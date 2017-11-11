@@ -7,10 +7,11 @@ namespace Coffee{
 namespace CResources{
 namespace Posix{
 
-FileFunDef::NodeType PosixFileMod_def::Stat(cstring fn)
+FileFunDef::NodeType PosixFileMod_def::Stat(Url const& fn)
 {
+    auto url = *fn;
     struct stat fs = {};
-    int s = lstat(fn,&fs);
+    int s = lstat(url.c_str(),&fs);
 
     errno = 0;
 
@@ -37,13 +38,14 @@ FileFunDef::NodeType PosixFileMod_def::Stat(cstring fn)
     return NodeType::None;
 }
 
-bool PosixFileMod_def::Touch(FileFunDef::NodeType t, cstring fn)
+bool PosixFileMod_def::Touch(FileFunDef::NodeType t, Url const& fn)
 {
+    auto url = *fn;
     switch(t)
     {
     case NodeType::File:
     {
-        int fd = creat(fn,S_IRWXU);
+        int fd = creat(url.c_str(),S_IRWXU);
         errno = 0;
         close(fd);
         break;
@@ -58,31 +60,33 @@ bool PosixFileMod_def::Touch(FileFunDef::NodeType t, cstring fn)
     return true;
 }
 
-CString PosixFileMod_def::DereferenceLink(cstring fn)
+CString PosixFileMod_def::DereferenceLink(Url const& fn)
 {
+    auto url = *fn;
     CString out;
     szptr name_size = PATH_MAX;
     out.resize(name_size+1);
-    ssize_t sz = readlink(fn,&out[0],name_size);
+    ssize_t sz = readlink(url.c_str(),&out[0],name_size);
     if(errno == EINVAL)
-        return out = fn;
+        return out = url.c_str();
     if(sz > 0)
-        out.resize(sz);
+        out.resize(C_FCAST<CString::size_type>(sz));
     else
-        return out = fn;
+        return out = url.c_str();
 
-    ErrnoCheck(fn);
+    ErrnoCheck(url.c_str());
 
     return out;
 }
 
-CString PosixFileMod_def::CanonicalName(cstring fn)
+CString PosixFileMod_def::CanonicalName(Url const& fn)
 {
+    auto url = *fn;
 #if defined(COFFEE_LINUX)
-    cstring_w name = canonicalize_file_name(fn);
+    cstring_w name = canonicalize_file_name(url.c_str());
     if(!name)
     {
-        ErrnoCheck(fn);
+        ErrnoCheck(url.c_str());
         return {};
     }
     CString out = name;
@@ -91,37 +95,41 @@ CString PosixFileMod_def::CanonicalName(cstring fn)
 #else
     CString out;
     out.resize(FILENAME_MAX);
-    if(!realpath(fn,&out[0]))
+    if(!realpath(url.c_str(),&out[0]))
         out.resize(0);
     out.resize(StrLen(out.c_str()));
     return out;
 #endif
 }
 
-bool PosixFileMod_def::Ln(cstring src, cstring target)
+bool PosixFileMod_def::Ln(Url const& src, Url const& target)
 {
-    int sig = symlink(src,target);
+    auto srcUrl = *src;
+    auto targetUrl = *target;
+    int sig = symlink(srcUrl.c_str(),targetUrl.c_str());
     if(sig == 0)
         return true;
     else
     {
-        ErrnoCheck(target);
+        ErrnoCheck(targetUrl.c_str());
         return false;
     }
 }
 
-szptr PosixFileMod_def::Size(cstring fn)
+szptr PosixFileMod_def::Size(Url const& fn)
 {
+    auto url = *fn;
     struct stat st = {};
-    if(lstat(fn,&st)!=0)
-        ErrnoCheck(fn);
-    return st.st_size;
+    if(lstat(url.c_str(),&st)!=0)
+        ErrnoCheck(url.c_str());
+    return C_FCAST<szptr>(st.st_size);
 }
 
-bool PosixFileMod_def::Exists(cstring fn)
+bool PosixFileMod_def::Exists(Url const& fn)
 {
+    auto url = *fn;
     struct stat st;
-    bool status = lstat(fn,&st)==0;
+    bool status = lstat(url.c_str(),&st)==0;
     if(status)
     {
         errno = 0;
@@ -129,6 +137,14 @@ bool PosixFileMod_def::Exists(cstring fn)
     }else{
         return (errno!=ENOENT||errno==ENOTDIR) && (errno=0);
     }
+}
+
+bool PosixFileMod_def::Rm(Url const& fn)
+{
+    auto url = *fn;
+    bool stat = unlink(url.c_str()) == 0;
+    ErrnoCheck(url.c_str());
+    return stat;
 }
 
 int PosixFileMod_def::MappingFlags(ResourceAccess acc)
@@ -214,13 +230,14 @@ int PosixFileMod_def::PosixRscFlags(ResourceAccess acc)
     return oflags;
 }
 
-bool PosixDirFun::Ls(cstring dname, DirFunDef::DirList &entries)
+bool PosixDirFun::Ls(Url const& dname, DirFunDef::DirList &entries)
 {
-    DIR* dr = opendir(dname);
+    auto url = *dname;
+    DIR* dr = opendir(url.c_str());
 
     if(!dr)
     {
-        PosixFileFun::ErrnoCheck(dname);
+        PosixFileFun::ErrnoCheck(url.c_str());
         return false;
     }
 
@@ -254,7 +271,7 @@ bool PosixDirFun::Ls(cstring dname, DirFunDef::DirList &entries)
             t = Type::Socket;
             break;
         default:
-            t = PosixFileFun::Stat(dir_ent->d_name);
+            t = PosixFileFun::Stat(MkUrl(dir_ent->d_name));
             break;
         }
 
@@ -263,21 +280,22 @@ bool PosixDirFun::Ls(cstring dname, DirFunDef::DirList &entries)
 
     closedir(dr);
 
-    PosixFileFun::ErrnoCheck(dname);
+    PosixFileFun::ErrnoCheck(url.c_str());
 
     return true;
 }
 
-bool PosixDirFun::MkDir(cstring dname, bool createParent)
+bool PosixDirFun::MkDir(Url const& dname, bool createParent)
 {
+    auto url = *dname;
     if(!createParent)
-        return mkdir(dname,S_IRWXU|S_IRWXG)==0;
+        return mkdir(url.c_str(),S_IRWXU|S_IRWXG)==0;
 
     char tmp[255];
     char *p = NULL;
     size_t len;
 
-    snprintf(tmp,sizeof(tmp),"%s",dname);
+    snprintf(tmp,sizeof(tmp),"%s",url.c_str());
     len = strlen(tmp);
     if(tmp[len-1] == '/')
         tmp[len-1] = 0;
@@ -291,15 +309,22 @@ bool PosixDirFun::MkDir(cstring dname, bool createParent)
     return mkdir(tmp,S_IRWXU)==0 || (errno == EEXIST);
 }
 
-bool Posix::PosixDirFun::ChDir(cstring dir)
+bool Posix::PosixDirFun::ChDir(Url const& dir)
 {
-    bool stat = chdir(dir) == 0;
+    auto url = *dir;
+    bool stat = chdir(url.c_str()) == 0;
     if(!stat)
     {
-        PosixFileFun::ErrnoCheck(dir);
+        PosixFileFun::ErrnoCheck(url.c_str());
         return false;
     }
     return true;
+}
+
+bool Posix::PosixDirFun::RmDir(Url const& dname)
+{
+    auto url = *dname;
+    return rmdir(url.c_str()) == 0 || (errno = 0);
 }
 
 bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
@@ -316,7 +341,7 @@ bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
             if(size != 0)
                 ref = path;
         }
-#else
+#elif defined(COFFEE_APPLE)
         if(!ref && fcntl(fd, F_GETPATH, path) != -1)
             ref = path;
 #endif

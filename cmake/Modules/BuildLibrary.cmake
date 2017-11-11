@@ -96,11 +96,13 @@ macro( GENERATE_FINDSCRIPT )
 endmacro()
 
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
-    file ( GLOB_RECURSE ${TARGET}_HEADERS
-#        ${HEADER_DIR}/*.h
-#        ${HEADER_DIR}/*.hpp
-        ${HEADER_DIR}/*
-        )
+    if(HEADER_DIR)
+        file ( GLOB_RECURSE ${TARGET}_HEADERS
+            #        ${HEADER_DIR}/*.h
+            #        ${HEADER_DIR}/*.hpp
+            ${HEADER_DIR}/*
+            )
+    endif()
     source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
 
     # Because it's hard to write these three commands over and over again
@@ -160,7 +162,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             )
     endif()
 
-    register_library( ${TARGET} ${HEADER_DIR} )
+    register_library( ${TARGET} "${HEADER_DIR}" )
 endmacro()
 
 macro(COFFEE_ADD_FRAMEWORK

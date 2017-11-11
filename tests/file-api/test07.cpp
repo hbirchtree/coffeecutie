@@ -6,8 +6,12 @@ using namespace Coffee;
 using File = CResources::FileFun;
 using Dir = CResources::DirFun;
 
-const cstring testpath = "test_level1/test_level2";
-const cstring testdir = "test_dir";
+const Url testpath = MkUrl("test_level1/test_level2",
+                           ResourceAccess::SpecifyStorage
+                           |ResourceAccess::TemporaryFile);
+const Url testdir = MkUrl("test_dir",
+                          ResourceAccess::SpecifyStorage
+                          |ResourceAccess::TemporaryFile);
 
 bool dirstat_test()
 {
@@ -35,7 +39,7 @@ bool dirbasename_test()
 {
     static const constexpr cstring result = "test_level1";
 
-    CString bname = Env::DirName(testpath);
+    CString bname = Env::DirName(testpath.internUrl.c_str());
 
     if(bname != result)
     {
@@ -67,13 +71,13 @@ bool basename_test()
 
 bool dirlist_test()
 {
-    CString file1 = Env::ConcatPath(testpath,"file1");
-    CString file2 = Env::ConcatPath(testpath,"file 2");
+    Url file1 = testpath + Path{"file1"};
+    Url file2 = testpath + Path{"file 2"};
     Profiler::Profile("Concatenating paths");
 
     if(!(Dir::MkDir(testpath,true)
-         && File::Touch(File::File,file1.c_str())
-         && File::Touch(File::File,file2.c_str())))
+         && File::Touch(File::File,file1))
+         && File::Touch(File::File,file2))
         return false;
     Profiler::Profile("Prerequisites");
 
@@ -88,14 +92,16 @@ bool dirlist_test()
         cBasicPrint("{0} : {1}",e.name,(uint32)e.type);
     Profiler::Profile("Printing names");
 
-    File::Rm(file1.c_str());
-    File::Rm(file2.c_str());
+    File::Rm(file1);
+    File::Rm(file2);
     Dir::RmDir(testpath);
     Profiler::Profile("Deleting files");
 
-    CString pdir = Env::DirName(testpath);
     Profiler::Profile("Basename");
-    Dir::RmDir(pdir.c_str());
+    auto pdir = C_CAST<Path>(testpath).dirname();
+    Dir::RmDir(MkUrl(pdir.internUrl.c_str(),
+                     ResourceAccess::SpecifyStorage
+                     |ResourceAccess::TemporaryFile));
     Profiler::Profile("Delete directory");
 
     return true;

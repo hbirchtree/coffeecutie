@@ -6,5 +6,5 @@ coffee_add_application_long (
 
     test01.cpp
 
-    CoffeeCore ""
+    "CoffeeCore;CoffeeTesting" ""
     "${COFFEE_ASSET_DIRECTORY}/packaging-test" )

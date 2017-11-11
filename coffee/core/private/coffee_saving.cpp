@@ -125,7 +125,8 @@ szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
     CResources::Resource rsc(file_str.c_str(),
                              ResourceAccess::SpecifyStorage
-                             | ResourceAccess::ConfigFile);
+                             | ResourceAccess::ConfigFile
+                             | ResourceAccess::NewFile);
 
     /* I promise not to overwrite your data... */
     rsc.data = c_ptr(data_ptr);

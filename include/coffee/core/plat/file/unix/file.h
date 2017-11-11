@@ -47,26 +47,21 @@ struct PosixFileMod_def : CommonFileFun
 {
     static bool ErrnoCheck(cstring ref = nullptr, int fd = -1);
 
-    static NodeType Stat(cstring fn);
+    static NodeType Stat(Url const& fn);
 
-    static bool Touch(NodeType t, cstring fn);
+    static bool Touch(NodeType t, Url const& fn);
 
-    STATICINLINE bool Rm(cstring fn)
-    {
-	bool stat = unlink(fn) == 0;
-        ErrnoCheck(fn);
-	return stat;
-    }
+    static bool Rm(Url const& fn);
 
-    static CString DereferenceLink(cstring fn);
+    static CString DereferenceLink(Url const& fn);
 
-    static CString CanonicalName(cstring fn);
+    static CString CanonicalName(Url const& fn);
 
-    static bool Ln(cstring src, cstring target);
+    static bool Ln(Url const& src, Url const& target);
 
-    static szptr Size(cstring fn);
+    static szptr Size(Url const& fn);
 
-    static bool Exists(cstring fn);
+    static bool Exists(Url const& fn);
 
 protected:
     static uint32 PageSize();
@@ -82,9 +77,10 @@ struct PosixFileFun_def : PosixFileMod_def
     using PosixFileMod_def::Exists;
     using PosixFileMod_def::Size;
 
-    STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
+    STATICINLINE FH* Open(Url const& fn, ResourceAccess ac)
     {
-        int fd = open(fn,PosixRscFlags(ac),S_IRWXU|S_IRGRP);
+        auto url = *fn;
+        int fd = open(url.c_str(),PosixRscFlags(ac),S_IRWXU|S_IRGRP);
 
         if(fd == -1)
             return nullptr;
@@ -96,6 +92,8 @@ struct PosixFileFun_def : PosixFileMod_def
     }
     STATICINLINE bool Close(FH* fh)
     {
+        if(!fh)
+            return false;
         close(fh->fd);
         delete fh;
         return true;
@@ -110,10 +108,13 @@ struct PosixFileFun_def : PosixFileMod_def
         if(f_size <= sz && f_size != -1)
             sz = f_size;
 
-        szptr szp = C_CAST<szptr>(sz);
+        szptr szp = C_CAST<szptr>(sz) + ((nullterm) ? 1 : 0);
 
-        data.data = C_CAST<byte_t*>(Calloc(4,szp));
+        data.data = C_CAST<byte_t*>(Calloc(1,szp));
         data.size = szp + nullterm;
+
+        if(!data.data)
+            return {};
 
         szptr i = 0;
         szptr chnk = 0;
@@ -144,6 +145,9 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE bool Write(FH* f_h, CByteData const& d, bool)
     {
+        if(!f_h)
+            return false;
+
         szptr i = 0;
         szptr it = 0;
         szptr chnk = 0;
@@ -160,9 +164,10 @@ struct PosixFileFun_def : PosixFileMod_def
         return i == d.size;
     }
 
-    STATICINLINE FM Map(cstring filename, ResourceAccess acc,
+    STATICINLINE FM Map(Url const& filename, ResourceAccess acc,
                     szptr offset, szptr size, int* error)
     {
+        auto url = *filename;
         if(error)
             *error = 0;
         uint64 pa_offset = offset & ~(PageSize());
@@ -176,7 +181,7 @@ struct PosixFileFun_def : PosixFileMod_def
         int mapping = MappingFlags(acc);
 
         /*... and then actually open it*/
-        int fd = open(filename,oflags);
+        int fd = open(url.c_str(),oflags);
         if(fd < 0)
         {
             if(error)
@@ -280,6 +285,9 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE szptr Size(FH* fh)
     {
+        if(!fh)
+            return 0;
+
         struct stat st;
         if(fh->fd>0)
         {
@@ -315,18 +323,15 @@ struct PosixFileFun : PosixFileFun_def<
 
 struct PosixDirFun : DirFunDef
 {
-    static bool ChDir(cstring dir);
+    static bool ChDir(Url const& dir);
 
-    static bool MkDir(cstring dname, bool createParent);
+    static bool MkDir(Url const& dname, bool createParent);
 
-    STATICINLINE bool RmDir(cstring dname)
-    {
-        return rmdir(dname) == 0 || (errno = 0);
-    }
+    static bool RmDir(Url const& dname);
 
     using Type = FileFunDef::NodeType;
 
-    static bool Ls(cstring dname, DirList& entries);
+    static bool Ls(Url const& dname, DirList& entries);
 };
 
 }

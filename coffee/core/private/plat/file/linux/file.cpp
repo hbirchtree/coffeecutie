@@ -42,7 +42,7 @@ CString LinuxFileFun::NativePath(cstring fn)
         }
     }else
     {
-        return FileFun::DereferenceLink(fn);
+        return FileFun::DereferenceLink(MkUrl(fn));
     }
 }
 
@@ -62,7 +62,10 @@ CString LinuxFileFun::NativePath(cstring fn, ResourceAccess storage)
 bool LinuxFileFun::VerifyAsset(cstring fn)
 {
     CString native = NativePath(fn);
-    return LinuxFileFun::Exists(native.c_str());
+
+    struct stat file_stat = {};
+
+    return stat(native.c_str(), &file_stat) == 0;
 }
 
 CString LinuxFileFun::sys_read(cstring fn)

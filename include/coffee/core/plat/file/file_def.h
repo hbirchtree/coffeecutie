@@ -5,6 +5,7 @@
 #include "../../types/tdef/stltypes.h"
 #include "../../types/cdef/memtypes.h"
 #include "../../types/edef/resenum.h"
+#include "../../base/files/url.h"
 
 namespace Coffee{
 namespace CResources{
@@ -46,15 +47,31 @@ struct FileFunDef
         return true;
     }
 
-    static FileHandle* Open(cstring, ResourceAccess);
-    static bool Close(FileHandle*);
+    static FileHandle* Open(Url const&, ResourceAccess){return nullptr;}
+    static bool Close(FileHandle*){return false;}
 
-    static void Seek(FileHandle* h,uint64 off);
+    static void Seek(FileHandle* h,uint64 off)
+    {
+        C_UNUSED(h);
+        C_UNUSED(off);
+    }
 
-    static CByteData Read(FileHandle* h,uint64 size,bool);
-    static bool Write(FileHandle* h,CByteData const& d,bool);
+    static CByteData Read(FileHandle* h,uint64 size,bool)
+    {
+        C_UNUSED(h);
+        C_UNUSED(size);
 
-    static szptr Size(FileHandle*);
+        return {};
+    }
+    static bool Write(FileHandle* h,CByteData const& d,bool)
+    {
+        C_UNUSED(h);
+        C_UNUSED(d);
+
+        return false;
+    }
+
+    static szptr Size(FileHandle*){return 0;}
 
     /*!
      * \brief Here's how the resource flags should work:
@@ -77,9 +94,23 @@ struct FileFunDef
      * \param err
      * \return
      */
-    static FileMapping Map(cstring fname, ResourceAccess access,
-                     szptr size, szptr offset, int* err);
-    static bool Unmap(FileMapping* mapp);
+    static FileMapping Map(Url const& fname, ResourceAccess access,
+                           szptr size, szptr offset, int* err)
+    {
+        C_UNUSED(fname);
+        C_UNUSED(access);
+        C_UNUSED(size);
+        C_UNUSED(offset);
+        C_UNUSED(err);
+
+        return {};
+    }
+    static bool Unmap(FileMapping* mapp)
+    {
+        C_UNUSED(mapp);
+
+        return false;
+    }
 
     static bool MapCache(void* mapping_ptr,szptr mapping_size,
                          szptr cache_offset, szptr cache_size)
@@ -88,6 +119,7 @@ struct FileFunDef
         C_UNUSED(mapping_size);
         C_UNUSED(cache_offset);
         C_UNUSED(cache_size);
+
         return false;
     }
     static bool MapUncache(void* mapping_ptr,szptr mapping_size,
@@ -97,12 +129,14 @@ struct FileFunDef
         C_UNUSED(mapping_size);
         C_UNUSED(cache_offset);
         C_UNUSED(cache_size);
+
         return false;
     }
     static bool MapSync(void* ptr,szptr size)
     {
         C_UNUSED(ptr);
         C_UNUSED(size);
+
         return false;
     }
 
@@ -118,8 +152,8 @@ struct FileFunDef
     static void ScratchUnmap(ScratchBuf*){}
 
     /* We allow checking size of unopened files, convenience */
-    static bool Exists(cstring);
-    static szptr Size(cstring);
+    static bool Exists(Url const&){return false;}
+    static szptr Size(Url const&){return 0;}
 
     /*!
      * \brief Creates an entry in the filesystem
@@ -128,19 +162,19 @@ struct FileFunDef
      *  - Directories are created non-recursively
      * \return
      */
-    static bool Touch(NodeType, cstring){return false;}
+    static bool Touch(NodeType, Url const&){return false;}
 
-    static bool Ln(cstring,cstring)
+    static bool Ln(Url const&,Url const&)
     {return false;}
 
-    static bool Rm(cstring)
+    static bool Rm(Url const&)
     {return false;}
 
-    static NodeType Stat(cstring)
+    static NodeType Stat(Url const&)
     {return NodeType::None;}
 
-    static CString DereferenceLink(cstring){return {};}
-    static CString CanonicalName(cstring){return {};}
+    static CString DereferenceLink(Url const&){return {};}
+    static CString CanonicalName(Url const&){return {};}
 };
 
 struct DirFunDef
@@ -155,14 +189,14 @@ struct DirFunDef
 
     using DirList = Vector<DirItem_t>;
 
-    static bool ChDir(cstring){return false;}
+    static bool ChDir(Url const&){return false;}
 
-    static bool MkDir(cstring, bool){return false;}
-    static bool RmDir(cstring){return false;}
+    static bool MkDir(Url const&, bool){return false;}
+    static bool RmDir(Url const&){return false;}
 
-    static bool Ls(cstring,DirList&){return false;}
+    static bool Ls(Url const&,DirList&){return false;}
 
-    static CString Basename(cstring){return {};}
+    static CString Basename(cstring fn);
 };
 
 }

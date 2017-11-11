@@ -3,11 +3,15 @@
 
 using namespace Coffee;
 
-const cstring testfile = "fileapi_testfile.txt";
+const Url writetest = MkUrl("writetest.txt",
+                            ResourceAccess::SpecifyStorage
+                            |ResourceAccess::TemporaryFile);
+const Url testfile = MkUrl("fileapi_testfile.txt",
+                           ResourceAccess::SpecifyStorage
+                           |ResourceAccess::TemporaryFile);
 
 using File = FileFun;
 
-const cstring writetest = "writetest.txt";
 byte_t write_data[100] = {
     "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n"
 };

@@ -37,7 +37,7 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
     int stat = Coffee::CoffeeMain(mainfun,argc,argv);
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
-    exit(0);
+    exit(stat);
 #else
     return stat;
 #endif

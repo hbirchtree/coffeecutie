@@ -113,7 +113,7 @@ if(COFFEE_GENERATE_LIBRARIES)
             add_subdirectory(examples)
         endif()
         if(GENERATE_TESTS)
-            add_subdirectory(examples/unit-tests)
+            add_subdirectory(tests)
         endif()
     endif()
 

@@ -1,5 +1,4 @@
-#ifndef CAPPLICATION_START
-#define CAPPLICATION_START
+#pragma once
 
 #include "../../types/tdef/fntypes.h"
 #include "../../coffee_version.h"
@@ -12,6 +11,13 @@
 #define main SDL_main
 #elif defined(COFFEE_CUSTOM_MAIN)
 #define main Coffee_main
+
+#if defined(COFFEE_APPLE_MOBILE)
+extern Coffee::CoffeeMainWithArgs apple_entry_point;
+#elif defined(COFFEE_ANDROID)
+extern Coffee::CoffeeMainWithArgs android_entry_point;
+#endif
+
 #endif
 
 extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);
@@ -21,7 +27,6 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv)
 
 // Wraps it with a custom name defined above
 #define COFFEE_APPLICATION_MAIN(mainfun) \
-    Coffee::CoffeeMainWithArgs android_entry_point = mainfun; \
     extern "C" int main(int argv, char** argc){ \
         return deref_main(mainfun,argv,argc); \
     }
@@ -42,6 +47,4 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv)
 // Plain old main() function
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     int main(int argv, char** argc){ return deref_main(mainfun,argv,argc); }
-#endif
-
 #endif

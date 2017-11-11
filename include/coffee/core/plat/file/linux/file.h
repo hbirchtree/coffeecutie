@@ -1,9 +1,8 @@
+#pragma once
+
 #include "../../platform_detect.h"
 
 #ifdef COFFEE_LINUX
-#ifndef COFFEE_CORE_PLAT_FILE_H
-#define COFFEE_CORE_PLAT_FILE_H
-
 #include "../unix/file.h"
 
 namespace Coffee{
@@ -40,5 +39,4 @@ using DirFun = Linux::LinuxDirFun;
 }
 }
 
-#endif
 #endif

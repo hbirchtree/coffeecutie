@@ -176,10 +176,11 @@ CString AndroidFileFun::NativePath(cstring fn, ResourceAccess storage)
         return NativePath(fn);
 }
 
-AndroidFileFun::FileHandle *AndroidFileFun::Open(cstring fn, ResourceAccess ac)
+AndroidFileFun::FileHandle *AndroidFileFun::Open(const Url &fn, ResourceAccess ac)
 {
+    auto url = *fn;
     FileHandle* fh = nullptr;
-    cstring asset = AssetApi::GetAsset(fn);
+    cstring asset = AssetApi::GetAsset(url.c_str());
     if(asset && FileFun::VerifyAsset(asset))
     {
         AAsset* fp = AAssetManager_open(and_asset_manager(),asset,AASSET_MODE_BUFFER);
@@ -247,9 +248,10 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle *fh)
         return Ancestor::Size(fh);
 }
 
-szptr AndroidFileFun::Size(cstring fn)
+szptr AndroidFileFun::Size(Url const& fn)
 {
-    cstring check = AssetApi::GetAsset(fn);
+    auto url = *fn;
+    cstring check = AssetApi::GetAsset(url.c_str());
     if(check && FileFun::VerifyAsset(check))
     {
         AAsset* ass = AAssetManager_open(and_asset_manager(),check,AASSET_MODE_UNKNOWN);
@@ -267,11 +269,12 @@ szptr AndroidFileFun::Size(cstring fn)
         return Ancestor::Size(fn);
 }
 
-AndroidFileFun::FileMapping AndroidFileFun::Map(cstring fn, ResourceAccess acc,
+AndroidFileFun::FileMapping AndroidFileFun::Map(const Url &fn, ResourceAccess acc,
                                                 szptr offset, szptr size,
                                                 int *)
 {
-    cstring asset = AssetApi::GetAsset(fn);
+    auto url = *fn;
+    cstring asset = AssetApi::GetAsset(url.c_str());
     if(asset)
     {
         if(feval(acc,ResourceAccess::WriteOnly))

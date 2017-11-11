@@ -8,8 +8,6 @@ if(ANDROID_USE_SDL2_LAUNCH)
 endif()
 
 set ( AndroidCore_SRCS
-    stub.cpp
-    #        static.cpp
     )
 
 if(NOT ANDROID_USE_SDL2_LAUNCH)

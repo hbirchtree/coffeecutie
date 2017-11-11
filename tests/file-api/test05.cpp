@@ -7,7 +7,9 @@ byte_t sample_storage[Unit_kB*100] = {
     "I'M THE TRASHMAN!\n"
 };
 
-const cstring big_map_test = "file_map_large.bin";
+const Url big_map_test = MkUrl("file_map_large.bin",
+                               ResourceAccess::SpecifyStorage
+                               |ResourceAccess::TemporaryFile);
 
 void* large_data = nullptr;
 
