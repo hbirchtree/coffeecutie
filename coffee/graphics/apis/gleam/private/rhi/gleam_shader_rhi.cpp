@@ -514,6 +514,7 @@ void GLEAM_ShaderUniformState::clear()
     m_uniforms.clear();
 }
 
+#if !defined(COFFEE_ONLY_GLES20)
 STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
                                   CGenum type,
                                   Vector<GLEAM_ProgramParameter>* params)
@@ -559,6 +560,7 @@ STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
         desc.m_name.resize(desc.m_name.find('\0'));
     }
 }
+#endif
 
 void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                        Vector<GLEAM_UniformDescriptor> *uniforms,
