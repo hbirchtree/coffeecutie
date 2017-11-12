@@ -1114,7 +1114,7 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     vertices.bind();
 
-#if !defined(COFFEE_GLEAM_DESKTOP)
+#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_ONLY_GLES20)
     if(m_store->features.qcom_tiling)
     {
         auto size = GLEAM_API::DefaultFramebuffer().size();
@@ -1126,7 +1126,7 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     InternalDraw(pipeline.m_handle, mode, d, i);
 
-#if !defined(COFFEE_GLEAM_DESKTOP)
+#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_ONLY_GLES20)
     if(m_store->features.qcom_tiling)
         glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
 #endif
