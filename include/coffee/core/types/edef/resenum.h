@@ -57,12 +57,14 @@ enum class ResourceAccess : u32
     /* Tell function to be particular about where to store this file */
     SpecifyStorage = 0x4000,
     /* Storage types */
-    AssetFile     = 0x8000,  /* Packaged in virtual file system, system-specific */
-    ConfigFile    = 0x10000, /* Stored in configuration directory, system-specific */
-    TemporaryFile = 0x20000, /* Stored in a temporary directory that is expected to be wiped, system-specific result */
-    CachedFile    = 0x40000, /* Stored, but could be wiped at any time */
+    AssetFile     = 0x8000,  /*!< Packaged in virtual file system, system-specific */
+    ConfigFile    = 0x10000, /*!< Stored in configuration directory, system-specific */
+    TemporaryFile = 0x20000, /*!< Stored in a temporary directory that is expected to be wiped, system-specific result */
+    CachedFile    = 0x40000, /*!< Stored, but could be wiped at any time */
 
-    SystemFile    = 0x80000,
+    SystemFile    = 0x80000, /*!< System-dependent, but mostly refers to passing through the path. If you give it abc.text, it will most likely become $PWD/abc.txt, /abc.txt will be /abc.txt */
+
+    Immutable     = 0x100000, /*!< For buffer APIs, do not allow reallocation of the buffer. Does not do anything for resource APIs */
 
     /* Masks */
     LockingMask = ExclusiveLocking|SharedLocking,

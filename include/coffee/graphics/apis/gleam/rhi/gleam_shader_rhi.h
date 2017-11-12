@@ -10,9 +10,11 @@ struct GLEAM_Shader : GraphicsAPI::Shader
 {
     friend struct GLEAM_API;
     friend struct GLEAM_Pipeline;
-    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
-                                  Vector<GLEAM_UniformDescriptor> *uniforms,
-                                  Vector<GLEAM_ProgramParameter> *params);
+    friend void GetShaderUniforms(
+            const GLEAM_Pipeline &pipeline,
+            Vector<GLEAM_UniformDescriptor> *uniforms,
+            Vector<GLEAM_ProgramParameter> *params,
+            Vector<GLEAM_ProgramParameter> *outputs);
 
     GLEAM_Shader():
         Shader(0),
@@ -65,9 +67,11 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
 {
     friend struct GLEAM_PipelineDumper;
     friend struct GLEAM_API;
-    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
-                                  Vector<GLEAM_UniformDescriptor> *uniforms,
-                                  Vector<GLEAM_ProgramParameter> *params);
+    friend void GetShaderUniforms(
+            const GLEAM_Pipeline &pipeline,
+            Vector<GLEAM_UniformDescriptor> *uniforms,
+            Vector<GLEAM_ProgramParameter> *params,
+            Vector<GLEAM_ProgramParameter> *outputs);
 
     GLEAM_Pipeline():
         Pipeline(0),
@@ -99,6 +103,7 @@ protected:
 
 struct GLEAM_ProgramParameter : GraphicsAPI::ProgramParameter
 {
+    ShaderStage stages;
 };
 
 struct GLEAM_UniformDescriptor : GraphicsAPI::UniformDescriptor
@@ -172,7 +177,8 @@ struct GLEAM_PipelineDumper : GraphicsProfiler::PipelineDumper<GLEAM_Pipeline>
 extern void GetShaderUniforms(
         GLEAM_Pipeline const& pipeline,
         C_OPTIONAL Vector<GLEAM_UniformDescriptor>* uniforms,
-        C_OPTIONAL Vector<GLEAM_ProgramParameter> *params);
+        C_OPTIONAL Vector<GLEAM_ProgramParameter> *params,
+        C_OPTIONAL Vector<GLEAM_ProgramParameter> *outputs);
 
 }
 }

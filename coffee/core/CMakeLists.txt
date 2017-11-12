@@ -123,6 +123,10 @@ if(ANDROID)
         private/plat/environment/android/environment.cpp
         private/plat/environment/android/sysinfo.cpp
         private/plat/sensor/android/sensor.cpp
+
+        # For reading process information
+        private/plat/file/linux/file.cpp
+        private/plat/environment/linux/process.cpp
     )
 endif()
 

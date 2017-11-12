@@ -90,154 +90,142 @@ STATICINLINE CString StringExtractLine(CString& shader, cstring query)
     return {};
 }
 
-//STATICINLINE void
-
-bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
+STATICINLINE void TransformShader(Bytes const& inputShader,
+                                  ShaderStage stage,
+                                  Vector<CString>& shaderStorage,
+                                  Vector<cstring>& shaderSrcVec)
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    CString transformedShader;
+    /* Because the original shader may not be null-terminated, we do
+     *  an insertion with the given length. */
+    transformedShader.insert(
+                0, C_FCAST<cstring>(inputShader.data),
+                C_FCAST<CString::size_type>(inputShader.size));
+
+    /* Before adding more snippets, we need to move the
+     *  #version directive */
+    CString versionDirective = {};
+    if((versionDirective = StringExtractLine(transformedShader,
+                                             "#version ")).size())
     {
-        int32 slen = C_FCAST<i32>(data.size);
-        CGL33::ShaderAlloc(1,stage,&m_handle);
-		if (m_handle == 0)
-		{
-			cWarning("Failed to allocate shader handle..?");
-			return false;
-		}
+        shaderStorage.push_back(versionDirective);
+    }
 
-        u32 numSources = 1;
-        cstring* shaderSrc = (cstring*)(&data.data);
-
-        i32* shaderLens = &slen;
-
-        Vector<cstring> shaderSrcVec = {};
-        Vector<i32> shaderSrcLens = {};
-
-        /* TODO: Move #extension directives */
-        CString transformedShader;
-        /* Because the originalShader may not be null-terminated, we do
-         *  an insertion with the given length. */
-        transformedShader.insert(0, *shaderSrc,
-                                 C_FCAST<CString::size_type>(slen));
-
-        /* Before adding more snippets, we need to move the
-         *  #version directive */
-        CString versionDirective = {};
-        if((versionDirective = StringExtractLine(transformedShader,
-                                                 "#version ")).size())
-            shaderSrcVec.push_back(versionDirective.c_str());
+    /* We move the extension directives at this point */
+    CString extensionDirective = {};
+    while((extensionDirective =
+           StringExtractLine(transformedShader,
+                             "\n#extension ")).size())
+        shaderStorage.push_back(extensionDirective);
 
 #if defined(COFFEE_ONLY_GLES20)
-        if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
-            return false;
+    if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
+        return false;
 
-
-        cstring originalShader = C_FCAST<cstring>(data.data);
-
-        /* Desktop GL does not require a precision specifier */
+    /* Desktop GL does not require a precision specifier */
 //        shaderSrcVec.push_back();
 
-        /* OpenGL GLSL ES 1.00 does not have a #version directive,
-         *  remove it */
-        shaderSrcVec.pop_back();
+    /* OpenGL GLSL ES 1.00 does not have a #version directive,
+     *  remove it */
+    shaderSrcVec.pop_back();
 
-        /* TODO: Provide better support for sampler2DArray, creating
-         *  extra uniforms for grid size and etc. This will allow us
-         *  to sample a sampler2D as if it were a sampler2DArray, all
-         *  with the same code. */
+    /* TODO: Provide better support for sampler2DArray, creating
+     *  extra uniforms for grid size and etc. This will allow us
+     *  to sample a sampler2D as if it were a sampler2DArray, all
+     *  with the same code. */
 
-        /* TODO: Using the sampler2DArray code, do the same for sampler3D.
-         * This will require special care when providing the user with
-         *  texture size limits. We may calculate the max size of a 3D
-         *  texture based on 2D texture size. Most likely, this will be
-         *  2048x2048 split into 128x or 256x pieces, or maybe smaller. */
+    /* TODO: Using the sampler2DArray code, do the same for sampler3D.
+     * This will require special care when providing the user with
+     *  texture size limits. We may calculate the max size of a 3D
+     *  texture based on 2D texture size. Most likely, this will be
+     *  2048x2048 split into 128x or 256x pieces, or maybe smaller. */
 
-        /* We add a compatibility shim for vertex and fragment shaders.
-         * This does some basic conversion, such as swapping "in" and
-         *  "out" with the approriate 1.00 equivalents (attribute and
-         *  varying) */
+    /* We add a compatibility shim for vertex and fragment shaders.
+     * This does some basic conversion, such as swapping "in" and
+     *  "out" with the approriate 1.00 equivalents (attribute and
+     *  varying) */
 
 
-        /* Remove the output declaration from modern GLSL */
-        transformedShader = CStrReplace(transformedShader,
-                                        "out vec4 OutColor;", "");
+    /* Remove the output declaration from modern GLSL */
+    transformedShader = CStrReplace(transformedShader,
+                                    "out vec4 OutColor;", "");
 
-        /* If a line has layout(...), remove it, GLSL 1.00
-         *  does not support that */
+    /* If a line has layout(...), remove it, GLSL 1.00
+     *  does not support that */
+    {
+        CString::size_type it;
+        while((it = transformedShader.find("layout")) != CString::npos)
         {
-            CString::size_type it;
-            while((it = transformedShader.find("layout")) != CString::npos)
-            {
-                auto endPos = transformedShader.find(')', it);
-                if(endPos != CString::npos)
-                    transformedShader.erase(it, endPos + 1 - it);
-            }
+            auto endPos = transformedShader.find(')', it);
+            if(endPos != CString::npos)
+                transformedShader.erase(it, endPos + 1 - it);
         }
+    }
 
-        if(stage == ShaderStage::Vertex)
-            shaderSrcVec.push_back(GLES20_COMPAT_VS);
-        else
-            shaderSrcVec.push_back(GLES20_COMPAT_FS);
+    if(stage == ShaderStage::Vertex)
+        shaderSrcVec.push_back(GLES20_COMPAT_VS);
+    else
+        shaderSrcVec.push_back(GLES20_COMPAT_FS);
 
 
 #else
 
-        /* For compatibility, remove usages of texture2DArray() in
-         *  favor of texture(). texture2DArray() was never put into
-         *  the standard. */
-        shaderSrcVec.push_back(
-                    "#define texture2DArray texture\n"
-                    );
+    /* For compatibility, remove usages of texture2DArray() in
+     *  favor of texture(). texture2DArray() was never put into
+     *  the standard. */
+    shaderSrcVec.push_back(
+                "#define texture2DArray texture\n"
+                );
 
-        if(stage != ShaderStage::Vertex)
-            shaderSrcVec.push_back(
-                        "#define gl_InstanceID InstanceID\n"
-                        "flat in int InstanceID;\n"
-                        );
-        else
-            shaderSrcVec.push_back(
-                        "flat out int InstanceID;\n"
-                        );
+    if(stage != ShaderStage::Vertex)
+        shaderSrcVec.push_back(
+                    "#define gl_InstanceID InstanceID\n"
+                    "flat in int InstanceID;\n"
+                    );
+    else
+        shaderSrcVec.push_back(
+                    "flat out int InstanceID;\n"
+                    );
 #endif
 
-        Vector<CString> extensionDirectives = {};
-        CString extensionDirective = {};
-        while((extensionDirective =
-               StringExtractLine(transformedShader,
-                                 "\n#extension ")).size())
-            extensionDirectives.push_back(extensionDirective);
+    shaderStorage.push_back(transformedShader);
 
-        /* #extension directives must be inserted after #version */
-        auto extPos =
-        #if !defined(COFFEE_ONLY_GLES20)
-                std::find(shaderSrcVec.begin(),
-                          shaderSrcVec.end(),
-                          versionDirective.c_str());
-        #else
-              shaderSrcVec.begin();
-        #endif
+    auto directiveEnd = shaderStorage.size() - 1;
 
-        if(extPos == shaderSrcVec.end() || versionDirective.size() == 0)
-            extPos = shaderSrcVec.begin();
-        else
-            extPos++;
+    for(auto i : Range<>(directiveEnd))
+        shaderSrcVec.insert(shaderSrcVec.begin(),
+                            shaderStorage.at(directiveEnd - 1 - i).c_str());
 
-        for(auto& ext : extensionDirectives)
-            shaderSrcVec.insert(extPos,
-                                ext.c_str());
+    shaderSrcVec.push_back(shaderStorage.back().c_str());
+}
+
+bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
+{
+    Vector<cstring> shaderSrcVec = {};
+    Vector<CString> shaderStorage = {};
+
+    TransformShader(data, stage, shaderStorage, shaderSrcVec);
+
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
+            || GL_CURR_API==GLES_3_0)
+    {
+        CGL33::ShaderAlloc(1,stage,&m_handle);
+
+		if (m_handle == 0)
+		{
+			cWarning("Failed to allocate shader handle..?");
+			return false;
+        }
+
+        Vector<i32> shaderSrcLens = {};
 
         shaderSrcLens.reserve(shaderSrcVec.size() + 1);
         for(cstring fragment : shaderSrcVec)
-        {
             shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
-        }
 
-        shaderSrcVec.push_back(transformedShader.c_str());
-        shaderSrcLens.push_back(transformedShader.size());
-
-        shaderLens = shaderSrcLens.data();
-        shaderSrc = shaderSrcVec.data();
-        numSources = C_FCAST<u32>(shaderSrcVec.size());
+        i32* shaderLens = shaderSrcLens.data();
+        cstring* shaderSrc = shaderSrcVec.data();
+        u32 numSources = C_FCAST<u32>(shaderSrcVec.size());
 
         cDebug("Compiling shader fragment:");
         for(u32 i : Range<u32>(numSources))
@@ -263,13 +251,13 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
-        CString shader_str;
-        shader_str.insert(0, C_FCAST<cstring>(data.data), data.size);
-
-        cstring shader_cstr = shader_str.c_str();
+        cstring* srcs = shaderSrcVec.data();
 
         m_handle = 0;
-        m_handle = CGL43::ProgramCreate(stage,1,&shader_cstr);
+        m_handle = CGL43::ProgramCreate(
+                    stage,
+                    C_FCAST<u32>(shaderSrcVec.size()),
+                    srcs);
 
         i32 link_state = 0;
         CGL43::ProgramGetiv(m_handle, GL_LINK_STATUS, &link_state);
@@ -467,7 +455,10 @@ bool GLEAM_ShaderUniformState::setSampler(
         samplerType = Texture::Cubemap;
         break;
     default:
-        return false;
+        if((value.m_flags & Depth) == Depth)
+            break;
+        else
+            return false;
     }
 
     uint32 idx = value.m_idx;
@@ -523,9 +514,56 @@ void GLEAM_ShaderUniformState::clear()
     m_uniforms.clear();
 }
 
+STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
+                                  CGenum type,
+                                  Vector<GLEAM_ProgramParameter>* params)
+{
+    i32 num_attrs = 0;
+    if(params)
+        glGetProgramInterfaceiv(hnd, type,
+                                GL_ACTIVE_RESOURCES, &num_attrs);
+
+    for(auto i : Range<>(C_FCAST<u32>(num_attrs)))
+    {
+        const CGenum props_to_get[] = {
+            GL_NAME_LENGTH,
+            GL_LOCATION,
+            GL_LOCATION_COMPONENT,
+            GL_TYPE,
+            GL_ARRAY_SIZE,
+        };
+        i32 props_out[sizeof(props_to_get)/sizeof(CGenum)];
+
+        glGetProgramResourceiv(
+                    hnd, type, C_FCAST<u32>(i),
+                    sizeof(props_to_get) / sizeof(CGenum),
+                    props_to_get,
+                    sizeof(props_out), nullptr,
+                    props_out);
+
+        if(props_out[1] == -1)
+            continue;
+
+        params->push_back({});
+
+        GLEAM_ProgramParameter& desc = params->back();
+        desc.stages = stages;
+
+        desc.m_idx = C_FCAST<u16>(props_out[1]);
+        desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[3]));
+        desc.m_name.resize(C_FCAST<u32>(props_out[0]));
+        glGetProgramResourceName(
+                    hnd, type, C_FCAST<u32>(i),
+                    props_out[0],
+                nullptr, &desc.m_name[0]);
+        desc.m_name.resize(desc.m_name.find('\0'));
+    }
+}
+
 void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                        Vector<GLEAM_UniformDescriptor> *uniforms,
-                       Vector<GLEAM_ProgramParameter> *params)
+                       Vector<GLEAM_ProgramParameter> *params,
+                       Vector<GLEAM_ProgramParameter> *outputs)
 {
     using namespace ShaderTypes;
 
@@ -681,6 +719,16 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                 if(desc.m_name.find('[') != CString::npos)
                     desc.m_name.resize(desc.m_name.find('['));
             }
+
+            if(params)
+                ProgramInputGet(hnd, p.stages,
+                                GL_PROGRAM_INPUT,
+                                params);
+
+            if(outputs)
+                ProgramInputGet(hnd, p.stages,
+                                GL_PROGRAM_OUTPUT,
+                                outputs);
         }
     }
 #endif

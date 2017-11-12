@@ -203,9 +203,10 @@ public:
     static void GetShaderUniformState(
             PIP const& pipeline,
             Vector<UNIFDESC>* uniforms,
-            Vector<PPARAM>* params = nullptr)
+            Vector<PPARAM>* params = nullptr,
+            Vector<PPARAM>* outputs = nullptr)
     {
-        GLEAM::GetShaderUniforms(pipeline,uniforms,params);
+        GLEAM::GetShaderUniforms(pipeline,uniforms,params, outputs);
     }
 
     static void SetTessellatorState(

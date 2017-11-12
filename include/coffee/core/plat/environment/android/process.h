@@ -4,12 +4,12 @@
 
 #ifdef COFFEE_ANDROID
 
-#include "../process_def.h"
+#include "../linux/process.h"
 
 namespace Coffee{
 namespace Environment{
 namespace Android{
-struct AndroidProcessProperty : ProcessPropertyDef
+struct AndroidProcessProperty : Linux::LinuxProcessProperty
 {
 };
 }

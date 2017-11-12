@@ -38,7 +38,7 @@ void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 #elif defined(COFFEE_ONLY_GLES20)
     major = 2; minor = 0;
 #else
-    major = 3; minor = 0;
+    major = 3; minor = 2;
 #endif
 }
 
@@ -182,8 +182,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     cVerbose(4,"Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
 
 #if !defined(COFFEE_GLEAM_DESKTOP)
-    store->features.qcom_tiling =
-            CGL33::Debug::CheckExtensionSupported("GL_QCOM_tiled_rendering");
+//    store->features.qcom_tiling =
+//            CGL33::Debug::CheckExtensionSupported("GL_QCOM_tiled_rendering");
 
     if(store->features.qcom_tiling)
     {

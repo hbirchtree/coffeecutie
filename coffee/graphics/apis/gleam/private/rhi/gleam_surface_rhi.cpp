@@ -290,6 +290,11 @@ CSize3 GLEAM_Surface3D_Base::texSize() const
     return m_size;
 }
 
+GLEAM_Sampler::GLEAM_Sampler():
+    m_handle(0)
+{
+}
+
 void GLEAM_Sampler::alloc()
 {
 #if !defined(COFFEE_ONLY_GLES20)
@@ -372,6 +377,12 @@ void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
     CGL33::SamplerParameteri(m_handle,GL_TEXTURE_MAG_FILTER,mag);
     CGL33::SamplerParameteri(m_handle,GL_TEXTURE_MIN_FILTER,min,mip);
 #endif
+}
+
+void GLEAM_Sampler::enableShadowSampler()
+{
+    i32 v = GL_COMPARE_REF_TO_TEXTURE;
+    CGL33::SamplerParameteriv(m_handle, GL_NONE, &v);
 }
 
 void GLEAM_Sampler2D::bind(uint32 i)

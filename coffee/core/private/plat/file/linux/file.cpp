@@ -5,10 +5,13 @@
 #include <coffee/core/coffee_version.h>
 #include <coffee/core/coffee.h>
 
+#include <stdio.h>
+
 namespace Coffee{
 namespace CResources{
 namespace Linux{
 
+#if !defined(COFFEE_ANDROID)
 CString LinuxFileFun::NativePath(cstring fn)
 {
     const constexpr cstring var_appimg = "APPIMAGE_DATA_DIR";
@@ -68,6 +71,8 @@ bool LinuxFileFun::VerifyAsset(cstring fn)
     return stat(native.c_str(), &file_stat) == 0;
 }
 
+#endif
+
 CString LinuxFileFun::sys_read(cstring fn)
 {
     CString out;
@@ -78,14 +83,27 @@ CString LinuxFileFun::sys_read(cstring fn)
     if(!fh)
         return out;
 
+#if !defined(COFFEE_ANDROID)
     while(getdelim(&arg,&size,0,fh) != -1)
     {
         out.append(arg);
     }
+
     free(arg);
     fclose(fh);
     if(out.size() > 0)
         out.resize(out.size()-1);
+#else
+    /* Source:
+     * https://stackoverflow.com/questions/12237712/how-can-i-show-the-size-of-files-in-proc-it-should-not-be-size-zero */
+    do {
+        char linedata[256];
+        memset(linedata, 0, sizeof(linedata));
+        if(fgets(linedata, sizeof(linedata), fh) == nullptr)
+            break;
+        out.append(linedata);
+    } while(!feof(fh));
+#endif
     return out;
 }
 

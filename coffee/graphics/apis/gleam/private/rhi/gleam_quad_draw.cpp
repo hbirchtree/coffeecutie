@@ -48,14 +48,14 @@ static cstring m_shader_fragment_passthrough = {
     "}\n"
 };
 
-static const scalar m_vertex_quad_data[] = {
-    -1.f, -1.f, 0.f, 0.f, 0.f,
-     1.f, -1.f, 0.f, 1.f, 0.f,
-    -1.f,  1.f, 0.f, 0.f, 1.f,
+static const sbyte_t m_vertex_quad_data[] = {
+    -127, -127, 0,   0,
+     127, -127, 127, 0,
+    -127,  127, 0,   127,
 
-    -1.f,  1.f, 0.f, 0.f, 1.f,
-     1.f,  1.f, 0.f, 1.f, 1.f,
-     1.f, -1.f, 0.f, 1.f, 0.f,
+     127,  127, 127, 127,
+    -127,  127, 0,   127,
+     127, -127, 127, 0,
 };
 
 void GLEAM_Quad_Drawer::create()
@@ -145,11 +145,16 @@ void GLEAM_Quad_Drawer::create_vbo_data()
     pos.m_idx = 0;
     tex.m_idx = 1;
 
-    pos.m_size = 3;
-    tex.m_size = 2;
+    pos.m_size = tex.m_size = 2;
 
-    pos.m_stride = tex.m_stride = sizeof(Vecf3) + sizeof(Vecf2);
-    tex.m_off = sizeof(Vecf3);
+    pos.m_type = tex.m_type = TypeEnum::Byte;
+
+    pos.m_flags = tex.m_flags =
+            GLEAM_API::AttributeNormalization
+            |GLEAM_API::AttributePacked;
+
+    pos.m_stride = tex.m_stride = sizeof(sbyte_t) * 4;
+    tex.m_off = sizeof(sbyte_t) * 2;
 
     m_desc.addAttribute(pos);
     m_desc.addAttribute(tex);

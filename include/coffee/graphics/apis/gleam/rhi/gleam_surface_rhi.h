@@ -110,10 +110,7 @@ struct GLEAM_SamplerHandle
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler
 {
-    GLEAM_Sampler():
-        m_handle(0)
-    {
-    }
+    GLEAM_Sampler();
 
     void alloc();
     void dealloc();
@@ -123,6 +120,8 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     void setEdgePolicy(uint8 dim, WrapPolicy p);
     void setFiltering(Filtering mag, Filtering min,
                       Filtering mip = Filtering::None);
+
+    void enableShadowSampler();
 
 protected:
     CGhnd m_handle;
