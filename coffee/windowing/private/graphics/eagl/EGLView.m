@@ -5,9 +5,6 @@ extern void* appdelegate_ptr;
 
 EGLView* current_view = NULL;
 
-extern int(*apple_entry_point)(int, char**);
-extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
-
 @implementation EGLView {
     AppDelegate* mAppDelegate;
     EAGLContext* mContext;

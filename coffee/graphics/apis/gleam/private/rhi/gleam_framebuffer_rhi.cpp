@@ -140,6 +140,9 @@ void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
     auto sz_arm_printable = view.convert<i32>();
     cVerbose(10, "Resizing render target {0} to {1}x{2}", m_handle,
              sz_arm_printable.w, sz_arm_printable.h);
+
+    m_size = sz_arm_printable.size();
+
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::ViewportArraySupported())
     {
@@ -162,17 +165,20 @@ CSize GLEAM_RenderTarget::size()
 {
     CSize out;
 
-    if(m_handle != 0)
-    {
-        fb_bind(m_type,m_handle);
-
-        out = CGL33::FBGetAttachmentSize(m_type,0);
-
+    if(m_size.area() == 0)
         if(m_handle != 0)
+        {
             fb_bind(m_type,m_handle);
-    }else{
-        out = CGL33::Debug::GetViewport();
-    }
+
+            out = CGL33::FBGetAttachmentSize(m_type,0);
+
+            if(m_handle != 0)
+                fb_bind(m_type,m_handle);
+        }else{
+            out = CGL33::Debug::GetViewport();
+        }
+    else
+        out = m_size;
 
     return out;
 }

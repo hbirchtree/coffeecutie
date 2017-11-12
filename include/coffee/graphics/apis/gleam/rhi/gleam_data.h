@@ -25,6 +25,14 @@ struct GLEAM_DataStore
 
     APILevel CURR_API = GL_Nothing;
 
+    struct {
+#if defined(COFFEE_GLEAM_DESKTOP)
+        u32 _pad;
+#else
+        bool qcom_tiling = false;
+#endif
+    } features;
+
     #ifndef NDEBUG
     bool DEBUG_MODE = false;
     #else

@@ -181,6 +181,16 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
     cVerbose(4,"Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
 
+#if !defined(COFFEE_GLEAM_DESKTOP)
+    store->features.qcom_tiling =
+            CGL33::Debug::CheckExtensionSupported("GL_QCOM_tiled_rendering");
+
+    if(store->features.qcom_tiling)
+    {
+        cVerbose(5, "Qualcomm tiling enabled");
+    }
+#endif
+
     m_store = store;
 
     return true;
@@ -1104,7 +1114,22 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     vertices.bind();
 
+#if !defined(COFFEE_GLEAM_DESKTOP)
+    if(m_store->features.qcom_tiling)
+    {
+        auto size = GLEAM_API::DefaultFramebuffer().size();
+        glStartTilingQCOM(0, 0, size.w, size.h,
+                          GL_COLOR_BUFFER_BIT0_QCOM
+                          |GL_DEPTH_BUFFER_BIT0_QCOM);
+    }
+#endif
+
     InternalDraw(pipeline.m_handle, mode, d, i);
+
+#if !defined(COFFEE_GLEAM_DESKTOP)
+    if(m_store->features.qcom_tiling)
+        glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
+#endif
 
     if(query)
         query->end();

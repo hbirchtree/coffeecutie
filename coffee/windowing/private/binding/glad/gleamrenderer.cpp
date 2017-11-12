@@ -78,7 +78,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 {
     Profiler::PushContext("GLeam");
 
-    cVerbose(8, "Acquiring GL context from {0}, {1}", (u64)m_app, (u64)m_app->glContext());
+    cVerbose(8, "Acquiring GL context from {0}, {1}",
+             (u64)m_app, (u64)m_app->glContext());
 
     if(!m_app->glContext()->acquireContext())
     {

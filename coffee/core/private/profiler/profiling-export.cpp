@@ -373,8 +373,6 @@ void ExitRoutine()
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
         if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
         {
-            constexpr cstring log_fmt = "{0}-profile.xml";
-        
             auto log_name = (Path{Env::ExecutableName()}
                     .fileBasename()
                     .removeExt() + "-profile")
