@@ -1,163 +1,160 @@
 #include <coffee/core/plat/environment/argument_parse.h>
+#include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/CDebug>
+
+#include <coffee/core/CFiles>
 
 namespace Coffee{
 
-bool ArgumentCollection::registerArgument(ArgumentCollection::ArgType l, cstring lname, cstring sname, cstring information)
+void ArgumentParser::addSwitch(
+        cstring name,
+        cstring longname, cstring shortname, cstring help)
 {
-    if(l != Switch && l != Argument)
-        return false;
-
-    arg_variant var = {};
-    var.type = l;
-    var.information = information;
-
-    arguments.push_back(var);
-    if(lname)
-        long_args[lname] = &arguments.back();
-    if(sname)
-        short_args[sname] = &arguments.back();
-
-    return true;
+    this->switches.push_back({name, longname, shortname, help});
 }
 
-void ArgumentCollection::get_argument(int argc, cstring *argv, Set<int> &_indices, ArgumentCollection::ArgType type, cstring sw, cstring sw_s, ArgumentCollection::arg_variant &var)
+void ArgumentParser::addArgument(
+        cstring name,
+        cstring longname, cstring shortname, cstring help)
 {
-    if(type == Switch)
+    this->arguments.push_back({name, longname, shortname, help});
+}
+
+void ArgumentParser::addPositionalArgument(
+        cstring name, cstring help)
+{
+    this->posargs.push_back({name, help});
+}
+
+ArgumentResult ArgumentParser::parseArguments(AppArg &args)
+{
+    ArgumentResult result;
+
+    aargswitch const* consumer = nullptr;
+
+    cstring arg_p = nullptr;
+
+    szptr num_positionals = 0;
+
+    for(cstring_w arg : args.m_ptrStorage)
     {
-        int idx = -1;
-        var.switched = var.switched || ArgParse::Check(argc,argv,sw,(sw_s) ? sw_s[0] : 0,&idx);
-        if(idx>=0)
-            _indices.insert(idx);
-    }else{
-        int idx = -1;
-        var.data = ArgParse::Get(argc,argv,sw,(sw_s) ? sw_s[0] : 0,&idx);
-        if(idx>=0)
+        if(!arg)
+            continue;
+
+        CString arg_w = arg;
+
+        if(consumer)
         {
-            _indices.insert(idx);
-            _indices.insert(idx+1);
+            result.arguments.insert({consumer->name, arg_w});
+            consumer = nullptr;
+            continue;
         }
-    }
-}
 
-void ArgumentCollection::parseArguments(int argc, cstring_w *_argv)
-{
-    cstring* argv = (cstring*)_argv;
+        arg_p  = nullptr;
 
-    argv = &argv[1];
-    argc--;
-
-    Set<int> _indices;
-
-    for(Pair<CString,arg_variant*> const& arg : short_args)
-        get_argument(argc,argv,_indices,arg.second->type,
-                     nullptr,arg.first.data(),*arg.second);
-
-    for(Pair<CString,arg_variant*> const& arg : long_args)
-        get_argument(argc,argv,_indices,arg.second->type,
-                     arg.first.data(),nullptr,*arg.second);
-
-    for(int i=0;i<argc;i++)
-        if(!_indices.count(i))
-            positional.push_back(argv[i]);
-}
-
-Map<CString, cstring> ArgumentCollection::getArgumentOptions()
-{
-    Map<CString,cstring> opts;
-    for(Pair<CString,arg_variant*> const& opt : long_args)
-    {
-        if(opt.second->type == Argument)
-            opts[opt.first] = opt.second->data;
-    }
-    return opts;
-}
-
-Map<CString, bool> ArgumentCollection::getSwitchOptions()
-{
-    Map<CString,bool> opts;
-    for(Pair<CString,arg_variant*> const& opt : long_args)
-    {
-        if(opt.second->type == Switch)
-            opts[opt.first] = opt.second->switched;
-    }
-    for(Pair<CString,arg_variant*> const& opt : short_args)
-    {
-        if(opt.second->type == Switch)
-            opts[opt.first] = opt.second->switched;
-    }
-    return opts;
-}
-
-CString ArgumentCollection::helpMessage() const
-{
-    CString out;
-    for(arg_variant const& v : arguments)
-    {
-        cstring short_arg = nullptr;
-        cstring long_arg = nullptr;
-        for(Pair<CString,arg_variant*> const& p : short_args)
+        if(arg_w.substr(0, 2) == "--")
+            arg_p = &arg_w[2];
+        else if(arg_w.substr(0, 1) == "-")
+            arg_p = &arg_w[1];
+        else if(num_positionals < posargs.size())
         {
-            if(p.second == &v)
+            result.positional.insert({
+                                         posargs.at(num_positionals).name,
+                                         arg_w
+                                     });
+            num_positionals++;
+            continue;
+        }else
+        {
+            cWarning("Unused arguments found: {0}", arg_w);
+            continue;
+        }
+
+        for(auto const& sw : switches)
+            if((sw.longname && StrCmp(arg_p, sw.longname))
+                    || (sw.shortname && StrCmp(arg_p, sw.shortname)))
             {
-                short_arg = p.first.c_str();
-                break;
+                result.switches.insert(sw.name);
             }
-        }
-        for(Pair<CString,arg_variant*> const& p : long_args)
-        {
-            if(p.second == &v)
+
+        for(auto const& arg : arguments)
+            if(StrCmp(arg_p, arg.longname) || StrCmp(arg_p, arg.shortname))
             {
-                long_arg = p.first.c_str();
-                break;
+                consumer = &arg;
+                continue;
             }
-        }
-
-        CString opt;
-        if(short_arg)
-        {
-            opt += "-";
-            opt += short_arg;
-        }
-        if(long_arg)
-        {
-            if(short_arg)
-                opt += ",";
-            opt += "--";
-            opt += long_arg;
-        }
-        opt += " : ";
-        opt += v.information;
-
-        out += opt;
-        out += "\n";
     }
-    return out;
+
+    return result;
 }
 
-bool ArgParse::Check(int argc, String *argv, String sw_l, Character sw_s, int *pos)
+CString ArgumentParser::helpMessage() const
 {
-    for(int i=0;i<argc;i++)
-        /* For short switches, check that sw_s is not '0' */
-        /* For long switches, check that sw_l is not '0x0' */
-        if((sw_s != 0 && _cmp_short_switch(argv[i],sw_s))||(sw_l && _cmp_long_switch(argv[i],sw_l)))
-        {
-            if(pos)
-                *pos = i;
-            return true;
-        }
-    return false;
+    auto out = cStringFormat(
+                "{0}",
+                Env::ExecutableName()
+    );
+
+    CString desc = {};
+
+    if(posargs.size())
+        desc += "\nPositional arguments";
+
+    for(auto p : posargs)
+    {
+        out += cStringFormat(" {0}",  p.name);
+        desc += cStringFormat("\n\t{0}\t\t{1}\n",
+                              p.name,  p.help);
+    }
+
+    if(arguments.size() || switches.size())
+        desc += "\nOptional arguments";
+
+    for(auto a : arguments)
+    {
+        out += " [";
+        if(a.longname)
+            (out += "--") += a.longname;
+        if(a.longname && a.shortname)
+            out += " ";
+        if(a.shortname)
+            (out += "-") +=  a.shortname;
+
+        out += " ";
+        out += a.name;
+        out += "]";
+
+        desc += cStringFormat("\n\t{0}\t\t{1}\n",
+                              a.name,  a.help);
+    }
+
+    for(auto s : switches)
+    {
+        out += " [";
+        if(s.longname)
+            (out += "--") += s.longname;
+        if(s.longname && s.shortname)
+            out += " ";
+        if(s.shortname)
+            (out += "-") +=  s.shortname;
+
+        out += "]";
+
+        if(s.longname && s.shortname)
+            desc += cStringFormat("\n  -{0}, --{1}\t\t{2}",
+                                  s.shortname, s.longname,
+                                  s.help);
+        else if(s.longname)
+            desc += cStringFormat("\n      --{0}\t\t{1}",
+                                  s.longname, s.help);
+        else if(s.shortname)
+            desc += cStringFormat("\n  -{0},\t\t\t{1}",
+                                  s.shortname, s.help);
+    }
+
+    return out + desc;
 }
 
-cstring ArgParse::Get(int argc, String *argv, String sw, Character sw_s, int *pos)
-{
-    for(int i=1;i<argc-1;i++)
-        if(_cmp_short_switch(argv[i],sw_s)||_cmp_long_switch(argv[i],sw))
-        {
-            if(pos)
-                *pos = i;
-            return argv[i+1];
-        }
-    return nullptr;
-}
+
 
 }

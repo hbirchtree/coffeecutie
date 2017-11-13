@@ -26,7 +26,7 @@ struct CGL_ProgramInterfaceQuery
     {
         int32 len = 0;
         ProgramGetInterfaceiv(h,i,GL_MAX_NAME_LENGTH,&len);
-        cstring_w name = new int8[len+1];
+        cstring_w name = new char[len+1];
         name[len] = 0;
         glGetProgramResourceName(h,i,d,len+1,nullptr,name);
         return name;

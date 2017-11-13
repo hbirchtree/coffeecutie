@@ -66,7 +66,7 @@ FORCEDINLINE void PrintArchitectureInfo()
 #endif
 }
 
-FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
+FORCEDINLINE void PrintHelpInfo(ArgumentParser const& arg)
 {
     cOutputPrint("{0}",arg.helpMessage());
 }
@@ -147,47 +147,53 @@ void CoffeeInit(bool profiler_init)
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
-    initargs = AppArg(argc, argv);
+    initargs = AppArg::Clone(argc, argv);
 
 #ifndef COFFEE_LOWFAT
     {
-        ArgumentCollection parser;
-        parser.registerArgument(ArgumentCollection::Switch,"help","h",
-                                "Print help information and exit");
-        parser.registerArgument(ArgumentCollection::Switch,"version",nullptr,
-                                "Print version information and exit");
-        parser.registerArgument(ArgumentCollection::Switch,nullptr,"v",
-                                "Print verbose messages to terminal while running");
-        parser.registerArgument(ArgumentCollection::Switch,nullptr,"q",
-                                "Be quiet");
-        parser.registerArgument(ArgumentCollection::Switch,"licenses",nullptr,
-                                "Print license information and exit");
+        ArgumentParser parser;
+        parser.addSwitch(
+                    "help",
+                    "help","h",
+                    "Print help information and exit");
+        parser.addSwitch(
+                    "version","version", nullptr,
+                    "Print version information and exit");
+        parser.addSwitch(
+                    "verbose", nullptr, "v",
+                    "Print verbose messages to terminal while running");
+        parser.addSwitch(
+                    "quiet",nullptr,"q",
+                    "Be quiet");
+        parser.addSwitch(
+                    "licenses","licenses", nullptr,
+                    "Print license information and exit");
 
-        parser.parseArguments(argc,argv);
+        auto args = parser.parseArguments(initargs);
 
-        for(Pair<CString,bool> const& a : parser.getSwitchOptions())
+        for(CString sw : args.switches)
         {
-            if((a.first == "help" || a.first == "h") && a.second)
+            if(sw == "help")
             {
                 PrintVersionInfo();
                 PrintHelpInfo(parser);
                 return 0;
-            }
-            if(a.first == "v" && a.second)
+            }else
+            if(sw == "verbose")
             {
                 Coffee::PrintingVerbosityLevel++;
-            }
-            if(a.first == "q" && a.second)
+            }else
+            if(sw == "quiet")
             {
                 Coffee::PrintingVerbosityLevel = 0;
-            }
-            if(a.first == "version" && a.second)
+            }else
+            if(sw == "version")
             {
                 PrintVersionInfo();
                 PrintBuildInfo();
                 return 0;
-            }
-            if(a.first == "licenses" && a.second)
+            }else
+            if(sw == "licenses")
             {
                 PrintLicenseInfo();
                 return 0;

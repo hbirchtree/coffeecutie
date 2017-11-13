@@ -7,7 +7,7 @@
 
 namespace Coffee{
 
-using int8  = char;
+using int8  = int8_t;
 using int16 = int16_t;
 using int32 = int32_t;
 using int64 = int64_t;
@@ -45,8 +45,8 @@ using wbyte_t   = wchar_t;
 
 using ushort = uint16;
 
-using cstring    = const sbyte_t*; /*!< Typical C-string*/
-using cstring_w  = sbyte_t*; /*!< Writable C-string*/
+using cstring    = const char*; /*!< Typical C-string*/
+using cstring_w  = char*; /*!< Writable C-string*/
 using cwstring   = const wchar_t*; /*!< Wide C-string*/
 using cwstring_w = wchar_t*; /*!< Wide, writable C-string*/
 

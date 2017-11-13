@@ -198,7 +198,16 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
 
 int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 {
-    bool json_formatting = ArgParse::Check(argc,argv,"json");
+    auto args = AppArg::Clone(argc, argv);
+
+    ArgumentParser parser;
+
+    parser.addSwitch("json", "json", nullptr, "Output JSON document");
+
+    auto parseArgs = parser.parseArguments(args);
+
+    bool json_formatting = parseArgs.switches.count("json");
+
 
     CString tmp;
 

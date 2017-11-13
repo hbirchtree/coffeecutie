@@ -196,6 +196,11 @@ struct DirFunDef
 
     static bool Ls(Url const&,DirList&){return false;}
 
+    STATICINLINE CString Basename(CString fn)
+    {
+        return Basename(fn.c_str());
+    }
+
     static CString Basename(cstring fn);
 };
 

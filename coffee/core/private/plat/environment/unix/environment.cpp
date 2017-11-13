@@ -33,11 +33,8 @@ CString PosixEnvironmentFun::BaseName(cstring n)
     return out;
 #else
     // This one is slower, but more compliant
-    cstring dname = n;
-    cstring_w out = AllocT<sbyte_t>(StrLen(dname)+1);
-    StrCpy(out,dname);
-    CString out_s = basename(out);
-    CFree(out);
+    CString out = n;
+    CString out_s = basename(&out[0]);
     return out_s;
 #endif
 }
@@ -55,10 +52,8 @@ CString PosixEnvironmentFun::DirName(cstring fname)
     return out;
 #else
     // This one is slower, but more compliant
-    cstring_w out = AllocT<sbyte_t>(StrLen(fname)+1);
-    StrCpy(out,fname);
-    CString out_s = dirname(out);
-    CFree(out);
+    CString out = fname;
+    CString out_s = dirname(&out[0]);
     return out_s;
 #endif
 }

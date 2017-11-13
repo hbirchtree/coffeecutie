@@ -125,8 +125,7 @@ void ExportProfilerData(CString& target)
     return;
 #endif
 
-    auto argv = GetInitArgs().argv;
-    auto argc = GetInitArgs().argc;
+    auto app_args = GetInitArgs().arguments();
 
     XML::Document doc;
 
@@ -162,12 +161,12 @@ void ExportProfilerData(CString& target)
 
         /* Launch commandline */
         XML::Element* argument;
-        for(int32 i=0;i<argc;i++)
+        for(auto arg : app_args)
         {
             argument = doc.NewElement("argument");
             args->InsertEndChild(argument);
 
-            argument->SetText(argv[i]);
+            argument->SetText(arg);
         }
 
         auto AddElement = [&](cstring tagname, CString text)

@@ -381,8 +381,10 @@ void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
 
 void GLEAM_Sampler::enableShadowSampler()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     i32 v = GL_COMPARE_REF_TO_TEXTURE;
     CGL33::SamplerParameteriv(m_handle, GL_NONE, &v);
+#endif
 }
 
 void GLEAM_Sampler2D::bind(uint32 i)

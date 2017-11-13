@@ -48,7 +48,7 @@ static cstring m_shader_fragment_passthrough = {
     "}\n"
 };
 
-static const sbyte_t m_vertex_quad_data[] = {
+static const i8 m_vertex_quad_data[] = {
     -127, -127, 0,   0,
      127, -127, 127, 0,
     -127,  127, 0,   127,

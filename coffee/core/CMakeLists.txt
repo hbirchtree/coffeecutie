@@ -44,6 +44,8 @@ set ( CoffeeCore_SRCS
     private/base/strings/information_extensions.cpp
     private/base/strings/vector_print_extensions.cpp
 
+    private/types/cdef/infotypes.cpp
+
     # Terminal functions
     private/terminal/table-print.cpp
 

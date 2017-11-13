@@ -16,10 +16,10 @@
 namespace Coffee{
 namespace Blam{
 
-using bl_tag = sbyte_t[4];
-using bl_string = sbyte_t[32];
-using bl_header = sbyte_t [4];
-using bl_footer = sbyte_t[4];
+using bl_tag = char[4];
+using bl_string = char[32];
+using bl_header = char [4];
+using bl_footer = char[4];
 
 struct tagref_t
 {
@@ -73,7 +73,8 @@ constexpr cstring header_head = "deah"; /*!< Header of file header*/
 constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
 
 constexpr int32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
-constexpr _cbasic_static_map<sbyte_t[15],sbyte_t[28],28> blam_map_names = {
+constexpr _cbasic_static_map<char[15],char[28],28>
+blam_map_names = {
     //Single player maps
 {"a10", "Pillar of Autumn"},
 {"a30", "Halo"},

@@ -119,8 +119,6 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         shaderStorage.push_back(extensionDirective);
 
 #if defined(COFFEE_ONLY_GLES20)
-    if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
-        return false;
 
     /* Desktop GL does not require a precision specifier */
 //        shaderSrcVec.push_back();
@@ -201,6 +199,11 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
 
 bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
+#if defined(COFFEE_ONLY_GLES20)
+    if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
+        return false;
+#endif
+
     Vector<cstring> shaderSrcVec = {};
     Vector<CString> shaderStorage = {};
 
