@@ -68,8 +68,7 @@ bool Resource::valid() const
 
 bool FileExists(const Resource &resc)
 {
-    CString native_fn = FileFun::NativePath(resc.resource());
-    return FileFun::Exists(MkUrl(native_fn.c_str()));
+    return FileFun::Exists(resc.m_platform_data->m_url);
 }
 
 bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
