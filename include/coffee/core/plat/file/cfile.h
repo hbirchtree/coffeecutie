@@ -11,18 +11,18 @@ namespace CResources{
 
 struct CommonFileFun : FileFunDef
 {
-    STATICINLINE CString NativePath(cstring fn)
-    {
-#if defined(COFFEE_WINDOWS)
-	return CStrReplace(fn,"/","\\");
-#else
-	return fn;
-#endif
-    }
-    STATICINLINE CString NativePath(cstring fn, ResourceAccess)
-    {
-        return NativePath(fn);
-    }
+//    STATICINLINE CString NativePath(cstring fn)
+//    {
+//#if defined(COFFEE_WINDOWS)
+//	return CStrReplace(fn,"/","\\");
+//#else
+//	return fn;
+//#endif
+//    }
+//    STATICINLINE CString NativePath(cstring fn, ResourceAccess)
+//    {
+//        return NativePath(fn);
+//    }
 };
 
 struct FILEApi

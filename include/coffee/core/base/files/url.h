@@ -55,12 +55,23 @@ struct Url
     ResourceAccess flags;
     HTTPAccess netflags;
 
+    CString cachedUrl;
+
     FORCEDINLINE bool isLocal() const
     {
         return category == Local;
     }
 
+    /*!
+     * \brief Operator with const which does not perform caching of dereferenced URLs
+     * \return
+     */
     CString operator*() const;
+    /*!
+     * \brief Does the same as const operator*, except it caches the value for later dereferences. Currently not very useful since most `FileFun::*` functions do not take `Url&`, but rather `Url const&`.
+     * \return
+     */
+    CString operator*();
 
     CResources::Resource rsc() const;
 
@@ -88,7 +99,8 @@ FORCEDINLINE Url MkUrl(cstring urlString)
         urlString,
                 Url::Local,
                 ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile,
-                HTTPAccess::None
+                HTTPAccess::None,
+        {}
     };
 }
 
@@ -99,7 +111,8 @@ FORCEDINLINE Url MkUrl(cstring urlString, ResourceAccess access)
         urlString,
                 Url::Local,
                 access,
-                HTTPAccess::None
+                HTTPAccess::None,
+        {}
     };
 }
 
@@ -110,7 +123,8 @@ FORCEDINLINE Url MkSysUrl(cstring urlString)
         urlString,
                 Url::Local,
                 ResourceAccess::SpecifyStorage|ResourceAccess::SystemFile,
-                HTTPAccess::None
+                HTTPAccess::None,
+        {}
     };
 }
 

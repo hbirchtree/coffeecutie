@@ -13,10 +13,10 @@ struct LinuxFileFun : Posix::PosixFileFun
 
     static CString sys_read(cstring fn);
 #if !defined(COFFEE_ANDROID)
-    static CString NativePath(cstring fn);
-    static CString NativePath(cstring fn,ResourceAccess storage);
+//    static CString NativePath(cstring fn);
+//    static CString NativePath(cstring fn,ResourceAccess storage);
 
-    static bool VerifyAsset(cstring fn);
+//    static bool VerifyAsset(cstring fn);
 
 
     STATICINLINE bool SuperCache()
