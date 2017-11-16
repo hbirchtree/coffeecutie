@@ -125,7 +125,8 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
 
     /* OpenGL GLSL ES 1.00 does not have a #version directive,
      *  remove it */
-    shaderSrcVec.pop_back();
+    if(versionDirective.size())
+        shaderStorage.pop_back();
 
     /* TODO: Provide better support for sampler2DArray, creating
      *  extra uniforms for grid size and etc. This will allow us
@@ -532,7 +533,7 @@ STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
         const CGenum props_to_get[] = {
             GL_NAME_LENGTH,
             GL_LOCATION,
-            GL_LOCATION_COMPONENT,
+//            GL_LOCATION_COMPONENT,
             GL_TYPE,
             GL_ARRAY_SIZE,
         };
@@ -554,7 +555,7 @@ STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
         desc.stages = stages;
 
         desc.m_idx = C_FCAST<u16>(props_out[1]);
-        desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[3]));
+        desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[2]));
         desc.m_name.resize(C_FCAST<u32>(props_out[0]));
         glGetProgramResourceName(
                     hnd, type, C_FCAST<u32>(i),
