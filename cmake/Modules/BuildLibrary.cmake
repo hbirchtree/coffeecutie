@@ -197,7 +197,7 @@ macro(COFFEE_ADD_FRAMEWORK
             set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
         endif()
 
-        register_library( ${TARGET} ${HEADER_DIR} )
+        register_library( ${TARGET} "${HEADER_DIR}" )
     else()
         coffee_add_elibrary(
             "${TARGET}" "${LINKOPT}"
