@@ -89,6 +89,7 @@ enum FCmdType
     Android_QueryDataPath,
     Android_QueryExternalDataPath,
     Android_QueryObbPath,
+    Android_QueryCachePath,
 };
 
 struct AndroidForeignCommand

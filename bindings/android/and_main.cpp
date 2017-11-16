@@ -9,6 +9,38 @@
 #include <android/window.h>
 #include <gestureDetector.h>
 
+static Coffee::CString Android_cacheDir;
+
+extern "C" {
+
+JNIEXPORT void
+Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
+        JNIEnv* env, jobject, jint id, jstring data
+        )
+{
+    auto string_data = env->GetStringUTFChars(data, 0);
+
+    if(!string_data)
+        return;
+
+    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
+
+    switch(id)
+    {
+    case 10:
+    {
+        Android_cacheDir = string_data;
+
+        break;
+    }
+    default:
+        break;
+    }
+
+    env->ReleaseStringUTFChars(data, string_data);
+}
+
+}
 
 using namespace Coffee;
 
@@ -45,6 +77,7 @@ struct AndroidInternalState
 {
     InputDetectors input;
     AndroidAppState currentState;
+    CString cachePath;
 };
 
 static AndroidInternalState* app_internal_state = nullptr;
@@ -438,6 +471,9 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
             break;
         case Android_QueryExternalDataPath:
             out->store_string = coffee_app->activity->externalDataPath;
+            break;
+        case Android_QueryCachePath:
+            out->store_string = Android_cacheDir;
             break;
 #if ANDROID_API_LEVEL >= 13
         case Android_QueryObbPath:
