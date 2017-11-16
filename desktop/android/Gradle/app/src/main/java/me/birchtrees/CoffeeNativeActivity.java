@@ -26,6 +26,7 @@ public final class CoffeeNativeActivity extends NativeActivity {
         {
             System.err.println("Failed to get library name");
         }
+        return null;
     }
 
     @Override
