@@ -105,7 +105,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
     for(auto i : range_rev<>(consumed.size()))
         args.m_ptrStorage.at(i) = nullptr;
 
-    Vector<cstring_w>::const_iterator it;
+    auto it = args.m_ptrStorage.end();;
 
     while((it = std::find(
                args.m_ptrStorage.begin(),
