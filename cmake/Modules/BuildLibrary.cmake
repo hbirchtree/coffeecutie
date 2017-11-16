@@ -172,9 +172,11 @@ macro(COFFEE_ADD_FRAMEWORK
         BUNDLE_RSRCS BUNDLE_HDRS
         LIBRARIES BUNDLE_LIBRARIES)
     if(APPLE AND NOT IOS)
-        file ( GLOB_RECURSE ${TARGET}_HEADERS
-            ${HEADER_DIR}/*
-            )
+        if(HEADER_DIR)
+            file ( GLOB_RECURSE ${TARGET}_HEADERS
+                ${HEADER_DIR}/*
+                )
+        endif()
         source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
 
         MACFRAMEWORK_PACKAGE(
