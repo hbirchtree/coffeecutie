@@ -601,9 +601,10 @@ macro(ANDROIDAPK_PACKAGE
             PROPERTY LINK_FLAGS )
 
         set_property ( TARGET ${TARGET}
-            PROPERTY LINK_FLAGS ${TARGET_LINK_FLAGS}
-                                    -U=ANativeActivity_onCreate
+            PROPERTY LINK_FLAGS
+"${TARGET_LINK_FLAGS} -U=ANativeActivity_onCreate -U=Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable"
             )
+
 
         target_link_libraries ( ${TARGET}
             PUBLIC

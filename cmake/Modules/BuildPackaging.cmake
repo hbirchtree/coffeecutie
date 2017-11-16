@@ -78,7 +78,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 )
             set ( RSC_FLAGS "" )
             foreach (RSC ${BUNDLE_RSRCS})
-                set ( RSC_FLAGS "--preload-file ${RSC}@/sample_data/eye-demo/ ${RSC_FLAGS}" )
+                set ( RSC_FLAGS "--preload-file ${RSC}@/assets/ ${RSC_FLAGS}" )
             endforeach()
 
             set_target_properties ( ${TARGET}
