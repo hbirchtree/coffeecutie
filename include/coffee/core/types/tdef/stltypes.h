@@ -100,16 +100,35 @@ inline UqPtr<T,Deleter> MkUqDST(Args... a)
     return UqPtr<T, Deleter>(new T(a...));
 }
 
-template<typename T = size_t>
-struct Range : Vector<T>
+template<bool Reversed>
+struct range_params
 {
-    Range(T len) : Vector<T>()
+    static const constexpr bool reversed = Reversed;
+};
+
+using range_reversed = range_params<true>;
+
+template<typename T = size_t, typename range_param = range_params<false>>
+struct range : Vector<T>
+{
+    range(T len) : Vector<T>()
     {
         this->reserve(len);
-        for(T i = 0; i<len; i++)
-            this->push_back(i);
+
+        if(! range_param::reversed)
+            for(T i = 0; i<len; i++)
+                this->push_back(i);
+        else
+            for(T i = len; i>0; i--)
+                this->push_back(i - 1);
     }
 };
+
+template<typename T = size_t>
+using Range = range<T>;
+
+template<typename T = size_t>
+using range_rev = range<T, range_reversed>;
 
 
 }

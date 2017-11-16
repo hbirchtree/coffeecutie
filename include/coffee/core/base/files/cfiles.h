@@ -31,6 +31,8 @@ public:
     friend bool FileMap(Resource &resc, ResourceAccess acc, szptr size);
     friend bool FileUnmap(Resource &resc);
 
+    friend bool FileExists(const Resource& resc);
+
     /*!
      * \brief Constructs a resource
      * \param rsrc Path to resource

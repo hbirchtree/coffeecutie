@@ -35,18 +35,26 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
     cstring arg_p = nullptr;
 
     szptr num_positionals = 0;
+    szptr arg_idx = 0;
+
+    Vector<bool> consumed;
+    consumed.resize(args.m_ptrStorage.size());
 
     for(cstring_w arg : args.m_ptrStorage)
     {
+        arg_idx++;
+
         if(!arg)
             continue;
 
+        auto is_consumed = consumed.at(arg_idx - 1);
         CString arg_w = arg;
 
         if(consumer)
         {
             result.arguments.insert({consumer->name, arg_w});
             consumer = nullptr;
+            is_consumed.flip();
             continue;
         }
 
@@ -58,10 +66,14 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
             arg_p = &arg_w[1];
         else if(num_positionals < posargs.size())
         {
+            if(arg_idx == 1)
+                continue;
+
             result.positional.insert({
                                          posargs.at(num_positionals).name,
                                          arg_w
                                      });
+            is_consumed.flip();
             num_positionals++;
             continue;
         }else
@@ -75,14 +87,30 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
                     || (sw.shortname && StrCmp(arg_p, sw.shortname)))
             {
                 result.switches.insert(sw.name);
+                is_consumed.flip();
             }
 
         for(auto const& arg : arguments)
-            if(StrCmp(arg_p, arg.longname) || StrCmp(arg_p, arg.shortname))
+            if((arg.longname && StrCmp(arg_p, arg.longname))
+                    || (arg.shortname && StrCmp(arg_p, arg.shortname)))
             {
                 consumer = &arg;
+                is_consumed.flip();
                 continue;
             }
+    }
+
+    /* After marking the arguments that are consumed,  */
+
+    for(auto i : range_rev<>(consumed.size()))
+        args.m_ptrStorage.at(i) = nullptr;
+
+    auto it = std::find(args.m_ptrStorage.begin(), args.m_ptrStorage.end(),
+                        nullptr);
+
+    while(it != args.m_ptrStorage.end())
+    {
+        args.m_ptrStorage.erase(it++);
     }
 
     return result;
@@ -102,8 +130,8 @@ CString ArgumentParser::helpMessage() const
 
     for(auto p : posargs)
     {
-        out += cStringFormat(" {0}",  p.name);
-        desc += cStringFormat("\n\t{0}\t\t{1}\n",
+        out += cStringFormat(" [{0}]",  p.name);
+        desc += cStringFormat("\n  {0}\t\t{1}\n",
                               p.name,  p.help);
     }
 
@@ -124,8 +152,16 @@ CString ArgumentParser::helpMessage() const
         out += a.name;
         out += "]";
 
-        desc += cStringFormat("\n\t{0}\t\t{1}\n",
-                              a.name,  a.help);
+        if(a.longname && a.shortname)
+            desc += cStringFormat("\n  -{0}, --{1}\t\t{2}",
+                                  a.shortname, a.longname,
+                                  a.help);
+        else if(a.longname)
+            desc += cStringFormat("\n      --{0}\t\t{1}",
+                                  a.longname, a.help);
+        else if(a.shortname)
+            desc += cStringFormat("\n  -{0}\t\t\t{1}",
+                                  a.shortname, a.help);
     }
 
     for(auto s : switches)
@@ -148,7 +184,7 @@ CString ArgumentParser::helpMessage() const
             desc += cStringFormat("\n      --{0}\t\t{1}",
                                   s.longname, s.help);
         else if(s.shortname)
-            desc += cStringFormat("\n  -{0},\t\t\t{1}",
+            desc += cStringFormat("\n  -{0}\t\t\t{1}",
                                   s.shortname, s.help);
     }
 

@@ -119,5 +119,6 @@ enum class BitFormat : uint8
 };
 
 using BitFmt = BitFormat;
+using RSCA = ResourceAccess;
 
 }

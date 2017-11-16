@@ -96,6 +96,10 @@ void CoffeeInit(bool profiler_init)
 #endif
 
 #ifndef COFFEE_LOWFAT
+    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
+#endif
+
+#ifndef COFFEE_LOWFAT
     if(profiler_init)
     {
         Profiler::InitProfiler();
@@ -116,10 +120,6 @@ void CoffeeInit(bool profiler_init)
     PrintVersionInfo();
     PrintBuildInfo();
     PrintArchitectureInfo();
-
-#ifndef COFFEE_LOWFAT
-    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
-#endif
 
 #ifdef COFFEE_SLAP_LOWMEM
     /*
@@ -150,24 +150,41 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     initargs = AppArg::Clone(argc, argv);
 
 #ifndef COFFEE_LOWFAT
+
+    Profiler::PushContext("CoffeeMain");
+
+    CoffeeInit(false);
+    Profiler::Profile("Init");
+
     {
         ArgumentParser parser;
         parser.addSwitch(
                     "help",
                     "help","h",
                     "Print help information and exit");
+
         parser.addSwitch(
                     "version","version", nullptr,
                     "Print version information and exit");
+
         parser.addSwitch(
                     "verbose", nullptr, "v",
                     "Print verbose messages to terminal while running");
+
         parser.addSwitch(
                     "quiet",nullptr,"q",
                     "Be quiet");
+
         parser.addSwitch(
                     "licenses","licenses", nullptr,
                     "Print license information and exit");
+
+        parser.addPositionalArgument(
+                    "resource_prefix",
+
+                    "Change resource prefix"
+                    " (only works if application does not"
+                    " override resource prefix)");
 
         auto args = parser.parseArguments(initargs);
 
@@ -178,33 +195,36 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                 PrintVersionInfo();
                 PrintHelpInfo(parser);
                 return 0;
-            }else
-            if(sw == "verbose")
+            }else if(sw == "verbose")
             {
                 Coffee::PrintingVerbosityLevel++;
-            }else
-            if(sw == "quiet")
+            }else if(sw == "quiet")
             {
                 Coffee::PrintingVerbosityLevel = 0;
-            }else
-            if(sw == "version")
+            }else if(sw == "version")
             {
                 PrintVersionInfo();
                 PrintBuildInfo();
                 return 0;
-            }else
-            if(sw == "licenses")
+            }else if(sw == "licenses")
             {
                 PrintLicenseInfo();
                 return 0;
             }
         }
+
+        for(auto arg : args.arguments)
+        {
+            if(arg.first == "resource_prefix")
+                CResources::FileResourcePrefix(arg.second.c_str());
+        }
+
+        for(auto pos : args.positional)
+        {
+            if(pos.first == "resource_prefix")
+                CResources::FileResourcePrefix(pos.second.c_str());
+        }
     }
-
-    Profiler::PushContext("CoffeeMain");
-
-    CoffeeInit(false);
-    Profiler::Profile("Init");
 
     /* This is a bit more versatile than simple procedures
      */

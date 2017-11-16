@@ -13,7 +13,7 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 {
 
 
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
     return renderer->init(properties, err);
 #else
 
@@ -58,12 +58,12 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
             c.gl.version.minor = env.min;
 
             if(renderer->init(properties, err))
-                break;
+                return  true;
             else
                 renderer->cleanup();
         }
     }
-    return true;
+    return false;
 #endif
 }
 
