@@ -22,14 +22,27 @@ set(CMAKE_SYSTEM_VERSION 1)
 
 set( EMSCRIPTEN ON CACHE BOOL "" )
 
-option ( COFFEE_GENERATE_HTML "Generate HTML wrapper document for Emscripten" ON )
-option ( COFFEE_GENERATE_WASM "Generate WASM version of code, not asm.js" OFF )
+option ( COFFEE_GENERATE_HTML
+    "Generate HTML wrapper document for Emscripten" ON )
+option ( COFFEE_GENERATE_WASM
+    "Generate WASM version of code, not asm.js" OFF )
 
 if(COFFEE_GENERATE_WASM)
     message ( STATUS "Generating WASM assembly" )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
-    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
-    set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+    set ( CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+    set ( CMAKE_C_FLAGS
+        "${CMAKE_C_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+    set ( CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+else()
+    message ( STATUS "Generating asm.js assembly" )
+    set ( CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -O2" CACHE STRING "" )
+    set ( CMAKE_C_FLAGS
+        "${CMAKE_C_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -O2" CACHE STRING "" )
+    set ( CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -O2" CACHE STRING "" )
 endif()
 
 set(CMAKE_CROSSCOMPILING TRUE)
