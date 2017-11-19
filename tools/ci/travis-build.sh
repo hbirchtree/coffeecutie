@@ -118,7 +118,8 @@ function build_standalone()
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
         -e COFFEE_DIR="$COFFEE_DIR" $@ \
-        -e CMAKE_TARGET="$CMAKE_TARGET"
+        -e CMAKE_TARGET="$CMAKE_TARGET" \
+        -e GENERATE_PROGRAMS="ON"
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
