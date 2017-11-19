@@ -41,7 +41,16 @@ struct StdRegexImpl : RegexDef
 
     STATICINLINE Pattern Compile(const CString& patt)
     {
-        return Pattern(patt);
+        /* Because GCC 4.8.x sucks, std::regex is really unstable */
+#if defined(COFFEE_BAD_REGEX)
+        try {
+#endif
+            return Pattern(patt);
+#if defined(COFFEE_BAD_REGEX)
+        } catch (std::regex_error const&) {
+            return {};
+        }
+#endif
     }
 
     static Vector<RegMatch> Match(

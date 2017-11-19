@@ -202,6 +202,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
     auto& g = d->g_data;
 
+    g = {};
+
     {
         szptr restore_size = sizeof(d->r_state);
         Store::RestoreMemory(&d->r_state, &restore_size, 0);

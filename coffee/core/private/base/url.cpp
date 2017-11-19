@@ -33,14 +33,15 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     AndroidForeignCommand cmd;
     cmd.type =  Android_QueryDataPath;
+    cmd.store_string = {};
 
     CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
                                 &cmd, nullptr, nullptr);
 
     paths.configDir = MkUrl(cmd.store_string.c_str(),
-                            RSCA::SystemFile);
+                            RSCA::SpecifyStorage|RSCA::SystemFile);
 
-    paths.assetDir = {};
+    paths.assetDir = MkUrl("", RSCA::SpecifyStorage|RSCA::AssetFile);
 
     cmd.type = Android_QueryCachePath;
 
@@ -48,7 +49,7 @@ STATICINLINE SystemPaths GetSystemPaths()
                                 &cmd, nullptr, nullptr);
 
     paths.cacheDir = MkUrl(cmd.store_string.c_str(),
-                           RSCA::SystemFile);
+                           RSCA::SpecifyStorage|RSCA::SystemFile);
 
     paths.tempDir = paths.cacheDir;
 
@@ -100,7 +101,9 @@ CString Url::operator*() const
             return cachedUrl;
 
 #if defined(COFFEE_UNIXPLAT)
-        return CStrReplace(DereferenceLocalPath(), "//", "/");
+        auto derefPath = DereferenceLocalPath();
+        derefPath = CStrReplace(derefPath, "//", "/");
+        return derefPath;
 #else
         return DereferenceLocalPath();
 #endif
@@ -108,6 +111,7 @@ CString Url::operator*() const
     case Networked:
         return internUrl;
     default:
+        throw std::runtime_error("dereferencing Url without category");
         return {};
     }
 }
@@ -129,8 +133,12 @@ Resource Url::rsc() const
 Url Url::operator+(const Path &path) const
 {
     Url cpy = *this;
-    cpy.internUrl = Env::ConcatPath(internUrl.c_str(),
-                                    path.internUrl.c_str());
+
+    if(internUrl.size())
+        cpy.internUrl = Env::ConcatPath(internUrl.c_str(),
+                                        path.internUrl.c_str());
+    else
+        cpy.internUrl = path.internUrl;
     cpy.cachedUrl = {};
     return cpy;
 }
@@ -148,8 +156,14 @@ STATICINLINE CString DereferencePath(cstring suffix,
     switch(storageMask ^ RSCA::SpecifyStorage)
     {
     case RSCA::AssetFile:
-    {
+    {  
+#if defined(COFFEE_ANDROID)
+        /* Because Android uses a virtual filesystem,
+         *  we do not go deeper to find a RSCA::SystemFile URL */
+        return urlPart.internUrl.c_str();
+#else
         return *(paths.assetDir + urlPart);
+#endif
     }
     case RSCA::ConfigFile:
     {

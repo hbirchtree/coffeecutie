@@ -115,6 +115,8 @@ int32 coffee_main(int32, cstring_w*)
     visual.flags ^= CDProperties::Windowed;
     visual.flags |= CDProperties::WindowedFullScreen;
 
+    cDebug("Visual: {0}", visual.gl.version);
+
     int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
 
     if(stat != 0)

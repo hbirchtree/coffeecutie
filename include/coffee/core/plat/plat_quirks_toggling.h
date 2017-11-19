@@ -149,6 +149,10 @@
 #define COFFEE_LIL_ENDIAN
 #endif
 
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#define COFFEE_BAD_REGEX
+#endif
+
 /* Disabling exceptions and RTTI in release for size reasons */
 #if !defined(COFFEE_ANDROID) && !defined(NDEBUG)
 #define COFFEE_USE_EXCEPTIONS

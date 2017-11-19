@@ -180,10 +180,11 @@ AndroidFileFun::FileHandle *AndroidFileFun::Open(const Url &fn, ResourceAccess a
 {
     auto url = *fn;
     FileHandle* fh = nullptr;
-    cstring asset = AssetApi::GetAsset(url.c_str());
-    if(asset && FileFun::VerifyAsset(asset))
+    if(feval(fn.flags & RSCA::AssetFile))
     {
-        AAsset* fp = AAssetManager_open(and_asset_manager(),asset,AASSET_MODE_BUFFER);
+        AAsset* fp = AAssetManager_open(and_asset_manager(),
+                                        url.c_str(),
+                                        AASSET_MODE_BUFFER);
         if(!fp)
             return nullptr;
         fh = new FileHandle;
@@ -251,10 +252,11 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle *fh)
 szptr AndroidFileFun::Size(Url const& fn)
 {
     auto url = *fn;
-    cstring check = AssetApi::GetAsset(url.c_str());
-    if(check && FileFun::VerifyAsset(check))
+    if(feval(fn.flags & RSCA::AssetFile))
     {
-        AAsset* ass = AAssetManager_open(and_asset_manager(),check,AASSET_MODE_UNKNOWN);
+        AAsset* ass = AAssetManager_open(and_asset_manager(),
+                                         url.c_str(),
+                                         AASSET_MODE_UNKNOWN);
         if(!ass)
             return 0;
 #if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
@@ -269,21 +271,18 @@ szptr AndroidFileFun::Size(Url const& fn)
         return Ancestor::Size(fn);
 }
 
-AndroidFileFun::FileMapping AndroidFileFun::Map(const Url &fn, ResourceAccess acc,
-                                                szptr offset, szptr size,
-                                                int *)
+AndroidFileFun::FileMapping AndroidFileFun::Map(
+        const Url &fn, ResourceAccess acc, szptr offset, szptr size,
+        int *)
 {
     auto url = *fn;
-    cstring asset = AssetApi::GetAsset(url.c_str());
-    if(asset)
+    if(feval(fn.flags & RSCA::AssetFile))
     {
         if(feval(acc,ResourceAccess::WriteOnly))
             return {};
         FileHandle* fh = Open(fn,acc);
         if(!fh)
             return {};
-        FileMapping map = {};
-        map.handle = fh;
 #if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
         if(AAsset_getLength64(fh->fp)<(offset+size))
 #else
@@ -293,6 +292,9 @@ AndroidFileFun::FileMapping AndroidFileFun::Map(const Url &fn, ResourceAccess ac
             Close(fh);
             return {};
         }
+
+        FileMapping map = {};
+        map.handle = fh;
         map.acc = acc;
         map.ptr = &((byte_t*)AAsset_getBuffer(fh->fp))[offset];
         map.size = size;

@@ -34,6 +34,8 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
     m_properties = props;
 #endif
 
+    cDebug("Initial loading");
+
     do{
         if(!(windowPreInit(props,err)
              && contextPreInit(props.gl,err)
@@ -42,12 +44,16 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
              ))
             break;
 
+        cDebug("Passed pre-init");
+
         if(!(windowInit(props,err)
              && contextInit(props.gl,err)
              && bindingInit(props.gl,err)
              && inputInit(err)
              ))
             break;
+
+        cDebug("Passed init");
 
         /* Run binding post-init, fetches GL extensions and etc. */
         if(!(windowPostInit(props,err)
@@ -56,6 +62,8 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
              && inputPostInit(err)
              ))
             break;
+
+        cDebug("Passed post-init");
 
         Profiler::AddExtraData("window:library", windowLibrary());
 

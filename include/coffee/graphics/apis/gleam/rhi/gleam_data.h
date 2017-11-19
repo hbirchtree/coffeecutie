@@ -17,7 +17,6 @@ struct GLEAM_DataStore
 {
     ~GLEAM_DataStore()
     {
-        fprintf(stderr, "I'M DYING BLARGH\n");
     }
 
     UqPtr<GLEAM_Instance_Data, InstanceDataDeleter> inst_data;

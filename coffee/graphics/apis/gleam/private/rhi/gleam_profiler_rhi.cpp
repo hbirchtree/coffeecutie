@@ -99,6 +99,8 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
       m_depth_stencil(PixelFormat::Depth24Stencil8,1),
       m_color(PixelFormat::RGBA8,1)
 {
+    m_quad_drawer = {};
+
     if(!GL_DEBUG_MODE)
     {
         m_enabled = false;
@@ -137,6 +139,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
 
         m_color_sampler.attach(&m_color);
         m_depth_stencil_sampler.attach(&m_depth_stencil);
+        m_depth_stencil_sampler.enableShadowSampler();
 
         resize(m_size);
 

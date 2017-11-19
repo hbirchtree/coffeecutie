@@ -47,7 +47,7 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PI
         steps++;
     }
 
-    return usage.vmsize - usage.vmrss;
+    return usage.vmrss;
 }
 
 bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)

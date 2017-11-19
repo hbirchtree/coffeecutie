@@ -176,6 +176,12 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
                 "#define texture2DArray texture\n"
                 );
 
+    if(GLEAM_API::LevelIsOfClass(GL_CURR_API, APIClass::GLES))
+        shaderSrcVec.push_back(
+                    "precision highp float;\n"
+                    "precision highp int;\n"
+                    );
+
     if(stage != ShaderStage::Vertex)
         shaderSrcVec.push_back(
                     "#define gl_InstanceID InstanceID\n"
@@ -268,8 +274,9 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
         if(GL_DEBUG_MODE && (m_handle == 0 || !link_state))
         {
-            CString log = CGL43::ProgramGetLog(m_handle);
-            cWarning("Shader program compilation error: {0}",log);
+            cstring_w log_c = CGL43::ProgramGetLog(m_handle);
+            cWarning("Shader program compilation error: {0}",log_c);
+            delete[] log_c;
             return false;
         }
 
@@ -350,6 +357,7 @@ bool GLEAM_Pipeline::assemble()
         {
             cstring_w log_ = CGL33::ProgramGetLog(m_handle);
             cDebug("Program link error: {0}", log_);
+            delete[] log_;
         }
         return stat;
     }
@@ -360,8 +368,9 @@ bool GLEAM_Pipeline::assemble()
         if(GL_DEBUG_MODE && !stat)
         {
             ShaderStage s = CGL43::PipelineGetStages(m_handle);
-            CString log = CGL43::PipelineGetLog(m_handle);
-            cDebug("Pipeline validation error: {0}",log);
+            cstring_w log_ = CGL43::PipelineGetLog(m_handle);
+            cDebug("Pipeline validation error: {0}",log_);
+            delete[] log_;
             cDebug("Pipeline stages: {0}",(uint32)s);
         }
         return stat;

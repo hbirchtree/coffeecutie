@@ -86,6 +86,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
 
         if (str.size()<=0)
             break;
+
 #if defined(COFFEE_GLEAM_DESKTOP)
         Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
 #else
