@@ -116,6 +116,7 @@ def main():
                          'desktop': None,
                          'internal/templates': None,
                          'tools/makers/Makefile.*': 'ci',
+                         'tools/makers/targets.yml': 'ci',
                          'tools/ci/*.sh': 'ci',
                          'tools/ci/github_api.py': 'ci',
                          'tools/ci/*.ps1': 'ci',
