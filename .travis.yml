@@ -17,6 +17,9 @@ env:
   - PYTHONPATH=/usr/lib/python3/dist-packages
   - CONFIGURATION=Debug
   matrix:
+  - BUILDVARIANT=android.armv7a.gingerbread.gles2
+  - BUILDVARIANT=android.armv7a.nougat.gles2
+  - BUILDVARIANT=android.armv8a.nougat.gles3
   - BUILDVARIANT=emscripten.asmjs
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
@@ -36,6 +39,12 @@ matrix:
   - env: BUILDVARIANT=coverage
   - env: BUILDVARIANT=raspberry.armhf
   exclude:
+  - env: BUILDVARIANT=android.armv7a.gingerbread.gles2
+    os: osx
+  - env: BUILDVARIANT=android.armv7a.nougat.gles2
+    os: osx
+  - env: BUILDVARIANT=android.armv8a.nougat.gles3
+    os: osx
   - env: BUILDVARIANT=emscripten.asmjs
     os: osx
   - env: BUILDVARIANT=emscripten.wasm

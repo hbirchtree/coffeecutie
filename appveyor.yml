@@ -12,7 +12,7 @@ build:
   project: Coffee.sln
   verbosity: minimal
 clone_script:
-- cmd: git clone -q --recursive https://github.com/%APPVEYOR_REPO_NAME%.git
+- cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
     %SOURCE_DIR%
 - cmd: cd %SOURCE_DIR% && git checkout -qf %APPVEYOR_REPO_COMMIT%
 configuration:
