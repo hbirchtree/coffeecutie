@@ -153,14 +153,14 @@ HRSRC open_rsc(cstring fn)
 #endif
 }
 
-bool WinFileFun::VerifyAsset(cstring fn)
-{
-#if defined(COFFEE_WINDOWS_UWP)
-    return true;
-#else
-    return open_rsc(fn);
-#endif
-}
+//bool WinFileFun::VerifyAsset(cstring fn)
+//{
+//#if defined(COFFEE_WINDOWS_UWP)
+//    return true;
+//#else
+//    return open_rsc(fn);
+//#endif
+//}
 
 WinFileFun::FileHandle* WinFileFun::Open(Url const& fn, ResourceAccess acc)
 {
