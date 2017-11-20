@@ -307,15 +307,17 @@ templates:
     =preload: linux-maemo.cmake
     =toolchain: linux-maemo-armv7_linux.toolchain.cmake
     =container: :hbirch/maemo-builder:v3
-    =build-type: Release
-    =lib.target: /maemo/home/coffee/library
+    =build.build-type: Release
     =target: multi.make8
+    =generator: Unix Makefiles
+    +cmake-opts:
+      - -DCOFFEE_BUILD_ASSIMP=OFF
     =container-opts: 
       - -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
       - -v $(lib.root):/maemo/$(lib.target):ro
       - -v $(project.src):/maemo/$(container.src):ro
       - -v $(project.install):/maemo/$(container.install):rw
-      - -v $(project.build):/maemo/$(container.build):rw
+      - -v $(project.build)/$(target-name):/maemo/$(container.build):rw
 
 
   raspberry.*:
