@@ -71,9 +71,9 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     using FileMapping = WinFileApi::FileMapping;
     using ScratchBuf = WinFileApi::ScratchBuf;
 
-    static CString NativePath(cstring fn);
-    static CString NativePath(cstring fn,ResourceAccess storage);
-    static bool VerifyAsset(cstring fn);
+//    static CString NativePath(cstring fn);
+//    static CString NativePath(cstring fn,ResourceAccess storage);
+//    static bool VerifyAsset(cstring fn);
 
     static FileHandle* Open(Url const& fn, ResourceAccess acc);
     static bool Close(FileHandle* fh);

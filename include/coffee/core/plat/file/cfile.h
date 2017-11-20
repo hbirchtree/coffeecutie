@@ -71,8 +71,7 @@ struct CFILEFun_def : CommonFileFun
         else if(feval(ac&(ResourceAccess::ReadWrite)))
             mode = "rb+";
 
-        CString fn_native = NativePath(url.c_str());
-        fh->handle = fopen(fn_native.c_str(),mode);
+        fh->handle = fopen(url.c_str(),mode);
 
         if(!fh->handle)
         {

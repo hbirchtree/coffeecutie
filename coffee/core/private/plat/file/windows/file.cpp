@@ -100,35 +100,35 @@ DWORD WinFileApi::GetMappingViewFlags(ResourceAccess acc)
     return view_fl;
 }
 
-CString WinFileFun::NativePath(cstring fn)
-{
-    if (fn[0] == ':')
-    {
-        //auto path = ::Windows::ApplicationModel::Package::Current->InstalledLocation->Path->Data();
-        //CString appdir = StrUtil::convertformat<char, wchar_t>(path);
-        //CString appdir = Env::ApplicationDir();
-        cstring asset_path = AssetApi::GetAsset(fn);
-        //CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
-        CString conc_path = asset_path;
-        conc_path = Mem::CStrReplace(conc_path, "/", "\\");
-#if !defined(COFFEE_WINDOWS_UWP)
-        conc_path = ":/" + conc_path;
-#endif
-        return conc_path;
-    }
-    return fn;
-}
+//CString WinFileFun::NativePath(cstring fn)
+//{
+//    if (fn[0] == ':')
+//    {
+//        //auto path = ::Windows::ApplicationModel::Package::Current->InstalledLocation->Path->Data();
+//        //CString appdir = StrUtil::convertformat<char, wchar_t>(path);
+//        //CString appdir = Env::ApplicationDir();
+//        cstring asset_path = AssetApi::GetAsset(fn);
+//        //CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
+//        CString conc_path = asset_path;
+//        conc_path = Mem::CStrReplace(conc_path, "/", "\\");
+//#if !defined(COFFEE_WINDOWS_UWP)
+//        conc_path = ":/" + conc_path;
+//#endif
+//        return conc_path;
+//    }
+//    return fn;
+//}
 
-CString WinFileFun::NativePath(cstring fn, ResourceAccess storage)
-{
-    if(feval(storage,ResourceAccess::TemporaryFile))
-    {
-        CString temp_dir = Env::GetVar("TEMP");
-        return Env::ConcatPath(temp_dir.c_str(),fn);
-    }
-    else
-        return NativePath(fn);
-}
+//CString WinFileFun::NativePath(cstring fn, ResourceAccess storage)
+//{
+//    if(feval(storage,ResourceAccess::TemporaryFile))
+//    {
+//        CString temp_dir = Env::GetVar("TEMP");
+//        return Env::ConcatPath(temp_dir.c_str(),fn);
+//    }
+//    else
+//        return NativePath(fn);
+//}
 
 CString create_rsc_name(cstring fn)
 {
