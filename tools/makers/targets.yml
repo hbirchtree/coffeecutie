@@ -74,7 +74,7 @@ global-sets:
 globals:
   BUILD_DIR: $(env:PWD)
   SOURCE_DIR: $(env:PWD)/..
-  ROOT_DIR: $(env:SOURCE_DIR)/tools/makers
+  ROOT_DIR: $(env:SOURCE_DIR)/$(env:MAKEFILE_DIR)
   GENERATE_PROGRAMS: OFF
   BUILD_MODE: containerized
   CONFIGURATION: Debug
@@ -159,6 +159,7 @@ templates:
     - -v $(project.src):$(container.src):ro
     - -v $(project.install):$(container.install):rw
     - -v $(project.build)/$(target-name):$(container.build):rw
+    - -v $(lib.root):$(lib.target):ro
     - --workdir "$(env:CMAKE_BUILD_DIR)"
   
   # Default CMake options
