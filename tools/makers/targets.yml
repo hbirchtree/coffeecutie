@@ -149,6 +149,7 @@ templates:
   =generator: Ninja
   =build-type: $(build.build-type)
   =preload: nothing.cmake
+  =lib.flavor: $(target-name)
   
   # Default dependency
   =dependencies: native-libs

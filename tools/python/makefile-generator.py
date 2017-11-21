@@ -181,8 +181,8 @@ def generate_rule(defs):
 
 # %s
 # Compiler: %s
-%s: %s
-\tmake -f $(ROOT_DIR)/$(RUNNER) %s \
+%s: %s FORCE
+\t@make -f $(ROOT_DIR)/$(RUNNER) %s \
 """
 %
 (defs['description'][0],
@@ -317,6 +317,13 @@ if __name__ == '__main__':
     for set in sorted(data['global-sets'].keys()):
       f.write(generate_conditional_variables(set, data['global-sets'][set],
                                              yoink_definitions))
+
+    f.write(
+"""
+# We use this to always run targets
+FORCE:
+"""
+    )
 
     for t in sorted(dependencies.keys()):
       f.write(generate_dep_rule(t, dependencies[t], yoink_definitions))
