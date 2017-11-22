@@ -30,7 +30,8 @@
 # LOCALLIB=...      -- Use a local library directory for build should be a
 #                   --  product of another quick-build.sh run.
 #
-# CONFIGURATION=... -- Set build configuration, typically Debug or Release
+# CONFIGURATION=... -- Set build configuration, typically Debug or Release.
+#                   -- Some target can only perform Release mode.
 #
 # CMAKE_TARGET=...  -- Override CMake build target. Does not work for all
 #                   --  builds, such as Android and Emscripten.
@@ -38,6 +39,10 @@
 # GITHUB_TOKEN=...  -- Use OAuth2 token to access Github when downloading
 #                   --  dependencies. Without this, you are limited to
 #                   --  60 requests.
+#
+# BUILD_MODE=...    -- Specify 'containerized' to build in Docker,
+#                   --  or 'bare' to build without containerization.
+#                   -- Applies only to Linux.
 # 
 
 function build_info()

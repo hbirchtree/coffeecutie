@@ -98,7 +98,7 @@ variables:
     build-type: $(env:CONFIGURATION)
   # For importing the Coffee library
   lib:
-    flavor: $(target-name)
+    flavor: ERROR_ABORT_DELET_THIS
     root: $(env:COFFEE_DIR)
     target: /home/coffee/library
 
