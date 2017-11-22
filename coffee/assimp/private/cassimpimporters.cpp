@@ -145,7 +145,8 @@ bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
 
     data = UqPtr<AssimpData>(new AssimpData);
 
-    u32 aiFlags = aiProcess_CalcTangentSpace|
+    u32 aiFlags =
+            aiProcess_CalcTangentSpace|
             aiProcess_Triangulate|
             aiProcess_OptimizeMeshes|
             aiProcess_SortByPType;
@@ -182,9 +183,6 @@ bool GetSceneObjects(const UqPtr<AssimpData> &scene, Vector<ObjectDesc> &objects
 
 #undef ExtractDetail
 
-    if(objects.size() > 0)
-        cWarning("Scene exists, but there are no objects in it");
-
     return objects.size() > 0;
 }
 
@@ -202,6 +200,7 @@ FORCEDINLINE Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>&
         parent->addChild(&n_node);
     n_node.setObjectName(node->mName.C_Str());
     n_node.transform = transpose(convert_aiMatrix(node->mTransformation));
+    n_node.flags = 0;
 
     if(node->mNumMeshes > 0)
         n_node.mesh = C_CAST<i32>(node->mMeshes[0]);
@@ -284,13 +283,13 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
                                          mesh->mNumVertices, i);
         else
         {
-//            Vector<Vecf2> texcoords;
-//            texcoords.resize(mesh->mNumVertices);
-//            for(u32 j=0;j<mesh->mNumVertices;j++)
-//                MemCpy(&texcoords[j], &mesh->mTextureCoords[i][j], sizeof(Vecf2));
-//            output_mesh.addAttributeData(Mesh::TexCoord,
-//                                         texcoords.data(),
-//                                         texcoords.size(), i);
+            Vector<Vecf2> texcoords;
+            texcoords.resize(mesh->mNumVertices);
+            for(u32 j=0;j<mesh->mNumVertices;j++)
+                MemCpy(&texcoords[j], &mesh->mTextureCoords[i][j], sizeof(Vecf2));
+            output_mesh.addAttributeData(Mesh::TexCoord,
+                                         texcoords.data(),
+                                         texcoords.size(), i);
         }
     }
 

@@ -2,13 +2,67 @@
 #include <coffee/core/CDebug>
 
 #include <coffee/core/coffee.h>
+#include <coffee/core/string_casting.h>
+
+#include <sys/sysinfo.h>
 
 #include <android_native_app_glue.h>
 #include <android/native_activity.h>
 #include <android/looper.h>
 #include <android/window.h>
+#include <gestureDetector.h>
+
+
+static Coffee::CString Android_cacheDir;
+static Coffee::CString Android_abis;
+static int Android_DPI;
+
+extern "C" {
+
+JNIEXPORT void
+Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
+        JNIEnv* env, jobject, jint id, jstring data
+        )
+{
+    auto string_data = env->GetStringUTFChars(data, 0);
+
+    if(!string_data)
+        return;
+
+    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
+
+    switch(id)
+    {
+    case 10:
+    {
+        Android_cacheDir = string_data;
+
+        break;
+    }
+    case 11:
+    {
+        Android_DPI = Coffee::cast_string<Coffee::i32>(string_data);
+
+        break;
+    }
+    case 12:
+    {
+        Android_abis = string_data;
+
+        break;
+    }
+    default:
+        break;
+    }
+
+    env->ReleaseStringUTFChars(data, string_data);
+}
+
+}
 
 using namespace Coffee;
+
+static const constexpr u8 INPUT_VERB = 11;
 
 enum AndroidAppState
 {
@@ -16,12 +70,35 @@ enum AndroidAppState
     AndroidApp_Visible,
 };
 
-struct AndroidInternalState
+struct AndroidSensorData
 {
-    AndroidAppState currentState;
+    ASensorManager* manager;
+    const ASensor* accelerometer;
+    const ASensor* gyroscope;
+    ASensorEventQueue* eventQueue;
 };
 
-AndroidInternalState* app_internal_state = nullptr;
+struct CoffeeAndroidUserData
+{
+    AndroidSensorData sensors;
+};
+
+struct InputDetectors
+{
+    ndk_helper::TapDetector tap;
+    ndk_helper::DoubletapDetector double_tap;
+    ndk_helper::PinchDetector pinch;
+    ndk_helper::DragDetector drag;
+};
+
+struct AndroidInternalState
+{
+    InputDetectors input;
+    AndroidAppState currentState;
+    CString cachePath;
+};
+
+static AndroidInternalState* app_internal_state = nullptr;
 
 struct android_app* coffee_app = nullptr;
 static JNIEnv* coffee_jni_env;
@@ -37,19 +114,6 @@ void(*CoffeeForeignSignalHandle)(int);
 void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
 
 extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
-
-struct AndroidSensorData
-{
-    ASensorManager* manager;
-    const ASensor* accelerometer;
-    const ASensor* gyroscope;
-    ASensorEventQueue* eventQueue;
-};
-
-struct CoffeeAndroidUserData
-{
-    AndroidSensorData sensors;
-};
 
 javavar Coffee_JavaGetStaticMember(cstring clss, cstring var, cstring type)
 {
@@ -219,6 +283,13 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     case APP_CMD_INIT_WINDOW:
     {
         CoffeeEventHandleCall(CoffeeHandle_Setup);
+
+        ANativeActivity_setWindowFlags(app->activity,
+                                       AWINDOW_FLAG_FULLSCREEN|
+                                       AWINDOW_FLAG_KEEP_SCREEN_ON,
+                                       AWINDOW_FLAG_FULLSCREEN|
+                                       AWINDOW_FLAG_KEEP_SCREEN_ON);
+
         /* Intentional fallthrough, we need to push a resize event */
     }
     case APP_CMD_WINDOW_RESIZED:
@@ -232,6 +303,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
         CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent,
                                 &gev, &rev, nullptr);
+
         break;
     }
 
@@ -273,8 +345,181 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 int32_t AndroidHandleInputCmd(struct android_app* app,
                               struct AInputEvent* event)
 {
-    cDebug("Input: {0}", event);
-    return 0;
+    switch(AInputEvent_getType(event))
+    {
+    case AINPUT_EVENT_TYPE_KEY:
+    {
+        auto action = AKeyEvent_getAction(event);
+        auto keyCode = AKeyEvent_getKeyCode(event);
+
+        auto flags = AKeyEvent_getFlags(event);
+
+        /* Just drop fake inputs, what use could they be? */
+        if(!(flags & AKEY_EVENT_FLAG_FROM_SYSTEM))
+            break;
+
+        /* TODO: Handle soft keyboard inputs specifically */
+        if(flags & AKEY_EVENT_FLAG_SOFT_KEYBOARD)
+        {
+            break;
+        }
+
+        if(flags & AKEY_EVENT_FLAG_VIRTUAL_HARD_KEY)
+            cDebug("Virtual hard key");
+
+        cDebug("Key event action: {0}:{1}:{2}", action, keyCode, flags);
+
+        break;
+    }
+    case AINPUT_EVENT_TYPE_MOTION:
+    {
+        int32_t actionPointerIndex = AMotionEvent_getAction(event);
+
+        uint8_t action = actionPointerIndex & AMOTION_EVENT_ACTION_MASK;
+        uint8_t pointerIdx =
+                (actionPointerIndex &
+                 AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
+
+        auto& input_data = app_internal_state->input;
+
+        auto& tap = input_data.tap;
+        auto& dubtap = input_data.double_tap;
+        auto& drag = input_data.drag;
+        auto& pinch = input_data.pinch;
+
+        auto flag = ndk_helper::GESTURE_STATE_START;
+        u32 dflg;
+
+        CfGeneralEvent gev = {};
+        gev.type = CfTouchEvent;
+
+        CfTouchEventData tev = {};
+        tev.type = CfTouch_None;
+
+        auto tapCoord = CPointF{
+            AMotionEvent_getX(event, pointerIdx),
+            AMotionEvent_getY(event, pointerIdx)
+        }.convert<u32>();
+
+        if(dubtap.Detect(event) & flag)
+        {
+            cVerbose(INPUT_VERB, "Double tap: {0}",
+                   tapCoord
+                   );
+
+            tev.type = CfTouchType::CfTouchTap;
+
+            tev.event.tap.x = tapCoord.x;
+            tev.event.tap.y = tapCoord.y;
+            tev.event.tap.doubleTap = 1;
+        }else
+        if(tap.Detect(event) & flag)
+        {
+            cVerbose(INPUT_VERB, "Tap: {0},{1}",
+                   AMotionEvent_getX(event, pointerIdx),
+                   AMotionEvent_getY(event, pointerIdx));
+
+            tev.type = CfTouchType::CfTouchTap;
+
+            tev.event.tap.x = tapCoord.x;
+            tev.event.tap.y = tapCoord.y;
+            tev.event.tap.doubleTap = 0;
+        }else
+        if((dflg = (pinch.Detect(event)
+                & (flag|ndk_helper::GESTURE_STATE_MOVE))))
+        {
+            ndk_helper::Vec2 p1, p2;
+
+            static Vecf4 initial_points;
+
+            Vecf4 points;
+
+            if(!pinch.GetPointers(p1, p2))
+                break;
+
+            p1.Value(points.x(), points.y());
+            p2.Value(points.z(), points.w());
+
+            if(dflg == ndk_helper::GESTURE_STATE_START)
+                initial_points = points;
+
+            cVerbose(INPUT_VERB, "Pinch: {0} ({1})", points,
+                   AMotionEvent_getHistorySize(event));
+
+            CPointF pinch_point = {
+                (points.x() + points.z()) / 2.f,
+                (points.y() + points.w()) / 2.f
+            };
+
+            tev.type = CfTouchType::CfTouchPinch;
+            tev.event.pinch.x = C_CAST<u32>(pinch_point.x);
+            tev.event.pinch.y = C_CAST<u32>(pinch_point.y);
+
+            if(dflg == ndk_helper::GESTURE_STATE_START)
+                tev.event.pinch.factor = 1.f;
+            else
+            {
+                Vecf2 v1 = {points.x(), points.y()};
+                Vecf2 v2 = {points.z(), points.w()};
+
+                Vecf2 v1_i = {initial_points.x(), initial_points.y()};
+                Vecf2 v2_i = {initial_points.z(), initial_points.w()};
+
+                auto dist1 = length(v1 - v2);
+                auto dist2 = length(v1_i - v2_i);
+
+                if(dist2 == 0.f)
+                    dist2 = 0.01f;
+
+                tev.event.pinch.factor = { dist1 / dist2 };
+
+                /* TODO: Allow this process to emit rotation gestures */
+                /* TODO: Allow this to fall over into a drag gesture? */
+            }
+
+        }else
+        if((dflg = (drag.Detect(event)
+                    & (flag|ndk_helper::GESTURE_STATE_MOVE))))
+        {
+            ndk_helper::Vec2 p;
+            Vecf2 point;
+
+            static Vecf2 initial_point;
+
+            drag.GetPointer(p);
+            p.Value(point.x(), point.y());
+
+            if(dflg == ndk_helper::GESTURE_STATE_START)
+                initial_point = {};
+
+            cVerbose(INPUT_VERB, "Drag: {0} -> {1}", initial_point, point);
+
+            tev.type = CfTouchType::CfTouchPan;
+            tev.event.pan.ox = C_CAST<u32>(point.x());
+            tev.event.pan.oy = C_CAST<u32>(point.y());
+            tev.event.pan.dx = C_CAST<i32>(initial_point.x() - point.x());
+            tev.event.pan.dy = C_CAST<i32>(initial_point.y() - point.y());
+            tev.event.pan.fingerCount = 1;
+
+            initial_point = point;
+        }
+
+        if(tev.type != CfTouch_None)
+        {
+            CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent,
+                                    &gev, &tev, nullptr);
+        }
+
+//        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action, 0, 0);
+        break;
+    }
+    default:
+    {
+        return 0;
+    }
+    }
+
+    return 1;
 }
 
 static void AndroidForeignSignalHandle(int evtype)
@@ -306,11 +551,46 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
             out->data.scalarI64 = coffee_app->activity->sdkVersion;
             break;
 
+        case Android_QueryDataPath:
+            out->store_string = coffee_app->activity->internalDataPath;
+            break;
+        case Android_QueryExternalDataPath:
+            out->store_string = coffee_app->activity->externalDataPath;
+            break;
+        case Android_QueryCachePath:
+            out->store_string = Android_cacheDir;
+            break;
+#if ANDROID_API_LEVEL >= 13
+        case Android_QueryObbPath:
+            out->store_string = coffee_app->activity->obbPath;
+            break;
+#endif
+
+        case Android_QueryPlatformABIs:
+            out->store_string = Android_abis;
+            break;
+
+        case Android_QueryMaxMemory:
+            struct sysinfo inf;
+            sysinfo(&inf);
+            out->data.scalarI64 = C_FCAST<i64>(inf.totalram*inf.mem_unit);
+            break;
+
+        case Android_QueryDeviceDPI:
+            out->data.scalarI64 = Android_DPI;
+            break;
+
         case Android_QueryNativeWindow:
             out->data.ptr = coffee_app->window;
             break;
+        case Android_QueryActivity:
+            out->data.ptr = coffee_app->activity->clazz;
+            break;
         case Android_QueryAssetManager:
             out->data.ptr = coffee_app->activity->assetManager;
+            break;
+        case Android_QueryApp:
+            out->data.ptr = coffee_app;
             break;
 
         default:

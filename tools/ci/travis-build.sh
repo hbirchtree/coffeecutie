@@ -1,5 +1,7 @@
 #!/bin/bash
 
+umask 000
+
 SOURCE_DIR="$PWD"
 BUILD_DIR="$SOURCE_DIR/multi_build"
 
@@ -15,7 +17,7 @@ export MANUAL_DEPLOY
 export MANUAL_CONTEXT
 
 QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
-MAKEFILE="Makefile.standalone"
+MAKEFILE="Makefile.linux"
 
 INFOPY="$SOURCE_DIR/buildinfo.py"
 
@@ -109,11 +111,16 @@ function build_standalone()
     done
 
     [ -z $CONFIGURATION ] && export CONFIGURATION=Debug
+    [ -z $CMAKE_TARGET ] && export CMAKE_TARGET=install
+    [ ! -z $TRAVIS ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
+    [ -z $GENERATE_PROGRAMS ] && export GENERATE_PROGRAMS=ON
 
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
-        -e COFFEE_DIR="$COFFEE_DIR" $@
+        -e COFFEE_DIR="$COFFEE_DIR" $@ \
+        -e CMAKE_TARGET="$CMAKE_TARGET" \
+        -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS"
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
@@ -147,6 +154,8 @@ function main()
     build_standalone "$1"
 
     [ ! -z $NODEPLOY ] && exit 0
+    [ ! -z $TRAVIS ] && sudo chown -R $(whoami) ${BUILD_DIR}
+
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} \
             --exclude=build/*/bin \
             --exclude=build/*/packaged \

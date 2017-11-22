@@ -3,6 +3,12 @@ $PrevPwd = $Pwd
 mkdir $env:BUILD_DIR
 cd $env:BUILD_DIR
 
+$PYTHON = "C:\Python36\python.exe"
+
+function build_info(){
+    . $PYTHON $env:SOURCE_DIR\buildinfo.py $args
+}
+
 $LIBRARY_DIR = "$env:BUILD_DIR\libraries"
 
 rm -r $LIBRARY_DIR
@@ -12,7 +18,22 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
         continue
     }
     try{
-        $release = (Invoke-RestMethod -Uri https://api.github.com/repos/$dep/releases/latest -Headers @{"Accept" = "application/vnd.github.v3+json"; "Authorization" = "token $env:GITHUB_TOKEN"})
+        $dep_version = (build_info dependencies $dep)
+
+        $all_releases = (Invoke-RestMethod -Uri https://api.github.com/repos/$dep/releases -Headers @{"Accept" = "application/vnd.github.v3+json"; "Authorization" = "token $env:GITHUB_TOKEN"})
+
+        echo "Searching for ${dep}:${dep_version}"
+
+        ForEach($rel in $all_releases) {
+             if($rel.tag_name -Eq $dep_version){
+                 $release = $rel
+            }
+        }
+
+        if($release) {
+        } else {
+             exit 1
+        }
 
         echo "Found release for $dep"
 
@@ -30,7 +51,7 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
 
                 echo "Extracting $dep from archive..."
                 Expand-Archive -Path $zipfile -DestinationPath $dest_dir -Force
-                mv -Force "$LIBRARY_DIR\out\*" "$LIBRARY_DIR\"
+                #mv -Force "$LIBRARY_DIR\out\*" "$LIBRARY_DIR\"
                 echo "Successfully extracted library $dep!"
             }
         }
@@ -41,7 +62,8 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
 }
 
 $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
-         "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON")
+         "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
+	 "-DCOFFEE_BUILD_ASSIMP=ON")
 
 . $env:SOURCE_DIR\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
     -CMakeBin $env:CMAKE_BIN -Standalone
@@ -53,6 +75,9 @@ if($env:SAME_BUILD_DIR) {
 }
 
 echo "Starting CMake process"
+
+echo $Args
+
 BuildProject $env:BUILDVARIANT $env:SOURCE_DIR $BuildDir $LIBRARY_DIR "$env:CONFIGURATION" $Args
 
 cd $PrevPwd

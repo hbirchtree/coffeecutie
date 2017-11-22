@@ -14,6 +14,8 @@ struct GLEAM_Quad_Drawer
     void draw(Matf4 const& xf, GLEAM_Sampler2D& sampler);
     void cleanup();
 
+    GLEAM_VertDescriptor &vertDesc();
+
 protected:
     bool compile_shaders();
     void create_vbo_data();

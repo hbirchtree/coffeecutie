@@ -10,9 +10,11 @@ struct GLEAM_Shader : GraphicsAPI::Shader
 {
     friend struct GLEAM_API;
     friend struct GLEAM_Pipeline;
-    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
-                                  Vector<GLEAM_UniformDescriptor> *uniforms,
-                                  Vector<GLEAM_ProgramParameter> *params);
+    friend void GetShaderUniforms(
+            const GLEAM_Pipeline &pipeline,
+            Vector<GLEAM_UniformDescriptor> *uniforms,
+            Vector<GLEAM_ProgramParameter> *params,
+            Vector<GLEAM_ProgramParameter> *outputs);
 
     GLEAM_Shader():
         Shader(0),
@@ -20,6 +22,38 @@ struct GLEAM_Shader : GraphicsAPI::Shader
     {
     }
 
+    /*!
+     * \brief Compiles a shader for the given stage, setting the handle
+     *  to the object and returning status on success.
+     *
+     * The given shader data does not need to be null-terminated, as the
+     *  given size is used.
+     *
+     * On OpenGL ES 2.0, this function will attempt to transform a
+     *  GLSL 3.30 shader into functioning GLSL ES 1.00 using a set
+     *  of substitutions, adding a couple of functions
+     *  (`texture` => `texture2D`, `texture2DArray` => wrapper around `texture2D`)
+     *
+     * This will work for simple shaders, but advanced shaders will still
+     *  need a rewrite to work on this.
+     *
+     * BEWARE: If you are on GLSL ES 1.00 and use sampler2DArray emulation,
+     *  you will have to specify a uniform `${SAMPLERNAME}_gridSize`
+     *  which is the `ceil(sqrt())` of the texture array's size. This is
+     *  necessary for the sampling function to work.
+     *
+     * Another note is that we are abusing the name texture2DArray
+     *  for sampler2DArray sampling. Sampling using
+     * \code{.cpp}
+     *  vec4 sample = texture2DArray(samplerHandle, vec3(...));
+     * \endcode
+     *
+     * Other than that, `in` and `out` are substituted for `attribute` and `varying` for vertex shaders, `in` becomes varying in fragment shaders.
+     *
+     * \param stage Which shader stage to compile
+     * \param data A container with GLSL source code, null-terminated
+     * \return true upon success
+     */
     bool compile(ShaderStage stage, Bytes const& data);
     void dealloc();
 
@@ -33,9 +67,11 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
 {
     friend struct GLEAM_PipelineDumper;
     friend struct GLEAM_API;
-    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
-                                  Vector<GLEAM_UniformDescriptor> *uniforms,
-                                  Vector<GLEAM_ProgramParameter> *params);
+    friend void GetShaderUniforms(
+            const GLEAM_Pipeline &pipeline,
+            Vector<GLEAM_UniformDescriptor> *uniforms,
+            Vector<GLEAM_ProgramParameter> *params,
+            Vector<GLEAM_ProgramParameter> *outputs);
 
     GLEAM_Pipeline():
         Pipeline(0),
@@ -44,6 +80,7 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
     }
 
     bool attach(GLEAM_Shader const&shader, ShaderStage const& stages);
+    GLEAM_Shader &storeShader(GLEAM_Shader&& shader);
 
     bool assemble();
 
@@ -61,10 +98,12 @@ protected:
     };
 
     Vector<shader_cntainer> m_programs;
+    LinkList<GLEAM_Shader> m_ownedPrograms;
 };
 
 struct GLEAM_ProgramParameter : GraphicsAPI::ProgramParameter
 {
+    ShaderStage stages;
 };
 
 struct GLEAM_UniformDescriptor : GraphicsAPI::UniformDescriptor
@@ -128,9 +167,18 @@ struct GLEAM_PipelineDumper : GraphicsProfiler::PipelineDumper<GLEAM_Pipeline>
     void dump(cstring out);
 };
 
-extern void GetShaderUniforms(GLEAM_Pipeline const& pipeline,
-                              Vector<GLEAM_UniformDescriptor>* uniforms,
-                              Vector<GLEAM_ProgramParameter> *params);
+/*!
+ * \brief Retrieve shader information, such as uniforms, uniform buffers, SSBOs, atomic counters etc.
+ * If specified, vertex attributes can also be retrieved.
+ * \param pipeline
+ * \param uniforms
+ * \param params
+ */
+extern void GetShaderUniforms(
+        GLEAM_Pipeline const& pipeline,
+        C_OPTIONAL Vector<GLEAM_UniformDescriptor>* uniforms,
+        C_OPTIONAL Vector<GLEAM_ProgramParameter> *params,
+        C_OPTIONAL Vector<GLEAM_ProgramParameter> *outputs);
 
 }
 }

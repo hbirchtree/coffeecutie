@@ -22,7 +22,7 @@ enum class TypeEnum : uint8
     Scalar, BigScalar,
 };
 
-enum class ResourceAccess
+enum class ResourceAccess : u32
 {
     None = 0x0,
 
@@ -57,19 +57,40 @@ enum class ResourceAccess
     /* Tell function to be particular about where to store this file */
     SpecifyStorage = 0x4000,
     /* Storage types */
-    AssetFile     = 0x8000,  /* Packaged in virtual file system, system-specific */
-    ConfigFile    = 0x10000, /* Stored in configuration directory, system-specific */
-    TemporaryFile = 0x20000, /* Stored in a temporary directory that is expected to be wiped, system-specific result */
-    CachedFile    = 0x40000, /* Stored, but could be wiped at any time */
+    AssetFile     = 0x8000,  /*!< Packaged in virtual file system, system-specific */
+    ConfigFile    = 0x10000, /*!< Stored in configuration directory, system-specific */
+    TemporaryFile = 0x20000, /*!< Stored in a temporary directory that is expected to be wiped, system-specific result */
+    CachedFile    = 0x40000, /*!< Stored, but could be wiped at any time */
+
+    SystemFile    = 0x80000, /*!< System-dependent, but mostly refers to passing through the path. If you give it abc.text, it will most likely become $PWD/abc.txt, /abc.txt will be /abc.txt */
+
+    Immutable     = 0x100000, /*!< For buffer APIs, do not allow reallocation of the buffer. Does not do anything for resource APIs */
 
     /* Masks */
     LockingMask = ExclusiveLocking|SharedLocking,
     AccessMask  = ReadWrite|Append|Executable,
     CreateMask  = NewFile|Discard,
     CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
-    StorageMask = SpecifyStorage|AssetFile|ConfigFile|TemporaryFile|CachedFile,
+    StorageMask = SpecifyStorage|AssetFile|ConfigFile|TemporaryFile|CachedFile|SystemFile,
 };
 C_FLAGS(ResourceAccess,uint32);
+
+enum class HTTPAccess
+{
+    None = 0x0,
+
+    Secure = 0x1, /* Whether to use SSL */
+
+    GET = 0x2, /*  */
+    POST = 0x4, /*  */
+    PUT = 0x8, /*  */
+
+    DefaultAccess = GET|Secure,
+
+    SecurityMask = Secure,
+    RequestMask = GET|POST|PUT,
+};
+C_FLAGS(HTTPAccess, u32);
 
 enum class BitFormat : uint8
 {
@@ -92,9 +113,12 @@ enum class BitFormat : uint8
     Scalar_64,
     Scalar_11_11_10,
 
+    UInt24_8,
+
     Scalar_32_Int_24_8,
 };
 
 using BitFmt = BitFormat;
+using RSCA = ResourceAccess;
 
 }

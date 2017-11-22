@@ -20,15 +20,7 @@ DATAFORMAT_TEXT = 1
 
 
 _TARGET_NAMES = {
-    'linux': {
-        'ubuntu': ['amd64', 'i686'],
-        'fedora': ['amd64'],
-        'emscripten': ['wasm', 'asmjs'],
-        'steam': ['amd64'],
-        'android': ['armv7a', 'armv8a', 'armv7a.kitkat'],
-        'maemo': ['armel', 'i386'],
-        'raspberry': ['armhf']
-    },
+    'linux': None, # These are dynamically loaded
     'osx': [
         'osx',
         'ios',
@@ -44,7 +36,7 @@ travis_targets = ['osx', 'ubuntu', 'fedora',
                   'emscripten', 'steam',
                   'android', 'maemo',
                   'raspberry']
-jenkins_targets = list(_TARGET_NAMES.keys()) + list(_TARGET_NAMES['linux'].keys())
+jenkins_targets = list(_TARGET_NAMES.keys())
 
 DeployInfo = namedtuple('DeployInfo', 'deploy_branches, build_branches')
 
@@ -65,6 +57,43 @@ def render_yaml(source):
     assert ( type(yaml_struct) == str)
     return yaml_struct
 
+
+def parse_linux_targets():
+    global jenkins_targets
+
+    def gen_targs(prefix, target_struct):
+        el = []
+        if type(target_struct) == list:
+            for part in target_struct:
+                if len(prefix) > 0:
+                    el.append((prefix + "." + part).replace('..', ''))
+                else:
+                    el.append(part)
+        elif type(target_struct) == dict:
+            for k in target_struct:
+                if len(prefix) > 0:
+                    el += gen_targs(prefix + '.' + k,
+                                    target_struct[k])
+                else:
+                    el += gen_targs(k,
+                                    target_struct[k])
+        return el
+
+    for f in ['%s/tools/makers/targets.yml' % dirname(__file__), '%s/ci/targets.yml' % (dirname(__file__))]:
+        try:
+            src = parse_yaml(f)
+
+            _TARGET_NAMES['linux'] = {}
+
+            for root in src['targets']:
+                targets = gen_targs('', src['targets'][root])
+                _TARGET_NAMES['linux'][root] = []
+                target_root = _TARGET_NAMES['linux'][root]
+                for t in targets:
+                    target_root.append(t)
+
+        except FileNotFoundError:
+            pass
 
 def git_get_origin(srcDir):
     import re
@@ -92,13 +121,6 @@ def git_get_origin(srcDir):
 
 
         raise RuntimeError('Failed to parse')
-
-
-def try_get_key(d, k, v): # d=dictionary, k=key, v=default val
-    try:
-        return d[k]
-    except KeyError:
-        return v
 
 
 def create_env_matrix(current, build_info):
@@ -330,7 +352,6 @@ def travis_gen_config(build_info, srcDir):
     return {
         'language': 'cpp',
         'dist': 'trusty',
-        'group': 'deprecated-2017Q2',
         'sudo': 'required',
         'services': ['docker'],
         'notifications': {
@@ -406,7 +427,7 @@ def jenkins_gen_config(build_info, src_dir):
         'OSX_TARGETS': mk_groovy_list(osx_targets),
         'WINDOWS_TARGETS': mk_groovy_list(windows_targets),
 
-        'DEPENDENCIES': deps,
+        'DEPENDENCIES': deps.replace(";", "%"),
         'DEPENDENCIES_NIX': deps.replace(";", "%"),
         'REPO_URL': repo_url,
 
@@ -528,6 +549,8 @@ def main():
     if args.list_plats:
         print(render_yaml(_TARGET_NAMES))
         exit(0)
+
+    parse_linux_targets()
 
     build_info = parse_yaml(args.input_file)
 

@@ -43,6 +43,10 @@
 #undef COFFEE_LINUX
 #endif
 
+#if defined(__MINGW64__)
+#define COFFEE_MINGW64
+#endif
+
 /* Mac OS X macro, not iOS */
 #if defined(__APPLE__)
 

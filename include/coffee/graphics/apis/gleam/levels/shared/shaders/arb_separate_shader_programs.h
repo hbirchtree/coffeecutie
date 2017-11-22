@@ -38,7 +38,7 @@ struct CGL_SeparableShaderPrograms
         PipelineGetiv(h,GL_INFO_LOG_LENGTH,&len);
         if(len<=0)
             return nullptr;
-        cstring_w s = new int8[len+1];
+        cstring_w s = new char[len+1];
         glGetProgramPipelineInfoLog(h,len,nullptr,s);
         return s;
     }

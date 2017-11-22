@@ -131,7 +131,7 @@ public:
                     continue;
 
                 tmp.clear();
-                tmp.insert(0,(sbyte_t*)shader_handle.data,shader_handle.size);
+                tmp.insert(0,(cstring_w)shader_handle.data,shader_handle.size);
                 cstr = &tmp[0];
                 if(i==0)
                 {

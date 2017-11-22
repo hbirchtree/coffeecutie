@@ -44,6 +44,7 @@ struct PlatformData
         PlatformWin32           = PlatformWindows | 0x1,
         PlatformUWP             = PlatformWindows | 0x2,
         PlatformUWPMobile       = PlatformWindows | 0x4,
+        PlatformMinGW           = PlatformWin32   | 0x8,
 
         /* Variants of web platforms */
         PlatformEmscripten      = PlatformWeb | 0x1,
@@ -57,6 +58,10 @@ struct PlatformData
     Platform PlatformVariant();
 
     static
+    /*!
+     * \brief Device DPI, where 1.f is 1:1 pixel ratio. This is used to directly scale UI components.
+     * \return
+     */
     scalar DeviceDPI();
 
     static

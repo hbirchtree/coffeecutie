@@ -9,6 +9,105 @@
 namespace Coffee{
 namespace CGL{
 
+struct CGL_Shared_Limits
+{
+    enum ShaderVariant
+    {
+        Vertex_Base = 50,
+        Fragment_Base = 100,
+
+        Total_Base = 150,
+
+        Geometry_Base = 200,
+        TessControl_Base = 250,
+        TessEval_Base = 300,
+        Compute_Base = 350,
+    };
+
+    enum MaxLimit
+    {
+        None,
+
+        Outputs = 1,
+        Inputs,
+        UniformVals,
+        ImageUnits,
+        ImageUniforms,
+        UniformsBlocks,
+        UniformVectors,
+        AtomicCounters,
+        AtomicBufs,
+        SSBO,
+        Subroutines,
+        SubroutineLocs,
+
+        Vertex_Attribs = 1000,
+        Vertex_AttrRelativeOff,
+        Vertex_AttrStride,
+        Vertex_AttrBindings,
+        Vertex_Streams,
+
+        Vertex_ClipDists,
+        Vertex_CullDists,
+        Vertex_CombClipCullDists,
+
+        Geom_InComps,
+        Geom_OutComps,
+        Geom_OutVerts,
+
+        Tess_Patches,
+
+        Tex_Size2D,
+        Tex_Size3D,
+        Tex_SizeArray,
+        Tex_SizeCube,
+        Tex_SizeBuf,
+        Tex_SizeSparse2D,
+        Tex_SizeSparse3D,
+        Tex_SizeSparseArray,
+        Tex_LODBias,
+
+        VAO_ElementVerts,
+        VAO_ElementIndices,
+        VAO_ElementIndex,
+
+        FBO_DrawBufs,
+        FBO_RendBufs,
+        FBO_RendBufSize,
+        FBO_ColorAtt,
+        FBO_Width,
+        FBO_Height,
+        FBO_Layers,
+        FBO_Samples,
+
+        XF_SeparateComps,
+        XF_InterleavComps,
+        XF_SeparateAttrs,
+
+        UniformLocs,
+
+        View_Dimensions,
+
+        Dbg_LabelLen,
+        Dbg_MessageLen,
+        Dbg_LoggedMessages,
+
+        Compile_Threads,
+    };
+
+    static i32 Max(u32 v);
+
+    static _cbasic_size_2d<i32> MaxSize(u32 v);
+
+    template<u32 ShaderBase>
+    STATICINLINE i32 ShaderMax(MaxLimit v)
+    {
+        if(v > SubroutineLocs)
+            return 0;
+        return Max(ShaderBase + v);
+    }
+};
+
 struct CGL_Shared_Debug
 {
     static bool b_isDebugging;

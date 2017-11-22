@@ -38,6 +38,7 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
     case BitFormat::UInt_2101010R:
     case BitFormat::Scalar_32:
     case BitFormat::Scalar_11_11_10:
+    case BitFormat::UInt24_8:
         pxsz = 4;
         break;
     case BitFormat::Scalar_64:

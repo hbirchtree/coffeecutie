@@ -46,7 +46,7 @@ struct AndroidFileFun :
     static CString NativePath(cstring fn);
     static CString NativePath(cstring fn,ResourceAccess storage);
 
-    static FileHandle* Open(cstring fn, ResourceAccess ac);
+    static FileHandle* Open(Url const& fn, ResourceAccess ac);
 
     static bool Close(FileHandle *fh);
 
@@ -55,9 +55,9 @@ struct AndroidFileFun :
     static bool Write(FileHandle *fh, const CByteData &d, bool);
 
     static szptr Size(FileHandle *fh);
-    static szptr Size(cstring fn);
+    static szptr Size(Url const& fn);
 
-    static FileMapping Map(cstring fn,ResourceAccess acc,
+    static FileMapping Map(Url const& fn,ResourceAccess acc,
                            szptr offset,szptr size,int*);
     static bool Unmap(FileMapping* mp);
 };

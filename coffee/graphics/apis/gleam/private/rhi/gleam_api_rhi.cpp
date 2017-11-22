@@ -19,7 +19,7 @@ namespace GLEAM{
 
 using GLC = CGL_Implementation;
 
-void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, TypeEnum dt, Vector<byte_t> &storage)
+void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, BitFmt dt, Vector<byte_t> &storage)
 {
     auto size = fb.size();
     if(size.area() <= 0)
@@ -34,11 +34,11 @@ void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, TypeEnum
 void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
 #if defined(COFFEE_GLEAM_DESKTOP)
-    major = 3; minor = 3;
+    major = 4; minor = 5;
 #elif defined(COFFEE_ONLY_GLES20)
     major = 2; minor = 0;
 #else
-    major = 3; minor = 0;
+    major = 3; minor = 2;
 #endif
 }
 
@@ -107,6 +107,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         cVerbose(7, "Creating PBO storage, {0} units", num_pbos);
 
         CGhnd* bufs = new CGhnd[num_pbos];
+        for (auto i : Range<>(num_pbos))
+            bufs[i] = 0;
         CGL33::BufAlloc(num_pbos,bufs);
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
@@ -137,7 +139,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     if(ver>=ver45&& /* DISABLES CODE */ (false))
         /* Unimplemented both on CGL level and here */
         store->CURR_API = GL_4_5;
-    else if(ver>=ver43 && /* DISABLES CODE */ (false))
+    else if(ver>=ver43)
         store->CURR_API = GL_4_3;
     else if(ver>=ver33)
         store->CURR_API = GL_3_3;
@@ -178,6 +180,16 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 #endif
 
     cVerbose(4,"Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
+
+#if !defined(COFFEE_GLEAM_DESKTOP)
+//    store->features.qcom_tiling =
+//            CGL33::Debug::CheckExtensionSupported("GL_QCOM_tiled_rendering");
+
+    if(store->features.qcom_tiling)
+    {
+        cVerbose(5, "Qualcomm tiling enabled");
+    }
+#endif
 
     m_store = store;
 
@@ -271,7 +283,7 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 {
     C_USED(i);
-#ifdef COFFEE_GLEAM_DESKTOP
+#if defined(COFFEE_GLEAM_DESKTOP)
     if(vstate.multiview())
     {
         if(CGL43::ViewportArraySupported())
@@ -297,12 +309,25 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             delete[] varr;
 
         CGL33::Enable(Feature::ClipDist,0);
+        CGL33::Enable(Feature::ClipDist,1);
+        CGL33::Enable(Feature::ClipDist,2);
+        CGL33::Enable(Feature::ClipDist,3);
 
         }else if(CGL33::ClipDistanceSupported())
         {
             /* TODO: Expand on this feature */
             CGL33::Enable(Feature::ClipDist,0);
         }
+    }else
+#elif !defined(COFFEE_ONLY_GLES20)
+    if(vstate.multiview())
+    {
+        /* Find some way to emulate multiview on GLES 3.0+ */
+    }else
+#else
+    if(vstate.multiview())
+    {
+        /* We're screwed. Throw the framebuffer on the floor, quick. */
     }else
 #endif
     {
@@ -327,7 +352,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 
 void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 {
-    if(GL_CURR_API==GLES_3_0 || GL_CURR_API == GLES_2_0)
+    if(GL_CURR_API==GLES_2_0 || GL_CURR_API == GLES_3_0)
     {
         if(bstate.blend())
         {
@@ -337,6 +362,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
             GLC::Disable(Feature::Blend);
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_2_0
              || GL_CURR_API==GLES_3_2)
     {
         if(bstate.blend())
@@ -347,7 +373,9 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 
     if(bstate.blend())
     {
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
+        if(GL_CURR_API==GL_3_3
+                || GL_CURR_API==GLES_2_0
+                || GL_CURR_API==GLES_3_0)
         {
             if(bstate.additive())
             {
@@ -377,7 +405,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 
 void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
 {
-    if(GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         if(dstate.testDepth())
             GLC::Enable(Feature::DepthTest);
@@ -402,8 +430,10 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
     {
         GLC::DepthMask(dstate.mask());
 
-        GLC::DepthFunc((ValueComparison)dstate.fun());
+        if(dstate.fun())
+            GLC::DepthFunc(C_CAST<ValueComparison>(dstate.fun()));
 
+#if defined(COFFEE_GLEAM_DESKTOP)
         if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
         {
             if(dstate.clampDepth())
@@ -411,6 +441,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
             else
                 GLC::Disable(Feature::DepthClamp,i);
         }
+#endif
         /*TODO: Implement clamping*/
     }
 
@@ -451,55 +482,68 @@ void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
 }
 
 template<typename T>
-void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data,
+                      szptr arr_size)
 {
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformfv(prog,idx,arr_size,data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformfv(prog,C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
     else
 #endif
-        CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+        CGL33::Uniformfv(C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
 template<typename T>
-void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data,
+                        szptr arr_size)
 {
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformfv(prog,idx,arr_size,false,data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformfv(prog,C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),false,data);
     else
 #endif
-        CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),false,data);
+        CGL33::Uniformfv(C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),false,data);
 }
 
 template<typename T>
-void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
+                      szptr arr_size)
 {
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformiv(prog,idx,arr_size,data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformiv(prog,C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
     else
 #endif
-        CGL33::Uniformiv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+        CGL33::Uniformiv(C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
 #if !defined(COFFEE_ONLY_GLES20)
 template<typename T>
-void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
+                       szptr arr_size)
 {
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformuiv(prog,idx,arr_size,data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformuiv(prog,C_CAST<i32>(idx),
+                          C_CAST<i32>(arr_size / sizeof(T)),data);
     else
-        CGL33::Uniformuiv(idx,arr_size,data);
+        CGL33::Uniformuiv(C_CAST<i32>(idx),
+                          C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 #endif
 
-void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
-                                      ShaderStage const& stage,
-                                      const GLEAM_ShaderUniformState &ustate)
+void GLEAM_API::SetShaderUniformState(
+        const GLEAM_Pipeline &pipeline,
+        ShaderStage const& stage,
+        const GLEAM_ShaderUniformState &ustate)
 {
     using namespace ShaderTypes;
 
@@ -507,7 +551,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
     CGhnd prog = 0;
 
-    if(GL_CURR_API==GL_3_3  || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3  || GL_CURR_API==GLES_2_0
+            || GL_CURR_API==GLES_3_0)
         prog = pipeline.m_handle;
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
@@ -533,44 +578,111 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         uint32 const& idx = u.first;
         uint32 const& fgs = u.second.value->flags;
 
-        if(fgs == (Mat_d|S2|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size);
-        else if(fgs == (Mat_d|S3|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf3*)db->data,db->size);
-        else if(fgs == (Mat_d|S4|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf4*)db->data,db->size);
+        using Matf2_t = sdt_uniff<Mat_d|S2>;
+        using Matf3_t = sdt_uniff<Mat_d|S3>;
+        using Matf4_t = sdt_uniff<Mat_d|S4>;
 
-        else if(fgs == (Vec_d|S2|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf2*)db->data,db->size);
-        else if(fgs == (Vec_d|S3|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf3*)db->data,db->size);
-        else if(fgs == (Vec_d|S4|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf4*)db->data,db->size);
+        using Vecf2_t = sdt_uniff<Vec_d|S2>;
+        using Vecf3_t = sdt_uniff<Vec_d|S3>;
+        using Vecf4_t = sdt_uniff<Vec_d|S4>;
 
-        else if(fgs == (Vec_d|S2|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci2*)db->data,db->size);
-        else if(fgs == (Vec_d|S3|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci3*)db->data,db->size);
-        else if(fgs == (Vec_d|S4|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci4*)db->data,db->size);
+        using Veci2_t = sdt_unifi<Vec_d|S2>;
+        using Veci3_t = sdt_unifi<Vec_d|S3>;
+        using Veci4_t = sdt_unifi<Vec_d|S4>;
+
+        using Vecu2_t = sdt_unifu<Vec_d|S2>;
+        using Vecu3_t = sdt_unifu<Vec_d|S3>;
+        using Vecu4_t = sdt_unifu<Vec_d|S4>;
+
+        using Valuef_t = sdt_uniff<S1>;
+        using Valuei_t = sdt_unifi<S1>;
+        using Valueu_t = sdt_unifu<S1>;
+
+        union {
+            c_cptr data;
+
+            Matf2* m2;
+            Matf3* m3;
+            Matf4* m4;
+
+            Vecf2* v2;
+            Vecf3* v3;
+            Vecf4* v4;
+
+            Veci2* vi2;
+            Veci3* vi3;
+            Veci4* vi4;
+
+            Vecui2* vu2;
+            Vecui3* vu3;
+            Vecui4* vu4;
+
+            scalar* s;
+            i32* i;
+            u32* u;
+        } ptr;
+
+        ptr.data = db->data;
+
+        switch(fgs)
+        {
+        case Matf2_t::value:
+            SetUniform_wrapf_m(prog,idx,ptr.m2,db->size);
+            break;
+        case Matf3_t::value:
+            SetUniform_wrapf_m(prog,idx,ptr.m3,db->size);
+            break;
+        case Matf4_t::value:
+            SetUniform_wrapf_m(prog,idx,ptr.m4,db->size);
+            break;
+
+        case Vecf2_t::value:
+            SetUniform_wrapf(prog,idx,ptr.v2,db->size);
+            break;
+        case Vecf3_t::value:
+            SetUniform_wrapf(prog,idx,ptr.v3,db->size);
+            break;
+        case Vecf4_t::value:
+            SetUniform_wrapf(prog,idx,ptr.v4,db->size);
+            break;
+
+        case Veci2_t::value:
+            SetUniform_wrapi(prog,idx,ptr.vi2,db->size);
+            break;
+        case Veci3_t::value:
+            SetUniform_wrapi(prog,idx,ptr.vi3,db->size);
+            break;
+        case Veci4_t::value:
+            SetUniform_wrapi(prog,idx,ptr.vi4,db->size);
+            break;
 
 #if !defined(COFFEE_ONLY_GLES20)
-        else if(fgs == (Vec_d|S2|UInt_t))
-            SetUniform_wrapui(prog,idx,(Vecui2*)db->data,db->size/sizeof(Vecui2));
-        else if(fgs == (Vec_d|S3|UInt_t))
-            SetUniform_wrapui(prog,idx,(Vecui3*)db->data,db->size/sizeof(Vecui3));
-        else if(fgs == (Vec_d|S4|UInt_t))
-            SetUniform_wrapui(prog,idx,(Vecui4*)db->data,db->size/sizeof(Vecui4));
+        case Vecu2_t::value:
+            SetUniform_wrapui(prog,idx,ptr.vu2,db->size);
+            break;
+        case Vecu3_t::value:
+            SetUniform_wrapui(prog,idx,ptr.vu3,db->size);
+            break;
+        case Vecu4_t::value:
+            SetUniform_wrapui(prog,idx,ptr.vu4,db->size);
+            break;
 #endif
 
-        else if(fgs==Scalar_t)
-            SetUniform_wrapf(prog,idx,(scalar*)db->data,db->size/sizeof(scalar));
-        else if(fgs==Int_t)
-            SetUniform_wrapi(prog,idx,(int32*)db->data,db->size/sizeof(int32));
+        case Valuef_t::value:
+            SetUniform_wrapf(prog,idx,ptr.s,db->size);
+            break;
+        case Valuei_t::value:
+            SetUniform_wrapi(prog,idx,ptr.i,db->size);
+            break;
 #if !defined(COFFEE_ONLY_GLES20)
-        else if(fgs==UInt_t)
-            SetUniform_wrapui(prog,idx,(uint32*)db->data,db->size/sizeof(uint32));
+        case Valueu_t::value:
+            SetUniform_wrapui(prog,idx,ptr.u,db->size);
+            break;
 #endif
+        default:
+            cWarning("Unhandled uniform type: {0}", fgs);
+            break;
+        }
     }
 
     for(auto s : ustate.m_samplers)
@@ -588,16 +700,17 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
             CGL33::TexBind(handle->m_type,handle->texture);
 #if !defined(COFFEE_ONLY_GLES20)
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
-            if(GL_CURR_API != GL_4_3)
+
+#if !defined(COFFEE_ONLY_GLES20)
+            if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
             {
+                CGL43::Uniformi(prog,s.first,handle->m_unit);
+                /* Set texture handle in shader */
+            }else
 #endif
+            {
                 /* Set texture handle in shader */
                 CGL33::Uniformi(s.first,handle->m_unit);
-#if !defined(COFFEE_ONLY_GLES20)
-            }
-            else{
-                /* Set texture handle in shader */
-                CGL43::Uniformi(prog,s.first,handle->m_unit);
             }
 #endif
         }
@@ -636,6 +749,349 @@ void GLEAM_API::PreDrawCleanup()
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
+void GLEAM_API::OptimizeRenderPass(
+        GLEAM_API::RenderPass &rpass,
+        GLEAM_API::OPT_DRAW& buffer)
+{
+    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
+    auto& cmdBufs = buffer.cmdBufs;
+
+    for(auto& call : rpass.draws)
+    {
+        vert_sort[&call.vertices].push_back(&call);
+    }
+
+    /* TODO: Add step to de-duplicate D_DATA into instancing */
+
+    for(auto& group : vert_sort)
+    {
+        Map<PSTATE*, Vector<RenderPass::DrawCall*>> ustate_sort;
+
+        for(auto& call : group.second)
+        {
+            ustate_sort[&call->state].push_back(call);
+        }
+
+        cmdBufs.reserve(cmdBufs.size() + ustate_sort.size());
+
+        for(auto& ustate_group : ustate_sort)
+        {
+            cmdBufs.push_back({*group.first, *ustate_group.first, {}});
+            auto& cmd_buf = cmdBufs.back();
+
+            cmd_buf.commands.reserve(ustate_group.second.size());
+
+            for(auto& call : ustate_group.second)
+                cmd_buf.commands.push_back({
+                                               call->d_call,
+                                               call->d_data
+                                           });
+        }
+    }
+
+#if !defined(COFFEE_ONLY_GLES20)
+    auto& mdData = buffer.multiDrawData;
+
+    for(auto& buffer : cmdBufs)
+    {
+        auto& data = mdData[&buffer];
+
+        /* TODO: Add functionality to determine whether we are
+         *  using Indirect or not */
+
+        data.counts.reserve(buffer.commands.size());
+        data.offsets.reserve(buffer.commands.size());
+        data.baseVertex.reserve(buffer.commands.size());
+        data.indirectCalls.reserve(buffer.commands.size());
+
+        for(auto& cmd : buffer.commands)
+        {
+            data.counts.push_back(cmd.data.elements());
+            data.offsets.push_back(0);
+            data.baseVertex.push_back(cmd.data.vertexOffset());
+
+            data.indirectCalls.push_back(
+            {
+                            cmd.data.elements(),
+                            cmd.data.instances(),
+                            cmd.data.indexOffset(),
+                            C_FCAST<u32>(cmd.data.vertexOffset()),
+                            cmd.data.instanceOffset()
+                        });
+
+            data.etype = cmd.data.elementType();
+            data.dc = cmd.call;
+        }
+    }
+#endif
+}
+
+/*!
+ * \brief The internal drawing function, making the assumption that
+ *  all state is ready.
+ * \param mode The primitive drawing mode
+ * \param d Drawcall information
+ * \param i Drawcall data, offsets and etc.
+ * \return true if drawcall was possible on the current API
+ */
+static bool InternalDraw(
+        CGhnd pipelineHandle,
+        DrwMd const& mode,
+        GLEAM_API::DrawCall const& d,
+        GLEAM_API::DrawInstanceData const& i)
+{
+    if(d.indexed())
+    {
+        szptr elsize = 4;
+        if(i.elementType()==TypeEnum::UShort)
+            elsize = 2;
+        if(i.elementType()==TypeEnum::UInt)
+            elsize = 4;
+
+        if(d.instanced())
+        {
+            /* TODO: Implement the disabled drawcalls using other means */
+#ifdef COFFEE_GLEAM_DESKTOP
+            if(GL_CURR_API==GL_4_3
+                    && i.instanceOffset()>0
+                    && i.vertexOffset()!=0)
+
+                CGL43::DrawElementsInstancedBaseVertexBaseInstance(
+                            mode,i.elements(),i.elementType(),
+                            i.indexOffset()*elsize,i.instances(),
+                            i.vertexOffset(),i.instanceOffset());
+
+            else if(GL_CURR_API==GL_4_3 && i.instanceOffset()>0)
+
+                CGL43::DrawElementsInstancedBaseInstance(
+                            mode,
+                            i.elements(),i.elementType(),
+                            i.indexOffset()*elsize,i.instanceOffset(),
+                            i.instances());
+
+            else if(i.vertexOffset() > 0)
+
+                CGL33::DrawElementInstancedBaseVertex(
+                            mode,
+                            i.elements(), i.elementType(),
+                            i.indexOffset()*elsize, i.instances(),
+                            i.vertexOffset());
+
+            else
+#endif
+#if !defined(COFFEE_ONLY_GLES20)
+                CGL33::DrawElementsInstanced(
+                            mode,i.elements(),i.elementType(),
+                            i.indexOffset()*elsize,i.instances());
+#else
+                CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                    i.indexOffset()*elsize);
+#endif
+        }else{
+#if !defined(COFFEE_ONLY_GLES20)
+            if(i.vertexOffset() > 0)
+                CGL33::DrawElementsBaseVertex(
+                            mode, i.elements(), i.elementType(),
+                            i.indexOffset()*elsize, i.vertexOffset());
+            else
+#endif
+                CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                    i.indexOffset()*elsize);
+        }
+
+    }else{
+#if !defined(COFFEE_ONLY_GLES20)
+        if(d.instanced())
+            CGL33::DrawArraysInstanced(mode,i.vertexOffset(),
+                                       i.vertices(),i.instances());
+        else
+#else
+        if(d.instanced())
+        {
+            auto hnd = pipelineHandle;
+            auto loc = glGetUniformLocation(hnd, "InstanceID");
+
+            auto loc_all = glGetUniformLocation(hnd, "InstanceCount");
+
+            if(loc_all != -1)
+                    glUniform1i(loc_all, i.instances());
+
+            for(uint32 j=0;j<i.instances();j++)
+            {
+                if(loc != -1)
+                    glUniform1i(loc, C_CAST<i32>(j));
+                CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
+            }
+        }else
+#endif
+            CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
+    }
+
+    return true;
+}
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+bool InternalMultiDraw(
+        GLEAM_API::OptimizedDraw::MultiDrawData const& data)
+{
+    static CGhnd indirectBuf;
+
+    using IndirectCall = GLEAM_API::OptimizedDraw::IndirectCall;
+
+    /* TODO: Add more MultiDraw* support */
+
+    if(data.dc.instanced())
+    {
+
+        /* TODO: Implement this using the buffer type */
+        if(indirectBuf == 0)
+            glGenBuffers(1, &indirectBuf);
+
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuf);
+        glBufferData(
+                    GL_DRAW_INDIRECT_BUFFER,
+                    data.indirectCalls.size() * sizeof(IndirectCall),
+                    data.indirectCalls.data(), GL_STATIC_DRAW);
+
+        /* TODO: Implement fallbacks using the pseudo-implementations */
+
+//        szptr elsize = 4;
+//        if(data.etype==TypeEnum::UShort)
+//            elsize = 2;
+//        if(data.etype==TypeEnum::UInt)
+//            elsize = 4;
+
+//        for(auto i : Range(data.indirectCalls.size()))
+//        {
+//            auto& dc = data.indirectCalls[i];
+//            CGL43::DrawElementsInstancedBaseVertexBaseInstance(
+//            {
+//                            Prim::Triangle, PrimCre::Explicit
+//                        },
+//                        dc.count,
+//                        data.etype,
+//                        dc.firstIndex * elsize,
+//                        dc.instanceCount,
+//                        dc.baseVertex,
+//                        dc.baseInstance
+//                        );
+//        }
+
+        CGL43::DrawMultiElementsIndirect(
+        {
+                        Prim::Triangle, PrimCre::Explicit
+                    }, data.etype,
+                    (c_cptr)0,
+                    data.indirectCalls.size(),
+                    sizeof(data.indirectCalls[0])
+                    );
+    }
+    else
+
+        CGL33::DrawMultiElementsBaseVertex(
+                    GL_TRIANGLES, data.counts.data(), data.etype,
+                    data.offsets.data(),
+                    data.counts.size(), data.baseVertex.data());
+
+    return true;
+}
+#endif
+
+void GLEAM_API::MultiDraw(
+        const GLEAM_API::PIP &pipeline,
+        const GLEAM_API::OPT_DRAW &draws)
+{
+    /* In debug mode, display the entire draw call.
+     *  This is the true verbose mode. */
+    if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
+    {
+        cVerbose(12, "- Pipeline:{0}", pipeline.m_handle);
+        for(auto& cmd : draws.cmdBufs)
+        {
+            cVerbose(12, "-- Vertices:{0} + UState:{1}",
+                     &cmd.vertices, &cmd.state);
+            for(auto& call : cmd.commands)
+            {
+                cVerbose(12, "--- Draw call:{0}", &call);
+            }
+        }
+    }
+
+    /* The important limiting factor is the speed of
+     *  binding new shader pipelines. */
+    pipeline.bind();
+
+    /* If using a platform without instancing, cheat by using a
+     *  uniform in its place. Preprocessor macros will handle the rest. */
+    i32 instanceID_loc = glGetUniformLocation(pipeline.m_handle,
+                                              "InstanceID");
+    i32 instanceID_val = 0;
+
+    /* TODO: Add fallback support for gl_DrawID */
+
+    /* We will use these to allow use of existing state.
+     * We will treat program uniform state as atomic,
+     *  because it can be a lot to compare */
+    V_DESC* p_vertices = nullptr;
+    PSTATE* p_state = nullptr;
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+    /* We assume that, if no multiDrawData is available,
+     *  we can't use it */
+    if(draws.multiDrawData.size())
+    {
+        for(auto& mdData : draws.multiDrawData)
+        {
+            auto& buffer = *mdData.first;
+
+            if(&buffer.vertices != p_vertices)
+            {
+                buffer.vertices.bind();
+                p_vertices = &buffer.vertices;
+            }
+
+            if(&buffer.state != p_state)
+            {
+                for(auto const& s : buffer.state)
+                    SetShaderUniformState(pipeline, s.first, s.second);
+                p_state = &buffer.state;
+            }
+
+            InternalMultiDraw(mdData.second);
+        }
+    }else
+#endif
+        /* This method minimizes the amount of state changes only,
+         *  draw calls are still a couple, but it's faster than
+         *  multiple calls to Draw() */
+        for(auto& buffer : draws.cmdBufs)
+        {
+            if(&buffer.vertices != p_vertices)
+            {
+                buffer.vertices.bind();
+                p_vertices = &buffer.vertices;
+            }
+
+            if(&buffer.state != p_state)
+            {
+                for(auto const& s : buffer.state)
+                    SetShaderUniformState(pipeline, s.first, s.second);
+                p_state = &buffer.state;
+            }
+
+            for(auto& cmd : buffer.commands)
+            {
+                glUniform1i(instanceID_loc, instanceID_val);
+                InternalDraw(pipeline.m_handle, {
+                                 Prim::Triangle, PrimCre::Explicit
+                             }, cmd.call, cmd.data);
+                instanceID_val ++;
+            }
+        }
+
+    pipeline.unbind();
+}
+
 void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
                      PipelineState const& ustate,
                      V_DESC& vertices,
@@ -658,79 +1114,22 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     vertices.bind();
 
-    if(d.indexed())
+#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_ONLY_GLES20)
+    if(m_store->features.qcom_tiling)
     {
-        szptr elsize = 4;
-        if(i.elementType()==TypeEnum::UShort)
-            elsize = 2;
-        if(i.elementType()==TypeEnum::UInt)
-            elsize = 4;
-
-        if(d.instanced())
-        {
-            /* TODO: Implement the disabled drawcalls using other means */
-#ifdef COFFEE_GLEAM_DESKTOP
-            if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0&&i.vertexOffset()!=0)
-
-                CGL43::DrawElementsInstancedBaseVertexBaseInstance(
-                            mode,i.elements(),i.elementType(),
-                            i.indexOffset()*elsize,i.instances(),
-                            i.vertexOffset(),i.instanceOffset());
-
-            else if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0)
-
-                CGL43::DrawElementsInstancedBaseInstance(
-                            mode,
-                            i.elements(),i.elementType(),
-                            i.indexOffset()*elsize,i.instanceOffset(),
-                            i.instances());
-
-            else
-#endif
-#if !defined(COFFEE_ONLY_GLES20)
-                CGL33::DrawElementsInstanced(mode,i.elements(),i.elementType(),
-                                             i.indexOffset()*elsize,i.instances());
-#else
-                CGL33::DrawElements(mode,i.elements(),i.elementType(),
-                                    i.indexOffset()*elsize);
-#endif
-        }else{
-#if !defined(COFFEE_ONLY_GLES20)
-            if(i.vertexOffset()>0)
-                CGL33::DrawElementsBaseVertex(mode, i.elements(), i.elementType(),
-                                              i.indexOffset()*elsize, i.vertexOffset());
-            else
-#endif
-                CGL33::DrawElements(mode,i.elements(),i.elementType(),
-                                    i.indexOffset()*elsize);
-        }
-
-    }else{
-#if !defined(COFFEE_ONLY_GLES20)
-        if(d.instanced())
-            CGL33::DrawArraysInstanced(mode,i.vertexOffset(),i.vertices(),i.instances());
-        else
-#else
-        if(d.instanced())
-        {
-            auto hnd = pipeline.m_handle;
-            auto loc = glGetUniformLocation(hnd, "InstanceID");
-            
-            auto loc_all = glGetUniformLocation(hnd, "InstanceCount");
-            
-            if(loc_all != -1)
-                    glUniform1i(loc_all, i.instances());
-            
-            for(uint32 j=0;j<i.instances();j++)
-            {
-                if(loc != -1)
-                    glUniform1i(loc, C_CAST<i32>(j));
-                CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
-            }
-        }else
-#endif
-            CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
+        auto size = GLEAM_API::DefaultFramebuffer().size();
+        glStartTilingQCOM(0, 0, size.w, size.h,
+                          GL_COLOR_BUFFER_BIT0_QCOM
+                          |GL_DEPTH_BUFFER_BIT0_QCOM);
     }
+#endif
+
+    InternalDraw(pipeline.m_handle, mode, d, i);
+
+#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_ONLY_GLES20)
+    if(m_store->features.qcom_tiling)
+        glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
+#endif
 
     if(query)
         query->end();
@@ -740,7 +1139,8 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 }
 
 void GLEAM_API::DrawConditional(const GLEAM_Pipeline &pipeline,
-                                const PipelineState &ustate, V_DESC &vertices,
+                                const PipelineState &ustate,
+                                V_DESC &vertices,
                                 const DrawCall &d,
                                 const DrawInstanceData &i,
                                 OccludeQuery &c)
@@ -776,6 +1176,33 @@ APILevel GLEAM_API::Level()
 namespace Strings{
 cstring to_string(RHI::GLEAM::APILevel lev)
 {
+    using LEV = RHI::GLEAM::APILevel;
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+    switch(lev)
+    {
+    case LEV::GL_3_3:
+        return "Desktop GL 3.3";
+    case LEV::GL_4_3:
+        return "Desktop GL 4.3";
+    case LEV::GL_4_5:
+        return "Desktop GL 4.5";
+    default:
+        break;
+    }
+#else
+    switch(lev)
+    {
+    case LEV::GLES_2_0:
+        return "GL ES 2.0";
+    case LEV::GLES_3_0:
+        return "GL ES 3.0";
+    case LEV::GLES_3_2:
+        return "GL ES 3.2";
+    default:
+        break;
+    }
+#endif
     return "?";
 }
 }

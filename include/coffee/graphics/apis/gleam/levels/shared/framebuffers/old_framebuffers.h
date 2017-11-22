@@ -50,7 +50,7 @@ struct CGL_Old_Framebuffers
     {glReadBuffer(b);}
 
     STATICINLINE void FBReadPixels(int32 x,int32 y,uint32 w,uint32 h,
-                                   PixelComponents fmt,TypeEnum dt,c_ptr p)
+                                   PixelComponents fmt,BitFormat dt,c_ptr p)
     {glReadPixels(x,y,w,h,to_enum(fmt),to_enum(dt),p);}
 
     /* Validation */

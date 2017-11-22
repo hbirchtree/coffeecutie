@@ -47,18 +47,16 @@ macro( GENERATE_FINDSCRIPT )
     set ( CONF_INCLUDE_DIRS "" )
     # Create a client-reproducible form of the incude directories for deploy
     foreach ( INC ${INC_DIRS} )
-        if( "${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
-            continue()
+        if(NOT "${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
+            string ( REGEX REPLACE "^.*INSTALL_INTERFACE:(.*)\>+$" "\${COFFEE_ROOT_DIR}/\\1"
+                INC_
+                "${INC}"
+                )
+            string ( REPLACE ">" "" INC_ "${INC_}" )
+            if(NOT IS_ABSOLUTE "${INC_}")
+                set ( CONF_INCLUDE_DIRS "${INC_};${CONF_INCLUDE_DIRS}" )
+            endif()
         endif()
-        string ( REGEX REPLACE "^.*INSTALL_INTERFACE:(.*)\>+$" "\${COFFEE_ROOT_DIR}/\\1"
-            INC_
-            "${INC}"
-            )
-        string ( REPLACE ">" "" INC_ "${INC_}" )
-        if(IS_ABSOLUTE "${INC_}")
-            continue()
-        endif()
-        set ( CONF_INCLUDE_DIRS "${INC_};${CONF_INCLUDE_DIRS}" )
     endforeach()
 
     # Dedupe it, because it's a lot
@@ -98,11 +96,13 @@ macro( GENERATE_FINDSCRIPT )
 endmacro()
 
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
-    file ( GLOB_RECURSE ${TARGET}_HEADERS
-#        ${HEADER_DIR}/*.h
-#        ${HEADER_DIR}/*.hpp
-        ${HEADER_DIR}/*
-        )
+    if(HEADER_DIR)
+        file ( GLOB_RECURSE ${TARGET}_HEADERS
+            #        ${HEADER_DIR}/*.h
+            #        ${HEADER_DIR}/*.hpp
+            ${HEADER_DIR}/*
+            )
+    endif()
     source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
 
     # Because it's hard to write these three commands over and over again
@@ -162,7 +162,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             )
     endif()
 
-    register_library( ${TARGET} ${HEADER_DIR} )
+    register_library( ${TARGET} "${HEADER_DIR}" )
 endmacro()
 
 macro(COFFEE_ADD_FRAMEWORK
@@ -172,9 +172,11 @@ macro(COFFEE_ADD_FRAMEWORK
         BUNDLE_RSRCS BUNDLE_HDRS
         LIBRARIES BUNDLE_LIBRARIES)
     if(APPLE AND NOT IOS)
-        file ( GLOB_RECURSE ${TARGET}_HEADERS
-            ${HEADER_DIR}/*
-            )
+        if(HEADER_DIR)
+            file ( GLOB_RECURSE ${TARGET}_HEADERS
+                ${HEADER_DIR}/*
+                )
+        endif()
         source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
 
         MACFRAMEWORK_PACKAGE(
@@ -195,7 +197,7 @@ macro(COFFEE_ADD_FRAMEWORK
             set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
         endif()
 
-        register_library( ${TARGET} ${HEADER_DIR} )
+        register_library( ${TARGET} "${HEADER_DIR}" )
     else()
         coffee_add_elibrary(
             "${TARGET}" "${LINKOPT}"

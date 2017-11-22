@@ -2,7 +2,7 @@
 
 #include <string>
 
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(__MINGW64__)
 #if !defined(COFFEE_WINDOWS_UWP)
 extern bool WMI_Query(const char* query, const wchar_t* property, std::string& target);
 #endif
@@ -20,7 +20,8 @@ using namespace Coffee;
 int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 {
     cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) \
+    && !defined(__MINGW64__)
 #ifdef NDEBUG
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 #endif
@@ -36,7 +37,7 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
     int stat = Coffee::CoffeeMain(mainfun,argc,argv);
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
-    exit(0);
+    exit(stat);
 #else
     return stat;
 #endif

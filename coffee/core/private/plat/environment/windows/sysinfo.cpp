@@ -1,7 +1,16 @@
 #include <coffee/core/plat/environment/windows/sysinfo.h>
 #include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/plat/plat_primary_identify.h>
 
-extern bool WMI_Query(const char* query, const wchar_t* property, std::string& target);
+#if !defined(COFFEE_MINGW64)
+extern bool WMI_Query(const char* query,
+                      const wchar_t* property,
+                      std::string& target);
+#else
+static inline bool WMI_Query(const char*, const wchar_t*, std::string&)
+{
+}
+#endif
 
 namespace Coffee{
 namespace Environment{

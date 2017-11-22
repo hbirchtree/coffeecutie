@@ -28,12 +28,15 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
 {
     m_size = size;
     bind();
-    if(GL_CURR_API==GL_3_3|| GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
-        CGL33::BufData(m_type,m_size,data,m_access);
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3)
+    if(GL_CURR_API==GL_4_3
+            && feval(m_access & ResourceAccess::Immutable))
+    {
         CGL43::BufStorage(m_type,m_size,data,m_access);
+    }else
 #endif
+        CGL33::BufData(m_type,m_size,data,m_access);
+
 }
 
 void *GLEAM_VBuffer::map(szptr offset,szptr size)

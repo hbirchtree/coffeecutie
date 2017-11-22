@@ -272,6 +272,8 @@ class StepUpdateBuildInfo(ProjectStep):
                             dry_run=_settings.dry,
                             verbose=_settings.verbose)
 
+            configure_ci.parse_linux_targets()
+
             if 'dependencies' in structure:
                 v = structure['dependencies']
 
@@ -293,11 +295,19 @@ class StepUpdateBuildInfo(ProjectStep):
         # If it does not exist, configure a new one
         else:
             structure = configure_ci.parse_yaml(src_file)
+            configure_ci.parse_linux_targets()
 
             structure['dependencies'][engine_slug] = engine_version
 
             structure['name'] = _struct.name
             structure['display_name'] = _struct.display_name
+            structure['version'] = {
+                     "major": 0,
+                     "minor": 0,
+                     "release": 1,
+                     "patch": 0,
+                     "hotfix": 0,
+                }
 
         config_files = configure_ci.generate_config_files(self.ci_services,
                                                           deepcopy(structure),
@@ -386,5 +396,6 @@ class StepCorrectPythonScriptPaths(ProjectStep):
         for f in glob('%s/*.py' % ProjectStep.get_target_dir()):
             file_data = open(f).read()
             file_data = file_data.replace('tools.python.', '')
+            file_data = file_data.replace('tools/python/', '')
             with open(f, mode='w') as fh:
                 fh.write(file_data)

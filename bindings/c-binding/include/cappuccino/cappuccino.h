@@ -1,12 +1,14 @@
 #pragma once
 
+#include <coffee/core/function_export.h>
+
 typedef const char* cstring;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void cDebug(cstring fmt);
+COFFAPI void cDebug(cstring fmt);
 
 #ifdef __cplusplus
 }

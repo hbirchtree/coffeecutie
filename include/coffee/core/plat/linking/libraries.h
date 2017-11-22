@@ -1,5 +1,4 @@
-#ifndef COFFEE_PLAT_LIBRARIES_H
-#define COFFEE_PLAT_LIBRARIES_H
+#pragma once
 
 #include "../../coffee_assert_macros.h"
 #include "../../types/tdef/integertypes.h"
@@ -108,5 +107,3 @@ const constexpr cstring DefaultConstructorFunction = "CoffeeLoader";
 
 }
 }
-
-#endif

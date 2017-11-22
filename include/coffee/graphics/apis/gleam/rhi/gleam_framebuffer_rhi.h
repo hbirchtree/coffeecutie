@@ -61,6 +61,7 @@ protected:
 
     CGhnd m_handle;
     FramebufferT m_type;
+    CSize m_size;
 };
 
 

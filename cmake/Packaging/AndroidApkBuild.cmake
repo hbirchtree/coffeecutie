@@ -122,6 +122,10 @@ macro(APK_BUILD TARGET_NAME
     if(ANDROID_USE_GRADLE)
         add_custom_command( TARGET ${TARGET_NAME}
             POST_BUILD
+            COMMAND chmod +x ${BUILD_DIR}/gradlew
+            )
+        add_custom_command( TARGET ${TARGET_NAME}
+            POST_BUILD
             COMMAND ${BUILD_DIR}/gradlew assemble
             WORKING_DIRECTORY ${BUILD_DIR}
             )
@@ -597,9 +601,10 @@ macro(ANDROIDAPK_PACKAGE
             PROPERTY LINK_FLAGS )
 
         set_property ( TARGET ${TARGET}
-            PROPERTY LINK_FLAGS ${TARGET_LINK_FLAGS}
-                                    -U=ANativeActivity_onCreate
+            PROPERTY LINK_FLAGS
+"${TARGET_LINK_FLAGS} -U=ANativeActivity_onCreate -U=Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable"
             )
+
 
         target_link_libraries ( ${TARGET}
             PUBLIC

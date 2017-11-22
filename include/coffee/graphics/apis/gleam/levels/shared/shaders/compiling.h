@@ -27,7 +27,7 @@ struct CGL_Old_ShaderCompiler
         ShaderGetiv(h,GL_INFO_LOG_LENGTH,&len);
         if(len<=0)
             return nullptr;
-        cstring_w s = new int8[len+1];
+        cstring_w s = new char[len+1];
         glGetShaderInfoLog(h,len,nullptr,s);
         return s;
     }
@@ -58,7 +58,7 @@ struct CGL_Old_ShaderCompiler
         ShaderGetiv(h,GL_SHADER_SOURCE_LENGTH,&len);
         if(len<=0)
             return nullptr;
-        cstring_w s = new int8[len+1];
+        cstring_w s = new char[len+1];
         glGetShaderSource(h,len,nullptr,s);
         s[len] = 0;
         return s;
@@ -98,7 +98,7 @@ struct CGL_Old_ShaderCompiler
         ProgramGetiv(h,GL_INFO_LOG_LENGTH,&len);
         if(len<=0)
             return nullptr;
-        cstring_w s = new int8[len+1];
+        cstring_w s = new char[len+1];
         glGetProgramInfoLog(h,len,nullptr,s);
         return s;
     }
@@ -131,7 +131,7 @@ struct CGL_Old_ShaderCompiler
         type[0] = new CGenum[num];
         size[0] = new int32[num];
         for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
+            names[0][i] = new char[namelen];
         for(int32 i=0;i<num;i++)
             glGetActiveAttrib(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
     }
@@ -164,7 +164,7 @@ struct CGL_Old_ShaderCompiler
         *values = new UnifValInfo[num];
 
         for(int32 i=0;i<num;i++)
-            (*values)[i].name = new int8[namelen];
+            (*values)[i].name = new char[namelen];
         for(int32 i=0;i<num;i++)
             glGetActiveUniform(h,i,namelen,nullptr,
                                &(*values)[i].size,

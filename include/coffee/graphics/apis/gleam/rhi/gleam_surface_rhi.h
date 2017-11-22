@@ -10,7 +10,8 @@ struct GLEAM_Surface : GraphicsAPI::Surface
 {
     friend struct GLEAM_RenderTarget;
 
-    GLEAM_Surface(Texture type, PixelFormat fmt,uint32 mips,uint32 texflags = 0);
+    GLEAM_Surface(Texture type, PixelFormat fmt,
+                  uint32 mips,uint32 texflags = 0);
 
     void allocate();
     void dealloc();
@@ -39,6 +40,8 @@ struct GLEAM_Surface2D : GLEAM_Surface
                 CSize size, c_cptr data,
                 CPoint offset = {0,0}, uint32 mip = 0);
 
+    CSize texSize() const;
+
     /*TODO: Add download function */
 
 protected:
@@ -49,13 +52,16 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
 {
     friend struct GLEAM_Sampler3D;
 
-    GLEAM_Surface3D_Base(Texture t, PixelFormat fmt,uint32 mips,uint32 texflags);
+    GLEAM_Surface3D_Base(Texture t, PixelFormat fmt,
+                         uint32 mips,uint32 texflags);
 
     void allocate(CSize3 size, PixelComponents c);
 
     void upload(BitFormat fmt, PixelComponents comp,
                 CSize3 size, c_cptr data,
                 CPoint3 offset = {0,0,0}, uint32 mip = 0);
+
+    CSize3 texSize() const;
 
     /*TODO: Add download function */
 
@@ -75,7 +81,8 @@ struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler2DArray;
-    GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips = 1,uint32 texflags = 0):
+    GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips = 1,
+                         uint32 texflags = 0):
         GLEAM_Surface3D_Base(Texture::T2DArray,fmt,mips,texflags) {}
 };
 
@@ -93,16 +100,17 @@ struct GLEAM_SamplerHandle
     CGhnd m_sampler;
     Texture m_type;
 
+#if defined(COFFEE_ONLY_GLES20)
+    u32 arraySize;
+#endif
+
     CGhnd& glTexHandle() {return texture;}
     CGhnd& glSamplerHandle() {return m_sampler;}
 };
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler
 {
-    GLEAM_Sampler():
-        m_handle(0)
-    {
-    }
+    GLEAM_Sampler();
 
     void alloc();
     void dealloc();
@@ -110,7 +118,10 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     void setLODRange(Vecf2 const& range);
     void setLODBias(scalar bias);
     void setEdgePolicy(uint8 dim, WrapPolicy p);
-    void setFiltering(Filtering mag, Filtering min, Filtering mip = Filtering::None);
+    void setFiltering(Filtering mag, Filtering min,
+                      Filtering mip = Filtering::None);
+
+    void enableShadowSampler();
 
 protected:
     CGhnd m_handle;

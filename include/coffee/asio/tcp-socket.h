@@ -30,7 +30,6 @@ struct TCPSocketImpl : ASIO_Client
         asio::streambuf recvp;
         asio::streambuf trans;
 
-    public:
         SSLSocket_(asio::io_service &serv, asio::ssl::context& ctxt):
             std::istream(&recvp),
             std::ostream(&trans),
@@ -39,6 +38,8 @@ struct TCPSocketImpl : ASIO_Client
             trans()
         {
         }
+
+    public:
 
         SSLSocket_(AsioContext_internal c):
             std::istream(&recvp),
@@ -56,8 +57,12 @@ struct TCPSocketImpl : ASIO_Client
         {
             asio::ip::tcp::resolver::query q(h,p);
             auto it = context->resolver.resolve(q);
+            decltype(it) end;
 
-            asio::connect(socket.next_layer(),it);
+            if(it != end)
+                return;
+
+            asio::connect(socket.next_layer(), it);
 
             socket.handshake(asio::ssl::stream_base::client);
         }

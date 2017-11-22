@@ -3,7 +3,11 @@
 #include "../coffee.h"
 
 namespace Coffee{
+
+struct Url;
+
 namespace Profiling{
+
 
 /*!
  * \brief Print profiler data to terminal
@@ -19,7 +23,7 @@ extern void PrintProfilerData();
  */
 extern void ExportProfilerData(CString &target);
 
-extern void ExportStringToFile(CString const& data, cstring outfile);
+extern void ExportStringToFile(CString const& data, Url const& outfile);
 
 /*!
  * \brief Called on exit to conclude profiling session

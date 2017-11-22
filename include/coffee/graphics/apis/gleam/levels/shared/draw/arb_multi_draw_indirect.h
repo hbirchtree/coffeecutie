@@ -18,8 +18,13 @@ struct CGL_MultiDrawIndirect
      * \param dc Number of indirect calls to process
      * \param s Stride of draw parameter structure
      */
-    STATICINLINE void DrawMultiArraysIndirect(DrwMd const& md,uint64 off,uint32 dc,uint64 s)
+    STATICINLINE void DrawMultiArraysIndirect(
+            DrwMd const& md,uint64 off,uint32 dc,uint64 s)
     {glMultiDrawArraysIndirect(to_enum(md.t,md.c),(c_cptr)off,dc,s);}
+
+    STATICINLINE void DrawMultiArraysIndirect(
+            DrwMd const& md,c_cptr off,uint32 dc,uint64 s)
+    {glMultiDrawArraysIndirect(to_enum(md.t,md.c),off,dc,s);}
     /*!
      * \brief DrawMultiElementsIndirect
      * \param p Primitive type
@@ -31,7 +36,13 @@ struct CGL_MultiDrawIndirect
      */
     STATICINLINE void DrawMultiElementsIndirect(
             DrwMd const& md,TypeEnum d,uint64 off,uint32 dc,uint32 s)
-    {glMultiDrawElementsIndirect(to_enum(md.t,md.c),to_enum(d),(c_cptr)off,dc,s);}
+    {glMultiDrawElementsIndirect(
+                    to_enum(md.t,md.c),to_enum(d),(c_cptr)off,dc,s);}
+
+    STATICINLINE void DrawMultiElementsIndirect(
+            DrwMd const& md,TypeEnum d,c_cptr off,uint32 dc,uint32 s)
+    {glMultiDrawElementsIndirect(
+                    to_enum(md.t,md.c),to_enum(d),off,dc,s);}
 };
 }
 }

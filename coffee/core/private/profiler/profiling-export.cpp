@@ -1,5 +1,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 
+#include <coffee/core/base/files/url.h>
+
 #include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
@@ -10,6 +12,7 @@
 
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
+
 
 namespace Coffee{
 namespace Profiling{
@@ -52,14 +55,77 @@ void PrintProfilerData()
 #endif
 }
 
+STATICINLINE XML::Element* AddChildWithText(
+        XML::Document& doc, XML::Element* e,
+        cstring tagname, CString text)
+{
+    auto newElement = doc.NewElement(tagname);
+    e->InsertEndChild(newElement);
+
+    if(text.size() > 0)
+        newElement->SetText(text.c_str());
+
+    return newElement;
+}
+
+STATICINLINE void ElementSetAttr(
+        XML::Element* e, cstring attrname, CString text)
+{
+    e->SetAttribute(attrname, text.c_str());
+}
+
+STATICINLINE void DescribeNetwork(XML::Document& doc, XML::Element* sysdata)
+{
+    auto net = AddChildWithText(doc, sysdata, "networking", {});
+
+    AddChildWithText(doc, net, "state", cast_pod(SysInfo::NetStatus()));
+}
+
+STATICINLINE void DescribeMemory(XML::Document& doc, XML::Element* sysdata)
+{
+    auto mem = AddChildWithText(doc, sysdata, "memory", {});
+
+    AddChildWithText(doc, mem, "bank", cast_pod(SysInfo::MemTotal()));
+}
+
+STATICINLINE void DescribeProcessor(XML::Document& doc, XML::Element* sysdata)
+{
+    XML::Element* procdata = doc.NewElement("processors");
+    sysdata->InsertEndChild(procdata);
+
+    HWDeviceInfo pinfo = SysInfo::Processor();
+
+    XML::Element* proc_detail = doc.NewElement("processor");
+    procdata->InsertEndChild(proc_detail);
+
+    AddChildWithText(doc, proc_detail, "manufacturer", pinfo.manufacturer);
+    AddChildWithText(doc, proc_detail, "model", pinfo.model);
+    AddChildWithText(doc, proc_detail, "firmware", pinfo.firmware);
+
+    auto cache = AddChildWithText(doc, proc_detail, "cache", {});
+
+    AddChildWithText(doc, cache, "l1",
+                     cast_pod(SysInfo::ProcessorCacheSize()));
+
+    AddChildWithText(doc, proc_detail, "frequencies",
+                     cast_pod(SysInfo::ProcessorFrequency()));
+
+    auto hier = AddChildWithText(doc, proc_detail, "hierarchy", {});
+
+    ElementSetAttr(hier, "cores", cast_pod(SysInfo::CoreCount()));
+    ElementSetAttr(hier, "threads", cast_pod(SysInfo::ThreadCount()));
+
+    if(SysInfo::HasHyperThreading())
+        AddChildWithText(doc, proc_detail, "hyperthreading", {});
+}
+
 void ExportProfilerData(CString& target)
 {
 #ifdef COFFEE_LOWFAT
     return;
 #endif
 
-    auto argv = GetInitArgs().argv;
-    auto argc = GetInitArgs().argc;
+    auto app_args = GetInitArgs().arguments();
 
     XML::Document doc;
 
@@ -89,18 +155,24 @@ void ExportProfilerData(CString& target)
 
     /* Store data about runtime */
     {
-        XML::Element* rundata = doc.NewElement("runtime");
-        root->InsertEndChild(rundata);
+        auto rundata = AddChildWithText(doc, root, "runtime", {});
+
+        auto args = AddChildWithText(doc, rundata, "arguments", {});
 
         /* Launch commandline */
         XML::Element* argument;
-        for(int32 i=0;i<argc;i++)
+        for(auto arg : app_args)
         {
             argument = doc.NewElement("argument");
-            rundata->InsertEndChild(argument);
+            args->InsertEndChild(argument);
 
-            argument->SetText(argv[i]);
+            argument->SetText(arg);
         }
+
+        auto AddElement = [&](cstring tagname, CString text)
+        {
+            AddChildWithText(doc,  rundata, tagname, text);
+        };
 
         /* Current working directory,
          * most likely application directory
@@ -108,60 +180,30 @@ void ExportProfilerData(CString& target)
 		CString sys_string = PlatformData::SystemDisplayString();
         CString device_string = cStringFormat("{0}", SysInfo::DeviceName());
 
-        CString cwd = Env::CurrentDir();
-        rundata->SetAttribute("cwd",cwd.c_str());
+        AddElement("cwd", Env::CurrentDir());
 
-        rundata->SetAttribute("version",CoffeeBuildString);
-        rundata->SetAttribute("system", sys_string.c_str());
-        rundata->SetAttribute("device", device_string.c_str());
-        rundata->SetAttribute("compiler",CoffeeCompilerString);
-        rundata->SetAttribute("architecture",CoffeeArchString);
+        AddElement("system", sys_string.c_str());
+        AddElement("device", device_string.c_str());
     }
     cVerbose(8,"Writing runtime data");
+
+    {
+        auto bdata = AddChildWithText(doc, root, "build", {});
+
+        AddChildWithText(doc, bdata, "version", CoffeeBuildString);
+        AddChildWithText(doc, bdata, "compiler", CoffeeCompilerString);
+        AddChildWithText(doc, bdata, "architecture", CoffeeArchString);
+    }
+    cVerbose(8, "Writing build data");
 
     /* Store system information */
     {
         XML::Element* sysdata = doc.NewElement("sysinfo");
         root->InsertEndChild(sysdata);
 
-        CString tmp = Convert::uinttostring(SysInfo::NetStatus());
-        sysdata->SetAttribute("sys.net",tmp.c_str());
-
-        tmp = Convert::uintltostring(SysInfo::MemTotal());
-        sysdata->SetAttribute("sys.memory",tmp.c_str());
-
-        {
-            HWDeviceInfo pinfo = SysInfo::Processor();
-
-            tmp = pinfo.manufacturer;
-            sysdata->SetAttribute("proc.manufacturer",tmp.c_str());
-
-            tmp = pinfo.model;
-            sysdata->SetAttribute("proc.model",tmp.c_str());
-
-            tmp = pinfo.firmware;
-            sysdata->SetAttribute("proc.firmware",tmp.c_str());
-        }
-
-        tmp = Convert::uintltostring(SysInfo::ProcessorCacheSize());
-        sysdata->SetAttribute("proc.cache",tmp.c_str());
-
-        tmp = Convert::scalartostring(SysInfo::ProcessorFrequency());
-        sysdata->SetAttribute("proc.freq",tmp.c_str());
-
-        {
-            tmp = Convert::uinttostring(SysInfo::CpuCount());
-            sysdata->SetAttribute("proc.count",tmp.c_str());
-
-            tmp = Convert::uinttostring(SysInfo::CoreCount());
-            sysdata->SetAttribute("proc.cores",tmp.c_str());
-
-            tmp = Convert::uintltostring(SysInfo::ThreadCount());
-            sysdata->SetAttribute("proc.threads",tmp.c_str());
-        }
-
-        tmp = Convert::booltostring(SysInfo::HasHyperThreading());
-        sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
+        DescribeMemory(doc, sysdata);
+        DescribeNetwork(doc, sysdata);
+        DescribeProcessor(doc, sysdata);
     }
     cVerbose(8,"Writing system data");
 
@@ -291,31 +333,32 @@ void ExportProfilerData(CString& target)
     target.insert(0, printer.CStr(), C_CAST<szptr>(printer.CStrSize()));
 }
 
-void ExportStringToFile(const CString &data, cstring outfile)
+void ExportStringToFile(const CString &data, const Url &outfile)
 {
 #ifdef COFFEE_LOWFAT
     return;
 #endif
 
-    /* TODO: Create structure to describe log directory */
-#if defined(COFFEE_ANDROID)
-    const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
-#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
-    const constexpr cstring logtemplate = "/tmp/{0}_profile.xml";
-#else
-    cstring logtemplate = outfile;
-#endif
+//#if defined(COFFEE_ANDROID)
+//    const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
+//#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
+//    const constexpr cstring logtemplate = "/tmp/{0}_profile.xml";
+//#else
+//    cstring logtemplate = outfile;
+//#endif
 
-    CString log_name = cStringFormat(
-                logtemplate,
-                ApplicationData().application_name);
+//    CString log_name = cStringFormat(
+//                logtemplate,
+//                ApplicationData().application_name);
+
     cVerbose(6,"Creating filename");
-    CResources::Resource out(log_name.c_str(),true);
+    CResources::Resource out(outfile);
     out.data = C_CCAST<c_ptr>(C_FCAST<c_cptr>(data.c_str()));
     /* -1 because we don't want the null-terminator */
     out.size = C_CAST<szptr>(data.size() - 1);
     cVerbose(6,"Retrieving data pointers");
-    CResources::FileCommit(out, false, ResourceAccess::Discard);
+    if(!CResources::FileCommit(out, false, ResourceAccess::Discard))
+        cWarning("Failed to export string to file");
     cVerbose(6,"Wrote file");
 }
 
@@ -329,20 +372,22 @@ void ExitRoutine()
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
         if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
         {
-            constexpr cstring log_fmt = "{0}-profile.xml";
-        
-            CString log_name = Env::ExecutableName();
-            log_name = Env::BaseName(log_name.c_str());
-            log_name = CStrReplace(log_name,".exe","");
-            log_name = cStringFormat(log_fmt, log_name);
-            CString c_file = FileFun::CanonicalName(log_name.c_str());
-            if(c_file.size() == 0)
-                c_file = cStringFormat(log_fmt, Env::ExecutableName());
-            cVerbose(6, "Saving profiler data to: {0}", c_file);
+            auto log_name = (Path{Env::ExecutableName()}
+                    .fileBasename()
+                    .removeExt() + "-profile")
+                    .addExtension("xml");
+
+            auto log_url = MkUrl(log_name.internUrl.c_str(),
+                                 ResourceAccess::SpecifyStorage
+                                 |ResourceAccess::TemporaryFile);
+
 
             CString target_log;
-            Profiling::ExportProfilerData(/*log_name.c_str(),argc,argv*/ target_log);
-            Profiling::ExportStringToFile(target_log, log_name.c_str());
+            Profiling::ExportProfilerData(target_log);
+            Profiling::ExportStringToFile(target_log, log_url);
+
+            cVerbose(6, "Saved profiler data to: {0}",
+                     FileFun::CanonicalName(log_url));
         }
     }
     /* ... and always destroy the profiler */

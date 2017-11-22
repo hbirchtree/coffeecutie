@@ -19,8 +19,8 @@ typedef struct
 
 typedef PACKEDSTRUCT
 {
-    sbyte_t magic[8];
-    sbyte_t build_ver[32];
+    char magic[8];
+    char build_ver[32];
     uint32 num_groups;
 } smsh_header_t;
 

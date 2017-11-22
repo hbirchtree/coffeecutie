@@ -113,7 +113,7 @@ if(COFFEE_GENERATE_LIBRARIES)
             add_subdirectory(examples)
         endif()
         if(GENERATE_TESTS)
-            add_subdirectory(examples/unit-tests)
+            add_subdirectory(tests)
         endif()
     endif()
 
@@ -129,4 +129,8 @@ link_directories(
     ${CMAKE_BINARY_DIR}/libs/lib/
     )
 
-generate_findscript()
+add_custom_target ( NULL )
+
+if(COFFEE_GENERATE_LIBRARIES)
+    generate_findscript()
+endif()

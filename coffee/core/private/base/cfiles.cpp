@@ -4,73 +4,36 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/CDebug>
 
-#include "../plat/file/file_abstraction.h"
+#include <coffee/core/base/files/url.h>
 
 namespace Coffee{
 namespace CResources{
-
-static CString _coffee_resource_prefix = "./";
-
-CString DereferencePath(cstring suffix, ResourceAccess storageMask)
-{
-    //We will NOT try to add any '/' in there.
-    cVerbose(9, "Dereferencing resource path");
-    if(feval(storageMask&ResourceAccess::SpecifyStorage))
-    {
-        CString asset_fn = CString(AssetApi::AssetPrefix)+suffix;
-
-        if(feval(storageMask&ResourceAccess::ConfigFile))
-        {
-#if defined(COFFEE_APPLE_MOBILE)
-            return FileFun::NativePath(asset_fn.c_str(),
-                                       storageMask&ResourceAccess::StorageMask);
-#else
-            cVerbose(9, "Detected configuration file flag");
-            CString cfgDir = Env::GetUserData(nullptr,nullptr);
-            cVerbose(9, "Using configuration directory: {0}", cfgDir);
-            if(!DirFun::MkDir(cfgDir.c_str(), true))
-                return {};
-            return Env::ConcatPath(cfgDir.c_str(),suffix);
-#endif
-        }
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || defined(COFFEE_LINUX) || defined(COFFEE_WINDOWS)
-        else if(feval(storageMask,ResourceAccess::AssetFile)
-                && FileFun::VerifyAsset(asset_fn.c_str()))
-            return asset_fn.c_str();
-#endif
-        else if(feval(storageMask,ResourceAccess::TemporaryFile))
-            return FileFun::NativePath(suffix,ResourceAccess::TemporaryFile);
-    }
-#if defined(COFFEE_ANDROID)
-    return suffix;
-#else
-    return _coffee_resource_prefix+suffix;
-#endif
-}
 
 struct Resource::ResourceData
 {
     FileFun::FileMapping m_mapping;
     FileFun::FileHandle* m_handle;
+    Url m_url;
 };
 
 Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
-    m_resource(),
-    m_platform_data(new ResourceData),
-    data(nullptr),
-    size(0),
-    flags(Undefined)
+    Resource(MkUrl(rsrc, acc & ResourceAccess::StorageMask))
 {
-    if(absolute)
-        m_resource = rsrc;
-    else{
-        m_resource = DereferencePath(rsrc,acc&ResourceAccess::StorageMask);
-    }
 }
 
 Resource::Resource(cstring rsrc, ResourceAccess acc):
     Resource(rsrc,false,acc)
 {
+}
+
+Resource::Resource(const Url &url):
+    m_resource(*url),
+    m_platform_data(new ResourceData),
+    data(nullptr),
+    size(0),
+    flags(Undefined)
+{
+    m_platform_data->m_url = url;
 }
 
 Resource::Resource(Resource &&rsc)
@@ -103,23 +66,17 @@ bool Resource::valid() const
     return !m_resource.empty();
 }
 
-void FileResourcePrefix(cstring prefix)
-{
-    _coffee_resource_prefix = prefix;
-}
-
 bool FileExists(const Resource &resc)
 {
-    CString native_fn = FileFun::NativePath(resc.resource());
-    return FileFun::Exists(native_fn.c_str());
+    return FileFun::Exists(resc.m_platform_data->m_url);
 }
 
 bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 {
-    CString native_fn = FileFun::NativePath(resc.resource());
-    cVerbose(6,"Native file path: {0}->{1}",resc.resource(),native_fn);
-    resc.size = FileFun::Size(native_fn.c_str());
+//    CString native_fn = FileFun::NativePath(resc.resource());
+//    cVerbose(6,"Native file path: {0}->{1}",resc.resource(),native_fn);
 
+    resc.size = FileFun::Size(resc.m_platform_data->m_url);
     resc.size = CMath::max(resc.size, size);
 
     if(resc.size == 0)
@@ -127,7 +84,7 @@ bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 
     int err = 0;
     resc.m_platform_data->m_mapping = FileFun::Map(
-				native_fn.c_str(),
+                resc.m_platform_data->m_url,
                 acc,
                 0,resc.size,
                 &err);
@@ -140,7 +97,8 @@ bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 #else
 		CString error = win_strerror(err);
 #endif
-        cWarning("Failed to map file {2}:{0}: {1}",err,error,resc.resource());
+        cWarning("Failed to map file {2}:{0}: {1}",
+                 err,error,resc.resource());
         resc.size = 0;
         return false;
     }
@@ -181,8 +139,9 @@ void FileFree(Resource &resc)
 
 bool FilePull(Resource &resc, bool textmode, bool)
 {
-	CString native_fn = FileFun::NativePath(resc.resource());
-    FileFun::FileHandle *fp = FileFun::Open(native_fn.c_str(),ResourceAccess::ReadOnly);
+    FileFun::FileHandle *fp =
+            FileFun::Open(resc.m_platform_data->m_url,
+                          ResourceAccess::ReadOnly);
 
     if(!fp){
         cWarning("Failed to read file: {0}",resc.resource());
@@ -195,6 +154,9 @@ bool FilePull(Resource &resc, bool textmode, bool)
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
 
+    if(!resc.data)
+        return false;
+
     resc.flags = resc.flags|Resource::FileIO;
 
     return true;
@@ -203,15 +165,15 @@ bool FilePull(Resource &resc, bool textmode, bool)
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
     cVerbose(7,"Entered FileCommit");
-    CString native_fn = FileFun::NativePath(resc.resource());
-    cVerbose(7,"Got native path: {0}",native_fn);
+//    CString native_fn = FileFun::NativePath(resc.resource());
+//    cVerbose(7,"Got native path: {0}",native_fn);
     ResourceAccess dflags = ResourceAccess::WriteOnly;
 
 //    if(!FileFun::Exists(native_fn.c_str()))
         dflags |= ResourceAccess::NewFile;
 
     FileFun::FileHandle *fp = FileFun::Open(
-                native_fn.c_str(),
+                resc.m_platform_data->m_url,
                 (append) ?
                     ResourceAccess::Append|dflags|acc
                   : dflags|acc);
@@ -228,7 +190,7 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
     return stat;
 }
 
-bool FileMkdir(cstring dirname, bool recursive)
+bool FileMkdir(Url const& dirname, bool recursive)
 {
     return DirFun::MkDir(dirname,recursive);
 }

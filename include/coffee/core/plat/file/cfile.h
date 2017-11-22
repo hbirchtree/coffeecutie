@@ -11,18 +11,18 @@ namespace CResources{
 
 struct CommonFileFun : FileFunDef
 {
-    STATICINLINE CString NativePath(cstring fn)
-    {
-#if defined(COFFEE_WINDOWS)
-	return CStrReplace(fn,"/","\\");
-#else
-	return fn;
-#endif
-    }
-    STATICINLINE CString NativePath(cstring fn, ResourceAccess)
-    {
-        return NativePath(fn);
-    }
+//    STATICINLINE CString NativePath(cstring fn)
+//    {
+//#if defined(COFFEE_WINDOWS)
+//	return CStrReplace(fn,"/","\\");
+//#else
+//	return fn;
+//#endif
+//    }
+//    STATICINLINE CString NativePath(cstring fn, ResourceAccess)
+//    {
+//        return NativePath(fn);
+//    }
 };
 
 struct FILEApi
@@ -47,8 +47,9 @@ struct CFILEFun_def : CommonFileFun
 {
     using FileMapping = FILEApi::FileMapping;
 
-    STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
+    STATICINLINE FH* Open(Url const& fn, ResourceAccess ac)
     {
+        auto url = *fn;
         FH* fh = new FH;
 
         cstring mode = nullptr;
@@ -70,8 +71,7 @@ struct CFILEFun_def : CommonFileFun
         else if(feval(ac&(ResourceAccess::ReadWrite)))
             mode = "rb+";
 
-        CString fn_native = NativePath(fn);
-        fh->handle = fopen(fn_native.c_str(),mode);
+        fh->handle = fopen(url.c_str(),mode);
 
         if(!fh->handle)
         {
@@ -119,7 +119,7 @@ struct CFILEFun_def : CommonFileFun
         return wsize==d.size;
     }
 
-    STATICINLINE szptr Size(cstring fn)
+    STATICINLINE szptr Size(Url const& fn)
     {
         FH* f = Open(fn, ResourceAccess::ReadOnly);
         if(f)
@@ -147,7 +147,7 @@ struct CFILEFun_def : CommonFileFun
      * \param err
      * \return
      */
-    STATICINLINE FileMapping Map(cstring fname, ResourceAccess access,
+    STATICINLINE FileMapping Map(Url const& fname, ResourceAccess access,
                                  szptr size, szptr offset, int*)
     {
         FileMapping map;
@@ -176,7 +176,7 @@ struct CFILEFun_def : CommonFileFun
 
         return true;
     }
-    STATICINLINE bool Exists(cstring fn)
+    STATICINLINE bool Exists(Url const& fn)
     {
         FH* f = Open(fn, ResourceAccess::ReadOnly);
         if(f)

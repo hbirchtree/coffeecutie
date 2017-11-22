@@ -5,141 +5,52 @@
 #define COFFEE_ARG_SWITCH '-'
 
 #include "../platform_detect.h"
-#include "../../coffee_macros.h"
-#include "../../types/tdef/stltypes.h"
-#include "../../types/tdef/integertypes.h"
 #include "../memory/cmemory.h"
 
 namespace Coffee{
 
-struct ArgumentCollection;
+struct _cbasic_arg_container;
 
-struct ArgParse
+using AppArg = _cbasic_arg_container;
+
+struct ArgumentResult
 {
-    using Character = char;
-    using String = cstring;
-    using String_w = cstring_w;
-
-    friend struct ArgumentCollection;
-
-protected:
-    STATICINLINE String _switch_short(String in)
-    {
-        /* If len is less than 2, it's not what we look for */
-        if(StrLen(in)<2)
-            return nullptr;
-        /* If first character is not "-" or "/", return with doomed ptr */
-        if(in[0]!=COFFEE_ARG_SWITCH && in[1]!=COFFEE_ARG_SWITCH)
-            return nullptr;
-        /* If all is good, return ptr to switch part */
-        return &in[1];
-    }
-    STATICINLINE String _switch_long(String in)
-    {
-        if(StrLen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
-            return in;
-        return &in[2];
-    }
-    STATICINLINE bool _cmp_short_switch(String in, Character sw)
-    {
-        /* If input is large, we probably don't want to parse it with this */
-        cstring opt = _switch_short(in);
-        for(szptr i=0;i<StrLen(opt);i++)
-            if(opt[i] == sw)
-                return true;
-        return false;
-    }
-    STATICINLINE bool _cmp_long_switch(String in, String sw)
-    {
-        return StrCmp(_switch_long(in),sw);
-    }
-
-    /*!
-     * \brief Check if an argument exists
-     * \param argc
-     * \param argv
-     * \param sw_l
-     * \param sw_s
-     * \param pos
-     * \return
-     */
-    static bool Check(int argc, String* argv, String sw_l, Character sw_s, int* pos);
-    /*!
-     * \brief Get the value of an argument
-     * \param argc
-     * \param argv
-     * \param sw
-     * \param sw_s
-     * \param pos
-     * \return
-     */
-    static cstring Get(int argc, String* argv, String sw, Character sw_s, int* pos);
-
-public:
-    STATICINLINE bool Check(int argc, String* argv, String sw)
-    {
-        return Check(argc,argv,sw,0,nullptr);
-    }
-    STATICINLINE String Get(int argc, String* argv, String sw)
-    {
-        return Get(argc,argv,sw,0,nullptr);
-    }
-
-    STATICINLINE bool Check(int argc, String_w* argv, String sw)
-    {
-        return Check(argc,(String*)argv,sw);
-    }
-    STATICINLINE String Get(int argc, String_w* argv, String sw)
-    {
-        return Get(argc,(String*)argv,sw);
-    }
+    Set<CString> switches;
+    Map<CString, CString> arguments;
+    Map<CString, CString> positional;
 };
 
-struct ArgumentCollection
+struct ArgumentParser
 {
-public:
-    enum ArgType
+    struct aargswitch
     {
-        Switch,
-        Argument,
+        cstring name;
+        cstring longname;
+        cstring shortname;
+        cstring help;
+    };
+    struct apos
+    {
+        cstring name;
+        cstring help;
     };
 
-    bool registerArgument(ArgType l, cstring lname,
-                          cstring sname = nullptr,
-                          cstring information = nullptr);
+    void addSwitch(cstring name, cstring longname, cstring shortname,
+                   cstring help);
 
-private:
-    struct arg_variant
-    {
-        ArgType type;
-        cstring information;
-        union
-        {
-            bool switched;
-            cstring data;
-        };
-    };
+    void addArgument(cstring name, cstring longname, cstring shortname,
+                     cstring help);
 
-    Vector<cstring> positional;
-    LinkList<arg_variant> arguments;
-    Map<CString,arg_variant*> short_args;
-    Map<CString,arg_variant*> long_args;
+    void addPositionalArgument(cstring name,
+                               cstring help);
 
-    void get_argument(int argc, cstring* argv, Set<int>& _indices,
-                      ArgType type, cstring sw, cstring sw_s, arg_variant& var);
-
-public:
-
-    void parseArguments(int argc, cstring_w* _argv);
-    Map<CString,cstring> getArgumentOptions();
-    Map<CString,bool> getSwitchOptions();
+    ArgumentResult parseArguments(AppArg& args);
 
     CString helpMessage() const;
 
-    FORCEDINLINE Vector<cstring> const& getPositionalArguments()
-    {
-        return positional;
-    }
+    Vector<aargswitch> switches;
+    Vector<aargswitch> arguments;
+    Vector<apos> posargs;
 };
 
 }

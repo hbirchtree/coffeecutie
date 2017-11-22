@@ -36,26 +36,26 @@ static cstring m_shader_fragment_passthrough = {
 #endif
     "uniform sampler2D tex;\n"
     "in vec2 tex_out;\n"
-    "layout(location=0) out vec4 out_col;\n"
+    "layout(location=0) out vec4 OutColor;\n"
     "void main(){\n"
 #if !defined(COFFEE_ANDROID) && 0
     "    vec4 comp = texture(tex,tex_out);\n"
     "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
     "    out_col.a = comp.a;\n"
     #else
-    "    out_col = texture(tex,tex_out);\n"
+    "    OutColor = texture(tex,tex_out);\n"
 #endif
     "}\n"
 };
 
-static const scalar m_vertex_quad_data[] = {
-    -1.f, -1.f, 0.f, 0.f, 0.f,
-     1.f, -1.f, 0.f, 1.f, 0.f,
-    -1.f,  1.f, 0.f, 0.f, 1.f,
+static const i8 m_vertex_quad_data[] = {
+    -127, -127, 0,   0,
+     127, -127, 127, 0,
+    -127,  127, 0,   127,
 
-    -1.f,  1.f, 0.f, 0.f, 1.f,
-     1.f,  1.f, 0.f, 1.f, 1.f,
-     1.f, -1.f, 0.f, 1.f, 0.f,
+     127,  127, 127, 127,
+    -127,  127, 0,   127,
+     127, -127, 127, 0,
 };
 
 void GLEAM_Quad_Drawer::create()
@@ -87,6 +87,11 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 
 void GLEAM_Quad_Drawer::cleanup()
 {
+}
+
+GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc()
+{
+    return m_desc;
 }
 
 bool GLEAM_Quad_Drawer::compile_shaders()
@@ -134,17 +139,22 @@ void GLEAM_Quad_Drawer::create_vbo_data()
 
     m_desc.alloc();
 
-    GLEAM_VertAttribute pos;
-    GLEAM_VertAttribute tex;
+    GLEAM_VertAttribute pos = {};
+    GLEAM_VertAttribute tex = {};
 
     pos.m_idx = 0;
     tex.m_idx = 1;
 
-    pos.m_size = 3;
-    tex.m_size = 2;
+    pos.m_size = tex.m_size = 2;
 
-    pos.m_stride = tex.m_stride = sizeof(scalar) * 5;
-    tex.m_off = sizeof(scalar) * 3;
+    pos.m_type = tex.m_type = TypeEnum::Byte;
+
+    pos.m_flags = tex.m_flags =
+            GLEAM_API::AttributeNormalization
+            |GLEAM_API::AttributePacked;
+
+    pos.m_stride = tex.m_stride = sizeof(sbyte_t) * 4;
+    tex.m_off = sizeof(sbyte_t) * 2;
 
     m_desc.addAttribute(pos);
     m_desc.addAttribute(tex);

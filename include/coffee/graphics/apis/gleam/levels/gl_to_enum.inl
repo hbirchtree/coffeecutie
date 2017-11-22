@@ -941,6 +941,14 @@ inline CGenum to_enum(BitFormat f)
 #endif
     case BitFormat::Scalar_32:
         return GL_FLOAT;
+    case BitFormat::UInt24_8:
+#if !defined(COFFEE_ONLY_GLES20)
+        return GL_UNSIGNED_INT_24_8;
+#else
+        /* In order to keep compatibility, we fall back to normal format,
+         *  and OpenGL ES 2.0 does not support depth+stencil formats. */
+        return GL_UNSIGNED_BYTE;
+#endif
     default:
         return GL_NONE;
     }
@@ -1186,97 +1194,115 @@ inline uint32 to_enum_shtype(CGenum f)
 {
     using namespace ShaderTypes;
 
+    /* We use sdt_* template to allow simpler verification of
+     *  these types later on. */
+
     switch(f)
     {
+#if !defined(COFFEE_ONLY_GLES20)
+    /* Depth buffer samplers */
+    case GL_SAMPLER_2D_SHADOW:
+        return sdt_sampf<S2|Depth>::value;
+    case GL_SAMPLER_2D_ARRAY_SHADOW:
+        return sdt_sampf<S2|Depth>::value;
+    case GL_SAMPLER_CUBE_SHADOW:
+        return sdt_sampf<SCube|Depth>::value;
+#endif
+#ifdef COFFEE_GLEAM_DESKTOP
+    case GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW:
+        return sdt_sampf<SCubeA|Depth>::value;
+#endif
+
+    /* Normal samplers */
     case GL_SAMPLER_2D:
-        return Sampler_v|S2|Scalar_t;
+        return sdt_sampf<S2>::value;
     case GL_SAMPLER_CUBE:
-        return Sampler_v|SCube|Scalar_t;
+        return sdt_sampf<SCube>::value;
 #if !defined(COFFEE_ONLY_GLES20)
     case GL_SAMPLER_CUBE_MAP_ARRAY:
-        return Sampler_v|SCubeA;
+        return sdt_sampf<SCubeA>::value;
     case GL_SAMPLER_3D:
-        return Sampler_v|S3|Scalar_t;
+        return sdt_sampf<S3>::value;
     case GL_SAMPLER_2D_ARRAY:
-        return Sampler_v|S2A|Scalar_t;
+        return sdt_sampf<S2A>::value;
 
     case GL_UNSIGNED_INT_SAMPLER_2D:
-        return Sampler_v|S2|UInt_t;
+        return sdt_samp<UInt_t,S2>::value;
     case GL_UNSIGNED_INT_SAMPLER_3D:
-        return Sampler_v|S3|UInt_t;
+        return sdt_samp<UInt_t,S3>::value;
     case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
-        return Sampler_v|S2A|UInt_t;
+        return sdt_samp<UInt_t,S2A>::value;
     case GL_UNSIGNED_INT_SAMPLER_CUBE:
-        return Sampler_v|SCube|UInt_t;
+        return sdt_samp<UInt_t,SCube>::value;
     case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
-        return Sampler_v|SCubeA|UInt_t;
+        return sdt_samp<UInt_t,SCubeA>::value;
 
     case GL_INT_SAMPLER_2D:
-        return Sampler_v|S2|Int_t;
+        return sdt_samp<Int_t,S2>::value;
     case GL_INT_SAMPLER_3D:
-        return Sampler_v|S3|Int_t;
+        return sdt_samp<Int_t,S3>::value;
     case GL_INT_SAMPLER_2D_ARRAY:
-        return Sampler_v|S2A|UInt_t;
+        return sdt_samp<Int_t,S2A>::value;
     case GL_INT_SAMPLER_CUBE:
-        return Sampler_v|Int_t|SCube;
+        return sdt_samp<Int_t,SCube>::value;
     case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
-        return Sampler_v|Int_t|SCubeA;
+        return sdt_samp<Int_t,SCubeA>::value;
         break;
 #endif
 
     case GL_FLOAT:
-        return Scalar_t;
+        return sdt_uniff<S1>::value;
     case GL_FLOAT_VEC2:
-        return Scalar_t|Vec_d|S2;
+        return sdt_uniff<Vec_d | S2>::value;
     case GL_FLOAT_VEC3:
-        return Scalar_t|Vec_d|S3;
+        return sdt_uniff<Vec_d | S3>::value;
     case GL_FLOAT_VEC4:
-        return Scalar_t|Vec_d|S4;
+        return sdt_uniff<Vec_d | S4>::value;
 
     case GL_FLOAT_MAT2:
-        return Scalar_t|Mat_d|S2;
+        return sdt_uniff<Mat_d | S2>::value;
     case GL_FLOAT_MAT3:
-        return Scalar_t|Mat_d|S3;
+        return sdt_uniff<Mat_d | S3>::value;
     case GL_FLOAT_MAT4:
-        return Scalar_t|Mat_d|S4;
+        return sdt_uniff<Mat_d | S4>::value;
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case GL_DOUBLE:
-        return BScalar_t;
+        return sdt_unifd<S1>::value;
     case GL_DOUBLE_VEC2:
-        return BScalar_t|Vec_d|S2;
+        return sdt_unifd<Vec_d | S2>::value;
     case GL_DOUBLE_VEC3:
-        return BScalar_t|Vec_d|S3;
+        return sdt_unifd<Vec_d | S3>::value;
     case GL_DOUBLE_VEC4:
-        return BScalar_t|Vec_d|S4;
+        return sdt_unifd<Vec_d | S4>::value;
 
     case GL_DOUBLE_MAT2:
-        return BScalar_t|Mat_d|S2;
+        return sdt_unifd<Mat_d | S2>::value;
     case GL_DOUBLE_MAT3:
-        return BScalar_t|Mat_d|S3;
+        return sdt_unifd<Mat_d | S3>::value;
     case GL_DOUBLE_MAT4:
-        return BScalar_t|Mat_d|S4;
+        return sdt_unifd<Mat_d | S4>::value;
 #endif
 
     case GL_UNSIGNED_INT:
-        return UInt_t;
+        return sdt_unifu<S1>::value;
 #if !defined(COFFEE_ONLY_GLES20)
     case GL_UNSIGNED_INT_VEC2:
-        return UInt_t|Vec_d|S2;
+        return sdt_unifu<Vec_d | S2>::value;
     case GL_UNSIGNED_INT_VEC3:
-        return UInt_t|Vec_d|S3;
+        return sdt_unifu<Vec_d | S3>::value;
     case GL_UNSIGNED_INT_VEC4:
-        return UInt_t|Vec_d|S4;
+        return sdt_unifu<Vec_d | S4>::value;
 #endif
 
     case GL_INT:
-        return Int_t;
+        return sdt_unifi<S1>::value;
     case GL_INT_VEC2:
-        return Int_t|Vec_d|S2;
+        return sdt_unifi<Vec_d | S2>::value;
     case GL_INT_VEC3:
-        return Int_t|Vec_d|S3;
+        return sdt_unifi<Vec_d | S3>::value;
     case GL_INT_VEC4:
-        return Int_t|Vec_d|S4;
+        return sdt_unifi<Vec_d | S4>::value;
 
     default:
         return ShaderTypes::None;

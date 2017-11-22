@@ -7,12 +7,15 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+using Lim = CGL_Shared_Limits;
+
 static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
                              uint32 binding, GLEAM_ArrayBuffer&)
 {
     for(GLEAM_VertAttribute const& attr : m_attributes)
         if(binding == attr.bufferAssociation())
         {
+            CGL33::VAOEnableAttrib(attr.index());
 #if !defined(COFFEE_ONLY_GLES20)
             bool use_integer = false;
             switch(attr.type())
@@ -37,7 +40,6 @@ static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
                             attr.bufferOffset()+attr.offset());
             else
 #endif
-                CGL33::VAOEnableAttrib(attr.index());
                 CGL33::VAOAttribPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.m_flags & GLEAM_API::AttributeNormalization,
@@ -75,7 +77,11 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute &attr)
     CGL33::VAOEnableAttrib(attr.index());
     if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
-        CGL43::VAOAttribFormat(attr.index(),attr.size(),attr.type(),false,attr.offset());
+        CGL43::VAOAttribFormat(
+                    attr.index(),attr.size(),
+                    attr.type(),
+                    attr.m_flags & GLEAM_API::AttributeNormalization,
+                    attr.offset());
     }
 #endif
 }
@@ -94,9 +100,10 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
         for(GLEAM_VertAttribute const& attr : m_attributes)
             if(binding == attr.bufferAssociation())
             {
-                CGL43::VAOBindVertexBuffer(binding,buf.m_handle,
-                                           attr.bufferOffset(),
-                                           attr.stride());
+                CGL43::VAOBindVertexBuffer(
+                            binding,buf.m_handle,
+                            attr.bufferOffset(),
+                            attr.stride());
                 CGL43::VAOAttribBinding(attr.index(),binding);
                 if(attr.instanced())
                     CGL43::VAOBindingDivisor(attr.index(),1);

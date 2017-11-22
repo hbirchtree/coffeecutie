@@ -24,9 +24,9 @@ struct RapidJson
 
     STATICINLINE Document Read(cstring data)
     {
-	Document doc;
-	doc.Parse(data);
-	return doc;
+        Document doc;
+        doc.Parse(data);
+        return doc;
     }
     STATICINLINE CString Serialize(Document const& doc)
     {

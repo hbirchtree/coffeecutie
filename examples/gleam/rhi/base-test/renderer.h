@@ -1,11 +1,14 @@
 #include <coffee/CGraphics>
-#include <coffee/CSDL2>
+#include <coffee/core/base/files/url.h>
 #include <coffee/core/CFiles>
+#include <coffee/CSDL2>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/core/base/types/counter.h>
 #include <coffee/core/CDebug>
+
+#include <coffee/asio/net_resource.h>
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/coffee_saving.h>
@@ -64,10 +67,12 @@ struct RendererState
 
         GLM::UNIFVAL transforms = {};
         GLM::UNIFVAL timeval = {};
+        GLM::UNIFVAL texture_size = {};
         GLM::UNIFSMP textures_array = {};
 
         Bytes transform_data = {};
         Bytes time_data = {};
+        Bytes texsize_data = {};
         
         // Graphics data
         CGCamera camera;
@@ -104,6 +109,7 @@ struct RendererState
         GLM::STENSTATE stenstate = {};
         
         GLM::USTATE unifstate = {};
+        GLM::USTATE unifstate_f = {};
         
         // Texture information
         bool did_apply_state = false;
@@ -152,11 +158,19 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
     if(e.type == CIEvent::TouchTap)
     {
         cDebug("Success!");
+        rdata->g_data.camera.position = {0.f, 0.f, -15.f};
+    }
+
+    if(e.type == CIEvent::TouchPan)
+    {
+        auto pev = C_FCAST<CIMTouchMotionEvent*>(data);
+        rdata->g_data.camera.position.x() = pev->origin.x / 1920.f;
+        rdata->g_data.camera.position.y() = pev->origin.y / 1200.f;
     }
     
     if(e.type == CIEvent::TouchRotate)
     {
-        CITouchRotateEvent* rev = C_FCAST<CITouchRotateEvent*>(data);
+        auto rev = C_FCAST<CITouchRotateEvent*>(data);
         
         Quatf rotation = Quatf(1.f, 0.f, rev->radians * 0.05f, 0.f);
         
@@ -168,7 +182,7 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
     {
         CITouchPinchEvent* pev = C_FCAST<CITouchPinchEvent*>(data);
         
-        rdata->g_data.camera.position.z() += (pev->factor - 1.f);
+        rdata->g_data.camera.position.z() += (-pev->factor + 1.f) / 100.f;
     }
 }
 
@@ -187,6 +201,8 @@ void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
 void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
     auto& g = d->g_data;
+
+    g = {};
 
     {
         szptr restore_size = sizeof(d->r_state);
@@ -347,6 +363,28 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         CStbImageLib::ImageFree(&img);
         CResources::FileUnmap(rsc);
     }
+
+    {
+        ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
+
+        Net::Resource rsc(ctx, "http://i.imgur.com/nQdOmCJ.png"_http);
+
+        if(rsc.fetch())
+        {
+            auto imdata = rsc.data();
+
+            CStbImageLib::CStbImage img;
+            CStbImageLib::LoadData(&img, BytesConst(imdata.data,
+                                                    imdata.size, 0));
+
+            eyetex.upload(BitFormat::UByte, PixCmp::RGBA,
+                          {img.size.w, img.size.h, 1},
+                          img.data, {0, 0, 0});
+        }else{
+            cWarning("Failed to retrieve spicy meme");
+        }
+    }
+
     Profiler::Profile("Texture loading");
     cVerbose("Uploading textures");
     
@@ -377,6 +415,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     g.transforms.data = &transform_data;
     g.timeval.data = &time_data;
+    g.texture_size.data = &g.texsize_data;
     
     /* We create some pipeline state, such as blending and viewport state */
     auto& viewportstate = g.viewportstate;
@@ -409,27 +448,29 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
      */
     Vector<GLM::UNIFDESC> unifs;
     GLM::GetShaderUniformState(eye_pip, &unifs);
-    auto& unifstate = g.unifstate;
+    auto& unifstate_v = g.unifstate;
+    auto& unifstate_f = g.unifstate_f;
     /* We assign CPU-side values to GPU-side values */
     for (GLM::UNIFDESC const &u : unifs) {
-        if (u.m_name == "transform[0]" || u.m_name == "transform")
+        if (u.m_name == "transform")
         {
-            unifstate.setUniform(u, &g.transforms);
+            unifstate_v.setUniform(u, &g.transforms);
             cVerbose(4, "Array size: {0}", u.m_arrSize);
         }
         else if (u.m_name == "texdata")
-            unifstate.setSampler(u, &g.textures_array);
+            unifstate_f.setSampler(u, &g.textures_array);
         else if (u.m_name == "mx")
-            unifstate.setUniform(u, &g.timeval);
+            unifstate_f.setUniform(u, &g.timeval);
+        else if (u.m_name == "texdata_gridSize")
+            unifstate_f.setUniform(u, &g.texture_size);
         else
             cVerbose(4,"Unhandled uniform value: {0}", u.m_name);
     }
     
     cVerbose("Acquire and set shader uniforms");
     
-
-    
-    /* Specifying the uniform data, such as camera matrices and transforms */
+    /* Specifying the uniform data, such as camera matrices
+     *  and transforms */
     
     
     auto& camera = g.camera;
@@ -590,10 +631,13 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         GLM::SetRasterizerState(g.rasterstate_poly);
         GLM::SetDepthState(g.deptstate);
     }
+
+    scalar texSize = i32(CMath::sqrt(g.eyetex->texSize().depth));
+    g.texsize_data = Bytes::Create(texSize);
     
     GLM::PipelineState pstate = {
         {ShaderStage::Vertex, g.unifstate},
-        {ShaderStage::Fragment, g.unifstate}
+        {ShaderStage::Fragment, g.unifstate_f}
     };
     
     /*
@@ -604,10 +648,10 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
      *  because this has a lot of benefits to efficiency.
      */
     
-    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata, g.o_query);
+    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata);
     
-    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
-                         g.call, g.instdata, *g.o_query);
+//    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
+//                         g.call, g.instdata, *g.o_query);
     
     if(d->r_state.debug_enabled)
     {
@@ -675,24 +719,33 @@ void frame_count(RendererState* d)
             cDebug("GPU Model: {0}", e.model());
 
             auto temp = e.temp();
-            cDebug("Temperature: {0} // {1}", temp.current, temp.max);
+            cDebug("Temperature: {0} // {1}",
+                   temp.current, temp.max);
 
             auto mem = e.mem();
-            cDebug("Memory use: tot={0}, used={1}, free={2}", mem.total, mem.used, mem.free);
-            cDebug("Memory used by this application: {0}", e.memUsage(ProcessProperty::Pid()));
+            cDebug("Memory use: tot={0}, used={1}, free={2}",
+                   mem.total, mem.used, mem.free);
+            cDebug("Memory used by this application: {0}",
+                   e.memUsage(ProcessProperty::Pid()));
 
             auto clk = e.clock(GpuInfo::Clock::Graphics);
-            cDebug("Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            cDebug("Clock limits: {0} / {1} / {2}",
+                   clk.current, clk.min, clk.max);
             clk = e.clock(GpuInfo::Clock::Memory);
-            cDebug("Memory limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            cDebug("Memory limits: {0} / {1} / {2}",
+                   clk.current, clk.min, clk.max);
             clk = e.clock(GpuInfo::Clock::VideoDecode);
-            cDebug("Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            cDebug("Video limits: {0} / {1} / {2}",
+                   clk.current, clk.min, clk.max);
 
             auto bus = e.bus();
-            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
+            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s",
+                   bus.rx, bus.tx);
 
             auto util = e.usage();
-            cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
+            cDebug("GPU usage: GPU={0}%,"
+                   " MEM={1}%, DECODER={2}%,"
+                   " ENCODER={3}%",
                    util.gpu, util.mem, util.decoder, util.encoder);
 
             cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));

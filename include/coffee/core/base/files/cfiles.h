@@ -1,5 +1,4 @@
-#ifndef CFILES_H
-#define CFILES_H
+#pragma once
 
 #include "../../types/edef/enumfun.h"
 #include "../../types/tdef/stltypes.h"
@@ -8,6 +7,9 @@
 #include "../../types/cdef/memtypes.h"
 
 namespace Coffee{
+
+struct Url;
+
 namespace CResources{
 
 /*!
@@ -29,6 +31,8 @@ public:
     friend bool FileMap(Resource &resc, ResourceAccess acc, szptr size);
     friend bool FileUnmap(Resource &resc);
 
+    friend bool FileExists(const Resource& resc);
+
     /*!
      * \brief Constructs a resource
      * \param rsrc Path to resource
@@ -37,6 +41,7 @@ public:
     Resource(cstring rsrc = nullptr,
              bool absolute = false,
              ResourceAccess acc = ResourceAccess::None);
+    Resource(Url const& url);
     Resource(cstring rsrc,
              ResourceAccess acc);
     Resource(Resource &&rsc);
@@ -59,13 +64,6 @@ public:
 };
 
 C_FLAGS(Resource::FileFlags,int);
-
-/*!
- * \brief Easy redirection of all resources in the application. :)
- * \param prefix
- * \return
- */
-extern void FileResourcePrefix(cstring prefix);
 
 extern bool FileExists(const Resource& resc);
 
@@ -103,7 +101,7 @@ extern void FileCommitTextmode(const Resource& resc, bool append = false);
  * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
  * \return True if process succeeded
  */
-extern bool FileMkdir(cstring dirname, bool recursive);
+extern bool FileMkdir(const Url &dirname, bool recursive);
 
 }
 
@@ -149,4 +147,3 @@ extern CString to_string(CResources::Resource const& r);
 }
 }
 
-#endif // CFILES_H

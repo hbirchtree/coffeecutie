@@ -33,34 +33,36 @@ Navigate to a directory outside the source tree, and do as follows:
 
  2. Build it
 
-        cd $SOURCE_DIR
-        TRAVIS_BUILD_DIR=$PWD
-        MAKEFILE_DIR=*directory path to Makefile.standalone, tools/makers*
-        BUILDVARIANT=$TARGET
-        TRAVIS_OS_NAME=*linux|osx*
-        DEPENDENCIES=*list of repository blobs, %-separated*
+	CONFIGURATION=*Debug|Release*
         GITHUB_TOKEN=*used if you are downloading dependencies*
 
-        $SOURCE_DIR/tools/ci/travis-build.sh
+        $SOURCE_DIR/quick-build.sh [TARGET]
 
 Where TARGET is one of the targets found in the Makefile.
 This process will download SDKs for most platforms, contained inside Docker containers.
 
+By default, this method uses Docker containers on Linux (this is not necessary for OS X/iOS targets). In order to generate a native environment, the following environment variable may be defined:
+
+	RUNNER=Makefile.workspace
+
+This changes the runtime of the build to become the bare-metal system. Android builds will require ANDROID\_SDK and ANDROID\_NDK to be defined, and Emscripten is untested. Systems with special toolchains (eg. Fedora, Ubuntu, SteamOS) will not work with this.
+
 ## Using the Makefiles on Windows
 Navigate to a directory outside the source tree, and do as follows in PowerShell:
 
-    $env:APPVEYOR_BUILD_FOLDER = $SOURCE_DIR
-    $env:APPVEYOR_REPO_NAME = *repo blob*
-    $env:APPVEYOR_REPO_COMMIT = (git -C $SOURCE_DIR rev-parse HEAD)
     $env:GITHUB_TOKEN = *for downloading engine dependencies, not necessary for engine itself*
-    $env:BUILDVARIANT = $TARGET
-    $env:MAKEFILE_DIR = *directory path of Makefile.windows in source tree*
     $env:CONFIGURATION = *Debug|Release*
-    $env:CMAKE_BIN = \\path\\to\\cmake.exe
-    $env:DEPENDENCIES = *list of repository blobs*
-    $env:BUILD_DIR = *probably $PWD*
 
-    $SOURCE_DIR\\tools\\ci\\appveyor-build.ps1
+    $SOURCE_DIR\\quick-build.ps1 [TARGET]
+
+Where the following targets are valid:
+
+ - win32.amd64
+ - win32.x86
+ - uwp.amd64
+ - uwp.arm
+
+This process creates a development environment suitable for Visual Studio, as there is no containerization on Windows.
 
 # Development environments
 ## For the lazy
@@ -93,4 +95,4 @@ tl;dr:
             -C$PROJECT_DIR/cmake/Preload/...
         ninja
 
-Some applications have sample data, sourced from the sample_data directory in the root of the project directory. Some applications will crash without these files.
+Some applications have sample data, sourced from the sample\_data directory in the root of the project directory. Some applications will crash without these files.

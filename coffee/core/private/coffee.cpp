@@ -66,7 +66,7 @@ FORCEDINLINE void PrintArchitectureInfo()
 #endif
 }
 
-FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
+FORCEDINLINE void PrintHelpInfo(ArgumentParser const& arg)
 {
     cOutputPrint("{0}",arg.helpMessage());
 }
@@ -96,6 +96,10 @@ void CoffeeInit(bool profiler_init)
 #endif
 
 #ifndef COFFEE_LOWFAT
+    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
+#endif
+
+#ifndef COFFEE_LOWFAT
     if(profiler_init)
     {
         Profiler::InitProfiler();
@@ -116,10 +120,6 @@ void CoffeeInit(bool profiler_init)
     PrintVersionInfo();
     PrintBuildInfo();
     PrintArchitectureInfo();
-
-#ifndef COFFEE_LOWFAT
-    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
-#endif
 
 #ifdef COFFEE_SLAP_LOWMEM
     /*
@@ -147,58 +147,84 @@ void CoffeeInit(bool profiler_init)
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
-    initargs = AppArg(argc, argv);
+    initargs = AppArg::Clone(argc, argv);
 
 #ifndef COFFEE_LOWFAT
-    {
-        ArgumentCollection parser;
-        parser.registerArgument(ArgumentCollection::Switch,"help","h",
-                                "Print help information and exit");
-        parser.registerArgument(ArgumentCollection::Switch,"version",nullptr,
-                                "Print version information and exit");
-        parser.registerArgument(ArgumentCollection::Switch,nullptr,"v",
-                                "Print verbose messages to terminal while running");
-        parser.registerArgument(ArgumentCollection::Switch,nullptr,"q",
-                                "Be quiet");
-        parser.registerArgument(ArgumentCollection::Switch,"licenses",nullptr,
-                                "Print license information and exit");
-
-        parser.parseArguments(argc,argv);
-
-        for(Pair<CString,bool> const& a : parser.getSwitchOptions())
-        {
-            if((a.first == "help" || a.first == "h") && a.second)
-            {
-                PrintVersionInfo();
-                PrintHelpInfo(parser);
-                return 0;
-            }
-            if(a.first == "v" && a.second)
-            {
-                Coffee::PrintingVerbosityLevel++;
-            }
-            if(a.first == "q" && a.second)
-            {
-                Coffee::PrintingVerbosityLevel = 0;
-            }
-            if(a.first == "version" && a.second)
-            {
-                PrintVersionInfo();
-                PrintBuildInfo();
-                return 0;
-            }
-            if(a.first == "licenses" && a.second)
-            {
-                PrintLicenseInfo();
-                return 0;
-            }
-        }
-    }
 
     Profiler::PushContext("CoffeeMain");
 
     CoffeeInit(false);
     Profiler::Profile("Init");
+
+    {
+        ArgumentParser parser;
+        parser.addSwitch(
+                    "help",
+                    "help","h",
+                    "Print help information and exit");
+
+        parser.addSwitch(
+                    "version","version", nullptr,
+                    "Print version information and exit");
+
+        parser.addSwitch(
+                    "verbose", nullptr, "v",
+                    "Print verbose messages to terminal while running");
+
+        parser.addSwitch(
+                    "quiet",nullptr,"q",
+                    "Be quiet");
+
+        parser.addSwitch(
+                    "licenses","licenses", nullptr,
+                    "Print license information and exit");
+
+        parser.addPositionalArgument(
+                    "resource_prefix",
+
+                    "Change resource prefix"
+                    " (only works if application does not"
+                    " override resource prefix)");
+
+        auto args = parser.parseArguments(initargs);
+
+        for(CString sw : args.switches)
+        {
+            if(sw == "help")
+            {
+                PrintVersionInfo();
+                PrintHelpInfo(parser);
+                return 0;
+            }else if(sw == "verbose")
+            {
+                Coffee::PrintingVerbosityLevel++;
+            }else if(sw == "quiet")
+            {
+                Coffee::PrintingVerbosityLevel = 0;
+            }else if(sw == "version")
+            {
+                PrintVersionInfo();
+                PrintBuildInfo();
+                return 0;
+            }else if(sw == "licenses")
+            {
+                PrintLicenseInfo();
+                return 0;
+            }
+        }
+
+        for(auto arg : args.arguments)
+        {
+            if(arg.first == "resource_prefix")
+                CResources::FileResourcePrefix(arg.second.c_str());
+        }
+
+        for(auto pos : args.positional)
+        {
+            if(pos.first == "resource_prefix")
+                CResources::FileResourcePrefix(pos.second.c_str());
+        }
+    }
 
     /* This is a bit more versatile than simple procedures
      */
@@ -234,7 +260,7 @@ void CoffeeTerminate()
 void GotoApplicationDir()
 {
     CString dir = Env::ApplicationDir();
-    DirFun::ChDir(dir.c_str());
+    DirFun::ChDir(MkUrl(dir.c_str()));
 }
 
 void InstallDefaultSigHandlers()

@@ -1,9 +1,6 @@
-#ifndef CREGEX_H
-#define CREGEX_H
+#pragma once
 
-#if !defined(COFFEE_ANDROID)
 #include <regex>
-#endif
 
 #include "../../coffee_mem_macros.h"
 #include "../../types/tdef/stltypes.h"
@@ -40,15 +37,20 @@ struct StdRegexImpl : RegexDef
         uint8 padding[7];
     };
 
-#if !defined(COFFEE_ANDROID)
     using Pattern = std::regex;
-#else
-    using Pattern = std::string;
-#endif
 
     STATICINLINE Pattern Compile(const CString& patt)
     {
-        return Pattern(patt);
+        /* Because GCC 4.8.x sucks, std::regex is really unstable */
+#if defined(COFFEE_BAD_REGEX)
+        try {
+#endif
+            return Pattern(patt);
+#if defined(COFFEE_BAD_REGEX)
+        } catch (std::regex_error const&) {
+            return {};
+        }
+#endif
     }
 
     static Vector<RegMatch> Match(
@@ -67,4 +69,3 @@ struct StdRegexImpl : RegexDef
 using Regex = RegexImplementation::StdRegexImpl;
 
 }
-#endif // CREGEX_H

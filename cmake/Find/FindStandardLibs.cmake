@@ -32,8 +32,12 @@ if(COFFEE_BUILD_SDL2)
         if(SDL2_INCLUDE_DIR)
             list ( APPEND CORE_INCLUDE_DIR
                 $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
-                $<INSTALL_INTERFACE:include/SDL2>
                 )
+            if(NOT ${SDL2_LIBRARY} MATCHES ".framework")
+                list ( APPEND CORE_INCLUDE_DIR
+                    $<INSTALL_INTERFACE:include/SDL2>
+                    )
+            endif()
         endif()
         #    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
     endif()
@@ -46,7 +50,7 @@ if(APPLE)
         "-framework CoreFoundation"
         "-framework CoreGraphics"
         "-framework Foundation"
-        "-framework OpenAL"
+        #        "-framework OpenAL"
         "-framework QuartzCore"
         )
     if(IOS)
@@ -70,10 +74,20 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
-#        GLESv1_CM
-        GLESv2
+        #        GLESv1_CM
+#        GLESv2
         EGL
         )
+
+    if(COFFEE_BUILD_GLES_20)
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            GLESv2
+            )
+    else()
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            GLESv3
+            )
+    endif()
 
     if(COFFEE_BUILD_SDL2)
         list ( APPEND CORE_EXTRA_LIBRARIES
@@ -85,12 +99,12 @@ if(ANDROID)
     list ( APPEND CORE_INCLUDE_DIR
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )
-#    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
-#        message ( "-- Building with GLES 3.0+ support" )
-#        list ( APPEND CORE_EXTRA_LIBRARIES
-#                GLESv3
-#                )
-#    endif()
+    #    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
+    #        message ( "-- Building with GLES 3.0+ support" )
+    #        list ( APPEND CORE_EXTRA_LIBRARIES
+    #                GLESv3
+    #                )
+    #    endif()
 endif()
 
 if(RASPBERRY)
@@ -98,50 +112,53 @@ if(RASPBERRY)
     # We also have bcm_host for accessing OpenGL for some reason
     # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
-#        GLESv2
+        #        GLESv2
         bcm_host
 
-#        asound
-#        pulse-simple pulse
-#        X11 Xext Xcursor Xinerama Xi Xrandr Xss Xxf86vm xkbcommon
-#        wayland-egl wayland-client wayland-cursor
+        #        asound
+        #        pulse-simple pulse
+        #        X11 Xext Xcursor Xinerama Xi Xrandr Xss Xxf86vm xkbcommon
+        #        wayland-egl wayland-client wayland-cursor
         )
 endif()
 
 if(WIN32)
     # Don't know what this is, but it's necessary
-	if(NOT WIN_UWP)
-		list ( APPEND CORE_EXTRA_LIBRARIES
-			 # For some of the file API
-			 #pathcch
+    if(NOT WIN_UWP)
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            # For some of the file API
+            #pathcch
 
-			 # Core includes
-			 user32
-			 gdi32
-			 winmm
-			 imm32
-			 ole32
-			 oleaut32
-			 shell32
-			 version
-			 Ws2_32
-			 wbemuuid
-			 )
-	else()
-		list ( APPEND CORE_EXTRA_LIBRARIES
-			OneCore
-			)
-	endif()
+            # Core includes
+            user32
+            gdi32
+            winmm
+            imm32
+            ole32
+            oleaut32
+            shell32
+            version
+            ws2_32
+            wbemuuid
+            )
+    else()
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            OneCore
+            )
+    endif()
 
-	if(COFFEE_BUILD_ANGLE)
-		find_package( ANGLE REQUIRED )
-		list ( APPEND CORE_EXTRA_LIBRARIES
-			${ANGLE_LIBRARIES}
-			)
-		list ( APPEND CORE_INCLUDE_DIR
-			${ANGLE_INCLUDE_DIR}
-			)
-	endif()
+    if(MINGW64)
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            mingw32
+            )
+    endif()
+
+    if(COFFEE_BUILD_ANGLE)
+        find_package( ANGLE REQUIRED )
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            AngleEGL AngleGLESv2
+            )
+    endif()
 endif()
 
 if(NACL)

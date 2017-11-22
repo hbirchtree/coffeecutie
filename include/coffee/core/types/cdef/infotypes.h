@@ -29,13 +29,13 @@ struct HWDeviceInfo
         firmware(firmware)
     {}
     FORCEDINLINE HWDeviceInfo(CString manufacturer,
-			      CString model,
-			      CString firmware,
-			      CString serial):
-	manufacturer(manufacturer),
-	model(model),
-	firmware(firmware),
-	serial(serial)
+                  CString model,
+                  CString firmware,
+                  CString serial):
+    manufacturer(manufacturer),
+    model(model),
+    firmware(firmware),
+    serial(serial)
     {}
 //    FORCEDINLINE HWDeviceInfo(HWDeviceInfo&& dev):
 //        HWDeviceInfo(dev.manufacturer, dev.model,
@@ -167,54 +167,18 @@ struct _cbasic_version
 
 struct _cbasic_arg_container
 {
-    FORCEDINLINE _cbasic_arg_container():
-        argv(nullptr),
-        argc(0),
-        string_containment(false)
-    {
-    }
-    FORCEDINLINE _cbasic_arg_container(int32& argc, cstring_w* argv):
-        argv(argv),
-        argc(argc),
-        string_containment(false)
-    {
-    }
+    friend struct ArgumentParser;
 
-    FORCEDINLINE void cleanup()
-    {
-        if(string_containment)
-        {
-            for(int32 i=0;i<argc;i++)
-                Mem::CFree(argv[i]);
-            Mem::CFree(argv);
-        }
-    }
+    void rebuildArgs();
 
-    STATICINLINE _cbasic_arg_container Clone(_cbasic_arg_container const& arg)
-    {
-        return Clone(arg.argc,arg.argv);
-    }
+    static _cbasic_arg_container Clone(int32 argc, cstring_w* argv);
 
-    STATICINLINE _cbasic_arg_container Clone(int32 argc, cstring_w* argv)
-    {
-        _cbasic_arg_container arg;
-        arg.argc = argc;
-        arg.argv = Mem::CallocPtrs<cstring_w>(argc);
-        for(int32 i=0;i<argc;i++)
-        {
-            szptr arglen = Mem::StrLen(argv[i]);
-            arg.argv[i] = Mem::AllocT<sbyte_t>(arglen+1);
-            arg.argv[i][arglen] = 0;
-            Mem::StrCpy(arg.argv[i],argv[i]);
-        }
-        arg.string_containment = true;
-        return arg;
-    }
+    Vector<cstring_w> const& arguments() const;
 
-    cstring_w* argv;
-    int32 argc;
+    Vector<cstring_w> m_ptrStorage;
 
 private:
+    Vector<CString> m_storage;
     bool string_containment;
 };
 

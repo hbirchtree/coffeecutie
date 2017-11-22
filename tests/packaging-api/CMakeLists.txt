@@ -1,0 +1,10 @@
+# Tests what happens to subdirectories and files on different systems, and whether it is desired behavior
+# This comes in handy to detect bugs, you know
+
+coffee_add_application_long (
+    Unit_Packaging_Test01 "Cu_PackagingTest"
+
+    test01.cpp
+
+    "CoffeeCore;CoffeeTesting" ""
+    "${COFFEE_ASSET_DIRECTORY}/packaging-test" )

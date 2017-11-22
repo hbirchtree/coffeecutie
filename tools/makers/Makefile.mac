@@ -7,7 +7,7 @@ COFFEE_DIR := $(PWD)/coffee_lib
 NATIVE_LIB_DIR := $(PWD)/native-libs
 BUILD_CONFIG := Debug
 
-EXTRA_OPTIONS := -DGENERATE_TESTS=OFF
+EXTRA_OPTIONS := -DGENERATE_TESTS=OFF -DCOFFEE_BUILD_ASSIMP=ON
 
 osx:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \

@@ -1,0 +1,359 @@
+targets:
+  android:
+    armv8a:
+      nougat:
+        - gles3
+      lollipop:
+        - gles3
+    armv7a:
+      nougat:
+        - gles2
+        - gles3
+      kitkat:
+        - gles2
+      gingerbread:
+        - gles2
+    mips:
+      kitkat:
+        - .
+    mips64:
+      kitkat:
+        - .
+    x86:
+      kitkat:
+        - .
+    x86_64:
+      kitkat:
+        - .
+  ubuntu:
+    amd64:
+      - .
+      - gles2
+      - gles3
+    i686:
+      - gles
+      - gles2
+  fedora:
+    - amd64
+  steam:
+    - amd64
+  coverage:
+    - .
+  docs:
+    - .
+  emscripten:
+    - asmjs
+    - wasm
+  maemo:
+    - armel
+  raspberry:
+    - armhf
+  mingw:
+    - w64
+
+global-sets:
+  containerized:
+    RUNNER: Makefile.multi
+    CMAKE_SOURCE_DIR: $(container.src)
+    CMAKE_BUILD_DIR: $(container.build)
+    CMAKE_INSTALL_DIR: $(container.install)
+    NATIVE_LIBRARY_DIR: $(dependencies.native-libs.target)
+    COFFEE_ROOT_DIR: $(lib.target)
+    ANDROID_NDK_INTERNAL: /home/coffee/android-ndk-linux
+    ANDROID_SDK_INTERNAL: /home/coffee/android-sdk-linux
+  bare:
+    RUNNER: Makefile.workspace
+    CMAKE_SOURCE_DIR: $(project.src)
+    CMAKE_BUILD_DIR: $(project.build)
+    CMAKE_INSTALL_DIR: $(project.install)
+    NATIVE_LIBRARY_DIR: $(dependencies.native-libs.root)
+    COFFEE_ROOT_DIR: $(lib.root)
+    ANDROID_NDK_INTERNAL: $(env:ANDROID_NDK)
+    ANDROID_SDK_INTERNAL: $(env:ANDROID_SDK)
+
+globals:
+  BUILD_DIR: $(env:PWD)
+  SOURCE_DIR: $(env:PWD)/..
+  ROOT_DIR: $(env:SOURCE_DIR)/$(env:MAKEFILE_DIR)
+  GENERATE_PROGRAMS: OFF
+  BUILD_MODE: containerized
+  CONFIGURATION: Debug
+
+# variables are transformed into project.src
+variables:
+  multi:
+    root: $(env:BUILD_DIR)
+  project:
+    src: $(env:SOURCE_DIR)
+    build: $(multi.root)
+    install: $(multi.root)/build
+  container:
+    src: /home/coffee/project
+    build: /home/coffee/build
+    install: /home/coffee/out
+  dep:
+    root: $(project.build)/dependencies
+  build:
+    prettyname: Nothing
+    build-type: $(env:CONFIGURATION)
+  # For importing the Coffee library
+  lib:
+    flavor: ERROR_ABORT_DELET_THIS
+    root: $(env:COFFEE_DIR)
+    target: /home/coffee/library
+
+  # Android-specific
+#  android-preload:
+#    root: $(multi.root)/build-android_standalone/build-android/preloads
+#    target: /home/coffee/preload
+  android:
+    stl: gnustl_static
+    toolchain: clang
+    features: rtti;exceptions
+    graphics: gles-2
+    api: 9
+    abi: nothing
+    arm-neon: OFF
+    gles20: ON
+    ndk: $(env:ANDROID_NDK_INTERNAL)
+    sdk: $(env:ANDROID_SDK_INTERNAL)
+
+dependencies:
+  native-libs:
+    type: git # type of dependency, decides procedure on how to use it
+    source: https://github.com/hbirchtree/native-library-bundle.git # in case of git, online url
+    root: $(dep.root)/native-libs # root is the native filesystem path
+    target: /nativelibs # target is only used with containers
+  rpi-sdk:
+    type: git
+    source: https://github.com/hbirchtree/raspberry-sysroot.git
+    root: $(dep.root)/raspberry-sysroot
+    target: /rpi-sysroot
+  emscripten:
+    type: empty
+    root: $(dep.root)/emsdk_portable
+    target: /home/coffee/emsdk_portable
+
+#
+# Templates
+# Apply variables based on regex matching in a tree
+# Nodes starting with = overwrite a variable, + appends to a the variable's list
+# Other nodes are branching regexes
+# Regexes follow Python rules
+# Some variables are only there for descriptive reasons
+#
+templates:
+  =target: multi
+  =cmake-target:
+    - install
+  =generator: Ninja
+  =build-type: $(build.build-type)
+  =preload: nothing.cmake
+  =lib.flavor: $(target-name)
+  
+  # Default dependency
+  =dependencies: native-libs
+  
+  # Default container options
+  =container-opts: 
+    - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
+    - -v $(project.src):$(container.src):ro
+    - -v $(project.install):$(container.install):rw
+    - -v $(project.build)/$(target-name):$(container.build):rw
+    - -v $(lib.root):$(lib.target):ro
+    - --workdir "$(env:CMAKE_BUILD_DIR)"
+  
+  # Default CMake options
+  =cmake-opts:
+    - $(env:CMAKE_SOURCE_DIR)
+    - -DNATIVE_LIBRARY_DIR=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)
+    - -DCOFFEE_ROOT_DIR=$(env:COFFEE_ROOT_DIR)/$(lib.flavor)
+    - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
+    - -DCOFFEE_BUILD_ASSIMP=ON
+    - -G'$(generator)'
+    - -C"$(env:CMAKE_SOURCE_DIR)/cmake/Preload/$(preload)"
+    - -DCMAKE_BUILD_TYPE=$(build.build-type)
+    - -DCMAKE_INSTALL_PREFIX=$(env:CMAKE_INSTALL_DIR)/$(target-name)
+    - -DCMAKE_TOOLCHAIN_FILE=$(env:CMAKE_SOURCE_DIR)/cmake/Toolchains/$(toolchain)
+
+
+  # For Ubuntu, Fedora, docs and coverage, specify generic preload
+  (ubuntu|docs|coverage|fedora).*:
+    (.*amd64.*|docs|coverage):
+      =container: ubuntu
+    (.*amd64.*|docs|coverage|fedora):
+      =toolchain: linux-generic_linux.toolchain.cmake
+  # Some parameters to make coverage testing work
+  coverage:
+    =description: Coverage build using same config as Ubuntu
+    =compiler: Clang
+    =target: multi.twostage
+    =preload: linux-coverage.cmake
+    +container-opts:
+      - -e CC=
+      - -e CXX=
+    =cmake-target:
+      - all
+      - CoverageTest@1
+
+  docs:
+    =description: Documentation build using only Doxygen
+    =compiler: Doxygen
+    =preload: docs-all.cmake
+  
+  ubuntu.*:
+    =description: Ubuntu build in a Ubuntu Docker
+    =compiler: GCC 5+
+    =preload: linux-generic.cmake
+    .*amd64.*:
+      +cmake-opts:
+        - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
+        - -DAPPIMAGE_RUNTIME_BINARY=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)/util/x86_64-linux-gnu/runtime
+        - -DCOFFEE_GENERATE_APPIMAGE=ON
+    .*i686.*:
+      =container: ubuntu-i686
+      =toolchain: linux-generic-i686_linux.toolchain.cmake
+    .*gles:
+      =preload: linux-gles.cmake
+    .*gles2:
+      =preload: linux-gles20.cmake
+
+  fedora.*:
+    =description: Fedora build in a Fedora Docker
+    =compiler: GCC 5+
+    =preload: linux-fedora.cmake
+    =container: fedora
+
+
+  steam.*:
+    =description: Build against the SteamRT SDK
+    =compiler: GCC 4.9.4
+    =preload: linux-steam.cmake
+    =toolchain: linux-steam_linux.toolchain.cmake
+    =container: steam
+
+
+  emscripten.*:
+    =description: Emscripten with WebAsm and asm.js
+    =compiler: Clang 4+
+    =container: emscripten
+    =preload: js-emscripten.cmake
+    =toolchain: js-emscripten.toolchain.cmake
+    =generator: Unix Makefiles
+    +cmake-opts:
+      - -DEMSCRIPTEN_ROOT_PATH=$(dependencies.emscripten.target)/emscripten/master
+      - -DCOFFEE_BUILD_ASSIMP=OFF
+    +container-opts:
+      - -e EMSCRIPTEN=$(dependencies.emscripten.target)/emscripten/master
+    .*wasm.*:
+      =preload: js-emscripten-wasm.cmake
+
+
+  android.*:
+    =description: Android builds, ARMv8-A and ARMv7-A mostly
+    =compiler: Clang
+    # Architecture specifics
+    .*armv8a.*:
+      =android.abi: arm64-v8a
+    .*armv7a.*:
+      =android.abi: 'armeabi-v7a with NEON'
+    .*armeabi.*:
+      =android.abi: armeabi
+    .*(x86\.).*:
+      =android.abi: x86
+    .*(x86_64).*:
+      =android.abi: x86_64
+    .*(mips\.).*:
+      =android.abi: mips
+    .*(mips64).*:
+      =android.abi: mips64
+    # Specifying native API level
+    .*(jelly||kitkat).*:
+      =android.api: 19
+    .*(lollipop|marshmallow).*:
+      =android.api: 21
+    .*nougat.*:
+      =android.api: 24
+    # Graphical properties
+    .*gles3.*:
+      =android.gles20: OFF
+
+    =android.toolchain: clang
+    +cmake-opts:
+      # Yay! Configuring the entire Android toolchain
+      - -DANDROID_NDK=$(android.ndk)
+      - -DANDROID_SDK=$(android.sdk)
+      - -DANDROID_TOOLCHAIN=$(android.toolchain)
+      - -DANDROID_STL=$(android.stl)
+      - -DANDROID_PLATFORM=android-$(android.api)
+      - -DANDROID_ABI='$(android.abi)'
+      - -DANDROID_CPP_FEATURES=$(android.features)
+      - -DANDROID_ARM_NEON=$(android.arm-neon)
+      - -DCOFFEE_BUILD_GLES=ON
+      - -DCOFFEE_BUILD_GLES_20=$(android.gles20)
+      - -DCOFFEE_BUILD_ASSIMP=ON
+      - -DCOFFEE_BUILD_OPENSSL=OFF
+      - -DCOFFEE_TESTS=OFF
+      - -DCOFFEE_BUILD_SDL2=OFF
+    =target: multi.twostage
+    =cmake-target:
+      - install
+      - AndroidPackage@1
+    =container: android
+    =toolchain: all-android.toolchain.cmake
+
+    
+  maemo.*:
+    =description: Maemo 5 builds, performed within a Maemo 5 armel chroot
+    =compiler: GCC 6
+    =preload: linux-maemo.cmake
+    =toolchain: linux-maemo-armv7_linux.toolchain.cmake
+    =container: :hbirch/maemo-builder:v3
+    =build.build-type: Release
+    =target: multi.make8
+    =generator: Unix Makefiles
+    +cmake-opts:
+      - -DCOFFEE_BUILD_ASSIMP=OFF
+    =container-opts: 
+      - -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
+      - -v $(lib.root):/maemo/$(lib.target):ro
+      - -v $(project.src):/maemo/$(container.src):ro
+      - -v $(project.install):/maemo/$(container.install):rw
+      - -v $(project.build)/$(target-name):/maemo/$(container.build):rw
+
+
+  raspberry.*:
+    =description: Raspberry Pi ARMv6 build
+    =compiler: GCC 4.9.4
+    =preload: linux-raspberry.cmake
+    =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
+    =container: raspberry
+    +dependencies: rpi-sdk
+    +container-opts: -v $(dependencies.rpi-sdk.root)/$(dependencies.rpi-sdk.path):$(dependencies.rpi-sdk.target):ro
+    +cmake-opts: -DRASPBERRY_SDK=$(dependencies.rpi-sdk.target)
+    .*armhf.*:
+      =dependencies.rpi-sdk.path: architectures/rpi-SDL2-X11-armv6
+
+
+  mingw.*:
+    =description: MinGW64 environment in Ubuntu Docker
+    =compiler: GCC 5+
+    =toolchain: windows-mingw64_linux.toolchain.cmake
+    =preload: windows-mingw64.cmake
+    =container: mingw64
+
+
+  (ubuntu.*|coverage|docs):
+    =build.prettyname: Ubuntu
+  (fedora.*):
+    =build.prettyname: Fedora
+  (steam.*):
+    =build.prettyname: SteamOS
+  (maemo.*):
+    =build.prettyname: Maemo
+  (android.*):
+    =build.prettyname: Android
+  (raspberry.*):
+    =build.prettyname: RaspberryPi
+  (mingw.*):
+    =build.prettyname: MinGW

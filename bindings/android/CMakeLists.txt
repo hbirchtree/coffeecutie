@@ -8,13 +8,12 @@ if(ANDROID_USE_SDL2_LAUNCH)
 endif()
 
 set ( AndroidCore_SRCS
-    stub.cpp
-    #        static.cpp
     )
 
 if(NOT ANDROID_USE_SDL2_LAUNCH)
     list (APPEND AndroidCore_SRCS
         ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}
+        ${NDK_HELPER_SOURCES}
         android_wrapperfun.cpp
         android_assets.cpp
         )
@@ -25,9 +24,14 @@ coffee_add_library ( AndroidCore
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     )
 
-coffee_bundle_includes( ${CMAKE_CURRENT_SOURCE_DIR}/include )
+# Suppress all those annoying double messages
+set_source_files_properties (
+    ${ANDROID_GLUE_SOURCES}
+    PROPERTIES
+    COMPILE_DEFINITIONS "NDEBUG"
+    )
 
-message ( "${ANDROID_GLUE_INCLUDE_DIR}" )
+coffee_bundle_includes( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 target_link_libraries ( AndroidCore
     PRIVATE
@@ -37,5 +41,6 @@ target_link_libraries ( AndroidCore
 target_include_directories ( AndroidCore
     PRIVATE
     ${ANDROID_GLUE_INCLUDE_DIR}
+    ${NDK_HELPER_INCLUDE_DIR}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )

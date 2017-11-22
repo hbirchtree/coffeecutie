@@ -5,6 +5,7 @@
 #ifdef COFFEE_WINDOWS
 
 #include "../libraries.h"
+#include "../../plat_windows.h"
 
 namespace Coffee {
 namespace Library {
@@ -66,6 +67,8 @@ struct WindowsFunctionLoader : FunctionLoad_def
     template<typename RType, typename... AType>
     struct Loader : FunctionLoad_def::Loader<RType,AType...>
     {
+        using Fun = RType(*)(AType...);
+
         STATICINLINE
         Fun GetFunction(
                 Library* lib,

@@ -28,7 +28,7 @@ platforms:
       - uwp
 
 dependencies:
-    hbirchtree/coffeecutie: *
+    hbirchtree/coffeecutie: '*'
 
 coverage: false
 
@@ -42,3 +42,11 @@ branches:
 makefile_location: ci
 template_location: cmake/Templates
 script_location: ci
+
+versionprefix: automated-release-
+version:
+    major: 0
+    minor: 0
+    release: 1
+    patch: 0
+    hotfix: 0

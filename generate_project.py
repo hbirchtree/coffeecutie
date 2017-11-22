@@ -116,6 +116,7 @@ def main():
                          'desktop': None,
                          'internal/templates': None,
                          'tools/makers/Makefile.*': 'ci',
+                         'tools/makers/targets.yml': 'ci',
                          'tools/ci/*.sh': 'ci',
                          'tools/ci/github_api.py': 'ci',
                          'tools/ci/*.ps1': 'ci',
@@ -125,7 +126,10 @@ def main():
                          'cmake/Templates/reconfig.py': 'rebuild.py',
                          'cmake/Templates/Config*.cmake.in': 'cmake/Templates',
                          'buildinfo.py': None,
+                         'version.py': None,
+                         'git-gen-release.sh': None,
                          'quick-build.sh': None,
+                         'quick-build.ps1': None,
                          'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
                      },
                      configurable_files={

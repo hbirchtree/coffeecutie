@@ -10,7 +10,7 @@ using namespace Coffee;
 int32 coffee_main(int32, cstring_w*)
 try{
     ASIO::AsioContext net_context = ASIO::AsioService::InitService();
-    Vector<sbyte_t> recv;
+    Vector<char> recv;
     UDP::endpoint remote;
     UDP::Socket sock(net_context, UDP::proto::v4(), 10240);
 

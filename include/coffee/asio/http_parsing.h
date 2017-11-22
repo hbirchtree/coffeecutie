@@ -101,10 +101,16 @@ bool ExtractResponse(StrmT& stream, Response* response)
         }
     }
 
+    auto contentLenIt = response->header.find("Content-Length");
+    if(contentLenIt != response->header.end())
+        response->payload.reserve(cast_string<u32>(contentLenIt->second));
+
     Profiler::Profile("Reading header data");
 
-    while(std::getline(stream,tmp)&&tmp!="\r\n")
-        response->payload.append(tmp);
+    response->payload = CString(std::istreambuf_iterator<char>(stream), {});
+
+//    while(std::getline(stream,tmp)&&tmp!="\r\n")
+//        response->payload.append(tmp);
 
     Profiler::Profile("Reading payload");
 

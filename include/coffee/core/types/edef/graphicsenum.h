@@ -52,7 +52,7 @@ enum class ProfilingTerm
 
 enum class TexType
 {
-    None, T2D, T3D, Cube
+    None, T2D, T2A, T3D, Cube
 };
 
 namespace ShaderTypes
@@ -113,8 +113,72 @@ namespace ShaderTypes
         SCube = 1 << 27,
         SCubeA = 1 << 28,
 
+        Depth = 1 << 29,
+
         SizeMask_f = 0xFFFF0000,
     };
+
+    using sdt_flag = unsigned int;
+
+    /* TODO: Add verification that each template argument is valid */
+
+    template<sdt_flag DataType, sdt_flag DataStructure, sdt_flag Storage>
+    struct sdt
+    {
+        static const constexpr sdt_flag value = DataType|DataStructure|Storage;
+    };
+
+    template<sdt_flag DataType, sdt_flag DataStructure>
+    struct sdt_unif : public sdt<DataType, DataStructure, Uniform_v>
+    {
+    };
+
+    template<sdt_flag DataStructure>
+    struct sdt_uniff : public sdt_unif<Scalar_t, DataStructure>
+    {
+    };
+
+    template<sdt_flag DataStructure>
+    struct sdt_unifd : public sdt_unif<BScalar_t, DataStructure>
+    {
+    };
+
+    template<sdt_flag DataStructure>
+    struct sdt_unifi : public sdt_unif<Int_t, DataStructure>
+    {
+    };
+
+    template<sdt_flag DataStructure>
+    struct sdt_unifu : public sdt_unif<UInt_t, DataStructure>
+    {
+    };
+
+    template<sdt_flag DataType, sdt_flag DataStructure>
+    struct sdt_samp : public sdt<DataType, DataStructure, Sampler_v>
+    {
+    };
+
+    template<sdt_flag DataStructure>
+    struct sdt_sampf : public sdt_samp<Scalar_t, DataStructure>
+    {
+    };
+
+    template<sdt_flag DataStructure>
+    struct sdt_sampd : public sdt_samp<BScalar_t, DataStructure>
+    {
+    };
+
+    template<sdt_flag DataType, sdt_flag DataStructure>
+    struct sdt_ubuf : public sdt<DataType, DataStructure, UniBuf_t>
+    {
+    };
+
+    template<sdt_flag DataType, sdt_flag DataStructure>
+    struct sdt_attr : public sdt<DataType, DataStructure, Attrib_v>
+    {
+    };
+
+
 
     enum ProgramData_t
     {

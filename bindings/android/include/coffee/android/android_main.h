@@ -79,14 +79,19 @@ enum FCmdType
 
     /* Hardware information */
     Android_QueryMaxMemory,
+    Android_QueryDeviceDPI,
 
     /* System-level functionality */
     Android_QueryNativeWindow,
     Android_QueryAssetManager,
+    Android_QueryActivity,
+    Android_QueryApp,
 
     /* Filesystem queries */
     Android_QueryDataPath,
     Android_QueryExternalDataPath,
+    Android_QueryObbPath,
+    Android_QueryCachePath,
 };
 
 struct AndroidForeignCommand

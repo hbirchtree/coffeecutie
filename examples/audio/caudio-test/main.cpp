@@ -1,6 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CInput>
 #include <coffee/core/CDebug>
+#include <coffee/core/CFiles>
 
 #include <coffee/CAudio>
 
@@ -152,7 +153,7 @@ public:
 
 int32 coffee_main(int32, cstring_w*)
 {
-    CResources::FileResourcePrefix("sample_data/caudio_test/");
+    FileResourcePrefix("sample_data/caudio_test/");
 
     CDRendererBase *renderer = new CDRenderer();
     CString err;

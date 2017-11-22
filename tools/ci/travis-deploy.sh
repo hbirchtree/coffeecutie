@@ -18,7 +18,14 @@ DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
 
 function github_api()
 {
-    $GITHUBPY --api-token ${GITHUB_TOKEN} $@
+    case ${TRAVIS_OS_NAME} in
+    "osx")
+        $GITHUBPY --api-token ${GITHUB_TOKEN} $@
+    ;;
+    *)
+        python3 $GITHUBPY --api-token ${GITHUB_TOKEN} $@
+    ;;
+    esac
 }
 
 TARGET_TAG=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)

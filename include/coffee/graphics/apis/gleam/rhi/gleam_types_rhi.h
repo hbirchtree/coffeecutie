@@ -75,6 +75,8 @@ struct GLEAM_ShaderBuffer;
 
 struct GLEAM_PixelBuffer;
 
+struct GLEAM_IndirectBuffer;
+
 /* Surfaces */
 struct GLEAM_Surface;
 

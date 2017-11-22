@@ -73,7 +73,8 @@ protected:
 
 #if !defined(COFFEE_USE_SDL_EVENT) && \
     !defined(COFFEE_USE_MAEMO_X11) && \
-    !defined(COFFEE_USE_APPLE_GLKIT)
+    !defined(COFFEE_USE_APPLE_GLKIT) && \
+    !defined(COFFEE_USE_ANDROID_NATIVEWIN)
     // InputApplication interface
 public:
     virtual bool inputPreInit(CString *) {return true;}

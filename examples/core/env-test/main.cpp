@@ -16,9 +16,9 @@ int32 coffee_main(int32, cstring_w*)
     Profiler::PushContext("Configuration data");
     {
         /* Check out system directory strings and user data directories */
-        CString cfg_dir  = Env::GetUserData(
+        Url cfg_dir  = {Env::GetUserData(
                     "hbirchtree",
-                    "Best Coffee of All Time");
+                    "Best Coffee of All Time")};
         Profiler::Profile("Get userdata directory");
 
         CString app_dir  = Env::ApplicationDir();
@@ -32,12 +32,12 @@ int32 coffee_main(int32, cstring_w*)
 
         Profiler::Profile("Print some data");
 
-        if(!CResources::FileMkdir(cfg_dir.c_str(),true))
+        if(!CResources::FileMkdir(cfg_dir,true))
             cWarning("Failed to create settings directory");
         else
         {
-            CString test_file = Env::ConcatPath(cfg_dir.c_str(),"test_file.sav");
-            FileFun::Touch(FileFun::File,test_file.c_str());
+            Url test_file = cfg_dir + Path{"test_file.sav"};
+            FileFun::Touch(FileFun::File,test_file);
         }
         Profiler::Profile("Create directory recursively");
     }

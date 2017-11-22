@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#ifdef COFFEE_LINUX
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 
 #include <coffee/core/types/edef/resenum.h>
 #include <coffee/core/types/tdef/stltypes.h>
@@ -24,6 +24,9 @@ struct LinuxProcessProperty : ProcessPropertyDef
     using PID = pid_t;
     using MemUnit = long;
 
+    static MemUnit Mem(PID);
+
+#if !defined(COFFEE_ANDROID)
     STATICINLINE void CoreDumpEnable()
     {
         struct rlimit lim;
@@ -46,7 +49,6 @@ struct LinuxProcessProperty : ProcessPropertyDef
         return getpid();
     }
 
-    static MemUnit Mem(PID);
 
     STATICINLINE int32 CpuTime(PID)
     {
@@ -103,6 +105,7 @@ struct LinuxProcessProperty : ProcessPropertyDef
             return 0;
         return rs.ru_nivcsw;
     }
+#endif
 };
 
 struct MemMap
@@ -132,7 +135,9 @@ struct MemMap
 }
 }
 
+#if !defined(COFFEE_ANDROID)
 using ProcessProperty = Environment::Linux::LinuxProcessProperty;
+#endif
 
 }
 

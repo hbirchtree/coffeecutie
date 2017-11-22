@@ -35,7 +35,10 @@ gpucount_t GetNumGpus()
     gpucount_t num = 0;
 
     DirFun::DirList files;
-    DirFun::Ls("/dev/dri", files);
+    DirFun::Ls(MkUrl("/dev/dri",
+                     ResourceAccess::SpecifyStorage
+                     |ResourceAccess::SystemFile),
+               files);
     for(DirFun::DirItem_t const& e : files)
         if(e.name.substr(0, 4) == "card")
             num++;

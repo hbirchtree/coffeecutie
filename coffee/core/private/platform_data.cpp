@@ -4,6 +4,10 @@
 #include <coffee/core/plat/plat_primary_identify.h>
 #include <coffee/core/coffee_mem_macros.h>
 
+#if defined(COFFEE_ANDROID)
+#include <coffee/android/android_main.h>
+#endif
+
 namespace Coffee{
 
 #if defined(COFFEE_LINUX)
@@ -18,8 +22,21 @@ extern PlatformData::DeviceType get_device_variant();
 
 PlatformData::DeviceType PlatformData::DeviceVariant()
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID) \
+    || defined(COFFEE_APPLE_MOBILE) \
+    || defined(COFFEE_MAEMO)
+
+    /* TODO: Add difference between tablet and phone */
+
+    return DevicePhone;
+#elif defined(COFFEE_LINUX)
     return DeviceUnknown;
+#elif defined(COFFEE_RASPBERRY)
+    return DeviceIOT;
+#elif
+    return DevicePhone;
+#elif defined(COFFEE_EMSCRIPTEN)
+    return DeviceIOT;
 #else
     return DeviceUnknown;
 #endif
@@ -29,18 +46,54 @@ PlatformData::Platform PlatformData::PlatformVariant()
 {
 #if defined(COFFEE_ANDROID)
     return PlatformAndroid;
+
+#elif defined(COFFEE_RASPBERRYPI)
+    return PlatformLinuxRaspberry;
+#elif defined(COFFEE_MAEMO)
+    return PlatformLinuxMaemo;
 #elif defined(COFFEE_LINUX)
     return PlatformLinux;
+
+#elif defined(COFFEE_EMSCRIPTEN)
+    return PlatformEmscripten;
+
+#elif defined(COFFEE_MINGW64)
+    return PlatformMinGW;
+#elif defined(COFFEE_WINDOWS_UWP)
+    return PlatformUWP;
 #elif defined(COFFEE_WINDOWS)
     return PlatformWindows;
+
+#elif defined(COFFEE_APPLE_MOBILE)
+    return PlatformMacIOS;
 #elif defined(COFFEE_APPLE)
     return PlatformMac;
+
+#elif defined(COFFEE_UNIXPLAT)
+    return PlatformUnix;
 #endif
 }
 
 scalar PlatformData::DeviceDPI()
 {
+    /* TODO: Add DPI fetch for Android and iOS */
+    /* Also, add DPI fetching for OS X and Linux */
+    /* DPI in Windows is a lie */
+#if defined(COFFEE_ANDROID)
+
+    AndroidForeignCommand fcmd;
+    fcmd.type = Android_QueryDeviceDPI;
+
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &fcmd, nullptr, nullptr);
+
+    /* A very careful ballpark set of constants
+     *  based on how it looks on a 320 DPI screen
+     *  and a 420 DPI screen */
+    return (scalar(fcmd.data.scalarI64) / 160.f);
+#else
     return 1.f;
+#endif
 }
 
 CString PlatformData::SystemDisplayString()
@@ -73,10 +126,10 @@ CString PlatformData::SystemDisplayString()
 
 bool PlatformData::IsMobile()
 {
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_IOS)
-    return false;
-#else
+#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS)
     return true;
+#else
+    return false;
 #endif
 }
 
