@@ -2,6 +2,9 @@
 #include <coffee/core/CDebug>
 
 #include <coffee/core/coffee.h>
+#include <coffee/core/string_casting.h>
+
+#include <sys/sysinfo.h>
 
 #include <android_native_app_glue.h>
 #include <android/native_activity.h>
@@ -9,7 +12,10 @@
 #include <android/window.h>
 #include <gestureDetector.h>
 
+
 static Coffee::CString Android_cacheDir;
+static Coffee::CString Android_abis;
+static int Android_DPI;
 
 extern "C" {
 
@@ -30,6 +36,18 @@ Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
     case 10:
     {
         Android_cacheDir = string_data;
+
+        break;
+    }
+    case 11:
+    {
+        Android_DPI = Coffee::cast_string<Coffee::i32>(string_data);
+
+        break;
+    }
+    case 12:
+    {
+        Android_abis = string_data;
 
         break;
     }
@@ -480,6 +498,20 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
             out->store_string = coffee_app->activity->obbPath;
             break;
 #endif
+
+        case Android_QueryPlatformABIs:
+            out->store_string = Android_abis;
+            break;
+
+        case Android_QueryMaxMemory:
+            struct sysinfo inf;
+            sysinfo(&inf);
+            out->data.scalarI64 = C_FCAST<i64>(inf.totalram*inf.mem_unit);
+            break;
+
+        case Android_QueryDeviceDPI:
+            out->data.scalarI64 = Android_DPI;
+            break;
 
         case Android_QueryNativeWindow:
             out->data.ptr = coffee_app->window;

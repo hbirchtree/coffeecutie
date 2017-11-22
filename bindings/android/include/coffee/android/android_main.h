@@ -78,6 +78,7 @@ enum FCmdType
 
     /* Hardware information */
     Android_QueryMaxMemory,
+    Android_QueryDeviceDPI,
 
     /* System-level functionality */
     Android_QueryNativeWindow,

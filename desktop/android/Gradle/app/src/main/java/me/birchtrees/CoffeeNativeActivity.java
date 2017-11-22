@@ -58,6 +58,26 @@ public final class CoffeeNativeActivity extends NativeActivity {
         System.loadLibrary(getLibraryName());
 
         smuggleVariable(10, getCacheDir().getAbsolutePath());
+        smuggleVariable(11,
+                    Integer.toString(
+                        getResources()
+                            .getDisplayMetrics()
+                            .densityDpi)
+                    );
+
+        {
+            String[] sysAbis = android.os.Build.SUPPORTED_ABIS;
+            String supportedAbis = "";
+
+            for(int i=0; i<sysAbis.length; i++)
+                supportedAbis = supportedAbis + " " + sysAbis[i];
+
+            supportedAbis = supportedAbis.trim();
+
+            smuggleVariable(12, supportedAbis);
+        }
+
+
     }
 
     protected void onResume() {
