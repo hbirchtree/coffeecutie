@@ -12,6 +12,9 @@ coffee_add_library (
 
 coffee_bundle_includes ( ${ASSIMP_INCLUDE_DIR} )
 coffee_bundle_library ( ${ASSIMP_LIBRARIES} )
+if(${IRRXML_LIBRARIES})
+    coffee_bundle_library ( ${IRRXML_LIBRARIES} )
+endif()
 
 target_include_directories ( CoffeeAssimp
     PUBLIC
