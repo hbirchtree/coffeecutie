@@ -33,8 +33,6 @@ PlatformData::DeviceType PlatformData::DeviceVariant()
     return DeviceUnknown;
 #elif defined(COFFEE_RASPBERRY)
     return DeviceIOT;
-#elif
-    return DevicePhone;
 #elif defined(COFFEE_EMSCRIPTEN)
     return DeviceIOT;
 #else
