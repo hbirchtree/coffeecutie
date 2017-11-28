@@ -142,7 +142,7 @@ macro(APK_BUILD TARGET_NAME
             "${APK_FILE_REL}"
             )
     else()
-        if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
             # In release-mode, we sign and align the APK manually
             add_custom_command ( TARGET ${TARGET_NAME}
                 POST_BUILD
@@ -312,6 +312,24 @@ macro(APK_GENERATE_PROJECT
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_APK_OUTPUT_DIR}"
         )
 
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        if(${ANDROID_ABI} MATCHES "armeabi")
+            set ( SHORT_ARCH "arm" )
+        elseif(${ANDROID_ABI} MATCHES "arm64")
+            set ( SHORT_ARCH "arm64" )
+
+        else()
+            set ( SHORT_ARCH "${ANDROID_ABI}" )
+        endif()
+
+        add_custom_command ( TARGET ${TARGET_NAME}
+            PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${ANDROID_NDK}/prebuilt/android-${SHORT_ARCH}/gdbserver/gdbserver
+            ${ANDROID_LIB_OUTPUT_DIRECTORY}/libgdbserver.so
+            )
+    endif()
+
 #    add_custom_command ( TARGET ${TARGET_NAME}
 #        POST_BUILD
 #        COMMAND ${CMAKE_COMMAND} -E copy
@@ -449,7 +467,7 @@ macro(APK_PACKAGE_EXT
 
     set ( RELEASE_PREFIX )
 
-    if( CMAKE_BUILD_TYPE STREQUAL "Release" )
+    if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" )
         set ( RELEASE_PREFIX "rel" )
         set ( ANDROID_APK_DEBUGGABLE "false" )
     else()
