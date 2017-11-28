@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <algorithm>
 #include "jni_types.h"
 
 namespace JNIPP {

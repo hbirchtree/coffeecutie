@@ -145,6 +145,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
 
 static char AndroidWindowType[] = "android.view.Window";
 static char AndroidViewType[] = "android.view.View";
+static char javaioFile[] = "java.io.File";
 
 void android_main(struct android_app* state)
 {
@@ -170,21 +171,31 @@ void android_main(struct android_app* state)
 
     deref_main_c(android_entry_point, 0, nullptr);
 
-//    cDebug("Board name: {0}", CJ_GetStatic<CString>("/android/os/Build", "BOARD"));
+    state->activity->vm->AttachCurrentThread(
+            &coffee_jni_env, NULL);
 
-//    state->activity->vm->AttachCurrentThread(
-//            &coffee_jni_env, NULL);
+    auto build = "android.os.Build"_jclass;
 
-//    auto build = "android.os.Build"_jclass;
+    auto var = build[FieldAs<JavaString>("BOARD"_jfield)].value();
+    cDebug("Board name: {0}", var);
 
-//    auto var = build[FieldAs<JavaString>("BOARD"_jfield)].value();
-//    cDebug("Board name: {0}", var);
+    var = build[FieldAs<JavaString>("BRAND"_jfield)].value();
+    cDebug("Brand: {0}", var);
 
-//    var = build[FieldAs<JavaString>("BRAND"_jfield)].value();
-//    cDebug("Brand: {0}", var);
+    var = build[FieldAs<JavaString>("PRODUCT"_jfield)].value();
+    cDebug("Product: {0}", var);
 
-//    var = build[FieldAs<JavaString>("PRODUCT"_jfield)].value();
-//    cDebug("Product: {0}", var);
+    auto myClass = "android.app.NativeActivity"_jclass;
+
+    using NativeActivity = JavaClass<javaioFile, void, void>;
+
+    auto myInstance = myClass(state->activity->clazz);
+
+    cDebug("JCall Start: {0}", Chrono::high_resolution_clock::now().time_since_epoch().count());
+    auto cacheDirFile = myInstance["getCacheDir"_jmethod.returns<NativeActivity>()]({});
+    cDebug("JCall End: {0}", Chrono::high_resolution_clock::now().time_since_epoch().count());
+
+//    cDebug("Instance: {0}", (u32)cacheDirFile.l);
 
     //        coffee_jni_env = app->activity->env;
 
@@ -537,8 +548,15 @@ static void AndroidForeignSignalHandle(int evtype)
     }
 }
 
-static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
-                                         void* p3)
+static CString AndroidGetBuildField(JNIPP::JObjectField<void>&& field)
+{
+    auto build = "android.os.Build"_jclass;
+    auto var = build[FieldAs<JavaString>(std::move(field))].value();
+    return var;
+}
+
+static void AndroidForeignSignalHandleNA(int evtype, void* p1,
+                                         void* p2, void* p3)
 {
     switch(evtype)
     {
@@ -568,6 +586,10 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
 
         case Android_QueryPlatformABIs:
             out->store_string = Android_abis;
+            break;
+
+        case Android_QueryDeviceBoardName:
+            out->store_string = AndroidGetBuildField("BOARD"_jfield);
             break;
 
         case Android_QueryMaxMemory:
