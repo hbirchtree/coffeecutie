@@ -102,10 +102,6 @@ variables:
     root: $(env:COFFEE_DIR)
     target: /home/coffee/library
 
-  # Android-specific
-#  android-preload:
-#    root: $(multi.root)/build-android_standalone/build-android/preloads
-#    target: /home/coffee/preload
   android:
     stl: gnustl_static
     toolchain: clang
@@ -133,6 +129,57 @@ dependencies:
     type: empty
     root: $(dep.root)/emsdk_portable
     target: /home/coffee/emsdk_portable
+
+build-dependencies:
+  appimg-runtime:
+    source: https://github.com/AppImage/AppImageKit.git
+    type: make
+  assimp:
+    source: git:https://github.com/assimp/assimp.git
+    type: cmake
+    options:
+      - -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF
+      - -DASSIMP_BUILD_BLEND_IMPORTER=ON
+      - -DASSIMP_BUILD_FBX_IMPORTER=ON
+      - -DASSIMP_BUILD_COLLADA_IMPORTER=ON
+      - -DASSIMP_BUILD_ASSIMP_TOOLS=OFF
+      - -DASSIMP_BUILD_TESTS=OFF
+      - -DBUILD_SHARED_LIBS=OFF
+      - -DBUILD_TESTING=OFF
+    output-files:
+      - code/libassimp.*
+      - contrib/irrXML/libIrrXML.*
+  bullet:
+    source: git:https://github.com/bulletphysics/bullet3.git
+    type: cmake
+    options:
+      - -DBUILD_BULLET2_DEMOS=OFF
+      - -DBUILD_UNIT_TESTS=OFF
+      - -DBUILD_CPU_DEMOS=OFF
+      - -DBUILD_EXTRAS=OFF
+      - -DUSE_GRAPHICAL_BENCHMARK=OFF
+  openal:
+    source: git:https://github.com/kcat/openal-soft.git
+    type: cmake
+    option:
+      - -DALSOFT_EXAMPLES=OFF
+      - -DALSOFT_TESTS=OFF
+      - -DALSOFT_UTILS=OFF
+  SDL2:
+    source: hg:https://hg.libsdl.org/SDL
+    type: automake
+    options:
+      - --host $(host.arch)
+      - --disable-shared
+      - --disable-atomic
+      - --disable-filesystem
+      - --disable-threads
+      - --disable-timers
+      - --disable-audio
+      - --disable-loadso
+      - --disable-cpuinfo
+      - --prefix=$(SDL2.install.root)
+
 
 #
 # Templates
@@ -227,7 +274,7 @@ templates:
 
   steam.*:
     =description: Build against the SteamRT SDK
-    =compiler: GCC 4.9.4
+    =compiler: GCC 4.8.4
     =preload: linux-steam.cmake
     =toolchain: linux-steam_linux.toolchain.cmake
     =container: steam
@@ -324,7 +371,7 @@ templates:
 
   raspberry.*:
     =description: Raspberry Pi ARMv6 build
-    =compiler: GCC 4.9.4
+    =compiler: GCC 4.9
     =preload: linux-raspberry.cmake
     =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
     =container: raspberry
