@@ -215,6 +215,11 @@ GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI()
     };
 }
 
+bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
+{
+    return m_store != nullptr;
+}
+
 void GLEAM_API::SetRasterizerState(const RASTSTATE &rstate, uint32 i)
 {
     if(GL_CURR_API==GLES_3_0)

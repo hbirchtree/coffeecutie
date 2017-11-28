@@ -181,6 +181,8 @@ public:
             bool debug = false);
     static bool UnloadAPI();
 
+    static bool IsAPILoaded();
+
     static API_CONTEXT GetLoadAPI();
 
     /* i specifies view index for indexed views, 0 for  */
