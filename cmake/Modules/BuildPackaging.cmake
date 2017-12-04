@@ -172,6 +172,22 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 "${PERMISSIONS}"
                 )
         endif()
+    elseif(GAMECUBE OR WII)
+        add_executable ( ${TARGET} ${SOURCES_MOD} )
+        add_custom_command (
+            TARGET "${TARGET}"
+            POST_BUILD
+            COMMAND "${ELF2DOL}"
+                "$<TARGET_FILE:${TARGET}>"
+                "$<TARGET_FILE:${TARGET}>.dol"
+            )
+        install (
+            FILES
+            "$<TARGET_FILE:${TARGET}>"
+            "$<TARGET_FILE:${TARGET}>.dol"
+            DESTINATION
+            "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
+            )
     else()
 
         add_executable(${TARGET} ${SOURCES_MOD})
