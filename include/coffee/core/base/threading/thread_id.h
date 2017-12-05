@@ -12,11 +12,19 @@ namespace Threads{
 template<typename thread_t>
 struct ThreadId_t
 {
+#if defined(COFFEE_NO_THREADLIB)
+    using thread_id_t = u32;
+#else
     using thread_id_t = typename thread_t::id;
+#endif
     using Hash = uint64;
 
     FORCEDINLINE ThreadId_t():
+#if defined(COFFEE_NO_THREADLIB)
+        m_id(0)
+#else
         m_id(std::this_thread::get_id())
+#endif
     {
     }
     FORCEDINLINE ThreadId_t(thread_id_t const& tid):

@@ -66,7 +66,9 @@ struct TimeDef
     static CString StringDate(cstring,DateTime){return "";}
     static CString ClockString(){return "";}
 
-	static Timestamp ParseTimeStdTime(cstring) { return 0; }
+    static Timestamp ParseTimeStdTime(cstring) { return 0; }
+
+    static CString FormattedCurrentTime(cstring fmt){return {};}
 };
 
 struct PosixIshTimeDef : public TimeDef
@@ -76,16 +78,18 @@ struct PosixIshTimeDef : public TimeDef
 	{
 		constexpr cstring fmt = "%Y-%m-%dT%H:%M:%S";
 		struct tm time_s = {};
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL)
+#if defined(COFFEE_UNIXPLAT)
 		if (strptime(src, fmt, &time_s))
-#else
+#elif !defined(COFFEE_GEKKO)
 		std::istringstream ss(src);
 		ss.imbue(std::locale(setlocale(LC_ALL,nullptr)));
 		ss >> std::get_time(&time_s,fmt);
 		if(!ss.fail())
 #endif
+#if !defined(GEKKO)
 			return mktime(&time_s);
 		else
+#endif
 			return 0;
 	}
 
@@ -95,6 +99,10 @@ struct PosixIshTimeDef : public TimeDef
 
 using TimeDef = Chronology::TimeDef;
 using PosixIshTimeDef = Chronology::PosixIshTimeDef;
+
+#if defined(COFFEE_STUBBED_TIMING)
+using Time = TimeDef;
+#endif
 
 }
 

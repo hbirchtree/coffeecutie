@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../plat/plat_quirks_toggling.h"
 #include "stldef.h"
 
 /*Container types*/
@@ -26,8 +27,20 @@ using CWString   = std::wstring; /*!< Typical string object suited for interface
 
 using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
+#if defined(COFFEE_NO_THREADLIB)
+struct Mutex
+{
+    void lock(){}
+    void unlock(){}
+};
+struct Lock
+{
+    Lock(Mutex& m){}
+};
+#else
 using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
+#endif
 
 template<typename T>
 using Atomic = std::atomic<T>;

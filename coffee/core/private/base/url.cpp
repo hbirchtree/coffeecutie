@@ -84,6 +84,10 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     paths.configDir = MkUrl(Env::GetUserData(nullptr, nullptr).c_str(),
                             RSCA::SystemFile);
+
+#elif defined(COFFEE_GEKKO)
+    paths.configDir = MkUrl("/MEM0", RSCA::SystemFile);
+
 #else
 
 #endif
@@ -153,10 +157,10 @@ STATICINLINE CString DereferencePath(cstring suffix,
 
     auto urlPart = Path{suffix};
 
-    switch(storageMask ^ RSCA::SpecifyStorage)
+    switch(storageMask & (RSCA::StorageMask ^ RSCA::SpecifyStorage))
     {
     case RSCA::AssetFile:
-    {  
+    {
 #if defined(COFFEE_ANDROID)
         /* Because Android uses a virtual filesystem,
          *  we do not go deeper to find a RSCA::SystemFile URL */

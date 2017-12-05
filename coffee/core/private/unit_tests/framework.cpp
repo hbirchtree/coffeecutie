@@ -16,8 +16,6 @@ namespace CoffeeTest{
 
 using namespace Coffee;
 
-static CElapsedTimerMicro timer;
-
 static Vector<cstring> titles;
 static Vector<cstring> descriptions;
 static Vector<uint64> test_times;
@@ -184,9 +182,9 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
 
     Profiler::PushContext(tmp.c_str());
 
-    timer.start();
+    auto start_time = Chrono::steady_clock::now();
     bool res = test.test();
-    test_times[i] = timer.elapsed();
+    test_times[i] = Chrono::duration_cast<Chrono::microseconds>(Chrono::steady_clock::now() - start_time).count();
     result.push_back(res);
     required.push_back(!test.optional);
 

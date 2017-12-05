@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../plat/plat_quirks_toggling.h"
+
 #include <future>
 #include <functional>
 
@@ -44,7 +46,23 @@ using FutureStatus = std::future_status;
 template<typename RType>
 using SharedFuture = std::shared_future<RType>;
 
+#if defined(COFFEE_NO_THREADLIB)
+struct Thread
+{
+    template<typename TFun, typename... Args>
+    Thread(TFun fptr, Args... args){}
+    Thread(){}
+    static inline i32 hardware_concurrency()
+    {
+        return 1;
+    }
+    void detach() {}
+    void join() {}
+    u32 get_id() {return 0;}
+};
+#else
 using Thread = std::thread;
+#endif
 
 FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
 {
@@ -111,10 +129,21 @@ FORCEDINLINE CString ThreadGetName()
 template<typename FunSignature>
 using Function = std::function<FunSignature>;
 
-using ThreadId = Threads::ThreadId_t<std::thread>;
+using ThreadId = Threads::ThreadId_t<Thread>;
 
 namespace CurrentThread{
+#if defined(COFFEE_NO_THREADLIB)
+template<typename... Args>
+STATICINLINE void sleep_for(Args... args)
+{
+}
+template<typename... Args>
+STATICINLINE void sleep_until(Args... args)
+{
+}
+#else
 using namespace std::this_thread;
+#endif
 }
 
 namespace Chrono{

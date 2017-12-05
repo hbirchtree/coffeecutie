@@ -126,7 +126,7 @@ struct EnvInterface
         (void)p1;
         (void)p2;
 
-        return CString();
+        return CString(p1) + '/' + p2;
     }
     /*!
      * \brief Get user home directory, $HOME on *nix, %USERPROFILE% on Windows

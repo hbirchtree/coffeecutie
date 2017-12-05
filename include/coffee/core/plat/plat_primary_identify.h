@@ -80,6 +80,12 @@
 #endif
 
 /* Generic UNIX, mostly for POSIX libraries */
-#if (defined(__unix__) || defined(COFFEE_APPLE)) && !defined(COFFEE_WINDOWS)
+#if (defined(__unix__) || defined(COFFEE_APPLE)) && \
+    !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL)
 #define COFFEE_UNIXPLAT
+#endif
+
+#if defined(GEKKO) || defined(__GEKKO__)
+#define C_SYSTEM_STRING "Nintendo Gamecube"
+#define COFFEE_GEKKO
 #endif
