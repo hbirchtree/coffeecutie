@@ -1,4 +1,4 @@
-#include <coffee/windowing/renderer/renderer.h>
+#include "renderer_internal.h"
 
 #include <coffee/core/CDebug>
 #include <coffee/core/base/files/cfiles.h>
@@ -12,58 +12,58 @@ namespace Display{
 
 using namespace Coffee::SDL2;
 
-CSDL2Renderer::CSDL2Renderer(CObject *parent) :
-    CDRendererBase(parent),
-    GLeamRenderer(this)
+CSDL2Renderer_Internal::CSDL2Renderer_Internal(CObject *parent) :
+    GLLoader(this)
+  #if defined(COFFEE_ENABLE_OPENGL)
+    , GLeamRenderer(this)
+  #endif
 {
 }
 
-CSDL2Renderer::CSDL2Renderer():
-    CSDL2Renderer(nullptr)
+CSDL2Renderer_Internal::CSDL2Renderer_Internal():
+    CSDL2Renderer_Internal(nullptr)
 {
 }
 
-CSDL2Renderer::~CSDL2Renderer()
+CSDL2Renderer_Internal::~CSDL2Renderer_Internal()
 {
     cleanup();
 }
 
-bool CSDL2Renderer::init(const CDProperties &props,CString* err)
+bool CSDL2Renderer_Internal::init(const CDProperties &props,CString* err)
 {
 #if defined(COFFEE_USE_SDL_EVENT) || defined(COFFEE_USE_SDL_GL) || defined(COFFEE_USE_SDL_WINDOW)
     m_properties = props;
 #endif
 
-    cDebug("Initial loading");
-
     do{
         if(!(windowPreInit(props,err)
+     #if defined(COFFEE_ENABLE_OPENGL)
              && contextPreInit(props.gl,err)
              && bindingPreInit(props.gl,err)
+     #endif
              && inputPreInit(err)
              ))
             break;
 
-        cDebug("Passed pre-init");
-
         if(!(windowInit(props,err)
+     #if defined(COFFEE_ENABLE_OPENGL)
              && contextInit(props.gl,err)
              && bindingInit(props.gl,err)
+     #endif
              && inputInit(err)
              ))
             break;
 
-        cDebug("Passed init");
-
         /* Run binding post-init, fetches GL extensions and etc. */
         if(!(windowPostInit(props,err)
+     #if defined(COFFEE_ENABLE_OPENGL)
              && contextPostInit(props.gl,err)
              && bindingPostInit(props.gl,err)
+     #endif
              && inputPostInit(err)
              ))
             break;
-
-        cDebug("Passed post-init");
 
         Profiler::AddExtraData("window:library", windowLibrary());
 
@@ -75,12 +75,15 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
     return false;
 }
 
-void CSDL2Renderer::cleanup()
+void CSDL2Renderer_Internal::cleanup()
 {
+#if defined(COFFEE_ENABLE_OPENGL)
     bindingTerminate();
 #if !defined(COFFEE_USE_SDL_GL)
     contextTerminate();
 #endif
+#endif
+
 #if !defined(COFFEE_USE_SDL_EVENT)
     inputTerminate();
 #endif
@@ -110,7 +113,7 @@ void CSDL2Renderer::cleanup()
 
 }
 
-void CSDL2Renderer::run()
+void CSDL2Renderer_Internal::run()
 {
 }
 

@@ -22,6 +22,10 @@ set ( NDKWindow_SRCS
     private/windowing/ndkwindow/ndk_window.cpp
     )
 
+set ( OGC_SRCS
+    private/windowing/ogc/ogc_window.cpp
+    )
+
 if(APPLE AND IOS)
     list ( APPEND GLKit_SRCS
         private/graphics/eagl/eagl_bind.mm
@@ -37,28 +41,36 @@ set ( GLAD_SRCS
 
 set ( Renderer_SRCS
     private/renderer.cpp
+    private/renderer_internal.cpp
+    private/stub/stub.cpp
     )
-    
+
 if(COFFEE_BUILD_GLES AND NOT COFFEE_BUILD_GLES_20)
     list(APPEND GLAD_SRCS private/binding/glad/glad_es/glad.c)
 elseif(NOT COFFEE_BUILD_GLES)
     list(APPEND GLAD_SRCS private/binding/glad/glad/glad.c)
 endif()
 
-set ( RENDERER_LIBS
-    CoffeeWindow_X11
-    CoffeeWindow_DMX
-    CoffeeWindow_GLKit
-    CoffeeWindow_NDKWindow
+if(COFFEE_BUILD_OPENGL)
+    set ( RENDERER_LIBS
+        CoffeeWindow_X11
+        CoffeeWindow_DMX
+        CoffeeWindow_GLKit
+        CoffeeWindow_NDKWindow
 
-    CoffeeContext_GLX
-    CoffeeContext_EGL
+        CoffeeContext_GLX
+        CoffeeContext_EGL
 
-    CoffeeBinding_GLAD
+        CoffeeBinding_GLAD
 
 
-    CoffeeGLeamRHI
-    )
+        CoffeeGLeamRHI
+        )
+elseif(GAMECUBE)
+    set ( RENDERER_LIBS
+        CoffeeWindow_OGC
+        )
+endif()
 
 if(COFFEE_BUILD_SDL2)
     list ( APPEND RENDERER_LIBS CoffeeSDL2 )
@@ -67,21 +79,28 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
         AND NOT COFFEE_BUILD_SDL2)
 endif()
 
-coffee_add_library ( CoffeeContext_EGL "${EGL_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/egl"
-    )
+if(COFFEE_BUILD_OPENGL)
+    coffee_add_library ( CoffeeContext_EGL "${EGL_SRCS}" ""
+        "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/egl"
+        )
 
-coffee_add_library ( CoffeeContext_GLX "${GLX_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/glx"
-    )
+    coffee_add_library ( CoffeeContext_GLX "${GLX_SRCS}" ""
+        "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/glx"
+        )
 
-coffee_add_library ( CoffeeBinding_GLAD "${GLAD_SRCS}" CoffeeGLeamCommon
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/binding/glad"
-    )
+    coffee_add_library ( CoffeeBinding_GLAD "${GLAD_SRCS}" CoffeeGLeamCommon
+        "${CMAKE_SOURCE_DIR}/include/coffee/windowing/binding/glad"
+        )
 
-target_link_libraries ( CoffeeBinding_GLAD
-    PRIVATE
-    CoffeeCore
+    target_link_libraries ( CoffeeBinding_GLAD
+        PRIVATE
+        CoffeeCore
+        )
+
+endif(COFFEE_BUILD_OPENGL)
+
+coffee_add_library ( CoffeeWindow_OGC "${OGC_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ogc"
     )
 
 coffee_add_library ( CoffeeWindow_X11 "${X11_SRCS}" ""
@@ -105,16 +124,24 @@ coffee_add_library ( CoffeeRenderer_Default "${Renderer_SRCS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer"
     )
 
-target_link_libraries( CoffeeContext_EGL
-	PRIVATE
-	CoffeeCore
-	)
 target_link_libraries( CoffeeWindow_NDKWindow
+    PRIVATE
+    CoffeeCore
+    )
+
+if(COFFEE_BUILD_OPENGL)
+    target_compile_definitions ( CoffeeRenderer_Default
+        PUBLIC
+        -DCOFFEE_ENABLE_OPENGL
+        )
+
+    target_link_libraries( CoffeeContext_EGL
         PRIVATE
         CoffeeCore
         )
+endif(COFFEE_BUILD_OPENGL)
 
-if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2)
+if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2 AND COFFEE_BUILD_OPENGL)
     find_package(SDL2 REQUIRED)
     target_include_directories ( CoffeeBinding_GLAD
         PRIVATE
@@ -126,15 +153,17 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
         AND NOT COFFEE_BUILD_SDL2)
     find_package ( X11 QUIET )
 
-    target_link_libraries ( CoffeeContext_GLX
-        PUBLIC
-        Xrender GL
-        ${X11_LIBRARIES}
-        )
-    target_include_directories( CoffeeContext_GLX
-        PRIVATE
-        ${X11_INCLUDE_DIR}
-        )
+    if(COFFEE_BUILD_OPENGL)
+        target_link_libraries ( CoffeeContext_GLX
+            PUBLIC
+            Xrender GL
+            ${X11_LIBRARIES}
+            )
+        target_include_directories( CoffeeContext_GLX
+            PRIVATE
+            ${X11_INCLUDE_DIR}
+            )
+    endif()
 
     target_link_libraries ( CoffeeWindow_X11
         PUBLIC

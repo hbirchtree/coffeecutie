@@ -9,7 +9,7 @@ namespace Coffee{
 namespace Display{
 
 class SDL2Window :
-        public WindowManagerClient,
+        public virtual WindowManagerClient,
         public virtual SDL2ContextUser
 {
 public:

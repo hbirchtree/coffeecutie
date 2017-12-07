@@ -7,7 +7,8 @@
 namespace Coffee{
 namespace Display{
 
-class GLeamRenderer : public GLLoader
+class GLeamRenderer :
+        public virtual GLLoader
 {
 public:
     GLeamRenderer(GLApplication* app);
