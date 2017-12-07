@@ -7,6 +7,11 @@
 
 namespace Coffee{
 
+#if defined(COFFEE_PLAIN_INT_TYPES)
+using int32_t = int;
+using uint32_t = unsigned int;
+#endif
+
 using int8  = int8_t;
 using int16 = int16_t;
 using int32 = int32_t;

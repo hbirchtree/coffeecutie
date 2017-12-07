@@ -15,11 +15,21 @@ extern int InitCOMInterface();
 #include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 
+#if defined(COFFEE_GEKKO)
+extern void GCVideoInit();
+extern void GCInfiniteLoop();
+#endif
+
 using namespace Coffee;
 
 int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 {
     cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
+
+#if defined(COFFEE_GEKKO)
+    GCVideoInit();
+#endif
+
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) \
     && !defined(__MINGW64__)
 #ifdef NDEBUG
@@ -35,6 +45,10 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
     atexit(Sensor::Android::Android_DestroySensors);
 #endif
     int stat = Coffee::CoffeeMain(mainfun,argc,argv);
+
+#if defined(COFFEE_GEKKO)
+    GCInfiniteLoop();
+#endif
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     exit(stat);

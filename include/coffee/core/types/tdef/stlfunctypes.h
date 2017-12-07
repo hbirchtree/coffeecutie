@@ -12,6 +12,12 @@
 #include <sys/prctl.h>
 #endif
 
+#if defined(COFFEE_GEKKO)
+#include <gccore.h>
+#include <ogcsys.h>
+#include <sys/timespec.h>
+#endif
+
 namespace Coffee{
 
 #if defined(COFFEE_NO_FUTURES)
@@ -49,16 +55,31 @@ using SharedFuture = std::shared_future<RType>;
 #if defined(COFFEE_NO_THREADLIB)
 struct Thread
 {
-    template<typename TFun, typename... Args>
-    Thread(TFun fptr, Args... args){}
-    Thread(){}
+    using id = u32;
+
+    Thread(std::function<void()> f);
+    template<typename TFun,
+             typename std::enable_if<std::is_pointer<TFun>::value, bool>::type* = nullptr,
+             typename... Args>
+    Thread(TFun fptr, Args... args) :
+        Thread([&]() {
+            fptr(args...);
+        })
+    {
+    }
+    Thread();
     static inline i32 hardware_concurrency()
     {
         return 1;
     }
-    void detach() {}
-    void join() {}
-    u32 get_id() {return 0;}
+    void detach();
+    void join();
+    id get_id();
+private:
+#if defined(COFFEE_GEKKO)
+    lwp_t m_threadHandle;
+    std::function<void()> m_threadLambda;
+#endif
 };
 #else
 using Thread = std::thread;
@@ -133,14 +154,27 @@ using ThreadId = Threads::ThreadId_t<Thread>;
 
 namespace CurrentThread{
 #if defined(COFFEE_NO_THREADLIB)
-template<typename... Args>
-STATICINLINE void sleep_for(Args... args)
+template<typename Rep, typename Period>
+STATICINLINE void sleep_for(const std::chrono::duration<Rep, Period>& dura)
 {
+#if defined(COFFEE_GEKKO)
+    struct timespec sleepyTime;
+    sleepyTime.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(dura).count();
+    sleepyTime.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count()
+                         % 1000000000;
+    nanosleep(&sleepyTime);
+#endif
 }
-template<typename... Args>
-STATICINLINE void sleep_until(Args... args)
+template<typename Clock, typename Duration>
+STATICINLINE void sleep_until(const std::chrono::time_point<Clock, Duration>& abs_time)
 {
+    sleep_for(abs_time - Clock::now());
 }
+
+extern void yield();
+
+extern Thread::id get_id();
+
 #else
 using namespace std::this_thread;
 #endif

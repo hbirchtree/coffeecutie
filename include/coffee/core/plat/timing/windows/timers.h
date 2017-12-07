@@ -29,6 +29,7 @@ namespace CFunctional {
         return (tick*1000000)/_win_perfcounter_data.freq.QuadPart;
     }
 
+#if defined(COFFEE_USE_OLD_TIMERS)
     template<typename T>
     class _cbasic_windows_timer : public _cbasic_timer<T>
     {
@@ -72,7 +73,7 @@ namespace CFunctional {
             return ((bigscalar)_win_api_get_time())/1000000.0;
         }
     };
-
+#endif
 
 }
 
@@ -126,9 +127,11 @@ struct WindowsTime : PosixIshTimeDef
 };
 
 using Time = WindowsTime;
+#if defined(COFFEE_USE_OLD_TIMERS)
 using CElapsedTimer = CFunctional::_plat_timer_ll_milli;
 using CElapsedTimerMicro = CFunctional::_plat_timer_ll_micro;
 using CElapsedTimerD = CFunctional::_plat_timer_scalar_micro;
+#endif
 
 }
 

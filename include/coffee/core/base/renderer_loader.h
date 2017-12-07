@@ -13,7 +13,7 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 {
 
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
     return renderer->init(properties, err);
 #else
 

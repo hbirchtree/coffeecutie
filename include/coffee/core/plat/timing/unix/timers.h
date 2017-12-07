@@ -15,6 +15,7 @@
 namespace Coffee{
 namespace CFunctional{
 
+#if defined(COFFEE_USE_OLD_TIMERS)
 template<typename T>
 class _cbasic_posix_timer : public _cbasic_timer<T>
 {
@@ -61,6 +62,7 @@ private:
         return (bigscalar)tv.tv_sec+(bigscalar)tv.tv_usec/1000000.0;
     }
 };
+#endif
 
 }
 
@@ -128,9 +130,11 @@ struct UnixTime : PosixIshTimeDef
 };
 
 using Time = UnixTime;
+#if defined(COFFEE_USE_OLD_TIMERS)
 using CElapsedTimer = CFunctional::_plat_timer_ll_milli;
 using CElapsedTimerMicro = CFunctional::_plat_timer_ll_micro;
 using CElapsedTimerD = CFunctional::_plat_timer_scalar_micro;
+#endif
 
 }
 
