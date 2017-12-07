@@ -11,24 +11,26 @@ using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
 {
+
     CResources::FileResourcePrefix("sample_data/");
 
     Profiler::PushContext("Configuration data");
     {
         /* Check out system directory strings and user data directories */
-        Url cfg_dir  = {Env::GetUserData(
-                    "hbirchtree",
-                    "Best Coffee of All Time")};
+        Url test_dir = MkUrl("config", RSCA::ConfigFile);
+        Url cfg_dir  = MkUrl("", RSCA::ConfigFile);
         Profiler::Profile("Get userdata directory");
+
+        cDebug("Test directory: {0} '{1}'", test_dir, *test_dir);
 
         CString app_dir  = Env::ApplicationDir();
         CString exe_name = Env::ExecutableName();
         Profiler::Profile("Get application location");
 
-        cDebug("Settings directory: {0}",cfg_dir);
+        cDebug("Settings directory: {0}",*cfg_dir);
         cDebug("Program directory:  {0}",app_dir);
         cDebug("Launching from      {0}",exe_name);
-		cDebug("Current directory:  {0}",Env::CurrentDir());
+        cDebug("Current directory:  {0}",Env::CurrentDir());
 
         Profiler::Profile("Print some data");
 

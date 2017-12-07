@@ -12,9 +12,11 @@ add_subdirectory (core/power-test)
 add_subdirectory (core/gpu-query)
 
 # ASIO examples, we leave this as core
-add_subdirectory(asio/base-client)
-add_subdirectory(asio/base-server)
-add_subdirectory(asio/irc-client)
+if(COFFEE_BUILD_ASIO)
+    add_subdirectory(asio/base-client)
+    add_subdirectory(asio/base-server)
+    add_subdirectory(asio/irc-client)
+endif()
 
 # Not going to say.
 add_subdirectory(rsread)
@@ -46,7 +48,7 @@ endif()
 #
 
 # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
-if(COFFEE_BUILD_OPENAL AND COFFEE_BUILD_GLEAM AND COFFEE_BUILD_SDL2)
+if(COFFEE_BUILD_OPENAL AND COFFEE_BUILD_GLEAM)
     if(NOT APPLE)    
         add_subdirectory (audio/caudio-test)
     endif()

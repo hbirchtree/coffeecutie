@@ -10,38 +10,7 @@
 using namespace Coffee;
 using namespace Display;
 
-class CDRenderer : public CSDL2Renderer
-{
-public:
-    CDRenderer():
-        CSDL2Renderer(0)
-    {
-    }
-
-    void run()
-    {
-    }
-    void eventHandleD(const Display::CDEvent &e, c_cptr data)
-    {
-        CSDL2Renderer::eventHandleD(e,data);
-
-        EventHandlers::WindowManagerCloseWindow(this,e,data);
-        EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>(e,data);
-
-        cDebug("Event: {0}", C_CAST<uint32>(e.type));
-    }
-    void eventHandleI(const CIEvent &e, c_cptr data)
-    {
-        CSDL2Renderer::eventHandleI(e,data);
-
-        EventHandlers::EscapeCloseWindow(this,e,data);
-        EventHandlers::ExitOnQuitSignal<CDRenderer>(this, e, data);
-
-        cDebug("Event: {0}", C_CAST<uint32>(e.type));
-    }
-
-    CQuat r_view;
-};
+using CDRenderer = CSDL2Renderer;
 
 struct SharedData
 {
@@ -70,14 +39,14 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     }
     
     renderer.popErrorMessage(Severity::Information, "Hello!", "Goodbye");
+
+    renderer.showWindow();
 }
 
 void loop_fun(CDRenderer& renderer, SharedData* data)
 {
-    if(renderer.contextTime() > 5.0)
-        renderer.closeWindow();
-
-    RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
+    RHI::GLEAM::GLEAM_API::DefaultFramebuffer()
+            .clear(0, {1.f, 1.f, 0.f, 0.1f});
 
     if(data->frame_ts <= Time::CurrentTimestamp())
     {
@@ -103,19 +72,40 @@ int32 coffee_main(int32, cstring_w*)
     CString err;
 
     ELoop* globLoop = new ELoop{
-            MkUq<CDRenderer>(),
+            Display::CreateRendererUq(),
             MkUq<SharedData>(),
             setup_fun, loop_fun, cleanup_fun,
             ELoop::TimeLimited, {}};
 
     ELoop& eventloop = *globLoop;
-    eventloop.time.max = 3;
+    eventloop.time.max = 10;
 
     CDProperties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
     visual.flags ^= CDProperties::Windowed;
     visual.flags |= CDProperties::WindowedFullScreen;
 
     cDebug("Visual: {0}", visual.gl.version);
+
+    eventloop.r().installEventHandler(
+    {
+                    EventHandlers::EscapeCloseWindow<CDRenderer>,
+                    nullptr, &eventloop.r()
+                });
+    eventloop.r().installEventHandler(
+    {
+                    EventHandlers::ExitOnQuitSignal<CDRenderer>,
+                    nullptr, &eventloop.r()
+                });
+    eventloop.r().installEventHandler(
+    {
+                    EventHandlers::WindowManagerCloseWindow<CDRenderer>,
+                    nullptr, &eventloop.r()
+                });
+    eventloop.r().installEventHandler(
+    {
+                    EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>,
+                    nullptr, &eventloop.r()
+                });
 
     int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
 
