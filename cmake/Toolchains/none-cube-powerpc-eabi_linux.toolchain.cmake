@@ -14,8 +14,8 @@ find_program ( ELF2DOL elf2dol )
 
 set ( ELF2DOL "${ELF2DOL}" CACHE STRING "" )
 
-set ( CMAKE_C_FLAGS "-mogc -mcpu=750 -meabi -mhard-float" )
-set ( CMAKE_CXX_FLAGS "-mogc -mcpu=750 -meabi -mhard-float -std=c++11" )
+set ( CMAKE_C_FLAGS "-mogc -mcpu=750 -meabi -mhard-float -I$ENV{PPCPORTLIBS_CUBE}/include" )
+set ( CMAKE_CXX_FLAGS "-mogc -mcpu=750 -meabi -mhard-float -std=c++11 -I$ENV{PPCPORTLIBS_CUBE}/include" )
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
@@ -25,7 +25,9 @@ set ( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
 set ( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 set ( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 
-link_directories ( $ENV{PPCPORTLIBS_CUBE}/lib )
+set ( CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} -I$ENV{PPCPORTLIBS_CUBE}/include -L$ENV{PPCPORTLIBS_CUBE}/lib"
+    )
 
 set ( CMAKE_LIBRARY_ARCHITECTURE "powerpc-eabi" CACHE STRING "" )
 

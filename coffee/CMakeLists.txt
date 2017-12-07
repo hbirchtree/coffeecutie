@@ -3,7 +3,9 @@ add_subdirectory(core)
 add_subdirectory(image)
 
 # ASIO networking
-add_subdirectory(asio)
+if(COFFEE_BUILD_ASIO)
+    add_subdirectory(asio)
+endif()
 
 # More here!
 add_subdirectory(graphics)
