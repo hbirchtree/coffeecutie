@@ -22,6 +22,8 @@
 using namespace Coffee;
 using namespace Display;
 
+using CDRenderer = CSDL2Renderer;
+
 #ifndef USE_NULL_RENDERER
     using GLM = GLEAMAPI;
 #else
@@ -120,20 +122,6 @@ struct RendererState
         GpuInfo::GpuQueryInterface fun;
         bool haveGpuQuery = false;
     } gq_data;
-};
-
-class CDRenderer : public CSDL2Renderer {
-public:
-
-private:
-
-public:
-    CDRenderer() : CSDL2Renderer(0) {}
-    virtual ~CDRenderer() {}
-
-    virtual void run() {
-    }
-    
 };
 
 void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)

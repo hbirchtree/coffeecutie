@@ -366,7 +366,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
 
-    CSDL2Renderer *renderer = new CDRenderer();
+    CSDL2Renderer *renderer = CreateRenderer();
 
     Profiler::Profile("Object creation");
 

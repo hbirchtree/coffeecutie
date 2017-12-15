@@ -44,7 +44,7 @@ int32 coffee_main(int32, cstring_w*)
     props.gl.flags |= GLProperties::GLDebug;
     
     EDATA* loop = new EDATA{
-            MkUq<CDRenderer>(),
+            CreateRendererUq(),
             MkUq<RendererState>(),
             SetupRendering,
             RendererLoop,
