@@ -62,7 +62,14 @@ bool PosixFileMod_def::Touch(FileFunDef::NodeType t, Url const& fn)
 
 CString PosixFileMod_def::DereferenceLink(Url const& fn)
 {
-    auto url = *fn;
+    CString url = fn.internUrl;
+
+    /* Avoid cyclic dependency in resolution of filenames, yo */
+    if(!feval(fn.flags & RSCA::SystemFile))
+        url = *fn;
+
+    errno = 0;
+
     CString out;
     szptr name_size = PATH_MAX;
     out.resize(name_size+1);

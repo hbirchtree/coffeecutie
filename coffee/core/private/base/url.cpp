@@ -107,6 +107,8 @@ CString Url::operator*() const
 #if defined(COFFEE_UNIXPLAT)
         auto derefPath = DereferenceLocalPath();
         derefPath = CStrReplace(derefPath, "//", "/");
+        derefPath = FileFun::DereferenceLink(
+                    MkUrl(derefPath.c_str(), RSCA::SystemFile));
         return derefPath;
 #else
         return DereferenceLocalPath();
