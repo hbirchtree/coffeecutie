@@ -57,7 +57,7 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
             c.gl.version.major = env.maj;
             c.gl.version.minor = env.min;
 
-            if(renderer->init(properties, err))
+            if(renderer->init(c, err))
                 return  true;
             else
                 renderer->cleanup();
