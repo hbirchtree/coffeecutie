@@ -25,6 +25,10 @@ bitm_texture_t BlamMapHandler::texture(uchar *bitm, const index_item_t* ref)
 {
     const bitm_image_t* item = bitm_get(ref,m_map.map,
                                         m_map.tags.index_magic,nullptr);
+
+    if(!item)
+        return {};
+
     return bitm_get_texture(item,bitm);
 }
 
@@ -35,6 +39,10 @@ void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images)
     auto texture_processor = [&](index_item_t const* it)
     {
         tex = texture(bitm,it);
+
+        if(!tex.data)
+            return;
+
         if(tex.type == TexType::T2D)
         {
             QImage::Format fmt;

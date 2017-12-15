@@ -113,7 +113,7 @@ void BlamDataViewer::openMap(BlamFileContext *map)
         m_map_handle->allTextures(m_bitmap_file->data,&m_textures_ref);
 
         auto matcher = [](index_item_t const* e){
-            return tag_class_cmp(e->tagclass_e[0], tag_class_t::bitm);
+            return e->tagclass_e[0] == tag_class_t::bitm;
         };
 
         auto raw = tag_index_view(m_map_handle->container());
