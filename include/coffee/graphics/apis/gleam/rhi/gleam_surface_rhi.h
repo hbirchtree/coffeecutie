@@ -37,7 +37,7 @@ struct GLEAM_Surface2D : GLEAM_Surface
     void allocate(CSize size, PixelComponents c);
 
     void upload(BitFormat fmt, PixelComponents comp,
-                CSize size, c_cptr data,
+                CSize size, const Bytes &data,
                 CPoint offset = {0,0}, uint32 mip = 0);
 
     CSize texSize() const;

@@ -8,6 +8,20 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+/* TODO: If a texture format is reversed, eg. BGRA, BGR
+ *  or simply reversed (RGBA -> ABGR), use swizzling
+ *  as fallback on OpenGL  ES
+ *
+ */
+
+STATICINLINE void texture_swizzle(
+        Texture type, CGhnd tex_hnd, PixCmp cmp, PixCmp target)
+{
+    CGL33::TexBind(type, tex_hnd);
+    i32 val = C_FCAST<i32>(CGL::to_enum(target));
+    CGL33::TexParameteriv(type, to_enum_swizz(cmp), &val);
+}
+
 GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 texflags):
     Surface(fmt,false,0,mips,texflags),
     m_type(type),
@@ -77,6 +91,9 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
     if(m_pixfmt == PixFmt::Depth24Stencil8)
         bitformat = BitFormat::UInt24_8;
 
+    if(IsPixFmtCompressed(m_pixfmt))
+        return;
+
     CGL33::TexBind(m_type,m_handle);
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
@@ -95,10 +112,10 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
 }
 
 void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
-                             CSize size, c_cptr data,
+                             CSize size, Bytes const& data,
                              CPoint offset, uint32 mip)
 {
-    c_cptr data_ptr = data;
+    c_cptr data_ptr = data.data;
     auto msz = size.convert<u32>();
 
 #if !defined(COFFEE_ONLY_GLES20)
@@ -112,19 +129,50 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
             CGL43::BufBind(BufType::PixelUData,pbo.buf);
             if(pbo.flags != 0)
                 CGL43::BufInvalidateData(pbo.buf);
-            CGL43::BufStorage(BufType::PixelUData,GetPixSize(fmt,comp,size.area()),data,
+            CGL43::BufStorage(BufType::PixelUData,
+                              GetPixSize(fmt,comp,size.area()),data.data,
                               ResourceAccess::WriteOnly|ResourceAccess::Persistent);
         }else
         {
         data_ptr = 0x0;
         CGL33::BufBind(BufType::PixelUData,pbo.buf);
-        CGL33::BufData(BufType::PixelUData,GetPixSize(fmt,comp,size.area()),data,
+        CGL33::BufData(BufType::PixelUData,
+                       GetPixSize(fmt,comp,size.area()),data.data,
                        ResourceAccess::WriteOnly|ResourceAccess::Streaming);
         }
     }
 #endif
 
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0)
+    if(IsPixFmtCompressed(m_pixfmt))
+    {
+        CGL33::TexBind(m_type, m_handle);
+
+        auto pflags = PixelFlags::None;
+
+        switch(comp)
+        {
+        case PixCmp::R:
+            pflags = PixelFlags::R;
+            break;
+        case PixCmp::RG:
+            pflags = PixelFlags::RG;
+            break;
+        case PixCmp::RGB:
+            pflags = PixelFlags::RGB;
+            break;
+        case PixCmp::RGBA:
+            pflags = PixelFlags::RGBA;
+            break;
+        }
+
+        CGL33::TexImageCompressed2D(
+                    m_type, mip, m_pixfmt,
+                    pflags,
+                    (CompFlags)(m_flags >> 10),
+                    size.w, size.h, 0, data.size, data.data);
+    }
+
+    else if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0)
     {
         CGL33::TexBind(m_type,m_handle);
 

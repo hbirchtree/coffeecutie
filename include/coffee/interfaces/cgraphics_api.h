@@ -854,6 +854,21 @@ struct GraphicsProfiler
     };
 };
 
+struct GraphicsDebug
+{
+    struct ScopeMarker
+    {
+        /* Creates debug group */
+        ScopeMarker(cstring) {}
+
+        /* Removes debug group */
+        ~ScopeMarker() {}
+    };
+
+    template<typename T>
+    static void Mark(T&, cstring) {}
+};
+
 struct NullAPI : GraphicsAPI
 {
     using OccludeQuery = GraphicsAPI::OccludeQuery<int>;
@@ -967,6 +982,11 @@ struct NullAPI : GraphicsAPI
 	using QRY_DBUF = GraphicsProfiler::BufferQuery<FB_T>;
 	using QRY_PERF = GraphicsProfiler::PerfQuery;
         using QRY_PIPDMP = GraphicsProfiler::PipelineDumper<PIP>;
+    };
+
+    struct DBG : GraphicsDebug
+    {
+        using DBG_SCOPE = GraphicsDebug::ScopeMarker;
     };
 };
 

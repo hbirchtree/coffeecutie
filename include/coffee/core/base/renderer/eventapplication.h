@@ -49,6 +49,19 @@ struct EventLoopData
     FORCEDINLINE ShareData* d() {return data.get();}
 };
 
+template<typename R, typename D>
+FORCEDINLINE
+EventLoopData<R,D>* MkEventLoop(UqPtr<R>&& renderer,
+                                UqPtr<D>&& data)
+{
+    return new EventLoopData<R,D>{
+        std::move(renderer), std::move(data),
+        {},  {}, {},
+
+        0, {}, {}
+    };
+}
+
 namespace CfEventFunctions {
 template<typename RendType, typename DataType>
 void WrapEventFunction(void* data, int event)
@@ -416,6 +429,15 @@ public:
 
     }
 };
+
+template<typename GAPI, typename R, typename D>
+int32 AutoExec(EventLoopData<R,D>& event)
+{
+    CString error;
+    auto visual = Display::GetDefaultVisual<GAPI>();
+
+    return EventApplication::execEventLoop(event, visual, error);
+}
 
 }
 }
