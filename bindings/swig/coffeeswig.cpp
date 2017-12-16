@@ -32,7 +32,7 @@ SDL2Renderer* CreateWindow(Props const& props, CObject *p)
 {
     CString err;
 
-    SDL2Renderer* win = new SDL2Renderer();
+    SDL2Renderer* win = Display::CreateRenderer();
     if(!win->init(props,&err))
         cDebug("Window creation error: {0}",err);
 

@@ -48,6 +48,8 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString &name)
     Thread t(ImpCreateNewThreadQueue, name, &flagPtr);
     auto tid = ThreadId(t.get_id()).hash();
 
+    CurrentThread::yield();
+
     /* I feel bad for this, but it shouldn't be called often */
     while(flagPtr == nullptr)
         ;

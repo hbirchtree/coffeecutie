@@ -13,7 +13,7 @@ namespace Display{
 
 class SDL2EventHandler :
         public virtual EventApplication,
-        public HapticApplication,
+        public virtual HapticApplication,
         public virtual SDL2ContextUser
 {
 public:
@@ -42,8 +42,8 @@ public:
     bool inputPostInit(CString*);
     void inputTerminate();
 
-    virtual void eventHandleD(const CDEvent &, c_cptr);
-    virtual void eventHandleI(const CIEvent &event, c_cptr data);
+    void eventHandleD(const CDEvent &, c_cptr);
+    void eventHandleI(const CIEvent &event, c_cptr data);
 
     CIControllerState getControllerState(uint16 index);
 

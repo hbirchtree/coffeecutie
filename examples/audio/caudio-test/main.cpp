@@ -5,28 +5,37 @@
 
 #include <coffee/CAudio>
 
-#include <coffee/sdl2/CSDL2WindowHost>
+#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/core/CInput>
 
 using namespace Coffee;
 using namespace Display;
 using namespace CAudio;
+using namespace CInput;
 
 using AL = COpenAL::OpenALAPI;
 
-class CDRenderer : public Coffee::Display::SDL2WindowHost
+struct AudioData
 {
+    AL::Device* device;
+
     AL::Sample* m_sample_1;
     AL::Sample* m_sample_2;
     AL::Track* m_track_1;
     AL::Track* m_track_2;
+};
 
-public:
-    CDRenderer()
-    {
-    }
+int32 coffee_main(int32, cstring_w*)
+{
+    FileResourcePrefix("sample_data/caudio_test/");
 
-    void run()
+    CString err;
+    auto eld = MkEventLoop<Display::CSDL2Renderer, AudioData>(
+                Display::CreateRendererUq(),
+                MkUq<AudioData>());
+
+    eld->setup = [&](Display::CSDL2Renderer& r, AudioData* d)
     {
         AudioSample smp;
         //Read audio sample from file
@@ -51,6 +60,7 @@ public:
         AL::Arbiter man;
         cDebug("Created AL arbiter");
         AL::Device* dev = man.createDevice(man.defaultSoundDevice());
+        d->device = dev;
         if(!dev)
         {
             cDebug("Failed to create audio device, descriptor={0}",
@@ -91,80 +101,90 @@ public:
         //Free sample data from source
         CFree(smp.data);
 
-        m_track_1 = &track1;
-        m_track_2 = &track2;
-        m_sample_1 = &samp1;
-        m_sample_2 = &samp1;
+        d->m_track_1 = &track1;
+        d->m_track_2 = &track2;
+        d->m_sample_1 = &samp1;
+        d->m_sample_2 = &samp1;
 
         //Queue sample for playback
         track1.queueSample(samp1);
 
-        this->showWindow();
-        while(!closeFlag())
-        {
-            track1.updateTrack(5);
-            track2.updateTrack(5);
-            this->pollEvents();
-        }
+        r.showWindow();
+    };
 
-        delete dev;
-    }
-    void eventHandleD(const Display::CDEvent &e, c_cptr data)
+    eld->loop = [&](Display::CSDL2Renderer& r, AudioData* d)
     {
-        SDL2WindowHost::eventHandleD(e,data);
-        EventHandlers::WindowManagerCloseWindow(this,e,data);
-    }
-    void eventHandleI(const CIEvent &e, c_cptr data)
+        d->m_track_1->updateTrack(5);
+        d->m_track_2->updateTrack(5);
+
+        r.pollEvents();
+        r.swapBuffers();
+    };
+
+    eld->cleanup = [&](Display::CSDL2Renderer&, AudioData* d)
     {
-        SDL2WindowHost::eventHandleI(e,data);
-        EventHandlers::EscapeCloseWindow(this,e,data);
+        delete d->device;
+    };
 
-        switch(e.type)
-        {
-        case CIEvent::Keyboard:
-        {
-            const CIKeyEvent* kev = (const CIKeyEvent*)data;
-            switch(kev->key)
-            {
-            case CK_Space:
-                m_track_1->queueSample(*m_sample_1);
-                break;
-            case CK_LShift:
-                m_track_2->queueSample(*m_sample_2);
-                break;
-            }
-        }
-        case CIEvent::MouseButton:
-        {
-            const CIMouseButtonEvent& mev = *(const CIMouseButtonEvent*)data;
-            if(mev.mod&CIMouseButtonEvent::Pressed)
-            {
-                m_track_1->queueSample(*m_sample_1);
-            }else{
-                m_track_2->queueSample(*m_sample_2);
-            }
-            break;
-        }
-        default:
-            break;
-        }
-    }
-};
-
-int32 coffee_main(int32, cstring_w*)
-{
-    FileResourcePrefix("sample_data/caudio_test/");
-
-    CDRendererBase *renderer = new CDRenderer();
-    CString err;
-    if(!renderer->init(GetDefaultVisual<RHI::GLEAM::GLEAM_API>(), &err))
+    eld->r().installEventHandler(
     {
-        cDebug("Initialization error: {0}",err);
-        return 1;
-    }
-    renderer->run();
-    renderer->cleanup();
-    delete renderer;
+                    [](c_ptr up, CIEvent const&  e, c_cptr data)
+                    {
+                        AudioData* m = C_FCAST<AudioData*>(up);
+
+                        auto& m_track_1 = m->m_track_1;
+                        auto& m_track_2 = m->m_track_2;
+                        auto& m_sample_1 = m->m_sample_1;
+                        auto& m_sample_2 = m->m_sample_2;
+
+                        switch(e.type)
+                        {
+                        case CIEvent::Keyboard:
+                        {
+                            const CIKeyEvent* kev = (const CIKeyEvent*)data;
+                            switch(kev->key)
+                            {
+                            case CK_Space:
+                                m_track_1->queueSample(*m_sample_1);
+                                break;
+                            case CK_LShift:
+                                m_track_2->queueSample(*m_sample_2);
+                                break;
+                            }
+                        }
+                        case CIEvent::MouseButton:
+                        {
+                            const CIMouseButtonEvent& mev = *(const CIMouseButtonEvent*)data;
+                            if(mev.mod&CIMouseButtonEvent::Pressed)
+                            {
+                                m_track_1->queueSample(*m_sample_1);
+                            }else{
+                                m_track_2->queueSample(*m_sample_2);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                        }
+                    },
+                    "Input handler",
+                    eld->d()
+                });
+    eld->r().installEventHandler(
+    {
+                EventHandlers::EscapeCloseWindow<CSDL2Renderer>,
+                "Escape handler", &eld->r()});
+    eld->r().installEventHandler(
+    {
+                EventHandlers::WindowManagerCloseWindow<CSDL2Renderer>,
+                "Close handler", &eld->r()});
+
+
+    int state = AutoExec<GLEAMAPI, Display::CSDL2Renderer, AudioData>(*eld);
+
+    if(state != 0)
+        cWarning("{0}", err);
+
     return 0;
 }
 

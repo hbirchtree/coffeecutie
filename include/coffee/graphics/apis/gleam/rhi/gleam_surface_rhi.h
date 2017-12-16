@@ -6,7 +6,7 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-struct GLEAM_Surface : GraphicsAPI::Surface
+struct GLEAM_Surface : GraphicsAPI::Surface<CSize,CPoint>
 {
     friend struct GLEAM_RenderTarget;
 
@@ -37,8 +37,18 @@ struct GLEAM_Surface2D : GLEAM_Surface
     void allocate(CSize size, PixelComponents c);
 
     void upload(BitFormat fmt, PixelComponents comp,
-                CSize size, c_cptr data,
+                CSize size, const Bytes &data,
                 CPoint offset = {0,0}, uint32 mip = 0);
+
+    void upload(BitFormat fmt, PixelComponents comp,
+                CSize size, c_cptr data,
+                CPoint offset = {0,0}, uint32 mip = 0)
+    {
+        Bytes dataS;
+        dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
+        dataS.size = 0;
+        upload(fmt, comp, size, dataS, offset, mip);
+    }
 
     CSize texSize() const;
 
@@ -46,6 +56,13 @@ struct GLEAM_Surface2D : GLEAM_Surface
 
 protected:
     CSize m_size;
+};
+
+struct GLEAM_SurfaceCube : GLEAM_Surface2D
+{
+    friend struct GLEAM_SamplerCube;
+
+    GLEAM_SurfaceCube(PixelFormat fmt, u32 mips = 1, u32 texflags = 0);
 };
 
 struct GLEAM_Surface3D_Base : GLEAM_Surface
@@ -58,8 +75,18 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
     void allocate(CSize3 size, PixelComponents c);
 
     void upload(BitFormat fmt, PixelComponents comp,
-                CSize3 size, c_cptr data,
+                CSize3 size, const Bytes &data,
                 CPoint3 offset = {0,0,0}, uint32 mip = 0);
+
+    void upload(BitFormat fmt, PixelComponents comp,
+                CSize3 size, c_cptr data,
+                CPoint3 offset = {0,0,0}, uint32 mip = 0)
+    {
+        Bytes dataS;
+        dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
+        dataS.size = 0;
+        upload(fmt, comp, size, dataS, offset, mip);
+    }
 
     CSize3 texSize() const;
 
@@ -84,6 +111,13 @@ struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
     GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips = 1,
                          uint32 texflags = 0):
         GLEAM_Surface3D_Base(Texture::T2DArray,fmt,mips,texflags) {}
+};
+
+struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
+{
+    friend struct GLEAM_SamplerCube;
+
+    GLEAM_SurfaceCubeArray(PixelFormat fmt, u32 mips = 1, u32 texflags = 0);
 };
 
 struct GLEAM_SamplerHandle

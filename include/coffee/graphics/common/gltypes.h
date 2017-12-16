@@ -46,11 +46,13 @@ struct CGL_ScopedContext
     CGL_ScopedContext(CGL_Context* ctxt):
         m_ctxt(ctxt)
     {
-        m_ctxt->acquireContext();
+        if(m_ctxt)
+            m_ctxt->acquireContext();
     }
     virtual ~CGL_ScopedContext()
     {
-        m_ctxt->releaseContext();
+        if(m_ctxt)
+            m_ctxt->releaseContext();
     }
 protected:
     CGL_Context* m_ctxt;

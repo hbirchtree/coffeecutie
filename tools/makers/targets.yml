@@ -260,7 +260,7 @@ templates:
     .*i686.*:
       =container: ubuntu-i686
       =toolchain: linux-generic-i686_linux.toolchain.cmake
-    .*gles:
+    .*gles.*:
       =preload: linux-gles.cmake
     .*gles2:
       =preload: linux-gles20.cmake

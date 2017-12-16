@@ -11,7 +11,7 @@ namespace Coffee{
 namespace Display{
 
 class GLKWindow :
-        public WindowManagerClient,
+        public virtual WindowManagerClient,
         public virtual EventApplication
 {
     friend class EGLRenderer;

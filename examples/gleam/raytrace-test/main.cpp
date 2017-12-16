@@ -247,7 +247,7 @@ int32 coffee_main(int32, cstring_w*)
 
     CElapsedTimerD timer;
     timer.start();
-    CSDL2Renderer *renderer = new CDRenderer();
+    CSDL2Renderer *renderer = CreateRenderer();
     cDebug("Allocated renderer: {0}",timer.elapsed());
     CDProperties props = GetDefaultVisual(4,3);
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;

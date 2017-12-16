@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
-#define COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
+#pragma once
 
 #include "../plat_primary_identify.h"
 #include "../../coffee_mem_macros.h"
@@ -334,7 +333,9 @@ struct DeviceInfoDef
     static scalar Weight(){return {};}
 };
 
-}
-
+#if defined(COFFEE_STUBBED_SYSINFO)
+using SysInfo = SysInfoDef;
+using PowerInfo = PowerInfoDef;
 #endif
 
+}

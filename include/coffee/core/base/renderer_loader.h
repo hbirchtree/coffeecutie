@@ -13,15 +13,15 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 {
 
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
     return renderer->init(properties, err);
 #else
 
     struct GLEnv
     {
         u32 requirements;
-        u32 min;
         u32 maj;
+        u32 min;
     };
 
     static const constexpr std::array<GLEnv, 7> GLVersions = {{
@@ -57,7 +57,7 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
             c.gl.version.major = env.maj;
             c.gl.version.minor = env.min;
 
-            if(renderer->init(properties, err))
+            if(renderer->init(c, err))
                 return  true;
             else
                 renderer->cleanup();

@@ -10,7 +10,7 @@ set ( Cappuccino_HDRS
 
 set ( LINK_MODE SHARED )
 
-if(APPLE AND IOS)
+if(COFFEE_NO_DYNAMIC_LINKING)
     # Shared libraries don't work on iOS
     set ( LINK_MODE STATIC )
 endif()

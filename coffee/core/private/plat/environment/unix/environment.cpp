@@ -194,6 +194,8 @@ CString &Posix::PosixTerminalColorCodes::ColorText(CString &text, EnvColorCodes:
     text += s[0];
 
     return text;
+#else
+    return text;
 #endif
 }
 

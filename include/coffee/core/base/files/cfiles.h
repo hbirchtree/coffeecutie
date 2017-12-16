@@ -40,7 +40,7 @@ public:
      */
     Resource(cstring rsrc = nullptr,
              bool absolute = false,
-             ResourceAccess acc = ResourceAccess::None);
+             ResourceAccess acc = ResourceAccess::AssetFile);
     Resource(Url const& url);
     Resource(cstring rsrc,
              ResourceAccess acc);

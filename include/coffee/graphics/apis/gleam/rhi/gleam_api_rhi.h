@@ -64,6 +64,7 @@ struct GLEAM_API : GraphicsAPI
     using BUF_U = GLEAM_UniformBuffer;
     using BUF_S = GLEAM_ShaderBuffer;
     using BUF_P = GLEAM_PixelBuffer;
+    using BUF_DRAW = GLEAM_IndirectBuffer;
 
     using D_CALL = DrawCall;
     using D_DATA = DrawInstanceData;
@@ -292,6 +293,11 @@ public:
     static bool GetRendererDriverInfo(GraphicsDevice const&, SWVersionInfo*);
     static CString GetShaderLanguageName(GraphicsContext const&);
     static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*);
+
+    struct DBG
+    {
+        using SCOPE = GLEAM_ScopeMarker;
+    };
 };
 
 struct GLEAM_PRF

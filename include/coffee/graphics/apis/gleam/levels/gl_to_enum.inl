@@ -107,23 +107,9 @@ inline CGenum to_enum(
 
     switch(f)
     {
-    case Feature::Blend:
-        return GL_BLEND;
-#ifdef COFFEE_GLEAM_DESKTOP
-    case Feature::DebugOutput:
-        return GL_DEBUG_OUTPUT;
-    case Feature::DebugOutputSync:
-        return GL_DEBUG_OUTPUT_SYNCHRONOUS;
-#endif
-    case Feature::DepthTest:
-        return GL_DEPTH_TEST;
 #ifdef COFFEE_GLEAM_DESKTOP
     case Feature::DepthClamp:
         return GL_DEPTH_CLAMP;
-#endif
-    case Feature::Dither:
-        return GL_DITHER;
-#ifdef COFFEE_GLEAM_DESKTOP
     case Feature::FramebufferSRGB:
         return GL_FRAMEBUFFER_SRGB;
     case Feature::LineSmooth:
@@ -132,10 +118,6 @@ inline CGenum to_enum(
         return GL_MULTISAMPLE;
     case Feature::PointSize:
         return GL_PROGRAM_POINT_SIZE;
-#endif
-    case Feature::PolygonOffsetFill:
-        return GL_POLYGON_OFFSET_FILL;
-#ifdef COFFEE_GLEAM_DESKTOP
     case Feature::PolygonOffsetLine:
         return GL_POLYGON_OFFSET_LINE;
     case Feature::PolygonOffsetPoint:
@@ -144,41 +126,45 @@ inline CGenum to_enum(
         return GL_POLYGON_SMOOTH;
     case Feature::PrimitiveRestart:
         return GL_PRIMITIVE_RESTART;
+    case Feature::SampleAlphaToOne:
+        return GL_SAMPLE_ALPHA_TO_ONE;
+    case Feature::SampleShading:
+        return GL_SAMPLE_SHADING;
+    case Feature::SeamlessCubemap:
+        return GL_TEXTURE_CUBE_MAP_SEAMLESS;
+    case Feature::ClipDist:
+        return GL_CLIP_DISTANCE0+((offset>7) ? 7 : offset);
 #endif
 #if !defined(COFFEE_ONLY_GLES20)
+    case Feature::DebugOutput:
+        return GL_DEBUG_OUTPUT;
+    case Feature::DebugOutputSync:
+        return GL_DEBUG_OUTPUT_SYNCHRONOUS;
     case Feature::PrimitiveRestartFixedIdx:
         return GL_PRIMITIVE_RESTART_FIXED_INDEX;
     case Feature::RasterizerDiscard:
         return GL_RASTERIZER_DISCARD;
-#endif
-    case Feature::SampleAlphaToCoverage:
-        return GL_SAMPLE_ALPHA_TO_COVERAGE;
-#ifdef COFFEE_GLEAM_DESKTOP
-    case Feature::SampleAlphaToOne:
-        return GL_SAMPLE_ALPHA_TO_ONE;
-#endif
-    case Feature::SampleCoverage:
-        return GL_SAMPLE_COVERAGE;
-#ifdef COFFEE_GLEAM_DESKTOP
     case Feature::SampleMask:
         return GL_SAMPLE_MASK;
-    case Feature::SampleShading:
-        return GL_SAMPLE_SHADING;
 #endif
+    case Feature::Blend:
+        return GL_BLEND;
+    case Feature::Culling:
+        return GL_CULL_FACE;
+    case Feature::DepthTest:
+        return GL_DEPTH_TEST;
+    case Feature::Dither:
+        return GL_DITHER;
+    case Feature::PolygonOffsetFill:
+        return GL_POLYGON_OFFSET_FILL;
+    case Feature::SampleAlphaToCoverage:
+        return GL_SAMPLE_ALPHA_TO_COVERAGE;
+    case Feature::SampleCoverage:
+        return GL_SAMPLE_COVERAGE;
     case Feature::ScissorTest:
         return GL_SCISSOR_TEST;
     case Feature::StencilTest:
         return GL_STENCIL_TEST;
-#ifdef COFFEE_GLEAM_DESKTOP
-    case Feature::SeamlessCubemap:
-        return GL_TEXTURE_CUBE_MAP_SEAMLESS;
-#endif
-#ifdef COFFEE_GLEAM_DESKTOP
-    case Feature::ClipDist:
-        return GL_CLIP_DISTANCE0+((offset>7) ? 7 : offset);
-#endif
-    case Feature::Culling:
-        return GL_CULL_FACE;
     default:
         return GL_NONE;
     }
@@ -228,9 +214,12 @@ inline CGenum to_enum(
 {
     switch(p)
     {
+
+    /* LINES */
+
     case Prim::Line:
 #ifdef COFFEE_GLEAM_DESKTOP
-        if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
+        if(feval(c, PrimCre::Adjacency|PrimCre::Strip))
             return GL_LINE_STRIP_ADJACENCY;
 #endif
         switch(c)
@@ -248,8 +237,14 @@ inline CGenum to_enum(
         default:
             return GL_NONE;
         }
+
+        /* POINTS */
+
     case Prim::Point:
         return GL_POINTS;
+
+        /* TRIANGLES */
+
     case Prim::Triangle:
 #ifdef COFFEE_GLEAM_DESKTOP
         if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
@@ -270,6 +265,9 @@ inline CGenum to_enum(
         default:
             return GL_TRIANGLES;
         }
+
+        /* PATCHES */
+
 #ifdef COFFEE_GLEAM_DESKTOP
     case Prim::Patch:
         if(c!=PrimCre::Explicit)
@@ -565,7 +563,7 @@ inline CGenum to_enum1(
     {
     case ShaderStage::Vertex:
         return GL_VERTEX_SHADER;
-#ifdef COFFEE_GLEAM_DESKTOP
+#if !defined(COFFEE_ONLY_GLES20)
     case ShaderStage::TessControl:
         return GL_TESS_CONTROL_SHADER;
     case ShaderStage::TessEval:
@@ -575,7 +573,7 @@ inline CGenum to_enum1(
 #endif
     case ShaderStage::Fragment:
         return GL_FRAGMENT_SHADER;
-#ifdef COFFEE_GLEAM_DESKTOP
+#if !defined(COFFEE_ONLY_GLES20)
     case ShaderStage::Compute:
         return GL_COMPUTE_SHADER;
 #endif
@@ -678,10 +676,9 @@ inline CGenum to_enum(
         return GL_MIN;
     case Operator::Max:
         return GL_MAX;
-#else
+#endif
     default:
         return GL_NONE;
-#endif
     }
 }
 
@@ -838,12 +835,18 @@ inline CGenum to_enum(PixelComponents f)
 #ifdef COFFEE_GLEAM_DESKTOP
     case PixelComponents::BGR:
         return GL_BGR;
+#else
+    case PixelComponents::BGR:
+        return GL_RGB;
 #endif
     case PixelComponents::RGBA:
         return GL_RGBA;
 #ifdef COFFEE_GLEAM_DESKTOP
     case PixelComponents::BGRA:
         return GL_BGRA;
+#else
+    case PixelComponents::BGRA:
+        return GL_RGBA;
 #endif
     case PixelComponents::Depth:
         return GL_DEPTH_COMPONENT;
@@ -852,6 +855,25 @@ inline CGenum to_enum(PixelComponents f)
         return GL_DEPTH_STENCIL;
     case PixelComponents::Stencil:
         return GL_STENCIL;
+#endif
+    default:
+        return GL_NONE;
+    }
+}
+
+inline CGenum to_enum_swizz(PixCmp f)
+{
+    switch(f)
+    {
+#if !defined(COFFEE_ONLY_GLES20)
+    case PixCmp::R:
+        return GL_TEXTURE_SWIZZLE_R;
+    case PixCmp::G:
+        return GL_TEXTURE_SWIZZLE_G;
+    case PixCmp::B:
+        return GL_TEXTURE_SWIZZLE_B;
+    case PixCmp::A:
+        return GL_TEXTURE_SWIZZLE_A;
 #endif
     default:
         return GL_NONE;
@@ -913,6 +935,8 @@ inline CGenum to_enum(BitFormat f)
     case BitFormat::UShort_565:
         return GL_UNSIGNED_SHORT_5_6_5;
 #ifdef COFFEE_GLEAM_DESKTOP
+    case BitFormat::UShortR:
+        return GL_UNSIGNED_SHORT_4_4_4_4_REV;
     case BitFormat::UShort_565R:
         return GL_UNSIGNED_SHORT_5_6_5_REV;
     case BitFormat::UShort_1555R:
@@ -928,6 +952,8 @@ inline CGenum to_enum(BitFormat f)
         return GL_UNSIGNED_INT_5_9_9_9_REV;
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
+    case BitFormat::UIntR:
+        return GL_UNSIGNED_INT_8_8_8_8_REV;
     case BitFormat::UInt_1010102:
         return GL_UNSIGNED_INT_10_10_10_2;
 #endif

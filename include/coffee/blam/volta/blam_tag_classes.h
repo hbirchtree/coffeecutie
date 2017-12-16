@@ -92,8 +92,20 @@ enum class tag_class_t
 
 FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)
 {
-    return Mem::ForeignEndian32(C_CAST<uint32>(v1)) == C_CAST<uint32>(v2) ||
-            v1 == v2;
+    auto v1_i = Mem::ForeignEndian32(C_CAST<u32>(v1));
+    auto v2_i = C_CAST<u32>(v2);
+
+    return v1_i == v2_i || v1 == v2;
+}
+
+FORCEDINLINE bool operator==(tag_class_t t1, tag_class_t t2)
+{
+    return tag_class_cmp(t1, t2);
+}
+
+FORCEDINLINE bool operator!=(tag_class_t t1, tag_class_t t2)
+{
+    return !(t1 == t2);
 }
 
 }

@@ -8,7 +8,8 @@
 namespace Coffee{
 namespace Display{
 
-class SDL2GLRenderer : public GLApplication,
+class SDL2GLRenderer :
+        public virtual GLApplication,
         public virtual SDL2ContextUser
 {
 public:

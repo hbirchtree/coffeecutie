@@ -1,5 +1,4 @@
-#ifndef CDISPLAY_H
-#define CDISPLAY_H
+#pragma once
 
 #include "../../types/cdef/infotypes.h"
 #include "../../types/cdef/pixtypes.h"
@@ -296,6 +295,3 @@ STATICINLINE CDProperties GetDefaultVisual()
 }
 using ColBits = Display::CDContextBits;
 }
-
-#endif // CDISPLAY_H
-

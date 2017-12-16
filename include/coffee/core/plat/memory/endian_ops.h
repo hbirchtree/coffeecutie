@@ -1,6 +1,6 @@
 #pragma once
 
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL)
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL) && !defined(GEKKO)
 #define USE_ARPA
 #include <arpa/inet.h>
 #endif

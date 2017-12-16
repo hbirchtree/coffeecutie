@@ -18,6 +18,10 @@ public:
     {
     }
 
+    virtual ~GLLoader()
+    {
+    }
+
     /*!
      * \brief Callback for GL errors and messages, implemented by the user.
      * \param d A pointer to the system's OpenGL report format, implementation-specific.

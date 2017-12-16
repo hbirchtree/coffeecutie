@@ -13,6 +13,8 @@ namespace Display{
 class InputApplication
 {
 public:
+    virtual ~InputApplication() {}
+
     virtual bool inputPreInit(CString*) = 0;
     virtual bool inputInit(CString*) = 0;
     virtual bool inputPostInit(CString*) = 0;

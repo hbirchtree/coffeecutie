@@ -149,7 +149,7 @@
 #define COFFEE_LIL_ENDIAN
 #endif
 
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ ==  9)
 #define COFFEE_BAD_REGEX
 #endif
 
@@ -267,13 +267,28 @@
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)\
+    || defined(COFFEE_GEKKO)
+
+#if !defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_STUBBED_SYSINFO
-#define COFFEE_STUBBED_ENVIRONMENT
+#endif
+
 #define COFFEE_STUBBED_PROCESS
 #define COFFEE_STUBBED_STACKTRACE
 #define COFFEE_STUBBED_CFILE
 #define COFFEE_STUBBED_DYNLOADER
+#define COFFEE_STUBBED_ENVIRONMENT
+#endif
+
+#if defined(COFFEE_GEKKO)
+#define COFFEE_STUBBED_TIMING
+#endif
+
+#if defined(COFFEE_GEKKO)
+#define COFFEE_NO_THREADLIB
+#define COFFEE_NO_FUTURES
+#define COFFEE_PLAIN_INT_TYPES
 #endif
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \

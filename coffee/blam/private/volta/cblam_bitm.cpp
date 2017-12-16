@@ -29,6 +29,9 @@ const bitm_image_t *bitm_get(
     C_UNUSED(numImages);
     bitm_header_t hdr = _bitm_get_header(map,item->offset-magic);
 
+    if(!hdr.imageCount)
+        return nullptr;
+
     hdr.offset_first -= magic;
     hdr.imageOffset -= magic;
 
@@ -71,47 +74,47 @@ bitm_texture_t bitm_get_texture(const bitm_image_t *img, const void *bitmfile)
     case bitm_format::Y8:
     case bitm_format::AY8:
         def.format = PixCmp::R;
-        def.dformat = BitFormat::UByte;
+        def.dformat = BitFormat::UInt;
         def.cformat = PixFmt::R8UI;
         break;
     case bitm_format::A8Y8:
         def.format = PixCmp::RG;
-        def.dformat = BitFormat::UByte;
+        def.dformat = BitFormat::UInt;
         def.cformat = PixFmt::RG8UI;
         break;
     case bitm_format::R5G6B5:
-        def.format = PixCmp::RGB;
+        def.format = PixCmp::BGR;
         def.dformat = BitFormat::UShort_565;
         def.cformat = PixFmt::RGB8UI;
         break;
     case bitm_format::A1R5G5B5:
-        def.format = PixCmp::RGBA;
+        def.format = PixCmp::BGRA;
         def.dformat = BitFormat::UShort_1555R;
         def.cformat = PixFmt::RGBA8;
         break;
     case bitm_format::A4R4G4B4:
-        def.format = PixCmp::RGBA;
+        def.format = PixCmp::BGRA;
         def.dformat = BitFormat::UShortR;
         def.cformat = PixFmt::RGBA8;
         break;
     case bitm_format::A8R8G8B8:
     case bitm_format::X8R8G8B8:
-        def.format = PixCmp::RGBA;
+        def.format = PixCmp::BGRA;
         def.dformat = BitFormat::UIntR;
         def.cformat = PixFmt::RGBA8;
         break;
     case bitm_format::DXT1:
-        def.format = PixCmp::None;
+        def.format = PixCmp::RGB;
         def.dformat = BitFormat::Byte;
         def.cformat = PixFmt::S3TC;
         break;
     case bitm_format::DXT2AND3:
-        def.format = PixCmp::None;
+        def.format = PixCmp::RGBA;
         def.dformat = BitFormat::Byte;
         def.cformat = PixFmt::S3TC;
         break;
     case bitm_format::DXT4AND5:
-        def.format = PixCmp::None;
+        def.format = PixCmp::RGBA;
         def.dformat = BitFormat::Byte;
         def.cformat = PixFmt::S3TC;
         break;

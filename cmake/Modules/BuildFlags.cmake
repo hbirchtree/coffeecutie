@@ -22,6 +22,12 @@ set ( COFFEE_BUILD_STRING "${COFFEE_VERSION_CODE}.${CBUILDTIME}-${GIT_HASH}" )
 
 add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 
+if( (APPLE AND IOS) OR GAMECUBE )
+    set ( COFFEE_NO_DYNAMIC_LINKING ON )
+else()
+    set ( COFFEE_NO_DYNAMIC_LINKING OFF )
+endif()
+
 # The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
 # Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)

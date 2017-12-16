@@ -146,6 +146,9 @@ struct tag_index_t
 };
 
 
+template<typename T>
+struct reflexive_t;
+
 /*!
  * \brief An item in the tag index, contains tag class (which identifies the type of item), tag ID (a numerical ID), an offset to a proper string, and an offset to its associated data.
  */
@@ -159,6 +162,15 @@ struct index_item_t
     uint32  string_offset; /*! Magic data offset to a full string for the item*/
     int32   offset; /*!< A byte offset to associated data*/
     int32   zeroes[2];
+
+    template<
+            typename T,
+            typename std::enable_if<std::is_class<T>::value,
+                                    bool>::type* = nullptr>
+    reflexive_t<T> to_reflexive() const
+    {
+        return {sizeof(T), offset};
+    }
 };
 
 /*!
@@ -177,9 +189,9 @@ struct reflexive_t
      * \param magic Magic number from tag index
      * \return A valid pointer if the reflexive is deemed valid (if the variable zero is indeed zero)
      */
-    const T* data(c_cptr basePtr, szptr magic) const
+    const T* data(c_cptr basePtr, u32 magic) const
     {
-        if(zero != 0)
+        if(count == 0 || basePtr == nullptr || zero != 0)
             return nullptr;
         const byte_t* b_basePtr = C_CAST<const byte_t*>(basePtr);
         return (const T*)(b_basePtr+offset-magic);
@@ -224,17 +236,22 @@ enum class bitm_flags_t : uint16
     linear = 0x10,
 };
 
+struct bitm_image_t;
+
 /*!
  * \brief A bitmap header for images
  */
 struct bitm_header_t
 {
     int32 unknown[22];
-    int32 offset_first; /*!< Offset to the first header*/
+    int32 offset_first; /*!< Offset to the bitm_padding_t structure */
     int32 unknown23;
     int32 imageCount; /*!< Count of images described by this header*/
-    int32 imageOffset; /*!< Data offset to bitmap*/
+    int32 imageOffset; /*!< Data offset to bitm_image_t */
     int32 unknown25;
+
+    reflexive_t<bitm_image_t> image_headers() const;
+    reflexive_t<char> image_ptr(bitm_image_t const* img) const;
 };
 
 struct bitm_padding_t
@@ -275,6 +292,28 @@ struct bitm_texture_t
     TexType   type;        /*!< Texture type, 2D, 3D and cubes*/
     uint16    blocksize;   /*!< Block size of DXT* formats*/
 };
+
+FORCEDINLINE
+reflexive_t<bitm_image_t> bitm_header_t::image_headers(
+        ) const
+{
+    if(imageCount)
+        return {sizeof(bitm_image_t), imageOffset, 0};
+    else
+        return {0, 0, 0};
+}
+
+FORCEDINLINE
+reflexive_t<char> bitm_header_t::image_ptr(
+        bitm_image_t const* img) const
+{
+    if(!img)
+        return {};
+
+    return {img->size, img->offset, 0};
+}
+
+C_FLAGS(bitm_flags_t, u16);
 
 }
 }

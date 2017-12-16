@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../plat/plat_quirks_toggling.h"
 #include "stldef.h"
 
 /*Container types*/
@@ -19,6 +20,10 @@
 #include <exception>
 #include <complex>
 
+#if defined(COFFEE_GEKKO)
+#include <gccore.h>
+#endif
+
 namespace Coffee{
 
 using CString   = std::string; /*!< Typical string object */
@@ -26,8 +31,36 @@ using CWString   = std::wstring; /*!< Typical string object suited for interface
 
 using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
+#if defined(COFFEE_NO_THREADLIB)
+struct Mutex
+{
+    Mutex();
+    ~Mutex();
+    void lock();
+    bool try_lock();
+    void unlock();
+#if defined(COFFEE_GEKKO)
+private:
+    ::u32 m_mutexHandle;
+#endif
+};
+struct Lock
+{
+    Lock(Mutex& m) : m_mutex(m)
+    {
+        m_mutex.lock();
+    }
+    ~Lock()
+    {
+        m_mutex.unlock();
+    }
+private:
+    Mutex& m_mutex;
+};
+#else
 using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
+#endif
 
 template<typename T>
 using Atomic = std::atomic<T>;

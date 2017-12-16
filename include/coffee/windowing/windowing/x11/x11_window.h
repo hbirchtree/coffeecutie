@@ -13,7 +13,7 @@ namespace Display{
 struct X11_Data;
 
 class X11Window :
-        public WindowManagerClient,
+        public virtual WindowManagerClient,
         private virtual EventApplication
 {
     friend class GLXRenderer;

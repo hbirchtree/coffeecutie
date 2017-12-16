@@ -10,7 +10,9 @@
 namespace Coffee{
 namespace Display{
 
-class NDKWindow : public WindowManagerClient, public virtual EventApplication
+class NDKWindow :
+        public virtual WindowManagerClient,
+        public virtual EventApplication
 {
     Vector<EventHandlerI> m_eventhandlers_input;
     Vector<EventHandlerD> m_eventhandlers_windw;

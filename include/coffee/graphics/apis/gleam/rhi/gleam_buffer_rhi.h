@@ -41,25 +41,29 @@ protected:
 
 struct GLEAM_BindableBuffer : GLEAM_VBuffer
 {
-    GLEAM_BindableBuffer(BufType type,ResourceAccess acc, szptr size):
-        GLEAM_VBuffer(type,acc,size)
+    GLEAM_BindableBuffer(
+            BufType type,ResourceAccess acc, szptr stride, szptr size):
+        GLEAM_VBuffer(type,acc,size),
+        m_stride(stride)
     {
     }
     void bindrange(uint32 idx, szptr off, szptr size) const;
+protected:
+    szptr m_stride;
 };
 
 struct GLEAM_UniformBuffer : GLEAM_BindableBuffer
 {
-    GLEAM_UniformBuffer(ResourceAccess acc, szptr size):
-        GLEAM_BindableBuffer(BufType::UniformData,acc,size)
+    GLEAM_UniformBuffer(ResourceAccess acc, szptr stride, szptr size):
+        GLEAM_BindableBuffer(BufType::UniformData,acc,stride,size)
     {
     }
 };
 
 struct GLEAM_ShaderBuffer : GLEAM_BindableBuffer
 {
-    GLEAM_ShaderBuffer(ResourceAccess acc, szptr size):
-        GLEAM_BindableBuffer(BufType::ShaderData,acc,size)
+    GLEAM_ShaderBuffer(ResourceAccess acc, szptr stride, szptr size):
+        GLEAM_BindableBuffer(BufType::ShaderData,acc,stride,size)
     {
     }
 };
@@ -92,12 +96,19 @@ struct GLEAM_PixelBuffer : GLEAM_VBuffer
 
 struct GLEAM_IndirectBuffer : GLEAM_VBuffer
 {
-    GLEAM_IndirectBuffer():
+    GLEAM_IndirectBuffer(
+            ResourceAccess acc, u32 flags, szptr stride, szptr size):
         GLEAM_VBuffer(BufType::DrawcallData,
-                      ResourceAccess::ReadOnly,
-                      0)
+                      acc,
+                      size),
+        m_stride(stride),
+        m_flags(flags)
+
     {
     }
+protected:
+    szptr m_stride;
+    u32 m_flags;
 };
 
 }

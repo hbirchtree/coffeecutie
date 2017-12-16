@@ -5,6 +5,7 @@
 #include <coffee/windowing/renderer/renderer.h>
 
 #include <coffee/graphics/apis/CGLeam>
+#include <coffee/graphics/apis/CGLeamRHI>
 
 #include <coffee/core/base/types/counter.h>
 #include <coffee/core/input/eventhandlers.h>
@@ -20,17 +21,75 @@ void framecount_fun(uint32 t, c_cptr)
 
 using GL = CGL::CGL43;
 
-class CDRenderer : public CSDL2Renderer
+//class CDRenderer : public CSDL2Renderer
+//{
+//public:
+//    CDRenderer()
+//        : CSDL2Renderer(0)
+//    {
+//    }
+
+
+//    void run()
+//    {
+
+//    }
+//    void eventHandleD(const Display::CDEvent &e, c_cptr data)
+//    {
+//        CSDL2Renderer::eventHandleD(e,data);
+
+//        EventHandlers::WindowManagerCloseWindow(this,e,data);
+//        EventHandlers::ResizeWindow<GL>(e,data);
+//    }
+//    void eventHandleI(const CIEvent &e, c_cptr data)
+//    {
+//        CSDL2Renderer::eventHandleI(e,data);
+
+//        EventHandlers::EscapeCloseWindow(this,e,data);
+
+//        if(e.type==CIEvent::Keyboard)
+//        {
+//            auto kev = (CIKeyEvent const*)data;
+//            switch(kev->key)
+//            {
+//            case CK_F11:
+//                this->setWindowState(CDProperties::WindowedFullScreen);
+//                break;
+//            case CK_F10:
+//                this->setWindowState(CDProperties::Windowed);
+//                break;
+//            }
+//        }
+//    }
+//};
+
+int32 coffee_main(int32 argc, cstring_w* argv)
 {
-public:
-    CDRenderer()
-        : CSDL2Renderer(0)
+    CResources::FileResourcePrefix("sample_data/eye-demo/");
+
+    /*Moving on to regular rendering*/
+    Profiler::PushContext("Root");
+
+    CSDL2Renderer *renderer = CreateRenderer();
+
+    Profiler::Profile("Object creation");
+
+    CDProperties props = GetDefaultVisual(3,3);
+    props.gl.flags |= GLProperties::GLDebug;
+
+    CString err;
+
+    struct Empty
     {
-    }
+    };
+
+    auto eld = MkEventLoop<CSDL2Renderer, Empty>(
+                CreateRendererUq(),
+                MkUq<Empty>());
 
     static const constexpr szptr num_textures = 4;
 
-    void run()
+    eld->setup = [&](CSDL2Renderer& r, Empty*)
     {
         Profiler::PushContext("Renderer");
         CElapsedTimer ftimer;
@@ -245,9 +304,9 @@ public:
 
         CGL::DrwMd mode = {CGL::Prim::Triangle,CGL::PrimCre::Explicit};
 
-        while(!closeFlag())
+        while(!r.closeFlag())
         {
-            scalar time = this->contextTime();
+            scalar time = r.contextTime();
 
             /* Cycle eye color that is displayed */
             if(cycle_color)
@@ -267,8 +326,8 @@ public:
 
             cam.position.x() = -2;
             cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
-//            if(dev)
-//                testmat = dev->view(VR::Eye::Left)*3;
+            //            if(dev)
+            //                testmat = dev->view(VR::Eye::Left)*3;
             testmat *= testmat_rot;
 
             objects[0] =
@@ -278,8 +337,8 @@ public:
 
             cam.position.x() = 2;
             cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
-//            if(dev)
-//                testmat = dev->view(VR::Eye::Right)*3;
+            //            if(dev)
+            //                testmat = dev->view(VR::Eye::Right)*3;
             testmat *= testmat_rot;
 
             objects[1] =
@@ -309,8 +368,8 @@ public:
             /* Update framecounter, print frames */
             fcounter.update(ftimer.elapsed());
 
-            this->pollEvents();
-            this->swapBuffers();
+            r.pollEvents();
+            r.swapBuffers();
         }
 
         Profiler::PushContext("Renderer cleanup");
@@ -325,63 +384,13 @@ public:
 
         Profiler::Profile();
 
-//        if(dev)
-//            VR::Shutdown();
+        //        if(dev)
+        //            VR::Shutdown();
 
         Profiler::PopContext();
-    }
-    void eventHandleD(const Display::CDEvent &e, c_cptr data)
-    {
-        CSDL2Renderer::eventHandleD(e,data);
 
-        EventHandlers::WindowManagerCloseWindow(this,e,data);
-        EventHandlers::ResizeWindow<GL>(e,data);
-    }
-    void eventHandleI(const CIEvent &e, c_cptr data)
-    {
-        CSDL2Renderer::eventHandleI(e,data);
-
-        EventHandlers::EscapeCloseWindow(this,e,data);
-
-        if(e.type==CIEvent::Keyboard)
-        {
-            auto kev = (CIKeyEvent const*)data;
-            switch(kev->key)
-            {
-            case CK_F11:
-                this->setWindowState(CDProperties::WindowedFullScreen);
-                break;
-            case CK_F10:
-                this->setWindowState(CDProperties::Windowed);
-                break;
-            }
-        }
-    }
-};
-
-int32 coffee_main(int32 argc, cstring_w* argv)
-{
-    CResources::FileResourcePrefix("sample_data/eye-demo/");
-
-    /*Moving on to regular rendering*/
-    Profiler::PushContext("Root");
-
-    CSDL2Renderer *renderer = new CDRenderer();
-
-    Profiler::Profile("Object creation");
-
-    CDProperties props = GetDefaultVisual(3,3);
-    props.gl.flags |= GLProperties::GLDebug;
-
-    CString err;
-
-    if(!renderer->init(props,&err))
-    {
-//        SDL2Dialog::ErrorMessage("Initialization Error",err.c_str());
-        cDebug("Initialization error: {0}",err);
-        return 1;
-    }
-    Profiler::Profile("Initialize renderer");
+        r.closeWindow();
+    };
 
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()
@@ -394,21 +403,16 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     if(!CGL::CGL45::CullDistanceSupported())
     {
-        cDebug("Some optional extensions were not found. Your experience might suffer.");
+        cDebug("Some optional extensions were not found."
+               " Your experience might suffer.");
     }
 
     Profiler::Profile("Get GL requirements");
 
-    renderer->run();
-
-    Profiler::Profile("Runtime");
-
-    renderer->cleanup();
-    delete renderer;
-
-    Profiler::Profile("Cleanup");
-
     Profiler::PopContext();
+
+    if(AutoExec<GLEAMAPI,CSDL2Renderer,Empty>(*eld) != 0)
+        return 1;
 
     return 0;
 }

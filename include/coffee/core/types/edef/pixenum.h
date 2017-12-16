@@ -33,6 +33,7 @@ enum class PixelComponents
     R,
     G,
     B,
+    A,
     RG,
     RGB,
     RGBA,
@@ -148,6 +149,21 @@ enum class PixelFormat
 
     Depth, DepthStencil, /* Fakes */
 };
+
+FORCEDINLINE bool IsPixFmtCompressed(PixelFormat f)
+{
+    switch(f)
+    {
+    case PixelFormat::ASTC:
+    case PixelFormat::S3TC:
+    case PixelFormat::BPTC:
+    case PixelFormat::RGTC:
+    case PixelFormat::ETC1:
+        return true;
+    default:
+        return false;
+    }
+}
 
 using PixFmt = PixelFormat;
 

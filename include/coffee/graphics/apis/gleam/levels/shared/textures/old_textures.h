@@ -111,8 +111,9 @@ struct CGL_Old_Textures
 
     /* TexSubImage */
 
-    STATICINLINE void TexSubImage2D(Texture t,uint32 level,int32 x,int32 y,
-                                    uint32 w,uint32 h,PixelComponents fmt,BitFormat dt,c_cptr p)
+    STATICINLINE void TexSubImage2D(
+            Texture t,uint32 level,int32 x,int32 y,
+            uint32 w,uint32 h,PixelComponents fmt,BitFormat dt,c_cptr p)
     {glTexSubImage2D(to_enum(t),level,x,y,w,h,to_enum(fmt),to_enum(dt),p);}
 #if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexSubImage3D(Texture t,uint32 level,int32 x,int32 y,int32 z,
@@ -123,10 +124,10 @@ struct CGL_Old_Textures
 
     /* TexImageCompressed */
 
-    STATICINLINE void TexImageCompressed2D(Texture t,int32 level,
-                                           PixelFormat ifmt, PixelFlags flgs,
-                                           CompFlags cflgs,
-                                           uint32 w,uint32 h,int32 border,uint32 sz,c_cptr p)
+    STATICINLINE void TexImageCompressed2D(
+            Texture t,int32 level,
+            PixelFormat ifmt, PixelFlags flgs, CompFlags cflgs,
+            uint32 w,uint32 h,int32 border,uint32 sz,c_cptr p)
     {glCompressedTexImage2D(to_enum(t),level,to_enum(ifmt,flgs,cflgs),w,h,border,sz,p);}
 #if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexImageCompressed3D(Texture t,int32 level,

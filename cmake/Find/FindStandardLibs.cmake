@@ -177,6 +177,12 @@ if(MAEMO)
         )
 endif()
 
+if(GAMECUBE)
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        ogc
+        )
+endif()
+
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     # Used for thread details
     list ( APPEND CORE_EXTRA_LIBRARIES rt )
@@ -184,10 +190,13 @@ endif()
 
 if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT EMSCRIPTEN)
     # Necessary for Linux and possibly OS X (latter is untested)
-    list ( APPEND CORE_EXTRA_LIBRARIES dl m z )
+    if(NOT GAMECUBE)
+        list ( APPEND CORE_EXTRA_LIBRARIES dl z )
+    endif()
+    list ( APPEND CORE_EXTRA_LIBRARIES m)
 endif()
 
-if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN)
+if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE)
     find_package(Threads REQUIRED)
     list( APPEND CORE_EXTRA_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} )
 endif()

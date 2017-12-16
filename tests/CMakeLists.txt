@@ -31,3 +31,4 @@ if(NOT ANDROID AND NOT WIN32)
     add_subdirectory(packaging-api)
 endif()
 
+add_subdirectory(window-api/basic)

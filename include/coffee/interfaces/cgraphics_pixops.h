@@ -51,6 +51,7 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
     case PixelComponents::R:
     case PixelComponents::G:
     case PixelComponents::B:
+    case PixelComponents::A:
     case PixelComponents::Stencil:
     case PixelComponents::Depth:
     case PixelComponents::DepthStencil:

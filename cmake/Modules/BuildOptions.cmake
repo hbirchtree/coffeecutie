@@ -59,6 +59,9 @@ option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 #
 #
 
+# Woohoo, multiple APIs and stuff
+option ( COFFEE_BUILD_OPENGL "Build with OpenGL support" ON )
+
 # Whether to enable the GLES renderer, will replace desktop GL renderer
 option ( COFFEE_BUILD_GLES "Build with GLES 3.0 renderer instead of desktop GL" OFF)
 option ( COFFEE_BUILD_GLES_20 "BUild with only GLES 2.0 renderer" OFF )
@@ -93,6 +96,8 @@ endif()
 # Core components, without this, you get nothing
 #
 
+# Requires nothing on most platforms
+option ( COFFEE_BUILD_ASIO "Build ASIO network support" ON )
 # Requires OpenAL libraries and headers
 option ( COFFEE_BUILD_OPENAL "Build with OpenAL support" ON)
 # Requires SDL2 libraries and headers

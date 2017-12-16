@@ -9,6 +9,8 @@ namespace Display{
 class GLApplication
 {
 public:
+    virtual ~GLApplication() {}
+
     virtual bool contextPreInit(const GLProperties& props,CString*) = 0;
     virtual bool contextInit(const GLProperties& props,CString*) = 0;
     virtual bool contextPostInit(const GLProperties& props,CString*) = 0;

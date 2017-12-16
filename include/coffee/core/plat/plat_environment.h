@@ -25,6 +25,8 @@
 #include "environment/raspberry/sysinfo.h"
 #include "environment/windows/sysinfo.h"
 
+#include "environment/sysinfo_def.h"
+
 namespace Coffee{
 
 using Env = Env_;
