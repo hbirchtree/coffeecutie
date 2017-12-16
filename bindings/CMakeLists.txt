@@ -10,4 +10,4 @@ endif()
 
 if(NOT WIN32)
     add_subdirectory ( c-binding )
-endif
+endif()
