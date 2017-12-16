@@ -98,6 +98,7 @@ FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)
     return v1_i == v2_i || v1 == v2;
 }
 
+#if !defined(COFFEE_MSVCXX)
 FORCEDINLINE bool operator==(tag_class_t t1, tag_class_t t2)
 {
     return tag_class_cmp(t1, t2);
@@ -107,6 +108,7 @@ FORCEDINLINE bool operator!=(tag_class_t t1, tag_class_t t2)
 {
     return !(t1 == t2);
 }
+#endif
 
 }
 }
