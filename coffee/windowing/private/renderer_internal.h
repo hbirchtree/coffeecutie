@@ -64,6 +64,8 @@ class CSDL2Renderer_Internal final :
         #elif defined(COFFEE_GEKKO)
         , public OGC_Window
 
+        #else
+        #error No windowing infrastructure defined
         #endif
 
         #if defined(COFFEE_USE_SDL_EVENT)

@@ -10,7 +10,7 @@ namespace Display{
 struct DISPMAN_Data;
 
 class DispmanXWindow :
-        public WindowManagerClient,
+        public virtual WindowManagerClient,
         public virtual EventApplication
 {
     DISPMAN_Data* m_dmData;
