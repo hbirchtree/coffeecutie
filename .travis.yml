@@ -1,3 +1,4 @@
+group: deprecated-2017Q4
 after_success:
 - tools/ci/travis-deploy.sh
 before_script:
