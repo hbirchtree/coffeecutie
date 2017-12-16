@@ -106,10 +106,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         const szptr num_pbos = 5;
         cVerbose(7, "Creating PBO storage, {0} units", num_pbos);
 
-        CGhnd* bufs = new CGhnd[num_pbos];
-        for (auto i : Range<>(num_pbos))
-            bufs[i] = 0;
-        CGL33::BufAlloc(num_pbos,bufs);
+        Vector<CGhnd> bufs;
+        bufs.resize(num_pbos);
+        CGL33::BufAlloc(num_pbos,bufs.data());
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
         for(uint32 i=0;i<num_pbos;i++)
@@ -119,7 +118,6 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
             pbo.flags = 0;
             store->inst_data->pboQueue.buffers.push_back(pbo);
         }
-        delete[] bufs;
     }
 #endif
 

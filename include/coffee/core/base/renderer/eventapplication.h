@@ -367,7 +367,8 @@ public:
             CoffeeEventHandle(data, CoffeeHandle_Loop);
         }, &ev, 0, 1);
 #endif
-        
+
+
 #if defined(COFFEE_USE_APPLE_GLKIT) || \
     defined(COFFEE_USE_ANDROID_NATIVEWIN) || \
     defined(COFFEE_EMSCRIPTEN)

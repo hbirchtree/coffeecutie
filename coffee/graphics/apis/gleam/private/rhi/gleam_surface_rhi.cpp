@@ -17,9 +17,47 @@ namespace GLEAM{
 STATICINLINE void texture_swizzle(
         Texture type, CGhnd tex_hnd, PixCmp cmp, PixCmp target)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::TexBind(type, tex_hnd);
     i32 val = C_FCAST<i32>(CGL::to_enum(target));
     CGL33::TexParameteriv(type, to_enum_swizz(cmp), &val);
+#endif
+}
+
+STATICINLINE void texture_pbo_upload(
+        szptr pixSize, Bytes const& data,
+        u32 m_flags, c_cptr& data_ptr)
+{
+#if !defined(COFFEE_ONLY_GLES20)
+    if(m_flags&GLEAM_API::TextureDMABuffered)
+    {
+        data_ptr = 0x0;
+        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0
+                || GL_CURR_API==GLES_3_2)
+        {
+            CGL33::BufBind(
+                        BufType::PixelUData,
+                        GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
+            CGL33::BufData(
+                        BufType::PixelUData,
+                        pixSize,
+                        data.data,
+                        ResourceAccess::WriteOnly
+                        |ResourceAccess::Persistent);
+        }else if (GL_CURR_API == GL_4_3)
+        {
+            CGL43::BufBind(
+                        BufType::PixelUData,
+                        GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
+            CGL43::BufStorage(
+                        BufType::PixelUData,
+                        pixSize,
+                        data.data,
+                        ResourceAccess::WriteOnly
+                        |ResourceAccess::Persistent);
+        }
+    }
+#endif
 }
 
 GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 texflags):
@@ -34,7 +72,7 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
     {
         /* We must set this to register a proper mipmap level */
 #if !defined(COFFEE_ONLY_GLES20)
-//        int32 min_lev = 0;
+        //        int32 min_lev = 0;
         int32 max_lev = mips - 1;
         CGL33::TexBind(type,m_handle);
         CGL33::TexParameteriv(type,GL_TEXTURE_MAX_LEVEL,&max_lev);
@@ -63,6 +101,9 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
     C_USED(comp);
     C_USED(mip);
     C_USED(d);
+
+    if(d == 0)
+        d = 1;
 
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_DEBUG_MODE){
@@ -95,7 +136,8 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
         return;
 
     CGL33::TexBind(m_type,m_handle);
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
+            || GL_CURR_API==GLES_3_0)
     {
         CGL33::TexImage2D(Texture::T2D,0,m_pixfmt,
                           size.w,size.h,0,c,
@@ -119,28 +161,9 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
     auto msz = size.convert<u32>();
 
 #if !defined(COFFEE_ONLY_GLES20)
-    if(m_flags&GLEAM_API::TextureDMABuffered)
-    {
-        GLEAM_PboQueue::Pbo& pbo = GLEAM_API_INSTANCE_DATA->pboQueue.current();
-
-        if((GL_CURR_API==GL_4_3 || GL_CURR_API==GL_4_5) && CGL43::BufferStorageSupported())
-        {
-            data_ptr = 0x0;
-            CGL43::BufBind(BufType::PixelUData,pbo.buf);
-            if(pbo.flags != 0)
-                CGL43::BufInvalidateData(pbo.buf);
-            CGL43::BufStorage(BufType::PixelUData,
-                              GetPixSize(fmt,comp,size.area()),data.data,
-                              ResourceAccess::WriteOnly|ResourceAccess::Persistent);
-        }else
-        {
-        data_ptr = 0x0;
-        CGL33::BufBind(BufType::PixelUData,pbo.buf);
-        CGL33::BufData(BufType::PixelUData,
-                       GetPixSize(fmt,comp,size.area()),data.data,
-                       ResourceAccess::WriteOnly|ResourceAccess::Streaming);
-        }
-    }
+    texture_pbo_upload(
+                GetPixSize(fmt,comp,size.convert<u32>().area()),
+                data, m_flags, data_ptr);
 #endif
 
     if(IsPixFmtCompressed(m_pixfmt))
@@ -179,7 +202,6 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         if(m_size.area()==0)
         {
             m_size = size;
-//            CGL33::TexImage2D(m_type,m_mips,m_pixfmt,msz.w,msz.h,0,comp,fmt,data_ptr);
         }else{
             CGL33::TexSubImage2D(m_type,mip,offset.x,offset.y,
                                  msz.w,msz.h,comp,fmt,data_ptr);
@@ -190,11 +212,12 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         CGL33::TexGenMipmap(m_type);
     }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0
+            || GL_CURR_API==GLES_3_2)
     {
         CGL43::TexBind(m_type,m_handle);
 
-//        CGL43::TexStorage2D(m_type,m_mips,m_pixfmt,size.w,size.h);
+        //        CGL43::TexStorage2D(m_type,m_mips,m_pixfmt,size.w,size.h);
         CGL43::TexSubImage2D(m_type,mip,offset.x,offset.y,
                              size.w,size.h,comp,fmt,data_ptr);
 
@@ -212,18 +235,24 @@ CSize Coffee::RHI::GLEAM::GLEAM_Surface2D::texSize() const
     return m_size;
 }
 
-GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
-#if !defined(COFFEE_ONLY_GLES20)
+GLEAM_SurfaceCube::GLEAM_SurfaceCube(PixelFormat fmt, u32 mips, u32 texflags) :
+    GLEAM_Surface2D(fmt, mips, texflags)
+{
+}
+
+GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
+        Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
+    #if !defined(COFFEE_ONLY_GLES20)
     GLEAM_Surface(t,fmt,mips,texflags),
-#else
+    #else
     GLEAM_Surface(Texture::T2D,fmt,mips,texflags),
-#endif
+    #endif
     m_size(0,0,0),
-#if defined(COFFEE_ONLY_GLES20)
+    #if defined(COFFEE_ONLY_GLES20)
     m_type(Texture::T2D)
-#else
+  #else
     m_type(t)
-#endif
+  #endif
 {
     C_USED(t);
 }
@@ -245,7 +274,8 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
                           msz.width,msz.height,msz.depth,
                           0,c,
                           BitFormat::UByte,nullptr);
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API==GLES_3_2)
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0
+             || GL_CURR_API==GLES_3_2)
     {
         CGL43::TexStorage3D(m_type, m_mips,m_pixfmt,
                             msz.width,msz.height,msz.depth);
@@ -262,46 +292,37 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 }
 
 void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
-                                  CSize3 size, c_cptr data, CPoint3 offset, uint32 mip)
+                                  CSize3 size, Bytes const& data,
+                                  CPoint3 offset, uint32 mip)
 {
     auto msz = size.convert<u32>();
     auto mof = offset.convert<u32>();
 #if !defined(COFFEE_ONLY_GLES20)
     /* If we want to use DMA transfer */
-    c_cptr data_ptr = data;
+    c_cptr data_ptr = data.data;
 
-    if(m_flags&GLEAM_API::TextureDMABuffered)
-    {
-        data_ptr = 0x0;
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
-        {
-            CGL33::BufBind(BufType::PixelUData,GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
-            CGL33::BufData(BufType::PixelUData,GetPixSize(fmt,comp,size.convert<u32>().volume()),data,
-                           ResourceAccess::WriteOnly|ResourceAccess::Persistent);
-        }else if (GL_CURR_API == GL_4_3)
-        {
-            CGL43::BufBind(BufType::PixelUData,GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
-            CGL43::BufStorage(BufType::PixelUData,GetPixSize(fmt,comp,size.convert<u32>().volume()),data,
-                              ResourceAccess::WriteOnly|ResourceAccess::Persistent);
-        }
-    }
-
+    texture_pbo_upload(
+                GetPixSize(fmt,comp,size.convert<u32>().volume()),
+                data, m_flags, data_ptr);
 
     if(GL_CURR_API==GL_3_3)
     {
         CGL33::TexBind(m_type,m_handle);
 
         CGL33::TexSubImage3D(m_type,mip,offset.x,offset.y,offset.z,
-                             size.width,size.height,size.depth,comp,fmt,data_ptr);
+                             size.width,size.height,size.depth,comp,
+                             fmt,data_ptr);
 
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL33::BufBind(BufType::PixelUData,0);
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0
+             || GL_CURR_API == GLES_3_2)
     {
         CGL43::TexBind(m_type,m_handle);
 
         CGL43::TexSubImage3D(m_type,mip,offset.x,offset.y,offset.z,
-                             size.width,size.height,size.depth,comp,fmt,data_ptr);
+                             size.width,size.height,size.depth,comp,
+                             fmt,data_ptr);
 
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL43::BufBind(BufType::PixelUData,0);
@@ -328,7 +349,7 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
         
         CGL33::TexSubImage2D(m_type, mip,
                              mofi.x, mofi.y, msz.width, msz.height,
-                             comp, fmt, data);
+                             comp, fmt, data.data);
     }
 #endif
 }
@@ -336,6 +357,12 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
 CSize3 GLEAM_Surface3D_Base::texSize() const
 {
     return m_size;
+}
+
+GLEAM_SurfaceCubeArray::GLEAM_SurfaceCubeArray(
+        PixelFormat fmt, u32 mips, u32 texflags) :
+    GLEAM_Surface2DArray(fmt, mips, texflags)
+{
 }
 
 GLEAM_Sampler::GLEAM_Sampler():
@@ -416,7 +443,8 @@ void GLEAM_Sampler::setEdgePolicy(uint8 dim, WrapPolicy p)
 #endif
 }
 
-void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
+void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min,
+                                 Filtering mip)
 {
     C_USED(mag);
     C_USED(min);

@@ -61,6 +61,11 @@ struct GraphicsAPI
     {
     }
 
+    static bool UnloadAPI()
+    {
+        return true;
+    }
+
     static CString GetAPIName(GraphicsDevice const&)
     {
         return {};
@@ -206,9 +211,9 @@ struct GraphicsAPI
     struct DepthState
     {
         DepthState():
-	    m_test(true),
+            m_test(true),
             m_clamp(false),
-	    m_mask(true),
+            m_mask(true),
             m_func()
         {
         }
@@ -303,6 +308,9 @@ struct GraphicsAPI
 
         void commit(szptr,c_cptr){}
 
+        void* map(szptr = 0, szptr = 0){return nullptr;}
+        void unmap(){}
+
     protected:
         ResourceAccess m_access;
         szptr m_size;
@@ -342,7 +350,9 @@ struct GraphicsAPI
      */
     struct IndirectBuffer : VertexBuffer
     {
-        IndirectBuffer(ResourceAccess access, uint32 flags, uint32 stride, szptr size)
+        IndirectBuffer(
+                ResourceAccess access, uint32 flags,
+                szptr stride, szptr size)
             :VertexBuffer(access,size),m_flags(flags),m_stride(stride){}
     protected:
         uint32 m_flags;
@@ -545,9 +555,11 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Rendering surface, can be rendered to by RenderTarget or used as texture.
-     *  Should support PBO upload for OpenGL
+     * \brief Rendering surface, can be rendered to by RenderTarget
+     *  or used as texture.
+     * Should support PBO upload for OpenGL
      */
+    template<typename CSizeT, typename PointT>
     struct Surface
     {
 
@@ -565,7 +577,11 @@ struct GraphicsAPI
         void allocate(CSizeT const&,PixCmp){}
         void dealloc(){}
 
-        void upload(BitFormat,PixCmp,CSizeT const&,c_cptr,PointT const& = {}){}
+        void upload(BitFormat,PixCmp,CSizeT const&, c_cptr,
+                    PointT const& = {}, u32 mip = 0){}
+
+        void upload(BitFmt,PixCmp,CSizeT const&, Bytes const&,
+                    PointT const& = {}, u32 mip = 0){}
 
         uint32 size() const {return 0;}
         bool isArray() const {return b_array;}
@@ -575,6 +591,8 @@ struct GraphicsAPI
 
         u8& glTexHandle() {static u8 m_; return m_;}
 
+        CSize texSize() const {return {};}
+
         PixelFormat m_pixfmt;
         bool b_array;
         uint32 m_arrsize;
@@ -583,12 +601,12 @@ struct GraphicsAPI
         ResourceAccess m_access;
     };
 
-    using Surface2D = Surface /* Simple 2D texture */;
-    using Surface3D = Surface /* Simple 3D texture */;
-    using SurfaceCube = Surface /* Cubemap texture */;
+    using Surface2D = Surface<CSize, CPoint> /* Simple 2D texture */;
+    using Surface3D = Surface<CSize3, CPoint3>/* Simple 3D texture */;
+    using SurfaceCube = Surface<CSize, CPoint> /* Cubemap texture */;
 
-    using Surface2DArray = Surface /* 2D texture array */;
-    using SurfaceCubeArray = Surface /* Cubemap array */;
+    using Surface2DArray = Surface<CSize3, CPoint3> /* 2D texture array */;
+    using SurfaceCubeArray = Surface<CSize3, CPoint3> /* Cubemap array */;
 
     /*!
      * \brief Used to address a sampler from the shaders
@@ -612,11 +630,18 @@ struct GraphicsAPI
 
         SamplerHandle handle(){return {};}
 
+        template<typename Surface>
         void attach(Surface const*){}
 
         void bind(uint32){}
 
-        void setFiltering(Filtering,Filtering,Filtering = Filtering::None){}
+        void setFiltering(Filtering,Filtering,
+                          Filtering = Filtering::None){}
+        void setLODRange(Vecf2 const&) {}
+        void setLODBias(scalar) {}
+        void setEdgePolicy(u8, WrapPolicy) {}
+
+        void enableShadowSampler(){}
     };
 
     struct Sampler2D : Sampler
@@ -648,6 +673,7 @@ struct GraphicsAPI
     struct ShaderImage
     {
         void bind(uint32){}
+        template<typename Surface>
         void attach(Surface*,PixFmt,ResourceAccess,uint32,uint32 = 0){}
     };
 
@@ -666,31 +692,34 @@ struct GraphicsAPI
      */
     struct RenderTarget
     {
-	constexpr RenderTarget(){}
+        constexpr RenderTarget(){}
 
-	/*!
-	 * \brief Do a framebuffer blit  to another framebuffer
-	 */
+        /*!
+     * \brief Do a framebuffer blit  to another framebuffer
+     */
         void blit(CRect64 const&,RenderTarget&,CRect64 const&,DBuffers) const{}
 
-	/*!
+        /*!
          * \brief Attach a surface to this framebuffer
-	 */
+     */
+        template<typename Surface>
         void attachSurface(Surface const&, uint32, uint32 = 0){}
         void attachSurface(RenderDummy const&){}
 
+        template<typename Surface>
         void attachDepthStencilSurface(Surface const&, uint32){}
+        template<typename Surface>
         void attachDepthSurface(Surface const&, uint32){}
 
         void resize(uint32,CRect64 const&){}
 
-	void clear(uint32, Vecf4 const&){}
-	void clear(bigscalar){}
-	void clear(bigscalar, int32){}
-	void clear(uint32, Vecf4 const&, bigscalar){}
-	void clear(uint32, Vecf4 const&, bigscalar, int32){}
+        void clear(uint32, Vecf4 const&){}
+        void clear(bigscalar){}
+        void clear(bigscalar, int32){}
+        void clear(uint32, Vecf4 const&, bigscalar){}
+        void clear(uint32, Vecf4 const&, bigscalar, int32){}
 
-	void use(FramebufferT){}
+        void use(FramebufferT){}
     };
 
     static void SetRenderTarget(RenderTarget const&);
@@ -715,11 +744,11 @@ struct GraphicsAPI
      */
     struct DrawInstanceData
     {
-	DrawInstanceData(uint32 v = 0, uint32 e = 0, uint32 i = 0):
-	    m_verts(v),m_elems(e),m_insts(i),
-        m_eltype(TypeEnum::UByte),
-        m_voff(0),m_eoff(0),m_ioff(0)
-    {}
+        DrawInstanceData(uint32 v = 0, uint32 e = 0, uint32 i = 0):
+            m_verts(v),m_elems(e),m_insts(i),
+            m_eltype(TypeEnum::UByte),
+            m_voff(0),m_eoff(0),m_ioff(0)
+        {}
 
         FORCEDINLINE uint32 vertices()const{return m_verts;}
         FORCEDINLINE uint32 elements()const{return m_elems;}
@@ -797,6 +826,7 @@ struct GraphicsAPI
 
     struct Util
     {
+        template<typename Surface>
         static void DumpTexture(Surface const& s);
     };
 };
@@ -808,10 +838,10 @@ struct GraphicsProfiler
      */
     struct PerfQuery
     {
-	PerfQuery(ProfilingTerm term):m_term(term){}
+        PerfQuery(ProfilingTerm term):m_term(term){}
 
-	void begin(){}
-	void end(){}
+        void begin(){}
+        void end(){}
 
         int64 resulti(){return 0;}
         uint64 resultu(){return 0;}
@@ -832,15 +862,15 @@ struct GraphicsProfiler
 
         void resize(CSize const&){}
 
-	void begin(){}
-	void end(){}
+        void begin(){}
+        void end(){}
 
         RT& output(){return m_rtarget;}
         RT& debugTarget(){return m_dtarget;}
 
-	RT& m_rtarget;
+        RT& m_rtarget;
         RT m_dtarget;
-	const DBuffers m_buffers;
+        const DBuffers m_buffers;
     };
 
     template<typename PIP>
@@ -928,6 +958,7 @@ struct NullAPI : GraphicsAPI
     using BUF_U = UniformBuffer;
     using BUF_S = ShaderBuffer;
     using BUF_P = PixelBuffer;
+    using BUF_DRAW = IndirectBuffer;
 
     using D_CALL = DrawCall;
     using D_DATA = DrawInstanceData;
@@ -979,14 +1010,14 @@ struct NullAPI : GraphicsAPI
     /* We define a profiler namespace */
     struct PRF
     {
-	using QRY_DBUF = GraphicsProfiler::BufferQuery<FB_T>;
-	using QRY_PERF = GraphicsProfiler::PerfQuery;
+        using QRY_DBUF = GraphicsProfiler::BufferQuery<FB_T>;
+        using QRY_PERF = GraphicsProfiler::PerfQuery;
         using QRY_PIPDMP = GraphicsProfiler::PipelineDumper<PIP>;
     };
 
     struct DBG : GraphicsDebug
     {
-        using DBG_SCOPE = GraphicsDebug::ScopeMarker;
+        using SCOPE = GraphicsDebug::ScopeMarker;
     };
 };
 

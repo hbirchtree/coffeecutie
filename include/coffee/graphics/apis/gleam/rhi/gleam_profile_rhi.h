@@ -43,6 +43,13 @@ protected:
 #endif
 };
 
+struct GLEAM_ScopeMarker : GraphicsDebug::ScopeMarker
+{
+    GLEAM_ScopeMarker(cstring tag);
+
+    ~GLEAM_ScopeMarker();
+};
+
 }
 }
 }

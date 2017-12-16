@@ -119,6 +119,8 @@ struct GLEAM_ShaderImage;
 /* Queries */
 struct GLEAM_OccludeQuery;
 
+struct GLEAM_ScopeMarker;
+
 }
 }
 

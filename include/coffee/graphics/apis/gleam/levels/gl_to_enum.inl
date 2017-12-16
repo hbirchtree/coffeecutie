@@ -865,6 +865,7 @@ inline CGenum to_enum_swizz(PixCmp f)
 {
     switch(f)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case PixCmp::R:
         return GL_TEXTURE_SWIZZLE_R;
     case PixCmp::G:
@@ -873,6 +874,9 @@ inline CGenum to_enum_swizz(PixCmp f)
         return GL_TEXTURE_SWIZZLE_B;
     case PixCmp::A:
         return GL_TEXTURE_SWIZZLE_A;
+#endif
+    default:
+        return GL_NONE;
     }
 }
 
