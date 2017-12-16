@@ -8,4 +8,6 @@ if(COFFEE_BUILD_SWIG_BINDING)
     add_subdirectory(swig)
 endif()
 
-add_subdirectory ( c-binding )
+if(NOT WIN32)
+    add_subdirectory ( c-binding )
+endif
