@@ -20,8 +20,8 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
     struct GLEnv
     {
         u32 requirements;
-        u32 min;
         u32 maj;
+        u32 min;
     };
 
     static const constexpr std::array<GLEnv, 7> GLVersions = {{
