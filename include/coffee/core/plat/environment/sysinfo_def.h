@@ -333,7 +333,7 @@ struct DeviceInfoDef
     static scalar Weight(){return {};}
 };
 
-#if defined(COFFEE_STUBBED_ENVIRONMENT)
+#if defined(COFFEE_STUBBED_SYSINFO)
 using SysInfo = SysInfoDef;
 using PowerInfo = PowerInfoDef;
 #endif

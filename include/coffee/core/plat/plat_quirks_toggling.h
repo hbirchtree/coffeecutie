@@ -269,14 +269,15 @@
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)\
     || defined(COFFEE_GEKKO)
+
+#if !defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_STUBBED_SYSINFO
+#endif
+
 #define COFFEE_STUBBED_PROCESS
 #define COFFEE_STUBBED_STACKTRACE
 #define COFFEE_STUBBED_CFILE
 #define COFFEE_STUBBED_DYNLOADER
-#endif
-
-#if defined(COFFEE_NACL) || defined(COFFEE_GEKKO)
 #define COFFEE_STUBBED_ENVIRONMENT
 #endif
 
