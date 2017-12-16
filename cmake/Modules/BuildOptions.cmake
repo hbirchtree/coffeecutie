@@ -26,6 +26,7 @@ option ( COFFEE_DOCS "Generate documentation" OFF )
 option ( SKIP_HIGHMEM_TESTS "Skip high-memory tests" OFF )
 option ( SKIP_LINKAGE_TEST "Skip test of dynamic linking" ON )
 option ( SKIP_OPENVR_TEST "Skip tests of OpenVR, it requires a display and hardware" ON )
+option ( SKIP_GRAPHIC_TESTS "Skip tests depending on headful configuration" ON )
 
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
