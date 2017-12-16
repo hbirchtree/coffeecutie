@@ -31,4 +31,7 @@ if(NOT ANDROID AND NOT WIN32)
     add_subdirectory(packaging-api)
 endif()
 
-add_subdirectory(window-api/basic)
+if(NOT SKIP_GRAPHIC_TESTS)
+    add_subdirectory(window-api/basic)
+    add_subdirectory(graphics/api_verify)
+endif()

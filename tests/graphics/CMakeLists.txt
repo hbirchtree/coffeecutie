@@ -1,2 +1,1 @@
 add_subdirectory(shader_types)
-add_subdirectory(api_verify)
