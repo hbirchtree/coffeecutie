@@ -1,4 +1,5 @@
 #include <coffee/core/base/debug/debugprinter.h>
+#include <coffee/core/plat/plat_environment.h>
 
 namespace Coffee{
 namespace DebugFun{
@@ -99,7 +100,10 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
     CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted);
     OutputDebugString(formatted_w.c_str());
 #elif defined(COFFEE_WINDOWS)
-    OutputDebugString(formatted.c_str());
+    if(Env::GetVar("DevEnvDir"))
+        OutputDebugString(formatted.c_str());
+    else
+        Puts(stream, formatted.c_str());
 #else
     Puts(stream,formatted.c_str());
 #endif
