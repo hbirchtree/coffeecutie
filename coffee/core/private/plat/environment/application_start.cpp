@@ -34,6 +34,9 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
     && !defined(__MINGW64__)
 #ifdef NDEBUG
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
+#else
+	if(Env::GetVar("VisualStudioVersion").size())
+		ShowWindow(GetConsoleWindow(), SW_HIDE);
 #endif
     InitCOMInterface();
 #elif defined(COFFEE_WINDOWS_UWP)

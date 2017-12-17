@@ -100,7 +100,7 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
     CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted);
     OutputDebugString(formatted_w.c_str());
 #elif defined(COFFEE_WINDOWS)
-    if(Env::GetVar("DevEnvDir").size())
+    if(Env::GetVar("VisualStudioVersion").size())
         OutputDebugString(formatted.c_str());
     else
         Puts(stream, formatted.c_str());

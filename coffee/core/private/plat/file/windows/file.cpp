@@ -132,11 +132,11 @@ DWORD WinFileApi::GetMappingViewFlags(ResourceAccess acc)
 
 CString create_rsc_name(cstring fn)
 {
-    if (!AssetApi::GetAsset(fn))
-        return "";
-    CString tag = "\"";
-    CString wrap = tag + AssetApi::GetAsset(fn) + tag;
+	if(!fn)
+		return {};
+
     /* Transform the filename to correspond with  */
+	CString wrap = fn;
     wrap = CStrReplace(wrap,"_","___");
     wrap = CStrReplace(wrap,"/","_");
     wrap = CStrReplace(wrap,"\\","_");

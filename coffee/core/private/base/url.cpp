@@ -12,6 +12,10 @@
 #include <coffee/android/android_main.h>
 #endif
 
+#if defined(COFFEE_WINDOWS_UWP)
+#include <ntverp.h>
+#endif
+
 namespace Coffee{
 
 using namespace CResources;
@@ -40,8 +44,6 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     paths.configDir = MkUrl(cmd.store_string.c_str(),
                             RSCA::SpecifyStorage|RSCA::SystemFile);
-
-    paths.assetDir = MkUrl("", RSCA::SpecifyStorage|RSCA::AssetFile);
 
     cmd.type = Android_QueryCachePath;
 
@@ -85,11 +87,36 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.configDir = MkUrl(Env::GetUserData(nullptr, nullptr).c_str(),
                             RSCA::SystemFile);
 
+#elif defined(COFFEE_WINDOWS)
+
+	CString temp_dir = Env::GetVar("TEMP");
+	paths.tempDir = MkUrl(temp_dir.c_str(), RSCA::SystemFile) +
+		Path{ ApplicationData().organization_name } +
+		Path{ ApplicationData().application_name };
+
+	CString config_dir = Env::GetVar("APPDATA");
+	paths.configDir = MkUrl(config_dir.c_str(), RSCA::SystemFile) +
+		Path{ ApplicationData().organization_name } +
+		Path{ ApplicationData().application_name };
+
+	CString cache_dir = Env::GetVar("LOCALAPPDATA");
+	paths.cacheDir = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
+		Path{ ApplicationData().organization_name } +
+		Path{ApplicationData().application_name};
+
+	/* assetDir is supposed to be empty, as it refers to a virtual filesystem */
+	/* We might want to toggle it based on running in UWP or something... */
+
+#if VER_PRODUCTBUILD >= 17025 && defined(COFFEE_WINDOWS_UWP)
+#error ERROR ERROR TIME TO IMPLEMENT PROPER UWP ASSET STORAGE M8
+#endif
+
 #elif defined(COFFEE_GEKKO)
+
     paths.configDir = MkUrl("/MEM0", RSCA::SystemFile);
 
 #else
-
+#error Unimplemented filesystem path handling, fix it!
 #endif
 
     return paths;
@@ -163,7 +190,7 @@ STATICINLINE CString DereferencePath(cstring suffix,
     {
     case RSCA::AssetFile:
     {
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || (defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOW_UWP))
         /* Because Android uses a virtual filesystem,
          *  we do not go deeper to find a RSCA::SystemFile URL */
         return urlPart.internUrl.c_str();

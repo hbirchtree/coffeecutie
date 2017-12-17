@@ -52,13 +52,52 @@ bool api_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _run_tests[2] = {
+bool test_url_version(RSCA access)
+{
+	try {
+		Url test = MkUrl("test", access);
+
+		CString test_string = *test;
+
+		cDebug("URL mapping({1}): test -> {0}", test_string, StrUtil::pointerify(C_CAST<u32>(access)));
+	}
+	catch (std::runtime_error const& e)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool url_api()
+{
+	do {
+		if (!test_url_version(RSCA::SystemFile))
+			break;
+		if (!test_url_version(RSCA::AssetFile))
+			break;
+		if (!test_url_version(RSCA::ConfigFile))
+			break;
+		if (!test_url_version(RSCA::TemporaryFile))
+			break;
+		if (!test_url_version(RSCA::CachedFile))
+			break;
+
+		return true;
+	} while (false);
+
+	return false;
+}
+
+COFFEE_TEST_SUITE(3) = {
     {api_test<FileInterface>, "Interface",
      "Testing that the unimplemented interface is properly tested",
      false, true},
     {api_test<NativeFileInterface>, "Native API",
      "Testing that the native API implements the interface correctly",
-     false, true}
+     false, true},
+	 {url_api, "URL API",
+	 "Testing whether the platform's URL API is working as intended",
+	 false, true}
 };
 
-COFFEE_RUN_TESTS(_run_tests);
+COFFEE_EXEC_TESTS();
