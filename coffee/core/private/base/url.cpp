@@ -118,10 +118,10 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_APPLE)
 
-    {
+    do {
         CFBundleRef bun = CFBundleGetMainBundle();
         if(!bun)
-            return fn;
+            break;
         CFURLRef path = CFBundleCopyBundleURL(bun);
         CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
         CFStringEncoding enc = CFStringGetSystemEncoding();
@@ -135,7 +135,7 @@ STATICINLINE SystemPaths GetSystemPaths()
         paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile) +
                 Path{"Contents"} + Path{"Resources"};
 #endif
-    }
+    } while(false);
 
     auto home = Env::GetVar("HOME");
 #if defined(COFFEE_APPLE_MOBILE)
