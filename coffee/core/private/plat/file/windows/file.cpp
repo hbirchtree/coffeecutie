@@ -137,6 +137,7 @@ CString create_rsc_name(cstring fn)
 
     /* Transform the filename to correspond with  */
 	CString wrap = fn;
+	wrap = '"' + wrap + '"';
     wrap = CStrReplace(wrap,"_","___");
     wrap = CStrReplace(wrap,"/","_");
     wrap = CStrReplace(wrap,"\\","_");
