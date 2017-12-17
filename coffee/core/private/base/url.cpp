@@ -111,6 +111,62 @@ STATICINLINE SystemPaths GetSystemPaths()
 #error ERROR ERROR TIME TO IMPLEMENT PROPER UWP ASSET STORAGE M8
 #endif
 
+#elif defined(COFFEE_APPLE)
+
+    {
+        CFBundleRef bun = CFBundleGetMainBundle();
+        if(!bun)
+            return fn;
+        CFURLRef path = CFBundleCopyBundleURL(bun);
+        CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
+        CFStringEncoding enc = CFStringGetSystemEncoding();
+        const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
+        CString out = pathcstr;
+        CFRelease(pathstr);
+        CFRelease(path);
+#if defined(COFFEE_APPLE_MOBILE)
+        paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile);
+#else
+        paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile) +
+                Path{"Contents"} + Path{"Resources"};
+#endif
+    }
+
+    auto home = Env::GetVar("HOME");
+#if defined(COFFEE_APPLE_MOBILE)
+
+    auto base = MkUrl(home.c_str(), RSCA::SystemFile);
+
+    paths.tempDir = base + Path{"tmp"};
+    paths.configDir = base + Path{"Documents"};
+    paths.cacheDir = base + Path{"Library"} + Path{"Caches"};
+
+#else
+    paths.tempDir = MkUrl("/tmp", RSCA::SystemFile);
+
+
+    auto library = MkUrl(home.c_str()) + Path{"Library"};
+
+    auto app_path =
+            Path{ApplicationData().organization_name} +
+            Path{ApplicationData().application_name};
+
+    paths.configDir = library + Path{"Application Support"} + app_path;
+
+    paths.configDir = library + Path{"Caches"} + app_path;
+#endif
+
+#elif defined(COFFEE_EMSCRIPTEN)
+
+    /* Emscripten uses a virtual filesystem */
+
+    paths.assetDir = MkUrl("/assets", RSCA::SystemFile);
+
+    paths.configDir = MkUrl("/config", RSCA::SystemFile);
+
+    paths.tempDir = MkUrl("/tmp", RSCA::SystemFile);
+    paths.cacheDir = paths.tempDir;
+
 #elif defined(COFFEE_GEKKO)
 
     paths.configDir = MkUrl("/MEM0", RSCA::SystemFile);
