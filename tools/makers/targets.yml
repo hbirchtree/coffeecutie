@@ -78,7 +78,7 @@ globals:
   GENERATE_PROGRAMS: OFF
   BUILD_MODE: containerized
   CONFIGURATION: Debug
-  HEADFUL: OFF
+  HEADLESS: ON
 
 # variables are transformed into project.src
 variables:
@@ -223,7 +223,7 @@ templates:
     - -DCMAKE_BUILD_TYPE=$(build.build-type)
     - -DCMAKE_INSTALL_PREFIX=$(env:CMAKE_INSTALL_DIR)/$(target-name)
     - -DCMAKE_TOOLCHAIN_FILE=$(env:CMAKE_SOURCE_DIR)/cmake/Toolchains/$(toolchain)
-    - -DSKIP_GRAPHIC_TESTS=$(env:HEADFUL)
+    - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
 
 
   # For Ubuntu, Fedora, docs and coverage, specify generic preload
