@@ -16,6 +16,11 @@
 #include <ntverp.h>
 #endif
 
+#if defined(COFFEE_APPLE)
+#include <CoreFoundation/CFBundle.h>
+#include <CoreFoundation/CFString.h>
+#endif
+
 namespace Coffee{
 
 using namespace CResources;
