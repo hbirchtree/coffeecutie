@@ -14,7 +14,6 @@ env:
   global:
   - MAKEFILE_DIR=tools/makers
   - DEPENDENCIES=
-  - PYTHONPATH=/usr/lib/python3/dist-packages
   - CONFIGURATION=Debug
   matrix:
   - BUILDVARIANT=android.armv7a.gingerbread.gles2
