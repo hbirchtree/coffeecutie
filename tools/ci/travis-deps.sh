@@ -11,6 +11,8 @@ case "${TRAVIS_OS_NAME}" in
     #brew install python3
     brew install sdl2 cmake ninja openssl
     pip install pyyaml requests
+    easy_install pip
+    sudo easy_install pip
     exit 0
 ;;
 esac
