@@ -47,7 +47,7 @@ secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 template_location: cmake/Templates
 version:
-  hotfix: 2
+  hotfix: 3
   major: 4
   minor: 2
   patch: 0
