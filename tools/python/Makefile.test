@@ -1,0 +1,342 @@
+BUILD_DIR ?= $(PWD)
+GENERATE_PROGRAMS ?= OFF
+ROOT_DIR ?= $(SOURCE_DIR)/tools/makers
+SOURCE_DIR ?= $(PWD)/..
+
+ifeq ($(BUILD_MODE), bare)
+	ANDROID_NDK_INTERNAL			:= $(ANDROID_NDK)
+	ANDROID_SDK_INTERNAL			:= $(ANDROID_SDK)
+	CMAKE_BUILD_DIR			:= $(BUILD_DIR)
+	CMAKE_INSTALL_DIR			:= $(BUILD_DIR)/build
+	CMAKE_SOURCE_DIR			:= $(SOURCE_DIR)
+	COFFEE_ROOT_DIR			:= $(COFFEE_DIR)
+	NATIVE_LIBRARY_DIR			:= $(BUILD_DIR)/dependencies/native-libs
+	RUNNER			:= Makefile.workspace
+endif
+
+ifeq ($(BUILD_MODE), containerized)
+	ANDROID_NDK_INTERNAL			:= /home/coffee/android-ndk-linux
+	ANDROID_SDK_INTERNAL			:= /home/coffee/android-sdk-linux
+	CMAKE_BUILD_DIR			:= /home/coffee/build
+	CMAKE_INSTALL_DIR			:= /home/coffee/out
+	CMAKE_SOURCE_DIR			:= /home/coffee/project
+	COFFEE_ROOT_DIR			:= /home/coffee/library
+	NATIVE_LIBRARY_DIR			:= /nativelibs
+	RUNNER			:= Makefile.multi
+endif
+
+native-libs.mkdir:
+	mkdir -p "$(BUILD_DIR)/dependencies/native-libs"
+
+native-libs: native-libs.mkdir
+	[ ! -d $(BUILD_DIR)/dependencies/native-libs/.git ] && \
+	git clone 'https://github.com/hbirchtree/native-library-bundle.git' $(BUILD_DIR)/dependencies/native-libs || \
+	true
+
+rpi-sdk.mkdir:
+	mkdir -p "$(BUILD_DIR)/dependencies/raspberry-sysroot"
+
+rpi-sdk: rpi-sdk.mkdir
+	[ ! -d $(BUILD_DIR)/dependencies/raspberry-sysroot/.git ] && \
+	git clone 'https://github.com/hbirchtree/raspberry-sysroot.git' $(BUILD_DIR)/dependencies/raspberry-sysroot || \
+	true
+
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.gingerbread.gles2: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread.gles2 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-19 -DANDROID_ABI='armeabi-v7a with NEON' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv7a.gingerbread.gles2:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv7a.gingerbread.gles2" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.kitkat.gles2: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.kitkat.gles2 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-19 -DANDROID_ABI='armeabi-v7a with NEON' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv7a.kitkat.gles2:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv7a.kitkat.gles2" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.nougat.gles2: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles2 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-24 -DANDROID_ABI='armeabi-v7a with NEON' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv7a.nougat.gles2:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv7a.nougat.gles2" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.nougat.gles3: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles3 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-24 -DANDROID_ABI='armeabi-v7a with NEON' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=OFF -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv7a.nougat.gles3:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv7a.nougat.gles3" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv8a.lollipop.gles3: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.lollipop.gles3 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-21 -DANDROID_ABI='arm64-v8a' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=OFF -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv8a.lollipop.gles3:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv8a.lollipop.gles3" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv8a.nougat.gles3: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.nougat.gles3 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-24 -DANDROID_ABI='arm64-v8a' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=OFF -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv8a.nougat.gles3:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv8a.nougat.gles3" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips.kitkat: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.kitkat -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-19 -DANDROID_ABI='mips' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.mips.kitkat:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.mips.kitkat" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips64.kitkat: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.kitkat -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-19 -DANDROID_ABI='mips64' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.mips64.kitkat:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.mips64.kitkat" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86.kitkat: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.kitkat -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-19 -DANDROID_ABI='x86' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.x86.kitkat:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.x86.kitkat" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86_64.kitkat: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.kitkat -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=gnustl_static -DANDROID_PLATFORM=android-19 -DANDROID_ABI='x86_64' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=ON -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.x86_64.kitkat:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.x86_64.kitkat" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Coverage build using same config as Ubuntu
+# Compiler: Clang
+coverage: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-coverage.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_SECOND_TARGET="CoverageTest" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/coverage:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)" -e CC= -e CXX=" \
+		-e BUILD_NAME="coverage" \
+		-e TOOLCHAIN="linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Documentation build using only Doxygen
+# Compiler: Doxygen
+docs: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/docs-all.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/docs -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic_linux.toolchain.cmake" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/docs:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="docs" \
+		-e TOOLCHAIN="linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Emscripten with WebAsm and asm.js
+# Compiler: Clang 4+
+emscripten.asmjs: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Nothing -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Unix Makefiles' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/js-emscripten.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/js-emscripten.toolchain.cmake -DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master -DCOFFEE_BUILD_ASSIMP=OFF" \
+		-e DOCKER_CONFIG="emscripten" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/emscripten.asmjs:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)" -e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master" \
+		-e BUILD_NAME="emscripten.asmjs" \
+		-e TOOLCHAIN="js-emscripten.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Emscripten with WebAsm and asm.js
+# Compiler: Clang 4+
+emscripten.wasm: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Nothing -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Unix Makefiles' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/js-emscripten-wasm.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/js-emscripten.toolchain.cmake -DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master -DCOFFEE_BUILD_ASSIMP=OFF" \
+		-e DOCKER_CONFIG="emscripten" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/emscripten.wasm:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)" -e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master" \
+		-e BUILD_NAME="emscripten.wasm" \
+		-e TOOLCHAIN="js-emscripten.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Fedora build in a Fedora Docker
+# Compiler: GCC 5+
+fedora.amd64: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Fedora -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-fedora.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic_linux.toolchain.cmake" \
+		-e DOCKER_CONFIG="fedora" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/fedora.amd64:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="fedora.amd64" \
+		-e TOOLCHAIN="linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Maemo 5 builds, performed within a Maemo 5 armel chroot
+# Compiler: GCC 6
+maemo.armel: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.make8 \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Maemo -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-maemo.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/maemo.armel -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake" \
+		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/maemo//nativelibs:ro -v $(COFFEE_DIR):/maemo//maemo/home/coffee/library:ro -v $(SOURCE_DIR):/maemo//home/coffee/project:ro -v $(BUILD_DIR)/build:/maemo//home/coffee/out:rw -v $(BUILD_DIR):/maemo//home/coffee/build:rw" \
+		-e BUILD_NAME="maemo.armel" \
+		-e TOOLCHAIN="linux-maemo-armv7_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# MinGW64 environment in Ubuntu Docker
+# Compiler: GCC 5+
+mingw.w64: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/MinGW -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/windows-mingw64.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/mingw.w64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/windows-mingw64_linux.toolchain.cmake" \
+		-e DOCKER_CONFIG="mingw64" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/mingw.w64:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="mingw.w64" \
+		-e TOOLCHAIN="windows-mingw64_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Raspberry Pi ARMv6 build
+# Compiler: GCC 4.9.4
+raspberry.armhf: native-libs rpi-sdk
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/RaspberryPi -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-raspberry.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake -DRASPBERRY_SDK=/rpi-sysroot" \
+		-e DOCKER_CONFIG="raspberry" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/raspberry.armhf:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)" -v $(BUILD_DIR)/dependencies/raspberry-sysroot/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro" \
+		-e BUILD_NAME="raspberry.armhf" \
+		-e TOOLCHAIN="linux-raspberry-armhf_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Build against the SteamRT SDK
+# Compiler: GCC 4.9.4
+steam.amd64: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/SteamOS -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-steam.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-steam_linux.toolchain.cmake" \
+		-e DOCKER_CONFIG="steam" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/steam.amd64:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="steam.amd64" \
+		-e TOOLCHAIN="linux-steam_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+ubuntu.amd64: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-generic.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic_linux.toolchain.cmake -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs -DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime -DCOFFEE_GENERATE_APPIMAGE=ON" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ubuntu.amd64:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="ubuntu.amd64" \
+		-e TOOLCHAIN="linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+ubuntu.amd64.gles2: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-gles20.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles2 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic_linux.toolchain.cmake -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs -DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime -DCOFFEE_GENERATE_APPIMAGE=ON" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ubuntu.amd64.gles2:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="ubuntu.amd64.gles2" \
+		-e TOOLCHAIN="linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+ubuntu.amd64.gles3: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-generic.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles3 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic_linux.toolchain.cmake -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs -DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime -DCOFFEE_GENERATE_APPIMAGE=ON" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ubuntu.amd64.gles3:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="ubuntu.amd64.gles3" \
+		-e TOOLCHAIN="linux-generic_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+ubuntu.i686.gles: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-gles.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake" \
+		-e DOCKER_CONFIG="ubuntu-i686" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ubuntu.i686.gles:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="ubuntu.i686.gles" \
+		-e TOOLCHAIN="linux-generic-i686_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+ubuntu.i686.gles2: native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/linux-gles20.cmake" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles2 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake" \
+		-e DOCKER_CONFIG="ubuntu-i686" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ubuntu.i686.gles2:/home/coffee/build:rw --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="ubuntu.i686.gles2" \
+		-e TOOLCHAIN="linux-generic-i686_linux.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"

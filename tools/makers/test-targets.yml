@@ -1,0 +1,76 @@
+environments:
+  android:
+    =type: android
+    galaxy-s3:
+      =uuid: abc
+      =net-id: 10.0.0.1:5544
+      +feature:
+        - phone
+        - gles2
+        - mali-400mp # stem into mali, mali-400mp
+        - armv7a
+        - physical
+        - marshmallow
+    nexus7:
+      +feature:
+        - tablet
+        - gles2
+        - gles3
+        - adreno-320 # stem  into adreno, adreno-320
+        - armv7a
+        - physical
+        - marshmallow
+    emulator-nexus6:
+      +feature:
+        - phone
+        - gles3
+        - armv8a
+        - emulator
+  linux:
+    =type: linux-ssh
+    armv6:
+      raspberry-3:
+        +feature:
+          - gles2
+          - videocore-iv
+          - debian
+      raspberry-zero:
+        +feature:
+          - gles2
+          - videocore-iv
+          - debian
+    armv7a:
+      beaglebone-black:
+        +features:
+          - gles2
+          - powervr-sgx-530 # stemmed into powervr, powervr-sgx, powervr-sgx-530
+          - ubuntu
+    ubuntu:
+      ati-5750-fglrx:
+        +feature:
+          - ati-radeon-5750 # is stemmed into ati, ati-radeon, ati-radeon-5750
+          - ubuntu-16.04
+      nv-660ti:
+        +feature:
+          - nvidia-gtx-660ti
+          - ubuntu-16.04
+    fedora:
+      qemu:
+        +feature:
+          - qemu
+  macos:
+    =type: macos-ssh
+    sierra-nv-970:
+      +feature:
+        - macos-sierra
+  windows:
+    =type: windows
+    win10-ati-5750:
+      +feature:
+        - ati-radeon-5750
+        - win10
+    win10-nv-660ti:
+      +feature:
+        - nvidia-gtx-660ti
+        - win10
+

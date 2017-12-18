@@ -10,9 +10,9 @@ case "${TRAVIS_OS_NAME}" in
 "osx")
     #brew install python3
     brew install sdl2 cmake ninja openssl
-    pip install pyyaml requests
     easy_install pip
     sudo easy_install pip
+    pip install pyyaml requests
     exit 0
 ;;
 esac
