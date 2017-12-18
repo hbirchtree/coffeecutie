@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+USE_TEXT_PARSING = False
+
 from sys import stderr, version_info, path
 from os import getcwd
-from yaml import load, dump
+try:
+    from yaml import load, dump
+except ImportError:
+    USE_TEXT_PARSING = True
+
 from os.path import dirname, realpath, isfile
 from argparse import ArgumentParser
 
@@ -16,7 +22,10 @@ else:
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
-    from yaml import Loader, Dumper
+    try:
+        from yaml import Loader, Dumper
+    except ImportError:
+        pass
 
 if __name__ == '__main__':
     args = ArgumentParser('BuildInfo')
@@ -31,7 +40,10 @@ if __name__ == '__main__':
 
     def read_yaml_file(file):
         with open(file, mode='r') as f:
-            return load(f.read(), Loader=Loader)
+            if USE_TEXT_PARSING:
+                return f.read()
+            else:
+                return load(f.read(), Loader=Loader)
 
     def save_yaml_file(file, src):
         with open(file, mode='w') as f:
@@ -48,6 +60,25 @@ if __name__ == '__main__':
         exit(1)
 
     values = config
+
+    if USE_TEXT_PARSING:
+        prim_key = args.keys.pop(0)
+        if prim_key == 'dependencies':
+            sec_key = args.keys.pop(0)
+            idx = config.find(sec_key)
+            if idx < 0:
+                exit(0)
+            idx = config.find(':', idx) + 1
+            end = config.find('\n', idx)
+            print(config[idx:end].strip())
+        elif prim_key == 'script_location':
+            idx = config.find(prim_key)
+            if idx < 0:
+                exit(0)
+            idx = config.find(':', idx) + 1
+            end = config.find('\n', idx)
+            print(config[idx:end].strip())
+        exit(0)
 
     try:
         while args.keys:
