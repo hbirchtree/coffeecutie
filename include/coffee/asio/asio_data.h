@@ -33,6 +33,9 @@ struct ASIO_Client
           ,sslctxt(asio::ssl::context::sslv23_client)
 #endif
         {
+#if defined(ASIO_USE_SSL)
+            sslctxt.set_default_verify_paths();
+#endif
         }
 
         asio::io_service service;

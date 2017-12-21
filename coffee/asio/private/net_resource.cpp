@@ -2,6 +2,8 @@
 
 #include <coffee/core/base/textprocessing/cregex.h>
 
+#define NETRSC_TAG "NetRsc::"
+
 namespace Coffee{
 namespace Net{
 
@@ -29,6 +31,8 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
     m_resource(*url),
     m_access(url.netflags)
 {
+    DProfContext a(NETRSC_TAG "Initializing NetResource");
+
     CString urlS = *url;
 
     CString protocol, resource;
@@ -36,6 +40,7 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
     if(!ExtractUrlComponents(urlS, &protocol, &m_host, &resource))
     {
         cVerbose(10, "Failed to decode URL");
+        Profiler::DeepProfile(NETRSC_TAG "Failed to decode URL");
         return;
     }
 
@@ -55,7 +60,10 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
         normal->connect(m_host, protocol);
 
         if(normal->bad())
+        {
+            Profiler::DeepProfile(NETRSC_TAG "Connection failed");
             return;
+        }
     }
 
     HTTP::InitializeRequest(m_request);
@@ -93,8 +101,12 @@ bool Resource::isResponseReady() const
 
 bool Resource::fetch()
 {
+    DProfContext a(NETRSC_TAG "Fetching data");
     if(!isRequestReady())
+    {
+        Profiler::DeepProfile(NETRSC_TAG "Resource not ready");
         return false;
+    }
 
 #if defined(ASIO_USE_SSL)
     bool secure = (m_access & HTTPAccess::Secure) != HTTPAccess::None;
@@ -107,6 +119,8 @@ bool Resource::fetch()
         ssl->flush();
         ssl->pull();
 
+        Profiler::DeepProfile(NETRSC_TAG "HTTPS file received");
+
         return HTTP::ExtractResponse(*ssl, &m_response);
     }else
 #endif
@@ -116,7 +130,27 @@ bool Resource::fetch()
 
         normal->flush();
 
+        Profiler::DeepProfile(NETRSC_TAG "HTTP file received");
+
         return HTTP::ExtractResponse(*normal, &m_response);
+    }
+}
+
+bool Resource::push(CString const& method, const Bytes &data)
+{
+    m_request.reqtype = method;
+
+    m_request.payload.resize(data.size);
+    MemCpy(m_request.payload.data(), data.data, data.size);
+
+    bool secure = (m_access & HTTPAccess::Secure) != HTTPAccess::None;
+
+    if(secure)
+    {
+
+    }else
+    {
+
     }
 }
 
@@ -127,6 +161,8 @@ cstring Resource::mimeType() const
 
 Bytes Resource::data() const
 {
+    Profiler::DeepProfile(NETRSC_TAG "Retrieving data");
+
     return Bytes(C_FCAST<byte_t*>(m_response.payload.data()),
                  m_response.payload.size(),
                  0);

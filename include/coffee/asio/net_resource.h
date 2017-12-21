@@ -35,6 +35,7 @@ public:
     bool isResponseReady() const;
 
     bool fetch();
+    bool push(const CString &method, Bytes const& data);
 
     cstring mimeType() const;
     Bytes data() const;
@@ -46,14 +47,14 @@ FORCEDINLINE Url operator "" _web(const char* url, size_t)
 {
     return {url, Url::Networked,
                 ResourceAccess::None,
-                HTTPAccess::DefaultAccess};
+                HTTPAccess::DefaultAccess, {}};
 }
 
 FORCEDINLINE Url operator "" _http(const char* url, size_t)
 {
     return {url, Url::Networked,
                 ResourceAccess::None,
-                HTTPAccess::GET};
+                HTTPAccess::GET, {}};
 }
 
 }

@@ -27,4 +27,9 @@ const Vector<cstring_w> &_cbasic_arg_container::arguments() const
     return m_ptrStorage;
 }
 
+const Vector<CString> &_cbasic_arg_container::originalArguments() const
+{
+    return m_storage;
+}
+
 }

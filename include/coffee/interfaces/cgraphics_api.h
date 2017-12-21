@@ -578,10 +578,10 @@ struct GraphicsAPI
         void dealloc(){}
 
         void upload(BitFormat,PixCmp,CSizeT const&, c_cptr,
-                    PointT const& = {}, u32 mip = 0){}
+                    PointT const& = {}, u32 = 0){}
 
         void upload(BitFmt,PixCmp,CSizeT const&, Bytes const&,
-                    PointT const& = {}, u32 mip = 0){}
+                    PointT const& = {}, u32 = 0){}
 
         uint32 size() const {return 0;}
         bool isArray() const {return b_array;}

@@ -202,6 +202,11 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     endif()
 
 
+    target_compile_definitions ( ${TARGET}
+        PRIVATE
+        -DCOFFEE_COMPONENT_NAME="${TARGET}"
+        )
+
     target_enable_cxx11(${TARGET})
 
     target_link_libraries ( ${TARGET}

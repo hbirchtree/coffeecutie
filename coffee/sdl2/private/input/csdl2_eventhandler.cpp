@@ -20,6 +20,8 @@ SDL2EventHandler::SDL2EventHandler()
 
 bool SDL2EventHandler::inputPreInit(CString*)
 {
+    DProfContext a("Setting up SDL input");
+
     /* Load input systems */
 
 #if defined(COFFEE_LINUX)
@@ -45,13 +47,13 @@ bool SDL2EventHandler::inputPreInit(CString*)
     sigaction(SIGINT, &action, nullptr);
 #endif
 
-    Profiler::Profile("SDL2 input initializtion");
-
     return true;
 }
 
 bool SDL2EventHandler::inputInit(CString*)
 {
+    DProfContext a("Loading SDL gamecontrollerdb");
+
     /* If found, load game controller mappings from file */
     auto mapping = "gamecontrollerdb.txt"_rsc;
 
@@ -63,13 +65,15 @@ bool SDL2EventHandler::inputInit(CString*)
         SDL_GameControllerAddMappingsFromRW(fsrc,0);
         SDL_FreeRW(fsrc);
         FileUnmap(mapping);
-    }
-    Profiler::Profile("Load controller mapping");
+    }else
+        Profiler::DeepProfile("Failed to locate gamecontrollerdb");
     return true;
 }
 
 bool SDL2EventHandler::inputPostInit(CString*)
 {
+    DProfContext a("Cleaning up joystick and haptic devices");
+
     /* WORKAROUND: Sometimes, haptic and joystick devices are not closed properly.
      *  This part ensures that they are indeed closed before starting.
      *  Everything else should be fine. */
@@ -83,7 +87,6 @@ bool SDL2EventHandler::inputPostInit(CString*)
         SDL_Joystick* h = SDL_JoystickOpen(i);
         SDL_JoystickClose(h);
     }
-    Profiler::Profile("Set input device states");
     return true;
 }
 

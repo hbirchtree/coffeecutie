@@ -358,8 +358,9 @@ Path Path::dirname()
 
 Path Path::operator+(cstring component)
 {
-    internUrl += component;
-    return *this;
+    Path cpy = *this;
+    cpy.internUrl += component;
+    return cpy;
 }
 
 Path Path::operator+(const Path &path)

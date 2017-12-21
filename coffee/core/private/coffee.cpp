@@ -151,9 +151,9 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
 #ifndef COFFEE_LOWFAT
 
-    Profiler::PushContext("CoffeeMain");
-
     CoffeeInit(false);
+
+    Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");
 
     {
@@ -178,6 +178,10 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         parser.addSwitch(
                     "licenses","licenses", nullptr,
                     "Print license information and exit");
+
+        parser.addSwitch(
+                    "dprofile", "deep-profile", nullptr,
+                    "Enable deep profiling");
 
         parser.addPositionalArgument(
                     "resource_prefix",
@@ -210,6 +214,9 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
             {
                 PrintLicenseInfo();
                 return 0;
+            }else if(sw == "dprofile")
+            {
+                Profiler::SetDeepProfileMode(true);
             }
         }
 
@@ -237,7 +244,6 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
 #ifndef COFFEE_LOWFAT
     Profiler::PopContext();
-    Profiler::Profile("Runtime");
     Profiler::PopContext();
 #endif
     return r;

@@ -174,6 +174,7 @@ struct _cbasic_arg_container
     static _cbasic_arg_container Clone(int32 argc, cstring_w* argv);
 
     Vector<cstring_w> const& arguments() const;
+    Vector<CString> const& originalArguments() const;
 
     Vector<cstring_w> m_ptrStorage;
 

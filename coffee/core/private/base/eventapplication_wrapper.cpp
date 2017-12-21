@@ -43,8 +43,8 @@ bool CoffeeEventHandleNACall(int event, void* ptr1,
 namespace Coffee{
 namespace CfAdaptors{
 
-void CfResizeHandler(EventApplication* app, int event,
-                     void* p1, void* p2, void* p3)
+void CfResizeHandler(EventApplication* app, int /*event*/,
+                     void* /*p1*/, void* p2, void* /*p3*/)
 {
     CfResizeEventData* evdata = C_FCAST<CfResizeEventData*>(p2);
     
@@ -56,8 +56,8 @@ void CfResizeHandler(EventApplication* app, int event,
     app->injectEvent(dEv, &rEv);
 }
 
-void CfTouchHandler(EventApplication* app, int event,
-                    void* p1, void* p2, void* p3)
+void CfTouchHandler(EventApplication* app, int /*event*/,
+                    void* /*p1*/, void* p2, void* /*p3*/)
 {
     CfTouchEventData* evdata = C_FCAST<CfTouchEventData*>(p2);
     

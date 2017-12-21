@@ -30,10 +30,7 @@ int32 coffee_main(int32, cstring_w*)
 //    GotoApplicationDir();
 
     /*Moving on to regular rendering*/
-    Profiler::PushContext("Root");
 //    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
-
-    Profiler::Profile("Object creation");
 
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
@@ -98,8 +95,6 @@ int32 coffee_main(int32, cstring_w*)
     {
         cWarning("Failed to start: {0}", err);
     }
-
-    Profiler::PopContext();
 
     return 0;
 }

@@ -9,7 +9,8 @@ namespace Coffee{
 namespace Display{
 
 template<typename Renderer> STATICINLINE
-bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* err)
+bool LoadHighestVersion(
+        Renderer* renderer, CDProperties& properties, CString* err)
 {
 
 
@@ -57,8 +58,9 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
             c.gl.version.major = env.maj;
             c.gl.version.minor = env.min;
 
+            DProfContext a("Attempting initialization");
             if(renderer->init(c, err))
-                return  true;
+                return true;
             else
                 renderer->cleanup();
         }

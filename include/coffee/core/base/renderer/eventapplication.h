@@ -324,6 +324,8 @@ public:
     static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
                                CDProperties& visual, CString& err)
     {
+        Profiler::DeepPushContext("Event loop creation");
+
         using ELD = EventLoopData<Renderer, Data>;
 
         static cstring suspend_str = "Suspend handler";
@@ -381,14 +383,19 @@ public:
          */
         /* This is where Emscripten jumps off to Javascript land,
          *  with setTimeout and stuff */
+
+        Profiler::DeepPopContext();
+
         return 0;
 #else
 
+        Profiler::DeepPushContext("Renderer initialization");
         /* By default, try to load the highest GL version */
         if(!LoadHighestVersion(&ev.r(), visual, &err))
         {
             return -1;
         }
+        Profiler::DeepPopContext();
 
         /* For timed runs, set the starting time */
         ev.time.start = Time::CurrentTimestamp();
@@ -400,6 +407,8 @@ public:
          *  loop that happens regardless of outside events.
          * On platforms with their own event loops, this does not work.
          */
+
+        Profiler::DeepPopContext();
 
         /* We retrieve the current thread's RuntimeQueue if it exists,
          *  and process it regularly. */

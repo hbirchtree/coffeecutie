@@ -6,6 +6,8 @@
 #include <coffee/core/CProfiling>
 #include "http_types.h"
 
+#include <iterator>
+
 namespace Coffee{
 namespace HTTP{
 
@@ -18,10 +20,17 @@ void SendProperty(CString& req_s, CString const& p, CString const& v)
     req_s += chunk;
 }
 
+template <typename T>
+std::ostream& operator << (std::ostream& os, const std::vector<T>& vec)
+{
+    std::copy( vec.begin(), vec.end(), std::ostream_iterator<T>( os ) );
+    return os;
+}
+
 template<typename StrmT>
 void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 {
-    ProfContext __m("Generating HTTP request");
+    DProfContext __m("Generating HTTP request");
 
     CString header;
 
@@ -48,23 +57,20 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     header += "\r\n";
 
-    Profiler::Profile("Creating header data");
-
-    if(r.payload.size())
-        header += r.payload;
-
-    Profiler::Profile("Creating payload data");
-    Profiler::Profile("Dud");
+    Profiler::DeepProfile("Creating header data");
 
     req_s << header;
 
-    Profiler::Profile("Transmitting data");
+    if(r.payload.size())
+        req_s << r.payload;
+
+    Profiler::DeepProfile("Transmitting data");
 }
 
 template<typename StrmT>
 bool ExtractResponse(StrmT& stream, Response* response)
 {
-    ProfContext __m("Extracting HTTP response");
+    DProfContext __m("Extracting HTTP response");
 
     CString tmp;
     CString t1,t2;
@@ -105,14 +111,17 @@ bool ExtractResponse(StrmT& stream, Response* response)
     if(contentLenIt != response->header.end())
         response->payload.reserve(cast_string<u32>(contentLenIt->second));
 
-    Profiler::Profile("Reading header data");
+    Profiler::DeepProfile("Reading header data");
 
-    response->payload = CString(std::istreambuf_iterator<char>(stream), {});
+    response->payload.clear();
+    auto it = std::istream_iterator<byte_t>(stream);
+    std::copy(it, std::istream_iterator<byte_t>(),
+              response->payload.begin());
 
 //    while(std::getline(stream,tmp)&&tmp!="\r\n")
 //        response->payload.append(tmp);
 
-    Profiler::Profile("Reading payload");
+    Profiler::DeepProfile("Reading payload");
 
     return true;
 }

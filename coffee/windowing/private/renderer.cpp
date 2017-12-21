@@ -7,6 +7,8 @@
 #include <coffee/sdl2/sdl2system.h>
 #endif
 
+#define RENDERER_TAG "RendererInterface::"
+
 namespace Coffee{
 namespace Display{
 
@@ -35,6 +37,8 @@ bool CSDL2Renderer_Internal::init(const CDProperties &props,CString* err)
 #if defined(COFFEE_USE_SDL_EVENT) || defined(COFFEE_USE_SDL_GL) || defined(COFFEE_USE_SDL_WINDOW)
     m_properties = props;
 #endif
+
+    DProfContext a(RENDERER_TAG "Initializing renderer");
 
     do{
         if(!(windowPreInit(props,err)
@@ -72,11 +76,15 @@ bool CSDL2Renderer_Internal::init(const CDProperties &props,CString* err)
 
     cleanup();
 
+    Profiler::DeepProfile("Failed to initialize renderer");
+
     return false;
 }
 
 void CSDL2Renderer_Internal::cleanup()
 {
+    DProfContext a(RENDERER_TAG "Cleaning up renderer");
+
 #if defined(COFFEE_ENABLE_OPENGL)
     bindingTerminate();
 #if !defined(COFFEE_USE_SDL_GL)

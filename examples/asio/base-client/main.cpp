@@ -50,7 +50,7 @@ int32 coffee_main(int32, cstring_w*)
             cDebug("Total time: {0}", tim.elapsed());
             for(std::pair<CString,CString> const& v : resp.header)
                 cDebug("{0} : {1}",v.first,v.second);
-            cDebug("Payload:\n{0}",resp.payload);
+            cDebug("Payload:\n{0}", (cstring)resp.payload.data());
         }
         Profiler::Profile("Receive response");
     }
@@ -87,7 +87,8 @@ int32 coffee_main(int32, cstring_w*)
             cDebug("Success!");
             Bytes data = testRsc.data();
             cDebug("Data size: {0} {1}", data.size, data.data[0]);
-        }
+        }else
+            cWarning("Failed");
     }
 
     if(/* DISABLES CODE */(false)){
@@ -122,7 +123,7 @@ int32 coffee_main(int32, cstring_w*)
             for(auto const& k : res.header)
                 cDebug("Header: {0} = {1}", k.first, k.second);
 
-            JSON::Document doc = JSON::Read(res.payload.c_str());
+            JSON::Document doc = JSON::Read((cstring)res.payload.data());
 
             if(doc.IsNull())
                 return;

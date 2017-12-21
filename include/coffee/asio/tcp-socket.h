@@ -37,6 +37,8 @@ struct TCPSocketImpl : ASIO_Client
             recvp(),
             trans()
         {
+            socket.lowest_layer().set_option(
+                        asio::ip::tcp::no_delay(true));
         }
 
     public:
@@ -64,6 +66,8 @@ struct TCPSocketImpl : ASIO_Client
 
             asio::connect(socket.next_layer(), it);
 
+            socket.set_verify_mode(asio::ssl::verify_peer);
+
             socket.handshake(asio::ssl::stream_base::client);
         }
 
@@ -72,7 +76,7 @@ struct TCPSocketImpl : ASIO_Client
         {
             std::ostream& ref = *this;
             std::ostream& r = ref << v;
-            flush();
+//            flush();
             return r;
         }
 
@@ -99,7 +103,9 @@ struct TCPSocketImpl : ASIO_Client
         void flush()
         {
             std::ostream::flush();
-            asio::write(socket,trans);
+            try {
+                asio::write(socket,trans);
+            } catch(std::system_error){}
         }
 
         void close()

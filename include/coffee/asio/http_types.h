@@ -30,7 +30,7 @@ struct _http_request
     StrType version;
     StrType mimeType;
     ValueMapping<StrType> header;
-    StrType payload;
+    Vector<byte_t> payload;
 };
 
 template<typename StrType>
@@ -41,7 +41,7 @@ struct _http_response
     StrType mimeType;
     StrType message;
     ValueMapping<StrType> header;
-    StrType payload;
+    Vector<byte_t> payload;
 
     union
     {

@@ -12,6 +12,8 @@ namespace Display{
 
 bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
 {
+    DProfContext a("Configuring SDL subsystems");
+
     C_UNUSED(p);
 
     m_window_flags = 0;
@@ -41,12 +43,13 @@ bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
     SDL_GetVersion(&ver);
     m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
-    Profiler::Profile("Create SDL2 context");
     return true;
 }
 
 bool SDL2Window::windowInit(const CDProperties& p, CString* err)
 {
+    DProfContext a("Creating SDL window");
+
     /* Translate window flags and apply them */
     m_window_flags |= SDL2::InterpretWindowFlags(p.flags);
 
@@ -67,12 +70,13 @@ bool SDL2Window::windowInit(const CDProperties& p, CString* err)
             *err = cStringFormat(CFStrings::SDL2_Library_FailureInit,SDL_GetError());
         return false;
     }
-    Profiler::Profile("Create window");
     return true;
 }
 
 bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
 {
+    DProfContext a("Post-configuring window");
+
     /* If an icon pointer is present, use it */
     if(p.icon)
     {
@@ -101,7 +105,6 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
     }
 #endif
 
-    Profiler::Profile("Set window properties");
     return true;
 }
 

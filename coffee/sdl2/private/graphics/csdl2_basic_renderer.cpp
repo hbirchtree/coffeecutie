@@ -39,7 +39,7 @@ bool SDL2SpriteRenderer::spritesPreInit(CString* err)
             *err = cStringFormat(CFStrings::SDL2_Library_FailureInit,
                                  SDL_GetError());
     }
-    Profiler::Profile("Initialize sprite rendering");
+    Profiler::DeepProfile("Initialize sprite rendering");
     return true;
 }
 

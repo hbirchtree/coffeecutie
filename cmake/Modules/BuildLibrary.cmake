@@ -204,6 +204,11 @@ macro(COFFEE_ADD_FRAMEWORK
             "${SOURCES}" "${LIBRARIES}" "${HEADER_DIR}")
     endif()
 
+    target_compile_definitions ( ${TARGET}
+        PRIVATE
+        -DCOFFEE_COMPONENT_NAME="${TARGET}"
+        )
+
     target_enable_cxx11(${TARGET})
 endmacro()
 

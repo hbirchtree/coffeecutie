@@ -38,11 +38,11 @@ RestClientImpl::Response RestClientImpl::RestRequestHTTP(AsioContext_internal, H
     asio::ip::tcp::iostream s;
     s.connect(h,port);
 
-    Profiler::Profile("Connect");
+    Profiler::DeepProfile("Connect");
 
     HTTP::GenerateRequest(s,h,r);
 
-    Profiler::Profile("Request generation");
+    Profiler::DeepProfile("Request generation");
 
     Response resp;
 
@@ -50,7 +50,7 @@ RestClientImpl::Response RestClientImpl::RestRequestHTTP(AsioContext_internal, H
         return Response();
     else
     {
-        Profiler::Profile("Response gathering");
+        Profiler::DeepProfile("Response gathering");
         return resp;
     }
 }

@@ -196,6 +196,7 @@ endif()
 if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/unix/environment.cpp
+        private/plat/environment/unix/stacktrace.cpp
         private/plat/file/unix/file.cpp
         private/plat/linking/unix/loader.cpp
         )
@@ -247,6 +248,17 @@ target_include_directories ( CoffeeCore
     $<INSTALL_INTERFACE:include/tinyxml2/>
     ${STANDARDLIBS_INCLUDE_DIR}
     )
+
+if(COFFEE_BUILD_ASIO)
+    target_compile_definitions( CoffeeCore
+        PRIVATE
+        -DCOFFEE_NETWORK_REPORTING
+        )
+    target_link_libraries ( CoffeeCore
+        PRIVATE
+        CoffeeASIO
+        )
+endif()
 
 if(COFFEE_BUILD_SWIG_BINDING)
 

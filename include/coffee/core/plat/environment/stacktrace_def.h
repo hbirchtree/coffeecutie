@@ -38,6 +38,16 @@ struct StacktracerDef
     {
         return {};
     }
+
+    /*!
+     * \brief Same as GetStackframeName, but only gets function name
+     * \return
+     */
+    static CString GetStackFuncName(u32 = 0)
+    {
+        return {};
+    }
+
     /*!
      * \brief Dump the full stack, alternatively from a start (first argument) to given length (second argument)
      * \return A vector containing stackframe names

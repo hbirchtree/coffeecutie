@@ -63,21 +63,22 @@ CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
 
 bool SDL2GLRenderer::contextPreInit(const GLProperties& props,CString*)
 {
+    DProfContext a("Set context properties");
+
     m_window_flags |= SDL_WINDOW_OPENGL;
     SDL2::SetContextProperties(props);
-    Profiler::Profile("Set context properties");
     return true;
 }
 
 bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
 {
     /* Acquire the OpenGL context from SDL2 */
-    Profiler::Profile("Acquire GL context");
+    DProfContext a("Acquire GL context");
 
     /* Make the GL context current to this thread */
     if(glContext() && glContext()->acquireContext())
     {
-        Profiler::Profile("Acquire context currency");
+        Profiler::DeepProfile("Acquire context currency");
         return true;
     }
     else
@@ -91,6 +92,8 @@ bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
 
 bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
 {
+    DProfContext a("Set swapping interval");
+
     /* Enable VSync if requested */
     if(props.flags&GLProperties::GLVSync)
         setSwapInterval(1);

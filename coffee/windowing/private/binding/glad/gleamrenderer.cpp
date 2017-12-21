@@ -76,18 +76,17 @@ bool GLeamRenderer::bindingInit(const GLProperties&,CString*)
 
 bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 {
-    Profiler::PushContext("GLeam");
+    DProfContext a("GLeam");
 
-    cVerbose(8, "Acquiring GL context from {0}, {1}",
-             (u64)m_app, (u64)m_app->glContext());
+//    cVerbose(8, "Acquiring GL context from {0}, {1}",
+//             (u64)m_app, (u64)m_app->glContext());
 
     if(!m_app->glContext()->acquireContext())
     {
+        Profiler::DeepProfile("Failed to acquire GL context");
         cWarning("Failed to acquire GL context");
         return false;
     }
-
-    Profiler::Profile("Context acquisition");
 
     bool status = false;
 
@@ -109,6 +108,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     GLADloadproc procload = nullptr;
 #endif
 
+    Profiler::DeepPushContext("Loading GLAD binding");
     if(!(p.flags & GLProperties::Flags::GLES))
     {
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -159,8 +159,9 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         }
 #endif
     }
+    Profiler::DeepPopContext();
 
-    Profiler::Profile("Loading GL function pointers");
+    Profiler::DeepProfile("Loading GL function pointers");
     cVerbose(7, "Function pointer checks succeeded: {0}", status);
 
     if(!status)
@@ -170,9 +171,11 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         /*Context or graphics card on fire? Just get out!*/
         if(err)
             *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;
+        Profiler::DeepProfile("glad failed to load");
         return false;
     }
 
+    Profiler::DeepPushContext("Printing information about GL");
     cDebug("Rendering device info: {0}",GL::Debug::Renderer());
 
     if(feval(p.flags&GLProperties::GLCoreProfile))
@@ -184,9 +187,12 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     cDebug("OpenGL GLSL version: {0}",
            GL::Debug::ShaderLanguageVersion());
+    Profiler::DeepPopContext();
 
     if(PlatformData::IsDebug())
     {
+        DProfContext b("Adding GL information to profiler");
+
         Profiler::AddExtraData(
                     "gl:renderer",
                     Strings::to_string(GL::Debug::Renderer()));
@@ -207,12 +213,13 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     if(GL::DebuggingSupported())
     {
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ONLY_GLES20)
+        DProfContext b("Configuring GL context debugging");
         GL::Debug::SetDebugMode(true);
         GL::Debug::DebugSetCallback(gleamcallback,this);
 #endif
     }
 
-    Profiler::Profile("Debug setup");
+
     return true;
 }
 

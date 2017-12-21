@@ -174,9 +174,9 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
     }
 }
 
-void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
-{
-    RendererState* rdata = C_FCAST<RendererState*>(r);
+//void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
+//{
+//    RendererState* rdata = C_FCAST<RendererState*>(r);
 //    if(e.type == CDEvent::Resize)
 //    {
 //        auto rev = C_CAST<Display::CDResizeEvent const*>(data);
@@ -184,7 +184,7 @@ void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
 //        
 //        camera.aspect = scalar(rev->w)/scalar(rev->h);
 //    }
-}
+//}
 
 void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
@@ -201,7 +201,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     cVerbose("Entering run() function");
     
-    Profiler::PushContext("Renderer");
+    ProfContext a("Renderer setup");
     
     const constexpr cstring textures[num_textures] = {
         "circle_red.png", "circle_blue.png", "circle_alpha.png",
@@ -236,6 +236,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Entering GL initialization stage");
     /* Uploading vertex data and creating descriptors */
     {
+        Profiler::PushContext("Vertex data upload");
+
         vertdesc.alloc();
         vertbuf.alloc();
         
@@ -260,6 +262,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         /* Finally we add these attributes to the descriptor */
         vertdesc.addAttribute(pos);
         vertdesc.addAttribute(tc);
+
+        Profiler::PopContext();
     }
     
     cVerbose("Generated vertex buffers");
@@ -271,6 +275,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     /* Compiling shaders and assemble a graphics pipeline */
     
     do{
+        ProfContext b("Shader compilation");
         const constexpr cstring shader_files[] = {
             "vr/vshader.glsl", "vr/fshader.glsl",
             "vr/vshader_es.glsl", "vr/fshader_es.glsl",
@@ -335,7 +340,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
     cVerbose("Texture allocation");
     
-    Profiler::Profile("Pre-texture loading");
+    Profiler::PushContext("Texture loading");
     for (int32 i = 0; i < eyetex.m_size.depth; i++) {
         CResources::Resource rsc(textures[i], ResourceAccess::SpecifyStorage |
                                  ResourceAccess::AssetFile);
@@ -373,7 +378,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         }
     }
 
-    Profiler::Profile("Texture loading");
+    Profiler::PopContext();
     cVerbose("Uploading textures");
     
     /* Attaching the texture data to a sampler object */
@@ -499,12 +504,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     g.tbase = d->r_state.time_base;
 
     g.o_query = new GLM::Q_OCC(CGL::QueryT::AnySamplesCon);
-    
-    Profiler::PopContext();
 }
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
 {
+    ProfContext a("Logic frame", Profiler::DataPoint::Hot);
+
     auto& g = d->g_data;
 
     /*
@@ -572,6 +577,8 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
+    ProfContext a("Render frame", Profiler::DataPoint::Hot);
+
     auto& g = d->g_data;
     
     bool do_debugging = d->r_state.debug_enabled && PlatformData::IsDebug();
