@@ -94,11 +94,16 @@ void WrapEventFunction(void* data, int event)
         case CoffeeHandle_Setup:
         if(CurrentState == 0)
         {
+            Profiler::DeepPushContext("Renderer-side setup");
             if(LoadHighestVersion(&edata->r(), edata->visual, nullptr))
             {
+                Profiler::DeepPopContext();
+                Profiler::DeepPushContext("Application-side setup");
                 edata->setup(edata->r(), edata->d());
+                Profiler::DeepPopContext();
                 CurrentState = 1;
-            }
+            }else
+                Profiler::DeepPopContext();
         }
         break;
         
@@ -113,9 +118,13 @@ void WrapEventFunction(void* data, int event)
         if(CurrentState == 1)
         {
             CurrentState = 0;
+            Profiler::DeepPushContext("Application-side cleanup");
             edata->cleanup(edata->r(), edata->d());
+            Profiler::DeepPopContext();
             
+            Profiler::DeepPushContext("Renderer-side cleanup");
             edata->r().cleanup();
+            Profiler::DeepPopContext();
         }
         break;
         
@@ -400,8 +409,10 @@ public:
         /* For timed runs, set the starting time */
         ev.time.start = Time::CurrentTimestamp();
 
+        Profiler::DeepPushContext("Application-side setup");
         /* Pump a setup event to get everything started */
         ev.setup(ev.r(), ev.d());
+        Profiler::DeepPopContext();
 
         /* In this case, event processing happens in a tight
          *  loop that happens regardless of outside events.

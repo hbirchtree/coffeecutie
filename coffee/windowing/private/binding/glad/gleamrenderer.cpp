@@ -206,6 +206,9 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         Profiler::AddExtraData(
                     "gl:extensions",
                     GL::Debug::s_ExtensionList);
+        Profiler::AddExtraData(
+                    "gl:driver",
+                    GL::Debug::ContextVersion().driver);
 
         /* TODO: Add GL limits to extra data */
     }

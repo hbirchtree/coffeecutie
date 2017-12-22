@@ -34,27 +34,34 @@ public:
     bool isRequestReady() const;
     bool isResponseReady() const;
 
+    void setHeaderField(CString const& field, CString const& value);
+
     bool fetch();
     bool push(const CString &method, Bytes const& data);
 
     cstring mimeType() const;
     Bytes data() const;
+    Map<CString, CString> const& headers() const;
 };
+
+FORCEDINLINE Url MkUrl(cstring url,
+                       HTTPAccess access = HTTPAccess::DefaultAccess)
+{
+    return {url, Url::Networked,
+                ResourceAccess::None,
+                access, {}};
+}
 
 }
 
 FORCEDINLINE Url operator "" _web(const char* url, size_t)
 {
-    return {url, Url::Networked,
-                ResourceAccess::None,
-                HTTPAccess::DefaultAccess, {}};
+    return Net::MkUrl(url);
 }
 
 FORCEDINLINE Url operator "" _http(const char* url, size_t)
 {
-    return {url, Url::Networked,
-                ResourceAccess::None,
-                HTTPAccess::GET, {}};
+    return Net::MkUrl(url, HTTPAccess::GET);
 }
 
 }

@@ -156,6 +156,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");
 
+    Profiler::PushContext("Argument parsing");
     {
         ArgumentParser parser;
         parser.addSwitch(
@@ -232,6 +233,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                 CResources::FileResourcePrefix(pos.second.c_str());
         }
     }
+    Profiler::PopContext();
 
     /* This is a bit more versatile than simple procedures
      */

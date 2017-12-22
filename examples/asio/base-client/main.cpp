@@ -17,6 +17,7 @@ int32 coffee_main(int32, cstring_w*)
 
     CElapsedTimer tim;
 
+    if(false)
     {
         /* Testing HTTP transport, will return the HTML document */
         ProfContext __m("example.com");
@@ -56,29 +57,61 @@ int32 coffee_main(int32, cstring_w*)
     }
 
     {
-//        CString host = "i.imgur.com";
+//        using asio::ip::tcp;
+//        namespace ssl = asio::ssl;
+//        typedef ssl::stream<tcp::socket> ssl_socket;
 
-//        TCP::SSLSocket con(net_context);
-//        con.connect(host.c_str(), "https");
+//        // Create a context that uses the default paths for
+//        // finding CA certificates.
+//        ssl::context ctx(ssl::context::sslv23);
+//        ctx.set_default_verify_paths();
 
-//        REST::Request req;
-//        HTTP::InitializeRequest(req);
+//        // Open a socket and connect it to the remote host.
+//        asio::io_service io_service;
+//        ssl_socket sock(io_service, ctx);
+//        tcp::resolver resolver(io_service);
+//        tcp::resolver::query query("hookb.in", "https");
+//        asio::connect(sock.lowest_layer(), resolver.resolve(query));
+//        sock.lowest_layer().set_option(tcp::no_delay(true));
 
-//        req.resource = "/nQdOmCJ.png";
-//        req.reqtype = "GET";
-//        req.mimeType.clear();
+//        // Perform SSL handshake and verify the remote host's
+//        // certificate.
+//        sock.set_verify_mode(ssl::verify_peer);
+//        sock.set_verify_callback(ssl::rfc2818_verification("hookb.in"));
+//        sock.handshake(ssl_socket::client);
 
-//        req.header.insert({"Accept", "*/*"});
+//        asio::streambuf buf;
+//        std::ostream os(&buf);
 
-//        HTTP::GenerateRequest(con, host, req);
+//        HTTP::Request r;
 
-//        con.flush();
-//        con.pull();
+//        HTTP::InitializeRequest(r);
 
-//        HTTP::Response resp;
+//        r.resource = "/Ekqw9wW0";
+//        r.reqtype = "POST";
 
-//        if(!HTTP::ExtractResponse(con, &resp))
-//            cWarning("I FAILED!");
+//        r.payload = {'A', 'B', 'C', 'D'};
+
+//        HTTP::GenerateRequest(os, "hookb.in", r);
+
+//        os.flush();
+
+//        auto s = asio::write(sock, buf);
+
+//        cDebug("Wrote: {0}", s);
+
+//        asio::streambuf rbuf;
+//        std::istream is(&rbuf);
+
+//        asio::error_code ec;
+//        asio::read(sock, rbuf, ec);
+
+//        cDebug("Error: {0}",  ec.message());
+
+//        is.rdbuf(&rbuf);
+    }
+
+    {
         Url testUrl = "https://i.imgur.com/nQdOmCJ.png"_web;
         Net::Resource testRsc(net_context, testUrl);
 
@@ -88,7 +121,26 @@ int32 coffee_main(int32, cstring_w*)
             Bytes data = testRsc.data();
             cDebug("Data size: {0} {1}", data.size, data.data[0]);
         }else
-            cWarning("Failed");
+            cWarning("Failed imgur");
+    }
+
+    if(/* DISABLES CODE */ (false))
+    {
+        Url testUrl = "https://hookb.in/Ekqw9wW0"_web;
+        Net::Resource testRsc(net_context, testUrl);
+
+        cstring test = "random string";
+
+        Bytes data;
+        data = Bytes::CreateString(test);
+
+        if(testRsc.push("POST", data))
+        {
+            auto d = testRsc.data();
+            cDebug("Hello!: \n{0}",
+                   StrUtil::encapsulate((cstring)d.data, d.size));
+        }else
+            cWarning("Failed hookbin");
     }
 
     if(/* DISABLES CODE */(false)){

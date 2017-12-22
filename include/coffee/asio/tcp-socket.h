@@ -30,16 +30,14 @@ struct TCPSocketImpl : ASIO_Client
         asio::streambuf recvp;
         asio::streambuf trans;
 
-        SSLSocket_(asio::io_service &serv, asio::ssl::context& ctxt):
-            std::istream(&recvp),
-            std::ostream(&trans),
-            socket(serv,ctxt),
-            recvp(),
-            trans()
-        {
-            socket.lowest_layer().set_option(
-                        asio::ip::tcp::no_delay(true));
-        }
+//        SSLSocket_(asio::io_service &serv, asio::ssl::context& ctxt):
+//            std::istream(&recvp),
+//            std::ostream(&trans),
+//            socket(serv,ctxt),
+//            recvp(),
+//            trans()
+//        {
+//        }
 
     public:
 
@@ -61,12 +59,17 @@ struct TCPSocketImpl : ASIO_Client
             auto it = context->resolver.resolve(q);
             decltype(it) end;
 
-            if(it != end)
+            if(it == end)
                 return;
 
             asio::connect(socket.next_layer(), it);
 
+            socket.lowest_layer().set_option(
+                        asio::ip::tcp::no_delay(true));
+
             socket.set_verify_mode(asio::ssl::verify_peer);
+            socket.set_verify_callback(
+                        asio::ssl::rfc2818_verification(h));
 
             socket.handshake(asio::ssl::stream_base::client);
         }
@@ -74,38 +77,33 @@ struct TCPSocketImpl : ASIO_Client
         template<typename T,typename R>
         R& operator<<(T const& v)
         {
-            std::ostream& ref = *this;
-            std::ostream& r = ref << v;
-//            flush();
-            return r;
+            return (*this) << v;
         }
 
         template<typename T, typename R>
         R& operator>>(T& v)
         {
-            pull();
-            std::istream& ref = *this;
-            return ref >> v;
+            return (*this) >> v;
         }
 
-        void pull()
+        asio::error_code pull(szptr* size = nullptr)
         {
-#ifndef NDEBUG
-            try{
-#endif
-                asio::read(socket,recvp);
-#ifndef NDEBUG
-            }catch(std::system_error){}
-#endif
+            asio::error_code ec;
+            auto size_ = asio::read(socket, recvp, ec);
+            if(size)
+                *size = size_;
             /* Fuck me, std::istream doesn't update itself */
             std::istream::rdbuf(&recvp);
+            return ec;
         }
-        void flush()
+        asio::error_code flush(szptr* size = nullptr)
         {
             std::ostream::flush();
-            try {
-                asio::write(socket,trans);
-            } catch(std::system_error){}
+            asio::error_code ec;
+            auto size_ = asio::write(socket, trans, ec);
+            if(size)
+                *size = size_;
+            return ec;
         }
 
         void close()
@@ -121,7 +119,8 @@ struct TCPSocketImpl : ASIO_Client
         SSLSocket_(AsioContext_internal) {}
         C_DELETE_COPY_CONSTRUCTOR(SSLSocket_);
 
-        void pull() {}
+        std::error_code pull() {return {};}
+        std::error_code flush() {return {};}
     };
 #endif
 

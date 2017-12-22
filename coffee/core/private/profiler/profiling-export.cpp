@@ -655,8 +655,24 @@ void ExitRoutine()
 
 #if defined(COFFEE_NETWORK_REPORTING)
 
+            const constexpr cstring network_server = "COFFEE_REPORT_ADDRESS";
+            if(Env::ExistsVar(network_server))
+            {
+                auto ctxt = ASIO::ASIO_Client::InitService();
 
+                auto netServerUrl = Env::GetVar(network_server);
 
+                auto reportBin = Net::MkUrl(netServerUrl.c_str());
+                Net::Resource reportBinRsc(ctxt, reportBin);
+
+                reportBinRsc.setHeaderField("Content-Type",
+                                            "application/octet-stream");
+                auto chromeData = Bytes::CreateString(
+                            target_chrome.c_str());
+
+                reportBinRsc.push("POST",
+                                  chromeData);
+            }
 #endif
 
             cVerbose(6, "Saved profiler data to: {0}",

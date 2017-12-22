@@ -33,6 +33,9 @@ int32 coffee_main(int32, cstring_w*)
 //    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
 
     /* Set up the window visual */
+
+    Profiler::PushContext("Set up renderer");
+
     CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
     cDebug("Property object size: {0}", sizeof(props));
@@ -89,6 +92,8 @@ int32 coffee_main(int32, cstring_w*)
                             RuntimeTask::Periodic,
                             0
                         });
+
+    Profiler::PopContext();
 
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)

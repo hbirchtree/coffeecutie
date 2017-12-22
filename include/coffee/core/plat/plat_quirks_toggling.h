@@ -299,6 +299,10 @@
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 
+#if defined(ASIO_USE_SSL)
+#define COFFEE_NETWORK_REPORTING
+#endif
+
 #if !defined(COFFEE_RASPBERRY_DMX) && \
     !defined(COFFEE_USE_LINUX_GLX) && \
     !defined(COFFEE_USE_MAEMO_EGL) && \

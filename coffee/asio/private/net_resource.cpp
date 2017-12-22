@@ -99,6 +99,16 @@ bool Resource::isResponseReady() const
     return m_response.code != 0;
 }
 
+void Resource::setHeaderField(const CString &field, const CString &value)
+{
+    if(field == "Content-Type")
+    {
+        m_request.mimeType = value;
+        return;
+    }
+    m_request.header[field] = value;
+}
+
 bool Resource::fetch()
 {
     DProfContext a(NETRSC_TAG "Fetching data");
@@ -116,8 +126,16 @@ bool Resource::fetch()
         HTTP::GenerateRequest(*ssl, m_host, m_request);
         m_host.clear();
 
-        ssl->flush();
-        ssl->pull();
+        szptr size = 0;
+        auto writeError = ssl->flush(&size);
+        if(writeError.value() != 0)
+            cWarning("Write error code: {0}, wrote {1} bytes",
+                     writeError.message(), size);
+
+        auto readError = ssl->pull(&size);
+        if(readError.value() != 0)
+            cWarning("Read error code: {0}, received {1} bytes",
+                     readError.message(), size);
 
         Profiler::DeepProfile(NETRSC_TAG "HTTPS file received");
 
@@ -138,7 +156,12 @@ bool Resource::fetch()
 
 bool Resource::push(CString const& method, const Bytes &data)
 {
+    /* We do this to allow POST/PUT/UPDATE/whatever */
     m_request.reqtype = method;
+
+    /* Most services require a MIME-type with the request */
+    if(!m_request.mimeType.size())
+        m_request.mimeType = "application/octet-stream";
 
     m_request.payload.resize(data.size);
     MemCpy(m_request.payload.data(), data.data, data.size);
@@ -147,10 +170,33 @@ bool Resource::push(CString const& method, const Bytes &data)
 
     if(secure)
     {
+        HTTP::GenerateRequest(*ssl, m_host, m_request);
+        m_host.clear();
 
+        szptr size = 0;
+        auto writeError = ssl->flush(&size);
+        if(writeError.value() != 0)
+            cWarning("Write error code: {0}, wrote {1} bytes",
+                     writeError.message(), size);
+
+        auto readError = ssl->pull(&size);
+        if(readError.value() != 0)
+            cWarning("Read error code: {0}, received {1} bytes",
+                     readError.message(), size);
+
+        Profiler::DeepProfile(NETRSC_TAG "HTTPS request sent");
+
+        return HTTP::ExtractResponse(*ssl, &m_response);
     }else
     {
+        HTTP::GenerateRequest(*normal, m_host, m_request);
+        m_host.clear();
 
+        normal->flush();
+
+        Profiler::DeepProfile(NETRSC_TAG "HTTP request sent");
+
+        return HTTP::ExtractResponse(*normal, &m_response);
     }
 }
 
@@ -166,6 +212,11 @@ Bytes Resource::data() const
     return Bytes(C_FCAST<byte_t*>(m_response.payload.data()),
                  m_response.payload.size(),
                  0);
+}
+
+const Map<CString, CString> &Resource::headers() const
+{
+    return m_response.header;
 }
 
 }

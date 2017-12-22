@@ -34,7 +34,8 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     CString header;
 
-    header += cStringFormat("{0} {1} {2}\r\n",r.reqtype,r.resource,r.version);
+    header += cStringFormat("{0} {1} {2}\r\n",
+                            r.reqtype,r.resource,r.version);
 
     SendProperty(header,"Host",host);
 
@@ -51,15 +52,14 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
     if(r.reqtype == "GET")
         SendProperty(header,"Connection","close");
 
-
     if(r.payload.size())
         SendProperty(header,"Content-Length",Convert::uintltostring(r.payload.size()));
 
     header += "\r\n";
 
-    Profiler::DeepProfile("Creating header data");
-
     req_s << header;
+
+    Profiler::DeepProfile("Creating header data");
 
     if(r.payload.size())
         req_s << r.payload;
@@ -85,7 +85,7 @@ bool ExtractResponse(StrmT& stream, Response* response)
             response->code = 0;
     }
 
-    std::getline(stream,response->message);
+    std::getline(stream, response->message);
     Mem::StrUtil::trim(response->message);
 
     /* In this case, it's not even an HTTP response */
@@ -107,19 +107,29 @@ bool ExtractResponse(StrmT& stream, Response* response)
         }
     }
 
+    auto& payload = response->payload;
+
     auto contentLenIt = response->header.find("Content-Length");
     if(contentLenIt != response->header.end())
-        response->payload.reserve(cast_string<u32>(contentLenIt->second));
+        payload.reserve(cast_string<u32>(contentLenIt->second));
 
     Profiler::DeepProfile("Reading header data");
 
-    response->payload.clear();
-    auto it = std::istream_iterator<byte_t>(stream);
-    std::copy(it, std::istream_iterator<byte_t>(),
-              response->payload.begin());
+    std::array<char, 4096> payloadBuffer;
+    while(stream.read(payloadBuffer.data(), payloadBuffer.size()))
+        payload.insert(
+                    payload.end(),
+                    payloadBuffer.begin(),
+                    payloadBuffer.end());
 
-//    while(std::getline(stream,tmp)&&tmp!="\r\n")
-//        response->payload.append(tmp);
+    auto extraSpace = payload.capacity()
+            - payload.size();
+    payload.resize(payload.capacity());
+
+    if(stream.gcount() <= extraSpace)
+        MemCpy(&payload.data()[payload.size() - extraSpace],
+               payloadBuffer.data(),
+               stream.gcount());
 
     Profiler::DeepProfile("Reading payload");
 
