@@ -30,6 +30,8 @@ struct TCPSocketImpl : ASIO_Client
         asio::streambuf recvp;
         asio::streambuf trans;
 
+        asio::error_code lastError;
+
 //        SSLSocket_(asio::io_service &serv, asio::ssl::context& ctxt):
 //            std::istream(&recvp),
 //            std::ostream(&trans),
@@ -53,25 +55,47 @@ struct TCPSocketImpl : ASIO_Client
 
         C_DELETE_COPY_CONSTRUCTOR(SSLSocket_);
 
-        void connect(Host h, Service p)
+        template<typename ServiceT>
+        void connect(Host h, ServiceT p)
         {
-            asio::ip::tcp::resolver::query q(h,p);
-            auto it = context->resolver.resolve(q);
+            asio::error_code ec;
+
+            asio::ip::tcp::resolver::query q(h, p);
+            auto it = context->resolver.resolve(q, ec);
             decltype(it) end;
 
             if(it == end)
+            {
+                lastError = ec;
                 return;
+            }
 
-            asio::connect(socket.next_layer(), it);
+            asio::connect(socket.next_layer(), it, ec);
+
+            if(ec != asio::error_code())
+            {
+                lastError = ec;
+                return;
+            }
 
             socket.lowest_layer().set_option(
                         asio::ip::tcp::no_delay(true));
 
+#if !defined(COFFEE_ANDROID)
             socket.set_verify_mode(asio::ssl::verify_peer);
             socket.set_verify_callback(
                         asio::ssl::rfc2818_verification(h));
+#endif
 
-            socket.handshake(asio::ssl::stream_base::client);
+            socket.handshake(asio::ssl::stream_base::client, ec);
+
+            if(ec != asio::error_code())
+                lastError = ec;
+        }
+
+        asio::error_code error() const
+        {
+            return lastError;
         }
 
         template<typename T,typename R>
@@ -108,8 +132,9 @@ struct TCPSocketImpl : ASIO_Client
 
         void close()
         {
-            socket.shutdown();
-            socket.next_layer().close();
+            socket.lowest_layer().close();
+//            socket.shutdown();
+//            socket.next_layer().close();
         }
 
     };

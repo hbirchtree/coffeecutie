@@ -25,9 +25,16 @@ private:
 
     HTTPAccess m_access;
 
+    asio::error_code m_error;
+
 public:
     Resource(ASIO::AsioContext ctxt, Url const& url);
     ~Resource();
+
+    bool secure() const;
+    bool connected() const;
+
+    ErrCode errorCode() const;
 
     cstring resource() const;
 
@@ -40,6 +47,7 @@ public:
     bool push(const CString &method, Bytes const& data);
 
     cstring mimeType() const;
+    u32 responseCode() const;
     Bytes data() const;
     Map<CString, CString> const& headers() const;
 };

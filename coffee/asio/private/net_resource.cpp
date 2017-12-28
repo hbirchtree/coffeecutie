@@ -7,12 +7,14 @@
 namespace Coffee{
 namespace Net{
 
-bool ExtractUrlComponents(CString const& url,
-                          CString* protocol,
-                          CString* host,
-                          CString* resource)
+static bool ExtractUrlComponents(CString const& url,
+                                 CString* protocol,
+                                 CString* port,
+                                 CString* host,
+                                 CString* resource)
 {
-    auto patt = Regex::Compile("([A-Za-z]+)://([A-Za-z0-9-\\.]+)/(.*)");
+    auto patt = Regex::Compile(
+                "([A-Za-z]+)://([A-Za-z0-9-\\.]+):?([0-9]*)/?(.*)");
 
     auto matches = Regex::Match(patt, url, true);
 
@@ -21,6 +23,14 @@ bool ExtractUrlComponents(CString const& url,
         *protocol = matches[1].s_match[0];
         *host = matches[2].s_match[0];
         *resource = matches[3].s_match[0];
+
+        return true;
+    }else if(matches.size() == 5)
+    {
+        *protocol = matches[1].s_match[0];
+        *host = matches[2].s_match[0];
+        *port = matches[3].s_match[0];
+        *resource = matches[4].s_match[0];
 
         return true;
     }
@@ -35,35 +45,52 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
 
     CString urlS = *url;
 
-    CString protocol, resource;
+    CString protocol, port, resource;
 
-    if(!ExtractUrlComponents(urlS, &protocol, &m_host, &resource))
+    if(!ExtractUrlComponents(urlS, &protocol, &port,
+                             &m_host, &resource))
     {
         cVerbose(10, "Failed to decode URL");
         Profiler::DeepProfile(NETRSC_TAG "Failed to decode URL");
         return;
-    }
+    }else
+        cVerbose(15, "URL components: {0} {1} {2} {3}",
+                 protocol, m_host, port, resource);
+
+    if(!port.size())
+        port = protocol;
 
 #if defined(ASIO_USE_SSL)
-    bool secure = (url.netflags & HTTPAccess::Secure) != HTTPAccess::None;
 
-    if(secure)
+    if(protocol == "http" && secure())
+    {
+        cVerbose(10, "Switching off SSL, protocol mismatch");
+        m_access = m_access & (m_access ^ HTTPAccess::Secure);
+    }
+
+    m_error = asio::error_code();
+
+    if(secure())
     {
         ssl = MkUq<TCP::SSLSocket>(ctxt);
 
-        ssl->connect(m_host, protocol);
+        ssl->connect(m_host, port);
+
+        m_error = ssl->error();
     }else
 #endif
     {
         normal = MkUq<TCP::Socket>();
 
-        normal->connect(m_host, protocol);
+        normal->connect(m_host, port);
 
-        if(normal->bad())
-        {
-            Profiler::DeepProfile(NETRSC_TAG "Connection failed");
-            return;
-        }
+        m_error = normal->error();
+    }
+
+    if(!connected())
+    {
+        Profiler::DeepProfile(NETRSC_TAG "Failed to connect");
+        return;
     }
 
     HTTP::InitializeRequest(m_request);
@@ -76,12 +103,36 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
 
 Resource::~Resource()
 {
+    asio::error_code ec;
+
 #if defined(ASIO_USE_SSL)
-    if((m_access & HTTPAccess::Secure) != HTTPAccess::None)
+    if(secure())
+    {
+        if(ssl->error() == asio::error_code())
+            ssl->close();
         ssl.release();
-    else
+    }else
 #endif
+    {
+        if(normal->error() == asio::error_code())
+            normal->close();
         normal.release();
+    }
+}
+
+bool Resource::secure() const
+{
+    return (m_access & HTTPAccess::Secure) != HTTPAccess::None;
+}
+
+bool Resource::connected() const
+{
+    return m_error == asio::error_code();
+}
+
+ErrCode Resource::errorCode() const
+{
+    return m_error;
 }
 
 cstring Resource::resource() const
@@ -111,76 +162,46 @@ void Resource::setHeaderField(const CString &field, const CString &value)
 
 bool Resource::fetch()
 {
-    DProfContext a(NETRSC_TAG "Fetching data");
+    return push("GET", Bytes());
+}
+
+bool Resource::push(CString const& method, const Bytes &data)
+{
+    DProfContext a(NETRSC_TAG "Sending HTTP request");
+
     if(!isRequestReady())
     {
         Profiler::DeepProfile(NETRSC_TAG "Resource not ready");
         return false;
     }
 
-#if defined(ASIO_USE_SSL)
-    bool secure = (m_access & HTTPAccess::Secure) != HTTPAccess::None;
-
-    if(secure)
-    {
-        HTTP::GenerateRequest(*ssl, m_host, m_request);
-        m_host.clear();
-
-        szptr size = 0;
-        auto writeError = ssl->flush(&size);
-        if(writeError.value() != 0)
-            cWarning("Write error code: {0}, wrote {1} bytes",
-                     writeError.message(), size);
-
-        auto readError = ssl->pull(&size);
-        if(readError.value() != 0)
-            cWarning("Read error code: {0}, received {1} bytes",
-                     readError.message(), size);
-
-        Profiler::DeepProfile(NETRSC_TAG "HTTPS file received");
-
-        return HTTP::ExtractResponse(*ssl, &m_response);
-    }else
-#endif
-    {
-        HTTP::GenerateRequest(*normal, m_host, m_request);
-        m_host.clear();
-
-        normal->flush();
-
-        Profiler::DeepProfile(NETRSC_TAG "HTTP file received");
-
-        return HTTP::ExtractResponse(*normal, &m_response);
-    }
-}
-
-bool Resource::push(CString const& method, const Bytes &data)
-{
-    /* We do this to allow POST/PUT/UPDATE/whatever */
+    /* We do this to allow GET/POST/PUT/UPDATE/whatever */
     m_request.reqtype = method;
 
     /* Most services require a MIME-type with the request */
     if(!m_request.mimeType.size())
         m_request.mimeType = "application/octet-stream";
 
-    m_request.payload.resize(data.size);
-    MemCpy(m_request.payload.data(), data.data, data.size);
+    if(data.size)
+    {
+        m_request.payload.resize(data.size);
+        MemCpy(m_request.payload.data(), data.data, data.size);
+    }
 
-    bool secure = (m_access & HTTPAccess::Secure) != HTTPAccess::None;
-
-    if(secure)
+#if defined(ASIO_USE_SSL)
+    if(secure())
     {
         HTTP::GenerateRequest(*ssl, m_host, m_request);
         m_host.clear();
 
         szptr size = 0;
         auto writeError = ssl->flush(&size);
-        if(writeError.value() != 0)
+        if(writeError != asio::error_code())
             cWarning("Write error code: {0}, wrote {1} bytes",
                      writeError.message(), size);
 
         auto readError = ssl->pull(&size);
-        if(readError.value() != 0)
+        if(readError != asio::error_code())
             cWarning("Read error code: {0}, received {1} bytes",
                      readError.message(), size);
 
@@ -188,6 +209,7 @@ bool Resource::push(CString const& method, const Bytes &data)
 
         return HTTP::ExtractResponse(*ssl, &m_response);
     }else
+#endif
     {
         HTTP::GenerateRequest(*normal, m_host, m_request);
         m_host.clear();
@@ -203,6 +225,11 @@ bool Resource::push(CString const& method, const Bytes &data)
 cstring Resource::mimeType() const
 {
     return m_response.mimeType.c_str();
+}
+
+u32 Resource::responseCode() const
+{
+    return m_response.code;
 }
 
 Bytes Resource::data() const

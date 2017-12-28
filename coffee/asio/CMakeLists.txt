@@ -9,6 +9,7 @@ set ( CoffeeASIO_SRCS
     private/tcp-socket.cpp
     private/udp-socket.cpp
     private/net_resource.cpp
+    private/net_profiling.cpp
     )
 
 set ( LIBS ${OPENSSL_LIBRARIES} )
