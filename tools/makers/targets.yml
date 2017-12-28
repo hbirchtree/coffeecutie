@@ -341,7 +341,6 @@ templates:
       - -DCOFFEE_BUILD_GLES=ON
       - -DCOFFEE_BUILD_GLES_20=$(android.gles20)
       - -DCOFFEE_BUILD_ASSIMP=ON
-      - -DCOFFEE_BUILD_OPENSSL=OFF
       - -DCOFFEE_TESTS=OFF
       - -DCOFFEE_BUILD_SDL2=OFF
     =target: multi.twostage

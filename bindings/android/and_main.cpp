@@ -1,8 +1,10 @@
 #include <coffee/android/android_main.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/CMD>
 
 #include <coffee/core/coffee.h>
 #include <coffee/core/string_casting.h>
+#include <coffee/core/profiler/profiling-export.h>
 
 #include <sys/sysinfo.h>
 
@@ -13,6 +15,7 @@
 #include <gestureDetector.h>
 
 
+static Coffee::Map<CString, CString> intentVariables;
 static Coffee::CString Android_cacheDir;
 static Coffee::CString Android_abis;
 static int Android_DPI;
@@ -29,25 +32,45 @@ Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
     if(!string_data)
         return;
 
-    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
+//    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
 
     switch(id)
     {
     case 10:
     {
+        /* Cache directory */
         Android_cacheDir = string_data;
 
         break;
     }
     case 11:
     {
+        /* DPI report */
         Android_DPI = Coffee::cast_string<Coffee::i32>(string_data);
 
         break;
     }
     case 12:
     {
+        /* ABI strings */
         Android_abis = string_data;
+
+        break;
+    }
+
+    case 13:
+    {
+        /* Importing Intent extras as environment variables */
+
+        Coffee::CString sdata = string_data;
+        auto split = sdata.find('=');
+        if(split == Coffee::CString::npos)
+            break;
+        auto keyName = sdata.substr(0, split);
+        auto varName = sdata.substr(split + 1, sdata.size() - split - 1);
+
+        intentVariables[keyName] = varName;
+        setenv(keyName.c_str(), varName.c_str(), 1);
 
         break;
     }
@@ -151,6 +174,9 @@ void android_main(struct android_app* state)
 {
     app_dummy();
 
+    Env::SetVar("COFFEE_REPORT_URL",
+                "https://coffee.birchtrees.me/reports");
+
     coffee_app = state;
 
     app_internal_state = new AndroidInternalState;
@@ -195,50 +221,6 @@ void android_main(struct android_app* state)
     auto cacheDirFile = myInstance["getCacheDir"_jmethod.returns<NativeActivity>()]({});
     cDebug("JCall End: {0}", Chrono::high_resolution_clock::now().time_since_epoch().count());
 
-//    cDebug("Instance: {0}", (u32)cacheDirFile.l);
-
-    //        coffee_jni_env = app->activity->env;
-
-    //        app->activity->vm->AttachCurrentThread(
-    //                &coffee_jni_env, NULL);
-
-    //        using AndroidWindow_t = JavaClass<AndroidWindowType, jobject, JObject<jobject>>;
-    //        using AndroidView_t = JavaClass<AndroidViewType, jobject, JObject<jobject>>;
-
-    //        auto windowMethod = "getWindow"_jmethod.returns<AndroidWindow_t>();
-    //        auto getDecorViewMethod = "getDecorView"_jmethod.returns<AndroidView_t>();
-    //        auto setSystemUiVisibilityMethod = "setSystemUiVisibility"_jmethod.with<int>().returns<void>();
-    //        auto nativeActivity = "android.app.NativeActivity"_jclass;
-    //        auto windowClass = "android.view.Window"_jclass;
-    //        auto viewClass = "android.view.View"_jclass;
-
-    //        auto nativeInstance = nativeActivity(app->activity->clazz);
-
-    //        auto windowInstance = windowClass(nativeInstance
-    //                                          [std::move(windowMethod)]({}).l);
-    //        auto decorView = viewClass(windowInstance
-    //                                   [std::move(getDecorViewMethod)]({}).l);
-
-    //        auto immersiveStickyFlag =
-    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_IMMERSIVE_STICKY"_jfield)];
-    //        auto fullscreenFlag =
-    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_FULLSCREEN"_jfield)];
-    //        auto hideNavBarFlag =
-    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_HIDE_NAVIGATION"_jfield)];
-    //        auto lowProfileFlag =
-    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_LOW_PROFILE"_jfield)];
-
-    //        jvalue uiFlags = {
-    //                .i = immersiveStickyFlag
-    //            |fullscreenFlag
-    //            |hideNavBarFlag
-    //            |lowProfileFlag,
-    //        };
-
-    //        decorView[std::move(setSystemUiVisibilityMethod)]({
-    //                                                                  uiFlags
-    //                                                          });
-
     cDebug("Thread: {0}", ThreadId().hash());
 
     while(1)
@@ -281,10 +263,14 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     switch(event)
     {
     case APP_CMD_START:
+    {
+        cDebug("App start", event);
+        break;
+    }
     case APP_CMD_RESUME:
     case APP_CMD_PAUSE:
-    case APP_CMD_STOP:
     case APP_CMD_DESTROY:
+    case APP_CMD_STOP:
     {
         cDebug("Lifecycle event triggered: {0}", event);
         break;
@@ -335,6 +321,11 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     case APP_CMD_TERM_WINDOW:
     {
         CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+        cDebug("App destroy triggered", event);
+        for(void(*f)() : Cmd::GetAtExit())
+        {
+            f();
+        }
         break;
     }
 
@@ -588,8 +579,23 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1,
             out->store_string = Android_abis;
             break;
 
+        case Android_QueryReleaseName:
+            out->store_string = AndroidGetBuildField("BOARD"_jfield);
+            break;
         case Android_QueryDeviceBoardName:
             out->store_string = AndroidGetBuildField("BOARD"_jfield);
+            break;
+        case Android_QueryDeviceBrand:
+            out->store_string = AndroidGetBuildField("BRAND"_jfield);
+            break;
+        case Android_QueryDeviceName:
+            out->store_string = AndroidGetBuildField("MODEL"_jfield);
+            break;
+        case Android_QueryDeviceManufacturer:
+            out->store_string = AndroidGetBuildField("MANUFACTURER"_jfield);
+            break;
+        case Android_QueryDeviceProduct:
+            out->store_string = AndroidGetBuildField("PRODUCT"_jfield);
             break;
 
         case Android_QueryMaxMemory:

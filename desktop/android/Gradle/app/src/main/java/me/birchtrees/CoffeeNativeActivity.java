@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.View;
 
 public final class CoffeeNativeActivity extends NativeActivity {
@@ -35,6 +36,7 @@ public final class CoffeeNativeActivity extends NativeActivity {
             super.onCreate(savedInstanceState);
         }catch(Exception e)
         {
+            System.err.println(e.getMessage());
             System.err.println("Fatal error in loading activity, retrying with verbose output");
             System.loadLibrary(getLibraryName());
             return;
@@ -65,6 +67,7 @@ public final class CoffeeNativeActivity extends NativeActivity {
                             .densityDpi)
                     );
 
+        try
         {
             String[] sysAbis = android.os.Build.SUPPORTED_ABIS;
             String supportedAbis = "";
@@ -75,9 +78,22 @@ public final class CoffeeNativeActivity extends NativeActivity {
             supportedAbis = supportedAbis.trim();
 
             smuggleVariable(12, supportedAbis);
+        }catch(NoSuchFieldError e)
+        {
+            smuggleVariable(12,
+                android.os.Build.CPU_ABI + " "
+                + android.os.Build.CPU_ABI2);
         }
 
+        if(getIntent().getExtras() != null)
+        {
+            Intent extra = getIntent();
 
+            for(String k : extra.getExtras().keySet())
+            {
+                smuggleVariable(13, k + "=" + extra.getStringExtra(k));
+            }
+        }
     }
 
     protected void onResume() {

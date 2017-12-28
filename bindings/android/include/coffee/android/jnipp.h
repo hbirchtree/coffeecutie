@@ -13,12 +13,16 @@ struct JClass;
 template<typename T>
 void JObjectField<T>::getStaticFieldID(const char *type)
 {
+    if(!JNIPP::GetJNI())
+        return;
     c_field = GetJNI()->GetStaticFieldID(c_class, fieldName.c_str(), type);
 }
 
 template<typename T>
 void JObjectField<T>::getFieldID(const char *type)
 {
+    if(!JNIPP::GetJNI())
+        return;
     c_field = GetJNI()->GetFieldID(c_class, fieldName.c_str(), type);
 }
 

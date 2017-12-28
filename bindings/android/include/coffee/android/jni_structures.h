@@ -108,6 +108,9 @@ struct JObject {
         std::string methodSignature = "(" + method.argType + ")"
                 + method.returnType;
 
+        if(!JNIPP::GetJNI())
+            return {};
+
         method.c_method = GetJNI()->GetMethodID(method.c_class,
                                                 method.methodName.c_str(),
                                                 methodSignature.c_str());

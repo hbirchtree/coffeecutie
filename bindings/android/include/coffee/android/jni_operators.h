@@ -12,6 +12,9 @@ FORCEDINLINE JNIPP::JClass operator "" _jclass(const char* className, size_t)
     std::replace(classNameStd.begin(), classNameStd.end(),
                  '.', '/');
 
+    if(!JNIPP::GetJNI())
+        return {};
+
     return {JNIPP::GetJNI()->FindClass(classNameStd.c_str())};
 }
 

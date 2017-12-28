@@ -28,6 +28,9 @@ FORCEDINLINE std::string JavaObjectAsValue(JObject<std::string> const* b)
 {
     std::string out;
 
+    if(!JNIPP::GetJNI())
+        return out;
+
     auto chars = GetJNI()->GetStringUTFChars((jstring)b->obj_ref, 0);
     if(chars)
         out = chars;
@@ -44,6 +47,9 @@ FORCEDINLINE JObject<RType> ObjectFieldToNative(JObjectField<RType>&& field)
 template<>
 FORCEDINLINE JObject<std::string> ObjectFieldToNative(JObjectField<std::string>&& field)
 {
+    if(!JNIPP::GetJNI())
+        return {};
+
     auto fId = field;
 
     fId.getStaticFieldID(fId.fieldType.c_str());
@@ -63,6 +69,9 @@ FORCEDINLINE RType ValueFieldToNative(JObjectField<RType>&& field)
 template<>
 FORCEDINLINE long ValueFieldToNative(JObjectField<long>&& field)
 {
+    if(!JNIPP::GetJNI())
+        return -1;
+
     field.getStaticFieldID(field.fieldType.c_str());
 
     return GetJNI()->GetStaticLongField(field.c_class,
@@ -72,6 +81,9 @@ FORCEDINLINE long ValueFieldToNative(JObjectField<long>&& field)
 template<>
 FORCEDINLINE int ValueFieldToNative(JObjectField<int>&& field)
 {
+    if(!JNIPP::GetJNI())
+        return -1;
+
     field.getStaticFieldID(field.fieldType.c_str());
 
     return GetJNI()->GetStaticIntField(field.c_class,
@@ -137,6 +149,9 @@ FORCEDINLINE jvalue ObjectMethodCall(
         jobject obj, jmethodID method, jvalue* args)
 {
     jvalue out;
+    if(!JNIPP::GetJNI())
+        return out;
+
     out.l = GetJNI()->CallObjectMethodA(obj, method, args);
     return out;
 }
@@ -145,6 +160,8 @@ template<>
 FORCEDINLINE jvalue ObjectMethodCall<void>(
         jobject obj, jmethodID method, jvalue* args)
 {
+    if(!JNIPP::GetJNI())
+        return {};
     GetJNI()->CallVoidMethodA(obj, method, args);
     return {};
 }
