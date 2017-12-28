@@ -181,6 +181,10 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 "$<TARGET_FILE:${TARGET}>"
                 "$<TARGET_FILE:${TARGET}>.dol"
             )
+        target_link_libraries ( ${TARGET}
+            PUBLIC
+            CoffeeRenderer_Default
+            )
         install (
             FILES
             "$<TARGET_FILE:${TARGET}>"
