@@ -27,7 +27,7 @@
 namespace Coffee{
 
 using CString   = std::string; /*!< Typical string object */
-using CWString   = std::wstring; /*!< Typical string object suited for interfaces */
+using CWString  = std::wstring; /*!< Typical string object suited for interfaces */
 
 using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
@@ -61,6 +61,8 @@ private:
 using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
 #endif
+
+using ErrCode = std::error_code;
 
 template<typename T>
 using Atomic = std::atomic<T>;

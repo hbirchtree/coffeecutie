@@ -2,11 +2,14 @@
 
 #include "../../platform_detect.h"
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 
 #include "../../../coffee_message_macros.h"
 #include "../sysinfo_def.h"
+
+#if !defined(COFFEE_ANDROID)
 #include "../sdlpowerinfo.h"
+#endif
 
 #include <sys/sysinfo.h>
 #include <unistd.h>
@@ -56,6 +59,7 @@ struct LinuxSysInfo : SysInfoDef
 
     static HWDeviceInfo Processor();
 
+    static Vector<bigscalar> ProcessorFrequencies();
     static bigscalar ProcessorFrequency();
 
     static bool HasFPU();
@@ -75,7 +79,12 @@ private:
     static CString cached_cpuinfo_string;
 };
 
-struct LinuxPowerInfo : _SDLPowerInfo
+struct LinuxPowerInfo :
+        #if !defined(COFFEE_ANDROID)
+        _SDLPowerInfo
+        #else
+        PowerInfoDef
+        #endif
 {
     static Temp CpuTemperature();
 };
@@ -83,9 +92,11 @@ struct LinuxPowerInfo : _SDLPowerInfo
 }
 }
 
+#if !defined(COFFEE_ANDROID)
 using PowerInfo = Environment::Linux::LinuxPowerInfo;
 #if !defined(COFFEE_RASPBERRYPI)
 using SysInfo = Environment::Linux::LinuxSysInfo;
+#endif
 #endif
 
 }

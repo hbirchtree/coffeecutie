@@ -10,7 +10,10 @@ namespace Coffee{
 template<typename T>
 struct _cbasic_data_chunk
 {
-    _cbasic_data_chunk()
+    _cbasic_data_chunk():
+        data(0),
+        size(0),
+        elements(0)
     {}
     _cbasic_data_chunk(T* data, szptr size, szptr elements):
         data(data),

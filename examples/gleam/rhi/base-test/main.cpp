@@ -5,6 +5,7 @@
 #include "renderer.h"
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/asio/net_profiling.h>
 
 void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
 {
@@ -24,6 +25,8 @@ using EDATA = EventLoopData<CDRenderer, RendererState>;
 
 int32 coffee_main(int32, cstring_w*)
 {
+    Net::RegisterProfiling();
+
     /* Set a prefix from which resources are fetched */
 //    CResources::FileResourcePrefix("sample_data/eye-demo/");
 //    SetPrintingVerbosity(8);

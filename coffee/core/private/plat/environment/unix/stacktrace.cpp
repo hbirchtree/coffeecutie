@@ -2,11 +2,14 @@
 
 #if defined(COFFEE_UNIXPLAT)
 
+#include <coffee/core/coffee_assert_macros.h>
+
 #include <coffee/core/CRegex>
+
+#include <cxxabi.h>     //Demangling function names
 
 #if defined(COFFEE_USE_UNWIND)
 #define UNW_LOCAL_ONLY
-#include <cxxabi.h>     //Demangling function names
 #include <libunwind.h>  //For retrieving the callstack
 #endif
 
@@ -16,16 +19,12 @@ namespace Posix{
 
 CString PosixStacktracer::DemangleSymbol(const char *sym)
 {
-#if defined(COFFEE_USE_UNWIND)
     int32 stat = 0;
     cstring_w symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
     if(stat==0)
         return CString(symbol);
     else
         return sym;
-#else
-    return sym;
-#endif
 }
 
 StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(uint32 start, int32 length)

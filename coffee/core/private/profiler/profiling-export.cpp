@@ -14,10 +14,6 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
-#if defined(COFFEE_NETWORK_REPORTING)
-#include <coffee/asio/net_resource.h>
-#endif
-
 namespace Coffee{
 namespace Profiling{
 
@@ -531,9 +527,20 @@ STATICINLINE void PutRuntimeInfo(JSON::Value& target,
                      FromString(pinfo.firmware, alloc),
                      alloc);
 
-    target.AddMember("processor.frequency",
-                     SysInfo::ProcessorFrequency(),
-                     alloc);
+    auto freqs = SysInfo::ProcessorFrequencies();
+    if(freqs.size())
+    {
+        JSON::Value freq_j;
+        freq_j.SetArray();
+        for(auto f : freqs)
+            freq_j.PushBack(f, alloc);
+        target.AddMember("processor.frequency",
+                         freq_j,
+                         alloc);
+    }else
+        target.AddMember("processor.frequency",
+                         SysInfo::ProcessorFrequency(),
+                         alloc);
 
     target.AddMember("processor.cores",
                      SysInfo::CoreCount(),
@@ -591,6 +598,15 @@ void ExportChromeTracerData(CString& target)
     extraData.SetObject();
     PutExtraData(extraData, doc.GetAllocator());
 
+    auto appd = ApplicationData();
+    doc.AddMember("application.name",
+                  FromString(appd.application_name, doc.GetAllocator()),
+                  doc.GetAllocator());
+    doc.AddMember("application.org",
+                  FromString(appd.organization_name, doc.GetAllocator()),
+                  doc.GetAllocator());
+    doc.AddMember("application.version", ApplicationData().version_code,
+                  doc.GetAllocator());
     PutRuntimeInfo(doc, doc.GetAllocator());
     doc.AddMember("runtime.arguments", args, doc.GetAllocator());
 
@@ -652,28 +668,6 @@ void ExitRoutine()
 
             Profiling::ExportStringToFile(target_log, log_url);
             Profiling::ExportStringToFile(target_chrome + " ", log_url2);
-
-#if defined(COFFEE_NETWORK_REPORTING)
-
-            const constexpr cstring network_server = "COFFEE_REPORT_ADDRESS";
-            if(Env::ExistsVar(network_server))
-            {
-                auto ctxt = ASIO::ASIO_Client::InitService();
-
-                auto netServerUrl = Env::GetVar(network_server);
-
-                auto reportBin = Net::MkUrl(netServerUrl.c_str());
-                Net::Resource reportBinRsc(ctxt, reportBin);
-
-                reportBinRsc.setHeaderField("Content-Type",
-                                            "application/octet-stream");
-                auto chromeData = Bytes::CreateString(
-                            target_chrome.c_str());
-
-                reportBinRsc.push("POST",
-                                  chromeData);
-            }
-#endif
 
             cVerbose(6, "Saved profiler data to: {0}",
                      FileFun::CanonicalName(log_url));

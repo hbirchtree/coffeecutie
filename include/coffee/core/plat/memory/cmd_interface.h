@@ -1,10 +1,8 @@
+#pragma once
 #include "../../coffee_mem_macros.h"
 
 #include "../../types/cdef/geometry.h"
 #include "cmemory.h"
-
-#ifndef COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
-#define COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 
 #if defined(COFFEE_USE_TERMINAL_CTL)
 #include <sys/ioctl.h>
@@ -54,38 +52,14 @@ struct BasicTerm : CmdDef
         getchar();
     }
 
-    C_NORETURN STATICINLINE void Exit(int code)
-    {
-        const constexpr cstring printf_fmt = "Exiting with code: %i\n";
-#if defined(COFFEE_ANDROID)
-        __android_log_print(ANDROID_LOG_WARN, "Coffee", printf_fmt, code);
-#else
-        fprintf(DefaultPrintOutputPipe, printf_fmt, code);
-#endif
-#if defined(COFFEE_EMSCRIPTEN)
-        emscripten_force_exit(code);
-#else
-        exit(code);
-#endif
-    }
+    C_NORETURN static void Exit(int code);
 
-    STATICINLINE void RegisterAtExit(void(*efun)())
-    {
-        if(atexit(efun) != 0)
-            fprintf(DefaultDebugOutputPipe,
-                    "Failed to register atexit() function\n");
-    }
+    static void RegisterAtExit(void(*efun)());
+
+#if defined(COFFEE_ANDROID)
+    static Vector<void(*)()> const& GetAtExit();
+#endif
 };
 
 }
 }
-
-#endif
-
-#undef COFFEE_CMD_INTERFACE_STRUCT
-
-#if defined(COFFEE_USE_TERMINAL_CTL)
-#include "cmd_unixterm.h"
-#else
-#include "cmd_dummy.h"
-#endif

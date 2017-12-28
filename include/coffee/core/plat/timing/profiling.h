@@ -216,43 +216,51 @@ struct SimpleProfilerImpl
 
     STATICINLINE bool SetDeepProfileMode(bool state)
     {
-#if !defined(NDEBUG)
+#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
         if(!profiler_data_store)
             return false;
 
         profiler_data_store->Deep_Profile = state;
 
         return true;
+#else
+        return false;
 #endif
     }
 
     STATICINLINE void DeepProfile(
             cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
+#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
         if(profiler_data_store
                 && profiler_data_store->Deep_Profile)
         {
             Profile(name, at);
         }
+#endif
     }
 
     STATICINLINE void DeepPushContext(
             cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
+#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
         if(profiler_data_store
                 && profiler_data_store->Deep_Profile)
         {
             PushContext(name, at);
         }
+#endif
     }
 
     STATICINLINE void DeepPopContext()
     {
+#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
         if(profiler_data_store
                 && profiler_data_store->Deep_Profile)
         {
             PopContext();
         }
+#endif
     }
 
     STATICINLINE void AddExtraData(CString const& key, CString const& val)

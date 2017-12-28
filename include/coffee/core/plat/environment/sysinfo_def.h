@@ -163,6 +163,18 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
+     * \brief In relation to ProcessorFrequency(), will return
+     *  max frequency of the cores in a heterogenous system.
+     * Will contain amount equal to ThreadCount()
+     * \return
+     */
+    Vector<bigscalar> ProcessorFrequencies()
+    {
+        return {};
+    }
+
+    STATICINLINE
+    /*!
      * \brief Current processor frequency in GHz, allowed to be inaccurate if hardware clocks particular cores differently
      * \return
      */

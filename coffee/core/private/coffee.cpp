@@ -88,7 +88,7 @@ void CoffeeInit(bool profiler_init)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 6;
+    Coffee::PrintingVerbosityLevel = 20;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel = 1;

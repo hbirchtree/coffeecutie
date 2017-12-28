@@ -3,3 +3,9 @@
 #include "plat/memory/cmd_interface.h"
 #include "plat/memory/cmd_process.h"
 #include "terminal/table-print.h"
+
+#if defined(COFFEE_USE_TERMINAL_CTL)
+#include "plat/memory/cmd_unixterm.h"
+#else
+#include "plat/memory/cmd_dummy.h"
+#endif

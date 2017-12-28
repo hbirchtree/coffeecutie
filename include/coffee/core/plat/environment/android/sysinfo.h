@@ -4,7 +4,7 @@
 
 #ifdef COFFEE_ANDROID
 
-#include "../sysinfo_def.h"
+#include "../linux/sysinfo.h"
 
 #if defined(COFFEE_USE_SDL2)
 #include "../sdlpowerinfo.h"
@@ -13,11 +13,11 @@
 namespace Coffee{
 namespace Environment{
 namespace Android{
-struct AndroidSysInfo : SysInfoDef
+struct AndroidSysInfo : Linux::LinuxSysInfo
 {
     static CString GetSystemVersion();
-    static HWDeviceInfo Processor();
     static HWDeviceInfo DeviceName();
+    static HWDeviceInfo Motherboard();
 };
 
 

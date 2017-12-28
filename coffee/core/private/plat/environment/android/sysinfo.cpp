@@ -12,7 +12,11 @@
 
 namespace Coffee{
 namespace Environment{
+namespace Linux{
+extern CString get_kern_arch();
+}
 namespace Android{
+
 
 JNIEnv* jni_getEnv()
 {
@@ -62,6 +66,7 @@ CString jni_getString(cstring cname, cstring field)
 
 CString AndroidSysInfo::GetSystemVersion()
 {
+#if defined(COFFEE_USE_SDL2)
     JNIEnv* env = jni_getEnv();
 
     cVerbose(7, "JNIEnv: {0}", c_cptr(env));
@@ -95,25 +100,72 @@ CString AndroidSysInfo::GetSystemVersion()
     }while(false);
 
     return "[0]";
+#else
+    AndroidForeignCommand cmd;
+
+    cmd.type = Android_QueryAPI;
+
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr,  nullptr);
+
+    return "Android API " + cast_pod(cmd.data.scalarI64);
+#endif
 }
 
-HWDeviceInfo AndroidSysInfo::Processor()
-{
-    CString model = Mem::StrUtil::propercase(jni_getString("android/os/Build","BRAND")) + " ";
-    model += Mem::StrUtil::propercase(jni_getString("android/os/Build","HARDWARE"));
-    return HWDeviceInfo(model,
-                        "0x0");
-}
+//HWDeviceInfo AndroidSysInfo::Processor()
+//{
+//    CString model = Mem::StrUtil::propercase(jni_getString("android/os/Build","BRAND")) + " ";
+//    model += Mem::StrUtil::propercase(jni_getString("android/os/Build","HARDWARE"));
+//    return HWDeviceInfo(model,
+//                        "0x0");
+//}
 
 HWDeviceInfo AndroidSysInfo::DeviceName()
 {
+#if defined(COFFEE_USE_SDL2)
     return HWDeviceInfo(
                 Mem::StrUtil::propercase(jni_getString("android/os/Build","BRAND")),
                 jni_getString("android/os/Build","MODEL"),
                 jni_getString("android/os/Build","BOOTLOADER"),
                 jni_getString("android/os/Build","SERIAL"));
+#else
+    AndroidForeignCommand cmd;
+
+    cmd.type = Android_QueryDeviceBoardName;
+
+    cmd.type = Android_QueryDeviceBrand;
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr,  nullptr);
+
+    auto brand = cmd.store_string;
+
+    cmd.type = Android_QueryDeviceName;
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr,  nullptr);
+
+    auto product = cmd.store_string;
+
+    return HWDeviceInfo(brand, product, "0x0");
+#endif
 }
 
+HWDeviceInfo AndroidSysInfo::Motherboard()
+{
+#if defined(COFFEE_USE_SDL2)
+    return HWDeviceInfo("", "", "")
+#else
+    AndroidForeignCommand cmd;
+
+    cmd.type = Android_QueryDeviceBoardName;
+
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr,  nullptr);
+
+    auto board = cmd.store_string;
+
+    return HWDeviceInfo(board, "", "");
+#endif
+}
 
 }
 }

@@ -61,10 +61,12 @@ set ( CoffeeCore_SRCS
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
+
     private/base/eventapplication_wrapper.cpp
 
     private/plat/file/file_common.cpp
 
+    private/plat/memory/cmd_interface.cpp
     private/plat/memory/string_ops.cpp
 
     # Compression / data storage
@@ -125,6 +127,7 @@ if(ANDROID)
         private/plat/file/android/file.cpp
         private/plat/environment/android/environment.cpp
         private/plat/environment/android/sysinfo.cpp
+        private/plat/environment/linux/sysinfo.cpp
         private/plat/sensor/android/sensor.cpp
 
         # For reading process information
@@ -200,6 +203,13 @@ if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
         private/plat/file/unix/file.cpp
         private/plat/linking/unix/loader.cpp
         )
+
+    find_package( Unwind QUIET )
+    if(LIBUNWIND_FOUND)
+        add_definitions(
+            -DLIBUNWIND_ENABLED
+            )
+    endif()
 endif()
 
 if(MAEMO)
@@ -248,17 +258,6 @@ target_include_directories ( CoffeeCore
     $<INSTALL_INTERFACE:include/tinyxml2/>
     ${STANDARDLIBS_INCLUDE_DIR}
     )
-
-if(COFFEE_BUILD_ASIO)
-    target_compile_definitions( CoffeeCore
-        PRIVATE
-        -DCOFFEE_NETWORK_REPORTING
-        )
-    target_link_libraries ( CoffeeCore
-        PRIVATE
-        CoffeeASIO
-        )
-endif()
 
 if(COFFEE_BUILD_SWIG_BINDING)
 

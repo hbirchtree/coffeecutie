@@ -125,7 +125,9 @@
     && !defined(COFFEE_APPLE_MOBILE) \
     && !defined(COFFEE_MAEMO)
 #define COFFEE_USE_TERMINAL_CTL
+#if defined(LIBUNWIND_ENABLED)
 #define COFFEE_USE_UNWIND
+#endif
 #endif
 
 #if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2)) \
@@ -297,10 +299,6 @@
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
-#endif
-
-#if defined(ASIO_USE_SSL)
-#define COFFEE_NETWORK_REPORTING
 #endif
 
 #if !defined(COFFEE_RASPBERRY_DMX) && \

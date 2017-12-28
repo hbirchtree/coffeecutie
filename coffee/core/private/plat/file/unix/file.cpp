@@ -1,4 +1,5 @@
 #include <coffee/core/plat/file/unix/file.h>
+#include <coffee/core/CDebug>
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -353,7 +354,8 @@ bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
             ref = path;
 #endif
 
-        fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
+//        fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
+        cDebug("ERROR:{0}: {1}", ref, strerror(errno));
         errno = 0;
         return true;
     }

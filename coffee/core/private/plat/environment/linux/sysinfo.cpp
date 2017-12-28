@@ -1,7 +1,8 @@
 #include <coffee/core/plat/environment/linux/sysinfo.h>
 #include <coffee/core/plat/file/linux/file.h>
-#include <coffee/core/plat/environment/linux/environment.h>
+#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/string_casting.h>
+#include <coffee/core/CDebug>
 
 #include <coffee/core/platform_data.h>
 
@@ -13,7 +14,9 @@ CString LinuxSysInfo::cached_cpuinfo_string;
 
 static const constexpr cstring invalid_info_string = "To Be Filled By O.E.M.";
 
-using DirFun = CResources::DirFun;
+using DirFun = CResources::Linux::LinuxDirFun;
+
+using LFileFun = CResources::Linux::LinuxFileFun;
 
 /* More paths to inspect:
  *
@@ -29,7 +32,7 @@ using DirFun = CResources::DirFun;
 
 static CString get_lsb_release()
 {
-    CString version = CResources::Linux::LinuxFileFun::sys_read("/etc/lsb-release");
+    CString version = LFileFun::sys_read("/etc/lsb-release");
     cstring desc = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
     if(desc && (desc = Search::ChrFind(desc, '=') + 1)
             && (desc = Search::ChrFind(desc, '"') + 1))
@@ -92,7 +95,7 @@ PlatformData::DeviceType get_device_variant()
     return PlatformData::DeviceIOT;
 #endif
 
-    CString input = CResources::Linux::LinuxFileFun::sys_read(
+    CString input = LFileFun::sys_read(
                 "/sys/class/dmi/id/chassis_type");
 
     int32 chassis_type = cast_string<int32>(input);
@@ -129,7 +132,7 @@ CString LinuxSysInfo::CPUInfoString(bool force)
 
     //        C_PERFWARN(__FILE__,__LINE__,"Reading from /proc/cpuinfo!");
 
-    CString data = CResources::Linux::LinuxFileFun::sys_read("/proc/cpuinfo");
+    CString data = LFileFun::sys_read("/proc/cpuinfo");
 
     cached_cpuinfo_string = data;
     atexit(FreeCPUInfoString);
@@ -186,9 +189,9 @@ SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
         if(dir.name == "lo")
             has_loopback = true;
         else {
-            CString operstate_file = Env_::ConcatPath(net_path, dir.name.c_str());
-            operstate_file = Env_::ConcatPath(operstate_file.c_str(), "operstate");
-            CString state = CResources::Linux::LinuxFileFun::sys_read(operstate_file.c_str());
+            CString operstate_file = Env::ConcatPath(net_path, dir.name.c_str());
+            operstate_file = Env::ConcatPath(operstate_file.c_str(), "operstate");
+            CString state = LFileFun::sys_read(operstate_file.c_str());
             if(state == "up")
                 return NetStatConnected;
         }
@@ -253,9 +256,9 @@ HWDeviceInfo LinuxSysInfo::Processor()
     CPUInfoString();
 
     CString mk_str = get_linux_property(cached_cpuinfo_string, mk_query);
-    if(!mk_str.size())
-        mk_str = get_linux_property(cached_cpuinfo_string, mk_query_linaro);
     CString md_str = get_linux_property(cached_cpuinfo_string, md_query);
+    if(!md_str.size())
+        md_str = get_linux_property(cached_cpuinfo_string, mk_query_linaro);
     CString fw_str = get_linux_property(cached_cpuinfo_string, fw_query);
     if(!fw_str.size())
         fw_str = get_linux_property(cached_cpuinfo_string, fw_query_linaro);
@@ -267,8 +270,48 @@ HWDeviceInfo LinuxSysInfo::Processor()
     return HWDeviceInfo(mk_str,md_str,fw_str);
 }
 
+Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
+{
+    Url p = MkUrl("/sys/bus/cpu/devices", RSCA::SystemFile);
+
+    int fd = open("/sys/bus/cpu/devices/", O_RDONLY|O_DIRECTORY);
+
+    DirFun::DirList cpus;
+    DirFun::Ls(p, cpus);
+
+    cDebug("Listing processors: {1} {0}", cpus.size(), *p, fd);
+
+    Vector<bigscalar> freqs;
+    freqs.reserve(cpus.size());
+
+    for(DirFun::DirItem_t const& e : cpus)
+    {
+        Url cpu = p
+                + Path::Mk(e.name.c_str())
+                + Path::Mk("cpufreq/scaling_max_freq");
+        cDebug("Reading {0}", *cpu);
+        CString tmp = LFileFun::sys_read((*cpu).c_str());
+        if(tmp.size())
+            freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
+    }
+
+    return freqs;
+}
+
 bigscalar LinuxSysInfo::ProcessorFrequency()
 {
+#if defined(__arm__)
+    /* We assume that ARM platforms use Linaro-derived kernels,
+     *  this applies to IoT devices and Androids. */
+
+    auto freqs = ProcessorFrequencies();
+    bigscalar maxf = 0.0;
+    for(auto f : freqs)
+        maxf = CMath::max(maxf, f);
+
+    return maxf;
+#else
+
     constexpr cstring query = "cpu MHz";
 
     CPUInfoString();
@@ -281,12 +324,16 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
     StrUtil::trim(res);
 
     return CMath::floor(cast_string<bigscalar>(res))/1000;
+#endif
 }
 
 bool LinuxSysInfo::HasFPU()
 {
 #if defined(COFFEE_MAEMO)
     const cstring query = "vfpv3";
+#elif defined(COFFEE_ANDROID)
+    const cstring query = "vfpv3";
+    const cstring query2 = "vfpv4";
 #else
     const cstring query = "fpu";
 #endif
@@ -296,7 +343,17 @@ bool LinuxSysInfo::HasFPU()
     CString result = get_linux_property(cached_cpuinfo_string, query);
     StrUtil::trim(result);
 
+#if defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
+    if(result.size() == 0)
+    {
+        CString result = get_linux_property(cached_cpuinfo_string, query2);
+        StrUtil::trim(result);
+    }
+
+    return result.size() > 0;
+#else
     return result == "yes";
+#endif
 }
 
 bool LinuxSysInfo::HasFPUExceptions()
@@ -361,11 +418,11 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
     cstring manf = str_gen;
     cstring prod = str_lin;
 
-    CString manufac = CResources::Linux::LinuxFileFun::sys_read("/sys/class/dmi/id/sys_vendor");
+    CString manufac = LFileFun::sys_read("/sys/class/dmi/id/sys_vendor");
     cstring prod_src = prod_name;
     if(manufac == "LENOVO")
         prod_src = prod_ver;
-    CString product = CResources::Linux::LinuxFileFun::sys_read(prod_ver);
+    CString product = LFileFun::sys_read(prod_ver);
 
     if(manufac.size() > 0 && manufac != invalid_info_string)
         manf = manufac.c_str();
@@ -376,6 +433,7 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
 #endif
 }
 
+#if !defined(COFFEE_ANDROID)
 PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 {
     static const constexpr cstring thermal_class = "/sys/class/thermal";
@@ -390,9 +448,9 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
             {
                 tmp = ((tmp + thermal_class) + e.name.c_str()) + "temp";
 
-                if(FileFun::Exists(Url() + tmp))
+                if(LFileFun::Exists(Url() + tmp))
                 {
-                    CString temp = FileFun::sys_read(tmp.internUrl.c_str());
+                    CString temp = LFileFun::sys_read(tmp.internUrl.c_str());
                     out.current = cast_string<scalar>(temp) / 1000;
                     break;
                 }
@@ -401,6 +459,7 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 
     return out;
 }
+#endif
 
 }
 }

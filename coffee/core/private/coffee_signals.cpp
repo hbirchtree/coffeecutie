@@ -16,37 +16,44 @@ void sighandle(int sig)
 {
     /* If we use an alternate buffer, switch back to primary */
     Cmd::ResetScreen();
+
+    switch(sig)
+    {
+    case SIGSEGV:
+    case SIGABRT:
+    case SIGILL:
+    case SIGINT:
+    case SIGTERM:
+        if(exit_handle)
+            exit_handle();
+        break;
+    default:
+        break;
+    }
+
+    switch(sig)
+    {
+    case SIGTERM:
+    case SIGINT:
+        Profiling::ExitRoutine();
+        break;
+    default:
+        break;
+    }
+
     switch(sig)
     {
     case SIGFPE:
         cVerbose(4,"FPE occurred");
         break;
+
     case SIGSEGV:
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(Sig_ShitMySelf);
     case SIGABRT:
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(Sig_PoopedABit);
     case SIGILL:
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(Sig_Termination);
     case SIGINT:
-    {
-        Profiling::ExitRoutine();
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(Sig_Interrupt);
-    }
     case SIGTERM:
-    {
-        Profiling::ExitRoutine();
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(Sig_Termination);
-    }
+        Cmd::Exit(sig);
+
     default:
         Cmd::Exit(Sig_UnknownBad);
     }
@@ -74,7 +81,7 @@ void InstallSignalHandler(Signals sig, sighandler_t handler)
     {
         if(!handler)
             handler = sighandle;
-        signal(sig,handler);
+        signal(sig, handler);
     }
 #endif
 }

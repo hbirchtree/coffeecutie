@@ -26,13 +26,16 @@ template<typename StrType> FORCEDINLINE
 StrType CStrReplace(const StrType &target, const StrType &query,
 					const StrType &replacement)
 {
+    if(query.size() == 0)
+        return target;
+
     StrType out = target;
-    for(size_t pos=0;;pos+=replacement.length())
+    for(size_t pos=0;;pos+=replacement.size())
     {
         pos = out.find(query,pos);
         if(pos==StrType::npos)
             break;
-        out.erase(pos,query.length());
+        out.erase(pos,query.size());
         out.insert(pos,replacement);
     }
     return out;

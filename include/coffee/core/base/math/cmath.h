@@ -42,8 +42,16 @@ template<typename T> bool IsPower2(T const& n)
     return n!=0&&(n&(n-1))==0;
 }
 
+#if !defined(M_PI)
+constexpr bigscalar pi = 3.1416;
+#else
 constexpr bigscalar pi = M_PI;
+#endif
+#if !defined(M_E)
+constexpr bigscalar e = 2.7183;
+#else
 constexpr bigscalar e = M_E;
+#endif
 
 /*
 template<typename T> T max(T const& v1, T const& v2)

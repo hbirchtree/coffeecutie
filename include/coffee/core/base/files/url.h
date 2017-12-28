@@ -39,6 +39,11 @@ struct Path
     Path operator+(Path const& path);
 
     Path& operator=(Url const& url);
+
+    STATICINLINE Path Mk(cstring p)
+    {
+        return {p};
+    }
 };
 
 struct Url

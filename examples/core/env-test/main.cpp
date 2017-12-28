@@ -2,6 +2,7 @@
 #include <coffee/core/CPlatform>
 #include <coffee/core/CFiles>
 #include <coffee/core/CDebug>
+#include <coffee/asio/net_profiling.h>
 
 #include <stdarg.h>
 
@@ -11,6 +12,9 @@ using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
 {
+#if defined(USE_ASIO)
+    Net::RegisterProfiling();
+#endif
 
     CResources::FileResourcePrefix("sample_data/");
 
