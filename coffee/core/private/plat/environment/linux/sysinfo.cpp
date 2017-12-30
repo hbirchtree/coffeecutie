@@ -441,7 +441,7 @@ HWDeviceInfo LinuxSysInfo::Motherboard()
 #else
     static const cstring mb_manuf = DMI_PATH "/board_vendor";
     static const cstring mb_model = DMI_PATH "/board_name";
-    static const cstring mb_version = DMI_PATH "/board_version";
+    static const cstring mb_version = DMI_PATH "/bios_version";
 
     CString manuf = LFileFun::sys_read(mb_manuf);
     CString model = LFileFun::sys_read(mb_model);
@@ -481,7 +481,7 @@ HWDeviceInfo LinuxSysInfo::Chassis()
 HWDeviceInfo LinuxSysInfo::BIOS()
 {
     static const cstring bios_manuf = DMI_PATH "/bios_vendor";
-    static const cstring bios_name = DMI_PATH "/bios_name";
+    static const cstring bios_name = DMI_PATH "/board_version";
     static const cstring bios_version = DMI_PATH "/bios_version";
 
     CString manuf = LFileFun::sys_read(bios_manuf);
