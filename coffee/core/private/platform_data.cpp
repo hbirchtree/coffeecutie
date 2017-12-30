@@ -30,7 +30,7 @@ PlatformData::DeviceType PlatformData::DeviceVariant()
 
     return DevicePhone;
 #elif defined(COFFEE_LINUX)
-    return DeviceUnknown;
+    return Environment::Linux::get_device_variant();
 #elif defined(COFFEE_RASPBERRY)
     return DeviceIOT;
 #elif defined(COFFEE_EMSCRIPTEN)
