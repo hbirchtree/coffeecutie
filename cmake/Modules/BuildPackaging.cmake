@@ -205,6 +205,17 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             )
     endif()
 
+    # A little convenience
+    if(";${ARGN};" MATCHES ";USE_ASIO;" AND TARGET CoffeeASIO)
+        target_compile_definitions( ${TARGET}
+            PRIVATE
+            -DFEATURE_USE_ASIO
+            )
+        target_link_libraries ( ${TARGET}
+            PRIVATE
+            CoffeeASIO
+            )
+    endif()
 
     target_compile_definitions ( ${TARGET}
         PRIVATE
@@ -252,7 +263,8 @@ macro(COFFEE_ADD_APPLICATION_LONGER
         "${SOURCES}" "${LIBRARIES}"
         "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
         "${PERMISSIONS}"
-        "")
+        ""
+         ${ARGN})
 endmacro()
 
 function(COFFEE_ADD_EXAMPLE_LONGER
@@ -264,7 +276,8 @@ function(COFFEE_ADD_EXAMPLE_LONGER
         "${TARGET}"
         "${TITLE}" "${COMPANY}" "${VERSION}"
         "${SOURCES}" "${LIBRARIES}"
-        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
+        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
+         ${ARGN})
 endfunction()
 
 macro(COFFEE_ADD_EXAMPLE_LONG
@@ -280,17 +293,33 @@ macro(COFFEE_ADD_EXAMPLE_LONG
         "${TARGET}"
         "${TITLE}" "${COMPANY}" "${VERSION}"
         "${SOURCES}" "${LIBRARIES}"
-        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
+        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
+         ${ARGN})
 endmacro()
 
 macro(COFFEE_ADD_APPLICATION_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
-    coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}")
+    coffee_add_example_long(
+        ${TARGET}
+        ${TITLE}
+        "${SOURCES}" "${LIBRARIES}" "${BUNDLE_LIBS}"
+        "${BUNDLE_RSRCS}"
+        ${ARGN})
 endmacro()
 
 macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
-    coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
+    coffee_add_example_long(
+        ${TARGET}
+        "${TITLE}"
+        "${SOURCES}" "${LIBRARIES}"
+        "" ""
+        ${ARGN})
 endmacro()
 
 macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
-    coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
+    coffee_add_example_long(
+        ${TARGET}
+        "${TITLE}"
+        "${SOURCES}" "${LIBRARIES}"
+        "" ""
+        ${ARGN})
 endmacro()

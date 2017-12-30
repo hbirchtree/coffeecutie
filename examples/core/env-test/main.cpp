@@ -12,7 +12,7 @@ using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
 {
-#if defined(USE_ASIO)
+#if defined(FEATURE_USE_ASIO)
     Net::RegisterProfiling();
 #endif
 

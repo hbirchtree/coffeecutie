@@ -37,9 +37,7 @@ static bool ExtractUrlComponents(CString const& url,
     return false;
 }
 
-Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
-    m_resource(*url),
-    m_access(url.netflags)
+void Resource::initRsc(const Url &url)
 {
     DProfContext a(NETRSC_TAG "Initializing NetResource");
 
@@ -72,7 +70,7 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
 
     if(secure())
     {
-        ssl = MkUq<TCP::SSLSocket>(ctxt);
+        ssl = MkUq<TCP::SSLSocket>(m_ctxt);
 
         ssl->connect(m_host, port);
 
@@ -93,18 +91,13 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
         return;
     }
 
-    HTTP::InitializeRequest(m_request);
-
     m_request.resource = "/" + resource;
-    m_request.reqtype = "GET";
-    m_request.mimeType.clear();
-    m_request.header.insert({"Accept", "*/*"});
+
+    m_response = {};
 }
 
-Resource::~Resource()
+void Resource::close()
 {
-    asio::error_code ec;
-
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
@@ -118,6 +111,20 @@ Resource::~Resource()
             normal->close();
         normal.release();
     }
+}
+
+Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
+    m_resource(*url),
+    m_ctxt(ctxt),
+    m_access(url.netflags)
+{
+    HTTP::InitializeRequest(m_request);
+    initRsc(url);
+}
+
+Resource::~Resource()
+{
+    close();
 }
 
 bool Resource::secure() const
@@ -188,6 +195,8 @@ bool Resource::push(CString const& method, const Bytes &data)
         MemCpy(m_request.payload.data(), data.data, data.size);
     }
 
+    bool result = false;
+
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
@@ -207,7 +216,7 @@ bool Resource::push(CString const& method, const Bytes &data)
 
         Profiler::DeepProfile(NETRSC_TAG "HTTPS request sent");
 
-        return HTTP::ExtractResponse(*ssl, &m_response);
+        result = HTTP::ExtractResponse(*ssl, &m_response);
     }else
 #endif
     {
@@ -218,7 +227,23 @@ bool Resource::push(CString const& method, const Bytes &data)
 
         Profiler::DeepProfile(NETRSC_TAG "HTTP request sent");
 
-        return HTTP::ExtractResponse(*normal, &m_response);
+        result = HTTP::ExtractResponse(*normal, &m_response);
+    }
+
+    switch(m_response.code)
+    {
+    case 301:
+    case 302:
+    case 308:
+    {
+        auto u = Net::MkUrl(m_response.header["Location"].c_str(),
+                HTTPAccess::DefaultAccess);
+        close();
+        initRsc(u);
+        return push(method, data);
+    }
+    default:
+        return result;
     }
 }
 

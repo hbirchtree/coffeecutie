@@ -16,6 +16,7 @@ private:
 
 #if defined(ASIO_USE_SSL)
     UqPtr<TCP::SSLSocket> ssl;
+    ASIO::AsioContext m_ctxt;
 #endif
     UqPtr<TCP::Socket> normal;
 
@@ -26,6 +27,9 @@ private:
     HTTPAccess m_access;
 
     asio::error_code m_error;
+
+    void initRsc(Url const& url);
+    void close();
 
 public:
     Resource(ASIO::AsioContext ctxt, Url const& url);

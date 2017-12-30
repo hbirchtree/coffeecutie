@@ -25,7 +25,9 @@ using EDATA = EventLoopData<CDRenderer, RendererState>;
 
 int32 coffee_main(int32, cstring_w*)
 {
+#if defined(FEATURE_USE_ASIO)
     Net::RegisterProfiling();
+#endif
 
     /* Set a prefix from which resources are fetched */
 //    CResources::FileResourcePrefix("sample_data/eye-demo/");

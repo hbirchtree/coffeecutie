@@ -85,6 +85,8 @@ enum class HTTPAccess
     POST = 0x4, /*  */
     PUT = 0x8, /*  */
 
+    NoRedirect = 0x10, /* Do not follow redirect locations */
+
     DefaultAccess = GET|Secure,
 
     SecurityMask = Secure,
