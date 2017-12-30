@@ -152,7 +152,8 @@
 #define COFFEE_LIL_ENDIAN
 #endif
 
-#if __GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ ==  9)
+#if (__GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ ==  9)) || \
+    defined(COFFEE_ANDROID)
 #define COFFEE_BAD_REGEX
 #endif
 

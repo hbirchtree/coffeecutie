@@ -12,6 +12,7 @@ namespace Linux{
 
 CString LinuxSysInfo::cached_cpuinfo_string;
 
+#define DMI_PATH "/sys/class/dmi/id/"
 static const constexpr cstring invalid_info_string = "To Be Filled By O.E.M.";
 
 using DirFun = CResources::Linux::LinuxDirFun;
@@ -400,8 +401,8 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
 #if defined(COFFEE_MAEMO)
     return HWDeviceInfo("Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
 #else
-    static const cstring prod_ver = "/sys/class/dmi/id/product_version";
-    static const cstring prod_name = "/sys/class/dmi/id/product_name";
+    static const cstring prod_ver = DMI_PATH "/product_version";
+    static const cstring prod_name = DMI_PATH "/product_name";
 
     static const cstring str_gen = "Generic";
     static const cstring str_lin = "Device";
@@ -418,7 +419,7 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
     cstring manf = str_gen;
     cstring prod = str_lin;
 
-    CString manufac = LFileFun::sys_read("/sys/class/dmi/id/sys_vendor");
+    CString manufac = LFileFun::sys_read(DMI_PATH "/sys_vendor");
     cstring prod_src = prod_name;
     if(manufac == "LENOVO")
         prod_src = prod_ver;
@@ -431,6 +432,77 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
 
     return HWDeviceInfo(manf, prod, get_kern_name() + (" " + get_kern_ver()));
 #endif
+}
+
+HWDeviceInfo LinuxSysInfo::Motherboard()
+{
+#if defined(COFFEE_MAEMO)
+    return HWDeviceInfo("Nokia", "RX-51", "0x0");
+#else
+    static const cstring mb_manuf = DMI_PATH "/board_vendor";
+    static const cstring mb_model = DMI_PATH "/board_name";
+    static const cstring mb_version = DMI_PATH "/board_version";
+
+    CString manuf = LFileFun::sys_read(mb_manuf);
+    CString model = LFileFun::sys_read(mb_model);
+    CString version = LFileFun::sys_read(mb_version);
+
+    return HWDeviceInfo(manuf, model,  version);
+#endif
+}
+
+HWDeviceInfo LinuxSysInfo::Chassis()
+{
+    static const cstring ch_manuf = DMI_PATH "/chassis_vendor";
+    static const cstring ch_model = DMI_PATH "/chassis_name";
+    static const cstring ch_version = DMI_PATH "/chassis_version";
+
+    CString manuf = LFileFun::sys_read(ch_manuf);
+    CString model = LFileFun::sys_read(ch_model);
+    CString version = LFileFun::sys_read(ch_version);
+
+    static const cstring str_gen = "Generic";
+    static const cstring str_lin = "Chassis";
+
+    cstring manuf_c = str_gen;
+    cstring model_c = str_lin;
+    cstring versn_c = "0x0";
+
+    if(manuf.size() && manuf != invalid_info_string)
+        manuf_c = manuf.c_str();
+    if(model.size() && model != invalid_info_string)
+        model_c = model.c_str();
+    if(version.size() && version != invalid_info_string)
+        versn_c = version.c_str();
+
+    return HWDeviceInfo(manuf_c, model_c, versn_c);
+}
+
+HWDeviceInfo LinuxSysInfo::BIOS()
+{
+    static const cstring bios_manuf = DMI_PATH "/bios_vendor";
+    static const cstring bios_name = DMI_PATH "/bios_name";
+    static const cstring bios_version = DMI_PATH "/bios_version";
+
+    CString manuf = LFileFun::sys_read(bios_manuf);
+    CString name = LFileFun::sys_read(bios_name);
+    CString version = LFileFun::sys_read(bios_version);
+
+    static const cstring str_gen = "Generic";
+    static const cstring str_lin = "BIOS";
+
+    cstring manuf_c = str_gen;
+    cstring name_c = str_lin;
+    cstring versn_c = "0x0";
+
+    if(manuf.size() && manuf != invalid_info_string)
+        manuf_c = manuf.c_str();
+    if(name.size() && name != invalid_info_string)
+        name_c = name.c_str();
+    if(version.size() && version != invalid_info_string)
+        versn_c = version.c_str();
+
+    return HWDeviceInfo(manuf_c, name_c, versn_c);
 }
 
 #if !defined(COFFEE_ANDROID)

@@ -113,6 +113,9 @@ struct PosixFileFun_def : PosixFileMod_def
         data.data = C_CAST<byte_t*>(Calloc(1,szp));
         data.size = szp + nullterm;
 
+        if(nullterm)
+            szp --;
+
         if(!data.data)
             return {};
 

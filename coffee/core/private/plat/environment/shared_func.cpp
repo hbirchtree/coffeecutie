@@ -75,6 +75,11 @@ HWDeviceInfo SysInfoDef::Chassis()
 {
     return HWDeviceInfo("Generic", "Chassis", "0x0");
 }
+
+HWDeviceInfo SysInfoDef::BIOS()
+{
+    return HWDeviceInfo("Generic", "BIOS", "0x0");
+}
 #endif
 
 }

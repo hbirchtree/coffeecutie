@@ -115,7 +115,9 @@ void Resource::close()
 
 Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
     m_resource(*url),
+    #if defined(ASIO_USE_SSL)
     m_ctxt(ctxt),
+    #endif
     m_access(url.netflags)
 {
     HTTP::InitializeRequest(m_request);

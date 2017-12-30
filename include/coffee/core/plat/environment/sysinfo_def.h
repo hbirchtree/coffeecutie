@@ -247,6 +247,9 @@ struct SysInfoDef
 
     static
     HWDeviceInfo Chassis();
+
+    static
+    HWDeviceInfo BIOS();
 };
 
 

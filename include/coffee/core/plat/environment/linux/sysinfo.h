@@ -74,6 +74,12 @@ struct LinuxSysInfo : SysInfoDef
 
     static HWDeviceInfo DeviceName();
 
+    static HWDeviceInfo Motherboard();
+
+    static HWDeviceInfo Chassis();
+
+    static HWDeviceInfo BIOS():
+
 private:
     static void FreeCPUInfoString();
     static CString cached_cpuinfo_string;
