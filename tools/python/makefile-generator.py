@@ -30,6 +30,10 @@ def gen_targs(prefix, target_struct):
   return el
 
 
+# Something something insert into a dictionary a key
+# Takes keys of the format:
+# [=+][.*]
+# Replacing the value if starting with =, otherwise append
 def det_insert(dic, keys, value):
   root = dic
   for key in keys[:-1]:
@@ -49,6 +53,9 @@ def det_insert(dic, keys, value):
     root[keys[-1][1:]] = value.copy()
 
 
+# For a set of patterns, generates a hierarchy of variables.
+# It separates variables that start with [=+], and creates patterns
+#  with associated variables recursively
 def gen_targ_data(templates, targets, definitions):
   properties = [k for k in templates if k[0] == '+' or k[0] == '=']
   patterns = [k for k in templates if k not in properties]
@@ -72,6 +79,8 @@ def gen_targ_data(templates, targets, definitions):
     gen_targ_data(templates[k], selection, definitions)
 
 
+# For dictionaries, collapses child dictionaries to the form
+#  a[key1][key2] => key1.key2
 def collapse_dictionary(d):
   out = {}
   for f in d:
@@ -85,16 +94,23 @@ def collapse_dictionary(d):
   return out
 
 
+# Generate dependency information describing pre-built build dependencies
 def gen_deps(dependencies, dep_defs):
   for dep in dependencies:
     src = dependencies[dep]
     dep_defs[dep] = src.copy()
 
 
+# Inserts  into var_defs the variables found in variables, after collapsing it
 def gen_vars(variables, var_defs):
   var_defs.update(collapse_dictionary(variables))
 
 
+# For all variables in definitions, resolves variables of the form
+#  $(VAR)
+#  and works until no more variables may be resolved.
+# Variables of the form $(env:VAR) are not touched,
+#  as they are transformed into the form $(VAR) for use in Makefile.
 def resolve_vars(definitions):
   var_pattern = re.compile('\$\((.*?)\)')
   resolved = set()
@@ -118,6 +134,8 @@ def resolve_vars(definitions):
         resolved.add(var)
 
 
+# Recursively resolves variable sets for targets, such
+#  that each targets has its own derived set of variables.
 def resolve_targets(target_definitions):
   for target in target_definitions:
     resolve_vars(target_definitions[target])
@@ -130,6 +148,8 @@ def print_target_data(target_defs):
       print('\t', f, target_defs[t][f])
 
 
+# Stringifies Python structures into Makefile-consumable format
+# Dictionaries are not supported
 def stringify(var):
   if type(var) == list:
     out = ""
@@ -155,8 +175,12 @@ def replace_definitions(vars, definitions):
     vars[v] = var_string
 
 
+# Generate Makefile rule string from target defintion
 def generate_rule(defs):
-  defs['dependencies'] = stringify(defs['dependencies'])
+  try:
+    defs['dependencies'] = stringify(defs['dependencies'])
+  except KeyError:
+    defs['dependencies'] = ''
 
   mapping = {
     'container-opts': 'DOCKER_EXTRA_OPTIONS',
@@ -170,11 +194,14 @@ def generate_rule(defs):
     mapping['cmake-second-target'] = 'CMAKE_SECOND_TARGET'
     defs['cmake-target'] = defs['cmake-target'][0]
 
-  if stringify(defs['container']).startswith(':'):
-    mapping['container'] = 'DOCKER_CONTAINER'
-    defs['container'] = stringify(defs['container'])[1:]
-  else:
-    mapping['container'] = 'DOCKER_CONFIG'
+  try:
+    if stringify(defs['container']).startswith(':'):
+      mapping['container'] = 'DOCKER_CONTAINER'
+      defs['container'] = stringify(defs['container'])[1:]
+    else:
+      mapping['container'] = 'DOCKER_CONFIG'
+  except KeyError:
+    pass
 
   var = (
 """
@@ -215,6 +242,7 @@ def generate_rule(defs):
   return var
 
 
+# Generate dependency rule for getting a Git dependency
 def generate_dep_rule(name, defs, var_definitions):
   replace_definitions(defs, var_definitions)
 
@@ -238,6 +266,7 @@ def generate_dep_rule(name, defs, var_definitions):
     return ""
 
 
+# Generate conditional variables for Makefile
 def generate_conditional_variables(name, vars, definitions):
   var = "\nifeq ($(BUILD_MODE), %s)" % name
 
@@ -263,11 +292,14 @@ if __name__ == '__main__':
   target_definitions = dict()
   targets = data['targets']
 
+  # Generate variable listings
   gen_vars(data['variables'], variables)
   gen_deps(data['dependencies'], dependencies)
 
+  # Generate targets from JSON
   targets = sorted(gen_targs('', targets))
 
+  # Initialize target structures
   for t in targets:
     target_definitions[t] = {}
     root = target_definitions[t]
@@ -275,16 +307,16 @@ if __name__ == '__main__':
     root.update(collapse_dictionary({'dependencies': dependencies}))
     root.update({'target-name': [t]})
 
+  # Generate variables for targets defined earlier
   gen_targ_data(data['templates'], targets, target_definitions)
 
-  # print_target_data(target_definitions)
+  # Resolve variables to their basic form
   resolve_targets(target_definitions)
 
-  # exit(0)
-
+  # Get one target as a sample, used to resolve dependency targets
   yoink_definitions = target_definitions[list(target_definitions.keys())[0]]
 
-  with open('Makefile.auto', 'w') as f:
+  with open(argv[2], 'w') as f:
     f.write(
 """
 #
@@ -314,9 +346,12 @@ if __name__ == '__main__':
                 .replace('True', 'ON')\
                 .replace('$(env:', '$('))
 
-    for set in sorted(data['global-sets'].keys()):
-      f.write(generate_conditional_variables(set, data['global-sets'][set],
-                                             yoink_definitions))
+    try:
+      for set in sorted(data['global-sets'].keys()):
+        f.write(generate_conditional_variables(set, data['global-sets'][set],
+                                               yoink_definitions))
+    except KeyError:
+      pass
 
     f.write(
 """
@@ -328,5 +363,23 @@ FORCE:
     for t in sorted(dependencies.keys()):
       f.write(generate_dep_rule(t, dependencies[t], yoink_definitions))
 
+    target_list = ""
+    for t in sorted(list(target_definitions.keys())):
+      target_list = target_list + "\\n" + t
+
+    f.write(
+"""
+
+# Create a help option
+list-targets:
+	@echo "%s"
+
+help: list-targets
+
+list: list-targets
+""" % target_list[2:])
+
     for t in sorted(target_definitions.keys()):
       f.write(generate_rule(target_definitions[t]))
+
+    f.write('\n\n')
