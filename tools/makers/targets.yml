@@ -104,7 +104,7 @@ variables:
     target: /home/coffee/library
 
   android:
-    stl: gnustl_static
+    stl: c++_static
     toolchain: clang
     features: rtti;exceptions
     graphics: gles-2
