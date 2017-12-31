@@ -72,7 +72,8 @@ void Resource::initRsc(const Url &url)
     {
         ssl = MkUq<TCP::SSLSocket>(m_ctxt);
 
-        ssl->connect(m_host, port);
+        ssl->connect(m_host, port,
+                     !feval(m_access, HTTPAccess::NoVerify));
 
         m_error = ssl->error();
     }else
@@ -174,6 +175,35 @@ bool Resource::fetch()
     return push("GET", Bytes());
 }
 
+bool Resource::push(const Bytes &data)
+{
+    CString method = "GET";
+    switch(m_access & HTTPAccess::RequestMask)
+    {
+    case HTTPAccess::POST:
+        method = "POST";
+        break;
+    case HTTPAccess::PUT:
+        method = "PUT";
+        break;
+    case HTTPAccess::UPDATE:
+        method = "UPDATE";
+        break;
+    case HTTPAccess::DELETE:
+        method = "UPDATE";
+        break;
+    case HTTPAccess::PATCH:
+        method = "PATCH";
+        break;
+    case HTTPAccess::HEAD:
+        method = "HEAD";
+        break;
+    default:
+        break;
+    }
+    return push(method, data);
+}
+
 bool Resource::push(CString const& method, const Bytes &data)
 {
     DProfContext a(NETRSC_TAG "Sending HTTP request");
@@ -231,6 +261,9 @@ bool Resource::push(CString const& method, const Bytes &data)
 
         result = HTTP::ExtractResponse(*normal, &m_response);
     }
+
+    if(feval(m_access & HTTPAccess::NoRedirect))
+        return result;
 
     switch(m_response.code)
     {

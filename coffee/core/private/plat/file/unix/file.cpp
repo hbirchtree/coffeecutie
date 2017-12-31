@@ -355,7 +355,7 @@ bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
 #endif
 
 //        fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
-        cDebug("ERROR:{0}: {1}", ref, strerror(errno));
+        cVerbose(10, "ERROR:{0}: {1}", ref, strerror(errno));
         errno = 0;
         return true;
     }

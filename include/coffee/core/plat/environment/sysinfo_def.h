@@ -82,7 +82,8 @@ struct SysInfoDef
      */
     ThrdCnt ThreadCount()
     {
-        return Thread::hardware_concurrency();
+        ThrdCnt c = Thread::hardware_concurrency();
+        return c;
     }
 
     STATICINLINE

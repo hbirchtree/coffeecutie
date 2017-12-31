@@ -4,6 +4,10 @@
 
 #include <jni.h>
 
+extern "C" {
+#include <cpu-features.h>
+}
+
 #if !defined(COFFEE_USE_SDL2)
 #include <coffee/android/android_main.h>
 #else
@@ -112,14 +116,6 @@ CString AndroidSysInfo::GetSystemVersion()
 #endif
 }
 
-//HWDeviceInfo AndroidSysInfo::Processor()
-//{
-//    CString model = Mem::StrUtil::propercase(jni_getString("android/os/Build","BRAND")) + " ";
-//    model += Mem::StrUtil::propercase(jni_getString("android/os/Build","HARDWARE"));
-//    return HWDeviceInfo(model,
-//                        "0x0");
-//}
-
 HWDeviceInfo AndroidSysInfo::DeviceName()
 {
 #if defined(COFFEE_USE_SDL2)
@@ -165,6 +161,16 @@ HWDeviceInfo AndroidSysInfo::Motherboard()
 
     return HWDeviceInfo(board, "", "");
 #endif
+}
+
+u32 AndroidSysInfo::CoreCount()
+{
+    return C_FCAST<u32>(android_getCpuCount());
+}
+
+ThrdCnt AndroidSysInfo::ThreadCount()
+{
+    return C_FCAST<u32>(android_getCpuCount());
 }
 
 }

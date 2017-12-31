@@ -14,6 +14,8 @@ struct PlatformData
         DeviceLaptop,
         DevicePhone,
         DeviceTablet,
+        DeviceServer,
+        DeviceAllInOne,
     };
 
     enum Platform

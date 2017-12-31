@@ -81,7 +81,10 @@ CString LinuxFileFun::sys_read(cstring fn)
     size_t size = 0;
 
     if(!fh)
+    {
+        ErrnoCheck(fn, -1);
         return out;
+    }
 
 #if !defined(COFFEE_ANDROID)
     while(getdelim(&arg,&size,0,fh) != -1)

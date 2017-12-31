@@ -177,6 +177,8 @@ static bool egl_create_context(EGLRenderer* renderer,
 	::EGLNativeWindowType egl_win = nullptr;
 #endif
 
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11) || \
+    defined(COFFEE_RASPBERRY_DMX) || defined(COFFEE_USE_WINDOWS_ANGLE)
     WindowManagerClient* wm_client = C_DCAST<WindowManagerClient>(renderer);
     CDWindow* win = wm_client->window();
 #if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
@@ -193,6 +195,7 @@ static bool egl_create_context(EGLRenderer* renderer,
 	egl_win = (EGLNativeWindowType)win->wininfo.winrt.window;
 #endif
     delete win;
+#endif
     
 #if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     cVerbose(8, "X11 display connection from SDL: {0}",
@@ -351,12 +354,12 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
     m_eglData->context = nullptr;
     m_eglData->config = nullptr;
 
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     WindowManagerClient* wm_client = C_DCAST<WindowManagerClient>(this);
     CDWindow* win = wm_client->window();
-#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     ::Display* x_disp = win->wininfo.x11.display;
-#endif
     delete win;
+#endif
 
 #if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     m_eglData->display = eglGetDisplay((EGLNativeDisplayType)x_disp);

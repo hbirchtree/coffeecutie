@@ -18,6 +18,9 @@ struct AndroidSysInfo : Linux::LinuxSysInfo
     static CString GetSystemVersion();
     static HWDeviceInfo DeviceName();
     static HWDeviceInfo Motherboard();
+
+    static u32 CoreCount();
+    static ThrdCnt ThreadCount();
 };
 
 

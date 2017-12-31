@@ -103,10 +103,35 @@ PlatformData::DeviceType get_device_variant()
 
     switch(chassis_type)
     {
-    case 1:
+    case 0x1:
+    case 0x2:
+    case 0x19:
+        return PlatformData::DeviceUnknown;
+    case 0x3:
+    case 0x4:
+    case 0x5:
+    case 0x6:
+    case 0x7:
         return PlatformData::DeviceDesktop;
-    case 10:
+    case 0x8:
+    case 0x9:
+    case 0xa:
+    case 0xc:
+    case 0xe:
+    case 0xf:
         return PlatformData::DeviceLaptop;
+    case 0xb:
+        return PlatformData::DeviceTablet;
+    case 0xd:
+        return PlatformData::DeviceAllInOne;
+    case 0x11:
+    case 0x17:
+    case 0x1c:
+    case 0x1d:
+        return PlatformData::DeviceServer;
+    case 0x10:
+    case 0x18:
+        return PlatformData::DeviceIOT;
     default:
         return PlatformData::DeviceUnknown;
     }
@@ -236,7 +261,17 @@ uint32 LinuxSysInfo::CoreCount()
     CString result = get_linux_property(cached_cpuinfo_string, query);
 
     if(!result.size())
-        return ThreadCount();
+    {
+        /* Some Android devices are bad at reporting CPU cores
+         *  using the hardware_concurrency API. For this reason,
+         *  we default to NPROC and hope that phones won't have
+         *  multi-socket setups anytime soon. */
+#if defined(COFFEE_ANDROID)
+        auto procs = sysconf(_SC_NPROCESSORS_ONLN);
+#else
+        return C_FCAST<u32>(ThreadCount());
+#endif
+    }
 
     StrUtil::trim(result);
 
@@ -273,30 +308,55 @@ HWDeviceInfo LinuxSysInfo::Processor()
 
 Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
 {
-    Url p = MkUrl("/sys/bus/cpu/devices", RSCA::SystemFile);
-
-    int fd = open("/sys/bus/cpu/devices/", O_RDONLY|O_DIRECTORY);
-
-    DirFun::DirList cpus;
-    DirFun::Ls(p, cpus);
-
-    cDebug("Listing processors: {1} {0}", cpus.size(), *p, fd);
-
-    Vector<bigscalar> freqs;
-    freqs.reserve(cpus.size());
-
-    for(DirFun::DirItem_t const& e : cpus)
+    static const constexpr struct
     {
-        Url cpu = p
-                + Path::Mk(e.name.c_str())
-                + Path::Mk("cpufreq/scaling_max_freq");
-        cDebug("Reading {0}", *cpu);
-        CString tmp = LFileFun::sys_read((*cpu).c_str());
-        if(tmp.size())
-            freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
+        cstring prefix;
+        cstring suffix;
+    } root_paths[3] = {
+    {
+        "/sys/bus/cpu/devices", "cpufreq/scaling_max_freq"
+    },
+    {
+        "/sys/devices/system/cpu", "cpufreq/scaling_max_freq"
+    },
+    {
+        "/sys/devices/system/cpu", "cpufreq/cpuinfo_max_freq"
+    },
+    };
+
+    for (size_t i=0; i<3; i++)
+    {
+        Url p = MkUrl(root_paths[i].prefix, RSCA::SystemFile);
+
+        DirFun::DirList cpus;
+        DirFun::Ls(p, cpus);
+
+        if(cpus.size() == 0)
+            continue;
+
+        Vector<bigscalar> freqs;
+        freqs.reserve(cpus.size());
+
+        for(DirFun::DirItem_t const& e : cpus)
+        {
+            if(e.name.substr(0, 3) != "cpu")
+                continue;
+
+            Url cpu = p
+                    + Path::Mk(e.name.c_str())
+                    + Path::Mk(root_paths[i].suffix);
+            CString tmp = LFileFun::sys_read((*cpu).c_str());
+            if(tmp.size())
+                freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
+        }
+
+        if(freqs.size() == 0)
+            continue;
+
+        return freqs;
     }
 
-    return freqs;
+    return {};
 }
 
 bigscalar LinuxSysInfo::ProcessorFrequency()

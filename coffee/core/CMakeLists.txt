@@ -133,6 +133,8 @@ if(ANDROID)
         # For reading process information
         private/plat/file/linux/file.cpp
         private/plat/environment/linux/process.cpp
+
+        ${CPUFEATURES_SOURCES}
     )
 endif()
 
@@ -279,6 +281,13 @@ if(COFFEE_BUILD_SWIG_BINDING)
         $<INSTALL_INTERFACE:include/tinyxml2/>
 
         ${STANDARDLIBS_INCLUDE_DIR}
+        )
+endif()
+
+if(ANDROID)
+    target_include_directories ( CoffeeCore
+        PRIVATE
+        ${CPUFEATURES_INCLUDE_DIR}
         )
 endif()
 

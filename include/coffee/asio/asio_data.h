@@ -30,11 +30,18 @@ struct ASIO_Client
             resolver(service),
             resolver_udp(service)
 #if defined(ASIO_USE_SSL)
-          ,sslctxt(asio::ssl::context::sslv23_client)
+          ,sslctxt(asio::ssl::context::sslv23)
 #endif
         {
-#if defined(ASIO_USE_SSL)
-            sslctxt.set_default_verify_paths();
+#if defined(ASIO_USE_SSL) && !defined(COFFEE_ANDROID)
+            asio::error_code ec;
+            sslctxt.set_default_verify_paths(ec);
+            if(ec != asio::error_code())
+            {
+                cWarning("Setting verification paths failed: {0}",
+                         ec.message());
+            }
+            sslctxt.set_verify_mode(asio::ssl::verify_peer);
 #endif
         }
 

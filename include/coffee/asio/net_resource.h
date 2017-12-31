@@ -48,6 +48,7 @@ public:
     void setHeaderField(CString const& field, CString const& value);
 
     bool fetch();
+    bool push(Bytes const& data);
     bool push(const CString &method, Bytes const& data);
 
     cstring mimeType() const;

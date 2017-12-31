@@ -14,6 +14,7 @@ if(NOT ANDROID_USE_SDL2_LAUNCH)
     list (APPEND AndroidCore_SRCS
         ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}
         ${NDK_HELPER_SOURCES}
+        ${CPUFEATURES_SOURCES}
         android_wrapperfun.cpp
         android_assets.cpp
         )

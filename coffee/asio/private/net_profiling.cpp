@@ -22,7 +22,9 @@ void ProfilingExport()
 
         auto netServerUrl = Env::GetVar(network_server);
 
-        auto reportBin = Net::MkUrl(netServerUrl.c_str());
+        auto reportBin = Net::MkUrl(netServerUrl.c_str(),
+                                    HTTPAccess::DefaultPOST
+                                    |HTTPAccess::NoVerify);
         Net::Resource reportBinRsc(ctxt, reportBin);
 
         if(!reportBinRsc.connected())
@@ -41,8 +43,7 @@ void ProfilingExport()
         auto chromeData = Bytes::CreateString(
                     target_chrome.c_str());
 
-        reportBinRsc.push("POST",
-                          chromeData);
+        reportBinRsc.push(chromeData);
 
         if(reportBinRsc.responseCode() != 200)
         {

@@ -88,7 +88,7 @@ void CoffeeInit(bool profiler_init)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 20;
+    Coffee::PrintingVerbosityLevel = 8;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel = 1;
@@ -152,6 +152,8 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 #ifndef COFFEE_LOWFAT
 
     CoffeeInit(false);
+
+    cDebug("Processors: {0}", std::thread::hardware_concurrency());
 
     Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");

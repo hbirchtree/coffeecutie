@@ -56,7 +56,7 @@ struct TCPSocketImpl : ASIO_Client
         C_DELETE_COPY_CONSTRUCTOR(SSLSocket_);
 
         template<typename ServiceT>
-        void connect(Host h, ServiceT p)
+        void connect(Host h, ServiceT p, bool verify=true)
         {
             asio::error_code ec;
 
@@ -82,12 +82,20 @@ struct TCPSocketImpl : ASIO_Client
                         asio::ip::tcp::no_delay(true));
 
 #if !defined(COFFEE_ANDROID)
-            socket.set_verify_mode(asio::ssl::verify_peer);
-            socket.set_verify_callback(
-                        asio::ssl::rfc2818_verification(h));
+            if(verify)
+            {
+                socket.set_verify_callback(
+                            asio::ssl::rfc2818_verification(h),
+                            ec);
+                if(ec != asio::error_code())
+                {
+                    lastError = ec;
+                    return;
+                }
+            }
 #endif
 
-            socket.handshake(asio::ssl::stream_base::client, ec);
+            socket.handshake(sock_t::client, ec);
 
             if(ec != asio::error_code())
                 lastError = ec;
