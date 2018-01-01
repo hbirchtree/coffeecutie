@@ -1,11 +1,3 @@
-//
-//  system_interface.m
-//  Coffee
-//
-//  Created by Håvard Bjerke on 31/12/2017.
-//
-//
-
 #include <coffee/core/plat/plat_primary_identify.h>
 
 #import <Foundation/Foundation.h>
@@ -24,7 +16,14 @@ void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis)
 {
 #if defined(COFFEE_APPLE_MOBILE)
     if(num_dpis)
-        *num_dpis = 0;
+        *num_dpis = [UIScreen screens].count;
+    
+    if(dpis)
+    {
+        NSArray<UIScreen*> *screens = [UIScreen screens];
+        for(size_t i=0;i<screens.count; i++)
+            dpis[i] = screens[i].nativeScale;
+    }
 #else
     if(num_dpis)
         *num_dpis = [NSScreen screens].count;
