@@ -123,6 +123,8 @@ endif()
 
 # Android-specific code
 if(ANDROID)
+    find_package( AndroidGlue REQUIRED )
+
     list ( APPEND CoffeeCore_SRCS
         private/plat/file/android/file.cpp
         private/plat/environment/android/environment.cpp

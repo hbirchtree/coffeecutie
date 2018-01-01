@@ -30,16 +30,16 @@ struct CGL_Shared_Limits
 
         Outputs = 1,
         Inputs,
-        UniformVals,
-        ImageUnits,
-        ImageUniforms,
-        UniformsBlocks,
-        UniformVectors,
+        UniformVals, /* number of scalars allowed */
+        ImageUnits, /* aka. texture units */
+        ImageUniforms, /* read/write images */
+        UniformsBlocks, /* UBO */
+        UniformVectors, /* scalar, vec2, vec3, vec4 uniforms */
         AtomicCounters,
         AtomicBufs,
         SSBO,
-        Subroutines,
-        SubroutineLocs,
+
+        Max_Shader_Property,
 
         Vertex_Attribs = 1000,
         Vertex_AttrRelativeOff,
@@ -86,6 +86,14 @@ struct CGL_Shared_Limits
 
         UniformLocs,
 
+        UBO_Size,
+        SSBO_Size,
+        AtomicBuf_Size,
+
+        UBO_Bindings,
+        SSBO_Bindings,
+        AtomicBuf_Bindings,
+
         View_Dimensions,
 
         Dbg_LabelLen,
@@ -93,16 +101,19 @@ struct CGL_Shared_Limits
         Dbg_LoggedMessages,
 
         Compile_Threads,
+
+        Max_Property,
     };
 
     static i32 Max(u32 v);
+    static cstring MaxName(u32 v);
 
     static _cbasic_size_2d<i32> MaxSize(u32 v);
 
     template<u32 ShaderBase>
     STATICINLINE i32 ShaderMax(MaxLimit v)
     {
-        if(v > SubroutineLocs)
+        if(v >= Max_Shader_Property)
             return 0;
         return Max(ShaderBase + v);
     }

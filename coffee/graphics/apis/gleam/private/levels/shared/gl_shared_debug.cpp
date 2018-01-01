@@ -234,43 +234,160 @@ bool CGL_Shared_Debug::CompressedFormatSupport(Texture, PixelFormat t)
 
 using L = CGL_Shared_Limits;
 
-static Map<u32, GLuint> limit_map = {
+#define A(v1, v2) {v1, {#v2, v2}}
+
+struct limit_name_t
+{
+    cstring name;
+    GLuint i;
+};
+
+static Map<u32, limit_name_t> limit_map = {
     /* Baseline OpenGL ES 2.0 limits */
-    {L::Vertex_Attribs, GL_MAX_VERTEX_ATTRIBS},
+    A(L::Vertex_Attribs, GL_MAX_VERTEX_ATTRIBS),
 
-    {L::Tex_Size2D, GL_MAX_TEXTURE_SIZE},
+    A(L::Tex_Size2D, GL_MAX_TEXTURE_SIZE),
 
-    {L::Vertex_Base + L::ImageUnits,GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS},
-    {L::Vertex_Base + L::UniformVectors,GL_MAX_VERTEX_UNIFORM_VECTORS},
+    A(L::Vertex_Base + L::ImageUnits,GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS),
+    A(L::Vertex_Base + L::UniformVectors,GL_MAX_VERTEX_UNIFORM_VECTORS),
 
-    {L::Fragment_Base + L::UniformVectors,GL_MAX_FRAGMENT_UNIFORM_VECTORS},
+    A(L::Fragment_Base + L::UniformVectors,GL_MAX_FRAGMENT_UNIFORM_VECTORS),
 
-    {L::Total_Base + L::ImageUnits, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS},
+    A(L::Total_Base + L::ImageUnits, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+
+    #if !defined(COFFEE_ONLY_GLES20)
+    A(L::Vertex_Base + L::UniformVals,GL_MAX_VERTEX_UNIFORM_COMPONENTS),
+    A(L::Vertex_Base + L::AtomicCounters,GL_MAX_VERTEX_ATOMIC_COUNTERS),
+    A(L::Vertex_Base + L::AtomicBufs,GL_MAX_VERTEX_ATOMIC_COUNTER_BUFFERS),
+    A(L::Vertex_Base + L::SSBO,GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS),
+    A(L::Vertex_Base + L::UniformsBlocks,GL_MAX_VERTEX_UNIFORM_BLOCKS),
+    A(L::Vertex_Base + L::Inputs,GL_MAX_VERTEX_ATTRIBS),
+    A(L::Vertex_Base + L::Outputs,GL_MAX_VERTEX_OUTPUT_COMPONENTS),
+    A(L::Vertex_Base + L::ImageUniforms,GL_MAX_VERTEX_IMAGE_UNIFORMS),
+
+    A(L::Fragment_Base+L::UniformVals,GL_MAX_FRAGMENT_UNIFORM_COMPONENTS),
+    A(L::Fragment_Base+L::AtomicCounters,GL_MAX_FRAGMENT_ATOMIC_COUNTERS),
+    A(L::Fragment_Base+L::AtomicBufs,GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS),
+    A(L::Fragment_Base + L::SSBO,GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS),
+    A(L::Fragment_Base + L::UniformsBlocks,GL_MAX_FRAGMENT_UNIFORM_BLOCKS),
+    A(L::Fragment_Base + L::Inputs,GL_MAX_FRAGMENT_INPUT_COMPONENTS),
+    A(L::Fragment_Base + L::Outputs,GL_MAX_DRAW_BUFFERS),
+    A(L::Fragment_Base + L::ImageUniforms,GL_MAX_FRAGMENT_IMAGE_UNIFORMS),
+
+    #endif
 
     #if defined(COFFEE_ONLY_GLES20)
-    {L::Vertex_Base + L::Outputs, GL_MAX_VARYING_VECTORS},
-    {L::Fragment_Base + L::Inputs, GL_MAX_VARYING_VECTORS},
+    A(L::Vertex_Base + L::Outputs, GL_MAX_VARYING_VECTORS),
+    A(L::Fragment_Base + L::Inputs, GL_MAX_VARYING_VECTORS),
     #endif
 
 
-    {L::FBO_RendBufSize, GL_MAX_RENDERBUFFER_SIZE},
+    A(L::FBO_RendBufSize, GL_MAX_RENDERBUFFER_SIZE),
 
-    {L::Tex_Size2D, GL_MAX_TEXTURE_SIZE},
-    {L::Tex_SizeCube, GL_MAX_CUBE_MAP_TEXTURE_SIZE},
+    A(L::Tex_Size2D, GL_MAX_TEXTURE_SIZE),
+    A(L::Tex_SizeCube, GL_MAX_CUBE_MAP_TEXTURE_SIZE),
 
     /* Extended OpenGL 3.3+ limits */
-    /* ... */
+    #if !defined(COFFEE_ONLY_GLES20)
+
+    #if defined(GL_MAX_3D_TEXTURE_SIZE)
+    A(L::Tex_Size3D,GL_MAX_3D_TEXTURE_SIZE),
+    #endif
+    #if defined(GL_MAX_ARRAY_TEXTURE_LAYERS)
+    A(L::Tex_SizeArray,GL_MAX_ARRAY_TEXTURE_LAYERS),
+    #endif
+    #if defined(GL_MAX_TEXTURE_BUFFER_SIZE)
+    A(L::Tex_SizeBuf,GL_MAX_TEXTURE_BUFFER_SIZE),
+    #endif
+    A(L::Tex_LODBias,GL_MAX_TEXTURE_LOD_BIAS),
+
+    #if defined(GL_ARB_sparse_texture)
+    A(L::Tex_SizeSparse2D,GL_MAX_SPARSE_TEXTURE_SIZE_ARB),
+    A(L::Tex_SizeSparse3D,GL_MAX_SPARSE_3D_TEXTURE_SIZE_ARB),
+    A(L::Tex_SizeSparseArray,GL_MAX_SPARSE_ARRAY_TEXTURE_LAYERS_ARB),
+    #endif
+
+
+    A(L::VAO_ElementIndex,GL_MAX_ELEMENT_INDEX),
+    A(L::VAO_ElementIndices,GL_MAX_ELEMENTS_INDICES),
+    A(L::VAO_ElementVerts,GL_MAX_ELEMENTS_VERTICES),
+
+    A(L::Vertex_AttrRelativeOff,GL_MAX_VERTEX_ATTRIB_RELATIVE_OFFSET),
+    A(L::Vertex_AttrStride,GL_MAX_VERTEX_ATTRIB_STRIDE),
+    A(L::Vertex_AttrBindings,GL_MAX_VERTEX_ATTRIB_BINDINGS),
+
+    #if defined(GL_MAX_VERTEX_STREAMS)
+    A(L::Vertex_Streams,GL_MAX_VERTEX_STREAMS),
+    #endif
+
+    #if defined(COFFEE_GLEAM_DESKTOP)
+    A(L::Vertex_ClipDists,GL_MAX_CLIP_DISTANCES),
+    A(L::Vertex_CullDists,GL_MAX_CULL_DISTANCES),
+    A(L::Vertex_CombClipCullDists,GL_MAX_COMBINED_CLIP_AND_CULL_DISTANCES),
+    #endif
+
+    A(L::Geom_InComps,GL_MAX_GEOMETRY_INPUT_COMPONENTS),
+    A(L::Geom_OutComps,GL_MAX_GEOMETRY_OUTPUT_COMPONENTS),
+    A(L::Geom_OutVerts,GL_MAX_GEOMETRY_OUTPUT_VERTICES),
+
+    #if defined(GL_MAX_TESS_PATCH_COMPONENTS)
+    A(L::Tess_Patches,GL_MAX_TESS_PATCH_COMPONENTS),
+    #endif
+
+    A(L::FBO_DrawBufs,GL_MAX_DRAW_BUFFERS),
+    A(L::FBO_RendBufSize,GL_MAX_RENDERBUFFER_SIZE),
+    A(L::FBO_ColorAtt,GL_MAX_COLOR_ATTACHMENTS),
+    A(L::FBO_Width,GL_MAX_FRAMEBUFFER_WIDTH),
+    A(L::FBO_Height,GL_MAX_FRAMEBUFFER_HEIGHT),
+    A(L::FBO_Layers,GL_MAX_FRAMEBUFFER_LAYERS),
+    A(L::FBO_Samples,GL_MAX_FRAMEBUFFER_SAMPLES),
+
+    #if defined(GL_MAX_TRANSFORM_FEEDBACK_BUFFERS)
+    A(L::XF_InterleavComps,GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS),
+    A(L::XF_SeparateComps,GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS),
+    A(L::XF_SeparateAttrs,GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS),
+    #endif
+
+    A(L::Dbg_LabelLen,GL_MAX_LABEL_LENGTH),
+    A(L::Dbg_MessageLen,GL_MAX_DEBUG_MESSAGE_LENGTH),
+    A(L::Dbg_LoggedMessages,GL_MAX_DEBUG_LOGGED_MESSAGES),
+
+    #if defined(GL_MAX_SHADER_COMPILER_THREADS_ARB)
+    A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_ARB),
+    #endif
+    #if defined(GL_MAX_SHADER_COMPILER_THREADS_KHR)
+    A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_KHR),
+    #endif
+
+    A(L::UniformLocs,GL_MAX_UNIFORM_LOCATIONS),
+
+    A(L::UBO_Size,GL_MAX_UNIFORM_BLOCK_SIZE),
+    #if defined(GL_MAX_SHADER_STORAGE_BLOCK_SIZE)
+    A(L::SSBO_Size,GL_MAX_SHADER_STORAGE_BLOCK_SIZE),
+    #endif
+    #if defined(GL_MAX_ATOMIC_COUNTER_BUFFER_SIZE)
+    A(L::AtomicBuf_Size,GL_MAX_ATOMIC_COUNTER_BUFFER_SIZE),
+    #endif
+
+    A(L::UBO_Bindings,GL_MAX_UNIFORM_BUFFER_BINDINGS),
+    #if defined(GL_MAX_SHADER_STORAGE_BLOCK_SIZE)
+    A(L::SSBO_Bindings,GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS),
+    #endif
+    #if defined(GL_MAX_ATOMIC_COUNTER_BUFFER_SIZE)
+    A(L::AtomicBuf_Bindings,GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS),
+    #endif
+    #endif
 };
 
-static Map<u32, GLuint> limit_map_2d =  {
-    {L::View_Dimensions, GL_MAX_VIEWPORT_DIMS},
+static Map<u32, limit_name_t> limit_map_2d =  {
+    A(L::View_Dimensions, GL_MAX_VIEWPORT_DIMS),
 };
 
 using DBG = CGL_Shared_Debug;
 
 i32 CGL_Shared_Limits::Max(u32 v)
 {
-    GLuint pname = limit_map[v];
+    GLuint pname = limit_map[v].i;
 
     if(pname == 0)
         return 0;
@@ -278,11 +395,19 @@ i32 CGL_Shared_Limits::Max(u32 v)
     return DBG::GetInteger(pname);
 }
 
+cstring CGL_Shared_Limits::MaxName(u32 v)
+{
+    auto const& attr = limit_map[v];
+    if(attr.i != 0)
+        return attr.name;
+    return nullptr;
+}
+
 _cbasic_size_2d<i32> CGL_Shared_Limits::MaxSize(u32 v)
 {
     _cbasic_size_2d<i32> size;
 
-    GLuint pname = limit_map_2d[v];
+    GLuint pname = limit_map_2d[v].i;
 
     if(pname != 0)
         DBG::GetIntegerv(pname, &size.w);

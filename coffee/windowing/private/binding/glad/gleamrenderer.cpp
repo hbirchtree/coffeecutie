@@ -210,7 +210,71 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
                     "gl:driver",
                     GL::Debug::ContextVersion().driver);
 
+        GL::Debug::InitCompressedFormats();
+
+        CString internalFormats = {};
+        for(szptr i : Range<>(C_FCAST<szptr>(
+                                  GL::Debug::Num_Internal_Formats)))
+        {
+            if(GL::Debug::Internal_Formats[i] > 0)
+
+            internalFormats.append(
+                        StrUtil::pointerify(
+                            C_FCAST<u64>(
+                                GL::Debug::Internal_Formats[i])&0xFFFF
+                            )
+                        + " ");
+        }
+
+        internalFormats = StrUtil::rtrim(internalFormats);
+
+        Profiler::AddExtraData("gl:texformats", internalFormats);
+
         /* TODO: Add GL limits to extra data */
+
+        using LIM = CGL::CGL_Shared_Limits;
+        CString limits = {};
+        for(u32 i=50; i<351; i+=50)
+            for(u32 j=0; j<LIM::Max_Shader_Property; j++)
+            {
+                u32 val = i + j;
+                i32 limit = LIM::Max(val);
+
+                if(limit == 0)
+                    continue;
+
+                auto name = LIM::MaxName(val);
+                CString label = {};
+                if(name)
+                    label = name;
+                else
+                    label = cast_pod(i);
+
+                limits += label + "="
+                        + cast_pod(limit)
+                        + ",";
+            }
+
+        for(u32 i=LIM::Vertex_Attribs; i<LIM::Max_Property; i++)
+        {
+            i32 limit = LIM::Max(i);
+
+            if(limit == 0)
+                continue;
+
+            auto name = LIM::MaxName(i);
+            CString label = {};
+            if(name)
+                label = name;
+            else
+                label = cast_pod(i);
+
+            limits += label + "="
+                    + cast_pod(limit)
+                    + ",";
+        }
+
+        Profiler::AddExtraData("gl:limits", limits);
     }
 
     if(GL::DebuggingSupported())

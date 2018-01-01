@@ -48,6 +48,54 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
 }
 
 template<typename T>
+/*!
+ * \brief Generate user clipping plane in perspective, reference for this is an article released by ImgTec for OpenGL ES 2.0 rendering. It was meant for water rendering, but can also be used for VR clipping if you know how to use it. This is meant to replace GL_CLIP_DIST, but this one is more hardware-independent.
+ * \param clipPlane
+ * \param perspective
+ * \param out
+ */
+FORCEDINLINE void GenUserClipSpace(
+        const _cbasic_tvector<T, 4>& clipPlane,
+        const _cbasic_tmatrix<T, 4>& perspective,
+        _cbasic_tmatrix<T, 4>& out
+        )
+{
+    out = perspective;
+    out[3] = clipPlane;
+    out[3] += _cbasic_tvector<T, 4>(0, 0, 1, 0);
+}
+
+template<typename T>
+/*!
+ * \brief Along with GenUserClipSpace, corrects the far plane when rendering the user clip space. Scales the output vertex. You should definitely use this.
+ * \param clipPlane
+ * \param perspective
+ * \param corner
+ */
+FORCEDINLINE void GenUserClipSpaceScale(
+        const _cbasic_tvector<T, 4>& clipPlane,
+        const _cbasic_tmatrix<T, 4>& perspective,
+        _cbasic_tvector<T, 4>& corner
+        )
+{
+    corner = _cbasic_tvector<T, 4>(
+                CMath::signbit(clipPlane.x()),
+                CMath::signbit(clipPlane.y()),
+                1.f,
+                1.f
+                );
+
+    corner = corner * inverse(perspective);
+}
+
+template<typename T>
+/*!
+ * \brief Generate a standard translate, scale, rotate matrix
+ * \param pos
+ * \param scl
+ * \param rot
+ * \return
+ */
 FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_vec3<T> const& pos,
         _cbasic_vec3<T> const& scl,
@@ -81,6 +129,11 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
 }
 
 template<typename T>
+/*!
+ * \brief Shortcut for GenTransform with TSR, but using a data structure.
+ * \param transform
+ * \return
+ */
 FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_transform<T> const& transform)
 {
@@ -91,6 +144,11 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
 }
 
 template<typename T>
+/*!
+ * \brief Generate a standard, parameterized camera matrix
+ * \param camera
+ * \return
+ */
 FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_camera<T> const& camera)
 {
@@ -101,6 +159,13 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
 }
 
 template<typename T>
+/*!
+ * \brief Emulates gluLookAt()
+ * \param observer
+ * \param up
+ * \param subject
+ * \return
+ */
 FORCEDINLINE _cbasic_tmatrix<T,3> GenLookat(
         const _cbasic_tvector<T,3>& observer,
         const _cbasic_tvector<T,3>& up,
