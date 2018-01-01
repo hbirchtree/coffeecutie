@@ -126,9 +126,11 @@ void WrapEventFunction(void* data, int event)
             edata->r().cleanup();
             Profiler::DeepPopContext();
             
+#if defined(COFFEE_NO_ATEXIT)
             auto const& ex = Cmd::GetAtExit();
             for(auto it=ex.rbegin(); it != ex.rend(); it++)
                 (*it)();
+#endif
         }
         break;
         
