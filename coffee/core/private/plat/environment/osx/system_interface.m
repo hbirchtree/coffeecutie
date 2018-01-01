@@ -6,11 +6,13 @@
 //
 //
 
+#include <coffee/core/plat/plat_primary_identify.h>
+
 #import <Foundation/Foundation.h>
 
-#if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+#if defined(COFFEE_APPLE_MOBILE)
 #import <UIKit/UIKit.h>
-#elif defined(TARGET_OS_MAC)
+#else
 #import <AppKit/AppKit.h>
 #endif
 
@@ -20,10 +22,10 @@ extern void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis);
 
 void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis)
 {
-#if defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+#if defined(COFFEE_APPLE_MOBILE)
     if(num_dpis)
         *num_dpis = 0;
-#elif defined(TARGET_OS_MAC)
+#else
     if(num_dpis)
         *num_dpis = [NSScreen screens].count;
     
