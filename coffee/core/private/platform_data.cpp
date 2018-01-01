@@ -119,9 +119,9 @@ scalar PlatformData::DeviceDPI()
 
 bool PlatformData::DeviceSafeArea(SafeArea& area)
 {
-#if !defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_APPLE_MOBILE)
     CoffeeForeignSignalHandleNA(CoffeeForeign_GetSafeMargins,
-            nullptr, nullptr, nullptr);
+            &area, nullptr, nullptr);
 
     return true;
 #else

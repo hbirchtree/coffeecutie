@@ -208,6 +208,13 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     DispatchGeneralEvent(CfTouchEvent, &ev);
 }
 
+- (void)safeAreaInsetsDidChange
+{
+    UIEdgeInsets a = self.window.rootViewController.view.safeAreaInsets;
+    UIEdgeInsets b = self.window.safeAreaInsets;
+    printf("Safe insets changed!");
+}
+
 - (void)handleSwipe: (UISwipeGestureRecognizer*) recog
 {
 //    CGPoint point = [recog locationInView: self.window.rootViewController.view];
@@ -384,6 +391,25 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
             // ... and then we just fill the C++-side buffers.
             winSize[0] = size.width;
             winSize[1] = size.height;
+            break;
+        }
+        case CoffeeForeign_GetSafeMargins:
+        {
+        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_11_0
+            UIEdgeInsets a = appdelegate_typed.window.safeAreaInsets;
+        #else
+            UIEdgeInsets a = appdelegate_typed.window.layoutMargins;
+        #endif
+            
+            float* margins = (float*)ptr1;
+            if(margins)
+            {
+                margins[0] = a.left;
+                margins[1] = a.top;
+                margins[2] = a.right;
+                margins[3] = a.bottom;
+            }
+            
             break;
         }
         case CoffeeForeign_ActivateMotion:
