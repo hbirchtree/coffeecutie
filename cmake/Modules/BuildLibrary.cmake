@@ -96,17 +96,17 @@ macro( GENERATE_FINDSCRIPT )
 endmacro()
 
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
-    if(HEADER_DIR)
-        file ( GLOB_RECURSE ${TARGET}_HEADERS
+    if(IS_DIRECTORY "${HEADER_DIR}")
+        file ( GLOB_RECURSE ALL_HEADERS
             #        ${HEADER_DIR}/*.h
             #        ${HEADER_DIR}/*.hpp
             ${HEADER_DIR}/*
             )
     endif()
     source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
-
+    
     # Because it's hard to write these three commands over and over again
-    add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${${TARGET}_HEADERS}")
+    add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${ALL_HEADERS}")
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -172,7 +172,7 @@ macro(COFFEE_ADD_FRAMEWORK
         BUNDLE_RSRCS BUNDLE_HDRS
         LIBRARIES BUNDLE_LIBRARIES)
     if(APPLE AND NOT IOS)
-        if(HEADER_DIR)
+        if(IS_DIRECTORY "${HEADER_DIR}")
             file ( GLOB_RECURSE ${TARGET}_HEADERS
                 ${HEADER_DIR}/*
                 )
@@ -182,7 +182,7 @@ macro(COFFEE_ADD_FRAMEWORK
         MACFRAMEWORK_PACKAGE(
             "${TARGET}" "${LINKOPT}"
             "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-            "${SOURCES}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
+            "${SOURCES};${${TARGET}_HEADERS}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
 
         target_link_libraries(${TARGET}
             PUBLIC

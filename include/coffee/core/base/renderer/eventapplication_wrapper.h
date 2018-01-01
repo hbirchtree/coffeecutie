@@ -145,6 +145,8 @@ enum CoffeeForeignSignal
     CoffeeForeign_DisplayMessage, // Will be coupled with a C-string or two
     /* ptr1 = pointer to 2-sized int array */
     CoffeeForeign_GetWinSize,
+    /* ptr1 = pointer to 4-sized float array, [left, top, right, bottom] */
+    CoffeeForeign_GetSafeMargins,
     
     CoffeeForeign_ActivateMotion,
 

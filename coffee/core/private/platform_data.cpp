@@ -12,6 +12,10 @@
 extern "C" void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis);
 #endif
 
+#if defined(COFFEE_APPLE_MOBILE)
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#endif
+
 namespace Coffee{
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
@@ -110,6 +114,18 @@ scalar PlatformData::DeviceDPI()
     return maxDpi;
 #else
     return 1.f;
+#endif
+}
+
+bool PlatformData::DeviceSafeArea(SafeArea& area)
+{
+#if !defined(COFFEE_APPLE_MOBILE)
+    CoffeeForeignSignalHandleNA(CoffeeForeign_GetSafeMargins,
+            nullptr, nullptr, nullptr);
+
+    return true;
+#else
+    return false;
 #endif
 }
 

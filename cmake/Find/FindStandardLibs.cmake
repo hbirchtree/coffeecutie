@@ -64,6 +64,7 @@ if(APPLE)
     else()
         list ( APPEND CORE_EXTRA_LIBRARIES
             "-framework OpenGL"
+            "-framework AppKit"
             )
     endif()
 endif()

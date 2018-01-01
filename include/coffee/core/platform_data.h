@@ -52,6 +52,19 @@ struct PlatformData
         PlatformEmscripten      = PlatformWeb | 0x1,
         PlatformNaCL            = PlatformWeb | 0x2,
     };
+    
+    struct SafeArea
+    {
+        union {
+            struct {
+                scalar left;
+                scalar top;
+                scalar right;
+                scalar bottom;
+            };
+            scalar data[4];
+        };
+    };
 
     static
     DeviceType DeviceVariant();
@@ -65,6 +78,14 @@ struct PlatformData
      * \return
      */
     scalar DeviceDPI();
+    
+    static
+    /*!
+     * \brief On some devices, get the insets on the display which can
+     *  safely be used by important UI/graphic elements.
+     * \return true if the value returned is valid
+     */
+    bool DeviceSafeArea(SafeArea& area);
 
     static
     /*!
