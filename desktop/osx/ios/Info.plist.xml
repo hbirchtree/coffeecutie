@@ -75,6 +75,16 @@
       <key>UILaunchImageSize</key>
       <string>{960, 640}</string>
     </dict>
+    <dict>
+      <key>UILaunchImageMInimumOSVersion</key>
+      <string>11.0</string>
+      <key>UILaunchImageName</key>
+      <string>Default-Landscape@3x</string>
+      <key>UILaunchImageOrientation</key>
+      <string>Landscape</string>
+      <key>UILaunchImageSize</key>
+      <string>{2208, 1242}</string>
+    </dict>
   </array>
   <key>UILaunchStoryboardName</key>
   <string>Coffee</string>
