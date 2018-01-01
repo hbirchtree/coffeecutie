@@ -77,7 +77,7 @@ HWDeviceInfo MacSysInfo::Processor()
     CString brand = _GetSysctlString(brd_string);
     uint64 microcode = _GetSysctlInt(mcc_string);
 
-    return HWDeviceInfo(vendor, brand, Mem::StrUtil::hexify(microcode, true));
+    return HWDeviceInfo(vendor, brand, Mem::StrUtil::hexify(microcode & 0xFFFF, true));
 }
 
 bigscalar MacSysInfo::ProcessorFrequency()

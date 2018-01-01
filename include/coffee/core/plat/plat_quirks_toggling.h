@@ -247,6 +247,10 @@
 #define COFFEE_USE_MAEMO_EGL
 #endif
 
+#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_NO_ATEXIT
+#endif
+
 #if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE

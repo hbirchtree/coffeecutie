@@ -246,6 +246,11 @@ STATICINLINE CString DereferencePath(cstring suffix,
     auto paths = GetSystemPaths();
 
     auto urlPart = Path{suffix};
+    
+    #if defined(COFFEE_APPLE_MOBILE)
+    /* Hey ho! On iOS we strip all directory structures, fun to debug, right? */
+    urlPart = urlPart.fileBasename();
+    #endif
 
     switch(storageMask & (RSCA::StorageMask ^ RSCA::SpecifyStorage))
     {

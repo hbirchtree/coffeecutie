@@ -55,6 +55,8 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    setenv("COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports", 1);
+
     appdelegate_ptr = self;
     appdelegate_typed = self;
     

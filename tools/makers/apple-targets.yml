@@ -77,6 +77,8 @@ templates:
     =flavor: mac-osx
     =toolchain: osx-generic_osx.toolchain.cmake
     =preload: osx-generic.cmake
+    +cmake-opts:
+      - -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
 
   ios.*:
     =toolchain:  all-ios.toolchain.cmake
