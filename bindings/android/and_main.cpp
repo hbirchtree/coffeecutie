@@ -321,11 +321,6 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     case APP_CMD_TERM_WINDOW:
     {
         CoffeeEventHandleCall(CoffeeHandle_Cleanup);
-        cDebug("App destroy triggered", event);
-        for(void(*f)() : Cmd::GetAtExit())
-        {
-            f();
-        }
         break;
     }
 
