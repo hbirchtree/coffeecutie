@@ -92,6 +92,13 @@ struct TCPSocketImpl : ASIO_Client
                     lastError = ec;
                     return;
                 }
+            }else{
+                socket.set_verify_callback(
+                            [](bool prever,
+                               asio::ssl::verify_context&)
+                {
+                    return true;
+                });
             }
 #endif
 

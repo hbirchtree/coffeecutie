@@ -125,6 +125,10 @@ void WrapEventFunction(void* data, int event)
             Profiler::DeepPushContext("Renderer-side cleanup");
             edata->r().cleanup();
             Profiler::DeepPopContext();
+            
+            auto const& ex = Cmd::GetAtExit();
+            for(auto it=ex.rbegin(); it != ex.rend(); it++)
+                (*it)();
         }
         break;
         

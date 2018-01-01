@@ -56,7 +56,7 @@ struct BasicTerm : CmdDef
 
     static void RegisterAtExit(void(*efun)());
 
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_NO_ATEXIT)
     static Vector<void(*)()> const& GetAtExit();
 #endif
 };

@@ -168,6 +168,7 @@ if(APPLE)
         private/plat/file/osx/file.cpp
         private/plat/environment/osx/sysinfo.cpp
         private/plat/environment/osx/environment.cpp
+        private/plat/environment/osx/system_interface.m
         )
 endif()
 

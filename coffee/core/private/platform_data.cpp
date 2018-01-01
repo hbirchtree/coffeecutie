@@ -8,6 +8,10 @@
 #include <coffee/android/android_main.h>
 #endif
 
+#if defined(COFFEE_APPLE)
+extern "C" void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis);
+#endif
+
 namespace Coffee{
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
@@ -89,6 +93,21 @@ scalar PlatformData::DeviceDPI()
      *  based on how it looks on a 320 DPI screen
      *  and a 420 DPI screen */
     return (scalar(fcmd.data.scalarI64) / 160.f);
+#elif defined(COFFEE_APPLE)
+    size_t numDpis = 0;
+    OSX_GetDisplayDPI(nullptr, &numDpis);
+    if(numDpis == 0)
+        return 1.f;
+    
+    Vector<float> dpis;
+    dpis.resize(numDpis);
+    OSX_GetDisplayDPI(dpis.data(), nullptr);
+    
+    float maxDpi = 0.f;
+    for(auto const& dpi : dpis)
+        maxDpi = CMath::max(dpi, maxDpi);
+    
+    return maxDpi;
 #else
     return 1.f;
 #endif

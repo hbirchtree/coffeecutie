@@ -3,7 +3,7 @@ GIT := git
 
 BUILD_NAME := mac-osx
 
-BUILD_DIR  := $(PWD)/build-$(BUILD_NAME)
+BUILD_DIR  := $(PWD)/$(BUILD_NAME)
 OUTPUT_DIR := $(PWD)/build/$(BUILD_NAME)
 SOURCE_DIR := $(PWD)/..
 
@@ -14,37 +14,18 @@ CMAKE_DIR := $(SOURCE_DIR)/cmake
 TOOL_DIR := $(CMAKE_DIR)/Toolchains
 PRLD_DIR := $(CMAKE_DIR)/Preload
 
-EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF
+NATIVE_LIB_DIR := $(PWD)/dependencies/native-libs
 
-NATIVE_LIB_DIR := $(PWD)/native-libs
-COFFEE_DIR := 
-
-CMAKE_GEN := Ninja
-CMAKE_TARGET := install
-CMAKE_CONFIG := Debug
-CMAKE_OPTS := -G$(CMAKE_GEN) \
-	-DCMAKE_TOOLCHAIN_FILE=$(TOOL_DIR)/$(TOOLCHAIN) \
-	-C$(PRLD_DIR)/$(PRELOAD) \
-	-DCMAKE_INSTALL_PREFIX=$(OUTPUT_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CMAKE_CONFIG) \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIB_DIR)/Apple \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR) \
-	$(EXTRA_OPTIONS)
+CMAKE_OPTS := $(EXTRA_OPTIONS)
 
 all: build
 
 make-dirs:
 	mkdir -p \
-		$(NATIVE_LIB_DIR) \
 		$(BUILD_DIR)
 
-native-lib-get: make-dirs
-	sh -c 'if [ ! -d "$(NATIVE_LIB_DIR)/.git" ]; then \
-	$(GIT) clone https://github.com/hbirchtree/native-library-bundle $(NATIVE_LIB_DIR); \
-	else git -C $(NATIVE_LIB_DIR) pull; fi'
-
-config: native-lib-get
-	sh -c 'cd $(BUILD_DIR) && CC=clang CXX=clang++ $(CMAKE) $(SOURCE_DIR) $(CMAKE_OPTS)'
+config: make-dirs
+	sh -c 'cd $(BUILD_DIR) && ls && CC=clang CXX=clang++ $(CMAKE) $(CMAKE_OPTS)'
 
 build: config
 	$(CMAKE) --build $(BUILD_DIR) --config $(CMAKE_CONFIG) --target $(CMAKE_TARGET)
