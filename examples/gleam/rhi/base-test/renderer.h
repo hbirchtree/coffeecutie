@@ -344,7 +344,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     for (int32 i = 0; i < eyetex.m_size.depth; i++) {
         CResources::Resource rsc(textures[i], ResourceAccess::SpecifyStorage |
                                  ResourceAccess::AssetFile);
-        CResources::FileMap(rsc);
+        if(!CResources::FileMap(rsc))
+            break;
         
         CStbImageLib::CStbImage img;
         CStbImageLib::LoadData(&img, &rsc);

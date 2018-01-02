@@ -1,0 +1,66 @@
+[
+    {
+        "width": 2436,
+        "height": 1125,
+        "res": "2436h",
+        "variant": "iphone",
+        "scale": "3x"
+    },
+    {
+        "width": 2208,
+        "height": 1242,
+        "res": "736h",
+        "variant": "iphone",
+        "scale": "3x"
+    },
+    {
+        "width": 1334,
+        "height": 750,
+        "res": "667h",
+        "variant": "iphone",
+        "scale": "2x"
+    },
+    {
+        "width": 960,
+        "height": 640,
+        "variant": "iphone",
+        "scale": "2x"
+    },
+    {
+        "width": 1136,
+        "height": 640,
+        "res": "retina4",
+        "variant": "iphone",
+        "scale": "2x"
+    },
+    {
+        "width": 480,
+        "height": 320,
+        "variant": "iphone",
+        "scale": "1x"
+    },
+    {
+        "width": 3840,
+        "height": 2160,
+        "variant": "tv",
+        "scale": "2x"
+    },
+    {
+        "width": 1920,
+        "height": 1080,
+        "variant": "tv",
+        "scale": "1x"
+    },
+    {
+        "width": 2048,
+        "height": 1536,
+        "variant": "ipad",
+        "scale": "2x"
+    },
+    {
+        "width": 1024,
+        "height": 768,
+        "variant": "ipad",
+        "scale": "1x"
+    }
+]
