@@ -921,20 +921,7 @@ static bool InternalDraw(
 #else
         if(d.instanced())
         {
-            auto hnd = pipelineHandle;
-            auto loc = glGetUniformLocation(hnd, "InstanceID");
-
-            auto loc_all = glGetUniformLocation(hnd, "InstanceCount");
-
-            if(loc_all != -1)
-                    glUniform1i(loc_all, i.instances());
-
-            for(uint32 j=0;j<i.instances();j++)
-            {
-                if(loc != -1)
-                    glUniform1i(loc, C_CAST<i32>(j));
-                CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
-            }
+            CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
         }else
 #endif
             CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
@@ -1190,13 +1177,24 @@ void GLEAM_API::MultiDraw(
                     vertexOffset = cmd.data.vertexOffset();
                     buffer.vertices.bind(vertexOffset);
                 }
+                if(cmd.data.instances() > 1)
+                {
+                    for(u32 i=0; i<cmd.data.instances(); i++)
+                    {
+                        if(i != 0)
+                            SetInstanceUniform(vertexHandle,
+                                               instanceID_loc, i);
+                        InternalDraw(
+                            pipeline.m_handle, {
+                            Prim::Triangle, PrimCre::Explicit
+                            }, cmd.call, cmd.data);
+                    }
+                }else
 #endif
+
                 InternalDraw(pipeline.m_handle, {
                                  Prim::Triangle, PrimCre::Explicit
                              }, cmd.call, cmd.data);
-#if defined(COFFEE_ONLY_GLES20)
-                instanceID_val ++;
-#endif
             }
         }
 
