@@ -66,7 +66,7 @@ rpi-sdk: rpi-sdk.mkdir
 
 # Create a help option
 list-targets:
-	@echo "android.armv7a.gingerbread.gles2\nandroid.armv7a.kitkat.gles2\nandroid.armv7a.nougat.gles2\nandroid.armv7a.nougat.gles3\nandroid.armv8a.lollipop.gles3\nandroid.armv8a.nougat.gles3\nandroid.mips.kitkat\nandroid.mips64.kitkat\nandroid.x86.kitkat\nandroid.x86_64.kitkat\ncoverage\ndocs\nemscripten.asmjs\nemscripten.wasm\nfedora.amd64\nmaemo.armel\nmingw.w64\nraspberry.armhf\nsteam.amd64\nubuntu.amd64\nubuntu.amd64.gles2\nubuntu.amd64.gles3\nubuntu.i686.gles\nubuntu.i686.gles2"
+	@echo "android.armv7a.gingerbread.gles2\nandroid.armv7a.kitkat.gles2\nandroid.armv7a.lollipop.gles3\nandroid.armv7a.nougat.gles2\nandroid.armv7a.nougat.gles3\nandroid.armv8a.lollipop.gles3\nandroid.armv8a.nougat.gles3\nandroid.mips.kitkat\nandroid.mips64.kitkat\nandroid.x86.kitkat\nandroid.x86_64.kitkat\ncoverage\ndocs\nemscripten.asmjs\nemscripten.wasm\nfedora.amd64\nmaemo.armel\nmingw.w64\nraspberry.armhf\nsteam.amd64\nubuntu.amd64\nubuntu.amd64.gles2\nubuntu.amd64.gles3\nubuntu.i686.gles\nubuntu.i686.gles2"
 
 help: list-targets
 
@@ -95,6 +95,19 @@ android.armv7a.kitkat.gles2: native-libs FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(COFFEE_DIR):/home/coffee/library:ro --workdir "$(CMAKE_BUILD_DIR)"" \
 		-e BUILD_NAME="android.armv7a.kitkat.gles2" \
+		-e TOOLCHAIN="all-android.toolchain.cmake" \
+		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.lollipop.gles3: native-libs FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.lollipop.gles3 -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -G'Ninja' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/nothing.cmake" -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.lollipop.gles3 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-android.toolchain.cmake -DSKIP_GRAPHIC_TESTS=$(HEADLESS) -DANDROID_NDK=$(ANDROID_NDK_INTERNAL) -DANDROID_SDK=$(ANDROID_SDK_INTERNAL) -DANDROID_TOOLCHAIN=clang -DANDROID_STL=c++_static -DANDROID_PLATFORM=android-21 -DANDROID_ABI='armeabi-v7a with NEON' -DANDROID_CPP_FEATURES=rtti\;exceptions -DANDROID_ARM_NEON=OFF -DCOFFEE_BUILD_GLES=ON -DCOFFEE_BUILD_GLES_20=OFF -DCOFFEE_BUILD_ASSIMP=ON -DCOFFEE_TESTS=OFF -DCOFFEE_BUILD_SDL2=OFF" \
+		-e CMAKE_SECOND_TARGET="AndroidPackage" \
+		-e DOCKER_CONFIG="android" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(COFFEE_DIR):/home/coffee/library:ro --workdir "$(CMAKE_BUILD_DIR)"" \
+		-e BUILD_NAME="android.armv7a.lollipop.gles3" \
 		-e TOOLCHAIN="all-android.toolchain.cmake" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"

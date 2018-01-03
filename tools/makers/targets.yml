@@ -9,6 +9,8 @@ targets:
       nougat:
         - gles2
         - gles3
+      lollipop:
+        - gles3
       kitkat:
         - gles2
       gingerbread:

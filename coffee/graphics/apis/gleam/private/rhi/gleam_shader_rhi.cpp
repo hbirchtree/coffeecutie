@@ -108,7 +108,11 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
     if((versionDirective = StringExtractLine(transformedShader,
                                              "#version ")).size())
     {
+        /* OpenGL GLSL ES 1.00 does not have a #version directive,
+         *  remove it */
+#if !defined(COFFEE_ONLY_GLES20)
         shaderStorage.push_back(versionDirective);
+#endif
     }
 
     /* We move the extension directives at this point */
@@ -119,14 +123,6 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         shaderStorage.push_back(extensionDirective);
 
 #if defined(COFFEE_ONLY_GLES20)
-
-    /* Desktop GL does not require a precision specifier */
-//        shaderSrcVec.push_back();
-
-    /* OpenGL GLSL ES 1.00 does not have a #version directive,
-     *  remove it */
-    if(versionDirective.size())
-        shaderStorage.pop_back();
 
     /* TODO: Provide better support for sampler2DArray, creating
      *  extra uniforms for grid size and etc. This will allow us
@@ -168,6 +164,8 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
 
 
 #else
+
+    /* Desktop GL does not require a precision specifier */
 
     /* For compatibility, remove usages of texture2DArray() in
      *  favor of texture(). texture2DArray() was never put into
