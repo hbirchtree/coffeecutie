@@ -153,8 +153,6 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
     CoffeeInit(false);
 
-    cDebug("Processors: {0}", std::thread::hardware_concurrency());
-
     Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");
 

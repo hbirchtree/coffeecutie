@@ -193,6 +193,16 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
                     );
 #endif
 
+    /* For supporting BaseInstance */
+    if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex)
+    {
+        shaderSrcVec.push_back(
+                    "#define gl_BaseInstanceARB BaseInstance\n"
+                    "#define gl_BaseInstance BaseInstance\n"
+                    "uniform int BaseInstance;\n"
+                    );
+    }
+
     shaderStorage.push_back(transformedShader);
 
     auto directiveEnd = shaderStorage.size() - 1;

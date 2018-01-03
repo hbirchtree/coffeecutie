@@ -61,6 +61,12 @@ protected:
 
     CGhnd m_handle;
     ShaderStage m_stages;
+
+public:
+    CGhnd internalHandle() const
+    {
+        return m_handle;
+    }
 };
 
 struct GLEAM_Pipeline : GraphicsAPI::Pipeline
@@ -88,6 +94,7 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
     void unbind() const;
 
     void dealloc();
+
 protected:
     CGhnd m_handle;
 
@@ -99,6 +106,16 @@ protected:
 
     Vector<shader_cntainer> m_programs;
     LinkList<GLEAM_Shader> m_ownedPrograms;
+
+public:
+    CGhnd pipelineHandle() const
+    {
+        return m_handle;
+    }
+    Vector<shader_cntainer> const& internalHandles() const
+    {
+        return m_programs;
+    }
 };
 
 struct GLEAM_ProgramParameter : GraphicsAPI::ProgramParameter

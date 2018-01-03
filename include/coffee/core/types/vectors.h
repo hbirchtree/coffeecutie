@@ -288,7 +288,16 @@ public:
     }
 };
 
-template<typename T,size_t Size>
+/*
+ * length() is overloaded with use of hypotx(), a C++11 function.
+ * hypot() does not support integers, and falls back to the
+ *  traditional loop in that case.
+ */
+
+template<typename T,size_t Size,
+         typename std::enable_if<Size >= 4
+                                 || std::is_integral<T>::value>::type*
+         = nullptr>
 FORCEDINLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
@@ -296,6 +305,62 @@ FORCEDINLINE T length(
     for(size_t i=0;i<Size;i++)
         sum += pow(v[i],(T)2);
     return sqrt(sum);
+}
+
+template<typename T, size_t Size,
+typename std::enable_if<Size == 2>::type* = nullptr,
+typename std::enable_if<std::is_same<T, double>::value>::type* = nullptr>
+FORCEDINLINE T length(
+        const _cbasic_tvector<T,Size>& v)
+{
+    return hypot(v[0], v[1]);
+}
+
+template<typename T, size_t Size,
+typename std::enable_if<Size == 2>::type* = nullptr,
+typename std::enable_if<std::is_same<T, float>::value>::type* = nullptr>
+FORCEDINLINE T length(
+        const _cbasic_tvector<T,Size>& v)
+{
+    return hypotf(v[0], v[1]);
+}
+
+template<typename T, size_t Size,
+typename std::enable_if<Size == 2>::type* = nullptr,
+typename std::enable_if<std::is_same<T, long double>::value>::type*
+         = nullptr>
+FORCEDINLINE T length(
+        const _cbasic_tvector<T,Size>& v)
+{
+    return hypotl(v[0], v[1]);
+}
+
+template<typename T, size_t Size,
+typename std::enable_if<Size == 3>::type* = nullptr,
+typename std::enable_if<std::is_same<T, double>::value>::type* = nullptr>
+FORCEDINLINE T length(
+        const _cbasic_tvector<T,Size>& v)
+{
+    return hypot(v[0], v[1], v[2]);
+}
+
+template<typename T, size_t Size,
+typename std::enable_if<Size == 3>::type* = nullptr,
+typename std::enable_if<std::is_same<T, float>::value>::type* = nullptr>
+FORCEDINLINE T length(
+        const _cbasic_tvector<T,Size>& v)
+{
+    return hypotf(v[0], v[1], v[2]);
+}
+
+template<typename T, size_t Size,
+typename std::enable_if<Size == 3>::type* = nullptr,
+typename std::enable_if<std::is_same<T, long double>::value>::type*
+         = nullptr>
+FORCEDINLINE T length(
+        const _cbasic_tvector<T,Size>& v)
+{
+    return hypotl(v[0], v[1], v[2]);
 }
 
 template<typename T,size_t Size>

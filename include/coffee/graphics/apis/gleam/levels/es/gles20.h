@@ -59,6 +59,9 @@ struct CGLES20 :
             return false;
 #endif
 
+        if(!glGetString(GL_VENDOR))
+            return false;
+
         if(!Debug::VerifyInit()
         #if !defined(COFFEE_LINKED_GLES)
                 || !glTexImage2D

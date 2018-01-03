@@ -25,10 +25,12 @@ struct GLEAM_DataStore
     APILevel CURR_API = GL_Nothing;
 
     struct {
+        bool instancing;
 #if defined(COFFEE_GLEAM_DESKTOP)
-        u32 _pad;
+        bool base_instance;
 #else
         bool qcom_tiling = false;
+        const bool base_instance = false;
 #endif
     } features;
 

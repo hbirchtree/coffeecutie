@@ -52,6 +52,9 @@ struct CGL33_Base :
 #endif
             return false;
 
+        if(!glGetString(GL_VENDOR))
+            return false;
+
         if(!Debug::VerifyInit() || !glGenSamplers)
             return false;
 

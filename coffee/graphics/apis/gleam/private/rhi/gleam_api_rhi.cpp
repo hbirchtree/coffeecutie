@@ -189,6 +189,13 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     }
 #endif
 
+#if defined(COFFEE_GLEAM_DESKTOP)
+    store->features.base_instance
+            = CGL33::Debug::CheckExtensionSupported(
+                "GL_ARB_shader_draw_parameters");
+    /* base_instance is const false on GLES */
+#endif
+
     m_store = store;
 
     return true;
@@ -843,6 +850,8 @@ static bool InternalDraw(
         GLEAM_API::DrawCall const& d,
         GLEAM_API::DrawInstanceData const& i)
 {
+    // TODO: Use glGetVertexAttribPointer for vertex offsets
+
     if(d.indexed())
     {
         szptr elsize = 4;
@@ -872,23 +881,24 @@ static bool InternalDraw(
                             i.indexOffset()*elsize,i.instanceOffset(),
                             i.instances());
 
-            else if(i.vertexOffset() > 0)
-
-                CGL33::DrawElementInstancedBaseVertex(
-                            mode,
-                            i.elements(), i.elementType(),
-                            i.indexOffset()*elsize, i.instances(),
-                            i.vertexOffset());
-
             else
 #endif
 #if !defined(COFFEE_ONLY_GLES20)
-                CGL33::DrawElementsInstanced(
-                            mode,i.elements(),i.elementType(),
-                            i.indexOffset()*elsize,i.instances());
+                if(i.vertexOffset() > 0)
+                {
+                    CGL33::DrawElementInstancedBaseVertex(
+                                mode,
+                                i.elements(), i.elementType(),
+                                i.indexOffset()*elsize, i.instances(),
+                                i.vertexOffset());
+                }
+                else
+                    CGL33::DrawElementsInstanced(
+                                mode,i.elements(),i.elementType(),
+                                i.indexOffset()*elsize,i.instances());
 #else
-                CGL33::DrawElements(mode,i.elements(),i.elementType(),
-                                    i.indexOffset()*elsize);
+                    CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                        i.indexOffset()*elsize);
 #endif
         }else{
 #if !defined(COFFEE_ONLY_GLES20)
@@ -1000,9 +1010,76 @@ bool InternalMultiDraw(
 }
 #endif
 
+/*!
+ * \brief Add a substitute for the gl_BaseInstanceARB variable on
+ *  GLES and GL 3.3
+ */
+static void GetInstanceUniform(
+        GLEAM_API::PIP const& pipeline,
+        cstring unifName,
+        i32& uloc,
+        CGhnd& handle
+        )
+{
+#if defined(GL_ARB_shader_draw_parameters)
+    return;
+#endif
+
+    if(GLEAM_FEATURES.base_instance)
+        return;
+
+    /* TODO: Cache the uniform location */
+
+    if(GL_CURR_API == GL_3_3 ||
+            GL_CURR_API  == GLES_2_0 ||
+            GL_CURR_API == GLES_3_0)
+    {
+        uloc = CGL33::ProgramUnifGetLoc(
+                    pipeline.pipelineHandle(), unifName);
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else
+    {
+        auto& hnd = handle;
+
+        for(auto const& cnt : pipeline.internalHandles())
+            if(cnt.stages == ShaderStage::Vertex)
+                hnd = cnt.shader->internalHandle();
+
+        uloc = C_FCAST<i32>(
+                    CGL43::ProgramGetResourceIdx(
+                        hnd, GL_UNIFORM, unifName)
+                    );
+    }
+#endif
+}
+
+static void SetInstanceUniform(
+        CGhnd hnd,
+        i32 uloc,
+        u32 baseInstance
+        )
+{
+    i32 baseInstance_i = C_FCAST<i32>(baseInstance);
+
+    if(GL_CURR_API == GL_3_3 ||
+            GL_CURR_API  == GLES_2_0 ||
+            GL_CURR_API == GLES_3_0)
+    {
+        CGL33::Uniformiv(uloc, 1, &baseInstance_i);
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else
+    {
+        CGL43::Uniformiv(hnd, C_FCAST<i32>(uloc), 1, &baseInstance_i);
+    }
+#endif
+}
+
 void GLEAM_API::MultiDraw(
         const GLEAM_API::PIP &pipeline,
-        const GLEAM_API::OPT_DRAW &draws)
+        const GLEAM_API::OPT_DRAW &draws
+        )
 {
     /* In debug mode, display the entire draw call.
      *  This is the true verbose mode. */
@@ -1024,12 +1101,6 @@ void GLEAM_API::MultiDraw(
      *  binding new shader pipelines. */
     pipeline.bind();
 
-    /* If using a platform without instancing, cheat by using a
-     *  uniform in its place. Preprocessor macros will handle the rest. */
-    i32 instanceID_loc = glGetUniformLocation(pipeline.m_handle,
-                                              "InstanceID");
-    i32 instanceID_val = 0;
-
     /* TODO: Add fallback support for gl_DrawID */
 
     /* We will use these to allow use of existing state.
@@ -1037,6 +1108,22 @@ void GLEAM_API::MultiDraw(
      *  because it can be a lot to compare */
     V_DESC* p_vertices = nullptr;
     PSTATE* p_state = nullptr;
+
+    CGhnd vertexHandle = 0;
+    i32 baseInstanceLoc = -1;
+    i32 instanceID_loc = -1;
+    u32 instanceID_val = 0;
+
+    /* For multiple instances, BaseInstance helps a lot */
+    GetInstanceUniform(pipeline, "BaseInstance",
+                       baseInstanceLoc, vertexHandle);
+
+#if defined(COFFEE_ONLY_GLES20)
+    /* If using a platform without instancing, cheat by using a
+     *  uniform in its place. Preprocessor macros will handle the rest. */
+    GetInstanceUniform(pipeline, "InstanceID",
+                       instanceID_loc, vertexHandle);
+#endif
 
 #if defined(COFFEE_GLEAM_DESKTOP)
     /* We assume that, if no multiDrawData is available,
@@ -1084,22 +1171,32 @@ void GLEAM_API::MultiDraw(
 
             for(auto& cmd : buffer.commands)
             {
-                glUniform1i(instanceID_loc, instanceID_val);
+                if(!GLEAM_FEATURES.base_instance)
+                    SetInstanceUniform(vertexHandle, baseInstanceLoc,
+                                       cmd.data.instanceOffset());
+#if defined(COFFEE_ONLY_GLES20)
+                SetInstanceUniform(vertexHandle, instanceID_loc,
+                                   instanceID_val);
+#endif
                 InternalDraw(pipeline.m_handle, {
                                  Prim::Triangle, PrimCre::Explicit
                              }, cmd.call, cmd.data);
+#if defined(COFFEE_ONLY_GLES20)
                 instanceID_val ++;
+#endif
             }
         }
 
     pipeline.unbind();
 }
 
-void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
-                     PipelineState const& ustate,
-                     V_DESC& vertices,
-                     const DrawCall &d, const DrawInstanceData &i,
-                     OccludeQuery* query)
+void GLEAM_API::Draw(
+        const GLEAM_Pipeline &pipeline,
+        PipelineState const& ustate,
+        V_DESC& vertices,
+        const DrawCall &d, const DrawInstanceData &i,
+        OccludeQuery* query
+        )
 {
     C_UNUSED(vertices);
 

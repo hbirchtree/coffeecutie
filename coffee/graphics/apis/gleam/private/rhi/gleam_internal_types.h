@@ -56,3 +56,4 @@ struct GLEAM_Instance_Data
 #define GL_CURR_API m_store->CURR_API
 #define GL_DEBUG_MODE m_store->DEBUG_MODE
 #define GLEAM_API_INSTANCE_DATA m_store->inst_data
+#define GLEAM_FEATURES m_store->features
