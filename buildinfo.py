@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 
 USE_TEXT_PARSING = False
@@ -72,6 +72,13 @@ if __name__ == '__main__':
             end = config.find('\n', idx)
             print(config[idx:end].strip())
         elif prim_key == 'script_location':
+            idx = config.find(prim_key)
+            if idx < 0:
+                exit(0)
+            idx = config.find(':', idx) + 1
+            end = config.find('\n', idx)
+            print(config[idx:end].strip())
+        elif prim_key == 'makefile_location':
             idx = config.find(prim_key)
             if idx < 0:
                 exit(0)

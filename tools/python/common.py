@@ -3,6 +3,8 @@ from collections import namedtuple
 from os.path import isfile, isdir, dirname
 from subprocess import Popen, PIPE
 
+from platform import uname
+
 local_yml_filespec = '.local.yml'
 build_yml_filespec = '.build.yml'
 
@@ -37,10 +39,18 @@ def run_command(program, args, workdir=curdir, dry_run=True, verbose=False):
         'git': [],
         'remove_file': [],
         'mkdir': ['-p'],
-        'copy_dir': ['-urT'],
+        'copy_dir': ['-va'],
         'update_file': ['-u'],
         'add_execute': ['+x']
     }
+
+    # On OS X, cp is quite primitive
+    # So we switch to rsync
+    if uname().system == 'Darwin':
+        program_mapping['copy_dir'] = 'rsync'
+        program_mapping['update_file'] = 'rsync'
+        program_args_mapping['copy_dir'] = ['-ur']
+        program_args_mapping['update_file'] = ['-u']
 
     args = program_args_mapping[program] + args
     program = program_mapping[program]

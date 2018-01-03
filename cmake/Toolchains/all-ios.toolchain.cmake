@@ -35,6 +35,9 @@ set (UNIX True)
 set (APPLE True)
 set (IOS True)
 
+cmake_policy(SET CMP0011 NEW)
+cmake_policy(SET CMP0054 NEW)
+
 # Required as of cmake 2.8.10
 set (CMAKE_OSX_DEPLOYMENT_TARGET "" CACHE STRING "Force unset of the deployment target for iOS" FORCE)
 

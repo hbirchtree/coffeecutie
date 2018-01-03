@@ -109,12 +109,12 @@ def main():
                      ],
                      constant_files={
                          'cmake': [
-                             'Find', 'Find_Windows',
-                             'Modules', 'Packaging', 'Preload',
-                             'Toolchains'
+                             'Find/', 'Find_Windows/',
+                             'Modules/', 'Packaging/', 'Preload/',
+                             'Toolchains/'
                          ],
-                         'desktop': None,
-                         'internal/templates': None,
+                         'desktop/': None,
+                         'internal/templates/': None,
                          'tools/makers/Makefile.*': 'ci',
                          'tools/makers/targets.yml': 'ci',
                          'tools/ci/*.sh': 'ci',
