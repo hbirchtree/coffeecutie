@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gleam_types_rhi.h"
+#include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee{
 namespace RHI{
@@ -31,7 +32,7 @@ struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
     void bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf);
     void setIndexBuffer(GLEAM_ElementBuffer const*buffer);
 
-    void bind();
+    void bind(u32 vertexOffset = 0);
     void unbind();
 private:
     GLEAM_ElementBuffer const* m_ibuffer = nullptr;

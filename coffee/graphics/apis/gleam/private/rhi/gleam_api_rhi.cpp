@@ -1108,6 +1108,9 @@ void GLEAM_API::MultiDraw(
      *  because it can be a lot to compare */
     V_DESC* p_vertices = nullptr;
     PSTATE* p_state = nullptr;
+#if defined(COFFEE_ONLY_GLES20)
+    i32 vertexOffset = 0;
+#endif
 
     CGhnd vertexHandle = 0;
     i32 baseInstanceLoc = -1;
@@ -1158,6 +1161,9 @@ void GLEAM_API::MultiDraw(
         {
             if(&buffer.vertices != p_vertices)
             {
+#if defined(COFFEE_ONLY_GLES20)
+                vertexOffset = 0;
+#endif
                 buffer.vertices.bind();
                 p_vertices = &buffer.vertices;
             }
@@ -1177,6 +1183,13 @@ void GLEAM_API::MultiDraw(
 #if defined(COFFEE_ONLY_GLES20)
                 SetInstanceUniform(vertexHandle, instanceID_loc,
                                    instanceID_val);
+                /* For the vertex offset, we bind the attributes
+                 *  again with a new pointer */
+                if(cmd.data.vertexOffset() != vertexOffset)
+                {
+                    vertexOffset = cmd.data.vertexOffset();
+                    buffer.vertices.bind(vertexOffset);
+                }
 #endif
                 InternalDraw(pipeline.m_handle, {
                                  Prim::Triangle, PrimCre::Explicit

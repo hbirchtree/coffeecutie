@@ -9,8 +9,10 @@ namespace GLEAM{
 
 using Lim = CGL_Shared_Limits;
 
-static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
-                             uint32 binding, GLEAM_ArrayBuffer&)
+static void vao_apply_buffer(
+        Vector<GLEAM_VertAttribute> const& m_attributes,
+        uint32 binding, GLEAM_ArrayBuffer&,
+        u32 vertexOffset = 0)
 {
     for(GLEAM_VertAttribute const& attr : m_attributes)
         if(binding == attr.bufferAssociation())
@@ -37,14 +39,19 @@ static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
                 CGL33::VAOAttribIPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.stride(),
-                            attr.bufferOffset()+attr.offset());
+                            attr.bufferOffset()
+                            + attr.offset()
+                            + vertexOffset * attr.stride()
+                            );
             else
 #endif
                 CGL33::VAOAttribPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.m_flags & GLEAM_API::AttributeNormalization,
                             attr.stride(),
-                            attr.bufferOffset()+attr.offset());
+                            attr.bufferOffset()
+                            + attr.offset()
+                            + vertexOffset * attr.stride());
 
 #if !defined(COFFEE_ONLY_GLES20)
             if(attr.instanced())
@@ -119,15 +126,17 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer *buffer)
     m_ibuffer = buffer;
 }
 
-void GLEAM_VertDescriptor::bind()
+void GLEAM_VertDescriptor::bind(u32 vertexOffset)
 {
 #if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOBind(m_handle);
+    C_UNUSED(vertexOffset);
 #else
     for(Pair<uint32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
     {
         binding.second.bind();
-        vao_apply_buffer(m_attributes, binding.first, binding.second);
+        vao_apply_buffer(m_attributes, binding.first, binding.second,
+                         vertexOffset);
     }
 #endif
     if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_2_0
