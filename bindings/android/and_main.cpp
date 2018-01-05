@@ -342,6 +342,8 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 int32_t AndroidHandleInputCmd(struct android_app* app,
                               struct AInputEvent* event)
 {
+    pthread_mutex_lock(&app->mutex);
+
     switch(AInputEvent_getType(event))
     {
     case AINPUT_EVENT_TYPE_KEY:
@@ -512,9 +514,12 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
     }
     default:
     {
+        pthread_mutex_unlock(&app->mutex);
         return 0;
     }
     }
+
+    pthread_mutex_unlock(&app->mutex);
 
     return 1;
 }

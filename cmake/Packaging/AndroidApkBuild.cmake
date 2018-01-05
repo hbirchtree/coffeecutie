@@ -122,10 +122,6 @@ macro(APK_BUILD TARGET_NAME
     if(ANDROID_USE_GRADLE)
         add_custom_command( TARGET ${TARGET_NAME}
             POST_BUILD
-            COMMAND chmod +x ${BUILD_DIR}/gradlew
-            )
-        add_custom_command( TARGET ${TARGET_NAME}
-            POST_BUILD
             COMMAND ${BUILD_DIR}/gradlew assemble
             WORKING_DIRECTORY ${BUILD_DIR}
             )
@@ -208,6 +204,10 @@ macro(APK_GENERATE_PROJECT
         file( WRITE
             "${GRADLE_WRAPPER_FILE}"
             "${GRADLE_PROPERTIES}" )
+        add_custom_command( TARGET ${TARGET_NAME}
+            POST_BUILD
+            COMMAND chmod +x ${BUILD_DIR}/gradlew
+            )
     else()
         add_custom_command ( TARGET ${Target_Name}
             PRE_BUILD
@@ -358,9 +358,14 @@ macro(APK_PACKAGE_EXT
         Dependency_Libs
         Icon_File )
 
-    add_custom_target ( "${Target_Name}.apk"
+    add_custom_target ( "${Target_Name}.project"
         DEPENDS "${Target_Name}"
         )
+
+    add_custom_target ( "${Target_Name}.apk"
+        DEPENDS "${Target_Name}.project"
+        )
+
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
@@ -512,7 +517,7 @@ macro(APK_PACKAGE_EXT
         "${ANDROID_PACKAGE_NAME}" )
 
     apk_generate_project(
-        "${Target_Name}.apk" "${ANDROID_APK_OUTPUT_DIR}"
+        "${Target_Name}.project" "${ANDROID_APK_OUTPUT_DIR}"
         "${BUILD_OUTDIR}" "${ANDROID_STARTUP_ACTIVITY}"
         "${ANDROID_ASSET_OUTPUT_DIRECTORY}"
         "${ANDROID_MAIN_PATH}"
@@ -532,7 +537,7 @@ macro(APK_PACKAGE_EXT
     #
     # Create library directory
     #
-    add_custom_command ( TARGET "${Target_Name}.apk"
+    add_custom_command ( TARGET "${Target_Name}.project"
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory
             "${ANDROID_LIB_OUTPUT_DIRECTORY}"
@@ -542,7 +547,7 @@ macro(APK_PACKAGE_EXT
     # Install dependency libraries
     set ( ANDROID_DEPENDENCIES_STRING )
     foreach(lib ${Dependency_Libs})
-        add_custom_command ( TARGET "${Target_Name}.apk"
+        add_custom_command ( TARGET "${Target_Name}.project"
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy ${lib}
                 ${ANDROID_LIB_OUTPUT_DIRECTORY}
@@ -571,7 +576,7 @@ macro(APK_PACKAGE_EXT
 #        )
 
 
-    apk_mipmap_icons("${Target_Name}.apk" "${ICON_ASSET}" "${BUILD_OUTDIR}")
+    apk_mipmap_icons("${Target_Name}.project" "${ICON_ASSET}" "${BUILD_OUTDIR}")
 
     if(ANDROID_BUILD_APK)
         apk_build("${Target_Name}.apk" "${BUILD_OUTDIR}"
