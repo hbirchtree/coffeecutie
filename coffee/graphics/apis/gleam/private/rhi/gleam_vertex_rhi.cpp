@@ -35,7 +35,9 @@ static void vao_apply_buffer(
             default:
                 break;
             }
-            if(use_integer && !(attr.m_flags & GLEAM_API::AttributePacked))
+            if(use_integer
+                    && !(attr.m_flags & GLEAM_API::AttributePacked)
+                    && !GLEAM_FEATURES.gles20)
                 CGL33::VAOAttribIPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.stride(),
@@ -63,14 +65,16 @@ static void vao_apply_buffer(
 void GLEAM_VertDescriptor::alloc()
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOAlloc(1,&m_handle);
+    if(!GLEAM_FEATURES.gles20)
+        CGL33::VAOAlloc(1,&m_handle);
 #endif
 }
 
 void GLEAM_VertDescriptor::dealloc()
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOFree(1,&m_handle);
+    if(!GLEAM_FEATURES.gles20)
+        CGL33::VAOFree(1,&m_handle);
 #endif
 }
 
@@ -78,46 +82,51 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute &attr)
 {
     m_attributes.push_back(attr);
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOBind(m_handle);
-#endif
-#if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOEnableAttrib(attr.index());
-    if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    if(!GLEAM_FEATURES.gles20)
     {
-        CGL43::VAOAttribFormat(
-                    attr.index(),attr.size(),
-                    attr.type(),
-                    attr.m_flags & GLEAM_API::AttributeNormalization,
-                    attr.offset());
+        CGL33::VAOBind(m_handle);
+        CGL33::VAOEnableAttrib(attr.index());
+
+        if(GLEAM_FEATURES.vertex_format)
+        {
+            CGL43::VAOAttribFormat(
+                        attr.index(),attr.size(),
+                        attr.type(),
+                        attr.m_flags & GLEAM_API::AttributeNormalization,
+                        attr.offset());
+        }
     }
 #endif
 }
 
 void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
 {
+    if(GLEAM_FEATURES.gles20)
+        m_bufferMapping.insert({binding, buf});
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL43::VAOBind(m_handle);
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    else
     {
-        buf.bind();
-        vao_apply_buffer(m_attributes, binding, buf);
+        CGL43::VAOBind(m_handle);
+        if(!GLEAM_FEATURES.vertex_format)
+        {
+            buf.bind();
+            vao_apply_buffer(m_attributes, binding, buf);
+        }
+        else if(GLEAM_FEATURES.vertex_format)
+        {
+            for(GLEAM_VertAttribute const& attr : m_attributes)
+                if(binding == attr.bufferAssociation())
+                {
+                    CGL43::VAOBindVertexBuffer(
+                                binding,buf.m_handle,
+                                attr.bufferOffset(),
+                                attr.stride());
+                    CGL43::VAOAttribBinding(attr.index(),binding);
+                    if(attr.instanced())
+                        CGL43::VAOBindingDivisor(attr.index(),1);
+                }
+        }
     }
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
-    {
-        for(GLEAM_VertAttribute const& attr : m_attributes)
-            if(binding == attr.bufferAssociation())
-            {
-                CGL43::VAOBindVertexBuffer(
-                            binding,buf.m_handle,
-                            attr.bufferOffset(),
-                            attr.stride());
-                CGL43::VAOAttribBinding(attr.index(),binding);
-                if(attr.instanced())
-                    CGL43::VAOBindingDivisor(attr.index(),1);
-            }
-    }
-#else
-    m_bufferMapping.insert({binding, buf});
 #endif
 }
 
@@ -129,38 +138,35 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer *buffer)
 void GLEAM_VertDescriptor::bind(u32 vertexOffset)
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOBind(m_handle);
-    C_UNUSED(vertexOffset);
-#else
-    for(Pair<uint32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
+    if(!GLEAM_FEATURES.gles20)
     {
-        binding.second.bind();
-        vao_apply_buffer(m_attributes, binding.first, binding.second,
-                         vertexOffset);
-    }
+        CGL33::VAOBind(m_handle);
+        C_UNUSED(vertexOffset);
+    }else
 #endif
-    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
-    {
-        if(m_ibuffer)
-            m_ibuffer->bind();
-    }
+        for(Pair<uint32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
+        {
+            binding.second.bind();
+            vao_apply_buffer(m_attributes, binding.first, binding.second,
+                             vertexOffset);
+        }
+
+    if(GLEAM_FEATURES.element_buffer_bind && m_ibuffer)
+        m_ibuffer->bind();
 }
 
 void GLEAM_VertDescriptor::unbind()
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOBind(0);
-#else
-    for(auto const& attr : m_attributes)
-        CGL33::VAODisableAttrib(attr.index());
+    if(!GLEAM_FEATURES.gles20)
+        CGL33::VAOBind(0);
+    else
 #endif
-    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
-    {
-        if(m_ibuffer)
-            m_ibuffer->unbind();
-    }
+        for(auto const& attr : m_attributes)
+            CGL33::VAODisableAttrib(attr.index());
+
+    if(GLEAM_FEATURES.element_buffer_bind && m_ibuffer)
+        m_ibuffer->unbind();
 }
 
 }

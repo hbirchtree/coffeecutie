@@ -25,7 +25,29 @@ struct GLEAM_DataStore
     APILevel CURR_API = GL_Nothing;
 
     struct {
-        bool instancing;
+        bool gles20 = false;
+        bool is_gles = false;
+
+        bool rasterizer_discard = false;
+        bool depth_clamp = false;
+        bool viewport_indexed = false;
+
+        bool separable_programs = false;
+
+        bool buffer_storage = false;
+        bool buffer_persistent = false;
+
+        bool texture_storage = false;
+
+        bool vertex_format = false;
+        bool element_buffer_bind = false;
+
+        bool draw_buffers_blend = false;
+        bool draw_color_mask = false;
+        bool draw_base_instance =  false;
+        bool draw_multi_indirect = false;
+        bool draw_indirect = false;
+
 #if defined(COFFEE_GLEAM_DESKTOP)
         bool base_instance;
 #else

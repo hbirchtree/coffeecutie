@@ -5,7 +5,7 @@
 
 namespace Coffee{
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if !defined(COFFEE_ONLY_GLES20)
 DebugType gl_converttype(GLuint type)
 {
     switch(type)

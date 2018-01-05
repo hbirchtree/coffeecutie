@@ -58,10 +58,10 @@ static const i8 m_vertex_quad_data[] = {
      127, -127, 127, 0,
 };
 
-void GLEAM_Quad_Drawer::create()
+void GLEAM_Quad_Drawer::create(u32 pos, u32 tex)
 {
     compile_shaders();
-    create_vbo_data();
+    create_vbo_data(pos, tex);
 }
 
 void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
@@ -80,9 +80,10 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
     auto handle = sampler.handle();
     m_state_f.setSampler(m_texLoc, &handle);
 
-    GLEAM_API::Draw(m_pip,
-    {{ShaderStage::Vertex, m_state_v},{ShaderStage::Fragment, m_state_f}},
-                    m_desc, {}, di, nullptr);
+    GLEAM_API::Draw(m_pip, {
+                        {ShaderStage::Vertex, &m_state_v},
+                        {ShaderStage::Fragment, &m_state_f}
+                    }, m_desc, {}, di, nullptr);
 }
 
 void GLEAM_Quad_Drawer::cleanup()
@@ -129,7 +130,7 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     return status;
 }
 
-void GLEAM_Quad_Drawer::create_vbo_data()
+void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
 {
     static GLEAM_ArrayBuffer m_buffer(ResourceAccess::ReadOnly,
                                       sizeof(m_vertex_quad_data));
@@ -142,8 +143,10 @@ void GLEAM_Quad_Drawer::create_vbo_data()
     GLEAM_VertAttribute pos = {};
     GLEAM_VertAttribute tex = {};
 
-    pos.m_idx = 0;
-    tex.m_idx = 1;
+    pos.m_idx = pos_;
+    tex.m_idx = tex_;
+
+    pos.m_bassoc = 0;
 
     pos.m_size = tex.m_size = 2;
 

@@ -10,7 +10,7 @@ namespace GLEAM{
 
 struct GLEAM_Quad_Drawer
 {
-    void create();
+    void create(u32 pos = 0, u32 tex = 1);
     void draw(Matf4 const& xf, GLEAM_Sampler2D& sampler);
     void cleanup();
 
@@ -18,7 +18,7 @@ struct GLEAM_Quad_Drawer
 
 protected:
     bool compile_shaders();
-    void create_vbo_data();
+    void create_vbo_data(u32 pos = 0, u32 tex = 1);
 
     GLEAM_Pipeline m_pip;
     GLEAM_UniformDescriptor m_texLoc;

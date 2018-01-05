@@ -133,10 +133,7 @@ struct GLEAM_SamplerHandle
     };
     CGhnd m_sampler;
     Texture m_type;
-
-#if defined(COFFEE_ONLY_GLES20)
     u32 arraySize;
-#endif
 
     CGhnd& glTexHandle() {return texture;}
     CGhnd& glSamplerHandle() {return m_sampler;}

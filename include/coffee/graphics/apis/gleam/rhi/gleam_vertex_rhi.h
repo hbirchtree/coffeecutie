@@ -16,11 +16,8 @@ struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
     GLEAM_VertDescriptor():
         m_ibuffer(nullptr),
         m_attributes(),
-    #if defined(COFFEE_ONLY_GLES20)
-        m_bufferMapping()
-    #else
+        m_bufferMapping(),
         m_handle(0)
-    #endif
     {
 
     }
@@ -37,12 +34,8 @@ struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
 private:
     GLEAM_ElementBuffer const* m_ibuffer = nullptr;
     Vector<GLEAM_VertAttribute> m_attributes;
-
-#if defined(COFFEE_ONLY_GLES20)
     Map<uint32, GLEAM_ArrayBuffer&> m_bufferMapping;
-#else
     CGhnd m_handle;
-#endif
 };
 
 }

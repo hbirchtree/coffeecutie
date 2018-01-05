@@ -30,9 +30,18 @@ public final class CoffeeNativeActivity extends NativeActivity {
         return null;
     }
 
+    private void tryLoad(String libname)
+    {
+        try{
+            System.loadLibrary(libname);
+        } catch(UnsatisfiedLinkError e) { }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
+            tryLoad("assimp");
+            tryLoad("openal");
             super.onCreate(savedInstanceState);
         }catch(Exception e)
         {

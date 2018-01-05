@@ -112,7 +112,11 @@ struct RendererState
         
         GLM::USTATE unifstate = {};
         GLM::USTATE unifstate_f = {};
-        
+
+        GLM::PSTATE pipstate = {};
+        GLM::RenderPass rpass_s = {};
+        GLM::OPT_DRAW rpass = {};
+
         // Texture information
         bool did_apply_state = false;
         
@@ -333,8 +337,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     /* Uploading textures */
     g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1,
-                              GLM::TextureDMABuffered
-                              | GLM::TextureArrayPerInstance);
+                              GLM::TextureDMABuffered);
     auto& eyetex = *g.eyetex;
     
     eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
@@ -505,6 +508,24 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     g.tbase = d->r_state.time_base;
 
     g.o_query = new GLM::Q_OCC(CGL::QueryT::AnySamplesCon);
+
+    g.rpass_s.pipeline = &g.eye_pip;
+    g.rpass_s.blend = &g.blendstate;
+    g.rpass_s.depth = &g.deptstate;
+    g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
+    g.rpass_s.raster = &g.rasterstate_poly;
+
+    g.pipstate[ShaderStage::Vertex] = &g.unifstate;
+    g.pipstate[ShaderStage::Fragment] = &g.unifstate_f;
+
+    g.rpass_s.draws.push_back({
+                                  &g.vertdesc,
+                                  &g.pipstate,
+                                  g.call,
+                                  g.instdata
+                              });
+
+    GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
 }
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
@@ -631,11 +652,6 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
     scalar texSize = i32(CMath::sqrt(g.eyetex->texSize().depth));
     g.texsize_data = Bytes::Create(texSize);
     
-    GLM::PipelineState pstate = {
-        {ShaderStage::Vertex, g.unifstate},
-        {ShaderStage::Fragment, g.unifstate_f}
-    };
-    
     /*
      * For VR, we could add drawcall parameters to specify this
      * The user would still specify their own projection matrices per-eye,
@@ -644,7 +660,7 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
      *  because this has a lot of benefits to efficiency.
      */
     
-    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata);
+    GLM::MultiDraw(g.eye_pip, g.rpass);
     
 //    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
 //                         g.call, g.instdata, *g.o_query);

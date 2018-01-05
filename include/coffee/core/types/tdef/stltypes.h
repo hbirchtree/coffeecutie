@@ -129,6 +129,11 @@ inline UqPtr<T> MkUq(Args... a)
 {
     return UqPtr<T>(new T(a...));
 }
+template<typename T>
+inline UqPtr<T> MkUqWrap(T* ptr)
+{
+    return  UqPtr<T>(ptr);
+}
 template<typename T, class Deleter, typename... Args>
 inline UqPtr<T,Deleter> MkUqDST(Args... a)
 {

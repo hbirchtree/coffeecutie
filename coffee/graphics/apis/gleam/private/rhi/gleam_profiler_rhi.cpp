@@ -220,15 +220,14 @@ GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag)
     :GraphicsDebug::ScopeMarker(tag)
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0,
-                     C_FCAST<i32>(StrLen(tag)), tag);
+    CGL33::Debug::SetDebugGroup(tag, 0);
 #endif
 }
 
 GLEAM_ScopeMarker::~GLEAM_ScopeMarker()
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    glPopDebugGroup();
+    CGL33::Debug::UnsetDebugGroup();
 #endif
 }
 

@@ -92,22 +92,29 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy &rb)
 void GLEAM_RenderTarget::attachDepthStencilSurface(const GLEAM_Surface &s, uint32 mip)
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    fb_bind(m_type,m_handle);
+    if(!GLEAM_FEATURES.gles20)
+    {
+        fb_bind(m_type,m_handle);
 
-    CGL33::FBAttachTexture2D(m_type,GL_DEPTH_STENCIL_ATTACHMENT,s.m_type,s.m_handle,mip);
+        CGL33::FBAttachTexture2D(
+                    m_type,GL_DEPTH_STENCIL_ATTACHMENT,
+                    s.m_type,s.m_handle,mip);
 
-    if(m_handle != 0)
-        fb_bind(m_type,0);
-#else
-    attachDepthSurface(s, mip);
+        if(m_handle != 0)
+            fb_bind(m_type,0);
+    }else
 #endif
+    {
+        attachDepthSurface(s, mip);
+    }
 }
 
 void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface &s, uint32 mip)
 {
     fb_bind(m_type,m_handle);
 
-    CGL33::FBAttachTexture2D(m_type,GL_DEPTH_ATTACHMENT,s.m_type,s.m_handle,mip);
+    CGL33::FBAttachTexture2D(
+                m_type,GL_DEPTH_ATTACHMENT,s.m_type,s.m_handle,mip);
 
     if(m_handle != 0)
         fb_bind(m_type,0);
@@ -117,19 +124,22 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
                               const CRect64 &tgt, DBuffers buf,
                               Filtering flt) const
 {
+#if !defined(COFFEE_ONLY_GLES20)
+    if(!GLEAM_FEATURES.gles20)
+    {
+        this->bind(FramebufferT::Read);
+        target.bind(FramebufferT::Draw);
+        CGL33::FBBlit(src.convert<int32>(),tgt.convert<int32>(),buf,flt);
+
+        this->unbind(FramebufferT::Read);
+        target.unbind(FramebufferT::Draw);
+    }
+#else
     C_USED(src);
     C_USED(target);
     C_USED(tgt);
     C_USED(buf);
     C_USED(flt);
-#if !defined(COFFEE_ONLY_GLES20)
-    this->bind(FramebufferT::Read);
-    target.bind(FramebufferT::Draw);
-    CGL33::FBBlit(src.convert<int32>(),tgt.convert<int32>(),buf,flt);
-
-    this->unbind(FramebufferT::Read);
-    target.unbind(FramebufferT::Draw);
-#else
     //TODO: We could implement this with a slow method and give lots of errors
 #endif
 }
@@ -144,7 +154,7 @@ void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
     m_size = sz_arm_printable.size();
 
 #if !defined(COFFEE_ONLY_GLES20)
-    if(CGL43::ViewportArraySupported())
+    if(!GLEAM_FEATURES.gles20 && CGL43::ViewportArraySupported())
     {
         auto r = view.convert<scalar>();
         CGL43::ViewportSet(i,r);
@@ -187,20 +197,15 @@ void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 {
     C_USED(i);
     fb_bind(m_type,m_handle);
-//    scalar* d = (scalar*)&color;
-//    if(GL_CURR_API == GLES_3_0)
-//    {
-        glClearColor(color.r(),color.g(),color.b(),color.a());
-        glClear(GL_COLOR_BUFFER_BIT);
-//    }else
-//        CGL33::ClearBufferfv(true,i,color);
+    glClearColor(color.r(),color.g(),color.b(),color.a());
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth)
 {
     fb_bind(m_type,m_handle);
     scalar tmp_dep = C_CAST<scalar>(depth);
-    if(GL_CURR_API == GLES_3_0)
+    if(GLEAM_FEATURES.is_gles)
     {
         glClearDepthf(C_CAST<scalar>(depth));
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -211,7 +216,7 @@ void GLEAM_RenderTarget::clear(bigscalar depth)
 void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
 {
     fb_bind(m_type,m_handle);
-    if(GL_CURR_API == GLES_3_0)
+    if(GLEAM_FEATURES.is_gles)
     {
 //        glClearDepthf(C_CAST<scalar>(depth));
         glClearStencil(stencil);
@@ -246,7 +251,7 @@ void GLEAM_RenderTarget::unbind(FramebufferT t) const
 
 bool GLEAM_RenderTarget::validate() const
 {
-    if(GL_DEBUG_MODE)
+    if(GL_DEBUG_MODE && false)
     {
         fb_bind(m_type,m_handle);
         bool stat = CGL33::FBValidate(m_type);

@@ -10,7 +10,6 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-#if defined(COFFEE_ONLY_GLES20)
 static const constexpr cstring GLES20_COMPAT_VS = {
     "\n#define in attribute\n"
     "#define out varying\n"
@@ -64,7 +63,6 @@ static const constexpr cstring GLES20_COMPAT_FS = {
 
     "uniform int InstanceID;\n"
 };
-#endif
 
 STATICINLINE CString StringExtractLine(CString& shader, cstring query)
 {
@@ -106,13 +104,12 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
      *  #version directive */
     CString versionDirective = {};
     if((versionDirective = StringExtractLine(transformedShader,
-                                             "#version ")).size())
+                                             "#version ")).size()
+            && !GLEAM_FEATURES.gles20)
     {
         /* OpenGL GLSL ES 1.00 does not have a #version directive,
          *  remove it */
-#if !defined(COFFEE_ONLY_GLES20)
         shaderStorage.push_back(versionDirective);
-#endif
     }
 
     /* We move the extension directives at this point */
@@ -122,74 +119,74 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
                              "\n#extension ")).size())
         shaderStorage.push_back(extensionDirective);
 
-#if defined(COFFEE_ONLY_GLES20)
-
-    /* TODO: Provide better support for sampler2DArray, creating
+    if(GLEAM_FEATURES.gles20)
+    {
+        /* TODO: Provide better support for sampler2DArray, creating
      *  extra uniforms for grid size and etc. This will allow us
      *  to sample a sampler2D as if it were a sampler2DArray, all
      *  with the same code. */
 
-    /* TODO: Using the sampler2DArray code, do the same for sampler3D.
+        /* TODO: Using the sampler2DArray code, do the same for sampler3D.
      * This will require special care when providing the user with
      *  texture size limits. We may calculate the max size of a 3D
      *  texture based on 2D texture size. Most likely, this will be
      *  2048x2048 split into 128x or 256x pieces, or maybe smaller. */
 
-    /* We add a compatibility shim for vertex and fragment shaders.
+        /* We add a compatibility shim for vertex and fragment shaders.
      * This does some basic conversion, such as swapping "in" and
      *  "out" with the approriate 1.00 equivalents (attribute and
      *  varying) */
 
 
-    /* Remove the output declaration from modern GLSL */
-    transformedShader = CStrReplace(transformedShader,
-                                    "out vec4 OutColor;", "");
+        /* Remove the output declaration from modern GLSL */
+        transformedShader = CStrReplace(transformedShader,
+                                        "out vec4 OutColor;", "");
 
-    /* If a line has layout(...), remove it, GLSL 1.00
+        /* If a line has layout(...), remove it, GLSL 1.00
      *  does not support that */
-    {
-        CString::size_type it;
-        while((it = transformedShader.find("layout")) != CString::npos)
         {
-            auto endPos = transformedShader.find(')', it);
-            if(endPos != CString::npos)
-                transformedShader.erase(it, endPos + 1 - it);
+            CString::size_type it;
+            while((it = transformedShader.find("layout")) != CString::npos)
+            {
+                auto endPos = transformedShader.find(')', it);
+                if(endPos != CString::npos)
+                    transformedShader.erase(it, endPos + 1 - it);
+            }
         }
-    }
 
-    if(stage == ShaderStage::Vertex)
-        shaderSrcVec.push_back(GLES20_COMPAT_VS);
-    else
-        shaderSrcVec.push_back(GLES20_COMPAT_FS);
+        if(stage == ShaderStage::Vertex)
+            shaderSrcVec.push_back(GLES20_COMPAT_VS);
+        else
+            shaderSrcVec.push_back(GLES20_COMPAT_FS);
 
+    }else
+    {
 
-#else
+        /* Desktop GL does not require a precision specifier */
 
-    /* Desktop GL does not require a precision specifier */
-
-    /* For compatibility, remove usages of texture2DArray() in
+        /* For compatibility, remove usages of texture2DArray() in
      *  favor of texture(). texture2DArray() was never put into
      *  the standard. */
-    shaderSrcVec.push_back(
-                "#define texture2DArray texture\n"
-                );
-
-    if(GLEAM_API::LevelIsOfClass(GL_CURR_API, APIClass::GLES))
         shaderSrcVec.push_back(
-                    "precision highp float;\n"
-                    "precision highp int;\n"
+                    "#define texture2DArray texture\n"
                     );
 
-    if(stage != ShaderStage::Vertex)
-        shaderSrcVec.push_back(
-                    "#define gl_InstanceID InstanceID\n"
-                    "flat in int InstanceID;\n"
-                    );
-    else
-        shaderSrcVec.push_back(
-                    "flat out int InstanceID;\n"
-                    );
-#endif
+        if(GLEAM_API::LevelIsOfClass(GL_CURR_API, APIClass::GLES))
+            shaderSrcVec.push_back(
+                        "precision highp float;\n"
+                        "precision highp int;\n"
+                        );
+
+        if(stage != ShaderStage::Vertex)
+            shaderSrcVec.push_back(
+                        "#define gl_InstanceID InstanceID\n"
+                        "flat in int InstanceID;\n"
+                        );
+        else
+            shaderSrcVec.push_back(
+                        "flat out int InstanceID;\n"
+                        );
+    }
 
     /* For supporting BaseInstance */
     if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex)
@@ -214,18 +211,17 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
 
 bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
-#if defined(COFFEE_ONLY_GLES20)
-    if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
+    if(GLEAM_FEATURES.gles20
+            && stage != ShaderStage::Vertex
+            && stage != ShaderStage::Fragment)
         return false;
-#endif
 
     Vector<cstring> shaderSrcVec = {};
     Vector<CString> shaderStorage = {};
 
     TransformShader(data, stage, shaderStorage, shaderSrcVec);
 
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
     {
         CGL33::ShaderAlloc(1,stage,&m_handle);
 
@@ -267,7 +263,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         return stat;
     }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
     {
         cstring* srcs = shaderSrcVec.data();
 
@@ -299,14 +295,13 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
 void GLEAM_Shader::dealloc()
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
     {
         if(m_handle!=0)
             CGL33::ShaderFree(1,&m_handle);
     }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
     {
         if(m_handle!=0)
             CGL43::ProgramFree(1,&m_handle);
@@ -321,8 +316,7 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
 
     if(shader.m_handle==0)
         return false;
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
     {
         if(m_handle==0)
             CGL33::ProgramAlloc(1,&m_handle);
@@ -330,7 +324,7 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
         return true;
     }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
     {
         if(m_handle==0)
             CGL43::PipelineAlloc(1,&m_handle);
@@ -357,8 +351,7 @@ bool GLEAM_Pipeline::assemble()
 {
     if(m_handle==0)
         return false;
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
     {
         bool stat = CGL33::ProgramLink(m_handle);
         if(GL_DEBUG_MODE && !stat)
@@ -370,7 +363,7 @@ bool GLEAM_Pipeline::assemble()
         return stat;
     }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
     {
         bool stat = CGL43::PipelineValidate(m_handle);
         if(GL_DEBUG_MODE && !stat)
@@ -389,33 +382,30 @@ bool GLEAM_Pipeline::assemble()
 
 void GLEAM_Pipeline::bind() const
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramUse(m_handle);
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
         CGL43::PipelineBind(m_handle);
 #endif
 }
 
 void GLEAM_Pipeline::unbind() const
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramUse(0);
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
         CGL43::PipelineBind(0);
 #endif
 }
 
 void GLEAM_Pipeline::dealloc()
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API==GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramFree(1, &m_handle);
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    else if(GLEAM_FEATURES.separable_programs)
         CGL43::PipelineFree(0, &m_handle);
 #endif
 }
@@ -440,6 +430,42 @@ bool GLEAM_ShaderUniformState::setUniform(
     return true;
 }
 
+STATICINLINE bool translate_sampler_type(
+        Texture& samplerType, u32 m_flags)
+{
+    using namespace ShaderTypes;
+
+    switch(m_flags & SizeMask_f)
+    {
+    case S2:
+        samplerType = Texture::T2D;
+        return true;
+    case SCube:
+        samplerType = Texture::Cubemap;
+        return true;
+    default:
+        if(!GLEAM_FEATURES.gles20)
+            switch(m_flags & SizeMask_f)
+            {
+#if !defined(COFFEE_ONLY_GLES20)
+            case S3:
+                samplerType = Texture::T3D;
+                return true;
+            case S2A:
+                samplerType = Texture::T2DArray;
+                return true;
+            case SCubeA:
+                samplerType = Texture::CubemapArray;
+                return true;
+#endif
+            }
+        if((m_flags & Depth) == Depth)
+            return true;
+        else
+            return false;
+    }
+}
+
 bool GLEAM_ShaderUniformState::setSampler(
         const GLEAM_UniformDescriptor &value,
         const GLEAM_SamplerHandle *sampler)
@@ -456,31 +482,8 @@ bool GLEAM_ShaderUniformState::setSampler(
 
     Texture samplerType = Texture::T2D;
 
-    switch(value.m_flags & SizeMask_f)
-    {
-    case S2:
-        samplerType = Texture::T2D;
-        break;
-#if !defined(COFFEE_ONLY_GLES20)
-    case S3:
-        samplerType = Texture::T3D;
-        break;
-    case S2A:
-        samplerType = Texture::T2DArray;
-        break;
-    case SCubeA:
-        samplerType = Texture::CubemapArray;
-        break;
-#endif
-    case SCube:
-        samplerType = Texture::Cubemap;
-        break;
-    default:
-        if((value.m_flags & Depth) == Depth)
-            break;
-        else
-            return false;
-    }
+    if(!translate_sampler_type(samplerType, value.m_flags))
+        return false;
 
     uint32 idx = value.m_idx;
     m_samplers[idx] = {sampler,value.stages};
@@ -590,8 +593,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
 {
     using namespace ShaderTypes;
 
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
-            || GL_CURR_API == GLES_3_0)
+    if(!GLEAM_FEATURES.separable_programs)
     {
         /* Does not differentiate between shader stages and
          *  their uniforms */
@@ -663,7 +665,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         }
     }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2){
+    else if(GLEAM_FEATURES.separable_programs){
 
         enum GL_PROP_IDX
         {
@@ -765,6 +767,10 @@ GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
 void GLEAM_PipelineDumper::dump(cstring out)
 {
     C_USED(out);
+
+    if(GLEAM_FEATURES.gles20)
+        return;
+
 #if !defined(COFFEE_ONLY_GLES20)
     int32* bin_fmts = &GLEAM_API_INSTANCE_DATA->GL_CACHED
             .NUM_PROGRAM_BINARY_FORMATS;
@@ -780,8 +786,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
         return;
     }
     if(CGL43::GetProgramBinarySupported() &&
-            (GL_CURR_API == GL_3_3
-             || GL_CURR_API == GLES_3_0))
+            (!GLEAM_FEATURES.separable_programs))
     {
         /* Just dump the program binary, nothing else is needed */
         CResources::Resource output(
@@ -820,8 +825,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
             cVerbose(5,"Dumping program ({0}) into file {1} failed",
                      m_pipeline.m_handle,
                      output.resource());
-    }else if(GL_CURR_API == GL_4_3
-             || GL_CURR_API == GLES_3_2)
+    }else if(GLEAM_FEATURES.separable_programs)
     {
         /* With pipeline objects we must fetch several
          *  shader programs and dump these */

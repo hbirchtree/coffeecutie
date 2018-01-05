@@ -34,20 +34,22 @@ GLeamRenderer::~GLeamRenderer()
 }
 
 #if !defined(COFFEE_ONLY_GLES20)
-void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GLchar* msg,
-                   const void* param)
+void gleamcallback(
+        GLenum src, GLenum type,GLuint id,GLenum sev,
+        GLsizei,const GLchar* msg,
+        const void* param
+        )
 {
-    C_USED(src);
-    C_USED(type);
-    C_USED(sev);
+    if(src == GL_DEBUG_SOURCE_APPLICATION)
+        return;
 
     const GLeamRenderer* renderer = (const GLeamRenderer*)param;
     CGL::CGDbgMsg cmsg;
-#ifdef COFFEE_GLEAM_DESKTOP
+
+
     cmsg.sev = gl_convertsev(sev);
     cmsg.type = gl_converttype(type);
     cmsg.comp = gl_convertcomp(src);
-#endif
     cmsg.id = id;
     cmsg.msg = msg;
     renderer->bindingCallback(&cmsg);
@@ -175,15 +177,22 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         return false;
     }
 
-    Profiler::DeepPushContext("Printing information about GL");
-    cDebug("Rendering device info: {0}",GL::Debug::Renderer());
+    if(PlatformData::IsDebug())
+    {
+        GL::Debug::SetDebugGroup("Print information");
 
-    if(feval(p.flags&GLProperties::GLCoreProfile))
-        cDebug("OpenGL core profile version: {0}",
-               GL::Debug::ContextVersion());
-    else
-        cDebug("OpenGL (non-core) version: {0}",
-               GL::Debug::ContextVersion());
+        Profiler::DeepPushContext("Printing information about GL");
+        cDebug("Rendering device info: {0}",GL::Debug::Renderer());
+
+        if(feval(p.flags&GLProperties::GLCoreProfile))
+            cDebug("OpenGL core profile version: {0}",
+                   GL::Debug::ContextVersion());
+        else
+            cDebug("OpenGL (non-core) version: {0}",
+                   GL::Debug::ContextVersion());
+
+        GL::Debug::UnsetDebugGroup();
+    }
 
     cDebug("OpenGL GLSL version: {0}",
            GL::Debug::ShaderLanguageVersion());
@@ -191,6 +200,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(PlatformData::IsDebug())
     {
+        GL::Debug::SetDebugGroup("Profiler statistics");
+
         DProfContext b("Adding GL information to profiler");
 
         Profiler::AddExtraData(
@@ -275,6 +286,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         }
 
         Profiler::AddExtraData("gl:limits", limits);
+
+        GL::Debug::UnsetDebugGroup();
     }
 
     if(GL::DebuggingSupported())

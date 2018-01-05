@@ -34,15 +34,23 @@ struct GraphicsAPI
     /* Enumerations */
     enum TextureFlags
     {
-        TextureDMABuffered = 1, /*!< Use DMA transfer for texture if available on hardware */
-        TextureAutoMipmapped, /*!< Generate automatic mipmaps on texture */
-        
-        TextureArrayPerInstance, /* Intrinsic for GLES 2.0, telling GLM to put use one texture from the array on one instance */
+        TextureDMABuffered      = 0x1,
+        /*!< Use DMA transfer for texture if available on hardware */
+        TextureAutoMipmapped    = 0x2,
+        /*!< Generate automatic mipmaps on texture */
+        TextureImmutable        = 0x4,
+        /*!< Create an immutable texture */
+
     };
     enum AttributeFlags
     {
-        AttributePacked         = 0x1, /*!< For integer types, loads them through the VertexAttribPointer() function */
-        AttributeNormalization  = 0x2, /*!< For integers loaded with VertexAttribPointer(), apply normalization */
+        AttributePacked         = 0x1,
+        /*!< For integer types, loads them through the
+         *  VertexAttribPointer() function */
+        AttributeNormalization  = 0x2,
+        /*!< For integers loaded with VertexAttribPointer(),
+         *  apply normalization. Essentially converts to
+         *  floating-point [-1.0, 1.0] */
     };
 
     struct GraphicsDevice

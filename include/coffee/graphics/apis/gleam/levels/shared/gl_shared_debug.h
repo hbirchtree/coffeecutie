@@ -166,13 +166,13 @@ struct CGL_Shared_Debug
 #endif
     }
 
-    STATICINLINE void SetDebugGroup(cstring n, uint32 id)
+    STATICINLINE void SetDebugGroup(cstring n, uint32 id = 0)
     {
         C_UNUSED(n);
         C_UNUSED(id);
 
 #if !defined(COFFEE_ONLY_GLES20)
-        glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION,id,-1,n);
 #endif
     }
     STATICINLINE void UnsetDebugGroup()

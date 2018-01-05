@@ -39,7 +39,7 @@ def run_command(program, args, workdir=curdir, dry_run=True, verbose=False):
         'git': [],
         'remove_file': [],
         'mkdir': ['-p'],
-        'copy_dir': ['-va'],
+        'copy_dir': ['-urT'],
         'update_file': ['-u'],
         'add_execute': ['+x']
     }

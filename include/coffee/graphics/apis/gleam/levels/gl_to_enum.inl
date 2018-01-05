@@ -994,6 +994,9 @@ inline CGenum to_enum(FramebufferT f)
         return GL_DRAW_FRAMEBUFFER;
     case FramebufferT::Read:
         return GL_READ_FRAMEBUFFER;
+#else
+    case FramebufferT::Draw:
+    case FramebufferT::Read:
 #endif
     case FramebufferT::All:
         return GL_FRAMEBUFFER;

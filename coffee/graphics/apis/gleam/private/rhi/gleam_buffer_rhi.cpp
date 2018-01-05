@@ -8,9 +8,9 @@ namespace GLEAM{
 
 STATICINLINE void VerifyBuffer(CGhnd h)
 {
-    if(GL_DEBUG_MODE)
-        if(!CGL33::Debug::IsBuffer(h))
-            cWarning("Invalid use of buffer API, buffer handle is not valid");
+    if(GL_DEBUG_MODE && !CGL33::Debug::IsBuffer(h))
+        cWarning("Invalid use of buffer API,"
+                 " buffer handle is not valid");
 }
 
 void GLEAM_VBuffer::alloc()
@@ -29,7 +29,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
     m_size = size;
     bind();
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API==GL_4_3
+    if(GLEAM_FEATURES.buffer_storage
             && feval(m_access & ResourceAccess::Immutable))
     {
         CGL43::BufStorage(m_type,m_size,data,m_access);
@@ -41,39 +41,47 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
 
 void *GLEAM_VBuffer::map(szptr offset,szptr size)
 {
-    C_USED(offset);
-
 #if !defined(COFFEE_ONLY_GLES20)
-    VerifyBuffer(m_handle);
+    if(!GLEAM_FEATURES.gles20)
+    {
+        VerifyBuffer(m_handle);
 
-    if(size == 0 && offset == 0)
-        size = m_size;
-    if(offset+size > m_size)
-        return nullptr;
-    bind();
+        if(size == 0 && offset == 0)
+            size = m_size;
+        if(offset+size > m_size)
+            return nullptr;
+        bind();
 
-    auto acc = m_access;
-    if(GL_CURR_API == GL_3_3)
-        acc ^= ResourceAccess::Persistent;
+        auto acc = m_access;
+        if(!GLEAM_FEATURES.buffer_persistent)
+            acc ^= ResourceAccess::Persistent;
 
-    return CGL33::BufMapRange(m_type,offset,(size) ? size : m_size,acc);
+        return CGL33::BufMapRange(m_type,offset,(size) ? size : m_size,acc);
+    }else
 #else
-    //TODO: Fix cases where offset is used for something!!!
-    m_mappedBufferFake.resize(size);
-    return &m_mappedBufferFake[0];
+    C_UNUSED(offset);
 #endif
+    {
+        //TODO: Fix cases where offset is used for something!!!
+        m_mappedBufferFake.resize(size);
+        return &m_mappedBufferFake[0];
+    }
 }
 
 void GLEAM_VBuffer::unmap()
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    VerifyBuffer(m_handle);
+    if(!GLEAM_FEATURES.gles20)
+    {
+        VerifyBuffer(m_handle);
 
-    bind();
-    CGL33::BufUnmap(m_type);
-#else
-    commit(m_mappedBufferFake.size(), &m_mappedBufferFake[0]);
+        bind();
+        CGL33::BufUnmap(m_type);
+    }else
 #endif
+    {
+        commit(m_mappedBufferFake.size(), &m_mappedBufferFake[0]);
+    }
 }
 
 void GLEAM_VBuffer::bind() const
@@ -88,16 +96,21 @@ void GLEAM_VBuffer::unbind() const
 
 void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size) const
 {
+#if !defined(COFFEE_ONLY_GLES20)
+    if(!GLEAM_FEATURES.gles20)
+    {
+        VerifyBuffer(m_handle);
+
+        CGL33::BufBindRange(m_type,idx,m_handle,off,size);
+    }else
+#else
     C_USED(idx);
     C_USED(off);
     C_USED(size);
-#if !defined(COFFEE_ONLY_GLES20)
-    VerifyBuffer(m_handle);
-
-    CGL33::BufBindRange(m_type,idx,m_handle,off,size);
-#else
-    //TODO: Find some solution to this, or print tons of errors
 #endif
+    {
+        //TODO: Find some solution to this, or print tons of errors
+    }
 }
 
 void GLEAM_PixelBuffer::setState(bool pack)

@@ -90,7 +90,7 @@ struct GLEAM_API : GraphicsAPI
 
     using DataStore = GLEAM_DataStore*;
 
-    using PipelineState = Map<ShaderStage,const GLEAM_ShaderUniformState &>;
+    using PipelineState = Map<ShaderStage,GLEAM_ShaderUniformState*>;
 
     using PSTATE = PipelineState;
 
@@ -115,11 +115,21 @@ struct GLEAM_API : GraphicsAPI
 #if !defined(COFFEE_ONLY_GLES20)
         struct IndirectCall
         {
-            u32 count;
-            u32 instanceCount;
-            u32 firstIndex;
-            u32 baseVertex;
-            u32 baseInstance;
+            union{
+                struct {
+                    u32 count;
+                    u32 instanceCount;
+                    u32 firstIndex;
+                    u32 baseVertex;
+                    u32 baseInstance;
+                } i;
+                struct {
+                    u32 count;
+                    u32 instanceCount;
+                    u32 first;
+                    u32 baseInstance;
+                } a;
+            };
         };
 
         struct MultiDrawData
@@ -143,17 +153,17 @@ struct GLEAM_API : GraphicsAPI
 
     struct RenderPass
     {
-        PIP& pipeline;
+        PIP* pipeline;
         FB_T* framebuffer;
 
-        BLNDSTATE& blend;
-        RASTSTATE& raster;
-        DEPTSTATE& depth;
+        BLNDSTATE* blend;
+        RASTSTATE* raster;
+        DEPTSTATE* depth;
 
         struct DrawCall
         {
-            V_DESC& vertices;
-            PSTATE& state;
+            V_DESC* vertices;
+            PSTATE* state;
             D_CALL d_call;
             D_DATA d_data;
         };

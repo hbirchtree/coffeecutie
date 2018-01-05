@@ -9,11 +9,10 @@ namespace GLEAM{
 
 CString GLEAM_API::GetAPIName(const GraphicsAPI::GraphicsDevice &)
 {
-#if defined(COFFEE_GLEAM_DESKTOP)
-    return "OpenGL";
-#else
-    return "OpenGL ES";
-#endif
+    if(!GLEAM_FEATURES.is_gles)
+        return "OpenGL";
+    else
+        return "OpenGL ES";
 }
 
 bool GLEAM_API::GetAPIVersion(const GraphicsAPI::GraphicsDevice &d, SWVersionInfo * ver)
@@ -44,11 +43,10 @@ bool GLEAM_API::GetRendererDriverInfo(const GraphicsAPI::GraphicsDevice &, SWVer
 
 CString GLEAM_API::GetShaderLanguageName(const GraphicsAPI::GraphicsContext &)
 {
-#if defined(COFFEE_GLEAM_DESKTOP)
-    return "GLSL";
-#else
-    return "GLSL ES";
-#endif
+    if(!GLEAM_FEATURES.is_gles)
+        return "GLSL";
+    else
+        return "GLSL ES";
 }
 
 bool GLEAM_API::GetShaderLanguageVersion(const GraphicsAPI::GraphicsContext &c, SWVersionInfo * ver)
