@@ -38,10 +38,16 @@ macro( GENERATE_FINDSCRIPT )
         )
 
     foreach(LIBRARY ${LIBRARY_DEFINITIONS})
-        get_property ( LIB_INCLUDES TARGET ${LIBRARY} PROPERTY INCLUDE_DIRECTORIES )
-        foreach(INC_PATH ${LIB_INCLUDES})
-            set ( INC_DIRS "${INC_DIRS};${INC_PATH}" )
-        endforeach()
+        get_property ( LIB_TYPE TARGET ${LIBRARY} PROPERTY
+            TYPE )
+
+        if(NOT "${LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
+            get_property ( LIB_INCLUDES TARGET ${LIBRARY}
+                PROPERTY INCLUDE_DIRECTORIES )
+            foreach(INC_PATH ${LIB_INCLUDES})
+                set ( INC_DIRS "${INC_DIRS};${INC_PATH}" )
+            endforeach()
+        endif()
     endforeach()
 
     set ( CONF_INCLUDE_DIRS "" )
@@ -104,7 +110,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             )
     endif()
     source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
-    
+
     # Because it's hard to write these three commands over and over again
     add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${ALL_HEADERS}")
 
@@ -134,8 +140,6 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
         PRIVATE
         -DCOFFEE_APPLICATION_LIBRARY
         )
-
-    file ( WRITE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TARGET}.link" "${LIBRARIES}" )
 
     if(ANDROID)
         install(

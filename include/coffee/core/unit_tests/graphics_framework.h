@@ -26,12 +26,23 @@ int gfx_main_proper(Coffee::u32 num, Test const* tests,
 
     int result = 1;
 
+#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
+    application_data->setup = [=](Display::RendererInterface& r, Empty*)
+    {
+        int result = run_tests(num, tests, argc, argv);
+
+        cDebug("CoffeeTest::result ==> {0}", result);
+
+        r.closeWindow();
+    };
+#else
     application_data->setup = [&](Display::RendererInterface& r, Empty*)
     {
         result = run_tests(num, tests, argc, argv);
 
         r.closeWindow();
     };
+#endif
 
     application_data->loop = [](Display::RendererInterface&,Empty*){};
     application_data->cleanup = [](Display::RendererInterface&,Empty*){};
@@ -40,6 +51,34 @@ int gfx_main_proper(Coffee::u32 num, Test const* tests,
                 *application_data);
 
     return result;
+}
+
+template<bool(*TFun)(), typename GFX>
+/*!
+ * \brief Template for testing graphics API functionaltiy without
+ *  writing all the API code every time.
+ * \return
+ */
+bool GraphicsWrap()
+{
+    bool status = false;
+    bool gfxLoaded = false;
+    auto GFXLoader = GFX::GetLoadAPI();
+
+    if(!GFXLoader(true))
+    {
+        status = false;
+        goto unload;
+    }
+    gfxLoaded = true;
+
+    status = TFun();
+
+unload:
+    if(gfxLoaded)
+        GFX::UnloadAPI();
+
+    return status;
 }
 
 }

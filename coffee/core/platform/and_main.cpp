@@ -14,6 +14,7 @@
 #include <android/window.h>
 #include <gestureDetector.h>
 
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
 
 static Coffee::Map<CString, CString> intentVariables;
 static Coffee::CString Android_cacheDir;
@@ -22,7 +23,7 @@ static int Android_DPI;
 
 extern "C" {
 
-JNIEXPORT void
+JNIEXPORT __attribute__((used)) void
 Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
         JNIEnv* env, jobject, jint id, jstring data
         )
@@ -172,8 +173,6 @@ static char javaioFile[] = "java.io.File";
 
 void android_main(struct android_app* state)
 {
-    app_dummy();
-
     Env::SetVar("COFFEE_REPORT_URL",
                 "https://coffee.birchtrees.me/reports");
 

@@ -26,30 +26,50 @@ struct LinuxSysInfo : SysInfoDef
 
     static NetStatusFlags NetStatus();
 
+
     static uint32 CpuCount();
+
     static uint32 CoreCount();
+
+    STATICINLINE
+    /*!
+     * \brief Return CPU usage into provided vector, as percentage
+     * One value designates the usage of one CPU core/thread
+     * It is acceptable to return one CPU-wide value.
+     * Vector shall be empty if no value can be found.
+     */
+    void GetCpuUsage(Vector<u8>&)
+    {
+        return;
+    }
+
+
     STATICINLINE bool MemVirtualAvailable()
     {
         return true;
     }
+
     STATICINLINE uint64 MemTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalram*inf.mem_unit;
     }
+
     STATICINLINE uint64 MemAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.freeram*inf.mem_unit;
     }
+
     STATICINLINE uint64 SwapTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalswap*inf.mem_unit;
     }
+
     STATICINLINE uint64 SwapAvailable()
     {
         struct sysinfo inf;
@@ -60,6 +80,7 @@ struct LinuxSysInfo : SysInfoDef
     static HWDeviceInfo Processor();
 
     static Vector<bigscalar> ProcessorFrequencies();
+
     static bigscalar ProcessorFrequency();
 
     static bool HasFPU();

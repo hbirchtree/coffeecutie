@@ -4,7 +4,7 @@
 #include <coffee/core/types/tdef/stltypes.h>
 
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
-#include "jnipp.h"
+#include <coffee/jni/jnipp.h>
 
 #include <jni.h>
 #include <android/sensor.h>

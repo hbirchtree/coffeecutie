@@ -35,7 +35,8 @@ void sighandle(int sig)
     {
     case SIGTERM:
     case SIGINT:
-        Profiling::ExitRoutine();
+        /* This place used to trigger the Profiler::ExitRoutine().
+         *  Linking made it difficult to keep it. */
         break;
     default:
         break;

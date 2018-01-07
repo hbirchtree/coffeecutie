@@ -335,33 +335,6 @@ bool Posix::PosixDirFun::RmDir(Url const& dname)
     return rmdir(url.c_str()) == 0 || (errno = 0);
 }
 
-bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
-{
-    if(errno != 0)
-    {
-        char path[PATH_MAX] = {};
-        char fd_path[128] = {};
-#if defined(COFFEE_LINUX)
-        if(fd >= 0)
-        {
-            snprintf(fd_path, 128, "/proc/self/fd/%d", fd);
-            auto size = readlink(fd_path, path, PATH_MAX);
-            if(size != 0)
-                ref = path;
-        }
-#elif defined(COFFEE_APPLE)
-        if(!ref && fcntl(fd, F_GETPATH, path) != -1)
-            ref = path;
-#endif
-
-//        fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
-        cVerbose(10, "ERROR:{0}: {1}", ref, strerror(errno));
-        errno = 0;
-        return true;
-    }
-    return false;
-}
-
 uint32 Posix::PosixFileMod_def::PageSize()
 {
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)

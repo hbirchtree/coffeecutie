@@ -4,6 +4,7 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/edef/resenum.h>
 #include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/coffee_resource.h>
 
 namespace Coffee{
 
@@ -13,7 +14,6 @@ namespace CResources{
  * \param prefix
  * \return
  */
-extern void FileResourcePrefix(cstring prefix);
 
 struct Resource;
 

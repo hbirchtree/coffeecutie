@@ -33,7 +33,7 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Version of the system we run on
+     * \brief Should return operating system version or similar.
      * \return
      */
     CString GetSystemVersion()
@@ -43,7 +43,7 @@ struct SysInfoDef
 
     static
     /*!
-     * \brief Get string representing system architecture (eg. win64, lin64, mac64, ios64, and32)
+     * \brief Return a primary operating system identifier, no version
      * \return
      */
     CString GetSystemString();
@@ -57,7 +57,9 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief CPU count in total
+     * \brief Return amount of processor packages.
+     * For NUMA systems, this is the amount of NUMA nodes.
+     * ARM big.LITTLE still count as single-package systems.
      * \return
      */
     CoreCnt CpuCount()
@@ -67,7 +69,8 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief CPU core count in total, all CPUs
+     * \brief Return core count of processor in use.
+     *  In NUMA systems, this shall be core count of the single processors.
      * \return
      */
     CoreCnt CoreCount()
@@ -98,16 +101,21 @@ struct SysInfoDef
 
     static
     /*!
-     * \brief Calculate a 'smart' amount of tasks to launch based upon amount of tasks
+     * \brief Calculate a 'smart' amount of tasks to launch based
+     *  upon amount of tasks
      * \param worksize Amount of tasks
-     * \param weight Weight given to each tasks. Should only be modified if each task is significant in size.
-     * \return An estimated value for what would be a suitable amount of tasks
+     * \param weight Weight given to each tasks. Should only be
+     *  modified if each task is significant in size.
+     * \return An estimated value for what would be a suitable
+     *  amount of tasks
      */
     ThrdCnt SmartParallelism(uint64 worksize, uint64 weight = 1);
 
     STATICINLINE
     /*!
-     * \brief Whether system supports virtual memory
+     * \brief Whether the system supports virtual memory.
+     * Only significant on weird Windows systems or
+     *  low-end Linux systems.
      * \return
      */
     bool MemVirtualAvailable()
@@ -117,7 +125,8 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Total amount of memory in system
+     * \brief Total amount of memory in system. For NUMA system,
+     *  this should include all nodes.
      * \return
      */
     MemUnit MemTotal()
@@ -127,7 +136,8 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Available free memory that can be used
+     * \brief Total amount of *available* memory in the system,
+     *  counting all NUMA nodes if applicable.
      * \return
      */
     MemUnit MemAvailable()
@@ -137,7 +147,10 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Total amount of swap in system
+     * \brief Total amount of swap space in system. On Windows,
+     *  this is the collected size of all page files.
+     * On Linux, this is the collected size of all swap partitions
+     *  and swap files.
      * \return
      */
     MemUnit SwapTotal()
@@ -157,16 +170,25 @@ struct SysInfoDef
 
     static
     /*!
-     * \brief Info about the system's processor
+     * \brief The CPUID of the processor.
+     * On x86, Intel should return GenuineIntel, AMD
+     * should return AuthenticAMD.
+     * On virtual machines, as long as it is returned from CPUID,
+     *  anything is acceptable.
+     * On ARM Linux systems the definition
+     *  is more coarse, as Linaro+ kernels
+     *  do not provide full information.
      * \return
      */
     HWDeviceInfo Processor();
 
     STATICINLINE
     /*!
-     * \brief In relation to ProcessorFrequency(), will return
-     *  max frequency of the cores in a heterogenous system.
-     * Will contain amount equal to ThreadCount()
+     * \brief Fill vector with processor frequencies per core.
+     *  On NUMA systems, the amount of elements *should*
+     *  (but does not need to) equal the amount of cores.
+     * ARM big.LITTLE systems should state frequencies
+     *  of both processor variants at the least.
      * \return
      */
     Vector<bigscalar> ProcessorFrequencies()
@@ -176,7 +198,9 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Current processor frequency in GHz, allowed to be inaccurate if hardware clocks particular cores differently
+     * \brief Return the greatest processor frequency on the system.
+     * This is a legacy feature from before considering NUMA
+     *  and other heterogenous systems..
      * \return
      */
     bigscalar ProcessorFrequency()
@@ -186,7 +210,10 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Whether the system has an FPU, has a great impact on floating-point calculations
+     * \brief Whether the system has a hardware FPU,
+     *  and does not process floating-point in pure software.
+     * On ARM, it is enough to check for VFPv* or NEON.
+     * On x86, the "fpu" CPUID flag is enough.
      * \return
      */
     bool HasFPU()
@@ -195,6 +222,11 @@ struct SysInfoDef
     }
 
     STATICINLINE
+    /*!
+     * \brief Whether FPU errors trigger exceptions/signals.
+     * Is not very much used.
+     * \return
+     */
     bool HasFPUExceptions()
     {
         return false;
@@ -202,7 +234,8 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Cache size can be used to optimize tight loops, or just to make screens look tacky
+     * \brief Loose definition, but if possible should return L1 cache size.
+     * This API is poorly implemented.
      * \return
      */
     MemUnit ProcessorCacheSize()
@@ -211,8 +244,11 @@ struct SysInfoDef
     }
 
     STATICINLINE
+
     /*!
-     * \brief Useful in relation to core count
+     * \brief Often provided as CoreCount() != ThreadCount(),
+     * should give a heuristic of whether the system maps
+     *  multiple execution threads to single physical cores.
      * \return
      */
     bool HasHyperThreading()
@@ -240,15 +276,40 @@ struct SysInfoDef
         return NetStatLocalOnly;
     }
 
+    /*!
+     * \brief If available through DMI or otherwise,
+     *  should return information on what retail device it might be.
+     *  Most custom-built desktop computers will not apply,
+     *  but laptops and phones will.
+     * \return
+     */
     static
     HWDeviceInfo DeviceName();
 
+    /*!
+     * \brief If possible, return the motherboard information from
+     *  DMI or otherwise.
+     * On Android, this is the Android SoC designation,
+     * eg. flo for Nexus 7 (2013).
+     * \return
+     */
     static
     HWDeviceInfo Motherboard();
 
+    /*!
+     * \brief Mostly for laptops and phones, return a description
+     *  of the chassis vendor.
+     * \return
+     */
     static
     HWDeviceInfo Chassis();
 
+    /*!
+     * \brief Provide a BIOS version for the motherboard.
+     *  Mostly applicable to x86 motherboards, but could return
+     *  bootloader or firmware version for phone.
+     * \return
+     */
     static
     HWDeviceInfo BIOS();
 };

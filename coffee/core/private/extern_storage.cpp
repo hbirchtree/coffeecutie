@@ -29,4 +29,16 @@ bool UnixCmd::UnixTerm::alternate_buffer = false;
 Mutex OutputPrinterDef::PrinterLock;
 #endif
 
+static CString _coffee_resource_prefix = "./";
+
+void CResources::FileResourcePrefix(cstring prefix)
+{
+    _coffee_resource_prefix = prefix;
+}
+
+CString const& CResources::GetFileResourcePrefix()
+{
+    return _coffee_resource_prefix;
+}
+
 }

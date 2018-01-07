@@ -151,6 +151,10 @@ struct GLEAM_API : GraphicsAPI
 
     using OPT_DRAW = OptimizedDraw;
 
+#if !defined(COFFEE_ONLY_GLES20)
+    using OptMap = Map<CommandBuffer*, OPT_DRAW::MultiDrawData>;
+#endif
+
     struct RenderPass
     {
         PIP* pipeline;

@@ -8,9 +8,13 @@
 #include <coffee/core/base/input/cinput.h>
 
 #if !defined(COFFEE_INJECTS_EVENTS_EXTERNALLY)
+void* coffee_event_handling_data;
+
 void(*CoffeeEventHandle)(void*, int);
 void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
-void* coffee_event_handling_data;
+
+void(*CoffeeForeignSignalHandle)(int);
+void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
 #endif
 
 bool CoffeeEventHandleCall(int event)

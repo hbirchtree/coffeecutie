@@ -1,10 +1,11 @@
 # CTest functions
 
 include ( ValgrindTest )
+include ( BuildPackaging )
 
 function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     # Bleh, Android kind of sucks for this.
-    if(ANDROID OR WIN_UWP)
+    if(WIN_UWP)
         return()
     endif()
 
@@ -21,9 +22,9 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         set ( SOURCES_MOD "${SOURCES};${APPLICATION_INFO_FILE};${LICENSE_FILE}" )
     endif()
 
-    add_executable ( ${TARGET} ${SOURCES_MOD} )
-
     if(EMSCRIPTEN)
+        add_executable ( ${TARGET} ${SOURCES_MOD} )
+
         set_target_properties( ${TARGET} PROPERTIES
           RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
         )
@@ -34,7 +35,19 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             DESTINATION
             bin
             )
+    elseif(ANDROID)
+        coffee_add_application_longerer(
+            ${TARGET}
+            ${TITLE} "me.birchtrees" 1
+            "Unit test - ${TITLE}" "Testing"
+            "${SOURCES_MOD}"
+            "${LIBRARIES};CoffeeTesting"
+            "" "" "" ""
+            "" ""
+            )
     else()
+        add_executable ( ${TARGET} ${SOURCES_MOD} )
+
         install(
             FILES
             "$<TARGET_FILE:${TARGET}>"
@@ -44,14 +57,19 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             )
     endif()
 
-    target_link_libraries ( ${TARGET}
-        ${LIBRARIES}
-        CoffeeTesting
-        )
+    if(ANDROID)
+    else()
+        target_link_libraries ( ${TARGET}
+            PUBLIC
+
+            ${LIBRARIES}
+            CoffeeTesting
+            )
+    endif()
 
     target_enable_cxx11(${TARGET})
 
-    if(ANDROID OR IOS) # Crosscompiling setup, until we find an elegant solution
+    if(IOS) # Crosscompiling setup, until we find an elegant solution
         message ( "Skipping unit test: ${TITLE}" )
         message ( "Please run the tests somehow!" )
     elseif(EMSCRIPTEN)
@@ -59,6 +77,24 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             NAME ${TITLE}
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
             COMMAND nodejs ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle/${TARGET}.js
+            )
+    elseif(ANDROID)
+
+        set ( ADB_AUTO_PATH
+            "${CMAKE_SOURCE_DIR}/tools/automation/scripts/adb_auto" )
+        set ( ADB_AUTO
+            "${ADB_AUTO_PATH}/unit_test.sh" )
+
+        set ( PKG_NAME )
+        android_gen_pkg_name ("me.birchtrees" "${TARGET}" PKG_NAME )
+
+        add_test (
+            NAME ${TITLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+
+            COMMAND ${ADB_AUTO}
+                ${ANDROID_APK_OUTPUT_DIR}/${PKG_NAME}_dbg.apk
+                ${PKG_NAME}
             )
     else()
         add_test (

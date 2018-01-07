@@ -27,15 +27,11 @@ set ( CoffeeCore_SRCS
     private/coffee_signals.cpp
     private/argument_handling.cpp
 
-    # General functions
-    private/coffee.cpp
-    private/platform_data.cpp
+    private/application_data.cpp
 
     # Internal object / debug functions
     private/base/cdebug.cpp
     private/base/cdisplay.cpp
-    private/base/cfiles.cpp
-    private/base/url.cpp
     private/base/cobject.cpp
     private/base/cregex.cpp
     private/base/debugprinter.cpp
@@ -50,30 +46,15 @@ set ( CoffeeCore_SRCS
     # Terminal functions
     private/terminal/table-print.cpp
 
-    # Profiling
-    private/profiler/profiling-export.cpp
-
     # Isolation of platform libraries
     #private/plat/environment_wall.cpp
 
     # Internal platform layer
-    private/plat/environment/application_start.cpp
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
-
-    private/base/eventapplication_wrapper.cpp
-
-    private/plat/file/file_common.cpp
-
     private/plat/memory/cmd_interface.cpp
     private/plat/memory/string_ops.cpp
-
-    # Compression / data storage
-    private/datastorage/compression/libz.cpp
-
-    # Storage stuff, may be externalized
-    private/coffee_saving.cpp
 
     # Task queues, for easier time scheduling
     private/task_queue/task.cpp
@@ -98,14 +79,45 @@ set ( CoffeeTesting_SRCS
     private/unit_tests/framework.cpp
     )
 
-# Platform-specific code, put it here
+set ( CoffeeFile_SRCS
+    private/plat/file/file_common.cpp
+    private/base/cfiles.cpp
+    private/base/url.cpp
 
-# EGL loading
-if( ANDROID )
-    list ( APPEND CoffeeCore_SRCS
-#            private/plat/graphics/eglinit.cpp
-            )
-endif()
+    # Storage stuff, may be externalized
+    private/coffee_saving.cpp
+    )
+
+set ( CoffeeCompression_SRCS
+    # Compression / data storage
+    private/datastorage/compression/libz.cpp
+    )
+
+set ( CoffeeSysInfo_SRCS
+    # All of this is platform-specific
+    )
+
+set ( CoffeeEventAppWrap_SRCS
+    private/base/eventapplication_wrapper.cpp
+    )
+set ( CoffeePlatformData_SRCS
+    private/platform_data.cpp
+    )
+
+set ( CoffeeCore_AppLoader_SRCS
+    private/plat/environment/application_start.cpp
+    )
+
+set ( CoffeeCore_Bootstrap_SRCS
+    private/coffee.cpp
+    )
+
+set ( CoffeeProfiler_SRCS
+    # Profiling
+    private/profiler/profiling-export.cpp
+    )
+
+# Platform-specific code, put it here
 
 # SDL power-management
 if(COFFEE_BUILD_SDL2
@@ -116,7 +128,7 @@ if(COFFEE_BUILD_SDL2
             OR APPLE
             OR WIN32))
     set ( SDL_POWER_PLUGIN_ENABLED ON )
-    list ( APPEND CoffeeCore_SRCS
+    list ( APPEND CoffeeSysInfo_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
 	)
 endif()
@@ -126,27 +138,46 @@ if(ANDROID)
     find_package( AndroidGlue REQUIRED )
 
     list ( APPEND CoffeeCore_SRCS
-        private/plat/file/android/file.cpp
         private/plat/environment/android/environment.cpp
-        private/plat/environment/android/sysinfo.cpp
-        private/plat/environment/linux/sysinfo.cpp
         private/plat/sensor/android/sensor.cpp
-
-        # For reading process information
         private/plat/file/linux/file.cpp
-        private/plat/environment/linux/process.cpp
 
+        )
+    list ( APPEND CoffeeCore_Bootstrap_SRCS
+        platform/and_main.cpp
+        ${ANDROID_GLUE_SOURCES}
+        ${NDK_HELPER_SOURCES}
         ${CPUFEATURES_SOURCES}
-    )
+        )
+
+    set_source_files_properties (
+        ${ANDROID_GLUE_SOURCES}
+        PROPERTIES
+        COMPILE_DEFINITIONS "NDEBUG"
+        )
+
+    list ( APPEND CoffeeFile_SRCS
+        private/plat/file/android/file.cpp
+        )
+    list ( APPEND CoffeeSysInfo_SRCS
+        # For reading process information
+        private/plat/environment/linux/process.cpp
+        private/plat/environment/linux/sysinfo.cpp
+        private/plat/environment/android/sysinfo.cpp
+        )
 endif()
 
 # Linux-specific code
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     list ( APPEND CoffeeCore_SRCS
-        private/plat/environment/linux/sysinfo.cpp
-        private/plat/file/linux/file.cpp
 	private/plat/environment/linux/environment.cpp
+        private/plat/file/linux/file.cpp
+        )
+    list ( APPEND CoffeeFile_SRCS
+        )
+    list ( APPEND CoffeeSysInfo_SRCS
         private/plat/environment/linux/process.cpp
+        private/plat/environment/linux/sysinfo.cpp
         )
 endif()
 
@@ -165,20 +196,26 @@ endif()
 # Mac OS X-specific code
 if(APPLE)
     list ( APPEND CoffeeCore_SRCS
-        private/plat/file/osx/file.cpp
         private/plat/environment/osx/sysinfo.cpp
         private/plat/environment/osx/environment.cpp
         private/plat/environment/osx/system_interface.m
         )
+    list ( APPEND CoffeeFile_SRCS
+        private/plat/file/osx/file.cpp
+        )
+
 endif()
 
 # Windows-specific code
 if(WIN32)
     list ( APPEND CoffeeCore_SRCS
-        private/plat/file/windows/file.cpp
         private/plat/environment/windows/environment.cpp
         private/plat/environment/windows/sysinfo.cpp
         )
+    list ( APPEND CoffeeFile_SRCS
+        private/plat/file/windows/file.cpp
+        )
+
 #	set_source_files_properties ( private/plat/file/windows/file.cpp
 #		PROPERTIES
 #		COMPILE_FLAGS "/ZW"
@@ -205,8 +242,11 @@ if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/unix/environment.cpp
         private/plat/environment/unix/stacktrace.cpp
-        private/plat/file/unix/file.cpp
         private/plat/linking/unix/loader.cpp
+        private/plat/file/unix/posix_shared.cpp
+        )
+    list ( APPEND CoffeeFile_SRCS
+        private/plat/file/unix/file.cpp
         )
 
     find_package( Unwind QUIET )
@@ -231,11 +271,23 @@ coffee_add_library ( CoffeeXML
     ""
     )
 
-coffee_add_library ( CoffeeCore
-    "${CoffeeCore_SRCS}"
-    "${STANDARDLIBS_LIBRARIES};CoffeeXML"
+coffee_add_library ( CoffeeCore_Base
+    "${CoffeeCore_SRCS};${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS}"
+    "${STANDARDLIBS_LIBRARIES};CoffeeXML;CoffeeProfiler"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )
+
+#coffee_add_library ( CoffeeCore_AppLoader
+#    ""
+#    "CoffeeCore_Base;"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+#    )
+
+#coffee_add_library ( CoffeeCore_Bootstrap
+#    ""
+#    "CoffeeCore_Base;"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+#    )
 
 coffee_add_library ( CoffeeINI
     "${CoffeeINI_SRCS}"
@@ -244,20 +296,60 @@ coffee_add_library ( CoffeeINI
     )
 coffee_add_library ( CoffeeTesting
     "${CoffeeTesting_SRCS}"
-    "CoffeeCore"
+    "CoffeeCore_Base"
     "${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests"
+    )
+
+coffee_add_library ( CoffeeFile
+    ""
+    "CoffeeCore_Base;CoffeeEventAppWrap"
+    "${CMAKE_SOURCE_DIR}/include/coffee/core/"
+    )
+coffee_add_library ( CoffeeSysInfo
+    ""
+    "CoffeeCore_Base"
+    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+coffee_add_library ( CoffeeEventAppWrap
+    ""
+    "CoffeeCore_Base"
+    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+coffee_add_library ( CoffeePlatformData
+    ""
+    "CoffeeCore_Base;CoffeeSysInfo"
+    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+coffee_add_library ( CoffeeProfiler
+    ""
+    "CoffeeCore_Base;CoffeePlatformData"
+    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+
+add_library ( CoffeeCore INTERFACE )
+
+install(
+    TARGETS CoffeeCore
+    EXPORT ${PROJECT_NAME}
+    )
+
+register_library ( CoffeeCore "${CMAKE_SOURCE_DIR}/include/coffee/core" )
+
+target_link_libraries ( CoffeeCore
+    INTERFACE
+    CoffeeCore_Base
     )
 
 find_package ( RapidJson REQUIRED )
 find_package ( TinyXML2 REQUIRED )
 
-target_include_directories ( CoffeeCore
+target_include_directories ( CoffeeCore_Base
     SYSTEM PUBLIC
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
     )
 
-target_include_directories ( CoffeeCore
+target_include_directories ( CoffeeCore_Base
     PUBLIC
     $<INSTALL_INTERFACE:include/>
     $<INSTALL_INTERFACE:include/tinyxml2/>
@@ -287,11 +379,42 @@ if(COFFEE_BUILD_SWIG_BINDING)
         )
 endif()
 
-if(ANDROID)
-    target_include_directories ( CoffeeCore
+if(SDL_POWER_PLUGIN_ENABLED)
+    find_package ( SDL2 QUIET )
+    target_link_libraries ( CoffeeSysInfo
         PRIVATE
-        ${CPUFEATURES_INCLUDE_DIR}
+        ${SDL2_LIBRARY}
         )
+endif()
+
+if(ANDROID)
+    target_include_directories ( CoffeeCore_Base
+        PRIVATE
+        ${ANDROID_GLUE_INCLUDE_DIR}
+        ${NDK_HELPER_INCLUDE_DIR}
+        ${CPUFEATURES_INCLUDE_DIR}
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
+        )
+#    target_link_libraries ( CoffeeCore_Base
+#        PUBLIC
+#        AndroidCore
+#        )
+#    target_link_libraries ( CoffeeEventAppWrap
+#        PUBLIC
+#        AndroidCore
+#        )
+#    target_link_libraries ( CoffeePlatformData
+#        PUBLIC
+#        AndroidCore
+#        )
+#    target_link_libraries ( CoffeeSysInfo
+#        PUBLIC
+#        AndroidCore
+#        )
+#    target_link_libraries ( CoffeeFile_Url
+#        PUBLIC
+#        AndroidCore
+#        )
 endif()
 
 coffee_bundle_includes (

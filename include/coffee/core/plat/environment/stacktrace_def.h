@@ -29,8 +29,15 @@ struct StacktracerDef
         return in;
     }
 
+    template<typename T>
+    static CString DemType()
+    {
+        return DemangleSymbol(GetTypeName<T>());
+    }
+
     /*!
-     * \brief Will return stackframe name for calling function at depth 0 by default
+     * \brief Will return stackframe name for calling function
+     *  at depth 0 by default
      *  Argument specifies depth.
      * \return A string with the name of the stackframe
      */

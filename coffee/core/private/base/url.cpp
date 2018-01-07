@@ -24,7 +24,6 @@
 namespace Coffee{
 
 using namespace CResources;
-static CString _coffee_resource_prefix = "./";
 
 struct SystemPaths
 {
@@ -37,6 +36,8 @@ struct SystemPaths
 STATICINLINE SystemPaths GetSystemPaths()
 {
     SystemPaths paths;
+
+    CString const& _coffee_resource_prefix = GetFileResourcePrefix();
 
 #if defined(COFFEE_ANDROID)
 
@@ -282,60 +283,12 @@ STATICINLINE CString DereferencePath(cstring suffix,
         return {};
     }
     }
-
-
-
-//    //We will NOT try to add any '/' in there.
-//    cVerbose(9, "Dereferencing resource path");
-//    if(feval(storageMask&ResourceAccess::SpecifyStorage))
-//    {
-////        CString asset_fn = CString(AssetApi::AssetPrefix)+suffix;
-
-//        if(feval(storageMask&ResourceAccess::ConfigFile))
-//        {
-//#if defined(COFFEE_APPLE_MOBILE)
-//            return FileFun::NativePath(
-//                        asset_fn.c_str(),
-//                        storageMask&ResourceAccess::StorageMask);
-//#else
-//            cVerbose(9, "Detected configuration file flag");
-//            CString cfgDir = Env::GetUserData(nullptr,nullptr);
-//            cVerbose(9, "Using configuration directory: {0}", cfgDir);
-//            if(!DirFun::MkDir(MkUrl(cfgDir.c_str()), true))
-//                return {};
-//            return Env::ConcatPath(cfgDir.c_str(),suffix);
-//#endif
-//        }
-//#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || \
-//    defined(COFFEE_LINUX) || defined(COFFEE_WINDOWS)
-//        else if(feval(storageMask,ResourceAccess::AssetFile)
-//                && FileFun::VerifyAsset(suffix))
-//            return suffix;
-//#endif
-//        else if(feval(storageMask,ResourceAccess::TemporaryFile))
-//            return
-//                    FileFun::NativePath(
-//                        suffix,ResourceAccess::TemporaryFile);
-//        else if(feval(storageMask,ResourceAccess::SystemFile))
-//            return FileFun::NativePath(
-//                        suffix, ResourceAccess::SystemFile);
-//    }
-//#if defined(COFFEE_ANDROID)
-//    return suffix;
-//#else
-//    return _coffee_resource_prefix + suffix;
-//#endif
 }
 
 CString Url::DereferenceLocalPath() const
 {
     return DereferencePath(internUrl.c_str(),
                            flags & ResourceAccess::StorageMask);
-}
-
-void CResources::FileResourcePrefix(cstring prefix)
-{
-    _coffee_resource_prefix = prefix;
 }
 
 Path Path::removeExt()

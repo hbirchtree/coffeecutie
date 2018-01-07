@@ -31,7 +31,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     set ( COMPANY "${APP_COMPANY_NAME}" )
     set ( VERSION_CODE "${APP_VERSION_CODE}" )
 
-    set ( PACKAGE_PREFIX "org.coffee" )
+    set ( PACKAGE_PREFIX "me.birchtrees" )
 
     set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon.svg" )
 

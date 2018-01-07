@@ -1,5 +1,4 @@
 if(ANDROID)
-    find_package ( CfAndroidMain )
     find_package ( AndroidToolkit )
 
     if(COFFEE_BUILD_SDL2)
@@ -20,20 +19,26 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( ANDROID_BUILD_TOOLS_VER "25.0.0" )
+    set ( ANDROID_BUILD_TOOLS_VER "25.0.0"
+        CACHE STRING "" )
     set ( ANDROID_APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk"
         CACHE PATH "" )
 
-    set ( ANDROID_PROJECT_INPUT "${COFFEE_DESKTOP_DIRECTORY}/android" )
+    set ( ANDROID_PROJECT_INPUT "${COFFEE_DESKTOP_DIRECTORY}/android"
+        CACHE STRING "" )
 
-    set ( ANDROID_PROJECT_TEMPLATE_DIR "${ANDROID_PROJECT_INPUT}/Template" )
-    set ( ANDROID_PROJECT_CONFIG_DIR "${ANDROID_PROJECT_INPUT}/Config" )
+    set ( ANDROID_PROJECT_TEMPLATE_DIR "${ANDROID_PROJECT_INPUT}/Template"
+        CACHE STRING "" )
+    set ( ANDROID_PROJECT_CONFIG_DIR "${ANDROID_PROJECT_INPUT}/Config"
+        CACHE STRING "" )
 
-    set ( ANDROID_BUILD_OUTPUT "${COFFEE_DEPLOY_DIRECTORY}/android-apk" )
+    set ( ANDROID_BUILD_OUTPUT "${COFFEE_DEPLOY_DIRECTORY}/android-apk"
+        CACHE STRING "" )
 
-    set ( ANDROID_BUILD_APK ON )
+    set ( ANDROID_BUILD_APK ON CACHE BOOL "" )
+    set ( ANDROID_DEPLOY_APK OFF CACHE BOOL "" )
 
-    set ( ANDROID_USE_GRADLE ON )
+    set ( ANDROID_USE_GRADLE ON CACHE BOOL "" )
 
     if(ANDROID_USE_GRADLE)
         set ( GRADLE_ROOT "app/src/main" )
@@ -51,8 +56,9 @@ if(ANDROID)
     endif()
 endif()
 
-
-add_custom_target ( AndroidPackage )
+if(NOT TARGET AndroidPackage)
+    add_custom_target ( AndroidPackage )
+endif()
 
 macro(APK_MIPMAP_ICONS Target_Name
         ICON_ASSET BUILD_OUTDIR)
@@ -588,10 +594,21 @@ macro(APK_PACKAGE_EXT
     endif()
 
     if(ANDROID_DEPLOY_APK)
-        apk_deploy("${Target_Name}.apk" "${DEVICE_TARGET}"
-            "${ANDROID_APK_FILE_OUTPUT}"
-            "${ANDROID_AM_START_ACTIVITY}" "${ANDROID_AM_START_INTENT}"
-            )
+        if(ANDROID_USE_GRADLE)
+            add_custom_target( ${Target_Name}.deploy
+                DEPENDS "${Target_Name}.apk"
+                )
+            add_custom_command( TARGET ${Target_Name}.deploy
+                POST_BUILD
+                WORKING_DIRECTORY "${BUILD_OUTDIR}"
+                COMMAND "${BUILD_OUTDIR}/gradlew" installDebug
+                )
+        else()
+            apk_deploy("${Target_Name}.apk" "${DEVICE_TARGET}"
+                "${ANDROID_APK_FILE_OUTPUT}"
+                "${ANDROID_AM_START_ACTIVITY}" "${ANDROID_AM_START_INTENT}"
+                )
+        endif()
     endif()
 
     add_dependencies( AndroidPackage "${Target_Name}.apk" )
@@ -604,6 +621,14 @@ macro(APK_PACKAGE_EXT
         ${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk
         )
 
+endmacro()
+
+macro(ANDROID_GEN_PKG_NAME ORG_NAME TARGET OUT )
+
+    string ( TOLOWER "${ORG_NAME}" ORG_NAME_T )
+    string ( TOLOWER "${TARGET}" TARGET_T )
+
+    set ( ${OUT} "${ORG_NAME_T}.${TARGET_T}" )
 endmacro()
 
 macro(ANDROIDAPK_PACKAGE
@@ -626,14 +651,6 @@ macro(ANDROIDAPK_PACKAGE
         set_property ( TARGET ${TARGET}
             PROPERTY LINK_FLAGS
 "${TARGET_LINK_FLAGS} -U=ANativeActivity_onCreate -U=Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable"
-            )
-
-
-        target_link_libraries ( ${TARGET}
-            PUBLIC
-            EGL
-            CoffeeCore
-            AndroidCore
             )
     endif()
 

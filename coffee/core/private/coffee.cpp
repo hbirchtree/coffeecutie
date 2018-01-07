@@ -14,31 +14,19 @@
 
 #include <coffee/core/coffee_signals.h>
 
+#if defined(COFFEE_ANDROID)
+#include <android_native_app_glue.h>
+#endif
+
 namespace Coffee{
 
-#if defined(COFFEE_ANDROID)
-CString plat_tmp_string;
-#endif
-
-/* Information that is not otherwise available */
-cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
-                                                        C_COMPILER_VER_MAJ,
-                                                        C_COMPILER_VER_MIN,
-                                                        C_COMPILER_VER_REV);
-cstring CoffeeArchString = COFFEE_ARCH;
-cstring CoffeeBuildString = COFFEE_BUILD_STRING;
-
-cstring CoffeePlatformString = C_SYSTEM_STRING;
-
-CString CoffeeDefaultWindowName;
-
-#ifndef COFFEE_LOADABLE_LIBRARY
-extern CoffeeApplicationData app_data;
-#endif
+extern CString plat_tmp_string;
 
 FORCEDINLINE void PrintVersionInfo()
 {
 #if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
+    auto const& app_data = ApplicationData();
+
     cOutputPrint("{0}, released by {1}, version {2}",
                 app_data.application_name,
                 app_data.organization_name,
@@ -135,7 +123,8 @@ void CoffeeInit(bool profiler_init)
 #endif
 
 #ifndef COFFEE_LOADABLE_LIBRARY
-    CoffeeDefaultWindowName = app_data.application_name + " [OpenGL]";
+    CoffeeDefaultWindowName = ApplicationData().application_name
+            + " [OpenGL]";
 #else
     CoffeeDefaultWindowName = "Coffee [OpenGL]";
 #endif
@@ -148,6 +137,10 @@ void CoffeeInit(bool profiler_init)
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
     initargs = AppArg::Clone(argc, argv);
+
+#if defined(COFFEE_ANDROID)
+    app_dummy();
+#endif
 
 #ifndef COFFEE_LOWFAT
 
@@ -277,14 +270,6 @@ void InstallDefaultSigHandlers()
 //    InstallSignalHandler(Sig_PoopedABit,nullptr);
 //    InstallSignalHandler(Sig_ShitMySelf,nullptr);
 //    InstallSignalHandler(Sig_FPE,nullptr);
-}
-
-const CoffeeApplicationData &ApplicationData()
-{
-#ifdef COFFEE_LOADABLE_LIBRARY
-    static CoffeeApplicationData app_data;
-#endif
-    return app_data;
 }
 
 void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)

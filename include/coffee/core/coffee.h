@@ -36,6 +36,14 @@ extern CoffeeApplicationData const& ApplicationData();
 //A simpler implementation of QObject
 class CObject;
 
+namespace CResources {
+
+extern void FileResourcePrefix(cstring prefix);
+
+extern CString const& GetFileResourcePrefix();
+
+}
+
 namespace CFunctional{}
 
 using namespace CFunctional;
