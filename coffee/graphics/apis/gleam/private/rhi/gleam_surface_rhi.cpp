@@ -65,6 +65,9 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
     m_type(type),
     m_handle(0)
 {
+    if(!GLEAM_FEATURES.texture_storage)
+        m_flags = m_flags & (~GLEAM_API::TextureImmutable);
+
     allocate();
     if(!feval(m_flags&GLEAM_API::TextureImmutable))
     {

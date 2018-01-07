@@ -165,8 +165,8 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         /* Desktop GL does not require a precision specifier */
 
         /* For compatibility, remove usages of texture2DArray() in
-     *  favor of texture(). texture2DArray() was never put into
-     *  the standard. */
+         *  favor of texture(). texture2DArray() was never put into
+         *  the standard. */
         shaderSrcVec.push_back(
                     "#define texture2DArray texture\n"
                     );
@@ -176,20 +176,11 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
                         "precision highp float;\n"
                         "precision highp int;\n"
                         );
-
-        if(stage != ShaderStage::Vertex)
-            shaderSrcVec.push_back(
-                        "#define gl_InstanceID InstanceID\n"
-                        "flat in int InstanceID;\n"
-                        );
-        else
-            shaderSrcVec.push_back(
-                        "flat out int InstanceID;\n"
-                        );
     }
 
     /* For supporting BaseInstance */
-    if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex)
+    if(!GLEAM_FEATURES.base_instance
+            && stage == ShaderStage::Vertex)
     {
         shaderSrcVec.push_back(
                     "#define gl_BaseInstanceARB BaseInstance\n"

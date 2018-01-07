@@ -6,6 +6,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/types/cdef/geometry.h>
@@ -223,6 +224,16 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
             && (api != GL_3_3);
     store->features.draw_color_mask =
             is_desktop || (api == GLES_3_2);
+
+    /* For BaseInstance to be fully effective, we need
+     *  both the gl_BaseInstanceARB GLSL variable
+     *  and Draw*BaseInstance. */
+#if defined(COFFEE_GLEAM_DESKTOP)
+    store->features.base_instance =
+#endif
+            store->features.draw_base_instance =
+            store->features.base_instance
+            && store->features.draw_base_instance;
 
     store->features.rasterizer_discard =
             (api != GLES_2_0);
@@ -1009,13 +1020,8 @@ bool InternalMultiDraw(
                     data.indirectCalls.data(), GL_STATIC_DRAW);
     }
 
-    if(data.dc.indexed()
-            && data.dc.instanced()
+    if(data.dc.indexed() && data.dc.instanced()
             && GLEAM_FEATURES.draw_multi_indirect)
-    {
-        /* TODO: Implement this using the buffer type */
-
-
         CGL43::DrawMultiElementsIndirect(
         {
                         Prim::Triangle, PrimCre::Explicit
@@ -1024,28 +1030,22 @@ bool InternalMultiDraw(
                     data.indirectCalls.size(),
                     sizeof(data.indirectCalls[0])
                 );
-    }
-    else if(data.dc.indexed()
-            && !data.dc.instanced())
+    else if(data.dc.indexed() && !data.dc.instanced())
         CGL33::DrawMultiElementsBaseVertex(
                     GL_TRIANGLES, data.counts.data(),
                     data.etype,
                     data.offsets.data(),
                     data.counts.size(),
                     data.baseVertex.data());
-    else if (!data.dc.indexed()
-             && data.dc.instanced()
+    else if (!data.dc.indexed() && data.dc.instanced()
              && GLEAM_FEATURES.draw_multi_indirect)
-    {
         CGL43::DrawMultiArraysIndirect(
         {
                         Prim::Triangle, PrimCre::Explicit
                     }, (c_cptr)nullptr,
                     data.indirectCalls.size(),
                     sizeof(IndirectCall));
-    }
-    else if(!data.dc.indexed()
-            && !data.dc.instanced())
+    else if(!data.dc.indexed() && !data.dc.instanced())
         CGL43::DrawMultiArrays(
                     GL_TRIANGLES,
                     C_RCAST<const i32*>(data.offsets.data()),
@@ -1119,6 +1119,8 @@ void GLEAM_API::MultiDraw(
         const GLEAM_API::OPT_DRAW &draws
         )
 {
+    GLEAM_API::DBG::SCOPE a("GLEAM_API::MultiDraw");
+
     /* In debug mode, display the entire draw call.
      *  This is the true verbose mode. */
     if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
@@ -1154,8 +1156,9 @@ void GLEAM_API::MultiDraw(
     u32 instanceID_val = 0;
 
     /* For multiple instances, BaseInstance helps a lot */
-    GetInstanceUniform(pipeline, "BaseInstance",
-                       baseInstanceLoc, vertexHandle);
+    if(!GLEAM_FEATURES.base_instance)
+        GetInstanceUniform(pipeline, "BaseInstance",
+                           baseInstanceLoc, vertexHandle);
 
     /* If using a platform without instancing, cheat by using a
      *  uniform in its place. Preprocessor macros will handle the rest. */
@@ -1164,9 +1167,23 @@ void GLEAM_API::MultiDraw(
                            instanceID_loc, vertexHandle);
 
 #if defined(COFFEE_GLEAM_DESKTOP)
+
+    /* For pure GL 3.3 platforms, we must assert that
+     *  instancing is not necessary */
+    auto it = std::find_if(draws.multiDrawData.begin(),
+                 draws.multiDrawData.end(),
+                 [](OptMap::value_type const& e)
+    {
+        return e.second.dc.instanced();
+    });
+
+    bool call_instanced = it != draws.multiDrawData.end();
+
     /* We assume that, if no multiDrawData is available,
      *  we can't use it */
-    if(draws.multiDrawData.size())
+    if(draws.multiDrawData.size() &&
+            (GLEAM_FEATURES.draw_multi_indirect
+             || !call_instanced))
     {
         for(auto& mdData : draws.multiDrawData)
         {
@@ -1174,12 +1191,16 @@ void GLEAM_API::MultiDraw(
 
             if(&buffer.vertices != p_vertices)
             {
+                GLEAM_API::DBG::SCOPE b(
+                            "GLEAM_API::VBuffer::bind");
                 buffer.vertices.bind();
                 p_vertices = &buffer.vertices;
             }
 
             if(&buffer.state != p_state)
             {
+                GLEAM_API::DBG::SCOPE b(
+                            "GLEAM_API::SetShaderUniformState");
                 for(auto const& s : buffer.state)
                     SetShaderUniformState(pipeline,
                                           s.first, *s.second);
@@ -1197,6 +1218,8 @@ void GLEAM_API::MultiDraw(
         {
             if(&buffer.vertices != p_vertices)
             {
+                GLEAM_API::DBG::SCOPE b(
+                            "GLEAM_API::VBuffer::bind");
                 if(GLEAM_FEATURES.gles20)
                     vertexOffset = 0;
                 buffer.vertices.bind();
@@ -1205,6 +1228,8 @@ void GLEAM_API::MultiDraw(
 
             if(&buffer.state != p_state)
             {
+                GLEAM_API::DBG::SCOPE b(
+                            "GLEAM_API::SetShaderUniformState");
                 for(auto const& s : buffer.state)
                     SetShaderUniformState(pipeline, s.first,
                                           *s.second);
