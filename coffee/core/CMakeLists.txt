@@ -273,7 +273,7 @@ coffee_add_library ( CoffeeXML
 
 coffee_add_library ( CoffeeCore_Base
     "${CoffeeCore_SRCS};${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS}"
-    "${STANDARDLIBS_LIBRARIES};CoffeeXML;CoffeeProfiler"
+    "${STANDARDLIBS_LIBRARIES};CoffeeXML"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )
 
@@ -300,31 +300,31 @@ coffee_add_library ( CoffeeTesting
     "${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests"
     )
 
-coffee_add_library ( CoffeeFile
-    ""
-    "CoffeeCore_Base;CoffeeEventAppWrap"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core/"
-    )
-coffee_add_library ( CoffeeSysInfo
-    ""
-    "CoffeeCore_Base"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-    )
-coffee_add_library ( CoffeeEventAppWrap
-    ""
-    "CoffeeCore_Base"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-    )
-coffee_add_library ( CoffeePlatformData
-    ""
-    "CoffeeCore_Base;CoffeeSysInfo"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-    )
-coffee_add_library ( CoffeeProfiler
-    ""
-    "CoffeeCore_Base;CoffeePlatformData"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-    )
+#coffee_add_library ( CoffeeFile
+#    ""
+#    "CoffeeCore_Base;CoffeeEventAppWrap"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core/"
+#    )
+#coffee_add_library ( CoffeeSysInfo
+#    ""
+#    "CoffeeCore_Base"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+#    )
+#coffee_add_library ( CoffeeEventAppWrap
+#    ""
+#    "CoffeeCore_Base"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+#    )
+#coffee_add_library ( CoffeePlatformData
+#    ""
+#    "CoffeeCore_Base;CoffeeSysInfo"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+#    )
+#coffee_add_library ( CoffeeProfiler
+#    ""
+#    "CoffeeCore_Base;CoffeePlatformData"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+#    )
 
 add_library ( CoffeeCore INTERFACE )
 
@@ -381,7 +381,7 @@ endif()
 
 if(SDL_POWER_PLUGIN_ENABLED)
     find_package ( SDL2 QUIET )
-    target_link_libraries ( CoffeeSysInfo
+    target_link_libraries ( CoffeeCore_Base
         PRIVATE
         ${SDL2_LIBRARY}
         )
@@ -395,26 +395,6 @@ if(ANDROID)
         ${CPUFEATURES_INCLUDE_DIR}
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )
-#    target_link_libraries ( CoffeeCore_Base
-#        PUBLIC
-#        AndroidCore
-#        )
-#    target_link_libraries ( CoffeeEventAppWrap
-#        PUBLIC
-#        AndroidCore
-#        )
-#    target_link_libraries ( CoffeePlatformData
-#        PUBLIC
-#        AndroidCore
-#        )
-#    target_link_libraries ( CoffeeSysInfo
-#        PUBLIC
-#        AndroidCore
-#        )
-#    target_link_libraries ( CoffeeFile_Url
-#        PUBLIC
-#        AndroidCore
-#        )
 endif()
 
 coffee_bundle_includes (
