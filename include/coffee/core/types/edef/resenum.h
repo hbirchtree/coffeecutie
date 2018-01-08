@@ -5,6 +5,8 @@
 #include "enumfun.h"
 #include "../tdef/integertypes.h"
 
+#undef DELETE
+
 namespace Coffee{
 
 enum class Delay : uint8
