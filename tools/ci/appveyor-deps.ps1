@@ -4,4 +4,4 @@
 iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
 choco install --no-progress -y python3
 
-. C:\Python36\Scripts\pip install pyyaml requests
+. C:\Python36\Scripts\pip -q install pyyaml requests
