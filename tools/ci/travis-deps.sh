@@ -8,11 +8,8 @@ case "${TRAVIS_OS_NAME}" in
     sudo apt-get -qy install python-requests python-yaml python3-requests
 ;;
 "osx")
-    #brew install python3
-    brew install sdl2 cmake ninja openssl
-    easy_install pip
-    sudo easy_install pip
-    pip install pyyaml requests
+    brew install sdl2 cmake openssl python3
+    pip3 install pyyaml requests
     exit 0
 ;;
 esac
