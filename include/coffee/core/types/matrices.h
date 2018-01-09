@@ -180,6 +180,20 @@ FORCEDINLINE _cbasic_tmatrix<T,Size> operator*(
 }
 
 template<typename T,size_t Size>
+FORCEDINLINE _cbasic_tvector<T,Size> operator*(
+        _cbasic_tvector<T,Size> const& m1,
+        _cbasic_tmatrix<T,Size> const& m2)
+{
+    _cbasic_tvector<T,Size> res(0);
+
+    for(size_t i=0;i<Size;i++)
+        for(size_t j=0;j<Size;j++)
+            res[i] += m1[j]*m2[i][j];
+
+    return res;
+}
+
+template<typename T,size_t Size>
 FORCEDINLINE _cbasic_tmatrix<T,Size> operator/(
         _cbasic_tmatrix<T,Size> const& src,
         const T& val)

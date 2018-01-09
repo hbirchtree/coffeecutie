@@ -1008,6 +1008,8 @@ bool InternalMultiDraw(
 
     /* TODO: Add fallbacks on Draw*Indirect */
 
+    DrwMd mode = {data.dc.primitive(),data.dc.primitiveMode()};
+
     if(data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect)
     {
         if(indirectBuf == 0)
@@ -1023,16 +1025,14 @@ bool InternalMultiDraw(
     if(data.dc.indexed() && data.dc.instanced()
             && GLEAM_FEATURES.draw_multi_indirect)
         CGL43::DrawMultiElementsIndirect(
-        {
-                        Prim::Triangle, PrimCre::Explicit
-                    }, data.etype,
+                    mode, data.etype,
                     (c_cptr)0,
                     data.indirectCalls.size(),
                     sizeof(data.indirectCalls[0])
                 );
     else if(data.dc.indexed() && !data.dc.instanced())
         CGL33::DrawMultiElementsBaseVertex(
-                    GL_TRIANGLES, data.counts.data(),
+                    mode, data.counts.data(),
                     data.etype,
                     data.offsets.data(),
                     data.counts.size(),
@@ -1040,14 +1040,12 @@ bool InternalMultiDraw(
     else if (!data.dc.indexed() && data.dc.instanced()
              && GLEAM_FEATURES.draw_multi_indirect)
         CGL43::DrawMultiArraysIndirect(
-        {
-                        Prim::Triangle, PrimCre::Explicit
-                    }, (c_cptr)nullptr,
+                    mode, (c_cptr)nullptr,
                     data.indirectCalls.size(),
                     sizeof(IndirectCall));
     else if(!data.dc.indexed() && !data.dc.instanced())
         CGL43::DrawMultiArrays(
-                    GL_TRIANGLES,
+                    mode,
                     C_RCAST<const i32*>(data.offsets.data()),
                     data.counts.data(),
                     data.offsets.size());
@@ -1238,6 +1236,10 @@ void GLEAM_API::MultiDraw(
 
             for(auto& cmd : buffer.commands)
             {
+                DrwMd mode = {cmd.call.primitive(),
+                              cmd.call.primitiveMode()
+                             };
+
                 if(!GLEAM_FEATURES.base_instance)
                     SetInstanceUniform(vertexHandle, baseInstanceLoc,
                                        cmd.data.instanceOffset());
@@ -1260,15 +1262,12 @@ void GLEAM_API::MultiDraw(
                         if(i != 0)
                             SetInstanceUniform(vertexHandle,
                                                instanceID_loc, i);
-                        InternalDraw(
-                            pipeline.m_handle, {
-                            Prim::Triangle, PrimCre::Explicit
-                            }, cmd.call, cmd.data);
+                        InternalDraw(pipeline.m_handle, mode,
+                                     cmd.call, cmd.data);
                     }
                 }else
-                    InternalDraw(pipeline.m_handle, {
-                                     Prim::Triangle, PrimCre::Explicit
-                                 }, cmd.call, cmd.data);
+                    InternalDraw(pipeline.m_handle,
+                                 mode, cmd.call, cmd.data);
             }
         }
 
@@ -1285,7 +1284,7 @@ void GLEAM_API::Draw(
 {
     C_UNUSED(vertices);
 
-    DrwMd mode = {Prim::Triangle,PrimCre::Explicit};
+    DrwMd mode = {d.primitive(),d.primitiveMode()};
 
     if(query)
         query->begin();

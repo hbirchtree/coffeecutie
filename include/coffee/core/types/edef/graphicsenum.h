@@ -55,6 +55,29 @@ enum class TexType
     None, T2D, T2A, T3D, Cube
 };
 
+/*!
+ * \brief Primitive types. Sorted such that, with 0,0
+ * for Prim and PrimCre, it defaults to explicit triangles.
+ */
+enum class Prim
+{
+    Triangle,
+    Point,
+    Line,
+    Patch,
+};
+
+enum class PrimCre
+{
+    Explicit,
+    Strip,
+    Fan,
+    Loop,
+    Adjacency,
+
+    MaxValue,
+};
+
 namespace ShaderTypes
 {
     enum ShaderType_t
@@ -186,6 +209,7 @@ namespace ShaderTypes
     };
 }
 
+C_FLAGS(PrimCre,uint32);
 C_FLAGS(DBuffers,uint32);
 C_FLAGS(FramebufferT,uint32);
 

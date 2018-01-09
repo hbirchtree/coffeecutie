@@ -90,6 +90,20 @@ void GLEAM_Quad_Drawer::cleanup()
 {
 }
 
+GLEAM_DrawInstance GLEAM_Quad_Drawer::drawInstance() const
+{
+    auto inst = GLEAM_DrawInstance{};
+
+    inst.m_verts = 6;
+
+    return inst;
+}
+
+GLEAM_DrawCall GLEAM_Quad_Drawer::drawcall() const
+{
+    return GLEAM_DrawCall(false, false);
+}
+
 GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc()
 {
     return m_desc;

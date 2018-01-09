@@ -14,11 +14,13 @@ struct GLEAM_Quad_Drawer
     void draw(Matf4 const& xf, GLEAM_Sampler2D& sampler);
     void cleanup();
 
-    GLEAM_VertDescriptor &vertDesc();
+    GLEAM_VertDescriptor& vertDesc();
+    GLEAM_DrawCall drawcall() const;
+    GLEAM_DrawInstance drawInstance() const;
 
 protected:
     bool compile_shaders();
-    void create_vbo_data(u32 pos = 0, u32 tex = 1);
+    void create_vbo_data(u32 pos, u32 tex);
 
     GLEAM_Pipeline m_pip;
     GLEAM_UniformDescriptor m_texLoc;

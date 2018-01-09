@@ -65,6 +65,9 @@ struct GLEAM_PrfQuery;
 struct GLEAM_PipelineDumper;
 struct GLEAM_Quad_Drawer;
 
+using GLEAM_DrawCall = GraphicsAPI::DrawCall;
+using GLEAM_DrawInstance = GraphicsAPI::DrawInstanceData;
+
 /* Buffers */
 struct GLEAM_VBuffer;
 struct GLEAM_ArrayBuffer;

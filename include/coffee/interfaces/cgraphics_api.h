@@ -734,11 +734,64 @@ struct GraphicsAPI
 
     struct DrawCall
     {
+        DrawCall(bool indexed, bool instanced):
+            m_idxd(indexed), m_inst(instanced)
+        {
+            setPrim(Prim::Triangle);
+            setCreat(PrimCre::Explicit);
+        }
+        DrawCall(bool indexed, bool instanced,
+                 Prim p, PrimCre c):
+            DrawCall(indexed, instanced)
+        {
+            setPrim(p);
+            setCreat(c);
+        }
+        DrawCall(bool indexed, bool instanced,
+                 Prim p):
+            DrawCall(indexed, instanced, p,
+                     PrimCre::Explicit)
+        {
+        }
+        DrawCall():
+            DrawCall(false, false)
+        {
+        }
+
         FORCEDINLINE bool indexed()const{return m_idxd;}
         FORCEDINLINE bool instanced()const{return m_inst;}
+        FORCEDINLINE Prim primitive()const
+        {
+            /* m_primitive is restricted to 0-3 range */
+            return static_cast<Prim>(m_primitive);
+        }
+        FORCEDINLINE PrimCre primitiveMode()const
+        {
+            if(m_pmode < static_cast<u32>(PrimCre::MaxValue))
+                return static_cast<PrimCre>(m_pmode);
+            else
+                return PrimCre::Explicit;
+        }
 
-        bool m_idxd;
-        bool m_inst;
+        FORCEDINLINE void setPrim(Prim e)
+        {
+            m_primitive = C_FCAST<u8>(e);
+        }
+        FORCEDINLINE void setCreat(PrimCre e)
+        {
+            m_pmode = C_FCAST<u8>(e);
+        }
+
+        union{
+            struct {
+                bool m_idxd:1;
+                bool m_inst:1;
+                u8 m_primitive:2;
+                u8 m_pmode:3;
+                bool m_unused:1;
+            };
+            u8 m_notouch = 0x0;
+        };
     };
 
     /*!

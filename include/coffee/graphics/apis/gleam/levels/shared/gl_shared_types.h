@@ -38,23 +38,6 @@ struct CGDbgMsg
     uint32 id;
 };
 
-enum class Prim
-{
-    Point,
-    Line,
-    Triangle,
-    Patch,
-};
-
-enum class PrimCre
-{
-    Explicit = 0x0,
-    Strip = 0x1,
-    Fan = 0x2,
-    Loop = 0x4,
-    Adjacency = 0x8,
-};
-
 enum class BufBit
 {
     Color = 0x1,
@@ -353,7 +336,6 @@ enum class PatchProperty
 };
 
 C_FLAGS(BufBit,uint32);
-C_FLAGS(PrimCre,uint32);
 C_FLAGS(ShaderStage,uint32);
 C_FLAGS(Face,uint32);
 

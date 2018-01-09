@@ -19,9 +19,9 @@ DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
 function github_api()
 {
     case ${TRAVIS_OS_NAME} in
-    "osx")
-        $GITHUBPY --api-token ${GITHUB_TOKEN} $@
-    ;;
+#    "osx")
+#        $GITHUBPY --api-token ${GITHUB_TOKEN} $@
+#    ;;
     *)
         python3 $GITHUBPY --api-token ${GITHUB_TOKEN} $@
     ;;
