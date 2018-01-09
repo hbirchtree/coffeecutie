@@ -775,11 +775,11 @@ struct GraphicsAPI
 
         FORCEDINLINE void setPrim(Prim e)
         {
-            m_primitive = C_FCAST<u8>(e);
+            m_primitive = C_CAST<u8>(e);
         }
         FORCEDINLINE void setCreat(PrimCre e)
         {
-            m_pmode = C_FCAST<u8>(e);
+            m_pmode = C_CAST<u8>(e);
         }
 
         union{
