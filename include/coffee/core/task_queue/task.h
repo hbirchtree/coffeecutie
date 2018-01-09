@@ -52,6 +52,18 @@ public:
     static RuntimeQueue *GetCurrentQueue();
 
     /*!
+     * \brief From inside a task, get a reference to itself
+     * \return
+     */
+    static RuntimeTask *GetSelf();
+
+    /*!
+     * \brief From inside a task, get its ID. Calling from outside will return 0.
+     * \return
+     */
+    static u64 GetSelfId();
+
+    /*!
      * \brief Enqueue a task into the current thread's runtime queue
      * \param task Task to be run with its internal parameters
      * \return 0 on failure, non-zero value handle otherwise.
@@ -111,6 +123,8 @@ private:
     Mutex mTasksLock;
     u64 mTaskIndex;
     ThreadId mThreadId;
+
+    u64 mCurrentTaskId;
 
     static Mutex globalMod;
     static Map<ThreadId::Hash, RuntimeQueue> queues;

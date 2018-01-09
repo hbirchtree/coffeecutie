@@ -77,6 +77,40 @@ RuntimeQueue *RuntimeQueue::GetCurrentQueue()
         return nullptr;
 }
 
+RuntimeTask *RuntimeQueue::GetSelf()
+{
+    RuntimeQueue* q = GetCurrentQueue();
+
+    if(!q)
+        return 0;
+
+    szptr idx = 0;
+
+    for(auto i : Range<>(q->mTaskIndices.size()))
+        if(q->mTaskIndices[i] == q->mCurrentTaskId)
+        {
+            idx = i;
+            break;
+        }
+
+    /* To avoid casting the from size_t to signed,
+     *  check if the validation holds */
+    if(idx != 0 || q->mTaskIndices[0] != q->mCurrentTaskId)
+        return nullptr;
+
+    return &q->mTasks[idx];
+}
+
+u64 RuntimeQueue::GetSelfId()
+{
+    RuntimeQueue* q = GetCurrentQueue();
+
+    if(!q)
+        return 0;
+
+    return q->mCurrentTaskId;
+}
+
 static bool VerifyTask(RuntimeTask const& t)
 {
     if(!(t.flags & (RuntimeTask::SingleShot|RuntimeTask::Periodic)))
@@ -175,9 +209,12 @@ bool RuntimeQueue::CancelTask(const ThreadId &targetThread, u64 taskId)
     if(!(task = GetTask(queue.mTaskIndices, queue.mTasks,  taskId)))
         return false;
 
-    Lock __(queue.mTasksLock);
+    if(queue.mCurrentTaskId == 0)
+        queue.mTasksLock.lock();
 
     queue.mTasksAlive[idx] = false;
+
+    queue.mTasksLock.unlock();
 
     return true;
 }
@@ -251,7 +288,9 @@ void RuntimeQueue::executeTasks()
         }
 
         /* In this case we will let it run */
+        mCurrentTaskId = mTaskIndices[i];
         task.task();
+        mCurrentTaskId = 0;
 
         /* Now, if a task is single-shot, remove it */
         if(task.flags & RuntimeTask::SingleShot)
