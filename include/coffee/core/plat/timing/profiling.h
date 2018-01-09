@@ -76,17 +76,15 @@ struct SimpleProfilerImpl
         {
             profiler_data_store = new ProfilerDataStore;
             profiler_data_store->global_init.store(0);
+            profiler_data_store->Enabled = true;
+            profiler_data_store->Deep_Profile = false;
         }
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-//        cVerbose(6,"Creating thread context stack");
         context_stack = new LinkList<CString>;
 #endif
 
-//        cVerbose(6,"Checking initializer value: {0}",global_init->load());
         if(profiler_data_store->global_init.load()<1)
         {
-//            cVerbose(6,"Creating profiler");
-
             profiler_data_store->start_time = Time::CurrentMicroTimestamp();
         }
 
