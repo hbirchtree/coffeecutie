@@ -302,7 +302,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
         GL::Enable(GL::Feature::ClipDist,0);
 
-        CGL::DrwMd mode = {CGL::Prim::Triangle,CGL::PrimCre::Explicit};
+        CGL::DrwMd mode = {Prim::Triangle,PrimCre::Explicit};
 
         while(!r.closeFlag())
         {
