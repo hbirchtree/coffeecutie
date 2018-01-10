@@ -58,7 +58,7 @@ function github_api()
     case "${TRAVIS_OS_NAME}" in
     *)
         # Python client
-        "$GITHUBPY" --api-token "$GITHUB_TOKEN" $@
+        python3 "$GITHUBPY" --api-token "$GITHUB_TOKEN" $@
     ;;
     "linux")
         # Qt/C++ client

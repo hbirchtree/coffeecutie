@@ -116,9 +116,9 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-    if(ALL_HEADERS)
-        set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
-    endif()
+#    if(ALL_HEADERS)
+#        set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
+#    endif()
 
     if(APPLE)
         set_target_properties( ${TARGET} PROPERTIES MACOSX_RPATH "." )
@@ -197,9 +197,9 @@ macro(COFFEE_ADD_FRAMEWORK
             -DCOFFEE_APPLICATION_LIBRARY
             )
 
-        if(ALL_HEADERS)
-            set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
-        endif()
+#        if(ALL_HEADERS)
+#            set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
+#        endif()
 
         register_library( ${TARGET} "${HEADER_DIR}" )
     else()
