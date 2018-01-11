@@ -1,5 +1,4 @@
-#ifndef COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
-#define COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
+#pragma once
 
 #include <coffee/core/types/composite_types.h>
 
@@ -207,6 +206,10 @@ FORCEDINLINE _cbasic_tmatrix<T,3> GenLookat(
 }
 
 }
-}
 
-#endif
+namespace Mat{
+
+using namespace CGraphicsData;
+
+}
+}
