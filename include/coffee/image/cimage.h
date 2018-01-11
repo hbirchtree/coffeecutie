@@ -128,6 +128,12 @@ extern void SaveTGA(const CSize &resolution,
 
 }
 
+namespace IMG
+{
+extern bool Load(Url const& src, PixCmp cmp, BitFmt &fmt,
+        Bytes &data, CSize& res);
+}
+
 namespace PNG
 {
 extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);

@@ -73,6 +73,7 @@ enum class PixelFormat
     /* Formatting: [CHANNELS][NUMBITS][DATATYPE] */
 
     /* Standard formats */
+    RGB8,       /*  24-bit,          8-bit per channel*/
     RGBA8,      /*  32-bit,          8-bit per channel*/
 
     /* Irregular formats */

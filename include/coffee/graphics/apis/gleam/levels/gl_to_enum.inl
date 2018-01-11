@@ -415,6 +415,9 @@ inline CGenum to_enum(
     case PixelFormat::Depth24Stencil8:
         return GL_DEPTH24_STENCIL8;
 #endif
+#if defined(COFFEE_GLEAM_DESKTOP)
+
+#endif
 
     /* Requires to be used with GL_UNSIGNED_INT */
 #if !defined(COFFEE_ONLY_GLES20)
@@ -489,6 +492,8 @@ inline CGenum to_enum(
     /* Because GL_RGBA8I cannot be used with GL_UNSIGNED_BYTE */
     case PixelFormat::RGBA8:
         return GL_RGBA8;
+    case PixelFormat::RGB8:
+        return GL_RGB8;
 
     case PixelFormat::R11G11B10F:
         return GL_R11F_G11F_B10F;
