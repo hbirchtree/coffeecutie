@@ -7,7 +7,7 @@ bool example_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _run_tests[2] = {
+const constexpr CoffeeTest::Test _run_tests[1] = {
     {example_test /* Test function */,
      "Short title","Longer description",
      false /* Optional? */,

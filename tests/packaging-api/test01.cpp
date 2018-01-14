@@ -103,7 +103,7 @@ bool resource_write_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[10] = {
+const constexpr CoffeeTest::Test _tests[5] = {
     {resource_exist_test,
      "Resource existence",
      "Test whether the resources are there"},

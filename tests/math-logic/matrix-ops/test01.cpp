@@ -29,7 +29,7 @@ bool matrix_translation_test()
 }
 
 const constexpr CoffeeTest::Test _tests[1] = {
-    matrix_translation_test
+    {matrix_translation_test, "Matrix translation"}
 };
 
 COFFEE_RUN_TESTS(_tests);

@@ -64,9 +64,9 @@ bool string_literal_test()
 }
 
 static const CoffeeTest::Test string_tests[3] = {
-    {interpret_integers},
+    {interpret_integers, "Interpreting integers from strings"},
     {convert_string, "String conversion of POD types", "", false},
-    {string_literal_test}
+    {string_literal_test, "Interpreting string literals"}
 };
 
 COFFEE_RUN_TESTS(string_tests)
