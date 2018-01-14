@@ -190,7 +190,7 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
 
     Profiler::PopContext();
 
-    if(!res && test.required_sequence)
+    if(!res && (test.required_sequence || !test.optional))
         fail = true;
 }
 
