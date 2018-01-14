@@ -56,6 +56,14 @@ CGL::CGL_Context *SDL2GLRenderer::glContext()
     return getSDL2Context()->context;
 }
 
+CGL::CGL_WorkerContext *SDL2GLRenderer::workerContext()
+{
+    if(!getSDL2Context() || !getSDL2Context()->window)
+        return nullptr;
+
+    return new CGL_SDL_GL_Context(getSDL2Context()->window);
+}
+
 CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
 {
     return CGL::CGL_ScopedContext(getSDL2Context()->context);

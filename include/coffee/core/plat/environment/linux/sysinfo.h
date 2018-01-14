@@ -43,6 +43,7 @@ struct LinuxSysInfo : SysInfoDef
         return;
     }
 
+    static u64 CachedMemory();
 
     STATICINLINE bool MemVirtualAvailable()
     {
@@ -60,7 +61,13 @@ struct LinuxSysInfo : SysInfoDef
     {
         struct sysinfo inf;
         sysinfo(&inf);
-        return inf.freeram*inf.mem_unit;
+
+        /* This is only here for easier debugging */
+        u64 free = inf.freeram;
+        free += inf.bufferram;
+        free += CachedMemory();
+
+        return free*inf.mem_unit;
     }
 
     STATICINLINE uint64 SwapTotal()

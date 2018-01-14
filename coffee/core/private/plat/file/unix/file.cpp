@@ -283,6 +283,9 @@ bool PosixDirFun::Ls(Url const& dname, DirFunDef::DirList &entries)
             break;
         }
 
+        if(StrCmp(dir_ent->d_name, ".") || StrCmp(dir_ent->d_name, ".."))
+            continue;
+
         entries.push_back({dir_ent->d_name,t});
     }
 

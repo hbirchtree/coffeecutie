@@ -118,8 +118,9 @@ static bool VerifyTask(RuntimeTask const& t)
     if((t.flags & RuntimeTask::SingleShot) &&
             (t.flags & RuntimeTask::Periodic))
         return false;
-    if((t.flags & RuntimeTask::SingleShot) &&
-            t.time < RuntimeTask::clock::now())
+    if((t.flags & RuntimeTask::SingleShot)
+            && !(t.flags & RuntimeTask::Immediate)
+            && t.time < RuntimeTask::clock::now())
         return false;
     return true;
 }
@@ -206,7 +207,7 @@ bool RuntimeQueue::CancelTask(const ThreadId &targetThread, u64 taskId)
     RuntimeTask const* task = nullptr;
     szptr idx = 0;
 
-    if(!(task = GetTask(queue.mTaskIndices, queue.mTasks,  taskId)))
+    if(!(task = GetTask(queue.mTaskIndices, queue.mTasks,  taskId, &idx)))
         return false;
 
     if(queue.mCurrentTaskId == 0)
@@ -235,8 +236,10 @@ void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
     auto const& queueRef = queue->second;
 
     RuntimeTask const* task = nullptr;
+    szptr idx = 0;
 
-    if(!(task = GetTask(queueRef.mTaskIndices, queueRef.mTasks, taskId)))
+    if(!(task = GetTask(queueRef.mTaskIndices, queueRef.mTasks, taskId,
+                        &idx)))
         return;
 
     /* We cannot reliably await periodic tasks */
@@ -244,10 +247,14 @@ void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
         return;
 
     /* Do not await a past event */
-    if(RuntimeTask::clock::now() > task->time)
+    if(!(task->flags & RuntimeTask::Immediate)
+            && RuntimeTask::clock::now() > task->time)
         return;
 
     CurrentThread::sleep_until(task->time);
+
+    /* I know this is bad, but we must await the task */
+    while(queueRef.mTasksAlive[idx]);
 }
 
 void RuntimeQueue::TerminateThreads()

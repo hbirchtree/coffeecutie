@@ -6,7 +6,8 @@
 namespace Coffee{
 namespace Display{
 
-struct CGL_SDL_GL_Context : CGL::CGL_Context
+struct CGL_SDL_GL_Context :
+        public CGL::CGL_WorkerContext
 {
     CGL_SDL_GL_Context(SDL_Window* win):
         m_window(win)
@@ -23,19 +24,20 @@ struct CGL_SDL_GL_Context : CGL::CGL_Context
 
     C_DELETE_COPY_CONSTRUCTOR(CGL_SDL_GL_Context);
 
-    bool acquireContext()
+    bool acquireContext() override
     {
         new (&m_threadId) ThreadId;
         return SDL_GL_MakeCurrent(m_window,m_context)==0;
     }
-    bool releaseContext()
+    bool releaseContext() override
     {
         return SDL_GL_MakeCurrent(nullptr,nullptr)==0;
     }
-    const ThreadId &currentThread()
+    const ThreadId &currentThread() override
     {
         return m_threadId;
     }
+
 protected:
     ThreadId m_threadId;
 private:

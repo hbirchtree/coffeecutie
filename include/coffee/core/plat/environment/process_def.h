@@ -8,6 +8,8 @@ namespace Coffee{
 namespace Environment{
 struct ProcessPropertyDef
 {
+    /* Memory in this context is returned in kB */
+
     using PID = uint64;
     /*!
      * \brief Initializes core dumping for the process, useful for information on crashes

@@ -296,6 +296,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         DProfContext b("Configuring GL context debugging");
         GL::Debug::SetDebugMode(true);
         GL::Debug::DebugSetCallback(gleamcallback,this);
+        GL::Debug::SetDebugLevel(Severity::Information, false);
 #endif
     }
 

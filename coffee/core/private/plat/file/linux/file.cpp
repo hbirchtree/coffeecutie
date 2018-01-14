@@ -73,14 +73,14 @@ namespace Linux{
 
 #endif
 
-CString LinuxFileFun::sys_read(cstring fn)
+CString LinuxFileFun::sys_read(cstring fn, bool quiet)
 {
     CString out;
     FILE* fh = fopen(fn,"r");
     char* arg = 0;
     size_t size = 0;
 
-    if(!fh)
+    if(!fh && !quiet)
     {
         ErrnoCheck(fn, -1);
         return out;
@@ -93,7 +93,6 @@ CString LinuxFileFun::sys_read(cstring fn)
     }
 
     free(arg);
-    fclose(fh);
     if(out.size() > 0)
         out.resize(out.size()-1);
 #else
@@ -107,6 +106,7 @@ CString LinuxFileFun::sys_read(cstring fn)
         out.append(linedata);
     } while(!feof(fh));
 #endif
+    fclose(fh);
     return out;
 }
 

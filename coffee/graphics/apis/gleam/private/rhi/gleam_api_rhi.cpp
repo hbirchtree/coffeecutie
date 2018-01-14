@@ -106,9 +106,14 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 #endif
 
 #if !defined(COFFEE_ONLY_GLES20)
+    do
     {
         const szptr num_pbos = 5;
         cVerbose(7, "Creating PBO storage, {0} units", num_pbos);
+
+        /* Check if someone else has initialized it */
+        if(store->inst_data->pboQueue.buffers.size() == num_pbos)
+            break;
 
         Vector<CGhnd> bufs;
         bufs.resize(num_pbos);
@@ -122,7 +127,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
             pbo.flags = 0;
             store->inst_data->pboQueue.buffers.push_back(pbo);
         }
-    }
+    }while(false);
 #endif
 
     cVerbose(10, "Getting GL context version");

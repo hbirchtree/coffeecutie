@@ -280,6 +280,27 @@ uint32 LinuxSysInfo::CoreCount()
     return cores ? cores : 1;
 }
 
+u64 LinuxSysInfo::CachedMemory()
+{
+    CString data = LFileFun::sys_read("/proc/meminfo");
+
+    auto idx = data.find("\nCached:");
+
+    if(idx != data.npos)
+    {
+        idx = data.find(":", idx) + 1;
+        auto end = data.find("\n", idx);
+
+        auto mem = data.substr(idx, end - idx - 2);
+
+        u64 count = cast_string<u64>(StrUtil::trim(mem));
+
+        return count * 1000;
+    }
+
+    return 0;
+}
+
 HWDeviceInfo LinuxSysInfo::Processor()
 {
     const cstring mk_query = "vendor_id";
@@ -569,24 +590,66 @@ HWDeviceInfo LinuxSysInfo::BIOS()
 PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 {
     static const constexpr cstring thermal_class = "/sys/class/thermal";
+    static const constexpr cstring hwmon_class = "/sys/class/hwmon";
     Temp out = {};
 
+    /* First, look for thermal_zone* units */
     DirFun::DirList lst;
     Path tmp,tmp2;
-    if(DirFun::Ls(MkUrl(thermal_class), lst))
+    Url base = MkUrl("", RSCA::SystemFile);
+
+    if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst))
     {
         for(auto e : lst)
             if(e.name != "." && e.name != "..")
             {
-                tmp = ((tmp + thermal_class) + e.name.c_str()) + "temp";
+                tmp = ((Path{} + thermal_class) + e.name.c_str()) + "temp";
 
-                if(LFileFun::Exists(Url() + tmp))
+                if(LFileFun::Exists(base + tmp))
                 {
-                    CString temp = LFileFun::sys_read(tmp.internUrl.c_str());
+                    CString temp = LFileFun::sys_read(
+                                tmp.internUrl.c_str(),
+                                true
+                                );
                     out.current = cast_string<scalar>(temp) / 1000;
                     break;
                 }
             }
+    }
+
+    lst = {};
+    tmp = Path::Mk("");
+    tmp2 = Path::Mk("");
+
+    /* hwmon* units */
+    if(DirFun::Ls(MkUrl(hwmon_class, RSCA::SystemFile), lst))
+    {
+        DirFun::DirList lst2;
+        Url path = MkUrl("", RSCA::SystemFile);
+        for(auto e : lst)
+        {
+            tmp = Path{hwmon_class};
+            path = path + (tmp + e.name.c_str());
+            if(DirFun::Ls(path, lst2))
+            {
+                for(auto e2 : lst2)
+                {
+                    auto prefix = e2.name.substr(0, 4);
+                    auto suffix = e2.name.substr(e2.name.size() - 5, 5);
+                    if(prefix != "temp" && suffix != "input")
+                        continue;
+
+                    Url path2 = path + Path{e2.name.c_str()};
+
+                    CString temp_s = LFileFun::sys_read(
+                                path2.internUrl.c_str(),
+                                true
+                                );
+
+                    out.current = cast_string<scalar>(temp_s);
+                }
+            }
+        }
     }
 
     return out;
