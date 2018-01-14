@@ -23,6 +23,19 @@ struct Url;
 
 struct Path
 {
+    Path(cstring path):
+        internUrl(path ? path : "")
+    {
+    }
+    Path(CString const& path):
+        internUrl(path)
+    {
+    }
+    Path():
+        Path(nullptr)
+    {
+    }
+
     CString internUrl;
 
     Path removeExt();

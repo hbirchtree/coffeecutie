@@ -317,7 +317,8 @@ Path Path::dirname()
 Path Path::operator+(cstring component)
 {
     Path cpy = *this;
-    cpy.internUrl += component;
+    cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
+//    cpy.internUrl += component;
     return cpy;
 }
 
