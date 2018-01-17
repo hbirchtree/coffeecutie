@@ -28,8 +28,8 @@ set ( OGC_SRCS
 
 if(APPLE AND IOS)
     list ( APPEND GLKit_SRCS
-        private/graphics/eagl/eagl_bind.mm
-        private/graphics/eagl/EGLView.m
+        private/graphics/ceagl/private/eagl_bind.mm
+        private/graphics/ceagl/private/EGLView.m
         private/windowing/glkit/glk_window.mm
         private/windowing/glkit/AppDelegate.m
         )
@@ -128,6 +128,13 @@ target_link_libraries( CoffeeWindow_NDKWindow
     PRIVATE
     CoffeeCore
     )
+
+if(APPLE AND IOS)
+    target_include_directories (
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+        )
+endif()
 
 if(COFFEE_BUILD_OPENGL)
     target_compile_definitions ( CoffeeRenderer_Default
