@@ -130,7 +130,15 @@ target_link_libraries( CoffeeWindow_NDKWindow
     )
 
 if(APPLE AND IOS)
-    target_include_directories (
+    target_include_directories ( CoffeeBinding_GLAD
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+        )
+    target_include_directories ( CoffeeWindow_GLKit
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+        )
+    target_include_directories ( CoffeeContext_EGL
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )

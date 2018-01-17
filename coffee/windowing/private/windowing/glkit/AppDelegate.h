@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
+#import <EGLView.h>
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate, GLKViewDelegate, GLKViewControllerDelegate, UIGestureRecognizerDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, GLKViewDelegate, GLKViewControllerDelegate, UIGestureRecognizerDelegate, EGLAppDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
