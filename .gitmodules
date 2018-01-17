@@ -22,3 +22,9 @@
 [submodule "tools/automation"]
 	path = tools/automation
 	url = https://github.com/hbirchtree/coffeecutie-automation-tools.git
+[submodule "include/coffee/jni"]
+	path = include/coffee/jni
+	url = https://github.com/hbirchtree/inline-jni.git
+[submodule "coffee/windowing/private/graphics/ceagl"]
+	path = coffee/windowing/private/graphics/ceagl
+	url = https://github.com/hbirchtree/ceagl.git
