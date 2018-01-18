@@ -16,8 +16,35 @@ extern int InitCOMInterface();
 #include <coffee/core/CDebug>
 
 #if defined(COFFEE_GEKKO)
-extern void GCVideoInit();
-extern void GCInfiniteLoop();
+GXRModeObj* gamecube_rmode = NULL;
+void* gamecube_xfb = NULL;
+
+void GCVideoInit()
+{
+    VIDEO_Init();
+
+    gamecube_rmode = VIDEO_GetPreferredMode(NULL);
+
+    gamecube_xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(gamecube_rmode));
+
+    VIDEO_Configure(gamecube_rmode);
+    VIDEO_SetNextFramebuffer(gamecube_xfb);
+    VIDEO_SetBlack(FALSE);
+    VIDEO_Flush();
+
+    VIDEO_WaitVSync();
+    if(gamecube_rmode->viTVMode&VI_NON_INTERLACE)
+        VIDEO_WaitVSync();
+
+    console_init(gamecube_xfb, 20, 20,
+                 gamecube_rmode->fbWidth, gamecube_rmode->xfbHeight,
+                 gamecube_rmode->fbWidth*2);
+}
+
+void GCInfiniteLoop()
+{
+    while(1) { VIDEO_WaitVSync(); }
+}
 #endif
 
 using namespace Coffee;

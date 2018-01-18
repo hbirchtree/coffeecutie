@@ -42,9 +42,24 @@ struct MeshLoader
         TypeEnum element_type;
     };
 
+    /*!
+     * \brief Container for Bytes that will collect Bytes into another
+     *  memory region, making it easier to do zero-copy transfer
+     *  between ASSIMP and the GL.
+     */
     struct ChainedBytes
     {
         Vector<Bytes> refs;
+
+        FORCEDINLINE szptr size()
+        {
+            szptr size = 0;
+
+            for(auto const& data : refs)
+                size += data.size;
+
+            return size;
+        }
 
         FORCEDINLINE bool cpy(void* target, szptr size)
         {
@@ -67,23 +82,27 @@ struct MeshLoader
                 MemCpy(&targetP[ptr], data.data, data.size);
                 ptr += data.size;
             }
+
+            return true;
         }
     };
 
-//    template<typename GFX>
+    template<typename GFX>
     struct BufferDescription
     {
-        using GFX = RHI::NullAPI;
+//        using GFX = RHI::NullAPI;
 
         typename GFX::D_CALL call;
         Vector<typename GFX::V_ATTR> attributes;
         Vector<typename GFX::D_DATA> draws;
+        Vector<Mesh> meshdata;
 
         ChainedBytes vertexData;
         ChainedBytes elementData;
     };
 
     template<typename API>
+    static
     bool ExtractDescriptors(
             ASSIMP::AssimpPtr& scene,
             Vector<Attr>const& attributes,
@@ -97,15 +116,23 @@ struct MeshLoader
             return false;
 
         /* Helper class for calculating attribute sizes */
-        Vector<Mesh> meshes;
+        Vector<Mesh>& meshes = buffers.meshdata;
         meshes.resize(C_FCAST<szptr>(meshCount));
 
         buffers.attributes.resize(attributes.size());
         buffers.draws.resize(C_FCAST<szptr>(meshCount));
+        buffers.vertexData.refs.resize(
+                    C_FCAST<szptr>(meshCount) * attributes.size()
+                    );
+        buffers.elementData.refs.resize(C_FCAST<szptr>(meshCount));
 
         szptr mesh_buffer_size = 0,
                 element_buffer_size = 0,
                 vertex_size = 0;
+
+        buffers.call.m_idxd = true;
+        buffers.call.setPrim(Prim::Triangle);
+        buffers.call.setCreat(PrimCre::Explicit);
 
         for(auto i : Range<i32>(meshCount))
         {
@@ -116,8 +143,11 @@ struct MeshLoader
 
             di.m_eltype = TypeEnum::UInt;
             di.m_elems = mesh.attrSize(M::Indices) / sizeof(u32);
+            di.m_eoff = element_buffer_size / sizeof(u32);
             di.m_verts = mesh.attrSize(M::Position) / sizeof(Vecf3);
-            di.m_voff = vertex_size / sizeof(Vecf3);
+            di.m_voff = vertex_size;
+
+            /* TODO: Add a quirk for baking vertex offset into indices */
 
             for(auto j : Range<i32>(attributes.size()))
             {
@@ -131,30 +161,60 @@ struct MeshLoader
                 mesh_buffer_size += mesh.attrSize(attributes[j].type,
                                                   attributes[j].channel);
             }
+
+            vertex_size += mesh.attrCount(M::Position, sizeof(Vecf3));
+
             /* Calculate element buffer size */
             element_buffer_size += mesh.attrSize(M::Indices);
+
+            /* Add element buffer to ChainedBytes structure */
+            auto& ebuf = buffers.elementData.refs[i];
+            ebuf.size = mesh.attrSize(M::Indices);
+            ebuf.data = mesh.getAttributeData<byte_t>(M::Indices);
         }
+
+        i32 bufIdx = 0;
+        for(auto const& attr : attributes)
+            for(auto i :  Range<i32>(meshCount))
+            {
+                auto& buf = buffers.vertexData.refs[bufIdx];
+
+                buf.size = meshes[i].attrSize(
+                            attr.type, attr.channel);
+                buf.data = meshes[i].getAttributeData<byte_t>(
+                            attr.type, attr.channel);
+
+                bufIdx ++;
+            }
 
         /* Initialize some vertex attribute information */
         for(auto i : Range<i32>(attributes.size()))
         {
             auto& vd = buffers.attributes[i];
             vd.m_idx = i; /* The user will have to define this or bind it */
+            vd.m_bassoc = i;
             vd.m_type = TypeEnum::Scalar;
             switch(attributes[i].type)
             {
-            case AttrType::Position:
-            case AttrType::Color:
-            case AttrType::Normal:
-            case AttrType::Tangent:
-            case AttrType::Bitangent:
+            case M::Position:
+            case M::Color:
+            case M::Normal:
+            case M::Tangent:
+            case M::Bitangent:
                 vd.m_size = 3;
+                vd.m_stride = sizeof(Vecf3);
                 break;
-            case AttrType::TexCoord:
+            case M::TexCoord:
                 vd.m_size = 2;
+                vd.m_stride = sizeof(Vecf2);
                 break;
             }
         }
+
+        /* TODO: If user is requesting a different
+         *  element type, perform on-the-fly conversion */
+
+        /* TODO: See if we can use i16 or similar for attributes */
 
         return true;
     }
