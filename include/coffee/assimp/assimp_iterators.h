@@ -20,6 +20,16 @@ struct MeshLoader
 
     using AttrType = M::AttributeTypes;
 
+    enum Quirks
+    {
+        QuirkCompressElements = 0x1,
+        /*!< When possible, use a smaller data type for element indices */
+        QuirkCompressVertices = 0x2,
+        /*!< When possible, use lower-precision format for storing vertex data */
+        QuirkElementVertexOffset = 0x4,
+        /*!< Add vertex offsets to elements */
+    };
+
     struct Attr
     {
         Attr(AttrType t, u32 ch = 0):
@@ -40,7 +50,94 @@ struct MeshLoader
         }
 
         TypeEnum element_type;
+        u32 quirks;
     };
+
+    template<typename To, typename From = u32,
+             typename std::enable_if<std::is_integral<To>::value
+                                     >::type* = nullptr,
+             typename std::enable_if<std::is_integral<From>::value
+                                     >::type* = nullptr,
+             typename std::enable_if<
+                 std::is_signed<To>::value == std::is_signed<From>::value
+                 >::type* = nullptr>
+    /*!
+     * \brief integer_downcast is aimed for the current scenario:
+     *  - The integers are within a continuous range
+     *  - The continuous range in From fits into the limits of the To datatype
+     * This allows simple compression of element indices where possible.
+     * \param target
+     * \param src
+     * \param size
+     * \return
+     */
+    static szptr integer_downcast(c_ptr target, c_cptr src, szptr size)
+    {
+        if(!target || !src)
+            return size / (sizeof(From) / sizeof(To));
+
+        From const* srcT = C_RCAST<From const*>(src);
+        To* trgT = C_RCAST<To*>(target);
+        szptr icount = size / sizeof(From);
+
+        for(szptr i=0; i<icount; i++)
+        {
+            From const& s = srcT[i];
+            To& t = trgT[i];
+
+            t = C_FCAST<To>(s);
+        }
+
+        return size / (sizeof(From) / sizeof(To));
+    }
+
+    template<typename T>
+    static T integer_range_get_max(T const* src, szptr count)
+    {
+        T max = std::numeric_limits<T>::min();
+        for(szptr i=0; i<count; i++)
+            max = CMath::max(max, src[i]);
+
+        return max;
+    }
+
+    template<typename To, typename From = scalar,
+             typename std::enable_if<std::is_signed<To>::value>::type* = nullptr,
+             typename std::enable_if<std::is_integral<To>::value>::type* = nullptr>
+    /* For simple down-cast from floating-point to i16 and i8, scales  */
+    static szptr integer_transform(c_ptr target, c_cptr src, szptr size)
+    {
+        if(!target || !src)
+            return size / (sizeof(From) / sizeof(To));
+
+        From const* srcT = C_RCAST<From const*>(src);
+        To* trgT = C_RCAST<To*>(target);
+        szptr icount = size / sizeof(From);
+
+        auto constexpr to_min = std::numeric_limits<To>::min();
+        auto constexpr to_max = std::numeric_limits<To>::max();
+
+        scalar from_min = std::numeric_limits<scalar>::infinity();
+        scalar from_max = -std::numeric_limits<scalar>::infinity();
+
+        for(szptr i=0; i<icount; i++)
+        {
+            from_min = CMath::min(from_min, srcT[i]);
+            from_max = CMath::max(from_max, srcT[i]);
+        }
+
+        for(szptr i=0; i<icount; i++)
+        {
+            From const& s = srcT[i];
+            To& t = trgT[i];
+
+            To res = (((s - from_min) * (1.0 / from_max) * 2.0) - 1.0) * to_max;
+
+            t = res;
+        }
+
+        return size / (sizeof(From) / sizeof(To));
+    }
 
     /*!
      * \brief Container for Bytes that will collect Bytes into another
@@ -49,14 +146,38 @@ struct MeshLoader
      */
     struct ChainedBytes
     {
+        static szptr default_transform(c_ptr dest, c_cptr src, szptr size)
+        {
+            if(!dest || !src)
+                return size;
+            MemCpy(dest, src, size);
+            return size;
+        }
+
+        ChainedBytes():
+            refs(),
+            transform(default_transform)
+        {
+        }
+
+        using xf = szptr(*)(c_ptr target, c_cptr source, szptr size);
+
         Vector<Bytes> refs;
+        /* transform works as such: when given a memory region source+size,
+         *  the enclosed function will return the N bytes output by
+         *  to the target.
+         * If given a nullptr as target, the function will only
+         *  return an estimate for the amount of memory needed.
+         *  The source+size memory area contains floating-point values
+         *  which may be converted to integer types. */
+        xf transform;
 
         FORCEDINLINE szptr size()
         {
             szptr size = 0;
 
             for(auto const& data : refs)
-                size += data.size;
+                size += transform(nullptr, nullptr, data.size);
 
             return size;
         }
@@ -68,9 +189,10 @@ struct MeshLoader
             /* First, do a dry run to check that the copy will succeed */
             for(auto const& data : refs)
             {
-                if(ptr + data.size > size)
+                szptr est = transform(nullptr, nullptr, data.size);
+                if(ptr + est > size)
                     return false;
-                ptr += data.size;
+                ptr += est;
             }
 
             ptr = 0;
@@ -79,8 +201,7 @@ struct MeshLoader
 
             for(auto const& data : refs)
             {
-                MemCpy(&targetP[ptr], data.data, data.size);
-                ptr += data.size;
+                ptr += transform(&targetP[ptr], data.data, data.size);
             }
 
             return true;
@@ -134,6 +255,8 @@ struct MeshLoader
         buffers.call.setPrim(Prim::Triangle);
         buffers.call.setCreat(PrimCre::Explicit);
 
+        u32 max_element = 0;
+
         for(auto i : Range<i32>(meshCount))
         {
             auto& mesh = meshes[i];
@@ -147,7 +270,24 @@ struct MeshLoader
             di.m_verts = mesh.attrSize(M::Position) / sizeof(Vecf3);
             di.m_voff = vertex_size;
 
-            /* TODO: Add a quirk for baking vertex offset into indices */
+            if(draw.quirks & QuirkElementVertexOffset)
+            {
+                /* For OpenGL ES 2.0, there is no such thing as
+                 *  a vertex offset. This simplifies that situation. */
+                u32* elements = mesh.getAttributeData<u32>(M::Indices);
+                for(szptr i=0; i<mesh.attrCount(M::Indices, sizeof(u32)); i++)
+                    elements[i] += di.m_voff;
+            }
+
+            /* When compressing elements, we would like to avoid the
+             *  case where each mesh has a different classification.
+             *  Instead, the whole batch has a single classification. */
+            if(draw.quirks & QuirkCompressElements)
+                max_element = CMath::max(
+                            integer_range_get_max(
+                                mesh.getAttributeData<u32>(M::Indices),
+                                mesh.attrCount(M::Indices, sizeof(u32))),
+                            max_element);
 
             for(auto j : Range<i32>(attributes.size()))
             {
@@ -171,6 +311,33 @@ struct MeshLoader
             auto& ebuf = buffers.elementData.refs[i];
             ebuf.size = mesh.attrSize(M::Indices);
             ebuf.data = mesh.getAttributeData<byte_t>(M::Indices);
+        }
+
+        TypeEnum idx_type = TypeEnum::UInt;
+
+        if(max_element <= std::numeric_limits<u8>::max())
+            idx_type = TypeEnum::UByte;
+        else if(max_element <= std::numeric_limits<u16>::max())
+            idx_type = TypeEnum::UShort;
+
+        if(idx_type != TypeEnum::UInt)
+        {
+            switch(idx_type)
+            {
+            case TypeEnum::UByte:
+                buffers.elementData.transform = integer_downcast<u8>;
+                break;
+            case TypeEnum::UShort:
+                buffers.elementData.transform = integer_downcast<u16>;
+                break;
+            default:
+                break;
+            }
+
+            for(auto i : Range<>(meshCount))
+            {
+                buffers.draws[i].m_eltype = idx_type;
+            }
         }
 
         i32 bufIdx = 0;
@@ -202,11 +369,11 @@ struct MeshLoader
             case M::Tangent:
             case M::Bitangent:
                 vd.m_size = 3;
-                vd.m_stride = sizeof(Vecf3);
+                vd.m_stride = vd.m_size * sizeof(scalar);
                 break;
             case M::TexCoord:
                 vd.m_size = 2;
-                vd.m_stride = sizeof(Vecf2);
+                vd.m_stride = vd.m_size * sizeof(scalar);
                 break;
             }
         }
