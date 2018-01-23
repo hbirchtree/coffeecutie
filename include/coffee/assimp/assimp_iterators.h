@@ -45,7 +45,8 @@ struct MeshLoader
     struct DrawInfo
     {
         DrawInfo():
-            element_type(TypeEnum::UInt)
+            element_type(TypeEnum::UInt),
+            quirks(0)
         {
         }
 
@@ -64,7 +65,8 @@ struct MeshLoader
     /*!
      * \brief integer_downcast is aimed for the current scenario:
      *  - The integers are within a continuous range
-     *  - The continuous range in From fits into the limits of the To datatype
+     *  - The continuous range in From fits into the limits of the
+     *           To datatype
      * This allows simple compression of element indices where possible.
      * \param target
      * \param src
@@ -102,8 +104,10 @@ struct MeshLoader
     }
 
     template<typename To, typename From = scalar,
-             typename std::enable_if<std::is_signed<To>::value>::type* = nullptr,
-             typename std::enable_if<std::is_integral<To>::value>::type* = nullptr>
+             typename std::enable_if<
+                 std::is_signed<To>::value>::type* = nullptr,
+             typename std::enable_if<
+                 std::is_integral<To>::value>::type* = nullptr>
     /* For simple down-cast from floating-point to i16 and i8, scales  */
     static szptr integer_transform(c_ptr target, c_cptr src, szptr size)
     {
@@ -131,7 +135,9 @@ struct MeshLoader
             From const& s = srcT[i];
             To& t = trgT[i];
 
-            To res = (((s - from_min) * (1.0 / from_max) * 2.0) - 1.0) * to_max;
+            To res = (((s - from_min) *
+                       (1.0 / from_max) * 2.0) - 1.0)
+                    * to_max;
 
             t = res;
         }
@@ -238,14 +244,17 @@ struct MeshLoader
 
         /* Helper class for calculating attribute sizes */
         Vector<Mesh>& meshes = buffers.meshdata;
-        meshes.resize(C_FCAST<szptr>(meshCount));
+        meshes.resize(meshes.size() + C_FCAST<szptr>(meshCount));
 
-        buffers.attributes.resize(attributes.size());
-        buffers.draws.resize(C_FCAST<szptr>(meshCount));
+        buffers.attributes.resize(
+                    attributes.size());
+        buffers.draws.resize(
+                    C_FCAST<szptr>(meshCount));
         buffers.vertexData.refs.resize(
                     C_FCAST<szptr>(meshCount) * attributes.size()
                     );
-        buffers.elementData.refs.resize(C_FCAST<szptr>(meshCount));
+        buffers.elementData.refs.resize(
+                    C_FCAST<szptr>(meshCount));
 
         szptr mesh_buffer_size = 0,
                 element_buffer_size = 0,
@@ -275,8 +284,12 @@ struct MeshLoader
                 /* For OpenGL ES 2.0, there is no such thing as
                  *  a vertex offset. This simplifies that situation. */
                 u32* elements = mesh.getAttributeData<u32>(M::Indices);
-                for(szptr i=0; i<mesh.attrCount(M::Indices, sizeof(u32)); i++)
+                auto indices = mesh.attrCount(M::Indices, sizeof(u32));
+                for(szptr i=0; i<indices; i++)
+                {
                     elements[i] += di.m_voff;
+                    di.m_voff = 0;
+                }
             }
 
             /* When compressing elements, we would like to avoid the
@@ -320,7 +333,8 @@ struct MeshLoader
         else if(max_element <= std::numeric_limits<u16>::max())
             idx_type = TypeEnum::UShort;
 
-        if(idx_type != TypeEnum::UInt)
+        if((draw.quirks & QuirkCompressElements)
+                && idx_type != TypeEnum::UInt)
         {
             switch(idx_type)
             {
@@ -363,19 +377,20 @@ struct MeshLoader
             vd.m_type = TypeEnum::Scalar;
             switch(attributes[i].type)
             {
-            case M::Position:
             case M::Color:
+                vd.m_size = 4;
+                break;
+            case M::Position:
             case M::Normal:
             case M::Tangent:
             case M::Bitangent:
                 vd.m_size = 3;
-                vd.m_stride = vd.m_size * sizeof(scalar);
                 break;
             case M::TexCoord:
                 vd.m_size = 2;
-                vd.m_stride = vd.m_size * sizeof(scalar);
                 break;
             }
+            vd.m_stride = vd.m_size * sizeof(scalar);
         }
 
         /* TODO: If user is requesting a different
