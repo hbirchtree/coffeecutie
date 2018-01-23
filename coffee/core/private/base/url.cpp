@@ -291,7 +291,7 @@ CString Url::DereferenceLocalPath() const
                            flags & ResourceAccess::StorageMask);
 }
 
-Path Path::removeExt()
+Path Path::removeExt() const
 {
     auto it = internUrl.rfind(".");
     if(it != CString::npos)
@@ -299,14 +299,24 @@ Path Path::removeExt()
     return {internUrl.substr(0, it)};
 }
 
-Path Path::addExtension(cstring ext)
+Path Path::addExtension(cstring ext) const
 {
     return {(internUrl + ".") + ext};
 }
 
-Path Path::fileBasename()
+Path Path::fileBasename() const
 {
     return {DirFun::Basename(internUrl.c_str())};
+}
+
+CString Path::extension() const
+{
+    auto it = internUrl.rfind(".");
+
+    if(it == CString::npos)
+        return {};
+
+    return internUrl.substr(it, internUrl.size() - it);
 }
 
 Path Path::dirname()

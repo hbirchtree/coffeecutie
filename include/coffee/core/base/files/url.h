@@ -38,9 +38,11 @@ struct Path
 
     CString internUrl;
 
-    Path removeExt();
-    Path addExtension(cstring ext);
-    Path fileBasename();
+    Path removeExt() const;
+    Path addExtension(cstring ext) const;
+    Path fileBasename() const;
+
+    CString extension() const;
 
     Path dirname();
 
