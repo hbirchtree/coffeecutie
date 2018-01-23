@@ -140,8 +140,9 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
         if(kev->mod & CIKeyEvent::PressedModifier
            && !(kev->mod&CIKeyEvent::RepeatedModifier))
         {
-//            if(kev->key == CK_F10)
-//                m_debugging = !m_debugging;
+            if(kev->key == CK_F10)
+                rdata->r_state.debug_enabled =
+                        !rdata->r_state.debug_enabled;
 //            else if(kev->key == CK_F9)
 //                setWindowPosition({0,0});
         }

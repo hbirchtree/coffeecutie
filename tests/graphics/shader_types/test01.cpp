@@ -29,8 +29,8 @@ bool shader_types_uniform_flags()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {shader_types_uniform_flags,"Uniform types", nullptr, false, false}
+COFFEE_TEST_SUITE(1) = {
+{shader_types_uniform_flags,"Uniform types"}
 };
 
 COFFEE_RUN_TESTS(_tests);

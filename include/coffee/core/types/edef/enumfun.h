@@ -4,11 +4,11 @@
 
 #define C_FLAGS(e,t) \
     \
-    inline e operator~(e val){return C_FC(e,~(C_FC(t,val)));} \
+    constexpr inline e operator~(e val){return C_FC(e,~(C_FC(t,val)));} \
     \
-    inline e operator^(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
-    inline e operator&(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)&C_FC(t,rhs));} \
-    inline e operator|(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)|C_FC(t,rhs));} \
+    constexpr inline e operator^(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
+    constexpr inline e operator&(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)&C_FC(t,rhs));} \
+    constexpr inline e operator|(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)|C_FC(t,rhs));} \
     \
     inline e operator^=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
     inline e operator&=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \

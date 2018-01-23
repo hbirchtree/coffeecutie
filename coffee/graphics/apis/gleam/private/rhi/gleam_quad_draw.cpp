@@ -121,13 +121,13 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     vertex.compile(ShaderStage::Vertex, vertex_src);
     fragment.compile(ShaderStage::Fragment, fragment_src);
 
-    m_pip.attach(vertex, ShaderStage::Vertex);
-    m_pip.attach(fragment, ShaderStage::Fragment);
+    auto& v_store = m_pip.storeShader(std::move(vertex));
+    auto& f_store = m_pip.storeShader(std::move(fragment));
+
+    m_pip.attach(v_store, ShaderStage::Vertex);
+    m_pip.attach(f_store, ShaderStage::Fragment);
 
     status = m_pip.assemble();
-
-    vertex.dealloc();
-    fragment.dealloc();
 
     Vector<GLEAM_UniformDescriptor> desc;
     Vector<GLEAM_ProgramParameter> params;

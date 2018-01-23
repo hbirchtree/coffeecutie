@@ -20,13 +20,15 @@ namespace GLEAM{
 
 using GLC = CGL_Implementation;
 
-void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, BitFmt dt, Vector<byte_t> &storage)
+void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixFmt c, BitFmt dt, Vector<byte_t> &storage)
 {
     auto size = fb.size();
     if(size.area() <= 0)
         return;
 
-    storage.resize(GetPixSize(BitFormat::UByte, c, size.area()));
+    storage.resize(GetPixSize(
+                       BitFormat::UByte, GetPixComponent(c),
+                       size.area()));
 
     fb.use(FramebufferT::Read);
     CGL33::FBReadPixels(0, 0, size.w, size.h, c, dt, &storage[0]);
@@ -90,15 +92,21 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
     CGL33::Debug::SetDebugGroup("Loading GLEAM");
 
-    cVerbose(8, "Entering LoadAPI()");
+    if(m_store)
+    {
+        cVerbose(8, GLM_API "Data store already created, skipping");
+        return true;
+    }
+
+    cVerbose(8, GLM_API "Entering LoadAPI()");
     if(!store)
     {
-        cWarning("No data store provided");
+        cWarning(GLM_API "No data store provided");
         CGL33::Debug::UnsetDebugGroup();
         return false;
     }
 
-    cVerbose(8, "Creating instance data");
+    cVerbose(8, GLM_API "Creating instance data");
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
 #ifndef NDEBUG
@@ -109,7 +117,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     do
     {
         const szptr num_pbos = 5;
-        cVerbose(7, "Creating PBO storage, {0} units", num_pbos);
+        cVerbose(7, GLM_API "Creating PBO storage, {0} units", num_pbos);
 
         /* Check if someone else has initialized it */
         if(store->inst_data->pboQueue.buffers.size() == num_pbos)
@@ -130,14 +138,14 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     }while(false);
 #endif
 
-    cVerbose(10, "Getting GL context version");
+    cVerbose(10,GLM_API  "Getting GL context version");
     auto ver = CGL_Implementation::Debug::ContextVersion();
 
-    cVerbose(10, "Matching GL API...");
+    cVerbose(10,GLM_API  "Matching GL API...");
 #if defined(COFFEE_GLEAM_DESKTOP)
     cVerbose(8, "Checking GL core versions");
 
-    cVerbose(12, "Constructing GL version structures");
+    cVerbose(12,GLM_API  "Constructing GL version structures");
     const Display::CGLVersion ver33(3,3);
     const Display::CGLVersion ver43(4,3);
     const Display::CGLVersion ver45(4,5);
@@ -173,22 +181,22 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
     if(store->CURR_API == GL_Nothing)
     {
-        cWarning("Totally failed to create a GLEAM context,"
+        cWarning(GLM_API "Totally failed to create a GLEAM context,"
                  " got version: {0}",ver);
         CGL33::Debug::UnsetDebugGroup();
         return false;
     }
-    cVerbose(10, "Selected API: {0}", store->CURR_API);
+    cVerbose(10, GLM_API "Selected API: {0}", store->CURR_API);
 
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL33::Tex_SRGB_Supported())
     {
-        cVerbose(6,"Enabling SRGB color for framebuffers");
+        cVerbose(6,GLM_API "Enabling SRGB color for framebuffers");
         CGL33::Enable(Feature::FramebufferSRGB);
     }
 #endif
 
-    cVerbose(4,"Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
+    cVerbose(4,GLM_API "Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
 
 #if !defined(COFFEE_GLEAM_DESKTOP)
 //    store->features.qcom_tiling =
@@ -282,11 +290,11 @@ bool GLEAM_API::UnloadAPI()
 
 GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI()
 {
-    cVerbose(8, "Returning GLEAM loader...");
+    cVerbose(8, GLM_API "Returning GLEAM loader...");
     return [](bool debug = false)
     {
         static GLEAM_DataStore m_gleam_data = {};
-        cVerbose(8, "Running GLEAM loader");
+        cVerbose(8, GLM_API "Running GLEAM loader");
         return LoadAPI(&m_gleam_data, debug);
     };
 }
@@ -1122,20 +1130,20 @@ void GLEAM_API::MultiDraw(
         const GLEAM_API::OPT_DRAW &draws
         )
 {
-    GLEAM_API::DBG::SCOPE a("GLEAM_API::MultiDraw");
+    GLEAM_API::DBG::SCOPE a(GLM_API "MultiDraw");
 
     /* In debug mode, display the entire draw call.
      *  This is the true verbose mode. */
     if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
     {
-        cVerbose(12, "- Pipeline:{0}", pipeline.m_handle);
+        cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle);
         for(auto& cmd : draws.cmdBufs)
         {
-            cVerbose(12, "-- Vertices:{0} + UState:{1}",
+            cVerbose(12, GLM_API "-- Vertices:{0} + UState:{1}",
                      &cmd.vertices, &cmd.state);
             for(auto& call : cmd.commands)
             {
-                cVerbose(12, "--- Draw call:{0}", &call);
+                cVerbose(12, GLM_API "--- Draw call:{0}", &call);
             }
         }
     }
@@ -1195,7 +1203,7 @@ void GLEAM_API::MultiDraw(
             if(&buffer.vertices != p_vertices)
             {
                 GLEAM_API::DBG::SCOPE b(
-                            "GLEAM_API::VBuffer::bind");
+                            GLM_API "VBuffer::bind");
                 buffer.vertices.bind();
                 p_vertices = &buffer.vertices;
             }
@@ -1203,7 +1211,7 @@ void GLEAM_API::MultiDraw(
             if(&buffer.state != p_state)
             {
                 GLEAM_API::DBG::SCOPE b(
-                            "GLEAM_API::SetShaderUniformState");
+                            GLM_API "SetShaderUniformState");
                 for(auto const& s : buffer.state)
                     SetShaderUniformState(pipeline,
                                           s.first, *s.second);
@@ -1222,7 +1230,7 @@ void GLEAM_API::MultiDraw(
             if(&buffer.vertices != p_vertices)
             {
                 GLEAM_API::DBG::SCOPE b(
-                            "GLEAM_API::VBuffer::bind");
+                            GLM_API "VBuffer::bind");
                 if(GLEAM_FEATURES.gles20)
                     vertexOffset = 0;
                 buffer.vertices.bind();
@@ -1232,7 +1240,7 @@ void GLEAM_API::MultiDraw(
             if(&buffer.state != p_state)
             {
                 GLEAM_API::DBG::SCOPE b(
-                            "GLEAM_API::SetShaderUniformState");
+                            GLM_API "SetShaderUniformState");
                 for(auto const& s : buffer.state)
                     SetShaderUniformState(pipeline, s.first,
                                           *s.second);

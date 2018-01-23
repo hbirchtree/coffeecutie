@@ -46,7 +46,7 @@ struct GLEAM_Surface2D : GLEAM_Surface
     {
         Bytes dataS;
         dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
-        dataS.size = 0;
+        dataS.size = GetPixSize(fmt, comp, size.area());
         upload(fmt, comp, size, dataS, offset, mip);
     }
 
@@ -84,7 +84,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
     {
         Bytes dataS;
         dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
-        dataS.size = 0;
+        dataS.size = GetPixSize(fmt, comp, size.volume());
         upload(fmt, comp, size, dataS, offset, mip);
     }
 

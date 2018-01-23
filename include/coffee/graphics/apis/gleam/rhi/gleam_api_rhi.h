@@ -178,9 +178,8 @@ struct GLEAM_API : GraphicsAPI
     /* "Loose" functions */
 public:
     /* Dump the framebuffer pixels to a buffer, might be asynchronous */
-    static void DumpFramebuffer(
-            FB_T& fb,
-            PixelComponents c,
+    static void DumpFramebuffer(FB_T& fb,
+            PixFmt c,
             BitFmt dt,
             Vector<byte_t>& storage);
 

@@ -103,34 +103,6 @@ enum class HTTPAccess
     RequestMask = GET|POST|PUT|UPDATE|DELETE|PATCH|HEAD,
 };
 C_FLAGS(HTTPAccess, u32);
-
-enum class BitFormat : uint8
-{
-    Byte, ByteR,
-    UByte, UByteR,
-    UByte_332, UByte_233R,
-
-    Short, ShortR,
-    UShort, UShortR,
-    UShort_565, UShort_565R,
-    UShort_5551, UShort_1555R,
-
-    Int, IntR,
-    UInt, UIntR,
-    UInt_5999R,
-    UInt_1010102, UInt_2101010R,
-
-    Scalar_16,
-    Scalar_32,
-    Scalar_64,
-    Scalar_11_11_10,
-
-    UInt24_8,
-
-    Scalar_32_Int_24_8,
-};
-
-using BitFmt = BitFormat;
 using RSCA = ResourceAccess;
 
 }

@@ -2,6 +2,9 @@
 
 #include "shared/gl_shared_include.h"
 #include "shared/gl_shared_types.h"
+#include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/types/edef/logicenum.h>
 
 namespace Coffee{
 namespace CGL{
@@ -322,6 +325,8 @@ inline CGenum to_enum(
         PixelFormat f, PixelFlags e,
         CompFlags d)
 {
+    using P = PixFmt;
+
     (void)f;
     (void)e;
     (void)d;
@@ -329,7 +334,7 @@ inline CGenum to_enum(
     switch(f)
     {
 #ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::ASTC:{
+    case P::ASTC:{
         CGenum out = 0;
         if(feval(e&PixelFlags::SRGBA))
             out = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
@@ -340,224 +345,233 @@ inline CGenum to_enum(
         switch(d)
         {
         case ASTC_4x4:
-            out += 0;
+            out += 0x0;
+            break;
         case ASTC_5x4:
-            out += 1;
+            out += 0x1;
+            break;
         case ASTC_5x5:
-            out += 2;
+            out += 0x2;
+            break;
         case ASTC_6x5:
-            out += 3;
+            out += 0x3;
+            break;
         case ASTC_6x6:
-            out += 4;
+            out += 0x4;
+            break;
         case ASTC_8x5:
-            out += 5;
+            out += 0x5;
+            break;
         case ASTC_8x6:
-            out += 6;
+            out += 0x6;
+            break;
         case ASTC_8x8:
-            out += 7;
+            out += 0x7;
+            break;
         case ASTC_10x5:
-            out += 8;
+            out += 0x8;
+            break;
         case ASTC_10x6:
-            out += 9;
+            out += 0x9;
+            break;
         case ASTC_10x8:
-            out += 10;
+            out += 0xA;
+            break;
         case ASTC_10x10:
-            out += 11;
+            out += 0xB;
+            break;
         case ASTC_12x10:
-            out += 12;
+            out += 0xC;
+            break;
         case ASTC_12x12:
-            out += 13;
+            out += 0xD;
+            break;
         default:
             return GL_NONE;
         }
         return out;
     }
-#endif
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::BPTC:
-        if(feval(e&(PixelFlags::RGBA|PixelFlags::Unormalized)))
+    case P::BPTC:
+        if(feval(e,PixelFlags::RGBA|PixelFlags::Unormalized))
             return GL_COMPRESSED_RGBA_BPTC_UNORM;
-        if(feval(e&(PixelFlags::SRGBA|PixelFlags::Unormalized)))
+        if(feval(e,PixelFlags::SRGBA|PixelFlags::Unormalized))
             return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
-        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint)))
-            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
-        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint|PixelFlags::Unsigned)))
+        if(feval(e,PixelFlags::RGB|PixelFlags::FloatingPoint|PixelFlags::Unsigned))
+            return GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+        if(feval(e,PixelFlags::RGB|PixelFlags::FloatingPoint))
             return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
         return GL_NONE;
-    case PixelFormat::RGTC:
-	if(feval(e&(PixelFlags::R|PixelFlags::Unsigned)))
+
+    case P::RGTC:
+        if(feval(e&(PixelFlags::R|PixelFlags::Unsigned)))
             return GL_COMPRESSED_RED_RGTC1;
-	if(feval(e&(PixelFlags::R|PixelFlags::Signed)))
+        if(feval(e&(PixelFlags::R|PixelFlags::Signed)))
             return GL_COMPRESSED_SIGNED_RED_RGTC1;
-	if(feval(e&(PixelFlags::RG|PixelFlags::Unsigned)))
+        if(feval(e&(PixelFlags::RG|PixelFlags::Unsigned)))
             return GL_COMPRESSED_RG_RGTC2;
-	if(feval(e&(PixelFlags::RG|PixelFlags::Signed)))
+        if(feval(e&(PixelFlags::RG|PixelFlags::Signed)))
             return GL_COMPRESSED_SIGNED_RG_RGTC2;
         return GL_NONE;
-    case PixelFormat::S3TC:
-        if(feval(e&(PixelFlags::RGB))&&feval(d&S3TC_1))
+
+    case P::S3TC:
+        if(feval(e&(PixelFlags::RGB))&& d == S3TC_1)
             return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_1))
+        if(feval(e&(PixelFlags::RGBA))&& d == S3TC_1)
             return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_3))
+        if(feval(e&(PixelFlags::RGBA))&&d == S3TC_3)
             return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_5))
+        if(feval(e&(PixelFlags::RGBA))&&d == S3TC_5)
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        return GL_NONE;
+
+    case P::RGBA2:
+        return GL_RGBA2;
+    case P::R3G3B2:
+        return GL_R3_G3_B2;
+    case P::RGB4:
+        return GL_RGB4;
+    case P::RGBA4:
+        return GL_RGBA4;
+    case P::RGB5:
+        return GL_RGB5;
+    case P::RGB10:
+        return GL_RGB10;
+    case P::RGB12:
+        return GL_RGB12;
+    case P::RGBA12:
+        return GL_RGBA12;
+
+    case PixFmt::R16:
+        return GL_R16;
+    case PixFmt::RG16:
+        return GL_RG16;
+    case P::RGB16:
+        return GL_RGB16;
+    case P::RGBA16:
+        return GL_RGBA16;
 #endif
 
-//    case PixelFormat::ETC1:
+//    case P::ETC1:
 //        return GL_ETC1_RGB8_OES;
-
-    /* Depth/stencil buffers */
-    case PixelFormat::Depth16:
-        return GL_DEPTH_COMPONENT16;
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::Depth24Stencil8:
-        return GL_DEPTH24_STENCIL8;
-#endif
-#if defined(COFFEE_GLEAM_DESKTOP)
-
-#endif
 
     /* Requires to be used with GL_UNSIGNED_INT */
 #if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::R8I:
+    case P::Depth16:
+        return GL_DEPTH_COMPONENT16;
+    /* Depth/stencil buffers */
+    case P::Depth24Stencil8:
+        return GL_DEPTH24_STENCIL8;
+    case P::Depth32F:
+        return GL_DEPTH_COMPONENT32F;
+    case P::Depth32FStencil8:
+        return GL_DEPTH32F_STENCIL8;
+
+    case P::R8I:
         return GL_R8I;
-    case PixelFormat::R8UI:
+    case P::R8UI:
         return GL_R8UI;
-    case PixelFormat::R16I:
+    case P::R16I:
         return GL_R16I;
-    case PixelFormat::R16UI:
+    case P::R16UI:
         return GL_R16UI;
-    case PixelFormat::R32I:
+    case P::R32I:
         return GL_R32I;
-    case PixelFormat::R32UI:
+    case P::R32UI:
         return GL_R32UI;
-    case PixelFormat::R16F:
+    case P::R16F:
         return GL_R16F;
-    case PixelFormat::R32F:
+    case P::R32F:
         return GL_R32F;
 
-    case PixelFormat::RG8I:
+    case P::RG8I:
         return GL_RG8I;
-    case PixelFormat::RG8UI:
+    case P::RG8UI:
         return GL_RG8UI;
-    case PixelFormat::RG16I:
+    case P::RG16I:
         return GL_RG16I;
-    case PixelFormat::RG16UI:
+    case P::RG16UI:
         return GL_RG16UI;
-    case PixelFormat::RG32I:
+    case P::RG32I:
         return GL_RG32I;
-    case PixelFormat::RG32UI:
+    case P::RG32UI:
         return GL_RG32UI;
-    case PixelFormat::RG16F:
+    case P::RG16F:
         return GL_RG16F;
-    case PixelFormat::RG32F:
+    case P::RG32F:
         return GL_RG32F;
 
-    case PixelFormat::RGB8I:
+    case P::RGB8I:
         return GL_RGB8I;
-    case PixelFormat::RGB8UI:
+    case P::RGB8UI:
         return GL_RGB8UI;
-    case PixelFormat::RGB16I:
+    case P::RGB16I:
         return GL_RGB16I;
-    case PixelFormat::RGB16UI:
+    case P::RGB16UI:
         return GL_RGB16UI;
-    case PixelFormat::RGB32I:
+    case P::RGB32I:
         return GL_RGB32I;
-    case PixelFormat::RGB32UI:
+    case P::RGB32UI:
         return GL_RGB32UI;
-    case PixelFormat::RGB16F:
+    case P::RGB16F:
         return GL_RGB16F;
-    case PixelFormat::RGB32F:
+    case P::RGB32F:
         return GL_RGB32F;
 
-    case PixelFormat::RGBA8I:
+    case P::RGBA8I:
         return GL_RGBA8I;
-    case PixelFormat::RGBA8UI:
+    case P::RGBA8UI:
         return GL_RGBA8UI;
-    case PixelFormat::RGBA16I:
+    case P::RGBA16I:
         return GL_RGBA16I;
-    case PixelFormat::RGBA16UI:
+    case P::RGBA16UI:
         return GL_RGBA16UI;
-    case PixelFormat::RGBA32I:
+    case P::RGBA32I:
         return GL_RGBA32I;
-    case PixelFormat::RGBA32UI:
+    case P::RGBA32UI:
         return GL_RGBA32UI;
-    case PixelFormat::RGBA16F:
+    case P::RGBA16F:
         return GL_RGBA16F;
-    case PixelFormat::RGBA32F:
+    case P::RGBA32F:
         return GL_RGBA32F;
 
     /* Because GL_RGBA8I cannot be used with GL_UNSIGNED_BYTE */
-    case PixelFormat::RGBA8:
-        return GL_RGBA8;
-    case PixelFormat::RGB8:
-        return GL_RGB8;
-
-    case PixelFormat::R11G11B10F:
-        return GL_R11F_G11F_B10F;
-#else
-    case PixelFormat::RGBA8:
-        return GL_RGBA;
-
-#endif
-
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::R3G3B2UI:
-        return GL_R3_G3_B2;
-    case PixelFormat::RGB4UI:
-        return GL_RGB4;
-    case PixelFormat::RGB5UI:
-        return GL_RGB5;
-#endif
-    case PixelFormat::RGB565UI:
+    case P::RGB565:
         return GL_RGB565;
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::RGB9E5UI:
-        return GL_RGB9_E5;
-#endif
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::RGB10:
-        return GL_RGB10;
-    case PixelFormat::RGB12:
-        return GL_RGB12;
-#endif
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::RGBA2:
-        return GL_RGBA2;
-#endif
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::RGB10A2I:
-        return GL_RGB10_A2;
-    case PixelFormat::RGB10A2UI:
-        return GL_RGB10_A2UI;
-#endif
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::RGBA12:
-        return GL_RGBA12;
-#endif
-    case PixelFormat::RGB5A1UI:
+    case P::RGB5A1:
         return GL_RGB5_A1;
+    case P::RGB9E5:
+        return GL_RGB9_E5;
+    case P::RGB10A2:
+        return GL_RGB10_A2;
+    case P::RGB10A2UI:
+        return GL_RGB10_A2UI;
 
-#if !defined(COFFEE_ONLY_GLES20)
-
-    case PixelFormat::SRGB8A8:
-#if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
-        return GL_SRGB8_ALPHA8;
-#else
-        return GL_RGBA8;
-#endif
-    case PixelFormat::SRGB8:
-#if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
-        return GL_SRGB8;
-#else
+    case PixFmt::R8:
+        return GL_R8;
+    case PixFmt::RG8:
+        return GL_RG8;
+    case P::RGB8:
         return GL_RGB8;
+    case P::RGBA8:
+        return GL_RGBA8;
+
+    case P::R11G11B10F:
+        return GL_R11F_G11F_B10F;
+
+#if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
+    case P::SRGB8A8:
+        return GL_SRGB8_ALPHA8;
+    case P::SRGB8:
+        return GL_SRGB8;
 #endif
+
+#else
+    case P::RGBA8:
+        return GL_RGBA;
 #endif
 
     default:
-	return GL_NONE;
+        return GL_NONE;
     }
 }
 
@@ -821,45 +835,69 @@ inline CGenum to_enum3(ResourceAccess acc)
 }
 #endif
 
-inline CGenum to_enum(PixelComponents f)
+inline CGenum to_enum(PixelComponents f, PixFmt hint)
 {
+#if !defined(COFFEE_ONLY_GLES20)
+    PixFlg flags = GetPixSampleType(hint);
+#endif
+
     switch(f)
     {
+    case PixelComponents::RGB:
+#if !defined(COFFEE_ONLY_GLES20)
+        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+            return GL_RGB_INTEGER;
+        else
+#endif
+            return GL_RGB;
+    case PixelComponents::RGBA:
+#if !defined(COFFEE_ONLY_GLES20)
+        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+            return GL_RGBA_INTEGER;
+        else
+#endif
+            return GL_RGBA;
 #if !defined(COFFEE_ONLY_GLES20)
     case PixelComponents::R:
-        return GL_RED;
+        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+            return GL_RED_INTEGER;
+        else
+            return GL_RED;
     case PixelComponents::G:
         return GL_GREEN;
     case PixelComponents::B:
         return GL_BLUE;
     case PixelComponents::RG:
-        return GL_RG;
-#endif
-    case PixelComponents::RGB:
-        return GL_RGB;
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelComponents::BGR:
-        return GL_BGR;
-#else
-    case PixelComponents::BGR:
-        return GL_RGB;
-#endif
-    case PixelComponents::RGBA:
-        return GL_RGBA;
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelComponents::BGRA:
-        return GL_BGRA;
-#else
-    case PixelComponents::BGRA:
-        return GL_RGBA;
-#endif
+        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+            return GL_RG_INTEGER;
+        else
+            return GL_RG;
+
     case PixelComponents::Depth:
         return GL_DEPTH_COMPONENT;
-#if !defined(COFFEE_ONLY_GLES20)
     case PixelComponents::DepthStencil:
         return GL_DEPTH_STENCIL;
     case PixelComponents::Stencil:
         return GL_STENCIL;
+#else
+    case PixCmp::R:
+    case PixCmp::G:
+    case PixCmp::B:
+        return GL_ALPHA;
+    case PixCmp::RG:
+        return GL_LUMINANCE_ALPHA;
+#endif
+        /* Endian-flipped formats */
+#ifdef COFFEE_GLEAM_DESKTOP
+    case PixelComponents::BGR:
+        return GL_BGR;
+    case PixelComponents::BGRA:
+        return GL_BGRA;
+#else
+    case PixelComponents::BGR:
+        return GL_RGB;
+    case PixelComponents::BGRA:
+        return GL_RGBA;
 #endif
     default:
         return GL_NONE;
@@ -919,67 +957,71 @@ inline CGenum to_enum(BitFormat f)
 {
     switch(f)
     {
+    /* Apparently, this is as far as the OpenGL ES 2.0 standard goes */
+    case BitFormat::UByte:
+        return GL_UNSIGNED_BYTE;
+    case BitFormat::UShort_565:
+        return GL_UNSIGNED_SHORT_5_6_5;
+    case BitFormat::UShort_5551:
+        return GL_UNSIGNED_SHORT_5_5_5_1;
+    case BitFormat::UShort_4444:
+        return GL_UNSIGNED_SHORT_4_4_4_4;
+
+#if !defined(COFFEE_ONLY_GLES20)
     case BitFormat::Byte:
         return GL_BYTE;
     case BitFormat::Short:
         return GL_SHORT;
     case BitFormat::Int:
         return GL_INT;
+    case BitFormat::UShort:
+        return GL_UNSIGNED_SHORT;
+    case BitFormat::UInt:
+        return GL_UNSIGNED_INT;
 
-    case BitFormat::UByte:
-        return GL_UNSIGNED_BYTE;
 #ifdef COFFEE_GLEAM_DESKTOP
     case BitFormat::UByte_233R:
         return GL_UNSIGNED_BYTE_2_3_3_REV;
     case BitFormat::UByte_332:
         return GL_UNSIGNED_BYTE_3_3_2;
-#endif
-
-    case BitFormat::UShort:
-        return GL_UNSIGNED_SHORT;
-    case BitFormat::UShort_565:
-        return GL_UNSIGNED_SHORT_5_6_5;
-#ifdef COFFEE_GLEAM_DESKTOP
-    case BitFormat::UShortR:
+    case BitFormat::UShort_4444R:
         return GL_UNSIGNED_SHORT_4_4_4_4_REV;
     case BitFormat::UShort_565R:
         return GL_UNSIGNED_SHORT_5_6_5_REV;
     case BitFormat::UShort_1555R:
         return GL_UNSIGNED_SHORT_1_5_5_5_REV;
-#endif
-    case BitFormat::UShort_5551:
-        return GL_UNSIGNED_SHORT_5_5_5_1;
-
-    case BitFormat::UInt:
-        return GL_UNSIGNED_INT;
-#if !defined(COFFEE_ONLY_GLES20)
-    case BitFormat::UInt_5999R:
-        return GL_UNSIGNED_INT_5_9_9_9_REV;
-#endif
-#ifdef COFFEE_GLEAM_DESKTOP
     case BitFormat::UIntR:
         return GL_UNSIGNED_INT_8_8_8_8_REV;
     case BitFormat::UInt_1010102:
         return GL_UNSIGNED_INT_10_10_10_2;
 #endif
-#if !defined(COFFEE_ONLY_GLES20)
+
+
+    case BitFormat::UInt_5999R:
+        return GL_UNSIGNED_INT_5_9_9_9_REV;
     case BitFormat::UInt_2101010R:
         return GL_UNSIGNED_INT_2_10_10_10_REV;
-#endif
-#if !defined(COFFEE_ONLY_GLES20)
+
     case BitFormat::Scalar_16:
         return GL_HALF_FLOAT;
-#endif
     case BitFormat::Scalar_32:
         return GL_FLOAT;
+
+    case BitFmt::Scalar_11_11_10:
+        return GL_UNSIGNED_INT_10F_11F_11F_REV;
+
     case BitFormat::UInt24_8:
-#if !defined(COFFEE_ONLY_GLES20)
         return GL_UNSIGNED_INT_24_8;
+    case BitFormat::Scalar_32_Int_24_8:
+        return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 #else
         /* In order to keep compatibility, we fall back to normal format,
          *  and OpenGL ES 2.0 does not support depth+stencil formats. */
+    case BitFormat::UInt24_8:
         return GL_UNSIGNED_BYTE;
 #endif
+
+
     default:
         return GL_NONE;
     }
@@ -1013,122 +1055,6 @@ inline CGenum to_enum(FramebufferT f)
 inline CGenum to_enum(AttribMode f)
 {
     return C_CAST<CGenum>(f);
-}
-
-inline CGpixfmt get_fmt(PixelFormat e, bool rev)
-{
-    (void)e;
-    (void)rev;
-
-    switch(e)
-    {
-    case PixelFormat::RGB8UI:
-            return {GL_UNSIGNED_BYTE,GL_RGB};
-    case PixelFormat::RGB8I:
-            return {GL_BYTE,GL_RGB};
-    case PixelFormat::RGB16UI:
-            return {GL_UNSIGNED_SHORT,GL_RGB};
-    case PixelFormat::RGB16I:
-            return {GL_SHORT,GL_RGB};
-    case PixelFormat::RGB32UI:
-            return {GL_UNSIGNED_INT,GL_RGB};
-    case PixelFormat::RGB32I:
-            return {GL_INT,GL_RGB};
-
-    case PixelFormat::RGBA8UI:
-#ifdef COFFEE_GLEAM_DESKTOP
-        if(rev)
-            return {GL_UNSIGNED_INT_8_8_8_8_REV,GL_RGBA};
-        else
-            return {GL_UNSIGNED_INT_8_8_8_8,GL_RGBA};
-#endif
-    case PixelFormat::RGBA8I:
-            return {GL_BYTE,GL_RGBA};
-    case PixelFormat::RGBA16UI:
-            return {GL_UNSIGNED_SHORT,GL_RGBA};
-    case PixelFormat::RGBA16I:
-            return {GL_SHORT,GL_RGBA};
-    case PixelFormat::RGBA32UI:
-            return {GL_UNSIGNED_INT,GL_RGBA};
-    case PixelFormat::RGBA32I:
-            return {GL_INT,GL_RGBA};
-
-#ifdef COFFEE_GLEAM_DESKTOP
-    case PixelFormat::R3G3B2UI:
-        if(rev)
-            return {GL_UNSIGNED_BYTE_2_3_3_REV,GL_RGB};
-        else
-            return {GL_UNSIGNED_BYTE_3_3_2,GL_RGB};
-#endif
-    case PixelFormat::RGB4UI:
-#ifdef COFFEE_GLEAM_DESKTOP
-        if(rev)
-            return {GL_UNSIGNED_SHORT_4_4_4_4_REV,GL_RGB};
-        else
-#endif
-            return {GL_UNSIGNED_SHORT_4_4_4_4,GL_RGB};
-    case PixelFormat::RGB565UI:
-#ifdef COFFEE_GLEAM_DESKTOP
-        if(rev)
-            return {GL_UNSIGNED_SHORT_5_6_5_REV,GL_RGB};
-        else
-#endif
-            return {GL_UNSIGNED_SHORT_5_6_5,GL_RGB};
-
-    case PixelFormat::RGB5A1UI:
-#ifdef COFFEE_GLEAM_DESKTOP
-        if(rev)
-            return {GL_UNSIGNED_SHORT_1_5_5_5_REV,GL_RGBA};
-        else
-#endif
-            return {GL_UNSIGNED_SHORT_5_5_5_1,GL_RGBA};
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::RGB9E5UI:
-        if(rev)
-            return {GL_UNSIGNED_INT_5_9_9_9_REV,GL_RGBA};
-        else
-            break;
-#endif
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::RGB10A2I:
-        if(rev)
-            return {GL_INT_2_10_10_10_REV,GL_RGBA};
-        else
-            break;
-#endif
-
-//#if !defined(COFFEE_ONLY_GLES20)
-//    case PixelFormat::RGB10A2UI:
-//        if(rev)
-//            return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
-//        else
-//            return {GL_UNSIGNED_INT_10_10_10_2,GL_RGBA};
-//#endif
-
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::R11G11B10F:
-        return {GL_UNSIGNED_INT_10F_11F_11F_REV,GL_RGB};
-#endif
-
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::R32F:
-        return {GL_FLOAT,GL_RED};
-    case PixelFormat::RG32F:
-        return {GL_FLOAT,GL_RG};
-#endif
-    case PixelFormat::RGB32F:
-        return {GL_FLOAT,GL_RGB};
-    case PixelFormat::RGBA32F:
-        return {GL_FLOAT,GL_RGBA};
-
-    case PixelFormat::RGBA8:
-        return {GL_UNSIGNED_BYTE, GL_RGBA};
-
-
-    default:
-        break;
-    }
-    return {GL_NONE,GL_NONE};
 }
 
 inline CGenum to_enum(Filtering p, Filtering s)

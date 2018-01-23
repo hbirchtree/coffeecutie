@@ -5,44 +5,49 @@
 
 namespace Coffee{
 
-FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
+FORCEDINLINE szptr GetPixSize(
+        BitFormat fmt, PixelComponents comp, szptr pixels)
 {
+    using B = BitFormat;
+
     szptr pxsz = 0;
     switch(fmt)
     {
-    case BitFormat::Byte:
-    case BitFormat::ByteR:
-    case BitFormat::UByte:
-    case BitFormat::UByteR:
-    case BitFormat::UByte_332:
-    case BitFormat::UByte_233R:
+    case B::Byte:
+    case B::ByteR:
+    case B::UByte:
+    case B::UByteR:
+    case B::UByte_332:
+    case B::UByte_233R:
         pxsz = 1;
         break;
-    case BitFormat::Short:
-    case BitFormat::ShortR:
-    case BitFormat::UShort:
-    case BitFormat::UShortR:
-    case BitFormat::UShort_565:
-    case BitFormat::UShort_565R:
-    case BitFormat::UShort_5551:
-    case BitFormat::UShort_1555R:
-    case BitFormat::Scalar_16:
+    case B::Short:
+    case B::ShortR:
+    case B::UShort:
+    case B::UShortR:
+    case B::UShort_4444:
+    case B::UShort_4444R:
+    case B::UShort_565:
+    case B::UShort_565R:
+    case B::UShort_5551:
+    case B::UShort_1555R:
+    case B::Scalar_16:
         pxsz = 2;
         break;
-    case BitFormat::Int:
-    case BitFormat::IntR:
-    case BitFormat::UInt:
-    case BitFormat::UIntR:
-    case BitFormat::UInt_5999R:
-    case BitFormat::UInt_1010102:
-    case BitFormat::UInt_2101010R:
-    case BitFormat::Scalar_32:
-    case BitFormat::Scalar_11_11_10:
-    case BitFormat::UInt24_8:
+    case B::Int:
+    case B::IntR:
+    case B::UInt:
+    case B::UIntR:
+    case B::UInt_5999R:
+    case B::UInt_1010102:
+    case B::UInt_2101010R:
+    case B::Scalar_32:
+    case B::Scalar_11_11_10:
+    case B::UInt24_8:
         pxsz = 4;
         break;
-    case BitFormat::Scalar_64:
-    case BitFormat::Scalar_32_Int_24_8:
+    case B::Scalar_64:
+    case B::Scalar_32_Int_24_8:
         pxsz = 8;
         break;
     }

@@ -4,6 +4,8 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
 
+#define GLM_API "GLEAM_API::"
+
 namespace Coffee{
 namespace RHI{
 namespace GLEAM{
