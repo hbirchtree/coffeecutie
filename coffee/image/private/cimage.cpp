@@ -204,7 +204,10 @@ bool IMG::Load(const Url &src, PixCmp cmp, BitFmt &fmt,
 
         res = img.size;
 
-        Stb::ImageFree(&img);
+        Bytes::SetDestr(data, [](Bytes& inst)
+        {
+            stbi_image_free(inst.data);
+        });
     }
 
     FileUnmap(rsc);
