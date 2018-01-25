@@ -1,7 +1,5 @@
 find_package ( AndroidSDK )
 
-message ("Android paths: NDK=${ANDROID_NDK}, SDK=${ANDROID_SDK}")
-
 set ( ANDROID_ADB_PROGRAM
         "/usr/bin/adb"
         CACHE FILEPATH "ANT build program" )

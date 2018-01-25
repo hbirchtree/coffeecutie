@@ -183,7 +183,18 @@ struct CGL_Old_Textures
     /* TexGenMipmap */
 
     STATICINLINE void TexGenMipmap(Texture t)
-    {glGenerateMipmap(to_enum(t));}
+    {
+#if defined(COFFEE_ANDROID)
+        /* Qualcomm tends to crash here... Solution?
+         *  Just ensure that texture operations are finished I guess.*/
+        if(strstr(glGetString(GL_VENDOR), "Qualcomm"))
+        {
+            glFlush();
+        }
+#endif
+
+        glGenerateMipmap(to_enum(t));
+    }
 
     /* TexParameter */
 
