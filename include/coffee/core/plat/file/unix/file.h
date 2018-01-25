@@ -334,7 +334,7 @@ struct PosixDirFun : DirFunDef
 
     using Type = FileFunDef::NodeType;
 
-    static bool Ls(Url const& dname, DirList& entries);
+    static bool Ls(Url const& dname, DirList& entries, bool quiet = false);
 };
 
 }

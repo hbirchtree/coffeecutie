@@ -598,7 +598,7 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
     Path tmp,tmp2;
     Url base = MkUrl("", RSCA::SystemFile);
 
-    if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst))
+    if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst, true))
     {
         for(auto e : lst)
             if(e.name != "." && e.name != "..")
@@ -622,15 +622,15 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
     tmp2 = Path::Mk("");
 
     /* hwmon* units */
-    if(DirFun::Ls(MkUrl(hwmon_class, RSCA::SystemFile), lst))
+    if(DirFun::Ls(MkUrl(hwmon_class, RSCA::SystemFile), lst, true))
     {
         DirFun::DirList lst2;
         Url path = MkUrl("", RSCA::SystemFile);
         for(auto e : lst)
         {
             tmp = Path{hwmon_class};
-            path = path + (tmp + e.name.c_str());
-            if(DirFun::Ls(path, lst2))
+            Url path2 = path + (tmp + e.name.c_str());
+            if(DirFun::Ls(path2, lst2, true))
             {
                 for(auto e2 : lst2)
                 {

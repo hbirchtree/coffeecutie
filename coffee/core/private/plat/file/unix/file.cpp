@@ -238,14 +238,16 @@ int PosixFileMod_def::PosixRscFlags(ResourceAccess acc)
     return oflags;
 }
 
-bool PosixDirFun::Ls(Url const& dname, DirFunDef::DirList &entries)
+bool PosixDirFun::Ls(
+        Url const& dname, DirFunDef::DirList &entries, bool quiet)
 {
     auto url = *dname;
     DIR* dr = opendir(url.c_str());
 
     if(!dr)
     {
-        PosixFileFun::ErrnoCheck(url.c_str());
+        if(!quiet)
+            PosixFileFun::ErrnoCheck(url.c_str());
         return false;
     }
 
@@ -291,7 +293,10 @@ bool PosixDirFun::Ls(Url const& dname, DirFunDef::DirList &entries)
 
     closedir(dr);
 
-    PosixFileFun::ErrnoCheck(url.c_str());
+    if(!quiet)
+        PosixFileFun::ErrnoCheck(url.c_str());
+    else
+        errno = 0;
 
     return true;
 }
