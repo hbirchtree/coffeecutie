@@ -65,7 +65,7 @@ STATICINLINE void texture_pbo_upload(
 STATICINLINE bool texture_check_bounds(
         Bytes const& texdata, PixCmp pix, BitFmt bit, szptr pixels)
 {
-    bool r = texdata.size <= GetPixSize(bit, pix, pixels);
+    bool r = texdata.size >= GetPixSize(bit, pix, pixels);
 
     if(!r)
         cWarning(GLM_API "Texture failed bounds test: {0} < {1}",
@@ -329,6 +329,8 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
             if(m_flags&GLEAM_API::TextureDMABuffered)
                 CGL33::BufBind(BufType::PixelUData,0);
         }
+
+        CGL33::TexGenMipmap(m_type);
 
         if(GL_DEBUG_MODE)
             upload_info(comp,mip,size.depth);

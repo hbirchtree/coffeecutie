@@ -1013,6 +1013,34 @@ bool InternalMultiDraw(
 {
     static CGhnd indirectBuf;
 
+    if(GL_DEBUG_MODE)
+    {
+        if(data.counts.size() == 0)
+            cWarning(GLM_API "Draw call has no meshes");
+
+        szptr valid = 0;
+        for(auto c : data.counts)
+            if(c > 0)
+                valid++;
+        if(valid == 0)
+            cWarning(GLM_API "Draw call has meshes, but null-sized");
+
+        for(auto const& call : data.indirectCalls)
+            if(data.dc.indexed())
+            {
+                if(call.i.instanceCount == 0)
+                    cWarning(GLM_API "Draw call with instanceCount==0");
+                if(call.i.count == 0)
+                    cWarning(GLM_API "Draw call with count==0");
+            }else
+            {
+                if(call.a.instanceCount == 0)
+                    cWarning(GLM_API "Draw call with instanceCount==0");
+                if(call.a.count == 0)
+                    cWarning(GLM_API "Draw call with count==0");
+            }
+    }
+
     using IndirectCall = GLEAM_API::OptimizedDraw::IndirectCall;
 
     /* TODO: Add more MultiDraw* support */
