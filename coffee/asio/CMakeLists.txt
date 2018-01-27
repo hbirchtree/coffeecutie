@@ -12,7 +12,9 @@ set ( CoffeeASIO_SRCS
     private/net_profiling.cpp
     )
 
-set ( LIBS ${OPENSSL_LIBRARIES} )
+if(TARGET OpenSSL::SSL)
+    set ( LIBS OpenSSL::SSL )
+endif()
 
 coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/asio")
