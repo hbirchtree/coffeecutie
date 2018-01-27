@@ -187,7 +187,8 @@ struct CGL_Old_Textures
 #if defined(COFFEE_ANDROID)
         /* Qualcomm tends to crash here... Solution?
          *  Just ensure that texture operations are finished I guess.*/
-        if(strstr(glGetString(GL_VENDOR), "Qualcomm"))
+        if(strstr(reinterpret_cast<const char*>(glGetString(GL_VENDOR)),
+                  "Qualcomm"))
         {
             glFlush();
         }

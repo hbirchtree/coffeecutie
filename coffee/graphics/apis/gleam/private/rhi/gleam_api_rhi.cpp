@@ -143,7 +143,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
     cVerbose(10,GLM_API  "Matching GL API...");
 #if defined(COFFEE_GLEAM_DESKTOP)
-    cVerbose(8, "Checking GL core versions");
+    cVerbose(8, GLM_API "Checking GL core versions");
 
     cVerbose(12,GLM_API  "Constructing GL version structures");
     const Display::CGLVersion ver33(3,3);
@@ -159,9 +159,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     else if(ver>=ver33)
         store->CURR_API = GL_3_3;
 #else
-    cVerbose(8, "Checking GLES versions");
+    cVerbose(8, GLM_API "Checking GLES versions");
 
-    cVerbose(12, "Constructing GL version structures");
+    cVerbose(12, GLM_API "Constructing GL version structures");
     const Display::CGLVersion ver20es(2,0);
 #if !defined(COFFEE_ONLY_GLES20)
     const Display::CGLVersion ver30es(3,0);
@@ -177,7 +177,12 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         store->CURR_API = GLES_2_0;
 #endif
 
-    cVerbose(8, "Got API: {0}", store->CURR_API);
+    if(Env::ExistsVar("GLEAM_API"))
+    {
+        store->CURR_API = gl_level_from_string(Env::GetVar("GLEAM_API"));
+    }
+
+    cVerbose(8, GLM_API "Got API: {0}", store->CURR_API);
 
     if(store->CURR_API == GL_Nothing)
     {
