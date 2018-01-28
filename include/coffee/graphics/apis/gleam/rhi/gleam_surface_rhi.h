@@ -93,9 +93,6 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
     /*TODO: Add download function */
 
     CSize3 m_size;
-
-protected:
-    Texture m_type;
 };
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base

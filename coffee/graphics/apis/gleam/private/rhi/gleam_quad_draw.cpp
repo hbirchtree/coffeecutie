@@ -146,7 +146,7 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
 void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
 {
-    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::ReadOnly,
+    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::WriteOnly,
                                       sizeof(m_vertex_quad_data));
 
     m_buffer.alloc();

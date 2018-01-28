@@ -244,17 +244,10 @@ GLEAM_SurfaceCube::GLEAM_SurfaceCube(PixelFormat fmt, u32 mips, u32 texflags) :
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
         Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
-    #if !defined(COFFEE_ONLY_GLES20)
-    GLEAM_Surface(t,fmt,mips,texflags),
-    #else
-    GLEAM_Surface(Texture::T2D,fmt,mips,texflags),
-    #endif
-    m_size(0,0,0),
-    #if defined(COFFEE_ONLY_GLES20)
-    m_type(Texture::T2D)
-  #else
-    m_type(t)
-  #endif
+    GLEAM_Surface((GL_CURR_API == GLES_2_0)
+                  ? Texture::T2D : t,
+                  fmt,mips,texflags),
+    m_size(0,0,0)
 {
     C_USED(t);
 }

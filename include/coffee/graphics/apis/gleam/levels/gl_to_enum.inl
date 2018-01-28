@@ -753,41 +753,41 @@ inline CGenum to_enum(BufType f)
     return (CGenum)f;
 }
 
-inline CGenum to_enum1(ResourceAccess acc)
+inline CGenum to_enum1(RSCA acc)
 {
     CGenum f = GL_NONE;
 
 #if !defined(COFFEE_ONLY_GLES20)
-    if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Persistent)))
+    if(feval(acc, RSCA::ReadOnly|RSCA::Persistent))
         f = GL_DYNAMIC_READ;
-    if(feval(acc&(ResourceAccess::WriteOnly|ResourceAccess::Persistent)))
+    if(feval(acc, RSCA::WriteOnly|RSCA::Persistent))
         f = GL_DYNAMIC_DRAW;
-    if(feval(acc&(ResourceAccess::ReadWrite|ResourceAccess::Persistent)))
+    if(feval(acc, RSCA::ReadWrite|RSCA::Persistent))
         f = GL_DYNAMIC_COPY;
 
     if(f != GL_NONE)
         return f;
 
-    if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Streaming)))
+    if(feval(acc, RSCA::ReadOnly|RSCA::Streaming))
         f = GL_STREAM_READ;
-    if(feval(acc&(ResourceAccess::WriteOnly|ResourceAccess::Streaming)))
+    if(feval(acc, RSCA::WriteOnly|RSCA::Streaming))
         f = GL_STREAM_DRAW;
-    if(feval(acc&(ResourceAccess::ReadWrite|ResourceAccess::Streaming)))
+    if(feval(acc, RSCA::ReadWrite|RSCA::Streaming))
         f = GL_STREAM_COPY;
 
     if(f != GL_NONE)
         return f;
 
-    if(feval(acc&(ResourceAccess::ReadOnly)))
+    if(feval(acc, RSCA::ReadOnly))
         f = GL_STATIC_READ;
-    if(feval(acc&(ResourceAccess::WriteOnly)))
+    if(feval(acc, RSCA::WriteOnly))
         f = GL_STATIC_DRAW;
-    if(feval(acc&(ResourceAccess::ReadWrite)))
+    if(feval(acc, RSCA::ReadWrite))
         f = GL_STATIC_COPY;
 #else
-    if(feval(acc&(ResourceAccess::Persistent)))
+    if(feval(acc&(RSCA::Persistent)))
         f = GL_DYNAMIC_DRAW;
-    else if(feval(acc&(ResourceAccess::Streaming)))
+    else if(feval(acc&(RSCA::Streaming)))
         f = GL_STREAM_DRAW;
     else
         f = GL_STATIC_DRAW;
@@ -796,38 +796,38 @@ inline CGenum to_enum1(ResourceAccess acc)
     return f;
 }
 
-inline CGenum to_enum2(ResourceAccess acc)
+inline CGenum to_enum2(RSCA acc)
 {
     (void)acc;
 
     CGenum f = 0;
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(feval(acc,ResourceAccess::Persistent))
+    if(feval(acc,RSCA::Persistent))
         f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
 #endif
 #if !defined(COFFEE_ONLY_GLES20)
-    if(feval(acc,ResourceAccess::ReadOnly))
+    if(feval(acc,RSCA::ReadOnly))
         f |= GL_MAP_READ_BIT;
-    if(feval(acc,ResourceAccess::WriteOnly))
+    if(feval(acc,RSCA::WriteOnly))
         f |= GL_MAP_WRITE_BIT;
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(feval(acc,ResourceAccess::Streaming))
+    if(feval(acc,RSCA::Streaming))
         f |= GL_CLIENT_STORAGE_BIT;
 #endif
     return f;
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGenum to_enum3(ResourceAccess acc)
+inline CGenum to_enum3(RSCA acc)
 {
     switch(acc)
     {
-    case ResourceAccess::WriteOnly:
+    case RSCA::WriteOnly:
         return GL_WRITE_ONLY;
-    case ResourceAccess::ReadOnly:
+    case RSCA::ReadOnly:
         return GL_READ_ONLY;
-    case ResourceAccess::ReadWrite:
+    case RSCA::ReadWrite:
         return GL_READ_WRITE;
     default:
         return GL_NONE;

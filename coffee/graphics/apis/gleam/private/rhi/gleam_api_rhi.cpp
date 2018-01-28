@@ -177,9 +177,25 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         store->CURR_API = GLES_2_0;
 #endif
 
+    auto prevApi = store->CURR_API;
+
+    /* Emulation mode; differs slightly from compiling against an API,
+     *  such as when ES 2.0 excludes pixel formats and etc. */
+    /* TODO: Document this feature */
     if(Env::ExistsVar("GLEAM_API"))
     {
         store->CURR_API = gl_level_from_string(Env::GetVar("GLEAM_API"));
+    }
+
+    /* If we are emulating ES 2.0, create a global vertex array.
+     *  All other code assumes that VertexAttribPointer
+     * runs without binding a VAO. */
+    /* TODO: Destroy this object when performing reload */
+    if(prevApi != GLES_2_0 && store->CURR_API == GLES_2_0)
+    {
+        GLuint vao = 0;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
     }
 
     cVerbose(8, GLM_API "Got API: {0}", store->CURR_API);
@@ -272,13 +288,16 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
             (api == GL_4_3);
     store->features.buffer_persistent =
             (api != GL_3_3)
-            && (api != GLES_2_0);
+            && (api != GLES_2_0)
+            && store->features.buffer_storage;
     store->features.element_buffer_bind = true;
     store->features.vertex_format =
             (api == GL_4_3)
             || (api == GLES_3_2);
 
     m_store = store;
+
+    DefaultFramebuffer().size();
 
     CGL33::Debug::UnsetDebugGroup();
 

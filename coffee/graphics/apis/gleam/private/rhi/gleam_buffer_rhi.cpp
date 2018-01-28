@@ -22,6 +22,7 @@ void GLEAM_VBuffer::dealloc()
 {
     VerifyBuffer(m_handle);
     CGL33::BufFree(1,&m_handle);
+    m_handle = 0;
 }
 
 void GLEAM_VBuffer::commit(szptr size, c_cptr data)
@@ -35,7 +36,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
         CGL43::BufStorage(m_type,m_size,data,m_access);
     }else
 #endif
-        CGL33::BufData(m_type,m_size,data,m_access);
+        CGL33::BufData(m_type,m_size,data, m_access);
 
 }
 
