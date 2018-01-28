@@ -144,6 +144,18 @@ public:
                      });
     }
 
+    struct task_data_t
+    {
+        RuntimeTask task;
+        u64 index;
+        bool alive;
+
+        FORCEDINLINE bool operator<(task_data_t const& other) const
+        {
+            return task < other.task;
+        }
+    };
+
     static bool CancelTask(u64 taskId);
     static bool CancelTask(ThreadId const& targetThread, u64 taskId);
 
@@ -160,14 +172,14 @@ public:
     RuntimeQueue();
     RuntimeQueue(const RuntimeQueue &queue);
 
+
 private:
 
     u64 enqueue(RuntimeTask&& task);
     void sortTasks();
 
-    Vector<RuntimeTask> mTasks;
-    Vector<u64> mTaskIndices;
-    Vector<bool> mTasksAlive;
+
+    Vector<task_data_t> mTasks;
     Mutex mTasksLock;
     u64 mTaskIndex;
     ThreadId mThreadId;
