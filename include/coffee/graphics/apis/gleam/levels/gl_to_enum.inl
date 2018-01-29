@@ -778,11 +778,11 @@ inline CGenum to_enum1(RSCA acc)
     if(f != GL_NONE)
         return f;
 
-    if(feval(acc, RSCA::ReadOnly))
+    if(feval(acc&RSCA::ReadOnly))
         f = GL_STATIC_READ;
-    if(feval(acc, RSCA::WriteOnly))
+    if(feval(acc&RSCA::WriteOnly))
         f = GL_STATIC_DRAW;
-    if(feval(acc, RSCA::ReadWrite))
+    if(feval(acc&RSCA::ReadWrite))
         f = GL_STATIC_COPY;
 #else
     if(feval(acc&(RSCA::Persistent)))

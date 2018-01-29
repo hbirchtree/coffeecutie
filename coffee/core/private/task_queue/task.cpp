@@ -256,6 +256,15 @@ void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
     while(queueRef.mTasks[idx].alive);
 }
 
+void RuntimeQueue::TerminateThread(RuntimeQueue *thread)
+{
+    if(!thread)
+        return;
+
+    queueFlags[thread->threadId().hash()]->store(false);
+    queueThreads[thread->threadId().hash()].join();
+}
+
 void RuntimeQueue::TerminateThreads()
 {
     for(auto t : queueFlags)

@@ -162,6 +162,7 @@ public:
     static void AwaitTask(u64 taskId);
     static void AwaitTask(ThreadId const& targetThread, u64 taskId);
 
+    static void TerminateThread(RuntimeQueue* thread);
     static void TerminateThreads();
 
     void executeTasks();

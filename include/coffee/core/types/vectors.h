@@ -341,7 +341,9 @@ typename std::enable_if<std::is_same<T, double>::value>::type* = nullptr>
 FORCEDINLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
-    return hypot(v[0], v[1], v[2]);
+    return CMath::sqrt(CMath::pow(v[0], 2.) +
+                       CMath::pow(v[1], 2.) +
+                       CMath::pow(v[2], 2.));
 }
 
 template<typename T, size_t Size,
@@ -350,7 +352,9 @@ typename std::enable_if<std::is_same<T, float>::value>::type* = nullptr>
 FORCEDINLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
-    return hypotf(v[0], v[1], v[2]);
+    return CMath::sqrt(CMath::pow(v[0], 2.f) +
+                       CMath::pow(v[1], 2.f) +
+                       CMath::pow(v[2], 2.f));
 }
 
 template<typename T, size_t Size,
@@ -360,7 +364,9 @@ typename std::enable_if<std::is_same<T, long double>::value>::type*
 FORCEDINLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
-    return hypotl(v[0], v[1], v[2]);
+    return CMath::sqrt(CMath::pow(v[0], 2.) +
+                       CMath::pow(v[1], 2.) +
+                       CMath::pow(v[2], 2.));
 }
 
 template<typename T,size_t Size>
