@@ -179,6 +179,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
     auto prevApi = store->CURR_API;
 
+#if !defined(COFFEE_ONLY_GLES20)
     /* Emulation mode; differs slightly from compiling against an API,
      *  such as when ES 2.0 excludes pixel formats and etc. */
     /* TODO: Document this feature */
@@ -197,6 +198,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
     }
+#endif
 
     cVerbose(8, GLM_API "Got API: {0}", store->CURR_API);
 
