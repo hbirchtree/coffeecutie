@@ -14,6 +14,8 @@ set ( CoffeeASIO_SRCS
 
 if(TARGET OpenSSL::SSL)
     set ( LIBS OpenSSL::SSL )
+else()
+    set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> )
 endif()
 
 coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
