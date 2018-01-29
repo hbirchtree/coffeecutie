@@ -319,7 +319,7 @@ templates:
     .*(mips64).*:
       =android.abi: mips64
     # Specifying native API level
-    .*(jelly||kitkat).*:
+    .*(jelly|kitkat).*:
       =android.api: 19
     .*(lollipop|marshmallow).*:
       =android.api: 21

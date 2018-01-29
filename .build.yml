@@ -18,7 +18,7 @@ makefile_location: tools/makers
 name: Coffee
 platforms:
   android:
-  - armv7a.gingerbread.gles2
+  - armv7a.kitkat.gles2
   - armv8a.nougat.gles3
   - armv7a.nougat.gles2
   emscripten:
