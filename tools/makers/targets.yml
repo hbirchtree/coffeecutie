@@ -345,6 +345,7 @@ templates:
       - -DCOFFEE_BUILD_ASSIMP=ON
       - -DCOFFEE_TESTS=OFF
       - -DCOFFEE_BUILD_SDL2=OFF
+      - -DGENERATE_TESTS=OFF
     =target: multi.twostage
     =cmake-target:
       - install
