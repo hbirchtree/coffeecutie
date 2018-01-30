@@ -13,7 +13,7 @@ bool framebuffer_read()
 
     Vector<byte_t> framebuffer;
     GFX::DumpFramebuffer(GFX::DefaultFramebuffer(),
-                         PixCmp::RGBA,
+                         PixFmt::RGBA8,
                          BitFmt::UByte,
                          framebuffer);
 

@@ -54,10 +54,10 @@ bool filesize_test()
     return size==target;
 }
 
-const constexpr CoffeeTest::Test _tests[3] = {
+COFFEE_TEST_SUITE(3) = {
     {filewrite_test,"File writing","Writing text data to disk"},
     {fileread_test,"File reading","Reading text data from disk"},
     {filesize_test,"File size","Verifying file size on disk"},
 };
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_EXEC_TESTS();

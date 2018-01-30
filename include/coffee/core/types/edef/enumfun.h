@@ -11,8 +11,8 @@
     constexpr inline e operator|(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)|C_FC(t,rhs));} \
     \
     inline e operator^=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
-    inline e operator&=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
-    inline e operator|=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));}
+    inline e operator&=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)&C_FC(t,rhs));} \
+    inline e operator|=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)|C_FC(t,rhs));}
 
 namespace Coffee{
 

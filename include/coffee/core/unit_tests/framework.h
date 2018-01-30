@@ -24,11 +24,11 @@ struct Test
     }
 
 
-    Fun test;
-    Coffee::cstring title;
-    Coffee::cstring description;
-    bool optional;
-    bool required_sequence;
+    Fun test; /*!< The function containing the test */
+    Coffee::cstring title; /*!< The title of the test, short */
+    Coffee::cstring description; /*!< Description of test, long*/
+    bool optional; /*!< Whether test is necessary for success */
+    bool required_sequence; /*!< Whether this test is necessary for running next test */
 };
 
 using TestList = Test*;

@@ -72,7 +72,7 @@ struct Url
 
     CString internUrl;
     StorageType category;
-    ResourceAccess flags;
+    RSCA flags;
     HTTPAccess netflags;
 
     CString cachedUrl;
@@ -118,13 +118,13 @@ FORCEDINLINE Url MkUrl(cstring urlString)
     {
         urlString,
                 Url::Local,
-                ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile,
+                RSCA::SpecifyStorage|RSCA::AssetFile,
                 HTTPAccess::None,
         {}
     };
 }
 
-FORCEDINLINE Url MkUrl(cstring urlString, ResourceAccess access)
+FORCEDINLINE Url MkUrl(cstring urlString, RSCA access)
 {
     return
     {
@@ -142,7 +142,7 @@ FORCEDINLINE Url MkSysUrl(cstring urlString)
     {
         urlString,
                 Url::Local,
-                ResourceAccess::SpecifyStorage|ResourceAccess::SystemFile,
+                RSCA::SpecifyStorage|RSCA::SystemFile,
                 HTTPAccess::None,
         {}
     };

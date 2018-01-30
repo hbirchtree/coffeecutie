@@ -403,24 +403,24 @@ inline CGenum to_enum(
         return GL_NONE;
 
     case P::RGTC:
-        if(feval(e&(PixelFlags::R|PixelFlags::Unsigned)))
+        if(feval(e, PixelFlags::R|PixelFlags::Unsigned))
             return GL_COMPRESSED_RED_RGTC1;
-        if(feval(e&(PixelFlags::R|PixelFlags::Signed)))
+        if(feval(e, PixelFlags::R|PixelFlags::Signed))
             return GL_COMPRESSED_SIGNED_RED_RGTC1;
-        if(feval(e&(PixelFlags::RG|PixelFlags::Unsigned)))
+        if(feval(e, PixelFlags::RG|PixelFlags::Unsigned))
             return GL_COMPRESSED_RG_RGTC2;
-        if(feval(e&(PixelFlags::RG|PixelFlags::Signed)))
+        if(feval(e, PixelFlags::RG|PixelFlags::Signed))
             return GL_COMPRESSED_SIGNED_RG_RGTC2;
         return GL_NONE;
 
     case P::S3TC:
-        if(feval(e&(PixelFlags::RGB))&& d == S3TC_1)
+        if(feval(e, PixelFlags::RGB)&& d == S3TC_1)
             return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        if(feval(e&(PixelFlags::RGBA))&& d == S3TC_1)
+        if(feval(e, PixelFlags::RGBA)&& d == S3TC_1)
             return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&d == S3TC_3)
+        if(feval(e, PixelFlags::RGBA)&&d == S3TC_3)
             return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&d == S3TC_5)
+        if(feval(e, PixelFlags::RGBA)&&d == S3TC_5)
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
         return GL_NONE;
 

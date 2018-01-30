@@ -68,6 +68,8 @@ enum class ResourceAccess : u32
 
     Immutable     = 0x100000, /*!< For buffer APIs, do not allow reallocation of the buffer. Does not do anything for resource APIs */
 
+    NoDereference = 0x200000, /*!< When handling a Url, operate on the link, not the file it refers to. Default behavior is to follow links. */
+
     /* Masks */
     LockingMask = ExclusiveLocking|SharedLocking,
     AccessMask  = ReadWrite|Append|Executable,

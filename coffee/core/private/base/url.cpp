@@ -194,10 +194,11 @@ CString Url::operator*() const
             return cachedUrl;
 
 #if defined(COFFEE_UNIXPLAT)
-        auto derefPath = DereferenceLocalPath();
+        CString derefPath = DereferenceLocalPath();
         derefPath = CStrReplace(derefPath, "//", "/");
-        derefPath = FileFun::DereferenceLink(
-                    MkUrl(derefPath.c_str(), RSCA::SystemFile));
+        if(!feval(flags & RSCA::NoDereference))
+            derefPath = FileFun::DereferenceLink(
+                        MkUrl(derefPath.c_str(), RSCA::SystemFile));
         return derefPath;
 #else
         return DereferenceLocalPath();
@@ -207,7 +208,6 @@ CString Url::operator*() const
         return internUrl;
     default:
         throw std::runtime_error("dereferencing Url without category");
-        return {};
     }
 }
 
@@ -239,7 +239,7 @@ Url Url::operator+(const Path &path) const
 }
 
 STATICINLINE CString DereferencePath(cstring suffix,
-                                     ResourceAccess storageMask)
+                                     RSCA storageMask)
 {
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
@@ -253,6 +253,8 @@ STATICINLINE CString DereferencePath(cstring suffix,
     urlPart = urlPart.fileBasename();
     #endif
 
+    Url tempStore = {};
+
     switch(storageMask & (RSCA::StorageMask ^ RSCA::SpecifyStorage))
     {
     case RSCA::AssetFile:
@@ -262,20 +264,27 @@ STATICINLINE CString DereferencePath(cstring suffix,
          *  we do not go deeper to find a RSCA::SystemFile URL */
         return urlPart.internUrl.c_str();
 #else
-        return *(paths.assetDir + urlPart);
+        tempStore = paths.assetDir + urlPart;
+        break;
 #endif
     }
     case RSCA::ConfigFile:
     {
-        return *(paths.configDir + urlPart);
+        DirFun::MkDir(paths.configDir, true);
+        tempStore = paths.configDir + urlPart;
+        break;
     }
     case RSCA::TemporaryFile:
     {
-        return *(paths.tempDir + urlPart);
+        DirFun::MkDir(paths.tempDir, true);
+        tempStore = paths.tempDir + urlPart;
+        break;
     }
     case RSCA::CachedFile:
     {
-        return *(paths.cacheDir + urlPart);
+        DirFun::MkDir(paths.cacheDir, true);
+        tempStore = paths.cacheDir + urlPart;
+        break;
     }
     default:
     {
@@ -283,12 +292,15 @@ STATICINLINE CString DereferencePath(cstring suffix,
         return {};
     }
     }
+    tempStore.flags |= storageMask & RSCA::NoDereference;
+    return *tempStore;
 }
 
 CString Url::DereferenceLocalPath() const
 {
     return DereferencePath(internUrl.c_str(),
-                           flags & ResourceAccess::StorageMask);
+                           flags & (RSCA::StorageMask
+                                    |RSCA::NoDereference));
 }
 
 Path Path::removeExt() const

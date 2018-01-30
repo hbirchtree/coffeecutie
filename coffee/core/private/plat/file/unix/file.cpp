@@ -112,8 +112,8 @@ CString PosixFileMod_def::CanonicalName(Url const& fn)
 
 bool PosixFileMod_def::Ln(Url const& src, Url const& target)
 {
-    auto srcUrl = *src;
-    auto targetUrl = *target;
+    CString srcUrl = *src;
+    CString targetUrl = *target;
     int sig = symlink(srcUrl.c_str(),targetUrl.c_str());
     if(sig == 0)
         return true;

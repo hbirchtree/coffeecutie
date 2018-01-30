@@ -466,6 +466,8 @@ int coffee_main(int32,cstring_w*)
                 case bitm_format::DXT4AND5:
                     flgs = CGL::S3TC_5;
                     break;
+                default:
+                    break;
                 }
 
                 flgs <<= 10;

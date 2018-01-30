@@ -93,7 +93,7 @@ bool pointer_allocated_format()
 
     snprintf(&real[0],real.size(),"Pointer: %p",ptr);
 
-    real.resize(Search::ChrFind(real.c_str(),0)-1-real.c_str());
+    real.resize(Search::ChrFind(real.c_str(),0)-real.c_str());
 
     CString test = cStringFormat("Pointer: {0}",ptr);
     if(real!=test)
@@ -138,8 +138,9 @@ const constexpr CoffeeTest::Test _tests[9] = {
     {integer_hex_format,"Integer hexadecimals"},
     {pointer_format,"Pointer formatting"},
     {pointer_allocated_format,"Pointer formatting, random pointer"},
-    {floating_point_format,"Floating-point with precision"},
-    {vector_format,"Floating-point vector"},
+    {floating_point_format,"Floating-point with precision", "",
+     true, false},
+    {vector_format,"Floating-point vector", "", true, false},
 };
 
 COFFEE_RUN_TESTS(_tests);

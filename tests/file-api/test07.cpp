@@ -57,13 +57,13 @@ bool basename_test()
     if(Env::BaseName("relative/path") != "path")
         return false;
 
-    if(Env::BaseName("") != "")
+    if(Env::BaseName("") != ".")
         return false;
 
     if(Env::BaseName("nothing") != "nothing")
         return false;
 
-    if(Env::BaseName("/") != ".")
+    if(Env::BaseName("/") != "/")
         return false;
 
     return true;
@@ -107,7 +107,7 @@ bool dirlist_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[4] = {
+COFFEE_TEST_SUITE(4) = {
     {dirbasename_test,"Directory basename","Getting the directory of a file"},
     {basename_test,"Basename operation","Getting the basename of paths"},
 
@@ -115,4 +115,4 @@ const constexpr CoffeeTest::Test _tests[4] = {
     {dirlist_test,"Directory listing","Listing entries in a directory"},
 };
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_EXEC_TESTS();
