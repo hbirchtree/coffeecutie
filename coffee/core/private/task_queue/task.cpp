@@ -261,8 +261,13 @@ void RuntimeQueue::TerminateThread(RuntimeQueue *thread)
     if(!thread)
         return;
 
-    queueFlags[thread->threadId().hash()]->store(false);
-    queueThreads[thread->threadId().hash()].join();
+    auto tid = thread->threadId().hash();
+
+    queueFlags[tid]->store(false);
+    queueThreads[tid].join();
+
+    queueFlags.erase(tid);
+    queueThreads.erase(tid);
 }
 
 void RuntimeQueue::TerminateThreads()
