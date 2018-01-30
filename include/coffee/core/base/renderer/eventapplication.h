@@ -74,27 +74,28 @@ void WrapEventFunction(void* data, int event)
 
     switch(event)
     {
-        case CoffeeHandle_IsForeground:
-        {
-            break;
-        }
-        case CoffeeHandle_TransForeground:
-        {
-            break;
-        }
-        case CoffeeHandle_IsBackground:
-        {
-            break;
-        }
-        case CoffeeHandle_TransBackground:
-        {
-            break;
-        }
+    case CoffeeHandle_IsForeground:
+    {
+        break;
+    }
+    case CoffeeHandle_TransForeground:
+    {
+        break;
+    }
+    case CoffeeHandle_IsBackground:
+    {
+        break;
+    }
+    case CoffeeHandle_TransBackground:
+    {
+        break;
+    }
         
-        case CoffeeHandle_Setup:
+    case CoffeeHandle_Setup:
         if(CurrentState == 0)
         {
             Profiler::DeepPushContext("Renderer-side setup");
+            /* By default, try to load the highest GL version */
             if(LoadHighestVersion(&edata->r(), edata->visual, nullptr))
             {
                 Profiler::DeepPopContext();
@@ -107,14 +108,16 @@ void WrapEventFunction(void* data, int event)
         }
         break;
         
-        case CoffeeHandle_Loop:
+    case CoffeeHandle_Loop:
+        /* We retrieve the current thread's RuntimeQueue if it exists,
+         *  and process it regularly. */
         if(CurrentState == 1)
             edata->loop(edata->r(), edata->d());
         if(RuntimeQueue::GetCurrentQueue())
             RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;
         
-        case CoffeeHandle_Cleanup:
+    case CoffeeHandle_Cleanup:
         if(CurrentState == 1)
         {
             CurrentState = 0;
@@ -134,7 +137,7 @@ void WrapEventFunction(void* data, int event)
         }
         break;
         
-        default:
+    default:
         break;
     }
 }
@@ -404,48 +407,32 @@ public:
         return 0;
 #else
 
-        Profiler::DeepPushContext("Renderer initialization");
-        /* By default, try to load the highest GL version */
-        if(!LoadHighestVersion(&ev.r(), visual, &err))
-        {
-            return -1;
-        }
-        Profiler::DeepPopContext();
+
+        /* Pump a setup event to get everything started */
+        CoffeeEventHandleCall(CoffeeHandle_Setup);
 
         /* For timed runs, set the starting time */
         ev.time.start = Time::CurrentTimestamp();
-
-        Profiler::DeepPushContext("Application-side setup");
-        /* Pump a setup event to get everything started */
-        ev.setup(ev.r(), ev.d());
-        Profiler::DeepPopContext();
 
         /* In this case, event processing happens in a tight
          *  loop that happens regardless of outside events.
          * On platforms with their own event loops, this does not work.
          */
 
-        Profiler::DeepPopContext();
-
-        /* We retrieve the current thread's RuntimeQueue if it exists,
-         *  and process it regularly. */
-        RuntimeQueue* rt_queue = RuntimeQueue::GetCurrentQueue();
         while(!ev.renderer->closeFlag())
         {
-            ev.loop(ev.r(), ev.d());
+            CoffeeEventHandleCall(CoffeeHandle_Loop);
 
             if(ev.flags & ELD::TimeLimited &&
-                    Time::CurrentTimestamp() > (ev.time.start + ev.time.max))
+                    Time::CurrentTimestamp() > (ev.time.start
+                                                + ev.time.max))
             {
                 auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);
             }
-            
-            if(rt_queue)
-                rt_queue->executeTasks();
         }
 
-        EH::event_exitFunc(&ev);
+        CoffeeEventHandleCall(CoffeeHandle_Cleanup);
 
         return 0;
 #endif

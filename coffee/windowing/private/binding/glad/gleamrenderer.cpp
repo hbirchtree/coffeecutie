@@ -19,6 +19,8 @@
 
 #include "conversion.h"
 
+#define GLR_API "GLeamRenderer::"
+
 namespace Coffee{
 namespace Display{
 
@@ -78,21 +80,21 @@ bool GLeamRenderer::bindingInit(const GLProperties&,CString*)
 
 bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 {
-    DProfContext a("GLeam");
+    DProfContext a(GLR_API "Binding initialization");
 
 //    cVerbose(8, "Acquiring GL context from {0}, {1}",
 //             (u64)m_app, (u64)m_app->glContext());
 
     if(!m_app->glContext()->acquireContext())
     {
-        Profiler::DeepProfile("Failed to acquire GL context");
-        cWarning("Failed to acquire GL context");
+        Profiler::DeepProfile(GLR_API "Failed to acquire GL context");
+        cWarning(GLR_API "Failed to acquire GL context");
         return false;
     }
 
     bool status = false;
 
-    cDebug("Attempting to load version: {0}",p.version);
+    cVerbose(8, GLR_API "Attempting to load version: {0}",p.version);
 
 #if !defined(COFFEE_GLEAM_DESKTOP) || defined(COFFEE_USE_MAEMO_EGL)
 
@@ -110,7 +112,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     GLADloadproc procload = nullptr;
 #endif
 
-    Profiler::DeepPushContext("Loading GLAD binding");
+    Profiler::DeepPushContext(GLR_API "Loading GLAD binding");
     if(!(p.flags & GLProperties::Flags::GLES))
     {
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -163,8 +165,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     }
     Profiler::DeepPopContext();
 
-    Profiler::DeepProfile("Loading GL function pointers");
-    cVerbose(7, "Function pointer checks succeeded: {0}", status);
+    Profiler::DeepProfile(GLR_API "Loading GL function pointers");
+    cVerbose(7, GLR_API "Function pointer checks succeeded: {0}", status);
 
     if(!status)
     {
@@ -173,36 +175,36 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         /*Context or graphics card on fire? Just get out!*/
         if(err)
             *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;
-        Profiler::DeepProfile("glad failed to load");
+        Profiler::DeepProfile(GLR_API "glad failed to load");
         return false;
     }
 
     if(PlatformData::IsDebug())
     {
-        GL::Debug::SetDebugGroup("Print information");
+        GL::Debug::SetDebugGroup(GLR_API "Print information");
 
-        Profiler::DeepPushContext("Printing information about GL");
-        cDebug("Rendering device info: {0}",GL::Debug::Renderer());
+        Profiler::DeepPushContext(GLR_API "Printing information about GL");
+        cDebug(GLR_API "Rendering device info: {0}",GL::Debug::Renderer());
 
         if(feval(p.flags&GLProperties::GLCoreProfile))
-            cDebug("OpenGL core profile version: {0}",
+            cDebug(GLR_API "OpenGL core profile version: {0}",
                    GL::Debug::ContextVersion());
         else
-            cDebug("OpenGL (non-core) version: {0}",
+            cDebug(GLR_API "OpenGL (non-core) version: {0}",
                    GL::Debug::ContextVersion());
 
         GL::Debug::UnsetDebugGroup();
     }
 
-    cDebug("OpenGL GLSL version: {0}",
+    cDebug(GLR_API "OpenGL GLSL version: {0}",
            GL::Debug::ShaderLanguageVersion());
     Profiler::DeepPopContext();
 
     if(PlatformData::IsDebug())
     {
-        GL::Debug::SetDebugGroup("Profiler statistics");
+        GL::Debug::SetDebugGroup(GLR_API "Profiler statistics");
 
-        DProfContext b("Adding GL information to profiler");
+        DProfContext b(GLR_API "Adding GL information to profiler");
 
         Profiler::AddExtraData(
                     "gl:renderer",
@@ -293,7 +295,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     if(GL::DebuggingSupported())
     {
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ONLY_GLES20)
-        DProfContext b("Configuring GL context debugging");
+        DProfContext b(GLR_API "Configuring GL context debugging");
         GL::Debug::SetDebugMode(true);
         GL::Debug::DebugSetCallback(gleamcallback,this);
         GL::Debug::SetDebugLevel(Severity::Information, false);
