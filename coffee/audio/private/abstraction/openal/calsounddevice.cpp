@@ -60,6 +60,8 @@ CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier &card,
 
 CALSoundDevice::~CALSoundDevice()
 {
+    m_children.clear();
+
     for(CALSoundSample* sample : m_data->m_samples)
         delete sample;
     for(CALSoundStream* stream : m_data->m_streams)
