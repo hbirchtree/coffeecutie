@@ -41,14 +41,14 @@ CAssimpData *CAssimpImporters::importResource(Resource *source,
                                 hint);
     if(!scene){
         cWarning("Failed to import scene \"%s\": %s",
-               source->resource(),
-               importer.GetErrorString());
+                 source->resource(),
+                 importer.GetErrorString());
         return nullptr;
     }else{
-//        cMsg("Assimp","Scene imported: cam=%i,lgt=%i,msh=%i,mat=%i,anm=%i,txt=%i",
-//             scene->mNumCameras,scene->mNumLights,
-//             scene->mNumMeshes,scene->mNumMaterials,
-//             scene->mNumAnimations,scene->mNumTextures);
+        //        cMsg("Assimp","Scene imported: cam=%i,lgt=%i,msh=%i,mat=%i,anm=%i,txt=%i",
+        //             scene->mNumCameras,scene->mNumLights,
+        //             scene->mNumMeshes,scene->mNumMaterials,
+        //             scene->mNumAnimations,scene->mNumTextures);
     }
 
     CElapsedTimer timer;
@@ -88,7 +88,7 @@ CAssimpData *CAssimpImporters::importResource(Resource *source,
         }
     }
 
-//    cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
+    //    cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
 
     importer.FreeScene();
 
@@ -173,8 +173,8 @@ bool GetSceneObjects(const UqPtr<AssimpData> &scene, Vector<ObjectDesc> &objects
 
 #define ExtractDetail(typeName, enumName) \
     if(mScene.Has ## typeName ()) \
-        for(u32 i=0;i<mScene.mNum ## typeName;i++) \
-            objects.push_back({mScene.m ## typeName[i]->mName.C_Str(), ObjectDesc::enumName});
+    for(u32 i=0;i<mScene.mNum ## typeName;i++) \
+    objects.push_back({mScene.m ## typeName[i]->mName.C_Str(), ObjectDesc::enumName});
 
     ExtractDetail(Animations, Animation);
     ExtractDetail(Cameras, Camera);
@@ -255,12 +255,15 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
     if(!mesh)
         return false;
 
+    new (&output_mesh) Mesh(false);
+
     output_mesh.clearAttributes();
 
     if(mesh->HasPositions())
-        output_mesh.addAttributeData(Mesh::Position,
-                                     C_FCAST<Vecf3*>(mesh->mVertices),
-                                     mesh->mNumVertices, 0);
+        output_mesh.addAttributeData(
+                    Mesh::Position,
+                    C_FCAST<Vecf3*>(mesh->mVertices),
+                    mesh->mNumVertices, 0);
 
     if(mesh->HasFaces())
     {
@@ -268,49 +271,52 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
         for(u32 i=0;i<mesh->mNumFaces;i++)
         {
             auto const& face = mesh->mFaces[i];
-            indices_cpy.insert(indices_cpy.end(), face.mIndices, face.mIndices + face.mNumIndices);
+            indices_cpy.insert(
+                        indices_cpy.end(),
+                        face.mIndices,
+                        face.mIndices + face.mNumIndices);
         }
-        output_mesh.addAttributeData(Mesh::Indices,
-                                     indices_cpy.data(),
-                                     indices_cpy.size(), 0);
+        output_mesh.addAttributeData(
+                    Mesh::Indices,
+                    indices_cpy.data(),
+                    indices_cpy.size(), 0);
     }
 
     for(u32 i=0;i<mesh->GetNumUVChannels();i++)
     {
-        if(mesh->mNumUVComponents[i] == 3)
-            output_mesh.addAttributeData(Mesh::TexCoord,
-                                         C_FCAST<Vecf3*>(mesh->mTextureCoords[i]),
-                                         mesh->mNumVertices, i);
-        else
-        {
-            Vector<Vecf2> texcoords;
-            texcoords.resize(mesh->mNumVertices);
-            for(u32 j=0;j<mesh->mNumVertices;j++)
-                MemCpy(&texcoords[j], &mesh->mTextureCoords[i][j], sizeof(Vecf2));
-            output_mesh.addAttributeData(Mesh::TexCoord,
-                                         texcoords.data(),
-                                         texcoords.size(), i);
-        }
+        if(!mesh->HasTextureCoords(i))
+            continue;
+        output_mesh.addAttributeData(
+                    Mesh::TexCoord,
+                    C_FCAST<Vecf3*>(mesh->mTextureCoords[i]),
+                    mesh->mNumVertices, i);
     }
 
     for(u32 i=0;i<mesh->GetNumColorChannels();i++)
-        if(mesh->HasVertexColors(i))
-            output_mesh.addAttributeData(Mesh::Color, mesh->mColors[i],
-                                         mesh->mNumVertices, i);
+    {
+        if(!mesh->HasVertexColors(i))
+            continue;
+        output_mesh.addAttributeData(
+                    Mesh::Color, mesh->mColors[i],
+                    mesh->mNumVertices, i);
+    }
 
     if(mesh->HasNormals())
-        output_mesh.addAttributeData(Mesh::Normal,
-                                     C_FCAST<Vecf3*>(mesh->mNormals),
-                                     mesh->mNumVertices, 0);
+        output_mesh.addAttributeData(
+                    Mesh::Normal,
+                    C_FCAST<Vecf3*>(mesh->mNormals),
+                    mesh->mNumVertices, 0);
 
     if(mesh->HasTangentsAndBitangents())
     {
-        output_mesh.addAttributeData(Mesh::Tangent,
-                                     C_FCAST<Vecf3*>(mesh->mTangents),
-                                     mesh->mNumVertices, 0);
-        output_mesh.addAttributeData(Mesh::Bitangent,
-                                     C_FCAST<Vecf3*>(mesh->mBitangents),
-                                     mesh->mNumVertices, 0);
+        output_mesh.addAttributeData(
+                    Mesh::Tangent,
+                    C_FCAST<Vecf3*>(mesh->mTangents),
+                    mesh->mNumVertices, 0);
+        output_mesh.addAttributeData(
+                    Mesh::Bitangent,
+                    C_FCAST<Vecf3*>(mesh->mBitangents),
+                    mesh->mNumVertices, 0);
     }
 
     return true;

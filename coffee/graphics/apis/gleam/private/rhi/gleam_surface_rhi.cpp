@@ -12,11 +12,8 @@ namespace GLEAM{
 
 /* TODO: If a texture format is reversed, eg. BGRA, BGR
  *  or simply reversed (RGBA -> ABGR), use swizzling
- *  as fallback on OpenGL  ES
- *
- */
-
-STATICINLINE void texture_swizzle(
+ *  as fallback on OpenGL ES */
+C_MAYBE_UNUSED STATICINLINE void texture_swizzle(
         Texture type, CGhnd tex_hnd, PixCmp cmp, PixCmp target)
 {
 #if !defined(COFFEE_ONLY_GLES20)

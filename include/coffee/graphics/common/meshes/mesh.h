@@ -33,6 +33,7 @@ struct _cbasic_mesh
         u32 attr_index;
         Vector<attr_component> data;
         struct {
+            /* TODO: Switch this with Bytes object */
             c_cptr ptr;
             szptr size;
         } mem;

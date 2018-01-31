@@ -282,7 +282,7 @@ struct CIHapticEvent
         struct
         {
             uint8 index;
-            byte_t name[];
+            byte_t name;
         } rumble_device;
     };
 };

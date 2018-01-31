@@ -21,7 +21,7 @@ endif()
 coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/asio")
 
-target_include_directories ( CoffeeASIO
+target_include_directories ( CoffeeASIO SYSTEM
     PUBLIC
     $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include>
 
@@ -29,7 +29,7 @@ target_include_directories ( CoffeeASIO
     )
 
 if(COFFEE_BUILD_OPENSSL)
-    target_include_directories ( CoffeeASIO
+    target_include_directories ( CoffeeASIO SYSTEM
         PUBLIC
         $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
         )

@@ -145,6 +145,39 @@ struct MeshLoader
         return size / (sizeof(From) / sizeof(To));
     }
 
+    template<szptr Size, /* Size of structure that is copied */
+             szptr Stride /* Size of entire structure */
+             >
+    /*!
+     * \brief jumping_memcpy is made for the case where you want to copy a vec2 out of a vec3 structure. This is specifically used for Assimp's vec3 texture coordinates, because we mostly use vec2 for TCs.
+     * \param target
+     * \param source
+     * \param size
+     * \return
+     */
+    static szptr jumping_memcpy(c_ptr target, c_cptr source, szptr size)
+    {
+        static_assert(Stride > Size,
+                      "Stride has to be larger than Size"
+                      " for this to be effective");
+
+        szptr ptr = 0;
+        szptr tptr = 0;
+
+        byte_t* raw_target = C_RCAST<byte_t*>(target);
+        byte_t const* raw_sauce = C_RCAST<byte_t const*>(source);
+
+        while(ptr + Stride < size)
+        {
+            MemCpy(&raw_target[ptr], &raw_sauce[ptr], Size);
+
+            ptr += Stride;
+            tptr += Size;
+        }
+
+        return (size / (Size - (Stride - Size))) * Size;
+    }
+
     /*!
      * \brief Container for Bytes that will collect Bytes into another
      *  memory region, making it easier to do zero-copy transfer
@@ -161,8 +194,7 @@ struct MeshLoader
         }
 
         ChainedBytes():
-            refs(),
-            transform(default_transform)
+            refs()
         {
         }
 
@@ -176,14 +208,33 @@ struct MeshLoader
          *  return an estimate for the amount of memory needed.
          *  The source+size memory area contains floating-point values
          *  which may be converted to integer types. */
-        xf transform;
+        Vector<xf> ref_transform;
+
+        FORCEDINLINE void check_transforms()
+        {
+            /* If user hasn't supplied anything, fill it
+             *  with default */
+            if(ref_transform.size() == 0)
+            {
+                ref_transform.reserve(refs.size());
+                for(szptr i=0;i<refs.size();i++)
+                    ref_transform.push_back(default_transform);
+            }
+        }
 
         FORCEDINLINE szptr size()
         {
             szptr size = 0;
 
+            check_transforms();
+
+            szptr i = 0;
             for(auto const& data : refs)
-                size += transform(nullptr, nullptr, data.size);
+            {
+                size += ref_transform[i](
+                        nullptr, nullptr, data.size);
+                i ++;
+            }
 
             return size;
         }
@@ -192,22 +243,31 @@ struct MeshLoader
         {
             szptr ptr = 0;
 
-            /* First, do a dry run to check that the copy will succeed */
+            check_transforms();
+
+            /* First, do a dry run to check that the
+             * copy will succeed */
+            szptr i = 0;
             for(auto const& data : refs)
             {
-                szptr est = transform(nullptr, nullptr, data.size);
+                szptr est = ref_transform[i](
+                            nullptr, nullptr, data.size);
                 if(ptr + est > size)
                     return false;
                 ptr += est;
+                i++;
             }
 
             ptr = 0;
+            i = 0;
 
             byte_t* targetP = C_RCAST<byte_t*>(target);
 
             for(auto const& data : refs)
             {
+                auto transform = ref_transform[i];
                 ptr += transform(&targetP[ptr], data.data, data.size);
+                i++;
             }
 
             return true;
@@ -336,17 +396,23 @@ struct MeshLoader
         if((draw.quirks & QuirkCompressElements)
                 && idx_type != TypeEnum::UInt)
         {
+            auto transform = ChainedBytes::default_transform;
             switch(idx_type)
             {
             case TypeEnum::UByte:
-                buffers.elementData.transform = integer_downcast<u8>;
+                transform = integer_downcast<u8>;
                 break;
             case TypeEnum::UShort:
-                buffers.elementData.transform = integer_downcast<u16>;
+                transform = integer_downcast<u16>;
                 break;
             default:
                 break;
             }
+
+            buffers.elementData.ref_transform.reserve(
+                        buffers.elementData.refs.size());
+            for(auto i : Range<>(buffers.elementData.refs.size()))
+                buffers.elementData.ref_transform.push_back(transform);
 
             for(auto i : Range<>(meshCount))
             {
@@ -355,6 +421,8 @@ struct MeshLoader
         }
 
         i32 bufIdx = 0;
+        buffers.vertexData.ref_transform.resize(
+                    buffers.vertexData.size());
         for(auto const& attr : attributes)
             for(auto i :  Range<i32>(meshCount))
             {
@@ -364,6 +432,13 @@ struct MeshLoader
                             attr.type, attr.channel);
                 buf.data = meshes[i].getAttributeData<byte_t>(
                             attr.type, attr.channel);
+
+                if(attr.type == AttrType::TexCoord)
+                    buffers.vertexData.ref_transform[bufIdx] =
+                            jumping_memcpy<sizeof(Vecf2), sizeof(Vecf3)>;
+                else
+                    buffers.vertexData.ref_transform[bufIdx] =
+                            ChainedBytes::default_transform;
 
                 bufIdx ++;
             }

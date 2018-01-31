@@ -7,6 +7,11 @@ string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 
 set ( COFFEE_VERSION_CODE "2.1.1" )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT WIN32)
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types"
+        CACHE STRING "" )
+endif()
+
 # git hash is retrieved
 execute_process (
     COMMAND git rev-parse HEAD

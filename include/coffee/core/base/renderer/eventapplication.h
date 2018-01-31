@@ -378,8 +378,6 @@ public:
         CoffeeEventHandle = WrapEventFunction<Renderer, Data>;
         CoffeeEventHandleNA = WrapEventFunctionNA<Renderer, Data>;
 
-        using EH = EventExitHandler<Renderer, Data>;
-
 #if defined(COFFEE_EMSCRIPTEN)
         /* Under emscripten, only the loop function is used later */
         emscripten_set_main_loop_arg([](void* data){
