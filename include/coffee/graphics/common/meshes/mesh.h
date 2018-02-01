@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/types/cdef/memtypes.h>
 
 namespace Coffee{
 
@@ -30,13 +31,22 @@ struct _cbasic_mesh
     using attr_component = byte_t;
     struct attr
     {
-        u32 attr_index;
+        attr():
+            data(),
+            mem(),
+            attr_index(0)
+        {
+        }
+        attr(attr&& a)
+        {
+            data = std::move(a.data);
+            mem = std::move(a.mem);
+            attr_index = a.attr_index;
+        }
+
         Vector<attr_component> data;
-        struct {
-            /* TODO: Switch this with Bytes object */
-            c_cptr ptr;
-            szptr size;
-        } mem;
+        Bytes mem;
+        u32 attr_index;
     };
 
     using AttributeType_t = uint16;
@@ -140,14 +150,22 @@ struct _cbasic_mesh
         return attrCount(t, stride, idx);
     }
 
+    static void secretAllocDestructor(Bytes& data)
+    {
+        CFree(data.data);
+    }
+
     template<typename VT>
     FORCEDINLINE
-    void addAttributeData(AttributeType_t a, VT const* ptr, szptr num, u32 idx = 0)
+    void addAttributeData(
+            AttributeType_t a, VT const* ptr, szptr num, u32 idx = 0,
+            bool alloc_mem = false)
     {
         auto data_ptr = attrGet(a, idx);
         if(!data_ptr)
         {
-            attributes.insert({a, {}});
+            /* Bytes is a move-only structure, cannot copy that stuff */
+            attributes.emplace(a, attr());
             data_ptr = attrGet(a, idx);
         }
         if(data_ptr)
@@ -156,11 +174,21 @@ struct _cbasic_mesh
             if(referenced_attributes)
             {
                 auto& data = data_ptr->mem;
-                data.ptr = ptr;
                 data.size = num * sizeof(VT);
+                if(alloc_mem)
+                {
+                    data.data = C_RCAST<byte_t*>(Alloc(data.size));
+                    MemCpy(data.data, ptr, data.size);
+                    Bytes::SetDestr(data, secretAllocDestructor);
+                }
+                else
+                    data.data = C_RCAST<byte_t*>(C_CCAST<VT*>(ptr));
             }else{
                 auto& data = data_ptr->data;
-                data.insert(data.end(), (byte_t*)&ptr[0], (byte_t*)&ptr[num]);
+                data.insert(
+                            data.end(),
+                            C_RCAST<byte_t const*>(&ptr[0]),
+                        C_RCAST<byte_t const*>(&ptr[num]));
             }
         }
     }
@@ -172,9 +200,9 @@ struct _cbasic_mesh
         if(ptr)
         {
             if(referenced_attributes)
-                return C_FCAST<VT*>(ptr->mem.ptr);
+                return C_RCAST<VT*>(ptr->mem.data);
             else
-                return C_FCAST<VT*>(ptr->data.data());
+                return C_RCAST<VT*>(ptr->data.data());
         }
         return nullptr;
     }
@@ -186,9 +214,9 @@ struct _cbasic_mesh
         if(ptr)
         {
             if(referenced_attributes)
-                return C_FCAST<VT const*>(ptr->mem.ptr);
+                return C_RCAST<VT const*>(ptr->mem.data);
             else
-                return C_FCAST<VT const*>(ptr->data.data());
+                return C_RCAST<VT const*>(ptr->data.data());
         }
         return nullptr;
     }

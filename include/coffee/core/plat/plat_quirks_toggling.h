@@ -266,6 +266,12 @@
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
 
+#if !defined(COFFEE_WINDOWS)
+/* Zlib comes bundled with pretty much all POSIX systems
+ *  except Windows */
+#define COFFEE_BUILD_ZLIB
+#endif
+
 #if defined(COFFEE_ANDROID)
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif

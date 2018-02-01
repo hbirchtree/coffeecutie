@@ -255,14 +255,13 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
     if(!mesh)
         return false;
 
-    new (&output_mesh) Mesh(false);
+    new (&output_mesh) Mesh(true);
 
     output_mesh.clearAttributes();
 
     if(mesh->HasPositions())
         output_mesh.addAttributeData(
-                    Mesh::Position,
-                    C_FCAST<Vecf3*>(mesh->mVertices),
+                    Mesh::Position, mesh->mVertices,
                     mesh->mNumVertices, 0);
 
     if(mesh->HasFaces())
@@ -279,7 +278,7 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
         output_mesh.addAttributeData(
                     Mesh::Indices,
                     indices_cpy.data(),
-                    indices_cpy.size(), 0);
+                    indices_cpy.size(), 0, true);
     }
 
     for(u32 i=0;i<mesh->GetNumUVChannels();i++)
@@ -287,8 +286,7 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
         if(!mesh->HasTextureCoords(i))
             continue;
         output_mesh.addAttributeData(
-                    Mesh::TexCoord,
-                    C_FCAST<Vecf3*>(mesh->mTextureCoords[i]),
+                    Mesh::TexCoord, mesh->mTextureCoords[i],
                     mesh->mNumVertices, i);
     }
 
@@ -310,12 +308,10 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
     if(mesh->HasTangentsAndBitangents())
     {
         output_mesh.addAttributeData(
-                    Mesh::Tangent,
-                    C_FCAST<Vecf3*>(mesh->mTangents),
+                    Mesh::Tangent, mesh->mTangents,
                     mesh->mNumVertices, 0);
         output_mesh.addAttributeData(
-                    Mesh::Bitangent,
-                    C_FCAST<Vecf3*>(mesh->mBitangents),
+                    Mesh::Bitangent, mesh->mBitangents,
                     mesh->mNumVertices, 0);
     }
 

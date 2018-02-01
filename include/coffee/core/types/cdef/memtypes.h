@@ -77,6 +77,16 @@ struct _cbasic_data_chunk
         return *this;
     }
 
+    template<typename T2>
+    _cbasic_data_chunk<T>& operator=(Vector<T2> const& vec)
+    {
+        data = C_FCAST<T*>(vec.data());
+        size = vec.size() * sizeof(T2);
+        elements = vec.size();
+
+        return *this;
+    }
+
     /*!
      * \brief Pointer to data
      */

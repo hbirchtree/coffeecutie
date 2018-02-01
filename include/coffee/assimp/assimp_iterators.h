@@ -161,21 +161,26 @@ struct MeshLoader
                       "Stride has to be larger than Size"
                       " for this to be effective");
 
-        szptr ptr = 0;
-        szptr tptr = 0;
-
-        byte_t* raw_target = C_RCAST<byte_t*>(target);
-        byte_t const* raw_sauce = C_RCAST<byte_t const*>(source);
-
-        while(ptr + Stride < size)
+        if(target && source)
         {
-            MemCpy(&raw_target[ptr], &raw_sauce[ptr], Size);
+            szptr ptr = 0;
+            szptr tptr = 0;
 
-            ptr += Stride;
-            tptr += Size;
+            byte_t* raw_target = C_RCAST<byte_t*>(target);
+            byte_t const* raw_sauce = C_RCAST<byte_t const*>(source);
+
+            while(ptr + Stride <= size)
+            {
+                MemCpy(&raw_target[tptr], &raw_sauce[ptr], Size);
+
+                ptr += Stride;
+                tptr += Size;
+            }
         }
 
-        return (size / (Size - (Stride - Size))) * Size;
+        szptr size_est = (size / Stride) * Size;
+
+        return size_est;
     }
 
     /*!
@@ -364,15 +369,23 @@ struct MeshLoader
 
             for(auto j : Range<i32>(attributes.size()))
             {
+                szptr attr_size = mesh.attrSize(attributes[j].type,
+                                                attributes[j].channel);
+
+                /* We do not support 3D texture coordinates, really,
+                 *  they are kind of useless for fast 3D. We use the
+                 *  third dimension for texture arrays. */
+                if(attributes[j].type == AttrType::TexCoord)
+                {
+                    attr_size = (attr_size * 2) / 3;
+                }
+
                 /* Calculate attribute offsets */
                 for(i32 k=j+1;k<attributes.size();k++)
-                    buffers.attributes[k].m_boffset +=
-                            mesh.attrSize(attributes[j].type,
-                                          attributes[j].channel);
+                    buffers.attributes[k].m_boffset += attr_size;
 
                 /* Calculate total vertex buffer size for all attributes */
-                mesh_buffer_size += mesh.attrSize(attributes[j].type,
-                                                  attributes[j].channel);
+                mesh_buffer_size += attr_size;
             }
 
             vertex_size += mesh.attrCount(M::Position, sizeof(Vecf3));
@@ -422,7 +435,7 @@ struct MeshLoader
 
         i32 bufIdx = 0;
         buffers.vertexData.ref_transform.resize(
-                    buffers.vertexData.size());
+                    buffers.vertexData.refs.size());
         for(auto const& attr : attributes)
             for(auto i :  Range<i32>(meshCount))
             {

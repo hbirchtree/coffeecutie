@@ -272,7 +272,7 @@ coffee_add_library ( CoffeeXML
     )
 
 coffee_add_library ( CoffeeCore_Base
-    "${CoffeeCore_SRCS};${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS}"
+    "${CoffeeCore_SRCS};${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS};${CoffeeCompression_SRCS}"
     "${STANDARDLIBS_LIBRARIES};CoffeeXML"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )

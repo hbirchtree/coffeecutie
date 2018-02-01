@@ -352,9 +352,9 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::Dbg_MessageLen,GL_MAX_DEBUG_MESSAGE_LENGTH),
     A(L::Dbg_LoggedMessages,GL_MAX_DEBUG_LOGGED_MESSAGES),
 
-    #if defined(GL_MAX_SHADER_COMPILER_THREADS_ARB)
-    A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_ARB),
-    #endif
+//    #if defined(GL_MAX_SHADER_COMPILER_THREADS_ARB)
+//    A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_ARB),
+//    #endif
     #if defined(GL_MAX_SHADER_COMPILER_THREADS_KHR)
     A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_KHR),
     #endif
