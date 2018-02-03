@@ -252,7 +252,9 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     XSetWindowAttributes xattr;
 
     xattr.override_redirect = False;
-    XChangeWindowAttributes(m_xData->display, m_xData->window, CWOverrideRedirect, &xattr);
+    XChangeWindowAttributes(
+                m_xData->display, m_xData->window,
+                CWOverrideRedirect, &xattr);
 
 #if defined(COFFEE_X11_HILDON)
     int one = 1;

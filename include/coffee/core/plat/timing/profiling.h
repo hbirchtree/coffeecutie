@@ -304,7 +304,6 @@ struct SimpleProfilerImpl
     static ThreadId current_thread_id;
 #endif
 
-#endif
 
     STATICINLINE LinkList<CString>& threadContextStack()
     {
@@ -312,6 +311,7 @@ struct SimpleProfilerImpl
         auto& ctxt = profiler_data_store->context_storage[hash];
         return ctxt.context_stack;
     }
+#endif
 
     STATICINLINE ExtraData* ExtraInfo()
     {
