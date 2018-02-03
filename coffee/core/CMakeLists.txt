@@ -58,6 +58,8 @@ set ( CoffeeCore_SRCS
 
     # Task queues, for easier time scheduling
     private/task_queue/task.cpp
+
+    private/datastorage/binary/virtualfs.cpp
     )
 
 set ( CoffeeXML_SRCS
