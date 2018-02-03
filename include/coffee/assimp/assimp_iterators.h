@@ -10,6 +10,7 @@
 
 #include <coffee/graphics/common/SMesh>
 #include <coffee/interfaces/cgraphics_api.h>
+#include <coffee/core/CProfiling>
 
 namespace Coffee{
 namespace ASSIMP{
@@ -302,6 +303,8 @@ struct MeshLoader
             BufferDescription<API>& buffers
             )
     {
+        DProfContext _("Creating Assimp descriptors");
+
         i32 meshCount = 0;
 
         if(!ASSIMP::GetMeshCount(scene, meshCount))

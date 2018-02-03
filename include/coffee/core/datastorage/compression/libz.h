@@ -29,6 +29,9 @@ struct LibZCompressor : Compressor_def
 };
 
 }
+
+using Zlib = Compression::LibZCompressor;
+
 }
 
 #endif

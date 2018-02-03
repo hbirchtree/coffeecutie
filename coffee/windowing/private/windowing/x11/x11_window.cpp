@@ -12,6 +12,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
+#include <X11/XKBlib.h>
 
 #if defined(COFFEE_USE_LINUX_GLX)
 #include <GL/glx.h>
@@ -121,8 +122,10 @@ CDMonitor X11Window::monitor()
         i32 x, y;
         u32 w, h;
         u32 bw, d;
-        XGetGeometry(m_xData->display, DefaultRootWindow(m_xData->display),
-                     &win, &x, &y, &w, &h, &bw, &d);
+        XGetGeometry(
+                    m_xData->display,
+                    DefaultRootWindow(m_xData->display),
+                    &win, &x, &y, &w, &h, &bw, &d);
         mon.resolution = {C_CAST<i32>(w), C_CAST<i32>(h)};
     }
 
@@ -226,12 +229,15 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
 
     //
     //
-    m_xData->window = XCreateWindow(m_xData->display, rootWindow,
-                                    0, 0, props.size.w, props.size.h, 0,
-                                    m_xData->visual->depth, InputOutput,
-                                    m_xData->visual->visual,
-                                    CWColormap | CWEventMask,
-                                    &swa);
+    m_xData->window = XCreateWindow(
+                m_xData->display, rootWindow,
+                50, 50, props.size.w, props.size.h, 0,
+                m_xData->visual->depth, InputOutput,
+                m_xData->visual->visual,
+                CWColormap | CWEventMask,
+                &swa);
+
+    XSync(m_xData->display, 0);
 
     if(!m_xData->window)
     {
@@ -240,7 +246,8 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     }
 
     Atom delete_window = XInternAtom(m_xData->display, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(m_xData->display, m_xData->window, &delete_window, 1);
+    XSetWMProtocols(m_xData->display, m_xData->window,
+                    &delete_window, 1);
 
     XSetWindowAttributes xattr;
 
@@ -256,15 +263,17 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
                     (u8*)&one, 1);
 #endif
 
+#if 0
+    /* This code prohibits movement of the window */
     XWMHints hints;
     hints.input = True;
     hints.flags = InputHint;
     XSetWMHints(m_xData->display, m_xData->window, &hints);
-
-    showWindow();
-    setWindowTitle(props.title);
+#endif
 
     setWindowState(props.flags);
+    showWindow();
+    setWindowTitle(props.title);
 
     return true;
 }
@@ -326,7 +335,8 @@ static void X_Apply_State(::Display* xd, ::Window w, cstring msg, int mode, Vect
         XChangeProperty(xd, w,
                         XInternAtom(xd, msg, True),
                         XA_ATOM, 32, PropModeReplace,
-                        (u8*)atoms_.data(), atoms_.size());
+                        C_RCAST<u8*>(atoms_.data()),
+                        C_FCAST<i32>(atoms_.size()));
     }
 
     /* Send event to root window */
@@ -350,7 +360,7 @@ static void X_Apply_State(::Display* xd, ::Window w, cstring msg, int mode, Vect
         int num = 0;
         for(Atom state : atoms_)
         {
-            xev.xclient.data.l[++num] = state;
+            xev.xclient.data.l[++num] = C_FCAST<i64>(state);
         }
 
         XSendEvent(xd,
@@ -510,7 +520,10 @@ void X11Window::processX11Events(InputApplication *eh)
             base_i.type = CIEvent::Keyboard;
             CIKeyEvent k;
             XKeyEvent& xk = xev.xkey;
-            auto keycode = XKeycodeToKeysym(m_xData->display, xk.keycode, 0);
+            auto keycode = XkbKeycodeToKeysym(
+                        m_xData->display,
+                        C_FCAST<u8>(xk.keycode), 0,
+                        xk.state & ShiftMask ? 1 : 0);
             if(xk.keycode == XK_VoidSymbol)
                 goto out_of_switch;
             if((keycode >= XK_space && keycode <= XK_asciitilde)

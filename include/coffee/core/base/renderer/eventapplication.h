@@ -94,12 +94,12 @@ void WrapEventFunction(void* data, int event)
     case CoffeeHandle_Setup:
         if(CurrentState == 0)
         {
-            Profiler::DeepPushContext("Renderer-side setup");
+            Profiler::DeepPushContext("Renderer::Setup");
             /* By default, try to load the highest GL version */
             if(LoadHighestVersion(&edata->r(), edata->visual, nullptr))
             {
                 Profiler::DeepPopContext();
-                Profiler::DeepPushContext("Application-side setup");
+                Profiler::DeepPushContext("Event::Setup");
                 edata->setup(edata->r(), edata->d());
                 Profiler::DeepPopContext();
                 CurrentState = 1;
@@ -121,11 +121,11 @@ void WrapEventFunction(void* data, int event)
         if(CurrentState == 1)
         {
             CurrentState = 0;
-            Profiler::DeepPushContext("Application-side cleanup");
+            Profiler::DeepPushContext("Event::Cleanup");
             edata->cleanup(edata->r(), edata->d());
             Profiler::DeepPopContext();
             
-            Profiler::DeepPushContext("Renderer-side cleanup");
+            Profiler::DeepPushContext("Renderer::Cleanup");
             edata->r().cleanup();
             Profiler::DeepPopContext();
             
@@ -342,7 +342,7 @@ public:
     static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
                                CDProperties& visual, CString& err)
     {
-        Profiler::DeepPushContext("Event loop creation");
+        Profiler::DeepPushContext("EventApplication::execEventLoop");
 
         using ELD = EventLoopData<Renderer, Data>;
 
@@ -417,6 +417,7 @@ public:
          * On platforms with their own event loops, this does not work.
          */
 
+        Profiler::DeepPushContext("EventApplication::Event loop");
         while(!ev.renderer->closeFlag())
         {
             CoffeeEventHandleCall(CoffeeHandle_Loop);
