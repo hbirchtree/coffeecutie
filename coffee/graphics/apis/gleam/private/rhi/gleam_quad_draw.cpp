@@ -34,16 +34,16 @@ static cstring m_shader_fragment_passthrough = {
 #else
     "#version 330\n"
 #endif
-    "uniform sampler2D tex;\n"
+    "uniform sampler2D colortex;\n"
     "in vec2 tex_out;\n"
     "layout(location=0) out vec4 OutColor;\n"
     "void main(){\n"
 #if !defined(COFFEE_ANDROID) && 0
-    "    vec4 comp = texture(tex,tex_out);\n"
+    "    vec4 comp = texture(colortex,tex_out);\n"
     "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
     "    out_col.a = comp.a;\n"
     #else
-    "    OutColor = texture(tex,tex_out);\n"
+    "    OutColor = texture(colortex,tex_out);\n"
 #endif
     "}\n"
 };
@@ -135,7 +135,7 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
     for(auto const& d : desc)
     {
-        if(d.m_name == "tex")
+        if(d.m_name == "colortex")
             m_texLoc = d;
         if(d.m_name == "transform")
             m_transformLoc = d;

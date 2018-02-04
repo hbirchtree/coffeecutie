@@ -196,9 +196,11 @@ CString Url::operator*() const
 #if defined(COFFEE_UNIXPLAT)
         CString derefPath = DereferenceLocalPath();
         derefPath = CStrReplace(derefPath, "//", "/");
+#if !defined(COFFEE_EMSCRIPTEN)
         if(!feval(flags & RSCA::NoDereference))
             derefPath = FileFun::DereferenceLink(
                         MkUrl(derefPath.c_str(), RSCA::SystemFile));
+#endif
         return derefPath;
 #else
         return DereferenceLocalPath();
@@ -234,6 +236,7 @@ Url Url::operator+(const Path &path) const
                                         path.internUrl.c_str());
     else
         cpy.internUrl = path.internUrl;
+
     cpy.cachedUrl = {};
     return cpy;
 }

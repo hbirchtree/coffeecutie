@@ -185,6 +185,7 @@ endif()
 
 if(EMSCRIPTEN)
     list ( APPEND CoffeeCore_SRCS
+        private/plat/environment/unix/environment.cpp
         private/plat/environment/emscripten/sysinfo.cpp
         )
 endif()

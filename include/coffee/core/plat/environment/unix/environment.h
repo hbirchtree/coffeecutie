@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_EMSCRIPTEN)
 
 #include "../environment_details.h"
 #include "../../memory/cmemory.h"
@@ -77,6 +77,11 @@ struct PosixTerminalColorCodes : EnvColorCodes
 
 }
 }
+
+#if defined(COFFEE_EMSCRIPTEN)
+using ColorMap_ = Environment::Posix::PosixTerminalColorCodes;
+using Env_ = Environment::Posix::PosixEnvironmentFun;
+#endif
 
 }
 

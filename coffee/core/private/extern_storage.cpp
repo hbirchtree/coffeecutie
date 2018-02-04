@@ -17,9 +17,9 @@ unw_context_t* Environment::Posix::PosixStacktracer::unwind_context = nullptr;
 #if !defined(COFFEE_DISABLE_PROFILER)
 Profiler::ProfilerDataStore* Profiler::profiler_data_store = nullptr;
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-thread_local ThreadId Profiler::current_thread_id;
+thread_local ThreadId Profiler::current_thread_id = ThreadId();
 #else
-ThreadId Profiler::current_thread_id;
+ThreadId Profiler::current_thread_id = ThreadId();
 #endif
 #endif
 

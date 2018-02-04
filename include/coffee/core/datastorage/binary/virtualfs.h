@@ -18,9 +18,9 @@ struct Resource;
  *
  * Layout of a .cvfs file:
  *
- * |---------------------|----------------|----------------|---------------|
- * | VirtualFS struct[0] | VirtualFile[0] | VirtualFile[1] | Blob data     |
- * |---------------------|----------------|----------------|---------------|
+ * |---------------|----------|----------|--------------|
+ * | VFS struct[0] | VFile[0] | VFile[1] | Blob data    |
+ * |---------------|----------|----------|--------------|
  *
  * VirtualFS struct serves as a header, with a magic segment.
  * VirtualFile structures refer into the Blob data segment.
