@@ -5,9 +5,6 @@ endif()
 
 set ( CoffeeASIO_SRCS
     private/rest-client.cpp
-    private/asio_data.cpp
-    private/tcp-socket.cpp
-    private/udp-socket.cpp
     private/net_resource.cpp
     private/net_profiling.cpp
     )

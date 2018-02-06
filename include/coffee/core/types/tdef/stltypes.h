@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../plat/plat_quirks_toggling.h"
-#include "stldef.h"
 
 /*Container types*/
 #include <string>
