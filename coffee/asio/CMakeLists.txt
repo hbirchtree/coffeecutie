@@ -21,9 +21,15 @@ endif()
 coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/asio")
 
+set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
+
+if(EMSCRIPTEN)
+    set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio-emscripten" )
+endif()
+
 target_include_directories ( CoffeeASIO SYSTEM
     PUBLIC
-    $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include>
+    $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
 
     $<INSTALL_INTERFACE:include/>
     )
@@ -35,4 +41,4 @@ if(COFFEE_BUILD_OPENSSL)
         )
 endif()
 
-coffee_bundle_includes ( "${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include" )
+coffee_bundle_includes ( "${ASIO_DIR}/asio/include" )

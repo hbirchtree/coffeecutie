@@ -1,57 +1,64 @@
 targets:
-  android:
-    armv8a:
-      nougat:
-        - gles3
-      lollipop:
-        - gles3
-    armv7a:
-      nougat:
+  coffee:
+    android:
+      armv8a:
+        nougat:
+          - gles3
+        lollipop:
+          - gles3
+      armv7a:
+        nougat:
+          - gles2
+          - gles3
+        lollipop:
+          - gles3
+        kitkat:
+          - gles2
+        gingerbread:
+          - gles2
+      mips:
+        kitkat:
+          - .
+      mips64:
+        kitkat:
+          - .
+      x86:
+        kitkat:
+          - .
+      x86_64:
+        kitkat:
+          - .
+    ubuntu:
+      amd64:
+        - .
         - gles2
         - gles3
-      lollipop:
-        - gles3
-      kitkat:
+      i686:
+        - gles
         - gles2
-      gingerbread:
-        - gles2
-    mips:
-      kitkat:
-        - .
-    mips64:
-      kitkat:
-        - .
-    x86:
-      kitkat:
-        - .
-    x86_64:
-      kitkat:
-        - .
-  ubuntu:
-    amd64:
+    fedora:
+      - amd64
+    steam:
+      - amd64
+    coverage:
       - .
-      - gles2
-      - gles3
-    i686:
-      - gles
-      - gles2
-  fedora:
-    - amd64
-  steam:
-    - amd64
-  coverage:
-    - .
-  docs:
-    - .
-  emscripten:
-    - asmjs
-    - wasm
-  maemo:
-    - armel
-  raspberry:
-    - armhf
-  mingw:
-    - w64
+    docs:
+      - .
+    emscripten:
+      - asmjs
+      - wasm
+    maemo:
+      - armel
+    raspberry:
+      - armhf
+    mingw:
+      - w64
+    osx:
+      - .
+    ios:
+      - .
+      - x86_64
+      - x86
 
 global-sets:
   containerized:
@@ -84,6 +91,7 @@ globals:
 
 # variables are transformed into project.src
 variables:
+  runner-choice: $(env:RUNNER)
   multi:
     root: $(env:BUILD_DIR)
   project:
@@ -96,6 +104,8 @@ variables:
     install: /home/coffee/out
   dep:
     root: $(project.build)/dependencies
+  build-dep:
+    root: $(project.build)/build-dependencies
   build:
     prettyname: Nothing
     build-type: $(env:CONFIGURATION)
@@ -135,12 +145,14 @@ dependencies:
 
 build-dependencies:
   appimg-runtime:
-    source: https://github.com/AppImage/AppImageKit.git
+    platforms: .*(ubuntu|fedora|raspberry|coverage|maemo).*
+    source: git:https://github.com/AppImage/AppImageKit.git
     type: make
   assimp:
+    platforms: ^[^d].*$
     source: git:https://github.com/assimp/assimp.git
     type: cmake
-    options:
+    cmake-opts:
       - -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF
       - -DASSIMP_BUILD_BLEND_IMPORTER=ON
       - -DASSIMP_BUILD_FBX_IMPORTER=ON
@@ -149,30 +161,31 @@ build-dependencies:
       - -DASSIMP_BUILD_TESTS=OFF
       - -DBUILD_SHARED_LIBS=OFF
       - -DBUILD_TESTING=OFF
-    output-files:
-      - code/libassimp.*
-      - contrib/irrXML/libIrrXML.*
   bullet:
+    platforms: ^[^d].*$
     source: git:https://github.com/bulletphysics/bullet3.git
     type: cmake
-    options:
+    cmake-opts:
       - -DBUILD_BULLET2_DEMOS=OFF
       - -DBUILD_UNIT_TESTS=OFF
       - -DBUILD_CPU_DEMOS=OFF
       - -DBUILD_EXTRAS=OFF
       - -DUSE_GRAPHICAL_BENCHMARK=OFF
+      - -DINSTALL_LIBS=ON
   openal:
+    platforms: ^[^d].*$
     source: git:https://github.com/kcat/openal-soft.git
     type: cmake
-    option:
+    cmake-opts:
       - -DALSOFT_EXAMPLES=OFF
       - -DALSOFT_TESTS=OFF
       - -DALSOFT_UTILS=OFF
-  SDL2:
+  sdl2:
+    platforms: .*(^[^d].*$|ubuntu|fedora|raspberry|coverage|mingw).*
     source: hg:https://hg.libsdl.org/SDL
     type: automake
-    options:
-      - --host $(host.arch)
+    ac-opts:
+      - --host=$(host.arch)
       - --disable-shared
       - --disable-atomic
       - --disable-filesystem
@@ -181,8 +194,13 @@ build-dependencies:
       - --disable-audio
       - --disable-loadso
       - --disable-cpuinfo
-      - --prefix=$(SDL2.install.root)
-
+      - --disable-video-vulkan
+      - --prefix=$(container.install)
+  openssl:
+    platforms: ^[^d].*$
+    # There's a special place in hell for project-specific
+    #  build processes like this one
+    type: openssl
 
 #
 # Templates
@@ -205,62 +223,123 @@ templates:
   =dependencies: native-libs
   
   # Default container options
-  =container-opts: 
-    - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
-    - -v $(project.src):$(container.src):ro
-    - -v $(project.install):$(container.install):rw
-    - -v $(project.build)/$(target-name):$(container.build):rw
-    - -v $(lib.root):$(lib.target):ro
-    - --workdir "$(env:CMAKE_BUILD_DIR)"
+  =container-opts: ''
   
   # Default CMake options
   =cmake-opts:
     - $(env:CMAKE_SOURCE_DIR)
-    - -DNATIVE_LIBRARY_DIR=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)
-    - -DCOFFEE_ROOT_DIR=$(env:COFFEE_ROOT_DIR)/$(lib.flavor)
-    - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
-    - -DCOFFEE_BUILD_ASSIMP=ON
     - -G'$(generator)'
-    - -C"$(env:CMAKE_SOURCE_DIR)/cmake/Preload/$(preload)"
-    - -DCMAKE_BUILD_TYPE=$(build.build-type)
-    - -DCMAKE_INSTALL_PREFIX=$(env:CMAKE_INSTALL_DIR)/$(target-name)
-    - -DCMAKE_TOOLCHAIN_FILE=$(env:CMAKE_SOURCE_DIR)/cmake/Toolchains/$(toolchain)
-    - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
+    - -C"$(toolchain-dir)/Preload/$(preload)"
+    - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
 
+  =build-deps:
+    - assimp
+    - openal
+    - bullet
+    - openssl
 
-  # For Ubuntu, Fedora, docs and coverage, specify generic preload
-  (ubuntu|docs|coverage|fedora).*:
-    (.*amd64.*|docs|coverage):
-      =container: ubuntu
-    (.*amd64.*|docs|coverage|fedora):
-      =toolchain: linux-generic_linux.toolchain.cmake
-  # Some parameters to make coverage testing work
-  coverage:
-    =description: Coverage build using same config as Ubuntu
+  .*(osx|ios).*:
+    =runner-choice: Makefile.mac-base
+    =target: build
+    =build.prettyname: Apple
+    =generator: Xcode
     =compiler: Clang
-    =target: multi.twostage
-    =preload: linux-coverage.cmake
-    +container-opts:
-      - -e CC=
-      - -e CXX=
-    =cmake-target:
-      - all
-      - CoverageTest@1
+    =container-opts:
+    .*osx.*:
+      =description: Apple OS X
+      =flavor: mac-osx
+      =toolchain: osx-generic_osx.toolchain.cmake
+      =preload: osx-generic.cmake
+      +cmake-opts:
+        - -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
+    .*ios.*:
+      =toolchain: all-ios.toolchain.cmake
+      =preload: osx-ios.cmake
+    .*ios$:
+      =description: Device-oriented build for ARM64 and ARMv7-A
+    .*ios.x86.*:
+      =description: iOS simulator build
+      .*x86_64:
+        +cmake-opts:
+          - -DIOS_PLATFORM=SIMULATOR64
+      .*x86$:
+        +cmake-opts:
+          - -DIOS_PLATFORM=SIMULATOR
 
-  docs:
-    =description: Documentation build using only Doxygen
-    =compiler: Doxygen
-    =preload: docs-all.cmake
-  
-  ubuntu.*:
-    =description: Ubuntu build in a Ubuntu Docker
-    =compiler: GCC 5+
-    =preload: linux-generic.cmake
-    .*amd64.*:
+  coffee.*:
+    =toolchain-dir: $(env:CMAKE_SOURCE_DIR)/cmake
+    +cmake-opts:
+      - -DNATIVE_LIBRARY_DIR=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)
+      - -DCOFFEE_ROOT_DIR=$(env:COFFEE_ROOT_DIR)/$(lib.flavor)
+      - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
+      - -DCOFFEE_BUILD_ASSIMP=ON
+      - -DCMAKE_BUILD_TYPE=$(build.build-type)
+      - -DCMAKE_INSTALL_PREFIX=$(env:CMAKE_INSTALL_DIR)/$(target-name)
+      - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
+    +container-opts:
+      - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
+      - -v $(project.src):$(container.src):ro
+      - -v $(project.install):$(container.install):rw
+      - -v $(project.build)/$(target-name):$(container.build):rw
+      - -v $(lib.root):$(lib.target):ro
+      - --workdir "$(env:CMAKE_BUILD_DIR)"
+    .*coverage:
+      =cmake-target:
+        - all
+        - CoverageTest@1
+      =target: multi.twostage
+    .*ubuntu.amd64.*:
       +cmake-opts:
         - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
         - -DAPPIMAGE_RUNTIME_BINARY=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)/util/x86_64-linux-gnu/runtime
         - -DCOFFEE_GENERATE_APPIMAGE=ON
+    .*emscripten.*:
+      +cmake-opts:
+        - -DCOFFEE_BUILD_ASSIMP=OFF
+    .*android.*:
+      +cmake-opts:
+        - -DCOFFEE_BUILD_GLES=ON
+        - -DCOFFEE_BUILD_GLES_20=$(android.gles20)
+        - -DCOFFEE_BUILD_ASSIMP=ON
+        - -DCOFFEE_TESTS=OFF
+        - -DCOFFEE_BUILD_SDL2=OFF
+        - -DGENERATE_TESTS=OFF
+      =target: multi.twostage
+      =cmake-target:
+        - install
+        - AndroidPackage@1
+    .*maemo.*:
+      +cmake-opts:
+        - -DCOFFEE_BUILD_ASSIMP=OFF
+
+  # For Ubuntu, Fedora, docs and coverage, specify generic preload
+  .*(ubuntu|docs|coverage|fedora).*:
+    .*(amd64.*|docs|coverage):
+      =container: ubuntu
+    .*(amd64.*|docs|coverage|fedora):
+      =toolchain: linux-generic_linux.toolchain.cmake
+    +build-deps:
+      - appimg-runtime
+      - SDL2
+
+  # Some parameters to make coverage testing work
+  .*coverage:
+    =description: Coverage build using same config as Ubuntu
+    =compiler: Clang
+    =preload: linux-coverage.cmake
+    +container-opts:
+      - -e CC=
+      - -e CXX=
+
+  .*docs:
+    =description: Documentation build using only Doxygen
+    =compiler: Doxygen
+    =preload: docs-all.cmake
+  
+  .*ubuntu.*:
+    =description: Ubuntu build in a Ubuntu Docker
+    =compiler: GCC 5+
+    =preload: linux-generic.cmake
     .*i686.*:
       =container: ubuntu-i686
       =toolchain: linux-generic-i686_linux.toolchain.cmake
@@ -269,14 +348,14 @@ templates:
     .*gles2:
       =preload: linux-gles20.cmake
 
-  fedora.*:
+  .*fedora.*:
     =description: Fedora build in a Fedora Docker
     =compiler: GCC 5+
     =preload: linux-fedora.cmake
     =container: fedora
 
 
-  steam.*:
+  .*steam.*:
     =description: Build against the SteamRT SDK
     =compiler: GCC 4.8.4
     =preload: linux-steam.cmake
@@ -284,7 +363,7 @@ templates:
     =container: steam
 
 
-  emscripten.*:
+  .*emscripten.*:
     =description: Emscripten with WebAsm and asm.js
     =compiler: Clang 4+
     =container: emscripten
@@ -293,14 +372,13 @@ templates:
     =generator: Unix Makefiles
     +cmake-opts:
       - -DEMSCRIPTEN_ROOT_PATH=$(dependencies.emscripten.target)/emscripten/master
-      - -DCOFFEE_BUILD_ASSIMP=OFF
     +container-opts:
       - -e EMSCRIPTEN=$(dependencies.emscripten.target)/emscripten/master
     .*wasm.*:
       =preload: js-emscripten-wasm.cmake
 
 
-  android.*:
+  .*android.*:
     =description: Android builds, ARMv8-A and ARMv7-A mostly
     =compiler: Clang
     # Architecture specifics
@@ -340,21 +418,11 @@ templates:
       - -DANDROID_ABI='$(android.abi)'
       - -DANDROID_CPP_FEATURES=$(android.features)
       - -DANDROID_ARM_NEON=$(android.arm-neon)
-      - -DCOFFEE_BUILD_GLES=ON
-      - -DCOFFEE_BUILD_GLES_20=$(android.gles20)
-      - -DCOFFEE_BUILD_ASSIMP=ON
-      - -DCOFFEE_TESTS=OFF
-      - -DCOFFEE_BUILD_SDL2=OFF
-      - -DGENERATE_TESTS=OFF
-    =target: multi.twostage
-    =cmake-target:
-      - install
-      - AndroidPackage@1
     =container: android
     =toolchain: all-android.toolchain.cmake
 
     
-  maemo.*:
+  .*maemo.*:
     =description: Maemo 5 builds, performed within a Maemo 5 armel chroot
     =compiler: GCC 6
     =preload: linux-maemo.cmake
@@ -363,8 +431,6 @@ templates:
     =build.build-type: Release
     =target: multi.make8
     =generator: Unix Makefiles
-    +cmake-opts:
-      - -DCOFFEE_BUILD_ASSIMP=OFF
     =container-opts: 
       - -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
       - -v $(lib.root):/maemo/$(lib.target):ro
@@ -373,38 +439,39 @@ templates:
       - -v $(project.build)/$(target-name):/maemo/$(container.build):rw
 
 
-  raspberry.*:
+  .*raspberry.*:
     =description: Raspberry Pi ARMv6 build
     =compiler: GCC 4.9
     =preload: linux-raspberry.cmake
     =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
     =container: raspberry
     +dependencies: rpi-sdk
-    +container-opts: -v $(dependencies.rpi-sdk.root)/$(dependencies.rpi-sdk.path):$(dependencies.rpi-sdk.target):ro
-    +cmake-opts: -DRASPBERRY_SDK=$(dependencies.rpi-sdk.target)
+    +container-opts:
+      - -v $(dependencies.rpi-sdk.root)/$(dependencies.rpi-sdk.path):$(dependencies.rpi-sdk.target):ro
+    +cmake-opts:
+      - -DRASPBERRY_SDK=$(dependencies.rpi-sdk.target)
     .*armhf.*:
       =dependencies.rpi-sdk.path: architectures/rpi-SDL2-X11-armv6
 
 
-  mingw.*:
+  .*mingw.*:
     =description: MinGW64 environment in Ubuntu Docker
     =compiler: GCC 5+
     =toolchain: windows-mingw64_linux.toolchain.cmake
     =preload: windows-mingw64.cmake
     =container: mingw64
 
-
-  (ubuntu.*|coverage|docs):
+  .*(ubuntu.*|coverage|docs):
     =build.prettyname: Ubuntu
-  (fedora.*):
+  .*(fedora.*):
     =build.prettyname: Fedora
-  (steam.*):
+  .*(steam.*):
     =build.prettyname: SteamOS
-  (maemo.*):
+  .*(maemo.*):
     =build.prettyname: Maemo
-  (android.*):
+  .*(android.*):
     =build.prettyname: Android
-  (raspberry.*):
+  .*(raspberry.*):
     =build.prettyname: RaspberryPi
-  (mingw.*):
+  .*(mingw.*):
     =build.prettyname: MinGW

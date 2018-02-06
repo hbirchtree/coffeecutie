@@ -32,6 +32,10 @@ struct TCPSocketImpl : ASIO_Client
 
         asio::error_code lastError;
 
+        Host hostname;
+
+        bool do_verify;
+
 //        SSLSocket_(asio::io_service &serv, asio::ssl::context& ctxt):
 //            std::istream(&recvp),
 //            std::ostream(&trans),
@@ -49,29 +53,38 @@ struct TCPSocketImpl : ASIO_Client
             context(c),
             socket(c->service,c->sslctxt),
             recvp(),
-            trans()
+            trans(),
+            do_verify(true)
         {
         }
 
         C_DELETE_COPY_CONSTRUCTOR(SSLSocket_);
 
-        template<typename ServiceT>
-        void connect(Host h, ServiceT p, bool verify=true)
+        using resolver_result = asio::ip::tcp::resolver::results_type;
+        using resolver_iter = asio::ip::tcp::resolver::iterator;
+
+        void resolve_handler(asio::error_code ec, resolver_result r)
         {
-            asio::error_code ec;
-
-            asio::ip::tcp::resolver::query q(h, p);
-            auto it = context->resolver.resolve(q, ec);
-            decltype(it) end;
-
-            if(it == end)
+            if(ec != asio::error_code())
             {
                 lastError = ec;
                 return;
             }
 
-            asio::connect(socket.next_layer(), it, ec);
+            using it_type = decltype(r);
 
+            asio::async_connect(
+                        socket.next_layer(), r, it_type(),
+                        [&](
+                        asio::error_code ec,
+                        resolver_iter r)
+            {
+                this->connect_handler(ec, r);
+            });
+        }
+
+        void connect_handler(asio::error_code ec, resolver_iter it)
+        {
             if(ec != asio::error_code())
             {
                 lastError = ec;
@@ -82,10 +95,10 @@ struct TCPSocketImpl : ASIO_Client
                         asio::ip::tcp::no_delay(true));
 
 #if !defined(COFFEE_ANDROID)
-            if(verify)
+            if(do_verify)
             {
                 socket.set_verify_callback(
-                            asio::ssl::rfc2818_verification(h),
+                            asio::ssl::rfc2818_verification(hostname),
                             ec);
                 if(ec != asio::error_code())
                 {
@@ -95,17 +108,47 @@ struct TCPSocketImpl : ASIO_Client
             }else{
                 socket.set_verify_callback(
                             [](bool prever,
-                               asio::ssl::verify_context&)
+                            asio::ssl::verify_context&)
                 {
                     return true;
                 });
             }
 #endif
 
-            socket.handshake(sock_t::client, ec);
+            socket.async_handshake(
+                        sock_t::client,
+                        [&](asio::error_code ec)
+            {
+                this->handshake_handler(ec);
+            });
+        }
 
+        void handshake_handler(asio::error_code ec)
+        {
             if(ec != asio::error_code())
+            {
                 lastError = ec;
+                return;
+            }
+        }
+
+        template<typename ServiceT>
+        void connect(Host h, ServiceT p, bool verify = true)
+        {
+            asio::ip::tcp::resolver::query q(h, p);
+
+            this->do_verify = verify;
+            this->hostname = h;
+
+            context->resolver.async_resolve(
+                        q, [&](
+                        asio::error_code ec,
+                        resolver_result r)
+            {
+                this->resolve_handler(ec, r);
+            });
+
+            context->service.run();
         }
 
         asio::error_code error() const
