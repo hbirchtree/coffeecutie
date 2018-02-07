@@ -299,15 +299,17 @@ struct SimpleProfilerImpl
 
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
     /* Because it's thread_local, it is initialized automatically */
-    thread_local static ThreadId current_thread_id;
+    thread_local static ThreadId* current_thread_id;
 #else
-    static ThreadId current_thread_id;
+    static ThreadId* current_thread_id;
 #endif
 
 
     STATICINLINE LinkList<CString>& threadContextStack()
     {
-        auto hash = current_thread_id.hash();
+        if(!current_thread_id)
+            current_thread_id = new ThreadId();
+        auto hash = current_thread_id->hash();
         auto& ctxt = profiler_data_store->context_storage[hash];
         return ctxt.context_stack;
     }
