@@ -20,10 +20,6 @@ coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 
-if(EMSCRIPTEN)
-    set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio-emscripten" )
-endif()
-
 target_include_directories ( CoffeeASIO SYSTEM
     PUBLIC
     $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
