@@ -1,4 +1,6 @@
 targets:
+  # this part of the target name is specifically removed.
+  # it's kind of hacky, but separates it from build dependencies.
   coffee:
     android:
       armv8a:
@@ -80,32 +82,52 @@ global-sets:
     ANDROID_NDK_INTERNAL: $(env:ANDROID_NDK)
     ANDROID_SDK_INTERNAL: $(env:ANDROID_SDK)
 
+# environment variables exposed to the outside
 globals:
   BUILD_DIR: $(env:PWD)
   SOURCE_DIR: $(env:PWD)/..
   ROOT_DIR: $(env:SOURCE_DIR)/$(env:MAKEFILE_DIR)
   GENERATE_PROGRAMS: OFF
+  # this one determines building in a container or natively
+  # it switches global-sets
   BUILD_MODE: containerized
   CONFIGURATION: Debug
   HEADLESS: ON
 
 # variables are transformed into project.src
 variables:
+  # for switching between Dockerized and native build environments
   runner-choice: $(env:RUNNER)
+  # the top-level directory for containing build data
   multi:
     root: $(env:BUILD_DIR)
+  # directories in real filesystem, never in container
   project:
     src: $(env:SOURCE_DIR)
     build: $(multi.root)
     install: $(multi.root)/build
+  # when running in a Docker container, these paths are used
+  # Apple builds work differently, dereferenced through $(cmake.*)
   container:
     src: /home/coffee/project
     build: /home/coffee/build
     install: /home/coffee/out
+  # dereference point for Apple builds, where Docker does not exist
+  # Apple platforms simply use $(project.*)
+  cmake:
+    src: $(env:CMAKE_SOURCE_DIR)
+    build: $(env:CMAKE_BUILD_DIR)
+    install: $(env:CMAKE_INSTALL_DIR)
+    coffee-lib: $(env:COFFEE_ROOT_DIR)
+    native-lib: $(env:NATIVE_LIBRARY_DIR)
+  # already-compiled dependencies
   dep:
     root: $(project.build)/dependencies
+  # sub-path for building dependencies, not downloading
   build-dep:
     root: $(project.build)/build-dependencies
+  # .prettyname is used within native-library-bundle for platform names
+  # .build-type is just configuration mode
   build:
     prettyname: Nothing
     build-type: $(env:CONFIGURATION)
@@ -115,6 +137,8 @@ variables:
     root: $(env:COFFEE_DIR)
     target: /home/coffee/library
 
+  # this is the entire Android build prelaod,
+  #  determining all properties for Android builds
   android:
     stl: c++_static
     toolchain: clang
@@ -227,11 +251,12 @@ templates:
   
   # Default CMake options
   =cmake-opts:
-    - $(env:CMAKE_SOURCE_DIR)
+    - $(cmake.src)
     - -G'$(generator)'
     - -C"$(toolchain-dir)/Preload/$(preload)"
     - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
 
+  # unused, but links build dependencies to platforms
   =build-deps:
     - assimp
     - openal
@@ -244,6 +269,11 @@ templates:
     =build.prettyname: Apple
     =generator: Xcode
     =compiler: Clang
+    =cmake.src: $(project.src)
+    =cmake.build: $(project.build)
+    =cmake.install: $(project.install)
+    =cmake.coffee-lib: $(lib.root)
+    =cmake.native-lib: $(dependencies.native-libs.root)
     =container-opts:
     .*osx.*:
       =description: Apple OS X
@@ -266,15 +296,18 @@ templates:
         +cmake-opts:
           - -DIOS_PLATFORM=SIMULATOR
 
+  # namespacing, separating build options for Coffee-related builds
+  #  from SDL2 and Assimp options
+  # without this, Assimp would get a lot of trashy CMake options handed to it
   coffee.*:
-    =toolchain-dir: $(env:CMAKE_SOURCE_DIR)/cmake
+    =toolchain-dir: $(cmake.src)/cmake
     +cmake-opts:
-      - -DNATIVE_LIBRARY_DIR=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)
-      - -DCOFFEE_ROOT_DIR=$(env:COFFEE_ROOT_DIR)/$(lib.flavor)
+      - -DNATIVE_LIBRARY_DIR=$(cmake.native-lib)/$(build.prettyname)
+      - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
       - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
       - -DCOFFEE_BUILD_ASSIMP=ON
       - -DCMAKE_BUILD_TYPE=$(build.build-type)
-      - -DCMAKE_INSTALL_PREFIX=$(env:CMAKE_INSTALL_DIR)/$(target-name)
+      - -DCMAKE_INSTALL_PREFIX=$(cmake.install)/$(target-name)
       - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
     +container-opts:
       - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro

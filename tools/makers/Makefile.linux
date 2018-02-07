@@ -265,7 +265,7 @@ fedora.amd64: native-libs FORCE
 # Compiler: Clang
 ios: native-libs FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ios -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ios -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ios:/home/coffee/build:rw -v $(COFFEE_DIR):/home/coffee/library:ro --workdir "$(CMAKE_BUILD_DIR)"" \
 		-e BUILD_NAME="ios" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -275,7 +275,7 @@ ios: native-libs FORCE
 # Compiler: Clang
 ios.x86: native-libs FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ios.x86 -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ios.x86 -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86 -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86 -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ios.x86:/home/coffee/build:rw -v $(COFFEE_DIR):/home/coffee/library:ro --workdir "$(CMAKE_BUILD_DIR)"" \
 		-e BUILD_NAME="ios.x86" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -285,7 +285,7 @@ ios.x86: native-libs FORCE
 # Compiler: Clang
 ios.x86_64: native-libs FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ios.x86_64 -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ios.x86_64 -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86_64 -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86_64 -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/ios.x86_64:/home/coffee/build:rw -v $(COFFEE_DIR):/home/coffee/library:ro --workdir "$(CMAKE_BUILD_DIR)"" \
 		-e BUILD_NAME="ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -317,7 +317,7 @@ mingw.w64: native-libs FORCE
 # Compiler: Clang
 osx: native-libs FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"$(CMAKE_SOURCE_DIR)/cmake/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/osx -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/osx -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"$(SOURCE_DIR)/cmake/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple -DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/osx -DGENERATE_PROGRAMS=$(GENERATE_PROGRAMS) -DCOFFEE_BUILD_ASSIMP=ON -DCMAKE_BUILD_TYPE=$(CONFIGURATION) -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx -DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro -v $(SOURCE_DIR):/home/coffee/project:ro -v $(BUILD_DIR)/build:/home/coffee/out:rw -v $(BUILD_DIR)/osx:/home/coffee/build:rw -v $(COFFEE_DIR):/home/coffee/library:ro --workdir "$(CMAKE_BUILD_DIR)"" \
 		-e BUILD_NAME="osx" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2237,7 +2237,7 @@ assimp.ios.install_dir:
 # Compiler: Clang
 assimp.ios: assimp.source assimp.ios.build_dir assimp.ios.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/assimp/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ios" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2257,7 +2257,7 @@ bullet.ios.install_dir:
 # Compiler: Clang
 bullet.ios: bullet.source bullet.ios.build_dir bullet.ios.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/bullet/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ios:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ios" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2277,7 +2277,7 @@ openal.ios.install_dir:
 # Compiler: Clang
 openal.ios: openal.source openal.ios.build_dir openal.ios.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openal/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ios:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ios" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2297,7 +2297,7 @@ openssl.ios.install_dir:
 # Compiler: Clang
 openssl.ios: openssl.source openssl.ios.build_dir openssl.ios.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openssl/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ios:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ios" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2317,7 +2317,7 @@ sdl2.ios.install_dir:
 # Compiler: Clang
 sdl2.ios: sdl2.source sdl2.ios.build_dir sdl2.ios.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base custom \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/sdl2/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2349,7 +2349,7 @@ assimp.ios.x86.install_dir:
 # Compiler: Clang
 assimp.ios.x86: assimp.source assimp.ios.x86.build_dir assimp.ios.x86.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/assimp/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios.x86:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ios.x86" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2369,7 +2369,7 @@ bullet.ios.x86.install_dir:
 # Compiler: Clang
 bullet.ios.x86: bullet.source bullet.ios.x86.build_dir bullet.ios.x86.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/bullet/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ios.x86:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ios.x86" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2389,7 +2389,7 @@ openal.ios.x86.install_dir:
 # Compiler: Clang
 openal.ios.x86: openal.source openal.ios.x86.build_dir openal.ios.x86.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openal/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ios.x86:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ios.x86" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2409,7 +2409,7 @@ openssl.ios.x86.install_dir:
 # Compiler: Clang
 openssl.ios.x86: openssl.source openssl.ios.x86.build_dir openssl.ios.x86.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openssl/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ios.x86:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ios.x86" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2429,7 +2429,7 @@ sdl2.ios.x86.install_dir:
 # Compiler: Clang
 sdl2.ios.x86: sdl2.source sdl2.ios.x86.build_dir sdl2.ios.x86.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base custom \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios.x86" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2461,7 +2461,7 @@ assimp.ios.x86_64.install_dir:
 # Compiler: Clang
 assimp.ios.x86_64: assimp.source assimp.ios.x86_64.build_dir assimp.ios.x86_64.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/assimp/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios.x86_64:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2481,7 +2481,7 @@ bullet.ios.x86_64.install_dir:
 # Compiler: Clang
 bullet.ios.x86_64: bullet.source bullet.ios.x86_64.build_dir bullet.ios.x86_64.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/bullet/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ios.x86_64:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2501,7 +2501,7 @@ openal.ios.x86_64.install_dir:
 # Compiler: Clang
 openal.ios.x86_64: openal.source openal.ios.x86_64.build_dir openal.ios.x86_64.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openal/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ios.x86_64:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2521,7 +2521,7 @@ openssl.ios.x86_64.install_dir:
 # Compiler: Clang
 openssl.ios.x86_64: openssl.source openssl.ios.x86_64.build_dir openssl.ios.x86_64.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openssl/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ios.x86_64:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2541,7 +2541,7 @@ sdl2.ios.x86_64.install_dir:
 # Compiler: Clang
 sdl2.ios.x86_64: sdl2.source sdl2.ios.x86_64.build_dir sdl2.ios.x86_64.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base custom \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-ios.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86_64:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2809,7 +2809,7 @@ assimp.osx.install_dir:
 # Compiler: Clang
 assimp.osx: assimp.source assimp.osx.build_dir assimp.osx.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/assimp/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/osx:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.osx" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2829,7 +2829,7 @@ bullet.osx.install_dir:
 # Compiler: Clang
 bullet.osx: bullet.source bullet.osx.build_dir bullet.osx.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/bullet/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/osx:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.osx" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2849,7 +2849,7 @@ openal.osx.install_dir:
 # Compiler: Clang
 openal.osx: openal.source openal.osx.build_dir openal.osx.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openal/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/osx:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.osx" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2869,7 +2869,7 @@ openssl.osx.install_dir:
 # Compiler: Clang
 openssl.osx: openssl.source openssl.osx.build_dir openssl.osx.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base build \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/openssl/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/osx:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.osx" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
@@ -2889,7 +2889,7 @@ sdl2.osx.install_dir:
 # Compiler: Clang
 sdl2.osx: sdl2.source sdl2.osx.build_dir sdl2.osx.install_dir FORCE
 	@make -f $(ROOT_DIR)/Makefile.mac-base custom \
-		-e EXTRA_OPTIONS="$(CMAKE_SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl" \
+		-e EXTRA_OPTIONS="$(SOURCE_DIR) -G'Xcode' -C"/home/coffee/cmake-project/Preload/osx-generic.cmake" -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl" \
 		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/sdl2/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/osx:/home/coffee/out:rw --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.osx" \
 		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
