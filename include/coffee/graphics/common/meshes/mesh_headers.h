@@ -25,18 +25,19 @@ struct vertex_blob_t
 
 struct attr_description_t
 {
-    u32 id;
     RHI::GraphicsAPI::VertexAttribute attr;
+    u32 id;
 };
 
 struct mesh_descriptor_t
 {
-    u32 id;
     RHI::GraphicsAPI::DrawInstanceData data;
     RHI::GraphicsAPI::DrawCall call_info;
+    u32 id;
     u32 num_attrs;
     u16 element_buffer;
     u16 pad_1;
+
     /* These are there in memory, but not in the struct.
      *  They are accessed by `&mesh_descriptor_t[1]` */
 /*    u32 attr_ids[num_attrs]; */
@@ -52,12 +53,12 @@ PACKEDSTRUCT smsh_header_t
     u32 num_groups;
 };
 
-struct smsh_groups_t
-{
+//struct smsh_groups_t
+//{
 //    vertex_blob_t attr_desc[1];
 //    vertex_blob_t mesh_descs[1];
 //    vertex_blob_t groups[1];
-};
+//};
 
 }
 }
