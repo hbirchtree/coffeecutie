@@ -35,7 +35,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             DESTINATION
             bin
             )
-    elseif(ANDROID)
+    elseif(ANDROID OR IOS)
         coffee_add_application_longerer(
             ${TARGET}
             ${TITLE} "me.birchtrees" 1
@@ -72,6 +72,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     if(IOS) # Crosscompiling setup, until we find an elegant solution
         message ( "Skipping unit test: ${TITLE}" )
         message ( "Please run the tests somehow!" )
+        return()
     elseif(EMSCRIPTEN)
         add_test (
             NAME ${TITLE}
