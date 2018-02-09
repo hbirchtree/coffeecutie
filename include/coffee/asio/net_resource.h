@@ -8,6 +8,15 @@
 namespace Coffee{
 namespace Net{
 
+FORCEDINLINE bool Supported()
+{
+#if !defined(COFFEE_EMSCRIPTEN)
+    return true;
+#else
+    return false;
+#endif
+}
+
 struct Resource
 {
 private:

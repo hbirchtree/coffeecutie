@@ -362,6 +362,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         CResources::FileUnmap(rsc);
     }
 
+    if(Net::Supported())
     {
         ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
 
