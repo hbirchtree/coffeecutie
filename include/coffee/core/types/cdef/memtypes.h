@@ -13,22 +13,37 @@ struct _cbasic_data_chunk
     _cbasic_data_chunk():
         data(0),
         size(0),
-        elements(0)
+        elements(0),
+        m_destr(nullptr)
     {}
     _cbasic_data_chunk(T* data, szptr size, szptr elements):
         data(data),
         size(size),
-        elements(elements)
+        elements(elements),
+        m_destr(nullptr)
     {
     }
     _cbasic_data_chunk(T* data, szptr size):
         data(data),
-        size(size)
+        size(size),
+        m_destr(nullptr)
     {
+    }
+
+    ~_cbasic_data_chunk()
+    {
+        if(m_destr)
+            m_destr(*this);
     }
 
     _cbasic_data_chunk(_cbasic_data_chunk&&) = default;
     _cbasic_data_chunk& operator=(_cbasic_data_chunk&&) = default;
+
+    STATICINLINE void SetDestr(_cbasic_data_chunk<T>& inst,
+                               void(*d)(_cbasic_data_chunk<T>&))
+    {
+        inst.m_destr = d;
+    }
 
     template<typename DT>
     STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
@@ -62,6 +77,16 @@ struct _cbasic_data_chunk
         return *this;
     }
 
+    template<typename T2>
+    _cbasic_data_chunk<T>& operator=(Vector<T2> const& vec)
+    {
+        data = C_FCAST<T*>(vec.data());
+        size = vec.size() * sizeof(T2);
+        elements = vec.size();
+
+        return *this;
+    }
+
     /*!
      * \brief Pointer to data
      */
@@ -74,6 +99,9 @@ struct _cbasic_data_chunk
      * \brief Number of elements, if applicable
      */
     szptr elements;
+
+private:
+    void(*m_destr)(_cbasic_data_chunk<T>&);
 };
 
 using CVoidData = _cbasic_data_chunk<void>;

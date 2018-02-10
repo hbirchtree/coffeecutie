@@ -40,7 +40,8 @@ struct CGL_Old_Framebuffers
     /* Blit */
     STATICINLINE void FBBlit(
             const CRect& s, const CRect& d,DBuffers m,Filtering f)
-    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, to_enum2(m),to_enum(f));}
+    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h,
+                       to_enum2(m),to_enum(f));}
 #endif
 
     /* Buffer management */
@@ -49,9 +50,12 @@ struct CGL_Old_Framebuffers
     STATICINLINE void FBReadBuffer(CGenum b)
     {glReadBuffer(b);}
 
-    STATICINLINE void FBReadPixels(int32 x,int32 y,uint32 w,uint32 h,
-                                   PixelComponents fmt,BitFormat dt,c_ptr p)
-    {glReadPixels(x,y,w,h,to_enum(fmt),to_enum(dt),p);}
+    STATICINLINE void FBReadPixels(
+            int32 x,int32 y,uint32 w,uint32 h,
+            PixFmt fmt,BitFormat dt,c_ptr p)
+    {glReadPixels(x,y,w,h,
+                  to_enum(GetPixComponent(fmt), fmt),
+                  to_enum(dt),p);}
 
     /* Validation */
     STATICINLINE bool FBValidate(FramebufferT t)

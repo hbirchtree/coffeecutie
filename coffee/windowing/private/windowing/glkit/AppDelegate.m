@@ -7,7 +7,7 @@
 //
 
 #import "AppDelegate.h"
-#import "../../graphics/eagl/EGLView.h"
+#import <EGLView.h>
 
 #import <CoreMotion/CoreMotion.h>
 

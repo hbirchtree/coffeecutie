@@ -1,5 +1,5 @@
 coffee_add_library ( CoffeeGraphicsAPI
-    "private/nullrenderer.cpp;private/query/gpu_query.cpp;private/scene/cnode.cpp"
+    "private/query/gpu_query.cpp"
     ""
     "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis"
     )

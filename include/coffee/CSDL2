@@ -1,5 +1,3 @@
-#pragma message ( "Greedy header in use!" )
-
 #include "sdl2/CSDL2SpriteWindow"
 #include "sdl2/CSDL2System"
 #include "sdl2/CSDL2WindowHost"

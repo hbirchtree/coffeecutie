@@ -1,5 +1,3 @@
-//#pragma message ( "Greedy header in use!" )
-
 #include "image/cimage.h"
 //#include "image/cnoise-gen.h"
 //#include "image/ctextrender.h"

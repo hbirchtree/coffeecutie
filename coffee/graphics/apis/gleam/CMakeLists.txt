@@ -32,6 +32,11 @@ if(COFFEE_BUILD_GLEAM)
         CoffeeCore
         )
 
+    target_include_directories ( CoffeeGLeamCommon
+        PRIVATE
+        ${CMAKE_SOURCE_DIR}/coffee/windowing/private/graphics/ceagl/include
+        )
+
     if(COFFEE_BUILD_GLEAM_RHI)
         coffee_add_library ( CoffeeGLeamRHI "${CoffeeGLeamRHI_SRCS}" "${LIBS};CoffeeGLeamCommon"
             "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/rhi"

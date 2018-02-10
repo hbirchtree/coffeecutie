@@ -58,6 +58,8 @@ set ( CoffeeCore_SRCS
 
     # Task queues, for easier time scheduling
     private/task_queue/task.cpp
+
+    private/datastorage/binary/virtualfs.cpp
     )
 
 set ( CoffeeXML_SRCS
@@ -183,6 +185,7 @@ endif()
 
 if(EMSCRIPTEN)
     list ( APPEND CoffeeCore_SRCS
+        private/plat/environment/unix/environment.cpp
         private/plat/environment/emscripten/sysinfo.cpp
         )
 endif()
@@ -272,7 +275,7 @@ coffee_add_library ( CoffeeXML
     )
 
 coffee_add_library ( CoffeeCore_Base
-    "${CoffeeCore_SRCS};${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS}"
+    "${CoffeeCore_SRCS};${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS};${CoffeeCompression_SRCS}"
     "${STANDARDLIBS_LIBRARIES};CoffeeXML"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )

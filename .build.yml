@@ -18,7 +18,7 @@ makefile_location: tools/makers
 name: Coffee
 platforms:
   android:
-  - armv7a.gingerbread.gles2
+  - armv7a.kitkat.gles2
   - armv8a.nougat.gles3
   - armv7a.nougat.gles2
   emscripten:
@@ -47,9 +47,9 @@ secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 template_location: cmake/Templates
 version:
-  hotfix: 0
+  hotfix: 3
   major: 4
   minor: 2
-  patch: 1
-  release: 11
+  patch: 0
+  release: 13
 versionprefix: automated-release-

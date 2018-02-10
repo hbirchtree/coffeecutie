@@ -114,17 +114,22 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     }
 
     if(GL_CURR_API == GL_4_3)
-        m_enabled = CGL43::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
+        m_enabled = CGL43::Debug::InternalFormatSupport(
+                    Texture::T2D,PixelFormat::Depth24Stencil8);
     else
-        m_enabled = CGL33::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
+        m_enabled = CGL33::Debug::InternalFormatSupport(
+                    Texture::T2D,PixelFormat::Depth24Stencil8);
 
-    if(!m_enabled && (GL_CURR_API == GLES_2_0||GL_CURR_API == GLES_3_0||GL_CURR_API == GLES_3_2))
+    if(!m_enabled &&
+            (GL_CURR_API == GLES_2_0
+             ||GL_CURR_API == GLES_3_0
+             ||GL_CURR_API == GLES_3_2))
     {
         m_enabled = true;
         cVerbose(6,"Opting for DEPTH16 depth buffer format");
         m_depth_stencil.dealloc();
         new (&m_depth_stencil) GLEAM_Surface2D(PixelFormat::Depth16,1);
-        new (&m_color) GLEAM_Surface2D(PixelFormat::RGB5A1UI);
+        new (&m_color) GLEAM_Surface2D(PixelFormat::RGB5A1);
     }
 
     if(GL_DEBUG_MODE && !m_enabled)
@@ -139,7 +144,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
 
         m_color_sampler.attach(&m_color);
         m_depth_stencil_sampler.attach(&m_depth_stencil);
-        m_depth_stencil_sampler.enableShadowSampler();
+//        m_depth_stencil_sampler.enableShadowSampler();
 
         resize(m_size);
 
@@ -182,7 +187,7 @@ void GLEAM_DBufQuery::resize(const CSize &s)
     {
         cVerbose(5,"New framebuffer dimensions: {0}",s);
         m_color.allocate(s,PixCmp::RGBA);
-        m_depth_stencil.allocate(s,PixCmp::Depth);
+        m_depth_stencil.allocate(s,PixCmp::DepthStencil);
     }
 #endif
 }

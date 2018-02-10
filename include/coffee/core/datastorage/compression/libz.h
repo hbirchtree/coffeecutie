@@ -2,15 +2,36 @@
 
 #include "standard.h"
 
+#if defined(COFFEE_BUILD_ZLIB)
+
 namespace Coffee{
 namespace Compression{
 
 struct LibZCompressor : Compressor_def
 {
-    static bool Compress(CByteData const& uncompressed, CByteData* target);
+    struct Opts
+    {
+        Opts():
+            chunk_size(1_MB),
+            level(5)
+        {
+        }
 
-    static bool Decompress(CByteData const& compressed, CByteData* target);
+        szptr chunk_size;
+        int level;
+    };
+
+    static bool Compress(
+            Bytes const& uncompressed, Bytes* target, Opts const& opts);
+
+    static bool Decompress(
+            Bytes const& compressed, Bytes* target, Opts const& opts);
 };
 
 }
+
+using Zlib = Compression::LibZCompressor;
+
 }
+
+#endif

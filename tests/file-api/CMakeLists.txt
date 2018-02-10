@@ -35,3 +35,7 @@ if(NOT WIN32 AND NOT EMSCRIPTEN AND NOT BUILD_COVERAGE)
     coffee_add_test ( Unit_Symlink_Test01
         "Cu_Symlink" test08.cpp CoffeeCore )
 endif()
+
+coffee_add_test ( Unit_Url01 "Cu_FileUrl"
+    test10.cpp CoffeeCore
+    )

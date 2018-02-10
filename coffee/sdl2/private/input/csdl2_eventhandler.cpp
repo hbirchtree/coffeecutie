@@ -52,7 +52,7 @@ bool SDL2EventHandler::inputPreInit(CString*)
 
 bool SDL2EventHandler::inputInit(CString*)
 {
-    DProfContext a("Loading SDL gamecontrollerdb");
+    DProfContext a(SDLEV_API "Loading SDL gamecontrollerdb");
 
     /* If found, load game controller mappings from file */
     auto mapping = "gamecontrollerdb.txt"_rsc;
@@ -66,13 +66,14 @@ bool SDL2EventHandler::inputInit(CString*)
         SDL_FreeRW(fsrc);
         FileUnmap(mapping);
     }else
-        Profiler::DeepProfile("Failed to locate gamecontrollerdb");
+        Profiler::DeepProfile(
+                    SDLEV_API "Failed to locate gamecontrollerdb");
     return true;
 }
 
 bool SDL2EventHandler::inputPostInit(CString*)
 {
-    DProfContext a("Cleaning up joystick and haptic devices");
+    DProfContext a(SDLEV_API "Cleaning up joystick and haptic devices");
 
     /* WORKAROUND: Sometimes, haptic and joystick devices are not closed properly.
      *  This part ensures that they are indeed closed before starting.

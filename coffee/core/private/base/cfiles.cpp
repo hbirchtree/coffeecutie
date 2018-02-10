@@ -101,7 +101,7 @@ bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 #else
 		CString error = win_strerror(err);
 #endif
-        cWarning("Failed to map file {2}:{0}: {1}",
+        cWarning(CFILES_TAG "Failed to map file {2}:{0}: {1}",
                  err,error,resc.resource());
         resc.size = 0;
         Profiler::DeepProfile(CFILES_TAG "Mapping failed");
@@ -112,7 +112,7 @@ bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
     resc.data = resc.m_platform_data->m_mapping.ptr;
     resc.flags = resc.flags|Resource::Mapped;
 
-    Profiler::DeepProfile("File mapped");
+    Profiler::DeepProfile(CFILES_TAG "File mapped");
 
     Profiler::DeepPopContext();
 
@@ -163,15 +163,14 @@ void FileFree(Resource &resc)
 
 bool FilePull(Resource &resc, bool textmode, bool)
 {
-    Profiler::DeepPushContext(CFILES_TAG "File reading");
+    DProfContext a(CFILES_TAG "File reading");
     FileFun::FileHandle *fp =
             FileFun::Open(resc.m_platform_data->m_url,
                           ResourceAccess::ReadOnly);
 
     if(!fp){
-        cWarning("Failed to read file: {0}",resc.resource());
+        cWarning(CFILES_TAG "Failed to read file: {0}",resc.resource());
         Profiler::DeepProfile(CFILES_TAG "File not found");
-        Profiler::DeepPopContext();
         return false;
     }
 
@@ -179,12 +178,11 @@ bool FilePull(Resource &resc, bool textmode, bool)
     resc.data = data.data;
     resc.size = data.size;
     if(!FileFun::Close(fp))
-        cWarning("Failed to close file: {0}",resc.resource());
+        cWarning(CFILES_TAG "Failed to close file: {0}",resc.resource());
 
     if(!resc.data)
     {
         Profiler::DeepProfile(CFILES_TAG "File read failure");
-        Profiler::DeepPopContext();
         return false;
     }
 
@@ -192,14 +190,12 @@ bool FilePull(Resource &resc, bool textmode, bool)
 
     Profiler::DeepProfile(CFILES_TAG "File read");
 
-    Profiler::DeepPopContext();
-
     return true;
 }
 
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
-    Profiler::DeepPushContext("File write");
+    DProfContext a(CFILES_TAG "File write");
 
     ResourceAccess dflags = ResourceAccess::WriteOnly;
 
@@ -214,7 +210,6 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 	if (!fp)
     {
         Profiler::DeepProfile(CFILES_TAG "File not created");
-        Profiler::DeepPopContext();
         return false;
     }
 
@@ -226,10 +221,8 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
     if(!FileFun::Close(fp))
     {
         Profiler::DeepProfile(CFILES_TAG "File failed to close");
-        cWarning("Failed to close file: {0}",resc.resource());
+        cWarning(CFILES_TAG "Failed to close file: {0}",resc.resource());
     }
-
-    Profiler::DeepPopContext();
 
     return stat;
 }

@@ -56,7 +56,7 @@ CGenum to_enum1(ResourceAccess acc);
 CGenum to_enum2(ResourceAccess acc);
 CGenum to_enum3(ResourceAccess acc);
 
-CGenum to_enum(PixelComponents f);
+CGenum to_enum(PixelComponents f, PixFmt hint);
 CGenum to_enum(TypeEnum f);
 CGenum to_enum(BitFormat f);
 

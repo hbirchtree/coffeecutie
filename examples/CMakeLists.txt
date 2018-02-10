@@ -14,15 +14,15 @@ add_subdirectory (core/gpu-query)
 # ASIO examples, we leave this as core
 if(COFFEE_BUILD_ASIO)
     add_subdirectory(asio/base-client)
-    add_subdirectory(asio/base-server)
-    add_subdirectory(asio/irc-client)
+#    add_subdirectory(asio/base-server)
+#    add_subdirectory(asio/irc-client)
 endif()
 
 # Not going to say.
-add_subdirectory(rsread)
+#add_subdirectory(rsread)
 
 # Casual fun
-add_subdirectory (experiments/cgb-test)
+#add_subdirectory (experiments/cgb-test)
 
 #
 #
@@ -70,10 +70,10 @@ if(COFFEE_BUILD_GLEAM)
         endif()
     endif()
 
-    if(NOT COFFEE_BUILD_GLES)
-        add_subdirectory(gleam/base-test)
-        add_subdirectory(gleam/raytrace-test)
-    endif()
+#    if(NOT COFFEE_BUILD_GLES)
+#        add_subdirectory(gleam/base-test)
+#        add_subdirectory(gleam/raytrace-test)
+#    endif()
 
     add_subdirectory(gleam/shadow-test)
 endif()

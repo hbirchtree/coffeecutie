@@ -91,6 +91,21 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     eld->setup = [&](CSDL2Renderer& r, Empty*)
     {
+        if(!(  GL::SeparableShaderSupported()
+               ||GL::VertexAttribBinding()
+               ||GL::ViewportArraySupported()
+               ||GL::BufferStorageSupported()))
+        {
+            cDebug("Unable to start: Required OpenGL extensions not found");
+            return;
+        }
+
+        if(!CGL::CGL45::CullDistanceSupported())
+        {
+            cDebug("Some optional extensions were not found."
+                   " Your experience might suffer.");
+        }
+
         Profiler::PushContext("Renderer");
         CElapsedTimer ftimer;
 
@@ -234,7 +249,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
                 GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
                 GL::TexSubImage3D(GL::Texture::T2DArray,0,
                                   0,0,i,1024,1024,1,
-                                  PixelComponents::RGBA,BitFormat::UByte,nullptr);
+                                  PixFmt::RGBA8,BitFormat::UByte,nullptr);
             }
         }
 
@@ -391,21 +406,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
         r.closeWindow();
     };
-
-    if(!(  GL::SeparableShaderSupported()
-           ||GL::VertexAttribBinding()
-           ||GL::ViewportArraySupported()
-           ||GL::BufferStorageSupported()))
-    {
-        cDebug("Unable to start: Required OpenGL extensions not found");
-        return 1;
-    }
-
-    if(!CGL::CGL45::CullDistanceSupported())
-    {
-        cDebug("Some optional extensions were not found."
-               " Your experience might suffer.");
-    }
 
     Profiler::Profile("Get GL requirements");
 

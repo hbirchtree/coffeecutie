@@ -15,7 +15,7 @@ bool signal_test()
 }
 
 const constexpr CoffeeTest::Test _tests[1] = {
-    {signal_test}
+    {signal_test, "Binding to a member function"}
 };
 
 COFFEE_RUN_TESTS(_tests);

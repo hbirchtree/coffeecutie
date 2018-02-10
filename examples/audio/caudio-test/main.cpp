@@ -28,7 +28,7 @@ struct AudioData
 
 int32 coffee_main(int32, cstring_w*)
 {
-    FileResourcePrefix("sample_data/caudio_test/");
+//    FileResourcePrefix("sample_data/caudio_test/");
 
     CString err;
     auto eld = MkEventLoop<Display::CSDL2Renderer, AudioData>(

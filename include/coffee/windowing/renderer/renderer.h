@@ -20,8 +20,8 @@ class RendererInterface :
 {
 public:
     RendererInterface(CObject* parent = nullptr) :
-        CDRendererBase(parent),
-        GLLoader(this)
+        GLLoader(this),
+        CDRendererBase(parent)
     {}
     virtual ~RendererInterface() {}
 };

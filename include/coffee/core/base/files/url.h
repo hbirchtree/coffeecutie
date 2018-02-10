@@ -23,11 +23,26 @@ struct Url;
 
 struct Path
 {
+    Path(cstring path):
+        internUrl(path ? path : "")
+    {
+    }
+    Path(CString const& path):
+        internUrl(path)
+    {
+    }
+    Path():
+        Path(nullptr)
+    {
+    }
+
     CString internUrl;
 
-    Path removeExt();
-    Path addExtension(cstring ext);
-    Path fileBasename();
+    Path removeExt() const;
+    Path addExtension(cstring ext) const;
+    Path fileBasename() const;
+
+    CString extension() const;
 
     Path dirname();
 
@@ -57,7 +72,7 @@ struct Url
 
     CString internUrl;
     StorageType category;
-    ResourceAccess flags;
+    RSCA flags;
     HTTPAccess netflags;
 
     CString cachedUrl;
@@ -103,13 +118,13 @@ FORCEDINLINE Url MkUrl(cstring urlString)
     {
         urlString,
                 Url::Local,
-                ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile,
+                RSCA::SpecifyStorage|RSCA::AssetFile,
                 HTTPAccess::None,
         {}
     };
 }
 
-FORCEDINLINE Url MkUrl(cstring urlString, ResourceAccess access)
+FORCEDINLINE Url MkUrl(cstring urlString, RSCA access)
 {
     return
     {
@@ -127,7 +142,7 @@ FORCEDINLINE Url MkSysUrl(cstring urlString)
     {
         urlString,
                 Url::Local,
-                ResourceAccess::SpecifyStorage|ResourceAccess::SystemFile,
+                RSCA::SpecifyStorage|RSCA::SystemFile,
                 HTTPAccess::None,
         {}
     };

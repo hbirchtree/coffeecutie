@@ -582,14 +582,28 @@ struct GraphicsAPI
               m_access(cl)
         {}
 
+        /*!
+         * \brief Allocates any data necessary for this surface to exist.
+         */
         void allocate(CSizeT const&,PixCmp){}
         void dealloc(){}
 
         void upload(BitFormat,PixCmp,CSizeT const&, c_cptr,
-                    PointT const& = {}, u32 = 0){}
+                    PointT const& = {}, u32 = 0)
+        {
+        }
 
+        /*!
+         * \brief A safe variant of `upload()`, can check
+         *  bounds before copying a texture from memory.
+         * The version of `upload()` taking a pointer has no
+         *  ability to check this.
+         * Please use this one for sanity.
+         */
         void upload(BitFmt,PixCmp,CSizeT const&, Bytes const&,
-                    PointT const& = {}, u32 = 0){}
+                    PointT const& = {}, u32 = 0)
+        {
+        }
 
         uint32 size() const {return 0;}
         bool isArray() const {return b_array;}

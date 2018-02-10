@@ -173,8 +173,8 @@ struct FileFunDef
     static NodeType Stat(Url const&)
     {return NodeType::None;}
 
-    static CString DereferenceLink(Url const&){return {};}
-    static CString CanonicalName(Url const&){return {};}
+    static CString DereferenceLink(Url const& d){return d.internUrl;}
+    static CString CanonicalName(Url const& d){return d.internUrl;}
 };
 
 struct DirFunDef

@@ -75,6 +75,7 @@ void GLEAM_VertDescriptor::dealloc()
 #if !defined(COFFEE_ONLY_GLES20)
     if(!GLEAM_FEATURES.gles20)
         CGL33::VAOFree(1,&m_handle);
+    m_handle = 0;
 #endif
 }
 

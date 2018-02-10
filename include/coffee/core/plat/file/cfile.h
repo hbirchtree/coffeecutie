@@ -148,7 +148,7 @@ struct CFILEFun_def : CommonFileFun
      * \return
      */
     STATICINLINE FileMapping Map(Url const& fname, ResourceAccess access,
-                                 szptr size, szptr offset, int*)
+                                 szptr offset, szptr size, int*)
     {
         FileMapping map;
         map.handle = Open(fname, access);

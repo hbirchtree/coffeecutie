@@ -53,6 +53,12 @@ struct SimpleProfilerImpl
         CString value;
     };
 
+    struct ThreadData
+    {
+        LinkList<CString> context_stack;
+    };
+
+    using ThreadStorage = Map<ThreadId::Hash, ThreadData>;
     using ThreadListing = Map<ThreadId::Hash,CString>;
     using ThreadItem = Pair<ThreadId::Hash,CString>;
     using ThreadPtr = ShPtr<ThreadId>;
@@ -76,18 +82,14 @@ struct SimpleProfilerImpl
         {
             profiler_data_store = new ProfilerDataStore;
             profiler_data_store->global_init.store(0);
+            profiler_data_store->Enabled = true;
+            profiler_data_store->Deep_Profile = false;
         }
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-//        cVerbose(6,"Creating thread context stack");
-        context_stack = new LinkList<CString>;
-#endif
 
-//        cVerbose(6,"Checking initializer value: {0}",global_init->load());
         if(profiler_data_store->global_init.load()<1)
         {
-//            cVerbose(6,"Creating profiler");
-
-            profiler_data_store->start_time = Time::CurrentMicroTimestamp();
+            profiler_data_store->start_time =
+                    Time::CurrentMicroTimestamp();
         }
 
         profiler_data_store->global_init.fetch_add(1);
@@ -97,13 +99,6 @@ struct SimpleProfilerImpl
     STATICINLINE void DestroyProfiler()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(context_stack)
-        {
-            delete context_stack;
-            context_stack = nullptr;
-        }
-#endif
         if(profiler_data_store &&
                 std::atomic_fetch_sub(&profiler_data_store->global_init,1)<2)
         {
@@ -144,13 +139,10 @@ struct SimpleProfilerImpl
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
-        if(!context_stack)
-            return;
-
         DataPoint p;
         p.tp = DataPoint::Profile;
         p.ts = ts;
-        p.name = (name) ? name : context_stack->front();
+        p.name = (name) ? name : threadContextStack().front();
         p.component = COFFEE_COMPONENT_NAME;
         p.at = at;
 
@@ -170,10 +162,7 @@ struct SimpleProfilerImpl
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
-        if(!context_stack)
-            return;
-
-        context_stack->push_front(name);
+        threadContextStack().push_front(name);
 
         DataPoint p;
         p.tp = DataPoint::Push;
@@ -199,17 +188,17 @@ struct SimpleProfilerImpl
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
-        if(!context_stack || context_stack->size()<1)
+        if(threadContextStack().size()<1)
             return;
 
         DataPoint p;
         p.tp = DataPoint::Pop;
         p.ts = ts;
-        p.name = context_stack->front();
+        p.name = threadContextStack().front();
         p.component = COFFEE_COMPONENT_NAME;
 
         profiler_data_store->datapoints.push_back(p);
-        context_stack->pop_front();
+        threadContextStack().pop_front();
 #endif
 #endif
     }
@@ -289,6 +278,7 @@ struct SimpleProfilerImpl
         LinkList<DataPoint> datapoints;
         StackFrames stackframes;
         ThreadListing threadnames;
+        ThreadStorage context_storage;
     #endif
 
         ExtraData extra_data;
@@ -308,9 +298,21 @@ struct SimpleProfilerImpl
     static ProfilerDataStore* profiler_data_store;
 
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-    thread_local static LinkList<CString> *context_stack;
+    /* Because it's thread_local, it is initialized automatically */
+    thread_local static ThreadId* current_thread_id;
+#else
+    static ThreadId* current_thread_id;
 #endif
 
+
+    STATICINLINE LinkList<CString>& threadContextStack()
+    {
+        if(!current_thread_id)
+            current_thread_id = new ThreadId();
+        auto hash = current_thread_id->hash();
+        auto& ctxt = profiler_data_store->context_storage[hash];
+        return ctxt.context_stack;
+    }
 #endif
 
     STATICINLINE ExtraData* ExtraInfo()

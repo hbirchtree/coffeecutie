@@ -5,11 +5,12 @@
 using namespace Coffee;
 
 const Url link_test = MkUrl("symlink.txt",
-                            ResourceAccess::SpecifyStorage
-                            |ResourceAccess::TemporaryFile);
+                            RSCA::SpecifyStorage
+                            |RSCA::TemporaryFile
+                            |RSCA::NoDereference);
 const Url target_test = MkUrl("target.txt",
-                              ResourceAccess::SpecifyStorage
-                              |ResourceAccess::TemporaryFile);
+                              RSCA::SpecifyStorage
+                              |RSCA::TemporaryFile);
 
 bool link_create_test()
 {

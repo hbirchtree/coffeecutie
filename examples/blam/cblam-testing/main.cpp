@@ -273,24 +273,24 @@ void DecodeDXT4And5 (int Height, int Width, const char* IData, unsigned int* PDa
     }
 }
 
-static int num_channels(bitm_format fmt)
-{
-    switch(fmt)
-    {
-    case bitm_format::A8Y8:
-    case bitm_format::AY8:
-        return 2;
-    case bitm_format::R5G6B5:
-        return 3;
-    case bitm_format::A1R5G5B5:
-    case bitm_format::A4R4G4B4:
-    case bitm_format::A8R8G8B8:
-    case bitm_format::X8R8G8B8:
-        return 4;
-    default:
-        return 1;
-    }
-}
+//static int num_channels(bitm_format fmt)
+//{
+//    switch(fmt)
+//    {
+//    case bitm_format::A8Y8:
+//    case bitm_format::AY8:
+//        return 2;
+//    case bitm_format::R5G6B5:
+//        return 3;
+//    case bitm_format::A1R5G5B5:
+//    case bitm_format::A4R4G4B4:
+//    case bitm_format::A8R8G8B8:
+//    case bitm_format::X8R8G8B8:
+//        return 4;
+//    default:
+//        return 1;
+//    }
+//}
 
 static int texture_size(bitm_image_t const* img)
 {
@@ -444,7 +444,7 @@ int coffee_main(int32,cstring_w*)
 
             API::DBG::SCOPE img_scope(label);
 
-            for(auto i : Range<i32>(head->imageCount))
+//            for(auto i : Range<i32>(head->imageCount))
             {
                 auto image = head->image_headers()
                         .data(mapfile.data,
@@ -465,6 +465,8 @@ int coffee_main(int32,cstring_w*)
                     break;
                 case bitm_format::DXT4AND5:
                     flgs = CGL::S3TC_5;
+                    break;
+                default:
                     break;
                 }
 

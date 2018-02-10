@@ -16,6 +16,7 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
      * \brief Fill matrix with specific value
      * \param c Value to fill with
      */
+    FORCEDINLINE
     _cbasic_tmatrix(const T& c)
     {
         for(size_t y=0;y<Size;y++)
@@ -25,6 +26,7 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
     /*!
      * \brief Generate an identity matrix
      */
+    FORCEDINLINE
     _cbasic_tmatrix()
     {
         for(size_t y=0;y<Size;y++)
@@ -34,18 +36,21 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
                 else
                     (*this)[x][y] = T(0);
     }
+    FORCEDINLINE
     _cbasic_tmatrix(const _cbasic_tmatrix<T, Size+1>& matrix)
     {
         for (size_t y = 0; y<Size; y++)
             for (size_t x = 0; x<Size; x++)
                 (*this)[x][y] = matrix[x][y];
     }
+    FORCEDINLINE
     _cbasic_tmatrix(const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] = matrix[x][y];
     }
+    FORCEDINLINE
     _cbasic_tmatrix(const _cbasic_tmatrix<T, Size-1>& matrix)
         : _cbasic_tmatrix()
     {
@@ -59,16 +64,19 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
      *
      */
 
-    FORCEDINLINE _cbasic_tvector<T,Size>& operator[](size_t i)
+    FORCEDINLINE _cbasic_tvector<T,Size>& operator[](
+            size_t i)
     {
         return d[i];
     }
-    FORCEDINLINE const _cbasic_tvector<T,Size>& operator[](size_t i) const
+    FORCEDINLINE const _cbasic_tvector<T,Size>& operator[](
+            size_t i) const
     {
         return d[i];
     }
 
-    FORCEDINLINE bool operator==(const _cbasic_tmatrix<T,Size>& matrix) const
+    FORCEDINLINE bool operator==(
+            const _cbasic_tmatrix<T,Size>& matrix) const
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
@@ -76,7 +84,8 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
                     return false;
         return true;
     }
-    FORCEDINLINE _cbasic_tmatrix<T,Size>& operator=(const _cbasic_tmatrix<T,Size>& matrix)
+    FORCEDINLINE _cbasic_tmatrix<T,Size>& operator=(
+            const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
@@ -279,7 +288,8 @@ template<typename T, size_t Size>
  * \param m
  * \return
  */
-FORCEDINLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,Size>& m)
+FORCEDINLINE _cbasic_tmatrix<T,Size> transpose(
+        const _cbasic_tmatrix<T,Size>& m)
 {
     _cbasic_tmatrix<T,Size> n;
 
@@ -292,13 +302,15 @@ FORCEDINLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,Size>& m)
 
 template<typename T>
 /* TODO: Fix this function!*/
-FORCEDINLINE _cbasic_tvector<T,4> get_translation(const _cbasic_tmatrix<T,4>& m)
+FORCEDINLINE _cbasic_tvector<T,4> get_translation(
+        const _cbasic_tmatrix<T,4>& m)
 {
     return m[3];
 }
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)
+_cbasic_tmatrix<T,4> inverse(
+        const _cbasic_tmatrix<T,4>& mv)
 {
     _cbasic_tmatrix<T,4> nv(mv);
 
@@ -440,7 +452,8 @@ FORCEDINLINE _cbasic_tvector<T, 3> decompose_matrix(
     _cbasic_tvector<T, 3> out;
 
     out[0] = CMath::atan2( m[3][2], m[3][3]);
-    out[1] = CMath::atan2(-m[3][1], CMath::sqrt(CMath::pow(m[3][2], 2) + m[3][3]));
+    out[1] = CMath::atan2(-m[3][1],
+            CMath::sqrt(CMath::pow(m[3][2], 2) + m[3][3]));
     out[2] = CMath::atan2( m[2][1], m[1][1]);
 
     return out;

@@ -1,6 +1,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_framebuffer_rhi.h>
 
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -122,8 +123,10 @@ void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface &s, uint32 mip)
 
 void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
                               const CRect64 &tgt, DBuffers buf,
-                              Filtering flt) const
+                              Filtering flt)
 {
+    GLEAM_ScopeMarker sc(GLM_API "blit");
+
 #if !defined(COFFEE_ONLY_GLES20)
     if(!GLEAM_FEATURES.gles20)
     {
@@ -146,29 +149,31 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
 
 void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
 {
-    fb_bind(m_type,m_handle);
+//    fb_bind(m_type,m_handle);
+
     auto sz_arm_printable = view.convert<i32>();
-    cVerbose(10, "Resizing render target {0} to {1}x{2}", m_handle,
+    cVerbose(10, GLM_API "Resizing render target {0} to {1}x{2}",
+             m_handle,
              sz_arm_printable.w, sz_arm_printable.h);
 
     m_size = sz_arm_printable.size();
 
-#if !defined(COFFEE_ONLY_GLES20)
-    if(!GLEAM_FEATURES.gles20 && CGL43::ViewportArraySupported())
-    {
-        auto r = view.convert<scalar>();
-        CGL43::ViewportSet(i,r);
-    }else
-#endif
-    {
-        if(GL_DEBUG_MODE)
-            if(i != 0)
-                cWarning("Cannot perform task: applying viewport index, unsupported");
-        if(i==0)
-            CGL33::ViewportSet(view);
-    }
-    if(m_handle != 0)
-        fb_bind(m_type,0);
+//#if !defined(COFFEE_ONLY_GLES20)
+//    if(!GLEAM_FEATURES.gles20 && CGL43::ViewportArraySupported())
+//    {
+//        auto r = view.convert<scalar>();
+//        CGL43::ViewportSet(i,r);
+//    }else
+//#endif
+//    {
+//        if(GL_DEBUG_MODE)
+//            if(i != 0)
+//                cWarning("Cannot perform task: applying viewport index, unsupported");
+//        if(i==0)
+//            CGL33::ViewportSet(view);
+//    }
+//    if(m_handle != 0)
+//        fb_bind(m_type,0);
 }
 
 CSize GLEAM_RenderTarget::size()
@@ -176,18 +181,16 @@ CSize GLEAM_RenderTarget::size()
     CSize out;
 
     if(m_size.area() == 0)
+    {
         if(m_handle != 0)
         {
-            fb_bind(m_type,m_handle);
-
-            out = CGL33::FBGetAttachmentSize(m_type,0);
-
-            if(m_handle != 0)
-                fb_bind(m_type,m_handle);
+            fb_bind(FramebufferT::Read,m_handle);
+            out = CGL33::FBGetAttachmentSize(FramebufferT::Read,0);
         }else{
             out = CGL33::Debug::GetViewport();
         }
-    else
+        m_size = out;
+    }else
         out = m_size;
 
     return out;
@@ -196,14 +199,14 @@ CSize GLEAM_RenderTarget::size()
 void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 {
     C_USED(i);
-    fb_bind(m_type,m_handle);
+    fb_bind(FramebufferT::Draw,m_handle);
     glClearColor(color.r(),color.g(),color.b(),color.a());
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth)
 {
-    fb_bind(m_type,m_handle);
+    fb_bind(FramebufferT::Draw,m_handle);
     scalar tmp_dep = C_CAST<scalar>(depth);
     if(GLEAM_FEATURES.is_gles)
     {
@@ -215,7 +218,7 @@ void GLEAM_RenderTarget::clear(bigscalar depth)
 
 void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
 {
-    fb_bind(m_type,m_handle);
+    fb_bind(FramebufferT::Draw,m_handle);
     if(GLEAM_FEATURES.is_gles)
     {
 //        glClearDepthf(C_CAST<scalar>(depth));
@@ -238,12 +241,15 @@ void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth, in
     clear(depth,stencil);
 }
 
-void GLEAM_RenderTarget::bind(FramebufferT t) const
+void GLEAM_RenderTarget::bind(FramebufferT t)
 {
     fb_bind(t,m_handle);
+    if(m_size.area() == 0)
+        size();
+    CGL33::ViewportSet({0, 0, m_size.w, m_size.h});
 }
 
-void GLEAM_RenderTarget::unbind(FramebufferT t) const
+void GLEAM_RenderTarget::unbind(FramebufferT t)
 {
     if(m_handle != 0)
         fb_bind(t,0);

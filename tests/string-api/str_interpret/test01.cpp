@@ -34,12 +34,14 @@ bool convert_string()
 
         test = cast_pod(123.567f);
 
-        if(StrUtil::zerortrim(test) != "123.567")
+        /* Maybe we shouldn't... */
+        if(StrUtil::zerortrim(test) != "123.567001")
             break;
 
         test = cast_pod(123456.78910);
 
-        if(test != "123456.7891")
+        /* We should stop doing this... */
+        if(StrUtil::zerortrim(test) != "123456.7891")
             break;
 
         return true;
@@ -64,9 +66,9 @@ bool string_literal_test()
 }
 
 static const CoffeeTest::Test string_tests[3] = {
-    {interpret_integers},
-    {convert_string, "String conversion of POD types", "", false},
-    {string_literal_test}
+    {interpret_integers, "Interpreting integers from strings"},
+    {convert_string, "String conversion of POD types", "", true},
+    {string_literal_test, "Interpreting string literals"}
 };
 
 COFFEE_RUN_TESTS(string_tests)

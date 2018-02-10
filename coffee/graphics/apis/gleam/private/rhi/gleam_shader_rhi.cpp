@@ -37,11 +37,11 @@ static const constexpr cstring GLES20_COMPAT_FS = {
     "vec4 texture(sampler2D sampler, vec2 texCoord)"
     "{"
     "   return texture2D(sampler, texCoord.xy);"
-    "}"
+    "}\n\n"
     "vec4 texture(sampler2D sampler, vec3 texCoord)"
     "{"
     "   return texture2D(sampler, texCoord.xy);"
-    "}"
+    "}\n\n"
 
     "vec4 texture2DArray_Internal(sampler2D tex, vec3 coord, float gridSize)"
     "{"
@@ -59,7 +59,7 @@ static const constexpr cstring GLES20_COMPAT_FS = {
     "            + vec2(gridX, gridY);"
 
     "    return texture2D(tex, coord.xy);"
-    "}\n"
+    "}\n\n"
 
     "uniform int InstanceID;\n"
 };
@@ -110,6 +110,9 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         /* OpenGL GLSL ES 1.00 does not have a #version directive,
          *  remove it */
         shaderStorage.push_back(versionDirective);
+    }else
+    {
+        shaderStorage.push_back("#version 100\n");
     }
 
     /* We move the extension directives at this point */

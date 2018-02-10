@@ -94,11 +94,17 @@ ALenum _al_get_model(const CDistanceModel& m)
 }
 ALuint _al_get_handle(const CALBuffer* b)
 {
-    return b->handle->handle;
+    if(b && b->handle)
+        return b->handle->handle;
+    else
+        return 0;
 }
 ALuint _al_get_handle(const CALSource* b)
 {
-    return b->handle->handle;
+    if(b && b->handle)
+        return b->handle->handle;
+    else
+        return 0;
 }
 void _al_check_rsc(const CALBuffer* b)
 {
@@ -377,7 +383,8 @@ void source_dequeue_buffers(
     for(szptr i=0;i<numBuffers;i++)
     {
         _al_check_rsc(buffers[i]);
-        handles[i] = buffers[i]->handle->handle;
+        if(buffers[i] && buffers[i]->handle)
+            handles[i] = buffers[i]->handle->handle;
     }
     alSourceUnqueueBuffers(_al_get_handle(source),numBuffers,handles);
     delete[] handles;

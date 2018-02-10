@@ -18,7 +18,7 @@ struct UnixTerm : CmdInterface::BasicTerm
 
     static void ClearScreen()
     {
-        fprintf(DefaultDebugOutputPipe,"\e[1;1H\e[2J");
+        fprintf(DefaultDebugOutputPipe,"\033[1;1H\033[2J");
     }
     static void AltScreen()
     {

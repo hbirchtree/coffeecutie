@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../plat/plat_quirks_toggling.h"
-#include "stldef.h"
 
 /*Container types*/
 #include <string>
@@ -89,6 +88,8 @@ using List = std::list<T>;
 
 template<typename T>
 using Vector = std::vector<T>;
+template<typename T, size_t Size>
+using Array = std::array<T, Size>;
 
 template<typename T1, typename T2>
 using Map = std::map<T1,T2>;

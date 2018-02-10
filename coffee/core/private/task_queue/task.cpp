@@ -86,8 +86,8 @@ RuntimeTask *RuntimeQueue::GetSelf()
 
     szptr idx = 0;
 
-    for(auto i : Range<>(q->mTaskIndices.size()))
-        if(q->mTaskIndices[i] == q->mCurrentTaskId)
+    for(auto i : Range<>(q->mTasks.size()))
+        if(q->mTasks[i].index == q->mCurrentTaskId)
         {
             idx = i;
             break;
@@ -95,10 +95,10 @@ RuntimeTask *RuntimeQueue::GetSelf()
 
     /* To avoid casting the from size_t to signed,
      *  check if the validation holds */
-    if(idx != 0 || q->mTaskIndices[0] != q->mCurrentTaskId)
+    if(idx != 0 || q->mTasks[0].index != q->mCurrentTaskId)
         return nullptr;
 
-    return &q->mTasks[idx];
+    return &q->mTasks[idx].task;
 }
 
 u64 RuntimeQueue::GetSelfId()
@@ -118,8 +118,9 @@ static bool VerifyTask(RuntimeTask const& t)
     if((t.flags & RuntimeTask::SingleShot) &&
             (t.flags & RuntimeTask::Periodic))
         return false;
-    if((t.flags & RuntimeTask::SingleShot) &&
-            t.time < RuntimeTask::clock::now())
+    if((t.flags & RuntimeTask::SingleShot)
+            && !(t.flags & RuntimeTask::Immediate)
+            && t.time < RuntimeTask::clock::now())
         return false;
     return true;
 }
@@ -161,17 +162,17 @@ u64 RuntimeQueue::Queue(ThreadId const& targetThread, RuntimeTask &&task)
  * \param taskId
  * \return
  */
-static RuntimeTask const* GetTask(Vector<u64> const& ids,
-                                  Vector<RuntimeTask> const& tasks,
-                                  u64 taskId,
-                                  szptr* idx = nullptr)
+static RuntimeTask const* GetTask(
+        Vector<RuntimeQueue::task_data_t> const& tasks,
+        u64 taskId,
+        szptr* idx = nullptr)
 {
     /* Locate the task in our vector */
     szptr i;
     bool found = false;
-    for(i = 0; i<ids.size(); i++)
+    for(i = 0; i<tasks.size(); i++)
     {
-        if(ids[i] == taskId)
+        if(tasks[i].index == taskId)
         {
             found = true;
             break;
@@ -184,7 +185,7 @@ static RuntimeTask const* GetTask(Vector<u64> const& ids,
     if(idx)
         *idx = i;
 
-    return &tasks[i];
+    return &tasks[i].task;
 }
 
 bool RuntimeQueue::CancelTask(u64 taskId)
@@ -206,13 +207,13 @@ bool RuntimeQueue::CancelTask(const ThreadId &targetThread, u64 taskId)
     RuntimeTask const* task = nullptr;
     szptr idx = 0;
 
-    if(!(task = GetTask(queue.mTaskIndices, queue.mTasks,  taskId)))
+    if(!(task = GetTask(queue.mTasks,  taskId, &idx)))
         return false;
 
     if(queue.mCurrentTaskId == 0)
         queue.mTasksLock.lock();
 
-    queue.mTasksAlive[idx] = false;
+    queue.mTasks[idx].alive = false;
 
     queue.mTasksLock.unlock();
 
@@ -235,8 +236,9 @@ void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
     auto const& queueRef = queue->second;
 
     RuntimeTask const* task = nullptr;
+    szptr idx = 0;
 
-    if(!(task = GetTask(queueRef.mTaskIndices, queueRef.mTasks, taskId)))
+    if(!(task = GetTask(queueRef.mTasks, taskId, &idx)))
         return;
 
     /* We cannot reliably await periodic tasks */
@@ -244,10 +246,28 @@ void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
         return;
 
     /* Do not await a past event */
-    if(RuntimeTask::clock::now() > task->time)
+    if(!(task->flags & RuntimeTask::Immediate)
+            && RuntimeTask::clock::now() > task->time)
         return;
 
     CurrentThread::sleep_until(task->time);
+
+    /* I know this is bad, but we must await the task */
+    while(queueRef.mTasks[idx].alive);
+}
+
+void RuntimeQueue::TerminateThread(RuntimeQueue *thread)
+{
+    if(!thread)
+        return;
+
+    auto tid = thread->threadId().hash();
+
+    queueFlags[tid]->store(false);
+    queueThreads[tid].join();
+
+    queueFlags.erase(tid);
+    queueThreads.erase(tid);
 }
 
 void RuntimeQueue::TerminateThreads()
@@ -270,34 +290,35 @@ void RuntimeQueue::executeTasks()
     auto currTime = RuntimeTask::clock::now();
 
     szptr i = 0;
-    for(RuntimeTask& task : mTasks)
+    for(task_data_t& task : mTasks)
     {
         /* If this task has to be run in the future,
          *  all proceeding tasks will do as well */
-        if(task.time > currTime)
+        if(task.task.time > currTime)
         {
             i++;
             break;
         }
 
         /* Skip dead tasks, clean it up later */
-        if(!mTasksAlive[i])
+        if(!mTasks[i].alive)
         {
             i++;
             continue;
         }
 
         /* In this case we will let it run */
-        mCurrentTaskId = mTaskIndices[i];
-        task.task();
+        mCurrentTaskId = mTasks[i].index;
+        task.task.task();
         mCurrentTaskId = 0;
 
         /* Now, if a task is single-shot, remove it */
-        if(task.flags & RuntimeTask::SingleShot)
-            mTasksAlive[i] = false;
-        else if(task.flags & RuntimeTask::Periodic)
+        if(task.task.flags & RuntimeTask::SingleShot)
+            mTasks[i].alive = false;
+        else if(task.task.flags & RuntimeTask::Periodic)
         {
-            task.time = RuntimeTask::clock::now() + task.interval;
+            task.task.time = RuntimeTask::clock::now()
+                    + task.task.interval;
         }else{
             ABORTEVERYTHINGGOGOGO();
         }
@@ -315,10 +336,10 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Duration fallback)
         return fallback;
     else
     {
-        if(mTasks[0].time < current)
+        if(mTasks[0].task.time < current)
             return std::chrono::milliseconds(0);
         else
-            return mTasks[0].time - current;
+            return mTasks[0].task.time - current;
     }
 }
 
@@ -340,7 +361,7 @@ RuntimeQueue::RuntimeQueue(RuntimeQueue const& queue)
 }
 
 RuntimeQueue::RuntimeQueue():
-    mTasks(), mTasksAlive(), mTasksLock(), mTaskIndex(0)
+    mTasks(), mTasksLock(), mTaskIndex(0)
 {
 }
 
@@ -350,9 +371,12 @@ u64 RuntimeQueue::enqueue(RuntimeTask &&task)
 
     u64 output = ++mTaskIndex;
 
-    mTasks.push_back(task);
-    mTasksAlive.push_back(true);
-    mTaskIndices.push_back(output);
+    task_data_t task_d;
+    task_d.task = std::move(task);
+    task_d.index = output;
+    task_d.alive = true;
+
+    mTasks.push_back(task_d);
 
     sortTasks();
 

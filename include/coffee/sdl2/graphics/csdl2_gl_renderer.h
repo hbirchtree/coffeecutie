@@ -23,7 +23,9 @@ public:
     void setSwapInterval(const int &i);
     CDContextBits context();
     ThreadId contextThread();
+
     CGL::CGL_Context *glContext();
+    CGL::CGL_WorkerContext *workerContext();
     CGL::CGL_ScopedContext scopedContext();
 
     bool contextPreInit(const GLProperties& props,CString*);

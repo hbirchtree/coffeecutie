@@ -79,6 +79,8 @@ void SetContextProperties(const GLProperties &props)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,props.version.major);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,props.version.minor);
 
+    SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, SDL_FALSE);
+
     if(props.flags&GLProperties::Flags::GLCoreProfile)
     {
         if(props.flags&GLProperties::Flags::GLES)

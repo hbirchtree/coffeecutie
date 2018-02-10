@@ -8,8 +8,18 @@ namespace Compression{
 
 struct Compressor_def
 {
-    static bool Compress(CByteData const&,CByteData*);
-    static bool Decompress(CByteData const&,CByteData*);
+    struct Opts
+    {
+    };
+
+    static bool Compress(Bytes const&,Bytes*, Opts const&)
+    {
+        return false;
+    }
+    static bool Decompress(Bytes const&,Bytes*, Opts const&)
+    {
+        return false;
+    }
 };
 
 }

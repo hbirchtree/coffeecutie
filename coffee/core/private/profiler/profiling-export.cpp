@@ -652,11 +652,11 @@ void ExitRoutine()
                                  |ResourceAccess::TemporaryFile);
 
             auto log_url2 = log_url
-                    + (log_name + "-chrome")
+                    + Path(log_name.internUrl + "-chrome")
                     .addExtension("json");
 
             log_url = log_url
-                    + (log_name + "-profile")
+                    + Path(log_name.internUrl + "-profile")
                     .addExtension("xml");
 
             CString target_log;

@@ -27,22 +27,24 @@ option ( COFFEE_GENERATE_HTML
 option ( COFFEE_GENERATE_WASM
     "Generate WASM version of code, not asm.js" OFF )
 
+set ( EM_COMMON "-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s USE_ZLIB=1 -O2" )
+
 if(COFFEE_GENERATE_WASM)
     message ( STATUS "Generating WASM assembly" )
     set ( CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+        "${CMAKE_CXX_FLAGS} ${EM_COMMON} -s WASM=1" CACHE STRING "" )
     set ( CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+        "${CMAKE_C_FLAGS} ${EM_COMMON} -s WASM=1" CACHE STRING "" )
     set ( CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -s WASM=1 -O2" CACHE STRING "" )
+        "${CMAKE_EXE_LINKER_FLAGS} ${EM_COMMON} -s WASM=1 --shell-file ${CMAKE_SOURCE_DIR}/desktop/emscripten/template.html" CACHE STRING "" )
 else()
     message ( STATUS "Generating asm.js assembly" )
     set ( CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -O2" CACHE STRING "" )
+        "${CMAKE_CXX_FLAGS} ${EM_COMMON}" CACHE STRING "" )
     set ( CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -O2" CACHE STRING "" )
+        "${CMAKE_C_FLAGS} ${EM_COMMON}" CACHE STRING "" )
     set ( CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1 -s USE_SDL=2 -O2" CACHE STRING "" )
+        "${CMAKE_EXE_LINKER_FLAGS} ${EM_COMMON} --shell-file ${CMAKE_SOURCE_DIR}/desktop/emscripten/template.html" CACHE STRING "" )
 endif()
 
 set(CMAKE_CROSSCOMPILING TRUE)

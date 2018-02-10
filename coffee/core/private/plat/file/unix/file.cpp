@@ -112,8 +112,8 @@ CString PosixFileMod_def::CanonicalName(Url const& fn)
 
 bool PosixFileMod_def::Ln(Url const& src, Url const& target)
 {
-    auto srcUrl = *src;
-    auto targetUrl = *target;
+    CString srcUrl = *src;
+    CString targetUrl = *target;
     int sig = symlink(srcUrl.c_str(),targetUrl.c_str());
     if(sig == 0)
         return true;
@@ -238,14 +238,16 @@ int PosixFileMod_def::PosixRscFlags(ResourceAccess acc)
     return oflags;
 }
 
-bool PosixDirFun::Ls(Url const& dname, DirFunDef::DirList &entries)
+bool PosixDirFun::Ls(
+        Url const& dname, DirFunDef::DirList &entries, bool quiet)
 {
     auto url = *dname;
     DIR* dr = opendir(url.c_str());
 
     if(!dr)
     {
-        PosixFileFun::ErrnoCheck(url.c_str());
+        if(!quiet)
+            PosixFileFun::ErrnoCheck(url.c_str());
         return false;
     }
 
@@ -283,12 +285,18 @@ bool PosixDirFun::Ls(Url const& dname, DirFunDef::DirList &entries)
             break;
         }
 
+        if(StrCmp(dir_ent->d_name, ".") || StrCmp(dir_ent->d_name, ".."))
+            continue;
+
         entries.push_back({dir_ent->d_name,t});
     }
 
     closedir(dr);
 
-    PosixFileFun::ErrnoCheck(url.c_str());
+    if(!quiet)
+        PosixFileFun::ErrnoCheck(url.c_str());
+    else
+        errno = 0;
 
     return true;
 }

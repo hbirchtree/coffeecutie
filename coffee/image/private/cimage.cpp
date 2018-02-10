@@ -185,4 +185,33 @@ void TGA::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
     C_UNUSED(dest);
 }
 
+bool IMG::Load(const Url &src, PixCmp cmp, BitFmt &fmt,
+               Bytes &data, CSize &res)
+{
+    Resource rsc(src);
+
+    if(!FileMap(rsc))
+        return false;
+
+    Stb::CStbImage img;
+
+    Stb::LoadData(&img, &rsc, cmp);
+
+    if(img.data)
+    {
+        data.size = img.bpp * img.size.area();
+        data.data = img.data;
+
+        res = img.size;
+
+        Bytes::SetDestr(data, [](Bytes& inst)
+        {
+            stbi_image_free(inst.data);
+        });
+    }
+
+    FileUnmap(rsc);
+    return true;
+}
+
 }

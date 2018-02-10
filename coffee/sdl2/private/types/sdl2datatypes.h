@@ -6,6 +6,10 @@
 #include <SDL_syswm.h>
 #include <coffee/graphics/common/gltypes.h>
 
+#define SDLGL_API "SDL2GL::"
+#define SDLEV_API "SDL2Event::"
+#define SDLWM_API "SDL2Window::"
+
 namespace Coffee{
 namespace SDL2{
 

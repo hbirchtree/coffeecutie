@@ -42,7 +42,7 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     void attachDepthSurface(GLEAM_Surface const& s, uint32 mip);
 
     void blit(CRect64 const& src,GLEAM_RenderTarget& target,
-              CRect64 const& tgt,DBuffers buf,Filtering flt) const;
+              CRect64 const& tgt,DBuffers buf,Filtering flt);
 
     void resize(uint32 i,CRect64 const& view);
 
@@ -55,8 +55,8 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     void clear(uint32 i, Vecf4 const& color, bigscalar depth, int32 stencil);
 
 protected:
-    void bind(FramebufferT t) const;
-    void unbind(FramebufferT t) const;
+    void bind(FramebufferT t);
+    void unbind(FramebufferT t);
     bool validate() const;
 
     CGhnd m_handle;
@@ -69,4 +69,3 @@ protected:
 }
 }
 }
-

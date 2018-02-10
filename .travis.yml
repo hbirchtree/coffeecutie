@@ -16,7 +16,7 @@ env:
   - DEPENDENCIES=
   - CONFIGURATION=Debug
   matrix:
-  - BUILDVARIANT=android.armv7a.gingerbread.gles2
+  - BUILDVARIANT=android.armv7a.kitkat.gles2
   - BUILDVARIANT=android.armv7a.nougat.gles2
   - BUILDVARIANT=android.armv8a.nougat.gles3
   - BUILDVARIANT=emscripten.asmjs
@@ -38,7 +38,7 @@ matrix:
   - env: BUILDVARIANT=coverage
   - env: BUILDVARIANT=raspberry.armhf
   exclude:
-  - env: BUILDVARIANT=android.armv7a.gingerbread.gles2
+  - env: BUILDVARIANT=android.armv7a.kitkat.gles2
     os: osx
   - env: BUILDVARIANT=android.armv7a.nougat.gles2
     os: osx

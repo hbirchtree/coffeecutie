@@ -239,9 +239,110 @@ bool test_api()
     return true;
 }
 
-COFFEE_TEST_SUITE(2) = {
+#if defined(COFFEE_GLEAM_DESKTOP)
+
+#include <coffee/graphics/apis/CGLeam>
+
+bool test_texture_formats()
+{
+    u32 pfmt_max = C_FCAST<u32>(PixFmt::MAX_PIXFMT);
+
+    bool status = true;
+
+    /* First, test all normal formats, excluding compressed ones */
+    for(u32 fmt=1; fmt<pfmt_max; fmt++)
+    {
+        PixFmt f = C_CAST<PixFmt>(fmt);
+
+        auto enval = CGL::to_enum(f);
+
+        if(enval == GL_NONE && !IsPixFmtCompressed(f))
+            status = false;
+    }
+
+    /* Second, test compressed formats. These have special flags. */
+
+    using P = PixFmt;
+    using F = PixelFlags;
+    using C = CGL::CompFlags;
+
+    using namespace CGL;
+
+    static const constexpr struct comp_fmt_t {
+        P fmt;
+        F flg;
+        C cfl;
+        bool expect;
+    } compressed_formats[20] = {
+        /* S3TC tests */
+    { P::S3TC, F::RGB, S3TC_1, false },
+    { P::S3TC, F::RGBA, S3TC_1, false },
+    { P::S3TC, F::RGBA, S3TC_3, false },
+    { P::S3TC, F::RGBA, S3TC_5, false },
+
+    { P::S3TC, F::RGB, S3TC_3, true },
+    { P::S3TC, F::RGB, S3TC_5, true },
+
+    { P::BPTC, F::RGBA|F::Unormalized, CompressionNone, false },
+    { P::BPTC, F::SRGBA|F::Unormalized, CompressionNone, false },
+    { P::BPTC, F::RGB|F::FloatingPoint, CompressionNone, false },
+    { P::BPTC, F::RGB|F::FloatingPoint, CompressionNone, false },
+
+    { P::BPTC, F::SRGBA|F::FloatingPoint, CompressionNone, true },
+    { P::BPTC, F::RGB|F::Unormalized, CompressionNone, true },
+
+    { P::RGTC, F::R|F::Unsigned, CompressionNone, false },
+    { P::RGTC, F::R|F::Signed, CompressionNone, false },
+    { P::RGTC, F::RG|F::Unsigned, CompressionNone, false },
+    { P::RGTC, F::RG|F::Signed, CompressionNone, false },
+
+    { P::RGTC, F::RGBA|F::Signed, CompressionNone, true },
+    { P::RGTC, F::RGB|F::Signed, CompressionNone, true },
+    { P::RGTC, F::RGBA|F::Unsigned, CompressionNone, true },
+    { P::RGTC, F::RGB|F::Unsigned, CompressionNone, true },
+
+    };
+
+    for(auto i : Range<>(20))
+    {
+        auto const& f = compressed_formats[i];
+
+        auto v = CGL::to_enum(f.fmt, f.flg, f.cfl);
+
+        if((v == GL_NONE) != f.expect)
+            status = false;
+    }
+
+    /* ASTC is a bit different to test */
+    static const constexpr F astc_flags[2] = {
+        F::RGBA, F::SRGBA
+    };
+    for(auto i : Range<>(2))
+        for(auto j : Range<>(ASTC_12x12 - 1))
+        {
+            auto v = CGL::to_enum(PixFmt::ASTC, astc_flags[i],
+                                  C_CAST<CompFlags>(j + 1));
+            if(v == GL_NONE)
+                status = false;
+        }
+
+    return status;
+}
+
+#endif
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+#define TEST_COUNT 3
+#else
+#define TEST_COUNT 2
+#endif
+
+COFFEE_TEST_SUITE(TEST_COUNT) = {
 {test_api<RHI::NullAPI>,"Null API", nullptr, false, false},
-{test_api<RHI::GLEAM::GLEAM_API>,"GLEAM OpenGL API", nullptr, false, false}
+{test_api<RHI::GLEAM::GLEAM_API>,"GLEAM OpenGL API", nullptr, false, false},
+        #if defined(COFFEE_GLEAM_DESKTOP)
+{test_texture_formats, "GLEAM pixel format verification"}
+        #endif
 };
 
 COFFEE_GFX_RUN_TESTS(_tests);

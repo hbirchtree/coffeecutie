@@ -56,6 +56,14 @@ CGL::CGL_Context *SDL2GLRenderer::glContext()
     return getSDL2Context()->context;
 }
 
+CGL::CGL_WorkerContext *SDL2GLRenderer::workerContext()
+{
+    if(!getSDL2Context() || !getSDL2Context()->window)
+        return nullptr;
+
+    return new CGL_SDL_GL_Context(getSDL2Context()->window);
+}
+
 CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
 {
     return CGL::CGL_ScopedContext(getSDL2Context()->context);
@@ -63,7 +71,7 @@ CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
 
 bool SDL2GLRenderer::contextPreInit(const GLProperties& props,CString*)
 {
-    DProfContext a("Set context properties");
+    DProfContext a(SDLGL_API "Set context properties");
 
     m_window_flags |= SDL_WINDOW_OPENGL;
     SDL2::SetContextProperties(props);
@@ -73,12 +81,12 @@ bool SDL2GLRenderer::contextPreInit(const GLProperties& props,CString*)
 bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
 {
     /* Acquire the OpenGL context from SDL2 */
-    DProfContext a("Acquire GL context");
+    DProfContext a(SDLGL_API "Acquire GL context");
 
     /* Make the GL context current to this thread */
     if(glContext() && glContext()->acquireContext())
     {
-        Profiler::DeepProfile("Acquire context currency");
+        Profiler::DeepProfile(SDLGL_API "Acquire context currency");
         return true;
     }
     else
@@ -92,7 +100,7 @@ bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
 
 bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
 {
-    DProfContext a("Set swapping interval");
+    DProfContext a(SDLGL_API "Set swapping interval");
 
     /* Enable VSync if requested */
     if(props.flags&GLProperties::GLVSync)
@@ -104,7 +112,8 @@ bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
 
 void SDL2GLRenderer::contextTerminate()
 {
-    cDebug("Context pointer: {0}", C_CAST<void*>(glContext()));
+    cVerbose(10, SDLGL_API"Context pointer: {0}",
+             C_CAST<void*>(glContext()));
     if(!glContext())
         return;
     /* Acquire GL context first, ensures that destructor won't fail on different thread */

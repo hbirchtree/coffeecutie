@@ -34,16 +34,16 @@ static cstring m_shader_fragment_passthrough = {
 #else
     "#version 330\n"
 #endif
-    "uniform sampler2D tex;\n"
+    "uniform sampler2D colortex;\n"
     "in vec2 tex_out;\n"
     "layout(location=0) out vec4 OutColor;\n"
     "void main(){\n"
 #if !defined(COFFEE_ANDROID) && 0
-    "    vec4 comp = texture(tex,tex_out);\n"
+    "    vec4 comp = texture(colortex,tex_out);\n"
     "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
     "    out_col.a = comp.a;\n"
     #else
-    "    OutColor = texture(tex,tex_out);\n"
+    "    OutColor = texture(colortex,tex_out);\n"
 #endif
     "}\n"
 };
@@ -121,13 +121,13 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     vertex.compile(ShaderStage::Vertex, vertex_src);
     fragment.compile(ShaderStage::Fragment, fragment_src);
 
-    m_pip.attach(vertex, ShaderStage::Vertex);
-    m_pip.attach(fragment, ShaderStage::Fragment);
+    auto& v_store = m_pip.storeShader(std::move(vertex));
+    auto& f_store = m_pip.storeShader(std::move(fragment));
+
+    m_pip.attach(v_store, ShaderStage::Vertex);
+    m_pip.attach(f_store, ShaderStage::Fragment);
 
     status = m_pip.assemble();
-
-    vertex.dealloc();
-    fragment.dealloc();
 
     Vector<GLEAM_UniformDescriptor> desc;
     Vector<GLEAM_ProgramParameter> params;
@@ -135,7 +135,7 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
     for(auto const& d : desc)
     {
-        if(d.m_name == "tex")
+        if(d.m_name == "colortex")
             m_texLoc = d;
         if(d.m_name == "transform")
             m_transformLoc = d;
@@ -146,7 +146,7 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
 void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
 {
-    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::ReadOnly,
+    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::WriteOnly,
                                       sizeof(m_vertex_quad_data));
 
     m_buffer.alloc();

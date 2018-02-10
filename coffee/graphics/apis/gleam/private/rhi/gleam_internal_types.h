@@ -4,6 +4,8 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
 
+#define GLM_API "GLEAM_API::"
+
 namespace Coffee{
 namespace RHI{
 namespace GLEAM{
@@ -48,6 +50,24 @@ struct GLEAM_Instance_Data
 	int32 NUM_PROGRAM_BINARY_FORMATS = -1;
     } GL_CACHED;
 };
+
+inline APILevel gl_level_from_string(CString const& str)
+{
+    if(str == "GL33")
+        return GL_3_3;
+    if(str == "GL43")
+        return GL_4_3;
+    if(str == "GL45")
+        return GL_4_5;
+    if(str == "ES2")
+        return GLES_2_0;
+    if(str == "ES3")
+        return GLES_3_0;
+    if(str == "ES32")
+        return GLES_3_2;
+    else
+        return GL_Nothing;
+}
 
 }
 }

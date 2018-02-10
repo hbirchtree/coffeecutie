@@ -10,6 +10,6 @@ coffee_add_library ( CoffeeImage "${CoffeeImage_SRCS}" ""
     "${CMAKE_SOURCE_DIR}/include/coffee/image")
 
 target_include_directories ( CoffeeImage
-    PRIVATE
+    PRIVATE SYSTEM
     ${STB_INCLUDE_DIR}
     )
