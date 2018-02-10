@@ -140,13 +140,12 @@ struct TCPSocketImpl : ASIO_Client
             this->do_verify = verify;
             this->hostname = h;
 
-            context->resolver.async_resolve(
-                        q, [&](
-                        asio::error_code ec,
-                        resolver_result r)
-            {
-                this->resolve_handler(ec, r);
-            });
+            context->service.reset();
+
+            asio::error_code ec;
+            auto it = context->resolver.resolve(q, ec);
+
+            this->resolve_handler(ec, it);
 
             context->service.run();
         }
