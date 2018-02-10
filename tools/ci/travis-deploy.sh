@@ -5,7 +5,7 @@ INFOPY="$SOURCE_DIR/buildinfo.py"
 SCRIPT_DIR="$SOURCE_DIR/$($INFOPY --source-dir "$SOURCE_DIR" script_location)"
 
 if [[ $BUILDVARIANT = "coverage" ]]; then
-    SEARCH_DIR=$SOURCE_DIR/multi_build/build-coverage
+    SEARCH_DIR=$SOURCE_DIR/multi_build/coverage
     mv $SEARCH_DIR/coverage.info.cleaned $SEARCH_DIR/coverage.info
     bash <(curl -s https://codecov.io/bash) -X gcov -s $SEARCH_DIR || echo "Codecov did not collect coverage reports"
 fi
