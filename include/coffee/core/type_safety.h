@@ -13,68 +13,55 @@
 #define IS_SIGNED(Type) std::is_signed<D>::value
 #define IS_USIGNED(Type) std::is_unsigned<D>::value
 
-template <typename D,
-          typename T,
-
-          typename std::enable_if<IS_SIGNED(D), T>::type* = nullptr,
-          typename std::enable_if<IS_USIGNED(T), T>::type* = nullptr
-
-          >
-/*!
- * \brief "Safe" casting between unsigned and signed types
- * \param from
- * \return The correct integer is all is good, 0 if it cannot be represented
- */
-static inline D C_FCAST(T from)
-{
-    return ((from > std::numeric_limits<D>::max())
-            ? 0
-            : from);
-}
-template <typename D,
-          typename T,
-
-          typename std::enable_if<IS_USIGNED(D), D>::type* = nullptr,
-          typename std::enable_if<IS_SIGNED(T), T>::type* = nullptr
-
-          >
-/*!
- * \brief "Safe" casting between unsigned and signed types
- * \param from
- * \return The correct integer if all is good, 0 if it cannot be represented
- */
-static inline D C_FCAST(T from)
-{
-    return ((from < 0)
-            ? 0
-            : from);
-}
-
 #define IS_INT(Type) std::is_integral<Type>::value
 #define IS_PTR(Type) std::is_pointer<Type>::value
 #define RP(Type) typename std::remove_pointer<Type>::type
-//#define IBASE(Type) (std::is_void<Type>::value || std::is_integral<Type>::value || std::is_class<Type>::value || std::is_floating_point<Type>::value)
 #define IS_POD(Type) (!std::is_pointer<Type>::value)
 #define IS_CONST(Type) std::is_const<Type>::value
 
 template<typename D,
          typename T,
-
-         typename std::enable_if<std::is_convertible<T,D>::value,T>::type* = nullptr,
-         typename std::enable_if<IS_INT(D),T>::type* = nullptr,
-         typename std::enable_if<IS_INT(T),T>::type* = nullptr,
-
-         typename std::enable_if<!((IS_SIGNED(T) && IS_USIGNED(D)) || (IS_USIGNED(T) && IS_SIGNED(D))), T>::type* = nullptr
-
-         >
+         typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
+         typename std::enable_if<
+    (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max()) &&
+    (std::numeric_limits<T>::min() >= std::numeric_limits<D>::min())
+            >::type* = nullptr,
+         typename std::enable_if<
+             IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
 /*!
- * \brief Integral casting, ex. u32 to u16
+ * \brief The case where all casting is safe, no downcasting
+ *  or signed-unsigned conversion
  * \param from
  * \return
  */
 static inline D C_FCAST(T from)
 {
     return static_cast<D>(from);
+}
+
+template<typename D,
+         typename T,
+         typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
+         typename std::enable_if<
+    (std::numeric_limits<T>::max() > std::numeric_limits<D>::max()) ||
+    (std::numeric_limits<T>::min() < std::numeric_limits<D>::min())
+             >::type* = nullptr>
+/*!
+ * \brief If there is a risk of going out of the
+ *  range of type D, return the closest value.
+ * \param from
+ * \return
+ */
+static inline D C_FCAST(T from)
+{
+    constexpr D max_val = std::numeric_limits<D>::max();
+    constexpr D min_val = std::numeric_limits<D>::min();
+
+    return (from > max_val)
+            ? max_val
+            : (from < min_val)
+              ? min_val
+              : from;
 }
 
 template<typename D,
@@ -107,25 +94,6 @@ static inline D C_FCAST(T from)
 {
     return reinterpret_cast<D>(from);
 }
-
-//template<typename D,
-//         typename T,
-
-//         typename std::enable_if<std::is_same<T, void*>::value, bool>::type* = nullptr,
-//         typename std::enable_if<IBASE(RP(D)), bool>::type* = nullptr,
-//         typename std::enable_if<NPTR(D), bool>::type* = nullptr,
-//         typename std::enable_if<(CONST(RP(D)) && CONST(RP(T))) || (!CONST(RP(D)) && !CONST(RP(T))) || (CONST(RP(D)) && !CONST(RP(T))),T>::type* = nullptr
-
-//         >
-///*!
-// * \brief Simple reinterpretation of a pointer
-// * \param from
-// * \return
-// */
-//static inline D C_FCAST(T from)
-//{
-//    return reinterpret_cast<D>(from);
-//}
 
 template<typename D,
          typename T,
