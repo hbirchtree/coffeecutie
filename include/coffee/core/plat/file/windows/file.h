@@ -17,10 +17,9 @@ struct WinDirFun : CResources::DirFunDef
     /*TODO: Implement Windows directory functions*/
     static bool MkDir(Url const& dname, bool parent);
 
-    STATICINLINE bool RmDir(Url const&)
-    {
-        return false;
-    }
+	static bool RmDir(Url const&);
+
+	static bool Ls(Url const&, DirList&);
 };
 
 struct WinFileApi

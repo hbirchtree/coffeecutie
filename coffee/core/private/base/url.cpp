@@ -203,7 +203,9 @@ CString Url::operator*() const
 #endif
         return derefPath;
 #else
-        return DereferenceLocalPath();
+        CString derefPath = DereferenceLocalPath();
+		derefPath = CStrReplace(derefPath, "\\", "/");
+		return derefPath;
 #endif
     }
     case Networked:

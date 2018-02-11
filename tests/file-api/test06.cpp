@@ -5,7 +5,7 @@ using namespace Coffee;
 
 const Url testfile = MkUrl("fileapi_testfile.txt",
                            ResourceAccess::SpecifyStorage
-                           |ResourceAccess::AssetFile);
+                           |ResourceAccess::TemporaryFile);
 
 using File = FileFun;
 

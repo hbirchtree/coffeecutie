@@ -318,7 +318,8 @@ szptr WinFileFun::Size(WinFileFun::FileHandle* fh)
     {
         LARGE_INTEGER e;
         e.QuadPart = 0;
-        e.LowPart = GetFileSizeEx(fh->file, &e);
+		if (GetFileSizeEx(fh->file, &e) == FALSE)
+			return 0;
         return e.QuadPart;
     }
 #ifndef COFFEE_WINDOWS_UWP
@@ -572,8 +573,16 @@ bool WinDirFun::MkDir(Url const& dname, bool parent)
 {
     auto url = *dname;
 
-    if(!parent)
-        return CreateDirectoryA(url.c_str(),nullptr);
+	if (!parent)
+	{
+		BOOL stat = CreateDirectoryA(url.c_str(), nullptr);
+
+		if (stat == FALSE && GetLastError() == ERROR_ALREADY_EXISTS)
+			return true;
+		else
+			return stat == TRUE;
+	}
+        
 
     char tmp[255];
     char *p = NULL;
@@ -590,7 +599,49 @@ bool WinDirFun::MkDir(Url const& dname, bool parent)
             CreateDirectoryA(tmp,nullptr);
             *p = '/';
         }
-    return CreateDirectoryA(tmp,nullptr)==0;
+    BOOL stat = CreateDirectoryA(tmp,nullptr);
+
+	if (stat == FALSE && GetLastError() == ERROR_ALREADY_EXISTS)
+		return true;
+	else
+		return stat == TRUE;
+}
+
+bool WinDirFun::RmDir(Url const &fn)
+{
+	CString deref = *fn;
+
+	return RemoveDirectoryA(deref.c_str()) == TRUE;
+}
+
+bool WinDirFun::Ls(Url const &fn, DirList &outl)
+{
+	CString deref = *fn;
+
+	WIN32_FIND_DATA ffd;
+
+	auto hnd = FindFirstFileA(deref.c_str(), &ffd);
+
+	if (hnd == INVALID_HANDLE_VALUE)
+		return false;
+
+	do {
+
+		outl.push_back({
+			ffd.cFileName,
+			(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				? DirItem_t::Type::Directory
+				: DirItem_t::Type::File
+		});
+
+	} while (FindNextFileA(hnd, &ffd) != FALSE);
+
+	if (GetLastError() != ERROR_NO_MORE_FILES)
+		return false;
+
+	FindClose(hnd);
+
+	return true;
 }
 
 }

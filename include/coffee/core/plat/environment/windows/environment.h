@@ -16,6 +16,8 @@ struct WindowsEnvFun : EnvInterface
 
     static Variables Environment();
 
+	static bool ExistsVar(cstring v);
+
     static CString GetVar(cstring v);
 
     STATICINLINE bool SetVar(cstring, cstring)

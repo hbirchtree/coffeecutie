@@ -137,7 +137,7 @@ bool Resource::secure() const
 
 bool Resource::connected() const
 {
-    return m_error == asio::error_code();
+    return !m_error;
 }
 
 ErrCode Resource::errorCode() const
@@ -237,12 +237,12 @@ bool Resource::push(CString const& method, const Bytes &data)
 
         szptr size = 0;
         auto writeError = ssl->flush(&size);
-        if(writeError != asio::error_code())
+        if(writeError)
             cWarning("Write error code: {0}, wrote {1} bytes",
                      writeError.message(), size);
 
         auto readError = ssl->pull(&size);
-        if(readError != asio::error_code())
+        if(readError)
             cWarning("Read error code: {0}, received {1} bytes",
                      readError.message(), size);
 

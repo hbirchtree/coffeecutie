@@ -155,6 +155,29 @@ CString PlatformData::SystemDisplayString()
     base.resize(base.find('\0'));
     /* What the fuck. Where does the rest of the string go? */
     base.append(")");
+
+#if defined(COFFEE_WINDOWS)
+	typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+	static LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+	do {
+		if (!fnIsWow64Process)
+		{
+			fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+				GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
+		}
+
+		if (!fnIsWow64Process)
+			break;
+
+		BOOL is_wow64 = FALSE;
+
+		if (fnIsWow64Process(GetCurrentProcess(), &is_wow64)
+			&& is_wow64 == TRUE)
+			base.append(" (WoW64)");
+	} while (false);
+#endif
+
     return base;
 }
 
