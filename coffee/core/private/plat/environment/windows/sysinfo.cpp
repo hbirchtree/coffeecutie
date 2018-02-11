@@ -208,12 +208,15 @@ CString WindowsSysInfo::GetSystemVersion()
     do{
         static WINE_GET_VERSION_FPTR pwine_get_version;
 
-        HMODULE hntdll = GetModuleHandle("ntdll.dll");
-        if(!hntdll)
-            break;
-        pwine_get_version = (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll,"wine_get_version");
-        if(!pwine_get_version)
-            break;
+		if (!pwine_get_version)
+		{
+			HMODULE hntdll = GetModuleHandle("ntdll.dll");
+			if (!hntdll)
+				break;
+			pwine_get_version = (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll, "wine_get_version");
+			if (!pwine_get_version)
+				break;
+		}
         CString out = CString("Wine ") + pwine_get_version();
         return out;
     }while(false);

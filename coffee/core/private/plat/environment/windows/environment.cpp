@@ -118,6 +118,15 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
 #endif
 }
 
+bool WindowsEnvFun::ExistsVar(cstring v)
+{
+#ifdef COFFEE_WINDOWS_UWP
+	return false;
+#else
+	return getenv(v) != nullptr;
+#endif
+}
+
 CString WindowsEnvFun::CurrentDir()
 {
 #ifdef COFFEE_WINDOWS_UWP
@@ -140,33 +149,53 @@ CString WindowsEnvFun::CurrentDir()
 
 CString WindowsEnvFun::DirName(cstring fn)
 {
-#ifdef COFFEE_WINDOWS_UWP
-    return {};
-#else
-    CString fn_ = fn;
-    fn_ = CStrReplace(fn, "/", "\\");
-    CWString fn_w(fn_.begin(), fn_.end());
-    //PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
-    CString out(fn_w.begin(), fn_w.end());
-    out.resize(StrLen(out.c_str()));
-    out = CStrReplace(out, "\\", "/");
-    return out;
-#endif
+	CString fn_ = fn;
+
+	auto idx = fn_.rfind('/');
+
+	if (idx != CString::npos)
+		return fn_.substr(0, idx);
+	else
+	{
+		if (!fn_.size())
+			return ".";
+		return fn_;
+	}
+
+//#ifdef COFFEE_WINDOWS_UWP
+//    return {};
+//#else
+//    CString fn_ = fn;
+//    fn_ = CStrReplace(fn, "/", "\\");
+//    CWString fn_w(fn_.begin(), fn_.end());
+//    //PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
+//    CString out(fn_w.begin(), fn_w.end());
+//    out.resize(StrLen(out.c_str()));
+//    out = CStrReplace(out, "\\", "/");
+//    return out;
+//#endif
 }
 CString WindowsEnvFun::BaseName(cstring fn)
 {
     const constexpr cstring sep = "/";
-    cstring out_f = Search::ChrFindR(fn, sep[0]);
-    if((out_f - fn) < 0)
-        return fn;
-    CString out;
-    if (!out_f)
-        out = fn;
-    else
-        out = out_f + 1;
-    if(out.empty())
-        out = ".";
-    return out;
+    
+	if (!fn)
+		return ".";
+
+	CString out = fn;
+	auto idx = out.rfind(sep);
+
+	if (out == "/")
+		return out;
+
+	if (idx == CString::npos)
+	{
+		if (!out.size())
+			return ".";
+		return out;
+	}
+
+    return out.substr(idx + 1, out.size() - idx - 1);
 }
 }
 }

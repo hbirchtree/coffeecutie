@@ -4,36 +4,42 @@ set ( OPENSSL_SEARCH_PATHS
     )
 
 find_library ( SSL_CRYPTO_LIBRARY_TMP
-    crypto
+    ssleay32
 
     PATH_SUFFIXES
     lib
+	lib/VC
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
 find_library ( SSL_LIBRARY_TMP
-    ssl
+    libeay32
 
     PATH_SUFFIXES
     lib
+	lib/VC
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
 
 find_path ( SSL_INCLUDE_DIR_TMP
-    openssl/ssl.h
-    openssl/ssl2.h
-    openssl/ssl3.h
+    ssl.h
+    ssl2.h
+    ssl3.h
 
     PATH_SUFFIXES
     include
+	include/openssl
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
 
-#set ( OPENSSL_LIBRARIES "${SSL_LIBRARY_TMP};${SSL_CRYPTO_LIBRARY_TMP}" CACHE STRING "" )
-set ( OPENSSL_LIBRARIES "C:/OpenSSL-Win64/lib/libssl.lib;C:/OpenSSL-Win64/lib/libcrypto.lib" CACHE STRING "" )
-set ( OPENSSL_INCLUDE_DIR "${SSL_INCLUDE_DIR_TMP}" CACHE PATH "" )
+if(DEFINED SSL_CRYPTO_LIBRARY_TMP AND DEFINED SSL_LIBRARY_TMP)
+	set ( OPENSSL_LIBRARIES "${SSL_CRYPTO_LIBRARY_TMP};${SSL_LIBRARY_TMP}" CACHE STRING "" )
+endif()
+if(DEFINED SSL_INCLUDE_DIR_TMP)
+	set ( OPENSSL_INCLUDE_DIR "${SSL_INCLUDE_DIR_TMP}/.." CACHE PATH "" )
+endif()
 
 INCLUDE(FindPackageHandleStandardArgs)
 

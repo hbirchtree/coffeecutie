@@ -52,7 +52,7 @@ struct EnvInterface
     STATICINLINE bool ExistsVar(cstring var)
     {
         (void)var;
-        return true;
+        return false;
     }
     /*!
      * \brief Get value from env

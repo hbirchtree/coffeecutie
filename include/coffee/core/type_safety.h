@@ -19,12 +19,17 @@
 #define IS_POD(Type) (!std::is_pointer<Type>::value)
 #define IS_CONST(Type) std::is_const<Type>::value
 
+/*! \brief If you want to know why this is done, it's because Visual C++ is broken.
+ *  Too broken for me to care.
+ */
+#if !defined(COFFEE_WINDOWS)
+
 template<typename D,
          typename T,
          typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
          typename std::enable_if<
-    (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max()) &&
-    (std::numeric_limits<T>::min() >= std::numeric_limits<D>::min())
+    (typename std::numeric_limits<T>::max() <= typename std::numeric_limits<D>::max()) &&
+    (typename std::numeric_limits<T>::min() >= typename std::numeric_limits<D>::min())
             >::type* = nullptr,
          typename std::enable_if<
              IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
@@ -63,6 +68,17 @@ static inline D C_FCAST(T from)
               ? min_val
               : from;
 }
+
+#else
+
+template<typename D, typename T,
+		 typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr>
+static inline D C_FCAST(T from)
+{
+	return static_cast<D>(from);
+}
+
+#endif
 
 template<typename D,
          typename T,

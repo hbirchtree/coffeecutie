@@ -130,6 +130,12 @@ bool vector_format()
         return true;
 }
 
+#if defined(COFFEE_WINDOWS)
+static constexpr bool has_broken_ptr_fmt = true;
+#else
+static constexpr bool has_broken_ptr_fmt = false;
+#endif
+
 const constexpr CoffeeTest::Test _tests[9] = {
     {basic_format,"Basic text formatting"},
     {string_format,"Basic text insertion, part 1","Has special characters"},
@@ -137,7 +143,8 @@ const constexpr CoffeeTest::Test _tests[9] = {
     {integer_decimal_format,"Integer decimals"},
     {integer_hex_format,"Integer hexadecimals"},
     {pointer_format,"Pointer formatting"},
-    {pointer_allocated_format,"Pointer formatting, random pointer"},
+    {pointer_allocated_format,"Pointer formatting, random pointer", nullptr,
+	has_broken_ptr_fmt, false},
     {floating_point_format,"Floating-point with precision", "",
      true, false},
     {vector_format,"Floating-point vector", "", true, false},

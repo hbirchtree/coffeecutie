@@ -58,10 +58,16 @@ bool casting_signed_unsigned()
     return true;
 }
 
+#if defined(COFFEE_WINDOWS)
+static constexpr bool supports_safe_cast = false;
+#else
+static constexpr bool supports_safe_cast = true;
+#endif
+
 COFFEE_TEST_SUITE(3) = {
 {enum_cast, "Casting enums to int"},
-{downcasting_u32_u16, "Downcasting"},
-{casting_signed_unsigned, "Unsigned casting"}
+{downcasting_u32_u16, "Downcasting", nullptr, true, false},
+{casting_signed_unsigned, "Unsigned casting", nullptr, true, false}
 };
 
 COFFEE_EXEC_TESTS();
