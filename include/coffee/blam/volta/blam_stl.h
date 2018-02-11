@@ -65,6 +65,11 @@ public:
             return &idx->m_root[i];
         }
 
+		index_item_t const* deref() const
+		{
+			return &tag_index_get_items(idx->m_file)[i];
+		}
+
         index_iterator(tag_index_view& idx, int32 i):
             i(i),
             idx(&idx)
@@ -105,6 +110,11 @@ public:
         {
             return deref();
         }
+
+		index_item_t const* operator*() const
+		{
+			return deref();
+		}
 
         operator cstring()
         {

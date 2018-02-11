@@ -10,7 +10,7 @@ namespace Net{
 
 FORCEDINLINE bool Supported()
 {
-#if !defined(COFFEE_EMSCRIPTEN)
+#if !defined(COFFEE_EMSCRIPTEN) && !defined(COFFEE_WINDOWS_UWP)
     return true;
 #else
     return false;

@@ -618,7 +618,7 @@ bool WinDirFun::Ls(Url const &fn, DirList &outl)
 {
 	CString deref = *fn;
 
-	WIN32_FIND_DATA ffd;
+	WIN32_FIND_DATAA ffd;
 
 	auto hnd = FindFirstFileA(deref.c_str(), &ffd);
 

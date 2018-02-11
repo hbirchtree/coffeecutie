@@ -8,7 +8,9 @@
 #include <coffee/core/base/types/counter.h>
 #include <coffee/core/CDebug>
 
+#if defined(FEATURE_USE_ASIO)
 #include <coffee/asio/net_resource.h>
+#endif
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/coffee_saving.h>
@@ -362,6 +364,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         CResources::FileUnmap(rsc);
     }
 
+#if defined(FEATURE_USE_ASIO)
     if(Net::Supported())
     {
         ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
@@ -383,6 +386,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             cWarning("Failed to retrieve spicy meme");
         }
     }
+#endif
 
     Profiler::PopContext();
     cVerbose("Uploading textures");

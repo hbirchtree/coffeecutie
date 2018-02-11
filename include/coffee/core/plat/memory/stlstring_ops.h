@@ -261,6 +261,12 @@ FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, bool spacing = true, szptr n
     return out;
 }
 
+#if __cplusplus >= 201703L || _HAS_CXX17
+#define NOT_FN std::not_fn
+#else
+#define NOT_FN std::not1
+#endif
+
 /* Reference: http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring */
 FORCEDINLINE CString& ltrim(CString& s)
 {
@@ -268,8 +274,8 @@ FORCEDINLINE CString& ltrim(CString& s)
             std::find_if(
                 s.begin(),
                 s.end(),
-                std::not1(
-                    std::ptr_fun<int,int>(std::isspace)
+                NOT_FN(
+                    std::isspace
                     )
                 )
             );
@@ -280,14 +286,17 @@ FORCEDINLINE CString& rtrim(CString& s)
     s.erase(std::find_if(
                 s.rbegin(),
                 s.rend(),
-                std::not1(
-                    std::ptr_fun<int,int>(std::isspace)
+                NOT_FN(
+                    std::isspace
                     )
                 ).base(),
             s.end()
             );
     return s;
 }
+
+#undef NOT_FN
+
 FORCEDINLINE CString& trim(CString& s)
 {
     return ltrim(rtrim(s));
