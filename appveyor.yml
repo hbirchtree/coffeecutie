@@ -1,3 +1,4 @@
+image: Visual Studio 2017
 before_build:
 - ps: tools\ci\appveyor-build.ps1
 before_deploy:
@@ -33,6 +34,9 @@ environment:
   matrix:
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: win32.amd64
+image:
+  - Visual Studio 2015
+  - Visual Studio 2017
 install:
 - ps: tools\ci\appveyor-deps.ps1
 matrix:
@@ -42,6 +46,11 @@ matrix:
   - BUILDVARIANT: uwp.arm
   - BUILDVARIANT: coverage
   - BUILDVARIANT: raspberry.armhf
+  exclude:
+  - BUILDVARIANT: uwp.amd64
+    image: Visual Studio 2015
+  - BUILDVARIANT: win32.amd64
+    image: Visual Studio 2017
 platform: x64
 skip_tags: true
 version: '{build}'
