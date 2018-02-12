@@ -9,7 +9,7 @@ if(CMAKE_TOOLCHAIN_FILE)
 endif()
 
 add_definitions (
-   -D_WIN32_WINNT=0x0601
+   -D_WIN32_WINNT=0x0602
    -D_CRT_SECURE_NO_WARNINGS
     )
 

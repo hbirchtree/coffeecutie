@@ -120,4 +120,115 @@ bool LibZCompressor::Decompress(
 
 }
 }
+#elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
+
+#include <coffee/core/plat/plat_windows.h>
+#include <compressapi.h>
+#include <coffee/core/CDebug>
+
+namespace Coffee{
+namespace Compression{
+
+bool LibZCompressor::Compress(
+        Bytes const& uncompressed, Bytes* target, Opts const& opts)
+{
+    COMPRESSOR_HANDLE cHnd = nullptr;
+
+    auto succ = ::CreateCompressor(
+            COMPRESS_ALGORITHM_LZMS,
+            nullptr, &cHnd);
+
+    if(!succ)
+    {
+        cWarning("LibZCompressor::Failed to create"
+                 " compressor: {0}",
+                 win_strerror(GetLastError()));
+        return false;
+    }
+
+    SIZE_T compSize = 0;
+
+    succ = ::Compress(
+        cHnd,
+        uncompressed.data, uncompressed.size,
+        nullptr, 0, &compSize);
+
+    if(compSize == 0 || !succ)
+    {
+        cWarning("LibZCompressor::Failed to estimate"
+                 " compressed size: {0}",
+                 win_strerror(GetLastError()));
+    }
+
+    target->data = C_RCAST<byte_t*>(Alloc(compSize));
+    target->size = compSize;
+    Bytes::SetDestr(*target, [](Bytes& b)
+    {
+        CFree(b.data);
+    });
+
+    succ = ::Compress(
+            cHnd,
+            uncompressed.data, uncompressed.size,
+            target->data, target->size,
+            &compSize);
+
+    ::CloseCompressor(cHnd);
+
+    return true;
+}
+
+bool LibZCompressor::Decompress(
+        Bytes const& compressed, Bytes* target, Opts const& opts)
+{
+    DECOMPRESSOR_HANDLE cHnd = nullptr;
+
+    auto succ = ::CreateDecompressor(
+            COMPRESS_ALGORITHM_LZMS,
+            nullptr, &cHnd);
+
+    if(!succ)
+    {
+        cWarning("LibZCompressor::Failed to create decompressor: {0}",
+                 win_strerror(GetLastError()));
+        return false;
+    }
+
+    SIZE_T compSize = 0;
+
+    succ = ::Decompress(
+            cHnd,
+            compressed.data, compressed.size,
+            nullptr, 0,
+            &compSize);
+
+    if(compSize == 0 || !succ)
+    {
+        cWarning("LibZCompressor::Failed to estimate"
+                 " decompressed size: {0}",
+                 win_strerror(GetLastError()));
+        return false;
+    }
+
+    target->data = C_RCAST<byte_t*>(Alloc(compSize));
+    target->size = compSize;
+    Bytes::SetDestr(*target, [](Bytes& b)
+    {
+        CFree(b.data);
+    });
+
+    succ = ::Decompress(
+            cHnd,
+            compressed.data, compressed.size,
+            target->data, target->size,
+            &compSize);
+
+    ::CloseDecompressor(cHnd);
+
+    return true;
+}
+
+}
+}
+
 #endif

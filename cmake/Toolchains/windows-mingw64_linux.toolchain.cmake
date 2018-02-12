@@ -9,7 +9,7 @@ set ( CMAKE_RC_COMPILER "${TOOLCHAIN_PREFIX}-windres" )
 
 add_definitions (
     -D__MINGW64__
-    -D_WIN32_WINNT=0x0600
+    -D_WIN32_WINNT=0x0602
 )
 
 set ( CMAKE_FIND_ROOT_PATH

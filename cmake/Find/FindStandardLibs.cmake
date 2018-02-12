@@ -140,13 +140,17 @@ if(WIN32)
             shell32
             version
             ws2_32
-            wbemuuid
+            iwbemuuid
             )
     else()
         list ( APPEND CORE_EXTRA_LIBRARIES
             OneCore
             )
     endif()
+
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        Cabinet
+        )
 
     if(MINGW64)
         list ( APPEND CORE_EXTRA_LIBRARIES

@@ -2,7 +2,7 @@
 
 #include "standard.h"
 
-#if defined(COFFEE_BUILD_ZLIB)
+#if defined(COFFEE_BUILD_ZLIB) || defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
 namespace Coffee{
 namespace Compression{

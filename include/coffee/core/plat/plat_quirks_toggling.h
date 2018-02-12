@@ -270,6 +270,8 @@
 /* Zlib comes bundled with pretty much all POSIX systems
  *  except Windows */
 #define COFFEE_BUILD_ZLIB
+#elif defined(COFFEE_WINDOWS) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0602
+#define COFFEE_BUILD_WINDOWS_DEFLATE
 #endif
 
 #if defined(COFFEE_ANDROID)
