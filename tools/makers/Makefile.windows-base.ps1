@@ -46,7 +46,12 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     
     DownloadNativeLibs
 
-    $Generator = "Visual Studio 15 2017 $arch".Trim()
+    if($env:APPVEYOR_BUILD_WORKER_IMAGE == "Visual Studio 2017")
+    {
+        $Generator = "Visual Studio 15 2017 $arch".Trim()
+    }else{
+        $Generator = "Visual Studio 14 2015 $arch".Trim()
+    }
 
     & $CMakeBin $SrcDir `
         -G"$Generator" `
