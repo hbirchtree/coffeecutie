@@ -261,10 +261,10 @@ FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, bool spacing = true, szptr n
     return out;
 }
 
-#if __cplusplus >= 201703L || _HAS_CXX17
+#if __cplusplus >= 201703L || (defined(_HAS_CXX17) && _HAS_CXX17)
 #define NOT_FN std::not_fn
 #else
-#define NOT_FN std::not1
+#define NOT_FN(s) std::not1(std::ptr_fun<int, int>(s))
 #endif
 
 /* Reference: http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring */

@@ -28,8 +28,8 @@ template<typename D,
          typename T,
          typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
          typename std::enable_if<
-    (typename std::numeric_limits<T>::max() <= typename std::numeric_limits<D>::max()) &&
-    (typename std::numeric_limits<T>::min() >= typename std::numeric_limits<D>::min())
+    (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max()) &&
+    (std::numeric_limits<T>::min() >= std::numeric_limits<D>::min())
             >::type* = nullptr,
          typename std::enable_if<
              IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
