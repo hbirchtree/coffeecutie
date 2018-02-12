@@ -20,6 +20,9 @@ add_definitions (
  -DWINUWP
  # We allow pure C string functions. Fuck, Microsoft.
  -D_CRT_SECURE_NO_WARNINGS
+ -D_SILENCE_CXX17_ALL_DEPRECATION_WARNINGS
 )
 
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1" )
+include_directories ( "${NATIVE_LIBRARY_DIR}/include" )
+
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1 /std:c++17" )

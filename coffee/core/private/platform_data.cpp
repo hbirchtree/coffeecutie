@@ -156,7 +156,7 @@ CString PlatformData::SystemDisplayString()
     /* What the fuck. Where does the rest of the string go? */
     base.append(")");
 
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
 	typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 	static LPFN_ISWOW64PROCESS fnIsWow64Process;
 

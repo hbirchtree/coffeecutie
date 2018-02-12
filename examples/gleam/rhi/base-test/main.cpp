@@ -5,7 +5,10 @@
 #include "renderer.h"
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
+
+#if defined(FEATURE_USE_ASIO)
 #include <coffee/asio/net_profiling.h>
+#endif
 
 void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
 {

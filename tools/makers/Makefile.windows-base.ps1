@@ -46,7 +46,7 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     
     DownloadNativeLibs
 
-    $Generator = "Visual Studio 14 2015 $arch".Trim()
+    $Generator = "Visual Studio 15 2017 $arch".Trim()
 
     & $CMakeBin $SrcDir `
         -G"$Generator" `

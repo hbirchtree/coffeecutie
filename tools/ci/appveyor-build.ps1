@@ -61,9 +61,24 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
     }
 }
 
-$Args = ("-DCOFFEE_BUILD_OPENSSL=ON","-DCOFFEE_BUILD_OPENAL=OFF",`
-         "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
-	 "-DCOFFEE_BUILD_ASSIMP=ON")
+switch -regex ($env:BUILDVARIANT)
+{
+    "^win32.x86$" {
+        $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
+                 "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
+	         "-DCOFFEE_BUILD_ASSIMP=OFF")
+    }
+    "^win32.amd64$" {
+        $Args = ("-DCOFFEE_BUILD_OPENSSL=ON","-DCOFFEE_BUILD_OPENAL=OFF",`
+                 "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
+	         "-DCOFFEE_BUILD_ASSIMP=ON")
+    }
+    "uwp.+" {
+        $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
+                 "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
+	         "-DCOFFEE_BUILD_ASSIMP=OFF", "-DCOFFEE_BUILD_ASIO=OFF")
+    }
+}
 
 . $env:SOURCE_DIR\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
     -CMakeBin $env:CMAKE_BIN -Standalone

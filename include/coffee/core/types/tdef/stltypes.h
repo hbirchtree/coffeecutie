@@ -18,6 +18,7 @@
 /*Shit*/
 #include <exception>
 #include <complex>
+#include <type_traits>
 
 #if defined(COFFEE_GEKKO)
 #include <gccore.h>
@@ -114,8 +115,22 @@ using Pair = std::pair<T1,T2>;
 
 using ByteVector = Vector<uint8_t>;
 
+//template<typename Tag, typename T>
+//using Iterator = std::iterator<Tag,T>;
+
+template<typename T>
+using NonConst = typename std::remove_const<T>::type;
+
 template<typename Tag, typename T>
-using Iterator = std::iterator<Tag,T>;
+struct Iterator
+{
+	typedef NonConst<T> value_type;
+
+	typedef Tag iterator_category;
+	typedef std::ptrdiff_t difference_type;
+	typedef T* pointer;
+	typedef T& reference;
+};
 
 using ForwardIteratorTag = std::forward_iterator_tag;
 

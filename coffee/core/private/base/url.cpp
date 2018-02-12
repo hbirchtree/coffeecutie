@@ -13,7 +13,18 @@
 #endif
 
 #if defined(COFFEE_WINDOWS_UWP)
+
+#pragma comment(lib, "windowsapp")
+
 #include <ntverp.h>
+
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.ApplicationModel.h>
+
+using namespace winrt;
+
+using WPkg = ::Windows::ApplicationModel::Package;
+
 #endif
 
 #if defined(COFFEE_APPLE)
@@ -109,6 +120,15 @@ STATICINLINE SystemPaths GetSystemPaths()
 	paths.cacheDir = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
 		Path{ ApplicationData().organization_name } +
 		Path{ApplicationData().application_name};
+
+#if defined(COFFEE_WINDOWS_UWP)
+	auto pkg = ::Windows::ApplicationModel::Package::Current();
+	auto appdata = pkg.InstalledLocation().Path();
+
+	CString bs = StrUtil::convertformat<char, wchar_t>(CWString(appdata.data()));
+
+	paths.assetDir = MkUrl(bs.c_str(), RSCA::SystemFile);
+#endif
 
 	/* assetDir is supposed to be empty, as it refers to a virtual filesystem */
 	/* We might want to toggle it based on running in UWP or something... */
@@ -264,7 +284,7 @@ STATICINLINE CString DereferencePath(cstring suffix,
     {
     case RSCA::AssetFile:
     {
-#if defined(COFFEE_ANDROID) || (defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOW_UWP))
+#if defined(COFFEE_ANDROID) || (defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP))
         /* Because Android uses a virtual filesystem,
          *  we do not go deeper to find a RSCA::SystemFile URL */
         return urlPart.internUrl.c_str();
