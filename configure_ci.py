@@ -85,8 +85,10 @@ def parse_linux_targets():
 
             _TARGET_NAMES['linux'] = {}
 
-            for root in src['targets']:
-                targets = gen_targs('', src['targets'][root])
+            _tmp_targets = src['targets']['coffee']
+
+            for root in _tmp_targets:
+                targets = gen_targs('', _tmp_targets[root])
                 _TARGET_NAMES['linux'][root] = []
                 target_root = _TARGET_NAMES['linux'][root]
                 for t in targets:
@@ -274,8 +276,19 @@ def appveyor_gen_config(build_info, srcDir):
                 'cmd': 'cd %SOURCE_DIR% && git checkout -qf %APPVEYOR_REPO_COMMIT%'
             }
         ],
+        'image': ['Visual Studio 2015', 'Visual Studio 2017'],
         'matrix': {
-            'allow_failures': allow_fails
+            'allow_failures': allow_fails,
+            'exclude': [
+                {
+                    'BUILDVARIANT': 'uwp.amd64',
+                    'image': 'Visual Studio 2015'
+                },
+                {
+                    'BUILDVARIANT': 'win32.amd64',
+                    'image': 'Visual Studio 2017'
+                }
+                ]
         },
         'environment': {
             'matrix': matrix,
