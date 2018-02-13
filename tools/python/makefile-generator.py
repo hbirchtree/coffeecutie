@@ -340,7 +340,7 @@ def gen_strip_target(target_info):
 #  - generate_rule (for CMake builds,
 #               do something else for automake
 #                and custom ones)
-def transform_build_deps(build_deps, template_def, skeleton, targets):
+def transform_build_deps(build_deps, template_def, build_template, skeleton, targets):
 
   targets = [v.replace('coffee.', '') for v in targets]
 
@@ -353,20 +353,25 @@ def transform_build_deps(build_deps, template_def, skeleton, targets):
 
   target_defs = ""
 
+  def add_build_dep_template(bt, out):
+    for e in build_template:
+      p = re.compile(e)
+      if p.match(bt) is not None:
+        gen_targ_data(build_template, [bt], {bt: out}, False)
+
   for target in sorted(list(build_deps.keys())):
     # Target description, quite simple
     td = build_deps[target]
 
     out = a_skeleton['docs']
-    out['dep-target'] = [target]
-    out['target-name'] = ['docs']
 
     out.update({
-      'target-name': ['%s.%s' % (target, out['target-name'][0].replace('coffee.', ''))],
-      'bdep.root': ['$(build-dep.root)/$(dep-target)/source'],
-      'bdep.target': ['/source'],
-      'toolchain-dir': '/home/coffee/cmake-project',
+      'dep-target': [target],
+      'build-arch': ['docs'],
+      'automake.opts': [''],
     })
+
+    add_build_dep_template(td['type'], out)
 
     try:
       src = td['source']
@@ -400,24 +405,13 @@ def transform_build_deps(build_deps, template_def, skeleton, targets):
           continue
 
       out = deepcopy(a_skeleton[build_target])
-      out['dep-target'] = [lib_target]
-      out['target-name'] = ['docs']
 
       out.update({
-        'container-opts': out['container-opts'] + [
-          '-v $(build-dep.root)/$(dep-target)/build/$(build-arch):$(container.build):rw',
-          '-v $(build-dep.root)/$(dep-target)/source:$(container.src):ro',
-          '-v $(project.src)/cmake:/home/coffee/cmake-project:ro',
-          '-v $(build-dep.root)/$(dep-target)/install/$(build-arch):$(container.install):rw',
-          '--workdir $(container.build)'
-        ],
         'build-arch': [build_target],
-        'target-name': ['%s.%s' % (lib_target, build_target)],
-        'bdep.root': ['$(build-dep.root)/$(dep-target)/source'],
-        'bdep.target': ['/source'],
-        'toolchain-dir': ['/home/coffee/cmake-project'],
-        'host.arch': ['x86_64-linux-gnu']
+        'dep-target': [lib_target]
       })
+
+      add_build_dep_template(td['type'], out)
 
       if not gen_once and td['type'] == 'cmake':
         target_defs = target_defs + gen_strip_target(out)
@@ -428,17 +422,12 @@ def transform_build_deps(build_deps, template_def, skeleton, targets):
                              '%s.%s.install_dir' % (lib_target, build_target)]
 
       if td['type'] == 'cmake':
-        out['cmake-opts'] = out['cmake-opts'] + td['cmake-opts'] + [
-          '-DCMAKE_INSTALL_PREFIX=$(container.install)',
-          '-DCMAKE_BUILD_TYPE=Release'
-        ]
+        out['cmake-opts'] += td['cmake-opts']
       elif td['type'] == 'automake':
-        out['program.exec'] = ['sh -c']
-        out['program.arguments'] = ['\'', 'cd $(container.build)', '&&', '$(container.src)/configure'] + td['ac-opts'] + ['&&', 'make -j4',
-                                                    '&&', 'make install', '\'']
-        out['target'] = ['custom']
+        out['automake.opts'] = [stringify(td['ac-opts'])]
+        out['cmake-opts'] = []
       elif td['type'] == 'openssl':
-        pass
+        out['cmake-opts'] = []
       else:
         continue
 
@@ -447,6 +436,7 @@ def transform_build_deps(build_deps, template_def, skeleton, targets):
         'install_dir': '$(build-dep.root)/$(dep-target)/install/$(build-arch)'
       }
 
+      resolve_vars(out)
       replace_definitions(build_dirs, out)
 
       mkdir_deps = ''
@@ -457,7 +447,6 @@ def transform_build_deps(build_deps, template_def, skeleton, targets):
 \tmkdir -p %s
 ''' % (lib_target, build_target, f, build_dirs[f])
 
-      resolve_vars(out)
 
       target_defs = target_defs + mkdir_deps + generate_rule(out)
 
@@ -489,7 +478,7 @@ if __name__ == '__main__':
   for t in targets:
     target_definitions[t] = {}
     root = target_definitions[t]
-    root.update(variables)
+    root.update(deepcopy(variables))
     root.update(collapse_dictionary({'dependencies': dependencies}))
     root.update({'target-name': [t]})
 
@@ -508,7 +497,10 @@ if __name__ == '__main__':
   temp_skeleton = {}
   temp_skeleton.update(variables)
   temp_skeleton.update(collapse_dictionary({'dependencies': dependencies}))
-  build_deps = transform_build_deps(build_deps, data['templates'], temp_skeleton, targets)
+  build_deps = transform_build_deps(build_deps,
+                                    data['templates'],
+                                    data['build-dep-template'],
+                                    temp_skeleton, targets)
 
   with open(argv[2], 'w') as f:
     f.write(
