@@ -140,7 +140,7 @@ if(WIN32)
             shell32
             version
             ws2_32
-#            iwbemuuid
+            wbemuuid
             )
     else()
         list ( APPEND CORE_EXTRA_LIBRARIES
