@@ -130,7 +130,7 @@ variables:
   cmake-project.src: /home/coffee/cmake-project # ^
   build-dep:
     root: $(project.build)/build-dependencies
-    src-root: $(bdep.root)/$(dep-target)/source
+    src-root: $(build-dep.root)/$(dep-target)/source
     src: $(container.src)
     install: $(container.install)
     install-root: $(build-dep.root)/$(dep-target)/install/$(build-arch)
@@ -256,8 +256,10 @@ build-dep-template:
     =host.arch: x86_64-linux-gnu
     =toolchain-dir: $(cmake-project.src)
     =cmake.install: $(build-dep.install)
+    =program.workdir: $(build-dep.build)
   ^cmake$:
     =build.build-type: Release
+    =cmake.src: $(build-dep.src)
     +cmake-opts:
       - -DCMAKE_BUILD_TYPE=$(build.build-type)
       - -DCMAKE_INSTALL_PREFIX=$(build-dep.install)
@@ -288,6 +290,7 @@ templates:
   =build-type: $(build.build-type)
   =preload: nothing.cmake
   =lib.flavor: $(target-name)
+  =program.workdir: $(env:CMAKE_BUILD_DIR)
   
   # Default dependency
   =dependencies: native-libs

@@ -3,7 +3,7 @@ GIT := git
 
 BUILD_NAME := mac-osx
 
-BUILD_DIR  := $(PWD)/$(BUILD_NAME)
+CMAKE_BUILD_DIR  := $(PWD)/$(BUILD_NAME)
 OUTPUT_DIR := $(PWD)/build/$(BUILD_NAME)
 SOURCE_DIR := $(PWD)/..
 
@@ -22,10 +22,10 @@ all: build
 
 make-dirs:
 	mkdir -p \
-		$(BUILD_DIR)
+		$(CMAKE_BUILD_DIR)
 
 config: make-dirs
-	sh -c 'cd $(BUILD_DIR) && ls && CC=clang CXX=clang++ $(CMAKE) $(CMAKE_OPTS)'
+	sh -c 'cd $(CMAKE_BUILD_DIR) && ls && CC=clang CXX=clang++ $(CMAKE) $(CMAKE_OPTS)'
 
 build: config
-	$(CMAKE) --build $(BUILD_DIR) --config $(CMAKE_CONFIG) --target $(CMAKE_TARGET)
+	$(CMAKE) --build $(CMAKE_BUILD_DIR) --config $(CMAKE_CONFIG) --target $(CMAKE_TARGET)

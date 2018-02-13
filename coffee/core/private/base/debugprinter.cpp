@@ -44,7 +44,13 @@ void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
     cstring severity_str = severity_string(sev);
 
     CString cclock = Time::ClockString();
-	cclock.resize(cclock.find('\0'));
+#if defined(COFFEE_WINDOWS)
+    /* VC++ fills the string with \0, and does not ignore it
+     *  while appending. This is a big problem. */
+    auto cclock_clip = cclock.find('\0');
+    if(cclock_clip != CString::npos)
+        cclock.resize(cclock_clip);
+#endif
 
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
     CString ms_time = cast_pod(Time::Microsecond() % 1000);

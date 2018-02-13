@@ -450,7 +450,7 @@ strip.android.armv7a.gingerbread.gles2:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv7a.gingerbread.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv7a.gingerbread.gles2/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -472,7 +472,7 @@ assimp.android.armv7a.gingerbread.gles2: assimp.source assimp.android.armv7a.gin
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv7a.gingerbread.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -493,7 +493,7 @@ bullet.android.armv7a.gingerbread.gles2: bullet.source bullet.android.armv7a.gin
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv7a.gingerbread.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -514,7 +514,7 @@ openal.android.armv7a.gingerbread.gles2: openal.source openal.android.armv7a.gin
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv7a.gingerbread.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -535,7 +535,7 @@ openssl.android.armv7a.gingerbread.gles2: openssl.source openssl.android.armv7a.
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv7a.gingerbread.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -556,7 +556,7 @@ sdl2.android.armv7a.gingerbread.gles2: sdl2.source sdl2.android.armv7a.gingerbre
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.gingerbread.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -568,7 +568,7 @@ strip.android.armv7a.kitkat.gles2:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv7a.kitkat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv7a.kitkat.gles2/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -590,7 +590,7 @@ assimp.android.armv7a.kitkat.gles2: assimp.source assimp.android.armv7a.kitkat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv7a.kitkat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -611,7 +611,7 @@ bullet.android.armv7a.kitkat.gles2: bullet.source bullet.android.armv7a.kitkat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv7a.kitkat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -632,7 +632,7 @@ openal.android.armv7a.kitkat.gles2: openal.source openal.android.armv7a.kitkat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv7a.kitkat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -653,7 +653,7 @@ openssl.android.armv7a.kitkat.gles2: openssl.source openssl.android.armv7a.kitka
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv7a.kitkat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -674,7 +674,7 @@ sdl2.android.armv7a.kitkat.gles2: sdl2.source sdl2.android.armv7a.kitkat.gles2.b
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.kitkat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -686,7 +686,7 @@ strip.android.armv7a.lollipop.gles3:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv7a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv7a.lollipop.gles3/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -708,7 +708,7 @@ assimp.android.armv7a.lollipop.gles3: assimp.source assimp.android.armv7a.lollip
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv7a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -729,7 +729,7 @@ bullet.android.armv7a.lollipop.gles3: bullet.source bullet.android.armv7a.lollip
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv7a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -750,7 +750,7 @@ openal.android.armv7a.lollipop.gles3: openal.source openal.android.armv7a.lollip
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv7a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -771,7 +771,7 @@ openssl.android.armv7a.lollipop.gles3: openssl.source openssl.android.armv7a.lol
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv7a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -792,7 +792,7 @@ sdl2.android.armv7a.lollipop.gles3: sdl2.source sdl2.android.armv7a.lollipop.gle
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -804,7 +804,7 @@ strip.android.armv7a.nougat.gles2:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv7a.nougat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv7a.nougat.gles2/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -826,7 +826,7 @@ assimp.android.armv7a.nougat.gles2: assimp.source assimp.android.armv7a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv7a.nougat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -847,7 +847,7 @@ bullet.android.armv7a.nougat.gles2: bullet.source bullet.android.armv7a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv7a.nougat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -868,7 +868,7 @@ openal.android.armv7a.nougat.gles2: openal.source openal.android.armv7a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv7a.nougat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -889,7 +889,7 @@ openssl.android.armv7a.nougat.gles2: openssl.source openssl.android.armv7a.nouga
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv7a.nougat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -910,7 +910,7 @@ sdl2.android.armv7a.nougat.gles2: sdl2.source sdl2.android.armv7a.nougat.gles2.b
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.nougat.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -922,7 +922,7 @@ strip.android.armv7a.nougat.gles3:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv7a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv7a.nougat.gles3/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -944,7 +944,7 @@ assimp.android.armv7a.nougat.gles3: assimp.source assimp.android.armv7a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv7a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -965,7 +965,7 @@ bullet.android.armv7a.nougat.gles3: bullet.source bullet.android.armv7a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv7a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -986,7 +986,7 @@ openal.android.armv7a.nougat.gles3: openal.source openal.android.armv7a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv7a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1007,7 +1007,7 @@ openssl.android.armv7a.nougat.gles3: openssl.source openssl.android.armv7a.nouga
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv7a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1028,7 +1028,7 @@ sdl2.android.armv7a.nougat.gles3: sdl2.source sdl2.android.armv7a.nougat.gles3.b
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1040,7 +1040,7 @@ strip.android.armv8a.lollipop.gles3:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv8a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv8a.lollipop.gles3/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1062,7 +1062,7 @@ assimp.android.armv8a.lollipop.gles3: assimp.source assimp.android.armv8a.lollip
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv8a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1083,7 +1083,7 @@ bullet.android.armv8a.lollipop.gles3: bullet.source bullet.android.armv8a.lollip
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv8a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1104,7 +1104,7 @@ openal.android.armv8a.lollipop.gles3: openal.source openal.android.armv8a.lollip
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv8a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1125,7 +1125,7 @@ openssl.android.armv8a.lollipop.gles3: openssl.source openssl.android.armv8a.lol
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv8a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1146,7 +1146,7 @@ sdl2.android.armv8a.lollipop.gles3: sdl2.source sdl2.android.armv8a.lollipop.gle
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv8a.lollipop.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1158,7 +1158,7 @@ strip.android.armv8a.nougat.gles3:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.armv8a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.armv8a.nougat.gles3/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1180,7 +1180,7 @@ assimp.android.armv8a.nougat.gles3: assimp.source assimp.android.armv8a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.armv8a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1201,7 +1201,7 @@ bullet.android.armv8a.nougat.gles3: bullet.source bullet.android.armv8a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.armv8a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1222,7 +1222,7 @@ openal.android.armv8a.nougat.gles3: openal.source openal.android.armv8a.nougat.g
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.armv8a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1243,7 +1243,7 @@ openssl.android.armv8a.nougat.gles3: openssl.source openssl.android.armv8a.nouga
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.armv8a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1264,7 +1264,7 @@ sdl2.android.armv8a.nougat.gles3: sdl2.source sdl2.android.armv8a.nougat.gles3.b
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv8a.nougat.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1276,7 +1276,7 @@ strip.android.mips.kitkat:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.mips.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.mips.kitkat/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1298,7 +1298,7 @@ assimp.android.mips.kitkat: assimp.source assimp.android.mips.kitkat.build_dir a
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.mips.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1319,7 +1319,7 @@ bullet.android.mips.kitkat: bullet.source bullet.android.mips.kitkat.build_dir b
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.mips.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1340,7 +1340,7 @@ openal.android.mips.kitkat: openal.source openal.android.mips.kitkat.build_dir o
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.mips.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1361,7 +1361,7 @@ openssl.android.mips.kitkat: openssl.source openssl.android.mips.kitkat.build_di
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.mips.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1382,7 +1382,7 @@ sdl2.android.mips.kitkat: sdl2.source sdl2.android.mips.kitkat.build_dir sdl2.an
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.mips.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1394,7 +1394,7 @@ strip.android.mips64.kitkat:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.mips64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.mips64.kitkat/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1416,7 +1416,7 @@ assimp.android.mips64.kitkat: assimp.source assimp.android.mips64.kitkat.build_d
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.mips64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1437,7 +1437,7 @@ bullet.android.mips64.kitkat: bullet.source bullet.android.mips64.kitkat.build_d
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.mips64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1458,7 +1458,7 @@ openal.android.mips64.kitkat: openal.source openal.android.mips64.kitkat.build_d
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.mips64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1479,7 +1479,7 @@ openssl.android.mips64.kitkat: openssl.source openssl.android.mips64.kitkat.buil
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.mips64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1500,7 +1500,7 @@ sdl2.android.mips64.kitkat: sdl2.source sdl2.android.mips64.kitkat.build_dir sdl
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.mips64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1512,7 +1512,7 @@ strip.android.x86.kitkat:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.x86.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.x86.kitkat/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1534,7 +1534,7 @@ assimp.android.x86.kitkat: assimp.source assimp.android.x86.kitkat.build_dir ass
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.x86.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1555,7 +1555,7 @@ bullet.android.x86.kitkat: bullet.source bullet.android.x86.kitkat.build_dir bul
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.x86.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1576,7 +1576,7 @@ openal.android.x86.kitkat: openal.source openal.android.x86.kitkat.build_dir ope
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.x86.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1597,7 +1597,7 @@ openssl.android.x86.kitkat: openssl.source openssl.android.x86.kitkat.build_dir 
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.x86.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1618,7 +1618,7 @@ sdl2.android.x86.kitkat: sdl2.source sdl2.android.x86.kitkat.build_dir sdl2.andr
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.x86.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1630,7 +1630,7 @@ strip.android.x86_64.kitkat:  FORCE
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.android.x86_64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/android.x86_64.kitkat/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1652,7 +1652,7 @@ assimp.android.x86_64.kitkat: assimp.source assimp.android.x86_64.kitkat.build_d
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.android.x86_64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1673,7 +1673,7 @@ bullet.android.x86_64.kitkat: bullet.source bullet.android.x86_64.kitkat.build_d
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.android.x86_64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1694,7 +1694,7 @@ openal.android.x86_64.kitkat: openal.source openal.android.x86_64.kitkat.build_d
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.android.x86_64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1715,7 +1715,7 @@ openssl.android.x86_64.kitkat: openssl.source openssl.android.x86_64.kitkat.buil
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.android.x86_64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1736,7 +1736,7 @@ sdl2.android.x86_64.kitkat: sdl2.source sdl2.android.x86_64.kitkat.build_dir sdl
 		-e DOCKER_CONFIG="android" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.x86_64.kitkat" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1748,7 +1748,7 @@ strip.coverage:  FORCE
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.coverage" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/coverage/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1770,7 +1770,7 @@ assimp.coverage: assimp.source assimp.coverage.build_dir assimp.coverage.install
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.coverage" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1791,7 +1791,7 @@ bullet.coverage: bullet.source bullet.coverage.build_dir bullet.coverage.install
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.coverage" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1812,7 +1812,7 @@ openal.coverage: openal.source openal.coverage.build_dir openal.coverage.install
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.coverage" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1833,7 +1833,7 @@ openssl.coverage: openssl.source openssl.coverage.build_dir openssl.coverage.ins
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.coverage" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1854,7 +1854,7 @@ sdl2.coverage: sdl2.source sdl2.coverage.build_dir sdl2.coverage.install_dir FOR
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.coverage" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1866,7 +1866,7 @@ strip.emscripten.asmjs:  FORCE
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.emscripten.asmjs" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/emscripten.asmjs/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1888,7 +1888,7 @@ assimp.emscripten.asmjs: assimp.source assimp.emscripten.asmjs.build_dir assimp.
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.emscripten.asmjs" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1909,7 +1909,7 @@ bullet.emscripten.asmjs: bullet.source bullet.emscripten.asmjs.build_dir bullet.
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.emscripten.asmjs" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1930,7 +1930,7 @@ openal.emscripten.asmjs: openal.source openal.emscripten.asmjs.build_dir openal.
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.emscripten.asmjs" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1951,7 +1951,7 @@ openssl.emscripten.asmjs: openssl.source openssl.emscripten.asmjs.build_dir open
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.emscripten.asmjs" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -1972,7 +1972,7 @@ sdl2.emscripten.asmjs: sdl2.source sdl2.emscripten.asmjs.build_dir sdl2.emscript
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.emscripten.asmjs" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -1984,7 +1984,7 @@ strip.emscripten.wasm:  FORCE
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.emscripten.wasm" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/emscripten.wasm/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2006,7 +2006,7 @@ assimp.emscripten.wasm: assimp.source assimp.emscripten.wasm.build_dir assimp.em
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.emscripten.wasm" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2027,7 +2027,7 @@ bullet.emscripten.wasm: bullet.source bullet.emscripten.wasm.build_dir bullet.em
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.emscripten.wasm" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2048,7 +2048,7 @@ openal.emscripten.wasm: openal.source openal.emscripten.wasm.build_dir openal.em
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.emscripten.wasm" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2069,7 +2069,7 @@ openssl.emscripten.wasm: openssl.source openssl.emscripten.wasm.build_dir openss
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.emscripten.wasm" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2090,7 +2090,7 @@ sdl2.emscripten.wasm: sdl2.source sdl2.emscripten.wasm.build_dir sdl2.emscripten
 		-e DOCKER_CONFIG="emscripten" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.emscripten.wasm" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2102,7 +2102,7 @@ strip.fedora.amd64:  FORCE
 		-e DOCKER_CONFIG="fedora" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.fedora.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/fedora.amd64/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2124,7 +2124,7 @@ assimp.fedora.amd64: assimp.source assimp.fedora.amd64.build_dir assimp.fedora.a
 		-e DOCKER_CONFIG="fedora" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.fedora.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2145,7 +2145,7 @@ bullet.fedora.amd64: bullet.source bullet.fedora.amd64.build_dir bullet.fedora.a
 		-e DOCKER_CONFIG="fedora" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.fedora.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2166,7 +2166,7 @@ openal.fedora.amd64: openal.source openal.fedora.amd64.build_dir openal.fedora.a
 		-e DOCKER_CONFIG="fedora" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.fedora.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2187,7 +2187,7 @@ openssl.fedora.amd64: openssl.source openssl.fedora.amd64.build_dir openssl.fedo
 		-e DOCKER_CONFIG="fedora" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.fedora.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2208,7 +2208,7 @@ sdl2.fedora.amd64: sdl2.source sdl2.fedora.amd64.build_dir sdl2.fedora.amd64.ins
 		-e DOCKER_CONFIG="fedora" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.fedora.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2219,7 +2219,7 @@ strip.ios:  FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ios" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/ios"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ios/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2240,7 +2240,7 @@ assimp.ios: assimp.source assimp.ios.build_dir assimp.ios.install_dir FORCE
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/assimp/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/ios -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ios" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/ios"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2260,7 +2260,7 @@ bullet.ios: bullet.source bullet.ios.build_dir bullet.ios.install_dir FORCE
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/bullet/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/ios -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ios" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/bullet/build/ios"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2280,7 +2280,7 @@ openal.ios: openal.source openal.ios.build_dir openal.ios.install_dir FORCE
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/openal/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/ios -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/ios -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ios" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openal/build/ios"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2300,7 +2300,7 @@ openssl.ios: openssl.source openssl.ios.build_dir openssl.ios.install_dir FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ios" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openssl/build/ios"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2320,7 +2320,7 @@ sdl2.ios: sdl2.source sdl2.ios.build_dir sdl2.ios.install_dir FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/ios"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2331,7 +2331,7 @@ strip.ios.x86:  FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ios.x86" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/ios.x86"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ios.x86/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2352,7 +2352,7 @@ assimp.ios.x86: assimp.source assimp.ios.x86.build_dir assimp.ios.x86.install_di
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/assimp/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/ios.x86 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/ios.x86 -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ios.x86" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/ios.x86"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2372,7 +2372,7 @@ bullet.ios.x86: bullet.source bullet.ios.x86.build_dir bullet.ios.x86.install_di
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/bullet/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/ios.x86 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/ios.x86 -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ios.x86" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/bullet/build/ios.x86"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2392,7 +2392,7 @@ openal.ios.x86: openal.source openal.ios.x86.build_dir openal.ios.x86.install_di
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/openal/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/ios.x86 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/ios.x86 -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ios.x86" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openal/build/ios.x86"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2412,7 +2412,7 @@ openssl.ios.x86: openssl.source openssl.ios.x86.build_dir openssl.ios.x86.instal
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ios.x86" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openssl/build/ios.x86"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2432,7 +2432,7 @@ sdl2.ios.x86: sdl2.source sdl2.ios.x86.build_dir sdl2.ios.x86.install_dir FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios.x86" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2443,7 +2443,7 @@ strip.ios.x86_64:  FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ios.x86_64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/ios.x86_64"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ios.x86_64/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2464,7 +2464,7 @@ assimp.ios.x86_64: assimp.source assimp.ios.x86_64.build_dir assimp.ios.x86_64.i
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/assimp/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/ios.x86_64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/ios.x86_64 -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ios.x86_64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/ios.x86_64"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2484,7 +2484,7 @@ bullet.ios.x86_64: bullet.source bullet.ios.x86_64.build_dir bullet.ios.x86_64.i
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/bullet/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/ios.x86_64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/ios.x86_64 -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ios.x86_64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/bullet/build/ios.x86_64"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2504,7 +2504,7 @@ openal.ios.x86_64: openal.source openal.ios.x86_64.build_dir openal.ios.x86_64.i
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/openal/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-ios.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/all-ios.toolchain.cmake -DIOS_PLATFORM=SIMULATOR64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/ios.x86_64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/ios.x86_64 -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ios.x86_64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openal/build/ios.x86_64"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2524,7 +2524,7 @@ openssl.ios.x86_64: openssl.source openssl.ios.x86_64.build_dir openssl.ios.x86_
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ios.x86_64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openssl/build/ios.x86_64"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2544,7 +2544,7 @@ sdl2.ios.x86_64: sdl2.source sdl2.ios.x86_64.build_dir sdl2.ios.x86_64.install_d
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios.x86_64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2556,7 +2556,7 @@ strip.maemo.armel:  FORCE
 		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.maemo.armel" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/maemo.armel/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2578,7 +2578,7 @@ assimp.maemo.armel: assimp.source assimp.maemo.armel.build_dir assimp.maemo.arme
 		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.maemo.armel" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2599,7 +2599,7 @@ bullet.maemo.armel: bullet.source bullet.maemo.armel.build_dir bullet.maemo.arme
 		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.maemo.armel" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2620,7 +2620,7 @@ openal.maemo.armel: openal.source openal.maemo.armel.build_dir openal.maemo.arme
 		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.maemo.armel" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2641,7 +2641,7 @@ openssl.maemo.armel: openssl.source openssl.maemo.armel.build_dir openssl.maemo.
 		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.maemo.armel" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2662,7 +2662,7 @@ sdl2.maemo.armel: sdl2.source sdl2.maemo.armel.build_dir sdl2.maemo.armel.instal
 		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.maemo.armel" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2674,7 +2674,7 @@ strip.mingw.w64:  FORCE
 		-e DOCKER_CONFIG="mingw64" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.mingw.w64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/mingw.w64/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2696,7 +2696,7 @@ assimp.mingw.w64: assimp.source assimp.mingw.w64.build_dir assimp.mingw.w64.inst
 		-e DOCKER_CONFIG="mingw64" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.mingw.w64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2717,7 +2717,7 @@ bullet.mingw.w64: bullet.source bullet.mingw.w64.build_dir bullet.mingw.w64.inst
 		-e DOCKER_CONFIG="mingw64" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.mingw.w64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2738,7 +2738,7 @@ openal.mingw.w64: openal.source openal.mingw.w64.build_dir openal.mingw.w64.inst
 		-e DOCKER_CONFIG="mingw64" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.mingw.w64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2759,7 +2759,7 @@ openssl.mingw.w64: openssl.source openssl.mingw.w64.build_dir openssl.mingw.w64.
 		-e DOCKER_CONFIG="mingw64" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.mingw.w64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2780,7 +2780,7 @@ sdl2.mingw.w64: sdl2.source sdl2.mingw.w64.build_dir sdl2.mingw.w64.install_dir 
 		-e DOCKER_CONFIG="mingw64" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.mingw.w64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2791,7 +2791,7 @@ strip.osx:  FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.osx" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/osx"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/osx/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2812,7 +2812,7 @@ assimp.osx: assimp.source assimp.osx.build_dir assimp.osx.install_dir FORCE
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/assimp/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-generic.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/osx -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/assimp/install/osx -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF -DASSIMP_BUILD_BLEND_IMPORTER=ON -DASSIMP_BUILD_FBX_IMPORTER=ON -DASSIMP_BUILD_COLLADA_IMPORTER=ON -DASSIMP_BUILD_ASSIMP_TOOLS=OFF -DASSIMP_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.osx" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/assimp/build/osx"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2832,7 +2832,7 @@ bullet.osx: bullet.source bullet.osx.build_dir bullet.osx.install_dir FORCE
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/bullet/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-generic.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/osx -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/bullet/install/osx -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_EXTRAS=OFF -DUSE_GRAPHICAL_BENCHMARK=OFF -DINSTALL_LIBS=ON" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.osx" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/bullet/build/osx"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2852,7 +2852,7 @@ openal.osx: openal.source openal.osx.build_dir openal.osx.install_dir FORCE
 		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/openal/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-generic.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/osx -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/openal/install/osx -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF -DALSOFT_UTILS=OFF" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.osx" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openal/build/osx"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2872,7 +2872,7 @@ openssl.osx: openssl.source openssl.osx.build_dir openssl.osx.install_dir FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.osx" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/openssl/build/osx"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2892,7 +2892,7 @@ sdl2.osx: sdl2.source sdl2.osx.build_dir sdl2.osx.install_dir FORCE
 		-e EXTRA_OPTIONS="" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.osx" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/osx"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2904,7 +2904,7 @@ strip.raspberry.armhf:  FORCE
 		-e DOCKER_CONFIG="raspberry" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.raspberry.armhf" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/raspberry.armhf/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -2926,7 +2926,7 @@ assimp.raspberry.armhf: assimp.source assimp.raspberry.armhf.build_dir assimp.ra
 		-e DOCKER_CONFIG="raspberry" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.raspberry.armhf" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2947,7 +2947,7 @@ bullet.raspberry.armhf: bullet.source bullet.raspberry.armhf.build_dir bullet.ra
 		-e DOCKER_CONFIG="raspberry" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.raspberry.armhf" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2968,7 +2968,7 @@ openal.raspberry.armhf: openal.source openal.raspberry.armhf.build_dir openal.ra
 		-e DOCKER_CONFIG="raspberry" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.raspberry.armhf" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -2989,7 +2989,7 @@ openssl.raspberry.armhf: openssl.source openssl.raspberry.armhf.build_dir openss
 		-e DOCKER_CONFIG="raspberry" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.raspberry.armhf" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3010,7 +3010,7 @@ sdl2.raspberry.armhf: sdl2.source sdl2.raspberry.armhf.build_dir sdl2.raspberry.
 		-e DOCKER_CONFIG="raspberry" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.raspberry.armhf" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3022,7 +3022,7 @@ strip.steam.amd64:  FORCE
 		-e DOCKER_CONFIG="steam" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.steam.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/steam.amd64/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3044,7 +3044,7 @@ assimp.steam.amd64: assimp.source assimp.steam.amd64.build_dir assimp.steam.amd6
 		-e DOCKER_CONFIG="steam" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.steam.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3065,7 +3065,7 @@ bullet.steam.amd64: bullet.source bullet.steam.amd64.build_dir bullet.steam.amd6
 		-e DOCKER_CONFIG="steam" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.steam.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3086,7 +3086,7 @@ openal.steam.amd64: openal.source openal.steam.amd64.build_dir openal.steam.amd6
 		-e DOCKER_CONFIG="steam" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.steam.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3107,7 +3107,7 @@ openssl.steam.amd64: openssl.source openssl.steam.amd64.build_dir openssl.steam.
 		-e DOCKER_CONFIG="steam" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.steam.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3128,7 +3128,7 @@ sdl2.steam.amd64: sdl2.source sdl2.steam.amd64.build_dir sdl2.steam.amd64.instal
 		-e DOCKER_CONFIG="steam" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.steam.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3140,7 +3140,7 @@ strip.ubuntu.amd64:  FORCE
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ubuntu.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ubuntu.amd64/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3162,7 +3162,7 @@ assimp.ubuntu.amd64: assimp.source assimp.ubuntu.amd64.build_dir assimp.ubuntu.a
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ubuntu.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3183,7 +3183,7 @@ bullet.ubuntu.amd64: bullet.source bullet.ubuntu.amd64.build_dir bullet.ubuntu.a
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ubuntu.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3204,7 +3204,7 @@ openal.ubuntu.amd64: openal.source openal.ubuntu.amd64.build_dir openal.ubuntu.a
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ubuntu.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3225,7 +3225,7 @@ openssl.ubuntu.amd64: openssl.source openssl.ubuntu.amd64.build_dir openssl.ubun
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ubuntu.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3246,7 +3246,7 @@ sdl2.ubuntu.amd64: sdl2.source sdl2.ubuntu.amd64.build_dir sdl2.ubuntu.amd64.ins
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.amd64" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3258,7 +3258,7 @@ strip.ubuntu.amd64.gles2:  FORCE
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ubuntu.amd64.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ubuntu.amd64.gles2/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3280,7 +3280,7 @@ assimp.ubuntu.amd64.gles2: assimp.source assimp.ubuntu.amd64.gles2.build_dir ass
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ubuntu.amd64.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3301,7 +3301,7 @@ bullet.ubuntu.amd64.gles2: bullet.source bullet.ubuntu.amd64.gles2.build_dir bul
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ubuntu.amd64.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3322,7 +3322,7 @@ openal.ubuntu.amd64.gles2: openal.source openal.ubuntu.amd64.gles2.build_dir ope
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ubuntu.amd64.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3343,7 +3343,7 @@ openssl.ubuntu.amd64.gles2: openssl.source openssl.ubuntu.amd64.gles2.build_dir 
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ubuntu.amd64.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3364,7 +3364,7 @@ sdl2.ubuntu.amd64.gles2: sdl2.source sdl2.ubuntu.amd64.gles2.build_dir sdl2.ubun
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.amd64.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3376,7 +3376,7 @@ strip.ubuntu.amd64.gles3:  FORCE
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ubuntu.amd64.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ubuntu.amd64.gles3/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3398,7 +3398,7 @@ assimp.ubuntu.amd64.gles3: assimp.source assimp.ubuntu.amd64.gles3.build_dir ass
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ubuntu.amd64.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3419,7 +3419,7 @@ bullet.ubuntu.amd64.gles3: bullet.source bullet.ubuntu.amd64.gles3.build_dir bul
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ubuntu.amd64.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3440,7 +3440,7 @@ openal.ubuntu.amd64.gles3: openal.source openal.ubuntu.amd64.gles3.build_dir ope
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ubuntu.amd64.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3461,7 +3461,7 @@ openssl.ubuntu.amd64.gles3: openssl.source openssl.ubuntu.amd64.gles3.build_dir 
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ubuntu.amd64.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3482,7 +3482,7 @@ sdl2.ubuntu.amd64.gles3: sdl2.source sdl2.ubuntu.amd64.gles3.build_dir sdl2.ubun
 		-e DOCKER_CONFIG="ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.amd64.gles3" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3494,7 +3494,7 @@ strip.ubuntu.i686.gles:  FORCE
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ubuntu.i686.gles" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ubuntu.i686.gles/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3516,7 +3516,7 @@ assimp.ubuntu.i686.gles: assimp.source assimp.ubuntu.i686.gles.build_dir assimp.
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ubuntu.i686.gles" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3537,7 +3537,7 @@ bullet.ubuntu.i686.gles: bullet.source bullet.ubuntu.i686.gles.build_dir bullet.
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ubuntu.i686.gles" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3558,7 +3558,7 @@ openal.ubuntu.i686.gles: openal.source openal.ubuntu.i686.gles.build_dir openal.
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ubuntu.i686.gles" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3579,7 +3579,7 @@ openssl.ubuntu.i686.gles: openssl.source openssl.ubuntu.i686.gles.build_dir open
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ubuntu.i686.gles" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3600,7 +3600,7 @@ sdl2.ubuntu.i686.gles: sdl2.source sdl2.ubuntu.i686.gles.build_dir sdl2.ubuntu.i
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.i686.gles" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3612,7 +3612,7 @@ strip.ubuntu.i686.gles2:  FORCE
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies:/target-defs:rw" \
 		-e BUILD_NAME="strip.ubuntu.i686.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c '\`cmake -LA /home/coffee/project | grep CMAKE_STRIP | cut -d= -f2\` -g /target-defs/*/install/ubuntu.i686.gles2/lib/*.a'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
@@ -3634,7 +3634,7 @@ assimp.ubuntu.i686.gles2: assimp.source assimp.ubuntu.i686.gles2.build_dir assim
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/assimp/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/assimp/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/assimp/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="assimp.ubuntu.i686.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3655,7 +3655,7 @@ bullet.ubuntu.i686.gles2: bullet.source bullet.ubuntu.i686.gles2.build_dir bulle
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/bullet/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/bullet/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/bullet/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="bullet.ubuntu.i686.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3676,7 +3676,7 @@ openal.ubuntu.i686.gles2: openal.source openal.ubuntu.i686.gles2.build_dir opena
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openal/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openal/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openal/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openal.ubuntu.i686.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3697,7 +3697,7 @@ openssl.ubuntu.i686.gles2: openssl.source openssl.ubuntu.i686.gles2.build_dir op
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/openssl/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/openssl/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/openssl/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="openssl.ubuntu.i686.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3718,7 +3718,7 @@ sdl2.ubuntu.i686.gles2: sdl2.source sdl2.ubuntu.i686.gles2.build_dir sdl2.ubuntu
 		-e DOCKER_CONFIG="ubuntu-i686" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.i686.gles2" \
-		-e CMAKE_BUILD_DIR="$(CMAKE_BUILD_DIR)"\
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
 		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 

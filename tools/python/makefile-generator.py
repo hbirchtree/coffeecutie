@@ -240,7 +240,7 @@ def generate_rule(defs):
       pass
 
   extra_vars = {
-    'CMAKE_BUILD_DIR': '$(CMAKE_BUILD_DIR)',
+    'CMAKE_BUILD_DIR': stringify(defs['program.workdir']),
   }
 
   if 'program.exec' in defs:

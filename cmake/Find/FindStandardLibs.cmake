@@ -93,7 +93,7 @@ if(ANDROID)
     if(COFFEE_BUILD_SDL2)
         list ( APPEND CORE_EXTRA_LIBRARIES
             SDL2
-            ${SDL2_LIBRARIES}
+#            ${SDL2_LIBRARIES}
             )
     endif()
 
@@ -140,7 +140,7 @@ if(WIN32)
             shell32
             version
             ws2_32
-            iwbemuuid
+#            iwbemuuid
             )
     else()
         list ( APPEND CORE_EXTRA_LIBRARIES
