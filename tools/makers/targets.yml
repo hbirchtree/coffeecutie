@@ -327,6 +327,7 @@ templates:
     =build-dep.install: $(build-dep.install-root)
     =build-dep.build: $(build-dep.build-root)
     =cmake-project.src: $(project.src)/cmake
+    =program.workdir: $(project.build)
     =container-opts:
     .*osx.*:
       =description: Apple OS X
