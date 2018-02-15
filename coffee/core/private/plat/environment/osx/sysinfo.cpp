@@ -30,7 +30,7 @@ static CString _GetSysctlString(const cstring mod_string)
 
 static uint64 _GetSysctlInt(const cstring mod_string)
 {
-    uint64 temp;
+    uint64 temp = 0;
     size_t len = sizeof(temp);
     sysctlbyname(mod_string, &temp, &len, nullptr, 0);
     return temp;
