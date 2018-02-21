@@ -38,12 +38,10 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
 
     int ret = Z_OK;
 
-    if(InitD == nullptr)
-        ret = InitD(&strm, opts.level, ZLIB_VERSION,
-                    C_FCAST<int>(sizeof(z_stream)));
+    if(InitD != nullptr)
+        ret = deflateInit(&strm, opts.level);
     else
-        ret = InitI(&strm, ZLIB_VERSION,
-                    C_FCAST<int>(sizeof(z_stream)));
+        ret = inflateInit(&strm);
 
     if(ret != Z_OK)
         return false;
@@ -64,7 +62,7 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
         }
     }
 
-    if(InitD == nullptr)
+    if(InitD != nullptr)
     {
         do
         {

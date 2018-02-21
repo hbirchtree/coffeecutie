@@ -60,7 +60,6 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
         }
 
         file.offset = data_size;
-        file.size = filenames[i].data.size;
         file.rsize = filenames[i].data.size;
         MemCpy(file.name, fn.c_str(), fn.size());
         file.flags = filenames[i].flags;
@@ -70,10 +69,12 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
         {
             Zlib::Compress(filenames[i].data,
                            &arr, {});
+            file.size = arr.size;
         }else
         {
             arr.data = filenames[i].data.data;
             arr.size = filenames[i].data.size;
+            file.size = filenames[i].data.size;
         }
 
         data_size += file.size;

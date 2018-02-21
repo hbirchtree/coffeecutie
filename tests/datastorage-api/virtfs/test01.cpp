@@ -6,7 +6,21 @@ using namespace Coffee;
 
 using RSC = Coffee::CResources::Resource;
 
-static const cstring test_txt_content = "TEST DATA LOL";
+static const cstring test_txt_content =
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        "TEST DATA LOL"
+        ;
 
 bool virtfs_serialize()
 {
@@ -14,7 +28,7 @@ bool virtfs_serialize()
     Vector<VirtFS::VirtDesc> inputData;
     inputData.emplace_back(
             "test.txt",
-            std::move(Bytes::CreateString(test_txt_content)),
+            Bytes::CreateString(test_txt_content),
             VirtFS::File_Compressed
         );
 
