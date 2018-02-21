@@ -44,10 +44,10 @@ enum FileFlags
 
 struct VirtualFS
 {
-    char vfs_header[16] = VirtualFS_Magic;
+    const char vfs_header[16] = VirtualFS_Magic;
 
     szptr num_files; /*!< Number of VFile entries */
-    szptr data_offset;
+    szptr data_offset; /*!< Offset from start of this structure to the data segment */
 
     static VFile const* GetFile(
             VFS const* vfs,
@@ -62,7 +62,8 @@ PACKEDSTRUCT VirtualFile
 {
     char name[96]; /*!< File name */
     szptr offset; /*!< Offset to file */
-    szptr size; /*!< Size of file */
+    szptr size; /*!< Size of file. If compressed, size of compressed file */
+    szptr rsize; /*!< Size of file in memory. If compressed, uncompressed size */
     u32 flags;
 };
 
@@ -109,6 +110,28 @@ public:
 
     Bytes data() const;
 };
+
+struct VirtDesc
+{
+    VirtDesc(cstring fname, Bytes&& data, u32 flags = 0):
+        filename(fname),
+        data(std::move(data)),
+        flags(flags)
+    {
+    }
+
+    CString filename;
+    Bytes data;
+    /*!
+     * \brief when matching File_Compressed,
+     *  compress the input data using zlib.
+     */
+    u32 flags;
+};
+
+extern bool GenVirtFS(
+        Vector<VirtDesc> const& filenames,
+        Vector<byte_t>* output);
 
 }
 

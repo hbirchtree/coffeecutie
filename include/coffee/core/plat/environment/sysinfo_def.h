@@ -64,17 +64,19 @@ struct SysInfoDef
      */
     CoreCnt CpuCount()
     {
-        return 0;
+        return 1;
     }
 
     STATICINLINE
     /*!
      * \brief Return core count of processor in use.
      *  In NUMA systems, this shall be core count of the single processors.
+     * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    CoreCnt CoreCount()
+    CoreCnt CoreCount(u32 i = 0)
     {
+        C_UNUSED(i);
         return 0;
     }
 
@@ -178,9 +180,10 @@ struct SysInfoDef
      * On ARM Linux systems the definition
      *  is more coarse, as Linaro+ kernels
      *  do not provide full information.
+     * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    HWDeviceInfo Processor();
+    HWDeviceInfo Processor(u32 i = 0);
 
     STATICINLINE
     /*!
@@ -189,10 +192,12 @@ struct SysInfoDef
      *  (but does not need to) equal the amount of cores.
      * ARM big.LITTLE systems should state frequencies
      *  of both processor variants at the least.
+     * \param i Processor to examine
      * \return
      */
-    Vector<bigscalar> ProcessorFrequencies()
+    Vector<bigscalar> ProcessorFrequencies(u32 i = 0)
     {
+        C_UNUSED(i);
         return {};
     }
 
@@ -201,10 +206,12 @@ struct SysInfoDef
      * \brief Return the greatest processor frequency on the system.
      * This is a legacy feature from before considering NUMA
      *  and other heterogenous systems..
+     * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    bigscalar ProcessorFrequency()
+    bigscalar ProcessorFrequency(u32 i = 0)
     {
+        C_UNUSED(i);
         return 1.0;
     }
 
@@ -236,10 +243,12 @@ struct SysInfoDef
     /*!
      * \brief Loose definition, but if possible should return L1 cache size.
      * This API is poorly implemented.
+     * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    MemUnit ProcessorCacheSize()
+    MemUnit ProcessorCacheSize(u32 i = 0)
     {
+        C_UNUSED(i);
         return 0;
     }
 
@@ -249,6 +258,7 @@ struct SysInfoDef
      * \brief Often provided as CoreCount() != ThreadCount(),
      * should give a heuristic of whether the system maps
      *  multiple execution threads to single physical cores.
+     * \param i Processor to examine, max count is CpuCount()
      * \return
      */
     bool HasHyperThreading()
