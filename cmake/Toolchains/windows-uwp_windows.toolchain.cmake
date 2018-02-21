@@ -25,4 +25,4 @@ add_definitions (
 
 include_directories ( "${NATIVE_LIBRARY_DIR}/include" )
 
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1 /std:c++17" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1 /std:c++17" CACHE STRING "" )

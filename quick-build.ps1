@@ -4,6 +4,7 @@ $env:BUILDVARIANT = $args[0]
 $env:CONFIGURATION = "Debug"
 $env:CMAKE_BIN = "cmake.exe"
 $env:SOURCE_DIR = "$PWD"
+$env:APPVEYOR_BUILD_WORKER_IMAGE = "$VSVER"
 
 $PYTHON="C:\Python36\python.exe"
 
