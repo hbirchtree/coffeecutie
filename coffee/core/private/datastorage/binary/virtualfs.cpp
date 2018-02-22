@@ -15,6 +15,11 @@ Resource::Resource(const VFS *base, const Url &url):
 {
 }
 
+bool Resource::valid() const
+{
+    return file != nullptr;
+}
+
 Bytes Resource::data() const
 {
     if(!file)
@@ -35,6 +40,7 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
 
     VFS base_fs = {};
 
+    MemCpy(base_fs.vfs_header, VFSMagic, MagicLength);
     base_fs.num_files = filenames.size();
     base_fs.data_offset =
             sizeof(VFS) +
@@ -97,6 +103,33 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
 
     Profiler::DeepProfile(VIRTFS_API "VirtFS creation successful");
     return true;
+}
+
+Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS *vfs, const VFile *file)
+{
+    byte_t const* basePtr = C_RCAST<byte_t const*>(vfs);
+
+    Bytes data;
+
+    if(file)
+    {
+        byte_t* srcPtr = C_CCAST<byte_t*>(basePtr
+                                          + vfs->data_offset
+                                          + file->offset);
+        szptr srcSize = file->size;
+
+        if(file->flags & File_Compressed)
+        {
+            if(!Zlib::Decompress(Bytes(srcPtr, srcSize), &data, {}))
+                cWarning(VIRTFS_API "Failed to decompress file");
+        }else
+        {
+            data.data = srcPtr;
+            data.size = srcSize;
+        }
+    }
+
+    return data;
 }
 
 }

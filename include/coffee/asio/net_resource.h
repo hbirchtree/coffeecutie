@@ -53,6 +53,10 @@ public:
 
     bool isRequestReady() const;
     bool isResponseReady() const;
+    FORCEDINLINE bool valid() const
+    {
+        return isResponseReady();
+    }
 
     void setHeaderField(CString const& field, CString const& value);
 

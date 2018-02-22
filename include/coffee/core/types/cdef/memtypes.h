@@ -56,6 +56,13 @@ struct _cbasic_data_chunk
         return {C_FCAST<T*>(src), strlen(src), 0};
     }
 
+    template<typename T2>
+    STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
+    {
+        return
+        {C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), 0};
+    }
+
     template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>
     T& operator[] (szptr i)
     {

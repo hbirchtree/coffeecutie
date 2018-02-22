@@ -40,11 +40,33 @@ enum FileFlags
     File_Compressed = 0x1,
 };
 
-#define VirtualFS_Magic "CfVirtFS"
+static const constexpr szptr MaxFileNameLength = 96;
+static const constexpr szptr MagicLength = 8;
+static const constexpr char VFSMagic[MagicLength] = "CfVrtFS";
 
 struct VirtualFS
 {
-    const char vfs_header[16] = VirtualFS_Magic;
+    static bool OpenVFS(Bytes const& src,
+                        VirtualFS const* *vfs)
+    {
+        *vfs = nullptr;
+
+        if(src.size < sizeof(VirtualFS))
+            return false;
+
+        VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
+
+        if(!MemCmp(VFSMagic,
+                   temp_vfs->vfs_header,
+                   sizeof(vfs_header)))
+            return false;
+
+        *vfs = temp_vfs;
+
+        return true;
+    }
+
+    char vfs_header[MagicLength];
 
     szptr num_files; /*!< Number of VFile entries */
     szptr data_offset; /*!< Offset from start of this structure to the data segment */
@@ -53,6 +75,10 @@ struct VirtualFS
             VFS const* vfs,
             cstring name);
 
+    static VFile const* GetFile(
+            VFS const* vfs,
+            szptr idx);
+
     static Bytes GetData(
             VFS const* vfs,
             VFile const* file);
@@ -60,7 +86,7 @@ struct VirtualFS
 
 PACKEDSTRUCT VirtualFile
 {
-    char name[96]; /*!< File name */
+    char name[MaxFileNameLength]; /*!< File name */
     szptr offset; /*!< Offset to file */
     szptr size; /*!< Size of file. If compressed, size of compressed file */
     szptr rsize; /*!< Size of file in memory. If compressed, uncompressed size */
@@ -85,17 +111,14 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(
     return nullptr;
 }
 
-FORCEDINLINE Bytes VirtualFS::GetData(
-        VFS const* vfs,
-        VFile const*  file)
+FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS *vfs, szptr idx)
 {
-    byte_t const* basePtr = C_RCAST<byte_t const*>(vfs);
+    VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
 
-    Bytes data;
-    data.data = C_CCAST<byte_t*>(basePtr + vfs->data_offset + file->offset);
-    data.size = file->size;
+    if(idx >= vfs->num_files)
+        return nullptr;
 
-    return data;
+    return &vf_start[idx];
 }
 
 struct Resource
@@ -108,7 +131,93 @@ public:
     Resource(VFS const* base,
              Url const& url);
 
+    bool valid() const;
     Bytes data() const;
+};
+
+struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
+{
+    static constexpr szptr npos = C_CAST<szptr>(-1);
+
+    /*!
+     * \brief constructor for end-iterator
+     */
+    vfs_iterator():
+        m_idx(npos),
+        m_file(nullptr)
+    {
+    }
+
+    vfs_iterator(VFS const* vfs, szptr idx):
+        m_vfs(vfs),
+        m_idx(idx),
+        m_file(VFS::GetFile(vfs, idx))
+    {
+    }
+
+    vfs_iterator& operator++()
+    {
+        m_idx++;
+        if(m_idx < m_vfs->num_files)
+            update_file();
+        else
+            m_idx = npos;
+        return *this;
+    }
+
+    bool operator !=(vfs_iterator const& other) const
+    {
+        return other.m_idx != m_idx;
+    }
+    bool operator ==(vfs_iterator const& other) const
+    {
+        return other.m_idx == m_idx;
+    }
+
+    VFile const& operator*() const
+    {
+        if(!m_file)
+            throw std::out_of_range("non-existent virtual file");
+        return *m_file;
+    }
+
+    operator Bytes()
+    {
+        return VFS::GetData(m_vfs, m_file);
+    }
+
+private:
+    void update_file()
+    {
+        m_file = VFS::GetFile(m_vfs, m_idx);
+    }
+
+    VFS const* m_vfs;
+    szptr m_idx;
+    VFile const* m_file;
+};
+
+struct vfs_view
+{
+    using iterator = vfs_iterator;
+
+    vfs_view(Bytes const& base)
+    {
+        VFS::OpenVFS(base, &m_vfs);
+    }
+
+    iterator begin() const
+    {
+        return iterator(m_vfs, 0);
+    }
+
+    iterator end() const
+    {
+        return iterator();
+    }
+
+private:
+    VFS const* m_vfs;
 };
 
 struct VirtDesc

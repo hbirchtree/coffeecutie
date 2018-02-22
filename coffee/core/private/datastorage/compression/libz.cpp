@@ -51,7 +51,7 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
         auto comp_size = compress_store.size();
         ret = Proc(&strm, Z_NO_FLUSH);
 
-        if(ret != Z_OK)
+        if(ret != Z_OK && ret != Z_STREAM_END)
             return false;
 
         if(strm.avail_out == 0 && strm.avail_in > 0)

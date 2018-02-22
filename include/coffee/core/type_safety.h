@@ -162,7 +162,7 @@ static inline D C_FCAST(T from)
 //}
 
 template<typename D, typename T>
-static inline D C_CAST(T from)
+static inline constexpr D C_CAST(T from)
 {
     return static_cast<D>(from);
 }
@@ -172,12 +172,12 @@ static inline D* C_DCAST(T* from)
     return dynamic_cast<D*>(from);
 }
 template<typename D, typename T>
-static inline D C_CCAST(T from)
+static inline constexpr D C_CCAST(T from)
 {
     return const_cast<D>(from);
 }
 template<typename D, typename T>
-static inline D C_RCAST(T from)
+static inline constexpr D C_RCAST(T from)
 {
     return reinterpret_cast<D>(from);
 }
