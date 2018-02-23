@@ -15,7 +15,7 @@ using AppArg = _cbasic_arg_container;
 
 struct ArgumentResult
 {
-    Set<CString> switches;
+    Map<CString, u32> switches;
     Map<CString, CString> arguments;
     Map<CString, CString> positional;
 };

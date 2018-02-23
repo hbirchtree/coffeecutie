@@ -26,8 +26,25 @@ void ArgumentParser::addPositionalArgument(
     this->posargs.push_back({name, help});
 }
 
+u32 short_arg_match(cstring specifiedArgs, cstring target)
+{
+    u32 result = 0;
+    for(auto i : Range<>(StrLen(specifiedArgs)))
+        if(specifiedArgs[i] == target[0])
+            result++;
+
+    return result;
+}
+
 ArgumentResult ArgumentParser::parseArguments(AppArg &args)
 {
+    enum arg_class_t
+    {
+        arg_long  = 1,
+        arg_short = 2,
+        arg_posit = 3,
+    };
+
     ArgumentResult result;
 
     aargswitch const* consumer = nullptr;
@@ -58,14 +75,22 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
             continue;
         }
 
+        arg_class_t arg_t = arg_posit;
         arg_p  = nullptr;
 
         if(arg_w.substr(0, 2) == "--")
+        {
+            arg_t = arg_long;
             arg_p = &arg_w[2];
+        }
         else if(arg_w.substr(0, 1) == "-")
+        {
+            arg_t = arg_short;
             arg_p = &arg_w[1];
+        }
         else if(num_positionals < posargs.size())
         {
+            arg_t = arg_posit;
             if(arg_idx == 1)
                 continue;
 
@@ -78,26 +103,45 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
             continue;
         }else
         {
-            cWarning("Unused arguments found: {0}", arg_w);
+            cVerbose(10, "Unused arguments found: {0}", arg_w);
             continue;
         }
 
+        u32 short_matches = 0;
+
         for(auto const& sw : switches)
-            if((sw.longname && StrCmp(arg_p, sw.longname))
-                    || (sw.shortname && StrCmp(arg_p, sw.shortname)))
+        {
+            if(sw.shortname)
+                short_matches = short_arg_match(arg_p, sw.shortname);
+
+            if((sw.longname
+                && arg_t == arg_long
+                && StrCmp(arg_p, sw.longname))
+                    ||
+                    (sw.shortname
+                     && arg_t == arg_short
+                     && short_matches > 0))
             {
-                result.switches.insert(sw.name);
+                result.switches[sw.name] += short_matches;
                 is_consumed.flip();
             }
+        }
 
         for(auto const& arg : arguments)
-            if((arg.longname && StrCmp(arg_p, arg.longname))
-                    || (arg.shortname && StrCmp(arg_p, arg.shortname)))
+        {
+            if(arg.shortname)
+                short_matches = short_arg_match(arg_p, arg.shortname);
+
+            if((arg.longname && arg_t == arg_long
+                && StrCmp(arg_p, arg.longname))
+                    || (arg.shortname && arg_t == arg_short
+                        && short_matches > 0))
             {
                 consumer = &arg;
                 is_consumed.flip();
                 continue;
             }
+        }
     }
 
     /* After marking the arguments that are consumed,  */

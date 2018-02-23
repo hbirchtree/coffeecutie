@@ -12,6 +12,15 @@ _cbasic_arg_container _cbasic_arg_container::Clone(int32 argc, cstring_w *argv)
 {
     _cbasic_arg_container arg;
 
+    if(argc > 0)
+        arg.m_programName = argv[0];
+
+    argc--;
+    argv++;
+
+    if(argc < 0)
+        argc = 0;
+
     arg.m_storage.reserve(C_FCAST<u32>(argc));
 
     for(auto i : Range<>(C_FCAST<u32>(argc)))
@@ -20,6 +29,11 @@ _cbasic_arg_container _cbasic_arg_container::Clone(int32 argc, cstring_w *argv)
     arg.rebuildArgs();
 
     return arg;
+}
+
+cstring_w _cbasic_arg_container::programName() const
+{
+    return m_programName;
 }
 
 const Vector<cstring_w> &_cbasic_arg_container::arguments() const

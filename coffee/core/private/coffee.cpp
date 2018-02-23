@@ -84,10 +84,6 @@ void CoffeeInit(bool profiler_init)
 #endif
 
 #ifndef COFFEE_LOWFAT
-    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
-#endif
-
-#ifndef COFFEE_LOWFAT
     if(profiler_init)
     {
         Profiler::InitProfiler();
@@ -186,8 +182,9 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
         auto args = parser.parseArguments(initargs);
 
-        for(CString sw : args.switches)
+        for(Pair<CString, u32> sw_ : args.switches)
         {
+            auto sw = sw_.first;
             if(sw == "help")
             {
                 PrintVersionInfo();
@@ -195,7 +192,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                 return 0;
             }else if(sw == "verbose")
             {
-                Coffee::PrintingVerbosityLevel++;
+                Coffee::PrintingVerbosityLevel += sw_.second;
             }else if(sw == "quiet")
             {
                 Coffee::PrintingVerbosityLevel = 0;
@@ -227,6 +224,10 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         }
     }
     Profiler::PopContext();
+
+#ifndef COFFEE_LOWFAT
+    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
+#endif
 
     /* This is a bit more versatile than simple procedures
      */
