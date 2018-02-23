@@ -46,6 +46,14 @@ static const constexpr char VFSMagic[MagicLength] = "CfVrtFS";
 
 struct VirtualFS
 {
+    /*!
+     * \brief Given bytes from `src', open the VFS inside iff
+     *  it is correct. A VFS is only correct if comparing
+     *  the file magic completes without error.
+     * \param src
+     * \param vfs
+     * \return
+     */
     static bool OpenVFS(Bytes const& src,
                         VirtualFS const* *vfs)
     {
@@ -66,19 +74,39 @@ struct VirtualFS
         return true;
     }
 
-    char vfs_header[MagicLength];
+    char vfs_header[MagicLength]; /*!< Magic file header */
 
     szptr num_files; /*!< Number of VFile entries */
     szptr data_offset; /*!< Offset from start of this structure to the data segment */
 
+    /*!
+     * \brief Given a VFS, get the handle to a file with the name `name'.
+     * \param vfs
+     * \param name
+     * \return nullptr if file not found
+     */
     static VFile const* GetFile(
             VFS const* vfs,
             cstring name);
 
+    /*!
+     * \brief Given a VFS, get the handle to the idx'th file.
+     * \param vfs
+     * \param idx
+     * \return nullptr if file not found
+     */
     static VFile const* GetFile(
             VFS const* vfs,
             szptr idx);
 
+    /*!
+     * \brief Given a VFS and a valid file within, return the
+     *  data. If the file is compressed, decompression
+     *  will be done internally.
+     * \param vfs
+     * \param file
+     * \return
+     */
     static Bytes GetData(
             VFS const* vfs,
             VFile const* file);
@@ -131,7 +159,17 @@ public:
     Resource(VFS const* base,
              Url const& url);
 
+    /*!
+     * \brief Check validity of resource and/or data it returns
+     * \return
+     */
     bool valid() const;
+    /*!
+     * \brief Return the data contained in the virtual file.
+     *  If the file in question is compressed,
+     *  decompression happens here.
+     * \return
+     */
     Bytes data() const;
 };
 

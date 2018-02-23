@@ -31,37 +31,43 @@ Bytes Resource::data() const
 bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
 {
     DProfContext _(VIRTFS_API "Generating VirtFS");
+
     /* You can't create a VFS without files */
     if(filenames.size() == 0)
     {
-        Profiler::DeepProfile(VIRTFS_API "Failed to create VirtFS");
+        Profiler::DeepProfile(VIRTFS_API "Failed, no files");
         return false;
     }
 
     VFS base_fs = {};
 
+    /* Insert header, calculate file segment offset */
     MemCpy(base_fs.vfs_header, VFSMagic, MagicLength);
     base_fs.num_files = filenames.size();
     base_fs.data_offset =
             sizeof(VFS) +
             sizeof(VFile) * base_fs.num_files;
 
+    /* Pre-allocate vectors */
     Vector<VFile> files;
     files.resize(filenames.size());
     Vector<Bytes> data_arrays;
     data_arrays.resize(filenames.size());
 
     szptr data_size = 0;
+    /* Define the data segment, compress data if necessary */
     for(auto i : Range<>(filenames.size()))
     {
         auto& file = files[i];
-        static constexpr szptr max_fname = sizeof(file.name) * sizeof(file.name[0]);
 
         auto const& fn = filenames[i].filename;
 
-        if(fn.size() * sizeof(fn[0]) > max_fname)
+        if(fn.size() * sizeof(fn[0]) > MaxFileNameLength)
         {
-            cWarning(VIRTFS_API "Filename is too long for VirtFS: {0} > {1}", fn.size(), max_fname);
+            cWarning(VIRTFS_API
+                     "Filename is too long for VirtFS: {0} > {1}",
+                     fn.size(), MaxFileNameLength);
+            Profiler::DeepProfile(VIRTFS_API "Failed, filename too long");
             return false;
         }
 
@@ -75,6 +81,8 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
         {
             Zlib::Compress(filenames[i].data,
                            &arr, {});
+            cVerbose(10, "Compressed file: {0} bytes -> {1} bytes",
+                     filenames[i].data.size, arr.size);
             file.size = arr.size;
         }else
         {
@@ -86,10 +94,13 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
         data_size += file.size;
     }
 
+    /* Final size has been determined */
     output->resize(base_fs.data_offset + data_size);
 
+    /* Header is copied straight into array */
     MemCpy(output->data(), &base_fs, sizeof(VFS));
 
+    /* For each file, insert the data into the array */
     for(auto i : Range<>(filenames.size()))
     {
         auto header_offset = sizeof(VFS) + sizeof(VFile) * i;
@@ -101,7 +112,7 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
                data_arrays[i].size);
     }
 
-    Profiler::DeepProfile(VIRTFS_API "VirtFS creation successful");
+    Profiler::DeepProfile(VIRTFS_API "Creation successful");
     return true;
 }
 
