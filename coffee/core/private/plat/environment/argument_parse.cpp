@@ -91,8 +91,6 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
         else if(num_positionals < posargs.size())
         {
             arg_t = arg_posit;
-            if(arg_idx == 1)
-                continue;
 
             result.positional.insert({
                                          posargs.at(num_positionals).name,

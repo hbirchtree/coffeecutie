@@ -78,6 +78,9 @@ FORCEDINLINE bool FutureAvailable(Future<T> const& f)
     C_UNUSED(f);
     return true;
 #else
+    if(!f.valid())
+        return true;
+
     return f.wait_for(Chrono::seconds(0)) == FutureStatus::ready;
 #endif
 }

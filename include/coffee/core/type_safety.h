@@ -4,6 +4,7 @@
 
 #include <type_traits>
 #include <limits>
+#include <stdint.h>
 
 #if defined(COFFEE_MACRO_CASTS)
 #define C_CAST(type, var) static_cast<type>(var)
@@ -59,14 +60,54 @@ template<typename D,
  */
 static inline D C_FCAST(T from)
 {
-    constexpr D max_val = std::numeric_limits<D>::max();
-    constexpr D min_val = std::numeric_limits<D>::min();
+    static constexpr D max_val = std::numeric_limits<D>::max();
+    static constexpr D min_val = std::numeric_limits<D>::min();
 
-    return (from > max_val)
-            ? max_val
-            : (from < min_val)
-              ? min_val
-              : from;
+    static constexpr T T_max_val = std::numeric_limits<T>::max();
+//    static constexpr T T_min_val = std::numeric_limits<T>::min();
+
+    static constexpr bool T_is_signed = std::is_signed<T>::value;
+    static constexpr bool D_is_signed = std::is_signed<D>::value;
+    static constexpr bool same_sign = T_is_signed == D_is_signed;
+
+    const ::uint64_t T_max_val_u64 = static_cast<::uint64_t>(T_max_val);
+    const ::uint64_t D_max_val_u64 = static_cast<::uint64_t>(max_val);
+
+    if(same_sign)
+    {
+        /* This part is quite simple, because comparisons
+         *  with same sign is well-defined */
+        if(from < min_val)
+            return min_val;
+        else if(from > max_val)
+            return max_val;
+        else
+            return from;
+    }else{
+        /* Comparisons with different sign is literally iffy */
+        if(from < 0)
+            /* If `from' is signed and below 0,
+             *  we know that `D' must be unsigned.
+             *  We can only return the smallest value for `D'. */
+            return min_val;
+        else if(T_max_val_u64 > D_max_val_u64 &&
+                static_cast<uint64_t>(from) > D_max_val_u64)
+            /* Check that, if T has a larger range than D,
+             *  that from is still within range.
+             * If not, return max_val.
+             *  At this point, we know that from is larger
+             *  than or equal to 0, and it is safe to cast
+             *  to the largest unsigned type. */
+            return max_val;
+        else
+            return from;
+    }
+
+//    return (from_signed > max_signed)
+//            ? max_val
+//            : (from_signed < min_signed)
+//              ? min_val
+//              : from;
 }
 
 #else

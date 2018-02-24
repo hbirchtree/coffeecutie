@@ -59,9 +59,9 @@ bool casting_signed_unsigned()
 }
 
 #if defined(COFFEE_WINDOWS)
-static constexpr bool supports_safe_cast = false;
+//static constexpr bool supports_safe_cast = false;
 #else
-static constexpr bool supports_safe_cast = true;
+//static constexpr bool supports_safe_cast = true;
 #endif
 
 COFFEE_TEST_SUITE(3) = {

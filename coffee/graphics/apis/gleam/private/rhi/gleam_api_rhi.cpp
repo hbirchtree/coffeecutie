@@ -271,6 +271,10 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
             store->features.base_instance
             && store->features.draw_base_instance;
 
+    store->features.draw_multi_indirect =
+            store->features.draw_multi_indirect
+            && store->features.draw_base_instance;
+
     store->features.rasterizer_discard =
             (api != GLES_2_0);
     store->features.depth_clamp = is_desktop;
@@ -1151,10 +1155,10 @@ static void GetInstanceUniform(
             if(cnt.stages == ShaderStage::Vertex)
                 hnd = cnt.shader->internalHandle();
 
-        uloc = C_FCAST<i32>(
-                    CGL43::ProgramGetResourceIdx(
-                        hnd, GL_UNIFORM, unifName)
-                    );
+        auto raw_uloc = CGL43::ProgramGetResourceIdx(
+                    hnd, GL_UNIFORM, unifName);
+
+        uloc = C_FCAST<i32>(raw_uloc);
     }
 #endif
 }
