@@ -353,7 +353,7 @@ CString Path::extension() const
     if(it == CString::npos)
         return {};
 
-    return internUrl.substr(it, internUrl.size() - it);
+    return internUrl.substr(it + 1, internUrl.size() - it - 1);
 }
 
 Path Path::dirname()

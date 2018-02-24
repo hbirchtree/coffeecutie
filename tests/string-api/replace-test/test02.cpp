@@ -130,13 +130,83 @@ bool vector_format()
         return true;
 }
 
+template<typename VectorT>
+bool generic_fmt()
+{
+    cStringFormat("{0}", VectorT());
+    return true;
+}
+
+template<typename EnumType, EnumType EVal>
+bool enum_fmt()
+{
+    u32 enum_i = 0;
+    u32 enum_max = C_FCAST<u32>(EVal);
+
+    while(enum_i <= enum_max)
+    {
+        cStringFormat("{0}", C_CAST<EnumType>(enum_i));
+        enum_i++;
+    }
+
+    return true;
+}
+
+bool hwdevice_fmt()
+{
+    HWDeviceInfo test("A", "B", "C", "D");
+
+    cStringFormat("{0}", test);
+
+    return true;
+}
+
+bool swver_fmt()
+{
+    SWVersionInfo test("A", 1, 0, 0, 0, "B");
+
+    cStringFormat("{0}", test);
+
+    return true;
+}
+
+bool contextbits_fmt()
+{
+    cStringFormat("{0}", Display::CDContextBits());
+    return true;
+}
+
+bool cglver_fmt()
+{
+    cStringFormat("{0}", Display::CGLVersion());
+    return true;
+}
+
+bool bbox_fmt()
+{
+    cStringFormat("{0}", BoundBox(1, 1, 1, false));
+    return true;
+}
+
+bool cdmon_fmt()
+{
+    cStringFormat("{0}", Display::CDMonitor());
+    return true;
+}
+
+bool basicver_fmt()
+{
+    cStringFormat("{0}", Version());
+    return true;
+}
+
 #if defined(COFFEE_WINDOWS)
 static constexpr bool has_broken_ptr_fmt = true;
 #else
 static constexpr bool has_broken_ptr_fmt = false;
 #endif
 
-const constexpr CoffeeTest::Test _tests[9] = {
+const constexpr CoffeeTest::Test _tests[26] = {
     {basic_format,"Basic text formatting"},
     {string_format,"Basic text insertion, part 1","Has special characters"},
     {cstring_format,"Basic text insertion, part 2","Has special characters"},
@@ -148,6 +218,27 @@ const constexpr CoffeeTest::Test _tests[9] = {
     {floating_point_format,"Floating-point with precision", "",
      true, false},
     {vector_format,"Floating-point vector", "", true, false},
+
+    {enum_fmt<Severity, Severity::Fatal>, "Severity formatting"},
+    {enum_fmt<DebugType, DebugType::Other>, "DebugType formatting"},
+    {enum_fmt<DebugComponent,DebugComponent::Extension>, "DbgCmp formatting"},
+
+    {hwdevice_fmt, "HWDeviceInfo format"},
+    {swver_fmt, "SWVersionInfo format"},
+    {bbox_fmt, "BoundBox format"},
+
+    {generic_fmt<Display::CDContextBits>, "ContextBits format"},
+    {generic_fmt<Display::CGLVersion>, "CGLVersion format"},
+    {generic_fmt<Display::CDMonitor>, "CDMonitor format"},
+    {generic_fmt<Version>, "Version format"},
+
+    {generic_fmt<Vecf2>, "Vecf2 format"},
+    {generic_fmt<Vecf3>, "Vecf3 format"},
+    {generic_fmt<Vecf4>, "Vecf4 format"},
+    {generic_fmt<Matf2>, "Matf2 format"},
+    {generic_fmt<Matf3>, "Matf3 format"},
+    {generic_fmt<Matf4>, "Matf4 format"},
+    {generic_fmt<Quatf>, "Quatf format"},
 };
 
 COFFEE_RUN_TESTS(_tests);
