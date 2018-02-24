@@ -1,5 +1,5 @@
+#include <coffee/core/coffee.h>
 #include <coffee/core/CUnitTesting>
-
 #include <coffee/core/types/vector_types.h>
 
 using namespace Coffee;
@@ -130,13 +130,6 @@ bool vector_format()
         return true;
 }
 
-template<typename VectorT>
-bool generic_fmt()
-{
-    cStringFormat("{0}", VectorT());
-    return true;
-}
-
 template<typename EnumType, EnumType EVal>
 bool enum_fmt()
 {
@@ -170,33 +163,22 @@ bool swver_fmt()
     return true;
 }
 
-bool contextbits_fmt()
-{
-    cStringFormat("{0}", Display::CDContextBits());
-    return true;
-}
-
-bool cglver_fmt()
-{
-    cStringFormat("{0}", Display::CGLVersion());
-    return true;
-}
-
 bool bbox_fmt()
 {
     cStringFormat("{0}", BoundBox(1, 1, 1, false));
     return true;
 }
 
-bool cdmon_fmt()
+bool apparg_fmt()
 {
-    cStringFormat("{0}", Display::CDMonitor());
+    cStringFormat("{0}", GetInitArgs());
     return true;
 }
 
-bool basicver_fmt()
+template<typename VectorT>
+bool generic_fmt()
 {
-    cStringFormat("{0}", Version());
+    cStringFormat("{0}", VectorT());
     return true;
 }
 
@@ -206,7 +188,7 @@ static constexpr bool has_broken_ptr_fmt = true;
 static constexpr bool has_broken_ptr_fmt = false;
 #endif
 
-const constexpr CoffeeTest::Test _tests[26] = {
+const constexpr CoffeeTest::Test _tests[27] = {
     {basic_format,"Basic text formatting"},
     {string_format,"Basic text insertion, part 1","Has special characters"},
     {cstring_format,"Basic text insertion, part 2","Has special characters"},
@@ -239,6 +221,7 @@ const constexpr CoffeeTest::Test _tests[26] = {
     {generic_fmt<Matf3>, "Matf3 format"},
     {generic_fmt<Matf4>, "Matf4 format"},
     {generic_fmt<Quatf>, "Quatf format"},
+    {apparg_fmt, "AppArg format"}
 };
 
 COFFEE_RUN_TESTS(_tests);
