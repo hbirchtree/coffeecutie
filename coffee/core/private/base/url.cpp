@@ -390,7 +390,7 @@ CString to_string(const Path &path)
 CString to_string(const Url &url)
 {
     return "url(" + url.internUrl + ","
-            + StrUtil::pointerify(C_FCAST<u32>(url.flags))
+            + StrUtil::pointerify(C_CAST<u32>(url.flags))
             + ")";
 }
 }

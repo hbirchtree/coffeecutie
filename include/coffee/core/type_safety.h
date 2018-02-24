@@ -80,17 +80,17 @@ static inline D C_FCAST(T from)
 
 #endif
 
-template<typename D,
-         typename T,
+//template<typename D,
+//         typename T,
 
-         typename std::enable_if<IS_INT(D), D>::type* = nullptr,
-         typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
+//         typename std::enable_if<IS_INT(D), D>::type* = nullptr,
+//         typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
 
-         >
-static inline D C_FCAST(T from)
-{
-    return static_cast<D>(from);
-}
+//         >
+//static inline D C_FCAST(T from)
+//{
+//    return static_cast<D>(from);
+//}
 
 template<typename D,
          typename T,

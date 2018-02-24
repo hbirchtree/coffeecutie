@@ -14,10 +14,10 @@ enum class TestingEnum
 
 bool enum_cast()
 {
-    if(C_FCAST<u32>(TestingEnum::EvaluatesToZero) != 0)
+    if(C_CAST<u32>(TestingEnum::EvaluatesToZero) != 0)
         return false;
 
-    if(C_FCAST<u32>(TestingEnum::EvaluatesToBigNumber) != big_number)
+    if(C_CAST<u32>(TestingEnum::EvaluatesToBigNumber) != big_number)
         return false;
 
     return true;

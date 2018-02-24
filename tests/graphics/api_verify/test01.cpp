@@ -245,7 +245,7 @@ bool test_api()
 
 bool test_texture_formats()
 {
-    u32 pfmt_max = C_FCAST<u32>(PixFmt::MAX_PIXFMT);
+    u32 pfmt_max = C_CAST<u32>(PixFmt::MAX_PIXFMT);
 
     bool status = true;
 

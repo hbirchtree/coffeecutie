@@ -134,7 +134,7 @@ template<typename EnumType, EnumType EVal>
 bool enum_fmt()
 {
     u32 enum_i = 0;
-    u32 enum_max = C_FCAST<u32>(EVal);
+    u32 enum_max = C_CAST<u32>(EVal);
 
     while(enum_i <= enum_max)
     {
