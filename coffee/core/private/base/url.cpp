@@ -331,7 +331,7 @@ CString Url::DereferenceLocalPath() const
 Path Path::removeExt() const
 {
     auto it = internUrl.rfind(".");
-    if(it != CString::npos)
+    if(it == CString::npos)
         return {};
     return {internUrl.substr(0, it)};
 }
