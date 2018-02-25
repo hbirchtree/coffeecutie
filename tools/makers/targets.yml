@@ -229,7 +229,7 @@ build-dependencies:
       - --disable-loadso
       - --disable-cpuinfo
       - --disable-video-vulkan
-      - --prefix=$(container.install)
+      - --prefix=$(build-dep.install)
   openssl:
     platforms: ^[^d].*$
     # There's a special place in hell for project-specific
@@ -268,8 +268,8 @@ build-dep-template:
     =program.exec: sh -c
     =program.arguments:
       - \'
-      - cd $(container.build) &&
-      - $(container.src)/configure $(automake.opts) &&
+      - cd $(build-dep.build) &&
+      - $(build-dep.src)/configure $(automake.opts) &&
       - make -j4 &&
       - make install
       - \'
