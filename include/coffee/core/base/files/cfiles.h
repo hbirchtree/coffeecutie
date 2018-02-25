@@ -15,7 +15,8 @@ namespace CResources{
 /*!
  * \brief A data resource which location cannot be changed.
  */
-struct Resource{
+struct Resource : ByteProvider
+{
 private:
     CString m_resource; /*!< URL for the resource*/
 
@@ -52,6 +53,8 @@ public:
 
     cstring resource() const;
     bool valid() const;
+
+    operator Bytes();
 
     enum FileFlags
     {

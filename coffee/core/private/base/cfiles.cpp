@@ -53,6 +53,11 @@ Resource::Resource(Resource &&rsc)
 
 Resource::~Resource()
 {
+    if(flags & Mapped)
+        FileUnmap(*this);
+    if(flags & FileIO)
+        FileFree(*this);
+
     if(m_platform_data)
         delete m_platform_data;
 }
@@ -65,6 +70,14 @@ cstring Resource::resource() const
 bool Resource::valid() const
 {
     return !m_resource.empty();
+}
+
+Coffee::CResources::Resource::operator Bytes()
+{
+    if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
+        return FileGetDescriptor(*this);
+    else
+        return Bytes();
 }
 
 bool FileExists(const Resource &resc)

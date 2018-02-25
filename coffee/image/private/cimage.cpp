@@ -185,17 +185,12 @@ void TGA::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
     C_UNUSED(dest);
 }
 
-bool IMG::Load(const Url &src, PixCmp cmp, BitFmt &fmt,
-               Bytes &data, CSize &res)
+bool IMG::LoadBytes(Bytes const&src, PixCmp cmp, BitFmt &fmt,
+                    Bytes &data, CSize &res)
 {
-    Resource rsc(src);
-
-    if(!FileMap(rsc))
-        return false;
-
     Stb::CStbImage img;
 
-    Stb::LoadData(&img, &rsc, cmp);
+    Stb::LoadData(&img, src, cmp);
 
     if(img.data)
     {
@@ -210,7 +205,6 @@ bool IMG::Load(const Url &src, PixCmp cmp, BitFmt &fmt,
         });
     }
 
-    FileUnmap(rsc);
     return true;
 }
 

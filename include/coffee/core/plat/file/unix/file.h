@@ -71,7 +71,11 @@ protected:
     static int PosixRscFlags(ResourceAccess acc);
 };
 
-template<typename FH, typename FM,typename ScratchBuf>
+template<typename FH, typename FM,typename ScratchBuf,
+         typename implements<PosixApi::FileHandle, FH>::type* = nullptr,
+         typename implements<PosixApi::FileMapping, FM>::type* = nullptr,
+         typename implements<CommonFileFun::ScratchBuf,
+                             ScratchBuf>::type* = nullptr>
 struct PosixFileFun_def : PosixFileMod_def
 {
     using PosixFileMod_def::Exists;

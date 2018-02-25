@@ -207,20 +207,63 @@ static inline constexpr D C_CAST(T from)
 {
     return static_cast<D>(from);
 }
+template<typename D, typename T,
+         typename std::enable_if<std::is_class<T>::value
+                                 && std::is_class<D>::value
+                                 >::type* = nullptr>
+/*!
+ * \brief For coercing a class/struct into another type,
+ *  such as with `operator T()`
+ * \param from
+ * \return
+ */
+static inline constexpr D C_OCAST(T& from)
+{
+    return static_cast<D>(from);
+}
 template<typename D, typename T>
+/*!
+ * \brief For dynamic casts. This function, as specified by the standard,
+ *  will tell you if a dynamic_cast is unnecessary.
+ * \param from
+ * \return
+ */
 static inline D* C_DCAST(T* from)
 {
     return dynamic_cast<D*>(from);
 }
 template<typename D, typename T>
+/*!
+ * \brief For discarding const-qualifier. Not recommended.
+ * \param from
+ * \return
+ */
 static inline constexpr D C_CCAST(T from)
 {
     return const_cast<D>(from);
 }
 template<typename D, typename T>
+/*!
+ * \brief Should not be used with class/struct types,
+ *  unless going from void* to class T.
+ * \param from
+ * \return
+ */
 static inline constexpr D C_RCAST(T from)
 {
     return reinterpret_cast<D>(from);
+}
+
+namespace Coffee {
+
+template<typename Interface, typename Implementation>
+struct implements
+{
+    typedef typename std::enable_if<
+    std::is_base_of<Interface, Implementation>::value
+    >::type type;
+};
+
 }
 
 #undef IS_INT

@@ -149,7 +149,7 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS *vfs, szptr idx)
     return &vf_start[idx];
 }
 
-struct Resource
+struct Resource : ByteProvider
 {
 private:
     VFS const* filesystem;
@@ -171,6 +171,11 @@ public:
      * \return
      */
     Bytes data() const;
+
+    operator Bytes() const
+    {
+        return data();
+    }
 };
 
 struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>

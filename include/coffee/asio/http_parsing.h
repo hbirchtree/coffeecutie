@@ -27,7 +27,8 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vec)
     return os;
 }
 
-template<typename StrmT>
+template<typename StrmT,
+         typename implements<std::ostream,StrmT>::type* = nullptr>
 void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 {
     DProfContext __m("Generating HTTP request");
@@ -67,7 +68,8 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
     Profiler::DeepProfile("Transmitting data");
 }
 
-template<typename StrmT>
+template<typename StrmT,
+         typename implements<std::istream,StrmT>::type* = nullptr>
 bool ExtractResponse(StrmT& stream, Response* response)
 {
     DProfContext __m("Extracting HTTP response");

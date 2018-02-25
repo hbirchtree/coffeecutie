@@ -4,11 +4,14 @@
 
 #include <coffee/core/coffee_mem_macros.h>
 #include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/base/renderer/initapplication.h>
 
 namespace Coffee{
 namespace Display{
 
-template<typename Renderer> STATICINLINE
+template<typename Renderer,
+         typename implements<InitApplication, Renderer>::type* = nullptr>
+STATICINLINE
 bool LoadHighestVersion(
         Renderer* renderer, CDProperties& properties, CString* err)
 {

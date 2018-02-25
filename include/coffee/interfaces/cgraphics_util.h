@@ -7,43 +7,40 @@
 namespace Coffee{
 namespace RHI{
 
-template<typename GFX>
-FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface, Resource&& tex_rsc)
+template<typename GFX, typename Resource,
+         typename std::enable_if<
+             std::is_base_of<ByteProvider, Resource>::value
+             >::type* = nullptr>
+FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface,
+                              Resource&& tex_rsc)
 {
     bool status = true;
 
-    if(CResources::FileMap(tex_rsc, ResourceAccess::ReadOnly))
+    Stb::Img tex_src;
+    if(Stb::LoadData(&tex_src, C_OCAST<Bytes>(tex_rsc)))
     {
-        Stb::Img tex_src;
-        if(Stb::LoadData(&tex_src, &tex_rsc))
-        {
-            surface.allocate(tex_src.size, PixCmp::RGBA);
-            surface.upload(BitFormat::UByte, PixCmp::RGBA, tex_src.size, tex_src.data,
-            {0,0}, 0);
-            Stb::ImageFree(&tex_src);
-        }else
-            status = false;
-        CResources::FileUnmap(tex_rsc);
+        surface.allocate(tex_src.size, PixCmp::RGBA);
+        surface.upload(BitFormat::UByte, PixCmp::RGBA, tex_src.size, tex_src.data,
+        {0,0}, 0);
+        Stb::ImageFree(&tex_src);
     }else
         status = false;
+
     return status;
 }
 
-template<typename GFX>
+template<typename GFX,typename Resource,
+         typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadShader(typename GFX::SHD& shader, Resource&& data,
                              ShaderStage stage)
 {
-    if(!CResources::FileMap(data, ResourceAccess::ReadOnly))
-        return false;
-
-    bool status = shader.compile(stage, FileGetDescriptor(data));
-
-    CResources::FileUnmap(data);
+    bool status = shader.compile(stage, C_OCAST<Bytes>(data));
 
     return status;
 }
 
-template<typename GFX>
+template<typename GFX, typename Resource,
+         typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadPipeline(typename GFX::PIP& pip,
                                Resource&& vert_file,
                                Resource&& frag_file)

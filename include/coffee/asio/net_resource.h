@@ -17,7 +17,7 @@ FORCEDINLINE bool Supported()
 #endif
 }
 
-struct Resource
+struct Resource : ByteProvider
 {
 private:
     CString m_resource;
@@ -68,6 +68,14 @@ public:
     u32 responseCode() const;
     Bytes data() const;
     Map<CString, CString> const& headers() const;
+
+    operator Bytes()
+    {
+        if(!isResponseReady() && !fetch())
+            return Bytes();
+
+        return data();
+    }
 };
 
 FORCEDINLINE Url MkUrl(cstring url,

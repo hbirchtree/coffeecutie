@@ -41,9 +41,17 @@ extern void Error();
 extern bool LoadData(CStbImage* target,
                      const Resource* src,
                      PixelComponents comp = PixelComponents::RGBA);
+
 extern bool LoadData(CStbImage* target,
                      BytesConst const& src,
                      PixelComponents comp = PixelComponents::RGBA);
+
+STATICINLINE bool LoadData(CStbImage* target,
+                     Bytes const& src,
+                     PixelComponents comp = PixelComponents::RGBA)
+{
+    return LoadData(target, BytesConst(src.data, src.size), comp);
+}
 
 /*!
  * \brief Function used by STB to write data into resource. Allocates and copies data into resource.
@@ -130,8 +138,17 @@ extern void SaveTGA(const CSize &resolution,
 
 namespace IMG
 {
-extern bool Load(Url const& src, PixCmp cmp, BitFmt &fmt,
-        Bytes &data, CSize& res);
+extern bool LoadBytes(Bytes const& src, PixCmp cmp, BitFmt &fmt,
+                 Bytes &data, CSize& res);
+
+template<typename Resource,
+         typename implements<ByteProvider, Resource>::type* = nullptr>
+STATICINLINE bool Load(Resource&& r, PixCmp cmp, BitFmt &fmt,
+                       Bytes &data, CSize& res)
+{
+    return LoadBytes(C_OCAST<Bytes>(r), cmp, fmt, data, res);
+}
+
 }
 
 namespace PNG

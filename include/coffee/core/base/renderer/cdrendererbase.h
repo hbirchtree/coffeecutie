@@ -37,7 +37,9 @@ public:
     }
 };
 
-template<class T>
+template<class T,
+         typename implements<EventApplication, T>::type* = nullptr,
+         typename implements<InitApplication, T>::type* = nullptr>
 FORCEDINLINE Future<void> LaunchAsync(T* r, CDProperties const& p)
 {
     Function<void()> fn = [r,p]()

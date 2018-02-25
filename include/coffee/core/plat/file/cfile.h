@@ -42,7 +42,8 @@ struct FILEApi
     };
 };
 
-template<typename FH>
+template<typename FH,
+         typename implements<FILEApi::FileHandle, FH>::type* = nullptr>
 struct CFILEFun_def : CommonFileFun
 {
     using FileMapping = FILEApi::FileMapping;
