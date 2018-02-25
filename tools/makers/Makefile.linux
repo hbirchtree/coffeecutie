@@ -557,7 +557,7 @@ sdl2.android.armv7a.gingerbread.gles2: sdl2.source sdl2.android.armv7a.gingerbre
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.gingerbread.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.gingerbread.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.gingerbread.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -675,7 +675,7 @@ sdl2.android.armv7a.kitkat.gles2: sdl2.source sdl2.android.armv7a.kitkat.gles2.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.kitkat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.kitkat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.kitkat.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -793,7 +793,7 @@ sdl2.android.armv7a.lollipop.gles3: sdl2.source sdl2.android.armv7a.lollipop.gle
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.lollipop.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -911,7 +911,7 @@ sdl2.android.armv7a.nougat.gles2: sdl2.source sdl2.android.armv7a.nougat.gles2.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.nougat.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.nougat.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.nougat.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1029,7 +1029,7 @@ sdl2.android.armv7a.nougat.gles3: sdl2.source sdl2.android.armv7a.nougat.gles3.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv7a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv7a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv7a.nougat.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1147,7 +1147,7 @@ sdl2.android.armv8a.lollipop.gles3: sdl2.source sdl2.android.armv8a.lollipop.gle
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv8a.lollipop.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv8a.lollipop.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv8a.lollipop.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1265,7 +1265,7 @@ sdl2.android.armv8a.nougat.gles3: sdl2.source sdl2.android.armv8a.nougat.gles3.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.armv8a.nougat.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.armv8a.nougat.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.armv8a.nougat.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1383,7 +1383,7 @@ sdl2.android.mips.kitkat: sdl2.source sdl2.android.mips.kitkat.build_dir sdl2.an
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.mips.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.mips.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.mips.kitkat" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1501,7 +1501,7 @@ sdl2.android.mips64.kitkat: sdl2.source sdl2.android.mips64.kitkat.build_dir sdl
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.mips64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.mips64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.mips64.kitkat" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1619,7 +1619,7 @@ sdl2.android.x86.kitkat: sdl2.source sdl2.android.x86.kitkat.build_dir sdl2.andr
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.x86.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.x86.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.x86.kitkat" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -1737,7 +1737,7 @@ sdl2.android.x86_64.kitkat: sdl2.source sdl2.android.x86_64.kitkat.build_dir sdl
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/android.x86_64.kitkat:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/android.x86_64.kitkat:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.android.x86_64.kitkat" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Coverage build using same config as Ubuntu
@@ -1855,7 +1855,7 @@ sdl2.coverage: sdl2.source sdl2.coverage.build_dir sdl2.coverage.install_dir FOR
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/coverage:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/coverage:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.coverage" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Emscripten with WebAsm and asm.js
@@ -1973,7 +1973,7 @@ sdl2.emscripten.asmjs: sdl2.source sdl2.emscripten.asmjs.build_dir sdl2.emscript
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/emscripten.asmjs:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/emscripten.asmjs:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.emscripten.asmjs" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Emscripten with WebAsm and asm.js
@@ -2091,7 +2091,7 @@ sdl2.emscripten.wasm: sdl2.source sdl2.emscripten.wasm.build_dir sdl2.emscripten
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/emscripten.wasm:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/emscripten.wasm:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.emscripten.wasm" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Fedora build in a Fedora Docker
@@ -2209,7 +2209,7 @@ sdl2.fedora.amd64: sdl2.source sdl2.fedora.amd64.build_dir sdl2.fedora.amd64.ins
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/fedora.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/fedora.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.fedora.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Device-oriented build for ARM64 and ARMv7-A
@@ -2321,7 +2321,7 @@ sdl2.ios: sdl2.source sdl2.ios.build_dir sdl2.ios.install_dir FORCE
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ios:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios" \
 		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/ios"\
-		-e CUSTOM_COMMAND="sh -c \' cd $(BUILD_DIR)/build-dependencies/sdl2/build/ios && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/ios && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd $(BUILD_DIR)/build-dependencies/sdl2/build/ios && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/ios && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # iOS simulator build
@@ -2433,7 +2433,7 @@ sdl2.ios.x86: sdl2.source sdl2.ios.x86.build_dir sdl2.ios.x86.install_dir FORCE
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios.x86" \
 		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86"\
-		-e CUSTOM_COMMAND="sh -c \' cd $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86 && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86 && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86 && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86 && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # iOS simulator build
@@ -2545,7 +2545,7 @@ sdl2.ios.x86_64: sdl2.source sdl2.ios.x86_64.build_dir sdl2.ios.x86_64.install_d
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86_64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ios.x86_64" \
 		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64"\
-		-e CUSTOM_COMMAND="sh -c \' cd $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64 && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86_64 && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd $(BUILD_DIR)/build-dependencies/sdl2/build/ios.x86_64 && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/ios.x86_64 && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Maemo 5 builds, performed within a Maemo 5 armel chroot
@@ -2663,7 +2663,7 @@ sdl2.maemo.armel: sdl2.source sdl2.maemo.armel.build_dir sdl2.maemo.armel.instal
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/maemo.armel:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/maemo.armel:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.maemo.armel" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # MinGW64 environment in Ubuntu Docker
@@ -2781,7 +2781,7 @@ sdl2.mingw.w64: sdl2.source sdl2.mingw.w64.build_dir sdl2.mingw.w64.install_dir 
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/mingw.w64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/mingw.w64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.mingw.w64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Apple OS X
@@ -2893,7 +2893,7 @@ sdl2.osx: sdl2.source sdl2.osx.build_dir sdl2.osx.install_dir FORCE
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.osx" \
 		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/sdl2/build/osx"\
-		-e CUSTOM_COMMAND="sh -c \' cd $(BUILD_DIR)/build-dependencies/sdl2/build/osx && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/osx && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd $(BUILD_DIR)/build-dependencies/sdl2/build/osx && $(BUILD_DIR)/build-dependencies/sdl2/source/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=$(BUILD_DIR)/build-dependencies/sdl2/install/osx && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Raspberry Pi ARMv6 build
@@ -3011,7 +3011,7 @@ sdl2.raspberry.armhf: sdl2.source sdl2.raspberry.armhf.build_dir sdl2.raspberry.
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/raspberry.armhf:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/raspberry.armhf:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.raspberry.armhf" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Build against the SteamRT SDK
@@ -3129,7 +3129,7 @@ sdl2.steam.amd64: sdl2.source sdl2.steam.amd64.build_dir sdl2.steam.amd64.instal
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/steam.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/steam.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.steam.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3247,7 +3247,7 @@ sdl2.ubuntu.amd64: sdl2.source sdl2.ubuntu.amd64.build_dir sdl2.ubuntu.amd64.ins
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3365,7 +3365,7 @@ sdl2.ubuntu.amd64.gles2: sdl2.source sdl2.ubuntu.amd64.gles2.build_dir sdl2.ubun
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.amd64.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3483,7 +3483,7 @@ sdl2.ubuntu.amd64.gles3: sdl2.source sdl2.ubuntu.amd64.gles3.build_dir sdl2.ubun
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.amd64.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3601,7 +3601,7 @@ sdl2.ubuntu.i686.gles: sdl2.source sdl2.ubuntu.i686.gles.build_dir sdl2.ubuntu.i
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.i686.gles" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3719,6 +3719,6 @@ sdl2.ubuntu.i686.gles2: sdl2.source sdl2.ubuntu.i686.gles2.build_dir sdl2.ubuntu
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/sdl2/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/sdl2/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/sdl2/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
 		-e BUILD_NAME="sdl2.ubuntu.i686.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c \' cd /home/coffee/build && /home/coffee/project/configure --host=x86_64-linux-gnu --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install \'"\
+		-e CUSTOM_COMMAND="sh -c ' cd /home/coffee/build && /home/coffee/project/configure --disable-shared --disable-atomic --disable-filesystem --disable-threads --disable-timers --disable-audio --disable-loadso --disable-cpuinfo --disable-video-vulkan --prefix=/home/coffee/out && make -j4 && make install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 

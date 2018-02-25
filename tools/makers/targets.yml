@@ -219,7 +219,7 @@ build-dependencies:
     source: hg:https://hg.libsdl.org/SDL
     type: automake
     ac-opts:
-      - --host=$(host.arch)
+#      - --host=$(host.arch)
       - --disable-shared
       - --disable-atomic
       - --disable-filesystem

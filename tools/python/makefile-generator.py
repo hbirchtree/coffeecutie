@@ -448,7 +448,7 @@ def transform_build_deps(build_deps, template_def, build_template, skeleton, tar
 ''' % (lib_target, build_target, f, build_dirs[f])
 
 
-      target_defs = target_defs + mkdir_deps + generate_rule(out)
+      target_defs = target_defs + mkdir_deps + generate_rule(out).replace('\\\'', '\'')
 
   return target_defs
 
