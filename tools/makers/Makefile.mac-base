@@ -18,6 +18,8 @@ NATIVE_LIB_DIR := $(PWD)/dependencies/native-libs
 
 CMAKE_OPTS := $(EXTRA_OPTIONS)
 
+CUSTOM_COMMAND := 
+
 all: build
 
 make-dirs:
@@ -29,3 +31,6 @@ config: make-dirs
 
 build: config
 	$(CMAKE) --build $(CMAKE_BUILD_DIR) --config $(CMAKE_CONFIG) --target $(CMAKE_TARGET)
+
+custom:
+	$(CUSTOM_COMMAND)
