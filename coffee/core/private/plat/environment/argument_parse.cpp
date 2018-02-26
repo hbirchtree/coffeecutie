@@ -145,7 +145,8 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
     /* After marking the arguments that are consumed,  */
 
     for(auto i : range_rev<>(consumed.size()))
-        args.m_ptrStorage.at(i) = nullptr;
+        if(consumed.at(i))
+            args.m_ptrStorage.at(i) = nullptr;
 
     auto it = args.m_ptrStorage.end();;
 

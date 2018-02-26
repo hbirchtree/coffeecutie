@@ -195,6 +195,12 @@ build-dependencies:
       - -DASSIMP_BUILD_TESTS=OFF
       - -DBUILD_SHARED_LIBS=OFF
       - -DBUILD_TESTING=OFF
+  glslang:
+    platforms: .*(ubuntu|osx).*
+    source: git:https://github.com/KhronosGroup/glslang.git
+    type: cmake
+    cmake-opts:
+      - -DBUILD_TESTING=OFF
   bullet:
     platforms: ^[^d].*$
     source: git:https://github.com/bulletphysics/bullet3.git
@@ -241,7 +247,7 @@ build-dependencies:
 #  dep-target: current build dependency, eg. sdl2, assimp
 build-dep-template:
   .*:
-    =container-opts:
+    +container-opts:
       - -v $(build-dep.build-root):$(container.build):rw
       - -v $(bdep.root):$(container.src):ro
       - -v $(build-dep.install-root):$(container.install):rw
@@ -380,9 +386,6 @@ templates:
         - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
         - -DAPPIMAGE_RUNTIME_BINARY=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)/util/x86_64-linux-gnu/runtime
         - -DCOFFEE_GENERATE_APPIMAGE=ON
-    .*emscripten.*:
-      +cmake-opts:
-        - -DCOFFEE_BUILD_ASSIMP=OFF
     .*android.*:
       +cmake-opts:
         - -DCOFFEE_BUILD_GLES=ON
@@ -562,3 +565,5 @@ templates:
     =build.prettyname: RaspberryPi
   .*(mingw.*):
     =build.prettyname: MinGW
+  .*(emscripten.*):
+    =build.prettyname: Emscripten
