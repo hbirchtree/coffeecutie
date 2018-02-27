@@ -125,7 +125,7 @@ void CoffeeInit(bool profiler_init)
     CoffeeDefaultWindowName = "Coffee [OpenGL]";
 #endif
 
-    cVerbose(8,"Initializing profiler");
+    cVerbose(8, "Initializing profiler");
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 }
@@ -195,7 +195,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                 Coffee::PrintingVerbosityLevel += sw_.second;
             }else if(sw == "quiet")
             {
-                Coffee::PrintingVerbosityLevel = 0;
+                Coffee::PrintingVerbosityLevel -= sw_.second;
             }else if(sw == "version")
             {
                 PrintVersionInfo();
@@ -247,7 +247,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
 void CoffeeTerminate()
 {
-    cDebug("Terminating");
+    cVerbose(5, "Terminating");
 
 #ifndef COFFEE_LOWFAT
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING

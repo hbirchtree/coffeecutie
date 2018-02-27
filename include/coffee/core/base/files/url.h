@@ -46,12 +46,12 @@ struct Path
 
     Path dirname();
 
-    Path operator+(cstring component);
-    FORCEDINLINE Path operator+(CString const& component)
+    Path operator+(cstring component) const;
+    FORCEDINLINE Path operator+(CString const& component) const
     {
         return *this + component.c_str();
     }
-    Path operator+(Path const& path);
+    Path operator+(Path const& path) const;
 
     Path& operator=(Url const& url);
 

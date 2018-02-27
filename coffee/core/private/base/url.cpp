@@ -361,7 +361,7 @@ Path Path::dirname()
     return {Env::DirName(internUrl.c_str())};
 }
 
-Path Path::operator+(cstring component)
+Path Path::operator+(cstring component) const
 {
     Path cpy = *this;
     cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
@@ -369,7 +369,7 @@ Path Path::operator+(cstring component)
     return cpy;
 }
 
-Path Path::operator+(const Path &path)
+Path Path::operator+(const Path &path) const
 {
     return {Env::ConcatPath(internUrl.c_str(),
                             path.internUrl.c_str())};
