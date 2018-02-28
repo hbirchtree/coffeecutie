@@ -1,6 +1,5 @@
 # Emscripten support
 
-Currently compiles, but does not work as intended when run in a browser.
-Supports generating asm.js output and Wasm outputs.
+Emscripten support is mostly done using SDL2. Input handling, WebGL and file handling is working as expected. Saving files to localStorage is not functional, but is also not prioritized (because the saving system is not very much used).
 
-Does not support thread-local storage for now.
+The Emscripten support is currently limited to WebGL 1, aka. OpenGL ES 2.0.

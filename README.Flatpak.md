@@ -1,6 +1,6 @@
 # Support for Flatpak
 
-The packaging is done using the script found in "cmake/Packaging/LinuxFlatpakBuild.cmake".
+The packaging is done using the script found in `cmake/Packaging/LinuxFlatpakBuild.cmake`.
 
 Resources and etc. are all good, most libraries are provided by the system.
 

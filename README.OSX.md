@@ -14,14 +14,13 @@ which limits TLS to POD types.
 
 I (the developer) do this:
 
-0. Install Xcode CLI tools (eg. run clang in terminal once)
+0. Install Xcode CLI tools (eg. run `clang` in terminal once)
 1. Install Ninja and CMake through homebrew
 
           brew install ninja cmake
 
-2. Install SDL2 frameworks (SDL's website provides this, the development version)
-3. Compile it! You will quickly see the appearance of
-    .app packages in the build/bin directory.
+2. Using `quick-build.sh`, compile the `osx` target.
+3. Compile it! It should just work. If you experience problems, please report them.
 
 # Any quirks?
 
