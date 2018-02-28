@@ -49,7 +49,9 @@ void GCInfiniteLoop()
 
 using namespace Coffee;
 
-int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
+int deref_main(CoffeeMainWithArgs mainfun,
+               int argc, char** argv,
+               u32 flags = 0)
 {
     cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
 
@@ -74,7 +76,7 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 
     atexit(Sensor::Android::Android_DestroySensors);
 #endif
-    int stat = Coffee::CoffeeMain(mainfun,argc,argv);
+    int stat = Coffee::CoffeeMain(mainfun,argc,argv, flags);
 
 #if defined(COFFEE_GEKKO)
     GCInfiniteLoop();

@@ -20,7 +20,7 @@ extern Coffee::CoffeeMainWithArgs android_entry_point;
 
 #endif
 
-extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);
+extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0);
 
 //This is a cheeky little macro that allows us to wrap the main function.
 #if defined(COFFEE_SDL_MAIN)
@@ -30,6 +30,9 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv)
     extern "C" int main(int argv, char** argc){ \
         return deref_main(mainfun,argv,argc); \
     }
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
+    COFFEE_APPLICATION_MAIN(mainfun)
 
 #elif defined(COFFEE_CUSTOM_MAIN)
 
@@ -42,9 +45,17 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv)
     Coffee::CoffeeMainWithArgs android_entry_point = mainfun;
 #endif
 
+#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
+    COFFEE_APPLICATION_MAIN(mainfun)
+
 #else
 
 // Plain old main() function
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     int main(int argv, char** argc){ return deref_main(mainfun,argv,argc); }
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
+    int main(int argv, char** argc){ \
+        return deref_main(mainfun,argv,argc, 0x1);\
+    }
 #endif
