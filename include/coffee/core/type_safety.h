@@ -102,12 +102,6 @@ static inline D C_FCAST(T from)
         else
             return from;
     }
-
-//    return (from_signed > max_signed)
-//            ? max_val
-//            : (from_signed < min_signed)
-//              ? min_val
-//              : from;
 }
 
 #else

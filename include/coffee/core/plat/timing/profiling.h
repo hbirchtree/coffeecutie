@@ -82,8 +82,10 @@ struct SimpleProfilerImpl
         {
             profiler_data_store = new ProfilerDataStore;
             profiler_data_store->global_init.store(0);
+#if !defined(NDEBUG)
             profiler_data_store->Enabled = true;
             profiler_data_store->Deep_Profile = false;
+#endif
         }
 
         if(profiler_data_store->global_init.load()<1)
@@ -305,6 +307,7 @@ struct SimpleProfilerImpl
 #endif
 
 
+#if !defined(NDEBUG)
     STATICINLINE LinkList<CString>& threadContextStack()
     {
         if(!current_thread_id)
@@ -314,6 +317,8 @@ struct SimpleProfilerImpl
         return ctxt.context_stack;
     }
 #endif
+
+#endif // COFFEE_DISABLE_PROFILER
 
     STATICINLINE ExtraData* ExtraInfo()
     {
