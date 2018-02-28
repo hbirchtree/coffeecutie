@@ -1,4 +1,4 @@
-# How to build against the Steam Runtime?
+# Port details
 
 The SteamOS build is mostly functional, with libraries built against
 GNU GCC 4.8.

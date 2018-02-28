@@ -1,4 +1,8 @@
-# Building on Raspberry Pi
+# Port details
+
+Raspberry Pi support currently depends on SDL2 for interacting with the hardware window manager. Currently, OpenGL ES 2.0 applications will override the entire screen. There is also potential for crashing the Raspberry Pi.
+
+## Building on Raspberry Pi
 Raspberry packages:
 
         # Essential packages (Ubuntu, Debian)
