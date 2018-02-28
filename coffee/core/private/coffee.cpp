@@ -125,12 +125,21 @@ void CoffeeInit(bool profiler_init)
     CoffeeDefaultWindowName = "Coffee [OpenGL]";
 #endif
 
-    cVerbose(8, "Initializing profiler");
+//    cVerbose(8, "Initializing profiler");
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 }
 
-int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
+enum StartFlags
+{
+    None = 0x0,
+    DiscardArgumentHandler = 0x1,
+};
+
+int32 CoffeeMain(
+        CoffeeMainWithArgs mainfun,
+        int32 argc, cstring_w*argv,
+        u32 flags)
 {
     initargs = AppArg::Clone(argc, argv);
 
@@ -146,6 +155,8 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiler::Profile("Init");
 
     Profiler::PushContext("Argument parsing");
+
+    if(!(flags & DiscardArgumentHandler))
     {
         ArgumentParser parser;
         parser.addSwitch(
@@ -222,7 +233,12 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
             if(pos.first == "resource_prefix")
                 CResources::FileResourcePrefix(pos.second.c_str());
         }
+    }else
+    {
+        Coffee::PrintingVerbosityLevel = 1;
     }
+
+
     Profiler::PopContext();
 
 #ifndef COFFEE_LOWFAT

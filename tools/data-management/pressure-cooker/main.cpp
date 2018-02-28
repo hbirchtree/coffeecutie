@@ -8,7 +8,8 @@ using namespace Coffee;
 
 static Vector<CString> compressFilter = {
     "fbx", "bin", "vert", "frag", "geom", "tesc",
-    "tese", "comp", "blend", "svg"
+    "tese", "comp", "blend", "blend1", "svg", "kra", "jpg",
+    "png"
 };
 
 void recurse_directories(Path const& prepath,
@@ -64,8 +65,8 @@ i32 coffee_main(i32, cstring_w*)
 {
     ArgumentParser parser;
 
-//    parser.addPositionalArgument("resource_dir",
-//                                 "Source resource directory");
+    parser.addPositionalArgument("resource_dir",
+                                 "Source resource directory");
     parser.addPositionalArgument("out_vfs",
                                  "Output VirtualFS");
 
@@ -74,11 +75,15 @@ i32 coffee_main(i32, cstring_w*)
 
     auto args = parser.parseArguments(C_CCAST<AppArg&>(GetInitArgs()));
 
-    if(args.positional.size() != 1)
+    if(args.positional.size() != 2)
     {
         cBasicPrint("{0}", parser.helpMessage());
         return 1;
     }
+
+    auto outputVfs = MkUrl(args.positional["out_vfs"].c_str(),
+            RSCA::SystemFile);
+    FileResourcePrefix(args.positional["resource_dir"].c_str());
 
     for(auto arg : args.arguments)
     {
@@ -167,6 +172,7 @@ i32 coffee_main(i32, cstring_w*)
     else
         cDebug("Done!");
 
+    /* This part is about testing */
     Bytes vfsData = Bytes::CreateFrom(outputData);
 
     VirtFS::VFS const* vfs = nullptr;
@@ -203,7 +209,13 @@ i32 coffee_main(i32, cstring_w*)
         FileUnmap(rsc);
     }
 
+    /* At this point, we are writing the VFS to disk */
+    CResources::Resource output(outputVfs);
+    output = vfsData;
+
+    FileCommit(output, false, RSCA::Discard);
+
     return 0;
 }
 
-COFFEE_APPLICATION_MAIN(coffee_main)
+COFFEE_APPLICATION_MAIN_CUSTOM_ARG(coffee_main)

@@ -54,6 +54,13 @@ public:
     cstring resource() const;
     bool valid() const;
 
+    Resource& operator=(Bytes const& data)
+    {
+        this->data = data.data;
+        this->size = data.size;
+        return *this;
+    }
+
     operator Bytes();
 
     enum FileFlags
