@@ -480,6 +480,8 @@ struct MeshLoader
             case M::TexCoord:
                 vd.m_size = 2;
                 break;
+            default:
+                break;
             }
             vd.m_stride = vd.m_size * sizeof(scalar);
         }

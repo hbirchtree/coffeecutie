@@ -23,7 +23,7 @@ class CAssimpImporters
 private:
     CAssimpImporters();
 public:
-    static CAssimpData* importResource(Resource* source,
+    static CAssimpData* importResource(CResources::Resource* source,
                                        cstring hint = nullptr);
 };
 
@@ -68,7 +68,9 @@ struct NodeList : public LinkList<Node>
 };
 
 
-extern bool LoadScene(UqPtr<AssimpData> &target, Resource* source, cstring hint = nullptr);
+extern bool LoadScene(UqPtr<AssimpData> &target,
+                      CResources::Resource* source,
+                      cstring hint = nullptr);
 
 struct ObjectDesc
 {
@@ -93,13 +95,19 @@ struct Object
     };
 };
 
-extern bool GetSceneObjects(UqPtr<AssimpData> const& scene, Vector<ObjectDesc>& objects);
+extern bool GetSceneObjects(UqPtr<AssimpData> const& scene,
+                            Vector<ObjectDesc>& objects);
 
-extern bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
+extern bool GetSceneRoot(UqPtr<AssimpData> const& scene,
+                         Node** root,
+                         NodeList& nodes);
 
-extern bool GetMeshData(UqPtr<AssimpData> const& scene, i32 node, Mesh& output_mesh);
+extern bool GetMeshData(UqPtr<AssimpData> const& scene,
+                        i32 node,
+                        Mesh& output_mesh);
 
-extern bool GetMeshCount(UqPtr<AssimpData> const& scene, i32& count);
+extern bool GetMeshCount(UqPtr<AssimpData> const& scene,
+                         i32& count);
 
 }
 

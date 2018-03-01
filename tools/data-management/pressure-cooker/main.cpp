@@ -3,14 +3,23 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
+#include <coffee/core/plat/plat_linking.h>
+#include <coffee/interfaces/content_pipeline.h>
 
 using namespace Coffee;
+using namespace Library;
 
 static Vector<CString> compressFilter = {
     "fbx", "bin", "vert", "frag", "geom", "tesc",
     "tese", "comp", "blend", "blend1", "svg", "kra", "jpg",
     "png"
 };
+
+static Vector<CString> ignoreFiler = {
+    "kra", "kra~", "blend", "blend1", "zbin", "bin"
+};
+
+static Vector<CoffeePipeline::FileProcessor*> extProcessors;
 
 void recurse_directories(Path const& prepath,
                          DirFun::DirItem_t const& item,
@@ -25,12 +34,20 @@ void recurse_directories(Path const& prepath,
 
         u32 flag = 0;
 
+        for(auto ext : ignoreFiler)
+        {
+            if(ext == filename.extension())
+                return;
+        }
+
         for(auto ext : compressFilter)
+        {
             if(ext == filename.extension())
             {
                 flag = VirtFS::File_Compressed;
                 break;
             }
+        }
 
         files.push_back({
                             filename.internUrl.c_str(),
@@ -61,81 +78,169 @@ void recurse_directories(Path const& prepath,
     }
 }
 
-i32 coffee_main(i32, cstring_w*)
+void csv_parse(CString const& v, Vector<CString>& out)
 {
-    ArgumentParser parser;
+    auto it = v.find(",");
 
-    parser.addPositionalArgument("resource_dir",
-                                 "Source resource directory");
-    parser.addPositionalArgument("out_vfs",
-                                 "Output VirtualFS");
+    if(v.size() > 0 && it == CString::npos)
+        out.push_back(v);
+    else
+        out.push_back(v.substr(0, it));
 
-    parser.addArgument("compress_types", "compress-types", "c",
-                       "File extensions to perform compression for");
-
-    auto args = parser.parseArguments(C_CCAST<AppArg&>(GetInitArgs()));
-
-    if(args.positional.size() != 2)
+    while(it != CString::npos)
     {
-        cBasicPrint("{0}", parser.helpMessage());
-        return 1;
+        auto next = v.find(",", it + 1);
+
+        CString ext;
+        if(next == CString::npos)
+            ext = v.substr(it + 1,
+                           v.size() - it -  1);
+        else
+            ext = v.substr(it + 1, next - it - 1);
+
+        out.push_back(ext);
+
+        it = next;
+    }
+}
+
+void load_extension(cstring name)
+{
+    auto library = FunctionLoader::GetLibrary(
+                name, FunctionLoader::GlobalSymbols
+                );
+
+    if(!library)
+    {
+        cWarning("Failed to load library: {0}",
+                 FunctionLoader::LinkError());
+        return;
     }
 
-    auto outputVfs = MkUrl(args.positional["out_vfs"].c_str(),
-            RSCA::SystemFile);
-    FileResourcePrefix(args.positional["resource_dir"].c_str());
+    using T = CoffeePipeline::FileProcessor;
 
+    auto constructor = ObjectLoader::GetConstructor<T>(
+                library, DefaultConstructorFunction, nullptr);
+
+    if(!constructor.loader)
+        return;
+
+    extProcessors.push_back(constructor.loader());
+}
+
+void parse_args(ArgumentResult& args)
+{
     for(auto arg : args.arguments)
     {
         if(arg.first == "compress_types")
         {
             compressFilter.clear();
 
-            auto it = arg.second.find(",");
+            csv_parse(arg.second, compressFilter);
+        }else if(arg.first == "extensions")
+        {
+            Vector<CString> extensions;
+            csv_parse(arg.second, extensions);
 
-            if(arg.second.size() > 0 && it == CString::npos)
-                compressFilter.push_back(arg.second);
-            else
-                compressFilter.push_back(arg.second.substr(0, it));
-
-            while(it != CString::npos)
-            {
-                auto next = arg.second.find(",", it + 1);
-
-                CString ext;
-                if(next == CString::npos)
-                    ext = arg.second.substr(it + 1,
-                                            arg.second.size() - it -  1);
-                else
-                    ext = arg.second.substr(it + 1, next - 1);
-
-                compressFilter.push_back(ext);
-
-                it = next;
-            }
+            for(auto const& ext : extensions)
+                load_extension(ext.c_str());
+        }else if(arg.first == "ignore")
+        {
+            csv_parse(arg.second, ignoreFiler);
         }
     }
+}
 
-    auto rscDir = "."_url;
+void test_vfs(Vector<byte_t>& outputData,
+              Vector<VirtFS::VirtDesc> const& descriptors)
+{
+    /* This part is about testing */
+    Bytes vfsData = Bytes::CreateFrom(outputData);
 
-    Vector<VirtFS::VirtDesc> descriptors;
+    VirtFS::VFS const* vfs = nullptr;
+    VirtFS::VFS::OpenVFS(vfsData, &vfs);
 
-    DirFun::DirList content;
-    if(!DirFun::Ls(rscDir, content))
+    for(auto& desc : descriptors)
     {
-        cFatal("Failed to list resource directory");
-        return 1;
+        auto file = VirtFS::VFS::GetFile(vfs, desc.filename.c_str());
+
+        if(!file)
+            continue;
+
+        auto rsize = file->rsize;
+        auto fsize = file->size;
+
+        if(fsize == 0)
+            continue;
+
+        scalar percentage = scalar(fsize) / scalar(rsize) * 100.f;
+
+        cDebug("File squash: {0} : {1}% size ({2}B -> {3}B)",
+               desc.filename, percentage,
+               rsize, fsize);
+    }
+}
+
+i32 coffee_main(i32, cstring_w*)
+{
+    Url outputVfs;
+    auto rscDir = "."_url;
+    Vector<VirtFS::VirtDesc> descriptors;
+    Vector<CResources::Resource> resources;
+    u64 totalSize = 0;
+    Vector<byte_t> outputData;
+
+    {
+        ArgumentParser parser;
+
+        parser.addPositionalArgument("resource_dir",
+                                     "Source resource directory");
+        parser.addPositionalArgument("out_vfs",
+                                     "Output VirtualFS");
+
+        parser.addArgument("compress_types", "compress-types", "c",
+                           "File extensions to perform compression for,"
+                           " comma-separated list");
+
+        parser.addArgument("extensions", "extensions", "e",
+                           "Comma-separated list of libraries to"
+                           " perform extended tasks");
+
+        parser.addArgument("ignore", "ignore-extensions", "i",
+                           "Comma-separated list of file extensions"
+                           " to ignore");
+
+        auto args = parser.parseArguments(C_CCAST<AppArg&>(GetInitArgs()));
+
+        if(args.positional.size() != 2)
+        {
+            cBasicPrint("{0}", parser.helpMessage());
+            return 1;
+        }
+
+        parse_args(args);
+
+        outputVfs = MkUrl(args.positional["out_vfs"].c_str(),
+                RSCA::SystemFile);
+
+        FileResourcePrefix(args.positional["resource_dir"].c_str());
     }
 
-    std::for_each(content.begin(), content.end(),
-                  [&](DirFun::DirItem_t const& subItem)
+    /* List files */
     {
-        recurse_directories(rscDir, subItem, descriptors);
-    });
+        DirFun::DirList content;
+        if(!DirFun::Ls(rscDir, content))
+        {
+            cFatal("Failed to list resource directory");
+            return 1;
+        }
 
-    Vector<CResources::Resource> resources;
-
-    u64 totalSize = 0;
+        std::for_each(content.begin(), content.end(),
+                      [&](DirFun::DirItem_t const& subItem)
+        {
+            recurse_directories(rscDir, subItem, descriptors);
+        });
+    }
 
     for(auto& desc : descriptors)
     {
@@ -159,12 +264,18 @@ i32 coffee_main(i32, cstring_w*)
         totalSize += fsize;
     }
 
-    cDebug("Total size: {0}B/{1}MB",
+    cDebug("Total input size: {0}B/{1}MB",
            totalSize, totalSize / 1_MB);
+
+    cDebug("Post-processing files...");
+
+    for(auto proc : extProcessors)
+    {
+        proc->process(descriptors);
+    }
 
     cDebug("Creating filesystem...");
 
-    Vector<byte_t> outputData;
     if(!VirtFS::GenVirtFS(descriptors, &outputData))
     {
         cWarning("Failed to create VirtFS");
@@ -172,48 +283,26 @@ i32 coffee_main(i32, cstring_w*)
     else
         cDebug("Done!");
 
-    /* This part is about testing */
-    Bytes vfsData = Bytes::CreateFrom(outputData);
-
-    VirtFS::VFS const* vfs = nullptr;
-    VirtFS::VFS::OpenVFS(vfsData, &vfs);
-
-    for(auto& desc : descriptors)
+    /* Give some statistics on the created filesystem */
     {
-        auto rsize = 0;
-        auto fsize = 0;
-
-        auto file = VirtFS::VFS::GetFile(vfs, desc.filename.c_str());
-
-        if(!file)
-            continue;
-
-        rsize = file->rsize;
-        fsize = file->size;
-
-        if(fsize == 0)
-            continue;
-
-        scalar percentage = scalar(fsize) / scalar(rsize) * 100.f;
-
-        cDebug("File squash: {0} : {1}% size ({2}B -> {3}B)",
-               desc.filename, percentage,
-               rsize, fsize);
+        test_vfs(outputData, descriptors);
+        cDebug("Total output size: {0}/{1}MB",
+               outputData.size(), outputData.size() / 1_MB);
     }
 
-    cDebug("Total output size: {0}/{1}MB",
-           outputData.size(), outputData.size() / 1_MB);
-
+    /* Unmap all files */
     for(auto& rsc : resources)
     {
         FileUnmap(rsc);
     }
 
     /* At this point, we are writing the VFS to disk */
-    CResources::Resource output(outputVfs);
-    output = vfsData;
+    {
+        CResources::Resource output(outputVfs);
+        output = Bytes::CreateFrom(outputData);
 
-    FileCommit(output, false, RSCA::Discard);
+        FileCommit(output, false, RSCA::Discard);
+    }
 
     return 0;
 }
