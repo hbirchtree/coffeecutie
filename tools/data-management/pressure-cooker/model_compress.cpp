@@ -4,6 +4,7 @@
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/assimp/assimp_iterators.h>
 #include <coffee/interfaces/cgraphics_api.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
 using namespace CoffeePipeline;
 using namespace Coffee;

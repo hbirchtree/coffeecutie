@@ -37,6 +37,13 @@ struct FunctionLoad_def
         C_UNUSED(ver);
         return nullptr;
     }
+
+    STATICINLINE
+    cstring LinkError()
+    {
+        return nullptr;
+    }
+
     STATICINLINE
     /*!
      * \brief Unload a loaded library, platform-dependent definition
