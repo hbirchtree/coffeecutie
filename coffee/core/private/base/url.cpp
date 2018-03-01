@@ -44,6 +44,32 @@ struct SystemPaths
     Url tempDir;
 };
 
+#if defined(COFFEE_APPLE)
+CString GetAppleStoragePath()
+{
+    Url out = {};
+    do {
+        CFBundleRef bun = CFBundleGetMainBundle();
+        if(!bun)
+            break;
+        CFURLRef path = CFBundleCopyBundleURL(bun);
+        CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
+        CFStringEncoding enc = CFStringGetSystemEncoding();
+        const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
+        CString out = pathcstr;
+        CFRelease(pathstr);
+        CFRelease(path);
+#if defined(COFFEE_APPLE_MOBILE)
+        out = MkUrl(out.c_str(), RSCA::SystemFile);
+#else
+        out = MkUrl(out.c_str(), RSCA::SystemFile) +
+                Path{"Contents"} + Path{"Resources"};
+#endif
+    } while(false);
+    return out;
+}
+#endif
+
 STATICINLINE SystemPaths GetSystemPaths()
 {
     SystemPaths paths;
@@ -139,24 +165,7 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_APPLE)
 
-    do {
-        CFBundleRef bun = CFBundleGetMainBundle();
-        if(!bun)
-            break;
-        CFURLRef path = CFBundleCopyBundleURL(bun);
-        CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
-        CFStringEncoding enc = CFStringGetSystemEncoding();
-        const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
-        CString out = pathcstr;
-        CFRelease(pathstr);
-        CFRelease(path);
-#if defined(COFFEE_APPLE_MOBILE)
-        paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile);
-#else
-        paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile) +
-                Path{"Contents"} + Path{"Resources"};
-#endif
-    } while(false);
+    paths.assetDir = GetAppleStoragePath();
 
     auto home = Env::GetVar("HOME");
 #if defined(COFFEE_APPLE_MOBILE)
