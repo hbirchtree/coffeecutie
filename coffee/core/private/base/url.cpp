@@ -56,13 +56,13 @@ Url GetAppleStoragePath()
         CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
         CFStringEncoding enc = CFStringGetSystemEncoding();
         const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
-        CString out = pathcstr;
+        CString outStr = pathcstr;
         CFRelease(pathstr);
         CFRelease(path);
 #if defined(COFFEE_APPLE_MOBILE)
-        out = MkUrl(out.c_str(), RSCA::SystemFile);
+        out = MkUrl(outStr.c_str(), RSCA::SystemFile);
 #else
-        out = MkUrl(out.c_str(), RSCA::SystemFile) +
+        out = MkUrl(outStr.c_str(), RSCA::SystemFile) +
                 Path{"Contents"} + Path{"Resources"};
 #endif
     } while(false);
@@ -165,7 +165,8 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_APPLE)
 
-    paths.assetDir = GetAppleStoragePath();
+    paths.assetDir = MkUrl(_coffee_resource_prefix.c_str(),
+                           RSCA::SystemFile);
 
     auto home = Env::GetVar("HOME");
 #if defined(COFFEE_APPLE_MOBILE)

@@ -1,6 +1,7 @@
 #include <coffee/core/coffee_mem_macros.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/CDebug>
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/assimp/assimp_iterators.h>
 #include <coffee/interfaces/cgraphics_api.h>
@@ -25,6 +26,8 @@ bool supported(CString const& otherExt)
 struct AssimpProcessor : FileProcessor
 {
     virtual void process(Vector<VirtFS::VirtDesc> &files);
+    
+    virtual void receiveAssetPath(CString const& path);
 };
 
 COFFAPI FileProcessor* CoffeeLoader()
@@ -45,6 +48,10 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
 
         targets.push_back(file.filename);
     }
+
+    fprintf(stderr, "Hello!\n");
+    fprintf(stderr, "PressurizeModels::Found %u resources\n",
+           targets.size());
 
     Vector<ASSIMP::MeshLoader::Attr> attributes =
     {
@@ -120,7 +127,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
                             });
 
             FileUnmap(sceneFile);
-        }
+        }else
+            fprintf(stderr, "Failed to map file: %s\n", sceneFile.resource());
 
         files.erase(std::remove_if(files.begin(), files.end(),
                        [&](VirtFS::VirtDesc& otherFile)
@@ -129,3 +137,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
         }));
     }
 }
+
+void AssimpProcessor::receiveAssetPath(const CString &path) {
+    FileResourcePrefix(path.c_str());
+}
+

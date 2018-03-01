@@ -29,6 +29,8 @@ struct FileProcessor
      * \return
      */
     virtual void process(Vector<VirtFS::VirtDesc>& files) = 0;
+    
+    virtual void receiveAssetPath(CString const& assetPath) = 0;
 };
 
 }
