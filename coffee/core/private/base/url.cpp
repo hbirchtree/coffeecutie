@@ -45,7 +45,7 @@ struct SystemPaths
 };
 
 #if defined(COFFEE_APPLE)
-CString GetAppleStoragePath()
+Url GetAppleStoragePath()
 {
     Url out = {};
     do {

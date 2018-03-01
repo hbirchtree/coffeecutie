@@ -21,6 +21,9 @@
 namespace Coffee{
 
 extern CString plat_tmp_string;
+#if defined(COFFEE_APPLE)
+extern Url GetAppleStoragePath();
+#endif
 
 FORCEDINLINE void PrintVersionInfo()
 {
@@ -145,6 +148,10 @@ int32 CoffeeMain(
 
 #if defined(COFFEE_ANDROID)
     app_dummy();
+#endif
+
+#if defined(COFFEE_APPLE)
+    FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());
 #endif
 
 #ifndef COFFEE_LOWFAT
