@@ -18,12 +18,16 @@ cstring CoffeePlatformString = C_SYSTEM_STRING;
 
 CString CoffeeDefaultWindowName;
 
-#ifdef COFFEE_LOADABLE_LIBRARY
+#ifndef COFFEE_LOADABLE_LIBRARY
+extern CoffeeApplicationData app_data;
+#endif
+
 const CoffeeApplicationData &ApplicationData()
 {
+#ifdef COFFEE_LOADABLE_LIBRARY
     static CoffeeApplicationData app_data;
+#endif
     return app_data;
 }
-#endif
 
 }

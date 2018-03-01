@@ -18,11 +18,5 @@ Coffee::CoffeeApplicationData app_data = {"@APP_COMPANY@", "@APP_TITLE@", @APP_V
 #else
 namespace Coffee{
 Coffee::CoffeeApplicationData app_data = {};
-
-CoffeeApplicationData const& ApplicationData()
-{
-    return app_data;
-}
-
 }
 #endif

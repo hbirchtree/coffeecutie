@@ -140,6 +140,12 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
         PRIVATE
         -DCOFFEE_APPLICATION_LIBRARY
         )
+    if(NOT WIN32 AND LINK_OPT EQUAL SHARED)
+        target_compile_options (
+            PRIVATE
+            -Wl,-U,app_data
+            )
+    endif()
 
     if(ANDROID)
         install(
