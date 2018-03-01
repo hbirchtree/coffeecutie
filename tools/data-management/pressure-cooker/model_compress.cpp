@@ -7,6 +7,8 @@
 #include <coffee/interfaces/cgraphics_api.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
+#define PRESSURE_LIB "PressurizeModels::"
+
 using namespace CoffeePipeline;
 using namespace Coffee;
 
@@ -49,8 +51,7 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
         targets.push_back(file.filename);
     }
 
-    fprintf(stderr, "Hello!\n");
-    fprintf(stderr, "PressurizeModels::Found %u resources\n",
+    cDebug(PRESSURE_LIB "Found {0} resources",
            targets.size());
 
     Vector<ASSIMP::MeshLoader::Attr> attributes =
@@ -100,7 +101,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
             files.push_back({
                                 vertex.internUrl.c_str(),
                                 std::move(vertexBytes),
-                                VirtFS::File_Compressed
+                                (vertexBytes.size > 1_MB)
+                                ? VirtFS::File_Compressed : u32(0)
                             });
 
             vertexBytes.size = bdesc.elementData.size();
@@ -111,7 +113,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
             files.push_back({
                                 element.internUrl.c_str(),
                                 std::move(vertexBytes),
-                                VirtFS::File_Compressed
+                                (vertexBytes.size > 1_MB)
+                                ? VirtFS::File_Compressed : u32(0)
                             });
 
             files.push_back({
@@ -128,7 +131,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
 
             FileUnmap(sceneFile);
         }else
-            fprintf(stderr, "Failed to map file: %s\n", sceneFile.resource());
+            cWarning(PRESSURE_LIB "Failed to map file: {0}",
+                     sceneFile.resource());
 
         files.erase(std::remove_if(files.begin(), files.end(),
                        [&](VirtFS::VirtDesc& otherFile)

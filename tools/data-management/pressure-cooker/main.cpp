@@ -271,7 +271,7 @@ i32 coffee_main(i32, cstring_w*)
 
     for(auto proc : extProcessors)
     {
-    	
+        proc->receiveAssetPath(GetFileResourcePrefix());
         proc->process(descriptors);
     }
 
