@@ -12,7 +12,7 @@ PosixFunctionLoader::Library *PosixFunctionLoader::GetLibrary(
 #if defined(COFFEE_LINUX)
     perm[0] = "lib"+CString(libName)+shared_object_extension;
 #elif defined(COFFEE_APPLE)
-    perm[0] = "lib"+CString(libName);
+    perm[0] = "lib"+CString(libName)+shared_object_extension;
 #else
     perm[0] = "lib"+CString(libName)+shared_object_extension;
 #endif
