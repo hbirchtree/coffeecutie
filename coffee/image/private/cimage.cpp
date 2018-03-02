@@ -199,10 +199,12 @@ bool IMG::LoadBytes(Bytes const&src, PixCmp cmp, BitFmt &fmt,
 
         res = img.size;
 
-        Bytes::SetDestr(data, [](Bytes& inst)
-        {
-            stbi_image_free(inst.data);
-        });
+        if(res.area() > 0)
+            Bytes::SetDestr(data, [](Bytes& inst)
+            {
+                stbi_image_free(inst.data);
+                inst.data = nullptr;
+            });
     }
 
     return true;

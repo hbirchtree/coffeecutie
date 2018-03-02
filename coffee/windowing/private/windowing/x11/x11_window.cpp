@@ -156,8 +156,7 @@ bool X11Window::closeWindow()
     if(m_xData)
     {
         bool stat = XUnmapWindow(m_xData->display, m_xData->window) == 0;
-        if(stat)
-            m_closeFlag = true;
+        m_closeFlag = true;
         return stat;
     }
     return false;

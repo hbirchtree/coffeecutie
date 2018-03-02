@@ -6,7 +6,9 @@
 namespace Coffee{
 
 struct Url;
+namespace CResources{
 struct Resource;
+}
 
 /*! \brief VirtualFS is used to store an asset file system in a single file.
  * Referring into it is done using filenames, and all the files are

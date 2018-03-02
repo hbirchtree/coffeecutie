@@ -39,7 +39,7 @@ extern void Error();
  * \return True if success
  */
 extern bool LoadData(CStbImage* target,
-                     const Resource* src,
+                     const CResources::Resource* src,
                      PixelComponents comp = PixelComponents::RGBA);
 
 extern bool LoadData(CStbImage* target,
@@ -81,7 +81,7 @@ extern bool Resize(
  * \return
  */
 extern bool SavePNG(
-        Resource* target,
+        CResources::Resource* target,
         const CStbImageConst* src);
 /*!
  * \brief Save STB image to PNG file
@@ -90,7 +90,7 @@ extern bool SavePNG(
  * \return
  */
 extern bool SavePNG(
-        Resource* target,
+        CResources::Resource* target,
         const CStbImage* src);
 /*!
  * \brief Save STB image to TGA file

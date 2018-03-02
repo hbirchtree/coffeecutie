@@ -49,11 +49,9 @@ void recurse_directories(Path const& prepath,
             }
         }
 
-        files.push_back({
-                            filename.internUrl.c_str(),
-                            {},
-                            flag
-                        });
+        files.emplace_back(
+                    filename.internUrl.c_str(),
+                    Bytes(), flag);
         break;
     }
     case DirFun::Type::Directory:
