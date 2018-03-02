@@ -227,6 +227,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     target_link_libraries ( ${TARGET}
         PUBLIC
         ${LIBRARIES}
+        CoffeeCore_Application
         )
 
     if(NACL)

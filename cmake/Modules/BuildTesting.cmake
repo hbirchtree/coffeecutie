@@ -64,6 +64,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
 
             ${LIBRARIES}
             CoffeeTesting
+            CoffeeCore_Application
             )
     endif()
 
