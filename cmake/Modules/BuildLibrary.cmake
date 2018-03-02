@@ -140,8 +140,8 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
         PRIVATE
         -DCOFFEE_APPLICATION_LIBRARY
         )
-    if(NOT WIN32 AND LINK_OPT EQUAL SHARED)
-        target_compile_options (
+    if(NOT WIN32)
+        target_link_libraries ( ${TARGET}
             PRIVATE
             -Wl,-U,app_data
             )
