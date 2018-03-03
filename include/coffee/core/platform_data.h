@@ -4,7 +4,8 @@
 #include "types/tdef/integertypes.h"
 
 namespace Coffee{
-struct PlatformData
+
+COFFEE_APP_CLASS struct PlatformData
 {
     enum DeviceType
     {

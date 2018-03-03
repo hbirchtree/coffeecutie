@@ -27,3 +27,16 @@
 #define COFFAPI extern "C"
 
 #endif
+
+#ifndef COFFEE_APP_FUNC
+/*!
+  \brief If a function is marked with this, it is not
+ available within shared libraries.
+  */
+#define COFFEE_APP_FUNC extern
+/*!
+  \brief If a class/struct is marked with this, it is not
+ available within shared libraries.
+  */
+#define COFFEE_APP_CLASS
+#endif

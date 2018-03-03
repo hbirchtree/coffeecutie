@@ -32,6 +32,7 @@ Mutex OutputPrinterDef::PrinterLock;
 #endif
 
 static CString _coffee_resource_prefix = "./";
+static CoffeeApplicationData _coffee_current_app = {};
 
 void CResources::FileResourcePrefix(cstring prefix)
 {
@@ -41,6 +42,16 @@ void CResources::FileResourcePrefix(cstring prefix)
 CString const& CResources::GetFileResourcePrefix()
 {
     return _coffee_resource_prefix;
+}
+
+void SetCurrentApp(CoffeeApplicationData const& app)
+{
+    _coffee_current_app = app;
+}
+
+CoffeeApplicationData const& GetCurrentApp()
+{
+    return _coffee_current_app;
 }
 
 }

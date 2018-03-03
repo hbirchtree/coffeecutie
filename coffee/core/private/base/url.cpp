@@ -120,12 +120,12 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
     paths.cacheDir = MkUrl(Env::GetUserHome().c_str(), RSCA::SystemFile)
-            + Path{".cache"} + Path{ApplicationData().organization_name}
-            + Path{ApplicationData().application_name};
+            + Path{".cache"} + Path{GetCurrentApp().organization_name}
+            + Path{GetCurrentApp().application_name};
 
     /* Temporary files go in /tmp */
     paths.tempDir = MkUrl("/tmp", RSCA::SystemFile)
-            + Path{ApplicationData().application_name};
+            + Path{GetCurrentApp().application_name};
 
     paths.configDir = MkUrl(Env::GetUserData(nullptr, nullptr).c_str(),
                             RSCA::SystemFile);
@@ -134,18 +134,18 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 	CString temp_dir = Env::GetVar("TEMP");
 	paths.tempDir = MkUrl(temp_dir.c_str(), RSCA::SystemFile) +
-		Path{ ApplicationData().organization_name } +
-		Path{ ApplicationData().application_name };
+        Path{ GetCurrentApp().organization_name } +
+        Path{ GetCurrentApp().application_name };
 
 	CString config_dir = Env::GetVar("APPDATA");
 	paths.configDir = MkUrl(config_dir.c_str(), RSCA::SystemFile) +
-		Path{ ApplicationData().organization_name } +
-		Path{ ApplicationData().application_name };
+        Path{ GetCurrentApp().organization_name } +
+        Path{ GetCurrentApp().application_name };
 
 	CString cache_dir = Env::GetVar("LOCALAPPDATA");
 	paths.cacheDir = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
-		Path{ ApplicationData().organization_name } +
-		Path{ApplicationData().application_name};
+        Path{ GetCurrentApp().organization_name } +
+        Path{ GetCurrentApp().application_name};
 
 #if defined(COFFEE_WINDOWS_UWP)
 	auto pkg = ::Windows::ApplicationModel::Package::Current();
@@ -184,8 +184,8 @@ STATICINLINE SystemPaths GetSystemPaths()
     auto library = MkUrl(home.c_str()) + Path{"Library"};
 
     auto app_path =
-            Path{ApplicationData().organization_name} +
-            Path{ApplicationData().application_name};
+            Path{GetCurrentApp().organization_name} +
+            Path{GetCurrentApp().application_name};
 
     paths.configDir = library + Path{"Application Support"} + app_path;
 

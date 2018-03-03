@@ -158,6 +158,8 @@ int32 CoffeeMain(
 
     CoffeeInit(false);
 
+    SetCurrentApp(ApplicationData());
+
     Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");
 
