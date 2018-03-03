@@ -146,10 +146,12 @@ if(ANDROID)
 
         )
     list ( APPEND CoffeeCore_SRCS
-        platform/and_main.cpp
-        ${ANDROID_GLUE_SOURCES}
         ${NDK_HELPER_SOURCES}
         ${CPUFEATURES_SOURCES}
+        )
+    list ( APPEND CoffeeCore_AppLoader_SRCS
+        platform/and_main.cpp
+        ${ANDROID_GLUE_SOURCES}
         )
 
     set_source_files_properties (
@@ -275,12 +277,12 @@ coffee_add_library ( CoffeeXML
     )
 
 coffee_add_library ( CoffeeCore_Base
-    "${CoffeeCore_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeCompression_SRCS}"
+    "${CoffeeCore_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeCompression_SRCS};${CoffeePlatformData_SRCS}"
     "${STANDARDLIBS_LIBRARIES};CoffeeXML"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )
 coffee_add_library ( CoffeeCore_Application
-    "${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeProfiler_SRCS};${CoffeePlatformData_SRCS}"
+    "${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeProfiler_SRCS}"
     "CoffeeCore_Base"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )

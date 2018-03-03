@@ -2,6 +2,7 @@
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/timing/profiling.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
 
 #ifdef COFFEE_USE_TERMINAL_CTL
 #include <coffee/core/plat/memory/cmd_unixterm.h>
@@ -55,3 +56,12 @@ CoffeeApplicationData const& GetCurrentApp()
 }
 
 }
+
+/* These declarations are library-local storage for event handling */
+void* coffee_event_handling_data;
+
+void(*CoffeeEventHandle)(void*, int);
+void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
+
+void(*CoffeeForeignSignalHandle)(int);
+void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
