@@ -86,14 +86,14 @@ if(NOT WIN_UWP)
 		)
 endif()
 
-#if(NOT EMSCRIPTEN)
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
     HINTS
     $ENV{SDL2DIR}
     PATH_SUFFIXES include/SDL2 include
     PATHS ${SDL2_SEARCH_PATHS}
     )
-#endif()
+
+get_filename_component ( SDL2_INCLUDE_DIR "${SDL2_INCLUDE_DIR}" ABSOLUTE )
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
   NAMES
