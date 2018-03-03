@@ -363,6 +363,7 @@ templates:
     =toolchain-dir: $(cmake.src)/cmake
     +cmake-opts:
       - -DNATIVE_LIBRARY_DIR=$(cmake.native-lib)/$(build.prettyname)
+      - -DNATIVE_LIBRARY_ROOT=$(cmake.native-lib)
       - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
       - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
       - -DCOFFEE_BUILD_ASSIMP=ON

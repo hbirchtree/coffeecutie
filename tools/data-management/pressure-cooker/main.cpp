@@ -208,7 +208,7 @@ i32 coffee_main(i32, cstring_w*)
                            "Comma-separated list of file extensions"
                            " to ignore");
 
-        auto args = parser.parseArguments(C_CCAST<AppArg&>(GetInitArgs()));
+        auto args = parser.parseArguments(GetInitArgs());
 
         if(args.positional.size() != 2)
         {

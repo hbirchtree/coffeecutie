@@ -4,7 +4,7 @@ namespace Coffee{
 
 AppArg initargs;
 
-const AppArg &GetInitArgs()
+AppArg &GetInitArgs()
 {
     return initargs;
 }

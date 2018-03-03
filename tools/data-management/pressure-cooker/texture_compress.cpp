@@ -17,6 +17,7 @@ static Vector<CString> imageExtensions = {
 enum ImageProcessor
 {
     ImageProc_stb,
+    ImageProc_stb_rgb,
     ImageProc_tga,
 };
 
@@ -26,6 +27,16 @@ struct TextureCooker : FileProcessor
     virtual void receiveAssetPath(const CString &assetPath);
 };
 
+cstring compression_extension(u32 format)
+{
+    switch(format)
+    {
+    case squish::kDxt1:
+        return "dxt1";
+    default:
+        return "dxt5";
+    }
+}
 
 void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
 {
@@ -38,9 +49,13 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
         for(auto ext : imageExtensions)
             if(StrICmp(path.extension().c_str(), ext.c_str()))
             {
-                bool is_tga = ext == "TGA";
-                targets[desc.filename] = (is_tga)
-                        ? ImageProc_tga : ImageProc_stb;
+                if(ext == "TGA")
+                    targets[desc.filename] = ImageProc_tga;
+                else if(ext == "JPG")
+                    targets[desc.filename] = ImageProc_stb_rgb;
+                else
+                    targets[desc.filename] = ImageProc_stb;
+
                 continue;
             }
     }
@@ -61,7 +76,15 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
         if(size.area() == 0)
             continue;
 
-        auto outName = Path(file.first).removeExt().addExtension("dx5");
+        auto compress = squish::kDxt5;
+
+        if(file.second == ImageProc_stb_rgb)
+            compress = squish::kDxt1;
+
+        auto outName = Path(file.first)
+                .removeExt()
+                .addExtension(compression_extension(compress));
+
         files.emplace_back(
                     outName.internUrl.c_str(),
                     Bytes(),
@@ -70,18 +93,21 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
         Bytes& output = files.back().data;
         output.size = C_FCAST<szptr>(
                     squish::GetStorageRequirements(
-                        size.w, size.h, squish::kDxt5));
+                        size.w, size.h, compress));
         output.data = C_RCAST<byte_t*>(Calloc(output.size, 1));
-        Bytes::SetDestr(output, [](Bytes& b)
-        {
-            CFree(b.data);
-        });
+//        Bytes::SetDestr(output, [](Bytes& b)
+//        {
+//            CFree(b.data);
+//        });
 
         squish::CompressImage(data.data, size.w, size.h,
-                              output.data, squish::kDxt5);
+                              output.data, compress);
 
-        cDebug(TEXCOMPRESS_API "Compressed texture: {2} {0} -> {1}",
-               r.size, output.size, file.first);
+        cDebug(TEXCOMPRESS_API "Compressed texture: "
+                               "{2}: {0}B (file)"
+                               " -> {3}B (raw)"
+                               " -> {1}B (compressed)",
+               r.size, output.size, file.first, data.size);
 
         files.erase(std::find_if(files.begin(), files.end(),
                                    [&](VirtFS::VirtDesc& f)

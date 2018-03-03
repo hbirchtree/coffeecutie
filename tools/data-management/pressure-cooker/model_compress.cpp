@@ -90,11 +90,16 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
             auto draws = baseFname.addExtension("draws");
             auto attributes = baseFname.addExtension("attributes");
             auto drawcall = baseFname.addExtension("dcall");
+            auto graph = baseFname.addExtension("graph");
 
             Bytes vertexBytes;
             vertexBytes.size = bdesc.vertexData.size();
             vertexBytes.data = C_FCAST<byte_t*>(
                         Calloc(vertexBytes.size, 1));
+            Bytes::SetDestr(vertexBytes, [](Bytes& b)
+            {
+                CFree(b.data);
+            });
 
             bdesc.vertexData.cpy(vertexBytes.data,  vertexBytes.size);
 
@@ -108,6 +113,10 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
             vertexBytes.size = bdesc.elementData.size();
             vertexBytes.data = C_FCAST<byte_t*>(
                         Calloc(vertexBytes.size, 1));
+            Bytes::SetDestr(vertexBytes, [](Bytes& b)
+            {
+                CFree(b.data);
+            });
 
             bdesc.elementData.cpy(vertexBytes.data, vertexBytes.size);
             files.push_back({
@@ -115,6 +124,20 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
                                 std::move(vertexBytes),
                                 (vertexBytes.size > 1_MB)
                                 ? VirtFS::File_Compressed : u32(0)
+                            });
+
+            vertexBytes.size = bdesc.nodes.size();
+            vertexBytes.data = C_FCAST<byte_t*>(
+                        Calloc(vertexBytes.size, 1));
+            Bytes::SetDestr(vertexBytes, [](Bytes& b)
+            {
+                CFree(b.data);
+            });
+            bdesc.nodes.cpy(vertexBytes.data, vertexBytes.size);
+            files.push_back({
+                                graph.internUrl.c_str(),
+                                std::move(vertexBytes),
+                                0
                             });
 
             files.push_back({
