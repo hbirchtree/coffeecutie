@@ -15,8 +15,8 @@ CString LinuxEnv::GetUserData(cstring orgname, cstring appname)
     }else{
         if(!orgname && !appname)
         {
-            orgname = ApplicationData().organization_name.c_str();
-            appname = ApplicationData().application_name.c_str();
+            orgname = GetCurrentApp().organization_name.c_str();
+            appname = GetCurrentApp().application_name.c_str();
         }
 
         CString homedir = GetUserHome();
