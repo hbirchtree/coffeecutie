@@ -10,6 +10,17 @@ namespace Coffee{
 template<typename T>
 struct _cbasic_data_chunk
 {
+    _cbasic_data_chunk(_cbasic_data_chunk<T>&& other)
+    {
+        this->data = other.data;
+        this->size = other.size;
+        this->m_destr = other.m_destr;
+
+        other.data = nullptr;
+        other.size = 0;
+        other.m_destr = nullptr;
+    }
+
     _cbasic_data_chunk():
         data(0),
         size(0),
@@ -36,7 +47,7 @@ struct _cbasic_data_chunk
             m_destr(*this);
     }
 
-    _cbasic_data_chunk(_cbasic_data_chunk&&) = default;
+    C_DELETE_COPY_CONSTRUCTOR(_cbasic_data_chunk);
     _cbasic_data_chunk& operator=(_cbasic_data_chunk&&) = default;
 
     STATICINLINE void SetDestr(_cbasic_data_chunk<T>& inst,

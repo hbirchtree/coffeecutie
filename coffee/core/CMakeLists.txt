@@ -402,6 +402,13 @@ if(ANDROID)
         ${CPUFEATURES_INCLUDE_DIR}
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )
+    target_include_directories ( CoffeeCore_Application
+        PRIVATE
+        ${ANDROID_GLUE_INCLUDE_DIR}
+        ${NDK_HELPER_INCLUDE_DIR}
+        ${CPUFEATURES_INCLUDE_DIR}
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
+        )
 endif()
 
 coffee_bundle_includes (

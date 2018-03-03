@@ -16,19 +16,18 @@ if(COFFEE_BUILD_ASSIMP)
         )
 endif()
 
-if(COFFEE_BUILD_GLEAM_RHI)
+find_package( Squish QUIET )
+
+if(SQUISH_FOUND)
     coffee_add_elibrary(
         PressurizeTextures SHARED "texture_compress.cpp"
-        "CoffeeRenderer_Default;CoffeeTesting"
+        "CoffeeCore;CoffeeImage;Squish"
         "${CMAKE_SOURCE_DIR}/coffee/interfaces"
-        )
-
-    target_include_directories ( PressurizeTextures
-        PRIVATE
-        ${CMAKE_SOURCE_DIR}/libs/stb/
         )
 
     add_dependencies ( PressureCooker
         PressurizeTextures
         )
+else()
+    message ( STATUS "Skipping PressurizeTextures" )
 endif()
