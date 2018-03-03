@@ -145,7 +145,7 @@ if(ANDROID)
         private/plat/file/linux/file.cpp
 
         )
-    list ( APPEND CoffeeCore_Bootstrap_SRCS
+    list ( APPEND CoffeeCore_SRCS
         platform/and_main.cpp
         ${ANDROID_GLUE_SOURCES}
         ${NDK_HELPER_SOURCES}
