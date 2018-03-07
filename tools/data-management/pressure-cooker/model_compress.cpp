@@ -1,11 +1,14 @@
 #include <coffee/core/coffee_mem_macros.h>
-#include <coffee/interfaces/content_pipeline.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CDebug>
+#include <coffee/core/types/tdef/stltypes.h>
+
+#include <coffee/interfaces/cgraphics_api.h>
+#include <coffee/interfaces/content_pipeline.h>
+
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/assimp/assimp_iterators.h>
-#include <coffee/interfaces/cgraphics_api.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/assimp/assimp_material_iterators.h>
 
 #define PRESSURE_LIB "PressurizeModels::"
 
@@ -71,17 +74,21 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
 
         CResources::Resource sceneFile(MkUrl(filePath.internUrl.c_str()));
 
-        if(FileMap(sceneFile))
         {
             ASSIMP::MeshLoader::BufferDescription<RHI::NullAPI> bdesc;
             ASSIMP::AssimpPtr scene;
-            ASSIMP::LoadScene(scene,
-                              &sceneFile,
-                              Path(file).extension().c_str());
+            if(!ASSIMP::LoadScene(scene, C_OCAST<Bytes>(sceneFile),
+                              Path(file).extension().c_str()))
+                continue;
 
             ASSIMP::MeshLoader::ExtractDescriptors(
                         scene, attributes, dinfo,
                         bdesc);
+
+            ASSIMP::MaterialParser::MaterialSerializer materials;
+
+            ASSIMP::MaterialParser::ExtractDescriptors(
+                        scene, materials);
 
             auto baseFname = filePath.removeExt();
 
@@ -91,6 +98,7 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
             auto attributes = baseFname.addExtension("attributes");
             auto drawcall = baseFname.addExtension("dcall");
             auto graph = baseFname.addExtension("graph");
+            auto materialFn = baseFname.addExtension("materials");
 
             Bytes vertexBytes;
             vertexBytes.size = bdesc.vertexData.size();
@@ -142,20 +150,21 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
 
             files.push_back({
                                 draws.internUrl.c_str(),
-                                Bytes::CreateFrom(bdesc.draws),
+                                Bytes::CopyFrom(bdesc.draws),
+                                0
+                            });
+            files.push_back({
+                                attributes.internUrl.c_str(),
+                                Bytes::CopyFrom(bdesc.attributes),
                                 0
                             });
 
             files.push_back({
                                 drawcall.internUrl.c_str(),
-                                Bytes::Create(bdesc.call),
+                                Bytes::Copy(bdesc.call),
                                 0
                             });
-
-            FileUnmap(sceneFile);
-        }else
-            cWarning(PRESSURE_LIB "Failed to map file: {0}",
-                     sceneFile.resource());
+        }
 
         files.erase(std::remove_if(files.begin(), files.end(),
                        [&](VirtFS::VirtDesc& otherFile)

@@ -2,9 +2,9 @@
 
 #include "gl_shared_enum_convert.h"
 
+#include <coffee/core/coffee_assert_macros.h>
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/plat/memory/string_ops.h>
-#include <coffee/core/base/textprocessing/cregex.h>
 
 namespace Coffee{
 namespace CGL{

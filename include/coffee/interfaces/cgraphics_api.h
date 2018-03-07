@@ -1,10 +1,9 @@
 #pragma once
 
-#include <coffee/core/types/cdef/geometry.h>
+#include "cgraphics_api_basic.h"
 #include <coffee/core/types/cdef/funtypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/cdef/pixtypes.h>
-#include <coffee/core/types/cdef/timetypes.h>
 
 #include <coffee/core/types/vector_types.h>
 
@@ -14,8 +13,6 @@
 #include <coffee/core/types/edef/logicenum.h>
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
-
-#include <coffee/core/types/tdef/integertypes.h>
 
 #include "cgraphics_pixops.h"
 
@@ -29,7 +26,7 @@ struct CDProperties;
 }
 namespace RHI{
 
-struct GraphicsAPI
+struct GraphicsAPI : GraphicsAPI_Base
 {
     /* Enumerations */
     enum TextureFlags
@@ -1072,14 +1069,6 @@ struct NullAPI : GraphicsAPI
         {
             return true;
         };
-    }
-
-    static void GetDefaultVersion(i32&, i32&)
-    {
-    }
-
-    static void GetDefaultProperties(Display::CDProperties&)
-    {
     }
 
     /* We define a profiler namespace */

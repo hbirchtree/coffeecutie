@@ -94,7 +94,9 @@ struct MeshLoader
         return size / (sizeof(From) / sizeof(To));
     }
 
-    template<typename T>
+    template<typename T,
+             typename is_pod<T>::type* = nullptr
+             >
     static T integer_range_get_max(T const* src, szptr count)
     {
         T max = std::numeric_limits<T>::min();
@@ -375,6 +377,95 @@ struct MeshLoader
 
                 return nullptr;
             }
+
+            szptr indexOf(SerialNodeData const* node) const
+            {
+                SerialNodeData const* base =
+                        C_RCAST<SerialNodeData const*>(&this[1]);
+
+                return C_FCAST<szptr>(node - base);
+            }
+
+            struct iterator
+                    : Iterator<ForwardIteratorTag, SerialNodeData>
+            {
+                iterator(SerialHeader const* hdr, szptr parent):
+                    m_hdr(hdr),
+                    m_parent(parent),
+                    m_current(0)
+                {
+                    this->operator++();
+                }
+                iterator():
+                    m_hdr(nullptr),
+                    m_parent(C_CAST<szptr>(-1)),
+                    m_current(C_CAST<szptr>(-1))
+                {
+                }
+
+                iterator& operator++()
+                {
+                    do {
+                        m_current++;
+                    } while(m_current < m_hdr->num_nodes
+                            && m_hdr->node(m_current)->parent != m_parent);
+
+                    if(m_current >= m_hdr->num_nodes)
+                        m_current = C_CAST<szptr>(-1);
+
+                    return *this;
+                }
+
+                bool operator==(iterator const& other)
+                {
+                    return other.m_current == m_current;
+                }
+
+                bool operator!=(iterator const& other)
+                {
+                    return other.m_current != m_current;
+                }
+
+                SerialNodeData const& operator*()
+                {
+                    if(m_current > m_hdr->num_nodes)
+                        throw std::out_of_range("invalid access");
+                    else
+                        return *m_hdr->node(m_current);
+                }
+
+            private:
+                SerialHeader const* m_hdr;
+                szptr m_parent;
+                szptr m_current;
+            };
+
+            struct child_container
+            {
+                child_container(SerialHeader const* hdr,
+                                szptr parent):
+                    m_hdr(hdr),
+                    m_parent(parent)
+                {
+                }
+
+                iterator begin()
+                {
+                    return iterator(m_hdr, m_parent);
+                }
+                iterator end()
+                {
+                    return iterator();
+                }
+            private:
+                SerialHeader const* m_hdr;
+                szptr m_parent;
+            };
+
+            child_container childrenOf(szptr node) const
+            {
+                return child_container(this, node);
+            }
         };
 
         Vector<NodeData> nodes;
@@ -435,7 +526,12 @@ struct MeshLoader
         }
     };
 
-    template<typename GFX>
+    template<typename GFX,
+
+             typename implements<RHI::GraphicsAPI_Base, GFX>::type*
+             = nullptr
+
+             >
     struct BufferDescription
     {
 //        using GFX = RHI::NullAPI;
@@ -480,7 +576,12 @@ struct MeshLoader
         }
     }
 
-    template<typename API>
+    template<typename API,
+
+             typename implements<RHI::GraphicsAPI_Base, API>::type*
+             = nullptr
+
+             >
     static
     bool ExtractDescriptors(
             ASSIMP::AssimpPtr& scene,

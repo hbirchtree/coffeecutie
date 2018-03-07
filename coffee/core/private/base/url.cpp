@@ -374,15 +374,21 @@ Path Path::dirname()
 Path Path::operator+(cstring component) const
 {
     Path cpy = *this;
-    cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
+    if(cpy.internUrl.size())
+        cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
+    else
+        cpy.internUrl = component;
 //    cpy.internUrl += component;
     return cpy;
 }
 
 Path Path::operator+(const Path &path) const
 {
-    return {Env::ConcatPath(internUrl.c_str(),
-                            path.internUrl.c_str())};
+    if(internUrl.size())
+        return {Env::ConcatPath(internUrl.c_str(),
+                                path.internUrl.c_str())};
+    else
+        return path;
 }
 
 Path &Path::operator=(const Url &url)

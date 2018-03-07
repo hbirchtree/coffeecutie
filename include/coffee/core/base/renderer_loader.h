@@ -10,7 +10,10 @@ namespace Coffee{
 namespace Display{
 
 template<typename Renderer,
-         typename implements<InitApplication, Renderer>::type* = nullptr>
+
+         typename implements<InitApplication, Renderer>::type* = nullptr
+
+         >
 STATICINLINE
 bool LoadHighestVersion(
         Renderer* renderer, CDProperties& properties, CString* err)

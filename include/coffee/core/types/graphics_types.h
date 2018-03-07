@@ -7,7 +7,12 @@
 namespace Coffee{
 namespace CGraphicsData{
 
-template<typename T> struct _cbasic_graphics_camera
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
+struct _cbasic_graphics_camera
 {
     FORCEDINLINE _cbasic_graphics_camera():
         rotation(),
@@ -37,7 +42,12 @@ template<typename T> struct _cbasic_graphics_camera
     CameraFlags flags;
 };
 
-template<typename T> struct _cbasic_graphics_transform
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
+struct _cbasic_graphics_transform
 {
     FORCEDINLINE _cbasic_graphics_transform():
         rotation(),

@@ -20,8 +20,14 @@ find_program ( PRESSURE_COOKER_BIN
 
 if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
     macro ( PACKAGE_DIRECTORY TARGET VFS_SOURCE VFS_TARGET EXTENSIONS )
+
+        get_filename_component ( OUTPUT_DIR "${VFS_TARGET}" DIRECTORY )
+
         add_custom_command ( TARGET ${TARGET}
-            POST_BUILD
+            PRE_BUILD
+
+            COMMAND
+            ${CMAKE_COMMAND} -E make_directory ${OUTPUT_DIR}
 
             COMMAND
             ${CMAKE_COMMAND} -E env

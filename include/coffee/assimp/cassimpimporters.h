@@ -69,7 +69,7 @@ struct NodeList : public LinkList<Node>
 
 
 extern bool LoadScene(UqPtr<AssimpData> &target,
-                      CResources::Resource* source,
+                      Bytes const& source,
                       cstring hint = nullptr);
 
 struct ObjectDesc

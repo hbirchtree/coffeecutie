@@ -1,4 +1,6 @@
 #include <coffee/graphics/apis/gleam/levels/shared/gl_shared_debug.h>
+#include <coffee/core/base/textprocessing/cregex.h>
+#include <coffee/core/plat/plat_memory.h>
 #include <coffee/core/string_casting.h>
 
 #if defined(COFFEE_USE_APPLE_GLKIT)

@@ -60,7 +60,7 @@ namespace Stb{
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern bool LoadVorbis(AudioSample* smp, CResources::Resource* src);
+extern bool LoadVorbis(AudioSample* smp, Bytes const& src);
 
 }
 

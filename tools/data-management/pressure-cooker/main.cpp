@@ -236,7 +236,7 @@ i32 coffee_main(i32, cstring_w*)
         std::for_each(content.begin(), content.end(),
                       [&](DirFun::DirItem_t const& subItem)
         {
-            recurse_directories(rscDir, subItem, descriptors);
+            recurse_directories({}, subItem, descriptors);
         });
     }
 

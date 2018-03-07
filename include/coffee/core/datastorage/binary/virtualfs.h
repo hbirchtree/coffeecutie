@@ -166,6 +166,11 @@ public:
      * \return
      */
     bool valid() const;
+
+    cstring resource() const
+    {
+        return file->name;
+    }
     /*!
      * \brief Return the data contained in the virtual file.
      *  If the file in question is compressed,

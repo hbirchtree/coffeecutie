@@ -2,7 +2,6 @@
 
 #include "../../coffee_mem_macros.h"
 
-#include "../tdef/stltypes.h"
 #include "../tdef/stlfunctypes.h"
 
 namespace Coffee{

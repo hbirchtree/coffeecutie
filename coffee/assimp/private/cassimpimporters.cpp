@@ -139,7 +139,7 @@ bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, Resource *resource)
 
 namespace ASSIMP{
 
-bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
+bool LoadScene(UqPtr<AssimpData>& target, const Bytes &source, cstring hint)
 {
     auto& data = target;
 
@@ -151,12 +151,13 @@ bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
             aiProcess_OptimizeMeshes|
             aiProcess_SortByPType;
 
-    data->scene = data->importer.ReadFileFromMemory(source->data, source->size,
-                                                    aiFlags, hint);
+    data->scene = data->importer.ReadFileFromMemory(
+                source.data, source.size,
+                aiFlags, hint);
 
     if(!data->scene)
     {
-        cWarning("Could not load scene: {0}", source->resource());
+        cWarning("Could not load scene: {0}", hint);
         target.reset();
         return false;
     }

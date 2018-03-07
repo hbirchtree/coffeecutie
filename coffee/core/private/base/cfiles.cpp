@@ -87,6 +87,13 @@ bool FileExists(const Resource &resc)
 
 bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 {
+    if(resc.flags & Resource::Mapped)
+    {
+        Profiler::DeepProfile(CFILES_TAG
+                              "File already mapped");
+        return true;
+    }
+
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
 
     resc.size = FileFun::Size(resc.m_platform_data->m_url);
@@ -137,7 +144,8 @@ bool FileUnmap(Resource &resc)
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
     if(!(resc.flags&Resource::Mapped))
     {
-        Profiler::DeepProfile(CFILES_TAG "Non-mapped file called for unmap");
+        Profiler::DeepProfile(CFILES_TAG
+                              "Non-mapped file called for unmap");
         Profiler::DeepPopContext();
         return false;
     }

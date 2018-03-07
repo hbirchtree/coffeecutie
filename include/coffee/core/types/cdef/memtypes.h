@@ -74,6 +74,44 @@ struct _cbasic_data_chunk
         {C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), 0};
     }
 
+    template<typename T2>
+    STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
+    {
+        _cbasic_data_chunk<T> out;
+        out.size = (data.size() * sizeof(T2)) / sizeof(T);
+        out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
+        MemCpy(out.data, data.data(), out.size);
+        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
+        {
+            CFree(b.data);
+        });
+
+        return out;
+    }
+
+    STATICINLINE szptr nmax(szptr v1, szptr v2)
+    {
+        if(v1 < v2)
+            return v2;
+        else
+            return v1;
+    }
+
+    template<typename T2>
+    STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
+    {
+        _cbasic_data_chunk<T> out;
+        out.size = nmax((sizeof(T2)) / sizeof(T), 8);
+        out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
+        MemCpy(out.data, &obj, out.size);
+//        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
+//        {
+//            CFree(b.data);
+//        });
+
+        return out;
+    }
+
     template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>
     T& operator[] (szptr i)
     {
@@ -140,6 +178,103 @@ struct ByteProvider
     }
 };
 
+template<typename T>
+struct _cbasic_serial_array
+{
+    _cbasic_serial_array():
+        m_data(nullptr),
+        m_size(0)
+    {
+    }
+
+    _cbasic_serial_array(Bytes const& source)
+    {
+        if((source.size % sizeof(T)) == 0)
+        {
+            m_data = C_RCAST<T const*>(source.data);
+            m_size = source.size / sizeof(T);
+        }else
+            m_size = 0;
+    }
+
+    static const constexpr szptr npos = C_CAST<szptr>(-1);
+
+    struct iterator : Iterator<ForwardIteratorTag, T>
+    {
+        iterator(_cbasic_serial_array<T>* base):
+            m_base(base),
+            m_idx(0)
+        {
+        }
+        iterator():
+            m_base(nullptr),
+            m_idx(npos)
+        {
+        }
+
+        iterator& operator++()
+        {
+            m_idx++;
+            if(m_idx >= m_base->m_size)
+                m_idx = npos;
+            return *this;
+        }
+
+        bool operator==(iterator const& other) const
+        {
+            return m_idx == other.m_idx;
+        }
+        bool operator!=(iterator const& other) const
+        {
+            return m_idx != other.m_idx;
+        }
+
+        T const& operator*() const
+        {
+            if(m_idx > m_base->m_size)
+                throw std::out_of_range("invalid access");
+            else
+                return (*m_base)[m_idx];
+        }
+    private:
+        _cbasic_serial_array<T>* m_base;
+        szptr m_idx;
+    };
+
+    iterator begin()
+    {
+        if(m_size == 0)
+            return end();
+        else
+            return iterator(this);
+    }
+
+    iterator end()
+    {
+        return iterator();
+    }
+
+    T const& operator[](szptr i)
+    {
+        if(i > m_size)
+            throw std::out_of_range("invalid access");
+        else
+            return m_data[i];
+    }
+
+    szptr size() const
+    {
+        return m_size;
+    }
+
+private:
+    T const* m_data;
+    szptr m_size;
+};
+
+template<typename T>
+using SerialArray = _cbasic_serial_array<T>;
+
 struct CMimeData
 {
     FORCEDINLINE CMimeData(cstring id, void* data,
@@ -201,62 +336,6 @@ struct _cbasic_nbuffer
     FORCEDINLINE size_t current_idx()
     {
         return ptr;
-    }
-};
-
-template<typename T>
-/*!
- * \brief Allows for RAII-consistent objects. The destructor should be specific to each specialization such that it behaves properly.
- */
-class _cbasic_raii_container
-{
-protected:
-    T* m_data;
-public:
-    FORCEDINLINE _cbasic_raii_container():
-        m_data(new T)
-    {
-    }
-    FORCEDINLINE _cbasic_raii_container(T* d):
-        m_data(d)
-    {
-    }
-    virtual ~_cbasic_raii_container()
-    {
-    }
-
-    FORCEDINLINE T *data()
-    {
-        return m_data;
-    }
-    FORCEDINLINE T& data_ref()
-    {
-        return *m_data;
-    }
-};
-
-template<typename T>
-/*!
- * \brief Locks access to a resource, unlocks on destruction.
- */
-class _cbasic_cookie_container
-{
-    Mutex& _access;
-    T& _cookie;
-public:
-    FORCEDINLINE _cbasic_cookie_container(Mutex& acc, T& cookie):
-        _access(acc),
-        _cookie(cookie)
-    {
-        _access.lock();
-    }
-    ~_cbasic_cookie_container()
-    {
-        _access.unlock();
-    }
-    FORCEDINLINE T& object()
-    {
-        return _cookie;
     }
 };
 

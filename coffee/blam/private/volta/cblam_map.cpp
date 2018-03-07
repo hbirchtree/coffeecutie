@@ -1,4 +1,5 @@
 #include <coffee/blam/volta/cblam_map.h>
+#include <coffee/core/plat/plat_memory.h>
 
 namespace Coffee{
 namespace Blam{

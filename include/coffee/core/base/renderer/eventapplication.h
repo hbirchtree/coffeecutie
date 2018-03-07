@@ -18,7 +18,14 @@
 namespace Coffee{
 namespace Display{
 
-template<typename Renderer, typename ShareData>
+template<typename Renderer, typename ShareData,
+
+         typename implements<InitApplication, Renderer>::type*
+         = nullptr,
+         typename implements<EventApplication, Renderer>::type*
+         = nullptr
+
+         >
 struct EventLoopData
 {
     enum Flags
@@ -338,7 +345,12 @@ public:
         }
     };
 
-    template<typename Renderer, typename Data>
+    template<typename Renderer, typename Data,
+
+             typename implements<EventApplication, Renderer>::type*
+             = nullptr
+
+             >
     static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
                                CDProperties& visual, CString& err)
     {

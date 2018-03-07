@@ -7,17 +7,14 @@
 namespace Coffee{
 namespace CAudio{
 
+template<typename Resource,
+         typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadVorbisFromFile(AudioSample& sample, Resource&& file)
 {
     bool status = true;
 
-    if(!CResources::FileMap(file))
-        return false;
-
-    if(!CAudio::Stb::LoadVorbis(&sample, &file))
+    if(!CAudio::Stb::LoadVorbis(&sample, C_OCAST<Bytes>(file)))
         status = false;
-
-    CResources::FileUnmap(file);
 
     return status;
 }
