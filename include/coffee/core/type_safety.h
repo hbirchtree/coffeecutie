@@ -13,12 +13,14 @@
 namespace Coffee{
 
 template<class T>
+/*!
+ * \brief is_not_virtual is used to guard against serializing
+ *  polymorphic classes, which are generally not serializable.
+ */
 struct is_not_virtual
 {
     typedef typename
     E_IF<!IS_POLY<T>::value>::type type;
-
-    
 };
 
 }
@@ -125,6 +127,12 @@ static inline D C_FCAST(T from)
 
 template<typename D, typename T,
 		 typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr>
+/*!
+ * \brief Substitute function for Windows,
+ *  because the above functions don't compile under MSVC.
+ * \param from
+ * \return
+ */
 static inline D C_FCAST(T from)
 {
 	return static_cast<D>(from);
@@ -280,6 +288,13 @@ static inline constexpr D C_RCAST(T from)
 namespace Coffee {
 
 template<typename Interface, typename Implementation>
+/*!
+ * \brief checks for inheritance only, and is used to enforce
+ *  the presence of methods/operators.
+ * This is used in place of plain template<typename T>.
+ * Yes, this is like virtual functions,
+ *  but only checked at compile-time.
+ */
 struct implements
 {
     typedef typename std::enable_if<
@@ -288,6 +303,11 @@ struct implements
 };
 
 template<typename T>
+/*!
+ * \brief For cases where a template argument should require a
+ *  basic type. Vector types, matrix types, sizes and etc. use
+ *  this to avoid errors with class operators.
+ */
 struct is_pod
 {
     typedef typename std::enable_if<
