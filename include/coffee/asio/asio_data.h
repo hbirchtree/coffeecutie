@@ -15,6 +15,9 @@
 #include <coffee/core/coffee_strings.h>
 
 namespace Coffee{
+/*!
+ * \brief ASIO bindings with simplified structures
+ */
 namespace ASIO{
 
 struct ASIO_Client
