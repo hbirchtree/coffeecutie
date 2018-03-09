@@ -6,6 +6,9 @@
 #include <coffee/core/types/edef/pixenum.h>
 
 namespace Coffee{
+/*!
+ * \brief Wrappers around stb_image for C++, not very abstract
+ */
 namespace CStbImageLib{
 
 /*!
@@ -122,6 +125,9 @@ extern void ImageFree(CStbImage* img);
 
 } //CStbImageLib
 
+/*!
+ * \brief Image-related functions, not from STB
+ */
 namespace CImage{
 
 /*!
@@ -136,6 +142,9 @@ extern void SaveTGA(const CSize &resolution,
 
 }
 
+/*!
+ * \brief Wrapping functions for simpler usage
+ */
 namespace IMG
 {
 extern bool LoadBytes(Bytes const& src, PixCmp cmp, BitFmt &fmt,

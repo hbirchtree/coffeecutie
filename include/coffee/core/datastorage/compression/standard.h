@@ -4,6 +4,9 @@
 #include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
+/*!
+ * \brief Wrappers for compression libraries
+ */
 namespace Compression{
 
 struct Compressor_def

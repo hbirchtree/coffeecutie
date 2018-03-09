@@ -4,6 +4,10 @@
 #include <coffee/core/base/threading/cthreading.h>
 
 namespace Coffee{
+/*!
+ * \brief Wrapper around OpenGL's calls into Coffee types
+ * Also used as a safety net for non-C++-friendly functions
+ */
 namespace CGL{
 
 /*!
