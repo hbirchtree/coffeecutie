@@ -222,16 +222,35 @@ HWDeviceInfo CGL_Shared_Debug::Renderer()
 
 bool CGL_Shared_Debug::CompressedFormatSupport(Texture, PixelFormat t)
 {
+    switch(t)
+    {
+    case PixFmt::S3TC:
+        return CheckExtensionSupported(
+                    "GL_EXT_texture_compression_s3tc");
+    case PixFmt::ASTC:
+        return CheckExtensionSupported(
+                    "GL_KHR_texture_compression_astc_hdr");
+    case PixFmt::BPTC:
+        return CheckExtensionSupported(
+                    "GL_ARB_texture_compression_bptc");
+    case PixFmt::RGTC:
+        return CheckExtensionSupported(
+                    "GL_ARB_texture_compression_rgtc");
+    case PixFmt::ETC1:
+        return CheckExtensionSupported(
+                    "GL_OES_compressed_ETC1_RGB8_texture");
+    default:
+        break;
+    }
+
     /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
-    int32 supp = GL_FALSE;
     i32 target = C_CAST<i32>(to_enum(t));
     for(int32 i=0;i<Num_Internal_Formats;i++)
         if(target == Internal_Formats[i])
         {
-            supp = GL_TRUE;
-            break;
+            return true;
         }
-    return supp == GL_TRUE;
+    return false;
 }
 
 using L = CGL_Shared_Limits;

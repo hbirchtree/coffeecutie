@@ -326,6 +326,7 @@ inline CGenum to_enum(
         CompFlags d)
 {
     using P = PixFmt;
+    using C = CompFlags;
 
     (void)f;
     (void)e;
@@ -344,46 +345,46 @@ inline CGenum to_enum(
             return GL_NONE;
         switch(d)
         {
-        case ASTC_4x4:
+        case C::ASTC_4x4:
             out += 0x0;
             break;
-        case ASTC_5x4:
+        case C::ASTC_5x4:
             out += 0x1;
             break;
-        case ASTC_5x5:
+        case C::ASTC_5x5:
             out += 0x2;
             break;
-        case ASTC_6x5:
+        case C::ASTC_6x5:
             out += 0x3;
             break;
-        case ASTC_6x6:
+        case C::ASTC_6x6:
             out += 0x4;
             break;
-        case ASTC_8x5:
+        case C::ASTC_8x5:
             out += 0x5;
             break;
-        case ASTC_8x6:
+        case C::ASTC_8x6:
             out += 0x6;
             break;
-        case ASTC_8x8:
+        case C::ASTC_8x8:
             out += 0x7;
             break;
-        case ASTC_10x5:
+        case C::ASTC_10x5:
             out += 0x8;
             break;
-        case ASTC_10x6:
+        case C::ASTC_10x6:
             out += 0x9;
             break;
-        case ASTC_10x8:
+        case C::ASTC_10x8:
             out += 0xA;
             break;
-        case ASTC_10x10:
+        case C::ASTC_10x10:
             out += 0xB;
             break;
-        case ASTC_12x10:
+        case C::ASTC_12x10:
             out += 0xC;
             break;
-        case ASTC_12x12:
+        case C::ASTC_12x12:
             out += 0xD;
             break;
         default:
@@ -414,13 +415,13 @@ inline CGenum to_enum(
         return GL_NONE;
 
     case P::S3TC:
-        if(feval(e, PixelFlags::RGB)&& d == S3TC_1)
+        if(feval(e, PixelFlags::RGB)&& d == C::S3TC_1)
             return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        if(feval(e, PixelFlags::RGBA)&& d == S3TC_1)
+        if(feval(e, PixelFlags::RGBA)&& d == C::S3TC_1)
             return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        if(feval(e, PixelFlags::RGBA)&&d == S3TC_3)
+        if(feval(e, PixelFlags::RGBA)&&d == C::S3TC_3)
             return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        if(feval(e, PixelFlags::RGBA)&&d == S3TC_5)
+        if(feval(e, PixelFlags::RGBA)&&d == C::S3TC_5)
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
         return GL_NONE;
 

@@ -73,11 +73,18 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
         CSize size;
         IMG::Load(std::move(r), cmp, bfmt, data, size);
 
+        /* IMG::Load may fail silently, just ignore it */
         if(size.area() == 0)
             continue;
 
+        if((size.w % 4) != 0 || (size.h % 4) != 0)
+            cWarning("Inadequate size for S3TC texture: {0}", size);
+
         auto compress = squish::kDxt5;
 
+        /* Depending on color channels/source format, we opt for DXT1
+         *  for storage efficiency. Especially when the image does
+         *  not have alpha. */
         if(file.second == ImageProc_stb_rgb)
             compress = squish::kDxt1;
 
@@ -91,29 +98,32 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
                     0
                     );
         Bytes& output = files.back().data;
-        output.size = C_FCAST<szptr>(
+        /* Allocate space for image as well as WxH parameters */
+        output.size =
+                C_FCAST<szptr>(
                     squish::GetStorageRequirements(
-                        size.w, size.h, compress));
+                        size.w, size.h, compress))
+                + sizeof(u32) * 2;
         output.data = C_RCAST<byte_t*>(Calloc(output.size, 1));
 //        Bytes::SetDestr(output, [](Bytes& b)
 //        {
 //            CFree(b.data);
 //        });
 
-        squish::CompressImage(data.data, size.w, size.h,
-                              output.data, compress);
+        squish::CompressImage(
+                    data.data, size.w, size.h,
+                    &output[sizeof(u32) * 2],
+                compress);
+
+        u32* sizeParam = C_RCAST<u32*>(output.data);
+        sizeParam[0] = C_FCAST<u32>(size.w);
+        sizeParam[1] = C_FCAST<u32>(size.h);
 
         cDebug(TEXCOMPRESS_API "Compressed texture: "
                                "{2}: {0}B (file)"
                                " -> {3}B (raw)"
                                " -> {1}B (compressed)",
                r.size, output.size, file.first, data.size);
-
-        files.erase(std::find_if(files.begin(), files.end(),
-                                   [&](VirtFS::VirtDesc& f)
-        {
-                        return f.filename == file.first;
-        }));
     }
 }
 

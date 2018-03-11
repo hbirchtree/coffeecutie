@@ -264,7 +264,7 @@ bool test_texture_formats()
 
     using P = PixFmt;
     using F = PixelFlags;
-    using C = CGL::CompFlags;
+    using C = CompFlags;
 
     using namespace CGL;
 
@@ -275,31 +275,31 @@ bool test_texture_formats()
         bool expect;
     } compressed_formats[20] = {
         /* S3TC tests */
-    { P::S3TC, F::RGB, S3TC_1, false },
-    { P::S3TC, F::RGBA, S3TC_1, false },
-    { P::S3TC, F::RGBA, S3TC_3, false },
-    { P::S3TC, F::RGBA, S3TC_5, false },
+    { P::S3TC, F::RGB, C::S3TC_1, false },
+    { P::S3TC, F::RGBA, C::S3TC_1, false },
+    { P::S3TC, F::RGBA, C::S3TC_3, false },
+    { P::S3TC, F::RGBA, C::S3TC_5, false },
 
-    { P::S3TC, F::RGB, S3TC_3, true },
-    { P::S3TC, F::RGB, S3TC_5, true },
+    { P::S3TC, F::RGB, C::S3TC_3, true },
+    { P::S3TC, F::RGB, C::S3TC_5, true },
 
-    { P::BPTC, F::RGBA|F::Unormalized, CompressionNone, false },
-    { P::BPTC, F::SRGBA|F::Unormalized, CompressionNone, false },
-    { P::BPTC, F::RGB|F::FloatingPoint, CompressionNone, false },
-    { P::BPTC, F::RGB|F::FloatingPoint, CompressionNone, false },
+    { P::BPTC, F::RGBA|F::Unormalized, C::CompressionNone, false },
+    { P::BPTC, F::SRGBA|F::Unormalized, C::CompressionNone, false },
+    { P::BPTC, F::RGB|F::FloatingPoint, C::CompressionNone, false },
+    { P::BPTC, F::RGB|F::FloatingPoint, C::CompressionNone, false },
 
-    { P::BPTC, F::SRGBA|F::FloatingPoint, CompressionNone, true },
-    { P::BPTC, F::RGB|F::Unormalized, CompressionNone, true },
+    { P::BPTC, F::SRGBA|F::FloatingPoint, C::CompressionNone, true },
+    { P::BPTC, F::RGB|F::Unormalized, C::CompressionNone, true },
 
-    { P::RGTC, F::R|F::Unsigned, CompressionNone, false },
-    { P::RGTC, F::R|F::Signed, CompressionNone, false },
-    { P::RGTC, F::RG|F::Unsigned, CompressionNone, false },
-    { P::RGTC, F::RG|F::Signed, CompressionNone, false },
+    { P::RGTC, F::R|F::Unsigned, C::CompressionNone, false },
+    { P::RGTC, F::R|F::Signed, C::CompressionNone, false },
+    { P::RGTC, F::RG|F::Unsigned, C::CompressionNone, false },
+    { P::RGTC, F::RG|F::Signed, C::CompressionNone, false },
 
-    { P::RGTC, F::RGBA|F::Signed, CompressionNone, true },
-    { P::RGTC, F::RGB|F::Signed, CompressionNone, true },
-    { P::RGTC, F::RGBA|F::Unsigned, CompressionNone, true },
-    { P::RGTC, F::RGB|F::Unsigned, CompressionNone, true },
+    { P::RGTC, F::RGBA|F::Signed, C::CompressionNone, true },
+    { P::RGTC, F::RGB|F::Signed, C::CompressionNone, true },
+    { P::RGTC, F::RGBA|F::Unsigned, C::CompressionNone, true },
+    { P::RGTC, F::RGB|F::Unsigned, C::CompressionNone, true },
 
     };
 
@@ -318,7 +318,7 @@ bool test_texture_formats()
         F::RGBA, F::SRGBA
     };
     for(auto i : Range<>(2))
-        for(auto j : Range<>(ASTC_12x12 - 1))
+        for(auto j : Range<>(C_CAST<u32>(C::ASTC_12x12) - 1))
         {
             auto v = CGL::to_enum(PixFmt::ASTC, astc_flags[i],
                                   C_CAST<CompFlags>(j + 1));

@@ -103,21 +103,23 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T> out;
         out.size = nmax((sizeof(T2)) / sizeof(T), 8);
         out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
-        MemCpy(out.data, &obj, out.size);
-//        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
-//        {
-//            CFree(b.data);
-//        });
+        MemCpy(out.data, &obj, sizeof(T2));
+        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
+        {
+            CFree(b.data);
+        });
 
         return out;
     }
 
-    template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>
+    template<typename std::enable_if<!std::is_void<T>::value,bool>::type*
+             = nullptr>
     T& operator[] (szptr i)
     {
         return data[i];
     }
-    template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>
+    template<typename std::enable_if<!std::is_void<T>::value,bool>::type*
+             = nullptr>
     T const& operator[] (szptr i) const
     {
         return data[i];
@@ -155,6 +157,64 @@ struct _cbasic_data_chunk
      * \brief Number of elements, if applicable
      */
     szptr elements;
+
+    /* Here's some iterator magic, for compatbility with STL containers */
+
+    struct iterator : Iterator<ForwardIteratorTag, T>
+    {
+        iterator() :
+            m_chunk(nullptr),
+            m_idx(C_CAST<szptr>(-1))
+        {
+        }
+        iterator(_cbasic_data_chunk<T>& chunk):
+            m_chunk(&chunk),
+            m_idx(0)
+        {
+        }
+
+        iterator& operator++()
+        {
+            if(m_idx < (m_chunk->size - 1))
+                m_idx++;
+            else
+                m_idx = C_CAST<szptr>(-1);
+
+            return *this;
+        }
+
+        bool operator==(iterator const& other) const
+        {
+            return other.m_idx == m_idx;
+        }
+
+        bool operator!=(iterator const& other) const
+        {
+            return other.m_idx != m_idx;
+        }
+
+        template<typename std::enable_if<
+                     !std::is_same<T, void>::value>::type*
+                 = nullptr>
+        T const& operator*() const
+        {
+            return m_chunk->data[m_idx];
+        }
+
+    private:
+        _cbasic_data_chunk* m_chunk;
+        szptr m_idx;
+    };
+
+    iterator begin()
+    {
+        return iterator(*this);
+    }
+
+    iterator end()
+    {
+        return iterator();
+    }
 
 private:
     void(*m_destr)(_cbasic_data_chunk<T>&);

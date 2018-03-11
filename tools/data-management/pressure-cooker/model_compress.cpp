@@ -42,6 +42,8 @@ COFFAPI FileProcessor* CoffeeLoader()
 
 void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
 {
+    using MP = ASSIMP::MaterialParser;
+
     Vector<CString> targets;
 
     for(auto& file : files)
@@ -63,6 +65,19 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
         {ASSIMP::MeshLoader::AttrType::TexCoord, 0},
         {ASSIMP::MeshLoader::AttrType::Normal, 0},
         {ASSIMP::MeshLoader::AttrType::Color, 0},
+    };
+
+    Array<aiTextureType, 2> textureTypes =
+    {{
+         aiTextureType_DIFFUSE,
+         aiTextureType_SHININESS,
+     }};
+
+    Vector<MP::PropertyClass> materialProps =
+    {
+        MP::PDiffuse,
+        MP::PSpecular,
+        MP::PSurface,
     };
 
     ASSIMP::MeshLoader::DrawInfo dinfo;
@@ -88,7 +103,11 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
             ASSIMP::MaterialParser::MaterialSerializer materials;
 
             ASSIMP::MaterialParser::ExtractDescriptors(
-                        scene, materials);
+                        scene, materials, textureTypes,
+                        materialProps);
+
+            cDebug(PRESSURE_LIB "Processed {0} materials",
+                   materials.header.num_materials);
 
             auto baseFname = filePath.removeExt();
 
@@ -164,14 +183,33 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
                                 Bytes::Copy(bdesc.call),
                                 0
                             });
+            files.push_back({
+                                materialFn.internUrl.c_str(),
+                                Bytes::CopyFrom(materials.data),
+                                0
+                            });
         }
-
-        files.erase(std::remove_if(files.begin(), files.end(),
-                       [&](VirtFS::VirtDesc& otherFile)
-        {
-            return file == otherFile.filename;
-        }));
     }
+
+    auto removePred = [&](VirtFS::VirtDesc const& file)
+    {
+        auto ext = Path(file.filename).extension();
+
+        for(auto otherExt : assimpExtensions)
+            if(StrICmp(ext.c_str(), otherExt))
+                return true;
+        return false;
+    };
+
+    auto removeIt = std::remove_if(files.begin(),
+                                   files.end(),
+                                   removePred);
+
+    /* Listen... remove_if does some funky stuff. */
+    for(auto it=removeIt; it!=files.end();it++)
+        it->data = Bytes();
+
+    files.erase(removeIt, files.end());
 }
 
 void AssimpProcessor::receiveAssetPath(const CString &path) {

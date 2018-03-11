@@ -7,7 +7,7 @@
 
 namespace Coffee{
 
-enum class PixelFlags
+enum class PixelFlags : u16
 {
     None = 0x0,
     /* Misc. properties */
@@ -26,7 +26,7 @@ enum class PixelFlags
 };
 C_FLAGS(PixelFlags,uint32);
 
-enum class PixelComponents
+enum class PixelComponents : u8
 {
     None,
 
@@ -47,20 +47,20 @@ enum class PixelComponents
 
 using PixCmp = PixelComponents;
 
-enum class PixelOperation
+enum class PixelOperation : u8
 {
     SwapEndiannes,
     Alignment,
 };
 
-enum class Filtering
+enum class Filtering : u8
 {
     None,
     Nearest,
     Linear,
 };
 
-enum class WrapPolicy
+enum class WrapPolicy : u8
 {
     Repeat,
     MirrorRepeat,
@@ -68,7 +68,7 @@ enum class WrapPolicy
     MirrorClamp,
 };
 
-enum class PixelFormat
+enum class PixelFormat : u8
 {
     None,
     /* Formatting: [CHANNELS][NUMBITS][DATATYPE] */
@@ -163,7 +163,31 @@ enum class PixelFormat
     Depth, DepthStencil, /* Fakes */
 };
 
-enum class BitFormat : uint8
+enum class CompFlags
+{
+    CompressionNone,
+
+    ASTC_4x4,
+    ASTC_5x4,
+    ASTC_5x5,
+    ASTC_6x5,
+    ASTC_6x6,
+    ASTC_8x5,
+    ASTC_8x6,
+    ASTC_8x8,
+    ASTC_10x5,
+    ASTC_10x6,
+    ASTC_10x8,
+    ASTC_10x10,
+    ASTC_12x10,
+    ASTC_12x12,
+
+    S3TC_1,
+    S3TC_3,
+    S3TC_5,
+};
+
+enum class BitFormat : u8
 {
     Byte, ByteR,
     UByte, UByteR,

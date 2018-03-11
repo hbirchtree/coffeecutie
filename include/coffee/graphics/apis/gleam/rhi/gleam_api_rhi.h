@@ -307,6 +307,8 @@ public:
     static CString GetShaderLanguageName(GraphicsContext const&);
     static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*);
 
+    static bool TextureFormatSupport(PixFmt fmt);
+
     struct DBG
     {
         using SCOPE = GLEAM_ScopeMarker;
