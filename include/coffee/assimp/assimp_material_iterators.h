@@ -196,7 +196,7 @@ struct MaterialParser
     {
         aiString t_path;
         u32 t_uvIdx;
-        ai_real t_blend;
+        float t_blend;
         aiTextureMapping t_map;
         aiTextureMapMode t_mapMode;
         aiTextureOp t_op;
@@ -261,8 +261,8 @@ struct MaterialParser
         case PSurface:
         {
             material.Get(AI_MATKEY_REFLECTIVITY, color.r);
-            material.Get(AI_MATKEY_SHININESS, color.b);
-            material.Get(AI_MATKEY_SHININESS_STRENGTH, color.g);
+            material.Get(AI_MATKEY_SHININESS, color.g);
+            material.Get(AI_MATKEY_SHININESS_STRENGTH, color.b);
 
             break;
         }
