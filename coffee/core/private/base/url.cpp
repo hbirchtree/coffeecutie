@@ -241,7 +241,7 @@ CString Url::operator*() const
     case Networked:
         return internUrl;
     default:
-        throw std::runtime_error("dereferencing Url without category");
+        throw resource_error("dereferencing Url without category");
     }
 }
 

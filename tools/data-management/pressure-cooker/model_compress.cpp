@@ -5,6 +5,7 @@
 
 #include <coffee/interfaces/cgraphics_api.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/core/terminal/terminal_cursor.h>
 
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/assimp/assimp_iterators.h>
@@ -30,7 +31,8 @@ bool supported(CString const& otherExt)
 
 struct AssimpProcessor : FileProcessor
 {
-    virtual void process(Vector<VirtFS::VirtDesc> &files);
+    virtual void process(Vector<VirtFS::VirtDesc> &files,
+                         TerminalCursor& cursor);
     
     virtual void receiveAssetPath(CString const& path);
 };
@@ -40,7 +42,8 @@ COFFAPI FileProcessor* CoffeeLoader()
     return new AssimpProcessor;
 }
 
-void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
+void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
+                              TerminalCursor& cursor)
 {
     using MP = ASSIMP::MaterialParser;
 
@@ -56,8 +59,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
         targets.push_back(file.filename);
     }
 
-    cDebug(PRESSURE_LIB "Found {0} resources",
-           targets.size());
+    cursor.progress(PRESSURE_LIB "Found {0} resources",
+                    targets.size());
 
     Vector<ASSIMP::MeshLoader::Attr> attributes =
     {
@@ -90,6 +93,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
         CResources::Resource sceneFile(MkUrl(filePath.internUrl.c_str()));
 
         {
+            cursor.progress(PRESSURE_LIB "Processing {0}", filePath);
+
             ASSIMP::MeshLoader::BufferDescription<RHI::NullAPI> bdesc;
             ASSIMP::AssimpPtr scene;
             if(!ASSIMP::LoadScene(scene, C_OCAST<Bytes>(sceneFile),
@@ -106,8 +111,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files)
                         scene, materials, textureTypes,
                         materialProps);
 
-            cDebug(PRESSURE_LIB "Processed {0} materials",
-                   materials.header.num_materials);
+            cursor.progress(PRESSURE_LIB "Processed {0} materials",
+                            materials.header.num_materials);
 
             auto baseFname = filePath.removeExt();
 

@@ -5,6 +5,7 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/plat/plat_linking.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/core/terminal/terminal_cursor.h>
 
 using namespace Coffee;
 using namespace Library;
@@ -150,7 +151,8 @@ void parse_args(ArgumentResult& args)
 }
 
 void test_vfs(Vector<byte_t>& outputData,
-              Vector<VirtFS::VirtDesc> const& descriptors)
+              Vector<VirtFS::VirtDesc> const& descriptors,
+              TerminalCursor& cursor)
 {
     /* This part is about testing */
     Bytes vfsData = Bytes::CreateFrom(outputData);
@@ -173,9 +175,9 @@ void test_vfs(Vector<byte_t>& outputData,
 
         scalar percentage = scalar(fsize) / scalar(rsize) * 100.f;
 
-        cDebug("File squash: {0} : {1}% size ({2}B -> {3}B)",
-               desc.filename, percentage,
-               rsize, fsize);
+        cursor.print("File squash: {0} : {1}% size ({2}B -> {3}B)",
+                     desc.filename, percentage,
+                     rsize, fsize);
     }
 }
 
@@ -187,6 +189,8 @@ i32 coffee_main(i32, cstring_w*)
     Vector<CResources::Resource> resources;
     u64 totalSize = 0;
     Vector<byte_t> outputData;
+    TerminalCursor cursor;
+    bool showStats = false;
 
     {
         ArgumentParser parser;
@@ -208,6 +212,9 @@ i32 coffee_main(i32, cstring_w*)
                            "Comma-separated list of file extensions"
                            " to ignore");
 
+        parser.addSwitch("statistics", "stats", "s",
+                         "Show statistics for files afterwards");
+
         auto args = parser.parseArguments(GetInitArgs());
 
         if(args.positional.size() != 2)
@@ -215,6 +222,9 @@ i32 coffee_main(i32, cstring_w*)
             cBasicPrint("{0}", parser.helpMessage());
             return 1;
         }
+
+        if(args.switches.find("statistics") != args.switches.end())
+            showStats = true;
 
         parse_args(args);
 
@@ -240,6 +250,39 @@ i32 coffee_main(i32, cstring_w*)
         });
     }
 
+    auto progressFun = [&]()
+    {
+        totalSize = 0;
+        for(auto const& f :  descriptors)
+            totalSize += f.data.size;
+
+        cstring ext = "B";
+
+        if(totalSize > 1_GB)
+        {
+            ext = "GB";
+            totalSize /= 1_GB;
+        }else if(totalSize > 1_MB)
+        {
+            ext = "MB";
+            totalSize /= 1_MB;
+        }else if(totalSize > 1_kB)
+        {
+            ext = "kB";
+            totalSize /= 1_kB;
+        }
+
+        CString progress = cStringFormat(
+                    "{0} files/{1}{2}: ",
+                    descriptors.size(),
+                    totalSize, ext
+                    );
+
+        return progress;
+    };
+
+    cursor.setProgress(progressFun);
+
     for(auto& desc : descriptors)
     {
         auto url = MkUrl(desc.filename.c_str());
@@ -249,45 +292,43 @@ i32 coffee_main(i32, cstring_w*)
 
         if(desc.data.size == 0)
         {
-            cWarning("Failed to add {0}", url);
+            cursor.print("Failed to add {0}", url);
             continue;
         }
 
         auto fsize = FileFun::Size(url);
-        cDebug("Adding file: {0}, {1} bytes, {2}", url,
-               fsize,
-               (desc.flags == VirtFS::File_Compressed)
-               ? "(compressed)" : "");
-
-        totalSize += fsize;
+        cursor.progress("Adding file: {0}, {1} bytes, {2}", url,
+                     fsize,
+                     (desc.flags == VirtFS::File_Compressed)
+                     ? "(compressed)" : "");
     }
 
-    cDebug("Total input size: {0}B/{1}MB",
-           totalSize, totalSize / 1_MB);
-
-    cDebug("Post-processing files...");
+    cursor.progress("Post-processing files...");
 
     for(auto proc : extProcessors)
     {
         proc->receiveAssetPath(GetFileResourcePrefix());
-        proc->process(descriptors);
+        proc->process(descriptors, cursor);
     }
 
-    cDebug("Creating filesystem...");
+    cursor.progress("Creating filesystem...");
 
     if(!VirtFS::GenVirtFS(descriptors, &outputData))
     {
-        cWarning("Failed to create VirtFS");
+        cursor.print("Failed to create VirtFS");
     }
     else
-        cDebug("Done!");
+        cursor.complete("Filesystem created!");
 
     /* Give some statistics on the created filesystem */
+    if(showStats)
     {
-        test_vfs(outputData, descriptors);
-        cDebug("Total output size: {0}/{1}MB",
-               outputData.size(), outputData.size() / 1_MB);
-    }
+        test_vfs(outputData, descriptors, cursor);
+        cursor.print("Total output size: {0}/{1}MB, {2} files",
+                     outputData.size(), outputData.size() / 1_MB,
+                     descriptors.size());
+    }else
+        cursor.print("");
 
     /* Unmap all files */
     for(auto& rsc : resources)

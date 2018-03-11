@@ -3,6 +3,10 @@ coffee_add_application (
     "main.cpp" "CoffeeCore"
     )
 
+coffee_add_application (
+    Depressurize "Depressurizer"
+    "depressure_main.cpp" "CoffeeCore"
+    )
 
 if(COFFEE_BUILD_ASSIMP)
     coffee_add_elibrary (

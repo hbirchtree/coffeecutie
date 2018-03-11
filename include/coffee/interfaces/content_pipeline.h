@@ -3,10 +3,15 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/VirtualFS>
 
+namespace Coffee{
+struct TerminalCursor;
+}
+
 namespace CoffeePipeline
 {
 
 using namespace Coffee;
+
 
 struct FileProcessor
 {
@@ -28,7 +33,8 @@ struct FileProcessor
      * \param files
      * \return
      */
-    virtual void process(Vector<VirtFS::VirtDesc>& files) = 0;
+    virtual void process(Vector<VirtFS::VirtDesc>& files,
+                         TerminalCursor& cursor) = 0;
     
     virtual void receiveAssetPath(CString const& assetPath) = 0;
 };

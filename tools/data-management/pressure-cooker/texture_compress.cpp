@@ -3,6 +3,7 @@
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/core/CDebug>
 #include <coffee/image/cimage.h>
+#include <coffee/core/terminal/terminal_cursor.h>
 
 #include <squish.h>
 
@@ -23,7 +24,8 @@ enum ImageProcessor
 
 struct TextureCooker : FileProcessor
 {
-    virtual void process(Vector<VirtFS::VirtDesc> &files);
+    virtual void process(Vector<VirtFS::VirtDesc> &files,
+                         TerminalCursor& cursor);
     virtual void receiveAssetPath(const CString &assetPath);
 };
 
@@ -38,7 +40,8 @@ cstring compression_extension(u32 format)
     }
 }
 
-void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
+void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
+                            TerminalCursor& cursor)
 {
     Map<CString, ImageProcessor> targets;
 
@@ -60,8 +63,8 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
             }
     }
 
-    cDebug(TEXCOMPRESS_API "Compressable textures found: {0}",
-           targets.size());
+    cursor.progress(TEXCOMPRESS_API "Compressable textures found: {0}",
+                    targets.size());
 
     for(auto file : targets)
     {
@@ -78,7 +81,9 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
             continue;
 
         if((size.w % 4) != 0 || (size.h % 4) != 0)
-            cWarning("Inadequate size for S3TC texture: {0}", size);
+            cursor.print(
+                        TEXCOMPRESS_API
+                        "Inadequate size for S3TC texture: {0}", size);
 
         auto compress = squish::kDxt5;
 
@@ -119,11 +124,11 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files)
         sizeParam[0] = C_FCAST<u32>(size.w);
         sizeParam[1] = C_FCAST<u32>(size.h);
 
-        cDebug(TEXCOMPRESS_API "Compressed texture: "
-                               "{2}: {0}B (file)"
-                               " -> {3}B (raw)"
-                               " -> {1}B (compressed)",
-               r.size, output.size, file.first, data.size);
+        cursor.progress(TEXCOMPRESS_API "Compressed texture: "
+                                        "{2}: {0}B (file)"
+                                        " -> {3}B (raw)"
+                                        " -> {1}B (compressed)",
+                        r.size, output.size, file.first, data.size);
     }
 }
 

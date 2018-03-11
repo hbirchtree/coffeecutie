@@ -30,7 +30,6 @@ namespace Coffee{
 using CString   = std::string; /*!< Typical string object */
 using CWString  = std::wstring; /*!< Typical string object suited for interfaces */
 
-using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Mutex
@@ -166,19 +165,81 @@ struct range_params
 using range_reversed = range_params<true>;
 
 template<typename T = size_t, typename range_param = range_params<false>>
-struct range : Vector<T>
+struct range
 {
-    range(T len) : Vector<T>()
+    struct iterator : Iterator<ForwardIteratorTag, T>
     {
-        this->reserve(len);
+        static const constexpr T npos = std::numeric_limits<T>::max();
 
-        if(! range_param::reversed)
-            for(T i = 0; i<len; i++)
-                this->push_back(i);
-        else
-            for(T i = len; i>0; i--)
-                this->push_back(i - 1);
+        iterator():
+            m_idx(npos)
+        {
+        }
+
+        iterator(T start, T end):
+            m_idx(start),
+            m_end(end)
+        {
+            bool correct = (!range_param::reversed) && start > end;
+            bool correct_rev = range_param::reversed && start > end;
+
+            if(correct && correct_rev)
+                throw std::out_of_range("invalid range");
+
+            if(start == end)
+                m_idx = npos;
+        }
+
+        iterator& operator++()
+        {
+            if(range_param::reversed)
+                m_idx --;
+            else
+                m_idx ++;
+
+            if(m_idx >= m_end)
+                m_idx = npos;
+
+            return *this;
+        }
+
+        bool operator==(iterator const& other) const
+        {
+            return m_idx == other.m_idx;
+        }
+
+        bool operator!=(iterator const& other) const
+        {
+            return m_idx != other.m_idx;
+        }
+
+        T operator*() const
+        {
+            return m_idx;
+        }
+
+    private:
+        T m_idx;
+        T m_end;
+    };
+
+    range(T len):
+        m_len(len)
+    {
     }
+
+    iterator begin()
+    {
+        return iterator(0, m_len);
+    }
+
+    iterator end()
+    {
+        return iterator();
+    }
+
+private:
+    T m_len;
 };
 
 template<typename T = size_t>
@@ -187,5 +248,9 @@ using Range = range<T>;
 template<typename T = size_t>
 using range_rev = range<T, range_reversed>;
 
-
 }
+
+struct resource_error : std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};

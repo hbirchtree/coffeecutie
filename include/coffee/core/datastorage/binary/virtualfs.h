@@ -201,8 +201,10 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     vfs_iterator(VFS const* vfs, szptr idx):
         m_vfs(vfs),
         m_idx(idx),
-        m_file(VFS::GetFile(vfs, idx))
+        m_file(vfs ? VFS::GetFile(vfs, idx): nullptr)
     {
+        if(!m_vfs)
+            m_idx = npos;
     }
 
     vfs_iterator& operator++()
@@ -227,7 +229,7 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     VFile const& operator*() const
     {
         if(!m_file)
-            throw std::out_of_range("non-existent virtual file");
+            throw resource_error("non-existent virtual file");
         return *m_file;
     }
 
