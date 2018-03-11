@@ -281,7 +281,7 @@ def generate_dep_rule(name, defs, var_definitions):
 """
 %s: %s.mkdir
 \t[ ! -d %s/.%s ] && \\
-\t%s clone '%s' %s || \\
+\t%s clone --depth 1 '%s' %s || \\
 \ttrue
 """ % (name, name, defs['root'], t, t, defs['source'], defs['root'])
     )

@@ -52,7 +52,7 @@ native-libs.mkdir:
 
 native-libs: native-libs.mkdir
 	[ ! -d $(BUILD_DIR)/dependencies/native-libs/.git ] && \
-	git clone 'https://github.com/hbirchtree/native-library-bundle.git' $(BUILD_DIR)/dependencies/native-libs || \
+	git clone --depth 1 'https://github.com/hbirchtree/native-library-bundle.git' $(BUILD_DIR)/dependencies/native-libs || \
 	true
 
 rpi-sdk.mkdir:
@@ -60,7 +60,7 @@ rpi-sdk.mkdir:
 
 rpi-sdk: rpi-sdk.mkdir
 	[ ! -d $(BUILD_DIR)/dependencies/raspberry-sysroot/.git ] && \
-	git clone 'https://github.com/hbirchtree/raspberry-sysroot.git' $(BUILD_DIR)/dependencies/raspberry-sysroot || \
+	git clone --depth 1 'https://github.com/hbirchtree/raspberry-sysroot.git' $(BUILD_DIR)/dependencies/raspberry-sysroot || \
 	true
 
 
@@ -406,7 +406,7 @@ appimg-runtime.source.mkdir:
 
 appimg-runtime.source: appimg-runtime.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/appimg-runtime/source/.git ] && \
-	git clone 'https://github.com/AppImage/AppImageKit.git' $(BUILD_DIR)/build-dependencies/appimg-runtime/source || \
+	git clone --depth 1 'https://github.com/AppImage/AppImageKit.git' $(BUILD_DIR)/build-dependencies/appimg-runtime/source || \
 	true
 
 assimp.source.mkdir:
@@ -414,7 +414,7 @@ assimp.source.mkdir:
 
 assimp.source: assimp.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/assimp/source/.git ] && \
-	git clone 'https://github.com/assimp/assimp.git' $(BUILD_DIR)/build-dependencies/assimp/source || \
+	git clone --depth 1 'https://github.com/assimp/assimp.git' $(BUILD_DIR)/build-dependencies/assimp/source || \
 	true
 
 bullet.source.mkdir:
@@ -422,7 +422,7 @@ bullet.source.mkdir:
 
 bullet.source: bullet.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/bullet/source/.git ] && \
-	git clone 'https://github.com/bulletphysics/bullet3.git' $(BUILD_DIR)/build-dependencies/bullet/source || \
+	git clone --depth 1 'https://github.com/bulletphysics/bullet3.git' $(BUILD_DIR)/build-dependencies/bullet/source || \
 	true
 
 glslang.source.mkdir:
@@ -430,7 +430,7 @@ glslang.source.mkdir:
 
 glslang.source: glslang.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/glslang/source/.git ] && \
-	git clone 'https://github.com/KhronosGroup/glslang.git' $(BUILD_DIR)/build-dependencies/glslang/source || \
+	git clone --depth 1 'https://github.com/KhronosGroup/glslang.git' $(BUILD_DIR)/build-dependencies/glslang/source || \
 	true
 
 openal.source.mkdir:
@@ -438,7 +438,7 @@ openal.source.mkdir:
 
 openal.source: openal.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/openal/source/.git ] && \
-	git clone 'https://github.com/kcat/openal-soft.git' $(BUILD_DIR)/build-dependencies/openal/source || \
+	git clone --depth 1 'https://github.com/kcat/openal-soft.git' $(BUILD_DIR)/build-dependencies/openal/source || \
 	true
 
 sdl2.source.mkdir:
@@ -446,7 +446,7 @@ sdl2.source.mkdir:
 
 sdl2.source: sdl2.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/sdl2/source/.hg ] && \
-	hg clone 'https://hg.libsdl.org/SDL' $(BUILD_DIR)/build-dependencies/sdl2/source || \
+	hg clone --depth 1 'https://hg.libsdl.org/SDL' $(BUILD_DIR)/build-dependencies/sdl2/source || \
 	true
 
 
