@@ -241,6 +241,10 @@ build-dependencies:
     # There's a special place in hell for project-specific
     #  build processes like this one
     type: openssl
+  squish:
+    platforms: .*(ubuntu|osx).*
+    type: make
+    source: git:https://github.com/Cavewhere/squish.git
 
 # The following variables are defined in makefile-generator.py:
 #  build-arch: target architecture, eg. ubuntu.amd64
@@ -263,6 +267,11 @@ build-dep-template:
     =toolchain-dir: $(cmake-project.src)
     =cmake.install: $(build-dep.install)
     =program.workdir: $(build-dep.build)
+    ^make$:
+      =container-opts:
+        - -v $(bdep.root):$(container.src):rw
+        - -v $(build-dep.install-root):$(container.install):rw
+        - --workdir $(container.src)
   ^cmake$:
     =build.build-type: Release
     =cmake.src: $(build-dep.src)
@@ -278,6 +287,15 @@ build-dep-template:
       - $(build-dep.src)/configure $(automake.opts) &&
       - make -j4 &&
       - make install
+      - \'
+  ^make$:
+    =target: custom
+    =program.exec: sh
+    =program.arguments:
+      - -c
+      - \'
+      - mkdir -p $(container.install)/include $(container.install)/lib &&
+      - make -f $(container.src)/Makefile -e INSTALL_DIR=$(container.install) install
       - \'
 
 #

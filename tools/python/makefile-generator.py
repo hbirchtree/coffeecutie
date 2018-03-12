@@ -426,6 +426,8 @@ def transform_build_deps(build_deps, template_def, build_template, skeleton, tar
       elif td['type'] == 'automake':
         out['automake.opts'] = [stringify(td['ac-opts'])]
         out['cmake-opts'] = []
+      elif td['type'] == 'make':
+        out['cmake-opts'] = []
       elif td['type'] == 'openssl':
         out['cmake-opts'] = []
       else:
