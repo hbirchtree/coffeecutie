@@ -81,7 +81,8 @@ CString PosixEnvironmentFun::CurrentDir()
 {
     CString dir;
     dir.resize(PATH_MAX);
-    getcwd(&dir[0], dir.size());
+    auto cwd = getcwd(&dir[0], dir.size());
+    C_UNUSED(cwd);
     auto idx = dir.find('\0');
     if(idx != CString::npos)
         dir.resize(idx);

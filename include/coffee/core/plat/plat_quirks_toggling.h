@@ -158,7 +158,7 @@
 #endif
 
 /* Disabling exceptions and RTTI in release for size reasons */
-#if !defined(COFFEE_ANDROID) && !defined(NDEBUG)
+#if !defined(COFFEE_ANDROID)
 #define COFFEE_USE_EXCEPTIONS
 #define COFFEE_USE_RTTI
 #endif
