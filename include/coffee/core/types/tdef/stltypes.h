@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../plat/plat_quirks_toggling.h"
+#include "../../coffee_mem_macros.h"
 
 /*Container types*/
 #include <string>
@@ -247,6 +248,16 @@ using Range = range<T>;
 
 template<typename T = size_t>
 using range_rev = range<T, range_reversed>;
+
+struct non_copy
+{
+    C_MOVE_CONSTRUCTOR(non_copy);
+    C_DELETE_COPY_CONSTRUCTOR(non_copy);
+
+    non_copy()
+    {
+    }
+};
 
 }
 

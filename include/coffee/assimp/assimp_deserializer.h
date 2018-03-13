@@ -7,6 +7,7 @@
 #include <coffee/core/types/tdef/stltypes.h>
 
 #include "assimp_iterators.h"
+#include "assimp_material_iterators.h"
 
 namespace Coffee{
 namespace ASSIMP{
@@ -20,6 +21,7 @@ template<typename API,
 struct SerializedData
 {
     using SNL = MeshLoader::SerialNodeList;
+    using MTL = MaterialParser::MaterialCollection;
 
     Vector<Bytes> store;
 
@@ -27,6 +29,7 @@ struct SerializedData
     SerialArray<typename API::D_DATA> draws;
     typename API::D_CALL draw_call;
     SNL::SerialHeader const* nodes;
+    MTL const* materials;
     Bytes const* vertices;
     Bytes const* elements;
 };
@@ -83,6 +86,9 @@ bool LoadModel(
                 );
     output.nodes = C_RCAST<SerialHeader const*>(
                 output.store.at(FI_Graph).data
+                );
+    output.materials = C_RCAST<typename SerializedData<API>::MTL const*>(
+                output.store.at(FI_Materials).data
                 );
     output.vertices = &output.store.at(FI_Vertices);
     output.elements = &output.store.at(FI_Elements);

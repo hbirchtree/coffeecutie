@@ -43,6 +43,12 @@ struct MaterialParser
         PTexture  = 0x4000,
     };
 
+    struct MaterialMesh
+    {
+        szptr material;
+        szptr mesh;
+    };
+
     struct Property
     {
         szptr data_offset;
@@ -61,7 +67,7 @@ struct MaterialParser
         }
     };
 
-    struct Material
+    struct Material : non_copy
     {
         szptr name_offset; /*!< Byte offset to name in string store */
 
@@ -94,6 +100,9 @@ struct MaterialParser
             numProperties /= sizeof(Property);
 
             auto selfIdx = this->index(col);
+
+            if(selfIdx > col.num_materials)
+                return nullptr;
 
             for(auto i : Range<>(numProperties))
                 if(properties[i].material == selfIdx
@@ -131,9 +140,10 @@ struct MaterialParser
         }
     };
 
-    struct MaterialCollection
+    struct MaterialCollection : non_copy
     {
         szptr num_materials;
+        szptr material_mesh_segment;
         szptr property_segment;
         szptr data_segment;
         szptr string_segment;
@@ -150,10 +160,32 @@ struct MaterialParser
             else
                 throw std::out_of_range("invalid access");
         }
+
+        Material const* meshMaterial(szptr meshIdx = 0) const
+        {
+            szptr num_meshes = (property_segment - material_mesh_segment);
+            num_meshes /= sizeof(MaterialMesh);
+
+            auto basePtr = C_RCAST<byte_t const*>(this);
+            basePtr += material_mesh_segment;
+
+            auto meshes = C_RCAST<MaterialMesh const*>(basePtr);
+
+            for(auto i : Range<>(num_meshes))
+                if(meshes[i].mesh == meshIdx)
+                    return &material(meshes[i].material);
+
+            return nullptr;
+        }
     };
 
     struct MaterialSerializer
     {
+        MaterialSerializer():
+            header()
+        {
+        }
+
         MaterialCollection header;
         Vector<byte_t> data;
     };
@@ -231,11 +263,11 @@ struct MaterialParser
                         );
 
             properties.push_back({
-                                     dataStoreSize,
-                                     materialIdx,
-                                     TranslateTexType(texType),
-                                     0
-                                 });
+                        dataStoreSize,
+                        materialIdx,
+                        TranslateTexType(texType),
+                        0
+                        });
 
 
             stringStore.push_back(t_path.C_Str());
@@ -308,6 +340,17 @@ struct MaterialParser
         Vector<Property> properties;
         Vector<Material> materialStore;
         Vector<CString> string_store;
+        Vector<MaterialMesh> materialMeshConnection;
+
+        for(auto i : Range<>(scene->scene->mNumMeshes))
+        {
+            auto const& mesh = *scene->scene->mMeshes[i];
+            materialMeshConnection.push_back(
+            {
+                            mesh.mMaterialIndex,
+                            i
+                        });
+        }
 
         for(auto i : Range<>(scene->scene->mNumMaterials))
         {
@@ -335,9 +378,8 @@ struct MaterialParser
                             properties, prop, C_FCAST<u32>(i));
             }
 
-            materialStore.push_back({
-                                        stringStoreSize
-                                    });
+            materialStore.emplace_back();
+            materialStore.back().name_offset = stringStoreSize;
 
             string_store.push_back(name.C_Str());
             stringStoreSize += name.length + 1;
@@ -348,11 +390,14 @@ struct MaterialParser
         szptr dataSegmentSize = data.size();
 
         Bytes materialRef = Bytes::CreateFrom(materialStore);
+        Bytes meshRef = Bytes::CreateFrom(materialMeshConnection);
         Bytes propertyRef = Bytes::CreateFrom(properties);
         Bytes headerRef = Bytes::Create(materialsData.header);
 
         data.insert(data.begin(),
                     propertyRef.begin(), propertyRef.end());
+        data.insert(data.begin(),
+                    meshRef.begin(), meshRef.end());
         data.insert(data.begin(),
                     materialRef.begin(), materialRef.end());
 
@@ -367,10 +412,12 @@ struct MaterialParser
 
         auto& header = materialsData.header;
 
-        header.num_materials = scene->scene->mNumMaterials;
+        header.num_materials = materialStore.size();
 
-        header.property_segment = sizeof(MaterialCollection)
-                + sizeof(Material) * scene->scene->mNumMaterials;
+        header.material_mesh_segment = sizeof(MaterialCollection)
+                + sizeof(Material) * materialStore.size();
+        header.property_segment = header.material_mesh_segment
+                + sizeof(MaterialMesh) * materialMeshConnection.size();
         header.data_segment = header.property_segment
                 + sizeof(Property) * properties.size();
         header.string_segment = header.data_segment
@@ -403,6 +450,7 @@ struct MaterialParser
 
 C_FLAGS(MaterialParser::PropertyClass, u16);
 
+FORCEDINLINE
 MaterialParser::PropertyClass MaterialParser::TranslateTexType(
         aiTextureType type)
 {
@@ -437,6 +485,7 @@ MaterialParser::PropertyClass MaterialParser::TranslateTexType(
 }
 
 template<>
+FORCEDINLINE
 MaterialParser::AssimpProperty
 MaterialParser::TranslatePropertyType<aiColor3D>(
         MaterialParser::PropertyClass type
