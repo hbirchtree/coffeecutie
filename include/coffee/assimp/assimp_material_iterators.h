@@ -161,6 +161,15 @@ struct MaterialParser
                 throw std::out_of_range("invalid access");
         }
 
+        szptr indexOf(Material const* mat) const
+        {
+            for(auto i : Range<>(num_materials))
+                if(&material(i) == mat)
+                    return i;
+
+            return C_CAST<szptr>(-1);
+        }
+
         Material const* meshMaterial(szptr meshIdx = 0) const
         {
             szptr num_meshes = (property_segment - material_mesh_segment);

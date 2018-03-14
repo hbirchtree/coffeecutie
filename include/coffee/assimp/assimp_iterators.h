@@ -715,7 +715,10 @@ struct MeshLoader
             buffers.elementData.ref_transform.reserve(
                         buffers.elementData.refs.size());
             for(auto i : Range<>(buffers.elementData.refs.size()))
+            {
+                C_UNUSED(i);
                 buffers.elementData.ref_transform.push_back(transform);
+            }
 
             for(auto i : Range<>(meshCount))
             {
@@ -783,6 +786,7 @@ struct MeshLoader
             SerialNodeList& serialNodes = buffers.nodes;
             serialNodes.nodes.reserve(nodes.size());
             serialNodes.stringStore.reserve(nodes.size());
+            serialNodes.rootNode = 0;
 
             traverse_nodes(rootNode, C_CAST<szptr>(-1),
                            sceneObjects, serialNodes);

@@ -18,7 +18,7 @@ using namespace Coffee;
 
 static Array<cstring, 2> assimpExtensions =
 {
-    "FBX", "DAE"
+    {"FBX", "DAE"}
 };
 
 bool supported(CString const& otherExt)
