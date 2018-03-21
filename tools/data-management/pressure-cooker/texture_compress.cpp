@@ -7,12 +7,20 @@
 
 #include <squish.h>
 
+
+#if defined(HAVE_LIBTIFF)
+#include <tiffio.h>
+#endif
+
 #define TEXCOMPRESS_API "TextureCooker::"
 
 using namespace CoffeePipeline;
 
 static Vector<CString> imageExtensions = {
-    "PNG", "JPG", "TGA", "JPEG"
+    "PNG", "JPG", "TGA", "JPEG",
+    #if defined(HAVE_LIBTIFF)
+    "TIF", "TIFF"
+    #endif
 };
 
 enum ImageProcessor
@@ -20,6 +28,9 @@ enum ImageProcessor
     ImageProc_stb,
     ImageProc_stb_rgb,
     ImageProc_tga,
+#if defined(HAVE_LIBTIFF)
+    ImageProc_tiff,
+#endif
 };
 
 struct TextureCooker : FileProcessor
@@ -27,6 +38,8 @@ struct TextureCooker : FileProcessor
     virtual void process(Vector<VirtFS::VirtDesc> &files,
                          TerminalCursor& cursor);
     virtual void receiveAssetPath(const CString &assetPath);
+
+    virtual void setBaseDirectories(const Vector<CString> &);
 };
 
 cstring compression_extension(u32 format)
@@ -56,6 +69,10 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
                     targets[desc.filename] = ImageProc_tga;
                 else if(ext == "JPG")
                     targets[desc.filename] = ImageProc_stb_rgb;
+#if defined(HAVE_LIBTIFF)
+                else if(ext == "TIFF"  || ext == "TIF")
+                    targets[desc.filename] = ImageProc_tiff;
+#endif
                 else
                     targets[desc.filename] = ImageProc_stb;
 
@@ -74,7 +91,65 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
         BitFmt bfmt;
         Bytes data;
         CSize size;
-        IMG::Load(std::move(r), cmp, bfmt, data, size);
+#if defined(HAVE_LIBTIFF)
+        if(file.second != ImageProc_tiff)
+#endif
+            IMG::Load(std::move(r), cmp, bfmt, data, size);
+#if defined(HAVE_LIBTIFF)
+        else
+        {
+            /* libtiff is used for reading TIFF files, because it's a
+             *  not part of stb. We use this opportunity to convert
+             *  it into PNG format for packing. */
+            auto timg = TIFFOpen(r.resource(), "r");
+
+            if(!timg)
+                continue;
+
+            TIFFRGBAImage rimg;
+            char emsg[1024] = {};
+
+            if(!TIFFRGBAImageBegin(&rimg, timg, 0, emsg))
+            {
+                TIFFClose(timg);
+                continue;
+            }
+
+            ::uint32 w, h;
+            TIFFGetField(timg, TIFFTAG_IMAGEWIDTH, &w);
+            TIFFGetField(timg, TIFFTAG_IMAGELENGTH, &h);
+
+            data.size = w * h * sizeof(u32);
+            data.data = CallocT<byte_t>(data.size, 1);
+
+            Bytes::SetDestr(data, [](Bytes& d)
+            {
+                CFree(d.data);
+            });
+
+            if(!TIFFRGBAImageGet(&rimg, C_RCAST<u32*>(data.data), w, h))
+            {
+                TIFFRGBAImageEnd(&rimg);
+                TIFFClose(timg);
+                continue;
+            }
+
+            size.w = C_FCAST<i32>(w);
+            size.h = C_FCAST<i32>(h);
+
+            /* This is where we create the PNG file */
+            auto pngPath = Path(file.first).removeExt()
+                    .addExtension("png");
+            files.emplace_back(
+                        pngPath.internUrl.c_str(),
+                        PNG::Save(data, size),
+                        0
+                        );
+
+            TIFFRGBAImageEnd(&rimg);
+            TIFFClose(timg);
+        }
+#endif
 
         /* IMG::Load may fail silently, just ignore it */
         if(size.area() == 0)
@@ -108,21 +183,27 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
                 C_FCAST<szptr>(
                     squish::GetStorageRequirements(
                         size.w, size.h, compress))
-                + sizeof(u32) * 2;
+                + sizeof(IMG::serial_image);
         output.data = C_RCAST<byte_t*>(Calloc(output.size, 1));
-//        Bytes::SetDestr(output, [](Bytes& b)
-//        {
-//            CFree(b.data);
-//        });
+        Bytes::SetDestr(output, [](Bytes& b)
+        {
+            CFree(b.data);
+        });
 
         squish::CompressImage(
                     data.data, size.w, size.h,
-                    &output[sizeof(u32) * 2],
+                    &output[sizeof(IMG::serial_image)],
                 compress);
 
-        u32* sizeParam = C_RCAST<u32*>(output.data);
-        sizeParam[0] = C_FCAST<u32>(size.w);
-        sizeParam[1] = C_FCAST<u32>(size.h);
+        IMG::serial_image imgDesc = {};
+        imgDesc.size = size.convert<u32>();
+        imgDesc.fmt = PixFmt::S3TC;
+        imgDesc.bit_fmt = BitFmt::Byte;
+        imgDesc.comp_fmt = (compress == squish::kDxt5)
+                ? CompFlags::S3TC_5
+                : CompFlags::S3TC_1;
+
+        MemCpy(output.data, &imgDesc, sizeof(IMG::serial_image));
 
         cursor.progress(TEXCOMPRESS_API "Compressed texture: "
                                         "{2}: {0}B (file)"
@@ -130,11 +211,30 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
                                         " -> {1}B (compressed)",
                         r.size, output.size, file.first, data.size);
     }
+
+#if defined(HAVE_LIBTIFF)
+    auto removePred = [&](VirtFS::VirtDesc const& desc)
+    {
+        return targets[desc.filename] == ImageProc_tiff;
+    };
+
+    auto removeIt = std::remove_if(files.begin(), files.end(),
+                                   removePred);
+
+    for(auto it = removeIt; it != files.end(); it++)
+        it->data = Bytes();
+
+    files.erase(removeIt, files.end());
+#endif
 }
 
 void TextureCooker::receiveAssetPath(const CString &assetPath)
 {
     FileResourcePrefix(assetPath.c_str());
+}
+
+void TextureCooker::setBaseDirectories(const Vector<CString> &)
+{
 }
 
 COFFAPI FileProcessor* CoffeeLoader()

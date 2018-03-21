@@ -12,6 +12,8 @@
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/interfaces/cgraphics_pixops.h>
 
+#include <coffee/core/CProfiling>
+
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -90,6 +92,8 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data *p)
 
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
+    DProfContext _(GLM_API "LoadAPI()");
+
     CGL33::Debug::SetDebugGroup("Loading GLEAM");
 
     if(m_store)

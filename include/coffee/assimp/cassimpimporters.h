@@ -58,9 +58,9 @@ struct Node : public MultiParentObject
             parent->addChild(this);
     }
 
-    Matf4 transform;
-    i32 mesh;
-    u32 flags;
+    Matf4 transform; /*!< Transform of the current node, not accumulated */
+    i32 mesh; /*!< Connected mesh ID, -1 if "virtual" */
+    u32 flags; /*!< User flags */
 };
 
 struct NodeList : public LinkList<Node>

@@ -232,6 +232,7 @@ struct MaterialParser
             Vector<Property>& properties,
             szptr& stringStoreSize,
             u32 materialIdx,
+            Vector<CString> const& baseDirs,
             aiTextureType texType = aiTextureType_DIFFUSE
             )
     {
@@ -278,9 +279,13 @@ struct MaterialParser
                         0
                         });
 
+            CString path = t_path.C_Str();
 
-            stringStore.push_back(t_path.C_Str());
-            stringStoreSize += t_path.length + 1;
+            for(auto const& bdir : baseDirs)
+                path = Search::CStrReplace(path, bdir, "");
+
+            stringStore.push_back(path);
+            stringStoreSize += path.size() + 1;
         }
     }
 
@@ -339,7 +344,8 @@ struct MaterialParser
             ASSIMP::AssimpPtr& scene,
             MaterialSerializer& materialsData,
             Array<aiTextureType, NumTexTypes> const& textureTypes,
-            Vector<PropertyClass> const& materialProps
+            Vector<PropertyClass> const& materialProps,
+            Vector<CString> const& baseDirs = {}
             )
     {
         szptr stringStoreSize = 0;
@@ -376,6 +382,7 @@ struct MaterialParser
                             properties,
                             stringStoreSize,
                             C_FCAST<u32>(i),
+                            baseDirs,
                             texType
                             );
             }

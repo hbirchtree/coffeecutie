@@ -20,6 +20,8 @@ static Vector<CString> ignoreFiler = {
     "kra", "kra~", "blend", "blend1", "zbin", "bin"
 };
 
+static Vector<CString> baseDirs = {};
+
 static Vector<CoffeePipeline::FileProcessor*> extProcessors;
 
 void recurse_directories(Path const& prepath,
@@ -146,6 +148,9 @@ void parse_args(ArgumentResult& args)
         }else if(arg.first == "ignore")
         {
             csv_parse(arg.second, ignoreFiler);
+        }else if(arg.first == "basedir")
+        {
+            csv_parse(arg.second, baseDirs);
         }
     }
 }
@@ -211,6 +216,13 @@ i32 coffee_main(i32, cstring_w*)
         parser.addArgument("ignore", "ignore-extensions", "i",
                            "Comma-separated list of file extensions"
                            " to ignore");
+
+        parser.addArgument("basedir", "base-dirs", "b",
+                           "Comma-separated list of resource base"
+                           " directories, used when filtering filenames"
+                           " in resources. Can be used to remove all"
+                           " absolute file paths. All of them."
+                           " Even embedded in models.");
 
         parser.addSwitch("statistics", "stats", "s",
                          "Show statistics for files afterwards");
@@ -308,6 +320,7 @@ i32 coffee_main(i32, cstring_w*)
     for(auto proc : extProcessors)
     {
         proc->receiveAssetPath(GetFileResourcePrefix());
+        proc->setBaseDirectories(baseDirs);
         proc->process(descriptors, cursor);
     }
 

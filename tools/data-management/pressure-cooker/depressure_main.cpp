@@ -30,7 +30,7 @@ i32 coffee_main(i32, cstring_w*)
         return 1;
     }
 
-    auto targetResource = targetFile.rsc();
+    auto targetResource = targetFile.rsc<Resource>();
     auto targetData = C_OCAST<Bytes>(targetResource);
 
     if(targetData.size == 0)

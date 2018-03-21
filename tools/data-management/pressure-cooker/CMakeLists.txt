@@ -23,11 +23,25 @@ endif()
 find_package( Squish QUIET )
 
 if(SQUISH_FOUND)
+    find_package( TIFF QUIET )
+
     coffee_add_elibrary(
         PressurizeTextures SHARED "texture_compress.cpp"
         "CoffeeCore;CoffeeImage;Squish"
         "${CMAKE_SOURCE_DIR}/coffee/interfaces"
         )
+
+    if(TIFF_FOUND)
+        target_compile_definitions ( PressurizeTextures
+            PRIVATE
+            -DHAVE_LIBTIFF
+            )
+
+        target_link_libraries ( PressurizeTextures
+            PUBLIC
+            TIFF::TIFF
+            )
+    endif()
 
     add_dependencies ( PressureCooker
         PressurizeTextures

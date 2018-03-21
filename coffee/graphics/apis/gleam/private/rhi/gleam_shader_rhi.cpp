@@ -235,9 +235,9 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         cstring* shaderSrc = shaderSrcVec.data();
         u32 numSources = C_FCAST<u32>(shaderSrcVec.size());
 
-        cDebug("Compiling shader fragment:");
+        cVerbose(12, "Compiling shader fragment:");
         for(u32 i : Range<u32>(numSources))
-            cDebug("{0}", CString(shaderSrcVec[i],
+            cVerbose(12, "{0}", CString(shaderSrcVec[i],
                                   shaderSrcLens[i]));
 
         CGL33::ShaderSource(m_handle,numSources,

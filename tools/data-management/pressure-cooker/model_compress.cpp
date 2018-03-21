@@ -21,6 +21,8 @@ static Array<cstring, 2> assimpExtensions =
     {"FBX", "DAE"}
 };
 
+static Vector<CString> const* baseDirs = nullptr;
+
 bool supported(CString const& otherExt)
 {
     for(auto ext : assimpExtensions)
@@ -35,6 +37,8 @@ struct AssimpProcessor : FileProcessor
                          TerminalCursor& cursor);
     
     virtual void receiveAssetPath(CString const& path);
+
+    virtual void setBaseDirectories(const Vector<CString> &dirs);
 };
 
 COFFAPI FileProcessor* CoffeeLoader()
@@ -70,10 +74,13 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
         {ASSIMP::MeshLoader::AttrType::Color, 0},
     };
 
-    Array<aiTextureType, 2> textureTypes =
+    Array<aiTextureType, 5> textureTypes =
     {{
          aiTextureType_DIFFUSE,
+         aiTextureType_SPECULAR,
          aiTextureType_SHININESS,
+         aiTextureType_NORMALS,
+         aiTextureType_EMISSIVE,
      }};
 
     Vector<MP::PropertyClass> materialProps =
@@ -109,7 +116,7 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
 
             ASSIMP::MaterialParser::ExtractDescriptors(
                         scene, materials, textureTypes,
-                        materialProps);
+                        materialProps, *baseDirs);
 
             cursor.progress(PRESSURE_LIB "Processed {0} materials",
                             materials.header.num_materials);
@@ -219,5 +226,10 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
 
 void AssimpProcessor::receiveAssetPath(const CString &path) {
     FileResourcePrefix(path.c_str());
+}
+
+void AssimpProcessor::setBaseDirectories(const Vector<CString> &dirs)
+{
+    baseDirs = &dirs;
 }
 

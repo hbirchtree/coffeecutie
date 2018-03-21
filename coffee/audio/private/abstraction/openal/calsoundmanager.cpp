@@ -1,5 +1,7 @@
 #include <coffee/audio/abstraction/openal/calsoundmanager.h>
 
+#include <coffee/core/CProfiling>
+
 #include <coffee/audio/openal/copenal.h>
 #include <coffee/audio/abstraction/openal/calsounddeviceidentifier.h>
 #include <coffee/audio/abstraction/openal/calsounddevice.h>
@@ -13,6 +15,8 @@ namespace COpenAL{
 
 CALSoundManager::CALSoundManager()
 {
+    DProfContext _("Enumerating audio devices");
+
     context_devices_input(idevices);
     context_devices_output(odevices);
 

@@ -37,6 +37,8 @@ struct FileProcessor
                          TerminalCursor& cursor) = 0;
     
     virtual void receiveAssetPath(CString const& assetPath) = 0;
+
+    virtual void setBaseDirectories(Vector<CString> const& dirs) = 0;
 };
 
 }
