@@ -50,6 +50,11 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
                 ${PACKAGING_ARGS} -c ${PACKAGE_DIRECTORY_COMPRESS_TYPES} )
         endif()
 
+        if(DEFINED PACKAGE_DIRECTORY_BASE_DIRS)
+            set ( PACKAGING_ARGS
+                ${PACKAGING_ARGS} -b ${PACKAGE_DIRECTORY_BASE_DIRS} )
+        endif()
+
         add_custom_command ( TARGET ${TARGET}
             PRE_BUILD
 
