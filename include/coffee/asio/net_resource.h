@@ -4,6 +4,7 @@
 #include <coffee/asio/http_parsing.h>
 #include <coffee/core/base/files/url.h>
 #include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/interfaces/byte_provider.h>
 
 namespace Coffee{
 namespace Net{
@@ -44,6 +45,8 @@ public:
     Resource(ASIO::AsioContext ctxt, Url const& url);
     ~Resource();
 
+    C_MOVE_CONSTRUCTOR(Resource);
+
     bool secure() const;
     bool connected() const;
 
@@ -75,6 +78,11 @@ public:
             return Bytes();
 
         return data();
+    }
+
+    operator Path() const
+    {
+        return Path(m_resource);
     }
 };
 

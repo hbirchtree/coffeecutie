@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/interfaces/byte_provider.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
 
@@ -161,6 +162,8 @@ public:
     Resource(VFS const* base,
              Url const& url);
 
+    C_MOVE_CONSTRUCTOR(Resource);
+
     /*!
      * \brief Check validity of resource and/or data it returns
      * \return
@@ -179,9 +182,14 @@ public:
      */
     Bytes data() const;
 
-    operator Bytes() const
+    operator Bytes()
     {
         return data();
+    }
+
+    operator Path() const
+    {
+        return Path(file->name);
     }
 };
 
@@ -293,6 +301,13 @@ struct VirtDesc
 extern bool GenVirtFS(
         Vector<VirtDesc> const& filenames,
         Vector<byte_t>* output);
+
+FORCEDINLINE Url operator "" _vfs(const char* url, size_t)
+{
+    Url out = MkUrl(url);
+    out.category = Url::Memory;
+    return out;
+}
 
 }
 

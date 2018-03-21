@@ -72,7 +72,12 @@ bool Resource::valid() const
     return !m_resource.empty();
 }
 
-Coffee::CResources::Resource::operator Bytes()
+Resource::operator Path() const
+{
+    return Path(m_resource);
+}
+
+Resource::operator Bytes()
 {
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
         return FileGetDescriptor(*this);

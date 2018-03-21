@@ -3,11 +3,14 @@
 #include <coffee/core/CFiles>
 #include <coffee/image/cimage.h>
 #include <coffee/core/types/edef/graphicsenum.h>
+#include <coffee/interfaces/cgraphics_api_basic.h>
+#include <coffee/interfaces/byte_provider.h>
 
 namespace Coffee{
 namespace RHI{
 
 template<typename GFX, typename Resource,
+         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
          typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadCompressedTexture(
         typename GFX::S_2D& surface,
@@ -37,26 +40,24 @@ FORCEDINLINE bool LoadCompressedTexture(
         switch(flags)
         {
         case C::S3TC_1:
-        {
             data.components = PixCmp::RGB;
             data.data_size = 8;
             break;
-        }
+        case C::S3TC_3:
         case C::S3TC_5:
-        {
             data.components = PixCmp::RGBA;
             data.data_size = 16;
             break;
-        }
         default:
             break;
         }
 
-        u32* pix_size = C_RCAST<u32*>(img_data.data);
-        data.width = pix_size[0];
-        data.height = pix_size[1];
+        IMG::serial_image* pix =
+                C_RCAST<IMG::serial_image*>(img_data.data);
 
-        data.data_size *= (pix_size[0] * pix_size[1] / 16);
+        data.data_size *= (pix->size.w * pix->size.h / 16);
+        data.width = pix->size.w;
+        data.height = pix->size.h;
 
         break;
     }
@@ -86,6 +87,7 @@ FORCEDINLINE bool LoadCompressedTexture(
 }
 
 template<typename GFX, typename Resource,
+         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
          typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadTexture(
         typename GFX::S_2D& surface,
@@ -108,7 +110,34 @@ FORCEDINLINE bool LoadTexture(
     return status;
 }
 
+template<typename GFX, typename Resource,
+         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
+         typename implements<ByteProvider, Resource>::type* = nullptr>
+FORCEDINLINE bool LoadTexture(
+        typename GFX::S_2DA& surface,
+        Resource&& tex_rsc,
+        i32 layer = 0
+        )
+{
+    bool status = true;
+
+    Stb::Img tex_src;
+    if(Stb::LoadData(&tex_src, C_OCAST<Bytes>(tex_rsc)))
+    {
+        CSize3 tex_size = {tex_src.size.w, tex_src.size.h, 1};
+
+        surface.upload(
+                    BitFormat::UByte, PixCmp::RGBA,
+                    tex_size, tex_src.data, {0,0,layer}, 0);
+        Stb::ImageFree(&tex_src);
+    }else
+        status = false;
+
+    return status;
+}
+
 template<typename GFX,typename Resource,
+         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
          typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadShader(
         typename GFX::SHD& shader,
@@ -122,6 +151,7 @@ FORCEDINLINE bool LoadShader(
 }
 
 template<typename GFX, typename Resource,
+         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
          typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadPipeline(
         typename GFX::PIP& pip,

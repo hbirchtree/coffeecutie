@@ -7,6 +7,8 @@
 
 namespace Coffee{
 
+struct Path;
+
 template<typename T>
 struct _cbasic_data_chunk
 {
@@ -225,18 +227,6 @@ using CByteData = _cbasic_data_chunk<byte_t>;
 
 using Bytes = CByteData;
 using BytesConst = _cbasic_data_chunk<const byte_t>;
-
-/*!
- * \brief
- * This class is used to indicate that it can be static_cast'ed to Bytes
- */
-struct ByteProvider
-{
-    operator Bytes() const
-    {
-        return Bytes();
-    }
-};
 
 template<typename T>
 struct _cbasic_serial_array

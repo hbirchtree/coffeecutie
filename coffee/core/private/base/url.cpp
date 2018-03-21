@@ -254,11 +254,6 @@ CString Url::operator*()
     return deref;
 }
 
-Resource Url::rsc() const
-{
-    return CResources::Resource(*this);
-}
-
 Url Url::operator+(const Path &path) const
 {
     Url cpy = *this;

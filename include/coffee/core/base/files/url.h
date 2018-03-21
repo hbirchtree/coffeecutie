@@ -68,6 +68,7 @@ struct Url
         Undefined,
         Local,
         Networked,
+        Memory,
     };
 
     CString internUrl;
@@ -93,8 +94,6 @@ struct Url
      */
     CString operator*();
 
-    CResources::Resource rsc() const;
-
     Url operator+(Path const& path) const;
 
     FORCEDINLINE Url& operator+=(Path const& path)
@@ -103,9 +102,15 @@ struct Url
         return *this;
     }
 
-    operator Path()
+    operator Path() const
     {
         return {internUrl};
+    }
+
+    template<typename Resource, typename... Args>
+    Resource rsc(Args... a) const
+    {
+        return Resource(a..., *this);
     }
 
 private:

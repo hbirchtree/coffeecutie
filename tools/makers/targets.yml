@@ -33,6 +33,7 @@ targets:
     ubuntu:
       amd64:
         - .
+        - tools
         - gles2
         - gles3
       i686:
@@ -395,6 +396,11 @@ templates:
       - -v $(project.build)/$(target-name):$(container.build):rw
       - -v $(lib.root):$(lib.target):ro
       - --workdir "$(env:CMAKE_BUILD_DIR)"
+    .*tools:
+      +cmake-opts:
+        - -DGENERATE_EXAMPLES=OFF
+        - -DGENERATE_PROGRAMS=ON
+        - -DGENERATE_TESTS=OFF
     .*coverage:
       =cmake-target:
         - all
