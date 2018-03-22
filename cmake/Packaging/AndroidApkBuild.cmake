@@ -187,8 +187,7 @@ macro(APK_GENERATE_PROJECT
     # Create build directory
     #
     if(ANDROID_USE_GRADLE)
-        add_custom_command ( TARGET ${TARGET_NAME}
-            PRE_BUILD
+        execute_process (
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${ANDROID_PROJECT_INPUT}/Gradle" "${BUILD_DIR}"
             )
