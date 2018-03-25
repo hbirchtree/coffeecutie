@@ -401,6 +401,9 @@ templates:
         - -DGENERATE_EXAMPLES=OFF
         - -DGENERATE_PROGRAMS=ON
         - -DGENERATE_TESTS=OFF
+        - -DCOFFEE_GENERATE_FLATPAK=OFF
+        - -DCOFFEE_GENERATE_SNAPPY=OFF
+        - -DCOFFEE_GENERATE_APPIMAGE=ON
     .*coverage:
       =cmake-target:
         - all
