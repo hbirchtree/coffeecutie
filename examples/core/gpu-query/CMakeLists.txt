@@ -1,5 +1,10 @@
-coffee_add_application_longer ( GpuQueryTest
-    "GPU Query Test" "hbirchtree" "5"
-    main.cpp "CoffeeCore;CoffeeGraphicsAPI"
-    ""
-    "")
+coffee_application (
+    TARGET GpuQueryTest
+
+    TITLE "GPU Query Test"
+    COMPANY "hbirchtree"
+    VERSION_CODE "5"
+
+    SOURCES main.cpp
+    LIBRARIES CoffeeCore CoffeeGraphicsAPI
+    )

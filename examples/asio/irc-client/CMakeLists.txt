@@ -1,1 +1,6 @@
-coffee_add_application ( IRC_Client "IRC client" main.cpp "CoffeeASIO;CoffeeCore" )
+coffee_application (
+    TARGET IRC_Client
+    TITLE "IRC client"
+    SOURCES main.cpp
+    LIBRARIES CoffeeASIO CoffeeCore
+    )

@@ -4,142 +4,136 @@ include ( LinuxFlatpakBuild )
 include ( LinuxSnappyBuild )
 include ( MacAppBuild )
 include ( WindowsImageBuild )
+include ( EmscriptenBuild )
+include ( GamecubeBuild )
 
-# TODO: Make package name more configurable
-# Android only uses shared libraries which are loaded, all else uses typical executables
-# We do a test to check if a library is a shared library for Android
-# For iOS, everything will be statically linked, which might be used for Android as well.
-# For now, we leave the linking options here for desktop platforms
-function(COFFEE_ADD_APPLICATION_LONGERER
+function(COFFEE_APPLICATION)
+
+    #    TARGET
+    #    TITLE APP_COMPANY_NAME APP_VERSION_CODE
+    #    INFO_STRING COPYRIGHT
+    #    SOURCES LIBRARIES
+    #    BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES
+    #    PERMISSIONS
+    #    BUNDLE_BINARIES
+
+    set ( APP_PACKAGE_PREFIX "me.birchtrees" )
+    set ( APP_COMPANY "Birchtrees" )
+    set ( APP_VERSION_CODE "1" )
+    set ( APP_INFO_STRING "This is a Coffee application" )
+    set ( APP_COPYRIGHT "MIT licensed code" )
+    set ( APP_TITLE "Coffee Application" )
+    set ( APP_PERMISSIONS
+        OPENGL AUDIO ENVIRONMENT_SENSORS
+        NETWORK_CONNECT JOYSTICK
+        )
+
+    set ( oneOpts
         TARGET
-        TITLE APP_COMPANY_NAME APP_VERSION_CODE
-        INFO_STRING COPYRIGHT
-        SOURCES LIBRARIES
-        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES
-        PERMISSIONS
-        BUNDLE_BINARIES)
+        # Aesthetic details
+        TITLE
+        COMPANY
+        VERSION_CODE
+        INFO_STRING
+        COPYRIGHT
 
-    coffee_gen_licenseinfo("${TARGET}" "${BUNDLE_LICENSES}")
-    coffee_gen_applicationinfo("${TARGET}"
-        "${TITLE}"
+        # Package name generation
+        # PACKAGE_PREFIX is prepended to target name
+        PACKAGE_PREFIX
+        # Defines entire package name
+        PACKAGE_NAME
+        )
+    set ( multiOpts
+        # Application permissions, translated per platform
+        PERMISSIONS
+
+        # Linking data
+        SOURCES
+        LIBRARIES
+
+        # For shared libraries
+        BUNDLE_LIBRARIES
+
+        # Just resources used by the program
+        # Specified as the root of a resource directory
+        RESOURCES
+        # For required programs
+        BUNDLE_BINARIES
+        # For licenses, will be merged into binary
+        BUNDLE_LICENSES
+        )
+    set ( switches
+        # Whether to automatically include ASIO
+        # Does not fail when ASIO is not built
+        # This is used for automatic inclusion of profiler report code
+        # Defines FEATURE_USE_ASIO when present
+        USE_ASIO
+        )
+
+    cmake_parse_arguments( APP
+        "${switches}" "${oneOpts}" "${multiOpts}"
+        ${ARGN}
+        )
+
+    # These define and create LICENSE_FILE and APPLICATION_INFO_FILE
+    coffee_gen_licenseinfo("${APP_TARGET}" "${APP_BUNDLE_LICENSES}")
+    coffee_gen_applicationinfo("${APP_TARGET}"
+        "${APP_TITLE}"
         "${APP_COMPANY_NAME}"
         "${APP_VERSION_CODE}"
         )
 
-    set ( SOURCES_MOD "${APPLICATION_INFO_FILE};${LICENSE_FILE};${SOURCES}" )
-
-    set ( COMPANY "${APP_COMPANY_NAME}" )
-    set ( VERSION_CODE "${APP_VERSION_CODE}" )
-
-    set ( PACKAGE_PREFIX "me.birchtrees" )
+    set ( SOURCES_MOD
+        "${APPLICATION_INFO_FILE};${LICENSE_FILE};${APP_SOURCES}"
+        )
 
     set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon.svg" )
 
     if(ANDROID)
         ANDROIDAPK_PACKAGE(
-            "${TARGET}"
-            "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
+            "${APP_TARGET}"
+            "${APP_PACKAGE_PREFIX}"
+            "${APP_TITLE}" "${APP_VERSION_CODE}"
+            "${APP_COPYRIGHT}" "${APP_COMPANY}"
             "${SOURCES_MOD}"
-            "${BUNDLE_RSRCS}"
-            "${BUNDLE_LIBS}"
+            "${APP_RESOURCES}"
+            "${APP_BUNDLE_LIBRARIES}"
             "${ICON_ASSET}" )
     elseif(WIN32)
         WINPE_PACKAGE(
-            ${TARGET}
-            "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-            "${INFO_STRING}"
+            ${APP_TARGET}
+            "${APP_PACKAGE_PREFIX}"
+            "${APP_TITLE}" "${APP_VERSION_CODE}"
+            "${APP_COPYRIGHT}" "${APP_COMPANY}"
+            "${APP_INFO_STRING}"
             "${SOURCES_MOD}"
-            "${BUNDLE_RSRCS}"
+            "${APP_RESOURCES}"
             "${ICON_ASSET}")
     elseif(APPLE)
         MACAPP_PACKAGE(
-            "${TARGET}"
-            "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-            "${INFO_STRING}"
+            "${APP_TARGET}"
+            "${APP_TITLE}" "${APP_VERSION_CODE}"
+            "${APP_COPYRIGHT}" "${APP_COMPANY}"
+            "${APP_INFO_STRING}"
             "${SOURCES_MOD}"
-            "${BUNDLE_RSRCS}"
-            "${BUNDLE_LIBS}"
+            "${APP_RESOURCES}"
+            "${APP_BUNDLE_LIBRARIES}"
             "${ICON_ASSET}" )
     elseif(EMSCRIPTEN)
-        add_executable(${TARGET} ${SOURCES_MOD})
-        set_property ( TARGET ${TARGET}
-            PROPERTY SUFFIX ".html" )
-        if(NOT COFFEE_GENERATE_HTML)
-            install(
-                TARGETS
-                ${TARGET}
+        EMSCRIPTEN_PACKAGE(
+            TARGET ${APP_TARGET}
 
-                DESTINATION
-                bin
-                )
-        else()
-            set_target_properties( ${TARGET} PROPERTIES
-                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
-                )
-            set ( RSC_FLAGS "" )
-            foreach (RSC ${BUNDLE_RSRCS})
-                set ( RSC_FLAGS "--preload-file ${RSC}@/assets/ ${RSC_FLAGS}" )
-            endforeach()
-
-            set_target_properties ( ${TARGET}
-                PROPERTIES
-                LINK_FLAGS "${RSC_FLAGS}"
-                )
-
-            install(
-                DIRECTORY
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
-
-                DESTINATION
-                bin
-                )
-        endif()
-    elseif(NACL)
-        include_directories( ${SDL2_INCLUDE_DIR} )
-
-        add_executable(${TARGET}
-            ${SDL2_MAIN_C_FILE}
-            ${SOURCES_MOD}
-            )
-
-        set ( OUT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle" )
-
-        execute_process( COMMAND "${CMAKE_COMMAND}" -E make_directory "${OUT_DIR}" )
-
-        # Create a manifest
-        configure_file(
-            "${COFFEE_DESKTOP_DIRECTORY}/native-client/application.nmf.in"
-            "${OUT_DIR}/${TARGET}.nmf"
-            )
-
-        # Create a simple, testable HTML page
-        configure_file(
-            "${COFFEE_DESKTOP_DIRECTORY}/native-client/index.html.in"
-            "${OUT_DIR}/index.html"
-            )
-
-        set_target_properties( ${TARGET} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${OUT_DIR}")
-
-        add_custom_command( TARGET ${TARGET}
-            POST_BUILD
-            COMMAND ${NACL_FINALIZE} $<TARGET_FILE:${TARGET}>
-            )
-
-        install(
-            DIRECTORY
-            ${OUT_DIR}
-
-            DESTINATION
-            bin
+            SOURCES ${SOURCES_MOD}
+            RESOURCES ${APP_RESOURCES}
+            ICON ${ICON_TARGET}
             )
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        add_executable( ${TARGET} ${SOURCES_MOD} )
+        add_executable( ${APP_TARGET} ${SOURCES_MOD} )
 
         # We still install a basic binary executable
         install(
             FILES
-            "$<TARGET_FILE:${TARGET}>"
+            "$<TARGET_FILE:${APP_TARGET}>"
 
             DESTINATION
             "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
@@ -147,58 +141,47 @@ function(COFFEE_ADD_APPLICATION_LONGERER
 
         if(COFFEE_GENERATE_APPIMAGE)
             APPIMAGE_PACKAGE(
-                ${TARGET}
-                "${TITLE}"
-                "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}"
+                ${APP_TARGET}
+                "${APP_TITLE}"
+                "${APP_RESOURCES}"
+                ""
+                "${APP_BUNDLE_LIBRARIES}"
                 "${ICON_ASSET}" )
         endif()
         if(COFFEE_GENERATE_FLATPAK)
             FLATPAK_PACKAGE(
-                ${TARGET}
-                "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-                "${BUNDLE_RSRCS}"
-                "" "${BUNDLE_LIBS}"
+                ${APP_TARGET}
+                "${APP_PACKAGE_PREFIX}" "${APP_TITLE}"
+                "${APP_VERSION_CODE}"
+                "${APP_COPYRIGHT}" "${APP_COMPANY}"
+                "${APP_RESOURCES}"
+                "" "${APP_BUNDLE_LIBRARIES}"
                 "${ICON_ASSET}" )
         endif()
         if(COFFEE_GENERATE_SNAPPY)
             SNAPPY_PACKAGE(
-                ${TARGET}
-                "${TITLE}" "${INFO_STRING}"
-                "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-                "${BUNDLE_RSRCS}"
-                "" "${BUNDLE_LIBS}"
-                "${BUNDLE_BINARIES}"
+                ${APP_TARGET}
+                "${APP_TITLE}" "${APP_INFO_STRING}"
+                "${APP_VERSION_CODE}" "${APP_COPYRIGHT}"
+                "${APP_COMPANY}"
+                "${APP_RESOURCES}"
+                "" "${APP_BUNDLE_LIBRARIES}"
+                "${APP_BUNDLE_BINARIES}"
                 "${ICON_ASSET}"
-                "${PERMISSIONS}"
+                "${APP_PERMISSIONS}"
                 )
         endif()
     elseif(GAMECUBE OR WII)
-        add_executable ( ${TARGET} ${SOURCES_MOD} )
-        add_custom_command (
-            TARGET "${TARGET}"
-            POST_BUILD
-            COMMAND "${ELF2DOL}"
-                "$<TARGET_FILE:${TARGET}>"
-                "$<TARGET_FILE:${TARGET}>.dol"
-            )
-        target_link_libraries ( ${TARGET}
-            PUBLIC
-            CoffeeRenderer_Default
-            )
-        install (
-            FILES
-            "$<TARGET_FILE:${TARGET}>"
-            "$<TARGET_FILE:${TARGET}>.dol"
-            DESTINATION
-            "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
+        GAMECUBE_PACKAGE(
+            TARGET ${APP_TARGET}
+            SOURCES ${SOURCES_MOD}
             )
     else()
-
-        add_executable(${TARGET} ${SOURCES_MOD})
+        add_executable(${APP_TARGET} ${SOURCES_MOD})
 
         install(
             TARGETS
-            ${TARGET}
+            ${APP_TARGET}
 
             DESTINATION
             "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
@@ -206,121 +189,28 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     endif()
 
     # A little convenience
-    if(";${ARGN};" MATCHES ";USE_ASIO;" AND TARGET CoffeeASIO)
-        target_compile_definitions( ${TARGET}
+    if(APP_USE_ASIO AND TARGET CoffeeASIO)
+        target_compile_definitions( ${APP_TARGET}
             PRIVATE
             -DFEATURE_USE_ASIO
             )
-        target_link_libraries ( ${TARGET}
+        target_link_libraries ( ${APP_TARGET}
             PRIVATE
             CoffeeASIO
             )
     endif()
 
-    target_compile_definitions ( ${TARGET}
+    target_compile_definitions ( ${APP_TARGET}
         PRIVATE
-        -DCOFFEE_COMPONENT_NAME="${TARGET}"
+        -DCOFFEE_COMPONENT_NAME="${APP_TARGET}"
         )
 
-    target_enable_cxx11(${TARGET})
+    target_enable_cxx11(${APP_TARGET})
 
-    target_link_libraries ( ${TARGET}
+    target_link_libraries ( ${APP_TARGET}
         PUBLIC
-        ${LIBRARIES}
+        ${APP_LIBRARIES}
         CoffeeCore_Application
         )
 
-    if(NACL)
-        target_link_libraries( ${TARGET}
-            PUBLIC
-            ${SDL2_LIBRARY}
-            ${SDL2_LIBRARIES}
-            ppapi_gles2
-            )
-    endif()
-
-    remove_definitions(
-        -DCOFFEE_APPLICATION_NAME -DCOFFEE_ORGANIZATION_NAME
-        -DCOFFEE_VERSION_CODE )
-
 endfunction()
-
-# Wrapper functions
-
-macro(COFFEE_ADD_APPLICATION_LONGER
-        TARGET
-        TITLE COMPANY VERSION
-        SOURCES LIBRARIES
-        BUNDLE_LIBS BUNDLE_RSRCS)
-
-    set ( PERMISSIONS "OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT;JOYSTICK" )
-    set ( INFO_STRING "It's a Coffee application" )
-    set ( COPYRIGHT "Copyright hbirchtree under MIT license" )
-
-    COFFEE_ADD_APPLICATION_LONGERER(
-        "${TARGET}"
-        "${TITLE}" "${COMPANY}" "${VERSION}"
-        "${INFO_STRING}" "${COPYRIGHT}"
-        "${SOURCES}" "${LIBRARIES}"
-        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
-        "${PERMISSIONS}"
-        ""
-         ${ARGN})
-endmacro()
-
-function(COFFEE_ADD_EXAMPLE_LONGER
-        TARGET
-        TITLE APP_COMPANY_NAME APP_VERSION_CODE
-        SOURCES LIBRARIES
-        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES)
-    COFFEE_ADD_APPLICATION_LONGER(
-        "${TARGET}"
-        "${TITLE}" "${COMPANY}" "${VERSION}"
-        "${SOURCES}" "${LIBRARIES}"
-        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
-         ${ARGN})
-endfunction()
-
-macro(COFFEE_ADD_EXAMPLE_LONG
-        TARGET
-        TITLE
-        SOURCES LIBRARIES
-        BUNDLE_LIBS BUNDLE_RSRCS)
-
-    set ( VERSION 5 )
-    set ( COMPANY "Coffee Guy" )
-
-    COFFEE_ADD_EXAMPLE_LONGER(
-        "${TARGET}"
-        "${TITLE}" "${COMPANY}" "${VERSION}"
-        "${SOURCES}" "${LIBRARIES}"
-        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
-         ${ARGN})
-endmacro()
-
-macro(COFFEE_ADD_APPLICATION_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
-    coffee_add_example_long(
-        ${TARGET}
-        ${TITLE}
-        "${SOURCES}" "${LIBRARIES}" "${BUNDLE_LIBS}"
-        "${BUNDLE_RSRCS}"
-        ${ARGN})
-endmacro()
-
-macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
-    coffee_add_example_long(
-        ${TARGET}
-        "${TITLE}"
-        "${SOURCES}" "${LIBRARIES}"
-        "" ""
-        ${ARGN})
-endmacro()
-
-macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
-    coffee_add_example_long(
-        ${TARGET}
-        "${TITLE}"
-        "${SOURCES}" "${LIBRARIES}"
-        "" ""
-        ${ARGN})
-endmacro()

@@ -779,9 +779,10 @@ struct MeshLoader
         Vector<ASSIMP::ObjectDesc> sceneObjects;
         if(ASSIMP::GetSceneObjects(scene, sceneObjects))
         {
-            ASSIMP::Node* rootNode;
+            ASSIMP::Node* rootNode = nullptr;
             ASSIMP::NodeList nodes;
-            ASSIMP::GetSceneRoot(scene, &rootNode, nodes);
+            if(!ASSIMP::GetRawSceneRoot(scene, &rootNode, nodes))
+                return false;
 
             SerialNodeList& serialNodes = buffers.nodes;
             serialNodes.nodes.reserve(nodes.size());

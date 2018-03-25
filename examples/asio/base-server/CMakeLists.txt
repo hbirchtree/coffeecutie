@@ -1,1 +1,6 @@
-coffee_add_application ( AsioServerTest "ASIO Test" main.cpp "CoffeeASIO;CoffeeCore" )
+coffee_application (
+    TARGET AsioServerTest
+    TITLE "ASIO Test"
+    SOURCES main.cpp
+    LIBRARIES CoffeeASIO CoffeeCore
+    )

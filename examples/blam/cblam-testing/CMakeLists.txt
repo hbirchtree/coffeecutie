@@ -1,3 +1,8 @@
-set ( LIBS CoffeeBlam CoffeeCore CoffeeImage CoffeeRenderer_Default CoffeeGLeamRHI )
-
-coffee_add_application ( BlamTesting "Blam Loader" main.cpp "${LIBS}" )
+coffee_application (
+    TARGET BlamTesting
+    TITLE "Blam Loader"
+    SOURCES main.cpp
+    LIBRARIES
+    CoffeeBlam CoffeeCore CoffeeImage
+    CoffeeRenderer_Default CoffeeGLeamRHI
+    )
