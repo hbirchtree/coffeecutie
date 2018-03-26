@@ -3,111 +3,129 @@
 #include "timing_def.h"
 #include "../../coffee_macros.h"
 #include "../../base/threading/cthreading.h"
+#include "../../internal_state.h"
 
 #ifndef COFFEE_COMPONENT_NAME
 #define COFFEE_COMPONENT_NAME "(unknown)"
 #endif
 
 namespace Coffee{
+
+#define profiler_data_store (State::GetProfilerStore())
+#define current_thread_id (&State::GetCurrentThreadId())
+
 namespace Profiling{
 
-struct SimpleProfilerImpl
+struct DataPoint
 {
-    struct DataPoint
+    FORCEDINLINE DataPoint():
+        thread()
     {
-        FORCEDINLINE DataPoint():
-            thread()
-        {
-        }
+    }
 
-        enum Type
-        {
-            Push,
-            Profile,
-            Pop,
-        };
+    enum Type
+    {
+        Push,
+        Profile,
+        Pop,
+    };
 
-        enum Attr
-        {
-            AttrNone,
-            Hot,
-        };
+    enum Attr
+    {
+        AttrNone,
+        Hot,
+    };
 
-        ThreadId thread;
+    ThreadId thread;
 
-        CString name;
-        Timestamp ts;
+    CString name;
+    Timestamp ts;
 
-        CString component;
+    CString component;
 
 //        CString label;
 //        uint32 line;
 
-        Type tp;
-        Attr at;
-    };
+    Type tp;
+    Attr at;
+};
 
-    struct ExtraPair
-    {
-        CString key;
-        CString value;
-    };
+struct ExtraPair
+{
+    CString key;
+    CString value;
+};
 
-    struct ThreadData
-    {
-        LinkList<CString> context_stack;
-    };
+struct ThreadData
+{
+    LinkList<CString> context_stack;
+};
 
-    using ThreadStorage = Map<ThreadId::Hash, ThreadData>;
-    using ThreadListing = Map<ThreadId::Hash,CString>;
-    using ThreadItem = Pair<ThreadId::Hash,CString>;
-    using ThreadPtr = ShPtr<ThreadId>;
-    using ExtraData = LinkList<ExtraPair>;
-    using StackFrames = Set<CString>;
+using ThreadStorage = Map<ThreadId::Hash, ThreadData>;
+using ThreadListing = Map<ThreadId::Hash,CString>;
+using ThreadItem = Pair<ThreadId::Hash,CString>;
+using ThreadPtr = ShPtr<ThreadId>;
+using ExtraData = LinkList<ExtraPair>;
+using StackFrames = Set<CString>;
 
-    STATICINLINE void ResetPointers()
-    {
-        /* Some platforms can't keep their pants on.
-         * And they shit the bed.
-         */
 #if !defined(COFFEE_DISABLE_PROFILER)
-        profiler_data_store = nullptr;
-#endif
-    }
 
+/* Below variables have storage in extern_storage.cpp */
+
+struct ProfilerDataStore
+{
+    Timestamp start_time;
+
+    Mutex data_access_mutex;
+#if !defined(NDEBUG)
+    LinkList<DataPoint> datapoints;
+    StackFrames stackframes;
+    ThreadListing threadnames;
+    ThreadStorage context_storage;
+#endif
+
+    ExtraData extra_data;
+
+#if !defined(NDEBUG)
+    bool Enabled;
+    bool Deep_Profile;
+#else
+    static const constexpr bool Enabled = false;
+    static const constexpr bool Deep_Profile = false;
+#endif
+
+    byte_t padding[2];
+
+};
+
+#if !defined(NDEBUG)
+STATICINLINE LinkList<CString>& threadContextStack()
+{
+    auto hash = current_thread_id->hash();
+    auto& ctxt = profiler_data_store->context_storage[hash];
+    return ctxt.context_stack;
+}
+#endif
+
+#endif // COFFEE_DISABLE_PROFILER
+
+struct SimpleProfilerImpl
+{
     STATICINLINE void InitProfiler()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        if(!profiler_data_store)
-        {
-            profiler_data_store = new ProfilerDataStore;
-            profiler_data_store->global_init.store(0);
 #if !defined(NDEBUG)
-            profiler_data_store->Enabled = true;
-            profiler_data_store->Deep_Profile = false;
+        profiler_data_store->Enabled = true;
+        profiler_data_store->Deep_Profile = false;
 #endif
-        }
 
-        if(profiler_data_store->global_init.load()<1)
-        {
-            profiler_data_store->start_time =
-                    Time::CurrentMicroTimestamp();
-        }
-
-        profiler_data_store->global_init.fetch_add(1);
+        profiler_data_store->start_time =
+                Time::CurrentMicroTimestamp();
 #endif
     }
 
     STATICINLINE void DestroyProfiler()
     {
-#if !defined(COFFEE_DISABLE_PROFILER)
-        if(profiler_data_store &&
-                std::atomic_fetch_sub(&profiler_data_store->global_init,1)<2)
-        {
-            delete profiler_data_store;
-            profiler_data_store = nullptr;
-        }
-#endif
     }
 
     STATICINLINE void LabelThread(cstring name)
@@ -116,7 +134,8 @@ struct SimpleProfilerImpl
         ThreadSetName(name);
 #if !defined(NDEBUG)
         ThreadId tid;
-        profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
+        profiler_data_store->threadnames
+                .insert(ThreadItem(tid.hash(),name));
 #endif
 #endif
     }
@@ -267,59 +286,6 @@ struct SimpleProfilerImpl
 #endif
     }
 
-#if !defined(COFFEE_DISABLE_PROFILER)
-
-    /* Below variables have storage in extern_storage.cpp */
-
-    struct ProfilerDataStore
-    {
-        Timestamp start_time;
-
-        Mutex data_access_mutex;
-    #if !defined(NDEBUG)
-        LinkList<DataPoint> datapoints;
-        StackFrames stackframes;
-        ThreadListing threadnames;
-        ThreadStorage context_storage;
-    #endif
-
-        ExtraData extra_data;
-        AtomicInt32 global_init;
-
-#if !defined(NDEBUG)
-        bool Enabled;
-        bool Deep_Profile;
-#else
-        static const constexpr bool Enabled = false;
-        static const constexpr bool Deep_Profile = false;
-#endif
-        byte_t padding[6];
-
-    };
-
-    static ProfilerDataStore* profiler_data_store;
-
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-    /* Because it's thread_local, it is initialized automatically */
-    thread_local static ThreadId* current_thread_id;
-#else
-    static ThreadId* current_thread_id;
-#endif
-
-
-#if !defined(NDEBUG)
-    STATICINLINE LinkList<CString>& threadContextStack()
-    {
-        if(!current_thread_id)
-            current_thread_id = new ThreadId();
-        auto hash = current_thread_id->hash();
-        auto& ctxt = profiler_data_store->context_storage[hash];
-        return ctxt.context_stack;
-    }
-#endif
-
-#endif // COFFEE_DISABLE_PROFILER
-
     STATICINLINE ExtraData* ExtraInfo()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
@@ -377,8 +343,8 @@ struct SimpleProfilerImpl
     }
 };
 
-FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1,
-                            SimpleProfilerImpl::DataPoint const& t2)
+FORCEDINLINE bool operator<(DataPoint const& t1,
+                            DataPoint const& t2)
 {
     ThreadId::Hash th1 = t1.thread.hash();
     ThreadId::Hash th2 = t1.thread.hash();
@@ -390,8 +356,6 @@ FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1,
 
 struct SimpleProfilerContext
 {
-    using DataPoint = SimpleProfilerImpl::DataPoint;
-
     SimpleProfilerContext(cstring name,
                           DataPoint::Attr at = DataPoint::AttrNone)
     {
@@ -405,8 +369,6 @@ struct SimpleProfilerContext
 
 struct DeepProfilerContext
 {
-    using DataPoint = SimpleProfilerImpl::DataPoint;
-
     DeepProfilerContext(cstring name,
                         DataPoint::Attr at = DataPoint::AttrNone)
     {
@@ -425,3 +387,6 @@ using ProfContext = Profiling::SimpleProfilerContext;
 using Profiler = Profiling::SimpleProfilerImpl;
 
 }
+
+#undef current_thread_id
+#undef profiler_data_store

@@ -40,11 +40,6 @@ struct PosixStacktracer : StacktracerDef
     {
         return GetRawStackframes(start,length);
     }
-private:
-
-#if defined(COFFEE_USE_UNWIND)
-    static unw_context_t* unwind_context;
-#endif
 };
 
 }

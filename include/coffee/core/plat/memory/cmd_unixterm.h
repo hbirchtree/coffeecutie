@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../platform_detect.h"
+#include "../../internal_state.h"
 
 #ifdef COFFEE_UNIXPLAT
 #include "cmd_interface.h"
@@ -23,14 +24,14 @@ struct UnixTerm : CmdInterface::BasicTerm
     static void AltScreen()
     {
         fprintf(DefaultDebugOutputPipe,"\033[?1049h\033[H");
-        alternate_buffer = !alternate_buffer;
+        State::GetAlternateTerminal() = !State::GetAlternateTerminal();
     }
     static void ResetScreen()
     {
-        if(!alternate_buffer)
+        if(!State::GetAlternateTerminal())
             return;
         fprintf(DefaultDebugOutputPipe,"\033[?1049l");
-        alternate_buffer = !alternate_buffer;
+        State::GetAlternateTerminal() = !State::GetAlternateTerminal();
     }
     static CSize TerminalSize()
     {

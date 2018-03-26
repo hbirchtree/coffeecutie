@@ -255,7 +255,7 @@ if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
         )
 
     find_package( Unwind QUIET )
-    if(LIBUNWIND_FOUND)
+    if(UNWIND_FOUND)
         add_definitions(
             -DLIBUNWIND_ENABLED
             )

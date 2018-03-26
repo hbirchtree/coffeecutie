@@ -39,9 +39,9 @@ void PrintProfilerData()
 
     LinkList<uint64> base_time; /* Stack of time values */
     LinkList<uint64> curr_timeline; /* Progression of time within a context */
-    for(Profiler::DataPoint const& p : *Profiler::DataPoints())
+    for(Profiling::DataPoint const& p : *Profiler::DataPoints())
     {
-        if(p.tp==Profiler::DataPoint::Profile)
+        if(p.tp==Profiling::DataPoint::Profile)
         {
             uint64 ts = (p.ts-base_time.front())-curr_timeline.front();
             cBasicPrint("Time: {0}, label: {1}",
@@ -50,13 +50,13 @@ void PrintProfilerData()
 
             curr_timeline.front() = p.ts-base_time.front();
         }
-        else if(p.tp==Profiler::DataPoint::Push)
+        else if(p.tp==Profiling::DataPoint::Push)
         {
             base_time.push_front(p.ts);
             curr_timeline.push_front(0);
             cBasicPrint("Enter scope: {0}",p.name,p.ts);
         }
-        else if(p.tp==Profiler::DataPoint::Pop)
+        else if(p.tp==Profiling::DataPoint::Pop)
         {
             base_time.pop_front();
             curr_timeline.pop_front();
@@ -232,7 +232,7 @@ void ExportProfilerData(CString& target)
         root->InsertEndChild(extradata);
 
         XML::Element* e;
-        for(Profiler::ExtraPair const& p : *Profiler::ExtraInfo())
+        for(Profiling::ExtraPair const& p : *Profiler::ExtraInfo())
         {
             e = doc.NewElement(p.key.c_str());
             extradata->InsertEndChild(e);
@@ -251,7 +251,7 @@ void ExportProfilerData(CString& target)
             root->InsertEndChild(threaddata);
 
             XML::Element* e;
-            for(Profiler::ThreadItem const& p : *Profiler::ThreadNames())
+            for(Profiling::ThreadItem const& p : *Profiler::ThreadNames())
             {
                 e = doc.NewElement("thread");
                 threaddata->InsertEndChild(e);
@@ -289,11 +289,11 @@ void ExportProfilerData(CString& target)
             Profiler::DataPoints()->sort();
 
             /* Finally, smash data points into XML format */
-            for(Profiler::DataPoint const& p : *Profiler::DataPoints())
+            for(Profiling::DataPoint const& p : *Profiler::DataPoints())
             {
                 switch(p.tp)
                 {
-                case Profiler::DataPoint::Profile:
+                case Profiling::DataPoint::Profile:
                 {
                     uint64 ts = p.ts-base.front()- lt.front();
 
@@ -311,7 +311,7 @@ void ExportProfilerData(CString& target)
                     lt.front() = p.ts-base.front();
                     break;
                 }
-                case Profiler::DataPoint::Push:
+                case Profiling::DataPoint::Push:
                 {
                     XML::Element* n = doc.NewElement("context");
 
@@ -329,7 +329,7 @@ void ExportProfilerData(CString& target)
                     lt.push_front(0);
                     break;
                 }
-                case Profiler::DataPoint::Pop:
+                case Profiling::DataPoint::Pop:
                 {
                     curr = curr->Parent()->ToElement();
                     base.pop_front();
@@ -374,7 +374,7 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
 
     Profiler::DataPoints()->sort();
 
-    for(Profiler::DataPoint const& p : *Profiler::DataPoints())
+    for(Profiling::DataPoint const& p : *Profiler::DataPoints())
     {
         JSON::Value o;
         o.SetObject();
@@ -396,9 +396,9 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
 
         switch(p.tp)
         {
-        case Profiler::DataPoint::Profile:
+        case Profiling::DataPoint::Profile:
         {
-            if(feval(p.at & Profiler::DataPoint::Hot))
+            if(feval(p.at & Profiling::DataPoint::Hot))
                 o.AddMember("ph", "P", alloc);
             else
                 o.AddMember("ph", "i", alloc);
@@ -408,7 +408,7 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
             target.PushBack(o, alloc);
             break;
         }
-        case Profiler::DataPoint::Push:
+        case Profiling::DataPoint::Push:
         {
             o.AddMember("ph", "B", alloc);
 
@@ -418,7 +418,7 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
             target.PushBack(o, alloc);
             break;
         }
-        case Profiler::DataPoint::Pop:
+        case Profiling::DataPoint::Pop:
         {
             JSON::Value& prev = stack.front();
 

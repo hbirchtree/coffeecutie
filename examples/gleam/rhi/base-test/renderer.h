@@ -531,7 +531,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Logic frame", Profiler::DataPoint::Hot);
+    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
 
@@ -600,7 +600,7 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Render frame", Profiler::DataPoint::Hot);
+    ProfContext a("Render frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
     

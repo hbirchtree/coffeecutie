@@ -157,6 +157,12 @@ inline UqPtr<T,Deleter> MkUqDST(Args... a)
     return UqPtr<T, Deleter>(new T(a...));
 }
 
+template<typename T, typename... Args>
+inline ShPtr<T> MkShared(Args... a)
+{
+    return ShPtr<T>(new T(a...));
+}
+
 template<bool Reversed>
 struct range_params
 {

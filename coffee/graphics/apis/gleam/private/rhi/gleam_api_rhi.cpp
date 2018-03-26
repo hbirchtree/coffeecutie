@@ -872,11 +872,13 @@ void GLEAM_API::PreDrawCleanup()
 
 void GLEAM_API::DisposePixelBuffers()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
         CGL33::BufFree(1, &buf.buf);
 
     queue.buffers.clear();
+#endif
 }
 
 void GLEAM_API::OptimizeRenderPass(

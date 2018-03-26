@@ -14,6 +14,8 @@
 
 #include <coffee/core/coffee_signals.h>
 
+#include <coffee/core/internal_state.h>
+
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
 #endif
@@ -75,7 +77,7 @@ FORCEDINLINE void PrintLicenseInfo()
 #endif
 }
 
-void CoffeeInit(bool profiler_init)
+void CoffeeInit(bool)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
@@ -84,14 +86,6 @@ void CoffeeInit(bool profiler_init)
 #else
     Coffee::PrintingVerbosityLevel = 1;
 #endif
-#endif
-
-#ifndef COFFEE_LOWFAT
-    if(profiler_init)
-    {
-        Profiler::InitProfiler();
-        Profiler::LabelThread("Main");
-    }
 #endif
 
 #ifndef NDEBUG
@@ -128,9 +122,10 @@ void CoffeeInit(bool profiler_init)
     CoffeeDefaultWindowName = "Coffee [OpenGL]";
 #endif
 
-//    cVerbose(8, "Initializing profiler");
+#ifndef COFFEE_LOWFAT
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
+#endif
 }
 
 enum StartFlags
@@ -144,6 +139,8 @@ int32 CoffeeMain(
         int32 argc, cstring_w*argv,
         u32 flags)
 {
+    State::SetInternalState(State::CreateNewState());
+
     initargs = AppArg::Clone(argc, argv);
 
 #if defined(COFFEE_ANDROID)
@@ -257,19 +254,6 @@ int32 CoffeeMain(
     /* This is a bit more versatile than simple procedures
      */
     Cmd::RegisterAtExit(CoffeeTerminate);
-
-    std::set_terminate([]()
-    {
-        try {
-            std::rethrow_exception(std::current_exception());
-        } catch(std::exception const& e) {
-            cWarning("Exception thrown: {0}",
-                     e.what()
-                     );
-        }
-
-        cWarning("Exiting thread");
-    });
 
     cVerbose(8,"Entering main function");
     Profiler::PushContext("main()");

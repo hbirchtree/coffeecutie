@@ -4,60 +4,164 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 
+#include <coffee/core/internal_state.h>
+
 #ifdef COFFEE_USE_TERMINAL_CTL
 #include <coffee/core/plat/memory/cmd_unixterm.h>
 #endif
 
 namespace Coffee{
-/* Don't mind this, just some string storage */
 
-#if defined(COFFEE_USE_UNWIND)
-unw_context_t* Environment::Posix::PosixStacktracer::unwind_context = nullptr;
+struct InternalState
+{
+#ifndef COFFEE_LOWFAT
+    Mutex printer_lock;
 #endif
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-Profiler::ProfilerDataStore* Profiler::profiler_data_store = nullptr;
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-thread_local ThreadId* Profiler::current_thread_id = nullptr;
-#else
-ThreadId* Profiler::current_thread_id = nullptr;
+    Profiling::ProfilerDataStore profiler_store;
 #endif
+
+#if defined(COFFEE_USE_UNWIND)
+    unw_context_t* unwind_context = nullptr;
 #endif
+
+    /* Resources */
+    CString _coffee_resource_prefix = "./";
+
+    /* Application info */
+    CoffeeApplicationData _coffee_current_app = {};
 
 #if defined(COFFEE_USE_TERMINAL_CTL)
-bool UnixCmd::UnixTerm::alternate_buffer = false;
+    bool terminal_alternate_buffer = false;
 #endif
 
-#ifndef COFFEE_LOWFAT
-Mutex OutputPrinterDef::PrinterLock;
-#endif
+    byte_t padding[7];
+};
 
-static CString _coffee_resource_prefix = "./";
-static CoffeeApplicationData _coffee_current_app = {};
+struct InternalThreadState
+{
+#if !defined(NDEBUG)
+    ThreadId current_thread_id;
+#endif
+};
+
+namespace State{
+
+static P<InternalState> internal_state = nullptr;
+static thread_local P<InternalThreadState> thread_state = nullptr;
+
+P<InternalState> CreateNewState()
+{
+    return MkShared<InternalState>();
+}
+
+P<InternalThreadState> CreateNewThreadState()
+{
+    return MkShared<InternalThreadState>();
+}
+
+void SetInternalState(P<InternalState> state)
+{
+    internal_state = state;
+}
+
+P<InternalState>& GetInternalState()
+{
+    return internal_state;
+}
+
+void SetInternalThreadState(P<InternalThreadState> state)
+{
+    thread_state = state;
+}
+
+P<InternalThreadState>& GetInternalThreadState()
+{
+    return thread_state;
+}
+
+/*
+ *
+ * Accessors
+ *
+ */
+
+Profiling::ProfilerDataStore* GetProfilerStore()
+{
+    C_PTR_CHECK(internal_state);
+    return &internal_state->profiler_store;
+}
+
+bool& GetAlternateTerminal()
+{
+    C_PTR_CHECK(internal_state);
+    return internal_state->terminal_alternate_buffer;
+}
+
+Mutex& GetPrinterLock()
+{
+    C_PTR_CHECK(internal_state);
+    return internal_state->printer_lock;
+}
+
+ThreadId& GetCurrentThreadId()
+{
+    if(!thread_state)
+        SetInternalThreadState(CreateNewThreadState());
+
+    /* We check it just in case everything is really bad */
+    C_PTR_CHECK(thread_state);
+
+    return thread_state->current_thread_id;
+}
+
+}
+
+/*
+ *
+ * File resource prefix stuff, used by file API
+ *
+ * This works as a proxy between CoffeeCore_Application
+ *  and the core library
+ *
+ */
 
 void CResources::FileResourcePrefix(cstring prefix)
 {
-    _coffee_resource_prefix = prefix;
+    C_PTR_CHECK(State::internal_state);
+    State::internal_state->_coffee_resource_prefix = prefix;
 }
 
 CString const& CResources::GetFileResourcePrefix()
 {
-    return _coffee_resource_prefix;
+    C_PTR_CHECK(State::internal_state);
+    return State::internal_state->_coffee_resource_prefix;
 }
 
 void SetCurrentApp(CoffeeApplicationData const& app)
 {
-    _coffee_current_app = app;
+    C_PTR_CHECK(State::internal_state);
+    State::internal_state->_coffee_current_app = app;
 }
 
 CoffeeApplicationData const& GetCurrentApp()
 {
-    return _coffee_current_app;
+    C_PTR_CHECK(State::internal_state);
+    return State::internal_state->_coffee_current_app;
 }
 
 }
 
-/* These declarations are library-local storage for event handling */
+/*
+ * These declarations are library-local storage for event handling
+ *
+ * They require compatibility with C linkage in order to work with
+ *  Objective-C and other things.
+ *
+ * They shouldn't be used externally to the program anyway.
+ *
+ */
 void* coffee_event_handling_data;
 
 void(*CoffeeEventHandle)(void*, int);
