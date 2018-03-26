@@ -73,6 +73,7 @@ inline APILevel gl_level_from_string(CString const& str)
 }
 }
 
+#define GLEAM_API_THREAD m_store->GpuThread
 #define GL_CURR_API m_store->CURR_API
 #define GL_DEBUG_MODE m_store->DEBUG_MODE
 #define GLEAM_API_INSTANCE_DATA m_store->inst_data

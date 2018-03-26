@@ -258,6 +258,19 @@ int32 CoffeeMain(
      */
     Cmd::RegisterAtExit(CoffeeTerminate);
 
+    std::set_terminate([]()
+    {
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch(std::exception const& e) {
+            cWarning("Exception thrown: {0}",
+                     e.what()
+                     );
+        }
+
+        cWarning("Exiting thread");
+    });
+
     cVerbose(8,"Entering main function");
     Profiler::PushContext("main()");
 #endif

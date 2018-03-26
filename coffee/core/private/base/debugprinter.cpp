@@ -59,6 +59,7 @@ void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
                                   StrUtil::lpad(ms_time, '0', 3)
                                   );
     prefix = cStringFormat("{0}:", clock.c_str());
+    prefix.append(ThreadGetName() + ":");
     prefix.push_back(severity_str[0]);
 
     ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));

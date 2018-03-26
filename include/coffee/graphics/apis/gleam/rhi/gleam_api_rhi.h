@@ -177,6 +177,8 @@ struct GLEAM_API : GraphicsAPI
 
     /* "Loose" functions */
 public:
+    static GraphicsQueue& Queue(u32 idx = 0);
+
     /* Dump the framebuffer pixels to a buffer, might be asynchronous */
     static void DumpFramebuffer(FB_T& fb,
             PixFmt c,
@@ -239,6 +241,14 @@ public:
      * \brief Perform any possible work that removes memory allocations made related to setting up drawing pipelines and similar.
      */
     static void PreDrawCleanup();
+
+    /*!
+     * \brief Dispose of pixel buffer objects, which are used
+     *  for uploading textures asynchronously.
+     * If you are going to use PBOs while rendering,
+     *  do *not* call this.
+     */
+    static void DisposePixelBuffers();
 
     /*!
      * \brief Optimize a render pass into a buffer which may be consumed by MultiDraw(). Will attempt to maximize use of instancing and glMultiDraw* functionality, and also minimize state changes between draw calls (eg. swapping less textures and uniforms).

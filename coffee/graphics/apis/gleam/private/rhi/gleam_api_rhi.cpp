@@ -22,6 +22,16 @@ namespace GLEAM{
 
 using GLC = CGL_Implementation;
 
+GraphicsAPI_Threading::GraphicsQueue &GLEAM_API::Queue(u32 idx)
+{
+    C_PTR_CHECK(m_store);
+
+    if(idx != 0)
+        throw std::invalid_argument("multi-threading not supported");
+
+    return GLEAM_API_THREAD;
+}
+
 void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixFmt c, BitFmt dt, Vector<byte_t> &storage)
 {
     auto size = fb.size();
@@ -109,6 +119,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         CGL33::Debug::UnsetDebugGroup();
         return false;
     }
+
+    store->GpuThread = GraphicsQueue(RuntimeQueue::GetCurrentQueue());
 
     cVerbose(8, GLM_API "Creating instance data");
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
@@ -856,6 +868,15 @@ void GLEAM_API::SetShaderUniformState(
 void GLEAM_API::PreDrawCleanup()
 {
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
+}
+
+void GLEAM_API::DisposePixelBuffers()
+{
+    auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
+    for(auto& buf : queue.buffers)
+        CGL33::BufFree(1, &buf.buf);
+
+    queue.buffers.clear();
 }
 
 void GLEAM_API::OptimizeRenderPass(

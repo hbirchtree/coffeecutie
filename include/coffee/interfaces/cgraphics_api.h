@@ -1,6 +1,8 @@
 #pragma once
 
 #include "cgraphics_api_basic.h"
+#include "cgraphics_api_thread.h"
+
 #include <coffee/core/types/cdef/funtypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/cdef/pixtypes.h>
@@ -26,7 +28,7 @@ struct CDProperties;
 }
 namespace RHI{
 
-struct GraphicsAPI : GraphicsAPI_Base
+struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 {
     /* Enumerations */
     enum TextureFlags
@@ -96,21 +98,6 @@ struct GraphicsAPI : GraphicsAPI_Base
     {
         return false;
     }
-
-    /*!
-     * \brief A singular command for the GPU command queue
-     */
-    struct GPUCommand : _cbasic_threadrunner_command
-    {
-    };
-    /*!
-     * \brief A queue which executes commands on the GPU thread
-     */
-    struct GPUCommandQueue : _cbasic_threadrunner_queue
-    {
-        virtual ~GPUCommandQueue() {}
-        void insertCmd(GPUCommand*){}
-    };
 
     /*!
      * \brief Contains state such as whether it should output to screen, culling, etc.

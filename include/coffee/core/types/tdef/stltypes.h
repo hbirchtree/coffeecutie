@@ -265,3 +265,18 @@ struct resource_error : std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
+
+struct implementation_error : std::invalid_argument
+{
+    using std::invalid_argument::invalid_argument;
+};
+
+struct undefined_behavior : std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
+
+#define C_PTR_CHECK(ptr) if(!ptr) \
+    throw undefined_behavior("bad pointer deref: " __FILE__);
+#define C_THIS_CHECK if(!this) \
+    throw undefined_behavior("bad access to *this: " __FILE__);
