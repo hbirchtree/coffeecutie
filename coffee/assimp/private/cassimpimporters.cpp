@@ -111,7 +111,7 @@ static void get_scene_nodes(aiNode* node,
         if(accumulate)
             np->transform = parent->transform * np->transform;
 
-        get_scene_nodes(c, np, node_storage);
+        get_scene_nodes(c, np, node_storage, accumulate);
     }
 }
 

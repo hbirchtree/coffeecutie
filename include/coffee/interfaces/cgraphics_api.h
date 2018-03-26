@@ -769,6 +769,11 @@ struct GraphicsAPI : GraphicsAPI_Base
         {
         }
 
+        DrawCall(DrawCall const& other):
+            m_notouch(other.m_notouch)
+        {
+        }
+
         FORCEDINLINE bool indexed()const{return m_idxd;}
         FORCEDINLINE bool instanced()const{return m_inst;}
         FORCEDINLINE Prim primitive()const
