@@ -198,7 +198,7 @@ struct PosixFileFun_def : PosixFileMod_def
 
         byte_t* addr = nullptr;
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_MMAP64)
         addr = static_cast<byte_t*>(mmap64(
                     NULL,
                     offset+size-pa_offset,
@@ -271,7 +271,7 @@ struct PosixFileFun_def : PosixFileMod_def
 
 
         ScratchBuf buf;
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_MMAP64)
         // mmap64() is a Linux-specific feature it seems
         buf.ptr = mmap64(nullptr,size,proto,mapflags,-1,0);
 #elif defined(COFFEE_APPLE)

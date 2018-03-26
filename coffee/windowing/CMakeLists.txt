@@ -168,7 +168,7 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
         AND NOT COFFEE_BUILD_SDL2)
     find_package ( X11 QUIET )
 
-    if(COFFEE_BUILD_OPENGL)
+    if(NOT COFFEE_BUILD_GLES)
         target_link_libraries ( CoffeeContext_GLX
             PUBLIC
             Xrender GL
