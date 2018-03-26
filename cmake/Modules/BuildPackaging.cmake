@@ -7,6 +7,12 @@ include ( WindowsImageBuild )
 include ( EmscriptenBuild )
 include ( GamecubeBuild )
 
+macro ( SET_DEFAULT VAR_NAME )
+    if(NOT DEFINED ${VAR_NAME})
+        set ( ${VAR_NAME} ${ARGN} )
+    endif()
+endmacro()
+
 function(COFFEE_APPLICATION)
 
     #    TARGET
@@ -16,17 +22,6 @@ function(COFFEE_APPLICATION)
     #    BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES
     #    PERMISSIONS
     #    BUNDLE_BINARIES
-
-    set ( APP_PACKAGE_PREFIX "me.birchtrees" )
-    set ( APP_COMPANY "Birchtrees" )
-    set ( APP_VERSION_CODE "1" )
-    set ( APP_INFO_STRING "This is a Coffee application" )
-    set ( APP_COPYRIGHT "MIT licensed code" )
-    set ( APP_TITLE "Coffee Application" )
-    set ( APP_PERMISSIONS
-        OPENGL AUDIO ENVIRONMENT_SENSORS
-        NETWORK_CONNECT JOYSTICK
-        )
 
     set ( oneOpts
         TARGET
@@ -73,6 +68,17 @@ function(COFFEE_APPLICATION)
     cmake_parse_arguments( APP
         "${switches}" "${oneOpts}" "${multiOpts}"
         ${ARGN}
+        )
+
+    set_default ( APP_PACKAGE_PREFIX "me.birchtrees" )
+    set_default ( APP_COMPANY "Birchtrees" )
+    set_default ( APP_VERSION_CODE "1" )
+    set_default ( APP_INFO_STRING "This is a Coffee application" )
+    set_default ( APP_COPYRIGHT "MIT licensed code" )
+    set_default ( APP_TITLE "Coffee Application" )
+    set_default ( APP_PERMISSIONS
+        OPENGL AUDIO ENVIRONMENT_SENSORS
+        NETWORK_CONNECT JOYSTICK
         )
 
     # These define and create LICENSE_FILE and APPLICATION_INFO_FILE

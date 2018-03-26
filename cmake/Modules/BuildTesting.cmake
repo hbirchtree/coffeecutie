@@ -36,14 +36,15 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             bin
             )
     elseif(ANDROID OR IOS)
-        coffee_add_application_longerer(
-            ${TARGET}
-            ${TITLE} "me.birchtrees" 1
-            "Unit test - ${TITLE}" "Testing"
-            "${SOURCES_MOD}"
-            "${LIBRARIES};CoffeeTesting"
-            "" "" "" ""
-            "" ""
+        coffee_application (
+            TARGET ${TARGET}
+            TITLE ${TITLE}
+            COMPANY "me.birchtrees"
+            VERSION_CODE 1
+            INFO_STRING "Unit test - ${TITLE}"
+            COPYRIGHT "Testing"
+            SOURCES ${SOURCES_MOD}
+            LIBRARIES ${LIBRARIES} CoffeeTesting
             )
     else()
         add_executable ( ${TARGET} ${SOURCES_MOD} )
