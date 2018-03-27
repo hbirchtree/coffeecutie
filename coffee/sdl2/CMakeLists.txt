@@ -20,7 +20,9 @@ set ( CoffeeSDL2Audio_SRCS
     )
 
 if(NOT EMSCRIPTEN)
-    find_package ( SDL2 REQUIRED )
+    if(NOT TARGET SDL2)
+        find_package ( SDL2 REQUIRED )
+    endif()
 
     set ( LIBS
         SDL2

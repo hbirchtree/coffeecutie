@@ -191,11 +191,7 @@ macro(APK_GENERATE_PROJECT
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${ANDROID_PROJECT_INPUT}/Gradle" "${BUILD_DIR}"
             )
-        # Thanks, Google
-        #execute_process (
-        #    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        #        "${ANDROID_SDK}/tools/templates/gradle/wrapper" "${BUILD_DIR}"
-        #    )
+
         #
         # We need to change the Gradle version used by the project
         #

@@ -286,17 +286,6 @@ coffee_add_library ( CoffeeCore_Application
     "CoffeeCore_Base"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
     )
-#coffee_add_library ( CoffeeCore_AppLoader
-#    ""
-#    "CoffeeCore_Base;"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-#    )
-
-#coffee_add_library ( CoffeeCore_Bootstrap
-#    ""
-#    "CoffeeCore_Base;"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-#    )
 
 coffee_add_library ( CoffeeINI
     "${CoffeeINI_SRCS}"
@@ -308,32 +297,6 @@ coffee_add_library ( CoffeeTesting
     "CoffeeCore_Base"
     "${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests"
     )
-
-#coffee_add_library ( CoffeeFile
-#    ""
-#    "CoffeeCore_Base;CoffeeEventAppWrap"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core/"
-#    )
-#coffee_add_library ( CoffeeSysInfo
-#    ""
-#    "CoffeeCore_Base"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-#    )
-#coffee_add_library ( CoffeeEventAppWrap
-#    ""
-#    "CoffeeCore_Base"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-#    )
-#coffee_add_library ( CoffeePlatformData
-#    ""
-#    "CoffeeCore_Base;CoffeeSysInfo"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-#    )
-#coffee_add_library ( CoffeeProfiler
-#    ""
-#    "CoffeeCore_Base;CoffeePlatformData"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/core"
-#    )
 
 add_library ( CoffeeCore INTERFACE )
 
@@ -389,10 +352,12 @@ if(COFFEE_BUILD_SWIG_BINDING)
 endif()
 
 if(SDL_POWER_PLUGIN_ENABLED)
-    find_package ( SDL2 QUIET )
+    if(NOT TARGET SDL2)
+        find_package ( SDL2 QUIET )
+    endif()
     target_link_libraries ( CoffeeCore_Base
         PRIVATE
-        ${SDL2_LIBRARY}
+        SDL2
         )
 endif()
 

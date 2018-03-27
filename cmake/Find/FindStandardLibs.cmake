@@ -8,7 +8,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this library
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
-    find_package(Unwind QUIET )
+    if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
+        find_package(Unwind QUIET )
+    endif()
     if (LIBUNWIND_FOUND)
         list ( APPEND CORE_INCLUDE_DIR
             $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
@@ -28,7 +30,9 @@ if(COFFEE_BUILD_SDL2)
         # We use SDL2 for some platform functionality, like power info
         # On Android, it is also used to read assets and
         #  acquiring device info.
-        find_package(SDL2 REQUIRED)
+        if(NOT DEFINED SDL2_INCLUDE_DIR)
+            find_package(SDL2 REQUIRED)
+        endif()
         if(SDL2_INCLUDE_DIR)
             list ( APPEND CORE_INCLUDE_DIR
                 $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>

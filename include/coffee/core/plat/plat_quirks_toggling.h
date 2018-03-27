@@ -360,9 +360,9 @@
  * #define COFFEE_XCODE_NO_TLS
  */
 
-#if defined(COFFEE_APPLE_MOBILE) \
-    || defined(COFFEE_EMSCRIPTEN) \
-    || defined(COFFEE_RASPBERRYPI)
+#if defined(COFFEE_EMSCRIPTEN) \
+    || defined(COFFEE_RASPBERRYPI) \
+    || defined(COFFEE_MAEMO)
 #define thread_local
 #elif (defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
 #define thread_local __thread

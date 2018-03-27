@@ -165,7 +165,11 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             )
     endif()
 
-    register_library( ${TARGET} "${HEADER_DIR}" )
+    if(NOT DEFINED "${TARGET}_REGISTERED")
+        register_library( ${TARGET} "${HEADER_DIR}" )
+        set ( "${TARGET}_REGISTERED" TRUE CACHE BOOL "" )
+        mark_as_advanced( "${TARGET}_REGISTERED" )
+    endif()
 endmacro()
 
 macro(COFFEE_ADD_FRAMEWORK

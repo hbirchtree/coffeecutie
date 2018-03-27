@@ -183,8 +183,12 @@ IF(SDL2_LIBRARY_TEMP)
   ENDIF(MINGW)
 
   if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-      find_package ( X11 QUIET )
-      find_package ( Wayland QUIET )
+      if(NOT DEFINED X11_LIBRARIES)
+          find_package ( X11 QUIET )
+      endif()
+      if(NOT DEFINED WAYLAND_LIBRARIES)
+          find_package ( Wayland QUIET )
+      endif()
 
       if(X11_FOUND)
           SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP}
