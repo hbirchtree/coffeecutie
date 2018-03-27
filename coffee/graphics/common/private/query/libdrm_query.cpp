@@ -4,7 +4,7 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/string_casting.h>
 
-#include <libdrm/drm.h>
+#include <drm.h>
 #include <xf86drm.h>
 
 #include <sys/fcntl.h>

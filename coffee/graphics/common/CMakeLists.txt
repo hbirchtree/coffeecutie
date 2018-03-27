@@ -27,7 +27,7 @@ if(NVIDIAML_FOUND)
         )
 endif()
 
-if(LIBDRM_FOUND)
+if(LIBDRM_FOUND AND FALSE)
     coffee_add_elibrary ( "coffee-libdrm" SHARED
         "private/query/libdrm_query.cpp;private/query/libdrm_query.c"
         "${LIBDRM_LIBRARIES};CoffeeCore"

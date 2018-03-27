@@ -238,8 +238,8 @@
 #endif
 
 #if defined(COFFEE_RASPBERRYPI)
-#define COFFEE_RASPBERRY_DMX
-#define COFFEE_USE_MAEMO_EGL
+//#define COFFEE_RASPBERRY_DMX
+//#define COFFEE_USE_MAEMO_EGL
 #endif
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
@@ -354,10 +354,17 @@
 #define COFFEE_NO_TLS
 #endif
 
-#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_EMSCRIPTEN)
+/*
+ * Support for thread_local arrived in Xcode 8.
+ * If you are on Xcode 7 or below, take this.
+ * #define COFFEE_XCODE_NO_TLS
+ */
+
+#if defined(COFFEE_APPLE_MOBILE) \
+    || defined(COFFEE_EMSCRIPTEN) \
+    || defined(COFFEE_RASPBERRYPI)
 #define thread_local
-#elif defined(COFFEE_APPLE) && 0
-/* Support for thread_local arrived in Xcode 8 */
+#elif (defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
 #define thread_local __thread
 #endif
 
