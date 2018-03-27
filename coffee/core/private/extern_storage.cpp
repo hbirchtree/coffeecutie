@@ -90,8 +90,12 @@ P<InternalThreadState>& GetInternalThreadState()
 
 Profiling::ProfilerDataStore* GetProfilerStore()
 {
+#if !defined(COFFEE_DISABLE_PROFILER)
     C_PTR_CHECK(internal_state);
     return &internal_state->profiler_store;
+#else
+    throw implementation_error("profiler disabled");
+#endif
 }
 
 #if defined(COFFEE_USE_TERMINAL_CTL)
