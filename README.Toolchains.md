@@ -9,18 +9,20 @@ Some features are special cases and quite ugly. Beware.
 | Platform         | Compiler name       | Compiler version |Workarounds       |
 |:-----------------|--------------------:|:-----------------|:-----------------|
 |Android           | Clang (GCC libs)    | 3.8.0+ (4.9.x)   |7                 |
-|Apple iOS         | Clang               | 3.4.0+           |2                 |
-|Apple OS X        | Clang               | 3.4.0+           |1, 7              |
-|Emscripten        | emcc                | 1.37.0+          |2.1, 7, 8         |
+|Apple iOS         | Apple/Clang         | 3.4.0+           |2*                |
+|Apple OS X        | Apple/Clang         | 3.4.0+           |1*, 7             |
+|Emscripten        | Clang/emcc          | 1.37.0+          |2.1, 7, 8         |
 |Maemo 5           | GCC                 | 6.0.1            |3, 5, 6, 7, 8     |
-|Native Client     | Clang               | 3.7.0+           |2.1, 7, 8         |
-|Raspberry Pi      | GCC                 | 4.9.3            |                  |
-|SteamOS           | GCC                 | 4.8.1            |                  |
+|Raspberry Pi      | GCC                 | 4.9.3            |10                |
+|SteamOS           | GCC                 | 4.8.1            |10                |
 |Ubuntu            | GCC                 | 5.4.0+           |                  |
 |Ubuntu (alt.)     | Clang               | 3.8.0+           |                  |
-|Windows (Win32)   | MSVC++              | 14.0             |4                 |
-|Windows (UWP)     | MSVC++              | 14.0             |4                 |
+|Windows (Win32)   | MSVC++              | 14.0+            |4                 |
+|Windows (UWP)     | MSVC++              | 14.0+            |4                 |
+|Nintendo Gekko    | GCC                 | 6.3.0            |9                 |
 |                  |                     |                  |                  |
+
+\* Only necessary with Xcode versions before 8
 
 ## Platform workarounds
 
@@ -36,3 +38,5 @@ Some features are special cases and quite ugly. Beware.
 | 7    | No `system()` function defined                                        |
 | 7.1  | No `execvpe()` function defined, external programs will fail          |
 | 8    | No way to set thread names, `pthread_setname_np()` non-existent       |
+| 9    | Custom, platform-bound thread and atomics layer                       |
+| 10   | std::regex is not properly implemented                                |

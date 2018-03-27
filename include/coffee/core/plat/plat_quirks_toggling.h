@@ -356,7 +356,8 @@
 
 #if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_EMSCRIPTEN)
 #define thread_local
-#elif defined(COFFEE_APPLE)
+#elif defined(COFFEE_APPLE) && 0
+/* Support for thread_local arrived in Xcode 8 */
 #define thread_local __thread
 #endif
 
