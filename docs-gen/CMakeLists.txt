@@ -30,10 +30,7 @@ MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
             
             execute_process (
                 COMMAND ${CMAKE_COMMAND} -E copy 
-                    ${CMAKE_CURRENT_SOURCE_DIR}/header.html 
-                    ${CMAKE_CURRENT_SOURCE_DIR}/footer.html 
-                    ${CMAKE_CURRENT_SOURCE_DIR}/customdoxygen.css 
-                    ${CMAKE_CURRENT_SOURCE_DIR}/doxy-boot.js 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/stylish.css
                     
                     ${CMAKE_CURRENT_BINARY_DIR}
                 )
