@@ -275,8 +275,6 @@ void CoffeeTerminate()
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     Profiling::ExitRoutine();
 #endif
-//    if(profiler_destroy)
-//        Profiler::DestroyProfiler();
     Cmd::ResetScreen();
 #endif
 }

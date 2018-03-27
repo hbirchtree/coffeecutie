@@ -85,7 +85,7 @@ function(COFFEE_APPLICATION)
     coffee_gen_licenseinfo("${APP_TARGET}" "${APP_BUNDLE_LICENSES}")
     coffee_gen_applicationinfo("${APP_TARGET}"
         "${APP_TITLE}"
-        "${APP_COMPANY_NAME}"
+        "${APP_COMPANY}"
         "${APP_VERSION_CODE}"
         )
 

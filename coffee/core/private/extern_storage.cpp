@@ -53,6 +53,7 @@ static thread_local P<InternalThreadState> thread_state = nullptr;
 
 P<InternalState> CreateNewState()
 {
+
     return MkShared<InternalState>();
 }
 
@@ -107,6 +108,7 @@ Mutex& GetPrinterLock()
 
 ThreadId& GetCurrentThreadId()
 {
+#if !defined(NDEBUG)
     if(!thread_state)
         SetInternalThreadState(CreateNewThreadState());
 
@@ -114,6 +116,9 @@ ThreadId& GetCurrentThreadId()
     C_PTR_CHECK(thread_state);
 
     return thread_state->current_thread_id;
+#else
+    throw releasemode_error("thread ID is not available");
+#endif
 }
 
 }
