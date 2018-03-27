@@ -27,6 +27,16 @@ MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
 
                 set_target_properties(doc PROPERTIES EXCLUDE_FROM_ALL TRUE)
             endif()
+            
+            execute_process (
+                COMMAND ${CMAKE_COMMAND} -E copy 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/header.html 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/footer.html 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/customdoxygen.css 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/doxy-boot.js 
+                    
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                )
 
         ELSE( DOXYFILE_FOUND )
             MESSAGE( STATUS "Doxygen configuration file not found - Documentation will not be generated" )
