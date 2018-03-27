@@ -71,7 +71,6 @@ int deref_main(CoffeeMainWithArgs mainfun,
 #elif defined(COFFEE_WINDOWS_UWP)
 	InitCOMInterface();
 #elif defined(COFFEE_ANDROID)
-    Profiler::ResetPointers();
     Sensor::Android::Android_InitSensors();
 
     atexit(Sensor::Android::Android_DestroySensors);

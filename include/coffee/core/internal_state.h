@@ -57,7 +57,9 @@ extern Profiling::ProfilerDataStore *GetProfilerStore();
 
 extern ThreadId& GetCurrentThreadId();
 
+#if defined(COFFEE_USE_TERMINAL_CTL)
 extern bool& GetAlternateTerminal();
+#endif
 
 extern Mutex& GetPrinterLock();
 

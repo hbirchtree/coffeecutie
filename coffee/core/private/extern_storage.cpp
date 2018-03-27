@@ -94,11 +94,13 @@ Profiling::ProfilerDataStore* GetProfilerStore()
     return &internal_state->profiler_store;
 }
 
+#if defined(COFFEE_USE_TERMINAL_CTL)
 bool& GetAlternateTerminal()
 {
     C_PTR_CHECK(internal_state);
     return internal_state->terminal_alternate_buffer;
 }
+#endif
 
 Mutex& GetPrinterLock()
 {
