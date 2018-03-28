@@ -6,6 +6,18 @@ if(NOT DEFINED COFFEE_BUILD_STRING)
     # Because file timestamps are unreliable.
     string (TIMESTAMP CBUILDTIME "%y%m%d%H")
 
+    execute_process (
+        COMMAND ${CMAKE_SOURCE_DIR}/version.py none --version
+        OUTPUT_VARIABLE COFFEE_VERSION_CODE
+        )
+
+    string ( REGEX REPLACE "\n$" "" COFFEE_VERSION_CODE "${COFFEE_VERSION_CODE}" )
+
+    message ( "${COFFEE_VERSION_CODE}" )
+
+    set ( COFFEE_VERSION_CODE "${COFFEE_VERSION_CODE}"
+        CACHE STRING "" )
+
     if(CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT WIN32)
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types"
             CACHE STRING "" )
