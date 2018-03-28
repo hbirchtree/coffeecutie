@@ -5,6 +5,7 @@
 #include "../../types/tdef/integertypes.h"
 #include "../../types/edef/resenum.h"
 #include "../../types/cdef/memtypes.h"
+#include <coffee/interfaces/byte_provider.h>
 
 namespace Coffee{
 
@@ -54,7 +55,16 @@ public:
     cstring resource() const;
     bool valid() const;
 
+    Resource& operator=(Bytes const& data)
+    {
+        this->data = data.data;
+        this->size = data.size;
+        return *this;
+    }
+
     operator Bytes();
+
+    operator Path() const;
 
     enum FileFlags
     {

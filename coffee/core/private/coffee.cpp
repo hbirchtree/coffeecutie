@@ -14,6 +14,8 @@
 
 #include <coffee/core/coffee_signals.h>
 
+#include <coffee/core/internal_state.h>
+
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
 #endif
@@ -21,6 +23,9 @@
 namespace Coffee{
 
 extern CString plat_tmp_string;
+#if defined(COFFEE_APPLE)
+extern Url GetAppleStoragePath();
+#endif
 
 FORCEDINLINE void PrintVersionInfo()
 {
@@ -72,7 +77,7 @@ FORCEDINLINE void PrintLicenseInfo()
 #endif
 }
 
-void CoffeeInit(bool profiler_init)
+void CoffeeInit(bool)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
@@ -81,14 +86,6 @@ void CoffeeInit(bool profiler_init)
 #else
     Coffee::PrintingVerbosityLevel = 1;
 #endif
-#endif
-
-#ifndef COFFEE_LOWFAT
-    if(profiler_init)
-    {
-        Profiler::InitProfiler();
-        Profiler::LabelThread("Main");
-    }
 #endif
 
 #ifndef NDEBUG
@@ -125,27 +122,47 @@ void CoffeeInit(bool profiler_init)
     CoffeeDefaultWindowName = "Coffee [OpenGL]";
 #endif
 
-    cVerbose(8,"Initializing profiler");
+#ifndef COFFEE_LOWFAT
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
+#endif
 }
 
-int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
+enum StartFlags
 {
+    None = 0x0,
+    DiscardArgumentHandler = 0x1,
+};
+
+int32 CoffeeMain(
+        CoffeeMainWithArgs mainfun,
+        int32 argc, cstring_w*argv,
+        u32 flags)
+{
+    State::SetInternalState(State::CreateNewState());
+
     initargs = AppArg::Clone(argc, argv);
 
 #if defined(COFFEE_ANDROID)
     app_dummy();
 #endif
 
+#if defined(COFFEE_APPLE)
+    FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());
+#endif
+
 #ifndef COFFEE_LOWFAT
 
     CoffeeInit(false);
+
+    SetCurrentApp(ApplicationData());
 
     Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");
 
     Profiler::PushContext("Argument parsing");
+
+    if(!(flags & DiscardArgumentHandler))
     {
         ArgumentParser parser;
         parser.addSwitch(
@@ -195,7 +212,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                 Coffee::PrintingVerbosityLevel += sw_.second;
             }else if(sw == "quiet")
             {
-                Coffee::PrintingVerbosityLevel = 0;
+                Coffee::PrintingVerbosityLevel -= sw_.second;
             }else if(sw == "version")
             {
                 PrintVersionInfo();
@@ -222,7 +239,12 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
             if(pos.first == "resource_prefix")
                 CResources::FileResourcePrefix(pos.second.c_str());
         }
+    }else
+    {
+        Coffee::PrintingVerbosityLevel = 1;
     }
+
+
     Profiler::PopContext();
 
 #ifndef COFFEE_LOWFAT
@@ -247,14 +269,12 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
 void CoffeeTerminate()
 {
-    cDebug("Terminating");
+    cVerbose(5, "Terminating");
 
 #ifndef COFFEE_LOWFAT
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     Profiling::ExitRoutine();
 #endif
-//    if(profiler_destroy)
-//        Profiler::DestroyProfiler();
     Cmd::ResetScreen();
 #endif
 }

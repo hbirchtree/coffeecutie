@@ -216,9 +216,9 @@ set(CMAKE_SYSTEM_NAME Android)
 # For example, they may want to prevent the NDK's libz from being picked up so
 # they can use their own.
 # https://github.com/android-ndk/ndk/issues/517
-if(NOT CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
-  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-endif()
+#if(NOT CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
+#  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+#endif()
 
 if(NOT CMAKE_FIND_ROOT_PATH_MODE_LIBRARY)
   set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)

@@ -4,7 +4,11 @@
 namespace Coffee{
 namespace Strings{
 
-template<typename T, size_t num, char v>
+template<typename T, size_t num, char v,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 static inline CString vector_to_string(
         _cbasic_tvector<T, num> const& value)
 {
@@ -25,7 +29,11 @@ static inline CString vector_to_string(
     return out;
 }
 
-template<typename T, size_t num, char v>
+template<typename T, size_t num, char v,
+
+         typename std::is_pod<T>::type* = nullptr
+
+         >
 static inline CString matrix_to_string(
         _cbasic_tmatrix<T, num> const& value)
 {

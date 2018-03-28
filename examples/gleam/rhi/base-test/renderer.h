@@ -8,6 +8,8 @@
 #include <coffee/core/base/types/counter.h>
 #include <coffee/core/CDebug>
 
+#include <coffee/interfaces/cgraphics_util.h>
+
 #if defined(FEATURE_USE_ASIO)
 #include <coffee/asio/net_resource.h>
 #endif
@@ -347,21 +349,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Texture allocation");
     
     Profiler::PushContext("Texture loading");
-    for (int32 i = 0; i < eyetex.m_size.depth; i++) {
-        CResources::Resource rsc(textures[i], ResourceAccess::SpecifyStorage |
+    for (i32 i = 0; i < eyetex.m_size.depth; i++) {
+        CResources::Resource rsc(textures[i],
+                                 ResourceAccess::SpecifyStorage |
                                  ResourceAccess::AssetFile);
-        if(!CResources::FileMap(rsc))
-            break;
-        
-        CStbImageLib::CStbImage img;
-        CStbImageLib::LoadData(&img, &rsc);
-        
-        eyetex.upload(BitFormat::UByte, PixCmp::RGBA, {img.size.w, img.size.h, 1},
-                      img.data, {0, 0, i});
-        cVerbose("Texture upload #{0}", i);
-        
-        CStbImageLib::ImageFree(&img);
-        CResources::FileUnmap(rsc);
+
+        if(!RHI::LoadTexture<GLM>(eyetex, std::move(rsc), i))
+            return;
     }
 
 #if defined(FEATURE_USE_ASIO)
@@ -369,7 +363,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     {
         ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
 
-        Net::Resource rsc(ctx, "http://i.imgur.com/nQdOmCJ.png"_http);
+        auto rsc = "http://i.imgur.com/nQdOmCJ.png"_http
+                .rsc<Net::Resource>(ctx);
 
         if(rsc.fetch())
         {
@@ -536,7 +531,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Logic frame", Profiler::DataPoint::Hot);
+    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
 
@@ -605,7 +600,7 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Render frame", Profiler::DataPoint::Hot);
+    ProfContext a("Render frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
     

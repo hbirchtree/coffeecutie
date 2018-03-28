@@ -27,7 +27,8 @@ CString PosixStacktracer::DemangleSymbol(const char *sym)
         return sym;
 }
 
-StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(uint32 start, int32 length)
+StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
+        uint32 start, int32 length)
 {
     Stacktrace t;
 #if defined(COFFEE_USE_UNWIND)

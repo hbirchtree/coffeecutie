@@ -1,4 +1,8 @@
-coffee_add_application_longer (
-    AssimpModelLoad "Assimp Model Load" "Coffee Guy" "1" main.cpp
-    "CoffeeAssimp;CoffeeCore" "" ""
+coffee_application (
+    TARGET AssimpModelLoad
+    TITLE "Assimp Model Load"
+    COMPANY "Coffee Guy"
+    VERSION_CODE 1
+    SOURCES main.cpp
+    LIBRARIES CoffeeAssimp CoffeeCore
     )

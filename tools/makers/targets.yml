@@ -33,6 +33,7 @@ targets:
     ubuntu:
       amd64:
         - .
+        - tools
         - gles2
         - gles3
       i686:
@@ -195,6 +196,12 @@ build-dependencies:
       - -DASSIMP_BUILD_TESTS=OFF
       - -DBUILD_SHARED_LIBS=OFF
       - -DBUILD_TESTING=OFF
+  glslang:
+    platforms: .*(ubuntu|osx).*
+    source: git:https://github.com/KhronosGroup/glslang.git
+    type: cmake
+    cmake-opts:
+      - -DBUILD_TESTING=OFF
   bullet:
     platforms: ^[^d].*$
     source: git:https://github.com/bulletphysics/bullet3.git
@@ -219,7 +226,7 @@ build-dependencies:
     source: hg:https://hg.libsdl.org/SDL
     type: automake
     ac-opts:
-      - --host=$(host.arch)
+#      - --host=$(host.arch)
       - --disable-shared
       - --disable-atomic
       - --disable-filesystem
@@ -229,19 +236,23 @@ build-dependencies:
       - --disable-loadso
       - --disable-cpuinfo
       - --disable-video-vulkan
-      - --prefix=$(container.install)
+      - --prefix=$(build-dep.install)
   openssl:
     platforms: ^[^d].*$
     # There's a special place in hell for project-specific
     #  build processes like this one
     type: openssl
+  squish:
+    platforms: .*(ubuntu|osx).*
+    type: make
+    source: git:https://github.com/Cavewhere/squish.git
 
 # The following variables are defined in makefile-generator.py:
 #  build-arch: target architecture, eg. ubuntu.amd64
 #  dep-target: current build dependency, eg. sdl2, assimp
 build-dep-template:
   .*:
-    =container-opts:
+    +container-opts:
       - -v $(build-dep.build-root):$(container.build):rw
       - -v $(bdep.root):$(container.src):ro
       - -v $(build-dep.install-root):$(container.install):rw
@@ -257,6 +268,11 @@ build-dep-template:
     =toolchain-dir: $(cmake-project.src)
     =cmake.install: $(build-dep.install)
     =program.workdir: $(build-dep.build)
+    ^make$:
+      =container-opts:
+        - -v $(bdep.root):$(container.src):rw
+        - -v $(build-dep.install-root):$(container.install):rw
+        - --workdir $(container.src)
   ^cmake$:
     =build.build-type: Release
     =cmake.src: $(build-dep.src)
@@ -268,10 +284,19 @@ build-dep-template:
     =program.exec: sh -c
     =program.arguments:
       - \'
-      - cd $(container.build) &&
-      - $(container.src)/configure $(automake.opts) &&
+      - cd $(build-dep.build) &&
+      - $(build-dep.src)/configure $(automake.opts) &&
       - make -j4 &&
       - make install
+      - \'
+  ^make$:
+    =target: custom
+    =program.exec: sh
+    =program.arguments:
+      - -c
+      - \'
+      - mkdir -p $(container.install)/include $(container.install)/lib &&
+      - make -f $(container.src)/Makefile -e INSTALL_DIR=$(container.install) install
       - \'
 
 #
@@ -357,6 +382,7 @@ templates:
     =toolchain-dir: $(cmake.src)/cmake
     +cmake-opts:
       - -DNATIVE_LIBRARY_DIR=$(cmake.native-lib)/$(build.prettyname)
+      - -DNATIVE_LIBRARY_ROOT=$(cmake.native-lib)
       - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
       - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
       - -DCOFFEE_BUILD_ASSIMP=ON
@@ -370,6 +396,14 @@ templates:
       - -v $(project.build)/$(target-name):$(container.build):rw
       - -v $(lib.root):$(lib.target):ro
       - --workdir "$(env:CMAKE_BUILD_DIR)"
+    .*tools:
+      +cmake-opts:
+        - -DGENERATE_EXAMPLES=OFF
+        - -DGENERATE_PROGRAMS=ON
+        - -DGENERATE_TESTS=OFF
+        - -DCOFFEE_GENERATE_FLATPAK=OFF
+        - -DCOFFEE_GENERATE_SNAPPY=OFF
+        - -DCOFFEE_GENERATE_APPIMAGE=ON
     .*coverage:
       =cmake-target:
         - all
@@ -380,9 +414,6 @@ templates:
         - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
         - -DAPPIMAGE_RUNTIME_BINARY=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)/util/x86_64-linux-gnu/runtime
         - -DCOFFEE_GENERATE_APPIMAGE=ON
-    .*emscripten.*:
-      +cmake-opts:
-        - -DCOFFEE_BUILD_ASSIMP=OFF
     .*android.*:
       +cmake-opts:
         - -DCOFFEE_BUILD_GLES=ON
@@ -562,3 +593,5 @@ templates:
     =build.prettyname: RaspberryPi
   .*(mingw.*):
     =build.prettyname: MinGW
+  .*(emscripten.*):
+    =build.prettyname: Emscripten

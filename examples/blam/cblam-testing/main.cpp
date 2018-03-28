@@ -415,6 +415,7 @@ int coffee_main(int32,cstring_w*)
                 Display::CreateRendererUq(), MkUq<Empty>());
 
     using API = RHI::GLEAM::GLEAM_API;
+    using C = CompFlags;
 
     event->setup = [&](Display::RendererInterface& r, Empty*)
     {
@@ -458,13 +459,13 @@ int coffee_main(int32,cstring_w*)
                 switch(image->format)
                 {
                 case bitm_format::DXT1:
-                    flgs = CGL::S3TC_1;
+                    flgs = C_CAST<u32>(C::S3TC_1);
                     break;
                 case bitm_format::DXT2AND3:
-                    flgs = CGL::S3TC_3;
+                    flgs = C_CAST<u32>(C::S3TC_3);
                     break;
                 case bitm_format::DXT4AND5:
-                    flgs = CGL::S3TC_5;
+                    flgs = C_CAST<u32>(C::S3TC_5);
                     break;
                 default:
                     break;

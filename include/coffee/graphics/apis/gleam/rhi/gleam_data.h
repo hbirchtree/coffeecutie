@@ -24,6 +24,8 @@ struct GLEAM_DataStore
 
     APILevel CURR_API = GL_Nothing;
 
+    RHI::GraphicsAPI_Threading::GraphicsQueue GpuThread;
+
     struct {
         bool gles20 = false;
         bool is_gles = false;

@@ -56,6 +56,13 @@ bool GLEAM_API::GetShaderLanguageVersion(const GraphicsAPI::GraphicsContext &c, 
     return true;
 }
 
+bool GLEAM_API::TextureFormatSupport(PixFmt fmt)
+{
+    return CGL33::Debug::CompressedFormatSupport(
+                Texture::T2D, fmt
+                );
+}
+
 }
 }
 }

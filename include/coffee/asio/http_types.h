@@ -4,6 +4,9 @@
 #include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee{
+/*!
+ * \brief A basic HTTP parser/reader
+ */
 namespace HTTP{
 
 enum Transport

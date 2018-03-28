@@ -1,3 +1,6 @@
-set ( LIBS CoffeeImage CoffeeCore )
-
-coffee_add_application ( TextRenderTest "Text Rendering" main.cpp "${LIBS}" )
+coffee_application (
+    TARGET TextRenderTest
+    TITLE "Text Rendering"
+    SOURCES main.cpp
+    LIBRARIES CoffeeImage CoffeeCore
+    )

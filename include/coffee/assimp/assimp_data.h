@@ -3,6 +3,9 @@
 #include <assimp/Importer.hpp>
 
 namespace Coffee{
+/*!
+ * \brief ASSIMP bindings with utility functions
+ */
 namespace ASSIMP{
 
 struct AssimpData

@@ -2,7 +2,7 @@
 
 You *will* need Visual Studio 2015 in order for compilation to work. (We need full C++11 support, not what VS2013 provides) Compiling 32-bit will not be supported officially; if that breaks, nobody cares.
 
-No successful attempts have been made with Cygwin, MinGW-W64 and MSYS2 so far. (Please report back if it does work!)
+It is also possible to build for MinGW-W64, but this is not a focus since it brings with it a lot of extra DLLs. It is available through the `quick-build.sh` target called `mingw.w64`.
 
 For setting up an environment, refer to `BUILDING.md` on Windows Makefiles,
 as it is usable in Visual Studio.

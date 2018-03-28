@@ -110,6 +110,43 @@ public:
     }
 
     /*!
+     * \brief For running a task on a thread, running it
+     *  immediately if possible.
+     * This is very handy for thread-bound contexts.
+     * \param q
+     * \param task
+     * \return
+     */
+    STATICINLINE u64 QueueEnsureThread(RuntimeQueue* q,
+                                       Function<void()>&& task,
+                                       bool await = false)
+    {
+        if(!q)
+            return 0;
+
+        /* If we are on the desired thread, run it now */
+        if(ThreadId() == q->threadId())
+        {
+            task();
+            return 0;
+        }
+
+        /* Otherwise queue it */
+        u64 id = Queue(q->threadId(),
+                     RuntimeTask::CreateTask(
+                         std::move(task),
+                         RuntimeTask::SingleShot|RuntimeTask::Immediate,
+                         RuntimeTask::clock::now()
+                         )
+                     );
+
+        if(await)
+            AwaitTask(q->threadId(), id);
+
+        return id;
+    }
+
+    /*!
      * \brief Like QueueShot, but will run as soon as possible. The difference is that this one ignores any possible deadlines. (QueueShot will kill the task if the deadline is not met)
      * \param q
      * \param task

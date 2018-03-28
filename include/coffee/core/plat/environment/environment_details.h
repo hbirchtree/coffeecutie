@@ -1,5 +1,4 @@
-#ifndef ENVIRONMENT_DETAILS
-#define ENVIRONMENT_DETAILS
+#pragma once
 
 #include "../../types/tdef/integertypes.h"
 #include "../../types/tdef/stltypes.h"
@@ -211,5 +210,3 @@ struct EnvColorCodes
 
 }
 } //Coffee
-
-#endif

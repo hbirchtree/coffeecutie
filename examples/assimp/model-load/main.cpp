@@ -17,7 +17,7 @@ i32 coffee_main(i32, cstring_w*)
         using Node = ASSIMP::Node;
 
         ASSIMP::AssimpPtr scene;
-        if(!ASSIMP::LoadScene(scene, &sceneFile, "FBX"))
+        if(!ASSIMP::LoadScene(scene, C_OCAST<Bytes>(sceneFile), "FBX"))
             return -1;
 
         Vector<ASSIMP::ObjectDesc> objects;

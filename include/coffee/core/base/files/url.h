@@ -46,12 +46,12 @@ struct Path
 
     Path dirname();
 
-    Path operator+(cstring component);
-    FORCEDINLINE Path operator+(CString const& component)
+    Path operator+(cstring component) const;
+    FORCEDINLINE Path operator+(CString const& component) const
     {
         return *this + component.c_str();
     }
-    Path operator+(Path const& path);
+    Path operator+(Path const& path) const;
 
     Path& operator=(Url const& url);
 
@@ -68,6 +68,7 @@ struct Url
         Undefined,
         Local,
         Networked,
+        Memory,
     };
 
     CString internUrl;
@@ -93,8 +94,6 @@ struct Url
      */
     CString operator*();
 
-    CResources::Resource rsc() const;
-
     Url operator+(Path const& path) const;
 
     FORCEDINLINE Url& operator+=(Path const& path)
@@ -103,9 +102,15 @@ struct Url
         return *this;
     }
 
-    operator Path()
+    operator Path() const
     {
         return {internUrl};
+    }
+
+    template<typename Resource, typename... Args>
+    Resource rsc(Args... a) const
+    {
+        return Resource(a..., *this);
     }
 
 private:

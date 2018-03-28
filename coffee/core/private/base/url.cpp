@@ -44,6 +44,32 @@ struct SystemPaths
     Url tempDir;
 };
 
+#if defined(COFFEE_APPLE)
+Url GetAppleStoragePath()
+{
+    Url out = {};
+    do {
+        CFBundleRef bun = CFBundleGetMainBundle();
+        if(!bun)
+            break;
+        CFURLRef path = CFBundleCopyBundleURL(bun);
+        CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
+        CFStringEncoding enc = CFStringGetSystemEncoding();
+        const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
+        CString outStr = pathcstr;
+        CFRelease(pathstr);
+        CFRelease(path);
+#if defined(COFFEE_APPLE_MOBILE)
+        out = MkUrl(outStr.c_str(), RSCA::SystemFile);
+#else
+        out = MkUrl(outStr.c_str(), RSCA::SystemFile) +
+                Path{"Contents"} + Path{"Resources"};
+#endif
+    } while(false);
+    return out;
+}
+#endif
+
 STATICINLINE SystemPaths GetSystemPaths()
 {
     SystemPaths paths;
@@ -94,12 +120,12 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
     paths.cacheDir = MkUrl(Env::GetUserHome().c_str(), RSCA::SystemFile)
-            + Path{".cache"} + Path{ApplicationData().organization_name}
-            + Path{ApplicationData().application_name};
+            + Path{".cache"} + Path{GetCurrentApp().organization_name}
+            + Path{GetCurrentApp().application_name};
 
     /* Temporary files go in /tmp */
     paths.tempDir = MkUrl("/tmp", RSCA::SystemFile)
-            + Path{ApplicationData().application_name};
+            + Path{GetCurrentApp().application_name};
 
     paths.configDir = MkUrl(Env::GetUserData(nullptr, nullptr).c_str(),
                             RSCA::SystemFile);
@@ -108,18 +134,18 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 	CString temp_dir = Env::GetVar("TEMP");
 	paths.tempDir = MkUrl(temp_dir.c_str(), RSCA::SystemFile) +
-		Path{ ApplicationData().organization_name } +
-		Path{ ApplicationData().application_name };
+        Path{ GetCurrentApp().organization_name } +
+        Path{ GetCurrentApp().application_name };
 
 	CString config_dir = Env::GetVar("APPDATA");
 	paths.configDir = MkUrl(config_dir.c_str(), RSCA::SystemFile) +
-		Path{ ApplicationData().organization_name } +
-		Path{ ApplicationData().application_name };
+        Path{ GetCurrentApp().organization_name } +
+        Path{ GetCurrentApp().application_name };
 
 	CString cache_dir = Env::GetVar("LOCALAPPDATA");
 	paths.cacheDir = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
-		Path{ ApplicationData().organization_name } +
-		Path{ApplicationData().application_name};
+        Path{ GetCurrentApp().organization_name } +
+        Path{ GetCurrentApp().application_name};
 
 #if defined(COFFEE_WINDOWS_UWP)
 	auto pkg = ::Windows::ApplicationModel::Package::Current();
@@ -139,24 +165,8 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_APPLE)
 
-    do {
-        CFBundleRef bun = CFBundleGetMainBundle();
-        if(!bun)
-            break;
-        CFURLRef path = CFBundleCopyBundleURL(bun);
-        CFStringRef pathstr = CFURLCopyFileSystemPath(path,kCFURLPOSIXPathStyle);
-        CFStringEncoding enc = CFStringGetSystemEncoding();
-        const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
-        CString out = pathcstr;
-        CFRelease(pathstr);
-        CFRelease(path);
-#if defined(COFFEE_APPLE_MOBILE)
-        paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile);
-#else
-        paths.assetDir = MkUrl(out.c_str(), RSCA::SystemFile) +
-                Path{"Contents"} + Path{"Resources"};
-#endif
-    } while(false);
+    paths.assetDir = MkUrl(_coffee_resource_prefix.c_str(),
+                           RSCA::SystemFile);
 
     auto home = Env::GetVar("HOME");
 #if defined(COFFEE_APPLE_MOBILE)
@@ -174,8 +184,8 @@ STATICINLINE SystemPaths GetSystemPaths()
     auto library = MkUrl(home.c_str()) + Path{"Library"};
 
     auto app_path =
-            Path{ApplicationData().organization_name} +
-            Path{ApplicationData().application_name};
+            Path{GetCurrentApp().organization_name} +
+            Path{GetCurrentApp().application_name};
 
     paths.configDir = library + Path{"Application Support"} + app_path;
 
@@ -231,7 +241,7 @@ CString Url::operator*() const
     case Networked:
         return internUrl;
     default:
-        throw std::runtime_error("dereferencing Url without category");
+        throw resource_error("dereferencing Url without category");
     }
 }
 
@@ -242,11 +252,6 @@ CString Url::operator*()
 
     cachedUrl = deref;
     return deref;
-}
-
-Resource Url::rsc() const
-{
-    return CResources::Resource(*this);
 }
 
 Url Url::operator+(const Path &path) const
@@ -361,18 +366,24 @@ Path Path::dirname()
     return {Env::DirName(internUrl.c_str())};
 }
 
-Path Path::operator+(cstring component)
+Path Path::operator+(cstring component) const
 {
     Path cpy = *this;
-    cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
+    if(cpy.internUrl.size())
+        cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
+    else
+        cpy.internUrl = component;
 //    cpy.internUrl += component;
     return cpy;
 }
 
-Path Path::operator+(const Path &path)
+Path Path::operator+(const Path &path) const
 {
-    return {Env::ConcatPath(internUrl.c_str(),
-                            path.internUrl.c_str())};
+    if(internUrl.size())
+        return {Env::ConcatPath(internUrl.c_str(),
+                                path.internUrl.c_str())};
+    else
+        return path;
 }
 
 Path &Path::operator=(const Url &url)

@@ -5,141 +5,20 @@
 #include <coffee/core/CThreading>
 
 #include <coffee/core/CRegex>
-#include <coffee/core/CThreading>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 
 #include <coffee/graphics/common/scene/cnode.h>
 #include <coffee/graphics/common/SMesh>
 
-#include "assimpfun.h"
-
-#define CASSIMP_MULTITHREAD
+#include <assimp/scene.h>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
 
 namespace Coffee {
-namespace CResourceTypes {
-namespace CAssimp {
-
-using namespace ::Assimp;
-
-CAssimpImporters::CAssimpImporters()
-{
-}
-
-CAssimpData *CAssimpImporters::importResource(Resource *source,
-                                              cstring hint)
-{
-    ::Assimp::Importer importer;
-
-    const aiScene* scene = importer
-            .ReadFileFromMemory(source->data,
-                                source->size,
-                                aiProcess_CalcTangentSpace|
-                                aiProcess_Triangulate|
-                                aiProcess_OptimizeMeshes|
-                                aiProcess_SortByPType,
-                                hint);
-    if(!scene){
-        cWarning("Failed to import scene \"%s\": %s",
-                 source->resource(),
-                 importer.GetErrorString());
-        return nullptr;
-    }else{
-        //        cMsg("Assimp","Scene imported: cam=%i,lgt=%i,msh=%i,mat=%i,anm=%i,txt=%i",
-        //             scene->mNumCameras,scene->mNumLights,
-        //             scene->mNumMeshes,scene->mNumMaterials,
-        //             scene->mNumAnimations,scene->mNumTextures);
-    }
-
-    CElapsedTimer timer;
-    timer.start();
-
-    Vector<CAssimpMesh*> meshes;
-#ifdef CASSIMP_MULTITHREAD
-    Function<CAssimpMesh*(aiMesh*)> fun = importMesh;
-    Vector<Future<CAssimpMesh*> > meshes_future;
-#endif
-    szptr i;
-    for(i=0;i<scene->mNumMeshes;i++){
-#ifdef CASSIMP_MULTITHREAD
-        meshes_future.push_back(Threads::RunAsync(fun,scene->mMeshes[i]));
-#else
-        meshes.push_back(importMesh(scene->mMeshes[i]));
-#endif
-    }
-
-#ifdef CASSIMP_MULTITHREAD
-    for(Future<CAssimpMesh*>& future : meshes_future){
-        meshes.push_back(future.get());
-    }
-#endif
-
-    CAssimpData* data = new CAssimpData;
-
-    {
-        data->numMeshes = meshes.size();
-        data->meshes    = (CAssimpMesh**)Calloc(
-                    meshes.size(),
-                    sizeof(CAssimpMesh*));
-        i=0;
-        for(CAssimpMesh* mesh : meshes){
-            data->meshes[i] = mesh;
-            i++;
-        }
-    }
-
-    //    cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
-
-    importer.FreeScene();
-
-    return data;
-}
-
-void coffee_assimp_free(CAssimp::CAssimpData *data)
-{
-    szptr i;
-    for(i=0;i<data->numMeshes;i++)
-        CFree(data->meshes[i]);
-    CFree(data->meshes);
-}
-
-byte_t *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *ref)
-{
-    return &((byte_t*)baseptr)[ref->offset];
-}
-
-cstring assimp_reflexive_string_get(const void* basePtr, const assimp_reflexive &ref)
-{
-    cstring b_ptr = (cstring)basePtr;
-    return &b_ptr[ref.offset];
-}
-
-bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, Resource *resource)
-{
-    bool success = false;
-
-    FileFree(*resource);
-
-    resource->size = mesh->byteSize;
-    resource->data = Alloc(resource->size);
-
-    MemCpy(resource->data,mesh,resource->size);
-
-    if(!FileCommit(*resource))
-        cWarning("Failed to store mesh data");
-    else success = true;
-
-    FileFree(*resource);
-
-    return success;
-}
-
-} // namespace CAssimp
-} // namespace CResourceTypes
-
 namespace ASSIMP{
 
-bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
+bool LoadScene(UqPtr<AssimpData>& target, const Bytes &source, cstring hint)
 {
     auto& data = target;
 
@@ -151,12 +30,13 @@ bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
             aiProcess_OptimizeMeshes|
             aiProcess_SortByPType;
 
-    data->scene = data->importer.ReadFileFromMemory(source->data, source->size,
-                                                    aiFlags, hint);
+    data->scene = data->importer.ReadFileFromMemory(
+                source.data, source.size,
+                aiFlags, hint);
 
     if(!data->scene)
     {
-        cWarning("Could not load scene: {0}", source->resource());
+        cWarning("Could not load scene: {0}", hint);
         target.reset();
         return false;
     }
@@ -186,12 +66,17 @@ bool GetSceneObjects(const UqPtr<AssimpData> &scene, Vector<ObjectDesc> &objects
     return objects.size() > 0;
 }
 
-FORCEDINLINE Matf4 convert_aiMatrix(aiMatrix4x4 const& mat)
+static Matf4 convert_aiMatrix(aiMatrix4x4 const& mat)
 {
-    return (Matf4 const&)mat;
+    static_assert(sizeof(Matf4) == sizeof(aiMatrix4x4),
+                  "Matrix sizes differ");
+
+    Matf4 out;
+    MemCpy(&out.d, &mat, sizeof(Matf4));
+    return out;
 }
 
-FORCEDINLINE Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>& node_storage)
+static Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>& node_storage)
 {
     node_storage.push_back(Node(nullptr));
 
@@ -210,7 +95,10 @@ FORCEDINLINE Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>&
     return &node_storage.back();
 }
 
-DENYINLINE void get_scene_nodes(aiNode* node, Node* parent, LinkList<Node>& node_storage)
+static void get_scene_nodes(aiNode* node,
+                            Node* parent, LinkList<Node>& node_storage,
+                            bool accumulate = true
+                            )
 {
     for(u32 i=0;i<node->mNumChildren;i++)
     {
@@ -218,14 +106,17 @@ DENYINLINE void get_scene_nodes(aiNode* node, Node* parent, LinkList<Node>& node
 
         auto np = create_scene_node(c, parent, node_storage);
 
-        /* Pre-multiplying the scene transform, much easier to deal with when doing MultiDraw* */
-        np->transform = parent->transform * np->transform;
+        /* Pre-multiplying the scene transform, much easier to deal
+         *  with when doing MultiDraw* */
+        if(accumulate)
+            np->transform = parent->transform * np->transform;
 
-        get_scene_nodes(c, np, node_storage);
+        get_scene_nodes(c, np, node_storage, accumulate);
     }
 }
 
-bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node **root, NodeList &nodes)
+bool GetSceneRoot(UqPtr<AssimpData> const& scene,
+                  Node **root, NodeList &nodes)
 {
     if(!scene || !scene->scene)
         return false;
@@ -241,7 +132,24 @@ bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node **root, NodeList &nodes)
     return nodes.size() > 0;
 }
 
-aiMesh* get_mesh(UqPtr<AssimpData> const& scene, i32 node)
+bool GetRawSceneRoot(const UqPtr<AssimpData> &scene,
+                     Node **root, NodeList &nodes)
+{
+    if(!scene || !scene->scene)
+        return false;
+
+    auto mNode = scene->scene->mRootNode;
+
+    auto parent = create_scene_node(mNode, nullptr, nodes);
+    get_scene_nodes(mNode, parent, nodes, false);
+
+    if(root)
+        *root = parent;
+
+    return nodes.size() > 0;
+}
+
+static aiMesh* get_mesh(UqPtr<AssimpData> const& scene, i32 node)
 {
     if(node < 0 || node >= C_CAST<i32>(scene->scene->mNumMeshes))
         return nullptr;

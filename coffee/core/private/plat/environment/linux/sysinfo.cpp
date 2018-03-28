@@ -428,7 +428,11 @@ bool LinuxSysInfo::HasFPU()
 #if defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
     if(result.size() == 0)
     {
+#if defined(COFFEE_MAEMO)
+        CString result = get_linux_property(cached_cpuinfo_string, query);
+#else
         CString result = get_linux_property(cached_cpuinfo_string, query2);
+#endif
         StrUtil::trim(result);
     }
 

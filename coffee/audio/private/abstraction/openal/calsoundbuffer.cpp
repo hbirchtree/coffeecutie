@@ -1,4 +1,5 @@
 #include <coffee/audio/abstraction/openal/calsoundbuffer.h>
+#include <coffee/core/CProfiling>
 
 namespace Coffee{
 namespace CAudio{
@@ -40,14 +41,16 @@ void CALSoundBuffer::setFormat(CSoundFormat &fmt)
 
 void CALSoundBuffer::fillBuffer(c_cptr data, const szptr &size)
 {
+    DProfContext _("Uploading audio sample");
+
     AudioSample smp;
 
     smp.fmt.bitdepth = m_fmt->bitDepth();
     smp.fmt.channels = m_fmt->channels();
     smp.fmt.frequency = m_fmt->samplerate();
 
-    smp.samples = size;
-    smp.data = (int16*)data;
+    smp.samples = C_FCAST<u32>(size);
+    smp.data = C_RCAST<int16*>(C_CCAST<c_ptr>(data));
 
     buffer_data(m_buffer,&smp);
 }

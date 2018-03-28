@@ -6,7 +6,7 @@ namespace Coffee{
 
 extern AppArg initargs;
 
-extern AppArg const& GetInitArgs();
+extern AppArg& GetInitArgs();
 
 namespace Strings{
 

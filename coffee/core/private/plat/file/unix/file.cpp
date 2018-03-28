@@ -90,7 +90,7 @@ CString PosixFileMod_def::DereferenceLink(Url const& fn)
 CString PosixFileMod_def::CanonicalName(Url const& fn)
 {
     auto url = *fn;
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_CANONICALIZE)
     cstring_w name = canonicalize_file_name(url.c_str());
     if(!name)
     {

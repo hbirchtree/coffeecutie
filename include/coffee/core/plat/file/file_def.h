@@ -179,6 +179,8 @@ struct FileFunDef
 
 struct DirFunDef
 {
+    using Type = FileFunDef::NodeType;
+
     struct DirItem_t
     {
         using Type = FileFunDef::NodeType;

@@ -1,8 +1,11 @@
-coffee_add_application_longerer (
-    CEF_Test
-    "CEF Test" "Coffee" "10"
-    "A test for Chromium Embedded Framework" "© Coffee?"
-    main.cpp CoffeeCEF
-    "" "" ""
-    "OPENGL;BROWSER" "CCefSlave"
+coffee_application (
+    TARGET CEF_Test
+    TITLE "CEF Test"
+    COMPANY "Coffee"
+    VERSION_CODE "10"
+    INFO_STRING "A test for Chromium Embedded Framework" "© Coffee?"
+    SOURCES main.cpp
+    LIBRARIES CoffeeCEF
+    PERMISSIONS OPENGL BROWSER
+    BUNDLE_BINARIES "CCefSlave"
     )

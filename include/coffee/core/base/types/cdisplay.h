@@ -3,6 +3,7 @@
 #include "../../types/cdef/infotypes.h"
 #include "../../types/cdef/pixtypes.h"
 #include "../../types/edef/enumfun.h"
+#include <coffee/interfaces/cgraphics_api_basic.h>
 
 namespace Coffee{
 namespace Display{
@@ -282,7 +283,12 @@ extern CDProperties GetDefaultVisual(
         const int32& ctxtMinorVer
         );
 
-template<typename GL_LIB>
+template<typename GL_LIB,
+
+         typename implements<RHI::GraphicsAPI_Base, GL_LIB>::type*
+         = nullptr
+
+         >
 STATICINLINE CDProperties GetDefaultVisual()
 {
     int32 majver = 0, minver = 0;

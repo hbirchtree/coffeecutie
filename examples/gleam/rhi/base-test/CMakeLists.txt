@@ -1,16 +1,20 @@
 project ( GLeamBaseTest )
-set ( GLeamBaseTest_SRCS
+
+coffee_application (
+    TARGET GLeamBaseTest_RHI
+    TITLE "GLeam Basic RHI"
+
+    SOURCES
     main.cpp
-    )
+    renderer.h
 
-set ( USERDATA
-    "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
-    )
-
-set ( LIBS
+    LIBRARIES
     CoffeeGLeamRHI
     CoffeeRenderer_Default
     CoffeeCore
-    )
 
-coffee_add_application_long ( GLeamBaseTest_RHI "GLeam Basic RHI" "main.cpp;renderer.h" "${LIBS}" "" "${USERDATA}" USE_ASIO )
+    RESOURCES
+    "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
+
+    USE_ASIO
+    )

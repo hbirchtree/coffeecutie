@@ -11,8 +11,10 @@ namespace RHI{
 namespace GLEAM{
 
 static const constexpr cstring GLES20_COMPAT_VS = {
-    "\n#define in attribute\n"
+    "\n"
+    "#define in attribute\n"
     "#define out varying\n"
+    "#define flat\n"
     "#define gl_InstanceID InstanceID\n"
 
     "precision highp int;\n"
@@ -21,7 +23,8 @@ static const constexpr cstring GLES20_COMPAT_VS = {
 };
 
 static const constexpr cstring GLES20_COMPAT_FS = {
-    "#define in varying\r\n"
+    "#define in varying\n"
+    "#define flat\n"
     "#define OutColor gl_FragColor\n"
     "#define sampler2DArray sampler2D\n"
     "#define sampler3DArray sampler3D\n"
@@ -235,9 +238,9 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         cstring* shaderSrc = shaderSrcVec.data();
         u32 numSources = C_FCAST<u32>(shaderSrcVec.size());
 
-        cDebug("Compiling shader fragment:");
+        cVerbose(12, "Compiling shader fragment:");
         for(u32 i : Range<u32>(numSources))
-            cDebug("{0}", CString(shaderSrcVec[i],
+            cVerbose(12, "{0}", CString(shaderSrcVec[i],
                                   shaderSrcLens[i]));
 
         CGL33::ShaderSource(m_handle,numSources,

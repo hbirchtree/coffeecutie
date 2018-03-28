@@ -5,8 +5,23 @@
 #include <coffee/core/base/files/cfiles.h>
 
 namespace Coffee{
+/*!
+ * \brief General audio rendering functions
+ */
 namespace CAudio{
 
+/*!
+ * \brief Basic audio sample formats
+ * Designation is as follows:
+ *
+ * [F][N][C]
+ *
+ * F = data format
+ * N = data precision
+ * C = channel specification
+ *
+ * M=mono, S=stereo, Q=quadrophonic
+ */
 enum class SampleFormat
 {
     U8M,
@@ -20,8 +35,6 @@ enum class SampleFormat
     F32M,
     F32S,
     F32Q,
-
-    /* M=mono, S=stereo, Q=quadrophonic */
 };
 
 /*!
@@ -60,7 +73,7 @@ namespace Stb{
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern bool LoadVorbis(AudioSample* smp, CResources::Resource* src);
+extern bool LoadVorbis(AudioSample* smp, Bytes const& src);
 
 }
 

@@ -8,7 +8,7 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-thread_local GLEAM_DataStore* m_store = nullptr;
+GLEAM_DataStore* m_store = nullptr;
 
 }
 }

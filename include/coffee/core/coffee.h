@@ -14,24 +14,31 @@ namespace Coffee{
 /*!
  * \brief This function handles initial program startup
  */
-extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w *argv);
+extern int32 CoffeeMain(
+        CoffeeMainWithArgs mainfun,
+        int32 argc, cstring_w *argv,
+        u32 flags = 0);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.
  */
-extern void CoffeeInit(bool profiler_init = true);
+COFFEE_APP_FUNC void CoffeeInit(bool profiler_init = true);
 
-extern void CoffeeTerminate();
+COFFEE_APP_FUNC void CoffeeTerminate();
 
-extern void GotoApplicationDir();
+COFFEE_APP_FUNC void GotoApplicationDir();
 
-extern void InstallDefaultSigHandlers();
+COFFEE_APP_FUNC void InstallDefaultSigHandlers();
 
-extern void SetPrintingVerbosity(u8 level);
+COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
 
 extern void SetDefaultWindowName(cstring appname);
 
-extern CoffeeApplicationData const& ApplicationData();
+COFFEE_APP_FUNC CoffeeApplicationData const& ApplicationData();
+
+extern void SetCurrentApp(CoffeeApplicationData const& app);
+
+extern CoffeeApplicationData const& GetCurrentApp();
 
 //A simpler implementation of QObject
 class CObject;

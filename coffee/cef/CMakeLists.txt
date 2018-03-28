@@ -8,4 +8,9 @@ target_include_directories ( CoffeeCEF
     $<INSTALL_INTERFACE:include/>
     )
 
-coffee_add_application ( CCefSlave "CEFSlave" private/ccef_slave.cpp "${CEF_LIBRARIES}" )
+coffee_application (
+    TARGET CCefSlave
+    TITLE "CEFSlave"
+    SOURCES private/ccef_slave.cpp
+    LIBRARIES "${CEF_LIBRARIES}"
+    )

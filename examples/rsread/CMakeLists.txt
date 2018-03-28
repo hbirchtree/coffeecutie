@@ -1,1 +1,6 @@
-coffee_add_application ( RSReadTest "RS Reading" main.cpp CoffeeCore )
+coffee_application (
+    TARGET RSReadTest
+    TITLE "RS Reading"
+    SOURCES main.cpp
+    LIBRARIES CoffeeCore
+    )

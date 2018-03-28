@@ -94,7 +94,9 @@ struct MeshLoader
         return size / (sizeof(From) / sizeof(To));
     }
 
-    template<typename T>
+    template<typename T,
+             typename is_pod<T>::type* = nullptr
+             >
     static T integer_range_get_max(T const* src, szptr count)
     {
         T max = std::numeric_limits<T>::min();
@@ -280,7 +282,256 @@ struct MeshLoader
         }
     };
 
-    template<typename GFX>
+    struct SerialNodeList
+    {
+        struct SerialHeader;
+
+        struct NodeData
+        {
+            Matf4 xf;
+            szptr parent; /*!< index of parent node */
+            u32 objectName; /*!< Index of object name in string store */
+            ASSIMP::ObjectDesc::ObjectType type;
+            i32 mesh; /*!< if >=0, index of mesh in related draw data */
+            u32 _pad;
+        };
+
+        struct SerialNodeData
+        {
+            Matf4 xf;
+            szptr parent; /*!< Index of parent node */
+            szptr objectName; /*!< Byte offset to name, null-terminated */
+            ASSIMP::ObjectDesc::ObjectType type;
+            i32 mesh;
+
+            /*!
+             * \brief Access name when serialized
+             * \param hdr Related header
+             * \return
+             */
+            cstring name(SerialHeader const& hdr) const
+            {
+                if(objectName < (hdr.data_size + sizeof(SerialHeader)))
+                {
+                    byte_t const* baseHdr = C_RCAST<byte_t const*>(&hdr);
+                    return C_RCAST<cstring>(&baseHdr[objectName]);
+                }else
+                    return nullptr;
+            }
+            /*!
+             * \brief Access parent when serialized
+             * \param hdr Related header
+             * \return
+             */
+            SerialNodeData const* parentData(
+                    SerialHeader const& hdr) const
+            {
+                return hdr.node(parent);
+            }
+            /*!
+             * \brief Access the full transform of the node,
+             *  including parents
+             */
+            Matf4 transform(
+                    SerialHeader const& hdr) const
+            {
+                if(parent < hdr.num_nodes)
+                    return hdr.node(parent)->transform(hdr) * xf;
+                else
+                    return xf;
+            }
+        };
+
+        struct SerialHeader
+        {
+            szptr num_nodes;
+            szptr data_size;
+            szptr rootNode; /*!< Index of root node */
+
+            /*!
+             * \brief Access a node when serialized,
+             *  quite often the root node
+             * \param i
+             * \return
+             */
+            SerialNodeData const* node(szptr i = 0) const
+            {
+                if(i < num_nodes)
+                {
+                    SerialNodeData const* nodes =
+                            C_RCAST<SerialNodeData const*>(&this[1]);
+                    return &nodes[i];
+                }else
+                    return nullptr;
+            }
+            /*!
+             * \brief Access a node by name  when serialized
+             * \param name
+             * \return
+             */
+            SerialNodeData const* node(cstring name) const
+            {
+                for(auto i : Range<>(num_nodes))
+                    if(StrCmp(node(i)->name(*this), name))
+                        return node(i);
+
+                return nullptr;
+            }
+
+            szptr indexOf(SerialNodeData const* node) const
+            {
+                SerialNodeData const* base =
+                        C_RCAST<SerialNodeData const*>(&this[1]);
+
+                return C_FCAST<szptr>(node - base);
+            }
+
+            struct iterator
+                    : Iterator<ForwardIteratorTag, SerialNodeData>
+            {
+                iterator(SerialHeader const* hdr, szptr parent):
+                    m_hdr(hdr),
+                    m_parent(parent),
+                    m_current(0)
+                {
+                    this->operator++();
+                }
+                iterator():
+                    m_hdr(nullptr),
+                    m_parent(C_CAST<szptr>(-1)),
+                    m_current(C_CAST<szptr>(-1))
+                {
+                }
+
+                iterator& operator++()
+                {
+                    do {
+                        m_current++;
+                    } while(m_current < m_hdr->num_nodes
+                            && m_hdr->node(m_current)->parent != m_parent);
+
+                    if(m_current >= m_hdr->num_nodes)
+                        m_current = C_CAST<szptr>(-1);
+
+                    return *this;
+                }
+
+                bool operator==(iterator const& other)
+                {
+                    return other.m_current == m_current;
+                }
+
+                bool operator!=(iterator const& other)
+                {
+                    return other.m_current != m_current;
+                }
+
+                SerialNodeData const& operator*()
+                {
+                    if(m_current > m_hdr->num_nodes)
+                        throw std::out_of_range("invalid access");
+                    else
+                        return *m_hdr->node(m_current);
+                }
+
+            private:
+                SerialHeader const* m_hdr;
+                szptr m_parent;
+                szptr m_current;
+            };
+
+            struct child_container
+            {
+                child_container(SerialHeader const* hdr,
+                                szptr parent):
+                    m_hdr(hdr),
+                    m_parent(parent)
+                {
+                }
+
+                iterator begin()
+                {
+                    return iterator(m_hdr, m_parent);
+                }
+                iterator end()
+                {
+                    return iterator();
+                }
+            private:
+                SerialHeader const* m_hdr;
+                szptr m_parent;
+            };
+
+            child_container childrenOf(szptr node) const
+            {
+                return child_container(this, node);
+            }
+        };
+
+        Vector<NodeData> nodes;
+        Vector<CString> stringStore;
+        szptr rootNode;
+
+        szptr size()
+        {
+            szptr nodeDataSize = nodes.size() * sizeof(NodeData);
+
+            szptr stringStoreSize = 0;
+            for(auto const& s : stringStore)
+                stringStoreSize += s.size() + 1;
+
+            return sizeof(SerialHeader)
+                    + nodeDataSize
+                    + stringStoreSize;
+        }
+
+        bool cpy(void* target, szptr size)
+        {
+            if(size < this->size())
+                return false;
+
+            SerialHeader header;
+            header.num_nodes = nodes.size();
+            header.data_size = this->size() - sizeof(SerialHeader);
+            header.rootNode = this->rootNode;
+
+            byte_t* basePtr = C_RCAST<byte_t*>(target);
+            szptr offset = 0;
+
+            MemCpy(basePtr, &header, sizeof(header));
+            offset += sizeof(header);
+            SerialNodeData* nodeData =
+                    C_RCAST<SerialNodeData*>(&basePtr[offset]);
+            for(auto const& node : nodes)
+            {
+                SerialNodeData newNode;
+                newNode.xf = node.xf;
+                newNode.parent = node.parent;
+                newNode.type = node.type;
+                newNode.mesh = node.mesh;
+                newNode.objectName = 0; /* Must be set later */
+                MemCpy(&basePtr[offset], &newNode,
+                       sizeof(SerialNodeData));
+                offset += sizeof(SerialNodeData);
+            }
+            for(auto i : Range<>(stringStore.size()))
+            {
+                auto const& s = stringStore.at(i);
+                nodeData[i].objectName = offset;
+                MemCpy(&basePtr[offset], &s[0], s.size());
+                offset += s.size() + 1;
+            }
+
+            return true;
+        }
+    };
+
+    template<typename GFX,
+
+             typename implements<RHI::GraphicsAPI_Base, GFX>::type*
+             = nullptr
+
+             >
     struct BufferDescription
     {
 //        using GFX = RHI::NullAPI;
@@ -292,9 +543,45 @@ struct MeshLoader
 
         ChainedBytes vertexData;
         ChainedBytes elementData;
+        SerialNodeList nodes;
     };
 
-    template<typename API>
+    static
+    void traverse_nodes(
+            ASSIMP::Node* current,
+            szptr parentIdx,
+            Vector<ObjectDesc> const& descs,
+            SerialNodeList& nodes)
+    {
+        szptr i = nodes.nodes.size();
+
+//        auto& desc = descs.at(i);
+
+        nodes.stringStore.push_back(current->objectName());
+
+        nodes.nodes.push_back({
+                                  current->transform,
+                                  parentIdx,
+                                  C_FCAST<u32>(i),
+                                  ObjectDesc::Mesh,
+                                  current->mesh,
+                                  0
+                              });
+
+        for(auto child : current->children())
+        {
+            traverse_nodes(C_CAST<ASSIMP::Node*>(child),
+                           i,
+                           descs, nodes);
+        }
+    }
+
+    template<typename API,
+
+             typename implements<RHI::GraphicsAPI_Base, API>::type*
+             = nullptr
+
+             >
     static
     bool ExtractDescriptors(
             ASSIMP::AssimpPtr& scene,
@@ -428,7 +715,10 @@ struct MeshLoader
             buffers.elementData.ref_transform.reserve(
                         buffers.elementData.refs.size());
             for(auto i : Range<>(buffers.elementData.refs.size()))
+            {
+                C_UNUSED(i);
                 buffers.elementData.ref_transform.push_back(transform);
+            }
 
             for(auto i : Range<>(meshCount))
             {
@@ -480,8 +770,27 @@ struct MeshLoader
             case M::TexCoord:
                 vd.m_size = 2;
                 break;
+            default:
+                break;
             }
             vd.m_stride = vd.m_size * sizeof(scalar);
+        }
+
+        Vector<ASSIMP::ObjectDesc> sceneObjects;
+        if(ASSIMP::GetSceneObjects(scene, sceneObjects))
+        {
+            ASSIMP::Node* rootNode = nullptr;
+            ASSIMP::NodeList nodes;
+            if(!ASSIMP::GetRawSceneRoot(scene, &rootNode, nodes))
+                return false;
+
+            SerialNodeList& serialNodes = buffers.nodes;
+            serialNodes.nodes.reserve(nodes.size());
+            serialNodes.stringStore.reserve(nodes.size());
+            serialNodes.rootNode = 0;
+
+            traverse_nodes(rootNode, C_CAST<szptr>(-1),
+                           sceneObjects, serialNodes);
         }
 
         /* TODO: If user is requesting a different

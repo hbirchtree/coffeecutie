@@ -281,7 +281,7 @@ def generate_dep_rule(name, defs, var_definitions):
 """
 %s: %s.mkdir
 \t[ ! -d %s/.%s ] && \\
-\t%s clone '%s' %s || \\
+\t%s clone --depth 1 '%s' %s || \\
 \ttrue
 """ % (name, name, defs['root'], t, t, defs['source'], defs['root'])
     )
@@ -426,6 +426,8 @@ def transform_build_deps(build_deps, template_def, build_template, skeleton, tar
       elif td['type'] == 'automake':
         out['automake.opts'] = [stringify(td['ac-opts'])]
         out['cmake-opts'] = []
+      elif td['type'] == 'make':
+        out['cmake-opts'] = []
       elif td['type'] == 'openssl':
         out['cmake-opts'] = []
       else:
@@ -448,7 +450,7 @@ def transform_build_deps(build_deps, template_def, build_template, skeleton, tar
 ''' % (lib_target, build_target, f, build_dirs[f])
 
 
-      target_defs = target_defs + mkdir_deps + generate_rule(out)
+      target_defs = target_defs + mkdir_deps + generate_rule(out).replace('\\\'', '\'')
 
   return target_defs
 

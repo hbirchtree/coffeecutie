@@ -1,4 +1,5 @@
 #include <coffee/core/task_queue/task.h>
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 
@@ -26,19 +27,30 @@ RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString &name)
 
 static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 {
-    AtomicBool runtimeFlag;
-    runtimeFlag.store(true);
+    try{
+        AtomicBool runtimeFlag;
+        runtimeFlag.store(true);
 
-    RuntimeQueue* queue = RuntimeQueue::CreateNewQueue(name);
+        RuntimeQueue* queue = RuntimeQueue::CreateNewQueue(name);
 
-    *flag = &runtimeFlag;
+        *flag = &runtimeFlag;
 
-    while(runtimeFlag.load())
+        while(runtimeFlag.load())
+        {
+            queue->executeTasks();
+
+            auto sleepTime = queue->timeTillNext(std::chrono::milliseconds(500));
+            CurrentThread::sleep_for(sleepTime);
+        }
+    } catch(std::exception const& e)
     {
-        queue->executeTasks();
-
-        auto sleepTime = queue->timeTillNext(std::chrono::milliseconds(500));
-        CurrentThread::sleep_for(sleepTime);
+        cWarning("Uncaught exception!\n"
+                 "\n"
+                 "\t{0}: {1}"
+                 "\n",
+                 e.what(),
+                 Stacktracer::DemangleSymbol(typeid(e).name())
+                 );
     }
 }
 
@@ -52,7 +64,9 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString &name)
 
     /* I feel bad for this, but it shouldn't be called often */
     while(flagPtr == nullptr)
-        ;
+    {
+        CurrentThread::yield();
+    }
 
     {
         Lock _(globalMod);

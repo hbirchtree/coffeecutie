@@ -26,7 +26,11 @@ struct _cbasic_point
 /*!
  * \brief A template for sizes
  */
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_size_2d : _cbasic_size
 {
     template<typename U>
@@ -40,13 +44,22 @@ struct _cbasic_size_2d : _cbasic_size
         h(src.y())
     {
     }
-    _cbasic_size_2d(T wd,T hg);
-    _cbasic_size_2d();
+    _cbasic_size_2d(T wd,T hg)
+        : w(wd),h(hg)
+    {
+    }
+    _cbasic_size_2d()
+        : w(0), h(0)
+    {
+    }
 
     T w;
     T h;
 
-    T area() const;
+    T area() const
+    {
+        return w*h;
+    }
 
     template<typename U>
     inline _cbasic_size_2d<U> convert() const
@@ -54,14 +67,33 @@ struct _cbasic_size_2d : _cbasic_size
         return _cbasic_size_2d<U>(w,h);
     }
 
-    _cbasic_size_2d<T> operator/(const T& d);
-    _cbasic_size_2d<T> operator*(const T& d);
+    FORCEDINLINE _cbasic_size_2d<T> operator/(const T &d)
+    {
+        return _cbasic_size_2d<T>(this->w/d,this->h/d);
+    }
+    FORCEDINLINE _cbasic_size_2d<T> operator*(const T &d)
+    {
+        return _cbasic_size_2d<T>(this->w*d,this->h*d);
+    }
 
-    _cbasic_size_2d<T>& operator/=(const T& d);
-    _cbasic_size_2d<T>& operator*=(const T& d);
+
+    FORCEDINLINE _cbasic_size_2d<T>& operator/=(const T &d)
+    {
+        (*this) = (*this)/d;
+        return *this;
+    }
+    FORCEDINLINE _cbasic_size_2d<T>& operator*=(const T &d)
+    {
+        (*this) = (*this)*d;
+        return *this;
+    }
 };
 
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_size_3d : _cbasic_size
 {
     _cbasic_size_3d(_cbasic_tvector<T, 3> const& src):
@@ -70,8 +102,14 @@ struct _cbasic_size_3d : _cbasic_size
         depth(src.z())
     {
     }
-    _cbasic_size_3d(T w, T h, T d);
-    _cbasic_size_3d();
+    _cbasic_size_3d(T w, T h, T d):
+        width(w),height(h),depth(d)
+    {
+    }
+    _cbasic_size_3d():
+        width(0),height(0),depth(0)
+    {
+    }
 
     template<typename U>
     inline _cbasic_size_3d<U> convert() const
@@ -81,13 +119,20 @@ struct _cbasic_size_3d : _cbasic_size
 
     T width,height,depth;
 
-    T volume();
+    T volume()
+    {
+        return width*height*depth;
+    }
 };
 
 /*!
  * \brief A template for point types, x and y values
  */
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_point_2d : _cbasic_point
 {
     _cbasic_point_2d(_cbasic_tvector<T, 2> const& src):
@@ -95,12 +140,21 @@ struct _cbasic_point_2d : _cbasic_point
         y(src.y())
     {
     }
-    _cbasic_point_2d(T x,T y);
-    _cbasic_point_2d();
+    _cbasic_point_2d(T x,T y):
+        x(x), y(y)
+    {
+    }
+    _cbasic_point_2d(){}
 
     T x,y;
 
-    T distance(const _cbasic_point_2d& p);
+    FORCEDINLINE T distance(const _cbasic_point_2d<T> &p)
+    {
+        return CMath::sqrt(
+                    CMath::pow(this->x-p.x,2)
+                    + CMath::pow(this->y-p.y,2)
+                    );
+    }
 
     template<typename T2>
     _cbasic_point_2d<T2> convert() const
@@ -118,7 +172,11 @@ struct _cbasic_point_2d : _cbasic_point
     }
 };
 
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_point_3d : _cbasic_point
 {
     _cbasic_point_3d(_cbasic_tvector<T, 3> const& src):
@@ -127,11 +185,20 @@ struct _cbasic_point_3d : _cbasic_point
         z(src.z())
     {
     }
-    _cbasic_point_3d(T x, T y, T z);
-    _cbasic_point_3d();
+    _cbasic_point_3d(T x, T y, T z):
+        x(x),y(y),z(z)
+    {
+    }
+    _cbasic_point_3d():
+        x(0),y(0),z(0)
+    {
+    }
 
     template<typename U>
-    _cbasic_point_3d<U> convert() const;
+    _cbasic_point_3d<U> convert() const
+    {
+        return _cbasic_point_3d<U>(x,y,z);
+    }
 
     template<typename T2>
     _cbasic_tvector<T2, 3> toVector() const
@@ -145,11 +212,21 @@ struct _cbasic_point_3d : _cbasic_point
 /*!
  * \brief Template for rectangle types, used for window rectangle positioning and orthographic view
  */
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_rect
 {
-    _cbasic_rect(T x,T y,T w,T h);
-    _cbasic_rect();
+    _cbasic_rect(T x,T y,T w,T h){
+        this->x = x;
+        this->y = y;
+        this->w = w;
+        this->h = h;
+    }
+    _cbasic_rect():
+        x(0),y(0),w(0),h(0){}
 
     _cbasic_rect(_cbasic_size_2d<T> const& s)
         : _cbasic_rect(0, 0, s.w, s.h)
@@ -166,7 +243,15 @@ struct _cbasic_rect
     };
 
     template<typename T2>
-    _cbasic_rect<T2> convert() const;
+    _cbasic_rect<T2> convert() const
+    {
+        _cbasic_rect<T2> out;
+        out.x = x;
+        out.y = y;
+        out.w = w;
+        out.h = h;
+        return out;
+    }
 
     FORCEDINLINE T left() const
     {
@@ -207,7 +292,20 @@ struct _cbasic_rect
         return w*h;
     }
     FORCEDINLINE _cbasic_rect<T> intersection(const _cbasic_rect<T>& rekt)
-    ;
+
+    {
+        if(!( rekt.left() < this->right() &&
+              rekt.right() > this->left() &&
+              rekt.top() < this->bottom() &&
+              rekt.bottom() > this->top() ))
+            return _cbasic_rect<T>();
+
+        return _cbasic_rect<T>(
+                    CMath::max(rekt.x,this->x),
+                    CMath::max(rekt.y,this->y),
+                    CMath::min(rekt.w,this->w),
+                    CMath::min(rekt.h,this->h));
+    }
     FORCEDINLINE bool test(const _cbasic_point_2d<T>& point)
     {
         if(point.x>this->left()  && point.x<this->right() &&
@@ -216,7 +314,14 @@ struct _cbasic_rect
         return true;
     }
     FORCEDINLINE _cbasic_rect<T> unite(const _cbasic_rect<T>& rekt)
-    ;
+
+    {
+        return _cbasic_rect<T>(
+                    CMath::min(rekt.x,this->x),
+                    CMath::min(rekt.y,this->y),
+                    CMath::max(rekt.w,this->w),
+                    CMath::max(rekt.h,this->h));
+    }
     FORCEDINLINE _cbasic_rect<T> offset(const _cbasic_point_2d<T>& point)
     {
         return _cbasic_rect<T>(this->x+point.x,
@@ -229,7 +334,11 @@ struct _cbasic_rect
     }
 };
 
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_boundingbox
 {
     _cbasic_boundingbox(T w,T h, T d, bool centered = false)
@@ -269,7 +378,11 @@ struct _cbasic_boundingbox
 /*!
  * \brief Describes the clipping distance of a GL scene
  */
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_range
 {
     _cbasic_range()
@@ -290,7 +403,11 @@ struct _cbasic_range
     T far_;
 };
 
-template<typename T>
+template<typename T,
+
+         typename is_pod<T>::type* = nullptr
+
+         >
 struct _cbasic_fov
 {
     _cbasic_fov():
@@ -304,156 +421,6 @@ struct _cbasic_fov
 
     T h, v;
 };
-
-//#if !defined(SWIG)
-#if !defined(SWIG_PARSER)
-
-template<typename T>
-FORCEDINLINE T _cbasic_point_2d<T>::distance(const _cbasic_point_2d<T> &p)
-{
-    return CMath::sqrt(CMath::pow(this->x-p.x,2) + CMath::pow(this->y-p.y,2));
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_rect<T>::_cbasic_rect():
-    x(0),y(0),w(0),h(0){}
-
-template<typename T>
-template<typename T2>
-FORCEDINLINE _cbasic_rect<T2> _cbasic_rect<T>::convert() const
-{
-    _cbasic_rect<T2> out;
-    out.x = x;
-    out.y = y;
-    out.w = w;
-    out.h = h;
-    return out;
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_rect<T>::_cbasic_rect(T x, T y, T w, T h){
-    this->x = x;
-    this->y = y;
-    this->w = w;
-    this->h = h;
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_rect<T> _cbasic_rect<T>::intersection(const _cbasic_rect<T> &rekt)
-{
-    if(!( rekt.left() < this->right() &&
-          rekt.right() > this->left() &&
-          rekt.top() < this->bottom() &&
-          rekt.bottom() > this->top() ))
-        return _cbasic_rect<T>();
-
-    return _cbasic_rect<T>(
-                CMath::max(rekt.x,this->x),
-                CMath::max(rekt.y,this->y),
-                CMath::min(rekt.w,this->w),
-                CMath::min(rekt.h,this->h));
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_rect<T> _cbasic_rect<T>::unite(const _cbasic_rect<T> &rekt)
-{
-    return _cbasic_rect<T>(
-                CMath::min(rekt.x,this->x),
-                CMath::min(rekt.y,this->y),
-                CMath::max(rekt.w,this->w),
-                CMath::max(rekt.h,this->h));
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_2d<T>::_cbasic_size_2d()
-    : w(0), h(0)
-{
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_2d<T>::_cbasic_size_2d(T wd, T hg)
-    : w(wd),h(hg)
-{
-}
-
-template<typename T>
-FORCEDINLINE T _cbasic_size_2d<T>::area() const
-{
-    return w*h;
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_2d<T> _cbasic_size_2d<T>::operator/(const T &d)
-{
-    return _cbasic_size_2d<T>(this->w/d,this->h/d);
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_2d<T> _cbasic_size_2d<T>::operator*(const T &d)
-{
-    return _cbasic_size_2d<T>(this->w*d,this->h*d);
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_2d<T> &_cbasic_size_2d<T>::operator/=(const T &d)
-{
-    (*this) = (*this)/d;
-    return *this;
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_2d<T> &_cbasic_size_2d<T>::operator*=(const T &d)
-{
-    (*this) = (*this)*d;
-    return *this;
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_3d<T>::_cbasic_size_3d(T w, T h, T d):
-    width(w),height(h),depth(d)
-{
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_size_3d<T>::_cbasic_size_3d():
-    width(0),height(0),depth(0)
-{
-}
-
-template<typename T>
-FORCEDINLINE T _cbasic_size_3d<T>::volume()
-{
-    return width*height*depth;
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_point_2d<T>::_cbasic_point_2d(T x, T y):
-    x(x), y(y)
-{
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_point_2d<T>::_cbasic_point_2d(){}
-
-template<typename T>
-FORCEDINLINE _cbasic_point_3d<T>::_cbasic_point_3d(T x, T y, T z):
-    x(x),y(y),z(z)
-{
-}
-
-template<typename T>
-FORCEDINLINE _cbasic_point_3d<T>::_cbasic_point_3d():
-    x(0),y(0),z(0)
-{
-}
-
-template<typename T>
-template<typename U>
-FORCEDINLINE _cbasic_point_3d<U> _cbasic_point_3d<T>::convert() const
-{
-    return _cbasic_point_3d<U>(x,y,z);
-}
-
 
 using CSizeT = _cbasic_size;
 using PointT = _cbasic_point;
@@ -521,7 +488,5 @@ using BoundBox = _cbasic_boundingbox<scalar>;
 using PtF = CPointF;
 using PtD = CPointD;
 using PtI = CPoint;
-
-#endif
 
 }

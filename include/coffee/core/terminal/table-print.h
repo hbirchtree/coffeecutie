@@ -1,13 +1,11 @@
 #pragma once
 
 #include "../types/tdef/integertypes.h"
+#include "../types/cdef/geometry.h"
 #include "../types/tdef/stltypes.h"
 #include "../plat/memory/stlstring_ops.h"
 
 namespace Coffee{
-
-template<typename T> struct _cbasic_size_2d;
-using CSize = _cbasic_size_2d<int32>;
 
 struct TablePrinter_Basic
 {
@@ -65,7 +63,9 @@ struct TablePrinter_Basic
      * \param table
      * \return A string representing the input table
      */
-    static CString GenTable(Table const& table,Header const& head, CSize* size = nullptr);
+    static CString GenTable(
+            Table const& table,Header const& head,
+            CSize* size = nullptr);
 };
 
 using Table = TablePrinter_Basic;

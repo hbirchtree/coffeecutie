@@ -1,3 +1,9 @@
-coffee_add_application ( GLeamShadowTest "GLeam Shadows" main.cpp
-    "CoffeeRenderer_Default;CoffeeGLeamRHI;CoffeeCore"
+coffee_application (
+    TARGET GLeamShadowTest
+    TITLE "GLeam Shadows"
+    SOURCES main.cpp
+    LIBRARIES
+    CoffeeRenderer_Default
+    CoffeeGLeamRHI
+    CoffeeCore
     )

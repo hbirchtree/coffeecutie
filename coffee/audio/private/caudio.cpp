@@ -4,19 +4,24 @@
 #include <stb_vorbis.c>
 #include <stb.h>
 
+#include <coffee/core/CProfiling>
 #include <coffee/core/CMath>
+
+#define STB_API "STB_VORBIS::"
 
 namespace Coffee{
 namespace CAudio{
 namespace Stb{
 
-bool LoadVorbis(CAudio::AudioSample *smp, CResources::Resource *src)
+bool LoadVorbis(CAudio::AudioSample *smp, Bytes const& src)
 {
+    DProfContext _(STB_API "Decoding audio");
+
     /* C is not so good with uint64 used by our resource format*/
-    int32 data_size = C_CAST<int32>(src->size);
+    int32 data_size = C_CAST<int32>(src.size);
 
     smp->samples = C_CAST<uint32>(stb_vorbis_decode_memory(
-                C_CAST<ubyte_t*>(src->data),data_size,
+                C_CAST<ubyte_t*>(src.data),data_size,
                 reinterpret_cast<int*>(&smp->fmt.channels),
                 reinterpret_cast<int*>(&smp->fmt.samplerate),
                 &smp->data));

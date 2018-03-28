@@ -5,6 +5,9 @@
 #include <coffee/core/types/cmatrix_functions.h>
 
 namespace Coffee{
+/*!
+ * \brief Graphics rendering data, mostly for creating matrices
+ */
 namespace CGraphicsData{
 
 typedef _cbasic_graphics_camera<scalar> CGCamera;

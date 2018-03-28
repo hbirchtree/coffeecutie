@@ -99,11 +99,19 @@
 //#define COFFEE_GLES20_MODE
 //#define COFFEE_LOWFAT
 
-/* Minor prohibiting flags */
+/*
+ *
+ * Minor prohibiting flags
+ *
+ */
+
 #define COFFEE_SLAP_LOWMEM
 
-/* Standard flags */
-#define COFFEE_USE_CHRONOTIME
+/*
+ *
+ * Extra architecture info
+ *
+ */
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
@@ -119,16 +127,19 @@
 #define COFFEE_ARCH_LLP64
 #endif
 
-/* Unwind and terminal control signals are desktop-only */
-#if (defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) \
-    && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__) \
-    && !defined(COFFEE_APPLE_MOBILE) \
-    && !defined(COFFEE_MAEMO)
-#define COFFEE_USE_TERMINAL_CTL
-#if defined(LIBUNWIND_ENABLED)
-#define COFFEE_USE_UNWIND
+/* So far, no issues with big-endian vs lil' endian,
+ *  but we will keep it in mind */
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define COFFEE_BIG_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define COFFEE_LIL_ENDIAN
 #endif
-#endif
+
+/*
+ *
+ * Signalize that we are running with a special startup process
+ *
+ */
 
 #if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2)) \
     || defined(COFFEE_WINDOWS_UWP) \
@@ -140,28 +151,22 @@
 #define COFFEE_INJECTS_EVENTS_EXTERNALLY
 #endif
 
-/* Terminal size: useless on Android */
-#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
-#define COFFEE_USE_IOCTL_TERM_SIZE
-#endif
+/*
+ *
+ * Exceptions and RTTI
+ *
+ */
 
-/* So far, no issues with big-endian vs lil' endian, but we will keep it in mind */
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define COFFEE_BIG_ENDIAN
-#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define COFFEE_LIL_ENDIAN
-#endif
-
-#if (__GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ ==  9)) || \
-    defined(COFFEE_ANDROID)
-#define COFFEE_BAD_REGEX
-#endif
-
-/* Disabling exceptions and RTTI in release for size reasons */
-#if !defined(COFFEE_ANDROID) && !defined(NDEBUG)
+#if !defined(COFFEE_ANDROID)
 #define COFFEE_USE_EXCEPTIONS
 #define COFFEE_USE_RTTI
 #endif
+
+/*
+ *
+ * Platform-specific tweaks
+ *
+ */
 
 #if defined(COFFEE_ANDROID) || defined(COFFEE_LOWFAT)
 /* For Android, we limit inlining for size reasons */
@@ -169,30 +174,24 @@
 #define COFFEE_DISABLE_PROFILER
 #endif
 
-/* This enables safer, but a bit slower functions for some core functions */
-/* dirname(), basename() */
-#define COFFEE_USE_POSIX_BASENAME
+/*
+ *
+ * Library-bound switches
+ *
+ */
 
-/* OpenSSL is difficult on Windows... */
 #if defined(COFFEE_ENABLE_SSL)
 #define ASIO_USE_SSL
 #endif
 
-/* thread_local workarounds */
-#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_EMSCRIPTEN)
-#define thread_local
-#elif defined(COFFEE_APPLE)
-#define thread_local __thread
-#endif
+/*
+ *
+ * OpenGL/ES
+ *
+ */
 
 #if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
 #define COFFEE_LINKED_GLES
-#endif
-
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
-#define COFFEE_DISABLE_SRGB_SUPPORT
-#define COFFEE_USE_IMMERSIVE_VIEW
-#define COFFEE_ALWAYS_VSYNC
 #endif
 
 #if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
@@ -205,11 +204,19 @@
 #define COFFEE_ONLY_GLES20
 #endif
 
-#if defined(COFFEE_MAEMO)
-#define COFFEE_NO_FUTURES
-#define COFFEE_NO_HUGETLB
+/*
+ *
+ * Display stack
+ *
+ */
 
-#define COFFEE_NO_RUSAGE_THREAD
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
+#define COFFEE_DISABLE_SRGB_SUPPORT
+#define COFFEE_USE_IMMERSIVE_VIEW
+#define COFFEE_ALWAYS_VSYNC
+#endif
+
+#if defined(COFFEE_MAEMO)
 #define COFFEE_FRAGILE_FRAMEBUFFER
 #define COFFEE_ALWAYS_VSYNC
 #define COFFEE_X11_HILDON
@@ -228,14 +235,19 @@
 #if defined(COFFEE_APPLE_MOBILE)
 #define COFFEE_USE_APPLE_GLKIT
 #define COFFEE_USE_MAEMO_EGL
+#endif
 
-#define COFFEE_NO_SYSTEM_CMD
+#if defined(COFFEE_RASPBERRYPI)
+//#define COFFEE_RASPBERRY_DMX
+//#define COFFEE_USE_MAEMO_EGL
 #endif
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
-// This is the super-fast X11 combination, SDL2 can't even be compared to this
-// The window is guaranteed to show within 500ms
-#if !defined(COFFEE_GLEAM_DESKTOP) //You cannot load OpenGL (non-ES) with EGL :(
+/* This is the super-fast X11 combination, SDL2 can't even
+ *  be compared to this */
+/* The window is guaranteed to show within 500ms */
+#if !defined(COFFEE_GLEAM_DESKTOP)
+/* You cannot load OpenGL (non-ES) with EGL :( */
 #define COFFEE_USE_MAEMO_EGL
 #else
 #define COFFEE_USE_LINUX_GLX
@@ -243,28 +255,11 @@
 #define COFFEE_USE_MAEMO_X11
 #endif
 
-#if defined(COFFEE_RASPBERRYPI)
-#define COFFEE_RASPBERRY_DMX
-#define COFFEE_USE_MAEMO_EGL
-#endif
-
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)
-#define COFFEE_NO_ATEXIT
-#endif
-
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
-    || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
-#define COFFEE_NO_EXECVPE
-#endif
-
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_EXECVPE)
-#define COFFEE_USE_EXECVPE
-#endif
-
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
-#define COFFEE_NO_PTHREAD_SETNAME_NP
-#define COFFEE_NO_PTHREAD_GETNAME_NP
-#endif
+/*
+ *
+ * Compression systems
+ *
+ */
 
 #if !defined(COFFEE_WINDOWS)
 /* Zlib comes bundled with pretty much all POSIX systems
@@ -274,19 +269,123 @@
 #define COFFEE_BUILD_WINDOWS_DEFLATE
 #endif
 
+/*
+ *
+ * System calls
+ *
+ */
+
+/* Standard flags */
+#define COFFEE_USE_CHRONOTIME
+
+#if defined(COFFEE_MAEMO) || defined(COFFEE_GEKKO)
+#define COFFEE_NO_TIME_FORMAT
+#endif
+
+/* Unwind and terminal control signals are desktop-only */
+#if (defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) \
+    && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__) \
+    && !defined(COFFEE_APPLE_MOBILE) \
+    && !defined(COFFEE_MAEMO)
+#define COFFEE_USE_TERMINAL_CTL
+#if defined(LIBUNWIND_ENABLED)
+#define COFFEE_USE_UNWIND
+#endif
+#endif
+
+/* Terminal size: useless on Android */
+#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
+#define COFFEE_USE_IOCTL_TERM_SIZE
+#endif
+
+#if (__GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ ==  9)) || \
+    defined(COFFEE_ANDROID)
+#define COFFEE_BAD_REGEX
+#endif
+
+/* This enables safer, but a bit slower functions for some core functions */
+/* dirname(), basename() */
+#define COFFEE_USE_POSIX_BASENAME
+
+#if defined(COFFEE_MAEMO)
+#define COFFEE_NO_FUTURES
+/* Strict POSIX rules apply sometimes */
+#define COFFEE_NO_HUGETLB
+#define COFFEE_NO_MMAP64
+#define COFFEE_NO_CANONICALIZE
+#define COFFEE_NO_RUSAGE_THREAD
+#endif
+
 #if defined(COFFEE_ANDROID)
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
+
+#if defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_NO_SYSTEM_CMD
+#endif
+
+#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_NO_ATEXIT
+#endif
+
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) \
+    || defined(COFFEE_NACL) || defined(COFFEE_MAEMO) \
+    || defined(COFFEE_APPLE)
+#define COFFEE_NO_EXECVPE
+#endif
+
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_EXECVPE)
+#define COFFEE_USE_EXECVPE
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
+    || defined(COFFEE_MAEMO)
+#define COFFEE_NO_PTHREAD_SETNAME_NP
+#define COFFEE_NO_PTHREAD_GETNAME_NP
+#endif
+
+/*
+ *
+ * thread_local workarounds
+ *
+ */
 
 #if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_NO_TLS
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)
+/*
+ * Support for thread_local arrived in Xcode 8.
+ * If you are on Xcode 7 or below, take this.
+ * #define COFFEE_XCODE_NO_TLS
+ */
+
+#if defined(COFFEE_EMSCRIPTEN) \
+    || defined(COFFEE_RASPBERRYPI) \
+    || defined(COFFEE_MAEMO)
+#define thread_local
+#elif (defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
+#define thread_local __thread
+#endif
+
+/*
+ *
+ * Platform output switching
+ *
+ */
+
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) \
+    || defined(COFFEE_NACL)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)\
+/*
+ *
+ * Implementation stubbing
+ *
+ */
+
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_GEKKO)
 
 #if !defined(COFFEE_EMSCRIPTEN)
@@ -298,17 +397,30 @@
 #define COFFEE_STUBBED_STACKTRACE
 #define COFFEE_STUBBED_CFILE
 #define COFFEE_STUBBED_DYNLOADER
+
 #endif
 
 #if defined(COFFEE_GEKKO)
 #define COFFEE_STUBBED_TIMING
 #endif
 
+/*
+ *
+ * Gekko switches, because it has nothing
+ *
+ */
+
 #if defined(COFFEE_GEKKO)
 #define COFFEE_NO_THREADLIB
 #define COFFEE_NO_FUTURES
 #define COFFEE_PLAIN_INT_TYPES
 #endif
+
+/*
+ *
+ * SDL stuff, because it is default
+ *
+ */
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
@@ -336,7 +448,11 @@
 #define COFFEE_USE_SDL_EVENT
 #endif
 
-/* And here comes some simplification for configuration issues */
+/*
+ *
+ * And here comes some simplification for configuration issues
+ *
+ */
 
 #if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_GLEAM_DESKTOP)
 #error Invalid configuration detected, cannot use GLES2.0 mode with desktop GL!

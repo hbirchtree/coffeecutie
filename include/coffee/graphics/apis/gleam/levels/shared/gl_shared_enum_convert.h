@@ -34,7 +34,7 @@ FORCEDINLINE CGenum to_enum(DrwMd m)
 }
 CGenum to_enum(bool pack, PixelOperation f);
 CGenum to_enum(PixelFormat f, PixelFlags e = PixelFlags::None,
-                            CompFlags d = CompressionNone);
+               CompFlags d = CompFlags::CompressionNone);
 /*!
      * \brief Returns GL_*_SHADER enum
      * \param f

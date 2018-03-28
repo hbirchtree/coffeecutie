@@ -46,7 +46,7 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileMap(rsc);
         cDebug("Mapping file succeeded, size={0},ptr={1}",rsc.size,
                (uintptr_t)rsc.data);
-        if(!Stb::LoadVorbis(&smp,&rsc))
+        if(!Stb::LoadVorbis(&smp,C_OCAST<Bytes>(rsc)))
         {
             cDebug("Failed to load audio file: {0}",rsc.resource());
             return;

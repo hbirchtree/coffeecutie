@@ -23,7 +23,12 @@ CString extArgReplace(const CString &fmt, const size_t &index, const CString &re
 }
 
 template<typename T,
-         typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+
+         typename std::enable_if<
+             std::is_floating_point<T>::value, bool>::type*
+         = nullptr
+
+         >
 CString cStringReplace(
         CString const& fmt, size_t const& index,
         T const& arg)

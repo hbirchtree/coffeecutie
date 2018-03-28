@@ -49,7 +49,9 @@ void GCInfiniteLoop()
 
 using namespace Coffee;
 
-int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
+int deref_main(CoffeeMainWithArgs mainfun,
+               int argc, char** argv,
+               u32 flags = 0)
 {
     cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
 
@@ -69,12 +71,11 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 #elif defined(COFFEE_WINDOWS_UWP)
 	InitCOMInterface();
 #elif defined(COFFEE_ANDROID)
-    Profiler::ResetPointers();
     Sensor::Android::Android_InitSensors();
 
     atexit(Sensor::Android::Android_DestroySensors);
 #endif
-    int stat = Coffee::CoffeeMain(mainfun,argc,argv);
+    int stat = Coffee::CoffeeMain(mainfun,argc,argv, flags);
 
 #if defined(COFFEE_GEKKO)
     GCInfiniteLoop();
@@ -91,3 +92,20 @@ extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv)
 {
     return deref_main(mainfun, argc, argv);
 }
+
+#include <coffee/core/coffee_version.h>
+
+namespace Coffee{
+#ifndef COFFEE_LOADABLE_LIBRARY
+extern CoffeeApplicationData app_data;
+#endif
+
+const CoffeeApplicationData& ApplicationData()
+{
+#ifdef COFFEE_LOADABLE_LIBRARY
+    static CoffeeApplicationData app_data;
+#endif
+    return app_data;
+}
+}
+

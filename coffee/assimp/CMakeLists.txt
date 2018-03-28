@@ -2,7 +2,6 @@ find_package(assimp REQUIRED)
 
 set ( CoffeeAssimp_SRCS
         private/cassimpimporters.cpp
-        private/assimpfun.cpp
         )
 
 coffee_add_library (

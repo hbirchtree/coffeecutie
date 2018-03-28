@@ -45,7 +45,7 @@
 
 #endif
 
-#if !defined(COFFEE_MAEMO)
+#if !defined(COFFEE_MAEMO) && !defined(COFFEE_ANDROID)
 #define C_NORETURN [[noreturn]]
 
 #else

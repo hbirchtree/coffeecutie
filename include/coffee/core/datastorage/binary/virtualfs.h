@@ -1,12 +1,15 @@
 #pragma once
 
+#include <coffee/interfaces/byte_provider.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
 
 namespace Coffee{
 
 struct Url;
+namespace CResources{
 struct Resource;
+}
 
 /*! \brief VirtualFS is used to store an asset file system in a single file.
  * Referring into it is done using filenames, and all the files are
@@ -159,11 +162,18 @@ public:
     Resource(VFS const* base,
              Url const& url);
 
+    C_MOVE_CONSTRUCTOR(Resource);
+
     /*!
      * \brief Check validity of resource and/or data it returns
      * \return
      */
     bool valid() const;
+
+    cstring resource() const
+    {
+        return file->name;
+    }
     /*!
      * \brief Return the data contained in the virtual file.
      *  If the file in question is compressed,
@@ -172,9 +182,14 @@ public:
      */
     Bytes data() const;
 
-    operator Bytes() const
+    operator Bytes()
     {
         return data();
+    }
+
+    operator Path() const
+    {
+        return Path(file->name);
     }
 };
 
@@ -194,8 +209,10 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     vfs_iterator(VFS const* vfs, szptr idx):
         m_vfs(vfs),
         m_idx(idx),
-        m_file(VFS::GetFile(vfs, idx))
+        m_file(vfs ? VFS::GetFile(vfs, idx): nullptr)
     {
+        if(!m_vfs)
+            m_idx = npos;
     }
 
     vfs_iterator& operator++()
@@ -220,7 +237,7 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     VFile const& operator*() const
     {
         if(!m_file)
-            throw std::out_of_range("non-existent virtual file");
+            throw resource_error("non-existent virtual file");
         return *m_file;
     }
 
@@ -284,6 +301,13 @@ struct VirtDesc
 extern bool GenVirtFS(
         Vector<VirtDesc> const& filenames,
         Vector<byte_t>* output);
+
+FORCEDINLINE Url operator "" _vfs(const char* url, size_t)
+{
+    Url out = MkUrl(url);
+    out.category = Url::Memory;
+    return out;
+}
 
 }
 

@@ -129,13 +129,13 @@ static JNIEnv* coffee_jni_env;
 
 extern CoffeeMainWithArgs android_entry_point;
 
-void* coffee_event_handling_data;
+extern void* coffee_event_handling_data;
 
-void(*CoffeeEventHandle)(void*, int);
-void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
+void(*CoffeeEventHandle_Platform)(void*, int);
+void(*CoffeeEventHandleNA_Platform)(void*, int, void*, void*, void*);
 
-void(*CoffeeForeignSignalHandle)(int);
-void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
+void(*CoffeeForeignSignalHandle_Platform)(int);
+void(*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
 
 extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 

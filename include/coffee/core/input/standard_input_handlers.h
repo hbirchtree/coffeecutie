@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/core/base/types/cdisplay.h>
-#include <coffee/core/base/input/cinput.h>
 #include "cinputfunctions.h"
 #include <coffee/core/types/edef/logicenum.h>
 #include <coffee/core/base/renderer/eventapplication.h>

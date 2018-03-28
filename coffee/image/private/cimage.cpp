@@ -1,5 +1,5 @@
 #include <coffee/image/cimage.h>
-
+#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -8,6 +8,8 @@
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
+
+#define STB_ABI "STB::"
 
 namespace Coffee{
 namespace CStbImageLib{
@@ -20,6 +22,8 @@ bool LoadData(CStbImage *target, const Resource *src, PixelComponents comp)
 bool LoadData(CStbImage *target, BytesConst const& src,
               PixelComponents comp)
 {
+    DProfContext _(STB_ABI "Loading image");
+
     int scomp = STBI_rgb_alpha;
 
     switch(comp)
@@ -69,6 +73,8 @@ bool Resize(CStbImage *img, const CSize &target, int channels)
 
 bool SavePNG(Resource *target, const CStbImageConst *src)
 {
+    DProfContext _(STB_ABI "Saving PNG image");
+
     return stbi_write_png_to_func(_stbi_write_data,target,
                                   src->size.w,src->size.h,
                                   src->bpp,src->data,src->size.w*4);
@@ -81,6 +87,8 @@ bool SavePNG(Resource *target, const CStbImage *src)
 
 bool SaveTGA(Resource *target, const CStbImage *src)
 {
+    DProfContext _(STB_ABI "Saving TGA image");
+
     return stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
 }
 
@@ -199,13 +207,39 @@ bool IMG::LoadBytes(Bytes const&src, PixCmp cmp, BitFmt &fmt,
 
         res = img.size;
 
-        Bytes::SetDestr(data, [](Bytes& inst)
-        {
-            stbi_image_free(inst.data);
-        });
+        if(res.area() > 0)
+            Bytes::SetDestr(data, [](Bytes& inst)
+            {
+                stbi_image_free(inst.data);
+                inst.data = nullptr;
+            });
     }
 
     return true;
+}
+
+Bytes PNG::Save(const Bytes &src, const CSize &res)
+{
+    Stb::Img im;
+    Bytes output;
+    Resource target("");
+
+    im.bpp = 4;
+    im.size = res;
+    im.data = src.data;
+
+    Stb::SavePNG(&target, &im);
+
+    output.data = C_RCAST<byte_t*>(target.data);
+    output.size = target.size;
+    Bytes::SetDestr(output, [](Bytes& b)
+    {
+        Stb::Img im;
+        im.data = b.data;
+        Stb::ImageFree(&im);
+    });
+
+    return output;
 }
 
 }

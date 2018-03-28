@@ -70,30 +70,6 @@ enum class AttribMode
 #endif
 };
 
-enum CompFlags
-{
-    CompressionNone,
-
-    ASTC_4x4,
-    ASTC_5x4,
-    ASTC_5x5,
-    ASTC_6x5,
-    ASTC_6x6,
-    ASTC_8x5,
-    ASTC_8x6,
-    ASTC_8x8,
-    ASTC_10x5,
-    ASTC_10x6,
-    ASTC_10x8,
-    ASTC_10x10,
-    ASTC_12x10,
-    ASTC_12x12,
-
-    S3TC_1,
-    S3TC_3,
-    S3TC_5,
-};
-
 enum class RetrieveStrategy
 {
     Await,

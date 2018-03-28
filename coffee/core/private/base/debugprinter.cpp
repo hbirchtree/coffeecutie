@@ -1,5 +1,6 @@
 #include <coffee/core/base/debug/debugprinter.h>
 #include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/internal_state.h>
 
 namespace Coffee{
 namespace DebugFun{
@@ -59,6 +60,7 @@ void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
                                   StrUtil::lpad(ms_time, '0', 3)
                                   );
     prefix = cStringFormat("{0}:", clock.c_str());
+    prefix.append(ThreadGetName() + ":");
     prefix.push_back(severity_str[0]);
 
     ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));
@@ -71,7 +73,7 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
     C_USED(sev);
 
     if(locking)
-        PrinterLock.lock();
+        State::GetPrinterLock().lock();
 #if defined(COFFEE_ANDROID)
     int flag = 0;
 
@@ -116,7 +118,7 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
     Puts(stream,formatted.c_str());
 #endif
     if(locking)
-        PrinterLock.unlock();
+        State::GetPrinterLock().unlock();
 }
 
 }

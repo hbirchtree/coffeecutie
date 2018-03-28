@@ -12,6 +12,8 @@
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/interfaces/cgraphics_pixops.h>
 
+#include <coffee/core/CProfiling>
+
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -19,6 +21,16 @@ namespace RHI{
 namespace GLEAM{
 
 using GLC = CGL_Implementation;
+
+GraphicsAPI_Threading::GraphicsQueue &GLEAM_API::Queue(u32 idx)
+{
+    C_PTR_CHECK(m_store);
+
+    if(idx != 0)
+        throw std::invalid_argument("multi-threading not supported");
+
+    return GLEAM_API_THREAD;
+}
 
 void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixFmt c, BitFmt dt, Vector<byte_t> &storage)
 {
@@ -90,6 +102,8 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data *p)
 
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
+    DProfContext _(GLM_API "LoadAPI()");
+
     CGL33::Debug::SetDebugGroup("Loading GLEAM");
 
     if(m_store)
@@ -105,6 +119,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         CGL33::Debug::UnsetDebugGroup();
         return false;
     }
+
+    store->GpuThread = GraphicsQueue(RuntimeQueue::GetCurrentQueue());
 
     cVerbose(8, GLM_API "Creating instance data");
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
@@ -852,6 +868,17 @@ void GLEAM_API::SetShaderUniformState(
 void GLEAM_API::PreDrawCleanup()
 {
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
+}
+
+void GLEAM_API::DisposePixelBuffers()
+{
+#if !defined(COFFEE_ONLY_GLES20)
+    auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
+    for(auto& buf : queue.buffers)
+        CGL33::BufFree(1, &buf.buf);
+
+    queue.buffers.clear();
+#endif
 }
 
 void GLEAM_API::OptimizeRenderPass(

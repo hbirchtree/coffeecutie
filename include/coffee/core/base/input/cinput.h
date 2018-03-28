@@ -5,6 +5,10 @@
 #include "cinput_keymap.h"
 
 namespace Coffee{
+/*!
+ * \brief Input structures and enums, are commonly used by
+ *  Display namespace
+ */
 namespace CInput{
 
 constexpr szptr ci_max_text_edit_size = 32;
@@ -36,8 +40,8 @@ struct
         HapticDev,/*!< Sent when a new haptic device is connected or disconnected*/
         Haptic,/*!< Transmitted when user wants to create a rumble event*/
 
-        TouchTap, /*!< Touch event, motion and etc. */
-        TouchMotion, /*!< Touch event, motion and etc. */
+        TouchTap, /*!< Single-finger tap */
+        TouchMotion, /*!< Single-finger movement on screen */
         TouchPan, /*!< Multi-touch events using several fingers*/
         TouchPinch, /*!< Two-finger pinch */
         TouchRotate, /*!< Two-finger rotation */

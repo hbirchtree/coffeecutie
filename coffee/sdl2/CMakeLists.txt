@@ -20,7 +20,9 @@ set ( CoffeeSDL2Audio_SRCS
     )
 
 if(NOT EMSCRIPTEN)
-    find_package ( SDL2 REQUIRED )
+    if(NOT TARGET SDL2)
+        find_package ( SDL2 REQUIRED )
+    endif()
 
     set ( LIBS
         SDL2
@@ -42,12 +44,10 @@ target_include_directories ( CoffeeSDL2
     )
 
 if(NOT EMSCRIPTEN)
-    if(SDL2_INCLUDE_DIR)
-        target_include_directories ( CoffeeSDL2
-            PRIVATE
-            $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
-            )
-    endif()
+    target_include_directories ( CoffeeSDL2
+        PRIVATE
+        $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+        )
 
     coffee_bundle_includes( ${SDL2_INCLUDE_DIR} )
     coffee_bundle_library( ${SDL2_LIBRARY} )

@@ -6,6 +6,33 @@
 #include <coffee/core/types/edef/pixenum.h>
 
 namespace Coffee{
+namespace IMG{
+
+/*!
+ * \brief For the cases when you need to store an image descriptor
+ *  on disk, does not have any assumptions on format.
+ */
+struct serial_image
+{
+    static constexpr const u32 hard_signature = 0xBEEF1B01;
+
+    u32 signature = hard_signature;
+    _cbasic_size_2d<u32> size;
+    PixFmt fmt;
+    BitFmt bit_fmt;
+    CompFlags comp_fmt;
+
+    bool valid() const
+    {
+        return signature == hard_signature;
+    }
+};
+
+}
+
+/*!
+ * \brief Wrappers around stb_image for C++, not very abstract
+ */
 namespace CStbImageLib{
 
 /*!
@@ -39,7 +66,7 @@ extern void Error();
  * \return True if success
  */
 extern bool LoadData(CStbImage* target,
-                     const Resource* src,
+                     const CResources::Resource* src,
                      PixelComponents comp = PixelComponents::RGBA);
 
 extern bool LoadData(CStbImage* target,
@@ -81,7 +108,7 @@ extern bool Resize(
  * \return
  */
 extern bool SavePNG(
-        Resource* target,
+        CResources::Resource* target,
         const CStbImageConst* src);
 /*!
  * \brief Save STB image to PNG file
@@ -90,7 +117,7 @@ extern bool SavePNG(
  * \return
  */
 extern bool SavePNG(
-        Resource* target,
+        CResources::Resource* target,
         const CStbImage* src);
 /*!
  * \brief Save STB image to TGA file
@@ -122,6 +149,9 @@ extern void ImageFree(CStbImage* img);
 
 } //CStbImageLib
 
+/*!
+ * \brief Image-related functions, not from STB
+ */
 namespace CImage{
 
 /*!
@@ -136,6 +166,9 @@ extern void SaveTGA(const CSize &resolution,
 
 }
 
+/*!
+ * \brief Wrapping functions for simpler usage
+ */
 namespace IMG
 {
 extern bool LoadBytes(Bytes const& src, PixCmp cmp, BitFmt &fmt,
@@ -154,6 +187,14 @@ STATICINLINE bool Load(Resource&& r, PixCmp cmp, BitFmt &fmt,
 namespace PNG
 {
 extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);
+
+/*!
+ * \brief Save image data from RGBA8 format into PNG data
+ * \param src
+ * \param res
+ * \return
+ */
+extern Bytes Save(Bytes const& src, CSize const& res);
 }
 
 namespace TGA

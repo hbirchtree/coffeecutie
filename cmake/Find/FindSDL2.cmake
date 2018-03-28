@@ -86,14 +86,14 @@ if(NOT WIN_UWP)
 		)
 endif()
 
-#if(NOT EMSCRIPTEN)
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
     HINTS
     $ENV{SDL2DIR}
     PATH_SUFFIXES include/SDL2 include
     PATHS ${SDL2_SEARCH_PATHS}
     )
-#endif()
+
+get_filename_component ( SDL2_INCLUDE_DIR "${SDL2_INCLUDE_DIR}" REALPATH )
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
   NAMES
@@ -183,8 +183,12 @@ IF(SDL2_LIBRARY_TEMP)
   ENDIF(MINGW)
 
   if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-      find_package ( X11 QUIET )
-      find_package ( Wayland QUIET )
+      if(NOT DEFINED X11_LIBRARIES)
+          find_package ( X11 QUIET )
+      endif()
+      if(NOT DEFINED WAYLAND_LIBRARIES)
+          find_package ( Wayland QUIET )
+      endif()
 
       if(X11_FOUND)
           SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP}

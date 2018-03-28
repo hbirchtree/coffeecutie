@@ -6,10 +6,28 @@
 #include <limits>
 #include <stdint.h>
 
-#if defined(COFFEE_MACRO_CASTS)
-#define C_CAST(type, var) static_cast<type>(var)
-#define C_DCAST(type, var) dynamic_cast<type>(var)
-#else
+#define E_IF std::enable_if
+#define IS_CLS std::is_class
+#define IS_POLY std::is_polymorphic
+
+namespace Coffee{
+
+template<class T>
+/*!
+ * \brief is_not_virtual is used to guard against serializing
+ *  polymorphic classes, which are generally not serializable.
+ */
+struct is_not_virtual
+{
+    typedef typename
+    E_IF<!IS_POLY<T>::value>::type type;
+};
+
+}
+
+#undef E_IF
+#undef IS_CLS
+#undef IS_POLY
 
 #define IS_SIGNED(Type) std::is_signed<D>::value
 #define IS_USIGNED(Type) std::is_unsigned<D>::value
@@ -55,6 +73,7 @@ template<typename D,
 /*!
  * \brief If there is a risk of going out of the
  *  range of type D, return the closest value.
+ *  Never underflows or overflows.
  * \param from
  * \return
  */
@@ -102,36 +121,24 @@ static inline D C_FCAST(T from)
         else
             return from;
     }
-
-//    return (from_signed > max_signed)
-//            ? max_val
-//            : (from_signed < min_signed)
-//              ? min_val
-//              : from;
 }
 
 #else
 
 template<typename D, typename T,
 		 typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr>
+/*!
+ * \brief Substitute function for Windows,
+ *  because the above functions don't compile under MSVC.
+ * \param from
+ * \return
+ */
 static inline D C_FCAST(T from)
 {
 	return static_cast<D>(from);
 }
 
 #endif
-
-//template<typename D,
-//         typename T,
-
-//         typename std::enable_if<IS_INT(D), D>::type* = nullptr,
-//         typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
-
-//         >
-//static inline D C_FCAST(T from)
-//{
-//    return static_cast<D>(from);
-//}
 
 template<typename D,
          typename T,
@@ -143,7 +150,7 @@ template<typename D,
 
          >
 /*!
- * \brief Simple reinterpretation of a pointer
+ * \brief Simple reinterpretation of a pointer, does not allow breaking const rules.
  * \param from
  * \return
  */
@@ -159,6 +166,11 @@ template<typename D,
          typename std::enable_if<IS_PTR(T), T>::type* = nullptr
 
          >
+/*!
+ * \brief For converting pointer to integer type.
+ * \param from
+ * \return
+ */
 static inline D C_FCAST(T from)
 {
     return reinterpret_cast<D>(from);
@@ -173,6 +185,12 @@ template<typename D,
          typename std::enable_if<IS_CONST(T), D>::type* = nullptr,
          typename std::enable_if<IS_PTR(T), T>::type* = nullptr
          >
+/*!
+ * \brief This overload operates on the pointer type. Example:
+ * `char* const` -> `char*`
+ * \param from
+ * \return
+ */
 static inline D C_FCAST(T from)
 {
     using T_not_const = typename std::remove_cv<T>::type;
@@ -182,34 +200,45 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<IS_PTR(D) && IS_PTR(T), D>::type* = nullptr,
+         typename std::enable_if<IS_PTR(D) && IS_PTR(T),
+                                 D>::type* = nullptr,
 
-         typename std::enable_if<IS_POD(RP(D)) && !IS_CONST(RP(D)), bool>::type* = nullptr,
-         typename std::enable_if<IS_POD(RP(T)) && IS_CONST(RP(T)), bool>::type* = nullptr
+         typename std::enable_if<IS_POD(RP(D)) && !IS_CONST(RP(D)),
+                                 bool>::type* = nullptr,
+         typename std::enable_if<IS_POD(RP(T)) && IS_CONST(RP(T)),
+                                 bool>::type* = nullptr
 
          >
+/*!
+ * \brief This overload is for the case:
+ * `const char*` -> `char*`, operating on the inner type.
+ * \param from
+ * \return
+ */
 static inline D C_FCAST(T from)
 {
     using T_not_const =
-    typename std::add_pointer<typename std::remove_const<typename std::remove_pointer<T>::type>::type>::type;
+    typename std::add_pointer<typename std::remove_const<
+    typename std::remove_pointer<T>::type>::type>::type;
 
     return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
 
-//template<typename D, typename T>
-//static inline D C_FFCAST(T from)
-//{
-//    return (D)from;
-//}
-
 template<typename D, typename T>
+/*!
+ * \brief C_CAST is for the cases where a static cast is acceptable. For example, when you *want* -1 to underflow.
+ * Also used for enum casts
+ * Few cases.
+ * \param from
+ * \return
+ */
 static inline constexpr D C_CAST(T from)
 {
     return static_cast<D>(from);
 }
+
 template<typename D, typename T,
          typename std::enable_if<std::is_class<T>::value
-                                 && std::is_class<D>::value
                                  >::type* = nullptr>
 /*!
  * \brief For coercing a class/struct into another type,
@@ -242,10 +271,12 @@ static inline constexpr D C_CCAST(T from)
 {
     return const_cast<D>(from);
 }
-template<typename D, typename T>
+template<typename D, typename T,
+         typename Coffee::is_not_virtual<T>::type* = nullptr>
 /*!
  * \brief Should not be used with class/struct types,
  *  unless going from void* to class T.
+ * Virtual classes are *NOT* allowed.
  * \param from
  * \return
  */
@@ -257,10 +288,30 @@ static inline constexpr D C_RCAST(T from)
 namespace Coffee {
 
 template<typename Interface, typename Implementation>
+/*!
+ * \brief checks for inheritance only, and is used to enforce
+ *  the presence of methods/operators.
+ * This is used in place of plain template<typename T>.
+ * Yes, this is like virtual functions,
+ *  but only checked at compile-time.
+ */
 struct implements
 {
     typedef typename std::enable_if<
     std::is_base_of<Interface, Implementation>::value
+    >::type type;
+};
+
+template<typename T>
+/*!
+ * \brief For cases where a template argument should require a
+ *  basic type. Vector types, matrix types, sizes and etc. use
+ *  this to avoid errors with class operators.
+ */
+struct is_pod
+{
+    typedef typename std::enable_if<
+    std::is_pod<T>::value
     >::type type;
 };
 
@@ -276,4 +327,3 @@ struct implements
 
 #define C_CAST(type, var) C_CAST<type>(var)
 #define C_DCAST(type, var) C_DCAST<type>(var)
-#endif

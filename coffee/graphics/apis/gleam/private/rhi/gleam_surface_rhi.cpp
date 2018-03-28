@@ -31,30 +31,15 @@ STATICINLINE void texture_pbo_upload(
     if(m_flags&GLEAM_API::TextureDMABuffered)
     {
         data_ptr = 0x0;
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0
-                || GL_CURR_API==GLES_3_2)
-        {
-            CGL33::BufBind(
-                        BufType::PixelUData,
-                        GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
-            CGL33::BufData(
-                        BufType::PixelUData,
-                        pixSize,
-                        data.data,
-                        ResourceAccess::WriteOnly
-                        |ResourceAccess::Persistent);
-        }else if (GL_CURR_API == GL_4_3)
-        {
-            CGL43::BufBind(
-                        BufType::PixelUData,
-                        GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
-            CGL43::BufStorage(
-                        BufType::PixelUData,
-                        pixSize,
-                        data.data,
-                        ResourceAccess::WriteOnly
-                        |ResourceAccess::Persistent);
-        }
+        CGL33::BufBind(
+                    BufType::PixelUData,
+                    GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
+        CGL33::BufData(
+                    BufType::PixelUData,
+                    pixSize,
+                    data.data,
+                    ResourceAccess::WriteOnly
+                    |ResourceAccess::Persistent);
     }
 #endif
 }

@@ -35,6 +35,7 @@ struct LinuxProcessProperty : ProcessPropertyDef
     }
     STATICINLINE bool CoreAffinity(Thread& thr, uint32 i)
     {
+#if !defined(COFFEE_MAEMO)
         cpu_set_t t;
         CPU_ZERO(&t);
         CPU_SET(i,&t);
@@ -42,6 +43,9 @@ struct LinuxProcessProperty : ProcessPropertyDef
                                          sizeof(cpu_set_t),
                                          &t);
         return out==0;
+#else
+        return false;
+#endif
     }
 
     STATICINLINE PID Pid()

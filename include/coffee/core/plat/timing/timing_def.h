@@ -78,15 +78,15 @@ struct PosixIshTimeDef : public TimeDef
 	{
 		constexpr cstring fmt = "%Y-%m-%dT%H:%M:%S";
 		struct tm time_s = {};
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_TIME_FORMAT)
 		if (strptime(src, fmt, &time_s))
-#elif !defined(COFFEE_GEKKO)
+#elif !defined(COFFEE_NO_TIME_FORMAT)
 		std::istringstream ss(src);
 		ss.imbue(std::locale(setlocale(LC_ALL,nullptr)));
 		ss >> std::get_time(&time_s,fmt);
 		if(!ss.fail())
 #endif
-#if !defined(GEKKO)
+#if !defined(COFFEE_NO_TIME_FORMAT)
 			return mktime(&time_s);
 		else
 #endif

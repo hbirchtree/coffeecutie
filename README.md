@@ -22,12 +22,13 @@ Game engine with platform support for Linux, OS X, Windows, Android
      - Packaging solutions such as Flatpak and Snap kind of work, but not really
    - Windows
      - Win32 is the only one that works properly, it also bakes resources into the executable
-     - UWP is underway, but it will probably run on ANGLE (no plans for D3D support)
+     - UWP halfway works, file system access is broken, requires ANGLE, and runs on the OpenGL ES 2.0 rendering code.
    - Android (only ARM64 and ARMv7a are truly tested, but it compiles for MIPS\* and x86\_\*!)
-   - Mac OS X (compiles for iOS as well, but no guarantee of actually working)
-   - Emscripten (barely works)
-   - NaCL (barely works)
+   - Mac OS X
+   - iOS support usually works, and is on par with Android support in terms of touch support
+   - Emscripten
  - Has OpenGL backends for 3.3 and 4.3, OpenGL ES backends for 2.0 and 3.0
+   - The OpenGL ES 2.0 backend is not optimal, but it sure is fast!
 
 # Platform support tl;dr
  - Linux support is dandy, always maintained

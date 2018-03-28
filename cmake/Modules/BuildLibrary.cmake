@@ -140,7 +140,6 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
         PRIVATE
         -DCOFFEE_APPLICATION_LIBRARY
         )
-
     if(ANDROID)
         install(
             TARGETS
@@ -223,4 +222,34 @@ macro(COFFEE_ADD_LIBRARY TARGET SOURCES LIBRARIES HEADER_DIR)
         "2.0" "hbirchtree" "hbirchtree"
         "${SOURCES}" "${HEADER_DIR}" "" ""
         "${LIBRARIES}" "")
+endmacro()
+
+macro(COFFEE_LIBRARY)
+    set ( LIB_LINKAGE "${COFFEE_LINK_OPT}" )
+    set ( LIB_VERSION_CODE "1" )
+    set ( LIB_COPYRIGHT "hbirchtree" )
+    set ( LIB_COMPANY "hbirchtree" )
+
+    cmake_parse_arguments(
+        LIB
+        ""
+        "TARGET;LINKAGE;VERSION_CODE;COPYRIGHT;COMPANY"
+        "SOURCES;LIBRARIES;HEADER_DIRS;RESOURCES;BUNDLE_LIBRARIES;BUNDLE_HEADERS"
+        ${ARGN}
+        )
+
+    coffee_add_framework(
+        "${LIB_TARGET}"
+        "${LIB_LINKAGE}"
+        "${LIB_VERSION_CODE}"
+        "${LIB_COPYRIGHT}"
+        "${LIB_COMPANY}"
+        "${LIB_SOURCES}"
+        "${LIB_HEADER_DIRS}"
+        "${LIB_RESOURCES}"
+        "${LIB_BUNDLE_HEADERS}"
+        "${LIB_LIBRARIES}"
+        "${LIB_BUNDLE_LIBRARIES}"
+        )
+
 endmacro()

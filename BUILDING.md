@@ -16,20 +16,16 @@
  - Ninja-build on Linux and OSX, to help the compile time
  - Some time
 
-        # Tip: use
-        cmake ${PROJECT_DIR} -LH
-        # to get build options
-
 Provided is a wide array of Makefiles which will automatically download dependencies and build the project.
 
 ## Using the Makefiles on *nix
 
 Navigate to a directory outside the source tree, and do as follows:
 
- 1. Install dependencies (supports OS X with Brew and Ubuntu):
+ 1. Install dependencies (for OSX only):
+    Refer to README.Linux.md for further details on Linux.
 
-        cd $SOURCE_DIR/tools/ci/
-        TRAVIS_OS_NAME=*linux|osx* ./travis-deps.sh
+        TRAVIS_OS_NAME=osx $SOURCE_DIR/tools/ci//travis-deps.sh
 
  2. Build it
 
@@ -41,9 +37,13 @@ Navigate to a directory outside the source tree, and do as follows:
 Where TARGET is one of the targets found in the Makefile.
 This process will download SDKs for most platforms, contained inside Docker containers.
 
+To list available targets:
+
+        $SOURCE_DIR/quick-build.sh list
+
 By default, this method uses Docker containers on Linux (this is not necessary for OS X/iOS targets). In order to generate a native environment, the following environment variable may be defined:
 
-	RUNNER=Makefile.workspace
+        BUILD_MODE=bare
 
 This changes the runtime of the build to become the bare-metal system. Android builds will require ANDROID\_SDK and ANDROID\_NDK to be defined, and Emscripten is untested. Systems with special toolchains (eg. Fedora, Ubuntu, SteamOS) will not work with this.
 
