@@ -13,6 +13,8 @@ if __name__ == '__main__':
                       help='source directory containing build.yml',
                       default=dirname(realpath(__file__)))
 
+    args.add_argument('--version', action='store_true')
+
     args.add_argument('increment_type', type=str,
                       choices=['none'] + version_vars,
                       help='which part of version to increment',
@@ -76,5 +78,8 @@ if __name__ == '__main__':
 
         save_yaml_file(build_config, config)
 
-    print(version_prefix + print_version(version_cfg))
+    if not args.version:
+        print(version_prefix + print_version(version_cfg))
+    else:
+        print(print_version(version_cfg))
 

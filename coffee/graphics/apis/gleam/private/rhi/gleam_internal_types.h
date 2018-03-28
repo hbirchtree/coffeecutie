@@ -22,7 +22,7 @@ using CGL43 = CGLES20;
 
 using namespace CGL;
 
-extern thread_local GLEAM_DataStore* m_store;
+extern GLEAM_DataStore* m_store;
 
 struct GLEAM_PboQueue
 {
