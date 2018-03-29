@@ -24,10 +24,12 @@ struct DataPointGenerator
 {
     DataPointGenerator()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
         for(auto const& p : State::GetProfilerStore()->thread_refs)
         {
             m_threadHashes.push_back(p.first);
         }
+#endif
     }
 
     struct iterator : Iterator<ForwardIteratorTag, DataPoint>
@@ -35,13 +37,13 @@ struct DataPointGenerator
         static const constexpr szptr npos = C_CAST<szptr>(-1);
 
         iterator(DataPointGenerator& gen):
-            generator(gen),
+            generator(&gen),
             current_index(0),
             current_thread(0)
         {
         }
         iterator(DataPointGenerator& gen, int):
-            generator(gen),
+            generator(&gen),
             current_index(npos),
             current_thread(npos)
         {
@@ -52,12 +54,12 @@ struct DataPointGenerator
             current_index ++;
             auto& points = intern_data()->datapoints;
             szptr p_size = points.size();
-            if(current_index >= points.size())
+            if(current_index >= p_size)
             {
                 current_thread ++;
                 current_index = 0;
             }
-            if(current_thread >= generator.m_threadHashes.size())
+            if(current_thread >= generator->m_threadHashes.size())
             {
                 current_thread = npos;
                 current_index = npos;
@@ -70,7 +72,7 @@ struct DataPointGenerator
         {
             return other.current_index == current_index
                     && other.current_thread == current_thread
-                    && (&other.generator) == (&generator);
+                    && (other.generator) == (generator);
         }
 
         bool operator!=(iterator const& other) const
@@ -86,11 +88,15 @@ struct DataPointGenerator
     private:
         ThreadData* intern_data() const
         {
-            auto key = generator.m_threadHashes.at(current_thread);
+#if !defined(COFFEE_DISABLE_PROFILER)
+            auto key = generator->m_threadHashes.at(current_thread);
             return State::GetProfilerStore()->thread_refs[key].get();
+#else
+            throw implementation_error("profiler not available");
+#endif
         }
 
-        DataPointGenerator& generator;
+        DataPointGenerator* generator;
         szptr current_index;
         szptr current_thread;
     };
@@ -347,7 +353,7 @@ void ExportProfilerData(CString& target)
     cVerbose(8,"Writing extra data");
 
     /* Only runs in debug mode! */
-    if(Profiler::Enabled()){
+    if(Profiler::HasData()){
 #ifndef NDEBUG
         /* Store list of threads we've bumped into or labeled */
         {
@@ -467,7 +473,7 @@ STATICINLINE JSON::Value FromString(CString const& s,
 
 STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    if(!Profiler::Enabled())
+    if(!Profiler::HasData())
         return;
 
     /* Some parsing information */
@@ -747,7 +753,8 @@ void ExitRoutine()
     /* Verify if we should export profiler data */
     {
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
-        if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
+        if(!(Env::ExistsVar(disable_flag)
+             && Env::GetVar(disable_flag) == "1"))
         {
             auto log_name = (Path{Env::ExecutableName()}
                     .fileBasename());

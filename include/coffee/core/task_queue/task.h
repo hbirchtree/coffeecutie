@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/tdef/stlfunctypes.h>
-#include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/types/edef/enumfun.h>
 
 namespace Coffee{
 
@@ -15,9 +15,9 @@ struct RuntimeTask
         Immediate = 0x8,
     };
 
-    using clock = std::chrono::steady_clock;
+    using clock = Chrono::steady_clock;
 
-    using Timepoint = std::chrono::time_point<clock>;
+    using Timepoint = Chrono::time_point<clock>;
     using Duration = clock::duration;
 
     STATICINLINE RuntimeTask CreateTask(Function<void()>&& fun,

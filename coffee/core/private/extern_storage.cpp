@@ -18,7 +18,6 @@ struct InternalState
     Mutex printer_lock;
 #endif
 
-
     /* Resources */
     CString resource_prefix = "./";
 
@@ -40,8 +39,10 @@ struct InternalState
 
     struct internal_bits_t {
         internal_bits_t():
-            printing_verbosity(0),
-            terminal_alternate_buffer(false)
+            printing_verbosity(0)
+  #if defined(COFFEE_USE_TERMINAL_CTL)
+            ,terminal_alternate_buffer(false)
+  #endif
         {
         }
 
@@ -60,7 +61,7 @@ struct InternalState
 struct InternalThreadState
 {
 
-#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
+#if !defined(COFFEE_DISABLE_PROFILER)
     InternalThreadState():
         current_thread_id(),
         profiler_data(MkShared<Profiling::ThreadData>())
@@ -99,7 +100,7 @@ P<InternalState>& GetInternalState()
 
 STATICINLINE void RegisterProfilerThreadState()
 {
-#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
+#if !defined(COFFEE_DISABLE_PROFILER)
     if(internal_state)
     {
         Lock _(GetProfilerStore()->data_access_mutex);
@@ -107,8 +108,6 @@ STATICINLINE void RegisterProfilerThreadState()
         GetProfilerStore()->thread_refs[ThreadId().hash()] =
                 thread_state->profiler_data;
     }
-
-    cDebug("Registered");
 #endif
 }
 
@@ -178,7 +177,7 @@ Mutex& GetPrinterLock()
 
 ThreadId& GetCurrentThreadId()
 {
-#if !defined(NDEBUG)
+#if !defined(COFFEE_DISABLE_PROFILER)
     if(!thread_state)
         SetInternalThreadState(CreateNewThreadState());
 

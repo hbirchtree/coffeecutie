@@ -1,3 +1,4 @@
 #pragma once
 
 #include "plat/environment/application_start.h"
+#include "CProfiling"

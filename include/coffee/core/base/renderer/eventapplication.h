@@ -3,8 +3,8 @@
 #include "inputapplication.h"
 #include <coffee/core/eventprocess.h>
 
-#include <coffee/core/plat/plat_timing.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/core/CProfiling>
 
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/base/renderer_loader.h>

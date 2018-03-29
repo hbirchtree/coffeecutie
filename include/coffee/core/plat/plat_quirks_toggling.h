@@ -76,6 +76,8 @@
  * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms
  *  with isolation
  *
+ * COFFEE_PROFILER_TRACING - print the events coming to the profiler, adds a lot of runtime cost
+ *
  * COFFEE_LOWFAT - disable or remove a lot of code, reduces library size a lot
  * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
  *
@@ -98,6 +100,7 @@
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
 //#define COFFEE_GLES20_MODE
 //#define COFFEE_LOWFAT
+#define COFFEE_PROFILER_TRACING
 
 /*
  *
@@ -182,6 +185,17 @@
 
 #if defined(COFFEE_ENABLE_SSL)
 #define ASIO_USE_SSL
+#endif
+
+/*
+ *
+ * Profiler switches
+ *
+ */
+
+/* Disable profiler in release mode */
+#if defined(NDEBUG)
+#define COFFEE_DISABLE_PROFILER
 #endif
 
 /*

@@ -1,4 +1,5 @@
 #include <coffee/core/task_queue/task.h>
+#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 
 #define RQ_API "RuntimeQueue::"
@@ -9,7 +10,6 @@ RuntimeQueue::QueueContextPtr RuntimeQueue::context;
 
 RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString &name)
 {
-    DProfContext __(RQ_API "Created new local task queue");
     Lock _(context->globalMod);
 
     auto t_id = ThreadId().hash();
@@ -20,7 +20,7 @@ RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString &name)
     if(q_it == context->queues.end())
     {
         context->queues.insert({t_id, RuntimeQueue()});
-        ThreadSetName(name);
+        Profiler::LabelThread(name.c_str());
         return &context->queues[t_id];
     }else
         return &(*q_it).second;
@@ -32,7 +32,6 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
         /* Enable profiler and etc. */
         State::SetInternalThreadState(State::CreateNewThreadState());
 
-        Profiler::DeepPushContext(RQ_API "Setting up thread queue");
         AtomicBool runtimeFlag;
         runtimeFlag.store(true);
 
@@ -40,8 +39,7 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 
         *flag = &runtimeFlag;
 
-        Profiler::DeepPopContext();
-        DProfContext _(RQ_API "Processing queue");
+        Profiler::DeepPushContext(RQ_API "Running queue");
 
         while(runtimeFlag.load())
         {
@@ -53,6 +51,8 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
                         std::chrono::milliseconds(500));
             CurrentThread::sleep_for(sleepTime);
         }
+        Profiler::DeepPopContext();
+
     } catch(std::exception const& e)
     {
         cWarning(RQ_API "Uncaught exception!\n"
