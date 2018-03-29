@@ -4,8 +4,6 @@
 
 namespace Coffee{
 
-extern AppArg initargs;
-
 extern AppArg& GetInitArgs();
 
 namespace Strings{

@@ -1,14 +1,30 @@
 #pragma once
 
+#include "coffee_version.h"
 #include <coffee/core/types/tdef/stlfunctypes.h>
 
 namespace Coffee{
+
+struct BuildInfo
+{
+    cstring compiler;
+    cstring architecture;
+    cstring platform;
+    cstring build_version;
+
+    CString default_window_name;
+
+#if defined(COFFEE_ANDROID)
+    CString plat_tmp_string;
+#endif
+};
 
 struct InternalState;
 struct InternalThreadState;
 
 namespace Profiling{
 struct ProfilerDataStore;
+struct ThreadData;
 }
 
 namespace State{
@@ -54,6 +70,7 @@ extern P<InternalThreadState>& GetInternalThreadState();
  */
 
 extern Profiling::ProfilerDataStore *GetProfilerStore();
+extern Profiling::ThreadData *GetProfilerTStore();
 
 extern ThreadId& GetCurrentThreadId();
 
@@ -62,6 +79,10 @@ extern bool& GetAlternateTerminal();
 #endif
 
 extern Mutex& GetPrinterLock();
+
+extern BuildInfo& GetBuildInfo();
+
+extern CoffeeApplicationData& GetAppData();
 
 }
 

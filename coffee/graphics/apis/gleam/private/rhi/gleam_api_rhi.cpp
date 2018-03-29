@@ -1219,7 +1219,7 @@ void GLEAM_API::MultiDraw(
 
     /* In debug mode, display the entire draw call.
      *  This is the true verbose mode. */
-    if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
+    if(GL_DEBUG_MODE && PrintingVerbosityLevel() >= 12)
     {
         cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle);
         for(auto& cmd : draws.cmdBufs)

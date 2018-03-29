@@ -12,6 +12,7 @@
 namespace Coffee{
 
 #define profiler_data_store (State::GetProfilerStore())
+#define profiler_tstore (State::GetProfilerTStore())
 #define current_thread_id (&State::GetCurrentThreadId())
 
 namespace Profiling{
@@ -19,7 +20,7 @@ namespace Profiling{
 struct DataPoint
 {
     FORCEDINLINE DataPoint():
-        thread()
+        thread(ThreadId().hash())
     {
     }
 
@@ -36,7 +37,7 @@ struct DataPoint
         Hot,
     };
 
-    ThreadId thread;
+    ThreadId::Hash thread;
 
     CString name;
     Timestamp ts;
@@ -56,17 +57,18 @@ struct ExtraPair
     CString value;
 };
 
+using ThreadListing = Map<ThreadId::Hash,CString>;
+using ThreadItem = Pair<ThreadId::Hash,CString>;
+using ExtraData = LinkList<ExtraPair>;
+using StackFrames = Set<CString>;
+
 struct ThreadData
 {
+    Vector<DataPoint> datapoints;
     LinkList<CString> context_stack;
 };
 
-using ThreadStorage = Map<ThreadId::Hash, ThreadData>;
-using ThreadListing = Map<ThreadId::Hash,CString>;
-using ThreadItem = Pair<ThreadId::Hash,CString>;
-using ThreadPtr = ShPtr<ThreadId>;
-using ExtraData = LinkList<ExtraPair>;
-using StackFrames = Set<CString>;
+using ThreadRefs = Map<ThreadId::Hash, ShPtr<ThreadData>>;
 
 #if !defined(COFFEE_DISABLE_PROFILER)
 
@@ -78,10 +80,8 @@ struct ProfilerDataStore
 
     Mutex data_access_mutex;
 #if !defined(NDEBUG)
-    LinkList<DataPoint> datapoints;
-    StackFrames stackframes;
     ThreadListing threadnames;
-    ThreadStorage context_storage;
+    ThreadRefs thread_refs;
 #endif
 
     ExtraData extra_data;
@@ -89,21 +89,17 @@ struct ProfilerDataStore
 #if !defined(NDEBUG)
     bool Enabled;
     bool Deep_Profile;
+    byte_t padding[2];
 #else
     static const constexpr bool Enabled = false;
     static const constexpr bool Deep_Profile = false;
 #endif
-
-    byte_t padding[2];
-
 };
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
 STATICINLINE LinkList<CString>& threadContextStack()
 {
-    auto hash = current_thread_id->hash();
-    auto& ctxt = profiler_data_store->context_storage[hash];
-    return ctxt.context_stack;
+    return profiler_tstore->context_stack;
 }
 #endif
 
@@ -124,8 +120,12 @@ struct SimpleProfilerImpl
 #endif
     }
 
-    STATICINLINE void DestroyProfiler()
+    STATICINLINE void DisableProfiler()
     {
+#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
+        profiler_data_store->Enabled = false;
+        profiler_data_store->Deep_Profile = false;
+#endif
     }
 
     STATICINLINE void LabelThread(cstring name)
@@ -133,9 +133,12 @@ struct SimpleProfilerImpl
 #if !defined(COFFEE_DISABLE_PROFILER)
         ThreadSetName(name);
 #if !defined(NDEBUG)
+
+        Lock _(profiler_data_store->data_access_mutex);
         ThreadId tid;
         profiler_data_store->threadnames
                 .insert(ThreadItem(tid.hash(),name));
+
 #endif
 #endif
     }
@@ -147,18 +150,16 @@ struct SimpleProfilerImpl
      *
      */
 
-    STATICINLINE void Profile(cstring name = nullptr,
-                              DataPoint::Attr at = DataPoint::AttrNone)
+    STATICINLINE void Profile(
+            cstring name = nullptr,
+            DataPoint::Attr at = DataPoint::AttrNone)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(!profiler_data_store)
+        if(!profiler_tstore)
             return;
 
         uint64 ts = Time::CurrentMicroTimestamp();
-
-        Lock l(profiler_data_store->data_access_mutex);
-        C_UNUSED(l);
 
         DataPoint p;
         p.tp = DataPoint::Profile;
@@ -167,21 +168,21 @@ struct SimpleProfilerImpl
         p.component = COFFEE_COMPONENT_NAME;
         p.at = at;
 
-        profiler_data_store->datapoints.push_back(p);
+        auto store = profiler_tstore;
+        auto& points = store->datapoints;
+
+        points.push_back(p);
 #endif
 #endif
     }
 
-    STATICINLINE void PushContext(cstring name,
-                                  DataPoint::Attr at = DataPoint::AttrNone)
+    STATICINLINE void PushContext(
+            cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(!profiler_data_store)
+        if(!profiler_tstore)
             return;
-
-        Lock l(profiler_data_store->data_access_mutex);
-        C_UNUSED(l);
 
         threadContextStack().push_front(name);
 
@@ -192,8 +193,9 @@ struct SimpleProfilerImpl
         p.component = COFFEE_COMPONENT_NAME;
         p.at = at;
 
-        profiler_data_store->datapoints.push_back(p);
-        profiler_data_store->datapoints.back().ts = Time::CurrentMicroTimestamp();
+        profiler_tstore->datapoints.push_back(p);
+        profiler_tstore->datapoints.back().ts =
+                Time::CurrentMicroTimestamp();
 #endif
 #endif
     }
@@ -201,13 +203,10 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(!profiler_data_store)
+        if(!profiler_tstore)
             return;
 
         uint64 ts = Time::CurrentMicroTimestamp();
-
-        Lock l(profiler_data_store->data_access_mutex);
-        C_UNUSED(l);
 
         if(threadContextStack().size()<1)
             return;
@@ -218,7 +217,7 @@ struct SimpleProfilerImpl
         p.name = threadContextStack().front();
         p.component = COFFEE_COMPONENT_NAME;
 
-        profiler_data_store->datapoints.push_back(p);
+        profiler_tstore->datapoints.push_back(p);
         threadContextStack().pop_front();
 #endif
 #endif
@@ -273,7 +272,8 @@ struct SimpleProfilerImpl
 #endif
     }
 
-    STATICINLINE void AddExtraData(CString const& key, CString const& val)
+    STATICINLINE void AddExtraData(
+            CString const& key, CString const& val)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
         if(!profiler_data_store)
@@ -292,18 +292,6 @@ struct SimpleProfilerImpl
         if(profiler_data_store)
             return &profiler_data_store->extra_data;
         else
-#endif
-            return nullptr;
-    }
-
-    STATICINLINE LinkList<DataPoint>* DataPoints()
-    {
-#if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG)
-        if(profiler_data_store)
-            return &profiler_data_store->datapoints;
-        else
-#endif
 #endif
             return nullptr;
     }
@@ -346,8 +334,8 @@ struct SimpleProfilerImpl
 FORCEDINLINE bool operator<(DataPoint const& t1,
                             DataPoint const& t2)
 {
-    ThreadId::Hash th1 = t1.thread.hash();
-    ThreadId::Hash th2 = t1.thread.hash();
+    ThreadId::Hash th1 = t1.thread;
+    ThreadId::Hash th2 = t1.thread;
     bool thread_sort = th1<th2;
     bool samethread = th1==th2;
     bool ts_sort = t1.ts<t2.ts;
@@ -390,3 +378,4 @@ using Profiler = Profiling::SimpleProfilerImpl;
 
 #undef current_thread_id
 #undef profiler_data_store
+#undef profiler_tstore

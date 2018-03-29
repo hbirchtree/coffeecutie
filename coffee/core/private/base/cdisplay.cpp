@@ -1,6 +1,7 @@
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/coffee_version.h>
 #include <coffee/core/platform_data.h>
+#include <coffee/core/internal_state.h>
 
 namespace Coffee{
 namespace Display{
@@ -19,7 +20,7 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
             |GLProperties::GLCoreProfile
             ;
 
-    props.title = CoffeeDefaultWindowName.c_str();
+    props.title = State::GetBuildInfo().default_window_name.c_str();
 
     props.size.w = 1280;
     props.size.h = 720;

@@ -18,42 +18,67 @@ struct InternalState
     Mutex printer_lock;
 #endif
 
-#if !defined(COFFEE_DISABLE_PROFILER)
-    Profiling::ProfilerDataStore profiler_store;
-#endif
+
+    /* Resources */
+    CString resource_prefix = "./";
+
+    /* Application info */
+    CoffeeApplicationData current_app = {};
+
+    BuildInfo build = {};
+
+    AppArg initial_args = {};
+
 
 #if defined(COFFEE_USE_UNWIND)
     unw_context_t* unwind_context = nullptr;
 #endif
 
-    /* Resources */
-    CString _coffee_resource_prefix = "./";
-
-    /* Application info */
-    CoffeeApplicationData _coffee_current_app = {};
-
-#if defined(COFFEE_USE_TERMINAL_CTL)
-    bool terminal_alternate_buffer = false;
+#if !defined(COFFEE_DISABLE_PROFILER)
+    Profiling::ProfilerDataStore profiler_store;
 #endif
 
-    byte_t padding[7];
+    struct internal_bits_t {
+        internal_bits_t():
+            printing_verbosity(0),
+            terminal_alternate_buffer(false)
+        {
+        }
+
+        u8 printing_verbosity;
+#if defined(COFFEE_USE_TERMINAL_CTL)
+        bool terminal_alternate_buffer;
+#endif
+    };
+
+    union {
+        internal_bits_t bits = {};
+        u64 _do_not_touch;
+    };
 };
 
 struct InternalThreadState
 {
-#if !defined(NDEBUG)
+
+#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
+    InternalThreadState():
+        current_thread_id(),
+        profiler_data(MkShared<Profiling::ThreadData>())
+    {
+    }
+
     ThreadId current_thread_id;
+    ShPtr<Profiling::ThreadData> profiler_data;
 #endif
 };
 
 namespace State{
 
-static P<InternalState> internal_state = nullptr;
-static thread_local P<InternalThreadState> thread_state = nullptr;
+static P<InternalState> internal_state;
+static thread_local P<InternalThreadState> thread_state;
 
 P<InternalState> CreateNewState()
 {
-
     return MkShared<InternalState>();
 }
 
@@ -72,9 +97,26 @@ P<InternalState>& GetInternalState()
     return internal_state;
 }
 
+STATICINLINE void RegisterProfilerThreadState()
+{
+#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
+    if(internal_state)
+    {
+        Lock _(GetProfilerStore()->data_access_mutex);
+
+        GetProfilerStore()->thread_refs[ThreadId().hash()] =
+                thread_state->profiler_data;
+    }
+
+    cDebug("Registered");
+#endif
+}
+
 void SetInternalThreadState(P<InternalThreadState> state)
 {
     thread_state = state;
+
+    RegisterProfilerThreadState();
 }
 
 P<InternalThreadState>& GetInternalThreadState()
@@ -88,6 +130,16 @@ P<InternalThreadState>& GetInternalThreadState()
  *
  */
 
+BuildInfo& GetBuildInfo()
+{
+    return internal_state->build;
+}
+
+CoffeeApplicationData& GetAppData()
+{
+    return internal_state->current_app;
+}
+
 Profiling::ProfilerDataStore* GetProfilerStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
@@ -98,11 +150,23 @@ Profiling::ProfilerDataStore* GetProfilerStore()
 #endif
 }
 
+Profiling::ThreadData *GetProfilerTStore()
+{
+#if !defined(COFFEE_DISABLE_PROFILER)
+    if(!thread_state)
+        SetInternalThreadState(CreateNewThreadState());
+
+    return thread_state->profiler_data.get();
+#else
+    throw implementation_error("profiler disabled");
+#endif
+}
+
 #if defined(COFFEE_USE_TERMINAL_CTL)
 bool& GetAlternateTerminal()
 {
     C_PTR_CHECK(internal_state);
-    return internal_state->terminal_alternate_buffer;
+    return internal_state->bits.terminal_alternate_buffer;
 }
 #endif
 
@@ -141,25 +205,46 @@ ThreadId& GetCurrentThreadId()
 void CResources::FileResourcePrefix(cstring prefix)
 {
     C_PTR_CHECK(State::internal_state);
-    State::internal_state->_coffee_resource_prefix = prefix;
+    State::internal_state->resource_prefix = prefix;
 }
 
 CString const& CResources::GetFileResourcePrefix()
 {
     C_PTR_CHECK(State::internal_state);
-    return State::internal_state->_coffee_resource_prefix;
+    return State::internal_state->resource_prefix;
 }
 
 void SetCurrentApp(CoffeeApplicationData const& app)
 {
     C_PTR_CHECK(State::internal_state);
-    State::internal_state->_coffee_current_app = app;
+    State::internal_state->current_app = app;
 }
 
 CoffeeApplicationData const& GetCurrentApp()
 {
     C_PTR_CHECK(State::internal_state);
-    return State::internal_state->_coffee_current_app;
+    return State::internal_state->current_app;
+}
+
+AppArg &GetInitArgs()
+{
+    C_PTR_CHECK(State::internal_state);
+    return State::internal_state->initial_args;;
+}
+
+u8& PrintingVerbosityLevel()
+{
+    /*!
+     * \brief We need this for the middle-stage where nothing
+     *  is set up yet
+     */
+    static u8 backup_verbosity;
+
+
+    if(State::internal_state)
+        return State::internal_state->bits.printing_verbosity;
+    else
+        return backup_verbosity;
 }
 
 }
