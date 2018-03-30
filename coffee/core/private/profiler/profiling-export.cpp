@@ -25,10 +25,26 @@ struct DataPointGenerator
     DataPointGenerator()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        for(auto const& p : State::GetProfilerStore()->thread_refs)
+        /* Sort the thread list to make it deterministic */
+        using TPair = Pair<ThreadId::Hash,CString>;
+
+        Vector<TPair> names;
+        names.insert(names.end(),
+                     State::GetProfilerStore()->threadnames.begin(),
+                     State::GetProfilerStore()->threadnames.end());
+
+        std::sort(names.begin(), names.end(),
+                  [](TPair const& v1, TPair const& v2)
         {
-            m_threadHashes.push_back(p.first);
-        }
+            return v1.second < v2.second;
+        });
+
+        std::transform(names.begin(), names.end(),
+                       std::back_inserter(m_threadHashes),
+                       [](TPair const& v)
+        {
+            return v.first;
+        });
 #endif
     }
 
@@ -41,6 +57,7 @@ struct DataPointGenerator
             current_index(0),
             current_thread(0)
         {
+            find_next();
         }
         iterator(DataPointGenerator& gen, int):
             generator(&gen),
@@ -51,20 +68,8 @@ struct DataPointGenerator
 
         iterator& operator++()
         {
-            current_index ++;
-            auto& points = intern_data()->datapoints;
-            szptr p_size = points.size();
-            if(current_index >= p_size)
-            {
-                current_thread ++;
-                current_index = 0;
-            }
-            if(current_thread >= generator->m_threadHashes.size())
-            {
-                current_thread = npos;
-                current_index = npos;
-            }
-
+            current_index++;
+            find_next();
             return *this;
         }
 
@@ -86,6 +91,21 @@ struct DataPointGenerator
         }
 
     private:
+        void find_next()
+        {
+            while(current_thread < generator->m_threadHashes.size()
+                  && current_index >= intern_data()->datapoints.size())
+            {
+                current_thread ++;
+                current_index = 0;
+            }
+            if(current_thread >= generator->m_threadHashes.size())
+            {
+                current_thread = npos;
+                current_index = npos;
+            }
+        }
+
         ThreadData* intern_data() const
         {
 #if !defined(COFFEE_DISABLE_PROFILER)
@@ -120,7 +140,7 @@ static Vector<DataPoint> GetSortedDataPoints()
     Vector<DataPoint> points;
     points.insert(points.begin(), gen.begin(), gen.end());
 
-    std::sort(points.begin(), points.end());
+//    std::sort(points.begin(), points.end());
 
     return points;
 }
@@ -478,7 +498,6 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
 
     /* Some parsing information */
     auto start = Profiler::StartTime();
-    LinkList<JSON::Value> stack;
 
     for(Profiling::DataPoint const& p : GetSortedDataPoints())
     {
@@ -510,35 +529,21 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
                 o.AddMember("ph", "i", alloc);
 
             o.AddMember("s", "t", alloc);
-
-            target.PushBack(o, alloc);
             break;
         }
         case Profiling::DataPoint::Push:
         {
             o.AddMember("ph", "B", alloc);
-
-            stack.emplace_front();
-            stack.front().CopyFrom(o, alloc);
-
-            target.PushBack(o, alloc);
             break;
         }
         case Profiling::DataPoint::Pop:
         {
-            JSON::Value& prev = stack.front();
-
-            prev.RemoveMember("ph");
-            prev.RemoveMember("ts");
-
-            prev.AddMember("ph", "E", alloc);
-            prev.AddMember("ts", JSON::Value(p.ts - start), alloc);
-
-            target.PushBack(prev, alloc);
-            stack.pop_front();
+            o.AddMember("ph", "E", alloc);
             break;
         }
         }
+
+        target.PushBack(o, alloc);
     }
 }
 

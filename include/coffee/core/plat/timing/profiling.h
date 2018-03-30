@@ -210,6 +210,7 @@ struct SimpleProfilerImpl
         p.ts = Time::CurrentMicroTimestamp();
         p.name = threadContextStack().front();
         p.component = COFFEE_COMPONENT_NAME;
+        p.at = DataPoint::AttrNone;
 
         profiler_tstore->datapoints.push_back(p);
         threadContextStack().pop_front();
@@ -217,6 +218,12 @@ struct SimpleProfilerImpl
         PFTRACE("POP:" + p.name);
 #endif
     }
+
+    /*
+     *
+     * Deep profiling functions
+     *
+     */
 
     STATICINLINE bool SetDeepProfileMode(bool state)
     {
@@ -365,8 +372,9 @@ struct SimpleProfilerContext
 
 struct DeepProfilerContext
 {
-    DENYINLINE DeepProfilerContext(cstring name,
-                        DataPoint::Attr at = DataPoint::AttrNone)
+    DENYINLINE DeepProfilerContext(
+            cstring name, DataPoint::Attr at = DataPoint::AttrNone):
+        m_name(name)
     {
         SimpleProfilerImpl::DeepPushContext(name, at);
     }
@@ -374,6 +382,8 @@ struct DeepProfilerContext
     {
         SimpleProfilerImpl::DeepPopContext();
     }
+
+    CString m_name;
 };
 
 }

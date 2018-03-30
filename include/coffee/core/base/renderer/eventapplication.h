@@ -119,7 +119,11 @@ void WrapEventFunction(void* data, int event)
         /* We retrieve the current thread's RuntimeQueue if it exists,
          *  and process it regularly. */
         if(CurrentState == 1)
+        {
+            Profiler::DeepPushContext("Event::Loop");
             edata->loop(edata->r(), edata->d());
+            Profiler::DeepPopContext();
+        }
         if(RuntimeQueue::GetCurrentQueue())
             RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;

@@ -45,12 +45,16 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
         {
             queue->executeTasks();
 
-            Profiler::DeepProfile(RQ_API "Going to sleep");
+            Profiler::DeepPushContext("Sleeping");
             auto sleepTime = queue->
                     timeTillNext(
                         std::chrono::milliseconds(500));
             CurrentThread::sleep_for(sleepTime);
+            Profiler::DeepPopContext();
         }
+
+        cVerbose(8, "Shutting down thread");
+
         Profiler::DeepPopContext();
 
     } catch(std::exception const& e)
