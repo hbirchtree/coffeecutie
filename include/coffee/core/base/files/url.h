@@ -59,6 +59,26 @@ struct Path
     {
         return {p};
     }
+
+    FORCEDINLINE bool operator<(Path const& other) const
+    {
+        return internUrl < other.internUrl;
+    }
+
+    FORCEDINLINE bool operator>(Path const& other) const
+    {
+        return internUrl > other.internUrl;
+    }
+
+    FORCEDINLINE bool operator==(Path const& other) const
+    {
+        return internUrl == other.internUrl;
+    }
+
+    FORCEDINLINE bool operator!=(Path const& other) const
+    {
+        return internUrl != other.internUrl;
+    }
 };
 
 struct Url

@@ -49,7 +49,7 @@ void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixFmt c, BitFmt dt, Vector
 void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
 #if defined(COFFEE_GLEAM_DESKTOP)
-    major = 4; minor = 5;
+    major = 4; minor = 6;
 #elif defined(COFFEE_ONLY_GLES20)
     major = 2; minor = 0;
 #else

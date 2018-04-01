@@ -15,6 +15,8 @@ void ProfilingExport()
     {
         cVerbose(10, "Network export starting");
 
+        Profiler::DisableProfiler();
+
         CString target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
 

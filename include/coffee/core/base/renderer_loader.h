@@ -31,7 +31,7 @@ bool LoadHighestVersion(
         u32 min;
     };
 
-    static const constexpr std::array<GLEnv, 7> GLVersions = {{
+    static const constexpr std::array<GLEnv, 8> GLVersions = {{
 #if !defined(COFFEE_ONLY_GLES20)
         {GLProperties::GLES, 3, 2},
         {GLProperties::GLES, 3, 1},
@@ -40,6 +40,7 @@ bool LoadHighestVersion(
         {GLProperties::GLES, 2, 0},
 
 #if !defined(COFFEE_APPLE)
+        {0x0, 4, 6},
         {0x0, 4, 5},
         {0x0, 4, 3},
 #endif
