@@ -1,5 +1,7 @@
-find_package( Squish QUIET )
-find_package( TIFF QUIET )
+find_package( Squish QUIET     )
+find_package( TIFF QUIET       )
+find_package( shaderc QUIET    )
+find_package( SPIRVCross QUIET )
 
 set ( BUNDLE_LIBS CACHE STRING "" )
 
@@ -45,10 +47,8 @@ if(COFFEE_BUILD_ASSIMP)
         )
 endif()
 
-
+#define gl_BaseInstanceARB 0
 if(SQUISH_FOUND)
-    find_package( TIFF QUIET )
-
     coffee_library(
         TARGET PressurizeTextures
         LINKAGE SHARED
@@ -74,4 +74,29 @@ if(SQUISH_FOUND)
         )
 else()
     message ( STATUS "Skipping PressurizeTextures" )
+endif()
+
+if(SHADERC_FOUND)
+    coffee_library (
+        TARGET PressurizeShaders
+        LINKAGE SHARED
+        SOURCES shader_compress.cpp
+        LIBRARIES CoffeeCore shaderc
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        )
+
+    if(SPVCROSS_FOUND)
+        target_compile_definitions ( PressurizeShaders
+            PUBLIC
+            -DHAVE_SPIRVCROSS
+            )
+        target_link_libraries ( PressurizeShaders
+            PUBLIC
+            spvcross
+            )
+    endif()
+
+    add_dependencies ( PressureCooker
+        PressurizeShaders
+        )
 endif()

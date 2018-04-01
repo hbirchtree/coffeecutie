@@ -11,6 +11,8 @@ add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
 add_subdirectory (core/gpu-query)
 
+add_subdirectory (components)
+
 # ASIO examples, we leave this as core
 if(COFFEE_BUILD_ASIO)
     add_subdirectory(asio/base-client)
