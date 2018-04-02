@@ -169,9 +169,7 @@ struct ShaderProcessor : FileProcessor
 {
     virtual void process(Vector<VirtFS::VirtDesc> &files,
                          TerminalCursor &cursor);
-    virtual void receiveAssetPath(const CString &)
-    {
-    }
+
     virtual void setBaseDirectories(const Vector<CString> &)
     {
     }

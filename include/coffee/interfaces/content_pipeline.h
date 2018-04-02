@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/core/internal_state.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/VirtualFS>
 
@@ -35,8 +36,15 @@ struct FileProcessor
      */
     virtual void process(Vector<VirtFS::VirtDesc>& files,
                          TerminalCursor& cursor) = 0;
-    
-    virtual void receiveAssetPath(CString const& assetPath) = 0;
+
+    virtual void setInternalState(
+            ShPtr<InternalState> state,
+            ShPtr<InternalThreadState> tstate
+            )
+    {
+        State::SetInternalState(state);
+        State::SetInternalThreadState(tstate);
+    }
 
     virtual void setBaseDirectories(Vector<CString> const& dirs) = 0;
 };

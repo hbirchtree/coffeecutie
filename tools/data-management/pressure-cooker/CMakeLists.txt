@@ -39,7 +39,7 @@ if(COFFEE_BUILD_ASSIMP)
         LINKAGE SHARED
         SOURCES model_compress.cpp
         LIBRARIES CoffeeCore CoffeeAssimp
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        HEADER_DIRS ${CMAKE_S123OURCE_DIR}/coffee/interfaces
         )
 
     add_dependencies ( PressureCooker
@@ -47,13 +47,12 @@ if(COFFEE_BUILD_ASSIMP)
         )
 endif()
 
-#define gl_BaseInstanceARB 0
 if(SQUISH_FOUND)
     coffee_library(
         TARGET PressurizeTextures
         LINKAGE SHARED
         SOURCES texture_compress.cpp
-        LIBRARIES CoffeeCore CoffeeImage Squish
+        LIBRARIES CoffeeImage CoffeeCore Squish
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 

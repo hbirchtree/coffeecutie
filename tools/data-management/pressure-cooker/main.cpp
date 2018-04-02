@@ -319,7 +319,10 @@ i32 coffee_main(i32, cstring_w*)
 
     for(auto proc : extProcessors)
     {
-        proc->receiveAssetPath(GetFileResourcePrefix());
+        proc->setInternalState(
+                    State::GetInternalState(),
+                    State::GetInternalThreadState()
+                    );
         proc->setBaseDirectories(baseDirs);
         proc->process(descriptors, cursor);
     }

@@ -37,7 +37,6 @@ struct TextureCooker : FileProcessor
 {
     virtual void process(Vector<VirtFS::VirtDesc> &files,
                          TerminalCursor& cursor);
-    virtual void receiveAssetPath(const CString &assetPath);
 
     virtual void setBaseDirectories(const Vector<CString> &);
 };
@@ -226,11 +225,6 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
 
     files.erase(removeIt, files.end());
 #endif
-}
-
-void TextureCooker::receiveAssetPath(const CString &assetPath)
-{
-    FileResourcePrefix(assetPath.c_str());
 }
 
 void TextureCooker::setBaseDirectories(const Vector<CString> &)
