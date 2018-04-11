@@ -359,12 +359,12 @@ FORCEDINLINE bool operator<(DataPoint const& t1,
 
 struct SimpleProfilerContext
 {
-    SimpleProfilerContext(cstring name,
+    FORCEDINLINE SimpleProfilerContext(cstring name,
                           DataPoint::Attr at = DataPoint::AttrNone)
     {
         SimpleProfilerImpl::PushContext(name, at);
     }
-    ~SimpleProfilerContext()
+    FORCEDINLINE ~SimpleProfilerContext()
     {
         SimpleProfilerImpl::PopContext();
     }
@@ -372,13 +372,13 @@ struct SimpleProfilerContext
 
 struct DeepProfilerContext
 {
-    DENYINLINE DeepProfilerContext(
+    FORCEDINLINE DeepProfilerContext(
             cstring name, DataPoint::Attr at = DataPoint::AttrNone):
         m_name(name)
     {
         SimpleProfilerImpl::DeepPushContext(name, at);
     }
-    DENYINLINE ~DeepProfilerContext()
+    FORCEDINLINE ~DeepProfilerContext()
     {
         SimpleProfilerImpl::DeepPopContext();
     }
