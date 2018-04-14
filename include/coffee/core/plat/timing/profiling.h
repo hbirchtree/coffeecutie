@@ -378,6 +378,15 @@ struct DeepProfilerContext
     {
         SimpleProfilerImpl::DeepPushContext(name, at);
     }
+
+    FORCEDINLINE DeepProfilerContext(
+            CString const& name,
+            DataPoint::Attr at = DataPoint::AttrNone):
+        m_name(name)
+    {
+        SimpleProfilerImpl::DeepPushContext(name.c_str(), at);
+    }
+
     FORCEDINLINE ~DeepProfilerContext()
     {
         SimpleProfilerImpl::DeepPopContext();
@@ -386,11 +395,15 @@ struct DeepProfilerContext
     CString m_name;
 };
 
+
 }
 
 using DProfContext = Profiling::DeepProfilerContext;
 using ProfContext = Profiling::SimpleProfilerContext;
 using Profiler = Profiling::SimpleProfilerImpl;
+
+#define DPROF_CONTEXT_FUNC(PREFIX) \
+    DProfContext _(PREFIX + CString(__FUNCTION__) + "()")
 
 }
 

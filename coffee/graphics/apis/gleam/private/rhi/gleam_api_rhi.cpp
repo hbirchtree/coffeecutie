@@ -669,6 +669,8 @@ void GLEAM_API::SetShaderUniformState(
         ShaderStage const& stage,
         const GLEAM_ShaderUniformState &ustate)
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     using namespace ShaderTypes;
 
     /* TODO: Tie uniforms to their applicable stages */
@@ -867,12 +869,15 @@ void GLEAM_API::SetShaderUniformState(
 
 void GLEAM_API::PreDrawCleanup()
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
 void GLEAM_API::DisposePixelBuffers()
 {
 #if !defined(COFFEE_ONLY_GLES20)
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
         CGL33::BufFree(1, &buf.buf);
@@ -885,6 +890,8 @@ void GLEAM_API::OptimizeRenderPass(
         GLEAM_API::RenderPass &rpass,
         GLEAM_API::OPT_DRAW& buffer)
 {
+    DProfContext _(GLM_API "Optimizing RenderPass");
+
     Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
     auto& cmdBufs = buffer.cmdBufs;
 
@@ -986,6 +993,7 @@ static bool InternalDraw(
         GLEAM_API::DrawCall const& d,
         GLEAM_API::DrawInstanceData const& i)
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
     // TODO: Use glGetVertexAttribPointer for vertex offsets
 
     if(d.indexed())
@@ -1068,6 +1076,8 @@ static bool InternalDraw(
 bool InternalMultiDraw(
         GLEAM_API::OptimizedDraw::MultiDrawData const& data)
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     static CGhnd indirectBuf;
 
     if(GL_DEBUG_MODE)
@@ -1215,6 +1225,7 @@ void GLEAM_API::MultiDraw(
         const GLEAM_API::OPT_DRAW &draws
         )
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
     GLEAM_API::DBG::SCOPE a(GLM_API "MultiDraw");
 
     /* In debug mode, display the entire draw call.
@@ -1380,6 +1391,8 @@ void GLEAM_API::Draw(
         OccludeQuery* query
         )
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     C_UNUSED(vertices);
 
     DrwMd mode = {d.primitive(),d.primitiveMode()};
