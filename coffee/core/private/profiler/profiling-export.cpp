@@ -127,11 +127,13 @@ struct DataPointGenerator
     {
         szptr counter = 0;
 
+#if !defined(COFFEE_DISABLE_PROFILER)
         for(auto const& hash : m_threadHashes)
             counter += State::GetProfilerStore()
                     ->thread_refs[hash]
                     .get()->datapoints
                     .size();
+#endif
 
         return counter;
     }
