@@ -63,6 +63,60 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt)
                 );
 }
 
+static u32 GLSLVersionFromAPI(APILevel level)
+{
+    switch(level)
+    {
+
+    case GLES_2_0:
+        return 100;
+    case GLES_3_0:
+    case GLES_3_2:
+        return 300;
+
+    case GL_3_3:
+        return 330;
+    case GL_4_3:
+        return 430;
+    case GL_4_5:
+        return 450;
+    default:
+        return 100;
+    }
+}
+
+UrlResolver GLEAM_API::ShaderResolver()
+{
+    UrlResolver::SingleResolver sres = [](Url const& urlPath)
+    {
+        Path path = urlPath;
+
+        CString api_name = "core";
+        CString ext = path.extension();
+        CString glsl_version = cast_pod(
+                    GLSLVersionFromAPI(Level())
+                    );
+
+        if(LevelIsOfClass(Level(), APIClass::GLES))
+            api_name = "es";
+
+        return MkUrl(
+
+                    path
+                    .removeExt()
+                    .addExtension(api_name.c_str())
+                    .addExtension(glsl_version.c_str())
+                    .addExtension(ext.c_str()),
+
+                    urlPath.flags
+                    );
+    };
+
+    return {
+        sres, UrlResolver::DefaultMulti
+    };
+}
+
 }
 }
 }

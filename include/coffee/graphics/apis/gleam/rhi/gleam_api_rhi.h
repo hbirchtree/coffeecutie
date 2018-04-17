@@ -5,6 +5,7 @@
 
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/interfaces/file_resolver.h>
 
 namespace Coffee{
 
@@ -318,6 +319,8 @@ public:
     static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*);
 
     static bool TextureFormatSupport(PixFmt fmt);
+
+    static UrlResolver ShaderResolver();
 
     struct DBG
     {

@@ -84,6 +84,11 @@ if(SHADERC_FOUND)
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 
+    set_property ( TARGET PressurizeShaders
+        PROPERTY LINK_FLAGS
+        "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
+        )
+
     if(SPVCROSS_FOUND)
         target_compile_definitions ( PressurizeShaders
             PUBLIC

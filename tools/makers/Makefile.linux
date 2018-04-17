@@ -1802,7 +1802,7 @@ appimg-runtime.coverage: appimg-runtime.source appimg-runtime.coverage.build_dir
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/coverage:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.coverage" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Coverage build using same config as Ubuntu
@@ -2178,7 +2178,7 @@ appimg-runtime.fedora.amd64: appimg-runtime.source appimg-runtime.fedora.amd64.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/fedora.amd64:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.fedora.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Fedora build in a Fedora Docker
@@ -2654,7 +2654,7 @@ appimg-runtime.maemo.armel: appimg-runtime.source appimg-runtime.maemo.armel.bui
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/maemo.armel:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.maemo.armel" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Maemo 5 builds, performed within a Maemo 5 armel chroot
@@ -3083,7 +3083,7 @@ squish.osx: squish.source squish.osx.build_dir squish.osx.install_dir FORCE
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/osx:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.osx" \
 		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/squish/build/osx"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3105,7 +3105,7 @@ appimg-runtime.raspberry.armhf: appimg-runtime.source appimg-runtime.raspberry.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/raspberry.armhf:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.raspberry.armhf" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Raspberry Pi ARMv6 build
@@ -3363,7 +3363,7 @@ appimg-runtime.ubuntu.amd64: appimg-runtime.source appimg-runtime.ubuntu.amd64.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3566,7 +3566,7 @@ squish.ubuntu.amd64: squish.source squish.ubuntu.amd64.build_dir squish.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3588,7 +3588,7 @@ appimg-runtime.ubuntu.amd64.gles2: appimg-runtime.source appimg-runtime.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3791,7 +3791,7 @@ squish.ubuntu.amd64.gles2: squish.source squish.ubuntu.amd64.gles2.build_dir squ
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3813,7 +3813,7 @@ appimg-runtime.ubuntu.amd64.gles3: appimg-runtime.source appimg-runtime.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64.gles3:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -4016,7 +4016,7 @@ squish.ubuntu.amd64.gles3: squish.source squish.ubuntu.amd64.gles3.build_dir squ
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64.gles3:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -4038,7 +4038,7 @@ appimg-runtime.ubuntu.amd64.tools: appimg-runtime.source appimg-runtime.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64.tools:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64.tools" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -4241,7 +4241,7 @@ squish.ubuntu.amd64.tools: squish.source squish.ubuntu.amd64.tools.build_dir squ
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64.tools:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64.tools" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -4263,7 +4263,7 @@ appimg-runtime.ubuntu.i686.gles: appimg-runtime.source appimg-runtime.ubuntu.i68
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.i686.gles:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.i686.gles" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -4466,7 +4466,7 @@ squish.ubuntu.i686.gles: squish.source squish.ubuntu.i686.gles.build_dir squish.
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.i686.gles:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.i686.gles" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -4488,7 +4488,7 @@ appimg-runtime.ubuntu.i686.gles2: appimg-runtime.source appimg-runtime.ubuntu.i6
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.i686.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.i686.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -4691,6 +4691,6 @@ squish.ubuntu.i686.gles2: squish.source squish.ubuntu.i686.gles2.build_dir squis
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.i686.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.i686.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 

@@ -3,6 +3,7 @@
 #include <coffee/core/internal_state.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/VirtualFS>
+#include <coffee/core/CFiles>
 
 namespace Coffee{
 struct TerminalCursor;
@@ -16,6 +17,8 @@ using namespace Coffee;
 
 struct FileProcessor
 {
+    Path cacheBaseDir;
+
     virtual ~FileProcessor()
     {
     }
@@ -47,6 +50,39 @@ struct FileProcessor
     }
 
     virtual void setBaseDirectories(Vector<CString> const& dirs) = 0;
+
+    virtual void setCacheBaseDirectory(Path const& basedir)
+    {
+        cacheBaseDir = basedir;
+    }
+
+    virtual Path cacheTransform(Path const& f)
+    {
+        return cacheBaseDir + Path(CStrReplace(f.internUrl, "/", "_"));
+    }
+
+    virtual bool isCached(Path const& file)
+    {
+        Resource test(MkUrl(cacheTransform(file)));
+        return FileExists(test);
+    }
+
+    virtual Bytes getCached(Path const& file)
+    {
+        Resource cache(MkUrl(cacheTransform(file)));
+        return Bytes::Copy(C_OCAST<Bytes>(cache));
+    }
+
+    virtual void cacheFile(Path const& file,
+                           Bytes const& content)
+    {
+        DirFun::MkDir(MkUrl(cacheBaseDir), true);
+        Path outputPath = cacheTransform(file);
+
+        Resource output(MkUrl(outputPath));
+        output = content;
+        FileCommit(output, false, RSCA::Discard);
+    }
 };
 
 }

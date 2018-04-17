@@ -86,6 +86,45 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
     {
         CResources::Resource r(MkUrl(file.first.c_str()));
 
+        auto compress = squish::kDxt5;
+
+        /* Depending on color channels/source format, we opt for DXT1
+         *  for storage efficiency. Especially when the image does
+         *  not have alpha. */
+        if(file.second == ImageProc_stb_rgb)
+            compress = squish::kDxt1;
+
+        auto outName = Path(file.first)
+                .removeExt()
+                .addExtension(compression_extension(compress));
+
+        if(isCached(outName))
+        {
+            cursor.progress(TEXCOMPRESS_API "Using cached texture: {0}",
+                            file.first);
+            files.emplace_back(
+                        outName.internUrl.c_str(),
+                        getCached(outName),
+                        0
+                        );
+
+#if defined(HAVE_LIBTIFF)
+            if(file.second == ImageProc_tiff)
+            {
+                auto pngPath = Path(file.first).removeExt()
+                        .addExtension("png");
+                if(isCached(pngPath))
+                    files.emplace_back(
+                                pngPath.internUrl.c_str(),
+                                getCached(pngPath),
+                                0
+                                );
+            }
+#endif
+
+            continue;
+        }
+
         PixCmp cmp = PixCmp::RGBA;
         BitFmt bfmt;
         Bytes data;
@@ -145,6 +184,8 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
                         0
                         );
 
+            cacheFile(pngPath, files.back().data);
+
             TIFFRGBAImageEnd(&rimg);
             TIFFClose(timg);
         }
@@ -155,21 +196,9 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
             continue;
 
         if((size.w % 4) != 0 || (size.h % 4) != 0)
-            cursor.print(
-                        TEXCOMPRESS_API
-                        "Inadequate size for S3TC texture: {0}", size);
-
-        auto compress = squish::kDxt5;
-
-        /* Depending on color channels/source format, we opt for DXT1
-         *  for storage efficiency. Especially when the image does
-         *  not have alpha. */
-        if(file.second == ImageProc_stb_rgb)
-            compress = squish::kDxt1;
-
-        auto outName = Path(file.first)
-                .removeExt()
-                .addExtension(compression_extension(compress));
+            cursor.print("{1}:0: Inadequate size for S3TC texture: {0}",
+                         size, Path(GetFileResourcePrefix()) + file.first
+                         );
 
         files.emplace_back(
                     outName.internUrl.c_str(),
@@ -203,6 +232,8 @@ void TextureCooker::process(Vector<VirtFS::VirtDesc> &files,
                 : CompFlags::S3TC_1;
 
         MemCpy(output.data, &imgDesc, sizeof(IMG::serial_image));
+
+        cacheFile(outName, output);
 
         cursor.progress(TEXCOMPRESS_API "Compressed texture: "
                                         "{2}: {0}B (file)"

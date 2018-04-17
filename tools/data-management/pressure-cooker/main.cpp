@@ -251,7 +251,8 @@ i32 coffee_main(i32, cstring_w*)
         DirFun::DirList content;
         if(!DirFun::Ls(rscDir, content))
         {
-            cFatal("Failed to list resource directory");
+            cFatal("{0}:0: Failed to list resource directory",
+                   *rscDir);
             return 1;
         }
 
@@ -304,7 +305,9 @@ i32 coffee_main(i32, cstring_w*)
 
         if(desc.data.size == 0)
         {
-            cursor.print("Failed to add {0}", url);
+            cursor.print("{0}:0: File of size 0 cannot be added",
+                         (Path(*rscDir) + url.internUrl)
+                         .canonical().internUrl);
             continue;
         }
 
@@ -319,6 +322,9 @@ i32 coffee_main(i32, cstring_w*)
 
     for(auto proc : extProcessors)
     {
+        proc->setCacheBaseDirectory(
+                    Path(outputVfs).dirname() + "vfscache"
+                    );
         proc->setInternalState(
                     State::GetInternalState(),
                     State::GetInternalThreadState()
@@ -331,7 +337,8 @@ i32 coffee_main(i32, cstring_w*)
 
     if(!VirtFS::GenVirtFS(descriptors, &outputData))
     {
-        cursor.print("Failed to create VirtFS");
+        cursor.print("{0}:0: Failed to create VirtFS",
+                     outputVfs.internUrl);
     }
     else
         cursor.complete("Filesystem created!");

@@ -101,7 +101,7 @@ extern bool FilePull(Resource &resc, bool textmode = false, bool bigendian = fal
  * \return
  */
 extern bool FileCommit(Resource& resc, bool append = false,
-		       ResourceAccess acc = ResourceAccess::None);
+               ResourceAccess acc = ResourceAccess::Discard);
 /*!
  * \brief Save data to file, append null-terminator
  * \return

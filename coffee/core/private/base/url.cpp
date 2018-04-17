@@ -361,9 +361,14 @@ CString Path::extension() const
     return internUrl.substr(it + 1, internUrl.size() - it - 1);
 }
 
-Path Path::dirname()
+Path Path::dirname() const
 {
     return {Env::DirName(internUrl.c_str())};
+}
+
+Path Path::canonical() const
+{
+    return {FileFun::CanonicalName(MkUrl(*this))};
 }
 
 Path Path::operator+(cstring component) const

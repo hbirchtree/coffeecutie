@@ -313,7 +313,7 @@ build-dep-template:
       - -c
       - \'
       - mkdir -p $(container.install)/include $(container.install)/lib &&
-      - make -f $(container.src)/Makefile -e INSTALL_DIR=$(container.install) install
+      - make -f $(container.src)/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=$(container.install) install
       - \'
 
 #

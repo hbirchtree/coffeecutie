@@ -143,5 +143,17 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS *vfs, const VFile *file)
     return data;
 }
 
+ResourceResolver<Resource> VirtualFS::GetResolver(
+        const VirtualFS *vfs
+        )
+{
+    return {
+        [=](Url const& path)
+        {
+            return VirtFS::Resource(vfs, path);
+        }
+    };
+}
+
 }
 }
