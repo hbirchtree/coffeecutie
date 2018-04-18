@@ -42,35 +42,44 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
 public:
     virtual shaderc_include_result *GetInclude(
             const char *requested_source,
-            shaderc_include_type,
+            shaderc_include_type type,
             const char * requesting_source,
             size_t)
     {
-        Path request_file(requesting_source);
-        request_file = request_file.dirname() + requested_source;
-
-        Resource* r = new Resource(MkUrl(request_file, RSCA::AssetFile));
-
-        if(!FileExists(*r))
+        /* TODO: Extend with stock shaders for #include <A.h> */
+        switch(type)
         {
+        case shaderc_include_type_relative:
+        {
+            Path request_file(requesting_source);
+            request_file = request_file.dirname() + requested_source;
 
+            Resource* r = new Resource(MkUrl(request_file, RSCA::AssetFile));
+
+            if(!FileExists(*r))
+            {
+
+                return nullptr;
+            }
+
+            Bytes data = C_OCAST<Bytes>(*r);
+
+            m_results.emplace_back();
+            auto& res = m_results.back();
+
+            res.content = C_FCAST<cstring>(data.data);
+            res.content_length = data.size;
+
+            res.source_name = requested_source;
+            res.source_name_length = StrLen(requested_source);
+
+            res.user_data = r;
+
+            return &res;
+        }
+        default:
             return nullptr;
         }
-
-        Bytes data = C_OCAST<Bytes>(*r);
-
-        m_results.emplace_back();
-        auto& res = m_results.back();
-
-        res.content = C_FCAST<cstring>(data.data);
-        res.content_length = data.size;
-
-        res.source_name = requested_source;
-        res.source_name_length = StrLen(requested_source);
-
-        res.user_data = r;
-
-        return &res;
     }
     virtual void ReleaseInclude(shaderc_include_result *data)
     {
@@ -110,23 +119,22 @@ static Vector<u32> CompileSpirV(
                 );
     options.SetSourceLanguage(shaderc_source_language_glsl);
 
+    /* We might want to create Vulkan SPV in the future */
     options.SetTargetEnvironment(target_env, 0);
 
+    /* We want to avoid setting locations manually */
     options.SetAutoMapLocations(true);
-//    options.SetAutoBindUniforms(true);
 
     shaderc_profile p =
             target.es_sl ? shaderc_profile_es
                          : shaderc_profile_core;
 
-    if(target.version < 400)
+    if(!target.es_sl && target.version < 400)
         p = shaderc_profile_none;
 
     options.SetForcedVersionProfile(C_FCAST<i32>(target.version), p);
 
     auto type = shader_mapping[path.extension()];
-
-//    Path compFile = (Path(GetFileResourcePrefix()) + path);
 
     shaderc::SpvCompilationResult module =
             compiler.CompileGlslToSpv(
@@ -174,38 +182,34 @@ static void GenerateGLSL(TerminalCursor& cursor,
 #if defined(HAVE_SPIRVCROSS)
     spirv_cross::CompilerGLSL compiler(source.data(), source.size());
 
-    /* TODO: On GLSL ES 1.00, create uniforms for
-     * - sampler2DArray
-     * - sampler3D
-     */
-
     spirv_cross::ShaderResources rsc = compiler.get_shader_resources();
 
+    /* SPIRV-Cross does not recognize gl_BaseInstance */
     compiler.add_header_line("#define gl_BuiltIn_4425 gl_BaseInstance");
 
     if(target.es_sl && target.version == 100)
     {
+        /* Remove "flat" qualifier always */
         compiler.add_header_line("#define flat");
-        compiler.add_header_line("#define uint int");
         compiler.add_header_line("#define double float");
 
+        /* Set some default precision, just in case */
         compiler.add_header_line("precision highp float;");
         compiler.add_header_line("precision mediump int;");
 
+        /* Remap sampler types */
         compiler.add_header_line("#define sampler3D sampler2D");
         compiler.add_header_line("#define sampler2DArray sampler2D");
 
+        /* Remove these builtins */
         compiler.add_header_line("#define gl_ClipDistance ClipDistance");
         compiler.add_header_line("#define gl_CullDistance CullDistance");
 
+        /* No InstanceID, we add it */
         compiler.add_header_line("#define gl_InstanceID InstanceID");
         compiler.add_header_line("uniform int InstanceID;");
 
-//        compiler.add_header_line("vec4 texture2D(sampler2D tex, vec3 coord)"
-//                                 "{"
-//                                 "return texture2D(tex, coord.xy);"
-//                                 "}");
-
+        /* Generate grid uniform for every array texture */
         for(auto const& img : rsc.sampled_images)
         {
             auto img_type = compiler.get_type_from_variable(img.id);
@@ -223,10 +227,15 @@ static void GenerateGLSL(TerminalCursor& cursor,
         }
     }
 
+    /* In GLSL 4.60+, BaseInstance is real */
     if(target.version < 460)
+    {
         compiler.add_header_line("#define gl_BaseInstance BaseInstance");
+        compiler.add_header_line("#define gl_BaseInstance BaseInstance");
+    }
 
-
+    /* In GLSL 4.60+, gl_BaseInstance should not be
+     *  suffixed with *ARB, right? */
     if(target.version == 460)
     {
         compiler.add_header_line("#define gl_BaseInstanceARB"
@@ -236,11 +245,23 @@ static void GenerateGLSL(TerminalCursor& cursor,
     spirv_cross::CompilerGLSL::Options opts;
     opts.version = target.version;
     opts.es = target.es_sl;
+
+    /* When compiling for GLSL 4.10+, we always use SSO */
+    if(!target.es_sl && target.version >= 410)
+        opts.separate_shader_objects = true;
+
     compiler.set_common_options(opts);
 
     CString glsl;
+
+    /* Compilation may fail for various reasons.
+     *  We will report the error and not emit any GLSL. */
     try {
         glsl = compiler.compile();
+        cursor.progress(SHD_API
+                        "Shader code generated: GLSL:{0}:{1} {2}",
+                        target.version, target.es_sl ? "es" : "core",
+                        srcFile.internUrl);
     } catch(spirv_cross::CompilerError const& e) {
         cursor.print("{0}:{1}:{2}: {3}",
                      GetFileResourcePrefix() + "/" + srcFile.internUrl,
@@ -249,6 +270,23 @@ static void GenerateGLSL(TerminalCursor& cursor,
                      e.what()
                      );
         return;
+    }
+
+    /* We take a round-trip to shaderc for validation
+     *  of the generated GLSL */
+    if(!target.es_sl)
+    {
+        shaderc::Compiler scompiler;
+        auto data = CompileSpirV(
+                    cursor, scompiler, srcFile.extension(),
+                    Bytes::CreateString(glsl.c_str()), srcFile,
+                    shaderc_optimization_level_zero,
+                    shaderc_target_env_opengl, target
+                    );
+
+        /* If validation step fails, do not add the GLSL. It is invalid. */
+        if(data.size() == 0)
+            return;
     }
 
     Vector<u8> glslData(glsl.begin(), glsl.end());
@@ -264,15 +302,6 @@ static void GenerateGLSL(TerminalCursor& cursor,
                         Bytes::CopyFrom(glslData),
                         VirtFS::File_Compressed
                     });
-
-    shaderc::Compiler scompiler;
-
-    if(!target.es_sl)
-        CompileSpirV(cursor, scompiler, srcFile.extension(),
-                     Bytes::CreateString(glsl.c_str()), srcFile,
-                     shaderc_optimization_level_zero,
-                     shaderc_target_env_opengl, target
-                     );
 #endif
 }
 

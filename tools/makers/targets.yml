@@ -262,7 +262,7 @@ build-dependencies:
       - -DCMAKE_CXX_FLAGS="-fPIC"
       - -DCMAKE_C_COMPILER=gcc
       - -DCMAKE_CXX_COMPILER=g++
-    source: git:https://github.com/KhronosGroup/SPIRV-Cross.git
+    source: git:https://github.com/hbirchtree/SPIRV-Cross.git
 
 # The following variables are defined in makefile-generator.py:
 #  build-arch: target architecture, eg. ubuntu.amd64

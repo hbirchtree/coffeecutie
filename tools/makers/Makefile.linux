@@ -473,7 +473,7 @@ spirv-cross.source.mkdir:
 
 spirv-cross.source: spirv-cross.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/spirv-cross/source/.git ] && \
-	git clone --recursive --depth 1 'https://github.com/KhronosGroup/SPIRV-Cross.git' $(BUILD_DIR)/build-dependencies/spirv-cross/source || \
+	git clone --recursive --depth 1 'https://github.com/hbirchtree/SPIRV-Cross.git' $(BUILD_DIR)/build-dependencies/spirv-cross/source || \
 	true
 
 squish.source.mkdir:

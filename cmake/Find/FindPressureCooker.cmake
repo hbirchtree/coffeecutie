@@ -26,7 +26,7 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
 
         cmake_parse_arguments ( PACKAGE_DIRECTORY
             ""
-            "EXTENSIONS;IGNORE_TYPES;BASE_DIRS;COMPRESS_TYPES"
+            "EXTENSIONS;IGNORE_TYPES;BASE_DIRS;COMPRESS_TYPES;CACHE_DIR"
             ""
             ${ARGN}
             )
@@ -53,6 +53,11 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
         if(DEFINED PACKAGE_DIRECTORY_BASE_DIRS)
             set ( PACKAGING_ARGS
                 ${PACKAGING_ARGS} -b ${PACKAGE_DIRECTORY_BASE_DIRS} )
+        endif()
+
+        if(DEFINED PACKAGE_DIRECTORY_CACHE_DIR)
+            set ( PACKAGING_ARGS
+                ${PACKAGING_ARGS} -m ${PACKAGE_DIRECTORY_CACHE_DIR} )
         endif()
 
         add_custom_command ( TARGET ${TARGET}

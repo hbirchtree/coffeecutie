@@ -251,6 +251,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     store->features.base_instance
             = CGL33::Debug::CheckExtensionSupported(
                 "GL_ARB_shader_draw_parameters");
+
+    if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
+        store->features.base_instance = false;
     /* base_instance is const false on GLES */
 #endif
 

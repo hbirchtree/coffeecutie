@@ -189,6 +189,7 @@ void test_vfs(Vector<byte_t>& outputData,
 i32 coffee_main(i32, cstring_w*)
 {
     Url outputVfs;
+    Path cacheDir;
     auto rscDir = "."_url;
     Vector<VirtFS::VirtDesc> descriptors;
     Vector<CResources::Resource> resources;
@@ -224,6 +225,10 @@ i32 coffee_main(i32, cstring_w*)
                            " absolute file paths. All of them."
                            " Even embedded in models.");
 
+        parser.addArgument("cachedir", "cache", "m",
+                           "Caching directory for optimizing"
+                           " cooking time");
+
         parser.addSwitch("statistics", "stats", "s",
                          "Show statistics for files afterwards");
 
@@ -242,6 +247,11 @@ i32 coffee_main(i32, cstring_w*)
 
         outputVfs = MkUrl(args.positional["out_vfs"].c_str(),
                 RSCA::SystemFile);
+
+        cacheDir = Path(outputVfs).dirname() + "vfscache";
+
+        if(args.arguments.find("cachedir") != args.arguments.end())
+            cacheDir = Path(args.arguments.find("cachedir")->second);
 
         FileResourcePrefix(args.positional["resource_dir"].c_str());
     }
@@ -322,14 +332,14 @@ i32 coffee_main(i32, cstring_w*)
 
     for(auto proc : extProcessors)
     {
-        proc->setCacheBaseDirectory(
-                    Path(outputVfs).dirname() + "vfscache"
-                    );
+        proc->setCacheBaseDirectory(cacheDir);
+
         proc->setInternalState(
                     State::GetInternalState(),
                     State::GetInternalThreadState()
                     );
         proc->setBaseDirectories(baseDirs);
+
         proc->process(descriptors, cursor);
     }
 
