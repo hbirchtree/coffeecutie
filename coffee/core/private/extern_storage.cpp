@@ -14,6 +14,8 @@ namespace Coffee{
 
 struct InternalState
 {
+    LogInterface logger = OutputPrinterImpl::fprintf_platform;
+
 #ifndef COFFEE_LOWFAT
     Mutex printer_lock;
 #endif
@@ -244,6 +246,24 @@ u8& PrintingVerbosityLevel()
         return State::internal_state->bits.printing_verbosity;
     else
         return backup_verbosity;
+}
+
+namespace DebugFun{
+
+void SetLogInterface(LogInterface intf)
+{
+    C_PTR_CHECK(State::internal_state);
+    State::internal_state->logger = intf;
+}
+
+LogInterface GetLogInterface()
+{
+    if(State::internal_state)
+        return State::internal_state->logger;
+    else
+        return DebugFun::OutputPrinterImpl::fprintf_platform;
+}
+
 }
 
 }

@@ -35,7 +35,7 @@ struct OutputPrinterImpl : OutputPrinterDef
             formatted = StrUtil::printclean(formatted);
         }
 
-        fprintf_platform(stream, &formatted[0], sev, locking);
+        GetLogInterface()(stream, &formatted[0], sev, locking);
     }
 };
 

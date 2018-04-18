@@ -17,6 +17,8 @@
 namespace Coffee{
 namespace Profiling{
 
+static constexpr szptr MAX_NUMBER_OF_ENTRIES = 1024 * 1024;
+
 /*!
  * \brief The DataPointGenerator iterates over all DataPoints in all threads
  */
@@ -121,9 +123,33 @@ struct DataPointGenerator
         szptr current_thread;
     };
 
+    szptr size()
+    {
+        szptr counter = 0;
+
+        for(auto const& hash : m_threadHashes)
+            counter += State::GetProfilerStore()
+                    ->thread_refs[hash]
+                    .get()->datapoints
+                    .size();
+
+        return counter;
+    }
+
+    /*!
+     * \brief As a safety measure, we disable saving the trace
+     *  after 1 million entries. This was proven useful in the wild.
+     * \return
+     */
     iterator begin()
     {
-        return iterator(*this);
+        if(size() < MAX_NUMBER_OF_ENTRIES)
+            return iterator(*this);
+        else
+        {
+            cWarning("Trace events too large, all events discarded!");
+            return end();
+        }
     }
 
     iterator end()

@@ -359,12 +359,12 @@ FORCEDINLINE bool operator<(DataPoint const& t1,
 
 struct SimpleProfilerContext
 {
-    SimpleProfilerContext(cstring name,
+    FORCEDINLINE SimpleProfilerContext(cstring name,
                           DataPoint::Attr at = DataPoint::AttrNone)
     {
         SimpleProfilerImpl::PushContext(name, at);
     }
-    ~SimpleProfilerContext()
+    FORCEDINLINE ~SimpleProfilerContext()
     {
         SimpleProfilerImpl::PopContext();
     }
@@ -372,13 +372,22 @@ struct SimpleProfilerContext
 
 struct DeepProfilerContext
 {
-    DENYINLINE DeepProfilerContext(
+    FORCEDINLINE DeepProfilerContext(
             cstring name, DataPoint::Attr at = DataPoint::AttrNone):
         m_name(name)
     {
         SimpleProfilerImpl::DeepPushContext(name, at);
     }
-    DENYINLINE ~DeepProfilerContext()
+
+    FORCEDINLINE DeepProfilerContext(
+            CString const& name,
+            DataPoint::Attr at = DataPoint::AttrNone):
+        m_name(name)
+    {
+        SimpleProfilerImpl::DeepPushContext(name.c_str(), at);
+    }
+
+    FORCEDINLINE ~DeepProfilerContext()
     {
         SimpleProfilerImpl::DeepPopContext();
     }
@@ -386,11 +395,15 @@ struct DeepProfilerContext
     CString m_name;
 };
 
+
 }
 
 using DProfContext = Profiling::DeepProfilerContext;
 using ProfContext = Profiling::SimpleProfilerContext;
 using Profiler = Profiling::SimpleProfilerImpl;
+
+#define DPROF_CONTEXT_FUNC(PREFIX) \
+    DProfContext _(PREFIX + CString(__FUNCTION__) + "()")
 
 }
 
