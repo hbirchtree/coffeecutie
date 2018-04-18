@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <array>
+#include <functional>
 
 /*Memory management*/
 #include <atomic>

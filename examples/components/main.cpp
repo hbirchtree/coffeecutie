@@ -71,10 +71,10 @@ i32 coffee_main(i32, cstring_w*)
 
     entities.register_component<Matf4>(matrix_store);
 
-    auto& e1 = entities.create_entity(rec1);
+    entities.create_entity(rec1);
     entities.create_entity(rec1);
 
-    auto& e2 = entities.create_entity(rec2);
+    entities.create_entity(rec2);
     entities.create_entity(rec2);
 
     for(auto& o : entities.select(OF_Test_1))
