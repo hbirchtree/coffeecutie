@@ -72,7 +72,9 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
 {
     C_USED(sev);
 
-    if(locking)
+    bool locking_state = C_OCAST<bool>(State::GetInternalState());
+
+    if(locking && locking_state)
         State::GetPrinterLock().lock();
 #if defined(COFFEE_ANDROID)
     int flag = 0;
@@ -117,7 +119,7 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
 #else
     Puts(stream,formatted.c_str());
 #endif
-    if(locking)
+    if(locking && locking_state)
         State::GetPrinterLock().unlock();
 }
 

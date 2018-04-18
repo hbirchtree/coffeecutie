@@ -5,13 +5,25 @@
 #include "../../base/threading/cthreading.h"
 #include "../../internal_state.h"
 
+#if defined(COFFEE_PROFILER_TRACING)
+#include <coffee/core/CDebug>
+#endif
+
 #ifndef COFFEE_COMPONENT_NAME
 #define COFFEE_COMPONENT_NAME "(unknown)"
 #endif
 
 namespace Coffee{
 
+#if defined(COFFEE_PROFILER_TRACING)
+#define PFTRACE(a) cVerbose(8, "PROFILER: {0}", a)
+#else
+#define PFTRACE(a)
+#endif
+
+
 #define profiler_data_store (State::GetProfilerStore())
+#define profiler_tstore (State::GetProfilerTStore())
 #define current_thread_id (&State::GetCurrentThreadId())
 
 namespace Profiling{
@@ -19,7 +31,7 @@ namespace Profiling{
 struct DataPoint
 {
     FORCEDINLINE DataPoint():
-        thread()
+        thread(ThreadId().hash())
     {
     }
 
@@ -36,7 +48,7 @@ struct DataPoint
         Hot,
     };
 
-    ThreadId thread;
+    ThreadId::Hash thread;
 
     CString name;
     Timestamp ts;
@@ -56,87 +68,77 @@ struct ExtraPair
     CString value;
 };
 
-struct ThreadData
-{
-    LinkList<CString> context_stack;
-};
-
-using ThreadStorage = Map<ThreadId::Hash, ThreadData>;
 using ThreadListing = Map<ThreadId::Hash,CString>;
 using ThreadItem = Pair<ThreadId::Hash,CString>;
-using ThreadPtr = ShPtr<ThreadId>;
 using ExtraData = LinkList<ExtraPair>;
 using StackFrames = Set<CString>;
 
-#if !defined(COFFEE_DISABLE_PROFILER)
+struct ThreadData
+{
+    Vector<DataPoint> datapoints;
+    LinkList<CString> context_stack;
+};
+
+using ThreadRefs = Map<ThreadId::Hash, ShPtr<ThreadData>>;
+
 
 /* Below variables have storage in extern_storage.cpp */
 
 struct ProfilerDataStore
 {
+#if !defined(COFFEE_DISABLE_PROFILER)
     Timestamp start_time;
 
     Mutex data_access_mutex;
-#if !defined(NDEBUG)
-    LinkList<DataPoint> datapoints;
-    StackFrames stackframes;
     ThreadListing threadnames;
-    ThreadStorage context_storage;
-#endif
+    ThreadRefs thread_refs;
 
     ExtraData extra_data;
 
-#if !defined(NDEBUG)
     bool Enabled;
     bool Deep_Profile;
-#else
-    static const constexpr bool Enabled = false;
-    static const constexpr bool Deep_Profile = false;
-#endif
-
     byte_t padding[2];
-
+#endif // COFFEE_DISABLE_PROFILER
 };
 
-#if !defined(NDEBUG)
+#if !defined(COFFEE_DISABLE_PROFILER)
 STATICINLINE LinkList<CString>& threadContextStack()
 {
-    auto hash = current_thread_id->hash();
-    auto& ctxt = profiler_data_store->context_storage[hash];
-    return ctxt.context_stack;
+    return profiler_tstore->context_stack;
 }
 #endif
 
-#endif // COFFEE_DISABLE_PROFILER
 
 struct SimpleProfilerImpl
 {
     STATICINLINE void InitProfiler()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG)
         profiler_data_store->Enabled = true;
         profiler_data_store->Deep_Profile = false;
-#endif
 
         profiler_data_store->start_time =
                 Time::CurrentMicroTimestamp();
 #endif
     }
 
-    STATICINLINE void DestroyProfiler()
+    STATICINLINE void DisableProfiler()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
+        profiler_data_store->Enabled = false;
+        profiler_data_store->Deep_Profile = false;
+#endif
     }
 
     STATICINLINE void LabelThread(cstring name)
     {
-#if !defined(COFFEE_DISABLE_PROFILER)
         ThreadSetName(name);
-#if !defined(NDEBUG)
+
+#if !defined(COFFEE_DISABLE_PROFILER)
+        Lock _(profiler_data_store->data_access_mutex);
         ThreadId tid;
         profiler_data_store->threadnames
                 .insert(ThreadItem(tid.hash(),name));
-#endif
 #endif
     }
 
@@ -147,86 +149,85 @@ struct SimpleProfilerImpl
      *
      */
 
-    STATICINLINE void Profile(cstring name = nullptr,
-                              DataPoint::Attr at = DataPoint::AttrNone)
+    STATICINLINE void Profile(
+            cstring name = nullptr,
+            DataPoint::Attr at = DataPoint::AttrNone)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(!profiler_data_store)
+        if(!profiler_tstore && profiler_data_store->Enabled)
             return;
-
-        uint64 ts = Time::CurrentMicroTimestamp();
-
-        Lock l(profiler_data_store->data_access_mutex);
-        C_UNUSED(l);
 
         DataPoint p;
         p.tp = DataPoint::Profile;
-        p.ts = ts;
+        p.ts = Time::CurrentMicroTimestamp();
         p.name = (name) ? name : threadContextStack().front();
         p.component = COFFEE_COMPONENT_NAME;
         p.at = at;
 
-        profiler_data_store->datapoints.push_back(p);
-#endif
+        auto store = profiler_tstore;
+        auto& points = store->datapoints;
+
+        points.push_back(p);
+
+        PFTRACE("PRF:" + p.name);
 #endif
     }
 
-    STATICINLINE void PushContext(cstring name,
-                                  DataPoint::Attr at = DataPoint::AttrNone)
+    STATICINLINE void PushContext(
+            cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(!profiler_data_store)
+        if(!profiler_tstore && profiler_data_store->Enabled)
             return;
-
-        Lock l(profiler_data_store->data_access_mutex);
-        C_UNUSED(l);
 
         threadContextStack().push_front(name);
 
         DataPoint p;
         p.tp = DataPoint::Push;
-        p.ts = 0;
+        p.ts = Time::CurrentMicroTimestamp();
         p.name = name;
         p.component = COFFEE_COMPONENT_NAME;
         p.at = at;
 
-        profiler_data_store->datapoints.push_back(p);
-        profiler_data_store->datapoints.back().ts = Time::CurrentMicroTimestamp();
-#endif
+        profiler_tstore->datapoints.push_back(p);
+        profiler_tstore->datapoints.back().ts =
+                Time::CurrentMicroTimestamp();
+
+        PFTRACE("PSH:" + p.name);
 #endif
     }
     STATICINLINE void PopContext()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
-        if(!profiler_data_store)
+        if(!profiler_tstore && profiler_data_store->Enabled)
             return;
-
-        uint64 ts = Time::CurrentMicroTimestamp();
-
-        Lock l(profiler_data_store->data_access_mutex);
-        C_UNUSED(l);
 
         if(threadContextStack().size()<1)
-            return;
+            throw implementation_error("invalid context pop");
 
         DataPoint p;
         p.tp = DataPoint::Pop;
-        p.ts = ts;
+        p.ts = Time::CurrentMicroTimestamp();
         p.name = threadContextStack().front();
         p.component = COFFEE_COMPONENT_NAME;
+        p.at = DataPoint::AttrNone;
 
-        profiler_data_store->datapoints.push_back(p);
+        profiler_tstore->datapoints.push_back(p);
         threadContextStack().pop_front();
-#endif
+
+        PFTRACE("POP:" + p.name);
 #endif
     }
 
+    /*
+     *
+     * Deep profiling functions
+     *
+     */
+
     STATICINLINE bool SetDeepProfileMode(bool state)
     {
-#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
+#if !defined(COFFEE_DISABLE_PROFILER)
         if(!profiler_data_store)
             return false;
 
@@ -241,39 +242,48 @@ struct SimpleProfilerImpl
     STATICINLINE void DeepProfile(
             cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
-#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
-        if(profiler_data_store
-                && profiler_data_store->Deep_Profile)
+#if !defined(COFFEE_DISABLE_PROFILER)
+        if(profiler_data_store && profiler_data_store->Deep_Profile)
         {
             Profile(name, at);
-        }
+        }else
+            return;
 #endif
     }
 
     STATICINLINE void DeepPushContext(
             cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
-#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
+#if !defined(COFFEE_DISABLE_PROFILER)
         if(profiler_data_store
                 && profiler_data_store->Deep_Profile)
         {
             PushContext(name, at);
-        }
+        }else
+            return;
 #endif
     }
 
     STATICINLINE void DeepPopContext()
     {
-#if !defined(COFFEE_DISABLE_PROFILER) && !defined(NDEBUG)
+#if !defined(COFFEE_DISABLE_PROFILER)
         if(profiler_data_store
                 && profiler_data_store->Deep_Profile)
         {
             PopContext();
-        }
+        }else
+            return;
 #endif
     }
 
-    STATICINLINE void AddExtraData(CString const& key, CString const& val)
+    /*
+     *
+     * Accessors
+     *
+     */
+
+    STATICINLINE void AddExtraData(
+            CString const& key, CString const& val)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
         if(!profiler_data_store)
@@ -296,28 +306,23 @@ struct SimpleProfilerImpl
             return nullptr;
     }
 
-    STATICINLINE LinkList<DataPoint>* DataPoints()
-    {
-#if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG)
-        if(profiler_data_store)
-            return &profiler_data_store->datapoints;
-        else
-#endif
-#endif
-            return nullptr;
-    }
-
     STATICINLINE bool Enabled()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG)
         if(profiler_data_store)
             return profiler_data_store->Enabled;
         else
 #endif
-#endif
             return false;
+    }
+
+    STATICINLINE bool HasData()
+    {
+#if !defined(COFFEE_DISABLE_PROFILER)
+        return profiler_data_store;
+#else
+        return false;
+#endif
     }
 
     STATICINLINE Timestamp StartTime()
@@ -333,11 +338,9 @@ struct SimpleProfilerImpl
     STATICINLINE ThreadListing* ThreadNames()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-#if !defined(NDEBUG)
         if(profiler_data_store)
             return &profiler_data_store->threadnames;
         else
-#endif
 #endif
             return nullptr;
     }
@@ -346,8 +349,8 @@ struct SimpleProfilerImpl
 FORCEDINLINE bool operator<(DataPoint const& t1,
                             DataPoint const& t2)
 {
-    ThreadId::Hash th1 = t1.thread.hash();
-    ThreadId::Hash th2 = t1.thread.hash();
+    ThreadId::Hash th1 = t1.thread;
+    ThreadId::Hash th2 = t1.thread;
     bool thread_sort = th1<th2;
     bool samethread = th1==th2;
     bool ts_sort = t1.ts<t2.ts;
@@ -356,12 +359,12 @@ FORCEDINLINE bool operator<(DataPoint const& t1,
 
 struct SimpleProfilerContext
 {
-    SimpleProfilerContext(cstring name,
+    FORCEDINLINE SimpleProfilerContext(cstring name,
                           DataPoint::Attr at = DataPoint::AttrNone)
     {
         SimpleProfilerImpl::PushContext(name, at);
     }
-    ~SimpleProfilerContext()
+    FORCEDINLINE ~SimpleProfilerContext()
     {
         SimpleProfilerImpl::PopContext();
     }
@@ -369,16 +372,29 @@ struct SimpleProfilerContext
 
 struct DeepProfilerContext
 {
-    DeepProfilerContext(cstring name,
-                        DataPoint::Attr at = DataPoint::AttrNone)
+    FORCEDINLINE DeepProfilerContext(
+            cstring name, DataPoint::Attr at = DataPoint::AttrNone):
+        m_name(name)
     {
         SimpleProfilerImpl::DeepPushContext(name, at);
     }
-    ~DeepProfilerContext()
+
+    FORCEDINLINE DeepProfilerContext(
+            CString const& name,
+            DataPoint::Attr at = DataPoint::AttrNone):
+        m_name(name)
+    {
+        SimpleProfilerImpl::DeepPushContext(name.c_str(), at);
+    }
+
+    FORCEDINLINE ~DeepProfilerContext()
     {
         SimpleProfilerImpl::DeepPopContext();
     }
+
+    CString m_name;
 };
+
 
 }
 
@@ -386,7 +402,12 @@ using DProfContext = Profiling::DeepProfilerContext;
 using ProfContext = Profiling::SimpleProfilerContext;
 using Profiler = Profiling::SimpleProfilerImpl;
 
+#define DPROF_CONTEXT_FUNC(PREFIX) \
+    DProfContext _(PREFIX + CString(__FUNCTION__) + "()")
+
 }
 
 #undef current_thread_id
 #undef profiler_data_store
+#undef profiler_tstore
+#undef PFTRACE

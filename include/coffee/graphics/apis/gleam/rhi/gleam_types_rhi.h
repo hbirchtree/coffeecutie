@@ -9,6 +9,21 @@ namespace GLEAM{
 
 using namespace CGL;
 
+struct GLEAM_Options
+{
+    GLEAM_Options():
+        old_shader_processing(true)
+    {
+    }
+
+    /*!
+     * \brief Enables aggressive shimming on shader code,
+     *  should not be used in combination
+     *  with SPIRV-Cross/PressurizeShaders
+     */
+    bool old_shader_processing;
+};
+
 enum APILevel
 {
     GL_Nothing = 0x0,

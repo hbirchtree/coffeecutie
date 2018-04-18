@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <array>
+#include <functional>
 
 /*Memory management*/
 #include <atomic>
@@ -265,6 +266,31 @@ struct non_copy
     }
 };
 
+template<typename IteratorType>
+struct quick_container
+{
+    quick_container(std::function<IteratorType()>&& begin_con,
+                    std::function<IteratorType()>&& end_con):
+        m_begin(begin_con),
+        m_end(end_con)
+    {
+    }
+
+    IteratorType begin()
+    {
+        return m_begin();
+    }
+
+    IteratorType end()
+    {
+        return m_end();
+    }
+
+private:
+    std::function<IteratorType()> m_begin;
+    std::function<IteratorType()> m_end;
+};
+
 }
 
 struct resource_error : std::runtime_error
@@ -287,7 +313,14 @@ struct undefined_behavior : std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+#define C_STR_HELPER(x) #x
+#define C_STR(x) C_STR_HELPER(x)
+
 #define C_PTR_CHECK(ptr) if(!ptr) \
-    throw undefined_behavior("bad pointer deref: " __FILE__);
+    throw undefined_behavior(\
+    "bad pointer deref: " __FILE__ C_STR(__LINE__)\
+    );
 #define C_THIS_CHECK if(!this) \
-    throw undefined_behavior("bad access to *this: " __FILE__);
+    throw undefined_behavior(\
+    "bad access to *this: " __FILE__  C_STR(__LINE__)\
+    );

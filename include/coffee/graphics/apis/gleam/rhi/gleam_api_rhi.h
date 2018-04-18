@@ -5,6 +5,7 @@
 
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/interfaces/file_resolver.h>
 
 namespace Coffee{
 
@@ -14,6 +15,8 @@ namespace GLEAM{
 struct GLEAM_API : GraphicsAPI
 {
     using API_CONTEXT = Function<bool(bool)>;
+
+    using OPTS = GLEAM_Options;
 
     using G_DEV = GraphicsDevice;
     using G_CTXT = GraphicsContext;
@@ -194,12 +197,16 @@ public:
 
     static bool LoadAPI(
             DataStore store,
-            bool debug = false);
+            bool debug = false,
+            GLEAM_Options const& options = {}
+            );
     static bool UnloadAPI();
 
     static bool IsAPILoaded();
 
-    static API_CONTEXT GetLoadAPI();
+    static API_CONTEXT GetLoadAPI(
+            GLEAM_Options const& options = {}
+            );
 
     /* i specifies view index for indexed views, 0 for  */
     static void SetRasterizerState(
@@ -318,6 +325,8 @@ public:
     static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*);
 
     static bool TextureFormatSupport(PixFmt fmt);
+
+    static UrlResolver ShaderResolver();
 
     struct DBG
     {

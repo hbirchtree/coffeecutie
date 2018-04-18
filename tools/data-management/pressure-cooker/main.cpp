@@ -189,6 +189,7 @@ void test_vfs(Vector<byte_t>& outputData,
 i32 coffee_main(i32, cstring_w*)
 {
     Url outputVfs;
+    Path cacheDir;
     auto rscDir = "."_url;
     Vector<VirtFS::VirtDesc> descriptors;
     Vector<CResources::Resource> resources;
@@ -224,6 +225,10 @@ i32 coffee_main(i32, cstring_w*)
                            " absolute file paths. All of them."
                            " Even embedded in models.");
 
+        parser.addArgument("cachedir", "cache", "m",
+                           "Caching directory for optimizing"
+                           " cooking time");
+
         parser.addSwitch("statistics", "stats", "s",
                          "Show statistics for files afterwards");
 
@@ -243,6 +248,11 @@ i32 coffee_main(i32, cstring_w*)
         outputVfs = MkUrl(args.positional["out_vfs"].c_str(),
                 RSCA::SystemFile);
 
+        cacheDir = Path(outputVfs).dirname() + "vfscache";
+
+        if(args.arguments.find("cachedir") != args.arguments.end())
+            cacheDir = Path(args.arguments.find("cachedir")->second);
+
         FileResourcePrefix(args.positional["resource_dir"].c_str());
     }
 
@@ -251,7 +261,8 @@ i32 coffee_main(i32, cstring_w*)
         DirFun::DirList content;
         if(!DirFun::Ls(rscDir, content))
         {
-            cFatal("Failed to list resource directory");
+            cFatal("{0}:0: Failed to list resource directory",
+                   *rscDir);
             return 1;
         }
 
@@ -304,7 +315,9 @@ i32 coffee_main(i32, cstring_w*)
 
         if(desc.data.size == 0)
         {
-            cursor.print("Failed to add {0}", url);
+            cursor.print("{0}:0: File of size 0 cannot be added",
+                         (Path(*rscDir) + url.internUrl)
+                         .canonical().internUrl);
             continue;
         }
 
@@ -319,8 +332,14 @@ i32 coffee_main(i32, cstring_w*)
 
     for(auto proc : extProcessors)
     {
-        proc->receiveAssetPath(GetFileResourcePrefix());
+        proc->setCacheBaseDirectory(cacheDir);
+
+        proc->setInternalState(
+                    State::GetInternalState(),
+                    State::GetInternalThreadState()
+                    );
         proc->setBaseDirectories(baseDirs);
+
         proc->process(descriptors, cursor);
     }
 
@@ -328,7 +347,8 @@ i32 coffee_main(i32, cstring_w*)
 
     if(!VirtFS::GenVirtFS(descriptors, &outputData))
     {
-        cursor.print("Failed to create VirtFS");
+        cursor.print("{0}:0: Failed to create VirtFS",
+                     outputVfs.internUrl);
     }
     else
         cursor.complete("Filesystem created!");

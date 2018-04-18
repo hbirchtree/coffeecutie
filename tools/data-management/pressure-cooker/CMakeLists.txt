@@ -1,5 +1,7 @@
-find_package( Squish QUIET )
-find_package( TIFF QUIET )
+find_package( Squish QUIET     )
+find_package( TIFF QUIET       )
+find_package( shaderc QUIET    )
+find_package( SPIRVCross QUIET )
 
 set ( BUNDLE_LIBS CACHE STRING "" )
 
@@ -37,7 +39,7 @@ if(COFFEE_BUILD_ASSIMP)
         LINKAGE SHARED
         SOURCES model_compress.cpp
         LIBRARIES CoffeeCore CoffeeAssimp
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        HEADER_DIRS ${CMAKE_S123OURCE_DIR}/coffee/interfaces
         )
 
     add_dependencies ( PressureCooker
@@ -45,15 +47,12 @@ if(COFFEE_BUILD_ASSIMP)
         )
 endif()
 
-
 if(SQUISH_FOUND)
-    find_package( TIFF QUIET )
-
     coffee_library(
         TARGET PressurizeTextures
         LINKAGE SHARED
         SOURCES texture_compress.cpp
-        LIBRARIES CoffeeCore CoffeeImage Squish
+        LIBRARIES CoffeeImage CoffeeCore Squish
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 
@@ -74,4 +73,34 @@ if(SQUISH_FOUND)
         )
 else()
     message ( STATUS "Skipping PressurizeTextures" )
+endif()
+
+if(SHADERC_FOUND)
+    coffee_library (
+        TARGET PressurizeShaders
+        LINKAGE SHARED
+        SOURCES shader_compress.cpp
+        LIBRARIES CoffeeCore shaderc
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        )
+
+    set_property ( TARGET PressurizeShaders
+        PROPERTY LINK_FLAGS
+        "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
+        )
+
+    if(SPVCROSS_FOUND)
+        target_compile_definitions ( PressurizeShaders
+            PUBLIC
+            -DHAVE_SPIRVCROSS
+            )
+        target_link_libraries ( PressurizeShaders
+            PUBLIC
+            spvcross
+            )
+    endif()
+
+    add_dependencies ( PressureCooker
+        PressurizeShaders
+        )
 endif()

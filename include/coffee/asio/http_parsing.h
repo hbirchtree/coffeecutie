@@ -16,8 +16,10 @@ using Host = CString;
 FORCEDINLINE
 void SendProperty(CString& req_s, CString const& p, CString const& v)
 {
+    DProfContext _("Sending property");
     CString chunk = cStringFormat("{0}: {1}\r\n",p,v);
     req_s += chunk;
+
 }
 
 template <typename T>
@@ -58,7 +60,10 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     header += "\r\n";
 
-    req_s << header;
+    {
+        DProfContext _("Sending header chunk");
+        req_s << header;
+    }
 
     Profiler::DeepProfile("Creating header data");
 
@@ -77,35 +82,38 @@ bool ExtractResponse(StrmT& stream, Response* response)
     CString tmp;
     CString t1,t2;
 
-    stream >> response->version;
-    stream >> t1;
-
     {
+        DProfContext _("Reading response code");
+        stream >> response->version;
+        stream >> t1;
+
         bool code_ok = false;
         response->code = Mem::Convert::strtouint(t1.c_str(),10,&code_ok);
         if(!code_ok)
             response->code = 0;
-    }
 
-    std::getline(stream, response->message);
-    Mem::StrUtil::trim(response->message);
+        std::getline(stream, response->message);
+        Mem::StrUtil::trim(response->message);
+    }
 
     /* In this case, it's not even an HTTP response */
     if(response->version.substr(0,5)!="HTTP/")
         return false;
-
-    while(std::getline(stream,tmp) && tmp!="\r")
     {
-        int64 idx = Search::ChrFind(tmp.c_str(),':')-tmp.c_str();
-        cstring end = Search::ChrFind(tmp.c_str(),'\r');
-        if(idx > 0)
+        DProfContext _("Reading header fields");
+        while(std::getline(stream,tmp) && tmp!="\r")
         {
-            t1 = tmp.substr(0,idx);
-            t2 = tmp.substr(idx+1,tmp.size());
-            if(end)
-                t2.resize(t2.size()-1);
-            StrUtil::trim(t2);
-            response->header[t1] = t2;
+            auto idx = Search::ChrFind(tmp.c_str(),':')-tmp.c_str();
+            cstring end = Search::ChrFind(tmp.c_str(),'\r');
+            if(idx > 0)
+            {
+                t1 = tmp.substr(0, C_FCAST<szptr>(idx));
+                t2 = tmp.substr(C_FCAST<szptr>(idx+1), tmp.size());
+                if(end)
+                    t2.resize(t2.size()-1);
+                StrUtil::trim(t2);
+                response->header[t1] = t2;
+            }
         }
     }
 
@@ -115,25 +123,24 @@ bool ExtractResponse(StrmT& stream, Response* response)
     if(contentLenIt != response->header.end())
         payload.reserve(cast_string<u32>(contentLenIt->second));
 
-    Profiler::DeepProfile("Reading header data");
+    {
+        DProfContext _("Reading payload");
+        std::array<char, 4096> payloadBuffer;
+        while(stream.read(payloadBuffer.data(), payloadBuffer.size()))
+            payload.insert(
+                        payload.end(),
+                        payloadBuffer.begin(),
+                        payloadBuffer.end());
 
-    std::array<char, 4096> payloadBuffer;
-    while(stream.read(payloadBuffer.data(), payloadBuffer.size()))
-        payload.insert(
-                    payload.end(),
-                    payloadBuffer.begin(),
-                    payloadBuffer.end());
+        auto extraSpace = payload.capacity()
+                - payload.size();
+        payload.resize(payload.capacity());
 
-    auto extraSpace = payload.capacity()
-            - payload.size();
-    payload.resize(payload.capacity());
-
-    if(stream.gcount() <= extraSpace)
-        MemCpy(&payload.data()[payload.size() - extraSpace],
-               payloadBuffer.data(),
-               stream.gcount());
-
-    Profiler::DeepProfile("Reading payload");
+        if(stream.gcount() <= extraSpace)
+            MemCpy(&payload.data()[payload.size() - extraSpace],
+                    payloadBuffer.data(),
+                    stream.gcount());
+    }
 
     return true;
 }

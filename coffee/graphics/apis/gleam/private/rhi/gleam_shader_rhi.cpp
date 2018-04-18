@@ -11,60 +11,69 @@ namespace RHI{
 namespace GLEAM{
 
 static const constexpr cstring GLES20_COMPAT_VS = {
-    "\n"
-    "#define in attribute\n"
-    "#define out varying\n"
-    "#define flat\n"
-    "#define gl_InstanceID InstanceID\n"
+    R"(
 
-    "precision highp int;\n"
+#define in attribute
+#define out varying
+#define flat
+#define gl_InstanceID InstanceID
 
-    "uniform int InstanceID;\n"
+precision highp int;
+
+    )"
+//    uniform int InstanceID;
 };
 
 static const constexpr cstring GLES20_COMPAT_FS = {
-    "#define in varying\n"
-    "#define flat\n"
-    "#define OutColor gl_FragColor\n"
-    "#define sampler2DArray sampler2D\n"
-    "#define sampler3DArray sampler3D\n"
-    "#define gl_InstanceID InstanceID\n"
+    R"(
+#define in varying
+#define flat
+#define OutColor gl_FragColor
+#define sampler2DArray sampler2D
+#define sampler3DArray sampler3D
+#define gl_InstanceID InstanceID
 
-    "#define texture2DArray(texUnit, texCoord) "
-    "texture2DArray_Internal(texUnit, texCoord, texdata_gridSize)\n"
-//    "texture2DArray_Internal(texUnit, texCoord, texUnit ## _gridSize)\n"
+//#define texture2DArray(texUnit, texCoord)
+//texture2DArray_Internal(texUnit, texCoord, texdata_gridSize)
+//texture2DArray_Internal(texUnit, texCoord, texUnit ## _gridSize)
 
-    "precision mediump float;\n"
-    "precision highp int;\n"
+precision mediump float;
+precision highp int;
 
-    "vec4 texture(sampler2D sampler, vec2 texCoord)"
-    "{"
-    "   return texture2D(sampler, texCoord.xy);"
-    "}\n\n"
-    "vec4 texture(sampler2D sampler, vec3 texCoord)"
-    "{"
-    "   return texture2D(sampler, texCoord.xy);"
-    "}\n\n"
+vec4 texture(sampler2D sampler, vec2 texCoord)
+{
+   return texture2D(sampler, texCoord.xy);
+}
 
-    "vec4 texture2DArray_Internal(sampler2D tex, vec3 coord, float gridSize)"
-    "{"
-    "    float squareSize = gridSize;"
-    "    int iSquareSize = int(squareSize);"
-    "    float fSquareSize = 1.0 / squareSize;"
+vec4 texture(sampler2D sampler, vec3 texCoord)
+{
+   return texture2D(sampler, texCoord.xy);
+}
 
-    "    float gridY = float(int(coord.z) / iSquareSize) * fSquareSize;"
-    "    float gridX = (coord.z - gridY * squareSize) * fSquareSize;"
+vec4 texture2DArray_Internal(sampler2D tex, vec3 coord, float gridSize)
+{
+    float squareSize = gridSize;
+    int iSquareSize = int(squareSize);
+    float fSquareSize = 1.0 / squareSize;
 
-    "    vec2 baseCoord = vec2(gridX * fSquareSize, gridY * fSquareSize);"
+    float gridY = float(int(coord.z) / iSquareSize) * fSquareSize;
+    float gridX = (coord.z - gridY * squareSize) * fSquareSize;
 
-    "    coord.xy = coord.xy"
-    "            * vec2(fSquareSize, fSquareSize)"
-    "            + vec2(gridX, gridY);"
+    vec2 baseCoord = vec2(gridX * fSquareSize, gridY * fSquareSize);
 
-    "    return texture2D(tex, coord.xy);"
-    "}\n\n"
+    coord.xy = coord.xy
+            * vec2(fSquareSize, fSquareSize)
+            + vec2(gridX, gridY);
 
-    "uniform int InstanceID;\n"
+    return texture2D(tex, coord.xy);
+}
+
+#define texture2D texture
+
+)"
+
+
+//    "uniform int InstanceID;\n"
 };
 
 STATICINLINE CString StringExtractLine(CString& shader, cstring query)
@@ -118,14 +127,17 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         shaderStorage.push_back("#version 100\n");
     }
 
-    /* We move the extension directives at this point */
-    CString extensionDirective = {};
-    while((extensionDirective =
-           StringExtractLine(transformedShader,
-                             "\n#extension ")).size())
-        shaderStorage.push_back(extensionDirective);
+    if(GLEAM_OPTIONS.old_shader_processing)
+    {
+        /* We move the extension directives at this point */
+        CString extensionDirective = {};
+        while((extensionDirective =
+               StringExtractLine(transformedShader,
+                                 "\n#extension ")).size())
+            shaderStorage.push_back(extensionDirective);
+    }
 
-    if(GLEAM_FEATURES.gles20)
+    if(GLEAM_FEATURES.gles20 && GLEAM_OPTIONS.old_shader_processing)
     {
         /* TODO: Provide better support for sampler2DArray, creating
      *  extra uniforms for grid size and etc. This will allow us
@@ -165,7 +177,7 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         else
             shaderSrcVec.push_back(GLES20_COMPAT_FS);
 
-    }else
+    }else if(GLEAM_OPTIONS.old_shader_processing)
     {
 
         /* Desktop GL does not require a precision specifier */
@@ -185,13 +197,22 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
     }
 
     /* For supporting BaseInstance */
-    if(!GLEAM_FEATURES.base_instance
-            && stage == ShaderStage::Vertex)
+    if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex
+            && GLEAM_OPTIONS.old_shader_processing)
     {
         shaderSrcVec.push_back(
                     "#define gl_BaseInstanceARB BaseInstance\n"
                     "#define gl_BaseInstance BaseInstance\n"
                     "uniform int BaseInstance;\n"
+                    );
+    }
+    if(stage == ShaderStage::Vertex && !GLEAM_OPTIONS.old_shader_processing)
+    {
+        shaderSrcVec.push_back(
+                    R"(
+#define SPIRV_Cross_BaseInstance BaseInstance
+#define SPIRV_Cross_InstanceID InstanceID
+)"
                     );
     }
 
@@ -204,10 +225,14 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
                             shaderStorage.at(directiveEnd - 1 - i).c_str());
 
     shaderSrcVec.push_back(shaderStorage.back().c_str());
+    shaderSrcVec.push_back("\n");
 }
 
 bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
+    if(data.size == 0)
+        return false;
+
     if(GLEAM_FEATURES.gles20
             && stage != ShaderStage::Vertex
             && stage != ShaderStage::Fragment)
@@ -250,8 +275,20 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
         if(GL_DEBUG_MODE && !stat)
         {
+            CString completeSource;
+            for(auto i : Range<>(numSources))
+                completeSource.append(StrUtil::encapsulate(
+                                          shaderSrc[i],
+                                          C_FCAST<szptr>(shaderLens[i])
+                                          ));
             cstring_w log = CGL33::ShaderGetLog(m_handle);
-            cWarning("Shader compilation error: {0}",log);
+            cWarning("Shader compilation error: {0}\n"
+                     "Associated source: \n{1}"
+                     "Original source: \n{2}",
+                     log, completeSource,
+                     StrUtil::encapsulate(C_FCAST<cstring>(data.data),
+                                          data.size)
+                     );
             return false;
         }
 

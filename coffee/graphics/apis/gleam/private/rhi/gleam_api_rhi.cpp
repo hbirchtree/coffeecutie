@@ -49,7 +49,7 @@ void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixFmt c, BitFmt dt, Vector
 void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
 #if defined(COFFEE_GLEAM_DESKTOP)
-    major = 4; minor = 5;
+    major = 4; minor = 6;
 #elif defined(COFFEE_ONLY_GLES20)
     major = 2; minor = 0;
 #else
@@ -100,7 +100,8 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data *p)
     delete p;
 }
 
-bool GLEAM_API::LoadAPI(DataStore store, bool debug)
+bool GLEAM_API::LoadAPI(DataStore store, bool debug,
+                        GLEAM_API::OPTS const& options)
 {
     DProfContext _(GLM_API "LoadAPI()");
 
@@ -125,6 +126,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     cVerbose(8, GLM_API "Creating instance data");
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
+    store->options = options;
 #ifndef NDEBUG
     store->DEBUG_MODE = debug;
 #endif
@@ -251,6 +253,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     store->features.base_instance
             = CGL33::Debug::CheckExtensionSupported(
                 "GL_ARB_shader_draw_parameters");
+
+    if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
+        store->features.base_instance = false;
     /* base_instance is const false on GLES */
 #endif
 
@@ -334,14 +339,16 @@ bool GLEAM_API::UnloadAPI()
 
 /* Future improvement: cache changes, or maybe rely on driver for that */
 
-GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI()
+GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI(
+        GLEAM_API::OPTS const& options
+        )
 {
     cVerbose(8, GLM_API "Returning GLEAM loader...");
-    return [](bool debug = false)
+    return [&](bool debug = false)
     {
         static GLEAM_DataStore m_gleam_data = {};
         cVerbose(8, GLM_API "Running GLEAM loader");
-        return LoadAPI(&m_gleam_data, debug);
+        return LoadAPI(&m_gleam_data, debug, options);
     };
 }
 
@@ -669,6 +676,8 @@ void GLEAM_API::SetShaderUniformState(
         ShaderStage const& stage,
         const GLEAM_ShaderUniformState &ustate)
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     using namespace ShaderTypes;
 
     /* TODO: Tie uniforms to their applicable stages */
@@ -867,12 +876,15 @@ void GLEAM_API::SetShaderUniformState(
 
 void GLEAM_API::PreDrawCleanup()
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
 void GLEAM_API::DisposePixelBuffers()
 {
 #if !defined(COFFEE_ONLY_GLES20)
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
         CGL33::BufFree(1, &buf.buf);
@@ -885,6 +897,8 @@ void GLEAM_API::OptimizeRenderPass(
         GLEAM_API::RenderPass &rpass,
         GLEAM_API::OPT_DRAW& buffer)
 {
+    DProfContext _(GLM_API "Optimizing RenderPass");
+
     Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
     auto& cmdBufs = buffer.cmdBufs;
 
@@ -986,6 +1000,7 @@ static bool InternalDraw(
         GLEAM_API::DrawCall const& d,
         GLEAM_API::DrawInstanceData const& i)
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
     // TODO: Use glGetVertexAttribPointer for vertex offsets
 
     if(d.indexed())
@@ -1068,6 +1083,8 @@ static bool InternalDraw(
 bool InternalMultiDraw(
         GLEAM_API::OptimizedDraw::MultiDrawData const& data)
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     static CGhnd indirectBuf;
 
     if(GL_DEBUG_MODE)
@@ -1215,11 +1232,12 @@ void GLEAM_API::MultiDraw(
         const GLEAM_API::OPT_DRAW &draws
         )
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
     GLEAM_API::DBG::SCOPE a(GLM_API "MultiDraw");
 
     /* In debug mode, display the entire draw call.
      *  This is the true verbose mode. */
-    if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
+    if(GL_DEBUG_MODE && PrintingVerbosityLevel() >= 12)
     {
         cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle);
         for(auto& cmd : draws.cmdBufs)
@@ -1380,6 +1398,8 @@ void GLEAM_API::Draw(
         OccludeQuery* query
         )
 {
+    DPROF_CONTEXT_FUNC(GLM_API);
+
     C_UNUSED(vertices);
 
     DrwMd mode = {d.primitive(),d.primitiveMode()};

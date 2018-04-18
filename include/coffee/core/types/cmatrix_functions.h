@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/composite_types.h>
+#include "graphics_types.h"
 
 namespace Coffee{
 namespace CGraphicsData{

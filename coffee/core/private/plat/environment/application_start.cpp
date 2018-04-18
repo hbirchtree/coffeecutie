@@ -96,16 +96,10 @@ extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv)
 #include <coffee/core/coffee_version.h>
 
 namespace Coffee{
-#ifndef COFFEE_LOADABLE_LIBRARY
-extern CoffeeApplicationData app_data;
-#endif
 
 const CoffeeApplicationData& ApplicationData()
 {
-#ifdef COFFEE_LOADABLE_LIBRARY
-    static CoffeeApplicationData app_data;
-#endif
-    return app_data;
+    return GetCurrentApp();
 }
 }
 

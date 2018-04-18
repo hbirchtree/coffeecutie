@@ -52,7 +52,7 @@ native-libs.mkdir:
 
 native-libs: native-libs.mkdir
 	[ ! -d $(BUILD_DIR)/dependencies/native-libs/.git ] && \
-	git clone --depth 1 'https://github.com/hbirchtree/native-library-bundle.git' $(BUILD_DIR)/dependencies/native-libs || \
+	git clone --recursive --depth 1 'https://github.com/hbirchtree/native-library-bundle.git' $(BUILD_DIR)/dependencies/native-libs || \
 	true
 
 rpi-sdk.mkdir:
@@ -60,13 +60,13 @@ rpi-sdk.mkdir:
 
 rpi-sdk: rpi-sdk.mkdir
 	[ ! -d $(BUILD_DIR)/dependencies/raspberry-sysroot/.git ] && \
-	git clone --depth 1 'https://github.com/hbirchtree/raspberry-sysroot.git' $(BUILD_DIR)/dependencies/raspberry-sysroot || \
+	git clone --recursive --depth 1 'https://github.com/hbirchtree/raspberry-sysroot.git' $(BUILD_DIR)/dependencies/raspberry-sysroot || \
 	true
 
 
 # Create a help option
 list-targets:
-	@echo "android.armv7a.gingerbread.gles2\nandroid.armv7a.kitkat.gles2\nandroid.armv7a.lollipop.gles3\nandroid.armv7a.nougat.gles2\nandroid.armv7a.nougat.gles3\nandroid.armv8a.lollipop.gles3\nandroid.armv8a.nougat.gles3\nandroid.mips.kitkat\nandroid.mips64.kitkat\nandroid.x86.kitkat\nandroid.x86_64.kitkat\ncoverage\ndocs\nemscripten.asmjs\nemscripten.wasm\nfedora.amd64\nios\nios.x86\nios.x86_64\nmaemo.armel\nmingw.w64\nosx\nraspberry.armhf\nsteam.amd64\nubuntu.amd64\nubuntu.amd64.gles2\nubuntu.amd64.gles3\nubuntu.amd64.tools\nubuntu.i686.gles\nubuntu.i686.gles2\nappimg-runtime.coverage\nappimg-runtime.fedora.amd64\nappimg-runtime.maemo.armel\nappimg-runtime.raspberry.armhf\nappimg-runtime.ubuntu.amd64\nappimg-runtime.ubuntu.amd64.gles2\nappimg-runtime.ubuntu.amd64.gles3\nappimg-runtime.ubuntu.amd64.tools\nappimg-runtime.ubuntu.i686.gles\nappimg-runtime.ubuntu.i686.gles2\nassimp.android.armv7a.gingerbread.gles2\nassimp.android.armv7a.kitkat.gles2\nassimp.android.armv7a.lollipop.gles3\nassimp.android.armv7a.nougat.gles2\nassimp.android.armv7a.nougat.gles3\nassimp.android.armv8a.lollipop.gles3\nassimp.android.armv8a.nougat.gles3\nassimp.android.mips.kitkat\nassimp.android.mips64.kitkat\nassimp.android.x86.kitkat\nassimp.android.x86_64.kitkat\nassimp.coverage\nassimp.emscripten.asmjs\nassimp.emscripten.wasm\nassimp.fedora.amd64\nassimp.ios\nassimp.ios.x86\nassimp.ios.x86_64\nassimp.maemo.armel\nassimp.mingw.w64\nassimp.osx\nassimp.raspberry.armhf\nassimp.steam.amd64\nassimp.ubuntu.amd64\nassimp.ubuntu.amd64.gles2\nassimp.ubuntu.amd64.gles3\nassimp.ubuntu.amd64.tools\nassimp.ubuntu.i686.gles\nassimp.ubuntu.i686.gles2\nbullet.android.armv7a.gingerbread.gles2\nbullet.android.armv7a.kitkat.gles2\nbullet.android.armv7a.lollipop.gles3\nbullet.android.armv7a.nougat.gles2\nbullet.android.armv7a.nougat.gles3\nbullet.android.armv8a.lollipop.gles3\nbullet.android.armv8a.nougat.gles3\nbullet.android.mips.kitkat\nbullet.android.mips64.kitkat\nbullet.android.x86.kitkat\nbullet.android.x86_64.kitkat\nbullet.coverage\nbullet.emscripten.asmjs\nbullet.emscripten.wasm\nbullet.fedora.amd64\nbullet.ios\nbullet.ios.x86\nbullet.ios.x86_64\nbullet.maemo.armel\nbullet.mingw.w64\nbullet.osx\nbullet.raspberry.armhf\nbullet.steam.amd64\nbullet.ubuntu.amd64\nbullet.ubuntu.amd64.gles2\nbullet.ubuntu.amd64.gles3\nbullet.ubuntu.amd64.tools\nbullet.ubuntu.i686.gles\nbullet.ubuntu.i686.gles2\nglslang.osx\nglslang.ubuntu.amd64\nglslang.ubuntu.amd64.gles2\nglslang.ubuntu.amd64.gles3\nglslang.ubuntu.amd64.tools\nglslang.ubuntu.i686.gles\nglslang.ubuntu.i686.gles2\nopenal.android.armv7a.gingerbread.gles2\nopenal.android.armv7a.kitkat.gles2\nopenal.android.armv7a.lollipop.gles3\nopenal.android.armv7a.nougat.gles2\nopenal.android.armv7a.nougat.gles3\nopenal.android.armv8a.lollipop.gles3\nopenal.android.armv8a.nougat.gles3\nopenal.android.mips.kitkat\nopenal.android.mips64.kitkat\nopenal.android.x86.kitkat\nopenal.android.x86_64.kitkat\nopenal.coverage\nopenal.emscripten.asmjs\nopenal.emscripten.wasm\nopenal.fedora.amd64\nopenal.ios\nopenal.ios.x86\nopenal.ios.x86_64\nopenal.maemo.armel\nopenal.mingw.w64\nopenal.osx\nopenal.raspberry.armhf\nopenal.steam.amd64\nopenal.ubuntu.amd64\nopenal.ubuntu.amd64.gles2\nopenal.ubuntu.amd64.gles3\nopenal.ubuntu.amd64.tools\nopenal.ubuntu.i686.gles\nopenal.ubuntu.i686.gles2\nopenssl.android.armv7a.gingerbread.gles2\nopenssl.android.armv7a.kitkat.gles2\nopenssl.android.armv7a.lollipop.gles3\nopenssl.android.armv7a.nougat.gles2\nopenssl.android.armv7a.nougat.gles3\nopenssl.android.armv8a.lollipop.gles3\nopenssl.android.armv8a.nougat.gles3\nopenssl.android.mips.kitkat\nopenssl.android.mips64.kitkat\nopenssl.android.x86.kitkat\nopenssl.android.x86_64.kitkat\nopenssl.coverage\nopenssl.emscripten.asmjs\nopenssl.emscripten.wasm\nopenssl.fedora.amd64\nopenssl.ios\nopenssl.ios.x86\nopenssl.ios.x86_64\nopenssl.maemo.armel\nopenssl.mingw.w64\nopenssl.osx\nopenssl.raspberry.armhf\nopenssl.steam.amd64\nopenssl.ubuntu.amd64\nopenssl.ubuntu.amd64.gles2\nopenssl.ubuntu.amd64.gles3\nopenssl.ubuntu.amd64.tools\nopenssl.ubuntu.i686.gles\nopenssl.ubuntu.i686.gles2\nsdl2.android.armv7a.gingerbread.gles2\nsdl2.android.armv7a.kitkat.gles2\nsdl2.android.armv7a.lollipop.gles3\nsdl2.android.armv7a.nougat.gles2\nsdl2.android.armv7a.nougat.gles3\nsdl2.android.armv8a.lollipop.gles3\nsdl2.android.armv8a.nougat.gles3\nsdl2.android.mips.kitkat\nsdl2.android.mips64.kitkat\nsdl2.android.x86.kitkat\nsdl2.android.x86_64.kitkat\nsdl2.coverage\nsdl2.emscripten.asmjs\nsdl2.emscripten.wasm\nsdl2.fedora.amd64\nsdl2.ios\nsdl2.ios.x86\nsdl2.ios.x86_64\nsdl2.maemo.armel\nsdl2.mingw.w64\nsdl2.osx\nsdl2.raspberry.armhf\nsdl2.steam.amd64\nsdl2.ubuntu.amd64\nsdl2.ubuntu.amd64.gles2\nsdl2.ubuntu.amd64.gles3\nsdl2.ubuntu.amd64.tools\nsdl2.ubuntu.i686.gles\nsdl2.ubuntu.i686.gles2\nsquish.osx\nsquish.ubuntu.amd64\nsquish.ubuntu.amd64.gles2\nsquish.ubuntu.amd64.gles3\nsquish.ubuntu.amd64.tools\nsquish.ubuntu.i686.gles\nsquish.ubuntu.i686.gles2\nstrip.android.armv7a.gingerbread.gles2\nstrip.android.armv7a.kitkat.gles2\nstrip.android.armv7a.lollipop.gles3\nstrip.android.armv7a.nougat.gles2\nstrip.android.armv7a.nougat.gles3\nstrip.android.armv8a.lollipop.gles3\nstrip.android.armv8a.nougat.gles3\nstrip.android.mips.kitkat\nstrip.android.mips64.kitkat\nstrip.android.x86.kitkat\nstrip.android.x86_64.kitkat\nstrip.coverage\nstrip.emscripten.asmjs\nstrip.emscripten.wasm\nstrip.fedora.amd64\nstrip.ios\nstrip.ios.x86\nstrip.ios.x86_64\nstrip.maemo.armel\nstrip.mingw.w64\nstrip.osx\nstrip.raspberry.armhf\nstrip.steam.amd64\nstrip.ubuntu.amd64\nstrip.ubuntu.amd64.gles2\nstrip.ubuntu.amd64.gles3\nstrip.ubuntu.amd64.tools\nstrip.ubuntu.i686.gles\nstrip.ubuntu.i686.gles2"
+	@echo "android.armv7a.gingerbread.gles2\nandroid.armv7a.kitkat.gles2\nandroid.armv7a.lollipop.gles3\nandroid.armv7a.nougat.gles2\nandroid.armv7a.nougat.gles3\nandroid.armv8a.lollipop.gles3\nandroid.armv8a.nougat.gles3\nandroid.mips.kitkat\nandroid.mips64.kitkat\nandroid.x86.kitkat\nandroid.x86_64.kitkat\ncoverage\ndocs\nemscripten.asmjs\nemscripten.wasm\nfedora.amd64\nios\nios.x86\nios.x86_64\nmaemo.armel\nmingw.w64\nosx\nraspberry.armhf\nsteam.amd64\nubuntu.amd64\nubuntu.amd64.gles2\nubuntu.amd64.gles3\nubuntu.amd64.tools\nubuntu.i686.gles\nubuntu.i686.gles2\nappimg-runtime.coverage\nappimg-runtime.fedora.amd64\nappimg-runtime.maemo.armel\nappimg-runtime.raspberry.armhf\nappimg-runtime.ubuntu.amd64\nappimg-runtime.ubuntu.amd64.gles2\nappimg-runtime.ubuntu.amd64.gles3\nappimg-runtime.ubuntu.amd64.tools\nappimg-runtime.ubuntu.i686.gles\nappimg-runtime.ubuntu.i686.gles2\nassimp.android.armv7a.gingerbread.gles2\nassimp.android.armv7a.kitkat.gles2\nassimp.android.armv7a.lollipop.gles3\nassimp.android.armv7a.nougat.gles2\nassimp.android.armv7a.nougat.gles3\nassimp.android.armv8a.lollipop.gles3\nassimp.android.armv8a.nougat.gles3\nassimp.android.mips.kitkat\nassimp.android.mips64.kitkat\nassimp.android.x86.kitkat\nassimp.android.x86_64.kitkat\nassimp.coverage\nassimp.emscripten.asmjs\nassimp.emscripten.wasm\nassimp.fedora.amd64\nassimp.ios\nassimp.ios.x86\nassimp.ios.x86_64\nassimp.maemo.armel\nassimp.mingw.w64\nassimp.osx\nassimp.raspberry.armhf\nassimp.steam.amd64\nassimp.ubuntu.amd64\nassimp.ubuntu.amd64.gles2\nassimp.ubuntu.amd64.gles3\nassimp.ubuntu.amd64.tools\nassimp.ubuntu.i686.gles\nassimp.ubuntu.i686.gles2\nbullet.android.armv7a.gingerbread.gles2\nbullet.android.armv7a.kitkat.gles2\nbullet.android.armv7a.lollipop.gles3\nbullet.android.armv7a.nougat.gles2\nbullet.android.armv7a.nougat.gles3\nbullet.android.armv8a.lollipop.gles3\nbullet.android.armv8a.nougat.gles3\nbullet.android.mips.kitkat\nbullet.android.mips64.kitkat\nbullet.android.x86.kitkat\nbullet.android.x86_64.kitkat\nbullet.coverage\nbullet.emscripten.asmjs\nbullet.emscripten.wasm\nbullet.fedora.amd64\nbullet.ios\nbullet.ios.x86\nbullet.ios.x86_64\nbullet.maemo.armel\nbullet.mingw.w64\nbullet.osx\nbullet.raspberry.armhf\nbullet.steam.amd64\nbullet.ubuntu.amd64\nbullet.ubuntu.amd64.gles2\nbullet.ubuntu.amd64.gles3\nbullet.ubuntu.amd64.tools\nbullet.ubuntu.i686.gles\nbullet.ubuntu.i686.gles2\nglslang.osx\nglslang.ubuntu.amd64\nglslang.ubuntu.amd64.gles2\nglslang.ubuntu.amd64.gles3\nglslang.ubuntu.amd64.tools\nglslang.ubuntu.i686.gles\nglslang.ubuntu.i686.gles2\nopenal.android.armv7a.gingerbread.gles2\nopenal.android.armv7a.kitkat.gles2\nopenal.android.armv7a.lollipop.gles3\nopenal.android.armv7a.nougat.gles2\nopenal.android.armv7a.nougat.gles3\nopenal.android.armv8a.lollipop.gles3\nopenal.android.armv8a.nougat.gles3\nopenal.android.mips.kitkat\nopenal.android.mips64.kitkat\nopenal.android.x86.kitkat\nopenal.android.x86_64.kitkat\nopenal.coverage\nopenal.emscripten.asmjs\nopenal.emscripten.wasm\nopenal.fedora.amd64\nopenal.ios\nopenal.ios.x86\nopenal.ios.x86_64\nopenal.maemo.armel\nopenal.mingw.w64\nopenal.osx\nopenal.raspberry.armhf\nopenal.steam.amd64\nopenal.ubuntu.amd64\nopenal.ubuntu.amd64.gles2\nopenal.ubuntu.amd64.gles3\nopenal.ubuntu.amd64.tools\nopenal.ubuntu.i686.gles\nopenal.ubuntu.i686.gles2\nopenssl.android.armv7a.gingerbread.gles2\nopenssl.android.armv7a.kitkat.gles2\nopenssl.android.armv7a.lollipop.gles3\nopenssl.android.armv7a.nougat.gles2\nopenssl.android.armv7a.nougat.gles3\nopenssl.android.armv8a.lollipop.gles3\nopenssl.android.armv8a.nougat.gles3\nopenssl.android.mips.kitkat\nopenssl.android.mips64.kitkat\nopenssl.android.x86.kitkat\nopenssl.android.x86_64.kitkat\nopenssl.coverage\nopenssl.emscripten.asmjs\nopenssl.emscripten.wasm\nopenssl.fedora.amd64\nopenssl.ios\nopenssl.ios.x86\nopenssl.ios.x86_64\nopenssl.maemo.armel\nopenssl.mingw.w64\nopenssl.osx\nopenssl.raspberry.armhf\nopenssl.steam.amd64\nopenssl.ubuntu.amd64\nopenssl.ubuntu.amd64.gles2\nopenssl.ubuntu.amd64.gles3\nopenssl.ubuntu.amd64.tools\nopenssl.ubuntu.i686.gles\nopenssl.ubuntu.i686.gles2\nsdl2.android.armv7a.gingerbread.gles2\nsdl2.android.armv7a.kitkat.gles2\nsdl2.android.armv7a.lollipop.gles3\nsdl2.android.armv7a.nougat.gles2\nsdl2.android.armv7a.nougat.gles3\nsdl2.android.armv8a.lollipop.gles3\nsdl2.android.armv8a.nougat.gles3\nsdl2.android.mips.kitkat\nsdl2.android.mips64.kitkat\nsdl2.android.x86.kitkat\nsdl2.android.x86_64.kitkat\nsdl2.coverage\nsdl2.emscripten.asmjs\nsdl2.emscripten.wasm\nsdl2.fedora.amd64\nsdl2.ios\nsdl2.ios.x86\nsdl2.ios.x86_64\nsdl2.maemo.armel\nsdl2.mingw.w64\nsdl2.osx\nsdl2.raspberry.armhf\nsdl2.steam.amd64\nsdl2.ubuntu.amd64\nsdl2.ubuntu.amd64.gles2\nsdl2.ubuntu.amd64.gles3\nsdl2.ubuntu.amd64.tools\nsdl2.ubuntu.i686.gles\nsdl2.ubuntu.i686.gles2\nshaderc.osx\nshaderc.ubuntu.amd64\nshaderc.ubuntu.amd64.gles2\nshaderc.ubuntu.amd64.gles3\nshaderc.ubuntu.amd64.tools\nshaderc.ubuntu.i686.gles\nshaderc.ubuntu.i686.gles2\nspirv-cross.osx\nspirv-cross.ubuntu.amd64\nspirv-cross.ubuntu.amd64.gles2\nspirv-cross.ubuntu.amd64.gles3\nspirv-cross.ubuntu.amd64.tools\nspirv-cross.ubuntu.i686.gles\nspirv-cross.ubuntu.i686.gles2\nsquish.osx\nsquish.ubuntu.amd64\nsquish.ubuntu.amd64.gles2\nsquish.ubuntu.amd64.gles3\nsquish.ubuntu.amd64.tools\nsquish.ubuntu.i686.gles\nsquish.ubuntu.i686.gles2\nstrip.android.armv7a.gingerbread.gles2\nstrip.android.armv7a.kitkat.gles2\nstrip.android.armv7a.lollipop.gles3\nstrip.android.armv7a.nougat.gles2\nstrip.android.armv7a.nougat.gles3\nstrip.android.armv8a.lollipop.gles3\nstrip.android.armv8a.nougat.gles3\nstrip.android.mips.kitkat\nstrip.android.mips64.kitkat\nstrip.android.x86.kitkat\nstrip.android.x86_64.kitkat\nstrip.coverage\nstrip.emscripten.asmjs\nstrip.emscripten.wasm\nstrip.fedora.amd64\nstrip.ios\nstrip.ios.x86\nstrip.ios.x86_64\nstrip.maemo.armel\nstrip.mingw.w64\nstrip.osx\nstrip.raspberry.armhf\nstrip.steam.amd64\nstrip.ubuntu.amd64\nstrip.ubuntu.amd64.gles2\nstrip.ubuntu.amd64.gles3\nstrip.ubuntu.amd64.tools\nstrip.ubuntu.i686.gles\nstrip.ubuntu.i686.gles2"
 
 help: list-targets
 
@@ -417,7 +417,7 @@ appimg-runtime.source.mkdir:
 
 appimg-runtime.source: appimg-runtime.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/appimg-runtime/source/.git ] && \
-	git clone --depth 1 'https://github.com/AppImage/AppImageKit.git' $(BUILD_DIR)/build-dependencies/appimg-runtime/source || \
+	git clone --recursive --depth 1 'https://github.com/AppImage/AppImageKit.git' $(BUILD_DIR)/build-dependencies/appimg-runtime/source || \
 	true
 
 assimp.source.mkdir:
@@ -425,7 +425,7 @@ assimp.source.mkdir:
 
 assimp.source: assimp.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/assimp/source/.git ] && \
-	git clone --depth 1 'https://github.com/assimp/assimp.git' $(BUILD_DIR)/build-dependencies/assimp/source || \
+	git clone --recursive --depth 1 'https://github.com/assimp/assimp.git' $(BUILD_DIR)/build-dependencies/assimp/source || \
 	true
 
 bullet.source.mkdir:
@@ -433,7 +433,7 @@ bullet.source.mkdir:
 
 bullet.source: bullet.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/bullet/source/.git ] && \
-	git clone --depth 1 'https://github.com/bulletphysics/bullet3.git' $(BUILD_DIR)/build-dependencies/bullet/source || \
+	git clone --recursive --depth 1 'https://github.com/bulletphysics/bullet3.git' $(BUILD_DIR)/build-dependencies/bullet/source || \
 	true
 
 glslang.source.mkdir:
@@ -441,7 +441,7 @@ glslang.source.mkdir:
 
 glslang.source: glslang.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/glslang/source/.git ] && \
-	git clone --depth 1 'https://github.com/KhronosGroup/glslang.git' $(BUILD_DIR)/build-dependencies/glslang/source || \
+	git clone --recursive --depth 1 'https://github.com/KhronosGroup/glslang.git' $(BUILD_DIR)/build-dependencies/glslang/source || \
 	true
 
 openal.source.mkdir:
@@ -449,7 +449,7 @@ openal.source.mkdir:
 
 openal.source: openal.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/openal/source/.git ] && \
-	git clone --depth 1 'https://github.com/kcat/openal-soft.git' $(BUILD_DIR)/build-dependencies/openal/source || \
+	git clone --recursive --depth 1 'https://github.com/kcat/openal-soft.git' $(BUILD_DIR)/build-dependencies/openal/source || \
 	true
 
 sdl2.source.mkdir:
@@ -457,7 +457,23 @@ sdl2.source.mkdir:
 
 sdl2.source: sdl2.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/sdl2/source/.hg ] && \
-	hg clone --depth 1 'https://hg.libsdl.org/SDL' $(BUILD_DIR)/build-dependencies/sdl2/source || \
+	hg clone --recursive --depth 1 'https://hg.libsdl.org/SDL' $(BUILD_DIR)/build-dependencies/sdl2/source || \
+	true
+
+shaderc.source.mkdir:
+	mkdir -p "$(BUILD_DIR)/build-dependencies/shaderc/source"
+
+shaderc.source: shaderc.source.mkdir
+	[ ! -d $(BUILD_DIR)/build-dependencies/shaderc/source/.git ] && \
+	git clone --recursive --depth 1 'https://github.com/hbirchtree/shaderc.git' $(BUILD_DIR)/build-dependencies/shaderc/source || \
+	true
+
+spirv-cross.source.mkdir:
+	mkdir -p "$(BUILD_DIR)/build-dependencies/spirv-cross/source"
+
+spirv-cross.source: spirv-cross.source.mkdir
+	[ ! -d $(BUILD_DIR)/build-dependencies/spirv-cross/source/.git ] && \
+	git clone --recursive --depth 1 'https://github.com/hbirchtree/SPIRV-Cross.git' $(BUILD_DIR)/build-dependencies/spirv-cross/source || \
 	true
 
 squish.source.mkdir:
@@ -465,7 +481,7 @@ squish.source.mkdir:
 
 squish.source: squish.source.mkdir
 	[ ! -d $(BUILD_DIR)/build-dependencies/squish/source/.git ] && \
-	git clone --depth 1 'https://github.com/Cavewhere/squish.git' $(BUILD_DIR)/build-dependencies/squish/source || \
+	git clone --recursive --depth 1 'https://github.com/Cavewhere/squish.git' $(BUILD_DIR)/build-dependencies/squish/source || \
 	true
 
 
@@ -1786,7 +1802,7 @@ appimg-runtime.coverage: appimg-runtime.source appimg-runtime.coverage.build_dir
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/coverage:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.coverage" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Coverage build using same config as Ubuntu
@@ -2162,7 +2178,7 @@ appimg-runtime.fedora.amd64: appimg-runtime.source appimg-runtime.fedora.amd64.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/fedora.amd64:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.fedora.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Fedora build in a Fedora Docker
@@ -2638,7 +2654,7 @@ appimg-runtime.maemo.armel: appimg-runtime.source appimg-runtime.maemo.armel.bui
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/maemo.armel:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.maemo.armel" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Maemo 5 builds, performed within a Maemo 5 armel chroot
@@ -3010,6 +3026,46 @@ sdl2.osx: sdl2.source sdl2.osx.build_dir sdl2.osx.install_dir FORCE
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.osx.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/osx
+
+
+
+shaderc.osx.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/osx
+
+
+# Apple OS X
+# Compiler: Clang
+shaderc.osx: shaderc.source shaderc.osx.build_dir shaderc.osx.install_dir FORCE
+	@make -f $(ROOT_DIR)/Makefile.mac-base build \
+		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/shaderc/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-generic.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/shaderc/install/osx -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/shaderc/install/osx -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/shaderc/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.osx" \
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/shaderc/build/osx"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.osx.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/osx
+
+
+
+spirv-cross.osx.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/osx
+
+
+# Apple OS X
+# Compiler: Clang
+spirv-cross.osx: spirv-cross.source spirv-cross.osx.build_dir spirv-cross.osx.install_dir FORCE
+	@make -f $(ROOT_DIR)/Makefile.mac-base build \
+		-e EXTRA_OPTIONS="$(BUILD_DIR)/build-dependencies/spirv-cross/source -G'Xcode' -C$(SOURCE_DIR)/cmake/Preload/osx-generic.cmake -DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/cmake/Toolchains/osx-generic_osx.toolchain.cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/spirv-cross/install/osx -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build-dependencies/spirv-cross/install/osx -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_EXTRA_OPTIONS="None -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/osx:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/osx:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.osx" \
+		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/spirv-cross/build/osx"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.osx.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/osx
 
@@ -3027,7 +3083,7 @@ squish.osx: squish.source squish.osx.build_dir squish.osx.install_dir FORCE
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/osx:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.osx" \
 		-e CMAKE_BUILD_DIR="$(BUILD_DIR)/build-dependencies/squish/build/osx"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3049,7 +3105,7 @@ appimg-runtime.raspberry.armhf: appimg-runtime.source appimg-runtime.raspberry.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/raspberry.armhf:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.raspberry.armhf" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Raspberry Pi ARMv6 build
@@ -3307,7 +3363,7 @@ appimg-runtime.ubuntu.amd64: appimg-runtime.source appimg-runtime.ubuntu.amd64.b
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3450,6 +3506,48 @@ sdl2.ubuntu.amd64: sdl2.source sdl2.ubuntu.amd64.build_dir sdl2.ubuntu.amd64.ins
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.ubuntu.amd64.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64
+
+
+
+shaderc.ubuntu.amd64.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+shaderc.ubuntu.amd64: shaderc.source shaderc.ubuntu.amd64.build_dir shaderc.ubuntu.amd64.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-generic.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.ubuntu.amd64" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.ubuntu.amd64.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64
+
+
+
+spirv-cross.ubuntu.amd64.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+spirv-cross.ubuntu.amd64: spirv-cross.source spirv-cross.ubuntu.amd64.build_dir spirv-cross.ubuntu.amd64.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-generic.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.ubuntu.amd64" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.ubuntu.amd64.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/ubuntu.amd64
 
@@ -3468,7 +3566,7 @@ squish.ubuntu.amd64: squish.source squish.ubuntu.amd64.build_dir squish.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3490,7 +3588,7 @@ appimg-runtime.ubuntu.amd64.gles2: appimg-runtime.source appimg-runtime.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3633,6 +3731,48 @@ sdl2.ubuntu.amd64.gles2: sdl2.source sdl2.ubuntu.amd64.gles2.build_dir sdl2.ubun
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.ubuntu.amd64.gles2.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.gles2
+
+
+
+shaderc.ubuntu.amd64.gles2.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.gles2
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+shaderc.ubuntu.amd64.gles2: shaderc.source shaderc.ubuntu.amd64.gles2.build_dir shaderc.ubuntu.amd64.gles2.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles20.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.ubuntu.amd64.gles2" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.ubuntu.amd64.gles2.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.gles2
+
+
+
+spirv-cross.ubuntu.amd64.gles2.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.gles2
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+spirv-cross.ubuntu.amd64.gles2: spirv-cross.source spirv-cross.ubuntu.amd64.gles2.build_dir spirv-cross.ubuntu.amd64.gles2.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles20.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.ubuntu.amd64.gles2" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.ubuntu.amd64.gles2.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/ubuntu.amd64.gles2
 
@@ -3651,7 +3791,7 @@ squish.ubuntu.amd64.gles2: squish.source squish.ubuntu.amd64.gles2.build_dir squ
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3673,7 +3813,7 @@ appimg-runtime.ubuntu.amd64.gles3: appimg-runtime.source appimg-runtime.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64.gles3:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3816,6 +3956,48 @@ sdl2.ubuntu.amd64.gles3: sdl2.source sdl2.ubuntu.amd64.gles3.build_dir sdl2.ubun
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.ubuntu.amd64.gles3.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.gles3
+
+
+
+shaderc.ubuntu.amd64.gles3.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.gles3
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+shaderc.ubuntu.amd64.gles3: shaderc.source shaderc.ubuntu.amd64.gles3.build_dir shaderc.ubuntu.amd64.gles3.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.ubuntu.amd64.gles3" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.ubuntu.amd64.gles3.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.gles3
+
+
+
+spirv-cross.ubuntu.amd64.gles3.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.gles3
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+spirv-cross.ubuntu.amd64.gles3: spirv-cross.source spirv-cross.ubuntu.amd64.gles3.build_dir spirv-cross.ubuntu.amd64.gles3.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.gles3:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.gles3:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.ubuntu.amd64.gles3" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.ubuntu.amd64.gles3.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/ubuntu.amd64.gles3
 
@@ -3834,7 +4016,7 @@ squish.ubuntu.amd64.gles3: squish.source squish.ubuntu.amd64.gles3.build_dir squ
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64.gles3:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64.gles3" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -3856,7 +4038,7 @@ appimg-runtime.ubuntu.amd64.tools: appimg-runtime.source appimg-runtime.ubuntu.a
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.amd64.tools:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.amd64.tools" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -3999,6 +4181,48 @@ sdl2.ubuntu.amd64.tools: sdl2.source sdl2.ubuntu.amd64.tools.build_dir sdl2.ubun
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.ubuntu.amd64.tools.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.tools
+
+
+
+shaderc.ubuntu.amd64.tools.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.tools
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+shaderc.ubuntu.amd64.tools: shaderc.source shaderc.ubuntu.amd64.tools.build_dir shaderc.ubuntu.amd64.tools.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-generic.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.tools:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.tools:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.amd64.tools:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.amd64.tools:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.ubuntu.amd64.tools" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.ubuntu.amd64.tools.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.tools
+
+
+
+spirv-cross.ubuntu.amd64.tools.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.tools
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+spirv-cross.ubuntu.amd64.tools: spirv-cross.source spirv-cross.ubuntu.amd64.tools.build_dir spirv-cross.ubuntu.amd64.tools.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-generic.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_CONFIG="ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.tools:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.tools:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.amd64.tools:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.amd64.tools:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.ubuntu.amd64.tools" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.ubuntu.amd64.tools.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/ubuntu.amd64.tools
 
@@ -4017,7 +4241,7 @@ squish.ubuntu.amd64.tools: squish.source squish.ubuntu.amd64.tools.build_dir squ
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.amd64.tools:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.amd64.tools" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -4039,7 +4263,7 @@ appimg-runtime.ubuntu.i686.gles: appimg-runtime.source appimg-runtime.ubuntu.i68
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.i686.gles:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.i686.gles" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -4182,6 +4406,48 @@ sdl2.ubuntu.i686.gles: sdl2.source sdl2.ubuntu.i686.gles.build_dir sdl2.ubuntu.i
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.ubuntu.i686.gles.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.i686.gles
+
+
+
+shaderc.ubuntu.i686.gles.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.i686.gles
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+shaderc.ubuntu.i686.gles: shaderc.source shaderc.ubuntu.i686.gles.build_dir shaderc.ubuntu.i686.gles.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic-i686_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_CONFIG="ubuntu-i686" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.ubuntu.i686.gles" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.ubuntu.i686.gles.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.i686.gles
+
+
+
+spirv-cross.ubuntu.i686.gles.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.i686.gles
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+spirv-cross.ubuntu.i686.gles: spirv-cross.source spirv-cross.ubuntu.i686.gles.build_dir spirv-cross.ubuntu.i686.gles.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic-i686_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_CONFIG="ubuntu-i686" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.i686.gles:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.i686.gles:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.ubuntu.i686.gles" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.ubuntu.i686.gles.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/ubuntu.i686.gles
 
@@ -4200,7 +4466,7 @@ squish.ubuntu.i686.gles: squish.source squish.ubuntu.i686.gles.build_dir squish.
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.i686.gles:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.i686.gles" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
@@ -4222,7 +4488,7 @@ appimg-runtime.ubuntu.i686.gles2: appimg-runtime.source appimg-runtime.ubuntu.i6
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/appimg-runtime/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/appimg-runtime/install/ubuntu.i686.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="appimg-runtime.ubuntu.i686.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 # Ubuntu build in a Ubuntu Docker
@@ -4365,6 +4631,48 @@ sdl2.ubuntu.i686.gles2: sdl2.source sdl2.ubuntu.i686.gles2.build_dir sdl2.ubuntu
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 
 
+shaderc.ubuntu.i686.gles2.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.i686.gles2
+
+
+
+shaderc.ubuntu.i686.gles2.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.i686.gles2
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+shaderc.ubuntu.i686.gles2: shaderc.source shaderc.ubuntu.i686.gles2.build_dir shaderc.ubuntu.i686.gles2.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles20.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic-i686_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSHADERC_SKIP_TESTS=ON -DENABLE_HLSL=OFF" \
+		-e DOCKER_CONFIG="ubuntu-i686" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/shaderc/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/shaderc/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/shaderc/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="shaderc.ubuntu.i686.gles2" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
+spirv-cross.ubuntu.i686.gles2.build_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.i686.gles2
+
+
+
+spirv-cross.ubuntu.i686.gles2.install_dir:
+	mkdir -p $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.i686.gles2
+
+
+# Ubuntu build in a Ubuntu Docker
+# Compiler: GCC 5+
+spirv-cross.ubuntu.i686.gles2: spirv-cross.source spirv-cross.ubuntu.i686.gles2.build_dir spirv-cross.ubuntu.i686.gles2.install_dir FORCE
+	@make -f $(ROOT_DIR)/$(RUNNER) multi \
+		-e EXTRA_OPTIONS="/home/coffee/project -G'Ninja' -C/home/coffee/cmake-project/Preload/linux-gles20.cmake -DCMAKE_TOOLCHAIN_FILE=/home/coffee/cmake-project/Toolchains/linux-generic-i686_linux.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/home/coffee/out -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++" \
+		-e DOCKER_CONFIG="ubuntu-i686" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build -v $(BUILD_DIR)/build-dependencies/spirv-cross/build/ubuntu.i686.gles2:/home/coffee/build:rw -v $(BUILD_DIR)/build-dependencies/spirv-cross/source:/home/coffee/project:ro -v $(BUILD_DIR)/build-dependencies/spirv-cross/install/ubuntu.i686.gles2:/home/coffee/out:rw -v $(SOURCE_DIR)/cmake:/home/coffee/cmake-project:ro --workdir /home/coffee/build" \
+		-e BUILD_NAME="spirv-cross.ubuntu.i686.gles2" \
+		-e CMAKE_BUILD_DIR="/home/coffee/build"\
+		-e OUTPUT_DIR="$(BUILD_DIR)"
+
+
 squish.ubuntu.i686.gles2.build_dir:
 	mkdir -p $(BUILD_DIR)/build-dependencies/squish/build/ubuntu.i686.gles2
 
@@ -4383,6 +4691,6 @@ squish.ubuntu.i686.gles2: squish.source squish.ubuntu.i686.gles2.build_dir squis
 		-e DOCKER_EXTRA_OPTIONS="-v $(BUILD_DIR)/build-dependencies/squish/source:/home/coffee/project:rw -v $(BUILD_DIR)/build-dependencies/squish/install/ubuntu.i686.gles2:/home/coffee/out:rw --workdir /home/coffee/project" \
 		-e BUILD_NAME="squish.ubuntu.i686.gles2" \
 		-e CMAKE_BUILD_DIR="/home/coffee/build"\
-		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e INSTALL_DIR=/home/coffee/out install '"\
+		-e CUSTOM_COMMAND="sh -c ' mkdir -p /home/coffee/out/include /home/coffee/out/lib && make -f /home/coffee/project/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=/home/coffee/out install '"\
 		-e OUTPUT_DIR="$(BUILD_DIR)"
 

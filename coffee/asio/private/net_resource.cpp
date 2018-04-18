@@ -236,15 +236,20 @@ bool Resource::push(CString const& method, const Bytes &data)
         m_host.clear();
 
         szptr size = 0;
-        auto writeError = ssl->flush(&size);
-        if(writeError)
-            cWarning("Write error code: {0}, wrote {1} bytes",
-                     writeError.message(), size);
-
-        auto readError = ssl->pull(&size);
-        if(readError)
-            cWarning("Read error code: {0}, received {1} bytes",
-                     readError.message(), size);
+        {
+            DProfContext _("Flushing SSL socket");
+            auto writeError = ssl->flush(&size);
+            if(writeError)
+                cWarning("Write error code: {0}, wrote {1} bytes",
+                         writeError.message(), size);
+        }
+        {
+            DProfContext _("Pulling SSL socket");
+            auto readError = ssl->pull(&size);
+            if(readError)
+                cWarning("Read error code: {0}, received {1} bytes",
+                         readError.message(), size);
+        }
 
         Profiler::DeepProfile(NETRSC_TAG "HTTPS request sent");
 

@@ -3,8 +3,8 @@
 #include "inputapplication.h"
 #include <coffee/core/eventprocess.h>
 
-#include <coffee/core/plat/plat_timing.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/core/CProfiling>
 
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/base/renderer_loader.h>
@@ -119,7 +119,11 @@ void WrapEventFunction(void* data, int event)
         /* We retrieve the current thread's RuntimeQueue if it exists,
          *  and process it regularly. */
         if(CurrentState == 1)
+        {
+            Profiler::DeepPushContext("Event::Loop");
             edata->loop(edata->r(), edata->d());
+            Profiler::DeepPopContext();
+        }
         if(RuntimeQueue::GetCurrentQueue())
             RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;

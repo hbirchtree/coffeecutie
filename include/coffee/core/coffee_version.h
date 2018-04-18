@@ -9,13 +9,6 @@ namespace Coffee{
 
 using CoffeeApplicationData = ApplicationData_t;
 
-extern cstring CoffeeCompilerString;
-extern cstring CoffeeArchString;
-extern cstring CoffeeBuildString;
-extern cstring CoffeePlatformString;
-
-extern CString CoffeeDefaultWindowName;
-
 }
 
 

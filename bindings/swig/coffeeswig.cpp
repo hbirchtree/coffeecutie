@@ -147,5 +147,5 @@ void SetLogVerbosity(int level)
 
 int GetLogVerbosity()
 {
-    return Coffee::PrintingVerbosityLevel;
+    return Coffee::PrintingVerbosityLevel();
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/interfaces/cgraphics_api_basic.h>
+#include <coffee/interfaces/file_resolver.h>
 #include <coffee/core/type_safety.h>
 #include <coffee/core/base/files/url.h>
 #include <coffee/core/types/cdef/memtypes.h>
@@ -41,7 +42,7 @@ template<typename API>
 static
 bool LoadModel(
         Url const& base,
-        ResolveResource&& resourceResolve,
+        BytesResolver& resourceResolve,
         SerializedData<API>& output
         )
 {
@@ -71,7 +72,7 @@ bool LoadModel(
 
         output.store.push_back(
                     std::move(
-                        resourceResolve(base, ext)
+                        resourceResolve.extResolver(base, ext)
                         ));
     }
 

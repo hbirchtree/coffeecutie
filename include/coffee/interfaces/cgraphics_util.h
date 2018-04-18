@@ -5,6 +5,7 @@
 #include <coffee/core/types/edef/graphicsenum.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/byte_provider.h>
+#include <coffee/interfaces/file_resolver.h>
 
 namespace Coffee{
 namespace RHI{
@@ -136,27 +137,26 @@ FORCEDINLINE bool LoadTexture(
     return status;
 }
 
-template<typename GFX,typename Resource,
+template<typename GFX,
          typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
          typename implements<ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadShader(
         typename GFX::SHD& shader,
-        Resource&& data,
+        Bytes&& data,
         ShaderStage stage
         )
 {
-    bool status = shader.compile(stage, C_OCAST<Bytes>(data));
+    bool status = shader.compile(stage, data);
 
     return status;
 }
 
-template<typename GFX, typename Resource,
-         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
+template<typename GFX,
+         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadPipeline(
         typename GFX::PIP& pip,
-        Resource&& vert_file,
-        Resource&& frag_file
+        Bytes&& vert_file,
+        Bytes&& frag_file
         )
 {
     typename GFX::SHD vert;
@@ -184,6 +184,21 @@ FORCEDINLINE bool LoadPipeline(
     }
 
     return true;
+}
+
+template<typename GFX>
+FORCEDINLINE bool LoadPipeline(
+        typename GFX::PIP& pip,
+        BytesResolver const& resolver,
+        Url const& vert_file,
+        Url const& frag_file
+        )
+{
+    return LoadPipeline<GFX>(
+                pip,
+                resolver.resolver(vert_file),
+                resolver.resolver(frag_file)
+                );
 }
 
 }

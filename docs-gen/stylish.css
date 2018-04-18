@@ -90,6 +90,7 @@ span.icona {
 .icon {
     width: 2em;
     height: 2em;
+    background-color: #336bd6 !important;
 }
 
 /* Navpath */

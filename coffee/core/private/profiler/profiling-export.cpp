@@ -17,6 +17,162 @@
 namespace Coffee{
 namespace Profiling{
 
+static constexpr szptr MAX_NUMBER_OF_ENTRIES = 1024 * 1024;
+
+/*!
+ * \brief The DataPointGenerator iterates over all DataPoints in all threads
+ */
+struct DataPointGenerator
+{
+    DataPointGenerator()
+    {
+#if !defined(COFFEE_DISABLE_PROFILER)
+        /* Sort the thread list to make it deterministic */
+        using TPair = Pair<ThreadId::Hash,CString>;
+
+        Vector<TPair> names;
+        names.insert(names.end(),
+                     State::GetProfilerStore()->threadnames.begin(),
+                     State::GetProfilerStore()->threadnames.end());
+
+        std::sort(names.begin(), names.end(),
+                  [](TPair const& v1, TPair const& v2)
+        {
+            return v1.second < v2.second;
+        });
+
+        std::transform(names.begin(), names.end(),
+                       std::back_inserter(m_threadHashes),
+                       [](TPair const& v)
+        {
+            return v.first;
+        });
+#endif
+    }
+
+    struct iterator : Iterator<ForwardIteratorTag, DataPoint>
+    {
+        static const constexpr szptr npos = C_CAST<szptr>(-1);
+
+        iterator(DataPointGenerator& gen):
+            generator(&gen),
+            current_index(0),
+            current_thread(0)
+        {
+            find_next();
+        }
+        iterator(DataPointGenerator& gen, int):
+            generator(&gen),
+            current_index(npos),
+            current_thread(npos)
+        {
+        }
+
+        iterator& operator++()
+        {
+            current_index++;
+            find_next();
+            return *this;
+        }
+
+        bool operator==(iterator const& other) const
+        {
+            return other.current_index == current_index
+                    && other.current_thread == current_thread
+                    && (other.generator) == (generator);
+        }
+
+        bool operator!=(iterator const& other) const
+        {
+            return !(*this == other);
+        }
+
+        DataPoint const& operator*() const
+        {
+            return intern_data()->datapoints.at(current_index);
+        }
+
+    private:
+        void find_next()
+        {
+            while(current_thread < generator->m_threadHashes.size()
+                  && current_index >= intern_data()->datapoints.size())
+            {
+                current_thread ++;
+                current_index = 0;
+            }
+            if(current_thread >= generator->m_threadHashes.size())
+            {
+                current_thread = npos;
+                current_index = npos;
+            }
+        }
+
+        ThreadData* intern_data() const
+        {
+#if !defined(COFFEE_DISABLE_PROFILER)
+            auto key = generator->m_threadHashes.at(current_thread);
+            return State::GetProfilerStore()->thread_refs[key].get();
+#else
+            throw implementation_error("profiler not available");
+#endif
+        }
+
+        DataPointGenerator* generator;
+        szptr current_index;
+        szptr current_thread;
+    };
+
+    szptr size()
+    {
+        szptr counter = 0;
+
+#if !defined(COFFEE_DISABLE_PROFILER)
+        for(auto const& hash : m_threadHashes)
+            counter += State::GetProfilerStore()
+                    ->thread_refs[hash]
+                    .get()->datapoints
+                    .size();
+#endif
+
+        return counter;
+    }
+
+    /*!
+     * \brief As a safety measure, we disable saving the trace
+     *  after 1 million entries. This was proven useful in the wild.
+     * \return
+     */
+    iterator begin()
+    {
+        if(size() < MAX_NUMBER_OF_ENTRIES)
+            return iterator(*this);
+        else
+        {
+            cWarning("Trace events too large, all events discarded!");
+            return end();
+        }
+    }
+
+    iterator end()
+    {
+        return iterator(*this, 0);
+    }
+private:
+    Vector<ThreadId::Hash> m_threadHashes;
+};
+
+static Vector<DataPoint> GetSortedDataPoints()
+{
+    DataPointGenerator gen;
+    Vector<DataPoint> points;
+    points.insert(points.begin(), gen.begin(), gen.end());
+
+//    std::sort(points.begin(), points.end());
+
+    return points;
+}
+
 static CString AnonymizePath(CString const& p)
 {
     return CStrReplace(CStrReplace(p,
@@ -39,7 +195,7 @@ void PrintProfilerData()
 
     LinkList<uint64> base_time; /* Stack of time values */
     LinkList<uint64> curr_timeline; /* Progression of time within a context */
-    for(Profiling::DataPoint const& p : *Profiler::DataPoints())
+    for(Profiling::DataPoint const& p : DataPointGenerator())
     {
         if(p.tp==Profiling::DataPoint::Profile)
         {
@@ -208,9 +364,11 @@ void ExportProfilerData(CString& target)
     {
         auto bdata = AddChildWithText(doc, root, "build", {});
 
-        AddChildWithText(doc, bdata, "version", CoffeeBuildString);
-        AddChildWithText(doc, bdata, "compiler", CoffeeCompilerString);
-        AddChildWithText(doc, bdata, "architecture", CoffeeArchString);
+        auto const& buildi = State::GetBuildInfo();
+
+        AddChildWithText(doc, bdata, "version", buildi.build_version);
+        AddChildWithText(doc, bdata, "compiler", buildi.compiler);
+        AddChildWithText(doc, bdata, "architecture", buildi.architecture);
     }
     cVerbose(8, "Writing build data");
 
@@ -243,7 +401,7 @@ void ExportProfilerData(CString& target)
     cVerbose(8,"Writing extra data");
 
     /* Only runs in debug mode! */
-    if(Profiler::Enabled()){
+    if(Profiler::HasData()){
 #ifndef NDEBUG
         /* Store list of threads we've bumped into or labeled */
         {
@@ -286,10 +444,8 @@ void ExportProfilerData(CString& target)
             base.push_front(Profiler::StartTime());
             lt.push_front(0);
 
-            Profiler::DataPoints()->sort();
-
             /* Finally, smash data points into XML format */
-            for(Profiling::DataPoint const& p : *Profiler::DataPoints())
+            for(Profiling::DataPoint const& p : GetSortedDataPoints())
             {
                 switch(p.tp)
                 {
@@ -300,7 +456,7 @@ void ExportProfilerData(CString& target)
                     XML::Element* n = doc.NewElement("dpoint");
 
                     CString tsf = Convert::uintltostring(ts);
-                    CString tid = StrUtil::pointerify(p.thread.hash());
+                    CString tid = StrUtil::pointerify(p.thread);
 
                     n->SetAttribute("ts",tsf.c_str());
                     n->SetAttribute("label",p.name.c_str());
@@ -316,7 +472,7 @@ void ExportProfilerData(CString& target)
                     XML::Element* n = doc.NewElement("context");
 
                     CString tsf = Convert::uintltostring(p.ts-base.front());
-                    CString tid = StrUtil::pointerify(p.thread.hash());
+                    CString tid = StrUtil::pointerify(p.thread);
 
                     n->SetAttribute("ts",tsf.c_str());
                     n->SetAttribute("label",p.name.c_str());
@@ -365,24 +521,21 @@ STATICINLINE JSON::Value FromString(CString const& s,
 
 STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    if(!Profiler::Enabled())
+    if(!Profiler::HasData())
         return;
 
     /* Some parsing information */
     auto start = Profiler::StartTime();
-    LinkList<JSON::Value> stack;
 
-    Profiler::DataPoints()->sort();
-
-    for(Profiling::DataPoint const& p : *Profiler::DataPoints())
+    for(Profiling::DataPoint const& p : GetSortedDataPoints())
     {
         JSON::Value o;
         o.SetObject();
 
-        CString tid = StrUtil::pointerify(p.thread.hash());
+        CString tid = StrUtil::pointerify(p.thread);
 
-        if((*Profiler::ThreadNames())[p.thread.hash()].size())
-            tid = (*Profiler::ThreadNames())[p.thread.hash()];
+        if((*Profiler::ThreadNames())[p.thread].size())
+            tid = (*Profiler::ThreadNames())[p.thread];
 
         auto catVal = FromString(p.component, alloc);
         auto tidVal = FromString(tid, alloc);
@@ -404,35 +557,21 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
                 o.AddMember("ph", "i", alloc);
 
             o.AddMember("s", "t", alloc);
-
-            target.PushBack(o, alloc);
             break;
         }
         case Profiling::DataPoint::Push:
         {
             o.AddMember("ph", "B", alloc);
-
-            stack.emplace_front();
-            stack.front().CopyFrom(o, alloc);
-
-            target.PushBack(o, alloc);
             break;
         }
         case Profiling::DataPoint::Pop:
         {
-            JSON::Value& prev = stack.front();
-
-            prev.RemoveMember("ph");
-            prev.RemoveMember("ts");
-
-            prev.AddMember("ph", "E", alloc);
-            prev.AddMember("ts", JSON::Value(p.ts - start), alloc);
-
-            target.PushBack(prev, alloc);
-            stack.pop_front();
+            o.AddMember("ph", "E", alloc);
             break;
         }
         }
+
+        target.PushBack(o, alloc);
     }
 }
 
@@ -463,14 +602,16 @@ STATICINLINE void PutExtraData(JSON::Value& target,
 STATICINLINE void PutRuntimeInfo(JSON::Value& target,
                    JSON::Document::AllocatorType& alloc)
 {
+    auto const& buildi = State::GetBuildInfo();
+
     target.AddMember("build.version",
-                     FromString(CoffeeBuildString, alloc),
+                     FromString(buildi.build_version, alloc),
                      alloc);
     target.AddMember("build.compiler",
-                     FromString(CoffeeCompilerString, alloc),
+                     FromString(buildi.compiler, alloc),
                      alloc);
     target.AddMember("build.architecture",
-                     FromString(CoffeeArchString, alloc),
+                     FromString(buildi.architecture, alloc),
                      alloc);
 
     target.AddMember("runtime.system",
@@ -639,10 +780,14 @@ void ExitRoutine()
 #ifdef COFFEE_LOWFAT
     return;
 #endif
+
+    Profiler::DisableProfiler();
+
     /* Verify if we should export profiler data */
     {
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
-        if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
+        if(!(Env::ExistsVar(disable_flag)
+             && Env::GetVar(disable_flag) == "1"))
         {
             auto log_name = (Path{Env::ExecutableName()}
                     .fileBasename());
@@ -673,8 +818,6 @@ void ExitRoutine()
                      FileFun::CanonicalName(log_url));
         }
     }
-    /* ... and always destroy the profiler */
-    Profiler::DestroyProfiler();
 }
 
 }

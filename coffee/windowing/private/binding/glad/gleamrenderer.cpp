@@ -119,18 +119,16 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         const static CGLVersion v33(3,3);
         const static CGLVersion v43(4,3);
         const static CGLVersion v45(4,5);
+        const static CGLVersion v46(4,6);
 
         if(p.version>=v45)
         {
-//            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v45);
             status = CGL::CGL45::LoadBinding(m_app->glContext(), procload);
         }else if(p.version>=v43)
         {
-//            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v43);
             status = CGL::CGL43::LoadBinding(m_app->glContext(), procload);
         } else if(p.version>=v33)
         {
-//            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v33);
             status = CGL::CGL33::LoadBinding(m_app->glContext(), procload);
         }
 #endif

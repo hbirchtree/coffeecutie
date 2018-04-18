@@ -1,5 +1,6 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/CProfiling>
 
 #include <coffee/core/plat/plat_primary_identify.h>
 #include <coffee/core/coffee_mem_macros.h>
@@ -82,6 +83,9 @@ PlatformData::Platform PlatformData::PlatformVariant()
 
 scalar PlatformData::DeviceDPI()
 {
+    /* We add this to allow better indication on traces */
+    DProfContext _("Fetching device DPI");
+
     /* TODO: Add DPI fetch for Android and iOS */
     /* Also, add DPI fetching for OS X and Linux */
     /* DPI in Windows is a lie */

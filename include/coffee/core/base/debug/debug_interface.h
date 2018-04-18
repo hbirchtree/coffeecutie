@@ -12,6 +12,8 @@ struct StacktraceFunDef
     static Stacktrace GetStacktrace();
 };
 
+using LogInterface = void(*)(FILE*, CString, Severity, bool);
+
 struct OutputPrinterDef
 {
     static Mutex PrinterLock;
@@ -47,6 +49,14 @@ struct LogPrinterDef
     template<typename... Args>
     static void cMsg(cstring, cstring, Args...){}
 };
+
+/*!
+ * \brief Get the currently set logging interface
+ * By default this is set to OutputPrinterImpl::fprintf_platform
+ * \return
+ */
+extern LogInterface GetLogInterface();
+extern void SetLogInterface(LogInterface intf);
 
 }
 }

@@ -1,13 +1,7 @@
 #include <coffee/core/argument_handling.h>
+#include <coffee/core/internal_state.h>
 
 namespace Coffee{
-
-AppArg initargs;
-
-AppArg &GetInitArgs()
-{
-    return initargs;
-}
 
 CString Strings::to_string(const AppArg &args)
 {

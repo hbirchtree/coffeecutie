@@ -13,7 +13,9 @@ void ProfilingExport()
     const constexpr cstring network_server = "COFFEE_REPORT_URL";
     if(Env::ExistsVar(network_server))
     {
-        cVerbose(10, "Network export starting  1");
+        cVerbose(10, "Network export starting");
+
+        Profiler::DisableProfiler();
 
         CString target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);

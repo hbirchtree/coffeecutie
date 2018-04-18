@@ -78,3 +78,4 @@ inline APILevel gl_level_from_string(CString const& str)
 #define GL_DEBUG_MODE m_store->DEBUG_MODE
 #define GLEAM_API_INSTANCE_DATA m_store->inst_data
 #define GLEAM_FEATURES RHI::GLEAM::m_store->features
+#define GLEAM_OPTIONS RHI::GLEAM::m_store->options

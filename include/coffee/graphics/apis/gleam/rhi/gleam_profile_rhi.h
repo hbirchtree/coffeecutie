@@ -45,6 +45,10 @@ protected:
 
 struct GLEAM_ScopeMarker : GraphicsDebug::ScopeMarker
 {
+    explicit GLEAM_ScopeMarker(CString const tag)
+        : GLEAM_ScopeMarker(tag.c_str())
+    {
+    }
     GLEAM_ScopeMarker(cstring tag);
 
     ~GLEAM_ScopeMarker();

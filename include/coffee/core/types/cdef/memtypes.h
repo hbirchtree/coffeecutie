@@ -114,6 +114,20 @@ struct _cbasic_data_chunk
         return out;
     }
 
+    STATICINLINE _cbasic_data_chunk<T> Copy(
+            _cbasic_data_chunk<T> const& src)
+    {
+        _cbasic_data_chunk<T> out;
+        out.size = src.size;
+        out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
+        MemCpy(out.data, src.data, src.size * sizeof(T));
+        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
+        {
+            CFree(b.data);
+        });
+        return out;
+    }
+
     template<typename std::enable_if<!std::is_void<T>::value,bool>::type*
              = nullptr>
     T& operator[] (szptr i)

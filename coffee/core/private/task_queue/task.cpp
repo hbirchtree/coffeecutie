@@ -1,26 +1,27 @@
 #include <coffee/core/task_queue/task.h>
+#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
+
+#define RQ_API "RuntimeQueue::"
 
 namespace Coffee{
 
-Mutex RuntimeQueue::globalMod;
-Map<ThreadId::Hash, RuntimeQueue> RuntimeQueue::queues;
-Map<ThreadId::Hash, Thread> RuntimeQueue::queueThreads;
-Map<ThreadId::Hash, AtomicBool*> RuntimeQueue::queueFlags;
+RuntimeQueue::QueueContextPtr RuntimeQueue::context;
 
 RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString &name)
 {
-    Lock _(globalMod);
+    Lock _(context->globalMod);
 
     auto t_id = ThreadId().hash();
 
-    auto q_it = queues.find(t_id);
+    auto q_it = context->queues.find(t_id);
 
-    if(q_it == queues.end())
+
+    if(q_it == context->queues.end())
     {
-        queues.insert({t_id, RuntimeQueue()});
-        ThreadSetName(name);
-        return &queues[t_id];
+        context->queues.insert({t_id, RuntimeQueue()});
+        Profiler::LabelThread(name.c_str());
+        return &context->queues[t_id];
     }else
         return &(*q_it).second;
 }
@@ -28,6 +29,9 @@ RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString &name)
 static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 {
     try{
+        /* Enable profiler and etc. */
+        State::SetInternalThreadState(State::CreateNewThreadState());
+
         AtomicBool runtimeFlag;
         runtimeFlag.store(true);
 
@@ -35,16 +39,27 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 
         *flag = &runtimeFlag;
 
+        Profiler::DeepPushContext(RQ_API "Running queue");
+
         while(runtimeFlag.load())
         {
             queue->executeTasks();
 
-            auto sleepTime = queue->timeTillNext(std::chrono::milliseconds(500));
+            Profiler::DeepPushContext("Sleeping");
+            auto sleepTime = queue->
+                    timeTillNext(
+                        std::chrono::milliseconds(500));
             CurrentThread::sleep_for(sleepTime);
+            Profiler::DeepPopContext();
         }
+
+        cVerbose(8, "Shutting down thread");
+
+        Profiler::DeepPopContext();
+
     } catch(std::exception const& e)
     {
-        cWarning("Uncaught exception!\n"
+        cWarning(RQ_API "Uncaught exception!\n"
                  "\n"
                  "\t{0}: {1}"
                  "\n",
@@ -56,6 +71,7 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 
 RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString &name)
 {
+    DProfContext _("Creating new task queue");
     AtomicBool* flagPtr = nullptr;
     Thread t(ImpCreateNewThreadQueue, name, &flagPtr);
     auto tid = ThreadId(t.get_id()).hash();
@@ -69,23 +85,23 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString &name)
     }
 
     {
-        Lock _(globalMod);
+        Lock _(context->globalMod);
 
-        queueThreads[tid] = std::move(t);
-        queueFlags.insert({tid, flagPtr});
+        context->queueThreads[tid] = std::move(t);
+        context->queueFlags.insert({tid, flagPtr});
     }
 
-    return &queues.find(tid)->second;
+    return &context->queues.find(tid)->second;
 }
 
 RuntimeQueue *RuntimeQueue::GetCurrentQueue()
 {
-    Lock _(globalMod);
+    Lock _(context->globalMod);
 
     auto q_id = ThreadId().hash();
-    auto q_it = queues.find(q_id);
+    auto q_it = context->queues.find(q_id);
 
-    if(q_it != queues.end())
+    if(q_it != context->queues.end())
         return &(*q_it).second;
     else
         return nullptr;
@@ -154,15 +170,16 @@ u64 RuntimeQueue::Queue(ThreadId const& targetThread, RuntimeTask &&task)
         task.time = RuntimeTask::clock::now() + task.interval;
     }
 
-    Lock _(globalMod);
+    Lock _(context->globalMod);
 
-    auto q_it = queues.find(targetThread.hash());
+    auto q_it = context->queues.find(targetThread.hash());
 
-    if(q_it == queues.end())
+    if(q_it == context->queues.end())
         return 0;
     else
     {
         auto& ref = (*q_it).second;
+        Profiler::DeepProfile(RQ_API "Adding task to Queue");
         return ref.enqueue(std::move(task));
     }
 }
@@ -202,6 +219,82 @@ static RuntimeTask const* GetTask(
     return &tasks[i].task;
 }
 
+bool RuntimeQueue::Block(u64 taskId)
+{
+    return Block(ThreadId(), taskId);
+}
+
+bool RuntimeQueue::Block(const ThreadId &targetThread, u64 taskId)
+{
+    Lock _(context->globalMod);
+
+    auto q_it = context->queues.find(targetThread.hash());
+
+    if(q_it == context->queues.end())
+        return false;
+
+    auto& queue = (*q_it).second;
+
+    RuntimeTask const* task = nullptr;
+    szptr idx = 0;
+
+    if(!(task = GetTask(queue.mTasks, taskId, &idx)))
+        return false;
+
+    /* We do this check in case we are executing in the queue */
+    /* Otherwise we deadlock */
+    if(queue.mCurrentTaskId == 0)
+        queue.mTasksLock.lock();
+
+    if(!queue.mTasks[idx].alive)
+        return false;
+
+    Profiler::DeepProfile(RQ_API "Blocking task");
+    queue.mTasks[idx].alive = false;
+
+    queue.mTasksLock.unlock();
+
+    return true;
+}
+
+bool RuntimeQueue::Unblock(u64 taskId)
+{
+    return Unblock(ThreadId(), taskId);
+}
+
+bool RuntimeQueue::Unblock(const ThreadId &targetThread, u64 taskId)
+{
+    Lock _(context->globalMod);
+
+    auto q_it = context->queues.find(targetThread.hash());
+
+    if(q_it == context->queues.end())
+        return false;
+
+    auto& queue = (*q_it).second;
+
+    RuntimeTask const* task = nullptr;
+    szptr idx = 0;
+
+    if(!(task = GetTask(queue.mTasks, taskId, &idx)))
+        return false;
+
+    /* We do this check in case we are executing in the queue */
+    /* Otherwise we deadlock */
+    if(queue.mCurrentTaskId == 0)
+        queue.mTasksLock.lock();
+
+    if(queue.mTasks[idx].alive)
+        return false;
+
+    Profiler::DeepProfile(RQ_API "Unblocking task");
+    queue.mTasks[idx].alive = true;
+
+    queue.mTasksLock.unlock();
+
+    return true;
+}
+
 bool RuntimeQueue::CancelTask(u64 taskId)
 {
     return CancelTask(ThreadId(), taskId);
@@ -209,11 +302,11 @@ bool RuntimeQueue::CancelTask(u64 taskId)
 
 bool RuntimeQueue::CancelTask(const ThreadId &targetThread, u64 taskId)
 {
-    Lock _(globalMod);
+    Lock _(context->globalMod);
 
-    auto q_it = queues.find(targetThread.hash());
+    auto q_it = context->queues.find(targetThread.hash());
 
-    if(q_it == queues.end())
+    if(q_it == context->queues.end())
         return false;
 
     auto& queue = (*q_it).second;
@@ -224,10 +317,13 @@ bool RuntimeQueue::CancelTask(const ThreadId &targetThread, u64 taskId)
     if(!(task = GetTask(queue.mTasks,  taskId, &idx)))
         return false;
 
+    /* We do this check in case we are executing in the queue */
+    /* Otherwise we deadlock */
     if(queue.mCurrentTaskId == 0)
         queue.mTasksLock.lock();
 
     queue.mTasks[idx].alive = false;
+    queue.mTasks[idx].to_dispose = true;
 
     queue.mTasksLock.unlock();
 
@@ -241,10 +337,10 @@ void RuntimeQueue::AwaitTask(u64 taskId)
 
 void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
 {
-    auto queue = queues.find(targetThread.hash());
+    auto queue = context->queues.find(targetThread.hash());
 
     /* If thread has no queue, return */
-    if(queue == queues.end())
+    if(queue == context->queues.end())
         return;
 
     auto const& queueRef = queue->second;
@@ -267,7 +363,8 @@ void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
     CurrentThread::sleep_until(task->time);
 
     /* I know this is bad, but we must await the task */
-    while(queueRef.mTasks[idx].alive);
+    while(queueRef.mTasks[idx].alive)
+        CurrentThread::yield();
 }
 
 void RuntimeQueue::TerminateThread(RuntimeQueue *thread)
@@ -277,29 +374,54 @@ void RuntimeQueue::TerminateThread(RuntimeQueue *thread)
 
     auto tid = thread->threadId().hash();
 
-    queueFlags[tid]->store(false);
-    queueThreads[tid].join();
+    context->queueFlags[tid]->store(false);
+    context->queueThreads[tid].join();
 
-    queueFlags.erase(tid);
-    queueThreads.erase(tid);
+    context->queueFlags.erase(tid);
+    context->queueThreads.erase(tid);
 }
 
 void RuntimeQueue::TerminateThreads()
 {
-    for(auto t : queueFlags)
+    Lock _(context->globalMod);
+
+    for(auto t : context->queueFlags)
     {
         t.second->store(false);
     }
 
-    for(auto& t : queueThreads)
+    for(auto& t : context->queueThreads)
     {
         t.second.join();
     }
 }
 
+RuntimeQueue::QueueContextPtr RuntimeQueue::CreateContext()
+{
+    return MkShared<QueueContext>();
+}
+
+bool RuntimeQueue::SetQueueContext(RuntimeQueue::QueueContextPtr i)
+{
+    if(context)
+        return false;
+
+    context = i;
+    return true;
+}
+
+RuntimeQueue::QueueContextPtr RuntimeQueue::GetQueueContext()
+{
+    return context;
+}
+
 void RuntimeQueue::executeTasks()
 {
+    DProfContext __(RQ_API "Executing thread tasks");
+
+    Profiler::DeepPushContext(RQ_API "Locking queue");
     Lock _(mTasksLock);
+    Profiler::DeepPopContext();
 
     auto currTime = RuntimeTask::clock::now();
 
@@ -323,7 +445,9 @@ void RuntimeQueue::executeTasks()
 
         /* In this case we will let it run */
         mCurrentTaskId = mTasks[i].index;
+        Profiler::DeepPushContext(RQ_API "Running task");
         task.task.task();
+        Profiler::DeepPopContext();
         mCurrentTaskId = 0;
 
         /* Now, if a task is single-shot, remove it */
@@ -334,7 +458,7 @@ void RuntimeQueue::executeTasks()
             task.task.time = RuntimeTask::clock::now()
                     + task.task.interval;
         }else{
-            ABORTEVERYTHINGGOGOGO();
+            throw implementation_error("unknown task type");
         }
         i++;
     }
@@ -375,7 +499,7 @@ RuntimeQueue::RuntimeQueue(RuntimeQueue const& queue)
 }
 
 RuntimeQueue::RuntimeQueue():
-    mTasks(), mTasksLock(), mTaskIndex(0)
+    mTasks(), mTasksLock(), mTaskIndex(0), mCurrentTaskId(0)
 {
 }
 
@@ -389,6 +513,7 @@ u64 RuntimeQueue::enqueue(RuntimeTask &&task)
     task_d.task = std::move(task);
     task_d.index = output;
     task_d.alive = true;
+    task_d.to_dispose = false;
 
     mTasks.push_back(task_d);
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <coffee/interfaces/byte_provider.h>
+#include <coffee/interfaces/file_resolver.h>
+
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
 
@@ -37,6 +39,41 @@ struct VirtualFS;
 
 using VFS = VirtualFS;
 using VFile = VirtualFile;
+
+struct Resource : ByteProvider
+{
+private:
+    VFS const* filesystem;
+    VFile const* file;
+
+public:
+    Resource(VFS const* base,
+             Url const& url);
+
+    C_MOVE_CONSTRUCTOR(Resource);
+
+    /*!
+     * \brief Check validity of resource and/or data it returns
+     * \return
+     */
+    bool valid() const;
+
+    cstring resource() const;
+    /*!
+     * \brief Return the data contained in the virtual file.
+     *  If the file in question is compressed,
+     *  decompression happens here.
+     * \return
+     */
+    Bytes data() const;
+
+    operator Bytes()
+    {
+        return data();
+    }
+
+    operator Path() const;
+};
 
 enum FileFlags
 {
@@ -113,6 +150,9 @@ struct VirtualFS
     static Bytes GetData(
             VFS const* vfs,
             VFile const* file);
+
+    static ResourceResolver<VirtFS::Resource> GetResolver(
+            VirtualFS const* vfs);
 };
 
 PACKEDSTRUCT VirtualFile
@@ -141,57 +181,6 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(
 
     return nullptr;
 }
-
-FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS *vfs, szptr idx)
-{
-    VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
-
-    if(idx >= vfs->num_files)
-        return nullptr;
-
-    return &vf_start[idx];
-}
-
-struct Resource : ByteProvider
-{
-private:
-    VFS const* filesystem;
-    VFile const* file;
-
-public:
-    Resource(VFS const* base,
-             Url const& url);
-
-    C_MOVE_CONSTRUCTOR(Resource);
-
-    /*!
-     * \brief Check validity of resource and/or data it returns
-     * \return
-     */
-    bool valid() const;
-
-    cstring resource() const
-    {
-        return file->name;
-    }
-    /*!
-     * \brief Return the data contained in the virtual file.
-     *  If the file in question is compressed,
-     *  decompression happens here.
-     * \return
-     */
-    Bytes data() const;
-
-    operator Bytes()
-    {
-        return data();
-    }
-
-    operator Path() const
-    {
-        return Path(file->name);
-    }
-};
 
 struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
 {
@@ -307,6 +296,26 @@ FORCEDINLINE Url operator "" _vfs(const char* url, size_t)
     Url out = MkUrl(url);
     out.category = Url::Memory;
     return out;
+}
+
+FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS *vfs, szptr idx)
+{
+    VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
+
+    if(idx >= vfs->num_files)
+        return nullptr;
+
+    return &vf_start[idx];
+}
+
+FORCEDINLINE cstring Resource::resource() const
+{
+    return file->name;
+}
+
+FORCEDINLINE Resource::operator Path() const
+{
+    return Path(file->name);
 }
 
 }

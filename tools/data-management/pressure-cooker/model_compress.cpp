@@ -35,8 +35,6 @@ struct AssimpProcessor : FileProcessor
 {
     virtual void process(Vector<VirtFS::VirtDesc> &files,
                          TerminalCursor& cursor);
-    
-    virtual void receiveAssetPath(CString const& path);
 
     virtual void setBaseDirectories(const Vector<CString> &dirs);
 };
@@ -222,10 +220,6 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
         it->data = Bytes();
 
     files.erase(removeIt, files.end());
-}
-
-void AssimpProcessor::receiveAssetPath(const CString &path) {
-    FileResourcePrefix(path.c_str());
 }
 
 void AssimpProcessor::setBaseDirectories(const Vector<CString> &dirs)

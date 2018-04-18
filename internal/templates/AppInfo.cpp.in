@@ -13,10 +13,21 @@ int Java_org_libsdl_app_SDLActivity_nativeInit__Ljava_lang_Object_2(
 
 #ifndef COFFEE_LOWFAT
 namespace Coffee{
-Coffee::CoffeeApplicationData app_data = {"@APP_COMPANY@", "@APP_TITLE@", @APP_VERSION@};
+
+void SetApplicationData(CoffeeApplicationData& appdata)
+{
+    appdata.application_name = "@APP_TITLE@";
+    appdata.organization_name = "@APP_COMPANY@";
+    appdata.version_code = @APP_VERSION@;
+}
+
 }
 #else
 namespace Coffee{
-Coffee::CoffeeApplicationData app_data = {};
+
+void SetApplicationData(CoffeeApplicationData&)
+{
+}
+
 }
 #endif

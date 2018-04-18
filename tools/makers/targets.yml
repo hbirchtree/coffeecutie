@@ -246,6 +246,23 @@ build-dependencies:
     platforms: .*(ubuntu|osx).*
     type: make
     source: git:https://github.com/Cavewhere/squish.git
+  shaderc:
+    platforms: .*(ubuntu|osx).*
+    type: cmake
+    cmake-opts:
+      - -DCMAKE_C_COMPILER=gcc
+      - -DCMAKE_CXX_COMPILER=g++
+      - -DSHADERC_SKIP_TESTS=ON
+      - -DENABLE_HLSL=OFF
+    source: git:https://github.com/hbirchtree/shaderc.git
+  spirv-cross:
+    platforms: .*(ubuntu|osx).*
+    type: cmake
+    cmake-opts:
+      - -DCMAKE_CXX_FLAGS="-fPIC"
+      - -DCMAKE_C_COMPILER=gcc
+      - -DCMAKE_CXX_COMPILER=g++
+    source: git:https://github.com/hbirchtree/SPIRV-Cross.git
 
 # The following variables are defined in makefile-generator.py:
 #  build-arch: target architecture, eg. ubuntu.amd64
@@ -296,7 +313,7 @@ build-dep-template:
       - -c
       - \'
       - mkdir -p $(container.install)/include $(container.install)/lib &&
-      - make -f $(container.src)/Makefile -e INSTALL_DIR=$(container.install) install
+      - make -f $(container.src)/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=$(container.install) install
       - \'
 
 #

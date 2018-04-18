@@ -50,7 +50,7 @@ struct ThreadId_t
 #endif
     }
 private:
-    const thread_id_t m_id;
+    thread_id_t m_id;
 };
 
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/tdef/stlfunctypes.h>
-#include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/types/edef/enumfun.h>
 
 namespace Coffee{
 
@@ -15,9 +15,9 @@ struct RuntimeTask
         Immediate = 0x8,
     };
 
-    using clock = std::chrono::steady_clock;
+    using clock = Chrono::steady_clock;
 
-    using Timepoint = std::chrono::time_point<clock>;
+    using Timepoint = Chrono::time_point<clock>;
     using Duration = clock::duration;
 
     STATICINLINE RuntimeTask CreateTask(Function<void()>&& fun,
@@ -185,13 +185,24 @@ public:
     {
         RuntimeTask task;
         u64 index;
-        bool alive;
+        union {
+            struct {
+                bool alive:1;
+                bool to_dispose:1;
+            };
+        };
 
         FORCEDINLINE bool operator<(task_data_t const& other) const
         {
             return task < other.task;
         }
     };
+
+    static bool Block(u64 taskId);
+    static bool Block(ThreadId const& targetThread, u64 taskId);
+
+    static bool Unblock(u64 taskId);
+    static bool Unblock(ThreadId const& targetThread, u64 taskId);
 
     static bool CancelTask(u64 taskId);
     static bool CancelTask(ThreadId const& targetThread, u64 taskId);
@@ -210,6 +221,32 @@ public:
     RuntimeQueue();
     RuntimeQueue(const RuntimeQueue &queue);
 
+    struct QueueContext
+    {
+        Mutex globalMod;
+        Map<ThreadId::Hash, RuntimeQueue> queues;
+        Map<ThreadId::Hash, Thread> queueThreads;
+        Map<ThreadId::Hash, AtomicBool*> queueFlags;
+    };
+
+    using QueueContextPtr = ShPtr<QueueContext>;
+
+    /*!
+     * \brief Create a new thread context, do nothing else.
+     * \return
+     */
+    static QueueContextPtr CreateContext();
+    /*!
+     * \brief Set queue context if and only if there is none from before.
+     * If one already exists, we cannot control it.
+     * \param i
+     */
+    static bool SetQueueContext(QueueContextPtr i);
+    /*!
+     * \brief Return the current context, regardless of whether it exists.
+     * \return
+     */
+    static QueueContextPtr GetQueueContext();
 
 private:
 
@@ -224,10 +261,7 @@ private:
 
     u64 mCurrentTaskId;
 
-    static Mutex globalMod;
-    static Map<ThreadId::Hash, RuntimeQueue> queues;
-    static Map<ThreadId::Hash, Thread> queueThreads;
-    static Map<ThreadId::Hash, AtomicBool*> queueFlags;
+    static ShPtr<QueueContext> context;
 };
 
 }

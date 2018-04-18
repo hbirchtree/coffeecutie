@@ -44,7 +44,9 @@ struct Path
 
     CString extension() const;
 
-    Path dirname();
+    Path dirname() const;
+
+    Path canonical() const;
 
     Path operator+(cstring component) const;
     FORCEDINLINE Path operator+(CString const& component) const
@@ -58,6 +60,26 @@ struct Path
     STATICINLINE Path Mk(cstring p)
     {
         return {p};
+    }
+
+    FORCEDINLINE bool operator<(Path const& other) const
+    {
+        return internUrl < other.internUrl;
+    }
+
+    FORCEDINLINE bool operator>(Path const& other) const
+    {
+        return internUrl > other.internUrl;
+    }
+
+    FORCEDINLINE bool operator==(Path const& other) const
+    {
+        return internUrl == other.internUrl;
+    }
+
+    FORCEDINLINE bool operator!=(Path const& other) const
+    {
+        return internUrl != other.internUrl;
     }
 };
 
@@ -148,6 +170,18 @@ FORCEDINLINE Url MkSysUrl(cstring urlString)
         urlString,
                 Url::Local,
                 RSCA::SpecifyStorage|RSCA::SystemFile,
+                HTTPAccess::None,
+        {}
+    };
+}
+
+FORCEDINLINE Url MkUrl(Path p, RSCA access = RSCA::SystemFile)
+{
+    return
+    {
+        p.internUrl.c_str(),
+                Url::Local,
+                RSCA::SpecifyStorage|access,
                 HTTPAccess::None,
         {}
     };
