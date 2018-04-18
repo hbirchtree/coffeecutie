@@ -100,7 +100,8 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data *p)
     delete p;
 }
 
-bool GLEAM_API::LoadAPI(DataStore store, bool debug)
+bool GLEAM_API::LoadAPI(DataStore store, bool debug,
+                        GLEAM_API::OPTS const& options)
 {
     DProfContext _(GLM_API "LoadAPI()");
 
@@ -125,6 +126,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     cVerbose(8, GLM_API "Creating instance data");
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
+    store->options = options;
 #ifndef NDEBUG
     store->DEBUG_MODE = debug;
 #endif
@@ -337,14 +339,16 @@ bool GLEAM_API::UnloadAPI()
 
 /* Future improvement: cache changes, or maybe rely on driver for that */
 
-GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI()
+GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI(
+        GLEAM_API::OPTS const& options
+        )
 {
     cVerbose(8, GLM_API "Returning GLEAM loader...");
-    return [](bool debug = false)
+    return [&](bool debug = false)
     {
         static GLEAM_DataStore m_gleam_data = {};
         cVerbose(8, GLM_API "Running GLEAM loader");
-        return LoadAPI(&m_gleam_data, debug);
+        return LoadAPI(&m_gleam_data, debug, options);
     };
 }
 

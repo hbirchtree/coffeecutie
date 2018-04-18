@@ -26,6 +26,8 @@ struct GLEAM_DataStore
 
     RHI::GraphicsAPI_Threading::GraphicsQueue GpuThread;
 
+    GLEAM_Options options;
+
     struct {
         bool gles20 = false;
         bool is_gles = false;

@@ -127,14 +127,17 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         shaderStorage.push_back("#version 100\n");
     }
 
-    /* We move the extension directives at this point */
-    CString extensionDirective = {};
-    while((extensionDirective =
-           StringExtractLine(transformedShader,
-                             "\n#extension ")).size())
-        shaderStorage.push_back(extensionDirective);
+    if(GLEAM_OPTIONS.old_shader_processing)
+    {
+        /* We move the extension directives at this point */
+        CString extensionDirective = {};
+        while((extensionDirective =
+               StringExtractLine(transformedShader,
+                                 "\n#extension ")).size())
+            shaderStorage.push_back(extensionDirective);
+    }
 
-    if(GLEAM_FEATURES.gles20)
+    if(GLEAM_FEATURES.gles20 && GLEAM_OPTIONS.old_shader_processing)
     {
         /* TODO: Provide better support for sampler2DArray, creating
      *  extra uniforms for grid size and etc. This will allow us
@@ -174,7 +177,7 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         else
             shaderSrcVec.push_back(GLES20_COMPAT_FS);
 
-    }else
+    }else if(GLEAM_OPTIONS.old_shader_processing)
     {
 
         /* Desktop GL does not require a precision specifier */
@@ -194,13 +197,22 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
     }
 
     /* For supporting BaseInstance */
-    if(!GLEAM_FEATURES.base_instance
-            && stage == ShaderStage::Vertex)
+    if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex
+            && GLEAM_OPTIONS.old_shader_processing)
     {
         shaderSrcVec.push_back(
                     "#define gl_BaseInstanceARB BaseInstance\n"
                     "#define gl_BaseInstance BaseInstance\n"
                     "uniform int BaseInstance;\n"
+                    );
+    }
+    if(stage == ShaderStage::Vertex && !GLEAM_OPTIONS.old_shader_processing)
+    {
+        shaderSrcVec.push_back(
+                    R"(
+                    #define SPIRV_Cross_BaseInstance BaseInstance
+                    #define SPIRV_Cross_InstanceID InstanceID
+                    )"
                     );
     }
 
