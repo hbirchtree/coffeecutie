@@ -3,6 +3,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -111,6 +112,8 @@ GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc()
 
 bool GLEAM_Quad_Drawer::compile_shaders()
 {
+    GLEAM_API::DBG::SCOPE _(CString(GLM_API) + __FUNCTION__);
+
     bool status = true;
     GLEAM_Shader vertex;
     GLEAM_Shader fragment;
@@ -146,6 +149,8 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
 void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
 {
+    GLEAM_API::DBG::SCOPE _(CString(GLM_API) + __FUNCTION__);
+
     static GLEAM_ArrayBuffer m_buffer(ResourceAccess::WriteOnly,
                                       sizeof(m_vertex_quad_data));
 

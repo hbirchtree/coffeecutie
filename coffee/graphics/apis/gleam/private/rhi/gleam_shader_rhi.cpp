@@ -210,9 +210,9 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
     {
         shaderSrcVec.push_back(
                     R"(
-                    #define SPIRV_Cross_BaseInstance BaseInstance
-                    #define SPIRV_Cross_InstanceID InstanceID
-                    )"
+#define SPIRV_Cross_BaseInstance BaseInstance
+#define SPIRV_Cross_InstanceID InstanceID
+)"
                     );
     }
 
@@ -225,10 +225,14 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
                             shaderStorage.at(directiveEnd - 1 - i).c_str());
 
     shaderSrcVec.push_back(shaderStorage.back().c_str());
+    shaderSrcVec.push_back("\n");
 }
 
 bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
+    if(data.size == 0)
+        return false;
+
     if(GLEAM_FEATURES.gles20
             && stage != ShaderStage::Vertex
             && stage != ShaderStage::Fragment)
@@ -279,8 +283,12 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
                                           ));
             cstring_w log = CGL33::ShaderGetLog(m_handle);
             cWarning("Shader compilation error: {0}\n"
-                     "Associated source: {1}",
-                     log, completeSource);
+                     "Associated source: \n{1}"
+                     "Original source: \n{2}",
+                     log, completeSource,
+                     StrUtil::encapsulate(C_FCAST<cstring>(data.data),
+                                          data.size)
+                     );
             return false;
         }
 

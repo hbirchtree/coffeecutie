@@ -197,18 +197,6 @@ static void GenerateGLSL(TerminalCursor& cursor,
         compiler.add_header_line("precision highp float;");
         compiler.add_header_line("precision mediump int;");
 
-        /* Remap sampler types */
-        compiler.add_header_line("#define sampler3D sampler2D");
-        compiler.add_header_line("#define sampler2DArray sampler2D");
-
-        /* Remove these builtins */
-        compiler.add_header_line("#define gl_ClipDistance ClipDistance");
-        compiler.add_header_line("#define gl_CullDistance CullDistance");
-
-        /* No InstanceID, we add it */
-        compiler.add_header_line("#define gl_InstanceID InstanceID");
-        compiler.add_header_line("uniform int InstanceID;");
-
         /* Generate grid uniform for every array texture */
         for(auto const& img : rsc.sampled_images)
         {
