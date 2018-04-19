@@ -356,7 +356,7 @@ void GLEAM_Sampler::alloc()
 #if !defined(COFFEE_ONLY_GLES20)
 #ifdef COFFEE_GLEAM_DESKTOP
     if(GL_CURR_API==GL_4_5)
-        CGL45::SamplerAlloc(1,&m_handle);
+        CGL45::SamplerAlloc(Span<CGhnd>::Create(m_handle));
     else
 #endif
         if(!GLEAM_FEATURES.gles20)

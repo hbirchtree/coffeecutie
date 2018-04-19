@@ -12,14 +12,19 @@
 namespace Coffee{
 namespace CGL{
 
-template<typename CGhnd,typename CGenum,typename FramebufferT,typename Texture>
+template<typename CGhnd, typename CGenum,
+         typename FramebufferT, typename Texture,
+         typename ReqVer
+         >
 struct CGL_Old_Framebuffers
 {
     /* Framebuffers */
+    GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
     STATICINLINE void FBBind(FramebufferT t,CGhnd h)
     {glBindFramebuffer(to_enum(t),h);}
 
     /*TODO: Create FramebufAttProp enum*/
+    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
     STATICINLINE void FBGetAttachParameter(
             FramebufferT t,CGenum att,CGenum p,int32* d)
     {glGetFramebufferAttachmentParameteriv(to_enum(t),att,p,d);}
@@ -38,6 +43,7 @@ struct CGL_Old_Framebuffers
 
 #if !defined(COFFEE_ONLY_GLES20)
     /* Blit */
+    GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
     STATICINLINE void FBBlit(
             const CRect& s, const CRect& d,DBuffers m,Filtering f)
     {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h,
@@ -87,6 +93,7 @@ struct CGL_Old_Framebuffers
     STATICINLINE void RBufGetParameteri(CGenum p,int32* d)
     {glGetRenderbufferParameteriv(GL_RENDERBUFFER,p,d);}
 
+    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
     STATICINLINE CSize FBGetAttachmentSize(FramebufferT t, uint32 idx)
     {
         C_UNUSED(t);

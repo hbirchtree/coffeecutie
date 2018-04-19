@@ -17,7 +17,7 @@ namespace CGL{
  * \brief OpenGL ES 3.0 compliance model
  */
 struct CGLES30 :
-        CGLES20,
+        CGLES20_Base<GLESVER_30>,
         CGL_Old_Queries<QueryT,CGhnd,CGenum>,
         CGL_TextureStorage
 {

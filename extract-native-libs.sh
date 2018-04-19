@@ -3,6 +3,11 @@
 CURRENT_DIR=$(dirname $0)
 
 NATIVE_LIB_DIR="$PWD"
+
+if [ ! -z "$1" ]; then
+  NATIVE_LIB_DIR="$1"
+fi
+
 TOOLCHAIN="ubuntu.amd64"
 
 TARGET_TOOLCHAIN="Ubuntu"

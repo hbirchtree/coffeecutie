@@ -18,10 +18,10 @@ static const constexpr cstring GLES20_COMPAT_VS = {
 #define flat
 #define gl_InstanceID InstanceID
 
+uniform int InstanceID;
 precision highp int;
 
     )"
-//    uniform int InstanceID;
 };
 
 static const constexpr cstring GLES20_COMPAT_FS = {
@@ -68,12 +68,16 @@ vec4 texture2DArray_Internal(sampler2D tex, vec3 coord, float gridSize)
     return texture2D(tex, coord.xy);
 }
 
+vec4 texture2DArray(sampler2D tex, vec3 coord)
+{
+    return texture2D(tex, coord.xy);
+}
+
 #define texture2D texture
 
 )"
 
 
-//    "uniform int InstanceID;\n"
 };
 
 STATICINLINE CString StringExtractLine(CString& shader, cstring query)
@@ -159,6 +163,9 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         /* Remove the output declaration from modern GLSL */
         transformedShader = CStrReplace(transformedShader,
                                         "out vec4 OutColor;", "");
+
+        transformedShader = CStrReplace(transformedShader,
+                                        "uniform int InstanceID;", "");
 
         /* If a line has layout(...), remove it, GLSL 1.00
      *  does not support that */

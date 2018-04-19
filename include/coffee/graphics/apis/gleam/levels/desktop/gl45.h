@@ -8,9 +8,15 @@ namespace CGL{
 /*!
  * \brief OpenGL 4.5 compliance model
  */
-struct CGL45 : CGL43
+template<typename ReqVer>
+struct CGL45_Base : CGL43_Base<ReqVer>
 {
-    STATICINLINE bool DirectStateSupported(){return false;}
+    using Debug = typename CGL43::Debug;
+
+    STATICINLINE bool DirectStateSupported()
+    {
+        return Debug::CheckExtensionSupported("GL_ARB_direct_state_access");
+    }
 
     STATICINLINE bool BindlessTextureSupported(){return false;}
 
@@ -25,26 +31,102 @@ struct CGL45 : CGL43
      * Most functions here should use DSA
      *
      */
+    GL_VERSION_REQ(GLVER_45)
     STATICINLINE void MemoryBarrierByRegion(GLbitfield f){glMemoryBarrierByRegion(f);}
 
     /* Allocations, initializing variants */
-    STATICINLINE bool TexAlloc(size_t,CGenum,CGhnd*){return false;}
 
-    STATICINLINE bool BufAlloc(size_t,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool TexAlloc(CGenum tex_type, Span<CGhnd> const& handles)
+    {
+        glCreateTextures(
+                    tex_type,
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool FBAlloc(size_t,CGenum,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool BufAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateBuffers(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool XFAlloc(size_t,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool FBAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateFramebuffers(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool RenderBufferAlloc(size_t,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool XFAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateTransformFeedbacks(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool SamplerAlloc(size_t,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool RenderBufferAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateRenderbuffers(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool QueryAlloc(size_t,CGenum,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool SamplerAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateSamplers(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool VAOAlloc(size_t,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool QueryAlloc(QueryT t, Span<CGhnd> const& handles)
+    {
+        glCreateQueries(
+                    to_enum(t),
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
-    STATICINLINE bool PipelineAlloc(size_t,CGhnd*){return false;}
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool VAOAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateVertexArrays(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
+
+    GL_VERSION_REQ(GLVER_45)
+    STATICINLINE bool PipelineAlloc(Span<CGhnd> const& handles)
+    {
+        glCreateProgramPipelines(
+                    C_FCAST<GLint>(handles.size),
+                    handles.data
+                    );
+        return true;
+    }
 
     /* Textures */
     STATICINLINE bool TexStorage2D(CGhnd,int64,CGenum,int64,int64){return false;}
@@ -79,6 +161,9 @@ struct CGL45 : CGL43
 
     STATICINLINE void TexMakeHandleResident(CGhnd64 h){}
     STATICINLINE void TexMakeHandleNonResident(CGhnd64 h){}
+
+    STATICINLINE void ImageBindTextures(u32 f,Span<CGhnd> const& handles)
+    {glBindImageTextures(f,C_FCAST<i32>(handles.size),handles.data);}
 
     STATICINLINE void ImgMakeHandleResident(CGhnd64 h,CGenum f){}
     STATICINLINE void ImgMakeHandleNonResident(CGhnd64 h){}
@@ -133,6 +218,8 @@ struct CGL45 : CGL43
     STATICINLINE void SamplerBind(){}
     STATICINLINE void XFBind(){}
 };
+
+using CGL45 = CGL45_Base<GLVER_45>;
 
 }
 }
