@@ -19,7 +19,7 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( ANDROID_BUILD_TOOLS_VER "25.0.0"
+    set ( ANDROID_BUILD_TOOLS_VER "26.0.2"
         CACHE STRING "" )
     set ( ANDROID_APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk"
         CACHE PATH "" )
@@ -62,6 +62,10 @@ endif()
 
 macro(APK_MIPMAP_ICONS Target_Name
         ICON_ASSET BUILD_OUTDIR)
+    
+    # Disabled because adaptive icons are better at this
+    return()
+
     #
     # Mipmap the icons
     #
