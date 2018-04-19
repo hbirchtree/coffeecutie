@@ -250,13 +250,15 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
 #endif
 
 #if defined(COFFEE_GLEAM_DESKTOP)
-    store->features.base_instance
-            = CGL33::Debug::CheckExtensionSupported(
-                "GL_ARB_shader_draw_parameters");
+    /* base_instance is const false on GLES */
 
+    store->features.base_instance = CGL46::DrawParametersSupported();
+
+    /* If we are emulating, base_instance would skew the results */
     if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
         store->features.base_instance = false;
-    /* base_instance is const false on GLES */
+
+    store->features.direct_state = CGL45::DirectStateSupported();
 #endif
 
     bool is_desktop = APILevelIsOfClass(store->CURR_API,APIClass::GLCore);

@@ -77,9 +77,11 @@ static u32 GLSLVersionFromAPI(APILevel level)
     case GL_3_3:
         return 330;
     case GL_4_3:
+        if(GLEAM_FEATURES.base_instance)
+            return 460;
         return 430;
     case GL_4_5:
-        return 450;
+        return 460;
     default:
         return 100;
     }

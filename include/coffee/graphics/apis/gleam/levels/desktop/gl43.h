@@ -42,7 +42,11 @@ namespace CGL{
 /*!
  * \brief OpenGL 4.3 compliance model
  */
-struct CGL43 : CGL33_Base,
+template<typename ReqVer>
+struct CGL43_Base :
+
+        CGL33_Base<ReqVer>,
+
         CGL_BufferInvalidateSubData,
         CGL_ClearBuffer,
         CGL_BufferStorage,
@@ -135,10 +139,6 @@ struct CGL43 : CGL33_Base,
     STATICINLINE bool BufferStorageSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_buffer_storage");}
 
-    /*TODO: Move to 4.5*/
-    STATICINLINE void ImageBindTextures(int32 f,uint32 c, const CGhnd* h)
-    {glBindImageTextures(f,c,h);}
-
     STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
     {glBlendFunci(i,v1,v2);}
 
@@ -186,6 +186,8 @@ struct CGL43 : CGL33_Base,
         }
     };
 };
+
+using CGL43 = CGL43_Base<GLVER_43>;
 
 }
 }

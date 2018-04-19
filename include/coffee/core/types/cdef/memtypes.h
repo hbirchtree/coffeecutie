@@ -58,29 +58,53 @@ struct _cbasic_data_chunk
         inst.m_destr = d;
     }
 
-    template<typename DT>
+    template<typename DT,
+             typename is_not_virtual<DT>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
-        return {C_FCAST<T*>(&obj), sizeof(DT), 0};
+        return {C_FCAST<T*>(&obj), sizeof(DT), 1};
     }
 
+    template<typename is_pod<T>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {C_FCAST<T*>(src), strlen(src), 0};
+        return {
+            C_FCAST<T*>(src),
+                    strlen(src),
+                    0
+        };
     }
 
-    template<typename T2>
+    template<typename T2,
+             typename is_not_virtual<T2>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
     {
-        return
-        {C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), 0};
+        return { C_RCAST<T*>(data.data()),
+                    sizeof(T2) * data.size(),
+                    data.size()
+        };
     }
 
     template<typename T2>
+    STATICINLINE _cbasic_data_chunk<T> From(Vector<T2>& data)
+    {
+        return CreateFrom(data);
+    }
+
+    template<typename T2,
+             typename is_pod<T2>::type* = nullptr>
+    STATICINLINE _cbasic_data_chunk<T> From(T2& data)
+    {
+        return CreateFrom(data);
+    }
+
+    template<typename T2,
+             typename is_not_virtual<T2>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
     {
         _cbasic_data_chunk<T> out;
         out.size = (data.size() * sizeof(T2)) / sizeof(T);
+        out.elements = data.size();
         out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
         MemCpy(out.data, data.data(), out.size);
         _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
@@ -104,6 +128,7 @@ struct _cbasic_data_chunk
     {
         _cbasic_data_chunk<T> out;
         out.size = nmax((sizeof(T2)) / sizeof(T), 8);
+        out.elements = 1;
         out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
         MemCpy(out.data, &obj, sizeof(T2));
         _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
@@ -241,6 +266,9 @@ using CByteData = _cbasic_data_chunk<byte_t>;
 
 using Bytes = CByteData;
 using BytesConst = _cbasic_data_chunk<const byte_t>;
+
+template<typename T>
+using Span = _cbasic_data_chunk<T>;
 
 template<typename T>
 struct _cbasic_serial_array

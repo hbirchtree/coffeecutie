@@ -54,9 +54,11 @@ struct GLEAM_DataStore
 
 #if defined(COFFEE_GLEAM_DESKTOP)
         bool base_instance;
+        bool direct_state = false;
 #else
         bool qcom_tiling = false;
         const bool base_instance = false;
+        const bool direct_state = false;
 #endif
     } features;
 

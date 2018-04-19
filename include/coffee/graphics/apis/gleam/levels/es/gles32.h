@@ -25,11 +25,11 @@ namespace CGL{
 
 struct CGLES32 :
         CGL_Implementation,
-        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture>,
+        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture, GLESVER_32>,
         CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>,
         CGL_Old_Constructors<CGhnd,ShaderStage,CGsync>,
         CGL_Old_ShaderCompiler<CGhnd,CGenum>,
-        CGL_Old_Buffers<CGhnd,BufType>,
+        CGL_Old_Buffers<CGhnd,BufType, GLESVER_32>,
         CGL_Old_VAOs<CGhnd,CGenum>,
         CGL_Basic_Draw,
 

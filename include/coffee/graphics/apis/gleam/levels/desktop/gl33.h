@@ -1,5 +1,4 @@
-#ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_33_H
-#define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_33_H
+#pragma once
 
 #include "glbase.h"
 
@@ -20,13 +19,14 @@ namespace CGL{
 /*!
  * \brief OpenGL 3.3 compliance model
  */
+template<typename ReqVer>
 struct CGL33_Base :
         CGL_Implementation,
-        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture>,
+        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture, ReqVer>,
         CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>,
         CGL_Old_Constructors<CGhnd,ShaderStage,CGsync>,
         CGL_Old_ShaderCompiler<CGhnd,CGenum>,
-        CGL_Old_Buffers<CGhnd,BufType>,
+        CGL_Old_Buffers<CGhnd,BufType, ReqVer>,
         CGL_Old_VAOs<CGhnd,CGenum>,
         CGL_Old_Queries<QueryT,CGhnd,CGenum>,
         CGL_Basic_Draw,
@@ -85,14 +85,20 @@ struct CGL33_Base :
     STATICINLINE bool RGTCSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_texture_compression_rgtc");}
 
+    GL_VERSION_REQ_DESKTOP(GLVER_30)
     STATICINLINE bool DXTCSupported()
     {return Debug::CheckExtensionSupported("GL_EXT_texture_compression_s3tc");}
 
     /* Shaders */
     /*TODO: Create ShaderProperty enum*/
 
+    GL_VERSION_REQ_DESKTOP(GLVER_32)
     STATICINLINE int32 ProgramGetFragDataIdx(CGhnd h,cstring n){return glGetFragDataIndex(h,n);}
+
+    GL_VERSION_REQ_DESKTOP(GLVER_30)
     STATICINLINE void ProgramBindFragData(CGhnd h,uint32 l,cstring n){glBindFragDataLocation(h,l,n);}
+
+    GL_VERSION_REQ_DESKTOP(GLVER_32)
     STATICINLINE void ProgramBindFragDataIndexed(CGhnd h,uint32 i,uint32 l,cstring n)
     {
         glBindFragDataLocationIndexed(h,l,i,n);
@@ -100,6 +106,7 @@ struct CGL33_Base :
 
 
     /* Subroutines */
+    GL_VERSION_REQ_DESKTOP(GLVER_40)
     STATICINLINE void ProgramSubRtGet(CGhnd h,ShaderStage s,uint32* n,
                                       cstring_w** names,int32** rtSize,int32*** rt)
     {
@@ -126,33 +133,45 @@ struct CGL33_Base :
             glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_COMPATIBLE_SUBROUTINES,rt[0][i]);
         }
     }
+
+    GL_VERSION_REQ_DESKTOP(GLVER_40)
     STATICINLINE uint32 ProgramSubRtGetLoc(CGhnd h,ShaderStage s,cstring n)
     {return glGetSubroutineIndex(h,to_enum1(s),n);}
     /* Binds all subroutine uniforms */
+    GL_VERSION_REQ_DESKTOP(GLVER_40)
     STATICINLINE void ProgramSubRtBind(ShaderStage s,int32 n,const uint32* d)
     {glUniformSubroutinesuiv(to_enum1(s),n,d);}
 
+    GL_VERSION_REQ(GLVER_32)
     STATICINLINE void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
                                    uint32 w,uint32 h)
     {glTexImage2DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,GL_FALSE);}
+
+    GL_VERSION_REQ(GLVER_32)
     STATICINLINE void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
                                    uint32 w,uint32 h,uint32 d)
     {glTexImage3DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,d,GL_FALSE);}
 
     /* Buffers */
+    GL_VERSION_REQ_DESKTOP(GLVER_30)
     STATICINLINE void BufGetSubData(BufType t,int64 off,uint32 sz,c_ptr p)
     {glGetBufferSubData(to_enum(t),off,sz,p);}
 
     /* Queries */
+    GL_VERSION_REQ_DESKTOP(GLVER_30)
     STATICINLINE void ConditionalRenderBegin(CGhnd h,Delay m)
     {glBeginConditionalRender(h,to_enum1(m));}
+
+    GL_VERSION_REQ_DESKTOP(GLVER_30)
     STATICINLINE void ConditionalRenderEnd()
     {glEndConditionalRender();}
 
+    GL_VERSION_REQ_DESKTOP(GLVER_32)
     STATICINLINE void QueryCounter(CGhnd h,CGenum t)
     {glQueryCounter(h,t);}
 
     /* FB */
+    GL_VERSION_REQ_DESKTOP(GLVER_30)
     STATICINLINE void FBAttachTexture3D(FramebufferT t,CGenum att,Texture textrg,CGhnd h,
                                         int32 level,int32 z)
     {glFramebufferTexture3D(to_enum(t),att,to_enum(textrg),h,level,z);}
@@ -165,12 +184,11 @@ struct CGL33_Base :
     }
 };
 
-struct CGL33 : CGL33_Base,
+struct CGL33 :
+        CGL33_Base<GLVER_33>,
         CGL_Old_Uniforms
 {
 };
 
 }
 }
-
-#endif
