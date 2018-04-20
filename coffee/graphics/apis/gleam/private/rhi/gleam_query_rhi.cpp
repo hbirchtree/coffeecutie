@@ -9,7 +9,7 @@ void GLEAM_Query::alloc()
 {
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.gles20)
-        CGL33::QueryAlloc(1,&m_handle);
+        CGL33::QueryAlloc(m_handle);
 #endif
 }
 
@@ -17,7 +17,7 @@ void GLEAM_Query::dealloc()
 {
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.gles20)
-        CGL33::QueryFree(1,&m_handle);
+        CGL33::QueryFree(m_handle);
 #endif
 }
 

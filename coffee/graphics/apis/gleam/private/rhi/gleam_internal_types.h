@@ -14,6 +14,7 @@ namespace GLEAM{
 #if !defined(COFFEE_ONLY_GLES20)
 using CGL33 = CGLES30;
 using CGL43 = CGLES32;
+using CGL45 = CGLES32;
 #else
 using CGL33 = CGLES20;
 using CGL43 = CGLES20;

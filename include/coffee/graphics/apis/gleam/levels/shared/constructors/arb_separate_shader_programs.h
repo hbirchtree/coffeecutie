@@ -4,20 +4,21 @@
 #include "../gl_shared_enum_convert.h"
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/cdef/memtypes.h>
 
 namespace Coffee{
 namespace CGL{
 
 struct CGL_SeparableShaderPrograms_Allocators
 {
-    STATICINLINE bool PipelineAlloc(uint32 c,CGhnd* h)
+    STATICINLINE bool PipelineAlloc(Span<CGhnd> const& handles)
     {
-        glGenProgramPipelines(c,h);
+        glGenProgramPipelines(C_FCAST<i32>(handles.elements), handles.data);
         return true;
     }
-    STATICINLINE bool PipelineFree(uint32 c,CGhnd* h)
+    STATICINLINE bool PipelineFree(Span<CGhnd> const& handles)
     {
-        glDeleteProgramPipelines(c,h);
+        glDeleteProgramPipelines(C_FCAST<i32>(handles.elements), handles.data);
         return true;
     }
 };

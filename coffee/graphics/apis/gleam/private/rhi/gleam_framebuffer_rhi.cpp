@@ -36,7 +36,7 @@ FORCEDINLINE void fb_bind(FramebufferT t, CGhnd h)
 
 void GLEAM_RenderDummy::allocate(PixelFormat fmt,DBuffers buf, uint32 index, CSize size)
 {
-    CGL33::RenderBufferAlloc(1,&m_handle);
+    CGL33::RenderBufferAlloc(m_handle);
 
     CGL33::RBufBind(m_handle);
     CGL33::RBufStorage(fmt,size.w,size.h);
@@ -48,19 +48,19 @@ void GLEAM_RenderDummy::allocate(PixelFormat fmt,DBuffers buf, uint32 index, CSi
 
 void GLEAM_RenderDummy::deallocate()
 {
-    CGL33::RenderBufferFree(1,&m_handle);
+    CGL33::RenderBufferFree(m_handle);
 }
 
 /* TODO: Cache the currently bound framebuffers for each type to avoid too many rebinds */
 
 void GLEAM_RenderTarget::alloc()
 {
-    CGL33::FBAlloc(1,&m_handle);
+    CGL33::FBAlloc(m_handle);
 }
 
 void GLEAM_RenderTarget::dealloc()
 {
-    CGL33::FBFree(1,&m_handle);
+    CGL33::FBFree(m_handle);
 }
 
 void GLEAM_RenderTarget::attachSurface(const GLEAM_Surface &s, uint32 idx, uint32 mip)

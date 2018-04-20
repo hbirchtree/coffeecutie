@@ -8,10 +8,14 @@
 namespace Coffee{
 namespace CGL{
 
+template<typename ReqVer>
 struct CGL_BufferStorage
 {
-    STATICINLINE void BufStorage(BufType t,uint64 s,c_cptr d,ResourceAccess a)
-    {glBufferStorage(to_enum(t),s,d,to_enum2(a));}
+    GL_VERSION_REQ_DESKTOP(GLVER_44)
+    STATICINLINE void BufStorage(BufType t,i64 s,c_cptr d,ResourceAccess a)
+    {
+        glBufferStorage(to_enum(t),s,d,to_enum2(a));
+    }
 };
 
 }

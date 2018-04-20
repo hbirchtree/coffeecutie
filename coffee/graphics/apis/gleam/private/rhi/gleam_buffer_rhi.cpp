@@ -15,13 +15,18 @@ STATICINLINE void VerifyBuffer(CGhnd h)
 
 void GLEAM_VBuffer::alloc()
 {
-    CGL33::BufAlloc(1,&m_handle);
+#if defined(COFFEE_GLEAM_DESKTOP)
+    if(GLEAM_FEATURES.direct_state)
+        CGL45::BufAlloc(m_handle);
+    else
+#endif
+        CGL33::BufAlloc(m_handle);
 }
 
 void GLEAM_VBuffer::dealloc()
 {
     VerifyBuffer(m_handle);
-    CGL33::BufFree(1,&m_handle);
+    CGL33::BufFree(m_handle);
     m_handle = 0;
 }
 
@@ -29,14 +34,18 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
 {
     m_size = size;
     bind();
-#if !defined(COFFEE_ONLY_GLES20)
+#if defined(COFFEE_GLEAM_DESKTOP)
     if(GLEAM_FEATURES.buffer_storage
             && feval(m_access & ResourceAccess::Immutable))
     {
-        CGL43::BufStorage(m_type,m_size,data,m_access);
+        CGL45::BufStorage(m_handle,
+                          Bytes::From(data, size),
+                          m_access);
     }else
 #endif
-        CGL33::BufData(m_type,m_size,data, m_access);
+        CGL33::BufData(m_type,
+                       Bytes::From(data, m_size),
+                       m_access);
 
 }
 

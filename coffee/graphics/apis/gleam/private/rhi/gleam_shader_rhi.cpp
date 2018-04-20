@@ -252,7 +252,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
     if(!GLEAM_FEATURES.separable_programs)
     {
-        CGL33::ShaderAlloc(1,stage,&m_handle);
+        CGL33::ShaderAlloc(stage, m_handle);
 
 		if (m_handle == 0)
 		{
@@ -339,13 +339,13 @@ void GLEAM_Shader::dealloc()
     if(!GLEAM_FEATURES.separable_programs)
     {
         if(m_handle!=0)
-            CGL33::ShaderFree(1,&m_handle);
+            CGL33::ShaderFree(m_handle);
     }
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GLEAM_FEATURES.separable_programs)
     {
         if(m_handle!=0)
-            CGL43::ProgramFree(1,&m_handle);
+            CGL43::ProgramFree(m_handle);
     }
 #endif
 }
@@ -360,7 +360,7 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
     if(!GLEAM_FEATURES.separable_programs)
     {
         if(m_handle==0)
-            CGL33::ProgramAlloc(1,&m_handle);
+            CGL33::ProgramAlloc(m_handle);
         CGL33::ShaderAttach(m_handle,shader.m_handle);
         return true;
     }
@@ -368,7 +368,7 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
     else if(GLEAM_FEATURES.separable_programs)
     {
         if(m_handle==0)
-            CGL43::PipelineAlloc(1,&m_handle);
+            CGL43::PipelineAlloc(m_handle);
         bool stat = CGL43::PipelineUseStages(
                     m_handle,shader.m_stages&stages,shader.m_handle);
         if(stat)
@@ -444,10 +444,10 @@ void GLEAM_Pipeline::unbind() const
 void GLEAM_Pipeline::dealloc()
 {
     if(!GLEAM_FEATURES.separable_programs)
-        CGL33::ProgramFree(1, &m_handle);
+        CGL33::ProgramFree(m_handle);
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GLEAM_FEATURES.separable_programs)
-        CGL43::PipelineFree(0, &m_handle);
+        CGL43::PipelineFree(m_handle);
 #endif
 }
 

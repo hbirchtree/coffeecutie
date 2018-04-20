@@ -28,6 +28,9 @@ STATICINLINE void texture_pbo_upload(
         u32 m_flags, c_cptr& data_ptr)
 {
 #if !defined(COFFEE_ONLY_GLES20)
+    if(pixSize > data.size)
+        throw undefined_behavior("memory access would go out of bounds");
+
     if(m_flags&GLEAM_API::TextureDMABuffered)
     {
         data_ptr = 0x0;
@@ -36,8 +39,7 @@ STATICINLINE void texture_pbo_upload(
                     GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
         CGL33::BufData(
                     BufType::PixelUData,
-                    pixSize,
-                    data.data,
+                    Bytes::From(data.data, pixSize),
                     ResourceAccess::WriteOnly
                     |ResourceAccess::Persistent);
     }
@@ -70,7 +72,7 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
         /* We must set this to register a proper mipmap level */
 #if !defined(COFFEE_ONLY_GLES20)
         //        int32 min_lev = 0;
-        int32 max_lev = mips - 1;
+        int32 max_lev = C_FCAST<i32>(mips - 1);
         CGL33::TexBind(type,m_handle);
         CGL33::TexParameteriv(type,GL_TEXTURE_MAX_LEVEL,&max_lev);
         CGL33::TexBind(type,0);
@@ -80,12 +82,17 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
 
 void GLEAM_Surface::allocate()
 {
-    CGL33::TexAlloc(1,&m_handle);
+#if defined(COFFEE_GLEAM_DESKTOP)
+    if(GLEAM_FEATURES.direct_state)
+        CGL45::TexAlloc(m_type, Span<CGhnd>::From(m_handle));
+    else
+#endif
+        CGL33::TexAlloc(Span<CGhnd>::From(m_handle));
 }
 
 void GLEAM_Surface::dealloc()
 {
-    CGL33::TexFree(1,&m_handle);
+    CGL33::TexFree(Span<CGhnd>::From(m_handle));
 }
 
 CGhnd GLEAM_Surface::handle()
@@ -129,7 +136,9 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
     if(IsPixFmtCompressed(m_pixfmt))
         return;
 
-    CGL33::TexBind(m_type,m_handle);
+    if(!GLEAM_FEATURES.direct_state)
+        CGL33::TexBind(m_type,m_handle);
+
     if(!feval(m_flags&GLEAM_API::TextureImmutable))
     {
         CGL33::TexImage2D(Texture::T2D,0,m_pixfmt,
@@ -139,8 +148,13 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GLEAM_FEATURES.texture_storage)
     {
-        CGL43::TexStorage2D(Texture::T2D,m_mips,m_pixfmt,
-                            size.w,size.h);
+#if defined(COFFEE_GLEAM_DESKTOP)
+        if(GLEAM_FEATURES.direct_state)
+            CGL45::TexStorage2D(m_handle, m_mips, m_pixfmt, size.w, size.h);
+        else
+#endif
+            CGL43::TexStorage2D(Texture::T2D,m_mips,m_pixfmt,
+                                size.w,size.h);
     }
 #endif
     m_size = size;
@@ -361,7 +375,7 @@ void GLEAM_Sampler::alloc()
 #endif
         if(!GLEAM_FEATURES.gles20)
     {
-        CGL33::SamplerAlloc(1,&m_handle);
+        CGL33::SamplerAlloc(m_handle);
     }
 #endif
 }
@@ -370,7 +384,7 @@ void GLEAM_Sampler::dealloc()
 {
 #if !defined(COFFEE_ONLY_GLES20)
     if(!GLEAM_FEATURES.gles20)
-        CGL33::SamplerFree(1,&m_handle);
+        CGL33::SamplerFree(m_handle);
 #endif
 }
 

@@ -49,7 +49,7 @@ struct CGL43_Base :
 
         CGL_BufferInvalidateSubData,
         CGL_ClearBuffer,
-        CGL_BufferStorage,
+        CGL_BufferStorage<ReqVer>,
 
         CGL_SeparableShaderPrograms,
 

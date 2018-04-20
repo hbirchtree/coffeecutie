@@ -230,9 +230,17 @@ FORCEDINLINE bool IsPixFmtCompressed(PixelFormat f)
     }
 }
 
+
 using BitFmt = BitFormat;
 using PixFmt = PixelFormat;
 using PixFlg = PixelFlags;
+
+struct CompFmt
+{
+    PixFmt base_fmt;
+    PixFlg p_flags;
+    CompFlags c_flags;
+};
 
 #if __cpp_constexpr >= 201304
 #define CONSTEXPR_EXTENDED constexpr

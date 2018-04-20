@@ -66,6 +66,9 @@ struct gl_version_at_least_ver
         typename std::enable_if<gl_version_at_least_ver<RequestedVer, MinimumVer>::value>::type* = nullptr\
         >
 
+/* For requirement of an extension */
+#define GL_EXTENSION_REQ(extname) /* Intentionally empty */
+
 /* -- Danger zone -- */
 #define GLVER_20 gl_ver_t<2,0>
 #define GLVER_21 gl_ver_t<2,1>

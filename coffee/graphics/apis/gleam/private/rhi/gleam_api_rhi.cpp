@@ -143,7 +143,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
 
         Vector<CGhnd> bufs;
         bufs.resize(num_pbos);
-        CGL33::BufAlloc(num_pbos,bufs.data());
+
+        CGL33::BufAlloc(Span<CGhnd>::CreateFrom(bufs));
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
         for(uint32 i=0;i<num_pbos;i++)
@@ -253,12 +254,15 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     /* base_instance is const false on GLES */
 
     store->features.base_instance = CGL46::DrawParametersSupported();
+    store->features.direct_state = CGL45::DirectStateSupported();
 
     /* If we are emulating, base_instance would skew the results */
     if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
+    {
         store->features.base_instance = false;
+        store->features.direct_state = false;
+    }
 
-    store->features.direct_state = CGL45::DirectStateSupported();
 #endif
 
     bool is_desktop = APILevelIsOfClass(store->CURR_API,APIClass::GLCore);
@@ -889,7 +893,7 @@ void GLEAM_API::DisposePixelBuffers()
 
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
-        CGL33::BufFree(1, &buf.buf);
+        CGL33::BufFree(buf.buf);
 
     queue.buffers.clear();
 #endif

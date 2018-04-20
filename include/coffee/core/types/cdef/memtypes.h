@@ -12,23 +12,29 @@ struct Path;
 template<typename T>
 struct _cbasic_data_chunk
 {
-    _cbasic_data_chunk(_cbasic_data_chunk<T>&& other)
+    FORCEDINLINE
+    _cbasic_data_chunk(_cbasic_data_chunk<T>&& other):
+        data(other.data),
+        size(other.size),
+        elements(other.elements),
+        m_destr(other.m_destr)
     {
-        this->data = other.data;
-        this->size = other.size;
-        this->m_destr = other.m_destr;
-
         other.data = nullptr;
         other.size = 0;
+        other.elements = 0;
         other.m_destr = nullptr;
     }
 
+    FORCEDINLINE
     _cbasic_data_chunk():
         data(0),
         size(0),
         elements(0),
         m_destr(nullptr)
-    {}
+    {
+    }
+
+    FORCEDINLINE
     _cbasic_data_chunk(T* data, szptr size, szptr elements):
         data(data),
         size(size),
@@ -36,9 +42,21 @@ struct _cbasic_data_chunk
         m_destr(nullptr)
     {
     }
+
+    FORCEDINLINE
     _cbasic_data_chunk(T* data, szptr size):
         data(data),
         size(size),
+        elements(0),
+        m_destr(nullptr)
+    {
+    }
+
+    FORCEDINLINE
+    _cbasic_data_chunk(T& value):
+        data(&value),
+        size(sizeof(T)),
+        elements(1),
         m_destr(nullptr)
     {
     }
@@ -91,11 +109,17 @@ struct _cbasic_data_chunk
         return CreateFrom(data);
     }
 
+    template<typename T2>
+    STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    {
+        return {C_FCAST<T*>(data), size, 1};
+    }
+
     template<typename T2,
              typename is_pod<T2>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> From(T2& data)
     {
-        return CreateFrom(data);
+        return Create(data);
     }
 
     template<typename T2,
