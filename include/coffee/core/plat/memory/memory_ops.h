@@ -89,9 +89,26 @@ FORCEDINLINE T ExtractIntegerPtr(void* ptr)
 //#undef M_OP
 }
 
+/*!
+ * \brief Remove offending bits from offset
+ * \param alignment
+ * \param off
+ * \return
+ */
 FORCEDINLINE szptr AlignOffset(szptr alignment, szptr off)
 {
     return off & ~(alignment);
+}
+
+/*!
+ * \brief Align an offset by adding to the pointer.
+ * \param off
+ * \param alignment
+ * \return
+ */
+FORCEDINLINE szptr AlignOffsetForward(szptr alignment, szptr off)
+{
+    return off + ((alignment - (off & (alignment - 1))) % alignment);
 }
 
 /* Memory management */

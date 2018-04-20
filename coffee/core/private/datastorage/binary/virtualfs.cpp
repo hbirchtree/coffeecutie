@@ -71,6 +71,10 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
             return false;
         }
 
+        /* We want to align data to 8-byte boundaries */
+        data_size = AlignOffsetForward(8, data_size);
+        szptr alignment = AlignOffset(8, data_size);
+
         file.offset = data_size;
         file.rsize = filenames[i].data.size;
         MemCpy(file.name, fn.c_str(), fn.size());

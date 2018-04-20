@@ -116,8 +116,8 @@ struct VirtualFS
 
     char vfs_header[MagicLength]; /*!< Magic file header */
 
-    szptr num_files; /*!< Number of VFile entries */
-    szptr data_offset; /*!< Offset from start of this structure to the data segment */
+    u64 num_files; /*!< Number of VFile entries */
+    u64 data_offset; /*!< Offset from start of this structure to the data segment */
 
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'.
@@ -158,10 +158,11 @@ struct VirtualFS
 PACKEDSTRUCT VirtualFile
 {
     char name[MaxFileNameLength]; /*!< File name */
-    szptr offset; /*!< Offset to file */
-    szptr size; /*!< Size of file. If compressed, size of compressed file */
-    szptr rsize; /*!< Size of file in memory. If compressed, uncompressed size */
+    u64 offset; /*!< Offset to file */
+    u64 size; /*!< Size of file. If compressed, size of compressed file */
+    u64 rsize; /*!< Size of file in memory. If compressed, uncompressed size */
     u32 flags;
+    const u32 _pad = 0;
 };
 
 FORCEDINLINE VFile const* VirtualFS::GetFile(

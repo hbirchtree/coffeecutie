@@ -289,7 +289,7 @@ struct MeshLoader
         struct NodeData
         {
             Matf4 xf;
-            szptr parent; /*!< index of parent node */
+            u64 parent; /*!< index of parent node */
             u32 objectName; /*!< Index of object name in string store */
             ASSIMP::ObjectDesc::ObjectType type;
             i32 mesh; /*!< if >=0, index of mesh in related draw data */
@@ -299,8 +299,8 @@ struct MeshLoader
         struct SerialNodeData
         {
             Matf4 xf;
-            szptr parent; /*!< Index of parent node */
-            szptr objectName; /*!< Byte offset to name, null-terminated */
+            u64 parent; /*!< Index of parent node */
+            u64 objectName; /*!< Byte offset to name, null-terminated */
             ASSIMP::ObjectDesc::ObjectType type;
             i32 mesh;
 
@@ -344,9 +344,9 @@ struct MeshLoader
 
         struct SerialHeader
         {
-            szptr num_nodes;
-            szptr data_size;
-            szptr rootNode; /*!< Index of root node */
+            u64 num_nodes;
+            u64 data_size;
+            u64 rootNode; /*!< Index of root node */
 
             /*!
              * \brief Access a node when serialized,
@@ -354,7 +354,7 @@ struct MeshLoader
              * \param i
              * \return
              */
-            SerialNodeData const* node(szptr i = 0) const
+            SerialNodeData const* node(u64 i = 0) const
             {
                 if(i < num_nodes)
                 {
@@ -470,7 +470,7 @@ struct MeshLoader
 
         Vector<NodeData> nodes;
         Vector<CString> stringStore;
-        szptr rootNode;
+        u64 rootNode;
 
         szptr size()
         {

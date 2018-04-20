@@ -45,13 +45,13 @@ struct MaterialParser
 
     struct MaterialMesh
     {
-        szptr material;
-        szptr mesh;
+        u64 material;
+        u64 mesh;
     };
 
     struct Property
     {
-        szptr data_offset;
+        u64 data_offset;
         u32 material;
         PropertyClass property;
         u16 _pad;
@@ -69,7 +69,7 @@ struct MaterialParser
 
     struct Material : non_copy
     {
-        szptr name_offset; /*!< Byte offset to name in string store */
+        u64 name_offset; /*!< Byte offset to name in string store */
 
         szptr index(MaterialCollection const& col) const
         {
@@ -120,7 +120,7 @@ struct MaterialParser
 
     struct MatTex
     {
-        szptr path_offset; /*!< Byte offset to path in string store */
+        u64 path_offset; /*!< Byte offset to path in string store */
 
         u32 uvIdx;
         scalar blend;
@@ -142,11 +142,11 @@ struct MaterialParser
 
     struct MaterialCollection : non_copy
     {
-        szptr num_materials;
-        szptr material_mesh_segment;
-        szptr property_segment;
-        szptr data_segment;
-        szptr string_segment;
+        u64 num_materials;
+        u64 material_mesh_segment;
+        u64 property_segment;
+        u64 data_segment;
+        u64 string_segment;
 
         struct MaterialContext
         {
