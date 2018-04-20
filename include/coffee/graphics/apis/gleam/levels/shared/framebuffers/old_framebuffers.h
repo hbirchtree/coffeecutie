@@ -24,7 +24,7 @@ struct CGL_Old_Framebuffers
     {glBindFramebuffer(to_enum(t),h);}
 
     /*TODO: Create FramebufAttProp enum*/
-    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
+    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
     STATICINLINE void FBGetAttachParameter(
             FramebufferT t,CGenum att,CGenum p,int32* d)
     {glGetFramebufferAttachmentParameteriv(to_enum(t),att,p,d);}
@@ -93,7 +93,7 @@ struct CGL_Old_Framebuffers
     STATICINLINE void RBufGetParameteri(CGenum p,int32* d)
     {glGetRenderbufferParameteriv(GL_RENDERBUFFER,p,d);}
 
-    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
+    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
     STATICINLINE CSize FBGetAttachmentSize(FramebufferT t, uint32 idx)
     {
         C_UNUSED(t);

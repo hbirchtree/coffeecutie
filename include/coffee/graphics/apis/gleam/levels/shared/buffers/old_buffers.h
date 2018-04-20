@@ -15,11 +15,11 @@ struct CGL_Old_Buffers
     STATICINLINE void BufBind(BufType t,CGhnd h)
     {glBindBuffer(to_enum(t),h);}
 
-    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
+    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
     STATICINLINE void BufData(BufType t,uint64 sz,c_cptr p,ResourceAccess a)
     {glBufferData(to_enum(t),sz,p,to_enum1(a));}
 
-    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
+    GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
     STATICINLINE void BufSubData(BufType t,int64 off,uint32 sz,c_cptr p)
     {glBufferSubData(to_enum(t),off,sz,p);}
 

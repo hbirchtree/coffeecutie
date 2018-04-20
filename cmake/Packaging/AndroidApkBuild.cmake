@@ -62,41 +62,6 @@ endif()
 
 macro(APK_MIPMAP_ICONS Target_Name
         ICON_ASSET BUILD_OUTDIR)
-    
-    # Disabled because adaptive icons are better at this
-    return()
-
-    #
-    # Mipmap the icons
-    #
-    set ( ANDROID_MIPMAP_SET
-        "mdpi/48"
-        "hdpi/72"
-        "xhdpi/96"
-        "xxhdpi/144"
-        )
-
-    #message ( "-- Mipmapping file ${ICON_ASSET} to ${ANDROID_MIPMAP_SET}" )
-
-    foreach(mip ${ANDROID_MIPMAP_SET})
-        string ( REGEX REPLACE "([a-z]+)/([0-9]+)" "\\1" MIPMAP_DEST_DIR "${mip}" )
-        string ( REGEX REPLACE "([a-z]+)/([0-9]+)" "\\2" MIPMAP_SIZE "${mip}" )
-        set ( MIPMAP_DEST_FILE
-            "${BUILD_OUTDIR}/${APK_RSC_PREFIX}/drawable-${MIPMAP_DEST_DIR}/ic_launcher.png" )
-        add_custom_command ( TARGET "${Target_Name}"
-            PRE_BUILD
-            COMMAND
-            ${CMAKE_COMMAND} -E
-            make_directory "${BUILD_OUTDIR}/${APK_RSC_PREFIX}/drawable-${MIPMAP_DEST_DIR}"
-            )
-        if(INKSCAPE_PROGRAM)
-            inkscape_resize_svg( "${Target_Name}" "${ICON_ASSET}"
-                ${MIPMAP_SIZE} "${MIPMAP_DEST_FILE}" )
-        else()
-            magick_resize_svg ( "${Target_Name}" "${ICON_ASSET}"
-                "${MIPMAP_SIZE}" "${MIPMAP_DEST_FILE}" )
-        endif()
-    endforeach()
 endmacro()
 
 #
