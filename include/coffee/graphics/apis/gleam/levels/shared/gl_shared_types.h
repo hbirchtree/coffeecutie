@@ -92,6 +92,11 @@ struct gl_version_at_least_ver
 #define GLESVER_31 gl_ver_t<3,1,true>
 #define GLESVER_32 gl_ver_t<3,2,true>
 
+#define GL_EXT_CHECK(name, ext_name) bool name ## Supported() \
+    {\
+        return Debug::CheckExtensionSupported(ext_name);\
+    }
+
 /*
  * The above macro is used as such:
  *

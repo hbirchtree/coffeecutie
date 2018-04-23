@@ -8,8 +8,9 @@
 namespace Coffee {
 namespace CGL {
 
-template <typename CGhnd, typename ShaderStage, typename CGsync>
-struct CGL_Old_Constructors {
+template<typename CGhnd, typename ShaderStage, typename CGsync>
+struct CGL_Old_Constructors
+{
     /* Allocations */
     STATICINLINE bool TexAlloc(Span<CGhnd> const& handles)
     {
@@ -92,38 +93,38 @@ struct CGL_Old_Constructors {
 
     STATICINLINE bool ProgramAlloc(Span<CGhnd> const& handles)
     {
-        for (uint32 i = 0; i < handles.elements; i++)
+        for(uint32 i = 0; i < handles.elements; i++)
             handles.data[i] = glCreateProgram();
         return true;
     }
     STATICINLINE bool ProgramFree(Span<CGhnd> const& handles)
     {
-        for (uint32 i = 0; i < handles.elements; i++)
+        for(uint32 i = 0; i < handles.elements; i++)
             glDeleteProgram(handles.data[i]);
         return true;
     }
 
     STATICINLINE bool ShaderAlloc(ShaderStage t, Span<CGhnd> const& handles)
     {
-        for (uint32 i = 0; i < handles.elements; i++)
+        for(uint32 i = 0; i < handles.elements; i++)
             handles.data[i] = glCreateShader(to_enum1(t));
         return true;
     }
     STATICINLINE bool ShaderFree(Span<CGhnd> const& handles)
     {
-        for (uint32 i = 0; i < handles.elements; i++)
+        for(uint32 i = 0; i < handles.elements; i++)
             glDeleteShader(handles.data[i]);
         return true;
     }
 
 #if !defined(COFFEE_ONLY_GLES20)
-    STATICINLINE bool FenceFree(Span<CGhnd> const& handles)
+    STATICINLINE bool FenceFree(Span<GLsync> const& handles)
     {
-        for (uint32 i = 0; i < handles.elements; i++)
-            glDeleteSync((GLsync)handles.data[i]);
+        for(uint32 i = 0; i < handles.elements; i++)
+            glDeleteSync(handles.data[i]);
         return true;
     }
 #endif
 };
-}
-}
+} // namespace CGL
+} // namespace Coffee

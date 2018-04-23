@@ -1,11 +1,11 @@
 #pragma once
 
-#include <utility>
 #include "../../coffee_macros.h"
-#include "../tdef/integertypes.h"
 #include "../../plat/memory/cmemory.h"
+#include "../tdef/integertypes.h"
+#include <utility>
 
-namespace Coffee{
+namespace Coffee {
 
 struct Path;
 
@@ -13,51 +13,43 @@ template<typename T>
 struct _cbasic_data_chunk
 {
     FORCEDINLINE
-    _cbasic_data_chunk(_cbasic_data_chunk<T>&& other):
-        data(other.data),
-        size(other.size),
-        elements(other.elements),
+    _cbasic_data_chunk(_cbasic_data_chunk<T>&& other) :
+        data(other.data), size(other.size), elements(other.elements),
         m_destr(other.m_destr)
     {
-        other.data = nullptr;
-        other.size = 0;
+        other.data     = nullptr;
+        other.size     = 0;
         other.elements = 0;
-        other.m_destr = nullptr;
+        other.m_destr  = nullptr;
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk():
-        data(0),
-        size(0),
-        elements(0),
-        m_destr(nullptr)
+    _cbasic_data_chunk() : data(0), size(0), elements(0), m_destr(nullptr)
     {
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk(T* data, szptr size, szptr elements):
-        data(data),
-        size(size),
-        elements(elements),
-        m_destr(nullptr)
+    _cbasic_data_chunk(T* data, szptr size, szptr elements) :
+        data(data), size(size), elements(elements), m_destr(nullptr)
     {
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk(T* data, szptr size):
-        data(data),
-        size(size),
-        elements(0),
-        m_destr(nullptr)
+    _cbasic_data_chunk(T* data, szptr size) :
+        data(data), size(size), elements(0), m_destr(nullptr)
     {
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk(T& value):
-        data(&value),
-        size(sizeof(T)),
-        elements(1),
-        m_destr(nullptr)
+    _cbasic_data_chunk(T& value) :
+        data(&value), size(sizeof(T)), elements(1), m_destr(nullptr)
+    {
+    }
+
+    FORCEDINLINE
+    _cbasic_data_chunk(Vector<T>& array) :
+        data(array.data()), size(sizeof(T) * array.size()),
+        elements(array.size()), m_destr(nullptr)
     {
     }
 
@@ -70,14 +62,13 @@ struct _cbasic_data_chunk
     C_DELETE_COPY_CONSTRUCTOR(_cbasic_data_chunk);
     _cbasic_data_chunk& operator=(_cbasic_data_chunk&&) = default;
 
-    STATICINLINE void SetDestr(_cbasic_data_chunk<T>& inst,
-                               void(*d)(_cbasic_data_chunk<T>&))
+    STATICINLINE void SetDestr(
+        _cbasic_data_chunk<T>& inst, void (*d)(_cbasic_data_chunk<T>&))
     {
         inst.m_destr = d;
     }
 
-    template<typename DT,
-             typename is_not_virtual<DT>::type* = nullptr>
+    template<typename DT, typename is_not_virtual<DT>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
         return {C_FCAST<T*>(&obj), sizeof(DT), 1};
@@ -86,21 +77,14 @@ struct _cbasic_data_chunk
     template<typename is_pod<T>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {
-            C_FCAST<T*>(src),
-                    strlen(src),
-                    0
-        };
+        return {C_FCAST<T*>(src), strlen(src), 0};
     }
 
-    template<typename T2,
-             typename is_not_virtual<T2>::type* = nullptr>
+    template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
     {
-        return { C_RCAST<T*>(data.data()),
-                    sizeof(T2) * data.size(),
-                    data.size()
-        };
+        return {
+            C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), data.size()};
     }
 
     template<typename T2>
@@ -115,26 +99,22 @@ struct _cbasic_data_chunk
         return {C_FCAST<T*>(data), size, 1};
     }
 
-    template<typename T2,
-             typename is_pod<T2>::type* = nullptr>
+    template<typename T2, typename is_pod<T2>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> From(T2& data)
     {
         return Create(data);
     }
 
-    template<typename T2,
-             typename is_not_virtual<T2>::type* = nullptr>
+    template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
     STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
     {
         _cbasic_data_chunk<T> out;
-        out.size = (data.size() * sizeof(T2)) / sizeof(T);
+        out.size     = (data.size() * sizeof(T2)) / sizeof(T);
         out.elements = data.size();
-        out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
+        out.data     = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
         MemCpy(out.data, data.data(), out.size);
-        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
-        {
-            CFree(b.data);
-        });
+        _cbasic_data_chunk<T>::SetDestr(
+            out, [](_cbasic_data_chunk<T>& b) { CFree(b.data); });
 
         return out;
     }
@@ -151,41 +131,36 @@ struct _cbasic_data_chunk
     STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
     {
         _cbasic_data_chunk<T> out;
-        out.size = nmax((sizeof(T2)) / sizeof(T), 8);
+        out.size     = nmax((sizeof(T2)) / sizeof(T), 8);
         out.elements = 1;
-        out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
+        out.data     = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
         MemCpy(out.data, &obj, sizeof(T2));
-        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
-        {
-            CFree(b.data);
-        });
+        _cbasic_data_chunk<T>::SetDestr(
+            out, [](_cbasic_data_chunk<T>& b) { CFree(b.data); });
 
         return out;
     }
 
-    STATICINLINE _cbasic_data_chunk<T> Copy(
-            _cbasic_data_chunk<T> const& src)
+    STATICINLINE _cbasic_data_chunk<T> Copy(_cbasic_data_chunk<T> const& src)
     {
         _cbasic_data_chunk<T> out;
         out.size = src.size;
         out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
         MemCpy(out.data, src.data, src.size * sizeof(T));
-        _cbasic_data_chunk<T>::SetDestr(out, [](_cbasic_data_chunk<T>& b)
-        {
-            CFree(b.data);
-        });
+        _cbasic_data_chunk<T>::SetDestr(
+            out, [](_cbasic_data_chunk<T>& b) { CFree(b.data); });
         return out;
     }
 
-    template<typename std::enable_if<!std::is_void<T>::value,bool>::type*
-             = nullptr>
-    T& operator[] (szptr i)
+    template<
+        typename std::enable_if<!std::is_void<T>::value, bool>::type* = nullptr>
+    T& operator[](szptr i)
     {
         return data[i];
     }
-    template<typename std::enable_if<!std::is_void<T>::value,bool>::type*
-             = nullptr>
-    T const& operator[] (szptr i) const
+    template<
+        typename std::enable_if<!std::is_void<T>::value, bool>::type* = nullptr>
+    T const& operator[](szptr i) const
     {
         return data[i];
     }
@@ -193,8 +168,8 @@ struct _cbasic_data_chunk
     template<typename VectorT>
     _cbasic_data_chunk<T>& operator=(VectorT const& vec)
     {
-        data = C_FCAST<T*>(vec.data());
-        size = vec.size() * sizeof(typename VectorT::value_type);
+        data     = C_FCAST<T*>(vec.data());
+        size     = vec.size() * sizeof(typename VectorT::value_type);
         elements = vec.size();
 
         return *this;
@@ -203,8 +178,8 @@ struct _cbasic_data_chunk
     template<typename T2>
     _cbasic_data_chunk<T>& operator=(Vector<T2> const& vec)
     {
-        data = C_FCAST<T*>(vec.data());
-        size = vec.size() * sizeof(T2);
+        data     = C_FCAST<T*>(vec.data());
+        size     = vec.size() * sizeof(T2);
         elements = vec.size();
 
         return *this;
@@ -227,14 +202,10 @@ struct _cbasic_data_chunk
 
     struct iterator : Iterator<ForwardIteratorTag, T>
     {
-        iterator() :
-            m_chunk(nullptr),
-            m_idx(C_CAST<szptr>(-1))
+        iterator() : m_chunk(nullptr), m_idx(C_CAST<szptr>(-1))
         {
         }
-        iterator(_cbasic_data_chunk<T>& chunk):
-            m_chunk(&chunk),
-            m_idx(0)
+        iterator(_cbasic_data_chunk<T>& chunk) : m_chunk(&chunk), m_idx(0)
         {
         }
 
@@ -258,17 +229,17 @@ struct _cbasic_data_chunk
             return other.m_idx != m_idx;
         }
 
-        template<typename std::enable_if<
-                     !std::is_same<T, void>::value>::type*
-                 = nullptr>
+        template<
+            typename std::enable_if<!std::is_same<T, void>::value>::type* =
+                nullptr>
         T const& operator*() const
         {
             return m_chunk->data[m_idx];
         }
 
-    private:
+      private:
         _cbasic_data_chunk* m_chunk;
-        szptr m_idx;
+        szptr               m_idx;
     };
 
     iterator begin()
@@ -281,14 +252,14 @@ struct _cbasic_data_chunk
         return iterator();
     }
 
-private:
-    void(*m_destr)(_cbasic_data_chunk<T>&);
+  private:
+    void (*m_destr)(_cbasic_data_chunk<T>&);
 };
 
 using CVoidData = _cbasic_data_chunk<void>;
 using CByteData = _cbasic_data_chunk<byte_t>;
 
-using Bytes = CByteData;
+using Bytes      = CByteData;
 using BytesConst = _cbasic_data_chunk<const byte_t>;
 
 template<typename T>
@@ -297,9 +268,7 @@ using Span = _cbasic_data_chunk<T>;
 template<typename T>
 struct _cbasic_serial_array
 {
-    _cbasic_serial_array():
-        m_data(nullptr),
-        m_size(0)
+    _cbasic_serial_array() : m_data(nullptr), m_size(0)
     {
     }
 
@@ -309,7 +278,7 @@ struct _cbasic_serial_array
         {
             m_data = C_RCAST<T const*>(source.data);
             m_size = source.size / sizeof(T);
-        }else
+        } else
             m_size = 0;
     }
 
@@ -317,14 +286,10 @@ struct _cbasic_serial_array
 
     struct iterator : Iterator<ForwardIteratorTag, T>
     {
-        iterator(_cbasic_serial_array<T>* base):
-            m_base(base),
-            m_idx(0)
+        iterator(_cbasic_serial_array<T>* base) : m_base(base), m_idx(0)
         {
         }
-        iterator():
-            m_base(nullptr),
-            m_idx(npos)
+        iterator() : m_base(nullptr), m_idx(npos)
         {
         }
 
@@ -352,9 +317,10 @@ struct _cbasic_serial_array
             else
                 return (*m_base)[m_idx];
         }
-    private:
+
+      private:
         _cbasic_serial_array<T>* m_base;
-        szptr m_idx;
+        szptr                    m_idx;
     };
 
     iterator begin()
@@ -383,9 +349,9 @@ struct _cbasic_serial_array
         return m_size;
     }
 
-private:
+  private:
     T const* m_data;
-    szptr m_size;
+    szptr    m_size;
 };
 
 template<typename T>
@@ -393,13 +359,10 @@ using SerialArray = _cbasic_serial_array<T>;
 
 struct CMimeData
 {
-    FORCEDINLINE CMimeData(cstring id, void* data,
-                           const szptr& size,
-                           bool doClean = false):
+    FORCEDINLINE CMimeData(
+        cstring id, void* data, const szptr& size, bool doClean = false) :
         m_id(id),
-        m_data(data),
-        m_size(size),
-        b_doClean(doClean)
+        m_data(data), m_size(size), b_doClean(doClean)
     {
     }
     FORCEDINLINE ~CMimeData()
@@ -407,18 +370,29 @@ struct CMimeData
         if(b_doClean)
             CFree(m_data);
     }
-    FORCEDINLINE const CString& id(){return m_id;}
-    FORCEDINLINE const void* data(){return m_data;}
-    FORCEDINLINE const szptr& dataSize(){return m_size;}
-private:
+    FORCEDINLINE const CString& id()
+    {
+        return m_id;
+    }
+    FORCEDINLINE const void* data()
+    {
+        return m_data;
+    }
+    FORCEDINLINE const szptr& dataSize()
+    {
+        return m_size;
+    }
+
+  private:
     CString m_id;
-    void* m_data;
-    szptr m_size;
-    bool b_doClean;
+    void*   m_data;
+    szptr   m_size;
+    bool    b_doClean;
 };
 
 /*!
- * \brief Allows for buffering of any type of object, texture, buffer, etc. according to conditions.
+ * \brief Allows for buffering of any type of object, texture, buffer, etc.
+ * according to conditions.
  */
 template<typename T, size_t BufferSize>
 struct _cbasic_nbuffer
@@ -429,8 +403,8 @@ struct _cbasic_nbuffer
     }
 
     static constexpr size_t size = BufferSize;
-    T data[BufferSize];
-    size_t ptr;
+    T                       data[BufferSize];
+    size_t                  ptr;
 
     virtual void advance()
     {
@@ -447,12 +421,11 @@ struct _cbasic_nbuffer
 
     FORCEDINLINE size_t next_idx()
     {
-        return (ptr+1)%BufferSize;
+        return (ptr + 1) % BufferSize;
     }
     FORCEDINLINE size_t current_idx()
     {
         return ptr;
     }
 };
-
-}
+} // namespace Coffee

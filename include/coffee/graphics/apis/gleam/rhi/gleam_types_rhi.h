@@ -32,6 +32,7 @@ enum APILevel
     GL_3_3   = 0x330,
     GL_4_3   = 0x430,
     GL_4_5   = 0x450,
+    GL_4_6   = 0x460,
 
     /* Mobile GL versions / ES */
     /* These do not map directly to desktop versions */

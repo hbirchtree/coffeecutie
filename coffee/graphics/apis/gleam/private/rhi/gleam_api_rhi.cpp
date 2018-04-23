@@ -144,7 +144,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
         Vector<CGhnd> bufs;
         bufs.resize(num_pbos);
 
-        CGL33::BufAlloc(Span<CGhnd>::CreateFrom(bufs));
+        CGL33::BufAlloc(bufs);
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
         for(uint32 i=0;i<num_pbos;i++)
@@ -168,10 +168,13 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     const Display::CGLVersion ver33(3,3);
     const Display::CGLVersion ver43(4,3);
     const Display::CGLVersion ver45(4,5);
+    const Display::CGLVersion ver46(4,6);
 
     /* If higher level of API is not achieved, stay at the lower one */
-    if(ver>=ver45&& /* DISABLES CODE */ (false))
+    if(ver>=ver46)
         /* Unimplemented both on CGL level and here */
+        store->CURR_API = GL_4_6;
+    else if(ver>=ver45)
         store->CURR_API = GL_4_5;
     else if(ver>=ver43)
         store->CURR_API = GL_4_3;
