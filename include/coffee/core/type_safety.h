@@ -41,14 +41,14 @@ struct is_not_virtual
 /*! \brief If you want to know why this is done, it's because Visual C++ is broken.
  *  Too broken for me to care.
  */
-#if !defined(COFFEE_WINDOWS)
+#if 1
 
 template<typename D,
          typename T,
          typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
          typename std::enable_if<
-    (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max()) &&
-    (std::numeric_limits<T>::min() >= std::numeric_limits<D>::min())
+    ((std::numeric_limits<T>::max)() <= (std::numeric_limits<D>::max)()) &&
+    ((std::numeric_limits<T>::min)() >= (std::numeric_limits<D>::min)())
             >::type* = nullptr,
          typename std::enable_if<
              IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
@@ -67,8 +67,8 @@ template<typename D,
          typename T,
          typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
          typename std::enable_if<
-    (std::numeric_limits<T>::max() > std::numeric_limits<D>::max()) ||
-    (std::numeric_limits<T>::min() < std::numeric_limits<D>::min())
+    ((std::numeric_limits<T>::max)() > (std::numeric_limits<D>::max)()) ||
+    ((std::numeric_limits<T>::min)() < (std::numeric_limits<D>::min)())
              >::type* = nullptr>
 /*!
  * \brief If there is a risk of going out of the
@@ -79,10 +79,10 @@ template<typename D,
  */
 static inline D C_FCAST(T from)
 {
-    static constexpr D max_val = std::numeric_limits<D>::max();
-    static constexpr D min_val = std::numeric_limits<D>::min();
+    static constexpr D max_val = (std::numeric_limits<D>::max)();
+    static constexpr D min_val = (std::numeric_limits<D>::min)();
 
-    static constexpr T T_max_val = std::numeric_limits<T>::max();
+    static constexpr T T_max_val = (std::numeric_limits<T>::max)();
 //    static constexpr T T_min_val = std::numeric_limits<T>::min();
 
     static constexpr bool T_is_signed = std::is_signed<T>::value;

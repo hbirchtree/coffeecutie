@@ -48,7 +48,7 @@ struct CGLES32 :
         CGL_ProgramInterfaceQuery,
         CGL_GetProgramBinary,
 
-        CGL_VertexAttribBinding,
+        CGL_VertexAttribBinding<GLESVER_32>,
 
         CGL_XF2
 {
