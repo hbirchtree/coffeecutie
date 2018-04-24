@@ -282,7 +282,7 @@ bool WinFileFun::Write(FileHandle* fh, CByteData const& d, bool)
 
         SetFilePointer(fh->file, 0, nullptr, FILE_BEGIN);
 
-        return stat && stat2 && i == d.size;
+        return stat2 && i == d.size;
     }
     else
         return false;

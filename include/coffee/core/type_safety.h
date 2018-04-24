@@ -41,7 +41,7 @@ struct is_not_virtual
 /*! \brief If you want to know why this is done, it's because Visual C++ is broken.
  *  Too broken for me to care.
  */
-#if 1
+#if !defined(COFFEE_WINDOWS)
 
 template<typename D,
          typename T,
@@ -297,9 +297,13 @@ template<typename Interface, typename Implementation>
  */
 struct implements
 {
+#if defined(COFFEE_WINDOWS)
+    typedef int type;
+#else
     typedef typename std::enable_if<
     std::is_base_of<Interface, Implementation>::value
     >::type type;
+#endif
 };
 
 template<typename T>
@@ -310,9 +314,13 @@ template<typename T>
  */
 struct is_pod
 {
+#if defined(COFFEE_WINDOWS)
+    typedef int type;
+#else
     typedef typename std::enable_if<
     std::is_pod<T>::value
     >::type type;
+#endif
 };
 
 }

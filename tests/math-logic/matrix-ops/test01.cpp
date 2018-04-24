@@ -13,11 +13,11 @@ bool matrix_translation_test()
     testt.rotation = CQuat(2,1,1.1,1);
 
     CMat4 testmat;
-    testmat *= GenTransform(testt);
+    testmat *= GenTransform<scalar>(testt);
     testt.position = CVec3(3,2,3);
-    testmat *= GenTransform(testt);
+    testmat *= GenTransform<scalar>(testt);
     testt.position = CVec3(3,3,2);
-    testmat *= GenTransform(testt);
+    testmat *= GenTransform<scalar>(testt);
 
     CVec4 trans = get_translation(testmat);
     Profiler::Profile("Acquire matrix translation");

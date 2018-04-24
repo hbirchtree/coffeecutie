@@ -579,16 +579,16 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
     floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
     camera.position.x() -= 0.1;
-    object_matrices[0] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(base_transform);
-    object_matrices[2] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(floor_transform);
+    object_matrices[0] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(base_transform);
+    object_matrices[2] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(floor_transform);
 
     camera.position.x() += 0.2;
-    object_matrices[1] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(base_transform);
-    object_matrices[3] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(floor_transform);
+    object_matrices[1] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(base_transform);
+    object_matrices[3] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(floor_transform);
 
     camera.position.x() -= 0.1;
 

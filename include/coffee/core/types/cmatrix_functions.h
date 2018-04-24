@@ -133,7 +133,7 @@ template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> GenOrthographic(
         _cbasic_graphics_camera<T> const& camera)
 {
-    return GenOrthographic(
+    return GenOrthographic<T>(
                 camera.orthoview,camera.zVals);
 }
 
@@ -141,7 +141,7 @@ template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
         _cbasic_graphics_camera<T> const& camera)
 {
-    return GenPerspective(
+    return GenPerspective<T>(
                 camera.fieldOfView,
                 camera.aspect,
                 camera.zVals);
@@ -156,7 +156,7 @@ template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_transform<T> const& transform)
 {
-    return GenTransform(
+    return GenTransform<T>(
                 transform.position,
                 transform.scale,
                 transform.rotation);
@@ -171,7 +171,7 @@ template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_camera<T> const& camera)
 {
-    return GenTransform(
+    return GenTransform<T>(
                 camera.position,
                 _cbasic_vec3<T>(1.0),
                 camera.rotation);

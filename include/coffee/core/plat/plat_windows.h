@@ -2,7 +2,7 @@
 
 #include "plat_primary_identify.h"
 #include "../coffee_mem_macros.h"
-#include "../types/tdef/stltypes.h"
+#include <string>
 
 #ifdef COFFEE_WINDOWS
 
@@ -28,7 +28,7 @@
 #endif
 
 namespace Coffee {
-	inline CString win_strerror(DWORD err)
+	inline std::string win_strerror(DWORD err)
 	{
 #ifdef COFFEE_WINDOWS_UWP
 		LPWSTR msgBuf = nullptr;
@@ -52,7 +52,7 @@ namespace Coffee {
 		LocalFree(msgBuf);
 		CString error(error_w.begin(),error_w.end());
 #else
-		CString error(msgBuf, size);
+		std::string error(msgBuf, size);
 		LocalFree(msgBuf);
 #endif
 		return error;

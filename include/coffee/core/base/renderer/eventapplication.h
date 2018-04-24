@@ -18,12 +18,14 @@
 namespace Coffee{
 namespace Display{
 
-template<typename Renderer, typename ShareData,
+template<typename Renderer, typename ShareData
 
-         typename implements<InitApplication, Renderer>::type*
+         #if !defined(COFFEE_WINDOWS)
+         , typename implements<InitApplication, Renderer>::type*
          = nullptr,
          typename implements<EventApplication, Renderer>::type*
          = nullptr
+         #endif
 
          >
 struct EventLoopData

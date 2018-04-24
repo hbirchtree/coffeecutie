@@ -14,6 +14,11 @@ namespace Coffee{
 
 struct InternalState
 {
+    InternalState():
+        bits()
+    {
+    }
+
     LogInterface logger = OutputPrinterImpl::fprintf_platform;
 
 #ifndef COFFEE_LOWFAT

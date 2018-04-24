@@ -476,10 +476,10 @@ int coffee_main(int32,cstring_w*)
                 API::S_2D tex_handle(texture.cformat, 1,
                                      flgs);
 
-                tex_handle.allocate(image->isize, texture.format);
+                tex_handle.allocate(image->isize.convert<i32>(), texture.format);
 
                 tex_handle.upload(texture.dformat, texture.format,
-                                  image->isize, {
+                                  image->isize.convert<i32>(), {
                                       (byte_t*)texture.data,
                                       (szptr)texture_size(image)
                                   });
