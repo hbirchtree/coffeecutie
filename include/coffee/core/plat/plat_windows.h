@@ -48,9 +48,9 @@ namespace Coffee {
 #endif
 
 #ifdef COFFEE_WINDOWS_UWP
-		CWString error_w(msgBuf, size);
+        std::wstring error_w(msgBuf, size);
 		LocalFree(msgBuf);
-		CString error(error_w.begin(),error_w.end());
+        std::string error(error_w.begin(),error_w.end());
 #else
 		std::string error(msgBuf, size);
 		LocalFree(msgBuf);
