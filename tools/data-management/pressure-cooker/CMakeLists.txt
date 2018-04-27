@@ -42,7 +42,7 @@ if(COFFEE_BUILD_ASSIMP)
         HEADER_DIRS ${CMAKE_S123OURCE_DIR}/coffee/interfaces
         )
 
-    if(LINUX)
+    if(NOT APPLE)
         set_property ( TARGET PressurizeModels
             PROPERTY LINK_FLAGS
             "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
@@ -63,7 +63,7 @@ if(SQUISH_FOUND)
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 
-    if(LINUX)
+    if(NOT APPLE)
         set_property ( TARGET PressurizeTextures
             PROPERTY LINK_FLAGS
             "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
@@ -98,7 +98,7 @@ if(SHADERC_FOUND)
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 
-    if(LINUX)
+    if(NOT APPLE)
         set_property ( TARGET PressurizeShaders
             PROPERTY LINK_FLAGS
             "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
