@@ -9,6 +9,24 @@ namespace GLEAM {
 
 using Lim = CGL_Shared_Limits;
 
+static bool IsIntegerType(TypeEnum e)
+{
+    switch(e)
+    {
+    case TypeEnum::Byte:
+    case TypeEnum::UByte:
+    case TypeEnum::Short:
+    case TypeEnum::UShort:
+    case TypeEnum::Int:
+    case TypeEnum::UInt:
+    case TypeEnum::LL:
+    case TypeEnum::ULL:
+        return true;
+    default:
+        return false;
+    }
+}
+
 /*!
  * \brief vao_apply_buffer
  * \param m_attributes
@@ -26,22 +44,8 @@ static void vao_apply_buffer(
         {
             CGL33::VAOEnableAttrib(attr.index());
 #if !defined(COFFEE_ONLY_GLES20)
-            bool use_integer = false;
-            switch(attr.type())
-            {
-            case TypeEnum::Byte:
-            case TypeEnum::UByte:
-            case TypeEnum::Short:
-            case TypeEnum::UShort:
-            case TypeEnum::Int:
-            case TypeEnum::UInt:
-            case TypeEnum::LL:
-            case TypeEnum::ULL:
-                use_integer = true;
-                break;
-            default:
-                break;
-            }
+            bool use_integer = IsIntegerType(attr.type());
+
             if(use_integer && !(attr.m_flags & GLEAM_API::AttributePacked) &&
                !GLEAM_FEATURES.gles20)
                 CGL33::VAOAttribIPointer(
@@ -100,15 +104,24 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 #if defined(COFFEE_GLEAM_DESKTOP)
         if(GLEAM_FEATURES.direct_state)
         {
-            glEnableVertexArrayAttrib(m_handle, attr.index());
+            CGL45::VAOEnableAttrib(m_handle, attr.index());
 
-            CGL45::VAOAttribFormat(
-                m_handle,
-                attr.index(),
-                attr.size(),
-                attr.type(),
-                attr.m_flags & GLEAM_API::AttributeNormalization,
-                attr.offset());
+            if(IsIntegerType(attr.type()) &&
+               !(attr.m_flags & GLEAM_API::AttributePacked))
+                CGL45::VAOAttribFormatI(
+                    m_handle,
+                    attr.index(),
+                    attr.size(),
+                    attr.type(),
+                    attr.offset());
+            else
+                CGL45::VAOAttribFormat(
+                    m_handle,
+                    attr.index(),
+                    attr.size(),
+                    attr.type(),
+                    attr.m_flags & GLEAM_API::AttributeNormalization,
+                    attr.offset());
         } else
 #endif
         {
@@ -117,12 +130,17 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 
             if(GLEAM_FEATURES.vertex_format)
             {
-                CGL43::VAOAttribFormat(
-                    attr.index(),
-                    attr.size(),
-                    attr.type(),
-                    attr.m_flags & GLEAM_API::AttributeNormalization,
-                    attr.offset());
+                if(IsIntegerType(attr.type()) &&
+                   !(attr.m_flags & GLEAM_API::AttributePacked))
+                    CGL43::VAOAttribFormatI(
+                        attr.index(), attr.size(), attr.type(), attr.offset());
+                else
+                    CGL43::VAOAttribFormat(
+                        attr.index(),
+                        attr.size(),
+                        attr.type(),
+                        attr.m_flags & GLEAM_API::AttributeNormalization,
+                        attr.offset());
             }
         }
     }
@@ -214,7 +232,7 @@ void GLEAM_VertDescriptor::bind(u32 vertexOffset)
         }
 
     if(GLEAM_FEATURES.element_buffer_bind && m_ibuffer)
-        m_ibuffer->bind();
+        CGL33::BufBind(m_ibuffer->m_type, m_ibuffer->m_handle);
 }
 
 void GLEAM_VertDescriptor::unbind()

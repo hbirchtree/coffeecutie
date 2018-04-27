@@ -138,7 +138,8 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
     if(IsPixFmtCompressed(m_pixfmt))
         return;
 
-    if(!GLEAM_FEATURES.direct_state)
+    if(!GLEAM_FEATURES.direct_state ||
+       !feval(m_flags & GLEAM_API::TextureImmutable))
         CGL33::TexBind(m_type, m_handle);
 
     if(!feval(m_flags & GLEAM_API::TextureImmutable))
@@ -163,7 +164,8 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
         else
 #endif
             CGL43::TexStorage2D(Texture::T2D, m_mips, m_pixfmt, size.w, size.h);
-    }
+    } else
+        throw implementation_error(GLM_API "failed to allocate texture!");
 #endif
     m_size = size;
 }

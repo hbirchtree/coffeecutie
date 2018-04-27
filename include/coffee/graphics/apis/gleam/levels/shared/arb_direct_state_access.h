@@ -307,6 +307,12 @@ struct CGL_DirectStateAccess
 
     /* VAO */
     GL_VERSION_REQ(GLVER_45)
+    STATICINLINE void VAOEnableAttrib(CGhnd hnd, u32 idx)
+    {
+        glEnableVertexArrayAttrib(hnd, idx);
+    }
+
+    GL_VERSION_REQ(GLVER_45)
     STATICINLINE void VAOAttribFormat(
         CGhnd hnd, u32 idx, i32 size, TypeEnum type, bool norm, u32 offset)
     {

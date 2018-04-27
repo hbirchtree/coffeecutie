@@ -326,10 +326,14 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
             (api != GL_3_3)
             && (api != GLES_2_0)
             && store->features.buffer_storage;
-    store->features.element_buffer_bind = true;
     store->features.vertex_format =
             (api == GL_4_3)
-            || (api == GLES_3_2);
+            || (api == GLES_3_2)
+            || (api == GL_4_5)
+            || (api == GL_4_6)
+            ;
+
+    store->features.element_buffer_bind = !store->features.vertex_format;
 
     m_store = store;
 
@@ -1014,6 +1018,14 @@ static bool InternalDraw(
 
     if(d.indexed())
     {
+        if(GL_DEBUG_MODE)
+        {
+            i32 elementHnd = CGL33::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+
+            if(elementHnd == 0)
+                cWarning(GLM_API "No element buffer binding!");
+        }
+
         szptr elsize = 1;
         if(i.elementType()==TypeEnum::UShort)
             elsize = 2;
@@ -1098,6 +1110,11 @@ bool InternalMultiDraw(
 
     if(GL_DEBUG_MODE)
     {
+        i32 elementHnd = CGL33::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+
+        if(elementHnd == 0)
+            cWarning(GLM_API "No element buffer binding!");
+
         if(data.counts.size() == 0)
             cWarning(GLM_API "Draw call has no meshes");
 
