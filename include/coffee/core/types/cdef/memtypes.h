@@ -24,32 +24,43 @@ struct _cbasic_data_chunk
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk() : data(0), size(0), elements(0), m_destr(nullptr)
+    _cbasic_data_chunk() : data(0), size(0), elements(0)
     {
     }
 
     FORCEDINLINE
     _cbasic_data_chunk(T* data, szptr size, szptr elements) :
-        data(data), size(size), elements(elements), m_destr(nullptr)
+        data(data), size(size), elements(elements)
     {
     }
 
     FORCEDINLINE
     _cbasic_data_chunk(T* data, szptr size) :
-        data(data), size(size), elements(0), m_destr(nullptr)
+        data(data), size(size), elements(0)
     {
     }
 
     FORCEDINLINE
     _cbasic_data_chunk(T& value) :
-        data(&value), size(sizeof(T)), elements(1), m_destr(nullptr)
+        data(&value), size(sizeof(T)), elements(1)
     {
     }
 
     FORCEDINLINE
     _cbasic_data_chunk(Vector<T>& array) :
         data(array.data()), size(sizeof(T) * array.size()),
-        elements(array.size()), m_destr(nullptr)
+        elements(array.size())
+    {
+    }
+
+    template<
+        typename T2,
+        typename std::enable_if<
+            std::is_same<T2, typename std::remove_cv<T>::type>::value>::type* =
+            nullptr>
+    FORCEDINLINE _cbasic_data_chunk(_cbasic_data_chunk<T2> const& other) :
+        data(C_RCAST<T*>(other.data)), size(other.size),
+        elements(other.elements)
     {
     }
 
@@ -59,8 +70,34 @@ struct _cbasic_data_chunk
             m_destr(*this);
     }
 
+    template<typename T2>
+    explicit operator _cbasic_data_chunk<T2>()
+    {
+        _cbasic_data_chunk<T2> out;
+
+        out.data     = C_RCAST<T2*>(this->data);
+        out.size     = this->size;
+        out.elements = this->elements;
+
+        return out;
+    }
+
     C_DELETE_COPY_CONSTRUCTOR(_cbasic_data_chunk);
-    _cbasic_data_chunk& operator=(_cbasic_data_chunk&&) = default;
+
+    _cbasic_data_chunk& operator=(_cbasic_data_chunk&& other)
+    {
+        data = other.data;
+        elements = other.elements;
+        size = other.size;
+        m_destr = other.m_destr;
+
+        other.data = nullptr;
+        other.elements = 0;
+        other.size = 0;
+        other.m_destr = nullptr;
+
+        return *this;
+    }
 
     STATICINLINE void SetDestr(
         _cbasic_data_chunk<T>& inst, void (*d)(_cbasic_data_chunk<T>&))
@@ -253,7 +290,7 @@ struct _cbasic_data_chunk
     }
 
   private:
-    void (*m_destr)(_cbasic_data_chunk<T>&);
+    void (*m_destr)(_cbasic_data_chunk<T>&) = nullptr;
 };
 
 using CVoidData = _cbasic_data_chunk<void>;

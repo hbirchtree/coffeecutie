@@ -5,6 +5,8 @@
 #include "renderer.h"
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/pressurized/gleam/texture_loader.h>
+#include <coffee/pressurized/gleam/shader_loader.h>
 
 #if defined(FEATURE_USE_ASIO)
 #include <coffee/asio/net_profiling.h>

@@ -42,6 +42,11 @@ if(COFFEE_BUILD_ASSIMP)
         HEADER_DIRS ${CMAKE_S123OURCE_DIR}/coffee/interfaces
         )
 
+    set_property ( TARGET PressurizeModels
+        PROPERTY LINK_FLAGS
+        "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
+        )
+
     add_dependencies ( PressureCooker
         PressurizeModels
         )
@@ -54,6 +59,11 @@ if(SQUISH_FOUND)
         SOURCES texture_compress.cpp
         LIBRARIES CoffeeImage CoffeeCore Squish
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        )
+
+    set_property ( TARGET PressurizeTextures
+        PROPERTY LINK_FLAGS
+        "-U=CoffeeLoader -fvisibility=hidden -Wl,--exclude-libs,ALL"
         )
 
     if(TIFF_FOUND)

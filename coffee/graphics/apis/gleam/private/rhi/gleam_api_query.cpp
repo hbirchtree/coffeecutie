@@ -63,7 +63,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt)
                 );
 }
 
-static u32 GLSLVersionFromAPI(APILevel level)
+u32 GLSLVersionFromAPI(APILevel level)
 {
     switch(level)
     {
@@ -85,38 +85,6 @@ static u32 GLSLVersionFromAPI(APILevel level)
     default:
         return 100;
     }
-}
-
-UrlResolver GLEAM_API::ShaderResolver()
-{
-    UrlResolver::SingleResolver sres = [](Url const& urlPath)
-    {
-        Path path = urlPath;
-
-        CString api_name = "core";
-        CString ext = path.extension();
-        CString glsl_version = cast_pod(
-                    GLSLVersionFromAPI(Level())
-                    );
-
-        if(LevelIsOfClass(Level(), APIClass::GLES))
-            api_name = "es";
-
-        return MkUrl(
-
-                    path
-                    .removeExt()
-                    .addExtension(api_name.c_str())
-                    .addExtension(glsl_version.c_str())
-                    .addExtension(ext.c_str()),
-
-                    urlPath.flags
-                    );
-    };
-
-    return {
-        sres, UrlResolver::DefaultMulti
-    };
 }
 
 }

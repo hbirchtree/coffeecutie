@@ -5,8 +5,8 @@
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/edef/pixenum.h>
 
-namespace Coffee{
-namespace IMG{
+namespace Coffee {
+namespace IMG {
 
 /*!
  * \brief For the cases when you need to store an image descriptor
@@ -16,11 +16,13 @@ struct serial_image
 {
     static constexpr const u32 hard_signature = 0xBEEF1B01;
 
-    u32 signature = hard_signature;
+    u32                  signature = hard_signature;
     _cbasic_size_2d<u32> size;
-    PixFmt fmt;
-    BitFmt bit_fmt;
+
     CompFlags comp_fmt;
+    PixFmt    fmt;
+    BitFmt    bit_fmt;
+    u8        _pad;
 
     bool valid() const
     {
@@ -28,68 +30,89 @@ struct serial_image
     }
 };
 
-}
+} // namespace IMG
 
 /*!
  * \brief Wrappers around stb_image for C++, not very abstract
  */
-namespace CStbImageLib{
+namespace stb {
 
-/*!
- * \brief STB image format for standard imported images
- */
-struct CStbImage
+template<typename PixType>
+struct image
 {
-    byte_t* data; /*!< Pointer to image data*/
-    CSize size; /*!< Image resolution*/
-    int bpp = 0; /*!< Describes image format according to STB*/
+    PixType* data;
+    Size     size;
+    int      bpp;
+
+    STATICINLINE image<PixType> From(void* data, Size const& size, int bpp = 4)
+    {
+        image<PixType> img;
+        img.data = data;
+        img.size = size;
+        img.bpp  = bpp;
+
+        return img;
+    }
+
+    STATICINLINE image<PixType> From(
+        Bytes const& data, Size const& size, int bpp = 4)
+    {
+        image<PixType> img;
+        img.data = data.data;
+        img.size = size;
+        img.bpp  = bpp;
+
+        return img;
+    }
+
+    template<
+        typename PixType2,
+        typename std::enable_if<std::is_same<
+            typename std::remove_cv<PixType>::type,
+            typename std::remove_cv<PixType2>::type>::value>::type* = nullptr>
+    operator image<PixType2>()
+    {
+        image<PixType2> out;
+
+        out.data = C_RCAST<PixType2*>(this->data);
+        out.size = this->size;
+        out.bpp  = this->bpp;
+
+        return out;
+    }
+
+    operator Bytes()
+    {
+        Bytes out;
+
+        out.data     = C_RCAST<byte_t*>(this->data);
+        out.size     = size.area() * bpp;
+        out.elements = size.area();
+
+        return out;
+    }
 };
 
-/*!
- * \brief STB image format for constant data which may not be modified
- */
-struct CStbImageConst
-{
-    const byte_t* data = nullptr; /*!< const pointer to image data*/
-    CSize size; /*!< Image resolution*/
-    int bpp = 0; /*!< Describes image format according to STB*/
-};
+using image_rw    = image<u8>;
+using image_const = image<u8 const>;
+
+using CStbImage      = image_rw;
+using CStbImageConst = image_const;
 
 /*!
  * \brief Print any potential STB errors
  */
 extern void Error();
-/*!
- * \brief Load STB image from file
- * \param target Target to load into
- * \param src Source to load from
- * \return True if success
- */
-extern bool LoadData(CStbImage* target,
-                     const CResources::Resource* src,
-                     PixelComponents comp = PixelComponents::RGBA);
 
-extern bool LoadData(CStbImage* target,
-                     BytesConst const& src,
-                     PixelComponents comp = PixelComponents::RGBA);
+extern bool LoadData(
+    image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA);
 
-STATICINLINE bool LoadData(CStbImage* target,
-                     Bytes const& src,
-                     PixelComponents comp = PixelComponents::RGBA)
+STATICINLINE bool LoadData(
+        image_rw* target, Bytes const& src, PixCmp comp = PixCmp::RGBA)
 {
-    return LoadData(target, BytesConst(src.data, src.size), comp);
+    return LoadData(target, C_OCAST<BytesConst>(src), comp);
 }
 
-/*!
- * \brief Function used by STB to write data into resource. Allocates and copies data into resource.
- * \param ctxt Context pointer, CResource in our case
- * \param data Pointer to data
- * \param size Size of data
- */
-extern void _stbi_write_data(
-        void* ctxt,
-        void* data,
-        int size);
 /*!
  * \brief Resize an image using STB
  * \param img Target image
@@ -97,118 +120,91 @@ extern void _stbi_write_data(
  * \param channels Amount of channels
  * \return True if success
  */
-extern bool Resize(
-        CStbImage* img,
-        const CSize& target,
-        int channels);
+extern Bytes Resize(image_const const& img, const CSize& target, int channels);
 /*!
  * \brief Save STB image to PNG file
  * \param target Target resource
  * \param src STB image to save
  * \return
  */
-extern bool SavePNG(
-        CResources::Resource* target,
-        const CStbImageConst* src);
-/*!
- * \brief Save STB image to PNG file
- * \param target Target resource
- * \param src STB image to save
- * \return
- */
-extern bool SavePNG(
-        CResources::Resource* target,
-        const CStbImage* src);
+extern bool SavePNG(Bytes& target, const image_const& src);
 /*!
  * \brief Save STB image to TGA file
  * \param target Target resource
  * \param src STB image to save
  * \return
  */
-extern bool SaveTGA(
-        Resource* target,
-        const CStbImage* src);
+extern bool SaveTGA(Bytes& target, const image_const& src);
 
-/*!
- * \brief Flip image vertically, allocates and frees memory
- * \param src
- */
-extern void FlipVertical(
-        CStbImage* src);
-/*!
- * \brief Flip image horizontally, allocates and frees memory
- * \param src
- */
-extern void FlipHorizontal(
-        CStbImage* src);
+extern bool SaveJPG(Bytes& target, const image_const& src, int qual = 80);
 /*!
  * \brief Free image data
  * \param img
  */
 extern void ImageFree(CStbImage* img);
+extern void ImageFreePtr(void* img);
 
-} //CStbImageLib
-
-/*!
- * \brief Image-related functions, not from STB
- */
-namespace CImage{
-
-/*!
- * \brief Only saves RGB data, R, RG and RGBA won't work
- * \param resolution
- * \param imgData
- * \param outdata
- */
-extern void SaveTGA(const CSize &resolution,
-                     const CByteData &imgData,
-                     CByteData &outdata);
-
-}
+} // namespace stb
 
 /*!
  * \brief Wrapping functions for simpler usage
  */
-namespace IMG
-{
-extern bool LoadBytes(Bytes const& src, PixCmp cmp, BitFmt &fmt,
-                 Bytes &data, CSize& res);
+namespace IMG {
 
-template<typename Resource,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
-STATICINLINE bool Load(Resource&& r, PixCmp cmp, BitFmt &fmt,
-                       Bytes &data, CSize& res)
+STATICINLINE bool Load(
+    Bytes& r, PixCmp cmp, BitFmt& fmt, Bytes& data, CSize& res)
 {
-    return LoadBytes(C_OCAST<Bytes>(r), cmp, fmt, data, res);
+    stb::image_rw img;
+    bool          stat = stb::LoadData(&img, C_OCAST<BytesConst>(r), cmp);
+
+    fmt  = BitFmt::UByte;
+    data = C_OCAST<Bytes>(img);
+    res  = img.size;
+    Bytes::SetDestr(data, [](Bytes& b) { stb::ImageFreePtr(b.data); });
+
+    return stat;
 }
 
+STATICINLINE bool Load(
+    Bytes&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, CSize& res)
+{
+    return Load(r, cmp, fmt, data, res);
 }
 
-namespace PNG
-{
-extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);
+} // namespace IMG
 
+namespace PNG {
 /*!
  * \brief Save image data from RGBA8 format into PNG data
  * \param src
  * \param res
  * \return
  */
-extern Bytes Save(Bytes const& src, CSize const& res);
+extern Bytes Save(stb::image_const const& im);
+
+} // namespace PNG
+
+namespace TGA {
+/*!
+ * \brief Save image data from RGBA8, RGB8, RG8 or R8 into TGA data
+ * \param data
+ * \param res
+ * \param bpp
+ * \return
+ */
+extern Bytes Save(Bytes const& data, CSize const& res, int bpp = 4);
+} // namespace TGA
+
+namespace JPG {
+extern Bytes Save(stb::image_const const& src, int qual = 80);
 }
 
-namespace TGA
-{
-extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);
-}
-
-namespace Stb
-{
-using namespace CStbImageLib;
-using Img = CStbImage;
+namespace Stb {
+using namespace stb;
+using Img      = CStbImage;
 using ImgConst = CStbImageConst;
-}
+} // namespace Stb
 
-} //Coffee
+} // namespace Coffee
 
 #endif

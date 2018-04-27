@@ -42,15 +42,10 @@ struct CGLUtil
 
         CResources::Resource rsc(fn);
 
-        CStbImageLib::CStbImageConst img;
-        img.bpp = 4;
-        img.data = data.data;
-        img.size = tsize;
-
-        CStbImageLib::SavePNG(&rsc,&img);
+        auto outData = PNG::Save(stb::image_const::From(rsc, tsize));
+        rsc = outData;
 
         CResources::FileCommit(rsc);
-        CResources::FileFree(rsc);
         CFree(data.data);
 #endif
     }

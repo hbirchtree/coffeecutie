@@ -163,7 +163,7 @@ enum class PixelFormat : u8
     Depth, DepthStencil, /* Fakes */
 };
 
-enum class CompFlags
+enum class CompFlags : u8
 {
     CompressionNone,
 

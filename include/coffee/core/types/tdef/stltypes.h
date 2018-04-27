@@ -12,6 +12,7 @@
 #include <map>
 #include <array>
 #include <functional>
+#include <tuple>
 
 /*Memory management*/
 #include <atomic>
@@ -114,6 +115,9 @@ using Set = std::set<T>;
 
 template<typename T1, typename T2>
 using Pair = std::pair<T1,T2>;
+
+template<typename... Args>
+using Tuple = std::tuple<Args...>;
 
 using ByteVector = Vector<uint8_t>;
 
@@ -318,9 +322,9 @@ struct undefined_behavior : std::runtime_error
 
 #define C_PTR_CHECK(ptr) if(!ptr) \
     throw undefined_behavior(\
-    "bad pointer deref: " __FILE__ C_STR(__LINE__)\
+    "bad pointer deref: " __FILE__ ":" C_STR(__LINE__)\
     );
 #define C_THIS_CHECK if(!this) \
     throw undefined_behavior(\
-    "bad access to *this: " __FILE__  C_STR(__LINE__)\
+    "bad access to *this: " __FILE__ ":" C_STR(__LINE__)\
     );

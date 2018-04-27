@@ -326,8 +326,6 @@ public:
 
     static bool TextureFormatSupport(PixFmt fmt);
 
-    static UrlResolver ShaderResolver();
-
     struct DBG
     {
         using SCOPE = GLEAM_ScopeMarker;

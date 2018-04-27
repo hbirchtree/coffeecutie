@@ -33,8 +33,8 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
         SDL2Dialog::ErrorMessage("Failed to load resource","Couldn't find texture");
         return {};
     }
-    CStbImageLib::CStbImage img;
-    CStbImageLib::LoadData(&img,&analog_rsc,PixCmp::RGBA);
+    stb::image_rw img;
+    stb::LoadData(&img, analog_rsc);
 
     instance->createTexture(*renderer,1,&out,
                             PixelFormat::RGBA8,
@@ -51,7 +51,7 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
     MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
     instance->unmapTexture(out);
 
-    CStbImageLib::ImageFree(&img);
+    stb::ImageFree(&img);
     CResources::FileUnmap(analog_rsc);
 
     return out;

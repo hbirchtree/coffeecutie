@@ -16,6 +16,12 @@ i32 coffee_main(i32, cstring_w*)
 
     parser.addPositionalArgument("vfs-file", "target virtual file system");
 
+    parser.addArgument("infile", "in-file", "g",
+                       "Get file from the VFS");
+
+    parser.addArgument("outfile", "out-file", "o",
+                       "Output file when using -g");
+
     auto args = parser.parseArguments(GetInitArgs());
 
     for(auto pos : args.positional)

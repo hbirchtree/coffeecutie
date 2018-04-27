@@ -164,8 +164,8 @@ int32 coffee_main(int32, cstring_w*)
             cDebug("Pointer to texture: {0}",C_FCAST<const byte_t*>(texfile.data));
 
             /* Decode file to RGBA data */
-            CStbImageLib::CStbImage img;
-            CStbImageLib::LoadData(&img,&texfile);
+            stb::image_rw img;
+            stb::LoadData(&img, texfile, PixCmp::RGBA);
 
             /* Copy texture into texture memory */
             {
@@ -175,7 +175,7 @@ int32 coffee_main(int32, cstring_w*)
             }
 
             /* Clean up */
-            CStbImageLib::ImageFree(&img);
+            stb::ImageFree(&img);
             CResources::FileUnmap(texfile);
             Profiler::Profile("Texture load");
         }

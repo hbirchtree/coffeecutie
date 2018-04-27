@@ -160,19 +160,19 @@ FORCEDINLINE T* AllocT(szptr datasize)
 template<typename T>
 FORCEDINLINE T* ReallocT(T* ptr, szptr datasize)
 {
-    return static_cast<T*>(realloc(ptr,datasize));
+    return reinterpret_cast<T*>(realloc(ptr,datasize));
 }
 
 template<typename T>
 FORCEDINLINE T* CallocT(szptr unit, szptr num)
 {
-    return static_cast<T*>(calloc(unit,num));
+    return reinterpret_cast<T*>(calloc(unit,num));
 }
 
 template<typename T>
 FORCEDINLINE T* CallocPtrs(szptr num)
 {
-    return static_cast<T*>(calloc(sizeof(T),num));
+    return reinterpret_cast<T*>(calloc(sizeof(T),num));
 }
 
 }

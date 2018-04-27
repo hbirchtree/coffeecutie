@@ -175,6 +175,8 @@ struct FileFunDef
 
     static CString DereferenceLink(Url const& d){return d.internUrl;}
     static CString CanonicalName(Url const& d){return d.internUrl;}
+
+    static void Truncate(Url const&, szptr){}
 };
 
 struct DirFunDef

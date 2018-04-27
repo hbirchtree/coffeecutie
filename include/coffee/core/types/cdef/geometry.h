@@ -430,6 +430,8 @@ using PointT = _cbasic_point;
  */
 using CSize = _cbasic_size_2d<int32>;
 
+using Size = CSize;
+
 using CSize3 = _cbasic_size_3d<int32>;
 /*!
  * \brief Heavy-duty size structure

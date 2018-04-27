@@ -60,6 +60,8 @@ inline APILevel gl_level_from_string(CString const& str)
         return GL_4_3;
     if(str == "GL45")
         return GL_4_5;
+    if(str == "GL46")
+        return GL_4_6;
     if(str == "ES2")
         return GLES_2_0;
     if(str == "ES3")

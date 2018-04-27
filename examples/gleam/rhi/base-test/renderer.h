@@ -370,9 +370,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         {
             auto imdata = rsc.data();
 
-            CStbImageLib::CStbImage img;
-            CStbImageLib::LoadData(&img, BytesConst(imdata.data,
-                                                    imdata.size, 0));
+            stb::image_rw img;
+            stb::LoadData(&img, BytesConst(imdata.data, imdata.size, 0));
 
             eyetex.upload(BitFormat::UByte, PixCmp::RGBA,
                           {img.size.w, img.size.h, 1},

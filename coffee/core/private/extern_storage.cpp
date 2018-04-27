@@ -82,8 +82,11 @@ struct InternalThreadState
 
 namespace State{
 
-static P<InternalState> internal_state;
-static thread_local P<InternalThreadState> thread_state;
+#define ISTATE internal_state
+#define TSTATE thread_state
+
+P<InternalState> internal_state;
+thread_local P<InternalThreadState> thread_state;
 
 P<InternalState> CreateNewState()
 {
@@ -97,37 +100,39 @@ P<InternalThreadState> CreateNewThreadState()
 
 void SetInternalState(P<InternalState> state)
 {
-    internal_state = state;
+//    fprintf(stdout, "SET: %p\n", &State::internal_state);
+    fflush(stdout);
+    ISTATE = state;
 }
 
 P<InternalState>& GetInternalState()
 {
-    return internal_state;
+    return ISTATE;
 }
 
 STATICINLINE void RegisterProfilerThreadState()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
-    if(internal_state)
+    if(ISTATE)
     {
         Lock _(GetProfilerStore()->data_access_mutex);
 
         GetProfilerStore()->thread_refs[ThreadId().hash()] =
-                thread_state->profiler_data;
+                TSTATE->profiler_data;
     }
 #endif
 }
 
 void SetInternalThreadState(P<InternalThreadState> state)
 {
-    thread_state = state;
+    TSTATE = state;
 
     RegisterProfilerThreadState();
 }
 
 P<InternalThreadState>& GetInternalThreadState()
 {
-    return thread_state;
+    return TSTATE;
 }
 
 /*
@@ -138,19 +143,19 @@ P<InternalThreadState>& GetInternalThreadState()
 
 BuildInfo& GetBuildInfo()
 {
-    return internal_state->build;
+    return ISTATE->build;
 }
 
 CoffeeApplicationData& GetAppData()
 {
-    return internal_state->current_app;
+    return ISTATE->current_app;
 }
 
 Profiling::ProfilerDataStore* GetProfilerStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
-    C_PTR_CHECK(internal_state);
-    return &internal_state->profiler_store;
+    C_PTR_CHECK(ISTATE);
+    return &ISTATE->profiler_store;
 #else
     throw implementation_error("profiler disabled");
 #endif
@@ -159,10 +164,10 @@ Profiling::ProfilerDataStore* GetProfilerStore()
 Profiling::ThreadData *GetProfilerTStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
-    if(!thread_state)
+    if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
-    return thread_state->profiler_data.get();
+    return TSTATE->profiler_data.get();
 #else
     throw implementation_error("profiler disabled");
 #endif
@@ -171,27 +176,27 @@ Profiling::ThreadData *GetProfilerTStore()
 #if defined(COFFEE_USE_TERMINAL_CTL)
 bool& GetAlternateTerminal()
 {
-    C_PTR_CHECK(internal_state);
-    return internal_state->bits.terminal_alternate_buffer;
+    C_PTR_CHECK(ISTATE);
+    return ISTATE->bits.terminal_alternate_buffer;
 }
 #endif
 
 Mutex& GetPrinterLock()
 {
-    C_PTR_CHECK(internal_state);
-    return internal_state->printer_lock;
+    C_PTR_CHECK(ISTATE);
+    return ISTATE->printer_lock;
 }
 
 ThreadId& GetCurrentThreadId()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
-    if(!thread_state)
+    if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
     /* We check it just in case everything is really bad */
-    C_PTR_CHECK(thread_state);
+    C_PTR_CHECK(TSTATE);
 
-    return thread_state->current_thread_id;
+    return TSTATE->current_thread_id;
 #else
     throw releasemode_error("thread ID is not available");
 #endif
@@ -210,32 +215,34 @@ ThreadId& GetCurrentThreadId()
 
 void CResources::FileResourcePrefix(cstring prefix)
 {
-    C_PTR_CHECK(State::internal_state);
-    State::internal_state->resource_prefix = prefix;
+    C_PTR_CHECK(State::ISTATE);
+    State::ISTATE->resource_prefix = prefix;
 }
 
 CString const& CResources::GetFileResourcePrefix()
 {
-    C_PTR_CHECK(State::internal_state);
-    return State::internal_state->resource_prefix;
+//    fprintf(stdout, "GET: %p\n", &State::internal_state);
+    fflush(stdout);
+    C_PTR_CHECK(State::ISTATE);
+    return State::ISTATE->resource_prefix;
 }
 
 void SetCurrentApp(CoffeeApplicationData const& app)
 {
-    C_PTR_CHECK(State::internal_state);
-    State::internal_state->current_app = app;
+    C_PTR_CHECK(State::ISTATE);
+    State::ISTATE->current_app = app;
 }
 
 CoffeeApplicationData const& GetCurrentApp()
 {
-    C_PTR_CHECK(State::internal_state);
-    return State::internal_state->current_app;
+    C_PTR_CHECK(State::ISTATE);
+    return State::ISTATE->current_app;
 }
 
 AppArg &GetInitArgs()
 {
-    C_PTR_CHECK(State::internal_state);
-    return State::internal_state->initial_args;;
+    C_PTR_CHECK(State::ISTATE);
+    return State::ISTATE->initial_args;
 }
 
 u8& PrintingVerbosityLevel()
@@ -247,8 +254,8 @@ u8& PrintingVerbosityLevel()
     static u8 backup_verbosity;
 
 
-    if(State::internal_state)
-        return State::internal_state->bits.printing_verbosity;
+    if(State::ISTATE)
+        return State::ISTATE->bits.printing_verbosity;
     else
         return backup_verbosity;
 }
@@ -257,14 +264,14 @@ namespace DebugFun{
 
 void SetLogInterface(LogInterface intf)
 {
-    C_PTR_CHECK(State::internal_state);
-    State::internal_state->logger = intf;
+    C_PTR_CHECK(State::ISTATE);
+    State::ISTATE->logger = intf;
 }
 
 LogInterface GetLogInterface()
 {
-    if(State::internal_state)
-        return State::internal_state->logger;
+    if(State::ISTATE)
+        return State::ISTATE->logger;
     else
         return DebugFun::OutputPrinterImpl::fprintf_platform;
 }

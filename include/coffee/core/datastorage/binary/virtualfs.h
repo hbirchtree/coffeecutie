@@ -279,6 +279,13 @@ struct VirtDesc
     {
     }
 
+    VirtDesc(Path const& fname, Bytes&& data, u32 flags = 0):
+        filename(fname.internUrl.c_str()),
+        data(std::move(data)),
+        flags(flags)
+    {
+    }
+
     CString filename;
     Bytes data;
     /*!
