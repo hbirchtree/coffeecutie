@@ -205,9 +205,11 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     /* Emulation mode; differs slightly from compiling against an API,
      *  such as when ES 2.0 excludes pixel formats and etc. */
     /* TODO: Document this feature */
+    bool forced_api = false;
     if(Env::ExistsVar("GLEAM_API"))
     {
         store->CURR_API = gl_level_from_string(Env::GetVar("GLEAM_API"));
+        forced_api = true;
     }
 
     /* If we are emulating ES 2.0, create a global vertex array.
@@ -259,6 +261,12 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     store->features.base_instance = CGL46::DrawParametersSupported();
     store->features.direct_state = CGL45::DirectStateSupported();
 
+    if(forced_api && store->CURR_API < GL_4_5 && store->CURR_API < GLES_MIN)
+    {
+        store->features.base_instance = false;
+        store->features.direct_state = false;
+    }
+
     /* If we are emulating, base_instance would skew the results */
     if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
     {
@@ -280,9 +288,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
             && (api != GLES_3_0)
             && (api != GL_3_3);
     store->features.draw_multi_indirect =
-            (api == GL_4_3);
+            (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6);
     store->features.draw_indirect =
-            (api == GL_4_3)
+            (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6)
             || (api == GLES_3_2);
     store->features.draw_buffers_blend =
             (api != GLES_2_0)
@@ -333,7 +341,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
             || (api == GL_4_6)
             ;
 
-    store->features.element_buffer_bind = !store->features.vertex_format;
+    store->features.element_buffer_bind =
+            !is_desktop
+            || (is_desktop && store->CURR_API < GL_4_5);
 
     m_store = store;
 
@@ -1225,7 +1235,7 @@ static void GetInstanceUniform(
             if(cnt.stages == ShaderStage::Vertex)
                 hnd = cnt.shader->internalHandle();
 
-        auto raw_uloc = CGL43::ProgramGetResourceIdx(
+        auto raw_uloc = CGL43::ProgramGetResourceLoc(
                     hnd, GL_UNIFORM, unifName);
 
         uloc = C_FCAST<i32>(raw_uloc);

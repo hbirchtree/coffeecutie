@@ -34,6 +34,8 @@ enum APILevel
     GL_4_5   = 0x450,
     GL_4_6   = 0x460,
 
+    GLES_MIN = 0x10000,
+
     /* Mobile GL versions / ES */
     /* These do not map directly to desktop versions */
     GLES_2_0 = 0x10200,
