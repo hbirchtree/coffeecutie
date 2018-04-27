@@ -198,7 +198,7 @@ struct DirFunDef
     static bool MkDir(Url const&, bool){return false;}
     static bool RmDir(Url const&){return false;}
 
-    static bool Ls(Url const&,DirList&){return false;}
+    static bool Ls(Url const&,DirList&,bool = false){return false;}
 
     STATICINLINE CString Basename(CString fn)
     {

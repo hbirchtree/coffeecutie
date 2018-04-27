@@ -19,14 +19,14 @@ STATICINLINE UrlResolver TextureResolver(
     {
         static constexpr szptr num_formats = 5;
 
-        static constexpr Pair<PixFmt, cstring> formats[num_formats] =
-        {
+        static constexpr Array<Pair<PixFmt, cstring>, num_formats> formats =
+        {{
             {PixFmt::S3TC, "dxt5"},
             {PixFmt::S3TC, "dxt3"},
             {PixFmt::S3TC, "dxt1"},
             {PixFmt::ETC1, "etc2"},
             {PixFmt::ETC1, "etc1"},
-        };
+        }};
 
         Path baseName = url;
         baseName = baseName.removeExt();

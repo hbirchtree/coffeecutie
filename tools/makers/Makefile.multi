@@ -44,7 +44,7 @@ multi: multi-config
 	$(DOCKER) run --rm \
 		$(DOCKER_EXTRA_OPTIONS) \
 		$(DOCKER_CONTAINER) \
-			$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) 1>/dev/null
+			$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET)
 
 multi.twostage: multi-config
 	$(DOCKER) run --rm \
@@ -53,11 +53,11 @@ multi.twostage: multi-config
 			sh -c '\
 			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target all && \
 			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1 && \
-			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) 1> /dev/null'
+			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET)'
 
 multi.make8: multi-config
 	$(DOCKER) run --rm \
 		$(DOCKER_EXTRA_OPTIONS) \
 		$(DOCKER_CONTAINER) \
-			sh -c "$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8 1>/dev/null"
+			sh -c "$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8"
 
