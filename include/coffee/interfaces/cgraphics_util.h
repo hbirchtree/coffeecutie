@@ -1,38 +1,35 @@
 #pragma once
 
 #include <coffee/core/CFiles>
-#include <coffee/image/cimage.h>
 #include <coffee/core/types/edef/graphicsenum.h>
-#include <coffee/interfaces/cgraphics_api_basic.h>
+#include <coffee/image/cimage.h>
 #include <coffee/interfaces/byte_provider.h>
+#include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
 
-namespace Coffee{
-namespace RHI{
+namespace Coffee {
+namespace RHI {
 
-template<typename GFX, typename Resource,
-         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
-FORCEDINLINE bool LoadCompressedTexture(
-        typename GFX::S_2D& surface,
-        Resource&& tex_rsc,
-        PixFmt fmt, CompFlags flags
-        )
+FORCEDINLINE Tuple<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
 {
     using C = CompFlags;
 
-    struct ImgDesc {
-        void* img_data;
-        szptr data_size;
-        u32 width;
-        u32 height;
+    auto pix = C_RCAST<IMG::serial_image const*>(img_data.data);
+    struct ImageData
+    {
+        szptr  data_size;
+        i32    width, height;
         PixCmp components;
+
+        u8 _pad[7];
     } data;
 
-    Bytes img_data = C_OCAST<Bytes>(tex_rsc);
+    auto fmt      = pix->fmt;
+    auto flags    = pix->comp_fmt;
+    auto pixflags = PixFlg::None;
 
     if(img_data.size < 8)
-        return false;
+        return std::make_tuple(Size(), CompFmt());
 
     switch(fmt)
     {
@@ -41,123 +38,202 @@ FORCEDINLINE bool LoadCompressedTexture(
         switch(flags)
         {
         case C::S3TC_1:
+            pixflags        = PixFlg::RGB;
             data.components = PixCmp::RGB;
-            data.data_size = 8;
+            data.data_size  = 8;
             break;
         case C::S3TC_3:
         case C::S3TC_5:
+            pixflags        = PixFlg::RGBA;
             data.components = PixCmp::RGBA;
-            data.data_size = 16;
+            data.data_size  = 16;
             break;
         default:
             break;
         }
 
-        IMG::serial_image* pix =
-                C_RCAST<IMG::serial_image*>(img_data.data);
-
         data.data_size *= (pix->size.w * pix->size.h / 16);
-        data.width = pix->size.w;
+        data.width  = pix->size.w;
         data.height = pix->size.h;
 
         break;
     }
     default:
-        return false;
+        return std::make_tuple(Size(), CompFmt());
     }
 
     /* Ensure that the upload won't be bad */
     if(img_data.size < data.data_size)
-        return false;
-
-    /* TODO: Implement support for mipmap uploads */
+        return std::make_tuple(Size(), CompFmt());
 
     u32 compressionFlags = C_CAST<u32>(flags);
     compressionFlags <<= 10;
 
-    CSize tex_size = {data.width,  data.height};
+    CSize tex_size = {data.width, data.height};
 
-    surface = GFX::S_2D(fmt, 1, compressionFlags);
+    return std::make_tuple(tex_size, CompFmt(fmt, pixflags, flags));
+}
+
+template<
+    typename GFX,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
+FORCEDINLINE bool LoadCompressedTexture(
+    typename GFX::S_2D& surface, Bytes&& img_data, PixFmt fmt)
+{
+    if(img_data.size == 0)
+        return false;
+
+    Size    tex_size = {};
+    CompFmt cfmt;
+
+    std::tie(tex_size, cfmt) = UnpackCompressedTexture(img_data);
+
+    surface = GFX::S_2D(fmt, 1, 0);
 
     surface.allocate(tex_size, fmt);
 
-    surface.upload(BitFmt::Byte, fmt, tex_size,
-                   img_data);
+    Bytes image_data;
+    image_data.data = &img_data.data[sizeof(IMG::serial_image)];
+    image_data.size = img_data.size - sizeof(IMG::serial_image);
+
+    surface.upload(cfmt, tex_size, image_data);
 
     return true;
 }
 
-template<typename GFX, typename Resource,
-         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
-FORCEDINLINE bool LoadTexture(
-        typename GFX::S_2D& surface,
-        Resource&& tex_rsc
-        )
+template<
+    typename GFX,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
+FORCEDINLINE bool LoadCompressedTexture(
+    typename GFX::S_2DA& surface, Bytes&& img_data, i32 layer = 0, u32 mip = 0)
+{
+    if(img_data.size == 0)
+        return false;
+
+    Size    tex_size = {};
+    CompFmt cfmt;
+
+    std::tie(tex_size, cfmt) = UnpackCompressedTexture(img_data);
+
+    Bytes image_data;
+    image_data.data = &img_data.data[sizeof(IMG::serial_image)];
+    image_data.size = img_data.size - sizeof(IMG::serial_image);
+
+    surface.upload(
+        cfmt, {tex_size.w, tex_size.h, 1}, image_data, {0, 0, layer}, mip);
+
+    return true;
+}
+
+template<
+    typename GFX,
+    typename Resource,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
+/*!
+ * \brief Variant of LoadCompressedTexture that loads mipmaps
+ * \param surface
+ * \param img_data
+ * \param layer
+ * \return
+ */
+FORCEDINLINE bool LoadCompressedTextureMipmap(
+    typename GFX::S_2DA&              surface,
+    ResourceResolver<Resource> const& rr,
+    Function<bool(Url const&)> const& pred,
+    Url const&                        baseUrl,
+    i32                               layer = 0)
+{
+    Vector<Url> urls;
+    if(!rr.resourceQuery(Path(baseUrl).removeExt(), urls))
+        return false;
+
+    u32 mip = 0;
+    auto it = urls.begin();
+    while((it = std::find_if(it, urls.end(), pred)) != urls.end())
+    {
+        LoadCompressedTexture<GFX>(
+                    surface,
+                    rr.resolveResource(*it),
+                    layer,
+                    mip++
+                );
+        it++;
+
+        if(mip >= surface.mipmaps())
+            break;
+    }
+
+    return true;
+}
+
+template<
+    typename GFX,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
+FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface, Bytes&& tex_rsc)
 {
     bool status = true;
 
     Stb::Img tex_src;
-    if(Stb::LoadData(&tex_src, C_OCAST<Bytes>(tex_rsc)))
+    if(Stb::LoadData(&tex_src, tex_rsc))
     {
         surface.allocate(tex_src.size, PixCmp::RGBA);
         surface.upload(
-                    BitFormat::UByte, PixCmp::RGBA,
-                    tex_src.size, tex_src.data, {0,0}, 0);
+            BitFormat::UByte,
+            PixCmp::RGBA,
+            tex_src.size,
+            tex_src.data,
+            {0, 0},
+            0);
         Stb::ImageFree(&tex_src);
-    }else
+    } else
         status = false;
 
     return status;
 }
 
-template<typename GFX, typename Resource,
-         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
+template<
+    typename GFX,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadTexture(
-        typename GFX::S_2DA& surface,
-        Resource&& tex_rsc,
-        i32 layer = 0
-        )
+    typename GFX::S_2DA& surface, Bytes&& tex_rsc, i32 layer = 0)
 {
     bool status = true;
 
     Stb::Img tex_src;
-    if(Stb::LoadData(&tex_src, C_OCAST<Bytes>(tex_rsc)))
+    if(Stb::LoadData(&tex_src, tex_rsc))
     {
         CSize3 tex_size = {tex_src.size.w, tex_src.size.h, 1};
 
         surface.upload(
-                    BitFormat::UByte, PixCmp::RGBA,
-                    tex_size, tex_src.data, {0,0,layer}, 0);
+            BitFormat::UByte,
+            PixCmp::RGBA,
+            tex_size,
+            tex_src.data,
+            {0, 0, layer},
+            0);
         Stb::ImageFree(&tex_src);
-    }else
+    } else
         status = false;
 
     return status;
 }
 
-template<typename GFX,
-         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
+template<
+    typename GFX,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadShader(
-        typename GFX::SHD& shader,
-        Bytes&& data,
-        ShaderStage stage
-        )
+    typename GFX::SHD& shader, Bytes&& data, ShaderStage stage)
 {
     bool status = shader.compile(stage, data);
 
     return status;
 }
 
-template<typename GFX,
-         typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
+template<
+    typename GFX,
+    typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadPipeline(
-        typename GFX::PIP& pip,
-        Bytes&& vert_file,
-        Bytes&& frag_file
-        )
+    typename GFX::PIP& pip, Bytes&& vert_file, Bytes&& frag_file)
 {
     typename GFX::SHD vert;
     typename GFX::SHD frag;
@@ -188,18 +264,14 @@ FORCEDINLINE bool LoadPipeline(
 
 template<typename GFX>
 FORCEDINLINE bool LoadPipeline(
-        typename GFX::PIP& pip,
-        BytesResolver const& resolver,
-        Url const& vert_file,
-        Url const& frag_file
-        )
+    typename GFX::PIP&   pip,
+    BytesResolver const& resolver,
+    Url const&           vert_file,
+    Url const&           frag_file)
 {
     return LoadPipeline<GFX>(
-                pip,
-                resolver.resolver(vert_file),
-                resolver.resolver(frag_file)
-                );
+        pip, resolver.resolver(vert_file), resolver.resolver(frag_file));
 }
 
-}
-}
+} // namespace RHI
+} // namespace Coffee

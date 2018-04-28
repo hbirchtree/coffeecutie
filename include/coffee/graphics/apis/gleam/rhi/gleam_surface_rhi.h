@@ -2,29 +2,33 @@
 
 #include "gleam_types_rhi.h"
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
-struct GLEAM_Surface : GraphicsAPI::Surface<CSize,CPoint>
+struct GLEAM_Surface : GraphicsAPI::Surface<CSize, CPoint>
 {
     friend struct GLEAM_RenderTarget;
 
-    GLEAM_Surface(Texture type, PixelFormat fmt,
-                  uint32 mips,uint32 texflags = 0);
+    GLEAM_Surface(
+        Texture type, PixelFormat fmt, uint32 mips, uint32 texflags = 0);
 
     void allocate();
     void dealloc();
 
     CGhnd handle();
 
-    CGhnd& glTexHandle() {return m_handle;}
+    CGhnd& glTexHandle()
+    {
+        return m_handle;
+    }
 
-protected:
+  protected:
     void upload_info(PixCmp comp, uint32 mip, uint32 d);
 
     Texture m_type;
-public:
+
+  public:
     CGhnd m_handle;
 };
 
@@ -32,17 +36,32 @@ struct GLEAM_Surface2D : GLEAM_Surface
 {
     friend struct GLEAM_Sampler2D;
 
-    GLEAM_Surface2D(PixelFormat fmt,uint32 mips = 1,uint32 texflags = 0);
+    GLEAM_Surface2D(PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0);
 
-    void allocate(CSize size, PixelComponents c);
+    void allocate(CSize size, PixCmp c);
 
-    void upload(BitFormat fmt, PixelComponents comp,
-                CSize size, const Bytes &data,
-                CPoint offset = {0,0}, uint32 mip = 0);
+    void upload(
+        PixDesc      pfmt,
+        CSize const& size,
+        const Bytes& data,
+        CPoint       offset = {0, 0},
+        uint32       mip    = 0);
 
-    void upload(BitFormat fmt, PixelComponents comp,
-                CSize size, c_cptr data,
-                CPoint offset = {0,0}, uint32 mip = 0)
+    void upload(
+        BitFmt       fmt,
+        PixCmp       comp,
+        CSize const& size,
+        const Bytes& data,
+        CPoint       offset = {0, 0},
+        uint32       mip    = 0);
+
+    void upload(
+        BitFmt fmt,
+        PixCmp comp,
+        CSize  size,
+        c_cptr data,
+        CPoint offset = {0, 0},
+        uint32 mip    = 0)
     {
         Bytes dataS;
         dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
@@ -54,7 +73,7 @@ struct GLEAM_Surface2D : GLEAM_Surface
 
     /*TODO: Add download function */
 
-protected:
+  protected:
     CSize m_size;
 };
 
@@ -69,18 +88,33 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
 {
     friend struct GLEAM_Sampler3D;
 
-    GLEAM_Surface3D_Base(Texture t, PixelFormat fmt,
-                         uint32 mips,uint32 texflags);
+    GLEAM_Surface3D_Base(
+        Texture t, PixelFormat fmt, uint32 mips, uint32 texflags);
 
-    void allocate(CSize3 size, PixelComponents c);
+    void allocate(CSize3 size, PixCmp c);
 
-    void upload(BitFormat fmt, PixelComponents comp,
-                CSize3 size, const Bytes &data,
-                CPoint3 offset = {0,0,0}, uint32 mip = 0);
+    void upload(
+        PixDesc        pfmt,
+        CSize3 const&  size,
+        Bytes const&   data,
+        CPoint3 const& offset = {0, 0, 0},
+        uint32         mip    = 0);
 
-    void upload(BitFormat fmt, PixelComponents comp,
-                CSize3 size, c_cptr data,
-                CPoint3 offset = {0,0,0}, uint32 mip = 0)
+    void upload(
+        BitFmt         fmt,
+        PixCmp         comp,
+        CSize3 const&  size,
+        Bytes const&   data,
+        CPoint3 const& offset = {0, 0, 0},
+        uint32         mip    = 0);
+
+    void upload(
+        BitFmt         fmt,
+        PixCmp         comp,
+        CSize3 const&  size,
+        c_cptr         data,
+        CPoint3 const& offset = {0, 0, 0},
+        uint32         mip    = 0)
     {
         Bytes dataS;
         dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
@@ -98,16 +132,20 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler3D;
-    GLEAM_Surface3D(PixelFormat fmt, uint32 mips = 1,uint32 texflags = 0):
-        GLEAM_Surface3D_Base(Texture::T3D,fmt,mips,texflags) {}
+    GLEAM_Surface3D(PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0) :
+        GLEAM_Surface3D_Base(Texture::T3D, fmt, mips, texflags)
+    {
+    }
 };
 
 struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler2DArray;
-    GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips = 1,
-                         uint32 texflags = 0):
-        GLEAM_Surface3D_Base(Texture::T2DArray,fmt,mips,texflags) {}
+    GLEAM_Surface2DArray(
+        PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0) :
+        GLEAM_Surface3D_Base(Texture::T2DArray, fmt, mips, texflags)
+    {
+    }
 };
 
 struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
@@ -128,12 +166,18 @@ struct GLEAM_SamplerHandle
         };
         CGhnd64 texture64;
     };
-    CGhnd m_sampler;
+    CGhnd   m_sampler;
     Texture m_type;
-    u32 arraySize;
+    u32     arraySize;
 
-    CGhnd& glTexHandle() {return texture;}
-    CGhnd& glSamplerHandle() {return m_sampler;}
+    CGhnd& glTexHandle()
+    {
+        return texture;
+    }
+    CGhnd& glSamplerHandle()
+    {
+        return m_sampler;
+    }
 };
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler
@@ -146,12 +190,12 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     void setLODRange(Vecf2 const& range);
     void setLODBias(scalar bias);
     void setEdgePolicy(uint8 dim, WrapPolicy p);
-    void setFiltering(Filtering mag, Filtering min,
-                      Filtering mip = Filtering::None);
+    void setFiltering(
+        Filtering mag, Filtering min, Filtering mip = Filtering::None);
 
     void enableShadowSampler();
 
-protected:
+  protected:
     CGhnd m_handle;
 };
 
@@ -162,19 +206,20 @@ struct GLEAM_Sampler_Base : GLEAM_Sampler
     {
         m_surface = surf;
     }
-protected:
+
+  protected:
     Surf* m_surface;
 };
 
 struct GLEAM_Sampler2D : GLEAM_Sampler_Base<GLEAM_Surface2D>
 {
-    void bind(uint32 i);
+    void                bind(uint32 i);
     GLEAM_SamplerHandle handle();
 };
 
 struct GLEAM_Sampler3D : GLEAM_Sampler_Base<GLEAM_Surface3D>
 {
-    void bind(uint32 i);
+    void                bind(uint32 i);
     GLEAM_SamplerHandle handle();
 };
 
@@ -182,22 +227,22 @@ struct GLEAM_Sampler2DArray : GLEAM_Sampler_Base<GLEAM_Surface2DArray>
 {
     friend struct GLEAM_API;
 
-    void bind(uint32 i);
+    void                bind(uint32 i);
     GLEAM_SamplerHandle handle();
 };
 
 struct GLEAM_SamplerCube : GLEAM_Sampler_Base<GLEAM_SurfaceCube>
 {
-    void bind(uint32 i);
+    void                bind(uint32 i);
     GLEAM_SamplerHandle handle();
 };
 
 struct GLEAM_SamplerCubeArray : GLEAM_Sampler_Base<GLEAM_SurfaceCubeArray>
 {
-    void bind(uint32 i);
+    void                bind(uint32 i);
     GLEAM_SamplerHandle handle();
 };
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

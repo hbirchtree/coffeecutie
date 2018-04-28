@@ -144,7 +144,7 @@ static void CompressDXT(
 
             /* Allocate space for image as well as WxH parameters */
             output.size = C_FCAST<szptr>(squish::GetStorageRequirements(
-                              imsize.w, imsize.h, compress)) +
+                              imsize.w, imsize.h, squish::kDxt5)) +
                           sizeof(IMG::serial_image);
             output.data = C_RCAST<byte_t*>(Calloc(output.size, 1));
             Bytes::SetDestr(output, [](Bytes& b) { CFree(b.data); });
@@ -161,14 +161,13 @@ static void CompressDXT(
                 imsize.w,
                 imsize.h,
                 &output[sizeof(IMG::serial_image)],
-                compress);
+                squish::kDxt5);
 
             IMG::serial_image imgDesc = {};
             imgDesc.size              = imsize.convert<u32>();
             imgDesc.fmt               = PixFmt::S3TC;
             imgDesc.bit_fmt           = BitFmt::Byte;
-            imgDesc.comp_fmt = (compress == squish::kDxt5) ? CompFlags::S3TC_5
-                                                           : CompFlags::S3TC_1;
+            imgDesc.comp_fmt          = CompFlags::S3TC_5;
 
             MemCpy(output.data, &imgDesc, sizeof(IMG::serial_image));
 

@@ -3,13 +3,13 @@
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/file_resolver.h>
 
-#include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/tdef/integertypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct Url;
-namespace CResources{
+namespace CResources {
 struct Resource;
 }
 
@@ -31,24 +31,22 @@ struct Resource;
  * VirtualFile structures refer into the Blob data segment.
  *
  */
-namespace VirtFS
-{
+namespace VirtFS {
 
 struct VirtualFile;
 struct VirtualFS;
 
-using VFS = VirtualFS;
+using VFS   = VirtualFS;
 using VFile = VirtualFile;
 
 struct Resource : ByteProvider
 {
-private:
-    VFS const* filesystem;
+  private:
+    VFS const*   filesystem;
     VFile const* file;
 
-public:
-    Resource(VFS const* base,
-             Url const& url);
+  public:
+    Resource(VFS const* base, Url const& url);
 
     C_MOVE_CONSTRUCTOR(Resource);
 
@@ -80,9 +78,9 @@ enum FileFlags
     File_Compressed = 0x1,
 };
 
-static const constexpr szptr MaxFileNameLength = 96;
-static const constexpr szptr MagicLength = 8;
-static const constexpr char VFSMagic[MagicLength] = "CfVrtFS";
+static const constexpr szptr MaxFileNameLength     = 96;
+static const constexpr szptr MagicLength           = 8;
+static const constexpr char  VFSMagic[MagicLength] = "CfVrtFS";
 
 struct VirtualFS
 {
@@ -94,8 +92,7 @@ struct VirtualFS
      * \param vfs
      * \return
      */
-    static bool OpenVFS(Bytes const& src,
-                        VirtualFS const* *vfs)
+    static bool OpenVFS(Bytes const& src, VirtualFS const** vfs)
     {
         *vfs = nullptr;
 
@@ -104,9 +101,7 @@ struct VirtualFS
 
         VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
 
-        if(!MemCmp(VFSMagic,
-                   temp_vfs->vfs_header,
-                   sizeof(vfs_header)))
+        if(!MemCmp(VFSMagic, temp_vfs->vfs_header, sizeof(vfs_header)))
             return false;
 
         *vfs = temp_vfs;
@@ -116,8 +111,9 @@ struct VirtualFS
 
     char vfs_header[MagicLength]; /*!< Magic file header */
 
-    u64 num_files; /*!< Number of VFile entries */
-    u64 data_offset; /*!< Offset from start of this structure to the data segment */
+    u64 num_files;   /*!< Number of VFile entries */
+    u64 data_offset; /*!< Offset from start of this structure to the data
+                        segment */
 
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'.
@@ -125,9 +121,7 @@ struct VirtualFS
      * \param name
      * \return nullptr if file not found
      */
-    static VFile const* GetFile(
-            VFS const* vfs,
-            cstring name);
+    static VFile const* GetFile(VFS const* vfs, cstring name);
 
     /*!
      * \brief Given a VFS, get the handle to the idx'th file.
@@ -135,9 +129,7 @@ struct VirtualFS
      * \param idx
      * \return nullptr if file not found
      */
-    static VFile const* GetFile(
-            VFS const* vfs,
-            szptr idx);
+    static VFile const* GetFile(VFS const* vfs, szptr idx);
 
     /*!
      * \brief Given a VFS and a valid file within, return the
@@ -147,32 +139,27 @@ struct VirtualFS
      * \param file
      * \return
      */
-    static Bytes GetData(
-            VFS const* vfs,
-            VFile const* file);
+    static Bytes GetData(VFS const* vfs, VFile const* file);
 
-    static ResourceResolver<VirtFS::Resource> GetResolver(
-            VirtualFS const* vfs);
+    static ResourceResolver<VirtFS::Resource> GetResolver(VirtualFS const* vfs);
 };
 
 PACKEDSTRUCT VirtualFile
 {
     char name[MaxFileNameLength]; /*!< File name */
-    u64 offset; /*!< Offset to file */
-    u64 size; /*!< Size of file. If compressed, size of compressed file */
-    u64 rsize; /*!< Size of file in memory. If compressed, uncompressed size */
-    u32 flags;
+    u64  offset;                  /*!< Offset to file */
+    u64  size;  /*!< Size of file. If compressed, size of compressed file */
+    u64  rsize; /*!< Size of file in memory. If compressed, uncompressed size */
+    u32  flags;
     const u32 _pad = 0;
 };
 
-FORCEDINLINE VFile const* VirtualFS::GetFile(
-        VFS const* vfs,
-        cstring name)
+FORCEDINLINE VFile const* VirtualFS::GetFile(VFS const* vfs, cstring name)
 {
     /* We start finding files after the VirtualFS structure */
     VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
 
-    for(szptr i=0; i<vfs->num_files; i++)
+    for(szptr i = 0; i < vfs->num_files; i++)
     {
         auto& current_file = vf_start[i];
 
@@ -190,16 +177,12 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     /*!
      * \brief constructor for end-iterator
      */
-    vfs_iterator():
-        m_idx(npos),
-        m_file(nullptr)
+    vfs_iterator() : m_idx(npos), m_file(nullptr)
     {
     }
 
-    vfs_iterator(VFS const* vfs, szptr idx):
-        m_vfs(vfs),
-        m_idx(idx),
-        m_file(vfs ? VFS::GetFile(vfs, idx): nullptr)
+    vfs_iterator(VFS const* vfs, szptr idx) :
+        m_vfs(vfs), m_idx(idx), m_file(vfs ? VFS::GetFile(vfs, idx) : nullptr)
     {
         if(!m_vfs)
             m_idx = npos;
@@ -215,11 +198,11 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
         return *this;
     }
 
-    bool operator !=(vfs_iterator const& other) const
+    bool operator!=(vfs_iterator const& other) const
     {
         return other.m_idx != m_idx;
     }
-    bool operator ==(vfs_iterator const& other) const
+    bool operator==(vfs_iterator const& other) const
     {
         return other.m_idx == m_idx;
     }
@@ -236,14 +219,14 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
         return VFS::GetData(m_vfs, m_file);
     }
 
-private:
+  private:
     void update_file()
     {
         m_file = VFS::GetFile(m_vfs, m_idx);
     }
 
-    VFS const* m_vfs;
-    szptr m_idx;
+    VFS const*   m_vfs;
+    szptr        m_idx;
     VFile const* m_file;
 };
 
@@ -266,28 +249,40 @@ struct vfs_view
         return iterator();
     }
 
-private:
+    iterator starting_with(Path const& path, iterator start)
+    {
+        return std::find_if(start, end(), [&](VFile const& file) {
+            CString fname = file.name;
+            /* +4 for extension */
+            if(fname.size() + 4 < path.internUrl.size())
+                return false;
+            else
+            {
+                return fname.substr(0, path.internUrl.size()) ==
+                           path.internUrl &&
+                       fname.at(path.internUrl.size()) == '.';
+            }
+        });
+    }
+
+  private:
     VFS const* m_vfs;
 };
 
 struct VirtDesc
 {
-    VirtDesc(cstring fname, Bytes&& data, u32 flags = 0):
-        filename(fname),
-        data(std::move(data)),
-        flags(flags)
+    VirtDesc(cstring fname, Bytes&& data, u32 flags = 0) :
+        filename(fname), data(std::move(data)), flags(flags)
     {
     }
 
-    VirtDesc(Path const& fname, Bytes&& data, u32 flags = 0):
-        filename(fname.internUrl.c_str()),
-        data(std::move(data)),
-        flags(flags)
+    VirtDesc(Path const& fname, Bytes&& data, u32 flags = 0) :
+        filename(fname.internUrl.c_str()), data(std::move(data)), flags(flags)
     {
     }
 
     CString filename;
-    Bytes data;
+    Bytes   data;
     /*!
      * \brief when matching File_Compressed,
      *  compress the input data using zlib.
@@ -296,17 +291,16 @@ struct VirtDesc
 };
 
 extern bool GenVirtFS(
-        Vector<VirtDesc> const& filenames,
-        Vector<byte_t>* output);
+    Vector<VirtDesc> const& filenames, Vector<byte_t>* output);
 
-FORCEDINLINE Url operator "" _vfs(const char* url, size_t)
+FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
-    Url out = MkUrl(url);
+    Url out      = MkUrl(url);
     out.category = Url::Memory;
     return out;
 }
 
-FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS *vfs, szptr idx)
+FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS* vfs, szptr idx)
 {
     VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
 
@@ -326,6 +320,6 @@ FORCEDINLINE Resource::operator Path() const
     return Path(file->name);
 }
 
-}
+} // namespace VirtFS
 
-}
+} // namespace Coffee

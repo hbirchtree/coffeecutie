@@ -151,10 +151,26 @@ ResourceResolver<Resource> VirtualFS::GetResolver(
         const VirtualFS *vfs
         )
 {
+    if(!vfs)
+        throw undefined_behavior(VIRTFS_API "got null vfs!");
+
     return {
         [=](Url const& path)
         {
             return VirtFS::Resource(vfs, path);
+        },
+        [=](Path const& query, Vector<Url>& output)
+        {
+            vfs_view view(Bytes::From(*vfs));
+
+            auto it = view.begin();
+            while((it = view.starting_with(query, it)) != view.end())
+            {
+                output.push_back(MkUrl((*it).name));
+                ++it;
+            }
+
+            return true;
         }
     };
 }

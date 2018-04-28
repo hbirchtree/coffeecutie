@@ -47,8 +47,10 @@ template<typename Resource,
 struct ResourceResolver
 {
     using Resolver = Function<Resource(Url const&)>;
+    using FileQuery = Function<bool(Path const&, Vector<Url>&)>;
 
     Resolver resolveResource;
+    FileQuery resourceQuery;
 };
 
 struct BytesResolver

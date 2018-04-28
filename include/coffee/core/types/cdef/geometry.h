@@ -119,7 +119,7 @@ struct _cbasic_size_3d : _cbasic_size
 
     T width,height,depth;
 
-    T volume()
+    T volume() const
     {
         return width*height*depth;
     }
