@@ -248,13 +248,16 @@ using PixFlg = PixelFlags;
 
 struct CompFmt
 {
-    CompFmt()
+    constexpr CompFmt() :
+        base_fmt(PixFmt::None), c_flags(CompFlags::CompressionNone),
+        p_flags(PixFlg::None)
     {
     }
-    CompFmt(PixFmt base, CompFlags cf) : base_fmt(base), c_flags(cf)
+    constexpr CompFmt(PixFmt base, CompFlags cf) :
+        base_fmt(base), c_flags(cf), p_flags(PixFlg::None)
     {
     }
-    CompFmt(PixFmt base, PixFlg flg, CompFlags cf) :
+    constexpr CompFmt(PixFmt base, PixFlg flg, CompFlags cf) :
         base_fmt(base), c_flags(cf), p_flags(flg)
     {
     }
