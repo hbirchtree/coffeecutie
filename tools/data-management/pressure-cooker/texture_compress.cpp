@@ -108,7 +108,7 @@ static void CompressDXT(
 
         auto sizeString = cast_pod(newSize.w);
         auto targetImg  = outName.addExtension(sizeString.c_str())
-                             .addExtension(compression_extension(compress));
+                             .addExtension("dxt5");
         auto mipImg = outName.addExtension(sizeString.c_str());
 
         if(compress == squish::kDxt1)
@@ -268,8 +268,8 @@ static void CompressTextureSet(
             size.h = C_FCAST<i32>(h);
 
             /* This is where we create the PNG file */
-            PNG::Save(stb::image_const::From(data, size));
-            cooker->cacheFile(pngPath, files.back().data);
+            auto pngData = PNG::Save(stb::image_const::From(data, size));
+            cooker->cacheFile(pngPath, pngData);
 
             TIFFRGBAImageEnd(&rimg);
             TIFFClose(timg);

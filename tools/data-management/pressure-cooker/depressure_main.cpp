@@ -166,7 +166,6 @@ i32 coffee_main(i32, cstring_w*)
     parser.addSwitch("force", "force", "f", "Forceful behavior, be careful");
 
     parser.addSwitch("human", nullptr, "h", "Human-readable size");
-    parser.addSwitch("human", nullptr, "h", "Human-readable size");
     parser.addSwitch("size", nullptr, "c", "Show compressed size");
     parser.addSwitch("rsize", nullptr, "r", "Show real size");
 

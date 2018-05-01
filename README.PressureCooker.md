@@ -22,6 +22,9 @@ It may be extended in several ways:
  - Texture compression (S3TC/DXT)
    - Compresses PNG, JPG and TGA into DXT5 using libsquish
    - Can be made configurable for spectrum of DXT1, DXT3 and DXT5
+ - Shader cross-compilation
+   - Generates GLSL 3.30, 4.30, 4.60 and ESSL 1.00 and 3.00 source files
+   - Generates OpenGL SPIR-V binary
 
 ## Accessing pressure-cooked data
 
@@ -52,3 +55,18 @@ Loading textures becomes slightly more tricky:
  - Depending on the input format, textures might have the following extensions:
    - `.dxt1`, DXT1 compression, for RGB textures (eg. JPG)
    - `.dxt5`, DXT5 compression, for RGBA textures (eg. PNG, TGA)
+
+### Shaders
+
+Using `RHI::GLEAM::ShaderResolver()`, you get a URL resolver which picks and appropriate source file.
+The generated files for a given `shader.vert` become:
+
+ - shader.core.330.vert
+ - shader.core.430.vert
+ - shader.es.100.vert
+ - shader.es.300.vert
+ - shader.vert.spv
+
+The `UrlResolver` structure will handle this based on the API version provided.
+
+The ESSL 1.00 shader is created using a custom SPIRV-Tools optimizer pass.
