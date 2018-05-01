@@ -1,16 +1,16 @@
 #include <coffee/core/coffee.h>
 
-#include <coffee/core/CMD>
 #include <coffee/core/CDebug>
+#include <coffee/core/CMD>
 #include <coffee/core/CProfiling>
 
 #include <coffee/core/coffee_version.h>
 
-#include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/plat/environment/process_def.h>
-#include <coffee/core/types/cdef/infotypes.h>
 #include <coffee/core/plat/plat_file.h>
+#include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/types/cdef/infotypes.h>
 
 #include <coffee/core/coffee_signals.h>
 
@@ -21,7 +21,14 @@
 #include <android_native_app_glue.h>
 #endif
 
-namespace Coffee{
+namespace Coffee {
+
+enum StartFlags
+{
+    None                   = 0x0,
+    DiscardArgumentHandler = 0x1,
+    SilentInit             = 0x2,
+};
 
 /*!
  * \brief We use this internally to apply compiler-provided info
@@ -45,58 +52,59 @@ FORCEDINLINE void PrintVersionInfo()
 #if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
     auto const& app_data = ApplicationData();
 
-    cOutputPrint("{0}, released by {1}, version {2}",
-                app_data.application_name,
-                app_data.organization_name,
-                app_data.version_code);
+    cOutputPrint(
+        "{0}, released by {1}, version {2}",
+        app_data.application_name,
+        app_data.organization_name,
+        app_data.version_code);
 #endif
 }
 
 FORCEDINLINE void PrintBuildInfo()
 {
 #ifndef COFFEE_LOWFAT
-    cOutputPrint("Running {0} build {1}",
-                "Coffee",
-                State::GetBuildInfo().build_version);
+    cOutputPrint(
+        "Running {0} build {1}", "Coffee", State::GetBuildInfo().build_version);
 #endif
 }
 
 FORCEDINLINE void PrintArchitectureInfo()
 {
 #ifndef COFFEE_LOWFAT
-    cOutputPrint("Compiled for {0} on {1} ({2})",
-                 State::GetBuildInfo().platform,
-                 State::GetBuildInfo().compiler,
-                 State::GetBuildInfo().architecture);
-    cOutputPrint("Executing on {0}",PlatformData::SystemDisplayString());
-    cOutputPrint("Device: {0}",SysInfo::DeviceName());
+    cOutputPrint(
+        "Compiled for {0} on {1} ({2})",
+        State::GetBuildInfo().platform,
+        State::GetBuildInfo().compiler,
+        State::GetBuildInfo().architecture);
+    cOutputPrint("Executing on {0}", PlatformData::SystemDisplayString());
+    cOutputPrint("Device: {0}", SysInfo::DeviceName());
 #endif
 }
 
 FORCEDINLINE void PrintHelpInfo(ArgumentParser const& arg)
 {
-    cOutputPrint("{0}",arg.helpMessage());
+    cOutputPrint("{0}", arg.helpMessage());
 }
 
 FORCEDINLINE void PrintLicenseInfo()
 {
 #if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
-    cVerbose(6,"Number of licenses to print: {0}",CoffeeLicenseCount);
-    for(unsigned int i=0;i<CoffeeLicenseCount;i++)
+    cVerbose(6, "Number of licenses to print: {0}", CoffeeLicenseCount);
+    for(unsigned int i = 0; i < CoffeeLicenseCount; i++)
     {
-        cOutputPrint("{0}",CoffeeLicenseString[i]);
-        if(i<(CoffeeLicenseCount-1))
+        cOutputPrint("{0}", CoffeeLicenseString[i]);
+        if(i < (CoffeeLicenseCount - 1))
             cOutputPrint("\n\n--|END OF LICENSE|--\n\n");
     }
 #endif
 }
 
-void CoffeeInit(bool)
+static void CoffeeInit_Internal(u32 flags)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
     PrintingVerbosityLevel() = 8;
-    DefaultPrintOutputPipe = DefaultDebugOutputPipe;
+//    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel() = 1;
 #endif
@@ -109,14 +117,17 @@ void CoffeeInit(bool)
 
 #if defined(COFFEE_ANDROID)
     State::GetBuildInfo().plat_tmp_string =
-            cStringFormat("Android ({0})",__ANDROID_API__);
+        cStringFormat("Android ({0})", __ANDROID_API__);
     State::GetBuildInfo().platform =
-            State::GetBuildInfo().plat_tmp_string.c_str();
+        State::GetBuildInfo().plat_tmp_string.c_str();
 #endif
 
-    PrintVersionInfo();
-    PrintBuildInfo();
-    PrintArchitectureInfo();
+    if(!(flags & SilentInit))
+    {
+        PrintVersionInfo();
+        PrintBuildInfo();
+        PrintArchitectureInfo();
+    }
 
 #ifdef COFFEE_SLAP_LOWMEM
     /*
@@ -133,7 +144,7 @@ void CoffeeInit(bool)
 
 #ifndef COFFEE_LOADABLE_LIBRARY
     State::GetBuildInfo().default_window_name =
-            ApplicationData().application_name + " [OpenGL]";
+        ApplicationData().application_name + " [OpenGL]";
 #else
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
@@ -144,16 +155,13 @@ void CoffeeInit(bool)
 #endif
 }
 
-enum StartFlags
+void CoffeeInit(bool)
 {
-    None = 0x0,
-    DiscardArgumentHandler = 0x1,
-};
+    CoffeeInit_Internal(0x0);
+}
 
 int32 CoffeeMain(
-        CoffeeMainWithArgs mainfun,
-        int32 argc, cstring_w*argv,
-        u32 flags)
+    CoffeeMainWithArgs mainfun, int32 argc, cstring_w* argv, u32 flags)
 {
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
@@ -181,7 +189,7 @@ int32 CoffeeMain(
 
 #ifndef COFFEE_LOWFAT
 
-    CoffeeInit(false);
+    CoffeeInit_Internal(flags);
 
     Profiler::PushContext("CoffeeMain");
     Profiler::Profile("Init");
@@ -192,36 +200,37 @@ int32 CoffeeMain(
     {
         ArgumentParser parser;
         parser.addSwitch(
-                    "help",
-                    "help","h",
-                    "Print help information and exit");
+            "help", "help", "h", "Print help information and exit");
 
         parser.addSwitch(
-                    "version","version", nullptr,
-                    "Print version information and exit");
+            "version",
+            "version",
+            nullptr,
+            "Print version information and exit");
 
         parser.addSwitch(
-                    "verbose", nullptr, "v",
-                    "Print verbose messages to terminal while running");
+            "verbose",
+            nullptr,
+            "v",
+            "Print verbose messages to terminal while running");
+
+        parser.addSwitch("quiet", nullptr, "q", "Be quiet");
 
         parser.addSwitch(
-                    "quiet",nullptr,"q",
-                    "Be quiet");
+            "licenses",
+            "licenses",
+            nullptr,
+            "Print license information and exit");
 
         parser.addSwitch(
-                    "licenses","licenses", nullptr,
-                    "Print license information and exit");
-
-        parser.addSwitch(
-                    "dprofile", "deep-profile", nullptr,
-                    "Enable deep profiling");
+            "dprofile", "deep-profile", nullptr, "Enable deep profiling");
 
         parser.addPositionalArgument(
-                    "resource_prefix",
+            "resource_prefix",
 
-                    "Change resource prefix"
-                    " (only works if application does not"
-                    " override resource prefix)");
+            "Change resource prefix"
+            " (only works if application does not"
+            " override resource prefix)");
 
         auto args = parser.parseArguments(GetInitArgs());
 
@@ -233,22 +242,22 @@ int32 CoffeeMain(
                 PrintVersionInfo();
                 PrintHelpInfo(parser);
                 return 0;
-            }else if(sw == "verbose")
+            } else if(sw == "verbose")
             {
                 Coffee::PrintingVerbosityLevel() += sw_.second;
-            }else if(sw == "quiet")
+            } else if(sw == "quiet")
             {
                 Coffee::PrintingVerbosityLevel() -= sw_.second;
-            }else if(sw == "version")
+            } else if(sw == "version")
             {
                 PrintVersionInfo();
                 PrintBuildInfo();
                 return 0;
-            }else if(sw == "licenses")
+            } else if(sw == "licenses")
             {
                 PrintLicenseInfo();
                 return 0;
-            }else if(sw == "dprofile")
+            } else if(sw == "dprofile")
             {
                 Profiler::SetDeepProfileMode(true);
             }
@@ -265,27 +274,26 @@ int32 CoffeeMain(
             if(pos.first == "resource_prefix")
                 CResources::FileResourcePrefix(pos.second.c_str());
         }
-    }else
+    } else
     {
         Coffee::PrintingVerbosityLevel() = 1;
     }
 
-
     Profiler::PopContext();
 
 #ifndef COFFEE_LOWFAT
-    cVerbose(1,"Verbosity level: {0}",
-             Coffee::PrintingVerbosityLevel());
+    if(!(flags & SilentInit))
+        cVerbose(1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
 #endif
 
     /* This is a bit more versatile than simple procedures
      */
     Cmd::RegisterAtExit(CoffeeTerminate);
 
-    cVerbose(8,"Entering main function");
+    cVerbose(8, "Entering main function");
     Profiler::PushContext("main()");
 #endif
-    int32 r = mainfun(argc,argv);
+    int32 r = mainfun(argc, argv);
 
 #ifndef COFFEE_LOWFAT
     Profiler::PopContext();
@@ -314,10 +322,10 @@ void GotoApplicationDir()
 
 void InstallDefaultSigHandlers()
 {
-//    InstallSignalHandler(Sig_Termination,nullptr);
-//    InstallSignalHandler(Sig_PoopedABit,nullptr);
-//    InstallSignalHandler(Sig_ShitMySelf,nullptr);
-//    InstallSignalHandler(Sig_FPE,nullptr);
+    //    InstallSignalHandler(Sig_Termination,nullptr);
+    //    InstallSignalHandler(Sig_PoopedABit,nullptr);
+    //    InstallSignalHandler(Sig_ShitMySelf,nullptr);
+    //    InstallSignalHandler(Sig_FPE,nullptr);
 }
 
 void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)
@@ -327,4 +335,4 @@ void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)
 #endif
 }
 
-}
+} // namespace Coffee

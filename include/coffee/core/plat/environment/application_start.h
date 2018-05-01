@@ -34,6 +34,9 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
     COFFEE_APPLICATION_MAIN(mainfun)
 
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
+    COFFEE_APPLICATION_MAIN(mainfun)
+
 #elif defined(COFFEE_CUSTOM_MAIN)
 
 #if defined(COFFEE_APPLE_MOBILE)
@@ -48,6 +51,9 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
     COFFEE_APPLICATION_MAIN(mainfun)
 
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
+    COFFEE_APPLICATION_MAIN(mainfun)
+
 #else
 
 // Plain old main() function
@@ -58,4 +64,10 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
     int main(int argv, char** argc){ \
         return deref_main(mainfun,argv,argc, 0x1);\
     }
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
+    int main(int argv, char** argc){ \
+        return deref_main(mainfun,argv,argc, flags);\
+    }
+
 #endif

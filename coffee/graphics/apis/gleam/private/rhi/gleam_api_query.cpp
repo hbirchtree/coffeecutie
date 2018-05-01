@@ -81,6 +81,7 @@ u32 GLSLVersionFromAPI(APILevel level)
             return 460;
         return 430;
     case GL_4_5:
+    case GL_4_6:
         return 460;
     default:
         return 100;

@@ -2,6 +2,7 @@
 
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/type_safety.h>
+#include <coffee/core/types/tdef/stlfunctypes.h>
 #include <coffee/core/CDebug>
 
 #if defined(COFFEE_LINUX)
@@ -34,6 +35,11 @@ struct TerminalCursor
         m_interactive = false;
 #endif
     }
+
+    /* These functions are found in cdebug.cpp */
+    void print_basic(CString const& fmt, CString const& output);
+    void print_nonl(CString const& fmt, CString const& output);
+    /*  */
 
     template<typename... Args>
     void overwrite(cstring fmt, Args... args)
@@ -71,7 +77,7 @@ struct TerminalCursor
         else
             outFmt = "\r{0}\r";
 
-        cBasicPrintNoNL(outFmt, output);
+        print_nonl(outFmt, output);
         CurrentThread::sleep_for(Chrono::milliseconds(100));
         m_lastLength = output.size();
         m_overwriteMode = true;
@@ -121,7 +127,7 @@ struct TerminalCursor
         else
             outFmt = "{0}";
 
-        cBasicPrint(outFmt, output);
+        print_basic(outFmt, output);
         m_overwriteMode = false;
         m_lastLength = 0;
     }

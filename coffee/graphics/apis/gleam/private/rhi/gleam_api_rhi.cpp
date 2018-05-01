@@ -1525,6 +1525,8 @@ cstring to_string(RHI::GLEAM::APILevel lev)
             return "Desktop GL 4.3";
         case LEV::GL_4_5:
             return "Desktop GL 4.5";
+        case LEV::GL_4_6:
+            return "Desktop GL 4.6";
         default:
             break;
         }

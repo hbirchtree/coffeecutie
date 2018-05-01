@@ -441,9 +441,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        int32 index(){return m_idx;}
-        cstring name(){return m_name.c_str();}
-        uint32 flags(){return m_flags;}
+        int32 index() const {return m_idx;}
+        cstring name() const {return m_name.c_str();}
+        uint32 flags() const {return m_flags;}
 
         CString m_name;
         uint32 m_flags;

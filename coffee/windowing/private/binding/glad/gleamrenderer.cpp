@@ -5,6 +5,7 @@
 
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/CDebug>
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
 #include <CEAGL/eagl.h>

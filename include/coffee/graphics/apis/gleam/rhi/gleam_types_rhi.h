@@ -57,6 +57,7 @@ inline bool APILevelIsOfClass(APILevel l, APIClass c)
     case GL_3_3:
     case GL_4_3:
     case GL_4_5:
+    case GL_4_6:
         return c == APIClass::GLCore;
     case GLES_2_0:
     case GLES_3_0:

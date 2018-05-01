@@ -3,6 +3,7 @@
 #include <coffee/core/CMD>
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 namespace Net{

@@ -3,6 +3,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
+#include <coffee/core/CDebug>
 
 #define GLM_API "GLEAM_API::"
 

@@ -113,7 +113,10 @@ void WrapEventFunction(void* data, int event)
                 Profiler::DeepPopContext();
                 CurrentState = 1;
             }else
+            {
                 Profiler::DeepPopContext();
+                throw undefined_behavior("EventApplication::setup failed");
+            }
         }
         break;
         

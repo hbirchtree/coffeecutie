@@ -6,6 +6,7 @@
 #include <coffee/CGraphics>
 #include <coffee/core/coffee.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 using namespace Display;

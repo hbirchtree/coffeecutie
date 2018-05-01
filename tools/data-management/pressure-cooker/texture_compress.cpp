@@ -1,10 +1,10 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/base/threading/job_system.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/core/CDebug>
 
 #include <squish.h>
 
@@ -21,7 +21,7 @@ static const constexpr cstring TEX_MAX_SIZE = "TEXCOOK_MAX_SIZE";
 static const constexpr cstring TEX_MIN_SIZE = "TEXCOOK_MIN_SIZE";
 
 static i32 max_texture_size = 1024;
-static i32 min_texture_size = 128;
+static i32 min_texture_size = 16;
 
 static Vector<CString> imageExtensions = {"PNG",
                                           "JPG",
@@ -227,9 +227,7 @@ static void CompressTextureSet(
 
             if(cooker->isCached(pngPath))
             {
-                files.emplace_back(
-                    pngPath.internUrl.c_str(), cooker->getCached(pngPath), 0);
-                IMG::Load(files.back().data, cmp, bfmt, data, size);
+                IMG::Load(cooker->getCached(pngPath), cmp, bfmt, data, size);
                 break;
             }
 
@@ -270,11 +268,7 @@ static void CompressTextureSet(
             size.h = C_FCAST<i32>(h);
 
             /* This is where we create the PNG file */
-            files.emplace_back(
-                pngPath.internUrl.c_str(),
-                PNG::Save(stb::image_const::From(data, size)),
-                0);
-
+            PNG::Save(stb::image_const::From(data, size));
             cooker->cacheFile(pngPath, files.back().data);
 
             TIFFRGBAImageEnd(&rimg);

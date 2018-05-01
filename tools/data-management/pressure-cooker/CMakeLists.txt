@@ -2,6 +2,7 @@ find_package( Squish QUIET     )
 find_package( TIFF QUIET       )
 find_package( shaderc QUIET    )
 find_package( SPIRVCross QUIET )
+find_package( SPIRVTools QUIET )
 
 set ( BUNDLE_LIBS CACHE STRING "" )
 
@@ -98,6 +99,11 @@ if(SHADERC_FOUND)
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 
+    target_include_directories( PressurizeShaders
+        PRIVATE
+        ${SPVTOOLS_INCLUDE_DIR_TMP}
+        )
+
     if(NOT APPLE)
         set_property ( TARGET PressurizeShaders
             PROPERTY LINK_FLAGS
@@ -114,6 +120,7 @@ if(SHADERC_FOUND)
             PUBLIC
             spvcross
             )
+
     endif()
 
     add_dependencies ( PressureCooker

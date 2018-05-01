@@ -1,8 +1,6 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
-#include <coffee/core/CDebug>
-
 #include "../gl_shared.h"
 
 #include "../glxml.h"

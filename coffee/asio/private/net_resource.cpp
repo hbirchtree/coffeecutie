@@ -1,5 +1,7 @@
 #include <coffee/asio/net_resource.h>
 
+#include <coffee/core/string_casting.h>
+#include <coffee/core/CDebug>
 #include <coffee/core/base/textprocessing/cregex.h>
 
 #define NETRSC_TAG "NetRsc::"

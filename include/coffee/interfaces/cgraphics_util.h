@@ -147,16 +147,12 @@ FORCEDINLINE bool LoadCompressedTextureMipmap(
     if(!rr.resourceQuery(Path(baseUrl).removeExt(), urls))
         return false;
 
-    u32 mip = 0;
-    auto it = urls.begin();
+    u32  mip = 0;
+    auto it  = urls.begin();
     while((it = std::find_if(it, urls.end(), pred)) != urls.end())
     {
         LoadCompressedTexture<GFX>(
-                    surface,
-                    rr.resolveResource(*it),
-                    layer,
-                    mip++
-                );
+            surface, rr.resolveResource(*it), layer, mip++);
         it++;
 
         if(mip >= surface.mipmaps())
@@ -272,6 +268,197 @@ FORCEDINLINE bool LoadPipeline(
     return LoadPipeline<GFX>(
         pip, resolver.resolver(vert_file), resolver.resolver(frag_file));
 }
+
+template<typename GFX>
+struct shader_param_view
+{
+    using Pipeline = typename GFX::PIP;
+    using UniState = typename GFX::USTATE;
+    using ProgState = typename GFX::PSTATE;
+
+    using const_desc    = typename GFX::UNIFDESC;
+    using const_value   = typename GFX::UNIFVAL;
+    using sampler_value = typename GFX::UNIFSMP;
+    using param_desc    = typename GFX::PPARAM;
+
+    using constant_desc_t  = Vector<const_desc>;
+    using constant_desc_it = typename constant_desc_t::iterator;
+
+    using param_desc_t  = Vector<param_desc>;
+    using param_desc_it = typename param_desc_t::iterator;
+
+    static Function<bool(const_desc&)> constant_by_name(
+        CString const& param_name)
+    {
+        return [=](const_desc& desc) { return desc.name == param_name; };
+    }
+
+    shader_param_view(Pipeline& pip) : m_pipeline(pip)
+    {
+    }
+
+    /*!
+     * \brief Retrieve pipeline constants and parameters for iteration
+     */
+    void get_pipeline_params()
+    {
+        m_states.clear();
+
+        m_constant_desc.clear();
+        m_parameter_desc.clear();
+
+        m_constant_data.clear();
+        m_constant_values.clear();
+
+        GFX::GetShaderUniformState(
+            m_pipeline, &m_constant_desc, &m_parameter_desc);
+    }
+
+    constant_desc_it constants_begin()
+    {
+        return m_constant_desc.begin();
+    }
+    constant_desc_it constants_end()
+    {
+        return m_constant_desc.end();
+    }
+
+    param_desc_it params_begin()
+    {
+        return m_parameter_desc.begin();
+    }
+    param_desc_it params_end()
+    {
+        return m_parameter_desc.end();
+    }
+
+    quick_container<constant_desc_it> constants()
+    {
+        return quick_container<constant_desc_it>(
+            [&]() { return constants_begin(); },
+            [&]() { return constants_end(); });
+    }
+
+    quick_container<param_desc_it> params()
+    {
+        return quick_container<param_desc_it>(
+            [&]() { return params_begin(); },
+            [&]() { return params_end(); });
+    }
+
+    /*!
+     * \brief Set data for a given constant,
+     *  user is responsible for setting the correct type of data.
+     * \param desc
+     * \param data
+     */
+    void set_constant(const_desc const& desc, Bytes&& data)
+    {
+        if(!(desc.m_flags & ShaderTypes::Uniform_v))
+            return;
+
+        m_constant_data.emplace(
+            std::make_pair(const_desc_id{&desc}, std::move(data)));
+        m_constant_values.emplace(
+            std::make_pair(const_desc_id{&desc}, const_value()));
+    }
+
+    void set_sampler(const_desc const& desc, sampler_value&& data)
+    {
+        if(!(desc.m_flags & ShaderTypes::Sampler_v))
+            return;
+
+        m_sampler_handles.emplace(
+            std::make_pair(const_desc_id{&desc}, std::move(data)));
+    }
+
+    Bytes& get_constant_data(CString const& variable)
+    {
+        for(auto& constant : m_constant_data)
+            if(constant.first.desc->m_name == variable)
+                return constant.second;
+
+        throw undefined_behavior("constant not found");
+    }
+
+    /*!
+     * \brief After data is set using set_* functions,
+     *  this functions creates a USTATE object
+     */
+    void build_state()
+    {
+        for(auto& constant_data : m_constant_data)
+        {
+            auto& constant_value = m_constant_values[constant_data.first];
+            auto  stage          = constant_data.first.desc->stages;
+
+            constant_value.data = &constant_data.second;
+            constant_value.flags = constant_data.first.desc->m_flags;
+
+            m_states[stage].setUniform(
+                *constant_data.first.desc, &constant_value);
+        }
+
+        for(auto& sampler_value : m_sampler_handles)
+        {
+            auto stage = sampler_value.first.desc->stages;
+
+            m_states[stage].setSampler(
+                *sampler_value.first.desc, &sampler_value.second);
+        }
+    }
+
+    /*!
+     * \brief Get a USTATE that can be used with the pipeline
+     * \param stage
+     * \return
+     */
+    ProgState& get_state()
+    {
+        ProgState& pstate = m_cached_state;
+        pstate.clear();
+
+        for(auto& e : m_states)
+            pstate[e.first] = &e.second;
+
+        return pstate;
+    }
+
+    /* Containers for direct shader state */
+    constant_desc_t m_constant_desc;
+    param_desc_t    m_parameter_desc;
+
+    /* Meta-state for building USTATE */
+    struct ConstantDescriptor
+    {
+        typename GFX::UNIFVAL value;
+        Bytes                 data;
+    };
+
+    struct SamplerDescriptor
+    {
+        typename GFX::UNIFSMP value;
+    };
+
+    struct const_desc_id
+    {
+        const_desc const* desc;
+
+        bool operator<(const_desc_id const& other) const
+        {
+            return desc->m_name < other.desc->m_name;
+        }
+    };
+
+    Map<const_desc_id, Bytes>         m_constant_data;
+    Map<const_desc_id, sampler_value> m_sampler_handles;
+    Map<const_desc_id, const_value>   m_constant_values;
+    Map<ShaderStage, UniState>        m_states;
+
+  private:
+    ProgState m_cached_state;
+    Pipeline& m_pipeline;
+};
 
 } // namespace RHI
 } // namespace Coffee
