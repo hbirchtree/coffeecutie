@@ -299,7 +299,7 @@ void ExportProfilerData(CString& target)
 
     using namespace XML_Stuff;
 
-    auto app_args = GetInitArgs().arguments();
+    auto const& app_args = GetInitArgs().arguments();
 
     XML::Document doc;
 

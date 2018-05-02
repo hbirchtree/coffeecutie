@@ -259,7 +259,8 @@ FORCEDINLINE CString
     return out;
 }
 
-#if __cplusplus >= 201703L || (defined(_HAS_CXX17) && _HAS_CXX17)
+#if defined(COFFEE_MSVCXX) && \
+    (__cplusplus >= 201703L || (defined(_HAS_CXX17) && _HAS_CXX17))
 #define NOT_FN std::not_fn
 #else
 #define NOT_FN(s) std::not1(std::ptr_fun<int, int>(s))

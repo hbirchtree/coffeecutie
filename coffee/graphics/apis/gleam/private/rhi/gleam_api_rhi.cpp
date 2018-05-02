@@ -367,7 +367,7 @@ GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI(
         )
 {
     cVerbose(8, GLM_API "Returning GLEAM loader...");
-    return [&](bool debug = false)
+    return [=](bool debug = false)
     {
         static GLEAM_DataStore m_gleam_data = {};
         cVerbose(8, GLM_API "Running GLEAM loader");

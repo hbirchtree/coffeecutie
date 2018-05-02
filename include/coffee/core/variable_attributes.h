@@ -3,7 +3,7 @@
 #include "plat/plat_primary_identify.h"
 #include "plat/plat_compiler_identify.h"
 
-#if (__cplusplus >= 201703L)
+#if (__cplusplus >= 201703L) && 0
 #define UNUSED_PARAM [[maybe_unused]]
 
 #elif defined(COFFEE_GCC) || defined(COFFEE_CLANG) \
@@ -26,7 +26,7 @@
 #define C_MAYBE_UNUSED
 #endif
 
-#if (__cplusplus >= 201403L)
+#if (__cplusplus >= 201403L) && 0
 #define C_DEPRECATED [[deprecated]]
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 
@@ -35,7 +35,7 @@
 #define C_DEPRECATED __attribute__((deprecated))
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 
-#elif defined(COFFEE_MSVC)
+#elif defined(COFFEE_MSVC) && 0
 #define C_DEPRECATED __declspec(deprecated)
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 

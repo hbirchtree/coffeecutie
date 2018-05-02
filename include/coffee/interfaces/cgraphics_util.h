@@ -401,6 +401,9 @@ struct shader_param_view
             auto& constant_value = m_constant_values[constant_data.first];
             auto  stage          = constant_data.first.desc->stages;
 
+            if(!constant_data.second.data)
+                continue;
+
             constant_value.data = &constant_data.second;
             constant_value.flags = constant_data.first.desc->m_flags;
 

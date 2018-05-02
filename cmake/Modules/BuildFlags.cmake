@@ -106,3 +106,24 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT EMSCRIPTEN AND NOT NACL A
 endif()
 
 include ( WindowsPlatformDetect )
+
+# Enabling ASan/TSan/UBSan
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if(COFFEE_ASAN OR COFFEE_TSAN OR COFFEE_UBSAN)
+        if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+            message ( WARNING "Sanitizers should run in Debug mode!" )
+        endif()
+
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer" )
+    endif()
+
+    if(COFFEE_ASAN)
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address" )
+    endif()
+    if(COFFEE_TSAN)
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread" )
+    endif()
+    if(COFFEE_UBSAN)
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined" )
+    endif()
+endif()

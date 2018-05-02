@@ -525,15 +525,15 @@ FORCEDINLINE PixCmp GetPixComponent(CompFmt fmt)
 struct PixDesc
 {
     PixDesc() :
-        pixfmt(PixFmt::None), pixflg(PixFlg::None),
-        cmpflg(CompFlags::CompressionNone), bfmt(BitFmt::Byte),
+        pixfmt(PixFmt::None), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(BitFmt::Byte),
         comp(PixCmp::None)
     {
     }
 
     PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp) :
-        pixfmt(pixfmt), pixflg(PixFlg::None),
-        cmpflg(CompFlags::CompressionNone), bfmt(bitfmt), comp(comp)
+        pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)
     {
     }
 
