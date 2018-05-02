@@ -1,42 +1,52 @@
 #pragma once
 
-#include <coffee/core/types/tdef/stlfunctypes.h>
 #include <coffee/core/types/edef/enumfun.h>
+#include <coffee/core/types/tdef/stlfunctypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct RuntimeTask
 {
     enum TaskFlags
     {
-        Parallel = 0x1,
+        Parallel   = 0x1,
         SingleShot = 0x2,
-        Periodic = 0x4,
-        Immediate = 0x8,
+        Periodic   = 0x4,
+        Immediate  = 0x8,
     };
 
     using clock = Chrono::steady_clock;
 
     using Timepoint = Chrono::time_point<clock>;
-    using Duration = clock::duration;
+    using Duration  = clock::duration;
 
-    STATICINLINE RuntimeTask CreateTask(Function<void()>&& fun,
-                                        TaskFlags f = SingleShot,
-                                        Timepoint ts = {})
+    STATICINLINE RuntimeTask CreateTask(
+        Function<void()>&& fun, TaskFlags f = SingleShot, Timepoint ts = {})
     {
-        RuntimeTask task;
+        RuntimeTask task = {};
         task.flags = f;
-        task.task = fun;
-        task.time = ts;
+        task.task  = std::move(fun);
+        task.time  = ts;
+
+        return task;
+    }
+
+    STATICINLINE RuntimeTask CreateTask(
+            Function<void()>&& fun, TaskFlags f = SingleShot, Duration d = {})
+    {
+        RuntimeTask task = {};
+        task.flags = f;
+        task.task = std::move(fun);
+        task.interval = d;
 
         return task;
     }
 
     Function<void()> task;
-    Timepoint time;
-    Duration interval;
-    TaskFlags flags;
-    u32 _pad;
+    Timepoint        time;
+    Duration         interval;
+    TaskFlags        flags;
+    u32              _pad;
 
     FORCEDINLINE bool operator<(RuntimeTask const& other) const
     {
@@ -48,21 +58,21 @@ C_FLAGS(RuntimeTask::TaskFlags, u32);
 
 class RuntimeQueue
 {
-public:
-    static RuntimeQueue *CreateNewQueue(CString const& name);
-    static RuntimeQueue *CreateNewThreadQueue(CString const& name);
+  public:
+    static RuntimeQueue* CreateNewQueue(CString const& name);
+    static RuntimeQueue* CreateNewThreadQueue(CString const& name);
 
-    static RuntimeQueue *GetCurrentQueue();
+    static RuntimeQueue* GetCurrentQueue();
 
     /*!
      * \brief From inside a task, get a reference to itself
      * \return
      */
-    static RuntimeTask *GetSelf();
+    static RuntimeTask* GetSelf();
 
     /*!
-     * \brief From inside a task, get its ID. Calling from outside will return 0.
-     * \return
+     * \brief From inside a task, get its ID. Calling from outside will return
+     * 0. \return
      */
     static u64 GetSelfId();
 
@@ -95,18 +105,17 @@ public:
      * \param task Task to be run
      * \return
      */
-    STATICINLINE u64 QueueShot(RuntimeQueue* q,
-                               RuntimeTask::Duration time,
-                               Function<void()>&& task)
+    STATICINLINE u64 QueueShot(
+        RuntimeQueue* q, RuntimeTask::Duration time, Function<void()>&& task)
     {
         if(!q)
             return 0;
-        return Queue(q->threadId(),
-                     RuntimeTask::CreateTask(
-                         std::move(task),
-                         RuntimeTask::SingleShot,
-                         RuntimeTask::clock::now() + time
-                         ));
+        return Queue(
+            q->threadId(),
+            RuntimeTask::CreateTask(
+                std::move(task),
+                RuntimeTask::SingleShot,
+                RuntimeTask::clock::now() + time));
     }
 
     /*!
@@ -117,9 +126,8 @@ public:
      * \param task
      * \return
      */
-    STATICINLINE u64 QueueEnsureThread(RuntimeQueue* q,
-                                       Function<void()>&& task,
-                                       bool await = false)
+    STATICINLINE u64 QueueEnsureThread(
+        RuntimeQueue* q, Function<void()>&& task, bool await = false)
     {
         if(!q)
             return 0;
@@ -132,13 +140,12 @@ public:
         }
 
         /* Otherwise queue it */
-        u64 id = Queue(q->threadId(),
-                     RuntimeTask::CreateTask(
-                         std::move(task),
-                         RuntimeTask::SingleShot|RuntimeTask::Immediate,
-                         RuntimeTask::clock::now()
-                         )
-                     );
+        u64 id = Queue(
+            q->threadId(),
+            RuntimeTask::CreateTask(
+                std::move(task),
+                RuntimeTask::SingleShot | RuntimeTask::Immediate,
+                RuntimeTask::clock::now()));
 
         if(await)
             AwaitTask(q->threadId(), id);
@@ -147,48 +154,52 @@ public:
     }
 
     /*!
-     * \brief Like QueueShot, but will run as soon as possible. The difference is that this one ignores any possible deadlines. (QueueShot will kill the task if the deadline is not met)
+     * \brief Like QueueShot, but will run as soon as possible. The difference
+     * is that this one ignores any possible deadlines. (QueueShot will kill the
+     * task if the deadline is not met)
      * \param q
      * \param task
      * \return
      */
-    STATICINLINE u64 QueueImmediate(RuntimeQueue* q,
-                                    RuntimeTask::Duration time,
-                                    Function<void()>&& task)
+    STATICINLINE u64 QueueImmediate(
+        RuntimeQueue* q, RuntimeTask::Duration time, Function<void()>&& task)
     {
         if(!q)
             return 0;
-        return Queue(q->threadId(),
-                     RuntimeTask::CreateTask(
-                         std::move(task),
-                         RuntimeTask::SingleShot|RuntimeTask::Immediate,
-                         RuntimeTask::clock::now() + time
-                         ));
+        return Queue(
+            q->threadId(),
+            RuntimeTask::CreateTask(
+                std::move(task),
+                RuntimeTask::SingleShot | RuntimeTask::Immediate,
+                RuntimeTask::clock::now() + time));
     }
 
-    STATICINLINE u64 QueuePeriodic(RuntimeQueue* q,
-                                   RuntimeTask::Duration time,
-                                   Function<void()>&& task)
+    STATICINLINE u64 QueuePeriodic(
+        RuntimeQueue* q, RuntimeTask::Duration time, Function<void()>&& task)
     {
         if(!q)
             return 0;
-        return Queue(q->threadId(), {
-                         task,
-                         {},
-                         time,
-                         RuntimeTask::Periodic,
-                         0,
-                     });
+        return Queue(
+            q->threadId(),
+            {
+                task,
+                {},
+                time,
+                RuntimeTask::Periodic,
+                0,
+            });
     }
 
     struct task_data_t
     {
         RuntimeTask task;
-        u64 index;
-        union {
-            struct {
-                bool alive:1;
-                bool to_dispose:1;
+        u64         index;
+        union
+        {
+            struct
+            {
+                bool alive : 1;
+                bool to_dispose : 1;
             };
         };
 
@@ -213,20 +224,20 @@ public:
     static void TerminateThread(RuntimeQueue* thread);
     static void TerminateThreads();
 
-    void executeTasks();
+    void                  executeTasks();
     RuntimeTask::Duration timeTillNext(RuntimeTask::Duration fallback);
-    CString name();
-    ThreadId threadId();
+    CString               name();
+    ThreadId              threadId();
 
     RuntimeQueue();
-    RuntimeQueue(const RuntimeQueue &queue);
+    RuntimeQueue(const RuntimeQueue& queue);
 
     struct QueueContext
     {
-        Mutex globalMod;
+        Mutex                             globalMod;
         Map<ThreadId::Hash, RuntimeQueue> queues;
-        Map<ThreadId::Hash, Thread> queueThreads;
-        Map<ThreadId::Hash, AtomicBool*> queueFlags;
+        Map<ThreadId::Hash, Thread>       queueThreads;
+        Map<ThreadId::Hash, AtomicBool*>  queueFlags;
     };
 
     using QueueContextPtr = ShPtr<QueueContext>;
@@ -248,20 +259,59 @@ public:
      */
     static QueueContextPtr GetQueueContext();
 
-private:
-
-    u64 enqueue(RuntimeTask&& task);
+  private:
+    u64  enqueue(RuntimeTask&& task);
     void sortTasks();
 
-
     Vector<task_data_t> mTasks;
-    Mutex mTasksLock;
-    u64 mTaskIndex;
-    ThreadId mThreadId;
+    Mutex               mTasksLock;
+    u64                 mTaskIndex;
+    ThreadId            mThreadId;
 
     u64 mCurrentTaskId;
 
     static ShPtr<QueueContext> context;
 };
 
-}
+struct ScopedTask
+{
+    template<typename... Args>
+    ScopedTask(ThreadId const& tid, Function<void()>&& fun, Args... args)
+    {
+        m_id = RuntimeQueue::Queue(
+            tid, RuntimeTask::CreateTask(std::move(fun), args...));
+        m_threadId = tid;
+    }
+
+    ScopedTask(ThreadId const& tid, RuntimeTask&& task)
+    {
+        m_id = RuntimeQueue::Queue(tid, std::move(task));
+        m_threadId = tid;
+    }
+
+    ScopedTask(ScopedTask&& other):
+        m_id(other.m_id),
+        m_threadId(other.m_threadId)
+    {
+        other.m_id = 0;
+    }
+
+    C_DELETE_COPY_CONSTRUCTOR(ScopedTask);
+
+    ~ScopedTask()
+    {
+        if(m_id != 0)
+            RuntimeQueue::CancelTask(m_threadId, m_id);
+    }
+
+    u64 id() const
+    {
+        return m_id;
+    }
+
+private:
+    u64 m_id;
+    ThreadId m_threadId;
+};
+
+} // namespace Coffee

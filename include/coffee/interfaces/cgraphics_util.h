@@ -346,6 +346,15 @@ struct shader_param_view
             [&]() { return params_end(); });
     }
 
+    param_desc_it get_attribute(CString const& attr_name)
+    {
+        return std::find_if(params_begin(), params_end(),
+                            [&](param_desc const& param)
+        {
+            return param.m_name == attr_name;
+        });
+    }
+
     /*!
      * \brief Set data for a given constant,
      *  user is responsible for setting the correct type of data.

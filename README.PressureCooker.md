@@ -21,10 +21,12 @@ It may be extended in several ways:
    - Automatically compresses element array losslessly (downcast to u16 and u8)
  - Texture compression (S3TC/DXT)
    - Compresses PNG, JPG and TGA into DXT5 using libsquish
+   - Supports using libtiff to read TIFF images
    - Can be made configurable for spectrum of DXT1, DXT3 and DXT5
+   - Configurable through `TEXCOOK_MAX_SIZE` and `TEXCOOK_MIN_SIZE`
  - Shader cross-compilation
    - Generates GLSL 3.30, 4.30, 4.60 and ESSL 1.00 and 3.00 source files
-   - Generates OpenGL SPIR-V binary
+   - Generates OpenGL SPIR-V binary- shader.core.330.vert
 
 ## Accessing pressure-cooked data
 
@@ -53,8 +55,10 @@ This also makes your application profilable with Valgrind (Assimp stops Valgrind
 Loading textures becomes slightly more tricky:
 
  - Depending on the input format, textures might have the following extensions:
-   - `.dxt1`, DXT1 compression, for RGB textures (eg. JPG)
-   - `.dxt5`, DXT5 compression, for RGBA textures (eg. PNG, TGA)
+   - `.dxt1`, DXT1 compression
+   - `.dxt5`, DXT5 compression
+   - `.png`, as a fallback format
+ - Mipmapping is done on the images
 
 ### Shaders
 

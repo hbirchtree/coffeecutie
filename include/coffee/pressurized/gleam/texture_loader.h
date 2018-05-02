@@ -18,7 +18,7 @@ STATICINLINE UrlResolver TextureResolver(
     UrlResolver::SingleResolver sres = [&](Url const& url) {
         static constexpr szptr num_formats = 5;
 
-        static constexpr Array<Pair<PixFmt, cstring>, num_formats> formats = {{
+        static const Array<Pair<PixFmt, cstring>, num_formats> formats = {{
             {PixFmt::S3TC, "dxt5"},
             {PixFmt::S3TC, "dxt3"},
             {PixFmt::S3TC, "dxt1"},

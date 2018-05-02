@@ -27,7 +27,7 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
         cmake_parse_arguments ( PACKAGE_DIRECTORY
             ""
             "EXTENSIONS;IGNORE_TYPES;BASE_DIRS;COMPRESS_TYPES;CACHE_DIR"
-            ""
+            "ENV_VARS"
             ${ARGN}
             )
 
@@ -60,6 +60,10 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
                 ${PACKAGING_ARGS} -m ${PACKAGE_DIRECTORY_CACHE_DIR} )
         endif()
 
+        if(DEFINED PACKAGE_DIRECTORY_ENV_VARS)
+            set ( ENV_VARS ${PACKAGE_DIRECTORY_ENV_VARS} )
+        endif()
+
         add_custom_command ( TARGET ${TARGET}
             PRE_BUILD
 
@@ -70,6 +74,7 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
             ${CMAKE_COMMAND} -E env
             LD_LIBRARY_PATH=${PRESSURE_COOKER_LIB_DIR}
             DYLD_LIBRARY_PATH=${PRESSURE_COOKER_LIB_DIR}
+            ${ENV_VARS}
             ${PRESSURE_COOKER_BIN}
                 ${PACKAGING_ARGS}
                 ${VFS_SOURCE}

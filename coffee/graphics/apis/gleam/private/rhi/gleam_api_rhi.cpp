@@ -639,6 +639,9 @@ template<typename T>
 void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data,
                       szptr arr_size)
 {
+    if(!data)
+        return;
+
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.separable_programs)
@@ -654,6 +657,9 @@ template<typename T>
 void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data,
                         szptr arr_size)
 {
+    if(!data)
+        return;
+
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.separable_programs)
@@ -669,6 +675,9 @@ template<typename T>
 void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
                       szptr arr_size)
 {
+    if(!data)
+        return;
+
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.separable_programs)
@@ -685,6 +694,9 @@ template<typename T>
 void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
                        szptr arr_size)
 {
+    if(!data)
+        return;
+
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformuiv(prog,C_CAST<i32>(idx),
                           C_CAST<i32>(arr_size / sizeof(T)),data);

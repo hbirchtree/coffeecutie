@@ -1,10 +1,10 @@
+#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/base/threading/job_system.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
-#include <coffee/core/CDebug>
 
 #include <squish.h>
 
@@ -107,8 +107,8 @@ static void CompressDXT(
          *  imsize is source size */
 
         auto sizeString = cast_pod(newSize.w);
-        auto targetImg  = outName.addExtension(sizeString.c_str())
-                             .addExtension("dxt5");
+        auto targetImg =
+            outName.addExtension(sizeString.c_str()).addExtension("dxt5");
         auto mipImg = outName.addExtension(sizeString.c_str());
 
         if(compress == squish::kDxt1)
@@ -116,7 +116,13 @@ static void CompressDXT(
         else
             mipImg = mipImg.addExtension("png");
 
-        if(cooker->isCached(targetImg) && cooker->isCached(mipImg))
+        if(newSize.w > max_texture_size || newSize.h > max_texture_size)
+        {
+            cursor.progress(
+                TEXCOMPRESS_API "Skipping texture, over max size: {0}",
+                targetImg.internUrl);
+            imsize = newSize;
+        } else if(cooker->isCached(targetImg) && cooker->isCached(mipImg))
         {
             cursor.progress(
                 TEXCOMPRESS_API "Using cache texture: {0}",
@@ -125,7 +131,7 @@ static void CompressDXT(
             files.emplace_back(mipImg, cooker->getCached(mipImg), 0);
 
             imsize = newSize;
-        } else if(newSize.w <= max_texture_size || newSize.h <= max_texture_size)
+        } else
         {
             if(imsize.w != newSize.w)
             {
@@ -139,7 +145,7 @@ static void CompressDXT(
             files.emplace_back(targetImg, Bytes(), 0);
             files.emplace_back(mipImg, Bytes(), 0);
 
-            Bytes& output = files.at(files.size() - 2).data;
+            Bytes& output    = files.at(files.size() - 2).data;
             Bytes& pngOutput = files.at(files.size() - 1).data;
 
             /* Allocate space for image as well as WxH parameters */
@@ -181,12 +187,6 @@ static void CompressDXT(
 
             /* Cache regular image format */
             cooker->cacheFile(mipImg, pngOutput);
-        }else
-        {
-            cursor.progress(
-                        TEXCOMPRESS_API "Skipping texture, over max size: {0}",
-                        targetImg.internUrl);
-            imsize = newSize;
         }
 
         newSize = imsize / 2;
