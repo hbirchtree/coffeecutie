@@ -640,7 +640,7 @@ void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data,
                       szptr arr_size)
 {
     if(!data)
-        return;
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
@@ -658,7 +658,7 @@ void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data,
                         szptr arr_size)
 {
     if(!data)
-        return;
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
@@ -676,7 +676,7 @@ void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
                       szptr arr_size)
 {
     if(!data)
-        return;
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
@@ -695,7 +695,7 @@ void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
                        szptr arr_size)
 {
     if(!data)
-        return;
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformuiv(prog,C_CAST<i32>(idx),
