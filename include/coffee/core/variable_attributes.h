@@ -55,10 +55,20 @@
 
 #if (__cplusplus >= 201703L)
 #define C_HAS_INCLUDE(header) __has_include(header)
-
 #else
 #define C_HAS_INCLUDE(header) 0
 
+#endif
+
+#if defined(__has_cpp_attribute ) && __has_cpp_attribute(nodiscard) && \
+    (__cplusplus >= 201703L)
+#define NO_DISCARD [[nodiscard]]
+#elif defined(COFFEE_GCC)
+#define NO_DISCARD [[gnu::warn_unused_result]]
+#elif defined(COFFEE_CLANG)
+#define NO_DISCARD [[clang::warn_unused_result]]
+#else
+#define NO_DISCARD
 #endif
 
 #define C_OPTIONAL

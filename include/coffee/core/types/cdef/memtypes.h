@@ -72,7 +72,7 @@ struct _cbasic_data_chunk
     }
 
     template<typename T2>
-    explicit operator _cbasic_data_chunk<T2>()
+    NO_DISCARD explicit operator _cbasic_data_chunk<T2>()
     {
         _cbasic_data_chunk<T2> out;
 
@@ -110,7 +110,7 @@ struct _cbasic_data_chunk
         inst.m_destr = d;
     }
 
-    STATICINLINE _cbasic_data_chunk<T> Alloc(szptr num)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Alloc(szptr num)
     {
 #if !defined(NDEBUG)
         if(num == 0)
@@ -129,19 +129,19 @@ struct _cbasic_data_chunk
     }
 
     template<typename DT, typename is_not_virtual<DT>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
         return {C_FCAST<T*>(&obj), sizeof(DT), 1};
     }
 
     template<typename is_pod<T>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
         return {C_FCAST<T*>(src), strlen(src), 0};
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
     {
         static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
 
@@ -150,7 +150,7 @@ struct _cbasic_data_chunk
     }
 
     template<typename T2>
-    STATICINLINE _cbasic_data_chunk<T> From(Vector<T2>& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(Vector<T2>& data)
     {
         return CreateFrom(data);
     }
@@ -160,7 +160,7 @@ struct _cbasic_data_chunk
         typename std::enable_if<
             !std::is_same<typename std::remove_cv<T2>::type, void>::value>::
             type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
     {
         static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
 
@@ -172,19 +172,19 @@ struct _cbasic_data_chunk
         typename std::enable_if<
             std::is_same<typename std::remove_cv<T2>::type, void>::value>::
             type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
     {
         return {C_FCAST<T*>(data), size / sizeof(T), 1};
     }
 
     template<typename T2, typename is_pod<T2>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> From(T2& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2& data)
     {
         return Create(data);
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
     {
         static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
 
@@ -207,7 +207,7 @@ struct _cbasic_data_chunk
     }
 
     template<typename T2>
-    STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
     {
         static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
 
@@ -221,7 +221,7 @@ struct _cbasic_data_chunk
         return out;
     }
 
-    STATICINLINE _cbasic_data_chunk<T> Copy(_cbasic_data_chunk<T> const& src)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(_cbasic_data_chunk<T> const& src)
     {
         using OutT = _cbasic_data_chunk<T>;
 
@@ -357,22 +357,22 @@ struct _cbasic_data_chunk
     using iterator       = iterator_base<>;
     using const_iterator = iterator_base<const T>;
 
-    iterator begin()
+    NO_DISCARD iterator begin()
     {
         return iterator(*this);
     }
 
-    iterator end()
+    NO_DISCARD iterator end()
     {
         return iterator(*this, size);
     }
 
-    const_iterator begin() const
+    NO_DISCARD const_iterator begin() const
     {
         return const_iterator(*this);
     }
 
-    const_iterator end() const
+    NO_DISCARD const_iterator end() const
     {
         return const_iterator(*this, size);
     }
@@ -459,7 +459,7 @@ struct _cbasic_serial_array
         szptr                    m_idx;
     };
 
-    iterator begin()
+    NO_DISCARD iterator begin()
     {
         if(m_size == 0)
             return end();
@@ -467,7 +467,7 @@ struct _cbasic_serial_array
             return iterator(this);
     }
 
-    iterator end()
+    NO_DISCARD iterator end()
     {
         return iterator();
     }
