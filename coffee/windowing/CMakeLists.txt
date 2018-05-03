@@ -80,16 +80,23 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
 endif()
 
 if(COFFEE_BUILD_OPENGL)
-    coffee_add_library ( CoffeeContext_EGL "${EGL_SRCS}" ""
-        "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/egl"
+    coffee_library (
+        TARGET CoffeeContext_EGL
+        SOURCES ${EGL_SRCS}
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/egl
         )
 
-    coffee_add_library ( CoffeeContext_GLX "${GLX_SRCS}" ""
-        "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/glx"
+    coffee_library (
+        TARGET CoffeeContext_GLX
+        SOURCES ${GLX_SRCS}
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/glx
         )
 
-    coffee_add_library ( CoffeeBinding_GLAD "${GLAD_SRCS}" CoffeeGLeamCommon
-        "${CMAKE_SOURCE_DIR}/include/coffee/windowing/binding/glad"
+    coffee_library (
+        TARGET CoffeeBinding_GLAD
+        SOURCES ${GLAD_SRCS}
+        LIBRARIES CoffeeGLeamCommon
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/binding/glad
         )
 
     target_link_libraries ( CoffeeBinding_GLAD
@@ -99,29 +106,42 @@ if(COFFEE_BUILD_OPENGL)
 
 endif(COFFEE_BUILD_OPENGL)
 
-coffee_add_library ( CoffeeWindow_OGC "${OGC_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ogc"
+coffee_library (
+    TARGET CoffeeWindow_OGC
+    SOURCES ${OGC_SRCS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ogc
     )
 
-coffee_add_library ( CoffeeWindow_X11 "${X11_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/x11"
+coffee_library (
+    TARGET CoffeeWindow_X11
+    SOURCES ${X11_SRCS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/x11
     )
 
-coffee_add_library ( CoffeeWindow_DMX "${DMX_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/dispmanx"
+coffee_library (
+    TARGET CoffeeWindow_DMX
+    SOURCES ${DMX_SRCS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/dispmanx
     )
 
-coffee_add_library ( CoffeeWindow_GLKit "${GLKit_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/glkit"
+coffee_library (
+    TARGET CoffeeWindow_GLKit
+    SOURCES ${GLKit_SRCS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/glkit
     )
 
-coffee_add_library ( CoffeeWindow_NDKWindow "${NDKWindow_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ndkwindow"
+coffee_library (
+    TARGET CoffeeWindow_NDKWindow
+    SOURCES ${NDKWindow_SRCS}
+    HEADER_DIRS
+    ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ndkwindow
     )
 
-coffee_add_library ( CoffeeRenderer_Default "${Renderer_SRCS}"
-    "${RENDERER_LIBS}"
-    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer"
+coffee_library (
+    TARGET CoffeeRenderer_Default
+    SOURCES ${Renderer_SRCS}
+    LIBRARIES ${RENDERER_LIBS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer
     )
 
 target_link_libraries( CoffeeWindow_NDKWindow

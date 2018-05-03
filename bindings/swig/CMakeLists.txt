@@ -82,14 +82,22 @@ coffee_gen_applicationinfo( CoffeeSwigShim
     1
     )
 
-set ( CoffeeSwigShim_SRCS
-    "coffeeswig.cpp;${LICENSE_FILE};${APPLICATION_INFO_FILE}"
-    )
+coffee_library(
+    TARGET CoffeeSwigShim
 
-coffee_add_library(CoffeeSwigShim
-    "${CoffeeSwigShim_SRCS}"
-    "CoffeeGLeamCommon;CoffeeGLeamRHI;CoffeeOpenAL;CoffeeBlam;CoffeeCoreLoadable"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    SOURCES
+    coffeeswig.cpp
+    ${LICENSE_FILE}
+    ${APPLICATION_INFO_FILE}
+
+    LIBRARIES
+    CoffeeGLeamCommon
+    CoffeeGLeamRHI
+    CoffeeOpenAL
+    CoffeeBlam
+    CoffeeCoreLoadable
+
+    HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
 # Link with some libraries

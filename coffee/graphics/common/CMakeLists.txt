@@ -1,7 +1,7 @@
-coffee_add_library ( CoffeeGraphicsAPI
-    "private/query/gpu_query.cpp"
-    ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis"
+coffee_library (
+    TARGET CoffeeGraphicsAPI
+    SOURCES private/query/gpu_query.cpp
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis
     )
 
 target_link_libraries ( CoffeeGraphicsAPI

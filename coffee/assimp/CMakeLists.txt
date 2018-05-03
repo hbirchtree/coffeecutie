@@ -4,10 +4,12 @@ set ( CoffeeAssimp_SRCS
         private/cassimpimporters.cpp
         )
 
-coffee_add_library (
-    CoffeeAssimp "${CoffeeAssimp_SRCS}"
-    "Assimp"
-    "${CMAKE_SOURCE_DIR}/include/coffee/assimp" )
+coffee_library (
+    TARGET CoffeeAssimp
+    SOURCES ${CoffeeAssimp_SRCS}
+    LIBRARIES Assimp
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/assimp
+    )
 
 coffee_bundle_includes ( ${ASSIMP_INCLUDE_DIR} )
 coffee_bundle_library ( ${ASSIMP_LIBRARIES} )

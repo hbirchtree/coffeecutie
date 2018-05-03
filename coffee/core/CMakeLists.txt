@@ -346,7 +346,7 @@ target_include_directories ( CoffeeCore_Base
 if(COFFEE_BUILD_SWIG_BINDING)
 
 
-    coffee_elibrary (
+    coffee_library (
         TARGET CoffeeCoreLoadable
         LINKAGE SHARED
         SOURCES ${CoffeeCore_SRCS}
