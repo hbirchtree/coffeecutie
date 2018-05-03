@@ -16,9 +16,18 @@ find_package( NvidiaML QUIET )
 find_package( LibDRM QUIET )
 
 if(NVIDIAML_FOUND)
-    coffee_add_elibrary ( "coffee-nvidia" SHARED
-        "private/query/nvidia_query.cpp" "${NVIDIAML_LIBRARIES};CoffeeCore"
-        "${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query"
+    coffee_library (
+        TARGET coffee-nvidia
+        LINKAGE SHARED
+        SOURCES
+        private/query/nvidia_query.cpp
+
+        LIBRARIES
+        ${NVIDIAML_LIBRARIES}
+        CoffeeCore
+
+        HEADER_DIRS
+        ${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query
         )
 
     target_include_directories( "coffee-nvidia"
@@ -28,10 +37,19 @@ if(NVIDIAML_FOUND)
 endif()
 
 if(LIBDRM_FOUND AND FALSE)
-    coffee_add_elibrary ( "coffee-libdrm" SHARED
-        "private/query/libdrm_query.cpp;private/query/libdrm_query.c"
-        "${LIBDRM_LIBRARIES};CoffeeCore"
-        "${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query"
+    coffee_library (
+        TARGET coffee-libdrm
+        LINKAGE SHARED
+        SOURCES
+        private/query/libdrm_query.cpp
+        private/query/libdrm_query.c
+
+        LIBRARIES
+        ${LIBDRM_LIBRARIES}
+        CoffeeCore
+
+        HEADER_DIRS
+        ${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query
         )
 
     target_include_directories( "coffee-libdrm"
