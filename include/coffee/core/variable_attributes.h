@@ -60,9 +60,12 @@
 
 #endif
 
-#if defined(__has_cpp_attribute ) && __has_cpp_attribute(nodiscard) && \
-    (__cplusplus >= 201703L)
+#if defined(__has_cpp_attribute ) && (__cplusplus >= 201703L)
+
+#if __has_cpp_attribute(nodiscard)
 #define NO_DISCARD [[nodiscard]]
+#endif
+
 #elif defined(COFFEE_GCC)
 #define NO_DISCARD [[gnu::warn_unused_result]]
 #elif defined(COFFEE_CLANG)
