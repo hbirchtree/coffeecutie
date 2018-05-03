@@ -59,14 +59,14 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
                                       ApplicationData().application_name,
                                       slot);
 
-    static DataStatus data_status = {0, 0, data_ptr, data_size};
+    static DataStatus data_status = {0, 0, data.data, data.size};
     emscripten_idb_async_load(ApplicationData().organization_name.c_str(),
                               save_file.c_str(),
                               &data_status,
                               emscripten_callback_load,
                               emscripten_callback_error);
 
-    return *data_size;
+    return data.size;
 #else
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
     cVerbose(8, "Pre-creating resource");

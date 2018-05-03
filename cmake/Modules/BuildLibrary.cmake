@@ -315,7 +315,7 @@ macro(COFFEE_LIBRARY)
             RUNTIME DESTINATION "lib/${ANDROID_ABI}"
             PUBLIC_HEADER DESTINATION include
             )
-    else()
+    elseif(NOT (APPLE AND NOT IOS))
         install(
             TARGETS ${LIB_TARGET}
 
