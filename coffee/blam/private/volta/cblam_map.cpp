@@ -1,4 +1,5 @@
 #include <coffee/blam/volta/cblam_map.h>
+#include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/plat/plat_memory.h>
 
 namespace Coffee{
@@ -47,7 +48,8 @@ tag_index_t tag_index_get(
 {
     const tag_index_t* tgi = tag_index_ptr(file);
     tag_index_t dupe;
-    MemCpy(&dupe,tgi,sizeof(tag_index_t));
+    MemCpy(Bytes::Create(*tgi), Bytes::Create(dupe));
+//    MemCpy(&dupe,tgi,sizeof(tag_index_t));
     tag_index_magic(&dupe,file->tagIndexOffset);
     return dupe;
 }

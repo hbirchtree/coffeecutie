@@ -31,10 +31,7 @@ struct CGLUtil
         GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_WIDTH,&tsize.w);
         GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_HEIGHT,&tsize.h);
 
-        Bytes data = {};
-
-        data.size = tsize.area()*4;
-        data.data = (ubyte_t*)Alloc(data.size);
+        Bytes data = Bytes::Alloc(C_FCAST<szptr>(tsize.area() * 4));
 
         GL::TexBind(t,h);
         GL::TexGetImage(t,0,PixelComponents::RGBA,PixelFormat::RGBA8,data);

@@ -736,7 +736,7 @@ void GLEAM_API::SetShaderUniformState(
     {
         if(!feval(u.second.stages&stage))
             continue;
-        CByteData const* db = u.second.value->data;
+        Bytes const* db = u.second.value->data;
         if(!db)
             continue;
 

@@ -1,7 +1,7 @@
-#ifndef COFFEE_PLAT_ENVIRONMENT_STACKTRACE_DEF_H
-#define COFFEE_PLAT_ENVIRONMENT_STACKTRACE_DEF_H
+#pragma once
 
-#include "../../types/basetypes.h"
+#include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
 
@@ -66,5 +66,3 @@ struct StacktracerDef
 };
 
 }
-
-#endif

@@ -20,7 +20,8 @@ bool readwrite_file()
     Profiler::Profile("Reading time");
 
     CResources::Resource rsc(testFileDupe);
-    INI::Write(doc2,rsc);
+    CString docData = INI::Write(doc2);
+    rsc = Bytes::CreateString(docData.c_str());
     CResources::FileCommit(rsc);
     CResources::FileFree(rsc);
     Profiler::Profile("Write-back");
@@ -60,7 +61,8 @@ bool write_file()
 
     CResources::Resource rsc(testfile);
     Profiler::Profile("File object");
-    INI::Write(doc,rsc);
+    CString docData = INI::Write(doc);
+    rsc = Bytes::CreateString(docData.c_str());
     Profiler::Profile("Writing object to file");
     CResources::FileCommit(rsc,false,ResourceAccess::Discard);
     Profiler::Profile("Committing file");

@@ -1,11 +1,13 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CThreading>
+#include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/CDebug>
 
 using namespace Coffee;
 
 bool workload_test()
 {
+
     struct DataSet
     {
         CSize64 size;
@@ -14,36 +16,38 @@ bool workload_test()
     data.size.w = 1024*1024;
     data.size.h = 1024;
 
-    data.value = C_CAST<uint8*>(Alloc(data.size.area()));
+    Bytes workspace = Bytes::Alloc(data.size.area());
 
-    if(!data.value)
-    {
-        cDebug("Failed to allocate {0} B of memory",data.size.area());
-        /* If we fail to allocate the memory, try again with less memory, reducing it */
-        /* This may be a problem with low-memory systems (eg. RPi) */
-        uint64 sz = 1024;
-        while(!data.value)
-        {
-            sz /= 2;
+    data.value = C_CAST<uint8*>(workspace.data);
 
-            data.size.w = sz * sz;
-            data.size.h = sz;
+//    if(!data.value)
+//    {
+//        cDebug("Failed to allocate {0} B of memory",data.size.area());
+//        /* If we fail to allocate the memory, try again with less memory, reducing it */
+//        /* This may be a problem with low-memory systems (eg. RPi) */
+//        uint64 sz = 1024;
+//        while(!data.value)
+//        {
+//            sz /= 2;
 
-            cDebug("Reducing to {0} B of memory",data.size.area());
+//            data.size.w = sz * sz;
+//            data.size.h = sz;
 
-            data.value = C_CAST<uint8*>(Alloc(data.size.area()));
+//            cDebug("Reducing to {0} B of memory",data.size.area());
 
-            if(sz <= 2)
-                break;
-        }
+//            data.value = C_CAST<uint8*>(Alloc(data.size.area()));
 
-        if(!data.value)
-        {
-            cWarning("Failed to allocate memory :(");
-            return false;
-        }else
-            cDebug("Settling with {0} B of memory",data.size.area());
-    }
+//            if(sz <= 2)
+//                break;
+//        }
+
+//        if(!data.value)
+//        {
+//            cWarning("Failed to allocate memory :(");
+//            return false;
+//        }else
+//            cDebug("Settling with {0} B of memory",data.size.area());
+//    }
 
 	Profiler::Profile("Memory allocation");
 

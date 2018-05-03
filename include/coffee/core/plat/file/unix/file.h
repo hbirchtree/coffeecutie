@@ -106,22 +106,28 @@ struct PosixFileFun_def : PosixFileMod_def
         return true;
     }
 
-    STATICINLINE CByteData Read(FH* f_h, int64 f_size, bool nullterm)
+    STATICINLINE Bytes Read(FH* f_h, int64 f_size, bool nullterm)
     {
-        CByteData data;
+        Bytes data = {};
 
         int64 sz = Size(f_h);
 
         if(f_size <= sz && f_size != -1)
             sz = f_size;
 
+        if(sz == 0)
+            return data;
+
         szptr szp = C_CAST<szptr>(sz) + ((nullterm) ? 1 : 0);
 
-        data.data = C_CAST<byte_t*>(Calloc(1, szp));
-        data.size = szp + nullterm;
+        data = Bytes::Alloc(szp + nullterm);
+
 
         if(nullterm)
+        {
+            data.data[szp] = 0;
             szp--;
+        }
 
         if(!data.data)
             return {};
@@ -151,7 +157,7 @@ struct PosixFileFun_def : PosixFileMod_def
         return false;
     }
 
-    STATICINLINE bool Write(FH* f_h, CByteData const& d, bool)
+    STATICINLINE bool Write(FH* f_h, Bytes const& d, bool)
     {
         if(!f_h)
             return false;

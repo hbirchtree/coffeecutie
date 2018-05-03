@@ -4,10 +4,10 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/types/tdef/integertypes.h>
 
-namespace Coffee{
-namespace DataStorage{
-namespace TextStorage{
-namespace CINI{
+namespace Coffee {
+namespace DataStorage {
+namespace TextStorage {
+namespace CINI {
 
 struct IniParserDef
 {
@@ -51,11 +51,11 @@ struct SimpleIniParser : IniParserDef
             return v4;
         }
 
-        int64& operator=(int64 const&v)
+        int64& operator=(int64 const& v)
         {
             return v1 = v;
         }
-        bigscalar& operator=(bigscalar const&v)
+        bigscalar& operator=(bigscalar const& v)
         {
             return v2 = v;
         }
@@ -69,33 +69,25 @@ struct SimpleIniParser : IniParserDef
             return v4 = v;
         }
 
-    protected:
+      protected:
         union
         {
-            int64 v1;
+            int64     v1;
             bigscalar v2;
-            bool v4;
+            bool      v4;
         };
         CString v3;
 
-        variant_t(int64 v):
-            type(Integer),
-            v1(v)
+        variant_t(int64 v) : type(Integer), v1(v)
         {
         }
-        variant_t(bigscalar v):
-            type(Float),
-            v2(v)
+        variant_t(bigscalar v) : type(Float), v2(v)
         {
         }
-        variant_t(cstring v):
-            type(String),
-            v3(v)
+        variant_t(cstring v) : type(String), v3(v)
         {
         }
-        variant_t(bool v):
-            type(Bool),
-            v4(v)
+        variant_t(bool v) : type(Bool), v4(v)
         {
         }
     };
@@ -106,26 +98,26 @@ struct SimpleIniParser : IniParserDef
 
         void insertValue(cstring name, variant_t* v)
         {
-            m_values.insert(Pair<CString,variant_t*>(name,v));
+            m_values.insert(Pair<CString, variant_t*>(name, v));
         }
         variant_t* value(cstring name)
         {
             auto it = m_values.find(name);
-            if(it==m_values.end())
+            if(it == m_values.end())
                 return nullptr;
             return it->second;
         }
 
-        MultiMap<CString,variant_t*> const& values() const
+        MultiMap<CString, variant_t*> const& values() const
         {
             return m_values;
         }
 
-    protected:
+      protected:
         section_t()
         {
         }
-        MultiMap<CString,variant_t*> m_values;
+        MultiMap<CString, variant_t*> m_values;
     };
 
     struct document_t
@@ -164,66 +156,68 @@ struct SimpleIniParser : IniParserDef
         /* Section insertion/extraction */
         void insertSection(cstring name, section_t* s)
         {
-            m_section_map.insert(Pair<CString,section_t*>(name,s));
+            m_section_map.insert(Pair<CString, section_t*>(name, s));
         }
         section_t* section(cstring name)
         {
             auto it = m_section_map.find(name);
-            if(it==m_section_map.end())
+            if(it == m_section_map.end())
                 return nullptr;
             return it->second;
         }
         /* Global values */
         void insertValue(cstring name, variant_t* v)
         {
-            m_variant_map.insert(Pair<CString,variant_t*>(name,v));
+            m_variant_map.insert(Pair<CString, variant_t*>(name, v));
         }
         variant_t* value(cstring name)
         {
             auto it = m_variant_map.find(name);
-            if(it==m_variant_map.end())
+            if(it == m_variant_map.end())
                 return nullptr;
             return it->second;
         }
 
-        MultiMap<CString,variant_t*> const& values() const
+        MultiMap<CString, variant_t*> const& values() const
         {
             return m_variant_map;
         }
-        MultiMap<CString,section_t*> const& sections() const
+        MultiMap<CString, section_t*> const& sections() const
         {
             return m_section_map;
         }
 
-    protected:
+      protected:
         LinkList<section_t> section_containment;
         LinkList<variant_t> variant_containment;
 
-        MultiMap<CString,variant_t*> m_variant_map;
-        MultiMap<CString,section_t*> m_section_map;
+        MultiMap<CString, variant_t*> m_variant_map;
+        MultiMap<CString, section_t*> m_section_map;
     };
 
-    static document_t Read(CResources::Resource const& source, bool unixmode = true);
+    static document_t Read(
+        Bytes const& source, bool unixmode = true);
 
-
-    static bool Write(document_t const& doc,CResources::Resource& target);
+    static CString Write(document_t const& doc);
 
     using Document = document_t;
-    using Variant = variant_t*;
-    using Section = section_t*;
+    using Variant  = variant_t*;
+    using Section  = section_t*;
 
-protected:
-    static void PairToString(Pair<CString,variant_t*> const& v,
-                             CString& t1, CString& outdata, cstring linesep);
-
+  protected:
+    static void PairToString(
+        Pair<CString, variant_t*> const& v,
+        CString&                         t1,
+        CString&                         outdata,
+        cstring                          linesep);
 };
 
-}
-}
-}
+} // namespace CINI
+} // namespace TextStorage
+} // namespace DataStorage
 
 using INI = DataStorage::TextStorage::CINI::SimpleIniParser;
 
-}
+} // namespace Coffee
 
 #endif

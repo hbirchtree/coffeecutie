@@ -201,10 +201,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     g = {};
 
-    {
-        szptr restore_size = sizeof(d->r_state);
-        Store::RestoreMemory(&d->r_state, &restore_size, 0);
-    }
+    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
     
     d->gq_data.haveGpuQuery = GpuInfo::LoadDefaultGpuQuery(&d->gq_data.fun);
     
@@ -530,7 +527,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
+//    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
 
@@ -599,7 +596,7 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Render frame", Profiling::DataPoint::Hot);
+//    ProfContext a("Render frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
     
@@ -712,7 +709,7 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
     GLM::UnloadAPI();
 
     cDebug("Saving time: {0}", d->r_state.time_base);
-    Store::SaveMemory(&d->r_state, sizeof(d->r_state), 0);
+    Store::SaveMemory(Bytes::Create(d->r_state), 0);
 }
 
 void frame_count(RendererState* d)

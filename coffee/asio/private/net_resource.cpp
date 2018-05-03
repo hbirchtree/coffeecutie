@@ -1,8 +1,9 @@
 #include <coffee/asio/net_resource.h>
 
 #include <coffee/core/string_casting.h>
-#include <coffee/core/CDebug>
 #include <coffee/core/base/textprocessing/cregex.h>
+#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/CDebug>
 
 #define NETRSC_TAG "NetRsc::"
 
@@ -225,8 +226,9 @@ bool Resource::push(CString const& method, const Bytes &data)
 
     if(data.size)
     {
-        m_request.payload.resize(data.size);
-        MemCpy(m_request.payload.data(), data.data, data.size);
+        m_request.payload.reserve(data.size);
+        MemCpy(data, m_request.payload);
+//        MemCpy(m_request.payload.data(), data.data, data.size);
     }
 
     bool result = false;

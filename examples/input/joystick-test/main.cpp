@@ -5,12 +5,14 @@
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2WindowHost>
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/core/CDebug>
+#include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/core/types/map.h>
 #include <coffee/image/cimage.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 using namespace Display;
@@ -48,7 +50,8 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
     }
 
     CRGBA* data = C_CAST<CRGBA*>(instance->mapTexture(out));
-    MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
+    MemCpy(C_OCAST<Bytes>(img), Bytes::From(data, img.size.area() * img.bpp));
+//    MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
     instance->unmapTexture(out);
 
     stb::ImageFree(&img);

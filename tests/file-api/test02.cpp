@@ -14,8 +14,9 @@ byte_t sample_storage[Unit_kB*100] = {
 bool filewrite_test()
 {
     CResources::Resource rsc(small_map_test);
-    rsc.data = sample_storage;
-    rsc.size = sizeof(sample_storage);
+
+    rsc = Bytes::From(sample_storage, sizeof(sample_storage));
+
     return CResources::FileCommit(rsc,false,ResourceAccess::WriteOnly|ResourceAccess::Discard|ResourceAccess::NewFile);
 }
 

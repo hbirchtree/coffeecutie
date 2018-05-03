@@ -394,7 +394,10 @@ i32 coffee_main(i32, cstring_w*)
         FileOpenMap(
             output, outputData.size(), RSCA::ReadWrite | RSCA::Persistent);
 
-        MemCpy(output.data, outputData.data(), output.size);
+        Bytes outputView = output;
+
+        MemCpy(outputData, outputView);
+//        MemCpy(output.data, outputData.data(), output.size);
     }
 
     return 0;

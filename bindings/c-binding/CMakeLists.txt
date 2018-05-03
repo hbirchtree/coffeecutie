@@ -15,11 +15,12 @@ if(COFFEE_NO_DYNAMIC_LINKING)
     set ( LINK_MODE STATIC )
 endif()
 
-coffee_add_elibrary (
-    Cappuccino ${LINK_MODE}
-    "${Cappuccino_SRCS}"
-    "${Cappuccino_LIBS}"
-    "${Cappuccino_HDRS}"
+coffee_library (
+    TARGET  Cappuccino
+    LINKAGE ${LINK_MODE}
+    SOURCES ${Cappuccino_SRCS}
+    LIBRARIES ${Cappuccino_LIBS}
+    HEADER_DIRS ${Cappuccino_HDRS}
     )
 
 target_include_directories ( Cappuccino

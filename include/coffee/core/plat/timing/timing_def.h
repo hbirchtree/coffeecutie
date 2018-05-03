@@ -101,7 +101,7 @@ struct PosixIshTimeDef : public TimeDef
 namespace CFunctional{
 
 template<typename time_base, typename clock_type>
-class C_DEPRECATED _cbasic_timer_chrono_base :
+class _cbasic_timer_chrono_base :
         public _cbasic_timer<clock_type>
 {
 protected:
@@ -122,7 +122,7 @@ public:
     }
 };
 
-class C_DEPRECATED _cbasic_timer_scalar_micro :
+class _cbasic_timer_scalar_micro :
         public _cbasic_timer_chrono_base<Chronology::microseconds,bigscalar>
 {
 public:
@@ -132,7 +132,7 @@ public:
     }
 };
 
-class C_DEPRECATED _cbasic_timer_milli :
+class _cbasic_timer_milli :
         public _cbasic_timer_chrono_base<Chronology::milliseconds,u64>
 {
 public:
@@ -142,7 +142,7 @@ public:
     }
 };
 
-class C_DEPRECATED _cbasic_timer_micro :
+class _cbasic_timer_micro :
         public _cbasic_timer_chrono_base<Chronology::microseconds,u64>
 {
 public:

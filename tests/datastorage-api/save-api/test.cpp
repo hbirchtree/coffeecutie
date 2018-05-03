@@ -35,7 +35,7 @@ bool save_to_disk()
     szptr data_size = sizeof(data);
 
     cVerbose(5, "Separate operation");
-    Store::RestoreMemory(&data, &data_size);
+    Store::RestoreMemory(Bytes::Create(data));
 
     cDebug("On-disk: {0}", C_CAST<CString>(data));
 
@@ -47,12 +47,12 @@ bool save_to_disk()
     TestStructure data_cpy = data;
 
     cVerbose(5, "Separate operation");
-    Store::SaveMemory(&data, sizeof(data));
+    Store::SaveMemory(Bytes::Create(data));
 
     data_size = sizeof(data);
 
     cVerbose(5, "Separate operation");
-    Store::RestoreMemory(&data, &data_size);
+    Store::RestoreMemory(Bytes::Create(data));
 
     cDebug("In-memory: {0}", C_CAST<CString>(data_cpy));
     cDebug("On-disk: {0}", C_CAST<CString>(data));

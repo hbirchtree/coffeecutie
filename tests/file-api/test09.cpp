@@ -7,8 +7,7 @@ using FileInterface = FileFunDef;
 using NativeFileInterface = FileFun;
 
 template<typename FileApi,
-         typename std::enable_if<
-             std::is_base_of<FileFunDef, FileApi>::value>::type* = nullptr>
+         typename implements<FileFunDef, FileApi>::type* = nullptr>
 bool api_test()
 {
     /* This test suite tests whether the function signature of the
@@ -23,7 +22,7 @@ bool api_test()
                              |ResourceAccess::Discard
                              |ResourceAccess::WriteOnly);
     FileApi::Seek(hnd, 0);
-    FileApi::Read(hnd, 0, false);
+    FileApi::Read(hnd, 1, false);
     FileApi::Write(hnd, Bytes(), false);
     FileApi::Size(hnd);
     FileApi::Close(hnd);
@@ -61,7 +60,7 @@ bool test_url_version(RSCA access)
 
 		cDebug("URL mapping({1}): test -> {0}", test_string, StrUtil::pointerify(C_CAST<u32>(access)));
 	}
-	catch (std::runtime_error const& e)
+    catch (std::runtime_error const&)
 	{
 		return false;
 	}

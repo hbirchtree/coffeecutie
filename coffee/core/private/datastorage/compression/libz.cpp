@@ -4,37 +4,38 @@
 
 #include <zlib.h>
 
-namespace Coffee{
-namespace Compression{
+namespace Coffee {
+namespace Compression {
 
 using Opts = LibZCompressor::Opts;
 
-using inflate_init_fun = int(*)(z_streamp, const char*, int);
-using deflate_init_fun = int(*)(z_streamp, int, const char*, int);
+using inflate_init_fun = int (*)(z_streamp, const char*, int);
+using deflate_init_fun = int (*)(z_streamp, int, const char*, int);
 
-using process_fun = int(*)(z_streamp, int);
+using process_fun = int (*)(z_streamp, int);
 
-using end_fun = int(*)(z_streamp);
+using end_fun = int (*)(z_streamp);
 
-template<inflate_init_fun InitI = nullptr,
-         deflate_init_fun InitD = nullptr,
-         process_fun Proc = nullptr,
-         end_fun End = nullptr>
+template<
+    inflate_init_fun InitI = nullptr,
+    deflate_init_fun InitD = nullptr,
+    process_fun      Proc  = nullptr,
+    end_fun          End   = nullptr>
 bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
 {
     Vector<byte_t> compress_store;
     compress_store.resize(opts.chunk_size);
 
     z_stream strm;
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
+    strm.zalloc = nullptr;
+    strm.zfree  = nullptr;
+    strm.opaque = nullptr;
 
-    strm.avail_out = opts.chunk_size;
-    strm.next_out = compress_store.data();
+    strm.avail_out = C_FCAST<u32>(opts.chunk_size);
+    strm.next_out  = compress_store.data();
 
-    strm.avail_in = input.size;
-    strm.next_in = input.data;
+    strm.avail_in = C_FCAST<u32>(input.size);
+    strm.next_in  = input.data;
 
     int ret = Z_OK;
 
@@ -49,7 +50,7 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
     while(strm.avail_in > 0)
     {
         auto comp_size = compress_store.size();
-        ret = Proc(&strm, Z_NO_FLUSH);
+        ret            = Proc(&strm, Z_NO_FLUSH);
 
         if(ret != Z_OK && ret != Z_STREAM_END)
             return false;
@@ -57,8 +58,8 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
         if(strm.avail_out == 0 && strm.avail_in > 0)
         {
             compress_store.resize(comp_size + opts.chunk_size);
-            strm.avail_out = opts.chunk_size;
-            strm.next_out = &compress_store[comp_size];
+            strm.avail_out = C_FCAST<u32>(opts.chunk_size);
+            strm.next_out  = &compress_store[comp_size];
         }
     }
 
@@ -75,8 +76,8 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
             {
                 auto comp_size = compress_store.size();
                 compress_store.resize(comp_size + opts.chunk_size);
-                strm.avail_out = opts.chunk_size;
-                strm.next_out = &compress_store[comp_size];
+                strm.avail_out = C_FCAST<u32>(opts.chunk_size);
+                strm.next_out  = &compress_store[comp_size];
             }
         } while(ret != Z_STREAM_END);
     }
@@ -88,88 +89,78 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
 
     szptr out_size = compress_store.size() - strm.avail_out;
 
-    output->data = C_FCAST<byte_t*>(Alloc(out_size));
-    output->size = out_size;
-    Bytes::SetDestr(*output, [](Bytes& d)
-    {
-        CFree(d.data);
-    });
+    (*output) = Bytes::Alloc(out_size);
 
-    MemCpy(output->data, compress_store.data(), output->size);
+    MemCpy(Bytes::CreateFrom(compress_store).at(0, output->size), *output);
 
     return true;
 }
 
 bool LibZCompressor::Compress(
-        Bytes const& uncompressed, Bytes* target, Opts const& opts)
+    Bytes const& uncompressed, Bytes* target, Opts const& opts)
 {
-    return compression_routine<
-            nullptr, deflateInit_, deflate, deflateEnd>
-            (uncompressed, target, opts);
+    return compression_routine<nullptr, deflateInit_, deflate, deflateEnd>(
+        uncompressed, target, opts);
 }
 
 bool LibZCompressor::Decompress(
-        Bytes const& compressed, Bytes* target, Opts const& opts)
+    Bytes const& compressed, Bytes* target, Opts const& opts)
 {
-    return compression_routine<
-            inflateInit_, nullptr, inflate, inflateEnd>
-            (compressed, target, opts);
+    return compression_routine<inflateInit_, nullptr, inflate, inflateEnd>(
+        compressed, target, opts);
 }
 
-}
-}
+} // namespace Compression
+} // namespace Coffee
 #elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
+#include <coffee/core/CDebug>
 #include <coffee/core/plat/plat_windows.h>
 #include <compressapi.h>
-#include <coffee/core/CDebug>
 
-namespace Coffee{
-namespace Compression{
+namespace Coffee {
+namespace Compression {
 
 bool LibZCompressor::Compress(
-        Bytes const& uncompressed, Bytes* target, Opts const& opts)
+    Bytes const& uncompressed, Bytes* target, Opts const& opts)
 {
     COMPRESSOR_HANDLE cHnd = nullptr;
 
-    auto succ = ::CreateCompressor(
-            COMPRESS_ALGORITHM_LZMS,
-            nullptr, &cHnd);
+    auto succ = ::CreateCompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &cHnd);
 
     if(!succ)
     {
-        cWarning("LibZCompressor::Failed to create"
-                 " compressor: {0}",
-                 win_strerror(GetLastError()));
+        cWarning(
+            "LibZCompressor::Failed to create"
+            " compressor: {0}",
+            win_strerror(GetLastError()));
         return false;
     }
 
     SIZE_T compSize = 0;
 
     succ = ::Compress(
-        cHnd,
-        uncompressed.data, uncompressed.size,
-        nullptr, 0, &compSize);
+        cHnd, uncompressed.data, uncompressed.size, nullptr, 0, &compSize);
 
     if(compSize == 0 || !succ)
     {
-        cWarning("LibZCompressor::Failed to estimate"
-                 " compressed size: {0}",
-                 win_strerror(GetLastError()));
+        cWarning(
+            "LibZCompressor::Failed to estimate"
+            " compressed size: {0}",
+            win_strerror(GetLastError()));
     }
 
     target->data = C_RCAST<byte_t*>(Alloc(compSize));
     target->size = compSize;
-    Bytes::SetDestr(*target, [](Bytes& b)
-    {
-        CFree(b.data);
-    });
+    Bytes::SetDestr(*target, [](Bytes& b) { CFree(b.data); });
 
     succ = ::Compress(
-            cHnd,
-            uncompressed.data, uncompressed.size,
-            target->data, target->size,
-            &compSize);
+        cHnd,
+        uncompressed.data,
+        uncompressed.size,
+        target->data,
+        target->size,
+        &compSize);
 
     ::CloseCompressor(cHnd);
 
@@ -177,56 +168,52 @@ bool LibZCompressor::Compress(
 }
 
 bool LibZCompressor::Decompress(
-        Bytes const& compressed, Bytes* target, Opts const& opts)
+    Bytes const& compressed, Bytes* target, Opts const& opts)
 {
     DECOMPRESSOR_HANDLE cHnd = nullptr;
 
-    auto succ = ::CreateDecompressor(
-            COMPRESS_ALGORITHM_LZMS,
-            nullptr, &cHnd);
+    auto succ = ::CreateDecompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &cHnd);
 
     if(!succ)
     {
-        cWarning("LibZCompressor::Failed to create decompressor: {0}",
-                 win_strerror(GetLastError()));
+        cWarning(
+            "LibZCompressor::Failed to create decompressor: {0}",
+            win_strerror(GetLastError()));
         return false;
     }
 
     SIZE_T compSize = 0;
 
     succ = ::Decompress(
-            cHnd,
-            compressed.data, compressed.size,
-            nullptr, 0,
-            &compSize);
+        cHnd, compressed.data, compressed.size, nullptr, 0, &compSize);
 
     if(compSize == 0 || !succ)
     {
-        cWarning("LibZCompressor::Failed to estimate"
-                 " decompressed size: {0}",
-                 win_strerror(GetLastError()));
+        cWarning(
+            "LibZCompressor::Failed to estimate"
+            " decompressed size: {0}",
+            win_strerror(GetLastError()));
         return false;
     }
 
     target->data = C_RCAST<byte_t*>(Alloc(compSize));
     target->size = compSize;
-    Bytes::SetDestr(*target, [](Bytes& b)
-    {
-        CFree(b.data);
-    });
+    Bytes::SetDestr(*target, [](Bytes& b) { CFree(b.data); });
 
     succ = ::Decompress(
-            cHnd,
-            compressed.data, compressed.size,
-            target->data, target->size,
-            &compSize);
+        cHnd,
+        compressed.data,
+        compressed.size,
+        target->data,
+        target->size,
+        &compSize);
 
     ::CloseDecompressor(cHnd);
 
     return true;
 }
 
-}
-}
+} // namespace Compression
+} // namespace Coffee
 
 #endif

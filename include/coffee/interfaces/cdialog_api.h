@@ -4,6 +4,9 @@
 #include <coffee/core/coffee_macros.h>
 #include <coffee/core/types/composite_types.h>
 #include <coffee/core/base/threading/cthreading.h>
+#include <coffee/core/types/edef/colorenum.h>
+#include <coffee/core/types/edef/dbgenum.h>
+#include <coffee/core/types/edef/pixenum.h>
 
 namespace Coffee{
 

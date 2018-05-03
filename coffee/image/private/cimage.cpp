@@ -1,6 +1,7 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
 #include <coffee/image/cimage.h>
+#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/CDebug>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
@@ -107,7 +108,8 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     else
         target->data = ReallocT<byte_t>(target->data, target->size);
 
-    MemCpy(&target->data[offset], data, C_FCAST<szptr>(size));
+    MemCpy(Bytes::From(data, size), *target);
+//    MemCpy(&target->data[offset], data, C_FCAST<szptr>(size));
 }
 
 /*!

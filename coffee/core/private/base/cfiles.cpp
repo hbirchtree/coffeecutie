@@ -76,6 +76,9 @@ Resource::operator Path() const
 
 Resource::operator Bytes()
 {
+    if(data && size)
+        return Bytes::From(data, size);
+
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
         return FileGetDescriptor(*this);
     else
@@ -218,7 +221,8 @@ bool FilePull(Resource& resc, bool textmode, bool)
         return false;
     }
 
-    CByteData data = FileFun::Read(fp, -1, textmode);
+    Bytes data = FileFun::Read(fp, -1, textmode);
+    data.disown(); /* Relinquish ownership of data */
     resc.data      = data.data;
     resc.size      = data.size;
     if(!FileFun::Close(fp))
@@ -255,10 +259,7 @@ bool FileCommit(Resource& resc, bool append, ResourceAccess acc)
         return false;
     }
 
-    CByteData d;
-    d.data    = (byte_t*)resc.data;
-    d.size    = resc.size;
-    bool stat = FileFun::Write(fp, d, false);
+    bool stat = FileFun::Write(fp, resc, false);
 
     if(!FileFun::Close(fp))
     {

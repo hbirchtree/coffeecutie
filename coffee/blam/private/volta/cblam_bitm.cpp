@@ -1,10 +1,12 @@
 #include <coffee/blam/volta/cblam_bitm.h>
 
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/CImage>
 #include <coffee/core/CMath>
 #include <coffee/blam/volta/cblam_bitm_decoders.h>
+#include <coffee/core/types/cdef/memsafe.h>
+
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 namespace Blam{
@@ -16,7 +18,8 @@ bitm_header_t _bitm_get_header(const void* base, int32 offset)
 	bitm_header_t hdr = {};
     if(ptr->imageCount < 1)
         return hdr;
-    MemCpy(&hdr,ptr,sizeof(bitm_header_t));
+    MemCpy(Bytes::Create(*ptr), Bytes::Create(hdr));
+//    MemCpy(&hdr,ptr,sizeof(bitm_header_t));
     return hdr;
 }
 

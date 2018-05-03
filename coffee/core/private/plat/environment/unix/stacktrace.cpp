@@ -3,6 +3,7 @@
 #if defined(COFFEE_UNIXPLAT)
 
 #include <coffee/core/coffee_assert_macros.h>
+#include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/core/CRegex>
 
@@ -20,9 +21,13 @@ namespace Posix{
 CString PosixStacktracer::DemangleSymbol(const char *sym)
 {
     int32 stat = 0;
-    cstring_w symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
+    Ptr<char> symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
     if(stat==0)
-        return CString(symbol);
+    {
+        CString outSymbol = symbol.ptr;
+        CFree(symbol);
+        return outSymbol;
+    }
     else
         return sym;
 }

@@ -26,16 +26,16 @@
 #define C_MAYBE_UNUSED
 #endif
 
-#if (__cplusplus >= 201403L) && 0
+#if (__cplusplus >= 201403L)
 #define C_DEPRECATED [[deprecated]]
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 
 #elif (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) \
-    && !defined(COFFEE_MAEMO) && 0
+    && !defined(COFFEE_MAEMO)
 #define C_DEPRECATED __attribute__((deprecated))
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 
-#elif defined(COFFEE_MSVC) && 0
+#elif defined(COFFEE_MSVC)
 #define C_DEPRECATED __declspec(deprecated)
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 

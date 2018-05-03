@@ -108,13 +108,18 @@ endif()
 include ( WindowsPlatformDetect )
 
 # Enabling ASan/TSan/UBSan
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     if(COFFEE_ASAN OR COFFEE_TSAN OR COFFEE_UBSAN)
         if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
             message ( WARNING "Sanitizers should run in Debug mode!" )
         endif()
 
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer" )
+    endif()
+
+    if(BUILD_COVERAGE AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        set ( CMAKE_CXX_FLAGS
+            "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping" )
     endif()
 
     if(COFFEE_ASAN)
@@ -126,4 +131,6 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     if(COFFEE_UBSAN)
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined" )
     endif()
+
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "" )
 endif()

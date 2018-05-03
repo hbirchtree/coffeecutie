@@ -174,7 +174,7 @@ struct MeshLoader
 
             while(ptr + Stride <= size)
             {
-                MemCpy(&raw_target[tptr], &raw_sauce[ptr], Size);
+                memcpy(&raw_target[tptr], &raw_sauce[ptr], Size);
 
                 ptr += Stride;
                 tptr += Size;
@@ -197,7 +197,7 @@ struct MeshLoader
         {
             if(!dest || !src)
                 return size;
-            MemCpy(dest, src, size);
+            memcpy(dest, src, size);
             return size;
         }
 
@@ -498,7 +498,10 @@ struct MeshLoader
             byte_t* basePtr = C_RCAST<byte_t*>(target);
             szptr offset = 0;
 
-            MemCpy(basePtr, &header, sizeof(header));
+            Bytes baseView = Bytes::From(basePtr, size);
+
+            MemCpy(Bytes::Create(header), baseView);
+//            MemCpy(basePtr, &header, sizeof(header));
             offset += sizeof(header);
             SerialNodeData* nodeData =
                     C_RCAST<SerialNodeData*>(&basePtr[offset]);
@@ -510,15 +513,16 @@ struct MeshLoader
                 newNode.type = node.type;
                 newNode.mesh = node.mesh;
                 newNode.objectName = 0; /* Must be set later */
-                MemCpy(&basePtr[offset], &newNode,
-                       sizeof(SerialNodeData));
+                MemCpy(Bytes::Create(newNode), baseView.at(offset));
+//                MemCpy(&basePtr[offset], &newNode, sizeof(SerialNodeData));
                 offset += sizeof(SerialNodeData);
             }
             for(auto i : Range<>(stringStore.size()))
             {
                 auto const& s = stringStore.at(i);
                 nodeData[i].objectName = offset;
-                MemCpy(&basePtr[offset], &s[0], s.size());
+                MemCpy(s, baseView.at(offset));
+//                MemCpy(&basePtr[offset], &s[0], s.size());
                 offset += s.size() + 1;
             }
 

@@ -55,38 +55,6 @@ template<typename T>
 FORCEDINLINE T ExtractIntegerPtr(void* ptr)
 {
     return C_CAST<T>(C_FCAST<uintptr_t>(ptr));
-//    struct MemPack
-//    {
-//        void* ptr;
-//        u64 _u64;
-//        u32 _u32;
-//        u16 _u16;
-//        u8 _u8;
-
-//        i64 _i64;
-//        i32 _i32;
-//        i16 _i16;
-//        i8 _i8;
-//    };
-
-//    MemPack m;
-//    m.ptr = ptr;
-
-//    constexpr bool sign = T(-1) < 0;
-
-//#define M_OP(bits) \
-//    case sizeof(u ## bits): return (sign) ? T(m._i ## bits) : T(m._u ## bits);
-
-//    switch(sizeof(T))
-//    {
-//    M_OP(64);
-//    M_OP(32);
-//    M_OP(16);
-//    M_OP(8);
-//    default:
-//        return T(0);
-//    }
-//#undef M_OP
 }
 
 /*!
