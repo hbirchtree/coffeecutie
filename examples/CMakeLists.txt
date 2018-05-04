@@ -88,7 +88,7 @@ endif()
 #
 
 # Examples of the CBlam API and its import of Blam engine data
-if(COFFEE_BUILD_CBLAM)
+if(COFFEE_BUILD_CBLAM AND COFFEE_BUILD_GLEAM AND COFFEE_BUILD_GLEAM_RHI)
     add_subdirectory (blam/cblam-testing)
 endif()
 

@@ -6,6 +6,7 @@ namespace Coffee{
 CString Strings::to_string(const AppArg &args)
 {
     CString out = "AppArg(";
+#ifndef COFFEE_LOWFAT
 
     bool touched = false;
 
@@ -16,6 +17,7 @@ CString Strings::to_string(const AppArg &args)
         ((out += "'") += (arg) ? arg : "NULL") += "'";
         touched = true;
     }
+#endif
 
     return out + ")";
 }

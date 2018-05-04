@@ -42,7 +42,7 @@ static bool ExtractUrlComponents(CString const& url,
 
 void Resource::initRsc(const Url &url)
 {
-    DProfContext a(NETRSC_TAG "Initializing NetResource");
+    DProfContext a(DTEXT(NETRSC_TAG "Initializing NetResource"));
 
     CString urlS = *url;
 
@@ -52,7 +52,7 @@ void Resource::initRsc(const Url &url)
                              &m_host, &resource))
     {
         cVerbose(10, "Failed to decode URL");
-        Profiler::DeepProfile(NETRSC_TAG "Failed to decode URL");
+        Profiler::DeepProfile(DTEXT(NETRSC_TAG "Failed to decode URL"));
         return;
     }else
         cVerbose(15, "URL components: {0} {1} {2} {3}",

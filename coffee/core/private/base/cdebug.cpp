@@ -37,12 +37,16 @@ void cLog(cstring id, cstring msg)
 
 void TerminalCursor::print_basic(CString const& fmt, CString const& output)
 {
+#ifndef COFFEE_LOWFAT
     DebugPrinter::cBasicPrint(fmt.c_str(), output);
+#endif
 }
 
 void TerminalCursor::print_nonl(CString const& fmt, CString const& output)
 {
+#ifndef COFFEE_LOWFAT
     DebugPrinter::cBasicPrintNoNL(fmt.c_str(), output);
+#endif
 }
 
 }

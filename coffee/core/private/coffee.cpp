@@ -108,7 +108,6 @@ static void CoffeeInit_Internal(u32 flags)
 #else
     Coffee::PrintingVerbosityLevel() = 1;
 #endif
-#endif
 
 #ifndef NDEBUG
     /* Allow core dump by default in debug mode */
@@ -149,7 +148,6 @@ static void CoffeeInit_Internal(u32 flags)
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
 
-#ifndef COFFEE_LOWFAT
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 #endif
@@ -167,11 +165,14 @@ int32 CoffeeMain(
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
     State::SetInternalThreadState(State::CreateNewThreadState());
+
+#ifndef COFFEE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
     SetApplicationData(State::GetAppData());
     /* BuildInfo contains information on the compiler, architecture
      *  and platform */
     SetBuildInfo(State::GetBuildInfo());
+#endif
 
     /* Create initial RuntimeQueue context for the user */
     RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext());
@@ -281,10 +282,8 @@ int32 CoffeeMain(
 
     Profiler::PopContext();
 
-#ifndef COFFEE_LOWFAT
     if(!(flags & SilentInit))
         cVerbose(1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
-#endif
 
     /* This is a bit more versatile than simple procedures
      */
@@ -293,6 +292,7 @@ int32 CoffeeMain(
     cVerbose(8, "Entering main function");
     Profiler::PushContext("main()");
 #endif
+
     int32 r = mainfun(argc, argv);
 
 #ifndef COFFEE_LOWFAT

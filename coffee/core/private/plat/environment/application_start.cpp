@@ -53,7 +53,9 @@ int deref_main(CoffeeMainWithArgs mainfun,
                int argc, char** argv,
                u32 flags = 0)
 {
+#ifndef COFFEE_LOWFAT
     cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
+#endif
 
 #if defined(COFFEE_GEKKO)
     GCVideoInit();

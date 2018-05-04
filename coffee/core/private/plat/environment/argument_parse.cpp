@@ -1,5 +1,6 @@
 #include <coffee/core/plat/environment/argument_parse.h>
 #include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/CDebug>
 
 #include <coffee/core/CFiles>

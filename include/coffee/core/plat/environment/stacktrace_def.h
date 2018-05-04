@@ -16,7 +16,11 @@ struct StacktracerDef
      */
     static CString GetTypeName()
     {
+#ifndef COFFEE_LOWFAT
         return typeid(T).name();
+#else
+        return {};
+#endif
     }
 
     /*!

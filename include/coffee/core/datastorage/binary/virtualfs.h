@@ -210,7 +210,7 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     VFile const& operator*() const
     {
         if(!m_file)
-            throw resource_error("non-existent virtual file");
+            Throw(resource_error("non-existent virtual file"));
         return *m_file;
     }
 

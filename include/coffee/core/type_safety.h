@@ -5,10 +5,32 @@
 #include <type_traits>
 #include <limits>
 #include <stdint.h>
+#include <stdlib.h>
+
+/* Wrap text that is used for debugging with this, and it will disappear
+ *  in release-mode */
+#ifndef COFFEE_LOWFAT
+#define DTEXT(text) text
+#else
+#define DTEXT(text) ""
+#endif
+
+/* For the future */
+#define LTEXT(text) text
 
 #define E_IF std::enable_if
 #define IS_CLS std::is_class
 #define IS_POLY std::is_polymorphic
+
+#ifndef COFFEE_LOWFAT
+template<typename T>
+[[noreturn]] inline void Throw(T&& exception)
+{
+    throw exception;
+}
+#else
+#define Throw(a) abort()
+#endif
 
 namespace Coffee{
 

@@ -2,6 +2,8 @@
 
 #include "../../coffee_mem_macros.h"
 #include "../../plat/plat_quirks_toggling.h"
+#include "standard_exceptions.h"
+#include "../cdef/ptr_wrap.h"
 
 /*Container types*/
 #include <array>
@@ -102,11 +104,18 @@ using Map = std::map<T1, T2>;
 template<typename T1, typename T2>
 using MultiMap = std::multimap<T1, T2>;
 
+#ifndef COFFEE_LOWFAT
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
 
 template<typename T, class Deleter = std::default_delete<T>>
 using UqPtr = std::unique_ptr<T, Deleter>;
+#else
+template<typename T>
+using ShPtr = Ptr<T>;
+template<typename T, class Deleter = std::default_delete<T>>
+using UqPtr = Ptr<T>;
+#endif
 
 template<typename T>
 using Complex = std::complex<T>;
@@ -200,7 +209,7 @@ struct range
             bool correct_rev = range_param::reversed && start > end;
 
             if(correct && correct_rev)
-                throw std::out_of_range("invalid range");
+                Throw(std::out_of_range("invalid range"));
 
             if(start == end)
                 m_idx = npos;
@@ -301,41 +310,14 @@ struct quick_container
 
 } // namespace Coffee
 
-/* Custom exception types, for more readability */
-
-struct resource_error : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
-struct implementation_error : std::invalid_argument
-{
-    using std::invalid_argument::invalid_argument;
-};
-
-struct releasemode_error : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
-struct undefined_behavior : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
-struct memory_error : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
 #define C_STR_HELPER(x) #x
 #define C_STR(x) C_STR_HELPER(x)
 
-#define C_PTR_CHECK(ptr)                                        \
-    if(!ptr)                                                    \
-        throw undefined_behavior("bad pointer deref: " __FILE__ \
-                                 ":" C_STR(__LINE__));
-#define C_THIS_CHECK                                              \
-    if(!this)                                                     \
-        throw undefined_behavior("bad access to *this: " __FILE__ \
-                                 ":" C_STR(__LINE__));
+#define C_PTR_CHECK(ptr)                                                \
+    if(!ptr)                                                            \
+        Throw(undefined_behavior("bad pointer deref: " __FILE__ \
+                                         ":" C_STR(__LINE__)));
+#define C_THIS_CHECK                                                      \
+    if(!this)                                                             \
+        Throw(undefined_behavior("bad access to *this: " __FILE__ \
+                                         ":" C_STR(__LINE__)));

@@ -17,6 +17,7 @@ struct mem_usage
 
 LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PID)
 {
+#ifndef COFFEE_LOWFAT
     CString mem_info = CResources::Linux::LinuxFileFun::sys_read("/proc/self/statm");
 
     mem_usage usage = {};
@@ -48,10 +49,14 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PI
     }
 
     return usage.vmrss;
+#else
+    return 0;
+#endif
 }
 
 bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
 {
+#ifndef COFFEE_LOWFAT
     CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
     CString maps_info = CResources::Linux::LinuxFileFun::sys_read(maps_file.c_str());
 
@@ -138,6 +143,9 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
     }
 
     return true;
+#else
+    return false;
+#endif
 }
 
 

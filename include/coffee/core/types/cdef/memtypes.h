@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../coffee_macros.h"
-#include "../../plat/memory/cmemory.h"
 #include "../tdef/integertypes.h"
+#include "../tdef/stltypes.h"
 #include <utility>
 
 namespace Coffee {
@@ -105,7 +105,7 @@ struct _cbasic_data_chunk
     {
 #if !defined(NDEBUG)
         if(!d)
-            throw implementation_error("abuse of SetDestr()");
+            Throw(implementation_error("abuse of SetDestr()"));
 #endif
         inst.m_destr = d;
     }
@@ -114,7 +114,7 @@ struct _cbasic_data_chunk
     {
 #if !defined(NDEBUG)
         if(num == 0)
-            throw implementation_error("allocating 0 bytes is bad");
+            Throw(implementation_error("allocating 0 bytes is bad"));
 #endif
         _cbasic_data_chunk<T> out;
 
@@ -221,7 +221,8 @@ struct _cbasic_data_chunk
         return out;
     }
 
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(_cbasic_data_chunk<T> const& src)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(
+        _cbasic_data_chunk<T> const& src)
     {
         using OutT = _cbasic_data_chunk<T>;
 
@@ -448,7 +449,7 @@ struct _cbasic_serial_array
         {
 #if !defined(NDEBUG)
             if(m_idx > m_base->m_size)
-                throw std::out_of_range("invalid access");
+                Throw(std::out_of_range("invalid access"));
             else
 #endif
                 return (*m_base)[m_idx];
@@ -476,7 +477,7 @@ struct _cbasic_serial_array
     {
 #if !defined(NDEBUG)
         if(i > m_size)
-            throw std::out_of_range("invalid access");
+            Throw(std::out_of_range("invalid access"));
         else
 #endif
             return m_data[i];

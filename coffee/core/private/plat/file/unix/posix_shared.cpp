@@ -6,6 +6,7 @@ namespace CResources{
 
 bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
 {
+#ifndef COFFEE_LOWFAT
     if(errno != 0)
     {
         char path[PATH_MAX] = {};
@@ -28,6 +29,7 @@ bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
         errno = 0;
         return true;
     }
+#endif
     return false;
 }
 

@@ -156,7 +156,7 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS* vfs, const VFile* file)
 ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
 {
     if(!vfs)
-        throw undefined_behavior(VIRTFS_API "got null vfs!");
+        Throw(undefined_behavior(VIRTFS_API "got null vfs!"));
 
     return {[=](Url const& path) { return VirtFS::Resource(vfs, path); },
             [=](Path const& query, Vector<Url>& output) {
