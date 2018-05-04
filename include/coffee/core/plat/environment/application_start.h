@@ -54,11 +54,11 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
 // This is loaded from AppDelegate.m in CoffeeWindow_GLKit
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     Coffee::CoffeeMainWithArgs apple_entry_point = mainfun;
-#error Lowfat mode is not supported on this platform
+
 #elif defined(COFFEE_ANDROID)
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     Coffee::CoffeeMainWithArgs android_entry_point = mainfun;
-#error Lowfat mode is not supported on this platform
+
 #endif
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
