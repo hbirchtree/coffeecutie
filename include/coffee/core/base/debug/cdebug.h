@@ -14,30 +14,6 @@ namespace Coffee{
 namespace DebugFun{
 using namespace Strings;
 
-namespace CDebugHelpers{
-//FORCEDINLINE void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
-//{
-//#ifndef COFFEE_LOWFAT
-//    OutputPrinter::fprintf(DefaultDebugOutputPipe,header);
-//    for(szptr i=0;i<stacksize;i++){
-//        OutputPrinter::fprintf(DefaultDebugOutputPipe,callfmt,callstack[i]);
-//        CFree(callstack[i]);
-//    }
-//    CFree(callstack);
-//#endif
-//}
-
-//FORCEDINLINE void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
-//{
-//#ifndef COFFEE_LOWFAT
-//    for(szptr i=0;i<stacksize;i++)
-//        CFree(callstack[i]);
-//    CFree(callstack);
-//#endif
-//}
-
-}
-
 /*!
  * \brief Different severities for debug messages
  */

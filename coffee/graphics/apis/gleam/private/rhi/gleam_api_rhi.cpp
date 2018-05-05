@@ -736,7 +736,7 @@ void GLEAM_API::SetShaderUniformState(
     {
         if(!feval(u.second.stages&stage))
             continue;
-        CByteData const* db = u.second.value->data;
+        Bytes const* db = u.second.value->data;
         if(!db)
             continue;
 
@@ -1132,10 +1132,13 @@ bool InternalMultiDraw(
 
     if(GL_DEBUG_MODE)
     {
-        i32 elementHnd = CGL33::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+        if(data.dc.indexed())
+        {
+            i32 elementHnd = CGL33::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
 
-        if(elementHnd == 0)
-            cWarning(GLM_API "No element buffer binding!");
+            if(elementHnd == 0)
+                cWarning(GLM_API "No element buffer binding!");
+        }
 
         if(data.counts.size() == 0)
             cWarning(GLM_API "Draw call has no meshes");

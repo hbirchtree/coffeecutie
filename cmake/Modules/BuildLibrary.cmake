@@ -101,49 +101,89 @@ macro( GENERATE_FINDSCRIPT )
         )
 endmacro()
 
-macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
-    if(IS_DIRECTORY "${HEADER_DIR}")
-        file ( GLOB_RECURSE ALL_HEADERS
-            #        ${HEADER_DIR}/*.h
-            #        ${HEADER_DIR}/*.hpp
-            ${HEADER_DIR}/*
-            )
-    endif()
-    source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
-
-    # Because it's hard to write these three commands over and over again
-    add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${ALL_HEADERS}")
-
-    set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-#    if(ALL_HEADERS)
-#        set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
-#    endif()
-
-    if(APPLE)
-        set_target_properties( ${TARGET} PROPERTIES MACOSX_RPATH "." )
-    elseif(WIN32)
-        set_target_properties ( ${TARGET}
-            PROPERTIES
-            VERSION ${COFFEE_BUILD_STRING}
-            SOVERSION 1
-            )
-    endif()
-
-    target_enable_cxx11(${TARGET})
-
-    target_link_libraries(${TARGET}
-        PUBLIC
-        ${LIBRARIES}
+macro(COFFEE_LIBRARY)
+    cmake_parse_arguments(
+        LIB
+        ""
+        "TARGET;LINKAGE;VERSION_CODE;COPYRIGHT;COMPANY"
+        "SOURCES;LIBRARIES;HEADER_DIRS;RESOURCES;BUNDLE_LIBRARIES;BUNDLE_HEADERS"
+        ${ARGN}
         )
-    target_compile_definitions ( ${TARGET}
+
+    if(NOT DEFINED LIB_LINKAGE)
+        set ( LIB_LINKAGE ${COFFEE_LINK_OPT} )
+    endif()
+
+    if(NOT DEFINED LIB_VERSION_CODE)
+        set ( LIB_VERSION_CODE "1" )
+    endif()
+
+    if(NOT DEFINED LIB_COPYRIGHT)
+        set ( LIB_COPYRIGHT "hbirchtree" )
+    endif()
+
+    if(NOT DEFINED LIB_COMPANY)
+        set ( LIB_COMPANY "hbirchtree" )
+    endif()
+
+    foreach( HEADER_DIR ${LIB_HEADER_DIRS} )
+        if(IS_DIRECTORY "${HEADER_DIR}")
+            file ( GLOB_RECURSE ALL_HEADERS
+        #        ${HEADER_DIR}/*.h
+        #        ${HEADER_DIR}/*.hpp
+                ${HEADER_DIR}/*
+                )
+        endif()
+    endforeach()
+
+    source_group ( "${LIB_TARGET}_headers" FILES ${ALL_HEADERS} )
+
+    if(APPLE AND NOT IOS)
+
+        MACFRAMEWORK_PACKAGE(
+            "${LIB_TARGET}" "${LIB_LINKAGE}"
+            "${LIB_VERSION_CODE}" "${LIB_COPYRIGHT}" "${LIB_COMPANY}"
+            "${LIB_SOURCES};${ALL_HEADERS}" "${LIB_RESOURCES}"
+            "${LIB_BUNDLE_HEADERS}"
+            )
+
+    else()
+
+        add_library(${LIB_TARGET} ${LIB_LINKAGE}
+            ${LIB_SOURCES}
+            ${ALL_HEADERS}
+            )
+
+        set_property(TARGET ${LIB_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+        if(APPLE)
+            set_target_properties( ${LIB_TARGET} PROPERTIES MACOSX_RPATH "." )
+        elseif(WIN32)
+            set_target_properties ( ${LIB_TARGET}
+                PROPERTIES
+                VERSION ${COFFEE_BUILD_STRING}
+                SOVERSION 1
+                )
+        endif()
+
+    endif()
+
+    target_enable_cxx11(${LIB_TARGET})
+
+    target_link_libraries( ${LIB_TARGET}
+        PUBLIC
+        ${LIB_LIBRARIES}
+        )
+    target_compile_definitions ( ${LIB_TARGET}
         PRIVATE
         -DCOFFEE_APPLICATION_LIBRARY
+        -DCOFFEE_COMPONENT_NAME="${LIB_TARGET}"
         )
+
     if(ANDROID)
         install(
             TARGETS
-            ${TARGET}
+            ${LIB_TARGET}
 
             EXPORT ${PROJECT_NAME}
 
@@ -152,9 +192,9 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             RUNTIME DESTINATION "lib/${ANDROID_ABI}"
             PUBLIC_HEADER DESTINATION include
             )
-    else()
+    elseif(NOT (APPLE AND NOT IOS))
         install(
-            TARGETS ${TARGET}
+            TARGETS ${LIB_TARGET}
 
             EXPORT ${PROJECT_NAME}
 
@@ -165,71 +205,25 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             )
     endif()
 
-    register_library( ${TARGET} "${HEADER_DIR}" )
+    register_library( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
+
+#    coffee_add_framework(
+#        "${LIB_TARGET}"
+#        "${LIB_LINKAGE}"
+#        "${LIB_VERSION_CODE}"
+#        "${LIB_COPYRIGHT}"
+#        "${LIB_COMPANY}"
+#        "${LIB_SOURCES}"
+#        "${LIB_HEADER_DIRS}"
+#        "${LIB_RESOURCES}"
+#        "${LIB_BUNDLE_HEADERS}"
+#        "${LIB_LIBRARIES}"
+#        "${LIB_BUNDLE_LIBRARIES}"
+#        )
+
 endmacro()
 
-macro(COFFEE_ADD_FRAMEWORK
-        TARGET LINKOPT
-        VERSION_CODE COPYRIGHT COMPANY
-        SOURCES HEADER_DIR
-        BUNDLE_RSRCS BUNDLE_HDRS
-        LIBRARIES BUNDLE_LIBRARIES)
-    if(APPLE AND NOT IOS)
-        if(IS_DIRECTORY "${HEADER_DIR}")
-            file ( GLOB_RECURSE ${TARGET}_HEADERS
-                ${HEADER_DIR}/*
-                )
-        endif()
-        source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
-
-        MACFRAMEWORK_PACKAGE(
-            "${TARGET}" "${LINKOPT}"
-            "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-            "${SOURCES};${${TARGET}_HEADERS}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
-
-        target_link_libraries(${TARGET}
-            PUBLIC
-            ${LIBRARIES}
-            )
-        target_compile_definitions ( ${TARGET}
-            PRIVATE
-            -DCOFFEE_APPLICATION_LIBRARY
-            )
-
-#        if(ALL_HEADERS)
-#            set_property(TARGET ${TARGET} PROPERTY PUBLIC_HEADER ${ALL_HEADERS} )
-#        endif()
-
-        register_library( ${TARGET} "${HEADER_DIR}" )
-    else()
-        coffee_add_elibrary(
-            "${TARGET}" "${LINKOPT}"
-            "${SOURCES}" "${LIBRARIES}" "${HEADER_DIR}")
-    endif()
-
-    target_compile_definitions ( ${TARGET}
-        PRIVATE
-        -DCOFFEE_COMPONENT_NAME="${TARGET}"
-        )
-
-    target_enable_cxx11(${TARGET})
-endmacro()
-
-macro(COFFEE_ADD_LIBRARY TARGET SOURCES LIBRARIES HEADER_DIR)
-    # Just a little simplification
-    coffee_add_framework(
-        ${TARGET} ${COFFEE_LINK_OPT}
-        "2.0" "hbirchtree" "hbirchtree"
-        "${SOURCES}" "${HEADER_DIR}" "" ""
-        "${LIBRARIES}" "")
-endmacro()
-
-macro(COFFEE_LIBRARY)
-    set ( LIB_LINKAGE "${COFFEE_LINK_OPT}" )
-    set ( LIB_VERSION_CODE "1" )
-    set ( LIB_COPYRIGHT "hbirchtree" )
-    set ( LIB_COMPANY "hbirchtree" )
-
+macro(COFFEE_FRAMEWORK)
     cmake_parse_arguments(
         LIB
         ""
@@ -238,18 +232,18 @@ macro(COFFEE_LIBRARY)
         ${ARGN}
         )
 
-    coffee_add_framework(
-        "${LIB_TARGET}"
-        "${LIB_LINKAGE}"
-        "${LIB_VERSION_CODE}"
-        "${LIB_COPYRIGHT}"
-        "${LIB_COMPANY}"
-        "${LIB_SOURCES}"
-        "${LIB_HEADER_DIRS}"
-        "${LIB_RESOURCES}"
-        "${LIB_BUNDLE_HEADERS}"
-        "${LIB_LIBRARIES}"
-        "${LIB_BUNDLE_LIBRARIES}"
+    coffee_library(
+        TARGET "${LIB_TARGET}"
+        LINKAGE "${LIB_LINKAGE}"
+        VERSION_CODE "${LIB_VERSION_CODE}"
+        COPYRIGHT "${LIB_COPYRIGHT}"
+        COMPANY "${LIB_COMPANY}"
+        SOURCES ${LIB_SOURCES}
+        LIBRARIES ${LIB_LIBRARIES}
+        HEADER_DIRS ${LIB_HEADER_DIRS}
+        RESOURCES ${LIB_RESOURCES}
+        BUNDLE_LIBRARIES ${LIB_BUNDLE_LIBRARIES}
+        BUNDLE_HEADERS ${LIB_BUNDLE_HEADERS}
         )
 
 endmacro()

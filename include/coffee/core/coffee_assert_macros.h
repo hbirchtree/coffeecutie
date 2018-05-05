@@ -22,6 +22,7 @@ void RUNOUTTHEWINDOW()
     throw "I RAN OUT THE WINDOW";
 #else
     std::raise(SIGINT);
+    abort();
 #endif
 }
 

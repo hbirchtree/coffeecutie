@@ -74,8 +74,11 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
 
     bool locking_state = C_OCAST<bool>(State::GetInternalState());
 
+#ifndef COFFEE_LOWFAT
     if(locking && locking_state)
         State::GetPrinterLock().lock();
+#endif
+
 #if defined(COFFEE_ANDROID)
     int flag = 0;
 
@@ -119,8 +122,11 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
 #else
     Puts(stream,formatted.c_str());
 #endif
+
+#ifndef COFFEE_LOWFAT
     if(locking && locking_state)
         State::GetPrinterLock().unlock();
+#endif
 }
 
 }

@@ -37,8 +37,7 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     CString header;
 
-    header +=
-        r.reqtype + " " + r.resource + " " + r.version + "\r\n";
+    header += r.reqtype + " " + r.resource + " " + r.version + "\r\n";
 
     SendProperty(header, "Host", host);
 
@@ -57,7 +56,7 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     if(r.payload.size())
         SendProperty(
-            header, "Content-Length", Convert::uintltostring(r.payload.size()));
+            header, "Content-Length", cast_pod(r.payload.size()));
 
     header += "\r\n";
 
@@ -133,13 +132,16 @@ bool ExtractResponse(StrmT& stream, Response* response)
                 payload.end(), payloadBuffer.begin(), payloadBuffer.end());
 
         auto extraSpace = payload.capacity() - payload.size();
-        payload.resize(payload.capacity());
 
         if(stream.gcount() <= extraSpace)
-            MemCpy(
-                &payload.data()[payload.size() - extraSpace],
-                payloadBuffer.data(),
-                stream.gcount());
+            std::copy(
+                payloadBuffer.begin(),
+                payloadBuffer.begin() + stream.gcount(),
+                std::back_insert_iterator<Vector<byte_t>>(payload));
+        //            MemCpy(
+        //                &payload.data()[payload.size() - extraSpace],
+        //                payloadBuffer.data(),
+        //                stream.gcount());
     }
 
     return true;

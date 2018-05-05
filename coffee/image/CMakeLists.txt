@@ -1,13 +1,15 @@
 find_package ( stb REQUIRED )
 
-set ( CoffeeImage_SRCS
-        private/cimage.cpp
-        private/cnoise-gen.cpp
-        private/ctextrender.cpp
-        )
+coffee_library (
+    TARGET CoffeeImage
 
-coffee_add_library ( CoffeeImage "${CoffeeImage_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/image")
+    SOURCES
+    private/cimage.cpp
+    private/cnoise-gen.cpp
+    private/ctextrender.cpp
+
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/image
+    )
 
 target_include_directories ( CoffeeImage
     PRIVATE SYSTEM

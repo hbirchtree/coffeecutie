@@ -205,14 +205,14 @@ bool AndroidFileFun::Close(FileHandle *fh)
     return true;
 }
 
-CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
+Bytes AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
 {
     if(!fh)
         return {};
     if(fh->fp)
     {
         /* In this case, the file exists as an asset */
-        CByteData data;
+        Bytes data;
 #if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
         data.size = AAsset_getLength64(fh->fp);
 #else
@@ -226,7 +226,7 @@ CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
         return Ancestor::Read(fh,size,nterminate);
 }
 
-bool AndroidFileFun::Write(FileHandle *fh, const CByteData &d, bool)
+bool AndroidFileFun::Write(FileHandle *fh, const Bytes &d, bool)
 {
     if(fh->fp)
     {

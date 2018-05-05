@@ -1,17 +1,16 @@
-#include <coffee/core/datastorage/binary/virtualfs.h>
-#include <coffee/core/base/files/url.h>
-#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
+#include <coffee/core/base/files/url.h>
+#include <coffee/core/datastorage/binary/virtualfs.h>
 #include <coffee/core/datastorage/compression/libz.h>
 
 #define VIRTFS_API "VirtFS::"
 
-namespace Coffee{
-namespace VirtFS{
+namespace Coffee {
+namespace VirtFS {
 
-Resource::Resource(const VFS *base, const Url &url):
-    filesystem(base),
-    file(VFS::GetFile(base, url.internUrl.c_str()))
+Resource::Resource(const VFS* base, const Url& url) :
+    filesystem(base), file(VFS::GetFile(base, url.internUrl.c_str()))
 {
 }
 
@@ -28,7 +27,7 @@ Bytes Resource::data() const
     return VFS::GetData(filesystem, file);
 }
 
-bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
+bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
 {
     DProfContext _(VIRTFS_API "Generating VirtFS");
 
@@ -42,11 +41,11 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
     VFS base_fs = {};
 
     /* Insert header, calculate file segment offset */
-    MemCpy(base_fs.vfs_header, VFSMagic, MagicLength);
-    base_fs.num_files = filenames.size();
-    base_fs.data_offset =
-            sizeof(VFS) +
-            sizeof(VFile) * base_fs.num_files;
+    auto headerRef = Bytes::From(base_fs.vfs_header, MagicLength);
+    MemCpy(Bytes::CreateString(VFSMagic), headerRef);
+    //    MemCpy(base_fs.vfs_header, VFSMagic, MagicLength);
+    base_fs.num_files   = filenames.size();
+    base_fs.data_offset = sizeof(VFS) + sizeof(VFile) * base_fs.num_files;
 
     /* Pre-allocate vectors */
     Vector<VFile> files;
@@ -64,34 +63,39 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
 
         if(fn.size() * sizeof(fn[0]) > MaxFileNameLength)
         {
-            cWarning(VIRTFS_API
-                     "Filename is too long for VirtFS: {0} > {1}",
-                     fn.size(), MaxFileNameLength);
+            cWarning(
+                VIRTFS_API "Filename is too long for VirtFS: {0} > {1}",
+                fn.size(),
+                MaxFileNameLength);
             Profiler::DeepProfile(VIRTFS_API "Failed, filename too long");
             return false;
         }
 
         /* We want to align data to 8-byte boundaries */
         data_size = AlignOffsetForward(8, data_size);
-        szptr alignment = AlignOffset(8, data_size);
+        //        szptr alignment = AlignOffset(8, data_size);
 
         file.offset = data_size;
-        file.rsize = filenames[i].data.size;
-        MemCpy(file.name, fn.c_str(), fn.size());
+        file.rsize  = filenames[i].data.size;
+
+        MemCpy(fn, Bytes::From(file.name, fn.size()));
+        //        MemCpy(file.name, fn.c_str(), fn.size());
         file.flags = filenames[i].flags;
 
         auto& arr = data_arrays[i];
         if(file.flags & File_Compressed)
         {
-            Zlib::Compress(filenames[i].data,
-                           &arr, {});
-            cVerbose(10, "Compressed file: {0} bytes -> {1} bytes",
-                     filenames[i].data.size, arr.size);
+            Zlib::Compress(filenames[i].data, &arr, {});
+            cVerbose(
+                10,
+                "Compressed file: {0} bytes -> {1} bytes",
+                filenames[i].data.size,
+                arr.size);
             file.size = arr.size;
-        }else
+        } else
         {
-            arr.data = filenames[i].data.data;
-            arr.size = filenames[i].data.size;
+            arr.data  = filenames[i].data.data;
+            arr.size  = filenames[i].data.size;
             file.size = filenames[i].data.size;
         }
 
@@ -99,28 +103,31 @@ bool GenVirtFS(const Vector<VirtDesc> &filenames, Vector<byte_t> *output)
     }
 
     /* Final size has been determined */
-    output->resize(base_fs.data_offset + data_size);
+    output->reserve(base_fs.data_offset + data_size);
 
     /* Header is copied straight into array */
-    MemCpy(output->data(), &base_fs, sizeof(VFS));
+    MemCpy(Bytes::From(base_fs), *output);
 
     /* For each file, insert the data into the array */
     for(auto i : Range<>(filenames.size()))
-    {
-        auto header_offset = sizeof(VFS) + sizeof(VFile) * i;
-        auto final_offset = base_fs.data_offset + files[i].offset;
+        MemCpy(Bytes::Create(files[i]), *output);
 
-        MemCpy(&(*output)[header_offset], &files[i],
-               sizeof(VFile));
-        MemCpy(&(*output)[final_offset], data_arrays[i].data,
-               data_arrays[i].size);
+    output->resize(output->capacity());
+    Bytes outputView = Bytes::CreateFrom(*output);
+
+    for(auto i : Range<>(filenames.size()))
+    {
+        auto const& srcData = data_arrays[i];
+        MemCpy(
+            srcData,
+            outputView.at(base_fs.data_offset + files[i].offset, srcData.size));
     }
 
     Profiler::DeepProfile(VIRTFS_API "Creation successful");
     return true;
 }
 
-Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS *vfs, const VFile *file)
+Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS* vfs, const VFile* file)
 {
     byte_t const* basePtr = C_RCAST<byte_t const*>(vfs);
 
@@ -128,16 +135,15 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS *vfs, const VFile *file)
 
     if(file)
     {
-        byte_t* srcPtr = C_CCAST<byte_t*>(basePtr
-                                          + vfs->data_offset
-                                          + file->offset);
+        byte_t* srcPtr =
+            C_CCAST<byte_t*>(basePtr + vfs->data_offset + file->offset);
         szptr srcSize = file->size;
 
         if(file->flags & File_Compressed)
         {
             if(!Zlib::Decompress(Bytes(srcPtr, srcSize), &data, {}))
                 cWarning(VIRTFS_API "Failed to decompress file");
-        }else
+        } else
         {
             data.data = srcPtr;
             data.size = srcSize;
@@ -147,33 +153,25 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS *vfs, const VFile *file)
     return data;
 }
 
-ResourceResolver<Resource> VirtualFS::GetResolver(
-        const VirtualFS *vfs
-        )
+ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
 {
     if(!vfs)
-        throw undefined_behavior(VIRTFS_API "got null vfs!");
+        Throw(undefined_behavior(VIRTFS_API "got null vfs!"));
 
-    return {
-        [=](Url const& path)
-        {
-            return VirtFS::Resource(vfs, path);
-        },
-        [=](Path const& query, Vector<Url>& output)
-        {
-            vfs_view view(Bytes::From(*vfs));
+    return {[=](Url const& path) { return VirtFS::Resource(vfs, path); },
+            [=](Path const& query, Vector<Url>& output) {
+                vfs_view view(Bytes::From(*vfs));
 
-            auto it = view.begin();
-            while((it = view.starting_with(query, it)) != view.end())
-            {
-                output.push_back(MkUrl((*it).name));
-                ++it;
-            }
+                auto it = view.begin();
+                while((it = view.starting_with(query, it)) != view.end())
+                {
+                    output.push_back(MkUrl((*it).name));
+                    ++it;
+                }
 
-            return true;
-        }
-    };
+                return true;
+            }};
 }
 
-}
-}
+} // namespace VirtFS
+} // namespace Coffee

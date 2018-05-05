@@ -1,38 +1,40 @@
 #pragma once
 
-#include "../../plat/plat_quirks_toggling.h"
 #include "../../coffee_mem_macros.h"
+#include "../../plat/plat_quirks_toggling.h"
+#include "standard_exceptions.h"
+#include "../cdef/ptr_wrap.h"
 
 /*Container types*/
-#include <string>
-#include <queue>
-#include <list>
-#include <vector>
-#include <set>
-#include <map>
 #include <array>
 #include <functional>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <string>
 #include <tuple>
+#include <vector>
 
 /*Memory management*/
 #include <atomic>
-#include <mutex>
 #include <memory>
+#include <mutex>
 
 /*Shit*/
-#include <exception>
 #include <complex>
+#include <exception>
 #include <type_traits>
 
 #if defined(COFFEE_GEKKO)
 #include <gccore.h>
 #endif
 
-namespace Coffee{
+namespace Coffee {
 
-using CString   = std::string; /*!< Typical string object */
-using CWString  = std::wstring; /*!< Typical string object suited for interfaces */
-
+using CString = std::string; /*!< Typical string object */
+using CWString =
+    std::wstring; /*!< Typical string object suited for interfaces */
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Mutex
@@ -43,7 +45,7 @@ struct Mutex
     bool try_lock();
     void unlock();
 #if defined(COFFEE_GEKKO)
-private:
+  private:
     ::u32 m_mutexHandle;
 #endif
 };
@@ -57,7 +59,8 @@ struct Lock
     {
         m_mutex.unlock();
     }
-private:
+
+  private:
     Mutex& m_mutex;
 };
 #else
@@ -70,12 +73,12 @@ using ErrCode = std::error_code;
 template<typename T>
 using Atomic = std::atomic<T>;
 
-using AtomicInt8 = std::atomic_int_fast8_t;
+using AtomicInt8  = std::atomic_int_fast8_t;
 using AtomicInt16 = std::atomic_int_fast16_t;
 using AtomicInt32 = std::atomic_int;
 using AtomicInt64 = std::atomic_int_fast64_t;
 
-using AtomicUInt8 = std::atomic_uint_fast8_t;
+using AtomicUInt8  = std::atomic_uint_fast8_t;
 using AtomicUInt16 = std::atomic_uint_fast16_t;
 using AtomicUInt32 = std::atomic_uint;
 using AtomicUInt64 = std::atomic_uint_fast64_t;
@@ -96,16 +99,23 @@ template<typename T, size_t Size>
 using Array = std::array<T, Size>;
 
 template<typename T1, typename T2>
-using Map = std::map<T1,T2>;
+using Map = std::map<T1, T2>;
 
 template<typename T1, typename T2>
-using MultiMap = std::multimap<T1,T2>;
+using MultiMap = std::multimap<T1, T2>;
 
+#ifndef COFFEE_LOWFAT
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
 
-template<typename T,class Deleter = std::default_delete<T>>
-using UqPtr = std::unique_ptr<T,Deleter>;
+template<typename T, class Deleter = std::default_delete<T>>
+using UqPtr = std::unique_ptr<T, Deleter>;
+#else
+template<typename T>
+using ShPtr = Ptr<T>;
+template<typename T, class Deleter = std::default_delete<T>>
+using UqPtr = Ptr<T>;
+#endif
 
 template<typename T>
 using Complex = std::complex<T>;
@@ -114,15 +124,15 @@ template<typename T>
 using Set = std::set<T>;
 
 template<typename T1, typename T2>
-using Pair = std::pair<T1,T2>;
+using Pair = std::pair<T1, T2>;
 
 template<typename... Args>
 using Tuple = std::tuple<Args...>;
 
 using ByteVector = Vector<uint8_t>;
 
-//template<typename Tag, typename T>
-//using Iterator = std::iterator<Tag,T>;
+// template<typename Tag, typename T>
+// using Iterator = std::iterator<Tag,T>;
 
 template<typename T>
 using NonConst = typename std::remove_const<T>::type;
@@ -130,12 +140,12 @@ using NonConst = typename std::remove_const<T>::type;
 template<typename Tag, typename T>
 struct Iterator
 {
-	typedef NonConst<T> value_type;
+    typedef NonConst<T> value_type;
 
-	typedef Tag iterator_category;
-	typedef std::ptrdiff_t difference_type;
-	typedef T* pointer;
-	typedef T& reference;
+    typedef Tag            iterator_category;
+    typedef std::ptrdiff_t difference_type;
+    typedef T*             pointer;
+    typedef T&             reference;
 };
 
 using ForwardIteratorTag = std::forward_iterator_tag;
@@ -154,10 +164,10 @@ inline UqPtr<T> MkUq(Args... a)
 template<typename T>
 inline UqPtr<T> MkUqWrap(T* ptr)
 {
-    return  UqPtr<T>(ptr);
+    return UqPtr<T>(ptr);
 }
 template<typename T, class Deleter, typename... Args>
-inline UqPtr<T,Deleter> MkUqDST(Args... a)
+inline UqPtr<T, Deleter> MkUqDST(Args... a)
 {
     return UqPtr<T, Deleter>(new T(a...));
 }
@@ -167,6 +177,12 @@ inline ShPtr<T> MkShared(Args... a)
 {
     return ShPtr<T>(new T(a...));
 }
+
+/*
+ *
+ * Here comes a couple of custom classes and wrappers
+ *
+ */
 
 template<bool Reversed>
 struct range_params
@@ -183,20 +199,17 @@ struct range
     {
         static const constexpr T npos = std::numeric_limits<T>::max();
 
-        iterator():
-            m_idx(npos)
+        iterator() : m_idx(npos)
         {
         }
 
-        iterator(T start, T end):
-            m_idx(start),
-            m_end(end)
+        iterator(T start, T end) : m_idx(start), m_end(end)
         {
-            bool correct = (!range_param::reversed) && start > end;
+            bool correct     = (!range_param::reversed) && start > end;
             bool correct_rev = range_param::reversed && start > end;
 
             if(correct && correct_rev)
-                throw std::out_of_range("invalid range");
+                Throw(std::out_of_range("invalid range"));
 
             if(start == end)
                 m_idx = npos;
@@ -205,9 +218,9 @@ struct range
         iterator& operator++()
         {
             if(range_param::reversed)
-                m_idx --;
+                m_idx--;
             else
-                m_idx ++;
+                m_idx++;
 
             if(m_idx >= m_end)
                 m_idx = npos;
@@ -230,13 +243,12 @@ struct range
             return m_idx;
         }
 
-    private:
+      private:
         T m_idx;
         T m_end;
     };
 
-    range(T len):
-        m_len(len)
+    range(T len) : m_len(len)
     {
     }
 
@@ -250,7 +262,7 @@ struct range
         return iterator();
     }
 
-private:
+  private:
     T m_len;
 };
 
@@ -273,8 +285,9 @@ struct non_copy
 template<typename IteratorType>
 struct quick_container
 {
-    quick_container(std::function<IteratorType()>&& begin_con,
-                    std::function<IteratorType()>&& end_con):
+    quick_container(
+        std::function<IteratorType()>&& begin_con,
+        std::function<IteratorType()>&& end_con) :
         m_begin(begin_con),
         m_end(end_con)
     {
@@ -290,41 +303,21 @@ struct quick_container
         return m_end();
     }
 
-private:
+  private:
     std::function<IteratorType()> m_begin;
     std::function<IteratorType()> m_end;
 };
 
-}
-
-struct resource_error : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
-struct implementation_error : std::invalid_argument
-{
-    using std::invalid_argument::invalid_argument;
-};
-
-struct releasemode_error : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
-struct undefined_behavior : std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
+} // namespace Coffee
 
 #define C_STR_HELPER(x) #x
 #define C_STR(x) C_STR_HELPER(x)
 
-#define C_PTR_CHECK(ptr) if(!ptr) \
-    throw undefined_behavior(\
-    "bad pointer deref: " __FILE__ ":" C_STR(__LINE__)\
-    );
-#define C_THIS_CHECK if(!this) \
-    throw undefined_behavior(\
-    "bad access to *this: " __FILE__ ":" C_STR(__LINE__)\
-    );
+#define C_PTR_CHECK(ptr)                                                \
+    if(!ptr)                                                            \
+        Throw(undefined_behavior("bad pointer deref: " __FILE__ \
+                                         ":" C_STR(__LINE__)));
+#define C_THIS_CHECK                                                      \
+    if(!this)                                                             \
+        Throw(undefined_behavior("bad access to *this: " __FILE__ \
+                                         ":" C_STR(__LINE__)));

@@ -847,13 +847,9 @@ void GLEAM_PipelineDumper::dump(cstring out)
             return;
         cVerbose(6,"Acquired program binary");
         /* Insert API version */
-        MemCpy(&program_data[0],
-                &GL_CURR_API,
-                sizeof(GL_CURR_API));
+//        MemCpy(&program_data[0], &GL_CURR_API, sizeof(GL_CURR_API));
         /* Put binary type in there */
-        MemCpy(&program_data[sizeof(GL_CURR_API)],
-                &t,
-                sizeof(t));
+//        MemCpy(&program_data[sizeof(GL_CURR_API)], &t, sizeof(t));
 
         /* Create the output resource */
         output.size = program_data.size();

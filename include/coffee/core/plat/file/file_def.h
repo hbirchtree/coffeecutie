@@ -56,14 +56,14 @@ struct FileFunDef
         C_UNUSED(off);
     }
 
-    static CByteData Read(FileHandle* h,uint64 size,bool)
+    static Bytes Read(FileHandle* h,uint64 size,bool)
     {
         C_UNUSED(h);
         C_UNUSED(size);
 
         return {};
     }
-    static bool Write(FileHandle* h,CByteData const& d,bool)
+    static bool Write(FileHandle* h,Bytes const& d,bool)
     {
         C_UNUSED(h);
         C_UNUSED(d);

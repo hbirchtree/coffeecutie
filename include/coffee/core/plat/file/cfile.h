@@ -89,9 +89,9 @@ struct CFILEFun_def : CommonFileFun
         return true;
     }
 
-    STATICINLINE CByteData Read(FH* fh, uint64 size,bool nterminate)
+    STATICINLINE Bytes Read(FH* fh, uint64 size,bool nterminate)
     {
-        CByteData data;
+        Bytes data;
         data.elements = 0;
         szptr esize = Size(fh);
         if(size <= esize && size != -1)
@@ -101,7 +101,7 @@ struct CFILEFun_def : CommonFileFun
             data.size = esize+1;
         else
             data.size = esize;
-        data.data = (byte_t*)Alloc(data.size);
+        data = Bytes::Alloc(data.size);
         szptr rsize = fread(data.data,sizeof(byte_t),esize,fh->handle);
         data.size = rsize;
         if(nterminate)
@@ -114,7 +114,7 @@ struct CFILEFun_def : CommonFileFun
     {
         return fseek(fh->handle,off,SEEK_SET)==0;
     }
-    STATICINLINE bool Write(FH* fh,CByteData const& d,bool)
+    STATICINLINE bool Write(FH* fh,Bytes const& d,bool)
     {
         szptr wsize = fwrite(d.data,sizeof(byte_t),d.size,fh->handle);
         return wsize==d.size;
@@ -160,7 +160,11 @@ struct CFILEFun_def : CommonFileFun
             map.handle = nullptr;
             return map;
         }
-        CByteData data = Read(map.handle, offset + size, false);
+
+        Bytes data = Read(map.handle, offset + size, false);
+
+        Bytes::SetDestr(data, nullptr);
+
         map.acc = access;
         map.size = size;
         map.ptr = &data[offset];

@@ -10,9 +10,14 @@
 
 #include <iostream>
 
+#include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
+
+#ifndef None
+#define None 0L
+#endif
 
 #if defined(COFFEE_USE_LINUX_GLX)
 #include <GL/glx.h>

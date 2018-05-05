@@ -391,9 +391,13 @@ HEX_CONVERT(hexify, uint64, Convert::x64_fmt)
 
 FORCEDINLINE CString pointerify(uint64 const& ptr)
 {
+#ifndef COFFEE_LOWFAT
     CString str = "0x";
     str += hexify(ptr);
     return str;
+#else
+    return {};
+#endif
 }
 template<
     typename T,

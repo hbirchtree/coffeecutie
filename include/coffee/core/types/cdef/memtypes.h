@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../coffee_macros.h"
-#include "../../plat/memory/cmemory.h"
 #include "../tdef/integertypes.h"
+#include "../tdef/stltypes.h"
 #include <utility>
 
 namespace Coffee {
@@ -12,6 +12,8 @@ struct Path;
 template<typename T>
 struct _cbasic_data_chunk
 {
+    using value_type = T;
+
     FORCEDINLINE
     _cbasic_data_chunk(_cbasic_data_chunk<T>&& other) :
         data(other.data), size(other.size), elements(other.elements),
@@ -41,8 +43,7 @@ struct _cbasic_data_chunk
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk(T& value) :
-        data(&value), size(sizeof(T)), elements(1)
+    _cbasic_data_chunk(T& value) : data(&value), size(sizeof(T)), elements(1)
     {
     }
 
@@ -71,7 +72,7 @@ struct _cbasic_data_chunk
     }
 
     template<typename T2>
-    explicit operator _cbasic_data_chunk<T2>()
+    NO_DISCARD explicit operator _cbasic_data_chunk<T2>()
     {
         _cbasic_data_chunk<T2> out;
 
@@ -86,15 +87,15 @@ struct _cbasic_data_chunk
 
     _cbasic_data_chunk& operator=(_cbasic_data_chunk&& other)
     {
-        data = other.data;
+        data     = other.data;
         elements = other.elements;
-        size = other.size;
-        m_destr = other.m_destr;
+        size     = other.size;
+        m_destr  = other.m_destr;
 
-        other.data = nullptr;
+        other.data     = nullptr;
         other.elements = 0;
-        other.size = 0;
-        other.m_destr = nullptr;
+        other.size     = 0;
+        other.m_destr  = nullptr;
 
         return *this;
     }
@@ -102,56 +103,97 @@ struct _cbasic_data_chunk
     STATICINLINE void SetDestr(
         _cbasic_data_chunk<T>& inst, void (*d)(_cbasic_data_chunk<T>&))
     {
+#if !defined(NDEBUG)
+        if(!d)
+            Throw(implementation_error("abuse of SetDestr()"));
+#endif
         inst.m_destr = d;
     }
 
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Alloc(szptr num)
+    {
+#if !defined(NDEBUG)
+        if(num == 0)
+            Throw(implementation_error("allocating 0 bytes is bad"));
+#endif
+        _cbasic_data_chunk<T> out;
+
+        out.data     = C_RCAST<T*>(calloc(num * sizeof(T), 1));
+        out.size     = sizeof(T) * num;
+        out.elements = num;
+
+        _cbasic_data_chunk<T>::SetDestr(
+            out, [](_cbasic_data_chunk<T>& d) { free(d.data); });
+
+        return out;
+    }
+
     template<typename DT, typename is_not_virtual<DT>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
         return {C_FCAST<T*>(&obj), sizeof(DT), 1};
     }
 
     template<typename is_pod<T>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
         return {C_FCAST<T*>(src), strlen(src), 0};
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
     {
+        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
+
         return {
             C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), data.size()};
     }
 
     template<typename T2>
-    STATICINLINE _cbasic_data_chunk<T> From(Vector<T2>& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(Vector<T2>& data)
     {
         return CreateFrom(data);
     }
 
-    template<typename T2>
-    STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    template<
+        typename T2,
+        typename std::enable_if<
+            !std::is_same<typename std::remove_cv<T2>::type, void>::value>::
+            type* = nullptr>
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
     {
-        return {C_FCAST<T*>(data), size, 1};
+        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
+
+        return {C_FCAST<T*>(data), size * sizeof(T2) / sizeof(T), 1};
+    }
+
+    template<
+        typename T2,
+        typename std::enable_if<
+            std::is_same<typename std::remove_cv<T2>::type, void>::value>::
+            type* = nullptr>
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    {
+        return {C_FCAST<T*>(data), size / sizeof(T), 1};
     }
 
     template<typename T2, typename is_pod<T2>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> From(T2& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2& data)
     {
         return Create(data);
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
-    STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
     {
-        _cbasic_data_chunk<T> out;
-        out.size     = (data.size() * sizeof(T2)) / sizeof(T);
-        out.elements = data.size();
-        out.data     = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
-        MemCpy(out.data, data.data(), out.size);
-        _cbasic_data_chunk<T>::SetDestr(
-            out, [](_cbasic_data_chunk<T>& b) { CFree(b.data); });
+        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
+
+        using OutT = _cbasic_data_chunk<T>;
+
+        OutT out = OutT::Alloc((data.size() * sizeof(T2)) / sizeof(T));
+
+        //        std::copy(data.begin(), data.end(), out.begin());
+        memcpy(out.data, data.data(), data.size() * sizeof(T2));
 
         return out;
     }
@@ -165,27 +207,32 @@ struct _cbasic_data_chunk
     }
 
     template<typename T2>
-    STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
     {
-        _cbasic_data_chunk<T> out;
-        out.size     = nmax((sizeof(T2)) / sizeof(T), 8);
-        out.elements = 1;
-        out.data     = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
-        MemCpy(out.data, &obj, sizeof(T2));
-        _cbasic_data_chunk<T>::SetDestr(
-            out, [](_cbasic_data_chunk<T>& b) { CFree(b.data); });
+        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
+
+        using OutT = _cbasic_data_chunk<T>;
+
+        OutT out = OutT::Alloc(sizeof(T2) / sizeof(T));
+
+        T2* cpy = C_RCAST<T2*>(out.data);
+        *cpy    = obj;
 
         return out;
     }
 
-    STATICINLINE _cbasic_data_chunk<T> Copy(_cbasic_data_chunk<T> const& src)
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(
+        _cbasic_data_chunk<T> const& src)
     {
-        _cbasic_data_chunk<T> out;
-        out.size = src.size;
-        out.data = C_RCAST<T*>(Calloc(out.size * sizeof(T), 1));
-        MemCpy(out.data, src.data, src.size * sizeof(T));
-        _cbasic_data_chunk<T>::SetDestr(
-            out, [](_cbasic_data_chunk<T>& b) { CFree(b.data); });
+        using OutT = _cbasic_data_chunk<T>;
+
+        OutT out = OutT::Alloc(src.elements ? src.elements : src.size);
+
+        std::copy(
+            src.begin(),
+            src.end(),
+            std::insert_iterator<_cbasic_data_chunk<T>>(out, out.begin()));
+
         return out;
     }
 
@@ -222,6 +269,24 @@ struct _cbasic_data_chunk
         return *this;
     }
 
+    _cbasic_data_chunk<T> at(szptr offset, szptr size = 0)
+    {
+        if(offset > this->size || offset + size > this->size)
+            return {};
+
+        byte_t* basePtr = C_RCAST<byte_t*>(data);
+
+        if(size == 0)
+            size = this->size - offset;
+
+        return From(&basePtr[offset], size);
+    }
+
+    void disown()
+    {
+        m_destr = nullptr;
+    }
+
     /*!
      * \brief Pointer to data
      */
@@ -237,39 +302,49 @@ struct _cbasic_data_chunk
 
     /* Here's some iterator magic, for compatbility with STL containers */
 
-    struct iterator : Iterator<ForwardIteratorTag, T>
+    template<typename T_access = T>
+    struct iterator_base : Iterator<ForwardIteratorTag, T>
     {
-        iterator() : m_chunk(nullptr), m_idx(C_CAST<szptr>(-1))
+        friend struct _cbasic_data_chunk;
+
+        iterator_base(_cbasic_data_chunk<T>& chunk, szptr i = 0) :
+            m_chunk(&chunk), m_idx(i), m_readonly(false)
         {
         }
-        iterator(_cbasic_data_chunk<T>& chunk) : m_chunk(&chunk), m_idx(0)
+        iterator_base(_cbasic_data_chunk<T> const& chunk, szptr i = 0) :
+            m_chunk(C_CCAST<_cbasic_data_chunk<T>*>(&chunk)), m_idx(i),
+            m_readonly(true)
         {
         }
 
-        iterator& operator++()
+        iterator_base& operator++()
         {
-            if(m_idx < (m_chunk->size - 1))
+            if(m_idx < m_chunk->size)
                 m_idx++;
-            else
-                m_idx = C_CAST<szptr>(-1);
 
             return *this;
         }
 
-        bool operator==(iterator const& other) const
+        bool operator==(iterator_base const& other) const
         {
             return other.m_idx == m_idx;
         }
 
-        bool operator!=(iterator const& other) const
+        bool operator!=(iterator_base const& other) const
         {
             return other.m_idx != m_idx;
         }
 
-        template<
-            typename std::enable_if<!std::is_same<T, void>::value>::type* =
-                nullptr>
         T const& operator*() const
+        {
+            return m_chunk->data[m_idx];
+        }
+
+        template<
+            typename Dummy = void,
+            typename std::enable_if<!std::is_const<T_access>::value, Dummy>::
+                type* = nullptr>
+        T& operator*()
         {
             return m_chunk->data[m_idx];
         }
@@ -277,26 +352,49 @@ struct _cbasic_data_chunk
       private:
         _cbasic_data_chunk* m_chunk;
         szptr               m_idx;
+        bool                m_readonly;
     };
 
-    iterator begin()
+    using iterator       = iterator_base<>;
+    using const_iterator = iterator_base<const T>;
+
+    NO_DISCARD iterator begin()
     {
         return iterator(*this);
     }
 
-    iterator end()
+    NO_DISCARD iterator end()
     {
-        return iterator();
+        return iterator(*this, size);
+    }
+
+    NO_DISCARD const_iterator begin() const
+    {
+        return const_iterator(*this);
+    }
+
+    NO_DISCARD const_iterator end() const
+    {
+        return const_iterator(*this, size);
+    }
+
+    iterator insert(iterator it, T&& value)
+    {
+        data[it.m_idx] = std::move(value);
+        return it;
+    }
+
+    iterator insert(iterator it, T const& value)
+    {
+        data[it.m_idx] = value;
+        return it;
     }
 
   private:
     void (*m_destr)(_cbasic_data_chunk<T>&) = nullptr;
 };
 
-using CVoidData = _cbasic_data_chunk<void>;
-using CByteData = _cbasic_data_chunk<byte_t>;
-
-using Bytes      = CByteData;
+using Bytes      = _cbasic_data_chunk<byte_t>;
 using BytesConst = _cbasic_data_chunk<const byte_t>;
 
 template<typename T>
@@ -349,9 +447,11 @@ struct _cbasic_serial_array
 
         T const& operator*() const
         {
+#if !defined(NDEBUG)
             if(m_idx > m_base->m_size)
-                throw std::out_of_range("invalid access");
+                Throw(std::out_of_range("invalid access"));
             else
+#endif
                 return (*m_base)[m_idx];
         }
 
@@ -360,7 +460,7 @@ struct _cbasic_serial_array
         szptr                    m_idx;
     };
 
-    iterator begin()
+    NO_DISCARD iterator begin()
     {
         if(m_size == 0)
             return end();
@@ -368,16 +468,18 @@ struct _cbasic_serial_array
             return iterator(this);
     }
 
-    iterator end()
+    NO_DISCARD iterator end()
     {
         return iterator();
     }
 
     T const& operator[](szptr i)
     {
+#if !defined(NDEBUG)
         if(i > m_size)
-            throw std::out_of_range("invalid access");
+            Throw(std::out_of_range("invalid access"));
         else
+#endif
             return m_data[i];
     }
 

@@ -1,5 +1,6 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
+#include <coffee/core/types/cdef/memsafe.h>
 
 using namespace Coffee;
 
@@ -31,8 +32,11 @@ bool filescratch_test()
     szptr sz = StrLen(test_data);
     szptr times = size/sz - size%sz;
 
+    Bytes scratchView = Bytes::From(f.ptr, f.size);
+
     for(uint32 i=0;i<times;i++)
-        Mem::MemCpy(&((byte_t*)f.ptr)[sz*i],test_data,sz);
+        MemCpy(Bytes::From(test_data, sz), scratchView.at(sz * i, sz));
+//        MemCpy(&((byte_t*)f.ptr)[sz*i],test_data,sz);
 
     bool flag = true;
 

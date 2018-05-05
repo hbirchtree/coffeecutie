@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_BASE_DEBUG_INTERFACE_H
-#define COFFEE_CORE_BASE_DEBUG_INTERFACE_H
+#pragma once
 
 #include "../../types/basetypes.h"
 
@@ -55,10 +54,9 @@ struct LogPrinterDef
  * By default this is set to OutputPrinterImpl::fprintf_platform
  * \return
  */
+
 extern LogInterface GetLogInterface();
 extern void SetLogInterface(LogInterface intf);
 
 }
 }
-
-#endif

@@ -126,8 +126,8 @@ struct OpenAL
 
     static ALbuffer* BufAlloc();
     static void BufFree(ALbuffer* b);
-    static void BufData(ALbuffer* b, SampleFormat f, const CByteData& d);
-    static ALbuffer* BufCreate(SampleFormat f, const CByteData& d);
+    static void BufData(ALbuffer* b, SampleFormat f, const Bytes& d);
+    static ALbuffer* BufCreate(SampleFormat f, const Bytes& d);
 
     static ALsource* SrcAlloc();
     static void SrcFree(ALsource* s);
@@ -149,7 +149,7 @@ struct OpenAL
     static void ListenerSetf(ListenerProperty p, const scalar* v);
 
     static void CaptureState(ALdev* d, bool start = true);
-    static void CaptureCollect(ALdev* d, CByteData& target);
+    static void CaptureCollect(ALdev* d, Bytes& target);
 
     struct Debug
     {

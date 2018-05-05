@@ -3,7 +3,7 @@
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/file_resolver.h>
 
-#include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee {
@@ -210,7 +210,7 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     VFile const& operator*() const
     {
         if(!m_file)
-            throw resource_error("non-existent virtual file");
+            Throw(resource_error("non-existent virtual file"));
         return *m_file;
     }
 

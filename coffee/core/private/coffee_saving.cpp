@@ -7,12 +7,12 @@
 namespace Coffee{
 namespace Store{
 
-int64 AvailableSaveMemory()
+i64 AvailableSaveMemory()
 {
     return -1;
 }
 
-uint16 AvailableSaveSlots()
+u16 AvailableSaveSlots()
 {
     return 1;
 }
@@ -48,25 +48,25 @@ void emscripten_callback_error(void* arg)
 }
 #endif
 
-szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
+szptr RestoreMemory(Bytes&& data, u16 slot)
 {
     cVerbose(8, "Loading memory: {0}+{1} <- slot {2} ::",
-             StrUtil::pointerify(data_ptr),
-             *data_size, slot);
+             StrUtil::pointerify(data.data),
+             data.size, slot);
 
 #if defined(COFFEE_EMSCRIPTEN)
     CString save_file = cStringFormat("{0}_Slot-{1}.dat",
                                       ApplicationData().application_name,
                                       slot);
 
-    static DataStatus data_status = {0, 0, data_ptr, data_size};
+    static DataStatus data_status = {0, 0, data.data, &data.size};
     emscripten_idb_async_load(ApplicationData().organization_name.c_str(),
                               save_file.c_str(),
                               &data_status,
                               emscripten_callback_load,
                               emscripten_callback_error);
 
-    return *data_size;
+    return data.size;
 #else
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
     cVerbose(8, "Pre-creating resource");
@@ -76,16 +76,16 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
 
     cVerbose(8, "Created resource");
 
-    if(!CResources::FilePull(rsc, false, false) && rsc.size <= *data_size)
+    if(!CResources::FilePull(rsc, false, false) && rsc.size <= data.size)
     {
-        *data_size = 0;
+        data.size = 0;
         CResources::FileFree(rsc);
-        return *data_size;
+        return data.size;
     }
 
     cVerbose(8, "Pulled resource");
 
-    if(!data_ptr || !rsc.data || rsc.size < 1 || rsc.size >= *data_size)
+    if(!data.data || !rsc.data || rsc.size < 1 || rsc.size >= data.size)
     {
         CResources::FileFree(rsc);
         return rsc.size;
@@ -94,17 +94,17 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
     cVerbose(8, "Validated resource, got {0}+{1}",
              StrUtil::pointerify(rsc.data), rsc.size);
 
-    MemCpy(data_ptr, rsc.data, rsc.size);
+    MemCpy(C_OCAST<Bytes>(rsc), data);
     cVerbose(8, "Copied data from mapping to memory");
     CResources::FileFree(rsc);
 
-    cVerbose(8, "Memory load succeeded, got {0} bytes", *data_size);
+    cVerbose(8, "Memory load succeeded, got {0} bytes", data.size);
 
     return rsc.size;
 #endif
 }
 
-szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
+szptr SaveMemory(Bytes const& data, uint16 slot)
 {
 #if defined(COFFEE_EMSCRIPTEN)
     CString save_file = cStringFormat("{0}_Slot-{1}.dat",
@@ -115,12 +115,12 @@ szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
 
     emscripten_idb_async_store(ApplicationData().organization_name.c_str(),
                                save_file.c_str(),
-                               C_FCAST<void*>(data_ptr), data_size,
+                               C_FCAST<void*>(data.data), data.size,
                                &status,
                                emscripten_callback_store,
                                emscripten_callback_error);
 
-    return data_size;
+    return data.size;
 #else
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
     CResources::Resource rsc(file_str.c_str(),
@@ -129,8 +129,7 @@ szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
                              | ResourceAccess::NewFile);
 
     /* I promise not to overwrite your data... */
-    rsc.data = c_ptr(data_ptr);
-    rsc.size = data_size;
+    rsc = data;
 
     if(!CResources::FileCommit(rsc, false,
                            ResourceAccess::WriteOnly

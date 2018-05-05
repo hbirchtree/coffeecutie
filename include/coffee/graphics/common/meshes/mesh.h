@@ -1,7 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/tdef/stltypes.h>
-#include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/cdef/memsafe.h>
 
 namespace Coffee{
 
@@ -177,9 +176,8 @@ struct _cbasic_mesh
                 data.size = num * sizeof(VT);
                 if(alloc_mem)
                 {
-                    data.data = C_RCAST<byte_t*>(Alloc(data.size));
-                    MemCpy(data.data, ptr, data.size);
-                    Bytes::SetDestr(data, secretAllocDestructor);
+                    data = Bytes::Alloc(data.size);
+                    MemCpy(Bytes::From(ptr, num), data);
                 }
                 else
                     data.data = C_RCAST<byte_t*>(C_CCAST<VT*>(ptr));

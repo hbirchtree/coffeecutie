@@ -1,6 +1,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/types/vector_types.h>
+#include <coffee/core/types/cdef/memtypes.h>
 
 using namespace Coffee;
 
@@ -83,10 +84,9 @@ bool pointer_format()
 
 bool pointer_allocated_format()
 {
-    c_ptr ptr_f = Alloc(100);
-    CFree(ptr_f);
+    Bytes ptr_f = Bytes::Alloc(100);
 
-    c_cptr ptr = ptr_f;
+    c_cptr ptr = ptr_f.data;
 
     CString real;
     real.resize(100);

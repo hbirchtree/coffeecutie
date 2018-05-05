@@ -11,8 +11,13 @@
 #include <coffee/core/plat/windowmanager/plat_windowtype.h>
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
+#include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
+
+#ifndef None
+#define None 0L
+#endif
 
 #include <GL/glx.h>
 #include <GL/glxext.h>

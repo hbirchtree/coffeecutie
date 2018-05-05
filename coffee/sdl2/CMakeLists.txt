@@ -30,8 +30,12 @@ if(NOT EMSCRIPTEN)
         )
 endif()
 
-coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
-    "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")
+coffee_library (
+    TARGET CoffeeSDL2
+    SOURCES ${CoffeeSDL2_SRCS}
+    LIBRARIES ${LIBS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/sdl2
+    )
 
 target_link_libraries ( CoffeeSDL2
     PRIVATE

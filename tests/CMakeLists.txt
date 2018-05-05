@@ -36,3 +36,16 @@ if(NOT SKIP_GRAPHIC_TESTS)
     add_subdirectory(graphics/api_verify)
     add_subdirectory(graphics/self-test)
 endif()
+
+# This dummy target helps coverage see all the code,
+#  for more accurate coverage info.
+coffee_test (
+    TARGET Unit_IncludeAll
+    TITLE "Dummy target"
+
+    SOURCES
+    dummy.cpp
+
+    LIBRARIES
+    CoffeeCore CoffeeAssimp
+    )

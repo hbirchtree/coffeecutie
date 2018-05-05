@@ -149,11 +149,10 @@ static void CompressDXT(
             Bytes& pngOutput = files.at(files.size() - 1).data;
 
             /* Allocate space for image as well as WxH parameters */
-            output.size = C_FCAST<szptr>(squish::GetStorageRequirements(
-                              imsize.w, imsize.h, squish::kDxt5)) +
-                          sizeof(IMG::serial_image);
-            output.data = C_RCAST<byte_t*>(Calloc(output.size, 1));
-            Bytes::SetDestr(output, [](Bytes& b) { CFree(b.data); });
+            output = Bytes::Alloc(
+                C_FCAST<szptr>(squish::GetStorageRequirements(
+                    imsize.w, imsize.h, squish::kDxt5)) +
+                sizeof(IMG::serial_image));
 
             cursor.progress(
                 TEXCOMPRESS_API "Compressing texture: "
@@ -175,7 +174,8 @@ static void CompressDXT(
             imgDesc.bit_fmt           = BitFmt::Byte;
             imgDesc.comp_fmt          = CompFlags::S3TC_5;
 
-            MemCpy(output.data, &imgDesc, sizeof(IMG::serial_image));
+            MemCpy(Bytes::Create(imgDesc), output);
+//            MemCpy(output.data, &imgDesc, sizeof(IMG::serial_image));
 
             /* Cache DXT-compressed data */
             cooker->cacheFile(targetImg, output);

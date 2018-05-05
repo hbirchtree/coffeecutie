@@ -15,7 +15,7 @@ struct StbFontRenderer::FontData
     stbtt_fontinfo info;
 };
 
-StbFontRenderer::FontData *StbFontRenderer::LoadFontConfig(CByteData &p)
+StbFontRenderer::FontData *StbFontRenderer::LoadFontConfig(Bytes &p)
 {
     FontData* data = new FontData;
     if(!stbtt_InitFont(&data->info,p.data,0))
@@ -84,10 +84,10 @@ bool StbFontRenderer::CalcTextSize(FontData *d, const FontProperties &p,
 
 bool StbFontRenderer::RenderText(FontData *d, const FontProperties &p, cstring t)
 {
-    ubyte_t* data = C_CAST<ubyte_t*>(Alloc(512*128));
+//    ubyte_t* data = C_CAST<ubyte_t*>(Alloc(512*128));
     int32 x = 0;
 
-    C_UNUSED(data);
+//    C_UNUSED(data);
     C_UNUSED(x);
     C_UNUSED(d);
     C_UNUSED(p);

@@ -22,8 +22,10 @@ set ( CoffeeOpenAL_SRCS
 	private/abstraction/openal/calsoundsample.cpp
     )
 
-coffee_add_library ( CoffeeAudio "${CoffeeAudio_SRCS}" ""
-    "${CMAKE_SOURCE_DIR}/include/coffee/audio"
+coffee_library (
+    TARGET CoffeeAudio
+    SOURCES ${CoffeeAudio_SRCS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/audio
     )
 
 target_include_directories ( CoffeeAudio
@@ -32,9 +34,11 @@ target_include_directories ( CoffeeAudio
     ${STB_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}"
-    "CoffeeAudio"
-    "${CMAKE_SOURCE_DIR}/include/coffee/audio/openal"
+coffee_library (
+    TARGET CoffeeOpenAL
+    SOURCES ${CoffeeOpenAL_SRCS}
+    LIBRARIES CoffeeAudio
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/audio/openal
     )
 
 if(NOT APPLE)

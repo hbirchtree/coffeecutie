@@ -19,9 +19,9 @@ struct InternalState
     {
     }
 
+#ifndef COFFEE_LOWFAT
     LogInterface logger = OutputPrinterImpl::fprintf_platform;
 
-#ifndef COFFEE_LOWFAT
     Mutex printer_lock;
 #endif
 
@@ -157,7 +157,7 @@ Profiling::ProfilerDataStore* GetProfilerStore()
     C_PTR_CHECK(ISTATE);
     return &ISTATE->profiler_store;
 #else
-    throw implementation_error("profiler disabled");
+    Throw(implementation_error("profiler disabled"));
 #endif
 }
 
@@ -169,7 +169,7 @@ Profiling::ThreadData *GetProfilerTStore()
 
     return TSTATE->profiler_data.get();
 #else
-    throw implementation_error("profiler disabled");
+    Throw(implementation_error("profiler disabled"));
 #endif
 }
 
@@ -183,8 +183,12 @@ bool& GetAlternateTerminal()
 
 Mutex& GetPrinterLock()
 {
+#ifndef COFFEE_LOWFAT
     C_PTR_CHECK(ISTATE);
     return ISTATE->printer_lock;
+#else
+    Throw(releasemode_error("not available in this mode"));
+#endif
 }
 
 ThreadId& GetCurrentThreadId()
@@ -198,7 +202,7 @@ ThreadId& GetCurrentThreadId()
 
     return TSTATE->current_thread_id;
 #else
-    throw releasemode_error("thread ID is not available");
+    Throw(releasemode_error("thread ID is not available"));
 #endif
 }
 
@@ -262,12 +266,15 @@ u8& PrintingVerbosityLevel()
 
 namespace DebugFun{
 
+#ifndef COFFEE_LOWFAT
 void SetLogInterface(LogInterface intf)
 {
     C_PTR_CHECK(State::ISTATE);
     State::ISTATE->logger = intf;
 }
+#endif
 
+#ifndef COFFEE_LOWFAT
 LogInterface GetLogInterface()
 {
     if(State::ISTATE)
@@ -275,6 +282,7 @@ LogInterface GetLogInterface()
     else
         return DebugFun::OutputPrinterImpl::fprintf_platform;
 }
+#endif
 
 }
 

@@ -9,6 +9,7 @@ namespace Coffee{
 namespace Net{
 void ProfilingExport()
 {
+#ifndef COFFEE_LOWFAT
     cVerbose(10, "Checking for network profiling...");
 
     const constexpr cstring network_server = "COFFEE_REPORT_URL";
@@ -64,6 +65,7 @@ void ProfilingExport()
         }
     }else
         cVerbose(10, "Network export cancelled");
+#endif
 }
 
 void RegisterProfiling()

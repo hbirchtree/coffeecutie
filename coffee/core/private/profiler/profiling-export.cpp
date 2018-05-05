@@ -14,6 +14,8 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
+#ifndef COFFEE_LOWFAT
+
 namespace Coffee{
 namespace Profiling{
 
@@ -822,3 +824,5 @@ void ExitRoutine()
 
 }
 }
+
+#endif

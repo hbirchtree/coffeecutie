@@ -50,9 +50,9 @@ struct AndroidFileFun :
 
     static bool Close(FileHandle *fh);
 
-    static CByteData Read(FileHandle *fh, uint64 size, bool nterminate);
+    static Bytes Read(FileHandle *fh, uint64 size, bool nterminate);
 
-    static bool Write(FileHandle *fh, const CByteData &d, bool);
+    static bool Write(FileHandle *fh, const Bytes &d, bool);
 
     static szptr Size(FileHandle *fh);
     static szptr Size(Url const& fn);
