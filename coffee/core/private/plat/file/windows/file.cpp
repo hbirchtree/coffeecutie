@@ -215,15 +215,16 @@ bool WinFileFun::Close(WinFileFun::FileHandle* fh)
     return false;
 }
 
-CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
+Bytes WinFileFun::Read(FileHandle * h, uint64 size, bool)
 {
     if(h->type == FileHandle::FS)
     {
-        CByteData d;
+        Bytes d;
 
         d.size = Size(h);
         d.size = (size < d.size) ? size : d.size;
-        d.data = (byte_t*)Alloc(d.size);
+
+        d = Bytes::Alloc(d.size);
 
         DWORD size = 0;
         szptr i = 0;
@@ -237,8 +238,7 @@ CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
             if (stat && size == chnk)
                 i += chnk;
             else {
-                d.size = 0;
-                CFree(d.data);
+                d = Bytes();
                 break;
             }
         }
@@ -248,7 +248,7 @@ CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
         return d;
     }else
     {
-        CByteData d = {};
+        Bytes d = {};
 
 #ifndef COFFEE_WINDOWS_UWP
         HGLOBAL lsrc = LoadResource(nullptr, h->rsrc);
@@ -261,7 +261,7 @@ CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
     }
 }
 
-bool WinFileFun::Write(FileHandle* fh, CByteData const& d, bool)
+bool WinFileFun::Write(FileHandle* fh, Bytes const& d, bool)
 {
     if (fh->type == FileHandle::FS) {
         DWORD size = 0;
