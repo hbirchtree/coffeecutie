@@ -55,6 +55,11 @@ struct Ptr
         return ptr;
     }
 
+    FORCEDINLINE const T* operator->() const
+    {
+        return ptr;
+    }
+
     FORCEDINLINE T& operator*()
     {
 #if !defined(NDEBUG)
@@ -86,9 +91,19 @@ struct Ptr
         return *this;
     }
 
+    /* For replacing other std::*_ptr types */
     FORCEDINLINE void release()
     {
         ptr = nullptr;
+    }
+    FORCEDINLINE void reset()
+    {
+        release();
+    }
+
+    FORCEDINLINE T* get()
+    {
+        return ptr;
     }
 };
 
