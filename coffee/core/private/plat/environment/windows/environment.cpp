@@ -76,39 +76,15 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
         return{};
     Variables var;
 
-    CString k, v;
-
     while (env[0] != TCHAR(0))
     {
-        cstring_w p_r = nullptr;
-        cstring p = nullptr;
+        CString p_r;
 
-        p_r = Convert::WideNarrow(env);
+        p_r = env;
 
-        if (!p_r)
-            p = (cstring)env;
-        else
-            p = p_r;
+        szptr key_end = p_r.find('=');
 
-        k.clear();
-        {
-            szptr len = Search::ChrFind(p, '=') - p;
-            k.resize(len);
-            k.insert(0, p, len);
-        }
-        v.clear();
-        {
-            szptr off = Search::ChrFind(p, '=') - p + 1;
-            szptr len = StrLen(p) - off;
-            v.resize(len);
-            v.insert(0, &p[off], len);
-        }
-
-
-        var[k] = v;
-
-        if (p_r)
-            CFree(p_r);
+        var[p_r.substr(0, key_end)] = p_r.substr(key_end);
 
         env = (TCHAR*)Search::ChrFind(env, TCHAR(0));
         env += 1; // Skipping the expected \0

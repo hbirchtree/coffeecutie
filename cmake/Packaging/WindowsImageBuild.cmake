@@ -55,7 +55,7 @@ macro(WINPE_PACKAGE
     set ( LINESHIFT "\r\n" )
 
     if(MINGW64)
-        set ( LINESHIFT "\r\n" )
+        set ( LINESHIFT "\n\n\n" )
     endif()
 
 

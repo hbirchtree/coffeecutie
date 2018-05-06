@@ -28,7 +28,7 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenOrthographic(
 template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T, 4> GenInfinitePerspective(
         const T& fov, const T& aspect,
-        const T& near
+        const T& near_
         )
 {
     _cbasic_tmatrix<T,4> out;
@@ -39,7 +39,7 @@ FORCEDINLINE _cbasic_tmatrix<T, 4> GenInfinitePerspective(
 
     out[0] = {foc, 0,            0,    0};
     out[1] = {0,   foc / aspect, 0,    0};
-    out[2] = {0,   0,            e-1., (e-2) * near};
+    out[2] = {0,   0,            e-1., (e-2) * near_};
     out[3] = {0,   0,           -1,    0};
 
     return out;

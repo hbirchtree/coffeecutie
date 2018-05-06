@@ -143,11 +143,13 @@ P<InternalThreadState>& GetInternalThreadState()
 
 BuildInfo& GetBuildInfo()
 {
+    C_PTR_CHECK(ISTATE);
     return ISTATE->build;
 }
 
 CoffeeApplicationData& GetAppData()
 {
+    C_PTR_CHECK(ISTATE);
     return ISTATE->current_app;
 }
 

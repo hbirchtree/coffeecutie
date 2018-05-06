@@ -1,4 +1,6 @@
-find_package(assimp REQUIRED)
+if(NOT ASSIMP_FOUND)
+    find_package(assimp REQUIRED)
+endif()
 
 set ( CoffeeAssimp_SRCS
         private/cassimpimporters.cpp

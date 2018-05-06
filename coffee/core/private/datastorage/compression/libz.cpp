@@ -150,9 +150,7 @@ bool LibZCompressor::Compress(
             win_strerror(GetLastError()));
     }
 
-    target->data = C_RCAST<byte_t*>(Alloc(compSize));
-    target->size = compSize;
-    Bytes::SetDestr(*target, [](Bytes& b) { CFree(b.data); });
+    *target = Bytes::Alloc(compSize);
 
     succ = ::Compress(
         cHnd,
@@ -196,9 +194,7 @@ bool LibZCompressor::Decompress(
         return false;
     }
 
-    target->data = C_RCAST<byte_t*>(Alloc(compSize));
-    target->size = compSize;
-    Bytes::SetDestr(*target, [](Bytes& b) { CFree(b.data); });
+    *target = Bytes::Alloc(compSize);
 
     succ = ::Decompress(
         cHnd,
