@@ -16,8 +16,6 @@ int32 coffee_main(int32, cstring_w*)
     Net::RegisterProfiling();
 #endif
 
-    State::SetInternalState(State::CreateNewState());
-
     CResources::FileResourcePrefix("sample_data/");
 
     Profiler::PushContext("Configuration data");
