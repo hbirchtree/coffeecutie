@@ -4,11 +4,13 @@
 *.user
 .DS_Store
 *.swp
+core
 
 # Directories
 bin
 build
 build_*
+multi_build
 
 # JetBrains/CLion
 .idea
