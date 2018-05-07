@@ -23,7 +23,18 @@ extern Coffee::CoffeeMainWithArgs android_entry_point;
 extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0);
 
 //This is a cheeky little macro that allows us to wrap the main function.
-#if defined(COFFEE_SDL_MAIN)
+#if defined(COFFEE_LOWFAT)
+
+#define COFFEE_APPLICATION_MAIN(mainfun) \
+    int main(int argv, char** argc){ return mainfun(argv,argc); }
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
+    int main(int argv, char** argc){ return mainfun(argv,argc); }
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
+    int main(int argv, char** argc){ return mainfun(argv,argc); }
+
+#elif defined(COFFEE_SDL_MAIN)
 
 // Wraps it with a custom name defined above
 #define COFFEE_APPLICATION_MAIN(mainfun) \
@@ -34,18 +45,26 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
     COFFEE_APPLICATION_MAIN(mainfun)
 
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
+    COFFEE_APPLICATION_MAIN(mainfun)
+
 #elif defined(COFFEE_CUSTOM_MAIN)
 
 #if defined(COFFEE_APPLE_MOBILE)
 // This is loaded from AppDelegate.m in CoffeeWindow_GLKit
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     Coffee::CoffeeMainWithArgs apple_entry_point = mainfun;
+
 #elif defined(COFFEE_ANDROID)
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     Coffee::CoffeeMainWithArgs android_entry_point = mainfun;
+
 #endif
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
+    COFFEE_APPLICATION_MAIN(mainfun)
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
     COFFEE_APPLICATION_MAIN(mainfun)
 
 #else
@@ -58,4 +77,10 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
     int main(int argv, char** argc){ \
         return deref_main(mainfun,argv,argc, 0x1);\
     }
+
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
+    int main(int argv, char** argc){ \
+        return deref_main(mainfun,argv,argc, flags);\
+    }
+
 #endif

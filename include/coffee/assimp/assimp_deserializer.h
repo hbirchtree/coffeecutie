@@ -74,6 +74,10 @@ bool LoadModel(
                     std::move(
                         resourceResolve.extResolver(base, ext)
                         ));
+
+        /* If file resolution fails, escape! */
+        if(!output.store.back().data)
+            return false;
     }
 
     output.draws = SerialArray<typename API::D_DATA>(

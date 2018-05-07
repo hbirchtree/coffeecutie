@@ -3,6 +3,7 @@
 
 #include "asio_data.h"
 #include "http_types.h"
+#include <coffee/core/base/threading/job_system.h>
 
 namespace Coffee{
 namespace ASIO{

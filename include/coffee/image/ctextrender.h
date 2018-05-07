@@ -21,7 +21,7 @@ struct FontRendererDef
 
     struct FontData;
 
-    static FontData* LoadFontConfig(CByteData&){return nullptr;}
+    static FontData* LoadFontConfig(Bytes&){return nullptr;}
     static void UnloadFontConfig(FontData*){}
     static cstring GetFontName(FontData*){return nullptr;}
     static bool GetFontProperties(FontData*,scalar,FontProperties*){return false;}
@@ -37,7 +37,7 @@ struct StbFontRenderer : TrueType::FontRendererDef
 {
     struct FontData;
 
-    static FontData* LoadFontConfig(CByteData& p);
+    static FontData* LoadFontConfig(Bytes& p);
     static void UnloadFontConfig(FontData* d);
     static cstring GetFontName(FontData* d);
     static bool GetFontProperties(FontData* d, scalar h, FontProperties* p);

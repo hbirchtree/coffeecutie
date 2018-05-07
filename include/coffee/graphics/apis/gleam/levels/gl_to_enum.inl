@@ -296,6 +296,8 @@ inline CGenum to_enum(
     case DrawMode::Point:
         return GL_POINT;
     }
+
+	return GL_NONE;
 }
 #endif
 

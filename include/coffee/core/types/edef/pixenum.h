@@ -1,30 +1,30 @@
 #pragma once
 
-#include "enumfun.h"
 #include "../tdef/integertypes.h"
+#include "enumfun.h"
 
 #undef None
 
-namespace Coffee{
+namespace Coffee {
 
 enum class PixelFlags : u16
 {
     None = 0x0,
     /* Misc. properties */
-    FloatingPoint   = 0x10,
-    Unsigned        = 0x20,
-    Normalize       = 0x40,
-    Signed          = 0x80,
-    Unormalized     = 0x100,
+    FloatingPoint = 0x10,
+    Unsigned      = 0x20,
+    Normalize     = 0x40,
+    Signed        = 0x80,
+    Unormalized   = 0x100,
 
     /* Specifying color channels for compressed formats */
-    R       = 0x0800,
-    RG      = 0x1000,
-    RGB     = 0x2000,
-    RGBA    = 0x4000,
-    SRGBA   = 0x8000,
+    R     = 0x0800,
+    RG    = 0x1000,
+    RGB   = 0x2000,
+    RGBA  = 0x4000,
+    SRGBA = 0x8000,
 };
-C_FLAGS(PixelFlags,uint32);
+C_FLAGS(PixelFlags, uint32);
 
 enum class PixelComponents : u8
 {
@@ -74,75 +74,75 @@ enum class PixelFormat : u8
     /* Formatting: [CHANNELS][NUMBITS][DATATYPE] */
 
     /* Standard integer formats, float samplers */
-    R8,         /*   8-bit */
-    R16,        /*  16-bit */
-    RG8,        /*   8-bit            8-bit R,  8-bit G */
-    RG16,       /*  32-bit,          16-bit R, 16-bit G */
+    R8,   /*   8-bit */
+    R16,  /*  16-bit */
+    RG8,  /*   8-bit            8-bit R,  8-bit G */
+    RG16, /*  32-bit,          16-bit R, 16-bit G */
 
-    R3G3B2,     /*   8-bit,          3-bit R, 3-bit G, 2-bit B */
-    RGB4,       /*  12-bit,          4-bit per channel*/
-    RGB5,       /*  15-bit,          5-bit per channel*/
-    RGB565,     /*  16-bit,          5-bit R, 6-bit G, 5-bit B */
-    RGB8,       /*  24-bit,          8-bit per channel*/
-    RGB10,      /*  30-bit,         10-bit per channel*/
-    RGB12,      /*  36-bit,         12-bit per channel*/
-    RGB16,      /*  48-bit,         16-bit per channel*/
+    R3G3B2, /*   8-bit,          3-bit R, 3-bit G, 2-bit B */
+    RGB4,   /*  12-bit,          4-bit per channel*/
+    RGB5,   /*  15-bit,          5-bit per channel*/
+    RGB565, /*  16-bit,          5-bit R, 6-bit G, 5-bit B */
+    RGB8,   /*  24-bit,          8-bit per channel*/
+    RGB10,  /*  30-bit,         10-bit per channel*/
+    RGB12,  /*  36-bit,         12-bit per channel*/
+    RGB16,  /*  48-bit,         16-bit per channel*/
 
-    RGBA2,      /*   8-bit,          2-bit per channel */
-    RGBA8,      /*  32-bit,          8-bit per channel*/
-    RGBA4,      /*  16-bit,          4-bit per channel*/
-    RGBA12,     /*  48-bit,         12-bit per channel */
-    RGBA16,     /*  64-bit,         16-bit per channel*/
+    RGBA2,  /*   8-bit,          2-bit per channel */
+    RGBA8,  /*  32-bit,          8-bit per channel*/
+    RGBA4,  /*  16-bit,          4-bit per channel*/
+    RGBA12, /*  48-bit,         12-bit per channel */
+    RGBA16, /*  64-bit,         16-bit per channel*/
 
-    RGB5A1,     /*  16-bit,          5-bit per channel, 1-bit alpha*/
-    RGB9E5,     /*  32-bit,          9-bit special fp RGB, 5-bit ui extra */
-    RGB10A2,    /*  32-bit,         10-bit RGB, 2-bit alpha */
+    RGB5A1,  /*  16-bit,          5-bit per channel, 1-bit alpha*/
+    RGB9E5,  /*  32-bit,          9-bit special fp RGB, 5-bit ui extra */
+    RGB10A2, /*  32-bit,         10-bit RGB, 2-bit alpha */
 
     /* I-sampled formats */
-    R8I,        /*   8-bit i*/
-    R16I,       /*  16-bit i */
-    R32I,       /*  32-bit i */
-    RG8I,       /*  16-bit,          8-bit i channels */
-    RG16I,      /*  32-bit,         16-bit i channels */
-    RG32I,      /*  64-bit,         32-bit i channels */
-    RGB8I,      /*  24-bit,          8-bit i channels */
-    RGB16I,     /*  48-bit,         16-bit i channels */
-    RGB32I,     /*  96-bit,         32-bit i channels */
-    RGBA8I,     /*  16-bit,          8-bit i channels */
-    RGBA16I,    /*  64-bit,         16-bit i channels */
-    RGBA32I,    /* 128-bit,         32-bit i channels */
+    R8I,     /*   8-bit i*/
+    R16I,    /*  16-bit i */
+    R32I,    /*  32-bit i */
+    RG8I,    /*  16-bit,          8-bit i channels */
+    RG16I,   /*  32-bit,         16-bit i channels */
+    RG32I,   /*  64-bit,         32-bit i channels */
+    RGB8I,   /*  24-bit,          8-bit i channels */
+    RGB16I,  /*  48-bit,         16-bit i channels */
+    RGB32I,  /*  96-bit,         32-bit i channels */
+    RGBA8I,  /*  16-bit,          8-bit i channels */
+    RGBA16I, /*  64-bit,         16-bit i channels */
+    RGBA32I, /* 128-bit,         32-bit i channels */
 
     /* UI-sampled formats */
-    R8UI,       /*   8-bit ui*/
-    R16UI,      /*  16-bit ui */
-    R32UI,      /*  32-bit ui */
-    RG8UI,      /*  16-bit,          8-bit ui channels */
-    RG16UI,     /*  32-bit,         16-bit ui channels */
-    RG32UI,     /*  64-bit,         32-bit ui channels */
-    RGB8UI,     /*  24-bit,          8-bit ui channels */
-    RGB16UI,    /*  48-bit,         16-bit ui channels */
-    RGB32UI,    /*  96-bit,         32-bit ui channels */
-    RGBA8UI,    /*  16-bit,          8-bit ui channels */
-    RGBA16UI,   /*  64-bit,         16-bit ui channels */
-    RGBA32UI,   /* 128-bit,         32-bit ui channels */
+    R8UI,     /*   8-bit ui*/
+    R16UI,    /*  16-bit ui */
+    R32UI,    /*  32-bit ui */
+    RG8UI,    /*  16-bit,          8-bit ui channels */
+    RG16UI,   /*  32-bit,         16-bit ui channels */
+    RG32UI,   /*  64-bit,         32-bit ui channels */
+    RGB8UI,   /*  24-bit,          8-bit ui channels */
+    RGB16UI,  /*  48-bit,         16-bit ui channels */
+    RGB32UI,  /*  96-bit,         32-bit ui channels */
+    RGBA8UI,  /*  16-bit,          8-bit ui channels */
+    RGBA16UI, /*  64-bit,         16-bit ui channels */
+    RGBA32UI, /* 128-bit,         32-bit ui channels */
 
-    RGB10A2UI,  /*  32-bit,         10-bit ui per channel, 2-bit ui alpha*/
+    RGB10A2UI, /*  32-bit,         10-bit ui per channel, 2-bit ui alpha*/
 
     /* Floating-point formats */
-    R16F,       /*  16-bit fp */
-    R32F,       /*  32-bit fp */
-    RG16F,      /*  32-bit,         16-bit fp channels */
-    RG32F,      /*  64-bit,         32-bit fp channels */
-    RGB16F,     /*  48-bit,         16-bit fp channels */
-    RGB32F,     /*  96-bit,         32-bit fp channels */
-    RGBA16F,    /*  64-bit,         16-bit fp channels */
-    RGBA32F,    /* 128-bit,         32-bit fp channels */
+    R16F,    /*  16-bit fp */
+    R32F,    /*  32-bit fp */
+    RG16F,   /*  32-bit,         16-bit fp channels */
+    RG32F,   /*  64-bit,         32-bit fp channels */
+    RGB16F,  /*  48-bit,         16-bit fp channels */
+    RGB32F,  /*  96-bit,         32-bit fp channels */
+    RGBA16F, /*  64-bit,         16-bit fp channels */
+    RGBA32F, /* 128-bit,         32-bit fp channels */
 
     R11G11B10F, /*  32-bit,         11-bit fp RG, 10-bit fp B*/
 
     /* Compressed/nonlinear formats, use flags for further details */
-    SRGB8,      /*  24-bit SRGB data*/
-    SRGB8A8,    /*  24-bit SRGB data + 8-bit integer*/
+    SRGB8,   /*  24-bit SRGB data*/
+    SRGB8A8, /*  24-bit SRGB data + 8-bit integer*/
 
     ASTC,
     BPTC,
@@ -152,18 +152,20 @@ enum class PixelFormat : u8
     ETC1,
 
     /* Special data */
-//    Stencil,         /*  8-bit integer, not a real format */
-    Depth16,         /* 16-bit unsigned short */
-    Depth24Stencil8, /* 32-bit data,           24-bit floating-point, 8-bit integer */
+    //    Stencil,         /*  8-bit integer, not a real format */
+    Depth16,          /* 16-bit unsigned short */
+    Depth24Stencil8,  /* 32-bit data,           24-bit floating-point, 8-bit
+                         integer */
     Depth32F,         /* 32-bit floating-point */
     Depth32FStencil8, /* 32-bit floating-point, 8-bit stencil */
 
     MAX_PIXFMT,
 
-    Depth, DepthStencil, /* Fakes */
+    Depth,
+    DepthStencil, /* Fakes */
 };
 
-enum class CompFlags
+enum class CompFlags : u8
 {
     CompressionNone,
 
@@ -189,20 +191,31 @@ enum class CompFlags
 
 enum class BitFormat : u8
 {
-    Byte, ByteR,
-    UByte, UByteR,
-    UByte_332, UByte_233R,
+    Byte,
+    ByteR,
+    UByte,
+    UByteR,
+    UByte_332,
+    UByte_233R,
 
-    Short, ShortR,
-    UShort, UShortR,
-    UShort_4444, UShort_4444R,
-    UShort_565, UShort_565R,
-    UShort_5551, UShort_1555R,
+    Short,
+    ShortR,
+    UShort,
+    UShortR,
+    UShort_4444,
+    UShort_4444R,
+    UShort_565,
+    UShort_565R,
+    UShort_5551,
+    UShort_1555R,
 
-    Int, IntR,
-    UInt, UIntR,
+    Int,
+    IntR,
+    UInt,
+    UIntR,
     UInt_5999R,
-    UInt_1010102, UInt_2101010R,
+    UInt_1010102,
+    UInt_2101010R,
 
     Scalar_16,
     Scalar_32,
@@ -213,7 +226,6 @@ enum class BitFormat : u8
 
     Scalar_32_Int_24_8,
 };
-
 
 FORCEDINLINE bool IsPixFmtCompressed(PixelFormat f)
 {
@@ -233,6 +245,27 @@ FORCEDINLINE bool IsPixFmtCompressed(PixelFormat f)
 using BitFmt = BitFormat;
 using PixFmt = PixelFormat;
 using PixFlg = PixelFlags;
+
+struct CompFmt
+{
+    constexpr CompFmt() :
+        base_fmt(PixFmt::None), c_flags(CompFlags::CompressionNone),
+        p_flags(PixFlg::None)
+    {
+    }
+    constexpr CompFmt(PixFmt base, CompFlags cf) :
+        base_fmt(base), c_flags(cf), p_flags(PixFlg::None)
+    {
+    }
+    constexpr CompFmt(PixFmt base, PixFlg flg, CompFlags cf) :
+        base_fmt(base), c_flags(cf), p_flags(flg)
+    {
+    }
+
+    PixFmt    base_fmt;
+    CompFlags c_flags;
+    PixFlg    p_flags;
+};
 
 #if __cpp_constexpr >= 201304
 #define CONSTEXPR_EXTENDED constexpr
@@ -316,7 +349,7 @@ FORCEDINLINE BitFmt GetPreferredBitFmt(PixFmt fmt)
         return B::UShort;
     case P::Depth24Stencil8:
         return B::UInt24_8;
-    case  P::Depth32F:
+    case P::Depth32F:
         return B::Scalar_32;
     case P::Depth32FStencil8:
         return B::Scalar_32_Int_24_8;
@@ -454,21 +487,91 @@ FORCEDINLINE PixCmp GetPixComponent(PixFmt fmt)
     }
 }
 
+CONSTEXPR_EXTENDED
+FORCEDINLINE PixCmp GetPixComponent(CompFmt fmt)
+{
+    switch(fmt.base_fmt)
+    {
+    case PixFmt::S3TC:
+    {
+        switch(fmt.p_flags)
+        {
+        case PixFlg::RGB:
+            return PixCmp::RGB;
+        case PixFlg::RGBA:
+            return PixCmp::RGBA;
+        default:
+            break;
+        }
+        switch(fmt.c_flags)
+        {
+        case CompFlags::S3TC_1:
+            return PixCmp::RGB;
+        case CompFlags::S3TC_3:
+        case CompFlags::S3TC_5:
+            return PixCmp::RGBA;
+        default:
+            break;
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+    return PixCmp::None;
+}
+
+struct PixDesc
+{
+    PixDesc() :
+        pixfmt(PixFmt::None), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(BitFmt::Byte),
+        comp(PixCmp::None)
+    {
+    }
+
+    PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp) :
+        pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)
+    {
+    }
+
+    PixDesc(CompFmt cf) : c(cf), bfmt(BitFmt::Byte), comp(GetPixComponent(c))
+    {
+    }
+
+    union
+    {
+        CompFmt c;
+        struct
+        {
+            PixFmt    pixfmt;
+            CompFlags cmpflg;
+            PixFlg    pixflg;
+        };
+    };
+
+    BitFmt bfmt;
+    PixCmp comp;
+};
+
 #if __cpp_constexpr >= 201304
 template<PixFmt F, BitFmt B, PixelFlags Sample>
 struct PixInfo
 {
-    static constexpr PixFmt format = F;
-    static constexpr PixCmp components = GetPixComponent(F);
-    static constexpr BitFmt bitfmt = B;
+    static constexpr PixFmt     format      = F;
+    static constexpr PixCmp     components  = GetPixComponent(F);
+    static constexpr BitFmt     bitfmt      = B;
     static constexpr PixelFlags sample_type = Sample;
 };
 
 template<PixFmt F>
-struct PixInfoDefault
-        : PixInfo<F, GetPreferredBitFmt(F), GetPixSampleType(F)> { };
+struct PixInfoDefault : PixInfo<F, GetPreferredBitFmt(F), GetPixSampleType(F)>
+{
+};
 #endif
 
-}
+} // namespace Coffee
 
 #undef CONSTEXPR_EXTENDED

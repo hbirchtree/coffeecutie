@@ -33,7 +33,10 @@ public:
     friend bool FileMap(Resource &resc, ResourceAccess acc, szptr size);
     friend bool FileUnmap(Resource &resc);
 
+    friend bool FileOpenMap(Resource& resc, szptr size, RSCA acc);
+
     friend bool FileExists(const Resource& resc);
+    friend void FileFree(Resource &resc);
 
     /*!
      * \brief Constructs a resource
@@ -91,6 +94,8 @@ extern bool FileMap(Resource& resc, ResourceAccess acc = ResourceAccess::ReadOnl
  */
 extern bool FileUnmap(Resource& resc);
 
+extern bool FileOpenMap(Resource& resc, szptr size, RSCA acc = RSCA::ReadWrite);
+
 /*!
  * \brief Free data pointer
  */
@@ -102,6 +107,8 @@ extern bool FilePull(Resource &resc, bool textmode = false, bool bigendian = fal
  */
 extern bool FileCommit(Resource& resc, bool append = false,
                ResourceAccess acc = ResourceAccess::Discard);
+
+
 /*!
  * \brief Save data to file, append null-terminator
  * \return

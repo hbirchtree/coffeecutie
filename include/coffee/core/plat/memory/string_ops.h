@@ -141,13 +141,6 @@ STRTOFN_FUNCTION(bigscalar, strtoscalar, strtod)
 
 extern bool strtobool(cstring n, bool *valid = nullptr);
 
-/* C-String conversion */
-extern cwstring_w NarrowWide(cstring str);
-extern cstring_w WideNarrow(cwstring str);
-
-/* This is a workaround till C++17 constexpr if is made available. */
-FORCEDINLINE cstring_w WideNarrow(cstring) { return nullptr; }
-
 }
 
 }

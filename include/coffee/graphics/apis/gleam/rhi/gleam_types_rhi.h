@@ -32,6 +32,9 @@ enum APILevel
     GL_3_3   = 0x330,
     GL_4_3   = 0x430,
     GL_4_5   = 0x450,
+    GL_4_6   = 0x460,
+
+    GLES_MIN = 0x10000,
 
     /* Mobile GL versions / ES */
     /* These do not map directly to desktop versions */
@@ -54,6 +57,7 @@ inline bool APILevelIsOfClass(APILevel l, APIClass c)
     case GL_3_3:
     case GL_4_3:
     case GL_4_5:
+    case GL_4_6:
         return c == APIClass::GLCore;
     case GLES_2_0:
     case GLES_3_0:

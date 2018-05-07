@@ -1,6 +1,6 @@
 #pragma once
 #include "task.h"
-#include <coffee/core/CDebug>
+#include <coffee/core/CMath>
 
 namespace Coffee{
 

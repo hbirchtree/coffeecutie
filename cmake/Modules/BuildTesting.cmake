@@ -3,85 +3,119 @@
 include ( ValgrindTest )
 include ( BuildPackaging )
 
-function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
-    # Bleh, Android kind of sucks for this.
+function(COFFEE_TEST)
+    # If a platform does not support simple testing, drop out here
     if(WIN_UWP)
         return()
     endif()
 
-    coffee_gen_licenseinfo("${TARGET}" "")
-    coffee_gen_applicationinfo("${TARGET}"
-        "${TITLE}"
-        "Coffee"
-        "5"
+    cmake_parse_arguments(
+        TEST
+        ""
+        "TARGET;TITLE"
+        "SOURCES;LIBRARIES"
+        ${ARGN}
         )
 
-    if(ANDROID) # Android platform layer
-        set ( SOURCES_MOD "${SOURCES};${APPLICATION_INFO_FILE};${LICENSE_FILE};${SDL2_ANDROID_MAIN_FILE}" )
+    if(NOT DEFINED TEST_TARGET OR NOT DEFINED TEST_TITLE)
+        message ( FATAL "Test target is not valid" )
+    endif()
+
+    coffee_gen_licenseinfo(
+        "${TEST_TARGET}"
+        ""
+        )
+    coffee_gen_applicationinfo(
+        "${TEST_TARGET}"
+        "${TEST_TITLE}"
+        "Coffee"
+        "1"
+        )
+
+    if(ANDROID)
+        set ( SOURCES_MOD
+            ${TEST_SOURCES}
+            ${APPLICATION_INFO_FILE}
+            ${LICENSE_FILE}
+#            ${SDL2_ANDROID_MAIN_FILE}
+            )
     else()
-        set ( SOURCES_MOD "${SOURCES};${APPLICATION_INFO_FILE};${LICENSE_FILE}" )
+        set ( SOURCES_MOD
+            ${TEST_SOURCES}
+            ${APPLICATION_INFO_FILE}
+            ${LICENSE_FILE}
+            )
     endif()
 
     if(EMSCRIPTEN)
-        add_executable ( ${TARGET} ${SOURCES_MOD} )
+        add_executable( ${TEST_TARGET}
+            ${SOURCES_MOD}
+            )
 
-        set_target_properties( ${TARGET} PROPERTIES
-          RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
-        )
-        install(
-            DIRECTORY
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
+        set_target_properties( ${TEST_TARGET}
+            PROPERTIES
 
-            DESTINATION
-            bin
+            RUNTIME_OUTPUT_DIRECTORY
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TARGET}.bundle
+            )
+
+        install (
+            DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TARGET}.bundle
+            DESTINATION bin
             )
     elseif(ANDROID OR IOS)
         coffee_application (
-            TARGET ${TARGET}
-            TITLE ${TITLE}
-            COMPANY "me.birchtrees"
+            TARGET "${TEST_TARGET}"
+            TITLE "${TEST_TITLE}"
+            COMPANY "tests"
             VERSION_CODE 1
-            INFO_STRING "Unit test - ${TITLE}"
+            INFO_STRING "Unit test - ${TEST_TITLE}"
             COPYRIGHT "Testing"
             SOURCES ${SOURCES_MOD}
-            LIBRARIES ${LIBRARIES} CoffeeTesting
+            LIBRARIES ${TEST_LIBRARIES} CoffeeTesting
             )
     else()
-        add_executable ( ${TARGET} ${SOURCES_MOD} )
+        add_executable ( ${TEST_TARGET} ${SOURCES_MOD} )
 
         install(
             FILES
-            "$<TARGET_FILE:${TARGET}>"
+            "$<TARGET_FILE:${TEST_TARGET}>"
 
             DESTINATION
             "bin/tests/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
     endif()
 
-    if(ANDROID)
-    else()
-        target_link_libraries ( ${TARGET}
+
+    if((NOT ANDROID) AND (NOT IOS))
+        target_link_libraries ( ${TEST_TARGET}
             PUBLIC
 
-            ${LIBRARIES}
+            ${TEST_LIBRARIES}
             CoffeeTesting
             CoffeeCore_Application
             )
     endif()
 
-    target_enable_cxx11(${TARGET})
+    target_enable_cxx11( ${TEST_TARGET} )
 
-    if(IOS) # Crosscompiling setup, until we find an elegant solution
-        message ( "Skipping unit test: ${TITLE}" )
+    if(IOS)
+        # There is not solution for iOS as of yet
+
+        message ( "Skipping unit test: ${TEST_TITLE}" )
         message ( "Please run the tests somehow!" )
         return()
     elseif(EMSCRIPTEN)
         add_test (
-            NAME ${TITLE}
-            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
-            COMMAND nodejs ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle/${TARGET}.js
+            NAME "${TEST_TITLE}"
+            WORKING_DIRECTORY
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TARGET}.bundle
+            COMMAND
+            nodejs ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TARGET}.bundle/${TEST_TARGET}.js
             )
     elseif(ANDROID)
+        # We use a unit testing utility for Android,
+        #  which installs and runs the test
 
         set ( ADB_AUTO_PATH
             "${CMAKE_SOURCE_DIR}/tools/automation/scripts/adb_auto" )
@@ -89,10 +123,10 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             "${ADB_AUTO_PATH}/unit_test.sh" )
 
         set ( PKG_NAME )
-        android_gen_pkg_name ("me.birchtrees" "${TARGET}" PKG_NAME )
+        android_gen_pkg_name ("tests" "${TEST_TARGET}" PKG_NAME )
 
         add_test (
-            NAME ${TITLE}
+            NAME "${TEST_TITLE}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 
             COMMAND ${ADB_AUTO}
@@ -100,33 +134,44 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
                 ${PKG_NAME}
             )
     else()
+        # In this case, CTest runs its normal course, locally
         add_test (
-            NAME ${TITLE}
+            NAME "${TEST_TITLE}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMAND $<TARGET_FILE:${TARGET}>
+            COMMAND $<TARGET_FILE:${TEST_TARGET}>
             )
     endif()
 
+    # Valgrind checks, for deep run-level checking
     if(COFFEE_VALGRIND_MASSIF)
-        VALGRIND_TEST("massif" "--stacks=yes" "${TARGET}")
+        VALGRIND_TEST("massif" "--stacks=yes" "${TEST_TARGET}")
     endif()
     if(COFFEE_VALGRIND_MEMCHECK)
-        VALGRIND_TEST("memcheck" "--stacks=yes" "${TARGET}")
+        VALGRIND_TEST("memcheck" "" "${TEST_TARGET}")
     endif()
     if(COFFEE_VALGRIND_CALLGRIND)
-        VALGRIND_TEST("callgrind" "--stacks=yes" "${TARGET}")
+        VALGRIND_TEST("callgrind" "" "${TEST_TARGET}")
     endif()
     if(COFFEE_VALGRIND_CACHEGRIND)
-        VALGRIND_TEST("cachegrind" "--stacks=yes" "${TARGET}")
+        VALGRIND_TEST("cachegrind" "" "${TEST_TARGET}")
     endif()
 
+    # When generating coverage data, we need to add the targets here
     if(BUILD_COVERAGE)
         setup_target_for_coverage(
-            "${TARGET}.Coverage"
-            "${TARGET}"
+            "${TEST_TARGET}.Coverage"
+            "${TEST_TARGET}"
             coverage
             )
     endif()
+endfunction()
 
+function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
+    coffee_test(
+        TARGET "${TARGET}"
+        TITLE "${TITLE}"
+        SOURCES ${SOURCES}
+        LIBRARIES ${LIBRARIES}
+        )
 endfunction()
 

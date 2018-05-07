@@ -3,6 +3,7 @@
 #if defined(COFFEE_UNIXPLAT)
 
 #include <coffee/core/coffee_assert_macros.h>
+#include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/core/CRegex>
 
@@ -19,11 +20,17 @@ namespace Posix{
 
 CString PosixStacktracer::DemangleSymbol(const char *sym)
 {
+#ifndef COFFEE_LOWFAT
     int32 stat = 0;
-    cstring_w symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
+    Ptr<char> symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
     if(stat==0)
-        return CString(symbol);
+    {
+        CString outSymbol = symbol.ptr;
+        CFree(symbol);
+        return outSymbol;
+    }
     else
+#endif
         return sym;
 }
 
@@ -31,6 +38,7 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
         uint32 start, int32 length)
 {
     Stacktrace t;
+#ifndef COFFEE_LOWFAT
 #if defined(COFFEE_USE_UNWIND)
     if(!unwind_context)
     {
@@ -69,19 +77,25 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
     C_UNUSED(start);
     C_UNUSED(length);
 #endif
+#endif
     return t;
 }
 
 CString PosixStacktracer::GetStackframeName(uint32 depth)
 {
+#ifndef COFFEE_LOWFAT
     Stacktrace trace = GetRawStackframes(depth, 2);
     if(!trace.size())
         return "???";
     return CString(trace[0]);
+#else
+    return {};
+#endif
 }
 
 CString PosixStacktracer::GetStackFuncName(u32 depth)
 {
+#ifndef COFFEE_LOWFAT
     static bool rgx_compiled;
     static Regex::Pattern rgx;
 
@@ -98,6 +112,9 @@ CString PosixStacktracer::GetStackFuncName(u32 depth)
         return frame;
 
     return result[1].s_match.front();
+#else
+    return {};
+#endif
 }
 
 }

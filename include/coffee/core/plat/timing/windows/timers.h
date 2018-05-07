@@ -103,7 +103,7 @@ struct WindowsTime : PosixIshTimeDef
 		CString out;
 		out.resize(40);
 
-		int len = std::strftime(&out[0],out.size(),fmt,&dt);
+        std::strftime(&out[0],out.size(),fmt,&dt);
 
 		return out;
 	}

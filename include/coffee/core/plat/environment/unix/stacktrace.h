@@ -20,12 +20,20 @@ struct PosixStacktracer : StacktracerDef
     template<typename T>
     STATICINLINE CString GetTypeName()
     {
+#ifndef COFFEE_LOWFAT
         return DemangleSymbol(typeid(T).name());
+#else
+        return {};
+#endif
     }
 
     STATICINLINE CString DemangleSymbol(CString const& sym)
     {
+#ifndef COFFEE_LOWFAT
         return DemangleSymbol(sym.c_str());
+#else
+        return {};
+#endif
     }
 
     static CString DemangleSymbol(const char* sym);

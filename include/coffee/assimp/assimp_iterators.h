@@ -174,7 +174,7 @@ struct MeshLoader
 
             while(ptr + Stride <= size)
             {
-                MemCpy(&raw_target[tptr], &raw_sauce[ptr], Size);
+                memcpy(&raw_target[tptr], &raw_sauce[ptr], Size);
 
                 ptr += Stride;
                 tptr += Size;
@@ -197,7 +197,7 @@ struct MeshLoader
         {
             if(!dest || !src)
                 return size;
-            MemCpy(dest, src, size);
+            memcpy(dest, src, size);
             return size;
         }
 
@@ -289,7 +289,7 @@ struct MeshLoader
         struct NodeData
         {
             Matf4 xf;
-            szptr parent; /*!< index of parent node */
+            u64 parent; /*!< index of parent node */
             u32 objectName; /*!< Index of object name in string store */
             ASSIMP::ObjectDesc::ObjectType type;
             i32 mesh; /*!< if >=0, index of mesh in related draw data */
@@ -299,8 +299,8 @@ struct MeshLoader
         struct SerialNodeData
         {
             Matf4 xf;
-            szptr parent; /*!< Index of parent node */
-            szptr objectName; /*!< Byte offset to name, null-terminated */
+            u64 parent; /*!< Index of parent node */
+            u64 objectName; /*!< Byte offset to name, null-terminated */
             ASSIMP::ObjectDesc::ObjectType type;
             i32 mesh;
 
@@ -344,9 +344,9 @@ struct MeshLoader
 
         struct SerialHeader
         {
-            szptr num_nodes;
-            szptr data_size;
-            szptr rootNode; /*!< Index of root node */
+            u64 num_nodes;
+            u64 data_size;
+            u64 rootNode; /*!< Index of root node */
 
             /*!
              * \brief Access a node when serialized,
@@ -354,7 +354,7 @@ struct MeshLoader
              * \param i
              * \return
              */
-            SerialNodeData const* node(szptr i = 0) const
+            SerialNodeData const* node(u64 i = 0) const
             {
                 if(i < num_nodes)
                 {
@@ -470,7 +470,7 @@ struct MeshLoader
 
         Vector<NodeData> nodes;
         Vector<CString> stringStore;
-        szptr rootNode;
+        u64 rootNode;
 
         szptr size()
         {
@@ -498,7 +498,10 @@ struct MeshLoader
             byte_t* basePtr = C_RCAST<byte_t*>(target);
             szptr offset = 0;
 
-            MemCpy(basePtr, &header, sizeof(header));
+            Bytes baseView = Bytes::From(basePtr, size);
+
+            MemCpy(Bytes::Create(header), baseView);
+//            MemCpy(basePtr, &header, sizeof(header));
             offset += sizeof(header);
             SerialNodeData* nodeData =
                     C_RCAST<SerialNodeData*>(&basePtr[offset]);
@@ -510,15 +513,16 @@ struct MeshLoader
                 newNode.type = node.type;
                 newNode.mesh = node.mesh;
                 newNode.objectName = 0; /* Must be set later */
-                MemCpy(&basePtr[offset], &newNode,
-                       sizeof(SerialNodeData));
+                MemCpy(Bytes::Create(newNode), baseView.at(offset));
+//                MemCpy(&basePtr[offset], &newNode, sizeof(SerialNodeData));
                 offset += sizeof(SerialNodeData);
             }
             for(auto i : Range<>(stringStore.size()))
             {
                 auto const& s = stringStore.at(i);
                 nodeData[i].objectName = offset;
-                MemCpy(&basePtr[offset], &s[0], s.size());
+                MemCpy(s, baseView.at(offset));
+//                MemCpy(&basePtr[offset], &s[0], s.size());
                 offset += s.size() + 1;
             }
 

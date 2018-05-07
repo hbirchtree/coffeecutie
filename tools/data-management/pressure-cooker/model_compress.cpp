@@ -130,13 +130,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
             auto materialFn = baseFname.addExtension("materials");
 
             Bytes vertexBytes;
-            vertexBytes.size = bdesc.vertexData.size();
-            vertexBytes.data = C_FCAST<byte_t*>(
-                        Calloc(vertexBytes.size, 1));
-            Bytes::SetDestr(vertexBytes, [](Bytes& b)
-            {
-                CFree(b.data);
-            });
+
+            vertexBytes = Bytes::Alloc(bdesc.vertexData.size());
 
             bdesc.vertexData.cpy(vertexBytes.data,  vertexBytes.size);
 
@@ -147,13 +142,7 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
                                 ? VirtFS::File_Compressed : u32(0)
                             });
 
-            vertexBytes.size = bdesc.elementData.size();
-            vertexBytes.data = C_FCAST<byte_t*>(
-                        Calloc(vertexBytes.size, 1));
-            Bytes::SetDestr(vertexBytes, [](Bytes& b)
-            {
-                CFree(b.data);
-            });
+            vertexBytes = Bytes::Alloc(bdesc.elementData.size());
 
             bdesc.elementData.cpy(vertexBytes.data, vertexBytes.size);
             files.push_back({
@@ -163,13 +152,8 @@ void AssimpProcessor::process(Vector<VirtFS::VirtDesc> &files,
                                 ? VirtFS::File_Compressed : u32(0)
                             });
 
-            vertexBytes.size = bdesc.nodes.size();
-            vertexBytes.data = C_FCAST<byte_t*>(
-                        Calloc(vertexBytes.size, 1));
-            Bytes::SetDestr(vertexBytes, [](Bytes& b)
-            {
-                CFree(b.data);
-            });
+            vertexBytes = Bytes::Alloc(bdesc.nodes.size());
+
             bdesc.nodes.cpy(vertexBytes.data, vertexBytes.size);
             files.push_back({
                                 graph.internUrl.c_str(),

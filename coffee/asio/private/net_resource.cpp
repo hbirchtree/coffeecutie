@@ -1,6 +1,9 @@
 #include <coffee/asio/net_resource.h>
 
+#include <coffee/core/string_casting.h>
 #include <coffee/core/base/textprocessing/cregex.h>
+#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/CDebug>
 
 #define NETRSC_TAG "NetRsc::"
 
@@ -39,7 +42,7 @@ static bool ExtractUrlComponents(CString const& url,
 
 void Resource::initRsc(const Url &url)
 {
-    DProfContext a(NETRSC_TAG "Initializing NetResource");
+    DProfContext a(DTEXT(NETRSC_TAG "Initializing NetResource"));
 
     CString urlS = *url;
 
@@ -49,7 +52,7 @@ void Resource::initRsc(const Url &url)
                              &m_host, &resource))
     {
         cVerbose(10, "Failed to decode URL");
-        Profiler::DeepProfile(NETRSC_TAG "Failed to decode URL");
+        Profiler::DeepProfile(DTEXT(NETRSC_TAG "Failed to decode URL"));
         return;
     }else
         cVerbose(15, "URL components: {0} {1} {2} {3}",
@@ -223,8 +226,9 @@ bool Resource::push(CString const& method, const Bytes &data)
 
     if(data.size)
     {
-        m_request.payload.resize(data.size);
-        MemCpy(m_request.payload.data(), data.data, data.size);
+        m_request.payload.reserve(data.size);
+        MemCpy(data, m_request.payload);
+//        MemCpy(m_request.payload.data(), data.data, data.size);
     }
 
     bool result = false;

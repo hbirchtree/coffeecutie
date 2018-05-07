@@ -76,7 +76,7 @@ struct GraphicsAPI_Threading
 
     static GraphicsQueue& Queue(u32 idx = 0)
     {
-        throw implementation_error("not implemented");
+        Throw(implementation_error("not implemented"));
     }
 };
 

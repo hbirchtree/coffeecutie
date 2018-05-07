@@ -72,7 +72,8 @@ static Matf4 convert_aiMatrix(aiMatrix4x4 const& mat)
                   "Matrix sizes differ");
 
     Matf4 out;
-    MemCpy(&out.d, &mat, sizeof(Matf4));
+    MemCpy(Bytes::Create(mat), Bytes::Create(out));
+//    MemCpy(&out.d, &mat, sizeof(Matf4));
     return out;
 }
 

@@ -32,6 +32,9 @@ namespace State{
 template<typename T>
 using P = ShPtr<T>;
 
+extern P<InternalState> internal_state;
+extern thread_local P<InternalThreadState> thread_state;
+
 extern P<InternalState> CreateNewState();
 
 extern P<InternalThreadState> CreateNewThreadState();

@@ -55,43 +55,28 @@ template<typename T>
 FORCEDINLINE T ExtractIntegerPtr(void* ptr)
 {
     return C_CAST<T>(C_FCAST<uintptr_t>(ptr));
-//    struct MemPack
-//    {
-//        void* ptr;
-//        u64 _u64;
-//        u32 _u32;
-//        u16 _u16;
-//        u8 _u8;
-
-//        i64 _i64;
-//        i32 _i32;
-//        i16 _i16;
-//        i8 _i8;
-//    };
-
-//    MemPack m;
-//    m.ptr = ptr;
-
-//    constexpr bool sign = T(-1) < 0;
-
-//#define M_OP(bits) \
-//    case sizeof(u ## bits): return (sign) ? T(m._i ## bits) : T(m._u ## bits);
-
-//    switch(sizeof(T))
-//    {
-//    M_OP(64);
-//    M_OP(32);
-//    M_OP(16);
-//    M_OP(8);
-//    default:
-//        return T(0);
-//    }
-//#undef M_OP
 }
 
+/*!
+ * \brief Remove offending bits from offset
+ * \param alignment
+ * \param off
+ * \return
+ */
 FORCEDINLINE szptr AlignOffset(szptr alignment, szptr off)
 {
     return off & ~(alignment);
+}
+
+/*!
+ * \brief Align an offset by adding to the pointer.
+ * \param off
+ * \param alignment
+ * \return
+ */
+FORCEDINLINE szptr AlignOffsetForward(szptr alignment, szptr off)
+{
+    return off + ((alignment - (off & (alignment - 1))) % alignment);
 }
 
 /* Memory management */
@@ -100,7 +85,7 @@ FORCEDINLINE void CFree(c_ptr data)
     free(data);
 }
 
-FORCEDINLINE bool MemCmp(c_cptr target, c_cptr cmp, szptr len, int64* val = nullptr)
+C_DEPRECATED FORCEDINLINE bool MemCmp(c_cptr target, c_cptr cmp, szptr len, int64* val = nullptr)
 {
     if(val)
         return (*val = memcmp(target,cmp,len))==0;
@@ -113,7 +98,7 @@ C_DEPRECATED FORCEDINLINE void MemCpy(c_ptr dest, c_cptr source, szptr len)
     memcpy(dest,source,len);
 }
 
-FORCEDINLINE void MemClear(c_ptr start, szptr len)
+C_DEPRECATED FORCEDINLINE void MemClear(c_ptr start, szptr len)
 {
     memset(start,0,len);
 }
@@ -135,27 +120,27 @@ C_DEPRECATED FORCEDINLINE void* Calloc(szptr unit, szptr num)
 }
 
 template<typename T>
-FORCEDINLINE T* AllocT(szptr datasize)
+C_DEPRECATED FORCEDINLINE T* AllocT(szptr datasize)
 {
     return static_cast<T*>(malloc(datasize));
 }
 
 template<typename T>
-FORCEDINLINE T* ReallocT(T* ptr, szptr datasize)
+C_DEPRECATED FORCEDINLINE T* ReallocT(T* ptr, szptr datasize)
 {
-    return static_cast<T*>(realloc(ptr,datasize));
+    return reinterpret_cast<T*>(realloc(ptr,datasize));
 }
 
 template<typename T>
-FORCEDINLINE T* CallocT(szptr unit, szptr num)
+C_DEPRECATED FORCEDINLINE T* CallocT(szptr unit, szptr num)
 {
-    return static_cast<T*>(calloc(unit,num));
+    return reinterpret_cast<T*>(calloc(unit,num));
 }
 
 template<typename T>
-FORCEDINLINE T* CallocPtrs(szptr num)
+C_DEPRECATED FORCEDINLINE T* CallocPtrs(szptr num)
 {
-    return static_cast<T*>(calloc(sizeof(T),num));
+    return reinterpret_cast<T*>(calloc(sizeof(T),num));
 }
 
 }

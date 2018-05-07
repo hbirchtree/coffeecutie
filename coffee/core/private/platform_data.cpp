@@ -135,6 +135,7 @@ bool PlatformData::DeviceSafeArea(SafeArea& area)
 
 CString PlatformData::SystemDisplayString()
 {
+#ifndef COFFEE_LOWFAT
 //    const constexpr cstring _fmt = "%s %s %u-bit (%s ";
     const constexpr cstring _fmt = "%s %s (%s ";
     CString sys_ver = SysInfo::GetSystemVersion();
@@ -183,6 +184,9 @@ CString PlatformData::SystemDisplayString()
 #endif
 
     return base;
+#else
+    return {};
+#endif
 }
 
 bool PlatformData::IsMobile()

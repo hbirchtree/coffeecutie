@@ -22,6 +22,7 @@ void RUNOUTTHEWINDOW()
     throw "I RAN OUT THE WINDOW";
 #else
     std::raise(SIGINT);
+    abort();
 #endif
 }
 
@@ -52,10 +53,9 @@ void CASSERT(bool expr)
         ABORTEVERYTHINGGOGOGO();
 }
 
-FORCEDINLINE
-void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
+C_DEPRECATED FORCEDINLINE
+void CASSERT_MEM(c_cptr, c_cptr, szptr)
 {
-    CASSERT(Mem::MemCmp(m1,m2,size));
 }
 
 template<typename T> FORCEDINLINE

@@ -3,6 +3,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
+#include <coffee/core/CDebug>
 
 #define GLM_API "GLEAM_API::"
 
@@ -14,6 +15,7 @@ namespace GLEAM{
 #if !defined(COFFEE_ONLY_GLES20)
 using CGL33 = CGLES30;
 using CGL43 = CGLES32;
+using CGL45 = CGLES32;
 #else
 using CGL33 = CGLES20;
 using CGL43 = CGLES20;
@@ -59,6 +61,8 @@ inline APILevel gl_level_from_string(CString const& str)
         return GL_4_3;
     if(str == "GL45")
         return GL_4_5;
+    if(str == "GL46")
+        return GL_4_6;
     if(str == "ES2")
         return GLES_2_0;
     if(str == "ES3")

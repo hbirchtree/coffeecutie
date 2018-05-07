@@ -1,30 +1,23 @@
 #ifndef COFFEE_CORE_PLAT_FILE_DEF_H
 #define COFFEE_CORE_PLAT_FILE_DEF_H
 
-#include "../../types/tdef/integertypes.h"
-#include "../../types/tdef/stltypes.h"
+#include "../../base/files/url.h"
 #include "../../types/cdef/memtypes.h"
 #include "../../types/edef/resenum.h"
-#include "../../base/files/url.h"
+#include "../../types/tdef/integertypes.h"
+#include "../../types/tdef/stltypes.h"
 
-namespace Coffee{
-namespace CResources{
+namespace Coffee {
+namespace CResources {
 
 struct FileFunDef
 {
-    struct FileHandle;
-    struct FileMapping
+    struct FileHandle
     {
-        void* ptr;
-        szptr size;
-        ResourceAccess acc;
     };
-    struct ScratchBuf
-    {
-        void* ptr;
-        szptr size;
-        ResourceAccess acc;
-    };
+
+    using FileMapping = Bytes;
+    using ScratchBuf  = Bytes;
 
     enum NodeType
     {
@@ -40,45 +33,48 @@ struct FileFunDef
     };
 
     static CString NativePath(cstring);
-    static CString NativePath(cstring,ResourceAccess);
+    static CString NativePath(cstring, ResourceAccess);
 
     STATICINLINE bool VerifyAsset(cstring)
     {
         return true;
     }
 
-    static FileHandle* Open(Url const&, ResourceAccess){return nullptr;}
-    static bool Close(FileHandle*){return false;}
-
-    static void Seek(FileHandle* h,uint64 off)
+    static FileHandle Open(Url const&, ResourceAccess)
     {
-        C_UNUSED(h);
-        C_UNUSED(off);
-    }
-
-    static CByteData Read(FileHandle* h,uint64 size,bool)
-    {
-        C_UNUSED(h);
-        C_UNUSED(size);
-
         return {};
     }
-    static bool Write(FileHandle* h,CByteData const& d,bool)
+    static bool Valid(FileHandle const&)
     {
-        C_UNUSED(h);
-        C_UNUSED(d);
-
+        return false;
+    }
+    static bool Close(FileHandle&&)
+    {
         return false;
     }
 
-    static szptr Size(FileHandle*){return 0;}
+    static Bytes Read(FileHandle const&, szptr, bool)
+    {
+        return {};
+    }
+    static bool Write(FileHandle const&, Bytes const&, bool)
+    {
+        return false;
+    }
+
+    static szptr Size(FileHandle const&)
+    {
+        return 0;
+    }
 
     /*!
      * \brief Here's how the resource flags should work:
      * Must work:
      *  - ExclusiveLocking : don't allow others to open/write the file
-     *  - SharedLocking : don't allow simultaneous writes (may happen autonomously)
-     *  - Persistent : changes must be visisble to others, eg. flushed once in a while
+     *  - SharedLocking : don't allow simultaneous writes (may happen
+     * autonomously)
+     *  - Persistent : changes must be visisble to others, eg. flushed once in a
+     * while
      *  - ReadOnly : allow read access
      *  - WriteOnly : allow write access
      *  - Executable : allow execute access
@@ -94,8 +90,12 @@ struct FileFunDef
      * \param err
      * \return
      */
-    static FileMapping Map(Url const& fname, ResourceAccess access,
-                           szptr size, szptr offset, int* err)
+    static FileMapping Map(
+        Url const&     fname,
+        ResourceAccess access,
+        szptr          size,
+        szptr          offset,
+        int*           err)
     {
         C_UNUSED(fname);
         C_UNUSED(access);
@@ -105,25 +105,16 @@ struct FileFunDef
 
         return {};
     }
-    static bool Unmap(FileMapping* mapp)
+    static bool Unmap(FileMapping&&)
     {
-        C_UNUSED(mapp);
-
         return false;
     }
 
-    static bool MapCache(void* mapping_ptr,szptr mapping_size,
-                         szptr cache_offset, szptr cache_size)
-    {
-        C_UNUSED(mapping_ptr);
-        C_UNUSED(mapping_size);
-        C_UNUSED(cache_offset);
-        C_UNUSED(cache_size);
-
-        return false;
-    }
-    static bool MapUncache(void* mapping_ptr,szptr mapping_size,
-                           szptr cache_offset, szptr cache_size)
+    static bool MapCache(
+        void* mapping_ptr,
+        szptr mapping_size,
+        szptr cache_offset,
+        szptr cache_size)
     {
         C_UNUSED(mapping_ptr);
         C_UNUSED(mapping_size);
@@ -132,7 +123,20 @@ struct FileFunDef
 
         return false;
     }
-    static bool MapSync(void* ptr,szptr size)
+    static bool MapUncache(
+        void* mapping_ptr,
+        szptr mapping_size,
+        szptr cache_offset,
+        szptr cache_size)
+    {
+        C_UNUSED(mapping_ptr);
+        C_UNUSED(mapping_size);
+        C_UNUSED(cache_offset);
+        C_UNUSED(cache_size);
+
+        return false;
+    }
+    static bool MapSync(void* ptr, szptr size)
     {
         C_UNUSED(ptr);
         C_UNUSED(size);
@@ -140,20 +144,36 @@ struct FileFunDef
         return false;
     }
 
-
     /*!
      * \brief Magically cache your whole application
      * \return
      */
-    static bool SuperCache(){return false;}
-    static bool SuperUncache(){return false;}
+    static bool SuperCache()
+    {
+        return false;
+    }
+    static bool SuperUncache()
+    {
+        return false;
+    }
 
-    static ScratchBuf ScratchBuffer(szptr, ResourceAccess){return {};}
-    static void ScratchUnmap(ScratchBuf*){}
+    static ScratchBuf ScratchBuffer(szptr, ResourceAccess)
+    {
+        return {};
+    }
+    static void ScratchUnmap(ScratchBuf&&)
+    {
+    }
 
     /* We allow checking size of unopened files, convenience */
-    static bool Exists(Url const&){return false;}
-    static szptr Size(Url const&){return 0;}
+    static bool Exists(Url const&)
+    {
+        return false;
+    }
+    static szptr Size(Url const&)
+    {
+        return 0;
+    }
 
     /*!
      * \brief Creates an entry in the filesystem
@@ -162,19 +182,38 @@ struct FileFunDef
      *  - Directories are created non-recursively
      * \return
      */
-    static bool Touch(NodeType, Url const&){return false;}
+    static bool Touch(NodeType, Url const&)
+    {
+        return false;
+    }
 
-    static bool Ln(Url const&,Url const&)
-    {return false;}
+    static bool Ln(Url const&, Url const&)
+    {
+        return false;
+    }
 
     static bool Rm(Url const&)
-    {return false;}
+    {
+        return false;
+    }
 
     static NodeType Stat(Url const&)
-    {return NodeType::None;}
+    {
+        return NodeType::None;
+    }
 
-    static CString DereferenceLink(Url const& d){return d.internUrl;}
-    static CString CanonicalName(Url const& d){return d.internUrl;}
+    static CString DereferenceLink(Url const& d)
+    {
+        return d.internUrl;
+    }
+    static CString CanonicalName(Url const& d)
+    {
+        return d.internUrl;
+    }
+
+    static void Truncate(Url const&, szptr)
+    {
+    }
 };
 
 struct DirFunDef
@@ -186,17 +225,29 @@ struct DirFunDef
         using Type = FileFunDef::NodeType;
 
         CString name;
-        Type type;
+        Type    type;
     };
 
     using DirList = Vector<DirItem_t>;
 
-    static bool ChDir(Url const&){return false;}
+    static bool ChDir(Url const&)
+    {
+        return false;
+    }
 
-    static bool MkDir(Url const&, bool){return false;}
-    static bool RmDir(Url const&){return false;}
+    static bool MkDir(Url const&, bool)
+    {
+        return false;
+    }
+    static bool RmDir(Url const&)
+    {
+        return false;
+    }
 
-    static bool Ls(Url const&,DirList&){return false;}
+    static bool Ls(Url const&, DirList&, bool = false)
+    {
+        return false;
+    }
 
     STATICINLINE CString Basename(CString fn)
     {
@@ -206,10 +257,10 @@ struct DirFunDef
     static CString Basename(cstring fn);
 };
 
-}
+} // namespace CResources
 
 using namespace CResources;
 
-}
+} // namespace Coffee
 
 #endif

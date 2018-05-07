@@ -8,6 +8,7 @@
 namespace Coffee{
 namespace CGL{
 
+GL_EXTENSION_REQ("GL_ARB_texture_view")
 struct CGL_TextureView
 {
     STATICINLINE void TexView(CGhnd vh,Texture t,CGhnd th,PixelFormat ifmt,

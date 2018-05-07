@@ -23,8 +23,12 @@ set ( LIBS
     )
 
 if(COFFEE_BUILD_GLEAM)
-    coffee_add_library ( CoffeeGLeamCommon "${CoffeeGLeam_SRCS}" "${LIBS}"
-        "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/levels"
+    coffee_library (
+        TARGET CoffeeGLeamCommon
+        SOURCES ${CoffeeGLeam_SRCS}
+        LIBRARIES ${LIBS}
+        HEADER_DIRS
+        ${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/levels
         )
 
     target_link_libraries ( CoffeeGLeamCommon
@@ -38,8 +42,12 @@ if(COFFEE_BUILD_GLEAM)
         )
 
     if(COFFEE_BUILD_GLEAM_RHI)
-        coffee_add_library ( CoffeeGLeamRHI "${CoffeeGLeamRHI_SRCS}" "${LIBS};CoffeeGLeamCommon"
-            "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/rhi"
+        coffee_library (
+            TARGET CoffeeGLeamRHI
+            SOURCES ${CoffeeGLeamRHI_SRCS}
+            LIBRARIES ${LIBS} CoffeeGLeamCommon
+            HEADER_DIRS
+            ${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/rhi
             )
         target_link_libraries ( CoffeeGLeamRHI
             PRIVATE
@@ -47,22 +55,3 @@ if(COFFEE_BUILD_GLEAM)
             )
     endif()
 endif()
-
-#set ( RendererGL_SRCS
-#    private/renderers/gl_lib.cpp
-#    )
-#set ( RendererGLES_SRCS
-#    private/renderers/gles_lib.cpp
-#    )
-#set ( RendererEGL_SRCS
-#    private/renderers/egl_lib.cpp
-#    )
-
-#coffee_add_library ( GLeam_Renderer_GL "${RendererGL_SRCS}" "CoffeeGLeam;CoffeeSDL2"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/renderers/gl_lib" )
-
-#coffee_add_library ( GLeam_Renderer_GLES "${RendererGL_SRCS}" "CoffeeGLeam;CoffeeSDL2"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/renderers/gles_lib" )
-
-#coffee_add_library ( GLeam_Renderer_EGL "${RendererGL_SRCS}" "CoffeeGLeam;CoffeeSDL2"
-#    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/renderers/egl_lib" )

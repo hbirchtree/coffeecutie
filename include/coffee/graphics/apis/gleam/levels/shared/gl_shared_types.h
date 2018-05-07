@@ -10,6 +10,104 @@
 namespace Coffee{
 namespace CGL{
 
+template<size_t Major, size_t Minor, bool ES = false>
+struct gl_ver_t
+{
+    static constexpr size_t major = Major;
+    static constexpr size_t minor = Minor;
+    static constexpr bool   es    = ES;
+};
+
+template<typename ReqVer, typename MinVer>
+struct gl_version_at_least_ver
+{
+    template<size_t V1, size_t V2>
+    struct ge_to
+    {
+        static constexpr bool value = V1 >= V2;
+    };
+
+    using major_test = ge_to<ReqVer::major, MinVer::major>;
+    using minor_test = ge_to<ReqVer::minor, MinVer::minor>;
+
+    static constexpr bool value =
+            (major_test::value && minor_test::value) &&
+            (ReqVer::es == MinVer::es);
+};
+
+/* Functions that require a certain OpenGL version */
+#define GL_VERSION_REQ(MinVer) \
+    template<\
+        typename RequestedVer = ReqVer,\
+        typename MinimumVer = MinVer,\
+        typename std::enable_if<gl_version_at_least_ver<RequestedVer, MinimumVer>::value>::type* = nullptr\
+        >
+
+#define GL_VERSION_REQ_COMBO(MinVerDesktop, MinVerES) \
+    template<\
+        typename RequestedVer = ReqVer,\
+        typename MinimumVerDesktop = MinVerDesktop,\
+        typename MinimumVerES = MinVerES,\
+        typename std::enable_if<gl_version_at_least_ver<RequestedVer, MinimumVerDesktop>::value || gl_version_at_least_ver<RequestedVer, MinimumVerES>::value, bool>::type* = nullptr\
+        >
+
+/* Functions that require a certain OpenGL version and are desktop-only */
+#define GL_VERSION_REQ_DESKTOP(MinVer) \
+    template<\
+        typename RequestedVer = ReqVer,\
+        typename MinimumVer = MinVer,\
+        typename std::enable_if<gl_version_at_least_ver<RequestedVer, MinimumVer>::value, bool>::type* = nullptr\
+        >
+/* Functions that require a certain OpenGL version and are ES-only */
+#define GL_VERSION_REQ_ES(MinVer) \
+    template<\
+        typename RequestedVer = ReqVer,\
+        typename MinimumVer = MinVer,\
+        typename std::enable_if<gl_version_at_least_ver<RequestedVer, MinimumVer>::value>::type* = nullptr\
+        >
+
+/* For requirement of an extension */
+#define GL_EXTENSION_REQ(extname) /* Intentionally empty */
+
+/* -- Danger zone -- */
+#define GLVER_20 gl_ver_t<2,0>
+#define GLVER_21 gl_ver_t<2,1>
+
+/* Standardized OpenGL versions */
+#define GLVER_30 gl_ver_t<3,0>
+#define GLVER_31 gl_ver_t<3,1>
+#define GLVER_32 gl_ver_t<3,2>
+#define GLVER_33 gl_ver_t<3,3>
+#define GLVER_40 gl_ver_t<4,0>
+#define GLVER_41 gl_ver_t<4,1>
+#define GLVER_42 gl_ver_t<4,2>
+#define GLVER_43 gl_ver_t<4,3>
+#define GLVER_44 gl_ver_t<4,4>
+#define GLVER_45 gl_ver_t<4,5>
+#define GLVER_46 gl_ver_t<4,6>
+
+/* OpenGL ES versions */
+#define GLESVER_20 gl_ver_t<2,0,true>
+#define GLESVER_30 gl_ver_t<3,0,true>
+#define GLESVER_31 gl_ver_t<3,1,true>
+#define GLESVER_32 gl_ver_t<3,2,true>
+
+#define GL_EXT_CHECK(name, ext_name) bool name ## Supported() \
+    {\
+        return Debug::CheckExtensionSupported(ext_name);\
+    }
+
+/*
+ * The above macro is used as such:
+ *
+ * GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
+ * static void ClearBuffer(...)
+ * {
+ *     ...;
+ * }
+ */
+
+
 /* Type definitions */
 using CGenum = uint32;
 using CGflag = uint32;

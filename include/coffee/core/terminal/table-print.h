@@ -4,6 +4,7 @@
 #include "../types/cdef/geometry.h"
 #include "../types/tdef/stltypes.h"
 #include "../plat/memory/stlstring_ops.h"
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 

@@ -15,8 +15,12 @@ else()
     set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> )
 endif()
 
-coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
-    "${CMAKE_SOURCE_DIR}/include/coffee/asio")
+coffee_library (
+    TARGET CoffeeASIO
+    SOURCES ${CoffeeASIO_SRCS}
+    LIBRARIES ${LIBS}
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/asio
+    )
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 

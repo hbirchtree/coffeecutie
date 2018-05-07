@@ -6,6 +6,7 @@ namespace Coffee{
 
 CString TablePrinter_Basic::GenTable(const TablePrinter_Basic::Table &table, const TablePrinter_Basic::Header &head, CSize *size)
 {
+#ifndef COFFEE_LOWFAT
     const ColSize header_pad = 1;
     const byte_t newline = '\n';
     const byte_t row_sep = '#';
@@ -83,6 +84,9 @@ CString TablePrinter_Basic::GenTable(const TablePrinter_Basic::Table &table, con
     }
 
     return ss.str();
+#else
+    return {};
+#endif
 }
 
 }

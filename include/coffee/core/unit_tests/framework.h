@@ -2,8 +2,8 @@
 
 #include <coffee/core/CApplication>
 #include <coffee/core/CProfiling>
-#include <coffee/core/CDebug>
 #include <coffee/core/CMD>
+#include <coffee/core/terminal/table-print.h>
 
 namespace CoffeeTest
 {

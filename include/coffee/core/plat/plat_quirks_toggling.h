@@ -161,7 +161,7 @@
  *
  */
 
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_LOWFAT)
 #define COFFEE_USE_EXCEPTIONS
 #define COFFEE_USE_RTTI
 #endif

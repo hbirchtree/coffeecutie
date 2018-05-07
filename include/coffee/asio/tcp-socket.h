@@ -181,7 +181,8 @@ struct TCPSocketImpl : ASIO_Client
         {
             std::ostream::flush();
             asio::error_code ec;
-            auto size_ = asio::write(socket, trans, ec);
+            auto size_ = asio::write(socket, trans.data(), ec);
+            trans.consume(size_);
             if(size)
                 *size = size_;
             return ec;

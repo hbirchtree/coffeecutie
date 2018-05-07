@@ -201,10 +201,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     g = {};
 
-    {
-        szptr restore_size = sizeof(d->r_state);
-        Store::RestoreMemory(&d->r_state, &restore_size, 0);
-    }
+    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
     
     d->gq_data.haveGpuQuery = GpuInfo::LoadDefaultGpuQuery(&d->gq_data.fun);
     
@@ -370,9 +367,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         {
             auto imdata = rsc.data();
 
-            CStbImageLib::CStbImage img;
-            CStbImageLib::LoadData(&img, BytesConst(imdata.data,
-                                                    imdata.size, 0));
+            stb::image_rw img;
+            stb::LoadData(&img, BytesConst(imdata.data, imdata.size, 0));
 
             eyetex.upload(BitFormat::UByte, PixCmp::RGBA,
                           {img.size.w, img.size.h, 1},
@@ -531,7 +527,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
+//    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
 
@@ -579,16 +575,16 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
     floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
     camera.position.x() -= 0.1;
-    object_matrices[0] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(base_transform);
-    object_matrices[2] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(floor_transform);
+    object_matrices[0] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(base_transform);
+    object_matrices[2] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(floor_transform);
 
     camera.position.x() += 0.2;
-    object_matrices[1] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(base_transform);
-    object_matrices[3] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(floor_transform);
+    object_matrices[1] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(base_transform);
+    object_matrices[3] = GenPerspective<scalar>(camera) * GenTransform<scalar>(camera) *
+    GenTransform<scalar>(floor_transform);
 
     camera.position.x() -= 0.1;
 
@@ -600,7 +596,7 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext a("Render frame", Profiling::DataPoint::Hot);
+//    ProfContext a("Render frame", Profiling::DataPoint::Hot);
 
     auto& g = d->g_data;
     
@@ -713,7 +709,7 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
     GLM::UnloadAPI();
 
     cDebug("Saving time: {0}", d->r_state.time_base);
-    Store::SaveMemory(&d->r_state, sizeof(d->r_state), 0);
+    Store::SaveMemory(Bytes::Create(d->r_state), 0);
 }
 
 void frame_count(RendererState* d)

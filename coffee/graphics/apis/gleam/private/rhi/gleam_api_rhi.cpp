@@ -143,7 +143,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
 
         Vector<CGhnd> bufs;
         bufs.resize(num_pbos);
-        CGL33::BufAlloc(num_pbos,bufs.data());
+
+        CGL33::BufAlloc(bufs);
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
         for(uint32 i=0;i<num_pbos;i++)
@@ -167,10 +168,13 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     const Display::CGLVersion ver33(3,3);
     const Display::CGLVersion ver43(4,3);
     const Display::CGLVersion ver45(4,5);
+    const Display::CGLVersion ver46(4,6);
 
     /* If higher level of API is not achieved, stay at the lower one */
-    if(ver>=ver45&& /* DISABLES CODE */ (false))
+    if(ver>=ver46)
         /* Unimplemented both on CGL level and here */
+        store->CURR_API = GL_4_6;
+    else if(ver>=ver45)
         store->CURR_API = GL_4_5;
     else if(ver>=ver43)
         store->CURR_API = GL_4_3;
@@ -201,9 +205,11 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     /* Emulation mode; differs slightly from compiling against an API,
      *  such as when ES 2.0 excludes pixel formats and etc. */
     /* TODO: Document this feature */
+    bool forced_api = false;
     if(Env::ExistsVar("GLEAM_API"))
     {
         store->CURR_API = gl_level_from_string(Env::GetVar("GLEAM_API"));
+        forced_api = true;
     }
 
     /* If we are emulating ES 2.0, create a global vertex array.
@@ -250,13 +256,24 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
 #endif
 
 #if defined(COFFEE_GLEAM_DESKTOP)
-    store->features.base_instance
-            = CGL33::Debug::CheckExtensionSupported(
-                "GL_ARB_shader_draw_parameters");
-
-    if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
-        store->features.base_instance = false;
     /* base_instance is const false on GLES */
+
+    store->features.base_instance = CGL46::DrawParametersSupported();
+    store->features.direct_state = CGL45::DirectStateSupported();
+
+    if(forced_api && store->CURR_API < GL_4_5 && store->CURR_API < GLES_MIN)
+    {
+        store->features.base_instance = false;
+        store->features.direct_state = false;
+    }
+
+    /* If we are emulating, base_instance would skew the results */
+    if(APILevelIsOfClass(store->CURR_API, APIClass::GLES))
+    {
+        store->features.base_instance = false;
+        store->features.direct_state = false;
+    }
+
 #endif
 
     bool is_desktop = APILevelIsOfClass(store->CURR_API,APIClass::GLCore);
@@ -271,9 +288,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
             && (api != GLES_3_0)
             && (api != GL_3_3);
     store->features.draw_multi_indirect =
-            (api == GL_4_3);
+            (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6);
     store->features.draw_indirect =
-            (api == GL_4_3)
+            (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6)
             || (api == GLES_3_2);
     store->features.draw_buffers_blend =
             (api != GLES_2_0)
@@ -317,10 +334,16 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
             (api != GL_3_3)
             && (api != GLES_2_0)
             && store->features.buffer_storage;
-    store->features.element_buffer_bind = true;
     store->features.vertex_format =
             (api == GL_4_3)
-            || (api == GLES_3_2);
+            || (api == GLES_3_2)
+            || (api == GL_4_5)
+            || (api == GL_4_6)
+            ;
+
+    store->features.element_buffer_bind =
+            !is_desktop
+            || (is_desktop && store->CURR_API < GL_4_5);
 
     m_store = store;
 
@@ -344,7 +367,7 @@ GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI(
         )
 {
     cVerbose(8, GLM_API "Returning GLEAM loader...");
-    return [&](bool debug = false)
+    return [=](bool debug = false)
     {
         static GLEAM_DataStore m_gleam_data = {};
         cVerbose(8, GLM_API "Running GLEAM loader");
@@ -616,6 +639,9 @@ template<typename T>
 void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data,
                       szptr arr_size)
 {
+    if(!data)
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
+
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.separable_programs)
@@ -631,6 +657,9 @@ template<typename T>
 void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data,
                         szptr arr_size)
 {
+    if(!data)
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
+
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.separable_programs)
@@ -646,6 +675,9 @@ template<typename T>
 void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
                       szptr arr_size)
 {
+    if(!data)
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
+
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GLEAM_FEATURES.separable_programs)
@@ -662,6 +694,9 @@ template<typename T>
 void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
                        szptr arr_size)
 {
+    if(!data)
+        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
+
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformuiv(prog,C_CAST<i32>(idx),
                           C_CAST<i32>(arr_size / sizeof(T)),data);
@@ -701,7 +736,7 @@ void GLEAM_API::SetShaderUniformState(
     {
         if(!feval(u.second.stages&stage))
             continue;
-        CByteData const* db = u.second.value->data;
+        Bytes const* db = u.second.value->data;
         if(!db)
             continue;
 
@@ -887,7 +922,7 @@ void GLEAM_API::DisposePixelBuffers()
 
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
-        CGL33::BufFree(1, &buf.buf);
+        CGL33::BufFree(buf.buf);
 
     queue.buffers.clear();
 #endif
@@ -1005,6 +1040,14 @@ static bool InternalDraw(
 
     if(d.indexed())
     {
+        if(GL_DEBUG_MODE)
+        {
+            i32 elementHnd = CGL33::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+
+            if(elementHnd == 0)
+                cWarning(GLM_API "No element buffer binding!");
+        }
+
         szptr elsize = 1;
         if(i.elementType()==TypeEnum::UShort)
             elsize = 2;
@@ -1089,6 +1132,14 @@ bool InternalMultiDraw(
 
     if(GL_DEBUG_MODE)
     {
+        if(data.dc.indexed())
+        {
+            i32 elementHnd = CGL33::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+
+            if(elementHnd == 0)
+                cWarning(GLM_API "No element buffer binding!");
+        }
+
         if(data.counts.size() == 0)
             cWarning(GLM_API "Draw call has no meshes");
 
@@ -1199,7 +1250,7 @@ static void GetInstanceUniform(
             if(cnt.stages == ShaderStage::Vertex)
                 hnd = cnt.shader->internalHandle();
 
-        auto raw_uloc = CGL43::ProgramGetResourceIdx(
+        auto raw_uloc = CGL43::ProgramGetResourceLoc(
                     hnd, GL_UNIFORM, unifName);
 
         uloc = C_FCAST<i32>(raw_uloc);
@@ -1489,6 +1540,8 @@ cstring to_string(RHI::GLEAM::APILevel lev)
             return "Desktop GL 4.3";
         case LEV::GL_4_5:
             return "Desktop GL 4.5";
+        case LEV::GL_4_6:
+            return "Desktop GL 4.6";
         default:
             break;
         }

@@ -1,5 +1,6 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
+#include <coffee/core/types/cdef/memsafe.h>
 
 using namespace Coffee;
 
@@ -57,7 +58,9 @@ bool resource_read_test()
     if(!FilePull(rsc))
         return false;
 
-    if(sizeof(probe_text)-1 != rsc.size || !MemCmp(rsc.data,probe_text,rsc.size))
+    Bytes probeData = Bytes::From(probe_text, sizeof(probe_text));
+
+    if(MemCmp(probeData, C_OCAST<Bytes>(rsc)))
     {
         cDebug("Sizes: {0} ?= {1}", sizeof(probe_text) - 1,rsc.size);
         cDebug("Data:\n"

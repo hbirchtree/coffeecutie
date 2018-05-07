@@ -35,7 +35,7 @@ struct AndroidFileFun :
 
     struct FileMapping : FileFunDef::FileMapping
     {
-        FileHandle* handle;
+        FileHandle handle;
     };
 
     using Ancestor = Posix::PosixFileFun_def<
@@ -46,20 +46,20 @@ struct AndroidFileFun :
     static CString NativePath(cstring fn);
     static CString NativePath(cstring fn,ResourceAccess storage);
 
-    static FileHandle* Open(Url const& fn, ResourceAccess ac);
+    static FileHandle Open(Url const& fn, ResourceAccess ac);
 
-    static bool Close(FileHandle *fh);
+    static bool Close(FileHandle&& fh);
 
-    static CByteData Read(FileHandle *fh, uint64 size, bool nterminate);
+    static Bytes Read(FileHandle const& fh, szptr size, bool nterminate);
 
-    static bool Write(FileHandle *fh, const CByteData &d, bool);
+    static bool Write(FileHandle const& fh, const Bytes &d, bool);
 
-    static szptr Size(FileHandle *fh);
+    static szptr Size(FileHandle const& fh);
     static szptr Size(Url const& fn);
 
     static FileMapping Map(Url const& fn,ResourceAccess acc,
                            szptr offset,szptr size,int*);
-    static bool Unmap(FileMapping* mp);
+    static bool Unmap(FileMapping&& mp);
 };
 
 }

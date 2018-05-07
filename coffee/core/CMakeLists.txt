@@ -270,32 +270,47 @@ endif()
 
 find_package ( StandardLibs REQUIRED )
 
-coffee_add_library ( CoffeeXML
-    "${CoffeeXML_SRCS}"
-    ""
-    ""
+coffee_library (
+    TARGET CoffeeXML
+    SOURCES ${CoffeeXML_SRCS}
     )
 
-coffee_add_library ( CoffeeCore_Base
-    "${CoffeeCore_SRCS};${CoffeeFile_SRCS};${CoffeeEventAppWrap_SRCS};${CoffeeSysInfo_SRCS};${CoffeeCompression_SRCS};${CoffeePlatformData_SRCS}"
-    "${STANDARDLIBS_LIBRARIES};CoffeeXML"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+coffee_library (
+    TARGET CoffeeCore_Base
+    SOURCES
+    ${CoffeeCore_SRCS}
+    ${CoffeeFile_SRCS}
+    ${CoffeeEventAppWrap_SRCS}
+    ${CoffeeSysInfo_SRCS}
+    ${CoffeeCompression_SRCS}
+    ${CoffeePlatformData_SRCS}
+
+    LIBRARIES
+    ${STANDARDLIBS_LIBRARIES}
+    CoffeeXML
+
+    HEADER_DIRS
+    ${CMAKE_SOURCE_DIR}/include/coffee/core
     )
-coffee_add_library ( CoffeeCore_Application
-    "${CoffeeCore_AppLoader_SRCS};${CoffeeCore_Bootstrap_SRCS};${CoffeeProfiler_SRCS}"
-    "CoffeeCore_Base"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core"
+coffee_library (
+    TARGET CoffeeCore_Application
+    SOURCES
+    ${CoffeeCore_AppLoader_SRCS}
+    ${CoffeeCore_Bootstrap_SRCS}
+    ${CoffeeProfiler_SRCS}
+    LIBRARIES CoffeeCore_Base
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core
     )
 
-coffee_add_library ( CoffeeINI
-    "${CoffeeINI_SRCS}"
-    ""
-    ""
+coffee_library (
+    TARGET CoffeeINI
+    SOURCES ${CoffeeINI_SRCS}
     )
-coffee_add_library ( CoffeeTesting
-    "${CoffeeTesting_SRCS}"
-    "CoffeeCore_Base"
-    "${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests"
+coffee_library (
+    TARGET CoffeeTesting
+    SOURCES ${CoffeeTesting_SRCS}
+    LIBRARIES CoffeeCore_Base
+    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests
     )
 
 add_library ( CoffeeCore INTERFACE )
@@ -331,10 +346,12 @@ target_include_directories ( CoffeeCore_Base
 if(COFFEE_BUILD_SWIG_BINDING)
 
 
-    coffee_add_elibrary ( CoffeeCoreLoadable SHARED
-        "${CoffeeCore_SRCS}"
-        "${STANDARDLIBS_LIBRARIES}"
-        "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    coffee_library (
+        TARGET CoffeeCoreLoadable
+        LINKAGE SHARED
+        SOURCES ${CoffeeCore_SRCS}
+        LIBRARIES ${STANDARDLIBS_LIBRARIES}
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core
         )
     target_compile_definitions ( CoffeeCoreLoadable
         PRIVATE

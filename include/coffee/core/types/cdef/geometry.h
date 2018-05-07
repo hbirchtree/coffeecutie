@@ -119,7 +119,7 @@ struct _cbasic_size_3d : _cbasic_size
 
     T width,height,depth;
 
-    T volume()
+    T volume() const
     {
         return width*height*depth;
     }
@@ -429,6 +429,8 @@ using PointT = _cbasic_point;
  * \brief Typical size, uses integer, should be used for window size
  */
 using CSize = _cbasic_size_2d<int32>;
+
+using Size = CSize;
 
 using CSize3 = _cbasic_size_3d<int32>;
 /*!

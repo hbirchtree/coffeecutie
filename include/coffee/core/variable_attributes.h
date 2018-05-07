@@ -3,7 +3,7 @@
 #include "plat/plat_primary_identify.h"
 #include "plat/plat_compiler_identify.h"
 
-#if (__cplusplus >= 201703L)
+#if (__cplusplus >= 201703L) && 0
 #define UNUSED_PARAM [[maybe_unused]]
 
 #elif defined(COFFEE_GCC) || defined(COFFEE_CLANG) \
@@ -31,7 +31,7 @@
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 
 #elif (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) \
-    && !defined(COFFEE_MAEMO) && 0
+    && !defined(COFFEE_MAEMO)
 #define C_DEPRECATED __attribute__((deprecated))
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 
@@ -55,10 +55,23 @@
 
 #if (__cplusplus >= 201703L)
 #define C_HAS_INCLUDE(header) __has_include(header)
-
 #else
 #define C_HAS_INCLUDE(header) 0
 
+#endif
+
+#if defined(__has_cpp_attribute ) && (__cplusplus >= 201703L)
+
+#if __has_cpp_attribute(nodiscard)
+#define NO_DISCARD [[nodiscard]]
+#endif
+
+#elif defined(COFFEE_GCC)
+#define NO_DISCARD [[gnu::warn_unused_result]]
+#elif defined(COFFEE_CLANG)
+#define NO_DISCARD [[clang::warn_unused_result]]
+#else
+#define NO_DISCARD
 #endif
 
 #define C_OPTIONAL

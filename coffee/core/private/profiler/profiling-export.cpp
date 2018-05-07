@@ -14,6 +14,8 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
+#ifndef COFFEE_LOWFAT
+
 namespace Coffee{
 namespace Profiling{
 
@@ -299,7 +301,7 @@ void ExportProfilerData(CString& target)
 
     using namespace XML_Stuff;
 
-    auto app_args = GetInitArgs().arguments();
+    auto const& app_args = GetInitArgs().arguments();
 
     XML::Document doc;
 
@@ -822,3 +824,5 @@ void ExitRoutine()
 
 }
 }
+
+#endif

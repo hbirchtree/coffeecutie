@@ -5,10 +5,32 @@
 #include <type_traits>
 #include <limits>
 #include <stdint.h>
+#include <stdlib.h>
+
+/* Wrap text that is used for debugging with this, and it will disappear
+ *  in release-mode */
+#ifndef COFFEE_LOWFAT
+#define DTEXT(text) text
+#else
+#define DTEXT(text) ""
+#endif
+
+/* For the future */
+#define LTEXT(text) text
 
 #define E_IF std::enable_if
 #define IS_CLS std::is_class
 #define IS_POLY std::is_polymorphic
+
+#ifndef COFFEE_LOWFAT
+template<typename T>
+[[noreturn]] inline void Throw(T&& exception)
+{
+    throw exception;
+}
+#else
+#define Throw(a) abort()
+#endif
 
 namespace Coffee{
 
@@ -21,6 +43,20 @@ struct is_not_virtual
 {
     typedef typename
     E_IF<!IS_POLY<T>::value>::type type;
+};
+
+template<class T, template<class...> class Template>
+struct is_specialized
+{
+    static constexpr bool value = false;
+//    typedef typename std::enable_if<false, T>::type type;
+};
+
+template<template<class...> class Template, class... Args>
+struct is_specialized<Template<Args...>, Template>
+{
+    static constexpr bool value = true;
+//    typedef typename std::enable_if<true, Template<Args...>>::type type;
 };
 
 }
@@ -47,8 +83,8 @@ template<typename D,
          typename T,
          typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
          typename std::enable_if<
-    (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max()) &&
-    (std::numeric_limits<T>::min() >= std::numeric_limits<D>::min())
+    ((std::numeric_limits<T>::max)() <= (std::numeric_limits<D>::max)()) &&
+    ((std::numeric_limits<T>::min)() >= (std::numeric_limits<D>::min)())
             >::type* = nullptr,
          typename std::enable_if<
              IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
@@ -67,8 +103,8 @@ template<typename D,
          typename T,
          typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
          typename std::enable_if<
-    (std::numeric_limits<T>::max() > std::numeric_limits<D>::max()) ||
-    (std::numeric_limits<T>::min() < std::numeric_limits<D>::min())
+    ((std::numeric_limits<T>::max)() > (std::numeric_limits<D>::max)()) ||
+    ((std::numeric_limits<T>::min)() < (std::numeric_limits<D>::min)())
              >::type* = nullptr>
 /*!
  * \brief If there is a risk of going out of the
@@ -79,10 +115,10 @@ template<typename D,
  */
 static inline D C_FCAST(T from)
 {
-    static constexpr D max_val = std::numeric_limits<D>::max();
-    static constexpr D min_val = std::numeric_limits<D>::min();
+    static constexpr D max_val = (std::numeric_limits<D>::max)();
+    static constexpr D min_val = (std::numeric_limits<D>::min)();
 
-    static constexpr T T_max_val = std::numeric_limits<T>::max();
+    static constexpr T T_max_val = (std::numeric_limits<T>::max)();
 //    static constexpr T T_min_val = std::numeric_limits<T>::min();
 
     static constexpr bool T_is_signed = std::is_signed<T>::value;
@@ -297,9 +333,13 @@ template<typename Interface, typename Implementation>
  */
 struct implements
 {
+#if defined(COFFEE_WINDOWS)
+    typedef int type;
+#else
     typedef typename std::enable_if<
     std::is_base_of<Interface, Implementation>::value
     >::type type;
+#endif
 };
 
 template<typename T>
@@ -310,9 +350,13 @@ template<typename T>
  */
 struct is_pod
 {
+#if defined(COFFEE_WINDOWS)
+    typedef int type;
+#else
     typedef typename std::enable_if<
-    std::is_pod<T>::value
+    std::is_pod<T>::value, T
     >::type type;
+#endif
 };
 
 }

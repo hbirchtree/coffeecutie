@@ -56,6 +56,7 @@ using cwstring   = const wchar_t*; /*!< Wide C-string*/
 using cwstring_w = wchar_t*; /*!< Wide, writable C-string*/
 
 using szptr = size_t; /*!< Usable as offset into data*/
+using ptroff = intptr_t;
 
 using intptr = intptr_t;
 using uintptr = uintptr_t;

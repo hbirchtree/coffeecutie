@@ -1,13 +1,14 @@
 #include <coffee/audio/openal/copenal.h>
-#include <coffee/core/types/map.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/map.h>
 
 #include <al.h>
 #include <alc.h>
 
-namespace Coffee{
-namespace CAudio{
-namespace COpenAL{
+namespace Coffee {
+namespace CAudio {
+namespace COpenAL {
 
 struct CALhnd
 {
@@ -18,10 +19,11 @@ struct CALContext
 {
     CALContext();
 
-    ALCcontext *context;
-    ALCdevice *device;
+    ALCcontext* context;
+    ALCdevice*  device;
     CALCallback callback; /*!< Callback to be called on error*/
-    Thread::id context_thread; /*!< Which thread the context is currently located on*/
+    Thread::id
+        context_thread; /*!< Which thread the context is currently located on*/
 };
 
 struct CALCaptureDevice
@@ -31,60 +33,50 @@ struct CALCaptureDevice
 
 static CALCallback error_callback = nullptr;
 
-constexpr _cbasic_static_map<CSourceProperty,ALenum,20> al_source_prop_map = {
-    {CSourceProperty::Pitch,AL_PITCH},
-    {CSourceProperty::Gain,AL_GAIN},
-    {CSourceProperty::MinGain,AL_MIN_GAIN},
-    {CSourceProperty::MaxGain,AL_MAX_GAIN},
-    {CSourceProperty::MaxDist,AL_MAX_DISTANCE},
-    {CSourceProperty::RolloffFactor,AL_ROLLOFF_FACTOR},
-    {CSourceProperty::ReferenceDistance,AL_REFERENCE_DISTANCE},
-    {CSourceProperty::ConeOuterGain,AL_CONE_OUTER_GAIN},
-    {CSourceProperty::ConeOuterAngle,AL_CONE_OUTER_ANGLE},
-    {CSourceProperty::ConeInnerAngle,AL_CONE_INNER_ANGLE},
-    {CSourceProperty::Relative,AL_SOURCE_RELATIVE},
-    {CSourceProperty::Looping,AL_LOOPING},
+constexpr _cbasic_static_map<CSourceProperty, ALenum, 20> al_source_prop_map = {
+    {CSourceProperty::Pitch, AL_PITCH},
+    {CSourceProperty::Gain, AL_GAIN},
+    {CSourceProperty::MinGain, AL_MIN_GAIN},
+    {CSourceProperty::MaxGain, AL_MAX_GAIN},
+    {CSourceProperty::MaxDist, AL_MAX_DISTANCE},
+    {CSourceProperty::RolloffFactor, AL_ROLLOFF_FACTOR},
+    {CSourceProperty::ReferenceDistance, AL_REFERENCE_DISTANCE},
+    {CSourceProperty::ConeOuterGain, AL_CONE_OUTER_GAIN},
+    {CSourceProperty::ConeOuterAngle, AL_CONE_OUTER_ANGLE},
+    {CSourceProperty::ConeInnerAngle, AL_CONE_INNER_ANGLE},
+    {CSourceProperty::Relative, AL_SOURCE_RELATIVE},
+    {CSourceProperty::Looping, AL_LOOPING},
 
-    {CSourceProperty::Position,AL_POSITION},
-    {CSourceProperty::Velocity,AL_VELOCITY},
-    {CSourceProperty::Direction,AL_DIRECTION},
-    {CSourceProperty::OffsetBytes,AL_BYTE_OFFSET},
-    {CSourceProperty::OffsetSamples,AL_SAMPLE_OFFSET},
-    {CSourceProperty::OffsetSeconds,AL_SEC_OFFSET},
+    {CSourceProperty::Position, AL_POSITION},
+    {CSourceProperty::Velocity, AL_VELOCITY},
+    {CSourceProperty::Direction, AL_DIRECTION},
+    {CSourceProperty::OffsetBytes, AL_BYTE_OFFSET},
+    {CSourceProperty::OffsetSamples, AL_SAMPLE_OFFSET},
+    {CSourceProperty::OffsetSeconds, AL_SEC_OFFSET},
 
-    {CSourceProperty::PlaybackState,AL_SOURCE_STATE},
+    {CSourceProperty::PlaybackState, AL_SOURCE_STATE},
 
-    {CSourceProperty::BuffersProcessed,AL_BUFFERS_PROCESSED},
+    {CSourceProperty::BuffersProcessed, AL_BUFFERS_PROCESSED},
 };
 
-CALContext::CALContext():
-    context(nullptr),
-    device(nullptr),
-    callback(nullptr),
-    context_thread()
+CALContext::CALContext() :
+    context(nullptr), device(nullptr), callback(nullptr), context_thread()
 {
 }
 
-CALListener::CALListener():
-    orientation_forward(0,0,0),
-    orientation_up(0,0,0),
-    position(0,0,0),
-    velocity(0,0,0),
-    gain(0)
+CALListener::CALListener() :
+    orientation_forward(0, 0, 0), orientation_up(0, 0, 0), position(0, 0, 0),
+    velocity(0, 0, 0), gain(0)
 {
 }
 
-CALSource::CALSource():
-    position(0,0,0),
-    velocity(0,0,0),
-    direction(0,0,0),
-    handle(nullptr),
+CALSource::CALSource() :
+    position(0, 0, 0), velocity(0, 0, 0), direction(0, 0, 0), handle(nullptr),
     state(AL_STOPPED)
 {
 }
 
-CALBuffer::CALBuffer():
-    handle(nullptr)
+CALBuffer::CALBuffer() : handle(nullptr)
 {
 }
 
@@ -147,7 +139,7 @@ ALenum _al_get_fmt(AudioFormat const& fmt)
     return ofmt;
 }
 
-CALContext *context_create(cstring device)
+CALContext* context_create(cstring device)
 {
     CALContext* context = new CALContext;
 
@@ -162,15 +154,17 @@ CALContext *context_create(cstring device)
         return nullptr;
     }
 
-    cMsg("ALC","Initialized, using device: {0}",
-         alcGetString(context->device,ALC_DEVICE_SPECIFIER));
+    cMsg(
+        "ALC",
+        "Initialized, using device: {0}",
+        alcGetString(context->device, ALC_DEVICE_SPECIFIER));
 
-    context->context = alcCreateContext(context->device,NULL);
+    context->context = alcCreateContext(context->device, NULL);
 
     context_make_current(context);
 
     CALVersion ver = context_version(context);
-    cMsg("ALC","Context version: {0}.{1}",ver.major,ver.minor);
+    cMsg("ALC", "Context version: {0}.{1}", ver.major, ver.minor);
 
     return context;
 }
@@ -180,88 +174,88 @@ void context_set_distance_model(CDistanceModel const& m)
     alDistanceModel(_al_get_model(m));
 }
 
-void context_destroy(CALContext *context)
+void context_destroy(CALContext* context)
 {
-    if(context->context_thread==CurrentThread::get_id())
+    if(context->context_thread == CurrentThread::get_id())
         alcMakeContextCurrent(context->context);
 
     alcDestroyContext(context->context);
-    if(alcCloseDevice(context->device)!=ALC_TRUE)
+    if(alcCloseDevice(context->device) != ALC_TRUE)
         cWarning("Failed to close AL device");
     context->context = nullptr;
-    context->device = nullptr;
-    cMsg("ALC","Destroyed");
+    context->device  = nullptr;
+    cMsg("ALC", "Destroyed");
 
     delete context;
 }
 
-bool context_make_current(CALContext *context)
+bool context_make_current(CALContext* context)
 {
-    if(CurrentThread::get_id()==context->context_thread)
+    if(CurrentThread::get_id() == context->context_thread)
         return true;
 
     ALCboolean b = alcMakeContextCurrent(context->context);
-    if(b==ALC_FALSE)
+    if(b == ALC_FALSE)
         return false;
     context->context_thread = CurrentThread::get_id();
     return true;
 }
 
-void context_get_error(const CALContext *context)
+void context_get_error(const CALContext* context)
 {
     ALenum err = alGetError();
-    if(context&&context->callback&&!error_callback)
+    if(context && context->callback && !error_callback)
         error_callback = context->callback;
-    if(err!=ALC_NO_ERROR&&error_callback)
+    if(err != ALC_NO_ERROR && error_callback)
     {
         CALReport* rep = new CALReport;
-        rep->message = alGetString(err);
+        rep->message   = alGetString(err);
         error_callback(rep);
         delete rep;
     }
 }
 
-bool context_check_extension(const CALContext *context, cstring extension)
+bool context_check_extension(const CALContext* context, cstring extension)
 {
-    return alcIsExtensionPresent(context->device,extension)==ALC_TRUE;
+    return alcIsExtensionPresent(context->device, extension) == ALC_TRUE;
 }
 
 CALVersion context_version(CALContext* ctxt)
 {
     CALVersion v;
-    alcGetIntegerv(ctxt->device,ALC_MAJOR_VERSION,1,&v.major);
-    alcGetIntegerv(ctxt->device,ALC_MINOR_VERSION,1,&v.minor);
+    alcGetIntegerv(ctxt->device, ALC_MAJOR_VERSION, 1, &v.major);
+    alcGetIntegerv(ctxt->device, ALC_MINOR_VERSION, 1, &v.minor);
     return v;
 }
 
-void context_set_debug_callback(CALContext *context, CALCallback callback)
+void context_set_debug_callback(CALContext* context, CALCallback callback)
 {
     context->callback = callback;
 }
 
 void context_devices_output(Vector<cstring>& devices)
 {
-    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
+    if(!alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
         return;
 
-    const ALCchar* devices_c = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
+    const ALCchar* devices_c = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
 
     szptr i = 0;
     while(*devices_c)
     {
         devices.resize(i + 1);
         devices[i] = devices_c;
-        devices_c += StrLen(devices_c)+1;
+        devices_c += StrLen(devices_c) + 1;
         i++;
     }
 }
 
 void context_devices_input(Vector<cstring>& devices)
 {
-    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
+    if(!alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
         return;
 
-    const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
+    const ALCchar* cdevices = alcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
 
     if(!cdevices)
         return;
@@ -271,143 +265,151 @@ void context_devices_input(Vector<cstring>& devices)
     {
         devices.resize(i + 1);
         devices[i] = cdevices;
-        cdevices += StrLen(cdevices)+1;
+        cdevices += StrLen(cdevices) + 1;
         i++;
     }
 }
 
 cstring context_device_default()
 {
-    return alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
+    return alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
 }
 
-void alAlloc(CALBuffer *buffer)
+void alAlloc(CALBuffer* buffer)
 {
     buffer->handle = new CALhnd;
-    alGenBuffers(1,&(buffer->handle->handle));
+    alGenBuffers(1, &(buffer->handle->handle));
     context_get_error();
 }
 
-void alAlloc(CALSource *source)
+void alAlloc(CALSource* source)
 {
     source->handle = new CALhnd;
-    alGenSources(1,&(source->handle->handle));
+    alGenSources(1, &(source->handle->handle));
     context_get_error();
 }
 
-void alFree(CALSource *source)
+void alFree(CALSource* source)
 {
-    alDeleteSources(1,&(source->handle->handle));
+    alDeleteSources(1, &(source->handle->handle));
     context_get_error();
     delete source->handle;
     source->handle = nullptr;
 }
 
-void alFree(CALBuffer *buffer)
+void alFree(CALBuffer* buffer)
 {
-    alDeleteBuffers(1,&(buffer->handle->handle));
+    alDeleteBuffers(1, &(buffer->handle->handle));
     context_get_error();
     delete buffer->handle;
     buffer->handle = nullptr;
 }
 
-void listener_set(const CALListener *listener)
+void listener_set(const CALListener* listener)
 {
-    alListenerf(AL_GAIN,listener->gain);
+    alListenerf(AL_GAIN, listener->gain);
     context_get_error();
 
-    alListenerfv(AL_POSITION,(scalar*)&listener->position);
+    alListenerfv(AL_POSITION, (scalar*)&listener->position);
     context_get_error();
-    alListenerfv(AL_VELOCITY,(scalar*)&listener->velocity);
+    alListenerfv(AL_VELOCITY, (scalar*)&listener->velocity);
     context_get_error();
-    scalar *orient = new scalar[6];
-    MemCpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    MemCpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
-    alListenerfv(AL_ORIENTATION,orient);
+    scalar* orient = new scalar[6];
+
+    MemCpy(
+        Bytes::Create(listener->orientation_forward),
+        Bytes::From(&orient[0], 3));
+    MemCpy(Bytes::Create(listener->orientation_up), Bytes::From(&orient[3], 3));
+
+    //    MemCpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
+    //    MemCpy(&orient[3],&listener->orientation_up,sizeof(CVec3));
+    alListenerfv(AL_ORIENTATION, orient);
     delete[] orient;
     context_get_error();
 }
 
-int32 source_get_offset_seconds(const CALSource *source)
+int32 source_get_offset_seconds(const CALSource* source)
 {
     _al_check_rsc(source);
 
     int32 i;
-    alGetSourcei(_al_get_handle(source),AL_SEC_OFFSET,&i);
+    alGetSourcei(_al_get_handle(source), AL_SEC_OFFSET, &i);
     context_get_error();
     return i;
 }
 
-int32 source_get_offset_samples(const CALSource *source)
+int32 source_get_offset_samples(const CALSource* source)
 {
     _al_check_rsc(source);
 
     int32 i;
-    alGetSourcei(_al_get_handle(source),AL_SAMPLE_OFFSET,&i);
+    alGetSourcei(_al_get_handle(source), AL_SAMPLE_OFFSET, &i);
     context_get_error();
     return i;
 }
 
-int32 source_get_offset_bytes(const CALSource *source)
+int32 source_get_offset_bytes(const CALSource* source)
 {
     _al_check_rsc(source);
 
     int32 i;
-    alGetSourcei(_al_get_handle(source),AL_BYTE_OFFSET,&i);
+    alGetSourcei(_al_get_handle(source), AL_BYTE_OFFSET, &i);
     context_get_error();
     return i;
 }
 
 void source_queue_buffers(
-        CALSource *source, szptr numBuffers, const CALBuffer * const *buffers)
+    CALSource* source, szptr numBuffers, const CALBuffer* const* buffers)
 {
     _al_check_rsc(source);
 
     ALuint* handles = new ALuint[numBuffers];
-    for(szptr i=0;i<numBuffers;i++)
+    for(szptr i = 0; i < numBuffers; i++)
     {
         _al_check_rsc(buffers[i]);
-        auto hnd = _al_get_handle(buffers[i]);
+        auto hnd   = _al_get_handle(buffers[i]);
         handles[i] = hnd;
     }
-    alSourceQueueBuffers(_al_get_handle(source),numBuffers,handles);
+    alSourceQueueBuffers(_al_get_handle(source), numBuffers, handles);
     delete[] handles;
     context_get_error();
 }
 
 void source_dequeue_buffers(
-        CALSource *source, szptr numBuffers, const CALBuffer * const *buffers)
+    CALSource* source, szptr numBuffers, const CALBuffer* const* buffers)
 {
     _al_check_rsc(source);
     ALuint* handles = new ALuint[numBuffers];
-    for(szptr i=0;i<numBuffers;i++)
+    for(szptr i = 0; i < numBuffers; i++)
     {
         _al_check_rsc(buffers[i]);
         if(buffers[i] && buffers[i]->handle)
             handles[i] = buffers[i]->handle->handle;
     }
-    alSourceUnqueueBuffers(_al_get_handle(source),numBuffers,handles);
+    alSourceUnqueueBuffers(_al_get_handle(source), numBuffers, handles);
     delete[] handles;
     context_get_error();
 }
 
 void source_seti(
-        CALSource *source, CSourceProperty const& prop, const int32 *val)
+    CALSource* source, CSourceProperty const& prop, const int32* val)
 {
     _al_check_rsc(source);
-    alSourceiv(_al_get_handle(source),get_value(prop,al_source_prop_map),val);
+    alSourceiv(
+        _al_get_handle(source), get_value(prop, al_source_prop_map), val);
     context_get_error();
 }
 
 void source_setf(
-        CALSource *source, CSourceProperty const& prop, const scalar* val)
+    CALSource* source, CSourceProperty const& prop, const scalar* val)
 {
     _al_check_rsc(source);
-    alSourcefv(_al_get_handle(source),get_value(prop,al_source_prop_map),val);
+    alSourcefv(
+        _al_get_handle(source), get_value(prop, al_source_prop_map), val);
     context_get_error();
 }
 
-void source_set_state(CALSource *source, CALPlaybackState state)
+void source_set_state(CALSource* source, CALPlaybackState state)
 {
     switch(state)
     {
@@ -427,137 +429,146 @@ void source_set_state(CALSource *source, CALPlaybackState state)
     context_get_error();
 }
 
-bool source_playing(CALSource *source)
+bool source_playing(CALSource* source)
 {
-    return source_geti(source,CSourceProperty::PlaybackState)==AL_PLAYING;
+    return source_geti(source, CSourceProperty::PlaybackState) == AL_PLAYING;
 }
 
 void source_set_states(
-        const CALSource **sources, szptr numSources, CALPlaybackState state)
+    const CALSource** sources, szptr numSources, CALPlaybackState state)
 {
-    ALuint *src = new ALuint[numSources];
-    for(szptr i=0;i<numSources;i++)
+    ALuint* src = new ALuint[numSources];
+    for(szptr i = 0; i < numSources; i++)
         src[i] = _al_get_handle(sources[i]);
 
     switch(state)
     {
     case CALPlaybackState::Stopped:
-        alSourceStopv(numSources,src);
+        alSourceStopv(numSources, src);
         break;
     case CALPlaybackState::Playing:
-        alSourcePlayv(numSources,src);
+        alSourcePlayv(numSources, src);
         break;
     case CALPlaybackState::Paused:
-        alSourcePausev(numSources,src);
+        alSourcePausev(numSources, src);
         break;
     case CALPlaybackState::Rewind:
-        alSourceRewindv(numSources,src);
+        alSourceRewindv(numSources, src);
         break;
     }
     context_get_error();
     delete[] src;
 }
 
-void source_set_offset_seconds(CALSource *source, int32 const& off)
+void source_set_offset_seconds(CALSource* source, int32 const& off)
 {
-    source_seti(source,CSourceProperty::OffsetSeconds,&off);
+    source_seti(source, CSourceProperty::OffsetSeconds, &off);
 }
 
-void source_set_offset_samples(CALSource *source, int32 const& off)
+void source_set_offset_samples(CALSource* source, int32 const& off)
 {
-    source_seti(source,CSourceProperty::OffsetSamples,&off);
+    source_seti(source, CSourceProperty::OffsetSamples, &off);
 }
 
-void source_set_offset_bytes(CALSource *source, int32 const& off)
+void source_set_offset_bytes(CALSource* source, int32 const& off)
 {
-    source_seti(source,CSourceProperty::OffsetBytes,&off);
+    source_seti(source, CSourceProperty::OffsetBytes, &off);
 }
 
 void source_transform(
-        CALSource *source, const CVec3& position,
-        const CVec3& velocity, const CVec3& direction)
+    CALSource*   source,
+    const CVec3& position,
+    const CVec3& velocity,
+    const CVec3& direction)
 {
     _al_check_rsc(source);
 
-    source->position = position;
-    source->velocity = velocity;
+    source->position  = position;
+    source->velocity  = velocity;
     source->direction = direction;
 
-    source_setf(source,CSourceProperty::Position,
-                             (const scalar*)&source->position);
-    source_setf(source,CSourceProperty::Velocity,
-                             (const scalar*)&source->velocity);
-    source_setf(source,CSourceProperty::Direction,
-                             (const scalar*)&source->direction);
+    source_setf(
+        source, CSourceProperty::Position, (const scalar*)&source->position);
+    source_setf(
+        source, CSourceProperty::Velocity, (const scalar*)&source->velocity);
+    source_setf(
+        source, CSourceProperty::Direction, (const scalar*)&source->direction);
 }
 
 void source_seti(
-        CALSource *source, CSourceProperty const& prop, const int32 &val)
+    CALSource* source, CSourceProperty const& prop, const int32& val)
 {
-    source_seti(source,prop,&val);
+    source_seti(source, prop, &val);
 }
 
 void source_setf(
-        CALSource *source, CSourceProperty const& prop, const scalar &val)
+    CALSource* source, CSourceProperty const& prop, const scalar& val)
 {
-    source_setf(source,prop,&val);
+    source_setf(source, prop, &val);
 }
 
-int32 source_geti(CALSource *source, const CSourceProperty &prop)
+int32 source_geti(CALSource* source, const CSourceProperty& prop)
 {
     _al_check_rsc(source);
 
     ALint v;
-    alGetSourcei(_al_get_handle(source),get_value(prop,al_source_prop_map),&v);
+    alGetSourcei(
+        _al_get_handle(source), get_value(prop, al_source_prop_map), &v);
     return v;
 }
 
-scalar source_getf(CALSource *source, const CSourceProperty &prop)
+scalar source_getf(CALSource* source, const CSourceProperty& prop)
 {
     _al_check_rsc(source);
 
     ALfloat v;
-    alGetSourcef(_al_get_handle(source),get_value(prop,al_source_prop_map),&v);
+    alGetSourcef(
+        _al_get_handle(source), get_value(prop, al_source_prop_map), &v);
     return v;
 }
 
-void buffer_data(CALBuffer *buffer, const AudioSample *sample)
+void buffer_data(CALBuffer* buffer, const AudioSample* sample)
 {
     _al_check_rsc(buffer);
 
     ALenum fmt = _al_get_fmt(sample->fmt);
 
     alBufferData(
-                _al_get_handle(buffer),fmt,
-                sample->data,
-                C_CAST<ALCsizei>(sample->samples*sample->fmt.channels*sizeof(sample->data[0])),
-            C_CAST<ALCsizei>(sample->fmt.samplerate));
+        _al_get_handle(buffer),
+        fmt,
+        sample->data,
+        C_CAST<ALCsizei>(
+            sample->samples * sample->fmt.channels * sizeof(sample->data[0])),
+        C_CAST<ALCsizei>(sample->fmt.samplerate));
 }
 
-void alAlloc(CALBuffer *buffer, const AudioSample *sample)
+void alAlloc(CALBuffer* buffer, const AudioSample* sample)
 {
     alAlloc(buffer);
     _al_check_rsc(buffer);
-    buffer_data(buffer,sample);
+    buffer_data(buffer, sample);
     context_get_error();
 }
 
-CALCaptureDevice *capture_create(
-        CALContext *context, cstring device,
-        AudioFormat const& fmt, uint32 samples)
+CALCaptureDevice* capture_create(
+    CALContext* context, cstring device, AudioFormat const& fmt, uint32 samples)
 {
     context_make_current(context);
 
     CALCaptureDevice* cdev = new CALCaptureDevice;
 
     cdev->capdevice = alcCaptureOpenDevice(
-                device,
-                fmt.samplerate,
-                _al_get_fmt(fmt),
-                C_CAST<ALCsizei>(samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels));
+        device,
+        fmt.samplerate,
+        _al_get_fmt(fmt),
+        C_CAST<ALCsizei>(
+            samples * fmt.samplerate * (fmt.bitdepth / 8) * fmt.channels));
 
-    cDebug("Creating AL capture device: {0},fq={1},buffer={2}",
-           device,fmt.samplerate,samples*(fmt.bitdepth/8)*fmt.channels);
+    cDebug(
+        "Creating AL capture device: {0},fq={1},buffer={2}",
+        device,
+        fmt.samplerate,
+        samples * (fmt.bitdepth / 8) * fmt.channels);
 
     return cdev;
 }
@@ -568,38 +579,35 @@ void capture_free(CALCaptureDevice* dev)
     delete dev;
 }
 
-void capture_start(CALCaptureDevice *dev)
+void capture_start(CALCaptureDevice* dev)
 {
     alcCaptureStart(dev->capdevice);
 }
 
-void capture_stop(CALCaptureDevice *dev)
+void capture_stop(CALCaptureDevice* dev)
 {
     alcCaptureStop(dev->capdevice);
 }
 
-void capture_grab_samples(CALCaptureDevice *dev,
-                          AudioSample &sample)
+void capture_grab_samples(CALCaptureDevice* dev, AudioSample& sample)
 {
-    alcCaptureSamples(dev->capdevice,sample.data,sample.samples);
+    alcCaptureSamples(dev->capdevice, sample.data, sample.samples);
 }
 
-}
-}
+} // namespace COpenAL
+} // namespace CAudio
 
-namespace Strings{
+namespace Strings {
 CString to_string(CAudio::COpenAL::CALBuffer const& buf)
 {
-    return "CALBuffer(" + StrUtil::pointerify(buf.handle) + ","
-            + ((buf.handle) ? cast_pod(buf.handle->handle) : CString("0x0"))
-            + ")";
+    return "CALBuffer(" + StrUtil::pointerify(buf.handle) + "," +
+           ((buf.handle) ? cast_pod(buf.handle->handle) : CString("0x0")) + ")";
 }
 
 CString to_string(CAudio::COpenAL::CALSource const& src)
 {
-    return "CALSource(" + StrUtil::pointerify(src.handle) + ","
-            + ((src.handle) ? cast_pod(src.handle->handle) : CString("0x0"))
-            + ")";
+    return "CALSource(" + StrUtil::pointerify(src.handle) + "," +
+           ((src.handle) ? cast_pod(src.handle->handle) : CString("0x0")) + ")";
 }
-}
-}
+} // namespace Strings
+} // namespace Coffee

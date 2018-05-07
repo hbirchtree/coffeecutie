@@ -1,74 +1,130 @@
 #pragma once
 
+#include "../gl_shared_enum_convert.h"
 #include "../gl_shared_include.h"
 #include "../gl_shared_types.h"
-#include "../gl_shared_enum_convert.h"
+#include <coffee/core/types/cdef/memtypes.h>
 
-namespace Coffee{
-namespace CGL{
+namespace Coffee {
+namespace CGL {
 
-template<typename CGhnd,typename ShaderStage,typename CGsync>
+template<typename CGhnd, typename ShaderStage, typename CGsync>
 struct CGL_Old_Constructors
 {
     /* Allocations */
-    STATICINLINE bool TexAlloc(uint32 l,CGhnd* d){glGenTextures(l,d); return true;}
-    STATICINLINE bool TexFree(uint32 l,CGhnd* d){glDeleteTextures(l,d); return true;}
+    STATICINLINE bool TexAlloc(Span<CGhnd> const& handles)
+    {
+        glGenTextures(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool TexFree(Span<CGhnd> const& handles)
+    {
+        glDeleteTextures(handles.elements, handles.data);
+        return true;
+    }
 
-    STATICINLINE bool FBAlloc(uint32 l,CGhnd* d){glGenFramebuffers(l,d); return true;}
-    STATICINLINE bool FBFree(uint32 l,CGhnd* d){glDeleteFramebuffers(l,d); return true;}
+    STATICINLINE bool FBAlloc(Span<CGhnd> const& handles)
+    {
+        glGenFramebuffers(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool FBFree(Span<CGhnd> const& handles)
+    {
+        glDeleteFramebuffers(handles.elements, handles.data);
+        return true;
+    }
 
-    STATICINLINE bool RenderBufferAlloc(uint32 l,CGhnd* d){glGenRenderbuffers(l,d); return true;}
-    STATICINLINE bool RenderBufferFree(uint32 l,CGhnd* d){glDeleteRenderbuffers(l,d); return true;}
+    STATICINLINE bool RenderBufferAlloc(Span<CGhnd> const& handles)
+    {
+        glGenRenderbuffers(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool RenderBufferFree(Span<CGhnd> const& handles)
+    {
+        glDeleteRenderbuffers(handles.elements, handles.data);
+        return true;
+    }
 
-    STATICINLINE bool BufAlloc(uint32 l,CGhnd* d){glGenBuffers(l,d); return true;}
-    STATICINLINE bool BufFree(uint32 l,CGhnd* d){glDeleteBuffers(l,d); return true;}
+    STATICINLINE bool BufAlloc(Span<CGhnd> const& handles)
+    {
+        glGenBuffers(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool BufFree(Span<CGhnd> const& handles)
+    {
+        glDeleteBuffers(handles.elements, handles.data);
+        return true;
+    }
 
 #if !defined(COFFEE_ONLY_GLES20)
-    STATICINLINE bool SamplerAlloc(uint32 l,CGhnd* d){glGenSamplers(l,d); return true;}
-    STATICINLINE bool SamplerFree(uint32 l,CGhnd* d){glDeleteSamplers(l,d); return true;}
+    STATICINLINE bool SamplerAlloc(Span<CGhnd> const& handles)
+    {
+        glGenSamplers(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool SamplerFree(Span<CGhnd> const& handles)
+    {
+        glDeleteSamplers(handles.elements, handles.data);
+        return true;
+    }
 
-    STATICINLINE bool VAOAlloc(uint32 l,CGhnd* d){glGenVertexArrays(l,d); return true;}
-    STATICINLINE bool VAOFree(uint32 l,CGhnd* d){glDeleteVertexArrays(l,d); return true;}
+    STATICINLINE bool VAOAlloc(Span<CGhnd> const& handles)
+    {
+        glGenVertexArrays(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool VAOFree(Span<CGhnd> const& handles)
+    {
+        glDeleteVertexArrays(handles.elements, handles.data);
+        return true;
+    }
 
-    STATICINLINE bool QueryAlloc(uint32 l,CGhnd* d){glGenQueries(l,d); return true;}
-    STATICINLINE bool QueryFree(uint32 l,CGhnd* d){glDeleteQueries(l,d); return true;}
+    STATICINLINE bool QueryAlloc(Span<CGhnd> const& handles)
+    {
+        glGenQueries(handles.elements, handles.data);
+        return true;
+    }
+    STATICINLINE bool QueryFree(Span<CGhnd> const& handles)
+    {
+        glDeleteQueries(handles.elements, handles.data);
+        return true;
+    }
 #endif
 
-    STATICINLINE bool ProgramAlloc(uint32 l,CGhnd* d)
+    STATICINLINE bool ProgramAlloc(Span<CGhnd> const& handles)
     {
-        for(uint32 i=0;i<l;i++)
-            d[i] = glCreateProgram();
+        for(uint32 i = 0; i < handles.elements; i++)
+            handles.data[i] = glCreateProgram();
         return true;
     }
-    STATICINLINE bool ProgramFree(uint32 l,CGhnd* d)
+    STATICINLINE bool ProgramFree(Span<CGhnd> const& handles)
     {
-        for(uint32 i=0;i<l;i++)
-            glDeleteProgram(d[i]);
+        for(uint32 i = 0; i < handles.elements; i++)
+            glDeleteProgram(handles.data[i]);
         return true;
     }
 
-    STATICINLINE bool ShaderAlloc(uint32 l,ShaderStage t,CGhnd* d)
+    STATICINLINE bool ShaderAlloc(ShaderStage t, Span<CGhnd> const& handles)
     {
-        for(uint32 i=0;i<l;i++)
-            d[i] = glCreateShader(to_enum1(t));
+        for(uint32 i = 0; i < handles.elements; i++)
+            handles.data[i] = glCreateShader(to_enum1(t));
         return true;
     }
-    STATICINLINE bool ShaderFree(uint32 l,CGhnd* d)
+    STATICINLINE bool ShaderFree(Span<CGhnd> const& handles)
     {
-        for(uint32 i=0;i<l;i++)
-            glDeleteShader(d[i]);
+        for(uint32 i = 0; i < handles.elements; i++)
+            glDeleteShader(handles.data[i]);
         return true;
     }
 
 #if !defined(COFFEE_ONLY_GLES20)
-    STATICINLINE bool FenceFree(uint32 l,CGsync* d)
+    STATICINLINE bool FenceFree(Span<GLsync> const& handles)
     {
-        for(uint32 i=0;i<l;i++)
-            glDeleteSync((GLsync)d[i]);
+        for(uint32 i = 0; i < handles.elements; i++)
+            glDeleteSync(handles.data[i]);
         return true;
     }
 #endif
 };
-
-}
-}
+} // namespace CGL
+} // namespace Coffee

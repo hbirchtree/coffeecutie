@@ -42,10 +42,12 @@ namespace CGL{
 /*!
  * \brief OpenGL 4.3 compliance model
  */
-struct CGL43 : CGL33_Base,
-        CGL_BufferInvalidateSubData,
+template<typename ReqVer>
+struct CGL43_Base :
+
+        CGL33_Base<ReqVer>,
+
         CGL_ClearBuffer,
-        CGL_BufferStorage,
 
         CGL_SeparableShaderPrograms,
 
@@ -67,13 +69,8 @@ struct CGL43 : CGL33_Base,
         CGL_SSBO,
         CGL_GetProgramBinary,
 
-        CGL_TextureStorage,
-        CGL_TextureStorageMultisample,
-        CGL_TextureView,
         CGL_ShaderImageLoadStore,
         CGL_CopyImage,
-
-        CGL_VertexAttribBinding,
 
         CGL_XF2,
         CGL_XF3
@@ -90,54 +87,50 @@ struct CGL43 : CGL33_Base,
 
     //TODO: Add more extensions to check for, and check for them in functions
 
-    STATICINLINE bool TexStorageSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_texture_storage");}
+    STATICINLINE GL_EXT_CHECK(TexStorage,
+                              "GL_ARB_texture_storage")
 
-    STATICINLINE bool TexViewSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_texture_view");}
+    STATICINLINE GL_EXT_CHECK(TexView,
+                              "GL_ARB_texture_view")
 
-    STATICINLINE bool ViewportArraySupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_viewport_array");}
+    STATICINLINE GL_EXT_CHECK(ViewportArray,
+                              "GL_ARB_viewport_array")
 
-    STATICINLINE bool VertexAttribBinding()
-    {return Debug::CheckExtensionSupported("GL_ARB_vertex_attrib_binding");}
+    STATICINLINE GL_EXT_CHECK(VertexAttrib,
+                              "GL_ARB_vertex_attrib_binding")
 
-    STATICINLINE bool SeparableShaderSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_separate_shader_objects");}
+    STATICINLINE GL_EXT_CHECK(SeparableShader,
+                              "GL_ARB_separate_shader_objects")
 
-    STATICINLINE bool TessellationSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_tessellation_shader");}
+    STATICINLINE GL_EXT_CHECK(Tessellation,
+                              "GL_ARB_tessellation_shader")
 
-    STATICINLINE bool ShaderStorageSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_shader_storage_buffer_object");}
+    STATICINLINE GL_EXT_CHECK(ShaderStorage,
+                              "GL_ARB_shader_storage_buffer_object")
 
-    STATICINLINE bool ShaderPrecisionSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_shader_precision");}
+    STATICINLINE GL_EXT_CHECK(ShaderPrecision,
+                              "GL_ARB_shader_precision")
 
-    STATICINLINE bool ProgramResourceInfoSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_program_interface_query");}
+    STATICINLINE GL_EXT_CHECK(ProgramResourceInfo,
+                              "GL_ARB_program_interface_query")
 
-    STATICINLINE bool ComputeShaderSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_compute_shader");}
+    STATICINLINE GL_EXT_CHECK(ComputeShader,
+                              "GL_ARB_compute_shader")
 
-    STATICINLINE bool XF2Supported()
-    {return Debug::CheckExtensionSupported("GL_ARB_transform_feedback2");}
+    STATICINLINE GL_EXT_CHECK(XF2,
+                              "GL_ARB_transform_feedback2")
 
-    STATICINLINE bool XF3Supported()
-    {return Debug::CheckExtensionSupported("GL_ARB_transform_feedback3");}
+    STATICINLINE GL_EXT_CHECK(XF3,
+                              "GL_ARB_transform_feedback3")
 
-    STATICINLINE bool InstancedXFSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_transform_feedback_instanced");}
+    STATICINLINE GL_EXT_CHECK(InstancedXF,
+                              "GL_ARB_transform_feedback_instanced")
 
-    STATICINLINE bool MultiDrawIndirectSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_multi_draw_indirect");}
+    STATICINLINE GL_EXT_CHECK(MultiDrawIndirect,
+                              "GL_ARB_multi_draw_indirect")
 
-    STATICINLINE bool BufferStorageSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_buffer_storage");}
-
-    /*TODO: Move to 4.5*/
-    STATICINLINE void ImageBindTextures(int32 f,uint32 c, const CGhnd* h)
-    {glBindImageTextures(f,c,h);}
+    STATICINLINE GL_EXT_CHECK(BufferStorage,
+                              "GL_ARB_buffer_storage")
 
     STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
     {glBlendFunci(i,v1,v2);}
@@ -185,6 +178,26 @@ struct CGL43 : CGL33_Base,
             return sz;
         }
     };
+};
+
+struct CGL43 :
+        CGL43_Base<GLVER_43>,
+
+        /* GL 4.3 features */
+        CGL_BufferInvalidateSubData,
+        CGL_BufferStorage<GLVER_43>,
+        CGL_TextureStorage,
+        CGL_TextureStorageMultisample,
+        CGL_TextureView,
+        CGL_VertexAttribBinding<GLVER_43>,
+
+        /* GL 3.3 features */
+        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture, GLVER_33>,
+        CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>,
+        CGL_Old_Constructors<CGhnd,ShaderStage,CGsync>,
+        CGL_Old_Buffers<CGhnd,BufType, GLVER_33>,
+        CGL_Old_VAOs<CGhnd,CGenum>
+{
 };
 
 }

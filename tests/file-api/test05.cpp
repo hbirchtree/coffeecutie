@@ -1,5 +1,6 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
+#include <coffee/core/types/cdef/memsafe.h>
 
 using namespace Coffee;
 
@@ -11,25 +12,32 @@ const Url big_map_test = MkUrl("file_map_large.bin",
                                ResourceAccess::SpecifyStorage
                                |ResourceAccess::TemporaryFile);
 
-void* large_data = nullptr;
+Bytes large_data = {};
 
 bool filewrite_large_test()
 {
     CResources::Resource rsc(big_map_test);
 
+    /* TODO: Update with Bytes */
+
     rsc.size = Unit_GB*5;
     Profiler::Profile("Pre-allocation setup");
 
-    rsc.data = Calloc(1,rsc.size);
+    rsc.data = calloc(1,rsc.size);
     Profiler::Profile("5GB allocation");
 
-    large_data = rsc.data;
+    large_data = C_OCAST<Bytes>(rsc);
+    Bytes::SetDestr(large_data, [](Bytes& d)
     {
-        byte_t* data = (byte_t*)large_data;
+        CFree(d.data);
+    });
+
+    {
         cstring test_string = "I'M THE TRASHMAN!\n";
-        MemCpy(data,test_string,StrLen(test_string));
-        MemCpy(&data[Unit_GB*4],test_string,StrLen(test_string));
+        memcpy(large_data.data,test_string,StrLen(test_string));
+        memcpy(&large_data[4_GB],test_string,StrLen(test_string));
     }
+
     Profiler::Profile("Copying data into segment");
 
     bool stat = CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
@@ -50,11 +58,10 @@ bool filemap_large_test()
     if(rsc.size != Unit_GB*5)
         stat = false;
     else{
-        stat = MemCmp(large_data,rsc.data,rsc.size);
+        stat = MemCmp(large_data, C_OCAST<Bytes>(rsc));
         Profiler::Profile("Comparing 5GB of data");
     }
 
-    CFree(large_data);
     Profiler::Profile("Freeing 5GB of data");
 
     CResources::FileUnmap(rsc);

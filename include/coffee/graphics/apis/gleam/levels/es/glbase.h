@@ -4,7 +4,6 @@
 #include <coffee/graphics/common/gltypes.h>
 
 #include <coffee/core/coffee_strings.h>
-#include <coffee/core/CDebug>
 #include <coffee/core/plat/memory/cmemory.h>
 
 #include "../gl_shared.h"

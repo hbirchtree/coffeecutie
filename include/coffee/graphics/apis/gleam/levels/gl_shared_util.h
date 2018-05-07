@@ -31,10 +31,7 @@ struct CGLUtil
         GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_WIDTH,&tsize.w);
         GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_HEIGHT,&tsize.h);
 
-        Bytes data = {};
-
-        data.size = tsize.area()*4;
-        data.data = (ubyte_t*)Alloc(data.size);
+        Bytes data = Bytes::Alloc(C_FCAST<szptr>(tsize.area() * 4));
 
         GL::TexBind(t,h);
         GL::TexGetImage(t,0,PixelComponents::RGBA,PixelFormat::RGBA8,data);
@@ -42,15 +39,10 @@ struct CGLUtil
 
         CResources::Resource rsc(fn);
 
-        CStbImageLib::CStbImageConst img;
-        img.bpp = 4;
-        img.data = data.data;
-        img.size = tsize;
-
-        CStbImageLib::SavePNG(&rsc,&img);
+        auto outData = PNG::Save(stb::image_const::From(rsc, tsize));
+        rsc = outData;
 
         CResources::FileCommit(rsc);
-        CResources::FileFree(rsc);
         CFree(data.data);
 #endif
     }

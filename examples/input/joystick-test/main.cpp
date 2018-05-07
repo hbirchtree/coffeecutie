@@ -5,12 +5,14 @@
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2WindowHost>
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/core/CDebug>
+#include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/core/types/map.h>
 #include <coffee/image/cimage.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 using namespace Display;
@@ -33,8 +35,8 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
         SDL2Dialog::ErrorMessage("Failed to load resource","Couldn't find texture");
         return {};
     }
-    CStbImageLib::CStbImage img;
-    CStbImageLib::LoadData(&img,&analog_rsc,PixCmp::RGBA);
+    stb::image_rw img;
+    stb::LoadData(&img, analog_rsc);
 
     instance->createTexture(*renderer,1,&out,
                             PixelFormat::RGBA8,
@@ -48,10 +50,11 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
     }
 
     CRGBA* data = C_CAST<CRGBA*>(instance->mapTexture(out));
-    MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
+    MemCpy(C_OCAST<Bytes>(img), Bytes::From(data, img.size.area() * img.bpp));
+//    MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
     instance->unmapTexture(out);
 
-    CStbImageLib::ImageFree(&img);
+    stb::ImageFree(&img);
     CResources::FileUnmap(analog_rsc);
 
     return out;

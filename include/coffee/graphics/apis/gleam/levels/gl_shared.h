@@ -13,6 +13,8 @@ namespace CGL{
 
 struct CGL_Shared_Functions
 {
+    using ReqVer = GLVER_33;
+
     using CGhnd = CGL::CGhnd;
     using BufType = CGL::BufType;
     using Texture = CGL::Texture;
@@ -51,8 +53,10 @@ struct CGL_Shared_Functions
     void Disable(Feature e,uint32 o = 0){glDisable(to_enum(e,o));}
 
 #if !defined(COFFEE_ONLY_GLES20)
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
     STATICINLINE
     void Enablei(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
     STATICINLINE
     void Disablei(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
 #endif
@@ -159,6 +163,8 @@ struct CGL_Shared_Functions
     void LineWidth(scalar f){glLineWidth(f);}
     STATICINLINE
     void PolyOffset(scalar f1,scalar f2){glPolygonOffset(f1,f2);}
+
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void PolyMode(Face f1,DrawMode f2)
     {
@@ -170,6 +176,7 @@ struct CGL_Shared_Functions
 #endif
     }
 
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void PointParameteriv(CGenum f,const int32* d)
     {
@@ -180,6 +187,8 @@ struct CGL_Shared_Functions
         glPointParameteriv(f,d);
 #endif
     }
+
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void PointParameterfv(CGenum f,const scalar* d)
     {
@@ -190,6 +199,8 @@ struct CGL_Shared_Functions
         glPointParameterfv(f,d);
 #endif
     }
+
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void PointSize(scalar f)
     {
@@ -201,9 +212,12 @@ struct CGL_Shared_Functions
     }
 
     /* Sampling */
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
     STATICINLINE
     void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
+
 #if !defined(COFFEE_ONLY_GLES20)
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
     STATICINLINE
     void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
 #endif
@@ -215,6 +229,7 @@ struct CGL_Shared_Functions
         glPixelStorei(to_enum(pack,op),v);
     }
 
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void ColorMask(CColorMask op)
     {
@@ -224,6 +239,7 @@ struct CGL_Shared_Functions
         glColorMask(op.r,op.g,op.b,op.a);
 #endif
     }
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void ColorMaski(uint32 i, CColorMask op)
     {
@@ -234,6 +250,8 @@ struct CGL_Shared_Functions
         glColorMaski(i,op.r,op.g,op.b,op.a);
 #endif
     }
+
+    GL_VERSION_REQ(GLVER_33)
     STATICINLINE
     void ColorLogicOp(LogicOp op)
     {

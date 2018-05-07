@@ -1,5 +1,6 @@
-#include <coffee/image/cimage.h>
 #include <coffee/core/CProfiling>
+#include <coffee/image/cimage.h>
+#include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/CDebug>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -11,16 +12,56 @@
 
 #define STB_ABI "STB::"
 
-namespace Coffee{
-namespace CStbImageLib{
+namespace Coffee {
+namespace stb {
 
-bool LoadData(CStbImage *target, const Resource *src, PixelComponents comp)
+static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 {
-    return LoadData(target, FileGetDescriptor(*src), comp);
+    auto outData = Bytes::Alloc(numPixels * sizeof(rgba_t));
+
+    auto srcImage = src.as<rgba_t>();
+    auto dstImage = outData.as<rgba_t>();
+
+    for(auto i : Range<>(numPixels))
+    {
+        rgba_t& srcPix = *C_RCAST<rgba_t*>(&srcImage[i * channels]);
+        rgba_t& p      = dstImage[i];
+
+        switch(channels)
+        {
+        case 1:
+        {
+            p.r = srcPix.r;
+            p.g = srcPix.r;
+            p.b = srcPix.r;
+            p.a = 0xFF;
+            break;
+        }
+        case 2:
+        {
+            p.r = srcPix.r;
+            p.g = srcPix.r;
+            p.b = srcPix.r;
+            p.a = srcPix.g;
+            break;
+        }
+        case 3:
+        {
+            p.r = srcPix.r;
+            p.g = srcPix.g;
+            p.b = srcPix.b;
+            p.a = 0xFF;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    src = std::move(outData);
 }
 
-bool LoadData(CStbImage *target, BytesConst const& src,
-              PixelComponents comp)
+bool LoadData(image_rw* target, BytesConst const& src, PixelComponents comp)
 {
     DProfContext _(STB_ABI "Loading image");
 
@@ -45,201 +86,179 @@ bool LoadData(CStbImage *target, BytesConst const& src,
     }
 
     target->data = stbi_load_from_memory(
-                (const byte_t*)src.data,src.size,
-                &target->size.w,&target->size.h,
-                &target->bpp,scomp);
+        C_RCAST<const byte_t*>(src.data),
+        C_FCAST<int>(src.size),
+        &target->size.w,
+        &target->size.h,
+        &target->bpp,
+        scomp);
+
+    target->bpp = scomp;
+
     return target->data != nullptr;
 }
 
-void _stbi_write_data(void *ctxt, void *data, int size)
+void _stbi_write_data(void* ctxt, void* data, int size)
 {
-    Resource* target = (Resource*)ctxt;
-    target->size = size;
-    target->data = Alloc(size);
-    MemCpy(target->data,data,size);
+    Bytes* target = C_FCAST<Bytes*>(ctxt);
+    auto   offset = target->size;
+    target->size += C_FCAST<szptr>(size);
+
+    if(!target->data)
+        *target = Bytes::Alloc(target->size);
+    else
+        target->resize(target->size);
+
+    MemCpy(Bytes::From(data, size), target->at(offset));
+//    MemCpy(&target->data[offset], data, C_FCAST<szptr>(size));
 }
 
-bool Resize(CStbImage *img, const CSize &target, int channels)
+/*!
+ * \brief NearestNeighborResize
+ * \param src
+ * \param out
+ * \param srcSize size of src image, must be larger than output image
+ * \param outSize
+ */
+static void NearestNeighborResize(
+    rgba_t const* src, rgba_t* out, Size const& srcSize_, Size const& outSize_)
 {
-    byte_t* data = (byte_t*)Alloc(img->bpp*img->size.h*img->size.w*channels);
-    stbir_resize_uint8(img->data,img->size.w,img->size.h,0,
-                       data,target.w,target.h,0,
-                       channels);
-    CFree(img->data);
-    img->data = data;
-    img->size = target;
-    return img->data;
+    _cbasic_size_2d<u32> srcSize = srcSize_.convert<u32>();
+    _cbasic_size_2d<u32> outSize = outSize_.convert<u32>();
+
+    const auto pixel_ratio_w = srcSize.w / outSize.h;
+    const auto pixel_ratio_h = srcSize.h / outSize.h;
+
+    for(auto y : Range<>(outSize.h))
+        for(auto x : Range<>(outSize.w))
+        {
+            auto src_x = x * pixel_ratio_w;
+            auto src_y = y * pixel_ratio_h;
+
+            auto& outPix = out[y * outSize.w + x];
+            auto const& srcPix = src[src_y * srcSize.w + src_x];
+
+            outPix = srcPix;
+        }
 }
 
-bool SavePNG(Resource *target, const CStbImageConst *src)
+Bytes Resize(image_const const& img, const CSize& target, int channels)
+{
+    Bytes data = Bytes::Alloc(target.area() * channels);
+
+    if(target.area() > img.size.area() || channels != 4)
+        stbir_resize_uint8(
+            img.data,
+            img.size.w,
+            img.size.h,
+            0,
+            data.data,
+            target.w,
+            target.h,
+            0,
+            channels);
+    else
+        NearestNeighborResize(
+            C_RCAST<const rgba_t*>(img.data),
+            C_RCAST<rgba_t*>(data.data),
+            img.size,
+            target);
+
+    return data;
+}
+
+bool SavePNG(Bytes& target, const image_const& src)
 {
     DProfContext _(STB_ABI "Saving PNG image");
 
-    return stbi_write_png_to_func(_stbi_write_data,target,
-                                  src->size.w,src->size.h,
-                                  src->bpp,src->data,src->size.w*4);
+    return stbi_write_png_to_func(
+        _stbi_write_data,
+        &target,
+        src.size.w,
+        src.size.h,
+        src.bpp,
+        src.data,
+        src.size.w * 4);
 }
 
-bool SavePNG(Resource *target, const CStbImage *src)
-{
-    return stbi_write_png_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data,src->size.w*4);
-}
-
-bool SaveTGA(Resource *target, const CStbImage *src)
+bool SaveTGA(Bytes& target, const image_const& src)
 {
     DProfContext _(STB_ABI "Saving TGA image");
 
-    return stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
+    return stbi_write_tga_to_func(
+        _stbi_write_data, &target, src.size.w, src.size.h, src.bpp, src.data);
 }
 
-void FlipVertical(CStbImage *src)
+bool SaveJPG(Bytes& target, const image_const& src, int qual)
 {
-    int32 wdt = src->size.w;
-    szptr siz = src->bpp*src->size.w*src->size.h;
+    DProfContext _(STB_ABI "Saving JPG image");
 
-    byte_t* data = (byte_t*)Alloc(siz);
-
-    for(szptr i=0;i<siz;i+=wdt*src->bpp)
-    {
-        MemCpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
-    }
-
-    CFree(src->data);
-    src->data = data;
-}
-
-void FlipHorizontal(CStbImage *src)
-{
-    int32 bot = src->size.h;
-    int32 wdt = src->size.w;
-    szptr siz = src->bpp*src->size.w*src->size.h;
-
-    byte_t* data = (byte_t*)Alloc(siz);
-
-    for(int32 i=0;i<bot;i++)
-        for(int32 j=0;j<wdt;j++)
-        {
-            MemCpy(&data[(i*wdt+wdt-j)*src->bpp],&src->data[(i*wdt+j)*src->bpp],src->bpp);
-        }
-
-    CFree(src->data);
-    src->data = data;
+    return stbi_write_jpg_to_func(
+        _stbi_write_data,
+        &target,
+        src.size.w,
+        src.size.h,
+        src.bpp,
+        src.data,
+        qual);
 }
 
 void Error()
 {
-    cDebug("%s",stbi_failure_reason());
+    cDebug("%s", stbi_failure_reason());
 }
 
-void ImageFree(CStbImage *img)
+void ImageFreePtr(void* img)
 {
-    stbi_image_free(img->data);
+    stbi_image_free(img);
 }
 
+void ImageFree(CStbImage* img)
+{
+    ImageFreePtr(img->data);
 }
 
-struct tga_header
+void DataSetDestr(Bytes& b)
 {
-    uint8 idsize;
-    uint8 cmaptype;
-    uint8 imgtype;
-    uint16 cmapstart;
-    uint16 cmapsize;
-    uint8 cmapbpp;
-    int16 xorg;
-    int16 yorg;
-    int16 width;
-    int16 height;
-    uint8 bpp;
-    uint8 descriptor;
-};
-
-void CImage::SaveTGA(const CSize& resolution,
-                      const CByteData& imgData,
-                      CByteData& outdata)
-{
-    tga_header head = {};
-
-    head.width = resolution.w;
-    head.height = resolution.h;
-
-    head.bpp = 24;
-    head.imgtype = 2;
-
-    outdata.size = imgData.size+sizeof(tga_header);
-    outdata.data = (byte_t*)Alloc(outdata.size);
-
-    MemCpy(&outdata.data[0],&head,sizeof(head));
-    MemCpy(&outdata.data[sizeof(tga_header)],imgData.data,imgData.size);
-}
-
-void PNG::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
-{
-    CResources::Resource rsc(dest, ResourceAccess::None);
-
-    CStbImageLib::CStbImageConst img;
-    img.bpp = 4;
-    img.data = data.data();
-    img.size = res;
-
-    CStbImageLib::SavePNG(&rsc, &img);
-    CResources::FileCommit(rsc);
-}
-
-void TGA::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
-{
-    C_UNUSED(data);
-    C_UNUSED(res);
-    C_UNUSED(dest);
-}
-
-bool IMG::LoadBytes(Bytes const&src, PixCmp cmp, BitFmt &fmt,
-                    Bytes &data, CSize &res)
-{
-    Stb::CStbImage img;
-
-    Stb::LoadData(&img, src, cmp);
-
-    if(img.data)
-    {
-        data.size = img.bpp * img.size.area();
-        data.data = img.data;
-
-        res = img.size;
-
-        if(res.area() > 0)
-            Bytes::SetDestr(data, [](Bytes& inst)
-            {
-                stbi_image_free(inst.data);
-                inst.data = nullptr;
-            });
-    }
-
-    return true;
-}
-
-Bytes PNG::Save(const Bytes &src, const CSize &res)
-{
-    Stb::Img im;
-    Bytes output;
-    Resource target("");
-
-    im.bpp = 4;
-    im.size = res;
-    im.data = src.data;
-
-    Stb::SavePNG(&target, &im);
-
-    output.data = C_RCAST<byte_t*>(target.data);
-    output.size = target.size;
-    Bytes::SetDestr(output, [](Bytes& b)
-    {
-        Stb::Img im;
-        im.data = b.data;
-        Stb::ImageFree(&im);
+    Bytes::SetDestr(b, [](Bytes& b) {
+//        ImageFreePtr(b.data);
+        CFree(b.data);
+        b.data     = nullptr;
+        b.size     = 0;
+        b.elements = 0;
     });
+}
+
+} // namespace stb
+
+Bytes TGA::Save(Bytes const& data, CSize const& res, int bpp)
+{
+    Bytes output;
+
+    stb::SaveTGA(output, stb::image_const::From(data, res, bpp));
+    stb::DataSetDestr(output);
 
     return output;
 }
 
+Bytes PNG::Save(stb::image_const const& im)
+{
+    Bytes output;
+
+    Stb::SavePNG(output, im);
+    stb::DataSetDestr(output);
+
+    return output;
 }
+
+Bytes JPG::Save(const stb::image_const& src, int qual)
+{
+    Bytes output;
+
+    bool stat = stb::SaveJPG(output, src, qual);
+    stb::DataSetDestr(output);
+
+    return output;
+}
+
+} // namespace Coffee

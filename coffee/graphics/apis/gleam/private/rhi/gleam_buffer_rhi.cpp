@@ -2,10 +2,9 @@
 
 #include "gleam_internal_types.h"
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
-
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 STATICINLINE void VerifyBuffer(CGhnd h)
 {
     if(GL_DEBUG_MODE && !CGL33::Debug::IsBuffer(h))
@@ -15,13 +14,18 @@ STATICINLINE void VerifyBuffer(CGhnd h)
 
 void GLEAM_VBuffer::alloc()
 {
-    CGL33::BufAlloc(1,&m_handle);
+#if defined(COFFEE_GLEAM_DESKTOP)
+    if(GLEAM_FEATURES.direct_state)
+        CGL45::BufAlloc(m_handle);
+    else
+#endif
+        CGL33::BufAlloc(m_handle);
 }
 
 void GLEAM_VBuffer::dealloc()
 {
     VerifyBuffer(m_handle);
-    CGL33::BufFree(1,&m_handle);
+    CGL33::BufFree(m_handle);
     m_handle = 0;
 }
 
@@ -29,18 +33,28 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
 {
     m_size = size;
     bind();
-#if !defined(COFFEE_ONLY_GLES20)
-    if(GLEAM_FEATURES.buffer_storage
-            && feval(m_access & ResourceAccess::Immutable))
+#if defined(COFFEE_GLEAM_DESKTOP)
+    if(GLEAM_FEATURES.buffer_storage &&
+       feval(m_access & ResourceAccess::Immutable))
     {
-        CGL43::BufStorage(m_type,m_size,data,m_access);
-    }else
+        if(GLEAM_FEATURES.direct_state)
+            CGL45::BufStorage(m_handle, Bytes::From(data, size), m_access);
+        else
+            CGL_BufferStorage<GLVER_44>::BufStorage(
+                m_type, Bytes::From(data, size), m_access);
+    } else
 #endif
-        CGL33::BufData(m_type,m_size,data, m_access);
-
+    {
+#if defined(COFFEE_GLEAM_DESKTOP)
+        if(GLEAM_FEATURES.direct_state)
+            CGL45::BufData(m_handle, Bytes::From(data, m_size), m_access);
+        else
+#endif
+            CGL33::BufData(m_type, Bytes::From(data, m_size), m_access);
+    }
 }
 
-void *GLEAM_VBuffer::map(szptr offset,szptr size)
+void* GLEAM_VBuffer::map(szptr offset, szptr size)
 {
 #if !defined(COFFEE_ONLY_GLES20)
     if(!GLEAM_FEATURES.gles20)
@@ -49,21 +63,32 @@ void *GLEAM_VBuffer::map(szptr offset,szptr size)
 
         if(size == 0 && offset == 0)
             size = m_size;
-        if(offset+size > m_size)
-            return nullptr;
+        if(offset + size > m_size)
+            throw std::out_of_range(GLM_API "offset + size too big");
+
         bind();
 
         auto acc = m_access;
         if(!GLEAM_FEATURES.buffer_persistent)
             acc ^= ResourceAccess::Persistent;
 
-        return CGL33::BufMapRange(m_type,offset,(size) ? size : m_size,acc);
-    }else
+#if defined(COFFEE_GLEAM_DESKTOP)
+        if(GLEAM_FEATURES.direct_state)
+            return CGL45::BufMapRange(
+                m_handle, C_FCAST<ptroff>(offset), C_FCAST<ptroff>(size), acc);
+        else
+#endif
+            return CGL33::BufMapRange(
+                m_type,
+                C_FCAST<ptroff>(offset),
+                C_FCAST<ptroff>((size) ? size : m_size),
+                acc);
+    } else
 #else
     C_UNUSED(offset);
 #endif
     {
-        //TODO: Fix cases where offset is used for something!!!
+        // TODO: Fix cases where offset is used for something!!!
         m_mappedBufferFake.resize(size);
         return &m_mappedBufferFake[0];
     }
@@ -77,8 +102,13 @@ void GLEAM_VBuffer::unmap()
         VerifyBuffer(m_handle);
 
         bind();
-        CGL33::BufUnmap(m_type);
-    }else
+#if defined(COFFEE_GLEAM_DESKTOP)
+        if(GLEAM_FEATURES.direct_state)
+            CGL45::BufUnmap(m_handle);
+        else
+#endif
+            CGL33::BufUnmap(m_type);
+    } else
 #endif
     {
         commit(m_mappedBufferFake.size(), &m_mappedBufferFake[0]);
@@ -87,12 +117,14 @@ void GLEAM_VBuffer::unmap()
 
 void GLEAM_VBuffer::bind() const
 {
-    CGL33::BufBind(m_type,m_handle);
+    if(!GLEAM_FEATURES.direct_state)
+        CGL33::BufBind(m_type, m_handle);
 }
 
 void GLEAM_VBuffer::unbind() const
 {
-    CGL33::BufBind(m_type,0);
+    if(!GLEAM_FEATURES.direct_state)
+        CGL33::BufBind(m_type, 0);
 }
 
 void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size) const
@@ -102,15 +134,16 @@ void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size) const
     {
         VerifyBuffer(m_handle);
 
-        CGL33::BufBindRange(m_type,idx,m_handle,off,size);
-    }else
+        CGL33::BufBindRange(
+            m_type, idx, m_handle, C_FCAST<ptroff>(off), C_FCAST<ptroff>(size));
+    } else
 #else
     C_USED(idx);
     C_USED(off);
     C_USED(size);
 #endif
     {
-        //TODO: Find some solution to this, or print tons of errors
+        throw implementation_error("cannot bind ranges with this API");
     }
 }
 
@@ -118,7 +151,6 @@ void GLEAM_PixelBuffer::setState(bool pack)
 {
     m_type = (pack) ? BufType::PixelPData : BufType::PixelUData;
 }
-
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

@@ -1,5 +1,6 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
+#include <coffee/core/types/cdef/memsafe.h>
 
 using namespace Coffee;
 
@@ -17,27 +18,30 @@ byte_t write_data[100] = {
 };
 
 const szptr dynamic_size = 5_GB;
-void* dynamic_store = nullptr;
+Bytes dynamic_store = {};
 
 bool filewrite_test()
 {
     Resource rsc(writetest);
-    rsc.size = dynamic_size;
     Profiler::Profile("Pre-allocation setup");
 
-    rsc.data = Calloc(1,rsc.size);
+    rsc = Bytes::Alloc(dynamic_size);
     Profiler::Profile("5GB allocation");
 
+    Bytes rscView = rsc;
+
     {
-        byte_t* dest = (byte_t*)rsc.data;
+//        byte_t* dest = (byte_t*)rsc.data;
         /* Write some data below 4GB mark */
-        MemCpy(dest,write_data,sizeof(write_data));
+//        MemCpy(dest,write_data,sizeof(write_data));
+        MemCpy(Bytes::From(write_data, 100), rscView.at(0));
         /* Write data above 4GB mark, requires 64-bit. Fuck 32-bit. */
-        MemCpy(&dest[4_GB],write_data,sizeof(write_data));
+        MemCpy(Bytes::From(write_data, 100), rscView.at(4_GB));
+//        MemCpy(&dest[4_GB],write_data,sizeof(write_data));
     }
     Profiler::Profile("Copying data into segment");
 
-    dynamic_store = rsc.data;
+    dynamic_store = C_OCAST<Bytes>(rsc);
 
     bool stat = FileCommit(rsc,false,
                            ResourceAccess::WriteOnly
@@ -63,7 +67,7 @@ bool fileread_test()
 
         if(status)
         {
-            status = MemCmp(dynamic_store,rsc.data,dynamic_size);
+            status = MemCmp(dynamic_store, C_OCAST<Bytes>(rsc));
             Profiler::Profile("Comparing 5GB of data");
         }
 

@@ -29,14 +29,14 @@ namespace CGL{
  *  - Framebuffer layers are present, but not supported
  */
 
-
-struct CGLES20 :
+template<typename ReqVer>
+struct CGLES20_Base :
         CGL_Implementation,
-        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture>,
+        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture, ReqVer>,
         CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>,
         CGL_Old_Constructors<CGhnd,ShaderStage,CGsync>,
         CGL_Old_ShaderCompiler<CGhnd,CGenum>,
-        CGL_Old_Buffers<CGhnd,BufType>,
+        CGL_Old_Buffers<CGhnd,BufType, ReqVer>,
         CGL_Old_VAOs<CGhnd,CGenum>,
         CGL_Old_Uniforms,
         CGL_Basic_Draw
@@ -76,6 +76,8 @@ struct CGLES20 :
         return true;
     }
 };
+
+using CGLES20 = CGLES20_Base<GLESVER_20>;
 
 }
 }

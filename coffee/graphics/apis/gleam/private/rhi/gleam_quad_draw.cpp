@@ -10,44 +10,103 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-static cstring m_shader_vertex_passthrough = {
-#if !defined(COFFEE_APPLE)
-    "#version 300 es\n"
-    "precision lowp float;\n"
-#else
-    "#version 330\n"
-#endif
-    "layout(location=0) in vec3 pos;\n"
-    "layout(location=1) in vec2 tex;\n"
-    ""
-    "out vec2 tex_out;\n"
-    "uniform mat4 transform;\n"
-    ""
-    "void main(){\n"
-    "    tex_out = tex;\n"
-    "    gl_Position = transform*vec4(pos,1.);\n"
-    "}\n"
+using ShaderVersionPair = Pair<APILevel, Pair<cstring, cstring>>;
+
+static ShaderVersionPair quad_shaders[3] = {
+    {
+        GLES_2_0,
+        {
+            R"(#version 100
+precision lowp int;
+precision lowp float;
+uniform mat4 transform[64];
+uniform int InstanceID;
+attribute vec3 pos;
+attribute vec2 tex;
+varying vec2 fTex;
+void main(){fTex = tex; gl_Position = transform[InstanceID] * vec4(pos, 1.0);}
+)",
+            R"(#version 100
+precision lowp float;
+uniform sampler2D colorTex;
+varying vec2 fTex;
+void main(){gl_FragColor = texture2D(colorTex, fTex);}
+)"
+        }
+    },
+    {
+        GLES_3_0,
+        {
+            R"(#version 300 es
+precision lowp float;
+layout(location=0) in vec3 pos;
+layout(location=1) in vec2 tex;
+out vec2 fTex;
+uniform mat4 transform[64];
+void main(){fTex = tex; gl_Position = transform[gl_InstanceID] * vec4(pos, 1.0);}
+)",
+            R"(#version 300 es
+uniform sampler2D colorTex;
+in vec2 fTex;
+out vec4 OutColor;
+void main(){OutColor = texture(colorTex, fTex);}
+)"
+        }
+    },
+    {
+        GL_3_3,
+        {
+            R"(#version 330
+in vec3 pos;
+in vec2 tex;
+out vec2 fTex;
+uniform mat4 transform[64];
+void main(){fTex = tex; gl_Position = transform[gl_InstanceID] * vec4(pos, 1.0);}
+)",
+            R"(#version 330
+uniform sampler2D colorTex;
+in vec2 fTex;
+out vec4 OutColor;
+void main(){OutColor = texture(colorTex, fTex);}
+)"
+        }
+    }
 };
-static cstring m_shader_fragment_passthrough = {
-#if !defined(COFFEE_APPLE)
-    "#version 300 es\n"
-    "precision lowp float;\n"
-#else
-    "#version 330\n"
-#endif
-    "uniform sampler2D colortex;\n"
-    "in vec2 tex_out;\n"
-    "layout(location=0) out vec4 OutColor;\n"
-    "void main(){\n"
-#if !defined(COFFEE_ANDROID) && 0
-    "    vec4 comp = texture(colortex,tex_out);\n"
-    "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
-    "    out_col.a = comp.a;\n"
-    #else
-    "    OutColor = texture(colortex,tex_out);\n"
-#endif
-    "}\n"
-};
+
+static cstring find_shader(ShaderStage stage,
+                           APILevel version)
+{
+    ShaderVersionPair* pair = nullptr;
+
+    switch(version)
+    {
+    case GLES_2_0:
+        pair = &quad_shaders[0];
+        break;
+    default:
+    {
+        if(APILevelIsOfClass(version, APIClass::GLCore))
+        {
+            pair = &quad_shaders[2];
+        }else
+            pair = &quad_shaders[1];
+        break;
+    }
+    }
+
+    if(!pair)
+        throw implementation_error("failed to match shader version");
+
+    switch(stage)
+    {
+    case ShaderStage::Vertex:
+        return pair->second.first;
+    case ShaderStage::Fragment:
+        return pair->second.second;
+    default:
+        throw implementation_error("chosen shaderstage not supported");
+    }
+}
 
 static const i8 m_vertex_quad_data[] = {
     -127, -127, 0,   0,
@@ -118,8 +177,12 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     GLEAM_Shader vertex;
     GLEAM_Shader fragment;
 
-    Bytes vertex_src = Bytes::CreateString(m_shader_vertex_passthrough);
-    Bytes fragment_src = Bytes::CreateString(m_shader_fragment_passthrough);
+    Bytes vertex_src = Bytes::CreateString(
+                find_shader(ShaderStage::Vertex, GLEAM_API::Level())
+                );
+    Bytes fragment_src = Bytes::CreateString(
+                find_shader(ShaderStage::Fragment, GLEAM_API::Level())
+                );
 
     vertex.compile(ShaderStage::Vertex, vertex_src);
     fragment.compile(ShaderStage::Fragment, fragment_src);

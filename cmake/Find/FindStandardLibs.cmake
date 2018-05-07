@@ -152,15 +152,15 @@ if(WIN32)
             )
     endif()
 
-    list ( APPEND CORE_EXTRA_LIBRARIES
-        Cabinet
-        )
-
     if(MINGW64)
         list ( APPEND CORE_EXTRA_LIBRARIES
             mingw32
             )
     endif()
+
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        cabinet
+        )
 
     if(COFFEE_BUILD_ANGLE)
         find_package( ANGLE REQUIRED )

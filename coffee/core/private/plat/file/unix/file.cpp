@@ -76,7 +76,10 @@ CString PosixFileMod_def::DereferenceLink(Url const& fn)
     out.resize(name_size+1);
     ssize_t sz = readlink(url.c_str(),&out[0],name_size);
     if(errno == EINVAL)
+    {
+        errno = 0;
         return out = url.c_str();
+    }
     if(sz > 0)
         out.resize(C_FCAST<CString::size_type>(sz));
     else
@@ -147,6 +150,32 @@ bool PosixFileMod_def::Exists(Url const& fn)
     }
 }
 
+void PosixFileMod_def::Truncate(const Url &fn, szptr size)
+{
+    auto url = *fn;
+
+    int fd = -1;
+
+    struct stat file_info;
+    if(stat(url.c_str(), &file_info) != 0)
+        fd = creat(url.c_str(), S_IRWXU);
+    else
+        fd = open(url.c_str(), PROT_WRITE);
+
+    errno = 0;
+
+#if defined(COFFEE_LINUX)
+    if(ftruncate64(fd, C_FCAST<ptroff>(size)) != 0)
+#else
+    if(ftruncate(fd, C_FCAST<ptroff>(size)) != 0)
+#endif
+    {
+        ErrnoCheck(url.c_str(), -1);
+    }
+
+    close(fd);
+}
+
 bool PosixFileMod_def::Rm(Url const& fn)
 {
     auto url = *fn;
@@ -181,12 +210,12 @@ int PosixFileMod_def::MappingFlags(ResourceAccess acc)
     if(feval(acc&ResourceAccess::ExclusiveLocking))
         mapping |= MAP_LOCKED;
 
-    if(feval(acc&(ResourceAccess::Streaming)))
-        mapping |= MAP_POPULATE;
-    if(feval(acc&ResourceAccess::GreedyCache))
-        mapping |= MAP_POPULATE|MAP_LOCKED;
-    if(feval(acc&ResourceAccess::NoCache))
-        mapping |= MAP_NONBLOCK;
+//    if(feval(acc&(ResourceAccess::Streaming)))
+//        mapping |= MAP_POPULATE;
+//    if(feval(acc&ResourceAccess::GreedyCache))
+//        mapping |= MAP_POPULATE|MAP_LOCKED;
+//    if(feval(acc&ResourceAccess::NoCache))
+//        mapping |= MAP_NONBLOCK;
 #endif
 
     return mapping;
