@@ -18,7 +18,7 @@ byte_t write_data[100] = {
 };
 
 const szptr dynamic_size = 5_GB;
-void* dynamic_store = nullptr;
+Bytes dynamic_store = {};
 
 bool filewrite_test()
 {
@@ -41,7 +41,7 @@ bool filewrite_test()
     }
     Profiler::Profile("Copying data into segment");
 
-    dynamic_store = rsc.data;
+    dynamic_store = C_OCAST<Bytes>(rsc);
 
     bool stat = FileCommit(rsc,false,
                            ResourceAccess::WriteOnly
@@ -67,7 +67,7 @@ bool fileread_test()
 
         if(status)
         {
-            status = MemCmp(dynamic_store,rsc.data,dynamic_size);
+            status = MemCmp(dynamic_store, C_OCAST<Bytes>(rsc));
             Profiler::Profile("Comparing 5GB of data");
         }
 

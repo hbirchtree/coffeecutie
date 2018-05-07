@@ -15,10 +15,12 @@
 namespace Coffee {
 namespace stb {
 
-static void ReshapeRGBA(u8** src, szptr numPixels, u32 channels)
+static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 {
-    u8*  srcImage = *src;
-    auto dstImage = AllocT<rgba_t>(numPixels * sizeof(rgba_t));
+    auto outData = Bytes::Alloc(numPixels * sizeof(rgba_t));
+
+    auto srcImage = src.as<rgba_t>();
+    auto dstImage = outData.as<rgba_t>();
 
     for(auto i : Range<>(numPixels))
     {
@@ -56,8 +58,7 @@ static void ReshapeRGBA(u8** src, szptr numPixels, u32 channels)
         }
     }
 
-    stbi_image_free(srcImage);
-    *src = C_RCAST<u8*>(dstImage);
+    src = std::move(outData);
 }
 
 bool LoadData(image_rw* target, BytesConst const& src, PixelComponents comp)
@@ -104,11 +105,11 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     target->size += C_FCAST<szptr>(size);
 
     if(!target->data)
-        target->data = AllocT<byte_t>(target->size);
+        *target = Bytes::Alloc(target->size);
     else
-        target->data = ReallocT<byte_t>(target->data, target->size);
+        target->resize(target->size);
 
-    MemCpy(Bytes::From(data, size), *target);
+    MemCpy(Bytes::From(data, size), target->at(offset));
 //    MemCpy(&target->data[offset], data, C_FCAST<szptr>(size));
 }
 
@@ -143,10 +144,7 @@ static void NearestNeighborResize(
 
 Bytes Resize(image_const const& img, const CSize& target, int channels)
 {
-    Bytes data;
-    data.size = C_FCAST<szptr>(target.area() * channels);
-    data.data = AllocT<byte_t>(data.size);
-    Bytes::SetDestr(data, [](Bytes& d) { CFree(d.data); });
+    Bytes data = Bytes::Alloc(target.area() * channels);
 
     if(target.area() > img.size.area() || channels != 4)
         stbir_resize_uint8(

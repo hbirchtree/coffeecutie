@@ -10,9 +10,10 @@ namespace CResources {
 
 struct Resource::ResourceData
 {
-    FileFun::FileMapping m_mapping;
-    FileFun::FileHandle* m_handle;
-    Url                  m_url;
+    FileFun::FileMapping       m_mapping;
+    UqPtr<FileFun::FileHandle> m_handle;
+    Bytes                      m_resourceBuffer;
+    Url                        m_url;
 };
 
 Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc) :
@@ -114,7 +115,7 @@ bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
     resc.m_platform_data->m_mapping =
         FileFun::Map(resc.m_platform_data->m_url, acc, 0, resc.size, &err);
 
-    if(!resc.m_platform_data->m_mapping.ptr)
+    if(!resc.m_platform_data->m_mapping.data)
     {
     /* Externalize error checkers */
 #ifndef COFFEE_WINDOWS
@@ -133,7 +134,7 @@ bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
         return false;
     }
 
-    resc.data  = resc.m_platform_data->m_mapping.ptr;
+    resc.data  = resc.m_platform_data->m_mapping.data;
     resc.flags = resc.flags | Resource::Mapped;
 
     Profiler::DeepProfile(CFILES_TAG "File mapped");
@@ -153,7 +154,7 @@ bool FileUnmap(Resource& resc)
         return false;
     }
 
-    bool s = FileFun::Unmap(&resc.m_platform_data->m_mapping);
+    bool s = FileFun::Unmap(std::move(resc.m_platform_data->m_mapping));
 
     if(!s)
     {
@@ -181,14 +182,13 @@ bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
     resc.m_platform_data->m_mapping =
         FileFun::Map(resc.m_platform_data->m_url, acc, 0, size, &error);
 
-    if(!resc.m_platform_data->m_mapping.ptr)
+    if(!resc.m_platform_data->m_mapping.data)
     {
-        cWarning(CFILES_TAG "Failed to map file {0}",
-                 resc.resource());
+        cWarning(CFILES_TAG "Failed to map file {0}", resc.resource());
         return false;
     }
 
-    resc.data = resc.m_platform_data->m_mapping.ptr;
+    resc.data = resc.m_platform_data->m_mapping.data;
     resc.size = resc.m_platform_data->m_mapping.size;
 
     resc.flags |= Resource::Mapped;
@@ -201,31 +201,32 @@ void FileFree(Resource& resc)
     if(!(resc.flags & Resource::FileIO))
         return;
 
-    CFree(resc.data);
-    resc.data = nullptr;
-    resc.size = 0;
+    Bytes local = std::move(resc.m_platform_data->m_resourceBuffer);
+
+    resc.m_platform_data->m_resourceBuffer = {};
 
     Profiler::DeepProfile(CFILES_TAG "File buffer free'd");
 }
 
 bool FilePull(Resource& resc, bool textmode, bool)
 {
-    DProfContext         a(CFILES_TAG "File reading");
-    FileFun::FileHandle* fp =
+    DProfContext a(CFILES_TAG "File reading");
+
+    auto fp =
         FileFun::Open(resc.m_platform_data->m_url, ResourceAccess::ReadOnly);
 
-    if(!fp)
+    if(!FileFun::Valid(fp))
     {
         cWarning(CFILES_TAG "Failed to read file: {0}", resc.resource());
         Profiler::DeepProfile(CFILES_TAG "File not found");
         return false;
     }
 
-    Bytes data = FileFun::Read(fp, -1, textmode);
-    data.disown(); /* Relinquish ownership of data */
-    resc.data      = data.data;
-    resc.size      = data.size;
-    if(!FileFun::Close(fp))
+    auto& data = resc.m_platform_data->m_resourceBuffer;
+    data       = FileFun::Read(fp, -1, textmode);
+    resc.data  = data.data;
+    resc.size  = data.size;
+    if(!FileFun::Close(std::move(fp)))
         cWarning(CFILES_TAG "Failed to close file: {0}", resc.resource());
 
     if(!resc.data)
@@ -249,11 +250,11 @@ bool FileCommit(Resource& resc, bool append, ResourceAccess acc)
 
     dflags |= ResourceAccess::NewFile;
 
-    FileFun::FileHandle* fp = FileFun::Open(
+    auto fp = FileFun::Open(
         resc.m_platform_data->m_url,
         (append) ? ResourceAccess::Append | dflags | acc : dflags | acc);
 
-    if(!fp)
+    if(!FileFun::Valid(fp))
     {
         Profiler::DeepProfile(CFILES_TAG "File not created");
         return false;
@@ -261,7 +262,7 @@ bool FileCommit(Resource& resc, bool append, ResourceAccess acc)
 
     bool stat = FileFun::Write(fp, resc, false);
 
-    if(!FileFun::Close(fp))
+    if(!FileFun::Close(std::move(fp)))
     {
         Profiler::DeepProfile(CFILES_TAG "File failed to close");
         cWarning(CFILES_TAG "Failed to close file: {0}", resc.resource());

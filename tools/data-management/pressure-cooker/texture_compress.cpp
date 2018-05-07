@@ -252,8 +252,7 @@ static void CompressTextureSet(
             TIFFGetField(timg, TIFFTAG_IMAGEWIDTH, &w);
             TIFFGetField(timg, TIFFTAG_IMAGELENGTH, &h);
 
-            data.size = w * h * sizeof(u32);
-            data.data = CallocT<byte_t>(data.size, 1);
+            data = Bytes::Alloc(w * h * sizeof(u32));
 
             Bytes::SetDestr(data, [](Bytes& d) { CFree(d.data); });
 

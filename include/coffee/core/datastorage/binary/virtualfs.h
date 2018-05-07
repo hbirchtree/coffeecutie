@@ -81,6 +81,10 @@ enum FileFlags
 static const constexpr szptr MaxFileNameLength     = 96;
 static const constexpr szptr MagicLength           = 8;
 static const constexpr char  VFSMagic[MagicLength] = "CfVrtFS";
+static const constexpr u32 VFSMagic_Encoded[2] =
+{
+    0x72566643, 0x534674
+};
 
 struct VirtualFS
 {
@@ -101,7 +105,9 @@ struct VirtualFS
 
         VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
 
-        if(!MemCmp(VFSMagic, temp_vfs->vfs_header, sizeof(vfs_header)))
+        Bytes magic = Bytes::From(VFSMagic_Encoded, 2);
+
+        if(!MemCmp(magic, Bytes::From(temp_vfs->vfs_header, MagicLength)))
             return false;
 
         *vfs = temp_vfs;
@@ -159,11 +165,13 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(VFS const* vfs, cstring name)
     /* We start finding files after the VirtualFS structure */
     VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
 
+    auto searchName = CString(name);
+
     for(szptr i = 0; i < vfs->num_files; i++)
     {
         auto& current_file = vf_start[i];
 
-        if(MemCmp(name, current_file.name, StrLen(name)))
+        if(searchName == current_file.name)
             return &current_file;
     }
 

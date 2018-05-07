@@ -10,10 +10,15 @@ namespace Display{
 
 struct GLX_Data;
 
+struct GLX_Data_Deleter
+{
+    void operator()(GLX_Data* ptr);
+};
+
 class GLXRenderer :
         public virtual GLApplication
 {
-    GLX_Data* m_gxData;
+    UqPtr<GLX_Data, GLX_Data_Deleter> m_gxData;
 
     // GLApplication interface
 public:

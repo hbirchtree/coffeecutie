@@ -29,6 +29,50 @@ namespace Coffee {
 namespace CResources {
 namespace Posix {
 
+struct posix_fd
+{
+    int fd;
+
+    FORCEDINLINE posix_fd(int fd) : fd(fd)
+    {
+    }
+
+    FORCEDINLINE posix_fd(posix_fd&& fd) : fd(fd.fd)
+    {
+        fd.clear();
+    }
+
+    /*!
+     * \brief Transfer ownership of fd
+     */
+    FORCEDINLINE void clear()
+    {
+        fd = 0;
+    }
+
+    FORCEDINLINE posix_fd& operator=(posix_fd&& fd)
+    {
+        this->fd = fd.fd;
+        fd.fd = 0;
+
+        return *this;
+    }
+
+    /*!
+     * \brief If still contained, close the fd
+     */
+    FORCEDINLINE ~posix_fd()
+    {
+        if(fd != 0)
+            close(fd);
+    }
+
+    FORCEDINLINE operator int() const
+    {
+        return fd;
+    }
+};
+
 struct PosixApi
 {
     struct FileHandle
@@ -37,8 +81,9 @@ struct PosixApi
         {
         }
 
-        int fd;
+        posix_fd fd;
     };
+
     using FileMapping = FileFunDef::FileMapping;
 };
 
@@ -84,29 +129,31 @@ struct PosixFileFun_def : PosixFileMod_def
     using PosixFileMod_def::Exists;
     using PosixFileMod_def::Size;
 
-    STATICINLINE FH* Open(Url const& fn, ResourceAccess ac)
+    STATICINLINE FH Open(Url const& fn, ResourceAccess ac)
     {
         auto url = *fn;
-        int  fd  = open(url.c_str(), PosixRscFlags(ac), S_IRWXU | S_IRGRP);
+        auto fd =
+            posix_fd(open(url.c_str(), PosixRscFlags(ac), S_IRWXU | S_IRGRP));
 
         if(fd == -1)
-            return nullptr;
+            return {};
 
-        FH* fh = new FH();
-        fh->fd = fd;
+        FH fh;
+        fh.fd = std::move(fd);
 
         return fh;
     }
-    STATICINLINE bool Close(FH* fh)
+    STATICINLINE bool Valid(FH const& fh)
     {
-        if(!fh)
-            return false;
-        close(fh->fd);
-        delete fh;
+        return C_OCAST<int>(fh.fd) != 0;
+    }
+    STATICINLINE bool Close(FH&& fh)
+    {
+        close(fh.fd);
         return true;
     }
 
-    STATICINLINE Bytes Read(FH* f_h, int64 f_size, bool nullterm)
+    STATICINLINE Bytes Read(FH const& f_h, int64 f_size, bool nullterm)
     {
         Bytes data = {};
 
@@ -122,7 +169,6 @@ struct PosixFileFun_def : PosixFileMod_def
 
         data = Bytes::Alloc(szp + nullterm);
 
-
         if(nullterm)
         {
             data.data[szp] = 0;
@@ -137,7 +183,7 @@ struct PosixFileFun_def : PosixFileMod_def
         while(i < szp)
         {
             chnk = ((szp - i) < Int32_Max) ? (szp - i) : Int32_Max;
-            i += read(f_h->fd, &((C_CAST<byte_t*>(data.data))[i]), chnk);
+            i += read(f_h.fd, &((C_CAST<byte_t*>(data.data))[i]), chnk);
             if(ErrnoCheck())
                 break;
         }
@@ -151,36 +197,24 @@ struct PosixFileFun_def : PosixFileMod_def
         return data;
     }
 
-    STATICINLINE bool Seek(FH*, uint64)
+    STATICINLINE bool Write(FH const& f_h, Bytes const& d, bool)
     {
-        /* We won't use this, it's tedious */
-        return false;
-    }
-
-    STATICINLINE bool Write(FH* f_h, Bytes const& d, bool)
-    {
-        if(!f_h)
-            return false;
-
         szptr i    = 0;
         szptr it   = 0;
         szptr chnk = 0;
         while(i < d.size)
         {
             chnk = ((d.size - i) < Int32_Max) ? (d.size - i) : Int32_Max;
-            i += write(f_h->fd, &(C_CAST<byte_t*>(d.data)[i]), chnk);
-            if(ErrnoCheck(nullptr, f_h->fd) && it != 0)
+            i += write(f_h.fd, &(C_CAST<byte_t*>(d.data)[i]), chnk);
+            if(ErrnoCheck(nullptr, f_h.fd) && it != 0)
                 break;
             it++;
         }
         return i == d.size;
     }
 
-    STATICINLINE FM Map(Url const&     filename,
-                        ResourceAccess acc,
-                        szptr          offset,
-                        szptr          size,
-                        int*           error)
+    STATICINLINE
+    FM Map(Url const& filename, RSCA acc, szptr offset, szptr size, int* error)
     {
         auto url = *filename;
         if(error)
@@ -229,13 +263,20 @@ struct PosixFileFun_def : PosixFileMod_def
         if(::close(fd) != 0)
             ErrnoCheck();
 
-        return {addr, size, acc};
+        FM out(addr, size, size);
+        out.assignAccess(acc);
+
+        /* Set up some semantics to automatically unmap it
+         *  when out of scope */
+        FM::SetDestr(out, [](FM& f) { Unmap(std::move(f)); });
+
+        return out;
     }
 
-    STATICINLINE bool Unmap(FM* mapp)
+    STATICINLINE bool Unmap(FM&& mapp)
     {
-        void* ptr  = mapp->ptr;
-        szptr size = mapp->size;
+        void* ptr  = mapp.data;
+        szptr size = mapp.size;
         if(munmap(ptr, size) == 0)
         {
             return true;
@@ -245,6 +286,7 @@ struct PosixFileFun_def : PosixFileMod_def
             return false;
         }
     }
+
     STATICINLINE bool MapCache(
         void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
     {
@@ -254,15 +296,17 @@ struct PosixFileFun_def : PosixFileMod_def
         base += r_off;
         return mlock(base, r_size) == 0;
     }
+
     STATICINLINE bool MapUncache(
         void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
     {
         if(r_off + r_size > t_size)
             return false;
-        byte_t* base = (byte_t*)t_ptr;
+        byte_t* base = C_RCAST<byte_t*>(t_ptr);
         base += r_off;
         return munlock(base, r_size) == 0;
     }
+
     STATICINLINE bool MapSync(void* ptr, szptr size)
     {
         return msync(ptr, size, MS_SYNC | MS_INVALIDATE);
@@ -282,32 +326,31 @@ struct PosixFileFun_def : PosixFileMod_def
         ScratchBuf buf;
 #if defined(COFFEE_LINUX) && !defined(COFFEE_NO_MMAP64)
         // mmap64() is a Linux-specific feature it seems
-        buf.ptr = mmap64(nullptr, size, proto, mapflags, -1, 0);
+        buf.data =
+            C_RCAST<byte_t*>(mmap64(nullptr, size, proto, mapflags, -1, 0));
 #elif defined(COFFEE_APPLE)
-        buf.ptr = mmap(nullptr, size, proto, mapflags, -1, 0);
+        buf.data =
+            C_RCAST<byte_t*>(mmap(nullptr, size, proto, mapflags, -1, 0));
 #endif
-        buf.acc  = access;
+        buf.assignAccess(access);
         buf.size = size;
 
-        if(!buf.ptr || buf.ptr == (void*)0xFFFFFFFF)
+        if(!buf.data || buf.data == (void*)0xFFFFFFFF)
             return {};
 
         return buf;
     }
-    STATICINLINE void ScratchUnmap(ScratchBuf* buf)
+    STATICINLINE void ScratchUnmap(ScratchBuf&& buf)
     {
-        munmap(buf->ptr, buf->size);
+        munmap(buf.data, buf.size);
     }
 
-    STATICINLINE szptr Size(FH* fh)
+    STATICINLINE szptr Size(FH const& fh)
     {
-        if(!fh)
-            return 0;
-
         struct stat st;
-        if(fh->fd > 0)
+        if(fh.fd)
         {
-            if(fstat(fh->fd, &st) != 0)
+            if(fstat(fh.fd, &st) != 0)
                 ErrnoCheck();
             errno = 0;
             return st.st_size;
@@ -317,7 +360,7 @@ struct PosixFileFun_def : PosixFileMod_def
             return 0;
         }
     }
-    STATICINLINE bool Exists(FH* fn)
+    STATICINLINE bool Exists(FH const& fn)
     {
         struct stat st;
         bool        status = fstat(fn->fd, &st) == 0;

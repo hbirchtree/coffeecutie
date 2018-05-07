@@ -35,6 +35,16 @@ struct GLX_Context;
 
 struct GLX_Data
 {
+    GLX_Data():
+        display(nullptr),
+        x_window(None),
+        context(nullptr),
+        window(None),
+        config(nullptr),
+        visual(nullptr)
+    {
+    }
+
     ::Display* display;
     ::Window x_window;
 
@@ -47,7 +57,7 @@ struct GLX_Data
 //    XRenderPictFormat* pict_format;
 
 
-    GLX_Context* c_context;
+    UqPtr<GLX_Context> c_context;
 };
 
 struct GLX_Context : CGL::CGL_Context
@@ -113,8 +123,8 @@ bool GLXRenderer::contextPreInit(const GLProperties &props, CString *)
 
     delete window_handle;
 
-    m_gxData = new GLX_Data;
-    MemClear(m_gxData, sizeof(*m_gxData));
+    m_gxData = MkUqDST<GLX_Data, GLX_Data_Deleter>();
+    *m_gxData = {};
 
 #ifdef USE_ADVANCED_GLX
 
@@ -299,7 +309,7 @@ bool GLXRenderer::contextPostInit(const GLProperties &props, CString *)
     }
 
     m_gxData->context = ctxt;
-    m_gxData->c_context = new GLX_Context(m_gxData);
+    m_gxData->c_context = MkUq<GLX_Context>(m_gxData.get());
 
     return true;
 }
@@ -312,7 +322,7 @@ void GLXRenderer::contextTerminate()
 void GLXRenderer::swapBuffers()
 {
 #ifndef NDEBUG
-    CASSERT(m_gxData);
+    CASSERT(C_OCAST<bool>(m_gxData));
     CASSERT(m_gxData->display);
     CASSERT(m_gxData->window);
 #endif
@@ -350,13 +360,18 @@ ThreadId GLXRenderer::contextThread()
 CGL::CGL_Context *GLXRenderer::glContext()
 {
     if(m_gxData)
-        return m_gxData->c_context;
+        return m_gxData->c_context.get();
     return nullptr;
 }
 
 CGL::CGL_ScopedContext GLXRenderer::scopedContext()
 {
     return CGL::CGL_ScopedContext(glContext());
+}
+
+void GLX_Data_Deleter::operator()(GLX_Data *ptr)
+{
+    delete ptr;
 }
 
 }

@@ -2,8 +2,8 @@
 
 #include "../../coffee_mem_macros.h"
 #include "../../plat/plat_quirks_toggling.h"
-#include "standard_exceptions.h"
 #include "../cdef/ptr_wrap.h"
+#include "standard_exceptions.h"
 
 /*Container types*/
 #include <array>
@@ -313,11 +313,11 @@ struct quick_container
 #define C_STR_HELPER(x) #x
 #define C_STR(x) C_STR_HELPER(x)
 
-#define C_PTR_CHECK(ptr)                                                \
-    if(!ptr)                                                            \
+#define C_PTR_CHECK(ptr)                                        \
+    if(!ptr)                                                    \
         Throw(undefined_behavior("bad pointer deref: " __FILE__ \
-                                         ":" C_STR(__LINE__)));
-#define C_THIS_CHECK                                                      \
-    if(!this)                                                             \
+                                 ":" C_STR(__LINE__)));
+#define C_THIS_CHECK                                              \
+    if(!this)                                                     \
         Throw(undefined_behavior("bad access to *this: " __FILE__ \
-                                         ":" C_STR(__LINE__)));
+                                 ":" C_STR(__LINE__)));

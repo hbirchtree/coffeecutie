@@ -108,7 +108,7 @@ extern bool LoadData(
     image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA);
 
 STATICINLINE bool LoadData(
-        image_rw* target, Bytes const& src, PixCmp comp = PixCmp::RGBA)
+    image_rw* target, Bytes const& src, PixCmp comp = PixCmp::RGBA)
 {
     return LoadData(target, C_OCAST<BytesConst>(src), comp);
 }

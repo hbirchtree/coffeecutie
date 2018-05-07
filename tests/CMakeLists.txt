@@ -41,7 +41,7 @@ endif()
 #  for more accurate coverage info.
 coffee_test (
     TARGET Unit_IncludeAll
-    TITLE "Dummy target"
+    TITLE "Dummy_Target"
 
     SOURCES
     dummy.cpp

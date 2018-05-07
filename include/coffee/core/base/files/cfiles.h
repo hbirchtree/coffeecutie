@@ -36,6 +36,7 @@ public:
     friend bool FileOpenMap(Resource& resc, szptr size, RSCA acc);
 
     friend bool FileExists(const Resource& resc);
+    friend void FileFree(Resource &resc);
 
     /*!
      * \brief Constructs a resource

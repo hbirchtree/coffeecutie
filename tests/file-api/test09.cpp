@@ -1,13 +1,14 @@
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
-using FileInterface = FileFunDef;
+using FileInterface       = FileFunDef;
 using NativeFileInterface = FileFun;
 
-template<typename FileApi,
-         typename implements<FileFunDef, FileApi>::type* = nullptr>
+template<
+    typename FileApi,
+    typename implements<FileFunDef, FileApi>::type* = nullptr>
 bool api_test()
 {
     /* This test suite tests whether the function signature of the
@@ -17,26 +18,30 @@ bool api_test()
     const auto testingUrl = MkUrl("testfile.dat");
 
     /* File handle API */
-    auto hnd = FileApi::Open(testingUrl,
-                             ResourceAccess::NewFile
-                             |ResourceAccess::Discard
-                             |ResourceAccess::WriteOnly);
-    FileApi::Seek(hnd, 0);
+    auto hnd = FileApi::Open(
+        testingUrl,
+        ResourceAccess::NewFile | ResourceAccess::Discard |
+            ResourceAccess::WriteOnly);
     FileApi::Read(hnd, 1, false);
     FileApi::Write(hnd, Bytes(), false);
     FileApi::Size(hnd);
-    FileApi::Close(hnd);
+    FileApi::Valid(hnd);
+    FileApi::Close(std::move(hnd));
+    hnd = {};
 
     /* Mapping API */
-    int _nothing = 0;
-    auto map_hnd = FileApi::Map(testingUrl, ResourceAccess::ReadOnly,
-                                10, 0, &_nothing);
-    FileApi::MapCache(map_hnd.ptr, map_hnd.size,
-                      0, 8);
-    FileApi::MapUncache(map_hnd.ptr, map_hnd.size,
-                        0, 8);
-    FileApi::MapSync(map_hnd.ptr, map_hnd.size);
-    FileApi::Unmap(&map_hnd);
+    int  _nothing = 0;
+    auto map_hnd =
+        FileApi::Map(testingUrl, ResourceAccess::ReadOnly, 10, 0, &_nothing);
+    FileApi::MapCache(map_hnd.data, map_hnd.size, 0, 8);
+    FileApi::MapUncache(map_hnd.data, map_hnd.size, 0, 8);
+    FileApi::MapSync(map_hnd.data, map_hnd.size);
+    FileApi::Unmap(std::move(map_hnd));
+    map_hnd = {};
+
+    /* ScratchBuf API */
+    auto scratch_hnd = FileApi::ScratchBuffer(100, RSCA::ReadWrite);
+    FileApi::ScratchUnmap(std::move(scratch_hnd));
 
     /* Plain URL API */
     FileApi::CanonicalName(testingUrl);
@@ -53,50 +58,64 @@ bool api_test()
 
 bool test_url_version(RSCA access)
 {
-	try {
-		Url test = MkUrl("test", access);
+    try
+    {
+        Url test = MkUrl("test", access);
 
-		CString test_string = *test;
+        CString test_string = *test;
 
-		cDebug("URL mapping({1}): test -> {0}", test_string, StrUtil::pointerify(C_CAST<u32>(access)));
-	}
-    catch (std::runtime_error const&)
-	{
-		return false;
-	}
-	return true;
+        cDebug(
+            "URL mapping({1}): test -> {0}",
+            test_string,
+            StrUtil::pointerify(C_CAST<u32>(access)));
+    } catch(std::runtime_error const&)
+    {
+        return false;
+    }
+    return true;
 }
 
 bool url_api()
 {
-	do {
-		if (!test_url_version(RSCA::SystemFile))
-			break;
-		if (!test_url_version(RSCA::AssetFile))
-			break;
-		if (!test_url_version(RSCA::ConfigFile))
-			break;
-		if (!test_url_version(RSCA::TemporaryFile))
-			break;
-		if (!test_url_version(RSCA::CachedFile))
-			break;
+    do
+    {
+        if(!test_url_version(RSCA::SystemFile))
+            break;
+        if(!test_url_version(RSCA::AssetFile))
+            break;
+        if(!test_url_version(RSCA::ConfigFile))
+            break;
+        if(!test_url_version(RSCA::TemporaryFile))
+            break;
+        if(!test_url_version(RSCA::CachedFile))
+            break;
 
-		return true;
-	} while (false);
+        return true;
+    } while(false);
 
-	return false;
+    return false;
 }
 
-COFFEE_TEST_SUITE(3) = {
-    {api_test<FileInterface>, "Interface",
+COFFEE_TEST_SUITE(4) = {
+    {api_test<FileInterface>,
+     "Interface",
      "Testing that the unimplemented interface is properly tested",
-     false, true},
-    {api_test<NativeFileInterface>, "Native API",
+     false,
+     true},
+    {api_test<CFILEFun>,
+     "FILE API",
+     "Testing the FILE*-based C API",
+     false,
+     true},
+    {api_test<NativeFileInterface>,
+     "Native API",
      "Testing that the native API implements the interface correctly",
-     false, true},
-	 {url_api, "URL API",
-	 "Testing whether the platform's URL API is working as intended",
-	 false, true}
-};
+     false,
+     true},
+    {url_api,
+     "URL API",
+     "Testing whether the platform's URL API is working as intended",
+     false,
+     true}};
 
 COFFEE_EXEC_TESTS();

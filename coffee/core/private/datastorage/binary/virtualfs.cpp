@@ -41,8 +41,10 @@ bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
     VFS base_fs = {};
 
     /* Insert header, calculate file segment offset */
-    auto headerRef = Bytes::From(base_fs.vfs_header, MagicLength);
-    MemCpy(Bytes::CreateString(VFSMagic), headerRef);
+    MemCpy(
+        Bytes::From(VFSMagic_Encoded, 2),
+        Bytes::From(base_fs.vfs_header, MagicLength));
+
     //    MemCpy(base_fs.vfs_header, VFSMagic, MagicLength);
     base_fs.num_files   = filenames.size();
     base_fs.data_offset = sizeof(VFS) + sizeof(VFile) * base_fs.num_files;

@@ -65,8 +65,8 @@ function(COFFEE_TEST)
             )
     elseif(ANDROID OR IOS)
         coffee_application (
-            TARGET ${TEST_TARGET}
-            TITLE ${TEST_TITLE}
+            TARGET "${TEST_TARGET}"
+            TITLE "${TEST_TITLE}"
             COMPANY "tests"
             VERSION_CODE 1
             INFO_STRING "Unit test - ${TEST_TITLE}"
@@ -107,7 +107,7 @@ function(COFFEE_TEST)
         return()
     elseif(EMSCRIPTEN)
         add_test (
-            NAME ${TEST_TITLE}
+            NAME "${TEST_TITLE}"
             WORKING_DIRECTORY
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TARGET}.bundle
             COMMAND
@@ -126,7 +126,7 @@ function(COFFEE_TEST)
         android_gen_pkg_name ("tests" "${TEST_TARGET}" PKG_NAME )
 
         add_test (
-            NAME ${TEST_TITLE}
+            NAME "${TEST_TITLE}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 
             COMMAND ${ADB_AUTO}
@@ -136,7 +136,7 @@ function(COFFEE_TEST)
     else()
         # In this case, CTest runs its normal course, locally
         add_test (
-            NAME ${TEST_TITLE}
+            NAME "${TEST_TITLE}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND $<TARGET_FILE:${TEST_TARGET}>
             )
@@ -168,8 +168,8 @@ endfunction()
 
 function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     coffee_test(
-        TARGET ${TARGET}
-        TITLE ${TITLE}
+        TARGET "${TARGET}"
+        TITLE "${TITLE}"
         SOURCES ${SOURCES}
         LIBRARIES ${LIBRARIES}
         )

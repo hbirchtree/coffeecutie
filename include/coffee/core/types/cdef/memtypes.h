@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../coffee_macros.h"
+#include "../edef/resenum.h"
 #include "../tdef/integertypes.h"
 #include "../tdef/stltypes.h"
 #include <utility>
@@ -42,8 +43,13 @@ struct _cbasic_data_chunk
     {
     }
 
-    FORCEDINLINE
-    _cbasic_data_chunk(T& value) : data(&value), size(sizeof(T)), elements(1)
+    template<
+        typename Dummy = void,
+        typename std::enable_if<
+            !std::is_void<typename std::remove_cv<T>::type>::value,
+            Dummy>::type* = nullptr>
+    FORCEDINLINE _cbasic_data_chunk(T& value) :
+        data(&value), size(sizeof(T)), elements(1)
     {
     }
 
@@ -110,7 +116,11 @@ struct _cbasic_data_chunk
         inst.m_destr = d;
     }
 
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Alloc(szptr num)
+    template<
+        typename SizeT,
+        typename std::enable_if<std::is_unsigned<SizeT>::value, SizeT>::type* =
+            nullptr>
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Alloc(SizeT num)
     {
 #if !defined(NDEBUG)
         if(num == 0)
@@ -128,16 +138,35 @@ struct _cbasic_data_chunk
         return out;
     }
 
+    template<
+        typename SizeT,
+        typename std::enable_if<std::is_signed<SizeT>::value, SizeT>::type* =
+            nullptr>
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Alloc(SizeT num)
+    {
+        return Alloc(C_FCAST<szptr>(num));
+    }
+
     template<typename DT, typename is_not_virtual<DT>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
         return {C_FCAST<T*>(&obj), sizeof(DT), 1};
     }
 
-    template<typename is_pod<T>::type* = nullptr>
+    template<
+        typename Dummy                                               = void,
+        typename std::enable_if<std::is_pod<T>::value, Dummy>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
         return {C_FCAST<T*>(src), strlen(src), 0};
+    }
+
+    template<
+        typename Dummy                                                = void,
+        typename std::enable_if<!std::is_pod<T>::value, Dummy>::type* = nullptr>
+    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateString(cstring)
+    {
+        return {};
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
@@ -149,22 +178,24 @@ struct _cbasic_data_chunk
             C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), data.size()};
     }
 
-    template<typename T2>
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(Vector<T2>& data)
-    {
-        return CreateFrom(data);
-    }
-
     template<
         typename T2,
         typename std::enable_if<
             !std::is_same<typename std::remove_cv<T2>::type, void>::value>::
             type* = nullptr>
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    NO_DISCARD STATICINLINE
+        /*!
+         * \brief From non-void pointer to bytes, sized in elements of type T2
+         * \param data
+         * \param size
+         * \return
+         */
+        _cbasic_data_chunk<T>
+        From(T2* data, szptr size)
     {
         static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
 
-        return {C_FCAST<T*>(data), size * sizeof(T2) / sizeof(T), 1};
+        return {C_FCAST<T*>(data), size * sizeof(T2) / sizeof(T), size};
     }
 
     template<
@@ -172,19 +203,39 @@ struct _cbasic_data_chunk
         typename std::enable_if<
             std::is_same<typename std::remove_cv<T2>::type, void>::value>::
             type* = nullptr>
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2* data, szptr size)
+    NO_DISCARD STATICINLINE
+        /*!
+         * \brief From a void-like pointer to bytes, size is in bytes
+         * \param data
+         * \param size
+         * \return
+         */
+        _cbasic_data_chunk<T>
+        From(T2* data, szptr size)
     {
-        return {C_FCAST<T*>(data), size / sizeof(T), 1};
+        return {C_FCAST<T*>(data), size, 0};
     }
 
-    template<typename T2, typename is_pod<T2>::type* = nullptr>
+    template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> From(T2& data)
     {
         return Create(data);
     }
 
-    template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CopyFrom(Vector<T2>& data)
+    template<
+        typename T2,
+        typename is_not_virtual<T2>::type* = nullptr,
+        typename std::enable_if<
+            std::is_same<T, typename std::remove_const<T2>::type>::value>::
+            type* = nullptr>
+    NO_DISCARD STATICINLINE
+        /*!
+         * \brief Copy data from vector of same type, copies by value
+         * \param data
+         * \return
+         */
+        _cbasic_data_chunk<T>
+        CopyFrom(Vector<T2>& data)
     {
         static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
 
@@ -192,7 +243,33 @@ struct _cbasic_data_chunk
 
         OutT out = OutT::Alloc((data.size() * sizeof(T2)) / sizeof(T));
 
-        //        std::copy(data.begin(), data.end(), out.begin());
+        std::copy(data.begin(), data.end(), out.begin());
+
+        return out;
+    }
+
+    template<
+        typename T2,
+        typename is_not_virtual<T2>::type* = nullptr,
+        typename std::enable_if<
+            !std::is_same<T, typename std::remove_const<T2>::type>::value>::
+            type* = nullptr>
+    NO_DISCARD STATICINLINE
+        /*!
+         * \brief Copy data from vector of different type, copies byte-wise.
+         * Ignores move semantics.
+         * \param data
+         * \return
+         */
+        _cbasic_data_chunk<T>
+        CopyFrom(Vector<T2>& data)
+    {
+        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
+
+        using OutT = _cbasic_data_chunk<T>;
+
+        OutT out = OutT::Alloc((data.size() * sizeof(T2)) / sizeof(T));
+
         memcpy(out.data, data.data(), data.size() * sizeof(T2));
 
         return out;
@@ -237,13 +314,17 @@ struct _cbasic_data_chunk
     }
 
     template<
-        typename std::enable_if<!std::is_void<T>::value, bool>::type* = nullptr>
+        typename Dummy = void,
+        typename std::enable_if<!std::is_void<T>::value, Dummy>::type* =
+            nullptr>
     T& operator[](szptr i)
     {
         return data[i];
     }
     template<
-        typename std::enable_if<!std::is_void<T>::value, bool>::type* = nullptr>
+        typename Dummy = void,
+        typename std::enable_if<!std::is_void<T>::value, Dummy>::type* =
+            nullptr>
     T const& operator[](szptr i) const
     {
         return data[i];
@@ -269,9 +350,25 @@ struct _cbasic_data_chunk
         return *this;
     }
 
-    _cbasic_data_chunk<T> at(szptr offset, szptr size = 0)
+    FORCEDINLINE operator bool()
+    {
+        return data && size;
+    }
+
+    /*!
+     * \brief Create a sub-view of the memory region,
+     *  preferred way of doing offsets
+     * \param offset
+     * \param size
+     * \return
+     */
+    NO_DISCARD FORCEDINLINE _cbasic_data_chunk<T> at(
+        szptr offset, szptr size = 0)
     {
         if(offset > this->size || offset + size > this->size)
+            return {};
+
+        if(!data)
             return {};
 
         byte_t* basePtr = C_RCAST<byte_t*>(data);
@@ -282,6 +379,37 @@ struct _cbasic_data_chunk
         return From(&basePtr[offset], size);
     }
 
+    template<typename T2>
+    FORCEDINLINE _cbasic_data_chunk<T2> as()
+    {
+        return _cbasic_data_chunk<T2>(
+            C_RCAST<T2*>(data),
+            size * sizeof(T),
+            (size * sizeof(T)) / sizeof(T2));
+    }
+
+    FORCEDINLINE _cbasic_data_chunk<T>& resize(szptr newSize)
+    {
+        data = C_RCAST<T*>(realloc(data, newSize));
+
+        if(!data)
+            Throw(undefined_behavior("reallocation failed"));
+
+        size = newSize;
+
+        return *this;
+    }
+
+    FORCEDINLINE _cbasic_data_chunk<T>& assignAccess(RSCA acc)
+    {
+        m_access = acc;
+        return *this;
+    }
+
+    /*!
+     * \brief Remove ownership of memory.
+     * All responsibility is left to the user.
+     */
     void disown()
     {
         m_destr = nullptr;
@@ -392,6 +520,7 @@ struct _cbasic_data_chunk
 
   private:
     void (*m_destr)(_cbasic_data_chunk<T>&) = nullptr;
+    RSCA m_access;
 };
 
 using Bytes      = _cbasic_data_chunk<byte_t>;

@@ -354,7 +354,7 @@ struct is_pod
     typedef int type;
 #else
     typedef typename std::enable_if<
-    std::is_pod<T>::value
+    std::is_pod<T>::value, T
     >::type type;
 #endif
 };
