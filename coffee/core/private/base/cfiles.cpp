@@ -51,10 +51,10 @@ Resource::Resource(Resource&& rsc)
 
 Resource::~Resource()
 {
-    if(flags & Mapped)
-        FileUnmap(*this);
-    if(flags & FileIO)
-        FileFree(*this);
+//    if(flags & Mapped)
+//        FileUnmap(*this);
+//    if(flags & FileIO)
+//        FileFree(*this);
 
     if(m_platform_data)
         delete m_platform_data;

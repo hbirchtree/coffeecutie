@@ -1,10 +1,12 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/base/threading/job_system.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/core/datastorage/text/json/cjsonparser.h>
+
+#include <coffee/core/CDebug>
 
 #include <squish.h>
 
@@ -22,6 +24,48 @@ static const constexpr cstring TEX_MIN_SIZE = "TEXCOOK_MIN_SIZE";
 
 static i32 max_texture_size = 1024;
 static i32 min_texture_size = 16;
+
+struct texture_settings_t
+{
+    i32 max_size, min_size;
+    u32 channels;
+
+    void parse(Bytes&& data)
+    {
+        if(!data.data)
+            return;
+
+        auto doc = JSON::Read(data.as<char>().data);
+
+        for(auto it=doc.MemberBegin(); it != doc.MemberEnd(); ++it)
+        {
+            auto member = CString((*it).name.GetString());
+
+            if(member == "max_size")
+                max_size = (*it).value.GetInt();
+            if(member == "min_size")
+                min_size = (*it).value.GetInt();
+            if(member == "channels")
+                channels = (*it).value.GetUint();
+        }
+    }
+
+    void parse(Path basePath)
+    {
+        Path generalDesc = basePath.dirname() + "ALL.texture.json";
+        Path specificDesc =
+            basePath.addExtension("texture").addExtension("json");
+
+
+        auto generalRsc = Resource(MkUrl(generalDesc, RSCA::AssetFile));
+        if(FileExists(generalRsc))
+            parse(C_OCAST<Bytes>(generalRsc));
+
+        auto specificRsc = Resource(MkUrl(specificDesc, RSCA::AssetFile));
+        if(FileExists(specificRsc))
+            parse(C_OCAST<Bytes>(specificRsc));
+    }
+};
 
 static Vector<CString> imageExtensions = {"PNG",
                                           "JPG",
@@ -51,24 +95,13 @@ struct TextureCooker : FileProcessor
     virtual void setBaseDirectories(const Vector<CString>&);
 };
 
-static cstring compression_extension(i32 format)
-{
-    switch(format)
-    {
-    case squish::kDxt1:
-        return "dxt1";
-    default:
-        return "dxt5";
-    }
-}
-
 static void CompressDXT(
     Vector<VirtFS::VirtDesc>&            files,
     Pair<CString, ImageProcessor> const& file,
     CSize const&                         size,
     Bytes const&                         inputData,
     Path const&                          outName,
-    i32                                  compress,
+    texture_settings_t const&            compress,
 
     TerminalCursor& cursor,
     FileProcessor*  cooker)
@@ -101,22 +134,31 @@ static void CompressDXT(
 
     auto imsize  = size;
     auto newSize = imsize;
-    while(newSize.w >= min_texture_size && newSize.h >= min_texture_size)
+    while(newSize.w >= compress.min_size && newSize.h >= compress.min_size)
     {
         /* The step will generate a bitmap of size newSize,
          *  imsize is source size */
 
+        auto ext             = "dxt5";
+        auto compression_fmt = squish::kDxt5;
+
+        if(compress.channels == 3)
+        {
+            ext             = "dxt1";
+            compression_fmt = squish::kDxt1;
+        }
+
         auto sizeString = cast_pod(newSize.w);
         auto targetImg =
-            outName.addExtension(sizeString.c_str()).addExtension("dxt5");
+            outName.addExtension(sizeString.c_str()).addExtension(ext);
         auto mipImg = outName.addExtension(sizeString.c_str());
 
-        if(compress == squish::kDxt1)
+        if(compress.channels == 3)
             mipImg = mipImg.addExtension("jpg");
         else
             mipImg = mipImg.addExtension("png");
 
-        if(newSize.w > max_texture_size || newSize.h > max_texture_size)
+        if(newSize.w > compress.max_size || newSize.h > compress.max_size)
         {
             cursor.progress(
                 TEXCOMPRESS_API "Skipping texture, over max size: {0}",
@@ -151,7 +193,7 @@ static void CompressDXT(
             /* Allocate space for image as well as WxH parameters */
             output = Bytes::Alloc(
                 C_FCAST<szptr>(squish::GetStorageRequirements(
-                    imsize.w, imsize.h, squish::kDxt5)) +
+                    imsize.w, imsize.h, compression_fmt)) +
                 sizeof(IMG::serial_image));
 
             cursor.progress(
@@ -166,21 +208,22 @@ static void CompressDXT(
                 imsize.w,
                 imsize.h,
                 &output[sizeof(IMG::serial_image)],
-                squish::kDxt5);
+                compression_fmt);
 
             IMG::serial_image imgDesc = {};
             imgDesc.size              = imsize.convert<u32>();
             imgDesc.fmt               = PixFmt::S3TC;
             imgDesc.bit_fmt           = BitFmt::Byte;
-            imgDesc.comp_fmt          = CompFlags::S3TC_5;
+            imgDesc.comp_fmt          = compression_fmt == squish::kDxt5
+                                   ? CompFlags::S3TC_5
+                                   : CompFlags::S3TC_1;
 
             MemCpy(Bytes::Create(imgDesc), output);
-//            MemCpy(output.data, &imgDesc, sizeof(IMG::serial_image));
 
             /* Cache DXT-compressed data */
             cooker->cacheFile(targetImg, output);
 
-            if(compress == squish::kDxt1)
+            if(compress.channels == 3)
                 pngOutput = JPG::Save(stb::image_const::From(data, imsize));
             else
                 pngOutput = PNG::Save(stb::image_const::From(data, imsize));
@@ -200,14 +243,6 @@ static void CompressTextureSet(
     TerminalCursor&                      cursor)
 {
     CResources::Resource r(MkUrl(file.first.c_str()));
-
-    auto compress = squish::kDxt5;
-
-    /* Depending on color channels/source format, we opt for DXT1
-     *  for storage efficiency. Especially when the image does
-     *  not have alpha. */
-    if(file.second == ImageProc_stb_rgb)
-        compress = squish::kDxt1;
 
     auto outName = Path(file.first).removeExt();
 
@@ -279,7 +314,15 @@ static void CompressTextureSet(
     if(size.area() == 0)
         return;
 
-    CompressDXT(files, file, size, data, outName, compress, cursor, cooker);
+    texture_settings_t settings;
+
+    settings.max_size = max_texture_size;
+    settings.min_size = min_texture_size;
+    settings.channels = 4;
+
+    settings.parse(outName);
+
+    CompressDXT(files, file, size, data, outName, settings, cursor, cooker);
 }
 
 void TextureCooker::process(

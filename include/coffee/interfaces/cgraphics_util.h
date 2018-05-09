@@ -7,6 +7,8 @@
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
 
+#include "cgraphics_pixops.h"
+
 namespace Coffee {
 namespace RHI {
 
@@ -40,19 +42,16 @@ FORCEDINLINE Tuple<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
         case C::S3TC_1:
             pixflags        = PixFlg::RGB;
             data.components = PixCmp::RGB;
-            data.data_size  = 8;
             break;
         case C::S3TC_3:
         case C::S3TC_5:
             pixflags        = PixFlg::RGBA;
             data.components = PixCmp::RGBA;
-            data.data_size  = 16;
             break;
         default:
             break;
         }
 
-        data.data_size *= (pix->size.w * pix->size.h / 16);
         data.width  = pix->size.w;
         data.height = pix->size.h;
 
@@ -61,6 +60,9 @@ FORCEDINLINE Tuple<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
     default:
         return std::make_tuple(Size(), CompFmt());
     }
+
+    data.data_size = GetPixCompressedSize(
+        fmt, data.components, pixflags, flags, {data.width, data.height});
 
     /* Ensure that the upload won't be bad */
     if(img_data.size < data.data_size)
@@ -272,8 +274,8 @@ FORCEDINLINE bool LoadPipeline(
 template<typename GFX>
 struct shader_param_view
 {
-    using Pipeline = typename GFX::PIP;
-    using UniState = typename GFX::USTATE;
+    using Pipeline  = typename GFX::PIP;
+    using UniState  = typename GFX::USTATE;
     using ProgState = typename GFX::PSTATE;
 
     using const_desc    = typename GFX::UNIFDESC;
@@ -342,17 +344,15 @@ struct shader_param_view
     quick_container<param_desc_it> params()
     {
         return quick_container<param_desc_it>(
-            [&]() { return params_begin(); },
-            [&]() { return params_end(); });
+            [&]() { return params_begin(); }, [&]() { return params_end(); });
     }
 
     param_desc_it get_attribute(CString const& attr_name)
     {
-        return std::find_if(params_begin(), params_end(),
-                            [&](param_desc const& param)
-        {
-            return param.m_name == attr_name;
-        });
+        return std::find_if(
+            params_begin(), params_end(), [&](param_desc const& param) {
+                return param.m_name == attr_name;
+            });
     }
 
     /*!
@@ -404,7 +404,7 @@ struct shader_param_view
             if(!constant_data.second.data)
                 continue;
 
-            constant_value.data = &constant_data.second;
+            constant_value.data  = &constant_data.second;
             constant_value.flags = constant_data.first.desc->m_flags;
 
             m_states[stage].setUniform(

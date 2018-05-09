@@ -335,41 +335,50 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
         } else
         {
             u32 i = 0;
-            auto size = msz;
             while(i < m_mips)
             {
                 if(!IsPixFmtCompressed(m_pixfmt))
                     CGL33::TexImage3D(
-                                m_type,
-                                i,
-                                m_pixfmt,
-                                size.width,
-                                size.height,
-                                size.depth,
-                                0,
-                                c,
-                                bitformat,
-                                nullptr);
+                        m_type,
+                        i,
+                        m_pixfmt,
+                        msz.width,
+                        msz.height,
+                        msz.depth,
+                        0,
+                        c,
+                        bitformat,
+                        nullptr);
                 else
                 {
+                    CompFlags f = C_CAST<CompFlags>(m_flags >> 10);
 
-                    Vector<byte_t> test;
-                    test.resize(size.volume());
+                    Vector<byte_t> empty;
+                    empty.resize(
+                        GetPixCompressedSize(
+                            m_pixfmt,
+                            c,
+                            component_to_flag(c),
+                            f,
+                            _cbasic_size_2d<u32>(msz.width, msz.height)
+                                .convert<i32>()) *
+                        msz.depth);
+
                     CGL33::TexImageCompressed3D(
-                                m_type,
-                                i,
-                                CompFmt(m_pixfmt, PixFlg::RGBA, (CompFlags)(m_flags >> 10)),
-                                size.width,
-                                size.height,
-                                size.depth,
-                                0,
-                                test.size(),
-                                test.data());
+                        m_type,
+                        C_FCAST<i32>(i),
+                        CompFmt(m_pixfmt, component_to_flag(c), f),
+                        msz.width,
+                        msz.height,
+                        msz.depth,
+                        0,
+                        C_FCAST<u32>(empty.size()),
+                        empty.data());
                 }
 
-                i ++;
-                size.width /= 2;
-                size.height /= 2;
+                i++;
+                msz.width /= 2;
+                msz.height /= 2;
             }
         }
     } else

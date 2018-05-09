@@ -1,7 +1,10 @@
 #ifndef COFFEE_CORE_DATASTORAGE_TEXT_JSON_H
 #define COFFEE_CORE_DATASTORAGE_TEXT_JSON_H
 
-#include <coffee/core/CBase>
+#include <coffee/core/coffee_mem_macros.h>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
+
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>

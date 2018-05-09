@@ -147,9 +147,9 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         return C_OCAST<int>(fh.fd) != 0;
     }
-    STATICINLINE bool Close(FH&& fh)
+    STATICINLINE bool Close(FH&&)
     {
-        close(fh.fd);
+//        close(fh.fd);
         return true;
     }
 

@@ -19,5 +19,5 @@ function die()
 RELEASE_NAME="$($WDIR/version.py $1)"
 
 gitw tag "$RELEASE_NAME" && \
-	gitw push && \
+	gitw push || \
 	gitw push --tags

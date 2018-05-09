@@ -40,6 +40,10 @@ struct Path
 
     Path removeExt() const;
     Path addExtension(cstring ext) const;
+    FORCEDINLINE Path addExtension(CString const& ext) const
+    {
+        return addExtension(ext.c_str());
+    }
     Path fileBasename() const;
 
     CString extension() const;

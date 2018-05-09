@@ -2,11 +2,11 @@
 
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/cdef/geometry.h>
 
-namespace Coffee{
+namespace Coffee {
 
-FORCEDINLINE szptr GetPixSize(
-        BitFormat fmt, PixelComponents comp, szptr pixels)
+FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
 {
     using B = BitFormat;
 
@@ -78,7 +78,27 @@ FORCEDINLINE szptr GetPixSize(
         break;
     }
 
-    return pxsz*pixels;
+    return pxsz * pixels;
 }
 
+FORCEDINLINE szptr GetPixCompressedSize(
+        PixFmt fmt, PixCmp comp, PixFlg flags, CompFlags cflags,
+        Size const& tex_size)
+{
+    switch(fmt)
+    {
+    case PixFmt::S3TC:
+    {
+        u32 block_size = 16;
+
+        if(cflags == CompFlags::S3TC_1)
+            block_size = 8;
+
+        return (C_FCAST<u32>(tex_size.area()) / 16) * block_size;
+    }
+    default:
+        return 0;
+    }
 }
+
+} // namespace Coffee

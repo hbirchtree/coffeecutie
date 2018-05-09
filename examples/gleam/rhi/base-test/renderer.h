@@ -322,8 +322,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         }
         v_shader.dealloc();
         f_shader.dealloc();
-        CResources::FileUnmap(v_rsc);
-        CResources::FileUnmap(f_rsc);
         
         GLM::PRF::QRY_PIPDMP dumper(eye_pip);
         dumper.dump("hello.prg");

@@ -3,8 +3,8 @@
 #include "inputapplication.h"
 #include <coffee/core/eventprocess.h>
 
-#include <coffee/core/task_queue/task.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/task_queue/task.h>
 
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/base/renderer_loader.h>
@@ -15,19 +15,20 @@
 #include <emscripten.h>
 #endif
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-template<typename Renderer, typename ShareData
+template<
+    typename Renderer,
+    typename ShareData
 
-         #if !defined(COFFEE_WINDOWS)
-         , typename implements<InitApplication, Renderer>::type*
-         = nullptr,
-         typename implements<EventApplication, Renderer>::type*
-         = nullptr
-         #endif
+#if !defined(COFFEE_WINDOWS)
+    ,
+    typename implements<InitApplication, Renderer>::type*  = nullptr,
+    typename implements<EventApplication, Renderer>::type* = nullptr
+#endif
 
-         >
+    >
 struct EventLoopData
 {
     enum Flags
@@ -35,7 +36,7 @@ struct EventLoopData
         TimeLimited = 0x1,
     };
 
-    UqPtr<Renderer> renderer;
+    UqPtr<Renderer>  renderer;
     UqPtr<ShareData> data;
 
     Function<void(Renderer&, ShareData*)> setup;
@@ -46,7 +47,8 @@ struct EventLoopData
 
     union
     {
-        struct{
+        struct
+        {
             Timestamp start;
             Timestamp max;
         } time;
@@ -54,31 +56,39 @@ struct EventLoopData
 
     CDProperties visual;
 
-    FORCEDINLINE Renderer& r() {return *renderer.get();}
-    FORCEDINLINE ShareData* d() {return data.get();}
+    FORCEDINLINE Renderer& r()
+    {
+        return *renderer.get();
+    }
+    FORCEDINLINE ShareData* d()
+    {
+        return data.get();
+    }
 };
 
 template<typename R, typename D>
-FORCEDINLINE
-EventLoopData<R,D>* MkEventLoop(UqPtr<R>&& renderer,
-                                UqPtr<D>&& data)
+FORCEDINLINE EventLoopData<R, D>* MkEventLoop(
+    UqPtr<R>&& renderer, UqPtr<D>&& data)
 {
-    return new EventLoopData<R,D>{
-        std::move(renderer), std::move(data),
-        {},  {}, {},
+    return new EventLoopData<R, D>{std::move(renderer),
+                                   std::move(data),
+                                   {},
+                                   {},
+                                   {},
 
-        0, {}, {}
-    };
+                                   0,
+                                   {},
+                                   {}};
 }
 
 namespace CfEventFunctions {
 template<typename RendType, typename DataType>
 void WrapEventFunction(void* data, int event)
 {
-    using ELD = EventLoopData<RendType,DataType>;
-    
+    using ELD = EventLoopData<RendType, DataType>;
+
     static int CurrentState;
-    
+
     ELD* edata = C_FCAST<ELD*>(data);
 
     switch(event)
@@ -99,7 +109,7 @@ void WrapEventFunction(void* data, int event)
     {
         break;
     }
-        
+
     case CoffeeHandle_Setup:
         if(CurrentState == 0)
         {
@@ -112,14 +122,14 @@ void WrapEventFunction(void* data, int event)
                 edata->setup(edata->r(), edata->d());
                 Profiler::DeepPopContext();
                 CurrentState = 1;
-            }else
+            } else
             {
                 Profiler::DeepPopContext();
                 throw undefined_behavior("EventApplication::setup failed");
             }
         }
         break;
-        
+
     case CoffeeHandle_Loop:
         /* We retrieve the current thread's RuntimeQueue if it exists,
          *  and process it regularly. */
@@ -132,7 +142,7 @@ void WrapEventFunction(void* data, int event)
         if(RuntimeQueue::GetCurrentQueue())
             RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;
-        
+
     case CoffeeHandle_Cleanup:
         if(CurrentState == 1)
         {
@@ -140,19 +150,19 @@ void WrapEventFunction(void* data, int event)
             Profiler::DeepPushContext("Event::Cleanup");
             edata->cleanup(edata->r(), edata->d());
             Profiler::DeepPopContext();
-            
+
             Profiler::DeepPushContext("Renderer::Cleanup");
             edata->r().cleanup();
             Profiler::DeepPopContext();
-            
+
 #if defined(COFFEE_NO_ATEXIT)
             auto const& ex = Cmd::GetAtExit();
-            for(auto it=ex.rbegin(); it != ex.rend(); it++)
+            for(auto it = ex.rbegin(); it != ex.rend(); it++)
                 (*it)();
 #endif
         }
         break;
-        
+
     default:
         break;
     }
@@ -161,47 +171,46 @@ void WrapEventFunction(void* data, int event)
 template<typename RendType, typename DataType>
 void WrapEventFunctionNA(void* data, int event, void* p1, void* p2, void* p3)
 {
-    using ELD = EventLoopData<RendType,DataType>;
-    
+    using ELD = EventLoopData<RendType, DataType>;
+
     static const constexpr CfAdaptors::CfAdaptor EventHandlingVector[10] = {
         {},
         {CfResizeEvent, CfAdaptors::CfResizeHandler},
         {CfTouchEvent, CfAdaptors::CfTouchHandler},
     };
-    
+
     ELD* edata = C_FCAST<ELD*>(data);
-    
+
     switch(event)
     {
-        case CoffeeHandle_GeneralEvent:
+    case CoffeeHandle_GeneralEvent:
+    {
+        struct CfGeneralEvent* g = C_FCAST<CfGeneralEvent*>(p1);
+
+        auto func = EventHandlingVector[g->type].func;
+
+        if(!func)
         {
-            struct CfGeneralEvent* g = C_FCAST<CfGeneralEvent*>(p1);
-            
-            auto func = EventHandlingVector[g->type].func;
-            
-            if(!func)
-            {
-                fprintf(stderr, "Hit NULL event handler!\n");
-                return;
-            }
-            
-            EventHandlingVector[g->type].func(&edata->r(), event,
-                                              p1, p2, p3);
-            
-            break;
+            fprintf(stderr, "Hit NULL event handler!\n");
+            return;
         }
-        default:
+
+        EventHandlingVector[g->type].func(&edata->r(), event, p1, p2, p3);
+
+        break;
+    }
+    default:
         break;
     }
 }
-}
+} // namespace CfEventFunctions
 
 class EventApplication : public InputApplication
 {
-protected:
+  protected:
     bool m_closeFlag = false;
-public:
 
+  public:
     virtual ~EventApplication()
     {
     }
@@ -209,11 +218,11 @@ public:
     template<typename EvType>
     struct EventHandler
     {
-        using FPtr = void(*)(void*,EvType const& e, c_cptr);
+        using FPtr = void (*)(void*, EvType const& e, c_cptr);
 
-        FPtr func;
+        FPtr    func;
         cstring name;
-        void* user_ptr;
+        void*   user_ptr;
     };
 
     using EventHandlerI = EventHandler<CIEvent>;
@@ -272,7 +281,10 @@ public:
         if(start_time == 0)
             start_time = Time::CurrentTimestamp<std::chrono::microseconds>();
 
-        return bigscalar(Time::CurrentTimestamp<std::chrono::microseconds>() - start_time) * 1_us;
+        return bigscalar(
+                   Time::CurrentTimestamp<std::chrono::microseconds>() -
+                   start_time) *
+               1_us;
     }
 
     /*!
@@ -290,8 +302,9 @@ public:
     }
 
     /*!
-     * \brief Stores a reference to an event loop to be used with the application.
-     * \param eventloop Generic pointer to EventLoopData<> structure
+     * \brief Stores a reference to an event loop to be used with the
+     * application. \param eventloop Generic pointer to EventLoopData<>
+     * structure
      */
     virtual void registerEventLoop(void* eventloop)
     {
@@ -313,16 +326,17 @@ public:
 #endif
     }
 
-#define SUSPRESUME_FUN(var, cond, fun, extrafun) \
-    template<typename Renderer, typename Data> \
-    static void var(void* ptr, CDEvent const& e, c_cptr) \
-    { \
-        if(e.type == CDEvent::cond) \
-        { \
-            EventLoopData<Renderer, Data>& evdata = *C_FCAST<EventLoopData<Renderer, Data>* >(ptr); \
-            extrafun(evdata); \
-            evdata.fun(evdata.r(), evdata.d()); \
-        } \
+#define SUSPRESUME_FUN(var, cond, fun, extrafun)               \
+    template<typename Renderer, typename Data>                 \
+    static void var(void* ptr, CDEvent const& e, c_cptr)       \
+    {                                                          \
+        if(e.type == CDEvent::cond)                            \
+        {                                                      \
+            EventLoopData<Renderer, Data>& evdata =            \
+                *C_FCAST<EventLoopData<Renderer, Data>*>(ptr); \
+            extrafun(evdata);                                  \
+            evdata.fun(evdata.r(), evdata.d());                \
+        }                                                      \
     }
 
     SUSPRESUME_FUN(resumeFunction, IsForeground, setup, resumeExtra)
@@ -333,7 +347,7 @@ public:
     template<typename Renderer, typename Data>
     struct EventExitHandler
     {
-        using ELD = EventLoopData<Renderer,Data>;
+        using ELD = EventLoopData<Renderer, Data>;
 
         static ELD* ev;
 
@@ -354,32 +368,48 @@ public:
         }
     };
 
-    template<typename Renderer, typename Data,
-
-             typename implements<EventApplication, Renderer>::type*
-             = nullptr
-
-             >
-    static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
-                               CDProperties& visual, CString& err)
+    template<typename Renderer, typename Data>
+    C_DEPRECATED
+    static i32 execEventLoop(
+        EventLoopData<Renderer, Data>& ev, CDProperties& visual, CString& err)
     {
+        return execEventLoop(
+            MkUqWrap<EventLoopData<Renderer, Data>>(&ev), visual, err);
+    }
+
+    template<
+        typename Renderer,
+        typename Data,
+
+        typename implements<EventApplication, Renderer>::type* = nullptr
+
+        >
+    static int32 execEventLoop(
+        UqPtr<EventLoopData<Renderer, Data>>&& ev,
+        CDProperties&                          visual,
+        CString&)
+    {
+        if(!ev)
+            return -1;
+
         Profiler::DeepPushContext("EventApplication::execEventLoop");
 
         using ELD = EventLoopData<Renderer, Data>;
 
         static cstring suspend_str = "Suspend handler";
-        static cstring resume_str = "Resume handler";
+        static cstring resume_str  = "Resume handler";
 
-        Renderer& r = ev.r();
+        Renderer& r = ev->r();
 
-        /* Because MSVC++ sucks, I can't use a struct initializer list for this :( */
-		EventHandlerD suspend_data = {};
-		EventHandlerD resume_data = {};
-		suspend_data.user_ptr = resume_data.user_ptr = &ev;
-		suspend_data.func = suspendFunction<Renderer, Data>;
-		resume_data.func = resumeFunction<Renderer, Data>;
-		suspend_data.name = suspend_str;
-		resume_data.name = resume_str;
+        /* Because MSVC++ sucks, I can't use a struct initializer list for this
+         * :( */
+        EventHandlerD suspend_data = {};
+        EventHandlerD resume_data  = {};
+        suspend_data.user_ptr = resume_data.user_ptr = ev.get();
+        suspend_data.func = suspendFunction<Renderer, Data>;
+        resume_data.func  = resumeFunction<Renderer, Data>;
+        suspend_data.name = suspend_str;
+        resume_data.name  = resume_str;
 
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
@@ -394,23 +424,27 @@ public:
 
         using namespace CfEventFunctions;
 
-        ev.visual = visual;
-        coffee_event_handling_data = &ev;
-        CoffeeEventHandle = WrapEventFunction<Renderer, Data>;
-        CoffeeEventHandleNA = WrapEventFunctionNA<Renderer, Data>;
+        static UqPtr<ELD> local_event_data = std::move(ev);
+
+        local_event_data->visual   = visual;
+        coffee_event_handling_data = local_event_data.get();
+        CoffeeEventHandle          = WrapEventFunction<Renderer, Data>;
+        CoffeeEventHandleNA        = WrapEventFunctionNA<Renderer, Data>;
 
 #if defined(COFFEE_EMSCRIPTEN)
         /* Under emscripten, only the loop function is used later */
-        emscripten_set_main_loop_arg([](void* data){
-            CoffeeEventHandle(data, CoffeeHandle_Setup);
-            CoffeeEventHandle(data, CoffeeHandle_Loop);
-        }, &ev, 0, 1);
+        emscripten_set_main_loop_arg(
+            [](void* data) {
+                CoffeeEventHandle(data, CoffeeHandle_Setup);
+                CoffeeEventHandle(data, CoffeeHandle_Loop);
+            },
+            ev.get(),
+            0,
+            1);
 #endif
 
-
 #if defined(COFFEE_USE_APPLE_GLKIT) || \
-    defined(COFFEE_USE_ANDROID_NATIVEWIN) || \
-    defined(COFFEE_EMSCRIPTEN)
+    defined(COFFEE_USE_ANDROID_NATIVEWIN) || defined(COFFEE_EMSCRIPTEN)
         /* Under GLKit, the entry point for setup, update and cleanup
          *  reside in AppDelegate.m
          * Lifecycle is manageed by UIKit in this case
@@ -426,12 +460,14 @@ public:
         return 0;
 #else
 
-
         /* Pump a setup event to get everything started */
         CoffeeEventHandleCall(CoffeeHandle_Setup);
 
+        auto time     = local_event_data->time;
+        auto ev_flags = local_event_data->flags;
+
         /* For timed runs, set the starting time */
-        ev.time.start = Time::CurrentTimestamp();
+        time.start = Time::CurrentTimestamp();
 
         /* In this case, event processing happens in a tight
          *  loop that happens regardless of outside events.
@@ -439,13 +475,12 @@ public:
          */
 
         Profiler::DeepPushContext("EventApplication::Event loop");
-        while(!ev.renderer->closeFlag())
+        while(!local_event_data->renderer->closeFlag())
         {
             CoffeeEventHandleCall(CoffeeHandle_Loop);
 
-            if(ev.flags & ELD::TimeLimited &&
-                    Time::CurrentTimestamp() > (ev.time.start
-                                                + ev.time.max))
+            if(ev_flags & ELD::TimeLimited &&
+               Time::CurrentTimestamp() > (time.start + time.max))
             {
                 auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);
@@ -460,18 +495,17 @@ public:
 
     void exec()
     {
-
     }
 };
 
 template<typename GAPI, typename R, typename D>
-int32 AutoExec(EventLoopData<R,D>& event)
+int32 AutoExec(EventLoopData<R, D>& event)
 {
     CString error;
-    auto visual = Display::GetDefaultVisual<GAPI>();
+    auto    visual = Display::GetDefaultVisual<GAPI>();
 
     return EventApplication::execEventLoop(event, visual, error);
 }
 
-}
-}
+} // namespace Display
+} // namespace Coffee

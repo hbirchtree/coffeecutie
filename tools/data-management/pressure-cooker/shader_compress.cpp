@@ -1,3 +1,4 @@
+#include <coffee/core/datastorage/text/json/cjsonparser.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/string_casting.h>
 #include <coffee/interfaces/content_pipeline.h>
@@ -19,6 +20,51 @@
 
 using namespace CoffeePipeline;
 using namespace Coffee;
+
+struct shader_settings_t
+{
+    Vector<u32> shader_versions;
+    Path        target_file;
+
+    void parse(Bytes&& data, Path dirName)
+    {
+        if(!data.data)
+            return;
+
+        auto doc = JSON::Read(data.as<char>().data);
+
+        for(auto it = doc.MemberBegin(); it != doc.MemberEnd(); ++it)
+        {
+            auto member = CString((*it).name.GetString());
+
+            if(member == "versions")
+            {
+                auto vers = (*it).value.GetArray();
+                shader_versions.clear();
+                shader_versions.reserve(vers.Size());
+                for(auto& v : vers)
+                    if(v.IsInt())
+                        shader_versions.push_back(v.GetUint());
+            } else if(member == "target")
+                target_file = dirName + (*it).value.GetString();
+        }
+    }
+
+    void parse(Path basePath)
+    {
+        Path generalDesc = basePath.dirname() + "ALL.shader.json";
+        Path specificDesc =
+            basePath.addExtension("shader").addExtension("json");
+
+        auto generalRsc = Resource(MkUrl(generalDesc, RSCA::AssetFile));
+        if(FileExists(generalRsc))
+            parse(C_OCAST<Bytes>(generalRsc), basePath.dirname());
+
+        auto specificRsc = Resource(MkUrl(specificDesc, RSCA::AssetFile));
+        if(FileExists(specificRsc))
+            parse(C_OCAST<Bytes>(specificRsc), basePath.dirname());
+    }
+};
 
 using Pass      = spvtools::opt::Pass;
 using PassToken = spvtools::Optimizer::PassToken;
@@ -683,8 +729,20 @@ void ShaderProcessor::process(
     Vector<VirtFS::VirtDesc> newFiles;
     newFiles.reserve(selection.size() * 5);
 
+    const Vector<u32> default_shader_versions = {10200, 10300, 330, 430, 460};
+
     for(auto const& path : selection)
     {
+        shader_settings_t settings;
+
+        settings.shader_versions = default_shader_versions;
+        settings.target_file     = path.first.removeExt();
+
+        settings.parse(path.first.removeExt());
+
+        settings.target_file =
+            settings.target_file.addExtension(path.first.extension());
+
         /* Generate optimized SPIR-V binary */
         Vector<u32> optimized = CompileSpirV(
             cursor,
@@ -728,12 +786,33 @@ void ShaderProcessor::process(
 
         /* With the generated SPIR-V, cross-compile it to
          *  various GLSL/ES versions, for portability */
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {100, true});
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {300, true});
+        for(auto ver : settings.shader_versions)
+        {
+            bool is_es    = ver > 10000;
+            u32  glsl_ver = ver;
 
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {330, false});
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {430, false});
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {460, false});
+            if(glsl_ver > 10000)
+            {
+                glsl_ver -= 10000;
+                if(glsl_ver == 200)
+                    glsl_ver = 100;
+            }
+
+            GenerateGLSL(
+                cursor,
+                newFiles,
+                settings.target_file,
+                unoptimized,
+                {glsl_ver, is_es});
+        }
+
+        //        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {300,
+        //        true});
+
+        //        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {330,
+        //        false}); GenerateGLSL(cursor, newFiles, path.first,
+        //        unoptimized, {430, false}); GenerateGLSL(cursor, newFiles,
+        //        path.first, unoptimized, {460, false});
     }
 
     files.reserve(files.size() + newFiles.size());

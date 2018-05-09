@@ -1,21 +1,22 @@
 #include <coffee/core/coffee.h>
 
-#include <coffee/core/CDebug>
 #include <coffee/core/CMD>
 #include <coffee/core/CProfiling>
 
+#include <coffee/core/coffee_signals.h>
 #include <coffee/core/coffee_version.h>
 
+#include <coffee/core/CFiles>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/types/cdef/infotypes.h>
 
-#include <coffee/core/coffee_signals.h>
-
 #include <coffee/core/internal_state.h>
 #include <coffee/core/task_queue/task.h>
+
+#include <coffee/core/CDebug>
 
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
@@ -106,7 +107,7 @@ static void CoffeeInit_Internal(u32 flags)
     PrintingVerbosityLevel() = 8;
 //    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
 #else
-    Coffee::PrintingVerbosityLevel() = 1;
+    Coffee::PrintingVerbosityLevel()          = 1;
 #endif
 
 #ifndef NDEBUG
@@ -307,6 +308,47 @@ void CoffeeTerminate()
     cVerbose(5, "Terminating");
 
 #ifndef COFFEE_LOWFAT
+
+#ifndef NDEBUG
+#if defined(COFFEE_LINUX)
+    /* Do runtime leak checks for POSIX resources,
+     *  useful when debugging resource APIs */
+
+    Vector<DirFun::DirItem_t> file_descs;
+    auto procFd = Path("/proc/self/fd");
+
+    cDebug("Open POSIX file descriptors:");
+    if(DirFun::Ls(MkUrl(procFd, RSCA::SystemFile), file_descs))
+        for(auto const& f : file_descs)
+        {
+            cBasicPrint(
+                "{0} : {1}",
+                f.name,
+                (procFd + f.name).canonical());
+        }
+
+    using MMAP = Environment::Linux::MemMap;
+
+    MMAP::ProcMap mem_map;
+    MMAP::GetProcMap(ProcessProperty::Pid(), mem_map);
+
+    cDebug("Open POSIX mmap() regions:");
+    for(auto const& e : mem_map)
+    {
+        /* Shared libraries are not our concern most of the time */
+        if(e.name.find(".so") != CString::npos)
+            continue;
+
+        cBasicPrint(
+            "{0} => {1}+{2}, {3}",
+            e.name.size() ? e.name : "[anon]",
+            StrUtil::pointerify(e.start),
+            e.end - e.start,
+            StrUtil::pointerify(C_CAST<u32>(e.access)));
+    }
+#endif
+#endif
+
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     Profiling::ExitRoutine();
 #endif
