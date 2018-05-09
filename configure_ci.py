@@ -390,7 +390,8 @@ def travis_gen_config(build_info, srcDir):
         'branches': {
             'only': deploy_data[0]
         },
-        'after_success': ['%s/travis-deploy.sh' % script_loc]
+        'after_success': ['%s/travis-deploy.sh' % script_loc],
+        'apt': {'update': True}
     }
 
 
