@@ -143,7 +143,7 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS* vfs, const VFile* file)
 
         if(file->flags & File_Compressed)
         {
-            if(!Zlib::Decompress(Bytes(srcPtr, srcSize), &data, {}))
+            if(!Zlib::Decompress(Bytes(srcPtr, srcSize, srcSize), &data, {}))
                 cWarning(VIRTFS_API "Failed to decompress file");
         } else
         {
@@ -151,6 +151,8 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS* vfs, const VFile* file)
             data.size = srcSize;
         }
     }
+
+    data.elements = data.size;
 
     return data;
 }

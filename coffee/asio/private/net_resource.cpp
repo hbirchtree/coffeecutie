@@ -307,7 +307,7 @@ Bytes Resource::data() const
 
     return Bytes(C_FCAST<byte_t*>(m_response.payload.data()),
                  m_response.payload.size(),
-                 0);
+                 m_response.payload.size());
 }
 
 const Map<CString, CString> &Resource::headers() const

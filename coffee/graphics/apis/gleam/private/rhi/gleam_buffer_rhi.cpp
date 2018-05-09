@@ -29,8 +29,10 @@ void GLEAM_VBuffer::dealloc()
     m_handle = 0;
 }
 
-void GLEAM_VBuffer::commit(szptr size, c_cptr data)
+void GLEAM_VBuffer::commit(szptr size, c_cptr data_)
 {
+    c_ptr data = C_CCAST<c_ptr>(data_);
+
     m_size = size;
     bind();
 #if defined(COFFEE_GLEAM_DESKTOP)
@@ -38,19 +40,19 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
        feval(m_access & ResourceAccess::Immutable))
     {
         if(GLEAM_FEATURES.direct_state)
-            CGL45::BufStorage(m_handle, Bytes::From(data, size), m_access);
+            CGL45::BufStorage(m_handle, Bytes::Unsafe(data, size), m_access);
         else
             CGL_BufferStorage<GLVER_44>::BufStorage(
-                m_type, Bytes::From(data, size), m_access);
+                m_type, Bytes::Unsafe(data, size), m_access);
     } else
 #endif
     {
 #if defined(COFFEE_GLEAM_DESKTOP)
         if(GLEAM_FEATURES.direct_state)
-            CGL45::BufData(m_handle, Bytes::From(data, m_size), m_access);
+            CGL45::BufData(m_handle, Bytes::Unsafe(data, m_size), m_access);
         else
 #endif
-            CGL33::BufData(m_type, Bytes::From(data, m_size), m_access);
+            CGL33::BufData(m_type, Bytes::Unsafe(data, m_size), m_access);
     }
 }
 

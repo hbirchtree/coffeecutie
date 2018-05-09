@@ -127,11 +127,11 @@ extern bool FileMkdir(const Url &dirname, bool recursive);
 
 FORCEDINLINE Bytes FileGetDescriptor(CResources::Resource& resc)
 {
-    return {C_CAST<byte_t*>(resc.data),resc.size, 0};
+    return {C_CAST<byte_t*>(resc.data),resc.size, resc.size};
 }
 FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
 {
-    return {C_CAST<byte_t const*>(resc.data),resc.size, 0};
+    return {C_CAST<byte_t const*>(resc.data),resc.size, resc.size};
 }
 
 FORCEDINLINE CResources::Resource operator "" _rsc(const char* fn, size_t)

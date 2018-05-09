@@ -98,6 +98,8 @@ struct VirtualFS
      */
     static bool OpenVFS(Bytes const& src, VirtualFS const** vfs)
     {
+        using IntData = _cbasic_data_chunk<u32>;
+
         *vfs = nullptr;
 
         if(src.size < sizeof(VirtualFS))
@@ -105,9 +107,10 @@ struct VirtualFS
 
         VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
 
-        Bytes magic = Bytes::From(VFSMagic_Encoded, 2);
+        IntData magic = IntData::From(VFSMagic_Encoded, 2);
+        IntData fileMagic = IntData::From(temp_vfs->vfs_header, MagicLength);
 
-        if(!MemCmp(magic, Bytes::From(temp_vfs->vfs_header, MagicLength)))
+        if(magic[0] != fileMagic[0] || magic[1] != fileMagic[1])
             return false;
 
         *vfs = temp_vfs;

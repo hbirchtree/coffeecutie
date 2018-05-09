@@ -27,7 +27,7 @@ struct _cbasic_data_chunk
     }
 
     FORCEDINLINE
-    _cbasic_data_chunk() : data(0), size(0), elements(0)
+    _cbasic_data_chunk() : data(nullptr), size(0), elements(0)
     {
     }
 
@@ -35,12 +35,8 @@ struct _cbasic_data_chunk
     _cbasic_data_chunk(T* data, szptr size, szptr elements) :
         data(data), size(size), elements(elements)
     {
-    }
-
-    FORCEDINLINE
-    _cbasic_data_chunk(T* data, szptr size) :
-        data(data), size(size), elements(0)
-    {
+        if((size && !data) || (size && !elements) || (!size && data))
+            Throw(implementation_error("invalid construction"));
     }
 
     template<
@@ -120,7 +116,14 @@ struct _cbasic_data_chunk
         typename SizeT,
         typename std::enable_if<std::is_unsigned<SizeT>::value, SizeT>::type* =
             nullptr>
-    NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Alloc(SizeT num)
+    NO_DISCARD STATICINLINE
+    /*!
+     * \brief Standard memory allocation with RAII semantics.
+     * All memory is initialized to 0.
+     * \param num
+     * \return
+     */
+    _cbasic_data_chunk<T> Alloc(SizeT num)
     {
 #if !defined(NDEBUG)
         if(num == 0)
@@ -138,6 +141,31 @@ struct _cbasic_data_chunk
         return out;
     }
 
+    template<typename T2>
+    NO_DISCARD STATICINLINE
+    /*!
+     * \brief For cases where safety needs to be disabled,
+     *  eg. passing symbolic values.
+     * This is used when talking to OpenGL with offsets.
+     * Objects created with this should not be used with iterators!
+     *
+     * \param data
+     * \param size
+     * \param elements
+     * \return
+     */
+    _cbasic_data_chunk<T> Unsafe(
+        T2* data = nullptr, szptr size = 0, szptr elements = 0)
+    {
+        _cbasic_data_chunk<T> out;
+
+        out.data     = C_RCAST<T*>(data);
+        out.size     = size;
+        out.elements = elements;
+
+        return out;
+    }
+
     template<
         typename SizeT,
         typename std::enable_if<std::is_signed<SizeT>::value, SizeT>::type* =
@@ -150,7 +178,7 @@ struct _cbasic_data_chunk
     template<typename DT, typename is_not_virtual<DT>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
-        return {C_FCAST<T*>(&obj), sizeof(DT), 1};
+        return {C_FCAST<T*>(&obj), sizeof(DT), sizeof(DT) / sizeof(T)};
     }
 
     template<
@@ -158,7 +186,7 @@ struct _cbasic_data_chunk
         typename std::enable_if<std::is_pod<T>::value, Dummy>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {C_FCAST<T*>(src), strlen(src), 0};
+        return {C_FCAST<T*>(src), strlen(src), strlen(src) / sizeof(T)};
     }
 
     template<
@@ -172,10 +200,9 @@ struct _cbasic_data_chunk
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateFrom(Vector<T2>& data)
     {
-        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
-
-        return {
-            C_RCAST<T*>(data.data()), sizeof(T2) * data.size(), data.size()};
+        return {C_RCAST<T*>(data.data()),
+                data.size() * sizeof(T2),
+                (data.size() * sizeof(T2)) / sizeof(T)};
     }
 
     template<
@@ -193,9 +220,9 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T>
         From(T2* data, szptr size)
     {
-        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to wrap");
-
-        return {C_FCAST<T*>(data), size * sizeof(T2) / sizeof(T), size};
+        return {C_FCAST<T*>(data),
+                size * sizeof(T2),
+                (size * sizeof(T2)) / sizeof(T)};
     }
 
     template<
@@ -213,7 +240,7 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T>
         From(T2* data, szptr size)
     {
-        return {C_FCAST<T*>(data), size, 0};
+        return {C_FCAST<T*>(data), size, size / sizeof(T)};
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
@@ -447,7 +474,7 @@ struct _cbasic_data_chunk
 
         iterator_base& operator++()
         {
-            if(m_idx < m_chunk->size)
+            if(m_idx < m_chunk->elements)
                 m_idx++;
 
             return *this;
@@ -488,22 +515,28 @@ struct _cbasic_data_chunk
 
     NO_DISCARD iterator begin()
     {
+        if(elements == 0)
+            throw implementation_error("no elements");
+
         return iterator(*this);
     }
 
     NO_DISCARD iterator end()
     {
-        return iterator(*this, size);
+        return iterator(*this, elements);
     }
 
     NO_DISCARD const_iterator begin() const
     {
+        if(elements == 0)
+            throw implementation_error("no elements");
+
         return const_iterator(*this);
     }
 
     NO_DISCARD const_iterator end() const
     {
-        return const_iterator(*this, size);
+        return const_iterator(*this, elements);
     }
 
     iterator insert(iterator it, T&& value)
