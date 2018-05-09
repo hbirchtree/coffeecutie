@@ -346,6 +346,15 @@ i32 coffee_main(i32, cstring_w*)
             (desc.flags == VirtFS::File_Compressed) ? "(compressed)" : "");
     }
 
+    auto removeIt = std::remove_if(
+        descriptors.begin(), descriptors.end(),
+        [](VirtFS::VirtDesc const& desc)
+        {
+            return desc.data.size == 0;
+        });
+
+    descriptors.erase(removeIt, descriptors.end());
+
     cursor.progress("Post-processing files...");
 
     for(auto proc : extProcessors)
@@ -365,7 +374,7 @@ i32 coffee_main(i32, cstring_w*)
     {
         cursor.print("{0}:0: Failed to create VirtFS", outputVfs.internUrl);
     } else
-        cursor.complete("Filesystem created!");
+        cursor.complete("Filesystem created! ({0}MB)", outputData.size() / 1_MB);
 
     /* Give some statistics on the created filesystem */
     if(showStats)
@@ -388,16 +397,12 @@ i32 coffee_main(i32, cstring_w*)
     /* At this point, we are writing the VFS to disk */
     {
         Resource output(outputVfs);
-        //        output = Bytes::CreateFrom(outputData);
 
-        //        FileCommit(output, false, RSCA::Discard);
         FileOpenMap(
             output, outputData.size(), RSCA::ReadWrite | RSCA::Persistent);
 
         Bytes outputView = output;
-
         MemCpy(outputData, outputView);
-//        MemCpy(output.data, outputData.data(), output.size);
     }
 
     return 0;

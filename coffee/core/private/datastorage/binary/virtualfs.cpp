@@ -75,13 +75,11 @@ bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
 
         /* We want to align data to 8-byte boundaries */
         data_size = AlignOffsetForward(8, data_size);
-        //        szptr alignment = AlignOffset(8, data_size);
 
         file.offset = data_size;
         file.rsize  = filenames[i].data.size;
 
         MemCpy(fn, Bytes::From(file.name, fn.size()));
-        //        MemCpy(file.name, fn.c_str(), fn.size());
         file.flags = filenames[i].flags;
 
         auto& arr = data_arrays[i];
@@ -96,8 +94,10 @@ bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
             file.size = arr.size;
         } else
         {
-            arr.data  = filenames[i].data.data;
-            arr.size  = filenames[i].data.size;
+            arr.data     = filenames[i].data.data;
+            arr.size     = filenames[i].data.size;
+            arr.elements = filenames[i].data.elements;
+
             file.size = filenames[i].data.size;
         }
 
@@ -120,6 +120,11 @@ bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
     for(auto i : Range<>(filenames.size()))
     {
         auto const& srcData = data_arrays[i];
+        if(srcData.size == 0)
+        {
+            cWarning("File {0} has problems", filenames[i].filename);
+            continue;
+        }
         MemCpy(
             srcData,
             outputView.at(base_fs.data_offset + files[i].offset, srcData.size));
