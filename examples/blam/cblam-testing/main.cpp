@@ -481,6 +481,7 @@ int coffee_main(int32,cstring_w*)
                 tex_handle.upload(texture.dformat, texture.format,
                                   image->isize.convert<i32>(), {
                                       (byte_t*)texture.data,
+                                      (szptr)texture_size(image),
                                       (szptr)texture_size(image)
                                   });
 

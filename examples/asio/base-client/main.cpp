@@ -8,6 +8,7 @@
 #include <coffee/asio/net_resource.h>
 
 #include <coffee/core/CMD>
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 
