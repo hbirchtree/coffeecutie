@@ -6,25 +6,26 @@ find_package( SPIRVTools QUIET )
 
 set ( BUNDLE_LIBS CACHE STRING "" )
 
-if(SQUISH_FOUND)
-    list ( APPEND BUNDLE_LIBS
-        "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}PressurizeTextures${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        )
-endif()
+set ( PRESSURIZERS )
 
 if(COFFEE_BUILD_ASSIMP)
-    list ( APPEND BUNDLE_LIBS
-        "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}PressurizeModels${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        )
+    list ( APPEND PRESSURIZERS "$<TARGET_FILE:PressurizeModels>" )
 endif()
 
+if(SQUISH_FOUND)
+    list ( APPEND PRESSURIZERS "$<TARGET_FILE:PressurizeTextures>" )
+endif()
+
+if(SHADERC_FOUND)
+    list ( APPEND PRESSURIZERS "$<TARGET_FILE:PressurizeShaders>" )
+endif()
 
 coffee_application (
     TARGET PressureCooker
     TITLE "Pressure Cooker"
     SOURCES main.cpp
     LIBRARIES CoffeeCore
-    BUNDLE_LIBRARIES ${BUNDLE_LIBS}
+    BUNDLE_LIBRARIES ${PRESSURIZERS}
     )
 
 coffee_application (
@@ -40,7 +41,7 @@ if(COFFEE_BUILD_ASSIMP)
         LINKAGE SHARED
         SOURCES model_compress.cpp
         LIBRARIES CoffeeCore CoffeeAssimp
-        HEADER_DIRS ${CMAKE_S123OURCE_DIR}/coffee/interfaces
+        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
 
     if(NOT APPLE)

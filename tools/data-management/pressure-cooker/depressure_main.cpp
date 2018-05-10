@@ -153,6 +153,17 @@ static i32 extract_file(
 
 i32 coffee_main(i32, cstring_w*)
 {
+    /* Very important:
+     * We unset environment variables that may affect the input to the program.
+     */
+
+    /* AppImage, Snappy and Flatpak storage locations */
+    Env::UnsetVar("APPIMAGE_DATA_DIR");
+    Env::UnsetVar("SNAP");
+
+    /* End of messing with the environment */
+
+
     Url targetFile = {};
 
     ArgumentParser parser;

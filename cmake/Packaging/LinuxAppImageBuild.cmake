@@ -71,31 +71,17 @@ macro( APPIMAGE_PACKAGE
     list ( APPEND APPIMAGE_DATA
         ${DATA} )
 
-    # Remove the previous AppImage file to avoid confusion when generating a new one
     add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E remove "${APPIMAGE_FINAL_NAME}"
-        )
 
-    # Create some necessary directory structure in AppDir
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
+        # Remove the previous AppImage file to avoid confusion when generating a new one
+        COMMAND ${CMAKE_COMMAND} -E remove "${APPIMAGE_FINAL_NAME}"
+
+        # Create some necessary directory structure in AppDir
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_OUTPUT_DIRECTORY}"
-        )
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_BINARY_DIR}"
-        )
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_CACHE_DIR}"
-        )
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_LIBRARY_DIR}"
-        )
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_ASSET_DIR}"
         )
 
@@ -145,17 +131,25 @@ macro( APPIMAGE_PACKAGE
     # Copy bundled libraries into AppDir
     foreach ( LIB ${LIBRARY_FILES} )
         add_custom_command ( TARGET ${TARGET}
-            PRE_BUILD
+            POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${APPIMAGE_LIBRARY_DIR}"
             )
     endforeach()
 
     foreach ( LIB ${LIBRARIES} )
         add_custom_command ( TARGET ${TARGET}
-            PRE_BUILD
+            POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>" "${APPIMAGE_LIBRARY_DIR}"
             )
     endforeach()
+
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND
+            (NOT "${LIBRARIES}" STREQUAL "" OR NOT "${LIBRARY_FILES}" STREQUAL ""))
+        add_custom_command ( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND bash -c '${CMAKE_STRIP} `find ${APPIMAGE_LIBRARY_DIR} -type f`'
+            )
+    endif()
 
     # Copy the binary to AppDir
     add_custom_command ( TARGET ${TARGET}
@@ -170,20 +164,20 @@ macro( APPIMAGE_PACKAGE
             )
     endif()
 
-    # Do the actual packaging step with AppImageKit
-    add_custom_command ( TARGET ${TARGET}
-        POST_BUILD
-        COMMAND "${MKSQUASH_PROGRAM}"
-                "${APPIMAGE_INTERMEDIATE_DIR}"
-                "${APPIMAGE_INTERMEDIATE_SQUASH}"
-                -root-owned -noappend
-        )
+    # Do the actual packaging
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
         USES_TERMINAL
 
+        # First create squashfs
+        COMMAND "${MKSQUASH_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}"
+                "${APPIMAGE_INTERMEDIATE_SQUASH}"
+                -root-owned -noappend
+        # Concatenate AppImage runtime with image
         COMMAND cat "${APPIMAGE_RUNTIME_BINARY}" >> "${APPIMAGE_FINAL_NAME}"
         COMMAND cat "${APPIMAGE_INTERMEDIATE_SQUASH}" >> "${APPIMAGE_FINAL_NAME}"
+
+        # Make image executable
         COMMAND chmod +x "${APPIMAGE_FINAL_NAME}"
         )
 

@@ -424,7 +424,14 @@ class EventApplication : public InputApplication
 
         using namespace CfEventFunctions;
 
-        static UqPtr<ELD> local_event_data = std::move(ev);
+#if defined(COFFEE_USE_APPLE_GLKIT) || \
+    defined(COFFEE_USE_ANDROID_NATIVEWIN) || defined(COFFEE_EMSCRIPTEN)
+        auto stored_event_data = new UqPtr<ELD>();
+        auto& local_event_data = *stored_event_data;
+        local_event_data = std::move(ev);
+#else
+        auto& local_event_data = ev;
+#endif
 
         local_event_data->visual   = visual;
         coffee_event_handling_data = local_event_data.get();
@@ -438,7 +445,7 @@ class EventApplication : public InputApplication
                 CoffeeEventHandle(data, CoffeeHandle_Setup);
                 CoffeeEventHandle(data, CoffeeHandle_Loop);
             },
-            ev.get(),
+            local_event_data.get(),
             0,
             1);
 #endif
