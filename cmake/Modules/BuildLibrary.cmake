@@ -104,7 +104,7 @@ endmacro()
 macro(COFFEE_LIBRARY)
     cmake_parse_arguments(
         LIB
-        ""
+        "LINKABLE"
         "TARGET;LINKAGE;VERSION_CODE;COPYRIGHT;COMPANY"
         "SOURCES;LIBRARIES;HEADER_DIRS;RESOURCES;BUNDLE_LIBRARIES;BUNDLE_HEADERS"
         ${ARGN}
@@ -138,7 +138,7 @@ macro(COFFEE_LIBRARY)
 
     source_group ( "${LIB_TARGET}_headers" FILES ${ALL_HEADERS} )
 
-    if(APPLE AND NOT IOS)
+    if(APPLE AND NOT IOS AND NOT LIB_LINKABLE)
 
         MACFRAMEWORK_PACKAGE(
             "${LIB_TARGET}" "${LIB_LINKAGE}"
@@ -192,7 +192,7 @@ macro(COFFEE_LIBRARY)
             RUNTIME DESTINATION "lib/${ANDROID_ABI}"
             PUBLIC_HEADER DESTINATION include
             )
-    elseif(NOT (APPLE AND NOT IOS))
+    elseif(NOT (APPLE AND NOT IOS AND NOT LIB_LINKABLE))
         install(
             TARGETS ${LIB_TARGET}
 

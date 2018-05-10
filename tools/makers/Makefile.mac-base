@@ -30,7 +30,7 @@ config: make-dirs
 	sh -c 'cd $(CMAKE_BUILD_DIR) && ls && CC=clang CXX=clang++ $(CMAKE) $(CMAKE_OPTS)'
 
 build: config
-	$(CMAKE) --build $(CMAKE_BUILD_DIR) --config $(CMAKE_CONFIG) --target $(CMAKE_TARGET)
+	$(CMAKE) --build $(CMAKE_BUILD_DIR) --config $(CONFIGURATION) --target $(CMAKE_TARGET)
 
 custom:
 	$(CUSTOM_COMMAND)
