@@ -74,6 +74,7 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 
 RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name)
 {
+    try{
     DProfContext _(DTEXT(RQ_API "Creating new task queue"));
     AtomicBool*  flagPtr = nullptr;
     Thread       t(ImpCreateNewThreadQueue, name, &flagPtr);
@@ -95,6 +96,11 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name)
     }
 
     return &context->queues.find(tid)->second;
+    } catch(std::exception const& e)
+    {
+        cWarning("Failed to create RuntimeQueue: {0}", e.what());
+        return nullptr;
+    }
 }
 
 RuntimeQueue* RuntimeQueue::GetCurrentQueue()

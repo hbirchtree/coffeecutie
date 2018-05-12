@@ -214,9 +214,15 @@
 #endif
 
 #if defined(COFFEE_APPLE_MOBILE)\
-    || defined(COFFEE_GLES20_MODE) || defined(COFFEE_EMSCRIPTEN)
+    || defined(COFFEE_GLES20_MODE)// || defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN)
+#define COFFEE_WEBGL
+#define COFFEE_LINKED_GLES
+#define COFFEE_LINKED_GLES30
 #endif
 
 /*

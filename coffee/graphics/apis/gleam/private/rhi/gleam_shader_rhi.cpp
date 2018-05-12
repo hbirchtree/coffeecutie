@@ -303,7 +303,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
         return stat;
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
         cstring* srcs = shaderSrcVec.data();
@@ -364,7 +364,7 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
         CGL33::ShaderAttach(m_handle,shader.m_handle);
         return true;
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
         if(m_handle==0)
@@ -403,7 +403,7 @@ bool GLEAM_Pipeline::assemble()
         }
         return stat;
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
         bool stat = CGL43::PipelineValidate(m_handle);
@@ -425,7 +425,7 @@ void GLEAM_Pipeline::bind() const
 {
     if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramUse(m_handle);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
         CGL43::PipelineBind(m_handle);
 #endif
@@ -435,7 +435,7 @@ void GLEAM_Pipeline::unbind() const
 {
     if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramUse(0);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
         CGL43::PipelineBind(0);
 #endif
@@ -445,7 +445,7 @@ void GLEAM_Pipeline::dealloc()
 {
     if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramFree(m_handle);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
         CGL43::PipelineFree(m_handle);
 #endif
@@ -488,13 +488,15 @@ STATICINLINE bool translate_sampler_type(
         if(!GLEAM_FEATURES.gles20)
             switch(m_flags & SizeMask_f)
             {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
             case S3:
                 samplerType = Texture::T3D;
                 return true;
             case S2A:
                 samplerType = Texture::T2DArray;
                 return true;
+#endif
+#if GL_VERSION_VERIFY(0x330, 0x320)
             case SCubeA:
                 samplerType = Texture::CubemapArray;
                 return true;
@@ -579,7 +581,7 @@ void GLEAM_ShaderUniformState::clear()
     m_uniforms.clear();
 }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
                                   CGenum type,
                                   Vector<GLEAM_ProgramParameter>* params)
@@ -705,7 +707,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
             delete[] sizes;
         }
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs){
 
         enum GL_PROP_IDX

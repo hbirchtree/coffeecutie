@@ -147,7 +147,7 @@ struct CGL_Shared_Debug
         C_UNUSED(s);
         C_UNUSED(enabled);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageControl(
                     GL_DONT_CARE,GL_DONT_CARE,
                     to_enum(s),0,nullptr,
@@ -161,7 +161,7 @@ struct CGL_Shared_Debug
         C_UNUSED(h);
         C_UNUSED(s);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         glObjectLabel(to_enum(t),h,-1,s);
 #endif
     }
@@ -171,13 +171,13 @@ struct CGL_Shared_Debug
         C_UNUSED(n);
         C_UNUSED(id);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION,id,-1,n);
 #endif
     }
     STATICINLINE void UnsetDebugGroup()
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         glPopDebugGroup();
 #endif
     }
@@ -188,7 +188,7 @@ struct CGL_Shared_Debug
         C_UNUSED(t);
         C_UNUSED(n);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
                              to_enum(t),0,
                              to_enum(s),
@@ -201,7 +201,7 @@ struct CGL_Shared_Debug
         C_UNUSED(c);
         C_UNUSED(param);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageCallback(c,param);
 #endif
     }
@@ -383,12 +383,15 @@ struct CGL_Shared_Debug
     STATICINLINE
     bool IsXF(CGhnd h){return glIsTransformFeedback(h)==GL_TRUE;}
 
+#if GL_VERSION_VERIFY(0x330, 0x310)
     STATICINLINE
     bool IsPipeline(CGhnd h){return glIsProgramPipeline(h)==GL_TRUE;}
 
     /* IsEnabled */
     STATICINLINE
     bool IsEnabledi(Feature f,int32 i){return glIsEnabledi(to_enum(f),i)==GL_TRUE;}
+#endif
+
 #endif
 };
 

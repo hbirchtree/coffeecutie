@@ -97,6 +97,11 @@ struct gl_version_at_least_ver
         return Debug::CheckExtensionSupported(ext_name);\
     }
 
+#define GL_VERSION_NONE 0xFFFFF
+
+#define GL_VERSION_VERIFY(core_ver, es_ver) \
+    (GL_VERSION_BASE_CORE >= core_ver) || (GL_VERSION_BASE_ES >= es_ver)
+
 /*
  * The above macro is used as such:
  *
@@ -111,10 +116,10 @@ struct gl_version_at_least_ver
 /* Type definitions */
 using CGenum = uint32;
 using CGflag = uint32;
-#if defined(COFFEE_ONLY_GLES20)
-using CGcallback = void(*)();
-#else
+#if GL_VERSION_VERIFY(0x410, 0x320)
 using CGcallback = GLDEBUGPROC;
+#else
+using CGcallback = void(*)();
 #endif
 using CGsync = void*;
 
@@ -330,7 +335,7 @@ enum class Texture
 #else
     T2DArray = GL_TEXTURE_2D_ARRAY,
 #endif
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
 #endif
 
@@ -398,10 +403,10 @@ enum class QueryT
 
 enum class PatchProperty
 {
-#if defined(COFFEE_ONLY_GLES20)
-    Vertices = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x330, 0x320)
     Vertices = GL_PATCH_VERTICES,
+#else
+    Vertices = GL_NONE,
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
     DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,

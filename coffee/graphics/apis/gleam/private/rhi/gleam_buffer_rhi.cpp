@@ -14,7 +14,7 @@ STATICINLINE void VerifyBuffer(CGhnd h)
 
 void GLEAM_VBuffer::alloc()
 {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
         CGL45::BufAlloc(m_handle);
     else
@@ -35,7 +35,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data_)
 
     m_size = size;
     bind();
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
     if(GLEAM_FEATURES.buffer_storage &&
        feval(m_access & ResourceAccess::Immutable))
     {
@@ -47,7 +47,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data_)
     } else
 #endif
     {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
             CGL45::BufData(m_handle, Bytes::Unsafe(data, m_size), m_access);
         else
@@ -58,7 +58,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data_)
 
 void* GLEAM_VBuffer::map(szptr offset, szptr size)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300) && !defined(COFFEE_WEBGL)
     if(!GLEAM_FEATURES.gles20)
     {
         VerifyBuffer(m_handle);
@@ -74,7 +74,7 @@ void* GLEAM_VBuffer::map(szptr offset, szptr size)
         if(!GLEAM_FEATURES.buffer_persistent)
             acc ^= ResourceAccess::Persistent;
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
             return CGL45::BufMapRange(
                 m_handle, C_FCAST<ptroff>(offset), C_FCAST<ptroff>(size), acc);
@@ -98,13 +98,13 @@ void* GLEAM_VBuffer::map(szptr offset, szptr size)
 
 void GLEAM_VBuffer::unmap()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300) && !defined(COFFEE_WEBGL)
     if(!GLEAM_FEATURES.gles20)
     {
         VerifyBuffer(m_handle);
 
         bind();
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
             CGL45::BufUnmap(m_handle);
         else
@@ -131,7 +131,7 @@ void GLEAM_VBuffer::unbind() const
 
 void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size) const
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         VerifyBuffer(m_handle);

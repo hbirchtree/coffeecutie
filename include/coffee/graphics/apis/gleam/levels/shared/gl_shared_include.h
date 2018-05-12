@@ -26,7 +26,12 @@
 #include <glad/glad.h>
 #include <glad/KHR/khrplatform.h>
 
+#define GL_VERSION_BASE_CORE 0xFFFF
+#define GL_VERSION_BASE_ES   0x0
+
 #else
+
+#define GL_VERSION_BASE_CORE 0x0
 
 #if defined(COFFEE_LINKED_GLES)
 
@@ -39,21 +44,38 @@
 // Apple loads the functions from a framework
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
+
+#define GL_VERSION_BASE_ES 0x200
+
 #else
+
+#if defined(COFFEE_LINKED_GLES32)
+#include <GLES3/gl32.h>
+#ifndef GL_VERSION_BASE_ES
+#define GL_VERSION_BASE_ES 0x320
+#endif
+#endif
+#if defined(COFFEE_LINKED_GLES31)
+#include <GLES3/gl31.h>
+#ifndef GL_VERSION_BASE_ES
+#define GL_VERSION_BASE_ES 0x310
+#endif
+#endif
+#if defined(COFFEE_LINKED_GLES30)
+#include <GLES3/gl3.h>
+#ifndef GL_VERSION_BASE_ES
+#define GL_VERSION_BASE_ES 0x300
+#endif
+#endif
 
 // Standard headers for GLES functions
 #include <GLES2/gl2.h>
 
+#ifndef GL_VERSION_BASE_ES
+#define GL_VERSION_BASE_ES 0x200
+#endif
+
 // GLES3.x is optional
-#if defined(COFFEE_LINKED_GLES30)
-#include <GLES3/gl3.h>
-#endif
-#if defined(COFFEE_LINKED_GLES31)
-#include <GLES3/gl31.h>
-#endif
-#if defined(COFFEE_LINKED_GLES32)
-#include <GLES3/gl32.h>
-#endif
 
 #endif
 
@@ -61,6 +83,9 @@
 // Runtime-loaded OpenGL functions
 #include <glad_es/glad.h>
 #include <glad_es/KHR/khrplatform.h>
+
+#define GL_VERSION_BASE_ES 0xFFFF
+
 #endif
 
 #endif

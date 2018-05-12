@@ -25,18 +25,21 @@ struct CGL_Basic_Draw
             DrwMd const& p,u32 c,TypeEnum t,u64 off)
     {glDrawElements(to_enum(p),c,to_enum(t),(void*)off);}
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     STATICINLINE void DrawElementsBaseVertex(
             DrwMd const& p, u32 c, TypeEnum t, u64 off, i32 voff)
     {glDrawElementsBaseVertex(to_enum(p), c, to_enum(t), (void*)off, voff);}
-    STATICINLINE void DrawElementsInstanced(
-            DrwMd const& p,u32 c,TypeEnum t,uint64 off,u64 pc)
-    {glDrawElementsInstanced(to_enum(p),c,to_enum(t),(void*)off,pc);}
-
     STATICINLINE void DrawElementInstancedBaseVertex(
             DrwMd const& p,u32 c,TypeEnum t,u64 off,u64 pc,i32 voff)
     {glDrawElementsInstancedBaseVertex(
                     to_enum(p), c, to_enum(t), (void*)off, pc, voff);}
+#endif
+
+    STATICINLINE void DrawElementsInstanced(
+            DrwMd const& p,u32 c,TypeEnum t,uint64 off,u64 pc)
+    {glDrawElementsInstanced(to_enum(p),c,to_enum(t),(void*)off,pc);}
+
 
     STATICINLINE void DrawRangeElements(
             DrwMd const& p,u32 f,u32 e,i32 c,TypeEnum t,i64 off)

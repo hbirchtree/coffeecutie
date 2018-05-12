@@ -98,7 +98,7 @@ void GLEAM_VertDescriptor::dealloc()
 void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 {
     m_attributes.push_back(attr);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(!GLEAM_FEATURES.gles20)
     {
 #if defined(COFFEE_GLEAM_DESKTOP)
@@ -153,7 +153,7 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf)
     {
         m_bufferMapping.insert({binding, buf});
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else
     {
 #if defined(COFFEE_GLEAM_DESKTOP)

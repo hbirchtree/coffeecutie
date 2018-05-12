@@ -29,7 +29,7 @@ macro ( EMSCRIPTEN_PACKAGE )
 
     set_target_properties ( ${EM_TARGET}
         PROPERTIES
-        LINK_FLAGS "${RSC_FLAGS}"
+        LINK_FLAGS "${${EM_TARGET}_RSC_FLAGS}"
         )
 
     install(

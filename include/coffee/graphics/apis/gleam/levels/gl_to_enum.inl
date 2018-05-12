@@ -14,7 +14,7 @@ inline CGenum to_enum(
 {
     switch(s)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     case Severity::High:
         return GL_DEBUG_SEVERITY_HIGH;
     case Severity::Medium:
@@ -34,7 +34,7 @@ inline CGenum to_enum(
 {
     switch(t)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     case DebugType::Compatibility:
         return GL_DEBUG_TYPE_PORTABILITY;
     case DebugType::Compliance:
@@ -64,7 +64,7 @@ inline CGenum to_enum(
     CGenum type;
     switch(t)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     case Object::Shader:
         type = GL_SHADER;
         break;
@@ -138,7 +138,7 @@ inline CGenum to_enum(
     case Feature::ClipDist:
         return GL_CLIP_DISTANCE0+((offset>7) ? 7 : offset);
 #endif
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     case Feature::DebugOutput:
         return GL_DEBUG_OUTPUT;
     case Feature::DebugOutputSync:
@@ -585,20 +585,18 @@ inline CGenum to_enum1(
     {
     case ShaderStage::Vertex:
         return GL_VERTEX_SHADER;
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     case ShaderStage::TessControl:
         return GL_TESS_CONTROL_SHADER;
     case ShaderStage::TessEval:
         return GL_TESS_EVALUATION_SHADER;
     case ShaderStage::Geometry:
         return GL_GEOMETRY_SHADER;
-#endif
-    case ShaderStage::Fragment:
-        return GL_FRAGMENT_SHADER;
-#if !defined(COFFEE_ONLY_GLES20)
     case ShaderStage::Compute:
         return GL_COMPUTE_SHADER;
 #endif
+    case ShaderStage::Fragment:
+        return GL_FRAGMENT_SHADER;
     default:
         return GL_NONE;
     }
@@ -611,7 +609,7 @@ inline CGenum to_enum2(
 
     CGenum o = 0;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(feval(f&ShaderStage::Vertex))
         o |= GL_VERTEX_SHADER_BIT;
     if(feval(f&ShaderStage::TessControl))
@@ -709,7 +707,7 @@ inline CGenum to_enum(Texture f)
     return (CGenum)f;
 }
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 inline CGenum to_enum(LogicOp op)
 {
     if(feval(op&(LogicOp::COPY)))
@@ -1182,8 +1180,15 @@ inline uint32 to_enum_shtype(CGenum f)
     case GL_SAMPLER_CUBE:
         return sdt_sampf<SCube>::value;
 #if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     case GL_SAMPLER_CUBE_MAP_ARRAY:
         return sdt_sampf<SCubeA>::value;
+    case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
+        return sdt_samp<Int_t,SCubeA>::value;
+    case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
+        return sdt_samp<UInt_t,SCubeA>::value;
+#endif
+
     case GL_SAMPLER_3D:
         return sdt_sampf<S3>::value;
     case GL_SAMPLER_2D_ARRAY:
@@ -1197,8 +1202,6 @@ inline uint32 to_enum_shtype(CGenum f)
         return sdt_samp<UInt_t,S2A>::value;
     case GL_UNSIGNED_INT_SAMPLER_CUBE:
         return sdt_samp<UInt_t,SCube>::value;
-    case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
-        return sdt_samp<UInt_t,SCubeA>::value;
 
     case GL_INT_SAMPLER_2D:
         return sdt_samp<Int_t,S2>::value;
@@ -1208,9 +1211,6 @@ inline uint32 to_enum_shtype(CGenum f)
         return sdt_samp<Int_t,S2A>::value;
     case GL_INT_SAMPLER_CUBE:
         return sdt_samp<Int_t,SCube>::value;
-    case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
-        return sdt_samp<Int_t,SCubeA>::value;
-        break;
 #endif
 
     case GL_FLOAT:

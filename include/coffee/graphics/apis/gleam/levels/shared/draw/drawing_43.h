@@ -10,6 +10,7 @@ namespace CGL{
 
 struct CGL_Drawing_43
 {
+#if GL_VERSION_VERIFY(0x330, 0x320)
     /*!
      * \brief DrawArraysIndirect
      * \param p Primitive type
@@ -32,19 +33,6 @@ struct CGL_Drawing_43
     {glDrawElementsIndirect(to_enum(c),to_enum(d),(c_cptr)off);}
 
     /*!
-     * \brief DrawRangeElements
-     * \param p Primitive type
-     * \param c Primitive creation method
-     * \param f First element in range to draw
-     * \param e Last element in range to draw
-     * \param vc Number of elements to draw
-     * \param d Element data type
-     * \param off Offset into index buffer
-     */
-    STATICINLINE void DrawRangeElements(
-            DrwMd c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off)
-    {glDrawRangeElements(to_enum(c),f,e,vc,to_enum(d),(c_cptr)off);}
-    /*!
      * \brief DrawRangeElementsBaseVertex
      * \param p Primitive type
      * \param c Primitive creation method
@@ -58,6 +46,21 @@ struct CGL_Drawing_43
     STATICINLINE void DrawRangeElementsBaseVertex(
             DrwMd c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off,int32 bv)
     {glDrawRangeElementsBaseVertex(to_enum(c),f,e,vc,to_enum(d),(c_cptr)off,bv);}
+#endif
+
+    /*!
+     * \brief DrawRangeElements
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param f First element in range to draw
+     * \param e Last element in range to draw
+     * \param vc Number of elements to draw
+     * \param d Element data type
+     * \param off Offset into index buffer
+     */
+    STATICINLINE void DrawRangeElements(
+            DrwMd c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off)
+    {glDrawRangeElements(to_enum(c),f,e,vc,to_enum(d),(c_cptr)off);}
 
 #ifdef COFFEE_GLEAM_DESKTOP
     /*!

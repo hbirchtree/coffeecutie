@@ -432,7 +432,7 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE &rstate, uint32 i)
 void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 {
     C_USED(tstate);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(CGL43::TessellationSupported())
     {
         CGL43::PatchParameteri(
@@ -542,7 +542,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
             }else
                 GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
         else if(GLEAM_FEATURES.draw_buffers_blend)
         {
             if(bstate.additive())
@@ -643,7 +643,7 @@ void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data,
         throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     C_USED(prog);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformfv(prog,C_CAST<i32>(idx),
                          C_CAST<i32>(arr_size / sizeof(T)),data);
@@ -661,7 +661,7 @@ void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data,
         throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     C_USED(prog);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformfv(prog,C_CAST<i32>(idx),
                          C_CAST<i32>(arr_size / sizeof(T)),false,data);
@@ -679,7 +679,7 @@ void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
         throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
     C_USED(prog);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformiv(prog,C_CAST<i32>(idx),
                          C_CAST<i32>(arr_size / sizeof(T)),data);
@@ -689,7 +689,7 @@ void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
                          C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 template<typename T>
 void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
                        szptr arr_size)
@@ -697,10 +697,12 @@ void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
     if(!data)
         throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
 
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniformuiv(prog,C_CAST<i32>(idx),
                           C_CAST<i32>(arr_size / sizeof(T)),data);
     else
+#endif
         CGL33::Uniformuiv(C_CAST<i32>(idx),
                           C_CAST<i32>(arr_size / sizeof(T)),data);
 }
@@ -866,7 +868,7 @@ void GLEAM_API::SetShaderUniformState(
 #if !defined(COFFEE_ONLY_GLES20)
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
             if(GLEAM_FEATURES.separable_programs)
             {
                 /* Set texture handle in shader */
@@ -1079,7 +1081,8 @@ static bool InternalDraw(
             else
 #endif
             {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
+#if GL_VERSION_VERIFY(0x330, 0x320)
                 if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0)
                 {
                     CGL33::DrawElementInstancedBaseVertex(
@@ -1088,7 +1091,9 @@ static bool InternalDraw(
                                 i.indexOffset()*elsize, i.instances(),
                                 i.vertexOffset());
                 }
-                else if(!GLEAM_FEATURES.gles20)
+                else
+#endif
+                    if(!GLEAM_FEATURES.gles20)
                     CGL33::DrawElementsInstanced(
                                 mode,i.elements(),i.elementType(),
                                 i.indexOffset()*elsize,i.instances());
@@ -1098,7 +1103,7 @@ static bool InternalDraw(
                                         i.indexOffset()*elsize);
             }
         }else{
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
             if(i.vertexOffset() > 0)
                 CGL33::DrawElementsBaseVertex(
                             mode, i.elements(), i.elementType(),
@@ -1122,7 +1127,7 @@ static bool InternalDraw(
     return true;
 }
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 bool InternalMultiDraw(
         GLEAM_API::OptimizedDraw::MultiDrawData const& data)
 {
@@ -1241,7 +1246,7 @@ static void GetInstanceUniform(
         uloc = CGL33::ProgramUnifGetLoc(
                     pipeline.pipelineHandle(), unifName);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else
     {
         auto& hnd = handle;
@@ -1255,6 +1260,9 @@ static void GetInstanceUniform(
 
         uloc = C_FCAST<i32>(raw_uloc);
     }
+#else
+    else
+        Throw(implementation_error("bad render path"));
 #endif
 }
 
@@ -1270,11 +1278,14 @@ static void SetInstanceUniform(
     {
         CGL33::Uniformiv(uloc, 1, &baseInstance_i);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     else
     {
         CGL43::Uniformiv(hnd, C_FCAST<i32>(uloc), 1, &baseInstance_i);
     }
+#else
+    else
+        Throw(implementation_error("bad render path"));
 #endif
 }
 
@@ -1331,7 +1342,7 @@ void GLEAM_API::MultiDraw(
         GetInstanceUniform(pipeline, "InstanceID",
                            instanceID_loc, vertexHandle);
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 
     /* For pure GL 3.3 platforms, we must assert that
      *  instancing is not necessary */
@@ -1467,7 +1478,7 @@ void GLEAM_API::Draw(
 
     vertices.bind();
 
-#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
     if(m_store->features.qcom_tiling)
     {
         auto size = GLEAM_API::DefaultFramebuffer().size();
@@ -1479,7 +1490,7 @@ void GLEAM_API::Draw(
 
     InternalDraw(pipeline.m_handle, mode, d, i);
 
-#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
     if(m_store->features.qcom_tiling)
         glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
 #endif

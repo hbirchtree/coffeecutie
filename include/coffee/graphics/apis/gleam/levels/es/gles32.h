@@ -7,18 +7,23 @@
 #include "../shared/xfb/arb_xf2.h"
 
 #include "../shared/draw/drawing_43.h"
+
+#if GL_VERSION_VERIFY(0x330, 0x320)
 #include "../shared/draw/arb_tessellation_shader.h"
 #include "../shared/draw/arb_compute_shader.h"
 
 #include "../shared/constructors/arb_separate_shader_programs.h"
 #include "../shared/shaders/arb_program_interface_query.h"
 #include "../shared/shaders/arb_separate_shader_programs.h"
-#include "../shared/shaders/arb_es2_compatibility.h"
-#include "../shared/shaders/arb_get_program_binary.h"
-
 #include "../shared/vertex/arb_vertex_attrib_binding.h"
 
 #include "../shared/framebuffers/arb_framebuffer_no_attachments.h"
+#endif
+
+#include "../shared/shaders/arb_es2_compatibility.h"
+#include "../shared/shaders/arb_get_program_binary.h"
+
+
 
 namespace Coffee{
 namespace CGL{
@@ -35,20 +40,28 @@ struct CGLES32 :
 
         CGL_TextureStorage,
 
+        #if GL_VERSION_VERIFY(0xFFFF, 0x320)
         CGL_SeparableShaderPrograms,
 
         CGL_SeparableShaderPrograms_Allocators,
         CGL_XF2_Allocators,
+        #endif
 
+        #if GL_VERSION_VERIFY(0xFFFF, 0x320)
         CGL_TessellationShader,
         CGL_ComputeShader,
         CGL_Drawing_43,
+        #endif
 
         CGL_ES2Compatibility,
+        #if GL_VERSION_VERIFY(0xFFFF, 0x320)
         CGL_ProgramInterfaceQuery,
+        #endif
         CGL_GetProgramBinary,
 
+        #if GL_VERSION_VERIFY(0xFFFF, 0x320)
         CGL_VertexAttribBinding<GLESVER_32>,
+        #endif
 
         CGL_XF2
 {
@@ -71,7 +84,11 @@ struct CGLES32 :
         if(!CGLES30::LoadBinding(ctxt,fun))
             return false;
 
+#if defined(COFFEE_LINKED_GLES32)
         return (bool)glVertexAttribFormat;
+#else
+        return true;
+#endif
     }
 
     STATICINLINE void ViewportSet(uint32, CRectF& view)
@@ -79,8 +96,10 @@ struct CGLES32 :
         ViewportSet(view.convert<int64>());
     }
 
+#if defined(COFFEE_LINKED_GLES32)
     STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
     {glBlendFunci(i,v1,v2);}
+#endif
 
     /* Stubbing this to avoid compilation errors */
     template<typename... T>

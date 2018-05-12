@@ -15,7 +15,7 @@ namespace CGL{
 void CGL_Shared_Debug::SetDebugMode(bool enabled)
 {
     C_USED(enabled);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
     if(enabled == b_isDebugging)
         return;
     if(enabled)
@@ -276,28 +276,30 @@ static Map<u32, limit_name_t> limit_map = {
 
     A(L::Total_Base + L::ImageUnits, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS),
 
-    #if !defined(COFFEE_ONLY_GLES20)
+    #if GL_VERSION_VERIFY(0x330, 0x300)
     A(L::Vertex_Base + L::UniformVals,GL_MAX_VERTEX_UNIFORM_COMPONENTS),
-    A(L::Vertex_Base + L::AtomicCounters,GL_MAX_VERTEX_ATOMIC_COUNTERS),
-    A(L::Vertex_Base + L::AtomicBufs,GL_MAX_VERTEX_ATOMIC_COUNTER_BUFFERS),
-    A(L::Vertex_Base + L::SSBO,GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS),
     A(L::Vertex_Base + L::UniformsBlocks,GL_MAX_VERTEX_UNIFORM_BLOCKS),
     A(L::Vertex_Base + L::Inputs,GL_MAX_VERTEX_ATTRIBS),
     A(L::Vertex_Base + L::Outputs,GL_MAX_VERTEX_OUTPUT_COMPONENTS),
-    A(L::Vertex_Base + L::ImageUniforms,GL_MAX_VERTEX_IMAGE_UNIFORMS),
-
     A(L::Fragment_Base+L::UniformVals,GL_MAX_FRAGMENT_UNIFORM_COMPONENTS),
-    A(L::Fragment_Base+L::AtomicCounters,GL_MAX_FRAGMENT_ATOMIC_COUNTERS),
-    A(L::Fragment_Base+L::AtomicBufs,GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS),
-    A(L::Fragment_Base + L::SSBO,GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS),
     A(L::Fragment_Base + L::UniformsBlocks,GL_MAX_FRAGMENT_UNIFORM_BLOCKS),
     A(L::Fragment_Base + L::Inputs,GL_MAX_FRAGMENT_INPUT_COMPONENTS),
     A(L::Fragment_Base + L::Outputs,GL_MAX_DRAW_BUFFERS),
+
+    #if GL_VERSION_VERIFY(0x330, 0x320)
+    A(L::Vertex_Base + L::AtomicCounters,GL_MAX_VERTEX_ATOMIC_COUNTERS),
+    A(L::Vertex_Base + L::AtomicBufs,GL_MAX_VERTEX_ATOMIC_COUNTER_BUFFERS),
+    A(L::Vertex_Base + L::SSBO,GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS),
+    A(L::Vertex_Base + L::ImageUniforms,GL_MAX_VERTEX_IMAGE_UNIFORMS),
+    A(L::Fragment_Base+L::AtomicCounters,GL_MAX_FRAGMENT_ATOMIC_COUNTERS),
+    A(L::Fragment_Base+L::AtomicBufs,GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS),
+    A(L::Fragment_Base + L::SSBO,GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS),
     A(L::Fragment_Base + L::ImageUniforms,GL_MAX_FRAGMENT_IMAGE_UNIFORMS),
+    #endif
 
     #endif
 
-    #if defined(COFFEE_ONLY_GLES20)
+    #if GL_VERSION_VERIFY(0x330, 0x300)
     A(L::Vertex_Base + L::Outputs, GL_MAX_VARYING_VECTORS),
     A(L::Fragment_Base + L::Inputs, GL_MAX_VARYING_VECTORS),
     #endif
@@ -333,9 +335,11 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::VAO_ElementIndices,GL_MAX_ELEMENTS_INDICES),
     A(L::VAO_ElementVerts,GL_MAX_ELEMENTS_VERTICES),
 
+    #if GL_VERSION_VERIFY(0x330, 0x320)
     A(L::Vertex_AttrRelativeOff,GL_MAX_VERTEX_ATTRIB_RELATIVE_OFFSET),
     A(L::Vertex_AttrStride,GL_MAX_VERTEX_ATTRIB_STRIDE),
     A(L::Vertex_AttrBindings,GL_MAX_VERTEX_ATTRIB_BINDINGS),
+    #endif
 
     #if defined(GL_MAX_VERTEX_STREAMS)
     A(L::Vertex_Streams,GL_MAX_VERTEX_STREAMS),
@@ -347,9 +351,11 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::Vertex_CombClipCullDists,GL_MAX_COMBINED_CLIP_AND_CULL_DISTANCES),
     #endif
 
+    #if GL_VERSION_VERIFY(0x330, 0x320)
     A(L::Geom_InComps,GL_MAX_GEOMETRY_INPUT_COMPONENTS),
     A(L::Geom_OutComps,GL_MAX_GEOMETRY_OUTPUT_COMPONENTS),
     A(L::Geom_OutVerts,GL_MAX_GEOMETRY_OUTPUT_VERTICES),
+    #endif
 
     #if defined(GL_MAX_TESS_PATCH_COMPONENTS)
     A(L::Tess_Patches,GL_MAX_TESS_PATCH_COMPONENTS),
@@ -358,10 +364,13 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::FBO_DrawBufs,GL_MAX_DRAW_BUFFERS),
     A(L::FBO_RendBufSize,GL_MAX_RENDERBUFFER_SIZE),
     A(L::FBO_ColorAtt,GL_MAX_COLOR_ATTACHMENTS),
+
+    #if GL_VERSION_VERIFY(0x330, 0x320)
     A(L::FBO_Width,GL_MAX_FRAMEBUFFER_WIDTH),
     A(L::FBO_Height,GL_MAX_FRAMEBUFFER_HEIGHT),
     A(L::FBO_Layers,GL_MAX_FRAMEBUFFER_LAYERS),
     A(L::FBO_Samples,GL_MAX_FRAMEBUFFER_SAMPLES),
+    #endif
 
     #if defined(GL_MAX_TRANSFORM_FEEDBACK_BUFFERS)
     A(L::XF_InterleavComps,GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS),
@@ -369,9 +378,11 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::XF_SeparateAttrs,GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS),
     #endif
 
+    #if GL_VERSION_VERIFY(0x330, 0x320)
     A(L::Dbg_LabelLen,GL_MAX_LABEL_LENGTH),
     A(L::Dbg_MessageLen,GL_MAX_DEBUG_MESSAGE_LENGTH),
     A(L::Dbg_LoggedMessages,GL_MAX_DEBUG_LOGGED_MESSAGES),
+    #endif
 
 //    #if defined(GL_MAX_SHADER_COMPILER_THREADS_ARB)
 //    A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_ARB),
@@ -380,7 +391,9 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::Compile_Threads,GL_MAX_SHADER_COMPILER_THREADS_KHR),
     #endif
 
+    #if GL_VERSION_VERIFY(0x330, 0x320)
     A(L::UniformLocs,GL_MAX_UNIFORM_LOCATIONS),
+    #endif
 
     A(L::UBO_Size,GL_MAX_UNIFORM_BLOCK_SIZE),
     #if defined(GL_MAX_SHADER_STORAGE_BLOCK_SIZE)

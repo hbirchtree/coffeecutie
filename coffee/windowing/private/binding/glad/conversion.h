@@ -2,10 +2,11 @@
 
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/graphics/apis/gleam/levels/shared/gl_shared_include.h>
+#include <coffee/graphics/apis/gleam/levels/shared/gl_shared_types.h>
 
 namespace Coffee{
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 DebugType gl_converttype(GLuint type)
 {
     switch(type)

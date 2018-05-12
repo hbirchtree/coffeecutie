@@ -92,6 +92,7 @@ bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
     else
     {
         CString m_err = cStringFormat("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
+        cDebug("{0}", m_err);
         if(err)
             *err = m_err;
         return false;

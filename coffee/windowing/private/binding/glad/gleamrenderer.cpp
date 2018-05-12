@@ -36,7 +36,7 @@ GLeamRenderer::~GLeamRenderer()
 {
 }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 void gleamcallback(
         GLenum src, GLenum type,GLuint id,GLenum sev,
         GLsizei,const GLchar* msg,
@@ -141,11 +141,14 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         const static CGLVersion v32es(3,2);
 #endif
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if !defined(COFFEE_LINKED_GLES)
+#if GL_VERSION_VERIFY(0x0, 0x320)
         if(p.version>=v32es)
         {
             status = CGL::CGLES32::LoadBinding(m_app->glContext(),procload);
         }else
+#endif
+#if GL_VERSION_VERIFY(0x0, 0x300)
         if(p.version==v30es)
         {
             status = CGL::CGLES30::LoadBinding(m_app->glContext(),procload);
@@ -153,13 +156,11 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 #endif
         if(p.version==v20es)
         {
-#if !defined(COFFEE_LINKED_GLES)
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),procload);
-#else
-            cVerbose(7, "Checking OpenGL ES 2.0 functions...");
-            status = CGL::CGLES20::LoadBinding(m_app->glContext(),nullptr);
-#endif
         }
+#else
+        status = true;
+#endif
 #endif
     }
     Profiler::DeepPopContext();
@@ -293,7 +294,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(GL::DebuggingSupported())
     {
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ONLY_GLES20)
+#if !defined(COFFEE_WINDOWS) && GL_VERSION_VERIFY(0x330, 0x320)
         DProfContext b(GLR_API "Configuring GL context debugging");
         GL::Debug::SetDebugMode(true);
         GL::Debug::DebugSetCallback(gleamcallback,this);

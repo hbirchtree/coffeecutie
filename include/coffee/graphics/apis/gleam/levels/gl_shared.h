@@ -52,11 +52,11 @@ struct CGL_Shared_Functions
     STATICINLINE
     void Disable(Feature e,uint32 o = 0){glDisable(to_enum(e,o));}
 
-#if !defined(COFFEE_ONLY_GLES20)
-    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
     STATICINLINE
     void Enablei(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
-    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
     STATICINLINE
     void Disablei(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
 #endif
@@ -216,8 +216,8 @@ struct CGL_Shared_Functions
     STATICINLINE
     void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
 
-#if !defined(COFFEE_ONLY_GLES20)
-    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
+#if GL_VERSION_VERIFY(0x330, 0x310)
+    GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_31)
     STATICINLINE
     void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
 #endif
@@ -268,7 +268,8 @@ struct CGL_Shared_Functions
      * \brief Check if platform supports any kind of GL debugging. If this returns true, there should be a valid implementation.
      * \return
      */
-#if !defined(COFFEE_ONLY_GLES20)
+#if (!defined(COFFEE_ONLY_GLES20) && defined(COFFEE_LINKED_GLES32)) ||\
+    defined(COFFEE_GLEAM_DESKTOP)
     bool DebuggingSupported()
     {return Debug::CheckExtensionSupported("GL_KHR_debug") && glDebugMessageCallback;}
 #else
