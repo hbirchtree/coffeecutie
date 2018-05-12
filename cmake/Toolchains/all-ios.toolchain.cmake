@@ -186,7 +186,6 @@ set (CMAKE_SYSTEM_FRAMEWORK_PATH
 )
 
 # only search the iOS sdks, not the remainder of the host filesystem
-set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 

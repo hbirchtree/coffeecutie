@@ -22,6 +22,7 @@ endif()
 
 coffee_application (
     TARGET PressureCooker
+    USE_CMD
     TITLE "Pressure Cooker"
     SOURCES main.cpp
     LIBRARIES CoffeeCore
@@ -30,6 +31,7 @@ coffee_application (
 
 coffee_application (
     TARGET Depressurize
+    USE_CMD
     TITLE "Depressurizer"
     SOURCES depressure_main.cpp
     LIBRARIES CoffeeCore
@@ -38,6 +40,7 @@ coffee_application (
 if(COFFEE_BUILD_ASSIMP)
     coffee_library (
         TARGET PressurizeModels
+        LINKABLE
         LINKAGE SHARED
         SOURCES model_compress.cpp
         LIBRARIES CoffeeCore CoffeeAssimp
@@ -59,6 +62,7 @@ endif()
 if(SQUISH_FOUND)
     coffee_library(
         TARGET PressurizeTextures
+        LINKABLE
         LINKAGE SHARED
         SOURCES texture_compress.cpp
         LIBRARIES CoffeeImage CoffeeCore Squish
@@ -94,6 +98,7 @@ endif()
 if(SHADERC_FOUND)
     coffee_library (
         TARGET PressurizeShaders
+        LINKABLE
         LINKAGE SHARED
         SOURCES shader_compress.cpp
         LIBRARIES CoffeeCore shaderc

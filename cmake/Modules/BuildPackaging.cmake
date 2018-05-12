@@ -63,6 +63,7 @@ function(COFFEE_APPLICATION)
         # This is used for automatic inclusion of profiler report code
         # Defines FEATURE_USE_ASIO when present
         USE_ASIO
+        USE_CMD
         )
 
     cmake_parse_arguments( APP
@@ -115,7 +116,7 @@ function(COFFEE_APPLICATION)
             "${SOURCES_MOD}"
             "${APP_RESOURCES}"
             "${ICON_ASSET}")
-    elseif(APPLE)
+    elseif(APPLE AND NOT APP_USE_CMD)
         MACAPP_PACKAGE(
             "${APP_TARGET}"
             "${APP_TITLE}" "${APP_VERSION_CODE}"
