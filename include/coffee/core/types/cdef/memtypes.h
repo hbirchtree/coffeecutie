@@ -10,6 +10,8 @@ namespace Coffee {
 
 struct Path;
 
+#define BYTE_API "_cbasic_data_chunk<T>::"
+
 template<typename T>
 struct _cbasic_data_chunk
 {
@@ -36,7 +38,7 @@ struct _cbasic_data_chunk
         data(data), size(size), elements(elements)
     {
         if((size && !data) || (size && !elements) || (!size && data))
-            Throw(implementation_error("invalid construction"));
+            Throw(implementation_error(BYTE_API "invalid construction"));
     }
 
     template<
@@ -107,7 +109,7 @@ struct _cbasic_data_chunk
     {
 #if !defined(NDEBUG)
         if(!d)
-            Throw(implementation_error("abuse of SetDestr()"));
+            Throw(implementation_error(BYTE_API "abuse of SetDestr()"));
 #endif
         inst.m_destr = d;
     }
@@ -127,7 +129,7 @@ struct _cbasic_data_chunk
     {
 #if !defined(NDEBUG)
         if(num == 0)
-            Throw(implementation_error("allocating 0 bytes is bad"));
+            Throw(implementation_error(BYTE_API "allocating 0 bytes is bad"));
 #endif
         _cbasic_data_chunk<T> out;
 
@@ -264,7 +266,7 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T>
         CopyFrom(Vector<T2>& data)
     {
-        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
+        static_assert(sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
 
         using OutT = _cbasic_data_chunk<T>;
 
@@ -291,7 +293,7 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T>
         CopyFrom(Vector<T2>& data)
     {
-        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
+        static_assert(sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
 
         using OutT = _cbasic_data_chunk<T>;
 
@@ -313,7 +315,7 @@ struct _cbasic_data_chunk
     template<typename T2>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
     {
-        static_assert(sizeof(T2) >= sizeof(T), "incompatible size to copy");
+        static_assert(sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
 
         using OutT = _cbasic_data_chunk<T>;
 
@@ -420,7 +422,7 @@ struct _cbasic_data_chunk
         data = C_RCAST<T*>(realloc(data, newSize));
 
         if(!data)
-            Throw(undefined_behavior("reallocation failed"));
+            Throw(undefined_behavior(BYTE_API "reallocation failed"));
 
         size = newSize;
 
@@ -516,7 +518,7 @@ struct _cbasic_data_chunk
     NO_DISCARD iterator begin()
     {
         if(elements == 0)
-            throw implementation_error("no elements");
+            throw implementation_error(BYTE_API "no elements");
 
         return iterator(*this);
     }
@@ -529,7 +531,7 @@ struct _cbasic_data_chunk
     NO_DISCARD const_iterator begin() const
     {
         if(elements == 0)
-            throw implementation_error("no elements");
+            throw implementation_error(BYTE_API "no elements");
 
         return const_iterator(*this);
     }
@@ -555,6 +557,8 @@ struct _cbasic_data_chunk
     void (*m_destr)(_cbasic_data_chunk<T>&) = nullptr;
     RSCA m_access;
 };
+
+#undef BYTE_API
 
 using Bytes      = _cbasic_data_chunk<byte_t>;
 using BytesConst = _cbasic_data_chunk<const byte_t>;
