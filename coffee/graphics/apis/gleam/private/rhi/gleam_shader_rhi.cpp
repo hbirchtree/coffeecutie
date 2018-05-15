@@ -341,7 +341,7 @@ void GLEAM_Shader::dealloc()
         if(m_handle!=0)
             CGL33::ShaderFree(m_handle);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x410, 0x300)
     else if(GLEAM_FEATURES.separable_programs)
     {
         if(m_handle!=0)
@@ -814,7 +814,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
     if(GLEAM_FEATURES.gles20)
         return;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     int32* bin_fmts = &GLEAM_API_INSTANCE_DATA->GL_CACHED
             .NUM_PROGRAM_BINARY_FORMATS;
     if(*bin_fmts == -1)

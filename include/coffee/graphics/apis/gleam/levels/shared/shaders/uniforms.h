@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../gl_shared_include.h"
+#include "../gl_shared_types.h"
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/vector_types.h>
 
@@ -69,7 +69,7 @@ struct CGL_Old_Uniforms
         glUniformMatrix4fv(l, c, (t) ? GL_TRUE : GL_FALSE, (scalar*)d);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void Uniformfv(
         int32 l, int32 c, bool t, const _cbasic_tmnmatrix<scalar, 2, 3>* d)
     {

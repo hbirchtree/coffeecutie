@@ -56,7 +56,7 @@ struct CGL_Old_Constructors
         return true;
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE bool SamplerAlloc(Span<CGhnd> const& handles)
     {
         glGenSamplers(handles.elements, handles.data);
@@ -117,7 +117,7 @@ struct CGL_Old_Constructors
         return true;
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE bool FenceFree(Span<GLsync> const& handles)
     {
         for(uint32 i = 0; i < handles.elements; i++)

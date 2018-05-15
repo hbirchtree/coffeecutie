@@ -11,15 +11,13 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-#ifndef COFFEE_GLEAM_DESKTOP
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
 using CGL33 = CGLES30;
 using CGL43 = CGLES32;
 using CGL45 = CGLES32;
-#else
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
 using CGL33 = CGLES20;
 using CGL43 = CGLES20;
-#endif
 #endif
 
 using namespace CGL;
@@ -45,7 +43,7 @@ struct GLEAM_PboQueue
 
 struct GLEAM_Instance_Data
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     GLEAM_PboQueue pboQueue;
 #endif
     struct {

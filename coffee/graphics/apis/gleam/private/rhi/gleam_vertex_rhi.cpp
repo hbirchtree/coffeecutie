@@ -43,7 +43,7 @@ static void vao_apply_buffer(
         if(binding == attr.bufferAssociation())
         {
             CGL33::VAOEnableAttrib(attr.index());
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
             bool use_integer = IsIntegerType(attr.type());
 
             if(use_integer && !(attr.m_flags & GLEAM_API::AttributePacked) &&
@@ -66,7 +66,7 @@ static void vao_apply_buffer(
                     attr.bufferOffset() + attr.offset() +
                         vertexOffset * attr.stride());
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
             if(attr.instanced())
                 CGL33::VAODivisor(attr.index(), 1);
 #endif
@@ -75,12 +75,11 @@ static void vao_apply_buffer(
 
 void GLEAM_VertDescriptor::alloc()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
         CGL45::VAOAlloc(m_handle);
     else
-#endif
+#elif GL_VERSION_VERIFY(0x300, 0x300)
         if(!GLEAM_FEATURES.gles20)
         CGL33::VAOAlloc(m_handle);
 #endif
@@ -88,7 +87,7 @@ void GLEAM_VertDescriptor::alloc()
 
 void GLEAM_VertDescriptor::dealloc()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
         CGL33::VAOFree(m_handle);
     m_handle = 0;
@@ -101,7 +100,7 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(!GLEAM_FEATURES.gles20)
     {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
         {
             CGL45::VAOEnableAttrib(m_handle, attr.index());
@@ -156,12 +155,12 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf)
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else
     {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(!GLEAM_FEATURES.direct_state)
 #endif
             CGL43::VAOBind(m_handle);
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
         {
             for(GLEAM_VertAttribute const& attr : m_attributes)
@@ -209,7 +208,7 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer* buffer)
 {
     m_ibuffer = buffer;
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.vertex_format && GLEAM_FEATURES.direct_state)
         CGL45::VAOElementBuffer(m_handle, buffer->m_handle);
 #endif
@@ -217,7 +216,7 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer* buffer)
 
 void GLEAM_VertDescriptor::bind(u32 vertexOffset)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGL33::VAOBind(m_handle);
@@ -237,7 +236,7 @@ void GLEAM_VertDescriptor::bind(u32 vertexOffset)
 
 void GLEAM_VertDescriptor::unbind()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
         CGL33::VAOBind(0);
     else

@@ -53,7 +53,7 @@ struct GLEAM_DataStore
         bool draw_indirect = false;
 
 #if defined(COFFEE_GLEAM_DESKTOP)
-        bool base_instance;
+        bool base_instance = false;
         bool direct_state = false;
 #else
         bool qcom_tiling = false;

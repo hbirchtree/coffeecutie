@@ -92,7 +92,7 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy &rb)
 
 void GLEAM_RenderTarget::attachDepthStencilSurface(const GLEAM_Surface &s, uint32 mip)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         fb_bind(m_type,m_handle);
@@ -127,7 +127,7 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
 {
     GLEAM_ScopeMarker sc(GLM_API "blit");
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         this->bind(FramebufferT::Read);
@@ -149,31 +149,12 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
 
 void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
 {
-//    fb_bind(m_type,m_handle);
-
     auto sz_arm_printable = view.convert<i32>();
     cVerbose(10, GLM_API "Resizing render target {0} to {1}x{2}",
              m_handle,
              sz_arm_printable.w, sz_arm_printable.h);
 
     m_size = sz_arm_printable.size();
-
-//#if !defined(COFFEE_ONLY_GLES20)
-//    if(!GLEAM_FEATURES.gles20 && CGL43::ViewportArraySupported())
-//    {
-//        auto r = view.convert<scalar>();
-//        CGL43::ViewportSet(i,r);
-//    }else
-//#endif
-//    {
-//        if(GL_DEBUG_MODE)
-//            if(i != 0)
-//                cWarning("Cannot perform task: applying viewport index, unsupported");
-//        if(i==0)
-//            CGL33::ViewportSet(view);
-//    }
-//    if(m_handle != 0)
-//        fb_bind(m_type,0);
 }
 
 CSize GLEAM_RenderTarget::size()

@@ -97,9 +97,12 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     cVerbose(8, GLR_API "Attempting to load version: {0}",p.version);
 
+    /* When rendering with GLES or EGL, we need a procloader most likely */
 #if !defined(COFFEE_GLEAM_DESKTOP) || defined(COFFEE_USE_MAEMO_EGL)
 
+    /* If GLES functions are linked, skip this */
 #if !defined(COFFEE_LINKED_GLES)
+    /* Otherwise, pick a procloader based on the current windowing API */
 #if defined(COFFEE_USE_LINUX_GLX)
     GLADloadproc procload = (GLADloadproc)glXGetProcAddress;
 #elif defined(COFFEE_USE_MAEMO_EGL)
@@ -116,7 +119,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     Profiler::DeepPushContext(GLR_API "Loading GLAD binding");
     if(!(p.flags & GLProperties::Flags::GLES))
     {
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         const static CGLVersion v33(3,3);
         const static CGLVersion v43(4,3);
         const static CGLVersion v45(4,5);
@@ -134,9 +137,9 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         }
 #endif
     }else{
-#ifndef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
         const static CGLVersion v20es(2,0);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
         const static CGLVersion v30es(3,0);
         const static CGLVersion v32es(3,2);
 #endif

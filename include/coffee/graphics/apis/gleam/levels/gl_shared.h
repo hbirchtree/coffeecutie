@@ -78,7 +78,7 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ClearBufferiv(const int32* d)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         glClearBufferiv(GL_STENCIL,0,d);
 #else
         ClearStencil(*d);
@@ -88,7 +88,7 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ClearBufferfv(const scalar* d)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         glClearBufferfv(GL_DEPTH,0,d);
 #else
         ClearDepth(*d);
@@ -98,7 +98,7 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ClearBufferfv(bool,int32 i,const CVec4& d)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         glClearBufferfv(GL_COLOR,i,(scalar*)&d);
 #else
         C_UNUSED(i);
@@ -109,7 +109,7 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ClearBufferfi(scalar d,int32 s)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);
 #else
         ClearBufferiv(&s);
@@ -136,7 +136,7 @@ struct CGL_Shared_Functions
     STATICINLINE
     void DepthSet(ZField64 const& d)
     {
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glDepthRange(d.near_,d.far_);
 #else
         glDepthRangef(d.near_,d.far_);
@@ -171,7 +171,7 @@ struct CGL_Shared_Functions
         C_UNUSED(f1);
         C_UNUSED(f2);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glPolygonMode(to_enum(f1),to_enum(f2));
 #endif
     }
@@ -183,7 +183,7 @@ struct CGL_Shared_Functions
         C_UNUSED(f);
         C_UNUSED(d);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glPointParameteriv(f,d);
 #endif
     }
@@ -195,7 +195,7 @@ struct CGL_Shared_Functions
         C_UNUSED(f);
         C_UNUSED(d);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glPointParameterfv(f,d);
 #endif
     }
@@ -206,7 +206,7 @@ struct CGL_Shared_Functions
     {
         C_UNUSED(f);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glPointSize(f);
 #endif
     }
@@ -235,7 +235,7 @@ struct CGL_Shared_Functions
     {
         C_UNUSED(op);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glColorMask(op.r,op.g,op.b,op.a);
 #endif
     }
@@ -246,7 +246,7 @@ struct CGL_Shared_Functions
         C_UNUSED(i);
         C_UNUSED(op);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glColorMaski(i,op.r,op.g,op.b,op.a);
 #endif
     }
@@ -257,7 +257,7 @@ struct CGL_Shared_Functions
     {
         C_UNUSED(op);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         glLogicOp(to_enum(op));
 #endif
     }
@@ -268,8 +268,7 @@ struct CGL_Shared_Functions
      * \brief Check if platform supports any kind of GL debugging. If this returns true, there should be a valid implementation.
      * \return
      */
-#if (!defined(COFFEE_ONLY_GLES20) && defined(COFFEE_LINKED_GLES32)) ||\
-    defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x430, 0x320)
     bool DebuggingSupported()
     {return Debug::CheckExtensionSupported("GL_KHR_debug") && glDebugMessageCallback;}
 #else

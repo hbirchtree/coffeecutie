@@ -6,6 +6,7 @@
 #include <coffee/core/types/edef/enumfun.h>
 #include <coffee/core/types/edef/graphicsenum.h>
 #include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
 namespace CGL{
@@ -164,12 +165,12 @@ enum class VertexWinding
 
 enum class AttribMode
 {
-#if defined(COFFEE_ONLY_GLES20)
-    Interleaved = GL_NONE,
-    Separate = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     Interleaved = GL_INTERLEAVED_ATTRIBS,
     Separate = GL_SEPARATE_ATTRIBS,
+#else
+    Interleaved = GL_NONE,
+    Separate = GL_NONE,
 #endif
 };
 
@@ -220,7 +221,7 @@ enum class Feature
 {
     Blend,
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     ClipDist,
 #endif
     Culling,
@@ -228,7 +229,7 @@ enum class Feature
     DebugOutput,
     DebugOutputSync,
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     DepthClamp,
 #endif
     DepthTest,
@@ -236,12 +237,12 @@ enum class Feature
 
     FramebufferSRGB,
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     LineSmooth,
     PolygonSmooth,
 #endif
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     PrimitiveRestart,
 #endif
     PrimitiveRestartFixedIdx,
@@ -249,7 +250,7 @@ enum class Feature
     SampleAlphaToCoverage,
     SampleCoverage,
     SampleMask,
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     SampleAlphaToOne,
     SampleShading,
 #endif
@@ -259,18 +260,18 @@ enum class Feature
     ScissorTest,
     StencilTest,
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     PointSize,
 #endif
 
     SeamlessCubemap,
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     Multisample,
 #endif
 
     PolygonOffsetFill,
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     PolygonOffsetPoint,
     PolygonOffsetLine,
 #endif
@@ -281,13 +282,13 @@ enum class BufType
 
     ArrayData = GL_ARRAY_BUFFER,
     ElementData = GL_ELEMENT_ARRAY_BUFFER,
-#if defined(COFFEE_ONLY_GLES20)
-    UniformData = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     UniformData = GL_UNIFORM_BUFFER,
+#else
+    UniformData = GL_NONE,
 #endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     ShaderData = GL_SHADER_STORAGE_BUFFER,
     AtomicData = GL_ATOMIC_COUNTER_BUFFER,
     QueryData = GL_QUERY_BUFFER,
@@ -296,12 +297,12 @@ enum class BufType
     AtomicData = 0,
     QueryData = 0,
 #endif
-#if defined(COFFEE_ONLY_GLES20)
-    XFBData = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
+#else
+    XFBData = GL_NONE,
 #endif
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     DrawcallData = GL_DRAW_INDIRECT_BUFFER,
     ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
 #else
@@ -309,31 +310,31 @@ enum class BufType
     ComputecallData = 0,
 #endif
 
-#if defined(COFFEE_ONLY_GLES20)
-    PixelUData = GL_NONE,
-    PixelPData = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     PixelUData = GL_PIXEL_UNPACK_BUFFER,
     PixelPData = GL_PIXEL_PACK_BUFFER,
+#else
+    PixelUData = GL_NONE,
+    PixelPData = GL_NONE,
 #endif
 };
 
 enum class Texture
 {
     T2D = GL_TEXTURE_2D,
-#if defined(COFFEE_ONLY_GLES20)
-    T3D = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     T3D = GL_TEXTURE_3D,
+#else
+    T3D = GL_NONE,
 #endif
     Cubemap = GL_TEXTURE_CUBE_MAP,
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     Rect = GL_TEXTURE_RECTANGLE,
 #endif
-#if defined(COFFEE_ONLY_GLES20)
-    T2DArray = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     T2DArray = GL_TEXTURE_2D_ARRAY,
+#else
+    T2DArray = GL_NONE,
 #endif
 #if GL_VERSION_VERIFY(0x330, 0x320)
     CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
@@ -346,7 +347,7 @@ enum class Texture
     CubeZ_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
     CubeZ_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     Proxy2D = GL_PROXY_TEXTURE_2D,
     Proxy3D = GL_PROXY_TEXTURE_3D,
     ProxyCubemap = GL_PROXY_TEXTURE_CUBE_MAP,
@@ -365,7 +366,7 @@ enum class Texture
 
 enum class DrawMode
 {
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     Point = GL_POINT,
     Line = GL_LINE,
     Fill = GL_FILL,
@@ -378,17 +379,17 @@ enum class DrawMode
 
 enum class QueryT
 {
-#if defined(COFFEE_ONLY_GLES20)
-    AnySamples = GL_NONE,
-    AnySamplesCon = GL_NONE,
-    XFGen = GL_NONE,
-#else
+#if GL_VERSION_VERIFY(0x300, 0x300)
     AnySamples = GL_ANY_SAMPLES_PASSED,
     AnySamplesCon = GL_ANY_SAMPLES_PASSED_CONSERVATIVE,
     XFGen = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
+#else
+    AnySamples = GL_NONE,
+    AnySamplesCon = GL_NONE,
+    XFGen = GL_NONE,
 #endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     TimeElapsed = GL_TIME_ELAPSED,
 
     Samples = GL_SAMPLES_PASSED,
@@ -408,15 +409,15 @@ enum class PatchProperty
 #else
     Vertices = GL_NONE,
 #endif
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,
     DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,
 #endif
 };
 
-C_FLAGS(BufBit,uint32);
-C_FLAGS(ShaderStage,uint32);
-C_FLAGS(Face,uint32);
+C_FLAGS(BufBit,u32);
+C_FLAGS(ShaderStage,u32);
+C_FLAGS(Face,u32);
 
 }
 }

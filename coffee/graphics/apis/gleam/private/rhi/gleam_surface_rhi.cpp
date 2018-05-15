@@ -16,7 +16,7 @@ namespace GLEAM {
 C_MAYBE_UNUSED STATICINLINE void texture_swizzle(
     Texture type, CGhnd tex_hnd, PixCmp cmp, PixCmp target)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::TexBind(type, tex_hnd);
     i32 val = C_FCAST<i32>(CGL::to_enum(target, PixFmt::None));
     CGL33::TexParameteriv(type, to_enum_swizz(cmp), &val);
@@ -26,13 +26,13 @@ C_MAYBE_UNUSED STATICINLINE void texture_swizzle(
 STATICINLINE void texture_pbo_upload(
     szptr pixSize, Bytes const& data, u32 m_flags, c_cptr& data_ptr)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(pixSize > data.size)
         throw undefined_behavior("memory access would go out of bounds");
 
     if(m_flags & GLEAM_API::TextureDMABuffered)
     {
-        data_ptr = 0x0;
+        data_ptr = nullptr;
         CGL33::BufBind(
             BufType::PixelUData,
             GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
@@ -87,7 +87,7 @@ GLEAM_Surface::GLEAM_Surface(
     if(!feval(m_flags & GLEAM_API::TextureImmutable))
     {
     /* We must set this to register a proper mipmap level */
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         //        int32 min_lev = 0;
         i32 max_lev  = C_FCAST<i32>(mips - 1);
         i32 base_lev = 0;
@@ -101,7 +101,7 @@ GLEAM_Surface::GLEAM_Surface(
 
 void GLEAM_Surface::allocate()
 {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
         CGL45::TexAlloc(m_type, Span<CGhnd>::From(m_handle));
     else
@@ -128,7 +128,7 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
     if(d == 0)
         d = 1;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(GL_DEBUG_MODE)
     {
         uint32 w, h, d_;
@@ -188,10 +188,10 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
                 bitformat,
                 nullptr);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     else if(GLEAM_FEATURES.texture_storage)
     {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
             CGL45::TexStorage2D(m_handle, m_mips, m_pixfmt, size.w, size.h);
         else
@@ -219,7 +219,7 @@ void GLEAM_Surface2D::upload(
     if(!texture_check_bounds(data, comp, fmt, msz.area()))
         return;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!IsPixFmtCompressed(pxfmt))
         texture_pbo_upload(
             GetPixSize(fmt, comp, size.convert<u32>().area()),
@@ -310,7 +310,7 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 
     auto msz = size.convert<u32>();
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         if(!feval(m_flags & GLEAM_API::TextureImmutable))
@@ -319,7 +319,7 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
         if(GLEAM_FEATURES.texture_storage &&
            feval(m_flags & GLEAM_API::TextureImmutable))
         {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
             if(GLEAM_FEATURES.direct_state)
                 CGL45::TexStorage3D(
                     m_handle,
@@ -400,7 +400,7 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
             nullptr);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!feval(m_flags & GLEAM_API::TextureImmutable))
 #endif
         CGL33::TexBind(m_type, 0);
@@ -424,7 +424,7 @@ void GLEAM_Surface3D_Base::upload(
        !texture_check_bounds(data, comp, fmt, msz.volume()))
         return;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         /* If we want to use DMA transfer */
@@ -440,7 +440,7 @@ void GLEAM_Surface3D_Base::upload(
         if(!GLEAM_FEATURES.direct_state)
             CGL33::TexBind(m_type, m_handle);
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         if(IsPixFmtCompressed(pxfmt) && GLEAM_FEATURES.direct_state)
         {
             CGL45::TexSubImageCompressed3D(
@@ -566,8 +566,8 @@ GLEAM_Sampler::GLEAM_Sampler() : m_handle(0)
 
 void GLEAM_Sampler::alloc()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, 0x300)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
         CGL45::SamplerAlloc(m_handle);
     else
@@ -581,7 +581,7 @@ void GLEAM_Sampler::alloc()
 
 void GLEAM_Sampler::dealloc()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
         CGL33::SamplerFree(m_handle);
 #endif
@@ -590,7 +590,7 @@ void GLEAM_Sampler::dealloc()
 void GLEAM_Sampler::setLODRange(const Vecf2& range)
 {
     C_USED(range);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGL33::SamplerParameterfv(m_handle, GL_TEXTURE_MIN_LOD, &range.x());
@@ -602,7 +602,7 @@ void GLEAM_Sampler::setLODRange(const Vecf2& range)
 void GLEAM_Sampler::setLODBias(scalar bias)
 {
     C_USED(bias);
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(!GLEAM_FEATURES.gles20)
     {
         if(GL_DEBUG_MODE)
@@ -621,7 +621,7 @@ void GLEAM_Sampler::setLODBias(scalar bias)
 
 void GLEAM_Sampler::setEdgePolicy(uint8 dim, WrapPolicy p)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGenum d;
@@ -650,7 +650,7 @@ void GLEAM_Sampler::setEdgePolicy(uint8 dim, WrapPolicy p)
 
 void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGL33::SamplerParameteri(m_handle, GL_TEXTURE_MAG_FILTER, mag);
@@ -665,7 +665,7 @@ void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
 
 void GLEAM_Sampler::enableShadowSampler()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         i32 v = GL_COMPARE_REF_TO_TEXTURE;
@@ -677,7 +677,7 @@ void GLEAM_Sampler::enableShadowSampler()
 void GLEAM_Sampler2D::bind(uint32 i)
 {
     CGL33::TexActive(i);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
         CGL33::SamplerBind(i, m_handle);
 #endif
@@ -699,7 +699,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
         CGL33::TexGenMipmap(m_surface->m_type);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
         h.m_sampler = m_handle;
 #endif
@@ -710,7 +710,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
 void GLEAM_Sampler3D::bind(uint32 i)
 {
     C_USED(i);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGL33::TexActive(i);
@@ -733,7 +733,7 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
         CGL33::TexGenMipmap(m_surface->m_type);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         /* TODO: Add bindless */
@@ -746,7 +746,7 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 
 void GLEAM_Sampler2DArray::bind(uint32 i)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGL33::TexActive(i);
@@ -773,7 +773,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
         CGL33::TexGenMipmap(m_surface->m_type);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 
     if(!GLEAM_FEATURES.gles20)
         h.m_sampler = m_handle;

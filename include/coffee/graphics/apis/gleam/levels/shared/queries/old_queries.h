@@ -21,12 +21,16 @@ struct CGL_Old_Queries
     {glGetQueryiv(to_enum(t),p,v);}
 
     /* GetQueryObject*v */
+#if GL_VERSION_VERIFY(0x200, 0x300)
     STATICINLINE void QueryGetObjectuiv(CGhnd h,CGenum f,uint32* d)
     {glGetQueryObjectuiv(h,f,d);}
+#endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
     STATICINLINE void QueryGetObjectiv(CGhnd h,CGenum f,int32* d)
     {glGetQueryObjectiv(h,f,d);}
+#endif
+#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
     STATICINLINE void QueryGetObjecti64v(CGhnd h,CGenum f,int64* d)
     {glGetQueryObjecti64v(h,f,d);}
     STATICINLINE void QueryGetObjectui64v(CGhnd h,CGenum f,uint64* d)

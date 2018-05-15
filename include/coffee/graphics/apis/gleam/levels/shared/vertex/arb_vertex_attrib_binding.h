@@ -39,7 +39,7 @@ struct CGL_VertexAttribBinding
         glBindVertexBuffer(idx, h, off, stride);
     }
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     STATICINLINE void VAOAttribFormatL(uint32 i, i32 s, TypeEnum t,
                                        uint32 off)
     {

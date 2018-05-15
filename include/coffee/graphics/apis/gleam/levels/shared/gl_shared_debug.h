@@ -262,7 +262,7 @@ struct CGL_Shared_Debug
 
     STATICINLINE bool InternalFormatSupport(Texture, PixelFormat)
     {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         return true;
 #else
         return false;
@@ -282,7 +282,7 @@ struct CGL_Shared_Debug
     /* GetString */
 
     STATICINLINE cstring GetString(CGenum e){return C_RCAST<cstring>(glGetString(e));}
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE cstring GetStringi(CGenum e,uint32 i){return (cstring)glGetStringi(e,i);}
 #endif
 
@@ -305,7 +305,7 @@ struct CGL_Shared_Debug
         glGetIntegerv(e,&i);
         return i;
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE int64 GetIntegerLL(CGenum e)
     {
         int64 i = 0;
@@ -329,7 +329,7 @@ struct CGL_Shared_Debug
     }
 
     /* Get*i_v */
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE int32 GetIntegerI(CGenum e,uint32 i)
     {
         int32 v = 0;
@@ -352,7 +352,7 @@ struct CGL_Shared_Debug
     {
         return glIsBuffer(h)==GL_TRUE;
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE
     bool IsVAO(CGhnd h){return glIsVertexArray(h)==GL_TRUE;}
 #endif
@@ -370,7 +370,7 @@ struct CGL_Shared_Debug
     STATICINLINE
     bool IsTexture(CGhnd h){return glIsTexture(h)==GL_TRUE;}
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE
     bool IsSampler(CGhnd h){return glIsSampler(h)==GL_TRUE;}
 

@@ -33,7 +33,7 @@ struct CGL_ProgramInterfaceQuery
     }
     STATICINLINE int32 ProgramGetResourceLoc(CGhnd h,CGenum e,cstring n)
     {return glGetProgramResourceLocation(h,e,n);}
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
     STATICINLINE int32 ProgramGetResourceLocIdx(CGhnd h,CGenum e,cstring n)
     {return glGetProgramResourceLocationIndex(h,e,n);}
 #endif

@@ -14,7 +14,7 @@ struct CGL_TessellationShader
     STATICINLINE void PatchParameteri(PatchProperty p,int32 v)
     {glPatchParameteri(to_enum(p),v);}
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
     STATICINLINE void PatchParameterfv(PatchProperty p,const scalar* v)
     {glPatchParameterfv(to_enum(p),v);}
 #endif

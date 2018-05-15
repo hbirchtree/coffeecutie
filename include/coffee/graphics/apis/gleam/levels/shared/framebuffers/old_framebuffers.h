@@ -52,7 +52,7 @@ struct CGL_Old_Framebuffers
         glFramebufferRenderbuffer(to_enum(t), att, GL_RENDERBUFFER, h);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     /* Blit */
     GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
     STATICINLINE void FBBlit(
@@ -103,7 +103,7 @@ struct CGL_Old_Framebuffers
 
         glRenderbufferStorage(GL_RENDERBUFFER, fmt, w, h);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void RBufStorageMS(
         PixelFormat ifmt, uint32 samples, uint32 w, uint32 h)
     {
@@ -125,7 +125,7 @@ struct CGL_Old_Framebuffers
 
         CSize out = {};
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         using Tex = CGL_Old_Textures<CGhnd, CGenum, Texture, CompFlags>;
 
         int32 tmp = 0;

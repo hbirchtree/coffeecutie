@@ -115,7 +115,7 @@ struct GLEAM_API : GraphicsAPI
     {
         Vector<CommandBuffer> cmdBufs;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         struct IndirectCall
         {
             union{
@@ -154,7 +154,7 @@ struct GLEAM_API : GraphicsAPI
 
     using OPT_DRAW = OptimizedDraw;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     using OptMap = Map<CommandBuffer*, OPT_DRAW::MultiDrawData>;
 #endif
 

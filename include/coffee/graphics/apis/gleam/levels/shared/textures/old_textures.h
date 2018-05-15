@@ -47,7 +47,7 @@ struct CGL_Old_Textures
             to_enum(dt),
             p);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void TexImage3D(
         Texture         t,
         uint32          level,
@@ -84,7 +84,7 @@ struct CGL_Old_Textures
         szptr*  size,
         uint32  mip = 0)
     {
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         int32 w_t, h_t, d_t;
         TexGetLevelParameteriv(t, mip, GL_TEXTURE_WIDTH, &w_t);
         TexGetLevelParameteriv(t, mip, GL_TEXTURE_HEIGHT, &h_t);
@@ -140,7 +140,7 @@ struct CGL_Old_Textures
         *size = 0;
 #endif
     }
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     STATICINLINE void TexGetCompressedSize(
         Texture t, uint32& w, uint32& h, uint32& d, szptr& size)
     {
@@ -153,7 +153,7 @@ struct CGL_Old_Textures
     }
 #endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     STATICINLINE void TexGetImage(
         Texture         t,
         uint32          level,
@@ -199,7 +199,7 @@ struct CGL_Old_Textures
             to_enum(dt),
             p);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void TexSubImage3D(
         Texture   t,
         uint32    level,
@@ -250,7 +250,7 @@ struct CGL_Old_Textures
             sz,
             p);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void TexImageCompressed3D(
         Texture t,
         int32   level,
@@ -299,7 +299,7 @@ struct CGL_Old_Textures
             sz,
             p);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void TexSubImageCompressed3D(
         Texture t,
         uint32  level,
@@ -357,7 +357,7 @@ struct CGL_Old_Textures
     {
         glCopyTexSubImage2D(to_enum(t), level, xo, yo, x, y, w, h);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void TexCopySubImage3D(
         Texture t,
         uint32  level,
@@ -442,7 +442,7 @@ struct CGL_Old_Textures
         glTexParameterIuiv(to_enum(t), e, v);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     /* Samplers */
     STATICINLINE void SamplerBind(uint32 i, CGhnd h)
     {

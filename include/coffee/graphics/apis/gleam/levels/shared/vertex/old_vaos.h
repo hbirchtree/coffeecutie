@@ -29,7 +29,7 @@ struct CGL_Old_VAOs
                               C_RCAST<void*>(offset));
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void VAOBind(CGhnd h)
     {
         glBindVertexArray(h);

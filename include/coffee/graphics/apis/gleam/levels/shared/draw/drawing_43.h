@@ -62,7 +62,7 @@ struct CGL_Drawing_43
             DrwMd c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off)
     {glDrawRangeElements(to_enum(c),f,e,vc,to_enum(d),(c_cptr)off);}
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
     /*!
      * \brief DrawElementsInstancedBaseInstance
      * \param p Primitive type
@@ -103,7 +103,9 @@ struct CGL_Drawing_43
     STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd c,int32 vf,
                                                 uint32 vc,uint32 ic,uint32 bi)
     {glDrawArraysInstancedBaseInstance(to_enum(c),vf,vc,ic,bi);}
+#endif
 
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
     /*!
      * \brief DrawXF
      * \param p Primitive type
@@ -121,7 +123,9 @@ struct CGL_Drawing_43
      */
     STATICINLINE void DrawXFStream(DrwMd c,CGhnd h,uint32 s)
     {glDrawTransformFeedbackStream(to_enum(c),h,s);}
+#endif
 
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
     /*!
      * \brief DrawXFInstanced
      * \param p Primitive type

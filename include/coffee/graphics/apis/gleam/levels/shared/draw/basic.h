@@ -14,7 +14,7 @@ struct CGL_Basic_Draw
             DrwMd const& p,i32 f,u64 c)
     {glDrawArrays(to_enum(p),f,c);}
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE void DrawArraysInstanced(
             DrwMd const& p,i32 f, u32 c,u32 ic)
     {glDrawArraysInstanced(to_enum(p),f,c,ic);}

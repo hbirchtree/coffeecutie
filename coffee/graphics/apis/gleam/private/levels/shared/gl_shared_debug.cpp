@@ -33,7 +33,7 @@ void CGL_Shared_Debug::SetDebugMode(bool enabled)
 
 void CGL_Shared_Debug::GetExtensions()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     int32 numExtensions = 0;
     numExtensions = GetInteger(GL_NUM_EXTENSIONS);
 
@@ -67,7 +67,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
     ver.revision = 0;
 
     /* In most cases, this will work wonders */
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     ver.major = C_CAST<uint8>(GetInteger(GL_MAJOR_VERSION));
     ver.minor = C_CAST<uint8>(GetInteger(GL_MINOR_VERSION));
 #else
@@ -89,7 +89,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
         if (str.size()<=0)
             break;
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
         Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
 #else
         Regex::Pattern p = Regex::Compile("OpenGL ES ([0-9]+)\\.([0-9]+)?([\\s\\S]*)");
@@ -125,11 +125,11 @@ Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
 {
     Display::CGLVersion ver = {};
 
-#if !defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
     ver.revision = 1;
 #endif
 
-#if defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     ver.major = 1;
     ver.minor = 0;
 #endif
@@ -311,7 +311,7 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::Tex_SizeCube, GL_MAX_CUBE_MAP_TEXTURE_SIZE),
 
     /* Extended OpenGL 3.3+ limits */
-    #if !defined(COFFEE_ONLY_GLES20)
+    #if GL_VERSION_VERIFY(0x300, 0x300)
 
     #if defined(GL_MAX_3D_TEXTURE_SIZE)
     A(L::Tex_Size3D,GL_MAX_3D_TEXTURE_SIZE),
@@ -345,7 +345,7 @@ static Map<u32, limit_name_t> limit_map = {
     A(L::Vertex_Streams,GL_MAX_VERTEX_STREAMS),
     #endif
 
-    #if defined(COFFEE_GLEAM_DESKTOP)
+    #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
     A(L::Vertex_ClipDists,GL_MAX_CLIP_DISTANCES),
     A(L::Vertex_CullDists,GL_MAX_CULL_DISTANCES),
     A(L::Vertex_CombClipCullDists,GL_MAX_COMBINED_CLIP_AND_CULL_DISTANCES),
@@ -410,7 +410,8 @@ static Map<u32, limit_name_t> limit_map = {
     #if defined(GL_MAX_ATOMIC_COUNTER_BUFFER_SIZE)
     A(L::AtomicBuf_Bindings,GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS),
     #endif
-    #endif
+
+    #endif // GL_VERSION_VERIFY(0x300, 0x300)
 };
 
 static Map<u32, limit_name_t> limit_map_2d =  {

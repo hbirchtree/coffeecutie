@@ -7,7 +7,7 @@ namespace GLEAM{
 
 void GLEAM_Query::alloc()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(GLEAM_FEATURES.gles20)
         CGL33::QueryAlloc(m_handle);
 #endif
@@ -15,7 +15,7 @@ void GLEAM_Query::alloc()
 
 void GLEAM_Query::dealloc()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(GLEAM_FEATURES.gles20)
         CGL33::QueryFree(m_handle);
 #endif
@@ -23,7 +23,7 @@ void GLEAM_Query::dealloc()
 
 void GLEAM_OccludeQuery::begin()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(GLEAM_FEATURES.gles20)
     {
         if(m_handle == 0)
@@ -37,7 +37,7 @@ void GLEAM_OccludeQuery::begin()
 
 void GLEAM_OccludeQuery::end()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(GLEAM_FEATURES.gles20)
     {
         CGL33::ColorMask({1,1,1,1,0});
@@ -49,14 +49,14 @@ void GLEAM_OccludeQuery::end()
 
 int64 GLEAM_OccludeQuery::resulti()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     int64 v;
     CGL33::QueryGetObjecti64v(m_handle,GL_QUERY_RESULT,&v);
-#else
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
     uint32 v;
     CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
 #endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
     return v;
 #else
     return 0;
@@ -65,20 +65,18 @@ int64 GLEAM_OccludeQuery::resulti()
 
 uint64 GLEAM_OccludeQuery::resultu()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-    if(GLEAM_FEATURES.gles20)
-    {
-#ifdef COFFEE_GLEAM_DESKTOP
-        uint64 v;
-        CGL33::QueryGetObjectui64v(m_handle,GL_QUERY_RESULT,&v);
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+    uint64 v;
+    CGL33::QueryGetObjectui64v(m_handle,GL_QUERY_RESULT,&v);
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
+    uint32 v;
+    CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
+#endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    return v;
 #else
-        uint32 v;
-        CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
+    return 0;
 #endif
-        return v;
-    }else
-#endif
-        return 0;
 }
 
 }

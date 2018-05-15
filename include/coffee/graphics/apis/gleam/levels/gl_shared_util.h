@@ -3,7 +3,7 @@
 #include <coffee/CImage>
 #include <coffee/core/CFiles>
 
-#include "shared/gl_shared_include.h"
+#include "shared/gl_shared_types.h"
 
 namespace Coffee{
 namespace CGL{
@@ -25,7 +25,7 @@ struct CGLUtil
         C_USED(l);
         C_USED(fn);
 
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 
         CSize tsize;
         GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_WIDTH,&tsize.w);

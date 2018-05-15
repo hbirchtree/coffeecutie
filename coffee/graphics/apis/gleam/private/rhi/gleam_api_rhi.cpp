@@ -48,12 +48,14 @@ void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixFmt c, BitFmt dt, Vector
 
 void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     major = 4; minor = 6;
-#elif defined(COFFEE_ONLY_GLES20)
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
+    major = 3; minor = 2;
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
     major = 2; minor = 0;
 #else
-    major = 3; minor = 2;
+    Throw(implementation_error("unhandled GL version"));
 #endif
 }
 
@@ -63,7 +65,7 @@ void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
 #if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
             |Display::GLProperties::GLSRGB
 #endif
-#if !defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
             |Display::GLProperties::GLES
 #endif
 #if defined(COFFEE_ALWAYS_VSYNC)
@@ -131,7 +133,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     store->DEBUG_MODE = debug;
 #endif
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     do
     {
         const szptr num_pbos = 5;
@@ -161,7 +163,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     auto ver = CGL_Implementation::Debug::ContextVersion();
 
     cVerbose(10,GLM_API  "Matching GL API...");
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
     cVerbose(8, GLM_API "Checking GL core versions");
 
     cVerbose(12,GLM_API  "Constructing GL version structures");
@@ -184,8 +186,10 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     cVerbose(8, GLM_API "Checking GLES versions");
 
     cVerbose(12, GLM_API "Constructing GL version structures");
+
     const Display::CGLVersion ver20es(2,0);
-#if !defined(COFFEE_ONLY_GLES20)
+
+#if GL_VERSION_VERIFY(0x330, 0x300)
     const Display::CGLVersion ver30es(3,0);
     const Display::CGLVersion ver32es(3,2);
 
@@ -201,7 +205,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
 
     auto prevApi = store->CURR_API;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     /* Emulation mode; differs slightly from compiling against an API,
      *  such as when ES 2.0 excludes pixel formats and etc. */
     /* TODO: Document this feature */
@@ -235,7 +239,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     }
     cVerbose(10, GLM_API "Selected API: {0}", store->CURR_API);
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(CGL33::Tex_SRGB_Supported())
     {
         cVerbose(6,GLM_API "Enabling SRGB color for framebuffers");
@@ -245,7 +249,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
 
     cVerbose(4,GLM_API "Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
 
-#if !defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
 //    store->features.qcom_tiling =
 //            CGL33::Debug::CheckExtensionSupported("GL_QCOM_tiled_rendering");
 
@@ -255,7 +259,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
     }
 #endif
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     /* base_instance is const false on GLES */
 
     store->features.base_instance = CGL46::DrawParametersSupported();
@@ -293,16 +297,14 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug,
             (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6)
             || (api == GLES_3_2);
     store->features.draw_buffers_blend =
-            (api != GLES_2_0)
-            && (api != GLES_3_0)
-            && (api != GL_3_3);
+            is_desktop && (api != GL_3_3);
     store->features.draw_color_mask =
             is_desktop || (api == GLES_3_2);
 
     /* For BaseInstance to be fully effective, we need
      *  both the gl_BaseInstanceARB GLSL variable
      *  and Draw*BaseInstance. */
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     store->features.base_instance =
 #endif
             store->features.draw_base_instance =
@@ -446,7 +448,7 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 {
     C_USED(i);
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(vstate.multiview())
     {
         if(CGL43::ViewportArraySupported())
@@ -482,7 +484,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             CGL33::Enable(Feature::ClipDist,0);
         }
     }else
-#elif !defined(COFFEE_ONLY_GLES20)
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
     if(vstate.multiview())
     {
         /* Find some way to emulate multiview on GLES 3.0+ */
@@ -542,7 +544,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
             }else
                 GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         }
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
         else if(GLEAM_FEATURES.draw_buffers_blend)
         {
             if(bstate.additive())
@@ -589,7 +591,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
         if(dstate.fun())
             GLC::DepthFunc(C_CAST<ValueComparison>(dstate.fun()));
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
         if(GLEAM_FEATURES.depth_clamp)
         {
             if(dstate.clampDepth())
@@ -825,7 +827,7 @@ void GLEAM_API::SetShaderUniformState(
             SetUniform_wrapi(prog,idx,ptr.vi4,db->size);
             break;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         case Vecu2_t::value:
             SetUniform_wrapui(prog,idx,ptr.vu2,db->size);
             break;
@@ -843,7 +845,7 @@ void GLEAM_API::SetShaderUniformState(
         case Valuei_t::value:
             SetUniform_wrapi(prog,idx,ptr.i,db->size);
             break;
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         case Valueu_t::value:
             SetUniform_wrapui(prog,idx,ptr.u,db->size);
             break;
@@ -865,10 +867,10 @@ void GLEAM_API::SetShaderUniformState(
             /* Set up texture state */
             CGL33::TexActive(handle->m_unit);
             CGL33::TexBind(handle->m_type,handle->texture);
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
 
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x410, 0x320)
             if(GLEAM_FEATURES.separable_programs)
             {
                 /* Set texture handle in shader */
@@ -885,7 +887,7 @@ void GLEAM_API::SetShaderUniformState(
         /*TODO: Add optimized path where BindSamplers is used */
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x310, 0x300)
     for(auto b : ustate.m_ubuffers)
     {
         auto& det = b.second;
@@ -897,7 +899,7 @@ void GLEAM_API::SetShaderUniformState(
     }
 #endif
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x430, 0x310)
     if(CGL43::ShaderStorageSupported())
         for(auto b : ustate.m_sbuffers)
         {
@@ -919,7 +921,7 @@ void GLEAM_API::PreDrawCleanup()
 
 void GLEAM_API::DisposePixelBuffers()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     DPROF_CONTEXT_FUNC(GLM_API);
 
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
@@ -972,7 +974,7 @@ void GLEAM_API::OptimizeRenderPass(
         }
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(GLEAM_FEATURES.gles20)
         return;
 
@@ -1059,7 +1061,7 @@ static bool InternalDraw(
         if(d.instanced())
         {
             /* TODO: Implement the disabled drawcalls using other means */
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
             if(GLEAM_FEATURES.draw_base_instance
                     && i.instanceOffset()>0
                     && i.vertexOffset()!=0)
@@ -1068,7 +1070,8 @@ static bool InternalDraw(
                             mode,i.elements(),i.elementType(),
                             i.indexOffset()*elsize,i.instances(),
                             i.vertexOffset(),i.instanceOffset());
-
+#endif
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
             else if(GLEAM_FEATURES.draw_base_instance
                     && i.instanceOffset()>0)
 
@@ -1077,12 +1080,10 @@ static bool InternalDraw(
                             i.elements(),i.elementType(),
                             i.indexOffset()*elsize,i.instanceOffset(),
                             i.instances());
-
             else
 #endif
             {
-#if GL_VERSION_VERIFY(0x330, 0x300)
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x320, 0x320)
                 if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0)
                 {
                     CGL33::DrawElementInstancedBaseVertex(
@@ -1093,6 +1094,7 @@ static bool InternalDraw(
                 }
                 else
 #endif
+#if GL_VERSION_VERIFY(0x310, 0x300)
                     if(!GLEAM_FEATURES.gles20)
                     CGL33::DrawElementsInstanced(
                                 mode,i.elements(),i.elementType(),
@@ -1103,7 +1105,7 @@ static bool InternalDraw(
                                         i.indexOffset()*elsize);
             }
         }else{
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x320, 0x320)
             if(i.vertexOffset() > 0)
                 CGL33::DrawElementsBaseVertex(
                             mode, i.elements(), i.elementType(),
@@ -1115,7 +1117,7 @@ static bool InternalDraw(
         }
 
     }else{
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x310, 0x300)
         if(d.instanced())
             CGL33::DrawArraysInstanced(mode,i.vertexOffset(),
                                        i.vertices(),i.instances());
@@ -1509,7 +1511,7 @@ void GLEAM_API::DrawConditional(const GLEAM_Pipeline &pipeline,
                                 const DrawInstanceData &i,
                                 OccludeQuery &c)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
     CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
     Draw(pipeline, ustate, vertices, d, i);
@@ -1542,7 +1544,7 @@ cstring to_string(RHI::GLEAM::APILevel lev)
 {
     using LEV = RHI::GLEAM::APILevel;
 
-#if defined(COFFEE_GLEAM_DESKTOP)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
         switch(lev)
         {
         case LEV::GL_3_3:

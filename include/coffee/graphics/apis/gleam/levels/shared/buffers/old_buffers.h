@@ -37,7 +37,7 @@ struct CGL_Old_Buffers
         glCopyBufferSubData(to_enum(t1), to_enum(t2), off1, off2, sz);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
     STATICINLINE void BufBindRange(
         BufType t, uint32 i, CGhnd b, ptroff off, ptroff sz)
@@ -64,7 +64,8 @@ struct CGL_Old_Buffers
     {
         glGetBufferParameteriv(to_enum(t), p, v);
     }
-#if !defined(COFFEE_ONLY_GLES20)
+
+#if GL_VERSION_VERIFY(0x300, 0x300)
     GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
     STATICINLINE void BufGetParameterLLv(BufType t, CGenum p, i64* v)
     {

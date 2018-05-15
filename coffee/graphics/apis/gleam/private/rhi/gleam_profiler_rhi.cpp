@@ -34,7 +34,7 @@ GLEAM_PrfQuery::GLEAM_PrfQuery(ProfilingTerm term):
 
 void GLEAM_PrfQuery::begin()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(m_handle == 0)
         alloc();
 
@@ -44,21 +44,21 @@ void GLEAM_PrfQuery::begin()
 
 void GLEAM_PrfQuery::end()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::QueryEnd(m_type);
 #endif
 }
 
 int64 GLEAM_PrfQuery::resulti()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     int64 v;
     CGL33::QueryGetObjecti64v(m_handle,GL_QUERY_RESULT,&v);
-#else
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
     uint32 v;
     CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
 #endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
     return v;
 #else
     return 0;
@@ -67,14 +67,14 @@ int64 GLEAM_PrfQuery::resulti()
 
 uint64 GLEAM_PrfQuery::resultu()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-#ifdef COFFEE_GLEAM_DESKTOP
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     uint64 v;
     CGL33::QueryGetObjectui64v(m_handle,GL_QUERY_RESULT,&v);
-#else
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
     uint32 v;
     CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
 #endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
     return v;
 #else
     return 0;
@@ -224,14 +224,14 @@ void GLEAM_DBufQuery::end()
 GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag)
     :GraphicsDebug::ScopeMarker(tag)
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::Debug::SetDebugGroup(tag, 0);
 #endif
 }
 
 GLEAM_ScopeMarker::~GLEAM_ScopeMarker()
 {
-#if !defined(COFFEE_ONLY_GLES20)
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::Debug::UnsetDebugGroup();
 #endif
 }
