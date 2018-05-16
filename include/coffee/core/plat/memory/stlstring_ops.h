@@ -226,6 +226,13 @@ FORCEDINLINE CString reverse(CString const& src_)
     return src;
 }
 
+template<typename CharT>
+FORCEDINLINE std::basic_string<CharT> multiply(CharT character, szptr num)
+{
+    std::basic_string<CharT> out;
+    return out.insert(0, num, character);
+}
+
 FORCEDINLINE CString printclean(CString const& src_)
 {
     CString src = src_;
