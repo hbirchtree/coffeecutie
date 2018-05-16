@@ -79,9 +79,10 @@ void GLEAM_VertDescriptor::alloc()
     if(GLEAM_FEATURES.direct_state)
         CGL45::VAOAlloc(m_handle);
     else
-#elif GL_VERSION_VERIFY(0x300, 0x300)
+#if GL_VERSION_VERIFY(0x300, 0x300)
         if(!GLEAM_FEATURES.gles20)
         CGL33::VAOAlloc(m_handle);
+#endif
 #endif
 }
 

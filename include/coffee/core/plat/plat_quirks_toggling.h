@@ -222,7 +222,7 @@
 #if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_WEBGL
 #define COFFEE_LINKED_GLES
-#define COFFEE_LINKED_GLES30
+#define COFFEE_LINKED_GLES20
 #endif
 
 /*
