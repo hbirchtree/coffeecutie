@@ -13,8 +13,12 @@ struct UnixTerm : CmdInterface::BasicTerm
 {
     static bool Interactive()
     {
+#if defined(COFFEE_LINUX)
+        return isatty(fileno(stdout)) && isatty(fileno(stderr));
+#else
         //TODO: Find way of detecting interactive session
         return false;
+#endif
     }
 
     static void ClearScreen()

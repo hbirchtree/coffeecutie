@@ -383,7 +383,8 @@ static void glibc_backtrace()
             std::rethrow_exception(exc_ptr);
     } catch(std::exception& e)
     {
-        cBasicPrint("{0}", StrUtil::multiply('-', Cmd::TerminalSize().w));
+        if(Cmd::Interactive())
+            cBasicPrint("{0}", StrUtil::multiply('-', Cmd::TerminalSize().w));
         cBasicPrint("exception encountered:");
         cBasicPrint(" >> {0}: {1}",
                  Stacktracer::DemangleSymbol(typeid(e).name()),
