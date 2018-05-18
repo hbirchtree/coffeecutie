@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CURRENT_DIR=$(dirname $0)
+CURRENT_DIR=$(dirname $(dirname $(realpath $0)))
 
 NATIVE_LIB_DIR="$PWD"
 

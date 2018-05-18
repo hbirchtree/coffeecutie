@@ -70,8 +70,8 @@ class ProjectStructure:
         self.rsc_dir = resource_dir
 
     def generate(self, dry=True, verbose=False):
-        from tools.python.git_common import git_initialize
-        from tools.python.common import configure_file
+        from python.git_common import git_initialize
+        from python.common import configure_file
 
         global _settings
         _settings = RunSettings(dry=dry, verbose=verbose)
@@ -96,7 +96,7 @@ class ProjectStructure:
 
     @staticmethod
     def create_directory_structure(target_dir, directories):
-        from tools.python.common import run_command
+        from python.common import run_command
 
         _dry_run = _settings.dry
         _verbose = _settings.verbose
@@ -117,8 +117,8 @@ class ProjectStructure:
     def copy_config_files(source_dir, target_dir, files):
         from os.path import isdir, isfile
         from glob import glob
-        from tools.python.common import run_command
-        from tools.python.git_common import git_add
+        from python.common import run_command
+        from python.git_common import git_add
 
         _dry_run = _settings.dry
         _verbose = _settings.verbose
@@ -174,8 +174,8 @@ class ProjectStructure:
 
     @staticmethod
     def configure_all_files(src_dir, trg_dir, files, variables):
-        from tools.python.common import configure_file
-        from tools.python.git_common import git_add
+        from python.common import configure_file
+        from python.git_common import git_add
 
         for file in files:
             src_file = '%s/%s' % (src_dir, file)
@@ -195,8 +195,8 @@ class StepCreateRebuild(ProjectStep):
         pass
 
     def __call__(self):
-        from tools.python.git_common import git_add
-        from tools.python.common import run_command
+        from python.git_common import git_add
+        from python.common import run_command
 
         target_dir = ProjectStep.get_target_dir()
 
@@ -215,7 +215,7 @@ class StepSaveLocalInfo(ProjectStep):
     def __call__(self):
         from os.path import isfile
         import configure_ci
-        from tools.python.common import local_yml_filespec
+        from python.common import local_yml_filespec
 
         target_dir = ProjectStep.get_target_dir()
 
@@ -245,8 +245,8 @@ class StepUpdateBuildInfo(ProjectStep):
 
     def __call__(self):
         from copy import deepcopy
-        from tools.python.git_common import git_add, git_get_commit, git_get_slug
-        from tools.python.common import run_command, build_yml_filespec
+        from python.git_common import git_add, git_get_commit, git_get_slug
+        from python.common import run_command, build_yml_filespec
         from os.path import isfile
         import configure_ci
 
@@ -344,7 +344,7 @@ class StepListGitStatus(ProjectStep):
         pass
 
     def __call__(self):
-        from tools.python.common import run_command
+        from python.common import run_command
 
         target_dir = ProjectStep.get_target_dir()
 
@@ -360,9 +360,9 @@ class StepGenerateCMakeScript(ProjectStep):
         self.exports = set_or_default(exports, {})
 
     def __call__(self):
-        from tools.python.cmake_common import cmake_generate_findscript
+        from python.cmake_common import cmake_generate_findscript
         from configure_ci import try_get_key
-        from tools.python.git_common import git_add
+        from python.git_common import git_add
 
         cmake_script = cmake_generate_findscript(try_get_key(_prev_build_data,
                                                              'exports',

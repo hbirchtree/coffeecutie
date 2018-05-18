@@ -1,5 +1,5 @@
 import configure_ci
-from tools.python.common import *
+from python.common import *
 
 _git_dir = None
 

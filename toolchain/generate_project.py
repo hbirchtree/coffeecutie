@@ -3,10 +3,10 @@
 from argparse import ArgumentParser
 from os.path import dirname, realpath
 
-from tools.python.git_common import *
+from python.git_common import *
 
-from tools.python.project_generator import *
-from tools.python.project_generator import _settings as run_settings
+from python.project_generator import *
+from python.project_generator import _settings as run_settings
 
 _dry_run = True
 _verbose = False
@@ -59,7 +59,7 @@ def main():
                       dest='repo_dir',
                       help='directory from which template files will be pulled \
                             defaults to directory where this program resides',
-                      default=realpath(dirname(__file__)))
+                      default=dirname(realpath(dirname(__file__))))
 
     args.add_argument('--execute', action='store_false',
                       dest='dry_run', help='do not perform any actions, only print commands and files',
@@ -73,7 +73,7 @@ def main():
 
     args = args.parse_args()
 
-    repo_dir = realpath(dirname(__file__))
+    repo_dir = dirname(realpath(dirname(__file__)))
     target_dir = realpath(args.project_directory)
     project_name = args.project_name
     display_name = args.display_name
@@ -170,7 +170,7 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
                          StepUpdateBuildInfo('cmake/Templates/coffee-build.yml',
                                              configure_ci.CI_SERVICES),
                          #StepGenerateCMakeScript(),
-                         StepCorrectPythonScriptPaths(),
+                         #StepCorrectPythonScriptPaths(),
                          StepListGitStatus(),
                      ]
                      ).generate(dry=args.dry_run,
