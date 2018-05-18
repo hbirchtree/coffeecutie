@@ -273,7 +273,7 @@ build-dep-template:
       - -v $(build-dep.build-root):$(container.build):rw
       - -v $(bdep.root):$(container.src):ro
       - -v $(build-dep.install-root):$(container.install):rw
-      - -v $(project.src)/cmake:/home/coffee/cmake-project:ro
+      - -v $(project.src)/toolchain/cmake:/home/coffee/cmake-project:ro
       - --workdir $(container.build)
     =dependencies:
       - $(dep-target).source
@@ -282,7 +282,7 @@ build-dep-template:
     =target-name: $(dep-target).$(build-arch)
     =bdep.root: $(build-dep.root)/$(dep-target)/source
     =host.arch: x86_64-linux-gnu
-    =toolchain-dir: $(cmake-project.src)/toolchain
+    =toolchain-dir: $(cmake-project.src)
     =cmake.install: $(build-dep.install)
     =program.workdir: $(build-dep.build)
     ^make$:
