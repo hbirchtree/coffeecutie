@@ -1,11 +1,10 @@
 project ( @PJNAME@ )
 cmake_minimum_required(VERSION 3.1)
 
-set ( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}/cmake/Modules" )
-include( SubprojectFunctions )
+include( toolchain/cmake/Modules/SubprojectFunctions.cmake )
 Init_Subproject()
 
-find_package ( Coffee REQUIRED )
+import_coffee_lib ( Coffee REQUIRED )
 find_package ( StandardLibs REQUIRED )
 find_package ( SDL2 REQUIRED )
 
@@ -18,21 +17,16 @@ set ( USERDATA
     )
 
 set ( BUNDLE_LIBS
-    @BUNDLE_LIBS@
     )
 
 set ( LIBS
-    @LIBS@
-    ;${BUNDLE_LIBS}
     )
 
 set ( PERMS
     OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT;JOYSTICK
     )
 
-include_directories ( "${COFFEE_INCLUDE_DIR}" )
-
-coffee_add_application_longerer (
+coffee_application (
         TARGET @PJNAME@
         
         # App meta-data

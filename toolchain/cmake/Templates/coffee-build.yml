@@ -39,9 +39,9 @@ branches:
   - name: testing
     build: true
 
-makefile_location: ci
-template_location: cmake/Templates
-script_location: ci
+makefile_location: toolchain/makers
+template_location: toolchain/cmake/Templates
+script_location: toolchain/ci
 
 versionprefix: automated-release-
 version:

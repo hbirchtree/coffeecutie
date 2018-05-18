@@ -6,7 +6,7 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-import common
+import toolchain.python.common as common
 
 from os.path import dirname, realpath, isfile, isdir
 from subprocess import call
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         print('Repo directory not found, exiting')
         exit(1)
 
-    generate_file = '%s/generate_project.py' % repo_dir
+    generate_file = '%s/toolchain/generate_project.py' % repo_dir
 
     with open(generate_file):
         pass

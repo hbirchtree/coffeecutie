@@ -33,14 +33,30 @@ case $1 in
         "linux")
             ${TC_DIR}/python/makefile-generator.py ${TC_DIR}/makers/targets.yml ${TC_DIR}/makers/Makefile.$3
         ;;
+        *)
+            echo \
+"Options: 
+linux - Generate for Linux and OSX, despite the name"
+        ;;
         esac
+    ;;
+    *)
+        echo \
+"Options: 
+regen - Regenerate meta-build system"
     ;;
     esac
 ;;
 *)
 echo "Available tools: 
 
-quick-build - Use pre-defined build environments
-ci          - Generate CI files"
+quick-build         - Use pre-defined build environments
+ci                  - Generate CI files
+version             - Manage project version
+build-info          - Extract information from .build.yml
+extract-tools       - Extract compiled tools into deployment directory
+extract-native-libs - Extract compiled libraries into deployment directory
+generate-project    - Generate a new project directory
+makefile-generator  - Regenerate meta-build system"
 ;;
 esac

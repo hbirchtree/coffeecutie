@@ -46,6 +46,8 @@ macro( INIT_SUBPROJECT )
         ${COFFEE_ROOT_DIR}/share
         )
 
+    message ( "PREFIX: ${CMAKE_PREFIX_PATH}" )
+
     set ( CMAKE_MODULE_PATH
         ${CMAKE_MODULE_PATH}
         ${CMAKE_SOURCE_DIR}/toolchain/cmake/Find

@@ -103,38 +103,22 @@ def main():
                      repo_dir=repo_dir,
                      target_dir=target_dir,
                      directory_skeleton=[
-                         'cmake', 'src', 'internal',
-                         'ci', 'include',
-                         'cmake/Templates'
+                         'src', 'toolchain',
+                         'include',
+                         'toolchain/cmake/Templates',
+                         'toolchain/ci'
                      ],
                      constant_files={
-                         'cmake': [
-                             'Find/', 'Find_Windows/',
-                             'Modules/', 'Packaging/', 'Preload/',
-                             'Toolchains/'
-                         ],
-                         'desktop/': None,
-                         'internal/templates/': None,
-                         'tools/makers/Makefile.*': 'ci',
-                         'tools/makers/targets.yml': 'ci',
-                         'tools/ci/*.sh': 'ci',
-                         'tools/ci/github_api.py': 'ci',
-                         'tools/ci/*.ps1': 'ci',
-                         'configure_ci.py': None,
-                         'tools/python/common.py': 'common.py',
-                         'cmake/Templates/JenkinsTemplate.groovy': None,
-                         'cmake/Templates/reconfig.py': 'rebuild.py',
-                         'cmake/Templates/Config*.cmake.in': 'cmake/Templates',
-                         'buildinfo.py': None,
-                         'version.py': None,
-                         'git-gen-release.sh': None,
-                         'quick-build.sh': None,
-                         'quick-build.ps1': None,
-                         'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
+                        'cb': None,
+                        'toolchain': None,
+                        'toolchain/cmake/Templates/JenkinsTemplate.groovy': None,
+                        'toolchain/ci/get_matching_release.py': 'toolchain/ci/travis-helper.py',
+                        'toolchain/cmake/Templates/reconfig.py': 'rebuild.py',
+                        'toolchain/cmake/Templates/Config*.cmake.in': 'toolchain/cmake/Templates'
                      },
                      configurable_files={
-                         'cmake/Templates/TemplateProject.txt': 'CMakeLists.txt',
-                         'cmake/Templates/main.cpp': 'src/main.cpp'
+                         'toolchain/cmake/Templates/TemplateProject.txt': 'CMakeLists.txt',
+                         'toolchain/cmake/Templates/main.cpp': 'src/main.cpp'
                      },
                      configure_vars={
                          'PJNAME': project_name,
@@ -167,7 +151,7 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
                      project_steps=[
                          StepCreateRebuild(),
                          StepSaveLocalInfo(),
-                         StepUpdateBuildInfo('cmake/Templates/coffee-build.yml',
+                         StepUpdateBuildInfo('toolchain/cmake/Templates/coffee-build.yml',
                                              configure_ci.CI_SERVICES),
                          #StepGenerateCMakeScript(),
                          #StepCorrectPythonScriptPaths(),

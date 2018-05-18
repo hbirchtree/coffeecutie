@@ -19,7 +19,7 @@ export MANUAL_CONTEXT
 QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
 MAKEFILE="Makefile.linux"
 
-INFOPY="$SOURCE_DIR/buildinfo.py"
+INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
 SCRIPT_DIR="$SOURCE_DIR/$($INFOPY --source-dir $SOURCE_DIR script_location)"
 

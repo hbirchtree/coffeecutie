@@ -200,7 +200,7 @@ class StepCreateRebuild(ProjectStep):
 
         target_dir = ProjectStep.get_target_dir()
 
-        for f in ('%s/rebuild.py' % target_dir, '%s/configure_ci.py' % target_dir):
+        for f in ('%s/rebuild.py' % target_dir, '%s/toolchain/configure_ci.py' % target_dir):
             run_command('add_execute', [f],
                         dry_run=_settings.dry,
                         verbose=_settings.verbose)
