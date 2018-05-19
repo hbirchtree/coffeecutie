@@ -3,7 +3,7 @@
 #include "../platform_detect.h"
 #include "../../internal_state.h"
 
-#ifdef COFFEE_UNIXPLAT
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_LINUX)
 #include "cmd_interface.h"
 
 namespace Coffee{
@@ -11,7 +11,7 @@ namespace UnixCmd{
 
 struct UnixTerm : CmdInterface::BasicTerm
 {
-    static bool Interactive()
+    STATICINLINE bool Interactive()
     {
 #if defined(COFFEE_LINUX)
         return isatty(fileno(stdout)) && isatty(fileno(stderr));

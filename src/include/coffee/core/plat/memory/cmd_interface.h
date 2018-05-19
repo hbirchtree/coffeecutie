@@ -23,7 +23,7 @@ namespace CmdInterface{
 struct CmdDef
 {
     /* Indicate whether we are using a proper terminal */
-    static bool Interactive();
+    static bool Interactive() { return false; }
 
     /* Basic command line actions */
     static cstring ReadString(cstring_w target, int32 size, FILE* strm);
