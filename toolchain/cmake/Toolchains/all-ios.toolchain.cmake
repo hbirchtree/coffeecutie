@@ -214,10 +214,10 @@ endmacro (find_host_package)
 
 # Added by H. Birch Tree
 set ( CMAKE_FIND_ROOT_PATH
-        ${CMAKE_FIND_ROOT_PATH}
-        ${COFFEE_ROOT_DIR}
-	${NATIVE_LIBRARY_DIR}
-        ${CMAKE_SOURCE_DIR}/libs
+    ${CMAKE_FIND_ROOT_PATH}
+    ${COFFEE_ROOT_DIR}
+    ${NATIVE_LIBRARY_DIR}
+    ${CMAKE_SOURCE_DIR}/src/libs
     )
 
 set ( CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++0x" 

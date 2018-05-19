@@ -15,7 +15,7 @@ add_definitions (
 set ( CMAKE_FIND_ROOT_PATH
     /usr/${TOOLCHAIN_PREFIX}
     ${NATIVE_LIBRARY_DIR}
-    ${CMAKE_SOURCE_DIR}/libs
+    ${CMAKE_SOURCE_DIR}/src/libs
     ${COFFEE_ROOT_DIR}
     )
 
