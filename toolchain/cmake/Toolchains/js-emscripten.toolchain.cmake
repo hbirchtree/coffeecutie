@@ -29,6 +29,8 @@ option ( COFFEE_GENERATE_WASM
 
 set ( EM_COMMON "-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy -s USE_SDL=2 -s USE_ZLIB=1 -O2" )
 
+set ( SHELL_FILE "${CMAKE_SOURCE_DIR}/toolchain/desktop/emscripten/template.html" )
+
 if(COFFEE_GENERATE_WASM)
     message ( STATUS "Generating WASM assembly" )
     set ( CMAKE_CXX_FLAGS
@@ -36,7 +38,7 @@ if(COFFEE_GENERATE_WASM)
     set ( CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} ${EM_COMMON} -s WASM=1" CACHE STRING "" )
     set ( CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} ${EM_COMMON} -s WASM=1 --shell-file ${CMAKE_SOURCE_DIR}/desktop/emscripten/template.html" CACHE STRING "" )
+        "${CMAKE_EXE_LINKER_FLAGS} ${EM_COMMON} -s WASM=1 --shell-file ${SHELL_FILE}" CACHE STRING "" )
 else()
     message ( STATUS "Generating asm.js assembly" )
     set ( CMAKE_CXX_FLAGS
@@ -44,7 +46,7 @@ else()
     set ( CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} ${EM_COMMON}" CACHE STRING "" )
     set ( CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} ${EM_COMMON} --shell-file ${CMAKE_SOURCE_DIR}/desktop/emscripten/template.html" CACHE STRING "" )
+        "${CMAKE_EXE_LINKER_FLAGS} ${EM_COMMON} --shell-file ${SHELL_FILE}" CACHE STRING "" )
 endif()
 
 set(CMAKE_CROSSCOMPILING TRUE)
