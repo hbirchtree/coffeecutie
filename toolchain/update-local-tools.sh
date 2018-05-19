@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WDIR=$(dirname $0)
+WDIR=$(dirname $(dirname $(realpath $0)))
 
 CONFIGURATION=Release
 NODEPLOY=1
