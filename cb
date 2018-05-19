@@ -1,0 +1,69 @@
+#!/bin/bash
+
+BASE_DIR=$(dirname ${0})
+TC_DIR=${BASE_DIR}/toolchain
+
+case $1 in
+"quick-build")
+    ${TC_DIR}/quick-build.sh ${@:2}
+;;
+"ci")
+    ${TC_DIR}/configure_ci.py ${@:2}
+;;
+"version")
+    ${TC_DIR}/version.py ${@:2}
+;;
+"build-info")
+    ${TC_DIR}/buildinfo.py ${@:2}
+;;
+"extract-tools")
+    ${TC_DIR}/extract-tools.sh ${@:2}
+;;
+"extract-native-libs")
+    ${TC_DIR}/extract-native-libs.sh ${@:2}
+;;
+"generate-project")
+    ${TC_DIR}/generate_project.py ${@:2}
+;;
+"update-local-tools")
+    ${TC_DIR}/update-local-tools.sh ${@:2}
+;;
+"gen-release")
+    ${TC_DIR}/git-gen-release.sh ${@:2}
+;;
+"makefile-generator")
+    MAKERS_DIR=${BASE_DIR}
+    case $2 in
+    "regen")
+        case $3 in
+        "linux")
+            ${TC_DIR}/python/makefile-generator.py ${TC_DIR}/makers/targets.yml ${TC_DIR}/makers/Makefile.$3
+        ;;
+        *)
+            echo \
+"Options: 
+linux - Generate for Linux and OSX, despite the name"
+        ;;
+        esac
+    ;;
+    *)
+        echo \
+"Options: 
+regen - Regenerate meta-build system"
+    ;;
+    esac
+;;
+*)
+echo "Available tools: 
+
+quick-build         - Use pre-defined build environments
+ci                  - Generate CI files
+version             - Manage project version
+build-info          - Extract information from .build.yml
+extract-tools       - Extract compiled tools into deployment directory
+extract-native-libs - Extract compiled libraries into deployment directory
+generate-project    - Generate a new project directory
+gen-release         - Generate Git tag and push to Git remote
+makefile-generator  - Regenerate meta-build system"
+;;
+esac

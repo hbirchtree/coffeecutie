@@ -1,0 +1,49 @@
+project ( @PJNAME@ )
+cmake_minimum_required(VERSION 3.1)
+
+include( toolchain/cmake/Modules/SubprojectFunctions.cmake )
+Init_Subproject()
+
+import_coffee_lib ( Coffee REQUIRED )
+find_package ( StandardLibs REQUIRED )
+find_package ( SDL2 REQUIRED )
+
+set ( SRCS
+    @SRCS@
+    )
+
+set ( USERDATA
+    "${CMAKE_SOURCE_DIR}/rsrc/@PJNAME@"
+    )
+
+set ( BUNDLE_LIBS
+    )
+
+set ( LIBS
+    )
+
+set ( PERMS
+    OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT;JOYSTICK
+    )
+
+coffee_application (
+        TARGET @PJNAME@
+        
+        # App meta-data
+        TITLE "@TITLE@"
+        COMPANY "@COMPANY@"
+        COPYRIGHT "@COPYRIGHT@"
+        VERSION_CODE "1"
+        INFO_STRING "@DESC@"
+        PERMISSIONS ${PERMS}
+        BUNDLE_LICENSES ${LICENSES}
+        
+        # Linker resources and programs
+        SOURCES ${SRCS}
+        LIBRARIES ${LIBS}
+        BUNDLE_LIBRARIES ${BUNDLE_LIBS}
+        BUNDLE_BINARIES ${BUNDLE_BINS}
+        
+        # Application sources
+        RESOURCES ${USERDATA}
+        )

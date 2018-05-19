@@ -52,13 +52,13 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
 
     if (platform == 'linux' || platform == 'osx')
     {
-        cmd = "\"${srcDir}/tools/ci/travis-build.sh\""
+        cmd = "\"${srcDir}/toolchain/ci/travis-build.sh\""
         job.with {
             steps {
                 environmentVariables {
                     env('TRAVIS_OS_NAME', platform)
                     env('TRAVIS_BUILD_DIR', srcDir)
-                    env('MAKEFILE_DIR', 'tools/makers')
+                    env('MAKEFILE_DIR', 'toolchain/makers')
                     env('DEPENDENCIES', '')
                     env('GITHUB_TOKEN', '${GH_API_TOKEN}')
                     env('MANUAL_DEPLOY', '1')
@@ -68,7 +68,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
         }
     }else if(platform == 'windows')
     {
-        cmd = "powershell \"${srcDir}\\tools/ci\\appveyor-build.ps1\""
+        cmd = "powershell \"${srcDir}\\toolchain/ci\\appveyor-build.ps1\""
 
         job.with {
             steps {
@@ -76,7 +76,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
                     env('APPVEYOR_BUILD_FOLDER', srcDir)
                     env('BUILD_DIR', '${WORKSPACE}/build_' + target)
                     env('CMAKE_BIN', 'C:\\Program Files\\CMake\\bin\\cmake.exe')
-                    env('MAKEFILE_DIR', 'tools/makers')
+                    env('MAKEFILE_DIR', 'toolchain/makers')
                     env('DEPENDENCIES', '')
                     env('GITHUB_TOKEN', '${GITHUB_TOKEN}')
                     env('BUILDVARIANT', target)

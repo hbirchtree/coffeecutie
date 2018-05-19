@@ -1,20 +1,20 @@
 [submodule "libs/stb"]
-	path = libs/stb
+	path = src/libs/stb
 	url = https://github.com/nothings/stb.git
 [submodule "libs/glm"]
-	path = libs/glm
+	path = src/libs/glm
 	url = https://github.com/g-truc/glm.git
 [submodule "libs/tinyxml2"]
-	path = libs/tinyxml2
+	path = src/libs/tinyxml2
 	url = https://github.com/leethomason/tinyxml2.git
 [submodule "libs/openvr"]
-	path = libs/openvr
+	path = src/libs/openvr
 	url = https://github.com/ValveSoftware/openvr.git
 [submodule "libs/asio"]
-	path = libs/asio
+	path = src/libs/asio
 	url = https://github.com/chriskohlhoff/asio.git
 [submodule "libs/rapidjson"]
-	path = libs/rapidjson
+	path = src/libs/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 [submodule "sample_data"]
 	path = sample_data
@@ -23,8 +23,8 @@
 	path = tools/automation
 	url = https://github.com/hbirchtree/coffeecutie-automation-tools.git
 [submodule "include/coffee/jni"]
-	path = include/coffee/jni
+	path = src/include/coffee/jni
 	url = https://github.com/hbirchtree/inline-jni.git
 [submodule "coffee/windowing/private/graphics/ceagl"]
-	path = coffee/windowing/private/graphics/ceagl
+	path = src/coffee/windowing/private/graphics/ceagl
 	url = https://github.com/hbirchtree/ceagl.git

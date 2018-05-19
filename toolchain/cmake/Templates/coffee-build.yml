@@ -1,0 +1,52 @@
+name: coffeecutie
+display_name: Coffeecutie
+platforms:
+    emscripten:
+      - asmjs
+      - wasm
+    ubuntu:
+      - amd64
+      - i686
+      - armhf
+    fedora:
+      - amd64
+    raspberry:
+      - armhf
+    steam:
+      - amd64
+    android:
+      - armv7a
+      - armv8a
+      - armv7a.kitkat
+    maemo:
+      - armv7a
+    osx:
+      - osx
+      - ios.x86_64
+    windows:
+      - win32
+      - uwp
+
+dependencies:
+    hbirchtree/coffeecutie: '*'
+
+coverage: false
+
+branches:
+  - name: master
+    build: true
+    deploy: true
+  - name: testing
+    build: true
+
+makefile_location: toolchain/makers
+template_location: toolchain/cmake/Templates
+script_location: toolchain/ci
+
+versionprefix: automated-release-
+version:
+    major: 0
+    minor: 0
+    release: 1
+    patch: 0
+    hotfix: 0
