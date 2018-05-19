@@ -9,7 +9,7 @@ $env:APPVEYOR_BUILD_WORKER_IMAGE = "$VSVER"
 $PYTHON="C:\Python36\python.exe"
 
 function build_info() {
-    . $PYTHON $PWD\buildinfo.py $args
+    . $PYTHON $PWD\toolchain\buildinfo.py $args
 }
 
 $env:SCRIPT_DIR = (build_info script_location)

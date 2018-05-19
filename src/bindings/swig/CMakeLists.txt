@@ -74,21 +74,11 @@ set(CMAKE_SWIG_FLAGS "")
 
 link_directories( ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${COFFEE_LIB_DIR})
 
-coffee_gen_licenseinfo( CoffeeSwigShim "" )
-
-coffee_gen_applicationinfo( CoffeeSwigShim
-    "Coffee"
-    "Coffee"
-    1
-    )
-
 coffee_library(
     TARGET CoffeeSwigShim
 
     SOURCES
     coffeeswig.cpp
-    ${LICENSE_FILE}
-    ${APPLICATION_INFO_FILE}
 
     LIBRARIES
     CoffeeGLeamCommon

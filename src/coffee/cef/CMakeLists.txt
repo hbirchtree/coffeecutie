@@ -1,6 +1,15 @@
 find_package ( CEF REQUIRED )
 
-coffee_add_library( CoffeeCEF private/ccef.cpp "${CEF_LIBRARIES};CoffeeImage" )
+coffee_library (
+    TARGET CoffeeCEF 
+    
+    SOURCES
+    private/ccef.cpp
+    
+    LIBRARIES 
+    ${CEF_LIBRARIES}
+    CoffeeImage
+    )
 
 target_include_directories ( CoffeeCEF
     PUBLIC
@@ -10,7 +19,12 @@ target_include_directories ( CoffeeCEF
 
 coffee_application (
     TARGET CCefSlave
+   
     TITLE "CEFSlave"
-    SOURCES private/ccef_slave.cpp
-    LIBRARIES "${CEF_LIBRARIES}"
+    
+    SOURCES 
+    private/ccef_slave.cpp
+
+    LIBRARIES 
+    ${CEF_LIBRARIES}
     )
