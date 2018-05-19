@@ -101,7 +101,7 @@ elseif(ANDROID)
     # Will be running on  Android NDK bindings
 elseif(APPLE)
     # It will just use GLKit
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT EMSCRIPTEN AND NOT NACL AND NOT ANDROID)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT EMSCRIPTEN AND NOT ANDROID)
     add_definitions( -DCOFFEE_LINUX_LIGHTWEIGHT_WM )
 endif()
 

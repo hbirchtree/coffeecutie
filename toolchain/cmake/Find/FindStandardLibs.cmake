@@ -18,10 +18,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
 
-    if(NOT NACL)
-        if(COFFEE_BUILD_GLES)
-            list ( APPEND CORE_EXTRA_LIBRARIES EGL GLESv2 )
-        endif()
+    if(COFFEE_BUILD_GLES)
+        list ( APPEND CORE_EXTRA_LIBRARIES EGL GLESv2 )
     endif()
 endif()
 
@@ -78,12 +76,11 @@ if(ANDROID)
     list ( APPEND CORE_EXTRA_LIBRARIES
         # Logging and Android functions
         log android
-        # OpenGL ES
-        #        GLESv1_CM
-#        GLESv2
+        # All Android targets use EGL
         EGL
         )
 
+    # If we are building a GLESv3-exclusive target, drop GLESv2
     if(COFFEE_BUILD_GLES_20)
         list ( APPEND CORE_EXTRA_LIBRARIES
             GLESv2
@@ -97,19 +94,12 @@ if(ANDROID)
     if(COFFEE_BUILD_SDL2)
         list ( APPEND CORE_EXTRA_LIBRARIES
             SDL2
-#            ${SDL2_LIBRARIES}
             )
     endif()
 
     list ( APPEND CORE_INCLUDE_DIR
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )
-    #    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
-    #        message ( "-- Building with GLES 3.0+ support" )
-    #        list ( APPEND CORE_EXTRA_LIBRARIES
-    #                GLESv3
-    #                )
-    #    endif()
 endif()
 
 if(RASPBERRY)
@@ -132,6 +122,7 @@ if(WIN32)
     if(NOT WIN_UWP)
         list ( APPEND CORE_EXTRA_LIBRARIES
             # For some of the file API
+            # This one is not available on UWP
             #pathcch
 
             # Core includes
@@ -170,16 +161,6 @@ if(WIN32)
     endif()
 endif()
 
-if(NACL)
-    find_package(SDL2 REQUIRED)
-    list ( APPEND CORE_EXTRA_LIBRARIES
-        ppapi_simple
-        ppapi
-        nacl_io
-        nosys
-        )
-endif()
-
 if(MAEMO)
     list ( APPEND CORE_EXTRA_LIBRARIES
         GLESv2 IMGegl
@@ -192,12 +173,12 @@ if(GAMECUBE)
         )
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID)
     # Used for thread details
     list ( APPEND CORE_EXTRA_LIBRARIES rt )
 endif()
 
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT EMSCRIPTEN)
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT EMSCRIPTEN)
     # Necessary for Linux and possibly OS X (latter is untested)
     if(NOT GAMECUBE)
         list ( APPEND CORE_EXTRA_LIBRARIES dl z )

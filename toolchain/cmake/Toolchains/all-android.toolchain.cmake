@@ -434,7 +434,6 @@ else()
   message(FATAL_ERROR "Invalid Android toolchain: ${ANDROID_TOOLCHAIN}.")
 endif()
 
-message ( "${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}" )
 if(NOT IS_DIRECTORY "${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}")
   message(FATAL_ERROR "Invalid Android platform: ${ANDROID_PLATFORM}.")
 elseif(NOT IS_DIRECTORY "${CMAKE_SYSROOT}")

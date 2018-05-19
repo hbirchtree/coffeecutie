@@ -3,7 +3,7 @@ if(ANDROID)
 
     if(COFFEE_BUILD_SDL2)
         find_package ( SDL2main REQUIRED )
-        message (STATUS "Main File: ${SDL2_ANDROID_MAIN_FILE}" )
+        #message (STATUS "Main File: ${SDL2_ANDROID_MAIN_FILE}" )
     endif()
 
     include ( InkscapeResize )
