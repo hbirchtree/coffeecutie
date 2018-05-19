@@ -17,7 +17,7 @@ if(COFFEE_BUILD_GLEAM)
 
     target_include_directories ( CoffeeGLeamCommon
         PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/coffee/windowing/private/graphics/ceagl/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>
         $<INSTALL_INTERFACE:include>
         )
 
