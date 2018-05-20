@@ -57,9 +57,6 @@ struct RendererState
         // GLEAM data
         GLM::API_CONTEXT loader = nullptr;
 
-        GLM::PRF::QRY_DBUF* buffer_debug   = nullptr;
-        GLM::PRF::QRY_DBUF* buffer_debug_p = nullptr;
-
         GLM::FB_T* render_target = nullptr;
 
         GLM::BUF_A* vertbuf;
@@ -96,24 +93,13 @@ struct RendererState
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
-        /* Now generating a drawcall, which only specifies small state that can
-         * be shared */
-        GLM::D_CALL call{false, true};
-        GLM::Q_OCC* o_query = nullptr;
-
         /* Instance data is more akin to individual drawcalls, specifying vertex
          * buffer information */
         GLM::D_DATA instdata = {6, 0, 4};
 
         // View information
-        GLM::VIEWSTATE viewportstate;
-        GLM::RASTSTATE rasterstate_poly = {};
-        GLM::RASTSTATE rasterstate_line = {};
         GLM::BLNDSTATE blendstate       = {};
-        GLM::PIXLSTATE pixlstate        = {};
         GLM::DEPTSTATE deptstate        = {};
-        GLM::TSLRSTATE teslstate        = {};
-        GLM::STENSTATE stenstate        = {};
 
         GLM::USTATE unifstate   = {};
         GLM::USTATE unifstate_f = {};
@@ -121,17 +107,7 @@ struct RendererState
         GLM::PSTATE     pipstate = {};
         GLM::RenderPass rpass_s  = {};
         GLM::OPT_DRAW   rpass    = {};
-
-        // Texture information
-        bool did_apply_state = false;
-
     } g_data;
-
-    struct RGPUQuery
-    {
-        GpuInfo::GpuQueryInterface fun;
-        bool                       haveGpuQuery = false;
-    } gq_data;
 };
 
 void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
@@ -148,53 +124,9 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
         {
             if(kev->key == CK_F10)
                 rdata->r_state.debug_enabled = !rdata->r_state.debug_enabled;
-            //            else if(kev->key == CK_F9)
-            //                setWindowPosition({0,0});
         }
     }
-
-    if(e.type == CIEvent::TouchTap)
-    {
-        cDebug("Success!");
-        rdata->g_data.camera.position = {0.f, 0.f, -15.f};
-    }
-
-    if(e.type == CIEvent::TouchPan)
-    {
-        auto pev                          = C_FCAST<CIMTouchMotionEvent*>(data);
-        rdata->g_data.camera.position.x() = pev->origin.x / 1920.f;
-        rdata->g_data.camera.position.y() = pev->origin.y / 1200.f;
-    }
-
-    if(e.type == CIEvent::TouchRotate)
-    {
-        auto rev = C_FCAST<CITouchRotateEvent*>(data);
-
-        Quatf rotation = Quatf(1.f, 0.f, rev->radians * 0.05f, 0.f);
-
-        rdata->g_data.camera.rotation =
-            normalize_quat(rotation * rdata->g_data.camera.rotation);
-    }
-
-    if(e.type == CIEvent::TouchPinch)
-    {
-        CITouchPinchEvent* pev = C_FCAST<CITouchPinchEvent*>(data);
-
-        rdata->g_data.camera.position.z() += (-pev->factor + 1.f) / 100.f;
-    }
 }
-
-// void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
-//{
-//    RendererState* rdata = C_FCAST<RendererState*>(r);
-//    if(e.type == CDEvent::Resize)
-//    {
-//        auto rev = C_CAST<Display::CDResizeEvent const*>(data);
-//        buffer_debug_p->resize(*rev);
-//
-//        camera.aspect = scalar(rev->w)/scalar(rev->h);
-//    }
-//}
 
 void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
@@ -203,8 +135,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     g = {};
 
     Store::RestoreMemory(Bytes::Create(d->r_state), 0);
-
-    d->gq_data.haveGpuQuery = GpuInfo::LoadDefaultGpuQuery(&d->gq_data.fun);
 
     cVerbose("Entering run() function");
 
@@ -298,50 +228,14 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         CResources::Resource f_rsc(
             shader_files[isGles * 2 + isGles20 * 2 + 1],
             ResourceAccess::SpecifyStorage | ResourceAccess::AssetFile);
-        if(!CResources::FileMap(v_rsc) || !CResources::FileMap(f_rsc))
+
+        if(!RHI::LoadPipeline<GLM>(eye_pip, v_rsc, f_rsc))
         {
-            cWarning(
-                "Failed to map resources: {0}, {1}",
-                v_rsc.resource(),
-                f_rsc.resource());
-            break;
+            cFatal("Failed to load shaders");
         }
 
-        Bytes v_shader_code = FileGetDescriptor(v_rsc);
-        Bytes f_shader_code = FileGetDescriptor(f_rsc);
-
-        if(v_shader.compile(ShaderStage::Vertex, v_shader_code) &&
-           f_shader.compile(ShaderStage::Fragment, f_shader_code))
-        {
-            cVerbose("Shaders compiled");
-            eye_pip.attach(v_shader, ShaderStage::Vertex);
-            eye_pip.attach(f_shader, ShaderStage::Fragment);
-            cVerbose("Shaders attached");
-            if(!eye_pip.assemble())
-            {
-                cWarning("Invalid pipeline");
-                break;
-            }
-            cVerbose("GPU pipeline assembled");
-        } else
-        {
-            cWarning("Shader compilation failed");
-            break;
-        }
-        v_shader.dealloc();
-        f_shader.dealloc();
-
-        GLM::PRF::QRY_PIPDMP dumper(eye_pip);
-        dumper.dump("hello.prg");
     } while(false);
     cVerbose("Compiled shaders");
-
-    /*
-     * Binding the pipeline for usage
-     * This has different meaning across GL3.3 and GL4.3+
-     */
-    eye_pip.bind();
-    cVerbose("Pipeline bind");
 
     /* Uploading textures */
     g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1, GLM::TextureDMABuffered);
@@ -362,6 +256,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     }
 
 #if defined(FEATURE_USE_ASIO)
+    /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
         ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
@@ -401,8 +296,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
     cVerbose("Setting sampler properties");
 
-    /* Creating the uniform data store */
-
     /*
      * These specify byte buffers which refer to other data
      * This makes it simple to redirect or reallocate the uniform data
@@ -423,30 +316,16 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     g.texture_size.data = &g.texsize_data;
 
     /* We create some pipeline state, such as blending and viewport state */
-    auto& viewportstate    = g.viewportstate;
     auto& blendstate       = g.blendstate;
     auto& deptstate        = g.deptstate;
-    auto& rasterstate_line = g.rasterstate_line;
-
-    CSize win_size = renderer.windowSize();
 
     blendstate.m_doBlend = true;
-    viewportstate.m_view.clear();
-    viewportstate.m_view.push_back({0, 0, win_size.w, win_size.h});
-    viewportstate.m_scissor.clear();
-    viewportstate.m_scissor.push_back({0, 0, win_size.w, win_size.h});
-    viewportstate.m_mview        = true;
-    rasterstate_line.m_wireframe = true;
     deptstate.m_test             = true;
     deptstate.m_func             = C_CAST<uint32>(ValueComparison::Less);
 
     /* Applying state information */
-    GLM::SetViewportState(viewportstate, 0);
-    GLM::SetStencilState(g.stenstate, 0);
     GLM::SetBlendState(g.blendstate);
-    GLM::SetPixelProcessState(g.pixlstate);
     GLM::SetDepthState(deptstate);
-    GLM::SetTessellatorState(g.teslstate);
     cVerbose("Set renderer state");
 
     /* We query the current pipeline for possible uniform/texture/buffer values
@@ -461,7 +340,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         if(u.m_name == "transform")
         {
             unifstate_v.setUniform(u, &g.transforms);
-            cVerbose(4, "Array size: {0}", u.m_arrSize);
         } else if(u.m_name == "texdata")
             unifstate_f.setSampler(u, &g.textures_array);
         else if(u.m_name == "mx")
@@ -504,23 +382,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     GLM::DefaultFramebuffer().clear(0, g.clear_col, 0.5);
 
-    g.buffer_debug = new GLM::PRF::QRY_DBUF(
-        GLM::DefaultFramebuffer(), DBuffers::Color | DBuffers::Depth);
-
-    g.buffer_debug_p = g.buffer_debug;
-
-    g.render_target = &GLM::DefaultFramebuffer();
-
     g.tprevious = d->r_state.time_base;
     g.tbase     = d->r_state.time_base;
-
-    g.o_query = new GLM::Q_OCC(CGL::QueryT::AnySamplesCon);
 
     g.rpass_s.pipeline    = &g.eye_pip;
     g.rpass_s.blend       = &g.blendstate;
     g.rpass_s.depth       = &g.deptstate;
     g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
-    g.rpass_s.raster      = &g.rasterstate_poly;
 
     g.pipstate[ShaderStage::Vertex]   = &g.unifstate;
     g.pipstate[ShaderStage::Fragment] = &g.unifstate_f;
@@ -532,27 +400,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void LogicLoop(CDRenderer& renderer, RendererState* d)
 {
-    //    ProfContext a("Logic frame", Profiling::DataPoint::Hot);
-
     auto& g = d->g_data;
-
-    /*
-     * Events are always late for the drawcall.
-     * The best we can do is update the state as often as possible.
-     * Or we could maximize the time of each iteration for VSYNC,
-     *  polling once to begin with and also later.
-     *
-     * Example:
-     * poll();
-     * ...
-     * upload();
-     * process();
-     * ...
-     * millisleep(15);
-     * poll();
-     * draw();
-     *
-     */
 
     renderer.pollEvents();
 
@@ -571,8 +419,6 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
     /* Define frame data */
     base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 2.);
     base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 2.);
-
-    //      camera.position.z() = -tprevious;
 
     time_value = C_CAST<scalar>(CMath::sin(tprevious) + (CMath::pi / 4.));
 
@@ -605,77 +451,14 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    //    ProfContext a("Render frame", Profiling::DataPoint::Hot);
-
     auto& g = d->g_data;
 
-    bool do_debugging = d->r_state.debug_enabled && PlatformData::IsDebug();
-    if(do_debugging)
-    {
-        g.did_apply_state = false;
-        g.render_target   = &g.buffer_debug->debugTarget();
-    } else
-        g.render_target = &GLM::DefaultFramebuffer();
-
-    g.render_target->clear(0, g.clear_col, 1.);
-
-    /*
-     * Events are always late for the drawcall.
-     * The best we can do is update the state as often as possible.
-     * Or we could maximize the time of each iteration for VSYNC,
-     *  polling once to begin with and also later.
-     *
-     * Example:
-     * poll();
-     * ...
-     * upload();
-     * process();
-     * ...
-     * millisleep(15);
-     * poll();
-     * draw();
-     *
-     */
-
-    /*
-     * In APIs such as GL4.3+, this will apply vertex and fragment states
-     * separately.
-     * With GL3.3 it sets all state with the vertex stage and drops the rest.
-     */
-    if(d->r_state.debug_enabled || !g.did_apply_state)
-    {
-        g.did_apply_state = true;
-
-        g.vertdesc.bind();
-        g.vertdesc.bindBuffer(0, *g.vertbuf);
-        g.eye_pip.bind();
-
-        GLM::SetRasterizerState(g.rasterstate_poly);
-        GLM::SetDepthState(g.deptstate);
-    }
+    GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
 
     scalar texSize = i32(CMath::sqrt(g.eyetex->texSize().depth));
     g.texsize_data = Bytes::Create(texSize);
 
-    /*
-     * For VR, we could add drawcall parameters to specify this
-     * The user would still specify their own projection matrices per-eye,
-     *  or we could fabricate these.
-     * We would primarily support stereo instancing,
-     *  because this has a lot of benefits to efficiency.
-     */
-
     GLM::MultiDraw(g.eye_pip, g.rpass);
-
-    //    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
-    //                         g.call, g.instdata, *g.o_query);
-
-    if(d->r_state.debug_enabled)
-    {
-        g.did_apply_state = false;
-        GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
-        g.buffer_debug->end();
-    }
 
     renderer.swapBuffers();
 
@@ -684,14 +467,6 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererCleanup(CDRenderer& renderer, RendererState* d)
 {
-    //    Vector<byte_t> m_framebuffer;
-    //    GLM::DumpFramebuffer(GLM::DefaultFramebuffer(), PixelComponents::RGBA,
-    //    TypeEnum::UByte,
-    //                         m_framebuffer);
-
-    //    PNG::Save(m_framebuffer, GLM::DefaultFramebuffer().size(),
-    //    "test.png");
-
     auto& g = d->g_data;
 
     g.vertbuf->dealloc();
@@ -701,19 +476,11 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
     g.eye_pip.dealloc();
     g.eyesamp.dealloc();
 
-    delete g.buffer_debug;
-    g.buffer_debug = nullptr;
-
-    delete g.o_query;
-    g.o_query = nullptr;
-
     delete g.vertbuf;
     g.vertbuf = nullptr;
 
     delete g.eyetex;
     g.eyetex = nullptr;
-
-    g.render_target = nullptr;
 
     g.loader = nullptr;
     GLM::UnloadAPI();
@@ -722,63 +489,3 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
     Store::SaveMemory(Bytes::Create(d->r_state), 0);
 }
 
-void frame_count(RendererState* d)
-{
-    cDebug("Swaps/s: {0}", d->frameCount);
-
-    d->frameCount = 0;
-
-    if(d->gq_data.haveGpuQuery)
-    {
-        auto fun = d->gq_data.fun;
-        cDebug("GPU Driver: {0}", fun.GetDriver());
-        cDebug("GPU Devices: {0}", fun.GetNumGpus());
-        for(GpuInfo::GpuView e : GpuInfo::GpuQueryView(fun))
-        {
-            cDebug("GPU Model: {0}", e.model());
-
-            auto temp = e.temp();
-            cDebug("Temperature: {0} // {1}", temp.current, temp.max);
-
-            auto mem = e.mem();
-            cDebug(
-                "Memory use: tot={0}, used={1}, free={2}",
-                mem.total,
-                mem.used,
-                mem.free);
-            cDebug(
-                "Memory used by this application: {0}",
-                e.memUsage(ProcessProperty::Pid()));
-
-            auto clk = e.clock(GpuInfo::Clock::Graphics);
-            cDebug(
-                "Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
-            clk = e.clock(GpuInfo::Clock::Memory);
-            cDebug(
-                "Memory limits: {0} / {1} / {2}",
-                clk.current,
-                clk.min,
-                clk.max);
-            clk = e.clock(GpuInfo::Clock::VideoDecode);
-            cDebug(
-                "Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
-
-            auto bus = e.bus();
-            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
-
-            auto util = e.usage();
-            cDebug(
-                "GPU usage: GPU={0}%,"
-                " MEM={1}%, DECODER={2}%,"
-                " ENCODER={3}%",
-                util.gpu,
-                util.mem,
-                util.decoder,
-                util.encoder);
-
-            cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
-        }
-    }
-
-    cDebug("Memory: {0}", ProcessProperty::Mem(ProcessProperty::Pid()));
-}
