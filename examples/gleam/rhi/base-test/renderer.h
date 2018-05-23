@@ -100,6 +100,7 @@ struct RendererState
         // View information
         GLM::BLNDSTATE blendstate       = {};
         GLM::DEPTSTATE deptstate        = {};
+        GLM::D_CALL    call             = {};
 
         GLM::USTATE unifstate   = {};
         GLM::USTATE unifstate_f = {};
@@ -222,12 +223,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         bool isGles = (GLM::LevelIsOfClass(GLM::Level(), GLM::APIClass::GLES));
         bool isGles20 = GLM::Level() == RHI::GLEAM::GLES_2_0;
 
-        CResources::Resource v_rsc(
-            shader_files[isGles * 2 + isGles20 * 2],
-            ResourceAccess::SpecifyStorage | ResourceAccess::AssetFile);
-        CResources::Resource f_rsc(
-            shader_files[isGles * 2 + isGles20 * 2 + 1],
-            ResourceAccess::SpecifyStorage | ResourceAccess::AssetFile);
+        CResources::Resource v_rsc(shader_files[isGles * 2 + isGles20 * 2]);
+        CResources::Resource f_rsc(shader_files[isGles * 2 + isGles20 * 2 + 1]);
 
         if(!RHI::LoadPipeline<GLM>(eye_pip, v_rsc, f_rsc))
         {
@@ -451,6 +448,7 @@ void LogicLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
+    LogicLoop(renderer, d);
     auto& g = d->g_data;
 
     GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
@@ -461,8 +459,9 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
     GLM::MultiDraw(g.eye_pip, g.rpass);
 
     renderer.swapBuffers();
+    renderer.pollEvents();
 
-    d->frameCount++;
+    //d->frameCount++;
 }
 
 void RendererCleanup(CDRenderer& renderer, RendererState* d)

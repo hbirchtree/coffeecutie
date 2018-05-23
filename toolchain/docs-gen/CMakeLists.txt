@@ -45,12 +45,12 @@ ENDFUNCTION(GENERATE_DOCUMENTATION)
 
 IF(COFFEE_DOCS)
     GENERATE_DOCUMENTATION(
-        "${CMAKE_SOURCE_DIR}/docs-gen/coffee.dox.in"
-        "${CMAKE_SOURCE_DIR}/src/coffee"
+        "${CMAKE_CURRENT_SOURCE_DIR}/coffee.dox.in"
+        "${CMAKE_SOURCE_DIR}/src/coffee ${CMAKE_SOURCE_DIR}/src/include"
         )
     INSTALL (
         DIRECTORY
-        "${CMAKE_BINARY_DIR}/docs-gen/html"
+        "${CMAKE_CURRENT_BINARY_DIR}/html"
         DESTINATION
         "docs"
         )
