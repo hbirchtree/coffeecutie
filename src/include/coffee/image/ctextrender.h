@@ -14,20 +14,12 @@ struct FontRendererDef
     struct FontProperties
     {
         scalar scale;
-        int32 ascent;
-        int32 descent;
-        int32 linegap;
+        int ascent;
+        int descent;
+        int linegap;
     };
 
     struct FontData;
-
-    static FontData* LoadFontConfig(Bytes&){return nullptr;}
-    static void UnloadFontConfig(FontData*){}
-    static cstring GetFontName(FontData*){return nullptr;}
-    static bool GetFontProperties(FontData*,scalar,FontProperties*){return false;}
-
-    static bool CalcTextSize(FontData*,FontProperties const&,cstring,CRect*,uint32*){return false;}
-    static bool RenderText(FontData*,FontProperties const&,cstring){return false;}
 };
 
 }
@@ -37,13 +29,29 @@ struct StbFontRenderer : TrueType::FontRendererDef
 {
     struct FontData;
 
-    static FontData* LoadFontConfig(Bytes& p);
-    static void UnloadFontConfig(FontData* d);
-    static cstring GetFontName(FontData* d);
-    static bool GetFontProperties(FontData* d, scalar h, FontProperties* p);
+    struct DataDeleter
+    {
+        void operator()(FontData* data);
+    };
 
-    static bool CalcTextSize(FontData* d,FontProperties const& p,cstring t,CRect* b,uint32* s);
-    static bool RenderText(FontData* d,FontProperties const& p,cstring t);
+    using FontPtr = UqPtr<FontData, DataDeleter>;
+
+    static FontPtr LoadFontConfig(Bytes&& p);
+    static void UnloadFontConfig(FontPtr&& d);
+    static cstring GetFontName(FontPtr const& d);
+    static bool GetFontProperties(FontPtr const& d, scalar h, FontProperties &p);
+
+    static bool CalcTextSize(
+            FontPtr const& d,
+            FontProperties const& p,
+            cstring t,
+            CRect& b,
+            uint32& s);
+    static Bytes& RenderText(
+            FontPtr const& font,
+            FontProperties const& properties,
+            cstring text,
+            Bytes& output);
 };
 
 }

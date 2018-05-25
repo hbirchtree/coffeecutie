@@ -43,12 +43,13 @@ public:
      * \param rsrc Path to resource
      * \param absolute False by default, true to not use global file redirection
      */
+    C_DEPRECATED
     Resource(cstring rsrc = nullptr,
              bool absolute = false,
-             ResourceAccess acc = ResourceAccess::AssetFile);
+             RSCA acc = RSCA::AssetFile);
     Resource(Url const& url);
     Resource(cstring rsrc,
-             ResourceAccess acc);
+             RSCA acc = RSCA::AssetFile);
     Resource(Resource &&rsc);
     ~Resource();
 
@@ -160,6 +161,13 @@ FORCEDINLINE CResources::Resource operator "" _config(const char* fn, size_t)
     return CResources::Resource(fn,
                                 ResourceAccess::SpecifyStorage|
                                 ResourceAccess::ConfigFile);
+}
+
+FORCEDINLINE CResources::Resource operator "" _sysfile(const char* fn, size_t)
+{
+    return CResources::Resource(fn,
+                                ResourceAccess::SpecifyStorage|
+                                ResourceAccess::SystemFile);
 }
 
 namespace Strings{

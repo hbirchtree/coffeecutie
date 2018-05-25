@@ -1,8 +1,6 @@
 #include <coffee/image/ctextrender.h>
 
-#if !defined(COFFEE_NACL)
-#include <coffee/core/plat/plat_memory.h>
-
+#include <coffee/core/types/cdef/memsafe.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
@@ -15,89 +13,117 @@ struct StbFontRenderer::FontData
     stbtt_fontinfo info;
 };
 
-StbFontRenderer::FontData *StbFontRenderer::LoadFontConfig(Bytes &p)
+StbFontRenderer::FontPtr StbFontRenderer::LoadFontConfig(Bytes &&p)
 {
-    FontData* data = new FontData;
+    if(!p)
+        return FontPtr();
+
+    auto data = MkUqDST<FontData, DataDeleter>();
+
     if(!stbtt_InitFont(&data->info,p.data,0))
-    {
-        delete data;
-        return nullptr;
-    }
+        return FontPtr();
+
     return data;
 }
 
-void StbFontRenderer::UnloadFontConfig(StbFontRenderer::FontData *d)
+void StbFontRenderer::UnloadFontConfig(FontPtr &&d)
 {
-    delete d;
+    d = {};
 }
 
-cstring StbFontRenderer::GetFontName(StbFontRenderer::FontData *d)
+cstring StbFontRenderer::GetFontName(const StbFontRenderer::FontPtr &d)
 {
-    /*TODO: Fix name fetching for Stb Truetype*/
-    int len;
-    return stbtt_GetFontNameString(&d->info,&len,1,1,1,1);
+    if(!d)
+        return nullptr;
+
+    int len = 0;
+
+    return stbtt_GetFontNameString(
+                &d->info,
+                &len,
+                STBTT_PLATFORM_ID_UNICODE,
+                STBTT_UNICODE_EID_UNICODE_1_0,
+                0,
+                0);
 }
 
-bool StbFontRenderer::GetFontProperties(FontData *d, scalar h, FontProperties *p)
+bool StbFontRenderer::GetFontProperties(
+        const FontPtr &d,
+        scalar h,
+        FontProperties &p)
 {
-    p->scale = stbtt_ScaleForPixelHeight(&d->info,h);
-    stbtt_GetFontVMetrics(&d->info,&p->ascent,&p->descent,&p->linegap);
-    p->ascent *= p->scale;
-    p->descent *= p->scale;
+    if(!d)
+        return false;
+
+    p.scale = stbtt_ScaleForPixelHeight(&d->info, h);
+    stbtt_GetFontVMetrics(&d->info, &p.ascent, &p.descent, &p.linegap);
+
+    p.ascent *= p.scale;
+    p.descent *= p.scale;
+
     return true;
 }
 
-/*Reference: https://github.com/justinmeiners/stb-truetype-example/blob/master/source/main.c */
-
-bool StbFontRenderer::CalcTextSize(FontData *d, const FontProperties &p,
-                                   cstring t, CRect *b, uint32 *s)
+bool StbFontRenderer::CalcTextSize(
+        const FontPtr &d,
+        const FontProperties &p,
+        cstring t,
+        CRect &b,
+        uint32 &s)
 {
-    C_UNUSED(s);
 
-    szptr max = StrLen(t);
-    int32 x = 0;
-    for(uint32 i=0;i<max;i++)
-    {
-        CRect box;
-        stbtt_GetCodepointBitmapBox(&d->info,t[i],p.scale,p.scale,
-                                    &box.x,&box.y,&box.w,&box.h);
-
-        int ax;
-        stbtt_GetCodepointHMetrics(&d->info,t[i],&ax,0);
-
-        x += ax*p.scale;
-
-        int kern = stbtt_GetCodepointKernAdvance(&d->info,t[i],t[i+1]);
-
-        x += kern*p.scale;
-
-        box.w = box.w-box.x;
-        box.h = box.h-box.y;
-
-        box.x += x;
-        box.y = p.ascent+box.y;
-
-        *b = b->unite(box);
-    }
-    return true;
 }
 
-bool StbFontRenderer::RenderText(FontData *d, const FontProperties &p, cstring t)
+Bytes& StbFontRenderer::RenderText(
+        const FontPtr &data,
+        const FontProperties &properties,
+        cstring text,
+        Bytes& output)
 {
-//    ubyte_t* data = C_CAST<ubyte_t*>(Alloc(512*128));
-    int32 x = 0;
+    auto stb_data = &data->info;
+    auto scale = properties.scale;
 
-//    C_UNUSED(data);
-    C_UNUSED(x);
-    C_UNUSED(d);
-    C_UNUSED(p);
-    for(uint32 i=0;i<StrLen(t);i++)
+    using irect = _cbasic_rect<int>;
+
+    output = Bytes::Alloc(256 * 128);
+
+    Bytes stringData = Bytes::CreateString(text);
+
+    int x = 0;
+    auto shadowChar = stringData.begin();
+
+    for(auto c : stringData)
     {
+        ++shadowChar;
 
+        irect bbox = {};
+        stbtt_GetCodepointBitmapBox(
+                    stb_data, c, scale, scale,
+                    &bbox.x, &bbox.y, &bbox.w, &bbox.h);
+
+
+        int y = properties.ascent + bbox.y, ax = 0, kern = 0;
+
+//        bbox.w -= bbox.x;
+//        bbox.h -= bbox.y;
+
+        stbtt_MakeCodepointBitmap(
+                    stb_data, &output[x + (y * 256)],
+                bbox.w, bbox.h, 256, scale, scale, c);
+
+        stbtt_GetCodepointHMetrics(stb_data, c, &ax, nullptr);
+        kern = stbtt_GetCodepointKernAdvance(stb_data, c, *shadowChar);
+
+        x += scale * (ax + kern);
     }
-    return false;
+
+    return output;
+}
+
+void StbFontRenderer::DataDeleter::operator()(FontData *data)
+{
+    delete data;
 }
 
 }
 }
-#endif
