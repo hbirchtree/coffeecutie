@@ -1,6 +1,8 @@
 #include <coffee/CAsio>
 #include <coffee/core/CApplication>
-#include <coffee/core/coffee.h>
+#include <coffee/core/CMD>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 
@@ -18,7 +20,7 @@ void ExitFun()
 
 int32 coffee_main(int32, cstring_w*)
 {
-    SetExitHandler(ExitFun);
+    Cmd::RegisterAtExit(ExitFun);
 
     CString user = "testuser";
     CString channel = "#test";

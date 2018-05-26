@@ -178,7 +178,7 @@ bool SavePNG(Bytes& target, const image_const& src)
         src.size.h,
         src.bpp,
         src.data,
-        src.size.w * 4);
+        src.size.w * src.bpp);
 }
 
 bool SaveTGA(Bytes& target, const image_const& src)

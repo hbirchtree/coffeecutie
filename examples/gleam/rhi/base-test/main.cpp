@@ -35,6 +35,7 @@ int32 coffee_main(int32, cstring_w*)
     renderer->installEventHandler({KeyEventHandler, nullptr, loop->data.get()});
     
     loop->data->rt_queue = RuntimeQueue::GetCurrentQueue();
+
     RuntimeQueue::Queue({
          [loop](){
              LogicLoop(*loop->renderer.get(), loop->data.get());

@@ -17,14 +17,11 @@ add_subdirectory (components)
 if(COFFEE_BUILD_ASIO)
     add_subdirectory(asio/base-client)
 #    add_subdirectory(asio/base-server)
-#    add_subdirectory(asio/irc-client)
+    add_subdirectory(asio/irc-client)
 endif()
 
 # Not going to say.
 #add_subdirectory(rsread)
-
-# Casual fun
-#add_subdirectory (experiments/cgb-test)
 
 #
 #
@@ -90,55 +87,6 @@ endif()
 # Examples of the CBlam API and its import of Blam engine data
 if(COFFEE_BUILD_CBLAM AND COFFEE_BUILD_GLEAM AND COFFEE_BUILD_GLEAM_RHI)
     add_subdirectory (blam/cblam-testing)
-endif()
-
-#
-#
-
-#
-# FFMedia
-#
-
-# Examples of media playback and capture through CFFMedia, powered by FFMPEG
-if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_FFMEDIA AND COFFEE_BUILD_GLBINDING)
-    add_subdirectory (media/media-test)
-endif()
-
-#
-#
-
-#
-# PCL/Kinect
-#
-
-# Manipulation of point cloud data through PCL
-if(COFFEE_BUILD_PCL AND COFFEE_BUILD_NECT)
-    add_subdirectory (pcl/pcl-test)
-endif()
-
-#
-#
-
-#
-# Qt
-#
-
-# Qt widgets and etc.
-if(COFFEE_BUILD_QT)
-    add_subdirectory(qt/node-editor-test)
-endif()
-
-#
-#
-
-#
-# VR
-#
-
-if(COFFEE_BUILD_OPENVR) # AND COFFEE_BUILD_OCULUSVR
-#    add_subdirectory(vr/base-test)
-#    add_subdirectory(vr/hellovr)
-#    add_subdirectory(vr/hellovr-rhi)
 endif()
 
 #

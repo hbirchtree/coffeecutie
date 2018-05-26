@@ -39,14 +39,12 @@ int32 coffee_main(int32, cstring_w*)
     {
         AudioSample smp;
         //Read audio sample from file
-        CResources::Resource rsc("healing.ogg",false,
-                                 ResourceAccess::SpecifyStorage
-                                 |ResourceAccess::AssetFile);
+        auto rsc = "healing.ogg"_rsc;
         cDebug("Resource");
         CResources::FileMap(rsc);
         cDebug("Mapping file succeeded, size={0},ptr={1}",rsc.size,
                (uintptr_t)rsc.data);
-        if(!Stb::LoadVorbis(&smp,C_OCAST<Bytes>(rsc)))
+        if(!Stb::LoadVorbis(&smp, rsc))
         {
             cDebug("Failed to load audio file: {0}",rsc.resource());
             return;
@@ -97,9 +95,6 @@ int32 coffee_main(int32, cstring_w*)
         samp1_props.active |= AL::Properties::Looping;
 
         samp1.assignProperties(&samp1_props);
-
-        //Free sample data from source
-        CFree(smp.data);
 
         d->m_track_1 = &track1;
         d->m_track_2 = &track2;

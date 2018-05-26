@@ -40,13 +40,8 @@ public:
 
     /*!
      * \brief Constructs a resource
-     * \param rsrc Path to resource
-     * \param absolute False by default, true to not use global file redirection
+     * \param url Path to resource
      */
-    C_DEPRECATED
-    Resource(cstring rsrc = nullptr,
-             bool absolute = false,
-             RSCA acc = RSCA::AssetFile);
     Resource(Url const& url);
     Resource(cstring rsrc,
              RSCA acc = RSCA::AssetFile);

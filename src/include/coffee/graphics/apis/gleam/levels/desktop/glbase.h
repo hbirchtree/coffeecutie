@@ -3,8 +3,6 @@
 
 #include "../gl_shared.h"
 
-#include "../glxml.h"
-
 namespace Coffee{
 namespace CGL{
 

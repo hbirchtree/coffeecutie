@@ -16,13 +16,8 @@ struct Resource::ResourceData
     Url                        m_url;
 };
 
-Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc) :
-    Resource(MkUrl(rsrc, acc & ResourceAccess::StorageMask))
-{
-}
-
 Resource::Resource(cstring rsrc, ResourceAccess acc) :
-    Resource(rsrc, false, acc)
+    Resource(MkUrl(rsrc, acc & ResourceAccess::StorageMask))
 {
 }
 

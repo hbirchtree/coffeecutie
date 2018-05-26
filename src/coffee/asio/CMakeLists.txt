@@ -37,4 +37,9 @@ if(COFFEE_BUILD_OPENSSL)
         )
 endif()
 
+target_compile_definitions( CoffeeASIO
+    PUBLIC
+    -DASIO_STANDALONE
+    )
+
 coffee_bundle_includes ( "${ASIO_DIR}/asio/include" )

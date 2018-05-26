@@ -1301,6 +1301,7 @@ void GLEAM_API::MultiDraw(
 
     /* In debug mode, display the entire draw call.
      *  This is the true verbose mode. */
+#ifndef COFFEE_LOWFAT
     if(GL_DEBUG_MODE && PrintingVerbosityLevel() >= 12)
     {
         cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle);
@@ -1314,6 +1315,7 @@ void GLEAM_API::MultiDraw(
             }
         }
     }
+#endif
 
     /* The important limiting factor is the speed of
      *  binding new shader pipelines. */
