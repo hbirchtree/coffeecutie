@@ -3,6 +3,11 @@
 BASE_DIR=$(dirname ${0})
 TC_DIR=${BASE_DIR}/toolchain
 
+function all_source_files()
+{
+  find ${BASE_DIR}/src/coffee ${BASE_DIR}/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
+}
+
 case $1 in
 "quick-build")
     ${TC_DIR}/quick-build.sh ${@:2}
@@ -53,17 +58,59 @@ regen - Regenerate meta-build system"
     ;;
     esac
 ;;
+"format")
+    if [ -z $CLANG_FORMAT ]; then
+        CLANG_FORMAT=clang-format   
+    fi
+    if [ -z $2 ]; then
+        all_source_files
+    else
+        all_source_files -exec $CLANG_FORMAT -style=file $2 {} \;
+    fi
+;;
+"include-guards")
+   function detect_ifndef_guard()
+    {
+        if [ ! -z "$(head -1 $@ | grep '#ifndef ')" ]; then
+            echo $@
+        fi
+    }
+  
+    for f in $(all_source_files); do
+        detect_ifndef_guard $f
+    done
+;;
+"platform-guards")
+    function detect_platform_guards()
+    {
+        grep '^#if' $@ /dev/null | egrep 'defined[ ]*\([ ]*COFFEE_[A-Za-z]+\)'
+    }
+    for f in $(all_source_files); do
+        detect_platform_guards $f
+    done
+;;
 *)
 echo "Available tools: 
 
-quick-build         - Use pre-defined build environments
-ci                  - Generate CI files
-version             - Manage project version
-build-info          - Extract information from .build.yml
-extract-tools       - Extract compiled tools into deployment directory
-extract-native-libs - Extract compiled libraries into deployment directory
-generate-project    - Generate a new project directory
-gen-release         - Generate Git tag and push to Git remote
-makefile-generator  - Regenerate meta-build system"
+Project management:
+    generate-project    - Generate a new project directory
+
+Build tools:
+    quick-build         - Use pre-defined build environments
+    extract-tools       - Extract compiled tools into deployment directory
+    extract-native-libs - Extract compiled libraries into deployment directory
+    makefile-generator  - Regenerate meta-build system
+
+CI/CD tools:
+    ci                  - Generate CI files
+    version             - Manage project version
+    build-info          - Extract information from .build.yml
+    gen-release         - Generate Git tag and push to Git remote
+
+Code tools:
+    format              - Format code according to .clang-format
+    include-guards      - Detect files not using '#pragma once'
+    platform-guards     - Find usages of platform guards in code
+    "
 ;;
 esac
