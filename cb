@@ -69,24 +69,35 @@ regen - Regenerate meta-build system"
     fi
 ;;
 "include-guards")
-   function detect_ifndef_guard()
-    {
+    for f in $(all_source_files); do
         if [ ! -z "$(head -1 $@ | grep '#ifndef ')" ]; then
             echo $@
         fi
-    }
-  
-    for f in $(all_source_files); do
-        detect_ifndef_guard $f
     done
 ;;
 "platform-guards")
-    function detect_platform_guards()
-    {
-        grep '^#if' $@ /dev/null | egrep 'defined[ ]*\([ ]*COFFEE_[A-Za-z]+\)'
-    }
     for f in $(all_source_files); do
-        detect_platform_guards $f
+        grep '^#if' $f /dev/null | egrep 'defined[ ]*\([ ]*COFFEE_[A-Za-z]+\)'
+    done
+;;
+"exception-guards")
+    for f in $(all_source_files); do
+        egrep '[^A-Za-z0-9]throw ' $f /dev/null
+    done
+;;
+"rtti-guards")
+    for f in $(all_source_files); do
+        egrep 'typeid' $f /dev/null
+    done
+;;
+"cast-guards")
+    for f in $(all_source_files); do
+        egrep '(reinterpret|static|dynamic|const)_cast' $f /dev/null
+    done
+;;
+"stl-guards")
+    for f in $(all_source_files); do
+        egrep '(std::| std)' $f /dev/null
     done
 ;;
 *)
@@ -111,6 +122,10 @@ Code tools:
     format              - Format code according to .clang-format
     include-guards      - Detect files not using '#pragma once'
     platform-guards     - Find usages of platform guards in code
+    exception-guards    - Find usages of exeptions that are not wrapped
+    rtti-guards         - Find usages of RTTI
+    cast-guards         - Find usages of C++ *_cast<T>() operators
+    stl-guards          - Usage of std::* types
     "
 ;;
 esac
