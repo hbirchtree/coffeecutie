@@ -57,6 +57,9 @@ struct AudioFormat
  */
 struct AudioSample
 {
+    using short_data = _cbasic_data_chunk<short>;
+
+    short_data container;
     short* data = nullptr; /*!< Pointer to audio data*/
     AudioFormat fmt; /*!< Format specification*/
     uint32 samples;

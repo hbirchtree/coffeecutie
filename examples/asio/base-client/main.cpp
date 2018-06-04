@@ -198,6 +198,7 @@ int32 coffee_main(int32, cstring_w*)
         printResult(t);
     }
 
+#ifndef COFFEE_LOWFAT
     {
         /* UDP socket stuff */
 
@@ -240,6 +241,7 @@ int32 coffee_main(int32, cstring_w*)
             cDebug("Caught exception: {0}", e.what());
         }
     }
+#endif
 
     return 0;
 }

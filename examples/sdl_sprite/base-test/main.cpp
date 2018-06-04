@@ -156,22 +156,10 @@ int32 coffee_main(int32, cstring_w*)
             Profiler::Profile("Texture creation");
 
             /* Map a texture into memory */
-            CResources::Resource texfile(
-                "particle_sprite.png",
-                false,
-                ResourceAccess::SpecifyStorage | ResourceAccess::AssetFile |
-                    ResourceAccess::ReadOnly);
-
-            cDebug("Opening texture: {0}", texfile.resource());
-
-            CResources::FileMap(texfile);
-
-            cDebug(
-                "Pointer to texture: {0}",
-                C_FCAST<const byte_t*>(texfile.data));
+            auto texfile = "particle_sprite.png"_rsc;
 
             /* Decode file to RGBA data */
-            stb::image_rw img;
+            stb::image_rw img = {};
             stb::LoadData(&img, texfile, PixCmp::RGBA);
 
             /* Copy texture into texture memory */
@@ -180,7 +168,6 @@ int32 coffee_main(int32, cstring_w*)
                 MemCpy(
                     C_OCAST<Bytes>(img),
                     Bytes::From(pdata, img.size.area() * img.bpp));
-//                MemCpy(pdata, img.data, img.size.area() * img.bpp);
                 data->rend.unmapTexture(data->t);
             }
 

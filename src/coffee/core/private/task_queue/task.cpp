@@ -10,6 +10,8 @@ RuntimeQueue::QueueContextPtr RuntimeQueue::context;
 
 RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString& name)
 {
+    C_PTR_CHECK(context);
+
     Lock _(context->globalMod);
 
     auto t_id = ThreadId().hash();
@@ -74,28 +76,31 @@ static void ImpCreateNewThreadQueue(CString const& name, AtomicBool** flag)
 
 RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name)
 {
-    try{
-    DProfContext _(DTEXT(RQ_API "Creating new task queue"));
-    AtomicBool*  flagPtr = nullptr;
-    Thread       t(ImpCreateNewThreadQueue, name, &flagPtr);
-    auto         tid = ThreadId(t.get_id()).hash();
+    C_PTR_CHECK(context);
 
-    CurrentThread::yield();
-
-    /* I feel bad for this, but it shouldn't be called often */
-    while(flagPtr == nullptr)
+    try
     {
+        DProfContext _(DTEXT(RQ_API "Creating new task queue"));
+        AtomicBool*  flagPtr = nullptr;
+        Thread       t(ImpCreateNewThreadQueue, name, &flagPtr);
+        auto         tid = ThreadId(t.get_id()).hash();
+
         CurrentThread::yield();
-    }
 
-    {
-        Lock _(context->globalMod);
+        /* I feel bad for this, but it shouldn't be called often */
+        while(flagPtr == nullptr)
+        {
+            CurrentThread::yield();
+        }
 
-        context->queueThreads[tid] = std::move(t);
-        context->queueFlags.insert({tid, flagPtr});
-    }
+        {
+            Lock _(context->globalMod);
 
-    return &context->queues.find(tid)->second;
+            context->queueThreads[tid] = std::move(t);
+            context->queueFlags.insert({tid, flagPtr});
+        }
+
+        return &context->queues.find(tid)->second;
     } catch(std::exception const& e)
     {
         cWarning("Failed to create RuntimeQueue: {0}", e.what());
@@ -105,6 +110,8 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name)
 
 RuntimeQueue* RuntimeQueue::GetCurrentQueue()
 {
+    C_PTR_CHECK(context);
+
     Lock _(context->globalMod);
 
     auto q_id = ThreadId().hash();

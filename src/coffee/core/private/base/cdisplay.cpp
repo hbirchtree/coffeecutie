@@ -20,7 +20,9 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
             |GLProperties::GLCoreProfile
             ;
 
+#ifndef COFFEE_LOWFAT
     props.title = State::GetBuildInfo().default_window_name.c_str();
+#endif
 
     props.size.w = 1280;
     props.size.h = 720;

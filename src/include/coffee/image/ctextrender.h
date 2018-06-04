@@ -1,30 +1,28 @@
-#ifndef COFFEE_IMAGE_TRUETYPE_STB_H
-#define COFFEE_IMAGE_TRUETYPE_STB_H
+#pragma once
 
-#include <coffee/core/types/tdef/integertypes.h>
+#include "cimage.h"
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/tdef/integertypes.h>
 
-namespace Coffee{
-#if !defined(COFFEE_NACL)
-namespace TrueType{
+namespace Coffee {
+namespace TrueType {
 
 struct FontRendererDef
 {
     struct FontProperties
     {
         scalar scale;
-        int ascent;
-        int descent;
-        int linegap;
+        int    ascent;
+        int    descent;
+        int    linegap;
     };
 
     struct FontData;
 };
 
-}
-namespace StbTruetype
-{
+} // namespace TrueType
+namespace StbTruetype {
 struct StbFontRenderer : TrueType::FontRendererDef
 {
     struct FontData;
@@ -37,28 +35,21 @@ struct StbFontRenderer : TrueType::FontRendererDef
     using FontPtr = UqPtr<FontData, DataDeleter>;
 
     static FontPtr LoadFontConfig(Bytes&& p);
-    static void UnloadFontConfig(FontPtr&& d);
+    static void    UnloadFontConfig(FontPtr&& d);
     static cstring GetFontName(FontPtr const& d);
-    static bool GetFontProperties(FontPtr const& d, scalar h, FontProperties &p);
+    static bool    GetFontProperties(
+           FontPtr const& d, scalar h, FontProperties& p);
 
-    static bool CalcTextSize(
-            FontPtr const& d,
-            FontProperties const& p,
-            cstring t,
-            CRect& b,
-            uint32& s);
     static Bytes& RenderText(
-            FontPtr const& font,
-            FontProperties const& properties,
-            cstring text,
-            Bytes& output);
+        FontPtr const&        font,
+        FontProperties const& properties,
+        cstring               text,
+        Bytes&                output,
+        Size&                 imageSize);
 };
 
-}
+} // namespace StbTruetype
 
 using FontRenderer = StbTruetype::StbFontRenderer;
-#endif
 
-}
-
-#endif
+} // namespace Coffee

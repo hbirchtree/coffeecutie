@@ -279,7 +279,7 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
 
     setWindowState(props.flags);
     showWindow();
-    setWindowTitle(props.title);
+    setWindowTitle(props.title ? props.title : "Coffee");
 
     return true;
 }

@@ -3,6 +3,10 @@
 #include "../../types/tdef/fntypes.h"
 #include "../../coffee_version.h"
 
+#if defined(COFFEE_LOWFAT)
+#include <coffee/core/task_queue/task.h>
+#endif
+
 #if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2))
 #include <jni.h>
 #endif
@@ -26,13 +30,18 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv,
 #if defined(COFFEE_LOWFAT)
 
 #define COFFEE_APPLICATION_MAIN(mainfun) \
-    int main(int argv, char** argc){ return mainfun(argv,argc); }
+    int main(int argv, char** argc){ \
+        using namespace Coffee; \
+        RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext()); \
+        State::SetInternalState(State::CreateNewState()); \
+        return mainfun(argv,argc); \
+    }
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
-    int main(int argv, char** argc){ return mainfun(argv,argc); }
+    COFFEE_APPLICATION_MAIN(mainfun)
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
-    int main(int argv, char** argc){ return mainfun(argv,argc); }
+    COFFEE_APPLICATION_MAIN(mainfun)
 
 #elif defined(COFFEE_SDL_MAIN)
 

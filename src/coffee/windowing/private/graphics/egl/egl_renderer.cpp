@@ -469,7 +469,7 @@ void EGLRenderer::contextTerminate()
 
     if(!m_eglData->display)
     {
-        m_eglData.reset(nullptr);
+        m_eglData.reset();
         return;
     }
 
@@ -484,7 +484,7 @@ void EGLRenderer::contextTerminate()
     delete mContext;
     mContext = nullptr;
 
-    m_eglData.reset(nullptr);
+    m_eglData.reset();
 }
 
 void EGLRenderer::swapBuffers()
