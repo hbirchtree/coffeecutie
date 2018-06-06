@@ -11,22 +11,31 @@ i32 rendering_test(i32, cstring_w*)
 {
     using namespace TrueType;
 
-    auto fontData = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"_sysfile;
+    auto fontData = "/home/havard/.fonts/kenney-icon-font.ttf"_sysfile;
 
     Bytes data = fontData;
+
+    if(!data)
+    {
+        cDebug("Font not found!");
+        return 1;
+    }
 
     auto config = FontRenderer::LoadFontConfig(fontData);
 
     FontRenderer::FontProperties props;
     if(!FontRenderer::GetFontProperties(config, 64, props))
+    {
+        cDebug("Failed to configure font");
         return 1;
+    }
 
     Bytes textData = {};
     Size  textSize = {};
 
     {
         ProfContext _("Render text");
-        FontRenderer::RenderText(config, props, "test", textData, textSize);
+        FontRenderer::RenderText(config, props, "FINAL FANTASY VII", textData, textSize);
     }
 
     cDebug("Font name: {0}", FontRenderer::GetFontName(config));
@@ -42,7 +51,10 @@ i32 rendering_test(i32, cstring_w*)
         {
             ProfContext _("Filesystem");
             if(!FileCommit(outFile))
+            {
+                cDebug("Failed to save bitmap");
                 return 1;
+            }
         }
     }
 

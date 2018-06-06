@@ -59,4 +59,16 @@ using Matf3_2 = _cbasic_tmnmatrix<scalar,3,2>;
 using Matf4_2 = _cbasic_tmnmatrix<scalar,4,2>;
 using Matf4_3 = _cbasic_tmnmatrix<scalar,4,3>;
 
+using Matd2 = _cbasic_tmatrix<bigscalar, 2>;
+using Matd3 = _cbasic_tmatrix<bigscalar, 3>;
+using Matd4 = _cbasic_tmatrix<bigscalar, 4>;
+
+using Matd2_3 = _cbasic_tmnmatrix<bigscalar,2,3>;
+using Matd2_4 = _cbasic_tmnmatrix<bigscalar,2,4>;
+using Matd3_4 = _cbasic_tmnmatrix<bigscalar,3,4>;
+
+using Matd3_2 = _cbasic_tmnmatrix<bigscalar,3,2>;
+using Matd4_2 = _cbasic_tmnmatrix<bigscalar,4,2>;
+using Matd4_3 = _cbasic_tmnmatrix<bigscalar,4,3>;
+
 }

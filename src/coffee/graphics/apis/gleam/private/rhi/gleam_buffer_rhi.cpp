@@ -7,7 +7,7 @@ namespace RHI {
 namespace GLEAM {
 STATICINLINE void VerifyBuffer(CGhnd h)
 {
-    if(GL_DEBUG_MODE && !CGL33::Debug::IsBuffer(h))
+    if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h))
         cWarning("Invalid use of buffer API,"
                  " buffer handle is not valid");
 }
@@ -42,7 +42,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data_)
         if(GLEAM_FEATURES.direct_state)
             CGL45::BufStorage(m_handle, Bytes::Unsafe(data, size), m_access);
         else
-            CGL_BufferStorage<GLVER_44>::BufStorage(
+            CGL_44<GLVER_44>::BufStorage(
                 m_type, Bytes::Unsafe(data, size), m_access);
     } else
 #endif

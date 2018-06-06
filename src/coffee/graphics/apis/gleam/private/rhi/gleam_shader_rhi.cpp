@@ -1,14 +1,14 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
 
-#include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 #include "gleam_internal_types.h"
+#include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 
 #include <coffee/core/types/tdef/stltypes.h>
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
 static const constexpr cstring GLES20_COMPAT_VS = {
     R"(
@@ -21,8 +21,7 @@ static const constexpr cstring GLES20_COMPAT_VS = {
 uniform int InstanceID;
 precision highp int;
 
-    )"
-};
+    )"};
 
 static const constexpr cstring GLES20_COMPAT_FS = {
     R"(
@@ -77,7 +76,6 @@ vec4 texture2DArray(sampler2D tex, vec3 coord)
 
 )"
 
-
 };
 
 STATICINLINE CString StringExtractLine(CString& shader, cstring query)
@@ -93,9 +91,7 @@ STATICINLINE CString StringExtractLine(CString& shader, cstring query)
             endIdx++;
 
             CString versionDirective = {};
-            versionDirective.insert(0,
-                                    &shader[startIdx],
-                                    endIdx - startIdx);
+            versionDirective.insert(0, &shader[startIdx], endIdx - startIdx);
             shader.erase(startIdx, endIdx - 1);
 
             return versionDirective;
@@ -104,29 +100,31 @@ STATICINLINE CString StringExtractLine(CString& shader, cstring query)
     return {};
 }
 
-STATICINLINE void TransformShader(Bytes const& inputShader,
-                                  ShaderStage stage,
-                                  Vector<CString>& shaderStorage,
-                                  Vector<cstring>& shaderSrcVec)
+STATICINLINE void TransformShader(
+    Bytes const&     inputShader,
+    ShaderStage      stage,
+    Vector<CString>& shaderStorage,
+    Vector<cstring>& shaderSrcVec)
 {
     CString transformedShader;
     /* Because the original shader may not be null-terminated, we do
      *  an insertion with the given length. */
     transformedShader.insert(
-                0, C_FCAST<cstring>(inputShader.data),
-                C_FCAST<CString::size_type>(inputShader.size));
+        0,
+        C_FCAST<cstring>(inputShader.data),
+        C_FCAST<CString::size_type>(inputShader.size));
 
     /* Before adding more snippets, we need to move the
      *  #version directive */
     CString versionDirective = {};
-    if((versionDirective = StringExtractLine(transformedShader,
-                                             "#version ")).size()
-            && !GLEAM_FEATURES.gles20)
+    if((versionDirective = StringExtractLine(transformedShader, "#version "))
+           .size() &&
+       !GLEAM_FEATURES.gles20)
     {
         /* OpenGL GLSL ES 1.00 does not have a #version directive,
          *  remove it */
         shaderStorage.push_back(versionDirective);
-    }else
+    } else
     {
         shaderStorage.push_back("#version 100\n");
     }
@@ -136,39 +134,38 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         /* We move the extension directives at this point */
         CString extensionDirective = {};
         while((extensionDirective =
-               StringExtractLine(transformedShader,
-                                 "\n#extension ")).size())
+                   StringExtractLine(transformedShader, "\n#extension "))
+                  .size())
             shaderStorage.push_back(extensionDirective);
     }
 
     if(GLEAM_FEATURES.gles20 && GLEAM_OPTIONS.old_shader_processing)
     {
         /* TODO: Provide better support for sampler2DArray, creating
-     *  extra uniforms for grid size and etc. This will allow us
-     *  to sample a sampler2D as if it were a sampler2DArray, all
-     *  with the same code. */
+         *  extra uniforms for grid size and etc. This will allow us
+         *  to sample a sampler2D as if it were a sampler2DArray, all
+         *  with the same code. */
 
         /* TODO: Using the sampler2DArray code, do the same for sampler3D.
-     * This will require special care when providing the user with
-     *  texture size limits. We may calculate the max size of a 3D
-     *  texture based on 2D texture size. Most likely, this will be
-     *  2048x2048 split into 128x or 256x pieces, or maybe smaller. */
+         * This will require special care when providing the user with
+         *  texture size limits. We may calculate the max size of a 3D
+         *  texture based on 2D texture size. Most likely, this will be
+         *  2048x2048 split into 128x or 256x pieces, or maybe smaller. */
 
         /* We add a compatibility shim for vertex and fragment shaders.
-     * This does some basic conversion, such as swapping "in" and
-     *  "out" with the approriate 1.00 equivalents (attribute and
-     *  varying) */
-
+         * This does some basic conversion, such as swapping "in" and
+         *  "out" with the approriate 1.00 equivalents (attribute and
+         *  varying) */
 
         /* Remove the output declaration from modern GLSL */
-        transformedShader = CStrReplace(transformedShader,
-                                        "out vec4 OutColor;", "");
+        transformedShader =
+            CStrReplace(transformedShader, "out vec4 OutColor;", "");
 
-        transformedShader = CStrReplace(transformedShader,
-                                        "uniform int InstanceID;", "");
+        transformedShader =
+            CStrReplace(transformedShader, "uniform int InstanceID;", "");
 
         /* If a line has layout(...), remove it, GLSL 1.00
-     *  does not support that */
+         *  does not support that */
         {
             CString::size_type it;
             while((it = transformedShader.find("layout")) != CString::npos)
@@ -184,43 +181,35 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
         else
             shaderSrcVec.push_back(GLES20_COMPAT_FS);
 
-    }else if(GLEAM_OPTIONS.old_shader_processing)
+    } else if(GLEAM_OPTIONS.old_shader_processing)
     {
-
         /* Desktop GL does not require a precision specifier */
 
         /* For compatibility, remove usages of texture2DArray() in
          *  favor of texture(). texture2DArray() was never put into
          *  the standard. */
-        shaderSrcVec.push_back(
-                    "#define texture2DArray texture\n"
-                    );
+        shaderSrcVec.push_back("#define texture2DArray texture\n");
 
         if(GLEAM_API::LevelIsOfClass(GL_CURR_API, APIClass::GLES))
-            shaderSrcVec.push_back(
-                        "precision highp float;\n"
-                        "precision highp int;\n"
-                        );
+            shaderSrcVec.push_back("precision highp float;\n"
+                                   "precision highp int;\n");
     }
 
     /* For supporting BaseInstance */
-    if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex
-            && GLEAM_OPTIONS.old_shader_processing)
+    if(!GLEAM_FEATURES.base_instance && stage == ShaderStage::Vertex &&
+       GLEAM_OPTIONS.old_shader_processing)
     {
-        shaderSrcVec.push_back(
-                    "#define gl_BaseInstanceARB BaseInstance\n"
-                    "#define gl_BaseInstance BaseInstance\n"
-                    "uniform int BaseInstance;\n"
-                    );
+        shaderSrcVec.push_back("#define gl_BaseInstanceARB BaseInstance\n"
+                               "#define gl_BaseInstance BaseInstance\n"
+                               "uniform int BaseInstance;\n");
     }
     if(stage == ShaderStage::Vertex && !GLEAM_OPTIONS.old_shader_processing)
     {
         shaderSrcVec.push_back(
-                    R"(
+            R"(
 #define SPIRV_Cross_BaseInstance BaseInstance
 #define SPIRV_Cross_InstanceID InstanceID
-)"
-                    );
+)");
     }
 
     shaderStorage.push_back(transformedShader);
@@ -228,36 +217,36 @@ STATICINLINE void TransformShader(Bytes const& inputShader,
     auto directiveEnd = shaderStorage.size() - 1;
 
     for(auto i : Range<>(directiveEnd))
-        shaderSrcVec.insert(shaderSrcVec.begin(),
-                            shaderStorage.at(directiveEnd - 1 - i).c_str());
+        shaderSrcVec.insert(
+            shaderSrcVec.begin(),
+            shaderStorage.at(directiveEnd - 1 - i).c_str());
 
     shaderSrcVec.push_back(shaderStorage.back().c_str());
     shaderSrcVec.push_back("\n");
 }
 
-bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
+bool GLEAM_Shader::compile(ShaderStage stage, const Bytes& data)
 {
     if(data.size == 0)
         return false;
 
-    if(GLEAM_FEATURES.gles20
-            && stage != ShaderStage::Vertex
-            && stage != ShaderStage::Fragment)
+    if(GLEAM_FEATURES.gles20 && stage != ShaderStage::Vertex &&
+       stage != ShaderStage::Fragment)
         return false;
 
-    Vector<cstring> shaderSrcVec = {};
+    Vector<cstring> shaderSrcVec  = {};
     Vector<CString> shaderStorage = {};
 
     TransformShader(data, stage, shaderStorage, shaderSrcVec);
 
     if(!GLEAM_FEATURES.separable_programs)
     {
-        CGL33::ShaderAlloc(stage, m_handle);
+        m_handle = CGL33::ShaderAlloc(stage);
 
-		if (m_handle == 0)
-		{
-			cWarning("Failed to allocate shader handle..?");
-			return false;
+        if(m_handle == 0)
+        {
+            cWarning("Failed to allocate shader handle..?");
+            return false;
         }
 
         Vector<i32> shaderSrcLens = {};
@@ -266,36 +255,41 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         for(cstring fragment : shaderSrcVec)
             shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
 
-        i32* shaderLens = shaderSrcLens.data();
-        cstring* shaderSrc = shaderSrcVec.data();
-        u32 numSources = C_FCAST<u32>(shaderSrcVec.size());
+        const i32*     shaderLens = shaderSrcLens.data();
+        cstring* const shaderSrc  = shaderSrcVec.data();
+        u32            numSources = C_FCAST<u32>(shaderSrcVec.size());
 
         cVerbose(12, "Compiling shader fragment:");
         for(u32 i : Range<u32>(numSources))
-            cVerbose(12, "{0}", CString(shaderSrcVec[i],
-                                  shaderSrcLens[i]));
+            cVerbose(12, "{0}", CString(shaderSrcVec[i], shaderSrcLens[i]));
 
-        CGL33::ShaderSource(m_handle,numSources,
-                            shaderLens,
-                            shaderSrc);
-        bool stat = CGL33::ShaderCompile(m_handle);
+        CGL33::ShaderSource(m_handle, numSources, shaderSrc, shaderLens);
+
+        i32 stat = 0;
+        CGL33::ShaderGetiv(m_handle, GL_COMPILE_STATUS, &stat);
+
+        CGL33::ShaderCompile(m_handle);
 
         if(GL_DEBUG_MODE && !stat)
         {
+            CString infoLog;
+            i32     logLen = 0;
             CString completeSource;
+
             for(auto i : Range<>(numSources))
                 completeSource.append(StrUtil::encapsulate(
-                                          shaderSrc[i],
-                                          C_FCAST<szptr>(shaderLens[i])
-                                          ));
-            cstring_w log = CGL33::ShaderGetLog(m_handle);
-            cWarning("Shader compilation error: {0}\n"
-                     "Associated source: \n{1}"
-                     "Original source: \n{2}",
-                     log, completeSource,
-                     StrUtil::encapsulate(C_FCAST<cstring>(data.data),
-                                          data.size)
-                     );
+                    shaderSrc[i], C_FCAST<szptr>(shaderLens[i])));
+            CGL33::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL33::ShaderGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+            infoLog.resize(infoLog.find('\0'));
+            cWarning(
+                "Shader compilation error: {0}\n"
+                "Associated source: \n{1}"
+                "Original source: \n{2}",
+                infoLog,
+                completeSource,
+                StrUtil::encapsulate(C_FCAST<cstring>(data.data), data.size));
             return false;
         }
 
@@ -306,28 +300,28 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        cstring* srcs = shaderSrcVec.data();
-
-        m_handle = 0;
-        m_handle = CGL43::ProgramCreate(
-                    stage,
-                    C_FCAST<u32>(shaderSrcVec.size()),
-                    srcs);
+        m_handle = CGL43::ShaderProgramAllocv(stage, shaderSrcVec);
 
         i32 link_state = 0;
         CGL43::ProgramGetiv(m_handle, GL_LINK_STATUS, &link_state);
 
         if(GL_DEBUG_MODE && (m_handle == 0 || !link_state))
         {
-            cstring_w log_c = CGL43::ProgramGetLog(m_handle);
-            cWarning("Shader program compilation error: {0}",log_c);
-            delete[] log_c;
+            CString infoLog;
+            i32     logLen = 0;
+
+            CGL43::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL43::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+            infoLog.resize(infoLog.find('\0'));
+
+            cWarning("Shader program compilation error: {0}", infoLog);
             return false;
         }
 
         m_stages = stage;
 
-        return m_handle!=0;
+        return m_handle != 0;
     }
 #endif
     else
@@ -338,48 +332,48 @@ void GLEAM_Shader::dealloc()
 {
     if(!GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle!=0)
+        if(m_handle != 0)
             CGL33::ShaderFree(m_handle);
     }
 #if GL_VERSION_VERIFY(0x410, 0x300)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle!=0)
+        if(m_handle != 0)
             CGL43::ProgramFree(m_handle);
     }
 #endif
 }
 
-bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
-                            const ShaderStage &stages)
+bool GLEAM_Pipeline::attach(
+    const GLEAM_Shader& shader, const ShaderStage& stages)
 {
     C_USED(stages);
 
-    if(shader.m_handle==0)
+    if(shader.m_handle == 0)
         return false;
     if(!GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle==0)
-            CGL33::ProgramAlloc(m_handle);
-        CGL33::ShaderAttach(m_handle,shader.m_handle);
+        if(m_handle == 0)
+            m_handle = CGL33::ProgramAlloc();
+        CGL33::ShaderAttach(m_handle, shader.m_handle);
         return true;
     }
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle==0)
+        if(m_handle == 0)
             CGL43::PipelineAlloc(m_handle);
-        bool stat = CGL43::PipelineUseStages(
-                    m_handle,shader.m_stages&stages,shader.m_handle);
-        if(stat)
-            m_programs.push_back({&shader,shader.m_stages&stages});
-        return stat;
+        CGL43::ProgramUseStages(
+            m_handle, shader.m_stages & stages, shader.m_handle);
+        m_programs.push_back({&shader, shader.m_stages & stages});
+
+        return true;
     }
 #endif
     return false;
 }
 
-GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader &&shader)
+GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader&& shader)
 {
     m_ownedPrograms.push_back({});
 
@@ -390,30 +384,38 @@ GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader &&shader)
 
 bool GLEAM_Pipeline::assemble()
 {
-    if(m_handle==0)
+    if(m_handle == 0)
         return false;
     if(!GLEAM_FEATURES.separable_programs)
     {
-        bool stat = CGL33::ProgramLink(m_handle);
+        CGL33::ProgramLink(m_handle);
+        i32 stat = 0;
+        CGL33::ProgramGetiv(m_handle, GL_LINK_STATUS, &stat);
         if(GL_DEBUG_MODE && !stat)
         {
-            cstring_w log_ = CGL33::ProgramGetLog(m_handle);
-            cDebug("Program link error: {0}", log_);
-            delete[] log_;
+            CString infoLog;
+            i32 logLen;
+            CGL33::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL33::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+            cDebug("Program link error: {0}", infoLog);
         }
         return stat;
     }
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        bool stat = CGL43::PipelineValidate(m_handle);
+        i32 stat = 0;
+        CGL43::PipelineValidate(m_handle);
+        CGL43::PipelineGetiv(m_handle, GL_VALIDATE_STATUS, &stat);
         if(GL_DEBUG_MODE && !stat)
         {
-            ShaderStage s = CGL43::PipelineGetStages(m_handle);
-            cstring_w log_ = CGL43::PipelineGetLog(m_handle);
-            cDebug("Pipeline validation error: {0}",log_);
-            delete[] log_;
-            cDebug("Pipeline stages: {0}",(uint32)s);
+            CString infoLog;
+            i32 logLen;
+            CGL43::PipelineGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL43::PipelineGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+            cDebug("Pipeline validation error: {0}", infoLog);
         }
         return stat;
     }
@@ -452,12 +454,11 @@ void GLEAM_Pipeline::dealloc()
 }
 
 bool GLEAM_ShaderUniformState::setUniform(
-        const GLEAM_UniformDescriptor &value,
-        GLEAM_UniformValue *data)
+    const GLEAM_UniformDescriptor& value, GLEAM_UniformValue* data)
 {
     using namespace ShaderTypes;
 
-    if(value.m_idx<0)
+    if(value.m_idx < 0)
         return false;
 
     if(value.m_flags & ShaderTypes::Uniform_v)
@@ -465,14 +466,13 @@ bool GLEAM_ShaderUniformState::setUniform(
     else
         return false;
 
-    uint32 idx = value.m_idx;
-    data->flags = value.m_flags;
-    m_uniforms[idx] = {data,value.stages};
+    uint32 idx      = value.m_idx;
+    data->flags     = value.m_flags;
+    m_uniforms[idx] = {data, value.stages};
     return true;
 }
 
-STATICINLINE bool translate_sampler_type(
-        Texture& samplerType, u32 m_flags)
+STATICINLINE bool translate_sampler_type(Texture& samplerType, u32 m_flags)
 {
     using namespace ShaderTypes;
 
@@ -510,12 +510,11 @@ STATICINLINE bool translate_sampler_type(
 }
 
 bool GLEAM_ShaderUniformState::setSampler(
-        const GLEAM_UniformDescriptor &value,
-        const GLEAM_SamplerHandle *sampler)
+    const GLEAM_UniformDescriptor& value, const GLEAM_SamplerHandle* sampler)
 {
     using namespace ShaderTypes;
 
-    if(value.m_idx<0)
+    if(value.m_idx < 0)
         return false;
 
     if((value.m_flags & ShaderTypes::Sampler_v) != 0)
@@ -528,19 +527,19 @@ bool GLEAM_ShaderUniformState::setSampler(
     if(!translate_sampler_type(samplerType, value.m_flags))
         return false;
 
-    uint32 idx = value.m_idx;
-    m_samplers[idx] = {sampler,value.stages};
+    uint32 idx      = value.m_idx;
+    m_samplers[idx] = {sampler, value.stages};
     return true;
 }
 
 bool GLEAM_ShaderUniformState::setUBuffer(
-        const GLEAM_UniformDescriptor &value,
-        const GLEAM_UniformBuffer *buf,
-        GLEAM_BufferSection const& sec)
+    const GLEAM_UniformDescriptor& value,
+    const GLEAM_UniformBuffer*     buf,
+    GLEAM_BufferSection const&     sec)
 {
     using namespace ShaderTypes;
 
-    if(value.m_idx<0)
+    if(value.m_idx < 0)
         return false;
 
     if(value.m_flags & ShaderTypes::UniBuf_t)
@@ -548,19 +547,19 @@ bool GLEAM_ShaderUniformState::setUBuffer(
     else
         return false;
 
-    uint32 idx = value.m_idx;
-    m_ubuffers[idx] = {sec,buf,value.stages};
+    uint32 idx      = value.m_idx;
+    m_ubuffers[idx] = {sec, buf, value.stages};
     return true;
 }
 
 bool GLEAM_ShaderUniformState::setSBuffer(
-        const GLEAM_UniformDescriptor &value,
-        const GLEAM_ShaderBuffer *buf,
-        GLEAM_BufferSection const& sec)
+    const GLEAM_UniformDescriptor& value,
+    const GLEAM_ShaderBuffer*      buf,
+    GLEAM_BufferSection const&     sec)
 {
     using namespace ShaderTypes;
 
-    if(value.m_idx<0)
+    if(value.m_idx < 0)
         return false;
 
     if(value.m_flags & ShaderTypes::ShSBuf_t)
@@ -568,8 +567,8 @@ bool GLEAM_ShaderUniformState::setSBuffer(
     else
         return false;
 
-    uint32 idx = value.m_idx;
-    m_sbuffers[idx] = {sec,buf,value.stages};
+    uint32 idx      = value.m_idx;
+    m_sbuffers[idx] = {sec, buf, value.stages};
     return true;
 }
 
@@ -582,32 +581,36 @@ void GLEAM_ShaderUniformState::clear()
 }
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
-STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
-                                  CGenum type,
-                                  Vector<GLEAM_ProgramParameter>* params)
+STATICINLINE void ProgramInputGet(
+    CGhnd                           hnd,
+    ShaderStage                     stages,
+    CGenum                          type,
+    Vector<GLEAM_ProgramParameter>* params)
 {
     i32 num_attrs = 0;
     if(params)
-        glGetProgramInterfaceiv(hnd, type,
-                                GL_ACTIVE_RESOURCES, &num_attrs);
+        glGetProgramInterfaceiv(hnd, type, GL_ACTIVE_RESOURCES, &num_attrs);
 
     for(auto i : Range<>(C_FCAST<u32>(num_attrs)))
     {
         const CGenum props_to_get[] = {
             GL_NAME_LENGTH,
             GL_LOCATION,
-//            GL_LOCATION_COMPONENT,
+            //            GL_LOCATION_COMPONENT,
             GL_TYPE,
             GL_ARRAY_SIZE,
         };
-        i32 props_out[sizeof(props_to_get)/sizeof(CGenum)];
+        i32 props_out[sizeof(props_to_get) / sizeof(CGenum)];
 
         glGetProgramResourceiv(
-                    hnd, type, C_FCAST<u32>(i),
-                    sizeof(props_to_get) / sizeof(CGenum),
-                    props_to_get,
-                    sizeof(props_out), nullptr,
-                    props_out);
+            hnd,
+            type,
+            C_FCAST<u32>(i),
+            sizeof(props_to_get) / sizeof(CGenum),
+            props_to_get,
+            sizeof(props_out),
+            nullptr,
+            props_out);
 
         if(props_out[1] == -1)
             continue;
@@ -615,24 +618,23 @@ STATICINLINE void ProgramInputGet(CGhnd hnd, ShaderStage stages,
         params->push_back({});
 
         GLEAM_ProgramParameter& desc = params->back();
-        desc.stages = stages;
+        desc.stages                  = stages;
 
-        desc.m_idx = C_FCAST<u16>(props_out[1]);
+        desc.m_idx   = C_FCAST<u16>(props_out[1]);
         desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[2]));
         desc.m_name.resize(C_FCAST<u32>(props_out[0]));
         glGetProgramResourceName(
-                    hnd, type, C_FCAST<u32>(i),
-                    props_out[0],
-                nullptr, &desc.m_name[0]);
+            hnd, type, C_FCAST<u32>(i), props_out[0], nullptr, &desc.m_name[0]);
         desc.m_name.resize(desc.m_name.find('\0'));
     }
 }
 #endif
 
-void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
-                       Vector<GLEAM_UniformDescriptor> *uniforms,
-                       Vector<GLEAM_ProgramParameter> *params,
-                       Vector<GLEAM_ProgramParameter> *outputs)
+void GetShaderUniforms(
+    const GLEAM_Pipeline&            pipeline,
+    Vector<GLEAM_UniformDescriptor>* uniforms,
+    Vector<GLEAM_ProgramParameter>*  params,
+    Vector<GLEAM_ProgramParameter>*  outputs)
 {
     using namespace ShaderTypes;
 
@@ -646,19 +648,19 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         /* Get typical uniforms */
         if(uniforms)
         {
-            uint32 num_uniforms;
+            uint32              num_uniforms;
             CGL33::UnifValInfo* unifs;
-            CGL33::ProgramUnifGet(prog,&num_uniforms,&unifs);
-            if(num_uniforms==0)
+            CGL33::ProgramUnifGet(prog, &num_uniforms, &unifs);
+            if(num_uniforms == 0)
                 return;
             uniforms->reserve(num_uniforms);
-            for(uint32 i=0;i<num_uniforms;i++)
+            for(uint32 i = 0; i < num_uniforms; i++)
             {
                 auto const& v = unifs[i];
 
                 uniforms->push_back({});
-                GLEAM_UniformDescriptor &desc = uniforms->back();
-                desc.m_flags = 0;
+                GLEAM_UniformDescriptor& desc = uniforms->back();
+                desc.m_flags                  = 0;
 
                 desc.m_name = v.name;
 
@@ -667,10 +669,10 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                 if(desc.m_name.find('[') != CString::npos)
                     desc.m_name.resize(desc.m_name.find('['));
 
-                desc.m_idx = CGL33::ProgramUnifGetLoc(
-                            prog,desc.m_name.c_str());
-                desc.stages = ShaderStage::All;
-                desc.m_flags = to_enum_shtype(v.type);
+                desc.m_idx =
+                    CGL33::UnifGetLocation(prog, desc.m_name.c_str());
+                desc.stages    = ShaderStage::All;
+                desc.m_flags   = to_enum_shtype(v.type);
                 desc.m_arrSize = v.size;
                 delete[] v.name;
             }
@@ -684,32 +686,25 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         /* Get attribute locations, names and types */
         if(params)
         {
-            u32 num = 0;
-            cstring_w* names = nullptr;
-            u32* types = nullptr;
-            i32* sizes = nullptr;
-            CGL33::ProgramAttribGet(prog, &num, &names, &types, &sizes);
+            CGL33::GetActiveAttrib(prog, &num, &names, &types, &sizes);
             params->reserve(num);
 
-            for(u32 i=0;i<num;i++)
+            for(u32 i = 0; i < num; i++)
             {
                 params->push_back({});
                 auto& att = params->back();
 
                 att.m_name = names[i];
-                att.m_idx = C_CAST<u16>(
-                            CGL33::ProgramAttribLoc(prog, names[i]));
+                att.m_idx =
+                    C_CAST<u16>(CGL33::ProgramAttribLoc(prog, names[i]));
                 att.m_flags = to_enum_shtype(types[i]);
                 delete[] names[i];
             }
-            delete[] names;
-            delete[] types;
-            delete[] sizes;
         }
     }
 #if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs){
-
+    else if(GLEAM_FEATURES.separable_programs)
+    {
         enum GL_PROP_IDX
         {
             G_NameLen,
@@ -723,14 +718,14 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
 
         for(auto& p : pipeline.m_programs)
         {
-            int32 num_unifs;
+            int32        num_unifs;
             const CGhnd& hnd = p.shader->m_handle;
 
             /* Get number of uniform variables */
-            glGetProgramInterfaceiv(hnd, GL_UNIFORM,
-                                    GL_ACTIVE_RESOURCES, &num_unifs);
+            glGetProgramInterfaceiv(
+                hnd, GL_UNIFORM, GL_ACTIVE_RESOURCES, &num_unifs);
 
-            for(int32 i=0;i<num_unifs;i++)
+            for(int32 i = 0; i < num_unifs; i++)
             {
                 /* Per uniform, acquire the following variables */
                 const CGenum props_to_get[] = {
@@ -747,20 +742,24 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                     GL_BLOCK_INDEX,
                     GL_OFFSET,
                 };
-                int32 props_out[sizeof(props_to_get)/sizeof(CGenum)];
-                glGetProgramResourceiv(hnd, GL_UNIFORM, i,
-                                       sizeof(props_to_get)/sizeof(CGenum),
-                                       props_to_get,
-                                       sizeof(props_out), nullptr,
-                                       props_out);
+                int32 props_out[sizeof(props_to_get) / sizeof(CGenum)];
+                glGetProgramResourceiv(
+                    hnd,
+                    GL_UNIFORM,
+                    i,
+                    sizeof(props_to_get) / sizeof(CGenum),
+                    props_to_get,
+                    sizeof(props_out),
+                    nullptr,
+                    props_out);
 
                 /* Create the uniform value */
                 uniforms->push_back({});
                 GLEAM_UniformDescriptor& desc = uniforms->back();
-                desc.stages = p.stages;
+                desc.stages                   = p.stages;
 
                 desc.m_flags = to_enum_shtype(props_out[G_Type]);
-                desc.m_idx = props_out[G_Loc];
+                desc.m_idx   = props_out[G_Loc];
 
                 if((desc.m_blkIdx = props_out[G_BlkIdx]) != -1)
                 {
@@ -769,18 +768,22 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                 }
                 if(props_out[G_ArrSize] != -1)
                 {
-                    desc.m_arrSize = props_out[G_ArrSize];
+                    desc.m_arrSize   = props_out[G_ArrSize];
                     desc.m_arrStride = props_out[G_ArrStride];
                 }
 
                 /* Get the uniform name */
                 desc.m_name.resize(props_out[G_NameLen]);
-                glGetProgramResourceName(hnd, GL_UNIFORM, i,
-                                         props_out[G_NameLen],
-                                         nullptr,&desc.m_name[0]);
+                glGetProgramResourceName(
+                    hnd,
+                    GL_UNIFORM,
+                    i,
+                    props_out[G_NameLen],
+                    nullptr,
+                    &desc.m_name[0]);
                 /* Remove the null character */
                 if(desc.m_name.size() > 1)
-                    desc.m_name.resize(desc.m_name.size()-1);
+                    desc.m_name.resize(desc.m_name.size() - 1);
 
                 /* Some GLSL compilers (*cough* NVIDIA *cough*) add '[0]'
                  *  to array uniforms. */
@@ -789,20 +792,16 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
             }
 
             if(params)
-                ProgramInputGet(hnd, p.stages,
-                                GL_PROGRAM_INPUT,
-                                params);
+                ProgramInputGet(hnd, p.stages, GL_PROGRAM_INPUT, params);
 
             if(outputs)
-                ProgramInputGet(hnd, p.stages,
-                                GL_PROGRAM_OUTPUT,
-                                outputs);
+                ProgramInputGet(hnd, p.stages, GL_PROGRAM_OUTPUT, outputs);
         }
     }
 #endif
 }
 
-GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
+GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline& pipeline) :
     PipelineDumper(pipeline)
 {
 }
@@ -815,56 +814,62 @@ void GLEAM_PipelineDumper::dump(cstring out)
         return;
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
-    int32* bin_fmts = &GLEAM_API_INSTANCE_DATA->GL_CACHED
-            .NUM_PROGRAM_BINARY_FORMATS;
+    int32* bin_fmts =
+        &GLEAM_API_INSTANCE_DATA->GL_CACHED.NUM_PROGRAM_BINARY_FORMATS;
     if(*bin_fmts == -1)
     {
-        CGL43::Debug::GetIntegerv(
-                    GL_NUM_PROGRAM_BINARY_FORMATS,
-                    bin_fmts);
+        CGL::Debug::GetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, bin_fmts);
     }
     if(*bin_fmts <= 0)
     {
-        cVerbose(6,"No GL program binary formats supported");
+        cVerbose(6, "No GL program binary formats supported");
         return;
     }
-    if(CGL43::GetProgramBinarySupported() &&
-            (!GLEAM_FEATURES.separable_programs))
+    if(CGL::GetProgramBinarySupported() &&
+       (!GLEAM_FEATURES.separable_programs))
     {
-        /* Just dump the program binary, nothing else is needed */
-        CResources::Resource output(
-                    out,
-                    ResourceAccess::NewFile);
-
-        Vector<byte_t> program_data;
-        /* We'll fit the binary type in here */
-        program_data.resize(sizeof(GL_CURR_API)
-                            +sizeof(CGenum));
         CGenum t = GL_NONE;
-        cVerbose(6,"About to get program binary");
+        Vector<byte_t> program_data;
+        i32 progLen = 0;
+
+        /* Just dump the program binary, nothing else is needed */
+        CResources::Resource output(out, ResourceAccess::NewFile);
+
+        /* We'll fit the binary type in here */
+        program_data.resize(sizeof(GL_CURR_API) + sizeof(CGenum));
+        cVerbose(6, "About to get program binary");
         /* Append program data */
-        if(!CGL43::ProgramGetBinary(m_pipeline.m_handle,
-                                    &t,
-                                    &program_data))
+        CGL43::ProgramGetiv(
+            m_pipeline.m_handle, GL_PROGRAM_BINARY_LENGTH, &progLen);
+
+        program_data.resize(program_data.size() + C_FCAST<szptr>(progLen));
+
+        CGL43::ProgramGetBinary(m_pipeline.m_handle, &progLen, &t, program_data);
+        if(!progLen)
             return;
-        cVerbose(6,"Acquired program binary");
+
+        cVerbose(6, "Acquired program binary");
         /* Insert API version */
-//        MemCpy(&program_data[0], &GL_CURR_API, sizeof(GL_CURR_API));
+        //        MemCpy(&program_data[0], &GL_CURR_API, sizeof(GL_CURR_API));
         /* Put binary type in there */
-//        MemCpy(&program_data[sizeof(GL_CURR_API)], &t, sizeof(t));
+        //        MemCpy(&program_data[sizeof(GL_CURR_API)], &t, sizeof(t));
 
         /* Create the output resource */
         output.size = program_data.size();
         output.data = program_data.data();
         if(CResources::FileCommit(output, false, ResourceAccess::Discard))
-            cVerbose(5,"Dumped program ({0}) into file {1}",
-                     m_pipeline.m_handle,
-                     output.resource());
+            cVerbose(
+                5,
+                "Dumped program ({0}) into file {1}",
+                m_pipeline.m_handle,
+                output.resource());
         else
-            cVerbose(5,"Dumping program ({0}) into file {1} failed",
-                     m_pipeline.m_handle,
-                     output.resource());
-    }else if(GLEAM_FEATURES.separable_programs)
+            cVerbose(
+                5,
+                "Dumping program ({0}) into file {1} failed",
+                m_pipeline.m_handle,
+                output.resource());
+    } else if(GLEAM_FEATURES.separable_programs)
     {
         /* With pipeline objects we must fetch several
          *  shader programs and dump these */
@@ -872,13 +877,13 @@ void GLEAM_PipelineDumper::dump(cstring out)
          *  these programs and what shaders they are */
         struct GL_DUMPED_FMT
         {
-            u64 offset;
+            u64         offset;
             ShaderStage stg;
-            u32 _pad;
+            u32         _pad;
         };
         struct GL_MASS_DUMP
         {
-            APILevel lev;
+            APILevel      lev;
             GL_DUMPED_FMT dumps[6];
         };
 
@@ -889,6 +894,6 @@ void GLEAM_PipelineDumper::dump(cstring out)
 #endif
 }
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

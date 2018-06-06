@@ -107,17 +107,17 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         return;
     }
 
-    if(CGL33::Tex_SRGB_Supported())
-    {
-        m_color.dealloc();
-        new (&m_color) GLEAM_Surface2D(PixelFormat::SRGB8A8);
-    }
+//    if(CGL33::Tex_SRGB_Supported())
+//    {
+//        m_color.dealloc();
+//        new (&m_color) GLEAM_Surface2D(PixelFormat::SRGB8A8);
+//    }
 
     if(GL_CURR_API == GL_4_3)
-        m_enabled = CGL43::Debug::InternalFormatSupport(
+        m_enabled = CGL::Debug::InternalFormatSupport(
                     Texture::T2D,PixelFormat::Depth24Stencil8);
     else
-        m_enabled = CGL33::Debug::InternalFormatSupport(
+        m_enabled = CGL::Debug::InternalFormatSupport(
                     Texture::T2D,PixelFormat::Depth24Stencil8);
 
     if(!m_enabled &&
@@ -224,15 +224,23 @@ void GLEAM_DBufQuery::end()
 GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag)
     :GraphicsDebug::ScopeMarker(tag)
 {
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::Debug::SetDebugGroup(tag, 0);
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2))
+        CGL43::PushDebugGroup(
+                    GL_DEBUG_SOURCE_APPLICATION, 0, 0, tag);
+    else
+        CGL_KHR_debug<int>::PushDebugGroupKHR(
+                    GL_DEBUG_SOURCE_APPLICATION_KHR, 0, 0, tag);
 #endif
 }
 
 GLEAM_ScopeMarker::~GLEAM_ScopeMarker()
 {
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::Debug::UnsetDebugGroup();
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2))
+        CGL43::PopDebugGroup();
+    else
+        CGL_KHR_debug<int>::PopDebugGroupKHR();
 #endif
 }
 

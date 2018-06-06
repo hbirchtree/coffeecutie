@@ -71,10 +71,17 @@ struct gl_version_at_least_ver
 #define GL_EXTENSION_REQ(extname) /* Intentionally empty */
 
 /* -- Danger zone -- */
+#define GLVER_10 gl_ver_t<1,0>
+#define GLVER_11 gl_ver_t<1,0>
+#define GLVER_12 gl_ver_t<1,0>
+#define GLVER_13 gl_ver_t<1,0>
+#define GLVER_14 gl_ver_t<1,0>
+#define GLVER_15 gl_ver_t<1,0>
 #define GLVER_20 gl_ver_t<2,0>
 #define GLVER_21 gl_ver_t<2,1>
 
 /* Standardized OpenGL versions */
+
 #define GLVER_30 gl_ver_t<3,0>
 #define GLVER_31 gl_ver_t<3,1>
 #define GLVER_32 gl_ver_t<3,2>

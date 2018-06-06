@@ -81,3 +81,11 @@ inline APILevel gl_level_from_string(CString const& str)
 #define GLEAM_API_INSTANCE_DATA m_store->inst_data
 #define GLEAM_FEATURES RHI::GLEAM::m_store->features
 #define GLEAM_OPTIONS RHI::GLEAM::m_store->options
+
+#define GLEAM_VERSION_CHECK(desktop_ver, es_ver) \
+    (\
+     (APILevelIsOfClass(desktop_ver, APIClass::GLCore) && \
+        GL_CURR_API > desktop_ver) || \
+     (APILevelIsOfClass(es_ver, APIClass::GLES) && \
+        GL_CURR_API > es_ver)\
+    )

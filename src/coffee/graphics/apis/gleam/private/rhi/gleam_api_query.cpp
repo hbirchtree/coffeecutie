@@ -1,13 +1,13 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 
-#include <coffee/core/types/cdef/infotypes.h>
 #include "gleam_internal_types.h"
+#include <coffee/core/types/cdef/infotypes.h>
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
-CString GLEAM_API::GetAPIName(const GraphicsAPI::GraphicsDevice &)
+CString GLEAM_API::GetAPIName(const GraphicsAPI::GraphicsDevice&)
 {
     if(!GLEAM_FEATURES.is_gles)
         return "OpenGL";
@@ -15,33 +15,42 @@ CString GLEAM_API::GetAPIName(const GraphicsAPI::GraphicsDevice &)
         return "OpenGL ES";
 }
 
-bool GLEAM_API::GetAPIVersion(const GraphicsAPI::GraphicsDevice &d, SWVersionInfo * ver)
+bool GLEAM_API::GetAPIVersion(
+    const GraphicsAPI::GraphicsDevice& d, SWVersionInfo* ver)
 {
     auto gl_ver = CGL_Shared_Debug::ContextVersion();
-    new (ver) SWVersionInfo(GetAPIName(d), 0, gl_ver.major, gl_ver.minor, 0,
-                            StrUtil::pointerify(Level()));
+    new(ver) SWVersionInfo(
+        GetAPIName(d),
+        0,
+        gl_ver.major,
+        gl_ver.minor,
+        0,
+        StrUtil::pointerify(Level()));
     return true;
 }
 
-bool GLEAM_API::GetRendererInfo(const GraphicsAPI::GraphicsDevice &, HWDeviceInfo * dev)
+bool GLEAM_API::GetRendererInfo(
+    const GraphicsAPI::GraphicsDevice&, HWDeviceInfo* dev)
 {
     auto _dev = CGL_Shared_Debug::Renderer();
-    new (dev) HWDeviceInfo(_dev.manufacturer, _dev.model, _dev.firmware, _dev.serial);
+    new(dev)
+        HWDeviceInfo(_dev.manufacturer, _dev.model, _dev.firmware, _dev.serial);
     return true;
 }
 
-bool GLEAM_API::GetRendererDriverInfo(const GraphicsAPI::GraphicsDevice &, SWVersionInfo * ver)
+bool GLEAM_API::GetRendererDriverInfo(
+    const GraphicsAPI::GraphicsDevice&, SWVersionInfo* ver)
 {
     auto dev = CGL_Shared_Debug::Renderer();
     if(dev.firmware.size() > 0)
     {
-        new (ver) SWVersionInfo(dev.firmware, 0, 0);
+        new(ver) SWVersionInfo(dev.firmware, 0, 0);
         return true;
     }
     return false;
 }
 
-CString GLEAM_API::GetShaderLanguageName(const GraphicsAPI::GraphicsContext &)
+CString GLEAM_API::GetShaderLanguageName(const GraphicsAPI::GraphicsContext&)
 {
     if(!GLEAM_FEATURES.is_gles)
         return "GLSL";
@@ -49,25 +58,24 @@ CString GLEAM_API::GetShaderLanguageName(const GraphicsAPI::GraphicsContext &)
         return "GLSL ES";
 }
 
-bool GLEAM_API::GetShaderLanguageVersion(const GraphicsAPI::GraphicsContext &c, SWVersionInfo * ver)
+bool GLEAM_API::GetShaderLanguageVersion(
+    const GraphicsAPI::GraphicsContext& c, SWVersionInfo* ver)
 {
     auto glsl_ver = CGL_Shared_Debug::ShaderLanguageVersion();
-    new (ver) SWVersionInfo(GetShaderLanguageName(c), glsl_ver.major, glsl_ver.minor);
+    new(ver)
+        SWVersionInfo(GetShaderLanguageName(c), glsl_ver.major, glsl_ver.minor);
     return true;
 }
 
 bool GLEAM_API::TextureFormatSupport(PixFmt fmt)
 {
-    return CGL33::Debug::CompressedFormatSupport(
-                Texture::T2D, fmt
-                );
+    return CGL::Debug::CompressedFormatSupport(Texture::T2D, fmt);
 }
 
 u32 GLSLVersionFromAPI(APILevel level)
 {
     switch(level)
     {
-
     case GLES_2_0:
         return 100;
     case GLES_3_0:
@@ -88,6 +96,6 @@ u32 GLSLVersionFromAPI(APILevel level)
     }
 }
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

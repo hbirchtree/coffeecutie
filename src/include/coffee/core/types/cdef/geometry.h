@@ -433,6 +433,8 @@ using CSize = _cbasic_size_2d<int32>;
 using Size = CSize;
 
 using CSize3 = _cbasic_size_3d<int32>;
+
+using Size3 = CSize3;
 /*!
  * \brief Heavy-duty size structure
  */
@@ -490,5 +492,8 @@ using BoundBox = _cbasic_boundingbox<scalar>;
 using PtF = CPointF;
 using PtD = CPointD;
 using PtI = CPoint;
+
+using Point = CPoint;
+using Point3 = CPoint3;
 
 }

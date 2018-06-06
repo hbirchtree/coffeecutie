@@ -22,7 +22,7 @@
 
 #ifdef COFFEE_GLEAM_DESKTOP
 
-// Desktop GL functions, up to OpenGL 4.5
+// Desktop GL functions, up to OpenGL 4.6
 #include <glad/glad.h>
 #include <glad/KHR/khrplatform.h>
 

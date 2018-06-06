@@ -54,29 +54,23 @@ struct RendererState
 
     struct RGraphicsData
     {
+        RGraphicsData() : params(eye_pip)
+        {
+        }
+
         // GLEAM data
         GLM::API_CONTEXT loader = nullptr;
-
-        GLM::FB_T* render_target = nullptr;
 
         GLM::BUF_A* vertbuf;
         GLM::V_DESC vertdesc = {};
 
-        GLM::SHD v_shader = {};
-        GLM::SHD f_shader = {};
-        GLM::PIP eye_pip  = {};
+        GLM::SHD                    v_shader = {};
+        GLM::SHD                    f_shader = {};
+        GLM::PIP                    eye_pip  = {};
+        RHI::shader_param_view<GLM> params;
 
         GLM::S_2DA* eyetex;
         GLM::SM_2DA eyesamp = {};
-
-        GLM::UNIFVAL transforms     = {};
-        GLM::UNIFVAL timeval        = {};
-        GLM::UNIFVAL texture_size   = {};
-        GLM::UNIFSMP textures_array = {};
-
-        Bytes transform_data = {};
-        Bytes time_data      = {};
-        Bytes texsize_data   = {};
 
         // Graphics data
         CGCamera camera;
@@ -93,21 +87,15 @@ struct RendererState
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
-        /* Instance data is more akin to individual drawcalls, specifying vertex
-         * buffer information */
         GLM::D_DATA instdata = {6, 0, 4};
 
         // View information
-        GLM::BLNDSTATE blendstate       = {};
-        GLM::DEPTSTATE deptstate        = {};
-        GLM::D_CALL    call             = {};
+        GLM::BLNDSTATE blendstate = {};
+        GLM::DEPTSTATE deptstate  = {};
+        GLM::D_CALL    call       = {};
 
-        GLM::USTATE unifstate   = {};
-        GLM::USTATE unifstate_f = {};
-
-        GLM::PSTATE     pipstate = {};
-        GLM::RenderPass rpass_s  = {};
-        GLM::OPT_DRAW   rpass    = {};
+        GLM::RenderPass rpass_s = {};
+        GLM::OPT_DRAW   rpass   = {};
     } g_data;
 };
 
@@ -133,7 +121,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
     auto& g = d->g_data;
 
-    g = {};
+//    g = {};
 
     Store::RestoreMemory(Bytes::Create(d->r_state), 0);
 
@@ -293,32 +281,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
     cVerbose("Setting sampler properties");
 
-    /*
-     * These specify byte buffers which refer to other data
-     * This makes it simple to redirect or reallocate the uniform data
-     *
-     * These can be rotated to achieve per-frame disposable buffers,
-     *  allowing multiple frames to be processed concurrently without halt
-     */
-    auto& transform_data = g.transform_data;
-    auto& time_data      = g.time_data;
-
-    transform_data = Bytes::Create(g.object_matrices);
-    time_data      = Bytes::Create(g.time_value);
-
-    g.textures_array = eyesamp.handle();
-
-    g.transforms.data   = &transform_data;
-    g.timeval.data      = &time_data;
-    g.texture_size.data = &g.texsize_data;
-
     /* We create some pipeline state, such as blending and viewport state */
-    auto& blendstate       = g.blendstate;
-    auto& deptstate        = g.deptstate;
+    auto& blendstate = g.blendstate;
+    auto& deptstate  = g.deptstate;
 
     blendstate.m_doBlend = true;
-    deptstate.m_test             = true;
-    deptstate.m_func             = C_CAST<uint32>(ValueComparison::Less);
+    deptstate.m_test     = true;
+    deptstate.m_func     = C_CAST<uint32>(ValueComparison::Less);
 
     /* Applying state information */
     GLM::SetBlendState(g.blendstate);
@@ -327,24 +296,18 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     /* We query the current pipeline for possible uniform/texture/buffer values
      */
-    Vector<GLM::UNIFDESC> unifs;
-    GLM::GetShaderUniformState(eye_pip, &unifs);
-    auto& unifstate_v = g.unifstate;
-    auto& unifstate_f = g.unifstate_f;
-    /* We assign CPU-side values to GPU-side values */
-    for(GLM::UNIFDESC const& u : unifs)
+    g.params.get_pipeline_params();
+
+    for(auto constant : g.params.constants())
     {
-        if(u.m_name == "transform")
-        {
-            unifstate_v.setUniform(u, &g.transforms);
-        } else if(u.m_name == "texdata")
-            unifstate_f.setSampler(u, &g.textures_array);
-        else if(u.m_name == "mx")
-            unifstate_f.setUniform(u, &g.timeval);
-        else if(u.m_name == "texdata_gridSize")
-            unifstate_f.setUniform(u, &g.texture_size);
-        else
-            cVerbose(4, "Unhandled uniform value: {0}", u.m_name);
+        if(constant.m_name == "transform")
+            g.params.set_constant(
+                constant,
+                Bytes::From(g.object_matrices, sizeof(g.object_matrices)));
+        else if(constant.m_name == "texdata")
+            g.params.set_sampler(constant, g.eyesamp.handle());
+        else if(constant.m_name == "mx")
+            g.params.set_constant(constant, Bytes::Create(g.time_value));
     }
 
     cVerbose("Acquire and set shader uniforms");
@@ -387,10 +350,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     g.rpass_s.depth       = &g.deptstate;
     g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
 
-    g.pipstate[ShaderStage::Vertex]   = &g.unifstate;
-    g.pipstate[ShaderStage::Fragment] = &g.unifstate_f;
-
-    g.rpass_s.draws.push_back({&g.vertdesc, &g.pipstate, g.call, g.instdata});
+    g.rpass_s.draws.push_back(
+        {&g.vertdesc, &g.params.get_state(), g.call, g.instdata});
 
     GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
 }
@@ -451,17 +412,15 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
     LogicLoop(renderer, d);
     auto& g = d->g_data;
 
+    GLM::DefaultFramebuffer().use(FramebufferT::All);
     GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
-
-    scalar texSize = i32(CMath::sqrt(g.eyetex->texSize().depth));
-    g.texsize_data = Bytes::Create(texSize);
 
     GLM::MultiDraw(g.eye_pip, g.rpass);
 
     renderer.swapBuffers();
     renderer.pollEvents();
 
-    //d->frameCount++;
+    // d->frameCount++;
 }
 
 void RendererCleanup(CDRenderer& renderer, RendererState* d)
@@ -487,4 +446,3 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
     cDebug("Saving time: {0}", d->r_state.time_base);
     Store::SaveMemory(Bytes::Create(d->r_state), 0);
 }
-

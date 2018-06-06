@@ -24,6 +24,7 @@ struct MatrixContainer : ComponentContainer<Matf4>
 
     virtual void registerEntity(u64 id)
     {
+        mapping[id] = matrices.size();
         matrices.resize(matrices.size() + 1);
     }
     virtual void unregisterEntity(u64 id)
@@ -37,12 +38,13 @@ struct MatrixContainer : ComponentContainer<Matf4>
 
 void entity_process(EntityContainer& c)
 {
+    ProfContext _("Component");
     auto& m = c.get<Matf4>();
 
     m = CGraphicsData::GenPerspective(90.f, 1.f, {0.1f, 100.f});
     m = m * (Matf4() * 1.f);
 
-    cDebug("{0}", m * Vecf4(0.f, 0, 0.f, 1.f));
+    //cDebug("{0}", m * Vecf4(0.f, 0, 0.f, 1.f));
 }
 
 i32 coffee_main(i32, cstring_w*)
@@ -67,23 +69,33 @@ i32 coffee_main(i32, cstring_w*)
         OF_Test_2
     };
 
+    Profiler::PushContext("Register component");
     MatrixContainer matrix_store;
 
     entities.register_component<Matf4>(matrix_store);
+    Profiler::PopContext();
 
-    entities.create_entity(rec1);
-    entities.create_entity(rec1);
+    Profiler::PushContext("Create 200 entities");
+    for(auto i : Range<>(100))
+        entities.create_entity(rec1);
 
-    entities.create_entity(rec2);
-    entities.create_entity(rec2);
+    for(auto i : Range<>(100))
+        entities.create_entity(rec2);
+    Profiler::PopContext();
 
+    Profiler::PushContext("Updating entities");
     for(auto& o : entities.select(OF_Test_1))
         o.interval = Chrono::milliseconds(20);
 
-    for(auto& o : entities.select(0))
-        cDebug("Object: {0} {1}", o.id, o.interval.count());
+    //for(auto& o : entities.select(0))
+    //    cDebug("Object: {0} {1}", o.id, o.interval.count());
 
     entities.exec();
+    Profiler::PopContext();
+
+    Profiler::PushContext("Control");
+    CurrentThread::sleep_for(Chrono::milliseconds(1));
+    Profiler::PopContext();
 
     return 0;
 }

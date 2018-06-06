@@ -42,29 +42,31 @@ static void vao_apply_buffer(
     for(GLEAM_VertAttribute const& attr : m_attributes)
         if(binding == attr.bufferAssociation())
         {
-            CGL33::VAOEnableAttrib(attr.index());
+            CGL33::VAOEnableArray(attr.index());
 #if GL_VERSION_VERIFY(0x300, 0x300)
             bool use_integer = IsIntegerType(attr.type());
 
             if(use_integer && !(attr.m_flags & GLEAM_API::AttributePacked) &&
                !GLEAM_FEATURES.gles20)
-                CGL33::VAOAttribIPointer(
+                CGL33::VAOIPointer(
                     attr.index(),
                     attr.size(),
-                    attr.type(),
+                    to_enum(attr.type()),
                     attr.stride(),
-                    attr.bufferOffset() + attr.offset() +
-                        vertexOffset * attr.stride());
+                    C_RCAST<c_ptr>(
+                        attr.bufferOffset() + attr.offset() +
+                        vertexOffset * attr.stride()));
             else
 #endif
-                CGL33::VAOAttribPointer(
+                CGL33::VAOPointer(
                     attr.index(),
                     attr.size(),
-                    attr.type(),
+                    to_enum(attr.type()),
                     attr.m_flags & GLEAM_API::AttributeNormalization,
                     attr.stride(),
-                    attr.bufferOffset() + attr.offset() +
-                        vertexOffset * attr.stride());
+                    C_RCAST<c_ptr>(
+                        attr.bufferOffset() + attr.offset() +
+                        vertexOffset * attr.stride()));
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
             if(attr.instanced())
@@ -104,41 +106,44 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
         {
-            CGL45::VAOEnableAttrib(m_handle, attr.index());
+            CGL45::VAOEnable(m_handle, attr.index());
 
             if(IsIntegerType(attr.type()) &&
                !(attr.m_flags & GLEAM_API::AttributePacked))
-                CGL45::VAOAttribFormatI(
+                CGL45::VAOIFormat(
                     m_handle,
                     attr.index(),
                     attr.size(),
-                    attr.type(),
+                    to_enum(attr.type()),
                     attr.offset());
             else
-                CGL45::VAOAttribFormat(
+                CGL45::VAOFormat(
                     m_handle,
                     attr.index(),
                     attr.size(),
-                    attr.type(),
+                    to_enum(attr.type()),
                     attr.m_flags & GLEAM_API::AttributeNormalization,
                     attr.offset());
         } else
 #endif
         {
             CGL33::VAOBind(m_handle);
-            CGL33::VAOEnableAttrib(attr.index());
+            CGL33::VAOEnableArray(attr.index());
 
             if(GLEAM_FEATURES.vertex_format)
             {
                 if(IsIntegerType(attr.type()) &&
                    !(attr.m_flags & GLEAM_API::AttributePacked))
-                    CGL43::VAOAttribFormatI(
-                        attr.index(), attr.size(), attr.type(), attr.offset());
-                else
-                    CGL43::VAOAttribFormat(
+                    CGL43::VAOIFormat(
                         attr.index(),
                         attr.size(),
-                        attr.type(),
+                        to_enum(attr.type()),
+                        attr.offset());
+                else
+                    CGL43::VAOFormat(
+                        attr.index(),
+                        attr.size(),
+                        to_enum(attr.type()),
                         attr.m_flags & GLEAM_API::AttributeNormalization,
                         attr.offset());
             }
@@ -168,13 +173,13 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf)
             {
                 if(binding == attr.bufferAssociation())
                 {
-                    CGL45::VAOBindVertexBuffer(
+                    CGL45::VAOVertBuf(
                         m_handle,
                         binding,
                         buf.m_handle,
                         attr.bufferOffset(),
                         attr.stride());
-                    CGL45::VAOAttribBinding(
+                    CGL45::VAOBinding(
                         m_handle, attr.index(), attr.bufferAssociation());
                     if(attr.instanced())
                         CGL45::VAOBindingDivisor(m_handle, binding, 1);
@@ -187,12 +192,12 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf)
             for(GLEAM_VertAttribute const& attr : m_attributes)
                 if(binding == attr.bufferAssociation())
                 {
-                    CGL43::VAOBindVertexBuffer(
+                    CGL43::VertBufBind(
                         binding,
                         buf.m_handle,
                         attr.bufferOffset(),
                         attr.stride());
-                    CGL43::VAOAttribBinding(attr.index(), binding);
+                    CGL43::VAOBinding(attr.index(), binding);
                     if(attr.instanced())
                         CGL43::VAOBindingDivisor(attr.index(), 1);
                 }
@@ -211,7 +216,7 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer* buffer)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.vertex_format && GLEAM_FEATURES.direct_state)
-        CGL45::VAOElementBuffer(m_handle, buffer->m_handle);
+        CGL45::VAOElementBuf(m_handle, buffer->m_handle);
 #endif
 }
 
@@ -243,7 +248,7 @@ void GLEAM_VertDescriptor::unbind()
     else
 #endif
         for(auto const& attr : m_attributes)
-            CGL33::VAODisableAttrib(attr.index());
+            CGL33::VAODisableArray(attr.index());
 
     if(GLEAM_FEATURES.element_buffer_bind && m_ibuffer)
         m_ibuffer->unbind();

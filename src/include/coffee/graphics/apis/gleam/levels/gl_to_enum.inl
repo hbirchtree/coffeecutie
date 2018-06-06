@@ -1091,7 +1091,7 @@ inline CGenum to_enum(Filtering p, Filtering s)
     }
 }
 
-inline CGenum to_enum(WrapPolicy p)
+inline i32 to_enum(WrapPolicy p)
 {
     switch(p)
     {

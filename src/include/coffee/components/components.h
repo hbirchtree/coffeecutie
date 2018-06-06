@@ -134,8 +134,7 @@ struct EntityContainer : non_copy
     template<typename ComponentType>
     void register_component(ComponentContainer<ComponentType>& c)
     {
-        static const type_hash type_id =
-                typeid(ComponentType).hash_code();
+        static const type_hash type_id = typeid(ComponentType).hash_code();
 
         if(components.find(type_id) != components.end())
             throw implementation_error(

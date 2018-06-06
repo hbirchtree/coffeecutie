@@ -3,9 +3,9 @@
 #include <coffee/core/coffee_strings.h>
 #include <coffee/core/platform_data.h>
 
-#include <coffee/graphics/apis/gleam/gleam.h>
-#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
+#include <coffee/graphics/apis/gleam/gleam.h>
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
 #include <CEAGL/eagl.h>
@@ -22,13 +22,13 @@
 
 #define GLR_API "GLeamRenderer::"
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-using GL = CGL::CGL_Implementation;
+using GL = CGL::CGL_Lowest;
+using GDEBUG = CGL::Debug;
 
-GLeamRenderer::GLeamRenderer(GLApplication *app):
-    GLLoader(app)
+GLeamRenderer::GLeamRenderer(GLApplication* app) : GLLoader(app)
 {
 }
 
@@ -38,53 +38,58 @@ GLeamRenderer::~GLeamRenderer()
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 void gleamcallback(
-        GLenum src, GLenum type,GLuint id,GLenum sev,
-        GLsizei,const GLchar* msg,
-        const void* param
-        )
+    GLenum src,
+    GLenum type,
+    GLuint id,
+    GLenum sev,
+    GLsizei,
+    const GLchar* msg,
+    const void*   param)
 {
     if(src == GL_DEBUG_SOURCE_APPLICATION)
         return;
 
     const GLeamRenderer* renderer = (const GLeamRenderer*)param;
-    CGL::CGDbgMsg cmsg;
+    CGL::CGDbgMsg        cmsg;
 
-
-    cmsg.sev = gl_convertsev(sev);
+    cmsg.sev  = gl_convertsev(sev);
     cmsg.type = gl_converttype(type);
     cmsg.comp = gl_convertcomp(src);
-    cmsg.id = id;
-    cmsg.msg = msg;
+    cmsg.id   = id;
+    cmsg.msg  = msg;
     renderer->bindingCallback(&cmsg);
 }
 #endif
 
-void GLeamRenderer::bindingCallback(const void *report) const
+void GLeamRenderer::bindingCallback(const void* report) const
 {
-    const CGL::CGDbgMsg* msg =
-            (const CGL::CGDbgMsg*)report;
-    cBasicPrint("GL:{0}:{1}:{2}:{3}: {4}",
-                msg->comp,msg->sev,msg->type,
-                msg->id,msg->msg.c_str());
+    const CGL::CGDbgMsg* msg = (const CGL::CGDbgMsg*)report;
+    cBasicPrint(
+        "GL:{0}:{1}:{2}:{3}: {4}",
+        msg->comp,
+        msg->sev,
+        msg->type,
+        msg->id,
+        msg->msg.c_str());
     (void)msg;
 }
 
-bool GLeamRenderer::bindingPreInit(const GLProperties&,CString*)
+bool GLeamRenderer::bindingPreInit(const GLProperties&, CString*)
 {
     return true;
 }
 
-bool GLeamRenderer::bindingInit(const GLProperties&,CString*)
+bool GLeamRenderer::bindingInit(const GLProperties&, CString*)
 {
     return true;
 }
 
-bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
+bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 {
     DProfContext a(GLR_API "Binding initialization");
 
-//    cVerbose(8, "Acquiring GL context from {0}, {1}",
-//             (u64)m_app, (u64)m_app->glContext());
+    //    cVerbose(8, "Acquiring GL context from {0}, {1}",
+    //             (u64)m_app, (u64)m_app->glContext());
 
     if(!m_app->glContext()->acquireContext())
     {
@@ -95,7 +100,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     bool status = false;
 
-    cVerbose(8, GLR_API "Attempting to load version: {0}",p.version);
+    cVerbose(8, GLR_API "Attempting to load version: {0}", p.version);
 
     /* When rendering with GLES or EGL, we need a procloader most likely */
 #if !defined(COFFEE_GLEAM_DESKTOP) || defined(COFFEE_USE_MAEMO_EGL)
@@ -120,46 +125,65 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     if(!(p.flags & GLProperties::Flags::GLES))
     {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-        const static CGLVersion v33(3,3);
-        const static CGLVersion v43(4,3);
-        const static CGLVersion v45(4,5);
-        const static CGLVersion v46(4,6);
+        const static CGLVersion v33(3, 3);
+        const static CGLVersion v43(4, 3);
+        const static CGLVersion v45(4, 5);
+        const static CGLVersion v46(4, 6);
 
-        if(p.version>=v45)
+        if(p.version >= v45)
         {
-            status = CGL::CGL45::LoadBinding(m_app->glContext(), procload);
-        }else if(p.version>=v43)
+            status = CGL::Loader::LoadBinding(
+                m_app->glContext(),
+                procload,
+                reinterpret_cast<void**>(&glTextureBarrier));
+        } else if(p.version >= v43)
         {
-            status = CGL::CGL43::LoadBinding(m_app->glContext(), procload);
-        } else if(p.version>=v33)
+            status = CGL::Loader::LoadBinding(
+                m_app->glContext(),
+                procload,
+                reinterpret_cast<void**>(&glDispatchCompute));
+        } else if(p.version >= v33)
         {
-            status = CGL::CGL33::LoadBinding(m_app->glContext(), procload);
+            status = CGL::Loader::LoadBinding(
+                m_app->glContext(),
+                procload,
+                reinterpret_cast<void**>(&glCreateSamplers));
         }
 #endif
-    }else{
+    } else
+    {
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-        const static CGLVersion v20es(2,0);
+        const static CGLVersion v20es(2, 0);
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-        const static CGLVersion v30es(3,0);
-        const static CGLVersion v32es(3,2);
+        const static CGLVersion v30es(3, 0);
+        const static CGLVersion v32es(3, 2);
 #endif
 
 #if !defined(COFFEE_LINKED_GLES)
 #if GL_VERSION_VERIFY(0x0, 0x320)
-        if(p.version>=v32es)
+        if(p.version >= v32es)
         {
-            status = CGL::CGLES32::LoadBinding(m_app->glContext(),procload);
-        }else
+            status = CGL::Loader::LoadBinding(
+                m_app->glContext(),
+                procload,
+                reinterpret_cast<void**>(&glVertexAttribFormat));
+        } else
 #endif
 #if GL_VERSION_VERIFY(0x0, 0x300)
-        if(p.version==v30es)
+            if(p.version == v30es)
         {
-            status = CGL::CGLES30::LoadBinding(m_app->glContext(),procload);
-        }else
+            status = CGL::Loader::LoadBinding(
+                m_app->glContext(),
+                procload,
+                reinterpret_cast<void**>(&glTexStorage2D));
+        } else
 #endif
-        if(p.version==v20es)
+            if(p.version == v20es)
         {
-            status = CGL::CGLES20::LoadBinding(m_app->glContext(),procload);
+            status = CGL::Loader::LoadBinding(
+                m_app->glContext(),
+                procload,
+                reinterpret_cast<void**>(&glTexImage2D));
         }
 #else
         status = true;
@@ -173,8 +197,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(!status)
     {
-//        cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
-//             CFStrings::Graphics_GLeam_Renderer_FailLoad);
+        //        cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
+        //             CFStrings::Graphics_GLeam_Renderer_FailLoad);
         /*Context or graphics card on fire? Just get out!*/
         if(err)
             *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;
@@ -184,62 +208,54 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(PlatformData::IsDebug())
     {
-        GL::Debug::SetDebugGroup(GLR_API "Print information");
+        GDEBUG::SetDebugGroup(GLR_API "Print information");
 
         Profiler::DeepPushContext(GLR_API "Printing information about GL");
-        cDebug(GLR_API "Rendering device info: {0}",GL::Debug::Renderer());
+        cDebug(GLR_API "Rendering device info: {0}", GDEBUG::Renderer());
 
-        if(feval(p.flags&GLProperties::GLCoreProfile))
-            cDebug(GLR_API "OpenGL core profile version: {0}",
-                   GL::Debug::ContextVersion());
+        if(feval(p.flags & GLProperties::GLCoreProfile))
+            cDebug(
+                GLR_API "OpenGL core profile version: {0}",
+                GDEBUG::ContextVersion());
         else
-            cDebug(GLR_API "OpenGL (non-core) version: {0}",
-                   GL::Debug::ContextVersion());
+            cDebug(
+                GLR_API "OpenGL (non-core) version: {0}",
+                GDEBUG::ContextVersion());
 
-        GL::Debug::UnsetDebugGroup();
+        GDEBUG::UnsetDebugGroup();
     }
 
-    cDebug(GLR_API "OpenGL GLSL version: {0}",
-           GL::Debug::ShaderLanguageVersion());
+    cDebug(
+        GLR_API "OpenGL GLSL version: {0}", GDEBUG::ShaderLanguageVersion());
     Profiler::DeepPopContext();
 
     if(PlatformData::IsDebug())
     {
-        GL::Debug::SetDebugGroup(GLR_API "Profiler statistics");
+        GDEBUG::SetDebugGroup(GLR_API "Profiler statistics");
 
         DProfContext b(GLR_API "Adding GL information to profiler");
 
         Profiler::AddExtraData(
-                    "gl:renderer",
-                    Strings::to_string(GL::Debug::Renderer()));
+            "gl:renderer", Strings::to_string(GDEBUG::Renderer()));
         Profiler::AddExtraData(
-                    "gl:version",
-                    Strings::to_string(GL::Debug::ContextVersion()));
+            "gl:version", Strings::to_string(GDEBUG::ContextVersion()));
         Profiler::AddExtraData(
-                    "gl:glsl_version",
-                    Strings::to_string(
-                        GL::Debug::ShaderLanguageVersion()));
-        Profiler::AddExtraData(
-                    "gl:extensions",
-                    GL::Debug::s_ExtensionList);
-        Profiler::AddExtraData(
-                    "gl:driver",
-                    GL::Debug::ContextVersion().driver);
+            "gl:glsl_version",
+            Strings::to_string(GDEBUG::ShaderLanguageVersion()));
+        Profiler::AddExtraData("gl:extensions", GDEBUG::s_ExtensionList);
+        Profiler::AddExtraData("gl:driver", GDEBUG::ContextVersion().driver);
 
-        GL::Debug::InitCompressedFormats();
+        GDEBUG::InitCompressedFormats();
 
         CString internalFormats = {};
-        for(szptr i : Range<>(C_FCAST<szptr>(
-                                  GL::Debug::Num_Internal_Formats)))
+        for(szptr i : Range<>(C_FCAST<szptr>(GDEBUG::Num_Internal_Formats)))
         {
-            if(GL::Debug::Internal_Formats[i] > 0)
+            if(GDEBUG::Internal_Formats[i] > 0)
 
-            internalFormats.append(
-                        StrUtil::pointerify(
-                            C_FCAST<u64>(
-                                GL::Debug::Internal_Formats[i])&0xFFFF
-                            )
-                        + " ");
+                internalFormats.append(
+                    StrUtil::pointerify(
+                        C_FCAST<u64>(GDEBUG::Internal_Formats[i]) & 0xFFFF) +
+                    " ");
         }
 
         internalFormats = StrUtil::rtrim(internalFormats);
@@ -248,71 +264,66 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
         /* TODO: Add GL limits to extra data */
 
-        using LIM = CGL::CGL_Shared_Limits;
+        using LIM      = CGL::CGL_Shared_Limits;
         CString limits = {};
-        for(u32 i=50; i<351; i+=50)
-            for(u32 j=0; j<LIM::Max_Shader_Property; j++)
+        for(u32 i = 50; i < 351; i += 50)
+            for(u32 j = 0; j < LIM::Max_Shader_Property; j++)
             {
-                u32 val = i + j;
+                u32 val   = i + j;
                 i32 limit = LIM::Max(val);
 
                 if(limit == 0)
                     continue;
 
-                auto name = LIM::MaxName(val);
+                auto    name  = LIM::MaxName(val);
                 CString label = {};
                 if(name)
                     label = name;
                 else
                     label = cast_pod(i);
 
-                limits += label + "="
-                        + cast_pod(limit)
-                        + ",";
+                limits += label + "=" + cast_pod(limit) + ",";
             }
 
-        for(u32 i=LIM::Vertex_Attribs; i<LIM::Max_Property; i++)
+        for(u32 i = LIM::Vertex_Attribs; i < LIM::Max_Property; i++)
         {
             i32 limit = LIM::Max(i);
 
             if(limit == 0)
                 continue;
 
-            auto name = LIM::MaxName(i);
+            auto    name  = LIM::MaxName(i);
             CString label = {};
             if(name)
                 label = name;
             else
                 label = cast_pod(i);
 
-            limits += label + "="
-                    + cast_pod(limit)
-                    + ",";
+            limits += label + "=" + cast_pod(limit) + ",";
         }
 
         Profiler::AddExtraData("gl:limits", limits);
 
-        GL::Debug::UnsetDebugGroup();
+        GDEBUG::UnsetDebugGroup();
     }
 
-    if(GL::DebuggingSupported())
+    if(GDEBUG::b_isDebugging)
     {
 #if !defined(COFFEE_WINDOWS) && GL_VERSION_VERIFY(0x330, 0x320)
         DProfContext b(GLR_API "Configuring GL context debugging");
-        GL::Debug::SetDebugMode(true);
-        GL::Debug::DebugSetCallback(gleamcallback,this);
-        GL::Debug::SetDebugLevel(Severity::Information, false);
+        GDEBUG::SetDebugMode(true);
+        GDEBUG::DebugSetCallback(gleamcallback, this);
+        GDEBUG::SetDebugLevel(Severity::Information, false);
 #endif
     }
-
 
     return true;
 }
 
 void GLeamRenderer::bindingTerminate()
 {
-    GL::Debug::FreeInternalFormats();
+    GDEBUG::FreeInternalFormats();
 }
 
-}
-}
+} // namespace Display
+} // namespace Coffee
