@@ -104,7 +104,7 @@ inline CGenum to_enum(
 }
 
 inline CGenum to_enum(
-        Feature f, uint32 offset)
+        Feature f, u32 offset)
 {
     (void)offset;
 

@@ -11,7 +11,7 @@ i32 rendering_test(i32, cstring_w*)
 {
     using namespace TrueType;
 
-    auto fontData = "/home/havard/.fonts/kenney-icon-font.ttf"_sysfile;
+    auto fontData = "/usr/share/fonts/truetype/abyssinica/AbyssinicaSIL-R.ttf"_sysfile;
 
     Bytes data = fontData;
 

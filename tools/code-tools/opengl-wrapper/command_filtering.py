@@ -136,31 +136,40 @@ ACTION_TYPE_MAP = {
 }
 
 RESOURCE_TYPE_PRIORITY_MAP = [
+    'Framebuffers',
+    'Framebuffer',
+
     'Textures',
     'Samplers',
     
+    'ShaderProgramv',
     'ProgramPipelines',
     'Pipelines',
+    'ActiveUniformBlock',
+    'ActiveUniform',
     'UniformBlock',
     'ProgramUniform',
     'ShaderStorageBlock',
-    
-    'Buffers',
-    'NamedBuffer',
-   
-    'Framebuffers',
-    'Renderbuffers',
-    'NamedFramebuffer',
-    'NamedRenderbuffer',
-    
-    'ElementBuffer',
-    'VertexBuffers',
-    'VertexBuffer',
+    'ActiveAttrib',
+
     'VertexArrayAttrib',
     'VertexAttrib',
     'VertexArrays',
     'VertexArray',
 
+    'VertexBuffers',
+    'VertexBuffer',
+    
+    'Buffers',
+    'NamedBuffer',
+   
+    'Renderbuffers',
+    'NamedFramebuffer',
+    'NamedRenderbuffer',
+    
+    'ElementBuffer',
+    
+    'Attrib',
     'TransformFeedbacks',
 ]
 
@@ -173,8 +182,11 @@ RESOURCE_TYPE_MAP = {
     'Pipelines': 'Pipeline',
     'Uniform': 'Unif',
     'ProgramUniform': 'Unif',
+    'ActiveUniformBlock': 'ActiveUnifBlock',
     'UniformBlock': 'UnifBlock',
     'ShaderStorageBlock': 'SSBO',
+    'ActiveAttrib': 'ActiveAttrib',
+    'ActiveUniform': 'ActiveUnif',
     
     'Buffers': 'Buf',
     'Buffer': 'Buf',
@@ -223,6 +235,7 @@ RESOURCE_TYPES_LIST = [
     
     'ActiveUniforms|ActiveUniform',
     'ActiveUniformBlock|UniformBlock',
+    'ActiveAttrib',
     'ProgramUniform|Uniform',
     'ProgramPipelines|ProgramPipeline|Program|AttachedShaders|Shader',
     'ShaderStorageBlock',
@@ -292,6 +305,7 @@ def translate_move_object(cmd_name):
             if 'Is' in get[0]:
                 continue
             cmd_name = '%s%s%s' % (map_resource_type(get[1]), get[0], get[2])
+            return cmd_name
     # Rename InvalidateBufferSubdata into BufInvalidateSubdata and similar
     for rtype in RESOURCE_TYPES:
         get = re.findall(OBJECT_RGX % rtype, cmd_name)
@@ -300,6 +314,7 @@ def translate_move_object(cmd_name):
             if 'Is' in get[0]:
                 continue
             cmd_name = '%s%s%s' % (map_resource_type(get[1]), get[0], get[2])
+            return cmd_name
     return cmd_name
  
 UNIF_RGX = '^Unif(Matrix)?([0-9](x[0-9])?)(.*v)$'
@@ -310,7 +325,7 @@ def translate_cmd_name(cmd_name):
     if 'Draw' in cmd_name:
         return cmd_name
    
-    cmd_name = translate_move_get(cmd_name)
+    #cmd_name = translate_move_get(cmd_name)
     cmd_name = translate_move_action(cmd_name)
     cmd_name = translate_move_object(cmd_name)
 
@@ -596,6 +611,10 @@ class ArgumentTransform:
             elif arg.group in ['DrawElementsType', 'PrimitiveType'] and arg.name == 'type':
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'to_enum(%s)' % arg.name))
                 self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('TypeEnum')))
+                self.consume(arg)
+            elif 'ConditionalRender' in self.cmd_name and arg.name == 'mode':
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'to_enum1(%s)' % arg.name))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('Delay')))
                 self.consume(arg)
             elif 'Draw' in self.cmd_name and arg.name in ['indirect', 'indices'] and '*' in str(arg.atype):
                 self.remap_type(arg, GLBaseType('uintptr'), 'C_RCAST<%s>(%s)' % (arg.atype, arg.name))

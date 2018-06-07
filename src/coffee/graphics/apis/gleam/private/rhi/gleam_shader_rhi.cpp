@@ -282,14 +282,18 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes& data)
             CGL33::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
             infoLog.resize(C_FCAST<szptr>(logLen));
             CGL33::ShaderGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-            infoLog.resize(infoLog.find('\0'));
-            cWarning(
-                "Shader compilation error: {0}\n"
-                "Associated source: \n{1}"
-                "Original source: \n{2}",
-                infoLog,
-                completeSource,
-                StrUtil::encapsulate(C_FCAST<cstring>(data.data), data.size));
+            szptr idx = 0;
+            if((idx = infoLog.find('\0')) != CString::npos)
+            {
+                infoLog.resize(infoLog.find('\0'));
+                cWarning(
+                            "Shader compilation error: {0}\n"
+                            "Associated source: \n{1}"
+                            "Original source: \n{2}",
+                            infoLog,
+                            completeSource,
+                            StrUtil::encapsulate(C_FCAST<cstring>(data.data), data.size));
+            }
             return false;
         }
 
@@ -300,22 +304,28 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes& data)
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        m_handle = CGL43::ShaderProgramAllocv(stage, shaderSrcVec);
+        m_handle = CGL43::ShaderProgramvAlloc(stage, shaderSrcVec);
 
         i32 link_state = 0;
-        CGL43::ProgramGetiv(m_handle, GL_LINK_STATUS, &link_state);
+        CGL43::ProgramGetiv(m_handle, GL_VALIDATE_STATUS, &link_state);
 
-        if(GL_DEBUG_MODE && (m_handle == 0 || !link_state))
+        if(GL_DEBUG_MODE && m_handle == 0 && link_state != GL_TRUE)
         {
             CString infoLog;
             i32     logLen = 0;
 
             CGL43::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            logLen ++;
             infoLog.resize(C_FCAST<szptr>(logLen));
             CGL43::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-            infoLog.resize(infoLog.find('\0'));
 
-            cWarning("Shader program compilation error: {0}", infoLog);
+            szptr idx;
+            if((idx = infoLog.find('\0')) != CString::npos)
+            {
+                infoLog.resize(infoLog.find('\0'));
+                cWarning("Shader program compilation error:\n{0}", infoLog);
+            }else
+                cWarning("Failed to extract shader warning");
             return false;
         }
 
@@ -394,7 +404,7 @@ bool GLEAM_Pipeline::assemble()
         if(GL_DEBUG_MODE && !stat)
         {
             CString infoLog;
-            i32 logLen;
+            i32     logLen;
             CGL33::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
             infoLog.resize(C_FCAST<szptr>(logLen));
             CGL33::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
@@ -411,7 +421,7 @@ bool GLEAM_Pipeline::assemble()
         if(GL_DEBUG_MODE && !stat)
         {
             CString infoLog;
-            i32 logLen;
+            i32     logLen;
             CGL43::PipelineGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
             infoLog.resize(C_FCAST<szptr>(logLen));
             CGL43::PipelineGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
@@ -648,57 +658,128 @@ void GetShaderUniforms(
         /* Get typical uniforms */
         if(uniforms)
         {
-            uint32              num_uniforms;
-            CGL33::UnifValInfo* unifs;
-            CGL33::ProgramUnifGet(prog, &num_uniforms, &unifs);
-            if(num_uniforms == 0)
-                return;
-            uniforms->reserve(num_uniforms);
-            for(uint32 i = 0; i < num_uniforms; i++)
+            i32 num_uniforms = 0;
+            i32 max_namelen  = 0;
+
+            CGL33::ProgramGetiv(prog, GL_ACTIVE_UNIFORMS, &num_uniforms);
+            CGL33::ProgramGetiv(
+                prog, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_namelen);
+
+            uniforms->resize(num_uniforms);
+
+            szptr max_namelen_sz = C_FCAST<szptr>(max_namelen);
+
+            for(auto i : Range<>(C_FCAST<szptr>(num_uniforms)))
             {
-                auto const& v = unifs[i];
+                auto& unif = uniforms->at(i);
+                unif       = {};
 
-                uniforms->push_back({});
-                GLEAM_UniformDescriptor& desc = uniforms->back();
-                desc.m_flags                  = 0;
+                CString& unifName = unif.m_name;
+                unifName.resize(max_namelen_sz);
 
-                desc.m_name = v.name;
+                u32  type = GL_NONE;
+                i32& size = unif.m_arrSize;
 
-                /* Some GLSL compilers (*cough* NVIDIA *cough*) add '[0]'
-                 *  to array uniforms. */
-                if(desc.m_name.find('[') != CString::npos)
-                    desc.m_name.resize(desc.m_name.find('['));
+                CGL33::ActiveUnifGet(
+                    prog,
+                    i,
+                    unifName.size(),
+                    nullptr,
+                    &size,
+                    &type,
+                    &unifName[0]);
 
-                desc.m_idx =
-                    CGL33::UnifGetLocation(prog, desc.m_name.c_str());
-                desc.stages    = ShaderStage::All;
-                desc.m_flags   = to_enum_shtype(v.type);
-                desc.m_arrSize = v.size;
-                delete[] v.name;
+                unif.m_idx   = CGL33::UnifGetLocation(prog, unifName.data());
+                unif.m_flags = to_enum_shtype(type);
+                unif.stages  = ShaderStage::All;
+
+                /* If array specifier is in name, remove it */
+                auto trimIdx = unifName.find('[');
+
+                if(trimIdx != CString::npos)
+                    unifName.resize(trimIdx);
+                else
+                    unifName.resize(unifName.find('\0'));
             }
-            delete[] unifs;
         }
 
         /* Get uniforms buffers */
         {
+            i32 num_blocks  = 0;
+            i32 max_namelen = 0;
+
+            CGL33::ProgramGetiv(prog, GL_ACTIVE_UNIFORM_BLOCKS, &num_blocks);
+            CGL33::ProgramGetiv(
+                prog, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_namelen);
+
+            szptr max_namelen_sz = C_FCAST<szptr>(max_namelen);
+            szptr ublk_idx       = uniforms->size();
+            uniforms->resize(uniforms->size() + C_FCAST<szptr>(num_blocks));
+
+            for(auto i : Range<>(C_FCAST<szptr>(num_blocks)))
+            {
+                auto& unif    = uniforms->at(ublk_idx + i);
+                auto& blkName = unif.m_name;
+
+                i32 blkSize = 0, activeUnifs = 0;
+
+                Vector<i32> unifIndices;
+
+                CGL33::ActiveUnifBlockGetName(
+                    prog, i, blkName.size(), nullptr, &blkName[0]);
+                CGL33::ActiveUnifBlockGetiv(
+                    prog, i, GL_UNIFORM_BLOCK_DATA_SIZE, &blkSize);
+                CGL33::ActiveUnifBlockGetiv(
+                    prog, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &activeUnifs);
+
+                unifIndices.resize(activeUnifs);
+                CGL33::ActiveUnifBlockGetiv(
+                    prog,
+                    i,
+                    GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
+                    &unifIndices.at(0));
+
+                Throw(implementation_error(
+                    GLM_API "Uniform block handling not implemented"));
+            }
         }
 
         /* Get attribute locations, names and types */
         if(params)
         {
-            CGL33::GetActiveAttrib(prog, &num, &names, &types, &sizes);
-            params->reserve(num);
+            i32 num_attributes = 0;
+            i32 max_namelen    = 0;
 
-            for(u32 i = 0; i < num; i++)
+            CGL33::ProgramGetiv(prog, GL_ACTIVE_ATTRIBUTES, &num_attributes);
+            CGL33::ProgramGetiv(
+                prog, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max_namelen);
+
+            szptr max_namelen_sz = C_FCAST<szptr>(max_namelen);
+            params->resize(C_FCAST<szptr>(num_attributes));
+
+            for(auto i : Range<>(C_FCAST<szptr>(num_attributes)))
             {
-                params->push_back({});
-                auto& att = params->back();
+                auto& attrib = params->at(i);
 
-                att.m_name = names[i];
-                att.m_idx =
-                    C_CAST<u16>(CGL33::ProgramAttribLoc(prog, names[i]));
-                att.m_flags = to_enum_shtype(types[i]);
-                delete[] names[i];
+                auto& attribName = attrib.m_name;
+                attribName.resize(max_namelen_sz);
+
+                i32 esize = 0;
+                u32 type  = GL_NONE;
+
+                CGL33::ActiveAttribGet(
+                    prog,
+                    i,
+                    attribName.size(),
+                    nullptr,
+                    &esize,
+                    &type,
+                    &attribName[0]);
+
+                attrib.m_idx =
+                    CGL33::AttribGetLocation(prog, attribName.c_str());
+                attrib.m_flags = to_enum_shtype(type);
+                attrib.stages  = ShaderStage::All;
             }
         }
     }
@@ -825,12 +906,12 @@ void GLEAM_PipelineDumper::dump(cstring out)
         cVerbose(6, "No GL program binary formats supported");
         return;
     }
-    if(CGL::GetProgramBinarySupported() &&
+    if(Extensions::GetProgramBinarySupported() &&
        (!GLEAM_FEATURES.separable_programs))
     {
-        CGenum t = GL_NONE;
+        CGenum         t = GL_NONE;
         Vector<byte_t> program_data;
-        i32 progLen = 0;
+        i32            progLen = 0;
 
         /* Just dump the program binary, nothing else is needed */
         CResources::Resource output(out, ResourceAccess::NewFile);
@@ -844,7 +925,8 @@ void GLEAM_PipelineDumper::dump(cstring out)
 
         program_data.resize(program_data.size() + C_FCAST<szptr>(progLen));
 
-        CGL43::ProgramGetBinary(m_pipeline.m_handle, &progLen, &t, program_data);
+        CGL43::ProgramGetBinary(
+            m_pipeline.m_handle, &progLen, &t, program_data);
         if(!progLen)
             return;
 

@@ -173,7 +173,7 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf)
             {
                 if(binding == attr.bufferAssociation())
                 {
-                    CGL45::VAOVertBuf(
+                    CGL45::VAOVertexBuffer(
                         m_handle,
                         binding,
                         buf.m_handle,
@@ -216,7 +216,7 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer* buffer)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.vertex_format && GLEAM_FEATURES.direct_state)
-        CGL45::VAOElementBuf(m_handle, buffer->m_handle);
+        CGL45::VAOElementBuffer(m_handle, buffer->m_handle);
 #endif
 }
 

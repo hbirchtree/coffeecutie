@@ -19,7 +19,7 @@ FORCEDINLINE CGenum to_enum(PatchProperty f)
     return (CGenum)f;
 }
 
-CGenum to_enum(Feature e);
+CGenum to_enum(Feature e, u32 offset = 0);
 CGenum to_enum(QueryT f);
 
 CGenum to_enum(Severity s);

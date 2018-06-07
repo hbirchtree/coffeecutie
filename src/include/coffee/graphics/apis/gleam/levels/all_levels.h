@@ -737,6 +737,7 @@ template<typename ReqVer>
 struct CGL_11
     : CGL_10<ReqVer>
 {
+using Parent = CGL_10<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
@@ -937,6 +938,7 @@ template<typename ReqVer>
 struct CGL_12
     : CGL_11<ReqVer>
 {
+using Parent = CGL_11<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
@@ -1002,6 +1004,7 @@ template<typename ReqVer>
 struct CGL_13
     : CGL_12<ReqVer>
 {
+using Parent = CGL_12<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
@@ -1150,6 +1153,7 @@ template<typename ReqVer>
 struct CGL_14
     : CGL_13<ReqVer>
 {
+using Parent = CGL_13<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x140, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_14, GLESVER_20)
@@ -1292,6 +1296,7 @@ template<typename ReqVer>
 struct CGL_15
     : CGL_14<ReqVer>
 {
+using Parent = CGL_14<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
@@ -1590,6 +1595,7 @@ template<typename ReqVer>
 struct CGL_20
     : CGL_15<ReqVer>
 {
+using Parent = CGL_15<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
@@ -1609,7 +1615,7 @@ STATICINLINE void ShaderAttach(u32 program, u32 shader)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void BindAttribLocation(u32 program, u32 index, const GLchar * name)
+STATICINLINE void AttribBindLocation(u32 program, u32 index, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glBindAttribLocation)
@@ -1779,7 +1785,7 @@ STATICINLINE void VAOEnableArray(u32 index)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void GetActiveAttrib(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveAttribGet(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveAttrib)
@@ -1794,7 +1800,7 @@ STATICINLINE void GetActiveAttrib(u32 program, u32 index, i32 bufSize, i32 * len
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void UnifActiveGet(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveUnifGet(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniform)
@@ -1810,7 +1816,7 @@ STATICINLINE void UnifActiveGet(u32 program, u32 index, i32 bufSize, i32 * lengt
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderAttachedsGet(u32 program, i32 maxCount, i32 * count, u32 * shaders)
+STATICINLINE void AttachedShadersGet(u32 program, i32 maxCount, i32 * count, u32 * shaders)
 {
 #ifndef NDEBUG
     if(!glGetAttachedShaders)
@@ -1825,7 +1831,7 @@ STATICINLINE void ShaderAttachedsGet(u32 program, i32 maxCount, i32 * count, u32
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE i32 GetAttribLocation(u32 program, const GLchar * name)
+STATICINLINE i32 AttribGetLocation(u32 program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetAttribLocation)
@@ -3024,6 +3030,8 @@ template<typename ReqVer>
 struct CGL_21
     : CGL_20<ReqVer>
 {
+using Parent = CGL_20<ReqVer>;
+using Parent::Uniffv;
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
@@ -3119,10 +3127,11 @@ template<typename ReqVer>
 struct CGL_30
     : CGL_21<ReqVer>
 {
+using Parent = CGL_21<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void ConditionalRenderBegin(u32 id, GLenum mode)
+STATICINLINE void ConditionalRenderBegin(u32 id, Delay mode)
 {
 #ifndef NDEBUG
     if(!glBeginConditionalRender)
@@ -3130,7 +3139,7 @@ STATICINLINE void ConditionalRenderBegin(u32 id, GLenum mode)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBeginConditionalRender(id, mode);
+    glBeginConditionalRender(id, to_enum1(mode));
 }
 #endif
 
@@ -3482,7 +3491,7 @@ STATICINLINE void BufFlushMappedRange(BufType target, ptroff offset, ptroff leng
 
 #if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBRBuf(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
+STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
 {
 #ifndef NDEBUG
     if(!glFramebufferRenderbuffer)
@@ -3497,7 +3506,7 @@ STATICINLINE void FBRBuf(FramebufferT target, GLenum attachment, GLenum renderbu
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void FBTex1D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level)
+STATICINLINE void FBTexture1D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture1D)
@@ -3512,7 +3521,7 @@ STATICINLINE void FBTex1D(FramebufferT target, GLenum attachment, Texture textar
 
 #if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBTex2D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level)
+STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture2D)
@@ -3527,7 +3536,7 @@ STATICINLINE void FBTex2D(FramebufferT target, GLenum attachment, Texture textar
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void FBTex3D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level, i32 zoffset)
+STATICINLINE void FBTexture3D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level, i32 zoffset)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture3D)
@@ -3542,7 +3551,7 @@ STATICINLINE void FBTex3D(FramebufferT target, GLenum attachment, Texture textar
 
 #if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void FBTexLayer(FramebufferT target, GLenum attachment, u32 texture, i32 level, i32 layer)
+STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, u32 texture, i32 level, i32 layer)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureLayer)
@@ -4385,6 +4394,7 @@ template<typename ReqVer>
 struct CGL_31
     : CGL_30<ReqVer>
 {
+using Parent = CGL_30<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_copy_buffer) && GL_ARB_copy_buffer)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
@@ -4435,7 +4445,7 @@ STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum t
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifActiveGetBlockName(u32 program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
+STATICINLINE void ActiveUnifBlockGetName(u32 program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockName)
@@ -4450,7 +4460,7 @@ STATICINLINE void UnifActiveGetBlockName(u32 program, u32 uniformBlockIndex, i32
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifActiveGetBlockiv(u32 program, u32 uniformBlockIndex, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifBlockGetiv(u32 program, u32 uniformBlockIndex, GLenum pname, i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockiv)
@@ -4465,7 +4475,7 @@ STATICINLINE void UnifActiveGetBlockiv(u32 program, u32 uniformBlockIndex, GLenu
 
 #if GL_VERSION_VERIFY(0x310, GL_VERSION_NONE) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_DESKTOP(GLVER_31)
-STATICINLINE void UnifActiveGetName(u32 program, u32 uniformIndex, i32 bufSize, i32 * length, GLchar * uniformName)
+STATICINLINE void ActiveUnifGetName(u32 program, u32 uniformIndex, i32 bufSize, i32 * length, GLchar * uniformName)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformName)
@@ -4480,7 +4490,7 @@ STATICINLINE void UnifActiveGetName(u32 program, u32 uniformIndex, i32 bufSize, 
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifActivesGetiv(u32 program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifGetsiv(u32 program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformsiv)
@@ -4540,7 +4550,7 @@ STATICINLINE void PrimitiveRestartIndex(u32 index)
 
 #if GL_VERSION_VERIFY(0x310, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_32)
-STATICINLINE void BufTex(Texture target, PixFmt internalformat, u32 buffer)
+STATICINLINE void TexBuffer(Texture target, PixFmt internalformat, u32 buffer)
 {
 #ifndef NDEBUG
     if(!glTexBuffer)
@@ -4573,6 +4583,7 @@ template<typename ReqVer>
 struct CGL_32
     : CGL_31<ReqVer>
 {
+using Parent = CGL_31<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
@@ -4666,7 +4677,7 @@ STATICINLINE GLsync SyncFence(GLenum condition, RSCA flags)
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void FBTex(FramebufferT target, GLenum attachment, u32 texture, i32 level)
+STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture)
@@ -4864,6 +4875,7 @@ template<typename ReqVer>
 struct CGL_33
     : CGL_32<ReqVer>
 {
+using Parent = CGL_32<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE) || (defined(GL_ARB_blend_func_extended) && GL_ARB_blend_func_extended)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
@@ -5290,6 +5302,7 @@ template<typename ReqVer>
 struct CGL_40
     : CGL_33<ReqVer>
 {
+using Parent = CGL_33<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback3) && GL_ARB_transform_feedback3)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
@@ -5989,10 +6002,31 @@ template<typename ReqVer>
 struct CGL_41
     : CGL_40<ReqVer>
 {
+using Parent = CGL_40<ReqVer>;
+using Parent::Unif1f;
+using Parent::Uniffv;
+using Parent::Unif1i;
+using Parent::Unifiv;
+using Parent::Unif2f;
+using Parent::Unif2i;
+using Parent::Unif3f;
+using Parent::Unif3i;
+using Parent::Unif4f;
+using Parent::Unif4i;
+using Parent::Unif1ui;
+using Parent::Unifuiv;
+using Parent::Unif2ui;
+using Parent::Unif3ui;
+using Parent::Unif4ui;
+using Parent::Unif1d;
+using Parent::Unifdv;
+using Parent::Unif2d;
+using Parent::Unif3d;
+using Parent::Unif4d;
 
 #if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void ShaderProgramActive(u32 pipeline, u32 program)
+STATICINLINE void ProgramActiveShader(u32 pipeline, u32 program)
 {
 #ifndef NDEBUG
     if(!glActiveShaderProgram)
@@ -6037,7 +6071,7 @@ STATICINLINE void ClearDepthf(scalar d)
 
 #if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u32 ShaderProgramAllocv(ShaderStage type, Span<const GLchar *> const& strings)
+STATICINLINE u32 ShaderProgramvAlloc(ShaderStage type, Span<const GLchar *> const& strings)
 {
 #ifndef NDEBUG
     if(!glCreateShaderProgramv)
@@ -7315,6 +7349,7 @@ template<typename ReqVer>
 struct CGL_42
     : CGL_41<ReqVer>
 {
+using Parent = CGL_41<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x420, 0x310) || (defined(GL_ARB_shader_image_load_store) && GL_ARB_shader_image_load_store)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
@@ -7500,6 +7535,7 @@ template<typename ReqVer>
 struct CGL_43
     : CGL_42<ReqVer>
 {
+using Parent = CGL_42<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
@@ -8027,7 +8063,7 @@ STATICINLINE void SSBOBinding(u32 program, u32 storageBlockIndex, u32 storageBlo
 
 #if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_texture_buffer_range) && GL_ARB_texture_buffer_range)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void BufTexRange(Texture target, PixFmt internalformat, u32 buffer, ptroff offset, ptroff size)
+STATICINLINE void TexBufferRange(Texture target, PixFmt internalformat, u32 buffer, ptroff offset, ptroff size)
 {
 #ifndef NDEBUG
     if(!glTexBufferRange)
@@ -8164,6 +8200,13 @@ template<typename ReqVer>
 struct CGL_44
     : CGL_43<ReqVer>
 {
+using Parent = CGL_43<ReqVer>;
+using Parent::TexBind;
+using Parent::BufBindBase;
+using Parent::BufBindRange;
+using Parent::SamplerBind;
+using Parent::TexBindImage;
+using Parent::VertBufBind;
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
@@ -8242,7 +8285,7 @@ STATICINLINE void TexBind(u32 first, i32 count, const u32 * textures)
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void VAOBufBind(u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
+STATICINLINE void VertBufBind(u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
 {
 #ifndef NDEBUG
     if(!glBindVertexBuffers)
@@ -8304,6 +8347,69 @@ template<typename ReqVer>
 struct CGL_45
     : CGL_44<ReqVer>
 {
+using Parent = CGL_44<ReqVer>;
+using Parent::TexGetImage;
+using Parent::TexGetLevelParameterfv;
+using Parent::TexGetLevelParameteriv;
+using Parent::TexGetParameterfv;
+using Parent::TexGetParameteriv;
+using Parent::TexParameterf;
+using Parent::TexParameterfv;
+using Parent::TexParameteri;
+using Parent::TexParameteriv;
+using Parent::TexCopySubImage1D;
+using Parent::TexCopySubImage2D;
+using Parent::TexAlloc;
+using Parent::TexSubImage1D;
+using Parent::TexSubImage2D;
+using Parent::TexCopySubImage3D;
+using Parent::TexSubImage3D;
+using Parent::TexCompressedSubImage1D;
+using Parent::TexCompressedSubImage2D;
+using Parent::TexCompressedSubImage3D;
+using Parent::TexGetCompressedImage;
+using Parent::BufData;
+using Parent::BufSubData;
+using Parent::BufAlloc;
+using Parent::QueryAlloc;
+using Parent::BufGetParameteriv;
+using Parent::BufGetPointerv;
+using Parent::BufGetSubData;
+using Parent::BufMap;
+using Parent::BufUnmap;
+using Parent::VAOGetiv;
+using Parent::BufFlushMappedRange;
+using Parent::FBAlloc;
+using Parent::RBufAlloc;
+using Parent::VAOAlloc;
+using Parent::RBufGetParameteriv;
+using Parent::TexGetParameterIiv;
+using Parent::TexGetParameterIuiv;
+using Parent::BufMapRange;
+using Parent::RBufStorage;
+using Parent::RBufStorageMultisample;
+using Parent::TexParameterIiv;
+using Parent::TexParameterIuiv;
+using Parent::BufCopySubData;
+using Parent::TexBuffer;
+using Parent::BufGetParameteri64v;
+using Parent::SamplerAlloc;
+using Parent::XFAlloc;
+using Parent::PipelineAlloc;
+using Parent::TexStorage1D;
+using Parent::TexStorage2D;
+using Parent::TexStorage3D;
+using Parent::BufClearData;
+using Parent::BufClearSubData;
+using Parent::TexBufferRange;
+using Parent::TexStorage2DMultisample;
+using Parent::TexStorage3DMultisample;
+using Parent::VAOBinding;
+using Parent::VAOFormat;
+using Parent::VAOIFormat;
+using Parent::VAOLFormat;
+using Parent::VAOBindingDivisor;
+using Parent::BufStorage;
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
@@ -8322,7 +8428,7 @@ STATICINLINE void TexBindUnit(u32 unit, u32 texture)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBBlit(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
+STATICINLINE void FBBlitNamed(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
 {
 #ifndef NDEBUG
     if(!glBlitNamedFramebuffer)
@@ -8337,7 +8443,7 @@ STATICINLINE void FBBlit(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX0, i3
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE GLenum FBCheckStatus(u32 framebuffer, FramebufferT target)
+STATICINLINE GLenum FBCheckNamedStatus(u32 framebuffer, FramebufferT target)
 {
 #ifndef NDEBUG
     if(!glCheckNamedFramebufferStatus)
@@ -8382,7 +8488,7 @@ STATICINLINE void BufClearSubData(u32 buffer, PixFmt internalformat, ptroff offs
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearfi(u32 framebuffer, GLenum buffer, i32 drawbuffer, scalar depth, i32 stencil)
+STATICINLINE void FBClearNamedfi(u32 framebuffer, GLenum buffer, i32 drawbuffer, scalar depth, i32 stencil)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferfi)
@@ -8397,7 +8503,7 @@ STATICINLINE void FBClearfi(u32 framebuffer, GLenum buffer, i32 drawbuffer, scal
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearfv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const scalar> const& value)
+STATICINLINE void FBClearNamedfv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const scalar> const& value)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferfv)
@@ -8412,7 +8518,7 @@ STATICINLINE void FBClearfv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBCleariv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const i32> const& value)
+STATICINLINE void FBClearNamediv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const i32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferiv)
@@ -8427,7 +8533,7 @@ STATICINLINE void FBCleariv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearuiv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const u32> const& value)
+STATICINLINE void FBClearNameduiv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const u32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferuiv)
@@ -8863,7 +8969,7 @@ STATICINLINE void BufGetSubData(u32 buffer, ptroff offset, Bytes const& data)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBGetAttachmentParameteriv(u32 framebuffer, GLenum attachment, GLenum pname, i32 * params)
+STATICINLINE void FBGetNamedAttachmentParameteriv(u32 framebuffer, GLenum attachment, GLenum pname, i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetNamedFramebufferAttachmentParameteriv)
@@ -8878,7 +8984,7 @@ STATICINLINE void FBGetAttachmentParameteriv(u32 framebuffer, GLenum attachment,
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBGetParameteriv(u32 framebuffer, GLenum pname, i32 * param)
+STATICINLINE void FBGetNamedParameteriv(u32 framebuffer, GLenum pname, i32 * param)
 {
 #ifndef NDEBUG
     if(!glGetNamedFramebufferParameteriv)
@@ -8908,7 +9014,7 @@ STATICINLINE void RBufGetParameteriv(u32 renderbuffer, GLenum pname, i32 * param
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufQueryGetObjecti64v(u32 id, u32 buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjecti64v(u32 id, u32 buffer, GLenum pname, ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjecti64v)
@@ -8923,7 +9029,7 @@ STATICINLINE void BufQueryGetObjecti64v(u32 id, u32 buffer, GLenum pname, ptroff
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufQueryGetObjectiv(u32 id, u32 buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjectiv(u32 id, u32 buffer, GLenum pname, ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjectiv)
@@ -8938,7 +9044,7 @@ STATICINLINE void BufQueryGetObjectiv(u32 id, u32 buffer, GLenum pname, ptroff o
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufQueryGetObjectui64v(u32 id, u32 buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjectui64v(u32 id, u32 buffer, GLenum pname, ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjectui64v)
@@ -8953,7 +9059,7 @@ STATICINLINE void BufQueryGetObjectui64v(u32 id, u32 buffer, GLenum pname, ptrof
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufQueryGetObjectuiv(u32 id, u32 buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjectuiv(u32 id, u32 buffer, GLenum pname, ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjectuiv)
@@ -9271,7 +9377,7 @@ STATICINLINE void UnifGetnuiv(u32 program, i32 location, i32 bufSize, u32 * para
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBInvalidateData(u32 framebuffer, i32 numAttachments, const GLenum * attachments)
+STATICINLINE void FBInvalidateNamedData(u32 framebuffer, i32 numAttachments, const GLenum * attachments)
 {
 #ifndef NDEBUG
     if(!glInvalidateNamedFramebufferData)
@@ -9286,7 +9392,7 @@ STATICINLINE void FBInvalidateData(u32 framebuffer, i32 numAttachments, const GL
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBInvalidateSubData(u32 framebuffer, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
+STATICINLINE void FBInvalidateNamedSubData(u32 framebuffer, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
 {
 #ifndef NDEBUG
     if(!glInvalidateNamedFramebufferSubData)
@@ -9421,7 +9527,7 @@ STATICINLINE void NamedFramebufferDrawBuffers(u32 framebuffer, i32 n, const GLen
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBParameteri(u32 framebuffer, GLenum pname, i32 param)
+STATICINLINE void FBNamedParameteri(u32 framebuffer, GLenum pname, i32 param)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferParameteri)
@@ -9436,7 +9542,7 @@ STATICINLINE void FBParameteri(u32 framebuffer, GLenum pname, i32 param)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufFBRead(u32 framebuffer, GLenum src)
+STATICINLINE void FBNamedReadBuffer(u32 framebuffer, GLenum src)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferReadBuffer)
@@ -9451,7 +9557,7 @@ STATICINLINE void BufFBRead(u32 framebuffer, GLenum src)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void RBufFB(u32 framebuffer, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
+STATICINLINE void FBNamedRenderbuffer(u32 framebuffer, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferRenderbuffer)
@@ -9466,7 +9572,7 @@ STATICINLINE void RBufFB(u32 framebuffer, GLenum attachment, GLenum renderbuffer
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexFB(u32 framebuffer, GLenum attachment, u32 texture, i32 level)
+STATICINLINE void FBNamedTexture(u32 framebuffer, GLenum attachment, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferTexture)
@@ -9481,7 +9587,7 @@ STATICINLINE void TexFB(u32 framebuffer, GLenum attachment, u32 texture, i32 lev
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexFBLayer(u32 framebuffer, GLenum attachment, u32 texture, i32 level, i32 layer)
+STATICINLINE void FBNamedTextureLayer(u32 framebuffer, GLenum attachment, u32 texture, i32 level, i32 layer)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferTextureLayer)
@@ -9558,7 +9664,7 @@ STATICINLINE void TexBarrier()
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufTex(u32 texture, PixFmt internalformat, u32 buffer)
+STATICINLINE void TexBuffer(u32 texture, PixFmt internalformat, u32 buffer)
 {
 #ifndef NDEBUG
     if(!glTextureBuffer)
@@ -9573,7 +9679,7 @@ STATICINLINE void BufTex(u32 texture, PixFmt internalformat, u32 buffer)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufTexRange(u32 texture, PixFmt internalformat, u32 buffer, ptroff offset, ptroff size)
+STATICINLINE void TexBufferRange(u32 texture, PixFmt internalformat, u32 buffer, ptroff offset, ptroff size)
 {
 #ifndef NDEBUG
     if(!glTextureBufferRange)
@@ -9798,7 +9904,7 @@ STATICINLINE void TexSubImage3D(u32 texture, i32 level, Point3 const& offset, Si
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFBufBase(u32 xfb, u32 index, u32 buffer)
+STATICINLINE void BufTransformFeedbackBase(u32 xfb, u32 index, u32 buffer)
 {
 #ifndef NDEBUG
     if(!glTransformFeedbackBufferBase)
@@ -9813,7 +9919,7 @@ STATICINLINE void XFBufBase(u32 xfb, u32 index, u32 buffer)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFBufRange(u32 xfb, u32 index, u32 buffer, ptroff offset, ptroff size)
+STATICINLINE void BufTransformFeedbackRange(u32 xfb, u32 index, u32 buffer, ptroff offset, ptroff size)
 {
 #ifndef NDEBUG
     if(!glTransformFeedbackBufferRange)
@@ -9918,7 +10024,7 @@ STATICINLINE void VAOBindingDivisor(u32 vaobj, u32 bindingindex, u32 divisor)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOElementBuf(u32 vaobj, u32 buffer)
+STATICINLINE void VAOElementBuffer(u32 vaobj, u32 buffer)
 {
 #ifndef NDEBUG
     if(!glVertexArrayElementBuffer)
@@ -9933,7 +10039,7 @@ STATICINLINE void VAOElementBuf(u32 vaobj, u32 buffer)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOVertBuf(u32 vaobj, u32 bindingindex, u32 buffer, ptroff offset, i32 stride)
+STATICINLINE void VAOVertexBuffer(u32 vaobj, u32 bindingindex, u32 buffer, ptroff offset, i32 stride)
 {
 #ifndef NDEBUG
     if(!glVertexArrayVertexBuffer)
@@ -9948,7 +10054,7 @@ STATICINLINE void VAOVertBuf(u32 vaobj, u32 bindingindex, u32 buffer, ptroff off
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOVAOBuf(u32 vaobj, u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
+STATICINLINE void VAOVertexBuffers(u32 vaobj, u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
 {
 #ifndef NDEBUG
     if(!glVertexArrayVertexBuffers)
@@ -9965,6 +10071,7 @@ template<typename ReqVer>
 struct CGL_46
     : CGL_45<ReqVer>
 {
+using Parent = CGL_45<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_46)
@@ -10067,7 +10174,7 @@ STATICINLINE void ShaderAttach(u32 program, u32 shader)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void BindAttribLocation(u32 program, u32 index, const GLchar * name)
+STATICINLINE void AttribBindLocation(u32 program, u32 index, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glBindAttribLocation)
@@ -10733,7 +10840,7 @@ STATICINLINE void Flush()
 
 #if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBRBuf(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
+STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
 {
 #ifndef NDEBUG
     if(!glFramebufferRenderbuffer)
@@ -10748,7 +10855,7 @@ STATICINLINE void FBRBuf(FramebufferT target, GLenum attachment, GLenum renderbu
 
 #if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBTex2D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level)
+STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, Texture textarget, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture2D)
@@ -10853,7 +10960,7 @@ STATICINLINE void GenerateMipmap(Texture target)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void GetActiveAttrib(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveAttribGet(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveAttrib)
@@ -10868,7 +10975,7 @@ STATICINLINE void GetActiveAttrib(u32 program, u32 index, i32 bufSize, i32 * len
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void UnifActiveGet(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveUnifGet(u32 program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniform)
@@ -10884,7 +10991,7 @@ STATICINLINE void UnifActiveGet(u32 program, u32 index, i32 bufSize, i32 * lengt
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderAttachedsGet(u32 program, i32 maxCount, i32 * count, u32 * shaders)
+STATICINLINE void AttachedShadersGet(u32 program, i32 maxCount, i32 * count, u32 * shaders)
 {
 #ifndef NDEBUG
     if(!glGetAttachedShaders)
@@ -10899,7 +11006,7 @@ STATICINLINE void ShaderAttachedsGet(u32 program, i32 maxCount, i32 * count, u32
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE i32 GetAttribLocation(u32 program, const GLchar * name)
+STATICINLINE i32 AttribGetLocation(u32 program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetAttribLocation)
@@ -12204,6 +12311,8 @@ template<typename ReqVer>
 struct CGL_30
     : CGL_20<ReqVer>
 {
+using Parent = CGL_20<ReqVer>;
+using Parent::Uniffv;
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
@@ -12665,7 +12774,7 @@ STATICINLINE void BufFlushMappedRange(BufType target, ptroff offset, ptroff leng
 
 #if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void FBTexLayer(FramebufferT target, GLenum attachment, u32 texture, i32 level, i32 layer)
+STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, u32 texture, i32 level, i32 layer)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureLayer)
@@ -12742,7 +12851,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifActiveGetBlockName(u32 program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
+STATICINLINE void ActiveUnifBlockGetName(u32 program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockName)
@@ -12757,7 +12866,7 @@ STATICINLINE void UnifActiveGetBlockName(u32 program, u32 uniformBlockIndex, i32
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifActiveGetBlockiv(u32 program, u32 uniformBlockIndex, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifBlockGetiv(u32 program, u32 uniformBlockIndex, GLenum pname, i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockiv)
@@ -12772,7 +12881,7 @@ STATICINLINE void UnifActiveGetBlockiv(u32 program, u32 uniformBlockIndex, GLenu
 
 #if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifActivesGetiv(u32 program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifGetsiv(u32 program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformsiv)
@@ -13784,10 +13893,26 @@ template<typename ReqVer>
 struct CGL_31
     : CGL_30<ReqVer>
 {
+using Parent = CGL_30<ReqVer>;
+using Parent::Unif1f;
+using Parent::Uniffv;
+using Parent::Unif1i;
+using Parent::Unifiv;
+using Parent::Unif2f;
+using Parent::Unif2i;
+using Parent::Unif3f;
+using Parent::Unif3i;
+using Parent::Unif4f;
+using Parent::Unif4i;
+using Parent::Unif1ui;
+using Parent::Unifuiv;
+using Parent::Unif2ui;
+using Parent::Unif3ui;
+using Parent::Unif4ui;
 
 #if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void ShaderProgramActive(u32 pipeline, u32 program)
+STATICINLINE void ProgramActiveShader(u32 pipeline, u32 program)
 {
 #ifndef NDEBUG
     if(!glActiveShaderProgram)
@@ -13847,7 +13972,7 @@ STATICINLINE void VertBufBind(u32 bindingindex, u32 buffer, ptroff offset, i32 s
 
 #if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u32 ShaderProgramAllocv(ShaderStage type, Span<const GLchar *> const& strings)
+STATICINLINE u32 ShaderProgramvAlloc(ShaderStage type, Span<const GLchar *> const& strings)
 {
 #ifndef NDEBUG
     if(!glCreateShaderProgramv)
@@ -14809,6 +14934,7 @@ template<typename ReqVer>
 struct CGL_32
     : CGL_31<ReqVer>
 {
+using Parent = CGL_31<ReqVer>;
 
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x320)
 GL_VERSION_REQ_ES(GLESVER_32)
@@ -15048,7 +15174,7 @@ STATICINLINE void Enablei(Feature target, u32 index)
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void FBTex(FramebufferT target, GLenum attachment, u32 texture, i32 level)
+STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture)
@@ -15409,7 +15535,7 @@ STATICINLINE void SamplerParameterIuiv(u32 sampler, GLenum pname, const u32 * pa
 
 #if GL_VERSION_VERIFY(0x310, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_32)
-STATICINLINE void BufTex(Texture target, PixFmt internalformat, u32 buffer)
+STATICINLINE void TexBuffer(Texture target, PixFmt internalformat, u32 buffer)
 {
 #ifndef NDEBUG
     if(!glTexBuffer)
@@ -15425,7 +15551,7 @@ STATICINLINE void BufTex(Texture target, PixFmt internalformat, u32 buffer)
 
 #if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_texture_buffer_range) && GL_ARB_texture_buffer_range)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void BufTexRange(Texture target, PixFmt internalformat, u32 buffer, ptroff offset, ptroff size)
+STATICINLINE void TexBufferRange(Texture target, PixFmt internalformat, u32 buffer, ptroff offset, ptroff size)
 {
 #ifndef NDEBUG
     if(!glTexBufferRange)
@@ -15543,7 +15669,7 @@ STATICINLINE u64 TexGetHandleARB(u32 texture)
 
 #if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
 /* No template check available */
-STATICINLINE u64 SamplerTexGetHandleARB(u32 texture, u32 sampler)
+STATICINLINE u64 TexGetSamplerHandleARB(u32 texture, u32 sampler)
 {
 #ifndef NDEBUG
     if(!glGetTextureSamplerHandleARB)
@@ -15945,7 +16071,7 @@ struct CGL_ARB_geometry_shader4
 
 #if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
 /* No template check available */
-STATICINLINE void FBTexARB(FramebufferT target, GLenum attachment, u32 texture, i32 level)
+STATICINLINE void FBTextureARB(FramebufferT target, GLenum attachment, u32 texture, i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureARB)
@@ -15960,7 +16086,7 @@ STATICINLINE void FBTexARB(FramebufferT target, GLenum attachment, u32 texture, 
 
 #if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
 /* No template check available */
-STATICINLINE void FBTexFaceARB(FramebufferT target, GLenum attachment, u32 texture, i32 level, Texture face)
+STATICINLINE void FBTextureFaceARB(FramebufferT target, GLenum attachment, u32 texture, i32 level, Texture face)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureFaceARB)
@@ -15975,7 +16101,7 @@ STATICINLINE void FBTexFaceARB(FramebufferT target, GLenum attachment, u32 textu
 
 #if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
 /* No template check available */
-STATICINLINE void FBTexLayerARB(FramebufferT target, GLenum attachment, u32 texture, i32 level, i32 layer)
+STATICINLINE void FBTextureLayerARB(FramebufferT target, GLenum attachment, u32 texture, i32 level, i32 layer)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureLayerARB)
@@ -17005,7 +17131,7 @@ STATICINLINE void DetachObjectARB(GLhandleARB containerObj, GLhandleARB attached
 
 #if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
 /* No template check available */
-STATICINLINE void UnifActiveGetARB(GLhandleARB programObj, u32 index, i32 maxLength, i32 * length, i32 * size, GLenum * type, GLcharARB * name)
+STATICINLINE void ActiveUnifGetARB(GLhandleARB programObj, u32 index, i32 maxLength, i32 * length, i32 * size, GLenum * type, GLcharARB * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformARB)
@@ -17626,7 +17752,7 @@ struct CGL_ARB_texture_buffer_object
 
 #if 0 || (defined(GL_ARB_texture_buffer_object) && GL_ARB_texture_buffer_object)
 /* No template check available */
-STATICINLINE void BufTexARB(Texture target, PixFmt internalformat, u32 buffer)
+STATICINLINE void TexBufferARB(Texture target, PixFmt internalformat, u32 buffer)
 {
 #ifndef NDEBUG
     if(!glTexBufferARB)

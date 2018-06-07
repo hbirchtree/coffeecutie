@@ -71,7 +71,8 @@ void GLEAM_RenderTarget::attachSurface(
 
     CGenum attachment = GL_COLOR_ATTACHMENT0 + idx;
 
-    CGL33::FBTex2D(m_type, attachment, s.m_type, s.m_handle, C_FCAST<i32>(mip));
+    CGL33::FBTexture2D(
+        m_type, attachment, s.m_type, s.m_handle, C_FCAST<i32>(mip));
 
     if(m_handle != 0)
         fb_bind(m_type, 0);
@@ -86,7 +87,7 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy& rb)
     if(rb.m_type == DBuffers::Color)
         attachment += rb.m_attachment;
 
-    CGL33::FBRBuf(m_type, attachment, GL_RENDERBUFFER, rb.m_handle);
+    CGL33::FBRenderbuffer(m_type, attachment, GL_RENDERBUFFER, rb.m_handle);
 
     if(m_handle != 0)
         fb_bind(m_type, 0);
@@ -100,7 +101,7 @@ void GLEAM_RenderTarget::attachDepthStencilSurface(
     {
         fb_bind(m_type, m_handle);
 
-        CGL33::FBTex2D(
+        CGL33::FBTexture2D(
             m_type,
             GL_DEPTH_STENCIL_ATTACHMENT,
             s.m_type,
@@ -120,7 +121,7 @@ void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface& s, uint32 mip)
 {
     fb_bind(m_type, m_handle);
 
-    CGL33::FBTex2D(
+    CGL33::FBTexture2D(
         m_type, GL_DEPTH_ATTACHMENT, s.m_type, s.m_handle, C_FCAST<i32>(mip));
 
     if(m_handle != 0)

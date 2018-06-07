@@ -141,7 +141,9 @@ def get_cmd_deref(cmd):
             command_arguments=arguments_to_string(cmd.args[1], typed=False))
 
 def gen_feature_bucket(bucket):
+    added_commands = []
     prev_version = None
+    
     for b in sorted(list(bucket)):
         if b == 'GLVER_99':
             continue
@@ -155,8 +157,23 @@ def gen_feature_bucket(bucket):
             print('    : %s<ReqVer>' % prev_version)
         print('{')
 
+        if prev_version is not None:
+            print('using Parent = %s<ReqVer>;' % prev_version)
+
+        used_func = []
+
+        for cmd in added_commands:
+            for other_cmd in bucket[b]:
+                if cmd == other_cmd.name and cmd not in used_func:
+                    used_func += [cmd]
+                    print('using Parent::%s;' % cmd)
+                    break
+                elif cmd in used_func:
+                    break
+
         for cmd in bucket[b]:
             print(get_cmd_deref(cmd))
+            added_commands += [cmd.name]
 
         print('};')
         prev_version = version_name
@@ -178,12 +195,13 @@ print('#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)')
 gen_feature_bucket(version_buckets_es)
 print('#endif')
 
+
 for b in sorted(list(buckets)):
     print('#if defined(%s) && %s' % (b, b))
     print('template<typename ReqVer>')
     print('struct CGL_%s' % b[3:])
     print('{')
-
+    
     for cmd in buckets[b]:
         print(get_cmd_deref(cmd))
 

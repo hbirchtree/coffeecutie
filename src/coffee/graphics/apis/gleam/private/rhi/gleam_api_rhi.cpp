@@ -270,8 +270,8 @@ bool GLEAM_API::LoadAPI(
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     /* base_instance is const false on GLES */
 
-    store->features.base_instance = CGL::Debug::DrawParametersSupported();
-    store->features.direct_state  = CGL45::DirectStateSupported();
+    store->features.base_instance = Extensions::DrawParametersSupported();
+    store->features.direct_state  = Extensions::DirectStateSupported();
 
     if(forced_api && store->CURR_API < GL_4_5 && store->CURR_API < GLES_MIN)
     {
@@ -417,7 +417,7 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 {
     C_USED(tstate);
 #if GL_VERSION_VERIFY(0x330, 0x320)
-    if(CGL43::TessellationSupported())
+    if(Extensions::TessellationSupported())
     {
         CGL43::PatchParameteri(PatchProperty::Vertices, tstate.patchCount());
         /*TODO: Add configurability for inner and outer levels in place of TCS
@@ -432,7 +432,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(vstate.multiview())
     {
-        if(CGL43::ViewportArraySupported())
+        if(Extensions::ViewportArraySupported())
         {
             Vector<CRectF> varr;
 
@@ -461,7 +461,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             GLC::Enablei(Feature::ClipDist, 2);
             GLC::Enablei(Feature::ClipDist, 3);
 
-        } else if(CGL33::ClipDistanceSupported())
+        } else if(Extensions::ClipDistanceSupported())
         {
             /* TODO: Expand on this feature */
             GLC::Enablei(Feature::ClipDist, 0);
@@ -619,7 +619,7 @@ void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
 template<typename T>
 STATICINLINE Span<T> get_uniform_span(const T* d, szptr size)
 {
-    return Span<T>::Unsafe(d, size, size / sizeof(T));
+    return Span<T>::Unsafe(C_CCAST<T*>(d), size, size / sizeof(T));
 }
 
 template<typename T>
@@ -877,7 +877,7 @@ void GLEAM_API::SetShaderUniformState(
 #endif
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
-    if(CGL43::ShaderStorageSupported())
+    if(Extensions::ShaderStorageSupported())
         for(auto b : ustate.m_sbuffers)
         {
             auto&  det    = b.second;
@@ -1064,7 +1064,7 @@ static bool InternalDraw(
 #if GL_VERSION_VERIFY(0x320, 0x320)
                 if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0)
                 {
-                    CGL33::DrawElementInstancedBaseVertex(
+                    CGL33::DrawElementsInstancedBaseVertex(
                         mode,
                         i.elements(),
                         i.elementType(),

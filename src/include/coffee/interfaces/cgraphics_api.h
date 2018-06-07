@@ -117,7 +117,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         }
 
         bool discard()const{return m_discard;}
-        uint32 culling()const{return m_culling;}
+        u32 culling()const{return m_culling;}
         bool wireframeRender()const{return m_wireframe;}
         bool polygonSmooth()const{return m_polysmooth;}
         bool dither()const{return m_dither;}
@@ -126,7 +126,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         LogicOp colorOp()const{return m_colOp;}
         CColorMask colorMask()const{return m_colMask;}
 
-        uint32 m_culling;
+        u32 m_culling;
         LogicOp m_colOp;
         CColorMask m_colMask;
         bool m_discard;
@@ -143,9 +143,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        uint32 patchCount()const{return m_patches;}
+        u32 patchCount()const{return m_patches;}
 
-        uint32 m_patches;
+        u32 m_patches;
     };
 
     /*!
@@ -171,9 +171,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
         bool multiview()const{return m_mview;}
         szptr viewCount()const{return m_view.size();}
-        VRect const& view(uint32 i)const{return m_view[i];}
-        DField const& depth(uint32 i)const{return m_depth[i];}
-        VRect const& scissor(uint32 i)const{return m_scissor[i];}
+        VRect const& view(u32 i)const{return m_view[i];}
+        DField const& depth(u32 i)const{return m_depth[i];}
+        VRect const& scissor(u32 i)const{return m_scissor[i];}
 
         bool m_mview;
         Vector<VRect> m_view;
@@ -233,12 +233,12 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         }
 
         bool testStencil()const{return 0;}
-        uint32 mask()const{return 0;}
+        u32 mask()const{return 0;}
         StencilFunc func()const{return m_func;}
         StencilOp op()const{return m_op;}
 
         bool m_test;
-        uint32 m_mask;
+        u32 m_mask;
         StencilFunc m_func;
         StencilOp m_op;
     };
@@ -256,15 +256,15 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
         bool swapEndianness()const{return m_swap;}
         bool lsbFirst()const{return m_lsbf;}
-        uint32 rowLength()const{return m_rlen;}
-        uint32 imgHeight()const{return m_imgh;}
-        uint32 alignment()const{return m_align;}
+        u32 rowLength()const{return m_rlen;}
+        u32 imgHeight()const{return m_imgh;}
+        u32 alignment()const{return m_align;}
 
         bool m_swap;
         bool m_lsbf;
-        uint32 m_rlen;
-        uint32 m_imgh;
-        uint32 m_align;
+        u32 m_rlen;
+        u32 m_imgh;
+        u32 m_align;
     };
 
     struct DebugMessage
@@ -321,20 +321,20 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct UniformBuffer : VertexBuffer
     {
-        UniformBuffer(ResourceAccess access, uint32 stride, szptr size)
+        UniformBuffer(ResourceAccess access, u32 stride, szptr size)
             :VertexBuffer(access,size),m_stride(stride){}
     protected:
-        uint32 m_stride;
+        u32 m_stride;
     };
     /*!
      * \brief Contains data which will be modified by a shader, SSBO, transformed data, compute data
      */
     struct ShaderBuffer : VertexBuffer
     {
-        ShaderBuffer(ResourceAccess access, uint32 stride, szptr size)
+        ShaderBuffer(ResourceAccess access, u32 stride, szptr size)
             :VertexBuffer(access,size),m_stride(stride){}
     protected:
-        uint32 m_stride;
+        u32 m_stride;
     };
 
     /*!
@@ -343,12 +343,12 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     struct IndirectBuffer : VertexBuffer
     {
         IndirectBuffer(
-                ResourceAccess access, uint32 flags,
+                ResourceAccess access, u32 flags,
                 szptr stride, szptr size)
             :VertexBuffer(access,size),m_flags(flags),m_stride(stride){}
     protected:
-        uint32 m_flags;
-        uint32 m_stride;
+        u32 m_flags;
+        u32 m_stride;
     };
 
     /*!
@@ -380,21 +380,21 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         }
 
         uint64 bufferOffset()const{return m_boffset;}
-        uint32 bufferAssociation()const{return m_bassoc;}
-        uint32 index()const{return m_idx;}
-        uint32 size()const{return m_size;}
-        uint32 offset()const{return m_off;}
-        uint32 stride()const{return m_stride;}
+        u32 bufferAssociation()const{return m_bassoc;}
+        u32 index()const{return m_idx;}
+        u32 size()const{return m_size;}
+        u32 offset()const{return m_off;}
+        u32 stride()const{return m_stride;}
         TypeEnum type()const{return m_type;}
         bool instanced()const{return m_instanced;}
 
         uint64 m_boffset;
-        uint32 m_bassoc;
-        uint32 m_idx;
-        uint32 m_size;
-        uint32 m_off;
-        uint32 m_stride;
-        uint32 m_flags;
+        u32 m_bassoc;
+        u32 m_idx;
+        u32 m_size;
+        u32 m_off;
+        u32 m_stride;
+        u32 m_flags;
         TypeEnum m_type;
         bool m_instanced;
     };
@@ -423,7 +423,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         void dealloc(){}
 
         void bind(){}
-        void bindBuffer(uint32,VertexBuffer&){}
+        void bindBuffer(u32,VertexBuffer&){}
 
         void addAttribute(VertexAttribute const&){}
         void setIndexBuffer(ElementBuffer const*){}
@@ -441,23 +441,23 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        int32 index() const {return m_idx;}
+        i32 index() const {return m_idx;}
         cstring name() const {return m_name.c_str();}
-        uint32 flags() const {return m_flags;}
+        u32 flags() const {return m_flags;}
 
         CString m_name;
-        uint32 m_flags;
-        int32 m_idx;
+        u32 m_flags;
+        i32 m_idx;
 
-        int32 m_blkIdx;
+        i32 m_blkIdx;
 
         union{
             struct{
-                int32 m_offset;
+                i32 m_offset;
             };
             struct{
-                int32 m_arrStride;
-                int32 m_arrSize;
+                i32 m_arrStride;
+                i32 m_arrSize;
             };
         };
     };
@@ -470,7 +470,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         UniformValue()
         {}
         Bytes const* data;
-        uint32 flags;
+        u32 flags;
     };
 
     /*!
@@ -479,8 +479,8 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     struct ProgramParameter
     {
         CString m_name;
-        uint32 m_flags;
-        uint16 m_idx;
+        u32 m_flags;
+        u16 m_idx;
     };
 
     /*!
@@ -491,12 +491,12 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     struct Shader
     {
         Shader():Shader(0){}
-        Shader(uint32 flags):m_flags(flags){}
+        Shader(u32 flags):m_flags(flags){}
 
         bool compile(ShaderStage,Bytes&){return true;}
         void dealloc(){}
     protected:
-        uint32 m_flags;
+        u32 m_flags;
     };
     /*!
      * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader (for GL3.3, just slap a program in there and put tighter restrictions on attaching)
@@ -506,14 +506,14 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     struct Pipeline
     {
         Pipeline():Pipeline(0){}
-        Pipeline(uint32 flags):m_flags(flags){}
+        Pipeline(u32 flags):m_flags(flags){}
         void bind(){}
         void unbind(){}
 
         bool assemble(){return true;}
         void attach(Shader&,ShaderStage){}
     protected:
-        uint32 m_flags;
+        u32 m_flags;
     };
 
     /*!
@@ -554,9 +554,8 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     template<typename CSizeT, typename PointT>
     struct Surface
     {
-
-        Surface(PixelFormat fmt, bool isArray = false, uint32 arraySize = 0,
-                uint32 mips = 1, uint32 flags = 0,
+        Surface(PixelFormat fmt, bool isArray = false, u32 arraySize = 0,
+                u32 mips = 1, u32 flags = 0,
                 ResourceAccess cl = ResourceAccess::ReadOnly)
             :m_pixfmt(fmt),
               b_array(isArray),
@@ -589,10 +588,10 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        uint32 size() const {return 0;}
+        u32 size() const {return 0;}
         bool isArray() const {return b_array;}
-        uint32 arraySize() const {return m_arrsize;}
-        uint32 mipmaps() const {return m_mips;}
+        u32 arraySize() const {return m_arrsize;}
+        u32 mipmaps() const {return m_mips;}
         PixelFormat format() const {return m_pixfmt;}
 
         u8& glTexHandle() {static u8 m_; return m_;}
@@ -601,9 +600,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
         PixelFormat m_pixfmt;
         bool b_array;
-        uint32 m_arrsize;
-        uint32 m_mips;
-        uint32 m_flags;
+        u32 m_arrsize;
+        u32 m_mips;
+        u32 m_flags;
         ResourceAccess m_access;
     };
 
@@ -639,7 +638,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         template<typename Surface>
         void attach(Surface const*){}
 
-        void bind(uint32){}
+        void bind(u32){}
 
         void setFiltering(Filtering,Filtering,
                           Filtering = Filtering::None){}
@@ -678,9 +677,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct ShaderImage
     {
-        void bind(uint32){}
+        void bind(u32){}
         template<typename Surface>
-        void attach(Surface*,PixFmt,ResourceAccess,uint32,uint32 = 0){}
+        void attach(Surface*,PixFmt,ResourceAccess,u32,u32 = 0){}
     };
 
     /*!
@@ -688,7 +687,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct RenderDummy
     {
-        void allocate(PixelFormat,DBuffers,uint32,CSize){}
+        void allocate(PixelFormat,DBuffers,u32,CSize){}
         void deallocate(){}
     };
 
@@ -709,21 +708,21 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
          * \brief Attach a surface to this framebuffer
      */
         template<typename Surface>
-        void attachSurface(Surface const&, uint32, uint32 = 0){}
+        void attachSurface(Surface const&, u32, u32 = 0){}
         void attachSurface(RenderDummy const&){}
 
         template<typename Surface>
-        void attachDepthStencilSurface(Surface const&, uint32){}
+        void attachDepthStencilSurface(Surface const&, u32){}
         template<typename Surface>
-        void attachDepthSurface(Surface const&, uint32){}
+        void attachDepthSurface(Surface const&, u32){}
 
-        void resize(uint32,CRect64 const&){}
+        void resize(u32,CRect64 const&){}
 
-        void clear(uint32, Vecf4 const&){}
+        void clear(u32, Vecf4 const&){}
         void clear(bigscalar){}
         void clear(bigscalar, int32){}
-        void clear(uint32, Vecf4 const&, bigscalar){}
-        void clear(uint32, Vecf4 const&, bigscalar, int32){}
+        void clear(u32, Vecf4 const&, bigscalar){}
+        void clear(u32, Vecf4 const&, bigscalar, int32){}
 
         void use(FramebufferT){}
     };
@@ -808,30 +807,30 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct DrawInstanceData
     {
-        DrawInstanceData(uint32 v = 0, uint32 e = 0, uint32 i = 0):
+        DrawInstanceData(u32 v = 0, u32 e = 0, u32 i = 0):
             m_verts(v),m_elems(e),m_insts(i),
             m_eltype(TypeEnum::UByte),
             m_voff(0),m_eoff(0),m_ioff(0)
         {}
 
-        FORCEDINLINE uint32 vertices()const{return m_verts;}
-        FORCEDINLINE uint32 elements()const{return m_elems;}
+        FORCEDINLINE u32 vertices()const{return m_verts;}
+        FORCEDINLINE u32 elements()const{return m_elems;}
         FORCEDINLINE TypeEnum elementType()const{return m_eltype;}
-        FORCEDINLINE uint32 instances()const{return m_insts;}
+        FORCEDINLINE u32 instances()const{return m_insts;}
 
         FORCEDINLINE int32 vertexOffset()const{return m_voff;}
-        FORCEDINLINE uint32 indexOffset()const{return m_eoff;}
-        FORCEDINLINE uint32 instanceOffset()const{return m_ioff;}
+        FORCEDINLINE u32 indexOffset()const{return m_eoff;}
+        FORCEDINLINE u32 instanceOffset()const{return m_ioff;}
 
-        uint32 m_verts;
-        uint32 m_elems;
-        uint32 m_insts;
+        u32 m_verts;
+        u32 m_elems;
+        u32 m_insts;
 
         TypeEnum m_eltype;
 
         int32 m_voff;
-        uint32 m_eoff;
-        uint32 m_ioff;
+        u32 m_eoff;
+        u32 m_ioff;
     };
 
     /*!
@@ -874,10 +873,10 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
     static void SetRasterizerState(RasterizerState const&){}
     static void SetTessellatorState(TessellatorState const&){}
-    static void SetViewportState(ViewportState const&,uint32 = 0){}
+    static void SetViewportState(ViewportState const&,u32 = 0){}
     static void SetBlendState(BlendState const&){}
-    static void SetDepthState(DepthState<uint32> const&){}
-    static void SetStencilState(StencilState<uint32,uint32> const&,uint32){}
+    static void SetDepthState(DepthState<u32> const&){}
+    static void SetStencilState(StencilState<u32,u32> const&,u32){}
     static void SetPixelProcessState(PixelProcessState const&){}
     static void SetShaderUniformState(Pipeline&,ShaderStage,ShaderUniformState const&){}
 
@@ -975,14 +974,14 @@ struct NullAPI : GraphicsAPI
     /* Null renderer types, do not inherit from these */
     struct S_2D : Surface2D
     {
-        S_2D(PixelFormat fmt,uint32 mips = 1, uint32 flags = 0):
+        S_2D(PixelFormat fmt,u32 mips = 1, u32 flags = 0):
             Surface2D(fmt,false,0,mips,flags)
         {}
         CSize m_size;
     };
     struct S_3D : Surface3D
     {
-        S_3D(PixelFormat fmt,uint32 mips = 1, uint32 flags = 0):
+        S_3D(PixelFormat fmt,u32 mips = 1, u32 flags = 0):
             Surface3D(fmt,false,0,mips,flags)
         {}
         CSize3 m_size;
@@ -991,7 +990,7 @@ struct NullAPI : GraphicsAPI
 
     struct S_2DA : Surface2DArray
     {
-        S_2DA(PixelFormat fmt,uint32 mips = 1, uint32 flags = 0):
+        S_2DA(PixelFormat fmt,u32 mips = 1, u32 flags = 0):
             Surface2DArray(fmt,false,0,mips,flags)
         {}
         CSize3 m_size;
@@ -1036,8 +1035,8 @@ struct NullAPI : GraphicsAPI
     using RASTSTATE = RasterizerState;
     using VIEWSTATE = ViewportState;
     using BLNDSTATE = BlendState;
-    using DEPTSTATE = DepthState<uint32>;
-    using STENSTATE = StencilState<uint32,uint32>;
+    using DEPTSTATE = DepthState<u32>;
+    using STENSTATE = StencilState<u32,u32>;
     using TSLRSTATE = TessellatorState;
     using PIXLSTATE = PixelProcessState;
 
