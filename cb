@@ -95,6 +95,11 @@ regen - Regenerate meta-build system"
         egrep '(reinterpret|static|dynamic|const)_cast' $f /dev/null
     done
 ;;
+"cpp11-guards")
+    for f in $(all_source_files); do
+        egrep '(\[.*\]\s*\(.*?\)\s*\{|std::thread|std::function|std::unique_ptr|std::shared_ptr)' $f /dev/null
+    done
+;;
 "stl-guards")
     for f in $(all_source_files); do
         egrep '(std::| std)' $f /dev/null
@@ -124,7 +129,15 @@ Code tools:
     platform-guards     - Find usages of platform guards in code
     exception-guards    - Find usages of exeptions that are not wrapped
     rtti-guards         - Find usages of RTTI
+                          Currently detected:
+                            - typeid(...)
     cast-guards         - Find usages of C++ *_cast<T>() operators
+    cpp11-guards        - Find usages of features from C++11 and later
+                          Currently detected:
+                            - Lambdas
+                            - std::*_ptr
+                            - std::thread
+                            - std::function
     stl-guards          - Usage of std::* types
     "
 ;;
