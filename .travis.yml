@@ -16,7 +16,7 @@ env:
   global:
   - MAKEFILE_DIR=toolchain/makers
   - DEPENDENCIES=
-  - CONFIGURATION=Debug
+  - CONFIGURATION=Release
   matrix:
   - BUILDVARIANT=android.armv7a.kitkat.gles2
   - BUILDVARIANT=android.armv7a.nougat.gles2

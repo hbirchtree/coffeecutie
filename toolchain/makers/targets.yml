@@ -403,7 +403,7 @@ templates:
       - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
       - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
       - -DCOFFEE_BUILD_ASSIMP=ON
-      - -DCMAKE_BUILD_TYPE=$(build.build-type)
+      - -DCMAKE_BUILD_TYPE=$(build-type)
       - -DCMAKE_INSTALL_PREFIX=$(cmake.install)/$(target-name)
       - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
     +container-opts:
@@ -462,6 +462,7 @@ templates:
     =description: Coverage build using same config as Ubuntu
     =compiler: Clang
     =preload: linux-coverage.cmake
+    =build-type: Debug
     +container-opts:
       - -e CC=
       - -e CXX=
