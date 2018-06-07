@@ -379,7 +379,7 @@ def travis_gen_config(build_info, srcDir):
                 'global': ['MAKEFILE_DIR=%s' % make_loc,
                            'DEPENDENCIES=%s' % dependencies,
 #                           'PYTHONPATH=/usr/lib/python3/dist-packages:$PYTHONPATH',
-                           'CONFIGURATION=Debug'],
+                           'CONFIGURATION=Release'],
                 'matrix': build_matrix[0]
             },
         'matrix':
