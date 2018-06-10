@@ -225,263 +225,6 @@ STATICINLINE void TransformShader(
     shaderSrcVec.push_back("\n");
 }
 
-bool GLEAM_Shader::compile(ShaderStage stage, const Bytes& data)
-{
-    if(data.size == 0)
-        return false;
-
-    if(GLEAM_FEATURES.gles20 && stage != ShaderStage::Vertex &&
-       stage != ShaderStage::Fragment)
-        return false;
-
-    Vector<cstring> shaderSrcVec  = {};
-    Vector<CString> shaderStorage = {};
-
-    TransformShader(data, stage, shaderStorage, shaderSrcVec);
-
-    if(!GLEAM_FEATURES.separable_programs)
-    {
-        m_handle = CGL33::ShaderAlloc(stage);
-
-        if(m_handle == 0)
-        {
-            cWarning("Failed to allocate shader handle..?");
-            return false;
-        }
-
-        Vector<i32> shaderSrcLens = {};
-
-        shaderSrcLens.reserve(shaderSrcVec.size() + 1);
-        for(cstring fragment : shaderSrcVec)
-            shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
-
-        const i32*     shaderLens = shaderSrcLens.data();
-        cstring* const shaderSrc  = shaderSrcVec.data();
-        u32            numSources = C_FCAST<u32>(shaderSrcVec.size());
-
-        cVerbose(12, "Compiling shader fragment:");
-        for(u32 i : Range<u32>(numSources))
-            cVerbose(12, "{0}", CString(shaderSrcVec[i], shaderSrcLens[i]));
-
-        CGL33::ShaderSource(m_handle, numSources, shaderSrc, shaderLens);
-
-        i32 stat = 0;
-        CGL33::ShaderGetiv(m_handle, GL_COMPILE_STATUS, &stat);
-
-        CGL33::ShaderCompile(m_handle);
-
-        if(GL_DEBUG_MODE && !stat)
-        {
-            CString infoLog;
-            i32     logLen = 0;
-            CString completeSource;
-
-            for(auto i : Range<>(numSources))
-                completeSource.append(StrUtil::encapsulate(
-                    shaderSrc[i], C_FCAST<szptr>(shaderLens[i])));
-            CGL33::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
-            infoLog.resize(C_FCAST<szptr>(logLen));
-            CGL33::ShaderGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-            szptr idx = 0;
-            if((idx = infoLog.find('\0')) != CString::npos)
-            {
-                infoLog.resize(infoLog.find('\0'));
-                cWarning(
-                            "Shader compilation error: {0}\n"
-                            "Associated source: \n{1}"
-                            "Original source: \n{2}",
-                            infoLog,
-                            completeSource,
-                            StrUtil::encapsulate(C_FCAST<cstring>(data.data), data.size));
-            }
-            return false;
-        }
-
-        m_stages = stage;
-
-        return stat;
-    }
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs)
-    {
-        m_handle = CGL43::ShaderProgramvAlloc(stage, shaderSrcVec);
-
-        i32 link_state = 0;
-        CGL43::ProgramGetiv(m_handle, GL_VALIDATE_STATUS, &link_state);
-
-        if(GL_DEBUG_MODE && m_handle == 0 && link_state != GL_TRUE)
-        {
-            CString infoLog;
-            i32     logLen = 0;
-
-            CGL43::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
-            logLen ++;
-            infoLog.resize(C_FCAST<szptr>(logLen));
-            CGL43::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-
-            szptr idx;
-            if((idx = infoLog.find('\0')) != CString::npos)
-            {
-                infoLog.resize(infoLog.find('\0'));
-                cWarning("Shader program compilation error:\n{0}", infoLog);
-            }else
-                cWarning("Failed to extract shader warning");
-            return false;
-        }
-
-        m_stages = stage;
-
-        return m_handle != 0;
-    }
-#endif
-    else
-        return false;
-}
-
-void GLEAM_Shader::dealloc()
-{
-    if(!GLEAM_FEATURES.separable_programs)
-    {
-        if(m_handle != 0)
-            CGL33::ShaderFree(m_handle);
-    }
-#if GL_VERSION_VERIFY(0x410, 0x300)
-    else if(GLEAM_FEATURES.separable_programs)
-    {
-        if(m_handle != 0)
-            CGL43::ProgramFree(m_handle);
-    }
-#endif
-}
-
-bool GLEAM_Pipeline::attach(
-    const GLEAM_Shader& shader, const ShaderStage& stages)
-{
-    C_USED(stages);
-
-    if(shader.m_handle == 0)
-        return false;
-    if(!GLEAM_FEATURES.separable_programs)
-    {
-        if(m_handle == 0)
-            m_handle = CGL33::ProgramAlloc();
-        CGL33::ShaderAttach(m_handle, shader.m_handle);
-        return true;
-    }
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs)
-    {
-        if(m_handle == 0)
-            CGL43::PipelineAlloc(m_handle);
-        CGL43::ProgramUseStages(
-            m_handle, shader.m_stages & stages, shader.m_handle);
-        m_programs.push_back({&shader, shader.m_stages & stages});
-
-        return true;
-    }
-#endif
-    return false;
-}
-
-GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader&& shader)
-{
-    m_ownedPrograms.push_back({});
-
-    m_ownedPrograms.back() = shader;
-
-    return m_ownedPrograms.back();
-}
-
-bool GLEAM_Pipeline::assemble()
-{
-    if(m_handle == 0)
-        return false;
-    if(!GLEAM_FEATURES.separable_programs)
-    {
-        CGL33::ProgramLink(m_handle);
-        i32 stat = 0;
-        CGL33::ProgramGetiv(m_handle, GL_LINK_STATUS, &stat);
-        if(GL_DEBUG_MODE && !stat)
-        {
-            CString infoLog;
-            i32     logLen;
-            CGL33::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
-            infoLog.resize(C_FCAST<szptr>(logLen));
-            CGL33::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-            cDebug("Program link error: {0}", infoLog);
-        }
-        return stat;
-    }
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs)
-    {
-        i32 stat = 0;
-        CGL43::PipelineValidate(m_handle);
-        CGL43::PipelineGetiv(m_handle, GL_VALIDATE_STATUS, &stat);
-        if(GL_DEBUG_MODE && !stat)
-        {
-            CString infoLog;
-            i32     logLen;
-            CGL43::PipelineGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
-            infoLog.resize(C_FCAST<szptr>(logLen));
-            CGL43::PipelineGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-            cDebug("Pipeline validation error: {0}", infoLog);
-        }
-        return stat;
-    }
-#endif
-    return false;
-}
-
-void GLEAM_Pipeline::bind() const
-{
-    if(!GLEAM_FEATURES.separable_programs)
-        CGL33::ProgramUse(m_handle);
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs)
-        CGL43::PipelineBind(m_handle);
-#endif
-}
-
-void GLEAM_Pipeline::unbind() const
-{
-    if(!GLEAM_FEATURES.separable_programs)
-        CGL33::ProgramUse(0);
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs)
-        CGL43::PipelineBind(0);
-#endif
-}
-
-void GLEAM_Pipeline::dealloc()
-{
-    if(!GLEAM_FEATURES.separable_programs)
-        CGL33::ProgramFree(m_handle);
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else if(GLEAM_FEATURES.separable_programs)
-        CGL43::PipelineFree(m_handle);
-#endif
-}
-
-bool GLEAM_ShaderUniformState::setUniform(
-    const GLEAM_UniformDescriptor& value, GLEAM_UniformValue* data)
-{
-    using namespace ShaderTypes;
-
-    if(value.m_idx < 0)
-        return false;
-
-    if(value.m_flags & ShaderTypes::Uniform_v)
-        (void)0x0;
-    else
-        return false;
-
-    uint32 idx      = value.m_idx;
-    data->flags     = value.m_flags;
-    m_uniforms[idx] = {data, value.stages};
-    return true;
-}
-
 STATICINLINE bool translate_sampler_type(Texture& samplerType, u32 m_flags)
 {
     using namespace ShaderTypes;
@@ -517,6 +260,338 @@ STATICINLINE bool translate_sampler_type(Texture& samplerType, u32 m_flags)
         else
             return false;
     }
+}
+
+#if GL_VERSION_VERIFY(0x330, 0x320)
+STATICINLINE void ProgramInputGet(
+    CGhnd                           hnd,
+    ShaderStage                     stages,
+    CGenum                          type,
+    Vector<GLEAM_ProgramParameter>* params)
+{
+    i32 num_attrs = 0;
+    if(params)
+        glGetProgramInterfaceiv(hnd, type, GL_ACTIVE_RESOURCES, &num_attrs);
+
+    for(auto i : Range<>(C_FCAST<u32>(num_attrs)))
+    {
+        const CGenum props_to_get[] = {
+            GL_NAME_LENGTH,
+            GL_LOCATION,
+            //            GL_LOCATION_COMPONENT,
+            GL_TYPE,
+            GL_ARRAY_SIZE,
+        };
+        i32 props_out[sizeof(props_to_get) / sizeof(CGenum)];
+
+        glGetProgramResourceiv(
+            hnd,
+            type,
+            C_FCAST<u32>(i),
+            sizeof(props_to_get) / sizeof(CGenum),
+            props_to_get,
+            sizeof(props_out),
+            nullptr,
+            props_out);
+
+        if(props_out[1] == -1)
+            continue;
+
+        params->push_back({});
+
+        GLEAM_ProgramParameter& desc = params->back();
+        desc.stages                  = stages;
+
+        desc.m_idx   = C_FCAST<u16>(props_out[1]);
+        desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[2]));
+        desc.m_name.resize(C_FCAST<u32>(props_out[0]));
+        glGetProgramResourceName(
+            hnd, type, C_FCAST<u32>(i), props_out[0], nullptr, &desc.m_name[0]);
+        desc.m_name.resize(desc.m_name.find('\0'));
+    }
+}
+#endif
+
+bool GLEAM_Shader::compile(
+    ShaderStage stage, const Bytes& data, gleam_error& ec)
+{
+    if(data.size == 0)
+    {
+        ec = APIError::ShaderNoData;
+        return false;
+    }
+
+    if(GLEAM_FEATURES.gles20 && stage != ShaderStage::Vertex &&
+       stage != ShaderStage::Fragment)
+    {
+        ec = APIError::ShaderStageNotValid;
+        return false;
+    }
+
+    Vector<cstring> shaderSrcVec  = {};
+    Vector<CString> shaderStorage = {};
+
+    TransformShader(data, stage, shaderStorage, shaderSrcVec);
+
+    if(!GLEAM_FEATURES.separable_programs)
+    {
+        m_handle = CGL33::ShaderAllocEx(stage);
+
+        if(m_handle == 0)
+        {
+            ec = APIError::HandleAllocationFailed;
+            return false;
+        }
+
+        Vector<i32> shaderSrcLens = {};
+
+        shaderSrcLens.reserve(shaderSrcVec.size() + 1);
+        for(cstring fragment : shaderSrcVec)
+            shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
+
+        const i32*     shaderLens = shaderSrcLens.data();
+        cstring* const shaderSrc  = shaderSrcVec.data();
+        u32            numSources = C_FCAST<u32>(shaderSrcVec.size());
+
+        CGL33::ShaderSource(m_handle, numSources, shaderSrc, shaderLens);
+
+        CGL33::ShaderCompile(m_handle);
+
+        i32 stat = 0;
+        CGL33::ShaderGetiv(m_handle, GL_COMPILE_STATUS, &stat);
+
+        CGL33::ShaderCompile(m_handle);
+
+        if(GL_DEBUG_MODE && stat != GL_TRUE)
+        {
+            CString infoLog;
+            i32     logLen = 0;
+            i32     dummy  = 0;
+
+            CGL33::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            logLen++;
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL33::ShaderGetInfoLog(m_handle, logLen, &dummy, &infoLog[0]);
+            szptr idx = 0;
+            if((idx = infoLog.find('\0')) != CString::npos)
+            {
+                infoLog.resize(infoLog.find('\0'));
+                ec = infoLog;
+            }
+            ec = APIError::ShaderCompileFailed;
+            return false;
+        }
+
+        m_stages = stage;
+
+        return true;
+    }
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    else if(GLEAM_FEATURES.separable_programs)
+    {
+        m_handle = CGL43::ShaderProgramvAllocEx(stage, shaderSrcVec);
+
+        i32 link_state = 0;
+        CGL43::ProgramGetiv(m_handle, GL_VALIDATE_STATUS, &link_state);
+
+        if(GL_DEBUG_MODE && m_handle == 0 && link_state != GL_TRUE)
+        {
+            CString infoLog;
+            i32     logLen = 0;
+
+            CGL43::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            logLen++;
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL43::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+
+            szptr idx;
+
+            if((idx = infoLog.find('\0')) != CString::npos)
+            {
+                infoLog.resize(infoLog.find('\0'));
+                ec = infoLog;
+            }
+            ec = APIError::ShaderCompileFailed;
+            return false;
+        }
+
+        m_stages = stage;
+
+        return true;
+    }
+#endif
+    else
+    {
+        return false;
+    }
+}
+
+void GLEAM_Shader::dealloc(gleam_error& ec)
+{
+    if(!GLEAM_FEATURES.separable_programs)
+    {
+        if(m_handle != 0)
+            CGL33::ShaderFree(m_handle);
+        else
+            ec = APIError::HandleDeallocFailed;
+    }
+#if GL_VERSION_VERIFY(0x410, 0x300)
+    else if(GLEAM_FEATURES.separable_programs)
+    {
+        if(m_handle != 0)
+            CGL43::ProgramFree(m_handle);
+        else
+            ec = APIError::HandleDeallocFailed;
+    }
+#endif
+}
+
+bool GLEAM_Pipeline::attach(
+    const GLEAM_Shader& shader, const ShaderStage& stages, gleam_error& ec)
+{
+    C_USED(stages);
+
+    if(shader.m_handle == 0)
+    {
+        ec = APIE::InvalidObject;
+        return false;
+    }
+
+    if(!GLEAM_FEATURES.separable_programs)
+    {
+        if(m_handle == 0)
+            m_handle = CGL33::ProgramAllocEx();
+        CGL33::ShaderAttach(m_handle, shader.m_handle);
+        return true;
+    }
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    else if(GLEAM_FEATURES.separable_programs)
+    {
+        if(m_handle == 0)
+        {
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+            if(GLEAM_FEATURES.direct_state)
+                CGL45::PipelineAllocEx(m_handle);
+            else
+#endif
+                CGL43::PipelineAlloc(m_handle);
+        }
+        CGL43::ProgramUseStages(
+            m_handle, shader.m_stages & stages, shader.m_handle);
+        m_programs.push_back({&shader, shader.m_stages & stages});
+
+        return true;
+    }
+#endif
+    return false;
+}
+
+GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader&& shader)
+{
+    m_ownedPrograms.push_back({});
+
+    m_ownedPrograms.back() = shader;
+
+    return m_ownedPrograms.back();
+}
+
+bool GLEAM_Pipeline::assemble(gleam_error& ec)
+{
+    if(m_handle == 0)
+    {
+        ec = APIError::InvalidObject;
+        return false;
+    }
+
+    if(!GLEAM_FEATURES.separable_programs)
+    {
+        CGL33::ProgramLink(m_handle);
+        i32 stat = 0;
+        CGL33::ProgramGetiv(m_handle, GL_LINK_STATUS, &stat);
+        if(GL_DEBUG_MODE && !stat)
+        {
+            CString infoLog;
+            i32     logLen;
+            CGL33::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL33::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+            ec = APIError::PipelineLinkError;
+            ec = infoLog;
+        }
+        return stat;
+    }
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    else if(GLEAM_FEATURES.separable_programs)
+    {
+        i32 stat = 0;
+        CGL43::PipelineValidate(m_handle);
+        CGL43::PipelineGetiv(m_handle, GL_VALIDATE_STATUS, &stat);
+        if(GL_DEBUG_MODE && !stat)
+        {
+            CString infoLog;
+            i32     logLen;
+            CGL43::PipelineGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+            infoLog.resize(C_FCAST<szptr>(logLen));
+            CGL43::PipelineGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
+            ec = APIError::PipelineValidationError;
+            ec = infoLog;
+        }
+        return stat;
+    }
+#endif
+    ec = APIE::UnimplementedPath;
+    return false;
+}
+
+void GLEAM_Pipeline::bind(gleam_error& ec) const
+{
+    if(!GLEAM_FEATURES.separable_programs)
+        CGL33::ProgramUse(m_handle);
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    else if(GLEAM_FEATURES.separable_programs)
+        CGL43::PipelineBind(m_handle);
+#endif
+    ec = APIE::UnimplementedPath;
+}
+
+void GLEAM_Pipeline::unbind(gleam_error& ec) const
+{
+    if(!GLEAM_FEATURES.separable_programs)
+        CGL33::ProgramUse(0);
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    else if(GLEAM_FEATURES.separable_programs)
+        CGL43::PipelineBind(0);
+#endif
+    ec = APIE::UnimplementedPath;
+}
+
+void GLEAM_Pipeline::dealloc(gleam_error& ec)
+{
+    if(!GLEAM_FEATURES.separable_programs)
+        CGL33::ProgramFree(m_handle);
+#if GL_VERSION_VERIFY(0x330, 0x320)
+    else if(GLEAM_FEATURES.separable_programs)
+        CGL43::PipelineFree(m_handle);
+#endif
+}
+
+bool GLEAM_ShaderUniformState::setUniform(
+    const GLEAM_UniformDescriptor& value, GLEAM_UniformValue* data)
+{
+    using namespace ShaderTypes;
+
+    if(value.m_idx < 0)
+        return false;
+
+    if(value.m_flags & ShaderTypes::Uniform_v)
+        (void)0x0;
+    else
+        return false;
+
+    uint32 idx      = value.m_idx;
+    data->flags     = value.m_flags;
+    m_uniforms[idx] = {data, value.stages};
+    return true;
 }
 
 bool GLEAM_ShaderUniformState::setSampler(
@@ -590,56 +665,6 @@ void GLEAM_ShaderUniformState::clear()
     m_uniforms.clear();
 }
 
-#if GL_VERSION_VERIFY(0x330, 0x320)
-STATICINLINE void ProgramInputGet(
-    CGhnd                           hnd,
-    ShaderStage                     stages,
-    CGenum                          type,
-    Vector<GLEAM_ProgramParameter>* params)
-{
-    i32 num_attrs = 0;
-    if(params)
-        glGetProgramInterfaceiv(hnd, type, GL_ACTIVE_RESOURCES, &num_attrs);
-
-    for(auto i : Range<>(C_FCAST<u32>(num_attrs)))
-    {
-        const CGenum props_to_get[] = {
-            GL_NAME_LENGTH,
-            GL_LOCATION,
-            //            GL_LOCATION_COMPONENT,
-            GL_TYPE,
-            GL_ARRAY_SIZE,
-        };
-        i32 props_out[sizeof(props_to_get) / sizeof(CGenum)];
-
-        glGetProgramResourceiv(
-            hnd,
-            type,
-            C_FCAST<u32>(i),
-            sizeof(props_to_get) / sizeof(CGenum),
-            props_to_get,
-            sizeof(props_out),
-            nullptr,
-            props_out);
-
-        if(props_out[1] == -1)
-            continue;
-
-        params->push_back({});
-
-        GLEAM_ProgramParameter& desc = params->back();
-        desc.stages                  = stages;
-
-        desc.m_idx   = C_FCAST<u16>(props_out[1]);
-        desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[2]));
-        desc.m_name.resize(C_FCAST<u32>(props_out[0]));
-        glGetProgramResourceName(
-            hnd, type, C_FCAST<u32>(i), props_out[0], nullptr, &desc.m_name[0]);
-        desc.m_name.resize(desc.m_name.find('\0'));
-    }
-}
-#endif
-
 void GetShaderUniforms(
     const GLEAM_Pipeline&            pipeline,
     Vector<GLEAM_UniformDescriptor>* uniforms,
@@ -703,6 +728,7 @@ void GetShaderUniforms(
             }
         }
 
+#if GL_VERSION_VERIFY(0x310, 0x300)
         /* Get uniforms buffers */
         {
             i32 num_blocks  = 0;
@@ -743,6 +769,7 @@ void GetShaderUniforms(
                     GLM_API "Uniform block handling not implemented"));
             }
         }
+#endif
 
         /* Get attribute locations, names and types */
         if(params)
@@ -803,7 +830,7 @@ void GetShaderUniforms(
             const CGhnd& hnd = p.shader->m_handle;
 
             /* Get number of uniform variables */
-            glGetProgramInterfaceiv(
+            CGL43::ProgramGetInterfaceiv(
                 hnd, GL_UNIFORM, GL_ACTIVE_RESOURCES, &num_unifs);
 
             for(int32 i = 0; i < num_unifs; i++)
@@ -824,7 +851,7 @@ void GetShaderUniforms(
                     GL_OFFSET,
                 };
                 int32 props_out[sizeof(props_to_get) / sizeof(CGenum)];
-                glGetProgramResourceiv(
+                CGL43::ProgramGetResourceiv(
                     hnd,
                     GL_UNIFORM,
                     i,
@@ -855,7 +882,7 @@ void GetShaderUniforms(
 
                 /* Get the uniform name */
                 desc.m_name.resize(props_out[G_NameLen]);
-                glGetProgramResourceName(
+                CGL43::ProgramGetResourceName(
                     hnd,
                     GL_UNIFORM,
                     i,

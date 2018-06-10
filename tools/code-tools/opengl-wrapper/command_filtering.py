@@ -130,7 +130,7 @@ class GLType:
 
 ACTION_TYPE_MAP = {
     'Gen': 'Alloc',
-    'Create': 'Alloc',
+    'Create': 'AllocEx',
     'Delete': 'Free',
     'Bind': 'Bind'
 }
@@ -410,9 +410,12 @@ class ArgumentTransform:
         if arg1 is not None and arg2 is not None:
             self.consume(arg1)
             self.consume(arg2)
+            argument_type = 'Bytes'
+            if 'const' in arg1.atype.underlying_type():
+                argument_type = 'BytesConst'
             self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, '%s.data' % arg1.name))
-            self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, '%s.size' % arg1.name))
-            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('Bytes const&')))
+            self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'C_FCAST<%s>(%s.size)' % (arg2.atype, arg1.name)))
+            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('%s const&' % argument_type)))
 
         arg1 = self.find_by_name('format')
         arg2 = self.find_by_name('type')
@@ -454,7 +457,7 @@ class ArgumentTransform:
                 span_type += unif_info[1].replace('x', '_')
                 
             self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_RCAST<%s*>(%s.data)' % (arg1.atype.base_type, arg1.name)))
-            self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, '%s.size' % arg1.name))
+            self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'C_FCAST<%s>(%s.elements)' % (arg2.atype, arg1.name)))
             self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('Span<%s> const&' % span_type)))
 
         # For *Alloc/*Free functions, use a Span<T>, this check is thorough
@@ -475,7 +478,7 @@ class ArgumentTransform:
                     arg1.atype.base_type.type_name in ['ptroff', 'i32']:
                 self.consume(arg1)
                 self.consume(arg2)
-                self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, '%s.size' % arg2.name))
+                self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_FCAST<%s>(%s.elements)' % (arg1.atype, arg2.name)))
                 self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, '%s.data' % arg2.name))
                 self.emit_function_param(arg2, InArgExp(arg2.name, GLBaseType('Span<%s> const&' % arg2.atype.base_type)))
 

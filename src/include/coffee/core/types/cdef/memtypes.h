@@ -119,13 +119,14 @@ struct _cbasic_data_chunk
         typename std::enable_if<std::is_unsigned<SizeT>::value, SizeT>::type* =
             nullptr>
     NO_DISCARD STATICINLINE
-    /*!
-     * \brief Standard memory allocation with RAII semantics.
-     * All memory is initialized to 0.
-     * \param num
-     * \return
-     */
-    _cbasic_data_chunk<T> Alloc(SizeT num)
+        /*!
+         * \brief Standard memory allocation with RAII semantics.
+         * All memory is initialized to 0.
+         * \param num
+         * \return
+         */
+        _cbasic_data_chunk<T>
+        Alloc(SizeT num)
     {
 #if !defined(NDEBUG)
         if(num == 0)
@@ -133,7 +134,11 @@ struct _cbasic_data_chunk
 #endif
         _cbasic_data_chunk<T> out;
 
-        out.data     = C_RCAST<T*>(calloc(num * sizeof(T), 1));
+        out.data = C_RCAST<T*>(calloc(num * sizeof(T), 1));
+
+        if(!out.data)
+            Throw(memory_error("failed to allocate memory"));
+
         out.size     = sizeof(T) * num;
         out.elements = num;
 
@@ -145,19 +150,19 @@ struct _cbasic_data_chunk
 
     template<typename T2>
     NO_DISCARD STATICINLINE
-    /*!
-     * \brief For cases where safety needs to be disabled,
-     *  eg. passing symbolic values.
-     * This is used when talking to OpenGL with offsets.
-     * Objects created with this should not be used with iterators!
-     *
-     * \param data
-     * \param size
-     * \param elements
-     * \return
-     */
-    _cbasic_data_chunk<T> Unsafe(
-        T2* data = nullptr, szptr size = 0, szptr elements = 0)
+        /*!
+         * \brief For cases where safety needs to be disabled,
+         *  eg. passing symbolic values.
+         * This is used when talking to OpenGL with offsets.
+         * Objects created with this should not be used with iterators!
+         *
+         * \param data
+         * \param size
+         * \param elements
+         * \return
+         */
+        _cbasic_data_chunk<T>
+        Unsafe(T2* data = nullptr, szptr size = 0, szptr elements = 0)
     {
         _cbasic_data_chunk<T> out;
 
@@ -266,7 +271,8 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T>
         CopyFrom(Vector<T2>& data)
     {
-        static_assert(sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
+        static_assert(
+            sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
 
         using OutT = _cbasic_data_chunk<T>;
 
@@ -293,7 +299,8 @@ struct _cbasic_data_chunk
         _cbasic_data_chunk<T>
         CopyFrom(Vector<T2>& data)
     {
-        static_assert(sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
+        static_assert(
+            sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
 
         using OutT = _cbasic_data_chunk<T>;
 
@@ -315,7 +322,8 @@ struct _cbasic_data_chunk
     template<typename T2>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> Copy(T2 const& obj)
     {
-        static_assert(sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
+        static_assert(
+            sizeof(T2) >= sizeof(T), BYTE_API "incompatible size to copy");
 
         using OutT = _cbasic_data_chunk<T>;
 
@@ -517,8 +525,10 @@ struct _cbasic_data_chunk
 
     NO_DISCARD iterator begin()
     {
+#ifndef NDEBUG
         if(elements == 0)
-            throw implementation_error(BYTE_API "no elements");
+            Throw(implementation_error(BYTE_API "no elements"));
+#endif
 
         return iterator(*this);
     }
@@ -530,8 +540,10 @@ struct _cbasic_data_chunk
 
     NO_DISCARD const_iterator begin() const
     {
+#ifndef NDEBUG
         if(elements == 0)
-            throw implementation_error(BYTE_API "no elements");
+            Throw(implementation_error(BYTE_API "no elements"));
+#endif
 
         return const_iterator(*this);
     }
@@ -543,12 +555,22 @@ struct _cbasic_data_chunk
 
     iterator insert(iterator it, T&& value)
     {
+#ifndef NDEBUG
+        if(it.m_idx >= elements)
+            Throw(std::out_of_range("iterator out of bounds"));
+#endif
+
         data[it.m_idx] = std::move(value);
         return it;
     }
 
     iterator insert(iterator it, T const& value)
     {
+#ifndef NDEBUG
+        if(it.m_idx >= elements)
+            Throw(std::out_of_range("iterator out of bounds"));
+#endif
+
         data[it.m_idx] = value;
         return it;
     }

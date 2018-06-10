@@ -103,7 +103,7 @@ void GLEAM_Surface::allocate()
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::TexAlloc(m_type, Span<CGhnd>::From(m_handle));
+        CGL45::TexAllocEx(m_type, Span<CGhnd>::From(m_handle));
     else
 #endif
         CGL33::TexAlloc(Span<CGhnd>::From(m_handle));
@@ -197,6 +197,7 @@ void GLEAM_Surface2D::upload(
     PixDesc      pfmt,
     const CSize& size,
     const Bytes& data,
+    gleam_error& ec,
     CPoint       offset,
     uint32       mip)
 {
@@ -254,17 +255,6 @@ void GLEAM_Surface2D::upload(
 
     if(GL_DEBUG_MODE)
         upload_info(comp, mip, 1);
-}
-
-void GLEAM_Surface2D::upload(
-    BitFormat       fmt,
-    PixelComponents comp,
-    CSize const&    size,
-    Bytes const&    data,
-    CPoint          offset,
-    uint32          mip)
-{
-    upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
 }
 
 CSize Coffee::RHI::GLEAM::GLEAM_Surface2D::texSize() const
@@ -419,13 +409,7 @@ void GLEAM_Surface3D_Base::upload(
         } else if(IsPixFmtCompressed(pxfmt))
         {
             CGL33::TexCompressedSubImage3D(
-                m_type,
-                mip,
-                offset,
-                size,
-                pfmt.c,
-                data.size,
-                data.data);
+                m_type, mip, offset, size, pfmt.c, data.size, data.data);
         } else if(GLEAM_FEATURES.direct_state)
         {
             CGL45::TexSubImage3D(
@@ -516,7 +500,7 @@ void GLEAM_Sampler::alloc()
 #if GL_VERSION_VERIFY(0x300, 0x300)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::SamplerAlloc(m_handle);
+        CGL45::SamplerAllocEx(m_handle);
     else
 #endif
         if(!GLEAM_FEATURES.gles20)
@@ -603,8 +587,8 @@ void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
         CGL33::SamplerParameteri(m_handle, GL_TEXTURE_MAG_FILTER, to_enum(mag));
 
         i32 min_filter[2] = {};
-        min_filter[0] = to_enum(min);
-        min_filter[1] = to_enum(min);
+        min_filter[0]     = to_enum(min);
+        min_filter[1]     = to_enum(min);
         CGL33::SamplerParameteriv(m_handle, GL_TEXTURE_MIN_FILTER, min_filter);
     }
 #else

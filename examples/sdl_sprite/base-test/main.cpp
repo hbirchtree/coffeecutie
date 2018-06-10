@@ -3,6 +3,7 @@
 #include <coffee/core/CInput>
 #include <coffee/core/CProfiling>
 #include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/coffee.h>
 
 #include <coffee/CImage>
 
@@ -126,7 +127,6 @@ int32 coffee_main(int32, cstring_w*)
     C_UNUSED(sys1);
 
     /* Set file prefix, basically a cwd but only for resources */
-    CResources::FileResourcePrefix("sample_data/ctest_hud/");
     cDebug("Current directory: {0}", Env::CurrentDir());
 
     auto setup = [](BasicWindow& test, RenderData* data) {

@@ -8,8 +8,13 @@ namespace GLEAM{
 void GLEAM_Query::alloc()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    if(GLEAM_FEATURES.gles20)
-        CGL33::QueryAlloc(m_handle);
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    if(GLEAM_FEATURES.direct_state)
+        CGL45::QueryAllocEx(m_type, m_handle);
+    else
+#endif
+        if(GLEAM_FEATURES.gles20)
+            CGL33::QueryAlloc(m_handle);
 #endif
 }
 

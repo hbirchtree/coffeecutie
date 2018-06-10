@@ -5,19 +5,16 @@ macro(WINPE_PACKAGE
         SOURCES RESOURCES
         ICON_ASSET )
 
-    if(COFFEE_BUILD_ANGLE)
-
-    endif()
-
     set ( INCLUDED_LIBS "" )
     # Locate necessary binary files
     set ( BASE_LIBS )
     if(NOT MINGW64)
-        if(COFFEE_BUILD_SDL2)
+        if(BUILD_SDL2)
             find_package ( SDL2 REQUIRED )
             list ( APPEND BASE_LIBS SDL2 )
         endif()
-        if(COFFEE_BUILD_ANGLE)
+
+        if(BUILD_ANGLE)
             find_package ( ANGLE REQUIRED )
             list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
         endif()
@@ -155,16 +152,32 @@ macro(WINPE_PACKAGE
         set ( RESOURCE_DESCRIPTOR )
     endif()
 
-    add_executable(${TARGET}
-        ${OPTIONS}
+    set ( FINAL_SOURCE_FILES
         ${SDL2_MAIN_C_FILE}
         ${SOURCES}
-        ${WINDOWS_BASE_RESOURCE}
-        ${RESOURCE_DESCRIPTOR}
-        #${RESOURCE_HEADER}
         ${MANIFEST_FILE}
         ${INCLUDED_LIBS}
-        ${RESOURCE_FILES}
+        )
+
+    if(NOT MINGW64)
+        list ( APPEND FINAL_SOURCE_FILES
+            ${RESOURCE_DESCRIPTOR}
+            ${WINDOWS_BASE_RESOURCE}
+            ${RESOURCE_FILES}
+            )
+    endif()
+
+    add_executable(${TARGET}
+        ${OPTIONS}
+        ${FINAL_SOURCE_FILES}
+#        ${SDL2_MAIN_C_FILE}
+#        ${SOURCES}
+#        ${WINDOWS_BASE_RESOURCE}
+#        ${RESOURCE_DESCRIPTOR}
+        #${RESOURCE_HEADER}
+#        ${MANIFEST_FILE}
+#        ${INCLUDED_LIBS}
+#        ${RESOURCE_FILES}
         )
 
     if(WIN_UWP)

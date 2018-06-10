@@ -76,7 +76,9 @@ struct FileProcessor
     virtual void cacheFile(Path const& file,
                            Bytes const& content)
     {
-        DirFun::MkDir(MkUrl(cacheBaseDir), true);
+        file_error ec;
+
+        DirFun::MkDir(MkUrl(cacheBaseDir), true, ec);
         Path outputPath = cacheTransform(file);
 
         Resource output(MkUrl(outputPath));

@@ -1,16 +1,16 @@
 #pragma once
 
-#include "gleam_types_rhi.h"
 #include "gleam_shader_rhi.h"
+#include "gleam_types_rhi.h"
 
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/interfaces/file_resolver.h>
 
-namespace Coffee{
+namespace Coffee {
 
-namespace RHI{
-namespace GLEAM{
+namespace RHI {
+namespace GLEAM {
 
 struct GLEAM_API : GraphicsAPI
 {
@@ -18,7 +18,7 @@ struct GLEAM_API : GraphicsAPI
 
     using OPTS = GLEAM_Options;
 
-    using G_DEV = GraphicsDevice;
+    using G_DEV  = GraphicsDevice;
     using G_CTXT = GraphicsContext;
 
     /* These access the PBO queue */
@@ -31,27 +31,27 @@ struct GLEAM_API : GraphicsAPI
     /* Types and relationships */
     using PRF = GLEAM_PRF;
 
-    using StencilState = GraphicsAPI::StencilState<CGenum,CGenum>;
-    using DepthState = GraphicsAPI::DepthState<CGenum>;
+    using StencilState = GraphicsAPI::StencilState<CGenum, CGenum>;
+    using DepthState   = GraphicsAPI::DepthState<CGenum>;
 
-    using DrawCall = GraphicsAPI::DrawCall;
+    using DrawCall         = GraphicsAPI::DrawCall;
     using DrawInstanceData = GraphicsAPI::DrawInstanceData;
 
     using OccludeQuery = GLEAM_OccludeQuery;
 
     /* Just defining nicer names */
-    using S_2D = GLEAM_Surface2D;
-    using S_3D = GLEAM_Surface3D;
+    using S_2D   = GLEAM_Surface2D;
+    using S_3D   = GLEAM_Surface3D;
     using S_Cube = GLEAM_SurfaceCube;
 
-    using S_2DA = GLEAM_Surface2DArray;
+    using S_2DA   = GLEAM_Surface2DArray;
     using S_CubeA = GLEAM_SurfaceCubeArray;
 
-    using SM_2D = GLEAM_Sampler2D;
-    using SM_3D = GLEAM_Sampler3D;
+    using SM_2D   = GLEAM_Sampler2D;
+    using SM_3D   = GLEAM_Sampler3D;
     using SM_Cube = GLEAM_SamplerCube;
 
-    using SM_2DA = GLEAM_Sampler2DArray;
+    using SM_2DA   = GLEAM_Sampler2DArray;
     using SM_CubeA = GLEAM_SamplerCubeArray;
 
     using S_IMG = GLEAM_ShaderImage;
@@ -62,22 +62,22 @@ struct GLEAM_API : GraphicsAPI
     using V_ATTR = GLEAM_VertAttribute;
     using V_DESC = GLEAM_VertDescriptor;
 
-    using BUF_A = GLEAM_ArrayBuffer;
-    using BUF_E = GLEAM_ElementBuffer;
-    using BUF_U = GLEAM_UniformBuffer;
-    using BUF_S = GLEAM_ShaderBuffer;
-    using BUF_P = GLEAM_PixelBuffer;
+    using BUF_A    = GLEAM_ArrayBuffer;
+    using BUF_E    = GLEAM_ElementBuffer;
+    using BUF_U    = GLEAM_UniformBuffer;
+    using BUF_S    = GLEAM_ShaderBuffer;
+    using BUF_P    = GLEAM_PixelBuffer;
     using BUF_DRAW = GLEAM_IndirectBuffer;
 
     using D_CALL = DrawCall;
     using D_DATA = DrawInstanceData;
 
     using UNIFDESC = GLEAM_UniformDescriptor;
-    using UNIFVAL = GLEAM_UniformValue;
-    using UNIFSMP = GLEAM_SamplerHandle;
-    using PPARAM = GLEAM_ProgramParameter;
+    using UNIFVAL  = GLEAM_UniformValue;
+    using UNIFSMP  = GLEAM_SamplerHandle;
+    using PPARAM   = GLEAM_ProgramParameter;
 
-    using USTATE = GLEAM_ShaderUniformState;
+    using USTATE    = GLEAM_ShaderUniformState;
     using RASTSTATE = RasterizerState;
     using VIEWSTATE = ViewportState;
     using BLNDSTATE = BlendState;
@@ -93,7 +93,7 @@ struct GLEAM_API : GraphicsAPI
 
     using DataStore = GLEAM_DataStore*;
 
-    using PipelineState = Map<ShaderStage,GLEAM_ShaderUniformState*>;
+    using PipelineState = Map<ShaderStage, GLEAM_ShaderUniformState*>;
 
     using PSTATE = PipelineState;
 
@@ -118,15 +118,18 @@ struct GLEAM_API : GraphicsAPI
 #if GL_VERSION_VERIFY(0x300, 0x300)
         struct IndirectCall
         {
-            union{
-                struct {
+            union
+            {
+                struct
+                {
                     u32 count;
                     u32 instanceCount;
                     u32 firstIndex;
                     u32 baseVertex;
                     u32 baseInstance;
                 } i;
-                struct {
+                struct
+                {
                     u32 count;
                     u32 instanceCount;
                     u32 first;
@@ -137,7 +140,6 @@ struct GLEAM_API : GraphicsAPI
 
         struct MultiDrawData
         {
-
             Vector<i32> counts;
             Vector<i64> offsets;
             Vector<i32> baseVertex;
@@ -145,7 +147,7 @@ struct GLEAM_API : GraphicsAPI
             Vector<IndirectCall> indirectCalls;
 
             TypeEnum etype;
-            D_CALL dc;
+            D_CALL   dc;
         };
 
         Map<CommandBuffer*, MultiDrawData> multiDrawData;
@@ -160,7 +162,7 @@ struct GLEAM_API : GraphicsAPI
 
     struct RenderPass
     {
-        PIP* pipeline;
+        PIP*  pipeline;
         FB_T* framebuffer;
 
         BLNDSTATE* blend;
@@ -171,81 +173,69 @@ struct GLEAM_API : GraphicsAPI
         {
             V_DESC* vertices;
             PSTATE* state;
-            D_CALL d_call;
-            D_DATA d_data;
+            D_CALL  d_call;
+            D_DATA  d_data;
         };
 
         Vector<DrawCall> draws;
     };
 
     /* "Loose" functions */
-public:
+  public:
     static GraphicsQueue& Queue(u32 idx = 0);
 
     /* Dump the framebuffer pixels to a buffer, might be asynchronous */
-    static void DumpFramebuffer(FB_T& fb,
-            PixFmt c,
-            BitFmt dt,
-            Vector<byte_t>& storage);
+    static void DumpFramebuffer(
+        FB_T& fb, PixFmt c, BitFmt dt, Vector<byte_t>& storage);
 
-    static void GetDefaultVersion(
-            int32& major,
-            int32& minor);
+    static void GetDefaultVersion(int32& major, int32& minor);
 
-    static void GetDefaultProperties(
-            Display::CDProperties& properties);
+    static void GetDefaultProperties(Display::CDProperties& properties);
 
     static bool LoadAPI(
-            DataStore store,
-            bool debug = false,
-            GLEAM_Options const& options = {}
-            );
+        DataStore store, bool debug = false, GLEAM_Options const& options = {});
     static bool UnloadAPI();
 
     static bool IsAPILoaded();
 
-    static API_CONTEXT GetLoadAPI(
-            GLEAM_Options const& options = {}
-            );
+    static API_CONTEXT GetLoadAPI(GLEAM_Options const& options = {});
 
     /* i specifies view index for indexed views, 0 for  */
-    static void SetRasterizerState(
-            RASTSTATE const& rstate,
-            uint32 i = 0);
-    static void SetViewportState(
-            VIEWSTATE const& vstate,
-            uint32 i = 0);
-    static void SetBlendState(
-            BLNDSTATE const& bstate,
-            uint32 i = 0);
-    static void SetDepthState(
-            DEPTSTATE const& dstate,
-            uint32 i = 0);
-    static void SetStencilState(
-            STENSTATE const& sstate,
-            uint32 i = 0);
+    static void SetRasterizerState(RASTSTATE const& rstate, uint32 i = 0);
+    static void SetViewportState(VIEWSTATE const& vstate, uint32 i = 0);
+    static void SetBlendState(BLNDSTATE const& bstate, uint32 i = 0);
+    static void SetDepthState(DEPTSTATE const& dstate, uint32 i = 0);
+    static void SetStencilState(STENSTATE const& sstate, uint32 i = 0);
 
     static void GetShaderUniformState(
-            PIP const& pipeline,
-            Vector<UNIFDESC>* uniforms,
-            Vector<PPARAM>* params = nullptr,
-            Vector<PPARAM>* outputs = nullptr)
+        PIP const&        pipeline,
+        Vector<UNIFDESC>* uniforms,
+        Vector<PPARAM>*   params  = nullptr,
+        Vector<PPARAM>*   outputs = nullptr)
     {
-        GLEAM::GetShaderUniforms(pipeline,uniforms,params, outputs);
+        GLEAM::GetShaderUniforms(pipeline, uniforms, params, outputs);
     }
 
-    static void SetTessellatorState(
-            TSLRSTATE const& tstate);
+    static void SetTessellatorState(TSLRSTATE const& tstate);
     static void SetPixelProcessState(
-            PIXLSTATE const& pstate,
-            bool unpack = true);
+        PIXLSTATE const& pstate, bool unpack = true);
+
     static void SetShaderUniformState(
-            const PIP &pipeline,
-            ShaderStage const& stage,
-            USTATE const& ustate);
+        const PIP&         pipeline,
+        ShaderStage const& stage,
+        USTATE const&      ustate,
+        gleam_error&       error_code);
+
+    STATICINLINE void SetShaderUniformState(
+        const PIP& pipeline, ShaderStage const& stage, USTATE const& ustate)
+    {
+        gleam_error error_code;
+        SetShaderUniformState(pipeline, stage, ustate, error_code);
+    }
 
     /*!
-     * \brief Perform any possible work that removes memory allocations made related to setting up drawing pipelines and similar.
+     * \brief Perform any possible work that removes memory allocations made
+     * related to setting up drawing pipelines and similar.
      */
     static void PreDrawCleanup();
 
@@ -258,42 +248,60 @@ public:
     static void DisposePixelBuffers();
 
     /*!
-     * \brief Optimize a render pass into a buffer which may be consumed by MultiDraw(). Will attempt to maximize use of instancing and glMultiDraw* functionality, and also minimize state changes between draw calls (eg. swapping less textures and uniforms).
-     * \param rpass A pre-defined render pass by the user code
-     * \param buffer An output structure which is ready to be drawn in an optimized fashion.
+     * \brief Optimize a render pass into a buffer which may be consumed by
+     * MultiDraw(). Will attempt to maximize use of instancing and glMultiDraw*
+     * functionality, and also minimize state changes between draw calls (eg.
+     * swapping less textures and uniforms). \param rpass A pre-defined render
+     * pass by the user code \param buffer An output structure which is ready to
+     * be drawn in an optimized fashion.
      */
-    static void OptimizeRenderPass(
-            RenderPass& rpass,
-            OPT_DRAW &buffer);
+    static void OptimizeRenderPass(RenderPass& rpass, OPT_DRAW& buffer);
 
     /*!
-     * \brief Providing data output by OptimizeRenderPass(), use this function to perform the best possible combination of drawcalls.
-     * \param pipeline The pipeline with which the drawcalls are to be rendered with. This method cannot optimize between different pipeline usages.
-     * \param draws The drawcalls to be rendered
+     * \brief Providing data output by OptimizeRenderPass(), use this function
+     * to perform the best possible combination of drawcalls. \param pipeline
+     * The pipeline with which the drawcalls are to be rendered with. This
+     * method cannot optimize between different pipeline usages. \param draws
+     * The drawcalls to be rendered
      */
+    static void MultiDraw(PIP const& pipeline, OPT_DRAW const& draws)
+    {
+        gleam_error error_code;
+        MultiDraw(pipeline, draws, error_code);
+    }
+
     static void MultiDraw(
-            PIP const& pipeline,
-            OPT_DRAW const& draws);
+        PIP const& pipeline, OPT_DRAW const& draws, gleam_error& ec);
 
     /*!
-     * \brief Draw objects with the provided data. Will mostly map to a single drawcall.
-     * \param pipeline
-     * \param ustate
-     * \param vertices
-     * \param d
-     * \param i
+     * \brief Draw objects with the provided data. Will mostly map to a single
+     * drawcall. \param pipeline \param ustate \param vertices \param d \param i
      * \param query
      */
     static void Draw(
-            PIP const& pipeline,
-            PSTATE const& ustate,
-            V_DESC& vertices,
-            D_CALL const& d,D_DATA const& i,
-            Q_OCC* query = nullptr);
+        PIP const&    pipeline,
+        PSTATE const& ustate,
+        V_DESC&       vertices,
+        D_CALL const& d,
+        D_DATA const& i,
+        gleam_error&  ec,
+        Q_OCC*        query = nullptr);
+
+    static void Draw(
+        PIP const&    pipeline,
+        PSTATE const& ustate,
+        V_DESC&       vertices,
+        D_CALL const& d,
+        D_DATA const& i,
+        Q_OCC*        query = nullptr)
+    {
+        gleam_error ec;
+        Draw(pipeline, ustate, vertices, d, i, ec, query);
+    }
 
     /*!
-     * \brief As Draw(), except it can be drawn depending on an occlusion query output by a Draw() step with occlusion query capture.
-     * \param pipeline
+     * \brief As Draw(), except it can be drawn depending on an occlusion query
+     * output by a Draw() step with occlusion query capture. \param pipeline
      * \param ustate
      * \param vertices
      * \param d
@@ -301,11 +309,25 @@ public:
      * \param c
      */
     static void DrawConditional(
-            PIP const& pipeline,
+        PIP const&    pipeline,
+        PSTATE const& ustate,
+        V_DESC&       vertices,
+        D_CALL const& d,
+        D_DATA const& i,
+        Q_OCC&        c,
+        gleam_error&  ec);
+
+    static void DrawConditional(
+            PIP const&    pipeline,
             PSTATE const& ustate,
-            V_DESC& vertices,
+            V_DESC&       vertices,
             D_CALL const& d,
-            D_DATA const& i, Q_OCC &c);
+            D_DATA const& i,
+            Q_OCC&        c)
+    {
+        gleam_error ec;
+        DrawConditional(pipeline, ustate, vertices, d, i, c, ec);
+    }
 
     static FB_T& DefaultFramebuffer();
 
@@ -318,11 +340,12 @@ public:
     }
 
     static CString GetAPIName(GraphicsDevice const&);
-    static bool GetAPIVersion(GraphicsDevice const&, SWVersionInfo*);
-    static bool GetRendererInfo(GraphicsDevice const&, HWDeviceInfo*);
-    static bool GetRendererDriverInfo(GraphicsDevice const&, SWVersionInfo*);
+    static bool    GetAPIVersion(GraphicsDevice const&, SWVersionInfo*);
+    static bool    GetRendererInfo(GraphicsDevice const&, HWDeviceInfo*);
+    static bool    GetRendererDriverInfo(GraphicsDevice const&, SWVersionInfo*);
     static CString GetShaderLanguageName(GraphicsContext const&);
-    static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*);
+    static bool    GetShaderLanguageVersion(
+           GraphicsContext const&, SWVersionInfo*);
 
     static bool TextureFormatSupport(PixFmt fmt);
 
@@ -334,16 +357,16 @@ public:
 
 struct GLEAM_PRF
 {
-    using QRY_PERF = GLEAM_PrfQuery;
-    using QRY_DBUF = GLEAM_DBufQuery;
+    using QRY_PERF   = GLEAM_PrfQuery;
+    using QRY_DBUF   = GLEAM_DBufQuery;
     using QRY_PIPDMP = GLEAM_PipelineDumper;
-    using DRAW_QUAD = GLEAM_Quad_Drawer;
+    using DRAW_QUAD  = GLEAM_Quad_Drawer;
 };
 
-}
-}
+} // namespace GLEAM
+} // namespace RHI
 
-namespace Strings{
+namespace Strings {
 extern cstring to_string(RHI::GLEAM::APILevel lev);
 }
-}
+} // namespace Coffee

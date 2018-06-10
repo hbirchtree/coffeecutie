@@ -39,3 +39,7 @@ endif()
 coffee_add_test ( Unit_Url01 "Cu_FileUrl"
     test10.cpp CoffeeCore
     )
+
+coffee_add_test ( Unit_Bytes01 "Cu_Bytes"
+    test11.cpp CoffeeCore
+    )

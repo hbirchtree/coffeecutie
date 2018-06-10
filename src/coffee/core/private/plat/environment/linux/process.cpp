@@ -1,10 +1,10 @@
-#include <coffee/core/plat/environment/linux/process.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/plat/environment/linux/process.h>
 #include <coffee/core/string_casting.h>
 
-namespace Coffee{
-namespace Environment{
-namespace Linux{
+namespace Coffee {
+namespace Environment {
+namespace Linux {
 
 struct mem_usage
 {
@@ -15,25 +15,29 @@ struct mem_usage
     uint64 data;
 };
 
-LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PID)
+LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(
+    LinuxProcessProperty::PID)
 {
 #ifndef COFFEE_LOWFAT
-    CString mem_info = CResources::Linux::LinuxFileFun::sys_read("/proc/self/statm");
+    file_error ec;
+
+    CString mem_info =
+        CResources::Linux::LinuxFileFun::sys_read("/proc/self/statm", ec);
 
     mem_usage usage = {};
 
     size_t spacer = 0;
-    int steps = 0;
+    int    steps  = 0;
     while(true)
     {
         size_t start = spacer;
-        spacer = mem_info.find(' ', spacer);
+        spacer       = mem_info.find(' ', spacer);
 
         if(spacer > mem_info.size())
             break;
 
-        uint64 num = cast_string<uint64>(StrUtil::encapsulate(&mem_info[start],
-                                                              C_CAST<uint32>(spacer - start)));
+        uint64 num = cast_string<uint64>(StrUtil::encapsulate(
+            &mem_info[start], C_CAST<uint32>(spacer - start)));
         if(steps == 0)
             usage.vmsize = num;
         else if(steps == 1)
@@ -54,29 +58,32 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PI
 #endif
 }
 
-bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
+bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
 {
 #ifndef COFFEE_LOWFAT
-    CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
-    CString maps_info = CResources::Linux::LinuxFileFun::sys_read(maps_file.c_str());
+    file_error ec;
 
-    szptr end = maps_info.find('\n');
-    szptr pos = 0;
-    bool was_empty = false;
+    CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
+    CString maps_info =
+        CResources::Linux::LinuxFileFun::sys_read(maps_file.c_str(), ec);
+
+    szptr end       = maps_info.find('\n');
+    szptr pos       = 0;
+    bool  was_empty = false;
     while(end < maps_info.size())
     {
         target.push_back({});
         Entry& file = target.back();
 
-        szptr space = 0;
-        u32 filename_counter = 0;
+        szptr space            = 0;
+        u32   filename_counter = 0;
         while(space < end)
         {
-            space = maps_info.find(' ', pos);
+            space     = maps_info.find(' ', pos);
             szptr len = space - pos;
             if(space > end)
                 len = end - pos;
-            auto sec = StrUtil::encapsulate(&maps_info[pos], len);
+            auto sec  = StrUtil::encapsulate(&maps_info[pos], len);
             was_empty = sec.size() == 0;
             if(!was_empty)
             {
@@ -85,11 +92,11 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
                 {
                 case 1:
                 {
-                    szptr mid = sec.find('-');
+                    szptr   mid = sec.find('-');
                     CString tmp = StrUtil::encapsulate(sec.data(), mid);
-                    file.start = Convert::strtoull(tmp.data(), 16);
-                    tmp = &sec[mid+1];
-                    file.end = Convert::strtoull(tmp.data(), 16);
+                    file.start  = Convert::strtoull(tmp.data(), 16);
+                    tmp         = &sec[mid + 1];
+                    file.end    = Convert::strtoull(tmp.data(), 16);
                     break;
                 }
                 case 2:
@@ -127,10 +134,9 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
                     break;
                 }
                 default:
-//                    fprintf(stderr, "%s - ", sec.c_str());
+                    //                    fprintf(stderr, "%s - ", sec.c_str());
                     break;
                 }
-
             }
             pos = space + 1;
             if(space > end)
@@ -148,8 +154,6 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
 #endif
 }
 
-
-
-}
-}
-}
+} // namespace Linux
+} // namespace Environment
+} // namespace Coffee

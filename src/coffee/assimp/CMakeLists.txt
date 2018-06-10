@@ -1,8 +1,4 @@
-if(NOT ASSIMP_FOUND)
-    find_package(assimp REQUIRED)
-endif()
-
-message ( "TEST: ${ASSIMP_FOUND}" )
+find_package(assimp REQUIRED)
 
 coffee_library (
     TARGET CoffeeAssimp

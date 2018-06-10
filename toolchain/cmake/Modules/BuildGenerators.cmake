@@ -1,3 +1,7 @@
+################################################################################
+# For embedding license info and application info
+################################################################################
+
 macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
     set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_${TARGET}.c" )
 

@@ -23,10 +23,14 @@ private:
 
     struct ResourceData;
 
-    ResourceData* m_platform_data;
+    struct RscData_deleter
+    {
+        void operator()(ResourceData* data);
+    };
+
+    UqPtr<ResourceData, RscData_deleter> m_platform_data;
 
 public:
-
     friend bool FilePull(Resource &resc, bool textmode, bool bigendian);
     friend bool FileCommit(Resource &resc, bool append, ResourceAccess acc);
 
@@ -54,7 +58,19 @@ public:
     cstring resource() const;
     bool valid() const;
 
-    Resource& operator=(Bytes const& data)
+    /*!
+     * \brief Owning data assignment
+     * \param data
+     * \return
+     */
+    Resource& operator=(Bytes&& data);
+
+    /*!
+     * \brief Borrowing data assignment
+     * \param data
+     * \return
+     */
+    FORCEDINLINE Resource& operator=(Bytes const& data)
     {
         this->data = data.data;
         this->size = data.size;

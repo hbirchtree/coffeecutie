@@ -2,22 +2,22 @@
 
 #include <coffee/core/base/files/url.h>
 
-#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
-#include <coffee/core/CXmlParser>
 #include <coffee/core/CJSONParser>
+#include <coffee/core/CProfiling>
+#include <coffee/core/CXmlParser>
 
-#include <coffee/core/coffee_mem_macros.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/coffee_mem_macros.h>
 
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
 #ifndef COFFEE_LOWFAT
 
-namespace Coffee{
-namespace Profiling{
+namespace Coffee {
+namespace Profiling {
 
 static constexpr szptr MAX_NUMBER_OF_ENTRIES = 1024 * 1024;
 
@@ -30,25 +30,24 @@ struct DataPointGenerator
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
         /* Sort the thread list to make it deterministic */
-        using TPair = Pair<ThreadId::Hash,CString>;
+        using TPair = Pair<ThreadId::Hash, CString>;
 
         Vector<TPair> names;
-        names.insert(names.end(),
-                     State::GetProfilerStore()->threadnames.begin(),
-                     State::GetProfilerStore()->threadnames.end());
+        names.insert(
+            names.end(),
+            State::GetProfilerStore()->threadnames.begin(),
+            State::GetProfilerStore()->threadnames.end());
 
-        std::sort(names.begin(), names.end(),
-                  [](TPair const& v1, TPair const& v2)
-        {
-            return v1.second < v2.second;
-        });
+        std::sort(
+            names.begin(), names.end(), [](TPair const& v1, TPair const& v2) {
+                return v1.second < v2.second;
+            });
 
-        std::transform(names.begin(), names.end(),
-                       std::back_inserter(m_threadHashes),
-                       [](TPair const& v)
-        {
-            return v.first;
-        });
+        std::transform(
+            names.begin(),
+            names.end(),
+            std::back_inserter(m_threadHashes),
+            [](TPair const& v) { return v.first; });
 #endif
     }
 
@@ -56,17 +55,13 @@ struct DataPointGenerator
     {
         static const constexpr szptr npos = C_CAST<szptr>(-1);
 
-        iterator(DataPointGenerator& gen):
-            generator(&gen),
-            current_index(0),
-            current_thread(0)
+        iterator(DataPointGenerator& gen) :
+            generator(&gen), current_index(0), current_thread(0)
         {
             find_next();
         }
-        iterator(DataPointGenerator& gen, int):
-            generator(&gen),
-            current_index(npos),
-            current_thread(npos)
+        iterator(DataPointGenerator& gen, int) :
+            generator(&gen), current_index(npos), current_thread(npos)
         {
         }
 
@@ -79,9 +74,9 @@ struct DataPointGenerator
 
         bool operator==(iterator const& other) const
         {
-            return other.current_index == current_index
-                    && other.current_thread == current_thread
-                    && (other.generator) == (generator);
+            return other.current_index == current_index &&
+                   other.current_thread == current_thread &&
+                   (other.generator) == (generator);
         }
 
         bool operator!=(iterator const& other) const
@@ -94,19 +89,19 @@ struct DataPointGenerator
             return intern_data()->datapoints.at(current_index);
         }
 
-    private:
+      private:
         void find_next()
         {
-            while(current_thread < generator->m_threadHashes.size()
-                  && current_index >= intern_data()->datapoints.size())
+            while(current_thread < generator->m_threadHashes.size() &&
+                  current_index >= intern_data()->datapoints.size())
             {
-                current_thread ++;
+                current_thread++;
                 current_index = 0;
             }
             if(current_thread >= generator->m_threadHashes.size())
             {
                 current_thread = npos;
-                current_index = npos;
+                current_index  = npos;
             }
         }
 
@@ -121,8 +116,8 @@ struct DataPointGenerator
         }
 
         DataPointGenerator* generator;
-        szptr current_index;
-        szptr current_thread;
+        szptr               current_index;
+        szptr               current_thread;
     };
 
     szptr size()
@@ -132,9 +127,9 @@ struct DataPointGenerator
 #if !defined(COFFEE_DISABLE_PROFILER)
         for(auto const& hash : m_threadHashes)
             counter += State::GetProfilerStore()
-                    ->thread_refs[hash]
-                    .get()->datapoints
-                    .size();
+                           ->thread_refs[hash]
+                           .get()
+                           ->datapoints.size();
 #endif
 
         return counter;
@@ -160,30 +155,33 @@ struct DataPointGenerator
     {
         return iterator(*this, 0);
     }
-private:
+
+  private:
     Vector<ThreadId::Hash> m_threadHashes;
 };
 
 static Vector<DataPoint> GetSortedDataPoints()
 {
     DataPointGenerator gen;
-    Vector<DataPoint> points;
+    Vector<DataPoint>  points;
     points.insert(points.begin(), gen.begin(), gen.end());
 
-//    std::sort(points.begin(), points.end());
+    //    std::sort(points.begin(), points.end());
 
     return points;
 }
 
 static CString AnonymizePath(CString const& p)
 {
-    return CStrReplace(CStrReplace(p,
-                                   Env::GetUserHome(),
-                                   "~"),
-                                   Env::ExistsVar("USER") ?
-                                       Env::GetVar("USER") :
-                                       "",
-                                   "user");
+    return CStrReplace(
+        CStrReplace(p, Env::GetUserHome().internUrl, "~"),
+        Env::ExistsVar("USER") ? Env::GetVar("USER") : "",
+        "user");
+}
+
+static CString AnonymizePath(Url const& p)
+{
+    return AnonymizePath(p.internUrl);
 }
 
 void PrintProfilerData()
@@ -195,30 +193,26 @@ void PrintProfilerData()
 #ifndef NDEBUG
     cBasicPrint("Profiling information:");
 
-    LinkList<uint64> base_time; /* Stack of time values */
+    LinkList<uint64> base_time;     /* Stack of time values */
     LinkList<uint64> curr_timeline; /* Progression of time within a context */
     for(Profiling::DataPoint const& p : DataPointGenerator())
     {
-        if(p.tp==Profiling::DataPoint::Profile)
+        if(p.tp == Profiling::DataPoint::Profile)
         {
-            uint64 ts = (p.ts-base_time.front())-curr_timeline.front();
-            cBasicPrint("Time: {0}, label: {1}",
-                        ts,
-                        p.name);
+            uint64 ts = (p.ts - base_time.front()) - curr_timeline.front();
+            cBasicPrint("Time: {0}, label: {1}", ts, p.name);
 
-            curr_timeline.front() = p.ts-base_time.front();
-        }
-        else if(p.tp==Profiling::DataPoint::Push)
+            curr_timeline.front() = p.ts - base_time.front();
+        } else if(p.tp == Profiling::DataPoint::Push)
         {
             base_time.push_front(p.ts);
             curr_timeline.push_front(0);
-            cBasicPrint("Enter scope: {0}",p.name,p.ts);
-        }
-        else if(p.tp==Profiling::DataPoint::Pop)
+            cBasicPrint("Enter scope: {0}", p.name, p.ts);
+        } else if(p.tp == Profiling::DataPoint::Pop)
         {
             base_time.pop_front();
             curr_timeline.pop_front();
-            cBasicPrint("Exit scope: {0}",p.name,p.ts);
+            cBasicPrint("Exit scope: {0}", p.name, p.ts);
         }
     }
 #endif
@@ -227,8 +221,7 @@ void PrintProfilerData()
 namespace XML_Stuff {
 
 STATICINLINE XML::Element* AddChildWithText(
-        XML::Document& doc, XML::Element* e,
-        cstring tagname, CString text)
+    XML::Document& doc, XML::Element* e, cstring tagname, CString text)
 {
     auto newElement = doc.NewElement(tagname);
     e->InsertEndChild(newElement);
@@ -240,7 +233,7 @@ STATICINLINE XML::Element* AddChildWithText(
 }
 
 STATICINLINE void ElementSetAttr(
-        XML::Element* e, cstring attrname, CString text)
+    XML::Element* e, cstring attrname, CString text)
 {
     e->SetAttribute(attrname, text.c_str());
 }
@@ -275,11 +268,13 @@ STATICINLINE void DescribeProcessor(XML::Document& doc, XML::Element* sysdata)
 
     auto cache = AddChildWithText(doc, proc_detail, "cache", {});
 
-    AddChildWithText(doc, cache, "l1",
-                     cast_pod(SysInfo::ProcessorCacheSize()));
+    AddChildWithText(doc, cache, "l1", cast_pod(SysInfo::ProcessorCacheSize()));
 
-    AddChildWithText(doc, proc_detail, "frequencies",
-                     cast_pod(SysInfo::ProcessorFrequency()));
+    AddChildWithText(
+        doc,
+        proc_detail,
+        "frequencies",
+        cast_pod(SysInfo::ProcessorFrequency()));
 
     auto hier = AddChildWithText(doc, proc_detail, "hierarchy", {});
 
@@ -290,11 +285,10 @@ STATICINLINE void DescribeProcessor(XML::Document& doc, XML::Element* sysdata)
         AddChildWithText(doc, proc_detail, "hyperthreading", {});
 }
 
-}
+} // namespace XML_Stuff
 
 void ExportProfilerData(CString& target)
 {
-
 #ifdef COFFEE_LOWFAT
     return;
 #endif
@@ -317,16 +311,17 @@ void ExportProfilerData(CString& target)
         Env::Variables vars = Env::Environment();
 
         XML::Element* p;
-        /* TODO: Make variable whitelist instead of including all of them, for privacy */
+        /* TODO: Make variable whitelist instead of including all of them, for
+         * privacy */
         for(Env::VarPair const& v : vars)
         {
             p = doc.NewElement("v");
-            p->SetAttribute("name",v.first.c_str());
+            p->SetAttribute("name", v.first.c_str());
             p->SetText(v.second.c_str());
             envdata->InsertEndChild(p);
         }
     }
-    cVerbose(8,"Writing environment data");
+    cVerbose(8, "Writing environment data");
 #endif
 
     /* Store data about runtime */
@@ -345,23 +340,22 @@ void ExportProfilerData(CString& target)
             argument->SetText(arg);
         }
 
-        auto AddElement = [&](cstring tagname, CString text)
-        {
-            AddChildWithText(doc,  rundata, tagname, text);
+        auto AddElement = [&](cstring tagname, CString text) {
+            AddChildWithText(doc, rundata, tagname, text);
         };
 
         /* Current working directory,
          * most likely application directory
          *  or home directory */
-		CString sys_string = PlatformData::SystemDisplayString();
+        CString sys_string    = PlatformData::SystemDisplayString();
         CString device_string = cStringFormat("{0}", SysInfo::DeviceName());
 
-        AddElement("cwd", Env::CurrentDir());
+        AddElement("cwd", Env::CurrentDir().internUrl);
 
         AddElement("system", sys_string.c_str());
         AddElement("device", device_string.c_str());
     }
-    cVerbose(8,"Writing runtime data");
+    cVerbose(8, "Writing runtime data");
 
     {
         auto bdata = AddChildWithText(doc, root, "build", {});
@@ -383,7 +377,7 @@ void ExportProfilerData(CString& target)
         DescribeNetwork(doc, sysdata);
         DescribeProcessor(doc, sysdata);
     }
-    cVerbose(8,"Writing system data");
+    cVerbose(8, "Writing system data");
 
     /* Store extra data gathered by program, is parsed as JSON if possible */
     if(Profiler::ExtraInfo())
@@ -400,10 +394,11 @@ void ExportProfilerData(CString& target)
             e->SetText(p.value.c_str());
         }
     }
-    cVerbose(8,"Writing extra data");
+    cVerbose(8, "Writing extra data");
 
     /* Only runs in debug mode! */
-    if(Profiler::HasData()){
+    if(Profiler::HasData())
+    {
 #ifndef NDEBUG
         /* Store list of threads we've bumped into or labeled */
         {
@@ -417,8 +412,8 @@ void ExportProfilerData(CString& target)
                 threaddata->InsertEndChild(e);
 
                 CString id = StrUtil::pointerify(p.first);
-                e->SetAttribute("id",id.c_str());
-                e->SetAttribute("name",p.second.c_str());
+                e->SetAttribute("id", id.c_str());
+                e->SetAttribute("name", p.second.c_str());
             }
         }
 
@@ -434,10 +429,10 @@ void ExportProfilerData(CString& target)
 
             /* Create a nice date string */
             CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
-            date = cStringFormat("{0}+{1}",date,Time::Microsecond());
+            date         = cStringFormat("{0}+{1}", date, Time::Microsecond());
 
-            curr_r->SetAttribute("start1",st.c_str());
-            curr_r->SetAttribute("start2",date.c_str());
+            curr_r->SetAttribute("start1", st.c_str());
+            curr_r->SetAttribute("start2", date.c_str());
 
             /* Some parsing information */
             LinkList<Timestamp> base;
@@ -453,32 +448,32 @@ void ExportProfilerData(CString& target)
                 {
                 case Profiling::DataPoint::Profile:
                 {
-                    uint64 ts = p.ts-base.front()- lt.front();
+                    uint64 ts = p.ts - base.front() - lt.front();
 
                     XML::Element* n = doc.NewElement("dpoint");
 
                     CString tsf = Convert::uintltostring(ts);
                     CString tid = StrUtil::pointerify(p.thread);
 
-                    n->SetAttribute("ts",tsf.c_str());
-                    n->SetAttribute("label",p.name.c_str());
-                    n->SetAttribute("thread",tid.c_str());
+                    n->SetAttribute("ts", tsf.c_str());
+                    n->SetAttribute("label", p.name.c_str());
+                    n->SetAttribute("thread", tid.c_str());
 
                     curr->InsertEndChild(n);
 
-                    lt.front() = p.ts-base.front();
+                    lt.front() = p.ts - base.front();
                     break;
                 }
                 case Profiling::DataPoint::Push:
                 {
                     XML::Element* n = doc.NewElement("context");
 
-                    CString tsf = Convert::uintltostring(p.ts-base.front());
+                    CString tsf = Convert::uintltostring(p.ts - base.front());
                     CString tid = StrUtil::pointerify(p.thread);
 
-                    n->SetAttribute("ts",tsf.c_str());
-                    n->SetAttribute("label",p.name.c_str());
-                    n->SetAttribute("thread",tid.c_str());
+                    n->SetAttribute("ts", tsf.c_str());
+                    n->SetAttribute("label", p.name.c_str());
+                    n->SetAttribute("thread", tid.c_str());
 
                     curr->InsertEndChild(n);
                     curr = n;
@@ -501,7 +496,7 @@ void ExportProfilerData(CString& target)
         }
 #endif
     }
-    cVerbose(8,"Writing profiler data");
+    cVerbose(8, "Writing profiler data");
 
     tinyxml2::XMLPrinter printer;
     doc.Print(&printer);
@@ -509,11 +504,10 @@ void ExportProfilerData(CString& target)
     target.insert(0, printer.CStr(), C_CAST<szptr>(printer.CStrSize()));
 }
 
-namespace CT_Stuff
-{
+namespace CT_Stuff {
 
-STATICINLINE JSON::Value FromString(CString const& s,
-                       JSON::Document::AllocatorType& alloc)
+STATICINLINE JSON::Value FromString(
+    CString const& s, JSON::Document::AllocatorType& alloc)
 {
     JSON::Value j;
     j.SetString(s.c_str(), alloc);
@@ -521,7 +515,8 @@ STATICINLINE JSON::Value FromString(CString const& s,
     return j;
 }
 
-STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutEvents(
+    JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
     if(!Profiler::HasData())
         return;
@@ -539,8 +534,8 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
         if((*Profiler::ThreadNames())[p.thread].size())
             tid = (*Profiler::ThreadNames())[p.thread];
 
-        auto catVal = FromString(p.component, alloc);
-        auto tidVal = FromString(tid, alloc);
+        auto catVal  = FromString(p.component, alloc);
+        auto tidVal  = FromString(tid, alloc);
         auto nameVal = FromString(p.name, alloc);
 
         o.AddMember("ts", JSON::Value(p.ts - start), alloc);
@@ -577,7 +572,8 @@ STATICINLINE void PutEvents(JSON::Value& target, JSON::Document::AllocatorType& 
     }
 }
 
-STATICINLINE void PutArgs(JSON::Value& target, JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutArgs(
+    JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
     auto args = GetInitArgs().originalArguments();
 
@@ -587,88 +583,71 @@ STATICINLINE void PutArgs(JSON::Value& target, JSON::Document::AllocatorType& al
     }
 }
 
-STATICINLINE void PutExtraData(JSON::Value& target,
-                  JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutExtraData(
+    JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
     if(!Profiler::ExtraInfo())
         return;
 
     for(auto info : *Profiler::ExtraInfo())
     {
-        target.AddMember(FromString(info.key, alloc),
-                         FromString(info.value, alloc),
-                         alloc);
+        target.AddMember(
+            FromString(info.key, alloc), FromString(info.value, alloc), alloc);
     }
 }
 
-STATICINLINE void PutRuntimeInfo(JSON::Value& target,
-                   JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutRuntimeInfo(
+    JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
     auto const& buildi = State::GetBuildInfo();
 
-    target.AddMember("build.version",
-                     FromString(buildi.build_version, alloc),
-                     alloc);
-    target.AddMember("build.compiler",
-                     FromString(buildi.compiler, alloc),
-                     alloc);
-    target.AddMember("build.architecture",
-                     FromString(buildi.architecture, alloc),
-                     alloc);
+    target.AddMember(
+        "build.version", FromString(buildi.build_version, alloc), alloc);
+    target.AddMember(
+        "build.compiler", FromString(buildi.compiler, alloc), alloc);
+    target.AddMember(
+        "build.architecture", FromString(buildi.architecture, alloc), alloc);
 
-    target.AddMember("runtime.system",
-                     FromString(PlatformData::SystemDisplayString(),
-                                alloc),
-                     alloc);
-    target.AddMember("device",
-                     FromString(Strings::to_string(SysInfo::DeviceName()),
-                                alloc),
-                     alloc);
+    target.AddMember(
+        "runtime.system",
+        FromString(PlatformData::SystemDisplayString(), alloc),
+        alloc);
+    target.AddMember(
+        "device",
+        FromString(Strings::to_string(SysInfo::DeviceName()), alloc),
+        alloc);
 
-    target.AddMember("device.dpi",
-                     PlatformData::DeviceDPI(),
-                     alloc);
-    target.AddMember("device.type",
-                     PlatformData::DeviceVariant(),
-                     alloc);
-    target.AddMember("device.platform",
-                     PlatformData::PlatformVariant(),
-                     alloc);
-    target.AddMember("device.debug",
-                     PlatformData::IsDebug(),
-                     alloc);
+    target.AddMember("device.dpi", PlatformData::DeviceDPI(), alloc);
+    target.AddMember("device.type", PlatformData::DeviceVariant(), alloc);
+    target.AddMember("device.platform", PlatformData::PlatformVariant(), alloc);
+    target.AddMember("device.debug", PlatformData::IsDebug(), alloc);
 
-    target.AddMember("device.version",
-                     FromString(Strings::to_string(
-                                    SysInfo::GetSystemVersion()),
-                                alloc),
-                     alloc);
-    target.AddMember("device.motherboard",
-                     FromString(Strings::to_string(SysInfo::Motherboard()),
-                                alloc),
-                     alloc);
-    target.AddMember("device.chassis",
-                     FromString(Strings::to_string(SysInfo::Chassis()),
-                                alloc),
-                     alloc);
+    target.AddMember(
+        "device.version",
+        FromString(Strings::to_string(SysInfo::GetSystemVersion()), alloc),
+        alloc);
+    target.AddMember(
+        "device.motherboard",
+        FromString(Strings::to_string(SysInfo::Motherboard()), alloc),
+        alloc);
+    target.AddMember(
+        "device.chassis",
+        FromString(Strings::to_string(SysInfo::Chassis()), alloc),
+        alloc);
 
 #if defined(COFFEE_INTERNAL_BUILD)
-    target.AddMember("device.hostname",
-                     FromString(Strings::to_string(SysInfo::HostName()),
-                                alloc),
-                     alloc);
+    target.AddMember(
+        "device.hostname",
+        FromString(Strings::to_string(SysInfo::HostName()), alloc),
+        alloc);
 #endif
 
     auto pinfo = SysInfo::Processor();
-    target.AddMember("processor.manufacturer",
-                     FromString(pinfo.manufacturer, alloc),
-                     alloc);
-    target.AddMember("processor.model",
-                     FromString(pinfo.model, alloc),
-                     alloc);
-    target.AddMember("processor.firmware",
-                     FromString(pinfo.firmware, alloc),
-                     alloc);
+    target.AddMember(
+        "processor.manufacturer", FromString(pinfo.manufacturer, alloc), alloc);
+    target.AddMember("processor.model", FromString(pinfo.model, alloc), alloc);
+    target.AddMember(
+        "processor.firmware", FromString(pinfo.firmware, alloc), alloc);
 
     auto freqs = SysInfo::ProcessorFrequencies();
     if(freqs.size())
@@ -677,49 +656,31 @@ STATICINLINE void PutRuntimeInfo(JSON::Value& target,
         freq_j.SetArray();
         for(auto f : freqs)
             freq_j.PushBack(f, alloc);
-        target.AddMember("processor.frequency",
-                         freq_j,
-                         alloc);
-    }else
-        target.AddMember("processor.frequency",
-                         SysInfo::ProcessorFrequency(),
-                         alloc);
+        target.AddMember("processor.frequency", freq_j, alloc);
+    } else
+        target.AddMember(
+            "processor.frequency", SysInfo::ProcessorFrequency(), alloc);
 
-    target.AddMember("processor.cores",
-                     SysInfo::CoreCount(),
-                     alloc);
-    target.AddMember("processor.threads",
-                     SysInfo::ThreadCount(),
-                     alloc);
+    target.AddMember("processor.cores", SysInfo::CoreCount(), alloc);
+    target.AddMember("processor.threads", SysInfo::ThreadCount(), alloc);
 
-    target.AddMember("processor.hyperthreading",
-                     SysInfo::HasHyperThreading(),
-                     alloc);
-    target.AddMember("processor.pae",
-                     SysInfo::HasPAE(),
-                     alloc);
-    target.AddMember("processor.fpu",
-                     SysInfo::HasFPU(),
-                     alloc);
+    target.AddMember(
+        "processor.hyperthreading", SysInfo::HasHyperThreading(), alloc);
+    target.AddMember("processor.pae", SysInfo::HasPAE(), alloc);
+    target.AddMember("processor.fpu", SysInfo::HasFPU(), alloc);
 
-    target.AddMember("memory.bank",
-                     SysInfo::MemTotal(),
-                     alloc);
-    target.AddMember("memory.virtual.total",
-                     SysInfo::SwapTotal(),
-                     alloc);
-    target.AddMember("memory.virtual.available",
-                     SysInfo::SwapAvailable(),
-                     alloc);
+    target.AddMember("memory.bank", SysInfo::MemTotal(), alloc);
+    target.AddMember("memory.virtual.total", SysInfo::SwapTotal(), alloc);
+    target.AddMember(
+        "memory.virtual.available", SysInfo::SwapAvailable(), alloc);
 
     auto cwd = Env::CurrentDir();
 
-    target.AddMember("runtime.cwd",
-                     FromString(AnonymizePath(cwd), alloc),
-                     alloc);
+    target.AddMember(
+        "runtime.cwd", FromString(AnonymizePath(cwd), alloc), alloc);
 }
 
-}
+} // namespace CT_Stuff
 
 void ExportChromeTracerData(CString& target)
 {
@@ -727,7 +688,6 @@ void ExportChromeTracerData(CString& target)
 
     JSON::Document doc;
     doc.SetObject();
-
 
     JSON::Value events;
     events.SetArray();
@@ -742,14 +702,18 @@ void ExportChromeTracerData(CString& target)
     PutExtraData(extraData, doc.GetAllocator());
 
     auto appd = ApplicationData();
-    doc.AddMember("application.name",
-                  FromString(appd.application_name, doc.GetAllocator()),
-                  doc.GetAllocator());
-    doc.AddMember("application.org",
-                  FromString(appd.organization_name, doc.GetAllocator()),
-                  doc.GetAllocator());
-    doc.AddMember("application.version", ApplicationData().version_code,
-                  doc.GetAllocator());
+    doc.AddMember(
+        "application.name",
+        FromString(appd.application_name, doc.GetAllocator()),
+        doc.GetAllocator());
+    doc.AddMember(
+        "application.org",
+        FromString(appd.organization_name, doc.GetAllocator()),
+        doc.GetAllocator());
+    doc.AddMember(
+        "application.version",
+        ApplicationData().version_code,
+        doc.GetAllocator());
     PutRuntimeInfo(doc, doc.GetAllocator());
     doc.AddMember("runtime.arguments", args, doc.GetAllocator());
 
@@ -760,21 +724,21 @@ void ExportChromeTracerData(CString& target)
     target = JSON::Serialize(doc);
 }
 
-void ExportStringToFile(const CString &data, const Url &outfile)
+void ExportStringToFile(const CString& data, const Url& outfile)
 {
 #ifdef COFFEE_LOWFAT
     return;
 #endif
 
-    cVerbose(6,"Creating filename");
+    cVerbose(6, "Creating filename");
     CResources::Resource out(outfile);
     out.data = C_CCAST<c_ptr>(C_FCAST<c_cptr>(data.c_str()));
     /* -1 because we don't want the null-terminator */
     out.size = C_CAST<szptr>(data.size() - 1);
-    cVerbose(6,"Retrieving data pointers");
+    cVerbose(6, "Retrieving data pointers");
     if(!CResources::FileCommit(out, false, ResourceAccess::Discard))
         cWarning("Failed to export string to file");
-    cVerbose(6,"Wrote file");
+    cVerbose(6, "Wrote file");
 }
 
 void ExitRoutine()
@@ -785,26 +749,25 @@ void ExitRoutine()
 
     Profiler::DisableProfiler();
 
+    file_error ec;
+
     /* Verify if we should export profiler data */
     {
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
-        if(!(Env::ExistsVar(disable_flag)
-             && Env::GetVar(disable_flag) == "1"))
+        if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
         {
-            auto log_name = (Path{Env::ExecutableName()}
-                    .fileBasename());
+            auto log_name = (Path{Env::ExecutableName()}.fileBasename());
 
-            auto log_url = MkUrl("",
-                                 ResourceAccess::SpecifyStorage
-                                 |ResourceAccess::TemporaryFile);
+            auto log_url = MkUrl(
+                "",
+                ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
 
-            auto log_url2 = log_url
-                    + Path(log_name.internUrl + "-chrome")
-                    .addExtension("json");
+            auto log_url2 =
+                log_url +
+                Path(log_name.internUrl + "-chrome").addExtension("json");
 
-            log_url = log_url
-                    + Path(log_name.internUrl + "-profile")
-                    .addExtension("xml");
+            log_url = log_url +
+                      Path(log_name.internUrl + "-profile").addExtension("xml");
 
             CString target_log;
 
@@ -816,13 +779,15 @@ void ExitRoutine()
             Profiling::ExportStringToFile(target_log, log_url);
             Profiling::ExportStringToFile(target_chrome + " ", log_url2);
 
-            cVerbose(6, "Saved profiler data to: {0}",
-                     FileFun::CanonicalName(log_url));
+            cVerbose(
+                6,
+                "Saved profiler data to: {0}",
+                FileFun::CanonicalName(log_url, ec));
         }
     }
 }
 
-}
-}
+} // namespace Profiling
+} // namespace Coffee
 
 #endif

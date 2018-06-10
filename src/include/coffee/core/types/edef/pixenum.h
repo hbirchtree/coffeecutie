@@ -537,6 +537,13 @@ struct PixDesc
     {
     }
 
+    PixDesc(BitFmt bitfmt, PixCmp comp) :
+        cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(bitfmt),
+        comp(comp)
+    {
+    }
+
     PixDesc(CompFmt cf) : c(cf), bfmt(BitFmt::Byte), comp(GetPixComponent(c))
     {
     }

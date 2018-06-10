@@ -73,32 +73,10 @@ jobject and_get_asset_manager(JNIEnv* env, jobject activity)
 }
 #endif
 
-AAssetManager* and_asset_manager()
+AAssetManager* and_asset_manager(file_error& ec)
 {
     if(!m_android_asset_manager)
     {
-#if defined(COFFEE_USE_SDL2)
-        cVerbose(6, "Acquiring JNI environment from SDL");
-        JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-        cVerbose(6, "Acquiring Android activity from SDL");
-        jobject manager =
-            and_get_asset_manager(env, (jobject)SDL_AndroidGetActivity());
-        if(!manager)
-        {
-            cVerbose(6, "Failed to acquire assetManager object");
-            return nullptr;
-        }
-        cVerbose(
-            6,
-            "Calling into AAssetManager_fromJava({0},{1})",
-            (c_cptr const&)env,
-            (c_cptr const&)manager);
-        m_android_asset_manager = AAssetManager_fromJava(env, manager);
-        cVerbose(
-            6,
-            "Acquired AAssetManager* ptr: {0}",
-            (c_cptr const&)m_android_asset_manager);
-#else
         AndroidForeignCommand cmd;
 
         cmd.type = Android_QueryAssetManager;
@@ -107,87 +85,19 @@ AAssetManager* and_asset_manager()
             CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
         m_android_asset_manager = C_FCAST<AAssetManager*>(cmd.data.ptr);
-#endif
     }
 
     if(!m_android_asset_manager)
     {
-        cVerbose(6, "Failed to acquire AssetManager* from Java");
+        ec = FileError::SystemError;
+        ec = CString("Failed to retrieve AAssetManager*");
     }
 
     return m_android_asset_manager;
 }
 
-CString AndroidFileFun::NativePath(cstring fn)
-{
-    cVerbose(6, "Input filename: {0}", fn);
-
-    if(!fn)
-        return "";
-
-    if(fn[0] == '/')
-        return fn;
-
-    if(AssetApi::GetAsset(fn))
-    {
-        cVerbose(6, "File {0} identified as asset", fn);
-        return fn;
-    }
-
-    CString prefix;
-
-#if defined(COFFEE_USE_SDL2)
-    cVerbose(
-        6,
-        "ExternalStorageState() function pointer: {0}",
-        (uint64)SDL_AndroidGetExternalStorageState);
-
-    if(SDL_AndroidGetExternalStorageState() == 0 ||
-       !(SDL_AndroidGetExternalStorageState() &
-         SDL_ANDROID_EXTERNAL_STORAGE_READ))
-    {
-        /* Failure! */
-        cVerbose(6, "Android SDL external storage status failed");
-        if(SDL_AndroidGetInternalStoragePath())
-            prefix = SDL_AndroidGetInternalStoragePath();
-    } else
-    {
-        if(SDL_AndroidGetExternalStoragePath())
-            prefix = SDL_AndroidGetExternalStoragePath();
-    }
-
-    cVerbose(6, "Storage prefix: {0}", prefix);
-#else
-    AndroidForeignCommand cmd;
-
-    cmd.type = Android_QueryExternalDataPath;
-
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    prefix = cmd.store_string;
-#endif
-
-    if(prefix.size() == 0)
-        return CString(fn);
-
-    prefix.append("/");
-
-    cVerbose(6, "Android native path: {0}", prefix + fn);
-
-    return prefix + fn;
-}
-
-CString AndroidFileFun::NativePath(cstring fn, ResourceAccess storage)
-{
-    if(feval(storage, ResourceAccess::TemporaryFile))
-        return Env::ConcatPath("/data/local/tmp", fn);
-    else
-        return NativePath(fn);
-}
-
 AndroidFileFun::FileHandle AndroidFileFun::Open(
-    const Url& fn, ResourceAccess ac)
+    const Url& fn, RSCA ac, file_error& ec)
 {
     auto       url = *fn;
     FileHandle fh  = {};
@@ -195,28 +105,28 @@ AndroidFileFun::FileHandle AndroidFileFun::Open(
     if(feval(fn.flags & RSCA::AssetFile))
     {
         AAsset* fp = AAssetManager_open(
-            and_asset_manager(), url.c_str(), AASSET_MODE_BUFFER);
+            and_asset_manager(ec), url.c_str(), AASSET_MODE_BUFFER);
 
         if(!fp)
             return {};
 
         fh.fp = fp;
     } else
-        fh = Ancestor::Open(fn, ac);
+        fh = Ancestor::Open(fn, ac, ec);
 
     return fh;
 }
 
-bool AndroidFileFun::Close(FileHandle&& fh)
+bool AndroidFileFun::Close(FileHandle&& fh, file_error& ec)
 {
     if(fh.fp)
         AAsset_close(fh.fp);
     else
-        return Ancestor::Close(std::move(fh));
+        return Ancestor::Close(std::move(fh), ec);
     return true;
 }
 
-Bytes AndroidFileFun::Read(FileHandle const& fh, szptr size, bool nterminate)
+Bytes AndroidFileFun::Read(FileHandle const& fh, szptr size, file_error& ec)
 {
     if(fh.fp)
     {
@@ -232,20 +142,21 @@ Bytes AndroidFileFun::Read(FileHandle const& fh, szptr size, bool nterminate)
 
         return data;
     } else
-        return Ancestor::Read(fh, size, nterminate);
+        return Ancestor::Read(fh, size, ec);
 }
 
-bool AndroidFileFun::Write(FileHandle const& fh, const Bytes& d, bool)
+bool AndroidFileFun::Write(FileHandle const& fh, const Bytes& d, file_error& ec)
 {
     if(fh.fp)
     {
         /* AAsset does not support writing to assets. */
+        ec = FileError::InvalidAccess;
         return false;
     } else
-        return Ancestor::Write(fh, d, false);
+        return Ancestor::Write(fh, d, ec);
 }
 
-szptr AndroidFileFun::Size(AndroidFileFun::FileHandle const& fh)
+szptr AndroidFileFun::Size(AndroidFileFun::FileHandle const& fh, file_error& ec)
 {
     if(fh.fp)
     {
@@ -255,16 +166,16 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle const& fh)
         return AAsset_getLength(fh.fp);
 #endif
     } else
-        return Ancestor::Size(fh);
+        return Ancestor::Size(fh, ec);
 }
 
-szptr AndroidFileFun::Size(Url const& fn)
+szptr AndroidFileFun::Size(Url const& fn, file_error& ec)
 {
     auto url = *fn;
     if(feval(fn.flags & RSCA::AssetFile))
     {
         AAsset* ass = AAssetManager_open(
-            and_asset_manager(), url.c_str(), AASSET_MODE_UNKNOWN);
+            and_asset_manager(ec), url.c_str(), AASSET_MODE_UNKNOWN);
         if(!ass)
             return 0;
 #if(ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
@@ -276,18 +187,18 @@ szptr AndroidFileFun::Size(Url const& fn)
 
         return sz;
     } else
-        return Ancestor::Size(fn);
+        return Ancestor::Size(fn, ec);
 }
 
 AndroidFileFun::FileMapping AndroidFileFun::Map(
-    const Url& fn, ResourceAccess acc, szptr offset, szptr size, int*)
+    const Url& fn, RSCA acc, szptr offset, szptr size, file_error& ec)
 {
     auto url = *fn;
     if(feval(fn.flags & RSCA::AssetFile))
     {
-        if(feval(acc, ResourceAccess::WriteOnly))
+        if(feval(acc, RSCA::WriteOnly))
             return {};
-        FileHandle fh = Open(fn, acc);
+        FileHandle fh = Open(fn, acc, ec);
         if(!fh.fp)
             return {};
 #if(ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
@@ -296,7 +207,7 @@ AndroidFileFun::FileMapping AndroidFileFun::Map(
         if(AAsset_getLength(fh.fp) < (offset + size))
 #endif
         {
-            Close(std::move(fh));
+            Close(std::move(fh), ec);
             return {};
         }
 
@@ -312,27 +223,26 @@ AndroidFileFun::FileMapping AndroidFileFun::Map(
         return map;
     } else
     {
-        auto fm = Ancestor::Map(fn, acc, offset, size, nullptr);
+        auto fm = Ancestor::Map(fn, acc, offset, size, ec);
 
         FileMapping map;
-        map.data   = fm.data;
-        map.size   = fm.size;
+        map.data = fm.data;
+        map.size = fm.size;
         return map;
     }
 }
 
-bool AndroidFileFun::Unmap(AndroidFileFun::FileMapping&& mp)
+bool AndroidFileFun::Unmap(AndroidFileFun::FileMapping&& mp, file_error& ec)
 {
     if(mp.handle.fd)
     {
-        return Close(std::move(mp.handle));
+        return Close(std::move(mp.handle), ec);
     } else
     {
         Ancestor::FileMapping map = {};
-        //        map.acc                   = mp.acc;
         map.data = mp.data;
         map.size = mp.size;
-        return Ancestor::Unmap(std::move(map));
+        return Ancestor::Unmap(std::move(map), ec);
     }
 }
 

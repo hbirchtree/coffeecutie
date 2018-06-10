@@ -11,7 +11,13 @@ namespace Linux{
 struct LinuxFileFun : Posix::PosixFileFun
 {
 
-    static CString sys_read(cstring fn, bool quiet = false);
+    STATICINLINE CString sys_read(cstring fn)
+    {
+        file_error ec;
+        return sys_read(fn, ec);
+    }
+
+    static CString sys_read(cstring fn, file_error& ec);
 
 #if !defined(COFFEE_ANDROID)
     STATICINLINE bool SuperCache()

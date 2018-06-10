@@ -34,24 +34,6 @@ CString WindowsEnvFun::ExecutableName(cstring_w)
 #endif
 }
 
-CString WindowsEnvFun::GetUserData(cstring org, cstring app)
-{
-    if(!org && !app)
-    {
-        org = ApplicationData().organization_name.c_str();
-        app = ApplicationData().application_name.c_str();
-    }
-
-    CString out;
-    out = GetUserHome();
-    out = ConcatPath(out.c_str(),"AppData");
-    out = ConcatPath(out.c_str(),"Local");
-    out = ConcatPath(out.c_str(),org);
-    out = ConcatPath(out.c_str(),app);
-    out = CStrReplace(out, "\\", "/");
-    return out;
-}
-
 CString WindowsEnvFun::GetVar(cstring v)
 {
     CString out;
@@ -103,7 +85,7 @@ bool WindowsEnvFun::ExistsVar(cstring v)
 #endif
 }
 
-CString WindowsEnvFun::CurrentDir()
+Url WindowsEnvFun::CurrentDir()
 {
 #ifdef COFFEE_WINDOWS_UWP
     CWString out;
@@ -119,59 +101,26 @@ CString WindowsEnvFun::CurrentDir()
     return CString(out.begin(),out.end());
 #else
     out = CStrReplace(out, "\\", "/");
-    return out;
+    return MkUrl(out, RSCA::SystemFile);
 #endif
 }
 
-CString WindowsEnvFun::DirName(cstring fn)
+Url WindowsEnvFun::GetUserData(cstring org, cstring app)
 {
-	CString fn_ = fn;
+    if(!org && !app)
+    {
+        org = ApplicationData().organization_name.c_str();
+        app = ApplicationData().application_name.c_str();
+    }
 
-	auto idx = fn_.rfind('/');
-
-	if (idx != CString::npos)
-		return fn_.substr(0, idx);
-	else
-	{
-		if (!fn_.size())
-			return ".";
-		return fn_;
-	}
-
-//#ifdef COFFEE_WINDOWS_UWP
-//    return {};
-//#else
-//    CString fn_ = fn;
-//    fn_ = CStrReplace(fn, "/", "\\");
-//    CWString fn_w(fn_.begin(), fn_.end());
-//    //PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
-//    CString out(fn_w.begin(), fn_w.end());
-//    out.resize(StrLen(out.c_str()));
-//    out = CStrReplace(out, "\\", "/");
-//    return out;
-//#endif
-}
-CString WindowsEnvFun::BaseName(cstring fn)
-{
-    const constexpr cstring sep = "/";
-    
-	if (!fn)
-		return ".";
-
-	CString out = fn;
-	auto idx = out.rfind(sep);
-
-	if (out == "/")
-		return out;
-
-	if (idx == CString::npos)
-	{
-		if (!out.size())
-			return ".";
-		return out;
-	}
-
-    return out.substr(idx + 1, out.size() - idx - 1);
+    CString out;
+    out = GetUserHome().internUrl;
+    out = ConcatPath(out.c_str(),"AppData");
+    out = ConcatPath(out.c_str(),"Local");
+    out = ConcatPath(out.c_str(),org);
+    out = ConcatPath(out.c_str(),app);
+    out = CStrReplace(out, "\\", "/");
+    return MkUrl(out, RSCA::SystemFile);
 }
 }
 }

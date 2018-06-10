@@ -11,7 +11,7 @@ namespace Android{
 
 struct AndroidEnv : Posix::PosixEnvironmentFun
 {
-    static CString GetUserData(cstring,cstring);
+    static Url GetUserData(cstring,cstring);
 
     STATICINLINE CString GetPathSep()
     {

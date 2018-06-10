@@ -1,14 +1,14 @@
+#include <coffee/core/CDebug>
 #include <coffee/core/plat/environment/linux/sysinfo.h>
 #include <coffee/core/plat/file/linux/file.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/string_casting.h>
-#include <coffee/core/CDebug>
 
 #include <coffee/core/platform_data.h>
 
-namespace Coffee{
-namespace Environment{
-namespace Linux{
+namespace Coffee {
+namespace Environment {
+namespace Linux {
 
 CString LinuxSysInfo::cached_cpuinfo_string;
 
@@ -35,14 +35,14 @@ static CString get_lsb_release()
 {
 #ifndef COFFEE_LOWFAT
     CString version = LFileFun::sys_read("/etc/lsb-release");
-    cstring desc = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = Search::ChrFind(desc, '=') + 1)
-            && (desc = Search::ChrFind(desc, '"') + 1))
+    cstring desc    = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
+    if(desc && (desc = Search::ChrFind(desc, '=') + 1) &&
+       (desc = Search::ChrFind(desc, '"') + 1))
     {
         cstring end = Search::ChrFind(desc, '"');
         if(end || (end = Search::ChrFind(desc, 0)))
         {
-            CString desc_std(desc, end-desc);
+            CString desc_std(desc, end - desc);
             return desc_std;
         }
     }
@@ -54,7 +54,7 @@ static CString get_kern_ver()
 {
 #ifndef COFFEE_LOWFAT
     utsname d;
-    if(uname(&d)!=0)
+    if(uname(&d) != 0)
         return "?";
     else
         return d.release;
@@ -71,10 +71,10 @@ static CString get_linux_property(CString const& source, cstring query)
     if(res == source.npos)
         return {};
 
-    res = source.find(":", res)+1;
+    res      = source.find(":", res) + 1;
     auto end = source.find_first_of("\n", res);
 
-    return source.substr(res, end-res);
+    return source.substr(res, end - res);
 #else
     return {};
 #endif
@@ -83,7 +83,7 @@ static CString get_linux_property(CString const& source, cstring query)
 CString get_kern_name()
 {
     utsname d;
-    if(uname(&d)!=0)
+    if(uname(&d) != 0)
         return "?";
     else
         return d.sysname;
@@ -92,7 +92,7 @@ CString get_kern_name()
 CString get_kern_arch()
 {
     utsname d;
-    if(uname(&d)!=0)
+    if(uname(&d) != 0)
         return "?";
     else
         return d.machine;
@@ -105,9 +105,7 @@ PlatformData::DeviceType get_device_variant()
 #elif defined(COFFEE_RASPBERRYPI)
     return PlatformData::DeviceIOT;
 #endif
-
-    CString input = LFileFun::sys_read(
-                "/sys/class/dmi/id/chassis_type");
+    CString input = LFileFun::sys_read("/sys/class/dmi/id/chassis_type");
 
     int32 chassis_type = cast_string<int32>(input);
 
@@ -155,7 +153,7 @@ CString LinuxSysInfo::GetSystemVersion()
     return tmp;
 }
 
-void  LinuxSysInfo::FreeCPUInfoString()
+void LinuxSysInfo::FreeCPUInfoString()
 {
     cached_cpuinfo_string.resize(0);
 }
@@ -163,7 +161,7 @@ void  LinuxSysInfo::FreeCPUInfoString()
 CString LinuxSysInfo::CPUInfoString(bool force)
 {
     /* We don't want to read it tons of times */
-    if(!cached_cpuinfo_string.empty()&&!force)
+    if(!cached_cpuinfo_string.empty() && !force)
         return cached_cpuinfo_string;
 
     //        C_PERFWARN(__FILE__,__LINE__,"Reading from /proc/cpuinfo!");
@@ -180,7 +178,7 @@ Set<CString> LinuxSysInfo::CPUFlags()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query_linaro = "Features";
-    const cstring query = "flags";
+    const cstring query        = "flags";
 
     CPUInfoString();
 
@@ -194,7 +192,7 @@ Set<CString> LinuxSysInfo::CPUFlags()
 
     StrUtil::trim(result);
 
-    Set<CString> flags;
+    Set<CString>       flags;
     CString::size_type ptr = 0;
 
     while(true)
@@ -202,7 +200,7 @@ Set<CString> LinuxSysInfo::CPUFlags()
         auto sp = result.find(' ', ptr);
         if(sp == CString::npos)
             return flags;
-        flags.insert(result.substr(ptr, sp-ptr));
+        flags.insert(result.substr(ptr, sp - ptr));
         if(sp == result.npos)
             break;
         ptr = sp + 1;
@@ -221,19 +219,26 @@ SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
 
     DirFun::DirList list;
 
-    DirFun::Ls(MkUrl(net_path,
-                     ResourceAccess::SpecifyStorage
-                     |ResourceAccess::SystemFile),
-               list);
+    file_error ec;
+
+    DirFun::Ls(
+        MkUrl(
+            net_path,
+            ResourceAccess::SpecifyStorage | ResourceAccess::SystemFile),
+        list,
+        ec);
 
     bool has_loopback = false;
     for(DirFun::DirItem_t const& dir : list)
     {
         if(dir.name == "lo")
             has_loopback = true;
-        else {
-            CString operstate_file = Env::ConcatPath(net_path, dir.name.c_str());
-            operstate_file = Env::ConcatPath(operstate_file.c_str(), "operstate");
+        else
+        {
+            CString operstate_file =
+                Env::ConcatPath(net_path, dir.name.c_str());
+            operstate_file =
+                Env::ConcatPath(operstate_file.c_str(), "operstate");
             CString state = LFileFun::sys_read(operstate_file.c_str());
             if(state == "up")
                 return NetStatConnected;
@@ -253,17 +258,17 @@ uint32 LinuxSysInfo::CpuCount()
     CPUInfoString();
 
     uint32 count = 0;
-    auto res = cached_cpuinfo_string.find(query);
+    auto   res   = cached_cpuinfo_string.find(query);
     while(res != cached_cpuinfo_string.npos)
     {
-        res = cached_cpuinfo_string.find(':', res)+1;
+        res      = cached_cpuinfo_string.find(':', res) + 1;
         auto end = cached_cpuinfo_string.find('\n', res);
 
         CString result = cached_cpuinfo_string.substr(res, end);
         StrUtil::trim(result);
 
-        uint32 c = cast_string<uint32>(result)+1;
-        count = CMath::max(count,c);
+        uint32 c = cast_string<uint32>(result) + 1;
+        count    = CMath::max(count, c);
 
         res = cached_cpuinfo_string.find(query, end);
     }
@@ -285,10 +290,10 @@ uint32 LinuxSysInfo::CoreCount()
 
     if(!result.size())
     {
-        /* Some Android devices are bad at reporting CPU cores
-         *  using the hardware_concurrency API. For this reason,
-         *  we default to NPROC and hope that phones won't have
-         *  multi-socket setups anytime soon. */
+    /* Some Android devices are bad at reporting CPU cores
+     *  using the hardware_concurrency API. For this reason,
+     *  we default to NPROC and hope that phones won't have
+     *  multi-socket setups anytime soon. */
 #if defined(COFFEE_ANDROID)
         auto procs = sysconf(_SC_NPROCESSORS_ONLN);
 #else
@@ -315,7 +320,7 @@ u64 LinuxSysInfo::CachedMemory()
 
     if(idx != data.npos)
     {
-        idx = data.find(":", idx) + 1;
+        idx      = data.find(":", idx) + 1;
         auto end = data.find("\n", idx);
 
         auto mem = data.substr(idx, end - idx - 2);
@@ -353,7 +358,7 @@ HWDeviceInfo LinuxSysInfo::Processor()
     StrUtil::trim(md_str);
     StrUtil::trim(fw_str);
 
-    return HWDeviceInfo(mk_str,md_str,fw_str);
+    return HWDeviceInfo(mk_str, md_str, fw_str);
 #else
     return {};
 #endif
@@ -367,23 +372,18 @@ Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
         cstring prefix;
         cstring suffix;
     } root_paths[3] = {
-    {
-        "/sys/bus/cpu/devices", "cpufreq/scaling_max_freq"
-    },
-    {
-        "/sys/devices/system/cpu", "cpufreq/scaling_max_freq"
-    },
-    {
-        "/sys/devices/system/cpu", "cpufreq/cpuinfo_max_freq"
-    },
+        {"/sys/bus/cpu/devices", "cpufreq/scaling_max_freq"},
+        {"/sys/devices/system/cpu", "cpufreq/scaling_max_freq"},
+        {"/sys/devices/system/cpu", "cpufreq/cpuinfo_max_freq"},
     };
 
-    for (size_t i=0; i<3; i++)
+    for(size_t i = 0; i < 3; i++)
     {
-        Url p = MkUrl(root_paths[i].prefix, RSCA::SystemFile);
+        file_error ec;
+        Url        p = MkUrl(root_paths[i].prefix, RSCA::SystemFile);
 
         DirFun::DirList cpus;
-        DirFun::Ls(p, cpus);
+        DirFun::Ls(p, cpus, ec);
 
         if(cpus.size() == 0)
             continue;
@@ -396,9 +396,8 @@ Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
             if(e.name.substr(0, 3) != "cpu")
                 continue;
 
-            Url cpu = p
-                    + Path::Mk(e.name.c_str())
-                    + Path::Mk(root_paths[i].suffix);
+            Url cpu =
+                p + Path::Mk(e.name.c_str()) + Path::Mk(root_paths[i].suffix);
             CString tmp = LFileFun::sys_read((*cpu).c_str());
             if(tmp.size())
                 freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
@@ -421,8 +420,8 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
     /* We assume that ARM platforms use Linaro-derived kernels,
      *  this applies to IoT devices and Androids. */
 
-    auto freqs = ProcessorFrequencies();
-    bigscalar maxf = 0.0;
+    auto      freqs = ProcessorFrequencies();
+    bigscalar maxf  = 0.0;
     for(auto f : freqs)
         maxf = CMath::max(maxf, f);
 
@@ -440,7 +439,7 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
 
     StrUtil::trim(res);
 
-    return CMath::floor(cast_string<bigscalar>(res))/1000;
+    return CMath::floor(cast_string<bigscalar>(res)) / 1000;
 #endif
 #else
     return 0.0;
@@ -494,7 +493,7 @@ bool LinuxSysInfo::HasFPUExceptions()
     CString result = get_linux_property(cached_cpuinfo_string, query);
     StrUtil::trim(result);
 
-    return StrCmp(result.c_str(),"yes");
+    return StrCmp(result.c_str(), "yes");
 #else
     return false;
 #endif
@@ -513,7 +512,7 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
     szptr e = result.find(" ");
     if(e == CString::npos)
         return 0;
-    result.erase(e,result.size()-e);
+    result.erase(e, result.size() - e);
 
     return cast_string<uint64>(result);
 #else
@@ -541,7 +540,8 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
 {
 #ifndef COFFEE_LOWFAT
 #if defined(COFFEE_MAEMO)
-    return HWDeviceInfo("Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
+    return HWDeviceInfo(
+        "Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
 #else
     static const cstring prod_ver = DMI_PATH "/product_version";
     static const cstring prod_name = DMI_PATH "/product_name";
@@ -593,7 +593,7 @@ HWDeviceInfo LinuxSysInfo::Motherboard()
     CString model = LFileFun::sys_read(mb_model);
     CString version = LFileFun::sys_read(mb_version);
 
-    return HWDeviceInfo(manuf, model,  version);
+    return HWDeviceInfo(manuf, model, version);
 #endif
 #else
     return {};
@@ -603,12 +603,12 @@ HWDeviceInfo LinuxSysInfo::Motherboard()
 HWDeviceInfo LinuxSysInfo::Chassis()
 {
 #ifndef COFFEE_LOWFAT
-    static const cstring ch_manuf = DMI_PATH "/chassis_vendor";
-    static const cstring ch_model = DMI_PATH "/chassis_name";
+    static const cstring ch_manuf   = DMI_PATH "/chassis_vendor";
+    static const cstring ch_model   = DMI_PATH "/chassis_name";
     static const cstring ch_version = DMI_PATH "/chassis_version";
 
-    CString manuf = LFileFun::sys_read(ch_manuf);
-    CString model = LFileFun::sys_read(ch_model);
+    CString manuf   = LFileFun::sys_read(ch_manuf);
+    CString model   = LFileFun::sys_read(ch_model);
     CString version = LFileFun::sys_read(ch_version);
 
     static const cstring str_gen = "Generic";
@@ -634,19 +634,19 @@ HWDeviceInfo LinuxSysInfo::Chassis()
 HWDeviceInfo LinuxSysInfo::BIOS()
 {
 #ifndef COFFEE_LOWFAT
-    static const cstring bios_manuf = DMI_PATH "/bios_vendor";
-    static const cstring bios_name = DMI_PATH "/board_version";
+    static const cstring bios_manuf   = DMI_PATH "/bios_vendor";
+    static const cstring bios_name    = DMI_PATH "/board_version";
     static const cstring bios_version = DMI_PATH "/bios_version";
 
-    CString manuf = LFileFun::sys_read(bios_manuf);
-    CString name = LFileFun::sys_read(bios_name);
+    CString manuf   = LFileFun::sys_read(bios_manuf);
+    CString name    = LFileFun::sys_read(bios_name);
     CString version = LFileFun::sys_read(bios_version);
 
     static const cstring str_gen = "Generic";
     static const cstring str_lin = "BIOS";
 
     cstring manuf_c = str_gen;
-    cstring name_c = str_lin;
+    cstring name_c  = str_lin;
     cstring versn_c = "0x0";
 
     if(manuf.size() && manuf != invalid_info_string)
@@ -667,47 +667,47 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 {
 #ifndef COFFEE_LOWFAT
     static const constexpr cstring thermal_class = "/sys/class/thermal";
-    static const constexpr cstring hwmon_class = "/sys/class/hwmon";
-    Temp out = {};
+    static const constexpr cstring hwmon_class   = "/sys/class/hwmon";
+    Temp                           out           = {};
 
     /* First, look for thermal_zone* units */
     DirFun::DirList lst;
-    Path tmp,tmp2;
-    Url base = MkUrl("", RSCA::SystemFile);
+    Path            tmp, tmp2;
+    Url             base = MkUrl("", RSCA::SystemFile);
 
-    if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst, true))
+    file_error ec;
+
+    if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst, ec))
     {
         for(auto e : lst)
             if(e.name != "." && e.name != "..")
             {
                 tmp = ((Path{} + thermal_class) + e.name.c_str()) + "temp";
 
-                if(LFileFun::Exists(base + tmp))
+                if(LFileFun::Exists(base + tmp, ec))
                 {
-                    CString temp = LFileFun::sys_read(
-                                tmp.internUrl.c_str(),
-                                true
-                                );
+                    CString temp =
+                        LFileFun::sys_read(tmp.internUrl.c_str(), ec);
                     out.current = cast_string<scalar>(temp) / 1000;
                     break;
                 }
             }
     }
 
-    lst = {};
-    tmp = Path::Mk("");
+    lst  = {};
+    tmp  = Path::Mk("");
     tmp2 = Path::Mk("");
 
     /* hwmon* units */
-    if(DirFun::Ls(MkUrl(hwmon_class, RSCA::SystemFile), lst, true))
+    if(DirFun::Ls(MkUrl(hwmon_class, RSCA::SystemFile), lst, ec))
     {
         DirFun::DirList lst2;
-        Url path = MkUrl("", RSCA::SystemFile);
+        Url             path = MkUrl("", RSCA::SystemFile);
         for(auto e : lst)
         {
-            tmp = Path{hwmon_class};
+            tmp       = Path{hwmon_class};
             Url path2 = path + (tmp + e.name.c_str());
-            if(DirFun::Ls(path2, lst2, true))
+            if(DirFun::Ls(path2, lst2, ec))
             {
                 for(auto e2 : lst2)
                 {
@@ -718,10 +718,8 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 
                     Url path2 = path + Path{e2.name.c_str()};
 
-                    CString temp_s = LFileFun::sys_read(
-                                path2.internUrl.c_str(),
-                                true
-                                );
+                    CString temp_s =
+                        LFileFun::sys_read(path2.internUrl.c_str(), ec);
 
                     out.current = cast_string<scalar>(temp_s);
                 }
@@ -736,6 +734,6 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 }
 #endif
 
-}
-}
-}
+} // namespace Linux
+} // namespace Environment
+} // namespace Coffee

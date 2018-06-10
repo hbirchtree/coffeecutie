@@ -1,6 +1,12 @@
-# GLeam requires no dependencies outside of SDL2
-if(COFFEE_BUILD_GLEAM AND COFFEE_BUILD_OPENGL)
-    add_subdirectory(apis/gleam)
+option ( BUILD_OPENGL "Target OpenGL API" ON )
+
+if(BUILD_OPENGL)
+    # GLEAM supports OpenGL 3.3 -> 4.6 and OpenGL ES 2.0 -> 3.2
+    option ( BUILD_GLEAM "Build with GLEAM graphics backend" ON )
+
+    if(BUILD_GLEAM)
+        add_subdirectory(apis/gleam)
+    endif()
 endif()
 
 add_subdirectory(common)

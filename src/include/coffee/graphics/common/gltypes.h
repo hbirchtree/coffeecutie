@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPICS_APIS_GLCORE_GLTYPES_H
 #define COFFEE_GRAPICS_APIS_GLCORE_GLTYPES_H
 
-#include <coffee/core/base/threading/cthreading.h>
+#include <coffee/core/types/tdef/stlfunctypes.h>
 
 namespace Coffee{
 /*!

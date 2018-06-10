@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.1)
-
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+option ( BUILD_DLANG "Build D bindings" OFF )
+option ( BUILD_PYTHON "Build Python bindings" ON )
+option ( BUILD_CSHARP "Build C# bindings" OFF )
 
 macro(CONFIG_SWIG_BUILD SFILE ID)
     # Explicit C++ build

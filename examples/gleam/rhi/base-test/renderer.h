@@ -8,6 +8,8 @@
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 
+#include <coffee/components/components.h>
+
 #include <coffee/interfaces/cgraphics_util.h>
 
 #if defined(FEATURE_USE_ASIO)
@@ -27,12 +29,7 @@ using namespace Coffee;
 using namespace Display;
 
 using CDRenderer = CSDL2Renderer;
-
-#ifndef USE_NULL_RENDERER
-using GLM = GLEAMAPI;
-#else
-using GLM = RHI::NullAPI;
-#endif
+using GLM        = GLEAMAPI;
 
 struct RuntimeState
 {
@@ -43,6 +40,111 @@ struct RuntimeState
 
 static const constexpr szptr num_textures = 5;
 
+struct TransformPair
+{
+    Transform first;
+    Matf4     second;
+    Vecf3     mask;
+};
+
+class TransformContainer : public Components::ComponentContainer<TransformPair>
+{
+    Map<u64, TransformPair> m_objects;
+    Span<Matf4>             m_matrices;
+
+  public:
+    TransformContainer(Span<Matf4>&& matrices) : m_matrices(std::move(matrices))
+    {
+    }
+
+    virtual void register_entity(u64 id)
+    {
+        m_objects[id] = {};
+    }
+    virtual void unregister_entity(u64 id)
+    {
+        m_objects.erase(id);
+    }
+    virtual TransformPair* get(u64 id)
+    {
+        return &m_objects[id];
+    }
+    virtual bool visit(
+        Components::EntityContainer& container, Components::Entity& entity)
+    {
+        auto camera = *container.get<CGCamera>(entity.id);
+
+        camera.position.x() -= 0.1f;
+
+        auto  projection    = GenPerspective(camera);
+        auto& object_matrix = m_objects[entity.id].second;
+
+        auto left_idx  = (entity.id - 1) * 2;
+        auto right_idx = left_idx + 1;
+
+        auto output_matrix = projection * GenTransform(camera) * object_matrix;
+
+        m_matrices[left_idx] = output_matrix;
+
+        camera.position.x() += 0.2f;
+
+        m_matrices[right_idx] =
+            projection * GenTransform(camera) * object_matrix;
+
+        return true;
+    }
+};
+
+class CameraContainer : public Components::ComponentContainer<CGCamera>
+{
+    CGCamera camera;
+
+  public:
+    CameraContainer()
+    {
+        camera.aspect      = 1.6f;
+        camera.fieldOfView = 90.f;
+        camera.zVals.far_  = 100.f;
+
+        camera.position = {0, 0, -10};
+    }
+
+    virtual void register_entity(u64)
+    {
+    }
+    virtual void unregister_entity(u64)
+    {
+    }
+    virtual CGCamera* get(u64)
+    {
+        return &camera;
+    }
+};
+
+class TimeSystem : public Components::Subsystem<Chrono::seconds_float>
+{
+    using system_clock = Chrono::high_resolution_clock;
+
+    Chrono::seconds_float    loop_time;
+    system_clock::time_point start_time;
+
+  public:
+    TimeSystem() : loop_time(), start_time(system_clock::now())
+    {
+    }
+
+    // Subsystem interface
+  public:
+    virtual void start_frame()
+    {
+        loop_time = system_clock::now() - start_time;
+    }
+    virtual Chrono::seconds_float get()
+    {
+        return loop_time;
+    }
+};
+
 struct RendererState
 {
     // State that can be loaded from disk
@@ -50,13 +152,21 @@ struct RendererState
 
     RuntimeQueue* rt_queue;
 
+    Components::EntityContainer entities;
+    CameraContainer             camera_cnt;
+    TimeSystem                  timing_sys;
+
     uint32 frameCount;
 
     struct RGraphicsData
     {
-        RGraphicsData() : params(eye_pip)
+        RGraphicsData() :
+            transform_cnt(Span<Matf4>::From(object_matrices, 128)),
+            params(eye_pip)
         {
         }
+
+        TransformContainer transform_cnt;
 
         // GLEAM data
         GLM::API_CONTEXT loader = nullptr;
@@ -73,17 +183,8 @@ struct RendererState
         GLM::SM_2DA eyesamp = {};
 
         // Graphics data
-        CGCamera camera;
-        Matf4    object_matrices[6] = {};
-        scalar   time_value         = 0.f;
-
-        Transform base_transform;
-        Transform floor_transform;
-
-        // Timing information
-        bigscalar tprevious = 0.0;
-        bigscalar tbase     = 0.0;
-        bigscalar tdelta    = 0.0;
+        Matf4  object_matrices[128] = {};
+        scalar time_value;
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
@@ -99,29 +200,11 @@ struct RendererState
     } g_data;
 };
 
-void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
-{
-    RendererState* rdata = C_FCAST<RendererState*>(r);
-
-    if(e.type == CIEvent::Keyboard)
-    {
-        auto kev = C_CAST<CIKeyEvent const*>(data);
-
-        /* Single presses */
-        if(kev->mod & CIKeyEvent::PressedModifier &&
-           !(kev->mod & CIKeyEvent::RepeatedModifier))
-        {
-            if(kev->key == CK_F10)
-                rdata->r_state.debug_enabled = !rdata->r_state.debug_enabled;
-        }
-    }
-}
-
 void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
-    auto& g = d->g_data;
+    RendererState::RGraphicsData& g = d->g_data;
 
-//    g = {};
+    //    g = {};
 
     Store::RestoreMemory(Bytes::Create(d->r_state), 0);
 
@@ -146,7 +229,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     /*
      * Loading the GLeam API, chosen according to what is available at runtime
      */
-    g.loader = GLM::GetLoadAPI();
+    GLM::OPTS load_opts      = {};
+    load_opts.crash_on_error = true;
+    g.loader                 = GLM::GetLoadAPI(load_opts);
     if(!g.loader(PlatformData::IsDebug()))
     {
         cDebug("Failed to load GLEAM API");
@@ -192,9 +277,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     cVerbose("Generated vertex buffers");
 
-    auto& v_shader = g.v_shader;
-    auto& f_shader = g.f_shader;
-    auto& eye_pip  = g.eye_pip;
+    auto& eye_pip = g.eye_pip;
 
     /* Compiling shaders and assemble a graphics pipeline */
 
@@ -298,41 +381,19 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
      */
     g.params.get_pipeline_params();
 
-    for(auto constant : g.params.constants())
+    for(auto& constant : g.params.constants())
     {
         if(constant.m_name == "transform")
-            g.params.set_constant(
-                constant,
-                Bytes::From(g.object_matrices, sizeof(g.object_matrices)));
+            g.params.set_constant(constant, Bytes::From(g.object_matrices, 6));
         else if(constant.m_name == "texdata")
             g.params.set_sampler(constant, g.eyesamp.handle());
         else if(constant.m_name == "mx")
             g.params.set_constant(constant, Bytes::Create(g.time_value));
     }
 
+    g.params.build_state();
+
     cVerbose("Acquire and set shader uniforms");
-
-    /* Specifying the uniform data, such as camera matrices
-     *  and transforms */
-
-    auto& camera = g.camera;
-
-    camera = CGCamera();
-
-    camera.aspect      = 1.6f;
-    camera.fieldOfView = 85.f;
-    camera.zVals.far_  = 100.;
-
-    camera.position = Vecf3(0, 0, -15);
-
-    auto& base_transform  = g.base_transform;
-    auto& floor_transform = g.floor_transform;
-
-    base_transform.position = Vecf3(0, 0, 5);
-    base_transform.scale    = Vecf3(1);
-
-    floor_transform.position = Vecf3(0, -2, 5);
-    floor_transform.scale    = Vecf3(2);
 
     /* Vertex descriptors are based upon the ideas from GL4.3 */
     vertdesc.bind();
@@ -340,77 +401,92 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     GLM::PreDrawCleanup();
 
-    GLM::DefaultFramebuffer().clear(0, g.clear_col, 0.5);
-
-    g.tprevious = d->r_state.time_base;
-    g.tbase     = d->r_state.time_base;
-
     g.rpass_s.pipeline    = &g.eye_pip;
     g.rpass_s.blend       = &g.blendstate;
     g.rpass_s.depth       = &g.deptstate;
     g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
 
+    g.call.m_inst = true;
+
     g.rpass_s.draws.push_back(
         {&g.vertdesc, &g.params.get_state(), g.call, g.instdata});
 
     GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
-}
 
-void LogicLoop(CDRenderer& renderer, RendererState* d)
-{
-    auto& g = d->g_data;
+    d->entities.register_component(d->camera_cnt);
+    d->entities.register_component(g.transform_cnt);
+    d->entities.register_subsystem(d->timing_sys);
 
-    renderer.pollEvents();
+    Components::EntityRecipe floor_object;
+    Components::EntityRecipe base_object;
 
-    auto& base_transform  = g.base_transform;
-    auto& floor_transform = g.floor_transform;
-    auto& camera          = g.camera;
+    floor_object.components = {typeid(CGCamera).hash_code(),
+                               typeid(TransformPair).hash_code()};
+    floor_object.interval   = Chrono::milliseconds(10);
+    base_object             = floor_object;
 
-    auto& tprevious = g.tprevious;
-    auto& tdelta    = g.tdelta;
-    auto& tbase     = g.tbase;
+    floor_object.loop = [](Components::EntityContainer& c) {
+        auto& xf = c.get<TransformPair>();
 
-    auto& time_value = g.time_value;
+        auto time = c.subsystem<Chrono::seconds_float>().get();
 
-    auto& object_matrices = g.object_matrices;
+        xf.first.position.x() = CMath::sin(time.count() * 2.f) * xf.mask.x();
+        xf.first.position.y() = CMath::cos(time.count() * 2.f) * xf.mask.y();
 
-    /* Define frame data */
-    base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 2.);
-    base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 2.);
+        xf.first.rotation.y() = CMath::sin(time.count());
+        xf.first.rotation     = normalize_quat(xf.first.rotation);
 
-    time_value = C_CAST<scalar>(CMath::sin(tprevious) + (CMath::pi / 4.));
+        xf.second = GenTransform(xf.first);
+    };
 
-    floor_transform.rotation.y() = C_CAST<scalar>(CMath::sin(tprevious));
-    floor_transform.rotation     = normalize_quat(floor_transform.rotation);
+    base_object.loop = [](Components::EntityContainer& c) {
+        auto& xf   = c.get<TransformPair>();
+        auto  time = c.subsystem<Chrono::seconds_float>().get().count();
 
-    camera.position.x() -= 0.1;
-    object_matrices[0] = GenPerspective<scalar>(camera) *
-                         GenTransform<scalar>(camera) *
-                         GenTransform<scalar>(base_transform);
-    object_matrices[2] = GenPerspective<scalar>(camera) *
-                         GenTransform<scalar>(camera) *
-                         GenTransform<scalar>(floor_transform);
+        xf.first.position.x() = CMath::sin(time * 4.f);
 
-    camera.position.x() += 0.2;
-    object_matrices[1] = GenPerspective<scalar>(camera) *
-                         GenTransform<scalar>(camera) *
-                         GenTransform<scalar>(base_transform);
-    object_matrices[3] = GenPerspective<scalar>(camera) *
-                         GenTransform<scalar>(camera) *
-                         GenTransform<scalar>(floor_transform);
+        xf.second = GenTransform(xf.first);
+    };
 
-    camera.position.x() -= 0.1;
+    floor_object.tags = 0x1;
+    base_object.tags  = 0x2;
 
-    tdelta    = tbase + renderer.contextTime() - tprevious;
-    tprevious = tbase + renderer.contextTime();
+    d->entities.create_entity(base_object);
+    d->entities.create_entity(floor_object);
 
-    d->r_state.time_base = tprevious;
+    for(auto& entity : d->entities.select(0x1))
+    {
+        auto& xf = *d->entities.get<TransformPair>(entity.id);
+
+        xf.first.position = {0, 0, 5};
+        xf.first.scale    = {1.5};
+
+        xf.mask.x() = 2;
+        xf.mask.y() = 2;
+    }
+
+    for(auto& entity : d->entities.select(0x2))
+    {
+        auto& xf = *d->entities.get<TransformPair>(entity.id);
+
+        xf.first.position = {0, 0, 5};
+        xf.first.scale    = {1};
+
+        xf.mask.x() = 1;
+        xf.mask.y() = 0.2f;
+    }
 }
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    LogicLoop(renderer, d);
     auto& g = d->g_data;
+
+    d->entities.exec();
+    g.time_value =
+        (CMath::sin(
+             d->entities.subsystem<Chrono::seconds_float>().get().count()) /
+         2.f) +
+        0.5f;
 
     GLM::DefaultFramebuffer().use(FramebufferT::All);
     GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
@@ -419,8 +495,6 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
     renderer.swapBuffers();
     renderer.pollEvents();
-
-    // d->frameCount++;
 }
 
 void RendererCleanup(CDRenderer& renderer, RendererState* d)

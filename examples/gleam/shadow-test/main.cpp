@@ -67,9 +67,6 @@ void cleanup_fun(CDRenderer&, SharedData*)
 
 int32 coffee_main(int32, cstring_w*)
 {
-    SetPrintingVerbosity(8);
-    FileResourcePrefix("sample_data/");
-
     CString err;
 
     ELoop* globLoop = new ELoop{

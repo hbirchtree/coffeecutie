@@ -17,47 +17,6 @@ namespace Coffee{
 namespace Environment{
 namespace Posix{
 
-CString PosixEnvironmentFun::BaseName(cstring n)
-{
-#if !defined(COFFEE_USE_POSIX_BASENAME)
-    if(StrLen(n)<1)
-        return ".";
-    // This one is fast, but does not handle rootfs
-    int64 idx = Search::ChrFindR(n,'/')-n;
-    if(idx < 0)
-        return n;
-    CString out;
-    out.insert(0,&n[idx+1],StrLen(n)-idx-1);
-    if(out.empty())
-        out = ".";
-    return out;
-#else
-    // This one is slower, but more compliant
-    CString out = n;
-    CString out_s = basename(&out[0]);
-    return out_s;
-#endif
-}
-
-CString PosixEnvironmentFun::DirName(cstring fname)
-{
-#if !defined(COFFEE_USE_POSIX_BASENAME)
-    int64 idx = Search::ChrFindR(fname,'/')-fname;
-    if(idx < 0)
-        return fname;
-    CString out;
-    out.insert(0,&fname[0],idx);
-    if(out.empty())
-        out = ".";
-    return out;
-#else
-    // This one is slower, but more compliant
-    CString out = fname;
-    CString out_s = dirname(&out[0]);
-    return out_s;
-#endif
-}
-
 bool PosixEnvironmentFun::PrependVar(cstring var, cstring val)
 {
     CString new_val = val;
@@ -77,7 +36,7 @@ CString PosixEnvironmentFun::ConcatPath(cstring v1, cstring v2)
     return v1+GetPathSep()+v2;
 }
 
-CString PosixEnvironmentFun::CurrentDir()
+Url PosixEnvironmentFun::CurrentDir()
 {
     CString dir;
     dir.resize(PATH_MAX);
@@ -86,7 +45,7 @@ CString PosixEnvironmentFun::CurrentDir()
     auto idx = dir.find('\0');
     if(idx != CString::npos)
         dir.resize(idx);
-    return dir;
+    return MkUrl(dir, RSCA::SystemFile);
 }
 
 EnvInterface::Variables PosixEnvironmentFun::Environment()

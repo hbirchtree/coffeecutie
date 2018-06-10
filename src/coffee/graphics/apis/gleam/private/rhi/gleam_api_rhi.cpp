@@ -20,7 +20,11 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
+#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 using GLC = CGL33;
+#else
+using GLC = CGL43;
+#endif
 
 GraphicsAPI_Threading::GraphicsQueue& GLEAM_API::Queue(u32 idx)
 {
@@ -215,7 +219,13 @@ bool GLEAM_API::LoadAPI(
     bool forced_api = false;
     if(Env::ExistsVar("GLEAM_API"))
     {
-        store->CURR_API = gl_level_from_string(Env::GetVar("GLEAM_API"));
+        auto level = Env::GetVar("GLEAM_API");
+
+        store->CURR_API = gl_level_from_string(level);
+
+        if(store->CURR_API == GL_Nothing)
+            throw undefined_behavior("invalid GLEAM API: " + level);
+
         forced_api      = true;
     }
 
@@ -226,8 +236,8 @@ bool GLEAM_API::LoadAPI(
     if(prevApi != GLES_2_0 && store->CURR_API == GLES_2_0)
     {
         GLuint vao = 0;
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
+        CGL33::VAOAlloc(vao);
+        CGL33::VAOBind(vao);
     }
 #endif
 
@@ -242,7 +252,6 @@ bool GLEAM_API::LoadAPI(
         CGL::Debug::UnsetDebugGroup();
         return false;
     }
-    cVerbose(10, GLM_API "Selected API: {0}", store->CURR_API);
 
     //#if GL_VERSION_VERIFY(0x300, 0x300)
     //    if(CGL::Tex_SRGB_Supported())
@@ -317,7 +326,7 @@ bool GLEAM_API::LoadAPI(
                                           store->features.draw_base_instance;
 
     store->features.rasterizer_discard = (api != GLES_2_0);
-    store->features.depth_clamp        = is_desktop;
+    store->features.depth_clamp        = is_desktop && false;
     store->features.viewport_indexed   = (api != GLES_2_0) && (api != GLES_3_0);
 
     store->features.separable_programs = is_desktop && (api != GL_3_3);
@@ -373,17 +382,22 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, uint32 i)
             GLC::Enable(Feature::Dither);
         else
             GLC::Disable(Feature::Dither);
-    } else if(GLEAM_FEATURES.viewport_indexed)
+    }
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    else if(GLEAM_FEATURES.viewport_indexed)
     {
         if(rstate.dither())
             GLC::Enablei(Feature::Dither, i);
         else
             GLC::Disablei(Feature::Dither, i);
     }
+#endif
 
+#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
     GLC::PolygonMode(
         Face::Both,
         (rstate.wireframeRender()) ? DrawMode::Line : DrawMode::Fill);
+#endif
 
     if(!GLEAM_FEATURES.viewport_indexed)
     {
@@ -391,13 +405,16 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, uint32 i)
             GLC::Enable(Feature::RasterizerDiscard);
         else
             GLC::Disable(Feature::RasterizerDiscard);
-    } else if(GLEAM_FEATURES.viewport_indexed)
+    }
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    else if(GLEAM_FEATURES.viewport_indexed)
     {
         if(rstate.discard())
             GLC::Enablei(Feature::RasterizerDiscard, i);
         else
             GLC::Disablei(Feature::RasterizerDiscard, i);
     }
+#endif
 
     //    GLC::ColorLogicOp(rstate.colorOp());
     //    if(!GLEAM_FEATURES.draw_color_mask)
@@ -486,7 +503,11 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             GLC::Viewport(tview.x, tview.y, tview.size());
         }
         if(vstate.m_depth.size() > 0)
+#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
             GLC::DepthRange(vstate.depth(0).near_, vstate.depth(0).far_);
+#else
+            GLC::DepthRangef(vstate.depth(0).near_, vstate.depth(0).far_);
+#endif
         if(vstate.m_scissor.size() > 0)
         {
             auto    sview = vstate.scissor(0);
@@ -507,13 +528,16 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
             GLC::Enable(Feature::Blend);
         } else
             GLC::Disable(Feature::Blend);
-    } else if(GLEAM_FEATURES.viewport_indexed)
+    }
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    else if(GLEAM_FEATURES.viewport_indexed)
     {
         if(bstate.blend())
             GLC::Enablei(Feature::Blend, i);
         else
             GLC::Disablei(Feature::Blend, i);
     }
+#endif
 
     if(bstate.blend())
     {
@@ -548,24 +572,12 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 
 void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
 {
-    if(!GLEAM_FEATURES.viewport_indexed)
+    if(dstate.testDepth())
+        GLC::Enable(Feature::DepthTest);
+    else
     {
-        if(dstate.testDepth())
-            GLC::Enable(Feature::DepthTest);
-        else
-        {
-            GLC::Disable(Feature::DepthTest);
-            return;
-        }
-    } else if(GLEAM_FEATURES.viewport_indexed)
-    {
-        if(dstate.testDepth())
-            GLC::Enablei(Feature::DepthTest, i);
-        else
-        {
-            GLC::Disablei(Feature::DepthTest, i);
-            return;
-        }
+        GLC::Disable(Feature::DepthTest);
+        return;
     }
 
     if(dstate.testDepth())
@@ -596,13 +608,16 @@ void GLEAM_API::SetStencilState(const STENSTATE& sstate, uint32 i)
             GLC::Enable(Feature::StencilTest);
         else
             GLC::Disable(Feature::StencilTest);
-    } else if(GLEAM_FEATURES.viewport_indexed)
+    }
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    else if(GLEAM_FEATURES.viewport_indexed)
     {
         if(sstate.testStencil())
             GLC::Enablei(Feature::StencilTest, i);
         else
             GLC::Disablei(Feature::StencilTest, i);
     }
+#endif
 
     //    GLC::StencilFuncSeparate(Face::Both,0x00000000);
 
@@ -614,280 +629,6 @@ void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
     Throw(implementation_error("not implemented!"));
 
     /*TODO: Implement more processing switches */
-}
-
-template<typename T>
-STATICINLINE Span<T> get_uniform_span(const T* d, szptr size)
-{
-    return Span<T>::Unsafe(C_CCAST<T*>(d), size, size / sizeof(T));
-}
-
-template<typename T>
-void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
-{
-    if(!data)
-        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
-
-    C_USED(prog);
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    if(GLEAM_FEATURES.separable_programs)
-        CGL43::Uniffv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
-    else
-#endif
-        CGL33::Uniffv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
-}
-
-template<typename T>
-void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
-{
-    if(!data)
-        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
-
-    C_USED(prog);
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    if(GLEAM_FEATURES.separable_programs)
-        CGL43::Uniffv(
-            prog, C_CAST<i32>(idx), false, get_uniform_span(data, arr_size));
-    else
-#endif
-        CGL33::Uniffv(
-            C_CAST<i32>(idx), false, get_uniform_span(data, arr_size));
-}
-
-template<typename T>
-void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
-{
-    if(!data)
-        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
-
-    C_USED(prog);
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    if(GLEAM_FEATURES.separable_programs)
-        CGL43::Unifiv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
-    else
-#endif
-        CGL33::Unifiv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
-}
-
-#if GL_VERSION_VERIFY(0x330, 0x300)
-template<typename T>
-void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
-{
-    if(!data)
-        throw undefined_behavior(GLM_API "passing nullptr to Uniform*v");
-
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    if(GLEAM_FEATURES.separable_programs)
-        CGL43::Unifuiv(
-            prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
-    else
-#endif
-        CGL33::Unifuiv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
-}
-#endif
-
-void GLEAM_API::SetShaderUniformState(
-    const GLEAM_Pipeline&           pipeline,
-    ShaderStage const&              stage,
-    const GLEAM_ShaderUniformState& ustate)
-{
-    DPROF_CONTEXT_FUNC(GLM_API);
-
-    using namespace ShaderTypes;
-
-    /* TODO: Tie uniforms to their applicable stages */
-
-    CGhnd prog = 0;
-
-    if(!GLEAM_FEATURES.separable_programs)
-        prog = pipeline.m_handle;
-    else if(GLEAM_FEATURES.separable_programs)
-    {
-        /*TODO: Find better way of doing this */
-        for(auto s : pipeline.m_programs)
-            if(feval(s.stages & stage))
-            {
-                prog = s.shader->m_handle;
-                break;
-            }
-    }
-
-    for(auto u : ustate.m_uniforms)
-    {
-        if(!feval(u.second.stages & stage))
-            continue;
-        Bytes const* db = u.second.value->data;
-        if(!db)
-            continue;
-
-        /* TODO: Cache uniform state changes, only set them when necessary */
-
-        uint32 const& idx = u.first;
-        uint32 const& fgs = u.second.value->flags;
-
-        using Matf2_t = sdt_uniff<Mat_d | S2>;
-        using Matf3_t = sdt_uniff<Mat_d | S3>;
-        using Matf4_t = sdt_uniff<Mat_d | S4>;
-
-        using Vecf2_t = sdt_uniff<Vec_d | S2>;
-        using Vecf3_t = sdt_uniff<Vec_d | S3>;
-        using Vecf4_t = sdt_uniff<Vec_d | S4>;
-
-        using Veci2_t = sdt_unifi<Vec_d | S2>;
-        using Veci3_t = sdt_unifi<Vec_d | S3>;
-        using Veci4_t = sdt_unifi<Vec_d | S4>;
-
-        using Vecu2_t = sdt_unifu<Vec_d | S2>;
-        using Vecu3_t = sdt_unifu<Vec_d | S3>;
-        using Vecu4_t = sdt_unifu<Vec_d | S4>;
-
-        using Valuef_t = sdt_uniff<S1>;
-        using Valuei_t = sdt_unifi<S1>;
-        using Valueu_t = sdt_unifu<S1>;
-
-        union
-        {
-            c_cptr data;
-
-            Matf2* m2;
-            Matf3* m3;
-            Matf4* m4;
-
-            Vecf2* v2;
-            Vecf3* v3;
-            Vecf4* v4;
-
-            Veci2* vi2;
-            Veci3* vi3;
-            Veci4* vi4;
-
-            Vecui2* vu2;
-            Vecui3* vu3;
-            Vecui4* vu4;
-
-            scalar* s;
-            i32*    i;
-            u32*    u;
-        } ptr;
-
-        ptr.data = db->data;
-
-        switch(fgs)
-        {
-        case Matf2_t::value:
-            SetUniform_wrapf_m(prog, idx, ptr.m2, db->size);
-            break;
-        case Matf3_t::value:
-            SetUniform_wrapf_m(prog, idx, ptr.m3, db->size);
-            break;
-        case Matf4_t::value:
-            SetUniform_wrapf_m(prog, idx, ptr.m4, db->size);
-            break;
-
-        case Vecf2_t::value:
-            SetUniform_wrapf(prog, idx, ptr.v2, db->size);
-            break;
-        case Vecf3_t::value:
-            SetUniform_wrapf(prog, idx, ptr.v3, db->size);
-            break;
-        case Vecf4_t::value:
-            SetUniform_wrapf(prog, idx, ptr.v4, db->size);
-            break;
-
-        case Veci2_t::value:
-            SetUniform_wrapi(prog, idx, ptr.vi2, db->size);
-            break;
-        case Veci3_t::value:
-            SetUniform_wrapi(prog, idx, ptr.vi3, db->size);
-            break;
-        case Veci4_t::value:
-            SetUniform_wrapi(prog, idx, ptr.vi4, db->size);
-            break;
-
-#if GL_VERSION_VERIFY(0x300, 0x300)
-        case Vecu2_t::value:
-            SetUniform_wrapui(prog, idx, ptr.vu2, db->size);
-            break;
-        case Vecu3_t::value:
-            SetUniform_wrapui(prog, idx, ptr.vu3, db->size);
-            break;
-        case Vecu4_t::value:
-            SetUniform_wrapui(prog, idx, ptr.vu4, db->size);
-            break;
-#endif
-
-        case Valuef_t::value:
-            SetUniform_wrapf(prog, idx, ptr.s, db->size);
-            break;
-        case Valuei_t::value:
-            SetUniform_wrapi(prog, idx, ptr.i, db->size);
-            break;
-#if GL_VERSION_VERIFY(0x300, 0x300)
-        case Valueu_t::value:
-            SetUniform_wrapui(prog, idx, ptr.u, db->size);
-            break;
-#endif
-        default:
-            cWarning("Unhandled uniform type: {0}", fgs);
-            break;
-        }
-    }
-
-    for(auto s : ustate.m_samplers)
-    {
-        if(!feval(s.second.stages & stage))
-            continue;
-
-        auto& handle = s.second.value;
-
-        {
-            /* Set up texture state */
-            CGL33::TexActive(handle->m_unit);
-            CGL33::TexBind(handle->m_type, handle->texture);
-#if GL_VERSION_VERIFY(0x330, 0x300)
-            CGL33::SamplerBind(handle->m_unit, handle->m_sampler);
-
-#if GL_VERSION_VERIFY(0x410, 0x320)
-            if(GLEAM_FEATURES.separable_programs)
-            {
-                /* Set texture handle in shader */
-                CGL43::Unifiv(prog, s.first, handle->m_unit);
-            } else
-#endif
-            {
-                /* Set texture handle in shader */
-                CGL33::Unifiv(s.first, handle->m_unit);
-            }
-#endif
-        }
-        /*TODO: Add bindless textures */
-        /*TODO: Add optimized path where BindSamplers is used */
-    }
-
-#if GL_VERSION_VERIFY(0x310, 0x300)
-    for(auto b : ustate.m_ubuffers)
-    {
-        auto&  det    = b.second;
-        auto&  buf    = det.buff;
-        uint32 bindex = b.first;
-        /* Bind uniform block to binding point */
-        buf->bindrange(bindex, det.sec.offset, det.sec.size);
-        CGL33::UnifBlockBinding(prog, b.first, bindex);
-    }
-#endif
-
-#if GL_VERSION_VERIFY(0x430, 0x310)
-    if(Extensions::ShaderStorageSupported())
-        for(auto b : ustate.m_sbuffers)
-        {
-            auto&  det    = b.second;
-            auto&  buf    = det.buff;
-            uint32 bindex = b.first;
-            /* Bind uniform block to binding point */
-            buf->bindrange(bindex, det.sec.offset, det.sec.size);
-            CGL43::SSBOBinding(prog, b.first, bindex);
-        }
-#endif
 }
 
 void GLEAM_API::PreDrawCleanup()
@@ -909,608 +650,6 @@ void GLEAM_API::DisposePixelBuffers()
 #endif
 }
 
-void GLEAM_API::OptimizeRenderPass(
-    GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer)
-{
-    DProfContext _(GLM_API "Optimizing RenderPass");
-
-    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
-    auto&                                       cmdBufs = buffer.cmdBufs;
-
-    for(auto& call : rpass.draws)
-    {
-        vert_sort[call.vertices].push_back(&call);
-    }
-
-    /* TODO: Add step to de-duplicate D_DATA into instancing */
-
-    for(auto& group : vert_sort)
-    {
-        Map<PSTATE*, Vector<RenderPass::DrawCall*>> ustate_sort;
-
-        for(auto& call : group.second)
-        {
-            ustate_sort[call->state].push_back(call);
-        }
-
-        cmdBufs.reserve(cmdBufs.size() + ustate_sort.size());
-
-        for(auto& ustate_group : ustate_sort)
-        {
-            cmdBufs.push_back({*group.first, *ustate_group.first, {}});
-            auto& cmd_buf = cmdBufs.back();
-
-            cmd_buf.commands.reserve(ustate_group.second.size());
-
-            for(auto& call : ustate_group.second)
-                cmd_buf.commands.push_back({call->d_call, call->d_data});
-        }
-    }
-
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    if(GLEAM_FEATURES.gles20)
-        return;
-
-    auto& mdData = buffer.multiDrawData;
-
-    for(auto& buffer : cmdBufs)
-    {
-        auto& data = mdData[&buffer];
-
-        /* TODO: Add functionality to determine whether we are
-         *  using Indirect or not */
-
-        data.counts.reserve(buffer.commands.size());
-        data.offsets.reserve(buffer.commands.size());
-        data.baseVertex.reserve(buffer.commands.size());
-        data.indirectCalls.reserve(buffer.commands.size());
-
-        for(auto& cmd : buffer.commands)
-        {
-            if(cmd.call.indexed())
-                data.counts.push_back(cmd.data.elements());
-            else
-                data.counts.push_back(cmd.data.vertices());
-            data.offsets.push_back(0);
-            data.baseVertex.push_back(cmd.data.vertexOffset());
-
-            data.indirectCalls.push_back({});
-            auto& r = data.indirectCalls.back();
-            if(cmd.call.indexed())
-            {
-                r.i.count         = cmd.data.elements();
-                r.i.instanceCount = cmd.data.instances();
-                r.i.firstIndex    = cmd.data.indexOffset();
-                r.i.baseVertex    = C_FCAST<u32>(cmd.data.vertexOffset());
-                r.i.baseInstance  = cmd.data.instanceOffset();
-            } else
-            {
-                r.a.count         = cmd.data.vertices();
-                r.a.instanceCount = cmd.data.instances();
-                r.a.first         = C_FCAST<u32>(cmd.data.vertexOffset());
-                r.a.baseInstance  = cmd.data.instanceOffset();
-            }
-
-            data.etype = cmd.data.elementType();
-            data.dc    = cmd.call;
-        }
-    }
-#endif
-}
-
-/*!
- * \brief The internal drawing function, making the assumption that
- *  all state is ready.
- * \param mode The primitive drawing mode
- * \param d Drawcall information
- * \param i Drawcall data, offsets and etc.
- * \return true if drawcall was possible on the current API
- */
-static bool InternalDraw(
-    CGhnd                              pipelineHandle,
-    DrwMd const&                       mode,
-    GLEAM_API::DrawCall const&         d,
-    GLEAM_API::DrawInstanceData const& i)
-{
-    DPROF_CONTEXT_FUNC(GLM_API);
-    // TODO: Use glGetVertexAttribPointer for vertex offsets
-
-    if(d.indexed())
-    {
-        if(GL_DEBUG_MODE)
-        {
-            i32 elementHnd =
-                CGL::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
-
-            if(elementHnd == 0)
-                cWarning(GLM_API "No element buffer binding!");
-        }
-
-        szptr elsize = 1;
-        if(i.elementType() == TypeEnum::UShort)
-            elsize = 2;
-        if(i.elementType() == TypeEnum::UInt)
-            elsize = 4;
-
-        if(d.instanced())
-        {
-        /* TODO: Implement the disabled drawcalls using other means */
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
-            if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0 &&
-               i.vertexOffset() != 0)
-
-                CGL43::DrawElementsInstancedBaseVertexBaseInstance(
-                    mode,
-                    i.elements(),
-                    i.elementType(),
-                    i.indexOffset() * elsize,
-                    i.instances(),
-                    i.vertexOffset(),
-                    i.instanceOffset());
-#endif
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
-            else if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0)
-
-                CGL43::DrawElementsInstancedBaseInstance(
-                    mode,
-                    i.elements(),
-                    i.elementType(),
-                    i.indexOffset() * elsize,
-                    i.instanceOffset(),
-                    i.instances());
-            else
-#endif
-            {
-#if GL_VERSION_VERIFY(0x320, 0x320)
-                if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0)
-                {
-                    CGL33::DrawElementsInstancedBaseVertex(
-                        mode,
-                        i.elements(),
-                        i.elementType(),
-                        i.indexOffset() * elsize,
-                        i.instances(),
-                        i.vertexOffset());
-                } else
-#endif
-#if GL_VERSION_VERIFY(0x310, 0x300)
-                    if(!GLEAM_FEATURES.gles20)
-                    CGL33::DrawElementsInstanced(
-                        mode,
-                        i.elements(),
-                        i.elementType(),
-                        i.indexOffset() * elsize,
-                        i.instances());
-                else
-#endif
-                    CGL33::DrawElements(
-                        mode,
-                        i.elements(),
-                        i.elementType(),
-                        i.indexOffset() * elsize);
-            }
-        } else
-        {
-#if GL_VERSION_VERIFY(0x320, 0x320)
-            if(i.vertexOffset() > 0)
-                CGL33::DrawElementsBaseVertex(
-                    mode,
-                    i.elements(),
-                    i.elementType(),
-                    i.indexOffset() * elsize,
-                    i.vertexOffset());
-            else
-#endif
-                CGL33::DrawElements(
-                    mode,
-                    i.elements(),
-                    i.elementType(),
-                    i.indexOffset() * elsize);
-        }
-
-    } else
-    {
-#if GL_VERSION_VERIFY(0x310, 0x300)
-        if(d.instanced())
-            CGL33::DrawArraysInstanced(
-                mode, i.vertexOffset(), i.vertices(), i.instances());
-        else
-#endif
-            CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
-    }
-
-    return true;
-}
-
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
-bool InternalMultiDraw(GLEAM_API::OptimizedDraw::MultiDrawData const& data)
-{
-    DPROF_CONTEXT_FUNC(GLM_API);
-
-    static CGhnd indirectBuf;
-
-    if(GL_DEBUG_MODE)
-    {
-        if(data.dc.indexed())
-        {
-            i32 elementHnd =
-                CGL::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
-
-            if(elementHnd == 0)
-                cWarning(GLM_API "No element buffer binding!");
-        }
-
-        if(data.counts.size() == 0)
-            cWarning(GLM_API "Draw call has no meshes");
-
-        szptr valid = 0;
-        for(auto c : data.counts)
-            if(c > 0)
-                valid++;
-        if(valid == 0)
-            cWarning(GLM_API "Draw call has meshes, but null-sized");
-
-        for(auto const& call : data.indirectCalls)
-            if(data.dc.indexed())
-            {
-                if(call.i.instanceCount == 0)
-                    cWarning(GLM_API "Draw call with instanceCount==0");
-                if(call.i.count == 0)
-                    cWarning(GLM_API "Draw call with count==0");
-            } else
-            {
-                if(call.a.instanceCount == 0)
-                    cWarning(GLM_API "Draw call with instanceCount==0");
-                if(call.a.count == 0)
-                    cWarning(GLM_API "Draw call with count==0");
-            }
-    }
-
-    using IndirectCall = GLEAM_API::OptimizedDraw::IndirectCall;
-
-    /* TODO: Add more MultiDraw* support */
-
-    /* TODO: Implement fallbacks using the pseudo-implementations */
-
-    /* TODO: Add fallbacks on Draw*Indirect */
-
-    DrwMd mode = {data.dc.primitive(), data.dc.primitiveMode()};
-
-    if(data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect)
-    {
-        if(indirectBuf == 0)
-            glGenBuffers(1, &indirectBuf);
-
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuf);
-        glBufferData(
-            GL_DRAW_INDIRECT_BUFFER,
-            data.indirectCalls.size() * sizeof(IndirectCall),
-            data.indirectCalls.data(),
-            GL_STATIC_DRAW);
-    }
-
-    if(data.dc.indexed() && data.dc.instanced() &&
-       GLEAM_FEATURES.draw_multi_indirect)
-        CGL43::MultiDrawElementsIndirect(
-            mode,
-            data.etype,
-            0,
-            data.indirectCalls.size(),
-            sizeof(data.indirectCalls[0]));
-    else if(data.dc.indexed() && !data.dc.instanced())
-        CGL33::MultiDrawElementsBaseVertex(
-            mode,
-            data.counts.data(),
-            data.etype,
-            C_RCAST<uintptr>(data.offsets.data()),
-            data.counts.size(),
-            data.baseVertex.data());
-    else if(
-        !data.dc.indexed() && data.dc.instanced() &&
-        GLEAM_FEATURES.draw_multi_indirect)
-        CGL43::MultiDrawArraysIndirect(
-            mode,
-            0,
-            data.indirectCalls.size(),
-            sizeof(IndirectCall));
-    else if(!data.dc.indexed() && !data.dc.instanced())
-        CGL43::MultiDrawArrays(
-            mode,
-            C_RCAST<const i32*>(data.offsets.data()),
-            data.counts.data(),
-            data.offsets.size());
-
-    return true;
-}
-#endif
-
-/*!
- * \brief Add a substitute for the gl_BaseInstanceARB variable on
- *  GLES and GL 3.3
- */
-static void GetInstanceUniform(
-    GLEAM_API::PIP const& pipeline, cstring unifName, i32& uloc, CGhnd& handle)
-{
-    if(GLEAM_FEATURES.base_instance)
-        return;
-
-    /* TODO: Cache the uniform location */
-
-    if(!GLEAM_FEATURES.separable_programs)
-    {
-        uloc = CGL33::UnifGetLocation(
-            pipeline.pipelineHandle(), unifName);
-    }
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else
-    {
-        auto& hnd = handle;
-
-        for(auto const& cnt : pipeline.internalHandles())
-            if(cnt.stages == ShaderStage::Vertex)
-                hnd = cnt.shader->internalHandle();
-
-        auto raw_uloc = CGL43::ProgramGetResourceLocation(
-            hnd, GL_UNIFORM, unifName);
-
-        uloc = C_FCAST<i32>(raw_uloc);
-    }
-#else
-    else
-        Throw(implementation_error("bad render path"));
-#endif
-}
-
-static void SetInstanceUniform(CGhnd hnd, i32 uloc, u32 baseInstance)
-{
-    i32 baseInstance_i = C_FCAST<i32>(baseInstance);
-
-    if(!GLEAM_FEATURES.separable_programs)
-    {
-        CGL33::Unifiv(uloc, baseInstance_i);
-    }
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    else
-    {
-        CGL43::Unifiv(hnd, C_FCAST<i32>(uloc), baseInstance_i);
-    }
-#else
-    else
-        Throw(implementation_error("bad render path"));
-#endif
-}
-
-void GLEAM_API::MultiDraw(
-    const GLEAM_API::PIP& pipeline, const GLEAM_API::OPT_DRAW& draws)
-{
-    DPROF_CONTEXT_FUNC(GLM_API);
-    GLEAM_API::DBG::SCOPE a(GLM_API "MultiDraw");
-
-    /* In debug mode, display the entire draw call.
-     *  This is the true verbose mode. */
-#ifndef COFFEE_LOWFAT
-    if(GL_DEBUG_MODE && PrintingVerbosityLevel() >= 12)
-    {
-        cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle);
-        for(auto& cmd : draws.cmdBufs)
-        {
-            cVerbose(
-                12,
-                GLM_API "-- Vertices:{0} + UState:{1}",
-                &cmd.vertices,
-                &cmd.state);
-            for(auto& call : cmd.commands)
-            {
-                cVerbose(12, GLM_API "--- Draw call:{0}", &call);
-            }
-        }
-    }
-#endif
-
-    /* The important limiting factor is the speed of
-     *  binding new shader pipelines. */
-    pipeline.bind();
-
-    /* TODO: Add fallback support for gl_DrawID */
-
-    /* We will use these to allow use of existing state.
-     * We will treat program uniform state as atomic,
-     *  because it can be a lot to compare */
-    V_DESC* p_vertices   = nullptr;
-    PSTATE* p_state      = nullptr;
-    i32     vertexOffset = 0;
-
-    CGhnd vertexHandle    = 0;
-    i32   baseInstanceLoc = -1;
-    i32   instanceID_loc  = -1;
-    u32   instanceID_val  = 0;
-
-    /* For multiple instances, BaseInstance helps a lot */
-    if(!GLEAM_FEATURES.base_instance)
-        GetInstanceUniform(
-            pipeline, "BaseInstance", baseInstanceLoc, vertexHandle);
-
-    /* If using a platform without instancing, cheat by using a
-     *  uniform in its place. Preprocessor macros will handle the rest. */
-    if(GLEAM_FEATURES.gles20)
-        GetInstanceUniform(
-            pipeline, "InstanceID", instanceID_loc, vertexHandle);
-
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
-
-    /* For pure GL 3.3 platforms, we must assert that
-     *  instancing is not necessary */
-    auto it = std::find_if(
-        draws.multiDrawData.begin(),
-        draws.multiDrawData.end(),
-        [](OptMap::value_type const& e) { return e.second.dc.instanced(); });
-
-    bool call_instanced = it != draws.multiDrawData.end();
-
-    /* We assume that, if no multiDrawData is available,
-     *  we can't use it */
-    if(draws.multiDrawData.size() &&
-       (GLEAM_FEATURES.draw_multi_indirect || !call_instanced))
-    {
-        for(auto& mdData : draws.multiDrawData)
-        {
-            auto& buffer = *mdData.first;
-
-            if(&buffer.vertices != p_vertices)
-            {
-                GLEAM_API::DBG::SCOPE b(GLM_API "VBuffer::bind");
-                buffer.vertices.bind();
-                p_vertices = &buffer.vertices;
-            }
-
-            if(&buffer.state != p_state)
-            {
-                GLEAM_API::DBG::SCOPE b(GLM_API "SetShaderUniformState");
-                for(auto const& s : buffer.state)
-                    SetShaderUniformState(pipeline, s.first, *s.second);
-                p_state = &buffer.state;
-            }
-
-            InternalMultiDraw(mdData.second);
-        }
-    } else
-#endif
-        /* This method minimizes the amount of state changes only,
-         *  draw calls are still a couple, but it's faster than
-         *  multiple calls to Draw() */
-        for(auto& buffer : draws.cmdBufs)
-        {
-            if(&buffer.vertices != p_vertices)
-            {
-                GLEAM_API::DBG::SCOPE b(GLM_API "VBuffer::bind");
-                if(GLEAM_FEATURES.gles20)
-                    vertexOffset = 0;
-                buffer.vertices.bind();
-                p_vertices = &buffer.vertices;
-            }
-
-            if(&buffer.state != p_state)
-            {
-                GLEAM_API::DBG::SCOPE b(GLM_API "SetShaderUniformState");
-                for(auto const& s : buffer.state)
-                    SetShaderUniformState(pipeline, s.first, *s.second);
-                p_state = &buffer.state;
-            }
-
-            for(auto& cmd : buffer.commands)
-            {
-                DrwMd mode = {cmd.call.primitive(), cmd.call.primitiveMode()};
-
-                if(!GLEAM_FEATURES.base_instance)
-                    SetInstanceUniform(
-                        vertexHandle,
-                        baseInstanceLoc,
-                        cmd.data.instanceOffset());
-                if(GLEAM_FEATURES.gles20)
-                {
-                    SetInstanceUniform(
-                        vertexHandle, instanceID_loc, instanceID_val);
-                    /* For the vertex offset, we bind the attributes
-                     *  again with a new pointer */
-                    if(cmd.data.vertexOffset() != vertexOffset)
-                    {
-                        vertexOffset = cmd.data.vertexOffset();
-                        buffer.vertices.bind(vertexOffset);
-                    }
-                }
-                if(GLEAM_FEATURES.gles20 && cmd.data.instances() > 1)
-                {
-                    for(u32 i = 0; i < cmd.data.instances(); i++)
-                    {
-                        if(i != 0)
-                            SetInstanceUniform(vertexHandle, instanceID_loc, i);
-                        InternalDraw(
-                            pipeline.m_handle, mode, cmd.call, cmd.data);
-                    }
-                } else
-                    InternalDraw(pipeline.m_handle, mode, cmd.call, cmd.data);
-            }
-        }
-
-    pipeline.unbind();
-}
-
-void GLEAM_API::Draw(
-    const GLEAM_Pipeline&   pipeline,
-    PipelineState const&    ustate,
-    V_DESC&                 vertices,
-    const DrawCall&         d,
-    const DrawInstanceData& i,
-    OccludeQuery*           query)
-{
-    DPROF_CONTEXT_FUNC(GLM_API);
-
-    C_UNUSED(vertices);
-
-    DrwMd mode = {d.primitive(), d.primitiveMode()};
-
-    if(query)
-        query->begin();
-
-    pipeline.bind();
-
-    for(auto const& s : ustate)
-    {
-        SetShaderUniformState(pipeline, s.first, *s.second);
-    }
-
-    vertices.bind();
-
-#if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
-    if(m_store->features.qcom_tiling)
-    {
-        auto size = GLEAM_API::DefaultFramebuffer().size();
-        glStartTilingQCOM(
-            0,
-            0,
-            size.w,
-            size.h,
-            GL_COLOR_BUFFER_BIT0_QCOM | GL_DEPTH_BUFFER_BIT0_QCOM);
-    }
-#endif
-
-    InternalDraw(pipeline.m_handle, mode, d, i);
-
-#if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
-    if(m_store->features.qcom_tiling)
-        glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
-#endif
-
-    if(query)
-        query->end();
-
-    vertices.unbind();
-    pipeline.unbind();
-}
-
-void GLEAM_API::DrawConditional(
-    const GLEAM_Pipeline&   pipeline,
-    const PipelineState&    ustate,
-    V_DESC&                 vertices,
-    const DrawCall&         d,
-    const DrawInstanceData& i,
-    OccludeQuery&           c)
-{
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
-    CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
-    Draw(pipeline, ustate, vertices, d, i);
-    CGL33::ConditionalRenderEnd();
-#else
-    C_UNUSED(pipeline);
-    C_UNUSED(ustate);
-    C_UNUSED(vertices);
-    C_UNUSED(d);
-    C_UNUSED(i);
-    C_UNUSED(c);
-#endif
-}
-
 GLEAM_API::FB_T& GLEAM_API::DefaultFramebuffer()
 {
     return m_store->DefaultFramebuffer;
@@ -1519,6 +658,39 @@ GLEAM_API::FB_T& GLEAM_API::DefaultFramebuffer()
 APILevel GLEAM_API::Level()
 {
     return GL_CURR_API;
+}
+
+const char *api_error::name() const noexcept
+{
+    return "RHI::GLEAM";
+}
+
+std::string api_error::message(int error_code) const
+{
+    APIError ec = C_CAST<APIError>(error_code);
+
+    switch(ec)
+    {
+    case APIError::DrawNoIndexBuffer:
+        return "No index buffer bound";
+    case APIError::DrawNoElements:
+    case APIError::DrawNoVertices:
+        return "Drawcall with count==0";
+    case APIError::DrawNoInstances:
+        return "Drawcall with instanceCount==0";
+    case APIError::DrawNullsizedMeshes:
+        return "Drawcall has no meshes";
+    case APIError::DrawNoMeshes:
+        return "Drawcall has meshes, but null-sized";
+    case APIError::UniformTypeUnhandled:
+        return "Uniform type not handled";
+    case APIError::UniformNoProgram:
+        return "No program specified for uniforms";
+    case APIError::UniformDataNullptr:
+        return "Uniform data pointer was nullptr";
+    default:
+        Throw(implementation_error("message not implemented"));
+    }
 }
 
 } // namespace GLEAM

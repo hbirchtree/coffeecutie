@@ -2,6 +2,7 @@
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/string_casting.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/core/coffee.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/core/terminal/terminal_cursor.h>

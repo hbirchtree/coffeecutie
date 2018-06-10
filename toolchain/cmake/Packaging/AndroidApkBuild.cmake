@@ -1,7 +1,7 @@
 if(ANDROID)
     find_package ( AndroidToolkit )
 
-    if(COFFEE_BUILD_SDL2)
+    if(BUILD_SDL2)
         find_package ( SDL2main REQUIRED )
         #message (STATUS "Main File: ${SDL2_ANDROID_MAIN_FILE}" )
     endif()
@@ -190,7 +190,7 @@ macro(APK_GENERATE_PROJECT
     # Some necessary files for APK generation
     #
 
-    if(COFFEE_BUILD_SDL2)
+    if(BUILD_SDL2)
         # Insert details into files
         configure_file (
             "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/AndroidManifest.xml.in"
@@ -341,7 +341,7 @@ macro(APK_PACKAGE_EXT
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
     # For SDL2-enabled programs
-    if(COFFEE_BUILD_SDL2)
+    if(BUILD_SDL2)
         set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
     else()
         set ( ANDROID_STARTUP_ACTIVITY "NativeActivity" )
@@ -367,11 +367,6 @@ macro(APK_PACKAGE_EXT
 
     set ( ANDROID_API_TARGET ${Api_Target} )
 
-#    if(COFFEE_BUILD_GLEAM_RHI)
-#        set ( ANDROID_ES30_REQ "true" )
-#        set ( ANDROID_API_MIN_TARGET "17" )
-#    else()
-#    endif()
     set ( ANDROID_API_MIN_TARGET "9" )
 
     set ( ANDROID_REQUIRED_FEATURES
@@ -407,7 +402,7 @@ macro(APK_PACKAGE_EXT
         android:required=\"false\" />")
     endforeach()
 
-    if(COFFEE_BUILD_GLES)
+    if(BUILD_GLES)
         set ( ANDROID_FEATURES
             "${ANDROID_FEATURES}
 
@@ -471,7 +466,7 @@ macro(APK_PACKAGE_EXT
     #
     # Debugging/deployment options
     #
-    if(COFFEE_BUILD_SDL2)
+    if(BUILD_SDL2)
         set ( ANDROID_AM_START_INTENT
             "${ANDROID_PACKAGE_NAME}" )
         set ( ANDROID_AM_START_ACTIVITY
@@ -605,7 +600,7 @@ macro(ANDROIDAPK_PACKAGE
         ICON_ASSET )
 
 
-    if(COFFEE_BUILD_SDL2)
+    if(BUILD_SDL2)
         add_library(${TARGET} SHARED ${SOURCES} )
     else()
         add_library(${TARGET} SHARED ${SOURCES} )

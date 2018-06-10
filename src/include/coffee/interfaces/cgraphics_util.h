@@ -12,7 +12,7 @@
 namespace Coffee {
 namespace RHI {
 
-FORCEDINLINE Tuple<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
+FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
 {
     using C = CompFlags;
 
@@ -301,6 +301,8 @@ struct shader_param_view
 
     /*!
      * \brief Retrieve pipeline constants and parameters for iteration
+     *
+     * This invalidates all previosly set constants
      */
     void get_pipeline_params()
     {
@@ -366,10 +368,8 @@ struct shader_param_view
         if(!(desc.m_flags & ShaderTypes::Uniform_v))
             return;
 
-        m_constant_data.emplace(
-            std::make_pair(const_desc_id{&desc}, std::move(data)));
-        m_constant_values.emplace(
-            std::make_pair(const_desc_id{&desc}, const_value()));
+        m_constant_data[const_desc_id{&desc}] = std::move(data);
+        m_constant_values[const_desc_id{&desc}] = const_value();
     }
 
     void set_sampler(const_desc const& desc, sampler_value&& data)
@@ -377,8 +377,7 @@ struct shader_param_view
         if(!(desc.m_flags & ShaderTypes::Sampler_v))
             return;
 
-        m_sampler_handles.emplace(
-            std::make_pair(const_desc_id{&desc}, std::move(data)));
+        m_sampler_handles[const_desc_id{&desc}] = std::move(data);
     }
 
     Bytes& get_constant_data(CString const& variable)
@@ -388,6 +387,15 @@ struct shader_param_view
                 return constant.second;
 
         throw undefined_behavior("constant not found");
+    }
+
+    sampler_value& get_sampler_hnd(CString const& variable)
+    {
+        for(auto& sampler : m_sampler_handles)
+            if(sampler.first.desc->m_name == variable)
+                return sampler.second;
+
+        throw undefined_behavior("sampler not found");
     }
 
     /*!
@@ -458,13 +466,14 @@ struct shader_param_view
 
         bool operator<(const_desc_id const& other) const
         {
-            return desc->m_name < other.desc->m_name;
+            return desc < other.desc;
         }
     };
 
     Map<const_desc_id, Bytes>         m_constant_data;
     Map<const_desc_id, sampler_value> m_sampler_handles;
     Map<const_desc_id, const_value>   m_constant_values;
+
     Map<ShaderStage, UniState>        m_states;
 
   private:

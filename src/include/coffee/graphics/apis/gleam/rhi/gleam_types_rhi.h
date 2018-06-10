@@ -12,7 +12,8 @@ using namespace CGL;
 struct GLEAM_Options
 {
     GLEAM_Options():
-        old_shader_processing(true)
+        old_shader_processing(true),
+        crash_on_error(false)
     {
     }
 
@@ -22,7 +23,56 @@ struct GLEAM_Options
      *  with SPIRV-Cross/PressurizeShaders
      */
     bool old_shader_processing;
+
+    bool crash_on_error;
 };
+
+enum class APIError
+{
+    None = 0,
+
+    GeneralError = 1,
+
+    DrawNoIndexBuffer,
+    DrawNoInstances,
+    DrawNoVertices,
+    DrawNoElements,
+    DrawNoMeshes,
+    DrawNullsizedMeshes,
+
+    DrawNoVertexBuffer,
+
+    ShaderCompileFailed,
+    ShaderStageNotValid,
+    ShaderNoData,
+
+    PipelineValidationError,
+    PipelineLinkError,
+
+    UniformTypeUnhandled,
+    UniformDataNullptr,
+    UniformNoProgram,
+
+    BufferMappingFailed,
+    BufferMappingOutOfBounds,
+
+    HandleAllocationFailed,
+    HandleDeallocFailed,
+
+    InvalidObject,
+
+    UnimplementedPath,
+};
+
+using APIE = APIError;
+
+struct api_error : error_category
+{
+    virtual const char* name() const noexcept;
+    virtual std::string message(int error_code) const;
+};
+
+using gleam_error = domain_error_code<APIError, api_error>;
 
 enum APILevel
 {

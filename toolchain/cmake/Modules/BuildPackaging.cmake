@@ -146,7 +146,7 @@ function(COFFEE_APPLICATION)
             "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
 
-        if(COFFEE_GENERATE_APPIMAGE)
+        if(GENERATE_APPIMAGE)
             APPIMAGE_PACKAGE(
                 ${APP_TARGET}
                 "${APP_TITLE}"
@@ -155,7 +155,7 @@ function(COFFEE_APPLICATION)
                 "${APP_BUNDLE_LIBRARIES}"
                 "${ICON_ASSET}" )
         endif()
-        if(COFFEE_GENERATE_FLATPAK)
+        if(GENERATE_FLATPAK)
             FLATPAK_PACKAGE(
                 ${APP_TARGET}
                 "${APP_PACKAGE_PREFIX}" "${APP_TITLE}"
@@ -165,7 +165,7 @@ function(COFFEE_APPLICATION)
                 "" "${APP_BUNDLE_LIBRARIES}"
                 "${ICON_ASSET}" )
         endif()
-        if(COFFEE_GENERATE_SNAPPY)
+        if(GENERATE_SNAPPY)
             SNAPPY_PACKAGE(
                 ${APP_TARGET}
                 "${APP_TITLE}" "${APP_INFO_STRING}"

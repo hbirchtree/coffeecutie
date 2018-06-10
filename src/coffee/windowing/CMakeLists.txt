@@ -45,13 +45,13 @@ set ( Renderer_SRCS
     private/stub/stub.cpp
     )
 
-if(COFFEE_BUILD_GLES AND NOT COFFEE_BUILD_GLES_20)
+if(BUILD_GLES AND NOT BUILD_GLES_20)
     list(APPEND GLAD_SRCS private/binding/glad/glad_es/glad.c)
-elseif(NOT COFFEE_BUILD_GLES)
+elseif(NOT BUILD_GLES)
     list(APPEND GLAD_SRCS private/binding/glad/glad/glad.c)
 endif()
 
-if(COFFEE_BUILD_OPENGL)
+if(BUILD_OPENGL)
     set ( RENDERER_LIBS
         CoffeeWindow_X11
         CoffeeWindow_DMX
@@ -72,14 +72,11 @@ elseif(GAMECUBE)
         )
 endif()
 
-if(COFFEE_BUILD_SDL2)
+if(BUILD_SDL2)
     list ( APPEND RENDERER_LIBS CoffeeSDL2 )
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
-        AND NOT ANDROID AND NOT NACL AND NOT EMSCRIPTEN
-        AND NOT COFFEE_BUILD_SDL2)
 endif()
 
-if(COFFEE_BUILD_OPENGL)
+if(BUILD_OPENGL)
     coffee_library (
         TARGET CoffeeContext_EGL
         SOURCES ${EGL_SRCS}
@@ -105,8 +102,7 @@ if(COFFEE_BUILD_OPENGL)
         PRIVATE
         CoffeeCore
         )
-
-endif(COFFEE_BUILD_OPENGL)
+endif(BUILD_OPENGL)
 
 coffee_library (
     TARGET CoffeeWindow_OGC
@@ -171,26 +167,29 @@ if(APPLE AND IOS)
         )
 endif()
 
-if(COFFEE_BUILD_OPENGL)
+if(BUILD_OPENGL)
     target_compile_definitions ( CoffeeRenderer_Default
         PUBLIC
         -DCOFFEE_ENABLE_OPENGL
         )
-endif(COFFEE_BUILD_OPENGL)
+endif(BUILD_OPENGL)
 
-if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2 AND COFFEE_BUILD_OPENGL)
+if(NOT EMSCRIPTEN AND BUILD_SDL2 AND BUILD_OPENGL)
     find_package(SDL2 REQUIRED)
     target_include_directories ( CoffeeBinding_GLAD
         PRIVATE
         ${SDL2_INCLUDE_DIR}
         ${STANDARDLIBS_INCLUDE_DIR}
         )
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
-        AND NOT ANDROID AND NOT NACL AND NOT EMSCRIPTEN
-        AND NOT COFFEE_BUILD_SDL2)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID
+        AND NOT EMSCRIPTEN AND NOT BUILD_SDL2)
+    target_compile_definitions ( CoffeeRenderer_Default PUBLIC
+        -DCOFFEE_LINUX_LIGHTWEIGHT_WM
+        )
+
     find_package ( X11 QUIET )
 
-    if(NOT COFFEE_BUILD_GLES)
+    if(NOT BUILD_GLES)
         target_link_libraries ( CoffeeContext_GLX
             PUBLIC
             Xrender GL

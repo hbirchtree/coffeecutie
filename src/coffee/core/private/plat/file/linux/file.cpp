@@ -11,7 +11,7 @@ namespace Coffee{
 namespace CResources{
 namespace Linux{
 
-CString LinuxFileFun::sys_read(cstring fn, bool quiet)
+CString LinuxFileFun::sys_read(cstring fn, file_error& ec)
 {
 #ifndef COFFEE_LOWFAT
     CString out;
@@ -19,9 +19,9 @@ CString LinuxFileFun::sys_read(cstring fn, bool quiet)
     char* arg = 0;
     size_t size = 0;
 
-    if(!fh && !quiet)
+    if(!fh)
     {
-        ErrnoCheck(fn, -1);
+        ErrnoCheck(ec, fn, -1);
         return out;
     }else
         errno = 0;

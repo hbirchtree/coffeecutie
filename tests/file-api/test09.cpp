@@ -17,41 +17,43 @@ bool api_test()
 
     const auto testingUrl = MkUrl("testfile.dat");
 
+    file_error ec;
+
     /* File handle API */
     auto hnd = FileApi::Open(
         testingUrl,
         ResourceAccess::NewFile | ResourceAccess::Discard |
-            ResourceAccess::WriteOnly);
-    FileApi::Read(hnd, 1, false);
-    FileApi::Write(hnd, Bytes(), false);
-    FileApi::Size(hnd);
-    FileApi::Valid(hnd);
-    FileApi::Close(std::move(hnd));
+            ResourceAccess::WriteOnly,
+        ec);
+    FileApi::Read(hnd, 1, ec);
+    FileApi::Write(hnd, Bytes(), ec);
+    FileApi::Size(hnd, ec);
+    FileApi::Valid(hnd, ec);
+    FileApi::Close(std::move(hnd), ec);
     hnd = {};
 
     /* Mapping API */
-    int  _nothing = 0;
     auto map_hnd =
-        FileApi::Map(testingUrl, ResourceAccess::ReadOnly, 10, 0, &_nothing);
-    FileApi::MapCache(map_hnd.data, map_hnd.size, 0, 8);
-    FileApi::MapUncache(map_hnd.data, map_hnd.size, 0, 8);
-    FileApi::MapSync(map_hnd.data, map_hnd.size);
-    FileApi::Unmap(std::move(map_hnd));
+        FileApi::Map(testingUrl, ResourceAccess::ReadOnly, 10, 0, ec);
+    FileApi::MapCache(map_hnd.data, map_hnd.size, 0, 8, ec);
+    FileApi::MapUncache(map_hnd.data, map_hnd.size, 0, 8, ec);
+    FileApi::MapSync(map_hnd.data, map_hnd.size, ec);
+    FileApi::Unmap(std::move(map_hnd), ec);
     map_hnd = {};
 
     /* ScratchBuf API */
-    auto scratch_hnd = FileApi::ScratchBuffer(100, RSCA::ReadWrite);
-    FileApi::ScratchUnmap(std::move(scratch_hnd));
+    auto scratch_hnd = FileApi::ScratchBuffer(100, RSCA::ReadWrite, ec);
+    FileApi::ScratchUnmap(std::move(scratch_hnd), ec);
 
     /* Plain URL API */
-    FileApi::CanonicalName(testingUrl);
-    FileApi::DereferenceLink(testingUrl);
-    FileApi::Exists(testingUrl);
-    FileApi::Size(testingUrl);
-    FileApi::Touch(FileApi::NodeType::File, testingUrl);
-    FileApi::Stat(testingUrl);
-    FileApi::Ln(testingUrl, testingUrl);
-    FileApi::Rm(testingUrl);
+    FileApi::CanonicalName(testingUrl, ec);
+    FileApi::DereferenceLink(testingUrl, ec);
+    FileApi::Exists(testingUrl, ec);
+    FileApi::Size(testingUrl, ec);
+    FileApi::Touch(FileApi::NodeType::File, testingUrl, ec);
+    FileApi::Stat(testingUrl, ec);
+    FileApi::Ln(testingUrl, testingUrl, ec);
+    FileApi::Rm(testingUrl, ec);
 
     return true;
 }

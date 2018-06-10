@@ -15,19 +15,29 @@ set ( COFFEE_EXT_LIBRARY_DIR
     "${CMAKE_SOURCE_DIR}/src/libs"
     )
 
-if(COFFEE_GENERATE_LIBRARIES)
+if(BUILD_LIBRARIES)
     add_subdirectory( src )
 endif()
 
-if(COFFEE_GENERATE_LIBRARIES AND GENERATE_PROGRAMS)
+if(BUILD_LIBRARIES AND BUILD_BINARIES)
     # Tools, includes the GUI profiler
-    add_subdirectory(tools)
+    if(BUILD_UTILITIES)
+        add_subdirectory(tools)
+    endif()
 
     # Add subdir for example applications
-    if(GENERATE_EXAMPLES)
+    if(BUILD_EXAMPLES)
         add_subdirectory(examples)
     endif()
-    if(GENERATE_TESTS)
+
+    if(BUILD_TESTS)
+        option ( SKIP_HIGHMEM_TESTS "Skip high-memory tests" OFF )
+        option ( SKIP_LINKAGE_TEST "Skip test of dynamic linking" ON )
+        option ( SKIP_OPENVR_TEST
+            "Skip tests of OpenVR, it requires a display and hardware" ON )
+        option ( SKIP_GRAPHIC_TESTS
+            "Skip tests depending on headful configuration" ON )
+
         add_subdirectory(tests)
     endif()
 endif()

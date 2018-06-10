@@ -70,8 +70,6 @@ int32 coffee_main(int32, cstring_w*)
     SubsystemWrapper<SDL2::SDL2> sys1;
     C_UNUSED(sys1);
 
-    CResources::FileResourcePrefix("sample_data/input-sprites/");
-
     int32 majGL = 2, minGL = 0;
     RHI::GLEAM::GLEAM_API::GetDefaultVersion(majGL, minGL);
     auto visual = GetDefaultVisual(majGL, minGL);

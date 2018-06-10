@@ -400,11 +400,10 @@ templates:
     +cmake-opts:
       - -DNATIVE_LIBRARY_DIR=$(cmake.native-lib)/$(build.prettyname)
       - -DNATIVE_LIBRARY_ROOT=$(cmake.native-lib)
-      - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
-      - -DGENERATE_PROGRAMS=$(env:GENERATE_PROGRAMS)
-      - -DCOFFEE_BUILD_ASSIMP=ON
       - -DCMAKE_BUILD_TYPE=$(build-type)
       - -DCMAKE_INSTALL_PREFIX=$(cmake.install)/$(target-name)
+      - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
+      - -DBUILD_BINARIES=$(env:GENERATE_PROGRAMS)
       - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
     +container-opts:
       - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
@@ -415,12 +414,12 @@ templates:
       - --workdir "$(env:CMAKE_BUILD_DIR)"
     .*tools:
       +cmake-opts:
-        - -DGENERATE_EXAMPLES=OFF
-        - -DGENERATE_PROGRAMS=ON
-        - -DGENERATE_TESTS=OFF
-        - -DCOFFEE_GENERATE_FLATPAK=OFF
-        - -DCOFFEE_GENERATE_SNAPPY=OFF
-        - -DCOFFEE_GENERATE_APPIMAGE=ON
+        - -DBUILD_UTILITIES=ON
+        - -DBUILD_EXAMPLES=OFF
+        - -DBUILD_TESTS=OFF
+        - -DGENERATE_FLATPAK=OFF
+        - -DGENERATE_SNAPPY=OFF
+        - -DGENERATE_APPIMAGE=ON
     .*coverage:
       =cmake-target:
         - all
@@ -430,22 +429,20 @@ templates:
       +cmake-opts:
         - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
         - -DAPPIMAGE_RUNTIME_BINARY=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)/util/x86_64-linux-gnu/runtime
-        - -DCOFFEE_GENERATE_APPIMAGE=ON
+        - -DGENERATE_APPIMAGE=ON
     .*android.*:
       +cmake-opts:
-        - -DCOFFEE_BUILD_GLES=ON
-        - -DCOFFEE_BUILD_GLES_20=$(android.gles20)
-        - -DCOFFEE_BUILD_ASSIMP=ON
-        - -DCOFFEE_TESTS=OFF
-        - -DCOFFEE_BUILD_SDL2=OFF
-        - -DGENERATE_TESTS=OFF
+        - -DBUILD_GLES=ON
+        - -DBUILD_GLES_20=$(android.gles20)
+        - -DBUILD_TESTS=OFF
+        - -DBUILD_SDL2=OFF
       =target: multi.twostage
       =cmake-target:
         - install
         - AndroidPackage@1
-    .*maemo.*:
+    .*(ubuntu|fedora|coverage|android|docs|steam|raspberry|emscripten).*:
       +cmake-opts:
-        - -DCOFFEE_BUILD_ASSIMP=OFF
+        - -DBUILD_ASSIMP=ON
 
   # For Ubuntu, Fedora, docs and coverage, specify generic preload
   .*(ubuntu|docs|coverage|fedora).*:
@@ -456,6 +453,9 @@ templates:
     +build-deps:
       - appimg-runtime
       - SDL2
+
+  .*(ubuntu|fedora|coverage|android|steam|emscripten|raspberry|maemo|mingw).*:
+    =generator: CodeBlocks - Ninja
 
   # Some parameters to make coverage testing work
   .*coverage:

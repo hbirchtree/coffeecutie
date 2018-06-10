@@ -6,6 +6,11 @@
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/vector_types.h>
 
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-bool-conversion"
+#endif
+
 namespace Coffee{
 namespace CGL{
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
@@ -824,7 +829,7 @@ STATICINLINE void TexFree(Span<const u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTextures(textures.size, textures.data);
+    glDeleteTextures(C_FCAST<i32>(textures.elements), textures.data);
 }
 #endif
 
@@ -869,7 +874,7 @@ STATICINLINE void TexAlloc(Span<u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTextures(textures.size, textures.data);
+    glGenTextures(C_FCAST<i32>(textures.elements), textures.data);
 }
 #endif
 
@@ -1028,7 +1033,9 @@ STATICINLINE void TexCompressedImage1D(Texture target, i32 level, CompFmt intern
 #ifndef NDEBUG
     if(!glCompressedTexImage1D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexImage1DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1044,7 +1051,9 @@ STATICINLINE void TexCompressedImage2D(Texture target, i32 level, CompFmt intern
 #ifndef NDEBUG
     if(!glCompressedTexImage2D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexImage2DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1060,7 +1069,9 @@ STATICINLINE void TexCompressedImage3D(Texture target, i32 level, CompFmt intern
 #ifndef NDEBUG
     if(!glCompressedTexImage3D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexImage3DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1076,7 +1087,9 @@ STATICINLINE void TexCompressedSubImage1D(Texture target, i32 level, i32 xoffset
 #ifndef NDEBUG
     if(!glCompressedTexSubImage1D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexSubImage1DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1092,7 +1105,9 @@ STATICINLINE void TexCompressedSubImage2D(Texture target, i32 level, Point const
 #ifndef NDEBUG
     if(!glCompressedTexSubImage2D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexSubImage2DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1108,7 +1123,9 @@ STATICINLINE void TexCompressedSubImage3D(Texture target, i32 level, Point3 cons
 #ifndef NDEBUG
     if(!glCompressedTexSubImage3D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexSubImage3DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1124,7 +1141,9 @@ STATICINLINE void TexGetCompressedImage(Texture target, i32 level, void * img)
 #ifndef NDEBUG
     if(!glGetCompressedTexImage)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glGetCompressedTexImageARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1140,7 +1159,9 @@ STATICINLINE void SampleCoverage(scalar value, bool invert)
 #ifndef NDEBUG
     if(!glSampleCoverage)
     {
+#if defined(GL_ARB_multisample) && GL_ARB_multisample
         if(glSampleCoverageARB) Throw(undefined_behavior("extension GL_ARB_multisample is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1237,7 +1258,9 @@ STATICINLINE void PointParameterf(GLenum pname, scalar param)
 #ifndef NDEBUG
     if(!glPointParameterf)
     {
+#if defined(GL_ARB_point_parameters) && GL_ARB_point_parameters
         if(glPointParameterfARB) Throw(undefined_behavior("extension GL_ARB_point_parameters is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1253,7 +1276,9 @@ STATICINLINE void PointParameterfv(GLenum pname, const scalar * params)
 #ifndef NDEBUG
     if(!glPointParameterfv)
     {
+#if defined(GL_ARB_point_parameters) && GL_ARB_point_parameters
         if(glPointParameterfvARB) Throw(undefined_behavior("extension GL_ARB_point_parameters is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1305,7 +1330,9 @@ STATICINLINE void QueryBegin(QueryT target, u32 id)
 #ifndef NDEBUG
     if(!glBeginQuery)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glBeginQueryARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1331,7 +1358,7 @@ STATICINLINE void BufBind(BufType target, u32 buffer)
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufData(BufType target, Bytes const& data, RSCA usage)
+STATICINLINE void BufData(BufType target, BytesConst const& data, RSCA usage)
 {
 #ifndef NDEBUG
     if(!glBufferData)
@@ -1339,14 +1366,14 @@ STATICINLINE void BufData(BufType target, Bytes const& data, RSCA usage)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferData(to_enum(target), data.size, data.data, to_enum1(usage));
+    glBufferData(to_enum(target), C_FCAST<ptroff>(data.size), data.data, to_enum1(usage));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufSubData(BufType target, ptroff offset, Bytes const& data)
+STATICINLINE void BufSubData(BufType target, ptroff offset, BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glBufferSubData)
@@ -1354,7 +1381,7 @@ STATICINLINE void BufSubData(BufType target, ptroff offset, Bytes const& data)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferSubData(to_enum(target), offset, data.size, data.data);
+    glBufferSubData(to_enum(target), offset, C_FCAST<ptroff>(data.size), data.data);
 }
 #endif
 
@@ -1369,7 +1396,7 @@ STATICINLINE void BufFree(Span<const u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteBuffers(buffers.size, buffers.data);
+    glDeleteBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
 }
 #endif
 
@@ -1381,11 +1408,13 @@ STATICINLINE void QueryFree(Span<const u32> const& ids)
 #ifndef NDEBUG
     if(!glDeleteQueries)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glDeleteQueriesARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteQueries(ids.size, ids.data);
+    glDeleteQueries(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -1397,7 +1426,9 @@ STATICINLINE void QueryEnd(QueryT target)
 #ifndef NDEBUG
     if(!glEndQuery)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glEndQueryARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1416,7 +1447,7 @@ STATICINLINE void BufAlloc(Span<u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenBuffers(buffers.size, buffers.data);
+    glGenBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
 }
 #endif
 
@@ -1428,11 +1459,13 @@ STATICINLINE void QueryAlloc(Span<u32> const& ids)
 #ifndef NDEBUG
     if(!glGenQueries)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGenQueriesARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenQueries(ids.size, ids.data);
+    glGenQueries(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -1477,7 +1510,7 @@ STATICINLINE void BufGetSubData(BufType target, ptroff offset, Bytes const& data
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetBufferSubData(to_enum(target), offset, data.size, data.data);
+    glGetBufferSubData(to_enum(target), offset, C_FCAST<ptroff>(data.size), data.data);
 }
 #endif
 
@@ -1489,7 +1522,9 @@ STATICINLINE void QueryGetObjectiv(u32 id, GLenum pname, i32 * params)
 #ifndef NDEBUG
     if(!glGetQueryObjectiv)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGetQueryObjectivARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1505,7 +1540,9 @@ STATICINLINE void QueryGetObjectuiv(u32 id, GLenum pname, u32 * params)
 #ifndef NDEBUG
     if(!glGetQueryObjectuiv)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGetQueryObjectuivARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1521,7 +1558,9 @@ STATICINLINE void QueryGetiv(QueryT target, GLenum pname, i32 * params)
 #ifndef NDEBUG
     if(!glGetQueryiv)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGetQueryivARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1552,7 +1591,9 @@ STATICINLINE u8 IsQuery(u32 id)
 #ifndef NDEBUG
     if(!glIsQuery)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glIsQueryARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1604,7 +1645,9 @@ STATICINLINE void ShaderAttach(u32 program, u32 shader)
 #ifndef NDEBUG
     if(!glAttachShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glAttachObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1650,7 +1693,9 @@ STATICINLINE void ShaderCompile(u32 shader)
 #ifndef NDEBUG
     if(!glCompileShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glCompileShaderARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1661,12 +1706,14 @@ STATICINLINE void ShaderCompile(u32 shader)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ProgramAlloc()
+STATICINLINE u32 ProgramAllocEx()
 {
 #ifndef NDEBUG
     if(!glCreateProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glCreateProgramObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1677,12 +1724,14 @@ STATICINLINE u32 ProgramAlloc()
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ShaderAlloc(ShaderStage type)
+STATICINLINE u32 ShaderAllocEx(ShaderStage type)
 {
 #ifndef NDEBUG
     if(!glCreateShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glCreateShaderObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1728,7 +1777,9 @@ STATICINLINE void ShaderDetach(u32 program, u32 shader)
 #ifndef NDEBUG
     if(!glDetachShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glDetachObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1759,7 +1810,9 @@ STATICINLINE void DrawBuffers(i32 n, const GLenum * bufs)
 #ifndef NDEBUG
     if(!glDrawBuffers)
     {
+#if defined(GL_ARB_draw_buffers) && GL_ARB_draw_buffers
         if(glDrawBuffersARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1805,7 +1858,9 @@ STATICINLINE void ActiveUnifGet(u32 program, u32 index, i32 bufSize, i32 * lengt
 #ifndef NDEBUG
     if(!glGetActiveUniform)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetActiveUniformARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1896,7 +1951,9 @@ STATICINLINE void ShaderGetSource(u32 shader, i32 bufSize, i32 * length, GLchar 
 #ifndef NDEBUG
     if(!glGetShaderSource)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetShaderSourceARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1927,7 +1984,9 @@ STATICINLINE i32 UnifGetLocation(u32 program, const GLchar * name)
 #ifndef NDEBUG
     if(!glGetUniformLocation)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetUniformLocationARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1943,7 +2002,9 @@ STATICINLINE void UnifGetfv(u32 program, i32 location, scalar * params)
 #ifndef NDEBUG
     if(!glGetUniformfv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetUniformfvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -1959,7 +2020,9 @@ STATICINLINE void UnifGetiv(u32 program, i32 location, i32 * params)
 #ifndef NDEBUG
     if(!glGetUniformiv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetUniformivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2065,7 +2128,9 @@ STATICINLINE void ProgramLink(u32 program)
 #ifndef NDEBUG
     if(!glLinkProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glLinkProgramARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2081,7 +2146,9 @@ STATICINLINE void ShaderSource(u32 shader, i32 count, const GLchar * *const stri
 #ifndef NDEBUG
     if(!glShaderSource)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glShaderSourceARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2142,7 +2209,9 @@ STATICINLINE void Unif1f(i32 location, scalar v0)
 #ifndef NDEBUG
     if(!glUniform1f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2158,11 +2227,13 @@ STATICINLINE void Uniffv(i32 location, Span<const scalar> const& value)
 #ifndef NDEBUG
     if(!glUniform1fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform1fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2174,7 +2245,9 @@ STATICINLINE void Unif1i(i32 location, i32 v0)
 #ifndef NDEBUG
     if(!glUniform1i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2190,11 +2263,13 @@ STATICINLINE void Unifiv(i32 location, Span<const i32> const& value)
 #ifndef NDEBUG
     if(!glUniform1iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform1iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -2206,7 +2281,9 @@ STATICINLINE void Unif2f(i32 location, scalar v0, scalar v1)
 #ifndef NDEBUG
     if(!glUniform2f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2222,11 +2299,13 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf2> const& value)
 #ifndef NDEBUG
     if(!glUniform2fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform2fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2238,7 +2317,9 @@ STATICINLINE void Unif2i(i32 location, i32 v0, i32 v1)
 #ifndef NDEBUG
     if(!glUniform2i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2254,11 +2335,13 @@ STATICINLINE void Unifiv(i32 location, Span<Veci2> const& value)
 #ifndef NDEBUG
     if(!glUniform2iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform2iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -2270,7 +2353,9 @@ STATICINLINE void Unif3f(i32 location, scalar v0, scalar v1, scalar v2)
 #ifndef NDEBUG
     if(!glUniform3f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2286,11 +2371,13 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf3> const& value)
 #ifndef NDEBUG
     if(!glUniform3fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform3fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2302,7 +2389,9 @@ STATICINLINE void Unif3i(i32 location, i32 v0, i32 v1, i32 v2)
 #ifndef NDEBUG
     if(!glUniform3i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2318,11 +2407,13 @@ STATICINLINE void Unifiv(i32 location, Span<Veci3> const& value)
 #ifndef NDEBUG
     if(!glUniform3iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform3iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -2334,7 +2425,9 @@ STATICINLINE void Unif4f(i32 location, scalar v0, scalar v1, scalar v2, scalar v
 #ifndef NDEBUG
     if(!glUniform4f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2350,11 +2443,13 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf4> const& value)
 #ifndef NDEBUG
     if(!glUniform4fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform4fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2366,7 +2461,9 @@ STATICINLINE void Unif4i(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
 #ifndef NDEBUG
     if(!glUniform4i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2382,11 +2479,13 @@ STATICINLINE void Unifiv(i32 location, Span<Veci4> const& value)
 #ifndef NDEBUG
     if(!glUniform4iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform4iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -2398,11 +2497,13 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2> const& value)
 #ifndef NDEBUG
     if(!glUniformMatrix2fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniformMatrix2fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2414,11 +2515,13 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3> const& value)
 #ifndef NDEBUG
     if(!glUniformMatrix3fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniformMatrix3fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2430,11 +2533,13 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4> const& value)
 #ifndef NDEBUG
     if(!glUniformMatrix4fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniformMatrix4fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -2446,7 +2551,9 @@ STATICINLINE void ProgramUse(u32 program)
 #ifndef NDEBUG
     if(!glUseProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUseProgramObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -2462,7 +2569,9 @@ STATICINLINE void ProgramValidate(u32 program)
 #ifndef NDEBUG
     if(!glValidateProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glValidateProgramARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -3043,7 +3152,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -3058,7 +3167,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -3073,7 +3182,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -3088,7 +3197,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -3103,7 +3212,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -3118,7 +3227,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -3379,7 +3488,7 @@ STATICINLINE void FBFree(Span<const u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteFramebuffers(framebuffers.size, framebuffers.data);
+    glDeleteFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
@@ -3394,7 +3503,7 @@ STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteRenderbuffers(renderbuffers.size, renderbuffers.data);
+    glDeleteRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
@@ -3409,7 +3518,7 @@ STATICINLINE void VAOFree(Span<const u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteVertexArrays(arrays.size, arrays.data);
+    glDeleteVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
 }
 #endif
 
@@ -3556,7 +3665,9 @@ STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, u32 tex
 #ifndef NDEBUG
     if(!glFramebufferTextureLayer)
     {
+#if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
         if(glFramebufferTextureLayerARB) Throw(undefined_behavior("extension GL_ARB_geometry_shader4 is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -3575,7 +3686,7 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenFramebuffers(framebuffers.size, framebuffers.data);
+    glGenFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
@@ -3590,7 +3701,7 @@ STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenRenderbuffers(renderbuffers.size, renderbuffers.data);
+    glGenRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
@@ -3605,7 +3716,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenVertexArrays(arrays.size, arrays.data);
+    glGenVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
 }
 #endif
 
@@ -3980,7 +4091,7 @@ STATICINLINE void Unifuiv(i32 location, Span<const u32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform1uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -4010,7 +4121,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform2uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -4040,7 +4151,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform3uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -4070,7 +4181,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform4uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -4418,7 +4529,9 @@ STATICINLINE void DrawArraysInstanced(DrwMd const& mode, i32 first, i32 count, i
 #ifndef NDEBUG
     if(!glDrawArraysInstanced)
     {
+#if defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced
         if(glDrawArraysInstancedARB) Throw(undefined_behavior("extension GL_ARB_draw_instanced is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -4434,7 +4547,9 @@ STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum t
 #ifndef NDEBUG
     if(!glDrawElementsInstanced)
     {
+#if defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced
         if(glDrawElementsInstancedARB) Throw(undefined_behavior("extension GL_ARB_draw_instanced is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -4555,7 +4670,9 @@ STATICINLINE void TexBuffer(Texture target, PixFmt internalformat, u32 buffer)
 #ifndef NDEBUG
     if(!glTexBuffer)
     {
+#if defined(GL_ARB_texture_buffer_object) && GL_ARB_texture_buffer_object
         if(glTexBufferARB) Throw(undefined_behavior("extension GL_ARB_texture_buffer_object is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -4682,7 +4799,9 @@ STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, u32 texture,
 #ifndef NDEBUG
     if(!glFramebufferTexture)
     {
+#if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
         if(glFramebufferTextureARB) Throw(undefined_behavior("extension GL_ARB_geometry_shader4 is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -4917,7 +5036,7 @@ STATICINLINE void SamplerFree(Span<const u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteSamplers(samplers.size, samplers.data);
+    glDeleteSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
 }
 #endif
 
@@ -4932,7 +5051,7 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenSamplers(samplers.size, samplers.data);
+    glGenSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
 }
 #endif
 
@@ -5169,7 +5288,9 @@ STATICINLINE void VAODivisor(u32 index, u32 divisor)
 #ifndef NDEBUG
     if(!glVertexAttribDivisor)
     {
+#if defined(GL_ARB_instanced_arrays) && GL_ARB_instanced_arrays
         if(glVertexAttribDivisorARB) Throw(undefined_behavior("extension GL_ARB_instanced_arrays is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -5341,7 +5462,9 @@ STATICINLINE void BlendEquationSeparatei(u32 buf, GLenum modeRGB, GLenum modeAlp
 #ifndef NDEBUG
     if(!glBlendEquationSeparatei)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendEquationSeparateiARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -5357,7 +5480,9 @@ STATICINLINE void BlendEquationi(u32 buf, GLenum mode)
 #ifndef NDEBUG
     if(!glBlendEquationi)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendEquationiARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -5373,7 +5498,9 @@ STATICINLINE void BlendFuncSeparatei(u32 buf, GLenum srcRGB, GLenum dstRGB, GLen
 #ifndef NDEBUG
     if(!glBlendFuncSeparatei)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendFuncSeparateiARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -5389,7 +5516,9 @@ STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
 #ifndef NDEBUG
     if(!glBlendFunci)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendFunciARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -5408,7 +5537,7 @@ STATICINLINE void XFFree(Span<const u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTransformFeedbacks(ids.size, ids.data);
+    glDeleteTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -5498,7 +5627,7 @@ STATICINLINE void XFAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTransformFeedbacks(ids.size, ids.data);
+    glGenTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -5753,7 +5882,7 @@ STATICINLINE void Unifdv(i32 location, Span<const bigscalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1dv(location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glUniform1dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5783,7 +5912,7 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2dv(location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glUniform2dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5813,7 +5942,7 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3dv(location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glUniform3dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5843,7 +5972,7 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4dv(location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glUniform4dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5858,7 +5987,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix2dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5873,7 +6002,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix2x3dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5888,7 +6017,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix2x4dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5903,7 +6032,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix3dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5918,7 +6047,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix3x2dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5933,7 +6062,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix3x4dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5948,7 +6077,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix4dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5963,7 +6092,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix4x2dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -5978,7 +6107,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3dv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix4x3dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6071,7 +6200,7 @@ STATICINLINE void ClearDepthf(scalar d)
 
 #if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u32 ShaderProgramvAlloc(ShaderStage type, Span<const GLchar *> const& strings)
+STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> const& strings)
 {
 #ifndef NDEBUG
     if(!glCreateShaderProgramv)
@@ -6079,7 +6208,7 @@ STATICINLINE u32 ShaderProgramvAlloc(ShaderStage type, Span<const GLchar *> cons
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShaderProgramv(to_enum1(type), strings.size, strings.data);
+    return glCreateShaderProgramv(to_enum1(type), C_FCAST<i32>(strings.elements), strings.data);
 }
 #endif
 
@@ -6094,7 +6223,7 @@ STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgramPipelines(pipelines.size, pipelines.data);
+    glDeleteProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
@@ -6154,7 +6283,7 @@ STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenProgramPipelines(pipelines.size, pipelines.data);
+    glGenProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
@@ -6199,7 +6328,7 @@ STATICINLINE void ProgramGetBinary(u32 program, i32 * length, GLenum * binaryFor
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramBinary(program, binary.size, length, binaryFormat, binary.data);
+    glGetProgramBinary(program, C_FCAST<i32>(binary.size), length, binaryFormat, binary.data);
 }
 #endif
 
@@ -6301,7 +6430,9 @@ STATICINLINE void ProgramParameteri(u32 program, GLenum pname, i32 value)
 #ifndef NDEBUG
     if(!glProgramParameteri)
     {
+#if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
         if(glProgramParameteriARB) Throw(undefined_behavior("extension GL_ARB_geometry_shader4 is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -6335,7 +6466,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, Span<const bigscalar> const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1dv(program, location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform1dv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6365,7 +6496,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<const scalar> const& va
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform1fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6395,7 +6526,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<const i32> const& value
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform1iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -6425,7 +6556,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<const u32> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform1uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -6455,7 +6586,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, Span<Vecd2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2dv(program, location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform2dv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6485,7 +6616,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<Vecf2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform2fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6515,7 +6646,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<Veci2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform2iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -6545,7 +6676,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<Vecui2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform2uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -6575,7 +6706,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, Span<Vecd3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3dv(program, location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform3dv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6605,7 +6736,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<Vecf3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform3fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6635,7 +6766,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<Veci3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform3iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -6665,7 +6796,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<Vecui3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform3uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -6695,7 +6826,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, Span<Vecd4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4dv(program, location, value.size, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform4dv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6725,7 +6856,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<Vecf4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform4fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6755,7 +6886,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<Veci4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform4iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -6785,7 +6916,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<Vecui4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform4uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -6800,7 +6931,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd2> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix2dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6815,7 +6946,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf2> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6830,7 +6961,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd2_3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix2x3dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6845,7 +6976,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf2_3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x3fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6860,7 +6991,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd2_4
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix2x4dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6875,7 +7006,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf2_4
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x4fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6890,7 +7021,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd3> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix3dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6905,7 +7036,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf3> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6920,7 +7051,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd3_2
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix3x2dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6935,7 +7066,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf3_2
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x2fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6950,7 +7081,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd3_4
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix3x4dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6965,7 +7096,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf3_4
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x4fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -6980,7 +7111,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd4> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix4dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -6995,7 +7126,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf4> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -7010,7 +7141,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd4_2
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix4x2dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -7025,7 +7156,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf4_2
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x2fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -7040,7 +7171,7 @@ STATICINLINE void Unifdv(u32 program, i32 location, bool transpose, Span<Matd4_3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3dv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix4x3dv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
 }
 #endif
 
@@ -7055,7 +7186,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf4_3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x3fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -7569,7 +7700,7 @@ STATICINLINE void BufClearData(BufType target, PixFmt internalformat, PixCmp for
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_clear_buffer_object) && GL_ARB_clear_buffer_object)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, Bytes const& data)
+STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glClearBufferSubData)
@@ -7577,7 +7708,7 @@ STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff o
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferSubData(target, to_enum(internalformat), offset, data.size, to_enum(format, PixFmt::None), to_enum(type), data.data);
+    glClearBufferSubData(target, to_enum(internalformat), offset, C_FCAST<ptroff>(data.size), to_enum(format, PixFmt::None), to_enum(type), data.data);
 }
 #endif
 
@@ -7604,8 +7735,12 @@ STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userPa
 #ifndef NDEBUG
     if(!glDebugMessageCallback)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glDebugMessageCallbackARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glDebugMessageCallbackKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -7621,8 +7756,12 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
 #ifndef NDEBUG
     if(!glDebugMessageControl)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glDebugMessageControlARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glDebugMessageControlKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -7638,8 +7777,12 @@ STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum 
 #ifndef NDEBUG
     if(!glDebugMessageInsert)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glDebugMessageInsertARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glDebugMessageInsertKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -7700,8 +7843,12 @@ STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GL
 #ifndef NDEBUG
     if(!glGetDebugMessageLog)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glGetDebugMessageLogARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glGetDebugMessageLogKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -7747,7 +7894,9 @@ STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 *
 #ifndef NDEBUG
     if(!glGetObjectLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glGetObjectLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -7763,7 +7912,9 @@ STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length,
 #ifndef NDEBUG
     if(!glGetObjectPtrLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glGetObjectPtrLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -7989,7 +8140,9 @@ STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLc
 #ifndef NDEBUG
     if(!glObjectLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glObjectLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -8005,7 +8158,9 @@ STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * la
 #ifndef NDEBUG
     if(!glObjectPtrLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glObjectPtrLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -8021,7 +8176,9 @@ STATICINLINE void PopDebugGroup()
 #ifndef NDEBUG
     if(!glPopDebugGroup)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glPopDebugGroupKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -8037,7 +8194,9 @@ STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar
 #ifndef NDEBUG
     if(!glPushDebugGroup)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glPushDebugGroupKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -8300,7 +8459,7 @@ STATICINLINE void VertBufBind(u32 first, i32 count, const u32 * buffers, const p
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_buffer_storage) && GL_ARB_buffer_storage)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void BufStorage(BufType target, Bytes const& data, RSCA flags)
+STATICINLINE void BufStorage(BufType target, BytesConst const& data, RSCA flags)
 {
 #ifndef NDEBUG
     if(!glBufferStorage)
@@ -8308,7 +8467,7 @@ STATICINLINE void BufStorage(BufType target, Bytes const& data, RSCA flags)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferStorage(to_enum(target), data.size, data.data, to_enum2(flags));
+    glBufferStorage(to_enum(target), C_FCAST<ptroff>(data.size), data.data, to_enum2(flags));
 }
 #endif
 
@@ -8359,7 +8518,6 @@ using Parent::TexParameteri;
 using Parent::TexParameteriv;
 using Parent::TexCopySubImage1D;
 using Parent::TexCopySubImage2D;
-using Parent::TexAlloc;
 using Parent::TexSubImage1D;
 using Parent::TexSubImage2D;
 using Parent::TexCopySubImage3D;
@@ -8370,8 +8528,6 @@ using Parent::TexCompressedSubImage3D;
 using Parent::TexGetCompressedImage;
 using Parent::BufData;
 using Parent::BufSubData;
-using Parent::BufAlloc;
-using Parent::QueryAlloc;
 using Parent::BufGetParameteriv;
 using Parent::BufGetPointerv;
 using Parent::BufGetSubData;
@@ -8379,9 +8535,6 @@ using Parent::BufMap;
 using Parent::BufUnmap;
 using Parent::VAOGetiv;
 using Parent::BufFlushMappedRange;
-using Parent::FBAlloc;
-using Parent::RBufAlloc;
-using Parent::VAOAlloc;
 using Parent::RBufGetParameteriv;
 using Parent::TexGetParameterIiv;
 using Parent::TexGetParameterIuiv;
@@ -8393,9 +8546,6 @@ using Parent::TexParameterIuiv;
 using Parent::BufCopySubData;
 using Parent::TexBuffer;
 using Parent::BufGetParameteri64v;
-using Parent::SamplerAlloc;
-using Parent::XFAlloc;
-using Parent::PipelineAlloc;
 using Parent::TexStorage1D;
 using Parent::TexStorage2D;
 using Parent::TexStorage3D;
@@ -8473,7 +8623,7 @@ STATICINLINE void BufClearData(u32 buffer, PixFmt internalformat, PixCmp format,
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufClearSubData(u32 buffer, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, Bytes const& data)
+STATICINLINE void BufClearSubData(u32 buffer, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glClearNamedBufferSubData)
@@ -8481,7 +8631,7 @@ STATICINLINE void BufClearSubData(u32 buffer, PixFmt internalformat, ptroff offs
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedBufferSubData(buffer, to_enum(internalformat), offset, data.size, to_enum(format, PixFmt::None), to_enum(type), data.data);
+    glClearNamedBufferSubData(buffer, to_enum(internalformat), offset, C_FCAST<ptroff>(data.size), to_enum(format, PixFmt::None), to_enum(type), data.data);
 }
 #endif
 
@@ -8668,7 +8818,7 @@ STATICINLINE void TexCopySubImage3D(u32 texture, i32 level, Point3 const& offset
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufAlloc(Span<u32> const& buffers)
+STATICINLINE void BufAllocEx(Span<u32> const& buffers)
 {
 #ifndef NDEBUG
     if(!glCreateBuffers)
@@ -8676,14 +8826,14 @@ STATICINLINE void BufAlloc(Span<u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateBuffers(buffers.size, buffers.data);
+    glCreateBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
+STATICINLINE void FBAllocEx(Span<u32> const& framebuffers)
 {
 #ifndef NDEBUG
     if(!glCreateFramebuffers)
@@ -8691,14 +8841,14 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateFramebuffers(framebuffers.size, framebuffers.data);
+    glCreateFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
+STATICINLINE void PipelineAllocEx(Span<u32> const& pipelines)
 {
 #ifndef NDEBUG
     if(!glCreateProgramPipelines)
@@ -8706,14 +8856,14 @@ STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateProgramPipelines(pipelines.size, pipelines.data);
+    glCreateProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void QueryAlloc(QueryT target, Span<u32> const& ids)
+STATICINLINE void QueryAllocEx(QueryT target, Span<u32> const& ids)
 {
 #ifndef NDEBUG
     if(!glCreateQueries)
@@ -8721,14 +8871,14 @@ STATICINLINE void QueryAlloc(QueryT target, Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateQueries(to_enum(target), ids.size, ids.data);
+    glCreateQueries(to_enum(target), C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
+STATICINLINE void RBufAllocEx(Span<u32> const& renderbuffers)
 {
 #ifndef NDEBUG
     if(!glCreateRenderbuffers)
@@ -8736,14 +8886,14 @@ STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateRenderbuffers(renderbuffers.size, renderbuffers.data);
+    glCreateRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
+STATICINLINE void SamplerAllocEx(Span<u32> const& samplers)
 {
 #ifndef NDEBUG
     if(!glCreateSamplers)
@@ -8751,14 +8901,14 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateSamplers(samplers.size, samplers.data);
+    glCreateSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexAlloc(Texture target, Span<u32> const& textures)
+STATICINLINE void TexAllocEx(Texture target, Span<u32> const& textures)
 {
 #ifndef NDEBUG
     if(!glCreateTextures)
@@ -8766,14 +8916,14 @@ STATICINLINE void TexAlloc(Texture target, Span<u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateTextures(to_enum(target), textures.size, textures.data);
+    glCreateTextures(to_enum(target), C_FCAST<i32>(textures.elements), textures.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFAlloc(Span<u32> const& ids)
+STATICINLINE void XFAllocEx(Span<u32> const& ids)
 {
 #ifndef NDEBUG
     if(!glCreateTransformFeedbacks)
@@ -8781,14 +8931,14 @@ STATICINLINE void XFAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateTransformFeedbacks(ids.size, ids.data);
+    glCreateTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOAlloc(Span<u32> const& arrays)
+STATICINLINE void VAOAllocEx(Span<u32> const& arrays)
 {
 #ifndef NDEBUG
     if(!glCreateVertexArrays)
@@ -8796,7 +8946,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateVertexArrays(arrays.size, arrays.data);
+    glCreateVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
 }
 #endif
 
@@ -8898,7 +9048,9 @@ STATICINLINE GLenum GetGraphicsResetStatus()
 #ifndef NDEBUG
     if(!glGetGraphicsResetStatus)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetGraphicsResetStatusKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -8962,7 +9114,7 @@ STATICINLINE void BufGetSubData(u32 buffer, ptroff offset, Bytes const& data)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedBufferSubData(buffer, offset, data.size, data.data);
+    glGetNamedBufferSubData(buffer, offset, C_FCAST<ptroff>(data.size), data.data);
 }
 #endif
 
@@ -9334,7 +9486,9 @@ STATICINLINE void UnifGetnfv(u32 program, i32 location, i32 bufSize, scalar * pa
 #ifndef NDEBUG
     if(!glGetnUniformfv)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetnUniformfvKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -9350,7 +9504,9 @@ STATICINLINE void UnifGetniv(u32 program, i32 location, i32 bufSize, i32 * param
 #ifndef NDEBUG
     if(!glGetnUniformiv)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetnUniformivKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -9366,7 +9522,9 @@ STATICINLINE void UnifGetnuiv(u32 program, i32 location, i32 bufSize, u32 * para
 #ifndef NDEBUG
     if(!glGetnUniformuiv)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetnUniformuivKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -9452,7 +9610,7 @@ STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufData(u32 buffer, Bytes const& data, RSCA usage)
+STATICINLINE void BufData(u32 buffer, BytesConst const& data, RSCA usage)
 {
 #ifndef NDEBUG
     if(!glNamedBufferData)
@@ -9460,14 +9618,14 @@ STATICINLINE void BufData(u32 buffer, Bytes const& data, RSCA usage)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedBufferData(buffer, data.size, data.data, to_enum1(usage));
+    glNamedBufferData(buffer, C_FCAST<ptroff>(data.size), data.data, to_enum1(usage));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufStorage(u32 buffer, Bytes const& data, RSCA flags)
+STATICINLINE void BufStorage(u32 buffer, BytesConst const& data, RSCA flags)
 {
 #ifndef NDEBUG
     if(!glNamedBufferStorage)
@@ -9475,14 +9633,14 @@ STATICINLINE void BufStorage(u32 buffer, Bytes const& data, RSCA flags)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedBufferStorage(buffer, data.size, data.data, to_enum2(flags));
+    glNamedBufferStorage(buffer, C_FCAST<ptroff>(data.size), data.data, to_enum2(flags));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufSubData(u32 buffer, ptroff offset, Bytes const& data)
+STATICINLINE void BufSubData(u32 buffer, ptroff offset, BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glNamedBufferSubData)
@@ -9490,7 +9648,7 @@ STATICINLINE void BufSubData(u32 buffer, ptroff offset, Bytes const& data)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedBufferSubData(buffer, offset, data.size, data.data);
+    glNamedBufferSubData(buffer, offset, C_FCAST<ptroff>(data.size), data.data);
 }
 #endif
 
@@ -9637,8 +9795,12 @@ STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, Bit
 #ifndef NDEBUG
     if(!glReadnPixels)
     {
+#if defined(GL_ARB_robustness) && GL_ARB_robustness
         if(glReadnPixelsARB) Throw(undefined_behavior("extension GL_ARB_robustness is available"));
+#endif
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glReadnPixelsKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10080,7 +10242,9 @@ STATICINLINE void MultiDrawArraysIndirectCount(DrwMd const& mode, uintptr indire
 #ifndef NDEBUG
     if(!glMultiDrawArraysIndirectCount)
     {
+#if defined(GL_ARB_indirect_parameters) && GL_ARB_indirect_parameters
         if(glMultiDrawArraysIndirectCountARB) Throw(undefined_behavior("extension GL_ARB_indirect_parameters is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10096,7 +10260,9 @@ STATICINLINE void MultiDrawElementsIndirectCount(DrwMd const& mode, GLenum type,
 #ifndef NDEBUG
     if(!glMultiDrawElementsIndirectCount)
     {
+#if defined(GL_ARB_indirect_parameters) && GL_ARB_indirect_parameters
         if(glMultiDrawElementsIndirectCountARB) Throw(undefined_behavior("extension GL_ARB_indirect_parameters is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10127,7 +10293,9 @@ STATICINLINE void ShaderSpecialize(u32 shader, const GLchar * pEntryPoint, u32 n
 #ifndef NDEBUG
     if(!glSpecializeShader)
     {
+#if defined(GL_ARB_gl_spirv) && GL_ARB_gl_spirv
         if(glSpecializeShaderARB) Throw(undefined_behavior("extension GL_ARB_gl_spirv is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10163,7 +10331,9 @@ STATICINLINE void ShaderAttach(u32 program, u32 shader)
 #ifndef NDEBUG
     if(!glAttachShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glAttachObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10324,7 +10494,7 @@ STATICINLINE void BlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufData(BufType target, Bytes const& data, RSCA usage)
+STATICINLINE void BufData(BufType target, BytesConst const& data, RSCA usage)
 {
 #ifndef NDEBUG
     if(!glBufferData)
@@ -10332,14 +10502,14 @@ STATICINLINE void BufData(BufType target, Bytes const& data, RSCA usage)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferData(to_enum(target), data.size, data.data, to_enum1(usage));
+    glBufferData(to_enum(target), C_FCAST<ptroff>(data.size), data.data, to_enum1(usage));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufSubData(BufType target, ptroff offset, Bytes const& data)
+STATICINLINE void BufSubData(BufType target, ptroff offset, BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glBufferSubData)
@@ -10347,7 +10517,7 @@ STATICINLINE void BufSubData(BufType target, ptroff offset, Bytes const& data)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferSubData(to_enum(target), offset, data.size, data.data);
+    glBufferSubData(to_enum(target), offset, C_FCAST<ptroff>(data.size), data.data);
 }
 #endif
 
@@ -10449,7 +10619,9 @@ STATICINLINE void ShaderCompile(u32 shader)
 #ifndef NDEBUG
     if(!glCompileShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glCompileShaderARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10465,7 +10637,9 @@ STATICINLINE void TexCompressedImage2D(Texture target, i32 level, CompFmt intern
 #ifndef NDEBUG
     if(!glCompressedTexImage2D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexImage2DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10481,7 +10655,9 @@ STATICINLINE void TexCompressedSubImage2D(Texture target, i32 level, Point const
 #ifndef NDEBUG
     if(!glCompressedTexSubImage2D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexSubImage2DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10522,12 +10698,14 @@ STATICINLINE void TexCopySubImage2D(Texture target, i32 level, Point const& offs
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ProgramAlloc()
+STATICINLINE u32 ProgramAllocEx()
 {
 #ifndef NDEBUG
     if(!glCreateProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glCreateProgramObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10538,12 +10716,14 @@ STATICINLINE u32 ProgramAlloc()
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ShaderAlloc(ShaderStage type)
+STATICINLINE u32 ShaderAllocEx(ShaderStage type)
 {
 #ifndef NDEBUG
     if(!glCreateShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glCreateShaderObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10577,7 +10757,7 @@ STATICINLINE void BufFree(Span<const u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteBuffers(buffers.size, buffers.data);
+    glDeleteBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
 }
 #endif
 
@@ -10592,7 +10772,7 @@ STATICINLINE void FBFree(Span<const u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteFramebuffers(framebuffers.size, framebuffers.data);
+    glDeleteFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
@@ -10622,7 +10802,7 @@ STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteRenderbuffers(renderbuffers.size, renderbuffers.data);
+    glDeleteRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
@@ -10652,7 +10832,7 @@ STATICINLINE void TexFree(Span<const u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTextures(textures.size, textures.data);
+    glDeleteTextures(C_FCAST<i32>(textures.elements), textures.data);
 }
 #endif
 
@@ -10709,7 +10889,9 @@ STATICINLINE void ShaderDetach(u32 program, u32 shader)
 #ifndef NDEBUG
     if(!glDetachShader)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glDetachObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -10893,7 +11075,7 @@ STATICINLINE void BufAlloc(Span<u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenBuffers(buffers.size, buffers.data);
+    glGenBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
 }
 #endif
 
@@ -10908,7 +11090,7 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenFramebuffers(framebuffers.size, framebuffers.data);
+    glGenFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
@@ -10923,7 +11105,7 @@ STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenRenderbuffers(renderbuffers.size, renderbuffers.data);
+    glGenRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
@@ -10938,7 +11120,7 @@ STATICINLINE void TexAlloc(Span<u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTextures(textures.size, textures.data);
+    glGenTextures(C_FCAST<i32>(textures.elements), textures.data);
 }
 #endif
 
@@ -10980,7 +11162,9 @@ STATICINLINE void ActiveUnifGet(u32 program, u32 index, i32 bufSize, i32 * lengt
 #ifndef NDEBUG
     if(!glGetActiveUniform)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetActiveUniformARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11191,7 +11375,9 @@ STATICINLINE void ShaderGetSource(u32 shader, i32 bufSize, i32 * length, GLchar 
 #ifndef NDEBUG
     if(!glGetShaderSource)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetShaderSourceARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11267,7 +11453,9 @@ STATICINLINE i32 UnifGetLocation(u32 program, const GLchar * name)
 #ifndef NDEBUG
     if(!glGetUniformLocation)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetUniformLocationARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11283,7 +11471,9 @@ STATICINLINE void UnifGetfv(u32 program, i32 location, scalar * params)
 #ifndef NDEBUG
     if(!glGetUniformfv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetUniformfvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11299,7 +11489,9 @@ STATICINLINE void UnifGetiv(u32 program, i32 location, i32 * params)
 #ifndef NDEBUG
     if(!glGetUniformiv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glGetUniformivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11495,7 +11687,9 @@ STATICINLINE void ProgramLink(u32 program)
 #ifndef NDEBUG
     if(!glLinkProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glLinkProgramARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11586,7 +11780,9 @@ STATICINLINE void SampleCoverage(scalar value, bool invert)
 #ifndef NDEBUG
     if(!glSampleCoverage)
     {
+#if defined(GL_ARB_multisample) && GL_ARB_multisample
         if(glSampleCoverageARB) Throw(undefined_behavior("extension GL_ARB_multisample is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11632,7 +11828,9 @@ STATICINLINE void ShaderSource(u32 shader, i32 count, const GLchar * *const stri
 #ifndef NDEBUG
     if(!glShaderSource)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glShaderSourceARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11828,7 +12026,9 @@ STATICINLINE void Unif1f(i32 location, scalar v0)
 #ifndef NDEBUG
     if(!glUniform1f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11844,11 +12044,13 @@ STATICINLINE void Uniffv(i32 location, Span<const scalar> const& value)
 #ifndef NDEBUG
     if(!glUniform1fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform1fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -11860,7 +12062,9 @@ STATICINLINE void Unif1i(i32 location, i32 v0)
 #ifndef NDEBUG
     if(!glUniform1i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11876,11 +12080,13 @@ STATICINLINE void Unifiv(i32 location, Span<const i32> const& value)
 #ifndef NDEBUG
     if(!glUniform1iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform1ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform1iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -11892,7 +12098,9 @@ STATICINLINE void Unif2f(i32 location, scalar v0, scalar v1)
 #ifndef NDEBUG
     if(!glUniform2f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11908,11 +12116,13 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf2> const& value)
 #ifndef NDEBUG
     if(!glUniform2fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform2fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -11924,7 +12134,9 @@ STATICINLINE void Unif2i(i32 location, i32 v0, i32 v1)
 #ifndef NDEBUG
     if(!glUniform2i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11940,11 +12152,13 @@ STATICINLINE void Unifiv(i32 location, Span<Veci2> const& value)
 #ifndef NDEBUG
     if(!glUniform2iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform2ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform2iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -11956,7 +12170,9 @@ STATICINLINE void Unif3f(i32 location, scalar v0, scalar v1, scalar v2)
 #ifndef NDEBUG
     if(!glUniform3f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -11972,11 +12188,13 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf3> const& value)
 #ifndef NDEBUG
     if(!glUniform3fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform3fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -11988,7 +12206,9 @@ STATICINLINE void Unif3i(i32 location, i32 v0, i32 v1, i32 v2)
 #ifndef NDEBUG
     if(!glUniform3i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12004,11 +12224,13 @@ STATICINLINE void Unifiv(i32 location, Span<Veci3> const& value)
 #ifndef NDEBUG
     if(!glUniform3iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform3ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform3iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -12020,7 +12242,9 @@ STATICINLINE void Unif4f(i32 location, scalar v0, scalar v1, scalar v2, scalar v
 #ifndef NDEBUG
     if(!glUniform4f)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4fARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12036,11 +12260,13 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf4> const& value)
 #ifndef NDEBUG
     if(!glUniform4fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fv(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform4fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -12052,7 +12278,9 @@ STATICINLINE void Unif4i(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
 #ifndef NDEBUG
     if(!glUniform4i)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4iARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12068,11 +12296,13 @@ STATICINLINE void Unifiv(i32 location, Span<Veci4> const& value)
 #ifndef NDEBUG
     if(!glUniform4iv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniform4ivARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iv(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform4iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -12084,11 +12314,13 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2> const& value)
 #ifndef NDEBUG
     if(!glUniformMatrix2fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniformMatrix2fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -12100,11 +12332,13 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3> const& value)
 #ifndef NDEBUG
     if(!glUniformMatrix3fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniformMatrix3fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -12116,11 +12350,13 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4> const& value)
 #ifndef NDEBUG
     if(!glUniformMatrix4fv)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUniformMatrix4fvARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -12132,7 +12368,9 @@ STATICINLINE void ProgramUse(u32 program)
 #ifndef NDEBUG
     if(!glUseProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glUseProgramObjectARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12148,7 +12386,9 @@ STATICINLINE void ProgramValidate(u32 program)
 #ifndef NDEBUG
     if(!glValidateProgram)
     {
+#if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
         if(glValidateProgramARB) Throw(undefined_behavior("extension GL_ARB_shader_objects is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12321,7 +12561,9 @@ STATICINLINE void QueryBegin(QueryT target, u32 id)
 #ifndef NDEBUG
     if(!glBeginQuery)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glBeginQueryARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12517,7 +12759,9 @@ STATICINLINE void TexCompressedImage3D(Texture target, i32 level, CompFmt intern
 #ifndef NDEBUG
     if(!glCompressedTexImage3D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexImage3DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12533,7 +12777,9 @@ STATICINLINE void TexCompressedSubImage3D(Texture target, i32 level, Point3 cons
 #ifndef NDEBUG
     if(!glCompressedTexSubImage3D)
     {
+#if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
         if(glCompressedTexSubImage3DARB) Throw(undefined_behavior("extension GL_ARB_texture_compression is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12579,11 +12825,13 @@ STATICINLINE void QueryFree(Span<const u32> const& ids)
 #ifndef NDEBUG
     if(!glDeleteQueries)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glDeleteQueriesARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteQueries(ids.size, ids.data);
+    glDeleteQueries(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -12598,7 +12846,7 @@ STATICINLINE void SamplerFree(Span<const u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteSamplers(samplers.size, samplers.data);
+    glDeleteSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
 }
 #endif
 
@@ -12628,7 +12876,7 @@ STATICINLINE void XFFree(Span<const u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTransformFeedbacks(ids.size, ids.data);
+    glDeleteTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -12643,7 +12891,7 @@ STATICINLINE void VAOFree(Span<const u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteVertexArrays(arrays.size, arrays.data);
+    glDeleteVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
 }
 #endif
 
@@ -12655,7 +12903,9 @@ STATICINLINE void DrawArraysInstanced(DrwMd const& mode, i32 first, i32 count, i
 #ifndef NDEBUG
     if(!glDrawArraysInstanced)
     {
+#if defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced
         if(glDrawArraysInstancedARB) Throw(undefined_behavior("extension GL_ARB_draw_instanced is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12671,7 +12921,9 @@ STATICINLINE void DrawBuffers(i32 n, const GLenum * bufs)
 #ifndef NDEBUG
     if(!glDrawBuffers)
     {
+#if defined(GL_ARB_draw_buffers) && GL_ARB_draw_buffers
         if(glDrawBuffersARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12687,7 +12939,9 @@ STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum t
 #ifndef NDEBUG
     if(!glDrawElementsInstanced)
     {
+#if defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced
         if(glDrawElementsInstancedARB) Throw(undefined_behavior("extension GL_ARB_draw_instanced is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12718,7 +12972,9 @@ STATICINLINE void QueryEnd(QueryT target)
 #ifndef NDEBUG
     if(!glEndQuery)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glEndQueryARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12779,7 +13035,9 @@ STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, u32 tex
 #ifndef NDEBUG
     if(!glFramebufferTextureLayer)
     {
+#if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
         if(glFramebufferTextureLayerARB) Throw(undefined_behavior("extension GL_ARB_geometry_shader4 is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -12795,11 +13053,13 @@ STATICINLINE void QueryAlloc(Span<u32> const& ids)
 #ifndef NDEBUG
     if(!glGenQueries)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGenQueriesARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenQueries(ids.size, ids.data);
+    glGenQueries(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -12814,7 +13074,7 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenSamplers(samplers.size, samplers.data);
+    glGenSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
 }
 #endif
 
@@ -12829,7 +13089,7 @@ STATICINLINE void XFAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTransformFeedbacks(ids.size, ids.data);
+    glGenTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -12844,7 +13104,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenVertexArrays(arrays.size, arrays.data);
+    glGenVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
 }
 #endif
 
@@ -13009,7 +13269,7 @@ STATICINLINE void ProgramGetBinary(u32 program, i32 * length, GLenum * binaryFor
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramBinary(program, binary.size, length, binaryFormat, binary.data);
+    glGetProgramBinary(program, C_FCAST<i32>(binary.size), length, binaryFormat, binary.data);
 }
 #endif
 
@@ -13021,7 +13281,9 @@ STATICINLINE void QueryGetObjectuiv(u32 id, GLenum pname, u32 * params)
 #ifndef NDEBUG
     if(!glGetQueryObjectuiv)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGetQueryObjectuivARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -13037,7 +13299,9 @@ STATICINLINE void QueryGetiv(QueryT target, GLenum pname, i32 * params)
 #ifndef NDEBUG
     if(!glGetQueryiv)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glGetQueryivARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -13233,7 +13497,9 @@ STATICINLINE u8 IsQuery(u32 id)
 #ifndef NDEBUG
     if(!glIsQuery)
     {
+#if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
         if(glIsQueryARB) Throw(undefined_behavior("extension GL_ARB_occlusion_query is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -13354,7 +13620,9 @@ STATICINLINE void ProgramParameteri(u32 program, GLenum pname, i32 value)
 #ifndef NDEBUG
     if(!glProgramParameteri)
     {
+#if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
         if(glProgramParameteriARB) Throw(undefined_behavior("extension GL_ARB_geometry_shader4 is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -13568,7 +13836,7 @@ STATICINLINE void Unifuiv(i32 location, Span<const u32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform1uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -13598,7 +13866,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform2uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -13628,7 +13896,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform3uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -13658,7 +13926,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4uiv(location, value.size, C_RCAST<const u32*>(value.data));
+    glUniform4uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -13688,7 +13956,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -13703,7 +13971,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -13718,7 +13986,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -13733,7 +14001,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -13748,7 +14016,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -13763,7 +14031,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3fv(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -13790,7 +14058,9 @@ STATICINLINE void VAODivisor(u32 index, u32 divisor)
 #ifndef NDEBUG
     if(!glVertexAttribDivisor)
     {
+#if defined(GL_ARB_instanced_arrays) && GL_ARB_instanced_arrays
         if(glVertexAttribDivisorARB) Throw(undefined_behavior("extension GL_ARB_instanced_arrays is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -13972,7 +14242,7 @@ STATICINLINE void VertBufBind(u32 bindingindex, u32 buffer, ptroff offset, i32 s
 
 #if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u32 ShaderProgramvAlloc(ShaderStage type, Span<const GLchar *> const& strings)
+STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> const& strings)
 {
 #ifndef NDEBUG
     if(!glCreateShaderProgramv)
@@ -13980,7 +14250,7 @@ STATICINLINE u32 ShaderProgramvAlloc(ShaderStage type, Span<const GLchar *> cons
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShaderProgramv(to_enum1(type), strings.size, strings.data);
+    return glCreateShaderProgramv(to_enum1(type), C_FCAST<i32>(strings.elements), strings.data);
 }
 #endif
 
@@ -13995,7 +14265,7 @@ STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgramPipelines(pipelines.size, pipelines.data);
+    glDeleteProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
@@ -14085,7 +14355,7 @@ STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenProgramPipelines(pipelines.size, pipelines.data);
+    glGenProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
@@ -14340,7 +14610,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<const scalar> const& va
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform1fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14370,7 +14640,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<const i32> const& value
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform1iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -14400,7 +14670,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<const u32> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform1uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -14430,7 +14700,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<Vecf2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform2fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14460,7 +14730,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<Veci2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform2iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -14490,7 +14760,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<Vecui2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform2uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -14520,7 +14790,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<Vecf3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform3fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14550,7 +14820,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<Veci3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform3iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -14580,7 +14850,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<Vecui3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform3uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -14610,7 +14880,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, Span<Vecf4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4fv(program, location, value.size, C_RCAST<const scalar*>(value.data));
+    glProgramUniform4fv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14640,7 +14910,7 @@ STATICINLINE void Unifiv(u32 program, i32 location, Span<Veci4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4iv(program, location, value.size, C_RCAST<const i32*>(value.data));
+    glProgramUniform4iv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -14670,7 +14940,7 @@ STATICINLINE void Unifuiv(u32 program, i32 location, Span<Vecui4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4uiv(program, location, value.size, C_RCAST<const u32*>(value.data));
+    glProgramUniform4uiv(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
 }
 #endif
 
@@ -14685,7 +14955,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf2> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14700,7 +14970,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf2_3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x3fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14715,7 +14985,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf2_4
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x4fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14730,7 +15000,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf3> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14745,7 +15015,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf3_2
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x2fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14760,7 +15030,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf3_4
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x4fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14775,7 +15045,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf4> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14790,7 +15060,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf4_2
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x2fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14805,7 +15075,7 @@ STATICINLINE void Uniffv(u32 program, i32 location, bool transpose, Span<Matf4_3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3fv(program, location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x3fv(program, location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -14943,7 +15213,9 @@ STATICINLINE void BlendBarrier()
 #ifndef NDEBUG
     if(!glBlendBarrier)
     {
+#if defined(GL_KHR_blend_equation_advanced) && GL_KHR_blend_equation_advanced
         if(glBlendBarrierKHR) Throw(undefined_behavior("extension GL_KHR_blend_equation_advanced is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -14959,7 +15231,9 @@ STATICINLINE void BlendEquationSeparatei(u32 buf, GLenum modeRGB, GLenum modeAlp
 #ifndef NDEBUG
     if(!glBlendEquationSeparatei)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendEquationSeparateiARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -14975,7 +15249,9 @@ STATICINLINE void BlendEquationi(u32 buf, GLenum mode)
 #ifndef NDEBUG
     if(!glBlendEquationi)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendEquationiARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -14991,7 +15267,9 @@ STATICINLINE void BlendFuncSeparatei(u32 buf, GLenum srcRGB, GLenum dstRGB, GLen
 #ifndef NDEBUG
     if(!glBlendFuncSeparatei)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendFuncSeparateiARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15007,7 +15285,9 @@ STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
 #ifndef NDEBUG
     if(!glBlendFunci)
     {
+#if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
         if(glBlendFunciARB) Throw(undefined_behavior("extension GL_ARB_draw_buffers_blend is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15053,8 +15333,12 @@ STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userPa
 #ifndef NDEBUG
     if(!glDebugMessageCallback)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glDebugMessageCallbackARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glDebugMessageCallbackKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15070,8 +15354,12 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
 #ifndef NDEBUG
     if(!glDebugMessageControl)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glDebugMessageControlARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glDebugMessageControlKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15087,8 +15375,12 @@ STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum 
 #ifndef NDEBUG
     if(!glDebugMessageInsert)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glDebugMessageInsertARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glDebugMessageInsertKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15179,7 +15471,9 @@ STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, u32 texture,
 #ifndef NDEBUG
     if(!glFramebufferTexture)
     {
+#if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
         if(glFramebufferTextureARB) Throw(undefined_behavior("extension GL_ARB_geometry_shader4 is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15195,8 +15489,12 @@ STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GL
 #ifndef NDEBUG
     if(!glGetDebugMessageLog)
     {
+#if defined(GL_ARB_debug_output) && GL_ARB_debug_output
         if(glGetDebugMessageLogARB) Throw(undefined_behavior("extension GL_ARB_debug_output is available"));
+#endif
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glGetDebugMessageLogKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15212,7 +15510,9 @@ STATICINLINE GLenum GetGraphicsResetStatus()
 #ifndef NDEBUG
     if(!glGetGraphicsResetStatus)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetGraphicsResetStatusKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15228,7 +15528,9 @@ STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 *
 #ifndef NDEBUG
     if(!glGetObjectLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glGetObjectLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15244,7 +15546,9 @@ STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length,
 #ifndef NDEBUG
     if(!glGetObjectPtrLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glGetObjectPtrLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15320,7 +15624,9 @@ STATICINLINE void UnifGetnfv(u32 program, i32 location, i32 bufSize, scalar * pa
 #ifndef NDEBUG
     if(!glGetnUniformfv)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetnUniformfvKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15336,7 +15642,9 @@ STATICINLINE void UnifGetniv(u32 program, i32 location, i32 bufSize, i32 * param
 #ifndef NDEBUG
     if(!glGetnUniformiv)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetnUniformivKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15352,7 +15660,9 @@ STATICINLINE void UnifGetnuiv(u32 program, i32 location, i32 bufSize, u32 * para
 #ifndef NDEBUG
     if(!glGetnUniformuiv)
     {
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glGetnUniformuivKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15398,7 +15708,9 @@ STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLc
 #ifndef NDEBUG
     if(!glObjectLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glObjectLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15414,7 +15726,9 @@ STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * la
 #ifndef NDEBUG
     if(!glObjectPtrLabel)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glObjectPtrLabelKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15445,7 +15759,9 @@ STATICINLINE void PopDebugGroup()
 #ifndef NDEBUG
     if(!glPopDebugGroup)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glPopDebugGroupKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15461,7 +15777,9 @@ STATICINLINE void PrimitiveBoundingBox(scalar minX, scalar minY, scalar minZ, sc
 #ifndef NDEBUG
     if(!glPrimitiveBoundingBox)
     {
+#if defined(GL_ARB_ES3_2_compatibility) && GL_ARB_ES3_2_compatibility
         if(glPrimitiveBoundingBoxARB) Throw(undefined_behavior("extension GL_ARB_ES3_2_compatibility is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15477,7 +15795,9 @@ STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar
 #ifndef NDEBUG
     if(!glPushDebugGroup)
     {
+#if defined(GL_KHR_debug) && GL_KHR_debug
         if(glPushDebugGroupKHR) Throw(undefined_behavior("extension GL_KHR_debug is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15493,8 +15813,12 @@ STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, Bit
 #ifndef NDEBUG
     if(!glReadnPixels)
     {
+#if defined(GL_ARB_robustness) && GL_ARB_robustness
         if(glReadnPixelsARB) Throw(undefined_behavior("extension GL_ARB_robustness is available"));
+#endif
+#if defined(GL_KHR_robustness) && GL_KHR_robustness
         if(glReadnPixelsKHR) Throw(undefined_behavior("extension GL_KHR_robustness is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15540,7 +15864,9 @@ STATICINLINE void TexBuffer(Texture target, PixFmt internalformat, u32 buffer)
 #ifndef NDEBUG
     if(!glTexBuffer)
     {
+#if defined(GL_ARB_texture_buffer_object) && GL_ARB_texture_buffer_object
         if(glTexBufferARB) Throw(undefined_behavior("extension GL_ARB_texture_buffer_object is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -15797,7 +16123,7 @@ STATICINLINE void UnifHandleui64vARB(u32 program, i32 location, Span<const u64> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformHandleui64vARB(program, location, values.size, C_RCAST<const u64*>(values.data));
+    glProgramUniformHandleui64vARB(program, location, C_FCAST<i32>(values.elements), C_RCAST<const u64*>(values.data));
 }
 #endif
 
@@ -15812,7 +16138,7 @@ STATICINLINE void UnifHandleui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformHandleui64vARB(location, value.size, C_RCAST<const u64*>(value.data));
+    glUniformHandleui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16228,7 +16554,7 @@ STATICINLINE void Unif1i64vARB(u32 program, i32 location, Span<const i64> const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1i64vARB(program, location, value.size, C_RCAST<const i64*>(value.data));
+    glProgramUniform1i64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16243,7 +16569,7 @@ STATICINLINE void Unif1ui64vARB(u32 program, i32 location, Span<const u64> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1ui64vARB(program, location, value.size, C_RCAST<const u64*>(value.data));
+    glProgramUniform1ui64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16258,7 +16584,7 @@ STATICINLINE void Unif2i64vARB(u32 program, i32 location, Span<const i64> const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2i64vARB(program, location, value.size, C_RCAST<const i64*>(value.data));
+    glProgramUniform2i64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16273,7 +16599,7 @@ STATICINLINE void Unif2ui64vARB(u32 program, i32 location, Span<const u64> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2ui64vARB(program, location, value.size, C_RCAST<const u64*>(value.data));
+    glProgramUniform2ui64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16288,7 +16614,7 @@ STATICINLINE void Unif3i64vARB(u32 program, i32 location, Span<const i64> const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3i64vARB(program, location, value.size, C_RCAST<const i64*>(value.data));
+    glProgramUniform3i64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16303,7 +16629,7 @@ STATICINLINE void Unif3ui64vARB(u32 program, i32 location, Span<const u64> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3ui64vARB(program, location, value.size, C_RCAST<const u64*>(value.data));
+    glProgramUniform3ui64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16318,7 +16644,7 @@ STATICINLINE void Unif4i64vARB(u32 program, i32 location, Span<const i64> const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4i64vARB(program, location, value.size, C_RCAST<const i64*>(value.data));
+    glProgramUniform4i64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16333,7 +16659,7 @@ STATICINLINE void Unif4ui64vARB(u32 program, i32 location, Span<const u64> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4ui64vARB(program, location, value.size, C_RCAST<const u64*>(value.data));
+    glProgramUniform4ui64vARB(program, location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16348,7 +16674,7 @@ STATICINLINE void Unif1i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1i64vARB(location, value.size, C_RCAST<const i64*>(value.data));
+    glUniform1i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16363,7 +16689,7 @@ STATICINLINE void Unif1ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1ui64vARB(location, value.size, C_RCAST<const u64*>(value.data));
+    glUniform1ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16378,7 +16704,7 @@ STATICINLINE void Unif2i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2i64vARB(location, value.size, C_RCAST<const i64*>(value.data));
+    glUniform2i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16393,7 +16719,7 @@ STATICINLINE void Unif2ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ui64vARB(location, value.size, C_RCAST<const u64*>(value.data));
+    glUniform2ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16408,7 +16734,7 @@ STATICINLINE void Unif3i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3i64vARB(location, value.size, C_RCAST<const i64*>(value.data));
+    glUniform3i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16423,7 +16749,7 @@ STATICINLINE void Unif3ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ui64vARB(location, value.size, C_RCAST<const u64*>(value.data));
+    glUniform3ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -16438,7 +16764,7 @@ STATICINLINE void Unif4i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4i64vARB(location, value.size, C_RCAST<const i64*>(value.data));
+    glUniform4i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
 }
 #endif
 
@@ -16453,7 +16779,7 @@ STATICINLINE void Unif4ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ui64vARB(location, value.size, C_RCAST<const u64*>(value.data));
+    glUniform4ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
 }
 #endif
 
@@ -17334,7 +17660,7 @@ STATICINLINE void Unif1fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fvARB(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform1fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -17364,7 +17690,7 @@ STATICINLINE void Unif1ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1ivARB(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform1ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -17394,7 +17720,7 @@ STATICINLINE void Unif2fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fvARB(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform2fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -17424,7 +17750,7 @@ STATICINLINE void Unif2ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ivARB(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform2ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -17454,7 +17780,7 @@ STATICINLINE void Unif3fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fvARB(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform3fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -17484,7 +17810,7 @@ STATICINLINE void Unif3ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ivARB(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform3ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -17514,7 +17840,7 @@ STATICINLINE void Unif4fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fvARB(location, value.size, C_RCAST<const scalar*>(value.data));
+    glUniform4fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -17544,7 +17870,7 @@ STATICINLINE void Unif4ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ivARB(location, value.size, C_RCAST<const i32*>(value.data));
+    glUniform4ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
 }
 #endif
 
@@ -17559,7 +17885,7 @@ STATICINLINE void UnifMatrix2fvARB(i32 location, bool transpose, Span<const scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fvARB(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2fvARB(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -17574,7 +17900,7 @@ STATICINLINE void UnifMatrix3fvARB(i32 location, bool transpose, Span<const scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fvARB(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3fvARB(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -17589,7 +17915,7 @@ STATICINLINE void UnifMatrix4fvARB(i32 location, bool transpose, Span<const scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fvARB(location, value.size, transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4fvARB(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
 }
 #endif
 
@@ -18085,7 +18411,9 @@ STATICINLINE void ShaderMaxCompilerThreadsKHR(u32 count)
 #ifndef NDEBUG
     if(!glMaxShaderCompilerThreadsKHR)
     {
+#if defined(GL_ARB_parallel_shader_compile) && GL_ARB_parallel_shader_compile
         if(glMaxShaderCompilerThreadsARB) Throw(undefined_behavior("extension GL_ARB_parallel_shader_compile is available"));
+#endif
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
@@ -18180,3 +18508,7 @@ STATICINLINE void ReadnPixelsKHR(i32 x, i32 y, Size const& size, PixCmp format, 
 
 } // CGL
 } // Coffee
+
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#pragma GCC diagnostic pop
+#endif

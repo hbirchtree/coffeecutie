@@ -199,12 +199,12 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     Vector<GLEAM_ProgramParameter> params;
     GLEAM_API::GetShaderUniformState(m_pip, &desc, &params);
 
-    for(auto const& d : desc)
+    for(auto& d : desc)
     {
         if(d.m_name == "colortex")
-            m_texLoc = d;
+            m_texLoc = std::move(d);
         if(d.m_name == "transform")
-            m_transformLoc = d;
+            m_transformLoc = std::move(d);
     }
 
     return status;

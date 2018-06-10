@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../plat/plat_environment.h"
+#include "../../plat/plat_sysinfo.h"
 #include "../../types/tdef/integertypes.h"
 #include "../../types/tdef/stltypes.h"
 #include "async_tasks.h"

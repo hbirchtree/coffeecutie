@@ -9,7 +9,7 @@ namespace Coffee {
 namespace Windows {
 const constexpr cstring coffee_rsc_tag = "CF_RES";
 
-WinFileApi::FileAccess WinFileApi::GetAccess(ResourceAccess acc)
+WinFileApi::FileAccess WinFileApi::GetAccess(RSCA acc)
 {
     FileAccess f;
     f.open   = 0;
@@ -17,26 +17,26 @@ WinFileApi::FileAccess WinFileApi::GetAccess(ResourceAccess acc)
     f.create = 0;
     f.attr   = 0;
 
-    if(feval(acc & ResourceAccess::ReadOnly))
+    if(feval(acc & RSCA::ReadOnly))
         f.open |= GENERIC_READ;
-    if(feval(acc & ResourceAccess::WriteOnly))
+    if(feval(acc & RSCA::WriteOnly))
         f.open |= GENERIC_WRITE;
-    if(feval(acc & ResourceAccess::Executable))
+    if(feval(acc & RSCA::Executable))
         f.open |= GENERIC_EXECUTE;
 
-    if(!feval(acc & ResourceAccess::ExclusiveLocking))
+    if(!feval(acc & RSCA::ExclusiveLocking))
         f.share |= FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
-    if(feval(acc & ResourceAccess::Discard))
+    if(feval(acc & RSCA::Discard))
         f.create |= CREATE_ALWAYS;
-    else if(feval(acc & ResourceAccess::NewFile))
+    else if(feval(acc & RSCA::NewFile))
         f.create |= CREATE_NEW;
     else
         f.create |= OPEN_EXISTING;
 
     return f;
 }
-HANDLE WinFileApi::GetFileHandle(Url const& fn, ResourceAccess acc)
+HANDLE WinFileApi::GetFileHandle(Url const& fn, RSCA acc)
 {
     auto       url = *fn;
     FileAccess f   = GetAccess(acc);
@@ -49,90 +49,51 @@ HANDLE WinFileApi::GetFileHandle(Url const& fn, ResourceAccess acc)
         url.c_str(), f.open, f.share, nullptr, f.create, f.attr, nullptr);
 #endif
 }
-DWORD WinFileApi::GetMappingFlags(ResourceAccess acc)
+DWORD WinFileApi::GetMappingFlags(RSCA acc)
 {
     DWORD profl = 0;
 
-    if(feval(acc & ResourceAccess::ReadOnly) &&
-       feval(acc & ResourceAccess::WriteOnly) &&
-       feval(acc & ResourceAccess::Executable) &&
-       feval(acc & ResourceAccess::Persistent))
+    if(feval(acc & RSCA::ReadOnly) && feval(acc & RSCA::WriteOnly) &&
+       feval(acc & RSCA::Executable) && feval(acc & RSCA::Persistent))
         profl = PAGE_EXECUTE_READWRITE;
     else if(
-        feval(acc & ResourceAccess::ReadOnly) &&
-        feval(acc & ResourceAccess::WriteOnly) &&
-        feval(acc & ResourceAccess::Persistent))
+        feval(acc & RSCA::ReadOnly) && feval(acc & RSCA::WriteOnly) &&
+        feval(acc & RSCA::Persistent))
         profl = PAGE_READWRITE;
-    if(feval(acc & ResourceAccess::ReadOnly) &&
-       feval(acc & ResourceAccess::WriteOnly) &&
-       feval(acc & ResourceAccess::Executable))
+    if(feval(acc & RSCA::ReadOnly) && feval(acc & RSCA::WriteOnly) &&
+       feval(acc & RSCA::Executable))
         profl = PAGE_EXECUTE_WRITECOPY;
-    else if(
-        feval(acc & ResourceAccess::ReadOnly) &&
-        feval(acc & ResourceAccess::WriteOnly))
+    else if(feval(acc & RSCA::ReadOnly) && feval(acc & RSCA::WriteOnly))
         profl = PAGE_WRITECOPY;
-    else if(feval(acc & ResourceAccess::ReadOnly))
+    else if(feval(acc & RSCA::ReadOnly))
         profl = PAGE_READONLY;
 
-    if(feval(acc & ResourceAccess::NoCache))
+    if(feval(acc & RSCA::NoCache))
         profl |= SEC_NOCACHE;
-    if(feval(acc & ResourceAccess::HugeFile))
+    if(feval(acc & RSCA::HugeFile))
         profl |= SEC_LARGE_PAGES;
-    if(feval(acc & ResourceAccess::GreedyCache))
+    if(feval(acc & RSCA::GreedyCache))
         profl |= SEC_COMMIT;
-    if(feval(acc & ResourceAccess::Virtual))
+    if(feval(acc & RSCA::Virtual))
         profl |= SEC_RESERVE;
 
     return profl;
 }
 
-DWORD WinFileApi::GetMappingViewFlags(ResourceAccess acc)
+DWORD WinFileApi::GetMappingViewFlags(RSCA acc)
 {
     DWORD view_fl = 0;
 
-    if(feval(acc & ResourceAccess::ReadOnly) &&
-       feval(acc & ResourceAccess::WriteOnly) &&
-       feval(acc & ResourceAccess::Persistent))
+    if(feval(acc & RSCA::ReadOnly) && feval(acc & RSCA::WriteOnly) &&
+       feval(acc & RSCA::Persistent))
         view_fl = FILE_MAP_WRITE;
-    if(feval(acc & ResourceAccess::ReadOnly) &&
-       feval(acc & ResourceAccess::WriteOnly))
+    if(feval(acc & RSCA::ReadOnly) && feval(acc & RSCA::WriteOnly))
         view_fl |= FILE_MAP_COPY;
-    else if(feval(acc & ResourceAccess::ReadOnly))
+    else if(feval(acc & RSCA::ReadOnly))
         view_fl = FILE_MAP_READ;
 
     return view_fl;
 }
-
-// CString WinFileFun::NativePath(cstring fn)
-//{
-//    if (fn[0] == ':')
-//    {
-//        //auto path =
-//        ::Windows::ApplicationModel::Package::Current->InstalledLocation->Path->Data();
-//        //CString appdir = StrUtil::convertformat<char, wchar_t>(path);
-//        //CString appdir = Env::ApplicationDir();
-//        cstring asset_path = AssetApi::GetAsset(fn);
-//        //CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
-//        CString conc_path = asset_path;
-//        conc_path = Mem::CStrReplace(conc_path, "/", "\\");
-//#if !defined(COFFEE_WINDOWS_UWP)
-//        conc_path = ":/" + conc_path;
-//#endif
-//        return conc_path;
-//    }
-//    return fn;
-//}
-
-// CString WinFileFun::NativePath(cstring fn, ResourceAccess storage)
-//{
-//    if(feval(storage,ResourceAccess::TemporaryFile))
-//    {
-//        CString temp_dir = Env::GetVar("TEMP");
-//        return Env::ConcatPath(temp_dir.c_str(),fn);
-//    }
-//    else
-//        return NativePath(fn);
-//}
 
 CString create_rsc_name(cstring fn)
 {
@@ -167,11 +128,10 @@ HRSRC open_rsc(cstring fn)
 //#endif
 //}
 
-WinFileFun::FileHandle WinFileFun::Open(Url const& fn, ResourceAccess acc)
+WinFileFun::FileHandle WinFileFun::Open(Url const& fn, RSCA acc, file_error& ec)
 {
     auto url = *fn;
-    if(feval(fn.flags & ResourceAccess::AssetFile) &&
-       !feval(acc, ResourceAccess::WriteOnly))
+    if(feval(fn.flags & RSCA::AssetFile) && !feval(acc, RSCA::WriteOnly))
     {
         HRSRC rsc = open_rsc(url.c_str());
 
@@ -190,7 +150,7 @@ WinFileFun::FileHandle WinFileFun::Open(Url const& fn, ResourceAccess acc)
     if(ff == INVALID_HANDLE_VALUE)
         return {};
 
-    FileHandle fh = CFILEFun_def<FileHandle>::Open(fn, acc);
+    FileHandle fh = CFILEFun_def<FileHandle>::Open(fn, acc, ec);
     if(!fh.handle)
     {
         CloseHandle(ff);
@@ -201,25 +161,25 @@ WinFileFun::FileHandle WinFileFun::Open(Url const& fn, ResourceAccess acc)
     return fh;
 }
 
-bool WinFileFun::Close(WinFileFun::FileHandle&& fh)
+bool WinFileFun::Close(WinFileFun::FileHandle&& fh, file_error& ec)
 {
     if(fh.type == FileHandle::FS)
     {
         HANDLE file = fh.file;
-        return CFILEFun_def<FileHandle>::Close(std::move(fh)) &&
+        return CFILEFun_def<FileHandle>::Close(std::move(fh), ec) &&
                CloseHandle(file);
     } else
         return true;
     return false;
 }
 
-Bytes WinFileFun::Read(FileHandle const& h, uint64 size, bool)
+Bytes WinFileFun::Read(FileHandle const& h, uint64 size, file_error& ec)
 {
     if(h.type == FileHandle::FS)
     {
         Bytes d;
 
-        d.size = Size(h);
+        d.size = Size(h, ec);
         d.size = (size < d.size) ? size : d.size;
 
         d = Bytes::Alloc(d.size);
@@ -260,7 +220,7 @@ Bytes WinFileFun::Read(FileHandle const& h, uint64 size, bool)
     }
 }
 
-bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, bool)
+bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, file_error& ec)
 {
     if(fh.type == FileHandle::FS)
     {
@@ -287,10 +247,10 @@ bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, bool)
         return false;
 }
 
-bool WinFileFun::Exists(Url const& fn)
+bool WinFileFun::Exists(Url const& fn, file_error& ec)
 {
     /* If it's secretly a resource, return now with true */
-    if(feval(fn.flags & ResourceAccess::AssetFile))
+    if(feval(fn.flags & RSCA::AssetFile))
         return true;
 
     auto url = *fn;
@@ -310,7 +270,7 @@ bool WinFileFun::Exists(Url const& fn)
     }
 }
 
-szptr WinFileFun::Size(WinFileFun::FileHandle const& fh)
+szptr WinFileFun::Size(WinFileFun::FileHandle const& fh, file_error& ec)
 {
     if(fh.type == FileHandle::FS)
     {
@@ -326,11 +286,11 @@ szptr WinFileFun::Size(WinFileFun::FileHandle const& fh)
     return 0;
 #endif
 }
-szptr WinFileFun::Size(Url const& fn)
+szptr WinFileFun::Size(Url const& fn, file_error& ec)
 {
     auto url = *fn;
 #ifndef COFFEE_WINDOWS_UWP
-    if(feval(fn.flags & ResourceAccess::AssetFile))
+    if(feval(fn.flags & RSCA::AssetFile))
     {
         HRSRC rsc_h = open_rsc(url.c_str());
         DWORD sz    = 0;
@@ -360,7 +320,7 @@ szptr WinFileFun::Size(Url const& fn)
     }
 }
 
-bool WinFileFun::Touch(NodeType t, Url const& n)
+bool WinFileFun::Touch(NodeType t, Url const& n, file_error& ec)
 {
     auto url = *n;
 
@@ -389,12 +349,12 @@ bool WinFileFun::Touch(NodeType t, Url const& n)
         }
     }
     case NodeType::Directory:
-        return DirFun::MkDir(n, false);
+        return DirFun::MkDir(n, false, ec);
     default:
         return false;
     }
 }
-bool WinFileFun::Rm(Url const& fn)
+bool WinFileFun::Rm(Url const& fn, file_error& ec)
 {
     auto url = *fn;
 
@@ -406,7 +366,7 @@ bool WinFileFun::Rm(Url const& fn)
     return DeleteFile(url.c_str());
 #endif
 }
-WinFileFun::NodeType WinFileFun::Stat(Url const& f)
+WinFileFun::NodeType WinFileFun::Stat(Url const& f, file_error& ec)
 {
     auto url = *f;
 
@@ -426,12 +386,11 @@ WinFileFun::NodeType WinFileFun::Stat(Url const& f)
 }
 
 WinFileFun::FileMapping WinFileFun::Map(
-    Url const& fn, ResourceAccess acc, szptr off, szptr size, int* err)
+    Url const& fn, RSCA acc, szptr off, szptr size, file_error& ec)
 {
     auto url = *fn;
 
-    if(feval(fn.flags & ResourceAccess::AssetFile) &&
-       !feval(acc, ResourceAccess::WriteOnly))
+    if(feval(fn.flags & RSCA::AssetFile) && !feval(acc, RSCA::WriteOnly))
     {
         FileMapping fm = {};
 
@@ -450,14 +409,14 @@ WinFileFun::FileMapping WinFileFun::Map(
         return fm;
     }
 
-    if(off + size > Size(fn))
+    if(off + size > Size(fn, ec))
         return {};
 
     HANDLE fh = WinFileApi::GetFileHandle(fn, acc);
 
     if(fh == INVALID_HANDLE_VALUE)
     {
-        *err = GetLastError();
+        //        *err = GetLastError();
         return {};
     }
 
@@ -477,7 +436,7 @@ WinFileFun::FileMapping WinFileFun::Map(
 
     if(!mh)
     {
-        *err = GetLastError();
+        //        *err = GetLastError();
         CloseHandle(fh);
         return {};
     }
@@ -496,7 +455,7 @@ WinFileFun::FileMapping WinFileFun::Map(
 
     if(!ptr)
     {
-        *err = GetLastError();
+        //        *err = GetLastError();
         CloseHandle(fh);
         CloseHandle(mh);
         return {};
@@ -511,7 +470,7 @@ WinFileFun::FileMapping WinFileFun::Map(
 
     return fm;
 }
-bool WinFileFun::Unmap(WinFileFun::FileMapping&& fp)
+bool WinFileFun::Unmap(WinFileFun::FileMapping&& fp, file_error& ec)
 {
     if(!fp.mapping)
         return true;
@@ -524,7 +483,8 @@ bool WinFileFun::Unmap(WinFileFun::FileMapping&& fp)
 
     return true;
 }
-WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(szptr size, ResourceAccess acc)
+WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
+    szptr size, RSCA acc, file_error& ec)
 {
     ScratchBuf b = {};
     b.assignAccess(acc);
@@ -564,13 +524,13 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(szptr size, ResourceAccess acc)
 
     return b;
 }
-void WinFileFun::ScratchUnmap(WinFileFun::ScratchBuf&& buf)
+void WinFileFun::ScratchUnmap(WinFileFun::ScratchBuf&& buf, file_error& ec)
 {
     UnmapViewOfFile(buf.data);
     CloseHandle(buf.mapping);
 }
 
-bool WinDirFun::MkDir(Url const& dname, bool parent)
+bool WinDirFun::MkDir(Url const& dname, bool parent, file_error& ec)
 {
     auto url = *dname;
 
@@ -607,14 +567,14 @@ bool WinDirFun::MkDir(Url const& dname, bool parent)
         return stat == TRUE;
 }
 
-bool WinDirFun::RmDir(Url const& fn)
+bool WinDirFun::RmDir(Url const& fn, file_error& ec)
 {
     CString deref = *fn;
 
     return RemoveDirectoryA(deref.c_str()) == TRUE;
 }
 
-bool WinDirFun::Ls(Url const& fn, DirList& outl)
+bool WinDirFun::Ls(Url const& fn, DirList& outl, file_error& ec)
 {
     CString deref = *fn;
 
@@ -640,6 +600,56 @@ bool WinDirFun::Ls(Url const& fn, DirList& outl)
     FindClose(hnd);
 
     return true;
+}
+
+Url WinDirFun::Dirname(CString const& fn, file_error& ec)
+{
+    CString fn_ = fn;
+
+    do
+    {
+        if(!fn_.size())
+        {
+            fn_ = ".";
+            break;
+        }
+
+        auto idx = fn_.rfind('/');
+
+        if(idx != CString::npos)
+            fn_ = fn_.substr(0, idx);
+    } while(false);
+
+    return MkUrl(fn_, RSCA::SystemFile);
+}
+
+Url WinDirFun::Basename(CString const& fn, file_error& ec)
+{
+    const constexpr cstring sep = "/";
+
+    CString out = fn;
+
+    do
+    {
+        if(!fn.size())
+        {
+            out = ".";
+            break;
+        }
+
+        if(out == "/")
+            break;
+
+        auto idx = out.rfind(sep);
+
+        if(idx == CString::npos)
+            break;
+
+        out = out.substr(idx + 1, out.size() - idx - 1);
+
+    } while(false);
+
+    return MkUrl(out, RSCA::SystemFile);
 }
 
 } // namespace Windows

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../../types/tdef/integertypes.h"
-#include "../../types/tdef/stltypes.h"
+#include <coffee/core/base/files/url.h>
 
 namespace Coffee{
 namespace Environment{
@@ -22,25 +21,6 @@ struct EnvInterface
      */
     STATICINLINE CString ExecutableName()
     {
-        return CString();
-    }
-
-    /*!
-     * \brief Get base name of an arbitrary path, should work like basename
-     * \return
-     */
-    STATICINLINE CString BaseName(cstring path)
-    {
-        (void)path;
-        return CString();
-    }
-    /*!
-     * \brief Directory name from arbitrary path, should work like dirname
-     * \return
-     */
-    STATICINLINE CString DirName(cstring path)
-    {
-        (void)path;
         return CString();
     }
 
@@ -113,27 +93,12 @@ struct EnvInterface
     }
 
     /*!
-     * \brief Get path separation character, / or \\
-     * \return
-     */
-    STATICINLINE CString GetPathSep()
-    {
-        return CString();
-    }
-    STATICINLINE CString ConcatPath(cstring p1, cstring p2)
-    {
-        (void)p1;
-        (void)p2;
-
-        return CString(p1) + '/' + p2;
-    }
-    /*!
      * \brief Get user home directory, $HOME on *nix, %USERPROFILE% on Windows
      * \return
      */
-    STATICINLINE CString GetUserHome()
+    STATICINLINE Url GetUserHome()
     {
-        return CString();
+        return Url();
     }
 
     /*!
@@ -142,29 +107,29 @@ struct EnvInterface
      * \param appname
      * \return
      */
-    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
+    STATICINLINE Url GetUserData(cstring orgname, cstring appname)
     {
         (void)orgname;
         (void)appname;
         /* Typically ConcatPath(*user data dir*, ConcatPath(orgname, appname)) */
-        return CString();
+        return Url();
     }
 
     /*!
      * \brief Directory of the running application's executable
      * \return
      */
-    STATICINLINE CString ApplicationDir()
+    STATICINLINE Url ApplicationDir()
     {
-        return CString();
+        return Url();
     }
     /*!
      * \brief Current directory where we are executing
      * \return
      */
-    STATICINLINE CString CurrentDir()
+    STATICINLINE Url CurrentDir()
     {
-        return CString();
+        return Url();
     }
 
     /*!

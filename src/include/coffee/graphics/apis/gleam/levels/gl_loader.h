@@ -11,7 +11,11 @@ namespace CGL {
 struct Loader
 {
     STATICINLINE bool LoadBinding(
+#if !defined(COFFEE_LINKED_GLES)
         CGL_Context* ctxt, GLADloadproc fun, void** ptr_check)
+#else
+        CGL_Context* ctxt, void* fun, void** ptr_check)
+#endif
     {
         C_USED(fun);
 
@@ -21,7 +25,7 @@ struct Loader
 #if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_LINKED_GLES)
         if(!gladLoadGLES2Loader(fun))
             return false;
-#else
+#elif !defined(COFFEE_LINKED_GLES)
         if(!gladLoadGL())
             return false;
 #endif

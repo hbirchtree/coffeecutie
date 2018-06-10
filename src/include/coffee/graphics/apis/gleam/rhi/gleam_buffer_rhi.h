@@ -2,9 +2,9 @@
 
 #include "gleam_types_rhi.h"
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
 struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
 {
@@ -12,27 +12,34 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     friend struct GLEAM_Surface2D;
     friend struct GLEAM_Surface2DArray;
 
-    GLEAM_VBuffer(BufType type, ResourceAccess acc, szptr):
-        VertexBuffer(acc),
-        m_type(type),
-        m_handle(0)
+    GLEAM_VBuffer(BufType type, ResourceAccess acc, szptr) :
+        VertexBuffer(acc), m_type(type), m_handle(0)
     {
     }
 
     void alloc();
     void dealloc();
 
-    void commit(szptr size, c_cptr data = nullptr);
+    void commit(BytesConst const& data);
+    void commit(szptr size, c_cptr data = nullptr)
+    {
+        commit(BytesConst::Unsafe(data, size));
+    }
 
-    void* map(szptr offset = 0,szptr size = 0);
+    Bytes map(szptr offset, szptr size, gleam_error& ec);
+    Bytes map(szptr offset = 0, szptr size = 0)
+    {
+        gleam_error ec;
+        return map(offset, size, ec);
+    }
     void unmap();
 
-protected:
+  protected:
     void bind() const;
     void unbind() const;
 
     BufType m_type;
-    CGhnd m_handle;
+    CGhnd   m_handle;
 
     Vector<byte_t> m_mappedBufferFake;
 };
@@ -40,52 +47,53 @@ protected:
 struct GLEAM_BindableBuffer : GLEAM_VBuffer
 {
     GLEAM_BindableBuffer(
-            BufType type,ResourceAccess acc, szptr stride, szptr size):
-        GLEAM_VBuffer(type,acc,size),
+        BufType type, ResourceAccess acc, szptr stride, szptr size) :
+        GLEAM_VBuffer(type, acc, size),
         m_stride(stride)
     {
     }
-    void bindrange(uint32 idx, szptr off, szptr size) const;
-protected:
+    void bindrange(uint32 idx, szptr off, szptr size, gleam_error& ec) const;
+
+  protected:
     szptr m_stride;
 };
 
 struct GLEAM_UniformBuffer : GLEAM_BindableBuffer
 {
-    GLEAM_UniformBuffer(ResourceAccess acc, szptr stride, szptr size):
-        GLEAM_BindableBuffer(BufType::UniformData,acc,stride,size)
+    GLEAM_UniformBuffer(ResourceAccess acc, szptr stride, szptr size) :
+        GLEAM_BindableBuffer(BufType::UniformData, acc, stride, size)
     {
     }
 };
 
 struct GLEAM_ShaderBuffer : GLEAM_BindableBuffer
 {
-    GLEAM_ShaderBuffer(ResourceAccess acc, szptr stride, szptr size):
-        GLEAM_BindableBuffer(BufType::ShaderData,acc,stride,size)
+    GLEAM_ShaderBuffer(ResourceAccess acc, szptr stride, szptr size) :
+        GLEAM_BindableBuffer(BufType::ShaderData, acc, stride, size)
     {
     }
 };
 
 struct GLEAM_ArrayBuffer : GLEAM_VBuffer
 {
-    GLEAM_ArrayBuffer(ResourceAccess acc,szptr size):
-        GLEAM_VBuffer(BufType::ArrayData,acc,size)
+    GLEAM_ArrayBuffer(ResourceAccess acc, szptr size) :
+        GLEAM_VBuffer(BufType::ArrayData, acc, size)
     {
     }
 };
 
 struct GLEAM_ElementBuffer : GLEAM_VBuffer
 {
-    GLEAM_ElementBuffer(ResourceAccess acc, szptr size):
-        GLEAM_VBuffer(BufType::ElementData,acc,size)
+    GLEAM_ElementBuffer(ResourceAccess acc, szptr size) :
+        GLEAM_VBuffer(BufType::ElementData, acc, size)
     {
     }
 };
 
 struct GLEAM_PixelBuffer : GLEAM_VBuffer
 {
-    GLEAM_PixelBuffer(ResourceAccess acc, szptr size):
-        GLEAM_VBuffer(BufType::PixelUData,acc,size)
+    GLEAM_PixelBuffer(ResourceAccess acc, szptr size) :
+        GLEAM_VBuffer(BufType::PixelUData, acc, size)
     {
     }
 
@@ -95,20 +103,18 @@ struct GLEAM_PixelBuffer : GLEAM_VBuffer
 struct GLEAM_IndirectBuffer : GLEAM_VBuffer
 {
     GLEAM_IndirectBuffer(
-            ResourceAccess acc, u32 flags, szptr stride, szptr size):
-        GLEAM_VBuffer(BufType::DrawcallData,
-                      acc,
-                      size),
-        m_stride(stride),
-        m_flags(flags)
+        ResourceAccess acc, u32 flags, szptr stride, szptr size) :
+        GLEAM_VBuffer(BufType::DrawcallData, acc, size),
+        m_stride(stride), m_flags(flags)
 
     {
     }
-protected:
+
+  protected:
     szptr m_stride;
-    u32 m_flags;
+    u32   m_flags;
 };
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

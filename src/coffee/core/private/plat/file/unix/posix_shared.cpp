@@ -4,11 +4,15 @@
 namespace Coffee{
 namespace CResources{
 
-bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
+bool Posix::PosixFileMod_def::ErrnoCheck(file_error& ec, cstring ref, int fd)
 {
+
 #ifndef COFFEE_LOWFAT
     if(errno != 0)
     {
+        ec = FileError::SystemError;
+
+        /*
         char path[PATH_MAX] = {};
         char fd_path[128] = {};
 #if defined(COFFEE_LINUX)
@@ -26,6 +30,9 @@ bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
 
 //        fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
         cVerbose(10, "ERROR:{0}: {1}", ref, strerror(errno));
+*/
+
+        ec = strerror(errno);
         errno = 0;
         return true;
     }

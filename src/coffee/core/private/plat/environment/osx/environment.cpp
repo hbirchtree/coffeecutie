@@ -5,7 +5,7 @@ namespace Coffee{
 namespace Environment{
 namespace Mac{
 
-CString MacEnv::GetUserData(cstring orgname, cstring appname)
+Url MacEnv::GetUserData(cstring orgname, cstring appname)
 {
     if(!orgname && !appname)
     {
@@ -17,7 +17,7 @@ CString MacEnv::GetUserData(cstring orgname, cstring appname)
     dir = ConcatPath(dir.c_str(),"Library/Application Support");
     dir = ConcatPath(dir.c_str(),orgname);
     dir = ConcatPath(dir.c_str(),appname);
-    return dir;
+    return MkUrl(dir, RSCA::SystemFile);
 }
 
 }

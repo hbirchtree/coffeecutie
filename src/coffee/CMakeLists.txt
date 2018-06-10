@@ -1,42 +1,43 @@
-# Core libraries, no external dependencies
+option ( BUILD_ASIO     "Build with ASIO networking"                ON  )
+option ( BUILD_ASSIMP   "Build with ASSIMP importer"                OFF )
+option ( BUILD_AUDIO    "Build with audio support"                  ON  )
+option ( BUILD_BLAM     "Build Blam! data readers"                  ON  )
+option ( BUILD_CEF      "Build with Chromium Embedded Framework"    OFF )
+option ( BUILD_OPENVR   "Build with OpenVR integration"             OFF )
+option ( BUILD_SDL2     "Build with SDL2 graphics backend"          ON  )
+
 add_subdirectory(core)
 add_subdirectory(image)
 
-# ASIO networking
-if(COFFEE_BUILD_ASIO)
+add_subdirectory(graphics)
+add_subdirectory(windowing)
+
+if(BUILD_ASIO)
     add_subdirectory(asio)
 endif()
 
-# More here!
-add_subdirectory(graphics)
-
-add_subdirectory(windowing)
-
-if(COFFEE_BUILD_CBLAM)
-    add_subdirectory(blam)
-endif()
-
-# Requires OpenAL
-if(COFFEE_BUILD_OPENAL)
-    add_subdirectory(audio)
-endif()
-
-# Requires SDL2... obviously
-if(COFFEE_BUILD_SDL2)
-    add_subdirectory(sdl2)
-endif()
-
-# Compiled by user
-if(COFFEE_BUILD_ASSIMP)
+if(BUILD_ASSIMP)
     add_subdirectory(assimp)
 endif()
 
-if(COFFEE_BUILD_CEF)
+if(BUILD_BLAM)
+    add_subdirectory(blam)
+endif()
+
+if(BUILD_CEF)
     add_subdirectory(cef)
 endif()
 
-if(COFFEE_BUILD_DBUS)
-    add_subdirectory(misc/dbus)
+if(BUILD_AUDIO)
+    add_subdirectory(audio)
+endif()
+
+if(BUILD_SDL2)
+    add_subdirectory(sdl2)
+endif()
+
+if(BUILD_OPENVR)
+
 endif()
 
 coffee_bundle_includes ( "${CMAKE_CURRENT_SOURCE_DIR}/../include" )

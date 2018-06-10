@@ -25,6 +25,7 @@
 #include <complex>
 #include <exception>
 #include <type_traits>
+#include <system_error>
 
 #if defined(COFFEE_GEKKO)
 #include <gccore.h>
@@ -127,7 +128,7 @@ template<typename T1, typename T2>
 using Pair = std::pair<T1, T2>;
 
 template<typename... Args>
-using Tuple = std::tuple<Args...>;
+using Tup = std::tuple<Args...>;
 
 using ByteVector = Vector<uint8_t>;
 
@@ -306,6 +307,41 @@ struct quick_container
   private:
     std::function<IteratorType()> m_begin;
     std::function<IteratorType()> m_end;
+};
+
+using error_category = std::error_category;
+
+struct error_code : std::error_code
+{
+    CString error_message;
+
+    error_code& operator=(CString error_msg)
+    {
+        this->error_message = error_msg;
+        return *this;
+    }
+};
+
+template<typename DomainError, typename ErrorCategory>
+struct domain_error_code : error_code
+{
+    using error_code::operator=;
+
+    domain_error_code& operator=(DomainError error_code)
+    {
+        assign(C_CAST<int>(error_code), ErrorCategory());
+        return *this;
+    }
+
+    bool operator!=(DomainError error)
+    {
+        return C_CAST<int>(error) != value();
+    }
+
+    bool operator==(DomainError error)
+    {
+        return C_CAST<int>(error) == value();
+    }
 };
 
 } // namespace Coffee

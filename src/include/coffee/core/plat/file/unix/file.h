@@ -8,22 +8,14 @@
 #include <mach/vm_statistics.h>
 #endif
 
-// errno
-#include <errno.h>
-// ???
-#include <unistd.h>
-// open(), close(), read(), write(), creat()
-#include <fcntl.h>
-// opendir(), readdir()
-#include <dirent.h>
+#include <dirent.h>   // opendir(), readdir()
+#include <errno.h>    // errno
+#include <fcntl.h>    // open(), close(), read(), write(), creat()
+#include <libgen.h>   // basename()
+#include <sys/mman.h> // mmap(), mmap64(), msync(), mlock(), munlock()
+#include <sys/stat.h> // lstat()
 #include <sys/types.h>
-// lstat()
-#include <sys/stat.h>
-// mmap(), mmap64(), msync(), mlock(), munlock()
-#include <sys/mman.h>
-
-// basename()
-#include <libgen.h>
+#include <unistd.h> // ???
 
 namespace Coffee {
 namespace CResources {
@@ -53,7 +45,7 @@ struct posix_fd
     FORCEDINLINE posix_fd& operator=(posix_fd&& fd)
     {
         this->fd = fd.fd;
-        fd.fd = 0;
+        fd.fd    = 0;
 
         return *this;
     }
@@ -89,25 +81,25 @@ struct PosixApi
 
 struct PosixFileMod_def : CommonFileFun
 {
-    static bool ErrnoCheck(cstring ref = nullptr, int fd = -1);
+    static bool ErrnoCheck(file_error& ec, cstring ref = nullptr, int fd = -1);
 
-    static NodeType Stat(Url const& fn);
+    static NodeType Stat(Url const& fn, file_error& ec);
 
-    static bool Touch(NodeType t, Url const& fn);
+    static bool Touch(NodeType t, Url const& fn, file_error& ec);
 
-    static bool Rm(Url const& fn);
+    static bool Rm(Url const& fn, file_error& ec);
 
-    static CString DereferenceLink(Url const& fn);
+    static CString DereferenceLink(Url const& fn, file_error& ec);
 
-    static CString CanonicalName(Url const& fn);
+    static CString CanonicalName(Url const& fn, file_error& ec);
 
-    static bool Ln(Url const& src, Url const& target);
+    static bool Ln(Url const& src, Url const& target, file_error& ec);
 
-    static szptr Size(Url const& fn);
+    static szptr Size(Url const& fn, file_error& ec);
 
-    static bool Exists(Url const& fn);
+    static bool Exists(Url const& fn, file_error& ec);
 
-    static void Truncate(Url const& fn, szptr size);
+    static void Truncate(Url const& fn, szptr size, file_error& ec);
 
   protected:
     static uint32 PageSize();
@@ -129,35 +121,37 @@ struct PosixFileFun_def : PosixFileMod_def
     using PosixFileMod_def::Exists;
     using PosixFileMod_def::Size;
 
-    STATICINLINE FH Open(Url const& fn, ResourceAccess ac)
+    STATICINLINE FH Open(Url const& fn, ResourceAccess ac, file_error& ec)
     {
         auto url = *fn;
         auto fd =
             posix_fd(open(url.c_str(), PosixRscFlags(ac), S_IRWXU | S_IRGRP));
 
         if(fd == -1)
+        {
+            ErrnoCheck(ec, url.c_str());
             return {};
+        }
 
         FH fh;
         fh.fd = std::move(fd);
 
         return fh;
     }
-    STATICINLINE bool Valid(FH const& fh)
+    STATICINLINE bool Valid(FH const& fh, file_error&)
     {
         return C_OCAST<int>(fh.fd) != 0;
     }
-    STATICINLINE bool Close(FH&&)
+    STATICINLINE bool Close(FH&&, file_error& ec)
     {
-//        close(fh.fd);
         return true;
     }
 
-    STATICINLINE Bytes Read(FH const& f_h, int64 f_size, bool nullterm)
+    STATICINLINE Bytes Read(FH const& f_h, int64 f_size, file_error& ec)
     {
         Bytes data = {};
 
-        int64 sz = Size(f_h);
+        int64 sz = Size(f_h, ec);
 
         if(f_size <= sz && f_size != -1)
             sz = f_size;
@@ -165,15 +159,9 @@ struct PosixFileFun_def : PosixFileMod_def
         if(sz == 0)
             return data;
 
-        szptr szp = C_CAST<szptr>(sz) + ((nullterm) ? 1 : 0);
+        szptr szp = C_CAST<szptr>(sz);
 
-        data = Bytes::Alloc(szp + nullterm);
-
-        if(nullterm)
-        {
-            data.data[szp] = 0;
-            szp--;
-        }
+        data = Bytes::Alloc(szp);
 
         if(!data.data)
             return {};
@@ -184,7 +172,7 @@ struct PosixFileFun_def : PosixFileMod_def
         {
             chnk = ((szp - i) < Int32_Max) ? (szp - i) : Int32_Max;
             i += read(f_h.fd, &((C_CAST<byte_t*>(data.data))[i]), chnk);
-            if(ErrnoCheck())
+            if(ErrnoCheck(ec))
                 break;
         }
 
@@ -197,7 +185,7 @@ struct PosixFileFun_def : PosixFileMod_def
         return data;
     }
 
-    STATICINLINE bool Write(FH const& f_h, Bytes const& d, bool)
+    STATICINLINE bool Write(FH const& f_h, Bytes const& d, file_error& ec)
     {
         szptr i    = 0;
         szptr it   = 0;
@@ -206,7 +194,7 @@ struct PosixFileFun_def : PosixFileMod_def
         {
             chnk = ((d.size - i) < Int32_Max) ? (d.size - i) : Int32_Max;
             i += write(f_h.fd, &(C_CAST<byte_t*>(d.data)[i]), chnk);
-            if(ErrnoCheck(nullptr, f_h.fd) && it != 0)
+            if(ErrnoCheck(ec, nullptr, f_h.fd) && it != 0)
                 break;
             it++;
         }
@@ -214,11 +202,10 @@ struct PosixFileFun_def : PosixFileMod_def
     }
 
     STATICINLINE
-    FM Map(Url const& filename, RSCA acc, szptr offset, szptr size, int* error)
+    FM Map(
+        Url const& filename, RSCA acc, szptr offset, szptr size, file_error& ec)
     {
-        auto url = *filename;
-        if(error)
-            *error = 0;
+        auto   url       = *filename;
         uint64 pa_offset = offset & ~(PageSize());
 
         if(pa_offset != offset)
@@ -233,8 +220,7 @@ struct PosixFileFun_def : PosixFileMod_def
         int fd = open(url.c_str(), oflags);
         if(fd < 0)
         {
-            if(error)
-                *error = errno;
+            ErrnoCheck(ec);
             return {};
         }
 
@@ -255,25 +241,27 @@ struct PosixFileFun_def : PosixFileMod_def
 
         if(addr == MAP_FAILED)
         {
-            ErrnoCheck(url.c_str(), fd);
-            *error = errno;
+            ErrnoCheck(ec, url.c_str(), fd);
             return {};
         }
 
         if(::close(fd) != 0)
-            ErrnoCheck();
+            ErrnoCheck(ec);
 
         FM out(addr, size, size);
         out.assignAccess(acc);
 
         /* Set up some semantics to automatically unmap it
          *  when out of scope */
-        FM::SetDestr(out, [](FM& f) { Unmap(std::move(f)); });
+        FM::SetDestr(out, [](FM& f) {
+            file_error ec;
+            Unmap(std::move(f), ec);
+        });
 
         return out;
     }
 
-    STATICINLINE bool Unmap(FM&& mapp)
+    STATICINLINE bool Unmap(FM&& mapp, file_error& ec)
     {
         void* ptr  = mapp.data;
         szptr size = mapp.size;
@@ -282,13 +270,13 @@ struct PosixFileFun_def : PosixFileMod_def
             return true;
         } else
         {
-            ErrnoCheck("munmap()");
+            ErrnoCheck(ec, "munmap()");
             return false;
         }
     }
 
     STATICINLINE bool MapCache(
-        void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
+        void* t_ptr, szptr t_size, szptr r_off, szptr r_size, file_error& ec)
     {
         if(r_off + r_size > t_size)
             return false;
@@ -298,7 +286,7 @@ struct PosixFileFun_def : PosixFileMod_def
     }
 
     STATICINLINE bool MapUncache(
-        void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
+        void* t_ptr, szptr t_size, szptr r_off, szptr r_size, file_error& ec)
     {
         if(r_off + r_size > t_size)
             return false;
@@ -307,12 +295,17 @@ struct PosixFileFun_def : PosixFileMod_def
         return munlock(base, r_size) == 0;
     }
 
-    STATICINLINE bool MapSync(void* ptr, szptr size)
+    STATICINLINE bool MapSync(void* ptr, szptr size, file_error& ec)
     {
-        return msync(ptr, size, MS_SYNC | MS_INVALIDATE);
+        auto ret = msync(ptr, size, MS_SYNC | MS_INVALIDATE);
+
+        ErrnoCheck(ec);
+
+        return ret;
     }
 
-    STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess access)
+    STATICINLINE ScratchBuf
+                 ScratchBuffer(szptr size, ResourceAccess access, file_error& ec)
     {
         int proto    = ProtFlags(access);
         int mapflags = MappingFlags(access);
@@ -333,37 +326,44 @@ struct PosixFileFun_def : PosixFileMod_def
             C_RCAST<byte_t*>(mmap(nullptr, size, proto, mapflags, -1, 0));
 #endif
         buf.assignAccess(access);
-        buf.size = size;
+        buf.size = buf.elements = size;
 
-        if(!buf.data || buf.data == (void*)0xFFFFFFFF)
+        if(!buf.data || buf.data == MAP_FAILED)
+        {
+            ec = FileError::MappingFailed;
             return {};
+        }
 
         return buf;
     }
-    STATICINLINE void ScratchUnmap(ScratchBuf&& buf)
+    STATICINLINE void ScratchUnmap(ScratchBuf&& buf, file_error& ec)
     {
         munmap(buf.data, buf.size);
+
+        ErrnoCheck(ec);
     }
 
-    STATICINLINE szptr Size(FH const& fh)
+    STATICINLINE szptr Size(FH const& fh, file_error& ec)
     {
         struct stat st;
         if(fh.fd)
         {
             if(fstat(fh.fd, &st) != 0)
-                ErrnoCheck();
-            errno = 0;
-            return st.st_size;
+                ErrnoCheck(ec);
+
+            return C_FCAST<szptr>(st.st_size);
         } else
         {
             /* We somehow want a filename here. */
             return 0;
         }
     }
-    STATICINLINE bool Exists(FH const& fn)
+
+    STATICINLINE bool Exists(FH const& fn, file_error&)
     {
         struct stat st;
         bool        status = fstat(fn->fd, &st) == 0;
+
         if(status)
             return true;
         else
@@ -383,15 +383,29 @@ struct PosixFileFun : PosixFileFun_def<
 
 struct PosixDirFun : DirFunDef
 {
-    static bool ChDir(Url const& dir);
+    static bool ChDir(Url const& dir, file_error& ec);
 
-    static bool MkDir(Url const& dname, bool createParent);
+    static bool MkDir(Url const& dname, bool createParent, file_error& ec);
 
-    static bool RmDir(Url const& dname);
+    static bool RmDir(Url const& dname, file_error& ec);
 
     using Type = FileFunDef::NodeType;
 
-    static bool Ls(Url const& dname, DirList& entries, bool quiet = false);
+    static bool Ls(Url const& dname, DirList& entries, file_error& ec);
+
+    static Url Basename(CString const& n, file_error& ec);
+
+    static Url Dirname(CString const& fname, file_error& ec);
+
+    STATICINLINE CString ConcatPath(cstring p1, cstring p2, file_error&)
+    {
+        if(p1)
+            return CString(p1) + GetPathSep() + p2;
+        else if(p2)
+            return p2;
+        else
+            return ".";
+    }
 };
 
 } // namespace Posix

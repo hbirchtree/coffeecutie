@@ -18,19 +18,19 @@ struct MatrixContainer : ComponentContainer<Matf4>
     Map<u64, szptr> mapping;
     Vector<Matf4> matrices;
 
-    virtual ~MatrixContainer()
+    virtual ~MatrixContainer() override
     {
     }
 
-    virtual void registerEntity(u64 id)
+    virtual void register_entity(u64 id) override
     {
         mapping[id] = matrices.size();
         matrices.resize(matrices.size() + 1);
     }
-    virtual void unregisterEntity(u64 id)
+    virtual void unregister_entity(u64 id) override
     {
     }
-    virtual Matf4 *get(u64 id)
+    virtual Matf4 *get(u64 id) override
     {
         return &matrices.at(mapping[id]);
     }

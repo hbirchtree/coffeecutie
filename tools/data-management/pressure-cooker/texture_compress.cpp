@@ -5,6 +5,7 @@
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/core/datastorage/text/json/cjsonparser.h>
+#include <coffee/core/coffee.h>
 
 #include <coffee/core/CDebug>
 

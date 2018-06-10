@@ -15,7 +15,7 @@ bool test_buffer_api(Args... args)
     buffer.alloc();
     buffer.commit(sizeof(Vecf3), &test_vec);
 
-    void* mapped_ptr = buffer.map(0, sizeof(scalar));
+    auto mapped_ptr = buffer.map(0, sizeof(scalar));
     C_UNUSED(mapped_ptr);
 
     buffer.unmap();
@@ -93,8 +93,7 @@ bool test_api()
         Bytes data;
         data.data = nullptr;
         data.size = 0;
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, data, p, 0);
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, nullptr, p, 0);
+        s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
         u32 size = s_2d.arraySize();
         bool is_array = s_2d.isArray();
@@ -137,8 +136,7 @@ bool test_api()
         Bytes data;
         data.data = nullptr;
         data.size = 0;
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, data, p, 0);
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, nullptr, p, 0);
+        s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
         u32 size = s_2d.arraySize();
         bool is_array = s_2d.isArray();
@@ -164,8 +162,7 @@ bool test_api()
         Bytes data;
         data.data = nullptr;
         data.size = 0;
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, data, p, 0);
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, nullptr, p, 0);
+        s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
         u32 size = s_2d.arraySize();
         bool is_array = s_2d.isArray();
@@ -191,8 +188,7 @@ bool test_api()
         Bytes data;
         data.data = nullptr;
         data.size = 0;
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, data, p, 0);
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, nullptr, p, 0);
+        s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
         u32 size = s_2d.arraySize();
         bool is_array = s_2d.isArray();
@@ -218,8 +214,7 @@ bool test_api()
         Bytes data;
         data.data = nullptr;
         data.size = 0;
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, data, p, 0);
-        s_2d.upload(BitFmt::Byte, PixCmp::RGBA, s, nullptr, p, 0);
+        s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
         u32 size = s_2d.arraySize();
         bool is_array = s_2d.isArray();

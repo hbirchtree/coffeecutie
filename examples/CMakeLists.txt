@@ -11,10 +11,12 @@ add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
 add_subdirectory (core/gpu-query)
 
-add_subdirectory (components)
+if(NOT LOWFAT_BUILD)
+    add_subdirectory (components)
+endif()
 
 # ASIO examples, we leave this as core
-if(COFFEE_BUILD_ASIO)
+if(BUILD_ASIO)
     add_subdirectory(asio/base-client)
 #    add_subdirectory(asio/base-server)
     add_subdirectory(asio/irc-client)
@@ -30,7 +32,7 @@ endif()
 # SDL2
 #
 
-if(COFFEE_BUILD_SDL2)
+if(BUILD_SDL2)
     # Sprite rendering with SDL2
     add_subdirectory(sdl_sprite/base-test)
     # Joystick visualizer
@@ -47,7 +49,7 @@ endif()
 #
 
 # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
-if(COFFEE_BUILD_OPENAL AND COFFEE_BUILD_GLEAM)
+if(BUILD_AUDIO AND BUILD_GLEAM)
     if(NOT APPLE)    
         add_subdirectory (audio/caudio-test)
     endif()
@@ -60,20 +62,8 @@ endif()
 # GLeam
 #
 
-if(COFFEE_BUILD_GLEAM)
-    if(COFFEE_BUILD_GLEAM_RHI)
-        # Supports GL 3.3+ and GL ES 3.0+ APIs
-        add_subdirectory(gleam/rhi/base-test)
-        if(COFFEE_BUILD_OPENVR)
-            #add_subdirectory(gleam/rhi/vr-test)
-        endif()
-    endif()
-
-#    if(NOT COFFEE_BUILD_GLES)
-#        add_subdirectory(gleam/base-test)
-#        add_subdirectory(gleam/raytrace-test)
-#    endif()
-
+if(BUILD_GLEAM)
+    add_subdirectory(gleam/rhi/base-test)
     add_subdirectory(gleam/shadow-test)
 endif()
 
@@ -85,7 +75,7 @@ endif()
 #
 
 # Examples of the CBlam API and its import of Blam engine data
-if(COFFEE_BUILD_CBLAM AND COFFEE_BUILD_GLEAM AND COFFEE_BUILD_GLEAM_RHI)
+if(BUILD_BLAM AND BUILD_GLEAM)
     add_subdirectory (blam/cblam-testing)
 endif()
 
@@ -96,7 +86,7 @@ endif()
 # Assimp
 #
 
-if(COFFEE_BUILD_ASSIMP)
+if(BUILD_ASSIMP)
     add_subdirectory(assimp/model-load)
 endif()
 
@@ -108,7 +98,7 @@ endif()
 #
 
 # Offscreen rendering test
-if(COFFEE_BUILD_CEF)
+if(BUILD_CEF)
     add_subdirectory(cef/base-test)
 endif()
 
@@ -119,7 +109,7 @@ endif()
 # SWIG APIs
 #
 
-if(COFFEE_BUILD_SWIG_BINDING)
+if(BUILD_SWIG_BINDING)
     add_subdirectory(wrapper/native-test)
 endif()
 
@@ -131,10 +121,3 @@ endif()
 #
 
 add_subdirectory(font-rendering)
-
-#
-#
-
-if(COFFEE_BUILD_DBUS)
-    add_subdirectory ( misc/dbus/simple-method )
-endif()

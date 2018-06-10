@@ -1,6 +1,12 @@
 #pragma once
 
-#include <Importer.hpp>
+#include <coffee/core/types/tdef/stltypes.h>
+
+struct aiScene;
+
+namespace Assimp{
+class Importer;
+}
 
 namespace Coffee{
 /*!
@@ -8,20 +14,21 @@ namespace Coffee{
  */
 namespace ASSIMP{
 
+struct AssimpData;
+
+struct AssimpData_deleter
+{
+    void operator()(AssimpData* data);
+};
+
+struct Importer_deleter
+{
+    void operator()(::Assimp::Importer* importer);
+};
+
 struct AssimpData
 {
-    AssimpData():
-        scene(nullptr)
-    {
-    }
-
-    ~AssimpData()
-    {
-        if(scene)
-            importer.FreeScene();
-    }
-
-    ::Assimp::Importer importer;
+    UqPtr<::Assimp::Importer, Importer_deleter> importer;
     const ::aiScene* scene;
 };
 

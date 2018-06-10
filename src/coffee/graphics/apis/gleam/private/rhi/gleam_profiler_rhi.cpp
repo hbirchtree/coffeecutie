@@ -227,10 +227,10 @@ GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag)
 #if GL_VERSION_VERIFY(0x300, 0x320)
     if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2))
         CGL43::PushDebugGroup(
-                    GL_DEBUG_SOURCE_APPLICATION, 0, 0, tag);
+                    GL_DEBUG_SOURCE_APPLICATION, 0, strlen(tag), tag);
     else
         CGL_KHR_debug<int>::PushDebugGroupKHR(
-                    GL_DEBUG_SOURCE_APPLICATION_KHR, 0, 0, tag);
+                    GL_DEBUG_SOURCE_APPLICATION_KHR, 0, strlen(tag), tag);
 #endif
 }
 

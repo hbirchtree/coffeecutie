@@ -28,7 +28,7 @@ Valid levels as of February 2018 are:
 
  - `GL33` = OpenGL 3.3
  - `GL43` = OpenGL 4.3
- - `GL45` = OpenGL 4.5 (unimplemented!)
+ - `GL45` = OpenGL 4.5
  - `ES2`  = OpenGL ES 2.0
  - `ES3`  = OpenGL ES 3.0
  - `ES32` = OpenGL ES 3.2

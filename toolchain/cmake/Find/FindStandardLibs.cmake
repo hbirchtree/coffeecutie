@@ -18,12 +18,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
 
-    if(COFFEE_BUILD_GLES)
+    if(BUILD_GLES)
         list ( APPEND CORE_EXTRA_LIBRARIES EGL GLESv2 )
     endif()
 endif()
 
-if(COFFEE_BUILD_SDL2)
+if(BUILD_SDL2)
     if(SDL_POWER_PLUGIN_ENABLED OR ANDROID OR WIN_UWP)
         # We use SDL2 for some platform functionality, like power info
         # On Android, it is also used to read assets and
@@ -81,7 +81,7 @@ if(ANDROID)
         )
 
     # If we are building a GLESv3-exclusive target, drop GLESv2
-    if(COFFEE_BUILD_GLES_20)
+    if(BUILD_GLES_20)
         list ( APPEND CORE_EXTRA_LIBRARIES
             GLESv2
             )
@@ -91,7 +91,7 @@ if(ANDROID)
             )
     endif()
 
-    if(COFFEE_BUILD_SDL2)
+    if(BUILD_SDL2)
         list ( APPEND CORE_EXTRA_LIBRARIES
             SDL2
             )
@@ -153,7 +153,7 @@ if(WIN32)
         cabinet
         )
 
-    if(COFFEE_BUILD_ANGLE)
+    if(BUILD_ANGLE)
         find_package( ANGLE REQUIRED )
         list ( APPEND CORE_EXTRA_LIBRARIES
             AngleEGL AngleGLESv2

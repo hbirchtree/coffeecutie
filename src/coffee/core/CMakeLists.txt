@@ -122,17 +122,14 @@ set ( CoffeeProfiler_SRCS
 # Platform-specific code, put it here
 
 # SDL power-management
-if(COFFEE_BUILD_SDL2
-        AND NOT POWERPC
-        AND NOT IOS
-        AND (ANDROID
-            OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux"
-            OR APPLE
-            OR WIN32))
+if(BUILD_SDL2
+        AND NOT POWERPC AND NOT IOS
+        AND (ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
+        )
     set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeSysInfo_SRCS
-	private/plat/environment/sdlpowerinfo.cpp
-	)
+        private/plat/environment/sdlpowerinfo.cpp
+        )
 endif()
 
 # Android-specific code
@@ -143,7 +140,6 @@ if(ANDROID)
         private/plat/environment/android/environment.cpp
         private/plat/sensor/android/sensor.cpp
         private/plat/file/linux/file.cpp
-
         )
     list ( APPEND CoffeeCore_SRCS
         ${NDK_HELPER_SOURCES}
@@ -172,12 +168,10 @@ if(ANDROID)
 endif()
 
 # Linux-specific code
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     list ( APPEND CoffeeCore_SRCS
-	private/plat/environment/linux/environment.cpp
+        private/plat/environment/linux/environment.cpp
         private/plat/file/linux/file.cpp
-        )
-    list ( APPEND CoffeeFile_SRCS
         )
     list ( APPEND CoffeeSysInfo_SRCS
         private/plat/environment/linux/process.cpp
@@ -189,12 +183,6 @@ if(EMSCRIPTEN)
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/unix/environment.cpp
         private/plat/environment/emscripten/sysinfo.cpp
-        )
-endif()
-
-if(NACL)
-    list ( APPEND CoffeeCore_SRCS
-        private/plat/environment/native-client/sysinfo.cpp
         )
 endif()
 
@@ -220,20 +208,15 @@ if(WIN32)
     list ( APPEND CoffeeFile_SRCS
         private/plat/file/windows/file.cpp
         )
-
-#	set_source_files_properties ( private/plat/file/windows/file.cpp
-#		PROPERTIES
-#		COMPILE_FLAGS "/ZW"
-#		)
-        if(NOT WIN_UWP AND NOT MINGW64)
-		list ( APPEND CoffeeCore_SRCS
-			private/plat/environment/windows/windows_startup.cpp
-			)
-        elseif(WIN_UWP)
-		list ( APPEND CoffeeCore_SRCS
-			private/plat/environment/windows/windows_startup_uwp.cpp
-			)
-	endif()
+    if(NOT WIN_UWP AND NOT MINGW64)
+        list ( APPEND CoffeeCore_SRCS
+            private/plat/environment/windows/windows_startup.cpp
+            )
+    elseif(WIN_UWP)
+        list ( APPEND CoffeeCore_SRCS
+            private/plat/environment/windows/windows_startup_uwp.cpp
+            )
+    endif()
 endif()
 
 if(RASPBERRY)
@@ -243,7 +226,7 @@ if(RASPBERRY)
 endif()
 
 # POSIX code
-if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/unix/environment.cpp
         private/plat/environment/unix/stacktrace.cpp
@@ -314,6 +297,16 @@ coffee_library (
     HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests
     )
 
+target_compile_definitions ( CoffeeCore_Base PUBLIC
+    -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}"
+    )
+
+if(LOWFAT_BUILD)
+    target_compile_definitions (  CoffeeCore_Base PUBLIC
+        -DCOFFEE_LOWFAT
+        )
+endif()
+
 add_library ( CoffeeCore INTERFACE )
 
 install(
@@ -350,7 +343,7 @@ target_include_directories ( CoffeeCore_Base
     ${STANDARDLIBS_INCLUDE_DIR}
     )
 
-if(COFFEE_BUILD_SWIG_BINDING)
+if(BUILD_SWIG_BINDING)
     coffee_library (
         TARGET CoffeeCoreLoadable
         LINKAGE SHARED
@@ -384,8 +377,11 @@ if(SDL_POWER_PLUGIN_ENABLED)
 endif()
 
 if(ANDROID)
-    target_include_directories ( CoffeeCore_Base
-        PRIVATE
+    target_compile_definitions ( CoffeeCore_Base PUBLIC
+        -DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}
+        )
+
+    target_include_directories ( CoffeeCore_Base PRIVATE
         ${ANDROID_GLUE_INCLUDE_DIR}
         ${NDK_HELPER_INCLUDE_DIR}
         ${CPUFEATURES_INCLUDE_DIR}

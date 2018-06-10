@@ -1,10 +1,11 @@
+#pragma once
+
 #include "../../platform_detect.h"
 
 #ifdef COFFEE_WINDOWS
-#ifndef COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_WINDOWS_H
-#define COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_WINDOWS_H
 
 #include "../environment_details.h"
+#include "../../file/windows/file.h"
 
 namespace Coffee{
 namespace Environment{
@@ -45,21 +46,21 @@ struct WindowsEnvFun : EnvInterface
         out += fv;
         return out;
     }
-    STATICINLINE CString GetUserHome()
+    STATICINLINE Url GetUserHome()
     {
-        return GetVar("USERPROFILE");
+        return MkUrl(GetVar("USERPROFILE"), RSCA::SystemFile);
     }
 
-    static CString GetUserData(cstring org, cstring app);
+    static Url GetUserData(cstring org, cstring app);
 
-    STATICINLINE CString ApplicationDir()
+    STATICINLINE Url ApplicationDir()
     {
+        file_error ec;
         CString fn = ExecutableName();
-        return DirName(fn.c_str());
+        return DirFun::Dirname(fn.c_str(), ec);
     }
-    static CString CurrentDir();
-    static CString DirName(cstring fn);
-    static CString BaseName(cstring fn);
+
+    static Url CurrentDir();
 };
 }
 
@@ -70,5 +71,4 @@ using Env_ = Environment::Windows::WindowsEnvFun;
 
 }
 
-#endif
 #endif

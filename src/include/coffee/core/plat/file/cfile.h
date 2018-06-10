@@ -71,9 +71,9 @@ struct FILEApi
         FileMapping& operator=(FileMapping&& other)
         {
             this->fm_handle = std::move(other.fm_handle);
-            this->handle = std::move(other.handle);
-            this->data = other.data;
-            this->size = other.size;
+            this->handle    = std::move(other.handle);
+            this->data      = other.data;
+            this->size      = other.size;
 
             other.fm_handle = {};
             other.handle    = {};
@@ -97,7 +97,7 @@ struct CFILEFun_def : CommonFileFun
 {
     using FileMapping = FILEApi::FileMapping;
 
-    STATICINLINE FH Open(Url const& fn, ResourceAccess ac)
+    STATICINLINE FH Open(Url const& fn, ResourceAccess ac, file_error& ec)
     {
         auto url = *fn;
         FH   fh  = {};
@@ -127,71 +127,108 @@ struct CFILEFun_def : CommonFileFun
         fh.handle = fopen(url.c_str(), mode);
 
         if(!fh.handle)
+        {
+            ec = FileError::NotFound;
             return {};
+        }
 
         return fh;
     }
-    STATICINLINE bool Valid(FH const& fh)
+    STATICINLINE bool Valid(FH const& fh, file_error& ec)
     {
-        return fh.handle != nullptr;
+        if(!fh.handle)
+        {
+            ec = FileError::InvalidHandle;
+            return false;
+        }
+        return true;
     }
-    STATICINLINE bool Close(FH&& fh)
+    STATICINLINE bool Close(FH&& fh, file_error& ec)
     {
+        if(!Valid(fh, ec))
+            return false;
         fclose(fh.handle);
         return true;
     }
 
-    STATICINLINE Bytes Read(FH const& fh, uint64 size, bool nterminate)
+    STATICINLINE Bytes Read(FH const& fh, uint64 size, file_error& ec)
     {
+        if(!Valid(fh, ec))
+            return {};
+
         Bytes data;
         data.elements = 0;
-        szptr esize   = Size(fh);
+        szptr esize   = Size(fh, ec);
         if(size <= esize && size != -1)
             esize = size;
 
         if(esize == 0)
             return {};
 
-        if(nterminate)
-            data.size = esize + 1;
-        else
-            data.size = esize;
+        data.size = esize;
+        data      = Bytes::Alloc(data.size);
 
-        data        = Bytes::Alloc(data.size);
         szptr rsize = fread(data.data, sizeof(byte_t), esize, fh.handle);
-        data.size   = rsize;
-        if(nterminate)
-            data.data[esize - 1] = 0;
-        //        if(rsize<esize)
-        //            cLog(CFStrings::Plat_File_Native_SizeErr,esize,rsize);
+
+        if(rsize != esize)
+        {
+            int error = ferror(fh.handle);
+            ec        = FileError::ReadFailed;
+            return {};
+        }
+
+        data.size = rsize;
+
         return data;
     }
-    STATICINLINE bool Seek(FH const& fh, uint64 off)
+    STATICINLINE bool Seek(FH const& fh, uint64 off, file_error& ec)
     {
+        if(!Valid(fh, ec))
+            return false;
         return fseek(fh.handle, off, SEEK_SET) == 0;
     }
-    STATICINLINE bool Write(FH const& fh, Bytes const& d, bool)
+    STATICINLINE bool Write(FH const& fh, Bytes const& d, file_error& ec)
     {
+        if(!Valid(fh, ec))
+            return false;
+
         szptr wsize = fwrite(d.data, sizeof(byte_t), d.size, fh.handle);
-        return wsize == d.size;
+
+        if(wsize != d.size)
+        {
+            int error = ferror(fh.handle);
+            ec        = FileError::WriteFailed;
+            return false;
+        }
+
+        return true;
     }
 
-    STATICINLINE szptr Size(Url const& fn)
+    STATICINLINE szptr Size(Url const& fn, file_error& ec)
     {
-        FH f = Open(fn, ResourceAccess::ReadOnly);
+        FH f = Open(fn, ResourceAccess::ReadOnly, ec);
+
         if(f.handle)
         {
-            szptr tmp = Size(f);
+            szptr tmp = Size(f, ec);
             return tmp;
         } else
+        {
+            int error = ferror(f.handle);
+            ec        = FileError::NotFound;
             return 0;
+        }
     }
-    STATICINLINE szptr Size(FH const& fh)
+    STATICINLINE szptr Size(FH const& fh, file_error& ec)
     {
+        if(!Valid(fh, ec))
+            return 0;
+
         szptr offset = ftell(fh.handle);
-        fseek(fh.handle, 0, SEEK_END);
-        szptr fsize = ftell(fh.handle);
-        fseek(fh.handle, offset, SEEK_SET);
+        int   res    = fseek(fh.handle, 0, SEEK_END);
+        szptr fsize  = ftell(fh.handle);
+        res          = fseek(fh.handle, offset, SEEK_SET);
+
         return fsize;
     }
     /*!
@@ -204,16 +241,20 @@ struct CFILEFun_def : CommonFileFun
      * \return
      */
     STATICINLINE FileMapping
-                 Map(Url const& fname, ResourceAccess access, szptr offset, szptr size, int*)
+                 Map(Url const&     fname,
+                     ResourceAccess access,
+                     szptr          offset,
+                     szptr          size,
+                     file_error&    ec)
     {
-        auto  handle = Open(fname, access);
-        szptr r_size = Size(handle);
+        auto  handle = Open(fname, access, ec);
+        szptr r_size = Size(handle, ec);
         if(size + offset > r_size)
         {
             return {};
         }
 
-        auto data = Read(handle, offset + size, false);
+        auto data = Read(handle, offset + size, ec);
         data.assignAccess(access);
 
         auto f = FileMapping::Wrap(std::move(data), std::move(handle));
@@ -229,18 +270,16 @@ struct CFILEFun_def : CommonFileFun
      * \param map
      * \return
      */
-    STATICINLINE bool Unmap(FileMapping&& map)
+    STATICINLINE bool Unmap(FileMapping&& map, file_error&)
     {
         C_USED(map);
 
         return true;
     }
-    STATICINLINE bool Exists(Url const& fn)
+    STATICINLINE bool Exists(Url const& fn, file_error& ec)
     {
-        FH f = Open(fn, ResourceAccess::ReadOnly);
-        if(f.handle)
-            return true;
-        return false;
+        FH f = Open(fn, ResourceAccess::ReadOnly, ec);
+        return Valid(f, ec);
     }
 };
 

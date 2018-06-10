@@ -21,7 +21,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
         CString execname = ExecutableName();
         return DirName(execname.c_str());
     }
-    static CString GetUserData(cstring orgname, cstring appname);
+    static Url GetUserData(cstring orgname, cstring appname);
 };
 
 #if defined(COFFEE_APPLE_DESKTOP)

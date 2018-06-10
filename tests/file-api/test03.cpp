@@ -8,6 +8,8 @@ using Scratch = CResources::FileFun::ScratchBuf;
 
 bool filescratch_test()
 {
+    file_error ec;
+
 #if defined(COFFEE_RASPBERRYPI)
     /* Raspberry Pi has limited memory, and often does not have swap */
     /* 256MB devices are out of the question */
@@ -17,7 +19,7 @@ bool filescratch_test()
 #endif
 
     Scratch f =
-        CResources::FileFun::ScratchBuffer(size, ResourceAccess::ReadWrite);
+        CResources::FileFun::ScratchBuffer(size, ResourceAccess::ReadWrite, ec);
 
     /* If true, no buffer was mapped */
     if(!f)
@@ -48,7 +50,7 @@ bool filescratch_test()
             break;
         }
 
-    CResources::FileFun::ScratchUnmap(std::move(f));
+    CResources::FileFun::ScratchUnmap(std::move(f), ec);
 
     return flag;
 }

@@ -10,6 +10,27 @@
 namespace Coffee {
 namespace CResources {
 
+enum class FileError
+{
+    NotFound = 1,
+    MappingFailed,
+    PermissionError,
+    InvalidAccess,
+    InvalidHandle,
+    ReadFailed,
+    WriteFailed,
+
+    SystemError,
+};
+
+struct file_error_category : error_category
+{
+    virtual const char* name() const noexcept;
+    virtual std::string message(int) const;
+};
+
+using file_error = domain_error_code<FileError, file_error_category>;
+
 struct FileFunDef
 {
     struct FileHandle
@@ -32,37 +53,29 @@ struct FileFunDef
         Socket,
     };
 
-    static CString NativePath(cstring);
-    static CString NativePath(cstring, ResourceAccess);
-
-    STATICINLINE bool VerifyAsset(cstring)
-    {
-        return true;
-    }
-
-    static FileHandle Open(Url const&, ResourceAccess)
+    static FileHandle Open(Url const&, ResourceAccess, file_error&)
     {
         return {};
     }
-    static bool Valid(FileHandle const&)
+    static bool Valid(FileHandle const&, file_error&)
     {
         return false;
     }
-    static bool Close(FileHandle&&)
+    static bool Close(FileHandle&&, file_error&)
     {
         return false;
     }
 
-    static Bytes Read(FileHandle const&, szptr, bool)
+    static Bytes Read(FileHandle const&, szptr, file_error&)
     {
         return {};
     }
-    static bool Write(FileHandle const&, Bytes const&, bool)
+    static bool Write(FileHandle const&, Bytes const&, file_error&)
     {
         return false;
     }
 
-    static szptr Size(FileHandle const&)
+    static szptr Size(FileHandle const&, file_error&)
     {
         return 0;
     }
@@ -95,17 +108,17 @@ struct FileFunDef
         ResourceAccess access,
         szptr          size,
         szptr          offset,
-        int*           err)
+        file_error&    ec)
     {
         C_UNUSED(fname);
         C_UNUSED(access);
         C_UNUSED(size);
         C_UNUSED(offset);
-        C_UNUSED(err);
+        C_UNUSED(ec);
 
         return {};
     }
-    static bool Unmap(FileMapping&&)
+    static bool Unmap(FileMapping&&, file_error&)
     {
         return false;
     }
@@ -114,7 +127,7 @@ struct FileFunDef
         void* mapping_ptr,
         szptr mapping_size,
         szptr cache_offset,
-        szptr cache_size)
+        szptr cache_size, file_error&)
     {
         C_UNUSED(mapping_ptr);
         C_UNUSED(mapping_size);
@@ -124,22 +137,24 @@ struct FileFunDef
         return false;
     }
     static bool MapUncache(
-        void* mapping_ptr,
+        c_ptr mapping_ptr,
         szptr mapping_size,
         szptr cache_offset,
-        szptr cache_size)
+        szptr cache_size, file_error& ec)
     {
         C_UNUSED(mapping_ptr);
         C_UNUSED(mapping_size);
         C_UNUSED(cache_offset);
         C_UNUSED(cache_size);
+        C_UNUSED(ec);
 
         return false;
     }
-    static bool MapSync(void* ptr, szptr size)
+    static bool MapSync(c_ptr ptr, szptr size, file_error& ec)
     {
         C_UNUSED(ptr);
         C_UNUSED(size);
+        C_UNUSED(ec);
 
         return false;
     }
@@ -157,20 +172,20 @@ struct FileFunDef
         return false;
     }
 
-    static ScratchBuf ScratchBuffer(szptr, ResourceAccess)
+    static ScratchBuf ScratchBuffer(szptr, ResourceAccess, file_error&)
     {
         return {};
     }
-    static void ScratchUnmap(ScratchBuf&&)
+    static void ScratchUnmap(ScratchBuf&&, file_error&)
     {
     }
 
     /* We allow checking size of unopened files, convenience */
-    static bool Exists(Url const&)
+    static bool Exists(Url const&, file_error&)
     {
         return false;
     }
-    static szptr Size(Url const&)
+    static szptr Size(Url const&, file_error&)
     {
         return 0;
     }
@@ -182,36 +197,36 @@ struct FileFunDef
      *  - Directories are created non-recursively
      * \return
      */
-    static bool Touch(NodeType, Url const&)
+    static bool Touch(NodeType, Url const&, file_error&)
     {
         return false;
     }
 
-    static bool Ln(Url const&, Url const&)
+    static bool Ln(Url const&, Url const&, file_error&)
     {
         return false;
     }
 
-    static bool Rm(Url const&)
+    static bool Rm(Url const&, file_error&)
     {
         return false;
     }
 
-    static NodeType Stat(Url const&)
+    static NodeType Stat(Url const&, file_error&)
     {
         return NodeType::None;
     }
 
-    static CString DereferenceLink(Url const& d)
+    static CString DereferenceLink(Url const& d, file_error&)
     {
         return d.internUrl;
     }
-    static CString CanonicalName(Url const& d)
+    static CString CanonicalName(Url const& d, file_error&)
     {
         return d.internUrl;
     }
 
-    static void Truncate(Url const&, szptr)
+    static void Truncate(Url const&, szptr, file_error&)
     {
     }
 };
@@ -230,31 +245,51 @@ struct DirFunDef
 
     using DirList = Vector<DirItem_t>;
 
-    static bool ChDir(Url const&)
+    static bool ChDir(Url const&, file_error&)
     {
         return false;
     }
 
-    static bool MkDir(Url const&, bool)
+    static bool MkDir(Url const&, bool, file_error&)
     {
         return false;
     }
-    static bool RmDir(Url const&)
-    {
-        return false;
-    }
-
-    static bool Ls(Url const&, DirList&, bool = false)
+    static bool RmDir(Url const&, file_error&)
     {
         return false;
     }
 
-    STATICINLINE CString Basename(CString fn)
+    static bool Ls(Url const&, DirList&, file_error&)
     {
-        return Basename(fn.c_str());
+        return false;
     }
 
-    static CString Basename(cstring fn);
+    /*!
+     * \brief Get base name of an arbitrary path, should work like basename
+     * \return
+     */
+    STATICINLINE Url Basename(CString const&, file_error&)
+    {
+        return Url();
+    }
+
+    /*!
+     * \brief Directory name from arbitrary path, should work like dirname
+     * \return
+     */
+    STATICINLINE Url Dirname(CString const&, file_error&)
+    {
+        return Url();
+    }
+
+    /*!
+     * \brief Get path separation character, / or \\
+     * \return
+     */
+    STATICINLINE CString GetPathSep()
+    {
+        return CString("/");
+    }
 };
 
 } // namespace CResources

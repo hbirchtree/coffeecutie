@@ -24,6 +24,10 @@ coffee_library (
     HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/sdl2
     )
 
+target_compile_definitions ( CoffeeSDL2 PUBLIC
+    -DCOFFEE_USE_SDL2=1
+    )
+
 if(NOT EMSCRIPTEN)
     target_include_directories ( CoffeeSDL2
         PRIVATE

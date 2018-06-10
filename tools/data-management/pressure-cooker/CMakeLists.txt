@@ -8,7 +8,7 @@ set ( BUNDLE_LIBS CACHE STRING "" )
 
 set ( PRESSURIZERS )
 
-if(COFFEE_BUILD_ASSIMP)
+if(BUILD_ASSIMP)
     list ( APPEND PRESSURIZERS "$<TARGET_FILE:PressurizeModels>" )
 endif()
 
@@ -37,7 +37,7 @@ coffee_application (
     LIBRARIES CoffeeCore
     )
 
-if(COFFEE_BUILD_ASSIMP)
+if(BUILD_ASSIMP)
     coffee_library (
         TARGET PressurizeModels
         LINKABLE
@@ -126,7 +126,6 @@ if(SHADERC_FOUND)
             PUBLIC
             spvcross
             )
-
     endif()
 
     add_dependencies ( PressureCooker

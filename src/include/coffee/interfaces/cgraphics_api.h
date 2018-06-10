@@ -432,7 +432,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     /*!
      * \brief Describes a particular uniform value, either inside a uniform block or separately
      */
-    struct UniformDescriptor
+    struct UniformDescriptor : non_copy
     {
         UniformDescriptor():
             m_name(),
@@ -571,11 +571,6 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         void allocate(CSizeT const&,PixCmp){}
         void dealloc(){}
 
-        void upload(BitFormat,PixCmp,CSizeT const&, c_cptr,
-                    PointT const& = {}, u32 = 0)
-        {
-        }
-
         /*!
          * \brief A safe variant of `upload()`, can check
          *  bounds before copying a texture from memory.
@@ -583,7 +578,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
          *  ability to check this.
          * Please use this one for sanity.
          */
-        void upload(BitFmt,PixCmp,CSizeT const&, Bytes const&,
+        void upload(PixDesc,CSizeT const&, Bytes const&,
                     PointT const& = {}, u32 = 0)
         {
         }

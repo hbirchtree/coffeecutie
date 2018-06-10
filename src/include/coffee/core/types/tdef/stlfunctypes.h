@@ -182,6 +182,10 @@ using namespace std::this_thread;
 
 namespace Chrono{
 using namespace std::chrono;
+
+using seconds_float = duration<scalar>;
+using seconds_double = duration<bigscalar>;
+
 }
 
 }

@@ -19,9 +19,6 @@ endif()
 if(NOT SKIP_LINKAGE_TEST)
     add_subdirectory(link-api)
 endif()
-#if(COFFEE_BUILD_OPENVR AND NOT SKIP_OPENVR_TEST)
-#    add_subdirectory(vr-api)
-#endif()
 
 # This needs different testing and setup
 if(NOT ANDROID AND NOT WIN32)
@@ -50,7 +47,7 @@ coffee_test (
     CoffeeCore CoffeeGLeamCommon
     )
 
-if(COFFEE_BUILD_ASSIMP)
+if(BUILD_ASSIMP)
     target_link_libraries ( Unit_IncludeAll
         PUBLIC
         CoffeeAssimp

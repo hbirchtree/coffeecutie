@@ -12,7 +12,7 @@ namespace Coffee{
 namespace Environment{
 namespace Android{
 
-CString AndroidEnv::GetUserData(cstring,cstring)
+Url AndroidEnv::GetUserData(cstring,cstring)
 {
 #ifdef COFFEE_USE_SDL2
     auto path = SDL_AndroidGetInternalStoragePath();
@@ -28,7 +28,7 @@ CString AndroidEnv::GetUserData(cstring,cstring)
     CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
                                 &cmd, nullptr, nullptr);
 
-    return cmd.store_string;
+    return MkUrl(cmd.store_string, RSCA::SystemFile);
 #endif
 }
 

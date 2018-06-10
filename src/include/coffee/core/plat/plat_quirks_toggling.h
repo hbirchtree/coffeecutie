@@ -329,7 +329,11 @@
 #define COFFEE_USE_POSIX_BASENAME
 
 #if defined(COFFEE_MAEMO)
+/* C++ features that don't work */
 #define COFFEE_NO_FUTURES
+#define COFFEE_NO_EXCEPTION_RETHROW
+#define COFFEE_NO_TERMINATION_HANDLER
+
 /* Strict POSIX rules apply sometimes */
 #define COFFEE_NO_HUGETLB
 #define COFFEE_NO_MMAP64

@@ -93,8 +93,10 @@ class GLCommand:
         base = 'if(!%s)\n    {' % self.original_name
 
         for ext in self.fallback:
+            base += '\n#if defined(%s) && %s' % (ext[1].name, ext[1].name)
             base += '\n        if(%s) Throw(undefined_behavior("extension %s is available"));' %\
                     (ext[0].original_name, ext[1].name)
+            base += '\n#endif'
 
         base += '\n        Throw(undefined_behavior("function not loaded!"));'
 

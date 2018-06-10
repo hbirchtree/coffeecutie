@@ -5,9 +5,20 @@
 namespace Coffee{
 namespace CResources{
 
-CString DirFunDef::Basename(cstring fn)
+const char* file_error_category::name() const noexcept
 {
-    return Env::BaseName(fn);
+    return "FileFun";
+}
+
+std::string file_error_category::message(int error_code) const
+{
+    FileError ec = C_CAST<FileError>(error_code);
+
+    switch(ec)
+    {
+    default:
+        return "";
+    }
 }
 
 }

@@ -325,8 +325,10 @@ void CoffeeTerminate()
     Vector<DirFun::DirItem_t> file_descs;
     auto procFd = Path("/proc/self/fd");
 
+    file_error ec;
+
     cDebug("Open POSIX file descriptors:");
-    if(DirFun::Ls(MkUrl(procFd, RSCA::SystemFile), file_descs))
+    if(DirFun::Ls(MkUrl(procFd, RSCA::SystemFile), file_descs, ec))
         for(auto const& f : file_descs)
         {
             cBasicPrint(
@@ -366,12 +368,14 @@ void CoffeeTerminate()
 
 void GotoApplicationDir()
 {
-    CString dir = Env::ApplicationDir();
-    DirFun::ChDir(MkUrl(dir.c_str()));
+    file_error ec;
+
+    Url dir = Env::ApplicationDir();
+    DirFun::ChDir(MkUrl(dir), ec);
 }
 
-#if defined(COFFEE_LINUX)
-static void glibc_backtrace()
+#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_EXCEPTION_RETHROW)
+C_NORETURN static void glibc_backtrace()
 {
     static constexpr szptr MAX_CONTEXT = 20;
 
@@ -422,7 +426,7 @@ static void glibc_backtrace()
 
 void InstallDefaultSigHandlers()
 {
-    #if defined(COFFEE_LINUX)
+    #if defined(COFFEE_LINUX) && !defined(COFFEE_NO_TERMINATION_HANDLER)
     std::set_terminate(glibc_backtrace);
     #endif
     //    InstallSignalHandler(Sig_Termination,nullptr);

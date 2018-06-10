@@ -22,16 +22,16 @@ set(CMAKE_SYSTEM_VERSION 1)
 
 set( EMSCRIPTEN ON CACHE BOOL "" )
 
-option ( COFFEE_GENERATE_HTML
+option ( GENERATE_HTML
     "Generate HTML wrapper document for Emscripten" ON )
-option ( COFFEE_GENERATE_WASM
+option ( GENERATE_WASM
     "Generate WASM version of code, not asm.js" OFF )
 
 set ( EM_COMMON "-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy -s USE_SDL=2 -s USE_ZLIB=1 -O2 -fPIC" )
 
 set ( SHELL_FILE "${CMAKE_SOURCE_DIR}/toolchain/desktop/emscripten/template.html" )
 
-if(COFFEE_GENERATE_WASM)
+if(GENERATE_WASM)
     message ( STATUS "Generating WASM assembly" )
     set ( CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} ${EM_COMMON} -s WASM=1" CACHE STRING "" )

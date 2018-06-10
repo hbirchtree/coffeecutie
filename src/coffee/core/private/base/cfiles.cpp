@@ -1,7 +1,7 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/string_casting.h>
 
 #define CFILES_TAG "File::"
 
@@ -16,14 +16,19 @@ struct Resource::ResourceData
     Url                        m_url;
 };
 
+void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
+{
+    delete data;
+}
+
 Resource::Resource(cstring rsrc, ResourceAccess acc) :
     Resource(MkUrl(rsrc, acc & ResourceAccess::StorageMask))
 {
 }
 
 Resource::Resource(const Url& url) :
-    m_resource(*url), m_platform_data(new ResourceData), data(nullptr), size(0),
-    flags(Undefined)
+    m_resource(*url), m_platform_data(MkUqDST<ResourceData, RscData_deleter>()),
+    data(nullptr), size(0), flags(Undefined)
 {
     m_platform_data->m_url = url;
 
@@ -35,7 +40,7 @@ Resource::Resource(Resource&& rsc)
     this->data            = rsc.data;
     this->size            = rsc.size;
     this->flags           = rsc.flags;
-    this->m_platform_data = rsc.m_platform_data;
+    this->m_platform_data = std::move(rsc.m_platform_data);
     this->m_resource      = std::move(rsc.m_resource);
 
     rsc.data            = nullptr;
@@ -46,13 +51,6 @@ Resource::Resource(Resource&& rsc)
 
 Resource::~Resource()
 {
-//    if(flags & Mapped)
-//        FileUnmap(*this);
-//    if(flags & FileIO)
-//        FileFree(*this);
-
-    if(m_platform_data)
-        delete m_platform_data;
 }
 
 cstring Resource::resource() const
@@ -63,6 +61,16 @@ cstring Resource::resource() const
 bool Resource::valid() const
 {
     return !m_resource.empty();
+}
+
+Resource &Resource::operator=(Bytes &&data)
+{
+    Bytes& internal_store = this->m_platform_data->m_resourceBuffer;
+
+    internal_store = std::move(data);
+    this->data = internal_store.data;
+    this->size = internal_store.size;
+    return *this;
 }
 
 Resource::operator Path() const
@@ -83,11 +91,14 @@ Resource::operator Bytes()
 
 bool FileExists(const Resource& resc)
 {
-    return FileFun::Exists(resc.m_platform_data->m_url);
+    file_error ec;
+    return FileFun::Exists(resc.m_platform_data->m_url, ec);
 }
 
 bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
 {
+    file_error ec;
+
     if(resc.flags & Resource::Mapped)
     {
         Profiler::DeepProfile(CFILES_TAG "File already mapped");
@@ -96,7 +107,7 @@ bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
 
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
 
-    resc.size = FileFun::Size(resc.m_platform_data->m_url);
+    resc.size = FileFun::Size(resc.m_platform_data->m_url, ec);
     resc.size = CMath::max(resc.size, size);
 
     if(resc.size == 0)
@@ -106,23 +117,11 @@ bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
         return false;
     }
 
-    int err = 0;
     resc.m_platform_data->m_mapping =
-        FileFun::Map(resc.m_platform_data->m_url, acc, 0, resc.size, &err);
+        FileFun::Map(resc.m_platform_data->m_url, acc, 0, resc.size, ec);
 
-    if(!resc.m_platform_data->m_mapping.data)
+    if(ec)
     {
-    /* Externalize error checkers */
-#ifndef COFFEE_WINDOWS
-        CString error = strerror(err);
-#else
-        CString error = win_strerror(err);
-#endif
-        cWarning(
-            CFILES_TAG "Failed to map file {2}:{0}: {1}",
-            err,
-            error,
-            resc.resource());
         resc.size = 0;
         Profiler::DeepProfile(CFILES_TAG "Mapping failed");
         Profiler::DeepPopContext();
@@ -141,6 +140,8 @@ bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
 
 bool FileUnmap(Resource& resc)
 {
+    file_error ec;
+
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
     if(!(resc.flags & Resource::Mapped))
     {
@@ -149,7 +150,7 @@ bool FileUnmap(Resource& resc)
         return false;
     }
 
-    bool s = FileFun::Unmap(std::move(resc.m_platform_data->m_mapping));
+    bool s = FileFun::Unmap(std::move(resc.m_platform_data->m_mapping), ec);
 
     if(!s)
     {
@@ -171,17 +172,15 @@ bool FileUnmap(Resource& resc)
 
 bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
 {
-    FileFun::Truncate(resc.m_platform_data->m_url, size);
+    file_error ec;
 
-    int error = 0;
+    FileFun::Truncate(resc.m_platform_data->m_url, size, ec);
+
     resc.m_platform_data->m_mapping =
-        FileFun::Map(resc.m_platform_data->m_url, acc, 0, size, &error);
+        FileFun::Map(resc.m_platform_data->m_url, acc, 0, size, ec);
 
-    if(!resc.m_platform_data->m_mapping.data)
-    {
-        cWarning(CFILES_TAG "Failed to map file {0}", resc.resource());
+    if(!ec)
         return false;
-    }
 
     resc.data = resc.m_platform_data->m_mapping.data;
     resc.size = resc.m_platform_data->m_mapping.size;
@@ -207,22 +206,24 @@ bool FilePull(Resource& resc, bool textmode, bool)
 {
     DProfContext a(CFILES_TAG "File reading");
 
-    auto fp =
-        FileFun::Open(resc.m_platform_data->m_url, ResourceAccess::ReadOnly);
+    file_error ec;
 
-    if(!FileFun::Valid(fp))
+    auto fp = FileFun::Open(
+        resc.m_platform_data->m_url, ResourceAccess::ReadOnly, ec);
+
+    if(ec)
     {
-        cWarning(CFILES_TAG "Failed to read file: {0}", resc.resource());
         Profiler::DeepProfile(CFILES_TAG "File not found");
         return false;
     }
 
     auto& data = resc.m_platform_data->m_resourceBuffer;
-    data       = FileFun::Read(fp, -1, textmode);
+    data       = FileFun::Read(fp, -1, ec);
     resc.data  = data.data;
     resc.size  = data.size;
-    if(!FileFun::Close(std::move(fp)))
-        cWarning(CFILES_TAG "Failed to close file: {0}", resc.resource());
+
+    if(!FileFun::Close(std::move(fp), ec) || ec)
+        return false;
 
     if(!resc.data)
     {
@@ -241,26 +242,29 @@ bool FileCommit(Resource& resc, bool append, ResourceAccess acc)
 {
     DProfContext a(CFILES_TAG "File write");
 
+    file_error ec;
+
     ResourceAccess dflags = ResourceAccess::WriteOnly;
 
     dflags |= ResourceAccess::NewFile;
 
     auto fp = FileFun::Open(
         resc.m_platform_data->m_url,
-        (append) ? ResourceAccess::Append | dflags | acc : dflags | acc);
+        (append) ? ResourceAccess::Append | dflags | acc : dflags | acc,
+        ec);
 
-    if(!FileFun::Valid(fp))
+    if(ec)
     {
         Profiler::DeepProfile(CFILES_TAG "File not created");
         return false;
     }
 
-    bool stat = FileFun::Write(fp, resc, false);
+    bool stat = FileFun::Write(fp, resc, ec);
 
-    if(!FileFun::Close(std::move(fp)))
+    if(!FileFun::Close(std::move(fp), ec))
     {
         Profiler::DeepProfile(CFILES_TAG "File failed to close");
-        cWarning(CFILES_TAG "Failed to close file: {0}", resc.resource());
+        return false;
     }
 
     return stat;
@@ -269,7 +273,9 @@ bool FileCommit(Resource& resc, bool append, ResourceAccess acc)
 bool FileMkdir(Url const& dirname, bool recursive)
 {
     Profiler::DeepProfile(CFILES_TAG "Directory creation");
-    bool status = DirFun::MkDir(dirname, recursive);
+    file_error ec;
+
+    bool status = DirFun::MkDir(dirname, recursive, ec);
 
     if(!status)
         Profiler::DeepProfile(CFILES_TAG "Directory creation failed");

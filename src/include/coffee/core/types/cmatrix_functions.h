@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics_types.h"
+#include <coffee/core/coffee_assert_macros.h>
 
 namespace Coffee{
 namespace CGraphicsData{

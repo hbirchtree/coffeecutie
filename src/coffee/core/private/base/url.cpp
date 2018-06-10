@@ -3,6 +3,7 @@
 #include "../plat/file/file_abstraction.h"
 #include <coffee/core/base/files/cfiles.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/coffee_resource.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/plat_file.h>
 
@@ -118,19 +119,18 @@ STATICINLINE SystemPaths GetSystemPaths()
         paths.assetDir =
             MkUrl(_coffee_resource_prefix.c_str(), RSCA::SystemFile);
     else
-        paths.assetDir = MkUrl(Env::CurrentDir().c_str(), RSCA::SystemFile);
+        paths.assetDir = Env::CurrentDir();
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
-    paths.cacheDir = MkUrl(Env::GetUserHome().c_str(), RSCA::SystemFile) +
-                     Path{".cache"} + Path{GetCurrentApp().organization_name} +
+    paths.cacheDir = Env::GetUserHome() + Path{".cache"} +
+                     Path{GetCurrentApp().organization_name} +
                      Path{GetCurrentApp().application_name};
 
     /* Temporary files go in /tmp */
     paths.tempDir = MkUrl("/tmp", RSCA::SystemFile) +
                     Path{GetCurrentApp().application_name};
 
-    paths.configDir =
-        MkUrl(Env::GetUserData(nullptr, nullptr).c_str(), RSCA::SystemFile);
+    paths.configDir = Env::GetUserData(nullptr, nullptr);
 
 #elif defined(COFFEE_WINDOWS)
 
@@ -220,6 +220,8 @@ CString Url::operator*() const
     {
     case Local:
     {
+        file_error ec;
+
         if(cachedUrl.size())
             return cachedUrl;
 
@@ -229,7 +231,7 @@ CString Url::operator*() const
 #if !defined(COFFEE_EMSCRIPTEN)
         if(!feval(flags & RSCA::NoDereference))
             derefPath = FileFun::DereferenceLink(
-                MkUrl(derefPath.c_str(), RSCA::SystemFile));
+                MkUrl(derefPath.c_str(), RSCA::SystemFile), ec);
 #endif
         return derefPath;
 #else
@@ -273,7 +275,8 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
 
-    auto paths = GetSystemPaths();
+    file_error ec;
+    auto       paths = GetSystemPaths();
 
     auto urlPart = Path{suffix};
 
@@ -300,19 +303,19 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::ConfigFile:
     {
-        DirFun::MkDir(paths.configDir, true);
+        DirFun::MkDir(paths.configDir, true, ec);
         tempStore = paths.configDir + urlPart;
         break;
     }
     case RSCA::TemporaryFile:
     {
-        DirFun::MkDir(paths.tempDir, true);
+        DirFun::MkDir(paths.tempDir, true, ec);
         tempStore = paths.tempDir + urlPart;
         break;
     }
     case RSCA::CachedFile:
     {
-        DirFun::MkDir(paths.cacheDir, true);
+        DirFun::MkDir(paths.cacheDir, true, ec);
         tempStore = paths.cacheDir + urlPart;
         break;
     }
@@ -347,14 +350,16 @@ Path Path::addExtension(cstring ext) const
 
 Path Path::fileBasename() const
 {
-    return {DirFun::Basename(internUrl.c_str())};
+    file_error ec;
+    return {DirFun::Basename(internUrl, ec).internUrl};
 }
 
 CString Path::extension() const
 {
-    auto it = internUrl.rfind(".");
+    auto it     = internUrl.rfind(".");
+    auto sep_it = internUrl.rfind(DirFun::GetPathSep());
 
-    if(it == CString::npos)
+    if(it == CString::npos || (sep_it != CString::npos && sep_it > it))
         return {};
 
     return internUrl.substr(it + 1, internUrl.size() - it - 1);
@@ -362,12 +367,14 @@ CString Path::extension() const
 
 Path Path::dirname() const
 {
-    return {Env::DirName(internUrl.c_str())};
+    file_error ec;
+    return {DirFun::Dirname(internUrl.c_str(), ec).internUrl};
 }
 
 Path Path::canonical() const
 {
-    return {FileFun::CanonicalName(MkUrl(*this))};
+    file_error ec;
+    return {FileFun::CanonicalName(MkUrl(*this), ec)};
 }
 
 Path Path::operator+(cstring component) const

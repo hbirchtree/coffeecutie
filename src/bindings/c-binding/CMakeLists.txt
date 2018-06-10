@@ -1,26 +1,21 @@
-set ( Cappuccino_SRCS
-    private/cappuccino.cpp
-    )
-set ( Cappuccino_LIBS
-    CoffeeCore
-    )
-set ( Cappuccino_HDRS
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    )
-
 set ( LINK_MODE SHARED )
 
-if(COFFEE_NO_DYNAMIC_LINKING)
-    # Shared libraries don't work on iOS
+if(NO_DYNAMIC_LINKING)
     set ( LINK_MODE STATIC )
 endif()
 
 coffee_library (
     TARGET  Cappuccino
     LINKAGE ${LINK_MODE}
-    SOURCES ${Cappuccino_SRCS}
-    LIBRARIES ${Cappuccino_LIBS}
-    HEADER_DIRS ${Cappuccino_HDRS}
+
+    SOURCES
+    private/cappuccino.cpp
+
+    LIBRARIES
+    CoffeeCore
+
+    HEADER_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
 target_include_directories ( Cappuccino
@@ -29,4 +24,4 @@ target_include_directories ( Cappuccino
     $<INSTALL_INTERFACE:include/>
     )
 
-coffee_bundle_includes ( ${Cappuccino_HDRS} )
+coffee_bundle_includes ( ${CMAKE_CURRENT_SOURCE_DIR}/include )

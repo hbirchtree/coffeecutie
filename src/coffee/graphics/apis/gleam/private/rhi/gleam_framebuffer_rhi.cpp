@@ -36,7 +36,12 @@ FORCEDINLINE void fb_bind(FramebufferT t, CGhnd h)
 void GLEAM_RenderDummy::allocate(
     PixelFormat fmt, DBuffers buf, uint32 index, CSize size)
 {
-    CGL33::RBufAlloc(m_handle);
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    if(GLEAM_FEATURES.direct_state)
+        CGL45::RBufAllocEx(m_handle);
+    else
+#endif
+        CGL33::RBufAlloc(m_handle);
 
     CGL33::RBufBind(GL_RENDERBUFFER, m_handle);
     CGL33::RBufStorage(GL_RENDERBUFFER, fmt, size);
@@ -56,7 +61,12 @@ void GLEAM_RenderDummy::deallocate()
 
 void GLEAM_RenderTarget::alloc()
 {
-    CGL33::FBAlloc(m_handle);
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    if(GLEAM_FEATURES.direct_state)
+        CGL45::FBAllocEx(m_handle);
+    else
+#endif
+        CGL33::FBAlloc(m_handle);
 }
 
 void GLEAM_RenderTarget::dealloc()
@@ -210,14 +220,18 @@ void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
     C_USED(i);
     fb_bind(FramebufferT::Draw, m_handle);
     if(GLEAM_FEATURES.is_gles)
+    {
         CGL33::ClearColor(color);
+        CGL33::Clear(GL_COLOR_BUFFER_BIT);
+    }
+#if GL_VERSION_VERIFY(0x300, 0x300)
     else
         CGL43::BufClearfv(
             GL_COLOR,
-            GL_DRAW_BUFFER0 + C_FCAST<i32>(i),
-            Span<scalar>::Unsafe(C_CCAST<Vecf4*>(&color), sizeof(color), 4));
+            C_FCAST<i32>(i),
+            Span<scalar>::Create(color));
+#endif
 
-    CGL33::Clear(GL_COLOR_BUFFER_BIT);
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth)
@@ -226,10 +240,17 @@ void GLEAM_RenderTarget::clear(bigscalar depth)
     scalar tmp_dep = C_CAST<scalar>(depth);
     if(GLEAM_FEATURES.is_gles)
     {
+#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
         CGL33::ClearDepth(depth);
+#else
+        CGL33::ClearDepthf(C_CAST<scalar>(depth));
+#endif
         CGL33::Clear(GL_DEPTH_BUFFER_BIT);
-    } else
+    }
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    else
         CGL33::BufClearfv(GL_DEPTH, 0, tmp_dep);
+#endif
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
@@ -240,9 +261,12 @@ void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
         //        glClearDepthf(C_CAST<scalar>(depth));
         CGL33::ClearStencil(stencil);
         CGL33::Clear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    } else
+    }
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    else
         CGL33::BufClearfi(
             GL_DEPTH_STENCIL, 0, C_CAST<scalar>(depth), C_CAST<int32>(stencil));
+#endif
 }
 
 void GLEAM_RenderTarget::clear(uint32 i, const Vecf4& color, bigscalar depth)

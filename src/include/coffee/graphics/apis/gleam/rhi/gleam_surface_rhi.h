@@ -44,29 +44,19 @@ struct GLEAM_Surface2D : GLEAM_Surface
         PixDesc      pfmt,
         CSize const& size,
         const Bytes& data,
+        gleam_error& ec,
         CPoint       offset = {0, 0},
         uint32       mip    = 0);
 
     void upload(
-        BitFmt       fmt,
-        PixCmp       comp,
+        PixDesc      pfmt,
         CSize const& size,
         const Bytes& data,
         CPoint       offset = {0, 0},
-        uint32       mip    = 0);
-
-    void upload(
-        BitFmt fmt,
-        PixCmp comp,
-        CSize  size,
-        c_cptr data,
-        CPoint offset = {0, 0},
-        uint32 mip    = 0)
+        uint32       mip    = 0)
     {
-        Bytes dataS;
-        dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
-        dataS.size = GetPixSize(fmt, comp, size.area());
-        upload(fmt, comp, size, dataS, offset, mip);
+        gleam_error ec;
+        return upload(pfmt, size, data, ec, offset, mip);
     }
 
     CSize texSize() const;

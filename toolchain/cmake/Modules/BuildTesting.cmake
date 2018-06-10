@@ -3,6 +3,10 @@
 include ( ValgrindTest )
 include ( BuildPackaging )
 
+################################################################################
+# For automating tests using CTest
+################################################################################
+
 function(COFFEE_TEST)
     # If a platform does not support simple testing, drop out here
     if(WIN_UWP)
@@ -143,16 +147,16 @@ function(COFFEE_TEST)
     endif()
 
     # Valgrind checks, for deep run-level checking
-    if(COFFEE_VALGRIND_MASSIF)
+    if(VALGRIND_MASSIF)
         VALGRIND_TEST("massif" "--stacks=yes" "${TEST_TARGET}")
     endif()
-    if(COFFEE_VALGRIND_MEMCHECK)
+    if(VALGRIND_MEMCHECK)
         VALGRIND_TEST("memcheck" "" "${TEST_TARGET}")
     endif()
-    if(COFFEE_VALGRIND_CALLGRIND)
+    if(VALGRIND_CALLGRIND)
         VALGRIND_TEST("callgrind" "" "${TEST_TARGET}")
     endif()
-    if(COFFEE_VALGRIND_CACHEGRIND)
+    if(VALGRIND_CACHEGRIND)
         VALGRIND_TEST("cachegrind" "" "${TEST_TARGET}")
     endif()
 

@@ -1,5 +1,7 @@
+option ( BUILD_OPENSSL "Build ASIO with OpenSSL support" ON )
+
 # OpenSSL used for ASIO networking
-if(COFFEE_BUILD_OPENSSL)
+if(BUILD_OPENSSL)
     find_package(OpenSSL REQUIRED)
 endif()
 
@@ -30,10 +32,13 @@ target_include_directories ( CoffeeASIO SYSTEM
     $<INSTALL_INTERFACE:include/>
     )
 
-if(COFFEE_BUILD_OPENSSL)
+if(BUILD_OPENSSL)
     target_include_directories ( CoffeeASIO SYSTEM
         PUBLIC
         $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
+        )
+    target_compile_definitions ( CoffeeASIO PUBLIC
+        -DCOFFEE_ENABLE_SSL
         )
 endif()
 
