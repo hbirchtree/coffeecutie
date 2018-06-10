@@ -1,10 +1,38 @@
 #!/usr/bin/env python
 
+from argparse import ArgumentParser
+from os.path import dirname
+from os.path import realpath
+from os.path import isfile
+from buildinfo import build_yml_filespec
 from buildinfo import *
+
 # common is always in path because buildinfo fixes the PYTHONPATH
 from python.common import try_get_key
 
 version_vars = ['major', 'minor', 'release', 'patch', 'hotfix']
+
+def fallback_yml_read(data):
+    output =  {}
+
+    try:
+        version_idx = data.find('version:')
+        version_section = data[version_idx:]
+        output['version'] = {}
+
+        for k in version_vars:
+            start = version_section.find(k)
+            key_set = version_section[start:version_section.find('\n', start)]
+            output['version'].update({k: int(key_set[key_set.find(':')+1:].strip())})
+
+        version_prefix_section = data[data.find('versionprefix:'):]
+        output['versionprefix'] = version_prefix_section[version_prefix_section.find(':')+1:].strip()
+    except KeyError:
+        pass
+    except ValueError:
+        pass
+
+    return output
 
 if __name__ == '__main__':
     args = ArgumentParser('VersionUtil')
@@ -24,10 +52,15 @@ if __name__ == '__main__':
 
     def read_yaml_file(file):
         with open(file, mode='r') as f:
-            return load(f.read(), Loader=Loader);
+            yml_data = f.read()
+            try:
+                return load(yml_data, Loader=Loader)
+            except NameError:
+                return fallback_yml_read(yml_data)
     def save_yaml_file(file, src):
+        data_dump = dump(src, default_flow_style=False)
         with open(file, mode='w') as f:
-            f.write(dump(src, default_flow_style=False))
+            f.write(data_dump)
     
     this_dir = args.src_dir
 
@@ -45,7 +78,6 @@ if __name__ == '__main__':
                 ver_str += '.'
             i += 1
         return ver_str
-        
 
     config = read_yaml_file(build_config)
 
@@ -56,7 +88,7 @@ if __name__ == '__main__':
     if len(version_cfg.keys()) == 0:
         for k in version_vars:
             version_cfg[k] = 0
-        version_cfg['release'] = 1
+        version_cfg['major'] = 1
 
     if args.increment_type != 'none':
         version_cfg[args.increment_type] = 1 +  try_get_key(version_cfg,

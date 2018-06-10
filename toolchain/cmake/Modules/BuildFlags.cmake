@@ -14,7 +14,7 @@ if(NOT DEFINED COFFEE_BUILD_STRING)
     string (TIMESTAMP CBUILDTIME "%y%m%d%H")
 
     execute_process (
-        COMMAND ${CMAKE_SOURCE_DIR}/version.py none --version
+        COMMAND ${CMAKE_SOURCE_DIR}/toolchain/version.py none --version
         OUTPUT_VARIABLE COFFEE_VERSION_CODE
         )
 
