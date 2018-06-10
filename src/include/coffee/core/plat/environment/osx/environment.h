@@ -5,6 +5,7 @@
 #if defined(COFFEE_APPLE)
 
 #include "../unix/environment.h"
+#include "../../file/unix/file.h"
 
 #include "../../memory/stlstring_ops.h"
 
@@ -16,10 +17,11 @@ struct MacEnv : Posix::PosixEnvironmentFun
 {
     static CString ExecutableName(cstring_w = nullptr);
 
-    STATICINLINE CString ApplicationDir()
+    STATICINLINE Url ApplicationDir()
     {
+        file_error ec;
         CString execname = ExecutableName();
-        return DirName(execname.c_str());
+        return DirFun::Dirname(execname.c_str(), ec);
     }
     static Url GetUserData(cstring orgname, cstring appname);
 };
