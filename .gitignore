@@ -4,7 +4,6 @@
 *.user
 .DS_Store
 *.swp
-core
 
 # Directories
 bin
