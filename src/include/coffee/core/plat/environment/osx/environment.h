@@ -13,6 +13,9 @@ namespace Coffee{
 namespace Environment{
 namespace Mac{
 
+using namespace CResources;
+using namespace Posix;
+
 struct MacEnv : Posix::PosixEnvironmentFun
 {
     static CString ExecutableName(cstring_w = nullptr);
@@ -21,7 +24,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
     {
         file_error ec;
         CString execname = ExecutableName();
-        return Posix::PosixDirFun::Dirname(execname.c_str(), ec);
+        return PosixDirFun::Dirname(execname.c_str(), ec);
     }
     static Url GetUserData(cstring orgname, cstring appname);
 };
