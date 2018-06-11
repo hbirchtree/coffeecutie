@@ -21,7 +21,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
     {
         file_error ec;
         CString execname = ExecutableName();
-        return DirFun::Dirname(execname.c_str(), ec);
+        return Posix::PosixDirFun::Dirname(execname.c_str(), ec);
     }
     static Url GetUserData(cstring orgname, cstring appname);
 };
