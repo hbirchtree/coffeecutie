@@ -46,10 +46,10 @@ void gleamcallback(
     const GLchar* msg,
     const void*   param)
 {
-    if(src == GL_DEBUG_SOURCE_APPLICATION)
-        return;
+//    if(src == GL_DEBUG_SOURCE_APPLICATION)
+//        return;
 
-    const GLeamRenderer* renderer = (const GLeamRenderer*)param;
+    const GLeamRenderer* renderer = C_RCAST<const GLeamRenderer*>(param);
     CGL::CGDbgMsg        cmsg;
 
     cmsg.sev  = gl_convertsev(sev);
@@ -63,7 +63,7 @@ void gleamcallback(
 
 void GLeamRenderer::bindingCallback(const void* report) const
 {
-    const CGL::CGDbgMsg* msg = (const CGL::CGDbgMsg*)report;
+    const CGL::CGDbgMsg* msg = C_RCAST<const CGL::CGDbgMsg*>(report);
     cBasicPrint(
         "GL:{0}:{1}:{2}:{3}: {4}",
         msg->comp,
@@ -72,6 +72,8 @@ void GLeamRenderer::bindingCallback(const void* report) const
         msg->id,
         msg->msg.c_str());
     (void)msg;
+
+    C_BREAK();
 }
 
 bool GLeamRenderer::bindingPreInit(const GLProperties&, CString*)
@@ -197,37 +199,36 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 
     if(!status)
     {
-        //        cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
-        //             CFStrings::Graphics_GLeam_Renderer_FailLoad);
-        /*Context or graphics card on fire? Just get out!*/
         if(err)
             *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;
         Profiler::DeepProfile(GLR_API "glad failed to load");
         return false;
     }
 
-    if(PlatformData::IsDebug())
-    {
-        GDEBUG::SetDebugGroup(GLR_API "Print information");
+//    if(PlatformData::IsDebug())
+//    {
+//        GDEBUG::SetDebugGroup(GLR_API "Print information");
 
-        Profiler::DeepPushContext(GLR_API "Printing information about GL");
-        cDebug(GLR_API "Rendering device info: {0}", GDEBUG::Renderer());
+//        Profiler::DeepPushContext(GLR_API "Printing information about GL");
+//        cDebug(GLR_API "Rendering device info: {0}", GDEBUG::Renderer());
 
-        if(feval(p.flags & GLProperties::GLCoreProfile))
-            cDebug(
-                GLR_API "OpenGL core profile version: {0}",
-                GDEBUG::ContextVersion());
-        else
-            cDebug(
-                GLR_API "OpenGL (non-core) version: {0}",
-                GDEBUG::ContextVersion());
+//        if(feval(p.flags & GLProperties::GLCoreProfile))
+//            cDebug(
+//                GLR_API "OpenGL core profile version: {0}",
+//                GDEBUG::ContextVersion());
+//        else
+//            cDebug(
+//                GLR_API "OpenGL (non-core) version: {0}",
+//                GDEBUG::ContextVersion());
 
-        GDEBUG::UnsetDebugGroup();
-    }
+//        GDEBUG::UnsetDebugGroup();
+//    }
 
     cDebug(
         GLR_API "OpenGL GLSL version: {0}", GDEBUG::ShaderLanguageVersion());
     Profiler::DeepPopContext();
+
+    GDEBUG::GetExtensions();
 
     if(PlatformData::IsDebug())
     {
@@ -307,7 +308,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
         GDEBUG::UnsetDebugGroup();
     }
 
-    if(GDEBUG::b_isDebugging)
+    if(PlatformData::IsDebug())
     {
 #if !defined(COFFEE_WINDOWS) && GL_VERSION_VERIFY(0x330, 0x320)
         DProfContext b(GLR_API "Configuring GL context debugging");

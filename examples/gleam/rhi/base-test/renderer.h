@@ -475,6 +475,16 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.mask.x() = 1;
         xf.mask.y() = 0.2f;
     }
+
+    GpuInfo::GpuQueryInterface interf;
+    gpu_query_error ec;
+    GpuInfo::LoadDefaultGpuQuery(interf, ec);
+
+    if(!ec)
+    {
+        for(auto dev : GpuInfo::GpuQueryView(interf))
+            cDebug("Video memory: {0}:{1}", dev.mem().total, dev.mem().free);
+    }
 }
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)

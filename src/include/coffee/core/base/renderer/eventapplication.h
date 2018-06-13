@@ -18,6 +18,9 @@
 namespace Coffee {
 namespace Display {
 
+template<typename R, typename D>
+using LoopFunction = Function<void(R&, D*)>;
+
 template<
     typename Renderer,
     typename ShareData
@@ -39,9 +42,9 @@ struct EventLoopData
     UqPtr<Renderer>  renderer;
     UqPtr<ShareData> data;
 
-    Function<void(Renderer&, ShareData*)> setup;
-    Function<void(Renderer&, ShareData*)> loop;
-    Function<void(Renderer&, ShareData*)> cleanup;
+    LoopFunction<Renderer, ShareData> setup;
+    LoopFunction<Renderer, ShareData> loop;
+    LoopFunction<Renderer, ShareData> cleanup;
 
     uint32 flags;
 
@@ -131,6 +134,7 @@ void WrapEventFunction(void* data, int event)
         break;
 
     case CoffeeHandle_Loop:
+    {
         /* We retrieve the current thread's RuntimeQueue if it exists,
          *  and process it regularly. */
         if(CurrentState == 1)
@@ -139,10 +143,16 @@ void WrapEventFunction(void* data, int event)
             edata->loop(edata->r(), edata->d());
             Profiler::DeepPopContext();
         }
-        if(RuntimeQueue::GetCurrentQueue())
-            RuntimeQueue::GetCurrentQueue()->executeTasks();
-        break;
 
+        runtime_queue_error ec;
+
+        if(RuntimeQueue::GetCurrentQueue(ec) && !ec)
+            RuntimeQueue::GetCurrentQueue(ec)->executeTasks();
+
+        C_ERROR_CHECK(ec);
+
+        break;
+    }
     case CoffeeHandle_Cleanup:
         if(CurrentState == 1)
         {
@@ -369,8 +379,7 @@ class EventApplication : public InputApplication
     };
 
     template<typename Renderer, typename Data>
-    C_DEPRECATED
-    static i32 execEventLoop(
+    C_DEPRECATED static i32 execEventLoop(
         EventLoopData<Renderer, Data>& ev, CDProperties& visual, CString& err)
     {
         return execEventLoop(

@@ -46,10 +46,15 @@ struct GraphicsAPI_Threading
                 return true;
             }
 
+            runtime_queue_error ec;
+
             RuntimeQueue::AwaitTask(
                         m_queue->threadId(),
-                        createTask(std::move(task))
-                        );
+                        createTask(std::move(task)),
+                        ec);
+
+            C_ERROR_CHECK(ec);
+
             return true;
         }
 
@@ -57,11 +62,16 @@ struct GraphicsAPI_Threading
         RuntimeQueue* m_queue;
         u64 createTask(GraphicsTask&& task)
         {
-            return RuntimeQueue::QueueImmediate(
+            runtime_queue_error ec;
+            auto id = RuntimeQueue::QueueImmediate(
                         m_queue,
                         Chrono::milliseconds(0),
-                        std::move(task)
-                        );
+                        std::move(task),
+                        ec);
+
+            C_ERROR_CHECK(ec);
+
+            return id;
         }
         bool isLocal()
         {

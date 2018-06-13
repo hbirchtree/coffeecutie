@@ -41,6 +41,7 @@ enum class APIError
     DrawNullsizedMeshes,
 
     DrawNoVertexBuffer,
+    DrawNotCompatible,
 
     ShaderCompileFailed,
     ShaderStageNotValid,
@@ -60,6 +61,7 @@ enum class APIError
     HandleDeallocFailed,
 
     InvalidObject,
+    InvalidElementType,
 
     UnimplementedPath,
 };

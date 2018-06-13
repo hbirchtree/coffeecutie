@@ -23,7 +23,7 @@ static int Android_DPI;
 
 extern "C" {
 
-JNIEXPORT __attribute__((used)) void
+JNIEXPORT __attribute__((used)) __attribute__((visibility ("default"))) void
 Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
         JNIEnv* env, jobject, jint id, jstring data
         )

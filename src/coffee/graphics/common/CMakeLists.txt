@@ -17,7 +17,7 @@ find_package( LibDRM QUIET )
 
 if(NVIDIAML_FOUND)
     coffee_library (
-        TARGET coffee-nvidia
+        TARGET CoffeeNVIDIAQuery
         LINKAGE SHARED
         SOURCES
         private/query/nvidia_query.cpp
@@ -30,7 +30,7 @@ if(NVIDIAML_FOUND)
         ${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query
         )
 
-    target_include_directories( "coffee-nvidia"
+    target_include_directories( CoffeeNVIDIAQuery
         PRIVATE
         $<BUILD_INTERFACE:${NVIDIAML_INCLUDE_DIR}>
         )
@@ -38,7 +38,7 @@ endif()
 
 if(LIBDRM_FOUND AND FALSE)
     coffee_library (
-        TARGET coffee-libdrm
+        TARGET CoffeeLibDRMQuery
         LINKAGE SHARED
         SOURCES
         private/query/libdrm_query.cpp
@@ -52,11 +52,22 @@ if(LIBDRM_FOUND AND FALSE)
         ${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query
         )
 
-    target_include_directories( "coffee-libdrm"
+    target_include_directories( CoffeeLibDRMQuery
         PRIVATE
         $<BUILD_INTERFACE:${LIBDRM_INCLUDE_DIR}>
         )
 endif()
 
-#coffee_add_elibrary ( "coffee-amd" SHARED "" )
-#coffee_add_elibrary ( "coffee-intel" SHARED "" )
+if(BUILD_OPENGL AND BUILD_GLEAM)
+    coffee_library (
+        TARGET CoffeeOpenGLQuery
+        LINKAGE SHARED
+        SOURCES
+        private/query/opengl_query.cpp
+
+        LIBRARIES
+        CoffeeCore
+        CoffeeBinding_GLAD
+        CoffeeGLeamCommon
+        )
+endif()

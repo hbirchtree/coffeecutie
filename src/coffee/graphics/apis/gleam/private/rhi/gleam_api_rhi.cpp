@@ -56,8 +56,8 @@ void GLEAM_API::GetDefaultVersion(int32& major, int32& minor)
     major = 4;
     minor = 6;
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-    major = 3;
-    minor = 2;
+    major               = 3;
+    minor               = 2;
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
     major = 2;
     minor = 0;
@@ -109,63 +109,8 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data* p)
     delete p;
 }
 
-bool GLEAM_API::LoadAPI(
-    DataStore store, bool debug, GLEAM_API::OPTS const& options)
+static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
 {
-    DProfContext _(GLM_API "LoadAPI()");
-
-    CGL::Debug::SetDebugGroup("Loading GLEAM");
-
-    if(m_store)
-    {
-        cVerbose(8, GLM_API "Data store already created, skipping");
-        return true;
-    }
-
-    cVerbose(8, GLM_API "Entering LoadAPI()");
-    if(!store)
-    {
-        cWarning(GLM_API "No data store provided");
-        CGL::Debug::UnsetDebugGroup();
-        return false;
-    }
-
-    store->GpuThread = GraphicsQueue(RuntimeQueue::GetCurrentQueue());
-
-    cVerbose(8, GLM_API "Creating instance data");
-    store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
-
-    store->options = options;
-#ifndef NDEBUG
-    store->DEBUG_MODE = debug;
-#endif
-
-#if GL_VERSION_VERIFY(0x330, 0x300)
-    do
-    {
-        const szptr num_pbos = 5;
-        cVerbose(7, GLM_API "Creating PBO storage, {0} units", num_pbos);
-
-        /* Check if someone else has initialized it */
-        if(store->inst_data->pboQueue.buffers.size() == num_pbos)
-            break;
-
-        Vector<CGhnd> bufs;
-        bufs.resize(num_pbos);
-
-        CGL33::BufAlloc(bufs);
-
-        store->inst_data->pboQueue.buffers.reserve(num_pbos);
-        for(uint32 i = 0; i < num_pbos; i++)
-        {
-            GLEAM_PboQueue::Pbo pbo;
-            pbo.buf   = bufs[i];
-            pbo.flags = 0;
-            store->inst_data->pboQueue.buffers.push_back(pbo);
-        }
-    } while(false);
-#endif
-
     cVerbose(10, GLM_API "Getting GL context version");
     auto ver = CGL::Debug::ContextVersion();
 
@@ -210,13 +155,13 @@ bool GLEAM_API::LoadAPI(
         store->CURR_API = GLES_2_0;
 #endif
 
+    systemLevel = store->CURR_API;
     auto prevApi = store->CURR_API;
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
     /* Emulation mode; differs slightly from compiling against an API,
      *  such as when ES 2.0 excludes pixel formats and etc. */
     /* TODO: Document this feature */
-    bool forced_api = false;
     if(Env::ExistsVar("GLEAM_API"))
     {
         auto level = Env::GetVar("GLEAM_API");
@@ -225,8 +170,6 @@ bool GLEAM_API::LoadAPI(
 
         if(store->CURR_API == GL_Nothing)
             throw undefined_behavior("invalid GLEAM API: " + level);
-
-        forced_api      = true;
     }
 
     /* If we are emulating ES 2.0, create a global vertex array.
@@ -253,27 +196,114 @@ bool GLEAM_API::LoadAPI(
         return false;
     }
 
-    //#if GL_VERSION_VERIFY(0x300, 0x300)
-    //    if(CGL::Tex_SRGB_Supported())
-    //    {
-    //        cVerbose(6,GLM_API "Enabling SRGB color for framebuffers");
-    //        CGL::Debug::Enable(Feature::FramebufferSRGB);
-    //    }
-    //#endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    if(Extensions::SRGB_Supported())
+    {
+        cVerbose(6, GLM_API "Enabling SRGB color for framebuffers");
+        CGL33::Enable(Feature::FramebufferSRGB);
+    }
+#endif
 
     cVerbose(
         4,
         GLM_API "Initialized API level {0}",
         StrUtil::pointerify(store->CURR_API));
 
-#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-    //    store->features.qcom_tiling =
-    //            CGL33::Debug::CheckExtensionSupported("GL_QCOM_tiled_rendering");
+    return true;
+}
 
-    if(store->features.qcom_tiling)
+static void ConstructContextObjects(GLEAM_API::DataStore store)
+{
+#if GL_VERSION_VERIFY(0x330, 0x300)
+    do
     {
-        cVerbose(5, "Qualcomm tiling enabled");
-    }
+        const szptr num_pbos = 5;
+        cVerbose(7, GLM_API "Creating PBO storage, {0} units", num_pbos);
+
+        /* Check if someone else has initialized it */
+        if(store->inst_data->pboQueue.buffers.size() == num_pbos)
+            break;
+
+        Vector<CGhnd> bufs;
+        bufs.resize(num_pbos);
+
+        CGL33::BufAlloc(bufs);
+
+        store->inst_data->pboQueue.buffers.reserve(num_pbos);
+        for(uint32 i = 0; i < num_pbos; i++)
+        {
+            GLEAM_PboQueue::Pbo pbo;
+            pbo.buf   = bufs[i];
+            pbo.flags = 0;
+            store->inst_data->pboQueue.buffers.push_back(pbo);
+        }
+    } while(false);
+#endif
+}
+
+static void SetAPIFeatures(GLEAM_API::DataStore store)
+{
+    auto api        = store->CURR_API;
+    bool is_desktop = APILevelIsOfClass(api, APIClass::GLCore);
+
+    auto& features = store->features;
+
+    features.is_gles = !is_desktop;
+    features.gles20  = (api == GLES_2_0);
+
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    features.direct_state =
+        features.direct_state || (is_desktop && api >= GL_4_5);
+    features.base_instance =
+        features.direct_state || (is_desktop && api >= GL_4_6);
+#endif
+
+    features.draw_base_instance =
+        (api != GLES_2_0) && (api != GLES_3_0) && (api != GL_3_3);
+    features.draw_multi_indirect =
+        (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6);
+    features.draw_indirect = (api == GL_4_3) || (api == GL_4_5) ||
+                             (api == GL_4_6) || (api == GLES_3_2);
+    features.draw_buffers_blend = is_desktop && (api != GL_3_3);
+    features.draw_color_mask    = is_desktop || (api == GLES_3_2);
+
+    /* For BaseInstance to be fully effective, we need
+     *  both the gl_BaseInstanceARB GLSL variable
+     *  and Draw*BaseInstance. */
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+    features.base_instance =
+#endif
+        features.draw_base_instance =
+            features.base_instance && features.draw_base_instance;
+
+    features.draw_multi_indirect =
+        features.draw_multi_indirect && features.draw_base_instance;
+
+    features.rasterizer_discard = (api != GLES_2_0);
+    features.depth_clamp        = is_desktop && false;
+    features.viewport_indexed   = (api != GLES_2_0) && (api != GLES_3_0);
+
+    features.separable_programs = is_desktop && (api != GL_3_3);
+
+    features.texture_storage = (api != GL_3_3) && (api != GLES_2_0);
+
+    features.buffer_storage = (api == GL_4_3);
+    features.buffer_persistent =
+        (api != GL_3_3) && (api != GLES_2_0) && features.buffer_storage;
+    features.vertex_format = (api == GL_4_3) || (api == GLES_3_2) ||
+                             (api == GL_4_5) || (api == GL_4_6);
+
+    features.element_buffer_bind =
+        !is_desktop || (is_desktop && store->CURR_API < GL_4_5);
+}
+
+static void SetExtensionFeatures(GLEAM_API::DataStore store)
+{
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
+//    if(store->features.qcom_tiling)
+//    {
+//        cVerbose(5, "Qualcomm tiling enabled");
+//    }
 #endif
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
@@ -282,6 +312,13 @@ bool GLEAM_API::LoadAPI(
     store->features.base_instance = Extensions::DrawParametersSupported();
     store->features.direct_state  = Extensions::DirectStateSupported();
 
+#endif
+}
+
+static void SetCompatibilityFeatures(
+    GLEAM_API::DataStore store, bool forced_api)
+{
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(forced_api && store->CURR_API < GL_4_5 && store->CURR_API < GLES_MIN)
     {
         store->features.base_instance = false;
@@ -294,53 +331,60 @@ bool GLEAM_API::LoadAPI(
         store->features.base_instance = false;
         store->features.direct_state  = false;
     }
+#endif
+}
 
+bool GLEAM_API::LoadAPI(
+    DataStore store, bool debug, GLEAM_API::OPTS const& options)
+{
+    DProfContext _(GLM_API "LoadAPI()");
+
+    CGL::Debug::SetDebugGroup("Loading GLEAM");
+
+    if(m_store)
+    {
+        cVerbose(8, GLM_API "Data store already created, skipping");
+        return true;
+    }
+
+    cVerbose(8, GLM_API "Entering LoadAPI()");
+    if(!store)
+    {
+        cWarning(GLM_API "No data store provided");
+        CGL::Debug::UnsetDebugGroup();
+        return false;
+    }
+
+    runtime_queue_error ec;
+    store->GpuThread = GraphicsQueue(RuntimeQueue::GetCurrentQueue(ec));
+    C_ERROR_CHECK(ec);
+
+    cVerbose(8, GLM_API "Creating instance data");
+    store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
+
+    store->options = options;
+#ifndef NDEBUG
+    store->DEBUG_MODE = debug;
+    if(!debug)
+    {
+        Debug::SetDebugMode(false);
+    }
 #endif
 
-    bool is_desktop = APILevelIsOfClass(store->CURR_API, APIClass::GLCore);
+    APILevel systemLevel;
+    SetAPIVersion(store, systemLevel);
 
-    auto api = store->CURR_API;
+    bool forced_api = (store->CURR_API != systemLevel);
 
-    store->features.is_gles = !is_desktop;
-    store->features.gles20  = (api == GLES_2_0);
+    ConstructContextObjects(store);
 
-    store->features.draw_base_instance =
-        (api != GLES_2_0) && (api != GLES_3_0) && (api != GL_3_3);
-    store->features.draw_multi_indirect =
-        (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6);
-    store->features.draw_indirect = (api == GL_4_3) || (api == GL_4_5) ||
-                                    (api == GL_4_6) || (api == GLES_3_2);
-    store->features.draw_buffers_blend = is_desktop && (api != GL_3_3);
-    store->features.draw_color_mask    = is_desktop || (api == GLES_3_2);
+    /* First, check if an extension is available for behavior */
+    if(!Env::ExistsVar("GLEAM_DISABLE_EXTENSIONS"))
+        SetExtensionFeatures(store);
+    SetAPIFeatures(store);
 
-    /* For BaseInstance to be fully effective, we need
-     *  both the gl_BaseInstanceARB GLSL variable
-     *  and Draw*BaseInstance. */
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    store->features.base_instance =
-#endif
-        store->features.draw_base_instance =
-            store->features.base_instance && store->features.draw_base_instance;
-
-    store->features.draw_multi_indirect = store->features.draw_multi_indirect &&
-                                          store->features.draw_base_instance;
-
-    store->features.rasterizer_discard = (api != GLES_2_0);
-    store->features.depth_clamp        = is_desktop && false;
-    store->features.viewport_indexed   = (api != GLES_2_0) && (api != GLES_3_0);
-
-    store->features.separable_programs = is_desktop && (api != GL_3_3);
-
-    store->features.texture_storage = (api != GL_3_3) && (api != GLES_2_0);
-
-    store->features.buffer_storage = (api == GL_4_3);
-    store->features.buffer_persistent =
-        (api != GL_3_3) && (api != GLES_2_0) && store->features.buffer_storage;
-    store->features.vertex_format = (api == GL_4_3) || (api == GLES_3_2) ||
-                                    (api == GL_4_5) || (api == GL_4_6);
-
-    store->features.element_buffer_bind =
-        !is_desktop || (is_desktop && store->CURR_API < GL_4_5);
+    /* Disable features when emulating lower API levels */
+    SetCompatibilityFeatures(store, forced_api);
 
     m_store = store;
 
@@ -374,24 +418,14 @@ bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
     return m_store != nullptr;
 }
 
-void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, uint32 i)
+void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, uint32)
 {
-    if(!GLEAM_FEATURES.viewport_indexed)
     {
         if(rstate.dither())
             GLC::Enable(Feature::Dither);
         else
             GLC::Disable(Feature::Dither);
     }
-#if GL_VERSION_VERIFY(0x300, 0x320)
-    else if(GLEAM_FEATURES.viewport_indexed)
-    {
-        if(rstate.dither())
-            GLC::Enablei(Feature::Dither, i);
-        else
-            GLC::Disablei(Feature::Dither, i);
-    }
-#endif
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
     GLC::PolygonMode(
@@ -399,22 +433,12 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, uint32 i)
         (rstate.wireframeRender()) ? DrawMode::Line : DrawMode::Fill);
 #endif
 
-    if(!GLEAM_FEATURES.viewport_indexed)
     {
         if(rstate.discard())
             GLC::Enable(Feature::RasterizerDiscard);
         else
             GLC::Disable(Feature::RasterizerDiscard);
     }
-#if GL_VERSION_VERIFY(0x300, 0x320)
-    else if(GLEAM_FEATURES.viewport_indexed)
-    {
-        if(rstate.discard())
-            GLC::Enablei(Feature::RasterizerDiscard, i);
-        else
-            GLC::Disablei(Feature::RasterizerDiscard, i);
-    }
-#endif
 
     //    GLC::ColorLogicOp(rstate.colorOp());
     //    if(!GLEAM_FEATURES.draw_color_mask)
@@ -660,7 +684,7 @@ APILevel GLEAM_API::Level()
     return GL_CURR_API;
 }
 
-const char *api_error::name() const noexcept
+const char* api_error::name() const noexcept
 {
     return "RHI::GLEAM";
 }

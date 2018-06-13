@@ -180,6 +180,11 @@ macro(COFFEE_LIBRARY)
         -DCOFFEE_COMPONENT_NAME="${LIB_TARGET}"
         )
 
+    target_compile_definitions ( ${LIB_TARGET}
+        PUBLIC
+        -DFEATURE_ENABLE_${LIB_TARGET}
+        )
+
     if(ANDROID)
         install(
             TARGETS

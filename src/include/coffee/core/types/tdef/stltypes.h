@@ -18,14 +18,15 @@
 
 /*Memory management*/
 #include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 
 /*Shit*/
 #include <complex>
 #include <exception>
-#include <type_traits>
 #include <system_error>
+#include <type_traits>
 
 #if defined(COFFEE_GEKKO)
 #include <gccore.h>
@@ -67,6 +68,9 @@ struct Lock
 #else
 using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
+
+using UqLock  = std::unique_lock<Mutex>;
+using CondVar = std::condition_variable;
 #endif
 
 using ErrCode = std::error_code;
@@ -325,11 +329,18 @@ struct error_code : std::error_code
 template<typename DomainError, typename ErrorCategory>
 struct domain_error_code : error_code
 {
+    domain_error_code()
+    {
+        assign(0, m_category);
+    }
+
     using error_code::operator=;
+
+    ErrorCategory m_category;
 
     domain_error_code& operator=(DomainError error_code)
     {
-        assign(C_CAST<int>(error_code), ErrorCategory());
+        assign(C_CAST<int>(error_code), m_category);
         return *this;
     }
 
@@ -357,3 +368,13 @@ struct domain_error_code : error_code
     if(!this)                                                     \
         Throw(undefined_behavior("bad access to *this: " __FILE__ \
                                  ":" C_STR(__LINE__)));
+
+#ifndef NDEBUG
+#define C_ERROR_CHECK(ec)                            \
+    {                                                \
+        if(ec)                                       \
+            Throw(std::runtime_error(ec.message())); \
+    }
+#else
+#define C_ERROR_CHECK(ec)
+#endif

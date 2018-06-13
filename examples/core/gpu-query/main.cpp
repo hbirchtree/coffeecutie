@@ -8,7 +8,8 @@ using namespace Coffee;
 int32 coffee_main(int32, cstring_w*)
 {
     GpuInfo::GpuQueryInterface fun = {};
-    if(GpuInfo::LoadDefaultGpuQuery(&fun))
+    gpu_query_error ec;
+    if(GpuInfo::LoadDefaultGpuQuery(fun, ec))
     {
         cDebug("GPU Driver: {0}", fun.GetDriver());
         cDebug("GPU Devices: {0}", fun.GetNumGpus());
@@ -39,6 +40,9 @@ int32 coffee_main(int32, cstring_w*)
 
             cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
         }
+    }else
+    {
+        cDebug("Failed to load: {0}", ec.message());
     }
 
     return 0;

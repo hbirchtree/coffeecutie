@@ -37,6 +37,22 @@ struct serial_image
  */
 namespace stb {
 
+enum class STBError
+{
+    GeneralError = 1,
+    InvalidComponents,
+    DecodingError,
+    EncodingError,
+};
+
+struct stb_error_category : error_category
+{
+    virtual const char* name() const noexcept;
+    virtual std::string message(int error_code) const;
+};
+
+using stb_error = domain_error_code<STBError, stb_error_category>;
+
 template<typename PixType>
 struct image
 {
@@ -99,18 +115,24 @@ using image_const = image<u8 const>;
 using CStbImage      = image_rw;
 using CStbImageConst = image_const;
 
-/*!
- * \brief Print any potential STB errors
- */
-extern void Error();
-
 extern bool LoadData(
-    image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA);
+    image_rw*         target,
+    BytesConst const& src,
+    stb_error&        ec,
+    PixCmp            comp = PixCmp::RGBA);
+
+STATICINLINE bool LoadData(
+    image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA)
+{
+    stb_error ec;
+    return LoadData(target, src, ec, comp);
+}
 
 STATICINLINE bool LoadData(
     image_rw* target, Bytes const& src, PixCmp comp = PixCmp::RGBA)
 {
-    return LoadData(target, C_OCAST<BytesConst>(src), comp);
+    stb_error ec;
+    return LoadData(target, C_OCAST<BytesConst>(src), ec, comp);
 }
 
 /*!
@@ -127,16 +149,17 @@ extern Bytes Resize(image_const const& img, const CSize& target, int channels);
  * \param src STB image to save
  * \return
  */
-extern bool SavePNG(Bytes& target, const image_const& src);
+extern bool SavePNG(Bytes& target, const image_const& src, stb_error& ec);
 /*!
  * \brief Save STB image to TGA file
  * \param target Target resource
  * \param src STB image to save
  * \return
  */
-extern bool SaveTGA(Bytes& target, const image_const& src);
+extern bool SaveTGA(Bytes& target, const image_const& src, stb_error& ec);
 
-extern bool SaveJPG(Bytes& target, const image_const& src, int qual = 80);
+extern bool SaveJPG(
+    Bytes& target, const image_const& src, stb_error& ec, int qual = 80);
 /*!
  * \brief Free image data
  * \param img
@@ -150,12 +173,15 @@ extern void ImageFreePtr(void* img);
  * \brief Wrapping functions for simpler usage
  */
 namespace IMG {
+using stb::stb_error;
 
 STATICINLINE bool Load(
     Bytes& r, PixCmp cmp, BitFmt& fmt, Bytes& data, CSize& res)
 {
+    stb_error ec;
+
     stb::image_rw img;
-    bool          stat = stb::LoadData(&img, C_OCAST<BytesConst>(r), cmp);
+    bool          stat = stb::LoadData(&img, C_OCAST<BytesConst>(r), ec, cmp);
 
     fmt  = BitFmt::UByte;
     data = C_OCAST<Bytes>(img);
@@ -174,17 +200,25 @@ STATICINLINE bool Load(
 } // namespace IMG
 
 namespace PNG {
+using stb::stb_error;
 /*!
  * \brief Save image data from RGBA8 format into PNG data
  * \param src
  * \param res
  * \return
  */
-extern Bytes Save(stb::image_const const& im);
+extern Bytes Save(stb::image_const const& im, stb_error& ec);
+
+STATICINLINE Bytes Save(stb::image_const const& im)
+{
+    stb_error ec;
+    return Save(im, ec);
+}
 
 } // namespace PNG
 
 namespace TGA {
+using stb::stb_error;
 /*!
  * \brief Save image data from RGBA8, RGB8, RG8 or R8 into TGA data
  * \param data
@@ -192,12 +226,19 @@ namespace TGA {
  * \param bpp
  * \return
  */
-extern Bytes Save(Bytes const& data, CSize const& res, int bpp = 4);
+extern Bytes Save(stb::image_const const& im, stb_error& ec);
+
+STATICINLINE Bytes Save(stb::image_const const& im)
+{
+    stb_error ec;
+    return Save(im, ec);
+}
 } // namespace TGA
 
 namespace JPG {
-extern Bytes Save(stb::image_const const& src, int qual = 80);
-}
+using stb::stb_error;
+extern Bytes Save(stb::image_const const& src, stb_error& ec, int qual = 80);
+} // namespace JPG
 
 namespace Stb {
 using namespace stb;

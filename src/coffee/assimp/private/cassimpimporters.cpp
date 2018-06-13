@@ -32,7 +32,7 @@ bool LoadScene(UqPtr<AssimpData>& target, const Bytes& source, cstring hint)
 {
     auto& data = target;
 
-    data = UqPtr<AssimpData>(new AssimpData);
+    data = MkUq<AssimpData>();
 
     u32 aiFlags = aiProcess_CalcTangentSpace | aiProcess_Triangulate |
                   aiProcess_OptimizeMeshes | aiProcess_SortByPType;

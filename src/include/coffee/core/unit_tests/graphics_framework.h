@@ -2,6 +2,7 @@
 
 #include <coffee/core/CDebug>
 #include <coffee/core/base/renderer/eventapplication.h>
+#include <coffee/interfaces/full_launcher.h>
 #include <coffee/windowing/renderer/renderer.h>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/types/tdef/stlfunctypes.h>

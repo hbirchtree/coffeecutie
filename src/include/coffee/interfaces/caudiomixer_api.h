@@ -288,7 +288,6 @@ public:
         C_UNUSED(fmt);
         C_UNUSED(samples);
         C_UNUSED(pts);
-        C_STUBBED("Timed data streaming");
     }
 
     /*!

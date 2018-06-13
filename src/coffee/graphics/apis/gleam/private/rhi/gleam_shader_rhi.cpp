@@ -803,6 +803,10 @@ void GetShaderUniforms(
                     &type,
                     &attribName[0]);
 
+                auto idx = attribName.find('\0');
+                if(idx != CString::npos)
+                    attribName.resize(idx);
+
                 attrib.m_idx =
                     CGL33::AttribGetLocation(prog, attribName.c_str());
                 attrib.m_flags = to_enum_shtype(type);
@@ -810,7 +814,7 @@ void GetShaderUniforms(
             }
         }
     }
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x430, 0x310)
     else if(GLEAM_FEATURES.separable_programs)
     {
         enum GL_PROP_IDX

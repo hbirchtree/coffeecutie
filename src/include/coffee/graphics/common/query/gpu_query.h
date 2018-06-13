@@ -6,6 +6,27 @@
 
 namespace Coffee{
 
+enum class GpuQueryError
+{
+    SymbolResolution = 1,
+    LibraryLoading,
+    Initialization,
+    InternalError,
+    DependencyError,
+
+    LibraryImplementation,
+
+    ArgumentError,
+};
+
+struct gpu_query_category : error_category
+{
+    virtual const char *name() const noexcept override;
+    virtual std::string message(int error_code) const override;
+};
+
+using gpu_query_error = domain_error_code<GpuQueryError, gpu_query_category>;
+
 struct SWVersionInfo;
 struct HWDeviceInfo;
 
@@ -13,7 +34,7 @@ namespace GpuInfo{
 
 struct MemStatus
 {
-    uint64 total, used, free;
+    u64 total, used, free;
 };
 struct PciStatus
 {
@@ -27,7 +48,7 @@ struct TempRange
 };
 struct ClockRange
 {
-    uint32 current, min, max;
+    u32 current, min, max;
 };
 struct UsageMeter
 {
@@ -35,7 +56,7 @@ struct UsageMeter
 };
 struct TransferStatus
 {
-    uint32 rx, tx;
+    u32 rx, tx;
 };
 enum class Clock
 {
@@ -46,8 +67,8 @@ enum class PMode
     Performance, Powersave
 };
 
-using gpucount_t = uint32;
-using proc_t = uint32;
+using gpucount_t = u32;
+using proc_t = u32;
 
 struct GpuQueryInterface
 {
@@ -55,7 +76,7 @@ struct GpuQueryInterface
     using PGetNumGpus = gpucount_t(*)();
     using PGpuModel = HWDeviceInfo(*)(gpucount_t);
     using PMemoryInfo = MemStatus(*)(gpucount_t);
-    using PProcMemoryUse = uint64(*)(gpucount_t,proc_t);
+    using PProcMemoryUse = u64(*)(gpucount_t,proc_t);
     using PGetTemperature = TempRange(*)(gpucount_t);
     using PGetClock = ClockRange(*)(gpucount_t,Clock);
     using PGetPowerMode = PMode(*)(gpucount_t);
@@ -82,7 +103,7 @@ extern GpuQueryInterface GetDefault();
  * \param loc Where to put the query pointers
  * \return True if external library was loaded, false if internal dummy
  */
-extern bool LoadDefaultGpuQuery(GpuQueryInterface* loc);
+extern bool LoadDefaultGpuQuery(GpuQueryInterface &loc, gpu_query_error& ec);
 
 class GpuView
 {
@@ -107,7 +128,7 @@ public:
     GPU_GLUE(UsageMeter, usage, GetUsage)
     GPU_GLUE(TransferStatus, bus, GetPcieTransfer)
 
-    GPU_GLUE_2(uint64, memUsage, proc_t, ProcMemoryUse)
+    GPU_GLUE_2(u64, memUsage, proc_t, ProcMemoryUse)
     GPU_GLUE_2(ClockRange, clock, Clock, GetClock)
 
 #undef GPU_GLUE_2

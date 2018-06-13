@@ -128,11 +128,19 @@ static bool InternalDraw(
                 ec = APIError::DrawNoIndexBuffer;
         }
 
-        szptr elsize = 1;
-        if(i.elementType() == TypeEnum::UShort)
+        szptr elsize;
+
+        if(i.elementType() ==  TypeEnum::UByte)
+            elsize = 1;
+        else if(i.elementType() == TypeEnum::UShort)
             elsize = 2;
-        if(i.elementType() == TypeEnum::UInt)
+        else if(i.elementType() == TypeEnum::UInt)
             elsize = 4;
+        else
+            ec = APIError::InvalidElementType;
+
+        if(ec)
+            return false;
 
         if(d.instanced())
         {
@@ -297,6 +305,9 @@ bool InternalMultiDraw(
 
     DrwMd mode = {data.dc.primitive(), data.dc.primitiveMode()};
 
+    if(ec)
+        return false;
+
     if(data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect)
     {
         if(indirectBuf == 0)
@@ -340,6 +351,8 @@ bool InternalMultiDraw(
             C_RCAST<const i32*>(data.offsets.data()),
             data.counts.data(),
             data.offsets.size());
+    else
+        ec = APIE::DrawNotCompatible;
 
     return true;
 }
@@ -479,6 +492,9 @@ void GLEAM_API::MultiDraw(
     if(draws.multiDrawData.size() &&
        (GLEAM_FEATURES.draw_multi_indirect || !call_instanced))
     {
+        if(GL_DEBUG_MODE && draws.multiDrawData.size() == 0)
+            ec = APIE::DrawNoMeshes;
+
         for(auto& mdData : draws.multiDrawData)
         {
             auto& buffer = *mdData.first;
@@ -562,6 +578,12 @@ void GLEAM_API::MultiDraw(
             }
         }
 
+    if(GL_DEBUG_MODE && ec)
+    {
+        Debug::DebugMessage(Severity::Critical, DebugType::Other,
+                            ec.category().message(ec.value()).c_str());
+    }
+
     pipeline.unbind();
 }
 
@@ -583,7 +605,7 @@ void GLEAM_API::Draw(
     if(query)
         query->begin();
 
-    pipeline.bind();
+    pipeline.bind(ec);
 
     for(auto const& s : ustate)
     {
@@ -607,6 +629,10 @@ void GLEAM_API::Draw(
 
     InternalDraw(pipeline.m_handle, mode, d, i, ec);
 
+    if(GL_DEBUG_MODE && ec)
+        Debug::DebugMessage(Severity::Critical, DebugType::Other,
+                            "GLEAM context error");
+
 #if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
     if(m_store->features.qcom_tiling)
         glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
@@ -616,7 +642,7 @@ void GLEAM_API::Draw(
         query->end();
 
     vertices.unbind();
-    pipeline.unbind();
+    pipeline.unbind(ec);
 }
 
 void GLEAM_API::DrawConditional(

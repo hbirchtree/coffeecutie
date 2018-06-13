@@ -65,10 +65,19 @@ template<typename T> FORCEDINLINE
 void C_UNUSED(T const&)
 {
 }
+
 template<typename T>
 FORCEDINLINE void C_USED(T const& v)
 {
     (void)v;
+}
+
+FORCEDINLINE void C_BREAK()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+    if(getenv("DEBUG_BREAK"))
+        std::raise(SIGINT);
+#endif
 }
 
 }

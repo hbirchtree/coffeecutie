@@ -5,7 +5,7 @@
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
 
-#if defined(FEATURE_USE_ASIO)
+#if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/asio/net_profiling.h>
 #endif
 
@@ -16,7 +16,7 @@ int32 coffee_main(int32, cstring_w*)
     using namespace EventHandlers;
     using namespace StandardInput;
 
-#if defined(FEATURE_USE_ASIO)
+#if defined(FEATURE_ENABLE_CoffeeASIO)
     Net::RegisterProfiling();
 #endif
 
@@ -40,13 +40,18 @@ int32 coffee_main(int32, cstring_w*)
     renderer->installEventHandler(
         {StandardCamera<CGCamera>, nullptr, loop->d()->camera_cnt.get(0)});
 
-    loop->data->rt_queue = RuntimeQueue::GetCurrentQueue();
+    runtime_queue_error ec;
+    loop->data->rt_queue = RuntimeQueue::GetCurrentQueue(ec);
 
-    RuntimeQueue::Queue({[loop]() { loop->d()->entities.exec(); },
-                         {},
-                         std::chrono::milliseconds(10),
-                         RuntimeTask::Periodic,
-                         0});
+    C_ERROR_CHECK(ec);
+
+    RuntimeQueue::Queue(
+        {[loop]() { loop->d()->entities.exec(); },
+         {},
+         std::chrono::milliseconds(10),
+         RuntimeTask::Periodic,
+         0},
+        ec);
 
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)

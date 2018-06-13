@@ -189,9 +189,9 @@ int32 CoffeeMain(
     /* Set the program arguments so that we can look at them later */
     GetInitArgs() = AppArg::Clone(argc, argv);
 
-#if defined(COFFEE_ANDROID)
+//#if defined(COFFEE_ANDROID)
     app_dummy();
-#endif
+//#endif
 
 #if defined(COFFEE_APPLE)
     FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());

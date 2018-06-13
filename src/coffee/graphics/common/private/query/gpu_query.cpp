@@ -53,45 +53,65 @@ struct _GpuQueryDef
     }
 };
 
-bool LoadDefaultGpuQuery(GpuQueryInterface *loc)
+bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error &ec)
 {
     using namespace Library;
 
     Vector<cstring> libs = {
-        "coffee-nvidia",
-        "coffee-amd",
-        "coffee-intel",
-        "coffee-libdrm"
+        "CoffeeNVIDIAQuery",
+        "CoffeeAMDQuery",
+        "CoffeeIntelQuery",
+        "CoffeeLibDRMQuery",
+        "CoffeeOpenGLQuery"
     };
-    CString error;
     for(cstring mf : libs)
     {
+        CString error;
         auto lib = FunctionLoader::GetLibrary(
                     mf, FunctionLoader::GlobalSymbols, nullptr, &error);
         if(!lib)
         {
-            cVerbose(6, "Library loading error: {0}", error);
+            ec = error;
+            ec = GpuQueryError::LibraryLoading;
+
             continue;
         }
         auto ldr = ObjectLoader::
                 GetConstructor<GpuQueryFunction>(lib, "GetGpuQuery", &error);
         if(!ldr.loader)
         {
-            cVerbose(6, "Symbol resolution error: {0}", error);
+            ec = error;
+            ec = GpuQueryError::SymbolResolution;
+
             FunctionLoader::UnloadLibrary(lib);
             continue;
         }
         GpuQueryFunction* fun = ldr.loader();
         if(!fun)
         {
-            cVerbose(6, "Failed to initialize {0}", mf);
+            ec = mf;
+            ec = GpuQueryError::Initialization;
+
             FunctionLoader::UnloadLibrary(lib);
             continue;
         }
-        *loc = fun->ptr();
+
+        if(!fun->ptr)
+        {
+            ec = mf;
+            ec = GpuQueryError::LibraryImplementation;
+            continue;
+        }
+
+        auto loader = fun->ptr();
+        loc = loader;
+
+        ec = C_CAST<GpuQueryError>(0);
+        ec = "";
+
         return true;
     }
-    *loc = GetDefault();
+    loc = GetDefault();
     return false;
 }
 
@@ -114,6 +134,35 @@ GpuQueryInterface GetDefault()
 }
 
 }
+
+const char *gpu_query_category::name() const noexcept
+{
+    return "GpuQuery";
+}
+
+std::string gpu_query_category::message(int error_code) const
+{
+    using GQE = GpuQueryError;
+
+    switch(C_CAST<GQE>(error_code))
+    {
+    case GQE::LibraryLoading:
+        return "Library loading";
+    case GQE::SymbolResolution:
+        return "Symbol resolution";
+    case GQE::Initialization:
+        return "Initialization error";
+    case GQE::InternalError:
+        return "Internal error";
+    case GQE::DependencyError:
+        return "Unmet dependencies";
+    case GQE::ArgumentError:
+        return "Called with bad parameters";
+    case GQE::LibraryImplementation:
+        return "Library implementation";
+    }
+}
+
 }
 
 GpuQueryFunction *GetGpuQueryDefault()

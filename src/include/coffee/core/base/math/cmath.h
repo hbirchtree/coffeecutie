@@ -14,6 +14,7 @@ namespace Coffee {
  * to.
  */
 namespace CMath {
+
 using namespace std;
 
 #ifdef COFFEE_WINDOWS
@@ -57,6 +58,27 @@ template<typename T>
 T mix(T a, T b, T f)
 {
     return a * (T(1) - f) + b * f;
+}
+
+template<
+    typename T,
+    typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+/*!
+ * \brief Check if values are within epsilon limits for the given type
+ * This is only necessary for floating-point types.
+ *
+ * \param v1
+ * \param v2
+ * \return
+ */
+bool floating_equal(T const& v1, T const& v2)
+{
+    const auto epsilon = std::numeric_limits<T>::epsilon();
+
+    const auto lower = v1 - epsilon;
+    const auto upper = v1 + epsilon;
+
+    return lower < v2 && upper > v2;
 }
 
 } // namespace CMath

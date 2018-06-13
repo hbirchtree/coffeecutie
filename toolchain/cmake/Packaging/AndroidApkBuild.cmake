@@ -1,10 +1,9 @@
 if(ANDROID)
-    find_package ( AndroidToolkit )
-
     if(BUILD_SDL2)
-        find_package ( SDL2main REQUIRED )
-        #message (STATUS "Main File: ${SDL2_ANDROID_MAIN_FILE}" )
+        message ( FATAL "Invalid configuration" )
     endif()
+
+    find_package ( AndroidToolkit )
 
     include ( InkscapeResize )
     include ( PermissionList )
@@ -19,8 +18,8 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( ANDROID_BUILD_TOOLS_VER "26.0.2"
-        CACHE STRING "" )
+    set ( ANDROID_BUILD_TOOLS_VER "26.0.2" CACHE STRING "" )
+
     set ( ANDROID_APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk"
         CACHE PATH "" )
 
@@ -38,22 +37,12 @@ if(ANDROID)
     set ( ANDROID_BUILD_APK ON CACHE BOOL "" )
     set ( ANDROID_DEPLOY_APK OFF CACHE BOOL "" )
 
-    set ( ANDROID_USE_GRADLE ON CACHE BOOL "" )
-
-    if(ANDROID_USE_GRADLE)
-        set ( GRADLE_ROOT "app/src/main" )
-        set ( JAVA_SRC_PREFIX "${GRADLE_ROOT}/java" )
-        set ( APK_RSC_PREFIX "${GRADLE_ROOT}/res" )
-        set ( MANIFEST_PREFIX "${GRADLE_ROOT}" )
-        set ( NATIVE_LIBS_PREFIX "${GRADLE_ROOT}/jniLibs" )
-        set ( APK_ASSET_PREFIX "${GRADLE_ROOT}/assets" )
-    else()
-        set ( JAVA_SRC_PREFIX "src" )
-        set ( APK_RSC_PREFIX "res" )
-        set ( MANIFEST_PREFIX "" )
-        set ( NATIVE_LIBS_PREFIX "libs" )
-        set ( APK_ASSET_PREFIX "assets" )
-    endif()
+    set ( GRADLE_ROOT "app/src/main" )
+    set ( JAVA_SRC_PREFIX "${GRADLE_ROOT}/java" )
+    set ( APK_RSC_PREFIX "${GRADLE_ROOT}/res" )
+    set ( MANIFEST_PREFIX "${GRADLE_ROOT}" )
+    set ( NATIVE_LIBS_PREFIX "${GRADLE_ROOT}/jniLibs" )
+    set ( APK_ASSET_PREFIX "${GRADLE_ROOT}/assets" )
 endif()
 
 if(NOT TARGET AndroidPackage)
@@ -83,7 +72,6 @@ macro(APK_DEPLOY TARGET_NAME DEVICE_TARGET ANDROID_APK_FILE
             -a "${INTENT}"
             -n "${ACTIVITY}"
         )
-#    android_ndk_gdb_debug(${TARGET_NAME} "${BUILD_DIR}" "${DEVICE_TARGET}")
 endmacro()
 
 #
@@ -94,57 +82,23 @@ macro(APK_BUILD TARGET_NAME
         SIGN_KEY SIGN_ALIAS
         ANT_PROPERTIES
         )
-    if(ANDROID_USE_GRADLE)
-        add_custom_command( TARGET ${TARGET_NAME}
-            POST_BUILD
-            COMMAND ${BUILD_DIR}/gradlew assemble
-            WORKING_DIRECTORY ${BUILD_DIR}
-            )
-        add_custom_command ( TARGET ${TARGET_NAME}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            "${BUILD_DIR}/app/build/outputs/apk/app-debug.apk"
-            "${APK_FILE}"
-            )
-        add_custom_command ( TARGET ${TARGET_NAME}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            "${BUILD_DIR}/app/build/outputs/apk/app-release-unsigned.apk"
-            "${APK_FILE_REL}"
-            )
-    else()
-        if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-            # In release-mode, we sign and align the APK manually
-            add_custom_command ( TARGET ${TARGET_NAME}
-                POST_BUILD
-                COMMAND ${ANDROID_ANT_PROGRAM} release
-                WORKING_DIRECTORY ${BUILD_DIR}
-                )
-            add_custom_command ( TARGET ${TARGET_NAME}
-                POST_BUILD
-                COMMAND jarsigner
-                -verbose
-                -keystore ${SIGN_KEY}
-                -storepass $ENV{ANDROID_APK_SIGN_PASS}
-                bin/${APK_NAME}
-                ${SIGN_ALIAS}
-
-                WORKING_DIRECTORY ${BUILD_DIR}
-                )
-            add_custom_command ( TARGET ${TARGET_NAME}
-                POST_BUILD
-                COMMAND ${ANDROID_ZIPALIGN} -v -f 4 bin/${APK_NAME} ${APK_FILE}
-                WORKING_DIRECTORY ${BUILD_DIR}
-                )
-        else()
-            # Debug mode is quite simple
-            add_custom_command ( TARGET ${TARGET_NAME}
-                POST_BUILD
-                COMMAND ${ANDROID_ANT_PROGRAM} ${ANT_PROPERTIES} debug
-                WORKING_DIRECTORY ${BUILD_DIR}
-                )
-        endif()
-    endif()
+    add_custom_command( TARGET ${TARGET_NAME}
+        POST_BUILD
+        COMMAND ${BUILD_DIR}/gradlew assemble
+        WORKING_DIRECTORY ${BUILD_DIR}
+        )
+    add_custom_command ( TARGET ${TARGET_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${BUILD_DIR}/app/build/outputs/apk/app-debug.apk"
+        "${APK_FILE}"
+        )
+    add_custom_command ( TARGET ${TARGET_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${BUILD_DIR}/app/build/outputs/apk/app-release-unsigned.apk"
+        "${APK_FILE_REL}"
+        )
 endmacro()
 
 macro(APK_GENERATE_PROJECT
@@ -155,67 +109,39 @@ macro(APK_GENERATE_PROJECT
     #
     # Create build directory
     #
-    if(ANDROID_USE_GRADLE)
-        execute_process (
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${ANDROID_PROJECT_INPUT}/Gradle" "${BUILD_DIR}"
-            )
+    execute_process (
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${ANDROID_PROJECT_INPUT}/Gradle" "${BUILD_DIR}"
+        )
 
-        #
-        # We need to change the Gradle version used by the project
-        #
-        set ( GRADLE_WRAPPER_FILE
-            "${BUILD_DIR}/gradle/wrapper/gradle-wrapper.properties" )
-        file ( READ
-            "${GRADLE_WRAPPER_FILE}"
-            GRADLE_PROPERTIES
-            )
-        string ( REGEX REPLACE "gradle-[0-9\.]+-all" "gradle-2.14.1-all"
-            GRADLE_PROPERTIES "${GRADLE_PROPERTIES}" )
-        file( WRITE
-            "${GRADLE_WRAPPER_FILE}"
-            "${GRADLE_PROPERTIES}" )
-        add_custom_command( TARGET ${TARGET_NAME}
-            POST_BUILD
-            COMMAND chmod +x ${BUILD_DIR}/gradlew
-            )
-    else()
-        add_custom_command ( TARGET ${Target_Name}
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_OUTDIR}
-            )
-    endif()
+    #
+    # We need to change the Gradle version used by the project
+    #
+    set ( GRADLE_WRAPPER_FILE
+        "${BUILD_DIR}/gradle/wrapper/gradle-wrapper.properties" )
+    file ( READ
+        "${GRADLE_WRAPPER_FILE}"
+        GRADLE_PROPERTIES
+        )
+    string ( REGEX REPLACE "gradle-[0-9\.]+-all" "gradle-2.14.1-all"
+        GRADLE_PROPERTIES "${GRADLE_PROPERTIES}" )
+    file( WRITE
+        "${GRADLE_WRAPPER_FILE}"
+        "${GRADLE_PROPERTIES}" )
+    add_custom_command( TARGET ${TARGET_NAME}
+        POST_BUILD
+        COMMAND chmod +x ${BUILD_DIR}/gradlew
+        )
 
     #
     # Some necessary files for APK generation
     #
 
-    if(BUILD_SDL2)
-        # Insert details into files
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/AndroidManifest.xml.in"
-            "${BUILD_DIR}/${MANIFEST_PREFIX}/AndroidManifest.xml"
-            @ONLY
-            )
-
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
-            "${BUILD_DIR}/${JAVA_SRC_PREFIX}/org/libsdl/app/SDLActivity.java"
-            @ONLY
-            )
-
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/${STARTUP_ACTIVITY}.java.in"
-            "${BUILD_DIR}/${JAVA_SRC_PREFIX}/${ANDROID_MAIN_PATH}/${STARTUP_ACTIVITY}.java"
-            @ONLY
-            )
-    else()
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/native/AndroidManifest.xml.in"
-            "${BUILD_DIR}/${MANIFEST_PREFIX}/AndroidManifest.xml"
-            @ONLY
-            )
-    endif()
+    configure_file (
+        "${ANDROID_PROJECT_CONFIG_DIR}/native/AndroidManifest.xml.in"
+        "${BUILD_DIR}/${MANIFEST_PREFIX}/AndroidManifest.xml"
+        @ONLY
+        )
     configure_file (
         "${ANDROID_PROJECT_CONFIG_DIR}/strings.xml.in"
         "${BUILD_DIR}/${APK_RSC_PREFIX}/values/strings.xml"
@@ -226,41 +152,10 @@ macro(APK_GENERATE_PROJECT
         "sdk.dir=${ANDROID_SDK}\n"
         "ndk.dir=${ANDROID_NDK}")
 
-    if(ANDROID_USE_GRADLE)
-        configure_file (
-            "${ANDROID_PROJECT_INPUT}/GradleTemplate/build.gradle.in"
-            "${BUILD_DIR}/app/build.gradle"
-            )
-    else()
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/build.xml.in"
-            "${BUILD_DIR}/build.xml"
-            @ONLY
-            )
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/project.properties.in"
-            "${BUILD_DIR}/project.properties"
-            @ONLY
-            )
-        add_custom_command ( TARGET ${TARGET_NAME}
-            COMMAND ${ANDROID_SDK_PROGRAM} update project --path ${BUILD_OUTDIR}
-            PRE_BUILD
-            WORKING_DIRECTORY ${BUILD_OUTDIR}
-            )
-        #
-        # Install base template files
-        #
-        add_custom_command ( TARGET ${Target_Name}
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${ANDROID_PROJECT_TEMPLATE_DIR} ${BUILD_OUTDIR}
-            )
-        add_custom_command ( TARGET ${Target_Name}
-            PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                ${ANDROID_LIB_OUTPUT_DIRECTORY}
-            )
-    endif()
+    configure_file (
+        "${ANDROID_PROJECT_INPUT}/GradleTemplate/build.gradle.in"
+        "${BUILD_DIR}/app/build.gradle"
+        )
 
     add_custom_command ( TARGET ${TARGET_NAME}
         PRE_BUILD
@@ -340,12 +235,7 @@ macro(APK_PACKAGE_EXT
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
-    # For SDL2-enabled programs
-    if(BUILD_SDL2)
-        set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
-    else()
-        set ( ANDROID_STARTUP_ACTIVITY "NativeActivity" )
-    endif()
+    set ( ANDROID_STARTUP_ACTIVITY "NativeActivity" )
 
     # For NativeActivity programs
     set ( ANDROID_STARTUP_LIBRARY
@@ -466,17 +356,10 @@ macro(APK_PACKAGE_EXT
     #
     # Debugging/deployment options
     #
-    if(BUILD_SDL2)
-        set ( ANDROID_AM_START_INTENT
-            "${ANDROID_PACKAGE_NAME}" )
-        set ( ANDROID_AM_START_ACTIVITY
-            "${ANDROID_PACKAGE_NAME}/.${ANDROID_STARTUP_ACTIVITY}" )
-    else()
-        set ( ANDROID_AM_START_INTENT
-            "android.intent.action.LAUNCHER" )
-        set ( ANDROID_AM_START_ACTIVITY
-            "${ANDROID_PACKAGE_NAME}/android.app.NativeActivity" )
-    endif()
+    set ( ANDROID_AM_START_INTENT
+        "android.intent.action.LAUNCHER" )
+    set ( ANDROID_AM_START_ACTIVITY
+        "${ANDROID_PACKAGE_NAME}/android.app.NativeActivity" )
 
     # Where the primary class is found, also decides names of package
     string ( REGEX REPLACE "\\." "/" ANDROID_MAIN_PATH
@@ -489,16 +372,6 @@ macro(APK_PACKAGE_EXT
         "${ANDROID_MAIN_PATH}"
         ${ARGN}
         )
-
-    #
-    # Enable GDB remote debugging
-    #
-#    android_ndk_gdb_enable(
-#        ${TARGET} "${BUILD_OUTDIR}/${NATIVE_LIBS_PREFIX}"
-#        "${BUILD_OUTDIR}/${NATIVE_LIBS_PREFIX}"
-#        "${SOURCES}" "${LIBRARIES}"
-#        )
-#    android_ndk_gdb_debuggable("${TARGET}")
 
     #
     # Create library directory
@@ -536,12 +409,6 @@ macro(APK_PACKAGE_EXT
     # We strip the final .so file that will be put on the device, not the real one
     #
 
-#    add_custom_command ( TARGET ${Target_Name}
-#        POST_BUILD
-#        COMMAND ${CMAKE_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
-#        )
-
-
     apk_mipmap_icons("${Target_Name}.project" "${ICON_ASSET}" "${BUILD_OUTDIR}")
 
     if(ANDROID_BUILD_APK)
@@ -554,21 +421,14 @@ macro(APK_PACKAGE_EXT
     endif()
 
     if(ANDROID_DEPLOY_APK)
-        if(ANDROID_USE_GRADLE)
-            add_custom_target( ${Target_Name}.deploy
-                DEPENDS "${Target_Name}.apk"
-                )
-            add_custom_command( TARGET ${Target_Name}.deploy
-                POST_BUILD
-                WORKING_DIRECTORY "${BUILD_OUTDIR}"
-                COMMAND "${BUILD_OUTDIR}/gradlew" installDebug
-                )
-        else()
-            apk_deploy("${Target_Name}.apk" "${DEVICE_TARGET}"
-                "${ANDROID_APK_FILE_OUTPUT}"
-                "${ANDROID_AM_START_ACTIVITY}" "${ANDROID_AM_START_INTENT}"
-                )
-        endif()
+        add_custom_target( ${Target_Name}.deploy
+            DEPENDS "${Target_Name}.apk"
+            )
+        add_custom_command( TARGET ${Target_Name}.deploy
+            POST_BUILD
+            WORKING_DIRECTORY "${BUILD_OUTDIR}"
+            COMMAND "${BUILD_OUTDIR}/gradlew" installDebug
+            )
     endif()
 
     add_dependencies( AndroidPackage "${Target_Name}.apk" )
@@ -599,20 +459,15 @@ macro(ANDROIDAPK_PACKAGE
         BUNDLE_LIBS
         ICON_ASSET )
 
+    add_library(${TARGET} SHARED ${SOURCES} )
 
-    if(BUILD_SDL2)
-        add_library(${TARGET} SHARED ${SOURCES} )
-    else()
-        add_library(${TARGET} SHARED ${SOURCES} )
+    get_property ( TARGET_LINK_FLAGS TARGET ${TARGET}
+        PROPERTY LINK_FLAGS )
 
-        get_property ( TARGET_LINK_FLAGS TARGET ${TARGET}
-            PROPERTY LINK_FLAGS )
-
-        set_property ( TARGET ${TARGET}
-            PROPERTY LINK_FLAGS
-"${TARGET_LINK_FLAGS} -U=ANativeActivity_onCreate -U=Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable"
-            )
-    endif()
+    set_property ( TARGET ${TARGET}
+        PROPERTY LINK_FLAGS
+        "${TARGET_LINK_FLAGS} -u ANativeActivity_onCreate -u Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable"
+        )
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 

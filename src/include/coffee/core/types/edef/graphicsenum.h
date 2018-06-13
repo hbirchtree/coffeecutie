@@ -4,6 +4,13 @@
 
 namespace Coffee{
 
+enum class GPUType
+{
+    Undefined,
+    Dedicated,
+    Integrated,
+};
+
 enum class DBuffers
 {
     None    = 0x0,

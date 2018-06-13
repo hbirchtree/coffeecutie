@@ -16,6 +16,8 @@ struct GLEAM_API : GraphicsAPI
 {
     using API_CONTEXT = Function<bool(bool)>;
 
+    using ERROR = gleam_error;
+
     using OPTS = GLEAM_Options;
 
     using G_DEV  = GraphicsDevice;
@@ -201,7 +203,7 @@ struct GLEAM_API : GraphicsAPI
     static API_CONTEXT GetLoadAPI(GLEAM_Options const& options = {});
 
     /* i specifies view index for indexed views, 0 for  */
-    static void SetRasterizerState(RASTSTATE const& rstate, uint32 i = 0);
+    static void SetRasterizerState(RASTSTATE const& rstate, uint32 = 0);
     static void SetViewportState(VIEWSTATE const& vstate, uint32 i = 0);
     static void SetBlendState(BLNDSTATE const& bstate, uint32 i = 0);
     static void SetDepthState(DEPTSTATE const& dstate, uint32 i = 0);

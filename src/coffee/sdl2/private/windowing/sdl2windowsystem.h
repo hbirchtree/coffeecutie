@@ -16,7 +16,7 @@ void GetWindowPtr(SDL_Window *window, CDWindow *win)
 
     if(!SDL_GetWindowWMInfo(window,&info))
     {
-        cDebug("Failed to acquire information on window: %s",SDL_GetError());
+        cDebug("Failed to acquire information on window: {0}",SDL_GetError());
         return;
     }
 
