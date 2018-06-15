@@ -40,7 +40,6 @@ public:
     virtual void setWindowPosition(const CPoint &);
     virtual CString windowTitle() const;
     virtual void setWindowTitle(const CString &);
-    virtual bool setWindowIcon(CBitmap &);
     virtual bool screensaverMode();
     virtual void setScreensaverMode(bool);
 };

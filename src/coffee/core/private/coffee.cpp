@@ -189,9 +189,9 @@ int32 CoffeeMain(
     /* Set the program arguments so that we can look at them later */
     GetInitArgs() = AppArg::Clone(argc, argv);
 
-//#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID)
     app_dummy();
-//#endif
+#endif
 
 #if defined(COFFEE_APPLE)
     FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());
@@ -315,6 +315,9 @@ void CoffeeTerminate()
 {
     cVerbose(5, "Terminating");
 
+    runtime_queue_error qec;
+    RuntimeQueue::TerminateThreads(qec);
+
 #ifndef COFFEE_LOWFAT
 
 #ifndef NDEBUG
@@ -375,7 +378,7 @@ void GotoApplicationDir()
 }
 
 #if defined(COFFEE_LINUX) && !defined(COFFEE_NO_EXCEPTION_RETHROW)
-C_NORETURN static void glibc_backtrace()
+static void glibc_backtrace()
 {
     static constexpr szptr MAX_CONTEXT = 20;
 
@@ -419,8 +422,8 @@ C_NORETURN static void glibc_backtrace()
                     cBasicPrint(" >> {0}", Stacktracer::DemangleSymbol(syms[i]));
             }
         }
+        abort();
     }
-    abort();
 }
 #endif
 

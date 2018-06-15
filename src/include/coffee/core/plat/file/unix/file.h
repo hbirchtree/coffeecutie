@@ -239,7 +239,7 @@ struct PosixFileFun_def : PosixFileMod_def
             NULL, offset + size - pa_offset, prot, mapping, fd, pa_offset));
 #endif
 
-        if(addr == MAP_FAILED)
+        if(!addr || addr == MAP_FAILED)
         {
             ErrnoCheck(ec, url.c_str(), fd);
             return {};

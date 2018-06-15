@@ -31,7 +31,7 @@ void emscripten_callback_load(void* arg, void* data, int size)
     DataStatus* status = C_FCAST<DataStatus*>(arg);
     cDebug("Loaded file");
     if(size <= C_CAST<int>(*status->size))
-        MemCpy(status->ptr, data, C_CAST<szptr>(size));
+        MemCpy(Bytes::From(data, size), Bytes::From(status->ptr, size));
     status->status = 1;
 }
 void emscripten_callback_store(void* arg)

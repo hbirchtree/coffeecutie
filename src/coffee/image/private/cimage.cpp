@@ -15,6 +15,227 @@
 namespace Coffee {
 namespace stb {
 
+void _stbi_write_data(void* ctxt, void* data, int size)
+{
+    Bytes* target = C_FCAST<Bytes*>(ctxt);
+    auto   offset = target->size;
+    target->size += C_FCAST<szptr>(size);
+
+    if(!target->data)
+        *target = Bytes::Alloc(target->size);
+    else
+        target->resize(target->size);
+
+    MemCpy(Bytes::From(data, size), target->at(offset));
+}
+
+namespace stb_templates {
+
+template<typename PixType>
+bool LoadFromMemory(BytesConst const&, image<PixType>*, int)
+{
+    return false;
+}
+
+template<>
+bool LoadFromMemory(BytesConst const& src, image_rw* target, int req_comp)
+{
+    target->data = stbi_load_from_memory(
+        C_RCAST<const byte_t*>(src.data),
+        C_FCAST<int>(src.size),
+        &target->size.w,
+        &target->size.h,
+        &target->bpp,
+        req_comp);
+
+    return true;
+}
+
+template<>
+bool LoadFromMemory(BytesConst const& src, image_float* target, int req_comp)
+{
+    target->data = stbi_loadf_from_memory(
+        C_RCAST<const byte_t*>(src.data),
+        C_FCAST<int>(src.size),
+        &target->size.w,
+        &target->size.h,
+        &target->bpp,
+        req_comp);
+
+    return true;
+}
+
+/*!
+ * \brief NearestNeighborResize
+ * \param src
+ * \param out
+ * \param srcSize size of src image, must be larger than output image
+ * \param outSize
+ */
+template<typename PixType>
+static void NearestNeighborResize(
+    rgba_untyped<PixType> const* src,
+    rgba_untyped<PixType>*       out,
+    Size const&                  srcSize_,
+    Size const&                  outSize_)
+{
+    _cbasic_size_2d<u32> srcSize = srcSize_.convert<u32>();
+    _cbasic_size_2d<u32> outSize = outSize_.convert<u32>();
+
+    const auto pixel_ratio_w = srcSize.w / outSize.h;
+    const auto pixel_ratio_h = srcSize.h / outSize.h;
+
+    for(auto y : Range<>(outSize.h))
+        for(auto x : Range<>(outSize.w))
+        {
+            auto src_x = x * pixel_ratio_w;
+            auto src_y = y * pixel_ratio_h;
+
+            auto&       outPix = out[(y * outSize.w + x) * sizeof(PixType)];
+            auto const& srcPix =
+                src[(src_y * srcSize.w + src_x) * sizeof(PixType)];
+
+            outPix = srcPix;
+        }
+}
+
+template<typename PixType>
+bool ResizeImage(
+    image<PixType> const&, Size const&, image<PixType>&, int, stb_error&)
+{
+    return false;
+}
+
+template<>
+bool ResizeImage(
+    image<scalar> const& img,
+    Size const&          target,
+    image<scalar>&       data,
+    int                  req_comp,
+    stb_error&           ec)
+{
+    auto res = stbir_resize_float(
+        img.data,
+        img.size.w,
+        img.size.h,
+        0,
+        data.data,
+        target.w,
+        target.h,
+        0,
+        req_comp);
+
+    if(res == 0)
+        ec = STBError::ResizeError;
+
+    return true;
+}
+
+template<>
+bool ResizeImage(
+    image<u8> const& img,
+    Size const&      target,
+    image<u8>&       data,
+    int              req_comp,
+    stb_error&       ec)
+{
+    auto res = stbir_resize_uint8(
+        img.data,
+        img.size.w,
+        img.size.h,
+        0,
+        data.data,
+        target.w,
+        target.h,
+        0,
+        req_comp);
+
+    if(res == 0)
+        ec = STBError::ResizeError;
+
+    return true;
+}
+
+template<typename PixType>
+bool LoadData(
+    image<PixType>*   target,
+    BytesConst const& src,
+    stb_error&        ec,
+    PixelComponents   comp)
+{
+    DProfContext _(STB_ABI "Loading image");
+
+    int scomp = STBI_rgb_alpha;
+
+    switch(comp)
+    {
+    case PixelComponents::R:
+        scomp = STBI_grey;
+        break;
+    case PixelComponents::RG:
+        scomp = STBI_grey_alpha;
+        break;
+    case PixelComponents::RGB:
+        scomp = STBI_rgb;
+        break;
+    case PixelComponents::RGBA:
+        scomp = STBI_rgb_alpha;
+        break;
+    default:
+        ec = STBError::InvalidComponents;
+        return false;
+    }
+
+    if(!stb_templates::LoadFromMemory(src, target, scomp))
+    {
+        ec = STBError::InvalidPixelFormat;
+        return false;
+    }
+
+    target->data_owner = Bytes::From(
+        target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
+
+    Bytes::SetDestr(
+        target->data_owner, [](Bytes& d) { stbi_image_free(d.data); });
+
+    target->bpp = scomp;
+
+    if(!target->data)
+    {
+        ec = STBError::DecodingError;
+        ec = stbi_failure_reason();
+    } else
+        return true;
+
+    return target->data != nullptr;
+}
+
+template<typename PixType>
+image<PixType> Resize(
+    image<PixType> const& img, const Size& target, int channels)
+{
+    Bytes          data = Bytes::Alloc(target.area() * channels);
+    image<PixType> out_image;
+    stb_error      ec;
+
+    out_image = image<PixType>::From(std::move(data), target, channels);
+
+    if(target.area() > img.size.area() || channels != 4)
+    {
+        if(!stb_templates::ResizeImage(img, target, out_image, channels, ec))
+            ec = STBError::InvalidPixelFormat;
+    } else
+        stb_templates::NearestNeighborResize(
+            C_RCAST<const rgba_untyped<PixType>*>(img.data),
+            C_RCAST<rgba_untyped<PixType>*>(out_image.data_owner.data),
+            img.size,
+            target);
+
+    return out_image;
+}
+
+} // namespace stb_templates
+
 static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 {
     auto outData = Bytes::Alloc(numPixels * sizeof(rgba_t));
@@ -61,121 +282,30 @@ static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
     src = std::move(outData);
 }
 
+/* Instantiate some templates as symbols here */
 bool LoadData(
-    image_rw*         target,
+    image<u8>*        target,
     BytesConst const& src,
     stb_error&        ec,
     PixelComponents   comp)
 {
-    DProfContext _(STB_ABI "Loading image");
-
-    int scomp = STBI_rgb_alpha;
-
-    switch(comp)
-    {
-    case PixelComponents::R:
-        scomp = STBI_grey;
-        break;
-    case PixelComponents::RG:
-        scomp = STBI_grey_alpha;
-        break;
-    case PixelComponents::RGB:
-        scomp = STBI_rgb;
-        break;
-    case PixelComponents::RGBA:
-        scomp = STBI_rgb_alpha;
-        break;
-    default:
-        ec = STBError::InvalidComponents;
-        return false;
-    }
-
-    target->data = stbi_load_from_memory(
-        C_RCAST<const byte_t*>(src.data),
-        C_FCAST<int>(src.size),
-        &target->size.w,
-        &target->size.h,
-        &target->bpp,
-        scomp);
-
-    target->bpp = scomp;
-
-    if(!target->data)
-    {
-        ec = STBError::DecodingError;
-        ec = stbi_failure_reason();
-    } else
-        return true;
-
-    return target->data != nullptr;
+    return stb_templates::LoadData(target, src, ec, comp);
 }
-
-void _stbi_write_data(void* ctxt, void* data, int size)
+bool LoadData(
+    image<scalar>*    target,
+    BytesConst const& src,
+    stb_error&        ec,
+    PixelComponents   comp)
 {
-    Bytes* target = C_FCAST<Bytes*>(ctxt);
-    auto   offset = target->size;
-    target->size += C_FCAST<szptr>(size);
-
-    if(!target->data)
-        *target = Bytes::Alloc(target->size);
-    else
-        target->resize(target->size);
-
-    MemCpy(Bytes::From(data, size), target->at(offset));
+    return stb_templates::LoadData(target, src, ec, comp);
 }
-
-/*!
- * \brief NearestNeighborResize
- * \param src
- * \param out
- * \param srcSize size of src image, must be larger than output image
- * \param outSize
- */
-static void NearestNeighborResize(
-    rgba_t const* src, rgba_t* out, Size const& srcSize_, Size const& outSize_)
+image<u8> Resize(image<u8> const& img, const Size& target, int channels)
 {
-    _cbasic_size_2d<u32> srcSize = srcSize_.convert<u32>();
-    _cbasic_size_2d<u32> outSize = outSize_.convert<u32>();
-
-    const auto pixel_ratio_w = srcSize.w / outSize.h;
-    const auto pixel_ratio_h = srcSize.h / outSize.h;
-
-    for(auto y : Range<>(outSize.h))
-        for(auto x : Range<>(outSize.w))
-        {
-            auto src_x = x * pixel_ratio_w;
-            auto src_y = y * pixel_ratio_h;
-
-            auto&       outPix = out[y * outSize.w + x];
-            auto const& srcPix = src[src_y * srcSize.w + src_x];
-
-            outPix = srcPix;
-        }
+    return stb_templates::Resize(img, target, channels);
 }
-
-Bytes Resize(image_const const& img, const CSize& target, int channels)
+image<scalar> Resize(image<scalar> const& img, const Size& target, int channels)
 {
-    Bytes data = Bytes::Alloc(target.area() * channels);
-
-    if(target.area() > img.size.area() || channels != 4)
-        stbir_resize_uint8(
-            img.data,
-            img.size.w,
-            img.size.h,
-            0,
-            data.data,
-            target.w,
-            target.h,
-            0,
-            channels);
-    else
-        NearestNeighborResize(
-            C_RCAST<const rgba_t*>(img.data),
-            C_RCAST<rgba_t*>(data.data),
-            img.size,
-            target);
-
-    return data;
+    return stb_templates::Resize(img, target, channels);
 }
 
 bool SavePNG(Bytes& target, const image_const& src, stb_error& ec)
@@ -259,6 +389,30 @@ void DataSetDestr(Bytes& b)
     });
 }
 
+image_float ToFloat(const image_const& image)
+{
+    image_float out = image_float::From(
+        Bytes::Alloc(
+            C_FCAST<szptr>(image.size.area() * image.bpp) * sizeof(scalar)),
+        image.size,
+        image.bpp);
+
+    using source_type = u8;
+    using target_type = scalar;
+
+    source_type const* src_ptr = image.data;
+    target_type*       out_ptr = out.data;
+
+    szptr components = C_FCAST<szptr>(image.bpp);
+
+    for(auto i : Range<>(C_FCAST<szptr>(image.size.area()) * components))
+    {
+        out_ptr[i] = target_type(src_ptr[i]) / 255.f;
+    }
+
+    return out;
+}
+
 const char* stb_error_category::name() const noexcept
 {
     return "stb";
@@ -274,8 +428,12 @@ std::string stb_error_category::message(int error_code) const
         return "Decoding error";
     case STBError::EncodingError:
         return "Encoding error";
+    case STBError::ResizeError:
+        return "Resizing error";
     case STBError::InvalidComponents:
         return "Invalid components specified";
+    case STBError::InvalidPixelFormat:
+        return "Invalid pixel format specified";
     }
 }
 

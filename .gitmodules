@@ -28,3 +28,6 @@
 [submodule "coffee/windowing/private/graphics/ceagl"]
 	path = src/coffee/windowing/private/graphics/ceagl
 	url = https://github.com/hbirchtree/ceagl.git
+[submodule "tools/data-management/pressure-cooker/etc2comp"]
+	path = tools/data-management/pressure-cooker/etc2comp
+	url = https://github.com/google/etc2comp.git

@@ -1,34 +1,31 @@
 #pragma once
 
-#include <coffee/core/base/renderer/spriteapplication.h>
 #include "../csdl2_context.h"
+#include <coffee/core/base/renderer/spriteapplication.h>
+#include <coffee/image/cimage.h>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-class SDL2SpriteRenderer : public SpriteApplication,public SDL2ContextUser
+class SDL2SpriteRenderer : public SpriteApplication, public SDL2ContextUser
 {
     struct SDLSpriteContext;
 
     SDLSpriteContext* m_context;
 
     // SpriteApplication interface
-public:
-    SDL2SpriteRenderer():
-        m_context(nullptr)
+  public:
+    SDL2SpriteRenderer() : m_context(nullptr)
     {
     }
-    SDL2SpriteRenderer(SDL2ContextUser* parentContext):
-        SDL2ContextUser(parentContext),
-        m_context(nullptr)
+    SDL2SpriteRenderer(SDL2ContextUser* parentContext) :
+        SDL2ContextUser(parentContext), m_context(nullptr)
     {
     }
 
     bool init(CString* err)
     {
-        return spritesPreInit(err) &&
-                spritesInit(err) &&
-                spritesPostInit(err);
+        return spritesPreInit(err) && spritesInit(err) && spritesPostInit(err);
     }
     void cleanup()
     {
@@ -45,25 +42,37 @@ public:
     void swapBuffers(Renderer const& r);
 
     Renderer createRenderer();
-    void destroyRenderer(Renderer t);
+    void     destroyRenderer(Renderer t);
 
-    bool createTexture(Renderer r, uint32 c,Texture *t, PixelFormat fmt,
-                       ResourceAccess acc, CSize const& size);
+    bool createTexture(
+        Renderer       r,
+        uint32         c,
+        Texture*       t,
+        PixelFormat    fmt,
+        ResourceAccess acc,
+        CSize const&   size);
     void destroyTexture(uint32 c, Texture* t);
 
-    bool createSprite(Texture const&,SpriteSource const&,Sprite*);
+    bool createSprite(Texture const&, SpriteSource const&, Sprite*);
 
-    void createSpriteAtlas(Texture const& t,Vector<SpriteSource> const&,
-                           uint32&,Vector<Sprite>&);
+    void createSpriteAtlas(
+        Texture const& t,
+        Vector<SpriteSource> const&,
+        uint32&,
+        Vector<Sprite>&);
 
-    bool uploadTexture(Texture tex, const CRect &region, CBitmap const& data);
+    bool uploadTexture(
+        Texture tex, const CRect& region, stb::image_rw const& data);
 
     void* mapTexture(Texture tex);
-    bool unmapTexture(Texture tex);
+    bool  unmapTexture(Texture tex);
 
-    void drawSprite(Renderer r, CPointF const& pos,
-                    CSizeF const& scale, Sprite const& sprite);
+    void drawSprite(
+        Renderer       r,
+        CPointF const& pos,
+        CSizeF const&  scale,
+        Sprite const&  sprite);
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee

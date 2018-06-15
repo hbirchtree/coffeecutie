@@ -400,7 +400,7 @@ struct DeviceInfoDef
     {
         enum TouchType
         {
-            None,
+            Undefined,
             Resistive,
             Capacitive,
         };

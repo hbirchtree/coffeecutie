@@ -77,12 +77,6 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
 {
     DProfContext a("Post-configuring window");
 
-    /* If an icon pointer is present, use it */
-    if(p.icon)
-    {
-        setWindowIcon(*p.icon);
-    }
-
     /* Show window if requested */
 //    if(p.flags&CDProperties::Visible)
 //        showWindow();
@@ -134,19 +128,19 @@ void SDL2Window::setWindowSize(const CSize &size)
     SDL_SetWindowMaximumSize(getSDL2Context()->window,size.w,size.h);
 }
 
-bool SDL2Window::setWindowIcon(CBitmap &icon)
-{
+//bool SDL2Window::setWindowIcon(CBitmap &icon)
+//{
 
-    SDL_Surface* sdl_icon = SDL_CreateRGBSurfaceFrom(icon.data(),
-                                                     icon.size.w,icon.size.h,
-                                                     32,sizeof(CRGBA),
-                                                     0,0,0,0);
-    if(!sdl_icon)
-        return false;
-    SDL_SetWindowIcon(getSDL2Context()->window,sdl_icon);
-    SDL_FreeSurface(sdl_icon);
-    return true;
-}
+//    SDL_Surface* sdl_icon = SDL_CreateRGBSurfaceFrom(icon.data(),
+//                                                     icon.size.w,icon.size.h,
+//                                                     32,sizeof(CRGBA),
+//                                                     0,0,0,0);
+//    if(!sdl_icon)
+//        return false;
+//    SDL_SetWindowIcon(getSDL2Context()->window,sdl_icon);
+//    SDL_FreeSurface(sdl_icon);
+//    return true;
+//}
 
 CDWindow* SDL2Window::window()
 {

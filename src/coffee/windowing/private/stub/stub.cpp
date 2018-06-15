@@ -97,11 +97,6 @@ void StubWindowManagerClient::setWindowTitle(const CString &)
 {
 }
 
-bool StubWindowManagerClient::setWindowIcon(CBitmap &)
-{
-    return false;
-}
-
 bool StubWindowManagerClient::screensaverMode()
 {
     return false;

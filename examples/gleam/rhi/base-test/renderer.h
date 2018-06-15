@@ -12,7 +12,7 @@
 
 #include <coffee/interfaces/cgraphics_util.h>
 
-#if defined(FEATURE_USE_ASIO)
+#if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/asio/net_resource.h>
 #endif
 
@@ -47,7 +47,11 @@ struct TransformPair
     Vecf3     mask;
 };
 
-class TransformContainer : public Components::ComponentContainer<TransformPair>
+using TransformTag = Components::TagType<TransformPair, i32>;
+using CameraTag    = Components::TagType<CGCamera, i32>;
+using TimeTag      = Components::TagType<Chrono::seconds_float, i32>;
+
+class TransformContainer : public Components::ComponentContainer<TransformTag>
 {
     Map<u64, TransformPair> m_objects;
     Span<Matf4>             m_matrices;
@@ -72,7 +76,7 @@ class TransformContainer : public Components::ComponentContainer<TransformPair>
     virtual bool visit(
         Components::EntityContainer& container, Components::Entity& entity)
     {
-        auto camera = *container.get<CGCamera>(entity.id);
+        auto camera = *container.get<CameraTag>(entity.id);
 
         camera.position.x() -= 0.1f;
 
@@ -95,7 +99,7 @@ class TransformContainer : public Components::ComponentContainer<TransformPair>
     }
 };
 
-class CameraContainer : public Components::ComponentContainer<CGCamera>
+class CameraContainer : public Components::ComponentContainer<CameraTag>
 {
     CGCamera camera;
 
@@ -121,7 +125,7 @@ class CameraContainer : public Components::ComponentContainer<CGCamera>
     }
 };
 
-class TimeSystem : public Components::Subsystem<Chrono::seconds_float>
+class TimeSystem : public Components::Subsystem<TimeTag>
 {
     using system_clock = Chrono::high_resolution_clock;
 
@@ -135,11 +139,15 @@ class TimeSystem : public Components::Subsystem<Chrono::seconds_float>
 
     // Subsystem interface
   public:
-    virtual void start_frame()
+    virtual void start_frame() override
     {
         loop_time = system_clock::now() - start_time;
     }
-    virtual Chrono::seconds_float get()
+    virtual Chrono::seconds_float const& get() const override
+    {
+        return loop_time;
+    }
+    virtual Chrono::seconds_float& get() override
     {
         return loop_time;
     }
@@ -151,6 +159,8 @@ struct RendererState
     RuntimeState r_state;
 
     RuntimeQueue* rt_queue;
+
+    ScopedTask component_task;
 
     Components::EntityContainer entities;
     CameraContainer             camera_cnt;
@@ -323,7 +333,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             return;
     }
 
-#if defined(FEATURE_USE_ASIO)
+#if defined(FEATURE_ENABLE_CoffeeASIO)
     /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
@@ -420,15 +430,15 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     Components::EntityRecipe floor_object;
     Components::EntityRecipe base_object;
 
-    floor_object.components = {typeid(CGCamera).hash_code(),
-                               typeid(TransformPair).hash_code()};
+    floor_object.components = {typeid(CameraTag).hash_code(),
+                               typeid(TransformTag).hash_code()};
     floor_object.interval   = Chrono::milliseconds(10);
     base_object             = floor_object;
 
     floor_object.loop = [](Components::EntityContainer& c) {
-        auto& xf = c.get<TransformPair>();
+        auto& xf = c.get<TransformTag>();
 
-        auto time = c.subsystem<Chrono::seconds_float>().get();
+        auto time = c.subsystem<TimeTag>().get();
 
         xf.first.position.x() = CMath::sin(time.count() * 2.f) * xf.mask.x();
         xf.first.position.y() = CMath::cos(time.count() * 2.f) * xf.mask.y();
@@ -440,8 +450,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     };
 
     base_object.loop = [](Components::EntityContainer& c) {
-        auto& xf   = c.get<TransformPair>();
-        auto  time = c.subsystem<Chrono::seconds_float>().get().count();
+        auto& xf   = c.get<TransformTag>();
+        auto  time = c.subsystem<TimeTag>().get().count();
 
         xf.first.position.x() = CMath::sin(time * 4.f);
 
@@ -456,7 +466,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     for(auto& entity : d->entities.select(0x1))
     {
-        auto& xf = *d->entities.get<TransformPair>(entity.id);
+        auto& xf = *d->entities.get<TransformTag>(entity.id);
 
         xf.first.position = {0, 0, 5};
         xf.first.scale    = {1.5};
@@ -467,7 +477,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     for(auto& entity : d->entities.select(0x2))
     {
-        auto& xf = *d->entities.get<TransformPair>(entity.id);
+        auto& xf = *d->entities.get<TransformTag>(entity.id);
 
         xf.first.position = {0, 0, 5};
         xf.first.scale    = {1};
@@ -476,8 +486,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.mask.y() = 0.2f;
     }
 
+    d->entities.exec();
+
     GpuInfo::GpuQueryInterface interf;
-    gpu_query_error ec;
+    gpu_query_error            ec;
     GpuInfo::LoadDefaultGpuQuery(interf, ec);
 
     if(!ec)
@@ -489,13 +501,17 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
+    runtime_queue_error ec;
+
     auto& g = d->g_data;
 
-    d->entities.exec();
+    renderer.pollEvents();
+
+    auto const& component_task = d->component_task;
+    RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
+
     g.time_value =
-        (CMath::sin(
-             d->entities.subsystem<Chrono::seconds_float>().get().count()) /
-         2.f) +
+        (CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f) +
         0.5f;
 
     GLM::DefaultFramebuffer().use(FramebufferT::All);
@@ -503,8 +519,9 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
     GLM::MultiDraw(g.eye_pip, g.rpass);
 
+    RuntimeQueue::Unblock(component_task.threadId(), component_task.id(), ec);
+
     renderer.swapBuffers();
-    renderer.pollEvents();
 }
 
 void RendererCleanup(CDRenderer& renderer, RendererState* d)

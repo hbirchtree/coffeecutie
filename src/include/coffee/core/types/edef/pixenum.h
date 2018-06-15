@@ -43,6 +43,8 @@ enum class PixelComponents : u8
     Stencil,
     Depth,
     DepthStencil,
+
+    RGBA_Punchthrough,
 };
 
 using PixCmp = PixelComponents;
@@ -150,6 +152,7 @@ enum class PixelFormat : u8
     S3TC,
 
     ETC1,
+    ETC2,
 
     /* Special data */
     //    Stencil,         /*  8-bit integer, not a real format */

@@ -63,13 +63,6 @@ public:
      */
     virtual void setWindowTitle(const CString& tl) = 0;
 
-    /*!
-     * \brief Set the window's icon for display in window manager and etc.
-     * \param icon The bitmap which is to be set. Not using const& because some surface creation methods require this.
-     * \return False on failure
-     */
-    virtual bool setWindowIcon(CBitmap& icon) = 0;
-
     /* Screensaver mode */
 
     /*!

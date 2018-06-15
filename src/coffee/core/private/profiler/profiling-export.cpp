@@ -58,6 +58,7 @@ struct DataPointGenerator
         iterator(DataPointGenerator& gen) :
             generator(&gen), current_index(0), current_thread(0)
         {
+            m_iterator = intern_data()->datapoints.begin();
             find_next();
         }
         iterator(DataPointGenerator& gen, int) :
@@ -68,6 +69,8 @@ struct DataPointGenerator
         iterator& operator++()
         {
             current_index++;
+            if(m_iterator != intern_data()->datapoints.end())
+                m_iterator++;
             find_next();
             return *this;
         }
@@ -86,10 +89,13 @@ struct DataPointGenerator
 
         DataPoint const& operator*() const
         {
-            return intern_data()->datapoints.at(current_index);
+            return *m_iterator;
+//            return intern_data()->datapoints.at(current_index);
         }
 
       private:
+        LinkList<DataPoint>::iterator m_iterator;
+
         void find_next()
         {
             while(current_thread < generator->m_threadHashes.size() &&
@@ -97,6 +103,8 @@ struct DataPointGenerator
             {
                 current_thread++;
                 current_index = 0;
+                if(current_thread < generator->m_threadHashes.size())
+                    m_iterator = intern_data()->datapoints.begin();
             }
             if(current_thread >= generator->m_threadHashes.size())
             {

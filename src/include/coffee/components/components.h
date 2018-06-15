@@ -15,6 +15,16 @@ struct EntityContainer;
 
 using LoopFun = void (*)(EntityContainer&);
 
+template<typename WrappedType, typename TagType>
+struct TaggedTypeWrapper
+{
+    using type = WrappedType;
+    using tag = TagType;
+};
+
+template<typename WrappedType, typename TagType>
+using TagType = TaggedTypeWrapper<WrappedType, TagType>;
+
 struct EntityRecipe
 {
     Vector<size_t> components;
@@ -47,7 +57,9 @@ struct ComponentContainerBase : non_copy
 template<typename ComponentType>
 struct ComponentContainer : ComponentContainerBase
 {
-    virtual ComponentType* get(u64 id) = 0;
+    using type = typename ComponentType::type;
+
+    virtual type* get(u64 id) = 0;
 
     virtual bool visit(EntityContainer&, Entity& entity)
     {
@@ -63,6 +75,8 @@ struct ComponentContainer : ComponentContainerBase
 template<typename OutputType>
 struct Subsystem
 {
+    using type = typename OutputType::type;
+
     virtual void start_frame()
     {
     }
@@ -70,7 +84,8 @@ struct Subsystem
     {
     }
 
-    virtual OutputType get() = 0;
+    virtual type const& get() const = 0;
+    virtual type& get() = 0;
 };
 
 struct EntityContainer : non_copy
@@ -278,15 +293,15 @@ struct EntityContainer : non_copy
     }
 
     template<typename ComponentType>
-    ComponentType* get(u64 id)
+    typename ComponentType::type* get(u64 id)
     {
         return container<ComponentType>().get(id);
     }
 
     template<typename ComponentType>
-    ComponentType& get()
+    typename ComponentType::type& get()
     {
-        ComponentType* v = get<ComponentType>(current_entity);
+        typename ComponentType::type* v = get<ComponentType>(current_entity);
 
         if(!v)
             throw undefined_behavior("entity not found in container");

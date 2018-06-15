@@ -66,8 +66,10 @@ struct Lock
     Mutex& m_mutex;
 };
 #else
-using Mutex = std::mutex;
-using Lock  = std::lock_guard<Mutex>;
+using RecMutex = std::recursive_mutex;
+using Mutex    = std::mutex;
+using Lock     = std::lock_guard<Mutex>;
+using RecLock  = std::lock_guard<RecMutex>;
 
 using UqLock  = std::unique_lock<Mutex>;
 using CondVar = std::condition_variable;

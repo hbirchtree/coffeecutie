@@ -209,7 +209,6 @@ FORCEDINLINE bool LoadTexture(
             tex_src.data,
             {0, 0, layer},
             0);
-        Stb::ImageFree(&tex_src);
     } else
         status = false;
 

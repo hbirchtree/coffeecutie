@@ -130,7 +130,7 @@ static bool InternalDraw(
 
         szptr elsize;
 
-        if(i.elementType() ==  TypeEnum::UByte)
+        if(i.elementType() == TypeEnum::UByte)
             elsize = 1;
         else if(i.elementType() == TypeEnum::UShort)
             elsize = 2;
@@ -182,7 +182,8 @@ static bool InternalDraw(
                         i.vertexOffset());
                 else
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x320)
-                if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0 && GL_CURR_API >= GLES_3_2)
+                if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0 &&
+                   GL_CURR_API >= GLES_3_2)
                     CGL43::DrawElementsInstancedBaseVertex(
                         mode,
                         i.elements(),
@@ -447,9 +448,12 @@ void GLEAM_API::MultiDraw(
     }
 #endif
 
-    /* The important limiting factor is the speed of
-     *  binding new shader pipelines. */
-    pipeline.bind();
+    {
+        DProfContext _(GLM_API "Binding pipeline");
+        /* The important limiting factor is the speed of
+         *  binding new shader pipelines. */
+        pipeline.bind();
+    }
 
     /* TODO: Add fallback support for gl_DrawID */
 
@@ -465,27 +469,38 @@ void GLEAM_API::MultiDraw(
     i32   instanceID_loc  = -1;
     u32   instanceID_val  = 0;
 
-    /* For multiple instances, BaseInstance helps a lot */
-    if(!GLEAM_FEATURES.base_instance)
-        GetInstanceUniform(
-            pipeline, "BaseInstance", baseInstanceLoc, vertexHandle, ec);
+    {
+        DProfContext _(GLM_API "Querying shader uniforms");
+        /* For multiple instances, BaseInstance helps a lot */
+        if(!GLEAM_FEATURES.base_instance)
+            GetInstanceUniform(
+                pipeline, "BaseInstance", baseInstanceLoc, vertexHandle, ec);
 
-    /* If using a platform without instancing, cheat by using a
-     *  uniform in its place. Preprocessor macros will handle the rest. */
-    if(GLEAM_FEATURES.gles20)
-        GetInstanceUniform(
-            pipeline, "InstanceID", instanceID_loc, vertexHandle, ec);
+        /* If using a platform without instancing, cheat by using a
+         *  uniform in its place. Preprocessor macros will handle the rest. */
+        if(GLEAM_FEATURES.gles20)
+            GetInstanceUniform(
+                pipeline, "InstanceID", instanceID_loc, vertexHandle, ec);
+    }
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 
     /* For pure GL 3.3 platforms, we must assert that
      *  instancing is not necessary */
-    auto it = std::find_if(
-        draws.multiDrawData.begin(),
-        draws.multiDrawData.end(),
-        [](OptMap::value_type const& e) { return e.second.dc.instanced(); });
+    bool call_instanced;
 
-    bool call_instanced = it != draws.multiDrawData.end();
+    {
+        DProfContext _(GLM_API "Querying drawcalls");
+
+        auto it = std::find_if(
+            draws.multiDrawData.begin(),
+            draws.multiDrawData.end(),
+            [](OptMap::value_type const& e) {
+                return e.second.dc.instanced();
+            });
+
+        call_instanced = it != draws.multiDrawData.end();
+    }
 
     /* We assume that, if no multiDrawData is available,
      *  we can't use it */
@@ -580,8 +595,10 @@ void GLEAM_API::MultiDraw(
 
     if(GL_DEBUG_MODE && ec)
     {
-        Debug::DebugMessage(Severity::Critical, DebugType::Other,
-                            ec.category().message(ec.value()).c_str());
+        Debug::DebugMessage(
+            Severity::Critical,
+            DebugType::Other,
+            ec.category().message(ec.value()).c_str());
     }
 
     pipeline.unbind();
@@ -630,8 +647,8 @@ void GLEAM_API::Draw(
     InternalDraw(pipeline.m_handle, mode, d, i, ec);
 
     if(GL_DEBUG_MODE && ec)
-        Debug::DebugMessage(Severity::Critical, DebugType::Other,
-                            "GLEAM context error");
+        Debug::DebugMessage(
+            Severity::Critical, DebugType::Other, "GLEAM context error");
 
 #if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
     if(m_store->features.qcom_tiling)

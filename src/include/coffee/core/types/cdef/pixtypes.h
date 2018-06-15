@@ -6,6 +6,12 @@
 
 namespace Coffee{
 
+template<typename T, u32 min_value = 0, u32 max_value = 0>
+struct rgba_untyped
+{
+    T r, g, b, a;
+};
+
 /*!
  * \brief Used for storing typical 8-bit color with alpha
  */
@@ -53,43 +59,6 @@ struct CRGB
     };
 };
 
-template<typename PixelType,typename DimT>
-struct _cbasic_bitmap_base
-{
-    FORCEDINLINE _cbasic_bitmap_base(DimT w, DimT h):
-        size(w,h)
-    {
-        m_pixels = new PixelType[sizeof(PixelType),w*h];
-        m_internal_data = true;
-    }
-    FORCEDINLINE _cbasic_bitmap_base(DimT w, DimT h, PixelType* data):
-        size(w,h)
-    {
-        m_pixels = data;
-        m_internal_data = false;
-    }
-
-    FORCEDINLINE ~_cbasic_bitmap_base()
-    {
-        if(m_internal_data)
-            delete[] m_pixels;
-    }
-
-    const _cbasic_size_2d<DimT> size;
-
-    FORCEDINLINE PixelType* data()
-    {
-        return m_pixels;
-    }
-    FORCEDINLINE const PixelType* data() const
-    {
-        return m_pixels;
-    }
-private:
-    PixelType* m_pixels;
-    bool m_internal_data;
-};
-
 struct CColorMask
 {
     bool r:1;
@@ -99,12 +68,8 @@ struct CColorMask
     uint8 padding:4;
 };
 
-using CBitmap = _cbasic_bitmap_base<CRGBA,int32>;
-using Bitmap = CBitmap;
-
 using rgba_t = CRGBA;
 using rgb_t = CRGB;
-using bitmap_t = Bitmap;
 using colormask_t = CColorMask;
 
 }

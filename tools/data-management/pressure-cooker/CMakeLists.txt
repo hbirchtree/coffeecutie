@@ -4,6 +4,8 @@ find_package( shaderc QUIET    )
 find_package( SPIRVCross QUIET )
 find_package( SPIRVTools QUIET )
 
+option ( BUILD_ETC2COMP "Build with ETC1/ETC2 compression support" OFF )
+
 set ( BUNDLE_LIBS CACHE STRING "" )
 
 set ( PRESSURIZERS )
@@ -64,7 +66,12 @@ if(SQUISH_FOUND)
         TARGET PressurizeTextures
         LINKABLE
         LINKAGE SHARED
-        SOURCES texture_compress.cpp
+        SOURCES
+        texture_compress.cpp
+        dxt_compression.h
+        texture_common.h
+        tiff_decoder.h
+
         LIBRARIES CoffeeImage CoffeeCore Squish
         HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
         )
@@ -86,6 +93,61 @@ if(SQUISH_FOUND)
             PUBLIC
             TIFF::TIFF
             )
+    endif()
+
+    if(BUILD_ETC2COMP)
+        # Etc2Comp's project files are a mess. Let's not.
+
+        target_sources ( PressurizeTextures
+            PRIVATE
+            etc2comp/EtcLib/Etc/EtcMath.h
+            etc2comp/EtcLib/Etc/EtcMath.cpp
+            etc2comp/EtcLib/Etc/EtcColor.h
+            etc2comp/EtcLib/Etc/EtcImage.cpp
+            etc2comp/EtcLib/Etc/EtcFilter.cpp
+            etc2comp/EtcLib/Etc/EtcConfig.h
+            etc2comp/EtcLib/Etc/EtcColorFloatRGBA.h
+            etc2comp/EtcLib/Etc/EtcFilter.h
+            etc2comp/EtcLib/Etc/EtcImage.h
+            etc2comp/EtcLib/Etc/Etc.h
+            etc2comp/EtcLib/Etc/Etc.cpp
+            etc2comp/EtcLib/EtcCodec/EtcDifferentialTrys.cpp
+            etc2comp/EtcLib/EtcCodec/EtcSortedBlockList.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RGB8A1.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RGB8A1.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_ETC1.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_ETC1.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RGB8.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RG11.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4EncodingBits.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_R11.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RGBA8.h
+            etc2comp/EtcLib/EtcCodec/EtcDifferentialTrys.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RGB8.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RGBA8.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_R11.cpp
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding_RG11.h
+            etc2comp/EtcLib/EtcCodec/EtcIndividualTrys.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4.cpp
+            etc2comp/EtcLib/EtcCodec/EtcIndividualTrys.cpp
+            etc2comp/EtcLib/EtcCodec/EtcErrorMetric.h
+            etc2comp/EtcLib/EtcCodec/EtcSortedBlockList.h
+            etc2comp/EtcLib/EtcCodec/EtcBlock4x4Encoding.h
+            )
+
+        target_include_directories ( PressurizeTextures
+            PRIVATE
+            etc2comp/EtcLib/Etc
+            etc2comp/EtcLib/EtcCodec
+            )
+
+        target_compile_definitions ( PressurizeTextures
+            PRIVATE
+            HAVE_ETC2COMP
+            )
+
     endif()
 
     add_dependencies ( PressureCooker

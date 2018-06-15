@@ -41,8 +41,10 @@ enum class STBError
 {
     GeneralError = 1,
     InvalidComponents,
+    InvalidPixelFormat,
     DecodingError,
     EncodingError,
+    ResizeError,
 };
 
 struct stb_error_category : error_category
@@ -56,6 +58,8 @@ using stb_error = domain_error_code<STBError, stb_error_category>;
 template<typename PixType>
 struct image
 {
+    Bytes data_owner;
+
     PixType* data;
     Size     size;
     int      bpp;
@@ -63,7 +67,7 @@ struct image
     STATICINLINE image<PixType> From(void* data, Size const& size, int bpp = 4)
     {
         image<PixType> img;
-        img.data = data;
+        img.data = C_FCAST<PixType*>(data);
         img.size = size;
         img.bpp  = bpp;
 
@@ -74,7 +78,19 @@ struct image
         Bytes const& data, Size const& size, int bpp = 4)
     {
         image<PixType> img;
-        img.data = data.data;
+        img.data = C_FCAST<PixType*>(data.data);
+        img.size = size;
+        img.bpp  = bpp;
+
+        return img;
+    }
+
+    STATICINLINE image<PixType> From(
+        Bytes&& data, Size const& size, int bpp = 4)
+    {
+        image<PixType> img;
+        img.data_owner = std::move(data);
+        img.data = C_FCAST<PixType*>(img.data_owner.data);
         img.size = size;
         img.bpp  = bpp;
 
@@ -102,24 +118,47 @@ struct image
         Bytes out;
 
         out.data     = C_RCAST<byte_t*>(this->data);
-        out.size     = size.area() * bpp;
-        out.elements = size.area();
+        out.size     = C_FCAST<szptr>(size.area() * bpp);
+        out.elements = C_FCAST<szptr>(size.area());
 
         return out;
+    }
+
+    void disown()
+    {
+        data_owner = Bytes();
     }
 };
 
 using image_rw    = image<u8>;
 using image_const = image<u8 const>;
 
+using image_float       = image<scalar>;
+using image_float_const = image<scalar>;
+
 using CStbImage      = image_rw;
 using CStbImageConst = image_const;
 
 extern bool LoadData(
-    image_rw*         target,
+    image<u8>*        target,
     BytesConst const& src,
     stb_error&        ec,
     PixCmp            comp = PixCmp::RGBA);
+extern bool LoadData(
+    image<scalar>*    target,
+    BytesConst const& src,
+    stb_error&        ec,
+    PixCmp            comp = PixCmp::RGBA);
+/*!
+ * \brief Resize an image using STB
+ * \param img Target image
+ * \param target New resolution
+ * \param channels Amount of channels
+ * \return True if success
+ */
+extern image<u8> Resize(image<u8> const& img, const Size& target, int channels);
+extern image<scalar> Resize(
+    image<scalar> const& img, const Size& target, int channels);
 
 STATICINLINE bool LoadData(
     image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA)
@@ -136,28 +175,35 @@ STATICINLINE bool LoadData(
 }
 
 /*!
- * \brief Resize an image using STB
- * \param img Target image
- * \param target New resolution
- * \param channels Amount of channels
- * \return True if success
+ * \brief Convert an image from u8 components to floating-point
+ * \param image
+ * \return
  */
-extern Bytes Resize(image_const const& img, const CSize& target, int channels);
+extern image_float ToFloat(image_const const& image);
+
 /*!
- * \brief Save STB image to PNG file
+ * \brief Save STB image to PNG
  * \param target Target resource
  * \param src STB image to save
  * \return
  */
 extern bool SavePNG(Bytes& target, const image_const& src, stb_error& ec);
 /*!
- * \brief Save STB image to TGA file
+ * \brief Save STB image to TGA
  * \param target Target resource
  * \param src STB image to save
+ * \param ec
  * \return
  */
 extern bool SaveTGA(Bytes& target, const image_const& src, stb_error& ec);
-
+/*!
+ * \brief Save STB image to JPG
+ * \param target
+ * \param src
+ * \param ec
+ * \param qual
+ * \return
+ */
 extern bool SaveJPG(
     Bytes& target, const image_const& src, stb_error& ec, int qual = 80);
 /*!
@@ -182,6 +228,8 @@ STATICINLINE bool Load(
 
     stb::image_rw img;
     bool          stat = stb::LoadData(&img, C_OCAST<BytesConst>(r), ec, cmp);
+
+    img.disown();
 
     fmt  = BitFmt::UByte;
     data = C_OCAST<Bytes>(img);
@@ -238,6 +286,12 @@ STATICINLINE Bytes Save(stb::image_const const& im)
 namespace JPG {
 using stb::stb_error;
 extern Bytes Save(stb::image_const const& src, stb_error& ec, int qual = 80);
+
+STATICINLINE Bytes Save(stb::image_const const& src, int qual = 80)
+{
+    stb_error ec;
+    return Save(src, ec, qual);
+}
 } // namespace JPG
 
 namespace Stb {

@@ -237,7 +237,6 @@ struct CDProperties
         gl(),
         title(nullptr),
         window(nullptr),
-        icon(nullptr),
         size(0,0),
         flags(),
         monitor(0)
@@ -269,7 +268,6 @@ struct CDProperties
     GLProperties    gl; /*!< Context properties to set*/
     cstring         title; /*!< Window title to start with*/
     CDWindow*       window; /*!< If applicable, contains data about a window*/
-    CBitmap*        icon;
     CSize           size; /*!< Size of window*/
     State           flags; /*!< Window flags*/
     uint16          monitor; /*!< Monitor to use with fullscreen*/

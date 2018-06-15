@@ -43,8 +43,6 @@ public:
 	virtual CString windowTitle() const;
     virtual void setWindowTitle(const CString &tl);
 
-	virtual bool setWindowIcon(CBitmap &icon);
-
 	virtual bool screensaverMode();
 	virtual void setScreensaverMode(bool m);
 

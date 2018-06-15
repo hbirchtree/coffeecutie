@@ -21,6 +21,7 @@ int32 coffee_main(int32, cstring_w*)
 #endif
 
     CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
+
     EDATA*       loop  = new EDATA{CreateRendererUq(),
                             MkUq<RendererState>(),
                             SetupRendering,
@@ -41,17 +42,25 @@ int32 coffee_main(int32, cstring_w*)
         {StandardCamera<CGCamera>, nullptr, loop->d()->camera_cnt.get(0)});
 
     runtime_queue_error ec;
-    loop->data->rt_queue = RuntimeQueue::GetCurrentQueue(ec);
+    RuntimeQueue::CreateNewQueue("Main");
+    loop->data->rt_queue =
+        RuntimeQueue::CreateNewThreadQueue("Component Worker", ec);
 
     C_ERROR_CHECK(ec);
 
-    RuntimeQueue::Queue(
-        {[loop]() { loop->d()->entities.exec(); },
+    loop->d()->component_task = ScopedTask(
+        loop->d()->rt_queue->threadId(),
+        {[loop]() {
+             Profiler::DeepPushContext("Components::exec()");
+             loop->d()->entities.exec();
+             Profiler::DeepPopContext();
+         },
          {},
          std::chrono::milliseconds(10),
          RuntimeTask::Periodic,
-         0},
-        ec);
+         0});
+
+    C_ERROR_CHECK(ec);
 
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)

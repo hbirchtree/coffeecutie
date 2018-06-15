@@ -283,6 +283,7 @@ class RuntimeQueue
 
     void                  executeTasks();
     RuntimeTask::Duration timeTillNext();
+    RuntimeTask::Duration timeTillNext(RuntimeTask::Timepoint clock);
     CString               name();
     ThreadId              threadId();
 
@@ -328,7 +329,7 @@ class RuntimeQueue
     void sortTasks();
 
     Vector<task_data_t> mTasks;
-    Mutex               mTasksLock;
+    RecMutex            mTasksLock;
     u64                 mTaskIndex;
     ThreadId            mThreadId;
 
@@ -339,6 +340,10 @@ class RuntimeQueue
 
 struct ScopedTask
 {
+    ScopedTask() : m_id(0)
+    {
+    }
+
     template<typename... Args>
     ScopedTask(ThreadId const& tid, Function<void()>&& fun, Args... args)
     {
@@ -354,7 +359,7 @@ struct ScopedTask
     ScopedTask(ThreadId const& tid, RuntimeTask&& task)
     {
         runtime_queue_error ec;
-        m_id       = RuntimeQueue::Queue(tid, std::move(task), ec);
+        m_id = RuntimeQueue::Queue(tid, std::move(task), ec);
 
         C_ERROR_CHECK(ec);
 
@@ -374,12 +379,26 @@ struct ScopedTask
         runtime_queue_error ec;
         if(m_id != 0)
             RuntimeQueue::CancelTask(m_threadId, m_id, ec);
-        C_ERROR_CHECK(ec);
+    }
+
+    ScopedTask& operator=(ScopedTask&& other)
+    {
+        m_id       = other.m_id;
+        m_threadId = other.m_threadId;
+
+        other.m_id       = 0;
+        other.m_threadId = {};
+
+        return *this;
     }
 
     u64 id() const
     {
         return m_id;
+    }
+    ThreadId threadId() const
+    {
+        return m_threadId;
     }
 
   private:

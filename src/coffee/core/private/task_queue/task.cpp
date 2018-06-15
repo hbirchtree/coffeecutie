@@ -109,18 +109,40 @@ static RuntimeTask const* GetTask(
 }
 
 static void NotifyThread(
-    ShPtr<RuntimeQueue::QueueContext> context, ThreadId::Hash threadId)
+    ShPtr<RuntimeQueue::QueueContext> context,
+    ThreadId::Hash                    threadId,
+    RuntimeTask::Duration             previousDeadline,
+    RuntimeTask::Timepoint            currentBase)
 {
     C_PTR_CHECK(context);
 
     auto threadFlags = context->queueFlags.find(threadId);
+    auto queueRef    = context->queues.find(threadId);
 
-    if(threadFlags == context->queueFlags.end())
+    if(threadFlags == context->queueFlags.end() ||
+       queueRef == context->queues.end())
         return;
 
     C_PTR_CHECK(threadFlags->second);
 
-    threadFlags->second->condition.notify_one();
+    /* We want to notify when:
+     * - A task is scheduled to run sooner than the thread will wake up
+     * - A task that will run is cancelled, and sleep can be rescheduled
+     *
+     * In essence, if our new event comes first in the timeline,
+     *  we need to reschedule the worker.
+     */
+
+    auto& condition = threadFlags->second->condition;
+    auto& queue     = queueRef->second;
+
+    auto wakeupTime = queue.timeTillNext(currentBase);
+
+    if(wakeupTime < previousDeadline)
+    {
+        Profiler::DeepProfile(RQ_API "Notifying thread");
+        condition.notify_one();
+    }
 }
 
 RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString& name)
@@ -154,14 +176,17 @@ static void ImpCreateNewThreadQueue(
         /* Enable profiler and etc. */
         State::SetInternalThreadState(State::CreateNewThreadState());
 
-        sem->condition.notify_one();
-
+        /* First create the queue object... */
         RuntimeQueue* queue = RuntimeQueue::CreateNewQueue(name);
 
-        Profiler::DeepPushContext(RQ_API "Running queue");
+        /* Then notify our parent that everything is done */
+        sem->condition.notify_one();
 
+        /* We use a mutex to allow our parent to notify us of work
+         *  or changes in the queue, to allow rescheduling. */
         UqLock thread_lock(sem->mutex);
 
+        Profiler::DeepPushContext(RQ_API "Running queue");
         while(sem->running.load())
         {
             queue->executeTasks();
@@ -204,9 +229,11 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name, rqe& ec)
 
         sem->running.store(true);
 
+        /* Spawn the thread */
         Thread t(ImpCreateNewThreadQueue, name, sem);
         auto   tid = ThreadId(t.get_id()).hash();
 
+        /* Wait for the RuntimeQueue to be created on the thread */
         sem->condition.wait(temp_lock);
 
         {
@@ -219,7 +246,6 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name, rqe& ec)
         return &context->queues.find(tid)->second;
     } catch(std::exception const& e)
     {
-        //        cWarning("Failed to create RuntimeQueue: {0}", e.what());
         ec = RQE::ThreadSpawn;
         ec = e.what();
         return nullptr;
@@ -311,8 +337,15 @@ u64 RuntimeQueue::Queue(
         auto& ref = (*q_it).second;
         Profiler::DeepProfile(RQ_API "Adding task to Queue");
 
+        q_it->second.mTasksLock.lock();
+
+        auto currentBase      = RuntimeTask::clock::now();
+        auto previousNextTime = ref.timeTillNext(currentBase);
+
         auto id = ref.enqueue(std::move(task));
-        NotifyThread(context, thread_id);
+
+        NotifyThread(context, thread_id, previousNextTime, currentBase);
+        q_it->second.mTasksLock.unlock();
 
         return id;
     }
@@ -320,7 +353,8 @@ u64 RuntimeQueue::Queue(
 
 bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 {
-    Lock _(context->globalMod);
+    Lock         _(context->globalMod);
+    DProfContext __(RQ_API "Blocking task");
 
     auto thread_id = targetThread.hash();
     auto q_it      = context->queues.find(thread_id);
@@ -349,23 +383,31 @@ bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
     if(!queue.mTasks[idx].alive)
     {
+        if(queue.mCurrentTaskId == 0)
+            queue.mTasksLock.unlock();
         ec = RQE::TaskAlreadyBlocked;
         return false;
     }
 
-    Profiler::DeepProfile(RQ_API "Blocking task");
     queue.mTasks[idx].alive = false;
 
-    queue.mTasksLock.unlock();
+    auto currentBase      = RuntimeTask::clock::now();
+    auto previousNextTime = queue.timeTillNext(currentBase);
 
-    NotifyThread(context, thread_id);
+    NotifyThread(context, thread_id, previousNextTime, currentBase);
+
+    if(queue.mCurrentTaskId == 0)
+    {
+        queue.mTasksLock.unlock();
+    }
 
     return true;
 }
 
 bool RuntimeQueue::Unblock(const ThreadId& targetThread, u64 taskId, rqe& ec)
 {
-    Lock _(context->globalMod);
+    Lock         _(context->globalMod);
+    DProfContext __(RQ_API "Unblocking task");
 
     auto thread_id = targetThread.hash();
     auto q_it      = context->queues.find(thread_id);
@@ -394,16 +436,21 @@ bool RuntimeQueue::Unblock(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
     if(queue.mTasks[idx].alive)
     {
+        if(queue.mCurrentTaskId == 0)
+            queue.mTasksLock.unlock();
         ec = RQE::TaskAlreadyStarted;
         return false;
     }
 
-    Profiler::DeepProfile(RQ_API "Unblocking task");
     queue.mTasks[idx].alive = true;
 
-    queue.mTasksLock.unlock();
+    auto currentBase      = RuntimeTask::clock::now();
+    auto previousNextTime = queue.timeTillNext(currentBase);
 
-    NotifyThread(context, thread_id);
+    NotifyThread(context, thread_id, previousNextTime, currentBase);
+
+    if(queue.mCurrentTaskId == 0)
+        queue.mTasksLock.unlock();
 
     return true;
 }
@@ -413,7 +460,7 @@ bool RuntimeQueue::CancelTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
     Lock _(context->globalMod);
 
     auto thread_id = targetThread.hash();
-    auto q_it = context->queues.find(thread_id);
+    auto q_it      = context->queues.find(thread_id);
 
     if(q_it == context->queues.end())
     {
@@ -440,9 +487,13 @@ bool RuntimeQueue::CancelTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
     queue.mTasks[idx].alive      = false;
     queue.mTasks[idx].to_dispose = true;
 
-    queue.mTasksLock.unlock();
+    auto currentBase      = RuntimeTask::clock::now();
+    auto previousNextTime = queue.timeTillNext(currentBase);
 
-    NotifyThread(context, thread_id);
+    NotifyThread(context, thread_id, previousNextTime, currentBase);
+
+    if(queue.mCurrentTaskId == 0)
+        queue.mTasksLock.unlock();
 
     return true;
 }
@@ -520,12 +571,17 @@ void RuntimeQueue::TerminateThreads(rqe& ec)
     for(auto t : context->queueFlags)
     {
         t.second->running.store(false);
+        t.second->condition.notify_one();
     }
 
     for(auto& t : context->queueThreads)
     {
         t.second.join();
     }
+
+    context->queueFlags.clear();
+    context->queueThreads.clear();
+    context->queues.clear();
 }
 
 RuntimeQueue::QueueContextPtr RuntimeQueue::CreateContext()
@@ -552,7 +608,7 @@ void RuntimeQueue::executeTasks()
     DProfContext __(DTEXT(RQ_API "Executing thread tasks"));
 
     Profiler::DeepPushContext(RQ_API "Locking queue");
-    Lock _(mTasksLock);
+    RecLock _(mTasksLock);
     Profiler::DeepPopContext();
 
     auto currTime = RuntimeTask::clock::now();
@@ -598,9 +654,13 @@ void RuntimeQueue::executeTasks()
 
 RuntimeTask::Duration RuntimeQueue::timeTillNext()
 {
-    Lock _(mTasksLock);
-
     RuntimeTask::Timepoint current = RuntimeTask::clock::now();
+    return timeTillNext(current);
+}
+
+RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
+{
+    RecLock _(mTasksLock);
 
     if(mTasks.size() == 0)
         return Chrono::milliseconds::max();
@@ -615,7 +675,7 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext()
 
 CString RuntimeQueue::name()
 {
-    Lock _(mTasksLock);
+    RecLock _(mTasksLock);
     return {};
 }
 
@@ -637,7 +697,7 @@ RuntimeQueue::RuntimeQueue() :
 
 u64 RuntimeQueue::enqueue(RuntimeTask&& task)
 {
-    Lock _(mTasksLock);
+    RecLock _(mTasksLock);
 
     u64 output = ++mTaskIndex;
 
