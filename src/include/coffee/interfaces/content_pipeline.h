@@ -1,23 +1,22 @@
 #pragma once
 
+#include <coffee/core/CFiles>
+#include <coffee/core/VirtualFS>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/VirtualFS>
-#include <coffee/core/CFiles>
 
-namespace Coffee{
+namespace Coffee {
 struct TerminalCursor;
 }
 
-namespace CoffeePipeline
-{
+namespace CoffeePipeline {
 
 using namespace Coffee;
-
 
 struct FileProcessor
 {
     Path cacheBaseDir;
+    u32  numWorkers;
 
     virtual ~FileProcessor()
     {
@@ -37,13 +36,11 @@ struct FileProcessor
      * \param files
      * \return
      */
-    virtual void process(Vector<VirtFS::VirtDesc>& files,
-                         TerminalCursor& cursor) = 0;
+    virtual void process(
+        Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor) = 0;
 
     virtual void setInternalState(
-            ShPtr<InternalState> state,
-            ShPtr<InternalThreadState> tstate
-            )
+        ShPtr<InternalState> state, ShPtr<InternalThreadState> tstate)
     {
         State::SetInternalState(state);
         State::SetInternalThreadState(tstate);
@@ -73,8 +70,7 @@ struct FileProcessor
         return Bytes::Copy(C_OCAST<Bytes>(cache));
     }
 
-    virtual void cacheFile(Path const& file,
-                           Bytes const& content)
+    virtual void cacheFile(Path const& file, Bytes const& content)
     {
         file_error ec;
 
@@ -87,4 +83,4 @@ struct FileProcessor
     }
 };
 
-}
+} // namespace CoffeePipeline

@@ -140,7 +140,7 @@ FORCEDINLINE void cFatal(cstring str, Arg... args)
 #ifndef COFFEE_LOWFAT
     DebugPrinter::cFatal(str,args...);
 #endif
-    CASSERT(false);
+    Throw(std::runtime_error(str));
 }
 
 template<typename...Arg>

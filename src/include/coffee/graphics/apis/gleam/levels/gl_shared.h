@@ -15,9 +15,6 @@ struct CGL_Shared_Functions
 {
     using ReqVer = GLVER_33;
 
-    using CGhnd = CGL::CGhnd;
-    using BufType = CGL::BufType;
-    using Texture = CGL::Texture;
     using Feature = CGL::Feature;
 
     using Debug = CGL_Shared_Debug;

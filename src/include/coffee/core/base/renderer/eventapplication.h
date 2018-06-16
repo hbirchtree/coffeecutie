@@ -147,9 +147,10 @@ void WrapEventFunction(void* data, int event)
         runtime_queue_error ec;
 
         if(RuntimeQueue::GetCurrentQueue(ec) && !ec)
+        {
             RuntimeQueue::GetCurrentQueue(ec)->executeTasks();
-
-        C_ERROR_CHECK(ec);
+            C_ERROR_CHECK(ec);
+        }
 
         break;
     }
@@ -506,15 +507,6 @@ class EventApplication : public InputApplication
     {
     }
 };
-
-template<typename GAPI, typename R, typename D>
-int32 AutoExec(EventLoopData<R, D>& event)
-{
-    CString error;
-    auto    visual = Display::GetDefaultVisual<GAPI>();
-
-    return EventApplication::execEventLoop(event, visual, error);
-}
 
 } // namespace Display
 } // namespace Coffee

@@ -22,12 +22,17 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
     /* C is not so good with uint64 used by our resource format*/
     int32 data_size = C_CAST<int32>(src.size);
 
-    smp->samples = C_CAST<uint32>(stb_vorbis_decode_memory(
+    i32 samples = stb_vorbis_decode_memory(
         C_CAST<ubyte_t*>(src.data),
         data_size,
         reinterpret_cast<int*>(&smp->fmt.channels),
         reinterpret_cast<int*>(&smp->fmt.samplerate),
-        &smp->data));
+        &smp->data);
+
+    if(samples < 0)
+        return false;
+
+    smp->samples = C_FCAST<u32>(samples);
 
     smp->container = audio_data::From(
         smp->data, smp->samples * smp->fmt.channels * smp->fmt.samplerate);
@@ -36,9 +41,6 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
     {
         CFree(data.data);
     });
-
-    if(smp->samples <= 0)
-        return false;
 
     smp->fmt.bitdepth = smp->samples / smp->fmt.samplerate * smp->fmt.channels;
     return true;

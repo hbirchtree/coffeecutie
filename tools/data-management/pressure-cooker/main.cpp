@@ -220,6 +220,8 @@ i32 coffee_main(i32, cstring_w*)
     bool                         showStats = false;
     file_error                   ec;
 
+    u32 globalNumWorkers = C_FCAST<u32>(SysInfo::ThreadCount());
+
     {
         ArgumentParser parser;
 
@@ -259,6 +261,12 @@ i32 coffee_main(i32, cstring_w*)
             " Even embedded in models.");
 
         parser.addArgument(
+            "workers",
+            "jobs",
+            "j",
+            "Max number of workers, defaults to number of cores on the system");
+
+        parser.addArgument(
             "cachedir",
             "cache",
             "m",
@@ -278,6 +286,9 @@ i32 coffee_main(i32, cstring_w*)
 
         if(args.switches.find("statistics") != args.switches.end())
             showStats = true;
+        if(args.arguments.find("workers") != args.arguments.end())
+            globalNumWorkers =
+                cast_string<u32>(args.arguments.find("workers")->second);
 
         parse_args(args);
 
@@ -376,6 +387,7 @@ i32 coffee_main(i32, cstring_w*)
         proc->setInternalState(
             State::GetInternalState(), State::GetInternalThreadState());
         proc->setBaseDirectories(baseDirs);
+        proc->numWorkers = globalNumWorkers;
 
         proc->process(descriptors, cursor);
     }

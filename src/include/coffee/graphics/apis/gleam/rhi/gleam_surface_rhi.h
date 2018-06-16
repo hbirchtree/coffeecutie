@@ -11,25 +11,28 @@ struct GLEAM_Surface : GraphicsAPI::Surface<CSize, CPoint>
     friend struct GLEAM_RenderTarget;
 
     GLEAM_Surface(
-        Texture type, PixelFormat fmt, uint32 mips, uint32 texflags = 0);
+        TexComp::tex_flag type,
+        PixelFormat       fmt,
+        uint32            mips,
+        uint32            texflags = 0);
 
     void allocate();
     void dealloc();
 
-    CGhnd handle();
+    u32 handle();
 
-    CGhnd& glTexHandle()
+    u32& glTexHandle()
     {
-        return m_handle;
+        return m_handle.hnd;
     }
 
   protected:
     void upload_info(PixCmp comp, uint32 mip, uint32 d);
 
-    Texture m_type;
+    TexComp::tex_flag m_type;
 
   public:
-    CGhnd m_handle;
+    glhnd m_handle;
 };
 
 struct GLEAM_Surface2D : GLEAM_Surface
@@ -79,7 +82,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
     friend struct GLEAM_Sampler3D;
 
     GLEAM_Surface3D_Base(
-        Texture t, PixelFormat fmt, uint32 mips, uint32 texflags);
+        tex::flag t, PixelFormat fmt, uint32 mips, uint32 texflags);
 
     void allocate(CSize3 size, PixCmp c);
 
@@ -123,7 +126,7 @@ struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler3D;
     GLEAM_Surface3D(PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0) :
-        GLEAM_Surface3D_Base(Texture::T3D, fmt, mips, texflags)
+        GLEAM_Surface3D_Base(tex::t3d::value, fmt, mips, texflags)
     {
     }
 };
@@ -133,7 +136,7 @@ struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
     friend struct GLEAM_Sampler2DArray;
     GLEAM_Surface2DArray(
         PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0) :
-        GLEAM_Surface3D_Base(Texture::T2DArray, fmt, mips, texflags)
+        GLEAM_Surface3D_Base(tex::t2d_array::value, fmt, mips, texflags)
     {
     }
 };
@@ -151,20 +154,20 @@ struct GLEAM_SamplerHandle
     {
         struct
         {
-            CGhnd texture;
-            CGhnd m_unit;
+            u32 texture;
+            u32 m_unit;
         };
-        CGhnd64 texture64;
+        u64 texture64;
     };
-    CGhnd   m_sampler;
-    Texture m_type;
-    u32     arraySize;
+    u32       m_sampler;
+    tex::flag m_type;
+    u32       arraySize;
 
-    CGhnd& glTexHandle()
+    u32& glTexHandle()
     {
         return texture;
     }
-    CGhnd& glSamplerHandle()
+    u32& glSamplerHandle()
     {
         return m_sampler;
     }
@@ -186,7 +189,7 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     void enableShadowSampler();
 
   protected:
-    CGhnd m_handle;
+    glhnd m_handle;
 };
 
 template<typename Surf>

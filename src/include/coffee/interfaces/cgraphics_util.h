@@ -14,8 +14,6 @@ namespace RHI {
 
 FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
 {
-    using C = CompFlags;
-
     auto pix = C_RCAST<IMG::serial_image const*>(img_data.data);
     struct ImageData
     {
@@ -26,54 +24,32 @@ FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
         u8 _pad[7];
     } data;
 
-    auto fmt      = pix->fmt;
-    auto flags    = pix->comp_fmt;
-    auto pixflags = PixFlg::None;
-
     if(img_data.size < 8)
         return std::make_tuple(Size(), CompFmt());
 
-    switch(fmt)
-    {
-    case PixFmt::S3TC:
-    {
-        switch(flags)
-        {
-        case C::S3TC_1:
-            pixflags        = PixFlg::RGB;
-            data.components = PixCmp::RGB;
-            break;
-        case C::S3TC_3:
-        case C::S3TC_5:
-            pixflags        = PixFlg::RGBA;
-            data.components = PixCmp::RGBA;
-            break;
-        default:
-            break;
-        }
+    CompFmt c_fmt = {};
 
-        data.width  = pix->size.w;
-        data.height = pix->size.h;
-
-        break;
-    }
-    default:
-        return std::make_tuple(Size(), CompFmt());
+    if(pix->desc_vers == 2)
+    {
+        c_fmt = pix->v2.format;
     }
 
     data.data_size = GetPixCompressedSize(
-        fmt, data.components, pixflags, flags, {data.width, data.height});
+        c_fmt, {data.width, data.height});
+
+    if(img_data.size < data.data_size)
+        return {};
 
     /* Ensure that the upload won't be bad */
     if(img_data.size < data.data_size)
         return std::make_tuple(Size(), CompFmt());
 
-    u32 compressionFlags = C_CAST<u32>(flags);
+    u32 compressionFlags = C_CAST<u32>(c_fmt.c_flags);
     compressionFlags <<= 10;
 
-    CSize tex_size = {data.width, data.height};
+    Size tex_size = {data.width, data.height};
 
-    return std::make_tuple(tex_size, CompFmt(fmt, pixflags, flags));
+    return std::make_tuple(tex_size, c_fmt);
 }
 
 template<
@@ -182,7 +158,6 @@ FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface, Bytes&& tex_rsc)
             tex_src.data,
             {0, 0},
             0);
-        Stb::ImageFree(&tex_src);
     } else
         status = false;
 
@@ -367,7 +342,7 @@ struct shader_param_view
         if(!(desc.m_flags & ShaderTypes::Uniform_v))
             return;
 
-        m_constant_data[const_desc_id{&desc}] = std::move(data);
+        m_constant_data[const_desc_id{&desc}]   = std::move(data);
         m_constant_values[const_desc_id{&desc}] = const_value();
     }
 
@@ -473,7 +448,7 @@ struct shader_param_view
     Map<const_desc_id, sampler_value> m_sampler_handles;
     Map<const_desc_id, const_value>   m_constant_values;
 
-    Map<ShaderStage, UniState>        m_states;
+    Map<ShaderStage, UniState> m_states;
 
   private:
     ProgState m_cached_state;

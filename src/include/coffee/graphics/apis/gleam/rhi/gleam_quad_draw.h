@@ -10,6 +10,11 @@ namespace GLEAM{
 
 struct GLEAM_Quad_Drawer
 {
+    GLEAM_Quad_Drawer():
+        m_pip()
+    {
+    }
+
     void create(u32 pos = 0, u32 tex = 1);
     void draw(Matf4 const& xf, GLEAM_Sampler2D& sampler);
     void cleanup();

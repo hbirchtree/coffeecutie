@@ -14,7 +14,7 @@ namespace GLEAM {
  *  or simply reversed (RGBA -> ABGR), use swizzling
  *  as fallback on OpenGL ES */
 C_MAYBE_UNUSED STATICINLINE void texture_swizzle(
-    Texture type, CGhnd tex_hnd, PixCmp cmp, PixCmp target)
+    TexComp::tex_flag type, glhnd const& tex_hnd, PixCmp cmp, PixCmp target)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::TexBind(type, tex_hnd);
@@ -33,13 +33,16 @@ STATICINLINE void texture_pbo_upload(
     if(m_flags & GLEAM_API::TextureDMABuffered)
     {
         data_ptr = nullptr;
+        glhnd hand(GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
         CGL33::BufBind(
-            BufType::PixelUData,
-            GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
+            buf::pixel_unpack::value,
+            hand);
         CGL33::BufData(
-            BufType::PixelUData,
+            buf::pixel_unpack::value,
             Bytes::From(data.data, pixSize),
             ResourceAccess::WriteOnly | ResourceAccess::Persistent);
+
+        hand.release();
     }
 #endif
 }
@@ -76,7 +79,7 @@ static PixFlg component_to_flag(PixCmp cmp)
 }
 
 GLEAM_Surface::GLEAM_Surface(
-    Texture type, PixelFormat fmt, uint32 mips, uint32 texflags) :
+    TexComp::tex_flag type, PixelFormat fmt, uint32 mips, uint32 texflags) :
     Surface(fmt, false, 0, mips, texflags),
     m_type(type), m_handle(0)
 {
@@ -94,7 +97,7 @@ GLEAM_Surface::GLEAM_Surface(
         CGL33::TexBind(type, m_handle);
         CGL33::TexParameteriv(type, GL_TEXTURE_BASE_LEVEL, &base_lev);
         CGL33::TexParameteriv(type, GL_TEXTURE_MAX_LEVEL, &max_lev);
-        CGL33::TexBind(type, 0);
+        CGL33::TexBind(type, glhnd());
 #endif
     }
 }
@@ -112,11 +115,12 @@ void GLEAM_Surface::allocate()
 void GLEAM_Surface::dealloc()
 {
     CGL33::TexFree(Span<CGhnd>::From(m_handle));
+    m_handle.release();
 }
 
-CGhnd GLEAM_Surface::handle()
+u32 GLEAM_Surface::handle()
 {
-    return m_handle;
+    return m_handle.hnd;
 }
 
 void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
@@ -134,9 +138,9 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
         uint32 w, h, d_;
         szptr  size;
         //        CGL33::TexGetImageSize(m_type, comp, w, h, d_, &size, mip);
-        if(m_type == Texture::T2DArray)
+        if(m_type & TexComp::tex_2d_array::value)
             size /= d;
-        cVerbose(5, "Texture allocation size ({0}): {1}", m_handle, size);
+        cVerbose(5, "Texture allocation size ({0}): {1}", m_handle.hnd, size);
 
         /* TODO: Add information about mipmaps */
     }
@@ -145,7 +149,7 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 
 GLEAM_Surface2D::GLEAM_Surface2D(
     PixelFormat fmt, uint32 mips, uint32 texflags) :
-    GLEAM_Surface(Texture::T2D, fmt, mips, texflags),
+    GLEAM_Surface(TexComp::tex_2d::value, fmt, mips, texflags),
     m_size(0, 0)
 {
 }
@@ -176,7 +180,13 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
                 trash.data());
         } else
             CGL33::TexImage2D(
-                Texture::T2D, 0, m_pixfmt, size, c, bitformat, nullptr);
+                tex::t2d::value,
+                0,
+                m_pixfmt,
+                size,
+                c,
+                bitformat,
+                nullptr);
     }
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else if(GLEAM_FEATURES.texture_storage)
@@ -186,7 +196,7 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
             CGL45::TexStorage2D(m_handle, m_mips, m_pixfmt, size);
         else
 #endif
-            CGL43::TexStorage2D(Texture::T2D, m_mips, m_pixfmt, size);
+            CGL43::TexStorage2D(TexComp::tex_2d::value, m_mips, m_pixfmt, size);
     } else
         throw implementation_error(GLM_API "failed to allocate texture!");
 #endif
@@ -250,7 +260,7 @@ void GLEAM_Surface2D::upload(
         }
 
         if(m_flags & GLEAM_API::TextureDMABuffered)
-            CGL33::BufBind(BufType::PixelUData, 0);
+            CGL33::BufBind(buf::pixel::value, glhnd());
     }
 
     if(GL_DEBUG_MODE)
@@ -268,9 +278,9 @@ GLEAM_SurfaceCube::GLEAM_SurfaceCube(PixelFormat fmt, u32 mips, u32 texflags) :
 }
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
-    Texture t, PixelFormat fmt, uint32 mips, uint32 texflags) :
+    tex::flag t, PixelFormat fmt, uint32 mips, uint32 texflags) :
     GLEAM_Surface(
-        (GL_CURR_API == GLES_2_0) ? Texture::T2D : t, fmt, mips, texflags),
+        (GL_CURR_API == GLES_2_0) ? tex::t2d::value : t, fmt, mips, texflags),
     m_size(0, 0, 0)
 {
     C_USED(t);
@@ -316,10 +326,7 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
                     Vector<byte_t> empty;
                     empty.resize(
                         GetPixCompressedSize(
-                            m_pixfmt,
-                            c,
-                            component_to_flag(c),
-                            f,
+                            CompFmt(m_pixfmt, component_to_flag(c), f),
                             _cbasic_size_2d<u32>(msz.width, msz.height)
                                 .convert<i32>()) *
                         msz.depth);
@@ -358,7 +365,7 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!feval(m_flags & GLEAM_API::TextureImmutable))
 #endif
-        CGL33::TexBind(m_type, 0);
+        CGL33::TexBind(m_type, glhnd());
 }
 
 void GLEAM_Surface3D_Base::upload(
@@ -434,7 +441,7 @@ void GLEAM_Surface3D_Base::upload(
         }
 
         if(m_flags & GLEAM_API::TextureDMABuffered)
-            CGL33::BufBind(BufType::PixelUData, 0);
+            CGL33::BufBind(buf::pixel_unpack::value, glhnd());
 
         if(GL_DEBUG_MODE)
             upload_info(comp, mip, msz.depth);
@@ -500,12 +507,12 @@ void GLEAM_Sampler::alloc()
 #if GL_VERSION_VERIFY(0x300, 0x300)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::SamplerAllocEx(m_handle);
+        CGL45::SamplerAllocEx(m_handle.hnd);
     else
 #endif
         if(!GLEAM_FEATURES.gles20)
     {
-        CGL33::SamplerAlloc(m_handle);
+        CGL33::SamplerAlloc(m_handle.hnd);
     }
 #endif
 }
@@ -514,7 +521,8 @@ void GLEAM_Sampler::dealloc()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        CGL33::SamplerFree(m_handle);
+        CGL33::SamplerFree(m_handle.hnd);
+    m_handle.release();
 #endif
 }
 
@@ -625,7 +633,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
 
     /* TODO: Add bindless */
     h.m_type  = m_surface->m_type;
-    h.texture = m_surface->m_handle;
+    h.texture = m_surface->m_handle.hnd;
 
     if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
        GLEAM_FEATURES.gles20)
@@ -636,7 +644,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        h.m_sampler = m_handle;
+        h.m_sampler = m_handle.hnd;
 #endif
 
     return h;
@@ -659,7 +667,7 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 {
     GLEAM_SamplerHandle h = {};
     h.m_type              = m_surface->m_type;
-    h.texture             = m_surface->m_handle;
+    h.texture             = m_surface->m_handle.hnd;
 
     if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
        GLEAM_FEATURES.gles20)
@@ -672,7 +680,7 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
     if(!GLEAM_FEATURES.gles20)
     {
         /* TODO: Add bindless */
-        h.m_sampler = m_surface->m_handle;
+        h.m_sampler = m_surface->m_handle.hnd;
     }
 #endif
 
@@ -699,7 +707,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 {
     GLEAM_SamplerHandle h = {};
     h.m_type              = m_surface->m_type;
-    h.texture             = m_surface->m_handle;
+    h.texture             = m_surface->m_handle.hnd;
 
     if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
        GLEAM_FEATURES.gles20)
@@ -711,7 +719,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 #if GL_VERSION_VERIFY(0x300, 0x300)
 
     if(!GLEAM_FEATURES.gles20)
-        h.m_sampler = m_handle;
+        h.m_sampler = m_handle.hnd;
     else
 #endif
         h.arraySize = m_surface->m_size.depth;

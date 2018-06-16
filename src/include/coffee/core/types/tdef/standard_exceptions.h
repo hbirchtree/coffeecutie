@@ -4,6 +4,11 @@
 
 /* Custom exception types, for more readability */
 
+struct resource_leak : std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
+
 struct resource_error : std::runtime_error
 {
     using std::runtime_error::runtime_error;

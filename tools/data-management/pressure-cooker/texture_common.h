@@ -2,12 +2,12 @@
 
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/core/type_safety.h>
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/interfaces/content_settings.h>
 
 #define TEXCOMPRESS_API "TextureCooker::"
 
@@ -20,51 +20,74 @@ static const constexpr cstring TEX_MIN_SIZE = "TEXCOOK_MIN_SIZE";
 static i32 max_texture_size = 1024;
 static i32 min_texture_size = 16;
 
-struct texture_settings_t
+enum CompressFormats
+{
+    Compress_DXT   = 0x0001, /*!< For desktop */
+    Compress_ETC   = 0x0002, /*!< For Android */
+    Compress_PVRTC = 0x0004, /*!< For Maemo, iOS and Android */
+    Compress_ATC   = 0x0008, /*!< For old Adreno */
+    Compress_ASTC  = 0x0010, /*!< For high-end desktop and iOS */
+    Compress_BC7   = 0x0020, /*!< For high-end desktop */
+    Compress_ALL   = 0xFFFF,
+
+    /* Special formats */
+    Compress_RAW       = 0x10000, /*!< Export raw RGBA u8 */
+    Compress_RAW_Float = 0x20000, /*!< Export raw RGBA f32 */
+};
+
+struct texture_settings_t : settings_visitor
 {
     i32 max_size, min_size;
     u32 channels;
+    u32 formats;
+    stb::ImageHint flags;
 
-    void parse(Bytes&& data)
+    virtual CString type()
     {
-        if(!data.data)
-            return;
-
-        auto doc = JSON::Read(data.as<char>().data);
-
-        for(auto it = doc.MemberBegin(); it != doc.MemberEnd(); ++it)
-        {
-            auto member = CString((*it).name.GetString());
-
-            if(member == "max_size")
-                max_size = (*it).value.GetInt();
-            if(member == "min_size")
-                min_size = (*it).value.GetInt();
-            if(member == "channels")
-                channels = (*it).value.GetUint();
-        }
+        return "texture";
     }
-
-    void parse(Path basePath)
+    virtual void visit(CString const& member, JSON::Value const& value)
     {
-        Path generalDesc = basePath.dirname() + "ALL.texture.json";
-        Path specificDesc =
-            basePath.addExtension("texture").addExtension("json");
+        if(member == "max_size")
+            max_size = value.GetInt();
+        else if(member == "min_size")
+            min_size = value.GetInt();
+        else if(member == "channels")
+            channels = value.GetUint();
+        else if(member == "formats")
+        {
+            formats = 0x0;
 
-        auto generalRsc = Resource(MkUrl(generalDesc, RSCA::AssetFile));
-        if(FileExists(generalRsc))
-            parse(C_OCAST<Bytes>(generalRsc));
+            for(auto const& m : value.GetArray())
+            {
+                if(m.GetString() == CString("DXT"))
+                    formats |= Compress_DXT;
+                else if(m.GetString() == CString("ETC"))
+                    formats |= Compress_ETC;
+                else if(m.GetString() == CString("ATC"))
+                    formats |= Compress_ATC;
+                else if(m.GetString() == CString("PVRTC"))
+                    formats |= Compress_PVRTC;
+                else if(m.GetString() == CString("RAW"))
+                    formats |= Compress_RAW;
+            }
+        } else if(member == "hints")
+        {
+            flags = stb::ImageHint::Undefined;
 
-        auto specificRsc = Resource(MkUrl(specificDesc, RSCA::AssetFile));
-        if(FileExists(specificRsc))
-            parse(C_OCAST<Bytes>(specificRsc));
+            for(auto const& m : value.GetArray())
+            {
+                if(m.GetString() == CString("normal"))
+                    flags |= stb::ImageHint::NormalMap;
+            }
+        }
     }
 };
 
 struct common_tools_t
 {
-    FileProcessor* cooker;
-    TerminalCursor& cursor;
+    FileProcessor*            cooker;
+    TerminalCursor&           cursor;
     texture_settings_t const& compress;
     Vector<VirtFS::VirtDesc>& files;
 };

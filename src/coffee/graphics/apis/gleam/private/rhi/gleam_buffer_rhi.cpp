@@ -5,9 +5,9 @@
 namespace Coffee {
 namespace RHI {
 namespace GLEAM {
-STATICINLINE void VerifyBuffer(CGhnd h)
+STATICINLINE void VerifyBuffer(glhnd const& h)
 {
-    if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h))
+    if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h.hnd))
         cWarning("Invalid use of buffer API,"
                  " buffer handle is not valid");
 }
@@ -16,17 +16,17 @@ void GLEAM_VBuffer::alloc()
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::BufAllocEx(m_handle);
+        CGL45::BufAllocEx(m_handle.hnd);
     else
 #endif
-        CGL33::BufAlloc(m_handle);
+        CGL33::BufAlloc(m_handle.hnd);
 }
 
 void GLEAM_VBuffer::dealloc()
 {
     VerifyBuffer(m_handle);
-    CGL33::BufFree(m_handle);
-    m_handle = 0;
+    CGL33::BufFree(m_handle.hnd);
+    m_handle.release();
 }
 
 void GLEAM_VBuffer::commit(BytesConst const& data)
@@ -142,7 +142,7 @@ void GLEAM_VBuffer::bind() const
 void GLEAM_VBuffer::unbind() const
 {
     if(!GLEAM_FEATURES.direct_state)
-        CGL33::BufBind(m_type, 0);
+        CGL33::BufBind(m_type, glhnd());
 }
 
 void GLEAM_BindableBuffer::bindrange(
@@ -168,7 +168,7 @@ void GLEAM_BindableBuffer::bindrange(
 
 void GLEAM_PixelBuffer::setState(bool pack)
 {
-    m_type = (pack) ? BufType::PixelPData : BufType::PixelUData;
+    m_type = (pack) ? buf::pixel_pack::value : buf::pixel_unpack::value;
 }
 } // namespace GLEAM
 } // namespace RHI

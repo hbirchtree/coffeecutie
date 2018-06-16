@@ -12,20 +12,20 @@ using int32_t = int;
 using uint32_t = unsigned int;
 #endif
 
-using int8  = int8_t;
-using int16 = int16_t;
-using int32 = int32_t;
-using int64 = int64_t;
+using int8  = C_DEPRECATED_TYPE<int8_t>::type;
+using int16 = C_DEPRECATED_TYPE<int16_t>::type;
+using int32 = C_DEPRECATED_TYPE<int32_t>::type;
+using int64 = C_DEPRECATED_TYPE<int64_t>::type;
 
 using i8 = int8_t;
 using i16 = int16_t;
 using i32 = int32_t;
 using i64 = int64_t;
 
-using uint8  = uint8_t;
-using uint16 = uint16_t;
-using uint32 = uint32_t;
-using uint64 = uint64_t;
+using uint8  = C_DEPRECATED_TYPE<uint8_t>::type;
+using uint16 = C_DEPRECATED_TYPE<uint16_t>::type;
+using uint32 = C_DEPRECATED_TYPE<uint32_t>::type;
+using uint64 = C_DEPRECATED_TYPE<uint64_t>::type;
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -40,8 +40,9 @@ using lscalar   = long double; /* Whoops... How did this get here? */
 using f16 = hscalar;
 using f32 = scalar;
 using f64 = bigscalar;
+using f80 = lscalar;
 
-using byte_t    = uint8;  /*!< System byte*/
+using byte_t    = u8;  /*!< System byte*/
 using ubyte_t   = byte_t; /*!< System byte*/
 using sbyte_t   = int8;   /*!< System unsigned byte*/
 
@@ -62,9 +63,9 @@ using intptr = intptr_t;
 using uintptr = uintptr_t;
 
 #if defined(INT8_MAX) && defined(UINT8_MAX)
-constexpr int8 Int8_Max = (INT8_MAX);
-constexpr int8 Int8_Min = (INT8_MIN);
-constexpr uint8 UInt8_Max = (UINT8_MAX);
+constexpr i8 Int8_Max = (INT8_MAX);
+constexpr i8 Int8_Min = (INT8_MIN);
+constexpr u8 UInt8_Max = (UINT8_MAX);
 #else
 constexpr int8 Int8_Max = (127);
 constexpr int8 Int8_Min = (127)-1;
@@ -72,9 +73,9 @@ constexpr uint8 UInt8_Max = (255);
 #endif
 
 #if defined(INT16_MAX) && defined(UINT16_MAX)
-constexpr int16 Int16_Max = (INT16_MAX);
-constexpr int16 Int16_Min = (INT16_MIN);
-constexpr uint16 UInt16_Max = (UINT16_MAX);
+constexpr i16 Int16_Max = (INT16_MAX);
+constexpr i16 Int16_Min = (INT16_MIN);
+constexpr u16 UInt16_Max = (UINT16_MAX);
 #else
 constexpr int16 Int16_Max = (32767);
 constexpr int16 Int16_Min = (-32767)+1;
@@ -82,9 +83,9 @@ constexpr uint16 UInt16_Max = 65535;
 #endif
 
 #if defined(INT32_MAX) && defined(UINT32_MAX)
-constexpr int32 Int32_Max = (INT32_MAX);
-constexpr int32 Int32_Min = (INT32_MIN);
-constexpr uint32 UInt32_Max = (UINT32_MAX);
+constexpr i32 Int32_Max = (INT32_MAX);
+constexpr i32 Int32_Min = (INT32_MIN);
+constexpr u32 UInt32_Max = (UINT32_MAX);
 #else
 constexpr int32 Int32_Max = 2147483647;
 constexpr int32 Int32_Min = (-2147483647)-1;
@@ -92,9 +93,9 @@ constexpr uint32 UInt32_Max = 4294967295;
 #endif
 
 #if defined(INT64_MAX) && defined(UINT64_MAX)
-constexpr int64 Int64_Max = (INT64_MAX);
-constexpr int64 Int64_Min = (INT64_MIN);
-constexpr uint64 UInt64_Max = (UINT64_MAX);
+constexpr i64 Int64_Max = (INT64_MAX);
+constexpr i64 Int64_Min = (INT64_MIN);
+constexpr u64 UInt64_Max = (UINT64_MAX);
 #else
 constexpr int64 Int64_Max = (9223372036854775807LL);
 constexpr int64 Int64_Min = (-9223372036854775807LL)-1;
@@ -105,12 +106,12 @@ using c_cptr = const void*;
 using c_ptr  = void*;
 
 #if !defined(COFFEE_RASPBERRYPI)
-using ThrdCnt = uint64;
+using ThrdCnt = u64;
 #else
 using ThrdCnt = uint32;
 #endif
-using MemUnit = uint64;
-using CoreCnt = uint32;
+using MemUnit = u64;
+using CoreCnt = u32;
 
 constexpr MemUnit Unit_kB = 1024;
 constexpr MemUnit Unit_MB = 1024*1024;

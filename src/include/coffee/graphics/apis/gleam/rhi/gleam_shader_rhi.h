@@ -70,13 +70,13 @@ struct GLEAM_Shader : GraphicsAPI::Shader
     }
 
   protected:
-    CGhnd       m_handle;
+    glhnd       m_handle;
     ShaderStage m_stages;
 
   public:
-    CGhnd internalHandle() const
+    u32 internalHandle() const
     {
-        return m_handle;
+        return m_handle.hnd;
     }
 };
 
@@ -125,7 +125,7 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
         return unbind(ec);
     }
 
-    void dealloc(gleam_error &ec);
+    void dealloc(gleam_error& ec);
     void dealloc()
     {
         gleam_error ec;
@@ -133,7 +133,7 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
     }
 
   protected:
-    CGhnd m_handle;
+    glhnd m_handle;
 
     struct shader_cntainer
     {
@@ -145,7 +145,7 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
     LinkList<GLEAM_Shader>  m_ownedPrograms;
 
   public:
-    CGhnd pipelineHandle() const
+    glhnd const& pipelineHandle() const
     {
         return m_handle;
     }

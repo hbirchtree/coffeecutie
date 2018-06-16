@@ -33,8 +33,8 @@ struct GLEAM_API : GraphicsAPI
     /* Types and relationships */
     using PRF = GLEAM_PRF;
 
-    using StencilState = GraphicsAPI::StencilState<CGenum, CGenum>;
-    using DepthState   = GraphicsAPI::DepthState<CGenum>;
+    using StencilState = GraphicsAPI::StencilState<u32, u32>;
+    using DepthState   = GraphicsAPI::DepthState<u32>;
 
     using DrawCall         = GraphicsAPI::DrawCall;
     using DrawInstanceData = GraphicsAPI::DrawInstanceData;
@@ -117,7 +117,6 @@ struct GLEAM_API : GraphicsAPI
     {
         Vector<CommandBuffer> cmdBufs;
 
-#if GL_VERSION_VERIFY(0x300, 0x300)
         struct IndirectCall
         {
             union
@@ -153,14 +152,11 @@ struct GLEAM_API : GraphicsAPI
         };
 
         Map<CommandBuffer*, MultiDrawData> multiDrawData;
-#endif
     };
 
     using OPT_DRAW = OptimizedDraw;
 
-#if GL_VERSION_VERIFY(0x300, 0x300)
     using OptMap = Map<CommandBuffer*, OPT_DRAW::MultiDrawData>;
-#endif
 
     struct RenderPass
     {
@@ -320,12 +316,12 @@ struct GLEAM_API : GraphicsAPI
         gleam_error&  ec);
 
     static void DrawConditional(
-            PIP const&    pipeline,
-            PSTATE const& ustate,
-            V_DESC&       vertices,
-            D_CALL const& d,
-            D_DATA const& i,
-            Q_OCC&        c)
+        PIP const&    pipeline,
+        PSTATE const& ustate,
+        V_DESC&       vertices,
+        D_CALL const& d,
+        D_DATA const& i,
+        Q_OCC&        c)
     {
         gleam_error ec;
         DrawConditional(pipeline, ustate, vertices, d, i, c, ec);
@@ -349,7 +345,7 @@ struct GLEAM_API : GraphicsAPI
     static bool    GetShaderLanguageVersion(
            GraphicsContext const&, SWVersionInfo*);
 
-    static bool TextureFormatSupport(PixFmt fmt);
+    static bool TextureFormatSupport(PixFmt fmt, CompFlags flags);
 
     struct DBG
     {

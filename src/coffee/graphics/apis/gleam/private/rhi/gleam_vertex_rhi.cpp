@@ -79,12 +79,12 @@ void GLEAM_VertDescriptor::alloc()
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::VAOAllocEx(m_handle);
+        CGL45::VAOAllocEx(m_handle.hnd);
     else
 #endif
 #if GL_VERSION_VERIFY(0x300, 0x300)
         if(!GLEAM_FEATURES.gles20)
-        CGL33::VAOAlloc(m_handle);
+        CGL33::VAOAlloc(m_handle.hnd);
 #endif
 }
 
@@ -92,8 +92,8 @@ void GLEAM_VertDescriptor::dealloc()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        CGL33::VAOFree(m_handle);
-    m_handle = 0;
+        CGL33::VAOFree(m_handle.hnd);
+    m_handle.release();
 #endif
 }
 
@@ -244,7 +244,7 @@ void GLEAM_VertDescriptor::unbind()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        CGL33::VAOBind(0);
+        CGL33::VAOBind(glhnd());
     else
 #endif
         for(auto const& attr : m_attributes)

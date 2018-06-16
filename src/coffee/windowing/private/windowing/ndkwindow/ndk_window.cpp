@@ -197,11 +197,6 @@ void NDKWindow::setWindowTitle(const CString &tl)
 {
 }
 
-bool NDKWindow::setWindowIcon(CBitmap &icon)
-{
-    return false;
-}
-
 bool NDKWindow::screensaverMode()
 {
     return false;

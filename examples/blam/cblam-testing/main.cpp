@@ -1,15 +1,15 @@
 #include <coffee/CBlam>
 #include <coffee/blam/volta/blam_stl.h>
 #include <coffee/core/CApplication>
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
-#include <coffee/core/plat/memory/stlstring_ops.h>
-
-#include <coffee/image/cimage.h>
-
 #include <coffee/core/base/renderer/eventapplication.h>
+#include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/image/cimage.h>
+#include <coffee/interfaces/full_launcher.h>
 #include <coffee/windowing/renderer/renderer.h>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 using namespace Blam;
@@ -509,7 +509,10 @@ int coffee_main(int32, cstring_w*)
         exit(0);
     };
 
-    Display::AutoExec<API>(*event);
+    AutoExec<API, Display::RendererInterface, Empty>(
+        [](Display::RendererInterface&, Empty*) {},
+        [](Display::RendererInterface&, Empty*) {},
+        [](Display::RendererInterface&, Empty*) {});
 
     //    for(auto e : texture_vec)
     //    {

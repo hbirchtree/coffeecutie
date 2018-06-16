@@ -225,17 +225,17 @@ STATICINLINE void TransformShader(
     shaderSrcVec.push_back("\n");
 }
 
-STATICINLINE bool translate_sampler_type(Texture& samplerType, u32 m_flags)
+STATICINLINE bool translate_sampler_type(tex::flag& samplerType, u32 m_flags)
 {
     using namespace ShaderTypes;
 
     switch(m_flags & SizeMask_f)
     {
     case S2:
-        samplerType = Texture::T2D;
+        samplerType = tex::t2d::value;
         return true;
     case SCube:
-        samplerType = Texture::Cubemap;
+        samplerType = tex::cube::value;
         return true;
     default:
         if(!GLEAM_FEATURES.gles20)
@@ -243,15 +243,15 @@ STATICINLINE bool translate_sampler_type(Texture& samplerType, u32 m_flags)
             {
 #if GL_VERSION_VERIFY(0x330, 0x300)
             case S3:
-                samplerType = Texture::T3D;
+                samplerType = tex::t3d::value;
                 return true;
             case S2A:
-                samplerType = Texture::T2DArray;
+                samplerType = tex::t2d_array::value;
                 return true;
 #endif
 #if GL_VERSION_VERIFY(0x330, 0x320)
             case SCubeA:
-                samplerType = Texture::CubemapArray;
+                samplerType = tex::cube_array::value;
                 return true;
 #endif
             }
@@ -264,14 +264,15 @@ STATICINLINE bool translate_sampler_type(Texture& samplerType, u32 m_flags)
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 STATICINLINE void ProgramInputGet(
-    CGhnd                           hnd,
+    glhnd const&                    hnd,
     ShaderStage                     stages,
     CGenum                          type,
     Vector<GLEAM_ProgramParameter>* params)
 {
     i32 num_attrs = 0;
     if(params)
-        glGetProgramInterfaceiv(hnd, type, GL_ACTIVE_RESOURCES, &num_attrs);
+        CGL43::ProgramGetInterfaceiv(
+            hnd, type, GL_ACTIVE_RESOURCES, &num_attrs);
 
     for(auto i : Range<>(C_FCAST<u32>(num_attrs)))
     {
@@ -284,7 +285,7 @@ STATICINLINE void ProgramInputGet(
         };
         i32 props_out[sizeof(props_to_get) / sizeof(CGenum)];
 
-        glGetProgramResourceiv(
+        CGL43::ProgramGetResourceiv(
             hnd,
             type,
             C_FCAST<u32>(i),
@@ -305,7 +306,7 @@ STATICINLINE void ProgramInputGet(
         desc.m_idx   = C_FCAST<u16>(props_out[1]);
         desc.m_flags = to_enum_shtype(C_FCAST<CGenum>(props_out[2]));
         desc.m_name.resize(C_FCAST<u32>(props_out[0]));
-        glGetProgramResourceName(
+        CGL43::ProgramGetResourceName(
             hnd, type, C_FCAST<u32>(i), props_out[0], nullptr, &desc.m_name[0]);
         desc.m_name.resize(desc.m_name.find('\0'));
     }
@@ -337,7 +338,7 @@ bool GLEAM_Shader::compile(
     {
         m_handle = CGL33::ShaderAllocEx(stage);
 
-        if(m_handle == 0)
+        if(!m_handle)
         {
             ec = APIError::HandleAllocationFailed;
             return false;
@@ -394,7 +395,7 @@ bool GLEAM_Shader::compile(
         i32 link_state = 0;
         CGL43::ProgramGetiv(m_handle, GL_VALIDATE_STATUS, &link_state);
 
-        if(GL_DEBUG_MODE && m_handle == 0 && link_state != GL_TRUE)
+        if(GL_DEBUG_MODE && !m_handle && link_state != GL_TRUE)
         {
             CString infoLog;
             i32     logLen = 0;
@@ -430,20 +431,21 @@ void GLEAM_Shader::dealloc(gleam_error& ec)
 {
     if(!GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle != 0)
-            CGL33::ShaderFree(m_handle);
-        else
+        if(!m_handle)
             ec = APIError::HandleDeallocFailed;
+        else
+            CGL33::ShaderFree(m_handle);
     }
 #if GL_VERSION_VERIFY(0x410, 0x300)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle != 0)
-            CGL43::ProgramFree(m_handle);
-        else
+        if(!m_handle)
             ec = APIError::HandleDeallocFailed;
+        else
+            CGL43::ProgramFree(m_handle);
     }
 #endif
+    m_handle.release();
 }
 
 bool GLEAM_Pipeline::attach(
@@ -451,7 +453,7 @@ bool GLEAM_Pipeline::attach(
 {
     C_USED(stages);
 
-    if(shader.m_handle == 0)
+    if(!shader.m_handle)
     {
         ec = APIE::InvalidObject;
         return false;
@@ -459,7 +461,7 @@ bool GLEAM_Pipeline::attach(
 
     if(!GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle == 0)
+        if(!m_handle)
             m_handle = CGL33::ProgramAllocEx();
         CGL33::ShaderAttach(m_handle, shader.m_handle);
         return true;
@@ -467,14 +469,14 @@ bool GLEAM_Pipeline::attach(
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
     {
-        if(m_handle == 0)
+        if(!m_handle)
         {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
             if(GLEAM_FEATURES.direct_state)
-                CGL45::PipelineAllocEx(m_handle);
+                CGL45::PipelineAllocEx(m_handle.hnd);
             else
 #endif
-                CGL43::PipelineAlloc(m_handle);
+                CGL43::PipelineAlloc(m_handle.hnd);
         }
         CGL43::ProgramUseStages(
             m_handle, shader.m_stages & stages, shader.m_handle);
@@ -488,16 +490,16 @@ bool GLEAM_Pipeline::attach(
 
 GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader&& shader)
 {
-    m_ownedPrograms.push_back({});
+    m_ownedPrograms.emplace_back();
 
-    m_ownedPrograms.back() = shader;
+    m_ownedPrograms.back() = std::move(shader);
 
     return m_ownedPrograms.back();
 }
 
 bool GLEAM_Pipeline::assemble(gleam_error& ec)
 {
-    if(m_handle == 0)
+    if(!m_handle)
     {
         ec = APIError::InvalidObject;
         return false;
@@ -546,10 +548,16 @@ bool GLEAM_Pipeline::assemble(gleam_error& ec)
 void GLEAM_Pipeline::bind(gleam_error& ec) const
 {
     if(!GLEAM_FEATURES.separable_programs)
+    {
         CGL33::ProgramUse(m_handle);
+        return;
+    }
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
+    {
         CGL43::PipelineBind(m_handle);
+        return;
+    }
 #endif
     ec = APIE::UnimplementedPath;
 }
@@ -557,22 +565,32 @@ void GLEAM_Pipeline::bind(gleam_error& ec) const
 void GLEAM_Pipeline::unbind(gleam_error& ec) const
 {
     if(!GLEAM_FEATURES.separable_programs)
-        CGL33::ProgramUse(0);
+    {
+        CGL33::ProgramUse(glhnd());
+        return;
+    }
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
-        CGL43::PipelineBind(0);
+    {
+        CGL43::PipelineBind(glhnd());
+        return;
+    }
 #endif
     ec = APIE::UnimplementedPath;
 }
 
 void GLEAM_Pipeline::dealloc(gleam_error& ec)
 {
+    for(auto& shader : m_ownedPrograms)
+        shader.dealloc(ec);
+
     if(!GLEAM_FEATURES.separable_programs)
         CGL33::ProgramFree(m_handle);
 #if GL_VERSION_VERIFY(0x330, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
-        CGL43::PipelineFree(m_handle);
+        CGL43::PipelineFree(m_handle.hnd);
 #endif
+    m_handle.release();
 }
 
 bool GLEAM_ShaderUniformState::setUniform(
@@ -607,7 +625,7 @@ bool GLEAM_ShaderUniformState::setSampler(
     else
         return false;
 
-    Texture samplerType = Texture::T2D;
+    tex::flag samplerType = tex::t2d::value;
 
     if(!translate_sampler_type(samplerType, value.m_flags))
         return false;
@@ -678,7 +696,7 @@ void GetShaderUniforms(
         /* Does not differentiate between shader stages and
          *  their uniforms */
         /* GL 4.3+ do not work with this */
-        CGhnd prog = pipeline.m_handle;
+        glhnd const& prog = pipeline.m_handle;
 
         /* Get typical uniforms */
         if(uniforms)
@@ -831,7 +849,7 @@ void GetShaderUniforms(
         for(auto& p : pipeline.m_programs)
         {
             int32        num_unifs;
-            const CGhnd& hnd = p.shader->m_handle;
+            glhnd const& hnd = p.shader->m_handle;
 
             /* Get number of uniform variables */
             CGL43::ProgramGetInterfaceiv(
@@ -974,13 +992,13 @@ void GLEAM_PipelineDumper::dump(cstring out)
             cVerbose(
                 5,
                 "Dumped program ({0}) into file {1}",
-                m_pipeline.m_handle,
+                m_pipeline.m_handle.hnd,
                 output.resource());
         else
             cVerbose(
                 5,
                 "Dumping program ({0}) into file {1} failed",
-                m_pipeline.m_handle,
+                m_pipeline.m_handle.hnd,
                 output.resource());
     } else if(GLEAM_FEATURES.separable_programs)
     {

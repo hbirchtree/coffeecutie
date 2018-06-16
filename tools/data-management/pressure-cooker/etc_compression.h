@@ -28,10 +28,50 @@ static CompFmt GetETCFormat(EtcImFormat fmt)
 {
     switch(fmt)
     {
+    /* ETC1 */
     case EtcImFormat::ETC1:
         return {PixFmt::ETC1, PixFlg::None, CompFlags::CompressionNone};
+
+    /* ETC2 formats */
+    case EtcImFormat::RGB8:
+        return {PixFmt::ETC2, PixFlg::RGB, CompFlags::CompressionNone};
     case EtcImFormat::RGB8A1:
+        return {PixFmt::ETC2,
+                PixFlg::RGBA | PixFlg::RGBA_Punchthrough,
+                CompFlags::CompressionNone};
+    case EtcImFormat::RGBA8:
         return {PixFmt::ETC2, PixFlg::RGBA, CompFlags::CompressionNone};
+
+    case EtcImFormat::SRGB8:
+        return {PixFmt::ETC2,
+                PixFlg::RGB | PixFlg::sRGB,
+                CompFlags::CompressionNone};
+    case EtcImFormat::SRGB8A1:
+        return {PixFmt::ETC2,
+                PixFlg::RGBA | PixFlg::RGBA_Punchthrough | PixFlg::sRGB,
+                CompFlags::CompressionNone};
+    case EtcImFormat::SRGBA8:
+        return {PixFmt::ETC2,
+                PixFlg::RGBA | PixFlg::sRGB,
+                CompFlags::CompressionNone};
+
+    /* Weird formats */
+    case EtcImFormat::RG11:
+        return {PixFmt::ETC2, PixFlg::RG, CompFlags::CompressionNone};
+    case EtcImFormat::SIGNED_RG11:
+        return {PixFmt::ETC2,
+                PixFlg::RG | PixFlg::Signed,
+                CompFlags::CompressionNone};
+
+    case EtcImFormat::R11:
+        return {PixFmt::ETC2, PixFlg::R, CompFlags::CompressionNone};
+    case EtcImFormat::SIGNED_R11:
+        return {PixFmt::ETC2,
+                PixFlg::R | PixFlg::Signed,
+                CompFlags::CompressionNone};
+
+    default:
+        Throw(implementation_error("unsupported format"));
     }
 }
 
@@ -56,7 +96,7 @@ static void CompressETC_With(
         img_size.w,
         img_size.h,
         format,
-        Etc::ErrorMetric::REC709,
+        Etc::ErrorMetric::RGBA,
         effort,
         1,
         1,
@@ -73,16 +113,22 @@ static void CompressETC_With(
             Bytes::From(mip.paucEncodingBits.get(), mip.uiEncodingBitsBytes);
 
         IMG::serial_image imgDesc = {};
+
         imgDesc.size =
             _cbasic_size_2d<i32>(mip.uiExtendedWidth, mip.uiExtendedHeight)
                 .convert<u32>();
-        imgDesc.fmt =
-            (format == EtcImFormat::ETC1) ? PixFmt::ETC1 : PixFmt::ETC2;
 
-        t.cursor.progress(TEXCOMPRESS_API "Saving mipmap: {0}", mipName);
+        auto fmt          = GetETCFormat(format);
+        imgDesc.v2.format = fmt;
+
+        t.cursor.progress(
+            TEXCOMPRESS_API
+            "Compressed texture: {0}: {1}B (raw float) -> {2}B (compressed)",
+            mipName.internUrl,
+            local_img.data_owner.size,
+            mip.uiEncodingBitsBytes);
 
         t.cooker->cacheFile(mipName, mipData);
-
         t.files.emplace_back(mipName, std::move(mipData), 0);
 
         mipData.disown();

@@ -128,20 +128,6 @@ void SDL2Window::setWindowSize(const CSize &size)
     SDL_SetWindowMaximumSize(getSDL2Context()->window,size.w,size.h);
 }
 
-//bool SDL2Window::setWindowIcon(CBitmap &icon)
-//{
-
-//    SDL_Surface* sdl_icon = SDL_CreateRGBSurfaceFrom(icon.data(),
-//                                                     icon.size.w,icon.size.h,
-//                                                     32,sizeof(CRGBA),
-//                                                     0,0,0,0);
-//    if(!sdl_icon)
-//        return false;
-//    SDL_SetWindowIcon(getSDL2Context()->window,sdl_icon);
-//    SDL_FreeSurface(sdl_icon);
-//    return true;
-//}
-
 CDWindow* SDL2Window::window()
 {
     return SDL2::GetWindow(getSDL2Context()->window);

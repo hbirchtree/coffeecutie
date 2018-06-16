@@ -3,6 +3,7 @@
 #include "gleam_types_rhi.h"
 #include "gleam_framebuffer_rhi.h"
 #include "gleam_api_rhi.h"
+#include "gleam_quad_draw.h"
 
 namespace Coffee{
 namespace RHI{
@@ -21,6 +22,8 @@ struct GLEAM_DataStore
 
     UqPtr<GLEAM_Instance_Data, InstanceDataDeleter> inst_data;
     GLEAM_API::FB_T DefaultFramebuffer;
+
+    GLEAM_Quad_Drawer debug_drawer;
 
     APILevel CURR_API = GL_Nothing;
 

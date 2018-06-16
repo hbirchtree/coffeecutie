@@ -28,7 +28,55 @@ It may be extended in several ways:
    - Generates GLSL 3.30, 4.30, 4.60 and ESSL 1.00 and 3.00 source files
    - Generates OpenGL SPIR-V binary- shader.core.330.vert
 
+## Details on extensions
+
+### Texture data
+
+The `PressurizeTextures` extension supports the following file formats:
+ - PNG
+ - JPG/JPEG
+ - TGA
+ - TIF/TIFF (if `libtiff` is available)
+
+The following per-directory JSON configuration is supported:
+
+```
+{
+    "max_size": <max mip size in pixels>,
+    "min_size": <min mip size in pixels>,
+    "channels": <1-4>,
+    "formats": ["RAW", "DXT", "ETC", "ATC", "PVRTC"]
+}
+```
+
+Configuration is put into a file named `<directory>/ALL.texture.json`.
+Only the configuration for the current directory is used, no inheritance.
+
+### Shaders
+
+The `PressurizeShaders` extension recognizes the following file formats:
+ - `.vert`
+ - `.frag`
+ - `.geom`
+ - `.tesc`
+ - `.tese`
+ - `.comp`
+
+The following per-file or per-directory JSON configuration is supported:
+
+```
+{
+    "versions": [330, 430, 450, 460, 10200, 10300, 10320],
+    "target": <redirected shader filename>
+}
+```
+
+Configuration can be made directory-wide with `<directory>/ALL.shader.json`
+ or per-file with `<file basename>.shader.json`.
+
 ## Accessing pressure-cooked data
+
+Most extensions support
 
 ### Assimp data
 
@@ -45,19 +93,21 @@ Assimp data is split into:
  - attributes
    - A list of `RHI::CGraphics_API::VertexAttribute` structures
  - graph
-   - An `ASSIMP::MeshLoader::SerialNodeList` structure, can be used in-place
+   - An `ASSIMP::MeshLoader::SerialNodeList` structure, can be used in-place. Contains matrices.
 
 This acts like the data coming out of `BufferDescription` in `assimp_iterators.h`, without the Assimp dependency.
 This also makes your application profilable with Valgrind (Assimp stops Valgrind in its tracks).
 
-### Texture data (S3TC/DXTn)
+### Texture data
 
 Loading textures becomes slightly more tricky:
 
  - Depending on the input format, textures might have the following extensions:
    - `.dxt1`, DXT1 compression
    - `.dxt5`, DXT5 compression
-   - `.png`, as a fallback format
+   - `.etc1`, ETC1 compression
+   - `.etc2`, ETC2 compression, including all variants
+   - `.png`/`.jpg`, as a fallback format
  - Mipmapping is done on the images
 
 ### Shaders

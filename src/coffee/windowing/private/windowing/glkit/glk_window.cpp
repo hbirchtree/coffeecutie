@@ -137,11 +137,6 @@ void GLKWindow::setWindowTitle(CString const& s)
 {
 }
 
-bool GLKWindow::setWindowIcon(CBitmap& s)
-{
-    return false;
-}
-
 void GLKWindow::setScreensaverMode(bool)
 {
 }

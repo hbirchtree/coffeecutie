@@ -22,8 +22,8 @@ struct TaggedTypeWrapper
     using tag = TagType;
 };
 
-template<typename WrappedType, typename TagType>
-using TagType = TaggedTypeWrapper<WrappedType, TagType>;
+template<typename WrappedType, typename TaggedType>
+using TagType = TaggedTypeWrapper<WrappedType, TaggedType>;
 
 struct EntityRecipe
 {

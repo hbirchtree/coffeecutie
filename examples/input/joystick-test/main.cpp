@@ -51,11 +51,7 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
 
     CRGBA* data = C_CAST<CRGBA*>(instance->mapTexture(out));
     MemCpy(C_OCAST<Bytes>(img), Bytes::From(data, img.size.area() * img.bpp));
-//    MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
     instance->unmapTexture(out);
-
-    stb::ImageFree(&img);
-    CResources::FileUnmap(analog_rsc);
 
     return out;
 }

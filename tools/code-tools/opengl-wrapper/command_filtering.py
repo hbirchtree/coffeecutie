@@ -567,6 +567,10 @@ class ArgumentTransform:
                 # Remove the border argument for texture functions
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, '0'))
                 self.consume(arg)
+            elif arg.name in ['texture', 'buffer', 'sampler', 'vaobj', 'array', 'program', 'shader', 'pipeline'] and str(arg.atype) == 'u32':
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'C_OCAST<u32>(%s)' % arg.name))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('glhnd const&')))
+                self.consume(arg)
             elif arg.group == 'EnableCap':
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'to_enum(%s)' % arg.name))
                 self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('Feature')))
@@ -625,6 +629,18 @@ class ArgumentTransform:
                 # Use Span<T> on 'T* value' arguments
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, '%s.data' % arg.name))
                 self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('Span<%s> const&' % (arg.atype.base_type,))))
+                self.consume(arg)
+            elif arg.group == 'TextureTarget':
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'texture_to_enum(%s)' % arg.name))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('TexComp::tex_flag const&')))
+                self.consume(arg)
+            elif arg.group in ['BufferStorageTarget', 'BufferTargetARB']:
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'buffer_to_enum(%s)' % arg.name))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('BufferComp::buf_flag const&')))
+                self.consume(arg)
+            elif arg.group == 'QueryTarget':
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'query_to_enum(%s)' % arg.name))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('QueryComp::query_flag const&')))
                 self.consume(arg)
             elif arg.group in TRANSLATE_GL_GROUP:
                 # Replace GLenum from functions utilizing state, eg. buffer bindings

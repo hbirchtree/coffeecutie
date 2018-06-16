@@ -108,7 +108,7 @@ void GLEAM_API::OptimizeRenderPass(
  * \return true if drawcall was possible on the current API
  */
 static bool InternalDraw(
-    CGhnd                              pipelineHandle,
+    glhnd const&                       pipelineHandle,
     DrwMd const&                       mode,
     GLEAM_API::DrawCall const&         d,
     GLEAM_API::DrawInstanceData const& i,
@@ -318,11 +318,15 @@ bool InternalMultiDraw(
             *C_CCAST<Vector<GLEAM_API::OptimizedDraw::IndirectCall>*>(
                 &data.indirectCalls);
 
-        CGL33::BufBind(BufType::DrawcallData, indirectBuf);
+        glhnd ghnd(indirectBuf);
+
+        CGL33::BufBind(buf::draw_indirect::value, ghnd);
         CGL33::BufData(
-            BufType::DrawcallData,
+            buf::draw_indirect::value,
             Bytes::CreateFrom(indirectCalls),
             RSCA::ReadOnly);
+
+        ghnd.release();
     }
 
     if(data.dc.indexed() && data.dc.instanced() &&
@@ -367,7 +371,7 @@ static void GetInstanceUniform(
     GLEAM_API::PIP const& pipeline,
     cstring               unifName,
     i32&                  uloc,
-    CGhnd&                handle,
+    glhnd&                handle,
     gleam_error&          error_code)
 {
     if(GLEAM_FEATURES.base_instance)
@@ -400,7 +404,7 @@ static void GetInstanceUniform(
 }
 
 static void SetInstanceUniform(
-    CGhnd hnd, i32 uloc, u32 baseInstance, gleam_error& ec)
+    glhnd const& hnd, i32 uloc, u32 baseInstance, gleam_error& ec)
 {
     i32 baseInstance_i = C_FCAST<i32>(baseInstance);
 
@@ -432,7 +436,7 @@ void GLEAM_API::MultiDraw(
 #ifndef COFFEE_LOWFAT
     if(GL_DEBUG_MODE && PrintingVerbosityLevel() >= 12)
     {
-        cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle);
+        cVerbose(12, GLM_API "- Pipeline:{0}", pipeline.m_handle.hnd);
         for(auto& cmd : draws.cmdBufs)
         {
             cVerbose(
@@ -464,7 +468,7 @@ void GLEAM_API::MultiDraw(
     PSTATE* p_state      = nullptr;
     i32     vertexOffset = 0;
 
-    CGhnd vertexHandle    = 0;
+    glhnd vertexHandle;
     i32   baseInstanceLoc = -1;
     i32   instanceID_loc  = -1;
     u32   instanceID_val  = 0;
@@ -647,8 +651,12 @@ void GLEAM_API::Draw(
     InternalDraw(pipeline.m_handle, mode, d, i, ec);
 
     if(GL_DEBUG_MODE && ec)
+    {
         Debug::DebugMessage(
-            Severity::Critical, DebugType::Other, "GLEAM context error");
+            Severity::Critical,
+            DebugType::Other,
+            "GLEAM context error: " + ec.message());
+    }
 
 #if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
     if(m_store->features.qcom_tiling)

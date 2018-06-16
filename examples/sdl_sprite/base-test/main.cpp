@@ -171,9 +171,6 @@ int32 coffee_main(int32, cstring_w*)
                 data->rend.unmapTexture(data->t);
             }
 
-            /* Clean up */
-            stb::ImageFree(&img);
-            CResources::FileUnmap(texfile);
             Profiler::Profile("Texture load");
         }
 
@@ -184,7 +181,7 @@ int32 coffee_main(int32, cstring_w*)
         /* Show the window */
         test.showWindow();
 
-        data->clearCol = CRGBA(255, 0, 0);
+        data->clearCol = CRGBA(127, 0, 0);
 
         /* Set clear color for buffer */
         data->rend.setClearColor(data->r, data->clearCol);
@@ -216,7 +213,7 @@ int32 coffee_main(int32, cstring_w*)
     };
 
     /* Create a window host for the renderer */
-    auto visual = GetDefaultVisual(2, 0);
+    auto visual = GetDefaultVisual(3, 3);
 
     using ELD = EventLoopData<BasicWindow, RenderData>;
 

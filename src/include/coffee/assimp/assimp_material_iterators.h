@@ -338,12 +338,11 @@ struct MaterialParser
                        colorBytes.end());
     }
 
-    template<szptr NumTexTypes>
     static
     bool ExtractDescriptors(
             ASSIMP::AssimpPtr& scene,
             MaterialSerializer& materialsData,
-            Array<aiTextureType, NumTexTypes> const& textureTypes,
+            Vector<aiTextureType> const& textureTypes,
             Vector<PropertyClass> const& materialProps,
             Vector<CString> const& baseDirs = {}
             )

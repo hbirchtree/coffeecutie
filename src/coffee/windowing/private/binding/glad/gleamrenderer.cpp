@@ -308,7 +308,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
         GDEBUG::UnsetDebugGroup();
     }
 
-    if(PlatformData::IsDebug())
+    if(p.flags & GLProperties::GLDebug)
     {
 #if !defined(COFFEE_WINDOWS) && GL_VERSION_VERIFY(0x330, 0x320)
         DProfContext b(GLR_API "Configuring GL context debugging");

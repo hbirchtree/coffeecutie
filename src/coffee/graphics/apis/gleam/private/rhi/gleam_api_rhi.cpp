@@ -178,9 +178,10 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     /* TODO: Destroy this object when performing reload */
     if(prevApi != GLES_2_0 && store->CURR_API == GLES_2_0)
     {
-        GLuint vao = 0;
-        CGL33::VAOAlloc(vao);
+        glhnd vao;
+        CGL33::VAOAlloc(vao.hnd);
         CGL33::VAOBind(vao);
+        vao.release();
     }
 #endif
 
@@ -712,8 +713,38 @@ std::string api_error::message(int error_code) const
         return "No program specified for uniforms";
     case APIError::UniformDataNullptr:
         return "Uniform data pointer was nullptr";
-    default:
-        Throw(implementation_error("message not implemented"));
+    case APIError::DrawNoVertexBuffer:
+        return "No vertex buffer specified";
+    case APIError::DrawNotCompatible:
+        return "Draw is not compatbile with current configuration";
+    case APIError::ShaderCompileFailed:
+        return "Failed to compile shader";
+    case APIError::ShaderStageNotValid:
+        return "Invalid shader stage";
+    case APIError::ShaderNoData:
+        return "Shader constant without data";
+    case APIError::PipelineValidationError:
+        return "Pipeline validation failed";
+    case APIError::PipelineLinkError:
+        return "Pipeline linking failed";
+    case APIError::BufferMappingFailed:
+        return "Buffer mapping failed";
+    case APIError::BufferMappingOutOfBounds:
+        return "Buffer mapping out of bounds";
+    case APIError::HandleAllocationFailed:
+        return "Failed to allocate object handle";
+    case APIError::HandleDeallocFailed:
+        return "Failed to deallocate object handle";
+    case APIError::InvalidObject:
+        return "Invalid GL object";
+    case APIError::InvalidElementType:
+        return "Invalid element type";
+    case APIError::UnimplementedPath:
+        return "Unimplemented rendering path";
+    case APIError::GeneralError:
+        return "General error";
+    case APIError::None:
+        return "";
     }
 }
 

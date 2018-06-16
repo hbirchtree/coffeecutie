@@ -529,6 +529,7 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
     auto& g = d->g_data;
 
     g.vertbuf->dealloc();
+    g.eyetex->dealloc();
     g.vertdesc.dealloc();
     g.v_shader.dealloc();
     g.f_shader.dealloc();

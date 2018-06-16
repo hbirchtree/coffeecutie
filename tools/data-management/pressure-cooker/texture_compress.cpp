@@ -22,7 +22,7 @@ struct TextureCooker : FileProcessor
 bool StbDecode(
     FileProcessor*,
     Pair<CString, ImageProcessor> const&,
-    PixCmp&   cmp,
+    PixCmp    cmp,
     BitFmt&   bfmt,
     CSize&    size,
     Bytes&    data,
@@ -36,7 +36,7 @@ static Map<
     bool (*)(
         FileProcessor*,
         Pair<CString, ImageProcessor> const&,
-        PixCmp&,
+        PixCmp,
         BitFmt&,
         CSize&,
         Bytes&,
@@ -47,8 +47,7 @@ static Map<
 #endif
 };
 
-static Tup<Bytes, Size> UpscaleImage(
-    Bytes&& image, Size const& size, i32 target_size)
+static Size ScaleSize(Size const& size, i32 target_size)
 {
     Size target_size_ = {target_size, target_size};
 
@@ -63,12 +62,20 @@ static Tup<Bytes, Size> UpscaleImage(
                                 C_CAST<i32>(scalar_size.w / scalar_size.h)};
         else
             target_size_ = {target_size *
-                                C_CAST<i32>(scalar_size.w / scalar_size.h),
+                                C_CAST<i32>(scalar_size.h / scalar_size.w),
                             target_size};
     }
 
+    return target_size_;
+}
+
+static Tup<Bytes, Size> ScaleImage(
+    Bytes&& image, Size const& size, i32 target_size, stb::ImageHint hint)
+{
+    auto target_size_ = ScaleSize(size, target_size);
+
     auto temp_img = stb::image_rw::From(image, size, 4);
-    auto res      = stb::Resize(temp_img, target_size_, 4);
+    auto res      = stb::Resize(temp_img, target_size_, 4, hint);
 
     Bytes output_data = std::move(res.data_owner);
 
@@ -107,22 +114,57 @@ static void CompressTextureSet(
 
     texture_settings_t settings;
 
+    settings.flags    = stb::ImageHint::Undefined;
     settings.max_size = max_texture_size;
     settings.min_size = min_texture_size;
     settings.channels = 4;
+    settings.formats  = Compress_ALL; /*!< Use all formats by default */
 
     settings.parse(outName);
 
     if(size.w < settings.max_size && size.h < settings.max_size)
     {
-        std::tie(data, size) =
-            UpscaleImage(std::move(data), size, settings.max_size);
+        std::tie(data, size) = ScaleImage(
+            std::move(data), size, settings.max_size, settings.flags);
+    } else if(size.w > settings.max_size && size.h > settings.max_size)
+    {
+        std::tie(data, size) = ScaleImage(
+            std::move(data), size, settings.max_size, settings.flags);
     }
 
     common_tools_t tools = {cooker, cursor, settings, files};
 
-    CompressDXT(tools, file, size, data, outName);
-    CompressETC12(tools, size, data, outName);
+    if(settings.formats & Compress_DXT)
+        CompressDXT(tools, file, size, data, outName);
+
+#if defined(HAVE_ETC2COMP)
+    if(settings.formats & Compress_ETC)
+        CompressETC12(tools, size, data, outName);
+#endif
+
+    if(settings.formats & Compress_RAW)
+    {
+        /* Just export the raw image as RGBA8 */
+        IMG::serial_image img;
+        img.size               = size;
+        img.v2.bit_fmt         = BitFmt::UByte;
+        img.v2.format.base_fmt = PixFmt::RGBA8;
+        img.v2.format.c_flags  = CompFlags::CompressionNone;
+        img.v2.format.p_flags  = PixFlg::None;
+
+        auto rawName = outName.addExtension("raw");
+
+        files.emplace_back(rawName, Bytes(), 0);
+
+        auto& rawData = files.back().data;
+
+        rawData = Bytes::Alloc(sizeof(img) + data.size);
+        MemCpy(Bytes::From(img), rawData.at(0, sizeof(img)));
+        MemCpy(data, rawData.at(sizeof(img)));
+
+        cursor.progress(
+            TEXCOMPRESS_API "Exporting raw RGBA for {0}", file.first);
+    }
 }
 
 void TextureCooker::process(
@@ -166,9 +208,11 @@ void TextureCooker::process(
     Map<ThreadId::Hash, Vector<VirtFS::VirtDesc>> threadFiles;
 
     Threads::ParallelForEach<FileContainer, FileElement>(
-        targets, [&](FileElement& e) {
+        targets,
+        [&](FileElement& e) {
             CompressTextureSet(threadFiles[ThreadId().hash()], e, this, cursor);
-        });
+        },
+        this->numWorkers);
 
     for(auto& thread : threadFiles)
     {

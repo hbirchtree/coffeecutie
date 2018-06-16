@@ -118,13 +118,14 @@ static void CompressDXT(
                 &output[sizeof(IMG::serial_image)],
                 compression_fmt);
 
-            IMG::serial_image imgDesc = {};
-            imgDesc.size              = imsize.convert<u32>();
-            imgDesc.fmt               = PixFmt::S3TC;
-            imgDesc.bit_fmt           = BitFmt::Byte;
-            imgDesc.comp_fmt          = compression_fmt == squish::kDxt5
-                                   ? CompFlags::S3TC_5
-                                   : CompFlags::S3TC_1;
+            IMG::serial_image imgDesc  = {};
+            imgDesc.size               = imsize.convert<u32>();
+            imgDesc.v2.format.base_fmt = PixFmt::S3TC;
+            imgDesc.v2.bit_fmt         = BitFmt::Byte;
+            imgDesc.v2.format.c_flags  = compression_fmt == squish::kDxt5
+                                            ? CompFlags::S3TC_5
+                                            : CompFlags::S3TC_1;
+            imgDesc.v2.format.p_flags = PixFlg::None;
 
             MemCpy(Bytes::Create(imgDesc), output);
 

@@ -488,12 +488,6 @@ void X11Window::setWindowTitle(const CString &tl)
         XStoreName(m_xData->display, m_xData->window, tl.c_str());
 }
 
-bool X11Window::setWindowIcon(CBitmap &icon)
-{
-    C_UNUSED(icon);
-    return false;
-}
-
 bool X11Window::screensaverMode()
 {
     return false;

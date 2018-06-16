@@ -2,35 +2,38 @@
 
 #include "shared/gl_shared_include.h"
 #include "shared/gl_shared_types.h"
-#include <coffee/core/types/edef/resenum.h>
-#include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/logicenum.h>
+#include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/types/edef/resenum.h>
 
-namespace Coffee{
-namespace CGL{
+namespace Coffee {
+namespace CGL {
 
-inline CGenum to_enum(
-        Severity s)
+inline CGenum to_enum(Severity s)
 {
     switch(s)
     {
 #if GL_VERSION_VERIFY(0x330, 0x320)
     case Severity::High:
+    case Severity::Critical:
+    case Severity::Fatal:
         return GL_DEBUG_SEVERITY_HIGH;
     case Severity::Medium:
         return GL_DEBUG_SEVERITY_MEDIUM;
     case Severity::Low:
         return GL_DEBUG_SEVERITY_LOW;
+    case Severity::Debug:
+    case Severity::Verbose:
     case Severity::Information:
         return GL_DEBUG_SEVERITY_NOTIFICATION;
-#endif
+#else
     default:
         return GL_NONE;
+#endif
     }
 }
 
-inline CGenum to_enum(
-        DebugType t)
+inline CGenum to_enum(DebugType t)
 {
     switch(t)
     {
@@ -58,8 +61,7 @@ inline CGenum to_enum(
     }
 }
 
-inline CGenum to_enum(
-        Object t)
+inline CGenum to_enum(Object t)
 {
     CGenum type;
     switch(t)
@@ -103,8 +105,7 @@ inline CGenum to_enum(
     return type;
 }
 
-inline CGenum to_enum(
-        Feature f, u32 offset)
+inline CGenum to_enum(Feature f, u32 offset)
 {
     (void)offset;
 
@@ -136,7 +137,7 @@ inline CGenum to_enum(
     case Feature::SeamlessCubemap:
         return GL_TEXTURE_CUBE_MAP_SEAMLESS;
     case Feature::ClipDist:
-        return GL_CLIP_DISTANCE0+((offset>7) ? 7 : offset);
+        return GL_CLIP_DISTANCE0 + ((offset > 7) ? 7 : offset);
 #endif
 #if GL_VERSION_VERIFY(0x330, 0x320)
     case Feature::DebugOutput:
@@ -168,13 +169,15 @@ inline CGenum to_enum(
         return GL_SCISSOR_TEST;
     case Feature::StencilTest:
         return GL_STENCIL_TEST;
+
     default:
-        return GL_NONE;
+        break;
     }
+
+    Throw(implementation_error("unhandled hardware feature"));
 }
 
-inline CGenum to_enum(
-        Face f)
+inline CGenum to_enum(Face f)
 {
     switch(f)
     {
@@ -190,8 +193,7 @@ inline CGenum to_enum(
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGenum to_enum(
-        BufBit f)
+inline CGenum to_enum(BufBit f)
 {
     switch(f)
     {
@@ -211,18 +213,15 @@ inline CGenum to_enum(
 }
 #endif
 
-inline CGenum to_enum(
-        Prim p,
-        PrimCre c)
+inline CGenum to_enum(Prim p, PrimCre c)
 {
     switch(p)
     {
-
-    /* LINES */
+        /* LINES */
 
     case Prim::Line:
 #ifdef COFFEE_GLEAM_DESKTOP
-        if(feval(c, PrimCre::Adjacency|PrimCre::Strip))
+        if(feval(c, PrimCre::Adjacency | PrimCre::Strip))
             return GL_LINE_STRIP_ADJACENCY;
 #endif
         switch(c)
@@ -250,7 +249,7 @@ inline CGenum to_enum(
 
     case Prim::Triangle:
 #ifdef COFFEE_GLEAM_DESKTOP
-        if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
+        if(feval(c & (PrimCre::Adjacency | PrimCre::Strip)))
             return GL_TRIANGLE_STRIP_ADJACENCY;
 #endif
         switch(c)
@@ -269,11 +268,11 @@ inline CGenum to_enum(
             return GL_TRIANGLES;
         }
 
-        /* PATCHES */
+            /* PATCHES */
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case Prim::Patch:
-        if(c!=PrimCre::Explicit)
+        if(c != PrimCre::Explicit)
             return GL_NONE;
         else
             return GL_PATCHES;
@@ -284,8 +283,7 @@ inline CGenum to_enum(
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGenum to_enum(
-        DrawMode f)
+inline CGenum to_enum(DrawMode f)
 {
     switch(f)
     {
@@ -297,12 +295,11 @@ inline CGenum to_enum(
         return GL_POINT;
     }
 
-	return GL_NONE;
+    return GL_NONE;
 }
 #endif
 
-inline CGenum to_enum(
-        bool pack, PixelOperation f)
+inline CGenum to_enum(bool pack, PixelOperation f)
 {
     switch(f)
     {
@@ -323,9 +320,7 @@ inline CGenum to_enum(
     }
 }
 
-inline CGenum to_enum(
-        PixelFormat f, PixelFlags e,
-        CompFlags d)
+inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
 {
     using P = PixFmt;
     using C = CompFlags;
@@ -336,97 +331,121 @@ inline CGenum to_enum(
 
     switch(f)
     {
-#ifdef COFFEE_GLEAM_DESKTOP
-    case P::ASTC:{
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    case P::ASTC:
+    {
         CGenum out = 0;
-        if(feval(e&PixelFlags::SRGBA))
+        if(feval(e, PixFlg::sRGB | PixFlg::RGBA))
             out = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
-        else if(feval(e&PixelFlags::RGBA))
+        else if(feval(e & PixFlg::RGBA))
             out = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
         else
             return GL_NONE;
-        switch(d)
-        {
-        case C::ASTC_4x4:
-            out += 0x0;
-            break;
-        case C::ASTC_5x4:
-            out += 0x1;
-            break;
-        case C::ASTC_5x5:
-            out += 0x2;
-            break;
-        case C::ASTC_6x5:
-            out += 0x3;
-            break;
-        case C::ASTC_6x6:
-            out += 0x4;
-            break;
-        case C::ASTC_8x5:
-            out += 0x5;
-            break;
-        case C::ASTC_8x6:
-            out += 0x6;
-            break;
-        case C::ASTC_8x8:
-            out += 0x7;
-            break;
-        case C::ASTC_10x5:
-            out += 0x8;
-            break;
-        case C::ASTC_10x6:
-            out += 0x9;
-            break;
-        case C::ASTC_10x8:
-            out += 0xA;
-            break;
-        case C::ASTC_10x10:
-            out += 0xB;
-            break;
-        case C::ASTC_12x10:
-            out += 0xC;
-            break;
-        case C::ASTC_12x12:
-            out += 0xD;
-            break;
-        default:
+
+        if(d >= C::ASTC_4x4 && d <= C::ASTC_12x12)
+            return out + (C_CAST<u32>(d) - C_CAST<u32>(C::ASTC_4x4));
+        else
             return GL_NONE;
-        }
-        return out;
     }
-    case P::BPTC:
-        if(feval(e,PixelFlags::RGBA|PixelFlags::Unormalized))
-            return GL_COMPRESSED_RGBA_BPTC_UNORM;
-        if(feval(e,PixelFlags::SRGBA|PixelFlags::Unormalized))
-            return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
-        if(feval(e,PixelFlags::RGB|PixelFlags::FloatingPoint|PixelFlags::Unsigned))
-            return GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
-        if(feval(e,PixelFlags::RGB|PixelFlags::FloatingPoint))
-            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
-        return GL_NONE;
+#endif
 
-    case P::RGTC:
-        if(feval(e, PixelFlags::R|PixelFlags::Unsigned))
-            return GL_COMPRESSED_RED_RGTC1;
-        if(feval(e, PixelFlags::R|PixelFlags::Signed))
-            return GL_COMPRESSED_SIGNED_RED_RGTC1;
-        if(feval(e, PixelFlags::RG|PixelFlags::Unsigned))
-            return GL_COMPRESSED_RG_RGTC2;
-        if(feval(e, PixelFlags::RG|PixelFlags::Signed))
-            return GL_COMPRESSED_SIGNED_RG_RGTC2;
-        return GL_NONE;
-
-    case P::S3TC:
-        if(feval(e, PixelFlags::RGB)&& d == C::S3TC_1)
-            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        if(feval(e, PixelFlags::RGBA)&& d == C::S3TC_1)
-            return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        if(feval(e, PixelFlags::RGBA)&&d == C::S3TC_3)
-            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        if(feval(e, PixelFlags::RGBA)&&d == C::S3TC_5)
+    case P::S3TC: /* Includes P::BCn */
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || \
+    defined(GL_ARB_texture_compression_bptc)
+        if(d == CompFlags::BC7)
+        {
+            /* BC7 */
+            if(feval(e, PixFlg::RGBA | PixFlg::Unormalized))
+                return GL_COMPRESSED_RGBA_BPTC_UNORM;
+            if(feval(e, PixFlg::sRGB | PixFlg::RGBA | PixFlg::Unormalized))
+                return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+        } else if(d == CompFlags::BC6H)
+        {
+            /* BC6H */
+            if(feval(e, PixFlg::RGB | PixFlg::FloatingPoint | PixFlg::Unsigned))
+                return GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+            if(feval(e, PixFlg::RGB | PixFlg::FloatingPoint))
+                return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+        } else
+#endif
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || \
+    defined(GL_ARB_texture_compression_rgtc)
+            if(d == CompFlags::BC5)
+        {
+            if(feval(e, PixFlg::RG | PixFlg::Signed))
+                return GL_COMPRESSED_SIGNED_RG_RGTC2;
+            else if(feval(e, PixFlg::RG))
+                return GL_COMPRESSED_RG_RGTC2;
+        } else if(d == CompFlags::BC4)
+        {
+            if(feval(e, PixFlg::R | PixFlg::Signed))
+                return GL_COMPRESSED_SIGNED_RED_RGTC1;
+            else if(feval(e, PixFlg::R))
+                return GL_COMPRESSED_RED_RGTC1;
+        } else
+#endif
+#if defined(GL_EXT_texture_compression_s3tc)
+            if(d == CompFlags::BC3)
+        {
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        } else if(d == CompFlags::BC1)
+        {
+            /* BC1 */
+            if(feval(e, PixFlg::RGB))
+                return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            else if(feval(e, PixFlg::RGBA))
+                return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        }
+#endif
         return GL_NONE;
 
+    case P::ETC1:
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
+        return GL_ETC1_RGB8_OES;
+#else
+        return GL_NONE;
+#endif
+
+    case P::ETC2:
+#if GL_VERSION_VERIFY(0x400, 0x310)
+        if(feval(e, PixFlg::RGB))
+            return GL_COMPRESSED_RGB8_ETC2;
+        else if(feval(e, PixFlg::RGBA))
+            return GL_COMPRESSED_RGBA8_ETC2_EAC;
+        else if(feval(e, PixFlg::RGBA_Punchthrough))
+            return GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+
+        else if(feval(e, PixFlg::RGBA | PixFlg::sRGB))
+            return GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+        else if(feval(e, PixFlg::RGB | PixFlg::sRGB))
+            return GL_COMPRESSED_SRGB8_ETC2;
+        else if(feval(
+                    e, PixFlg::RGB | PixFlg::sRGB | PixFlg::RGBA_Punchthrough))
+            return GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+
+        else if(feval(e, PixFlg::RG))
+            return GL_COMPRESSED_RG11_EAC;
+        else if(feval(e, PixFlg::RG | PixFlg::Signed))
+            return GL_COMPRESSED_SIGNED_RG11_EAC;
+
+        else if(feval(e, PixFlg::R))
+            return GL_COMPRESSED_R11_EAC;
+        else if(feval(e, PixFlg::R | PixFlg::Signed))
+            return GL_COMPRESSED_SIGNED_R11_EAC;
+#endif
+        else
+            return GL_NONE;
+
+    case P::ATC:
+#if defined(GL_AMD_compressed_ATC_texture)
+        if(feval(e, PixFlg::RGBA))
+            return GL_ATC_RGBA_EXPLICIT_ALPHA_AMD;
+        else if(feval(e, PixFlg::RGB))
+            return GL_ATC_RGB_AMD;
+#endif
+        return GL_NONE;
+
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     case P::RGBA2:
         return GL_RGBA2;
     case P::R3G3B2:
@@ -454,10 +473,7 @@ inline CGenum to_enum(
         return GL_RGBA16;
 #endif
 
-//    case P::ETC1:
-//        return GL_ETC1_RGB8_OES;
-
-    /* Requires to be used with GL_UNSIGNED_INT */
+        /* Requires to be used with GL_UNSIGNED_INT */
 #if !defined(COFFEE_ONLY_GLES20)
     case P::Depth16:
         return GL_DEPTH_COMPONENT16;
@@ -572,14 +588,12 @@ inline CGenum to_enum(
     case P::RGBA8:
         return GL_RGBA;
 #endif
-
     default:
-        return GL_NONE;
+        Throw(implementation_error("unhandled pixel format"));
     }
 }
 
-inline CGenum to_enum1(
-        ShaderStage f)
+inline CGenum to_enum1(ShaderStage f)
 {
     switch(f)
     {
@@ -602,36 +616,34 @@ inline CGenum to_enum1(
     }
 }
 
-inline CGenum to_enum2(
-        ShaderStage f)
+inline CGenum to_enum2(ShaderStage f)
 {
     (void)f;
 
     CGenum o = 0;
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
-    if(feval(f&ShaderStage::Vertex))
+    if(feval(f & ShaderStage::Vertex))
         o |= GL_VERTEX_SHADER_BIT;
-    if(feval(f&ShaderStage::TessControl))
+    if(feval(f & ShaderStage::TessControl))
         o |= GL_TESS_CONTROL_SHADER_BIT;
-    if(feval(f&ShaderStage::TessEval))
+    if(feval(f & ShaderStage::TessEval))
         o |= GL_TESS_EVALUATION_SHADER_BIT;
-    if(feval(f&ShaderStage::Geometry))
+    if(feval(f & ShaderStage::Geometry))
         o |= GL_GEOMETRY_SHADER_BIT;
-    if(feval(f&ShaderStage::Fragment))
+    if(feval(f & ShaderStage::Fragment))
         o |= GL_FRAGMENT_SHADER_BIT;
-    if(feval(f&ShaderStage::Compute))
+    if(feval(f & ShaderStage::Compute))
         o |= GL_COMPUTE_SHADER_BIT;
 
-    if(f==ShaderStage::All)
+    if(f == ShaderStage::All)
         o = GL_ALL_SHADER_BITS;
 #endif
 
     return o;
 }
 
-inline CGenum to_enum(
-        ValueHandling f)
+inline CGenum to_enum(ValueHandling f)
 {
     switch(f)
     {
@@ -654,8 +666,7 @@ inline CGenum to_enum(
     }
 }
 
-inline CGenum to_enum(
-        ValueComparison f)
+inline CGenum to_enum(ValueComparison f)
 {
     switch(f)
     {
@@ -680,8 +691,7 @@ inline CGenum to_enum(
     }
 }
 
-inline CGenum to_enum(
-        Operator f)
+inline CGenum to_enum(Operator f)
 {
     switch(f)
     {
@@ -702,93 +712,171 @@ inline CGenum to_enum(
     }
 }
 
-inline CGenum to_enum(Texture f)
+inline CGenum texture_to_enum(TexComp::tex_flag f)
 {
-    return (CGenum)f;
+    using namespace TexComp;
+
+    switch(f)
+    {
+    case tex_2d::value:
+        return GL_TEXTURE_2D;
+    case tex_2d_ms::value:
+        return GL_TEXTURE_2D_MULTISAMPLE;
+    case tex_2d_array::value:
+        return GL_TEXTURE_2D_ARRAY;
+    case tex_2d_array_ms::value:
+        return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+
+    case tex_3d::value:
+        return GL_TEXTURE_3D;
+
+    case tex_cube::value:
+        return GL_TEXTURE_CUBE_MAP;
+    case tex_cube_array::value:
+        return GL_TEXTURE_CUBE_MAP_ARRAY;
+    default:
+        break;
+    }
+
+    if(f & tex_cube::value)
+    {
+        switch(f & DIRECTIONS_MASK)
+        {
+        case North:
+            return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
+        case South:
+            return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
+        case West:
+            return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+        case East:
+            return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+        case Up:
+            return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
+        case Down:
+            return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+        }
+    }
+
+    Throw(implementation_error("unrecognized texture format"));
 }
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 inline CGenum to_enum(LogicOp op)
 {
-    if(feval(op&(LogicOp::COPY)))
+    if(feval(op & (LogicOp::COPY)))
         return GL_COPY;
-    if(feval(op&(LogicOp::COPY|LogicOp::SRC_INVERSE)))
+    if(feval(op & (LogicOp::COPY | LogicOp::SRC_INVERSE)))
         return GL_COPY_INVERTED;
-    if(feval(op&(LogicOp::CLEAR0)))
+    if(feval(op & (LogicOp::CLEAR0)))
         return GL_CLEAR;
-    if(feval(op&(LogicOp::CLEAR1)))
+    if(feval(op & (LogicOp::CLEAR1)))
         return GL_SET;
 
-    if(feval(op&(LogicOp::AND)))
+    if(feval(op & (LogicOp::AND)))
         return GL_AND;
-    if(feval(op&(LogicOp::NAND)))
+    if(feval(op & (LogicOp::NAND)))
         return GL_NAND;
-    if(feval(op&(LogicOp::AND|LogicOp::DST_INVERSE)))
+    if(feval(op & (LogicOp::AND | LogicOp::DST_INVERSE)))
         return GL_AND_REVERSE;
-    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
+    if(feval(op & (LogicOp::AND | LogicOp::SRC_INVERSE)))
         return GL_AND_INVERTED;
 
-    if(feval(op&(LogicOp::OR)))
+    if(feval(op & (LogicOp::OR)))
         return GL_OR;
-    if(feval(op&(LogicOp::NOR)))
+    if(feval(op & (LogicOp::NOR)))
         return GL_NOR;
-    if(feval(op&(LogicOp::XOR)))
+    if(feval(op & (LogicOp::XOR)))
         return GL_XOR;
-    if(feval(op&(LogicOp::OR|LogicOp::DST_INVERSE)))
+    if(feval(op & (LogicOp::OR | LogicOp::DST_INVERSE)))
         return GL_OR_REVERSE;
-    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
+    if(feval(op & (LogicOp::AND | LogicOp::SRC_INVERSE)))
         return GL_OR_INVERTED;
 
-    if(feval(op&(LogicOp::NOOP|LogicOp::DST_INVERSE)))
+    if(feval(op & (LogicOp::NOOP | LogicOp::DST_INVERSE)))
         return GL_INVERT;
 
-    if(feval(op&(LogicOp::XOR|LogicOp::SRC_INVERSE|LogicOp::DST_INVERSE)))
+    if(feval(op & (LogicOp::XOR | LogicOp::SRC_INVERSE | LogicOp::DST_INVERSE)))
         return GL_XOR;
 
     return GL_NONE;
 }
 #endif
 
-inline CGenum to_enum(BufType f)
+inline CGenum buffer_to_enum(BufferComp::buf_flag f)
 {
-    return (CGenum)f;
+    using namespace BufferComp;
+
+    switch(f)
+    {
+    case buf_vertex::value:
+        return GL_ARRAY_BUFFER;
+    case buf_elements::value:
+        return GL_ELEMENT_ARRAY_BUFFER;
+
+#if GL_VERSION_VERIFY(0x330, 0x300)
+    case buf_feedback::value:
+        return GL_TRANSFORM_FEEDBACK_BUFFER;
+    case buf_constants_ro::value:
+        return GL_UNIFORM_BUFFER;
+    case buf_pixel_pack::value:
+        return GL_PIXEL_PACK_BUFFER;
+    case buf_pixel_unpack::value:
+        return GL_PIXEL_UNPACK_BUFFER;
+#endif
+
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+    case buf_draw_indirect::value:
+        return GL_DRAW_INDIRECT_BUFFER;
+    case buf_compute_indirect::value:
+        return GL_DISPATCH_INDIRECT_BUFFER;
+
+    case buf_constants_rw::value:
+        return GL_SHADER_STORAGE_BUFFER;
+    case buf_atomic::value:
+        return GL_ATOMIC_COUNTER_BUFFER;
+    case buf_query::value:
+        return GL_QUERY_BUFFER;
+#endif
+    }
+
+    Throw(implementation_error("unrecognized buffer type"));
 }
 
 inline CGenum to_enum1(RSCA acc)
 {
     CGenum f = GL_NONE;
 
-#if !defined(COFFEE_ONLY_GLES20)
-    if(feval(acc, RSCA::ReadOnly|RSCA::Persistent))
+#if GL_VERSION_VERIFY(0x200, 0x300)
+    if(feval(acc, RSCA::ReadOnly | RSCA::Persistent))
         f = GL_DYNAMIC_READ;
-    if(feval(acc, RSCA::WriteOnly|RSCA::Persistent))
+    if(feval(acc, RSCA::WriteOnly | RSCA::Persistent))
         f = GL_DYNAMIC_DRAW;
-    if(feval(acc, RSCA::ReadWrite|RSCA::Persistent))
+    if(feval(acc, RSCA::ReadWrite | RSCA::Persistent))
         f = GL_DYNAMIC_COPY;
 
     if(f != GL_NONE)
         return f;
 
-    if(feval(acc, RSCA::ReadOnly|RSCA::Streaming))
+    if(feval(acc, RSCA::ReadOnly | RSCA::Streaming))
         f = GL_STREAM_READ;
-    if(feval(acc, RSCA::WriteOnly|RSCA::Streaming))
+    if(feval(acc, RSCA::WriteOnly | RSCA::Streaming))
         f = GL_STREAM_DRAW;
-    if(feval(acc, RSCA::ReadWrite|RSCA::Streaming))
+    if(feval(acc, RSCA::ReadWrite | RSCA::Streaming))
         f = GL_STREAM_COPY;
 
     if(f != GL_NONE)
         return f;
 
-    if(feval(acc&RSCA::ReadOnly))
+    if(feval(acc & RSCA::ReadOnly))
         f = GL_STATIC_READ;
-    if(feval(acc&RSCA::WriteOnly))
+    if(feval(acc & RSCA::WriteOnly))
         f = GL_STATIC_DRAW;
-    if(feval(acc&RSCA::ReadWrite))
+    if(feval(acc & RSCA::ReadWrite))
         f = GL_STATIC_COPY;
 #else
-    if(feval(acc&(RSCA::Persistent)))
+    if(feval(acc & (RSCA::Persistent)))
         f = GL_DYNAMIC_DRAW;
-    else if(feval(acc&(RSCA::Streaming)))
+    else if(feval(acc & (RSCA::Streaming)))
         f = GL_STREAM_DRAW;
     else
         f = GL_STATIC_DRAW;
@@ -803,17 +891,17 @@ inline CGenum to_enum2(RSCA acc)
 
     CGenum f = 0;
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(feval(acc,RSCA::Persistent))
-        f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
+    if(feval(acc, RSCA::Persistent))
+        f |= GL_MAP_COHERENT_BIT | GL_MAP_PERSISTENT_BIT;
 #endif
 #if !defined(COFFEE_ONLY_GLES20)
-    if(feval(acc,RSCA::ReadOnly))
+    if(feval(acc, RSCA::ReadOnly))
         f |= GL_MAP_READ_BIT;
-    if(feval(acc,RSCA::WriteOnly))
+    if(feval(acc, RSCA::WriteOnly))
         f |= GL_MAP_WRITE_BIT;
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(feval(acc,RSCA::Streaming))
+    if(feval(acc, RSCA::Streaming))
         f |= GL_CLIENT_STORAGE_BIT;
 #endif
     return f;
@@ -846,21 +934,21 @@ inline CGenum to_enum(PixelComponents f, PixFmt hint)
     {
     case PixelComponents::RGB:
 #if !defined(COFFEE_ONLY_GLES20)
-        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+        if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RGB_INTEGER;
         else
 #endif
             return GL_RGB;
     case PixelComponents::RGBA:
 #if !defined(COFFEE_ONLY_GLES20)
-        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+        if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RGBA_INTEGER;
         else
 #endif
             return GL_RGBA;
 #if !defined(COFFEE_ONLY_GLES20)
     case PixelComponents::R:
-        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+        if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RED_INTEGER;
         else
             return GL_RED;
@@ -869,7 +957,7 @@ inline CGenum to_enum(PixelComponents f, PixFmt hint)
     case PixelComponents::B:
         return GL_BLUE;
     case PixelComponents::RG:
-        if(feval(flags & (PixFlg::Signed|PixFlg::Unsigned)))
+        if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RG_INTEGER;
         else
             return GL_RG;
@@ -997,7 +1085,6 @@ inline CGenum to_enum(BitFormat f)
         return GL_UNSIGNED_INT_10_10_10_2;
 #endif
 
-
     case BitFormat::UInt_5999R:
         return GL_UNSIGNED_INT_5_9_9_9_REV;
     case BitFormat::UInt_2101010R:
@@ -1022,15 +1109,36 @@ inline CGenum to_enum(BitFormat f)
         return GL_UNSIGNED_BYTE;
 #endif
 
-
     default:
         return GL_NONE;
     }
 }
 
-inline CGenum to_enum(QueryT f)
+inline CGenum query_to_enum(QueryComp::query_flag f)
 {
-    return (CGenum)f;
+    using namespace QueryComp;
+
+    switch(f)
+    {
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    case query_any_samples::value:
+        return GL_ANY_SAMPLES_PASSED;
+    case query_any_samples_conservative::value:
+        return GL_ANY_SAMPLES_PASSED_CONSERVATIVE;
+    case query_feedback_primitives::value:
+        return GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN;
+#endif
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+    case query_samples::value:
+        return GL_SAMPLES_PASSED;
+    case query_primitives::value:
+        return GL_PRIMITIVES_GENERATED;
+    case query_timing::value:
+        return GL_TIME_ELAPSED;
+#endif
+    }
+
+    Throw(implementation_error("unknown query type"));
 }
 
 inline CGenum to_enum(FramebufferT f)
@@ -1123,15 +1231,15 @@ inline CGenum to_enum(VertexWinding e)
 
 inline CGenum to_enum1(DBuffers buf)
 {
-    if(feval(buf,DBuffers::Color))
+    if(feval(buf, DBuffers::Color))
         return GL_COLOR_ATTACHMENT0;
 #if !defined(COFFEE_ONLY_GLES20)
-    if(feval(buf,DBuffers::DepthStencil))
+    if(feval(buf, DBuffers::DepthStencil))
         return GL_DEPTH_STENCIL_ATTACHMENT;
 #endif
-    if(feval(buf,DBuffers::Depth))
+    if(feval(buf, DBuffers::Depth))
         return GL_DEPTH_ATTACHMENT;
-    if(feval(buf,DBuffers::Stencil))
+    if(feval(buf, DBuffers::Stencil))
         return GL_STENCIL_ATTACHMENT;
 
     return GL_NONE;
@@ -1139,13 +1247,13 @@ inline CGenum to_enum1(DBuffers buf)
 
 inline CGenum to_enum2(DBuffers buf)
 {
-    if(feval(buf,DBuffers::Color))
+    if(feval(buf, DBuffers::Color))
         return GL_COLOR_BUFFER_BIT;
-    if(feval(buf,DBuffers::DepthStencil))
-        return GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT;
-    if(feval(buf,DBuffers::Depth))
+    if(feval(buf, DBuffers::DepthStencil))
+        return GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+    if(feval(buf, DBuffers::Depth))
         return GL_DEPTH_BUFFER_BIT;
-    if(feval(buf,DBuffers::Stencil))
+    if(feval(buf, DBuffers::Stencil))
         return GL_STENCIL_BUFFER_BIT;
 
     return GL_NONE;
@@ -1163,15 +1271,15 @@ inline uint32 to_enum_shtype(CGenum f)
 #if !defined(COFFEE_ONLY_GLES20)
     /* Depth buffer samplers */
     case GL_SAMPLER_2D_SHADOW:
-        return sdt_sampf<S2|Depth>::value;
+        return sdt_sampf<S2 | Depth>::value;
     case GL_SAMPLER_2D_ARRAY_SHADOW:
-        return sdt_sampf<S2|Depth>::value;
+        return sdt_sampf<S2 | Depth>::value;
     case GL_SAMPLER_CUBE_SHADOW:
-        return sdt_sampf<SCube|Depth>::value;
+        return sdt_sampf<SCube | Depth>::value;
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
     case GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW:
-        return sdt_sampf<SCubeA|Depth>::value;
+        return sdt_sampf<SCubeA | Depth>::value;
 #endif
 
     /* Normal samplers */
@@ -1184,9 +1292,9 @@ inline uint32 to_enum_shtype(CGenum f)
     case GL_SAMPLER_CUBE_MAP_ARRAY:
         return sdt_sampf<SCubeA>::value;
     case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
-        return sdt_samp<Int_t,SCubeA>::value;
+        return sdt_samp<Int_t, SCubeA>::value;
     case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
-        return sdt_samp<UInt_t,SCubeA>::value;
+        return sdt_samp<UInt_t, SCubeA>::value;
 #endif
 
     case GL_SAMPLER_3D:
@@ -1195,22 +1303,22 @@ inline uint32 to_enum_shtype(CGenum f)
         return sdt_sampf<S2A>::value;
 
     case GL_UNSIGNED_INT_SAMPLER_2D:
-        return sdt_samp<UInt_t,S2>::value;
+        return sdt_samp<UInt_t, S2>::value;
     case GL_UNSIGNED_INT_SAMPLER_3D:
-        return sdt_samp<UInt_t,S3>::value;
+        return sdt_samp<UInt_t, S3>::value;
     case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
-        return sdt_samp<UInt_t,S2A>::value;
+        return sdt_samp<UInt_t, S2A>::value;
     case GL_UNSIGNED_INT_SAMPLER_CUBE:
-        return sdt_samp<UInt_t,SCube>::value;
+        return sdt_samp<UInt_t, SCube>::value;
 
     case GL_INT_SAMPLER_2D:
-        return sdt_samp<Int_t,S2>::value;
+        return sdt_samp<Int_t, S2>::value;
     case GL_INT_SAMPLER_3D:
-        return sdt_samp<Int_t,S3>::value;
+        return sdt_samp<Int_t, S3>::value;
     case GL_INT_SAMPLER_2D_ARRAY:
-        return sdt_samp<Int_t,S2A>::value;
+        return sdt_samp<Int_t, S2A>::value;
     case GL_INT_SAMPLER_CUBE:
-        return sdt_samp<Int_t,SCube>::value;
+        return sdt_samp<Int_t, SCube>::value;
 #endif
 
     case GL_FLOAT:
@@ -1288,5 +1396,5 @@ inline CGenum to_enum1(Delay d)
     }
 }
 
-}
-}
+} // namespace CGL
+} // namespace Coffee

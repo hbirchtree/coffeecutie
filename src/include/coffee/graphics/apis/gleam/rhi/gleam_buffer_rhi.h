@@ -39,7 +39,7 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     void unbind() const;
 
     BufType m_type;
-    CGhnd   m_handle;
+    glhnd   m_handle;
 
     Vector<byte_t> m_mappedBufferFake;
 };
@@ -61,7 +61,7 @@ struct GLEAM_BindableBuffer : GLEAM_VBuffer
 struct GLEAM_UniformBuffer : GLEAM_BindableBuffer
 {
     GLEAM_UniformBuffer(ResourceAccess acc, szptr stride, szptr size) :
-        GLEAM_BindableBuffer(BufType::UniformData, acc, stride, size)
+        GLEAM_BindableBuffer(buf::constants_ro::value, acc, stride, size)
     {
     }
 };
@@ -69,7 +69,7 @@ struct GLEAM_UniformBuffer : GLEAM_BindableBuffer
 struct GLEAM_ShaderBuffer : GLEAM_BindableBuffer
 {
     GLEAM_ShaderBuffer(ResourceAccess acc, szptr stride, szptr size) :
-        GLEAM_BindableBuffer(BufType::ShaderData, acc, stride, size)
+        GLEAM_BindableBuffer(buf::constants_rw::value, acc, stride, size)
     {
     }
 };
@@ -77,7 +77,7 @@ struct GLEAM_ShaderBuffer : GLEAM_BindableBuffer
 struct GLEAM_ArrayBuffer : GLEAM_VBuffer
 {
     GLEAM_ArrayBuffer(ResourceAccess acc, szptr size) :
-        GLEAM_VBuffer(BufType::ArrayData, acc, size)
+        GLEAM_VBuffer(buf::vertex::value, acc, size)
     {
     }
 };
@@ -85,7 +85,7 @@ struct GLEAM_ArrayBuffer : GLEAM_VBuffer
 struct GLEAM_ElementBuffer : GLEAM_VBuffer
 {
     GLEAM_ElementBuffer(ResourceAccess acc, szptr size) :
-        GLEAM_VBuffer(BufType::ElementData, acc, size)
+        GLEAM_VBuffer(buf::elements::value, acc, size)
     {
     }
 };
@@ -93,7 +93,7 @@ struct GLEAM_ElementBuffer : GLEAM_VBuffer
 struct GLEAM_PixelBuffer : GLEAM_VBuffer
 {
     GLEAM_PixelBuffer(ResourceAccess acc, szptr size) :
-        GLEAM_VBuffer(BufType::PixelUData, acc, size)
+        GLEAM_VBuffer(buf::pixel::value, acc, size)
     {
     }
 
@@ -104,7 +104,7 @@ struct GLEAM_IndirectBuffer : GLEAM_VBuffer
 {
     GLEAM_IndirectBuffer(
         ResourceAccess acc, u32 flags, szptr stride, szptr size) :
-        GLEAM_VBuffer(BufType::DrawcallData, acc, size),
+        GLEAM_VBuffer(buf::draw_indirect::value, acc, size),
         m_stride(stride), m_flags(flags)
 
     {

@@ -63,4 +63,17 @@ i32 AutoExec(
     return res;
 }
 
+template<typename GAPI, typename R, typename D>
+i32 AutoExec(
+    Display::LoopFunction<R, D>&& setup,
+    Display::LoopFunction<R, D>&& loop,
+    Display::LoopFunction<R, D>&& cleanup)
+{
+    return AutoExec<GAPI, R, D>(
+        [](R&, D*, Display::CDProperties&) {},
+        std::move(setup),
+        std::move(loop),
+        std::move(cleanup));
+}
+
 } // namespace Coffee

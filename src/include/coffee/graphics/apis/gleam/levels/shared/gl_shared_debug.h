@@ -182,6 +182,11 @@ struct CGL_Shared_Debug
 #endif
     }
 
+    STATICINLINE void DebugMessage(Severity s,DebugType t,CString const& n)
+    {
+        DebugMessage(s, t, n.c_str());
+    }
+
     STATICINLINE void DebugMessage(Severity s,DebugType t,cstring n)
     {
         C_UNUSED(s);
@@ -251,16 +256,9 @@ struct CGL_Shared_Debug
         delete[] Internal_Formats;
     }
 
-    static bool CompressedFormatSupport(Texture, PixelFormat t);
+    static bool CompressedFormatSupport(PixelFormat t);
 
-    STATICINLINE ColBits CompressedFormatDepths(Texture, PixelFormat)
-    {
-//        int32 supp;
-//        glGetInternalformativ(to_enum(tt),to_enum(t),GL_INTERNALFORMAT_SUPPORTED,sizeof(supp),&supp);
-        return {};
-    }
-
-    STATICINLINE bool InternalFormatSupport(Texture, PixelFormat)
+    STATICINLINE bool InternalFormatSupport(PixelFormat)
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
         return true;
@@ -268,11 +266,8 @@ struct CGL_Shared_Debug
         return false;
 #endif
     }
-    STATICINLINE CSize InternalFormatMaxResolution2D(Texture tt, PixelFormat t)
+    STATICINLINE CSize InternalFormatMaxResolution2D()
     {
-        C_UNUSED(tt);
-        C_UNUSED(t);
-
         CSize sz;
         sz.w = sz.h = GetInteger(GL_MAX_TEXTURE_SIZE);
         return sz;

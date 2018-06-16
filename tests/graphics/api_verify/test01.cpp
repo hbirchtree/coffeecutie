@@ -278,23 +278,15 @@ bool test_texture_formats()
     { P::S3TC, F::RGB, C::S3TC_3, true },
     { P::S3TC, F::RGB, C::S3TC_5, true },
 
-    { P::BPTC, F::RGBA|F::Unormalized, C::CompressionNone, false },
-    { P::BPTC, F::SRGBA|F::Unormalized, C::CompressionNone, false },
-    { P::BPTC, F::RGB|F::FloatingPoint, C::CompressionNone, false },
-    { P::BPTC, F::RGB|F::FloatingPoint, C::CompressionNone, false },
+    { P::BCn, F::RGBA|F::Unormalized, C::BC7, false },
+    { P::BCn, F::RGBA|F::sRGB|F::Unormalized, C::BC7, false },
+    { P::BCn, F::RGB|PixFlg::Unsigned|F::FloatingPoint, C::BC6H, false },
+    { P::BCn, F::RGB|F::FloatingPoint, C::BC6H, false },
 
-    { P::BPTC, F::SRGBA|F::FloatingPoint, C::CompressionNone, true },
-    { P::BPTC, F::RGB|F::Unormalized, C::CompressionNone, true },
-
-    { P::RGTC, F::R|F::Unsigned, C::CompressionNone, false },
-    { P::RGTC, F::R|F::Signed, C::CompressionNone, false },
-    { P::RGTC, F::RG|F::Unsigned, C::CompressionNone, false },
-    { P::RGTC, F::RG|F::Signed, C::CompressionNone, false },
-
-    { P::RGTC, F::RGBA|F::Signed, C::CompressionNone, true },
-    { P::RGTC, F::RGB|F::Signed, C::CompressionNone, true },
-    { P::RGTC, F::RGBA|F::Unsigned, C::CompressionNone, true },
-    { P::RGTC, F::RGB|F::Unsigned, C::CompressionNone, true },
+    { P::BCn, F::R|F::Unsigned, C::BC4, false },
+    { P::BCn, F::R|F::Signed, C::BC4, false },
+    { P::BCn, F::RG|F::Unsigned, C::BC5, false },
+    { P::BCn, F::RG|F::Signed, C::BC5, false },
 
     };
 
@@ -310,7 +302,7 @@ bool test_texture_formats()
 
     /* ASTC is a bit different to test */
     static const constexpr F astc_flags[2] = {
-        F::RGBA, F::SRGBA
+        F::RGBA, F::RGBA | F::sRGB
     };
     for(auto i : Range<>(2))
         for(auto j : Range<>(C_CAST<u32>(C::ASTC_12x12) - 1))

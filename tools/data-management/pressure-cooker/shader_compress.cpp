@@ -1,11 +1,13 @@
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
+#include <coffee/core/coffee.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/string_casting.h>
 #include <coffee/interfaces/content_pipeline.h>
-#include <coffee/core/coffee.h>
+#include <coffee/interfaces/content_settings.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/core/terminal/terminal_cursor.h>
+
+/* External dependencies */
 
 #include <glslang/Public/ShaderLang.h>
 #include <shaderc/shaderc.hpp>
@@ -22,48 +24,29 @@
 using namespace CoffeePipeline;
 using namespace Coffee;
 
-struct shader_settings_t
+struct shader_settings_t : settings_visitor
 {
     Vector<u32> shader_versions;
     Path        target_file;
 
-    void parse(Bytes&& data, Path dirName)
+    virtual CString type()
     {
-        if(!data.data)
-            return;
-
-        auto doc = JSON::Read(data.as<char>().data);
-
-        for(auto it = doc.MemberBegin(); it != doc.MemberEnd(); ++it)
-        {
-            auto member = CString((*it).name.GetString());
-
-            if(member == "versions")
-            {
-                auto vers = (*it).value.GetArray();
-                shader_versions.clear();
-                shader_versions.reserve(vers.Size());
-                for(auto& v : vers)
-                    if(v.IsInt())
-                        shader_versions.push_back(v.GetUint());
-            } else if(member == "target")
-                target_file = dirName + (*it).value.GetString();
-        }
+        return "shader";
     }
-
-    void parse(Path basePath)
+    virtual void visit(CString const& member, JSON::Value const& value)
     {
-        Path generalDesc = basePath.dirname() + "ALL.shader.json";
-        Path specificDesc =
-            basePath.addExtension("shader").addExtension("json");
-
-        auto generalRsc = Resource(MkUrl(generalDesc, RSCA::AssetFile));
-        if(FileExists(generalRsc))
-            parse(C_OCAST<Bytes>(generalRsc), basePath.dirname());
-
-        auto specificRsc = Resource(MkUrl(specificDesc, RSCA::AssetFile));
-        if(FileExists(specificRsc))
-            parse(C_OCAST<Bytes>(specificRsc), basePath.dirname());
+        if(member == "versions")
+        {
+            auto vers = value.GetArray();
+            shader_versions.clear();
+            shader_versions.reserve(vers.Size());
+            for(auto& v : vers)
+                if(v.IsInt())
+                    shader_versions.push_back(v.GetUint());
+        } else if(member == "target")
+        {
+            target_file = dirname() + value.GetString();
+        }
     }
 };
 

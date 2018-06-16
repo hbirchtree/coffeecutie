@@ -72,10 +72,13 @@ template<typename ContainerT, typename T>
  * \param pred Predicate function for items from said container
  */
 FORCEDINLINE void ParallelForEach(
-    ContainerT& container, Function<void(T&)>&& pred)
+    ContainerT& container, Function<void(T&)>&& pred, u32 num_workers = 0)
 {
 #if __cplusplus < 201703L
-    const auto thread_count = std::thread::hardware_concurrency();
+    auto thread_count = std::thread::hardware_concurrency();
+
+    if(num_workers > 0)
+        thread_count = num_workers;
 
     Vector<Future<void>> tasks;
     Mutex                work_lock;

@@ -29,6 +29,21 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     MemCpy(Bytes::From(data, size), target->at(offset));
 }
 
+void ImageFreePtr(void* img)
+{
+    stbi_image_free(img);
+}
+
+void DataSetDestr(Bytes& b)
+{
+    Bytes::SetDestr(b, [](Bytes& b) {
+        ImageFreePtr(b.data);
+        b.data     = nullptr;
+        b.size     = 0;
+        b.elements = 0;
+    });
+}
+
 namespace stb_templates {
 
 template<typename PixType>
@@ -139,7 +154,7 @@ bool ResizeImage(
     int              req_comp,
     stb_error&       ec)
 {
-    auto res = stbir_resize_uint8(
+    auto res = stbir_resize_uint8_generic(
         img.data,
         img.size.w,
         img.size.h,
@@ -148,7 +163,13 @@ bool ResizeImage(
         target.w,
         target.h,
         0,
-        req_comp);
+        req_comp,
+        3,
+        0,
+        STBIR_EDGE_CLAMP,
+        STBIR_FILTER_DEFAULT,
+        STBIR_COLORSPACE_LINEAR,
+        nullptr);
 
     if(res == 0)
         ec = STBError::ResizeError;
@@ -195,8 +216,7 @@ bool LoadData(
     target->data_owner = Bytes::From(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
-    Bytes::SetDestr(
-        target->data_owner, [](Bytes& d) { stbi_image_free(d.data); });
+    DataSetDestr(target->data_owner);
 
     target->bpp = scomp;
 
@@ -212,24 +232,29 @@ bool LoadData(
 
 template<typename PixType>
 image<PixType> Resize(
-    image<PixType> const& img, const Size& target, int channels)
+    image<PixType> const& img, const Size& target, int channels, ImageHint hint)
 {
     Bytes          data = Bytes::Alloc(target.area() * channels);
     image<PixType> out_image;
     stb_error      ec;
 
+    bool sharpen = !feval(hint, ImageHint::NormalMap);
+
     out_image = image<PixType>::From(std::move(data), target, channels);
 
-    if(target.area() > img.size.area() || channels != 4)
+    /* For smaller images, nearest-neighbor scaling preserves more detail */
+    if(target.w > 96 || !sharpen)
     {
         if(!stb_templates::ResizeImage(img, target, out_image, channels, ec))
             ec = STBError::InvalidPixelFormat;
     } else
+    {
         stb_templates::NearestNeighborResize(
-            C_RCAST<const rgba_untyped<PixType>*>(img.data),
-            C_RCAST<rgba_untyped<PixType>*>(out_image.data_owner.data),
+            C_RCAST<rgba_untyped<PixType>*>(img.data),
+            C_RCAST<rgba_untyped<PixType>*>(out_image.data),
             img.size,
             target);
+    }
 
     return out_image;
 }
@@ -299,13 +324,14 @@ bool LoadData(
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
-image<u8> Resize(image<u8> const& img, const Size& target, int channels)
+image<u8> Resize(
+    image<u8> const& img, const Size& target, int channels, ImageHint hint)
 {
-    return stb_templates::Resize(img, target, channels);
+    return stb_templates::Resize(img, target, channels, hint);
 }
 image<scalar> Resize(image<scalar> const& img, const Size& target, int channels)
 {
-    return stb_templates::Resize(img, target, channels);
+    return stb_templates::Resize(img, target, channels, ImageHint::Undefined);
 }
 
 bool SavePNG(Bytes& target, const image_const& src, stb_error& ec)
@@ -366,27 +392,6 @@ bool SaveJPG(Bytes& target, const image_const& src, stb_error& ec, int qual)
     }
 
     return res;
-}
-
-void ImageFreePtr(void* img)
-{
-    stbi_image_free(img);
-}
-
-void ImageFree(CStbImage* img)
-{
-    ImageFreePtr(img->data);
-}
-
-void DataSetDestr(Bytes& b)
-{
-    Bytes::SetDestr(b, [](Bytes& b) {
-        //        ImageFreePtr(b.data);
-        CFree(b.data);
-        b.data     = nullptr;
-        b.size     = 0;
-        b.elements = 0;
-    });
 }
 
 image_float ToFloat(const image_const& image)

@@ -40,7 +40,6 @@ public:
     void setWindowPosition(const CPoint &p);
     CString windowTitle() const;
     void setWindowTitle(const CString &tl);
-    bool setWindowIcon(CBitmap &icon);
     bool screensaverMode();
     void setScreensaverMode(bool m);
     CString windowLibrary() const;

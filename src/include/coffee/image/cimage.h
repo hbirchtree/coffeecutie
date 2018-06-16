@@ -14,15 +14,57 @@ namespace IMG {
  */
 struct serial_image
 {
+    serial_image() : size()
+    {
+        v2.format  = {};
+        v2.bit_fmt = BitFmt::Byte;
+    }
+
+    static serial_image const* From(Bytes const& data)
+    {
+        if(data.size < 8)
+            return nullptr;
+
+        serial_image const* img = C_RCAST<serial_image const*>(data.data);
+
+        if(!img->valid())
+            return nullptr;
+
+        if(img->desc_size > 0 && img->desc_size < 128)
+            return img;
+
+        return nullptr;
+    }
+
     static constexpr const u32 hard_signature = 0xBEEF1B01;
 
-    u32                  signature = hard_signature;
+    const u32 signature = hard_signature;
+    const u16 desc_size = sizeof(serial_image);
+    const u16 desc_vers = 2;
+
     _cbasic_size_2d<u32> size;
 
-    CompFlags comp_fmt;
-    PixFmt    fmt;
-    BitFmt    bit_fmt;
-    u8        _pad;
+    union
+    {
+        struct
+        {
+            CompFlags comp_fmt;
+            PixFmt    fmt;
+            BitFmt    bit_fmt;
+            u8        pad_;
+        } v1;
+        struct
+        {
+            CompFmt format;
+            BitFmt  bit_fmt;
+            u8      pad_;
+        } v2;
+        struct
+        {
+            u32 v1;
+            u32 v2;
+        } pad;
+    };
 
     bool valid() const
     {
@@ -36,6 +78,14 @@ struct serial_image
  * \brief Wrappers around stb_image for C++, not very abstract
  */
 namespace stb {
+
+enum class ImageHint : u16
+{
+    Undefined = 0x0,
+    NormalMap = 0x1,
+};
+
+C_FLAGS(ImageHint, u16);
 
 enum class STBError
 {
@@ -90,9 +140,9 @@ struct image
     {
         image<PixType> img;
         img.data_owner = std::move(data);
-        img.data = C_FCAST<PixType*>(img.data_owner.data);
-        img.size = size;
-        img.bpp  = bpp;
+        img.data       = C_FCAST<PixType*>(img.data_owner.data);
+        img.size       = size;
+        img.bpp        = bpp;
 
         return img;
     }
@@ -156,7 +206,11 @@ extern bool LoadData(
  * \param channels Amount of channels
  * \return True if success
  */
-extern image<u8> Resize(image<u8> const& img, const Size& target, int channels);
+extern image<u8> Resize(
+    image<u8> const& img,
+    const Size&      target,
+    int              channels,
+    ImageHint        hint = ImageHint::Undefined);
 extern image<scalar> Resize(
     image<scalar> const& img, const Size& target, int channels);
 
@@ -210,8 +264,7 @@ extern bool SaveJPG(
  * \brief Free image data
  * \param img
  */
-extern void ImageFree(CStbImage* img);
-extern void ImageFreePtr(void* img);
+extern void DataSetDestr(Bytes& b);
 
 } // namespace stb
 
@@ -234,7 +287,9 @@ STATICINLINE bool Load(
     fmt  = BitFmt::UByte;
     data = C_OCAST<Bytes>(img);
     res  = img.size;
-    Bytes::SetDestr(data, [](Bytes& b) { stb::ImageFreePtr(b.data); });
+    Bytes::SetDestr(data, [](Bytes& b) {
+
+    });
 
     return stat;
 }

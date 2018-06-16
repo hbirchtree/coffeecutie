@@ -67,6 +67,8 @@ void cleanup_fun(CDRenderer&, SharedData*)
 
 int32 coffee_main(int32, cstring_w*)
 {
+    RuntimeQueue::CreateNewQueue("Main");
+
     CString err;
 
     ELoop* globLoop = new ELoop{

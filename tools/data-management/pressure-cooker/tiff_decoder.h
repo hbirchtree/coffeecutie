@@ -8,7 +8,7 @@
 bool TiffDecode(
     FileProcessor*                       cooker,
     Pair<CString, ImageProcessor> const& file,
-    PixCmp&                              cmp,
+    PixCmp                               cmp,
     BitFmt&                              bfmt,
     CSize&                               size,
     Bytes&                               data,
@@ -58,6 +58,7 @@ bool TiffDecode(
 
         size.w = C_FCAST<i32>(w);
         size.h = C_FCAST<i32>(h);
+        bfmt   = BitFmt::UByte;
 
         /* This is where we create the PNG file */
         auto pngData = PNG::Save(stb::image_const::From(data, size));

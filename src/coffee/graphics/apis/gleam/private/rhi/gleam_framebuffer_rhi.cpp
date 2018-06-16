@@ -14,23 +14,23 @@ static Map<FramebufferT, CGhnd> fb_cached_binds = {
 };
 
 FORCEDINLINE FramebufferT
-             fb_check_binding(FramebufferT t, FramebufferT b, CGhnd h)
+             fb_check_binding(FramebufferT t, FramebufferT b, glhnd const& h)
 {
-    if(feval(t & b) && fb_cached_binds[b] != h)
+    if(feval(t & b) && fb_cached_binds[b] != h.hnd)
     {
-        fb_cached_binds[b] = h;
+        fb_cached_binds[b] = h.hnd;
         return b;
     }
     return FramebufferT::None;
 }
 
-FORCEDINLINE void fb_bind(FramebufferT t, CGhnd h)
+FORCEDINLINE void fb_bind(FramebufferT t, glhnd const& h)
 {
     FramebufferT b = fb_check_binding(t, FramebufferT::Read, h) |
                      fb_check_binding(t, FramebufferT::Draw, h);
     if(b == FramebufferT::None)
         return;
-    CGL33::FBBind(b, h);
+    CGL33::FBBind(b, h.hnd);
 }
 
 void GLEAM_RenderDummy::allocate(
@@ -38,12 +38,12 @@ void GLEAM_RenderDummy::allocate(
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::RBufAllocEx(m_handle);
+        CGL45::RBufAllocEx(m_handle.hnd);
     else
 #endif
-        CGL33::RBufAlloc(m_handle);
+        CGL33::RBufAlloc(m_handle.hnd);
 
-    CGL33::RBufBind(GL_RENDERBUFFER, m_handle);
+    CGL33::RBufBind(GL_RENDERBUFFER, m_handle.hnd);
     CGL33::RBufStorage(GL_RENDERBUFFER, fmt, size);
     CGL33::RBufBind(GL_RENDERBUFFER, 0);
 
@@ -53,7 +53,8 @@ void GLEAM_RenderDummy::allocate(
 
 void GLEAM_RenderDummy::deallocate()
 {
-    CGL33::RBufFree(m_handle);
+    CGL33::RBufFree(m_handle.hnd);
+    m_handle.release();
 }
 
 /* TODO: Cache the currently bound framebuffers for each type to avoid too many
@@ -63,15 +64,16 @@ void GLEAM_RenderTarget::alloc()
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::FBAllocEx(m_handle);
+        CGL45::FBAllocEx(m_handle.hnd);
     else
 #endif
-        CGL33::FBAlloc(m_handle);
+        CGL33::FBAlloc(m_handle.hnd);
 }
 
 void GLEAM_RenderTarget::dealloc()
 {
-    CGL33::FBFree(m_handle);
+    CGL33::FBFree(m_handle.hnd);
+    m_handle.release();
 }
 
 void GLEAM_RenderTarget::attachSurface(
@@ -84,8 +86,8 @@ void GLEAM_RenderTarget::attachSurface(
     CGL33::FBTexture2D(
         m_type, attachment, s.m_type, s.m_handle, C_FCAST<i32>(mip));
 
-    if(m_handle != 0)
-        fb_bind(m_type, 0);
+    if(m_handle.hnd != 0)
+        fb_bind(m_type, glhnd());
 }
 
 void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy& rb)
@@ -97,10 +99,10 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy& rb)
     if(rb.m_type == DBuffers::Color)
         attachment += rb.m_attachment;
 
-    CGL33::FBRenderbuffer(m_type, attachment, GL_RENDERBUFFER, rb.m_handle);
+    CGL33::FBRenderbuffer(m_type, attachment, GL_RENDERBUFFER, rb.m_handle.hnd);
 
-    if(m_handle != 0)
-        fb_bind(m_type, 0);
+    if(m_handle.hnd != 0)
+        fb_bind(m_type, glhnd());
 }
 
 void GLEAM_RenderTarget::attachDepthStencilSurface(
@@ -118,8 +120,8 @@ void GLEAM_RenderTarget::attachDepthStencilSurface(
             s.m_handle,
             C_FCAST<i32>(mip));
 
-        if(m_handle != 0)
-            fb_bind(m_type, 0);
+        if(m_handle.hnd != 0)
+            fb_bind(m_type, glhnd());
     } else
 #endif
     {
@@ -134,8 +136,8 @@ void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface& s, uint32 mip)
     CGL33::FBTexture2D(
         m_type, GL_DEPTH_ATTACHMENT, s.m_type, s.m_handle, C_FCAST<i32>(mip));
 
-    if(m_handle != 0)
-        fb_bind(m_type, 0);
+    if(m_handle.hnd != 0)
+        fb_bind(m_type, glhnd());
 }
 
 void GLEAM_RenderTarget::blit(
@@ -186,7 +188,7 @@ void GLEAM_RenderTarget::resize(uint32 i, CRect64 const& view)
     cVerbose(
         10,
         GLM_API "Resizing render target {0} to {1}x{2}",
-        m_handle,
+        m_handle.hnd,
         sz_arm_printable.w,
         sz_arm_printable.h);
 
@@ -199,7 +201,7 @@ CSize GLEAM_RenderTarget::size()
 
     if(m_size.area() == 0)
     {
-        if(m_handle != 0)
+        if(m_handle.hnd != 0)
         {
             fb_bind(FramebufferT::Read, m_handle);
             //            out = CGL33::FBGetAttachmentSize(FramebufferT::Read,
@@ -292,8 +294,8 @@ void GLEAM_RenderTarget::bind(FramebufferT t)
 
 void GLEAM_RenderTarget::unbind(FramebufferT t)
 {
-    if(m_handle != 0)
-        fb_bind(t, 0);
+    if(m_handle.hnd != 0)
+        fb_bind(t, glhnd());
 }
 
 bool GLEAM_RenderTarget::validate() const
@@ -302,7 +304,7 @@ bool GLEAM_RenderTarget::validate() const
     {
         fb_bind(m_type, m_handle);
         bool stat = CGL33::FBCheckStatus(m_type);
-        fb_bind(m_type, 0);
+        fb_bind(m_type, glhnd());
         return stat;
     } else
         return true;

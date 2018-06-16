@@ -7,9 +7,12 @@
 #include <coffee/core/types/edef/graphicsenum.h>
 #include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/cdef/handle.h>
 
 namespace Coffee{
 namespace CGL{
+
+using glhnd = generic_handle_t<u32>;
 
 template<size_t Major, size_t Minor, bool ES = false>
 struct gl_ver_t
@@ -284,92 +287,92 @@ enum class Feature
 #endif
 };
 
-enum class BufType
-{
+//enum class BufType
+//{
 
-    ArrayData = GL_ARRAY_BUFFER,
-    ElementData = GL_ELEMENT_ARRAY_BUFFER,
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    UniformData = GL_UNIFORM_BUFFER,
-#else
-    UniformData = GL_NONE,
-#endif
+//    ArrayData = GL_ARRAY_BUFFER,
+//    ElementData = GL_ELEMENT_ARRAY_BUFFER,
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    UniformData = GL_UNIFORM_BUFFER,
+//#else
+//    UniformData = GL_NONE,
+//#endif
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    ShaderData = GL_SHADER_STORAGE_BUFFER,
-    AtomicData = GL_ATOMIC_COUNTER_BUFFER,
-    QueryData = GL_QUERY_BUFFER,
-#else
-    ShaderData = 0,
-    AtomicData = 0,
-    QueryData = 0,
-#endif
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
-#else
-    XFBData = GL_NONE,
-#endif
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    DrawcallData = GL_DRAW_INDIRECT_BUFFER,
-    ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
-#else
-    DrawcallData = 0,
-    ComputecallData = 0,
-#endif
+//#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+//    ShaderData = GL_SHADER_STORAGE_BUFFER,
+//    AtomicData = GL_ATOMIC_COUNTER_BUFFER,
+//    QueryData = GL_QUERY_BUFFER,
+//#else
+//    ShaderData = 0,
+//    AtomicData = 0,
+//    QueryData = 0,
+//#endif
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
+//#else
+//    XFBData = GL_NONE,
+//#endif
+//#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+//    DrawcallData = GL_DRAW_INDIRECT_BUFFER,
+//    ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
+//#else
+//    DrawcallData = 0,
+//    ComputecallData = 0,
+//#endif
 
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    PixelUData = GL_PIXEL_UNPACK_BUFFER,
-    PixelPData = GL_PIXEL_PACK_BUFFER,
-#else
-    PixelUData = GL_NONE,
-    PixelPData = GL_NONE,
-#endif
-};
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    PixelUData = GL_PIXEL_UNPACK_BUFFER,
+//    PixelPData = GL_PIXEL_PACK_BUFFER,
+//#else
+//    PixelUData = GL_NONE,
+//    PixelPData = GL_NONE,
+//#endif
+//};
 
-enum class Texture
-{
-    T2D = GL_TEXTURE_2D,
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    T3D = GL_TEXTURE_3D,
-#else
-    T3D = GL_NONE,
-#endif
-    Cubemap = GL_TEXTURE_CUBE_MAP,
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    Rect = GL_TEXTURE_RECTANGLE,
-#endif
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    T2DArray = GL_TEXTURE_2D_ARRAY,
-#else
-    T2DArray = GL_NONE,
-#endif
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
-#endif
+//enum class Texture
+//{
+//    T2D = GL_TEXTURE_2D,
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    T3D = GL_TEXTURE_3D,
+//#else
+//    T3D = GL_NONE,
+//#endif
+//    Cubemap = GL_TEXTURE_CUBE_MAP,
+//#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+//    Rect = GL_TEXTURE_RECTANGLE,
+//#endif
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    T2DArray = GL_TEXTURE_2D_ARRAY,
+//#else
+//    T2DArray = GL_NONE,
+//#endif
+//#if GL_VERSION_VERIFY(0x330, 0x320)
+//    CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
+//#endif
 
-    CubeX_P = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-    CubeX_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-    CubeY_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-    CubeY_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-    CubeZ_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-    CubeZ_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+//    CubeX_P = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+//    CubeX_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+//    CubeY_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+//    CubeY_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+//    CubeZ_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+//    CubeZ_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    Proxy2D = GL_PROXY_TEXTURE_2D,
-    Proxy3D = GL_PROXY_TEXTURE_3D,
-    ProxyCubemap = GL_PROXY_TEXTURE_CUBE_MAP,
-    ProxyRect = GL_PROXY_TEXTURE_RECTANGLE,
+//#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+//    Proxy2D = GL_PROXY_TEXTURE_2D,
+//    Proxy3D = GL_PROXY_TEXTURE_3D,
+//    ProxyCubemap = GL_PROXY_TEXTURE_CUBE_MAP,
+//    ProxyRect = GL_PROXY_TEXTURE_RECTANGLE,
 
-    Proxy2DArray = GL_PROXY_TEXTURE_2D_ARRAY,
-    ProxyCubemapArray = GL_PROXY_TEXTURE_CUBE_MAP_ARRAY,
+//    Proxy2DArray = GL_PROXY_TEXTURE_2D_ARRAY,
+//    ProxyCubemapArray = GL_PROXY_TEXTURE_CUBE_MAP_ARRAY,
 
-    T2DMS = GL_TEXTURE_2D_MULTISAMPLE,
-    T2DArrayMS = GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
+//    T2DMS = GL_TEXTURE_2D_MULTISAMPLE,
+//    T2DArrayMS = GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
 
-    Proxy2DMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE,
-    Proxy2DArrayMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY,
-#endif
-};
+//    Proxy2DMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE,
+//    Proxy2DArrayMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY,
+//#endif
+//};
 
 enum class DrawMode
 {
@@ -384,30 +387,30 @@ enum class DrawMode
 #endif
 };
 
-enum class QueryT
-{
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    AnySamples = GL_ANY_SAMPLES_PASSED,
-    AnySamplesCon = GL_ANY_SAMPLES_PASSED_CONSERVATIVE,
-    XFGen = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
-#else
-    AnySamples = GL_NONE,
-    AnySamplesCon = GL_NONE,
-    XFGen = GL_NONE,
-#endif
+//enum class QueryT
+//{
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    AnySamples = GL_ANY_SAMPLES_PASSED,
+//    AnySamplesCon = GL_ANY_SAMPLES_PASSED_CONSERVATIVE,
+//    XFGen = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
+//#else
+//    AnySamples = GL_NONE,
+//    AnySamplesCon = GL_NONE,
+//    XFGen = GL_NONE,
+//#endif
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    TimeElapsed = GL_TIME_ELAPSED,
+//#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+//    TimeElapsed = GL_TIME_ELAPSED,
 
-    Samples = GL_SAMPLES_PASSED,
-    PrimGen = GL_PRIMITIVES_GENERATED,
+//    Samples = GL_SAMPLES_PASSED,
+//    PrimGen = GL_PRIMITIVES_GENERATED,
 
-#else
-    TimeElapsed = GL_NONE,
-    Samples = GL_NONE,
-    PrimGen = GL_NONE,
-#endif
-};
+//#else
+//    TimeElapsed = GL_NONE,
+//    Samples = GL_NONE,
+//    PrimGen = GL_NONE,
+//#endif
+//};
 
 enum class PatchProperty
 {

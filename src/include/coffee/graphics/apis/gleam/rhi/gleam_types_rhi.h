@@ -1,13 +1,14 @@
 #pragma once
 
 #include <coffee/interfaces/cgraphics_api.h>
-#include <coffee/graphics/apis/gleam/levels/shared/gl_shared_types.h>
+#include <coffee/core/types/cdef/handle.h>
 
 namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-using namespace CGL;
+using glhnd = generic_handle_t<u32>;
+using BufType = buf::flags;
 
 struct GLEAM_Options
 {

@@ -20,7 +20,7 @@ STATICINLINE Span<T> get_uniform_span(const T* d, szptr size)
 
 template<typename T>
 void SetUniform_wrapf(
-    CGhnd prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -39,7 +39,7 @@ void SetUniform_wrapf(
 
 template<typename T>
 void SetUniform_wrapf_m(
-    CGhnd prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -60,7 +60,7 @@ void SetUniform_wrapf_m(
 
 template<typename T>
 void SetUniform_wrapi(
-    CGhnd prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -80,7 +80,7 @@ void SetUniform_wrapi(
 #if GL_VERSION_VERIFY(0x330, 0x300)
 template<typename T>
 void SetUniform_wrapui(
-    CGhnd prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -110,22 +110,22 @@ void GLEAM_API::SetShaderUniformState(
 
     /* TODO: Tie uniforms to their applicable stages */
 
-    CGhnd prog = 0;
+    glhnd prog;
 
     if(!GLEAM_FEATURES.separable_programs)
-        prog = pipeline.m_handle;
+        prog = pipeline.m_handle.hnd;
     else if(GLEAM_FEATURES.separable_programs)
     {
         /*TODO: Find better way of doing this */
         for(auto s : pipeline.m_programs)
             if(feval(s.stages & stage))
             {
-                prog = s.shader->m_handle;
+                prog = s.shader->m_handle.hnd;
                 break;
             }
     }
 
-    if(prog == 0)
+    if(!prog)
         ec = APIError::UniformNoProgram;
 
     for(auto u : ustate.m_uniforms)
@@ -245,11 +245,15 @@ void GLEAM_API::SetShaderUniformState(
 #endif
         default:
             ec = APIError::UniformTypeUnhandled;
+            prog.release();
             return;
         }
 
         if(ec != APIError::None)
+        {
+            prog.release();
             return;
+        }
     }
 
     for(auto s : ustate.m_samplers)
@@ -261,10 +265,16 @@ void GLEAM_API::SetShaderUniformState(
 
         {
             /* Set up texture state */
+            glhnd ghnd(handle->texture);
+
             CGL33::TexActive(GL_TEXTURE0 + handle->m_unit);
-            CGL33::TexBind(handle->m_type, handle->texture);
+            CGL33::TexBind(handle->m_type, ghnd);
+
+            ghnd.release();
 #if GL_VERSION_VERIFY(0x330, 0x300)
-            CGL33::SamplerBind(handle->m_unit, handle->m_sampler);
+            glhnd shnd(handle->m_sampler);
+            CGL33::SamplerBind(handle->m_unit, shnd);
+            shnd.release();
 
 #if GL_VERSION_VERIFY(0x410, 0x320)
             if(GLEAM_FEATURES.separable_programs)
@@ -309,6 +319,8 @@ void GLEAM_API::SetShaderUniformState(
 #endif
         }
 #endif
+
+    prog.release();
 }
 
 } // namespace GLEAM

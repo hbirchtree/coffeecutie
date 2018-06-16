@@ -136,12 +136,6 @@ void DispmanXWindow::setWindowTitle(const CString &tl)
     C_UNUSED(tl);
 }
 
-bool DispmanXWindow::setWindowIcon(CBitmap &icon)
-{
-    C_UNUSED(icon);
-    return true;
-}
-
 bool DispmanXWindow::screensaverMode()
 {
     return true;
