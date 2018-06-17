@@ -64,7 +64,10 @@ endif()
 
 if(BUILD_GLEAM)
     add_subdirectory(gleam/rhi/base-test)
-    add_subdirectory(gleam/shadow-test)
+    add_subdirectory(gleam/compress-formats)
+    if(BUILD_OPENGL)
+        add_subdirectory(gleam/shadow-test)
+    endif()
 endif()
 
 #

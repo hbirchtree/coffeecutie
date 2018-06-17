@@ -1,17 +1,18 @@
 #pragma once
 
-#include "gleam_types_rhi.h"
 #include "gleam_shader_rhi.h"
+#include "gleam_types_rhi.h"
 #include "gleam_vertex_rhi.h"
+#include "gleam_buffer_rhi.h"
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
 struct GLEAM_Quad_Drawer
 {
-    GLEAM_Quad_Drawer():
-        m_pip()
+    GLEAM_Quad_Drawer() :
+        m_pip(), m_buffer(ResourceAccess::WriteOnly, sizeof(4 * 6))
     {
     }
 
@@ -20,19 +21,20 @@ struct GLEAM_Quad_Drawer
     void cleanup();
 
     GLEAM_VertDescriptor& vertDesc();
-    GLEAM_DrawCall drawcall() const;
-    GLEAM_DrawInstance drawInstance() const;
+    GLEAM_DrawCall        drawcall() const;
+    GLEAM_DrawInstance    drawInstance() const;
 
-protected:
+  protected:
     bool compile_shaders();
     void create_vbo_data(u32 pos, u32 tex);
 
-    GLEAM_Pipeline m_pip;
+    GLEAM_Pipeline          m_pip;
+    GLEAM_ArrayBuffer       m_buffer;
     GLEAM_UniformDescriptor m_texLoc;
     GLEAM_UniformDescriptor m_transformLoc;
-    GLEAM_VertDescriptor m_desc;
+    GLEAM_VertDescriptor    m_desc;
 };
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

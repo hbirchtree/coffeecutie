@@ -11,9 +11,9 @@ namespace Coffee{
 
 struct _cbasic_size
 {
-    _cbasic_size(){}
-    _cbasic_size(int32,int32){}
-    _cbasic_size(int32,int32,int32){}
+    constexpr _cbasic_size(){}
+    constexpr _cbasic_size(int32,int32){}
+    constexpr _cbasic_size(int32,int32,int32){}
 };
 
 struct _cbasic_point
@@ -44,11 +44,11 @@ struct _cbasic_size_2d : _cbasic_size
         h(src.y())
     {
     }
-    _cbasic_size_2d(T wd,T hg)
+    constexpr _cbasic_size_2d(T wd,T hg)
         : w(wd),h(hg)
     {
     }
-    _cbasic_size_2d()
+    constexpr _cbasic_size_2d()
         : w(0), h(0)
     {
     }

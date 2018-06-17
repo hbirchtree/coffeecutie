@@ -82,7 +82,7 @@ class GLCommand:
                      self.min_api[1].compile_str())
 
     def extension_check(self):
-        if len(self.extensions):
+        if len(self.extensions) and False:
             out = ''
             for ext in self.extensions:
                 out += ' || (defined(%s) && %s)' % (ext.name, ext.name)

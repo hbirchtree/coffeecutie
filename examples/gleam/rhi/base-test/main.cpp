@@ -43,27 +43,6 @@ int32 coffee_main(int32, cstring_w*)
     renderer->installEventHandler(
         {StandardCamera<CGCamera>, nullptr, loop->d()->camera_cnt.get(0)});
 
-    runtime_queue_error ec;
-    RuntimeQueue::CreateNewQueue("Main");
-    loop->data->rt_queue =
-        RuntimeQueue::CreateNewThreadQueue("Component Worker", ec);
-
-    C_ERROR_CHECK(ec);
-
-    loop->d()->component_task = ScopedTask(
-        loop->d()->rt_queue->threadId(),
-        {[loop]() {
-             Profiler::DeepPushContext("Components::exec()");
-             loop->d()->entities.exec();
-             Profiler::DeepPopContext();
-         },
-         {},
-         std::chrono::milliseconds(10),
-         RuntimeTask::Periodic,
-         0});
-
-    C_ERROR_CHECK(ec);
-
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)
         cWarning("Failed to start: {0}", err);

@@ -420,6 +420,7 @@ templates:
         - -DGENERATE_FLATPAK=OFF
         - -DGENERATE_SNAPPY=OFF
         - -DGENERATE_APPIMAGE=ON
+        - -DBUILD_ETC2COMP=ON
     .*coverage:
       =cmake-target:
         - all

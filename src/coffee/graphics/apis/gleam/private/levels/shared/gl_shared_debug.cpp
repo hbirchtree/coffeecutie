@@ -55,6 +55,12 @@ void CGL_Shared_Debug::GetExtensions()
     cstring extensions = eglQueryString(m_disp, EGL_EXTENSIONS);
     if(extensions)
         s_ExtensionList = extensions;
+#elif GL_VERSION_VERIFY(0x100, 0x200)
+
+    const GLubyte* exts = glGetString(GL_EXTENSIONS);
+    if(exts)
+        s_ExtensionList = C_RCAST<cstring>(exts);
+
 #endif
 }
 

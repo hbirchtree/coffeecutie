@@ -3,75 +3,14 @@
 #include "../file_abstraction.h"
 #include <coffee/core/CDebug>
 
-#if defined(COFFEE_USE_SDL2)
-#include <SDL_system.h>
-#include <android/asset_manager_jni.h>
-#else
 #include <android/asset_manager.h>
 #include <coffee/android/android_main.h>
-#endif
 
 namespace Coffee {
 namespace CResources {
 namespace Android {
 
 static AAssetManager* m_android_asset_manager = nullptr;
-
-#if defined(COFFEE_USE_SDL2)
-#pragma error WHAT THE FUK
-
-jobject and_get_app_context(JNIEnv* env, jobject activity)
-{
-    jmethodID methodApp = env->GetMethodID(
-        env->GetObjectClass(activity),
-        "getApplication",
-        "()Landroid/app/Application;");
-    if(!methodApp)
-        return nullptr;
-    jclass contextClass = env->FindClass("android/content/Context");
-    if(!contextClass)
-        return nullptr;
-    jmethodID contextMethod = env->GetMethodID(
-        contextClass, "getApplicationContext", "()Landroid/content/Context;");
-    if(!contextMethod)
-        return nullptr;
-    jobject contextObject = env->CallObjectMethod(activity, contextMethod);
-
-    return contextObject;
-}
-
-jobject and_get_asset_manager(JNIEnv* env, jobject activity)
-{
-    jobject appContext = and_get_app_context(env, activity);
-    if(!appContext)
-    {
-        cVerbose(6, "Failed to acquire applicationContext object");
-        return nullptr;
-    }
-    jmethodID getAssets = env->GetMethodID(
-        env->GetObjectClass(appContext),
-        "getAssets",
-        "()Landroid/content/res/AssetManager;");
-    if(!getAssets)
-    {
-        cVerbose(6, "Failed to acquire getAssets() method");
-        return nullptr;
-    }
-    jobject assetManager = env->CallObjectMethod(appContext, getAssets);
-    if(!assetManager)
-    {
-        cVerbose(6, "Failed to get assetManager object");
-        return nullptr;
-    }
-    jobject globalRef = env->NewGlobalRef(assetManager);
-    if(!globalRef)
-    {
-        cVerbose(6, "Failed to acquire global reference to AssetManager");
-        return nullptr;
-    }
-    return globalRef;
-}
-#endif
 
 AAssetManager* and_asset_manager(file_error& ec)
 {

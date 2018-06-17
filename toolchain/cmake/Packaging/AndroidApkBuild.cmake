@@ -163,6 +163,7 @@ macro(APK_GENERATE_PROJECT
 
     # Install asset files
     foreach (resc ${ARGN})
+        message ( "RSC ${resc}" )
         add_custom_command ( TARGET ${TARGET_NAME}
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory ${resc} .

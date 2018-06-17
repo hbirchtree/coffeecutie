@@ -468,7 +468,7 @@ void GLEAM_API::MultiDraw(
     PSTATE* p_state      = nullptr;
     i32     vertexOffset = 0;
 
-    glhnd vertexHandle;
+    glhnd vertexHandle(0);
     i32   baseInstanceLoc = -1;
     i32   instanceID_loc  = -1;
     u32   instanceID_val  = 0;
@@ -605,6 +605,7 @@ void GLEAM_API::MultiDraw(
             ec.category().message(ec.value()).c_str());
     }
 
+    vertexHandle.release();
     pipeline.unbind();
 }
 

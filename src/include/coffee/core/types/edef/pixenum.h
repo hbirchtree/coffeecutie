@@ -153,12 +153,15 @@ enum class PixelFormat : u8
     SRGB8A8, /*  24-bit SRGB data + 8-bit integer*/
 
     ASTC,
-    S3TC,
+    S3TC, /* Includes BPTC and RGTC */
 
     ATC,
 
     ETC1,
     ETC2,
+
+    PVRTC,
+    PVRTC2,
 
     /* Special data */
     //    Stencil,         /*  8-bit integer, not a real format */
@@ -174,7 +177,10 @@ enum class PixelFormat : u8
     DepthStencil, /* Fakes */
 
     /* Aliases */
-    BCn = S3TC,
+    BCn  = S3TC,
+    DXTn = S3TC,
+    BPTC = S3TC,
+    RGTX = S3TC,
 };
 
 /*!
@@ -214,7 +220,14 @@ enum class CompFlags : u8
     BC5, /* RG */
     BC6H,
     BC7, /* RGBA */
+
+    /* BPP specification, meant for PVRTC */
+    bpp_2,
+    bpp_4,
+
+    Undefined = CompressionNone,
 };
+C_FLAGS(CompFlags, u8);
 
 enum class BitFormat : u8
 {

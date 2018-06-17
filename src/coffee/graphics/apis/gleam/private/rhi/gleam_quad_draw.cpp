@@ -148,6 +148,9 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 
 void GLEAM_Quad_Drawer::cleanup()
 {
+    m_desc.dealloc();
+    m_pip.dealloc();
+    m_buffer.dealloc();
 }
 
 GLEAM_DrawInstance GLEAM_Quad_Drawer::drawInstance() const
@@ -213,9 +216,6 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
 {
     GLEAM_API::DBG::SCOPE _(CString(GLM_API) + __FUNCTION__);
-
-    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::WriteOnly,
-                                      sizeof(m_vertex_quad_data));
 
     m_buffer.alloc();
     m_buffer.commit(sizeof(m_vertex_quad_data), m_vertex_quad_data);

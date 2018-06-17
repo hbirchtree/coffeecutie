@@ -124,7 +124,6 @@
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) \
-    || defined(COFFEE_NACL) \
     || (defined(COFFEE_LINUX) && __SIZEOF_PTRDIFF_T__ == 4) ) \
     && __LP64__ != 1) \
     || defined(COFFEE_APPLE)
@@ -145,9 +144,7 @@
  *
  */
 
-#if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2)) \
-    || defined(COFFEE_WINDOWS_UWP) \
-    || defined(COFFEE_NACL)
+#if defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_SDL_MAIN
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
@@ -214,10 +211,12 @@
 #endif
 
 #if defined(COFFEE_APPLE_MOBILE)\
-    || defined(COFFEE_GLES20_MODE)// || defined(COFFEE_EMSCRIPTEN)
+    || defined(COFFEE_GLES20_MODE)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
 #endif
+
+#define COFFEE_GLES20_EXTENSIONS
 
 #if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_WEBGL
@@ -248,7 +247,7 @@
 #define COFFEE_USE_WINDOWS_ANGLE
 #endif
 
-#if defined(COFFEE_ANDROID) && !defined(COFFEE_USE_SDL2)
+#if defined(COFFEE_ANDROID)
 #define COFFEE_USE_ANDROID_NATIVEWIN
 #define COFFEE_USE_MAEMO_EGL
 #endif

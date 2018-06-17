@@ -165,9 +165,11 @@ RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString& name)
 }
 
 static void ImpCreateNewThreadQueue(
-    CString const& name, ShPtr<RuntimeQueue::semaphore_t> sem)
+    CString const& name, ShPtr<RuntimeQueue::semaphore_t>* sem)
 {
     runtime_queue_error ec;
+
+    ShPtr<RuntimeQueue::semaphore_t> sem_ = *sem;
 
 #ifndef COFFEE_LOWFAT
     try
@@ -180,20 +182,20 @@ static void ImpCreateNewThreadQueue(
         RuntimeQueue* queue = RuntimeQueue::CreateNewQueue(name);
 
         /* Then notify our parent that everything is done */
-        sem->condition.notify_one();
+        sem_->condition.notify_one();
 
         /* We use a mutex to allow our parent to notify us of work
          *  or changes in the queue, to allow rescheduling. */
-        UqLock thread_lock(sem->mutex);
+        UqLock thread_lock(sem_->mutex);
 
         Profiler::DeepPushContext(RQ_API "Running queue");
-        while(sem->running.load())
+        while(sem_->running.load())
         {
             queue->executeTasks();
 
             Profiler::DeepPushContext("Sleeping");
             auto sleepTime = queue->timeTillNext();
-            sem->condition.wait_for(thread_lock, sleepTime);
+            sem_->condition.wait_for(thread_lock, sleepTime);
             Profiler::DeepPopContext();
         }
 
@@ -225,12 +227,12 @@ RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name, rqe& ec)
         DProfContext _(DTEXT(RQ_API "Creating new task queue"));
 
         ShPtr<semaphore_t> sem = MkShared<semaphore_t>();
-        UqLock             temp_lock(sem->mutex);
+        UqLock             temp_lock(sem->start_mutex);
 
         sem->running.store(true);
 
         /* Spawn the thread */
-        Thread t(ImpCreateNewThreadQueue, name, sem);
+        Thread t(ImpCreateNewThreadQueue, name, &sem);
         auto   tid = ThreadId(t.get_id()).hash();
 
         /* Wait for the RuntimeQueue to be created on the thread */

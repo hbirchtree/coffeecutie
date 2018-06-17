@@ -219,21 +219,23 @@ GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag) :
     GraphicsDebug::ScopeMarker(tag)
 {
 #if GL_VERSION_VERIFY(0x300, 0x320)
-    if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2))
+    if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2) ||
+       Debug::CheckExtensionSupported("GL_KHR_debug"))
         CGL43::PushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(tag), tag);
-    else
-        CGL_KHR_debug<int>::PushDebugGroupKHR(
-            GL_DEBUG_SOURCE_APPLICATION_KHR, 0, strlen(tag), tag);
+//    else
+//        CGL_KHR_debug<int>::PushDebugGroupKHR(
+//            GL_DEBUG_SOURCE_APPLICATION_KHR, 0, strlen(tag), tag);
 #endif
 }
 
 GLEAM_ScopeMarker::~GLEAM_ScopeMarker()
 {
 #if GL_VERSION_VERIFY(0x300, 0x320)
-    if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2))
+    if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2) ||
+            Debug::CheckExtensionSupported("GL_KHR_debug"))
         CGL43::PopDebugGroup();
-    else
-        CGL_KHR_debug<int>::PopDebugGroupKHR();
+//    else
+//        CGL_KHR_debug<int>::PopDebugGroupKHR();
 #endif
 }
 

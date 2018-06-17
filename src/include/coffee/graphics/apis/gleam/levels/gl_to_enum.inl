@@ -111,11 +111,17 @@ inline CGenum to_enum(Feature f, u32 offset)
 
     switch(f)
     {
-#ifdef COFFEE_GLEAM_DESKTOP
+    case Feature::FramebufferSRGB:
+#if defined(GL_FRAMEBUFFER_SRGB)
+        return GL_FRAMEBUFFER_SRGB;
+#elif defined(GL_FRAMEBUFFER_SRGB_EXT)
+        return GL_FRAMEBUFFER_SRGB_EXT;
+#else
+        break;
+#endif
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     case Feature::DepthClamp:
         return GL_DEPTH_CLAMP;
-    case Feature::FramebufferSRGB:
-        return GL_FRAMEBUFFER_SRGB;
     case Feature::LineSmooth:
         return GL_LINE_SMOOTH;
     case Feature::Multisample:
@@ -340,12 +346,12 @@ inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
         else if(feval(e & PixFlg::RGBA))
             out = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
         else
-            return GL_NONE;
+            break;
 
         if(d >= C::ASTC_4x4 && d <= C::ASTC_12x12)
             return out + (C_CAST<u32>(d) - C_CAST<u32>(C::ASTC_4x4));
         else
-            return GL_NONE;
+            break;
     }
 #endif
 
@@ -391,19 +397,19 @@ inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
         } else if(d == CompFlags::BC1)
         {
             /* BC1 */
-            if(feval(e, PixFlg::RGB))
+            if(feval(e, PixFlg::RGBA))
                 return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            else if(feval(e, PixFlg::RGBA))
+            else if(feval(e, PixFlg::RGB))
                 return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         }
 #endif
-        return GL_NONE;
+        break;
 
     case P::ETC1:
-#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200) && defined(GL_ETC1_RGB8_OES)
         return GL_ETC1_RGB8_OES;
 #else
-        return GL_NONE;
+        break;
 #endif
 
     case P::ETC2:
@@ -432,9 +438,9 @@ inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
             return GL_COMPRESSED_R11_EAC;
         else if(feval(e, PixFlg::R | PixFlg::Signed))
             return GL_COMPRESSED_SIGNED_R11_EAC;
-#endif
         else
-            return GL_NONE;
+#endif
+            break;
 
     case P::ATC:
 #if defined(GL_AMD_compressed_ATC_texture)
@@ -443,7 +449,7 @@ inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
         else if(feval(e, PixFlg::RGB))
             return GL_ATC_RGB_AMD;
 #endif
-        return GL_NONE;
+        break;
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     case P::RGBA2:
@@ -589,8 +595,9 @@ inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
         return GL_RGBA;
 #endif
     default:
-        Throw(implementation_error("unhandled pixel format"));
+        break;
     }
+    Throw(implementation_error("unhandled pixel format"));
 }
 
 inline CGenum to_enum1(ShaderStage f)
@@ -612,8 +619,10 @@ inline CGenum to_enum1(ShaderStage f)
     case ShaderStage::Fragment:
         return GL_FRAGMENT_SHADER;
     default:
-        return GL_NONE;
+        break;
     }
+
+    Throw(implementation_error("invalid shader stage"));
 }
 
 inline CGenum to_enum2(ShaderStage f)
@@ -720,6 +729,10 @@ inline CGenum texture_to_enum(TexComp::tex_flag f)
     {
     case tex_2d::value:
         return GL_TEXTURE_2D;
+    case tex_cube::value:
+        return GL_TEXTURE_CUBE_MAP;
+
+#if GL_VERSION_VERIFY(0x300, 0x300)
     case tex_2d_ms::value:
         return GL_TEXTURE_2D_MULTISAMPLE;
     case tex_2d_array::value:
@@ -730,10 +743,10 @@ inline CGenum texture_to_enum(TexComp::tex_flag f)
     case tex_3d::value:
         return GL_TEXTURE_3D;
 
-    case tex_cube::value:
-        return GL_TEXTURE_CUBE_MAP;
     case tex_cube_array::value:
         return GL_TEXTURE_CUBE_MAP_ARRAY;
+#endif
+
     default:
         break;
     }
@@ -742,6 +755,7 @@ inline CGenum texture_to_enum(TexComp::tex_flag f)
     {
         switch(f & DIRECTIONS_MASK)
         {
+#if GL_VERSION_VERIFY(0x300, 0x300)
         case North:
             return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
         case South:
@@ -754,6 +768,9 @@ inline CGenum texture_to_enum(TexComp::tex_flag f)
             return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
         case Down:
             return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+#endif
+        default:
+            break;
         }
     }
 

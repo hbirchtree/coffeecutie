@@ -315,8 +315,8 @@ void CoffeeTerminate()
 {
     cVerbose(5, "Terminating");
 
-    runtime_queue_error qec;
-    RuntimeQueue::TerminateThreads(qec);
+//    runtime_queue_error qec;
+//    RuntimeQueue::TerminateThreads(qec);
 
 #ifndef COFFEE_LOWFAT
 

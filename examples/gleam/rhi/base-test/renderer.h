@@ -212,6 +212,24 @@ struct RendererState
 
 void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
+    runtime_queue_error rqec;
+    RuntimeQueue::CreateNewQueue("Main");
+    d->rt_queue = RuntimeQueue::CreateNewThreadQueue("Component Worker", rqec);
+
+    C_ERROR_CHECK(rqec);
+
+    d->component_task = ScopedTask(
+        d->rt_queue->threadId(),
+        {[d]() {
+             Profiler::DeepPushContext("Components::exec()");
+             d->entities.exec();
+             Profiler::DeepPopContext();
+         },
+         {},
+         std::chrono::milliseconds(10),
+         RuntimeTask::Periodic,
+         0});
+
     RendererState::RGraphicsData& g = d->g_data;
 
     //    g = {};
@@ -524,8 +542,13 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
     renderer.swapBuffers();
 }
 
-void RendererCleanup(CDRenderer& renderer, RendererState* d)
+void RendererCleanup(CDRenderer&, RendererState* d)
 {
+    runtime_queue_error ec;
+    RuntimeQueue::TerminateThread(d->rt_queue, ec);
+
+    d->entities.reset();
+
     auto& g = d->g_data;
 
     g.vertbuf->dealloc();

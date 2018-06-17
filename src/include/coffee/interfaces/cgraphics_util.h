@@ -19,10 +19,8 @@ FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
     {
         szptr  data_size;
         i32    width, height;
-        PixCmp components;
-
-        u8 _pad[7];
     } data;
+
 
     if(img_data.size < 8)
         return std::make_tuple(Size(), CompFmt());
@@ -34,8 +32,11 @@ FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
         c_fmt = pix->v2.format;
     }
 
-    data.data_size = GetPixCompressedSize(
-        c_fmt, {data.width, data.height});
+    auto loc_size = pix->size.convert<i32>();
+    data.width = loc_size.w;
+    data.height = loc_size.h;
+
+    data.data_size = GetPixCompressedSize(c_fmt, {data.width, data.height});
 
     if(img_data.size < data.data_size)
         return {};
@@ -194,9 +195,12 @@ template<
     typename GFX,
     typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadShader(
-    typename GFX::SHD& shader, Bytes&& data, ShaderStage stage)
+    typename GFX::SHD&   shader,
+    Bytes&&              data,
+    ShaderStage          stage,
+    typename GFX::ERROR& ec)
 {
-    bool status = shader.compile(stage, data);
+    bool status = shader.compile(stage, data, ec);
 
     return status;
 }
@@ -207,28 +211,29 @@ template<
 FORCEDINLINE bool LoadPipeline(
     typename GFX::PIP& pip, Bytes&& vert_file, Bytes&& frag_file)
 {
+    typename GFX::ERROR ec;
     typename GFX::SHD vert;
     typename GFX::SHD frag;
 
-    if(!LoadShader<GFX>(vert, std::move(vert_file), ShaderStage::Vertex))
+    if(!LoadShader<GFX>(vert, std::move(vert_file), ShaderStage::Vertex, ec))
         return false;
-    if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment))
+    if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment, ec))
         return false;
 
     auto& vert_ref = pip.storeShader(std::move(vert));
     auto& frag_ref = pip.storeShader(std::move(frag));
 
-    if(!pip.attach(vert_ref, ShaderStage::Vertex))
+    if(!pip.attach(vert_ref, ShaderStage::Vertex, ec))
         return false;
-    if(!pip.attach(frag_ref, ShaderStage::Fragment))
+    if(!pip.attach(frag_ref, ShaderStage::Fragment, ec))
         return false;
 
-    bool status = pip.assemble();
+    bool status = pip.assemble(ec);
 
     if(!status)
     {
-        vert.dealloc();
-        frag.dealloc();
+        vert_ref.dealloc(ec);
+        frag_ref.dealloc(ec);
     }
 
     return true;

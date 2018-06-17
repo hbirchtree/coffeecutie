@@ -73,34 +73,58 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     {
     case PixFmt::S3TC:
     {
+        if(flags == CompFlags::BC7 || flags == CompFlags::BC6H)
+        {
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || \
     defined(GL_ARB_texture_compression_bptc)
-        if(flags == CompFlags::BC7 || flags == CompFlags::BC6H)
-            return Debug::CheckExtensionSupported(
-                "GL_ARB_texture_compression_bptc");
+            if(APILevelIsOfClass(GL_CURR_API, APIClass::GLCore))
+                return Debug::CheckExtensionSupported(
+                    "GL_ARB_texture_compression_bptc");
+            else
+                return false;
+#else
+            return false;
 #endif
+        }
+        if(flags == CompFlags::BC4 || flags == CompFlags::BC5)
+        {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE) || \
     defined(GL_ARB_texture_compression_rgtc)
-        if(flags == CompFlags::BC5)
-            return Debug::CheckExtensionSupported(
-                "GL_ARB_texture_compression_rgtc");
-
-        if(flags == CompFlags::BC4)
-            return Debug::CheckExtensionSupported(
-                "GL_ARB_texture_compression_rgtc");
+            if(APILevelIsOfClass(GL_CURR_API, APIClass::GLCore))
+                return Debug::CheckExtensionSupported(
+                    "GL_ARB_texture_compression_rgtc");
+            else
+                return false;
+#else
+            return false;
 #endif
+        }
         if(flags == CompFlags::BC1 || flags == CompFlags::BC3)
+        {
             return Debug::CheckExtensionSupported(
                 "GL_EXT_texture_compression_s3tc");
+        }
         break;
     }
+
     case PixFmt::ASTC:
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || \
     defined(GL_KHR_texture_compression_astc_hdr)
-        return true;
+#if !defined(COFFEE_APPLE_MOBILE)
+        if(APILevelIsOfClass(GL_CURR_API, APIClass::GLCore))
+            return true;
+        else
+            /* Disabled because of API */
+            return false;
 #else
+        /* Available on iOS */
+        return true;
+#endif
+#else
+        /* Disabled because it's not available */
         return false;
 #endif
+
     case PixFmt::ETC1:
 #if defined(GL_OES_compressed_ETC1_RGB8_texture)
         return Debug::CheckExtensionSupported(
@@ -109,7 +133,8 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
         return false;
 #endif
     case PixFmt::ETC2:
-#if GL_VERSION_VERIFY(0x420, 0x310) || defined(GL_ARB_ES3_compatibility)
+#if(GL_VERSION_VERIFY(0x430, 0x300) || defined(GL_ARB_ES3_compatibility)) && \
+    defined(GL_COMPRESSED_RGB8_ETC2)
         return true;
 #else
         return false;
@@ -117,6 +142,24 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     case PixFmt::ATC:
 #if defined(GL_AMD_compressed_ATC_texture)
         return Debug::CheckExtensionSupported("GL_AMD_compressed_ATC_texture");
+#else
+        return false;
+#endif
+
+    case PixFmt::PVRTC:
+#if defined(COFFEE_APPLE_MOBILE)
+        return true;
+#elif defined(GL_IMG_texture_compression_pvrtc)
+        return Debug::CheckExtensionSupported(
+            "GL_IMG_texture_compression_pvrtc2");
+#else
+        return false;
+#endif
+
+    case PixFmt::PVRTC2:
+#if defined(GL_IMG_texture_compression_pvrtc2)
+        return Debug::CheckExtensionSupported(
+            "GL_IMG_texture_compression_pvrtc2");
 #else
         return false;
 #endif

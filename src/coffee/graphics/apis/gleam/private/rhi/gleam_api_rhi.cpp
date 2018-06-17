@@ -259,8 +259,7 @@ static void SetAPIFeatures(GLEAM_API::DataStore store)
         features.direct_state || (is_desktop && api >= GL_4_6);
 #endif
 
-    features.draw_base_instance =
-        (api != GLES_2_0) && (api != GLES_3_0) && (api != GL_3_3);
+    features.draw_base_instance = (is_desktop && api >= GL_4_5);
     features.draw_multi_indirect =
         (api == GL_4_3) || (api == GL_4_5) || (api == GL_4_6);
     features.draw_indirect = (api == GL_4_3) || (api == GL_4_5) ||

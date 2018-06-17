@@ -267,6 +267,7 @@ coffee_library (
     ${CoffeeSysInfo_SRCS}
     ${CoffeeCompression_SRCS}
     ${CoffeePlatformData_SRCS}
+    ${CoffeeProfiler_SRCS}
 
     LIBRARIES
     ${STANDARDLIBS_LIBRARIES}
@@ -280,7 +281,6 @@ coffee_library (
     SOURCES
     ${CoffeeCore_AppLoader_SRCS}
     ${CoffeeCore_Bootstrap_SRCS}
-    ${CoffeeProfiler_SRCS}
     LIBRARIES CoffeeCore_Base
     HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core
     )

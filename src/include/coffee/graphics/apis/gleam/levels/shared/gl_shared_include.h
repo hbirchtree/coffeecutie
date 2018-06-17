@@ -71,6 +71,10 @@
 // Standard headers for GLES functions
 #include <GLES2/gl2.h>
 
+#if defined(COFFEE_GLES20_EXTENSIONS)
+#include <GLES2/gl2ext.h>
+#endif
+
 #ifndef GL_VERSION_BASE_ES
 #define GL_VERSION_BASE_ES 0x200
 #endif

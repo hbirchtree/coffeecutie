@@ -3268,7 +3268,7 @@ STATICINLINE void XFBegin(GLenum primitiveMode)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer)
 {
@@ -3283,7 +3283,7 @@ STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glh
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer, ptroff offset, ptroff size)
 {
@@ -3313,7 +3313,7 @@ STATICINLINE void BindFragDataLocation(glhnd const& program, u32 color, const GL
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
 {
@@ -3328,7 +3328,7 @@ STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
 {
@@ -3343,7 +3343,7 @@ STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void VAOBind(glhnd const& array)
 {
@@ -3358,7 +3358,7 @@ STATICINLINE void VAOBind(glhnd const& array)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void FBBlit(i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
 {
@@ -3373,7 +3373,7 @@ STATICINLINE void FBBlit(i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE GLenum FBCheckStatus(FramebufferT target)
 {
@@ -3478,7 +3478,7 @@ STATICINLINE void ColorMaski(u32 index, bool r, bool g, bool b, bool a)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBFree(Span<const u32> const& framebuffers)
 {
@@ -3493,7 +3493,7 @@ STATICINLINE void FBFree(Span<const u32> const& framebuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
 {
@@ -3508,7 +3508,7 @@ STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void VAOFree(Span<const u32> const& arrays)
 {
@@ -3583,7 +3583,7 @@ STATICINLINE void XFEnd()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_map_buffer_range) && GL_ARB_map_buffer_range)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length)
 {
@@ -3598,7 +3598,7 @@ STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
 {
@@ -3613,7 +3613,7 @@ STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
 STATICINLINE void FBTexture1D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level)
 {
@@ -3628,7 +3628,7 @@ STATICINLINE void FBTexture1D(FramebufferT target, GLenum attachment, TexComp::t
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level)
 {
@@ -3643,7 +3643,7 @@ STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::t
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
 STATICINLINE void FBTexture3D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level, i32 zoffset)
 {
@@ -3658,7 +3658,7 @@ STATICINLINE void FBTexture3D(FramebufferT target, GLenum attachment, TexComp::t
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
 {
@@ -3676,7 +3676,7 @@ STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd c
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
 {
@@ -3691,7 +3691,7 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
 {
@@ -3706,7 +3706,7 @@ STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void VAOAlloc(Span<u32> const& arrays)
 {
@@ -3721,7 +3721,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void GenerateMipmap(TexComp::tex_flag const& target)
 {
@@ -3766,7 +3766,7 @@ STATICINLINE i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachment, GLenum pname, i32 * params)
 {
@@ -3781,7 +3781,7 @@ STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachm
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
 {
@@ -3796,7 +3796,7 @@ STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, i32 * params)
 {
@@ -3931,7 +3931,7 @@ STATICINLINE u8 IsEnabledi(Feature target, u32 index)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE u8 IsFramebuffer(u32 framebuffer)
 {
@@ -3946,7 +3946,7 @@ STATICINLINE u8 IsFramebuffer(u32 framebuffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
 {
@@ -3961,7 +3961,7 @@ STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE u8 IsVertexArray(glhnd const& array)
 {
@@ -3976,7 +3976,7 @@ STATICINLINE u8 IsVertexArray(glhnd const& array)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_map_buffer_range) && GL_ARB_map_buffer_range)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length, RSCA access)
 {
@@ -3991,7 +3991,7 @@ STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offse
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& size)
 {
@@ -4006,7 +4006,7 @@ STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt internalformat, Size const& size)
 {
@@ -4507,7 +4507,7 @@ struct CGL_31
 {
 using Parent = CGL_30<ReqVer>;
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_copy_buffer) && GL_ARB_copy_buffer)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, ptroff readOffset, ptroff writeOffset, ptroff size)
 {
@@ -4558,7 +4558,7 @@ STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum t
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
 {
@@ -4573,7 +4573,7 @@ STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockI
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockIndex, GLenum pname, i32 * params)
 {
@@ -4588,7 +4588,7 @@ STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockInd
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, GL_VERSION_NONE) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_31)
 STATICINLINE void ActiveUnifGetName(glhnd const& program, u32 uniformIndex, i32 bufSize, i32 * length, GLchar * uniformName)
 {
@@ -4603,7 +4603,7 @@ STATICINLINE void ActiveUnifGetName(glhnd const& program, u32 uniformIndex, i32 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
 {
@@ -4618,7 +4618,7 @@ STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformBlockName)
 {
@@ -4633,7 +4633,7 @@ STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformB
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void UnifGetIndices(glhnd const& program, i32 uniformCount, const GLchar * *const uniformNames, u32 * uniformIndices)
 {
@@ -4681,7 +4681,7 @@ STATICINLINE void TexBuffer(TexComp::tex_flag const& target, PixFmt internalform
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void UnifBlockBinding(glhnd const& program, u32 uniformBlockIndex, u32 uniformBlockBinding)
 {
@@ -4732,7 +4732,7 @@ STATICINLINE void SyncFree(GLsync sync)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x320) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
 STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
 {
@@ -4747,7 +4747,7 @@ STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x320) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
 STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, i32 basevertex)
 {
@@ -4762,7 +4762,7 @@ STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x320) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
 STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, u32 start, u32 end, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
 {
@@ -4855,7 +4855,7 @@ STATICINLINE void IntegerGet64v(GLenum pname, i64 * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x310) || (defined(GL_ARB_texture_multisample) && GL_ARB_texture_multisample)
+#if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
 STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
 {
@@ -4900,7 +4900,7 @@ STATICINLINE u8 IsSync(GLsync sync)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
 STATICINLINE void MultiDrawElementsBaseVertex(DrwMd const& mode, const i32 * count, TypeEnum type, uintptr indices, i32 drawcount, const i32 * basevertex)
 {
@@ -4915,7 +4915,7 @@ STATICINLINE void MultiDrawElementsBaseVertex(DrwMd const& mode, const i32 * cou
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE) || (defined(GL_ARB_provoking_vertex) && GL_ARB_provoking_vertex)
+#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
 STATICINLINE void VAOProvoking(GLenum mode)
 {
@@ -4930,7 +4930,7 @@ STATICINLINE void VAOProvoking(GLenum mode)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x310) || (defined(GL_ARB_texture_multisample) && GL_ARB_texture_multisample)
+#if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
 STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
 {
@@ -4945,7 +4945,7 @@ STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE) || (defined(GL_ARB_texture_multisample) && GL_ARB_texture_multisample)
+#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
 STATICINLINE void TexImage2DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
 {
@@ -4960,7 +4960,7 @@ STATICINLINE void TexImage2DMultisample(TexComp::tex_flag const& target, i32 sam
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE) || (defined(GL_ARB_texture_multisample) && GL_ARB_texture_multisample)
+#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
 STATICINLINE void TexImage3DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
 {
@@ -4996,7 +4996,7 @@ struct CGL_33
 {
 using Parent = CGL_32<ReqVer>;
 
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE) || (defined(GL_ARB_blend_func_extended) && GL_ARB_blend_func_extended)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
 STATICINLINE void BindFragDataLocationIndexed(glhnd const& program, u32 colorNumber, u32 index, const GLchar * name)
 {
@@ -5011,7 +5011,7 @@ STATICINLINE void BindFragDataLocationIndexed(glhnd const& program, u32 colorNum
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
 {
@@ -5026,7 +5026,7 @@ STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerFree(Span<const u32> const& samplers)
 {
@@ -5041,7 +5041,7 @@ STATICINLINE void SamplerFree(Span<const u32> const& samplers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
 {
@@ -5056,7 +5056,7 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE) || (defined(GL_ARB_blend_func_extended) && GL_ARB_blend_func_extended)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
 STATICINLINE i32 GetFragDataIndex(glhnd const& program, const GLchar * name)
 {
@@ -5071,7 +5071,7 @@ STATICINLINE i32 GetFragDataIndex(glhnd const& program, const GLchar * name)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE) || (defined(GL_ARB_timer_query) && GL_ARB_timer_query)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
 STATICINLINE void QueryGetObjecti64v(u32 id, GLenum pname, i64 * params)
 {
@@ -5086,7 +5086,7 @@ STATICINLINE void QueryGetObjecti64v(u32 id, GLenum pname, i64 * params)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE) || (defined(GL_ARB_timer_query) && GL_ARB_timer_query)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
 STATICINLINE void QueryGetObjectui64v(u32 id, GLenum pname, u64 * params)
 {
@@ -5101,7 +5101,7 @@ STATICINLINE void QueryGetObjectui64v(u32 id, GLenum pname, u64 * params)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32 * params)
 {
@@ -5116,7 +5116,7 @@ STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u32 * params)
 {
@@ -5131,7 +5131,7 @@ STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scalar * params)
 {
@@ -5146,7 +5146,7 @@ STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scal
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 * params)
 {
@@ -5161,7 +5161,7 @@ STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE u8 IsSampler(glhnd const& sampler)
 {
@@ -5176,7 +5176,7 @@ STATICINLINE u8 IsSampler(glhnd const& sampler)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE) || (defined(GL_ARB_timer_query) && GL_ARB_timer_query)
+#if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
 STATICINLINE void QueryCounter(u32 id, QueryComp::query_flag const& target)
 {
@@ -5191,7 +5191,7 @@ STATICINLINE void QueryCounter(u32 id, QueryComp::query_flag const& target)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const i32 * param)
 {
@@ -5206,7 +5206,7 @@ STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const u32 * param)
 {
@@ -5221,7 +5221,7 @@ STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar param)
 {
@@ -5236,7 +5236,7 @@ STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar p
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const scalar * param)
 {
@@ -5251,7 +5251,7 @@ STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const s
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 param)
 {
@@ -5266,7 +5266,7 @@ STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 para
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const i32 * param)
 {
@@ -5425,7 +5425,7 @@ struct CGL_40
 {
 using Parent = CGL_33<ReqVer>;
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback3) && GL_ARB_transform_feedback3)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void QueryBeginIndexed(QueryComp::query_flag const& target, u32 index, u32 id)
 {
@@ -5440,7 +5440,7 @@ STATICINLINE void QueryBeginIndexed(QueryComp::query_flag const& target, u32 ind
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFBind(GLenum target, u32 id)
 {
@@ -5527,7 +5527,7 @@ STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFFree(Span<const u32> const& ids)
 {
@@ -5542,7 +5542,7 @@ STATICINLINE void XFFree(Span<const u32> const& ids)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x310) || (defined(GL_ARB_draw_indirect) && GL_ARB_draw_indirect)
+#if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
 STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
 {
@@ -5557,7 +5557,7 @@ STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x310) || (defined(GL_ARB_draw_indirect) && GL_ARB_draw_indirect)
+#if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
 STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr indirect)
 {
@@ -5572,7 +5572,7 @@ STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void DrawTransformFeedback(DrwMd const& mode, u32 id)
 {
@@ -5587,7 +5587,7 @@ STATICINLINE void DrawTransformFeedback(DrwMd const& mode, u32 id)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback3) && GL_ARB_transform_feedback3)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void DrawTransformFeedbackStream(DrwMd const& mode, u32 id, u32 stream)
 {
@@ -5602,7 +5602,7 @@ STATICINLINE void DrawTransformFeedbackStream(DrwMd const& mode, u32 id, u32 str
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback3) && GL_ARB_transform_feedback3)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void QueryEndIndexed(QueryComp::query_flag const& target, u32 index)
 {
@@ -5617,7 +5617,7 @@ STATICINLINE void QueryEndIndexed(QueryComp::query_flag const& target, u32 index
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFAlloc(Span<u32> const& ids)
 {
@@ -5692,7 +5692,7 @@ STATICINLINE void ProgramGetStageiv(glhnd const& program, ShaderStage shadertype
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback3) && GL_ARB_transform_feedback3)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void QueryGetIndexediv(GLenum target, u32 index, GLenum pname, i32 * params)
 {
@@ -5752,7 +5752,7 @@ STATICINLINE void UnifGetSubroutineuiv(ShaderStage shadertype, i32 location, u32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void UnifGetdv(glhnd const& program, i32 location, bigscalar * params)
 {
@@ -5767,7 +5767,7 @@ STATICINLINE void UnifGetdv(glhnd const& program, i32 location, bigscalar * para
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE u8 IsTransformFeedback(u32 id)
 {
@@ -5797,7 +5797,7 @@ STATICINLINE void MinSampleShading(scalar value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_tessellation_shader) && GL_ARB_tessellation_shader)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void PatchParameterfv(PatchProperty pname, const scalar * values)
 {
@@ -5812,7 +5812,7 @@ STATICINLINE void PatchParameterfv(PatchProperty pname, const scalar * values)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x320) || (defined(GL_ARB_tessellation_shader) && GL_ARB_tessellation_shader)
+#if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
 STATICINLINE void PatchParameteri(PatchProperty pname, i32 value)
 {
@@ -5827,7 +5827,7 @@ STATICINLINE void PatchParameteri(PatchProperty pname, i32 value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFPause()
 {
@@ -5842,7 +5842,7 @@ STATICINLINE void XFPause()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFResume()
 {
@@ -5857,7 +5857,7 @@ STATICINLINE void XFResume()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unif1d(i32 location, bigscalar x)
 {
@@ -5872,7 +5872,7 @@ STATICINLINE void Unif1d(i32 location, bigscalar x)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, Span<const bigscalar> const& value)
 {
@@ -5887,7 +5887,7 @@ STATICINLINE void Unifdv(i32 location, Span<const bigscalar> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unif2d(i32 location, bigscalar x, bigscalar y)
 {
@@ -5902,7 +5902,7 @@ STATICINLINE void Unif2d(i32 location, bigscalar x, bigscalar y)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, Span<Vecd2> const& value)
 {
@@ -5917,7 +5917,7 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd2> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unif3d(i32 location, bigscalar x, bigscalar y, bigscalar z)
 {
@@ -5932,7 +5932,7 @@ STATICINLINE void Unif3d(i32 location, bigscalar x, bigscalar y, bigscalar z)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, Span<Vecd3> const& value)
 {
@@ -5947,7 +5947,7 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd3> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unif4d(i32 location, bigscalar x, bigscalar y, bigscalar z, bigscalar w)
 {
@@ -5962,7 +5962,7 @@ STATICINLINE void Unif4d(i32 location, bigscalar x, bigscalar y, bigscalar z, bi
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, Span<Vecd4> const& value)
 {
@@ -5977,7 +5977,7 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd4> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2> const& value)
 {
@@ -5992,7 +5992,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_3> const& value)
 {
@@ -6007,7 +6007,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_3> const& valu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_4> const& value)
 {
@@ -6022,7 +6022,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_4> const& valu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3> const& value)
 {
@@ -6037,7 +6037,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_2> const& value)
 {
@@ -6052,7 +6052,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_2> const& valu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_4> const& value)
 {
@@ -6067,7 +6067,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_4> const& valu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4> const& value)
 {
@@ -6082,7 +6082,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_2> const& value)
 {
@@ -6097,7 +6097,7 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_2> const& valu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE) || (defined(GL_ARB_gpu_shader_fp64) && GL_ARB_gpu_shader_fp64)
+#if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
 STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_3> const& value)
 {
@@ -6153,7 +6153,7 @@ using Parent::Unif2d;
 using Parent::Unif3d;
 using Parent::Unif4d;
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void ProgramActiveShader(glhnd const& pipeline, glhnd const& program)
 {
@@ -6168,7 +6168,7 @@ STATICINLINE void ProgramActiveShader(glhnd const& pipeline, glhnd const& progra
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineBind(glhnd const& pipeline)
 {
@@ -6183,7 +6183,7 @@ STATICINLINE void PipelineBind(glhnd const& pipeline)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ClearDepthf(scalar d)
 {
@@ -6198,7 +6198,7 @@ STATICINLINE void ClearDepthf(scalar d)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> const& strings)
 {
@@ -6213,7 +6213,7 @@ STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> co
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
 {
@@ -6228,7 +6228,7 @@ STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void DepthRangeArrayv(u32 first, i32 count, const bigscalar * v)
 {
@@ -6243,7 +6243,7 @@ STATICINLINE void DepthRangeArrayv(u32 first, i32 count, const bigscalar * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void DepthRangeIndexed(u32 index, bigscalar n, bigscalar f)
 {
@@ -6258,7 +6258,7 @@ STATICINLINE void DepthRangeIndexed(u32 index, bigscalar n, bigscalar f)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void DepthRangef(scalar n, scalar f)
 {
@@ -6273,7 +6273,7 @@ STATICINLINE void DepthRangef(scalar n, scalar f)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
 {
@@ -6288,7 +6288,7 @@ STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ScalarGeti_v(GLenum target, u32 index, bigscalar * data)
 {
@@ -6303,7 +6303,7 @@ STATICINLINE void ScalarGeti_v(GLenum target, u32 index, bigscalar * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ScalarfGeti_v(GLenum target, u32 index, scalar * data)
 {
@@ -6318,7 +6318,7 @@ STATICINLINE void ScalarfGeti_v(GLenum target, u32 index, scalar * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x300) || (defined(GL_ARB_get_program_binary) && GL_ARB_get_program_binary)
+#if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
 STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * binaryFormat, Bytes const& binary)
 {
@@ -6333,7 +6333,7 @@ STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * length, GLchar * infoLog)
 {
@@ -6348,7 +6348,7 @@ STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * l
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * params)
 {
@@ -6363,7 +6363,7 @@ STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * param
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precisiontype, i32 * range, i32 * precision)
 {
@@ -6378,7 +6378,7 @@ STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precis
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOGetLdv(u32 index, GLenum pname, bigscalar * params)
 {
@@ -6393,7 +6393,7 @@ STATICINLINE void VAOGetLdv(u32 index, GLenum pname, bigscalar * params)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
 {
@@ -6408,7 +6408,7 @@ STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x300) || (defined(GL_ARB_get_program_binary) && GL_ARB_get_program_binary)
+#if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
 STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const void * binary, i32 length)
 {
@@ -6423,7 +6423,7 @@ STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x300) || (defined(GL_ARB_get_program_binary) && GL_ARB_get_program_binary) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
 STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 value)
 {
@@ -6441,7 +6441,7 @@ STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 valu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unif1d(glhnd const& program, i32 location, bigscalar v0)
 {
@@ -6456,7 +6456,7 @@ STATICINLINE void Unif1d(glhnd const& program, i32 location, bigscalar v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<const bigscalar> const& value)
 {
@@ -6471,7 +6471,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<const bigscala
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
 {
@@ -6486,7 +6486,7 @@ STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> const& value)
 {
@@ -6501,7 +6501,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
 {
@@ -6516,7 +6516,7 @@ STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> const& value)
 {
@@ -6531,7 +6531,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> con
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
 {
@@ -6546,7 +6546,7 @@ STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> const& value)
 {
@@ -6561,7 +6561,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> co
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unif2d(glhnd const& program, i32 location, bigscalar v0, bigscalar v1)
 {
@@ -6576,7 +6576,7 @@ STATICINLINE void Unif2d(glhnd const& program, i32 location, bigscalar v0, bigsc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd2> const& value)
 {
@@ -6591,7 +6591,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd2> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v1)
 {
@@ -6606,7 +6606,7 @@ STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& value)
 {
@@ -6621,7 +6621,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
 {
@@ -6636,7 +6636,7 @@ STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& value)
 {
@@ -6651,7 +6651,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
 {
@@ -6666,7 +6666,7 @@ STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const& value)
 {
@@ -6681,7 +6681,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unif3d(glhnd const& program, i32 location, bigscalar v0, bigscalar v1, bigscalar v2)
 {
@@ -6696,7 +6696,7 @@ STATICINLINE void Unif3d(glhnd const& program, i32 location, bigscalar v0, bigsc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd3> const& value)
 {
@@ -6711,7 +6711,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd3> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2)
 {
@@ -6726,7 +6726,7 @@ STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& value)
 {
@@ -6741,7 +6741,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2)
 {
@@ -6756,7 +6756,7 @@ STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& value)
 {
@@ -6771,7 +6771,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2)
 {
@@ -6786,7 +6786,7 @@ STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const& value)
 {
@@ -6801,7 +6801,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unif4d(glhnd const& program, i32 location, bigscalar v0, bigscalar v1, bigscalar v2, bigscalar v3)
 {
@@ -6816,7 +6816,7 @@ STATICINLINE void Unif4d(glhnd const& program, i32 location, bigscalar v0, bigsc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd4> const& value)
 {
@@ -6831,7 +6831,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd4> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
 {
@@ -6846,7 +6846,7 @@ STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& value)
 {
@@ -6861,7 +6861,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
 {
@@ -6876,7 +6876,7 @@ STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& value)
 {
@@ -6891,7 +6891,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
 {
@@ -6906,7 +6906,7 @@ STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const& value)
 {
@@ -6921,7 +6921,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd2> const& value)
 {
@@ -6936,7 +6936,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2> const& value)
 {
@@ -6951,7 +6951,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd2_3> const& value)
 {
@@ -6966,7 +6966,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_3> const& value)
 {
@@ -6981,7 +6981,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd2_4> const& value)
 {
@@ -6996,7 +6996,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_4> const& value)
 {
@@ -7011,7 +7011,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd3> const& value)
 {
@@ -7026,7 +7026,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3> const& value)
 {
@@ -7041,7 +7041,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd3_2> const& value)
 {
@@ -7056,7 +7056,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_2> const& value)
 {
@@ -7071,7 +7071,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd3_4> const& value)
 {
@@ -7086,7 +7086,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_4> const& value)
 {
@@ -7101,7 +7101,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd4> const& value)
 {
@@ -7116,7 +7116,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4> const& value)
 {
@@ -7131,7 +7131,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd4_2> const& value)
 {
@@ -7146,7 +7146,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_2> const& value)
 {
@@ -7161,7 +7161,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd4_3> const& value)
 {
@@ -7176,7 +7176,7 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_3> const& value)
 {
@@ -7191,7 +7191,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ShaderReleaseCompiler()
 {
@@ -7206,7 +7206,7 @@ STATICINLINE void ShaderReleaseCompiler()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ScissorArrayv(u32 first, i32 count, const i32 * v)
 {
@@ -7221,7 +7221,7 @@ STATICINLINE void ScissorArrayv(u32 first, i32 count, const i32 * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ScissorIndexed(u32 index, i32 left, i32 bottom, Size const& size)
 {
@@ -7236,7 +7236,7 @@ STATICINLINE void ScissorIndexed(u32 index, i32 left, i32 bottom, Size const& si
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ScissorIndexedv(u32 index, const i32 * v)
 {
@@ -7251,7 +7251,7 @@ STATICINLINE void ScissorIndexedv(u32 index, const i32 * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ShaderBinary(i32 count, const u32 * shaders, GLenum binaryformat, const void * binary, i32 length)
 {
@@ -7266,7 +7266,7 @@ STATICINLINE void ShaderBinary(i32 count, const u32 * shaders, GLenum binaryform
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void ProgramUseStages(glhnd const& pipeline, ShaderStage stages, glhnd const& program)
 {
@@ -7281,7 +7281,7 @@ STATICINLINE void ProgramUseStages(glhnd const& pipeline, ShaderStage stages, gl
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineValidate(glhnd const& pipeline)
 {
@@ -7296,7 +7296,7 @@ STATICINLINE void PipelineValidate(glhnd const& pipeline)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL1d(u32 index, bigscalar x)
 {
@@ -7311,7 +7311,7 @@ STATICINLINE void VAOL1d(u32 index, bigscalar x)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL1dv(u32 index, const bigscalar * v)
 {
@@ -7326,7 +7326,7 @@ STATICINLINE void VAOL1dv(u32 index, const bigscalar * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL2d(u32 index, bigscalar x, bigscalar y)
 {
@@ -7341,7 +7341,7 @@ STATICINLINE void VAOL2d(u32 index, bigscalar x, bigscalar y)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL2dv(u32 index, const bigscalar * v)
 {
@@ -7356,7 +7356,7 @@ STATICINLINE void VAOL2dv(u32 index, const bigscalar * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL3d(u32 index, bigscalar x, bigscalar y, bigscalar z)
 {
@@ -7371,7 +7371,7 @@ STATICINLINE void VAOL3d(u32 index, bigscalar x, bigscalar y, bigscalar z)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL3dv(u32 index, const bigscalar * v)
 {
@@ -7386,7 +7386,7 @@ STATICINLINE void VAOL3dv(u32 index, const bigscalar * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL4d(u32 index, bigscalar x, bigscalar y, bigscalar z, bigscalar w)
 {
@@ -7401,7 +7401,7 @@ STATICINLINE void VAOL4d(u32 index, bigscalar x, bigscalar y, bigscalar z, bigsc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOL4dv(u32 index, const bigscalar * v)
 {
@@ -7416,7 +7416,7 @@ STATICINLINE void VAOL4dv(u32 index, const bigscalar * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_64bit) && GL_ARB_vertex_attrib_64bit)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void VAOLPointer(u32 index, i32 size, GLenum type, i32 stride, const void * pointer)
 {
@@ -7431,7 +7431,7 @@ STATICINLINE void VAOLPointer(u32 index, i32 size, GLenum type, i32 stride, cons
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ViewportArrayv(u32 first, i32 count, const scalar * v)
 {
@@ -7446,7 +7446,7 @@ STATICINLINE void ViewportArrayv(u32 first, i32 count, const scalar * v)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ViewportIndexedf(u32 index, scalar x, scalar y, scalar w, scalar h)
 {
@@ -7461,7 +7461,7 @@ STATICINLINE void ViewportIndexedf(u32 index, scalar x, scalar y, scalar w, scal
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE) || (defined(GL_ARB_viewport_array) && GL_ARB_viewport_array)
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
 STATICINLINE void ViewportIndexedfv(u32 index, const scalar * v)
 {
@@ -7482,7 +7482,7 @@ struct CGL_42
 {
 using Parent = CGL_41<ReqVer>;
 
-#if GL_VERSION_VERIFY(0x420, 0x310) || (defined(GL_ARB_shader_image_load_store) && GL_ARB_shader_image_load_store)
+#if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
 STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool layered, i32 layer, RSCA access, PixFmt format)
 {
@@ -7497,7 +7497,7 @@ STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool l
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_base_instance) && GL_ARB_base_instance)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd const& mode, i32 first, i32 count, i32 instancecount, u32 baseinstance)
 {
@@ -7512,7 +7512,7 @@ STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd const& mode, i32 first, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_base_instance) && GL_ARB_base_instance)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void DrawElementsInstancedBaseInstance(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, u32 baseinstance)
 {
@@ -7527,7 +7527,7 @@ STATICINLINE void DrawElementsInstancedBaseInstance(DrwMd const& mode, i32 count
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_base_instance) && GL_ARB_base_instance)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, i32 basevertex, u32 baseinstance)
 {
@@ -7542,7 +7542,7 @@ STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(DrwMd const& mode,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback_instanced) && GL_ARB_transform_feedback_instanced)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void DrawTransformFeedbackInstanced(DrwMd const& mode, u32 id, i32 instancecount)
 {
@@ -7557,7 +7557,7 @@ STATICINLINE void DrawTransformFeedbackInstanced(DrwMd const& mode, u32 id, i32 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_transform_feedback_instanced) && GL_ARB_transform_feedback_instanced)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void DrawTransformFeedbackStreamInstanced(DrwMd const& mode, u32 id, u32 stream, i32 instancecount)
 {
@@ -7572,7 +7572,7 @@ STATICINLINE void DrawTransformFeedbackStreamInstanced(DrwMd const& mode, u32 id
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_shader_atomic_counters) && GL_ARB_shader_atomic_counters)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void BufGetActiveAtomicCounteriv(glhnd const& program, u32 bufferIndex, GLenum pname, i32 * params)
 {
@@ -7587,7 +7587,7 @@ STATICINLINE void BufGetActiveAtomicCounteriv(glhnd const& program, u32 bufferIn
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x300) || (defined(GL_ARB_internalformat_query) && GL_ARB_internalformat_query)
+#if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
 STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt internalformat, GLenum pname, i32 bufSize, i32 * params)
 {
@@ -7602,7 +7602,7 @@ STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt in
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x310) || (defined(GL_ARB_shader_image_load_store) && GL_ARB_shader_image_load_store)
+#if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
 STATICINLINE void MemoryBarrier(u32 barriers)
 {
@@ -7617,7 +7617,7 @@ STATICINLINE void MemoryBarrier(u32 barriers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || (defined(GL_ARB_texture_storage) && GL_ARB_texture_storage)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
 STATICINLINE void TexStorage1D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, i32 width)
 {
@@ -7632,7 +7632,7 @@ STATICINLINE void TexStorage1D(TexComp::tex_flag const& target, i32 levels, PixF
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x300) || (defined(GL_ARB_texture_storage) && GL_ARB_texture_storage)
+#if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
 STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size const& size)
 {
@@ -7647,7 +7647,7 @@ STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixF
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x300) || (defined(GL_ARB_texture_storage) && GL_ARB_texture_storage)
+#if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
 STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size3 const& size)
 {
@@ -7668,7 +7668,7 @@ struct CGL_43
 {
 using Parent = CGL_42<ReqVer>;
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offset, i32 stride)
 {
@@ -7683,7 +7683,7 @@ STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offs
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_clear_buffer_object) && GL_ARB_clear_buffer_object)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void BufClearData(BufferComp::buf_flag const& target, PixFmt internalformat, PixCmp format, BitFmt type, const void * data)
 {
@@ -7698,7 +7698,7 @@ STATICINLINE void BufClearData(BufferComp::buf_flag const& target, PixFmt intern
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_clear_buffer_object) && GL_ARB_clear_buffer_object)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, BytesConst const& data)
 {
@@ -7713,7 +7713,7 @@ STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff o
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_copy_image) && GL_ARB_copy_image)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void CopyImageSubData(u32 srcName, GLenum srcTarget, i32 srcLevel, i32 srcX, i32 srcY, i32 srcZ, u32 dstName, GLenum dstTarget, i32 dstLevel, i32 dstX, i32 dstY, i32 dstZ, i32 srcWidth, i32 srcHeight, i32 srcDepth)
 {
@@ -7728,7 +7728,7 @@ STATICINLINE void CopyImageSubData(u32 srcName, GLenum srcTarget, i32 srcLevel, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userParam)
 {
@@ -7749,7 +7749,7 @@ STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userPa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
 {
@@ -7770,7 +7770,7 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
 {
@@ -7791,7 +7791,7 @@ STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_compute_shader) && GL_ARB_compute_shader)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_groups_z)
 {
@@ -7806,7 +7806,7 @@ STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_gr
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_compute_shader) && GL_ARB_compute_shader)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void DispatchComputeIndirect(ptroff indirect)
 {
@@ -7821,7 +7821,7 @@ STATICINLINE void DispatchComputeIndirect(ptroff indirect)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_framebuffer_no_attachments) && GL_ARB_framebuffer_no_attachments)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
 {
@@ -7836,7 +7836,7 @@ STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
 {
@@ -7857,7 +7857,7 @@ STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GL
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_framebuffer_no_attachments) && GL_ARB_framebuffer_no_attachments)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * params)
 {
@@ -7872,7 +7872,7 @@ STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * para
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_internalformat_query2) && GL_ARB_internalformat_query2)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void GetInternalformati64v(TexComp::tex_flag const& target, PixFmt internalformat, GLenum pname, i32 bufSize, i64 * params)
 {
@@ -7887,7 +7887,7 @@ STATICINLINE void GetInternalformati64v(TexComp::tex_flag const& target, PixFmt 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 * length, GLchar * label)
 {
@@ -7905,7 +7905,7 @@ STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 *
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length, GLchar * label)
 {
@@ -7923,7 +7923,7 @@ STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInterface, GLenum pname, i32 * params)
 {
@@ -7938,7 +7938,7 @@ STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInte
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
@@ -7953,7 +7953,7 @@ STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
@@ -7968,7 +7968,7 @@ STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum program
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE i32 ProgramGetResourceLocationIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
@@ -7983,7 +7983,7 @@ STATICINLINE i32 ProgramGetResourceLocationIndex(glhnd const& program, GLenum pr
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInterface, u32 index, i32 bufSize, i32 * length, GLchar * name)
 {
@@ -7998,7 +7998,7 @@ STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInterface, u32 index, i32 propCount, const GLenum * props, i32 bufSize, i32 * length, i32 * params)
 {
@@ -8013,7 +8013,7 @@ STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInter
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void BufInvalidateData(glhnd const& buffer)
 {
@@ -8028,7 +8028,7 @@ STATICINLINE void BufInvalidateData(glhnd const& buffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void BufInvalidateSubData(glhnd const& buffer, ptroff offset, ptroff length)
 {
@@ -8043,7 +8043,7 @@ STATICINLINE void BufInvalidateSubData(glhnd const& buffer, ptroff offset, ptrof
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x300) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
 STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GLenum * attachments)
 {
@@ -8058,7 +8058,7 @@ STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GL
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x300) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
 STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
 {
@@ -8073,7 +8073,7 @@ STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void TexInvalidateImage(glhnd const& texture, i32 level)
 {
@@ -8088,7 +8088,7 @@ STATICINLINE void TexInvalidateImage(glhnd const& texture, i32 level)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void TexInvalidateSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size)
 {
@@ -8103,7 +8103,7 @@ STATICINLINE void TexInvalidateSubImage(glhnd const& texture, i32 level, Point3 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_multi_draw_indirect) && GL_ARB_multi_draw_indirect)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void MultiDrawArraysIndirect(DrwMd const& mode, uintptr indirect, i32 drawcount, i32 stride)
 {
@@ -8118,7 +8118,7 @@ STATICINLINE void MultiDrawArraysIndirect(DrwMd const& mode, uintptr indirect, i
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_multi_draw_indirect) && GL_ARB_multi_draw_indirect)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void MultiDrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr indirect, i32 drawcount, i32 stride)
 {
@@ -8133,7 +8133,7 @@ STATICINLINE void MultiDrawElementsIndirect(DrwMd const& mode, TypeEnum type, ui
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLchar * label)
 {
@@ -8151,7 +8151,7 @@ STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * label)
 {
@@ -8169,7 +8169,7 @@ STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * la
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void PopDebugGroup()
 {
@@ -8187,7 +8187,7 @@ STATICINLINE void PopDebugGroup()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar * message)
 {
@@ -8205,7 +8205,7 @@ STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_shader_storage_buffer_object) && GL_ARB_shader_storage_buffer_object)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void SSBOBinding(glhnd const& program, u32 storageBlockIndex, u32 storageBlockBinding)
 {
@@ -8220,7 +8220,7 @@ STATICINLINE void SSBOBinding(glhnd const& program, u32 storageBlockIndex, u32 s
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_texture_buffer_range) && GL_ARB_texture_buffer_range)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer, ptroff offset, ptroff size)
 {
@@ -8235,7 +8235,7 @@ STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt interna
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_texture_storage_multisample) && GL_ARB_texture_storage_multisample)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
 {
@@ -8250,7 +8250,7 @@ STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 s
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_texture_storage_multisample) && GL_ARB_texture_storage_multisample)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
 {
@@ -8265,7 +8265,7 @@ STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 s
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_texture_view) && GL_ARB_texture_view)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void TexView(glhnd const& texture, TexComp::tex_flag const& target, u32 origtexture, PixFmt internalformat, u32 minlevel, u32 numlevels, u32 minlayer, u32 numlayers)
 {
@@ -8280,7 +8280,7 @@ STATICINLINE void TexView(glhnd const& texture, TexComp::tex_flag const& target,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
 {
@@ -8295,7 +8295,7 @@ STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normalized, u32 relativeoffset)
 {
@@ -8310,7 +8310,7 @@ STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normali
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
 {
@@ -8325,7 +8325,7 @@ STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativ
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
 STATICINLINE void VAOLFormat(u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
 {
@@ -8340,7 +8340,7 @@ STATICINLINE void VAOLFormat(u32 attribindex, i32 size, GLenum type, u32 relativ
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOBindingDivisor(u32 bindingindex, u32 divisor)
 {
@@ -8367,7 +8367,7 @@ using Parent::SamplerBind;
 using Parent::TexBindImage;
 using Parent::VertBufBind;
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 first, i32 count, const u32 * buffers)
 {
@@ -8382,7 +8382,7 @@ STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 first, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const ptroff * sizes)
 {
@@ -8397,7 +8397,7 @@ STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 first, i3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void TexBindImage(u32 first, i32 count, const u32 * textures)
 {
@@ -8412,7 +8412,7 @@ STATICINLINE void TexBindImage(u32 first, i32 count, const u32 * textures)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void SamplerBind(u32 first, i32 count, const u32 * samplers)
 {
@@ -8427,7 +8427,7 @@ STATICINLINE void SamplerBind(u32 first, i32 count, const u32 * samplers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void TexBind(u32 first, i32 count, const u32 * textures)
 {
@@ -8442,7 +8442,7 @@ STATICINLINE void TexBind(u32 first, i32 count, const u32 * textures)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_multi_bind) && GL_ARB_multi_bind)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void VertBufBind(u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
 {
@@ -8457,7 +8457,7 @@ STATICINLINE void VertBufBind(u32 first, i32 count, const u32 * buffers, const p
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_buffer_storage) && GL_ARB_buffer_storage)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void BufStorage(BufferComp::buf_flag const& target, BytesConst const& data, RSCA flags)
 {
@@ -8472,7 +8472,7 @@ STATICINLINE void BufStorage(BufferComp::buf_flag const& target, BytesConst cons
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_clear_texture) && GL_ARB_clear_texture)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void TexClearImage(glhnd const& texture, i32 level, PixCmp format, BitFmt type, const void * data)
 {
@@ -8487,7 +8487,7 @@ STATICINLINE void TexClearImage(glhnd const& texture, i32 level, PixCmp format, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE) || (defined(GL_ARB_clear_texture) && GL_ARB_clear_texture)
+#if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
 STATICINLINE void TexClearSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, const void * data)
 {
@@ -8561,7 +8561,7 @@ using Parent::VAOLFormat;
 using Parent::VAOBindingDivisor;
 using Parent::BufStorage;
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexBindUnit(u32 unit, glhnd const& texture)
 {
@@ -8576,7 +8576,7 @@ STATICINLINE void TexBindUnit(u32 unit, glhnd const& texture)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBBlitNamed(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
 {
@@ -8591,7 +8591,7 @@ STATICINLINE void FBBlitNamed(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE GLenum FBCheckNamedStatus(u32 framebuffer, FramebufferT target)
 {
@@ -8606,7 +8606,7 @@ STATICINLINE GLenum FBCheckNamedStatus(u32 framebuffer, FramebufferT target)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufClearData(glhnd const& buffer, PixFmt internalformat, PixCmp format, BitFmt type, const void * data)
 {
@@ -8621,7 +8621,7 @@ STATICINLINE void BufClearData(glhnd const& buffer, PixFmt internalformat, PixCm
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufClearSubData(glhnd const& buffer, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, BytesConst const& data)
 {
@@ -8636,7 +8636,7 @@ STATICINLINE void BufClearSubData(glhnd const& buffer, PixFmt internalformat, pt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBClearNamedfi(u32 framebuffer, GLenum buffer, i32 drawbuffer, scalar depth, i32 stencil)
 {
@@ -8651,7 +8651,7 @@ STATICINLINE void FBClearNamedfi(u32 framebuffer, GLenum buffer, i32 drawbuffer,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBClearNamedfv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const scalar> const& value)
 {
@@ -8666,7 +8666,7 @@ STATICINLINE void FBClearNamedfv(u32 framebuffer, GLenum buffer, i32 drawbuffer,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBClearNamediv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const i32> const& value)
 {
@@ -8681,7 +8681,7 @@ STATICINLINE void FBClearNamediv(u32 framebuffer, GLenum buffer, i32 drawbuffer,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBClearNameduiv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const u32> const& value)
 {
@@ -8696,7 +8696,7 @@ STATICINLINE void FBClearNameduiv(u32 framebuffer, GLenum buffer, i32 drawbuffer
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_clip_control) && GL_ARB_clip_control)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void ClipControl(GLenum origin, GLenum depth)
 {
@@ -8711,7 +8711,7 @@ STATICINLINE void ClipControl(GLenum origin, GLenum depth)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexCompressedSubImage1D(glhnd const& texture, i32 level, i32 xoffset, i32 width, CompFmt format, i32 imageSize, const void * data)
 {
@@ -8726,7 +8726,7 @@ STATICINLINE void TexCompressedSubImage1D(glhnd const& texture, i32 level, i32 x
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexCompressedSubImage2D(glhnd const& texture, i32 level, Point const& offset, Size const& size, CompFmt format, i32 imageSize, const void * data)
 {
@@ -8741,7 +8741,7 @@ STATICINLINE void TexCompressedSubImage2D(glhnd const& texture, i32 level, Point
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexCompressedSubImage3D(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, CompFmt format, i32 imageSize, const void * data)
 {
@@ -8756,7 +8756,7 @@ STATICINLINE void TexCompressedSubImage3D(glhnd const& texture, i32 level, Point
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufCopySubData(u32 readBuffer, u32 writeBuffer, ptroff readOffset, ptroff writeOffset, ptroff size)
 {
@@ -8771,7 +8771,7 @@ STATICINLINE void BufCopySubData(u32 readBuffer, u32 writeBuffer, ptroff readOff
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexCopySubImage1D(glhnd const& texture, i32 level, i32 xoffset, i32 x, i32 y, i32 width)
 {
@@ -8786,7 +8786,7 @@ STATICINLINE void TexCopySubImage1D(glhnd const& texture, i32 level, i32 xoffset
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexCopySubImage2D(glhnd const& texture, i32 level, Point const& offset, i32 x, i32 y, Size const& size)
 {
@@ -8801,7 +8801,7 @@ STATICINLINE void TexCopySubImage2D(glhnd const& texture, i32 level, Point const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexCopySubImage3D(glhnd const& texture, i32 level, Point3 const& offset, i32 x, i32 y, Size const& size)
 {
@@ -8816,7 +8816,7 @@ STATICINLINE void TexCopySubImage3D(glhnd const& texture, i32 level, Point3 cons
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufAllocEx(Span<u32> const& buffers)
 {
@@ -8831,7 +8831,7 @@ STATICINLINE void BufAllocEx(Span<u32> const& buffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBAllocEx(Span<u32> const& framebuffers)
 {
@@ -8846,7 +8846,7 @@ STATICINLINE void FBAllocEx(Span<u32> const& framebuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void PipelineAllocEx(Span<u32> const& pipelines)
 {
@@ -8861,7 +8861,7 @@ STATICINLINE void PipelineAllocEx(Span<u32> const& pipelines)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void QueryAllocEx(QueryComp::query_flag const& target, Span<u32> const& ids)
 {
@@ -8876,7 +8876,7 @@ STATICINLINE void QueryAllocEx(QueryComp::query_flag const& target, Span<u32> co
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void RBufAllocEx(Span<u32> const& renderbuffers)
 {
@@ -8891,7 +8891,7 @@ STATICINLINE void RBufAllocEx(Span<u32> const& renderbuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void SamplerAllocEx(Span<u32> const& samplers)
 {
@@ -8906,7 +8906,7 @@ STATICINLINE void SamplerAllocEx(Span<u32> const& samplers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexAllocEx(TexComp::tex_flag const& target, Span<u32> const& textures)
 {
@@ -8921,7 +8921,7 @@ STATICINLINE void TexAllocEx(TexComp::tex_flag const& target, Span<u32> const& t
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void XFAllocEx(Span<u32> const& ids)
 {
@@ -8936,7 +8936,7 @@ STATICINLINE void XFAllocEx(Span<u32> const& ids)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOAllocEx(Span<u32> const& arrays)
 {
@@ -8951,7 +8951,7 @@ STATICINLINE void VAOAllocEx(Span<u32> const& arrays)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAODisable(glhnd const& vaobj, u32 index)
 {
@@ -8966,7 +8966,7 @@ STATICINLINE void VAODisable(glhnd const& vaobj, u32 index)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOEnable(glhnd const& vaobj, u32 index)
 {
@@ -8981,7 +8981,7 @@ STATICINLINE void VAOEnable(glhnd const& vaobj, u32 index)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufFlushMappedRange(glhnd const& buffer, ptroff offset, ptroff length)
 {
@@ -8996,7 +8996,7 @@ STATICINLINE void BufFlushMappedRange(glhnd const& buffer, ptroff offset, ptroff
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGenerateMipmap(glhnd const& texture)
 {
@@ -9011,7 +9011,7 @@ STATICINLINE void TexGenerateMipmap(glhnd const& texture)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetCompressedImage(glhnd const& texture, i32 level, i32 bufSize, void * pixels)
 {
@@ -9026,7 +9026,7 @@ STATICINLINE void TexGetCompressedImage(glhnd const& texture, i32 level, i32 buf
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_get_texture_sub_image) && GL_ARB_get_texture_sub_image)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetCompressedSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, i32 bufSize, void * pixels)
 {
@@ -9041,7 +9041,7 @@ STATICINLINE void TexGetCompressedSubImage(glhnd const& texture, i32 level, Poin
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE GLenum GetGraphicsResetStatus()
 {
@@ -9059,7 +9059,7 @@ STATICINLINE GLenum GetGraphicsResetStatus()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufGetParameteri64v(glhnd const& buffer, GLenum pname, i64 * params)
 {
@@ -9074,7 +9074,7 @@ STATICINLINE void BufGetParameteri64v(glhnd const& buffer, GLenum pname, i64 * p
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufGetParameteriv(glhnd const& buffer, GLenum pname, i32 * params)
 {
@@ -9089,7 +9089,7 @@ STATICINLINE void BufGetParameteriv(glhnd const& buffer, GLenum pname, i32 * par
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufGetPointerv(glhnd const& buffer, GLenum pname, void * * params)
 {
@@ -9104,7 +9104,7 @@ STATICINLINE void BufGetPointerv(glhnd const& buffer, GLenum pname, void * * par
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufGetSubData(glhnd const& buffer, ptroff offset, Bytes const& data)
 {
@@ -9119,7 +9119,7 @@ STATICINLINE void BufGetSubData(glhnd const& buffer, ptroff offset, Bytes const&
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBGetNamedAttachmentParameteriv(u32 framebuffer, GLenum attachment, GLenum pname, i32 * params)
 {
@@ -9134,7 +9134,7 @@ STATICINLINE void FBGetNamedAttachmentParameteriv(u32 framebuffer, GLenum attach
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBGetNamedParameteriv(u32 framebuffer, GLenum pname, i32 * param)
 {
@@ -9149,7 +9149,7 @@ STATICINLINE void FBGetNamedParameteriv(u32 framebuffer, GLenum pname, i32 * par
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void RBufGetParameteriv(u32 renderbuffer, GLenum pname, i32 * params)
 {
@@ -9164,7 +9164,7 @@ STATICINLINE void RBufGetParameteriv(u32 renderbuffer, GLenum pname, i32 * param
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void QueryGetBufferObjecti64v(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
 {
@@ -9179,7 +9179,7 @@ STATICINLINE void QueryGetBufferObjecti64v(u32 id, glhnd const& buffer, GLenum p
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void QueryGetBufferObjectiv(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
 {
@@ -9194,7 +9194,7 @@ STATICINLINE void QueryGetBufferObjectiv(u32 id, glhnd const& buffer, GLenum pna
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void QueryGetBufferObjectui64v(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
 {
@@ -9209,7 +9209,7 @@ STATICINLINE void QueryGetBufferObjectui64v(u32 id, glhnd const& buffer, GLenum 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void QueryGetBufferObjectuiv(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
 {
@@ -9224,7 +9224,7 @@ STATICINLINE void QueryGetBufferObjectuiv(u32 id, glhnd const& buffer, GLenum pn
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetImage(glhnd const& texture, i32 level, PixCmp format, BitFmt type, i32 bufSize, void * pixels)
 {
@@ -9239,7 +9239,7 @@ STATICINLINE void TexGetImage(glhnd const& texture, i32 level, PixCmp format, Bi
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetLevelParameterfv(glhnd const& texture, i32 level, GLenum pname, scalar * params)
 {
@@ -9254,7 +9254,7 @@ STATICINLINE void TexGetLevelParameterfv(glhnd const& texture, i32 level, GLenum
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetLevelParameteriv(glhnd const& texture, i32 level, GLenum pname, i32 * params)
 {
@@ -9269,7 +9269,7 @@ STATICINLINE void TexGetLevelParameteriv(glhnd const& texture, i32 level, GLenum
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetParameterIiv(glhnd const& texture, GLenum pname, i32 * params)
 {
@@ -9284,7 +9284,7 @@ STATICINLINE void TexGetParameterIiv(glhnd const& texture, GLenum pname, i32 * p
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetParameterIuiv(glhnd const& texture, GLenum pname, u32 * params)
 {
@@ -9299,7 +9299,7 @@ STATICINLINE void TexGetParameterIuiv(glhnd const& texture, GLenum pname, u32 * 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetParameterfv(glhnd const& texture, GLenum pname, scalar * params)
 {
@@ -9314,7 +9314,7 @@ STATICINLINE void TexGetParameterfv(glhnd const& texture, GLenum pname, scalar *
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetParameteriv(glhnd const& texture, GLenum pname, i32 * params)
 {
@@ -9329,7 +9329,7 @@ STATICINLINE void TexGetParameteriv(glhnd const& texture, GLenum pname, i32 * pa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_get_texture_sub_image) && GL_ARB_get_texture_sub_image)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexGetSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, i32 bufSize, void * pixels)
 {
@@ -9344,7 +9344,7 @@ STATICINLINE void TexGetSubImage(glhnd const& texture, i32 level, Point3 const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void XFGeti64_v(u32 xfb, GLenum pname, u32 index, i64 * param)
 {
@@ -9359,7 +9359,7 @@ STATICINLINE void XFGeti64_v(u32 xfb, GLenum pname, u32 index, i64 * param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void XFGeti_v(u32 xfb, GLenum pname, u32 index, i32 * param)
 {
@@ -9374,7 +9374,7 @@ STATICINLINE void XFGeti_v(u32 xfb, GLenum pname, u32 index, i32 * param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void XFGetiv(u32 xfb, GLenum pname, i32 * param)
 {
@@ -9389,7 +9389,7 @@ STATICINLINE void XFGetiv(u32 xfb, GLenum pname, i32 * param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOGetIndexed64iv(glhnd const& vaobj, u32 index, GLenum pname, i64 * param)
 {
@@ -9404,7 +9404,7 @@ STATICINLINE void VAOGetIndexed64iv(glhnd const& vaobj, u32 index, GLenum pname,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOGetIndexediv(glhnd const& vaobj, u32 index, GLenum pname, i32 * param)
 {
@@ -9419,7 +9419,7 @@ STATICINLINE void VAOGetIndexediv(glhnd const& vaobj, u32 index, GLenum pname, i
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOGetiv(glhnd const& vaobj, GLenum pname, i32 * param)
 {
@@ -9479,7 +9479,7 @@ STATICINLINE void UnifGetndv(glhnd const& program, i32 location, i32 bufSize, bi
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, scalar * params)
 {
@@ -9497,7 +9497,7 @@ STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, sc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i32 * params)
 {
@@ -9515,7 +9515,7 @@ STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u32 * params)
 {
@@ -9533,7 +9533,7 @@ STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBInvalidateNamedData(u32 framebuffer, i32 numAttachments, const GLenum * attachments)
 {
@@ -9548,7 +9548,7 @@ STATICINLINE void FBInvalidateNamedData(u32 framebuffer, i32 numAttachments, con
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBInvalidateNamedSubData(u32 framebuffer, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
 {
@@ -9563,7 +9563,7 @@ STATICINLINE void FBInvalidateNamedSubData(u32 framebuffer, i32 numAttachments, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void * BufMap(glhnd const& buffer, RSCA access)
 {
@@ -9578,7 +9578,7 @@ STATICINLINE void * BufMap(glhnd const& buffer, RSCA access)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void * BufMapRange(glhnd const& buffer, ptroff offset, ptroff length, RSCA access)
 {
@@ -9593,7 +9593,7 @@ STATICINLINE void * BufMapRange(glhnd const& buffer, ptroff offset, ptroff lengt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x310) || (defined(GL_ARB_ES3_1_compatibility) && GL_ARB_ES3_1_compatibility)
+#if GL_VERSION_VERIFY(0x450, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_31)
 STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 {
@@ -9608,7 +9608,7 @@ STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufData(glhnd const& buffer, BytesConst const& data, RSCA usage)
 {
@@ -9623,7 +9623,7 @@ STATICINLINE void BufData(glhnd const& buffer, BytesConst const& data, RSCA usag
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufStorage(glhnd const& buffer, BytesConst const& data, RSCA flags)
 {
@@ -9638,7 +9638,7 @@ STATICINLINE void BufStorage(glhnd const& buffer, BytesConst const& data, RSCA f
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufSubData(glhnd const& buffer, ptroff offset, BytesConst const& data)
 {
@@ -9653,7 +9653,7 @@ STATICINLINE void BufSubData(glhnd const& buffer, ptroff offset, BytesConst cons
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void NamedFramebufferDrawBuffer(u32 framebuffer, GLenum buf)
 {
@@ -9668,7 +9668,7 @@ STATICINLINE void NamedFramebufferDrawBuffer(u32 framebuffer, GLenum buf)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void NamedFramebufferDrawBuffers(u32 framebuffer, i32 n, const GLenum * bufs)
 {
@@ -9683,7 +9683,7 @@ STATICINLINE void NamedFramebufferDrawBuffers(u32 framebuffer, i32 n, const GLen
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBNamedParameteri(u32 framebuffer, GLenum pname, i32 param)
 {
@@ -9698,7 +9698,7 @@ STATICINLINE void FBNamedParameteri(u32 framebuffer, GLenum pname, i32 param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBNamedReadBuffer(u32 framebuffer, GLenum src)
 {
@@ -9713,7 +9713,7 @@ STATICINLINE void FBNamedReadBuffer(u32 framebuffer, GLenum src)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBNamedRenderbuffer(u32 framebuffer, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
 {
@@ -9728,7 +9728,7 @@ STATICINLINE void FBNamedRenderbuffer(u32 framebuffer, GLenum attachment, GLenum
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBNamedTexture(u32 framebuffer, GLenum attachment, glhnd const& texture, i32 level)
 {
@@ -9743,7 +9743,7 @@ STATICINLINE void FBNamedTexture(u32 framebuffer, GLenum attachment, glhnd const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void FBNamedTextureLayer(u32 framebuffer, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
 {
@@ -9758,7 +9758,7 @@ STATICINLINE void FBNamedTextureLayer(u32 framebuffer, GLenum attachment, glhnd 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void RBufStorage(u32 renderbuffer, PixFmt internalformat, Size const& size)
 {
@@ -9773,7 +9773,7 @@ STATICINLINE void RBufStorage(u32 renderbuffer, PixFmt internalformat, Size cons
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void RBufStorageMultisample(u32 renderbuffer, i32 samples, PixFmt internalformat, Size const& size)
 {
@@ -9788,7 +9788,7 @@ STATICINLINE void RBufStorageMultisample(u32 renderbuffer, i32 samples, PixFmt i
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
 {
@@ -9809,7 +9809,7 @@ STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, Bit
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_texture_barrier) && GL_ARB_texture_barrier)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexBarrier()
 {
@@ -9824,7 +9824,7 @@ STATICINLINE void TexBarrier()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexBuffer(glhnd const& texture, PixFmt internalformat, glhnd const& buffer)
 {
@@ -9839,7 +9839,7 @@ STATICINLINE void TexBuffer(glhnd const& texture, PixFmt internalformat, glhnd c
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexBufferRange(glhnd const& texture, PixFmt internalformat, glhnd const& buffer, ptroff offset, ptroff size)
 {
@@ -9854,7 +9854,7 @@ STATICINLINE void TexBufferRange(glhnd const& texture, PixFmt internalformat, gl
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexParameterIiv(glhnd const& texture, GLenum pname, const i32 * params)
 {
@@ -9869,7 +9869,7 @@ STATICINLINE void TexParameterIiv(glhnd const& texture, GLenum pname, const i32 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexParameterIuiv(glhnd const& texture, GLenum pname, const u32 * params)
 {
@@ -9884,7 +9884,7 @@ STATICINLINE void TexParameterIuiv(glhnd const& texture, GLenum pname, const u32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexParameterf(glhnd const& texture, GLenum pname, scalar param)
 {
@@ -9899,7 +9899,7 @@ STATICINLINE void TexParameterf(glhnd const& texture, GLenum pname, scalar param
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexParameterfv(glhnd const& texture, GLenum pname, const scalar * param)
 {
@@ -9914,7 +9914,7 @@ STATICINLINE void TexParameterfv(glhnd const& texture, GLenum pname, const scala
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexParameteri(glhnd const& texture, GLenum pname, i32 param)
 {
@@ -9929,7 +9929,7 @@ STATICINLINE void TexParameteri(glhnd const& texture, GLenum pname, i32 param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexParameteriv(glhnd const& texture, GLenum pname, const i32 * param)
 {
@@ -9944,7 +9944,7 @@ STATICINLINE void TexParameteriv(glhnd const& texture, GLenum pname, const i32 *
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexStorage1D(glhnd const& texture, i32 levels, PixFmt internalformat, i32 width)
 {
@@ -9959,7 +9959,7 @@ STATICINLINE void TexStorage1D(glhnd const& texture, i32 levels, PixFmt internal
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexStorage2D(glhnd const& texture, i32 levels, PixFmt internalformat, Size const& size)
 {
@@ -9974,7 +9974,7 @@ STATICINLINE void TexStorage2D(glhnd const& texture, i32 levels, PixFmt internal
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexStorage2DMultisample(glhnd const& texture, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
 {
@@ -9989,7 +9989,7 @@ STATICINLINE void TexStorage2DMultisample(glhnd const& texture, i32 samples, Pix
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexStorage3D(glhnd const& texture, i32 levels, PixFmt internalformat, Size3 const& size)
 {
@@ -10004,7 +10004,7 @@ STATICINLINE void TexStorage3D(glhnd const& texture, i32 levels, PixFmt internal
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexStorage3DMultisample(glhnd const& texture, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
 {
@@ -10019,7 +10019,7 @@ STATICINLINE void TexStorage3DMultisample(glhnd const& texture, i32 samples, Pix
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexSubImage1D(glhnd const& texture, i32 level, i32 xoffset, i32 width, PixCmp format, BitFmt type, const void * pixels)
 {
@@ -10034,7 +10034,7 @@ STATICINLINE void TexSubImage1D(glhnd const& texture, i32 level, i32 xoffset, i3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexSubImage2D(glhnd const& texture, i32 level, Point const& offset, Size const& size, PixCmp format, BitFmt type, const void * pixels)
 {
@@ -10049,7 +10049,7 @@ STATICINLINE void TexSubImage2D(glhnd const& texture, i32 level, Point const& of
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void TexSubImage3D(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, const void * pixels)
 {
@@ -10064,7 +10064,7 @@ STATICINLINE void TexSubImage3D(glhnd const& texture, i32 level, Point3 const& o
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufTransformFeedbackBase(u32 xfb, u32 index, glhnd const& buffer)
 {
@@ -10079,7 +10079,7 @@ STATICINLINE void BufTransformFeedbackBase(u32 xfb, u32 index, glhnd const& buff
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void BufTransformFeedbackRange(u32 xfb, u32 index, glhnd const& buffer, ptroff offset, ptroff size)
 {
@@ -10094,7 +10094,7 @@ STATICINLINE void BufTransformFeedbackRange(u32 xfb, u32 index, glhnd const& buf
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE u8 BufUnmap(glhnd const& buffer)
 {
@@ -10109,7 +10109,7 @@ STATICINLINE u8 BufUnmap(glhnd const& buffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOBinding(glhnd const& vaobj, u32 attribindex, u32 bindingindex)
 {
@@ -10124,7 +10124,7 @@ STATICINLINE void VAOBinding(glhnd const& vaobj, u32 attribindex, u32 bindingind
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenum type, bool normalized, u32 relativeoffset)
 {
@@ -10139,7 +10139,7 @@ STATICINLINE void VAOFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenu
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOIFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
 {
@@ -10154,7 +10154,7 @@ STATICINLINE void VAOIFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLen
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOLFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
 {
@@ -10169,7 +10169,7 @@ STATICINLINE void VAOLFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLen
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOBindingDivisor(glhnd const& vaobj, u32 bindingindex, u32 divisor)
 {
@@ -10184,7 +10184,7 @@ STATICINLINE void VAOBindingDivisor(glhnd const& vaobj, u32 bindingindex, u32 di
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOElementBuffer(glhnd const& vaobj, glhnd const& buffer)
 {
@@ -10199,7 +10199,7 @@ STATICINLINE void VAOElementBuffer(glhnd const& vaobj, glhnd const& buffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOVertexBuffer(glhnd const& vaobj, u32 bindingindex, glhnd const& buffer, ptroff offset, i32 stride)
 {
@@ -10214,7 +10214,7 @@ STATICINLINE void VAOVertexBuffer(glhnd const& vaobj, u32 bindingindex, glhnd co
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE) || (defined(GL_ARB_direct_state_access) && GL_ARB_direct_state_access)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
 STATICINLINE void VAOVertexBuffers(glhnd const& vaobj, u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
 {
@@ -10271,7 +10271,7 @@ STATICINLINE void MultiDrawElementsIndirectCount(DrwMd const& mode, GLenum type,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE) || (defined(GL_ARB_polygon_offset_clamp) && GL_ARB_polygon_offset_clamp)
+#if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_46)
 STATICINLINE void PolygonOffsetClamp(scalar factor, scalar units, scalar clamp)
 {
@@ -10372,7 +10372,7 @@ STATICINLINE void BufBind(BufferComp::buf_flag const& target, glhnd const& buffe
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
 {
@@ -10387,7 +10387,7 @@ STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
 {
@@ -10522,7 +10522,7 @@ STATICINLINE void BufSubData(BufferComp::buf_flag const& target, ptroff offset, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE GLenum FBCheckStatus(FramebufferT target)
 {
@@ -10567,7 +10567,7 @@ STATICINLINE void ClearColor(_cbasic_vec4<scalar> const& color)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ClearDepthf(scalar d)
 {
@@ -10762,7 +10762,7 @@ STATICINLINE void BufFree(Span<const u32> const& buffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBFree(Span<const u32> const& framebuffers)
 {
@@ -10792,7 +10792,7 @@ STATICINLINE void ProgramFree(glhnd const& program)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
 {
@@ -10867,7 +10867,7 @@ STATICINLINE void DepthMask(bool flag)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void DepthRangef(scalar n, scalar f)
 {
@@ -11020,7 +11020,7 @@ STATICINLINE void Flush()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
 {
@@ -11035,7 +11035,7 @@ STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level)
 {
@@ -11080,7 +11080,7 @@ STATICINLINE void BufAlloc(Span<u32> const& buffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
 {
@@ -11095,7 +11095,7 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
 {
@@ -11125,7 +11125,7 @@ STATICINLINE void TexAlloc(Span<u32> const& textures)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void GenerateMipmap(TexComp::tex_flag const& target)
 {
@@ -11263,7 +11263,7 @@ STATICINLINE void ScalarfGetv(GLenum pname, scalar * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachment, GLenum pname, i32 * params)
 {
@@ -11323,7 +11323,7 @@ STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, i32 * params)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, i32 * params)
 {
@@ -11353,7 +11353,7 @@ STATICINLINE void ShaderGetInfoLog(glhnd const& shader, i32 bufSize, i32 * lengt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precisiontype, i32 * range, i32 * precision)
 {
@@ -11590,7 +11590,7 @@ STATICINLINE u8 IsEnabled(Feature cap)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE u8 IsFramebuffer(u32 framebuffer)
 {
@@ -11620,7 +11620,7 @@ STATICINLINE u8 IsProgram(glhnd const& program)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
 {
@@ -11743,7 +11743,7 @@ STATICINLINE void ReadPixels(i32 x, i32 y, Size const& size, PixCmp format, BitF
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ShaderReleaseCompiler()
 {
@@ -11758,7 +11758,7 @@ STATICINLINE void ShaderReleaseCompiler()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x200) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
 STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& size)
 {
@@ -11806,7 +11806,7 @@ STATICINLINE void Scissor(i32 x, i32 y, Size const& size)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x200) || (defined(GL_ARB_ES2_compatibility) && GL_ARB_ES2_compatibility)
+#if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
 STATICINLINE void ShaderBinary(i32 count, const u32 * shaders, GLenum binaryformat, const void * binary, i32 length)
 {
@@ -12587,7 +12587,7 @@ STATICINLINE void XFBegin(GLenum primitiveMode)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer)
 {
@@ -12602,7 +12602,7 @@ STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glh
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer, ptroff offset, ptroff size)
 {
@@ -12617,7 +12617,7 @@ STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, gl
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
 {
@@ -12632,7 +12632,7 @@ STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFBind(GLenum target, u32 id)
 {
@@ -12647,7 +12647,7 @@ STATICINLINE void XFBind(GLenum target, u32 id)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void VAOBind(glhnd const& array)
 {
@@ -12662,7 +12662,7 @@ STATICINLINE void VAOBind(glhnd const& array)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void FBBlit(i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
 {
@@ -12788,7 +12788,7 @@ STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, i32 l
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_copy_buffer) && GL_ARB_copy_buffer)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, ptroff readOffset, ptroff writeOffset, ptroff size)
 {
@@ -12836,7 +12836,7 @@ STATICINLINE void QueryFree(Span<const u32> const& ids)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerFree(Span<const u32> const& samplers)
 {
@@ -12866,7 +12866,7 @@ STATICINLINE void SyncFree(GLsync sync)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFFree(Span<const u32> const& ids)
 {
@@ -12881,7 +12881,7 @@ STATICINLINE void XFFree(Span<const u32> const& ids)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void VAOFree(Span<const u32> const& arrays)
 {
@@ -13013,7 +13013,7 @@ STATICINLINE GLsync SyncFence(GLenum condition, RSCA flags)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_map_buffer_range) && GL_ARB_map_buffer_range)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length)
 {
@@ -13028,7 +13028,7 @@ STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
 {
@@ -13064,7 +13064,7 @@ STATICINLINE void QueryAlloc(Span<u32> const& ids)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
 {
@@ -13079,7 +13079,7 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFAlloc(Span<u32> const& ids)
 {
@@ -13094,7 +13094,7 @@ STATICINLINE void XFAlloc(Span<u32> const& ids)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void VAOAlloc(Span<u32> const& arrays)
 {
@@ -13109,7 +13109,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
 {
@@ -13124,7 +13124,7 @@ STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockI
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockIndex, GLenum pname, i32 * params)
 {
@@ -13139,7 +13139,7 @@ STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockInd
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
 {
@@ -13229,7 +13229,7 @@ STATICINLINE void IntegerGet64v(GLenum pname, i64 * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
 {
@@ -13244,7 +13244,7 @@ STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x300) || (defined(GL_ARB_internalformat_query) && GL_ARB_internalformat_query)
+#if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
 STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt internalformat, GLenum pname, i32 bufSize, i32 * params)
 {
@@ -13259,7 +13259,7 @@ STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt in
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x300) || (defined(GL_ARB_get_program_binary) && GL_ARB_get_program_binary)
+#if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
 STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * binaryFormat, Bytes const& binary)
 {
@@ -13310,7 +13310,7 @@ STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scalar * params)
 {
@@ -13325,7 +13325,7 @@ STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scal
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 * params)
 {
@@ -13385,7 +13385,7 @@ STATICINLINE void XFGetVarying(glhnd const& program, u32 index, i32 bufSize, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformBlockName)
 {
@@ -13400,7 +13400,7 @@ STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformB
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void UnifGetIndices(glhnd const& program, i32 uniformCount, const GLchar * *const uniformNames, u32 * uniformIndices)
 {
@@ -13460,7 +13460,7 @@ STATICINLINE void VAOGetIuiv(u32 index, GLenum pname, u32 * params)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x300) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
 STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GLenum * attachments)
 {
@@ -13475,7 +13475,7 @@ STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GL
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x300) || (defined(GL_ARB_invalidate_subdata) && GL_ARB_invalidate_subdata)
+#if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
 STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
 {
@@ -13508,7 +13508,7 @@ STATICINLINE u8 IsQuery(u32 id)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE u8 IsSampler(glhnd const& sampler)
 {
@@ -13538,7 +13538,7 @@ STATICINLINE u8 IsSync(GLsync sync)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE u8 IsTransformFeedback(u32 id)
 {
@@ -13553,7 +13553,7 @@ STATICINLINE u8 IsTransformFeedback(u32 id)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_vertex_array_object) && GL_ARB_vertex_array_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE u8 IsVertexArray(glhnd const& array)
 {
@@ -13568,7 +13568,7 @@ STATICINLINE u8 IsVertexArray(glhnd const& array)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_map_buffer_range) && GL_ARB_map_buffer_range)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length, RSCA access)
 {
@@ -13583,7 +13583,7 @@ STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offse
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFPause()
 {
@@ -13598,7 +13598,7 @@ STATICINLINE void XFPause()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x300) || (defined(GL_ARB_get_program_binary) && GL_ARB_get_program_binary)
+#if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
 STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const void * binary, i32 length)
 {
@@ -13613,7 +13613,7 @@ STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x300) || (defined(GL_ARB_get_program_binary) && GL_ARB_get_program_binary) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
 STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 value)
 {
@@ -13646,7 +13646,7 @@ STATICINLINE void BufRead(GLenum src)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x300, 0x300) || (defined(GL_ARB_framebuffer_object) && GL_ARB_framebuffer_object)
+#if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
 STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt internalformat, Size const& size)
 {
@@ -13661,7 +13661,7 @@ STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt inte
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x300) || (defined(GL_ARB_transform_feedback2) && GL_ARB_transform_feedback2)
+#if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
 STATICINLINE void XFResume()
 {
@@ -13676,7 +13676,7 @@ STATICINLINE void XFResume()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar param)
 {
@@ -13691,7 +13691,7 @@ STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar p
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const scalar * param)
 {
@@ -13706,7 +13706,7 @@ STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const s
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 param)
 {
@@ -13721,7 +13721,7 @@ STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 para
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x300) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
 STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const i32 * param)
 {
@@ -13751,7 +13751,7 @@ STATICINLINE void TexImage3D(TexComp::tex_flag const& target, i32 level, PixFmt 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x300) || (defined(GL_ARB_texture_storage) && GL_ARB_texture_storage)
+#if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
 STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size const& size)
 {
@@ -13766,7 +13766,7 @@ STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixF
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x300) || (defined(GL_ARB_texture_storage) && GL_ARB_texture_storage)
+#if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
 STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size3 const& size)
 {
@@ -13931,7 +13931,7 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x310, 0x300) || (defined(GL_ARB_uniform_buffer_object) && GL_ARB_uniform_buffer_object)
+#if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
 STATICINLINE void UnifBlockBinding(glhnd const& program, u32 uniformBlockIndex, u32 uniformBlockBinding)
 {
@@ -14180,7 +14180,7 @@ using Parent::Unif2ui;
 using Parent::Unif3ui;
 using Parent::Unif4ui;
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void ProgramActiveShader(glhnd const& pipeline, glhnd const& program)
 {
@@ -14195,7 +14195,7 @@ STATICINLINE void ProgramActiveShader(glhnd const& pipeline, glhnd const& progra
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x310) || (defined(GL_ARB_shader_image_load_store) && GL_ARB_shader_image_load_store)
+#if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
 STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool layered, i32 layer, RSCA access, PixFmt format)
 {
@@ -14210,7 +14210,7 @@ STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool l
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineBind(glhnd const& pipeline)
 {
@@ -14225,7 +14225,7 @@ STATICINLINE void PipelineBind(glhnd const& pipeline)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offset, i32 stride)
 {
@@ -14240,7 +14240,7 @@ STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offs
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> const& strings)
 {
@@ -14255,7 +14255,7 @@ STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> co
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
 {
@@ -14270,7 +14270,7 @@ STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_compute_shader) && GL_ARB_compute_shader)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_groups_z)
 {
@@ -14285,7 +14285,7 @@ STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_gr
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_compute_shader) && GL_ARB_compute_shader)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void DispatchComputeIndirect(ptroff indirect)
 {
@@ -14300,7 +14300,7 @@ STATICINLINE void DispatchComputeIndirect(ptroff indirect)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x310) || (defined(GL_ARB_draw_indirect) && GL_ARB_draw_indirect)
+#if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
 STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
 {
@@ -14315,7 +14315,7 @@ STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x310) || (defined(GL_ARB_draw_indirect) && GL_ARB_draw_indirect)
+#if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
 STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr indirect)
 {
@@ -14330,7 +14330,7 @@ STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_framebuffer_no_attachments) && GL_ARB_framebuffer_no_attachments)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
 {
@@ -14345,7 +14345,7 @@ STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
 {
@@ -14375,7 +14375,7 @@ STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, u32 index, u8 *
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_framebuffer_no_attachments) && GL_ARB_framebuffer_no_attachments)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * params)
 {
@@ -14390,7 +14390,7 @@ STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * para
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x310) || (defined(GL_ARB_texture_multisample) && GL_ARB_texture_multisample)
+#if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
 STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
 {
@@ -14405,7 +14405,7 @@ STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInterface, GLenum pname, i32 * params)
 {
@@ -14420,7 +14420,7 @@ STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInte
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * length, GLchar * infoLog)
 {
@@ -14435,7 +14435,7 @@ STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * l
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * params)
 {
@@ -14450,7 +14450,7 @@ STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * param
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
@@ -14465,7 +14465,7 @@ STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
@@ -14480,7 +14480,7 @@ STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum program
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInterface, u32 index, i32 bufSize, i32 * length, GLchar * name)
 {
@@ -14495,7 +14495,7 @@ STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInt
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_program_interface_query) && GL_ARB_program_interface_query)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInterface, u32 index, i32 propCount, const GLenum * props, i32 bufSize, i32 * length, i32 * params)
 {
@@ -14540,7 +14540,7 @@ STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, i32 le
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
 {
@@ -14555,7 +14555,7 @@ STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x420, 0x310) || (defined(GL_ARB_shader_image_load_store) && GL_ARB_shader_image_load_store)
+#if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
 STATICINLINE void MemoryBarrier(u32 barriers)
 {
@@ -14570,7 +14570,7 @@ STATICINLINE void MemoryBarrier(u32 barriers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x310) || (defined(GL_ARB_ES3_1_compatibility) && GL_ARB_ES3_1_compatibility)
+#if GL_VERSION_VERIFY(0x450, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_31)
 STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 {
@@ -14585,7 +14585,7 @@ STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
 {
@@ -14600,7 +14600,7 @@ STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> const& value)
 {
@@ -14615,7 +14615,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
 {
@@ -14630,7 +14630,7 @@ STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> const& value)
 {
@@ -14645,7 +14645,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> con
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
 {
@@ -14660,7 +14660,7 @@ STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> const& value)
 {
@@ -14675,7 +14675,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> co
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v1)
 {
@@ -14690,7 +14690,7 @@ STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& value)
 {
@@ -14705,7 +14705,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
 {
@@ -14720,7 +14720,7 @@ STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& value)
 {
@@ -14735,7 +14735,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
 {
@@ -14750,7 +14750,7 @@ STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const& value)
 {
@@ -14765,7 +14765,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2)
 {
@@ -14780,7 +14780,7 @@ STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& value)
 {
@@ -14795,7 +14795,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2)
 {
@@ -14810,7 +14810,7 @@ STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& value)
 {
@@ -14825,7 +14825,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2)
 {
@@ -14840,7 +14840,7 @@ STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const& value)
 {
@@ -14855,7 +14855,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
 {
@@ -14870,7 +14870,7 @@ STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& value)
 {
@@ -14885,7 +14885,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
 {
@@ -14900,7 +14900,7 @@ STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& value)
 {
@@ -14915,7 +14915,7 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
 {
@@ -14930,7 +14930,7 @@ STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const& value)
 {
@@ -14945,7 +14945,7 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2> const& value)
 {
@@ -14960,7 +14960,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_3> const& value)
 {
@@ -14975,7 +14975,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_4> const& value)
 {
@@ -14990,7 +14990,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3> const& value)
 {
@@ -15005,7 +15005,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_2> const& value)
 {
@@ -15020,7 +15020,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_4> const& value)
 {
@@ -15035,7 +15035,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4> const& value)
 {
@@ -15050,7 +15050,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_2> const& value)
 {
@@ -15065,7 +15065,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_3> const& value)
 {
@@ -15080,7 +15080,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x310) || (defined(GL_ARB_texture_multisample) && GL_ARB_texture_multisample)
+#if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
 STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
 {
@@ -15095,7 +15095,7 @@ STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_texture_storage_multisample) && GL_ARB_texture_storage_multisample)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
 {
@@ -15110,7 +15110,7 @@ STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 s
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void ProgramUseStages(glhnd const& pipeline, ShaderStage stages, glhnd const& program)
 {
@@ -15125,7 +15125,7 @@ STATICINLINE void ProgramUseStages(glhnd const& pipeline, ShaderStage stages, gl
 #endif
 
 
-#if GL_VERSION_VERIFY(0x410, 0x310) || (defined(GL_ARB_separate_shader_objects) && GL_ARB_separate_shader_objects)
+#if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
 STATICINLINE void PipelineValidate(glhnd const& pipeline)
 {
@@ -15140,7 +15140,7 @@ STATICINLINE void PipelineValidate(glhnd const& pipeline)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
 {
@@ -15155,7 +15155,7 @@ STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normalized, u32 relativeoffset)
 {
@@ -15170,7 +15170,7 @@ STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normali
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
 {
@@ -15185,7 +15185,7 @@ STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativ
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x310) || (defined(GL_ARB_vertex_attrib_binding) && GL_ARB_vertex_attrib_binding)
+#if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
 STATICINLINE void VAOBindingDivisor(u32 bindingindex, u32 divisor)
 {
@@ -15311,7 +15311,7 @@ STATICINLINE void ColorMaski(u32 index, bool r, bool g, bool b, bool a)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_copy_image) && GL_ARB_copy_image)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void CopyImageSubData(u32 srcName, GLenum srcTarget, i32 srcLevel, i32 srcX, i32 srcY, i32 srcZ, u32 dstName, GLenum dstTarget, i32 dstLevel, i32 dstX, i32 dstY, i32 dstZ, i32 srcWidth, i32 srcHeight, i32 srcDepth)
 {
@@ -15326,7 +15326,7 @@ STATICINLINE void CopyImageSubData(u32 srcName, GLenum srcTarget, i32 srcLevel, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userParam)
 {
@@ -15347,7 +15347,7 @@ STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userPa
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
 {
@@ -15368,7 +15368,7 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
 {
@@ -15404,7 +15404,7 @@ STATICINLINE void Disablei(Feature target, u32 index)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x320) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
 STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
 {
@@ -15419,7 +15419,7 @@ STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x320) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
 STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, i32 basevertex)
 {
@@ -15434,7 +15434,7 @@ STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x320, 0x320) || (defined(GL_ARB_draw_elements_base_vertex) && GL_ARB_draw_elements_base_vertex)
+#if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
 STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, u32 start, u32 end, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
 {
@@ -15482,7 +15482,7 @@ STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const&
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
 {
@@ -15503,7 +15503,7 @@ STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GL
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE GLenum GetGraphicsResetStatus()
 {
@@ -15521,7 +15521,7 @@ STATICINLINE GLenum GetGraphicsResetStatus()
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 * length, GLchar * label)
 {
@@ -15539,7 +15539,7 @@ STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 *
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length, GLchar * label)
 {
@@ -15557,7 +15557,7 @@ STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length,
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32 * params)
 {
@@ -15572,7 +15572,7 @@ STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u32 * params)
 {
@@ -15617,7 +15617,7 @@ STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pn
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, scalar * params)
 {
@@ -15635,7 +15635,7 @@ STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, sc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i32 * params)
 {
@@ -15653,7 +15653,7 @@ STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i3
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u32 * params)
 {
@@ -15701,7 +15701,7 @@ STATICINLINE void MinSampleShading(scalar value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLchar * label)
 {
@@ -15719,7 +15719,7 @@ STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * label)
 {
@@ -15737,7 +15737,7 @@ STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * la
 #endif
 
 
-#if GL_VERSION_VERIFY(0x400, 0x320) || (defined(GL_ARB_tessellation_shader) && GL_ARB_tessellation_shader)
+#if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
 STATICINLINE void PatchParameteri(PatchProperty pname, i32 value)
 {
@@ -15752,7 +15752,7 @@ STATICINLINE void PatchParameteri(PatchProperty pname, i32 value)
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void PopDebugGroup()
 {
@@ -15788,7 +15788,7 @@ STATICINLINE void PrimitiveBoundingBox(scalar minX, scalar minY, scalar minZ, sc
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar * message)
 {
@@ -15806,7 +15806,7 @@ STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar
 #endif
 
 
-#if GL_VERSION_VERIFY(0x450, 0x320) || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
 STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
 {
@@ -15827,7 +15827,7 @@ STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, Bit
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const i32 * param)
 {
@@ -15842,7 +15842,7 @@ STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const 
 #endif
 
 
-#if GL_VERSION_VERIFY(0x330, 0x320) || (defined(GL_ARB_sampler_objects) && GL_ARB_sampler_objects)
+#if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
 STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const u32 * param)
 {
@@ -15875,7 +15875,7 @@ STATICINLINE void TexBuffer(TexComp::tex_flag const& target, PixFmt internalform
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_texture_buffer_range) && GL_ARB_texture_buffer_range)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer, ptroff offset, ptroff size)
 {
@@ -15920,7 +15920,7 @@ STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname
 #endif
 
 
-#if GL_VERSION_VERIFY(0x430, 0x320) || (defined(GL_ARB_texture_storage_multisample) && GL_ARB_texture_storage_multisample)
+#if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
 STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
 {
@@ -15941,7 +15941,7 @@ template<typename ReqVer>
 struct CGL_ARB_ES3_2_compatibility
 {
 
-#if 0 || (defined(GL_ARB_ES3_2_compatibility) && GL_ARB_ES3_2_compatibility)
+#if 0
 /* No template check available */
 STATICINLINE void PrimitiveBoundingBoxARB(scalar minX, scalar minY, scalar minZ, scalar minW, scalar maxX, scalar maxY, scalar maxZ, scalar maxW)
 {
@@ -15963,7 +15963,7 @@ template<typename ReqVer>
 struct CGL_ARB_bindless_texture
 {
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE u64 GetImageHandleARB(glhnd const& texture, i32 level, bool layered, i32 layer, GLenum format)
 {
@@ -15978,7 +15978,7 @@ STATICINLINE u64 GetImageHandleARB(glhnd const& texture, i32 level, bool layered
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE u64 TexGetHandleARB(glhnd const& texture)
 {
@@ -15993,7 +15993,7 @@ STATICINLINE u64 TexGetHandleARB(glhnd const& texture)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE u64 TexGetSamplerHandleARB(glhnd const& texture, glhnd const& sampler)
 {
@@ -16008,7 +16008,7 @@ STATICINLINE u64 TexGetSamplerHandleARB(glhnd const& texture, glhnd const& sampl
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void VAOGetLui64vARB(u32 index, GLenum pname, u64 * params)
 {
@@ -16023,7 +16023,7 @@ STATICINLINE void VAOGetLui64vARB(u32 index, GLenum pname, u64 * params)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE u8 IsImageHandleResidentARB(u64 handle)
 {
@@ -16038,7 +16038,7 @@ STATICINLINE u8 IsImageHandleResidentARB(u64 handle)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE u8 IsTextureHandleResidentARB(u64 handle)
 {
@@ -16053,7 +16053,7 @@ STATICINLINE u8 IsTextureHandleResidentARB(u64 handle)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void MakeImageHandleNonResidentARB(u64 handle)
 {
@@ -16068,7 +16068,7 @@ STATICINLINE void MakeImageHandleNonResidentARB(u64 handle)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void MakeImageHandleResidentARB(u64 handle, RSCA access)
 {
@@ -16083,7 +16083,7 @@ STATICINLINE void MakeImageHandleResidentARB(u64 handle, RSCA access)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void TexMakeHandleNonResidentARB(u64 handle)
 {
@@ -16098,7 +16098,7 @@ STATICINLINE void TexMakeHandleNonResidentARB(u64 handle)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void TexMakeHandleResidentARB(u64 handle)
 {
@@ -16113,7 +16113,7 @@ STATICINLINE void TexMakeHandleResidentARB(u64 handle)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void UnifHandleui64vARB(glhnd const& program, i32 location, Span<const u64> const& values)
 {
@@ -16128,7 +16128,7 @@ STATICINLINE void UnifHandleui64vARB(glhnd const& program, i32 location, Span<co
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void UnifHandleui64vARB(i32 location, Span<const u64> const& value)
 {
@@ -16143,7 +16143,7 @@ STATICINLINE void UnifHandleui64vARB(i32 location, Span<const u64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void VAOL1ui64ARB(u32 index, u64 x)
 {
@@ -16158,7 +16158,7 @@ STATICINLINE void VAOL1ui64ARB(u32 index, u64 x)
 #endif
 
 
-#if 0 || (defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture)
+#if 0
 /* No template check available */
 STATICINLINE void VAOL1ui64vARB(u32 index, const u64 * v)
 {
@@ -16180,7 +16180,7 @@ template<typename ReqVer>
 struct CGL_ARB_compute_variable_group_size
 {
 
-#if 0 || (defined(GL_ARB_compute_variable_group_size) && GL_ARB_compute_variable_group_size)
+#if 0
 /* No template check available */
 STATICINLINE void DispatchComputeGroupSizeARB(u32 num_groups_x, u32 num_groups_y, u32 num_groups_z, u32 group_size_x, u32 group_size_y, u32 group_size_z)
 {
@@ -16202,7 +16202,7 @@ template<typename ReqVer>
 struct CGL_ARB_debug_output
 {
 
-#if 0 || (defined(GL_ARB_debug_output) && GL_ARB_debug_output)
+#if 0
 /* No template check available */
 STATICINLINE void DebugMessageCallbackARB(GLDEBUGPROCARB callback, const void * userParam)
 {
@@ -16217,7 +16217,7 @@ STATICINLINE void DebugMessageCallbackARB(GLDEBUGPROCARB callback, const void * 
 #endif
 
 
-#if 0 || (defined(GL_ARB_debug_output) && GL_ARB_debug_output)
+#if 0
 /* No template check available */
 STATICINLINE void DebugMessageControlARB(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
 {
@@ -16232,7 +16232,7 @@ STATICINLINE void DebugMessageControlARB(GLenum source, GLenum type, GLenum seve
 #endif
 
 
-#if 0 || (defined(GL_ARB_debug_output) && GL_ARB_debug_output)
+#if 0
 /* No template check available */
 STATICINLINE void DebugMessageInsertARB(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
 {
@@ -16247,7 +16247,7 @@ STATICINLINE void DebugMessageInsertARB(GLenum source, GLenum type, u32 id, GLen
 #endif
 
 
-#if 0 || (defined(GL_ARB_debug_output) && GL_ARB_debug_output)
+#if 0
 /* No template check available */
 STATICINLINE u32 GetDebugMessageLogARB(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
 {
@@ -16269,7 +16269,7 @@ template<typename ReqVer>
 struct CGL_ARB_draw_buffers
 {
 
-#if 0 || (defined(GL_ARB_draw_buffers) && GL_ARB_draw_buffers)
+#if 0
 /* No template check available */
 STATICINLINE void DrawBuffersARB(i32 n, const GLenum * bufs)
 {
@@ -16291,7 +16291,7 @@ template<typename ReqVer>
 struct CGL_ARB_draw_buffers_blend
 {
 
-#if 0 || (defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend)
+#if 0
 /* No template check available */
 STATICINLINE void BlendEquationSeparateiARB(u32 buf, GLenum modeRGB, GLenum modeAlpha)
 {
@@ -16306,7 +16306,7 @@ STATICINLINE void BlendEquationSeparateiARB(u32 buf, GLenum modeRGB, GLenum mode
 #endif
 
 
-#if 0 || (defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend)
+#if 0
 /* No template check available */
 STATICINLINE void BlendEquationiARB(u32 buf, GLenum mode)
 {
@@ -16321,7 +16321,7 @@ STATICINLINE void BlendEquationiARB(u32 buf, GLenum mode)
 #endif
 
 
-#if 0 || (defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend)
+#if 0
 /* No template check available */
 STATICINLINE void BlendFuncSeparateiARB(u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
@@ -16336,7 +16336,7 @@ STATICINLINE void BlendFuncSeparateiARB(u32 buf, GLenum srcRGB, GLenum dstRGB, G
 #endif
 
 
-#if 0 || (defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend)
+#if 0
 /* No template check available */
 STATICINLINE void BlendFunciARB(u32 buf, GLenum src, GLenum dst)
 {
@@ -16358,7 +16358,7 @@ template<typename ReqVer>
 struct CGL_ARB_draw_instanced
 {
 
-#if 0 || (defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced)
+#if 0
 /* No template check available */
 STATICINLINE void DrawArraysInstancedARB(DrwMd const& mode, i32 first, i32 count, i32 primcount)
 {
@@ -16373,7 +16373,7 @@ STATICINLINE void DrawArraysInstancedARB(DrwMd const& mode, i32 first, i32 count
 #endif
 
 
-#if 0 || (defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced)
+#if 0
 /* No template check available */
 STATICINLINE void DrawElementsInstancedARB(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 primcount)
 {
@@ -16395,7 +16395,7 @@ template<typename ReqVer>
 struct CGL_ARB_geometry_shader4
 {
 
-#if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
+#if 0
 /* No template check available */
 STATICINLINE void FBTextureARB(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level)
 {
@@ -16410,7 +16410,7 @@ STATICINLINE void FBTextureARB(FramebufferT target, GLenum attachment, glhnd con
 #endif
 
 
-#if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
+#if 0
 /* No template check available */
 STATICINLINE void FBTextureFaceARB(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, TexComp::tex_flag const& face)
 {
@@ -16425,7 +16425,7 @@ STATICINLINE void FBTextureFaceARB(FramebufferT target, GLenum attachment, glhnd
 #endif
 
 
-#if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
+#if 0
 /* No template check available */
 STATICINLINE void FBTextureLayerARB(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
 {
@@ -16440,7 +16440,7 @@ STATICINLINE void FBTextureLayerARB(FramebufferT target, GLenum attachment, glhn
 #endif
 
 
-#if 0 || (defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4)
+#if 0
 /* No template check available */
 STATICINLINE void ProgramParameteriARB(glhnd const& program, GLenum pname, i32 value)
 {
@@ -16462,7 +16462,7 @@ template<typename ReqVer>
 struct CGL_ARB_gl_spirv
 {
 
-#if 0 || (defined(GL_ARB_gl_spirv) && GL_ARB_gl_spirv)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderSpecializeARB(glhnd const& shader, const GLchar * pEntryPoint, u32 numSpecializationConstants, const u32 * pConstantIndex, const u32 * pConstantValue)
 {
@@ -16484,7 +16484,7 @@ template<typename ReqVer>
 struct CGL_ARB_gpu_shader_int64
 {
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGeti64vARB(glhnd const& program, i32 location, i64 * params)
 {
@@ -16499,7 +16499,7 @@ STATICINLINE void UnifGeti64vARB(glhnd const& program, i32 location, i64 * param
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetui64vARB(glhnd const& program, i32 location, u64 * params)
 {
@@ -16514,7 +16514,7 @@ STATICINLINE void UnifGetui64vARB(glhnd const& program, i32 location, u64 * para
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetni64vARB(glhnd const& program, i32 location, i32 bufSize, i64 * params)
 {
@@ -16529,7 +16529,7 @@ STATICINLINE void UnifGetni64vARB(glhnd const& program, i32 location, i32 bufSiz
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnui64vARB(glhnd const& program, i32 location, i32 bufSize, u64 * params)
 {
@@ -16544,7 +16544,7 @@ STATICINLINE void UnifGetnui64vARB(glhnd const& program, i32 location, i32 bufSi
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
 {
@@ -16559,7 +16559,7 @@ STATICINLINE void Unif1i64vARB(glhnd const& program, i32 location, Span<const i6
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
 {
@@ -16574,7 +16574,7 @@ STATICINLINE void Unif1ui64vARB(glhnd const& program, i32 location, Span<const u
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
 {
@@ -16589,7 +16589,7 @@ STATICINLINE void Unif2i64vARB(glhnd const& program, i32 location, Span<const i6
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
 {
@@ -16604,7 +16604,7 @@ STATICINLINE void Unif2ui64vARB(glhnd const& program, i32 location, Span<const u
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
 {
@@ -16619,7 +16619,7 @@ STATICINLINE void Unif3i64vARB(glhnd const& program, i32 location, Span<const i6
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
 {
@@ -16634,7 +16634,7 @@ STATICINLINE void Unif3ui64vARB(glhnd const& program, i32 location, Span<const u
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
 {
@@ -16649,7 +16649,7 @@ STATICINLINE void Unif4i64vARB(glhnd const& program, i32 location, Span<const i6
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
 {
@@ -16664,7 +16664,7 @@ STATICINLINE void Unif4ui64vARB(glhnd const& program, i32 location, Span<const u
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1i64vARB(i32 location, Span<const i64> const& value)
 {
@@ -16679,7 +16679,7 @@ STATICINLINE void Unif1i64vARB(i32 location, Span<const i64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1ui64vARB(i32 location, Span<const u64> const& value)
 {
@@ -16694,7 +16694,7 @@ STATICINLINE void Unif1ui64vARB(i32 location, Span<const u64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2i64vARB(i32 location, Span<const i64> const& value)
 {
@@ -16709,7 +16709,7 @@ STATICINLINE void Unif2i64vARB(i32 location, Span<const i64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2ui64vARB(i32 location, Span<const u64> const& value)
 {
@@ -16724,7 +16724,7 @@ STATICINLINE void Unif2ui64vARB(i32 location, Span<const u64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3i64vARB(i32 location, Span<const i64> const& value)
 {
@@ -16739,7 +16739,7 @@ STATICINLINE void Unif3i64vARB(i32 location, Span<const i64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3ui64vARB(i32 location, Span<const u64> const& value)
 {
@@ -16754,7 +16754,7 @@ STATICINLINE void Unif3ui64vARB(i32 location, Span<const u64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4i64vARB(i32 location, Span<const i64> const& value)
 {
@@ -16769,7 +16769,7 @@ STATICINLINE void Unif4i64vARB(i32 location, Span<const i64> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4ui64vARB(i32 location, Span<const u64> const& value)
 {
@@ -16791,7 +16791,7 @@ template<typename ReqVer>
 struct CGL_ARB_indirect_parameters
 {
 
-#if 0 || (defined(GL_ARB_indirect_parameters) && GL_ARB_indirect_parameters)
+#if 0
 /* No template check available */
 STATICINLINE void MultiDrawArraysIndirectCountARB(DrwMd const& mode, uintptr indirect, ptroff drawcount, i32 maxdrawcount, i32 stride)
 {
@@ -16806,7 +16806,7 @@ STATICINLINE void MultiDrawArraysIndirectCountARB(DrwMd const& mode, uintptr ind
 #endif
 
 
-#if 0 || (defined(GL_ARB_indirect_parameters) && GL_ARB_indirect_parameters)
+#if 0
 /* No template check available */
 STATICINLINE void MultiDrawElementsIndirectCountARB(DrwMd const& mode, TypeEnum type, uintptr indirect, ptroff drawcount, i32 maxdrawcount, i32 stride)
 {
@@ -16828,7 +16828,7 @@ template<typename ReqVer>
 struct CGL_ARB_instanced_arrays
 {
 
-#if 0 || (defined(GL_ARB_instanced_arrays) && GL_ARB_instanced_arrays)
+#if 0
 /* No template check available */
 STATICINLINE void VAODivisorARB(u32 index, u32 divisor)
 {
@@ -16850,7 +16850,7 @@ template<typename ReqVer>
 struct CGL_ARB_multisample
 {
 
-#if 0 || (defined(GL_ARB_multisample) && GL_ARB_multisample)
+#if 0
 /* No template check available */
 STATICINLINE void SampleCoverageARB(scalar value, bool invert)
 {
@@ -16872,7 +16872,7 @@ template<typename ReqVer>
 struct CGL_ARB_occlusion_query
 {
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryBeginARB(GLenum target, u32 id)
 {
@@ -16887,7 +16887,7 @@ STATICINLINE void QueryBeginARB(GLenum target, u32 id)
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryDeleteARB(i32 n, const u32 * ids)
 {
@@ -16902,7 +16902,7 @@ STATICINLINE void QueryDeleteARB(i32 n, const u32 * ids)
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryEndARB(QueryComp::query_flag const& target)
 {
@@ -16917,7 +16917,7 @@ STATICINLINE void QueryEndARB(QueryComp::query_flag const& target)
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryGenARB(i32 n, u32 * ids)
 {
@@ -16932,7 +16932,7 @@ STATICINLINE void QueryGenARB(i32 n, u32 * ids)
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryGetObjectivARB(u32 id, GLenum pname, i32 * params)
 {
@@ -16947,7 +16947,7 @@ STATICINLINE void QueryGetObjectivARB(u32 id, GLenum pname, i32 * params)
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryGetObjectuivARB(u32 id, GLenum pname, u32 * params)
 {
@@ -16962,7 +16962,7 @@ STATICINLINE void QueryGetObjectuivARB(u32 id, GLenum pname, u32 * params)
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE void QueryGetivARB(QueryComp::query_flag const& target, GLenum pname, i32 * params)
 {
@@ -16977,7 +16977,7 @@ STATICINLINE void QueryGetivARB(QueryComp::query_flag const& target, GLenum pnam
 #endif
 
 
-#if 0 || (defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query)
+#if 0
 /* No template check available */
 STATICINLINE u8 IsQueryARB(u32 id)
 {
@@ -16999,7 +16999,7 @@ template<typename ReqVer>
 struct CGL_ARB_parallel_shader_compile
 {
 
-#if 0 || (defined(GL_ARB_parallel_shader_compile) && GL_ARB_parallel_shader_compile)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderMaxCompilerThreadsARB(u32 count)
 {
@@ -17021,7 +17021,7 @@ template<typename ReqVer>
 struct CGL_ARB_point_parameters
 {
 
-#if 0 || (defined(GL_ARB_point_parameters) && GL_ARB_point_parameters)
+#if 0
 /* No template check available */
 STATICINLINE void PointParameterfARB(GLenum pname, scalar param)
 {
@@ -17036,7 +17036,7 @@ STATICINLINE void PointParameterfARB(GLenum pname, scalar param)
 #endif
 
 
-#if 0 || (defined(GL_ARB_point_parameters) && GL_ARB_point_parameters)
+#if 0
 /* No template check available */
 STATICINLINE void PointParameterfvARB(GLenum pname, const scalar * params)
 {
@@ -17058,7 +17058,7 @@ template<typename ReqVer>
 struct CGL_ARB_robustness
 {
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE GLenum GetGraphicsResetStatusARB()
 {
@@ -17073,7 +17073,7 @@ STATICINLINE GLenum GetGraphicsResetStatusARB()
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnColorTableARB(GLenum target, PixCmp format, BitFmt type, i32 bufSize, void * table)
 {
@@ -17088,7 +17088,7 @@ STATICINLINE void GetnColorTableARB(GLenum target, PixCmp format, BitFmt type, i
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void TexGetnCompressedImageARB(TexComp::tex_flag const& target, i32 lod, i32 bufSize, void * img)
 {
@@ -17103,7 +17103,7 @@ STATICINLINE void TexGetnCompressedImageARB(TexComp::tex_flag const& target, i32
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnConvolutionFilterARB(GLenum target, PixCmp format, BitFmt type, i32 bufSize, void * image)
 {
@@ -17118,7 +17118,7 @@ STATICINLINE void GetnConvolutionFilterARB(GLenum target, PixCmp format, BitFmt 
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnHistogramARB(GLenum target, bool reset, PixCmp format, BitFmt type, i32 bufSize, void * values)
 {
@@ -17133,7 +17133,7 @@ STATICINLINE void GetnHistogramARB(GLenum target, bool reset, PixCmp format, Bit
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnMapdvARB(GLenum target, GLenum query, i32 bufSize, bigscalar * v)
 {
@@ -17148,7 +17148,7 @@ STATICINLINE void GetnMapdvARB(GLenum target, GLenum query, i32 bufSize, bigscal
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnMapfvARB(GLenum target, GLenum query, i32 bufSize, scalar * v)
 {
@@ -17163,7 +17163,7 @@ STATICINLINE void GetnMapfvARB(GLenum target, GLenum query, i32 bufSize, scalar 
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnMapivARB(GLenum target, GLenum query, i32 bufSize, i32 * v)
 {
@@ -17178,7 +17178,7 @@ STATICINLINE void GetnMapivARB(GLenum target, GLenum query, i32 bufSize, i32 * v
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnMinmaxARB(GLenum target, bool reset, PixCmp format, BitFmt type, i32 bufSize, void * values)
 {
@@ -17193,7 +17193,7 @@ STATICINLINE void GetnMinmaxARB(GLenum target, bool reset, PixCmp format, BitFmt
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnPixelMapfvARB(GLenum map, i32 bufSize, scalar * values)
 {
@@ -17208,7 +17208,7 @@ STATICINLINE void GetnPixelMapfvARB(GLenum map, i32 bufSize, scalar * values)
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnPixelMapuivARB(GLenum map, i32 bufSize, u32 * values)
 {
@@ -17223,7 +17223,7 @@ STATICINLINE void GetnPixelMapuivARB(GLenum map, i32 bufSize, u32 * values)
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnPixelMapusvARB(GLenum map, i32 bufSize, u16 * values)
 {
@@ -17238,7 +17238,7 @@ STATICINLINE void GetnPixelMapusvARB(GLenum map, i32 bufSize, u16 * values)
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnPolygonStippleARB(i32 bufSize, u8 * pattern)
 {
@@ -17253,7 +17253,7 @@ STATICINLINE void GetnPolygonStippleARB(i32 bufSize, u8 * pattern)
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void GetnSeparableFilterARB(GLenum target, PixCmp format, BitFmt type, i32 rowBufSize, void * row, i32 columnBufSize, void * column, void * span)
 {
@@ -17268,7 +17268,7 @@ STATICINLINE void GetnSeparableFilterARB(GLenum target, PixCmp format, BitFmt ty
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void TexGetnImageARB(TexComp::tex_flag const& target, i32 level, PixCmp format, BitFmt type, i32 bufSize, void * img)
 {
@@ -17283,7 +17283,7 @@ STATICINLINE void TexGetnImageARB(TexComp::tex_flag const& target, i32 level, Pi
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetndvARB(glhnd const& program, i32 location, i32 bufSize, bigscalar * params)
 {
@@ -17298,7 +17298,7 @@ STATICINLINE void UnifGetndvARB(glhnd const& program, i32 location, i32 bufSize,
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnfvARB(glhnd const& program, i32 location, i32 bufSize, scalar * params)
 {
@@ -17313,7 +17313,7 @@ STATICINLINE void UnifGetnfvARB(glhnd const& program, i32 location, i32 bufSize,
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnivARB(glhnd const& program, i32 location, i32 bufSize, i32 * params)
 {
@@ -17328,7 +17328,7 @@ STATICINLINE void UnifGetnivARB(glhnd const& program, i32 location, i32 bufSize,
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnuivARB(glhnd const& program, i32 location, i32 bufSize, u32 * params)
 {
@@ -17343,7 +17343,7 @@ STATICINLINE void UnifGetnuivARB(glhnd const& program, i32 location, i32 bufSize
 #endif
 
 
-#if 0 || (defined(GL_ARB_robustness) && GL_ARB_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void ReadnPixelsARB(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
 {
@@ -17365,7 +17365,7 @@ template<typename ReqVer>
 struct CGL_ARB_shader_objects
 {
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void AttachObjectARB(GLhandleARB containerObj, GLhandleARB obj)
 {
@@ -17380,7 +17380,7 @@ STATICINLINE void AttachObjectARB(GLhandleARB containerObj, GLhandleARB obj)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderCompileARB(GLhandleARB shaderObj)
 {
@@ -17395,7 +17395,7 @@ STATICINLINE void ShaderCompileARB(GLhandleARB shaderObj)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE GLhandleARB ProgramCreateObjectARB()
 {
@@ -17410,7 +17410,7 @@ STATICINLINE GLhandleARB ProgramCreateObjectARB()
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE GLhandleARB ShaderCreateObjectARB(ShaderStage shaderType)
 {
@@ -17425,7 +17425,7 @@ STATICINLINE GLhandleARB ShaderCreateObjectARB(ShaderStage shaderType)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void DeleteObjectARB(GLhandleARB obj)
 {
@@ -17440,7 +17440,7 @@ STATICINLINE void DeleteObjectARB(GLhandleARB obj)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void DetachObjectARB(GLhandleARB containerObj, GLhandleARB attachedObj)
 {
@@ -17455,7 +17455,7 @@ STATICINLINE void DetachObjectARB(GLhandleARB containerObj, GLhandleARB attached
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ActiveUnifGetARB(GLhandleARB programObj, u32 index, i32 maxLength, i32 * length, i32 * size, GLenum * type, GLcharARB * name)
 {
@@ -17470,7 +17470,7 @@ STATICINLINE void ActiveUnifGetARB(GLhandleARB programObj, u32 index, i32 maxLen
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void GetAttachedObjectsARB(GLhandleARB containerObj, i32 maxCount, i32 * count, GLhandleARB * obj)
 {
@@ -17485,7 +17485,7 @@ STATICINLINE void GetAttachedObjectsARB(GLhandleARB containerObj, i32 maxCount, 
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE GLhandleARB GetHandleARB(GLenum pname)
 {
@@ -17500,7 +17500,7 @@ STATICINLINE GLhandleARB GetHandleARB(GLenum pname)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void GetInfoLogARB(GLhandleARB obj, i32 maxLength, i32 * length, GLcharARB * infoLog)
 {
@@ -17515,7 +17515,7 @@ STATICINLINE void GetInfoLogARB(GLhandleARB obj, i32 maxLength, i32 * length, GL
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void GetObjectParameterfvARB(GLhandleARB obj, GLenum pname, scalar * params)
 {
@@ -17530,7 +17530,7 @@ STATICINLINE void GetObjectParameterfvARB(GLhandleARB obj, GLenum pname, scalar 
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void GetObjectParameterivARB(GLhandleARB obj, GLenum pname, i32 * params)
 {
@@ -17545,7 +17545,7 @@ STATICINLINE void GetObjectParameterivARB(GLhandleARB obj, GLenum pname, i32 * p
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderGetSourceARB(GLhandleARB obj, i32 maxLength, i32 * length, GLcharARB * source)
 {
@@ -17560,7 +17560,7 @@ STATICINLINE void ShaderGetSourceARB(GLhandleARB obj, i32 maxLength, i32 * lengt
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE i32 UnifGetLocationARB(GLhandleARB programObj, const GLcharARB * name)
 {
@@ -17575,7 +17575,7 @@ STATICINLINE i32 UnifGetLocationARB(GLhandleARB programObj, const GLcharARB * na
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetfvARB(GLhandleARB programObj, i32 location, scalar * params)
 {
@@ -17590,7 +17590,7 @@ STATICINLINE void UnifGetfvARB(GLhandleARB programObj, i32 location, scalar * pa
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetivARB(GLhandleARB programObj, i32 location, i32 * params)
 {
@@ -17605,7 +17605,7 @@ STATICINLINE void UnifGetivARB(GLhandleARB programObj, i32 location, i32 * param
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ProgramLinkARB(GLhandleARB programObj)
 {
@@ -17620,7 +17620,7 @@ STATICINLINE void ProgramLinkARB(GLhandleARB programObj)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderSourceARB(GLhandleARB shaderObj, i32 count, const GLcharARB * * string, const i32 * length)
 {
@@ -17635,7 +17635,7 @@ STATICINLINE void ShaderSourceARB(GLhandleARB shaderObj, i32 count, const GLchar
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1fARB(i32 location, scalar v0)
 {
@@ -17650,7 +17650,7 @@ STATICINLINE void Unif1fARB(i32 location, scalar v0)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1fvARB(i32 location, Span<const scalar> const& value)
 {
@@ -17665,7 +17665,7 @@ STATICINLINE void Unif1fvARB(i32 location, Span<const scalar> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1iARB(i32 location, i32 v0)
 {
@@ -17680,7 +17680,7 @@ STATICINLINE void Unif1iARB(i32 location, i32 v0)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif1ivARB(i32 location, Span<const i32> const& value)
 {
@@ -17695,7 +17695,7 @@ STATICINLINE void Unif1ivARB(i32 location, Span<const i32> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2fARB(i32 location, scalar v0, scalar v1)
 {
@@ -17710,7 +17710,7 @@ STATICINLINE void Unif2fARB(i32 location, scalar v0, scalar v1)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2fvARB(i32 location, Span<const scalar> const& value)
 {
@@ -17725,7 +17725,7 @@ STATICINLINE void Unif2fvARB(i32 location, Span<const scalar> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2iARB(i32 location, i32 v0, i32 v1)
 {
@@ -17740,7 +17740,7 @@ STATICINLINE void Unif2iARB(i32 location, i32 v0, i32 v1)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif2ivARB(i32 location, Span<const i32> const& value)
 {
@@ -17755,7 +17755,7 @@ STATICINLINE void Unif2ivARB(i32 location, Span<const i32> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3fARB(i32 location, scalar v0, scalar v1, scalar v2)
 {
@@ -17770,7 +17770,7 @@ STATICINLINE void Unif3fARB(i32 location, scalar v0, scalar v1, scalar v2)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3fvARB(i32 location, Span<const scalar> const& value)
 {
@@ -17785,7 +17785,7 @@ STATICINLINE void Unif3fvARB(i32 location, Span<const scalar> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3iARB(i32 location, i32 v0, i32 v1, i32 v2)
 {
@@ -17800,7 +17800,7 @@ STATICINLINE void Unif3iARB(i32 location, i32 v0, i32 v1, i32 v2)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif3ivARB(i32 location, Span<const i32> const& value)
 {
@@ -17815,7 +17815,7 @@ STATICINLINE void Unif3ivARB(i32 location, Span<const i32> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4fARB(i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
 {
@@ -17830,7 +17830,7 @@ STATICINLINE void Unif4fARB(i32 location, scalar v0, scalar v1, scalar v2, scala
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4fvARB(i32 location, Span<const scalar> const& value)
 {
@@ -17845,7 +17845,7 @@ STATICINLINE void Unif4fvARB(i32 location, Span<const scalar> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4iARB(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
 {
@@ -17860,7 +17860,7 @@ STATICINLINE void Unif4iARB(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void Unif4ivARB(i32 location, Span<const i32> const& value)
 {
@@ -17875,7 +17875,7 @@ STATICINLINE void Unif4ivARB(i32 location, Span<const i32> const& value)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void UnifMatrix2fvARB(i32 location, bool transpose, Span<const scalar> const& value)
 {
@@ -17890,7 +17890,7 @@ STATICINLINE void UnifMatrix2fvARB(i32 location, bool transpose, Span<const scal
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void UnifMatrix3fvARB(i32 location, bool transpose, Span<const scalar> const& value)
 {
@@ -17905,7 +17905,7 @@ STATICINLINE void UnifMatrix3fvARB(i32 location, bool transpose, Span<const scal
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void UnifMatrix4fvARB(i32 location, bool transpose, Span<const scalar> const& value)
 {
@@ -17920,7 +17920,7 @@ STATICINLINE void UnifMatrix4fvARB(i32 location, bool transpose, Span<const scal
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ProgramUseObjectARB(GLhandleARB programObj)
 {
@@ -17935,7 +17935,7 @@ STATICINLINE void ProgramUseObjectARB(GLhandleARB programObj)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shader_objects) && GL_ARB_shader_objects)
+#if 0
 /* No template check available */
 STATICINLINE void ProgramValidateARB(GLhandleARB programObj)
 {
@@ -17957,7 +17957,7 @@ template<typename ReqVer>
 struct CGL_ARB_shading_language_include
 {
 
-#if 0 || (defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderCompileIncludeARB(glhnd const& shader, i32 count, const GLchar * *const path, const i32 * length)
 {
@@ -17972,7 +17972,7 @@ STATICINLINE void ShaderCompileIncludeARB(glhnd const& shader, i32 count, const 
 #endif
 
 
-#if 0 || (defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include)
+#if 0
 /* No template check available */
 STATICINLINE void DeleteNamedStringARB(i32 namelen, const GLchar * name)
 {
@@ -17987,7 +17987,7 @@ STATICINLINE void DeleteNamedStringARB(i32 namelen, const GLchar * name)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include)
+#if 0
 /* No template check available */
 STATICINLINE void GetNamedStringARB(i32 namelen, const GLchar * name, i32 bufSize, i32 * stringlen, GLchar * string)
 {
@@ -18002,7 +18002,7 @@ STATICINLINE void GetNamedStringARB(i32 namelen, const GLchar * name, i32 bufSiz
 #endif
 
 
-#if 0 || (defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include)
+#if 0
 /* No template check available */
 STATICINLINE void GetNamedStringivARB(i32 namelen, const GLchar * name, GLenum pname, i32 * params)
 {
@@ -18017,7 +18017,7 @@ STATICINLINE void GetNamedStringivARB(i32 namelen, const GLchar * name, GLenum p
 #endif
 
 
-#if 0 || (defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include)
+#if 0
 /* No template check available */
 STATICINLINE u8 IsNamedStringARB(i32 namelen, const GLchar * name)
 {
@@ -18032,7 +18032,7 @@ STATICINLINE u8 IsNamedStringARB(i32 namelen, const GLchar * name)
 #endif
 
 
-#if 0 || (defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include)
+#if 0
 /* No template check available */
 STATICINLINE void NamedStringARB(GLenum type, i32 namelen, const GLchar * name, i32 stringlen, const GLchar * string)
 {
@@ -18054,7 +18054,7 @@ template<typename ReqVer>
 struct CGL_ARB_sparse_texture
 {
 
-#if 0 || (defined(GL_ARB_sparse_texture) && GL_ARB_sparse_texture)
+#if 0
 /* No template check available */
 STATICINLINE void TexPageCommitmentARB(GLenum target, i32 level, Point3 const& offset, Size3 const& size, bool commit)
 {
@@ -18076,7 +18076,7 @@ template<typename ReqVer>
 struct CGL_ARB_texture_buffer_object
 {
 
-#if 0 || (defined(GL_ARB_texture_buffer_object) && GL_ARB_texture_buffer_object)
+#if 0
 /* No template check available */
 STATICINLINE void TexBufferARB(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer)
 {
@@ -18098,7 +18098,7 @@ template<typename ReqVer>
 struct CGL_ARB_texture_compression
 {
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexCompressedImage1DARB(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, i32 width, i32 imageSize, const void * data)
 {
@@ -18113,7 +18113,7 @@ STATICINLINE void TexCompressedImage1DARB(TexComp::tex_flag const& target, i32 l
 #endif
 
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexCompressedImage2DARB(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size const& size, i32 imageSize, const void * data)
 {
@@ -18128,7 +18128,7 @@ STATICINLINE void TexCompressedImage2DARB(TexComp::tex_flag const& target, i32 l
 #endif
 
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexCompressedImage3DARB(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size3 const& size, i32 imageSize, const void * data)
 {
@@ -18143,7 +18143,7 @@ STATICINLINE void TexCompressedImage3DARB(TexComp::tex_flag const& target, i32 l
 #endif
 
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexCompressedSubImage1DARB(TexComp::tex_flag const& target, i32 level, i32 xoffset, i32 width, CompFmt format, i32 imageSize, const void * data)
 {
@@ -18158,7 +18158,7 @@ STATICINLINE void TexCompressedSubImage1DARB(TexComp::tex_flag const& target, i3
 #endif
 
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexCompressedSubImage2DARB(TexComp::tex_flag const& target, i32 level, Point const& offset, Size const& size, CompFmt format, i32 imageSize, const void * data)
 {
@@ -18173,7 +18173,7 @@ STATICINLINE void TexCompressedSubImage2DARB(TexComp::tex_flag const& target, i3
 #endif
 
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexCompressedSubImage3DARB(TexComp::tex_flag const& target, i32 level, Point3 const& offset, Size3 const& size, CompFmt format, i32 imageSize, const void * data)
 {
@@ -18188,7 +18188,7 @@ STATICINLINE void TexCompressedSubImage3DARB(TexComp::tex_flag const& target, i3
 #endif
 
 
-#if 0 || (defined(GL_ARB_texture_compression) && GL_ARB_texture_compression)
+#if 0
 /* No template check available */
 STATICINLINE void TexGetCompressedImageARB(TexComp::tex_flag const& target, i32 level, void * img)
 {
@@ -18210,7 +18210,7 @@ template<typename ReqVer>
 struct CGL_KHR_blend_equation_advanced
 {
 
-#if 0 || (defined(GL_KHR_blend_equation_advanced) && GL_KHR_blend_equation_advanced)
+#if 0
 /* No template check available */
 STATICINLINE void BlendBarrierKHR()
 {
@@ -18232,7 +18232,7 @@ template<typename ReqVer>
 struct CGL_KHR_debug
 {
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void DebugMessageCallbackKHR(GLDEBUGPROCKHR callback, const void * userParam)
 {
@@ -18247,7 +18247,7 @@ STATICINLINE void DebugMessageCallbackKHR(GLDEBUGPROCKHR callback, const void * 
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void DebugMessageControlKHR(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
 {
@@ -18262,7 +18262,7 @@ STATICINLINE void DebugMessageControlKHR(GLenum source, GLenum type, GLenum seve
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void DebugMessageInsertKHR(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
 {
@@ -18277,7 +18277,7 @@ STATICINLINE void DebugMessageInsertKHR(GLenum source, GLenum type, u32 id, GLen
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE u32 GetDebugMessageLogKHR(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
 {
@@ -18292,7 +18292,7 @@ STATICINLINE u32 GetDebugMessageLogKHR(u32 count, i32 bufSize, GLenum * sources,
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void GetObjectLabelKHR(GLenum identifier, u32 name, i32 bufSize, i32 * length, GLchar * label)
 {
@@ -18307,7 +18307,7 @@ STATICINLINE void GetObjectLabelKHR(GLenum identifier, u32 name, i32 bufSize, i3
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void GetObjectPtrLabelKHR(const void * ptr, i32 bufSize, i32 * length, GLchar * label)
 {
@@ -18322,7 +18322,7 @@ STATICINLINE void GetObjectPtrLabelKHR(const void * ptr, i32 bufSize, i32 * leng
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void GetPointervKHR(GLenum pname, void * * params)
 {
@@ -18337,7 +18337,7 @@ STATICINLINE void GetPointervKHR(GLenum pname, void * * params)
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void ObjectLabelKHR(GLenum identifier, u32 name, i32 length, const GLchar * label)
 {
@@ -18352,7 +18352,7 @@ STATICINLINE void ObjectLabelKHR(GLenum identifier, u32 name, i32 length, const 
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void ObjectPtrLabelKHR(const void * ptr, i32 length, const GLchar * label)
 {
@@ -18367,7 +18367,7 @@ STATICINLINE void ObjectPtrLabelKHR(const void * ptr, i32 length, const GLchar *
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void PopDebugGroupKHR()
 {
@@ -18382,7 +18382,7 @@ STATICINLINE void PopDebugGroupKHR()
 #endif
 
 
-#if 0 || (defined(GL_KHR_debug) && GL_KHR_debug)
+#if 0
 /* No template check available */
 STATICINLINE void PushDebugGroupKHR(GLenum source, u32 id, i32 length, const GLchar * message)
 {
@@ -18404,7 +18404,7 @@ template<typename ReqVer>
 struct CGL_KHR_parallel_shader_compile
 {
 
-#if 0 || (defined(GL_KHR_parallel_shader_compile) && GL_KHR_parallel_shader_compile)
+#if 0
 /* No template check available */
 STATICINLINE void ShaderMaxCompilerThreadsKHR(u32 count)
 {
@@ -18429,7 +18429,7 @@ template<typename ReqVer>
 struct CGL_KHR_robustness
 {
 
-#if 0 || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if 0
 /* No template check available */
 STATICINLINE GLenum GetGraphicsResetStatusKHR()
 {
@@ -18444,7 +18444,7 @@ STATICINLINE GLenum GetGraphicsResetStatusKHR()
 #endif
 
 
-#if 0 || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnfvKHR(glhnd const& program, i32 location, i32 bufSize, scalar * params)
 {
@@ -18459,7 +18459,7 @@ STATICINLINE void UnifGetnfvKHR(glhnd const& program, i32 location, i32 bufSize,
 #endif
 
 
-#if 0 || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnivKHR(glhnd const& program, i32 location, i32 bufSize, i32 * params)
 {
@@ -18474,7 +18474,7 @@ STATICINLINE void UnifGetnivKHR(glhnd const& program, i32 location, i32 bufSize,
 #endif
 
 
-#if 0 || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void UnifGetnuivKHR(glhnd const& program, i32 location, i32 bufSize, u32 * params)
 {
@@ -18489,7 +18489,7 @@ STATICINLINE void UnifGetnuivKHR(glhnd const& program, i32 location, i32 bufSize
 #endif
 
 
-#if 0 || (defined(GL_KHR_robustness) && GL_KHR_robustness)
+#if 0
 /* No template check available */
 STATICINLINE void ReadnPixelsKHR(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
 {

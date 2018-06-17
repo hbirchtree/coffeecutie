@@ -293,6 +293,7 @@ class RuntimeQueue
     struct semaphore_t
     {
         CondVar    condition;
+        Mutex      start_mutex;
         Mutex      mutex;
         AtomicBool running;
     };

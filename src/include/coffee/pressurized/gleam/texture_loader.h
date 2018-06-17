@@ -37,7 +37,8 @@ STATICINLINE UrlResolver TextureResolver(
         for(auto i : Range<>(num_formats))
         {
             auto const& fmt = formats[i];
-            if(GLEAMAPI::TextureFormatSupport(fmt.first))
+            if(GLEAMAPI::TextureFormatSupport(
+                   fmt.first, CompFlags::CompressionNone))
             {
                 auto rscUrl = MkUrl(baseName.addExtension(mip_ext.c_str())
                                         .addExtension(fmt.second));

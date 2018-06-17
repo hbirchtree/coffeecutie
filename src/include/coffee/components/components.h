@@ -161,6 +161,19 @@ struct EntityContainer : non_copy
 
     friend struct Entity;
 
+    void reset()
+    {
+        current_entity = 0;
+        entity_counter = 0;
+
+        entities.clear();
+        subsystems.clear();
+        components.clear();
+
+        subsystem_updaters.clear();
+        component_updaters.clear();
+    }
+
     void exec()
     {
         time_point time_now = clock::now();

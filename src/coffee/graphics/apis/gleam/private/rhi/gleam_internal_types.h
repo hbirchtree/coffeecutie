@@ -12,12 +12,12 @@ namespace RHI{
 namespace GLEAM{
 
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-using CGL33 = CGLES30;
-using CGL43 = CGLES32;
-using CGL45 = CGLES32;
+using CGL33 = CGL::CGLES30;
+using CGL43 = CGL::CGLES32;
+using CGL45 = CGL::CGLES32;
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-using CGL33 = CGLES20;
-using CGL43 = CGLES20;
+using CGL33 = CGL::CGLES20;
+using CGL43 = CGL::CGLES20;
 #endif
 
 using namespace CGL;
