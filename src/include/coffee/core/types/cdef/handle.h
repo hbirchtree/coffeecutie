@@ -7,8 +7,12 @@ namespace Coffee {
 
 template<
     typename hnd_type,
+
     typename std::enable_if<
-        std::is_trivially_copyable<hnd_type>::value>::type* = nullptr>
+        std::is_pod<hnd_type>::value ||
+        std::is_pointer<hnd_type>::value>::type* = nullptr
+
+    >
 struct generic_handle_t : non_copy
 {
     generic_handle_t() : hnd(hnd_type())
