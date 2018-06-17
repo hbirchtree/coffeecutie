@@ -120,7 +120,14 @@ function container_run()
 {
     case "${TRAVIS_OS_NAME}" in
     "linux")
-        make -s -f $CI_DIR/Makefile.multi custom -e CUSTOM_COMMAND="$1"
+        local CONTAINER_DATA=`grep "^$2:" "$CI_DIR/$MAKEFILE" -A 5 | grep 'DOCKER_CONTAINER\|DOCKER_CONFIG'`
+
+        if [ -z `echo $CONTAINER_DATA | grep DOCKER_CONTFIG` ]; then
+            make -s -f $CI_DIR/Makefile.multi custom -e CUSTOM_COMMAND="$1" -e DOCKER_CONFIG=`echo $CONTAINER_DATA | cut -d '"' -f 2`
+        else
+            make -s -f $CI_DIR/Makefile.multi custom -e CUSTOM_COMMAND="$1" -e DOCKER_CONTAINER=`echo $CONTAINER_DATA | cut -d '"' -f 2`
+        fi
+
     ;;
     "osx")
         $@
@@ -145,7 +152,7 @@ function build_standalone()
     echo "#### Program versions ###############################"
     echo "#####################################################"
 
-    container_run "cmake --version"
+    container_run "cmake --version" "$1"
     #container_run "clang --version"
     #container_run "clang++ --version"
     #container_run "gcc --version"
@@ -163,9 +170,10 @@ function build_standalone()
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
-        -e COFFEE_DIR="$COFFEE_DIR" $@ \
+        -e COFFEE_DIR="$COFFEE_DIR" \
         -e CMAKE_TARGET="$CMAKE_TARGET" \
-        -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS"
+        -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS" \
+        $@
 
     echo
     echo
