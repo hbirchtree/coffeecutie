@@ -40,3 +40,19 @@ Some features are special cases and quite ugly. Beware.
 | 8    | No way to set thread names, `pthread_setname_np()` non-existent       |
 | 9    | Custom, platform-bound thread and atomics layer                       |
 | 10   | std::regex is not properly implemented                                |
+
+## CMake versions (for Dockerized and CI builds)
+
+| Platform         | CMake version   | Notes                                   |
+|:-----------------|----------------:|:----------------------------------------|
+|Android           |3.10.2           |Runs on Ubuntu Xenial                    | 
+|Apple iOS/OSX     |Recent version   |Pulled from Brew                         | 
+|Emscripten        |3.5.1            |Runs on Ubuntu Xenial                    | 
+|Fedora            |3.11.0           |Runs on Fedora 28                        | 
+|Maemo 5           |3.1.0            |Latest compatible version for Maemo      | 
+|Raspberry Pi      |3.5.1            |Runs on Ubuntu Xenial, limited toolchain | 
+|SteamOS           |3.2.2            |Runs on Ubuntu Trusty                    | 
+|Ubuntu            |3.5.1            |Runs on Ubuntu Xenial                    | 
+|Windows (all)     |Recent version   |Pulled from Chocolatey                   | 
+|                  |                 |                                         |
+
