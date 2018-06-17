@@ -5,8 +5,11 @@
 macro(TARGET_ENABLE_CXX11 TARGET)
     if(NOT ANDROID AND NOT APPLE)
         target_compile_features(${TARGET} PRIVATE cxx_constexpr)
-        target_compile_features(${TARGET} PRIVATE cxx_relaxed_constexpr )
     endif()
+
+    set_property ( TARGET ${TARGET}
+        PROPERTY CXX_STANDARD 11
+        )
 
     if(EMSCRIPTEN)
         target_compile_features(${TARGET} PRIVATE cxx_relaxed_constexpr )

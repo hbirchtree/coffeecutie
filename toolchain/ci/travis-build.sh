@@ -1,7 +1,13 @@
 #!/bin/bash
 
+#######################################
+# For potential issues with create directories
+#######################################
 umask 000
 
+#######################################
+# General variables
+#######################################
 SOURCE_DIR="$PWD"
 BUILD_DIR="$SOURCE_DIR/multi_build"
 
@@ -9,9 +15,15 @@ CI_DIR="$SOURCE_DIR/$MAKEFILE_DIR"
 
 COFFEE_DIR="$BUILD_DIR/coffee_lib"
 
+#######################################
+# Create build directory and go to it
+#######################################
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
+#######################################
+# Export for scripts
+#######################################
 export BUILDVARIANT
 export MANUAL_DEPLOY
 export MANUAL_CONTEXT
@@ -21,11 +33,13 @@ MAKEFILE="Makefile.linux"
 
 INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
+#######################################
+# Retrieve script location relative to source dir
+#######################################
 SCRIPT_DIR="$SOURCE_DIR/$($INFOPY --source-dir $SOURCE_DIR script_location)"
 
 HELPER="$SCRIPT_DIR/travis-helper.py"
 GITHUBPY="$SCRIPT_DIR/github_api.py"
-
 
 function die()
 {
@@ -81,7 +95,7 @@ function download_libraries()
 
     notify "Using release $LATEST_RELEASE for $slug"
     local CURRENT_ASSET="$(github_api list asset ${slug}:${LATEST_RELEASE} | grep "libraries_${2}.tar.gz" | head -1)"
-    echo Asset $CURRENT_ASSET
+    #echo Asset $CURRENT_ASSET
 
     [[ -z $CURRENT_ASSET ]] && die "Failed to find ${slug} for $2"
 
@@ -102,6 +116,18 @@ function download_libraries()
     cd "$PREV_WD"
 }
 
+function container_run()
+{
+    case "${TRAVIS_OS_NAME}" in
+    "linux")
+        make -s -f $CI_DIR/Makefile.multi custom -e CUSTOM_COMMAND="$1"
+    ;;
+    "osx")
+        $@
+    ;;
+    esac
+}
+
 function build_standalone()
 {
     OLD_IFS=$IFS
@@ -115,12 +141,34 @@ function build_standalone()
     [ ! -z $TRAVIS ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
     [ -z $GENERATE_PROGRAMS ] && export GENERATE_PROGRAMS=ON
 
+    echo "#####################################################"
+    echo "#### Program versions ###############################"
+    echo "#####################################################"
+
+    container_run "cmake --version"
+    #container_run "clang --version"
+    #container_run "clang++ --version"
+    #container_run "gcc --version"
+    #container_run "g++ --version"
+    #container_run "ld --version"
+    tar --version
+    
+    echo "#####################################################"
+    echo "#####################################################"
+    echo "#####################################################"
+
+    echo
+    echo
+
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
         -e COFFEE_DIR="$COFFEE_DIR" $@ \
         -e CMAKE_TARGET="$CMAKE_TARGET" \
         -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS"
+
+    echo
+    echo
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
@@ -156,6 +204,9 @@ function main()
     [ ! -z $NODEPLOY ] && exit 0
     [ ! -z $TRAVIS ] && sudo chown -R $(whoami) ${BUILD_DIR}
 
+    #######################################
+    # Package binaries and libraries separately
+    #######################################
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} \
             --exclude=build/*/bin \
             --exclude=build/*/packaged \

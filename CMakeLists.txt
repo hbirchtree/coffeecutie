@@ -15,6 +15,8 @@ set ( COFFEE_EXT_LIBRARY_DIR
     "${CMAKE_SOURCE_DIR}/src/libs"
     )
 
+set ( COFFEE_ASSET_DIRECTORY "${CMAKE_SOURCE_DIR}/sample_data" )
+
 if(BUILD_LIBRARIES)
     add_subdirectory( src )
 endif()
