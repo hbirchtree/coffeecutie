@@ -144,6 +144,8 @@ FORCEDINLINE Size GetPixCompressedBlockSize(CompFmt format)
 
         return block_size;
     }
+    default:
+        break;
     }
 
     return {1, 1};
