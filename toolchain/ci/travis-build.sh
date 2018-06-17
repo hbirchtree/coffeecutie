@@ -175,13 +175,13 @@ function build_standalone()
         -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS" \
         $@
 
-    echo
-    echo
-
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
     EXIT_STAT=$?
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
+
+    echo
+    echo
 }
 
 function main()

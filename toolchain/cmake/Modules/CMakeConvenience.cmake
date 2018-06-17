@@ -8,7 +8,10 @@ macro(TARGET_ENABLE_CXX11 TARGET)
     endif()
 
     set_property ( TARGET ${TARGET}
-        PROPERTY CXX_STANDARD 11
+        PROPERTY CXX_STANDARD 14
+        )
+    set_property ( TARGET ${TARGET}
+        PROPERTY CXX_STANDARD_REQUIRED 11
         )
 
     if(EMSCRIPTEN)
