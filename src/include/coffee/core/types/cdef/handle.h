@@ -7,6 +7,7 @@ namespace Coffee {
 
 template<
     typename hnd_type,
+    bool enable_exception = true,
 
     typename std::enable_if<
         std::is_pod<hnd_type>::value ||
@@ -23,29 +24,31 @@ struct generic_handle_t : non_copy
     {
     }
 
-    template<
-        typename Dummy = int,
-        typename std::enable_if<std::is_integral<hnd_type>::value, Dummy>::
-            type* = nullptr>
     void handle_check()
     {
 #ifndef NDEBUG
-        if(hnd != hnd_type(0))
+        if(hnd != hnd_type())
             Throw(resource_leak("resource leakage detected"));
 #endif
     }
 
     template<
-        typename Dummy = int,
-        typename std::enable_if<!std::is_integral<hnd_type>::value, Dummy>::
-            type* = nullptr>
-    void handle_check()
+        typename Dummy                                          = int,
+        typename std::enable_if<enable_exception, Dummy>::type* = nullptr>
+    void handle_check_enable()
+    {
+        handle_check();
+    }
+    template<
+        typename Dummy                                           = int,
+        typename std::enable_if<!enable_exception, Dummy>::type* = nullptr>
+    void handle_check_enable()
     {
     }
 
     ~generic_handle_t()
     {
-        handle_check();
+        handle_check_enable();
     }
 
     C_DELETE_COPY_CONSTRUCTOR(generic_handle_t);
@@ -62,7 +65,7 @@ struct generic_handle_t : non_copy
 
     void release()
     {
-        hnd = 0;
+        hnd = hnd_type();
     }
 
     generic_handle_t<hnd_type>& operator=(hnd_type otherHandle)
@@ -82,7 +85,7 @@ struct generic_handle_t : non_copy
         return *this;
     }
 
-    u32 hnd;
+    hnd_type hnd;
 };
 
 } // namespace Coffee

@@ -1,31 +1,33 @@
 #include <coffee/core/unit_tests/framework.h>
 
-#include <coffee/core/CMD>
+#include <coffee/core/CDebug>
 #include <coffee/core/CJSONParser>
+#include <coffee/core/CMD>
 #include <coffee/core/CPlatform>
 #include <coffee/core/plat/environment/argument_parse.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/terminal/table-print.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
-#include <coffee/core/terminal/table-print.h>
-#include <coffee/core/CDebug>
 
 #include <coffee/core/string_casting.h>
 
-namespace CoffeeTest{
+namespace CoffeeTest {
 
 using namespace Coffee;
 
 static Vector<cstring> titles;
 static Vector<cstring> descriptions;
-static Vector<uint64> test_times;
-static Vector<bool> result;
-static Vector<bool> required;
+static Vector<uint64>  test_times;
+static Vector<bool>    result;
+static Vector<bool>    required;
 
-void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
-                   uint64 const& total_time,
-                   Test const* tests)
+void WriteJsonData(
+    JSON::WriteBuf& buf,
+    szptr const&    suc,
+    uint64 const&   total_time,
+    Test const*     tests)
 {
     JSON::Writer root(buf);
 
@@ -40,11 +42,11 @@ void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
     root.Uint64(total_time);
 
     /* If all tests passed, don't add this */
-    if(suc<result.size())
+    if(suc < result.size())
     {
         root.Key("passed");
         root.StartArray();
-        for(uint32 i=0;i<result.size();i++)
+        for(uint32 i = 0; i < result.size(); i++)
         {
             root.StartObject();
 
@@ -53,7 +55,7 @@ void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
                 root.String(tests[i].title);
             else
             {
-                CString fmt = cStringFormat("Test {0}",i);
+                CString fmt = cStringFormat("Test {0}", i);
                 root.String(fmt.c_str());
             }
 
@@ -67,7 +69,7 @@ void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
         /* List required tests */
         root.Key("failed");
         root.StartArray();
-        szptr i=0;
+        szptr i = 0;
         for(bool v : result)
         {
             if(!v)
@@ -84,7 +86,7 @@ void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
                     root.String(o.title);
                 else
                 {
-                    CString fmt = cStringFormat("Test {0}",i);
+                    CString fmt = cStringFormat("Test {0}", i);
                     root.String(fmt.c_str());
                 }
 
@@ -93,7 +95,6 @@ void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
                     root.Key("desc");
                     root.String(o.description);
                 }
-
 
                 root.EndObject();
             }
@@ -104,7 +105,7 @@ void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
         /* List optional tests */
         root.Key("optional");
         root.StartArray();
-        i=0;
+        i = 0;
         for(bool v : result)
         {
             if(!v)
@@ -148,12 +149,14 @@ void PrintAsciiTable(uint64 const& time_accum, szptr suc)
     table.push_back(Table::GenColumn(required));
     table.push_back(Table::GenColumn(test_times));
 
-    cBasicPrint("-- Results: \n"
-                "{0}",Table::GenTable(table,header));
+    cBasicPrint(
+        "-- Results: \n"
+        "{0}",
+        Table::GenTable(table, header));
 
-    cBasicPrint("Total time: {0} s", C_CAST<bigscalar>(time_accum)/1000000);
+    cBasicPrint("Total time: {0} s", C_CAST<bigscalar>(time_accum) / 1000000);
 
-    cBasicPrint("-- Passed: {0}/{1}",suc,result.size());
+    cBasicPrint("-- Passed: {0}/{1}", suc, result.size());
 }
 
 void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
@@ -163,15 +166,15 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
     if(test.title)
         tmp = test.title;
     else
-        tmp = cStringFormat("Test {0}",i+1);
+        tmp = cStringFormat("Test {0}", i + 1);
 
     if(!test.test)
     {
-        cBasicPrint("{0} skipped, nullptr",tmp);
+        cBasicPrint("{0} skipped, nullptr", tmp);
         return;
     }
 
-    titles[i] = test.title;
+    titles[i]       = test.title;
     descriptions[i] = test.description;
 
     if(fail)
@@ -184,8 +187,17 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
     Profiler::PushContext(tmp.c_str());
 
     auto start_time = Chrono::steady_clock::now();
-    bool res = test.test();
-    test_times[i] = Chrono::duration_cast<Chrono::microseconds>(Chrono::steady_clock::now() - start_time).count();
+    bool res        = false;
+    try
+    {
+        res = test.test();
+    } catch(std::exception const& e)
+    {
+        cWarning("Test died from exception: {0}", e.what());
+    }
+    test_times[i] = Chrono::duration_cast<Chrono::microseconds>(
+                        Chrono::steady_clock::now() - start_time)
+                        .count();
     result.push_back(res);
     required.push_back(!test.optional);
 
@@ -207,7 +219,6 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     bool json_formatting = parseArgs.switches.count("json");
 
-
     CString tmp;
 
     titles.resize(num);
@@ -218,14 +229,13 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     bool fail = false;
 
-
-    for(uint32 i=0;i<num;i++)
+    for(uint32 i = 0; i < num; i++)
     {
-        RunTest(i,tmp,tests,fail);
+        RunTest(i, tmp, tests, fail);
     }
 
-    result.resize(num,false);
-    required.resize(num,true);
+    result.resize(num, false);
+    required.resize(num, true);
 
     szptr suc = 0;
     for(bool v : result)
@@ -237,32 +247,32 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
     for(uint64 v : test_times)
         time_accum += v;
 
-    Profiler::AddExtraData(
-                "testing:title",
-                GetCurrentApp().application_name);
+    Profiler::AddExtraData("testing:title", GetCurrentApp().application_name);
 
     Profiler::AddExtraData("testing:bmark", cast_pod(time_accum));
 
-    Profiler::AddExtraData("testing:result", cStringFormat("{0},{1}",suc,num));
+    Profiler::AddExtraData(
+        "testing:result", cStringFormat("{0},{1}", suc, num));
 
     Profiler::AddExtraData("testing:mem", cast_pod(ProcessProperty::Mem(0)));
 
     if(!json_formatting)
     {
-        PrintAsciiTable(time_accum,suc);
-    }else{
+        PrintAsciiTable(time_accum, suc);
+    } else
+    {
         JSON::WriteBuf buf;
         WriteJsonData(buf, suc, time_accum, tests);
 
-        cOutputPrint("{0}",buf.GetString());
+        cOutputPrint("{0}", buf.GetString());
 
-        Profiler::AddExtraData("testing:jsonresult",buf.GetString());
+        Profiler::AddExtraData("testing:jsonresult", buf.GetString());
     }
 
     cDebug("Memory consumption: {0} kB", ProcessProperty::Mem(0));
 
-	/* For verbosity, we write it as this */
-	return (fail) ? 1 : 0;
+    /* For verbosity, we write it as this */
+    return (fail) ? 1 : 0;
 }
 
-}
+} // namespace CoffeeTest

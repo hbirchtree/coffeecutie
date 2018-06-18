@@ -12,6 +12,7 @@ add_subdirectory(profiling-api)
 add_subdirectory(size-tests)
 add_subdirectory(string-api)
 add_subdirectory(sysinfo-api)
+add_subdirectory(type-safe)
 
 if(NOT EMSCRIPTEN)
     add_subdirectory(thread-api)
