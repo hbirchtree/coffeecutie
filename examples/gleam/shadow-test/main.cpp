@@ -38,7 +38,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     {
         cDebug("Failed to initialize graphics API");
     }
-    
+
     renderer.popErrorMessage(Severity::Information, "Hello!", "Goodbye");
 
     renderer.showWindow();
@@ -67,8 +67,7 @@ void cleanup_fun(CDRenderer&, SharedData*)
 
 int32 coffee_main(int32, cstring_w*)
 {
-    SetPrintingVerbosity(8);
-    FileResourcePrefix("sample_data/");
+    RuntimeQueue::CreateNewQueue("Main");
 
     CString err;
 

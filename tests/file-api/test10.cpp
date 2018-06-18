@@ -8,10 +8,12 @@ bool url_bad_deref()
     /**/
     Url f = {};
 
-    try {
+    try
+    {
         auto deref = *f;
         return false;
-    } catch (std::runtime_error const&) {
+    } catch(std::runtime_error const&)
+    {
         return true;
     }
 }
@@ -20,10 +22,12 @@ bool url_get_dereferenced()
 {
     Url f = MkUrl("testfile");
 
-    try {
+    try
+    {
         auto deref = *f;
         return true;
-    } catch (std::runtime_error const&) {
+    } catch(std::runtime_error const&)
+    {
         return false;
     }
 }
@@ -48,6 +52,11 @@ bool url_path_get_extension()
         return false;
 
     return true;
+}
+
+bool url_path_get_extension_extra()
+{
+    return Path("directory.dir/test").extension() == "";
 }
 
 bool url_path_get_concat()
@@ -82,20 +91,21 @@ bool url_get_string()
     return true;
 }
 
-COFFEE_TEST_SUITE(13) = {
-{url_bad_deref, "Url bad dereferencing"},
-{url_get_dereferenced, "Url dereferencing"},
-{url_get_storage<RSCA::SystemFile>, "Url dereference class", "SystemFile"},
-{url_get_storage<RSCA::AssetFile>, "Url dereference class", "AssetFile"},
-{url_get_storage<RSCA::ConfigFile>, "Url dereference class", "ConfigFile"},
-{url_get_storage<RSCA::TemporaryFile>, "Url dereference class", "TempFile"},
-{url_get_storage<RSCA::CachedFile>, "Url dereference class", "CachedFile"},
-{url_path_get_extension, "Path get extension"},
-        {url_path_get_concat, "Path get concatenated"},
-{url_path_get_basename, "Path get basename"},
-{url_path_get_dirname, "Path get dirname"},
-{url_get_string, "Path get to_string"},
-{url_path_get_from_url, "Path get from Url"},
-        };
+COFFEE_TEST_SUITE(14) = {
+    {url_bad_deref, "Url bad dereferencing"},
+    {url_get_dereferenced, "Url dereferencing"},
+    {url_get_storage<RSCA::SystemFile>, "Url dereference class", "SystemFile"},
+    {url_get_storage<RSCA::AssetFile>, "Url dereference class", "AssetFile"},
+    {url_get_storage<RSCA::ConfigFile>, "Url dereference class", "ConfigFile"},
+    {url_get_storage<RSCA::TemporaryFile>, "Url dereference class", "TempFile"},
+    {url_get_storage<RSCA::CachedFile>, "Url dereference class", "CachedFile"},
+    {url_path_get_extension, "Path get extension"},
+    {url_path_get_extension_extra, "Path get extension", "Edge case"},
+    {url_path_get_concat, "Path get concatenated"},
+    {url_path_get_basename, "Path get basename"},
+    {url_path_get_dirname, "Path get dirname"},
+    {url_get_string, "Path get to_string"},
+    {url_path_get_from_url, "Path get from Url"},
+};
 
 COFFEE_EXEC_TESTS()

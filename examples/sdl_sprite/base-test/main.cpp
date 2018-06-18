@@ -3,6 +3,7 @@
 #include <coffee/core/CInput>
 #include <coffee/core/CProfiling>
 #include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/coffee.h>
 
 #include <coffee/CImage>
 
@@ -126,7 +127,6 @@ int32 coffee_main(int32, cstring_w*)
     C_UNUSED(sys1);
 
     /* Set file prefix, basically a cwd but only for resources */
-    CResources::FileResourcePrefix("sample_data/ctest_hud/");
     cDebug("Current directory: {0}", Env::CurrentDir());
 
     auto setup = [](BasicWindow& test, RenderData* data) {
@@ -156,22 +156,10 @@ int32 coffee_main(int32, cstring_w*)
             Profiler::Profile("Texture creation");
 
             /* Map a texture into memory */
-            CResources::Resource texfile(
-                "particle_sprite.png",
-                false,
-                ResourceAccess::SpecifyStorage | ResourceAccess::AssetFile |
-                    ResourceAccess::ReadOnly);
-
-            cDebug("Opening texture: {0}", texfile.resource());
-
-            CResources::FileMap(texfile);
-
-            cDebug(
-                "Pointer to texture: {0}",
-                C_FCAST<const byte_t*>(texfile.data));
+            auto texfile = "particle_sprite.png"_rsc;
 
             /* Decode file to RGBA data */
-            stb::image_rw img;
+            stb::image_rw img = {};
             stb::LoadData(&img, texfile, PixCmp::RGBA);
 
             /* Copy texture into texture memory */
@@ -180,13 +168,9 @@ int32 coffee_main(int32, cstring_w*)
                 MemCpy(
                     C_OCAST<Bytes>(img),
                     Bytes::From(pdata, img.size.area() * img.bpp));
-//                MemCpy(pdata, img.data, img.size.area() * img.bpp);
                 data->rend.unmapTexture(data->t);
             }
 
-            /* Clean up */
-            stb::ImageFree(&img);
-            CResources::FileUnmap(texfile);
             Profiler::Profile("Texture load");
         }
 
@@ -197,7 +181,7 @@ int32 coffee_main(int32, cstring_w*)
         /* Show the window */
         test.showWindow();
 
-        data->clearCol = CRGBA(255, 0, 0);
+        data->clearCol = CRGBA(127, 0, 0);
 
         /* Set clear color for buffer */
         data->rend.setClearColor(data->r, data->clearCol);
@@ -229,7 +213,7 @@ int32 coffee_main(int32, cstring_w*)
     };
 
     /* Create a window host for the renderer */
-    auto visual = GetDefaultVisual(2, 0);
+    auto visual = GetDefaultVisual(3, 3);
 
     using ELD = EventLoopData<BasicWindow, RenderData>;
 

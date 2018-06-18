@@ -25,6 +25,8 @@ bool filewrite_test()
 
 bool filemap_test()
 {
+    file_error ec;
+
     CResources::Resource rsc(small_map_test);
     CResources::FileMap(rsc);
     if(!rsc.data)
@@ -34,7 +36,7 @@ bool filemap_test()
         C_OCAST<Bytes>(rsc));
     CResources::FileUnmap(rsc);
 
-    CResources::FileFun::Rm(small_map_test);
+    CResources::FileFun::Rm(small_map_test, ec);
 
     return status;
 }

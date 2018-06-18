@@ -48,11 +48,13 @@ bool fileread_test()
 
 bool filesize_test()
 {
-    szptr size   = CResources::FileFun::Size(writetest);
+    file_error ec;
+
+    szptr size   = CResources::FileFun::Size(writetest, ec);
     szptr target = sizeof(write_data);
     cDebug("{0}?={1}", size, target);
 
-    File::Rm(writetest);
+    File::Rm(writetest, ec);
 
     return size == target;
 }

@@ -1,0 +1,172 @@
+/* Primary background color */
+body,
+div.header,
+div.headertitle {
+    background-color: #202020;
+}
+
+/* Primary font color */
+body,
+div.header,
+div.headertitle,
+.directory,
+.sm-dox a,
+.sm-dox ul a,
+.sm-dox ul a:hover,
+h2.groupheader,
+address {
+    color: #c0c0c0 !important;
+    text-shadow: none !important;
+}
+
+div.center img {
+    filter: invert(1);
+    margin: 3em 0;
+}
+
+/* Secondary font color */
+table td.mdescRight {
+    color: #949494;
+}
+
+/* Link coloring */
+a {
+    color: #4183C4 !important;
+}
+
+/* Secondary background color, navbar */
+
+.sm-dox,
+.sm-dox ul,
+.directory,
+div#main-nav a,
+div#main-nav a:hover,
+div#main-nav a:active,
+#MSearchResultsWindow {
+    background-image: none !important;
+    background-color: #181818;
+}
+
+/* Removing drop-shadow in navbar */
+a,
+a:hover,
+a:active,
+.sm-dox a,
+.sm-dox ul a,
+.sm-dox ul a:hover {
+    background-image: none !important;
+}
+
+tr.even {
+    background-color: #333 !important;
+}
+
+/* Tertiary background color in tables */
+table.doxtable th,
+table.doxtable td,
+table.memberdecls td,
+.sm-dox ul {
+    color: #949494;
+    background-color: #141414;
+    border-color: #343434 !important;
+}
+
+/* Primary border color */
+hr,
+div.header,
+#titlearea,
+.sm-nowrap::before,
+h2.groupheader {
+    border-color: #343434 !important;
+}
+
+/* In class/namespace list, make the letter bigger and expand the entry */
+table td.entry {
+    line-height: 2em;
+}
+span.icona {
+    margin-right: 1em;
+}
+.icon {
+    width: 2em;
+    height: 2em;
+    background-color: #336bd6 !important;
+}
+
+/* Navpath */
+.navpath li.navelem a {
+    color: #c0c0c0 !important;
+    text-shadow: none !important;
+}
+.navpath li.navelem {
+    background-image: none !important;
+    padding-right: 0;
+    padding-left: 0.5em;
+}
+.navpath li.navelem:after {
+    content: "";
+    margin-left: 1em;
+    border: 1em solid transparent;
+    border-left: 0.5em solid #542;
+}
+.navpath li.navelem {
+    display: flex;
+}
+.navpath ul {
+    background-image: none;
+    background-color: rgba(51, 34, 17, .4);
+    border: 1px solid #542;
+}
+
+/* Member declarations styling */
+table.memberdecls {
+    border-radius: 5px;
+    border-style: solid;
+    border-color: #141414;
+}
+
+.memname, .memtemplate, .fieldtable th {
+    color: #949494;
+    text-shadow: none !important;
+}
+
+.memtitle,
+.memproto,
+.memdoc,
+div.fragment,
+.fieldtable th,
+.fieldtable td,
+.fieldtable {
+    background-image: none !important;
+    border-color: #343434 !important;
+}
+
+.memtitle, div.fragment, .memproto {
+    background-color: #202020;
+}
+
+.fieldtable th {
+    background-color: #181818;
+}
+
+.memdoc {
+    background-color: #141414;
+}
+
+.paramname {
+    color: #4183C4;
+}
+
+span.mlabel {
+    background-color: #407045 !important;
+    border-color: #083 !important;
+}
+
+pre.fragment {
+    background-color: #181818 !important;
+    border-color: #000000;
+}
+
+span.lineno, span.lineno a {
+    background-color: #181818 !important;
+}

@@ -1,22 +1,21 @@
+#include <coffee/asio/net_profiling.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
-#include <coffee/core/CDebug>
-#include <coffee/core/CPlatform>
-#include <coffee/asio/net_profiling.h>
-
-#include <stdarg.h>
-
+#include <coffee/core/coffee.h>
 #include <coffee/core/plat/plat_sensor.h>
+
+#include <coffee/core/CPlatform>
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
 {
-#if defined(FEATURE_USE_ASIO)
+#if defined(FEATURE_ENABLE_CoffeeASIO)
     Net::RegisterProfiling();
 #endif
 
-    CResources::FileResourcePrefix("sample_data/");
+    file_error ec;
 
     Profiler::PushContext("Configuration data");
     {
@@ -27,23 +26,23 @@ int32 coffee_main(int32, cstring_w*)
 
         cDebug("Test directory: {0} '{1}'", test_dir, *test_dir);
 
-        CString app_dir  = Env::ApplicationDir();
+        Url app_dir  = Env::ApplicationDir();
         CString exe_name = Env::ExecutableName();
         Profiler::Profile("Get application location");
 
-        cDebug("Settings directory: {0}",*cfg_dir);
-        cDebug("Program directory:  {0}",app_dir);
-        cDebug("Launching from      {0}",exe_name);
-        cDebug("Current directory:  {0}",Env::CurrentDir());
+        cDebug("Settings directory: {0}", *cfg_dir);
+        cDebug("Program directory:  {0}", app_dir);
+        cDebug("Launching from      {0}", exe_name);
+        cDebug("Current directory:  {0}", Env::CurrentDir());
 
         Profiler::Profile("Print some data");
 
-        if(!CResources::FileMkdir(cfg_dir,true))
+        if(!CResources::FileMkdir(cfg_dir, true))
             cWarning("Failed to create settings directory");
         else
         {
             Url test_file = cfg_dir + Path{"test_file.sav"};
-            FileFun::Touch(FileFun::File,test_file);
+            FileFun::Touch(FileFun::File, test_file, ec);
         }
         Profiler::Profile("Create directory recursively");
     }

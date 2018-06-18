@@ -3,6 +3,15 @@
 
 using namespace Coffee;
 
+static const cstring test_ini_doc =
+R"(
+[Header1]
+Key1 = Value 1
+Key2 = 2
+Key3 = true
+Key4 = FALSE
+)";
+
 bool readwrite_file()
 {
     auto testFile = MkUrl("test.ini",
@@ -13,6 +22,11 @@ bool readwrite_file()
                               |ResourceAccess::TemporaryFile);
 
     CResources::Resource testfile(testFile);
+
+    testfile = Bytes::CreateString(test_ini_doc);
+
+    CResources::FileCommit(testfile);
+
     CResources::FileMap(testfile);
     Profiler::Profile("Mapping time");
 
@@ -37,6 +51,7 @@ bool readwrite_file()
  */
 bool write_file()
 {
+    file_error ec;
     Url testfile = MkUrl("testoutfile.ini",
                          ResourceAccess::SpecifyStorage
                          |ResourceAccess::TemporaryFile);
@@ -69,7 +84,9 @@ bool write_file()
     CResources::FileFree(rsc);
     Profiler::Profile("Free'ing file");
 
-    return CResources::FileFun::Exists(testfile);
+    auto res = CResources::FileFun::Exists(testfile, ec);
+
+    return res;
 }
 
 const constexpr CoffeeTest::Test _tests[2] = {

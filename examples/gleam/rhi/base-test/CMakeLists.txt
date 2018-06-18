@@ -15,6 +15,9 @@ coffee_application (
 
     RESOURCES
     "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
-
-    USE_ASIO
     )
+
+
+if(TARGET CoffeeASIO)
+    target_link_libraries ( GLeamBaseTest_RHI PUBLIC CoffeeASIO )
+endif()

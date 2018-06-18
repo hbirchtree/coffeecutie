@@ -5,12 +5,14 @@ add_subdirectory(cmd-api)
 add_subdirectory(datastorage-api)
 add_subdirectory(file-api)
 add_subdirectory(function-tests)
+add_subdirectory(graphics)
+add_subdirectory(image-api)
 add_subdirectory(math-logic)
 add_subdirectory(profiling-api)
 add_subdirectory(size-tests)
 add_subdirectory(string-api)
 add_subdirectory(sysinfo-api)
-add_subdirectory(graphics)
+add_subdirectory(type-safe)
 
 if(NOT EMSCRIPTEN)
     add_subdirectory(thread-api)
@@ -19,9 +21,6 @@ endif()
 if(NOT SKIP_LINKAGE_TEST)
     add_subdirectory(link-api)
 endif()
-#if(COFFEE_BUILD_OPENVR AND NOT SKIP_OPENVR_TEST)
-#    add_subdirectory(vr-api)
-#endif()
 
 # This needs different testing and setup
 if(NOT ANDROID AND NOT WIN32)
@@ -47,5 +46,16 @@ coffee_test (
     dummy.cpp
 
     LIBRARIES
-    CoffeeCore CoffeeAssimp
+    CoffeeCore CoffeeGLeamCommon
     )
+
+if(BUILD_ASSIMP)
+    target_link_libraries ( Unit_IncludeAll
+        PUBLIC
+        CoffeeAssimp
+        )
+    target_compile_definitions ( Unit_IncludeAll
+        PUBLIC
+        HAS_ASSIMP
+        )
+endif()

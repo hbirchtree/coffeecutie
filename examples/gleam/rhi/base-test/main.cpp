@@ -1,115 +1,51 @@
-#include <coffee/core/CApplication>
-#include <coffee/sdl2/CSDL2Dialog>
-#include <coffee/core/input/eventhandlers.h>
-#include <coffee/core/coffee.h>
 #include "renderer.h"
+#include <coffee/core/CApplication>
+#include <coffee/core/coffee.h>
+#include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/pressurized/gleam/texture_loader.h>
-#include <coffee/pressurized/gleam/shader_loader.h>
 
-#if defined(FEATURE_USE_ASIO)
+#if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/asio/net_profiling.h>
 #endif
-
-void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
-{
-//    auto r = C_CAST<CDRenderer*>(user_ptr);
-
-    cDebug("Caught window event: {0}", C_CAST<uint32>(ev.type));
-
-    if(ev.type == CDEvent::Focus)
-    {
-        auto state = C_CAST<CDFocusEvent const*>(data);
-        if(state->mod == CDFocusEvent::Leave)
-            exit(0);
-    }
-}
 
 using EDATA = EventLoopData<CDRenderer, RendererState>;
 
 int32 coffee_main(int32, cstring_w*)
 {
-#if defined(FEATURE_USE_ASIO)
+    using namespace EventHandlers;
+    using namespace StandardInput;
+
+#if defined(FEATURE_ENABLE_CoffeeASIO)
     Net::RegisterProfiling();
 #endif
 
-    /* Set a prefix from which resources are fetched */
-//    CResources::FileResourcePrefix("sample_data/eye-demo/");
-//    SetPrintingVerbosity(8);
-//    GotoApplicationDir();
-
-    /*Moving on to regular rendering*/
-//    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
-
-    /* Set up the window visual */
-
-    Profiler::PushContext("Set up renderer");
-
     CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
-    cDebug("Property object size: {0}", sizeof(props));
-
-    props.flags ^= CDProperties::Resizable;
     props.gl.flags |= GLProperties::GLDebug;
-    
-    EDATA* loop = new EDATA{
-            CreateRendererUq(),
-            MkUq<RendererState>(),
-            SetupRendering,
-            RendererLoop,
-            RendererCleanup,
-            0, {}, {}
-};
-    
+
+    EDATA*       loop  = new EDATA{CreateRendererUq(),
+                            MkUq<RendererState>(),
+                            SetupRendering,
+                            RendererLoop,
+                            RendererCleanup};
+
     auto renderer = loop->renderer.get();
-    
     /* Install some standard event handlers */
-    renderer->installEventHandler({EventHandlers::EscapeCloseWindow<CDRenderer>,
-                                   nullptr, renderer});
-    renderer->installEventHandler({EventHandlers::WindowManagerCloseWindow<CDRenderer>,
-                                   nullptr, renderer});
-    renderer->installEventHandler({EventHandlers::ResizeWindowUniversal<GLM>,
-                                   nullptr, renderer});
-    renderer->installEventHandler({EventHandlers::WindowManagerFullscreen<CDRenderer>,
-                                   nullptr, renderer});
-    renderer->installEventHandler({EventHandlers::ExitOnQuitSignal<CDRenderer>,
-                                   nullptr, renderer});
-    renderer->installEventHandler({StandardInput::StandardCamera<CGCamera>,
-                                   nullptr, &loop->data->g_data.camera});
-    
-    renderer->installEventHandler({KeyEventHandler, nullptr,
-                                   loop->data.get()});
-
-    loop->data->rt_queue = RuntimeQueue::CreateNewQueue("MainQueue");
-
-    RuntimeQueue::Queue({
-                            [loop](){
-                                frame_count(loop->data.get());
-                            },
-                            {},
-                            std::chrono::seconds(1),
-                            RuntimeTask::Periodic,
-                            0,
-                        });
-
-    RuntimeQueue::Queue({
-                           [loop](){
-                                LogicLoop(*loop->renderer.get(), loop->data.get());
-                            },
-                            {},
-                            std::chrono::milliseconds(10),
-                            RuntimeTask::Periodic,
-                            0
-                        });
-
-    Profiler::PopContext();
+    renderer->installEventHandler(
+        {EscapeCloseWindow<CDRenderer>, nullptr, renderer});
+    renderer->installEventHandler(
+        {WindowManagerCloseWindow<CDRenderer>, nullptr, renderer});
+    renderer->installEventHandler(
+        {ResizeWindowUniversal<GLM>, nullptr, renderer});
+    renderer->installEventHandler(
+        {WindowManagerFullscreen<CDRenderer>, nullptr, renderer});
+    renderer->installEventHandler(
+        {StandardCamera<CGCamera>, nullptr, loop->d()->camera_cnt.get(0)});
 
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)
-    {
         cWarning("Failed to start: {0}", err);
-    }
 
     return 0;
 }

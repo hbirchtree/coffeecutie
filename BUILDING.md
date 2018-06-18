@@ -29,12 +29,12 @@ Navigate to a directory outside the source tree, and do as follows:
 
  2. Build it
 
-	CONFIGURATION=*Debug|Release*
+	    CONFIGURATION=*Debug|Release*
         GITHUB_TOKEN=*used if you are downloading dependencies*
 
         $SOURCE_DIR/quick-build.sh [TARGET]
 
-Where TARGET is one of the targets found in the Makefile.
+Where `TARGET` is one of the targets found in the Makefile.
 This process will download SDKs for most platforms, contained inside Docker containers.
 
 To list available targets:

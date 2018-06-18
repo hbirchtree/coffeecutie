@@ -3,5 +3,8 @@ coffee_application (
     TITLE "Environment Data"
     SOURCES main.cpp
     LIBRARIES CoffeeCore
-    USE_ASIO
     )
+
+if(TARGET CoffeeASIO)
+    target_link_libraries ( EnvTest PUBLIC CoffeeASIO )
+endif()

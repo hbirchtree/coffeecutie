@@ -1,10 +1,11 @@
 #include <coffee/core/CApplication>
-#include <coffee/interfaces/content_pipeline.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/plat_linking.h>
 #include <coffee/core/terminal/terminal_cursor.h>
+#include <coffee/interfaces/content_pipeline.h>
+
 #include <coffee/core/CDebug>
 
 using namespace Coffee;
@@ -37,6 +38,8 @@ void recurse_directories(
     DirFun::DirItem_t const&  item,
     Vector<VirtFS::VirtDesc>& files)
 {
+    file_error ec;
+
     switch(item.type)
     {
     case DirFun::Type::File:
@@ -71,7 +74,7 @@ void recurse_directories(
         auto            url = MkUrl(path.internUrl.c_str());
         DirFun::DirList content;
 
-        DirFun::Ls(MkUrl(path.internUrl.c_str()), content, true);
+        DirFun::Ls(MkUrl(path.internUrl.c_str()), content, ec);
 
         std::for_each(
             content.begin(),
@@ -215,6 +218,9 @@ i32 coffee_main(i32, cstring_w*)
     Vector<byte_t>               outputData;
     TerminalCursor               cursor;
     bool                         showStats = false;
+    file_error                   ec;
+
+    u32 globalNumWorkers = C_FCAST<u32>(SysInfo::ThreadCount());
 
     {
         ArgumentParser parser;
@@ -255,6 +261,12 @@ i32 coffee_main(i32, cstring_w*)
             " Even embedded in models.");
 
         parser.addArgument(
+            "workers",
+            "jobs",
+            "j",
+            "Max number of workers, defaults to number of cores on the system");
+
+        parser.addArgument(
             "cachedir",
             "cache",
             "m",
@@ -274,6 +286,9 @@ i32 coffee_main(i32, cstring_w*)
 
         if(args.switches.find("statistics") != args.switches.end())
             showStats = true;
+        if(args.arguments.find("workers") != args.arguments.end())
+            globalNumWorkers =
+                cast_string<u32>(args.arguments.find("workers")->second);
 
         parse_args(args);
 
@@ -290,7 +305,7 @@ i32 coffee_main(i32, cstring_w*)
     /* List files */
     {
         DirFun::DirList content;
-        if(!DirFun::Ls(rscDir, content, true))
+        if(!DirFun::Ls(rscDir, content, ec))
         {
             cFatal("{0}:0: Failed to list resource directory", *rscDir);
             return 1;
@@ -348,7 +363,7 @@ i32 coffee_main(i32, cstring_w*)
             continue;
         }
 
-        auto fsize = FileFun::Size(url);
+        auto fsize = FileFun::Size(url, ec);
         cursor.progress(
             "Adding file: {0}, {1} bytes, {2}",
             url,
@@ -357,11 +372,9 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     auto removeIt = std::remove_if(
-        descriptors.begin(), descriptors.end(),
-        [](VirtFS::VirtDesc const& desc)
-        {
-            return desc.data.size == 0;
-        });
+        descriptors.begin(),
+        descriptors.end(),
+        [](VirtFS::VirtDesc const& desc) { return desc.data.size == 0; });
 
     descriptors.erase(removeIt, descriptors.end());
 
@@ -374,6 +387,7 @@ i32 coffee_main(i32, cstring_w*)
         proc->setInternalState(
             State::GetInternalState(), State::GetInternalThreadState());
         proc->setBaseDirectories(baseDirs);
+        proc->numWorkers = globalNumWorkers;
 
         proc->process(descriptors, cursor);
     }
@@ -384,7 +398,8 @@ i32 coffee_main(i32, cstring_w*)
     {
         cursor.print("{0}:0: Failed to create VirtFS", outputVfs.internUrl);
     } else
-        cursor.complete("Filesystem created! ({0}MB)", outputData.size() / 1_MB);
+        cursor.complete(
+            "Filesystem created! ({0}MB)", outputData.size() / 1_MB);
 
     /* Give some statistics on the created filesystem */
     if(showStats)

@@ -1,136 +1,50 @@
-project( Coffee C CXX )
 cmake_minimum_required( VERSION 3.1 )
+cmake_policy ( SET CMP0048 NEW )
 
-# Make it verbose
-set ( CMAKE_VERBOSE_MAKEFILE on )
-
-include ( CTest )
-
-set ( CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    ${CMAKE_SOURCE_DIR}/cmake/Find
-    ${CMAKE_SOURCE_DIR}/cmake/Modules
-    ${CMAKE_SOURCE_DIR}/cmake/Packaging
+project( 
+    Coffee 
+    LANGUAGES C CXX
+    VERSION 4.0
     )
 
-if(WIN32)
-    # FindOpenSSL is broken on Windows.
-    # There is this 'replacement' that works in our environment.
-    set ( CMAKE_MODULE_PATH
-        ${CMAKE_SOURCE_DIR}/cmake/Find_Windows
-        ${CMAKE_MODULE_PATH}
-        )
-endif()
+include ( toolchain/cmake/Modules/SubprojectFunctions.cmake )
 
+init_project()
 
-# We set some general options for building, just to keep the binaries and libs in one place
-set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-if(NOT WIN32)
-    set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
-else()
-    set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-endif()
-set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
+set ( COFFEE_EXT_LIBRARY_DIR
+    "${CMAKE_SOURCE_DIR}/src/libs"
+    )
 
-# Custom, Coffee-specific variables
-set ( CMAKE_PACKAGED_OUTPUT_PREFIX packaged ) # Custom, used by scripts
-
-set ( COFFEE_DESKTOP_DIRECTORY "${CMAKE_SOURCE_DIR}/desktop" )
 set ( COFFEE_ASSET_DIRECTORY "${CMAKE_SOURCE_DIR}/sample_data" )
 
-set ( COFFEE_PACKAGE_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}" )
-set ( COFFEE_DEPLOY_DIRECTORY "${PROJECT_BINARY_DIR}/deploy" )
-set ( COFFEE_SOURCE_TEMPLATE_DIRECTORY "${CMAKE_SOURCE_DIR}/internal/templates" )
-
-set ( COFFEE_NATIVE_LIB_DIR CACHE PATH "" )
-
-set ( COFFEE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/coffee" )
-set ( COFFEE_PCH_DIR "${CMAKE_BINARY_DIR}/pch/" )
-
-if(COFFEE_GENERATE_LIBRARIES)
-    message (STATUS "Building as: ${CMAKE_BUILD_TYPE}")
+if(BUILD_LIBRARIES)
+    add_subdirectory( src )
 endif()
 
-# This is used inside modules to refer to libraries
-set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_SOURCE_DIR}/libs )
-
-if(LOWFAT_BUILD)
-    add_definitions ( -DCOFFEE_LOWFAT )
-endif()
-
-include ( BuildOptions )
-include ( PrecompiledHeader )
-if(BUILD_COVERAGE)
-    include ( CodeCoverage )
-    APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
-
-if(COFFEE_GENERATE_LIBRARIES)
-    include ( BuildFunctions )
-
-    include ( BuildFlags )
-endif()
-
-# Primary includes
-include_directories (
-    ${CMAKE_SOURCE_DIR}/internal/include
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}
-    )
-
-# General include directories, not ours
-include_directories ( SYSTEM
-    ${CMAKE_BINARY_DIR}/libs/include
-    )
-
-# Extension include directories
-set (
-    COFFEE_EXT_PCL_INCLUDE_DIR
-    ${CMAKE_SOURCE_DIR}/ext/pcl-shim/include
-    )
-set (
-    COFFEE_EXT_FREENECT2_INCLUDE_DIR
-    ${CMAKE_SOURCE_DIR}/ext/kinect-shim/include
-    ${COFFEE_CORE_INCLUDE_DIR}
-    )
-
-if(COFFEE_GENERATE_LIBRARIES)
-    # Add subdir for core modules
-    add_subdirectory(coffee)
-
-    # Add subdir for generation of language bindings
-    add_subdirectory(bindings)
-
-    if(GENERATE_PROGRAMS)
-        if(COFFEE_GENERATE_HTML)
-            set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
-        endif()
-        # Tools, includes the GUI profiler
+if(BUILD_LIBRARIES AND BUILD_BINARIES)
+    # Tools, includes the GUI profiler
+    if(BUILD_UTILITIES)
         add_subdirectory(tools)
-
-        # Add subdir for example applications
-        if(GENERATE_EXAMPLES)
-            add_subdirectory(examples)
-        endif()
-        if(GENERATE_TESTS)
-            add_subdirectory(tests)
-        endif()
     endif()
 
-    # Add subdir for extensions, weak bindings of libraries
-    add_subdirectory(ext)
+    # Add subdir for example applications
+    if(BUILD_EXAMPLES)
+        add_subdirectory(examples)
+    endif()
+
+    if(BUILD_TESTS)
+        option ( SKIP_HIGHMEM_TESTS "Skip high-memory tests" OFF )
+        option ( SKIP_LINKAGE_TEST "Skip test of dynamic linking" ON )
+        option ( SKIP_OPENVR_TEST
+            "Skip tests of OpenVR, it requires a display and hardware" ON )
+        option ( SKIP_GRAPHIC_TESTS
+            "Skip tests depending on headful configuration" ON )
+
+        add_subdirectory(tests)
+    endif()
 endif()
 
 # Add documentation directory, not built by default (increases build time)
-add_subdirectory(docs-gen)
+add_subdirectory(toolchain/docs-gen)
 
-# Add automatic linking directory, useful to get builds up quickly
-link_directories(
-    ${CMAKE_BINARY_DIR}/libs/lib/
-    )
-
-add_custom_target ( NULL )
-
-if(COFFEE_GENERATE_LIBRARIES)
-    generate_findscript()
-endif()
+end_project()

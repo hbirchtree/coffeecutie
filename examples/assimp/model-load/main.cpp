@@ -4,13 +4,14 @@
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/assimp/assimp_data.h>
 #include <coffee/graphics/common/SMesh>
+#include <coffee/assimp/assimp_material_iterators.h>
+#include <coffee/assimp/assimp_iterators.h>
+#include <coffee/assimp/assimp_deserializer.h>
 
 using namespace Coffee;
 
 i32 coffee_main(i32, cstring_w*)
 {
-    CResources::FileResourcePrefix("sample_data/metro-demo/");
-
     auto sceneFile = CResources::Resource("metro.fbx", ResourceAccess::None);
     if(CResources::FileMap(sceneFile, ResourceAccess::ReadOnly))
     {

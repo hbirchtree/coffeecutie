@@ -1,91 +1,17 @@
-#include <coffee/core/CFiles>
 #include <coffee/core/base/threading/job_system.h>
-#include <coffee/core/terminal/terminal_cursor.h>
-#include <coffee/core/types/tdef/stltypes.h>
-#include <coffee/image/cimage.h>
-#include <coffee/interfaces/content_pipeline.h>
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
+
+#include "texture_common.h"
 
 #include <coffee/core/CDebug>
 
-#include <squish.h>
+/* Image decoders */
+#include "tiff_decoder.h"
 
-#if defined(HAVE_LIBTIFF)
-#include <tiffio.h>
-#endif
+/* Image compressors */
+#include "dxt_compression.h"
+#include "etc_compression.h"
 
-#define TEXCOMPRESS_API "TextureCooker::"
-
-using namespace CoffeePipeline;
-
-/* Environment variables */
-static const constexpr cstring TEX_MAX_SIZE = "TEXCOOK_MAX_SIZE";
-static const constexpr cstring TEX_MIN_SIZE = "TEXCOOK_MIN_SIZE";
-
-static i32 max_texture_size = 1024;
-static i32 min_texture_size = 16;
-
-struct texture_settings_t
-{
-    i32 max_size, min_size;
-    u32 channels;
-
-    void parse(Bytes&& data)
-    {
-        if(!data.data)
-            return;
-
-        auto doc = JSON::Read(data.as<char>().data);
-
-        for(auto it=doc.MemberBegin(); it != doc.MemberEnd(); ++it)
-        {
-            auto member = CString((*it).name.GetString());
-
-            if(member == "max_size")
-                max_size = (*it).value.GetInt();
-            if(member == "min_size")
-                min_size = (*it).value.GetInt();
-            if(member == "channels")
-                channels = (*it).value.GetUint();
-        }
-    }
-
-    void parse(Path basePath)
-    {
-        Path generalDesc = basePath.dirname() + "ALL.texture.json";
-        Path specificDesc =
-            basePath.addExtension("texture").addExtension("json");
-
-
-        auto generalRsc = Resource(MkUrl(generalDesc, RSCA::AssetFile));
-        if(FileExists(generalRsc))
-            parse(C_OCAST<Bytes>(generalRsc));
-
-        auto specificRsc = Resource(MkUrl(specificDesc, RSCA::AssetFile));
-        if(FileExists(specificRsc))
-            parse(C_OCAST<Bytes>(specificRsc));
-    }
-};
-
-static Vector<CString> imageExtensions = {"PNG",
-                                          "JPG",
-                                          "TGA",
-                                          "JPEG",
-#if defined(HAVE_LIBTIFF)
-                                          "TIF",
-                                          "TIFF"
-#endif
-};
-
-enum ImageProcessor
-{
-    ImageProc_stb,
-    ImageProc_stb_rgb,
-    ImageProc_tga,
-#if defined(HAVE_LIBTIFF)
-    ImageProc_tiff,
-#endif
-};
+namespace TexCompress {
 
 struct TextureCooker : FileProcessor
 {
@@ -95,145 +21,69 @@ struct TextureCooker : FileProcessor
     virtual void setBaseDirectories(const Vector<CString>&);
 };
 
-static void CompressDXT(
-    Vector<VirtFS::VirtDesc>&            files,
-    Pair<CString, ImageProcessor> const& file,
-    CSize const&                         size,
-    Bytes const&                         inputData,
-    Path const&                          outName,
-    texture_settings_t const&            compress,
-
-    TerminalCursor& cursor,
-    FileProcessor*  cooker)
+bool StbDecode(
+    FileProcessor*,
+    Pair<CString, ImageProcessor> const&,
+    PixCmp    cmp,
+    BitFmt&   bfmt,
+    CSize&    size,
+    Bytes&    data,
+    Resource& r)
 {
-    bool    fail   = false;
-    cstring reason = nullptr;
+    return IMG::Load(std::move(r), cmp, bfmt, data, size);
+}
 
+static Map<
+    ImageProcessor,
+    bool (*)(
+        FileProcessor*,
+        Pair<CString, ImageProcessor> const&,
+        PixCmp,
+        BitFmt&,
+        CSize&,
+        Bytes&,
+        Resource&)>
+    image_decoders = {{ImageProc_stb, StbDecode},
+#if defined(HAVE_LIBTIFF)
+                      {ImageProc_tiff, TiffDecode}
+#endif
+};
+
+static Size ScaleSize(Size const& size, i32 target_size)
+{
+    Size target_size_ = {target_size, target_size};
+
+    /* Non-quadratic, clamp largest size, scale the other */
     if(size.w != size.h)
     {
-        fail   = true;
-        reason = "{1}:0: Non-square texture is non-optimal: {0}";
-    }
+        auto scalar_size = size.convert<scalar>();
 
-    if((size.w % 4) != 0 || (size.h % 4) != 0)
-    {
-        fail   = true;
-        reason = "{1}:0: Inadequate size for S3TC texture: {0}";
-    }
-
-    if(fail)
-    {
-        auto offender = Path(GetFileResourcePrefix()) + file.first;
-        cursor.print(reason, size, offender.internUrl);
-        return;
-    }
-
-    Bytes data = Bytes();
-    data.data  = inputData.data;
-    data.size  = inputData.size;
-
-    auto imsize  = size;
-    auto newSize = imsize;
-    while(newSize.w >= compress.min_size && newSize.h >= compress.min_size)
-    {
-        /* The step will generate a bitmap of size newSize,
-         *  imsize is source size */
-
-        auto ext             = "dxt5";
-        auto compression_fmt = squish::kDxt5;
-
-        if(compress.channels == 3)
-        {
-            ext             = "dxt1";
-            compression_fmt = squish::kDxt1;
-        }
-
-        auto sizeString = cast_pod(newSize.w);
-        auto targetImg =
-            outName.addExtension(sizeString.c_str()).addExtension(ext);
-        auto mipImg = outName.addExtension(sizeString.c_str());
-
-        if(compress.channels == 3)
-            mipImg = mipImg.addExtension("jpg");
+        if(size.w > size.h)
+            target_size_ = {target_size,
+                            target_size *
+                                C_CAST<i32>(scalar_size.w / scalar_size.h)};
         else
-            mipImg = mipImg.addExtension("png");
-
-        if(newSize.w > compress.max_size || newSize.h > compress.max_size)
-        {
-            cursor.progress(
-                TEXCOMPRESS_API "Skipping texture, over max size: {0}",
-                targetImg.internUrl);
-            imsize = newSize;
-        } else if(cooker->isCached(targetImg) && cooker->isCached(mipImg))
-        {
-            cursor.progress(
-                TEXCOMPRESS_API "Using cache texture: {0}",
-                targetImg.internUrl);
-            files.emplace_back(targetImg, cooker->getCached(targetImg), 0);
-            files.emplace_back(mipImg, cooker->getCached(mipImg), 0);
-
-            imsize = newSize;
-        } else
-        {
-            if(imsize.w != newSize.w)
-            {
-                auto newData = stb::Resize(
-                    stb::CStbImage::From(inputData, size), newSize, 4);
-                data    = std::move(newData);
-                newData = Bytes();
-                imsize  = newSize;
-            }
-
-            files.emplace_back(targetImg, Bytes(), 0);
-            files.emplace_back(mipImg, Bytes(), 0);
-
-            Bytes& output    = files.at(files.size() - 2).data;
-            Bytes& pngOutput = files.at(files.size() - 1).data;
-
-            /* Allocate space for image as well as WxH parameters */
-            output = Bytes::Alloc(
-                C_FCAST<szptr>(squish::GetStorageRequirements(
-                    imsize.w, imsize.h, compression_fmt)) +
-                sizeof(IMG::serial_image));
-
-            cursor.progress(
-                TEXCOMPRESS_API "Compressing texture: "
-                                "{1}: {2}B (raw)"
-                                " -> {0}B (compressed)",
-                output.size,
-                targetImg.internUrl,
-                data.size);
-            squish::CompressImage(
-                data.data,
-                imsize.w,
-                imsize.h,
-                &output[sizeof(IMG::serial_image)],
-                compression_fmt);
-
-            IMG::serial_image imgDesc = {};
-            imgDesc.size              = imsize.convert<u32>();
-            imgDesc.fmt               = PixFmt::S3TC;
-            imgDesc.bit_fmt           = BitFmt::Byte;
-            imgDesc.comp_fmt          = compression_fmt == squish::kDxt5
-                                   ? CompFlags::S3TC_5
-                                   : CompFlags::S3TC_1;
-
-            MemCpy(Bytes::Create(imgDesc), output);
-
-            /* Cache DXT-compressed data */
-            cooker->cacheFile(targetImg, output);
-
-            if(compress.channels == 3)
-                pngOutput = JPG::Save(stb::image_const::From(data, imsize));
-            else
-                pngOutput = PNG::Save(stb::image_const::From(data, imsize));
-
-            /* Cache regular image format */
-            cooker->cacheFile(mipImg, pngOutput);
-        }
-
-        newSize = imsize / 2;
+            target_size_ = {target_size *
+                                C_CAST<i32>(scalar_size.h / scalar_size.w),
+                            target_size};
     }
+
+    return target_size_;
+}
+
+static Tup<Bytes, Size> ScaleImage(
+    Bytes&& image, Size const& size, i32 target_size, stb::ImageHint hint)
+{
+    auto target_size_ = ScaleSize(size, target_size);
+
+    auto temp_img = stb::image_rw::From(image, size, 4);
+    auto res      = stb::Resize(temp_img, target_size_, 4, hint);
+
+    Bytes output_data = std::move(res.data_owner);
+
+    res.disown();
+
+    return std::make_tuple(std::move(output_data), target_size_);
 }
 
 static void CompressTextureSet(
@@ -250,79 +100,73 @@ static void CompressTextureSet(
     BitFmt bfmt;
     Bytes  data;
     CSize  size;
-#if defined(HAVE_LIBTIFF)
-    if(file.second != ImageProc_tiff)
-#endif
-        IMG::Load(std::move(r), cmp, bfmt, data, size);
-#if defined(HAVE_LIBTIFF)
-    else
-        do
-        {
-            auto pngPath = Path(file.first).removeExt().addExtension("png");
 
-            if(cooker->isCached(pngPath))
-            {
-                IMG::Load(cooker->getCached(pngPath), cmp, bfmt, data, size);
-                break;
-            }
+    auto decoder = image_decoders.find(file.second);
 
-            /* libtiff is used for reading TIFF files, because it's a
-             *  not part of stb. We use this opportunity to convert
-             *  it into PNG format for packing. */
-            auto timg = TIFFOpen(r.resource(), "r");
-
-            if(!timg)
-                return;
-
-            TIFFRGBAImage rimg;
-            char          emsg[1024] = {};
-
-            if(!TIFFRGBAImageBegin(&rimg, timg, 0, emsg))
-            {
-                TIFFClose(timg);
-                return;
-            }
-
-            ::uint32 w, h;
-            TIFFGetField(timg, TIFFTAG_IMAGEWIDTH, &w);
-            TIFFGetField(timg, TIFFTAG_IMAGELENGTH, &h);
-
-            data = Bytes::Alloc(w * h * sizeof(u32));
-
-            Bytes::SetDestr(data, [](Bytes& d) { CFree(d.data); });
-
-            if(!TIFFRGBAImageGet(&rimg, C_RCAST<u32*>(data.data), w, h))
-            {
-                TIFFRGBAImageEnd(&rimg);
-                TIFFClose(timg);
-                return;
-            }
-
-            size.w = C_FCAST<i32>(w);
-            size.h = C_FCAST<i32>(h);
-
-            /* This is where we create the PNG file */
-            auto pngData = PNG::Save(stb::image_const::From(data, size));
-            cooker->cacheFile(pngPath, pngData);
-
-            TIFFRGBAImageEnd(&rimg);
-            TIFFClose(timg);
-        } while(false);
-#endif
-
-    /* IMG::Load may fail silently, just ignore it */
-    if(size.area() == 0)
+    if(decoder == image_decoders.end())
         return;
+
+    if(!decoder->second(cooker, file, cmp, bfmt, size, data, r))
+        return;
+
+    if(size.area() == 0)
+    {
+        return;
+    }
 
     texture_settings_t settings;
 
+    settings.flags    = stb::ImageHint::Undefined;
     settings.max_size = max_texture_size;
     settings.min_size = min_texture_size;
     settings.channels = 4;
+    settings.formats  = Compress_ALL; /*!< Use all formats by default */
 
     settings.parse(outName);
 
-    CompressDXT(files, file, size, data, outName, settings, cursor, cooker);
+    if(size.w < settings.max_size && size.h < settings.max_size)
+    {
+        std::tie(data, size) = ScaleImage(
+            std::move(data), size, settings.max_size, settings.flags);
+    } else if(size.w > settings.max_size && size.h > settings.max_size)
+    {
+        std::tie(data, size) = ScaleImage(
+            std::move(data), size, settings.max_size, settings.flags);
+    }
+
+    common_tools_t tools = {cooker, cursor, settings, files};
+
+    if(settings.formats & Compress_DXT)
+        CompressDXT(tools, file, size, data, outName);
+
+#if defined(HAVE_ETC2COMP)
+    if(settings.formats & Compress_ETC)
+        CompressETC12(tools, size, data, outName);
+#endif
+
+    if(settings.formats & Compress_RAW)
+    {
+        /* Just export the raw image as RGBA8 */
+        IMG::serial_image img;
+        img.size               = size;
+        img.v2.bit_fmt         = BitFmt::UByte;
+        img.v2.format.base_fmt = PixFmt::RGBA8;
+        img.v2.format.c_flags  = CompFlags::CompressionNone;
+        img.v2.format.p_flags  = PixFlg::None;
+
+        auto rawName = outName.addExtension("raw");
+
+        files.emplace_back(rawName, Bytes(), 0);
+
+        auto& rawData = files.back().data;
+
+        rawData = Bytes::Alloc(sizeof(img) + data.size);
+        MemCpy(Bytes::From(img), rawData.at(0, sizeof(img)));
+        MemCpy(data, rawData.at(sizeof(img)));
+
+        cursor.progress(
+            TEXCOMPRESS_API "Exporting raw RGBA for {0}", file.first);
+    }
 }
 
 void TextureCooker::process(
@@ -338,12 +182,11 @@ void TextureCooker::process(
         auto path = Path(desc.filename);
 
         for(auto ext : imageExtensions)
+            /* Check if we recognize the extension */
             if(StrICmp(path.extension().c_str(), ext.c_str()))
             {
-                if(ext == "TGA")
-                    targets.push_back({desc.filename, ImageProc_tga});
-                else if(ext == "JPG")
-                    targets.push_back({desc.filename, ImageProc_stb_rgb});
+                if(ext == "")
+                    continue;
 #if defined(HAVE_LIBTIFF)
                 else if(ext == "TIFF" || ext == "TIF")
                     targets.push_back({desc.filename, ImageProc_tiff});
@@ -367,9 +210,11 @@ void TextureCooker::process(
     Map<ThreadId::Hash, Vector<VirtFS::VirtDesc>> threadFiles;
 
     Threads::ParallelForEach<FileContainer, FileElement>(
-        targets, [&](FileElement& e) {
+        targets,
+        [&](FileElement& e) {
             CompressTextureSet(threadFiles[ThreadId().hash()], e, this, cursor);
-        });
+        },
+        this->numWorkers);
 
     for(auto& thread : threadFiles)
     {
@@ -405,3 +250,5 @@ COFFAPI FileProcessor* CoffeeLoader()
 {
     return new TextureCooker;
 }
+
+} // namespace TexCompress

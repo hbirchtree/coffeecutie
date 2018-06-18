@@ -51,11 +51,7 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
 
     CRGBA* data = C_CAST<CRGBA*>(instance->mapTexture(out));
     MemCpy(C_OCAST<Bytes>(img), Bytes::From(data, img.size.area() * img.bpp));
-//    MemCpy(data,img.data, C_CAST<szptr>(img.size.area()*img.bpp));
     instance->unmapTexture(out);
-
-    stb::ImageFree(&img);
-    CResources::FileUnmap(analog_rsc);
 
     return out;
 }
@@ -69,8 +65,6 @@ int32 coffee_main(int32, cstring_w*)
 {
     SubsystemWrapper<SDL2::SDL2> sys1;
     C_UNUSED(sys1);
-
-    CResources::FileResourcePrefix("sample_data/input-sprites/");
 
     int32 majGL = 2, minGL = 0;
     RHI::GLEAM::GLEAM_API::GetDefaultVersion(majGL, minGL);

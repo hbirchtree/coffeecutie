@@ -21,7 +21,9 @@ bool framebuffer_read()
     if(framebuffer.size() < sizeof(color))
         return false;
 
-    return MemCmp(Bytes::CreateFrom(framebuffer), Bytes::From(color));
+    return MemCmp(
+        Bytes::CreateFrom(framebuffer).at(0, sizeof(color)),
+        Bytes::From(color));
 }
 
 COFFEE_TEST_SUITE(1) = {

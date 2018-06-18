@@ -1,9 +1,9 @@
 after_success:
-- tools/ci/travis-deploy.sh
+- toolchain/ci/travis-deploy.sh
 apt:
   update: true
 before_script:
-- tools/ci/travis-deps.sh
+- toolchain/ci/travis-deps.sh
 branches:
   only:
   - master
@@ -14,9 +14,9 @@ compiles:
 dist: trusty
 env:
   global:
-  - MAKEFILE_DIR=tools/makers
+  - MAKEFILE_DIR=toolchain/makers
   - DEPENDENCIES=
-  - CONFIGURATION=Debug
+  - CONFIGURATION=Release
   matrix:
   - BUILDVARIANT=android.armv7a.kitkat.gles2
   - BUILDVARIANT=android.armv7a.nougat.gles2
@@ -72,7 +72,7 @@ os:
 - linux
 - osx
 script:
-- tools/ci/travis-build.sh
+- toolchain/ci/travis-build.sh
 services:
 - docker
 sudo: required

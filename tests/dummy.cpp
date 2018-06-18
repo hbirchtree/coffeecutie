@@ -43,10 +43,12 @@
 #include <coffee/image/cimage.h>
 
 /* ASSIMP APIs */
+#if defined(HAS_ASSIMP)
 #include <coffee/assimp/assimp_deserializer.h>
 #include <coffee/assimp/assimp_iterators.h>
 #include <coffee/assimp/assimp_material_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
+#endif
 
 bool dummy_test()
 {
