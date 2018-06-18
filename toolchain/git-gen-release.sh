@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WDIR="$(dirname $(dirname $(realpath $0)))"
+WDIR="$(dirname $(realpath $0))"
 
 function gitw()
 {
