@@ -11,6 +11,8 @@
 #include "dxt_compression.h"
 #include "etc_compression.h"
 
+namespace TexCompress {
+
 struct TextureCooker : FileProcessor
 {
     virtual void process(
@@ -248,3 +250,5 @@ COFFAPI FileProcessor* CoffeeLoader()
 {
     return new TextureCooker;
 }
+
+} // namespace TexCompress

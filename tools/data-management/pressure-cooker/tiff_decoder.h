@@ -5,6 +5,8 @@
 #if defined(HAVE_LIBTIFF)
 #include <tiffio.h>
 
+namespace TexCompress {
+
 bool TiffDecode(
     FileProcessor*                       cooker,
     Pair<CString, ImageProcessor> const& file,
@@ -70,4 +72,7 @@ bool TiffDecode(
 
     return true;
 }
+
+} // namespace TexCompress
+
 #endif

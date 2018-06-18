@@ -5,7 +5,7 @@
 
 #include "texture_common.h"
 
-using namespace Coffee;
+namespace TexCompress {
 
 static void CompressDXT(
     common_tools_t&                      t,
@@ -145,3 +145,5 @@ static void CompressDXT(
         newSize = imsize / 2;
     }
 }
+
+} // namespace TexCompress

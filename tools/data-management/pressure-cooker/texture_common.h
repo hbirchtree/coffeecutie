@@ -11,6 +11,8 @@
 
 #define TEXCOMPRESS_API "TextureCooker::"
 
+namespace TexCompress{
+
 using namespace CoffeePipeline;
 
 /* Environment variables */
@@ -109,3 +111,5 @@ enum ImageProcessor
     ImageProc_tiff,
 #endif
 };
+
+}

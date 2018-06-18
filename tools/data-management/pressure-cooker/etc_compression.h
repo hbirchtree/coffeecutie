@@ -9,6 +9,8 @@
 
 using EtcImFormat = Etc::Image::Format;
 
+namespace TexCompress {
+
 static cstring GetETCExtension(EtcImFormat fmt)
 {
     switch(fmt)
@@ -168,4 +170,7 @@ static bool CompressETC12(
 
     return false;
 }
+
+} // namespace TexCompress
+
 #endif
