@@ -137,36 +137,48 @@ function container_run()
 
 function build_standalone()
 {
+    #####################################################
+    # First get the dependencies, which we will download
+    #####################################################
     OLD_IFS=$IFS
     IFS='%'
     for dep in $DEPENDENCIES; do
         [ -z $NODEPS ] && IFS=$OLD_IFS download_libraries "$dep" "$1"
     done
 
+    #####################################################
+    # Set some default targets
+    #####################################################
     [ -z $CONFIGURATION ] && export CONFIGURATION=Debug
     [ -z $CMAKE_TARGET ] && export CMAKE_TARGET=install
     [ ! -z $TRAVIS ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
     [ -z $GENERATE_PROGRAMS ] && export GENERATE_PROGRAMS=ON
 
-    echo "#####################################################"
-    echo "#### Program versions ###############################"
-    echo "#####################################################"
+    if [ ! -z $TRAVIS ]; then
+        echo "#####################################################"
+        echo "#### Program versions ###############################"
+        echo "#####################################################"
 
-    container_run "cmake --version" "$1"
-    #container_run "clang --version"
-    #container_run "clang++ --version"
-    #container_run "gcc --version"
-    #container_run "g++ --version"
-    #container_run "ld --version"
-    tar --version
-    
-    echo "#####################################################"
-    echo "#####################################################"
-    echo "#####################################################"
+        container_run "cmake --version" "$1"
+        #container_run "clang --version"
+        #container_run "clang++ --version"
+        #container_run "gcc --version"
+        #container_run "g++ --version"
+        #container_run "ld --version"
+        tar --version
 
-    echo
-    echo
+        echo "#####################################################"
+        echo "#####################################################"
+        echo "#####################################################"
 
+        echo
+        echo
+    fi
+
+    #####################################################
+    # This invokes the build
+    # Docker configuration and similar is auto-generated
+    #####################################################
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
@@ -177,7 +189,9 @@ function build_standalone()
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
+    # We will also submit status to Firebase
     EXIT_STAT=$?
+    [[ ! "$EXIT_STAT" = 0 ]] && [[ ! -z $FIREBASE_ENDPOINT ]] && $CI_DIR/../firebase-submit-report.sh "$EXIT_STAT"
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 
     echo
