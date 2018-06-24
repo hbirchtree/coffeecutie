@@ -2,7 +2,6 @@ allow_fail:
 - env: BUILDVARIANT=maemo.armel
 - env: BUILDVARIANT=uwp.amd64
 - env: BUILDVARIANT=uwp.arm
-- env: BUILDVARIANT=coverage
 - env: BUILDVARIANT=raspberry.armhf
 branches:
 - build: true
@@ -20,14 +19,11 @@ platforms:
   android:
   - armv7a.kitkat.gles2
   - armv8a.nougat.gles3
-  - armv7a.nougat.gles2
   emscripten:
   - asmjs
   - wasm
   fedora:
   - amd64
-  maemo:
-  - armel
   osx:
   - osx
   - ios.x86_64

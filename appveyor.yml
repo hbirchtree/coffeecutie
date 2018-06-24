@@ -43,7 +43,6 @@ matrix:
   - BUILDVARIANT: maemo.armel
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: uwp.arm
-  - BUILDVARIANT: coverage
   - BUILDVARIANT: raspberry.armhf
   exclude:
   - BUILDVARIANT: uwp.amd64

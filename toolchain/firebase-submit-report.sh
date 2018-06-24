@@ -48,6 +48,8 @@ export MSG_BODY="$(get_q .repo):$(get_q .build_id) build failed on $(get_q .bran
 export MSG_TAG="$(get_q .repo):$(get_q .branch):$(get_q .build_id)"
 export MSG_DESCRIPTION="The $(get_q .build_id) build failed"
 
+# Some builds allow failure, just let them pass, no notification
+[ ! -z $TRAVIS ] && [ "$TRAVIS_ALLOW_FAILURE" == "true" ] && exit 0
+
 $BASEDIR/firebase-pop-notification.sh
 
-exit $?
