@@ -21,5 +21,4 @@ curl -s -X POST \
     ${FCM_ENDPOINT:-https://fcm.googleapis.com/fcm/send} \
     --header "Content-Type: application/json" \
     --header "Authorization: key=$FCM_TOKEN"
-        
-
+echo

@@ -6,30 +6,43 @@ OUTPUT_TYPE=${OUTPUT_TYPE:-text}
 
 function create_identity()
 {
-   if [ "${OUTPUT_TYPE}" == "text" ]; then
-        echo "$1/$2/$3/$4/$5"
+    local build_id="$(echo $5 | sed -e 's/\./-/g')"
+
+    if [ "${OUTPUT_TYPE}" == "text" ]; then
+        echo "${1:-unknown/unknown}/${2:-continuous-integration/unknown-ci}/${4:-push}/${3:-master}/${build_id:-unknown}"
     else
         echo "{
-    \"repo\": \"$1\",
-    \"service\": \"$2\",
-    \"event\": \"$3\",
-    \"branch\": \"$4\",
-    \"build_id\": \"$5\"
+    \"repo\": \"${1:-unknown/unknown}\",
+    \"service\": \"${2:-continuous-integration/unknown-ci}\",
+    \"event\": \"${3:-push}\",
+    \"branch\": \"${4:-master}\",
+    \"build_id\": \"${build_id:-unknown}\"
 }"
     fi
  
+}
+
+# Extra slug from URL
+function extract_repo_slug()
+{
+        echo "$1" | sed -rn 's|.*[:/]([A-Za-z0-9\.]+/[A-Za-z0-9\.]+)\.git$|\1|p'
 }
 
 function travis_get_path()
 {
     function travis_repo_slug()
     {
-        if [ ! -z $TRAVIS_ ]; then
+        if [ ! -z $TRAVIS_REPO_URL ]; then
+            extract_repo_slug $TRAVIS_REPO_URL 
+            return
+        fi
+        if [ ! -z $TRAVIS_PULL_REQUEST_SLUG ]; then
             echo $TRAVIS_PULL_REQUEST_SLUG
-        else
-            if [ ! -z $TRAVIS_REPO_SLUG ]; then
-                echo $TRAVIS_REPO_SLUG
-            fi
+            return
+        fi
+        if [ ! -z $TRAVIS_REPO_SLUG ]; then
+            echo $TRAVIS_REPO_SLUG
+            return
         fi
     }
     
@@ -48,7 +61,7 @@ function jenkins_get_path()
 {
     function jenkins_repo_slug()
     {
-        echo "$GIT_URL" | sed -rn 's|.*[:/]([A-Za-z0-9\.]+/[A-Za-z0-9\.]+)\.git$|\1|p'
+        extract_repo_slug $GIT_URL
     }
 
     local identifier=$BUILDVARIANT
@@ -62,7 +75,7 @@ function jenkins_get_path()
 
 CI_IDENTITY="generic-repository/generic-ci/service/push"
 
-if [ ! -z $TRAVIS ]; then
+if [ ! -z $TRAVIS_BRANCH ]; then
     travis_get_path
 fi
 

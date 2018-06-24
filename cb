@@ -3,6 +3,10 @@
 BASE_DIR=$(dirname ${0})
 TC_DIR=${BASE_DIR}/toolchain
 
+# For Firebase reporting
+export TRAVIS_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+export TRAVIS_REPO_URL="$(git remote get-url $(git remote | head -1))"
+
 function all_source_files()
 {
   find ${BASE_DIR}/src/coffee ${BASE_DIR}/src/include -regex '.*\.\(cpp\|h\)' -type f $@      

@@ -1,16 +1,35 @@
 #!/bin/bash
 
+function gen_information()
+{
+    local url=""
+
+    if [ ! -z $TRAVIS ]; then
+        local url="https://travis-ci.org/$REPO_SLUG/jobs/$TRAVIS_JOB_ID"
+    fi
+
+    if [ "$url" == "" ]; then
+        local url="https://github.com/$REPO_SLUG/commit/$(git rev-parse HEAD)"
+    fi
+
+    echo "{\"status\":$1,\"url\":\"$url\"}"
+}
+
 BASEDIR=$(dirname $0)
-
 IDENTITY="$($BASEDIR/ci-identify.sh)"
+JSON_DATA="$(OUTPUT_TYPE=json $BASEDIR/ci-identify.sh)"
 
-OUTPUT_TYPE=json $BASEDIR/ci-identify.sh
+function get_q()
+{
+    echo "$JSON_DATA" | jq $1 | cut -d '"' -f2
+}
 
 echo "
-********************************************************************************
-******************** Submitting build status to Firebase ***********************
-********************************************************************************
+################################################################################
+#################### Submitting build status to Firebase #######################
+################################################################################
 "
+echo $JSON_DATA | jq
 
 if [ -z $IDENTITY ]; then
     echo " * Failed to establish CI identity"
@@ -20,14 +39,14 @@ fi
 echo " * Submitting request to:"
 echo "   $IDENTITY"
 
-$BASEDIR/firebase-report.sh PUT "$IDENTITY" $@
+export REPO_SLUG="$(get_q .repo)"
 
-JSON_DATA="$(OUTPUT_TYPE=json $BASEDIR/ci-identify.sh)"
+$BASEDIR/firebase-report.sh PUT "$IDENTITY" "$(gen_information $@)"
 
-export MSG_TITLE="$(echo $JSON_DATA | jq .service)"
-export MSG_BODY="$(echo $JSON_DATA | jq .repo):$(echo $JSON_DATA | jq .build_id) build failed on $(echo $JSON_DATA | jq .branch)"
-export MSG_TAG="$(echo $JSON_DATA | jq .repo):$(echo $JSON_DATA | jq .branch):$(echo $JSON_DATA | jq .build_id)"
-export MSG_DESCRIPTION="The $(echo $JSON_DATA | jq .build_id) build failed"
+export MSG_TITLE="$(get_q .service)"
+export MSG_BODY="$(get_q .repo):$(get_q .build_id) build failed on $(get_q .branch)"
+export MSG_TAG="$(get_q .repo):$(get_q .branch):$(get_q .build_id)"
+export MSG_DESCRIPTION="The $(get_q .build_id) build failed"
 
 $BASEDIR/firebase-pop-notification.sh
 

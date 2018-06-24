@@ -23,3 +23,4 @@ function api_call()
 }
 
 api_call $@
+echo
