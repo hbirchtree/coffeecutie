@@ -55,10 +55,10 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 
     & $CMakeBin $SrcDir `
         -G"$Generator" `
-        -DCMAKE_TOOLCHAIN_FILE="$SrcDir/cmake/Toolchains/$toolchain.toolchain.cmake" `
+        -DCMAKE_TOOLCHAIN_FILE="$SrcDir/toolchain/cmake/Toolchains/$toolchain.toolchain.cmake" `
         -DANGLE_ROOT_DIR="$ANGLEDir" `
         -DNATIVE_LIBRARY_DIR="$NativeLibDir/$LibVariant" `
-        -C"$SrcDir/cmake/Preload/$preload.cmake" `
+        -C"$SrcDir/toolchain/cmake/Preload/$preload.cmake" `
         -DCMAKE_INSTALL_PREFIX="$Pwd/Out" `
         $ExtraArgs
 }
