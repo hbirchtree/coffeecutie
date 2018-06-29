@@ -138,8 +138,7 @@ using Tup = std::tuple<Args...>;
 
 using ByteVector = Vector<uint8_t>;
 
-// template<typename Tag, typename T>
-// using Iterator = std::iterator<Tag,T>;
+using ExceptionPtr = std::exception_ptr;
 
 template<typename T>
 using NonConst = typename std::remove_const<T>::type;

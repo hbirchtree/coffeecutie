@@ -12,6 +12,7 @@ namespace Linux{
 
 struct LinuxStacktracer : Posix::PosixStacktracer
 {
+    static void ExceptionStacktrace(ExceptionPtr const& exc_ptr);
 };
 
 }

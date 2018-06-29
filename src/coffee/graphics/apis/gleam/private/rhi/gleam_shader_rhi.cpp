@@ -765,6 +765,8 @@ void GetShaderUniforms(
                 auto& unif    = uniforms->at(ublk_idx + i);
                 auto& blkName = unif.m_name;
 
+                blkName.resize(max_namelen_sz);
+
                 i32 blkSize = 0, activeUnifs = 0;
 
                 Vector<i32> unifIndices;

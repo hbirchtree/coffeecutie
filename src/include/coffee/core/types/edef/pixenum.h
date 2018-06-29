@@ -34,7 +34,7 @@ enum class PixelFlags : u16
 };
 C_FLAGS(PixelFlags, uint32);
 
-enum class PixelComponents : u8
+enum class PixCmp : u8
 {
     None,
 
@@ -52,8 +52,6 @@ enum class PixelComponents : u8
     Depth,
     DepthStencil,
 };
-
-using PixCmp = PixelComponents;
 
 enum class PixelOperation : u8
 {
@@ -180,7 +178,9 @@ enum class PixelFormat : u8
     BCn  = S3TC,
     DXTn = S3TC,
     BPTC = S3TC,
-    RGTX = S3TC,
+    RGTC = S3TC,
+
+    Undefined = None,
 };
 
 /*!
@@ -265,6 +265,8 @@ enum class BitFormat : u8
     UInt24_8,
 
     Scalar_32_Int_24_8,
+
+    Undefined,
 };
 
 using BitFmt = BitFormat;

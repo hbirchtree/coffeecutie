@@ -1,7 +1,7 @@
 #pragma once
 
-#include "shared/gl_shared_debug.h"
-#include "shared/gl_shared_include.h"
+#include "gl_shared_debug.h"
+
 #include <coffee/core/coffee_mem_macros.h>
 #include <coffee/graphics/common/gltypes.h>
 

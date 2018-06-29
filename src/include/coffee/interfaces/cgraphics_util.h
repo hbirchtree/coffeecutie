@@ -17,13 +17,12 @@ FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
     auto pix = C_RCAST<IMG::serial_image const*>(img_data.data);
     struct ImageData
     {
-        szptr  data_size;
-        i32    width, height;
+        szptr data_size;
+        i32   width, height;
     } data;
 
-
     if(img_data.size < 8)
-        return std::make_tuple(Size(), CompFmt());
+        return {};
 
     CompFmt c_fmt = {};
 
@@ -32,25 +31,21 @@ FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
         c_fmt = pix->v2.format;
     }
 
-    auto loc_size = pix->size.convert<i32>();
-    data.width = loc_size.w;
-    data.height = loc_size.h;
+    if(!IsPixFmtCompressed(c_fmt.base_fmt))
+        return {};
 
-    data.data_size = GetPixCompressedSize(c_fmt, {data.width, data.height});
+    auto loc_size = pix->size.convert<i32>();
+
+    data.data_size = GetPixCompressedSize(c_fmt, loc_size);
 
     if(img_data.size < data.data_size)
         return {};
 
     /* Ensure that the upload won't be bad */
     if(img_data.size < data.data_size)
-        return std::make_tuple(Size(), CompFmt());
+        return {};
 
-    u32 compressionFlags = C_CAST<u32>(c_fmt.c_flags);
-    compressionFlags <<= 10;
-
-    Size tex_size = {data.width, data.height};
-
-    return std::make_tuple(tex_size, c_fmt);
+    return std::make_tuple(loc_size, c_fmt);
 }
 
 template<
@@ -66,6 +61,12 @@ FORCEDINLINE bool LoadCompressedTexture(
     CompFmt cfmt;
 
     std::tie(tex_size, cfmt) = UnpackCompressedTexture(img_data);
+
+    if(cfmt.base_fmt == PixFmt::None)
+        return false;
+
+    if(!GFX::TextureFormatSupport(cfmt.base_fmt, cfmt.c_flags))
+        return false;
 
     surface = GFX::S_2D(fmt, 1, 0);
 
@@ -93,6 +94,12 @@ FORCEDINLINE bool LoadCompressedTexture(
     CompFmt cfmt;
 
     std::tie(tex_size, cfmt) = UnpackCompressedTexture(img_data);
+
+    if(cfmt.base_fmt == PixFmt::None)
+        return false;
+
+    if(!GFX::TextureFormatSupport(cfmt.base_fmt, cfmt.c_flags))
+        return false;
 
     Bytes image_data;
     image_data.data = &img_data.data[sizeof(IMG::serial_image)];
@@ -130,11 +137,14 @@ FORCEDINLINE bool LoadCompressedTextureMipmap(
     auto it  = urls.begin();
     while((it = std::find_if(it, urls.end(), pred)) != urls.end())
     {
-        LoadCompressedTexture<GFX>(
-            surface, rr.resolveResource(*it), layer, mip++);
+        auto res = LoadCompressedTexture<GFX>(
+            surface, rr.resolveResource(*it), layer, mip);
         it++;
 
-        if(mip >= surface.mipmaps())
+        if(!res)
+            continue;
+
+        if(++mip >= surface.mipmaps())
             break;
     }
 
@@ -212,8 +222,8 @@ FORCEDINLINE bool LoadPipeline(
     typename GFX::PIP& pip, Bytes&& vert_file, Bytes&& frag_file)
 {
     typename GFX::ERROR ec;
-    typename GFX::SHD vert;
-    typename GFX::SHD frag;
+    typename GFX::SHD   vert;
+    typename GFX::SHD   frag;
 
     if(!LoadShader<GFX>(vert, std::move(vert_file), ShaderStage::Vertex, ec))
         return false;

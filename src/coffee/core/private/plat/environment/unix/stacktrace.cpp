@@ -118,6 +118,7 @@ CString PosixStacktracer::GetStackFuncName(u32 depth)
 }
 
 }
+
 }
 }
 

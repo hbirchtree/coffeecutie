@@ -22,7 +22,7 @@ STATICINLINE UrlResolver TextureResolver(
             {PixFmt::S3TC, "dxt5"},
             {PixFmt::S3TC, "dxt3"},
             {PixFmt::S3TC, "dxt1"},
-            {PixFmt::ETC1, "etc2"},
+            {PixFmt::ETC2, "etc2"},
             {PixFmt::ETC1, "etc1"},
         }};
 

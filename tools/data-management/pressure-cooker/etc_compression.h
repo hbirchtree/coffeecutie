@@ -82,7 +82,7 @@ static void CompressETC_With(
     Size const&       size,
     Path const&       outName,
     u32               num_mipmaps,
-    stb::image_float& local_img,
+    stb::image_float& sourceImage,
     EtcImFormat       format = EtcImFormat::ETC1,
     scalar            effort = 1.f)
 {
@@ -94,7 +94,7 @@ static void CompressETC_With(
     auto img_size      = size.convert<u32>();
 
     Etc::EncodeMipmaps(
-        local_img.data,
+        sourceImage.data,
         img_size.w,
         img_size.h,
         format,
@@ -111,8 +111,11 @@ static void CompressETC_With(
     {
         auto mipName = outName.addExtension(cast_pod(mip.uiExtendedWidth))
                            .addExtension(GetETCExtension(format));
-        auto mipData =
+
+        auto mipImage =
             Bytes::From(mip.paucEncodingBits.get(), mip.uiEncodingBitsBytes);
+
+        auto mipData = Bytes::Alloc(sizeof(IMG::serial_image) + mipImage.size);
 
         IMG::serial_image imgDesc = {};
 
@@ -127,8 +130,12 @@ static void CompressETC_With(
             TEXCOMPRESS_API
             "Compressed texture: {0}: {1}B (raw float) -> {2}B (compressed)",
             mipName.internUrl,
-            local_img.data_owner.size,
+            sourceImage.data_owner.size,
             mip.uiEncodingBitsBytes);
+
+        MemCpy(mipImage, mipData.at(sizeof(IMG::serial_image)));
+        MemCpy(
+            Bytes::Create(imgDesc), mipData.at(0, sizeof(IMG::serial_image)));
 
         t.cooker->cacheFile(mipName, mipData);
         t.files.emplace_back(mipName, std::move(mipData), 0);
@@ -154,11 +161,11 @@ static bool CompressETC12(
         }
     }
 
-    stb::image_float local_img =
+    stb::image_float floatImage =
         stb::ToFloat(stb::image_const::From(inputData, size, 4));
 
     CompressETC_With(
-        t, size, outName, num_mipmaps, local_img, EtcImFormat::ETC1, 1.f);
+        t, size, outName, num_mipmaps, floatImage, EtcImFormat::ETC1, 1.f);
 
     auto etc2_format = EtcImFormat::RGB8;
 
@@ -166,7 +173,7 @@ static bool CompressETC12(
         etc2_format = EtcImFormat::RGBA8;
 
     CompressETC_With(
-        t, size, outName, num_mipmaps, local_img, etc2_format, 1.f);
+        t, size, outName, num_mipmaps, floatImage, etc2_format, 1.f);
 
     return false;
 }

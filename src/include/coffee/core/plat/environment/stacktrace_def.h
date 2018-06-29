@@ -67,6 +67,10 @@ struct StacktracerDef
     {
         return {};
     }
+
+    static void ExceptionStacktrace(ExceptionPtr const&)
+    {
+    }
 };
 
 }

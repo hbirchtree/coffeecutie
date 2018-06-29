@@ -193,11 +193,15 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
         res = test.test();
     } catch(std::exception const& e)
     {
-        cWarning("Test died from exception: {0}", e.what());
+        cWarning(
+            "exception encountered: {0}: {1}",
+            Stacktracer::DemangleSymbol(typeid(e).name()),
+            e.what());
     }
-    test_times[i] = Chrono::duration_cast<Chrono::microseconds>(
-                        Chrono::steady_clock::now() - start_time)
-                        .count();
+
+    test_times[i] = C_FCAST<u64>(Chrono::duration_cast<Chrono::microseconds>(
+                                     Chrono::steady_clock::now() - start_time)
+                                     .count());
     result.push_back(res);
     required.push_back(!test.optional);
 

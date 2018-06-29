@@ -3,12 +3,14 @@
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
+
+#include <coffee/core/type_safety.h>
 #include <coffee/core/types/tdef/standard_exceptions.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee {
 
-FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
+FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixCmp comp, szptr pixels)
 {
     using B = BitFormat;
 
@@ -52,29 +54,33 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
     case B::Scalar_32_Int_24_8:
         pxsz = 8;
         break;
+
+    default:
+        Throw(implementation_error("size calculation not implemented"));
     }
     switch(comp)
     {
-    case PixelComponents::R:
-    case PixelComponents::G:
-    case PixelComponents::B:
-    case PixelComponents::A:
-    case PixelComponents::Stencil:
-    case PixelComponents::Depth:
-    case PixelComponents::DepthStencil:
+    case PixCmp::R:
+    case PixCmp::G:
+    case PixCmp::B:
+    case PixCmp::A:
+    case PixCmp::Stencil:
+    case PixCmp::Depth:
+    case PixCmp::DepthStencil:
         pxsz *= 1;
         break;
-    case PixelComponents::RG:
+    case PixCmp::RG:
         pxsz *= 2;
         break;
-    case PixelComponents::RGB:
-    case PixelComponents::BGR:
+    case PixCmp::RGB:
+    case PixCmp::BGR:
         pxsz *= 3;
         break;
-    case PixelComponents::RGBA:
-    case PixelComponents::BGRA:
+    case PixCmp::RGBA:
+    case PixCmp::BGRA:
         pxsz *= 4;
         break;
+
     default:
         Throw(implementation_error("size calculation not implemented"));
     }

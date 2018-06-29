@@ -1,10 +1,5 @@
 #include <coffee/graphics/apis/gleam/gleam.h>
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-#include <coffee/graphics/apis/gleam/levels/desktop/glbase.h>
-#else
-#include <coffee/graphics/apis/gleam/levels/es/glbase.h>
-#endif
 
 namespace Coffee{
 namespace CGL{

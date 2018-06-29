@@ -63,17 +63,13 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
     info.processors.push_back({});
     proc_info::proc* proc = &info.processors.back();
 
-    uint32 procc = 0;
-
-    while (byte_offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= rsize)
+    /*while (byte_offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= rsize)
     {
         switch (ptr->Relationship)
         {
         case RelationNumaNode:
-            break;
+			break;
         case RelationProcessorPackage:
-            if (++procc == 1)
-                break;
             info.processors.push_back({});
             proc = &info.processors.back();
             break;
@@ -111,7 +107,7 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
         }
         byte_offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
         ptr++;
-    }
+    }*/
 
     CFree(st);
 

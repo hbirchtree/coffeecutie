@@ -1,6 +1,7 @@
 #pragma once
-#include "shared/gl_shared_types.h"
-#include "shared/gl_shared_enum_convert.h"
+
+#include "gl_shared_enum_convert.h"
+
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/cdef/geometry.h>

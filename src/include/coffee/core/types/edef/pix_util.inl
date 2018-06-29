@@ -2,6 +2,7 @@
 
 #include <coffee/core/coffee_mem_macros.h>
 #include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/types/tdef/standard_exceptions.h>
 
 namespace Coffee {
 
@@ -108,7 +109,7 @@ FORCEDINLINE BitFmt GetPreferredBitFmt(PixFmt fmt)
         return B::Scalar_32_Int_24_8;
 
     default:
-        return B::UByte;
+        return B::Byte;
     }
 }
 
@@ -150,7 +151,7 @@ FORCEDINLINE PixelFlags GetPixSampleType(PixFmt fmt)
         return PixFlg::Signed;
 
     default:
-        return PixFlg::FloatingPoint;
+        return PixFlg::None;
     }
 }
 
@@ -293,6 +294,7 @@ FORCEDINLINE PixCmp GetPixComponent(CompFmt fmt)
     default:
         break;
     }
+
     return PixCmp::None;
 }
 

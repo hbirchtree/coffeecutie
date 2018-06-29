@@ -116,9 +116,6 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
 
     cVerbose(10, GLM_API "Matching GL API...");
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
-    cVerbose(8, GLM_API "Checking GL core versions");
-
-    cVerbose(12, GLM_API "Constructing GL version structures");
     const Display::CGLVersion ver33(3, 3);
     const Display::CGLVersion ver43(4, 3);
     const Display::CGLVersion ver45(4, 5);
@@ -135,10 +132,6 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     else if(ver >= ver33)
         store->CURR_API = GL_3_3;
 #else
-    cVerbose(8, GLM_API "Checking GLES versions");
-
-    cVerbose(12, GLM_API "Constructing GL version structures");
-
     const Display::CGLVersion ver20es(2, 0);
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
@@ -524,7 +517,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
         {
             auto    sview = vstate.view(0);
             CRect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Viewport(tview.x, tview.y, tview.size());
+            GLC::Viewport(tview.x, tview.y, tview.size().convert<i32>());
         }
         if(vstate.m_depth.size() > 0)
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
@@ -536,7 +529,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
         {
             auto    sview = vstate.scissor(0);
             CRect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Scissor(tview.x, tview.y, tview.size());
+            GLC::Scissor(tview.x, tview.y, tview.size().convert<i32>());
             GLC::Enable(Feature::ScissorTest);
         } else
             GLC::Disable(Feature::ScissorTest);

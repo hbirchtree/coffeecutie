@@ -1,7 +1,7 @@
 #pragma once
 
-#include "shared/gl_shared_include.h"
-#include "shared/gl_shared_types.h"
+#include "gl_shared_types.h"
+
 #include <coffee/core/types/edef/logicenum.h>
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
@@ -941,7 +941,7 @@ inline CGenum to_enum3(RSCA acc)
 }
 #endif
 
-inline CGenum to_enum(PixelComponents f, PixFmt hint)
+inline CGenum to_enum(PixCmp f, PixFmt hint)
 {
 #if !defined(COFFEE_ONLY_GLES20)
     PixFlg flags = GetPixSampleType(hint);
@@ -949,14 +949,14 @@ inline CGenum to_enum(PixelComponents f, PixFmt hint)
 
     switch(f)
     {
-    case PixelComponents::RGB:
+    case PixCmp::RGB:
 #if !defined(COFFEE_ONLY_GLES20)
         if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RGB_INTEGER;
         else
 #endif
             return GL_RGB;
-    case PixelComponents::RGBA:
+    case PixCmp::RGBA:
 #if !defined(COFFEE_ONLY_GLES20)
         if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RGBA_INTEGER;
@@ -964,26 +964,26 @@ inline CGenum to_enum(PixelComponents f, PixFmt hint)
 #endif
             return GL_RGBA;
 #if !defined(COFFEE_ONLY_GLES20)
-    case PixelComponents::R:
+    case PixCmp::R:
         if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RED_INTEGER;
         else
             return GL_RED;
-    case PixelComponents::G:
+    case PixCmp::G:
         return GL_GREEN;
-    case PixelComponents::B:
+    case PixCmp::B:
         return GL_BLUE;
-    case PixelComponents::RG:
+    case PixCmp::RG:
         if(feval(flags & (PixFlg::Signed | PixFlg::Unsigned)))
             return GL_RG_INTEGER;
         else
             return GL_RG;
 
-    case PixelComponents::Depth:
+    case PixCmp::Depth:
         return GL_DEPTH_COMPONENT;
-    case PixelComponents::DepthStencil:
+    case PixCmp::DepthStencil:
         return GL_DEPTH_STENCIL;
-    case PixelComponents::Stencil:
+    case PixCmp::Stencil:
         return GL_STENCIL;
 #else
     case PixCmp::R:
@@ -995,14 +995,14 @@ inline CGenum to_enum(PixelComponents f, PixFmt hint)
 #endif
         /* Endian-flipped formats */
 #ifdef COFFEE_GLEAM_DESKTOP
-    case PixelComponents::BGR:
+    case PixCmp::BGR:
         return GL_BGR;
-    case PixelComponents::BGRA:
+    case PixCmp::BGRA:
         return GL_BGRA;
 #else
-    case PixelComponents::BGR:
+    case PixCmp::BGR:
         return GL_RGB;
-    case PixelComponents::BGRA:
+    case PixCmp::BGRA:
         return GL_RGBA;
 #endif
     default:

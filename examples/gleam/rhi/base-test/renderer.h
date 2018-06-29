@@ -80,20 +80,20 @@ class TransformContainer : public Components::ComponentContainer<TransformTag>
 
         camera.position.x() -= 0.1f;
 
-        auto  projection    = GenPerspective(camera);
+        auto  projection    = GenPerspective<scalar>(camera);
         auto& object_matrix = m_objects[entity.id].second;
 
         auto left_idx  = (entity.id - 1) * 2;
         auto right_idx = left_idx + 1;
 
-        auto output_matrix = projection * GenTransform(camera) * object_matrix;
+        auto output_matrix = projection * GenTransform<scalar>(camera) * object_matrix;
 
         m_matrices[left_idx] = output_matrix;
 
         camera.position.x() += 0.2f;
 
         m_matrices[right_idx] =
-            projection * GenTransform(camera) * object_matrix;
+            projection * GenTransform<scalar>(camera) * object_matrix;
 
         return true;
     }
@@ -334,7 +334,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Compiled shaders");
 
     /* Uploading textures */
-    g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1, GLM::TextureDMABuffered);
+    g.eyetex = new GLM::S_2DA(
+        PixelFormat::RGBA8,
+        1,
+        GLM::TextureDMABuffered | GLM::TextureAutoMipmapped);
     auto& eyetex = *g.eyetex;
 
     eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
@@ -464,7 +467,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.first.rotation.y() = CMath::sin(time.count());
         xf.first.rotation     = normalize_quat(xf.first.rotation);
 
-        xf.second = GenTransform(xf.first);
+        xf.second = GenTransform<scalar>(xf.first);
     };
 
     base_object.loop = [](Components::EntityContainer& c) {
@@ -473,7 +476,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
         xf.first.position.x() = CMath::sin(time * 4.f);
 
-        xf.second = GenTransform(xf.first);
+        xf.second = GenTransform<scalar>(xf.first);
     };
 
     floor_object.tags = 0x1;

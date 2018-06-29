@@ -18,10 +18,6 @@
 
 #include <coffee/core/CDebug>
 
-#if defined(COFFEE_LINUX)
-#include <execinfo.h>
-#endif
-
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
 #endif
@@ -190,7 +186,10 @@ int32 CoffeeMain(
     GetInitArgs() = AppArg::Clone(argc, argv);
 
 #if defined(COFFEE_ANDROID)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     app_dummy();
+#pragma clang diagnostic pop
 #endif
 
 #if defined(COFFEE_APPLE)
@@ -377,61 +376,14 @@ void GotoApplicationDir()
     DirFun::ChDir(MkUrl(dir), ec);
 }
 
-#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_EXCEPTION_RETHROW)
-static void glibc_backtrace()
-{
-    static constexpr szptr MAX_CONTEXT = 20;
-
-    void* tracestore[MAX_CONTEXT];
-
-    auto exc_ptr = std::current_exception();
-    try {
-        if(exc_ptr)
-            std::rethrow_exception(exc_ptr);
-    } catch(std::exception& e)
-    {
-        if(Cmd::Interactive())
-            cBasicPrint("{0}", StrUtil::multiply('-', Cmd::TerminalSize().w));
-        cBasicPrint("exception encountered:");
-        cBasicPrint(" >> {0}: {1}",
-                 Stacktracer::DemangleSymbol(typeid(e).name()),
-                 e.what()); 
-        auto num = backtrace(tracestore, MAX_CONTEXT);
-        auto syms = backtrace_symbols(tracestore, num);
-        if(syms && num)
-        {
-            cBasicPrint("dumping stacktrace:");
-            for(auto i : Range<>(num))
-            {
-                if(syms[i])
-                {
-                    CString sym_ = syms[i];
-                    auto sym_end = sym_.rfind('+');
-                    auto sym_begin = sym_.rfind('(', sym_end);
-                    if(sym_end != CString::npos && sym_begin != CString::npos)
-                    {
-                        auto sym_length = sym_end - sym_begin - 1;
-                        auto sym_target = sym_.substr(sym_begin + 1, sym_length);
-                        sym_ = CStrReplace(
-                                 sym_, 
-                                 sym_target, 
-                                 Stacktracer::DemangleSymbol(sym_target));
-                        cBasicPrint(" >> {0}", sym_);
-                    }
-                }else
-                    cBasicPrint(" >> {0}", Stacktracer::DemangleSymbol(syms[i]));
-            }
-        }
-        abort();
-    }
-}
-#endif
-
 void InstallDefaultSigHandlers()
 {
-    #if defined(COFFEE_LINUX) && !defined(COFFEE_NO_TERMINATION_HANDLER)
-    std::set_terminate(glibc_backtrace);
-    #endif
+    std::set_terminate([]()
+    {
+        Stacktracer::ExceptionStacktrace(std::current_exception());
+        abort();
+    });
+
     //    InstallSignalHandler(Sig_Termination,nullptr);
     //    InstallSignalHandler(Sig_PoopedABit,nullptr);
     //    InstallSignalHandler(Sig_ShitMySelf,nullptr);

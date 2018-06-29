@@ -636,7 +636,7 @@ void GLEAM_API::Draw(
 
     vertices.bind();
 
-#if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x330)
     if(m_store->features.qcom_tiling)
     {
         auto size = GLEAM_API::DefaultFramebuffer().size();
@@ -659,7 +659,7 @@ void GLEAM_API::Draw(
             "GLEAM context error: " + ec.message());
     }
 
-#if GL_VERSION_VERIFY(0xFFFFFF, 0x330)
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x330)
     if(m_store->features.qcom_tiling)
         glEndTilingQCOM(GL_COLOR_BUFFER_BIT0_QCOM);
 #endif

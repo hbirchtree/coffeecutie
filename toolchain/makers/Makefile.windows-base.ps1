@@ -50,7 +50,7 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     {
         $Generator = "Visual Studio 15 2017 $arch".Trim()
     }else{
-        $Generator = "Visual Studio 14 2015 $arch".Trim()
+        $Generator = "Visual Studio 15 2017 $arch".Trim()
     }
 
     & $CMakeBin $SrcDir `

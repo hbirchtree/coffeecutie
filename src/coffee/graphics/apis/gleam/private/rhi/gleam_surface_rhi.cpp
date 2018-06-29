@@ -34,9 +34,7 @@ STATICINLINE void texture_pbo_upload(
     {
         data_ptr = nullptr;
         glhnd hand(GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
-        CGL33::BufBind(
-            buf::pixel_unpack::value,
-            hand);
+        CGL33::BufBind(buf::pixel_unpack::value, hand);
         CGL33::BufData(
             buf::pixel_unpack::value,
             Bytes::From(data.data, pixSize),
@@ -136,7 +134,7 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
     if(GL_DEBUG_MODE)
     {
         uint32 w, h, d_;
-        szptr  size;
+        szptr  size = 0;
         //        CGL33::TexGetImageSize(m_type, comp, w, h, d_, &size, mip);
         if(m_type & TexComp::tex_2d_array::value)
             size /= d;
@@ -154,7 +152,7 @@ GLEAM_Surface2D::GLEAM_Surface2D(
 {
 }
 
-void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
+void GLEAM_Surface2D::allocate(CSize size, PixCmp c)
 {
     auto bitformat = GetPreferredBitFmt(m_pixfmt);
 
@@ -180,13 +178,7 @@ void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
                 trash.data());
         } else
             CGL33::TexImage2D(
-                tex::t2d::value,
-                0,
-                m_pixfmt,
-                size,
-                c,
-                bitformat,
-                nullptr);
+                tex::t2d::value, 0, m_pixfmt, size, c, bitformat, nullptr);
     }
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else if(GLEAM_FEATURES.texture_storage)
@@ -288,7 +280,7 @@ GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
 
 #define TEX_SQUARE_GRID_SIZE(depth) C_CAST<i32>(CMath::ceil(CMath::sqrt(depth)))
 
-void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
+void GLEAM_Surface3D_Base::allocate(CSize3 size, PixCmp c)
 {
     auto bitformat = GetPreferredBitFmt(m_pixfmt);
 
@@ -477,12 +469,12 @@ void GLEAM_Surface3D_Base::upload(
 }
 
 void GLEAM_Surface3D_Base::upload(
-    BitFormat       fmt,
-    PixelComponents comp,
-    CSize3 const&   size,
-    Bytes const&    data,
-    CPoint3 const&  offset,
-    uint32          mip)
+    BitFormat      fmt,
+    PixCmp         comp,
+    CSize3 const&  size,
+    Bytes const&   data,
+    CPoint3 const& offset,
+    uint32         mip)
 {
     upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
 }
@@ -617,6 +609,33 @@ void GLEAM_Sampler::enableShadowSampler()
 #endif
 }
 
+template<typename TextureType>
+STATICINLINE GLEAM_SamplerHandle SamplerPrepareTexture(
+    TextureType*      m_surface,
+    glhnd&            m_handle,
+    TexComp::tex_flag m_type)
+{
+    GLEAM_SamplerHandle h = {};
+
+    h.m_type  = m_type;
+    h.texture = m_surface->m_handle.hnd;
+
+    if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
+       GLEAM_FEATURES.gles20)
+    {
+        CGL33::TexBind(m_type, m_surface->m_handle);
+        CGL33::GenerateMipmap(m_type);
+    }
+
+#if GL_VERSION_VERIFY(0x300, 0x300)
+
+    if(!GLEAM_FEATURES.gles20)
+        h.m_sampler = m_handle.hnd;
+#endif
+
+    return h;
+}
+
 void GLEAM_Sampler2D::bind(uint32 i)
 {
     CGL33::TexActive(i);
@@ -629,25 +648,7 @@ void GLEAM_Sampler2D::bind(uint32 i)
 
 GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
 {
-    GLEAM_SamplerHandle h = {};
-
-    /* TODO: Add bindless */
-    h.m_type  = m_surface->m_type;
-    h.texture = m_surface->m_handle.hnd;
-
-    if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
-       GLEAM_FEATURES.gles20)
-    {
-        CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
-        CGL33::GenerateMipmap(m_surface->m_type);
-    }
-
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    if(!GLEAM_FEATURES.gles20)
-        h.m_sampler = m_handle.hnd;
-#endif
-
-    return h;
+    return SamplerPrepareTexture(m_surface, m_handle, m_surface->m_type);
 }
 
 void GLEAM_Sampler3D::bind(uint32 i)
@@ -665,26 +666,7 @@ void GLEAM_Sampler3D::bind(uint32 i)
 
 GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 {
-    GLEAM_SamplerHandle h = {};
-    h.m_type              = m_surface->m_type;
-    h.texture             = m_surface->m_handle.hnd;
-
-    if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
-       GLEAM_FEATURES.gles20)
-    {
-        CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
-        CGL33::GenerateMipmap(m_surface->m_type);
-    }
-
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    if(!GLEAM_FEATURES.gles20)
-    {
-        /* TODO: Add bindless */
-        h.m_sampler = m_surface->m_handle.hnd;
-    }
-#endif
-
-    return h;
+    return SamplerPrepareTexture(m_surface, m_handle, m_surface->m_type);
 }
 
 void GLEAM_Sampler2DArray::bind(uint32 i)
@@ -705,24 +687,9 @@ void GLEAM_Sampler2DArray::bind(uint32 i)
 
 GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 {
-    GLEAM_SamplerHandle h = {};
-    h.m_type              = m_surface->m_type;
-    h.texture             = m_surface->m_handle.hnd;
+    auto h = SamplerPrepareTexture(m_surface, m_handle, m_surface->m_type);
 
-    if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
-       GLEAM_FEATURES.gles20)
-    {
-        CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
-        CGL33::GenerateMipmap(m_surface->m_type);
-    }
-
-#if GL_VERSION_VERIFY(0x300, 0x300)
-
-    if(!GLEAM_FEATURES.gles20)
-        h.m_sampler = m_handle.hnd;
-    else
-#endif
-        h.arraySize = m_surface->m_size.depth;
+    h.arraySize = m_surface->m_size.depth;
 
     return h;
 }

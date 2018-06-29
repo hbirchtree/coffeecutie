@@ -1,8 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/edef/dbgenum.h>
-#include <coffee/graphics/apis/gleam/levels/shared/gl_shared_include.h>
-#include <coffee/graphics/apis/gleam/levels/shared/gl_shared_types.h>
+#include <coffee/graphics/apis/gleam/levels/gl_shared_types.h>
 
 namespace Coffee{
 

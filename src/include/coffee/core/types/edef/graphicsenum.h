@@ -99,9 +99,9 @@ struct tex_basetype
 {
     static constexpr tex_flag base_fmt = BaseFmt;
 
-    static constexpr bool array        = Modifiers & Array;
-    static constexpr bool multisampled = Modifiers & Array;
-    static constexpr bool proxy        = Modifiers & Array;
+    static constexpr bool array        = C_CAST<bool>(Modifiers & Array);
+    static constexpr bool multisampled = C_CAST<bool>(Modifiers & Array);
+    static constexpr bool proxy        = C_CAST<bool>(Modifiers & Array);
 
     enum ex { value = BaseFmt | Modifiers };
 

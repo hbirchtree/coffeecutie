@@ -339,7 +339,7 @@ u64 RuntimeQueue::Queue(
         auto& ref = (*q_it).second;
         Profiler::DeepProfile(RQ_API "Adding task to Queue");
 
-        q_it->second.mTasksLock.lock();
+        RecLock __(q_it->second.mTasksLock);
 
         auto currentBase      = RuntimeTask::clock::now();
         auto previousNextTime = ref.timeTillNext(currentBase);
@@ -347,7 +347,6 @@ u64 RuntimeQueue::Queue(
         auto id = ref.enqueue(std::move(task));
 
         NotifyThread(context, thread_id, previousNextTime, currentBase);
-        q_it->second.mTasksLock.unlock();
 
         return id;
     }
@@ -380,13 +379,10 @@ bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
     /* We do this check in case we are executing in the queue */
     /* Otherwise we deadlock */
-    if(queue.mCurrentTaskId == 0)
-        queue.mTasksLock.lock();
+    RecLock ___(queue.mTasksLock);
 
     if(!queue.mTasks[idx].alive)
     {
-        if(queue.mCurrentTaskId == 0)
-            queue.mTasksLock.unlock();
         ec = RQE::TaskAlreadyBlocked;
         return false;
     }
@@ -398,10 +394,6 @@ bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
     NotifyThread(context, thread_id, previousNextTime, currentBase);
 
-    if(queue.mCurrentTaskId == 0)
-    {
-        queue.mTasksLock.unlock();
-    }
 
     return true;
 }
