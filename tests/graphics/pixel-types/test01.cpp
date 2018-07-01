@@ -8,6 +8,7 @@ struct PixFmt_iterator
 {
     PixFmt_iterator() : pixfmt_counter(C_CAST<u32>(PixFmt::None))
     {
+        ++(*this);
     }
 
     PixFmt_iterator& operator++()
@@ -53,7 +54,7 @@ bool regular_format_coverage()
 
     while(fmt)
     {
-        if(!IsPixFmtCompressed(fmt))
+        if(!IsPixFmtCompressed(fmt) && fmt != PixFmt::None)
         {
             auto sampleType = GetPixSampleType(fmt);
 

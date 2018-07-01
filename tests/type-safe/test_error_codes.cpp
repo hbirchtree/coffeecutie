@@ -56,9 +56,11 @@ bool simple_error_casting()
     auto& inner_value = ec.as<inner>();
     auto& outer_value = ec.as<outer_cast>();
 
+#if 0
     cDebug("{0}: {1}", ec.category().name(), ec.message());
     cDebug("-{0}: {1}", inner_value.category().name(), inner_value.message());
     cDebug("-{0}: {1}", outer_value.category().name(), outer_value.message());
+#endif
 
     return inner_value == 2 && outer_value == 1;
 }
@@ -82,10 +84,12 @@ bool deep_error_casting()
     auto& middle_value = ec.as<middle_cast>();
     auto& outer_value  = ec.as<outer_cast>();
 
+#if 0
     cDebug("{0}: {1}", ec.category().name(), ec.message());
     cDebug("-{0}: {1}", inner_value.category().name(), inner_value.message());
     cDebug("-{0}: {1}", middle_value.category().name(), middle_value.message());
     cDebug("-{0}: {1}", outer_value.category().name(), outer_value.message());
+#endif
 
     return inner_value == 3 && middle_value == 2 && outer_value == 1;
 }

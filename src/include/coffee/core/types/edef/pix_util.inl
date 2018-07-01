@@ -21,6 +21,8 @@ FORCEDINLINE bool IsPixFmtCompressed(PixFmt f)
     case PixFmt::ETC1:
     case PixFmt::ETC2:
     case PixFmt::ATC:
+    case PixFmt::PVRTC:
+    case PixFmt::PVRTC2:
         return true;
     default:
         return false;
@@ -114,6 +116,11 @@ FORCEDINLINE BitFmt GetPreferredBitFmt(PixFmt fmt)
 }
 
 CONSTEXPR_EXTENDED
+/*!
+ * \brief Describes sampling type when used in graphics shaders.
+ * \param fmt
+ * \return
+ */
 FORCEDINLINE PixelFlags GetPixSampleType(PixFmt fmt)
 {
     using F = PixFmt;
@@ -134,6 +141,7 @@ FORCEDINLINE PixelFlags GetPixSampleType(PixFmt fmt)
     case F::RGBA8UI:
     case F::RGBA16UI:
     case F::RGBA32UI:
+
         return PixFlg::Unsigned;
 
     case F::R8I:
@@ -148,7 +156,57 @@ FORCEDINLINE PixelFlags GetPixSampleType(PixFmt fmt)
     case F::RGBA8I:
     case F::RGBA16I:
     case F::RGBA32I:
+
         return PixFlg::Signed;
+
+    case F::R8:
+    case F::RG8:
+    case F::RGB8:
+    case F::RGBA8:
+
+    case F::R16:
+    case F::RG16:
+    case F::RGB16:
+    case F::RGBA16:
+
+    case F::RGB4:
+    case F::RGB5:
+    case F::RGB10:
+    case F::RGB12:
+
+    case F::RGBA2:
+    case F::RGBA4:
+    case F::RGBA12:
+
+    case F::R3G3B2:
+    case F::RGB565:
+    case F::RGB9E5:
+
+    case F::RGB5A1:
+    case F::RGB10A2:
+
+    case F::R16F:
+    case F::RG16F:
+    case F::RGB16F:
+    case F::RGBA16F:
+    case F::R32F:
+    case F::RG32F:
+    case F::RGB32F:
+    case F::RGBA32F:
+
+    case F::R11G11B10F:
+
+        return PixFlg::FloatingPoint;
+
+    case F::SRGB8:
+    case F::SRGB8A8:
+        return PixFlg::sRGB;
+
+    case F::Depth16:
+    case F::Depth32F:
+    case F::Depth24Stencil8:
+    case F::Depth32FStencil8:
+        return PixFlg::FloatingPoint;
 
     default:
         return PixFlg::None;
