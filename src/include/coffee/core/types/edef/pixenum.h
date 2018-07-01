@@ -171,14 +171,17 @@ enum class PixelFormat : u8
 
     MAX_PIXFMT,
 
+    /* Fakes */
     Depth,
-    DepthStencil, /* Fakes */
+    DepthStencil,
 
     /* Aliases */
-    BCn  = S3TC,
+    BCn  = S3TC, /* Includes BC1-7, distinguished by CompFlags */
     DXTn = S3TC,
     BPTC = S3TC,
     RGTC = S3TC,
+
+    EAC  = ETC2,
 
     Undefined = None,
 };
