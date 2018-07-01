@@ -9,7 +9,22 @@ namespace Coffee {
 namespace CResources {
 namespace Posix {
 
-FileFunDef::NodeType PosixFileMod_def::Stat(Url const& fn, file_error& ec)
+const char* posix_error_category::name() const noexcept
+{
+    return "posix_error_code";
+}
+
+std::string posix_error_category::message(int error_code) const
+{
+    char* posix_error_msg = strerror(error_code);
+
+    if(!posix_error_msg)
+        return "No error";
+
+    return posix_error_msg;
+}
+
+FileFunDef<>::NodeType PosixFileMod_def::Stat(Url const& fn, file_error&)
 {
     auto        url = *fn;
     struct stat fs  = {};
@@ -40,8 +55,7 @@ FileFunDef::NodeType PosixFileMod_def::Stat(Url const& fn, file_error& ec)
     return NodeType::None;
 }
 
-bool PosixFileMod_def::Touch(
-    FileFunDef::NodeType t, Url const& fn, file_error& ec)
+bool PosixFileMod_def::Touch(NodeType t, Url const& fn, file_error& ec)
 {
     auto url = *fn;
     switch(t)
@@ -61,6 +75,14 @@ bool PosixFileMod_def::Touch(
         return false;
     }
     return true;
+}
+
+bool PosixFileMod_def::Rm(Url const& fn, file_error& ec)
+{
+    auto url  = *fn;
+    bool stat = unlink(url.c_str()) == 0;
+    ErrnoCheck(ec, url.c_str());
+    return stat;
 }
 
 CString PosixFileMod_def::DereferenceLink(Url const& fn, file_error& ec)
@@ -138,7 +160,7 @@ szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
     return C_FCAST<szptr>(st.st_size);
 }
 
-bool PosixFileMod_def::Exists(Url const& fn, file_error& ec)
+bool PosixFileMod_def::Exists(Url const& fn, file_error&)
 {
     auto        url = *fn;
     struct stat st;
@@ -179,12 +201,158 @@ void PosixFileMod_def::Truncate(const Url& fn, szptr size, file_error& ec)
     close(fd);
 }
 
-bool PosixFileMod_def::Rm(Url const& fn, file_error& ec)
+bool Posix::PosixDirFun::ChDir(Url const& dir, file_error& ec)
 {
-    auto url  = *fn;
-    bool stat = unlink(url.c_str()) == 0;
-    ErrnoCheck(ec, url.c_str());
-    return stat;
+    auto url  = *dir;
+    bool stat = chdir(url.c_str()) == 0;
+    if(!stat)
+    {
+        PosixFileFun::ErrnoCheck(ec, url.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
+{
+    auto url = *dname;
+    if(!createParent)
+        return mkdir(url.c_str(), S_IRWXU | S_IRWXG) == 0;
+
+    char   tmp[255];
+    char*  p = NULL;
+    size_t len;
+
+    snprintf(tmp, sizeof(tmp), "%s", url.c_str());
+    len = strlen(tmp);
+    if(tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+    for(p = tmp + 1; *p; p++)
+        if(*p == '/')
+        {
+            *p = 0;
+            mkdir(tmp, S_IRWXU);
+            *p = '/';
+        }
+    return mkdir(tmp, S_IRWXU) == 0 || (errno == EEXIST);
+}
+
+bool Posix::PosixDirFun::RmDir(Url const& dname, file_error& ec)
+{
+    auto url = *dname;
+    return rmdir(url.c_str()) == 0 || (errno = 0);
+}
+
+bool PosixDirFun::Ls(
+    Url const& dname, DirFunDef::DirList& entries, file_error& ec)
+{
+    auto url = *dname;
+    DIR* dr  = opendir(url.c_str());
+
+    if(!dr)
+    {
+        PosixFileFun::ErrnoCheck(ec, url.c_str());
+        return false;
+    }
+
+    struct dirent* dir_ent = nullptr;
+
+    while((dir_ent = readdir(dr)) != nullptr)
+    {
+        Type t = Type::None;
+
+        switch(dir_ent->d_type)
+        {
+        case DT_BLK:
+            t = Type::Block;
+            break;
+        case DT_CHR:
+            t = Type::Character;
+            break;
+        case DT_DIR:
+            t = Type::Directory;
+            break;
+        case DT_LNK:
+            t = Type::Link;
+            break;
+        case DT_FIFO:
+            t = Type::FIFO;
+            break;
+        case DT_REG:
+            t = Type::File;
+            break;
+        case DT_SOCK:
+            t = Type::Socket;
+            break;
+        default:
+            t = PosixFileFun::Stat(MkUrl(dir_ent->d_name), ec);
+            break;
+        }
+
+        if(StrCmp(dir_ent->d_name, ".") || StrCmp(dir_ent->d_name, ".."))
+            continue;
+
+        entries.push_back({dir_ent->d_name, t});
+    }
+
+    closedir(dr);
+
+    PosixFileFun::ErrnoCheck(ec, url.c_str());
+    errno = 0;
+
+    return true;
+}
+
+Url PosixDirFun::Basename(CString const& n, file_error& ec)
+{
+#if !defined(COFFEE_USE_POSIX_BASENAME)
+    if(StrLen(n) < 1)
+        return ".";
+    // This one is fast, but does not handle rootfs
+    int64 idx = Search::ChrFindR(n, '/') - n;
+    if(idx < 0)
+        return n;
+    CString out;
+    out.insert(0, &n[idx + 1], StrLen(n) - idx - 1);
+    if(out.empty())
+        out = ".";
+    return out;
+#else
+    // This one is slower, but more compliant
+    CString out   = n;
+    CString out_s = basename(&out[0]);
+    PosixFileFun::ErrnoCheck(ec);
+    return MkUrl(out_s, RSCA::SystemFile);
+#endif
+}
+
+Url PosixDirFun::Dirname(CString const& fname, file_error& ec)
+{
+#if !defined(COFFEE_USE_POSIX_BASENAME)
+    int64 idx = Search::ChrFindR(fname, '/') - fname;
+    if(idx < 0)
+        return fname;
+    CString out;
+    out.insert(0, &fname[0], idx);
+    if(out.empty())
+        out = ".";
+    return out;
+#else
+    // This one is slower, but more compliant
+    CString out   = fname;
+    CString out_s = dirname(&out[0]);
+    PosixFileFun::ErrnoCheck(ec);
+    return MkUrl(out_s, RSCA::SystemFile);
+#endif
+}
+
+uint32 Posix::PosixFileMod_def::PageSize()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+    return static_cast<uint32>(sysconf(_SC_PAGESIZE) - 1);
+#else
+    return 8;
+#endif
 }
 
 int PosixFileMod_def::MappingFlags(ResourceAccess acc)
@@ -267,160 +435,6 @@ int PosixFileMod_def::PosixRscFlags(ResourceAccess acc)
         oflags |= O_CREAT;
 
     return oflags;
-}
-
-bool PosixDirFun::Ls(
-    Url const& dname, DirFunDef::DirList& entries, file_error& ec)
-{
-    auto url = *dname;
-    DIR* dr  = opendir(url.c_str());
-
-    if(!dr)
-    {
-        PosixFileFun::ErrnoCheck(ec, url.c_str());
-        return false;
-    }
-
-    struct dirent* dir_ent = nullptr;
-
-    while((dir_ent = readdir(dr)) != nullptr)
-    {
-        Type t = Type::None;
-
-        switch(dir_ent->d_type)
-        {
-        case DT_BLK:
-            t = Type::Block;
-            break;
-        case DT_CHR:
-            t = Type::Character;
-            break;
-        case DT_DIR:
-            t = Type::Directory;
-            break;
-        case DT_LNK:
-            t = Type::Link;
-            break;
-        case DT_FIFO:
-            t = Type::FIFO;
-            break;
-        case DT_REG:
-            t = Type::File;
-            break;
-        case DT_SOCK:
-            t = Type::Socket;
-            break;
-        default:
-            t = PosixFileFun::Stat(MkUrl(dir_ent->d_name), ec);
-            break;
-        }
-
-        if(StrCmp(dir_ent->d_name, ".") || StrCmp(dir_ent->d_name, ".."))
-            continue;
-
-        entries.push_back({dir_ent->d_name, t});
-    }
-
-    closedir(dr);
-
-    PosixFileFun::ErrnoCheck(ec, url.c_str());
-    errno = 0;
-
-    return true;
-}
-
-bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
-{
-    auto url = *dname;
-    if(!createParent)
-        return mkdir(url.c_str(), S_IRWXU | S_IRWXG) == 0;
-
-    char   tmp[255];
-    char*  p = NULL;
-    size_t len;
-
-    snprintf(tmp, sizeof(tmp), "%s", url.c_str());
-    len = strlen(tmp);
-    if(tmp[len - 1] == '/')
-        tmp[len - 1] = 0;
-    for(p = tmp + 1; *p; p++)
-        if(*p == '/')
-        {
-            *p = 0;
-            mkdir(tmp, S_IRWXU);
-            *p = '/';
-        }
-    return mkdir(tmp, S_IRWXU) == 0 || (errno == EEXIST);
-}
-
-bool Posix::PosixDirFun::ChDir(Url const& dir, file_error& ec)
-{
-    auto url  = *dir;
-    bool stat = chdir(url.c_str()) == 0;
-    if(!stat)
-    {
-        PosixFileFun::ErrnoCheck(ec, url.c_str());
-        return false;
-    }
-    return true;
-}
-
-bool Posix::PosixDirFun::RmDir(Url const& dname, file_error& ec)
-{
-    auto url = *dname;
-    return rmdir(url.c_str()) == 0 || (errno = 0);
-}
-
-uint32 Posix::PosixFileMod_def::PageSize()
-{
-#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
-    return static_cast<uint32>(sysconf(_SC_PAGESIZE) - 1);
-#else
-    return 8;
-#endif
-}
-
-Url PosixDirFun::Basename(CString const& n, file_error& ec)
-{
-#if !defined(COFFEE_USE_POSIX_BASENAME)
-    if(StrLen(n)<1)
-        return ".";
-    // This one is fast, but does not handle rootfs
-    int64 idx = Search::ChrFindR(n,'/')-n;
-    if(idx < 0)
-        return n;
-    CString out;
-    out.insert(0,&n[idx+1],StrLen(n)-idx-1);
-    if(out.empty())
-        out = ".";
-    return out;
-#else
-    // This one is slower, but more compliant
-    CString out = n;
-    CString out_s = basename(&out[0]);
-    PosixFileFun::ErrnoCheck(ec);
-    return MkUrl(out_s, RSCA::SystemFile);
-#endif
-}
-
-Url PosixDirFun::Dirname(CString const& fname, file_error& ec)
-{
-#if !defined(COFFEE_USE_POSIX_BASENAME)
-    int64 idx = Search::ChrFindR(fname,'/')-fname;
-    if(idx < 0)
-        return fname;
-    CString out;
-    out.insert(0,&fname[0],idx);
-    if(out.empty())
-        out = ".";
-    return out;
-#else
-    // This one is slower, but more compliant
-    CString out = fname;
-    CString out_s = dirname(&out[0]);
-    PosixFileFun::ErrnoCheck(ec);
-    return MkUrl(out_s, RSCA::SystemFile);
-#endif
 }
 
 } // namespace Posix

@@ -11,24 +11,27 @@
 #include "../../plat_windows.h"
 
 namespace Coffee {
+namespace CResources {
 namespace Windows {
-struct WinDirFun : CResources::DirFunDef
+
+struct win32_error_category : error_category
 {
-    /*TODO: Implement Windows directory functions*/
-    static bool MkDir(Url const& dname, bool parent, file_error& ec);
-
-    static bool RmDir(Url const&, file_error& ec);
-
-    static bool Ls(Url const&, DirList&, file_error& ec);
-
-    static Url Dirname(CString const& fn, file_error& ec);
-
-    static Url Basename(CString const& fn, file_error& ec);
+    virtual const char* name() const noexcept
+    {
+        return "win32_error_code";
+    }
+    virtual std::string message(int error_code) const
+    {
+        return "";
+    }
 };
+
+using win32_error_code =
+    nested_domain_error_code<DWORD, win32_error_category, FILE_error_code>;
 
 struct WinFileApi
 {
-    struct FileHandle : CResources::FILEApi::FileHandle
+    struct FileHandle : FILEApi::FileHandle
     {
         FileHandle() : file(nullptr)
         {
@@ -42,12 +45,12 @@ struct WinFileApi
         HRSRC   rsrc;
         FH_Type type = FS;
     };
-    struct FileMapping : CResources::FileFunDef::FileMapping
+    struct FileMapping : FileFunDef<>::FileMapping
     {
         HANDLE file;
         HANDLE mapping;
     };
-    struct ScratchBuf : CResources::CommonFileFun::ScratchBuf
+    struct ScratchBuf : CommonFileFun<>::ScratchBuf
     {
         HANDLE mapping;
         HANDLE view;
@@ -67,18 +70,22 @@ struct WinFileApi
     static DWORD  GetMappingViewFlags(RSCA acc);
 };
 
-struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
+using Win32FILEFun = CFILEFunBase_def<win32_error_code, WinFileApi::FileHandle>;
+
+struct WinFileFun : Win32FILEFun
 {
     using FileHandle  = WinFileApi::FileHandle;
     using FileMapping = WinFileApi::FileMapping;
     using ScratchBuf  = WinFileApi::ScratchBuf;
+
+    using Parent = Win32FILEFun;
 
     static FileHandle Open(Url const& fn, RSCA acc, file_error& ec);
     static bool       Close(FileHandle&& fh, file_error& ec);
 
     static bool Exists(Url const& fn, file_error& ec);
 
-    static Bytes Read(FileHandle const& h, uint64 size, file_error& ec);
+    static Bytes Read(FileHandle const& h, u64 size, file_error& ec);
     static bool  Write(FileHandle const& fh, Bytes const& d, file_error& ec);
 
     static szptr Size(FileHandle const& fh, file_error& ec);
@@ -94,11 +101,28 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     static ScratchBuf ScratchBuffer(szptr size, RSCA acc, file_error& ec);
     static void       ScratchUnmap(ScratchBuf&& buf, file_error& ec);
 };
+
+struct WinDirFun : DirFunDef<win32_error_code>
+{
+    using file_error = WinFileFun::file_error;
+
+    /*TODO: Implement Windows directory functions*/
+    static bool MkDir(Url const& dname, bool parent, file_error& ec);
+
+    static bool RmDir(Url const&, file_error& ec);
+
+    static bool Ls(Url const&, DirList&, file_error& ec);
+
+    static Url Dirname(CString const& fn, file_error& ec);
+
+    static Url Basename(CString const& fn, file_error& ec);
+};
+
 } // namespace Windows
 
-namespace CResources {
 using DirFun  = Windows::WinDirFun;
 using FileFun = Windows::WinFileFun;
+
 } // namespace CResources
 } // namespace Coffee
 

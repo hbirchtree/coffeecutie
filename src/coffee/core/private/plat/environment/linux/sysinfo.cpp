@@ -1,10 +1,11 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/plat/environment/linux/sysinfo.h>
-#include <coffee/core/plat/file/linux/file.h>
+
 #include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/plat/plat_file.h>
+#include <coffee/core/platform_data.h>
 #include <coffee/core/string_casting.h>
 
-#include <coffee/core/platform_data.h>
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Environment {

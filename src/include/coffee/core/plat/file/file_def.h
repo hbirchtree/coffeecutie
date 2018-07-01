@@ -29,17 +29,18 @@ struct file_error_category : error_category
     virtual std::string message(int) const;
 };
 
-using file_error = domain_error_code<FileError, file_error_category>;
+template<typename NestedError>
+using base_file_error =
+    nested_domain_error_code<FileError, file_error_category, NestedError>;
 
-struct FileFunDef
+template<typename NestedError>
+struct FileBase
 {
-    struct FileHandle
-    {
-    };
+    typedef base_file_error<NestedError> file_error;
+};
 
-    using FileMapping = Bytes;
-    using ScratchBuf  = Bytes;
-
+struct NodeTypeBase
+{
     enum NodeType
     {
         None,
@@ -52,6 +53,19 @@ struct FileFunDef
         FIFO,
         Socket,
     };
+};
+
+template<typename NestedError = sentinel_error_code>
+struct FileFunDef : FileBase<NestedError>, NodeTypeBase
+{
+    using file_error = typename FileBase<NestedError>::file_error;
+
+    struct FileHandle
+    {
+    };
+
+    using FileMapping = Bytes;
+    using ScratchBuf  = Bytes;
 
     static FileHandle Open(Url const&, ResourceAccess, file_error&)
     {
@@ -127,7 +141,8 @@ struct FileFunDef
         void* mapping_ptr,
         szptr mapping_size,
         szptr cache_offset,
-        szptr cache_size, file_error&)
+        szptr cache_size,
+        file_error&)
     {
         C_UNUSED(mapping_ptr);
         C_UNUSED(mapping_size);
@@ -137,10 +152,11 @@ struct FileFunDef
         return false;
     }
     static bool MapUncache(
-        c_ptr mapping_ptr,
-        szptr mapping_size,
-        szptr cache_offset,
-        szptr cache_size, file_error& ec)
+        c_ptr       mapping_ptr,
+        szptr       mapping_size,
+        szptr       cache_offset,
+        szptr       cache_size,
+        file_error& ec)
     {
         C_UNUSED(mapping_ptr);
         C_UNUSED(mapping_size);
@@ -231,13 +247,15 @@ struct FileFunDef
     }
 };
 
-struct DirFunDef
+template<typename NestedError = sentinel_error_code>
+struct DirFunDef : FileBase<NestedError>
 {
-    using Type = FileFunDef::NodeType;
+    using file_error = typename FileBase<NestedError>::file_error;
+    using Type = typename FileFunDef<NestedError>::NodeType;
 
     struct DirItem_t
     {
-        using Type = FileFunDef::NodeType;
+        using Type = typename FileFunDef<>::NodeType;
 
         CString name;
         Type    type;

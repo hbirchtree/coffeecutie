@@ -49,14 +49,12 @@ template<class T, template<class...> class Template>
 struct is_specialized
 {
     static constexpr bool value = false;
-//    typedef typename std::enable_if<false, T>::type type;
 };
 
 template<template<class...> class Template, class... Args>
 struct is_specialized<Template<Args...>, Template>
 {
     static constexpr bool value = true;
-//    typedef typename std::enable_if<true, Template<Args...>>::type type;
 };
 
 }

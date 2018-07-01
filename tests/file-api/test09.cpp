@@ -3,12 +3,13 @@
 
 using namespace Coffee;
 
-using FileInterface       = FileFunDef;
+using FileInterface       = FileFunDef<>;
 using NativeFileInterface = FileFun;
 
 template<
     typename FileApi,
-    typename implements<FileFunDef, FileApi>::type* = nullptr>
+    typename NestedError,
+    typename implements<FileFunDef<NestedError>, FileApi>::type* = nullptr>
 bool api_test()
 {
     /* This test suite tests whether the function signature of the
@@ -17,7 +18,7 @@ bool api_test()
 
     const auto testingUrl = MkUrl("testfile.dat");
 
-    file_error ec;
+    typename FileApi::file_error ec;
 
     /* File handle API */
     auto hnd = FileApi::Open(
@@ -99,17 +100,19 @@ bool url_api()
 }
 
 COFFEE_TEST_SUITE(4) = {
-    {api_test<FileInterface>,
+    {api_test<FileInterface, FileInterface::file_error::nested_error_type>,
      "Interface",
      "Testing that the unimplemented interface is properly tested",
      false,
      true},
-    {api_test<CFILEFun>,
+    {api_test<CFILEFun, CFILEFun::file_error::nested_error_type>,
      "FILE API",
      "Testing the FILE*-based C API",
      false,
      true},
-    {api_test<NativeFileInterface>,
+    {api_test<
+         NativeFileInterface,
+         NativeFileInterface::file_error::nested_error_type>,
      "Native API",
      "Testing that the native API implements the interface correctly",
      false,

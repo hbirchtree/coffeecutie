@@ -12,7 +12,7 @@ struct EmscriptenFileFun : CFILEFun_def<FILEApi::FileHandle>
     using FileHandle = FILEApi::FileHandle;
 };
 
-using DirFun = DirFunDef;
+using DirFun = DirFunDef<FILE_error_code>;
 using FileFun = EmscriptenFileFun;
 
 }

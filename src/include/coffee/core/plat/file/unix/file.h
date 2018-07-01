@@ -65,6 +65,14 @@ struct posix_fd
     }
 };
 
+struct posix_error_category : error_category
+{
+    virtual const char* name() const noexcept;
+    virtual std::string message(int error_code) const;
+};
+
+using posix_error_code = domain_error_code<int, posix_error_category>;
+
 struct PosixApi
 {
     struct FileHandle
@@ -76,14 +84,16 @@ struct PosixApi
         posix_fd fd;
     };
 
-    using FileMapping = FileFunDef::FileMapping;
+    using FileMapping = FileFunDef<>::FileMapping;
 };
 
-struct PosixFileMod_def : CommonFileFun
+using PosixCommonFileFun = CommonFileFun<posix_error_code>;
+
+struct PosixFileMod_def : PosixCommonFileFun
 {
     static bool ErrnoCheck(file_error& ec, cstring ref = nullptr, int fd = -1);
 
-    static NodeType Stat(Url const& fn, file_error& ec);
+    static NodeType Stat(Url const& fn, file_error&);
 
     static bool Touch(NodeType t, Url const& fn, file_error& ec);
 
@@ -97,7 +107,7 @@ struct PosixFileMod_def : CommonFileFun
 
     static szptr Size(Url const& fn, file_error& ec);
 
-    static bool Exists(Url const& fn, file_error& ec);
+    static bool Exists(Url const& fn, file_error&);
 
     static void Truncate(Url const& fn, szptr size, file_error& ec);
 
@@ -113,9 +123,10 @@ template<
     typename FH,
     typename FM,
     typename ScratchBuf,
-    typename implements<PosixApi::FileHandle, FH>::type*              = nullptr,
-    typename implements<PosixApi::FileMapping, FM>::type*             = nullptr,
-    typename implements<CommonFileFun::ScratchBuf, ScratchBuf>::type* = nullptr>
+    typename implements<PosixApi::FileHandle, FH>::type*  = nullptr,
+    typename implements<PosixApi::FileMapping, FM>::type* = nullptr,
+    typename implements<PosixCommonFileFun::ScratchBuf, ScratchBuf>::type* =
+        nullptr>
 struct PosixFileFun_def : PosixFileMod_def
 {
     using PosixFileMod_def::Exists;
@@ -374,22 +385,22 @@ struct PosixFileFun_def : PosixFileMod_def
 struct PosixFileFun : PosixFileFun_def<
                           PosixApi::FileHandle,
                           PosixApi::FileMapping,
-                          CommonFileFun::ScratchBuf>
+                          PosixCommonFileFun::ScratchBuf>
 {
     using FileHandle  = PosixApi::FileHandle;
     using FileMapping = PosixApi::FileMapping;
     using ScratchBuf  = CommonFileFun::ScratchBuf;
 };
 
-struct PosixDirFun : DirFunDef
+struct PosixDirFun : DirFunDef<posix_error_code>
 {
+    using Type = FileFunDef<>::NodeType;
+
     static bool ChDir(Url const& dir, file_error& ec);
 
     static bool MkDir(Url const& dname, bool createParent, file_error& ec);
 
     static bool RmDir(Url const& dname, file_error& ec);
-
-    using Type = FileFunDef::NodeType;
 
     static bool Ls(Url const& dname, DirList& entries, file_error& ec);
 

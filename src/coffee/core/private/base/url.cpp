@@ -232,6 +232,10 @@ CString Url::operator*() const
         if(!feval(flags & RSCA::NoDereference))
             derefPath = FileFun::DereferenceLink(
                 MkUrl(derefPath.c_str(), RSCA::SystemFile), ec);
+#ifndef NDEBUG
+        if(ec)
+            cWarning("{0}", ec.message());
+#endif
 #endif
         return derefPath;
 #else
@@ -325,6 +329,10 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
         return {};
     }
     }
+#ifndef NDEBUG
+    if(ec)
+        cWarning("{0}", ec.message());
+#endif
     tempStore.flags |= storageMask & RSCA::NoDereference;
     return *tempStore;
 }
@@ -351,7 +359,12 @@ Path Path::addExtension(cstring ext) const
 Path Path::fileBasename() const
 {
     file_error ec;
-    return {DirFun::Basename(internUrl, ec).internUrl};
+    Path       p = {DirFun::Basename(internUrl, ec).internUrl};
+#ifndef NDEBUG
+    if(ec)
+        cWarning("{0}", ec.message());
+#endif
+    return p;
 }
 
 CString Path::extension() const
@@ -368,13 +381,23 @@ CString Path::extension() const
 Path Path::dirname() const
 {
     file_error ec;
-    return {DirFun::Dirname(internUrl.c_str(), ec).internUrl};
+    Path       p = {DirFun::Dirname(internUrl.c_str(), ec).internUrl};
+#ifndef NDEBUG
+    if(ec)
+        cWarning("{0}", ec.message());
+#endif
+    return p;
 }
 
 Path Path::canonical() const
 {
     file_error ec;
-    return {FileFun::CanonicalName(MkUrl(*this), ec)};
+    Path       p = {FileFun::CanonicalName(MkUrl(*this), ec)};
+#ifndef NDEBUG
+    if(ec)
+        cWarning("{0}", ec.message());
+#endif
+    return p;
 }
 
 Path Path::operator+(cstring component) const

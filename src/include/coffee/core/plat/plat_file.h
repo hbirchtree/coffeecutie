@@ -6,8 +6,9 @@
 #include "file/windows/file.h"
 
 namespace Coffee{
+namespace CResources{
 
-//using DirFun = CResources::DirFun;
-//using FileFun = CResources::FileFun;
+using file_error = FileFun::file_error;
 
+}
 }

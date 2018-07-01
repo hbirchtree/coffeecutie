@@ -111,10 +111,6 @@ FORCEDINLINE bool ThreadSetName(CString const& name)
 #elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
     pthread_setname_np(pthread_self(), cpy.c_str());
     return true;
-#elif defined(COFFEE_WINDOWS)
-    CWString wname(name.begin(), name.end());
-    SetThreadDescription(GetCurrentThread(), wname.c_str());
-    return true;
 #else
     return false;
 #endif

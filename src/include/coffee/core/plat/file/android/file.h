@@ -24,22 +24,22 @@ struct AndroidFileApi
 struct AndroidFileFun : Posix::PosixFileFun_def<
 
                             AndroidFileApi::FileHandle,
-                            Posix::PosixApi::FileMapping,
-                            CommonFileFun::ScratchBuf
+                            FileFunDef<>::FileMapping,
+                            FileFunDef<>::ScratchBuf
 
                             >
 {
     using FileHandle = AndroidFileApi::FileHandle;
 
-    struct FileMapping : FileFunDef::FileMapping
+    struct FileMapping : FileFunDef<>::FileMapping
     {
         FileHandle handle;
     };
 
     using Ancestor = Posix::PosixFileFun_def<
         AndroidFileApi::FileHandle,
-        Posix::PosixApi::FileMapping,
-        CommonFileFun::ScratchBuf>;
+        FileFunDef<>::FileMapping,
+        FileFunDef<>::ScratchBuf>;
 
     static FileHandle Open(Url const& fn, RSCA ac, file_error& ec);
 
@@ -60,7 +60,7 @@ struct AndroidFileFun : Posix::PosixFileFun_def<
 } // namespace Android
 
 using FileFun = Android::AndroidFileFun;
-using DirFun  = DirFunDef;
+using DirFun  = Posix::PosixDirFun;
 
 } // namespace CResources
 } // namespace Coffee

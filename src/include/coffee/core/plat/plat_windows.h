@@ -17,8 +17,8 @@
 
 #include <winsock2.h>
 
-#include <windows.h>
 #include <processthreadsapi.h>
+#include <windows.h>
 
 #undef ERROR
 //#undef far
@@ -45,22 +45,56 @@ inline std::string win_strerror(DWORD err)
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 #ifdef COFFEE_WINDOWS_UWP
         (LPWSTR)&msgBuf,
-        0,
-        nullptr);
 #else
         (LPSTR)&msgBuf,
+#endif
         0,
         nullptr);
-#endif
 
 #ifdef COFFEE_WINDOWS_UWP
     std::wstring error_w(msgBuf, size);
-    LocalFree(msgBuf);
-    std::string error(error_w.begin(), error_w.end());
+    std::string  error(error_w.begin(), error_w.end());
 #else
     std::string error(msgBuf, size);
-    LocalFree(msgBuf);
 #endif
+    LocalFree(msgBuf);
     return error;
 }
+
+struct win_handle
+{
+    FORCEDINLINE win_handle() : m_hnd(0)
+    {
+    }
+
+    FORCEDINLINE win_handle(HANDLE wHnd) : m_hnd(wHnd)
+    {
+    }
+
+    FORCEDINLINE ~win_handle()
+    {
+        if(!(*this))
+            CloseHandle(m_hnd);
+    }
+
+    FORCEDINLINE win_handle& operator=(HANDLE wHnd)
+    {
+        m_hnd = wHnd;
+        return *this;
+    }
+
+    FORCEDINLINE operator HANDLE()
+    {
+        return m_hnd;
+    }
+
+    FORCEDINLINE operator bool()
+    {
+        return m_hnd != 0 && m_hnd != INVALID_HANDLE_VALUE;
+    }
+
+  private:
+    HANDLE m_hnd;
+};
+
 } // namespace Coffee

@@ -55,7 +55,7 @@ struct WindowsEnvFun : EnvInterface
 
     STATICINLINE Url ApplicationDir()
     {
-        file_error ec;
+        CResources::Windows::WinFileFun::file_error ec;
         CString fn = ExecutableName();
         return DirFun::Dirname(fn.c_str(), ec);
     }

@@ -8,21 +8,9 @@
 
 namespace Coffee{
 namespace CResources{
-namespace Mac{
 
-struct MacFileFun : Posix::PosixFileFun
-{
-};
-
-struct MacDirFun : Posix::PosixDirFun
-{
-
-};
-
-}
-
-using FileFun = Mac::MacFileFun;
-using DirFun = Mac::MacDirFun;
+using FileFun = Posix::PosixFileFun;
+using DirFun = Posix::PosixDirFun;
 
 }
 }

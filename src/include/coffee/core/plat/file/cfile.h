@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_PLAT_CFILE_H
-#define COFFEE_CORE_PLAT_CFILE_H
+#pragma once
 
 #include <cstdio>
 
@@ -9,9 +8,18 @@
 namespace Coffee {
 namespace CResources {
 
-struct CommonFileFun : FileFunDef
+template<typename NestedError = sentinel_error_code>
+struct CommonFileFun : FileFunDef<NestedError>
 {
 };
+
+struct FILE_error_category : error_category
+{
+    virtual const char* name() const noexcept;
+    virtual std::string message(int error_code) const;
+};
+
+using FILE_error_code = domain_error_code<int, FILE_error_category>;
 
 struct FILEApi
 {
@@ -42,7 +50,7 @@ struct FILEApi
     struct FileMapping : non_copy
     {
         static FileMapping Wrap(
-            FileFunDef::FileMapping&& data, FileHandle&& handle)
+            FileFunDef<>::FileMapping&& data, FileHandle&& handle)
         {
             FileMapping out;
 
@@ -83,18 +91,22 @@ struct FILEApi
             return *this;
         }
 
-        FileFunDef::FileMapping fm_handle;
-        FileHandle              handle;
-        void*                   data;
-        szptr                   size;
+        FileFunDef<>::FileMapping fm_handle;
+        FileHandle                handle;
+        void*                     data;
+        szptr                     size;
     };
+
+    static void CheckError(FILE* fd, FILE_error_code& ec);
 };
 
 template<
+    typename NestedError,
     typename FH,
     typename implements<FILEApi::FileHandle, FH>::type* = nullptr>
-struct CFILEFun_def : CommonFileFun
+struct CFILEFunBase_def : CommonFileFun<NestedError>
 {
+    using file_error  = typename CommonFileFun<NestedError>::file_error;
     using FileMapping = FILEApi::FileMapping;
 
     STATICINLINE FH Open(Url const& fn, ResourceAccess ac, file_error& ec)
@@ -129,6 +141,7 @@ struct CFILEFun_def : CommonFileFun
         if(!fh.handle)
         {
             ec = FileError::NotFound;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
             return {};
         }
 
@@ -147,8 +160,16 @@ struct CFILEFun_def : CommonFileFun
     {
         if(!Valid(fh, ec))
             return false;
-        fclose(fh.handle);
-        return true;
+
+        auto stat = fclose(fh.handle);
+
+        if(stat != 0)
+        {
+            ec = FileError::SystemError;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+        }
+
+        return stat == 0;
     }
 
     STATICINLINE Bytes Read(FH const& fh, uint64 size, file_error& ec)
@@ -172,8 +193,8 @@ struct CFILEFun_def : CommonFileFun
 
         if(rsize != esize)
         {
-            int error = ferror(fh.handle);
-            ec        = FileError::ReadFailed;
+            ec = FileError::ReadFailed;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
             return {};
         }
 
@@ -185,7 +206,15 @@ struct CFILEFun_def : CommonFileFun
     {
         if(!Valid(fh, ec))
             return false;
-        return fseek(fh.handle, off, SEEK_SET) == 0;
+        auto stat = fseek(fh.handle, off, SEEK_SET);
+
+        if(stat != 0)
+        {
+            ec = FileError::SystemError;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+        }
+
+        return stat == 0;
     }
     STATICINLINE bool Write(FH const& fh, Bytes const& d, file_error& ec)
     {
@@ -196,8 +225,8 @@ struct CFILEFun_def : CommonFileFun
 
         if(wsize != d.size)
         {
-            int error = ferror(fh.handle);
-            ec        = FileError::WriteFailed;
+            ec = FileError::WriteFailed;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
             return false;
         }
 
@@ -214,8 +243,8 @@ struct CFILEFun_def : CommonFileFun
             return tmp;
         } else
         {
-            int error = ferror(f.handle);
-            ec        = FileError::NotFound;
+            ec = FileError::NotFound;
+            FILEApi::CheckError(f.handle, ec.template as<FILE_error_code>());
             return 0;
         }
     }
@@ -226,8 +255,23 @@ struct CFILEFun_def : CommonFileFun
 
         szptr offset = ftell(fh.handle);
         int   res    = fseek(fh.handle, 0, SEEK_END);
-        szptr fsize  = ftell(fh.handle);
-        res          = fseek(fh.handle, offset, SEEK_SET);
+
+        if(res != 0)
+        {
+            ec = FileError::SystemError;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            return 0;
+        }
+
+        szptr fsize = ftell(fh.handle);
+        res         = fseek(fh.handle, offset, SEEK_SET);
+
+        if(res != 0)
+        {
+            ec = FileError::SystemError;
+            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            return 0;
+        }
 
         return fsize;
     }
@@ -283,9 +327,10 @@ struct CFILEFun_def : CommonFileFun
     }
 };
 
+template<typename FH>
+using CFILEFun_def = CFILEFunBase_def<FILE_error_code, FH>;
+
 using CFILEFun = CFILEFun_def<FILEApi::FileHandle>;
 
 } // namespace CResources
 } // namespace Coffee
-
-#endif

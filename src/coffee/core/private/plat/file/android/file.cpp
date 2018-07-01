@@ -1,5 +1,6 @@
 #include <coffee/core/plat/file/android/file.h>
 
+#include <coffee/core/plat/plat_file.h>
 #include "../file_abstraction.h"
 #include <coffee/core/CDebug>
 

@@ -6,6 +6,7 @@
 #include <fileapi.h>
 
 namespace Coffee {
+namespace CResources {
 namespace Windows {
 const constexpr cstring coffee_rsc_tag = "CF_RES";
 
@@ -36,6 +37,7 @@ WinFileApi::FileAccess WinFileApi::GetAccess(RSCA acc)
 
     return f;
 }
+
 HANDLE WinFileApi::GetFileHandle(Url const& fn, RSCA acc)
 {
     auto       url = *fn;
@@ -49,6 +51,7 @@ HANDLE WinFileApi::GetFileHandle(Url const& fn, RSCA acc)
         url.c_str(), f.open, f.share, nullptr, f.create, f.attr, nullptr);
 #endif
 }
+
 DWORD WinFileApi::GetMappingFlags(RSCA acc)
 {
     DWORD profl = 0;
@@ -150,7 +153,7 @@ WinFileFun::FileHandle WinFileFun::Open(Url const& fn, RSCA acc, file_error& ec)
     if(ff == INVALID_HANDLE_VALUE)
         return {};
 
-    FileHandle fh = CFILEFun_def<FileHandle>::Open(fn, acc, ec);
+    FileHandle fh = Parent::Open(fn, acc, ec);
     if(!fh.handle)
     {
         CloseHandle(ff);
@@ -166,7 +169,7 @@ bool WinFileFun::Close(WinFileFun::FileHandle&& fh, file_error& ec)
     if(fh.type == FileHandle::FS)
     {
         HANDLE file = fh.file;
-        return CFILEFun_def<FileHandle>::Close(std::move(fh), ec) &&
+        return Parent::Close(std::move(fh), ec) &&
                CloseHandle(file);
     } else
         return true;
@@ -653,4 +656,5 @@ Url WinDirFun::Basename(CString const& fn, file_error& ec)
 }
 
 } // namespace Windows
+} // namespace CResources
 } // namespace Coffee
