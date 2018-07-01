@@ -19,7 +19,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
 
     STATICINLINE Url ApplicationDir()
     {
-        file_error ec;
+        PosixDirFun::file_error ec;
         CString execname = ExecutableName();
         return CResources::Posix::PosixDirFun::Dirname(execname.c_str(), ec);
     }

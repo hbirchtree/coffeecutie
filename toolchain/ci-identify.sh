@@ -49,9 +49,13 @@ function travis_get_path()
     local repo_slug=$(travis_repo_slug)
     local repo_event=$TRAVIS_EVENT_TYPE
     local identifier=$BUILDVARIANT
+    local branch="$TRAVIS_BRANCH"
 
     if [ -z $BUILDVARIANT ]; then
         local identifier="unknown"
+    fi
+    if [ -z $branch ]; then
+        local branch=`git -C "$TRAVIS_BUILD_DIR" rev-parse --abbrev-ref HEAD`
     fi
 
     create_identity "$repo_slug" "$CI_PREFIX/travis-ci" "$TRAVIS_BRANCH" "$repo_event" "$identifier"

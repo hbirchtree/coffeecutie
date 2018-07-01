@@ -2,10 +2,10 @@
 
 #include "plat/plat_quirks_toggling.h"
 
-#include <type_traits>
 #include <limits>
 #include <stdint.h>
 #include <stdlib.h>
+#include <type_traits>
 
 /* Wrap text that is used for debugging with this, and it will disappear
  *  in release-mode */
@@ -32,7 +32,7 @@ template<typename T>
 #define Throw(a) abort()
 #endif
 
-namespace Coffee{
+namespace Coffee {
 
 template<class T>
 /*!
@@ -41,8 +41,7 @@ template<class T>
  */
 struct is_not_virtual
 {
-    typedef typename
-    E_IF<!IS_POLY<T>::value>::type type;
+    typedef typename E_IF<!IS_POLY<T>::value>::type type;
 };
 
 template<class T, template<class...> class Template>
@@ -57,7 +56,7 @@ struct is_specialized<Template<Args...>, Template>
     static constexpr bool value = true;
 };
 
-}
+} // namespace Coffee
 
 #undef E_IF
 #undef IS_CLS
@@ -72,20 +71,20 @@ struct is_specialized<Template<Args...>, Template>
 #define IS_POD(Type) (!std::is_pointer<Type>::value)
 #define IS_CONST(Type) std::is_const<Type>::value
 
-/*! \brief If you want to know why this is done, it's because Visual C++ is broken.
- *  Too broken for me to care.
+/*! \brief If you want to know why this is done, it's because Visual C++ is
+ * broken. Too broken for me to care.
  */
 #if !defined(COFFEE_WINDOWS)
 
-template<typename D,
-         typename T,
-         typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
-         typename std::enable_if<
-    ((std::numeric_limits<T>::max)() <= (std::numeric_limits<D>::max)()) &&
-    ((std::numeric_limits<T>::min)() >= (std::numeric_limits<D>::min)())
-            >::type* = nullptr,
-         typename std::enable_if<
-             IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
+template<
+    typename D,
+    typename T,
+    typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
+    typename std::enable_if<
+        ((std::numeric_limits<T>::max)() <= (std::numeric_limits<D>::max)()) &&
+        ((std::numeric_limits<T>::min)() >=
+         (std::numeric_limits<D>::min)())>::type*                = nullptr,
+    typename std::enable_if<IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
 /*!
  * \brief The case where all casting is safe, no downcasting
  *  or signed-unsigned conversion
@@ -97,13 +96,14 @@ static inline D C_FCAST(T from)
     return static_cast<D>(from);
 }
 
-template<typename D,
-         typename T,
-         typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
-         typename std::enable_if<
-    ((std::numeric_limits<T>::max)() > (std::numeric_limits<D>::max)()) ||
-    ((std::numeric_limits<T>::min)() < (std::numeric_limits<D>::min)())
-             >::type* = nullptr>
+template<
+    typename D,
+    typename T,
+    typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
+    typename std::enable_if<
+        ((std::numeric_limits<T>::max)() > (std::numeric_limits<D>::max)()) ||
+        ((std::numeric_limits<T>::min)() <
+         (std::numeric_limits<D>::min)())>::type* = nullptr>
 /*!
  * \brief If there is a risk of going out of the
  *  range of type D, return the closest value.
@@ -117,11 +117,11 @@ static inline D C_FCAST(T from)
     static constexpr D min_val = (std::numeric_limits<D>::min)();
 
     static constexpr T T_max_val = (std::numeric_limits<T>::max)();
-//    static constexpr T T_min_val = std::numeric_limits<T>::min();
+    //    static constexpr T T_min_val = std::numeric_limits<T>::min();
 
     static constexpr bool T_is_signed = std::is_signed<T>::value;
     static constexpr bool D_is_signed = std::is_signed<D>::value;
-    static constexpr bool same_sign = T_is_signed == D_is_signed;
+    static constexpr bool same_sign   = T_is_signed == D_is_signed;
 
     const ::uint64_t T_max_val_u64 = static_cast<::uint64_t>(T_max_val);
     const ::uint64_t D_max_val_u64 = static_cast<::uint64_t>(max_val);
@@ -136,15 +136,17 @@ static inline D C_FCAST(T from)
             return max_val;
         else
             return from;
-    }else{
+    } else
+    {
         /* Comparisons with different sign is literally iffy */
         if(from < 0)
             /* If `from' is signed and below 0,
              *  we know that `D' must be unsigned.
              *  We can only return the smallest value for `D'. */
             return min_val;
-        else if(T_max_val_u64 > D_max_val_u64 &&
-                static_cast<uint64_t>(from) > D_max_val_u64)
+        else if(
+            T_max_val_u64 > D_max_val_u64 &&
+            static_cast<uint64_t>(from) > D_max_val_u64)
             /* Check that, if T has a larger range than D,
              *  that from is still within range.
              * If not, return max_val.
@@ -159,8 +161,10 @@ static inline D C_FCAST(T from)
 
 #else
 
-template<typename D, typename T,
-		 typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr>
+template<
+    typename D,
+    typename T,
+    typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr>
 /*!
  * \brief Substitute function for Windows,
  *  because the above functions don't compile under MSVC.
@@ -169,37 +173,43 @@ template<typename D, typename T,
  */
 static inline D C_FCAST(T from)
 {
-	return static_cast<D>(from);
+    return static_cast<D>(from);
 }
 
 #endif
 
-template<typename D,
-         typename T,
+template<
+    typename D,
+    typename T,
 
-         typename std::enable_if<IS_PTR(D),T>::type* = nullptr,
-         typename std::enable_if<IS_PTR(T),T>::type* = nullptr,
-         typename std::enable_if<IS_POD(RP(D)) && IS_POD(RP(T)),T>::type* = nullptr,
-         typename std::enable_if<(IS_CONST(RP(D)) && IS_CONST(RP(T))) || (!IS_CONST(RP(D)) && !IS_CONST(RP(T))) || (IS_CONST(RP(D)) && !IS_CONST(RP(T))),T>::type* = nullptr
+    typename std::enable_if<IS_PTR(D), T>::type*                      = nullptr,
+    typename std::enable_if<IS_PTR(T), T>::type*                      = nullptr,
+    typename std::enable_if<IS_POD(RP(D)) && IS_POD(RP(T)), T>::type* = nullptr,
+    typename std::enable_if<
+        (IS_CONST(RP(D)) && IS_CONST(RP(T))) ||
+            (!IS_CONST(RP(D)) && !IS_CONST(RP(T))) ||
+            (IS_CONST(RP(D)) && !IS_CONST(RP(T))),
+        T>::type* = nullptr
 
-         >
+    >
 /*!
- * \brief Simple reinterpretation of a pointer, does not allow breaking const rules.
- * \param from
- * \return
+ * \brief Simple reinterpretation of a pointer, does not allow breaking const
+ * rules. \param from \return
  */
-static inline D C_FCAST(T from)
+static inline D
+C_FCAST(T from)
 {
     return reinterpret_cast<D>(from);
 }
 
-template<typename D,
-         typename T,
+template<
+    typename D,
+    typename T,
 
-         typename std::enable_if<IS_INT(D), D>::type* = nullptr,
-         typename std::enable_if<IS_PTR(T), T>::type* = nullptr
+    typename std::enable_if<IS_INT(D), D>::type* = nullptr,
+    typename std::enable_if<IS_PTR(T), T>::type* = nullptr
 
-         >
+    >
 /*!
  * \brief For converting pointer to integer type.
  * \param from
@@ -210,15 +220,15 @@ static inline D C_FCAST(T from)
     return reinterpret_cast<D>(from);
 }
 
-template<typename D,
-         typename T,
+template<
+    typename D,
+    typename T,
 
-         typename std::enable_if<IS_PTR(D), D>::type* = nullptr,
-         typename std::enable_if<!IS_CONST(D), D>::type* = nullptr,
+    typename std::enable_if<IS_PTR(D), D>::type*    = nullptr,
+    typename std::enable_if<!IS_CONST(D), D>::type* = nullptr,
 
-         typename std::enable_if<IS_CONST(T), D>::type* = nullptr,
-         typename std::enable_if<IS_PTR(T), T>::type* = nullptr
-         >
+    typename std::enable_if<IS_CONST(T), D>::type* = nullptr,
+    typename std::enable_if<IS_PTR(T), T>::type*   = nullptr>
 /*!
  * \brief This overload operates on the pointer type. Example:
  * `char* const` -> `char*`
@@ -231,18 +241,18 @@ static inline D C_FCAST(T from)
     return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
 
-template<typename D,
-         typename T,
+template<
+    typename D,
+    typename T,
 
-         typename std::enable_if<IS_PTR(D) && IS_PTR(T),
-                                 D>::type* = nullptr,
+    typename std::enable_if<IS_PTR(D) && IS_PTR(T), D>::type* = nullptr,
 
-         typename std::enable_if<IS_POD(RP(D)) && !IS_CONST(RP(D)),
-                                 bool>::type* = nullptr,
-         typename std::enable_if<IS_POD(RP(T)) && IS_CONST(RP(T)),
-                                 bool>::type* = nullptr
+    typename std::enable_if<IS_POD(RP(D)) && !IS_CONST(RP(D)), bool>::type* =
+        nullptr,
+    typename std::enable_if<IS_POD(RP(T)) && IS_CONST(RP(T)), bool>::type* =
+        nullptr
 
-         >
+    >
 /*!
  * \brief This overload is for the case:
  * `const char*` -> `char*`, operating on the inner type.
@@ -251,29 +261,29 @@ template<typename D,
  */
 static inline D C_FCAST(T from)
 {
-    using T_not_const =
-    typename std::add_pointer<typename std::remove_const<
-    typename std::remove_pointer<T>::type>::type>::type;
+    using T_not_const = typename std::add_pointer<typename std::remove_const<
+        typename std::remove_pointer<T>::type>::type>::type;
 
     return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
 
 template<typename D, typename T>
 /*!
- * \brief C_CAST is for the cases where a static cast is acceptable. For example, when you *want* -1 to underflow.
- * Also used for enum casts
- * Few cases.
+ * \brief C_CAST is for the cases where a static cast is acceptable. For
+ * example, when you *want* -1 to underflow. Also used for enum casts Few cases.
  * \param from
  * \return
  */
-static inline constexpr D C_CAST(T from)
+static inline constexpr D
+C_CAST(T from)
 {
     return static_cast<D>(from);
 }
 
-template<typename D, typename T,
-         typename std::enable_if<std::is_class<T>::value
-                                 >::type* = nullptr>
+template<
+    typename D,
+    typename T,
+    typename std::enable_if<std::is_class<T>::value>::type* = nullptr>
 /*!
  * \brief For coercing a class/struct into another type,
  *  such as with `operator T()`
@@ -305,8 +315,10 @@ static inline constexpr D C_CCAST(T from)
 {
     return const_cast<D>(from);
 }
-template<typename D, typename T,
-         typename Coffee::is_not_virtual<T>::type* = nullptr>
+template<
+    typename D,
+    typename T,
+    typename Coffee::is_not_virtual<T>::type* = nullptr>
 /*!
  * \brief Should not be used with class/struct types,
  *  unless going from void* to class T.
@@ -335,8 +347,7 @@ struct implements
     typedef int type;
 #else
     typedef typename std::enable_if<
-    std::is_base_of<Interface, Implementation>::value
-    >::type type;
+        std::is_base_of<Interface, Implementation>::value>::type    type;
 #endif
 };
 
@@ -351,13 +362,11 @@ struct is_pod
 #if defined(COFFEE_WINDOWS)
     typedef int type;
 #else
-    typedef typename std::enable_if<
-    std::is_pod<T>::value, T
-    >::type type;
+    typedef typename std::enable_if<std::is_pod<T>::value, T>::type type;
 #endif
 };
 
-}
+} // namespace Coffee
 
 #undef IS_INT
 #undef IS_PTR

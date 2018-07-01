@@ -8,6 +8,10 @@ function gen_information()
         local url="https://travis-ci.org/$REPO_SLUG/jobs/$TRAVIS_JOB_ID"
     fi
 
+    if [ ! -z $ ]; then
+        local url="$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER"
+    fi
+
     if [ "$url" == "" ]; then
         local url="https://github.com/$REPO_SLUG/commit/$(git rev-parse HEAD)"
     fi
