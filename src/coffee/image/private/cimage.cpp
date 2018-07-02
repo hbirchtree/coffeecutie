@@ -431,6 +431,8 @@ std::string stb_error_category::message(int error_code) const
     case STBError::InvalidPixelFormat:
         return "Invalid pixel format specified";
     }
+
+	throw implementation_error("unimplemented error message");
 }
 
 } // namespace stb

@@ -43,6 +43,8 @@ std::string runtime_queue_category::message(int error_code) const
     case RQE::UncaughtException:
         return "Thread died from uncaught exception";
     }
+
+	throw implementation_error("unimplemented error message");
 }
 
 static bool VerifyTask(RuntimeTask const& t, runtime_queue_error& ec)

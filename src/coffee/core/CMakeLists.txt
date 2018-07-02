@@ -412,6 +412,8 @@ if(WIN32)
         private/plat/environment/windows/sysinfo.cpp
 
         private/plat/file/windows/file.cpp
+
+		private/plat/plat_windows_errors.cpp
         )
     if(NOT WIN_UWP AND NOT MINGW64)
         target_sources ( CoffeeCore_Base PRIVATE

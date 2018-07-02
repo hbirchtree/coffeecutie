@@ -382,6 +382,7 @@ bool GLEAM_API::LoadAPI(
     m_store = store;
 
     DefaultFramebuffer().size();
+    GLC::CullFace(Face::Back);
 
     CGL::Debug::UnsetDebugGroup();
 
@@ -738,6 +739,8 @@ std::string api_error::message(int error_code) const
     case APIError::None:
         return "";
     }
+
+	throw implementation_error("unimplemented error message");
 }
 
 } // namespace GLEAM

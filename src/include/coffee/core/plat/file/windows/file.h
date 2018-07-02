@@ -8,25 +8,15 @@
 
 #include <sys/stat.h>
 
-#include "../../plat_windows.h"
+#include "../../plat_windows_errors.h"
 
 namespace Coffee {
 namespace CResources {
 namespace Windows {
 
-struct win32_error_category : error_category
-{
-    virtual const char* name() const noexcept
-    {
-        return "win32_error_code";
-    }
-    virtual std::string message(int error_code) const
-    {
-        return "";
-    }
-};
+using namespace Coffee::Win32;
 
-using win32_error_code =
+using win32_file_error =
     nested_domain_error_code<DWORD, win32_error_category, FILE_error_code>;
 
 struct WinFileApi
@@ -41,19 +31,19 @@ struct WinFileApi
             FS,
             RC
         };
-        HANDLE  file;
-        HRSRC   rsrc;
-        FH_Type type = FS;
+        win_handle file;
+        HRSRC      rsrc;
+        FH_Type    type = FS;
     };
     struct FileMapping : FileFunDef<>::FileMapping
     {
-        HANDLE file;
-        HANDLE mapping;
+        win_handle file;
+        win_handle mapping;
     };
     struct ScratchBuf : CommonFileFun<>::ScratchBuf
     {
-        HANDLE mapping;
-        HANDLE view;
+        win_handle mapping;
+        win_handle view;
     };
     struct FileAccess
     {
@@ -65,12 +55,12 @@ struct WinFileApi
 
     static FileAccess GetAccess(RSCA acc);
 
-    static HANDLE GetFileHandle(Url const& fn, RSCA acc);
-    static DWORD  GetMappingFlags(RSCA acc);
-    static DWORD  GetMappingViewFlags(RSCA acc);
+    static win_handle GetFileHandle(Url const& fn, RSCA acc);
+    static DWORD      GetMappingFlags(RSCA acc);
+    static DWORD      GetMappingViewFlags(RSCA acc);
 };
 
-using Win32FILEFun = CFILEFunBase_def<win32_error_code, WinFileApi::FileHandle>;
+using Win32FILEFun = CFILEFunBase_def<win32_file_error, WinFileApi::FileHandle>;
 
 struct WinFileFun : Win32FILEFun
 {
@@ -102,7 +92,7 @@ struct WinFileFun : Win32FILEFun
     static void       ScratchUnmap(ScratchBuf&& buf, file_error& ec);
 };
 
-struct WinDirFun : DirFunDef<win32_error_code>
+struct WinDirFun : DirFunDef<win32_file_error>
 {
     using file_error = WinFileFun::file_error;
 

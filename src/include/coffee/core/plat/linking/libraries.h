@@ -10,6 +10,8 @@ namespace Library{
 
 struct FunctionLoad_def
 {
+    using error_type = error_code;
+
     enum LoadFlags
     {
         NoFlags,
@@ -28,10 +30,11 @@ struct FunctionLoad_def
      */
     Library* GetLibrary(
             cstring name,
+            error_type& ec,
             LoadFlags flags = NoFlags,
-            Version const* ver = nullptr,
-            CString* = nullptr)
+            Version const* ver = nullptr)
     {
+        C_UNUSED(ec);
         C_UNUSED(name);
         C_UNUSED(flags);
         C_UNUSED(ver);
@@ -51,8 +54,9 @@ struct FunctionLoad_def
      * \return
      */
     bool UnloadLibrary(Library* lib,
-                       CString* = nullptr)
+                       error_type& ec)
     {
+        C_UNUSED(ec);
         C_UNUSED(lib);
         return false;
     }
@@ -72,10 +76,11 @@ struct FunctionLoad_def
         Fun GetFunction(
                 Library* lib,
                 cstring funcName,
-                CString*)
+                error_type& ec)
         {
             C_UNUSED(lib);
             C_UNUSED(funcName);
+            C_UNUSED(ec);
             return nullptr;
         }
     };
@@ -102,10 +107,11 @@ struct ObjectLoader_def
     ObjConstructor<Obj> GetConstructor(
             typename FunctionLoader::Library* library,
             cstring constructor,
-            CString* = nullptr)
+            typename FunctionLoader::error_type& ec)
     {
         C_UNUSED(library);
         C_UNUSED(constructor);
+        C_UNUSED(ec);
         return {};
     }
 };

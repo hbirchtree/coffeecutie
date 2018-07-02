@@ -1,9 +1,9 @@
-#include <coffee/graphics/common/query/gpu_query.h>
-#include <coffee/core/plat/plat_linking.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/plat/plat_linking.h>
+#include <coffee/graphics/common/query/gpu_query.h>
 
-namespace Coffee{
-namespace GpuInfo{
+namespace Coffee {
+namespace GpuInfo {
 
 /*!
  * \brief Dummy functions for GpuQuery interface
@@ -27,7 +27,7 @@ struct _GpuQueryDef
     {
         return {};
     }
-    static uint64 ProcMemoryUse(gpucount_t,proc_t)
+    static uint64 ProcMemoryUse(gpucount_t, proc_t)
     {
         return 0;
     }
@@ -53,37 +53,39 @@ struct _GpuQueryDef
     }
 };
 
-bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error &ec)
+bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error& ec)
 {
     using namespace Library;
 
-    Vector<cstring> libs = {
-        "CoffeeNVIDIAQuery",
-        "CoffeeAMDQuery",
-        "CoffeeIntelQuery",
-        "CoffeeLibDRMQuery",
-        "CoffeeOpenGLQuery"
-    };
+    Vector<cstring> libs = {"CoffeeNVIDIAQuery",
+                            "CoffeeAMDQuery",
+                            "CoffeeIntelQuery",
+                            "CoffeeLibDRMQuery",
+                            "CoffeeOpenGLQuery"};
     for(cstring mf : libs)
     {
-        CString error;
+        FunctionLoader::error_type loader_ec;
+
         auto lib = FunctionLoader::GetLibrary(
-                    mf, FunctionLoader::GlobalSymbols, nullptr, &error);
+            mf, loader_ec, FunctionLoader::GlobalSymbols, nullptr);
+
         if(!lib)
         {
-            ec = error;
+            ec = loader_ec.message();
             ec = GpuQueryError::LibraryLoading;
 
             continue;
         }
-        auto ldr = ObjectLoader::
-                GetConstructor<GpuQueryFunction>(lib, "GetGpuQuery", &error);
+
+        auto ldr = ObjectLoader::GetConstructor<GpuQueryFunction>(
+            lib, "GetGpuQuery", loader_ec);
+
         if(!ldr.loader)
         {
-            ec = error;
+            ec = loader_ec.message();
             ec = GpuQueryError::SymbolResolution;
 
-            FunctionLoader::UnloadLibrary(lib);
+            FunctionLoader::UnloadLibrary(std::move(lib), loader_ec);
             continue;
         }
         GpuQueryFunction* fun = ldr.loader();
@@ -92,7 +94,7 @@ bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error &ec)
             ec = mf;
             ec = GpuQueryError::Initialization;
 
-            FunctionLoader::UnloadLibrary(lib);
+            FunctionLoader::UnloadLibrary(std::move(lib), loader_ec);
             continue;
         }
 
@@ -104,7 +106,7 @@ bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error &ec)
         }
 
         auto loader = fun->ptr();
-        loc = loader;
+        loc         = loader;
 
         ec = C_CAST<GpuQueryError>(0);
         ec = "";
@@ -119,23 +121,21 @@ GpuQueryInterface GetDefault()
 {
     using namespace Coffee::GpuInfo;
 
-    return {
-        _GpuQueryDef::GetDriver,
-                _GpuQueryDef::GetNumGpus,
-                _GpuQueryDef::GpuModel,
-                _GpuQueryDef::MemoryInfo,
-                _GpuQueryDef::ProcMemoryUse,
-                _GpuQueryDef::GetTemperature,
-                _GpuQueryDef::GetClock,
-                _GpuQueryDef::GetPowerMode,
-                _GpuQueryDef::GetUsage,
-                _GpuQueryDef::GetPcieTransfer
-    };
+    return {_GpuQueryDef::GetDriver,
+            _GpuQueryDef::GetNumGpus,
+            _GpuQueryDef::GpuModel,
+            _GpuQueryDef::MemoryInfo,
+            _GpuQueryDef::ProcMemoryUse,
+            _GpuQueryDef::GetTemperature,
+            _GpuQueryDef::GetClock,
+            _GpuQueryDef::GetPowerMode,
+            _GpuQueryDef::GetUsage,
+            _GpuQueryDef::GetPcieTransfer};
 }
 
-}
+} // namespace GpuInfo
 
-const char *gpu_query_category::name() const noexcept
+const char* gpu_query_category::name() const noexcept
 {
     return "GpuQuery";
 }
@@ -161,11 +161,13 @@ std::string gpu_query_category::message(int error_code) const
     case GQE::LibraryImplementation:
         return "Library implementation";
     }
+
+	throw implementation_error("unimplemented error message");
 }
 
-}
+} // namespace Coffee
 
-GpuQueryFunction *GetGpuQueryDefault()
+GpuQueryFunction* GetGpuQueryDefault()
 {
-    return new GpuQueryFunction { Coffee::GpuInfo::GetDefault };
+    return new GpuQueryFunction{Coffee::GpuInfo::GetDefault};
 }

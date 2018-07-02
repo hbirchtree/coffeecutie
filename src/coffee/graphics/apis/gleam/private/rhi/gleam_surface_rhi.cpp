@@ -231,7 +231,7 @@ void GLEAM_Surface2D::upload(
             m_type,
             C_FCAST<i32>(mip),
             CompFmt(m_pixfmt, pflags, (CompFlags)(m_flags >> 10)),
-            msz,
+            size,
             data.size,
             data.data);
     } else
@@ -245,7 +245,7 @@ void GLEAM_Surface2D::upload(
                 m_type,
                 C_FCAST<i32>(mip),
                 offset,
-                msz,
+                size,
                 GetPixComponent(m_pixfmt),
                 fmt,
                 data_ptr);

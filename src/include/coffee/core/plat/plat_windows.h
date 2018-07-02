@@ -30,65 +30,55 @@
 #endif
 
 namespace Coffee {
-inline std::string win_strerror(DWORD err)
-{
-#ifdef COFFEE_WINDOWS_UWP
-    LPWSTR msgBuf = nullptr;
-#else
-    LPSTR msgBuf = nullptr;
-#endif
-    size_t size = FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-            FORMAT_MESSAGE_IGNORE_INSERTS,
-        nullptr,
-        err,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-#ifdef COFFEE_WINDOWS_UWP
-        (LPWSTR)&msgBuf,
-#else
-        (LPSTR)&msgBuf,
-#endif
-        0,
-        nullptr);
-
-#ifdef COFFEE_WINDOWS_UWP
-    std::wstring error_w(msgBuf, size);
-    std::string  error(error_w.begin(), error_w.end());
-#else
-    std::string error(msgBuf, size);
-#endif
-    LocalFree(msgBuf);
-    return error;
-}
 
 struct win_handle
 {
-    FORCEDINLINE win_handle() : m_hnd(0)
+    win_handle() : m_hnd(0)
     {
     }
 
-    FORCEDINLINE win_handle(HANDLE wHnd) : m_hnd(wHnd)
+    win_handle(HANDLE wHnd) : m_hnd(wHnd)
     {
     }
 
-    FORCEDINLINE ~win_handle()
+    win_handle(win_handle&& other) : m_hnd(other.m_hnd)
     {
-        if(!(*this))
+        other.m_hnd = INVALID_HANDLE_VALUE;
+    }
+
+    ~win_handle()
+    {
+        if(*this)
             CloseHandle(m_hnd);
     }
 
-    FORCEDINLINE win_handle& operator=(HANDLE wHnd)
+    bool close()
+    {
+        bool stat = CloseHandle(m_hnd) == TRUE;
+        m_hnd = 0;
+
+		return stat;
+    }
+
+    win_handle& operator=(win_handle&& other)
+    {
+        m_hnd       = other.m_hnd;
+        other.m_hnd = INVALID_HANDLE_VALUE;
+        return *this;
+    }
+
+    win_handle& operator=(HANDLE wHnd)
     {
         m_hnd = wHnd;
         return *this;
     }
 
-    FORCEDINLINE operator HANDLE()
+    explicit operator HANDLE() const
     {
         return m_hnd;
     }
 
-    FORCEDINLINE operator bool()
+    operator bool() const
     {
         return m_hnd != 0 && m_hnd != INVALID_HANDLE_VALUE;
     }

@@ -111,7 +111,7 @@ FORCEDINLINE BitFmt GetPreferredBitFmt(PixFmt fmt)
         return B::Scalar_32_Int_24_8;
 
     default:
-        return B::Byte;
+        return B::UByte;
     }
 }
 

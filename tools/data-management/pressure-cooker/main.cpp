@@ -117,7 +117,9 @@ void csv_parse(CString const& v, Vector<CString>& out)
 
 void load_extension(cstring name)
 {
-    auto library = FunctionLoader::GetLibrary(name, FunctionLoader::NoFlags);
+    FunctionLoader::error_type ec;
+    auto                       library =
+        FunctionLoader::GetLibrary(name, ec, FunctionLoader::NoFlags);
 
     if(!library)
     {
@@ -128,7 +130,7 @@ void load_extension(cstring name)
     using T = CoffeePipeline::FileProcessor;
 
     auto constructor = ObjectLoader::GetConstructor<T>(
-        library, DefaultConstructorFunction, nullptr);
+        library, DefaultConstructorFunction, ec);
 
     if(!constructor.loader)
         return;

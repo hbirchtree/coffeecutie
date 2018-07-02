@@ -125,15 +125,18 @@ bool LibZCompressor::Compress(
     Bytes const& uncompressed, Bytes* target, Opts const& opts)
 {
     COMPRESSOR_HANDLE cHnd = nullptr;
+    Win32::win32_error_code ec;
 
     auto succ = ::CreateCompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &cHnd);
 
     if(!succ)
     {
+        ec = GetLastError();
+
         cWarning(
             "LibZCompressor::Failed to create"
             " compressor: {0}",
-            win_strerror(GetLastError()));
+            ec.message());
         return false;
     }
 
@@ -144,10 +147,12 @@ bool LibZCompressor::Compress(
 
     if(compSize == 0 || !succ)
     {
+        ec = GetLastError();
+
         cWarning(
             "LibZCompressor::Failed to estimate"
             " compressed size: {0}",
-            win_strerror(GetLastError()));
+            ec.message());
     }
 
     *target = Bytes::Alloc(compSize);
@@ -169,14 +174,17 @@ bool LibZCompressor::Decompress(
     Bytes const& compressed, Bytes* target, Opts const& opts)
 {
     DECOMPRESSOR_HANDLE cHnd = nullptr;
+    Win32::win32_error_code ec;
 
     auto succ = ::CreateDecompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &cHnd);
 
     if(!succ)
     {
+        ec = GetLastError();
+
         cWarning(
             "LibZCompressor::Failed to create decompressor: {0}",
-            win_strerror(GetLastError()));
+            ec.message());
         return false;
     }
 
@@ -190,7 +198,7 @@ bool LibZCompressor::Decompress(
         cWarning(
             "LibZCompressor::Failed to estimate"
             " decompressed size: {0}",
-            win_strerror(GetLastError()));
+            ec.message());
         return false;
     }
 
