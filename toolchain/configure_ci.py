@@ -283,10 +283,6 @@ def appveyor_gen_config(build_info, srcDir):
                 {
                     'BUILDVARIANT': 'uwp.amd64',
                     'image': 'Visual Studio 2015'
-                },
-                {
-                    'BUILDVARIANT': 'win32.amd64',
-                    'image': 'Visual Studio 2017'
                 }
                 ]
         },
