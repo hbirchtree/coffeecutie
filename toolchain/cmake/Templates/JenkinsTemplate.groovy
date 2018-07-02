@@ -26,9 +26,6 @@ void GetSourceStep(job, repoUrl, srcDir)
                 branch('${GH_BRANCH}')
                 extensions {
                     relativeTargetDirectory(srcDir)
-                    submoduleOptions {
-                        recursive(true)
-                    }
                     cloneOptions {
                         shallow(true)
                     }
@@ -47,6 +44,12 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
             environmentVariables {
                 env('BUILDVARIANT', target)
             }
+        }
+    }
+
+    job.with {
+        steps {
+            shell("git -C \"${srcDir}\" submodule update --init --recursive")
         }
     }
 
