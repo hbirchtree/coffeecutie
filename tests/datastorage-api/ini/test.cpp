@@ -1,10 +1,10 @@
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/CIniParser>
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
 static const cstring test_ini_doc =
-R"(
+    R"(
 [Header1]
 Key1 = Value 1
 Key2 = 2
@@ -14,12 +14,12 @@ Key4 = FALSE
 
 bool readwrite_file()
 {
-    auto testFile = MkUrl("test.ini",
-                          ResourceAccess::SpecifyStorage
-                          |ResourceAccess::TemporaryFile);
-    auto testFileDupe = MkUrl("test.ini.ini",
-                              ResourceAccess::SpecifyStorage
-                              |ResourceAccess::TemporaryFile);
+    auto testFile = MkUrl(
+        "test.ini",
+        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+    auto testFileDupe = MkUrl(
+        "test.ini.ini",
+        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
 
     CResources::Resource testfile(testFile);
 
@@ -34,10 +34,10 @@ bool readwrite_file()
     Profiler::Profile("Reading time");
 
     CResources::Resource rsc(testFileDupe);
-    CString docData = INI::Write(doc2);
-    rsc = Bytes::CreateString(docData.c_str());
+    CString              docData = INI::Write(doc2);
+    rsc                          = Bytes::CreateString(docData.c_str());
+
     CResources::FileCommit(rsc);
-    CResources::FileFree(rsc);
     Profiler::Profile("Write-back");
 
     CResources::FileUnmap(testfile);
@@ -52,37 +52,35 @@ bool readwrite_file()
 bool write_file()
 {
     file_error ec;
-    Url testfile = MkUrl("testoutfile.ini",
-                         ResourceAccess::SpecifyStorage
-                         |ResourceAccess::TemporaryFile);
+    Url        testfile = MkUrl(
+        "testoutfile.ini",
+        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
 
     INI::Document doc;
 
     INI::Section t1 = doc.newSection();
     INI::Section t2 = doc.newSection();
 
-    doc.insertSection("Test",t1);
-    doc.insertSection("Rest",t2);
+    doc.insertSection("Test", t1);
+    doc.insertSection("Rest", t2);
 
     INI::Variant v1 = doc.newString("Hello test string");
     INI::Variant v2 = doc.newBool(false);
     INI::Variant v3 = doc.newInteger(100);
 
-    t1->insertValue("hello1",v1);
-    t1->insertValue("hello2",v2);
-    t1->insertValue("hello3",v3);
+    t1->insertValue("hello1", v1);
+    t1->insertValue("hello2", v2);
+    t1->insertValue("hello3", v3);
 
     Profiler::Profile("Creating and setting values");
 
     CResources::Resource rsc(testfile);
     Profiler::Profile("File object");
     CString docData = INI::Write(doc);
-    rsc = Bytes::CreateString(docData.c_str());
+    rsc             = Bytes::CreateString(docData.c_str());
     Profiler::Profile("Writing object to file");
-    CResources::FileCommit(rsc,false,ResourceAccess::Discard);
+    CResources::FileCommit(rsc, ResourceAccess::Discard);
     Profiler::Profile("Committing file");
-    CResources::FileFree(rsc);
-    Profiler::Profile("Free'ing file");
 
     auto res = CResources::FileFun::Exists(testfile, ec);
 

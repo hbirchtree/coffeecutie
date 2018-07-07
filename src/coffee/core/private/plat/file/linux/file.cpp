@@ -16,7 +16,7 @@ CString LinuxFileFun::sys_read(cstring fn, file_error& ec)
 #ifndef COFFEE_LOWFAT
     CString out;
     FILE* fh = fopen(fn,"r");
-    char* arg = 0;
+    char* arg = nullptr;
     size_t size = 0;
 
     if(!fh)

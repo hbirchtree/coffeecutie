@@ -990,7 +990,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
         /* Create the output resource */
         output.size = program_data.size();
         output.data = program_data.data();
-        if(CResources::FileCommit(output, false, ResourceAccess::Discard))
+        if(CResources::FileCommit(output, ResourceAccess::Discard))
             cVerbose(
                 5,
                 "Dumped program ({0}) into file {1}",

@@ -25,6 +25,9 @@ struct CSoundTransform
 
 struct CSoundProperty
 {
+    CSoundProperty()
+    {
+    }
 
     struct
     {

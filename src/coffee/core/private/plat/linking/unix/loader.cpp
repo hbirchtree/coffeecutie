@@ -68,12 +68,14 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
     {
         ec = 1;
         ec = LinkError();
+        errno = 0;
 
         return nullptr;
     } else
     {
         auto lib    = MkUq<Library>();
         lib->handle = handle;
+        errno = 0;
         return lib;
     }
 }

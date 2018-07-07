@@ -19,7 +19,7 @@ template<typename WrappedType, typename TagType>
 struct TaggedTypeWrapper
 {
     using type = WrappedType;
-    using tag = TagType;
+    using tag  = TagType;
 };
 
 template<typename WrappedType, typename TaggedType>
@@ -85,7 +85,7 @@ struct Subsystem
     }
 
     virtual type const& get() const = 0;
-    virtual type& get() = 0;
+    virtual type&       get()       = 0;
 };
 
 struct EntityContainer : non_copy
@@ -96,6 +96,8 @@ struct EntityContainer : non_copy
 
     struct entity_query : Iterator<ForwardIteratorTag, Entity>
     {
+        using entity_predicate = Function<bool(Entity const&)>;
+
         entity_query(EntityContainer& c, u32 tags) :
             pred([=](Entity const& e) { return (e.tags & tags) == tags; }),
             m_container(&c)
@@ -106,18 +108,21 @@ struct EntityContainer : non_copy
                 pred);
         }
 
-        template<typename ComponentType>
-        entity_query(
-            EntityContainer& c, ComponentContainer<ComponentType> const&) :
-            pred([&](Entity const& e) {
-                return c.get<ComponentType>(e.id) != nullptr;
-            }),
-            m_container(&c)
+        entity_query(EntityContainer& c, entity_predicate&& predicate) :
+            pred(predicate), m_container(&c)
         {
-            it = std::find_if(
-                m_container->entities.begin(),
-                m_container->entities.end(),
-                pred);
+        }
+
+        template<typename ComponentType>
+        STATICINLINE entity_query from_container(
+            EntityContainer& c, ComponentContainer<ComponentType> const& e)
+        {
+            /* MSVC++ seems to have difficulties with this */
+            C_UNUSED(e);
+
+            return entity_query(c, [&](Entity const& e) {
+                return c.get<ComponentType>(e.id) != nullptr;
+            });
         }
 
         entity_query(EntityContainer& c) :
@@ -154,9 +159,9 @@ struct EntityContainer : non_copy
         }
 
       private:
-        Function<bool(Entity const&)> pred;
-        EntityContainer*              m_container;
-        Vector<Entity>::iterator      it;
+        const entity_predicate   pred;
+        EntityContainer* const   m_container;
+        Vector<Entity>::iterator it;
     };
 
     friend struct Entity;
@@ -261,7 +266,10 @@ struct EntityContainer : non_copy
     quick_container<entity_query> select()
     {
         return quick_container<entity_query>(
-            [=]() { return entity_query(*this, container<ComponentType>()); },
+            [=]() {
+                return entity_query::from_container(
+                    *this, container<ComponentType>());
+            },
             [=]() { return entity_query(*this); });
     }
 

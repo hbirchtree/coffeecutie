@@ -21,8 +21,8 @@ void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
     delete data;
 }
 
-Resource::Resource(cstring rsrc, ResourceAccess acc) :
-    Resource(MkUrl(rsrc, acc & ResourceAccess::StorageMask))
+Resource::Resource(cstring rsrc, RSCA acc) :
+    Resource(MkUrl(rsrc, acc & RSCA::StorageMask))
 {
 }
 
@@ -63,13 +63,13 @@ bool Resource::valid() const
     return !m_resource.empty();
 }
 
-Resource &Resource::operator=(Bytes &&data)
+Resource& Resource::operator=(Bytes&& data)
 {
     Bytes& internal_store = this->m_platform_data->m_resourceBuffer;
 
     internal_store = std::move(data);
-    this->data = internal_store.data;
-    this->size = internal_store.size;
+    this->data     = internal_store.data;
+    this->size     = internal_store.size;
     return *this;
 }
 
@@ -95,7 +95,7 @@ bool FileExists(const Resource& resc)
     return FileFun::Exists(resc.m_platform_data->m_url, ec);
 }
 
-bool FileMap(Resource& resc, ResourceAccess acc, szptr size)
+bool FileMap(Resource& resc, RSCA acc, szptr size)
 {
     file_error ec;
 
@@ -202,14 +202,13 @@ void FileFree(Resource& resc)
     Profiler::DeepProfile(CFILES_TAG "File buffer free'd");
 }
 
-bool FilePull(Resource& resc, bool textmode, bool)
+bool FilePull(Resource& resc)
 {
     DProfContext a(CFILES_TAG "File reading");
 
     file_error ec;
 
-    auto fp = FileFun::Open(
-        resc.m_platform_data->m_url, ResourceAccess::ReadOnly, ec);
+    auto fp = FileFun::Open(resc.m_platform_data->m_url, RSCA::ReadOnly, ec);
 
     if(ec)
     {
@@ -238,20 +237,17 @@ bool FilePull(Resource& resc, bool textmode, bool)
     return true;
 }
 
-bool FileCommit(Resource& resc, bool append, ResourceAccess acc)
+bool FileCommit(Resource& resc, RSCA acc)
 {
     DProfContext a(CFILES_TAG "File write");
 
     file_error ec;
 
-    ResourceAccess dflags = ResourceAccess::WriteOnly;
+    RSCA dflags = RSCA::WriteOnly;
 
-    dflags |= ResourceAccess::NewFile;
+    dflags |= RSCA::NewFile;
 
-    auto fp = FileFun::Open(
-        resc.m_platform_data->m_url,
-        (append) ? ResourceAccess::Append | dflags | acc : dflags | acc,
-        ec);
+    auto fp = FileFun::Open(resc.m_platform_data->m_url, acc, ec);
 
     if(ec)
     {

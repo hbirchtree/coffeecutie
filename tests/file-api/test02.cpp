@@ -18,7 +18,6 @@ bool filewrite_test()
 
     return CResources::FileCommit(
         rsc,
-        false,
         ResourceAccess::WriteOnly | ResourceAccess::Discard |
             ResourceAccess::NewFile);
 }

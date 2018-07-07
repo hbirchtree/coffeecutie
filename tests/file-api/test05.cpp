@@ -36,7 +36,7 @@ bool filewrite_large_test()
     Profiler::Profile("Copying data into segment");
 
     bool stat = CResources::FileCommit(
-        rsc, false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+        rsc, ResourceAccess::WriteOnly | ResourceAccess::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;

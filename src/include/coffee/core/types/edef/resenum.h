@@ -24,7 +24,7 @@ enum class TypeEnum : uint8
     Scalar, BigScalar,
 };
 
-enum class ResourceAccess : u32
+enum class RSCA : u32
 {
     None = 0x0,
 
@@ -79,7 +79,7 @@ enum class ResourceAccess : u32
     StorageMask = SpecifyStorage|AssetFile|ConfigFile
                     |TemporaryFile|CachedFile|SystemFile,
 };
-C_FLAGS(ResourceAccess,uint32);
+C_FLAGS(RSCA, uint32);
 
 enum class HTTPAccess
 {
@@ -106,6 +106,7 @@ enum class HTTPAccess
     RequestMask = GET|POST|PUT|UPDATE|DELETE|PATCH|HEAD,
 };
 C_FLAGS(HTTPAccess, u32);
-using RSCA = ResourceAccess;
+
+using ResourceAccess = C_DEPRECATED_TYPE<RSCA>::type;
 
 }

@@ -1,24 +1,24 @@
 #pragma once
 
-#include "../../types/edef/enumfun.h"
-#include "../../types/tdef/stltypes.h"
-#include "../../types/tdef/integertypes.h"
-#include "../../types/edef/resenum.h"
 #include "../../types/cdef/memtypes.h"
+#include "../../types/edef/enumfun.h"
+#include "../../types/edef/resenum.h"
+#include "../../types/tdef/integertypes.h"
+#include "../../types/tdef/stltypes.h"
 #include <coffee/interfaces/byte_provider.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct Url;
 
-namespace CResources{
+namespace CResources {
 
 /*!
  * \brief A data resource which location cannot be changed.
  */
 struct Resource : ByteProvider
 {
-private:
+  private:
     CString m_resource; /*!< URL for the resource*/
 
     struct ResourceData;
@@ -30,33 +30,32 @@ private:
 
     UqPtr<ResourceData, RscData_deleter> m_platform_data;
 
-public:
-    friend bool FilePull(Resource &resc, bool textmode, bool bigendian);
-    friend bool FileCommit(Resource &resc, bool append, ResourceAccess acc);
+  public:
+    friend bool FilePull(Resource& resc);
+    friend bool FileCommit(Resource& resc, RSCA acc);
 
-    friend bool FileMap(Resource &resc, ResourceAccess acc, szptr size);
-    friend bool FileUnmap(Resource &resc);
+    friend bool FileMap(Resource& resc, RSCA acc, szptr size);
+    friend bool FileUnmap(Resource& resc);
 
     friend bool FileOpenMap(Resource& resc, szptr size, RSCA acc);
 
     friend bool FileExists(const Resource& resc);
-    friend void FileFree(Resource &resc);
+    friend void FileFree(Resource& resc);
 
     /*!
      * \brief Constructs a resource
      * \param url Path to resource
      */
     Resource(Url const& url);
-    Resource(cstring rsrc,
-             RSCA acc = RSCA::AssetFile);
-    Resource(Resource &&rsc);
+    Resource(cstring rsrc, RSCA acc = RSCA::AssetFile);
+    Resource(Resource&& rsc);
     ~Resource();
 
     void* data; /*!< Data pointer*/
     szptr size; /*!< Data size*/
 
     cstring resource() const;
-    bool valid() const;
+    bool    valid() const;
 
     /*!
      * \brief Owning data assignment
@@ -91,7 +90,7 @@ public:
     FileFlags flags;
 };
 
-C_FLAGS(Resource::FileFlags,int);
+C_FLAGS(Resource::FileFlags, int);
 
 extern bool FileExists(const Resource& resc);
 
@@ -99,7 +98,7 @@ extern bool FileExists(const Resource& resc);
  * \brief Memory map file as buffer
  * \return True if success
  */
-extern bool FileMap(Resource& resc, ResourceAccess acc = ResourceAccess::ReadOnly, szptr size = 0);
+extern bool FileMap(Resource& resc, RSCA acc = RSCA::ReadOnly, szptr size = 0);
 /*!
  * \brief Unmap file
  * \return True if success
@@ -111,78 +110,75 @@ extern bool FileOpenMap(Resource& resc, szptr size, RSCA acc = RSCA::ReadWrite);
 /*!
  * \brief Free data pointer
  */
-extern void FileFree(Resource &resc);
-extern bool FilePull(Resource &resc, bool textmode = false, bool bigendian = false);
+C_DEPRECATED extern void FileFree(Resource& resc);
+
+extern bool FilePull(Resource& resc);
+
+C_DEPRECATED FORCEDINLINE bool FilePull(Resource& resc, bool, bool)
+{
+    return FilePull(resc);
+}
+
 /*!
  * \brief Save data to file
  * \return
  */
-extern bool FileCommit(Resource& resc, bool append = false,
-               ResourceAccess acc = ResourceAccess::Discard);
+extern bool FileCommit(Resource& resc, RSCA acc = RSCA::Discard);
 
-
-/*!
- * \brief Save data to file, append null-terminator
- * \return
- */
-extern void FileCommitTextmode(const Resource& resc, bool append = false);
+C_DEPRECATED FORCEDINLINE bool FileCommit(
+    Resource& resc, bool append, RSCA acc = RSCA::Discard)
+{
+    return FileCommit(
+        resc,
+        acc | (append ? RSCA::NewFile | RSCA::WriteOnly | RSCA::Append
+                      : RSCA::None));
+}
 
 /*!
  * \brief Create a directory
  * \param dirname
- * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
- * \return True if process succeeded
+ * \param recursive Whether or not to create non-existent parent directories.
+ * Equal to the "-p" option for mkdir. \return True if process succeeded
  */
-extern bool FileMkdir(const Url &dirname, bool recursive);
+extern bool FileMkdir(const Url& dirname, bool recursive);
 
-}
+} // namespace CResources
 
 FORCEDINLINE Bytes FileGetDescriptor(CResources::Resource& resc)
 {
-    return {C_CAST<byte_t*>(resc.data),resc.size, resc.size};
+    return {C_CAST<byte_t*>(resc.data), resc.size, resc.size};
 }
 FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
 {
-    return {C_CAST<byte_t const*>(resc.data),resc.size, resc.size};
+    return {C_CAST<byte_t const*>(resc.data), resc.size, resc.size};
 }
 
-FORCEDINLINE CResources::Resource operator "" _rsc(const char* fn, size_t)
+FORCEDINLINE CResources::Resource operator"" _rsc(const char* fn, size_t)
 {
-    return CResources::Resource(fn,
-                                ResourceAccess::SpecifyStorage|
-                                ResourceAccess::AssetFile);
+    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::AssetFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _tmp(const char* fn, size_t)
+FORCEDINLINE CResources::Resource operator"" _tmp(const char* fn, size_t)
 {
-    return CResources::Resource(fn,
-                                ResourceAccess::SpecifyStorage|
-                                ResourceAccess::TemporaryFile);
+    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::TemporaryFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _cache(const char* fn, size_t)
+FORCEDINLINE CResources::Resource operator"" _cache(const char* fn, size_t)
 {
-    return CResources::Resource(fn,
-                                ResourceAccess::SpecifyStorage|
-                                ResourceAccess::CachedFile);
+    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::CachedFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _config(const char* fn, size_t)
+FORCEDINLINE CResources::Resource operator"" _config(const char* fn, size_t)
 {
-    return CResources::Resource(fn,
-                                ResourceAccess::SpecifyStorage|
-                                ResourceAccess::ConfigFile);
+    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::ConfigFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _sysfile(const char* fn, size_t)
+FORCEDINLINE CResources::Resource operator"" _sysfile(const char* fn, size_t)
 {
-    return CResources::Resource(fn,
-                                ResourceAccess::SpecifyStorage|
-                                ResourceAccess::SystemFile);
+    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::SystemFile);
 }
 
-namespace Strings{
+namespace Strings {
 extern CString to_string(CResources::Resource const& r);
 }
-}
-
+} // namespace Coffee

@@ -9,6 +9,9 @@ bool Posix::PosixFileMod_def::ErrnoCheck(file_error& ec, cstring ref, int fd)
 #ifndef COFFEE_LOWFAT
     if(errno != 0)
     {
+        if(ref)
+            ec.m_internalError = ref;
+
         ec                 = FileError::SystemError;
         ec                 = posix_error_code();
         ec.m_internalError = errno;

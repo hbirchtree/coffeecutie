@@ -744,8 +744,10 @@ void ExportStringToFile(const CString& data, const Url& outfile)
     /* -1 because we don't want the null-terminator */
     out.size = C_CAST<szptr>(data.size() - 1);
     cVerbose(6, "Retrieving data pointers");
-    if(!CResources::FileCommit(out, false, ResourceAccess::Discard))
+
+    if(!CResources::FileCommit(out, ResourceAccess::Discard))
         cWarning("Failed to export string to file");
+
     cVerbose(6, "Wrote file");
 }
 

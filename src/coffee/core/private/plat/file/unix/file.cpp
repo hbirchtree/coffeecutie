@@ -79,6 +79,8 @@ bool PosixFileMod_def::Touch(NodeType t, Url const& fn, file_error& ec)
 
 bool PosixFileMod_def::Rm(Url const& fn, file_error& ec)
 {
+    errno = 0;
+
     auto url  = *fn;
     bool stat = unlink(url.c_str()) == 0;
     ErrnoCheck(ec, url.c_str());
@@ -87,13 +89,13 @@ bool PosixFileMod_def::Rm(Url const& fn, file_error& ec)
 
 CString PosixFileMod_def::DereferenceLink(Url const& fn, file_error& ec)
 {
+    errno = 0;
+
     CString url = fn.internUrl;
 
     /* Avoid cyclic dependency in resolution of filenames, yo */
     if(!feval(fn.flags & RSCA::SystemFile))
         url = *fn;
-
-    errno = 0;
 
     CString out;
     szptr   name_size = PATH_MAX;
@@ -116,6 +118,8 @@ CString PosixFileMod_def::DereferenceLink(Url const& fn, file_error& ec)
 
 CString PosixFileMod_def::CanonicalName(Url const& fn, file_error& ec)
 {
+    errno = 0;
+
     auto url = *fn;
 #if defined(COFFEE_LINUX) && !defined(COFFEE_NO_CANONICALIZE)
     cstring_w name = canonicalize_file_name(url.c_str());
@@ -139,10 +143,11 @@ CString PosixFileMod_def::CanonicalName(Url const& fn, file_error& ec)
 
 bool PosixFileMod_def::Ln(Url const& src, Url const& target, file_error& ec)
 {
-    CString srcUrl    = *src;
-    CString targetUrl = *target;
-    int     sig       = symlink(srcUrl.c_str(), targetUrl.c_str());
-    if(sig == 0)
+    errno = 0;
+
+    auto srcUrl    = *src;
+    auto targetUrl = *target;
+    if(symlink(srcUrl.c_str(), targetUrl.c_str()) == 0)
         return true;
     else
     {
@@ -155,8 +160,10 @@ szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
 {
     auto        url = *fn;
     struct stat st  = {};
+
     if(lstat(url.c_str(), &st) != 0)
         ErrnoCheck(ec, url.c_str());
+
     return C_FCAST<szptr>(st.st_size);
 }
 
@@ -217,10 +224,14 @@ bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
 {
     auto url = *dname;
     if(!createParent)
-        return mkdir(url.c_str(), S_IRWXU | S_IRWXG) == 0;
+    {
+        bool stat = mkdir(url.c_str(), S_IRWXU | S_IRWXG) == 0;
+        PosixFileFun::ErrnoCheck(ec, url.c_str());
+        return stat;
+    }
 
     char   tmp[255];
-    char*  p = NULL;
+    char*  p = nullptr;
     size_t len;
 
     snprintf(tmp, sizeof(tmp), "%s", url.c_str());
@@ -232,15 +243,20 @@ bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
         {
             *p = 0;
             mkdir(tmp, S_IRWXU);
+            PosixFileFun::ErrnoCheck(ec, tmp);
             *p = '/';
         }
-    return mkdir(tmp, S_IRWXU) == 0 || (errno == EEXIST);
+    bool stat = mkdir(tmp, S_IRWXU) == 0 || (errno == EEXIST);
+    PosixFileFun::ErrnoCheck(ec, tmp);
+    return stat;
 }
 
 bool Posix::PosixDirFun::RmDir(Url const& dname, file_error& ec)
 {
     auto url = *dname;
-    return rmdir(url.c_str()) == 0 || (errno = 0);
+    bool stat = rmdir(url.c_str()) == 0 || (errno = 0);
+    PosixFileFun::ErrnoCheck(ec, url.c_str());
+    return stat;
 }
 
 bool PosixDirFun::Ls(

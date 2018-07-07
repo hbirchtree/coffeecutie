@@ -71,8 +71,6 @@ bool resource_read_test()
         return false;
     }
 
-    FileFree(rsc);
-
     return true;
 }
 

@@ -79,7 +79,7 @@ struct FileProcessor
 
         Resource output(MkUrl(outputPath));
         output = content;
-        FileCommit(output, false, RSCA::Discard);
+        FileCommit(output, RSCA::Discard);
     }
 };
 

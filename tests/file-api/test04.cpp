@@ -39,7 +39,7 @@ bool filewrite_test()
 
     dynamic_store = C_OCAST<Bytes>(rsc);
 
-    bool stat = FileCommit(rsc, false, RSCA::WriteOnly | RSCA::Discard);
+    bool stat = FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;
@@ -65,9 +65,6 @@ bool fileread_test()
             status = MemCmp(dynamic_store, C_OCAST<Bytes>(rsc));
             Profiler::Profile("Comparing 5GB of data");
         }
-
-        CResources::FileFree(rsc);
-        Profiler::Profile("Freeing 5GB of data");
 
         File::Rm(writetest, ec);
         Profiler::Profile("Deleting file");

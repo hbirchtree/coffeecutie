@@ -141,7 +141,7 @@ static i32 extract_file(
         }
 
         output = data;
-        if(!FileCommit(output, false, write_flags))
+        if(!FileCommit(output, write_flags))
         {
             cBasicPrint("{0}: failed to write file", output_fname);
             return 1;

@@ -79,10 +79,9 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
 
     cVerbose(8, "Created resource");
 
-    if(!CResources::FilePull(rsc, false, false) && rsc.size <= data.size)
+    if(!CResources::FilePull(rsc) && rsc.size <= data.size)
     {
         data.size = 0;
-        CResources::FileFree(rsc);
         return data.size;
     }
 
@@ -90,7 +89,6 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
 
     if(!data.data || !rsc.data || rsc.size < 1 || rsc.size >= data.size)
     {
-        CResources::FileFree(rsc);
         return rsc.size;
     }
 
@@ -102,7 +100,6 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
 
     MemCpy(C_OCAST<Bytes>(rsc), data);
     cVerbose(8, "Copied data from mapping to memory");
-    CResources::FileFree(rsc);
 
     cVerbose(8, "Memory load succeeded, got {0} bytes", data.size);
 
@@ -137,7 +134,7 @@ szptr SaveMemory(Bytes const& data, uint16 slot)
     /* I promise not to overwrite your data... */
     rsc = data;
 
-    if(!CResources::FileCommit(rsc, false, RSCA::WriteOnly | RSCA::Discard))
+    if(!CResources::FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard))
         return 0;
 
     return rsc.size;

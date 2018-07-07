@@ -258,6 +258,7 @@ image<PixType> Resize(
 
 } // namespace stb_templates
 
+/*
 static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 {
     auto outData = Bytes::Alloc(numPixels * sizeof(rgba_t));
@@ -303,6 +304,7 @@ static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 
     src = std::move(outData);
 }
+*/
 
 /* Instantiate some templates as symbols here */
 bool LoadData(
@@ -432,7 +434,7 @@ std::string stb_error_category::message(int error_code) const
         return "Invalid pixel format specified";
     }
 
-	throw implementation_error("unimplemented error message");
+    throw implementation_error("unimplemented error message");
 }
 
 } // namespace stb
@@ -461,7 +463,7 @@ Bytes JPG::Save(const stb::image_const& src, stb_error& ec, int qual)
 {
     Bytes output;
 
-    bool stat = stb::SaveJPG(output, src, ec, qual);
+    stb::SaveJPG(output, src, ec, qual);
     stb::DataSetDestr(output);
 
     return output;

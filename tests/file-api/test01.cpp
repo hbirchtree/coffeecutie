@@ -13,8 +13,9 @@ const Url testfile = MkUrl(
 
 using File = FileFun;
 
-byte_t write_data[100] = {"I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE "
-                          "RING, AND THEN I START EATING GARBAGE.\n"};
+static byte_t write_data[100] = {
+    "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE "
+    "RING, AND THEN I START EATING GARBAGE.\n"};
 
 bool filewrite_test()
 {
@@ -22,7 +23,7 @@ bool filewrite_test()
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
     return CResources::FileCommit(
-        rsc, false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+        rsc, ResourceAccess::WriteOnly | ResourceAccess::Discard);
 }
 
 bool fileread_test()
@@ -37,12 +38,10 @@ bool fileread_test()
 
     if(sizeof(write_data) != rsc.size)
     {
-        CResources::FileFree(rsc);
         return false;
     }
     bool status = MemCmp(
         Bytes::From(write_data, sizeof(write_data)), C_OCAST<Bytes>(rsc));
-    CResources::FileFree(rsc);
     return status;
 }
 
