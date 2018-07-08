@@ -329,7 +329,9 @@ inline CGenum to_enum(bool pack, PixelOperation f)
 inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
 {
     using P = PixFmt;
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     using C = CompFlags;
+#endif
 
     (void)f;
     (void)e;

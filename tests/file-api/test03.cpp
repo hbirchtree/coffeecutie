@@ -18,8 +18,7 @@ bool filescratch_test()
     szptr size = 512 * 1024 * 1024;
 #endif
 
-    Scratch f =
-        CResources::FileFun::ScratchBuffer(size, ResourceAccess::ReadWrite, ec);
+    Scratch f = CResources::FileFun::ScratchBuffer(size, RSCA::ReadWrite, ec);
 
     /* If true, no buffer was mapped */
     if(!f)

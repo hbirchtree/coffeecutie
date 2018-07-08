@@ -291,7 +291,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
 
     Url tempStore = {};
 
-    switch(storageMask & (RSCA::StorageMask ^ RSCA::SpecifyStorage))
+    switch(storageMask & RSCA::StorageMask)
     {
     case RSCA::AssetFile:
     {

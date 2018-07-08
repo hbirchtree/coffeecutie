@@ -1,21 +1,46 @@
 #include <coffee/core/unit_tests/framework.h>
 
-#include <coffee/core/CDebug>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CMD>
 #include <coffee/core/CPlatform>
 #include <coffee/core/plat/environment/argument_parse.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/string_casting.h>
+#include <coffee/core/task_queue/task.h>
 #include <coffee/core/terminal/table-print.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
-#include <coffee/core/string_casting.h>
+#include <coffee/core/CDebug>
 
 namespace CoffeeTest {
 
 using namespace Coffee;
+
+struct TestInstance
+{
+    void from_test(Test const& test_info)
+    {
+        title       = test_info.title;
+        description = test_info.description;
+        required    = !test_info.optional;
+    }
+
+    void submit(bool result, u64 time)
+    {
+        this->result = result;
+        this->time   = time;
+    }
+
+    u64 time;
+
+    cstring title;
+    cstring description;
+
+    bool result;
+    bool required;
+};
 
 static Vector<cstring> titles;
 static Vector<cstring> descriptions;
@@ -159,32 +184,15 @@ void PrintAsciiTable(uint64 const& time_accum, szptr suc)
     cBasicPrint("-- Passed: {0}/{1}", suc, result.size());
 }
 
-void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
+void RunTest(Test const& test, TestInstance& test_info)
 {
-    Test const& test = tests[i];
-
-    if(test.title)
-        tmp = test.title;
-    else
-        tmp = cStringFormat("Test {0}", i + 1);
+    test_info.from_test(test);
 
     if(!test.test)
     {
-        cBasicPrint("{0} skipped, nullptr", tmp);
+        cBasicPrint("{0} skipped, nullptr", test_info.title);
         return;
     }
-
-    titles[i]       = test.title;
-    descriptions[i] = test.description;
-
-    if(fail)
-    {
-        result.push_back(false);
-        required.push_back(!test.optional);
-        return;
-    }
-
-    Profiler::PushContext(tmp.c_str());
 
     auto start_time = Chrono::steady_clock::now();
     bool res        = false;
@@ -199,43 +207,40 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
             e.what());
     }
 
-    test_times[i] = C_FCAST<u64>(Chrono::duration_cast<Chrono::microseconds>(
-                                     Chrono::steady_clock::now() - start_time)
-                                     .count());
-    result.push_back(res);
-    required.push_back(!test.optional);
-
-    Profiler::PopContext();
-
-    if(!res && (test.required_sequence || !test.optional))
-        fail = true;
+    test_info.submit(
+        res,
+        C_FCAST<u64>(Chrono::duration_cast<Chrono::microseconds>(
+                         Chrono::steady_clock::now() - start_time)
+                         .count()));
 }
 
 int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 {
     auto args = AppArg::Clone(argc, argv);
 
+    RuntimeQueue::CreateNewQueue("Testing");
+
     ArgumentParser parser;
-
     parser.addSwitch("json", "json", nullptr, "Output JSON document");
-
     auto parseArgs = parser.parseArguments(args);
 
     bool json_formatting = parseArgs.switches.count("json");
 
-    CString tmp;
+    Vector<TestInstance> test_results;
+    test_results.resize(num);
 
     titles.resize(num);
     descriptions.resize(num);
+    test_times.resize(num);
     result.reserve(num);
     required.reserve(num);
-    test_times.resize(num);
 
     bool fail = false;
 
     for(uint32 i = 0; i < num; i++)
     {
-        RunTest(i, tmp, tests, fail);
+        TestInstance& test_info = test_results.at(i);
+        RunTest(tests[i], test_info);
     }
 
     result.resize(num, false);
@@ -252,13 +257,20 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
         time_accum += v;
 
     Profiler::AddExtraData("testing:title", GetCurrentApp().application_name);
-
     Profiler::AddExtraData("testing:bmark", cast_pod(time_accum));
-
-    Profiler::AddExtraData(
-        "testing:result", cStringFormat("{0},{1}", suc, num));
-
+    Profiler::AddExtraData("testing:result", fmt("{0},{1}", suc, num));
     Profiler::AddExtraData("testing:mem", cast_pod(ProcessProperty::Mem(0)));
+
+    for(auto i : Range<>(test_results.size()))
+    {
+        auto const& test = test_results.at(i);
+
+        titles.at(i)       = test.title;
+        descriptions.at(i) = test.description;
+        test_times.at(i)   = test.time;
+        result.at(i)       = test.result;
+        required.at(i)     = test.required;
+    }
 
     if(!json_formatting)
     {

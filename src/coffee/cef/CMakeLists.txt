@@ -9,12 +9,10 @@ coffee_library (
     LIBRARIES 
     ${CEF_LIBRARIES}
     CoffeeImage
-    )
 
-target_include_directories ( CoffeeCEF
-    PUBLIC
+    HEADER_DIRS
     $<BUILD_INTERFACE:${CEF_INCLUDE_DIR}>
-    $<INSTALL_INTERFACE:include/>
+    $<INSTALL_INTERFACE:include>
     )
 
 coffee_application (

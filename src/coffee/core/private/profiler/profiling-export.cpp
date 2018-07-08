@@ -1,3 +1,5 @@
+#define ENABLE_XML_PROFILE 0
+
 #include <coffee/core/profiler/profiling-export.h>
 
 #include <coffee/core/base/files/url.h>
@@ -6,7 +8,9 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
+#if ENABLE_XML_PROFILE
 #include <coffee/core/CXmlParser>
+#endif
 
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_mem_macros.h>
@@ -90,7 +94,7 @@ struct DataPointGenerator
         DataPoint const& operator*() const
         {
             return *m_iterator;
-//            return intern_data()->datapoints.at(current_index);
+            //            return intern_data()->datapoints.at(current_index);
         }
 
       private:
@@ -226,6 +230,7 @@ void PrintProfilerData()
 #endif
 }
 
+#if ENABLE_XML_PROFILE
 namespace XML_Stuff {
 
 STATICINLINE XML::Element* AddChildWithText(
@@ -512,6 +517,14 @@ void ExportProfilerData(CString& target)
     target.insert(0, printer.CStr(), C_CAST<szptr>(printer.CStrSize()));
 }
 
+#else
+
+void ExportProfilerData(CString&)
+{
+}
+
+#endif
+
 namespace CT_Stuff {
 
 STATICINLINE JSON::Value FromString(
@@ -739,13 +752,13 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 #endif
 
     cVerbose(6, "Creating filename");
-    CResources::Resource out(outfile);
+    Resource out(outfile);
     out.data = C_CCAST<c_ptr>(C_FCAST<c_cptr>(data.c_str()));
     /* -1 because we don't want the null-terminator */
     out.size = C_CAST<szptr>(data.size() - 1);
     cVerbose(6, "Retrieving data pointers");
 
-    if(!CResources::FileCommit(out, ResourceAccess::Discard))
+    if(!FileCommit(out, RSCA::Discard | RSCA::WriteOnly))
         cWarning("Failed to export string to file");
 
     cVerbose(6, "Wrote file");
@@ -768,26 +781,26 @@ void ExitRoutine()
         {
             auto log_name = (Path{Env::ExecutableName()}.fileBasename());
 
-            auto log_url = MkUrl(
-                "",
-                ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+            auto log_url = MkUrl("", RSCA::TemporaryFile);
 
             auto log_url2 =
                 log_url +
                 Path(log_name.internUrl + "-chrome").addExtension("json");
 
+#if ENABLE_XML_PROFILE
             log_url = log_url +
                       Path(log_name.internUrl + "-profile").addExtension("xml");
-
-            CString target_log;
+#endif
 
             CString target_chrome;
             Profiling::ExportChromeTracerData(target_chrome);
-
-            Profiling::ExportProfilerData(target_log);
-
-            Profiling::ExportStringToFile(target_log, log_url);
             Profiling::ExportStringToFile(target_chrome + " ", log_url2);
+
+#if ENABLE_XML_PROFILE
+            CString target_log;
+            Profiling::ExportProfilerData(target_log);
+            Profiling::ExportStringToFile(target_log, log_url);
+#endif
 
             cVerbose(
                 6,

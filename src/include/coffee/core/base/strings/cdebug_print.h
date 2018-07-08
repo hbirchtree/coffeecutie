@@ -47,6 +47,12 @@ FORCEDINLINE CString cStringFormat(cstring fmt)
     return fmt;
 }
 
+template<typename... Arg>
+FORCEDINLINE CString fmt(cstring fmt, Arg... arg)
+{
+    return cStringFormat(fmt, arg...);
+}
+
 }
 }
 

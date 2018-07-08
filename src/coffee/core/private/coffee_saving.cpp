@@ -73,9 +73,7 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
 #else
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
     cVerbose(8, "Pre-creating resource");
-    CResources::Resource rsc(
-        file_str.c_str(),
-        ResourceAccess::SpecifyStorage | ResourceAccess::ConfigFile);
+    Resource rsc(file_str.c_str(), RSCA::ConfigFile);
 
     cVerbose(8, "Created resource");
 
@@ -126,10 +124,8 @@ szptr SaveMemory(Bytes const& data, uint16 slot)
 
     return data.size;
 #else
-    CString              file_str = cStringFormat("CoffeeData.{0}.bin", slot);
-    CResources::Resource rsc(
-        file_str.c_str(),
-        RSCA::SpecifyStorage | RSCA::ConfigFile | RSCA::NewFile);
+    CString  file_str = cStringFormat("CoffeeData.{0}.bin", slot);
+    Resource rsc(file_str.c_str(), RSCA::ConfigFile | RSCA::NewFile);
 
     /* I promise not to overwrite your data... */
     rsc = data;

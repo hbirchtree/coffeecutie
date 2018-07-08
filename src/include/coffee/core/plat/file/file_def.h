@@ -67,7 +67,7 @@ struct FileFunDef : FileBase<NestedError>, NodeTypeBase
     using FileMapping = Bytes;
     using ScratchBuf  = Bytes;
 
-    static FileHandle Open(Url const&, ResourceAccess, file_error&)
+    static FileHandle Open(Url const&, RSCA, file_error&)
     {
         return {};
     }
@@ -118,11 +118,7 @@ struct FileFunDef : FileBase<NestedError>, NodeTypeBase
      * \return
      */
     static FileMapping Map(
-        Url const&     fname,
-        ResourceAccess access,
-        szptr          size,
-        szptr          offset,
-        file_error&    ec)
+        Url const& fname, RSCA access, szptr size, szptr offset, file_error& ec)
     {
         C_UNUSED(fname);
         C_UNUSED(access);
@@ -188,7 +184,7 @@ struct FileFunDef : FileBase<NestedError>, NodeTypeBase
         return false;
     }
 
-    static ScratchBuf ScratchBuffer(szptr, ResourceAccess, file_error&)
+    static ScratchBuf ScratchBuffer(szptr, RSCA, file_error&)
     {
         return {};
     }
@@ -251,7 +247,7 @@ template<typename NestedError = sentinel_error_code>
 struct DirFunDef : FileBase<NestedError>
 {
     using file_error = typename FileBase<NestedError>::file_error;
-    using Type = typename FileFunDef<NestedError>::NodeType;
+    using Type       = typename FileFunDef<NestedError>::NodeType;
 
     struct DirItem_t
     {

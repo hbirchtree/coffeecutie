@@ -5,4 +5,4 @@ add_subdirectory(coffee)
 add_subdirectory(bindings)
 
 # Add subdir for extensions, weak bindings of libraries
-#add_subdirectory(ext)
+add_subdirectory(ext)

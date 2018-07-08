@@ -29,7 +29,7 @@ int32 coffee_main(int32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Main");
 
-    int state = AutoExec<GLEAMAPI, Display::CSDL2Renderer, AudioData>(
+    AutoExec<GLEAMAPI, Display::CSDL2Renderer, AudioData>(
         [](Display::CSDL2Renderer& r, AudioData* data, CDProperties&) {
             r.installEventHandler(
                 {[](c_ptr up, CIEvent const& e, c_cptr data) {

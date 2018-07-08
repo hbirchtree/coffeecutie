@@ -6,8 +6,8 @@
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/interfaces/byte_provider.h>
 
-namespace Coffee{
-namespace Net{
+namespace Coffee {
+namespace Net {
 
 FORCEDINLINE bool Supported()
 {
@@ -20,18 +20,18 @@ FORCEDINLINE bool Supported()
 
 struct Resource : ByteProvider
 {
-private:
-    CString m_resource;
+  private:
+    CString        m_resource;
     Vector<byte_t> m_store;
 
 #if defined(ASIO_USE_SSL)
     UqPtr<TCP::SSLSocket> ssl;
-    ASIO::AsioContext m_ctxt;
+    ASIO::AsioContext     m_ctxt;
 #endif
     UqPtr<TCP::Socket> normal;
 
-    CString m_host;
-    REST::Request m_request;
+    CString        m_host;
+    REST::Request  m_request;
     HTTP::Response m_response;
 
     HTTPAccess m_access;
@@ -41,7 +41,7 @@ private:
     void initRsc(Url const& url);
     void close();
 
-public:
+  public:
     Resource(ASIO::AsioContext ctxt, Url const& url);
     ~Resource();
 
@@ -54,8 +54,8 @@ public:
 
     cstring resource() const;
 
-    bool isRequestReady() const;
-    bool isResponseReady() const;
+    bool              isRequestReady() const;
+    bool              isResponseReady() const;
     FORCEDINLINE bool valid() const
     {
         return isResponseReady();
@@ -65,11 +65,11 @@ public:
 
     bool fetch();
     bool push(Bytes const& data);
-    bool push(const CString &method, Bytes const& data);
+    bool push(const CString& method, Bytes const& data);
 
-    cstring mimeType() const;
-    u32 responseCode() const;
-    Bytes data() const;
+    cstring                      mimeType() const;
+    u32                          responseCode() const;
+    Bytes                        data() const;
     Map<CString, CString> const& headers() const;
 
     operator Bytes()
@@ -86,24 +86,22 @@ public:
     }
 };
 
-FORCEDINLINE Url MkUrl(cstring url,
-                       HTTPAccess access = HTTPAccess::DefaultAccess)
+FORCEDINLINE Url MkUrl(
+        cstring url, HTTPAccess access = HTTPAccess::DefaultAccess)
 {
-    return {url, Url::Networked,
-                ResourceAccess::None,
-                access, {}};
+    return {url, Url::Networked, RSCA::None, access, {}};
 }
 
-}
+} // namespace Net
 
-FORCEDINLINE Url operator "" _web(const char* url, size_t)
+FORCEDINLINE Url operator"" _web(const char* url, size_t)
 {
     return Net::MkUrl(url);
 }
 
-FORCEDINLINE Url operator "" _http(const char* url, size_t)
+FORCEDINLINE Url operator"" _http(const char* url, size_t)
 {
     return Net::MkUrl(url, HTTPAccess::GET);
 }
 
-}
+} // namespace Coffee

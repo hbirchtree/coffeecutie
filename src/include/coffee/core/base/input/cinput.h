@@ -52,7 +52,7 @@ struct
         MultiTouch,
         Gesture,
     };
-    EvTs ts = 0; /*!< Event timestamp*/
+    u32 ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
 
     uint8 pad1;

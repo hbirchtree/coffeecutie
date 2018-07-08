@@ -5,11 +5,12 @@
 #include "../../types/edef/enumfun.h"
 #include <coffee/interfaces/cgraphics_api_basic.h>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
 /*!
- * \brief Contains system-dependent window data. Is not allowed in the global namespace.
+ * \brief Contains system-dependent window data. Is not allowed in the global
+ * namespace.
  */
 struct CDWindow;
 
@@ -18,17 +19,14 @@ struct CDWindow;
  */
 struct CDColorSpace
 {
-    CDColorSpace():
-        red(0),
-        green(0),
-        blue(0)
+    CDColorSpace() : red(0), green(0), blue(0)
     {
     }
 
-    uint8 red     = 0;
-    uint8 green   = 0;
-    uint8 blue    = 0;
-    uint8 extra   = 0;
+    uint8 red   = 0;
+    uint8 green = 0;
+    uint8 blue  = 0;
+    uint8 extra = 0;
 };
 
 /*!
@@ -36,29 +34,17 @@ struct CDColorSpace
  */
 struct CDContextBits
 {
-    CDContextBits():
-        red(0),
-        green(0),
-        blue(0),
-        alpha(0),
-        depth(0),
-        stencil(0)
+    CDContextBits() : red(0), green(0), blue(0), alpha(0), depth(0), stencil(0)
     {
     }
 
-    bool operator ==(CDContextBits const& other)
+    bool operator==(CDContextBits const& other)
     {
         return (
-                    red     == other.red    &&
-                    green   == other.green  &&
-                    blue    == other.blue   &&
-                    alpha   == other.alpha  &&
-                    depth   == other.depth  &&
-                    stencil == other.stencil &&
-                    samples == other.samples
-                    );
+            red == other.red && green == other.green && blue == other.blue &&
+            alpha == other.alpha && depth == other.depth &&
+            stencil == other.stencil && samples == other.samples);
     }
-
 
     uint8 red;
     uint8 green;
@@ -76,31 +62,28 @@ struct CDContextBits
 /*!
  * \brief Monitor information
  */
-struct CDMonitor{
-    CDMonitor():
-        screenArea(),
-        name(nullptr),
-        phySize(0,0),
-        colorBits(),
-        refresh(0),
+struct CDMonitor
+{
+    CDMonitor() :
+        screenArea(), name(nullptr), phySize(0, 0), colorBits(), refresh(0),
         index(0)
     {
     }
 
-    CRect           screenArea; /*!< Area occupied in window manager*/
-    cstring         name; /*!< Name of monitor*/
-    CSize           phySize; /*!< Physical size of monitor*/
-    CSize           resolution;
-    CDColorSpace    colorBits; /*!< Color depth bits*/
-    int32           refresh:24;/*!< Refresh rate*/
-    uint8           index; /*!< Real monitor index*/
+    CRect        screenArea; /*!< Area occupied in window manager*/
+    cstring      name;       /*!< Name of monitor*/
+    CSize        phySize;    /*!< Physical size of monitor*/
+    CSize        resolution;
+    CDColorSpace colorBits;    /*!< Color depth bits*/
+    int32        refresh : 24; /*!< Refresh rate*/
+    uint8        index;        /*!< Real monitor index*/
 };
 
 /*!
  * \brief Window event
  */
-struct CDEvent{
-
+struct CDEvent
+{
     enum EventType : uint8
     {
         Refresh = 1,
@@ -116,10 +99,10 @@ struct CDEvent{
         TransitionBackground,
         TransitionForeground,
     };
-    EvTs ts; /*!< Event timestamp*/
+    u32       ts;   /*!< Event timestamp*/
     EventType type; /*!< Event type*/
 
-    STATICINLINE CDEvent Create(EvTs ts, EventType et)
+    STATICINLINE CDEvent Create(u32 ts, EventType et)
     {
         return {ts, et};
     }
@@ -140,14 +123,14 @@ struct CGLVersion : public _cbasic_version<uint8>
 {
     CGLVersion()
     {
-        this->major = 0;
-        this->minor = 0;
+        this->major    = 0;
+        this->minor    = 0;
         this->revision = 0;
     }
     CGLVersion(uint8 maj, uint8 min)
     {
-        this->major = maj;
-        this->minor = min;
+        this->major    = maj;
+        this->minor    = min;
         this->revision = 0;
     }
     CString driver;
@@ -158,20 +141,20 @@ struct CGLVersion : public _cbasic_version<uint8>
  */
 struct CDStateEvent
 {
-    CDStateEvent():
-        type()
+    CDStateEvent() : type()
     {
     }
 
-    enum StateChange : uint8{
-        Minimized   = 0x01,
-        Maximized   = 0x02,
-        Restored    = 0x03,
+    enum StateChange : uint8
+    {
+        Minimized = 0x01,
+        Maximized = 0x02,
+        Restored  = 0x03,
 
-        Closed      = 0x04,
+        Closed = 0x04,
 
-        Hidden      = 0x05,
-        Shown       = 0x06,
+        Hidden = 0x05,
+        Shown  = 0x06,
     };
     StateChange type; /*!< Type of window state event*/
 };
@@ -181,8 +164,7 @@ struct CDStateEvent
  */
 struct CDFocusEvent
 {
-    CDFocusEvent():
-        mod()
+    CDFocusEvent() : mod()
     {
     }
 
@@ -196,97 +178,92 @@ struct CDFocusEvent
     FocusMask mod; /*!< Type of focus event*/
 };
 
-C_FLAGS(CDFocusEvent::FocusMask,uint8);
+C_FLAGS(CDFocusEvent::FocusMask, uint8);
 
 /*!
  * \brief GL context properties to set on start-up
  */
 struct GLProperties
 {
-    GLProperties():
-        bits(),
-        flags(GLCoreProfile),
-        version(3,3)
+    GLProperties() : bits(), flags(GLCoreProfile), version(3, 3)
     {
     }
 
-    enum Flags : uint32{
-        GLNoFlag            = 0x00,
-        GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
-        GLVSync             = 0x02, /*!< Set GL vertical sync*/
-        GLDebug             = 0x04, /*!< Set GL debug context*/
-        GLAutoResize	    = 0x08, /*!< Set GL auto resize of context*/
-        GLRobust            = 0x10, /*!< Set GL robustness*/
-        GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
-        GLES                = 0x40, /*!< Request GLES is used*/
-        GLSRGB              = 0x100, /*!< Request SRGB framebuffers*/
+    enum Flags : uint32
+    {
+        GLNoFlag          = 0x00,
+        GLCoreProfile     = 0x01,  /*!< Set GL core profile*/
+        GLVSync           = 0x02,  /*!< Set GL vertical sync*/
+        GLDebug           = 0x04,  /*!< Set GL debug context*/
+        GLAutoResize      = 0x08,  /*!< Set GL auto resize of context*/
+        GLRobust          = 0x10,  /*!< Set GL robustness*/
+        GLPrintExtensions = 0x20,  /*!< Print GL extensions on startup*/
+        GLES              = 0x40,  /*!< Request GLES is used*/
+        GLSRGB            = 0x100, /*!< Request SRGB framebuffers*/
 
         GLFeatureLevelProfile = 0x80,
 
     };
-    CDContextBits       bits; /*!< Context bits*/
-    Flags               flags; /*!< Context flags*/
-    CGLVersion   version; /*!< Context version*/
+    CDContextBits bits;    /*!< Context bits*/
+    Flags         flags;   /*!< Context flags*/
+    CGLVersion    version; /*!< Context version*/
 };
 /*!
  * \brief Window properties to set on start-up
  */
 struct CDProperties
 {
-    CDProperties():
-        gl(),
-        title(nullptr),
-        window(nullptr),
-        size(0,0),
-        flags(),
-        monitor(0)
+    CDProperties() :
+        gl(), title(nullptr), window(nullptr), size(0, 0), flags(), monitor(0)
     {
     }
 
-    enum State : uint16{
-        FullScreen          = 0x001, /*!< Exclusive fullscreen mode*/
-        WindowedFullScreen  = 0x002, /*!< Windowed fullscreen mode*/
-        Windowed            = 0x004, /*!< Regular window mode*/
+    enum State : uint16
+    {
+        FullScreen         = 0x001, /*!< Exclusive fullscreen mode*/
+        WindowedFullScreen = 0x002, /*!< Windowed fullscreen mode*/
+        Windowed           = 0x004, /*!< Regular window mode*/
 
-        Minimized           = 0x008, /*!< Minimized mode*/
-        Maximized           = 0x010, /*!< Maximized mode*/
+        Minimized = 0x008, /*!< Minimized mode*/
+        Maximized = 0x010, /*!< Maximized mode*/
 
-        Focused             = 0x020, /*!< Focused mode*/
-        Resizable           = 0x040, /*!< Resizable mode*/
+        Focused   = 0x020, /*!< Focused mode*/
+        Resizable = 0x040, /*!< Resizable mode*/
 
-        Undecorated         = 0x080, /*!< Decorated mode*/
-        Floating            = 0x100, /*!< Floating mode, not supported by all platforms and context managers*/
-        Visible             = 0x200, /*!< Visibility*/
+        Undecorated = 0x080, /*!< Decorated mode*/
+        Floating =
+            0x100,       /*!< Floating mode, not supported by all platforms and
+                            context managers*/
+        Visible = 0x200, /*!< Visibility*/
 
-        HighDPI             = 0x400, /*!< HighDPI mode for platforms that support it (not Windows)*/
+        HighDPI = 0x400, /*!< HighDPI mode for platforms that support it (not
+                            Windows)*/
 
-        Foreign             = 0x800, /*!< For windows not created by context manager*/
+        Foreign = 0x800, /*!< For windows not created by context manager*/
 
-        Normal              = 0x1000, /*!< In SDL2, this restores the window*/
+        Normal = 0x1000, /*!< In SDL2, this restores the window*/
     };
 
-    GLProperties    gl; /*!< Context properties to set*/
-    cstring         title; /*!< Window title to start with*/
-    CDWindow*       window; /*!< If applicable, contains data about a window*/
-    CSize           size; /*!< Size of window*/
-    State           flags; /*!< Window flags*/
-    uint16          monitor; /*!< Monitor to use with fullscreen*/
+    GLProperties gl;      /*!< Context properties to set*/
+    cstring      title;   /*!< Window title to start with*/
+    CDWindow*    window;  /*!< If applicable, contains data about a window*/
+    CSize        size;    /*!< Size of window*/
+    State        flags;   /*!< Window flags*/
+    uint16       monitor; /*!< Monitor to use with fullscreen*/
 };
 
-C_FLAGS(CDProperties::State,uint16);
-C_FLAGS(GLProperties::Flags,uint8);
+C_FLAGS(CDProperties::State, uint16);
+C_FLAGS(GLProperties::Flags, uint8);
 
 extern CDProperties GetDefaultVisual(
-        const int32& ctxtMajorVer,
-        const int32& ctxtMinorVer
-        );
+    const int32& ctxtMajorVer, const int32& ctxtMinorVer);
 
-template<typename GL_LIB,
+template<
+    typename GL_LIB,
 
-         typename implements<RHI::GraphicsAPI_Base, GL_LIB>::type*
-         = nullptr
+    typename implements<RHI::GraphicsAPI_Base, GL_LIB>::type* = nullptr
 
-         >
+    >
 STATICINLINE CDProperties GetDefaultVisual()
 {
     int32 majver = 0, minver = 0;
@@ -296,6 +273,6 @@ STATICINLINE CDProperties GetDefaultVisual()
     return visual;
 }
 
-}
+} // namespace Display
 using ColBits = Display::CDContextBits;
-}
+} // namespace Coffee

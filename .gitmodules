@@ -31,3 +31,6 @@
 [submodule "tools/data-management/pressure-cooker/etc2comp"]
 	path = tools/data-management/pressure-cooker/etc2comp
 	url = https://github.com/google/etc2comp.git
+[submodule "src/ext/discord/discord-rpc"]
+	path = src/ext/discord/discord-rpc
+	url = https://github.com/discordapp/discord-rpc.git

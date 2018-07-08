@@ -100,12 +100,12 @@ void SDL2SpriteRenderer::destroyRenderer(Renderer t)
 }
 
 bool SDL2SpriteRenderer::createTexture(
-    Renderer       r,
-    uint32         c,
-    Texture*       t,
-    PixelFormat    fmt,
-    ResourceAccess acc,
-    CSize const&   size)
+    Renderer     r,
+    uint32       c,
+    Texture*     t,
+    PixelFormat  fmt,
+    RSCA         acc,
+    CSize const& size)
 {
     Uint32 sdlfmt = 0;
     switch(fmt)
@@ -120,11 +120,11 @@ bool SDL2SpriteRenderer::createTexture(
     Uint32 sdlacc = 0;
     switch(acc)
     {
-    case ResourceAccess::Persistent:
-    case ResourceAccess::Streaming:
+    case RSCA::Persistent:
+    case RSCA::Streaming:
         sdlacc = SDL_TEXTUREACCESS_STREAMING;
         break;
-    case ResourceAccess::WriteOnly:
+    case RSCA::WriteOnly:
         sdlacc = SDL_TEXTUREACCESS_TARGET;
         break;
     default:

@@ -38,7 +38,7 @@ STATICINLINE void texture_pbo_upload(
         CGL33::BufData(
             buf::pixel_unpack::value,
             Bytes::From(data.data, pixSize),
-            ResourceAccess::WriteOnly | ResourceAccess::Persistent);
+            RSCA::WriteOnly | RSCA::Persistent);
 
         hand.release();
     }
@@ -133,8 +133,8 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(GL_DEBUG_MODE)
     {
-        uint32 w, h, d_;
-        szptr  size = 0;
+        //        uint32 w, h, d_;
+        szptr size = 0;
         //        CGL33::TexGetImageSize(m_type, comp, w, h, d_, &size, mip);
         if(m_type & TexComp::tex_2d_array::value)
             size /= d;
@@ -611,9 +611,7 @@ void GLEAM_Sampler::enableShadowSampler()
 
 template<typename TextureType>
 STATICINLINE GLEAM_SamplerHandle SamplerPrepareTexture(
-    TextureType*      m_surface,
-    glhnd&            m_handle,
-    TexComp::tex_flag m_type)
+    TextureType* m_surface, glhnd& m_handle, TexComp::tex_flag m_type)
 {
     GLEAM_SamplerHandle h = {};
 

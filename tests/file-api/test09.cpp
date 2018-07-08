@@ -22,10 +22,7 @@ bool api_test()
 
     /* File handle API */
     auto hnd = FileApi::Open(
-        testingUrl,
-        ResourceAccess::NewFile | ResourceAccess::Discard |
-            ResourceAccess::WriteOnly,
-        ec);
+        testingUrl, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly, ec);
     FileApi::Read(hnd, 1, ec);
     FileApi::Write(hnd, Bytes(), ec);
     FileApi::Size(hnd, ec);
@@ -34,8 +31,7 @@ bool api_test()
     hnd = {};
 
     /* Mapping API */
-    auto map_hnd =
-        FileApi::Map(testingUrl, ResourceAccess::ReadOnly, 10, 0, ec);
+    auto map_hnd = FileApi::Map(testingUrl, RSCA::ReadOnly, 10, 0, ec);
     FileApi::MapCache(map_hnd.data, map_hnd.size, 0, 8, ec);
     FileApi::MapUncache(map_hnd.data, map_hnd.size, 0, 8, ec);
     FileApi::MapSync(map_hnd.data, map_hnd.size, ec);

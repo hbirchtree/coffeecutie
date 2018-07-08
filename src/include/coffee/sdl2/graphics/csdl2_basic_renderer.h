@@ -45,12 +45,12 @@ class SDL2SpriteRenderer : public SpriteApplication, public SDL2ContextUser
     void     destroyRenderer(Renderer t);
 
     bool createTexture(
-        Renderer       r,
-        uint32         c,
-        Texture*       t,
-        PixelFormat    fmt,
-        ResourceAccess acc,
-        CSize const&   size);
+        Renderer     r,
+        uint32       c,
+        Texture*     t,
+        PixelFormat  fmt,
+        RSCA         acc,
+        CSize const& size);
     void destroyTexture(uint32 c, Texture* t);
 
     bool createSprite(Texture const&, SpriteSource const&, Sprite*);

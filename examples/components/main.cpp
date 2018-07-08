@@ -20,7 +20,7 @@ struct MatrixContainer : ComponentContainer<TagMatf4>
     Map<u64, szptr> mapping;
     Vector<Matf4>   matrices;
 
-    virtual ~MatrixContainer()
+    virtual ~MatrixContainer() override
     {
     }
 
@@ -38,7 +38,7 @@ struct MatrixContainer : ComponentContainer<TagMatf4>
     }
 };
 
-void entity_process(EntityContainer& c)
+void entity_process(ContainerProxy& c)
 {
     ProfContext _("Component");
     auto&       m = c.get<TagMatf4>();

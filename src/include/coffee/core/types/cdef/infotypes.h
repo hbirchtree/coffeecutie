@@ -57,8 +57,8 @@ struct HWDeviceInfo
 struct SWVersionInfo
 {
     FORCEDINLINE SWVersionInfo(CString const& name,
-                               uint32 major,
-                               uint32 minor):
+                               u32 major,
+                               u32 minor):
         name(name),
         product(0),
         major_(major),
@@ -69,10 +69,10 @@ struct SWVersionInfo
     }
 
     FORCEDINLINE SWVersionInfo(CString const& name,
-                               uint32 prod,
-                               uint32 major,
-                               uint32 minor,
-                               uint32 patch,
+                               u32 prod,
+                               u32 major,
+                               u32 minor,
+                               u32 patch,
                                CString const& build):
         name(name),
         product(prod),
@@ -88,7 +88,7 @@ struct SWVersionInfo
 
     const CString name;
 
-    const uint32 product;
+    const u32 product;
     union{
         const uint32 major;
         const uint32 major_;

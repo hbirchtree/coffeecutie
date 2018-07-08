@@ -15,13 +15,8 @@ coffee_library (
     CoffeeCore
 
     HEADER_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-
-target_include_directories ( Cappuccino
-    PUBLIC
-    $<BUILD_INTERFACE:${Cappuccino_HDRS}>
-    $<INSTALL_INTERFACE:include/>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
     )
 
 coffee_bundle_includes ( ${CMAKE_CURRENT_SOURCE_DIR}/include )

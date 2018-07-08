@@ -222,12 +222,7 @@ SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
 
     file_error ec;
 
-    DirFun::Ls(
-        MkUrl(
-            net_path,
-            ResourceAccess::SpecifyStorage | ResourceAccess::SystemFile),
-        list,
-        ec);
+    DirFun::Ls(MkUrl(net_path, RSCA::SystemFile), list, ec);
 
     bool has_loopback = false;
     for(DirFun::DirItem_t const& dir : list)

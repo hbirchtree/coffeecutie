@@ -4,6 +4,8 @@ option ( BUILD_PCL "Build with PCL" OFF)
 option ( BUILD_NECT "Build with Kinect support" OFF)
 # Whether we should build with support for the Qt extension
 option ( BUILD_QT "Build with Qt support" OFF)
+# Discord Rich Presence API
+option ( BUILD_DISCORD_RPC "Build with Discord Rich Presence" OFF )
 
 # - What is an ext-classified library?
 # These libraries have less tight bindings to the framework, and will most likely introduce different paradigms to the engine. (Eg. smart pointers, different containers)
@@ -25,4 +27,8 @@ endif()
 #Freenect2 binding, might be promoted to core
 if(BUILD_NECT)
     add_subdirectory(kinect-shim)
+endif()
+
+if(BUILD_DISCORD_RPC)
+    add_subdirectory(discord)
 endif()

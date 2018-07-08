@@ -1,6 +1,6 @@
 coffee_test (
     TARGET Unit_PixFmtTests
-    TITLE "PixelFormat testing"
+    TITLE "Cu_PixFmtTesting"
 
     SOURCES test01.cpp
 

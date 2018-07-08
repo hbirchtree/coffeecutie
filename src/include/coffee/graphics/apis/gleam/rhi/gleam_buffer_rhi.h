@@ -12,7 +12,7 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     friend struct GLEAM_Surface2D;
     friend struct GLEAM_Surface2DArray;
 
-    GLEAM_VBuffer(BufType type, ResourceAccess acc, szptr) :
+    GLEAM_VBuffer(BufType type, RSCA acc, szptr) :
         VertexBuffer(acc), m_type(type), m_handle(0)
     {
     }
@@ -46,10 +46,8 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
 
 struct GLEAM_BindableBuffer : GLEAM_VBuffer
 {
-    GLEAM_BindableBuffer(
-        BufType type, ResourceAccess acc, szptr stride, szptr size) :
-        GLEAM_VBuffer(type, acc, size),
-        m_stride(stride)
+    GLEAM_BindableBuffer(BufType type, RSCA acc, szptr stride, szptr size) :
+        GLEAM_VBuffer(type, acc, size), m_stride(stride)
     {
     }
     void bindrange(uint32 idx, szptr off, szptr size, gleam_error& ec) const;
@@ -60,7 +58,7 @@ struct GLEAM_BindableBuffer : GLEAM_VBuffer
 
 struct GLEAM_UniformBuffer : GLEAM_BindableBuffer
 {
-    GLEAM_UniformBuffer(ResourceAccess acc, szptr stride, szptr size) :
+    GLEAM_UniformBuffer(RSCA acc, szptr stride, szptr size) :
         GLEAM_BindableBuffer(buf::constants_ro::value, acc, stride, size)
     {
     }
@@ -68,7 +66,7 @@ struct GLEAM_UniformBuffer : GLEAM_BindableBuffer
 
 struct GLEAM_ShaderBuffer : GLEAM_BindableBuffer
 {
-    GLEAM_ShaderBuffer(ResourceAccess acc, szptr stride, szptr size) :
+    GLEAM_ShaderBuffer(RSCA acc, szptr stride, szptr size) :
         GLEAM_BindableBuffer(buf::constants_rw::value, acc, stride, size)
     {
     }
@@ -76,7 +74,7 @@ struct GLEAM_ShaderBuffer : GLEAM_BindableBuffer
 
 struct GLEAM_ArrayBuffer : GLEAM_VBuffer
 {
-    GLEAM_ArrayBuffer(ResourceAccess acc, szptr size) :
+    GLEAM_ArrayBuffer(RSCA acc, szptr size) :
         GLEAM_VBuffer(buf::vertex::value, acc, size)
     {
     }
@@ -84,7 +82,7 @@ struct GLEAM_ArrayBuffer : GLEAM_VBuffer
 
 struct GLEAM_ElementBuffer : GLEAM_VBuffer
 {
-    GLEAM_ElementBuffer(ResourceAccess acc, szptr size) :
+    GLEAM_ElementBuffer(RSCA acc, szptr size) :
         GLEAM_VBuffer(buf::elements::value, acc, size)
     {
     }
@@ -92,7 +90,7 @@ struct GLEAM_ElementBuffer : GLEAM_VBuffer
 
 struct GLEAM_PixelBuffer : GLEAM_VBuffer
 {
-    GLEAM_PixelBuffer(ResourceAccess acc, szptr size) :
+    GLEAM_PixelBuffer(RSCA acc, szptr size) :
         GLEAM_VBuffer(buf::pixel::value, acc, size)
     {
     }
@@ -102,10 +100,9 @@ struct GLEAM_PixelBuffer : GLEAM_VBuffer
 
 struct GLEAM_IndirectBuffer : GLEAM_VBuffer
 {
-    GLEAM_IndirectBuffer(
-        ResourceAccess acc, u32 flags, szptr stride, szptr size) :
-        GLEAM_VBuffer(buf::draw_indirect::value, acc, size),
-        m_stride(stride), m_flags(flags)
+    GLEAM_IndirectBuffer(RSCA acc, u32 flags, szptr stride, szptr size) :
+        GLEAM_VBuffer(buf::draw_indirect::value, acc, size), m_stride(stride),
+        m_flags(flags)
 
     {
     }

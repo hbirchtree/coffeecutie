@@ -965,7 +965,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
         i32            progLen = 0;
 
         /* Just dump the program binary, nothing else is needed */
-        CResources::Resource output(out, ResourceAccess::NewFile);
+        CResources::Resource output(out, RSCA::NewFile);
 
         /* We'll fit the binary type in here */
         program_data.resize(sizeof(GL_CURR_API) + sizeof(CGenum));
@@ -990,7 +990,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
         /* Create the output resource */
         output.size = program_data.size();
         output.data = program_data.data();
-        if(CResources::FileCommit(output, ResourceAccess::Discard))
+        if(CResources::FileCommit(output, RSCA::Discard))
             cVerbose(
                 5,
                 "Dumped program ({0}) into file {1}",

@@ -114,9 +114,9 @@ struct PosixFileMod_def : PosixCommonFileFun
   protected:
     static uint32 PageSize();
 
-    static int MappingFlags(ResourceAccess acc);
-    static int ProtFlags(ResourceAccess acc);
-    static int PosixRscFlags(ResourceAccess acc);
+    static int MappingFlags(RSCA acc);
+    static int ProtFlags(RSCA acc);
+    static int PosixRscFlags(RSCA acc);
 };
 
 template<
@@ -132,7 +132,7 @@ struct PosixFileFun_def : PosixFileMod_def
     using PosixFileMod_def::Exists;
     using PosixFileMod_def::Size;
 
-    STATICINLINE FH Open(Url const& fn, ResourceAccess ac, file_error& ec)
+    STATICINLINE FH Open(Url const& fn, RSCA ac, file_error& ec)
     {
         auto url = *fn;
         auto fd =
@@ -316,7 +316,7 @@ struct PosixFileFun_def : PosixFileMod_def
     }
 
     STATICINLINE ScratchBuf
-                 ScratchBuffer(szptr size, ResourceAccess access, file_error& ec)
+                 ScratchBuffer(szptr size, RSCA access, file_error& ec)
     {
         int proto    = ProtFlags(access);
         int mapflags = MappingFlags(access);

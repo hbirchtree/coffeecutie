@@ -123,6 +123,7 @@ bool test_api()
         sample_2d.bind(0);
 
         s_2d.dealloc();
+        sample_2d.dealloc();
     }
 
     {
@@ -234,102 +235,9 @@ bool test_api()
     return true;
 }
 
-#if defined(COFFEE_GLEAM_DESKTOP)
-
-#include <coffee/graphics/apis/CGLeam>
-
-bool test_texture_formats()
-{
-    u32 pfmt_max = C_CAST<u32>(PixFmt::MAX_PIXFMT);
-
-    bool status = true;
-
-    /* First, test all normal formats, excluding compressed ones */
-    for(u32 fmt=1; fmt<pfmt_max; fmt++)
-    {
-        PixFmt f = C_CAST<PixFmt>(fmt);
-
-        auto enval = CGL::to_enum(f);
-
-        if(enval == GL_NONE && !IsPixFmtCompressed(f))
-            status = false;
-    }
-
-    /* Second, test compressed formats. These have special flags. */
-
-    using P = PixFmt;
-    using F = PixelFlags;
-    using C = CompFlags;
-
-    using namespace CGL;
-
-    static const constexpr struct comp_fmt_t {
-        P fmt;
-        F flg;
-        C cfl;
-        bool expect;
-    } compressed_formats[20] = {
-        /* S3TC tests */
-    { P::S3TC, F::RGB, C::S3TC_1, false },
-    { P::S3TC, F::RGBA, C::S3TC_1, false },
-    { P::S3TC, F::RGBA, C::S3TC_3, false },
-    { P::S3TC, F::RGBA, C::S3TC_5, false },
-
-    { P::S3TC, F::RGB, C::S3TC_3, true },
-    { P::S3TC, F::RGB, C::S3TC_5, true },
-
-    { P::BCn, F::RGBA|F::Unormalized, C::BC7, false },
-    { P::BCn, F::RGBA|F::sRGB|F::Unormalized, C::BC7, false },
-    { P::BCn, F::RGB|PixFlg::Unsigned|F::FloatingPoint, C::BC6H, false },
-    { P::BCn, F::RGB|F::FloatingPoint, C::BC6H, false },
-
-    { P::BCn, F::R|F::Unsigned, C::BC4, false },
-    { P::BCn, F::R|F::Signed, C::BC4, false },
-    { P::BCn, F::RG|F::Unsigned, C::BC5, false },
-    { P::BCn, F::RG|F::Signed, C::BC5, false },
-
-    };
-
-    for(auto i : Range<>(20))
-    {
-        auto const& f = compressed_formats[i];
-
-        auto v = CGL::to_enum(f.fmt, f.flg, f.cfl);
-
-        if((v == GL_NONE) != f.expect)
-            status = false;
-    }
-
-    /* ASTC is a bit different to test */
-    static const constexpr F astc_flags[2] = {
-        F::RGBA, F::RGBA | F::sRGB
-    };
-    for(auto i : Range<>(2))
-        for(auto j : Range<>(C_CAST<u32>(C::ASTC_12x12) - 1))
-        {
-            auto v = CGL::to_enum(PixFmt::ASTC, astc_flags[i],
-                                  C_CAST<CompFlags>(j + 1));
-            if(v == GL_NONE)
-                status = false;
-        }
-
-    return status;
-}
-
-#endif
-
-#if defined(COFFEE_GLEAM_DESKTOP)
-#define TEST_COUNT 3
-#else
-#define TEST_COUNT 2
-#endif
-
-COFFEE_TEST_SUITE(TEST_COUNT) = {
+COFFEE_TEST_SUITE(2) = {
 {test_api<RHI::NullAPI>,"Null API", nullptr, false, false},
-{test_api<RHI::GLEAM::GLEAM_API>,"GLEAM OpenGL API", nullptr, false, false},
-        #if defined(COFFEE_GLEAM_DESKTOP)
-{test_texture_formats, "GLEAM pixel format verification"}
-        #endif
+{test_api<RHI::GLEAM::GLEAM_API>,"GLEAM OpenGL API", nullptr, false, false}
 };
 
 COFFEE_GFX_RUN_TESTS(_tests);

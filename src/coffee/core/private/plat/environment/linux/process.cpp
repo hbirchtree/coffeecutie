@@ -102,15 +102,15 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
                 case 2:
                 {
                     if(sec.find('r') < end)
-                        file.access |= ResourceAccess::ReadOnly;
+                        file.access |= RSCA::ReadOnly;
                     if(sec.find('w') < end)
-                        file.access |= ResourceAccess::WriteOnly;
+                        file.access |= RSCA::WriteOnly;
                     if(sec.find('x') < end)
-                        file.access |= ResourceAccess::Executable;
+                        file.access |= RSCA::Executable;
                     if(sec.find('s') < end)
-                        file.access |= ResourceAccess::Shared;
+                        file.access |= RSCA::Shared;
                     if(sec.find('p') < end)
-                        file.access |= ResourceAccess::Private;
+                        file.access |= RSCA::Private;
                     break;
                 }
                 case 3:

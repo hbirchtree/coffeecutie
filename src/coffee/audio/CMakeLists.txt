@@ -12,12 +12,9 @@ coffee_library (
     private/caudio.cpp
 
     LIBRARIES CoffeeCore
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/audio
     )
 
-target_include_directories ( CoffeeAudio
-    SYSTEM
-    PRIVATE
+target_include_directories ( CoffeeAudio SYSTEM PRIVATE
     ${STB_INCLUDE_DIR}
     )
 
@@ -39,24 +36,26 @@ if(BUILD_OPENAL)
         private/abstraction/openal/calsoundsample.cpp
 
         LIBRARIES CoffeeAudio
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/audio/openal
         )
 
-    if(NOT APPLE)
+    if(NOT APPLE AND NOT WIN32)
         target_link_libraries ( CoffeeOpenAL
             PRIVATE
             OpenAL
             )
-    else()
+    elseif( WIN32 )
+        target_link_libraries ( CoffeeOpenAL
+            PRIVATE
+            ${OPENAL_LIBRARY}
+            )
+    elseif( APPLE )
         target_link_libraries ( CoffeeOpenAL
             PRIVATE
             "-framework OpenAL"
             )
     endif()
 
-    target_include_directories ( CoffeeOpenAL
-        SYSTEM
-        PRIVATE
+    target_include_directories ( CoffeeOpenAL SYSTEM PRIVATE
         ${OPENAL_INCLUDE_DIR}
         )
 endif()

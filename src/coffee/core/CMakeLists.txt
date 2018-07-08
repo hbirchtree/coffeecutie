@@ -1,10 +1,16 @@
 find_package ( StandardLibs REQUIRED )
+find_package ( RapidJson REQUIRED )
+find_package ( TinyXML2 REQUIRED )
 
 coffee_library (
     TARGET CoffeeXML
     SOURCES
     # We slap tinyXML2 in here, just cause
     ${COFFEE_EXT_LIBRARY_DIR}/tinyxml2/tinyxml2.cpp
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include/tinyxml2/>
     )
 
 coffee_library (
@@ -114,11 +120,15 @@ coffee_library (
 
     LIBRARIES
     ${STANDARDLIBS_LIBRARIES}
-    CoffeeXML
+#    CoffeeXML
 
     HEADER_DIRS
-    ${CMAKE_SOURCE_DIR}/include/coffee/core
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
+    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
+
+    $<INSTALL_INTERFACE:include>
     )
+
 coffee_library (
     TARGET CoffeeCore_Application
 
@@ -127,8 +137,8 @@ coffee_library (
     private/plat/environment/application_start.cpp
 
     LIBRARIES CoffeeCore_Base
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core
     )
+
 
 coffee_library (
     TARGET CoffeeINI
@@ -139,7 +149,6 @@ coffee_library (
     TARGET CoffeeTesting
     SOURCES private/unit_tests/framework.cpp
     LIBRARIES CoffeeCore_Base
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests
     )
 
 target_compile_definitions ( CoffeeCore_Base PUBLIC
@@ -152,57 +161,24 @@ if(LOWFAT_BUILD)
         )
 endif()
 
+add_library ( RapidJSON  INTERFACE )
 add_library ( CoffeeCore INTERFACE )
 
 install(
-    TARGETS CoffeeCore
+    TARGETS RapidJSON CoffeeCore
     EXPORT ${PROJECT_NAME}
     )
 
 register_library ( CoffeeCore "${CMAKE_SOURCE_DIR}/include/coffee/core" )
 
-target_link_libraries ( CoffeeCore
-    INTERFACE
+target_include_directories ( CoffeeCore_Base PUBLIC
+    $<BUILD_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
+    )
+
+target_link_libraries ( CoffeeCore INTERFACE
     CoffeeCore_Base
     )
-
-find_package ( RapidJson REQUIRED )
-find_package ( TinyXML2 REQUIRED )
-
-target_include_directories ( CoffeeCore_Base SYSTEM PUBLIC
-    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
-    $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
-    )
-
-target_include_directories ( CoffeeCore_Base PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
-    $<INSTALL_INTERFACE:include>
-    $<INSTALL_INTERFACE:include/tinyxml2/>
-    ${STANDARDLIBS_INCLUDE_DIR}
-    )
-
-if(BUILD_SWIG_BINDING)
-    coffee_library (
-        TARGET CoffeeCoreLoadable
-        LINKAGE SHARED
-        SOURCES ${CoffeeCore_SRCS}
-        LIBRARIES ${STANDARDLIBS_LIBRARIES}
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/core
-        )
-    target_compile_definitions ( CoffeeCoreLoadable
-        PRIVATE
-        -DCOFFEE_LOADABLE_LIBRARY
-        )
-    target_include_directories ( CoffeeCoreLoadable
-        PUBLIC
-        $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
-        $<INSTALL_INTERFACE:include/>
-        $<INSTALL_INTERFACE:include/tinyxml2/>
-
-        ${STANDARDLIBS_INCLUDE_DIR}
-        )
-endif()
 
 #
 #
@@ -220,8 +196,7 @@ if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
         private/plat/environment/sdlpowerinfo.cpp
         )
 
-    target_link_libraries ( CoffeeCore_Base
-        PRIVATE
+    target_link_libraries ( CoffeeCore_Base PRIVATE
         SDL2
         )
 endif()
@@ -275,10 +250,9 @@ if(ANDROID)
         )
 
     target_include_directories ( CoffeeCore_Base PUBLIC
-        ${ANDROID_GLUE_INCLUDE_DIR}
-        ${NDK_HELPER_INCLUDE_DIR}
-        ${CPUFEATURES_INCLUDE_DIR}
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
+        $<BUILD_INTERFACE:${ANDROID_GLUE_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${NDK_HELPER_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${CPUFEATURES_INCLUDE_DIR}>
         )
 endif()
 

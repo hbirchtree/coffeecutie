@@ -9,5 +9,4 @@ coffee_library (
     TARGET CoffeeBlam
     SOURCES ${CBlam_SRCS}
     LIBRARIES CoffeeImage
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/image
     )

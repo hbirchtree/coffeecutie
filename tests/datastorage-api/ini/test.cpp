@@ -14,12 +14,8 @@ Key4 = FALSE
 
 bool readwrite_file()
 {
-    auto testFile = MkUrl(
-        "test.ini",
-        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
-    auto testFileDupe = MkUrl(
-        "test.ini.ini",
-        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+    auto testFile     = MkUrl("test.ini", RSCA::TemporaryFile);
+    auto testFileDupe = MkUrl("test.ini.ini", RSCA::TemporaryFile);
 
     CResources::Resource testfile(testFile);
 
@@ -52,9 +48,7 @@ bool readwrite_file()
 bool write_file()
 {
     file_error ec;
-    Url        testfile = MkUrl(
-        "testoutfile.ini",
-        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+    Url        testfile = MkUrl("testoutfile.ini", RSCA::TemporaryFile);
 
     INI::Document doc;
 
@@ -79,7 +73,7 @@ bool write_file()
     CString docData = INI::Write(doc);
     rsc             = Bytes::CreateString(docData.c_str());
     Profiler::Profile("Writing object to file");
-    CResources::FileCommit(rsc, ResourceAccess::Discard);
+    CResources::FileCommit(rsc, RSCA::Discard);
     Profiler::Profile("Committing file");
 
     auto res = CResources::FileFun::Exists(testfile, ec);

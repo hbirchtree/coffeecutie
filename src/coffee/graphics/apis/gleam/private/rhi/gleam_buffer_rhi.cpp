@@ -35,8 +35,7 @@ void GLEAM_VBuffer::commit(BytesConst const& data)
     bind();
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
-    if(GLEAM_FEATURES.buffer_storage &&
-       feval(m_access & ResourceAccess::Immutable))
+    if(GLEAM_FEATURES.buffer_storage && feval(m_access & RSCA::Immutable))
     {
         if(GLEAM_FEATURES.direct_state)
             CGL45::BufStorage(m_handle, data, m_access);
@@ -81,7 +80,7 @@ Bytes GLEAM_VBuffer::map(szptr offset, szptr size, gleam_error& ec)
 
         auto acc = m_access;
         if(!GLEAM_FEATURES.buffer_persistent)
-            acc ^= ResourceAccess::Persistent;
+            acc ^= RSCA::Persistent;
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)

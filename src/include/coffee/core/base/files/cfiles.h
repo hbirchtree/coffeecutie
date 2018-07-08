@@ -155,27 +155,27 @@ FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
 
 FORCEDINLINE CResources::Resource operator"" _rsc(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::AssetFile);
+    return CResources::Resource(fn, RSCA::AssetFile);
 }
 
 FORCEDINLINE CResources::Resource operator"" _tmp(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::TemporaryFile);
+    return CResources::Resource(fn, RSCA::TemporaryFile);
 }
 
 FORCEDINLINE CResources::Resource operator"" _cache(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::CachedFile);
+    return CResources::Resource(fn, RSCA::CachedFile);
 }
 
 FORCEDINLINE CResources::Resource operator"" _config(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::ConfigFile);
+    return CResources::Resource(fn, RSCA::ConfigFile);
 }
 
 FORCEDINLINE CResources::Resource operator"" _sysfile(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::SpecifyStorage | RSCA::SystemFile);
+    return CResources::Resource(fn, RSCA::SystemFile);
 }
 
 namespace Strings {

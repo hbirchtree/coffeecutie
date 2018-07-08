@@ -81,21 +81,18 @@ if(BUILD_OPENGL)
         TARGET CoffeeContext_EGL
         SOURCES ${EGL_SRCS}
         LIBRARIES CoffeeCore
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/egl
         )
 
     coffee_library (
         TARGET CoffeeContext_GLX
         SOURCES ${GLX_SRCS}
         LIBRARIES CoffeeCore
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/glx
         )
 
     coffee_library (
         TARGET CoffeeBinding_GLAD
         SOURCES ${GLAD_SRCS}
         LIBRARIES CoffeeCore CoffeeGLeamCommon
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/binding/glad
         )
 
     target_link_libraries ( CoffeeBinding_GLAD
@@ -108,43 +105,36 @@ coffee_library (
     TARGET CoffeeWindow_OGC
     SOURCES ${OGC_SRCS}
     LIBRARIES CoffeeCore
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ogc
     )
 
 coffee_library (
     TARGET CoffeeWindow_X11
     SOURCES ${X11_SRCS}
     LIBRARIES CoffeeCore
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/x11
     )
 
 coffee_library (
     TARGET CoffeeWindow_DMX
     SOURCES ${DMX_SRCS}
     LIBRARIES CoffeeCore
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/dispmanx
     )
 
 coffee_library (
     TARGET CoffeeWindow_GLKit
     SOURCES ${GLKit_SRCS}
     LIBRARIES CoffeeCore
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/glkit
     )
 
 coffee_library (
     TARGET CoffeeWindow_NDKWindow
     SOURCES ${NDKWindow_SRCS}
     LIBRARIES CoffeeCore
-    HEADER_DIRS
-    ${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ndkwindow
     )
 
 coffee_library (
     TARGET CoffeeRenderer_Default
     SOURCES ${Renderer_SRCS}
     LIBRARIES CoffeeCore ${RENDERER_LIBS}
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer
     )
 
 target_link_libraries( CoffeeWindow_NDKWindow
@@ -153,16 +143,13 @@ target_link_libraries( CoffeeWindow_NDKWindow
     )
 
 if(APPLE AND IOS)
-    target_include_directories ( CoffeeBinding_GLAD
-        PRIVATE
+    target_include_directories ( CoffeeBinding_GLAD PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )
-    target_include_directories ( CoffeeWindow_GLKit
-        PRIVATE
+    target_include_directories ( CoffeeWindow_GLKit PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )
-    target_include_directories ( CoffeeContext_EGL
-        PRIVATE
+    target_include_directories ( CoffeeContext_EGL PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )
 endif()
@@ -176,8 +163,7 @@ endif(BUILD_OPENGL)
 
 if(NOT EMSCRIPTEN AND BUILD_SDL2 AND BUILD_OPENGL)
     find_package(SDL2 REQUIRED)
-    target_include_directories ( CoffeeBinding_GLAD
-        PRIVATE
+    target_include_directories ( CoffeeBinding_GLAD PRIVATE
         ${SDL2_INCLUDE_DIR}
         ${STANDARDLIBS_INCLUDE_DIR}
         )
@@ -190,23 +176,19 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID
     find_package ( X11 QUIET )
 
     if(NOT BUILD_GLES)
-        target_link_libraries ( CoffeeContext_GLX
-            PUBLIC
+        target_link_libraries ( CoffeeContext_GLX PUBLIC
             Xrender GL
             ${X11_LIBRARIES}
             )
-        target_include_directories( CoffeeContext_GLX
-            PRIVATE
+        target_include_directories( CoffeeContext_GLX PRIVATE
             ${X11_INCLUDE_DIR}
             )
     endif()
 
-    target_link_libraries ( CoffeeWindow_X11
-        PUBLIC
+    target_link_libraries ( CoffeeWindow_X11 PUBLIC
         ${X11_LIBRARIES}
         )
-    target_include_directories( CoffeeWindow_X11
-        PRIVATE
+    target_include_directories( CoffeeWindow_X11 PRIVATE
         ${X11_INCLUDE_DIR}
         )
 endif()

@@ -12,8 +12,9 @@ using duration   = Chrono::microseconds;
 using time_point = Chrono::time_point<clock>;
 
 struct EntityContainer;
+struct ContainerProxy;
 
-using LoopFun = void (*)(EntityContainer&);
+using LoopFun = void (*)(ContainerProxy&);
 
 template<typename WrappedType, typename TagType>
 struct TaggedTypeWrapper
@@ -42,6 +43,8 @@ struct Entity : non_copy
     time_point next_run;
 
     u32 tags;
+
+    u32 _pad = 0;
 };
 
 struct ComponentContainerBase : non_copy
@@ -50,8 +53,9 @@ struct ComponentContainerBase : non_copy
     {
     }
 
-    virtual void register_entity(u64 id)   = 0;
-    virtual void unregister_entity(u64 id) = 0;
+    virtual void register_entity(u64 id)    = 0;
+    virtual void unregister_entity(u64 id)  = 0;
+    virtual void process(ContainerProxy& c) = 0;
 };
 
 template<typename ComponentType>
@@ -61,7 +65,7 @@ struct ComponentContainer : ComponentContainerBase
 
     virtual type* get(u64 id) = 0;
 
-    virtual bool visit(EntityContainer&, Entity& entity)
+    virtual bool visit(ContainerProxy&, Entity& entity)
     {
         return visit(entity);
     }
@@ -69,20 +73,24 @@ struct ComponentContainer : ComponentContainerBase
     {
         return false;
     }
-    virtual void process(EntityContainer& c);
+
+    virtual void process(ContainerProxy& c);
 };
 
-template<typename OutputType>
-struct Subsystem
+struct SubsystemBase : non_copy
 {
-    using type = typename OutputType::type;
-
     virtual void start_frame()
     {
     }
     virtual void end_frame()
     {
     }
+};
+
+template<typename OutputType>
+struct Subsystem : SubsystemBase
+{
+    using type = typename OutputType::type;
 
     virtual type const& get() const = 0;
     virtual type&       get()       = 0;
@@ -90,7 +98,9 @@ struct Subsystem
 
 struct EntityContainer : non_copy
 {
-    EntityContainer() : current_entity(0), entity_counter(0)
+    friend struct Entity;
+
+    EntityContainer() : entity_counter(0)
     {
     }
 
@@ -102,15 +112,13 @@ struct EntityContainer : non_copy
             pred([=](Entity const& e) { return (e.tags & tags) == tags; }),
             m_container(&c)
         {
-            it = std::find_if(
-                m_container->entities.begin(),
-                m_container->entities.end(),
-                pred);
+            initialize_iterator();
         }
 
         entity_query(EntityContainer& c, entity_predicate&& predicate) :
-            pred(predicate), m_container(&c)
+            pred(std::move(predicate)), m_container(&c)
         {
+            initialize_iterator();
         }
 
         template<typename ComponentType>
@@ -159,65 +167,44 @@ struct EntityContainer : non_copy
         }
 
       private:
-        const entity_predicate   pred;
+        void initialize_iterator()
+        {
+            it = std::find_if(
+                m_container->entities.begin(),
+                m_container->entities.end(),
+                pred);
+        }
+
+        entity_predicate const   pred;
         EntityContainer* const   m_container;
         Vector<Entity>::iterator it;
     };
 
-    friend struct Entity;
+    /*
+     *
+     * Lifetime events
+     *
+     */
+
+    void exec();
 
     void reset()
     {
-        current_entity = 0;
         entity_counter = 0;
 
         entities.clear();
         subsystems.clear();
         components.clear();
-
-        subsystem_updaters.clear();
-        component_updaters.clear();
     }
 
-    void exec()
-    {
-        time_point time_now = clock::now();
-
-        for(auto& subsys : subsystem_updaters)
-            subsys.second.first(*this);
-
-        for(auto& e : entities)
-            if(e.next_run <= time_now)
-            {
-                current_entity = e.id;
-                e.loop(*this);
-                e.next_run = time_now + e.interval;
-            }
-        current_entity = 0;
-
-        for(auto& subsys : subsystem_updaters)
-            subsys.second.second(*this);
-
-        for(auto& component : component_updaters)
-            component.second(*this);
-    }
+    /*
+     *
+     * Creation and registering components and entities
+     *
+     */
 
     template<typename ComponentType>
-    void register_component(ComponentContainer<ComponentType>& c)
-    {
-        static const type_hash type_id = typeid(ComponentType).hash_code();
-
-        if(components.find(type_id) != components.end())
-            throw implementation_error("cannot register type twice");
-
-        auto adapted = C_RCAST<void*>(&c);
-
-        components.emplace(type_id, adapted);
-
-        component_updaters.emplace(type_id, [](EntityContainer& entities) {
-            entities.container<ComponentType>().process(entities);
-        });
-    }
+    void register_component(ComponentContainer<ComponentType>& c);
 
     template<typename OutputType>
     void register_subsystem(Subsystem<OutputType>& sys)
@@ -227,13 +214,9 @@ struct EntityContainer : non_copy
         if(subsystems.find(type_id) != subsystems.end())
             throw implementation_error("cannot register subsystem twice");
 
-        auto adapted = C_RCAST<void*>(&sys);
+        auto adapted = C_DCAST<SubsystemBase>(&sys);
 
         subsystems.emplace(type_id, adapted);
-
-        subsystem_updaters[type_id] = {
-            [](EntityContainer& c) { c.subsystem<OutputType>().start_frame(); },
-            [](EntityContainer& c) { c.subsystem<OutputType>().end_frame(); }};
     }
 
     Entity& create_entity(EntityRecipe const& recipe)
@@ -254,6 +237,12 @@ struct EntityContainer : non_copy
 
         return entity;
     }
+
+    /*
+     *
+     * For querying components or getting data
+     *
+     */
 
     quick_container<entity_query> select(u32 tags)
     {
@@ -280,7 +269,7 @@ struct EntityContainer : non_copy
         if(it == components.end())
             throw undefined_behavior("component not found");
 
-        return *C_RCAST<ComponentContainerBase*>(it->second);
+        return *it->second;
     }
 
     template<typename ComponentType>
@@ -295,7 +284,7 @@ struct EntityContainer : non_copy
         if(it == components.end())
             throw undefined_behavior("component not found");
 
-        return *C_RCAST<container_t*>(it->second);
+        return *C_DCAST<container_t>(it->second);
     }
 
     template<typename OutputType>
@@ -310,7 +299,7 @@ struct EntityContainer : non_copy
         if(it == subsystems.end())
             throw undefined_behavior("subsystem not found");
 
-        return *C_RCAST<subsystem_t*>(it->second);
+        return *C_DCAST<subsystem_t>(it->second);
     }
 
     template<typename ComponentType>
@@ -319,8 +308,49 @@ struct EntityContainer : non_copy
         return container<ComponentType>().get(id);
     }
 
+  private:
+    /* for accessing components */
+    using type_hash = size_t;
+    using SubsystemUpdaters =
+        Pair<void (*)(EntityContainer&), void (*)(EntityContainer&)>;
+
+    u64            entity_counter;
+    Vector<Entity> entities;
+
+    Map<type_hash, SubsystemBase*>          subsystems;
+    Map<type_hash, ComponentContainerBase*> components;
+};
+
+struct ContainerProxy : non_copy
+{
+    friend struct EntityContainer;
+
+    FORCEDINLINE
+    quick_container<EntityContainer::entity_query> select(u32 tags)
+    {
+        return m_container.select(tags);
+    }
+
     template<typename ComponentType>
-    typename ComponentType::type& get()
+    FORCEDINLINE quick_container<EntityContainer::entity_query> select()
+    {
+        return m_container.select<ComponentType>();
+    }
+
+    template<typename OutputType>
+    FORCEDINLINE Subsystem<OutputType>& subsystem()
+    {
+        return m_container.subsystem<OutputType>();
+    }
+
+    template<typename ComponentType>
+    typename ComponentType::type* get(u64 id)
+    {
+        return m_container.get<ComponentType>(id);
+    }
+
+    template<typename ComponentType>
+    FORCEDINLINE typename ComponentType::type& get()
     {
         typename ComponentType::type* v = get<ComponentType>(current_entity);
 
@@ -330,31 +360,21 @@ struct EntityContainer : non_copy
         return *v;
     }
 
-  protected:
-    /* for accessing components */
-    using type_hash = size_t;
-
-    u64 current_entity;
-
   private:
-    using SubsystemUpdaters =
-        Pair<void (*)(EntityContainer&), void (*)(EntityContainer&)>;
+    u64              current_entity;
+    EntityContainer& m_container;
 
-    u64            entity_counter;
-    Vector<Entity> entities;
-
-    Map<type_hash, void*>             subsystems;
-    Map<type_hash, SubsystemUpdaters> subsystem_updaters;
-
-    Map<type_hash, void*>                      components;
-    Map<type_hash, void (*)(EntityContainer&)> component_updaters;
+    ContainerProxy(EntityContainer& container) :
+        current_entity(0), m_container(container)
+    {
+    }
 };
 
 template<typename T>
 using CNT = ComponentContainer<T>;
 
 template<typename ComponentType>
-void ComponentContainer<ComponentType>::process(EntityContainer& c)
+FORCEDINLINE void ComponentContainer<ComponentType>::process(ContainerProxy& c)
 {
     auto query = c.select<ComponentType>();
 
@@ -362,6 +382,44 @@ void ComponentContainer<ComponentType>::process(EntityContainer& c)
     {
         this->visit(c, entity);
     }
+}
+
+FORCEDINLINE
+void EntityContainer::exec()
+{
+    time_point     time_now = clock::now();
+    ContainerProxy proxy(*this);
+
+    for(auto& subsys : subsystems)
+        subsys.second->start_frame();
+
+    for(auto& e : entities)
+        if(e.next_run <= time_now)
+        {
+            proxy.current_entity = e.id;
+            e.loop(proxy);
+            e.next_run = time_now + e.interval;
+        }
+
+    for(auto& subsys : subsystems)
+        subsys.second->end_frame();
+
+    for(auto& component : components)
+        component.second->process(proxy);
+}
+
+template<typename ComponentType>
+FORCEDINLINE void EntityContainer::register_component(
+    ComponentContainer<ComponentType>& c)
+{
+    static const type_hash type_id = typeid(ComponentType).hash_code();
+
+    if(components.find(type_id) != components.end())
+        throw implementation_error("cannot register type twice");
+
+    auto adapted = C_DCAST<ComponentContainerBase>(&c);
+
+    components.emplace(type_id, adapted);
 }
 
 } // namespace Components

@@ -132,15 +132,15 @@ SCALAR_CONVERT(scalarftostring, scalar, "%f")
 
 INTEGER_CONVERT(sizetostring, size_t, fmt_size_t_fmt)
 
-INTEGER_CONVERT(uintltostring, uint64, u64_fmt)
-INTEGER_CONVERT(uinttostring, uint32, u32_fmt)
-INTEGER_CONVERT(uintstostring, uint16, u16_fmt)
-INTEGER_CONVERT(uintctostring, uint8, u8_fmt)
+INTEGER_CONVERT(uintltostring, u64, u64_fmt)
+INTEGER_CONVERT(uinttostring, u32, u32_fmt)
+INTEGER_CONVERT(uintstostring, u16, u16_fmt)
+INTEGER_CONVERT(uintctostring, u8, u8_fmt)
 
-INTEGER_CONVERT(intltostring, int64, i64_fmt)
-INTEGER_CONVERT(inttostring, int32, i32_fmt)
-INTEGER_CONVERT(intstostring, int16, i16_fmt)
-INTEGER_CONVERT(intctostring, int8, i8_fmt)
+INTEGER_CONVERT(intltostring, i64, i64_fmt)
+INTEGER_CONVERT(inttostring, i32, i32_fmt)
+INTEGER_CONVERT(intstostring, i16, i16_fmt)
+INTEGER_CONVERT(intctostring, i8, i8_fmt)
 
 #undef INTEGER_CONVERT
 

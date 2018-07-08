@@ -3,11 +3,9 @@
 
 using namespace Coffee;
 
-const Url link_test = MkUrl(
-    "symlink.txt",
-    RSCA::SpecifyStorage | RSCA::TemporaryFile | RSCA::NoDereference);
-const Url target_test =
-    MkUrl("target.txt", RSCA::SpecifyStorage | RSCA::TemporaryFile);
+const Url link_test =
+    MkUrl("symlink.txt", RSCA::TemporaryFile | RSCA::NoDereference);
+const Url target_test = MkUrl("target.txt", RSCA::TemporaryFile);
 
 bool link_create_test()
 {

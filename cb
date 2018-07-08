@@ -109,6 +109,11 @@ regen - Regenerate meta-build system"
         egrep '(std::| std)' $f /dev/null
     done
 ;;
+"type-guards")
+    for f in $(all_source_files); do
+        egrep '(u|)int(8|16|32|64)' $f /dev/null
+    done
+;;
 *)
 echo "Available tools: 
 
@@ -143,6 +148,8 @@ Code tools:
                             - std::thread
                             - std::function
     stl-guards          - Usage of std::* types
+
+    type-guards         - Usage of deprecated [u]int[8|16|32|64] types
     "
 ;;
 esac

@@ -6,11 +6,8 @@ using namespace Coffee;
 using File = CResources::FileFun;
 using Dir  = CResources::DirFun;
 
-const Url testpath = MkUrl(
-    "test_level1/test_level2",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
-const Url testdir = MkUrl(
-    "test_dir", ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+const Url testpath = MkUrl("test_level1/test_level2", RSCA::TemporaryFile);
+const Url testdir  = MkUrl("test_dir", RSCA::TemporaryFile);
 
 bool dirstat_test()
 {
@@ -104,9 +101,7 @@ bool dirlist_test()
 
     Profiler::Profile("Basename");
     auto pdir = C_CAST<Path>(testpath).dirname();
-    Dir::RmDir(MkUrl(
-        pdir.internUrl.c_str(),
-        ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile), ec);
+    Dir::RmDir(MkUrl(pdir.internUrl.c_str(), RSCA::TemporaryFile), ec);
     Profiler::Profile("Delete directory");
 
     return true;

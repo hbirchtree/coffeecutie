@@ -253,7 +253,7 @@ bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
 
 bool Posix::PosixDirFun::RmDir(Url const& dname, file_error& ec)
 {
-    auto url = *dname;
+    auto url  = *dname;
     bool stat = rmdir(url.c_str()) == 0 || (errno = 0);
     PosixFileFun::ErrnoCheck(ec, url.c_str());
     return stat;
@@ -371,83 +371,83 @@ uint32 Posix::PosixFileMod_def::PageSize()
 #endif
 }
 
-int PosixFileMod_def::MappingFlags(ResourceAccess acc)
+int PosixFileMod_def::MappingFlags(RSCA acc)
 {
     int mapping = 0;
 
-    if(feval(acc & (ResourceAccess::Persistent)))
+    if(feval(acc & (RSCA::Persistent)))
         mapping = MAP_SHARED;
     else
         mapping = MAP_PRIVATE;
 
 #if defined(COFFEE_APPLE)
-    if(feval(acc & ResourceAccess::NoCache))
+    if(feval(acc & RSCA::NoCache))
         mapping |= MAP_NOCACHE;
 
-    if(feval(acc & ResourceAccess::HugeFile))
+    if(feval(acc & RSCA::HugeFile))
         mapping |= VM_FLAGS_SUPERPAGE_SIZE_ANY;
 #endif
 
 #if defined(COFFEE_LINUX)
 #if !defined(COFFEE_NO_HUGETLB)
-    if(feval(acc & ResourceAccess::HugeFile))
+    if(feval(acc & RSCA::HugeFile))
         mapping |= MAP_HUGETLB;
 #endif
 
-    if(feval(acc & ResourceAccess::ExclusiveLocking))
+    if(feval(acc & RSCA::ExclusiveLocking))
         mapping |= MAP_LOCKED;
 
-//    if(feval(acc&(ResourceAccess::Streaming)))
+//    if(feval(acc&(RSCA::Streaming)))
 //        mapping |= MAP_POPULATE;
-//    if(feval(acc&ResourceAccess::GreedyCache))
+//    if(feval(acc&RSCA::GreedyCache))
 //        mapping |= MAP_POPULATE|MAP_LOCKED;
-//    if(feval(acc&ResourceAccess::NoCache))
+//    if(feval(acc&RSCA::NoCache))
 //        mapping |= MAP_NONBLOCK;
 #endif
 
     return mapping;
 }
 
-int PosixFileMod_def::ProtFlags(ResourceAccess acc)
+int PosixFileMod_def::ProtFlags(RSCA acc)
 {
     int prot = PROT_NONE;
 
-    if(feval(acc & (ResourceAccess::ReadOnly)))
+    if(feval(acc & (RSCA::ReadOnly)))
         prot |= PROT_READ;
-    if(feval(acc & ResourceAccess::WriteOnly))
+    if(feval(acc & RSCA::WriteOnly))
         prot |= PROT_WRITE;
-    if(feval(acc & ResourceAccess::Executable))
+    if(feval(acc & RSCA::Executable))
         prot |= PROT_EXEC;
 
     return prot;
 }
 
-int PosixFileMod_def::PosixRscFlags(ResourceAccess acc)
+int PosixFileMod_def::PosixRscFlags(RSCA acc)
 {
     int oflags = 0;
 
-    if(feval(acc, ResourceAccess::ReadWrite))
+    if(feval(acc, RSCA::ReadWrite))
     {
         oflags = O_RDWR;
 
-        if(feval(acc & ResourceAccess::Discard))
+        if(feval(acc & RSCA::Discard))
             oflags |= O_TRUNC;
-    } else if(feval(acc, ResourceAccess::Executable))
+    } else if(feval(acc, RSCA::Executable))
         oflags = O_RDONLY;
-    else if(feval(acc, ResourceAccess::ReadOnly))
+    else if(feval(acc, RSCA::ReadOnly))
         oflags = O_RDONLY;
-    else if(feval(acc, ResourceAccess::WriteOnly))
+    else if(feval(acc, RSCA::WriteOnly))
     {
-        if(feval(acc & ResourceAccess::Append))
+        if(feval(acc & RSCA::Append))
             oflags = O_APPEND;
         else
             oflags = O_WRONLY;
 
-        if(feval(acc & ResourceAccess::Discard))
+        if(feval(acc & RSCA::Discard))
             oflags |= O_TRUNC;
     }
 
-    if(feval(acc & ResourceAccess::NewFile))
+    if(feval(acc & RSCA::NewFile))
         oflags |= O_CREAT;
 
     return oflags;

@@ -77,7 +77,7 @@
 #define C_OPTIONAL
 
 template<typename T>
-struct C_DEPRECATED C_DEPRECATED_TYPE
+struct C_DEPRECATED_TYPE
 {
-    using type = T;
+    /*C_DEPRECATED*/ typedef T type;
 };

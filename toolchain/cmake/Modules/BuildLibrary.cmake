@@ -12,6 +12,15 @@ macro( REGISTER_LIBRARY LIBNAME INC_DIR )
     set_property(GLOBAL PROPERTY CF_INCLUDE_DIRS "${INC_DIR};${INC_DIRS}" )
 endmacro()
 
+macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
+    string ( REGEX REPLACE
+        "^.*(INSTALL|BUILD)_INTERFACE:(.*)\>+$"
+        "\\2"
+        ${OUTPUT_VAR}
+        "${INPUT_DIR}"
+        )
+endmacro()
+
 macro( GENERATE_FINDSCRIPT )
     get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
     get_property( INC_DIRS_ GLOBAL PROPERTY CF_INCLUDE_DIRS )
@@ -101,6 +110,37 @@ macro( GENERATE_FINDSCRIPT )
         )
 endmacro()
 
+function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
+
+    if(ANDROID)
+        install(
+            TARGETS
+            ${LIB_TARGET}
+
+            EXPORT ${PROJECT_NAME}
+
+            ARCHIVE DESTINATION "lib/${ANDROID_ABI}"
+            LIBRARY DESTINATION "lib/${ANDROID_ABI}"
+            RUNTIME DESTINATION "lib/${ANDROID_ABI}"
+            PUBLIC_HEADER DESTINATION include
+            )
+    elseif(NOT (APPLE AND NOT IOS AND NOT LIB_LINKABLE))
+        install(
+            TARGETS ${LIB_TARGET}
+
+            EXPORT ${PROJECT_NAME}
+
+            ARCHIVE DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
+            LIBRARY DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
+            RUNTIME DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
+            PUBLIC_HEADER DESTINATION include
+            )
+    endif()
+
+    register_library( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
+
+endfunction()
+
 macro(COFFEE_LIBRARY)
     cmake_parse_arguments(
         LIB
@@ -127,12 +167,18 @@ macro(COFFEE_LIBRARY)
     endif()
 
     foreach( HEADER_DIR ${LIB_HEADER_DIRS} )
-        if(IS_DIRECTORY "${HEADER_DIR}")
-            file ( GLOB_RECURSE ALL_HEADERS
-        #        ${HEADER_DIR}/*.h
-        #        ${HEADER_DIR}/*.hpp
-                ${HEADER_DIR}/*
-                )
+        if("${HEADER_DIR}" MATCHES ".*BUILD_INTERFACE:.*")
+            extract_header_dir ( ${HEADER_DIR} HEAD_DIR )
+
+            if(IS_DIRECTORY "${HEAD_DIR}")
+                file ( GLOB_RECURSE ALL_HEADERS
+                    #        ${HEADER_DIR}/*.h
+                    #        ${HEADER_DIR}/*.hpp
+                    ${HEADER_DIR}/*
+                    )
+            else()
+                message ( FATAL_ERROR "No header directory: ${HEAD_DIR} (${HEADER_DIR})" )
+            endif()
         endif()
     endforeach()
 
@@ -170,10 +216,16 @@ macro(COFFEE_LIBRARY)
 
     target_enable_cxx11(${LIB_TARGET})
 
+    target_include_directories ( ${LIB_TARGET}
+        PUBLIC
+        ${LIB_HEADER_DIRS}
+        )
+
     target_link_libraries( ${LIB_TARGET}
         PUBLIC
         ${LIB_LIBRARIES}
         )
+
     target_compile_definitions ( ${LIB_TARGET}
         PRIVATE
         -DCOFFEE_APPLICATION_LIBRARY
@@ -185,46 +237,7 @@ macro(COFFEE_LIBRARY)
         -DFEATURE_ENABLE_${LIB_TARGET}
         )
 
-    if(ANDROID)
-        install(
-            TARGETS
-            ${LIB_TARGET}
-
-            EXPORT ${PROJECT_NAME}
-
-            ARCHIVE DESTINATION "lib/${ANDROID_ABI}"
-            LIBRARY DESTINATION "lib/${ANDROID_ABI}"
-            RUNTIME DESTINATION "lib/${ANDROID_ABI}"
-            PUBLIC_HEADER DESTINATION include
-            )
-    elseif(NOT (APPLE AND NOT IOS AND NOT LIB_LINKABLE))
-        install(
-            TARGETS ${LIB_TARGET}
-
-            EXPORT ${PROJECT_NAME}
-
-            ARCHIVE DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
-            LIBRARY DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
-            RUNTIME DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
-            PUBLIC_HEADER DESTINATION include
-            )
-    endif()
-
-    register_library( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
-
-#    coffee_add_framework(
-#        "${LIB_TARGET}"
-#        "${LIB_LINKAGE}"
-#        "${LIB_VERSION_CODE}"
-#        "${LIB_COPYRIGHT}"
-#        "${LIB_COMPANY}"
-#        "${LIB_SOURCES}"
-#        "${LIB_HEADER_DIRS}"
-#        "${LIB_RESOURCES}"
-#        "${LIB_BUNDLE_HEADERS}"
-#        "${LIB_LIBRARIES}"
-#        "${LIB_BUNDLE_LIBRARIES}"
-#        )
+    add_export ( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
 
 endmacro()
 

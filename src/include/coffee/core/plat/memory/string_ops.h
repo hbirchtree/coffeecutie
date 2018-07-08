@@ -131,10 +131,10 @@ FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
 namespace Convert
 {
 /* Conversion from string */
-STRTON_FUNCTION(int32, strtoint, strtol)
-STRTON_FUNCTION(uint32, strtouint, strtoul)
-STRTON_FUNCTION(int64, strtoll, strtoll)
-STRTON_FUNCTION(uint64, strtoull, strtoull)
+STRTON_FUNCTION(i32, strtoint, strtol)
+STRTON_FUNCTION(u32, strtouint, strtoul)
+STRTON_FUNCTION(i64, strtoll, strtoll)
+STRTON_FUNCTION(u64, strtoull, strtoull)
 
 STRTOFN_FUNCTION(scalar, strtofscalar, strtof)
 STRTOFN_FUNCTION(bigscalar, strtoscalar, strtod)

@@ -21,7 +21,6 @@ coffee_library (
     private/input/evhandlers/sdl2eventhandlers.cpp
 
     LIBRARIES CoffeeCore ${LIBS}
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/sdl2
     )
 
 target_compile_definitions ( CoffeeSDL2 PUBLIC
@@ -29,8 +28,7 @@ target_compile_definitions ( CoffeeSDL2 PUBLIC
     )
 
 if(NOT EMSCRIPTEN)
-    target_include_directories ( CoffeeSDL2
-        PRIVATE
+    target_include_directories ( CoffeeSDL2 PRIVATE
         $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
         )
 

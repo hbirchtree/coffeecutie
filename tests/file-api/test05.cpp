@@ -6,9 +6,7 @@ using namespace Coffee;
 
 byte_t sample_storage[Unit_kB * 100] = {"I'M THE TRASHMAN!\n"};
 
-const Url big_map_test = MkUrl(
-    "file_map_large.bin",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+const Url big_map_test = MkUrl("file_map_large.bin", RSCA::TemporaryFile);
 
 Bytes large_data = {};
 
@@ -35,8 +33,7 @@ bool filewrite_large_test()
 
     Profiler::Profile("Copying data into segment");
 
-    bool stat = CResources::FileCommit(
-        rsc, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+    bool stat = CResources::FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;

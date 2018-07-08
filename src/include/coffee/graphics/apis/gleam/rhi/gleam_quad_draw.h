@@ -1,9 +1,9 @@
 #pragma once
 
+#include "gleam_buffer_rhi.h"
 #include "gleam_shader_rhi.h"
 #include "gleam_types_rhi.h"
 #include "gleam_vertex_rhi.h"
-#include "gleam_buffer_rhi.h"
 
 namespace Coffee {
 namespace RHI {
@@ -11,8 +11,7 @@ namespace GLEAM {
 
 struct GLEAM_Quad_Drawer
 {
-    GLEAM_Quad_Drawer() :
-        m_pip(), m_buffer(ResourceAccess::WriteOnly, sizeof(4 * 6))
+    GLEAM_Quad_Drawer() : m_pip(), m_buffer(RSCA::WriteOnly, sizeof(4 * 6))
     {
     }
 

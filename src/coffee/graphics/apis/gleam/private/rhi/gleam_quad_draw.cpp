@@ -1,22 +1,20 @@
-#include <coffee/graphics/apis/gleam/rhi/gleam_quad_draw.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include "gleam_internal_types.h"
+#include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_quad_draw.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
 using ShaderVersionPair = Pair<APILevel, Pair<cstring, cstring>>;
 
-static ShaderVersionPair quad_shaders[3] = {
-    {
-        GLES_2_0,
-        {
-            R"(#version 100
+static ShaderVersionPair quad_shaders[3] = {{GLES_2_0,
+                                             {
+                                                 R"(#version 100
 precision lowp int;
 precision lowp float;
 uniform mat4 transform[64];
@@ -26,18 +24,15 @@ attribute vec2 tex;
 varying vec2 fTex;
 void main(){fTex = tex; gl_Position = transform[InstanceID] * vec4(pos, 1.0);}
 )",
-            R"(#version 100
+                                                 R"(#version 100
 precision lowp float;
 uniform sampler2D colorTex;
 varying vec2 fTex;
 void main(){gl_FragColor = texture2D(colorTex, fTex);}
-)"
-        }
-    },
-    {
-        GLES_3_0,
-        {
-            R"(#version 300 es
+)"}},
+                                            {GLES_3_0,
+                                             {
+                                                 R"(#version 300 es
 precision lowp float;
 layout(location=0) in vec3 pos;
 layout(location=1) in vec2 tex;
@@ -45,36 +40,29 @@ out vec2 fTex;
 uniform mat4 transform[64];
 void main(){fTex = tex; gl_Position = transform[gl_InstanceID] * vec4(pos, 1.0);}
 )",
-            R"(#version 300 es
+                                                 R"(#version 300 es
 uniform sampler2D colorTex;
 in vec2 fTex;
 out vec4 OutColor;
 void main(){OutColor = texture(colorTex, fTex);}
-)"
-        }
-    },
-    {
-        GL_3_3,
-        {
-            R"(#version 330
+)"}},
+                                            {GL_3_3,
+                                             {
+                                                 R"(#version 330
 in vec3 pos;
 in vec2 tex;
 out vec2 fTex;
 uniform mat4 transform[64];
 void main(){fTex = tex; gl_Position = transform[gl_InstanceID] * vec4(pos, 1.0);}
 )",
-            R"(#version 330
+                                                 R"(#version 330
 uniform sampler2D colorTex;
 in vec2 fTex;
 out vec4 OutColor;
 void main(){OutColor = texture(colorTex, fTex);}
-)"
-        }
-    }
-};
+)"}}};
 
-static cstring find_shader(ShaderStage stage,
-                           APILevel version)
+static cstring find_shader(ShaderStage stage, APILevel version)
 {
     ShaderVersionPair* pair = nullptr;
 
@@ -88,7 +76,7 @@ static cstring find_shader(ShaderStage stage,
         if(APILevelIsOfClass(version, APIClass::GLCore))
         {
             pair = &quad_shaders[2];
-        }else
+        } else
             pair = &quad_shaders[1];
         break;
     }
@@ -109,13 +97,9 @@ static cstring find_shader(ShaderStage stage,
 }
 
 static const i8 m_vertex_quad_data[] = {
-    -127, -127, 0,   0,
-     127, -127, 127, 0,
-    -127,  127, 0,   127,
+    -127, -127, 0,   0,   127,  -127, 127, 0,   -127, 127,  0,   127,
 
-     127,  127, 127, 127,
-    -127,  127, 0,   127,
-     127, -127, 127, 0,
+    127,  127,  127, 127, -127, 127,  0,   127, 127,  -127, 127, 0,
 };
 
 void GLEAM_Quad_Drawer::create(u32 pos, u32 tex)
@@ -124,7 +108,7 @@ void GLEAM_Quad_Drawer::create(u32 pos, u32 tex)
     create_vbo_data(pos, tex);
 }
 
-void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
+void GLEAM_Quad_Drawer::draw(const Matf4& xf, GLEAM_Sampler2D& sampler)
 {
     GLEAM_API::DrawInstanceData di;
     di.m_verts = 6;
@@ -132,18 +116,22 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
     GLEAM_ShaderUniformState m_state_v;
     GLEAM_ShaderUniformState m_state_f;
 
-    Bytes xf_data = Bytes::Create(xf);
+    Bytes              xf_data     = Bytes::Create(xf);
     GLEAM_UniformValue m_transform = {};
-    m_transform.data = &xf_data;
+    m_transform.data               = &xf_data;
     m_state_v.setUniform(m_transformLoc, &m_transform);
 
     auto handle = sampler.handle();
     m_state_f.setSampler(m_texLoc, &handle);
 
-    GLEAM_API::Draw(m_pip, {
-                        {ShaderStage::Vertex, &m_state_v},
-                        {ShaderStage::Fragment, &m_state_f}
-                    }, m_desc, {}, di, nullptr);
+    GLEAM_API::Draw(
+        m_pip,
+        {{ShaderStage::Vertex, &m_state_v},
+         {ShaderStage::Fragment, &m_state_f}},
+        m_desc,
+        {},
+        di,
+        nullptr);
 }
 
 void GLEAM_Quad_Drawer::cleanup()
@@ -167,7 +155,7 @@ GLEAM_DrawCall GLEAM_Quad_Drawer::drawcall() const
     return GLEAM_DrawCall(false, false);
 }
 
-GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc()
+GLEAM_VertDescriptor& GLEAM_Quad_Drawer::vertDesc()
 {
     return m_desc;
 }
@@ -176,16 +164,14 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 {
     GLEAM_API::DBG::SCOPE _(CString(GLM_API) + __FUNCTION__);
 
-    bool status = true;
+    bool         status = true;
     GLEAM_Shader vertex;
     GLEAM_Shader fragment;
 
     Bytes vertex_src = Bytes::CreateString(
-                find_shader(ShaderStage::Vertex, GLEAM_API::Level())
-                );
+        find_shader(ShaderStage::Vertex, GLEAM_API::Level()));
     Bytes fragment_src = Bytes::CreateString(
-                find_shader(ShaderStage::Fragment, GLEAM_API::Level())
-                );
+        find_shader(ShaderStage::Fragment, GLEAM_API::Level()));
 
     vertex.compile(ShaderStage::Vertex, vertex_src);
     fragment.compile(ShaderStage::Fragment, fragment_src);
@@ -199,7 +185,7 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     status = m_pip.assemble();
 
     Vector<GLEAM_UniformDescriptor> desc;
-    Vector<GLEAM_ProgramParameter> params;
+    Vector<GLEAM_ProgramParameter>  params;
     GLEAM_API::GetShaderUniformState(m_pip, &desc, &params);
 
     for(auto& d : desc)
@@ -235,11 +221,10 @@ void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
     pos.m_type = tex.m_type = TypeEnum::Byte;
 
     pos.m_flags = tex.m_flags =
-            GLEAM_API::AttributeNormalization
-            |GLEAM_API::AttributePacked;
+        GLEAM_API::AttributeNormalization | GLEAM_API::AttributePacked;
 
     pos.m_stride = tex.m_stride = sizeof(sbyte_t) * 4;
-    tex.m_off = sizeof(sbyte_t) * 2;
+    tex.m_off                   = sizeof(sbyte_t) * 2;
 
     m_desc.addAttribute(pos);
     m_desc.addAttribute(tex);
@@ -247,6 +232,6 @@ void GLEAM_Quad_Drawer::create_vbo_data(u32 pos_, u32 tex_)
     m_desc.bindBuffer(0, m_buffer);
 }
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

@@ -54,7 +54,7 @@ void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
 #endif
 
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
-    CString ms_time = cast_pod(Time::Microsecond() % 1000);
+    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
     CString clock = cStringFormat("{0}.{1}",
                                   cclock,
                                   StrUtil::lpad(ms_time, '0', 3)

@@ -148,7 +148,7 @@ FORCEDINLINE Url MkUrl(cstring urlString)
     {
         urlString,
                 Url::Local,
-                RSCA::SpecifyStorage|RSCA::AssetFile,
+                RSCA::AssetFile,
                 HTTPAccess::None,
         {}
     };
@@ -172,7 +172,7 @@ FORCEDINLINE Url MkSysUrl(cstring urlString)
     {
         urlString,
                 Url::Local,
-                RSCA::SpecifyStorage|RSCA::SystemFile,
+                RSCA::SystemFile,
                 HTTPAccess::None,
         {}
     };
@@ -184,7 +184,7 @@ FORCEDINLINE Url MkUrl(Path p, RSCA access = RSCA::SystemFile)
     {
         p.internUrl.c_str(),
                 Url::Local,
-                RSCA::SpecifyStorage|access,
+                access,
                 HTTPAccess::None,
         {}
     };

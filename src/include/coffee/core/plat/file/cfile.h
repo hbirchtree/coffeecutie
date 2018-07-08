@@ -109,7 +109,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
     using file_error  = typename CommonFileFun<NestedError>::file_error;
     using FileMapping = FILEApi::FileMapping;
 
-    STATICINLINE FH Open(Url const& fn, ResourceAccess ac, file_error& ec)
+    STATICINLINE FH Open(Url const& fn, RSCA ac, file_error& ec)
     {
         auto url = *fn;
         FH   fh  = {};
@@ -118,22 +118,17 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
 
         /* Because of the way masks work, feval must be run on each individual
          * flag */
-        if(feval(ac & ResourceAccess::ReadWrite) &&
-           feval(ac & ResourceAccess::Append))
+        if(feval(ac & RSCA::ReadWrite) && feval(ac & RSCA::Append))
             mode = "ab+";
-        else if(
-            feval(ac & ResourceAccess::WriteOnly) &&
-            feval(ac & ResourceAccess::Append))
+        else if(feval(ac & RSCA::WriteOnly) && feval(ac & RSCA::Append))
             mode = "ab";
-        else if(feval(ac & (ResourceAccess::ReadOnly)))
+        else if(feval(ac & (RSCA::ReadOnly)))
             mode = "rb";
-        else if(
-            feval(ac & ResourceAccess::WriteOnly) &&
-            feval(ac & ResourceAccess::Discard))
+        else if(feval(ac & RSCA::WriteOnly) && feval(ac & RSCA::Discard))
             mode = "wb+";
-        else if(feval(ac & (ResourceAccess::WriteOnly)))
+        else if(feval(ac & (RSCA::WriteOnly)))
             mode = "wb";
-        else if(feval(ac & (ResourceAccess::ReadWrite)))
+        else if(feval(ac & (RSCA::ReadWrite)))
             mode = "rb+";
 
         fh.handle = fopen(url.c_str(), mode);
@@ -235,7 +230,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
 
     STATICINLINE szptr Size(Url const& fn, file_error& ec)
     {
-        FH f = Open(fn, ResourceAccess::ReadOnly, ec);
+        FH f = Open(fn, RSCA::ReadOnly, ec);
 
         if(f.handle)
         {
@@ -285,11 +280,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
      * \return
      */
     STATICINLINE FileMapping
-                 Map(Url const&     fname,
-                     ResourceAccess access,
-                     szptr          offset,
-                     szptr          size,
-                     file_error&    ec)
+                 Map(Url const& fname, RSCA access, szptr offset, szptr size, file_error& ec)
     {
         auto  handle = Open(fname, access, ec);
         szptr r_size = Size(handle, ec);
@@ -322,7 +313,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
     }
     STATICINLINE bool Exists(Url const& fn, file_error& ec)
     {
-        FH f = Open(fn, ResourceAccess::ReadOnly, ec);
+        FH f = Open(fn, RSCA::ReadOnly, ec);
         return Valid(f, ec);
     }
 };

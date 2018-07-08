@@ -1,11 +1,9 @@
 coffee_library (
     TARGET CoffeeGraphicsAPI
     SOURCES private/query/gpu_query.cpp
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis
     )
 
-target_link_libraries ( CoffeeGraphicsAPI
-    PRIVATE
+target_link_libraries ( CoffeeGraphicsAPI PRIVATE
     CoffeeCore
     )
 
@@ -25,13 +23,9 @@ if(NVIDIAML_FOUND)
         LIBRARIES
         ${NVIDIAML_LIBRARIES}
         CoffeeCore
-
-        HEADER_DIRS
-        ${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query
         )
 
-    target_include_directories( CoffeeNVIDIAQuery
-        PRIVATE
+    target_include_directories( CoffeeNVIDIAQuery PRIVATE
         $<BUILD_INTERFACE:${NVIDIAML_INCLUDE_DIR}>
         )
 endif()
@@ -47,13 +41,9 @@ if(LIBDRM_FOUND AND FALSE)
         LIBRARIES
         ${LIBDRM_LIBRARIES}
         CoffeeCore
-
-        HEADER_DIRS
-        ${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query
         )
 
-    target_include_directories( CoffeeLibDRMQuery
-        PRIVATE
+    target_include_directories( CoffeeLibDRMQuery PRIVATE
         $<BUILD_INTERFACE:${LIBDRM_INCLUDE_DIR}>
         )
 endif()
@@ -62,8 +52,7 @@ if(BUILD_OPENGL AND BUILD_GLEAM AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT APPLE
     coffee_library (
         TARGET CoffeeOpenGLQuery
         LINKAGE SHARED
-        SOURCES
-        private/query/opengl_query.cpp
+        SOURCES private/query/opengl_query.cpp
 
         LIBRARIES
         CoffeeCore

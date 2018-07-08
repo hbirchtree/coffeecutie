@@ -4,10 +4,8 @@
 
 using namespace Coffee;
 
-const Url testfile =
-    MkUrl("fileapi_testfile.txt", RSCA::SpecifyStorage | RSCA::TemporaryFile);
-const Url writetest =
-    MkUrl("file_write_large.bin", RSCA::SpecifyStorage | RSCA::TemporaryFile);
+const Url testfile  = MkUrl("fileapi_testfile.txt", RSCA::TemporaryFile);
+const Url writetest = MkUrl("file_write_large.bin", RSCA::TemporaryFile);
 
 using File = FileFun;
 

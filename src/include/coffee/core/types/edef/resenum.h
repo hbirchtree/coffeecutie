@@ -57,7 +57,7 @@ enum class RSCA : u32
     Discard = 0x2000, /*<! Truncate data that exists in file */
 
     /* Tell function to be particular about where to store this file */
-    SpecifyStorage = 0x4000,
+//    SpecifyStorage = 0x4000,
     /* Storage types */
     AssetFile     = 0x8000,  /*!< Packaged in virtual file system, system-specific */
     ConfigFile    = 0x10000, /*!< Stored in configuration directory, system-specific */
@@ -76,7 +76,7 @@ enum class RSCA : u32
     AccessMask  = ReadWrite|Append|Executable,
     CreateMask  = NewFile|Discard,
     CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
-    StorageMask = SpecifyStorage|AssetFile|ConfigFile
+    StorageMask = AssetFile|ConfigFile
                     |TemporaryFile|CachedFile|SystemFile,
 };
 C_FLAGS(RSCA, uint32);
@@ -107,6 +107,6 @@ enum class HTTPAccess
 };
 C_FLAGS(HTTPAccess, u32);
 
-using ResourceAccess = C_DEPRECATED_TYPE<RSCA>::type;
+//using ResourceAccess = C_DEPRECATED_TYPE<RSCA>::type;
 
 }

@@ -6,9 +6,6 @@ if(BUILD_OPENSSL)
 endif()
 
 set ( CoffeeASIO_SRCS
-    private/rest-client.cpp
-    private/net_resource.cpp
-    private/net_profiling.cpp
     )
 
 if(TARGET OpenSSL::SSL)
@@ -19,22 +16,24 @@ endif()
 
 coffee_library (
     TARGET CoffeeASIO
-    SOURCES ${CoffeeASIO_SRCS}
+
+    SOURCES
+    private/rest-client.cpp
+    private/net_resource.cpp
+    private/net_profiling.cpp
+
     LIBRARIES CoffeeCore ${LIBS}
-    HEADER_DIRS ${CMAKE_SOURCE_DIR}/include/coffee/asio
     )
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 
-target_include_directories ( CoffeeASIO SYSTEM
-    PUBLIC
+target_include_directories ( CoffeeASIO SYSTEM PUBLIC
     $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
-    $<INSTALL_INTERFACE:include/>
+    $<INSTALL_INTERFACE:include>
     )
 
 if(BUILD_OPENSSL)
-    target_include_directories ( CoffeeASIO SYSTEM
-        PUBLIC
+    target_include_directories ( CoffeeASIO SYSTEM PUBLIC
         $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
         )
     target_compile_definitions ( CoffeeASIO PUBLIC
@@ -42,8 +41,7 @@ if(BUILD_OPENSSL)
         )
 endif()
 
-target_compile_definitions( CoffeeASIO
-    PUBLIC
+target_compile_definitions( CoffeeASIO PUBLIC
     -DASIO_STANDALONE
     )
 

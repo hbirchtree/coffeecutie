@@ -4,12 +4,8 @@
 
 using namespace Coffee;
 
-const Url writetest = MkUrl(
-    "writetest.txt",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
-const Url testfile = MkUrl(
-    "fileapi_testfile.txt",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+const Url writetest = MkUrl("writetest.txt", RSCA::TemporaryFile);
+const Url testfile  = MkUrl("fileapi_testfile.txt", RSCA::TemporaryFile);
 
 using File = FileFun;
 
@@ -22,8 +18,7 @@ bool filewrite_test()
     Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
-    return CResources::FileCommit(
-        rsc, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+    return CResources::FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard);
 }
 
 bool fileread_test()

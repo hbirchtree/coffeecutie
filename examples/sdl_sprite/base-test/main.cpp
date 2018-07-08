@@ -2,8 +2,8 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
 #include <coffee/core/CProfiling>
-#include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/CImage>
 
@@ -150,7 +150,7 @@ int32 coffee_main(int32, cstring_w*)
                1,
                &data->t,
                PixelFormat::RGBA8UI,
-               ResourceAccess::Streaming,
+               RSCA::Streaming,
                CSize(128, 128)))
         {
             Profiler::Profile("Texture creation");

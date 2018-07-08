@@ -61,20 +61,21 @@ class TransformContainer : public Components::ComponentContainer<TransformTag>
     {
     }
 
-    virtual void register_entity(u64 id)
+    virtual void register_entity(u64 id) override
     {
         m_objects[id] = {};
     }
-    virtual void unregister_entity(u64 id)
+    virtual void unregister_entity(u64 id) override
     {
         m_objects.erase(id);
     }
-    virtual TransformPair* get(u64 id)
+    virtual TransformPair* get(u64 id) override
     {
         return &m_objects[id];
     }
     virtual bool visit(
-        Components::EntityContainer& container, Components::Entity& entity)
+        Components::ContainerProxy& container,
+        Components::Entity&         entity) override
     {
         auto camera = *container.get<CameraTag>(entity.id);
 
@@ -86,7 +87,8 @@ class TransformContainer : public Components::ComponentContainer<TransformTag>
         auto left_idx  = (entity.id - 1) * 2;
         auto right_idx = left_idx + 1;
 
-        auto output_matrix = projection * GenTransform<scalar>(camera) * object_matrix;
+        auto output_matrix =
+            projection * GenTransform<scalar>(camera) * object_matrix;
 
         m_matrices[left_idx] = output_matrix;
 
@@ -113,13 +115,13 @@ class CameraContainer : public Components::ComponentContainer<CameraTag>
         camera.position = {0, 0, -10};
     }
 
-    virtual void register_entity(u64)
+    virtual void register_entity(u64) override
     {
     }
-    virtual void unregister_entity(u64)
+    virtual void unregister_entity(u64) override
     {
     }
-    virtual CGCamera* get(u64)
+    virtual CGCamera* get(u64) override
     {
         return &camera;
     }
@@ -266,7 +268,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         return;
     }
 
-    g.vertbuf = new GLM::BUF_A(ResourceAccess::ReadOnly, sizeof(vertexdata));
+    g.vertbuf      = new GLM::BUF_A(RSCA::ReadOnly, sizeof(vertexdata));
     auto& vertbuf  = *g.vertbuf;
     auto& vertdesc = g.vertdesc;
 
@@ -346,9 +348,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     Profiler::PushContext("Texture loading");
     for(i32 i = 0; i < eyetex.m_size.depth; i++)
     {
-        CResources::Resource rsc(
-            textures[i],
-            ResourceAccess::SpecifyStorage | ResourceAccess::AssetFile);
+        Resource rsc(textures[i], RSCA::AssetFile);
 
         if(!RHI::LoadTexture<GLM>(eyetex, std::move(rsc), i))
             return;
@@ -456,7 +456,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     floor_object.interval   = Chrono::milliseconds(10);
     base_object             = floor_object;
 
-    floor_object.loop = [](Components::EntityContainer& c) {
+    floor_object.loop = [](Components::ContainerProxy& c) {
         auto& xf = c.get<TransformTag>();
 
         auto time = c.subsystem<TimeTag>().get();
@@ -470,7 +470,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.second = GenTransform<scalar>(xf.first);
     };
 
-    base_object.loop = [](Components::EntityContainer& c) {
+    base_object.loop = [](Components::ContainerProxy& c) {
         auto& xf   = c.get<TransformTag>();
         auto  time = c.subsystem<TimeTag>().get().count();
 

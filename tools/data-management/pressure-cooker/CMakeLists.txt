@@ -46,7 +46,7 @@ if(BUILD_ASSIMP)
         LINKAGE SHARED
         SOURCES model_compress.cpp
         LIBRARIES CoffeeCore CoffeeAssimp
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
     if(NOT APPLE)
@@ -73,7 +73,7 @@ if(SQUISH_FOUND)
         tiff_decoder.h
 
         LIBRARIES CoffeeImage CoffeeCore Squish
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
     if(NOT APPLE)
@@ -164,7 +164,7 @@ if(SHADERC_FOUND)
         LINKAGE SHARED
         SOURCES shader_compress.cpp
         LIBRARIES CoffeeCore shaderc
-        HEADER_DIRS ${CMAKE_SOURCE_DIR}/coffee/interfaces
+        HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
     target_include_directories( PressurizeShaders

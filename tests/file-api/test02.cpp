@@ -4,11 +4,9 @@
 
 using namespace Coffee;
 
-const Url small_map_test = MkUrl(
-    "file_map_small.bin",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+const Url small_map_test = MkUrl("file_map_small.bin", RSCA::TemporaryFile);
 
-byte_t sample_storage[Unit_kB * 100] = {"I'M THE TRASHMAN!\n"};
+static byte_t sample_storage[Unit_kB * 100] = {"I'M THE TRASHMAN!\n"};
 
 bool filewrite_test()
 {
@@ -17,9 +15,7 @@ bool filewrite_test()
     rsc = Bytes::From(sample_storage, sizeof(sample_storage));
 
     return CResources::FileCommit(
-        rsc,
-        ResourceAccess::WriteOnly | ResourceAccess::Discard |
-            ResourceAccess::NewFile);
+        rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 }
 
 bool filemap_test()

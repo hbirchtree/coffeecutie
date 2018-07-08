@@ -23,16 +23,9 @@ using WFun =
 void windowing_wrap(WFun&& func)
 {
     using namespace Coffee;
-    auto application_data =
-        Display::MkEventLoop(Display::CreateRendererUq(), MkUq<Empty>());
-
-    application_data->setup = func;
-
-    application_data->loop    = [](Display::RendererInterface&, Empty*) {};
-    application_data->cleanup = [](Display::RendererInterface&, Empty*) {};
 
     AutoExec<API, Display::RendererInterface, Empty>(
-        [](Display::RendererInterface&, Empty*) {},
+        std::move(func),
     [](Display::RendererInterface&, Empty*) {},
     [](Display::RendererInterface&, Empty*) {});
 }

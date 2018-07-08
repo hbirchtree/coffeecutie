@@ -3,9 +3,8 @@
 
 using namespace Coffee;
 
-const Url testfile = MkUrl(
-    "fileapi_testfile.txt",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+const Url testfile =
+    MkUrl("fileapi_testfile.txt", RSCA::TemporaryFile);
 
 using File = FileFun;
 
@@ -39,7 +38,7 @@ bool check_move_constructor()
 
     bool status = true;
 
-    FileMap(r1, ResourceAccess::ReadWrite | ResourceAccess::NewFile, 100);
+    FileMap(r1, RSCA::ReadWrite | RSCA::NewFile, 100);
 
     Resource r2 = std::move(r1);
 

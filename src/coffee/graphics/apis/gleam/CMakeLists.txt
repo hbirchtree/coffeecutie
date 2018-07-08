@@ -18,17 +18,8 @@ coffee_library (
     CoffeeGraphicsAPI
 
     HEADER_DIRS
-    ${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/levels
-    )
-
-target_include_directories ( CoffeeGLeamCommon
-    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>
-    $<INSTALL_INTERFACE:include>
-    )
-
-target_include_directories ( CoffeeGLeamCommon
-    PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/toolchain/internal/include>
     )
 
@@ -54,7 +45,7 @@ if(BUILD_GLEAM)
         CoffeeGLeamCommon
 
         HEADER_DIRS
-        ${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam/rhi
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
         )
 endif()
 
