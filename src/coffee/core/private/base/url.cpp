@@ -89,7 +89,7 @@ STATICINLINE SystemPaths GetSystemPaths()
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
     paths.configDir = MkUrl(
-        cmd.store_string.c_str(), RSCA::SpecifyStorage | RSCA::SystemFile);
+        cmd.store_string.c_str(), RSCA::SystemFile);
 
     cmd.type = Android_QueryCachePath;
 
@@ -97,7 +97,7 @@ STATICINLINE SystemPaths GetSystemPaths()
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
     paths.cacheDir = MkUrl(
-        cmd.store_string.c_str(), RSCA::SpecifyStorage | RSCA::SystemFile);
+        cmd.store_string.c_str(), RSCA::SystemFile);
 
     paths.tempDir = paths.cacheDir;
 
