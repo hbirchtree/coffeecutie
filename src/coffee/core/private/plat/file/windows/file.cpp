@@ -360,7 +360,6 @@ szptr WinFileFun::Size(Url const& fn, file_error& ec)
         CWString wname =
             Mem::StrUtil::convertformat<wchar_t, char>(url.c_str());
         f = CreateFile2(wname.c_str(), GENERIC_READ, 0, OPEN_ALWAYS, nullptr);
-        CString err = win_strerror(GetLastError());
 #endif
         ec.as<win32_error_code>() = GetLastError();
 

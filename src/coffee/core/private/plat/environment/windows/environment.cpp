@@ -98,7 +98,7 @@ Url WindowsEnvFun::CurrentDir()
     out.resize(out.size() - 1);
 #ifdef COFFEE_WINDOWS_UWP
     out = CStrReplace(out, L"\\", L"/");
-    return CString(out.begin(),out.end());
+    return MkUrl(CString(out.begin(),out.end()), RSCA::SystemFile);
 #else
     out = CStrReplace(out, "\\", "/");
     return MkUrl(out, RSCA::SystemFile);
