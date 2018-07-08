@@ -2,8 +2,8 @@
 
 #include "../../types/basetypes.h"
 
-namespace Coffee{
-namespace DebugFun{
+namespace Coffee {
+namespace DebugFun {
 
 struct StacktraceFunDef
 {
@@ -11,14 +11,16 @@ struct StacktraceFunDef
     static Stacktrace GetStacktrace();
 };
 
-using LogInterface = void(*)(FILE*, CString, Severity, bool);
+using LogInterface = void (*)(FILE*, CString, Severity, bool);
 
 struct OutputPrinterDef
 {
     static Mutex PrinterLock;
 
     template<typename... Args>
-    static void fprintf(FILE*, cstring, Args...){}
+    static void fprintf(FILE*, cstring, Args...)
+    {
+    }
 };
 
 struct DebugPrinterDef
@@ -26,27 +28,44 @@ struct DebugPrinterDef
     static CString& Colorize(CString&, Color, Color);
 
     template<typename... Args>
-    static CString FormatPrintString(cstring, Args...){}
+    static CString FormatPrintString(cstring, Args...)
+    {
+        return {};
+    }
 
     template<typename... Args>
-    static void cDebug(cstring, Args...){}
+    static void cDebug(cstring, Args...)
+    {
+    }
     template<typename... Args>
-    static void cWarning(cstring, Args...){}
+    static void cWarning(cstring, Args...)
+    {
+    }
     template<typename... Args>
-    static void cFatal(cstring, Args...){}
+    static void cFatal(cstring, Args...)
+    {
+    }
 
     template<typename... Args>
-    static void cBasicPrint(cstring, Args...){}
+    static void cBasicPrint(cstring, Args...)
+    {
+    }
     template<typename... Args>
-    static void cBasicPrintNoNL(cstring, Args...){}
+    static void cBasicPrintNoNL(cstring, Args...)
+    {
+    }
 };
 
 struct LogPrinterDef
 {
     template<typename... Args>
-    static void cLog(cstring, int64, cstring, cstring, Args...){}
+    static void cLog(cstring, int64, cstring, cstring, Args...)
+    {
+    }
     template<typename... Args>
-    static void cMsg(cstring, cstring, Args...){}
+    static void cMsg(cstring, cstring, Args...)
+    {
+    }
 };
 
 /*!
@@ -56,7 +75,7 @@ struct LogPrinterDef
  */
 
 extern LogInterface GetLogInterface();
-extern void SetLogInterface(LogInterface intf);
+extern void         SetLogInterface(LogInterface intf);
 
-}
-}
+} // namespace DebugFun
+} // namespace Coffee

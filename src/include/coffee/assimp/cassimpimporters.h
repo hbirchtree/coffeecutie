@@ -1,11 +1,10 @@
-#ifndef COFFEE_CRESOURCETYPES_CASSIMP_CASSIMPIMPORTERS_H
-#define COFFEE_CRESOURCETYPES_CASSIMP_CASSIMPIMPORTERS_H
+#pragma once
 
-#include <coffee/core/coffee.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/coffee.h>
 
-#include <coffee/core/types/vector_types.h>
 #include <coffee/core/CObject>
+#include <coffee/core/types/vector_types.h>
 
 namespace Coffee {
 
@@ -26,18 +25,16 @@ struct Node : public MultiParentObject
     }
 
     Matf4 transform; /*!< Transform of the current node, not accumulated */
-    i32 mesh; /*!< Connected mesh ID, -1 if "virtual" */
-    u32 flags; /*!< User flags */
+    i32   mesh;      /*!< Connected mesh ID, -1 if "virtual" */
+    u32   flags;     /*!< User flags */
 };
 
 struct NodeList : public LinkList<Node>
 {
 };
 
-
-extern bool LoadScene(UqPtr<AssimpData> &target,
-                      Bytes const& source,
-                      cstring hint = nullptr);
+extern bool LoadScene(
+    UqPtr<AssimpData>& target, Bytes const& source, cstring hint = nullptr);
 
 struct ObjectDesc
 {
@@ -50,20 +47,20 @@ struct ObjectDesc
         Camera,
     };
 
-    const cstring objectName;
+    const cstring    objectName;
     const ObjectType type;
 };
 
 struct Object
 {
     ObjectDesc::ObjectType type;
-    union{
-
+    union
+    {
     };
 };
 
-extern bool GetSceneObjects(UqPtr<AssimpData> const& scene,
-                            Vector<ObjectDesc>& objects);
+extern bool GetSceneObjects(
+    UqPtr<AssimpData> const& scene, Vector<ObjectDesc>& objects);
 
 /*!
  * \brief Get pre-multiplied scene nodes.
@@ -74,9 +71,8 @@ extern bool GetSceneObjects(UqPtr<AssimpData> const& scene,
  * \param nodes
  * \return
  */
-extern bool GetSceneRoot(UqPtr<AssimpData> const& scene,
-                         Node** root,
-                         NodeList& nodes);
+extern bool GetSceneRoot(
+    UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
 
 /*!
  * \brief Like GetSceneRoot(), but does not accumulate matrices.
@@ -85,19 +81,14 @@ extern bool GetSceneRoot(UqPtr<AssimpData> const& scene,
  * \param nodes
  * \return
  */
-extern bool GetRawSceneRoot(UqPtr<AssimpData> const& scene,
-                            Node** root,
-                            NodeList& nodes);
+extern bool GetRawSceneRoot(
+    UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
 
-extern bool GetMeshData(UqPtr<AssimpData> const& scene,
-                        i32 node,
-                        Mesh& output_mesh);
+extern bool GetMeshData(
+    UqPtr<AssimpData> const& scene, i32 node, Mesh& output_mesh);
 
-extern bool GetMeshCount(UqPtr<AssimpData> const& scene,
-                         i32& count);
+extern bool GetMeshCount(UqPtr<AssimpData> const& scene, i32& count);
 
-}
+} // namespace ASSIMP
 
 } // namespace Coffee
-
-#endif // COFFEE_CRESOURCETYPES_CASSIMP_CASSIMPIMPORTERS_H
