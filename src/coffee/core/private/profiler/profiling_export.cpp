@@ -758,7 +758,7 @@ void ExportStringToFile(const CString& data, const Url& outfile)
     out.size = C_CAST<szptr>(data.size() - 1);
     cVerbose(6, "Retrieving data pointers");
 
-    if(!FileCommit(out, RSCA::Discard | RSCA::WriteOnly))
+    if(!FileCommit(out, RSCA::Discard | RSCA::WriteOnly | RSCA::NewFile))
         cWarning("Failed to export string to file");
 
     cVerbose(6, "Wrote file");

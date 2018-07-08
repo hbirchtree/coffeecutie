@@ -112,6 +112,7 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
 
     if(resc.size == 0)
     {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File not found");
         Profiler::DeepPopContext();
         return false;
@@ -122,6 +123,7 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
 
     if(ec)
     {
+        C_ERROR_CHECK(ec);
         resc.size = 0;
         Profiler::DeepProfile(CFILES_TAG "Mapping failed");
         Profiler::DeepPopContext();
@@ -154,11 +156,13 @@ bool FileUnmap(Resource& resc)
 
     if(!s)
     {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "Unmapping failed");
         Profiler::DeepPopContext();
         return false;
     }
 
+    resc.m_platform_data->m_mapping = {};
     resc.data = nullptr;
     resc.size = 0;
 
@@ -212,6 +216,7 @@ bool FilePull(Resource& resc)
 
     if(ec)
     {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File not found");
         return false;
     }
@@ -226,6 +231,7 @@ bool FilePull(Resource& resc)
 
     if(!resc.data)
     {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File read failure");
         return false;
     }
@@ -243,14 +249,11 @@ bool FileCommit(Resource& resc, RSCA acc)
 
     file_error ec;
 
-    RSCA dflags = RSCA::WriteOnly;
-
-    dflags |= RSCA::NewFile;
-
     auto fp = FileFun::Open(resc.m_platform_data->m_url, acc, ec);
 
     if(ec)
     {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File not created");
         return false;
     }
@@ -259,6 +262,7 @@ bool FileCommit(Resource& resc, RSCA acc)
 
     if(!FileFun::Close(std::move(fp), ec))
     {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File failed to close");
         return false;
     }
@@ -274,7 +278,10 @@ bool FileMkdir(Url const& dirname, bool recursive)
     bool status = DirFun::MkDir(dirname, recursive, ec);
 
     if(!status)
+    {
+        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "Directory creation failed");
+    }
 
     return status;
 }

@@ -26,28 +26,13 @@ coffee_library (
     # Library versioning
     private/application_data.cpp
 
-    # Useful system information, such as display DPI and system name
-    private/platform_data.cpp
-
     #
     # Debug functions
     #
     private/base/cdebug.cpp
     private/base/debugprinter.cpp
 
-    #
-    # Generic display functionality
-    #
-    private/base/cdisplay.cpp
-
-    #
-    # Object ownership and labeling
-    #
-    private/base/cobject.cpp
-
-    #
     # Wrapper around std::regex
-    #
     private/base/cregex.cpp
 
     #
@@ -56,17 +41,6 @@ coffee_library (
     private/base/strings/extensionresolvers.cpp
     private/base/strings/information_extensions.cpp
     private/base/strings/vector_print_extensions.cpp
-
-    #
-    # Alternative thread implementations
-    # Used for platforms without std::thread/std::mutex support
-    #
-    private/types/tdef/thread_types.cpp
-
-    #
-    # Terminal functions
-    #
-    private/terminal/table-print.cpp
 
     #
     # Internal platform layer, cross-platform
@@ -87,40 +61,14 @@ coffee_library (
     private/task_queue/task.cpp
 
     #
-    # Virtual filesystem
-    #
-    private/datastorage/binary/virtualfs.cpp
-
-    #
     # File-related functionality
     #
     private/plat/file/file_common.cpp
     private/base/cfiles.cpp
     private/base/url.cpp
 
-    #
-    # Generic application data storage, for application state
-    #
-    private/coffee_saving.cpp
-
-    #
-    # Wrapper exporting EventApplication to C
-    #
-    private/base/eventapplication_wrapper.cpp
-
-    #
-    # libz compression
-    #
-    private/datastorage/compression/libz.cpp
-
-    #
-    # Profiling export to XML and Chrome trace format
-    #
-    private/profiler/profiling-export.cpp
-
     LIBRARIES
     ${STANDARDLIBS_LIBRARIES}
-#    CoffeeXML
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
@@ -129,6 +77,35 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+#
+# libz compression and whatever compression Windows has
+#
+coffee_library (
+    TARGET CoffeeCore_Compression
+
+    SOURCES
+    private/datastorage/compression/libz.cpp
+
+    LIBRARIES CoffeeCore_Base
+    )
+
+#
+# Virtual filesystem
+#
+coffee_library (
+    TARGET CoffeeCore_VirtFS
+
+    SOURCES
+    private/datastorage/binary/virtualfs.cpp
+
+    LIBRARIES
+    CoffeeCore_Base
+    CoffeeCore_Compression
+    )
+
+#
+# Linked only by applications, contains main()
+#
 coffee_library (
     TARGET CoffeeCore_Application
 
@@ -139,12 +116,92 @@ coffee_library (
     LIBRARIES CoffeeCore_Base
     )
 
+#
+# EventApplication C wrapper
+#
+coffee_library (
+    TARGET CoffeeCore_EventApplicationC
 
+    SOURCES
+    private/base/eventapplication_wrapper.cpp
+    private/base/cdisplay.cpp
+
+    LIBRARIES CoffeeCore_Base
+    )
+
+#
+# Useful system information, such as display DPI and system name
+#
+coffee_library (
+    TARGET CoffeeCore_PlatformData
+
+    SOURCES
+    private/platform_data.cpp
+
+    LIBRARIES CoffeeCore_Base
+    )
+
+#
+# Utilities for printing in the terminal
+#
+coffee_library (
+    TARGET CoffeeCore_TerminalPrinting
+
+    SOURCES
+    private/terminal/table_print.cpp
+
+    LIBRARIES CoffeeCore_Base
+    )
+
+#
+# Generic application data storage, for application state
+#
+coffee_library (
+    TARGET CoffeeCore_Saving
+
+    SOURCES
+    private/coffee_saving.cpp
+
+    LIBRARIES CoffeeCore_Base
+    )
+
+#
+# Profiling export to Chrome trace format
+#
+coffee_library (
+    TARGET CoffeeCore_Profiling
+
+    SOURCES
+    private/profiler/profiling_export.cpp
+
+    LIBRARIES CoffeeCore_Base CoffeeCore_PlatformData
+    )
+
+#
+# Avoid this
+#
+coffee_library (
+    TARGET CoffeeCore_OldBlob
+
+    SOURCES
+    # Object ownership and labeling
+    private/base/cobject.cpp
+
+    LIBRARIES CoffeeCore_Base
+    )
+
+#
+# Custom INI reader/writer
+#
 coffee_library (
     TARGET CoffeeINI
     LIBRARIES CoffeeCore_Base
     SOURCES private/datastorage/text/ini/ciniparser.cpp
     )
+
+#
+# Unit test librar that dies properly when a test fails
+#
 coffee_library (
     TARGET CoffeeTesting
     SOURCES private/unit_tests/framework.cpp
@@ -178,6 +235,14 @@ target_include_directories ( CoffeeCore_Base PUBLIC
 
 target_link_libraries ( CoffeeCore INTERFACE
     CoffeeCore_Base
+    CoffeeCore_Compression
+    CoffeeCore_EventApplicationC
+    CoffeeCore_OldBlob
+    CoffeeCore_PlatformData
+    CoffeeCore_Profiling
+    CoffeeCore_Saving
+    CoffeeCore_TerminalPrinting
+    CoffeeCore_VirtFS
     )
 
 #
@@ -398,6 +463,20 @@ if(WIN32)
             private/plat/environment/windows/windows_startup_uwp.cpp
             )
     endif()
+endif()
+
+#
+#
+# Alternative thread implementations
+# Used for platforms without std::thread/std::mutex support
+# Implemented here:
+#  - Gamecube/Wii LWP
+#
+#
+if(GAMECUBE)
+    target_sources ( CoffeeCore_Base PRIVATE
+        private/types/tdef/thread_types.cpp
+        )
 endif()
 
 coffee_bundle_includes (
