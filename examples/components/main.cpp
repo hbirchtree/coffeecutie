@@ -71,7 +71,7 @@ i32 coffee_main(i32, cstring_w*)
     for(auto i : Range<>(100))
         entities.create_entity(rec1);
 
-    for(auto i : Range<>(100))
+    for(auto i : Range<>(1000000))
         entities.create_entity(rec2);
     Profiler::PopContext();
 
@@ -79,15 +79,17 @@ i32 coffee_main(i32, cstring_w*)
     for(auto& o : entities.select(OF_Test_1))
         o.interval = Chrono::milliseconds(20);
 
-    // for(auto& o : entities.select(0))
-    //    cDebug("Object: {0} {1}", o.id, o.interval.count());
+//    for(auto& o : entities.select(0))
+//        cBasicPrint("Object: {0} {1}", o.id, o.interval.count());
 
-    entities.exec();
+    for(auto i : Range<>(1000000))
+        entities.exec();
+
     Profiler::PopContext();
 
-    Profiler::PushContext("Control");
-    CurrentThread::sleep_for(Chrono::milliseconds(1));
-    Profiler::PopContext();
+//    Profiler::PushContext("Control");
+//    CurrentThread::sleep_for(Chrono::milliseconds(1));
+//    Profiler::PopContext();
 
     return 0;
 }

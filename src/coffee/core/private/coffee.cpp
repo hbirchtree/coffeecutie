@@ -166,6 +166,8 @@ void CoffeeInit(bool)
 int32 CoffeeMain(
     CoffeeMainWithArgs mainfun, int32 argc, cstring_w* argv, u32 flags)
 {
+    auto start_time = Chrono::high_resolution_clock::now();
+
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
@@ -177,6 +179,7 @@ int32 CoffeeMain(
     /* BuildInfo contains information on the compiler, architecture
      *  and platform */
     SetBuildInfo(State::GetBuildInfo());
+
 #endif
 
     /* Create initial RuntimeQueue context for the user */
@@ -306,6 +309,12 @@ int32 CoffeeMain(
 #ifndef COFFEE_LOWFAT
     Profiler::PopContext();
     Profiler::PopContext();
+
+    cBasicPrint(
+        "Execution time: {0}",
+        Chrono::duration_cast<Chrono::seconds_double>(
+            Chrono::high_resolution_clock::now() - start_time)
+            .count());
 #endif
     return r;
 }
@@ -314,8 +323,8 @@ void CoffeeTerminate()
 {
     cVerbose(5, "Terminating");
 
-//    runtime_queue_error qec;
-//    RuntimeQueue::TerminateThreads(qec);
+    //    runtime_queue_error qec;
+    //    RuntimeQueue::TerminateThreads(qec);
 
 #ifndef COFFEE_LOWFAT
 
@@ -325,7 +334,7 @@ void CoffeeTerminate()
      *  useful when debugging resource APIs */
 
     Vector<DirFun::DirItem_t> file_descs;
-    auto procFd = Path("/proc/self/fd");
+    auto                      procFd = Path("/proc/self/fd");
 
     file_error ec;
 
@@ -333,10 +342,7 @@ void CoffeeTerminate()
     if(DirFun::Ls(MkUrl(procFd, RSCA::SystemFile), file_descs, ec))
         for(auto const& f : file_descs)
         {
-            cBasicPrint(
-                "{0} : {1}",
-                f.name,
-                (procFd + f.name).canonical());
+            cBasicPrint("{0} : {1}", f.name, (procFd + f.name).canonical());
         }
 
     using MMAP = Environment::Linux::MemMap;
@@ -378,8 +384,7 @@ void GotoApplicationDir()
 
 void InstallDefaultSigHandlers()
 {
-    std::set_terminate([]()
-    {
+    std::set_terminate([]() {
         Stacktracer::ExceptionStacktrace(std::current_exception());
         abort();
     });
