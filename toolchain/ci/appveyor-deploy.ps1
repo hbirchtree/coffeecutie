@@ -24,7 +24,7 @@ cd $PrevWd
 # Next, we need to find the target tag and release
 # We use Python to do most of the work...
 $PYTHON="C:\Python36\python.exe"
-$BUILDINFOPY = "$env:SOURCE_DIR\buildinfo.py"
+$BUILDINFOPY = "$env:SOURCE_DIR\toolchain\buildinfo.py"
 $SCRIPT_DIR = (. $PYTHON $BUILDINFOPY --source-dir $env:SOURCE_DIR script_location )
 $SCRIPT_DIR = "$env:SOURCE_DIR\$SCRIPT_DIR"
 
