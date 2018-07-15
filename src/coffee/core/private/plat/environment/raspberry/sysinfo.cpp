@@ -1,9 +1,14 @@
 #include <coffee/core/plat/environment/raspberry/sysinfo.h>
 #include <coffee/core/plat/plat_file.h>
+#include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/plat/memory/string_ops.h>
 
 namespace Coffee{
 namespace Environment{
 namespace Raspberry{
+
+using namespace Mem;
+using namespace Search;
 
 static const constexpr cstring model_names[] = {
     "A",
