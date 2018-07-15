@@ -1387,6 +1387,8 @@ struct NullAPI : GraphicsAPI
 
     using API_CONTEXT = Function<bool(bool)>;
 
+    using ERROR = error_code;
+
     using FB_T = RenderTarget;
     using RBUF = RenderDummy;
 

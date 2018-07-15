@@ -45,7 +45,7 @@ template_location: toolchain/cmake/Templates
 version:
   hotfix: 0
   major: 4
-  minor: 2
+  minor: 3
   patch: 0
-  release: 18
+  release: 0
 versionprefix: automated-release-
