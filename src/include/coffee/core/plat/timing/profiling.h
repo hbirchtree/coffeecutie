@@ -48,13 +48,10 @@ struct DataPoint
 
     ThreadId::Hash thread;
 
-    CString   name;
+    cstring   name;
     Timestamp ts;
 
-    CString component;
-
-    //        CString label;
-    //        uint32 line;
+    cstring component;
 
     Type tp;
     Attr at;
@@ -71,10 +68,17 @@ using ThreadItem    = Pair<ThreadId::Hash, CString>;
 using ExtraData     = LinkList<ExtraPair>;
 using StackFrames   = Set<CString>;
 
+extern UqPtr<State::GlobalState> CreateJsonProfiler();
+extern void JsonPush(ThreadData* tdata, DataPoint const& point);
+
 struct ThreadData
 {
-    LinkList<DataPoint> datapoints;
-    LinkList<CString> context_stack;
+    struct
+    {
+        State::GlobalState* writer;
+        void (*push_back)(ThreadData* context, DataPoint const&);
+    } datapoints;
+    LinkList<cstring> context_stack;
 };
 
 using ThreadRefs = Map<ThreadId::Hash, ShPtr<ThreadData>>;
@@ -83,6 +87,15 @@ using ThreadRefs = Map<ThreadId::Hash, ShPtr<ThreadData>>;
 
 struct ProfilerDataStore
 {
+    ProfilerDataStore()
+#if !defined(COFFEE_DISABLE_PROFILER)
+        :
+        start_time(Time::CurrentMicroTimestamp()),
+        Enabled(true), Deep_Profile(false)
+#endif
+    {
+    }
+
 #if !defined(COFFEE_DISABLE_PROFILER)
     Timestamp start_time;
 
@@ -99,7 +112,7 @@ struct ProfilerDataStore
 };
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-STATICINLINE LinkList<CString>& threadContextStack()
+STATICINLINE LinkList<cstring>& threadContextStack()
 {
     return profiler_tstore->context_stack;
 }
@@ -109,12 +122,6 @@ struct SimpleProfilerImpl
 {
     STATICINLINE void InitProfiler()
     {
-#if !defined(COFFEE_DISABLE_PROFILER)
-        profiler_data_store->Enabled      = true;
-        profiler_data_store->Deep_Profile = false;
-
-        profiler_data_store->start_time = Time::CurrentMicroTimestamp();
-#endif
     }
 
     STATICINLINE void DisableProfiler()
@@ -136,14 +143,6 @@ struct SimpleProfilerImpl
 #endif
     }
 
-    /*
-     * To remove the overhead of container operations from the measurements,
-     * timestamps are captured as early or as late as possible, depending on
-     * which is appropriate. Linked lists have little insertion time, but we
-     * want to be sure.
-     *
-     */
-
     STATICINLINE void Profile(
         cstring name = nullptr, DataPoint::Attr at = DataPoint::AttrNone)
     {
@@ -161,9 +160,7 @@ struct SimpleProfilerImpl
         auto  store  = profiler_tstore;
         auto& points = store->datapoints;
 
-        points.push_back(p);
-
-        PFTRACE("PRF:" + p.name);
+        points.push_back(profiler_tstore, p);
 #endif
     }
 
@@ -183,8 +180,7 @@ struct SimpleProfilerImpl
         p.component = COFFEE_COMPONENT_NAME;
         p.at        = at;
 
-        profiler_tstore->datapoints.push_back(p);
-        profiler_tstore->datapoints.back().ts = Time::CurrentMicroTimestamp();
+        profiler_tstore->datapoints.push_back(profiler_tstore, p);
 
         PFTRACE("PSH:" + p.name);
 #endif
@@ -205,7 +201,7 @@ struct SimpleProfilerImpl
         p.component = COFFEE_COMPONENT_NAME;
         p.at        = DataPoint::AttrNone;
 
-        profiler_tstore->datapoints.push_back(p);
+        profiler_tstore->datapoints.push_back(profiler_tstore, p);
         threadContextStack().pop_front();
 
         PFTRACE("POP:" + p.name);

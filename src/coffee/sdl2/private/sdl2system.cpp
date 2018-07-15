@@ -1,9 +1,10 @@
 #include <coffee/sdl2/sdl2system.h>
 
 #include <coffee/core/coffee_strings.h>
-#include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
 #include "types/sdl2datatypes.h"
+
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 namespace SDL2{

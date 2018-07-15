@@ -6,6 +6,7 @@
 #include "assimp_data.h"
 #include <coffee/core/VirtualFS>
 #include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/plat/memory/stlstring_ops.h>
 
 namespace Coffee{
 namespace ASSIMP{
@@ -282,7 +283,7 @@ struct MaterialParser
             CString path = t_path.C_Str();
 
             for(auto const& bdir : baseDirs)
-                path = Search::CStrReplace(path, bdir, "");
+                path = Mem::Search::CStrReplace(path, bdir, "");
 
             stringStore.push_back(path);
             stringStoreSize += path.size() + 1;

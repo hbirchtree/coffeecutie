@@ -6,6 +6,8 @@ namespace Coffee {
 namespace Environment {
 namespace Linux {
 
+using namespace Mem;
+
 struct mem_usage
 {
     uint64 vmsize;

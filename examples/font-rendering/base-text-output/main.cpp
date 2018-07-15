@@ -11,7 +11,8 @@ i32 rendering_test(i32, cstring_w*)
 {
     using namespace TrueType;
 
-    auto fontData = "/usr/share/fonts/truetype/abyssinica/AbyssinicaSIL-R.ttf"_sysfile;
+    auto fontData =
+        "/usr/share/fonts/truetype/abyssinica/AbyssinicaSIL-R.ttf"_sysfile;
 
     Bytes data = fontData;
 
@@ -35,7 +36,8 @@ i32 rendering_test(i32, cstring_w*)
 
     {
         ProfContext _("Render text");
-        FontRenderer::RenderText(config, props, "FINAL FANTASY VII", textData, textSize);
+        FontRenderer::RenderText(
+            config, props, "Some cool Text", textData, textSize);
     }
 
     cDebug("Font name: {0}", FontRenderer::GetFontName(config));
@@ -50,7 +52,8 @@ i32 rendering_test(i32, cstring_w*)
 
         {
             ProfContext _("Filesystem");
-            if(!FileCommit(outFile))
+            if(!FileCommit(
+                   outFile, RSCA::Discard | RSCA::NewFile | RSCA::WriteOnly))
             {
                 cDebug("Failed to save bitmap");
                 return 1;

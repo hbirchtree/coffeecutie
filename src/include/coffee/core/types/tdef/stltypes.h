@@ -533,7 +533,7 @@ struct nested_empty_error_code
 #define C_ERROR_CHECK(ec)                            \
     {                                                \
         if(ec)                                       \
-            Throw(std::runtime_error(ec.message())); \
+            Throw(implementation_error(ec.message())); \
     }
 #else
 #define C_ERROR_CHECK(ec)

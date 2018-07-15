@@ -36,6 +36,16 @@ struct MatrixContainer : ComponentContainer<TagMatf4>
     {
         return &matrices.at(mapping[id]);
     }
+
+    virtual void prealloc(szptr count) override
+    {
+        matrices.reserve(matrices.size() + count);
+    }
+
+    virtual bool contains_entity(u64 id) const override
+    {
+        return mapping.find(id) != mapping.end();
+    }
 };
 
 void entity_process(ContainerProxy& c)
@@ -68,10 +78,13 @@ i32 coffee_main(i32, cstring_w*)
     Profiler::PopContext();
 
     Profiler::PushContext("Create 200 entities");
+
+    entities.prealloc(rec1, 100);
     for(auto i : Range<>(100))
         entities.create_entity(rec1);
 
-    for(auto i : Range<>(1000000))
+    entities.prealloc(rec2, 500000);
+    for(auto i : Range<>(500000))
         entities.create_entity(rec2);
     Profiler::PopContext();
 
@@ -82,7 +95,7 @@ i32 coffee_main(i32, cstring_w*)
 //    for(auto& o : entities.select(0))
 //        cBasicPrint("Object: {0} {1}", o.id, o.interval.count());
 
-    for(auto i : Range<>(1000000))
+    for(auto i : Range<>(10))
         entities.exec();
 
     Profiler::PopContext();
@@ -90,6 +103,8 @@ i32 coffee_main(i32, cstring_w*)
 //    Profiler::PushContext("Control");
 //    CurrentThread::sleep_for(Chrono::milliseconds(1));
 //    Profiler::PopContext();
+
+    ComponentContainerBase& t1 = matrix_store;
 
     return 0;
 }

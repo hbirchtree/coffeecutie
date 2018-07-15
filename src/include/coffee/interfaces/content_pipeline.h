@@ -3,6 +3,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/internal_state.h>
+#include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee {
@@ -55,7 +56,8 @@ struct FileProcessor
 
     virtual Path cacheTransform(Path const& f)
     {
-        return cacheBaseDir + Path(CStrReplace(f.internUrl, "/", "_"));
+        return cacheBaseDir +
+               Path(Mem::Search::CStrReplace(f.internUrl, "/", "_"));
     }
 
     virtual bool isCached(Path const& file)

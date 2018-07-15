@@ -1,17 +1,16 @@
-#ifndef COFFEE_DEBUG
-#define COFFEE_DEBUG
+#pragma once
 
 #include "../../coffee_mem_macros.h"
 
 #include "../strings/cdebug_print.h"
 
 #ifndef COFFEE_LOWFAT
-#include "debugprinter.h"
+#include "../printing/outputprinter.h"
 #endif
 
-namespace Coffee{
+namespace Coffee {
 
-namespace DebugFun{
+namespace DebugFun {
 using namespace Strings;
 
 /*!
@@ -19,10 +18,10 @@ using namespace Strings;
  */
 enum DebugSeverity
 {
-    DebugMsgInfo, /*!< Simple info, nothing serious*/
-    DebugMsgDebug, /*!< Debug info, should be disabled in release mode*/
+    DebugMsgInfo,    /*!< Simple info, nothing serious*/
+    DebugMsgDebug,   /*!< Debug info, should be disabled in release mode*/
     DebugMsgWarning, /*!< Warning, should be paid attention to*/
-    DebugMsgFatal, /*!< Fatal message, followed by a crash*/
+    DebugMsgFatal,   /*!< Fatal message, followed by a crash*/
 };
 
 template<typename... Arg>
@@ -34,8 +33,13 @@ template<typename... Arg>
 FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    CString out = cStringFormat(str,args...);
-    OutputPrinter::fprintf(DefaultDebugOutputPipe,Severity::Information,DebugPrinterImpl::print_fmt,out.c_str());
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe,
+        Severity::Information,
+        1,
+        OutputPrinter::Flag_NoContext,
+        str,
+        args...);
 #endif
 }
 
@@ -48,26 +52,41 @@ template<typename... Arg>
 FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    CString out = cStringFormat(str,args...);
-    OutputPrinter::fprintf(DefaultDebugOutputPipe,Severity::Information,"{0}",out.c_str());
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe,
+        Severity::Information,
+        1,
+        OutputPrinter::Flag_NoContext | OutputPrinter::Flag_NoNewline,
+        str,
+        args...);
 #endif
 }
 
-template<typename... Arg> FORCEDINLINE
-void cOutputPrint(cstring str, Arg... args)
+template<typename... Arg>
+FORCEDINLINE void cOutputPrint(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    CString out = cStringFormat(str,args...);
-    OutputPrinter::fprintf(DefaultPrintOutputPipe,Severity::Information,DebugPrinterImpl::print_fmt,out.c_str());
+    OutputPrinter::fprintf(
+        DefaultPrintOutputPipe,
+        Severity::Information,
+        0,
+        OutputPrinter::Flag_NoContext,
+        str,
+        args...);
 #endif
 }
 
-template<typename... Arg> FORCEDINLINE
-void cOutputPrintNoNL(cstring str, Arg... args)
+template<typename... Arg>
+FORCEDINLINE void cOutputPrintNoNL(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    CString out = cStringFormat(str,args...);
-    OutputPrinter::fprintf(DefaultPrintOutputPipe,Severity::Information,"{0}",out.c_str());
+    OutputPrinter::fprintf(
+        DefaultPrintOutputPipe,
+        Severity::Information,
+        0,
+        OutputPrinter::Flag_NoContext | OutputPrinter::Flag_NoNewline,
+        str,
+        args...);
 #endif
 }
 
@@ -80,7 +99,8 @@ template<typename... Arg>
 FORCEDINLINE void cDebug(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    DebugPrinter::cDebug(str,args...);
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe, Severity::Debug, 1, 0, str, args...);
 #endif
 }
 
@@ -94,7 +114,8 @@ template<typename... Arg>
 FORCEDINLINE void cVerbose(uint32 v, cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    DebugPrinter::cVerbose(v,str,args...);
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe, Severity::Verbose, v, 0, str, args...);
 #endif
 }
 
@@ -107,7 +128,8 @@ template<typename... Arg>
 FORCEDINLINE void cVerbose(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    DebugPrinter::cVerbose(3,str,args...);
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe, Severity::Verbose, 3, 0, str, args...);
 #endif
 }
 #else
@@ -125,7 +147,8 @@ template<typename... Arg>
 FORCEDINLINE void cWarning(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    DebugPrinter::cWarning(str,args...);
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe, Severity::Medium, 1, 0, str, args...);
 #endif
 }
 
@@ -138,20 +161,31 @@ template<typename... Arg>
 FORCEDINLINE void cFatal(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    DebugPrinter::cFatal(str,args...);
+    OutputPrinter::fprintf(
+        DefaultDebugOutputPipe, Severity::Fatal, 0, 0, str, args...);
 #endif
     Throw(std::runtime_error(str));
 }
 
-template<typename...Arg>
-FORCEDINLINE void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
+template<typename... Arg>
+FORCEDINLINE void cTag(cstring tag, cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
-    /* TODO: Pipe this to a proper logger */
+    OutputPrinter::fprintf_tagged(
+        DefaultDebugOutputPipe, Severity::Information, 0, 0, tag, str, args...);
+#endif
+}
+
+template<typename... Arg>
+C_DEPRECATED FORCEDINLINE void cLog(
+    cstring file, int64 line, cstring id, cstring msg, Arg... args)
+{
+#ifndef COFFEE_LOWFAT
+/* TODO: Pipe this to a proper logger */
 #ifndef NDEBUG
-    CString logr = cStringFormat("{0}:{1}@{2}", id, file, line);
-    CString fmt = logr + msg;
-    DebugPrinter::cDebug(fmt.c_str(), args...);
+//    CString logr = cStringFormat("{0}:{1}@{2}", id, file, line);
+//    CString fmt  = logr + msg;
+//    DebugPrinter::cDebug(fmt.c_str(), args...);
 #endif
 #endif
 }
@@ -163,14 +197,12 @@ template<typename... Arg>
  * \param msg
  * \param args
  */
-FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
+C_DEPRECATED FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 {
     cLog(nullptr, 0, src, msg, args...);
 }
-}
+} // namespace DebugFun
 
 using namespace Coffee::DebugFun;
 
-}
-
-#endif // COFFEE_DEBUG
+} // namespace Coffee

@@ -31,6 +31,8 @@ coffee_library (
     #
     private/base/cdebug.cpp
     private/base/debugprinter.cpp
+    private/base/jsonlogger.cpp
+    private/base/jsonprofile.cpp
 
     # Wrapper around std::regex
     private/base/cregex.cpp

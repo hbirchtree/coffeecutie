@@ -53,9 +53,11 @@ struct ComponentContainerBase : non_copy
     {
     }
 
-    virtual void register_entity(u64 id)    = 0;
-    virtual void unregister_entity(u64 id)  = 0;
-    virtual void process(ContainerProxy& c) = 0;
+    virtual void register_entity(u64 id)       = 0;
+    virtual void unregister_entity(u64 id)     = 0;
+    virtual void process(ContainerProxy& c)    = 0;
+    virtual void prealloc(szptr count)         = 0;
+    virtual bool contains_entity(u64 id) const = 0;
 };
 
 template<typename ComponentType>
@@ -123,14 +125,10 @@ struct EntityContainer : non_copy
 
         template<typename ComponentType>
         STATICINLINE entity_query from_container(
-            EntityContainer& c, ComponentContainer<ComponentType> const& e)
+            EntityContainer& c, ComponentContainer<ComponentType> const& comp)
         {
-            /* MSVC++ seems to have difficulties with this */
-            C_UNUSED(e);
-
-            return entity_query(c, [&](Entity const& e) {
-                return c.get<ComponentType>(e.id) != nullptr;
-            });
+            return entity_query(
+                c, [&](Entity const& e) { return comp.contains_entity(e.id); });
         }
 
         entity_query(EntityContainer& c) :
@@ -197,6 +195,23 @@ struct EntityContainer : non_copy
         components.clear();
     }
 
+    /*!
+     * \brief Used to hint to the entity container and components
+     *  to increase their buffer sizes.
+     * This avoids stalling on resizing vectors.
+     *
+     * \param recipe Type of entity to preallocate, will affect components
+     * \param count How much to expand, calling prealloc() multiple
+     *               times will not stack.
+     */
+    void prealloc(EntityRecipe const& recipe, szptr count)
+    {
+        entities.reserve(entities.size() + count);
+
+        for(auto type_id : recipe.components)
+            container(type_id).prealloc(count);
+    }
+
     /*
      *
      * Creation and registering components and entities
@@ -215,6 +230,9 @@ struct EntityContainer : non_copy
             throw implementation_error("cannot register subsystem twice");
 
         auto adapted = C_DCAST<SubsystemBase>(&sys);
+
+        if(C_RCAST<void*>(adapted) != C_RCAST<void*>(&sys))
+            throw implementation_error("pointer casts will fail");
 
         subsystems.emplace(type_id, adapted);
     }
@@ -284,7 +302,7 @@ struct EntityContainer : non_copy
         if(it == components.end())
             throw undefined_behavior("component not found");
 
-        return *C_DCAST<container_t>(it->second);
+        return *C_FCAST<container_t*>(it->second);
     }
 
     template<typename OutputType>
@@ -299,7 +317,7 @@ struct EntityContainer : non_copy
         if(it == subsystems.end())
             throw undefined_behavior("subsystem not found");
 
-        return *C_DCAST<subsystem_t>(it->second);
+        return *C_FCAST<subsystem_t*>(it->second);
     }
 
     template<typename ComponentType>
@@ -354,8 +372,10 @@ struct ContainerProxy : non_copy
     {
         typename ComponentType::type* v = get<ComponentType>(current_entity);
 
+#ifndef NDEBUG
         if(!v)
             throw undefined_behavior("entity not found in container");
+#endif
 
         return *v;
     }
@@ -418,6 +438,9 @@ FORCEDINLINE void EntityContainer::register_component(
         throw implementation_error("cannot register type twice");
 
     auto adapted = C_DCAST<ComponentContainerBase>(&c);
+
+    if(C_RCAST<void*>(adapted) != C_RCAST<void*>(&c))
+        throw implementation_error("pointer casts will fail");
 
     components.emplace(type_id, adapted);
 }

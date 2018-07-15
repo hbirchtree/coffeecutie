@@ -3,7 +3,7 @@
 #include "coffee_version.h"
 #include <coffee/core/types/tdef/stlfunctypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct BuildInfo
 {
@@ -22,17 +22,22 @@ struct BuildInfo
 struct InternalState;
 struct InternalThreadState;
 
-namespace Profiling{
+namespace Profiling {
 struct ProfilerDataStore;
 struct ThreadData;
-}
+} // namespace Profiling
 
-namespace State{
+namespace State {
+
+struct GlobalState
+{
+    virtual ~GlobalState();
+};
 
 template<typename T>
 using P = ShPtr<T>;
 
-extern P<InternalState> internal_state;
+extern P<InternalState>                    internal_state;
 extern thread_local P<InternalThreadState> thread_state;
 
 extern P<InternalState> CreateNewState();
@@ -72,8 +77,8 @@ extern P<InternalThreadState>& GetInternalThreadState();
  *
  */
 
-extern Profiling::ProfilerDataStore *GetProfilerStore();
-extern Profiling::ThreadData *GetProfilerTStore();
+extern Profiling::ProfilerDataStore* GetProfilerStore();
+extern Profiling::ThreadData*        GetProfilerTStore();
 
 extern ThreadId& GetCurrentThreadId();
 
@@ -87,6 +92,9 @@ extern BuildInfo& GetBuildInfo();
 
 extern CoffeeApplicationData& GetAppData();
 
-}
+extern UqPtr<GlobalState> SwapState(cstring key, UqPtr<GlobalState>&& ptr);
+extern UqPtr<GlobalState> const& PeekState(cstring key);
 
-}
+} // namespace State
+
+} // namespace Coffee

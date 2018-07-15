@@ -236,11 +236,12 @@ FORCEDINLINE std::basic_string<CharT> multiply(CharT character, szptr num)
 FORCEDINLINE CString printclean(CString const& src_)
 {
     CString src = src_;
+
     src.erase(
-        src.begin(),
-        std::find_if(src.begin(), src.end(), [](CString::value_type c) {
-            return std::isprint(c) || std::iscntrl(c);
-        }));
+        std::remove_if(
+            src.begin(), src.end(), [](char c) { return !std::isprint(c); }),
+        src.end());
+
     return src;
 }
 

@@ -149,11 +149,6 @@ struct _cbasic_mesh
         return attrCount(t, stride, idx);
     }
 
-    static void secretAllocDestructor(Bytes& data)
-    {
-        CFree(data.data);
-    }
-
     template<typename VT>
     FORCEDINLINE
     void addAttributeData(

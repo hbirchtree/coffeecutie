@@ -45,7 +45,7 @@ struct posix_fd
     FORCEDINLINE posix_fd& operator=(posix_fd&& fd)
     {
         this->fd = fd.fd;
-        fd.fd    = 0;
+        fd.clear();
 
         return *this;
     }
@@ -55,7 +55,7 @@ struct posix_fd
      */
     FORCEDINLINE ~posix_fd()
     {
-        if(fd != 0)
+        if(fd > 0)
             close(fd);
     }
 
@@ -134,6 +134,8 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE FH Open(Url const& fn, RSCA ac, file_error& ec)
     {
+        errno = 0;
+
         auto url = *fn;
         auto fd =
             posix_fd(open(url.c_str(), PosixRscFlags(ac), S_IRWXU | S_IRGRP));
@@ -146,6 +148,8 @@ struct PosixFileFun_def : PosixFileMod_def
 
         FH fh;
         fh.fd = std::move(fd);
+
+        fd.clear();
 
         return fh;
     }
@@ -161,6 +165,7 @@ struct PosixFileFun_def : PosixFileMod_def
     STATICINLINE Bytes Read(FH const& f_h, int64 f_size, file_error& ec)
     {
         Bytes data = {};
+        errno      = 0;
 
         int64 sz = Size(f_h, ec);
 
@@ -189,7 +194,6 @@ struct PosixFileFun_def : PosixFileMod_def
 
         if(i < szp)
         {
-            CFree(data.data);
             return {};
         }
 
@@ -201,6 +205,7 @@ struct PosixFileFun_def : PosixFileMod_def
         szptr i    = 0;
         szptr it   = 0;
         szptr chnk = 0;
+        errno      = 0;
         while(i < d.size)
         {
             chnk = ((d.size - i) < Int32_Max) ? (d.size - i) : Int32_Max;
@@ -218,6 +223,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         auto   url       = *filename;
         uint64 pa_offset = offset & ~(PageSize());
+        errno            = 0;
 
         if(pa_offset != offset)
             return {};
@@ -276,6 +282,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         void* ptr  = mapp.data;
         szptr size = mapp.size;
+        errno      = 0;
         if(munmap(ptr, size) == 0)
         {
             return true;
@@ -292,6 +299,7 @@ struct PosixFileFun_def : PosixFileMod_def
         if(r_off + r_size > t_size)
             return false;
         byte_t* base = static_cast<byte_t*>(t_ptr);
+        errno        = 0;
         base += r_off;
         return mlock(base, r_size) == 0;
     }
@@ -302,12 +310,14 @@ struct PosixFileFun_def : PosixFileMod_def
         if(r_off + r_size > t_size)
             return false;
         byte_t* base = C_RCAST<byte_t*>(t_ptr);
+        errno        = 0;
         base += r_off;
         return munlock(base, r_size) == 0;
     }
 
     STATICINLINE bool MapSync(void* ptr, szptr size, file_error& ec)
     {
+        errno    = 0;
         auto ret = msync(ptr, size, MS_SYNC | MS_INVALIDATE);
 
         ErrnoCheck(ec);
@@ -320,6 +330,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         int proto    = ProtFlags(access);
         int mapflags = MappingFlags(access);
+        errno        = 0;
 
 #if defined(COFFEE_LINUX)
         mapflags |= MAP_ANONYMOUS;
@@ -349,6 +360,7 @@ struct PosixFileFun_def : PosixFileMod_def
     }
     STATICINLINE void ScratchUnmap(ScratchBuf&& buf, file_error& ec)
     {
+        errno = 0;
         munmap(buf.data, buf.size);
 
         ErrnoCheck(ec);
@@ -356,6 +368,8 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE szptr Size(FH const& fh, file_error& ec)
     {
+        errno = 0;
+
         struct stat st;
         if(fh.fd)
         {
@@ -372,6 +386,8 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE bool Exists(FH const& fn, file_error&)
     {
+        errno = 0;
+
         struct stat st;
         bool        status = fstat(fn->fd, &st) == 0;
 

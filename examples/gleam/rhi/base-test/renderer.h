@@ -99,6 +99,14 @@ class TransformContainer : public Components::ComponentContainer<TransformTag>
 
         return true;
     }
+
+    virtual void prealloc(szptr) override
+    {
+    }
+    virtual bool contains_entity(u64 id) const override
+    {
+        return m_objects.find(id) != m_objects.end();
+    }
 };
 
 class CameraContainer : public Components::ComponentContainer<CameraTag>
@@ -125,6 +133,13 @@ class CameraContainer : public Components::ComponentContainer<CameraTag>
     {
         return &camera;
     }
+    virtual void prealloc(szptr) override
+    {
+    }
+    virtual bool contains_entity(u64) const override
+    {
+        return true;
+    }
 };
 
 class TimeSystem : public Components::Subsystem<TimeTag>
@@ -139,8 +154,6 @@ class TimeSystem : public Components::Subsystem<TimeTag>
     {
     }
 
-    // Subsystem interface
-  public:
     virtual void start_frame() override
     {
         loop_time = system_clock::now() - start_time;
@@ -223,9 +236,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     d->component_task = ScopedTask(
         d->rt_queue->threadId(),
         {[d]() {
-             Profiler::DeepPushContext("Components::exec()");
+             Profiler::PushContext("Components::exec()");
              d->entities.exec();
-             Profiler::DeepPopContext();
+             Profiler::PopContext();
          },
          {},
          std::chrono::milliseconds(10),
@@ -522,6 +535,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
+    ProfContext _("Render loop");
+
     runtime_queue_error ec;
 
     auto& g = d->g_data;
@@ -530,6 +545,7 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
     auto const& component_task = d->component_task;
     RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
+    Profiler::PushContext("Exclusive context");
 
     g.time_value =
         (CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f) +
@@ -540,6 +556,7 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
     GLM::MultiDraw(g.eye_pip, g.rpass);
 
+    Profiler::PopContext();
     RuntimeQueue::Unblock(component_task.threadId(), component_task.id(), ec);
 
     renderer.swapBuffers();

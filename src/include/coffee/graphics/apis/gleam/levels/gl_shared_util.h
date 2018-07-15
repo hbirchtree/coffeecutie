@@ -43,7 +43,6 @@ struct CGLUtil
         rsc          = outData;
 
         CResources::FileCommit(rsc);
-        CFree(data.data);
 #endif
     }
 };

@@ -684,38 +684,38 @@ struct _cbasic_serial_array
 template<typename T>
 using SerialArray = _cbasic_serial_array<T>;
 
-struct CMimeData
-{
-    FORCEDINLINE CMimeData(
-        cstring id, void* data, const szptr& size, bool doClean = false) :
-        m_id(id),
-        m_data(data), m_size(size), b_doClean(doClean)
-    {
-    }
-    FORCEDINLINE ~CMimeData()
-    {
-        if(b_doClean)
-            CFree(m_data);
-    }
-    FORCEDINLINE const CString& id()
-    {
-        return m_id;
-    }
-    FORCEDINLINE const void* data()
-    {
-        return m_data;
-    }
-    FORCEDINLINE const szptr& dataSize()
-    {
-        return m_size;
-    }
+//struct CMimeData
+//{
+//    FORCEDINLINE CMimeData(
+//        cstring id, void* data, const szptr& size, bool doClean = false) :
+//        m_id(id),
+//        m_data(data), m_size(size), b_doClean(doClean)
+//    {
+//    }
+//    FORCEDINLINE ~CMimeData()
+//    {
+//        if(b_doClean)
+//            CFree(m_data);
+//    }
+//    FORCEDINLINE const CString& id()
+//    {
+//        return m_id;
+//    }
+//    FORCEDINLINE const void* data()
+//    {
+//        return m_data;
+//    }
+//    FORCEDINLINE const szptr& dataSize()
+//    {
+//        return m_size;
+//    }
 
-  private:
-    CString m_id;
-    void*   m_data;
-    szptr   m_size;
-    bool    b_doClean;
-};
+//  private:
+//    CString m_id;
+//    void*   m_data;
+//    szptr   m_size;
+//    bool    b_doClean;
+//};
 
 /*!
  * \brief Allows for buffering of any type of object, texture, buffer, etc.

@@ -432,6 +432,8 @@ int PosixFileMod_def::PosixRscFlags(RSCA acc)
 
         if(feval(acc & RSCA::Discard))
             oflags |= O_TRUNC;
+        if(feval(acc & RSCA::Append))
+            oflags |= O_APPEND;
     } else if(feval(acc, RSCA::Executable))
         oflags = O_RDONLY;
     else if(feval(acc, RSCA::ReadOnly))
@@ -439,7 +441,7 @@ int PosixFileMod_def::PosixRscFlags(RSCA acc)
     else if(feval(acc, RSCA::WriteOnly))
     {
         if(feval(acc & RSCA::Append))
-            oflags = O_APPEND;
+            oflags = O_APPEND | O_WRONLY;
         else
             oflags = O_WRONLY;
 
@@ -449,6 +451,9 @@ int PosixFileMod_def::PosixRscFlags(RSCA acc)
 
     if(feval(acc & RSCA::NewFile))
         oflags |= O_CREAT;
+
+    if(feval(acc & RSCA::TempFile))
+        oflags |= O_TMPFILE;
 
     return oflags;
 }

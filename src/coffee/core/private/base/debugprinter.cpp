@@ -1,9 +1,18 @@
-#include <coffee/core/base/debug/debugprinter.h>
-#include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/internal_state.h>
+#include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/plat/timing/timing_def.h>
 
-namespace Coffee{
-namespace DebugFun{
+#if defined(COFFEE_ANDROID)
+#include <android/log.h>
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten.h>
+#endif
+
+namespace Coffee {
+namespace DebugFun {
 
 cstring severity_string(Severity sev)
 {
@@ -40,7 +49,7 @@ cstring severity_string(Severity sev)
     return severity_str;
 }
 
-void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
+static void AddContextString(CString& prefix, Severity sev)
 {
     cstring severity_str = severity_string(sev);
 
@@ -55,23 +64,25 @@ void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
 
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
     CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
-    CString clock = cStringFormat("{0}.{1}",
-                                  cclock,
-                                  StrUtil::lpad(ms_time, '0', 3)
-                                  );
+    CString clock =
+        cStringFormat("{0}.{1}", cclock, StrUtil::lpad(ms_time, '0', 3));
     prefix = cStringFormat("{0}:", clock.c_str());
     prefix.append(ThreadGetName() + ":");
     prefix.push_back(severity_str[0]);
 
-    ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));
+    ColorMap::ColorText(
+        prefix,
+        ColorMap::CombineFormat(
+            ColorMap::CmdColor::Green, ColorMap::CmdColor::Blue));
 #endif
 }
 
-void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
-                                         Severity sev, bool locking)
+static void native_print(FILE* stream, CString const& formatted, Severity sev)
 {
     C_USED(sev);
 
+    /* If printing to file, don't lock IO */
+    bool locking       = (stream == stdout || stream == stderr);
     bool locking_state = C_OCAST<bool>(State::GetInternalState());
 
 #ifndef COFFEE_LOWFAT
@@ -103,16 +114,16 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
         break;
     }
 
-    __android_log_print(flag, "Coffee", "%s", &formatted[0]);
+    __android_log_print(flag, "Coffee", "%s", formatted.c_str());
 #elif defined(COFFEE_EMSCRIPTEN)
     int flag = 0;
     if(formatted[0] == 'W')
         flag = EM_LOG_WARN;
     else if(formatted[0] == 'F')
         flag = EM_LOG_ERROR;
-    emscripten_log(flag, "%s", &formatted[0]);
+    emscripten_log(flag, "%s", formatted.c_str());
 #elif defined(COFFEE_WINDOWS_UWP)
-    CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted);
+    CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted_newline);
     OutputDebugString(formatted_w.c_str());
 #elif defined(COFFEE_WINDOWS)
     if(Env::GetVar("VisualStudioVersion").size())
@@ -120,7 +131,7 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
     else
         Puts(stream, formatted.c_str());
 #else
-    Puts(stream,formatted.c_str());
+    Puts(stream, formatted.c_str());
 #endif
 
 #ifndef COFFEE_LOWFAT
@@ -129,5 +140,38 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
 #endif
 }
 
+void OutputPrinterImpl::fprintf_platform_tagged(
+    FILE*          stream,
+    cstring        tag,
+    const CString& formatted_raw,
+    Severity       sev,
+    u32            level,
+    u32            flags)
+{
+    if(PrintingVerbosityLevel() < level)
+        return;
+
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_EMSCRIPTEN)
+    CString formatted;
+    if(!(flags & Flag_NoContext))
+    {
+        AddContextString(formatted, sev);
+
+        if(tag)
+            formatted += tag;
+
+        (formatted += ": ") += formatted_raw;
+    } else
+        formatted = formatted_raw;
+
+    if(!(flags & Flag_NoNewline))
+        formatted += "\n";
+#else
+    auto const& formatted = formatted_raw;
+#endif
+
+    native_print(stream, formatted, sev);
 }
-}
+
+} // namespace DebugFun
+} // namespace Coffee

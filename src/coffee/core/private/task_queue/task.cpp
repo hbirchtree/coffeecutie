@@ -44,7 +44,7 @@ std::string runtime_queue_category::message(int error_code) const
         return "Thread died from uncaught exception";
     }
 
-	throw implementation_error("unimplemented error message");
+    throw implementation_error("unimplemented error message");
 }
 
 static bool VerifyTask(RuntimeTask const& t, runtime_queue_error& ec)
@@ -142,6 +142,7 @@ static void NotifyThread(
 
     if(wakeupTime < previousDeadline)
     {
+        cVerbose(4, "Notifying thread");
         Profiler::DeepProfile(RQ_API "Notifying thread");
         condition.notify_one();
     }
@@ -396,7 +397,6 @@ bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
     NotifyThread(context, thread_id, previousNextTime, currentBase);
 
-
     return true;
 }
 
@@ -636,7 +636,10 @@ void RuntimeQueue::executeTasks()
 
         /* Now, if a task is single-shot, remove it */
         if(task.task.flags & RuntimeTask::SingleShot)
+        {
             mTasks[i].alive = false;
+            mTasks[i].to_dispose = true;
+        }
         else if(task.task.flags & RuntimeTask::Periodic)
         {
             task.task.time = RuntimeTask::clock::now() + task.task.interval;
@@ -658,14 +661,23 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
 {
     RecLock _(mTasksLock);
 
-    if(mTasks.size() == 0)
+    task_data_t* firstTask = nullptr;
+
+    for(auto task : mTasks)
+        if(task.alive)
+        {
+            firstTask = &task;
+            break;
+        }
+
+    if(!firstTask)
         return Chrono::milliseconds::max();
     else
     {
-        if(mTasks[0].task.time < current)
+        if(firstTask->task.time < current)
             return Chrono::milliseconds(0);
         else
-            return mTasks[0].task.time - current;
+            return firstTask->task.time - current;
     }
 }
 

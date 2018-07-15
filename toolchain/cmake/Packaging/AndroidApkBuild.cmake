@@ -84,7 +84,8 @@ macro(APK_BUILD TARGET_NAME
         )
     add_custom_command( TARGET ${TARGET_NAME}
         POST_BUILD
-        COMMAND ${BUILD_DIR}/gradlew assemble
+        COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
+            ${BUILD_DIR}/gradlew assemble
         WORKING_DIRECTORY ${BUILD_DIR}
         )
     add_custom_command ( TARGET ${TARGET_NAME}

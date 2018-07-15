@@ -1,47 +1,100 @@
-#ifndef COFFEE_CORE_BASE_DEBUG_OUTPUT_PRINTER_H
-#define COFFEE_CORE_BASE_DEBUG_OUTPUT_PRINTER_H
+#pragma once
 
-#include "../strings/cdebug_print.h"
 #include "../debug/debug_interface.h"
+#include "../strings/cdebug_print.h"
+#include <coffee/core/plat/memory/cmemory.h>
+#include <coffee/core/plat/plat_environment.h>
 
-#if defined(COFFEE_ANDROID)
-#include <android/log.h>
-#elif defined(COFFEE_EMSCRIPTEN)
-#include <emscripten.h>
-#endif
+namespace Coffee {
 
-namespace Coffee{
-namespace DebugFun{
+extern u8& PrintingVerbosityLevel();
 
-struct OutputPrinterImpl : OutputPrinterDef
+namespace DebugFun {
+
+using namespace Strings;
+
+extern cstring severity_string(Severity sev);
+
+using LogInterfaceBasic = void (*)(FILE*, CString const&, Severity, u32, u32);
+using LogInterfaceTagged =
+    void (*)(FILE*, cstring, CString const&, Severity, u32, u32);
+
+struct LogInterface
 {
-    static void fprintf_platform(FILE* stream, CString formatted,
-                                 Severity sev, bool locking);
+    LogInterfaceBasic  basic;
+    LogInterfaceTagged tag;
+};
+
+/*!
+ * \brief Get the currently set logging interface
+ * By default this is set to OutputPrinterImpl::fprintf_platform
+ * \return
+ */
+extern LogInterface GetLogInterface();
+extern void         SetLogInterface(LogInterface intf);
+
+struct OutputPrinterImpl
+{
+    enum PrintingFlags
+    {
+        Flag_None      = 0,
+        Flag_NoContext = 0x1,
+        Flag_NoNewline = 0x2,
+    };
+
+    using CmdColor = ColorMap::CmdColor;
+
+    static Mutex PrinterLock;
+
+    static void fprintf_platform_tagged(
+        FILE*          stream,
+        cstring        tag,
+        CString const& formatted_raw,
+        Severity       sev,
+        u32            level,
+        u32            flags);
+
+    STATICINLINE void fprintf_platform(
+        FILE*          stream,
+        CString const& formatted_raw,
+        Severity       sev,
+        u32            level,
+        u32            flags)
+    {
+        fprintf_platform_tagged(
+            stream, nullptr, formatted_raw, sev, level, flags);
+    }
 
     template<typename... Args>
-    static void fprintf(FILE* stream, Severity sev, cstring format,
-                        Args... args)
+    static void fprintf(
+        FILE*    stream,
+        Severity sev,
+        u32      level,
+        u32      flags,
+        cstring  format,
+        Args... args)
     {
-        C_UNUSED(sev);
+        CString formatted = Strings::cStringFormat(format, args...);
+        GetLogInterface().basic(stream, &formatted[0], sev, level, flags);
+    }
 
-        bool locking = false;
-
-        CString formatted = Strings::cStringFormat(format,args...);
-
-        /* If printing to file, don't lock IO */
-        if(stream==stdout||stream==stderr)
-        {
-            locking = true;
-            formatted = StrUtil::printclean(formatted);
-        }
-
-        GetLogInterface()(stream, &formatted[0], sev, locking);
+    template<typename... Args>
+    static void fprintf_tagged(
+        FILE*    stream,
+        Severity sev,
+        u32      level,
+        u32      flags,
+        cstring  tag,
+        cstring  format,
+        Args... args)
+    {
+        CString formatted = Strings::cStringFormat(format, args...);
+        GetLogInterface().tag(
+            stream, tag, formatted.c_str(), sev, level, flags);
     }
 };
 
 using OutputPrinter = OutputPrinterImpl;
 
-}
-}
-
-#endif
+} // namespace DebugFun
+} // namespace Coffee

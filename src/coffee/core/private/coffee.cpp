@@ -9,6 +9,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/plat/environment/process_def.h>
+#include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/types/cdef/infotypes.h>
@@ -43,6 +44,8 @@ extern void SetBuildInfo(BuildInfo& binfo);
  * \param appdata
  */
 extern void SetApplicationData(CoffeeApplicationData& appdata);
+
+extern void SetupJsonLogger();
 
 #if defined(COFFEE_APPLE)
 extern Url GetAppleStoragePath();
@@ -149,10 +152,6 @@ static void CoffeeInit_Internal(u32 flags)
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
 
-#ifndef NDEBUG
-    InstallDefaultSigHandlers();
-#endif
-
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 #endif
@@ -171,7 +170,6 @@ int32 CoffeeMain(
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
-    State::SetInternalThreadState(State::CreateNewThreadState());
 
 #ifndef COFFEE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
@@ -181,6 +179,12 @@ int32 CoffeeMain(
     SetBuildInfo(State::GetBuildInfo());
 
 #endif
+
+    /* Must be created before ThreadState, but after internal state */
+    State::SwapState("jsonProfiler", Profiling::CreateJsonProfiler());
+
+    State::SetInternalThreadState(State::CreateNewThreadState());
+
 
     /* Create initial RuntimeQueue context for the user */
     RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext());
@@ -199,14 +203,11 @@ int32 CoffeeMain(
     FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());
 #endif
 
+#ifndef NDEBUG
+    InstallDefaultSigHandlers();
+#endif
+
 #ifndef COFFEE_LOWFAT
-
-    CoffeeInit_Internal(flags);
-
-    Profiler::PushContext("CoffeeMain");
-    Profiler::Profile("Init");
-
-    Profiler::PushContext("Argument parsing");
 
     if(!(flags & DiscardArgumentHandler))
     {
@@ -236,6 +237,8 @@ int32 CoffeeMain(
 
         parser.addSwitch(
             "dprofile", "deep-profile", nullptr, "Enable deep profiling");
+
+        parser.addSwitch("json", "json", nullptr, "Output information as JSON");
 
         parser.addPositionalArgument(
             "resource_prefix",
@@ -272,6 +275,9 @@ int32 CoffeeMain(
             } else if(sw == "dprofile")
             {
                 Profiler::SetDeepProfileMode(true);
+            } else if(sw == "json")
+            {
+                SetupJsonLogger();
             }
         }
 
@@ -291,6 +297,8 @@ int32 CoffeeMain(
         Coffee::PrintingVerbosityLevel() = 1;
     }
 
+    Profiler::PushContext("CoffeeInit");
+    CoffeeInit_Internal(flags);
     Profiler::PopContext();
 
     if(!(flags & SilentInit))
@@ -304,10 +312,9 @@ int32 CoffeeMain(
     Profiler::PushContext("main()");
 #endif
 
-    int32 r = mainfun(argc, argv);
+    i32 result = mainfun(argc, argv);
 
 #ifndef COFFEE_LOWFAT
-    Profiler::PopContext();
     Profiler::PopContext();
 
     cBasicPrint(
@@ -316,7 +323,7 @@ int32 CoffeeMain(
             Chrono::high_resolution_clock::now() - start_time)
             .count());
 #endif
-    return r;
+    return result;
 }
 
 void CoffeeTerminate()
@@ -386,7 +393,11 @@ void InstallDefaultSigHandlers()
 {
     std::set_terminate([]() {
         Stacktracer::ExceptionStacktrace(std::current_exception());
+//#ifndef COFFEE_CUSTOM_EXIT_HANDLING
+//        exit(1);
+//#else
         abort();
+//#endif
     });
 
     //    InstallSignalHandler(Sig_Termination,nullptr);

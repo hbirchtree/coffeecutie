@@ -78,6 +78,8 @@ template<
     typename implements<std::istream, StrmT>::type* = nullptr>
 bool ExtractResponse(StrmT& stream, Response* response)
 {
+    using namespace Mem;
+
     DProfContext __m("Extracting HTTP response");
 
     CString tmp;
