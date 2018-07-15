@@ -7,6 +7,10 @@
 #include "types/tdef/integertypes.h"
 #include "coffee_mem_macros.h"
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten.h>
+#endif
+
 namespace Coffee{
 
 FORCEDINLINE

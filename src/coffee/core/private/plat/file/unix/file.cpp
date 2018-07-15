@@ -452,8 +452,10 @@ int PosixFileMod_def::PosixRscFlags(RSCA acc)
     if(feval(acc & RSCA::NewFile))
         oflags |= O_CREAT;
 
+#if defined(COFFEE_LINUX)
     if(feval(acc & RSCA::TempFile))
         oflags |= O_TMPFILE;
+#endif
 
     return oflags;
 }
