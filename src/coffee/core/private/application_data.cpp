@@ -12,7 +12,7 @@ void SetBuildInfo(BuildInfo& binfo)
                                      C_COMPILER_VER_MIN,
                                      C_COMPILER_VER_REV);
     binfo.architecture = COFFEE_ARCH;
-    binfo.build_version = COFFEE_BUILD_STRING;
+    binfo.build_version = C_STR(COFFEE_BUILD_STRING);
     binfo.platform = C_SYSTEM_STRING;
 }
 

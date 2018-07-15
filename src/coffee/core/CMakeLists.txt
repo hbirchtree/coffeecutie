@@ -211,7 +211,7 @@ coffee_library (
     )
 
 target_compile_definitions ( CoffeeCore_Base PUBLIC
-    -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}"
+    -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
     )
 
 if(LOWFAT_BUILD)

@@ -96,10 +96,6 @@ if(ANDROID)
             SDL2
             )
     endif()
-
-    list ( APPEND CORE_INCLUDE_DIR
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
-        )
 endif()
 
 if(RASPBERRY)
