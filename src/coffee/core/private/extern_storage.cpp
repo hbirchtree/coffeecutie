@@ -43,7 +43,7 @@ struct InternalState
     Profiling::ProfilerDataStore profiler_store;
 #endif
 
-    Map<CString, UqPtr<State::GlobalState>> pointer_storage;
+    Map<CString, ShPtr<State::GlobalState>> pointer_storage;
 
     struct internal_bits_t
     {
@@ -213,16 +213,16 @@ ThreadId& GetCurrentThreadId()
 #endif
 }
 
-UqPtr<GlobalState> SwapState(cstring key, UqPtr<GlobalState>&& ptr)
+ShPtr<GlobalState> SwapState(cstring key, ShPtr<GlobalState> const& ptr)
 {
     C_PTR_CHECK(ISTATE);
 
-    UqPtr<GlobalState> current   = std::move(ISTATE->pointer_storage[key]);
+    ShPtr<GlobalState> current   = std::move(ISTATE->pointer_storage[key]);
     ISTATE->pointer_storage[key] = std::move(ptr);
     return current;
 }
 
-const UqPtr<GlobalState>& PeekState(cstring key)
+const ShPtr<GlobalState>& PeekState(cstring key)
 {
     C_PTR_CHECK(ISTATE);
     return ISTATE->pointer_storage[key];

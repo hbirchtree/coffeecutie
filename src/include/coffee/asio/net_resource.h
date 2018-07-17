@@ -86,8 +86,14 @@ struct Resource : ByteProvider
     }
 };
 
-FORCEDINLINE Url MkUrl(
-        cstring url, HTTPAccess access = HTTPAccess::DefaultAccess)
+FORCEDINLINE Url
+             MkUrl(CString const& url, HTTPAccess access = HTTPAccess::DefaultAccess)
+{
+    return {url.c_str(), Url::Networked, RSCA::None, access, {}};
+}
+
+FORCEDINLINE Url
+             MkUrl(cstring url, HTTPAccess access = HTTPAccess::DefaultAccess)
 {
     return {url, Url::Networked, RSCA::None, access, {}};
 }

@@ -46,14 +46,14 @@ JsonProfileWriter::~JsonProfileWriter()
     FileFun::Close(std::move(logfile), ec);
 }
 
-UqPtr<State::GlobalState> CreateJsonProfiler()
+ShPtr<State::GlobalState> CreateJsonProfiler()
 {
     auto profile = MkUrl("profile.json", RSCA::TempFile);
 
     FileFun::file_error ec;
     FileFun::Truncate(profile, 0, ec);
 
-    return MkUq<JsonProfileWriter>(profile);
+    return MkShared<JsonProfileWriter>(profile);
 }
 
 void JsonPush(ThreadData* tdata, DataPoint const& point)

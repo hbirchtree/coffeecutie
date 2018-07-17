@@ -144,7 +144,7 @@ endfunction()
 macro(COFFEE_LIBRARY)
     cmake_parse_arguments(
         LIB
-        "LINKABLE"
+        "LINKABLE;NO_EXPORT"
         "TARGET;LINKAGE;VERSION_CODE;COPYRIGHT;COMPANY"
         "SOURCES;LIBRARIES;HEADER_DIRS;RESOURCES;BUNDLE_LIBRARIES;BUNDLE_HEADERS"
         ${ARGN}
@@ -237,7 +237,9 @@ macro(COFFEE_LIBRARY)
         -DFEATURE_ENABLE_${LIB_TARGET}
         )
 
-    add_export ( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
+    if(NOT LIB_NO_EXPORT)
+        add_export ( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
+    endif()
 
 endmacro()
 

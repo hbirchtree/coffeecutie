@@ -114,9 +114,9 @@ void SetupJsonLogger()
 
     FileFun::Write(jsonFile, Bytes::CreateString("[\n  "), ec);
 
-    UqPtr<JsonLogState> jsonState = MkUq<JsonLogState>();
+    auto jsonState = MkShared<JsonLogState>();
     jsonState->handle = std::move(jsonFile);
-    State::SwapState("jsonLog", std::move(jsonState));
+    State::SwapState("jsonLog", jsonState);
 
     DebugFun::SetLogInterface({JsonLogger, JsonTagLogger});
 

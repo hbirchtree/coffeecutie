@@ -92,8 +92,8 @@ extern BuildInfo& GetBuildInfo();
 
 extern CoffeeApplicationData& GetAppData();
 
-extern UqPtr<GlobalState> SwapState(cstring key, UqPtr<GlobalState>&& ptr);
-extern UqPtr<GlobalState> const& PeekState(cstring key);
+extern ShPtr<GlobalState> SwapState(cstring key, ShPtr<GlobalState> const& ptr);
+extern ShPtr<GlobalState> const& PeekState(cstring key);
 
 } // namespace State
 

@@ -68,7 +68,7 @@ using ThreadItem    = Pair<ThreadId::Hash, CString>;
 using ExtraData     = LinkList<ExtraPair>;
 using StackFrames   = Set<CString>;
 
-extern UqPtr<State::GlobalState> CreateJsonProfiler();
+extern ShPtr<State::GlobalState> CreateJsonProfiler();
 extern void JsonPush(ThreadData* tdata, DataPoint const& point);
 
 struct ThreadData

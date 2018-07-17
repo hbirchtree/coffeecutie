@@ -124,3 +124,7 @@ endif()
 #
 
 add_subdirectory(font-rendering)
+
+if(BUILD_DISCORD_RPC)
+    add_subdirectory(discord/basic)
+endif()

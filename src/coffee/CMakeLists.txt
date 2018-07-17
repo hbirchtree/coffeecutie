@@ -41,3 +41,9 @@ if(BUILD_OPENVR)
 endif()
 
 coffee_bundle_includes ( "${CMAKE_CURRENT_SOURCE_DIR}/../include" )
+
+coffee_library (
+    TARGET COnlineService
+    SOURCES misc/online_service.cpp
+    LIBRARIES CoffeeCore
+    )

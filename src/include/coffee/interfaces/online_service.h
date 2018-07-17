@@ -1,10 +1,11 @@
 #pragma once
 
+#include <coffee/core/base/files/url.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
-namespace Coffee{
-namespace Online{
+namespace Coffee {
+namespace Online {
 
 enum class FriendStatus
 {
@@ -17,50 +18,71 @@ enum class FriendStatus
 
 class User
 {
-public:
-    virtual u64 identifier() = 0;
+  public:
+    virtual ~User();
+    virtual u64     identifier()  = 0;
     virtual CString displayName() = 0;
-    virtual Url image() = 0;
+    virtual Url     image()       = 0;
 };
 
 class Achievement
 {
-public:
-    virtual u64 identifier()      = 0;
+  public:
+    virtual ~Achievement();
+    virtual u64     identifier()  = 0;
     virtual CString displayName() = 0;
-    virtual Url image() = 0;
+    virtual Url     image()       = 0;
 };
 
 class Friend
 {
-public:
-    virtual ShPtr<User> getUnderlyingUser() = 0;
-    virtual FriendStatus state()  = 0;
+  public:
+    virtual ~Friend();
+    virtual ShPtr<User>  getUnderlyingUser() = 0;
+    virtual FriendStatus state()             = 0;
 };
 
 class Party
 {
-public:
+  public:
     using UserContainer = void;
+
+    virtual ~Party();
 
     virtual UserContainer getParticipants() = 0;
 
     virtual u64 userLimit() = 0;
-    virtual u64 count() = 0;
+    virtual u64 count()     = 0;
 
     virtual CString secret() = 0;
 
-    virtual bool maySpectate() = 0;
+    virtual bool    maySpectate()    = 0;
     virtual CString spectateSecret() = 0;
+};
+
+struct PartyDesc
+{
+    CString partyId;
+    i32     curPlayers, maxPlayers;
+
+    struct
+    {
+        CString secret;
+    } spectate;
+    struct
+    {
+        CString secret;
+    } join;
 };
 
 class AchievementDelegate
 {
-public:
+  public:
     using AchievementContainer = void;
 
-    virtual void notifyAchievement(
-        ShPtr<AchievementDesc> const& achievment) = 0;
+    virtual ~AchievementDelegate();
+
+    virtual void notifyAchievement(ShPtr<Achievement> const& achievment) = 0;
 
     virtual AchievementContainer getAchievements() = 0;
 
@@ -69,16 +91,18 @@ public:
 
 class FriendDelegate
 {
-public:
-    using PartyContainer = void;
+  public:
+    using PartyContainer  = void;
+    using FriendContainer = Vector<Friend>;
     struct FriendQuery
     {
-        FriendStatus state = FriendStatus::Undefined;
-        CString name = {};
+        FriendStatus state;
+        CString      name;
     };
 
-    virtual FriendContainer getFriends(
-        FriendQuery query = {}) = 0;
+    virtual ~FriendDelegate();
+
+    virtual FriendContainer getFriends(FriendQuery query = {}) = 0;
 
     virtual ShPtr<Friend> fromUser(ShPtr<User> const&) = 0;
 
@@ -87,15 +111,36 @@ public:
 
 /*!
  * Target services:
- * 
+ *
  * - Discord Rich Presence
  */
-class PresenceService
+class PresenceDelegate
 {
-public:
-    virtual void identify(CString const&) = 0;
-    virtual void setActivity(CString const&) = 0;
-    virtual void setDescriptiveActivity(CString const&) = 0;
+  public:
+    virtual ~PresenceDelegate();
+    virtual void put(PartyDesc&& party) = 0;
+};
+
+class GameDelegate
+{
+  public:
+    struct Builder
+    {
+        Builder()
+        {
+        }
+        Builder(CString const& name, CString const& activity, Url const& img) :
+            gameName(name), activity(activity), gameImage(img)
+        {
+        }
+
+        CString gameName;
+        CString activity;
+        Url     gameImage;
+    };
+
+    virtual ~GameDelegate();
+    virtual void put(Builder&& gameDesc) = 0;
 };
 
 /*!
@@ -107,14 +152,16 @@ public:
  */
 class Service
 {
-public:
-    virtual ~Service() = 0;
+  public:
+    virtual ~Service();
 
+    virtual ShPtr<GameDelegate>        getGame()         = 0;
+    virtual ShPtr<PresenceDelegate>    getPresence()     = 0;
     virtual ShPtr<AchievementDelegate> getAchievements() = 0;
-    virtual ShPtr<FriendDelegate> getFriends() = 0;
+    virtual ShPtr<FriendDelegate>      getFriends()      = 0;
 
-    virtual void registerPresence(UqPtr<PresenceService>&&) = 0;
+    virtual void poll() = 0;
 };
 
-}
-}
+} // namespace Online
+} // namespace Coffee
