@@ -10,11 +10,35 @@ namespace Discord {
 
 struct DiscordOptions
 {
+    DiscordOptions(CString const& appId):
+        appId(appId),
+        imgSize(0)
+    {
+    }
+    DiscordOptions(CString const& appId, CString const& steamId):
+        appId(appId),
+        steamId(steamId),
+        imgSize(128)
+    {
+    }
+    DiscordOptions(CString const& appId, u32 imSize):
+        appId(appId),
+        imgSize(imSize)
+    {
+    }
+    DiscordOptions(CString const& appId, CString const& steamId, u32 imgSize):
+        appId(appId),
+        steamId(steamId),
+        imgSize(imgSize)
+    {
+    }
+
     CString appId;
     CString steamId;
+    u32 imgSize;
 };
 
-struct PlayerInfo
+struct PlayerInfo : non_copy
 {
     CString userTag;
     CString username;
@@ -30,7 +54,7 @@ struct discord_error_category : error_category
 
 using discord_error = domain_error_code<int, discord_error_category>;
 
-struct DiscordGameDelegate : Online::GameDelegate
+struct DiscordGameDelegate : Online::GameDelegate, non_copy
 {
     struct ExtraInfo
     {
@@ -51,7 +75,7 @@ struct DiscordGameDelegate : Online::GameDelegate
     void put(ExtraInfo&& gameInfo);
 };
 
-struct DiscordPresenceDelegate : Online::PresenceDelegate
+struct DiscordPresenceDelegate : Online::PresenceDelegate, non_copy
 {
     DiscordRichPresence* m_presence;
     Online::PartyDesc    m_desc;
@@ -82,7 +106,7 @@ struct DiscordPresenceDelegate : Online::PresenceDelegate
     void disable();
 };
 
-struct DiscordDelegate
+struct DiscordDelegate : non_copy
 {
     using JoinReply = DiscordPresenceDelegate::JoinReply;
 

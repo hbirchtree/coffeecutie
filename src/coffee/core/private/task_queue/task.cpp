@@ -328,48 +328,64 @@ u64 RuntimeQueue::Queue(
         task.time = RuntimeTask::clock::now() + task.interval;
     }
 
-    Lock _(context->globalMod);
+    context->globalMod.lock();
 
     auto thread_id = targetThread.hash();
     auto q_it      = context->queues.find(thread_id);
 
     if(q_it == context->queues.end())
     {
+        context->globalMod.unlock();
         ec = RQE::InvalidQueue;
         return 0;
     } else
     {
-        auto& ref = (*q_it).second;
-        Profiler::DeepProfile(RQ_API "Adding task to Queue");
-
-        RecLock __(q_it->second.mTasksLock);
-
-        auto currentBase      = RuntimeTask::clock::now();
-        auto previousNextTime = ref.timeTillNext(currentBase);
-
-        auto id = ref.enqueue(std::move(task));
-
-        NotifyThread(context, thread_id, previousNextTime, currentBase);
-
-        return id;
+        context->globalMod.unlock();
+        return Queue(&q_it->second, std::move(task), ec);
     }
+}
+
+u64 RuntimeQueue::Queue(
+    RuntimeQueue* queue, RuntimeTask&& task, RuntimeQueue::rqe&)
+{
+    auto& ref = *queue;
+    Profiler::DeepProfile(RQ_API "Adding task to Queue");
+
+    RecLock __(queue->mTasksLock);
+
+    auto currentBase      = RuntimeTask::clock::now();
+    auto previousNextTime = ref.timeTillNext(currentBase);
+
+    auto id = ref.enqueue(std::move(task));
+
+    NotifyThread(
+        context, queue->mThreadId.hash(), previousNextTime, currentBase);
+
+    return id;
 }
 
 bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 {
-    Lock         _(context->globalMod);
     DProfContext __(RQ_API "Blocking task");
 
     auto thread_id = targetThread.hash();
-    auto q_it      = context->queues.find(thread_id);
+    RuntimeQueue* pQueue = nullptr;
 
-    if(q_it == context->queues.end())
     {
-        ec = RQE::InvalidQueue;
-        return false;
+        Lock         _(context->globalMod);
+
+        auto q_it      = context->queues.find(thread_id);
+
+        if(q_it == context->queues.end())
+        {
+            ec = RQE::InvalidQueue;
+            return false;
+        }
+
+        pQueue = &(*q_it).second;
     }
 
-    auto& queue = (*q_it).second;
+    auto& queue = *pQueue;
 
     RuntimeTask const* task = nullptr;
     szptr              idx  = 0;
@@ -380,116 +396,119 @@ bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
         return false;
     }
 
-    /* We do this check in case we are executing in the queue */
-    /* Otherwise we deadlock */
-    RecLock ___(queue.mTasksLock);
-
-    if(!queue.mTasks[idx].alive)
     {
-        ec = RQE::TaskAlreadyBlocked;
-        return false;
+        /* We do this check in case we are executing in the queue */
+        /* Otherwise we deadlock */
+        RecLock ___(queue.mTasksLock);
+
+        if(!queue.mTasks[idx].alive)
+        {
+            ec = RQE::TaskAlreadyBlocked;
+            return false;
+        }
+
+        queue.mTasks[idx].alive = false;
+
+        auto currentBase      = RuntimeTask::clock::now();
+        auto previousNextTime = queue.timeTillNext(currentBase);
+
+        NotifyThread(context, thread_id, previousNextTime, currentBase);
     }
-
-    queue.mTasks[idx].alive = false;
-
-    auto currentBase      = RuntimeTask::clock::now();
-    auto previousNextTime = queue.timeTillNext(currentBase);
-
-    NotifyThread(context, thread_id, previousNextTime, currentBase);
 
     return true;
 }
 
 bool RuntimeQueue::Unblock(const ThreadId& targetThread, u64 taskId, rqe& ec)
 {
-    Lock         _(context->globalMod);
     DProfContext __(RQ_API "Unblocking task");
 
     auto thread_id = targetThread.hash();
-    auto q_it      = context->queues.find(thread_id);
+    RuntimeQueue* pQueue = nullptr;
 
-    if(q_it == context->queues.end())
     {
-        ec = RQE::InvalidQueue;
-        return false;
+        Lock         _(context->globalMod);
+        auto q_it      = context->queues.find(thread_id);
+
+        if(q_it == context->queues.end())
+        {
+            ec = RQE::InvalidQueue;
+            return false;
+        }
+
+        pQueue = &(*q_it).second;
     }
 
-    auto& queue = (*q_it).second;
+    auto& queue = *pQueue;
 
-    RuntimeTask const* task = nullptr;
-    szptr              idx  = 0;
-
-    if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
     {
-        ec = RQE::InvalidTaskId;
-        return false;
+        RecLock _(queue.mTasksLock);
+        RuntimeTask const* task = nullptr;
+        szptr              idx  = 0;
+
+        if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
+        {
+            ec = RQE::InvalidTaskId;
+            return false;
+        }
+
+        if(queue.mTasks[idx].alive)
+        {
+            ec = RQE::TaskAlreadyStarted;
+            return false;
+        }
+
+        queue.mTasks[idx].alive = true;
+
+        auto currentBase      = RuntimeTask::clock::now();
+        auto previousNextTime = queue.timeTillNext(currentBase);
+
+        NotifyThread(context, thread_id, previousNextTime, currentBase);
     }
-
-    /* We do this check in case we are executing in the queue */
-    /* Otherwise we deadlock */
-    if(queue.mCurrentTaskId == 0)
-        queue.mTasksLock.lock();
-
-    if(queue.mTasks[idx].alive)
-    {
-        if(queue.mCurrentTaskId == 0)
-            queue.mTasksLock.unlock();
-        ec = RQE::TaskAlreadyStarted;
-        return false;
-    }
-
-    queue.mTasks[idx].alive = true;
-
-    auto currentBase      = RuntimeTask::clock::now();
-    auto previousNextTime = queue.timeTillNext(currentBase);
-
-    NotifyThread(context, thread_id, previousNextTime, currentBase);
-
-    if(queue.mCurrentTaskId == 0)
-        queue.mTasksLock.unlock();
 
     return true;
 }
 
 bool RuntimeQueue::CancelTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
 {
-    Lock _(context->globalMod);
-
     auto thread_id = targetThread.hash();
-    auto q_it      = context->queues.find(thread_id);
+    RuntimeQueue* pQueue = nullptr;
 
-    if(q_it == context->queues.end())
     {
-        ec = RQE::InvalidQueue;
-        return false;
+        Lock _(context->globalMod);
+
+        auto q_it      = context->queues.find(thread_id);
+
+        if(q_it == context->queues.end())
+        {
+            ec = RQE::InvalidQueue;
+            return false;
+        }
+
+        pQueue = &(*q_it).second;
     }
 
-    auto& queue = (*q_it).second;
+    auto& queue = *pQueue;
 
-    RuntimeTask const* task = nullptr;
-    szptr              idx  = 0;
-
-    if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
     {
-        ec = RQE::InvalidTaskId;
-        return false;
+        RecLock _(queue.mTasksLock);
+
+        RuntimeTask const* task = nullptr;
+        szptr              idx  = 0;
+
+        if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
+        {
+            ec = RQE::InvalidTaskId;
+            return false;
+        }
+
+        queue.mTasks[idx].alive      = false;
+        queue.mTasks[idx].to_dispose = true;
+
+        auto currentBase      = RuntimeTask::clock::now();
+        auto previousNextTime = queue.timeTillNext(currentBase);
+
+        NotifyThread(context, thread_id, previousNextTime, currentBase);
     }
-
-    /* We do this check in case we are executing in the queue */
-    /* Otherwise we deadlock */
-    if(queue.mCurrentTaskId == 0)
-        queue.mTasksLock.lock();
-
-    queue.mTasks[idx].alive      = false;
-    queue.mTasks[idx].to_dispose = true;
-
-    auto currentBase      = RuntimeTask::clock::now();
-    auto previousNextTime = queue.timeTillNext(currentBase);
-
-    NotifyThread(context, thread_id, previousNextTime, currentBase);
-
-    if(queue.mCurrentTaskId == 0)
-        queue.mTasksLock.unlock();
 
     return true;
 }
@@ -637,10 +656,9 @@ void RuntimeQueue::executeTasks()
         /* Now, if a task is single-shot, remove it */
         if(task.task.flags & RuntimeTask::SingleShot)
         {
-            mTasks[i].alive = false;
+            mTasks[i].alive      = false;
             mTasks[i].to_dispose = true;
-        }
-        else if(task.task.flags & RuntimeTask::Periodic)
+        } else if(task.task.flags & RuntimeTask::Periodic)
         {
             task.task.time = RuntimeTask::clock::now() + task.task.interval;
         } else

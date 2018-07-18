@@ -23,7 +23,7 @@ i32 cmain(i32 argc, cstring_w* argv)
         cDebug("{0}: {1}", ec.message(), ec.error_message);
     };
 
-    auto service = Discord::CreateService({"468164529617109002", {}}, delegate);
+    auto service = Discord::CreateService({"468164529617109002"}, delegate);
 
     service->getGame()->put(
         GameDelegate::Builder("Best Game", "Rickrolling", MkUrl("coffee_cup")));

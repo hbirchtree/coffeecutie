@@ -15,6 +15,9 @@
 #if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/asio/net_resource.h>
 #endif
+#if defined(FEATURE_ENABLE_DiscordLatte)
+#include <coffee/discord/discord_binding.h>
+#endif
 
 #include <coffee/core/coffee_saving.h>
 #include <coffee/core/platform_data.h>
@@ -395,6 +398,58 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             cWarning("Failed to retrieve spicy meme");
         }
     }
+
+#if defined(FEATURE_ENABLE_DiscordLatte)
+    auto callbacks = MkShared<Discord::DiscordDelegate>();
+
+    auto mainQueue   = RuntimeQueue::GetCurrentQueue(rqec);
+    callbacks->ready = [mainQueue, &eyetex](Discord::PlayerInfo const& info) {
+        cDebug("Identified as: {0}", info.userTag);
+
+        auto ctxt = ASIO::ASIO_Client::InitService();
+
+        auto rsc = Net::Resource(ctxt, info.avatarUrl);
+
+        if(rsc.fetch())
+        {
+            auto imdata = rsc.data();
+
+            /* TODO: Make this a move operation */
+            ShPtr<stb::image_rw> img = MkShared<stb::image_rw>();
+            stb::LoadData(
+                img.get(), BytesConst(imdata.data, imdata.size, imdata.size));
+
+            auto imageUpload = [img, &eyetex]() {
+                cDebug("Uploading");
+                eyetex.upload(
+                    PixDesc(eyetex.m_pixfmt, BitFmt::UByte, PixCmp::RGBA),
+                    {img->size.w, img->size.h, 1},
+                    C_OCAST<Bytes>(*img),
+                    {});
+            };
+
+            runtime_queue_error ec;
+            RuntimeQueue::QueueShot(
+                mainQueue, Chrono::seconds(1), imageUpload, ec);
+        }
+    };
+
+    auto service =
+        Discord::CreateService({"468164529617109002", 256}, callbacks);
+
+    service->getPresence()->put({"", 1, 1, {}, {}});
+    service->getGame()->put(Online::GameDelegate::Builder(
+        {}, "Messing around", MkUrl("coffee_cup")));
+
+    RuntimeQueue::QueuePeriodic(
+        d->rt_queue,
+        Chrono::milliseconds(10),
+        [service]() {
+            ProfContext _("Discord poll");
+            service->poll();
+        },
+        rqec);
+#endif
 #endif
 
     Profiler::PopContext();

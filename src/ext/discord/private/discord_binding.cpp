@@ -37,6 +37,7 @@ STATICINLINE void ClearPresence(DiscordRichPresence& p)
 struct DiscordService : Online::Service, State::GlobalState
 {
     DiscordRichPresence m_cachedPresence;
+    DiscordOptions      m_options;
 
     ShPtr<Online::GameDelegate>     game;
     ShPtr<Online::PresenceDelegate> presence;
@@ -67,14 +68,14 @@ struct DiscordService : Online::Service, State::GlobalState
     }
 };
 
-static PlayerInfo InfoFromDiscordUser(DiscordUser const* user)
+static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
 {
     auto discriminator = cast_string<u32>(user->discriminator);
 
     Url avatarUrl = Net::MkUrl(
         (strlen(user->avatar) > 0)
-            ? fmt(DiscordAvatarFmt, user->userId, user->avatar, "jpg", 128)
-            : fmt(DiscordDefaultFmt, discriminator % 5, "png", 128));
+            ? fmt(DiscordAvatarFmt, user->userId, user->avatar, "jpg", imgSize)
+            : fmt(DiscordDefaultFmt, discriminator % 5, "png", imgSize));
 
     PlayerInfo info;
     info.avatarUrl = avatarUrl;
@@ -97,7 +98,6 @@ static DiscordService& GetService()
 ShPtr<Online::Service> CreateService(
     DiscordOptions&& options, ShPtr<DiscordDelegate> delegate)
 {
-
     auto discordService = MkShared<DiscordService>(delegate);
 
     State::SwapState("discordService", discordService);
@@ -117,13 +117,14 @@ ShPtr<Online::Service> CreateService(
 }
 
 DiscordService::DiscordService(ShPtr<DiscordDelegate> delegate) :
-    m_delegate(delegate)
+    m_options(""), m_delegate(delegate)
 {
 }
 
 void DiscordService::initialize(DiscordOptions const& options)
 {
     cstring steamId = nullptr;
+    m_options = options;
 
     if(options.steamId.size())
         steamId = options.steamId.c_str();
@@ -133,34 +134,54 @@ void DiscordService::initialize(DiscordOptions const& options)
     DiscordEventHandlers handlers = {};
 
     handlers.ready = [](DiscordUser const* user) {
-        PlayerInfo info = InfoFromDiscordUser(user);
+        PlayerInfo info =
+            InfoFromDiscordUser(user, GetService().m_options.imgSize);
 
-        GetService().delegate().ready(info);
+        auto& delegate = GetService().delegate();
+
+        if(delegate.ready)
+            delegate.ready(info);
     };
     handlers.disconnected = [](int err, cstring message) {
         discord_error ec;
         ec = err;
         ec = message;
 
-        GetService().delegate().disconnected(ec);
+        auto& delegate = GetService().delegate();
+
+        if(delegate.disconnected)
+            delegate.disconnected(ec);
     };
     handlers.errored = [](int err, cstring message) {
         discord_error ec;
         ec = err;
         ec = message;
 
-        GetService().delegate().error(ec);
+        auto& delegate = GetService().delegate();
+
+        if(delegate.error)
+            delegate.error(ec);
     };
     handlers.joinGame = [](cstring secret) {
-        GetService().delegate().joinGame(secret);
+        auto& delegate = GetService().delegate();
+
+        if(delegate.joinGame)
+            delegate.joinGame(secret);
     };
     handlers.spectateGame = [](cstring secret) {
-        GetService().delegate().spectate(secret);
+        auto& delegate = GetService().delegate();
+
+        if(delegate.spectate)
+            delegate.spectate(secret);
     };
     handlers.joinRequest = [](DiscordUser const* request) {
-        PlayerInfo info = InfoFromDiscordUser(request);
+        PlayerInfo info =
+            InfoFromDiscordUser(request, GetService().m_options.imgSize);
 
-        GetService().delegate().joinRequest(info);
+        auto& delegate = GetService().delegate();
+
+        if(delegate.joinRequest)
+            GetService().delegate().joinRequest(info);
     };
 
     m_delegate->joinReply = [&](PlayerInfo const&                  playerInfo,
@@ -175,8 +196,15 @@ void DiscordService::initialize(DiscordOptions const& options)
     m_cachedPresence.startTimestamp =
         Chrono::seconds(std::time(nullptr)).count();
 
-    presence = MkShared<DiscordPresenceDelegate>(options, &m_cachedPresence);
-    game     = MkShared<DiscordGameDelegate>(options, &m_cachedPresence);
+    presence = MkShared<
+        DiscordPresenceDelegate,
+        DiscordOptions const&,
+        DiscordRichPresence*>(options, &m_cachedPresence);
+
+    game = MkShared<
+        DiscordGameDelegate,
+        DiscordOptions const&,
+        DiscordRichPresence*>(options, &m_cachedPresence);
 }
 
 DiscordService::~DiscordService()

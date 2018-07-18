@@ -132,6 +132,15 @@ class RuntimeQueue
     static u64 Queue(ThreadId const& targetThread, RuntimeTask&& task, rqe& ec);
 
     /*!
+     * \brief Queue
+     * \param queue
+     * \param task
+     * \param ec
+     * \return
+     */
+    static u64 Queue(RuntimeQueue* queue, RuntimeTask&& task, rqe&);
+
+    /*!
      * \brief Queue a single-shot task, without the effort
      * \param q Target queue, must be a valid, non-null queue
      * \param time Targeted time in the future
