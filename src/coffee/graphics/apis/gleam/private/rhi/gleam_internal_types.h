@@ -84,8 +84,8 @@ inline APILevel gl_level_from_string(CString const& str)
 
 #define GLEAM_VERSION_CHECK(desktop_ver, es_ver) \
     (\
-     (APILevelIsOfClass(desktop_ver, APIClass::GLCore) && \
+     (APILevelIsOfClass(GL_CURR_API, APIClass::GLCore) && \
         GL_CURR_API > desktop_ver) || \
-     (APILevelIsOfClass(es_ver, APIClass::GLES) && \
+     (APILevelIsOfClass(GL_CURR_API, APIClass::GLES) && \
         GL_CURR_API > es_ver)\
     )

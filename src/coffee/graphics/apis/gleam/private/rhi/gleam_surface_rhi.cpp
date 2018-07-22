@@ -446,21 +446,21 @@ void GLEAM_Surface3D_Base::upload(
 
         u32 g_size = TEX_SQUARE_GRID_SIZE(m_size.depth);
 
-        for(u32 i = 0; i < C_FCAST<u32>(size.depth); i++)
+        for(u32 i = offset.z; i < C_FCAST<u32>(size.depth + offset.z); i++)
         {
             Point mofi = {C_FCAST<i32>(mof.x), C_FCAST<i32>(mof.y)};
 
-            auto x_coord = (mof.z + i) % g_size;
-            auto y_coord = (mof.z + i) / g_size;
+            auto x_coord = i % g_size;
+            auto y_coord = i / g_size;
 
-            mofi.x += m_size.width * x_coord;
-            mofi.y += m_size.height * y_coord;
+            mofi.x += m_size.width * x_coord + offset.x;
+            mofi.y += m_size.height * y_coord + offset.y;
 
             CGL33::TexSubImage2D(
                 m_type,
                 C_FCAST<i32>(mip),
                 mofi,
-                {m_size.width, m_size.height},
+                {size.width, size.height},
                 GetPixComponent(m_pixfmt),
                 fmt,
                 data.data);

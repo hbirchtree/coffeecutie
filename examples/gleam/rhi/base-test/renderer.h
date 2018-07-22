@@ -15,6 +15,7 @@
 #if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/asio/net_resource.h>
 #endif
+
 #if defined(FEATURE_ENABLE_DiscordLatte)
 #include <coffee/discord/discord_binding.h>
 #endif
@@ -194,6 +195,23 @@ struct RendererState
         {
         }
 
+        void reset()
+        {
+            loader = nullptr;
+            vertbuf = nullptr;
+            vertdesc = {};
+            v_shader = {};
+            f_shader = {};
+            eye_pip = {};
+            eyetex = nullptr;
+            eyesamp = {};
+            time_value = 0;
+            blendstate = {};
+            deptstate = {};
+            rpass_s = {};
+            rpass = {};
+        }
+
         TransformContainer transform_cnt;
 
         // GLEAM data
@@ -209,6 +227,7 @@ struct RendererState
 
         GLM::S_2DA* eyetex;
         GLM::SM_2DA eyesamp = {};
+        const scalar eyetexGridSize = 2.f;
 
         // Graphics data
         Matf4  object_matrices[128] = {};
@@ -233,6 +252,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     runtime_queue_error rqec;
     RuntimeQueue::CreateNewQueue("Main");
     d->rt_queue = RuntimeQueue::CreateNewThreadQueue("Component Worker", rqec);
+    auto onlineWorker =
+        RuntimeQueue::CreateNewThreadQueue("Online Worker", rqec);
 
     C_ERROR_CHECK(rqec);
 
@@ -250,9 +271,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     RendererState::RGraphicsData& g = d->g_data;
 
-    //    g = {};
+    d->g_data.reset();
 
-    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
+//    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
 
     cVerbose("Entering run() function");
 
@@ -442,8 +463,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         {}, "Messing around", MkUrl("coffee_cup")));
 
     RuntimeQueue::QueuePeriodic(
-        d->rt_queue,
-        Chrono::milliseconds(10),
+        onlineWorker,
+        Chrono::milliseconds(100),
         [service]() {
             ProfContext _("Discord poll");
             service->poll();
@@ -488,6 +509,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             g.params.set_sampler(constant, g.eyesamp.handle());
         else if(constant.m_name == "mx")
             g.params.set_constant(constant, Bytes::Create(g.time_value));
+        else if(constant.m_name == "texdata_gridSize")
+            g.params.set_constant(constant, Bytes::Create(g.eyetexGridSize));
     }
 
     g.params.build_state();
@@ -590,7 +613,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    ProfContext _("Render loop");
+    DProfContext _("Render loop");
 
     runtime_queue_error ec;
 
@@ -599,20 +622,22 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
     renderer.pollEvents();
 
     auto const& component_task = d->component_task;
-    RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
-    Profiler::PushContext("Exclusive context");
+    {
+        DProfContext __("Exclusive context");
+        RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
 
-    g.time_value =
-        (CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f) +
-        0.5f;
+        g.time_value = 0.f
+            /*(CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f) +
+                0.5f*/;
 
-    GLM::DefaultFramebuffer().use(FramebufferT::All);
-    GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
+        GLM::DefaultFramebuffer().use(FramebufferT::All);
+        GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
 
-    GLM::MultiDraw(g.eye_pip, g.rpass);
+        GLM::MultiDraw(g.eye_pip, g.rpass);
 
-    Profiler::PopContext();
-    RuntimeQueue::Unblock(component_task.threadId(), component_task.id(), ec);
+        RuntimeQueue::Unblock(
+            component_task.threadId(), component_task.id(), ec);
+    }
 
     renderer.swapBuffers();
 }

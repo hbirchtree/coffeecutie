@@ -92,6 +92,17 @@ using AtomicUInt64 = std::atomic_uint_fast64_t;
 
 using AtomicBool = std::atomic_bool;
 
+using atomic_bool = std::atomic_bool;
+using atomic_i8 = std::atomic_int_fast8_t;
+using atomic_i16 = std::atomic_int_fast16_t;
+using atomic_i32 = std::atomic_int_fast32_t;
+using atomic_i64 = std::atomic_int_fast64_t;
+
+using atomic_u8 = std::atomic_uint_fast8_t;
+using atomic_u16 = std::atomic_uint_fast16_t;
+using atomic_u32 = std::atomic_uint_fast32_t;
+using atomic_u64 = std::atomic_uint_fast64_t;
+
 template<typename T>
 using Queue = std::queue<T>;
 

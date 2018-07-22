@@ -332,7 +332,10 @@ bool GLEAM_API::LoadAPI(
 {
     DProfContext _(GLM_API "LoadAPI()");
 
-    CGL::Debug::SetDebugGroup("Loading GLEAM");
+#if GL_VERSION_VERIFY(0x430, 0x320)
+    if(glPushDebugGroup)
+        CGL::Debug::SetDebugGroup(GLM_API "Loading GLEAM");
+#endif
 
     if(m_store)
     {
@@ -384,7 +387,10 @@ bool GLEAM_API::LoadAPI(
     DefaultFramebuffer().size();
     GLC::CullFace(Face::Back);
 
-    CGL::Debug::UnsetDebugGroup();
+#if GL_VERSION_VERIFY(0x430, 0x320)
+    if(glPopDebugGroup)
+        CGL::Debug::UnsetDebugGroup();
+#endif
 
     return true;
 }
@@ -737,7 +743,7 @@ std::string api_error::message(int error_code) const
     case APIError::GeneralError:
         return "General error";
     case APIError::None:
-        return "";
+        return "No error";
     }
 
 	throw implementation_error("unimplemented error message");

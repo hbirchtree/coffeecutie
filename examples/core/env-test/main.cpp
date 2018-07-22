@@ -4,8 +4,8 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/plat_sensor.h>
 
-#include <coffee/core/CPlatform>
 #include <coffee/core/CDebug>
+#include <coffee/core/CPlatform>
 
 using namespace Coffee;
 
@@ -26,7 +26,7 @@ int32 coffee_main(int32, cstring_w*)
 
         cDebug("Test directory: {0} '{1}'", test_dir, *test_dir);
 
-        Url app_dir  = Env::ApplicationDir();
+        Url     app_dir  = Env::ApplicationDir();
         CString exe_name = Env::ExecutableName();
         Profiler::Profile("Get application location");
 

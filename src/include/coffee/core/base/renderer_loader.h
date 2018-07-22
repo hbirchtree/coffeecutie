@@ -20,7 +20,7 @@ bool LoadHighestVersion(
 {
 
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
     return renderer->init(properties, err);
 #else
 

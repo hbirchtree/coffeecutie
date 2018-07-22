@@ -94,6 +94,9 @@ static void JsonLoggerExit()
 
     FileFun::file_error ec;
     FileFun::Write(jsonLog, Bytes::CreateString("{}\n]\n"), ec);
+
+    DebugFun::SetLogInterface({OutputPrinter::fprintf_platform,
+                               OutputPrinter::fprintf_platform_tagged});
 }
 
 JsonLogState::~JsonLogState()
@@ -114,7 +117,7 @@ void SetupJsonLogger()
 
     FileFun::Write(jsonFile, Bytes::CreateString("[\n  "), ec);
 
-    auto jsonState = MkShared<JsonLogState>();
+    auto jsonState    = MkShared<JsonLogState>();
     jsonState->handle = std::move(jsonFile);
     State::SwapState("jsonLog", jsonState);
 

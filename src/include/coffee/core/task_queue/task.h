@@ -25,6 +25,10 @@ enum class RuntimeQueueError
                            running */
     InvalidQueue, /*!< When any function is given a ThreadId which does not
                      point to a running RuntimeQueue */
+
+    SameThread, /*!< Function has no effect on same thread */
+
+    ShuttingDown /*!< Queues are shutting down, killing threads */
 };
 
 struct runtime_queue_category : error_category
@@ -90,7 +94,36 @@ C_FLAGS(RuntimeTask::TaskFlags, u32);
 class RuntimeQueue
 {
   public:
-    using rqe = runtime_queue_error;
+    struct semaphore_t
+    {
+        CondVar     condition;
+        Mutex       start_mutex;
+        Mutex       mutex;
+        atomic_bool running;
+    };
+
+    struct QueueContext
+    {
+        QueueContext()
+        {
+            shutdownFlag.store(false);
+        }
+        ~QueueContext()
+        {
+            runtime_queue_error rqec;
+            RuntimeQueue::TerminateThreads(rqec);
+        }
+
+        Mutex       globalMod;
+        atomic_bool shutdownFlag;
+
+        Map<ThreadId::Hash, RuntimeQueue>       queues;
+        Map<ThreadId::Hash, Thread>             queueThreads;
+        Map<ThreadId::Hash, ShPtr<semaphore_t>> queueFlags;
+    };
+
+    using QueueContextPtr = ShPtr<QueueContext>;
+    using rqe             = runtime_queue_error;
 
     static RuntimeQueue* CreateNewQueue(CString const& name);
     static RuntimeQueue* CreateNewThreadQueue(CString const& name, rqe& ec);
@@ -138,7 +171,7 @@ class RuntimeQueue
      * \param ec
      * \return
      */
-    static u64 Queue(RuntimeQueue* queue, RuntimeTask&& task, rqe&);
+    static u64 Queue(RuntimeQueue* queue, RuntimeTask&& task, rqe& ec);
 
     /*!
      * \brief Queue a single-shot task, without the effort
@@ -261,6 +294,8 @@ class RuntimeQueue
             };
         };
 
+        u8 _pad[7];
+
         FORCEDINLINE bool operator<(task_data_t const& other) const
         {
             return task < other.task;
@@ -299,24 +334,6 @@ class RuntimeQueue
     RuntimeQueue();
     RuntimeQueue(const RuntimeQueue& queue);
 
-    struct semaphore_t
-    {
-        CondVar    condition;
-        Mutex      start_mutex;
-        Mutex      mutex;
-        AtomicBool running;
-    };
-
-    struct QueueContext
-    {
-        Mutex                                   globalMod;
-        Map<ThreadId::Hash, RuntimeQueue>       queues;
-        Map<ThreadId::Hash, Thread>             queueThreads;
-        Map<ThreadId::Hash, ShPtr<semaphore_t>> queueFlags;
-    };
-
-    using QueueContextPtr = ShPtr<QueueContext>;
-
     /*!
      * \brief Create a new thread context, do nothing else.
      * \return
@@ -333,6 +350,8 @@ class RuntimeQueue
      * \return
      */
     static QueueContextPtr GetQueueContext();
+
+    RuntimeTask::Timepoint mNextWakeup;
 
   private:
     u64  enqueue(RuntimeTask&& task);

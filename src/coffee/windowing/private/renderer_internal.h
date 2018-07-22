@@ -32,7 +32,8 @@ namespace SDL2{
 
 namespace Display{
 
-class CSDL2Renderer_Internal final :
+class
+        CSDL2Renderer_Internal final :
         public RendererInterface
 
         #if defined(COFFEE_ENABLE_OPENGL)

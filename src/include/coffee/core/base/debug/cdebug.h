@@ -177,6 +177,21 @@ FORCEDINLINE void cTag(cstring tag, cstring str, Arg... args)
 }
 
 template<typename... Arg>
+FORCEDINLINE void cTag(u32 level, cstring tag, cstring str, Arg... args)
+{
+#ifndef COFFEE_LOWFAT
+    OutputPrinter::fprintf_tagged(
+        DefaultDebugOutputPipe,
+        Severity::Information,
+        level,
+        0,
+        tag,
+        str,
+        args...);
+#endif
+}
+
+template<typename... Arg>
 C_DEPRECATED FORCEDINLINE void cLog(
     cstring file, int64 line, cstring id, cstring msg, Arg... args)
 {

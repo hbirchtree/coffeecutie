@@ -147,7 +147,7 @@ struct SimpleProfilerImpl
         cstring name = nullptr, DataPoint::Attr at = DataPoint::AttrNone)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        if(!profiler_tstore && profiler_data_store->Enabled)
+        if(!profiler_tstore || !profiler_data_store->Enabled)
             return;
 
         DataPoint p;
@@ -168,7 +168,7 @@ struct SimpleProfilerImpl
         cstring name, DataPoint::Attr at = DataPoint::AttrNone)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        if(!profiler_tstore && profiler_data_store->Enabled)
+        if(!profiler_tstore || !profiler_data_store->Enabled)
             return;
 
         threadContextStack().push_front(name);
@@ -188,7 +188,7 @@ struct SimpleProfilerImpl
     STATICINLINE void PopContext()
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        if(!profiler_tstore && profiler_data_store->Enabled)
+        if(!profiler_tstore || !profiler_data_store->Enabled)
             return;
 
         if(threadContextStack().size() < 1)

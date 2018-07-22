@@ -22,7 +22,7 @@ int32 coffee_main(int32, cstring_w*)
 
     CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
-    props.gl.flags |= GLProperties::GLDebug /*| GLProperties::GLVSync*/;
+    props.gl.flags |= GLProperties::GLDebug | GLProperties::GLVSync;
 
     EDATA*       loop  = new EDATA{CreateRendererUq(),
                             MkUq<RendererState>(),

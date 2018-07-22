@@ -6,59 +6,83 @@
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/jni/jnipp.h>
 
-#include <jni.h>
-#include <android/sensor.h>
-#include <android/asset_manager.h>
+#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/asset_manager.h>
+#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/sensor.h>
+#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/jni.h>
 
 struct android_app;
-
-extern struct android_app* coffee_app;
-
 struct AAsset;
 struct AAssetManager;
 
-using Coffee::cstring;
-using Coffee::CString;
-using Coffee::i64;
-using Coffee::u64;
-using Coffee::scalar;
-using Coffee::bigscalar;
+namespace android {
 
-struct javavar
+struct jni_error_category : Coffee::error_category
 {
-    JNIEnv* env;
-    jclass ass;
-    jfieldID field;
+    virtual const char* name() const noexcept;
+    virtual std::string message(int error_code) const;
 };
 
-extern javavar Coffee_JavaGetStaticMember(cstring clss,
-                                          cstring var,
-                                          cstring type);
+using jni_error_code = Coffee::domain_error_code<jint, jni_error_category>;
 
-template<typename T>
-FORCEDINLINE T CJ_GetStatic(cstring classname, cstring varname)
+struct ScopedJNI
 {
-    return T();
-}
+    JNIEnv* jniEnvironment;
+    JavaVM* javaVm;
 
-template<>
-FORCEDINLINE CString CJ_GetStatic(cstring classname, cstring varname)
-{
-    auto varobj = Coffee_JavaGetStaticMember(classname, varname,
-                                             "Ljava/lang/String;");
+    ScopedJNI(JavaVM* jvm) : javaVm(jvm)
+    {
+        jni_error_code ec;
 
-    if(!varobj.env)
-        return {};
+        auto envcode =
+            javaVm->GetEnv(C_RCAST<void**>(&jniEnvironment), JNI_VERSION_1_6);
 
-    jstring s = (jstring)varobj.env->GetStaticObjectField(varobj.ass, varobj.field);
-    auto chars = varobj.env->GetStringUTFChars(s, 0);
+        switch(envcode)
+        {
+        case JNI_EDETACHED:
+            break;
+        case JNI_OK:
+            return;
+        default:
+        {
+            ec = envcode;
+            C_ERROR_CHECK(ec);
+            return;
+        }
+        }
 
-    CString output = chars;
+        auto code = javaVm->AttachCurrentThread(&jniEnvironment, nullptr);
 
-    varobj.env->ReleaseStringUTFChars(s, chars);
+        if(code != JNI_OK)
+        {
+            ec = code;
+            C_ERROR_CHECK(ec);
+        }
+    }
 
-    return output;
-}
+    ~ScopedJNI()
+    {
+//        javaVm->DetachCurrentThread();
+    }
+
+    JNIEnv* env()
+    {
+        return jniEnvironment;
+    }
+};
+
+} // namespace android
+
+namespace jnipp {
+
+extern android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope);
+
+extern JavaVM* GetVM();
+
+} // namespace JNIPP
+
+namespace Coffee {
+
+extern struct android_app* coffee_app;
 
 enum FCmdType
 {
@@ -98,14 +122,17 @@ struct AndroidForeignCommand
 {
     FCmdType type;
 
-    union {
-        u64 scalarU64;
-        i64 scalarI64;
-        scalar scalarF32;
+    union
+    {
+        u64       scalarU64;
+        i64       scalarI64;
+        scalar    scalarF32;
         bigscalar scalarF64;
-        cstring ptr_string;
-        void* ptr;
+        cstring   ptr_string;
+        void*     ptr;
     } data;
 
     CString store_string;
 };
+
+} // namespace Coffee

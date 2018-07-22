@@ -453,6 +453,11 @@ class EventApplication : public InputApplication
             1);
 #endif
 
+        Cmd::RegisterAtExit([]()
+        {
+            local_event_data.release();
+        });
+
 #if defined(COFFEE_USE_APPLE_GLKIT) || \
     defined(COFFEE_USE_ANDROID_NATIVEWIN) || defined(COFFEE_EMSCRIPTEN)
         /* Under GLKit, the entry point for setup, update and cleanup

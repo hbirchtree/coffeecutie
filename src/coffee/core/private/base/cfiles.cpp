@@ -174,7 +174,8 @@ bool FileUnmap(Resource& resc)
     return s;
 }
 
-bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
+bool
+FileOpenMap(Resource& resc, szptr size, RSCA acc)
 {
     file_error ec;
 

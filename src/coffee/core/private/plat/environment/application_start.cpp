@@ -4,20 +4,20 @@
 
 #if defined(COFFEE_WINDOWS) && !defined(__MINGW64__)
 #if !defined(COFFEE_WINDOWS_UWP)
-extern bool WMI_Query(const char* query, const wchar_t* property, std::string& target);
+extern bool WMI_Query(
+    const char* query, const wchar_t* property, std::string& target);
 #endif
 extern int InitCOMInterface();
-#elif defined(COFFEE_ANDROID)
-#include "../sensor/android/android_sensors.h"
 #endif
 
-#include <coffee/core/coffee.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/coffee.h>
+
 #include <coffee/core/CDebug>
 
 #if defined(COFFEE_GEKKO)
 GXRModeObj* gamecube_rmode = NULL;
-void* gamecube_xfb = NULL;
+void*       gamecube_xfb   = NULL;
 
 void GCVideoInit()
 {
@@ -33,51 +33,51 @@ void GCVideoInit()
     VIDEO_Flush();
 
     VIDEO_WaitVSync();
-    if(gamecube_rmode->viTVMode&VI_NON_INTERLACE)
+    if(gamecube_rmode->viTVMode & VI_NON_INTERLACE)
         VIDEO_WaitVSync();
 
-    console_init(gamecube_xfb, 20, 20,
-                 gamecube_rmode->fbWidth, gamecube_rmode->xfbHeight,
-                 gamecube_rmode->fbWidth*2);
+    console_init(
+        gamecube_xfb,
+        20,
+        20,
+        gamecube_rmode->fbWidth,
+        gamecube_rmode->xfbHeight,
+        gamecube_rmode->fbWidth * 2);
 }
 
 void GCInfiniteLoop()
 {
-    while(1) { VIDEO_WaitVSync(); }
+    while(1)
+    {
+        VIDEO_WaitVSync();
+    }
 }
 #endif
 
 using namespace Coffee;
 
-int deref_main(CoffeeMainWithArgs mainfun,
-               int argc, char** argv,
-               u32 flags = 0)
+int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, u32 flags = 0)
 {
 #ifndef COFFEE_LOWFAT
     cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
 #endif
 
-#if defined(COFFEE_GEKKO)
-    GCVideoInit();
-#endif
-
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) \
-    && !defined(__MINGW64__)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
+    !defined(__MINGW64__)
 #ifdef NDEBUG
-	ShowWindow(GetConsoleWindow(), SW_HIDE);
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
 #else
-	if(Env::GetVar("VisualStudioVersion").size())
-		ShowWindow(GetConsoleWindow(), SW_HIDE);
+    if(Env::GetVar("VisualStudioVersion").size())
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
 #endif
     InitCOMInterface();
 #elif defined(COFFEE_WINDOWS_UWP)
-	InitCOMInterface();
-#elif defined(COFFEE_ANDROID)
-    Sensor::Android::Android_InitSensors();
-
-    atexit(Sensor::Android::Android_DestroySensors);
+    InitCOMInterface();
+#elif defined(COFFEE_GEKKO)
+    GCVideoInit();
 #endif
-    int stat = Coffee::CoffeeMain(mainfun,argc,argv, flags);
+
+    int stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
 
 #if defined(COFFEE_GEKKO)
     GCInfiniteLoop();
@@ -90,18 +90,17 @@ int deref_main(CoffeeMainWithArgs mainfun,
 #endif
 }
 
-extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv)
+extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv)
 {
     return deref_main(mainfun, argc, argv);
 }
 
 #include <coffee/core/coffee_version.h>
 
-namespace Coffee{
+namespace Coffee {
 
 const CoffeeApplicationData& ApplicationData()
 {
     return GetCurrentApp();
 }
-}
-
+} // namespace Coffee

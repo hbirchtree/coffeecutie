@@ -123,7 +123,7 @@ static void native_print(FILE* stream, CString const& formatted, Severity sev)
         flag = EM_LOG_ERROR;
     emscripten_log(flag, "%s", formatted.c_str());
 #elif defined(COFFEE_WINDOWS_UWP)
-    CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted_newline);
+    CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted);
     OutputDebugString(formatted_w.c_str());
 #elif defined(COFFEE_WINDOWS)
     if(Env::GetVar("VisualStudioVersion").size())
@@ -158,7 +158,7 @@ void OutputPrinterImpl::fprintf_platform_tagged(
         AddContextString(formatted, sev);
 
         if(tag)
-            formatted += tag;
+            (formatted += ":") += tag;
 
         (formatted += ": ") += formatted_raw;
     } else

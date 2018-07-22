@@ -51,20 +51,21 @@ vec4 texture(sampler2D sampler, vec3 texCoord)
 
 vec4 texture2DArray_Internal(sampler2D tex, vec3 coord, float gridSize)
 {
-    float squareSize = gridSize;
-    int iSquareSize = int(squareSize);
-    float fSquareSize = 1.0 / squareSize;
+    int iSquare = int(gridSize);
 
-    float gridY = float(int(coord.z) / iSquareSize) * fSquareSize;
-    float gridX = (coord.z - gridY * squareSize) * fSquareSize;
+    int grid_times = int(coord.z) / iSquare;
+    int remainder = int(coord.z) - grid_times * iSquare;
 
-    vec2 baseCoord = vec2(gridX * fSquareSize, gridY * fSquareSize);
+    float gridX = float(remainder);
+    float gridY = float(grid_times);
 
-    coord.xy = coord.xy
-            * vec2(fSquareSize, fSquareSize)
-            + vec2(gridX, gridY);
+    vec2 scaledCoord = coord.xy / gridSize;
 
-    return texture2D(tex, coord.xy);
+    scaledCoord = scaledCoord + vec2(gridX, gridY) / gridSize;
+
+    scaledCoord = (scaledCoord - vec2(1.0)) / 2.0;
+
+    return texture2D(tex, scaledCoord);
 }
 
 vec4 texture2DArray(sampler2D tex, vec3 coord)

@@ -172,7 +172,7 @@
 #if defined(COFFEE_ANDROID) || defined(COFFEE_LOWFAT)
 /* For Android, we limit inlining for size reasons */
 #define COFFEE_LIMIT_INLINE
-#define COFFEE_DISABLE_PROFILER
+//#define COFFEE_DISABLE_PROFILER
 #endif
 
 /*

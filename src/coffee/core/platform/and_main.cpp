@@ -1,39 +1,49 @@
 #include <coffee/android/android_main.h>
-#include <coffee/core/CDebug>
-#include <coffee/core/CMD>
 
+#include <coffee/core/CMD>
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/coffee.h>
-#include <coffee/core/string_casting.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/string_casting.h>
+#include <coffee/core/types/tdef/stltypes.h>
+
+#include "../private/plat/sensor/android/android_sensors.h"
+
+#include <coffee/core/CDebug>
 
 #include <sys/sysinfo.h>
 
+#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/looper.h>
+#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/native_activity.h>
+#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/window.h>
 #include <android_native_app_glue.h>
-#include <android/native_activity.h>
-#include <android/looper.h>
-#include <android/window.h>
 #include <gestureDetector.h>
 
-#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+using namespace jnipp;
 
-static Coffee::Map<CString, CString> intentVariables;
-static Coffee::CString Android_cacheDir;
-static Coffee::CString Android_abis;
-static int Android_DPI;
+namespace android {
+
+static std::map<std::string, std::string> intentVariables;
+static std::string                        Android_cacheDir;
+static std::string                        Android_abis;
+static int                                Android_DPI;
+
+} // namespace android
 
 extern "C" {
 
-JNIEXPORT __attribute__((used)) __attribute__((visibility ("default"))) void
+JNIEXPORT __attribute__((used)) __attribute__((visibility("default"))) void
 Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
-        JNIEnv* env, jobject, jint id, jstring data
-        )
+    JNIEnv* env, jobject, jint id, jstring data)
 {
-    auto string_data = env->GetStringUTFChars(data, 0);
+    using namespace android;
+
+    auto string_data = env->GetStringUTFChars(data, nullptr);
 
     if(!string_data)
         return;
 
-//    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
+    //    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
 
     switch(id)
     {
@@ -64,7 +74,7 @@ Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
         /* Importing Intent extras as environment variables */
 
         Coffee::CString sdata = string_data;
-        auto split = sdata.find('=');
+        auto            split = sdata.find('=');
         if(split == Coffee::CString::npos)
             break;
         auto keyName = sdata.substr(0, split);
@@ -81,12 +91,15 @@ Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
 
     env->ReleaseStringUTFChars(data, string_data);
 }
-
 }
 
-using namespace Coffee;
+namespace android {
 
-static const constexpr u8 INPUT_VERB = 11;
+/*
+ *
+ * Android structures
+ *
+ */
 
 enum AndroidAppState
 {
@@ -96,165 +109,88 @@ enum AndroidAppState
 
 struct AndroidSensorData
 {
-    ASensorManager* manager;
-    const ASensor* accelerometer;
-    const ASensor* gyroscope;
+    ASensorManager*    manager;
+    const ASensor*     accelerometer;
+    const ASensor*     gyroscope;
     ASensorEventQueue* eventQueue;
-};
-
-struct CoffeeAndroidUserData
-{
-    AndroidSensorData sensors;
 };
 
 struct InputDetectors
 {
-    ndk_helper::TapDetector tap;
+    ndk_helper::TapDetector       tap;
     ndk_helper::DoubletapDetector double_tap;
-    ndk_helper::PinchDetector pinch;
-    ndk_helper::DragDetector drag;
+    ndk_helper::PinchDetector     pinch;
+    ndk_helper::DragDetector      drag;
 };
 
 struct AndroidInternalState
 {
-    InputDetectors input;
+    InputDetectors  input;
     AndroidAppState currentState;
-    CString cachePath;
+    std::string     cachePath;
 };
 
-static AndroidInternalState* app_internal_state = nullptr;
-
-struct android_app* coffee_app = nullptr;
-static JNIEnv* coffee_jni_env;
-
-extern CoffeeMainWithArgs android_entry_point;
-
-extern void* coffee_event_handling_data;
-
-void(*CoffeeEventHandle_Platform)(void*, int);
-void(*CoffeeEventHandleNA_Platform)(void*, int, void*, void*, void*);
-
-void(*CoffeeForeignSignalHandle_Platform)(int);
-void(*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
-
-extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
-
-javavar Coffee_JavaGetStaticMember(cstring clss, cstring var, cstring type)
+const char* jni_error_category::name() const noexcept
 {
-    javavar _var;
-    _var.env = coffee_app->activity->env;
-    if(!_var.env)
-        return {};
-
-    _var.ass = _var.env->FindClass(clss);
-    _var.field = _var.env->GetStaticFieldID(_var.ass,var,type);
-
-    return _var;
+    return "jni_error_category";
 }
 
-JNIEnv* JNIPP::GetJNI()
+std::string jni_error_category::message(int error_code) const
 {
-    return coffee_jni_env;
+    switch(error_code)
+    {
+    case JNI_EVERSION:
+        return "Invalid JNI version specified";
+    case JNI_EDETACHED:
+        return "JNI thread detached";
+    case JNI_OK:
+        return "No error";
+    default:
+        break;
+    }
+
+    throw implementation_error("error message not implemented");
 }
 
-static void AndroidHandleAppCmd(struct android_app* app, int32_t event);
-
-static int32_t AndroidHandleInputCmd(struct android_app* app,
-                                     struct AInputEvent* event);
-
-static void AndroidForeignSignalHandle(int evtype);
-
-static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
-                                         void* p3);
+} // namespace android
 
 static char AndroidWindowType[] = "android.view.Window";
-static char AndroidViewType[] = "android.view.View";
-static char javaioFile[] = "java.io.File";
+static char AndroidViewType[]   = "android.view.View";
+static char javaioFile[]        = "java.io.File";
 
-void android_main(struct android_app* state)
+extern Coffee::CoffeeMainWithArgs android_entry_point;
+extern void*                      coffee_event_handling_data;
+extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv);
+
+namespace Coffee {
+
+using namespace android;
+
+/*
+ *
+ * Android storage
+ *
+ */
+static const constexpr u8    INPUT_VERB         = 11;
+static AndroidInternalState* app_internal_state = nullptr;
+struct android_app*          coffee_app         = nullptr;
+static JNIEnv*               coffee_jni_env;
+
+void (*CoffeeEventHandle_Platform)(void*, int);
+void (*CoffeeEventHandleNA_Platform)(void*, int, void*, void*, void*);
+
+void (*CoffeeForeignSignalHandle_Platform)(int);
+void (*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
+
+/*
+ *
+ * Android event handling
+ *
+ */
+
+static void getTempFile()
 {
-    Env::SetVar("COFFEE_REPORT_URL",
-                "https://coffee.birchtrees.me/reports");
-
-    coffee_app = state;
-
-    app_internal_state = new AndroidInternalState;
-
-    app_internal_state->currentState = AndroidApp_Hidden;
-
-    CoffeeForeignSignalHandle = AndroidForeignSignalHandle;
-    CoffeeForeignSignalHandleNA = AndroidForeignSignalHandleNA;
-
-    state->onAppCmd = AndroidHandleAppCmd;
-    state->onInputEvent = AndroidHandleInputCmd;
-
-    Coffee::SetPrintingVerbosity(10);
-
-    cDebug("State: {0}", StrUtil::pointerify(state));
-
-    cDebug("Running under API {0}", state->activity->sdkVersion);
-
-    deref_main_c(android_entry_point, 0, nullptr);
-
-    state->activity->vm->AttachCurrentThread(
-            &coffee_jni_env, NULL);
-
-    auto build = "android.os.Build"_jclass;
-
-    auto var = build[FieldAs<JavaString>("BOARD"_jfield)].value();
-    cDebug("Board name: {0}", var);
-
-    var = build[FieldAs<JavaString>("BRAND"_jfield)].value();
-    cDebug("Brand: {0}", var);
-
-    var = build[FieldAs<JavaString>("PRODUCT"_jfield)].value();
-    cDebug("Product: {0}", var);
-
-    auto myClass = "android.app.NativeActivity"_jclass;
-
-    using NativeActivity = JavaClass<javaioFile, void, void>;
-
-    auto myInstance = myClass(state->activity->clazz);
-
-    cDebug("JCall Start: {0}", Chrono::high_resolution_clock::now().time_since_epoch().count());
-    auto cacheDirFile = myInstance["getCacheDir"_jmethod.returns<NativeActivity>()]({});
-    cDebug("JCall End: {0}", Chrono::high_resolution_clock::now().time_since_epoch().count());
-
-    cDebug("Thread: {0}", ThreadId().hash());
-
-    while(1)
-    {
-        int ident;
-        int events;
-
-        struct android_poll_source* source;
-
-        int timeout = -1;
-
-        if(app_internal_state->currentState == AndroidApp_Visible)
-            timeout = 0;
-
-        while((ident=ALooper_pollAll(0, nullptr,
-                                     &events, (void**)&source)) >= 0)
-        {
-            if(source != nullptr)
-                source->process(state, source);
-
-            if(ident == LOOPER_ID_USER)
-            {
-                cDebug("User event");
-            }
-
-            if(state->destroyRequested != 0)
-            {
-                CoffeeEventHandleCall(CoffeeHandle_Cleanup);
-                return;
-            }
-        }
-
-        if(app_internal_state->currentState == AndroidApp_Visible)
-            CoffeeEventHandleCall(CoffeeHandle_Loop);
-    }
+    ScopedJNI jni(coffee_app->activity->vm);
 }
 
 void AndroidHandleAppCmd(struct android_app* app, int32_t event)
@@ -263,7 +199,6 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     {
     case APP_CMD_START:
     {
-        cDebug("App start", event);
         break;
     }
     case APP_CMD_RESUME:
@@ -280,11 +215,10 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     {
         CoffeeEventHandleCall(CoffeeHandle_Setup);
 
-        ANativeActivity_setWindowFlags(app->activity,
-                                       AWINDOW_FLAG_FULLSCREEN|
-                                       AWINDOW_FLAG_KEEP_SCREEN_ON,
-                                       AWINDOW_FLAG_FULLSCREEN|
-                                       AWINDOW_FLAG_KEEP_SCREEN_ON);
+        ANativeActivity_setWindowFlags(
+            app->activity,
+            AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON,
+            AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON);
 
         /* Intentional fallthrough, we need to push a resize event */
     }
@@ -297,8 +231,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         rev.w = C_FCAST<u32>(ANativeWindow_getWidth(app->window));
         rev.h = C_FCAST<u32>(ANativeWindow_getHeight(app->window));
 
-        CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent,
-                                &gev, &rev, nullptr);
+        CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &gev, &rev, nullptr);
 
         break;
     }
@@ -338,8 +271,8 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
 }
 
-int32_t AndroidHandleInputCmd(struct android_app* app,
-                              struct AInputEvent* event)
+int32_t AndroidHandleInputCmd(
+    struct android_app* app, struct AInputEvent* event)
 {
     pthread_mutex_lock(&app->mutex);
 
@@ -347,7 +280,7 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
     {
     case AINPUT_EVENT_TYPE_KEY:
     {
-        auto action = AKeyEvent_getAction(event);
+        auto action  = AKeyEvent_getAction(event);
         auto keyCode = AKeyEvent_getKeyCode(event);
 
         auto flags = AKeyEvent_getFlags(event);
@@ -375,56 +308,53 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
 
         uint8_t action = actionPointerIndex & AMOTION_EVENT_ACTION_MASK;
         uint8_t pointerIdx =
-                (actionPointerIndex &
-                 AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
+            (actionPointerIndex & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
 
         auto& input_data = app_internal_state->input;
 
-        auto& tap = input_data.tap;
+        auto& tap    = input_data.tap;
         auto& dubtap = input_data.double_tap;
-        auto& drag = input_data.drag;
-        auto& pinch = input_data.pinch;
+        auto& drag   = input_data.drag;
+        auto& pinch  = input_data.pinch;
 
         auto flag = ndk_helper::GESTURE_STATE_START;
-        u32 dflg;
+        u32  dflg;
 
         CfGeneralEvent gev = {};
-        gev.type = CfTouchEvent;
+        gev.type           = CfTouchEvent;
 
         CfTouchEventData tev = {};
-        tev.type = CfTouch_None;
+        tev.type             = CfTouch_None;
 
-        auto tapCoord = CPointF{
-            AMotionEvent_getX(event, pointerIdx),
-            AMotionEvent_getY(event, pointerIdx)
-        }.convert<u32>();
+        auto tapCoord = CPointF{AMotionEvent_getX(event, pointerIdx),
+                                AMotionEvent_getY(event, pointerIdx)}
+                            .convert<u32>();
 
         if(dubtap.Detect(event) & flag)
         {
-            cVerbose(INPUT_VERB, "Double tap: {0}",
-                   tapCoord
-                   );
+            cVerbose(INPUT_VERB, "Double tap: {0}", tapCoord);
 
             tev.type = CfTouchType::CfTouchTap;
 
-            tev.event.tap.x = tapCoord.x;
-            tev.event.tap.y = tapCoord.y;
+            tev.event.tap.x         = tapCoord.x;
+            tev.event.tap.y         = tapCoord.y;
             tev.event.tap.doubleTap = 1;
-        }else
-        if(tap.Detect(event) & flag)
+        } else if(tap.Detect(event) & flag)
         {
-            cVerbose(INPUT_VERB, "Tap: {0},{1}",
-                   AMotionEvent_getX(event, pointerIdx),
-                   AMotionEvent_getY(event, pointerIdx));
+            cVerbose(
+                INPUT_VERB,
+                "Tap: {0},{1}",
+                AMotionEvent_getX(event, pointerIdx),
+                AMotionEvent_getY(event, pointerIdx));
 
             tev.type = CfTouchType::CfTouchTap;
 
-            tev.event.tap.x = tapCoord.x;
-            tev.event.tap.y = tapCoord.y;
+            tev.event.tap.x         = tapCoord.x;
+            tev.event.tap.y         = tapCoord.y;
             tev.event.tap.doubleTap = 0;
-        }else
-        if((dflg = (pinch.Detect(event)
-                & (flag|ndk_helper::GESTURE_STATE_MOVE))))
+        } else if((dflg =
+                       (pinch.Detect(event) &
+                        (flag | ndk_helper::GESTURE_STATE_MOVE))))
         {
             ndk_helper::Vec2 p1, p2;
 
@@ -441,15 +371,16 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
             if(dflg == ndk_helper::GESTURE_STATE_START)
                 initial_points = points;
 
-            cVerbose(INPUT_VERB, "Pinch: {0} ({1})", points,
-                   AMotionEvent_getHistorySize(event));
+            cVerbose(
+                INPUT_VERB,
+                "Pinch: {0} ({1})",
+                points,
+                AMotionEvent_getHistorySize(event));
 
-            CPointF pinch_point = {
-                (points.x() + points.z()) / 2.f,
-                (points.y() + points.w()) / 2.f
-            };
+            CPointF pinch_point = {(points.x() + points.z()) / 2.f,
+                                   (points.y() + points.w()) / 2.f};
 
-            tev.type = CfTouchType::CfTouchPinch;
+            tev.type          = CfTouchType::CfTouchPinch;
             tev.event.pinch.x = C_CAST<u32>(pinch_point.x);
             tev.event.pinch.y = C_CAST<u32>(pinch_point.y);
 
@@ -469,18 +400,18 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
                 if(dist2 == 0.f)
                     dist2 = 0.01f;
 
-                tev.event.pinch.factor = { dist1 / dist2 };
+                tev.event.pinch.factor = {dist1 / dist2};
 
                 /* TODO: Allow this process to emit rotation gestures */
                 /* TODO: Allow this to fall over into a drag gesture? */
             }
 
-        }else
-        if((dflg = (drag.Detect(event)
-                    & (flag|ndk_helper::GESTURE_STATE_MOVE))))
+        } else if((dflg =
+                       (drag.Detect(event) &
+                        (flag | ndk_helper::GESTURE_STATE_MOVE))))
         {
             ndk_helper::Vec2 p;
-            Vecf2 point;
+            Vecf2            point;
 
             static Vecf2 initial_point;
 
@@ -492,7 +423,7 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
 
             cVerbose(INPUT_VERB, "Drag: {0} -> {1}", initial_point, point);
 
-            tev.type = CfTouchType::CfTouchPan;
+            tev.type         = CfTouchType::CfTouchPan;
             tev.event.pan.ox = C_CAST<u32>(point.x());
             tev.event.pan.oy = C_CAST<u32>(point.y());
             tev.event.pan.dx = C_CAST<i32>(initial_point.x() - point.x());
@@ -504,11 +435,12 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
 
         if(tev.type != CfTouch_None)
         {
-            CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent,
-                                    &gev, &tev, nullptr);
+            CoffeeEventHandleNACall(
+                CoffeeHandle_GeneralEvent, &gev, &tev, nullptr);
         }
 
-//        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action, 0, 0);
+        //        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action,
+        //        0, 0);
         break;
     }
     default:
@@ -529,7 +461,9 @@ static void AndroidForeignSignalHandle(int evtype)
     {
     case CoffeeForeign_ActivateMotion:
     {
-        /* TODO: Activate motion sensors here */
+        Sensor::Android::Android_InitSensors();
+        Cmd::RegisterAtExit(Sensor::Android::Android_DestroySensors);
+
         break;
     }
 
@@ -538,15 +472,20 @@ static void AndroidForeignSignalHandle(int evtype)
     }
 }
 
-static CString AndroidGetBuildField(JNIPP::JObjectField<void>&& field)
+template<typename T>
+static std::string GetBuildField(wrapping::jfield<T>&& field)
 {
-    auto build = "android.os.Build"_jclass;
-    auto var = build[FieldAs<JavaString>(std::move(field))].value();
-    return var;
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
+
+    jvalue fieldValue =
+        *"android.os.Build"_jclass[field.as("java.lang.String")];
+
+    return java::type_unwrapper<std::string>(fieldValue);
 }
 
-static void AndroidForeignSignalHandleNA(int evtype, void* p1,
-                                         void* p2, void* p3)
+static void AndroidForeignSignalHandleNA(
+    int evtype, void* p1, void* p2, void* p3)
 {
     switch(evtype)
     {
@@ -579,28 +518,28 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1,
             break;
 
         case Android_QueryReleaseName:
-            out->store_string = AndroidGetBuildField("BOARD"_jfield);
+            out->store_string = GetBuildField("BOARD"_jfield);
             break;
         case Android_QueryDeviceBoardName:
-            out->store_string = AndroidGetBuildField("BOARD"_jfield);
+            out->store_string = GetBuildField("BOARD"_jfield);
             break;
         case Android_QueryDeviceBrand:
-            out->store_string = AndroidGetBuildField("BRAND"_jfield);
+            out->store_string = GetBuildField("BRAND"_jfield);
             break;
         case Android_QueryDeviceName:
-            out->store_string = AndroidGetBuildField("MODEL"_jfield);
+            out->store_string = GetBuildField("MODEL"_jfield);
             break;
         case Android_QueryDeviceManufacturer:
-            out->store_string = AndroidGetBuildField("MANUFACTURER"_jfield);
+            out->store_string = GetBuildField("MANUFACTURER"_jfield);
             break;
         case Android_QueryDeviceProduct:
-            out->store_string = AndroidGetBuildField("PRODUCT"_jfield);
+            out->store_string = GetBuildField("PRODUCT"_jfield);
             break;
 
         case Android_QueryMaxMemory:
             struct sysinfo inf;
             sysinfo(&inf);
-            out->data.scalarI64 = C_FCAST<i64>(inf.totalram*inf.mem_unit);
+            out->data.scalarI64 = C_FCAST<i64>(inf.totalram * inf.mem_unit);
             break;
 
         case Android_QueryDeviceDPI:
@@ -636,4 +575,141 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1,
         break;
     }
     }
+}
+
+extern CString GetSystemDirectedPath(cstring suffix, RSCA storage);
+
+STATICINLINE void InitializeState(struct android_app* state)
+{
+    Env::SetVar("COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports");
+
+    coffee_app = state;
+
+    app_internal_state = new AndroidInternalState;
+
+    app_internal_state->currentState = AndroidApp_Hidden;
+
+    CoffeeForeignSignalHandle   = AndroidForeignSignalHandle;
+    CoffeeForeignSignalHandleNA = AndroidForeignSignalHandleNA;
+
+    state->onAppCmd     = AndroidHandleAppCmd;
+    state->onInputEvent = AndroidHandleInputCmd;
+
+    Coffee::SetPrintingVerbosity(10);
+
+    cDebug("State: {0}", StrUtil::pointerify(state));
+
+    cDebug("Running under API {0}", state->activity->sdkVersion);
+
+    try  {
+        GetSystemDirectedPath("File.json", RSCA::None);
+    } catch(jnipp::java_exception const& e)
+    {
+        cDebug("Failed to get temp file: {0}", std::string(e.what()));
+    }
+
+    {
+        ScopedJNI jni(state->activity->vm);
+        jnipp::SwapJNI(&jni);
+
+        auto build = "android.os.Build"_jclass;
+
+        //        auto var = build[FieldAs<JavaString>("BOARD"_jfield)].value();
+        //        var      = build[FieldAs<JavaString>("BRAND"_jfield)].value();
+        //        var      =
+        //        build[FieldAs<JavaString>("PRODUCT"_jfield)].value();
+
+        auto myClass = "android.app.NativeActivity"_jclass;
+
+        //        using NativeActivity = JavaClass<javaioFile, void, void>;
+
+        //        auto myInstance = myClass(state->activity->clazz);
+
+        //        auto cacheDirFile =
+        //            myInstance["getCacheDir"_jmethod.returns<NativeActivity>()]({});
+
+        //        cacheDirFile.
+    }
+}
+
+STATICINLINE void HandleEvents()
+{
+    int ident;
+    int events;
+
+    struct android_poll_source* source;
+
+    while((ident = ALooper_pollAll(0, nullptr, &events, (void**)&source)) >= 0)
+    {
+        if(source != nullptr)
+            source->process(coffee_app, source);
+
+        if(ident == LOOPER_ID_USER)
+        {
+            cDebug("User event");
+        }
+
+        if(coffee_app->destroyRequested != 0)
+        {
+            CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+            return;
+        }
+    }
+}
+
+STATICINLINE void StartEventProcessing()
+{
+    while(1)
+    {
+        int timeout = -1;
+
+        if(app_internal_state->currentState == AndroidApp_Visible)
+            timeout = 0;
+
+        HandleEvents();
+
+        if(app_internal_state->currentState == AndroidApp_Visible)
+            CoffeeEventHandleCall(CoffeeHandle_Loop);
+    }
+}
+
+} // namespace Coffee
+
+/*
+ *
+ * JNI functions
+ *
+ */
+
+namespace jnipp {
+
+thread_local android::ScopedJNI* jniScope = nullptr;
+
+android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope)
+{
+    auto prevScope  = jniScope;
+    jnipp::jniScope = jniScope;
+
+    return prevScope;
+}
+
+JNIEnv* GetJNI()
+{
+    return jniScope->env();
+}
+
+JavaVM* GetVM()
+{
+    return Coffee::coffee_app->activity->vm;
+}
+
+} // namespace jnipp
+
+void android_main(struct android_app* state)
+{
+    Coffee::InitializeState(state);
+
+    deref_main_c(android_entry_point, 0, nullptr);
+
+    Coffee::StartEventProcessing();
 }

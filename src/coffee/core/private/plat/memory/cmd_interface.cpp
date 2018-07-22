@@ -2,8 +2,8 @@
 
 #include <coffee/core/CDebug>
 
-namespace Coffee{
-namespace CmdInterface{
+namespace Coffee {
+namespace CmdInterface {
 
 void BasicTerm::Exit(int code)
 {
@@ -17,27 +17,26 @@ void BasicTerm::Exit(int code)
 }
 
 #if defined(COFFEE_NO_ATEXIT)
-static Vector<void(*)()> exit_functions;
+static Vector<void (*)()> exit_functions;
 #endif
 
 void BasicTerm::RegisterAtExit(void (*efun)())
 {
 #if defined(COFFEE_NO_ATEXIT)
-    cDebug("Registering function: {0}", efun);
     exit_functions.push_back(efun);
 #else
     if(atexit(efun) != 0)
-        fprintf(DefaultDebugOutputPipe,
-                "Failed to register atexit() function\n");
+        fprintf(
+            DefaultDebugOutputPipe, "Failed to register atexit() function\n");
 #endif
 }
 
 #if defined(COFFEE_NO_ATEXIT)
-const Vector<void (*)()> &BasicTerm::GetAtExit()
+const Vector<void (*)()>& BasicTerm::GetAtExit()
 {
     return exit_functions;
 }
 #endif
 
-}
-}
+} // namespace CmdInterface
+} // namespace Coffee

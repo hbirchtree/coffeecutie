@@ -52,7 +52,10 @@ AndroidFileFun::FileHandle AndroidFileFun::Open(
 
         fh.fp = fp;
     } else
+    {
         fh = Ancestor::Open(fn, ac, ec);
+        fh.fp = nullptr;
+    }
 
     return fh;
 }

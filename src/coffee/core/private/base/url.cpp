@@ -88,16 +88,14 @@ STATICINLINE SystemPaths GetSystemPaths()
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-    paths.configDir = MkUrl(
-        cmd.store_string.c_str(), RSCA::SystemFile);
+    paths.configDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
 
     cmd.type = Android_QueryCachePath;
 
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-    paths.cacheDir = MkUrl(
-        cmd.store_string.c_str(), RSCA::SystemFile);
+    paths.cacheDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
 
     paths.tempDir = paths.cacheDir;
 
@@ -214,6 +212,53 @@ STATICINLINE SystemPaths GetSystemPaths()
     return paths;
 }
 
+#if defined(COFFEE_ANDROID)
+static char javaioFile[] = "java.io.File";
+#endif
+
+#if defined(COFFEE_ANDROID)
+/*!
+ * \brief Get a system-directed file path
+ * This is used on Android for creating temporary files.
+ * \return
+ */
+CString GetSystemDirectedPath(cstring suffix, RSCA storage)
+{
+    //    using FileType = JavaClass<javaioFile, void, void>;
+
+    android::ScopedJNI jni(jnipp::GetVM());
+    jnipp::SwapJNI(&jni);
+
+    auto File           = "java.io.File"_jclass;
+    auto createTempFile = "createTempFile"_jmethod.ret("java.io.File")
+                              .arg("java.lang.String")
+                              .arg("java.lang.String");
+    auto getCanonicalPath = "getCanonicalPath"_jmethod.ret("java.lang.String");
+
+    switch(storage & RSCA::StorageMask)
+    {
+    case RSCA::TempFile:
+    {
+        Path filePath(suffix);
+
+        auto fileBasename = jnipp::java::type_wrapper<std::string>(
+            filePath.removeExt().internUrl);
+        auto fileExtension =
+            jnipp::java::type_wrapper<std::string>(filePath.extension());
+
+        auto fileInstance = File[createTempFile](fileBasename, fileExtension);
+
+        auto tempFile = File(fileInstance.l)[getCanonicalPath]();
+
+        return jnipp::java::type_unwrapper<std::string>(tempFile);
+    }
+    default:
+        return {};
+    }
+    //    auto var = File[createTempFile]({});
+}
+#endif
+
 CString Url::operator*() const
 {
     switch(category)
@@ -313,8 +358,13 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::TemporaryFile:
     {
+#if defined(COFFEE_ANDROID)
+        tempStore =
+            MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
+#else
         DirFun::MkDir(paths.tempDir, true, ec);
         tempStore = paths.tempDir + urlPart;
+#endif
         break;
     }
     case RSCA::CachedFile:

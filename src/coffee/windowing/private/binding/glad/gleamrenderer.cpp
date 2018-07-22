@@ -22,11 +22,34 @@
 
 #define GLR_API "GLeamRenderer::"
 
+
 namespace Coffee {
 namespace Display {
 
+#if defined(COFFEE_GLEAM_DESKTOP)
+using GLDEBUG = CGL::CGL43;
+#else
+using GLDEBUG = CGL::CGLES32;
+#endif
+
 using GL = CGL::CGL_Lowest;
 using GDEBUG = CGL::Debug;
+
+static void PushDebugGroup(cstring n)
+{
+#if GL_VERSION_VERIFY(0x430, 0x320)
+    if(glPushDebugGroup)
+        GLDEBUG::PushDebugGroup(GL_DEBUG_SOURCE_APPLICATION_KHR, 0, -1, n);
+#endif
+}
+
+static void PopDebugGroup()
+{
+#if GL_VERSION_VERIFY(0x430, 0x320)
+    if(glPopDebugGroup)
+        GLDEBUG::PopDebugGroup();
+#endif
+}
 
 GLeamRenderer::GLeamRenderer(GLApplication* app) : GLLoader(app)
 {
@@ -205,25 +228,6 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
         return false;
     }
 
-//    if(PlatformData::IsDebug())
-//    {
-//        GDEBUG::SetDebugGroup(GLR_API "Print information");
-
-//        Profiler::DeepPushContext(GLR_API "Printing information about GL");
-//        cDebug(GLR_API "Rendering device info: {0}", GDEBUG::Renderer());
-
-//        if(feval(p.flags & GLProperties::GLCoreProfile))
-//            cDebug(
-//                GLR_API "OpenGL core profile version: {0}",
-//                GDEBUG::ContextVersion());
-//        else
-//            cDebug(
-//                GLR_API "OpenGL (non-core) version: {0}",
-//                GDEBUG::ContextVersion());
-
-//        GDEBUG::UnsetDebugGroup();
-//    }
-
     cDebug(
         GLR_API "OpenGL GLSL version: {0}", GDEBUG::ShaderLanguageVersion());
     Profiler::DeepPopContext();
@@ -232,7 +236,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 
     if(PlatformData::IsDebug())
     {
-        GDEBUG::SetDebugGroup(GLR_API "Profiler statistics");
+        PushDebugGroup(GLR_API "Profiler statistics");
 
         DProfContext b(GLR_API "Adding GL information to profiler");
 
@@ -305,18 +309,18 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 
         Profiler::AddExtraData("gl:limits", limits);
 
-        GDEBUG::UnsetDebugGroup();
+        PopDebugGroup();
     }
 
-    if(p.flags & GLProperties::GLDebug)
-    {
 #if !defined(COFFEE_WINDOWS) && GL_VERSION_VERIFY(0x330, 0x320)
+    if(p.flags & GLProperties::GLDebug && glDebugMessageCallback)
+    {
         DProfContext b(GLR_API "Configuring GL context debugging");
         GDEBUG::SetDebugMode(true);
         GDEBUG::DebugSetCallback(gleamcallback, this);
         GDEBUG::SetDebugLevel(Severity::Information, false);
-#endif
     }
+#endif
 
     return true;
 }
