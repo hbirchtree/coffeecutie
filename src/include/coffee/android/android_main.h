@@ -6,8 +6,8 @@
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/jni/jnipp.h>
 
-#include <asset_manager.h>
-#include <sensor.h>
+#include <android/asset_manager.h>
+#include <android/sensor.h>
 #include <jni.h>
 
 struct android_app;
