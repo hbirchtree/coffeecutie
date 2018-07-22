@@ -6,9 +6,9 @@
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/jni/jnipp.h>
 
-#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/asset_manager.h>
-#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/sensor.h>
-#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/jni.h>
+#include <asset_manager.h>
+#include <sensor.h>
+#include <jni.h>
 
 struct android_app;
 struct AAsset;

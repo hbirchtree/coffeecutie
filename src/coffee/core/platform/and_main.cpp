@@ -13,9 +13,9 @@
 
 #include <sys/sysinfo.h>
 
-#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/looper.h>
-#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/native_activity.h>
-#include </home/havard/.local/android-ndk-r16b/sysroot/usr/include/android/window.h>
+#include <android/looper.h>
+#include <android/native_activity.h>
+#include <android/window.h>
 #include <android_native_app_glue.h>
 #include <gestureDetector.h>
 

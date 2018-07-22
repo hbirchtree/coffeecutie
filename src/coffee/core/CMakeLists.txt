@@ -321,11 +321,6 @@ if(ANDROID)
         $<BUILD_INTERFACE:${NDK_HELPER_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${CPUFEATURES_INCLUDE_DIR}>
         )
-
-    target_include_directories ( CoffeeCore_Base PUBLIC
-        /home/havard/.local/android-ndk-r16b/sources/cxx-stl/llvm-libc++/include
-        /home/havard/.local/android-ndk-r16b/sysroot/usr/include
-        )
 endif()
 
 #
