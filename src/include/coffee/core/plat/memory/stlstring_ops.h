@@ -258,6 +258,8 @@ INTEGER_COERCE_CONVERT(unsigned long long, u64)
 
 #if defined(COFFEE_WINDOWS)
 INTEGER_CONVERT(unsigned long, u32_fmt)
+#else
+INTEGER_COERCE_CONVERT(unsigned long, u64)
 #endif
 
 #undef INTEGER_COERCE_CONVERT
