@@ -10,7 +10,7 @@ struct ProcessPropertyDef
 {
     /* Memory in this context is returned in kB */
 
-    using PID = uint64;
+    using PID = u64;
     /*!
      * \brief Initializes core dumping for the process, useful for information on crashes
      */
@@ -58,7 +58,7 @@ struct ProcessPropertyDef
      * \param pid Target PID
      * \return
      */
-    static int32 CpuUsage(PID)
+    static i32 CpuUsage(PID)
     {
         return 0;
     }
@@ -71,27 +71,27 @@ struct ProcessPropertyDef
     {
         return 0;
     }
-    static int32 CpuTime(PID)
+    static i32 CpuTime(PID)
     {
         return 0;
     }
-    static int64 UserTime()
+    static i64 UserTime()
     {
         return 0;
     }
-    static int64 KernTime()
+    static i64 KernTime()
     {
         return 0;
     }
-    static int64 ThreadPageFaults()
+    static i64 ThreadPageFaults()
     {
         return 0;
     }
-    static int64 ThreadSoftPageFaults()
+    static i64 ThreadSoftPageFaults()
     {
         return 0;
     }
-    static int64 Swaps()
+    static i64 Swaps()
     {
         return 0;
     }

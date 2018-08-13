@@ -20,15 +20,15 @@ namespace Profiling {
 
 static Vector<DataPoint> GetSortedDataPoints()
 {
-    Vector<DataPoint>  points;
+    Vector<DataPoint> points;
 
     return points;
 }
 
 static CString AnonymizePath(CString const& p)
 {
-    return CStrReplace(
-        CStrReplace(p, Env::GetUserHome().internUrl, "~"),
+    return str::replace::str<char>(
+        str::replace::str<char>(p, Env::GetUserHome().internUrl, "~"),
         Env::ExistsVar("USER") ? Env::GetVar("USER") : "",
         "user");
 }
@@ -60,40 +60,43 @@ STATICINLINE JSON::Value FromString(
 STATICINLINE void PutEvents(
     JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    if(!Profiler::HasData())
-        return;
-
     /* Some parsing information */
-    auto start = Profiler::StartTime();
+    auto start = Coffee::Profiler::StartTime();
 
     for(Profiling::DataPoint const& p : GetSortedDataPoints())
     {
         JSON::Value o;
         o.SetObject();
 
-        CString tid = StrUtil::pointerify(p.thread);
+        CString tid = str::print::pointerify(p.tid);
 
-        if((*Profiler::ThreadNames())[p.thread].size())
-            tid = (*Profiler::ThreadNames())[p.thread];
+        if(ThreadGetName(p.tid).size())
+            tid = ThreadGetName(p.tid);
 
         auto catVal  = FromString(p.component, alloc);
         auto tidVal  = FromString(tid, alloc);
         auto nameVal = FromString(p.name, alloc);
 
-        o.AddMember("ts", JSON::Value(p.ts - start), alloc);
+//        o.AddMember(
+//            "ts",
+//            JSON::Value(
+//                Chrono::duration_cast<Chrono::microseconds>(p.ts).count() -
+//                start),
+//            alloc);
+
         o.AddMember("name", nameVal, alloc);
         o.AddMember("pid", JSON::Value(1), alloc);
         o.AddMember("tid", tidVal, alloc);
         o.AddMember("cat", catVal, alloc);
 
-        switch(p.tp)
+        switch(p.flags.type)
         {
         case Profiling::DataPoint::Profile:
         {
-            if(feval(p.at & Profiling::DataPoint::Hot))
-                o.AddMember("ph", "P", alloc);
-            else
-                o.AddMember("ph", "i", alloc);
+            //            if(feval(p.at & Profiling::DataPoint::Hot))
+            //                o.AddMember("ph", "P", alloc);
+            //            else
+            o.AddMember("ph", "i", alloc);
 
             o.AddMember("s", "t", alloc);
             break;
@@ -106,6 +109,11 @@ STATICINLINE void PutEvents(
         case Profiling::DataPoint::Pop:
         {
             o.AddMember("ph", "E", alloc);
+            break;
+        }
+        case DataPoint::Complete:
+        {
+            o.AddMember("ph", "X", alloc);
             break;
         }
         }
@@ -128,13 +136,15 @@ STATICINLINE void PutArgs(
 STATICINLINE void PutExtraData(
     JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    if(!Profiler::ExtraInfo())
+    if(!Coffee::Profiler::ExtraInfo())
         return;
 
-    for(auto info : *Profiler::ExtraInfo())
+    for(auto info : *Coffee::Profiler::ExtraInfo())
     {
         target.AddMember(
-            FromString(info.key, alloc), FromString(info.value, alloc), alloc);
+            FromString(info.first, alloc),
+            FromString(info.second, alloc),
+            alloc);
     }
 }
 
@@ -291,7 +301,7 @@ void ExitRoutine()
     return;
 #endif
 
-    Profiler::DisableProfiler();
+    State::GetProfilerStore()->disable();
 
     file_error ec;
 

@@ -6,6 +6,8 @@
 #include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/types/tdef/integertypes.h>
 
+#include <algorithm>
+
 namespace Coffee {
 
 struct Url;

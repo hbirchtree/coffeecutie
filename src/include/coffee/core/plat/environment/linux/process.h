@@ -22,7 +22,7 @@ namespace Linux {
 struct LinuxProcessProperty : ProcessPropertyDef
 {
     using PID     = pid_t;
-    using MemUnit = long;
+    using MemUnit = i64;
 
     static MemUnit Mem(PID);
 
@@ -33,7 +33,7 @@ struct LinuxProcessProperty : ProcessPropertyDef
         lim.rlim_cur = lim.rlim_max = RLIM_INFINITY;
         setrlimit(RLIMIT_CORE, &lim);
     }
-    STATICINLINE bool CoreAffinity(Thread& thr, uint32 i)
+    STATICINLINE bool CoreAffinity(Thread& thr, u32 i)
     {
 #if !defined(COFFEE_MAEMO)
         cpu_set_t t;
@@ -52,19 +52,19 @@ struct LinuxProcessProperty : ProcessPropertyDef
         return getpid();
     }
 
-    STATICINLINE int32 CpuTime(PID)
+    STATICINLINE i32 CpuTime(PID)
     {
         return 0;
     }
 
-    STATICINLINE int64 UserTime()
+    STATICINLINE i64 UserTime()
     {
         rusage rs;
         if(getrusage(RUSAGE_SELF, &rs) != 0)
             return 0;
         return rs.ru_utime.tv_sec * 1000000 + rs.ru_utime.tv_usec;
     }
-    STATICINLINE int64 KernTime()
+    STATICINLINE i64 KernTime()
     {
         rusage rs;
         if(getrusage(RUSAGE_SELF, &rs) != 0)
@@ -72,21 +72,21 @@ struct LinuxProcessProperty : ProcessPropertyDef
         return rs.ru_stime.tv_sec * 1000000 + rs.ru_stime.tv_usec;
     }
 
-    STATICINLINE int64 ThreadPageFaults()
+    STATICINLINE i64 ThreadPageFaults()
     {
         rusage rs;
         if(getrusage(RUSAGE_THREAD, &rs) != 0)
             return 0;
         return rs.ru_majflt;
     }
-    STATICINLINE int64 ThreadSoftPageFaults()
+    STATICINLINE i64 ThreadSoftPageFaults()
     {
         rusage rs;
         if(getrusage(RUSAGE_THREAD, &rs) != 0)
             return 0;
         return rs.ru_minflt;
     }
-    STATICINLINE int64 Swaps()
+    STATICINLINE i64 Swaps()
     {
         rusage rs;
         if(getrusage(RUSAGE_SELF, &rs) != 0)

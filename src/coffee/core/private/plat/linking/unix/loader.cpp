@@ -37,9 +37,9 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
     if(ver)
     {
 #if defined(COFFEE_LINUX)
-        perm[1] = perm[0] + "." + Mem::Convert::uinttostring(ver->major);
-        perm[2] = perm[1] + "." + Mem::Convert::uinttostring(ver->minor);
-        perm[3] = perm[2] + "." + Mem::Convert::uinttostring(ver->revision);
+        perm[1] = perm[0] + "." + str::convert::to_string(ver->major);
+        perm[2] = perm[1] + "." + str::convert::to_string(ver->minor);
+        perm[3] = perm[2] + "." + str::convert::to_string(ver->revision);
 #elif defined(COFFEE_APPLE)
         perm[1] = perm[0] + Mem::Convert::uinttostring(ver->major);
         perm[2] = perm[1] + Mem::Convert::uinttostring(ver->minor);
@@ -66,8 +66,8 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
 
     if(!handle)
     {
-        ec = 1;
-        ec = LinkError();
+        ec    = 1;
+        ec    = LinkError();
         errno = 0;
 
         return nullptr;
@@ -75,7 +75,7 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
     {
         auto lib    = MkUq<Library>();
         lib->handle = handle;
-        errno = 0;
+        errno       = 0;
         return lib;
     }
 }

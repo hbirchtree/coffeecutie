@@ -29,7 +29,7 @@ extern file_header_t const* file_header_get(c_cptr baseptr, version_t expectedVe
  */
 extern void tag_index_magic(
         tag_index_t* tagindex,
-        int32 tagIndexOffset);
+        i32 tagIndexOffset);
 
 /*!
  * \brief Get the tag index pointer out of the file header
@@ -50,7 +50,7 @@ extern const index_item_t* tag_index_get_items(
 extern const index_item_t* tag_index_get_item(
         const file_header_t* file,
         const tag_index_t* tags,
-        int32 tag_id);
+        i32 tag_id);
 
 /*!
  * \brief Creates a copy of the tag index and sets up its magic index
@@ -68,7 +68,7 @@ extern tag_index_t tag_index_get(
  * \return A pointer to the described data
  */
 extern const void* blam_mptr(
-        c_cptr base, int32 magic, int32 offset);
+        c_cptr base, i32 magic, i32 offset);
 
 /*!
  * \brief Acquire the name string for a tag

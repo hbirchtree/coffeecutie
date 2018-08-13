@@ -1278,7 +1278,7 @@ inline CGenum to_enum2(DBuffers buf)
     return GL_NONE;
 }
 
-inline uint32 to_enum_shtype(CGenum f)
+inline u32 to_enum_shtype(CGenum f)
 {
     using namespace ShaderTypes;
 

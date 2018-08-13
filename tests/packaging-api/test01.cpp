@@ -68,8 +68,8 @@ bool resource_read_test()
             "Data:\n"
             "Internal: {0}\n"
             "Resource: {1}\n",
-            StrUtil::hexdump(probe_text, sizeof(probe_text) - 1),
-            StrUtil::hexdump(rsc.data, rsc.size));
+            str::print::hexdump(probe_text, sizeof(probe_text) - 1),
+            str::print::hexdump(rsc.data, rsc.size));
         return false;
     }
 

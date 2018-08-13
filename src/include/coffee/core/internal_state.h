@@ -23,8 +23,8 @@ struct InternalState;
 struct InternalThreadState;
 
 namespace Profiling {
-struct ProfilerDataStore;
-struct ThreadData;
+struct PContext;
+struct ThreadState;
 } // namespace Profiling
 
 namespace State {
@@ -77,8 +77,8 @@ extern P<InternalThreadState>& GetInternalThreadState();
  *
  */
 
-extern Profiling::ProfilerDataStore* GetProfilerStore();
-extern Profiling::ThreadData*        GetProfilerTStore();
+extern Profiling::PContext*    GetProfilerStore();
+extern Profiling::ThreadState* GetProfilerTStore();
 
 extern ThreadId& GetCurrentThreadId();
 

@@ -38,8 +38,8 @@ struct MemStatus
 };
 struct PciStatus
 {
-    uint8 generation, curr_gen;
-    uint8 linkWidth, curr_linkWidth;
+    u8 generation, curr_gen;
+    u8 linkWidth, curr_linkWidth;
 };
 struct TempRange
 {
@@ -52,7 +52,7 @@ struct ClockRange
 };
 struct UsageMeter
 {
-    uint8 mem, gpu, decoder, encoder;
+    u8 mem, gpu, decoder, encoder;
 };
 struct TransferStatus
 {

@@ -19,7 +19,7 @@ cstring ctypename(const T& t)
 #endif
 }
 template<typename T>
-int64 ctypehash(const T& t)
+i64 ctypehash(const T& t)
 {
 #if !defined(COFFEE_USE_RTTI)
     return 0;

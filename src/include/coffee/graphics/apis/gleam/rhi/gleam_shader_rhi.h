@@ -213,10 +213,10 @@ struct GLEAM_ShaderUniformState : GraphicsAPI::ShaderUniformState
         ShaderStage stages;
     };
 
-    Map<uint32, uniform_container<GLEAM_UniformValue>>  m_uniforms;
-    Map<uint32, uniform_container<GLEAM_SamplerHandle>> m_samplers;
-    Map<uint32, buffer_container<GLEAM_UniformBuffer>>  m_ubuffers;
-    Map<uint32, buffer_container<GLEAM_ShaderBuffer>>   m_sbuffers;
+    Map<u32, uniform_container<GLEAM_UniformValue>>  m_uniforms;
+    Map<u32, uniform_container<GLEAM_SamplerHandle>> m_samplers;
+    Map<u32, buffer_container<GLEAM_UniformBuffer>>  m_ubuffers;
+    Map<u32, buffer_container<GLEAM_ShaderBuffer>>   m_sbuffers;
 };
 
 struct GLEAM_PipelineDumper : GraphicsProfiler::PipelineDumper<GLEAM_Pipeline>

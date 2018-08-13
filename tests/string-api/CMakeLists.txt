@@ -1,2 +1,3 @@
-add_subdirectory(replace-test)
+add_subdirectory(replace_test)
 add_subdirectory(str_interpret)
+add_subdirectory(plain_string)

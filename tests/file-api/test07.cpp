@@ -91,7 +91,7 @@ bool dirlist_test()
 
     cDebug("File entries:");
     for(Dir::DirItem_t const& e : list)
-        cBasicPrint("{0} : {1}", e.name, (uint32)e.type);
+        cBasicPrint("{0} : {1}", e.name, (u32)e.type);
     Profiler::Profile("Printing names");
 
     File::Rm(file1, ec);

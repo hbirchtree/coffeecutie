@@ -372,7 +372,7 @@ struct MeshLoader
             SerialNodeData const* node(cstring name) const
             {
                 for(auto i : Range<>(num_nodes))
-                    if(Mem::StrCmp(node(i)->name(*this), name))
+                    if(str::cmp(node(i)->name(*this), name))
                         return node(i);
 
                 return nullptr;

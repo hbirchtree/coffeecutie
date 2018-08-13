@@ -62,7 +62,7 @@ void CALSoundTrack::queueSample(CSoundSample<CALSource, CALBuffer> &sample)
     m_samples.push_back(f);
 }
 
-void CALSoundTrack::updateTrack(uint64 ts)
+void CALSoundTrack::updateTrack(u64 ts)
 {
     Vector<_csample_data*> removal;
     m_samples.sort();

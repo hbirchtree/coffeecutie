@@ -30,7 +30,7 @@ void ArgumentParser::addPositionalArgument(
 u32 short_arg_match(cstring specifiedArgs, cstring target)
 {
     u32 result = 0;
-    for(auto i : Range<>(StrLen(specifiedArgs)))
+    for(auto i : Range<>(str::len(specifiedArgs)))
         if(specifiedArgs[i] == target[0])
             result++;
 
@@ -115,7 +115,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
 
             if((sw.longname
                 && arg_t == arg_long
-                && StrCmp(arg_p, sw.longname))
+                && str::cmp(arg_p, sw.longname))
                     ||
                     (sw.shortname
                      && arg_t == arg_short
@@ -132,7 +132,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
                 short_matches = short_arg_match(arg_p, arg.shortname);
 
             if((arg.longname && arg_t == arg_long
-                && StrCmp(arg_p, arg.longname))
+                && str::cmp(arg_p, arg.longname))
                     || (arg.shortname && arg_t == arg_short
                         && short_matches > 0))
             {

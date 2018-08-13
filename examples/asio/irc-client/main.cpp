@@ -8,49 +8,50 @@ using namespace Coffee;
 
 const constexpr cstring quit_message = "Leaving";
 
-TCP::Socket irc_stream;
+UqPtr<TCP::Socket> irc_stream;
 
 void ExitFun()
 {
-    irc_stream << "QUIT :" << quit_message << "\r\n";
+    *irc_stream << "QUIT :" << quit_message << "\r\n";
 
-    irc_stream.flush();
-    irc_stream.close();
+    irc_stream->flush();
+    irc_stream->sync_close();
 }
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     Cmd::RegisterAtExit(ExitFun);
 
-    CString user = "testuser";
+    CString user    = "testuser";
     CString channel = "#test";
 
-    irc_stream.connect("localhost","6667");
+    irc_stream->connect("localhost", "6667");
 
-    irc_stream << "NICK " << user << "\r\n";
-    irc_stream << "USER " << user << " 8 * : Sumthing\r\n";
+    *irc_stream << "NICK " << user << "\r\n";
+    *irc_stream << "USER " << user << " 8 * : Sumthing\r\n";
 
     CString tmp;
-    while(std::getline(irc_stream,tmp))
-        if(tmp.find("004")==0)
+    while(std::getline(*irc_stream, tmp))
+        if(tmp.find("004") == 0)
         {
             cDebug("Logged in");
             break;
-        }else if(tmp.find("433")==0)
+        } else if(tmp.find("433") == 0)
         {
             cDebug("Username is taken");
             return 1;
         }
 
-    irc_stream << "JOIN " << channel << "\r\n";
+    *irc_stream << "JOIN " << channel << "\r\n";
 
-    while(std::getline(irc_stream,tmp))
+    while(std::getline(*irc_stream, tmp))
     {
-        if(tmp.find("PING ")==0)
+        if(tmp.find("PING ") == 0)
         {
-            irc_stream << "PONG " << tmp.substr(5) << "\r\n";
-        }else{
-            cDebug("{0}",tmp);
+            *irc_stream << "PONG " << tmp.substr(5) << "\r\n";
+        } else
+        {
+            cDebug("{0}", tmp);
         }
     }
 

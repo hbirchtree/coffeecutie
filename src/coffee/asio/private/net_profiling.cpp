@@ -1,12 +1,13 @@
 #include <coffee/core/profiler/profiling-export.h>
 
-#include <coffee/core/CMD>
+#include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
-#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/CMD>
+#include <coffee/core/plat/plat_environment.h>
 
-namespace Coffee{
-namespace Net{
+namespace Coffee {
+namespace Net {
 void ProfilingExport()
 {
 #ifndef COFFEE_LOWFAT
@@ -17,53 +18,67 @@ void ProfilingExport()
     {
         cVerbose(10, "Network export starting");
 
-        Profiler::DisableProfiler();
+        State::GetProfilerStore()->disable();
+
+        State::SwapState(ASIO::context_name, {});
+
+        auto worker = ASIO::GenWorker();
+
+        auto ctxt = worker->context;
 
         CString target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
 
-        auto ctxt = ASIO::ASIO_Client::InitService();
-
         auto netServerUrl = Env::GetVar(network_server);
 
-        auto reportBin = Net::MkUrl(netServerUrl.c_str(),
-                                    HTTPAccess::DefaultPOST
-                                    |HTTPAccess::NoVerify);
+        auto reportBin = Net::MkUrl(
+            netServerUrl.c_str(),
+            HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
         Net::Resource reportBinRsc(ctxt, reportBin);
 
         if(!reportBinRsc.connected())
         {
-            cDebug("Failed to connect to {0}: {1}",
-                     reportBinRsc.resource(),
-                     reportBinRsc.errorCode().message());
+            cDebug(
+                "Failed to connect to {0}: {1}",
+                reportBinRsc.resource(),
+                reportBinRsc.errorCode().message());
             return;
         }
 
-        reportBinRsc.setHeaderField("Content-Type",
-                                    "application/json");
         reportBinRsc.setHeaderField(
-                    "X-Coffee-Token",
-                    "token " + Env::GetVar("COFFEE_REPORT_ID"));
-        auto chromeData = Bytes::CreateString(
-                    target_chrome.c_str());
+            http::header_field::content_type,
+            http::header::to_string::content_type(http::content_type::json));
+        reportBinRsc.setHeaderField(
+            http::header_field::accept,
+            http::header::to_string::content_type(http::content_type::json));
+
+        reportBinRsc.setHeaderField(
+            "X-Coffee-Token", "token " + Env::GetVar("COFFEE_REPORT_ID"));
+
+        auto chromeData = Bytes::CreateString(target_chrome.c_str());
 
         reportBinRsc.push(chromeData);
 
         if(reportBinRsc.responseCode() != 200)
         {
-            cWarning("Got bad response from server: {1}\n{0}",
-                     StrUtil::encapsulate((cstring)reportBinRsc.data().data,
-                                          reportBinRsc.data().size),
-                     reportBinRsc.responseCode());
-        }else
+            cWarning(
+                "Got bad response from server: {1}\n{0}",
+                str::encapsulate(
+                    (cstring)reportBinRsc.data().data,
+                    reportBinRsc.data().size),
+                reportBinRsc.responseCode());
+        } else
         {
             auto data = reportBinRsc.data();
-            cVerbose(10, "Network export successful with response: {0}",
-                   StrUtil::encapsulate(
-                       (cstring)data.data,
-                       data.size));
+            cVerbose(
+                10,
+                "Network export successful with response: {0}",
+                str::encapsulate((cstring)data.data, data.size));
         }
-    }else
+
+        worker->stop();
+
+    } else
         cVerbose(10, "Network export cancelled");
 #endif
 }
@@ -73,5 +88,5 @@ void RegisterProfiling()
     Cmd::RegisterAtExit(ProfilingExport);
 }
 
-}
-}
+} // namespace Net
+} // namespace Coffee

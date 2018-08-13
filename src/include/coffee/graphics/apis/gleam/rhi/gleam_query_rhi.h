@@ -31,8 +31,8 @@ struct GLEAM_OccludeQuery : GraphicsAPI::OccludeQuery<query::flags>, GLEAM_Query
     void begin();
     void end();
 
-    int64  resulti();
-    uint64 resultu();
+    i64  resulti();
+    u64 resultu();
 };
 
 } // namespace GLEAM

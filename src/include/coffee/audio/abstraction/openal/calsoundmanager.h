@@ -16,16 +16,16 @@ class CALSoundManager : public CSoundArbiter<CALSource,CALBuffer>
     Vector<CALSoundDeviceIdentifier> v_idevices;
     Vector<CALSoundDeviceIdentifier> v_odevices;
 
-    uint32 d_idx = 0;
-    uint32 padding;
+    u32 d_idx = 0;
+    u32 padding;
 
 public:
     CALSoundManager();
     ~CALSoundManager();
 
     CSoundDeviceIdentifier &defaultSoundDevice();
-    uint32 numberSoundDevices();
-    uint32 numberSoundInputDevices();
+    u32 numberSoundDevices();
+    u32 numberSoundInputDevices();
     CSoundDeviceIdentifier &soundDevice(const szptr &devEnum);
     CSoundDeviceIdentifier &soundInputDevice(const szptr &devEnum);
     CSoundDevice<CALSource,CALBuffer> *createDevice(const CSoundDeviceIdentifier &id);

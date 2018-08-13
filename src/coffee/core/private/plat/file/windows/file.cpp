@@ -1,8 +1,6 @@
 #include <coffee/core/plat/file/windows/file.h>
 #include <coffee/core/plat/plat_environment.h>
 
-#include "../file_abstraction.h"
-
 #include <fileapi.h>
 
 namespace Coffee {
@@ -44,7 +42,7 @@ win_handle WinFileApi::GetFileHandle(Url const& fn, RSCA acc)
     auto       url = *fn;
     FileAccess f   = GetAccess(acc);
 #ifdef COFFEE_WINDOWS_UWP
-    CWString fn_w = StrUtil::convertformat<wbyte_t>(url);
+    CWString fn_w = str::encode::to<wbyte_t>(url);
     return CreateFile2(&fn_w[0], f.open, f.share, f.create, nullptr);
     return INVALID_HANDLE_VALUE;
 #else
@@ -107,9 +105,9 @@ CString create_rsc_name(cstring fn)
     /* Transform the filename to correspond with  */
     CString wrap = fn;
     wrap         = '"' + wrap + '"';
-    wrap         = CStrReplace(wrap, "_", "___");
-    wrap         = CStrReplace(wrap, "/", "_");
-    wrap         = CStrReplace(wrap, "\\", "_");
+    wrap         = str::replace::str(wrap, "_", "___");
+    wrap         = str::replace::str(wrap, "/", "_");
+    wrap         = str::replace::str(wrap, "\\", "_");
     return wrap;
 }
 
@@ -357,8 +355,7 @@ szptr WinFileFun::Size(Url const& fn, file_error& ec)
         f = CreateFile(
             url.c_str(), GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
 #else
-        CWString wname =
-            Mem::StrUtil::convertformat<wchar_t, char>(url.c_str());
+        CWString wname = str::encode::to<wchar_t>(url.c_str());
         f = CreateFile2(wname.c_str(), GENERIC_READ, 0, OPEN_ALWAYS, nullptr);
 #endif
         ec.as<win32_error_code>() = GetLastError();
@@ -413,7 +410,7 @@ bool WinFileFun::Rm(Url const& fn, file_error& ec)
     auto url = *fn;
 
 #ifdef COFFEE_WINDOWS_UWP
-    CWString fn_w = StrUtil::convertformat<wbyte_t>(url);
+    CWString fn_w = str::encode::to<wbyte_t>(url);
     // return DeleteFile(&fn_w[0]);
     return false;
 #else

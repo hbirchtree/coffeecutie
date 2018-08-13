@@ -61,7 +61,7 @@ CDWindow *StubWindowManagerClient::window()
     return nullptr;
 }
 
-uint32 StubWindowManagerClient::windowState() const
+u32 StubWindowManagerClient::windowState() const
 {
     return 0;
 }

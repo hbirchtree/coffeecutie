@@ -68,7 +68,7 @@ public:
      *  - Delete rootless nodes (ones not connected to the true root)
      *  - Purge loops (purge!)
      */
-    bool validateTree(uint32* state)
+    bool validateTree(u32* state)
     {
         /* Future improvement:
          *  - Remove degenerate nodes (looping nodes)

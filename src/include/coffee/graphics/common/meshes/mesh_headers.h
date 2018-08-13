@@ -16,11 +16,11 @@ struct vertex_blob_t
             std::numeric_limits<buffer_id>::max();
 
     szptr content_size;
-    int64 content_offset;
+    i64 content_offset;
     buffer_id id;
 
     uint16 pad_2;
-    uint32 pad_3;
+    u32 pad_3;
 };
 
 struct attr_description_t

@@ -6,7 +6,7 @@
 namespace Coffee{
 namespace Display{
 
-CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVer)
+CDProperties GetDefaultVisual(const i32& ctxtMajorVer,const i32& ctxtMinorVer)
 {
     CDProperties props = {};
 

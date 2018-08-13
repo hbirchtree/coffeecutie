@@ -165,10 +165,31 @@ RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString& name)
     if(q_it == context->queues.end())
     {
         context->queues.insert({t_id, RuntimeQueue()});
-        Profiler::LabelThread(name.c_str());
+        CurrentThread::SetName(name);
         return &context->queues[t_id];
     } else
         return &(*q_it).second;
+}
+
+STATICINLINE void ThreadQueueSleep(
+    RuntimeQueue* queue, UqLock& thread_lock, RuntimeQueue::semaphore_t* sem_)
+{
+    if(!sem_->running)
+        return;
+
+    DProfContext ___(RQ_API "Sleeping");
+
+    RuntimeTask::Duration sleepTime;
+
+    {
+        RecLock _(queue->mTasksLock);
+        auto    currentTime = RuntimeTask::clock::now();
+
+        sleepTime          = queue->timeTillNext(currentTime);
+        queue->mNextWakeup = currentTime + sleepTime;
+    }
+
+    sem_->condition.wait_for(thread_lock, sleepTime);
 }
 
 static void ImpCreateNewThreadQueue(
@@ -197,17 +218,11 @@ static void ImpCreateNewThreadQueue(
 
         {
             DProfContext _(RQ_API "Running queue");
-            while(sem_->running.load())
+            while(sem_->running)
             {
                 queue->executeTasks();
 
-                DProfContext ___(RQ_API "Sleeping");
-
-                auto currentTime   = RuntimeTask::clock::now();
-                auto sleepTime     = queue->timeTillNext(currentTime);
-                queue->mNextWakeup = currentTime + sleepTime;
-
-                sem_->condition.wait_for(thread_lock, sleepTime);
+                ThreadQueueSleep(queue, thread_lock, sem_.get());
             }
         }
 
@@ -223,9 +238,9 @@ static void ImpCreateNewThreadQueue(
         cWarning(
             RQ_API "Uncaught exception!\n"
                    "\n"
-                   "\t{0}"
+                   "{0}: {1}"
                    "\n",
-            ec.message());
+            ec.message(), ec.error_message);
 }
 
 RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name, rqe& ec)
@@ -624,7 +639,13 @@ void RuntimeQueue::TerminateThread(RuntimeQueue* thread, rqe& ec)
 
     auto tid = thread->threadId().hash();
 
-    context->queueFlags[tid]->running.store(false);
+    Lock _(context->globalMod);
+
+    auto& queueFlags = context->queueFlags[tid];
+
+    queueFlags->running.store(false);
+    queueFlags->condition.notify_one();
+
     context->queueThreads[tid].join();
 
     context->queueFlags.erase(tid);
@@ -732,8 +753,6 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext()
 
 RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
 {
-    RecLock _(mTasksLock);
-
     task_data_t* firstTask = nullptr;
 
     for(auto task : mTasks)
@@ -777,7 +796,7 @@ RuntimeQueue::RuntimeQueue(RuntimeQueue const& queue)
 }
 
 RuntimeQueue::RuntimeQueue() :
-    mTasks(), mTasksLock(), mTaskIndex(0), mCurrentTaskId(0)
+    mTasksLock(), mTasks(), mTaskIndex(0), mCurrentTaskId(0)
 {
 }
 

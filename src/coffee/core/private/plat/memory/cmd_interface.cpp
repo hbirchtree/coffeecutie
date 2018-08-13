@@ -22,6 +22,8 @@ static Vector<void (*)()> exit_functions;
 
 void BasicTerm::RegisterAtExit(void (*efun)())
 {
+    cTag("BasicTerm", "RegisterAtExit({0})", Stacktracer::GetFuncName(efun));
+
 #if defined(COFFEE_NO_ATEXIT)
     exit_functions.push_back(efun);
 #else

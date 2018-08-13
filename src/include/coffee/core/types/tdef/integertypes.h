@@ -6,13 +6,14 @@
 #include "../../coffee_mem_macros.h"
 
 namespace Coffee {
+namespace Primitives {
 
 #if defined(COFFEE_PLAIN_INT_TYPES)
 using int32_t  = int;
 using uint32_t = unsigned int;
 #endif
 
-using int8   = C_DEPRECATED_TYPE<int8_t>::type;
+using i8     = C_DEPRECATED_TYPE<int8_t>::type;
 using int16  = C_DEPRECATED_TYPE<int16_t>::type;
 using int32  = C_DEPRECATED_TYPE<int32_t>::type;
 using int64  = C_DEPRECATED_TYPE<int64_t>::type;
@@ -142,8 +143,14 @@ PACKEDSTRUCT uint24
     u32 d : 24;
 };
 
+using u24 = uint24;
+
 FORCEDINLINE scalar convert_i16_f(i16 v)
 {
     return C_CAST<scalar>(v) / Int16_Max;
 }
 }
+
+using namespace Primitives;
+
+} // namespace Coffee

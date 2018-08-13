@@ -25,7 +25,7 @@ public:
     CALSoundStream(CALSoundDevice &device,
                    const CSoundDeviceIdentifier &inputId,
                    const CSoundFormat &fmt,
-                   const int32& bufferMultiplier);
+                   const i32& bufferMultiplier);
     CALSoundStream(CALSoundDevice& device,
                    const CSoundFormat &fmt);
 

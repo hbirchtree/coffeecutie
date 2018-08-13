@@ -55,10 +55,10 @@ struct
     u32 ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
 
-    uint8 pad1;
+    u8 pad1;
     uint16 pad2;
 
-    STATICINLINE CIEvent Create(uint32 ts, EventType t)
+    STATICINLINE CIEvent Create(u32 ts, EventType t)
     {
         CIEvent e;
         e.ts = ts;
@@ -93,8 +93,8 @@ struct CIKeyEvent
         AltGrModifier     = 0x800,
     };
 
-    uint32 key  = 0; /*!< A keycode, use this to identify keys*/
-    uint32 scan = 0; /*!< System scancode*/
+    u32 key  = 0; /*!< A keycode, use this to identify keys*/
+    u32 scan = 0; /*!< System scancode*/
     KeyModifiers mod = NoneModifier; /*!< Modifier keys*/
 
     uint16 pad1;
@@ -116,11 +116,11 @@ struct CIMouseMoveEvent
     CPointF origin; /*!< Absolute position*/
     CPointF delta; /*!< Relative movement since last poll*/
     union{
-        uint8 btn = 0; /*!< Button held down while moved*/
+        u8 btn = 0; /*!< Button held down while moved*/
         bool hover;
     };
 
-    uint8 pad1;
+    u8 pad1;
     uint16 pad2;
 };
 
@@ -160,9 +160,9 @@ struct CIMouseButtonEvent
 struct CIScrollEvent
 {
     CPointF delta; /*!< Delta for scroll*/
-    uint8 mod = 0; /*!< Current mouse modifiers*/
+    u8 mod = 0; /*!< Current mouse modifiers*/
 
-    uint8 pad1;
+    u8 pad1;
     uint16 pad2;
 };
 
@@ -179,8 +179,8 @@ struct CIWriteEvent
  */
 struct CIWEditEvent
 {
-    int32 cursor; /*!< Cursor position*/
-    int32 len; /*!< Text length*/
+    i32 cursor; /*!< Cursor position*/
+    i32 len; /*!< Text length*/
     cstring text; /*!< Current text*/
 };
 
@@ -199,9 +199,9 @@ struct CIControllerAtomicEvent
         ButtonStateMask = 0x400, /*!< Shifted 10,1 bit*/
     };
 
-    int16 value; /*!< Scalar value for axis*/
-    uint8 index:5;
-    uint8 controller:4;
+    i16 value; /*!< Scalar value for axis*/
+    u8 index:5;
+    u8 controller:4;
     bool button_state:1;
     bool axis:1;
 };
@@ -214,29 +214,29 @@ struct CIControllerAtomicUpdateEvent
     cstring name;
     union{
         struct {
-            uint8 button:5;
-            uint8 axis:5;
-            uint8 controller:4;
+            u8 button:5;
+            u8 axis:5;
+            u8 controller:4;
             bool connected:1;
             bool remapped:1;
         };
-        uint32 spacer;
+        u32 spacer;
     };
-    uint32 pad1;
+    u32 pad1;
 };
 
 struct CIControllerState
 {
     union{
         struct{
-            int16 l_x;
-            int16 l_y;
-            int16 r_x;
-            int16 r_y;
-            int16 t_l;
-            int16 t_r;
+            i16 l_x;
+            i16 l_y;
+            i16 r_x;
+            i16 r_y;
+            i16 t_l;
+            i16 t_r;
         } e;
-        int16 d[6];
+        i16 d[6];
     } axes;
     union{
         uint16 d;
@@ -276,16 +276,16 @@ struct CIControllerState
 struct CIHapticEvent
 {
     union {
-        uint64 data = 0;
+        u64 data = 0;
         struct
         {
             scalar strength;
-            uint32 duration:24;
-            uint8 index;
+            u32 duration:24;
+            u8 index;
         } rumble_input;
         struct
         {
-            uint8 index;
+            u8 index;
             byte_t name;
         } rumble_device;
     };
@@ -314,11 +314,11 @@ struct CIDropEvent
         } text_data;
     };
     PACKEDSTRUCT{
-        uint32  size:24; /*!< Size of data*/
-        uint8 type; /*!< Event type*/
+        u32  size:24; /*!< Size of data*/
+        u8 type; /*!< Event type*/
     };
 
-    uint32 pad1;
+    u32 pad1;
 };
 
 /*!
@@ -326,13 +326,13 @@ struct CIDropEvent
  */
 struct CISensorEvent
 {
-    uint64 id; /*!< Enumeration ID*/
+    u64 id; /*!< Enumeration ID*/
     union {
         struct{
-            int16 x;
-            int16 y;
-            int16 z;
-            int16 w;
+            i16 x;
+            i16 y;
+            i16 z;
+            i16 w;
         } sivec;
         struct{
             uint16 x;
@@ -340,7 +340,7 @@ struct CISensorEvent
             uint16 z;
             uint16 w;
         } suvec;
-        uint64      lvalue; /*!< Integer value for input*/
+        u64      lvalue; /*!< Integer value for input*/
         bigscalar   dvalue; /*!< Floating-point value for input*/
     };
 };
@@ -358,7 +358,7 @@ struct CITouchTapEvent
             uint16 finger:15;
             bool pressed:1;
         };
-        uint32 evdata;
+        u32 evdata;
     };
 };
 
@@ -376,7 +376,7 @@ struct CITouchMotionEvent
             uint16 finger:15;
             bool hover:1;
         };
-        uint32 evdata;
+        u32 evdata;
     };
 };
 
@@ -389,10 +389,10 @@ struct CIMTouchMotionEvent
     {
         struct{
             uint16 fingers;
-            int16 angle;
-            int16 dist;
+            i16 angle;
+            i16 dist;
         };
-        uint64 evdata;
+        u64 evdata;
     };
 };
 
@@ -401,11 +401,11 @@ struct CIGestureEvent
     CPointF origin;
     union{
         struct{
-            uint32 gesture_id;
+            u32 gesture_id;
             uint16 error;
             uint16 fingers;
         };
-        uint64 evdata;
+        u64 evdata;
     };
 };
 
@@ -422,8 +422,8 @@ struct CITouchRotateEvent
 };
 
 C_FLAGS(CIKeyEvent::KeyModifiers,uint16);
-C_FLAGS(CIMouseButtonEvent::ButtonModifier,uint8);
-C_FLAGS(CIMouseButtonEvent::MouseButton,uint8);
+C_FLAGS(CIMouseButtonEvent::ButtonModifier,u8);
+C_FLAGS(CIMouseButtonEvent::MouseButton,u8);
 
 }
 }

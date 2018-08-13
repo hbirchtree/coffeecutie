@@ -36,12 +36,12 @@ static CString get_lsb_release()
 {
 #ifndef COFFEE_LOWFAT
     CString version = LFileFun::sys_read("/etc/lsb-release");
-    cstring desc    = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = Search::ChrFind(desc, '=') + 1) &&
-       (desc = Search::ChrFind(desc, '"') + 1))
+    cstring desc    = str::find(version.c_str(), "DISTRIB_DESCRIPTION");
+    if(desc && (desc = str::find(desc, '=') + 1) &&
+       (desc = str::find(desc, '"') + 1))
     {
-        cstring end = Search::ChrFind(desc, '"');
-        if(end || (end = Search::ChrFind(desc, 0)))
+        cstring end = str::find(desc, '"');
+        if(end || (end = str::find(desc, '\0')))
         {
             CString desc_std(desc, end - desc);
             return desc_std;
@@ -108,7 +108,7 @@ PlatformData::DeviceType get_device_variant()
 #endif
     CString input = LFileFun::sys_read("/sys/class/dmi/id/chassis_type");
 
-    int32 chassis_type = cast_string<int32>(input);
+    i32 chassis_type = cast_string<i32>(input);
 
     switch(chassis_type)
     {
@@ -191,7 +191,7 @@ Set<CString> LinuxSysInfo::CPUFlags()
     if(!result.size())
         return {};
 
-    StrUtil::trim(result);
+    str::trim::both(result);
 
     Set<CString>       flags;
     CString::size_type ptr = 0;
@@ -246,14 +246,14 @@ SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
     return NetStatDisconnected;
 }
 
-uint32 LinuxSysInfo::CpuCount()
+u32 LinuxSysInfo::CpuCount()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "physical id";
 
     CPUInfoString();
 
-    uint32 count = 0;
+    u32 count = 0;
     auto   res   = cached_cpuinfo_string.find(query);
     while(res != cached_cpuinfo_string.npos)
     {
@@ -261,9 +261,9 @@ uint32 LinuxSysInfo::CpuCount()
         auto end = cached_cpuinfo_string.find('\n', res);
 
         CString result = cached_cpuinfo_string.substr(res, end);
-        StrUtil::trim(result);
+        str::trim::both(result);
 
-        uint32 c = cast_string<uint32>(result) + 1;
+        u32 c = cast_string<u32>(result) + 1;
         count    = CMath::max(count, c);
 
         res = cached_cpuinfo_string.find(query, end);
@@ -275,7 +275,7 @@ uint32 LinuxSysInfo::CpuCount()
 #endif
 }
 
-uint32 LinuxSysInfo::CoreCount()
+u32 LinuxSysInfo::CoreCount()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "cpu cores";
@@ -297,9 +297,9 @@ uint32 LinuxSysInfo::CoreCount()
 #endif
     }
 
-    StrUtil::trim(result);
+    str::trim::both(result);
 
-    uint32 cores = cast_string<uint32>(result);
+    u32 cores = cast_string<u32>(result);
 
     return cores ? cores : 1;
 #else
@@ -321,7 +321,7 @@ u64 LinuxSysInfo::CachedMemory()
 
         auto mem = data.substr(idx, end - idx - 2);
 
-        u64 count = cast_string<u64>(StrUtil::trim(mem));
+        u64 count = cast_string<u64>(str::trim::both(mem));
 
         return count * 1000;
     }
@@ -350,9 +350,9 @@ HWDeviceInfo LinuxSysInfo::Processor()
     if(!fw_str.size())
         fw_str = get_linux_property(cached_cpuinfo_string, fw_query_linaro);
 
-    StrUtil::trim(mk_str);
-    StrUtil::trim(md_str);
-    StrUtil::trim(fw_str);
+    str::trim::both(mk_str);
+    str::trim::both(md_str);
+    str::trim::both(fw_str);
 
     return HWDeviceInfo(mk_str, md_str, fw_str);
 #else
@@ -395,6 +395,7 @@ Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
             Url cpu =
                 p + Path::Mk(e.name.c_str()) + Path::Mk(root_paths[i].suffix);
             CString tmp = LFileFun::sys_read((*cpu).c_str());
+            tmp = tmp.substr(0, tmp.find('\n'));
             if(tmp.size())
                 freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
         }
@@ -433,7 +434,7 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
     if(!res.size())
         return 0.0;
 
-    StrUtil::trim(res);
+    str::trim::both(res);
 
     return CMath::floor(cast_string<bigscalar>(res)) / 1000;
 #endif
@@ -457,7 +458,7 @@ bool LinuxSysInfo::HasFPU()
     CPUInfoString();
 
     CString result = get_linux_property(cached_cpuinfo_string, query);
-    StrUtil::trim(result);
+    str::trim::both(result);
 
 #if defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
     if(result.size() == 0)
@@ -467,7 +468,7 @@ bool LinuxSysInfo::HasFPU()
 #else
         CString result = get_linux_property(cached_cpuinfo_string, query2);
 #endif
-        StrUtil::trim(result);
+        str::trim::both(result);
     }
 
     return result.size() > 0;
@@ -487,15 +488,15 @@ bool LinuxSysInfo::HasFPUExceptions()
     CPUInfoString();
 
     CString result = get_linux_property(cached_cpuinfo_string, query);
-    StrUtil::trim(result);
+    str::trim::both(result);
 
-    return StrCmp(result.c_str(), "yes");
+    return str::cmp(result.c_str(), "yes");
 #else
     return false;
 #endif
 }
 
-uint64 LinuxSysInfo::ProcessorCacheSize()
+u64 LinuxSysInfo::ProcessorCacheSize()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "cache size";
@@ -503,14 +504,14 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
     CPUInfoString();
 
     CString result = get_linux_property(cached_cpuinfo_string, query);
-    StrUtil::trim(result);
+    str::trim::both(result);
 
     szptr e = result.find(" ");
     if(e == CString::npos)
         return 0;
     result.erase(e, result.size() - e);
 
-    return cast_string<uint64>(result);
+    return cast_string<u64>(result);
 #else
     return 0;
 #endif

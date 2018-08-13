@@ -24,9 +24,9 @@ namespace Chronology {
 using namespace std::chrono;
 
 template<typename cast_to, typename T>
-FORCEDINLINE uint64 time_to_uint64(T d)
+FORCEDINLINE u64 time_to_uint64(T d)
 {
-    return C_FCAST<uint64>(duration_cast<cast_to>(d).count());
+    return C_FCAST<u64>(duration_cast<cast_to>(d).count());
 }
 
 struct TimeDef
@@ -36,7 +36,7 @@ struct TimeDef
  * \return
  */
 #if defined(COFFEE_USE_CHRONOTIME)
-    static uint64 Microsecond()
+    static u64 Microsecond()
     {
         return time_to_uint64<microseconds>(
             high_resolution_clock::now().time_since_epoch());
@@ -48,7 +48,7 @@ struct TimeDef
         return time_to_uint64<cast_to>(
             high_resolution_clock::now().time_since_epoch());
     }
-    static uint64 CurrentMicroTimestamp()
+    static u64 CurrentMicroTimestamp()
     {
         return time_to_uint64<microseconds>(
             high_resolution_clock::now().time_since_epoch());

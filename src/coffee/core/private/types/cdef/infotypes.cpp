@@ -8,7 +8,7 @@ void _cbasic_arg_container::rebuildArgs()
         m_ptrStorage.push_back(&m_storage[i][0]);
 }
 
-_cbasic_arg_container _cbasic_arg_container::Clone(int32 argc, cstring_w *argv)
+_cbasic_arg_container _cbasic_arg_container::Clone(i32 argc, cstring_w *argv)
 {
     _cbasic_arg_container arg;
 

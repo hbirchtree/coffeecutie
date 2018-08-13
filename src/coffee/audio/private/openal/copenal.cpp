@@ -82,7 +82,7 @@ CALBuffer::CALBuffer() : handle(nullptr)
 
 ALenum _al_get_model(const CDistanceModel& m)
 {
-    return AL_DISTANCE_MODEL + (uint32)m;
+    return AL_DISTANCE_MODEL + (u32)m;
 }
 ALuint _al_get_handle(const CALBuffer* b)
 {
@@ -245,7 +245,7 @@ void context_devices_output(Vector<cstring>& devices)
     {
         devices.resize(i + 1);
         devices[i] = devices_c;
-        devices_c += StrLen(devices_c) + 1;
+        devices_c += str::len(devices_c) + 1;
         i++;
     }
 }
@@ -265,7 +265,7 @@ void context_devices_input(Vector<cstring>& devices)
     {
         devices.resize(i + 1);
         devices[i] = cdevices;
-        cdevices += StrLen(cdevices) + 1;
+        cdevices += str::len(cdevices) + 1;
         i++;
     }
 }
@@ -328,31 +328,31 @@ void listener_set(const CALListener* listener)
     context_get_error();
 }
 
-int32 source_get_offset_seconds(const CALSource* source)
+i32 source_get_offset_seconds(const CALSource* source)
 {
     _al_check_rsc(source);
 
-    int32 i;
+    i32 i;
     alGetSourcei(_al_get_handle(source), AL_SEC_OFFSET, &i);
     context_get_error();
     return i;
 }
 
-int32 source_get_offset_samples(const CALSource* source)
+i32 source_get_offset_samples(const CALSource* source)
 {
     _al_check_rsc(source);
 
-    int32 i;
+    i32 i;
     alGetSourcei(_al_get_handle(source), AL_SAMPLE_OFFSET, &i);
     context_get_error();
     return i;
 }
 
-int32 source_get_offset_bytes(const CALSource* source)
+i32 source_get_offset_bytes(const CALSource* source)
 {
     _al_check_rsc(source);
 
-    int32 i;
+    i32 i;
     alGetSourcei(_al_get_handle(source), AL_BYTE_OFFSET, &i);
     context_get_error();
     return i;
@@ -392,7 +392,7 @@ void source_dequeue_buffers(
 }
 
 void source_seti(
-    CALSource* source, CSourceProperty const& prop, const int32* val)
+    CALSource* source, CSourceProperty const& prop, const i32* val)
 {
     _al_check_rsc(source);
     alSourceiv(
@@ -460,17 +460,17 @@ void source_set_states(
     delete[] src;
 }
 
-void source_set_offset_seconds(CALSource* source, int32 const& off)
+void source_set_offset_seconds(CALSource* source, i32 const& off)
 {
     source_seti(source, CSourceProperty::OffsetSeconds, &off);
 }
 
-void source_set_offset_samples(CALSource* source, int32 const& off)
+void source_set_offset_samples(CALSource* source, i32 const& off)
 {
     source_seti(source, CSourceProperty::OffsetSamples, &off);
 }
 
-void source_set_offset_bytes(CALSource* source, int32 const& off)
+void source_set_offset_bytes(CALSource* source, i32 const& off)
 {
     source_seti(source, CSourceProperty::OffsetBytes, &off);
 }
@@ -496,7 +496,7 @@ void source_transform(
 }
 
 void source_seti(
-    CALSource* source, CSourceProperty const& prop, const int32& val)
+    CALSource* source, CSourceProperty const& prop, const i32& val)
 {
     source_seti(source, prop, &val);
 }
@@ -507,7 +507,7 @@ void source_setf(
     source_setf(source, prop, &val);
 }
 
-int32 source_geti(CALSource* source, const CSourceProperty& prop)
+i32 source_geti(CALSource* source, const CSourceProperty& prop)
 {
     _al_check_rsc(source);
 
@@ -551,7 +551,7 @@ void alAlloc(CALBuffer* buffer, const AudioSample* sample)
 }
 
 CALCaptureDevice* capture_create(
-    CALContext* context, cstring device, AudioFormat const& fmt, uint32 samples)
+    CALContext* context, cstring device, AudioFormat const& fmt, u32 samples)
 {
     context_make_current(context);
 
@@ -600,13 +600,13 @@ void capture_grab_samples(CALCaptureDevice* dev, AudioSample& sample)
 namespace Strings {
 CString to_string(CAudio::COpenAL::CALBuffer const& buf)
 {
-    return "CALBuffer(" + StrUtil::pointerify(buf.handle) + "," +
+    return "CALBuffer(" + str::print::pointerify(buf.handle) + "," +
            ((buf.handle) ? cast_pod(buf.handle->handle) : CString("0x0")) + ")";
 }
 
 CString to_string(CAudio::COpenAL::CALSource const& src)
 {
-    return "CALSource(" + StrUtil::pointerify(src.handle) + "," +
+    return "CALSource(" + str::print::pointerify(src.handle) + "," +
            ((src.handle) ? cast_pod(src.handle->handle) : CString("0x0")) + ")";
 }
 } // namespace Strings

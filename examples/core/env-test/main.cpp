@@ -4,12 +4,16 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/plat_sensor.h>
 
+#include <coffee/asio/http.h>
+
 #include <coffee/core/CDebug>
 #include <coffee/core/CPlatform>
 
+#include <stack>
+
 using namespace Coffee;
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_CoffeeASIO)
     Net::RegisterProfiling();

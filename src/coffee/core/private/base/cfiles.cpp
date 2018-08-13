@@ -292,7 +292,7 @@ bool FileMkdir(Url const& dirname, bool recursive)
 namespace Strings {
 CString to_string(const CResources::Resource& r)
 {
-    return CString("rsc(") + StrUtil::pointerify(r.data) + "+" +
+    return CString("rsc(") + str::print::pointerify(r.data) + "+" +
            cast_pod(r.size) + ")";
 }
 } // namespace Strings

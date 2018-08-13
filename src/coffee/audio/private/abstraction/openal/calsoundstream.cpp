@@ -8,7 +8,7 @@ namespace COpenAL{
 CALSoundStream::CALSoundStream(CALSoundDevice &device,
                                const CSoundDeviceIdentifier& inputId,
                                const CSoundFormat& fmt,
-                               const int32 &bufferMultiplier):
+                               const i32 &bufferMultiplier):
     CSoundStream(&device),
     m_soundSource(nullptr)
 {
@@ -78,7 +78,7 @@ szptr CALSoundStream::collectSamples(c_ptr data, const szptr &max_samples)
         return 0;
 
     AudioSample smp;
-    smp.data = (int16*)data;
+    smp.data = (i16*)data;
     smp.samples = max_samples;
     smp.fmt = m_capFmt;
 
@@ -101,7 +101,7 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
     CALBuffer* p_buf = buf;
 
     AudioSample samp;
-    samp.data = (int16*)data;
+    samp.data = (i16*)data;
     samp.fmt.bitdepth = fmt.bitDepth();
     samp.fmt.channels = fmt.channels();
     samp.fmt.frequency = fmt.samplerate();
@@ -145,7 +145,7 @@ void CALSoundStream::pauseStream()
 
 void CALSoundStream::collectBuffers()
 {
-    int32 procd = source_geti(m_soundSource,CSourceProperty::BuffersProcessed)-1;
+    i32 procd = source_geti(m_soundSource,CSourceProperty::BuffersProcessed)-1;
     CALBuffer* buffer;
     while(procd>0&&m_expended.size()>0)
     {

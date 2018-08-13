@@ -483,7 +483,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        uint64 bufferOffset() const
+        u64 bufferOffset() const
         {
             return m_boffset;
         }
@@ -516,7 +516,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_instanced;
         }
 
-        uint64   m_boffset;
+        u64   m_boffset;
         u32      m_bassoc;
         u32      m_idx;
         u32      m_size;
@@ -738,11 +738,11 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         }
 
         /* How to kill perf: */
-        int64 resulti()
+        i64 resulti()
         {
             return 0;
         }
-        uint64 resultu()
+        u64 resultu()
         {
             return 0;
         }
@@ -1002,13 +1002,13 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         void clear(bigscalar)
         {
         }
-        void clear(bigscalar, int32)
+        void clear(bigscalar, i32)
         {
         }
         void clear(u32, Vecf4 const&, bigscalar)
         {
         }
-        void clear(u32, Vecf4 const&, bigscalar, int32)
+        void clear(u32, Vecf4 const&, bigscalar, i32)
         {
         }
 
@@ -1124,7 +1124,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_insts;
         }
 
-        FORCEDINLINE int32 vertexOffset() const
+        FORCEDINLINE i32 vertexOffset() const
         {
             return m_voff;
         }
@@ -1143,7 +1143,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
         TypeEnum m_eltype;
 
-        int32 m_voff;
+        i32 m_voff;
         u32   m_eoff;
         u32   m_ioff;
     };
@@ -1258,11 +1258,11 @@ struct GraphicsProfiler
         {
         }
 
-        int64 resulti()
+        i64 resulti()
         {
             return 0;
         }
-        uint64 resultu()
+        u64 resultu()
         {
             return 0;
         }

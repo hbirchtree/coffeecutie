@@ -283,7 +283,7 @@ struct MaterialParser
             CString path = t_path.C_Str();
 
             for(auto const& bdir : baseDirs)
-                path = Mem::Search::CStrReplace(path, bdir, "");
+                path = str::replace::str<char>(path, bdir, "");
 
             stringStore.push_back(path);
             stringStoreSize += path.size() + 1;

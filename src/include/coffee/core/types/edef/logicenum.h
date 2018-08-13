@@ -40,7 +40,7 @@ enum class LogicOp
     COPY = 0x200, /* Copy source */
     NOOP = 0x400, /* Copy destination */
 };
-C_FLAGS(LogicOp,uint32);
+C_FLAGS(LogicOp,u32);
 
 enum class ValueComparison
 {

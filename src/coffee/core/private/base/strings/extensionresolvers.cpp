@@ -9,17 +9,16 @@ namespace Coffee{
 namespace Strings{
 
 using namespace Mem;
-using namespace Mem::Search;
 
 CString extArgReplacePhrase(const CString &fmt, const CString &phrase, const CString &replace)
 {
-    return CStrReplace(fmt,phrase,replace);
+    return str::replace::str(fmt,phrase,replace);
 }
 
 CString extArgReplace(const CString &fmt, const size_t &index, const CString &replace)
 {
     CString subfmt = "{" + cast_pod(index) + "}";
-    return CStrReplace(fmt,subfmt,replace);
+    return str::replace::str(fmt,subfmt,replace);
 }
 
 template<typename T,
@@ -39,7 +38,7 @@ CString cStringReplace(
 
     if(match.size()>=3)
     {
-        uint32 prec = Convert::strtouint(match[2].s_match[0].c_str());
+        u32 prec = str::from_string<u32>(match[2].s_match[0].c_str());
 
         CString rep;
 #ifdef COFFEE_USE_IOSTREAMS
@@ -47,7 +46,7 @@ CString cStringReplace(
         ss << std::fixed << std::setprecision(prec) << arg;
         ss >> rep;
 #else
-        rep = Convert::scalartostring(arg);
+        rep = str::convert::to_string(arg);
         auto dot1 = rep.find('.');
         auto dot2 = rep.find(',');
         if(dot1)

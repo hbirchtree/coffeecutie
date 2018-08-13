@@ -1,6 +1,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 
 #include "gleam_internal_types.h"
+#include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/core/types/cdef/infotypes.h>
 
 namespace Coffee {
@@ -25,7 +26,7 @@ bool GLEAM_API::GetAPIVersion(
         gl_ver.major,
         gl_ver.minor,
         0,
-        StrUtil::pointerify(Level()));
+        str::print::pointerify(Level()));
     return true;
 }
 
@@ -79,7 +80,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     defined(GL_ARB_texture_compression_bptc)
             if(APILevelIsOfClass(GL_CURR_API, APIClass::GLCore))
                 return Debug::CheckExtensionSupported(
-                    "GL_ARB_texture_compression_bptc");
+                    CGL_DBG_CTXT, "GL_ARB_texture_compression_bptc");
             else
                 return false;
 #else
@@ -92,7 +93,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     defined(GL_ARB_texture_compression_rgtc)
             if(APILevelIsOfClass(GL_CURR_API, APIClass::GLCore))
                 return Debug::CheckExtensionSupported(
-                    "GL_ARB_texture_compression_rgtc");
+                    CGL_DBG_CTXT, "GL_ARB_texture_compression_rgtc");
             else
                 return false;
 #else
@@ -102,7 +103,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
         if(flags == CompFlags::BC1 || flags == CompFlags::BC3)
         {
             return Debug::CheckExtensionSupported(
-                "GL_EXT_texture_compression_s3tc");
+                CGL_DBG_CTXT, "GL_EXT_texture_compression_s3tc");
         }
         break;
     }
@@ -128,7 +129,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     case PixFmt::ETC1:
 #if defined(GL_OES_compressed_ETC1_RGB8_texture)
         return Debug::CheckExtensionSupported(
-            "GL_OES_compressed_ETC1_RGB8_texture");
+            CGL_DBG_CTXT, "GL_OES_compressed_ETC1_RGB8_texture");
 #else
         return false;
 #endif
@@ -141,7 +142,8 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
 #endif
     case PixFmt::ATC:
 #if defined(GL_AMD_compressed_ATC_texture)
-        return Debug::CheckExtensionSupported("GL_AMD_compressed_ATC_texture");
+        return Debug::CheckExtensionSupported(
+            CGL_DBG_CTXT, "GL_AMD_compressed_ATC_texture");
 #else
         return false;
 #endif
@@ -151,7 +153,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
         return true;
 #elif defined(GL_IMG_texture_compression_pvrtc)
         return Debug::CheckExtensionSupported(
-            "GL_IMG_texture_compression_pvrtc2");
+            CGL_DBG_CTXT, "GL_IMG_texture_compression_pvrtc2");
 #else
         return false;
 #endif
@@ -159,7 +161,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     case PixFmt::PVRTC2:
 #if defined(GL_IMG_texture_compression_pvrtc2)
         return Debug::CheckExtensionSupported(
-            "GL_IMG_texture_compression_pvrtc2");
+            CGL_DBG_CTXT, "GL_IMG_texture_compression_pvrtc2");
 #else
         return false;
 #endif
@@ -168,7 +170,7 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
         break;
     }
 
-    return CGL::Debug::CompressedFormatSupport(fmt);
+    return CGL::Debug::CompressedFormatSupport(CGL_DBG_CTXT, fmt);
 }
 
 u32 GLSLVersionFromAPI(APILevel level)

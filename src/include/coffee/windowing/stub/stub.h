@@ -32,7 +32,7 @@ protected:
 
 public:
     virtual CDWindow *window();
-    virtual uint32 windowState() const;
+    virtual u32 windowState() const;
     virtual void setWindowState(const CDProperties::State &);
     virtual CSize windowSize() const;
     virtual void setWindowSize(const CSize &);

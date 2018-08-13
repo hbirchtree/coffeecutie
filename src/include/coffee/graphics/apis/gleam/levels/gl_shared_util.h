@@ -18,7 +18,7 @@ struct CGLUtil
      */
     template<typename GL>
     static void DumpTexture(
-        typename GL::Texture t, typename GL::CGhnd h, uint32 l, cstring fn)
+        typename GL::Texture t, typename GL::CGhnd h, u32 l, cstring fn)
     {
         C_USED(t);
         C_USED(h);

@@ -19,7 +19,7 @@ enum class ClassEnum
     E4 = 0x4,
 };
 
-C_FLAGS(ClassEnum,uint32);
+C_FLAGS(ClassEnum,u32);
 
 namespace IntegerTests{
 bool _and()
@@ -39,21 +39,21 @@ bool _xor()
 
 bool assign_and()
 {
-    uint32 v = IE1|IE4;
+    u32 v = IE1|IE4;
     v &= IE3;
     return v == IE1;
 }
 
 bool assign_or()
 {
-    uint32 v = IE1;
+    u32 v = IE1;
     v |= IE2;
     return v == IE3;
 }
 
 bool assign_xor()
 {
-    uint32 v = IE3;
+    u32 v = IE3;
     v ^= IE1;
     return v == IE2;
 }

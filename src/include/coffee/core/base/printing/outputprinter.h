@@ -1,9 +1,11 @@
 #pragma once
 
 #include "../debug/debug_interface.h"
-#include "../strings/cdebug_print.h"
 #include <coffee/core/plat/memory/cmemory.h>
 #include <coffee/core/plat/plat_environment.h>
+
+#include "../strings/string_format.h"
+#include "log_interface.h"
 
 namespace Coffee {
 
@@ -14,16 +16,6 @@ namespace DebugFun {
 using namespace Strings;
 
 extern cstring severity_string(Severity sev);
-
-using LogInterfaceBasic = void (*)(FILE*, CString const&, Severity, u32, u32);
-using LogInterfaceTagged =
-    void (*)(FILE*, cstring, CString const&, Severity, u32, u32);
-
-struct LogInterface
-{
-    LogInterfaceBasic  basic;
-    LogInterfaceTagged tag;
-};
 
 /*!
  * \brief Get the currently set logging interface

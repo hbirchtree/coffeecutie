@@ -7,9 +7,9 @@ bool signal_test()
 {
     /* Testing function slot/signal classes */
     CRect t(0,0,10,10);
-    CFunctionSlot<CRect,int32> b(&t,&CRect::area);
+    CFunctionSlot<CRect,i32> b(&t,&CRect::area);
 
-    CFunctionSignal<CRect,int32> sigtest;
+    CFunctionSignal<CRect,i32> sigtest;
 
     return sigtest.call(b)==t.w*t.h;
 }

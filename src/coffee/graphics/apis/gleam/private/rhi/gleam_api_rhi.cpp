@@ -13,6 +13,7 @@
 #include <coffee/interfaces/cgraphics_pixops.h>
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/CDebug>
 
 #include "gleam_internal_types.h"
 
@@ -50,7 +51,7 @@ void GLEAM_API::DumpFramebuffer(
     CGL33::ReadPixels(0, 0, size, GetPixComponent(c), dt, &storage[0]);
 }
 
-void GLEAM_API::GetDefaultVersion(int32& major, int32& minor)
+void GLEAM_API::GetDefaultVersion(i32& major, i32& minor)
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     major = 4;
@@ -148,7 +149,7 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
         store->CURR_API = GLES_2_0;
 #endif
 
-    systemLevel = store->CURR_API;
+    systemLevel  = store->CURR_API;
     auto prevApi = store->CURR_API;
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -191,7 +192,7 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    if(Extensions::SRGB_Supported())
+    if(Extensions::SRGB_Supported(store->inst_data->dbgContext))
     {
         cVerbose(6, GLM_API "Enabling SRGB color for framebuffers");
         CGL33::Enable(Feature::FramebufferSRGB);
@@ -201,7 +202,7 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     cVerbose(
         4,
         GLM_API "Initialized API level {0}",
-        StrUtil::pointerify(store->CURR_API));
+        str::print::pointerify(store->CURR_API));
 
     return true;
 }
@@ -302,8 +303,10 @@ static void SetExtensionFeatures(GLEAM_API::DataStore store)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     /* base_instance is const false on GLES */
 
-    store->features.base_instance = Extensions::DrawParametersSupported();
-    store->features.direct_state  = Extensions::DirectStateSupported();
+    store->features.base_instance =
+        Extensions::DrawParametersSupported(store->inst_data->dbgContext);
+    store->features.direct_state =
+        Extensions::DirectStateSupported(store->inst_data->dbgContext);
 
 #endif
 }
@@ -418,7 +421,7 @@ bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
     return m_store != nullptr;
 }
 
-void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, uint32)
+void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, u32)
 {
     {
         if(rstate.dither())
@@ -458,7 +461,7 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 {
     C_USED(tstate);
 #if GL_VERSION_VERIFY(0x330, 0x320)
-    if(Extensions::TessellationSupported())
+    if(Extensions::TessellationSupported(CGL_DBG_CTXT))
     {
         CGL43::PatchParameteri(PatchProperty::Vertices, tstate.patchCount());
         /*TODO: Add configurability for inner and outer levels in place of TCS
@@ -467,13 +470,13 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 #endif
 }
 
-void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
+void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, u32 i)
 {
     C_USED(i);
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(vstate.multiview())
     {
-        if(Extensions::ViewportArraySupported())
+        if(Extensions::ViewportArraySupported(CGL_DBG_CTXT))
         {
             Vector<CRectF> varr;
 
@@ -502,7 +505,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             GLC::Enablei(Feature::ClipDist, 2);
             GLC::Enablei(Feature::ClipDist, 3);
 
-        } else if(Extensions::ClipDistanceSupported())
+        } else if(Extensions::ClipDistanceSupported(CGL_DBG_CTXT))
         {
             /* TODO: Expand on this feature */
             GLC::Enablei(Feature::ClipDist, 0);
@@ -543,7 +546,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
     }
 }
 
-void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
+void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
     {
@@ -594,7 +597,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
     /*TODO: Find semantics for SampleCoverage*/
 }
 
-void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
+void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, u32 i)
 {
     if(dstate.testDepth())
         GLC::Enable(Feature::DepthTest);
@@ -624,7 +627,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
     }
 }
 
-void GLEAM_API::SetStencilState(const STENSTATE& sstate, uint32 i)
+void GLEAM_API::SetStencilState(const STENSTATE& sstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
     {
@@ -746,7 +749,7 @@ std::string api_error::message(int error_code) const
         return "No error";
     }
 
-	throw implementation_error("unimplemented error message");
+    throw implementation_error("unimplemented error message");
 }
 
 } // namespace GLEAM

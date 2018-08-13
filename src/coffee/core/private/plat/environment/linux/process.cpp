@@ -10,11 +10,11 @@ using namespace Mem;
 
 struct mem_usage
 {
-    uint64 vmsize;
-    uint64 vmrss;
-    uint64 rss;
-    uint64 text;
-    uint64 data;
+    u64 vmsize;
+    u64 vmrss;
+    u64 rss;
+    u64 text;
+    u64 data;
 };
 
 LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(
@@ -38,8 +38,8 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(
         if(spacer > mem_info.size())
             break;
 
-        uint64 num = cast_string<uint64>(StrUtil::encapsulate(
-            &mem_info[start], C_CAST<uint32>(spacer - start)));
+        u64 num = cast_string<u64>(
+            str::encapsulate(&mem_info[start], C_CAST<u32>(spacer - start)));
         if(steps == 0)
             usage.vmsize = num;
         else if(steps == 1)
@@ -85,7 +85,7 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
             szptr len = space - pos;
             if(space > end)
                 len = end - pos;
-            auto sec  = StrUtil::encapsulate(&maps_info[pos], len);
+            auto sec  = str::encapsulate(&maps_info[pos], len);
             was_empty = sec.size() == 0;
             if(!was_empty)
             {
@@ -95,10 +95,12 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
                 case 1:
                 {
                     szptr   mid = sec.find('-');
-                    CString tmp = StrUtil::encapsulate(sec.data(), mid);
-                    file.start  = Convert::strtoull(tmp.data(), 16);
-                    tmp         = &sec[mid + 1];
-                    file.end    = Convert::strtoull(tmp.data(), 16);
+                    CString tmp = str::encapsulate(sec.data(), mid);
+                    file.start =
+                        str::from_string<u64, str::convert_base_16>(tmp.data());
+                    tmp = &sec[mid + 1];
+                    file.end =
+                        str::from_string<u64, str::convert_base_16>(tmp.data());
                     break;
                 }
                 case 2:
@@ -117,7 +119,8 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
                 }
                 case 3:
                 {
-                    file.offset = cast_string<u64>(sec);
+                    file.offset = str::from_string<u64, str::convert_base_16>(
+                        sec.c_str());
                     break;
                 }
                 case 4:

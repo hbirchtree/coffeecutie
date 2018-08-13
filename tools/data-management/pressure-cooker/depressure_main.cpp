@@ -48,7 +48,7 @@ static CString humanize_size(szptr size)
 
 static CString srpad(CString src, szptr len)
 {
-    return StrUtil::rpad(src, ' ', len);
+    return str::pad::right(src, ' ', len);
 }
 
 static void normal_printing(

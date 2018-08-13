@@ -20,7 +20,7 @@ STATICINLINE Span<T> get_uniform_span(const T* d, szptr size)
 
 template<typename T>
 void SetUniform_wrapf(
-    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, u32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -39,7 +39,7 @@ void SetUniform_wrapf(
 
 template<typename T>
 void SetUniform_wrapf_m(
-    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, u32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -60,7 +60,7 @@ void SetUniform_wrapf_m(
 
 template<typename T>
 void SetUniform_wrapi(
-    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog, u32 idx, const T* data, szptr arr_size, gleam_error& ec)
 {
     if(!data)
     {
@@ -138,8 +138,8 @@ void GLEAM_API::SetShaderUniformState(
 
         /* TODO: Cache uniform state changes, only set them when necessary */
 
-        uint32 const& idx = u.first;
-        uint32 const& fgs = u.second.value->flags;
+        u32 const& idx = u.first;
+        u32 const& fgs = u.second.value->flags;
 
         using Matf2_t = sdt_uniff<Mat_d | S2>;
         using Matf3_t = sdt_uniff<Mat_d | S3>;
@@ -306,7 +306,7 @@ void GLEAM_API::SetShaderUniformState(
 #endif
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
-    if(Extensions::ShaderStorageSupported())
+    if(Extensions::ShaderStorageSupported(CGL_DBG_CTXT))
         for(auto b : ustate.m_sbuffers)
         {
             auto&  det    = b.second;

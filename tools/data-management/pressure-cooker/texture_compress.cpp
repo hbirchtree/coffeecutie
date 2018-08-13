@@ -183,7 +183,7 @@ void TextureCooker::process(
 
         for(auto ext : imageExtensions)
             /* Check if we recognize the extension */
-            if(StrICmp(path.extension().c_str(), ext.c_str()))
+            if(str::cmp<str::comp_nocase>(path.extension().c_str(), ext.c_str()))
             {
                 if(ext == "")
                     continue;

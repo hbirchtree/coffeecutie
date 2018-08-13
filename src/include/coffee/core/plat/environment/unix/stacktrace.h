@@ -38,13 +38,13 @@ struct PosixStacktracer : StacktracerDef
 
     static CString DemangleSymbol(const char* sym);
 
-    static Stacktrace GetRawStackframes(uint32 start = 0, int32 length = 1);
+    static Stacktrace GetRawStackframes(u32 start = 0, i32 length = 1);
 
-    static CString GetStackframeName(uint32 depth = 0);
+    static CString GetStackframeName(u32 depth = 0);
 
     static CString GetStackFuncName(u32 depth = 0);
 
-    STATICINLINE Stacktrace GetFullStack(uint32 start = 0, int32 length = -1)
+    STATICINLINE Stacktrace GetFullStack(u32 start = 0, i32 length = -1)
     {
         return GetRawStackframes(start,length);
     }

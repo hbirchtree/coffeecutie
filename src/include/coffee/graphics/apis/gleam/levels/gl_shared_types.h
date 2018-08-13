@@ -107,10 +107,10 @@ struct gl_version_at_least_ver
 #define GLESVER_31 gl_ver_t<3, 1, true>
 #define GLESVER_32 gl_ver_t<3, 2, true>
 
-#define GL_EXT_CHECK(name, ext_name)                     \
-    bool name##Supported()                               \
-    {                                                    \
-        return Debug::CheckExtensionSupported(ext_name); \
+#define GL_EXT_CHECK(name, ext_name)                        \
+    bool name##Supported(Debug::Context& c)                 \
+    {                                                       \
+        return Debug::CheckExtensionSupported(c, ext_name); \
     }
 
 #define GL_VERSION_NONE 0xFFFFF
@@ -129,7 +129,7 @@ struct gl_version_at_least_ver
  */
 
 /* Type definitions */
-using CGenum = uint32;
+using CGenum = u32;
 #if GL_VERSION_VERIFY(0x410, 0x320)
 using CGcallback = GLDEBUGPROC;
 #else
@@ -138,8 +138,8 @@ using CGcallback = void (*)();
 using CGsync = void*;
 
 /* Shorthand for GL object handles, we will treat them differently */
-using CGhnd   = uint32;
-using CGhnd64 = uint64;
+using CGhnd   = u32;
+using CGhnd64 = u64;
 struct CGpixfmt
 {
     CGenum type;
@@ -152,7 +152,7 @@ struct CGDbgMsg
     Severity       sev;
     DebugComponent comp;
     DebugType      type;
-    uint32         id;
+    u32         id;
 };
 
 enum class BufBit

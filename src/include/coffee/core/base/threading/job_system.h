@@ -25,7 +25,7 @@ FORCEDINLINE Future<void> ParallelFor(
     IterType                       weight = 1)
 {
     Function<void()> worker = [kernel, context, iterations, weight]() {
-        uint32 thrcount = SysInfo::SmartParallelism(iterations, weight);
+        u32 thrcount = SysInfo::SmartParallelism(iterations, weight);
 
         Vector<Future<void>> tasks;
 
@@ -42,7 +42,7 @@ FORCEDINLINE Future<void> ParallelFor(
                 }
             };
 
-        for(uint32 i = 0; i < thrcount; i++)
+        for(u32 i = 0; i < thrcount; i++)
         {
             IterType itc = split;
             if(i == 0)
@@ -50,7 +50,7 @@ FORCEDINLINE Future<void> ParallelFor(
             tasks.push_back(RunAsync(fun, kernel, context, split));
         }
 
-        for(uint32 i = 0; i < thrcount; i++)
+        for(u32 i = 0; i < thrcount; i++)
             tasks[i].get();
 
         return;

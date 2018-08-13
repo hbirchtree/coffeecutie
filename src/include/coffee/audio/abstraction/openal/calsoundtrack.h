@@ -13,7 +13,7 @@ class CALSoundTrack : public CSoundTrack<CALSource,CALBuffer>
     {
         CALBuffer* buf;
         CSoundProperty const* prop;
-        uint64 b_pts;
+        u64 b_pts;
 
         bool operator<(const _csample_data& d1) const
         {
@@ -40,7 +40,7 @@ public:
 
     virtual void queueSample(CSoundSample<CALSource,CALBuffer>& sample);
 
-    virtual void updateTrack(uint64 ts);
+    virtual void updateTrack(u64 ts);
 
     virtual CALSource* object();
 

@@ -1,5 +1,6 @@
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
+#include <coffee/asio/asio_worker.h>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
@@ -39,7 +40,7 @@ struct RuntimeState
 {
     bigscalar time_base     = 0.;
     bool      debug_enabled = false;
-    uint8     padding[7];
+    u8     padding[7];
 };
 
 static const constexpr szptr num_textures = 5;
@@ -177,7 +178,8 @@ struct RendererState
     // State that can be loaded from disk
     RuntimeState r_state;
 
-    RuntimeQueue* rt_queue;
+    RuntimeQueue*            rt_queue;
+    ShPtr<ASIO::ASIO_Worker> net_worker;
 
     ScopedTask component_task;
 
@@ -185,7 +187,7 @@ struct RendererState
     CameraContainer             camera_cnt;
     TimeSystem                  timing_sys;
 
-    uint32 frameCount;
+    u32 frameCount;
 
     struct RGraphicsData
     {
@@ -197,19 +199,19 @@ struct RendererState
 
         void reset()
         {
-            loader = nullptr;
-            vertbuf = nullptr;
-            vertdesc = {};
-            v_shader = {};
-            f_shader = {};
-            eye_pip = {};
-            eyetex = nullptr;
-            eyesamp = {};
+            loader     = nullptr;
+            vertbuf    = nullptr;
+            vertdesc   = {};
+            v_shader   = {};
+            f_shader   = {};
+            eye_pip    = {};
+            eyetex     = nullptr;
+            eyesamp    = {};
             time_value = 0;
             blendstate = {};
-            deptstate = {};
-            rpass_s = {};
-            rpass = {};
+            deptstate  = {};
+            rpass_s    = {};
+            rpass      = {};
         }
 
         TransformContainer transform_cnt;
@@ -225,8 +227,8 @@ struct RendererState
         GLM::PIP                    eye_pip  = {};
         RHI::shader_param_view<GLM> params;
 
-        GLM::S_2DA* eyetex;
-        GLM::SM_2DA eyesamp = {};
+        GLM::S_2DA*  eyetex;
+        GLM::SM_2DA  eyesamp        = {};
         const scalar eyetexGridSize = 2.f;
 
         // Graphics data
@@ -255,25 +257,15 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     auto onlineWorker =
         RuntimeQueue::CreateNewThreadQueue("Online Worker", rqec);
 
-    C_ERROR_CHECK(rqec);
+    d->net_worker = ASIO::GenWorker();
 
-    d->component_task = ScopedTask(
-        d->rt_queue->threadId(),
-        {[d]() {
-             Profiler::PushContext("Components::exec()");
-             d->entities.exec();
-             Profiler::PopContext();
-         },
-         {},
-         std::chrono::milliseconds(10),
-         RuntimeTask::Periodic,
-         0});
+    C_ERROR_CHECK(rqec);
 
     RendererState::RGraphicsData& g = d->g_data;
 
     d->g_data.reset();
 
-//    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
+    //    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
 
     cVerbose("Entering run() function");
 
@@ -395,10 +387,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
-        ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
-
-        auto rsc =
-            "http://i.imgur.com/nQdOmCJ.png"_http.rsc<Net::Resource>(ctx);
+        auto rsc = "http://i.imgur.com/nQdOmCJ.png"_http.rsc<Net::Resource>(
+            ASIO::GetContext());
 
         if(rsc.fetch())
         {
@@ -427,9 +417,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     callbacks->ready = [mainQueue, &eyetex](Discord::PlayerInfo const& info) {
         cDebug("Identified as: {0}", info.userTag);
 
-        auto ctxt = ASIO::ASIO_Client::InitService();
-
-        auto rsc = Net::Resource(ctxt, info.avatarUrl);
+        auto rsc = Net::Resource(ASIO::GetContext(), info.avatarUrl);
 
         if(rsc.fetch())
         {
@@ -490,7 +478,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     blendstate.m_doBlend = true;
     deptstate.m_test     = true;
-    deptstate.m_func     = C_CAST<uint32>(ValueComparison::Less);
+    deptstate.m_func     = C_CAST<u32>(ValueComparison::Less);
 
     /* Applying state information */
     GLM::SetBlendState(g.blendstate);
@@ -600,6 +588,18 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     d->entities.exec();
 
+    d->component_task = ScopedTask(
+        d->rt_queue->threadId(),
+        {[d]() {
+             Profiler::PushContext("Components::exec()");
+             d->entities.exec();
+             Profiler::PopContext();
+         },
+         {},
+         std::chrono::milliseconds(10),
+         RuntimeTask::Periodic,
+         0});
+
     GpuInfo::GpuQueryInterface interf;
     gpu_query_error            ec;
     GpuInfo::LoadDefaultGpuQuery(interf, ec);
@@ -646,6 +646,8 @@ void RendererCleanup(CDRenderer&, RendererState* d)
 {
     runtime_queue_error ec;
     RuntimeQueue::TerminateThread(d->rt_queue, ec);
+
+    d->net_worker->stop();
 
     d->entities.reset();
 

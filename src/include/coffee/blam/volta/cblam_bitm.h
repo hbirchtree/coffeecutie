@@ -18,8 +18,8 @@ namespace Blam{
 extern const bitm_image_t* bitm_get(
         const index_item_t* item,
         const file_header_t* map,
-        int32 magic,
-        int32 *numImages);
+        i32 magic,
+        i32 *numImages);
 
 /*!
  * \brief Transforms the image structure to a GL-ready structure which may be uploaded directly, doing any possible decoding on the GPU. The data is read directly from the source file without copying. (Unless the GL does this)

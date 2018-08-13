@@ -18,7 +18,7 @@ coffee_library (
     TARGET CoffeeASIO
 
     SOURCES
-    private/rest-client.cpp
+    private/asio_worker.cpp
     private/net_resource.cpp
     private/net_profiling.cpp
 

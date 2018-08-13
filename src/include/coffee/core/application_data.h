@@ -10,7 +10,7 @@ struct ApplicationData_t
     CString organization_name;
     CString application_name;
 
-    uint32 version_code;
+    u32 version_code;
 };
 
 }

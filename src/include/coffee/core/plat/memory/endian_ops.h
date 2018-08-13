@@ -12,7 +12,7 @@ namespace Coffee{
 namespace Mem{
 
 /* Endian conversion */
-FORCEDINLINE uint32 ForeignEndian32(uint32 i)
+FORCEDINLINE u32 ForeignEndian32(u32 i)
 {
 #ifdef USE_ARPA
     return htonl(i);
@@ -34,7 +34,7 @@ FORCEDINLINE uint16 ForeignEndian16(uint16 i)
 #endif
 }
 
-FORCEDINLINE uint32 NativeEndian32(uint32 i)
+FORCEDINLINE u32 NativeEndian32(u32 i)
 {
 #ifdef USE_ARPA
     return ntohl(i);

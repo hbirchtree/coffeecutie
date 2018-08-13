@@ -26,6 +26,9 @@ coffee_library (
     # Library versioning
     private/application_data.cpp
 
+    # Thread code
+    private/types/tdef/thread_glue.cpp
+
     #
     # Debug functions
     #
@@ -55,7 +58,6 @@ coffee_library (
 
     private/plat/environment/shared_func.cpp
     private/plat/memory/cmd_interface.cpp
-    private/plat/memory/string_ops.cpp
 
     #
     # Task queues, for easier time scheduling
@@ -175,6 +177,7 @@ coffee_library (
 
     SOURCES
     private/profiler/profiling_export.cpp
+    private/plat/timing/profiling.cpp
 
     LIBRARIES CoffeeCore_Base CoffeeCore_PlatformData
     )

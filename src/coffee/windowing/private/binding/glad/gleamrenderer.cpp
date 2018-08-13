@@ -22,7 +22,6 @@
 
 #define GLR_API "GLeamRenderer::"
 
-
 namespace Coffee {
 namespace Display {
 
@@ -32,7 +31,7 @@ using GLDEBUG = CGL::CGL43;
 using GLDEBUG = CGL::CGLES32;
 #endif
 
-using GL = CGL::CGL_Lowest;
+using GL     = CGL::CGL_Lowest;
 using GDEBUG = CGL::Debug;
 
 static void PushDebugGroup(cstring n)
@@ -69,8 +68,8 @@ void gleamcallback(
     const GLchar* msg,
     const void*   param)
 {
-//    if(src == GL_DEBUG_SOURCE_APPLICATION)
-//        return;
+    //    if(src == GL_DEBUG_SOURCE_APPLICATION)
+    //        return;
 
     const GLeamRenderer* renderer = C_RCAST<const GLeamRenderer*>(param);
     CGL::CGDbgMsg        cmsg;
@@ -228,11 +227,12 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
         return false;
     }
 
-    cDebug(
-        GLR_API "OpenGL GLSL version: {0}", GDEBUG::ShaderLanguageVersion());
+    cDebug(GLR_API "OpenGL GLSL version: {0}", GDEBUG::ShaderLanguageVersion());
     Profiler::DeepPopContext();
 
-    GDEBUG::GetExtensions();
+    CGL::CGL_Shared_Debug::Context ctxt;
+
+    GDEBUG::GetExtensions(ctxt);
 
     if(PlatformData::IsDebug())
     {
@@ -247,23 +247,21 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
         Profiler::AddExtraData(
             "gl:glsl_version",
             Strings::to_string(GDEBUG::ShaderLanguageVersion()));
-        Profiler::AddExtraData("gl:extensions", GDEBUG::s_ExtensionList);
+        Profiler::AddExtraData("gl:extensions", ctxt.extensionList);
         Profiler::AddExtraData("gl:driver", GDEBUG::ContextVersion().driver);
 
-        GDEBUG::InitCompressedFormats();
+        GDEBUG::InitCompressedFormats(ctxt);
 
         CString internalFormats = {};
-        for(szptr i : Range<>(C_FCAST<szptr>(GDEBUG::Num_Internal_Formats)))
+        for(auto ifmt : ctxt.internalFormats)
         {
-            if(GDEBUG::Internal_Formats[i] > 0)
-
-                internalFormats.append(
-                    StrUtil::pointerify(
-                        C_FCAST<u64>(GDEBUG::Internal_Formats[i]) & 0xFFFF) +
-                    " ");
+            if(ifmt <= 0)
+                continue;
+            internalFormats.append(
+                str::print::pointerify(C_FCAST<u64>(ifmt) & 0xFFFF) + " ");
         }
 
-        internalFormats = StrUtil::rtrim(internalFormats);
+        internalFormats = str::trim::right(internalFormats);
 
         Profiler::AddExtraData("gl:texformats", internalFormats);
 

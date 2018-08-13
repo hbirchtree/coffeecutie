@@ -5,7 +5,7 @@
 
 using namespace Coffee;
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     GpuInfo::GpuQueryInterface fun = {};
     gpu_query_error ec;
@@ -38,7 +38,7 @@ int32 coffee_main(int32, cstring_w*)
             cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
                    util.gpu, util.mem, util.decoder, util.encoder);
 
-            cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
+            cDebug("Power mode: {0}", C_CAST<u32>(e.pMode()));
         }
     }else
     {

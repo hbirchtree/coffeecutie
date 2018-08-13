@@ -121,7 +121,7 @@ struct RenderData
     CRGBA             clearCol;
 };
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     SubsystemWrapper<SDL2::SDL2> sys1;
     C_UNUSED(sys1);

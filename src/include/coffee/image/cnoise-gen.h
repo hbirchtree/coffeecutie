@@ -13,16 +13,16 @@ namespace NoiseGen{
  */
 extern scalar Perlin(
         const CVec3& pos,
-        const _cbasic_vec3<int32>& wrap = _cbasic_vec3<int32>(255));
+        const _cbasic_vec3<i32>& wrap = _cbasic_vec3<i32>(255));
 
 /*!
  * \brief Makes transfers the floating-point range [0.0,1.0] to integer [0,255]
  * \param v Value to transform, scaled to [0,1] range
  * \return A linear value in uint8 format
  */
-inline C_FORCE_INLINE uint8 Linearize(scalar v)
+inline C_FORCE_INLINE u8 Linearize(scalar v)
 {
-    return (uint8)(v*255);
+    return (u8)(v*255);
 }
 
 }

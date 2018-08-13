@@ -90,14 +90,14 @@ struct SWVersionInfo
 
     const u32 product;
     union{
-        const uint32 major;
-        const uint32 major_;
+        const u32 major;
+        const u32 major_;
     };
     union{
-        const uint32 minor;
-        const uint32 minor_;
+        const u32 minor;
+        const u32 minor_;
     };
-    const uint32 patch;
+    const u32 patch;
     const CString build;
 };
 
@@ -171,7 +171,7 @@ struct _cbasic_arg_container
 
     void rebuildArgs();
 
-    static _cbasic_arg_container Clone(int32 argc, cstring_w* argv);
+    static _cbasic_arg_container Clone(i32 argc, cstring_w* argv);
 
     cstring_w programName() const;
 
@@ -187,6 +187,6 @@ private:
 };
 
 using AppArg = _cbasic_arg_container;
-using Version = _cbasic_version<uint32>;
+using Version = _cbasic_version<u32>;
 
 }

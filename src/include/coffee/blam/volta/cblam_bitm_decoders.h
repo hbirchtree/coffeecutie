@@ -11,7 +11,7 @@ namespace Blam{
  * \param c Color structure to be converted
  * \return An RGBA integer
  */
-inline static uint32 blam_rgba_to_int(const bl_rgba_t &c)
+inline static u32 blam_rgba_to_int(const bl_rgba_t &c)
 {
     return c.i;
 }
@@ -23,7 +23,7 @@ inline static uint32 blam_rgba_to_int(const bl_rgba_t &c)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a8(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_a8(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(s);
@@ -36,7 +36,7 @@ inline static uint32 coffee_bitm_decode_m_a8(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_p8_y8(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(s);
@@ -52,7 +52,7 @@ inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_ay8(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(s);
@@ -67,7 +67,7 @@ inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_a8y8(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(b);
@@ -83,7 +83,7 @@ inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_r5g6b5(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(b);
@@ -101,7 +101,7 @@ inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_a1r5g5b5(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(b);
@@ -119,7 +119,7 @@ inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_a4r4g4b4(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(d);
     C_UNUSED(b);
@@ -137,7 +137,7 @@ inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_a8r8g8b8(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(s);
     C_UNUSED(b);
@@ -155,7 +155,7 @@ inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte_t b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_x8r8g8b8(uint32 d, uint16 s,byte_t b)
+inline static u32 coffee_bitm_decode_m_x8r8g8b8(u32 d, uint16 s,byte_t b)
 {
     C_UNUSED(s);
     C_UNUSED(b);

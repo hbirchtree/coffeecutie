@@ -28,8 +28,8 @@ bool fileread_test()
 
     cDebug(
         "\nTheirs:\n{1}\nMine:\n{0}",
-        StrUtil::hexdump(write_data, sizeof(write_data), true, 10),
-        StrUtil::hexdump(rsc.data, rsc.size, true, 10));
+        str::print::hexdump(write_data, sizeof(write_data), true, 10),
+        str::print::hexdump(rsc.data, rsc.size, true, 10));
 
     if(sizeof(write_data) != rsc.size)
     {

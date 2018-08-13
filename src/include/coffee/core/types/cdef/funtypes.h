@@ -83,7 +83,7 @@ class _cbasic_threadrunner_command
 {
 public:
     STATICINLINE void perform(_cbasic_threadrunner_command*){}
-    STATICINLINE void await(_cbasic_threadrunner_command*,uint64){}
+    STATICINLINE void await(_cbasic_threadrunner_command*,u64){}
 };
 
 class _cbasic_threadrunner_queue
@@ -101,7 +101,7 @@ public:
     {
         c->m_cmd();
     }
-    virtual bool await(uint64 = 0)
+    virtual bool await(u64 = 0)
     {
         return m_stat.load();
     }

@@ -24,7 +24,7 @@ int _coffee_sdl2_get_gl_attribute(SDL_GLattr attr)
     return t;
 }
 
-void _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GLattr attr, uint8* target)
+void _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GLattr attr, u8* target)
 {
     *target = _coffee_sdl2_get_gl_attribute(attr);
 }
@@ -89,7 +89,7 @@ void SetContextProperties(const GLProperties &props)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
     }
 
-    int32 cflags = 0;
+    i32 cflags = 0;
 
     if(props.flags&GLProperties::Flags::GLDebug)
         cflags|=SDL_GL_CONTEXT_DEBUG_FLAG;
@@ -121,7 +121,7 @@ GLProperties GetContextProperties()
     if(_coffee_sdl2_get_gl_attribute(SDL_GL_CONTEXT_PROFILE_MASK)==SDL_GL_CONTEXT_PROFILE_CORE)
         props.flags|=GLProperties::GLCoreProfile;
 
-    int32 cflags = _coffee_sdl2_get_gl_attribute(SDL_GL_CONTEXT_FLAGS);
+    i32 cflags = _coffee_sdl2_get_gl_attribute(SDL_GL_CONTEXT_FLAGS);
 
     if(cflags&SDL_GL_CONTEXT_DEBUG_FLAG)
         props.flags|=GLProperties::GLDebug;

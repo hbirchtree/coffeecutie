@@ -1,6 +1,8 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CMD>
 
+#include <coffee/core/terminal/table-print.h>
+
 using namespace Coffee;
 
 const constexpr cstring test1_names[20] = {

@@ -50,7 +50,7 @@ void CALSoundBuffer::fillBuffer(c_cptr data, const szptr &size)
     smp.fmt.frequency = m_fmt->samplerate();
 
     smp.samples = C_FCAST<u32>(size);
-    smp.data = C_RCAST<int16*>(C_CCAST<c_ptr>(data));
+    smp.data = C_RCAST<i16*>(C_CCAST<c_ptr>(data));
 
     buffer_data(m_buffer,&smp);
 }

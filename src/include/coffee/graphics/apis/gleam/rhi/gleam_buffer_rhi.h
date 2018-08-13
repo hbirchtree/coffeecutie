@@ -50,7 +50,7 @@ struct GLEAM_BindableBuffer : GLEAM_VBuffer
         GLEAM_VBuffer(type, acc, size), m_stride(stride)
     {
     }
-    void bindrange(uint32 idx, szptr off, szptr size, gleam_error& ec) const;
+    void bindrange(u32 idx, szptr off, szptr size, gleam_error& ec) const;
 
   protected:
     szptr m_stride;

@@ -55,7 +55,7 @@ public:
     {
         friend class tag_index_view;
 
-        int32 i;
+        i32 i;
         tag_index_view* idx;
 
         index_item_t const* deref()
@@ -70,7 +70,7 @@ public:
 			return &tag_index_get_items(idx->m_file)[i];
 		}
 
-        index_iterator(tag_index_view& idx, int32 i):
+        index_iterator(tag_index_view& idx, i32 i):
             i(i),
             idx(&idx)
         {

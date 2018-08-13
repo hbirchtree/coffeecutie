@@ -11,7 +11,8 @@ namespace Profiling {
 using namespace DataStorage::TextStorage::RJSON;
 
 static constexpr cstring event_format =
-    R"({"ts":{0},"name":"{1}","pid":1,"tid":"{2}","cat":"{3}","ph":"{4}","s":"t"},)";
+    R"({"ts":{0},"name":"{1}","pid":1,"tid":"{2}","cat":"{3}","ph":"{4}","s":"t"},
+)";
 
 struct JsonProfileWriter : State::GlobalState
 {
@@ -25,7 +26,10 @@ struct JsonProfileWriter : State::GlobalState
 
         C_ERROR_CHECK(ec);
 
-        FileFun::Write(logfile, Bytes::CreateString(R"({"displayTimeUnit": "ms","traceEvents":[)"), ec);
+        FileFun::Write(
+            logfile,
+            Bytes::CreateString(R"({"displayTimeUnit": "ms","traceEvents":[)"),
+            ec);
 
         C_ERROR_CHECK(ec);
     }
@@ -56,16 +60,16 @@ ShPtr<State::GlobalState> CreateJsonProfiler()
     return MkShared<JsonProfileWriter>(profile);
 }
 
-void JsonPush(ThreadData* tdata, DataPoint const& point)
+void JsonPush(ThreadState& tdata, DataPoint const& point)
 {
-    auto profileData = C_DCAST<JsonProfileWriter>(tdata->datapoints.writer);
+    auto profileData = C_DCAST<JsonProfileWriter>(tdata.writer);
 
     if(!profileData)
         return;
 
-    auto eventType = "i";
+    const char* eventType = "i";
 
-    switch(point.tp)
+    switch(point.flags.type)
     {
     case DataPoint::Push:
         eventType = "B";
@@ -79,13 +83,13 @@ void JsonPush(ThreadData* tdata, DataPoint const& point)
 
     auto event =
         fmt(event_format,
-            point.ts,
+            Chrono::duration_cast<Chrono::microseconds>(point.ts).count(),
             point.name,
-            StrUtil::pointerify(point.thread),
+            ThreadGetName(point.tid),
             point.component,
             eventType);
 
-    event = StrUtil::printclean(event);
+    event = str::transform::printclean(event);
 
     FileFun::file_error ec;
     FileFun::Write(

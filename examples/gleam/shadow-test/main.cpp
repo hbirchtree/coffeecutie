@@ -24,11 +24,16 @@ struct SharedData
 };
 
 using ELoop = EventLoopData<CDRenderer, SharedData>;
+using CGL_DBG = CGL::CGL_Shared_Debug;
 
 void setup_fun(CDRenderer& renderer, SharedData* data)
 {
     renderer.setWindowTitle("GL extensions");
-    cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
+
+    CGL_DBG::Context c;
+    CGL_DBG::GetExtensions(c);
+
+    cDebug("GL extensions: {0}", c.extensionList);
     cDebug("Framebuffer size: {0}, window size: {1}",
            renderer.framebufferSize(), renderer.windowSize());
     cDebug("Monitor: {0}", renderer.monitor());
@@ -65,7 +70,7 @@ void cleanup_fun(CDRenderer&, SharedData*)
 {
 }
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Main");
 
@@ -107,7 +112,7 @@ int32 coffee_main(int32, cstring_w*)
                     nullptr, &eventloop.r()
                 });
 
-    int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
+    i32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
 
     if(stat != 0)
         cDebug("Init error: {0}", err);

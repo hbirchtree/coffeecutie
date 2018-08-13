@@ -79,7 +79,7 @@ enum class RSCA : u32
     StorageMask = AssetFile|ConfigFile
                     |TemporaryFile|CachedFile|SystemFile,
 };
-C_FLAGS(RSCA, uint32);
+C_FLAGS(RSCA, u32);
 
 enum class HTTPAccess
 {

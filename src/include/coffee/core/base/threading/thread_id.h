@@ -22,7 +22,7 @@ struct ThreadId_t
 #else
     using thread_id_t = typename thread_t::id;
 #endif
-    using Hash = uint64;
+    using Hash = u64;
 
     FORCEDINLINE ThreadId_t():
 #if defined(COFFEE_NO_THREADLIB)
@@ -35,6 +35,12 @@ struct ThreadId_t
     FORCEDINLINE ThreadId_t(thread_id_t const& tid):
         m_id(tid)
     {
+    }
+
+    FORCEDINLINE Hash operator()(thread_id_t h)
+    {
+        m_id = h;
+        return hash();
     }
 
     FORCEDINLINE bool operator==(const ThreadId_t& thd) const

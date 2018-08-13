@@ -11,7 +11,7 @@ CString LinuxEnv::ExecutableName(cstring_w)
 {
     cstring_w p = realpath("/proc/self/exe", nullptr);
     CString   v = p;
-    CFree(p);
+    Mem::CFree(p);
     return v;
 }
 

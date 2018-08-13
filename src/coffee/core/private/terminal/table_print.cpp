@@ -79,8 +79,8 @@ CString TablePrinter_Basic::GenTable(const TablePrinter_Basic::Table &table, con
 
     if(size)
     {
-        size->w = C_FCAST<int32>(acc);
-        size->h = C_FCAST<int32>(row_count+2);
+        size->w = C_FCAST<i32>(acc);
+        size->h = C_FCAST<i32>(row_count+2);
     }
 
     return ss.str();

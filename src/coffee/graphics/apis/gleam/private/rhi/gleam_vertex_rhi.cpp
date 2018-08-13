@@ -35,7 +35,7 @@ static bool IsIntegerType(TypeEnum e)
  */
 static void vao_apply_buffer(
     Vector<GLEAM_VertAttribute> const& m_attributes,
-    uint32                             binding,
+    u32                             binding,
     GLEAM_ArrayBuffer&,
     u32 vertexOffset = 0)
 {
@@ -152,7 +152,7 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 #endif
 }
 
-void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf)
+void GLEAM_VertDescriptor::bindBuffer(u32 binding, GLEAM_ArrayBuffer& buf)
 {
     if(GLEAM_FEATURES.gles20)
     {
@@ -229,7 +229,7 @@ void GLEAM_VertDescriptor::bind(u32 vertexOffset)
         C_UNUSED(vertexOffset);
     } else
 #endif
-        for(Pair<uint32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
+        for(Pair<u32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
         {
             binding.second.bind();
             vao_apply_buffer(

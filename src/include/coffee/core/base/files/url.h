@@ -1,13 +1,13 @@
 #pragma once
 
 #include <coffee/core/coffee_mem_macros.h>
-#include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
-namespace CResources{
+namespace CResources {
 /*!
  * \brief Easy redirection of all resources in the application. :)
  * \param prefix
@@ -16,29 +16,26 @@ namespace CResources{
 
 struct Resource;
 
-}
+} // namespace CResources
 
 struct Url;
 
 struct Path
 {
-    Path(cstring path):
-        internUrl(path ? path : "")
+    Path(cstring path) : internUrl(path ? path : "")
     {
     }
-    Path(CString const& path):
-        internUrl(path)
+    Path(CString const& path) : internUrl(path)
     {
     }
-    Path():
-        Path(nullptr)
+    Path() : Path(nullptr)
     {
     }
 
     CString internUrl;
 
-    Path removeExt() const;
-    Path addExtension(cstring ext) const;
+    Path         removeExt() const;
+    Path         addExtension(cstring ext) const;
     FORCEDINLINE Path addExtension(CString const& ext) const
     {
         return addExtension(ext.c_str());
@@ -51,7 +48,7 @@ struct Path
 
     Path canonical() const;
 
-    Path operator+(cstring component) const;
+    Path         operator+(cstring component) const;
     FORCEDINLINE Path operator+(CString const& component) const
     {
         return *this + component.c_str();
@@ -96,10 +93,10 @@ struct Url
         Memory,
     };
 
-    CString internUrl;
+    CString     internUrl;
     StorageType category;
-    RSCA flags;
-    HTTPAccess netflags;
+    RSCA        flags;
+    HTTPAccess  netflags;
 
     CString cachedUrl;
 
@@ -109,13 +106,14 @@ struct Url
     }
 
     /*!
-     * \brief Operator with const which does not perform caching of dereferenced URLs
-     * \return
+     * \brief Operator with const which does not perform caching of dereferenced
+     * URLs \return
      */
     CString operator*() const;
     /*!
-     * \brief Does the same as const operator*, except it caches the value for later dereferences. Currently not very useful since most `FileFun::*` functions do not take `Url&`, but rather `Url const&`.
-     * \return
+     * \brief Does the same as const operator*, except it caches the value for
+     * later dereferences. Currently not very useful since most `FileFun::*`
+     * functions do not take `Url&`, but rather `Url const&`. \return
      */
     CString operator*();
 
@@ -138,65 +136,97 @@ struct Url
         return Resource(a..., *this);
     }
 
-private:
+  private:
     CString DereferenceLocalPath() const;
+};
+
+struct UrlParse
+{
+    static UrlParse From(Url const& url);
+
+    CString protocol()
+    {
+        return m_protocol;
+    }
+    CString host()
+    {
+        return m_host;
+    }
+    CString resource()
+    {
+        return m_resource;
+    }
+    u32 port()
+    {
+        return m_port;
+    }
+
+    bool valid() const
+    {
+        return m_protocol.size();
+    }
+
+  private:
+    UrlParse()
+    {
+    }
+    CString m_protocol;
+    CString m_host;
+    CString m_resource;
+    u32     m_port;
 };
 
 FORCEDINLINE Url MkUrl(cstring urlString)
 {
-    return
-    {
-        urlString,
-                Url::Local,
-                RSCA::AssetFile,
-                HTTPAccess::None,
-        {}
-    };
+    return {urlString, Url::Local, RSCA::AssetFile, HTTPAccess::None, {}};
 }
 
 FORCEDINLINE Url MkUrl(cstring urlString, RSCA access)
 {
-    return
-    {
-        urlString,
-                Url::Local,
-                access,
-                HTTPAccess::None,
-        {}
-    };
+    return {urlString, Url::Local, access, HTTPAccess::None, {}};
 }
 
 FORCEDINLINE Url MkSysUrl(cstring urlString)
 {
-    return
-    {
-        urlString,
-                Url::Local,
-                RSCA::SystemFile,
-                HTTPAccess::None,
-        {}
-    };
+    return {urlString, Url::Local, RSCA::SystemFile, HTTPAccess::None, {}};
 }
 
 FORCEDINLINE Url MkUrl(Path p, RSCA access = RSCA::SystemFile)
 {
-    return
-    {
-        p.internUrl.c_str(),
-                Url::Local,
-                access,
-                HTTPAccess::None,
-        {}
-    };
+    return {p.internUrl.c_str(), Url::Local, access, HTTPAccess::None, {}};
 }
 
-FORCEDINLINE Url operator "" _url(const char* url, size_t)
+/* Basic Url constructors */
+
+FORCEDINLINE Url operator"" _url(const char* url, size_t)
 {
     return MkUrl(url);
 }
 
-namespace Strings{
+FORCEDINLINE Url operator"" _web(const char* url, size_t)
+{
+    return {url, Url::Networked, RSCA::None, HTTPAccess::DefaultAccess, {}};
+}
+
+/*
+ *
+ * Location constructors
+ *
+ *
+ */
+
+FORCEDINLINE Url operator"" _tmp(const char* url, size_t)
+{
+    return MkUrl(url, RSCA::TempFile);
+}
+
+FORCEDINLINE Url operator"" _cache(const char* url, size_t)
+{
+    return MkUrl(url, RSCA::CachedFile);
+}
+
+namespace Strings {
 extern CString to_string(Url const& url);
 extern CString to_string(Path const& path);
-}
-}
+} // namespace Strings
+} // namespace Coffee

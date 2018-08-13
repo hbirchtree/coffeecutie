@@ -22,7 +22,7 @@ static Vector<CString> const* baseDirs = nullptr;
 bool supported(CString const& otherExt)
 {
     for(auto ext : assimpExtensions)
-        if(ext && StrICmp(ext, otherExt.c_str()))
+        if(ext && str::cmp<str::comp_nocase>(ext, otherExt.c_str()))
             return true;
     return false;
 }
@@ -277,7 +277,7 @@ void AssimpProcessor::process(
         auto ext = Path(file.filename).extension();
 
         for(auto otherExt : assimpExtensions)
-            if(StrICmp(ext.c_str(), otherExt))
+            if(str::cmp<str::comp_nocase>(ext.c_str(), otherExt))
                 return true;
         return false;
     };

@@ -354,7 +354,7 @@ struct Empty
  * main function. The purpose of this is platform abstraction such that the rest
  * of the code works consistently across platforms.
  */
-int coffee_main(int32, cstring_w*)
+int coffee_main(i32, cstring_w*)
 {
     //    CResources::FileResourcePrefix("sample_data/cblam_data/");
 
@@ -403,8 +403,8 @@ int coffee_main(int32, cstring_w*)
         }
     }
 
-    auto debigend = [](cstring src, uint32 len) {
-        return StrUtil::reverse(StrUtil::encapsulate(src, len));
+    auto debigend = [](cstring src, u32 len) {
+        return str::transform::reverse(str::encapsulate(src, len));
     };
     auto pred = [&](index_item_t const* e) {
         return debigend(e->tagclass[0], 4) == "scnr";

@@ -30,13 +30,13 @@ using Vecd2 = _cbasic_vec2<bigscalar>;
 using Vecd3 = _cbasic_vec3<bigscalar>;
 using Vecd4 = _cbasic_vec4<bigscalar>;
 
-using Veci2 = _cbasic_vec2<int32>;
-using Veci3 = _cbasic_vec3<int32>;
-using Veci4 = _cbasic_vec4<int32>;
+using Veci2 = _cbasic_vec2<i32>;
+using Veci3 = _cbasic_vec3<i32>;
+using Veci4 = _cbasic_vec4<i32>;
 
-using Vecui2 = _cbasic_vec2<uint32>;
-using Vecui3 = _cbasic_vec3<uint32>;
-using Vecui4 = _cbasic_vec4<uint32>;
+using Vecui2 = _cbasic_vec2<u32>;
+using Vecui3 = _cbasic_vec3<u32>;
+using Vecui4 = _cbasic_vec4<u32>;
 
 using CQuat = _cbasic_quat<scalar>;
 

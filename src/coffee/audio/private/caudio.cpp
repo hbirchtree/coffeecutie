@@ -21,7 +21,7 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
     DProfContext _(STB_API "Decoding audio");
 
     /* C is not so good with uint64 used by our resource format*/
-    int32 data_size = C_CAST<int32>(src.size);
+    i32 data_size = C_CAST<i32>(src.size);
 
     i32 samples = stb_vorbis_decode_memory(
         C_CAST<ubyte_t*>(src.data),
@@ -40,7 +40,7 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
 
     audio_data::SetDestr(smp->container, [](audio_data& data)
     {
-        CFree(data.data);
+        Mem::CFree(data.data);
     });
 
     smp->fmt.bitdepth = smp->samples / smp->fmt.samplerate * smp->fmt.channels;
@@ -61,7 +61,7 @@ bigscalar GetSampleLength(AudioSample const& smp)
 szptr GetSampleDataSize(const AudioFormat& fmt, szptr samples)
 {
     return fmt.samplerate * fmt.channels * samples *
-           CMath::max(C_CAST<uint32>(1), fmt.bitdepth / 8);
+           CMath::max(C_CAST<u32>(1), fmt.bitdepth / 8);
 }
 
 } // namespace CAudio

@@ -22,7 +22,7 @@ struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
     void dealloc();
 
     void addAttribute(GLEAM_VertAttribute const& attr);
-    void bindBuffer(uint32 binding, GLEAM_ArrayBuffer& buf);
+    void bindBuffer(u32 binding, GLEAM_ArrayBuffer& buf);
     void setIndexBuffer(GLEAM_ElementBuffer const* buffer);
 
     void bind(u32 vertexOffset = 0);
@@ -31,7 +31,7 @@ struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
   private:
     GLEAM_ElementBuffer const*      m_ibuffer = nullptr;
     Vector<GLEAM_VertAttribute>     m_attributes;
-    Map<uint32, GLEAM_ArrayBuffer&> m_bufferMapping;
+    Map<u32, GLEAM_ArrayBuffer&> m_bufferMapping;
     glhnd                           m_handle;
 };
 

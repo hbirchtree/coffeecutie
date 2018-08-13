@@ -17,7 +17,7 @@ CString SysInfoDef::GetSystemString()
     base.resize(len);
     snprintf(&base[0],base.size(),_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
     base.resize(base.find('\0'));
-    base = Mem::StrUtil::lower(base);
+    base = str::fmt::lower(base);
     return base;
 }
 
@@ -41,7 +41,7 @@ CString SysInfoDef::HostName()
 #endif
 }
 
-ThrdCnt SysInfoDef::SmartParallelism(uint64 worksize, uint64 weight)
+ThrdCnt SysInfoDef::SmartParallelism(u64 worksize, u64 weight)
 {
     if(worksize*weight <= ThreadCount())
     {

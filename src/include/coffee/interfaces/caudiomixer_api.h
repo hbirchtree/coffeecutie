@@ -125,12 +125,12 @@ public:
      * \brief The size of one sample with this format
      * \return
      */
-    virtual uint32 sampleSize() const = 0;
+    virtual u32 sampleSize() const = 0;
     /*!
      * \brief Samplerate/frequency of sound
      * \return
      */
-    virtual uint32 samplerate() const = 0;
+    virtual u32 samplerate() const = 0;
     /*!
      * \brief Number of channels in buffer
      * \return
@@ -140,11 +140,11 @@ public:
      * \brief Bit-depth of buffer data
      * \return
      */
-    virtual uint8 bitDepth() const = 0;
+    virtual u8 bitDepth() const = 0;
 
-    virtual void setSamplerate(const uint32& smrt) = 0;
+    virtual void setSamplerate(const u32& smrt) = 0;
     virtual void setChannels(const uint16& chans) = 0;
-    virtual void setBitDepth(const uint8& bitd) = 0;
+    virtual void setBitDepth(const u8& bitd) = 0;
 };
 
 template<class ST,class BT>
@@ -209,10 +209,10 @@ public:
 
     virtual CSoundBuffer<ST,BT>& buffer() = 0;
     virtual CSoundFormat& format() = 0;
-    virtual uint64 samples() const = 0;
+    virtual u64 samples() const = 0;
 
-    virtual uint64 pts() const = 0;
-    virtual void setPts(const uint64& pts) = 0;
+    virtual u64 pts() const = 0;
+    virtual void setPts(const u64& pts) = 0;
 
     virtual CSoundProperty const* properties() = 0;
     virtual void assignProperties(CSoundProperty const* props) = 0;
@@ -242,7 +242,7 @@ public:
      * \brief Progress and garbage-collect the sound track
      * \param ts
      */
-    virtual void updateTrack(uint64 ts) = 0;
+    virtual void updateTrack(u64 ts) = 0;
 
     virtual ST* object() = 0;
 
@@ -285,7 +285,7 @@ public:
 
     //TODO: Add PTS processing to sound streams
     virtual void feedDataTimed(c_cptr data, const CSoundFormat& fmt,
-                               const szptr& samples, const uint64& pts)
+                               const szptr& samples, const u64& pts)
     {
         C_UNUSED(data);
         C_UNUSED(fmt);
@@ -322,8 +322,8 @@ public:
     {
     }
 
-    virtual uint64 createTrack() = 0;
-    virtual CSoundTrack<ST,BT>& soundtrack(const uint64& track) = 0;
+    virtual u64 createTrack() = 0;
+    virtual CSoundTrack<ST,BT>& soundtrack(const u64& track) = 0;
 };
 
 class CSoundDeviceIdentifier
@@ -334,7 +334,7 @@ public:
     {
         return nullptr;
     }
-    virtual uint64 numericIdentifier() const
+    virtual u64 numericIdentifier() const
     {
         return 0;
     }
@@ -376,8 +376,8 @@ public:
 
     virtual CSoundDeviceIdentifier& defaultSoundDevice() = 0;
 
-    virtual uint32 numberSoundDevices() = 0;
-    virtual uint32 numberSoundInputDevices() = 0;
+    virtual u32 numberSoundDevices() = 0;
+    virtual u32 numberSoundInputDevices() = 0;
 
     virtual CSoundDeviceIdentifier& soundDevice(const szptr& devEnum) = 0;
     virtual CSoundDeviceIdentifier& soundInputDevice(const szptr& devEnum) = 0;

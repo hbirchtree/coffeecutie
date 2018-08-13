@@ -32,7 +32,7 @@ enum class PixelFlags : u16
 
     LOWER_SHORT_MASK = 0xFFFF,
 };
-C_FLAGS(PixelFlags, uint32);
+C_FLAGS(PixelFlags, u32);
 
 enum class PixCmp : u8
 {

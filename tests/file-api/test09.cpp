@@ -66,7 +66,7 @@ bool test_url_version(RSCA access)
         cDebug(
             "URL mapping({1}): test -> {0}",
             test_string,
-            StrUtil::pointerify(C_CAST<u32>(access)));
+            str::print::pointerify(C_CAST<u32>(access)));
     } catch(std::runtime_error const&)
     {
         return false;

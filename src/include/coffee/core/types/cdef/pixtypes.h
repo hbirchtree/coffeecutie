@@ -21,19 +21,19 @@ struct CRGBA
         i(0)
     {
     }
-    CRGBA(uint8 r,uint8 g,uint8 b,uint8 a = 255):
+    CRGBA(u8 r,u8 g,u8 b,u8 a = 255):
         r(r),g(g),b(b),a(a)
     {
     }
 
     union{
-        uint32 i;
+        u32 i;
         struct
         {
-            uint8 r,g,b,a;
+            u8 r,g,b,a;
         };
     };
-    uint32 rgba() const
+    u32 rgba() const
     {
 #if defined(COFFEE_LIL_ENDIAN)
         CRGBA t;
@@ -54,7 +54,7 @@ struct CRGB
         uint24 i;
         struct
         {
-            uint8 r,g,b;
+            u8 r,g,b;
         };
     };
 };
@@ -65,7 +65,7 @@ struct CColorMask
     bool g:1;
     bool b:1;
     bool a:1;
-    uint8 padding:4;
+    u8 padding:4;
 };
 
 using rgba_t = CRGBA;

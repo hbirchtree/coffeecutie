@@ -16,19 +16,17 @@ bool filewrite_large_test()
 
     /* TODO: Update with Bytes */
 
-    rsc.size = Unit_GB * 5;
     Profiler::Profile("Pre-allocation setup");
 
-    rsc.data = calloc(1, rsc.size);
+    large_data = Bytes::Alloc(5 * Unit_GB);
     Profiler::Profile("5GB allocation");
 
-    large_data = C_OCAST<Bytes>(rsc);
-    Bytes::SetDestr(large_data, [](Bytes& d) { CFree(d.data); });
+    rsc = large_data;
 
     {
         cstring test_string = "I'M THE TRASHMAN!\n";
-        memcpy(large_data.data, test_string, StrLen(test_string));
-        memcpy(&large_data[4_GB], test_string, StrLen(test_string));
+        memcpy(large_data.data, test_string, str::len(test_string));
+        memcpy(&large_data[4_GB], test_string, str::len(test_string));
     }
 
     Profiler::Profile("Copying data into segment");

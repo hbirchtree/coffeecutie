@@ -352,13 +352,13 @@ class RuntimeQueue
     static QueueContextPtr GetQueueContext();
 
     RuntimeTask::Timepoint mNextWakeup;
+    RecMutex            mTasksLock;
 
   private:
     u64  enqueue(RuntimeTask&& task);
     void sortTasks();
 
     Vector<task_data_t> mTasks;
-    RecMutex            mTasksLock;
     u64                 mTaskIndex;
     ThreadId            mThreadId;
 

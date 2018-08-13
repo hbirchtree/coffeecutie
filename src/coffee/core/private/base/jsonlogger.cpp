@@ -1,9 +1,13 @@
+#include <coffee/core/base/jsonlogger.h>
+
 #include <coffee/core/CMD>
-#include <coffee/core/base/debug/cdebug.h>
+#include <coffee/core/formatting.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_timing.h>
+
+#include <coffee/core/base/printing/outputprinter.h>
 
 namespace Coffee {
 
@@ -36,9 +40,9 @@ static const cstring JsonFormat =
 static CString JsonFilter(CString const& message)
 {
     CString filtered_message = message;
-    filtered_message         = CStrReplace(filtered_message, "\\", "\\\\");
-    filtered_message         = CStrReplace(filtered_message, "\n", "\\n");
-    return CStrReplace(filtered_message, "\"", "\\\"");
+    filtered_message = str::replace::str(filtered_message, "\\", "\\\\");
+    filtered_message = str::replace::str(filtered_message, "\n", "\\n");
+    return str::replace::str(filtered_message, "\"", "\\\"");
 }
 
 static JsonLogState& GetLogState()
@@ -52,13 +56,13 @@ static void JsonLogger(
     auto  filtered_message = JsonFilter(message);
     auto& jsonLog          = GetLogState().handle;
 
-    auto json_msg =
-        fmt(JsonFormat,
-            filtered_message,
-            DebugFun::severity_string(sev),
-            fileno(pipe),
-            level,
-            Time::Microsecond() / 1000);
+    auto json_msg = Strings::fmt(
+        JsonFormat,
+        filtered_message,
+        DebugFun::severity_string(sev),
+        fileno(pipe),
+        level,
+        Time::Microsecond() / 1000);
 
     FileFun::file_error ec;
     FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);
@@ -75,14 +79,14 @@ static void JsonTagLogger(
     auto  filtered_message = JsonFilter(message);
     auto& jsonLog          = GetLogState().handle;
 
-    auto json_msg =
-        fmt(JsonTaggedFormat,
-            filtered_message,
-            DebugFun::severity_string(sev),
-            fileno(pipe),
-            level,
-            tag,
-            Time::Microsecond() / 1000);
+    auto json_msg = Strings::fmt(
+        JsonTaggedFormat,
+        filtered_message,
+        DebugFun::severity_string(sev),
+        fileno(pipe),
+        level,
+        tag,
+        Time::Microsecond() / 1000);
 
     FileFun::file_error ec;
     FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);
@@ -95,23 +99,22 @@ static void JsonLoggerExit()
     FileFun::file_error ec;
     FileFun::Write(jsonLog, Bytes::CreateString("{}\n]\n"), ec);
 
-    DebugFun::SetLogInterface({OutputPrinter::fprintf_platform,
-                               OutputPrinter::fprintf_platform_tagged});
+    DebugFun::SetLogInterface(
+        {DebugFun::OutputPrinter::fprintf_platform,
+         DebugFun::OutputPrinter::fprintf_platform_tagged});
 }
 
 JsonLogState::~JsonLogState()
 {
 }
 
-void SetupJsonLogger()
+DebugFun::LogInterface SetupJsonLogger(Url const& jsonFilename)
 {
-    auto jsonLogUrl = MkUrl("application.json", RSCA::TempFile);
-
     FileFun::file_error ec;
-    FileFun::Truncate(jsonLogUrl, 0, ec);
+    FileFun::Truncate(jsonFilename, 0, ec);
 
     auto jsonFile = FileFun::Open(
-        jsonLogUrl,
+        jsonFilename,
         RSCA::ReadWrite | RSCA::Append | RSCA::Discard | RSCA::NewFile,
         ec);
 
@@ -120,10 +123,9 @@ void SetupJsonLogger()
     auto jsonState    = MkShared<JsonLogState>();
     jsonState->handle = std::move(jsonFile);
     State::SwapState("jsonLog", jsonState);
-
-    DebugFun::SetLogInterface({JsonLogger, JsonTagLogger});
-
     Cmd::RegisterAtExit(JsonLoggerExit);
+
+    return {JsonLogger, JsonTagLogger};
 }
 
 } // namespace Coffee

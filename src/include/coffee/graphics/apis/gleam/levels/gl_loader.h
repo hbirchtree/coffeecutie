@@ -41,18 +41,18 @@ using Debug = CGL_Shared_Debug;
 
 struct Extensions
 {
-    STATICINLINE bool SRGB_Supported()
+    STATICINLINE bool SRGB_Supported(Debug::Context& c)
     {
-        return Debug::CheckExtensionSupported("GL_EXT_sRGB")
-                || Debug::CheckExtensionSupported("GL_EXT_texture_sRGB");
+        return Debug::CheckExtensionSupported(c, "GL_EXT_sRGB")
+                || Debug::CheckExtensionSupported(c, "GL_EXT_texture_sRGB");
     }
-    STATICINLINE bool GetProgramBinarySupported()
+    STATICINLINE bool GetProgramBinarySupported(Debug::Context& c)
     {
-        return Debug::CheckExtensionSupported("GL_ARB_get_program_binary")
-                || Debug::CheckExtensionSupported("GL_OES_get_program_binary");
+        return Debug::CheckExtensionSupported(c, "GL_ARB_get_program_binary")
+                || Debug::CheckExtensionSupported(c, "GL_OES_get_program_binary");
     }
 
-    STATICINLINE bool ClipDistanceSupported()
+    STATICINLINE bool ClipDistanceSupported(Debug::Context&)
     {
         return false;
     }

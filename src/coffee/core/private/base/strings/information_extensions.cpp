@@ -1,12 +1,12 @@
 #include <coffee/core/base/strings/information_extensions.h>
-#include <coffee/core/base/strings/cdebug_print.h>
-
 #include <coffee/core/types/vector_types.h>
 
-namespace Coffee{
-namespace Strings{
+#include <coffee/core/base/strings/string_format.h>
 
-cstring to_string(const Severity &sev)
+namespace Coffee {
+namespace Strings {
+
+cstring to_string(const Severity& sev)
 {
     switch(sev)
     {
@@ -30,7 +30,7 @@ cstring to_string(const Severity &sev)
     return "";
 }
 
-cstring to_string(const DebugType &type)
+cstring to_string(const DebugType& type)
 {
     switch(type)
     {
@@ -54,7 +54,7 @@ cstring to_string(const DebugType &type)
     return "";
 }
 
-cstring to_string(const DebugComponent &comp)
+cstring to_string(const DebugComponent& comp)
 {
     switch(comp)
     {
@@ -81,26 +81,23 @@ cstring to_string(const DebugComponent &comp)
 template<typename T>
 static CString version_to_string(_cbasic_version<T> const& arg)
 {
-    return cast_pod(arg.major) +
-            '.' +
-            cast_pod(arg.minor) +
-            '.' +
-            cast_pod(arg.revision);
+    return cast_pod(arg.major) + '.' + cast_pod(arg.minor) + '.' +
+           cast_pod(arg.revision);
 }
 
-CString to_string(const _cbasic_version<uint8> &arg)
+CString to_string(const _cbasic_version<u8>& arg)
 {
-    return version_to_string<uint8>(arg);
+    return version_to_string<u8>(arg);
 }
 
-CString to_string(const _cbasic_version<int32> &arg)
+CString to_string(const _cbasic_version<i32>& arg)
 {
-    return version_to_string<int32>(arg);
+    return version_to_string<i32>(arg);
 }
 
-CString to_string(const _cbasic_version<uint32> &arg)
+CString to_string(const _cbasic_version<u32>& arg)
 {
-    return version_to_string<uint32>(arg);
+    return version_to_string<u32>(arg);
 }
 
 void conditional_add(CString& src, bool add_space)
@@ -109,7 +106,7 @@ void conditional_add(CString& src, bool add_space)
         src += ' ';
 }
 
-CString to_string(const HWDeviceInfo &arg)
+CString to_string(const HWDeviceInfo& arg)
 {
     CString output;
 
@@ -140,48 +137,57 @@ CString to_string(const HWDeviceInfo &arg)
     return output;
 }
 
-CString to_string(const SWVersionInfo &arg)
+CString to_string(const SWVersionInfo& arg)
 {
-    return
-            cStringFormat("sw={0}, ver={1}.{2}.{3}.{4}.{5}",
-                          arg.name,
-                          arg.product,arg.major,arg.minor,
-                          arg.patch,arg.build);
+    return cStringFormat(
+        "sw={0}, ver={1}.{2}.{3}.{4}.{5}",
+        arg.name,
+        arg.product,
+        arg.major,
+        arg.minor,
+        arg.patch,
+        arg.build);
 }
 
-CString to_string(const Display::CGLVersion &arg)
+CString to_string(const Display::CGLVersion& arg)
 {
-    return cStringFormat("{0}.{1} {2}",
-                         arg.major,arg.minor,arg.driver);
+    return cStringFormat("{0}.{1} {2}", arg.major, arg.minor, arg.driver);
 }
 
 CString to_string(BoundBox const& box)
 {
     return cStringFormat(
-                "b({0}->{1},{2}->{3},{4}->{5})",
-                box.x1(),box.x2(),
-                box.y1(),box.y2(),
-                box.z1(),box.z2());
+        "b({0}->{1},{2}->{3},{4}->{5})",
+        box.x1(),
+        box.x2(),
+        box.y1(),
+        box.y2(),
+        box.z1(),
+        box.z2());
 }
 
-CString to_string(const Display::CDContextBits &arg)
+CString to_string(const Display::CDContextBits& arg)
 {
     return cStringFormat(
-                "bits(rgba:{0},{1},{2},{3};ds:{4},{5},smp:{6})",
-                arg.red, arg.green, arg.blue, arg.alpha,
-                arg.depth, arg.stencil, arg.samples
-                );
+        "bits(rgba:{0},{1},{2},{3};ds:{4},{5},smp:{6})",
+        arg.red,
+        arg.green,
+        arg.blue,
+        arg.alpha,
+        arg.depth,
+        arg.stencil,
+        arg.samples);
 }
 
 CString to_string(Display::CDMonitor const& arg)
 {
     return cStringFormat(
-                "monitor(rgbx:{0},{1},{2},{3})",
-                arg.colorBits.red,
-                arg.colorBits.green,
-                arg.colorBits.blue,
-                arg.colorBits.extra);
+        "monitor(rgbx:{0},{1},{2},{3})",
+        arg.colorBits.red,
+        arg.colorBits.green,
+        arg.colorBits.blue,
+        arg.colorBits.extra);
 }
 
-}
-}
+} // namespace Strings
+} // namespace Coffee

@@ -27,7 +27,7 @@ struct _GpuQueryDef
     {
         return {};
     }
-    static uint64 ProcMemoryUse(gpucount_t, proc_t)
+    static u64 ProcMemoryUse(gpucount_t, proc_t)
     {
         return 0;
     }

@@ -5,7 +5,7 @@
 
 namespace Coffee{
 
-using Timestamp = uint64;
+using Timestamp = u64;
 
 using DateTime = tm;
 

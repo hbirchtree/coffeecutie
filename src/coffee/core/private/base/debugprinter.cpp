@@ -1,7 +1,10 @@
+#include <coffee/core/formatting.h>
+
 #include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/timing/timing_def.h>
+#include <coffee/core/string_casting.h>
 
 #if defined(COFFEE_ANDROID)
 #include <android/log.h>
@@ -65,9 +68,9 @@ static void AddContextString(CString& prefix, Severity sev)
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
     CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
     CString clock =
-        cStringFormat("{0}.{1}", cclock, StrUtil::lpad(ms_time, '0', 3));
+        cStringFormat("{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
     prefix = cStringFormat("{0}:", clock.c_str());
-    prefix.append(ThreadGetName() + ":");
+    prefix.append(CurrentThread::GetName() + ":");
     prefix.push_back(severity_str[0]);
 
     ColorMap::ColorText(
@@ -129,9 +132,9 @@ static void native_print(FILE* stream, CString const& formatted, Severity sev)
     if(Env::GetVar("VisualStudioVersion").size())
         OutputDebugString(formatted.c_str());
     else
-        Puts(stream, formatted.c_str());
+        Mem::Puts(stream, formatted.c_str());
 #else
-    Puts(stream, formatted.c_str());
+    Mem::Puts(stream, formatted.c_str());
 #endif
 
 #ifndef COFFEE_LOWFAT

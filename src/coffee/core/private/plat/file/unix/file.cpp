@@ -136,7 +136,7 @@ CString PosixFileMod_def::CanonicalName(Url const& fn, file_error& ec)
     out.resize(FILENAME_MAX);
     if(!realpath(url.c_str(), &out[0]))
         out.resize(0);
-    out.resize(StrLen(out.c_str()));
+    out.resize(str::len(out.c_str()));
     return out;
 #endif
 }
@@ -305,7 +305,7 @@ bool PosixDirFun::Ls(
             break;
         }
 
-        if(StrCmp(dir_ent->d_name, ".") || StrCmp(dir_ent->d_name, ".."))
+        if(str::cmp(dir_ent->d_name, ".") || str::cmp(dir_ent->d_name, ".."))
             continue;
 
         entries.push_back({dir_ent->d_name, t});
@@ -322,14 +322,14 @@ bool PosixDirFun::Ls(
 Url PosixDirFun::Basename(CString const& n, file_error& ec)
 {
 #if !defined(COFFEE_USE_POSIX_BASENAME)
-    if(StrLen(n) < 1)
+    if(str::len(n) < 1)
         return ".";
     // This one is fast, but does not handle rootfs
     int64 idx = Search::ChrFindR(n, '/') - n;
     if(idx < 0)
         return n;
     CString out;
-    out.insert(0, &n[idx + 1], StrLen(n) - idx - 1);
+    out.insert(0, &n[idx + 1], str::len(n) - idx - 1);
     if(out.empty())
         out = ".";
     return out;
@@ -362,10 +362,10 @@ Url PosixDirFun::Dirname(CString const& fname, file_error& ec)
 #endif
 }
 
-uint32 Posix::PosixFileMod_def::PageSize()
+u32 Posix::PosixFileMod_def::PageSize()
 {
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
-    return static_cast<uint32>(sysconf(_SC_PAGESIZE) - 1);
+    return static_cast<u32>(sysconf(_SC_PAGESIZE) - 1);
 #else
     return 8;
 #endif

@@ -16,8 +16,8 @@ public:
     CALSoundMixer(CSoundDevice<CALSource,CALBuffer>& dev);
     ~CALSoundMixer();
 
-    uint64 createTrack();
-    CSoundTrack<CALSource,CALBuffer> &soundtrack(const uint64 &track);
+    u64 createTrack();
+    CSoundTrack<CALSource,CALBuffer> &soundtrack(const u64 &track);
 };
 
 }

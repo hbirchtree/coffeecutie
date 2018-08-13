@@ -31,18 +31,18 @@ bool filescratch_test()
 
     cstring test_data = "TESTDATA";
 
-    szptr sz    = StrLen(test_data);
+    szptr sz    = str::len(test_data);
     szptr times = size / sz - size % sz;
 
     Bytes testMem = Bytes::From(test_data, sz);
 
-    for(uint32 i = 0; i < times; i++)
+    for(u32 i = 0; i < times; i++)
         MemCpy(testMem, f.at(sz * i, sz));
     //        MemCpy(&((byte_t*)f.ptr)[sz*i],test_data,sz);
 
     bool flag = true;
 
-    for(uint32 i = 0; i < times; i++)
+    for(u32 i = 0; i < times; i++)
         if(!MemCmp(f.at(sz * i, sz), testMem))
         {
             flag = false;

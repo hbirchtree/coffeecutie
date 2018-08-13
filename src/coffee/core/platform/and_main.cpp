@@ -188,11 +188,6 @@ void (*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
  *
  */
 
-static void getTempFile()
-{
-    ScopedJNI jni(coffee_app->activity->vm);
-}
-
 void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 {
     switch(event)
@@ -203,7 +198,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
     case APP_CMD_RESUME:
     case APP_CMD_PAUSE:
-    case APP_CMD_DESTROY:
+//    case APP_CMD_DESTROY:
     case APP_CMD_STOP:
     {
         cDebug("Lifecycle event triggered: {0}", event);
@@ -253,6 +248,12 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     case APP_CMD_TERM_WINDOW:
     {
         CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+
+        auto exit_func = CmdInterface::BasicTerm::GetAtExit();
+
+        for(auto func : exit_func)
+            func();
+
         break;
     }
 
@@ -260,6 +261,11 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     case APP_CMD_LOW_MEMORY:
     {
         CoffeeEventHandleCall(CoffeeHandle_LowMem);
+        break;
+    }
+
+    case APP_CMD_DESTROY:
+    {
         break;
     }
 
@@ -475,6 +481,8 @@ static void AndroidForeignSignalHandle(int evtype)
 template<typename T>
 static std::string GetBuildField(wrapping::jfield<T>&& field)
 {
+    using namespace ::jnipp_operators;
+
     ScopedJNI jni(coffee_app->activity->vm);
     jnipp::SwapJNI(&jni);
 
@@ -484,9 +492,10 @@ static std::string GetBuildField(wrapping::jfield<T>&& field)
     return java::type_unwrapper<std::string>(fieldValue);
 }
 
-static void AndroidForeignSignalHandleNA(
-    int evtype, void* p1, void* p2, void* p3)
+static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
+    using namespace ::jnipp_operators;
+
     switch(evtype)
     {
     case CoffeeForeign_RequestPlatformData:
@@ -559,6 +568,10 @@ static void AndroidForeignSignalHandleNA(
             out->data.ptr = coffee_app;
             break;
 
+        case Android_QueryStartActivity:
+            out->store_string =
+                jnipp::java::objects::get_class(coffee_app->activity->clazz);
+
         default:
             break;
         }
@@ -581,9 +594,14 @@ extern CString GetSystemDirectedPath(cstring suffix, RSCA storage);
 
 STATICINLINE void InitializeState(struct android_app* state)
 {
+    using namespace jnipp_operators;
+
     Env::SetVar("COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports");
 
     coffee_app = state;
+
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
 
     app_internal_state = new AndroidInternalState;
 
@@ -595,41 +613,15 @@ STATICINLINE void InitializeState(struct android_app* state)
     state->onAppCmd     = AndroidHandleAppCmd;
     state->onInputEvent = AndroidHandleInputCmd;
 
-    Coffee::SetPrintingVerbosity(10);
+    Coffee::SetPrintingVerbosity(15);
 
-    cDebug("State: {0}", StrUtil::pointerify(state));
+    auto activityName = jnipp::java::objects::get_class(state->activity->clazz);
 
-    cDebug("Running under API {0}", state->activity->sdkVersion);
+    cDebug("State:       {0}", str::print::pointerify(state));
+    cDebug("Activity:    {0}", activityName);
+    cDebug("Android API: {0}", state->activity->sdkVersion);
 
-    try  {
-        GetSystemDirectedPath("File.json", RSCA::None);
-    } catch(jnipp::java_exception const& e)
-    {
-        cDebug("Failed to get temp file: {0}", std::string(e.what()));
-    }
-
-    {
-        ScopedJNI jni(state->activity->vm);
-        jnipp::SwapJNI(&jni);
-
-        auto build = "android.os.Build"_jclass;
-
-        //        auto var = build[FieldAs<JavaString>("BOARD"_jfield)].value();
-        //        var      = build[FieldAs<JavaString>("BRAND"_jfield)].value();
-        //        var      =
-        //        build[FieldAs<JavaString>("PRODUCT"_jfield)].value();
-
-        auto myClass = "android.app.NativeActivity"_jclass;
-
-        //        using NativeActivity = JavaClass<javaioFile, void, void>;
-
-        //        auto myInstance = myClass(state->activity->clazz);
-
-        //        auto cacheDirFile =
-        //            myInstance["getCacheDir"_jmethod.returns<NativeActivity>()]({});
-
-        //        cacheDirFile.
-    }
+    jnipp::SwapJNI(nullptr);
 }
 
 STATICINLINE void HandleEvents()
@@ -695,6 +687,9 @@ android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope)
 
 JNIEnv* GetJNI()
 {
+    if(!jniScope)
+        throw undefined_behavior("no JNI environment");
+
     return jniScope->env();
 }
 
@@ -710,6 +705,8 @@ void android_main(struct android_app* state)
     Coffee::InitializeState(state);
 
     deref_main_c(android_entry_point, 0, nullptr);
+
+    Coffee::SetPrintingVerbosity(15);
 
     Coffee::StartEventProcessing();
 }

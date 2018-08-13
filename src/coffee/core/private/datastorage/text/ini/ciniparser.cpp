@@ -41,14 +41,14 @@ SimpleIniParser::document_t SimpleIniParser::Read(
     t4 = nullptr;
     while(ref && ref < end)
     {
-        t1 = StrFind(ref, linesep);
+        t1 = str::find(ref, linesep);
         if(t1)
         {
             switch(ref[0])
             {
             /* Sections */
             case sec_ld[0]:
-                t2 = StrFind(ref, sec_rd);
+                t2 = str::find(ref, sec_rd);
                 if(t2 && t2 < t1)
                 {
                     /* Create new section, insert name */
@@ -67,38 +67,36 @@ SimpleIniParser::document_t SimpleIniParser::Read(
             default:
             {
                 /* Find name-value delimiter */
-                t2 = StrFind(ref, del_vl);
+                t2 = str::find(ref, del_vl);
                 if(t2 && t2 < t1)
                 {
                     /* Extract value name */
                     tname.clear();
                     tname.insert(0, ref, t2 - ref);
-                    StrUtil::trim(tname);
+                    str::trim::both(tname);
 
                     /* Extract value, create variant */
                     cval = nullptr;
                     t2 += 1;
                     tvalu.clear();
                     tvalu.insert(0, t2, t1 - t2);
-                    StrUtil::trim(tvalu);
+                    str::trim::both(tvalu);
                     bool eval;
 
-                    int64 itype = Convert::strtoll(tvalu.c_str(), 10, &eval);
+                    i64 itype = str::from_string<i64>(tvalu.c_str());
                     if(eval)
                     {
                         cval = doc.newInteger(itype);
                     } else
                     {
-                        bigscalar dtype =
-                            Convert::strtoscalar(tvalu.c_str(), &eval);
+                        auto dtype = str::from_string<bigscalar>(tvalu.c_str());
                         if(eval)
                         {
                             cval = doc.newFloat(dtype);
                         } else
                         {
-                            eval = true;
-                            bool btype =
-                                Convert::strtobool(tvalu.c_str(), &eval);
+                            eval       = true;
+                            bool btype = str::from_string<bool>(tvalu.c_str());
                             if(eval)
                                 cval = doc.newBool(btype);
                             else
@@ -173,7 +171,7 @@ void SimpleIniParser::PairToString(
     case variant_t::String:
     {
         cstring cs = v.second->getString();
-        t1.insert(0, cs, StrLen(cs));
+        t1.insert(0, cs, str::len(cs));
         break;
     }
     }

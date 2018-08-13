@@ -1,22 +1,22 @@
 #pragma once
 
-#include "cmd_interface.h"
 #include "../plat_environment.h"
+#include "cmd_interface.h"
 
 #ifndef COFFEE_WINDOWS
 
-#include <sys/wait.h>
 #include <stdio.h>
 #include <string>
+#include <sys/wait.h>
 
 #endif
 
-namespace Coffee{
-namespace Environment{
+namespace Coffee {
+namespace Environment {
 
 struct Command
 {
-    CString program;
+    CString         program;
     Vector<CString> argv;
     Vector<cstring> envp;
 
@@ -29,20 +29,20 @@ struct CProcess
 {
     using Environment = Env::Variables;
 
-	STATICINLINE int ExecuteSystem(Command const& cmd_)
+    STATICINLINE int ExecuteSystem(Command const& cmd_)
     {
 #if !defined(COFFEE_NO_SYSTEM_CMD)
-		CString cmd = cmd_.program;
-		for (CString const& arg : cmd_.argv)
-		{
-			cmd.push_back(' ');
-			cmd.append(arg);
-		}
-		return system(cmd.c_str());
+        CString cmd = cmd_.program;
+        for(CString const& arg : cmd_.argv)
+        {
+            cmd.push_back(' ');
+            cmd.append(arg);
+        }
+        return system(cmd.c_str());
 #else
-		return -1;
+        return -1;
 #endif
-	}
+    }
 
     STATICINLINE int Execute(Command const& cmd_)
     {
@@ -50,9 +50,9 @@ struct CProcess
         Command cmd = cmd_;
 
         pid_t child;
-        int child_sig;
+        int   child_sig;
 
-        cmd.argv.insert(cmd.argv.begin(),cmd.program);
+        cmd.argv.insert(cmd.argv.begin(), cmd.program);
         cmd.argv.push_back(nullptr);
 
         if(cmd.envp.size() > 0)
@@ -63,71 +63,71 @@ struct CProcess
         if(child == 0)
         {
             child_sig = execvpe(
-                        cmd.program.c_str(),
-                        (cstring_w const*)cmd.argv.data(),
+                cmd.program.c_str(),
+                (cstring_w const*)cmd.argv.data(),
 
-                        (cmd.envp.size()>0)
-                        ? (cstring_w const*)cmd.envp.data()
-                        : environ);
+                (cmd.envp.size() > 0) ? (cstring_w const*)cmd.envp.data()
+                                      : environ);
             exit(0);
         }
 
         pid_t tpid;
-        do{
+        do
+        {
             tpid = wait(&child_sig);
-        }while(tpid != child);
+        } while(tpid != child);
 
         return child_sig;
 #else
-		return ExecuteSystem(cmd_);
+        return ExecuteSystem(cmd_);
 #endif
     }
 
     /*!
-     * \brief Execute command with logged output, logs stdout to out, stderr can go to last argument
-     * \param cmd_
-     * \param out
-     * \return
+     * \brief Execute command with logged output, logs stdout to out, stderr can
+     * go to last argument \param cmd_ \param out \return
      */
-    STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* = nullptr)
+    STATICINLINE int ExecuteLogged(
+        Command const& cmd_, CString* out, CString* = nullptr)
     {
 #if defined(COFFEE_USE_EXECVPE)
         CString cmd = cmd_.program;
-	for(CString const& arg : cmd_.argv)
+        for(CString const& arg : cmd_.argv)
         {
             cmd.push_back(' ');
             cmd.append(arg);
-	}
+        }
 
         out->resize(100);
 
-        uint64 i = 0;
+        u64  i = 0;
         CString tmp;
         tmp.resize(100);
-        FILE* pip = popen(cmd.c_str(),"r");
+        FILE* pip = popen(cmd.c_str(), "r");
         if(pip != nullptr)
         {
-            while(fgets(&tmp[0],tmp.capacity(),pip) != nullptr)
+            while(fgets(&tmp[0], tmp.capacity(), pip) != nullptr)
             {
-                fprintf(stderr,"%s",tmp.c_str());
-                out->insert(out->size(),&tmp[0],StrLen(tmp.c_str()));
+                fprintf(stderr, "%s", tmp.c_str());
+                out->insert(out->size(), &tmp[0], str::len(tmp.c_str()));
                 tmp.clear();
                 tmp.resize(100);
             }
             out->at(i) = 0;
             return pclose(pip);
-        }else{
+        } else
+        {
             return -1;
         }
 #else
-		return ExecuteSystem(cmd_);
+        return ExecuteSystem(cmd_);
 #endif
     }
 };
 
-}
+} // namespace Environment
 
-using Proc = Environment::CProcess;
+using Proc     = Environment::CProcess;
 using Proc_Cmd = Environment::Command;
 
-}
+} // namespace Coffee

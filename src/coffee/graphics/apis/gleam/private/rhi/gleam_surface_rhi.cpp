@@ -50,11 +50,13 @@ STATICINLINE bool texture_check_bounds(
 {
     bool r = texdata.size >= GetPixSize(bit, pix, pixels);
 
-    if(!r)
-        cWarning(
-            GLM_API "Texture failed bounds test: {0} < {1}",
-            texdata.size,
-            GetPixSize(bit, pix, pixels));
+    // TODO: Return error
+
+//    if(!r)
+//        cWarning(
+//            GLM_API "Texture failed bounds test: {0} < {1}",
+//            texdata.size,
+//            GetPixSize(bit, pix, pixels));
 
     return r;
 }
@@ -77,7 +79,7 @@ static PixFlg component_to_flag(PixCmp cmp)
 }
 
 GLEAM_Surface::GLEAM_Surface(
-    TexComp::tex_flag type, PixelFormat fmt, uint32 mips, uint32 texflags) :
+    TexComp::tex_flag type, PixelFormat fmt, u32 mips, u32 texflags) :
     Surface(fmt, false, 0, mips, texflags),
     m_type(type), m_handle(0)
 {
@@ -121,7 +123,7 @@ u32 GLEAM_Surface::handle()
     return m_handle.hnd;
 }
 
-void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
+void GLEAM_Surface::upload_info(PixCmp comp, u32 mip, u32 d)
 {
     C_USED(comp);
     C_USED(mip);
@@ -138,7 +140,10 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
         //        CGL33::TexGetImageSize(m_type, comp, w, h, d_, &size, mip);
         if(m_type & TexComp::tex_2d_array::value)
             size /= d;
-        cVerbose(5, "Texture allocation size ({0}): {1}", m_handle.hnd, size);
+
+        // TODO: Information
+
+//        cVerbose(5, "Texture allocation size ({0}): {1}", m_handle.hnd, size);
 
         /* TODO: Add information about mipmaps */
     }
@@ -146,7 +151,7 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 }
 
 GLEAM_Surface2D::GLEAM_Surface2D(
-    PixelFormat fmt, uint32 mips, uint32 texflags) :
+    PixelFormat fmt, u32 mips, u32 texflags) :
     GLEAM_Surface(TexComp::tex_2d::value, fmt, mips, texflags),
     m_size(0, 0)
 {
@@ -201,7 +206,7 @@ void GLEAM_Surface2D::upload(
     const Bytes& data,
     gleam_error& ec,
     CPoint       offset,
-    uint32       mip)
+    u32       mip)
 {
     c_cptr data_ptr = data.data;
     auto   msz      = size.convert<u32>();
@@ -270,7 +275,7 @@ GLEAM_SurfaceCube::GLEAM_SurfaceCube(PixelFormat fmt, u32 mips, u32 texflags) :
 }
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
-    tex::flag t, PixelFormat fmt, uint32 mips, uint32 texflags) :
+    tex::flag t, PixelFormat fmt, u32 mips, u32 texflags) :
     GLEAM_Surface(
         (GL_CURR_API == GLES_2_0) ? tex::t2d::value : t, fmt, mips, texflags),
     m_size(0, 0, 0)
@@ -365,7 +370,7 @@ void GLEAM_Surface3D_Base::upload(
     CSize3 const&  size,
     Bytes const&   data,
     CPoint3 const& offset,
-    uint32         mip)
+    u32         mip)
 {
     auto msz = size.convert<u32>();
     auto mof = offset.convert<u32>();
@@ -474,7 +479,7 @@ void GLEAM_Surface3D_Base::upload(
     CSize3 const&  size,
     Bytes const&   data,
     CPoint3 const& offset,
-    uint32         mip)
+    u32         mip)
 {
     upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
 }
@@ -541,7 +546,8 @@ void GLEAM_Sampler::setLODBias(scalar bias)
             scalar max = CGL::Debug::GetScalar(GL_MAX_TEXTURE_LOD_BIAS);
             if(bias > max)
             {
-                cWarning("GL_TEXTURE_LOD_BIAS: {0} > {1}", bias, max);
+                // TODO: Error
+//                cWarning("GL_TEXTURE_LOD_BIAS: {0} > {1}", bias, max);
                 return;
             }
         }
@@ -550,7 +556,7 @@ void GLEAM_Sampler::setLODBias(scalar bias)
 #endif
 }
 
-void GLEAM_Sampler::setEdgePolicy(uint8 dim, WrapPolicy p)
+void GLEAM_Sampler::setEdgePolicy(u8 dim, WrapPolicy p)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -634,7 +640,7 @@ STATICINLINE GLEAM_SamplerHandle SamplerPrepareTexture(
     return h;
 }
 
-void GLEAM_Sampler2D::bind(uint32 i)
+void GLEAM_Sampler2D::bind(u32 i)
 {
     CGL33::TexActive(i);
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -649,7 +655,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
     return SamplerPrepareTexture(m_surface, m_handle, m_surface->m_type);
 }
 
-void GLEAM_Sampler3D::bind(uint32 i)
+void GLEAM_Sampler3D::bind(u32 i)
 {
     C_USED(i);
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -667,7 +673,7 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
     return SamplerPrepareTexture(m_surface, m_handle, m_surface->m_type);
 }
 
-void GLEAM_Sampler2DArray::bind(uint32 i)
+void GLEAM_Sampler2DArray::bind(u32 i)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)

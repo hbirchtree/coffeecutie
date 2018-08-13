@@ -1,92 +1,93 @@
 #include <coffee/asio/net_resource.h>
 
-#include <coffee/core/string_casting.h>
 #include <coffee/core/base/textprocessing/cregex.h>
+#include <coffee/core/plat/timing/profiling.h>
+#include <coffee/core/string_casting.h>
 #include <coffee/core/types/cdef/memsafe.h>
+
 #include <coffee/core/CDebug>
 
 #define NETRSC_TAG "NetRsc::"
 
-namespace Coffee{
-namespace Net{
+namespace Coffee {
+namespace Net {
 
-static bool ExtractUrlComponents(CString const& url,
-                                 CString* protocol,
-                                 CString* port,
-                                 CString* host,
-                                 CString* resource)
-{
-    auto patt = Regex::Compile(
-                "([A-Za-z]+)://([A-Za-z0-9-\\.]+):?([0-9]*)/?(.*)");
-
-    auto matches = Regex::Match(patt, url, true);
-
-    if(matches.size() == 4)
-    {
-        *protocol = matches[1].s_match[0];
-        *host = matches[2].s_match[0];
-        *resource = matches[3].s_match[0];
-
-        return true;
-    }else if(matches.size() == 5)
-    {
-        *protocol = matches[1].s_match[0];
-        *host = matches[2].s_match[0];
-        *port = matches[3].s_match[0];
-        *resource = matches[4].s_match[0];
-
-        return true;
-    }
-    return false;
-}
-
-void Resource::initRsc(const Url &url)
+void Resource::initRsc(const Url& url)
 {
     DProfContext a(DTEXT(NETRSC_TAG "Initializing NetResource"));
 
     CString urlS = *url;
 
-    CString protocol, port, resource;
+    Profiler::DeepPushContext(DTEXT(NETRSC_TAG "Extracting URL components"));
+    UrlParse urlComponents = UrlParse::From(url);
 
-    if(!ExtractUrlComponents(urlS, &protocol, &port,
-                             &m_host, &resource))
     {
-        cVerbose(10, "Failed to decode URL");
-        Profiler::DeepProfile(DTEXT(NETRSC_TAG "Failed to decode URL"));
-        return;
-    }else
-        cVerbose(15, "URL components: {0} {1} {2} {3}",
-                 protocol, m_host, port, resource);
+        if(!urlComponents.valid())
+        {
+            cVerbose(10, "Failed to decode URL");
+            Profiler::DeepProfile(DTEXT(NETRSC_TAG "Failed to decode URL"));
+            return;
+        }
+    }
+    Profiler::DeepPopContext();
 
-    if(!port.size())
-        port = protocol;
+    u16 port = C_FCAST<u16>(urlComponents.port());
+    if(port == 0)
+    {
+        if(urlComponents.protocol() == "https")
+            port = 443;
+        else
+            port = 80;
+    }
+
+    if(m_request.host == urlComponents.host() && m_request.port == port &&
+       ((secure() && urlComponents.protocol() == "https") ||
+        (!secure() && urlComponents.protocol() == "http")))
+    {
+        m_request.header.resource = "/" + urlComponents.resource();
+        return;
+    } else
+        close();
+
+    m_request.host            = urlComponents.host();
+    m_request.header.resource = "/" + urlComponents.resource();
+    m_request.header.version  = http::version::v11;
+
+    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
+
+    m_request.port = port;
+
+    m_error = asio::error_code();
 
 #if defined(ASIO_USE_SSL)
-
-    if(protocol == "http" && secure())
+    if(urlComponents.protocol() == "http" && secure())
     {
         cVerbose(10, "Switching off SSL, protocol mismatch");
         m_access = m_access & (m_access ^ HTTPAccess::Secure);
     }
-
-    m_error = asio::error_code();
-
-    if(secure())
-    {
-        ssl = MkUq<TCP::SSLSocket>(m_ctxt);
-
-        ssl->connect(m_host, port,
-                     !feval(m_access, HTTPAccess::NoVerify));
-
-        m_error = ssl->error();
-    }else
 #endif
+
+
     {
-        normal = MkUq<TCP::Socket>();
+        DProfContext b(DTEXT(NETRSC_TAG "Connecting to host"));
+#if defined(ASIO_USE_SSL)
+        if(secure())
+        {
+            ssl = MkUq<TCP::SSLSocket>(m_ctxt);
 
-        normal->connect(m_host, port);
+            ssl->connect(
+                verify_https, m_request.host, cast_pod(m_request.port));
 
-        m_error = normal->error();
+            m_error = ssl->error();
+        } else
+#endif
+        {
+            normal = MkUq<TCP::Socket>(m_ctxt);
+
+            normal->connect(m_request.host, cast_pod(m_request.port));
+
+            m_error = normal->error();
+        }
     }
 
     if(!connected())
@@ -95,7 +96,7 @@ void Resource::initRsc(const Url &url)
         return;
     }
 
-    m_request.resource = "/" + resource;
+    http::header::transform::create_request(m_request);
 
     m_response = {};
 }
@@ -105,26 +106,40 @@ void Resource::close()
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
+        if(!ssl)
+            return;
+
         if(ssl->error() == asio::error_code())
-            ssl->close();
+            ssl->sync_close();
         ssl.release();
-    }else
+    } else
 #endif
     {
+        if(!normal)
+            return;
+
         if(normal->error() == asio::error_code())
-            normal->close();
+            normal->sync_close();
         normal.release();
     }
 }
 
-Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
-    m_resource(*url),
-    #if defined(ASIO_USE_SSL)
-    m_ctxt(ctxt),
-    #endif
-    m_access(url.netflags)
+Resource::Resource(ASIO::asio_context ctxt, const Url& url) :
+    m_resource(url), m_ctxt(ctxt), m_access(url.netflags)
 {
-    HTTP::InitializeRequest(m_request);
+    using namespace http::header::to_string;
+    using namespace http::header;
+
+    using field   = http::header_field;
+    using content = http::content_type;
+
+    transform::create_request(m_request);
+
+    auto& fields = m_request.header.standard_fields;
+
+    fields[field::accept] = content_type(content::any);
+
+    //    HTTP::InitializeRequest(m_request);
     initRsc(url);
 }
 
@@ -148,14 +163,14 @@ ErrCode Resource::errorCode() const
     return m_error;
 }
 
-cstring Resource::resource() const
+Url Resource::resource() const
 {
-    return m_resource.c_str();
+    return m_resource;
 }
 
 bool Resource::isRequestReady() const
 {
-    return m_request.resource.size() > 0 && m_host.size() > 0;
+    return http::validate::request(m_request) == http::validate::result::valid;
 }
 
 bool Resource::isResponseReady() const
@@ -163,53 +178,145 @@ bool Resource::isResponseReady() const
     return m_response.code != 0;
 }
 
-void Resource::setHeaderField(const CString &field, const CString &value)
+void Resource::setHeaderField(http::header_field field, const CString& value)
 {
-    if(field == "Content-Type")
-    {
-        m_request.mimeType = value;
-        return;
-    }
-    m_request.header[field] = value;
+    m_request.header.standard_fields[field] = value;
+}
+
+void Resource::setHeaderField(const CString& field, const CString& value)
+{
+    m_request.header.fields[field] = value;
+}
+
+http::request_t& Resource::getRequest()
+{
+    return m_request;
 }
 
 bool Resource::fetch()
 {
-    return push("GET", Bytes());
+    return push(http::method::get, Bytes());
 }
 
-bool Resource::push(const Bytes &data)
+bool Resource::push(const Bytes& data)
 {
-    CString method = "GET";
+    using method = http::method;
+
+    method meth = method::get;
     switch(m_access & HTTPAccess::RequestMask)
     {
     case HTTPAccess::POST:
-        method = "POST";
+        meth = method::post;
         break;
     case HTTPAccess::PUT:
-        method = "PUT";
+        meth = method::put;
         break;
     case HTTPAccess::UPDATE:
-        method = "UPDATE";
+        meth = method::update;
         break;
     case HTTPAccess::DELETE:
-        method = "UPDATE";
+        meth = method::delet;
         break;
     case HTTPAccess::PATCH:
-        method = "PATCH";
+        meth = method::patch;
         break;
     case HTTPAccess::HEAD:
-        method = "HEAD";
+        meth = method::head;
         break;
     default:
         break;
     }
-    return push(method, data);
+    return push(meth, data);
 }
 
-bool Resource::push(CString const& method, const Bytes &data)
+void Resource::readResponseHeader(std::istream& http_istream)
 {
+#if defined(ASIO_USE_SSL)
+    if(secure())
+    {
+        DProfContext __(NETRSC_TAG "Read response");
+        auto         socketError = ssl->flush();
+
+        if(socketError)
+            cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
+
+        ssl->read_until(http::header_terminator);
+
+        if(socketError)
+            cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
+    } else
+#endif
+    {
+        DProfContext __(NETRSC_TAG "Read response");
+        normal->flush();
+        normal->read_until(http::header_terminator);
+    }
+
+    {
+        DProfContext __(NETRSC_TAG "Parsing response");
+        m_response.header = http::stream::read_response(http_istream);
+    }
+
+    if(PrintingVerbosityLevel() >= 12)
+    {
+        cVerbose(
+            12,
+            NETRSC_TAG "Response: {0} {1} {2}",
+            http::header::to_string::version(m_response.header.version),
+            m_response.header.code,
+            m_response.header.message);
+        for(auto const& header : m_response.header.standard_fields)
+            cVerbose(
+                12,
+                NETRSC_TAG "-- {0}: {1}",
+                http::header::to_string::field(header.first),
+                header.second);
+        for(auto const& header : m_response.header.fields)
+            cVerbose(12, NETRSC_TAG "-- {0}: {1}", header.first, header.second);
+    }
+}
+
+void Resource::readResponsePayload(std::istream& http_istream)
+{
+    using namespace http;
+
+    auto& response_fields = m_response.header.standard_fields;
+
+    auto content_len_it = response_fields.find(header_field::content_length);
+
+    if(content_len_it == response_fields.end())
+        return;
+
+    {
+        DProfContext __(NETRSC_TAG "Reading payload");
+        auto         content_len = cast_string<u64>(content_len_it->second);
+
+        cVerbose(12, NETRSC_TAG "Reading {0} bytes...", content_len);
+
+#if defined(ASIO_USE_SSL)
+        if(secure())
+        {
+            ssl->read_some(content_len);
+        } else
+#endif
+            normal->read_some(content_len);
+
+        cVerbose(12, NETRSC_TAG "Read complete");
+
+        m_response.payload =
+            http::stream::read_payload(http_istream, content_len);
+    }
+
+    cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
+}
+
+bool Resource::push(http::method method, const Bytes& data)
+{
+    using namespace http;
+
     DProfContext a(NETRSC_TAG "Sending HTTP request");
+
+    auto& st_fields = m_request.header.standard_fields;
 
     if(!isRequestReady())
     {
@@ -217,103 +324,139 @@ bool Resource::push(CString const& method, const Bytes &data)
         return false;
     }
 
+    bool has_payload = data.size > 0;
+    bool should_expect =
+        m_request.header.version != version::v10 && has_payload;
+
     /* We do this to allow GET/POST/PUT/UPDATE/whatever */
-    m_request.reqtype = method;
+    m_request.header.method = method;
 
     /* Most services require a MIME-type with the request */
-    if(!m_request.mimeType.size())
-        m_request.mimeType = "application/octet-stream";
+    if(has_payload &&
+       st_fields.find(header_field::content_type) == st_fields.end())
+        st_fields[header_field::content_type] =
+            header::to_string::content_type(content_type::octet_stream);
 
-    if(data.size)
+    if(st_fields.find(header_field::expect) == st_fields.end() && should_expect)
+        st_fields[header_field::expect] = "100-continue";
+
+    if(has_payload)
     {
+        st_fields[header_field::content_length] = cast_pod(data.size);
+
         m_request.payload.reserve(data.size);
         MemCpy(data, m_request.payload);
-//        MemCpy(m_request.payload.data(), data.data, data.size);
     }
 
-    bool result = false;
+    std::istream* http_istream = nullptr;
+    std::ostream* http_ostream = nullptr;
 
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
-        HTTP::GenerateRequest(*ssl, m_host, m_request);
-        m_host.clear();
-
-        szptr size = 0;
-        {
-            DProfContext _("Flushing SSL socket");
-            auto writeError = ssl->flush(&size);
-            if(writeError)
-                cWarning("Write error code: {0}, wrote {1} bytes",
-                         writeError.message(), size);
-        }
-        {
-            DProfContext _("Pulling SSL socket");
-            auto readError = ssl->pull(&size);
-            if(readError)
-                cWarning("Read error code: {0}, received {1} bytes",
-                         readError.message(), size);
-        }
-
-        Profiler::DeepProfile(NETRSC_TAG "HTTPS request sent");
-
-        result = HTTP::ExtractResponse(*ssl, &m_response);
-    }else
+        http_istream = ssl.get();
+        http_ostream = ssl.get();
+    } else
 #endif
     {
-        HTTP::GenerateRequest(*normal, m_host, m_request);
-        m_host.clear();
-
-        normal->flush();
-
-        Profiler::DeepProfile(NETRSC_TAG "HTTP request sent");
-
-        result = HTTP::ExtractResponse(*normal, &m_response);
+        http_istream = normal.get();
+        http_ostream = normal.get();
     }
 
-    if(feval(m_access & HTTPAccess::NoRedirect))
-        return result;
+    auto header = header::serialize::request(m_request.header);
 
-    switch(m_response.code)
+    cVerbose(8, NETRSC_TAG "Sending request:\n{0}", header);
+
+#if defined(ASIO_USE_SSL)
+    if(secure())
+        ssl->write(header);
+    else
+#endif
+        normal->write(header);
+
+    if(should_expect)
     {
-    case 301:
-    case 302:
-    case 308:
+        readResponseHeader(*http_istream);
+        if(m_response.header.code != status::continue_)
+        {
+            cWarning(NETRSC_TAG "No continue received");
+            return false;
+        }
+    }
+
+    if(has_payload)
     {
-        auto u = Net::MkUrl(m_response.header["Location"].c_str(),
-                HTTPAccess::DefaultAccess);
-        close();
-        initRsc(u);
+        cVerbose(
+            12,
+            NETRSC_TAG "Pushed payload size: {0}",
+            m_request.payload.size());
+
+#if defined(ASIO_USE_SSL)
+        if(secure())
+        {
+            ssl->write(m_request.payload);
+            ssl->flush();
+        } else
+#endif
+        {
+            normal->write(m_request.payload);
+            normal->flush();
+        }
+    }
+
+    readResponseHeader(*http_istream);
+
+    readResponsePayload(*http_istream);
+
+    auto& response_fields = m_response.header.standard_fields;
+
+    auto response_code = header::classify_status(m_response.header.code);
+
+    if(response_code == response_class::redirect)
+    {
+        const auto redirect_location =
+            response_fields.find(header_field::location);
+
+        if(response_fields.find(header_field::connection) !=
+               response_fields.end() &&
+           util::strings::iequals(
+               response_fields[header_field::connection], "close"))
+            close();
+        initRsc(MkUrl(redirect_location->second, m_access));
+
         return push(method, data);
     }
-    default:
-        return result;
-    }
+
+    close();
+    return response_code == response_class::success;
 }
 
-cstring Resource::mimeType() const
+CString Resource::mimeType() const
 {
-    return m_response.mimeType.c_str();
+    using field = http::header_field;
+
+    auto const it = m_response.header.standard_fields.find(field::content_type);
+
+    if(it != m_response.header.standard_fields.end())
+        return {};
+
+    return it->second;
 }
 
 u32 Resource::responseCode() const
 {
-    return m_response.code;
+    return m_response.header.code;
 }
 
 Bytes Resource::data() const
 {
     Profiler::DeepProfile(NETRSC_TAG "Retrieving data");
 
-    return Bytes(C_FCAST<byte_t*>(m_response.payload.data()),
-                 m_response.payload.size(),
-                 m_response.payload.size());
+    return Bytes(
+        C_FCAST<byte_t*>(m_response.payload.data()),
+        m_response.payload.size(),
+        m_response.payload.size());
 }
 
-const Map<CString, CString> &Resource::headers() const
-{
-    return m_response.header;
-}
-
-}
-}
+} // namespace Net
+} // namespace Coffee

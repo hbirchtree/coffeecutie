@@ -14,9 +14,9 @@ class SpriteApplication
     using SpriteSource = CRect;
 
     /*! In-memory texture data, user is given handle */
-    using Texture = uint64;
+    using Texture = u64;
     /*! Renderer handle */
-    using Renderer = uint64;
+    using Renderer = u64;
 
     /*! User-modifiable sprite located in texture */
     struct Sprite
@@ -40,19 +40,19 @@ class SpriteApplication
 
     virtual bool createTexture(
         Renderer     r,
-        uint32       c,
+        u32       c,
         Texture*     t,
         PixelFormat  fmt,
         RSCA         acc,
         CSize const& size)                        = 0;
-    virtual void destroyTexture(uint32, Texture*) = 0;
+    virtual void destroyTexture(u32, Texture*) = 0;
 
     virtual bool createSprite(Texture const&, SpriteSource const&, Sprite*) = 0;
 
     virtual void createSpriteAtlas(
         Texture const&,
         Vector<SpriteSource> const&,
-        uint32&,
+        u32&,
         Vector<Sprite>&) = 0;
 };
 

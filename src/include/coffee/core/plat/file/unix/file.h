@@ -112,7 +112,7 @@ struct PosixFileMod_def : PosixCommonFileFun
     static void Truncate(Url const& fn, szptr size, file_error& ec);
 
   protected:
-    static uint32 PageSize();
+    static u32 PageSize();
 
     static int MappingFlags(RSCA acc);
     static int ProtFlags(RSCA acc);
@@ -162,12 +162,12 @@ struct PosixFileFun_def : PosixFileMod_def
         return true;
     }
 
-    STATICINLINE Bytes Read(FH const& f_h, int64 f_size, file_error& ec)
+    STATICINLINE Bytes Read(FH const& f_h, i64 f_size, file_error& ec)
     {
         Bytes data = {};
         errno      = 0;
 
-        int64 sz = Size(f_h, ec);
+        i64 sz = Size(f_h, ec);
 
         if(f_size <= sz && f_size != -1)
             sz = f_size;
@@ -222,7 +222,7 @@ struct PosixFileFun_def : PosixFileMod_def
         Url const& filename, RSCA acc, szptr offset, szptr size, file_error& ec)
     {
         auto   url       = *filename;
-        uint64 pa_offset = offset & ~(PageSize());
+        u64 pa_offset = offset & ~(PageSize());
         errno            = 0;
 
         if(pa_offset != offset)

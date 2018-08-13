@@ -10,6 +10,8 @@
 #include "inputapplication.h"
 #include "windowmanagerclient.h"
 
+#include <coffee/core/base/threading/async_tasks.h>
+
 namespace Coffee {
 
 using namespace CInput;

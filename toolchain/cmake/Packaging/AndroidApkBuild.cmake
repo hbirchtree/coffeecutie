@@ -487,7 +487,7 @@ macro(ANDROIDAPK_PACKAGE
         "${TITLE}"
         "${DOM_NAME}.${PACKAGE_SUFFIX}"
         "${COFFEE_VERSION_CODE}" "${COFFEE_BUILD_STRING}"
-        "24" "${ANDROID_ABI}"
+        "27" "${ANDROID_ABI}"
         "${DEPENDENCIES}"
         "${ICON_ASSET}"
         ${BUNDLE_RSRCS}

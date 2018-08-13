@@ -44,14 +44,14 @@ struct TestInstance
 
 static Vector<cstring> titles;
 static Vector<cstring> descriptions;
-static Vector<uint64>  test_times;
+static Vector<u64>  test_times;
 static Vector<bool>    result;
 static Vector<bool>    required;
 
 void WriteJsonData(
     JSON::WriteBuf& buf,
     szptr const&    suc,
-    uint64 const&   total_time,
+    u64 const&   total_time,
     Test const*     tests)
 {
     JSON::Writer root(buf);
@@ -71,7 +71,7 @@ void WriteJsonData(
     {
         root.Key("passed");
         root.StartArray();
-        for(uint32 i = 0; i < result.size(); i++)
+        for(u32 i = 0; i < result.size(); i++)
         {
             root.StartObject();
 
@@ -158,7 +158,7 @@ void WriteJsonData(
     root.EndObject();
 }
 
-void PrintAsciiTable(uint64 const& time_accum, szptr suc)
+void PrintAsciiTable(u64 const& time_accum, szptr suc)
 {
     Table::Header header;
     header.push_back("Test name");
@@ -214,8 +214,9 @@ void RunTest(Test const& test, TestInstance& test_info)
                          .count()));
 }
 
-int run_tests(uint32 num, Test const* tests, int argc, char** argv)
+int run_tests(u32 num, Test const* tests, int argc, char** argv)
 {
+    SetPrintingVerbosity(10);
     auto args = AppArg::Clone(argc, argv);
 
     RuntimeQueue::CreateNewQueue("Testing");
@@ -237,10 +238,13 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     bool fail = false;
 
-    for(uint32 i = 0; i < num; i++)
+    for(u32 i = 0; i < num; i++)
     {
         TestInstance& test_info = test_results.at(i);
         RunTest(tests[i], test_info);
+
+        if(test_info.required && !test_info.result)
+            fail = true;
     }
 
     result.resize(num, false);
@@ -251,9 +255,9 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
         if(v)
             suc++;
 
-    uint64 time_accum = 0;
+    u64 time_accum = 0;
 
-    for(uint64 v : test_times)
+    for(u64 v : test_times)
         time_accum += v;
 
     Profiler::AddExtraData("testing:title", GetCurrentApp().application_name);

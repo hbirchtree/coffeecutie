@@ -25,13 +25,13 @@ struct SDL2Context{
 
 //    Vector<CGL::CGL_Context*> m_subcontexts;
 
-    uint8 contextFlags = 0;
+    u8 contextFlags = 0;
 
     ThreadId thread;
 
-    Map<uint8,SDL_GameController*> controllers;
-    Map<uint8,SDL_Joystick*> joysticks;
-    Map<uint8,SDL_Haptic*> haptics;
+    Map<u8,SDL_GameController*> controllers;
+    Map<u8,SDL_Joystick*> joysticks;
+    Map<u8,SDL_Haptic*> haptics;
 };
 
 }

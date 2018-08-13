@@ -158,16 +158,6 @@ FORCEDINLINE CResources::Resource operator"" _rsc(const char* fn, size_t)
     return CResources::Resource(fn, RSCA::AssetFile);
 }
 
-FORCEDINLINE CResources::Resource operator"" _tmp(const char* fn, size_t)
-{
-    return CResources::Resource(fn, RSCA::TemporaryFile);
-}
-
-FORCEDINLINE CResources::Resource operator"" _cache(const char* fn, size_t)
-{
-    return CResources::Resource(fn, RSCA::CachedFile);
-}
-
 FORCEDINLINE CResources::Resource operator"" _config(const char* fn, size_t)
 {
     return CResources::Resource(fn, RSCA::ConfigFile);

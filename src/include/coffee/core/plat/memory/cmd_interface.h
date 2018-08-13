@@ -29,12 +29,12 @@ struct CmdDef
     }
 
     /* Basic command line actions */
-    static cstring ReadString(cstring_w target, int32 size, FILE* strm);
+    static cstring ReadString(cstring_w target, i32 size, FILE* strm);
     static void    Wait();
     static void    Exit(int code);
 
     static void Execute(cstring cmd);
-    static void Execute(cstring program, uint32 num_args, cstring* args);
+    static void Execute(cstring program, u32 num_args, cstring* args);
 
     /* Terminal screens */
     static void  ClearScreen();
@@ -45,9 +45,9 @@ struct CmdDef
 
 struct BasicTerm : CmdDef
 {
-    STATICINLINE cstring ReadString(cstring_w target, int32 size, FILE* strm)
+    STATICINLINE cstring ReadString(cstring_w target, i32 size, FILE* strm)
     {
-        return Gets(target, size, strm);
+        return fgets(target, size, strm);
     }
 
     STATICINLINE void Wait()

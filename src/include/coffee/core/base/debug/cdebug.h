@@ -2,8 +2,6 @@
 
 #include "../../coffee_mem_macros.h"
 
-#include "../strings/cdebug_print.h"
-
 #ifndef COFFEE_LOWFAT
 #include "../printing/outputprinter.h"
 #endif
@@ -111,7 +109,7 @@ template<typename... Arg>
  * \param str
  * \param args
  */
-FORCEDINLINE void cVerbose(uint32 v, cstring str, Arg... args)
+FORCEDINLINE void cVerbose(u32 v, cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
     OutputPrinter::fprintf(
@@ -193,7 +191,7 @@ FORCEDINLINE void cTag(u32 level, cstring tag, cstring str, Arg... args)
 
 template<typename... Arg>
 C_DEPRECATED FORCEDINLINE void cLog(
-    cstring file, int64 line, cstring id, cstring msg, Arg... args)
+    cstring file, i64 line, cstring id, cstring msg, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
 /* TODO: Pipe this to a proper logger */

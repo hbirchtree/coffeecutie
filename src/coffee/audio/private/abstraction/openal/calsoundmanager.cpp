@@ -25,7 +25,7 @@ CALSoundManager::CALSoundManager()
     szptr i = 0;
     for(cstring dev : odevices)
     {
-        if(StrCmp(odevices[i],def_str))
+        if(str::cmp(odevices[i],def_str))
             d_idx = i;
         v_odevices.push_back(CALSoundDeviceIdentifier(i,dev));
         i++;
@@ -53,12 +53,12 @@ CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
     return v_odevices[d_idx];
 }
 
-uint32 CALSoundManager::numberSoundDevices()
+u32 CALSoundManager::numberSoundDevices()
 {
     return odevices.size();
 }
 
-uint32 CALSoundManager::numberSoundInputDevices()
+u32 CALSoundManager::numberSoundInputDevices()
 {
     return idevices.size();
 }

@@ -8,7 +8,7 @@
 namespace Coffee{
 namespace Mem{
 /* Input/output */
-FORCEDINLINE cstring Gets(cstring_w target, int32 size, FILE* strm)
+FORCEDINLINE cstring Gets(cstring_w target, i32 size, FILE* strm)
 {
     return fgets(target,size,strm);
 }

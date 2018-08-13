@@ -49,8 +49,6 @@ bool TiffDecode(
 
         data = Bytes::Alloc(w * h * sizeof(u32));
 
-        Bytes::SetDestr(data, [](Bytes& d) { CFree(d.data); });
-
         if(!TIFFRGBAImageGet(&rimg, C_RCAST<u32*>(data.data), w, h))
         {
             TIFFRGBAImageEnd(&rimg);

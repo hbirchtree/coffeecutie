@@ -34,17 +34,17 @@ CSoundFormat &CALSoundSample::format()
     return *m_fmt;
 }
 
-uint64 CALSoundSample::samples() const
+u64 CALSoundSample::samples() const
 {
     return m_samples;
 }
 
-uint64 CALSoundSample::pts() const
+u64 CALSoundSample::pts() const
 {
     return m_pts;
 }
 
-void CALSoundSample::setPts(const uint64& pts)
+void CALSoundSample::setPts(const u64& pts)
 {
     m_pts = pts;
 }

@@ -18,7 +18,7 @@ struct OpenAL
     struct ALcapdevice;
 
     using ALCallback = void(*)(Severity,cstring);
-    using ALVersion = _cbasic_version<int32>;
+    using ALVersion = _cbasic_version<i32>;
     using ALbuffer = ALhnd;
     using ALsource = ALhnd;
 
@@ -119,9 +119,9 @@ struct OpenAL
 
     static void ContextSetAttenuation(Attenuation m);
 
-    static void ContextGeti(ContextProperty p, int32* v);
+    static void ContextGeti(ContextProperty p, i32* v);
     static void ContextGetf(ContextProperty p, scalar* v);
-    static void ContextSeti(ContextProperty p, const int32* v);
+    static void ContextSeti(ContextProperty p, const i32* v);
     static void ContextSetf(ContextProperty p, const scalar* v);
 
     static ALbuffer* BufAlloc();
@@ -135,17 +135,17 @@ struct OpenAL
     static void SrcState(ALsource** s,PlaybackState m);
 
     static void SrcSetBuffer(ALsource* s, const ALbuffer& b);
-    static void SrcQueueBuffers(ALsource* s, uint32 n, const ALbuffer** b);
-    static void SrcDequeueBuffers(ALsource* s, uint32 n, const ALbuffer** b);
+    static void SrcQueueBuffers(ALsource* s, u32 n, const ALbuffer** b);
+    static void SrcDequeueBuffers(ALsource* s, u32 n, const ALbuffer** b);
 
-    static void SrcGeti(ALsource* s, SourceProperty p, int32* v);
+    static void SrcGeti(ALsource* s, SourceProperty p, i32* v);
     static void SrcGetf(ALsource* s, SourceProperty p, scalar* v);
-    static void SrcSeti(ALsource* s, SourceProperty p, const int32* v);
+    static void SrcSeti(ALsource* s, SourceProperty p, const i32* v);
     static void SrcSetf(ALsource* s, SourceProperty p, const scalar* v);
 
-    static void ListenerGeti(ListenerProperty p, int32* v);
+    static void ListenerGeti(ListenerProperty p, i32* v);
     static void ListenerGetf(ListenerProperty p, scalar* v);
-    static void ListenerSeti(ListenerProperty p, const int32* v);
+    static void ListenerSeti(ListenerProperty p, const i32* v);
     static void ListenerSetf(ListenerProperty p, const scalar* v);
 
     static void CaptureState(ALdev* d, bool start = true);
@@ -166,7 +166,7 @@ struct OpenAL
         static bool IsSource(ALsource* s);
 
 	static void GetBool(ALdev* d, ContextProperty p, bool* v);
-	static void GetInt(ALdev* d, ContextProperty p, int32* v);
+	static void GetInt(ALdev* d, ContextProperty p, i32* v);
 	static void GetScalar(ALdev* d, ContextProperty p, scalar* v);
 	static void GetBigScalar(ALdev* d, ContextProperty p, bigscalar* v);
 	static cstring GetString(ALdev* d, ContextProperty p);
@@ -181,7 +181,7 @@ struct OpenAL
     };
 };
 
-C_FLAGS(OpenAL::Attenuation,uint32);
+C_FLAGS(OpenAL::Attenuation,u32);
 
 /*!
  * \brief Basic wrapping for OpenAL, nothing extensive
@@ -191,7 +191,7 @@ namespace COpenAL{
 
 struct CALhnd;
 struct CALCaptureDevice;
-using CALVersion = _cbasic_version<int32>;
+using CALVersion = _cbasic_version<i32>;
 
 enum class CALPlaybackState : uint8
 {
@@ -338,7 +338,7 @@ extern bool context_check_extension(
 extern void context_get_error(
         const CALContext* context = nullptr);
 
-extern uint32 context_max_sources(const CALContext* context = nullptr);
+extern u32 context_max_sources(const CALContext* context = nullptr);
 
 /*!
  * \brief Create an audio capture device and initialize it with codec information. OpenAL does the rest.
@@ -350,7 +350,7 @@ extern uint32 context_max_sources(const CALContext* context = nullptr);
 extern CALCaptureDevice* capture_create(
         CALContext* context,
         cstring device,
-	const AudioFormat &fmt, uint32 samples);
+	const AudioFormat &fmt, u32 samples);
 /*!
  * \brief Free the audio capture device when you are done with it.
  * \param dev
@@ -400,21 +400,21 @@ extern void listener_set(const CALListener* listener);
  * \param source
  * \return
  */
-extern int32 source_get_offset_seconds(
+extern i32 source_get_offset_seconds(
         const CALSource* source);
 /*!
  * \brief Get sample offset into buffer
  * \param source
  * \return
  */
-extern int32 source_get_offset_samples(
+extern i32 source_get_offset_samples(
         const CALSource* source);
 /*!
  * \brief Get byte offset into buffer
  * \param source
  * \return
  */
-extern int32 source_get_offset_bytes(
+extern i32 source_get_offset_bytes(
         const CALSource* source);
 
 /*!
@@ -423,21 +423,21 @@ extern int32 source_get_offset_bytes(
  * \param off
  */
 extern void source_set_offset_seconds(
-        CALSource* source, int32 const& off);
+        CALSource* source, i32 const& off);
 /*!
  * \brief Set sample offset into buffer
  * \param source
  * \param off
  */
 extern void source_set_offset_samples(
-        CALSource* source, int32 const& off);
+        CALSource* source, i32 const& off);
 /*!
  * \brief Set byte offset into buffer
  * \param source
  * \param off
  */
 extern void source_set_offset_bytes(
-        CALSource* source, const int32 &off);
+        CALSource* source, const i32 &off);
 
 /*!
  * \brief Set source playback mode
@@ -488,7 +488,7 @@ extern void source_dequeue_buffers(
  * \param val
  */
 extern void source_seti(
-        CALSource* source, CSourceProperty const& prop, const int32* val);
+        CALSource* source, CSourceProperty const& prop, const i32* val);
 /*!
  * \brief Set scalar property of source
  * \param source
@@ -500,11 +500,11 @@ extern void source_setf(
 
 
 extern void source_seti(
-        CALSource* source, CSourceProperty const& prop, int32 const& val);
+        CALSource* source, CSourceProperty const& prop, i32 const& val);
 extern void source_setf(
         CALSource* source, CSourceProperty const& prop, scalar const& val);
 
-extern int32 source_geti(
+extern i32 source_geti(
         CALSource* source, CSourceProperty const& prop);
 extern scalar source_getf(
         CALSource* source, CSourceProperty const& prop);

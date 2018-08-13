@@ -7,9 +7,9 @@ namespace Blam {
 
 cstring file_header_full_mapname(const file_header_t* map)
 {
-    for(int32 i = 0; i < blam_num_map_names; i++)
+    for(i32 i = 0; i < blam_num_map_names; i++)
     {
-        if(StrCmp(map->name, blam_map_names[i].key))
+        if(str::cmp(map->name, blam_map_names[i].key))
             return blam_map_names[i].value;
     }
     return map->name;
@@ -25,7 +25,7 @@ file_header_t const* file_header_get(c_cptr baseptr, version_t expectedVersion)
     return fh;
 }
 
-void tag_index_magic(tag_index_t* tagindex, int32 tagIndexOffset)
+void tag_index_magic(tag_index_t* tagindex, i32 tagIndexOffset)
 {
     tagindex->index_magic -= tagIndexOffset + 40;
 }
@@ -52,7 +52,7 @@ const index_item_t* tag_index_get_items(const file_header_t* file)
     return C_FCAST<const index_item_t*>(&(ptr[1]));
 }
 
-c_cptr blam_mptr(c_cptr base, int32 magic, int32 offset)
+c_cptr blam_mptr(c_cptr base, i32 magic, i32 offset)
 {
     const byte_t* ptr = (C_FCAST<const byte_t*>(base)) + offset - magic;
     return (ptr < base) ? nullptr : ptr;
@@ -64,11 +64,11 @@ cstring index_item_get_string(
     const tag_index_t*   tagindex)
 {
     return C_CAST<cstring>(blam_mptr(
-        map, tagindex->index_magic, C_CAST<int32>(idx->string_offset)));
+        map, tagindex->index_magic, C_CAST<i32>(idx->string_offset)));
 }
 
 const index_item_t* tag_index_get_item(
-    const file_header_t* file, const tag_index_t* tags, int32 tag_id)
+    const file_header_t* file, const tag_index_t* tags, i32 tag_id)
 {
     return &tag_index_get_items(file)[tag_id - tags->baseTag];
 }

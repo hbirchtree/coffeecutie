@@ -48,7 +48,7 @@ protected:
         return m_properties;
     }
 
-    uint32 m_window_flags;
+    u32 m_window_flags;
     CDProperties m_properties;
     CString m_contextString;
 

@@ -26,7 +26,7 @@ struct SysInfoDef
      * \brief Whether this build is 32-bit, 64-bit, 128-bit, blah.
      * \return
      */
-    uint32 BitNess()
+    u32 BitNess()
     {
         return C_SYSTEM_BITNESS;
     }
@@ -111,7 +111,7 @@ struct SysInfoDef
      * \return An estimated value for what would be a suitable
      *  amount of tasks
      */
-    ThrdCnt SmartParallelism(uint64 worksize, uint64 weight = 1);
+    ThrdCnt SmartParallelism(u64 worksize, u64 weight = 1);
 
     STATICINLINE
     /*!
@@ -375,7 +375,7 @@ struct PowerInfoDef
      * \brief Remaining minutes of battery
      * \return
      */
-    uint32 BatteryLifetime()
+    u32 BatteryLifetime()
     {
         return 0;
     }

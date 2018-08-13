@@ -45,11 +45,11 @@ struct AudioFormat
     AudioFormat();
 
     union{
-        uint32 samplerate; /*!< Samplerate, typically 44.1kHz*/
-        uint32 frequency;
+        u32 samplerate; /*!< Samplerate, typically 44.1kHz*/
+        u32 frequency;
     };
-    uint32 channels; /*!< Audio channels, typically 2 or 4*/
-    uint32 bitdepth;
+    u32 channels; /*!< Audio channels, typically 2 or 4*/
+    u32 bitdepth;
 };
 
 /*!
@@ -62,7 +62,7 @@ struct AudioSample
     short_data container;
     short* data = nullptr; /*!< Pointer to audio data*/
     AudioFormat fmt; /*!< Format specification*/
-    uint32 samples;
+    u32 samples;
 };
 
 extern bigscalar GetSampleLength(const AudioSample &smp);

@@ -18,13 +18,13 @@ CALSoundMixer::~CALSoundMixer()
         delete trck;
 }
 
-uint64 CALSoundMixer::createTrack()
+u64 CALSoundMixer::createTrack()
 {
     m_tracks.push_back(new CALSoundTrack(*m_dev));
     return m_tracks.size()-1;
 }
 
-CSoundTrack<CALSource, CALBuffer> &CALSoundMixer::soundtrack(const uint64 &track)
+CSoundTrack<CALSource, CALBuffer> &CALSoundMixer::soundtrack(const u64 &track)
 {
     if(track>=m_tracks.size())
 #if defined(COFFEE_USE_EXCEPTIONS)

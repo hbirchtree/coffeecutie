@@ -8,7 +8,7 @@ using namespace Coffee;
 bool mutex_locking()
 {
     Function<void()> message_test = [](){
-        int64 msgs = 0;
+        i64 msgs = 0;
         ThreadId thread;
 
         while(msgs<10)

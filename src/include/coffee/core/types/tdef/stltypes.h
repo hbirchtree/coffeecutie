@@ -35,8 +35,7 @@
 namespace Coffee {
 
 using CString = std::string; /*!< Typical string object */
-using CWString =
-    std::wstring; /*!< Typical string object suited for interfaces */
+using CWString = std::wstring;
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Mutex
@@ -134,6 +133,9 @@ using ShPtr = Ptr<T>;
 template<typename T, class Deleter = std::default_delete<T>>
 using UqPtr = Ptr<T>;
 #endif
+
+template<typename T>
+using WkPtr = std::weak_ptr<T>;
 
 template<typename T>
 using Complex = std::complex<T>;

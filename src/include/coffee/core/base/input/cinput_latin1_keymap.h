@@ -280,7 +280,7 @@ enum CILatin1Mapping : uint8
 //    CK_?                = 0xFF,
 };
 
-C_FLAGS(CILatin1Mapping,uint8);
+C_FLAGS(CILatin1Mapping,u8);
 
 }
 }

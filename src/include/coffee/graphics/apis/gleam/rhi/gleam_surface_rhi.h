@@ -13,8 +13,8 @@ struct GLEAM_Surface : GraphicsAPI::Surface<CSize, CPoint>
     GLEAM_Surface(
         TexComp::tex_flag type,
         PixelFormat       fmt,
-        uint32            mips,
-        uint32            texflags = 0);
+        u32            mips,
+        u32            texflags = 0);
 
     void allocate();
     void dealloc();
@@ -27,7 +27,7 @@ struct GLEAM_Surface : GraphicsAPI::Surface<CSize, CPoint>
     }
 
   protected:
-    void upload_info(PixCmp comp, uint32 mip, uint32 d);
+    void upload_info(PixCmp comp, u32 mip, u32 d);
 
     TexComp::tex_flag m_type;
 
@@ -39,7 +39,7 @@ struct GLEAM_Surface2D : GLEAM_Surface
 {
     friend struct GLEAM_Sampler2D;
 
-    GLEAM_Surface2D(PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0);
+    GLEAM_Surface2D(PixelFormat fmt, u32 mips = 1, u32 texflags = 0);
 
     void allocate(CSize size, PixCmp c);
 
@@ -49,14 +49,14 @@ struct GLEAM_Surface2D : GLEAM_Surface
         const Bytes& data,
         gleam_error& ec,
         CPoint       offset = {0, 0},
-        uint32       mip    = 0);
+        u32       mip    = 0);
 
     void upload(
         PixDesc      pfmt,
         CSize const& size,
         const Bytes& data,
         CPoint       offset = {0, 0},
-        uint32       mip    = 0)
+        u32       mip    = 0)
     {
         gleam_error ec;
         return upload(pfmt, size, data, ec, offset, mip);
@@ -82,7 +82,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
     friend struct GLEAM_Sampler3D;
 
     GLEAM_Surface3D_Base(
-        tex::flag t, PixelFormat fmt, uint32 mips, uint32 texflags);
+        tex::flag t, PixelFormat fmt, u32 mips, u32 texflags);
 
     void allocate(CSize3 size, PixCmp c);
 
@@ -91,7 +91,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
         CSize3 const&  size,
         Bytes const&   data,
         CPoint3 const& offset = {0, 0, 0},
-        uint32         mip    = 0);
+        u32         mip    = 0);
 
     void upload(
         BitFmt         fmt,
@@ -99,7 +99,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
         CSize3 const&  size,
         Bytes const&   data,
         CPoint3 const& offset = {0, 0, 0},
-        uint32         mip    = 0);
+        u32         mip    = 0);
 
     void upload(
         BitFmt         fmt,
@@ -107,7 +107,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
         CSize3 const&  size,
         c_cptr         data,
         CPoint3 const& offset = {0, 0, 0},
-        uint32         mip    = 0)
+        u32         mip    = 0)
     {
         Bytes dataS;
         dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
@@ -125,7 +125,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler3D;
-    GLEAM_Surface3D(PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0) :
+    GLEAM_Surface3D(PixelFormat fmt, u32 mips = 1, u32 texflags = 0) :
         GLEAM_Surface3D_Base(tex::t3d::value, fmt, mips, texflags)
     {
     }
@@ -135,7 +135,7 @@ struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler2DArray;
     GLEAM_Surface2DArray(
-        PixelFormat fmt, uint32 mips = 1, uint32 texflags = 0) :
+        PixelFormat fmt, u32 mips = 1, u32 texflags = 0) :
         GLEAM_Surface3D_Base(tex::t2d_array::value, fmt, mips, texflags)
     {
     }
@@ -182,7 +182,7 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
 
     void setLODRange(Vecf2 const& range);
     void setLODBias(scalar bias);
-    void setEdgePolicy(uint8 dim, WrapPolicy p);
+    void setEdgePolicy(u8 dim, WrapPolicy p);
     void setFiltering(
         Filtering mag, Filtering min, Filtering mip = Filtering::None);
 
@@ -206,13 +206,13 @@ struct GLEAM_Sampler_Base : GLEAM_Sampler
 
 struct GLEAM_Sampler2D : GLEAM_Sampler_Base<GLEAM_Surface2D>
 {
-    void                bind(uint32 i);
+    void                bind(u32 i);
     GLEAM_SamplerHandle handle();
 };
 
 struct GLEAM_Sampler3D : GLEAM_Sampler_Base<GLEAM_Surface3D>
 {
-    void                bind(uint32 i);
+    void                bind(u32 i);
     GLEAM_SamplerHandle handle();
 };
 
@@ -220,19 +220,19 @@ struct GLEAM_Sampler2DArray : GLEAM_Sampler_Base<GLEAM_Surface2DArray>
 {
     friend struct GLEAM_API;
 
-    void                bind(uint32 i);
+    void                bind(u32 i);
     GLEAM_SamplerHandle handle();
 };
 
 struct GLEAM_SamplerCube : GLEAM_Sampler_Base<GLEAM_SurfaceCube>
 {
-    void                bind(uint32 i);
+    void                bind(u32 i);
     GLEAM_SamplerHandle handle();
 };
 
 struct GLEAM_SamplerCubeArray : GLEAM_Sampler_Base<GLEAM_SurfaceCubeArray>
 {
-    void                bind(uint32 i);
+    void                bind(u32 i);
     GLEAM_SamplerHandle handle();
 };
 

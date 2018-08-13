@@ -12,8 +12,8 @@ class CALSoundSample : public CSoundSample<CALSource,CALBuffer>
     CSoundDevice<CALSource,CALBuffer>* m_dev;
     CSoundFormat* m_fmt;
     CSoundBuffer<CALSource,CALBuffer>* m_buffer;
-    uint64 m_pts;
-    uint64 m_samples;
+    u64 m_pts;
+    u64 m_samples;
 
     CSoundProperty const* m_properties;
 
@@ -27,10 +27,10 @@ public:
 
     CSoundBuffer<CALSource,CALBuffer>& buffer();
     CSoundFormat& format();
-    uint64 samples() const;
+    u64 samples() const;
 
-    uint64 pts() const;
-    void setPts(const uint64& pts);
+    u64 pts() const;
+    void setPts(const u64& pts);
 
     const CSoundProperty *properties();
     void assignProperties(const CSoundProperty *props);

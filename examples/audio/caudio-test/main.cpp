@@ -25,7 +25,7 @@ struct AudioData
     AL::Track*  m_track_2;
 };
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Main");
 
@@ -120,8 +120,8 @@ int32 coffee_main(int32, cstring_w*)
                     man.defaultSoundDevice().stringIdentifier());
             }
             AL::Mixer& mixer    = dev->mixer();
-            uint64     trackId1 = mixer.createTrack();
-            uint64     trackId2 = mixer.createTrack();
+            u64     trackId1 = mixer.createTrack();
+            u64     trackId2 = mixer.createTrack();
             AL::Track& track1   = mixer.soundtrack(trackId1);
             AL::Track& track2   = mixer.soundtrack(trackId2);
 

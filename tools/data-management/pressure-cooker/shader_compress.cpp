@@ -106,7 +106,7 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
             res.content_length = data.size;
 
             res.source_name        = requested_source;
-            res.source_name_length = StrLen(requested_source);
+            res.source_name_length = str::len(requested_source);
 
             res.user_data = r;
 
@@ -506,8 +506,7 @@ Associated source:
 {2})",
             module.GetErrorMessage(),
             path,
-            StrUtil::encapsulate(
-                C_RCAST<const char*>(source.data), source.size));
+            str::encapsulate(C_RCAST<const char*>(source.data), source.size));
         cursor.progress(SHD_API "Skipping shader");
         return {};
     }

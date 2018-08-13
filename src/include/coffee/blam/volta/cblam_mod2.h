@@ -26,27 +26,27 @@ struct blam_uvscale
 
 struct blam_mod2_report
 {
-    uint32 index_offset_start;
-    uint32 index_offset_end;
-    uint32 vertex_offset_start;
-    uint32 vertex_offset_end;
+    u32 index_offset_start;
+    u32 index_offset_end;
+    u32 vertex_offset_start;
+    u32 vertex_offset_end;
 };
 
 struct blam_shader_desc
 {
-    uint32 tag;
-    uint32 namePtr;
-    uint32 zero;
-    uint32 shaderTag;
-    uint32 unknown[4];
+    u32 tag;
+    u32 namePtr;
+    u32 zero;
+    u32 shaderTag;
+    u32 unknown[4];
 };
 
 struct blam_mod2_region_permutation
 {
     byte_t name[32];
-    uint32 flags[8];
-    int16 meshindex_lod[5];
-    int16 reserved[7];
+    u32 flags[8];
+    i16 meshindex_lod[5];
+    i16 reserved[7];
 };
 
 struct blam_mod2_region
@@ -57,14 +57,14 @@ struct blam_mod2_region
 
 struct blam_mod2_geometry_header
 {
-    uint32 unknown[9];
+    u32 unknown[9];
     reflexive_t<byte_t> mesh_headers;
 };
 
 struct blam_mod2_marker
 {
     byte_t name[32];
-    uint32 unknown[5];
+    u32 unknown[5];
     reflexive_t<byte_t> chunk;
 };
 
@@ -73,28 +73,28 @@ struct blam_mod2_marker
  */
 struct blam_mod2_header
 {
-    uint32 zero1;
-    uint32 unknown1;
-    uint32 offset1;
-    uint32 offset2;
-    uint32 offset3;
-    uint32 offset4;
-    uint32 offset5;
-    int16 lodcutoff_high_ext;
-    int16 lodcutoff_high;
-    int16 lodcutoff_med;
-    int16 lodcutoff_low;
-    int16 lodcutoff_low_ext;
+    u32 zero1;
+    u32 unknown1;
+    u32 offset1;
+    u32 offset2;
+    u32 offset3;
+    u32 offset4;
+    u32 offset5;
+    i16 lodcutoff_high_ext;
+    i16 lodcutoff_high;
+    i16 lodcutoff_med;
+    i16 lodcutoff_low;
+    i16 lodcutoff_low_ext;
 
-    int16 nodecount_high_ext;
-    int16 nodecount_high;
-    int16 nodecount_med;
-    int16 nodecount_low;
-    int16 nodecount_low_ext;
+    i16 nodecount_high_ext;
+    i16 nodecount_high;
+    i16 nodecount_med;
+    i16 nodecount_low;
+    i16 nodecount_low_ext;
 
     blam_uvscale uvscale;
 
-    uint32 unknown2[29];
+    u32 unknown2[29];
 
     reflexive_t<blam_mod2_marker> markers;
     reflexive_t<byte_t> nodes;
@@ -127,7 +127,7 @@ struct blam_mod2_bsp_header
 extern const blam_mod2_header* blam_mod2_get_header(
         const index_item_t* item,
         const file_header_t* map,
-        int32 magic);
+        i32 magic);
 
 }
 }

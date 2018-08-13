@@ -34,7 +34,7 @@ struct StdRegexImpl : RegexDef
         Vector<CString> s_match; /*!< Matching strings*/
         bool b_match; /*!< True if match was found*/
 
-        uint8 padding[7];
+        u8 padding[7];
     };
 
     using Pattern = std::regex;

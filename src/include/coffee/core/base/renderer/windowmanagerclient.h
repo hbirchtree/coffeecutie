@@ -23,7 +23,7 @@ public:
      * \brief Get current window state
      * \return
      */
-    virtual uint32 windowState() const = 0;
+    virtual u32 windowState() const = 0;
     /*!
      * \brief Set new window state according
      * \param s

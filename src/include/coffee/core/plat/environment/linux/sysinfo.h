@@ -27,9 +27,9 @@ struct LinuxSysInfo : SysInfoDef
     static NetStatusFlags NetStatus();
 
 
-    static uint32 CpuCount();
+    static u32 CpuCount();
 
-    static uint32 CoreCount();
+    static u32 CoreCount();
 
     STATICINLINE
     /*!
@@ -50,14 +50,14 @@ struct LinuxSysInfo : SysInfoDef
         return true;
     }
 
-    STATICINLINE uint64 MemTotal()
+    STATICINLINE u64 MemTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalram*inf.mem_unit;
     }
 
-    STATICINLINE uint64 MemAvailable()
+    STATICINLINE u64 MemAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
@@ -70,14 +70,14 @@ struct LinuxSysInfo : SysInfoDef
         return free*inf.mem_unit;
     }
 
-    STATICINLINE uint64 SwapTotal()
+    STATICINLINE u64 SwapTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalswap*inf.mem_unit;
     }
 
-    STATICINLINE uint64 SwapAvailable()
+    STATICINLINE u64 SwapAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
@@ -94,7 +94,7 @@ struct LinuxSysInfo : SysInfoDef
 
     static bool HasFPUExceptions();
 
-    static uint64 ProcessorCacheSize();
+    static u64 ProcessorCacheSize();
 
     static bool HasHyperThreading();
 

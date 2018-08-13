@@ -1,7 +1,10 @@
 #pragma once
 
+#if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/CAsio>
-#include <coffee/asio/http_parsing.h>
+#include <coffee/asio/http.h>
+#endif
+
 #include <coffee/core/base/files/url.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/interfaces/byte_provider.h>
@@ -18,21 +21,20 @@ FORCEDINLINE bool Supported()
 #endif
 }
 
+#if defined(FEATURE_ENABLE_CoffeeASIO)
+
 struct Resource : ByteProvider
 {
   private:
-    CString        m_resource;
-    Vector<byte_t> m_store;
-
+    Url                m_resource;
+    ASIO::asio_context m_ctxt;
 #if defined(ASIO_USE_SSL)
     UqPtr<TCP::SSLSocket> ssl;
-    ASIO::AsioContext     m_ctxt;
 #endif
     UqPtr<TCP::Socket> normal;
 
-    CString        m_host;
-    REST::Request  m_request;
-    HTTP::Response m_response;
+    http::request_t  m_request;
+    http::response_t m_response;
 
     HTTPAccess m_access;
 
@@ -41,8 +43,11 @@ struct Resource : ByteProvider
     void initRsc(Url const& url);
     void close();
 
+    void readResponseHeader(std::istream& http_istream);
+    void readResponsePayload(std::istream& http_istream);
+
   public:
-    Resource(ASIO::AsioContext ctxt, Url const& url);
+    Resource(ASIO::asio_context ctxt, Url const& url);
     ~Resource();
 
     C_MOVE_CONSTRUCTOR(Resource);
@@ -52,7 +57,7 @@ struct Resource : ByteProvider
 
     ErrCode errorCode() const;
 
-    cstring resource() const;
+    Url resource() const;
 
     bool              isRequestReady() const;
     bool              isResponseReady() const;
@@ -61,16 +66,18 @@ struct Resource : ByteProvider
         return isResponseReady();
     }
 
+    void setHeaderField(http::header_field field, CString const& value);
     void setHeaderField(CString const& field, CString const& value);
+
+    http::request_t& getRequest();
 
     bool fetch();
     bool push(Bytes const& data);
-    bool push(const CString& method, Bytes const& data);
+    bool push(http::method method, Bytes const& data);
 
-    cstring                      mimeType() const;
-    u32                          responseCode() const;
-    Bytes                        data() const;
-    Map<CString, CString> const& headers() const;
+    CString mimeType() const;
+    u32     responseCode() const;
+    Bytes   data() const;
 
     operator Bytes()
     {
@@ -82,7 +89,7 @@ struct Resource : ByteProvider
 
     operator Path() const
     {
-        return Path(m_resource);
+        return Path(m_request.header.resource);
     }
 };
 
@@ -100,10 +107,7 @@ FORCEDINLINE Url
 
 } // namespace Net
 
-FORCEDINLINE Url operator"" _web(const char* url, size_t)
-{
-    return Net::MkUrl(url);
-}
+#endif
 
 FORCEDINLINE Url operator"" _http(const char* url, size_t)
 {

@@ -65,12 +65,12 @@ void SDL_Handler(void*, SDL_Event* const& ev, c_cptr)
     //    cDebug("Event received: {0}", ev->type);
 }
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     SubsystemWrapper<SDL2::SDL2> sys1;
     C_UNUSED(sys1);
 
-    int32 majGL = 2, minGL = 0;
+    i32 majGL = 2, minGL = 0;
     RHI::GLEAM::GLEAM_API::GetDefaultVersion(majGL, minGL);
     auto visual = GetDefaultVisual(majGL, minGL);
     RHI::GLEAM::GLEAM_API::GetDefaultProperties(visual);

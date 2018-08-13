@@ -12,15 +12,15 @@ namespace Coffee{
 struct _cbasic_size
 {
     constexpr _cbasic_size(){}
-    constexpr _cbasic_size(int32,int32){}
-    constexpr _cbasic_size(int32,int32,int32){}
+    constexpr _cbasic_size(i32,i32){}
+    constexpr _cbasic_size(i32,i32,i32){}
 };
 
 struct _cbasic_point
 {
     _cbasic_point(){}
-    _cbasic_point(int32,int32){}
-    _cbasic_point(int32,int32,int32){}
+    _cbasic_point(i32,i32){}
+    _cbasic_point(i32,i32,i32){}
 };
 
 /*!
@@ -428,17 +428,17 @@ using PointT = _cbasic_point;
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
-using CSize = _cbasic_size_2d<int32>;
+using CSize = _cbasic_size_2d<i32>;
 
 using Size = CSize;
 
-using CSize3 = _cbasic_size_3d<int32>;
+using CSize3 = _cbasic_size_3d<i32>;
 
 using Size3 = CSize3;
 /*!
  * \brief Heavy-duty size structure
  */
-using CSize64 = _cbasic_size_2d<uint64>;
+using CSize64 = _cbasic_size_2d<u64>;
 /*!
  * \brief Size for inaccurate measurements
  */
@@ -451,9 +451,9 @@ using CSizeD = _cbasic_size_2d<bigscalar>;
 /*!
  * \brief Used for window rectangles
  */
-using CRect = _cbasic_rect<int32>;
+using CRect = _cbasic_rect<i32>;
 
-using CRect64 = _cbasic_rect<int64>;
+using CRect64 = _cbasic_rect<i64>;
 /*!
  * \brief Used for orthographic view rectangle
  */
@@ -466,9 +466,9 @@ using CRectD = _cbasic_rect<bigscalar>;
 /*!
  * \brief 32-bit integer point
  */
-using CPoint = _cbasic_point_2d<int32>;
+using CPoint = _cbasic_point_2d<i32>;
 
-using CPoint3 =  _cbasic_point_3d<int32>;
+using CPoint3 =  _cbasic_point_3d<i32>;
 /*!
  * \brief Single-precision floating-point point
  */

@@ -21,7 +21,7 @@ namespace Posix{
 CString PosixStacktracer::DemangleSymbol(const char *sym)
 {
 #ifndef COFFEE_LOWFAT
-    int32 stat = 0;
+    i32 stat = 0;
     Ptr<char> symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
     if(stat==0)
     {
@@ -35,7 +35,7 @@ CString PosixStacktracer::DemangleSymbol(const char *sym)
 }
 
 StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
-        uint32 start, int32 length)
+        u32 start, i32 length)
 {
     Stacktrace t;
 #ifndef COFFEE_LOWFAT
@@ -81,7 +81,7 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
     return t;
 }
 
-CString PosixStacktracer::GetStackframeName(uint32 depth)
+CString PosixStacktracer::GetStackframeName(u32 depth)
 {
 #ifndef COFFEE_LOWFAT
     Stacktrace trace = GetRawStackframes(depth, 2);

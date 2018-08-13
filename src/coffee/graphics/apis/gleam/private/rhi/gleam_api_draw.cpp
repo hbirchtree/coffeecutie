@@ -5,6 +5,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace RHI {

@@ -1,23 +1,21 @@
 #include <coffee/core/coffee.h>
 
+#include <coffee/core/CFiles>
 #include <coffee/core/CMD>
-#include <coffee/core/CProfiling>
-
+#include <coffee/core/argument_handling.h>
+#include <coffee/core/base/jsonlogger.h>
 #include <coffee/core/coffee_signals.h>
 #include <coffee/core/coffee_version.h>
-
-#include <coffee/core/CFiles>
-#include <coffee/core/argument_handling.h>
+#include <coffee/core/internal_state.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/cdef/infotypes.h>
 
-#include <coffee/core/internal_state.h>
-#include <coffee/core/task_queue/task.h>
-
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
@@ -44,8 +42,6 @@ extern void SetBuildInfo(BuildInfo& binfo);
  * \param appdata
  */
 extern void SetApplicationData(CoffeeApplicationData& appdata);
-
-extern void SetupJsonLogger();
 
 #if defined(COFFEE_APPLE)
 extern Url GetAppleStoragePath();
@@ -107,7 +103,7 @@ static void CoffeeInit_Internal(u32 flags)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
-    PrintingVerbosityLevel() = 8;
+//    PrintingVerbosityLevel() = 8;
 //    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel()          = 1;
@@ -152,8 +148,8 @@ static void CoffeeInit_Internal(u32 flags)
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
 
-    Profiler::InitProfiler();
-    Profiler::LabelThread("Main");
+    State::GetProfilerStore()->enable();
+    CurrentThread::SetName("Main");
 #endif
 }
 
@@ -162,8 +158,7 @@ void CoffeeInit(bool)
     CoffeeInit_Internal(0x0);
 }
 
-int32 CoffeeMain(
-    CoffeeMainWithArgs mainfun, int32 argc, cstring_w* argv, u32 flags)
+i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
@@ -183,11 +178,24 @@ int32 CoffeeMain(
     /* Must be created before ThreadState, but after internal state */
     State::SwapState("jsonProfiler", Profiling::CreateJsonProfiler());
 
-    State::SetInternalThreadState(State::CreateNewThreadState());
+#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
+    /* On Android and iOS, we want to terminate the profiler early */
+    CmdInterface::BasicTerm::RegisterAtExit([]() {
+        State::SwapState("jsonProfiler", ShPtr<State::GlobalState>());
+    });
+#endif
 
+    State::SetInternalThreadState(State::CreateNewThreadState());
 
     /* Create initial RuntimeQueue context for the user */
     RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext());
+
+#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
+    CmdInterface::BasicTerm::RegisterAtExit([]() {
+        runtime_queue_error ec;
+        RuntimeQueue::TerminateThreads(ec);
+    });
+#endif
 
     /* Set the program arguments so that we can look at them later */
     GetInitArgs() = AppArg::Clone(argc, argv);
@@ -207,8 +215,8 @@ int32 CoffeeMain(
     InstallDefaultSigHandlers();
 #endif
 
-#ifndef COFFEE_LOWFAT
-
+#if !defined(COFFEE_LOWFAT)
+#if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
     if(!(flags & DiscardArgumentHandler))
     {
         ArgumentParser parser;
@@ -277,7 +285,8 @@ int32 CoffeeMain(
                 Profiler::SetDeepProfileMode(true);
             } else if(sw == "json")
             {
-                SetupJsonLogger();
+                DebugFun::SetLogInterface(
+                    SetupJsonLogger("application.json"_tmp));
             }
         }
 
@@ -296,10 +305,18 @@ int32 CoffeeMain(
     {
         Coffee::PrintingVerbosityLevel() = 1;
     }
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN)
+    Coffee::PrintingVerbosityLevel() = 12;
+#endif
 
     Profiler::PushContext("CoffeeInit");
     CoffeeInit_Internal(flags);
     Profiler::PopContext();
+
+    if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
+        Profiler::SetDeepProfileMode(true);
 
     if(!(flags & SilentInit))
         cVerbose(1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
@@ -367,9 +384,9 @@ void CoffeeTerminate()
         cBasicPrint(
             "{0} => {1}+{2}, {3}",
             e.name.size() ? e.name : "[anon]",
-            StrUtil::pointerify(e.start),
+            str::print::pointerify(e.start),
             e.end - e.start,
-            StrUtil::pointerify(C_CAST<u32>(e.access)));
+            str::print::pointerify(C_CAST<u32>(e.access)));
     }
 #endif
 #endif
@@ -391,19 +408,16 @@ void GotoApplicationDir()
 
 void InstallDefaultSigHandlers()
 {
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE)
     std::set_terminate([]() {
         Stacktracer::ExceptionStacktrace(std::current_exception());
-//#ifndef COFFEE_CUSTOM_EXIT_HANDLING
-//        exit(1);
-//#else
+        //#ifndef COFFEE_CUSTOM_EXIT_HANDLING
+        //        exit(1);
+        //#else
         abort();
-//#endif
+        //#endif
     });
-
-    //    InstallSignalHandler(Sig_Termination,nullptr);
-    //    InstallSignalHandler(Sig_PoopedABit,nullptr);
-    //    InstallSignalHandler(Sig_ShitMySelf,nullptr);
-    //    InstallSignalHandler(Sig_FPE,nullptr);
+#endif
 }
 
 void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)

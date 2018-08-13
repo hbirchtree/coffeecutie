@@ -17,15 +17,6 @@ static FILE* DefaultDebugOutputPipe = stderr;
 static FILE* DefaultPrintOutputPipe = stdout;
 static FILE* DefaultInputPipe = stdin;
 
-namespace Mem{
-
-using Search::StrFind;
-using Search::CStrReplace;
-
-}
-
-using namespace Mem;
-
 }
 
 #endif

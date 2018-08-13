@@ -24,24 +24,24 @@ using bl_footer = char[4];
 struct tagref_t
 {
     bl_tag  tag;
-    int32   string_offset;
-    int32   unknown;
-    int32   tagId;
+    i32   string_offset;
+    i32   unknown;
+    i32   tagId;
 };
 
 /*!
  * \brief Blam, at least for Halo 1, uses int16 to store bitmap sizes
  */
-using bl_size_t = _cbasic_size_2d<int16>;
+using bl_size_t = _cbasic_size_2d<i16>;
 /*!
  * \brief As with blam_size, int16 is standard size for Halo 1.
  */
-using bl_point_t = _cbasic_point_2d<int16>;
+using bl_point_t = _cbasic_point_2d<i16>;
 
 /*!
  * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than Function
  */
-using BitmProcess = uint32(*)(uint32,uint16,byte_t);
+using BitmProcess = u32(*)(u32,uint16,byte_t);
 
 using bl_rgba_t = CRGBA;
 
@@ -72,7 +72,7 @@ constexpr cstring index_item_type_sbsp = "psbs"; /*!< Tag class for structured B
 constexpr cstring header_head = "deah"; /*!< Header of file header*/
 constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
 
-constexpr int32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
+constexpr i32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
 constexpr _cbasic_static_map<char[15],char[28],28>
 blam_map_names = {
     //Single player maps
@@ -115,16 +115,16 @@ struct file_header_t
 {
     bl_header id; /*!< Header value, should correspond with specific data*/
     version_t version; /*!< Version of Halo, determines the process*/
-    int32   decomp_len; /*!< Decompressed length, for Xbox where format is compressed. PC is uncompressed*/
-    int32   unknown1;
-    int32   tagIndexOffset; /*!< Offset to tag index*/
-    int32   tagIndexMetaLen; /*!< Length of tag index item metadata*/
-    int32   reserved_1[2];
+    i32   decomp_len; /*!< Decompressed length, for Xbox where format is compressed. PC is uncompressed*/
+    i32   unknown1;
+    i32   tagIndexOffset; /*!< Offset to tag index*/
+    i32   tagIndexMetaLen; /*!< Length of tag index item metadata*/
+    i32   reserved_1[2];
     bl_string name; /*!< Name identifier for map*/
     bl_string buildDate; /*!< Build date for the map file*/
     maptype_t mapType; /*!< Type of map, determines whether it is playable*/
-    int32   unknown_4;
-    int32   reserved_2[485];
+    i32   unknown_4;
+    i32   reserved_2[485];
     bl_footer footer; /*!< Footer value, should correspond with specific data*/
 };
 
@@ -133,16 +133,16 @@ struct file_header_t
  */
 struct tag_index_t
 {
-    int32   index_magic; /*!< A magic number used to configure the pointers to data*/
-    int32   baseTag; /*!< Base tag from which all tag IDs start from for this index*/
-    int32   vertexSize; /*!< Size of vertex data*/
-    int32   tagCount; /*!< Number of tags starting from the base tag*/
-    int32   vertexObjectCount; /*!< Number of vertex objects*/
-    uint32  vertexOffset; /*!< Offset to vertex data*/
-    int32   indicesObjectCount; /*!< Number of index objects*/
-    uint32  indicesOffset; /*!< Offset to index objects*/
-    int32   modelRawDataSize; /*!< Raw model data size*/
-    int32   tagStart; /*!< ???*/
+    i32   index_magic; /*!< A magic number used to configure the pointers to data*/
+    i32   baseTag; /*!< Base tag from which all tag IDs start from for this index*/
+    i32   vertexSize; /*!< Size of vertex data*/
+    i32   tagCount; /*!< Number of tags starting from the base tag*/
+    i32   vertexObjectCount; /*!< Number of vertex objects*/
+    u32  vertexOffset; /*!< Offset to vertex data*/
+    i32   indicesObjectCount; /*!< Number of index objects*/
+    u32  indicesOffset; /*!< Offset to index objects*/
+    i32   modelRawDataSize; /*!< Raw model data size*/
+    i32   tagStart; /*!< ???*/
 };
 
 
@@ -158,10 +158,10 @@ struct index_item_t
         bl_tag  tagclass[3]; /*!< Strings which identify its class*/
         tag_class_t tagclass_e[3]; /*!< enum-ified tagclass value */
     };
-    int32   tagId; /*!< A number representing its ID, only used for enumeration*/
-    uint32  string_offset; /*! Magic data offset to a full string for the item*/
-    int32   offset; /*!< A byte offset to associated data*/
-    int32   zeroes[2];
+    i32   tagId; /*!< A number representing its ID, only used for enumeration*/
+    u32  string_offset; /*! Magic data offset to a full string for the item*/
+    i32   offset; /*!< A byte offset to associated data*/
+    i32   zeroes[2];
 
     template<
             typename T,
@@ -179,9 +179,9 @@ struct index_item_t
 template<typename T>
 struct reflexive_t
 {
-    int32 count; /*!< Size of data*/
-    int32 offset; /*!< Offset to data within file (this will only refer to data within the map file)*/
-    int32 zero;
+    i32 count; /*!< Size of data*/
+    i32 offset; /*!< Offset to data within file (this will only refer to data within the map file)*/
+    i32 zero;
 
     /*!
      * \brief Made for simplicity when working with reflexive data. Instead of several functions performing the same task, this template allows to access the data much more conveniently.
@@ -243,12 +243,12 @@ struct bitm_image_t;
  */
 struct bitm_header_t
 {
-    int32 unknown[22];
-    int32 offset_first; /*!< Offset to the bitm_padding_t structure */
-    int32 unknown23;
-    int32 imageCount; /*!< Count of images described by this header*/
-    int32 imageOffset; /*!< Data offset to bitm_image_t */
-    int32 unknown25;
+    i32 unknown[22];
+    i32 offset_first; /*!< Offset to the bitm_padding_t structure */
+    i32 unknown23;
+    i32 imageCount; /*!< Count of images described by this header*/
+    i32 imageOffset; /*!< Data offset to bitm_image_t */
+    i32 unknown25;
 
     reflexive_t<bitm_image_t> image_headers() const;
     reflexive_t<char> image_ptr(bitm_image_t const* img) const;
@@ -256,7 +256,7 @@ struct bitm_header_t
 
 struct bitm_padding_t
 {
-    int32 unknown[16];
+    i32 unknown[16];
 };
 
 /*!
@@ -264,18 +264,18 @@ struct bitm_padding_t
  */
 struct bitm_image_t
 {
-    int32        id;         /*!< A character string*/
+    i32        id;         /*!< A character string*/
     bl_size_t    isize;      /*!< Size of image*/
-    int16        depth;      /*!< Depth bits for image*/
+    i16        depth;      /*!< Depth bits for image*/
     bitm_type_t  type;       /*!< Type of image*/
     bitm_format  format;     /*!< Format of image*/
     bitm_flags_t flags;      /*!< Flags present in image*/
     bl_point_t   reg_pnt;    /*!< I have no idea what this is.*/
-    int16        mipmaps;    /*!< Number of mipmaps*/
-    int16        pixOffset;  /*!< Pixel offset when in use*/
-    int32        offset;     /*!< Data offset*/
-    int32        size;       /*!< Data size in bytes*/
-    int32        unknown[4];
+    i16        mipmaps;    /*!< Number of mipmaps*/
+    i16        pixOffset;  /*!< Pixel offset when in use*/
+    i32        offset;     /*!< Data offset*/
+    i32        size;       /*!< Data size in bytes*/
+    i32        unknown[4];
 };
 
 /*!
@@ -285,7 +285,7 @@ struct bitm_texture_t
 {
     CSize3    resolution;  /*!< Size of texture*/
     c_cptr    data;        /*!< Pointer to described data*/
-    int16     mipmaps;     /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
+    i16     mipmaps;     /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
     PixCmp    format;      /*!< Texture format, DXT or RGBA*/
     PixFmt    cformat;     /*!< Compression format, if applicable*/
     BitFormat dformat;     /*!< Data format of texture data*/

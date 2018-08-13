@@ -23,8 +23,8 @@ struct SDL2SpriteRenderer::SDLSpriteContext
     Map<SDL2SpriteRenderer::Renderer, SDL_Renderer*> renderers;
     Map<SDL2SpriteRenderer::Texture, TexContext>     textures;
 
-    uint64 renderer_counter;
-    uint64 texture_counter;
+    u64 renderer_counter;
+    u64 texture_counter;
 };
 
 bool SDL2SpriteRenderer::spritesPreInit(CString* err)
@@ -101,7 +101,7 @@ void SDL2SpriteRenderer::destroyRenderer(Renderer t)
 
 bool SDL2SpriteRenderer::createTexture(
     Renderer     r,
-    uint32       c,
+    u32       c,
     Texture*     t,
     PixelFormat  fmt,
     RSCA         acc,
@@ -133,7 +133,7 @@ bool SDL2SpriteRenderer::createTexture(
     }
 
     SDL_Renderer* ren = m_context->renderers[r];
-    for(uint32 i = 0; i < c; i++)
+    for(u32 i = 0; i < c; i++)
     {
         SDLSpriteContext::TexContext ctxt;
         ctxt.parent = r;
@@ -155,9 +155,9 @@ bool SDL2SpriteRenderer::createTexture(
     return true;
 }
 
-void SDL2SpriteRenderer::destroyTexture(uint32 c, SpriteApplication::Texture* t)
+void SDL2SpriteRenderer::destroyTexture(u32 c, SpriteApplication::Texture* t)
 {
-    for(uint32 i = 0; i < c; i++)
+    for(u32 i = 0; i < c; i++)
     {
         SDLSpriteContext::TexContext tex = m_context->textures[t[i]];
         m_context->textures.erase(t[i]);
@@ -168,7 +168,7 @@ void SDL2SpriteRenderer::destroyTexture(uint32 c, SpriteApplication::Texture* t)
 void SDL2SpriteRenderer::createSpriteAtlas(
     const SpriteApplication::Texture& t,
     const Vector<SpriteApplication::SpriteSource>&,
-    uint32&,
+    u32&,
     Vector<SDL2SpriteRenderer::Sprite>&)
 {
     C_UNUSED(t);

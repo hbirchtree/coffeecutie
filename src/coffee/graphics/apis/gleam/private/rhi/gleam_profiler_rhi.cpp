@@ -5,6 +5,8 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_quad_draw.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 
+#include <coffee/core/CDebug>
+
 namespace Coffee {
 namespace RHI {
 namespace GLEAM {
@@ -48,7 +50,7 @@ void GLEAM_PrfQuery::end()
 #endif
 }
 
-int64 GLEAM_PrfQuery::resulti()
+i64 GLEAM_PrfQuery::resulti()
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     int64 v;
@@ -64,7 +66,7 @@ int64 GLEAM_PrfQuery::resulti()
 #endif
 }
 
-uint64 GLEAM_PrfQuery::resultu()
+u64 GLEAM_PrfQuery::resultu()
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     uint64 v;
@@ -220,7 +222,7 @@ GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag) :
 {
 #if GL_VERSION_VERIFY(0x300, 0x320)
     if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2) ||
-       Debug::CheckExtensionSupported("GL_KHR_debug"))
+       Debug::CheckExtensionSupported(CGL_DBG_CTXT, "GL_KHR_debug"))
         CGL43::PushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(tag), tag);
 //    else
 //        CGL_KHR_debug<int>::PushDebugGroupKHR(
@@ -232,7 +234,7 @@ GLEAM_ScopeMarker::~GLEAM_ScopeMarker()
 {
 #if GL_VERSION_VERIFY(0x300, 0x320)
     if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2) ||
-            Debug::CheckExtensionSupported("GL_KHR_debug"))
+       Debug::CheckExtensionSupported(CGL_DBG_CTXT, "GL_KHR_debug"))
         CGL43::PopDebugGroup();
 //    else
 //        CGL_KHR_debug<int>::PopDebugGroupKHR();

@@ -34,7 +34,7 @@ struct SimpleIniParser : IniParserDef
         };
         const Type type;
 
-        int64 getInteger() const
+        i64 getInteger() const
         {
             return v1;
         }
@@ -51,7 +51,7 @@ struct SimpleIniParser : IniParserDef
             return v4;
         }
 
-        int64& operator=(int64 const& v)
+        i64& operator=(i64 const& v)
         {
             return v1 = v;
         }
@@ -72,13 +72,13 @@ struct SimpleIniParser : IniParserDef
       protected:
         union
         {
-            int64     v1;
+            i64     v1;
             bigscalar v2;
             bool      v4;
         };
         CString v3;
 
-        variant_t(int64 v) : type(Integer), v1(v)
+        variant_t(i64 v) : type(Integer), v1(v)
         {
         }
         variant_t(bigscalar v) : type(Float), v2(v)
@@ -132,7 +132,7 @@ struct SimpleIniParser : IniParserDef
         }
 
         /* Value creation */
-        variant_t* newInteger(int64 v)
+        variant_t* newInteger(i64 v)
         {
             variant_containment.push_front(variant_t(v));
             return &variant_containment.front();

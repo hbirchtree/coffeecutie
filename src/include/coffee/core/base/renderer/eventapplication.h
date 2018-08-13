@@ -1,15 +1,14 @@
 #pragma once
 
 #include "inputapplication.h"
-#include <coffee/core/eventprocess.h>
-
-#include <coffee/core/CProfiling>
-#include <coffee/core/task_queue/task.h>
-
+#include <coffee/core/CMD>
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/base/renderer_loader.h>
+#include <coffee/core/eventprocess.h>
+#include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/task_queue/task.h>
 
-#include <coffee/core/CMD>
+#include <coffee/core/CProfiling>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
@@ -46,7 +45,7 @@ struct EventLoopData
     LoopFunction<Renderer, ShareData> loop;
     LoopFunction<Renderer, ShareData> cleanup;
 
-    uint32 flags;
+    u32 flags;
 
     union
     {
@@ -290,10 +289,10 @@ class EventApplication : public InputApplication
     {
         static u64 start_time = 0;
         if(start_time == 0)
-            start_time = Time::CurrentTimestamp<std::chrono::microseconds>();
+            start_time = Time::CurrentTimestamp<Chrono::microseconds>();
 
         return bigscalar(
-                   Time::CurrentTimestamp<std::chrono::microseconds>() -
+                   Time::CurrentTimestamp<Chrono::microseconds>() -
                    start_time) *
                1_us;
     }
@@ -394,7 +393,7 @@ class EventApplication : public InputApplication
         typename implements<EventApplication, Renderer>::type* = nullptr
 
         >
-    static int32 execEventLoop(
+    static i32 execEventLoop(
         UqPtr<EventLoopData<Renderer, Data>>&& ev,
         CDProperties&                          visual,
         CString&)
@@ -453,10 +452,7 @@ class EventApplication : public InputApplication
             1);
 #endif
 
-        Cmd::RegisterAtExit([]()
-        {
-            local_event_data.release();
-        });
+        Cmd::RegisterAtExit([]() { local_event_data.release(); });
 
 #if defined(COFFEE_USE_APPLE_GLKIT) || \
     defined(COFFEE_USE_ANDROID_NATIVEWIN) || defined(COFFEE_EMSCRIPTEN)

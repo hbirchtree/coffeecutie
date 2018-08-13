@@ -59,7 +59,7 @@ using namespace Coffee;
 int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, u32 flags = 0)
 {
 #ifndef COFFEE_LOWFAT
-    cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
+    cDebug("Entering deref_main() at {0}", str::print::pointerify(deref_main));
 #endif
 
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
@@ -83,7 +83,9 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, u32 flags = 0)
     GCInfiniteLoop();
 #endif
 
+
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
+    State::GetProfilerStore()->disable();
     exit(stat);
 #else
     return stat;

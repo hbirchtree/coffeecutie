@@ -19,15 +19,15 @@ CString WindowsEnvFun::ExecutableName(cstring_w)
     excname.resize(MAX_PATH);
 
     GetModuleFileName(nullptr, &excname[0], excname.size());
-    excname.resize(Search::ChrFind(excname.c_str(), 0) - excname.c_str());
+    excname.resize(str::find(excname.c_str(), '\0') - excname.c_str());
 #ifdef COFFEE_WINDOWS_UWP
-    excname = CStrReplace(excname, L"\\", L"/");
+    excname = str::replace::str(excname, L"\\", L"/");
 #else
-    excname = CStrReplace(excname, "\\", "/");
+    excname = str::replace::str(excname, "\\", "/");
 #endif
 
 #ifdef COFFEE_WINDOWS_UWP
-    CString out(excname.begin(),excname.end());
+    CString out(excname.begin(), excname.end());
     return out;
 #else
     return excname;
@@ -41,7 +41,7 @@ CString WindowsEnvFun::GetVar(cstring v)
 #ifndef COFFEE_WINDOWS_UWP
     cstring_w var = getenv(v);
 
-    if (var)
+    if(var)
         out = var;
 #endif
 
@@ -54,11 +54,11 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
     return {};
 #else
     TCHAR* env = GetEnvironmentStrings();
-    if (!env)
-        return{};
+    if(!env)
+        return {};
     Variables var;
 
-    while (env[0] != TCHAR(0))
+    while(env[0] != TCHAR(0))
     {
         CString p_r;
 
@@ -68,7 +68,7 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
 
         var[p_r.substr(0, key_end)] = p_r.substr(key_end);
 
-        env = (TCHAR*)Search::ChrFind(env, TCHAR(0));
+        env = (TCHAR*)str::find(env, TCHAR(0));
         env += 1; // Skipping the expected \0
     }
 
@@ -79,9 +79,9 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
 bool WindowsEnvFun::ExistsVar(cstring v)
 {
 #ifdef COFFEE_WINDOWS_UWP
-	return false;
+    return false;
 #else
-	return getenv(v) != nullptr;
+    return getenv(v) != nullptr;
 #endif
 }
 
@@ -97,10 +97,10 @@ Url WindowsEnvFun::CurrentDir()
     GetCurrentDirectory(out.size(), &out[0]);
     out.resize(out.size() - 1);
 #ifdef COFFEE_WINDOWS_UWP
-    out = CStrReplace(out, L"\\", L"/");
-    return MkUrl(CString(out.begin(),out.end()), RSCA::SystemFile);
+    out = str::replace::str(out, L"\\", L"/");
+    return MkUrl(CString(out.begin(), out.end()), RSCA::SystemFile);
 #else
-    out = CStrReplace(out, "\\", "/");
+    out = str::replace::str(out, "\\", "/");
     return MkUrl(out, RSCA::SystemFile);
 #endif
 }
@@ -115,13 +115,13 @@ Url WindowsEnvFun::GetUserData(cstring org, cstring app)
 
     CString out;
     out = GetUserHome().internUrl;
-    out = ConcatPath(out.c_str(),"AppData");
-    out = ConcatPath(out.c_str(),"Local");
-    out = ConcatPath(out.c_str(),org);
-    out = ConcatPath(out.c_str(),app);
-    out = CStrReplace(out, "\\", "/");
+    out = ConcatPath(out.c_str(), "AppData");
+    out = ConcatPath(out.c_str(), "Local");
+    out = ConcatPath(out.c_str(), org);
+    out = ConcatPath(out.c_str(), app);
+    out = str::replace::str(out, "\\", "/");
     return MkUrl(out, RSCA::SystemFile);
 }
-}
-}
-}
+} // namespace Windows
+} // namespace Environment
+} // namespace Coffee

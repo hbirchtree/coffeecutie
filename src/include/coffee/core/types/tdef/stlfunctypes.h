@@ -88,68 +88,6 @@ struct Thread
 using Thread       = std::thread;
 #endif
 
-FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
-{
-#if defined(COFFEE_APPLE)
-    //    pthread_setname_np(name.c_str());
-    return false;
-#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
-    pthread_setname_np(t.native_handle(), name.c_str());
-    return true;
-#else
-    return false;
-#endif
-}
-FORCEDINLINE bool ThreadSetName(CString const& name)
-{
-    CString cpy = name;
-    if(name.size() >= 16)
-        cpy.resize(15);
-#if defined(COFFEE_APPLE)
-    pthread_setname_np(cpy.c_str());
-    return true;
-#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
-    pthread_setname_np(pthread_self(), cpy.c_str());
-    return true;
-#else
-    return false;
-#endif
-}
-FORCEDINLINE CString ThreadGetName(Thread& t)
-{
-    CString out;
-    out.resize(17);
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP)
-    int stat = pthread_getname_np(t.native_handle(), &out[0], out.size());
-    if(stat != 0)
-        return out;
-    out.resize(out.find('\0', 0));
-    return out;
-#else
-    return out;
-#endif
-}
-FORCEDINLINE CString ThreadGetName()
-{
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP)
-    CString out;
-    out.resize(17);
-    int stat = pthread_getname_np(pthread_self(), &out[0], out.size());
-    if(stat != 0)
-        return out;
-    out.resize(out.find('\0', 0));
-    return out;
-#elif defined(COFFEE_ANDROID)
-    CString out;
-    out.resize(17);
-    int stat = prctl(PR_GET_NAME, &out[0], 0, 0, 0);
-    out.resize(out.find('\0', 0));
-    return out;
-#else
-    return {};
-#endif
-}
-
 template<typename FunSignature>
 using Function = std::function<FunSignature>;
 
@@ -184,7 +122,16 @@ extern Thread::id get_id();
 #else
 using namespace std::this_thread;
 #endif
+
+extern bool    SetName(CString const& name);
+extern CString GetName();
 }
+
+extern bool    ThreadSetName(Thread& t, CString const& name);
+extern CString ThreadGetName(Thread& t);
+
+extern bool    ThreadSetName(ThreadId::Hash t, CString const& name);
+extern CString ThreadGetName(ThreadId::Hash t);
 
 namespace Chrono {
 using namespace std::chrono;
@@ -193,4 +140,107 @@ using seconds_float  = duration<scalar>;
 using seconds_double = duration<bigscalar>;
 
 } // namespace Chrono
+
+namespace bind_this {
+template<
+    typename ClassName,
+    typename Ret,
+    typename... Args,
+    typename... IncludedArgs,
+    typename std::enable_if<!std::is_same<Ret, void>::value>::type* = nullptr>
+Function<Ret(Args...)> func(
+    ClassName* this_ref,
+    Ret (ClassName::*func_ref)(std::tuple<IncludedArgs...>, Args...),
+    IncludedArgs... iargs)
+{
+    return [=](Args... args) {
+        return (*this_ref.*func_ref)(std::make_tuple(iargs...), args...);
+    };
+}
+
+template<
+    typename ClassName,
+    typename Ret,
+    typename... Args,
+    typename... IncludedArgs,
+    typename std::enable_if<std::is_same<Ret, void>::value>::type* = nullptr>
+Function<void(Args...)> func(
+    ClassName* this_ref,
+    Ret (ClassName::*func_ref)(std::tuple<IncludedArgs...>, Args...),
+    IncludedArgs... iargs)
+{
+    return [=](Args... args) {
+        (*this_ref.*func_ref)(std::make_tuple(iargs...), args...);
+    };
+}
+
+template<
+    typename ClassName,
+    typename Ret,
+    typename... Args,
+    typename... IncludedArgs,
+    typename std::enable_if<!std::is_same<Ret, void>::value>::type* = nullptr>
+Function<Ret(Args...)> func(
+    ClassName* this_ref,
+    Ret (ClassName::*func_ref)(std::tuple<IncludedArgs...>, Args...),
+    std::tuple<IncludedArgs...> iargs)
+{
+    return [=](Args... args) { return (*this_ref.*func_ref)(iargs, args...); };
+}
+
+template<
+    typename ClassName,
+    typename Ret,
+    typename... Args,
+    typename... IncludedArgs,
+    typename std::enable_if<std::is_same<Ret, void>::value>::type* = nullptr>
+Function<void(Args...)> func(
+    ClassName* this_ref,
+    Ret (ClassName::*func_ref)(std::tuple<IncludedArgs...>, Args...),
+    std::tuple<IncludedArgs...> iargs)
+{
+    return [=](Args... args) { (*this_ref.*func_ref)(iargs, args...); };
+}
+} // namespace bind_this
+
+/*!
+ * \brief single-fire conditional
+ */
+struct concurrent_notif
+{
+    Mutex   awaiter;
+    CondVar variable;
+
+    Mutex prep_lock;
+
+    FORCEDINLINE Mutex& prepare_lock()
+    {
+        prep_lock.lock();
+        return prep_lock;
+    }
+
+    FORCEDINLINE void await()
+    {
+        UqLock lock(awaiter);
+
+        prep_lock.unlock();
+
+        variable.wait(lock);
+    }
+
+    template<typename Dur>
+    FORCEDINLINE std::cv_status await(Dur const& dur)
+    {
+        UqLock lock(awaiter);
+
+        return variable.wait_for(lock, dur);
+    }
+
+    FORCEDINLINE void notify()
+    {
+        UqLock _(prep_lock);
+
+        variable.notify_all();
+    }
+};
 }

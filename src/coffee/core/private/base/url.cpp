@@ -1,11 +1,12 @@
 #include <coffee/core/base/files/url.h>
 
-#include "../plat/file/file_abstraction.h"
+#include <coffee/core/CRegex>
 #include <coffee/core/base/files/cfiles.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_resource.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/plat_file.h>
+#include <coffee/core/plat/timing/profiling.h>
 
 #include <coffee/core/CDebug>
 
@@ -224,6 +225,8 @@ static char javaioFile[] = "java.io.File";
  */
 CString GetSystemDirectedPath(cstring suffix, RSCA storage)
 {
+    using namespace ::jnipp_operators;
+
     //    using FileType = JavaClass<javaioFile, void, void>;
 
     android::ScopedJNI jni(jnipp::GetVM());
@@ -231,8 +234,8 @@ CString GetSystemDirectedPath(cstring suffix, RSCA storage)
 
     auto File           = "java.io.File"_jclass;
     auto createTempFile = "createTempFile"_jmethod.ret("java.io.File")
-                              .arg("java.lang.String")
-                              .arg("java.lang.String");
+                              .arg<std::string>("java.lang.String")
+                              .arg<std::string>("java.lang.String");
     auto getCanonicalPath = "getCanonicalPath"_jmethod.ret("java.lang.String");
 
     switch(storage & RSCA::StorageMask)
@@ -241,12 +244,8 @@ CString GetSystemDirectedPath(cstring suffix, RSCA storage)
     {
         Path filePath(suffix);
 
-        auto fileBasename = jnipp::java::type_wrapper<std::string>(
-            filePath.removeExt().internUrl);
-        auto fileExtension =
-            jnipp::java::type_wrapper<std::string>(filePath.extension());
-
-        auto fileInstance = File[createTempFile](fileBasename, fileExtension);
+        auto fileInstance = File[createTempFile](
+            filePath.removeExt().internUrl, "." + filePath.extension());
 
         auto tempFile = File(fileInstance.l)[getCanonicalPath]();
 
@@ -272,7 +271,7 @@ CString Url::operator*() const
 
 #if defined(COFFEE_UNIXPLAT)
         CString derefPath = DereferenceLocalPath();
-        derefPath         = CStrReplace(derefPath, "//", "/");
+        derefPath         = str::replace::str(derefPath, "//", "/");
 #if !defined(COFFEE_EMSCRIPTEN)
         if(!feval(flags & RSCA::NoDereference))
             derefPath = FileFun::DereferenceLink(
@@ -285,7 +284,7 @@ CString Url::operator*() const
         return derefPath;
 #else
         CString derefPath = DereferenceLocalPath();
-        derefPath         = CStrReplace(derefPath, "\\", "/");
+        derefPath         = str::replace::str(derefPath, "\\", "/");
         return derefPath;
 #endif
     }
@@ -484,7 +483,65 @@ CString to_string(const Path& path)
 CString to_string(const Url& url)
 {
     return "url(" + url.internUrl + "," +
-           StrUtil::pointerify(C_CAST<u32>(url.flags)) + ")";
+           str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
 }
 } // namespace Strings
+
+#define URLPARSE_TAG "UrlParse::From"
+#define URLPARSE_CHARS ""
+
+UrlParse UrlParse::From(const Url& url)
+{
+    enum RegexEnum
+    {
+        URL_Proto = 1,
+        URL_Host,
+        URL_PortWithResource,
+        URL_Port,
+        URL_PortResource,
+        URL_PortOnly,
+        URL_Resource,
+    };
+
+    constexpr cstring url_pattern =
+        "^"                                     /* from start */
+        "([A-Za-z0-9\\.]*[A-Za-z0-9])://"       /* protocol */
+        "([A-Za-z0-9-_$\\.\\,\\+!\\*'\\(\\)]+)" /* host */
+        "(:([0-9]+)/(.*)|:([0-9]+)|/(.+)|)"     /* port and resource */
+        "$"                                     /* to end */
+        ;
+
+    DProfContext _(URLPARSE_TAG);
+    UrlParse     p = {};
+
+    Profiler::DeepPushContext(URLPARSE_TAG "Regex compile");
+    auto patt = Regex::Compile(url_pattern);
+    Profiler::DeepPopContext();
+
+    Profiler::DeepPushContext(URLPARSE_TAG "Regex");
+    auto matches = Regex::Match(patt, *url, true);
+    Profiler::DeepPopContext();
+
+    if(!matches.size())
+        return p;
+
+    p.m_protocol = matches[1].s_match[0];
+    p.m_host     = matches[2].s_match[0];
+
+    if(matches[URL_Port].s_match[0].size())
+    {
+        p.m_port     = cast_string<u32>(matches[URL_Port].s_match[0]);
+        p.m_resource = matches[URL_PortResource].s_match[0];
+    } else if(matches[URL_PortOnly].s_match[0].size())
+    {
+        p.m_port = cast_string<u32>(matches[URL_PortOnly].s_match[0]);
+    } else
+    {
+        p.m_port     = 0;
+        p.m_resource = matches[URL_Resource].s_match[0];
+    }
+
+    return p;
+}
+
 } // namespace Coffee

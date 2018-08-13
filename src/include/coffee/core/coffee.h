@@ -1,5 +1,4 @@
-#ifndef COFFEE_H
-#define COFFEE_H
+#pragma once
 
 #include "coffee_signals.h"
 #include "argument_handling.h"
@@ -14,9 +13,9 @@ namespace Coffee{
 /*!
  * \brief This function handles initial program startup
  */
-extern int32 CoffeeMain(
+extern i32 CoffeeMain(
         CoffeeMainWithArgs mainfun,
-        int32 argc, cstring_w *argv,
+        i32 argc, cstring_w *argv,
         u32 flags = 0);
 
 /*!
@@ -56,5 +55,3 @@ namespace CFunctional{}
 using namespace CFunctional;
 
 } //Coffee
-
-#endif // COFFEE_H

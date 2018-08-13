@@ -1,9 +1,9 @@
 #pragma once
 
-#include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct StacktracerDef
 {
@@ -21,6 +21,12 @@ struct StacktracerDef
 #else
         return {};
 #endif
+    }
+
+    template<typename T>
+    static CString GetFuncName(T /*funcPtr*/)
+    {
+        return {};
     }
 
     /*!
@@ -45,7 +51,7 @@ struct StacktracerDef
      *  Argument specifies depth.
      * \return A string with the name of the stackframe
      */
-    static CString GetStackframeName(uint32 = 0)
+    static CString GetStackframeName(u32 = 0)
     {
         return {};
     }
@@ -60,10 +66,11 @@ struct StacktracerDef
     }
 
     /*!
-     * \brief Dump the full stack, alternatively from a start (first argument) to given length (second argument)
-     * \return A vector containing stackframe names
+     * \brief Dump the full stack, alternatively from a start (first argument)
+     * to given length (second argument) \return A vector containing stackframe
+     * names
      */
-    static Stacktrace GetFullStack(uint32 = 0, int32 = -1)
+    static Stacktrace GetFullStack(u32 = 0, i32 = -1)
     {
         return {};
     }
@@ -73,4 +80,4 @@ struct StacktracerDef
     }
 };
 
-}
+} // namespace Coffee

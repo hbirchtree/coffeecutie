@@ -8,9 +8,8 @@
 #include <asio/ssl.hpp>
 #endif
 
-#include <coffee/core/types/tdef/stlfunctypes.h>
-
-#include <coffee/core/coffee_strings.h>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee {
 /*!
@@ -20,10 +19,6 @@ namespace ASIO {
 
 struct ASIO_Client
 {
-    using Host    = CString;
-    using Service = CString;
-    using Port    = uint16;
-
     struct AsioContext_data
     {
         AsioContext_data() :
@@ -61,8 +56,8 @@ struct ASIO_Client
     }
 };
 
-using AsioContext = ASIO_Client::AsioContext_internal;
-using AsioService = ASIO_Client;
+using service      = ASIO_Client;
+using asio_context = ASIO_Client::AsioContext_internal;
 
 } // namespace ASIO
 } // namespace Coffee

@@ -89,7 +89,7 @@ FORCEDINLINE bool FutureAvailable(Future<T> const& f)
  * \brief Sleep for mic microseconds, may not work accurately on mobile devices
  * \param mic
  */
-FORCEDINLINE void sleepMicros(uint64 mic)
+FORCEDINLINE void sleepMicros(u64 mic)
 {
     CurrentThread::sleep_for(Chrono::microseconds(mic));
 }
@@ -97,7 +97,7 @@ FORCEDINLINE void sleepMicros(uint64 mic)
  * \brief Sleep for mll milliseconds
  * \param mll
  */
-FORCEDINLINE void sleepMillis(uint64 mll)
+FORCEDINLINE void sleepMillis(u64 mll)
 {
     CurrentThread::sleep_for(Chrono::milliseconds(mll));
 }

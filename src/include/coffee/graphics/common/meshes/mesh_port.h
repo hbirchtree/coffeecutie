@@ -3,9 +3,6 @@
 #include "mesh.h"
 #include "mesh_headers.h"
 
-#include <coffee/core/coffee.h>
-#include <coffee/core/CFiles>
-
 namespace Coffee{
 namespace SMSH{
 

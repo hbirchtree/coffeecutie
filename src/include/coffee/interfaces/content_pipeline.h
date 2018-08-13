@@ -56,8 +56,7 @@ struct FileProcessor
 
     virtual Path cacheTransform(Path const& f)
     {
-        return cacheBaseDir +
-               Path(Mem::Search::CStrReplace(f.internUrl, "/", "_"));
+        return cacheBaseDir + Path(str::replace::str(f.internUrl, "/", "_"));
     }
 
     virtual bool isCached(Path const& file)

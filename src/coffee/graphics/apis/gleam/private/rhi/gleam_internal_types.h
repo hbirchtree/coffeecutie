@@ -3,7 +3,6 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
-#include <coffee/core/CDebug>
 
 #define GLM_API "GLEAM_API::"
 
@@ -29,10 +28,10 @@ struct GLEAM_PboQueue
     struct Pbo
     {
         CGhnd buf;
-        uint32 flags;
+        u32 flags;
     };
     Vector<Pbo> buffers;
-    uint32 idx = 0;
+    u32 idx = 0;
     Pbo& current()
     {
         Pbo& ref = buffers.at(idx++);
@@ -47,8 +46,10 @@ struct GLEAM_Instance_Data
     GLEAM_PboQueue pboQueue;
 #endif
     struct {
-	int32 NUM_PROGRAM_BINARY_FORMATS = -1;
+    i32 NUM_PROGRAM_BINARY_FORMATS = -1;
     } GL_CACHED;
+
+    Debug::CGL_Shared_Debug::Context dbgContext;
 };
 
 inline APILevel gl_level_from_string(CString const& str)
@@ -81,6 +82,7 @@ inline APILevel gl_level_from_string(CString const& str)
 #define GLEAM_API_INSTANCE_DATA m_store->inst_data
 #define GLEAM_FEATURES RHI::GLEAM::m_store->features
 #define GLEAM_OPTIONS RHI::GLEAM::m_store->options
+#define CGL_DBG_CTXT GLEAM_API_INSTANCE_DATA->dbgContext
 
 #define GLEAM_VERSION_CHECK(desktop_ver, es_ver) \
     (\

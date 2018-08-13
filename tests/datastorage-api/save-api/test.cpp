@@ -5,10 +5,10 @@ using namespace Coffee;
 
 struct TestStructure
 {
-    uint64 big_integer_test;
+    u64 big_integer_test;
     bigscalar big_float_test;
-    int32 smaller_integer_test;
-    int16 small_integer_test;
+    i32 smaller_integer_test;
+    i16 small_integer_test;
 
     bool operator ==(const TestStructure& b)
     {

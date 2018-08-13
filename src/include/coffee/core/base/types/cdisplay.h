@@ -23,10 +23,10 @@ struct CDColorSpace
     {
     }
 
-    uint8 red   = 0;
-    uint8 green = 0;
-    uint8 blue  = 0;
-    uint8 extra = 0;
+    u8 red   = 0;
+    u8 green = 0;
+    u8 blue  = 0;
+    u8 extra = 0;
 };
 
 /*!
@@ -46,17 +46,17 @@ struct CDContextBits
             stencil == other.stencil && samples == other.samples);
     }
 
-    uint8 red;
-    uint8 green;
-    uint8 blue;
-    uint8 alpha;
+    u8 red;
+    u8 green;
+    u8 blue;
+    u8 alpha;
 
-    uint8 depth;
-    uint8 stencil;
+    u8 depth;
+    u8 stencil;
 
-    uint8 samples;
+    u8 samples;
 
-    uint8 buffer_size;
+    u8 buffer_size;
 };
 
 /*!
@@ -75,8 +75,8 @@ struct CDMonitor
     CSize        phySize;    /*!< Physical size of monitor*/
     CSize        resolution;
     CDColorSpace colorBits;    /*!< Color depth bits*/
-    int32        refresh : 24; /*!< Refresh rate*/
-    uint8        index;        /*!< Real monitor index*/
+    i32        refresh : 24; /*!< Refresh rate*/
+    u8        index;        /*!< Real monitor index*/
 };
 
 /*!
@@ -119,7 +119,7 @@ using CDResizeEvent = CSize;
 /*!
  * \brief GL context version
  */
-struct CGLVersion : public _cbasic_version<uint8>
+struct CGLVersion : public _cbasic_version<u8>
 {
     CGLVersion()
     {
@@ -127,7 +127,7 @@ struct CGLVersion : public _cbasic_version<uint8>
         this->minor    = 0;
         this->revision = 0;
     }
-    CGLVersion(uint8 maj, uint8 min)
+    CGLVersion(u8 maj, u8 min)
     {
         this->major    = maj;
         this->minor    = min;
@@ -178,7 +178,7 @@ struct CDFocusEvent
     FocusMask mod; /*!< Type of focus event*/
 };
 
-C_FLAGS(CDFocusEvent::FocusMask, uint8);
+C_FLAGS(CDFocusEvent::FocusMask, u8);
 
 /*!
  * \brief GL context properties to set on start-up
@@ -253,10 +253,10 @@ struct CDProperties
 };
 
 C_FLAGS(CDProperties::State, uint16);
-C_FLAGS(GLProperties::Flags, uint8);
+C_FLAGS(GLProperties::Flags, u8);
 
 extern CDProperties GetDefaultVisual(
-    const int32& ctxtMajorVer, const int32& ctxtMinorVer);
+    const i32& ctxtMajorVer, const i32& ctxtMinorVer);
 
 template<
     typename GL_LIB,
@@ -266,7 +266,7 @@ template<
     >
 STATICINLINE CDProperties GetDefaultVisual()
 {
-    int32 majver = 0, minver = 0;
+    i32 majver = 0, minver = 0;
     GL_LIB::GetDefaultVersion(majver, minver);
     auto visual = GetDefaultVisual(majver, minver);
     GL_LIB::GetDefaultProperties(visual);

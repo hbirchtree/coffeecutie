@@ -53,7 +53,7 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
     cVerbose(
         8,
         "Loading memory: {0}+{1} <- slot {2} ::",
-        StrUtil::pointerify(data.data),
+        str::print::pointerify(data.data),
         data.size,
         slot);
 
@@ -95,7 +95,7 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
     cVerbose(
         8,
         "Validated resource, got {0}+{1}",
-        StrUtil::pointerify(rsc.data),
+        str::print::pointerify(rsc.data),
         rsc.size);
 
     MemCpy(C_OCAST<Bytes>(rsc), data);

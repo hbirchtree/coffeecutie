@@ -11,7 +11,7 @@
 
 using EDATA = EventLoopData<CDRenderer, RendererState>;
 
-int32 coffee_main(int32, cstring_w*)
+i32 coffee_main(i32, cstring_w*)
 {
     using namespace EventHandlers;
     using namespace StandardInput;

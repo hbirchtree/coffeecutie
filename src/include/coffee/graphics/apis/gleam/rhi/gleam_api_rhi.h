@@ -186,7 +186,7 @@ struct GLEAM_API : GraphicsAPI
     static void DumpFramebuffer(
         FB_T& fb, PixFmt c, BitFmt dt, Vector<byte_t>& storage);
 
-    static void GetDefaultVersion(int32& major, int32& minor);
+    static void GetDefaultVersion(i32& major, i32& minor);
 
     static void GetDefaultProperties(Display::CDProperties& properties);
 
@@ -199,11 +199,11 @@ struct GLEAM_API : GraphicsAPI
     static API_CONTEXT GetLoadAPI(GLEAM_Options const& options = {});
 
     /* i specifies view index for indexed views, 0 for  */
-    static void SetRasterizerState(RASTSTATE const& rstate, uint32 = 0);
-    static void SetViewportState(VIEWSTATE const& vstate, uint32 i = 0);
-    static void SetBlendState(BLNDSTATE const& bstate, uint32 i = 0);
-    static void SetDepthState(DEPTSTATE const& dstate, uint32 i = 0);
-    static void SetStencilState(STENSTATE const& sstate, uint32 i = 0);
+    static void SetRasterizerState(RASTSTATE const& rstate, u32 = 0);
+    static void SetViewportState(VIEWSTATE const& vstate, u32 i = 0);
+    static void SetBlendState(BLNDSTATE const& bstate, u32 i = 0);
+    static void SetDepthState(DEPTSTATE const& dstate, u32 i = 0);
+    static void SetStencilState(STENSTATE const& sstate, u32 i = 0);
 
     static void GetShaderUniformState(
         PIP const&        pipeline,

@@ -11,7 +11,7 @@
 namespace Coffee{
 namespace Blam{
 
-bitm_header_t _bitm_get_header(const void* base, int32 offset)
+bitm_header_t _bitm_get_header(const void* base, i32 offset)
 {
     const bitm_header_t* ptr = C_RCAST<const bitm_header_t*>(
                 (C_RCAST<const byte_t*>(base))+offset);
@@ -26,8 +26,8 @@ bitm_header_t _bitm_get_header(const void* base, int32 offset)
 const bitm_image_t *bitm_get(
         const index_item_t *item,
         const file_header_t *map,
-        int32 magic,
-        int32* numImages)
+        i32 magic,
+        i32* numImages)
 {
     C_UNUSED(numImages);
     bitm_header_t hdr = _bitm_get_header(map,item->offset-magic);
@@ -50,7 +50,7 @@ bitm_texture_t bitm_get_texture(const bitm_image_t *img, const void *bitmfile)
 
     bitm_texture_t def;
 
-    def.mipmaps = CMath::max<int16>(1,img->mipmaps);
+    def.mipmaps = CMath::max<i16>(1,img->mipmaps);
     switch(img->type)
     {
     case bitm_type_t::T2D:

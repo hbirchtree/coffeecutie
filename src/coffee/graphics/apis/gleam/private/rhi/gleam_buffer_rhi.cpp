@@ -7,9 +7,12 @@ namespace RHI {
 namespace GLEAM {
 STATICINLINE void VerifyBuffer(glhnd const& h)
 {
+    // TODO: Return error
+
     if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h.hnd))
-        cWarning("Invalid use of buffer API,"
-                 " buffer handle is not valid");
+        return;
+//        cWarning("Invalid use of buffer API,"
+//                 " buffer handle is not valid");
 }
 
 void GLEAM_VBuffer::alloc()
@@ -145,7 +148,7 @@ void GLEAM_VBuffer::unbind() const
 }
 
 void GLEAM_BindableBuffer::bindrange(
-    uint32 idx, szptr off, szptr size, gleam_error& ec) const
+    u32 idx, szptr off, szptr size, gleam_error& ec) const
 {
 #if GL_VERSION_VERIFY(0x330, 0x300)
     if(!GLEAM_FEATURES.gles20)

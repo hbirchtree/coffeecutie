@@ -1,25 +1,22 @@
 #pragma once
 
-#include <array>
-
-#include <coffee/core/coffee_mem_macros.h>
-#include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/CProfiling>
 #include <coffee/core/base/renderer/initapplication.h>
+#include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/coffee_mem_macros.h>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-template<typename Renderer,
+template<
+    typename Renderer,
 
-         typename implements<InitApplication, Renderer>::type* = nullptr
+    typename implements<InitApplication, Renderer>::type* = nullptr
 
-         >
-STATICINLINE
-bool LoadHighestVersion(
-        Renderer* renderer, CDProperties& properties, CString* err)
+    >
+STATICINLINE bool LoadHighestVersion(
+    Renderer* renderer, CDProperties& properties, CString* err)
 {
-
-
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
     return renderer->init(properties, err);
 #else
@@ -31,7 +28,7 @@ bool LoadHighestVersion(
         u32 min;
     };
 
-    static const constexpr std::array<GLEnv, 8> GLVersions = {{
+    static const constexpr Array<GLEnv, 8> GLVersions = {{
 #if !defined(COFFEE_ONLY_GLES20)
         {GLProperties::GLES, 3, 2},
         {GLProperties::GLES, 3, 1},
@@ -76,5 +73,5 @@ bool LoadHighestVersion(
 #endif
 }
 
-}
-}
+} // namespace Display
+} // namespace Coffee

@@ -52,7 +52,7 @@ void GLEAM_OccludeQuery::end()
 #endif
 }
 
-int64 GLEAM_OccludeQuery::resulti()
+i64 GLEAM_OccludeQuery::resulti()
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     int64 v;
@@ -68,7 +68,7 @@ int64 GLEAM_OccludeQuery::resulti()
 #endif
 }
 
-uint64 GLEAM_OccludeQuery::resultu()
+u64 GLEAM_OccludeQuery::resultu()
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     uint64 v;

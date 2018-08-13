@@ -38,91 +38,91 @@ struct reflex_group
 
 struct scn_biped
 {
-    int16 BipedType;
-    int16 unk2;
-    uint32 unk3;
+    i16 BipedType;
+    i16 unk2;
+    u32 unk3;
     Vecf3 pos;
     scalar rot;
-    uint32 unk[24];
+    u32 unk[24];
 };
 
 struct scn_equip
 {
-    int16 numid;
-    int16 unk2;
-    uint32  unk3;
+    i16 numid;
+    i16 unk2;
+    u32  unk3;
     Vecf3 pos;
-    uint32 unk[5];
+    u32 unk[5];
 };
 
 struct scn_vehicle_spawn
 {
-    int16 numid;
+    i16 numid;
     uint16 flag;
-    uint32 unknown1;
+    u32 unknown1;
     Vecf3 pos;
     scalar rot;
-    uint32 unknown2[24];
+    u32 unknown2[24];
 };
 
 struct scn_palette
 {
     bl_tag tag;
-    uint32 NamePtr;
-    uint32 unk1;
-    uint32 ObjectTagId;
-    uint32 unk[8];
+    u32 NamePtr;
+    u32 unk1;
+    u32 ObjectTagId;
+    u32 unk[8];
 };
 
 struct scn_weapon_spawn
 {
-    int16 numid;
+    i16 numid;
     uint16 flag;
-    uint32   unknown1;
+    u32   unknown1;
     Vecf3 pos;
     scalar  rot;
-    uint32   unknown2[17];
+    u32   unknown2[17];
 };
 
 struct scn_weapon_ref
 {
-    int16 numid;
+    i16 numid;
     uint16 flag;
-    uint32   unknown1;
+    u32   unknown1;
     Vecf3 pos;
     scalar  rot;
-    uint32   unknown2[17];
+    u32   unknown2[17];
 };
 
 
 struct scn_scenery_spawn
 {
-    int16 numid;
+    i16 numid;
     uint16 flag;
-    uint32 unknown1;
+    u32 unknown1;
     Vecf3 pos;
     scalar  rot;
     scalar  unk1[2];
-    uint32   unknown2[10];
+    u32   unknown2[10];
 };
 
 struct scn_machine
 {
-    int16 MachineType;
-    int16 unk2;
-    uint32  unk3;
+    i16 MachineType;
+    i16 unk2;
+    u32  unk3;
     Vecf3 pos;
     scalar rot;
-    uint32 unk[10];
+    u32 unk[10];
 };
 
 struct scn_sound_scenery
 {
-    int16 SoundType;
-    int16 unk2;
-    uint32  unk3;
+    i16 SoundType;
+    i16 unk2;
+    u32  unk3;
     Vecf3 pos;
-    uint32 unk4[5];
+    u32 unk4[5];
 };
 
 struct scn_player_spawn
@@ -138,19 +138,19 @@ struct scn_profile_placement
     scalar health;
     scalar shields;
     bl_tag primarytag;
-    int32 primaryrawfilename;
+    i32 primaryrawfilename;
     byte_t zero1[4];
-    int32 primaryidentifier;
-    int16 primaryclip;
-    int16 primarytotal;
+    i32 primaryidentifier;
+    i16 primaryclip;
+    i16 primarytotal;
     bl_tag secondarytag;
-    int32 secondaryfilename;
+    i32 secondaryfilename;
     byte_t zero2[4];
-    int32 secondaryidentifier;
-    int16 secondaryclip;
-    int16 secondarytotal;
-    int16 fraggrencount;
-    int16 plasmagrencount;
+    i32 secondaryidentifier;
+    i16 secondaryclip;
+    i16 secondarytotal;
+    i16 fraggrencount;
+    i16 plasmagrencount;
     byte_t zero3[20];
 };
 
@@ -162,33 +162,33 @@ struct scn_multiplayer_flag
     uint16 index1;
     uint16 index2;
     bl_tag  tag;
-    uint32  unk2[31];
+    u32  unk2[31];
 };
 
 struct scn_multiplayer_equipment
 {
-    uint32 unk[16];
+    u32 unk[16];
     Vecf3 pos;
     scalar yaw;
     scalar unk1;
-    uint32 NamePtr;
-    uint32 unk2;
-    uint32 ObjectTagId;
-    uint32 unk3[12];
+    u32 NamePtr;
+    u32 unk2;
+    u32 ObjectTagId;
+    u32 unk3[12];
 };
 
 struct scn_player_starting_profile
 {
-    uint32 unk1_offset;
+    u32 unk1_offset;
     byte_t name[28];
     uint16 padding1;
-    uint32 unk2_offset;
+    u32 unk2_offset;
     tagref_t weapon1;
-    uint32 unk3;
+    u32 unk3;
     tagref_t weapon2;
-    uint32 unk4;
-    uint32 unk5;
-    uint32 padding2[5];
+    u32 unk4;
+    u32 unk5;
+    u32 padding2[5];
 };
 
 struct scn_device_group
@@ -198,26 +198,26 @@ struct scn_device_group
 
 struct scn_bsp_trigger
 {
-    uint32 unk[2];
+    u32 unk[2];
 };
 
 struct scn_move_positions
 {
     byte_t unk1[32];
     byte_t unk2[4];
-    uint32 Offset;
-    uint32 unk[5];
+    u32 Offset;
+    u32 unk[5];
 };
 
 struct scn_object_name
 {
     bl_string name;
-    uint32 unknown;
+    u32 unknown;
 };
 
 struct scn_trigger_volume
 {
-    uint32 unk;
+    u32 unk;
     bl_string name;
     scalar unk2[9];
     bl_bounding_box box;
@@ -226,62 +226,62 @@ struct scn_trigger_volume
 struct scn_actor_variant_ref
 {
     bl_tag tag;
-    uint32 NamePtr;
-    uint32 unk;
+    u32 NamePtr;
+    u32 unk;
     scalar unk2;
 };
 
 struct scn_ai_animation_ref
 {
     bl_string name;
-    int16 unk1;
-    int16 unk2;
-    uint32 unk[14];
+    i16 unk1;
+    i16 unk2;
+    u32 unk[14];
 };
 
 struct scn_ai_script_ref
 {
     bl_string name;
-    uint32 unk[15];
+    u32 unk[15];
 };
 
 struct scn_ai_recording_ref
 {
-    uint32 unk1[6];
+    u32 unk1[6];
     bl_tag tag;
-    uint32 NamePtr;
-    uint32 unk[2];
+    u32 NamePtr;
+    u32 unk[2];
 };
 
 struct scn_script_triggers
 {
-    uint32 unk1;
+    u32 unk1;
     bl_string name;
     Vecf3 pos;
-    uint32 unk[11];
+    u32 unk[11];
 };
 
 struct scn_globals
 {
-    uint32 unk1;
+    u32 unk1;
     bl_string name;
-    uint32 unk2;
+    u32 unk2;
     Vecf3 pos;
     scalar unk3[4];
-    uint32 unk[9];
+    u32 unk[9];
 };
 
 struct scn_references
 {
-    uint32 unk1;
+    u32 unk1;
     bl_string name;
-    uint32 unk[15];
+    u32 unk[15];
 };
 
 struct scn_encounter
 {
     byte_t text[16];
-    uint32 unk[28];
+    u32 unk[28];
     reflexive_t<byte_t> squads;
     reflexive_t<byte_t> platoons;
     reflexive_t<byte_t> firingPositions;
@@ -291,32 +291,32 @@ struct scn_encounter
 struct scn_encounter_squad
 {
     bl_string name;
-    int16 ActorType;
-    int16 Platoon;
-    int16 InitialState;
-    int16 ReturnState;
-    uint32  unk1[11];
-    uint32  Ai_Attacking;
-    uint32  Ai_AttackingSearch;
-    uint32  Ai_AttackingGuard;
-    uint32  Ai_Defending;
-    uint32  Ai_DefendingSearch;
-    uint32  Ai_DefendingGuard;
-    uint32  Ai_Pursuing;
-    uint32  unk2[3];
-    int16 NormalDiffCount;
-    int16 InsaneDiffCount;
-    uint32  unk3[20];
+    i16 ActorType;
+    i16 Platoon;
+    i16 InitialState;
+    i16 ReturnState;
+    u32  unk1[11];
+    u32  Ai_Attacking;
+    u32  Ai_AttackingSearch;
+    u32  Ai_AttackingGuard;
+    u32  Ai_Defending;
+    u32  Ai_DefendingSearch;
+    u32  Ai_DefendingGuard;
+    u32  Ai_Pursuing;
+    u32  unk2[3];
+    i16 NormalDiffCount;
+    i16 InsaneDiffCount;
+    u32  unk3[20];
     reflexive_t<byte_t> StartLocations;
-    uint32  unk4[3];
+    u32  unk4[3];
 };
 
 struct scn_encounter_squad_spawn
 {
     Vecf3 pos;
     scalar yaw;
-    int16 unk2[5];
-    int16 CommandList;
+    i16 unk2[5];
+    i16 CommandList;
 };
 
 struct scn_encounter_info
@@ -331,37 +331,37 @@ struct scn_encounter_info
 
 struct scn_decal
 {
-    int16 unk1;
-    int16 unk2;
+    i16 unk1;
+    i16 unk2;
     Vecf3 pos;
 };
 
 struct scn_decal_ref
 {
     bl_tag tag;
-    uint32 NamePtr;
-    uint32 reserved;
-    uint32 TagId;
+    u32 NamePtr;
+    u32 reserved;
+    u32 TagId;
 };
 
 struct scn_shader_index
 {
-    uint32 ShaderType;
-    uint32 ShaderIndex;
+    u32 ShaderType;
+    u32 ShaderIndex;
 };
 
 struct scn_skybox
 {
     bl_tag tag;
-    uint32 NameRef;
-    uint32 unk1;
-    uint32 TagId;
+    u32 NameRef;
+    u32 unk1;
+    u32 TagId;
 };
 
 struct scn_starting_equip
 {
-    uint32 unknown1; /*!< Sometimes 1? */
-    uint32 index;
+    u32 unknown1; /*!< Sometimes 1? */
+    u32 index;
     byte_t padding2[51];
     tagref_t items[6];
     byte_t padding3[45];
@@ -369,11 +369,11 @@ struct scn_starting_equip
 
 struct scn_control
 {
-    int16 unk1;
-    int16 unk2;
+    i16 unk1;
+    i16 unk2;
     byte_t unk3[4];
     Vecf3 pos;
-    uint32 tag_id;
+    u32 tag_id;
     byte_t unk[40];
 };
 
@@ -384,18 +384,18 @@ struct scn_light_fixture
     Vecf3 pos;
     byte_t unk2[12];
     bl_rgba_t specular;
-    int32 zero1;
+    i32 zero1;
     bl_rgba_t color;
     byte_t unk3[40];
 };
 
 struct scn_sbsp
 {
-    uint32 header_offset;
-    uint32 xbox_reflexive_count;
-    uint32 xbox_reflexive_offset;
-    uint32 xbox_lightmap_reflexive_count;
-    uint32 xbox_lightmap_reflexive_offset;
+    u32 header_offset;
+    u32 xbox_reflexive_count;
+    u32 xbox_reflexive_offset;
+    u32 xbox_lightmap_reflexive_count;
+    u32 xbox_lightmap_reflexive_offset;
     bl_tag tag;
 };
 
@@ -404,14 +404,14 @@ struct scn_sbsp
  */
 struct scn_bsp_header
 {
-    uint32 offset;
-    uint32 size;
-    uint32 magic;
-    uint32 zero;
+    u32 offset;
+    u32 size;
+    u32 magic;
+    u32 zero;
     bl_tag tag;
-    uint32 name_ptr;
-    uint32 unknown1;
-    uint32 tag_id;
+    u32 name_ptr;
+    u32 unknown1;
+    u32 tag_id;
 };
 
 /*!
@@ -423,18 +423,18 @@ struct scenario
     byte_t unk_str2[16];
     byte_t unk_str3[16];
     reflexive_t<scn_skybox> skybox;
-    uint32 zero1;
+    u32 zero1;
     reflexive_t<tagref_t> child_scenarios;
 
-    uint32 reserved1[46];
+    u32 reserved1[46];
 
-    int32 editor_scenario_size;
-    uint32 unknown_2;
-    uint32 unknown_3;
-    uint32 ptr_to_index;
-    uint32 reserved2[2];
-    uint32 ptr_to_index_end;
-    uint32 reserved3[57];
+    i32 editor_scenario_size;
+    u32 unknown_2;
+    u32 unknown_3;
+    u32 ptr_to_index;
+    u32 reserved2[2];
+    u32 ptr_to_index_end;
+    u32 reserved3[57];
 
     reflexive_t<scn_object_name> object_names;
     reflex_group<scn_scenery_spawn> scenery;
@@ -469,8 +469,8 @@ struct scenario
     reflexive_t<scn_chunk> starting_locations;
     reflexive_t<scn_chunk> platoons;
     reflexive_t<scn_chunk> ai_conversations;
-    uint32 script_syntax_data_size;
-    uint32 unknown_7;
+    u32 script_syntax_data_size;
+    u32 unknown_7;
     reflexive_t<scn_chunk> scripts;
     reflexive_t<scn_chunk> commands;
     reflexive_t<scn_chunk> points;
@@ -488,8 +488,8 @@ struct scenario
     reflexive_t<scn_chunk> cutscene_camera_poi;
     reflexive_t<scn_chunk> cutscene_titles;
     reflexive_t<scn_chunk> unknown_9[8];
-    uint32 zero2;
-    uint32 unknown_10;
+    u32 zero2;
+    u32 unknown_10;
     reflexive_t<scn_bsp_header> struct_bsp;
 };
 

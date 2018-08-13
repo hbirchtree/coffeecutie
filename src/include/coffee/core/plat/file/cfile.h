@@ -167,7 +167,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         return stat == 0;
     }
 
-    STATICINLINE Bytes Read(FH const& fh, uint64 size, file_error& ec)
+    STATICINLINE Bytes Read(FH const& fh, u64 size, file_error& ec)
     {
         if(!Valid(fh, ec))
             return {};
@@ -197,7 +197,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
 
         return data;
     }
-    STATICINLINE bool Seek(FH const& fh, uint64 off, file_error& ec)
+    STATICINLINE bool Seek(FH const& fh, u64 off, file_error& ec)
     {
         if(!Valid(fh, ec))
             return false;

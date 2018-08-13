@@ -17,7 +17,7 @@ FORCEDINLINE void EventHandleDrop(
     e.ts = drop.timestamp;
 
     CIDropEvent d;
-    d.size = StrLen(drop.file)+1;
+    d.size = str::len(drop.file)+1;
     d.type = CIDropEvent::File;
     d.text_data.text = drop.file;
 

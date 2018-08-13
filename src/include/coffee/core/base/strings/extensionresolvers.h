@@ -1,23 +1,28 @@
 #ifndef COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
 #define COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
 
-#include "../../plat/memory/stlstring_ops.h"
 #include "../../coffee_mem_macros.h"
-#include "../../plat/plat_quirks_toggling.h"
 #include "../../plat/memory/stlstring_ops.h"
+#include "../../plat/plat_quirks_toggling.h"
 #include "../../string_casting.h"
 
-namespace Coffee{
-namespace Strings{
+namespace Coffee {
+namespace Strings {
 
-using namespace Mem;
+template<
+    typename CharT,
+    typename TargetChar,
+    typename UnwrappedT = typename std::remove_const<
+        typename std::remove_pointer<CharT>::type>::type>
+struct is_cstring
+{
+    static constexpr bool value = std::is_same<UnwrappedT, TargetChar>::value;
+};
 
-template<typename CharT,
-         typename std::enable_if<std::is_integral<CharT>::value,
-                                 bool>::type* = nullptr,
-         typename std::enable_if<std::is_signed<CharT>::value,
-                                 bool>::type* = nullptr>
-inline CString to_string(const CharT* const& v)
+template<
+    typename T,
+    typename std::enable_if<is_cstring<T, char>::value>::type* = nullptr>
+inline CString to_string(T* v)
 {
     CString out;
     if(v)
@@ -27,58 +32,71 @@ inline CString to_string(const CharT* const& v)
     return out;
 }
 
-inline CString to_string(char* v)
+template<
+    typename T,
+    typename std::enable_if<is_cstring<T, wchar_t>::value>::type* = nullptr>
+inline CString to_string(T* v)
 {
     CString out;
     if(v)
-        out = v;
-    else
+    {
+        CWString out_w = v;
+        out = CString(out_w.begin(), out_w.end());
+    } else
         out = "0x0";
     return out;
 }
 
-template<typename T,
-          typename std::enable_if<std::is_same<T, std::nullptr_t>::value,
-                                  bool>::type* = nullptr>
- inline CString to_string(T const&)
- {
-     return "0x0";
- }
+template<
+    typename T,
+    typename std::enable_if<
+        std::is_pointer<T>::value && !is_cstring<T, char>::value &&
+        !is_cstring<T, wchar_t>::value>::type* = nullptr>
+inline CString to_string(T const& v)
+{
+    return str::print::pointerify(v);
+}
 
-inline cstring to_string(bool const& v)
+template<
+    typename T,
+    typename std::enable_if<std::is_same<T, std::nullptr_t>::value>::type* =
+        nullptr>
+inline CString to_string(T const&)
+{
+    return "0x0";
+}
+
+template<
+    typename T,
+    typename std::enable_if<std::is_same<T, bool>::value>::type* = nullptr>
+inline cstring to_string(T const& v)
 {
     return (v) ? "true" : "false";
 }
 
-template<typename CharT>
-inline CString to_string(typename std::basic_string<CharT> const& v)
+template<template<typename CharT> class StringType, typename CharT>
+inline CString to_string(StringType<CharT> const& v)
 {
-    return v;
+    return CString(v.begin(), v.end());
 }
 
-template<typename T,
-         typename std::enable_if<std::is_pointer<T>::value,
-                                 bool>::type* = nullptr>
-inline CString to_string(T const& v)
-{
-    return StrUtil::pointerify(v);
-}
-
-template<typename T,
-         typename std::enable_if<std::is_integral<T>::value,
-                                 bool>::type* = nullptr>
+template<
+    typename T,
+    typename std::enable_if<
+        std::is_integral<T>::value && !std::is_same<T, bool>::value>::type* =
+        nullptr>
 inline CString to_string(const T& v)
 {
     return cast_pod<T>(v);
 }
 
-template<typename T,
-         typename std::enable_if<std::is_convertible<T, CString>::value,
-                                 bool>::type* = nullptr,
-         typename std::enable_if<!std::is_pointer<T>::value,
-                                 bool>::type* = nullptr,
-         typename std::enable_if<!std::is_same<T, std::nullptr_t>::value,
-                                 bool>::type* = nullptr>
+template<
+    typename T,
+    typename std::enable_if<std::is_convertible<T, CString>::value>::type* =
+        nullptr,
+    typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr,
+    typename std::enable_if<!std::is_same<T, std::nullptr_t>::value>::type* =
+        nullptr>
 inline CString to_string(T const& value)
 {
     return static_cast<CString>(value);
@@ -86,36 +104,24 @@ inline CString to_string(T const& value)
 
 inline CString to_string(const scalar& v)
 {
-    CString out = Convert::scalarftostring(v);
-    return StrUtil::zerortrim(out);
+    CString out = str::convert::to_string<scalar>(v);
+    return str::trim::right_zero(out);
 }
 inline CString to_string(const bigscalar& v)
 {
-    CString out = Convert::scalartostring(v);
-    return StrUtil::zerortrim(out);
+    CString out = str::convert::to_string<bigscalar>(v);
+    return str::trim::right_zero(out);
 }
 
-//template<typename T>
-//inline CString to_string(const T& v)
-//{
-//    return typeid(v).name();
-//}
-
-template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
+template<typename... Arg>
+CString cStringFormat(cstring fmt, Arg... args);
 
 inline CString cStringResolve(CString const& fmt, size_t)
 {
     return fmt;
 }
 
-extern CString extArgReplace(const CString &fmt, const size_t &index,
-                             const CString &replace);
-
-extern CString extArgReplacePhrase(const CString &fmt,
-                                   const CString &phrase,
-                                   const CString &replace);
-
-}
-}
+} // namespace Strings
+} // namespace Coffee
 
 #endif

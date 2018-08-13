@@ -40,7 +40,7 @@ struct InternalState
 #endif
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-    Profiling::ProfilerDataStore profiler_store;
+    Profiling::PContext profiler_store;
 #endif
 
     Map<CString, ShPtr<State::GlobalState>> pointer_storage;
@@ -73,15 +73,40 @@ struct InternalThreadState
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     InternalThreadState() :
-        current_thread_id(), profiler_data(MkShared<Profiling::ThreadData>())
+        current_thread_id(), profiler_data(MkShared<Profiling::ThreadState>())
     {
-        auto& datapoints = profiler_data->datapoints;
-        datapoints.push_back = Profiling::JsonPush;
-        datapoints.writer    = State::PeekState("jsonProfiler").get();
+        using RuntimeProperties = Profiling::Profiler::runtime_options;
+        auto runtimeProps       = MkUq<RuntimeProperties>();
+
+        runtimeProps->push               = Profiling::JsonPush;
+        runtimeProps->context            = profiler_data;
+        runtimeProps->context->thread_id = current_thread_id.hash();
+
+        Lock _(State::internal_state->profiler_store.access);
+
+        auto& globalState = State::internal_state->profiler_store.thread_states;
+
+        globalState[current_thread_id.hash()] = profiler_data;
+
+        profiler_data->writer         = State::PeekState("jsonProfiler").get();
+        profiler_data->internal_state = std::move(runtimeProps);
     }
 
-    ThreadId                     current_thread_id;
-    ShPtr<Profiling::ThreadData> profiler_data;
+    ~InternalThreadState()
+    {
+        using RuntimeOptions = Profiling::Profiler::runtime_options;
+
+        RuntimeOptions* internal_state =
+            C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
+
+        if(internal_state)
+            internal_state->context.reset();
+
+        profiler_data->internal_state = {};
+    }
+
+    ThreadId                      current_thread_id;
+    ShPtr<Profiling::ThreadState> profiler_data;
 #endif
 };
 
@@ -120,10 +145,10 @@ STATICINLINE void RegisterProfilerThreadState()
 #if !defined(COFFEE_DISABLE_PROFILER)
     if(ISTATE)
     {
-        Lock _(GetProfilerStore()->data_access_mutex);
+        auto tid = ThreadId().hash();
 
-        GetProfilerStore()->thread_refs[ThreadId().hash()] =
-            TSTATE->profiler_data;
+        Lock _(GetProfilerStore()->access);
+        GetProfilerStore()->thread_states[tid] = TSTATE->profiler_data;
     }
 #endif
 }
@@ -158,7 +183,7 @@ CoffeeApplicationData& GetAppData()
     return ISTATE->current_app;
 }
 
-Profiling::ProfilerDataStore* GetProfilerStore()
+Profiling::PContext* GetProfilerStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     C_PTR_CHECK(ISTATE);
@@ -168,7 +193,7 @@ Profiling::ProfilerDataStore* GetProfilerStore()
 #endif
 }
 
-Profiling::ThreadData* GetProfilerTStore()
+Profiling::ThreadState* GetProfilerTStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     if(!TSTATE)

@@ -162,7 +162,7 @@ struct EnvColorCodes
     using CmdFormat = uint16;
     using CmdColor = CmdColor::CmdColor_t;
 
-    STATICINLINE CmdFormat CombineFormat(uint8 fg, uint8 bg)
+    STATICINLINE CmdFormat CombineFormat(u8 fg, u8 bg)
     {
         return static_cast<uint16>(fg + (bg << 8));
     }
