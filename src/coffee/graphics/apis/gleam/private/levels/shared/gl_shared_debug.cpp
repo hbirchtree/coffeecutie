@@ -43,7 +43,7 @@ void CGL_Shared_Debug::GetExtensions(Context& ctxt)
     }
 #elif defined(COFFEE_USE_MAEMO_EGL) && !defined(COFFEE_USE_APPLE_GLKIT)
     EGLDisplay m_disp  = eglGetCurrentDisplay();
-    s_ExtensionList    = CString();
+    ctxt.extensionList = CString();
     cstring extensions = eglQueryString(m_disp, EGL_EXTENSIONS);
     if(extensions)
         ctxt.extensionList = extensions;
