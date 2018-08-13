@@ -783,9 +783,9 @@ inline payload_t read_payload(
     payload_t payload;
     payload.resize(len);
 
-    auto      payload_ptr = payload.data();
-    ::off64_t buf_size    = static_cast<::off64_t>(payload.size());
-    ::off64_t offset      = 0;
+    auto payload_ptr = payload.data();
+    i64  buf_size    = static_cast<i64>(payload.size());
+    i64  offset      = 0;
 
     while(p.read(&payload_ptr[offset], buf_size - offset) && offset < buf_size)
     {
