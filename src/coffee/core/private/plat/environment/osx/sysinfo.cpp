@@ -80,7 +80,7 @@ HWDeviceInfo MacSysInfo::Processor()
     uint64  microcode = _GetSysctlInt(mcc_string);
 
     return HWDeviceInfo(
-        vendor, brand, str::print::hexify(microcode & 0xFFFF, true));
+        vendor, brand, str::convert::hexify(microcode & 0xFFFF, true));
 }
 
 bigscalar MacSysInfo::ProcessorFrequency()
