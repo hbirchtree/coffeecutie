@@ -24,7 +24,7 @@ struct EGL_Data
 
 static void Msg_Complete_Handle(void* ptr)
 {
-    cDebug("We're back! {0}", StrUtil::pointerify(ptr));
+    cDebug("We're back! {0}", str::print::pointerify(ptr));
 }
 
 GLKWindow::GLKWindow()

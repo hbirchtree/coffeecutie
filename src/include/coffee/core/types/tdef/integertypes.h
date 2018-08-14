@@ -13,7 +13,7 @@ using int32_t  = int;
 using uint32_t = unsigned int;
 #endif
 
-using i8     = C_DEPRECATED_TYPE<int8_t>::type;
+using int8   = C_DEPRECATED_TYPE<int8_t>::type;
 using int16  = C_DEPRECATED_TYPE<int16_t>::type;
 using int32  = C_DEPRECATED_TYPE<int32_t>::type;
 using int64  = C_DEPRECATED_TYPE<int64_t>::type;

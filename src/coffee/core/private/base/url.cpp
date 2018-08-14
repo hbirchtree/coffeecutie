@@ -397,18 +397,18 @@ Path Path::removeExt() const
     auto it = internUrl.rfind(".");
     if(it == CString::npos)
         return {};
-    return {internUrl.substr(0, it)};
+    return Path{internUrl.substr(0, it)};
 }
 
 Path Path::addExtension(cstring ext) const
 {
-    return {(internUrl + ".") + ext};
+    return Path{(internUrl + ".") + ext};
 }
 
 Path Path::fileBasename() const
 {
     file_error ec;
-    Path       p = {DirFun::Basename(internUrl, ec).internUrl};
+    Path       p = Path{DirFun::Basename(internUrl, ec).internUrl};
 #ifndef NDEBUG
     if(ec)
         cWarning("{0}", ec.message());
@@ -430,7 +430,7 @@ CString Path::extension() const
 Path Path::dirname() const
 {
     file_error ec;
-    Path       p = {DirFun::Dirname(internUrl.c_str(), ec).internUrl};
+    Path       p = Path{DirFun::Dirname(internUrl.c_str(), ec).internUrl};
 #ifndef NDEBUG
     if(ec)
         cWarning("{0}", ec.message());
@@ -441,7 +441,7 @@ Path Path::dirname() const
 Path Path::canonical() const
 {
     file_error ec;
-    Path       p = {FileFun::CanonicalName(MkUrl(*this), ec)};
+    Path       p = Path{FileFun::CanonicalName(MkUrl(*this), ec)};
 #ifndef NDEBUG
     if(ec)
         cWarning("{0}", ec.message());
@@ -463,7 +463,7 @@ Path Path::operator+(cstring component) const
 Path Path::operator+(const Path& path) const
 {
     if(internUrl.size())
-        return {Env::ConcatPath(internUrl.c_str(), path.internUrl.c_str())};
+        return Path{Env::ConcatPath(internUrl.c_str(), path.internUrl.c_str())};
     else
         return path;
 }

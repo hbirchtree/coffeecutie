@@ -802,7 +802,7 @@ void ShaderProcessor::process(
 
     for(auto& desc : newFiles)
     {
-        cacheFile(desc.filename, desc.data);
+        cacheFile(Path(desc.filename), desc.data);
         files.insert(files.end(), std::move(desc));
     }
 }

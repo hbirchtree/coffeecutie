@@ -260,6 +260,7 @@ INTEGER_COERCE_CONVERT(unsigned long long, u64)
 INTEGER_CONVERT(unsigned long, u32_fmt)
 #else
 INTEGER_COERCE_CONVERT(unsigned long, u64)
+INTEGER_COERCE_CONVERT(long, i64)
 #endif
 
 #undef INTEGER_COERCE_CONVERT

@@ -22,10 +22,10 @@ struct Url;
 
 struct Path
 {
-    Path(cstring path) : internUrl(path ? path : "")
+    explicit Path(cstring path) : internUrl(path ? path : "")
     {
     }
-    Path(CString const& path) : internUrl(path)
+    explicit Path(CString const& path) : internUrl(path)
     {
     }
     Path() : Path(nullptr)
@@ -59,7 +59,7 @@ struct Path
 
     STATICINLINE Path Mk(cstring p)
     {
-        return {p};
+        return Path(p);
     }
 
     FORCEDINLINE bool operator<(Path const& other) const
@@ -127,7 +127,7 @@ struct Url
 
     operator Path() const
     {
-        return {internUrl};
+        return Path(internUrl);
     }
 
     template<typename Resource, typename... Args>
@@ -184,6 +184,11 @@ FORCEDINLINE Url MkUrl(cstring urlString)
 FORCEDINLINE Url MkUrl(cstring urlString, RSCA access)
 {
     return {urlString, Url::Local, access, HTTPAccess::None, {}};
+}
+
+FORCEDINLINE Url MkUrl(CString const& p, RSCA access = RSCA::SystemFile)
+{
+    return {p, Url::Local, access, HTTPAccess::None, {}};
 }
 
 FORCEDINLINE Url MkSysUrl(cstring urlString)
