@@ -40,7 +40,7 @@ bool dirbasename_test()
 
     Path bname = DirFun::Dirname(testpath.internUrl.c_str(), ec);
 
-    if(bname != result)
+    if(bname != Path(result))
     {
         cDebug("{0} != {1}", bname, result);
         return false;
@@ -52,19 +52,19 @@ bool basename_test()
 {
     file_error ec;
 
-    if(Path(DirFun::Basename("/absolute/path/really/path", ec)) != "path")
+    if(Path(DirFun::Basename("/absolute/path/really/path", ec)) != Path("path"))
         return false;
 
-    if(Path(DirFun::Basename("relative/path", ec)) != "path")
+    if(Path(DirFun::Basename("relative/path", ec)) != Path("path"))
         return false;
 
-    if(Path(DirFun::Basename("", ec)) != ".")
+    if(Path(DirFun::Basename("", ec)) != Path("."))
         return false;
 
-    if(Path(DirFun::Basename("nothing", ec)) != "nothing")
+    if(Path(DirFun::Basename("nothing", ec)) != Path("nothing"))
         return false;
 
-    if(Path(DirFun::Basename("/", ec)) != "/")
+    if(Path(DirFun::Basename("/", ec)) != Path("/"))
         return false;
 
     return true;
