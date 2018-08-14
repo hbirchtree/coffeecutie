@@ -242,7 +242,7 @@ template<
 FORCEDINLINE const CharType* find(
     const CharType* haystack, const CharType* needle)
 {
-    return wcswcs(haystack, needle);
+    return wcsstr(haystack, needle);
 }
 
 template<
