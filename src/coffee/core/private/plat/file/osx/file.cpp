@@ -1,7 +1,6 @@
 #include <coffee/core/plat/file/osx/file.h>
 
 #include <coffee/core/plat/plat_environment.h>
-#include "../file_abstraction.h"
 #include <CoreFoundation/CFBundle.h>
 #include <CoreFoundation/CFString.h>
 
