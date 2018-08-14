@@ -41,9 +41,9 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
         perm[2] = perm[1] + "." + str::convert::to_string(ver->minor);
         perm[3] = perm[2] + "." + str::convert::to_string(ver->revision);
 #elif defined(COFFEE_APPLE)
-        perm[1] = perm[0] + Mem::Convert::uinttostring(ver->major);
-        perm[2] = perm[1] + Mem::Convert::uinttostring(ver->minor);
-        perm[3] = perm[2] + Mem::Convert::uinttostring(ver->revision) +
+        perm[1] = perm[0] + str::convert::to_string(ver->major);
+        perm[2] = perm[1] + str::convert::to_string(ver->minor);
+        perm[3] = perm[2] + str::convert::to_string(ver->revision) +
                   shared_object_extension;
 
         perm[0] = perm[0] + shared_object_extension;
