@@ -51,7 +51,7 @@ void Resource::initRsc(const Url& url)
 
     m_request.host            = urlComponents.host();
     m_request.header.resource = "/" + urlComponents.resource();
-    m_request.header.version  = http::version::v11;
+    m_request.header.version  = http::version_t::v11;
 
     const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
 
@@ -195,33 +195,33 @@ http::request_t& Resource::getRequest()
 
 bool Resource::fetch()
 {
-    return push(http::method::get, Bytes());
+    return push(http::method_t::get, Bytes());
 }
 
 bool Resource::push(const Bytes& data)
 {
-    using method = http::method;
+    using method_t = http::method_t;
 
-    method meth = method::get;
+    method_t meth = method_t::get;
     switch(m_access & HTTPAccess::RequestMask)
     {
     case HTTPAccess::POST:
-        meth = method::post;
+        meth = method_t::post;
         break;
     case HTTPAccess::PUT:
-        meth = method::put;
+        meth = method_t::put;
         break;
     case HTTPAccess::UPDATE:
-        meth = method::update;
+        meth = method_t::update;
         break;
     case HTTPAccess::DELETE:
-        meth = method::delet;
+        meth = method_t::delet;
         break;
     case HTTPAccess::PATCH:
-        meth = method::patch;
+        meth = method_t::patch;
         break;
     case HTTPAccess::HEAD:
-        meth = method::head;
+        meth = method_t::head;
         break;
     default:
         break;
@@ -310,7 +310,7 @@ void Resource::readResponsePayload(std::istream& http_istream)
     cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
 }
 
-bool Resource::push(http::method method, const Bytes& data)
+bool Resource::push(http::method_t method, const Bytes& data)
 {
     using namespace http;
 
@@ -326,7 +326,7 @@ bool Resource::push(http::method method, const Bytes& data)
 
     bool has_payload = data.size > 0;
     bool should_expect =
-        m_request.header.version != version::v10 && has_payload;
+        m_request.header.version != version_t::v10 && has_payload;
 
     /* We do this to allow GET/POST/PUT/UPDATE/whatever */
     m_request.header.method = method;

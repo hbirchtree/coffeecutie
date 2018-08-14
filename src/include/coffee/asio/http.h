@@ -50,7 +50,7 @@ inline string trim(string const& value_)
 } // namespace strings
 } // namespace util
 
-enum class version : u8
+enum class version_t : u8
 {
     v10 = 10,
     v11 = 11,
@@ -94,7 +94,7 @@ enum class content_type : u8
     video,
 };
 
-enum class method : u8
+enum class method_t : u8
 {
     delet,
     get,
@@ -171,7 +171,7 @@ static constexpr plain_string header_terminator = "\r\n\r\n";
 struct header_t
 {
     header_t() :
-        resource("/"), code(0), version(version::v10), method(method::get)
+        resource("/"), code(0), version(version_t::v10), method(method_t::get)
     {
     }
 
@@ -181,8 +181,8 @@ struct header_t
     std::map<string, string>       fields;
 
     u16     code; /*!< response-only */
-    version version;
-    method  method;
+    version_t version;
+    method_t  method;
 };
 
 using payload_t = std::vector<char>;
@@ -204,7 +204,7 @@ struct response_t
 
 namespace header {
 namespace versioning {
-inline void ensure(header_t& header, version v)
+inline void ensure(header_t& header, version_t v)
 {
     auto existing = static_cast<u32>(header.version);
     auto ensure   = static_cast<u32>(v);
@@ -215,15 +215,15 @@ inline void ensure(header_t& header, version v)
 } // namespace versioning
 
 namespace to_string {
-inline plain_string version(version v)
+inline plain_string version(version_t v)
 {
     switch(v)
     {
-    case version::v10:
+    case version_t::v10:
         return "HTTP/1.0";
-    case version::v11:
+    case version_t::v11:
         return "HTTP/1.1";
-    case version::v20:
+    case version_t::v20:
         return "HTTP/2.0";
     }
 }
@@ -293,25 +293,25 @@ inline plain_string content_type(http::content_type type)
     }
 }
 
-inline plain_string method(http::method meth)
+inline plain_string method(method_t meth)
 {
     switch(meth)
     {
-    case http::method::delet:
+    case http::method_t::delet:
         return "DELETE";
-    case http::method::get:
+    case http::method_t::get:
         return "GET";
-    case http::method::head:
+    case http::method_t::head:
         return "HEAD";
-    case http::method::options:
+    case http::method_t::options:
         return "OPTIONS";
-    case http::method::patch:
+    case http::method_t::patch:
         return "PATCH";
-    case http::method::post:
+    case http::method_t::post:
         return "POST";
-    case http::method::put:
+    case http::method_t::put:
         return "PUT";
-    case http::method::update:
+    case http::method_t::update:
         return "UPDATE";
     }
 }
@@ -329,21 +329,21 @@ inline plain_string connection_policy(http::connection_policy pol)
 } // namespace to_string
 
 namespace from_string {
-inline version version(string const& v)
+inline version_t version(string const& v)
 {
     if(v.substr(0, 5) != "HTTP/")
-        return version::v10;
+        return version_t::v10;
 
     auto ver_sub = v.substr(5, 3);
 
     if(ver_sub == "1.0")
-        return version::v10;
+        return version_t::v10;
     if(ver_sub == "1.1")
-        return version::v11;
+        return version_t::v11;
     if(ver_sub == "2.0")
-        return version::v20;
+        return version_t::v20;
 
-    return version::v10;
+    return version_t::v10;
 }
 
 inline header_field field(string const& f)
@@ -382,26 +382,26 @@ inline header_field field(string const& f)
     return header_field::none;
 }
 
-inline http::method method(string const& v)
+inline method_t method(string const& v)
 {
     if(v == "DELETE")
-        return http::method::delet;
+        return method_t::delet;
     if(v == "GET")
-        return http::method::get;
+        return method_t::get;
     if(v == "HEAD")
-        return http::method::head;
+        return method_t::head;
     if(v == "OPTIONS")
-        return http::method::options;
+        return method_t::options;
     if(v == "PATCH")
-        return http::method::patch;
+        return method_t::patch;
     if(v == "POST")
-        return http::method::post;
+        return method_t::post;
     if(v == "PUT")
-        return http::method::put;
+        return method_t::put;
     if(v == "UPDATE")
-        return http::method::update;
+        return method_t::update;
 
-    return http::method::get;
+    return method_t::get;
 }
 } // namespace from_string
 
@@ -572,7 +572,7 @@ struct field_iterator
 namespace transform {
 inline header_t& create_continue(header_t& origin)
 {
-    versioning::ensure(origin, version::v11);
+    versioning::ensure(origin, version_t::v11);
 
     origin.standard_fields[header_field::expect] = "100-Continue";
 
@@ -749,7 +749,7 @@ inline result request(request_t const& rq)
     if(!util::has_key(st_fields, header_field::accept))
         return result::no_accept;
 
-    if(rq.header.method == method::get && rq.payload.size() > 0)
+    if(rq.header.method == method_t::get && rq.payload.size() > 0)
         return result::semantic_error;
 
     return result::valid;

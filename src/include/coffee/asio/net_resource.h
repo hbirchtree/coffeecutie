@@ -73,7 +73,7 @@ struct Resource : ByteProvider
 
     bool fetch();
     bool push(Bytes const& data);
-    bool push(http::method method, Bytes const& data);
+    bool push(http::method_t method, Bytes const& data);
 
     CString mimeType() const;
     u32     responseCode() const;

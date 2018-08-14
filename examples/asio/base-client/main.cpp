@@ -152,8 +152,8 @@ i32 coffee_main(i32, cstring_w*)
             req.host            = "coffee.birchtrees.me";
             req.port            = 443;
             req.header.resource = "/";
-            req.header.version  = http::version::v11;
-            req.header.method   = http::method::get;
+            req.header.version  = http::version_t::v11;
+            req.header.method   = http::method_t::get;
 
             auto& st_fields = req.header.standard_fields;
 
@@ -283,7 +283,7 @@ i32 coffee_main(i32, cstring_w*)
         Bytes data;
         data = Bytes::CreateString(test);
 
-        if(testRsc.push(http::method::post, data))
+        if(testRsc.push(http::method_t::post, data))
         {
             auto d = testRsc.data();
             cDebug("Hello!: \n{0}", str::encapsulate((cstring)d.data, d.size));
