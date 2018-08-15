@@ -21,7 +21,8 @@ bool readwrite_file()
 
     testfile = Bytes::CreateString(test_ini_doc);
 
-    CResources::FileCommit(testfile);
+    CResources::FileCommit(
+        testfile, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 
     CResources::FileMap(testfile);
     Profiler::Profile("Mapping time");
@@ -33,7 +34,7 @@ bool readwrite_file()
     CString              docData = INI::Write(doc2);
     rsc                          = Bytes::CreateString(docData.c_str());
 
-    CResources::FileCommit(rsc);
+    CResources::FileCommit(rsc, RSCA::Discard | RSCA::NewFile);
     Profiler::Profile("Write-back");
 
     CResources::FileUnmap(testfile);
@@ -73,7 +74,8 @@ bool write_file()
     CString docData = INI::Write(doc);
     rsc             = Bytes::CreateString(docData.c_str());
     Profiler::Profile("Writing object to file");
-    CResources::FileCommit(rsc, RSCA::Discard);
+    CResources::FileCommit(
+        rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
     Profiler::Profile("Committing file");
 
     auto res = CResources::FileFun::Exists(testfile, ec);

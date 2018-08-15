@@ -4,6 +4,7 @@
 #include "../edef/resenum.h"
 #include "../tdef/integertypes.h"
 #include "../tdef/stltypes.h"
+#include <coffee/core/plat/memory/string_ops.h>
 #include <utility>
 
 namespace Coffee {
@@ -193,7 +194,9 @@ struct _cbasic_data_chunk
         typename std::enable_if<std::is_pod<T>::value, Dummy>::type* = nullptr>
     NO_DISCARD STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {C_FCAST<T*>(src), strlen(src), strlen(src) / sizeof(T)};
+        auto len = str::len(src);
+
+        return {C_FCAST<T*>(src), len, len / sizeof(T)};
     }
 
     template<
@@ -684,7 +687,7 @@ struct _cbasic_serial_array
 template<typename T>
 using SerialArray = _cbasic_serial_array<T>;
 
-//struct CMimeData
+// struct CMimeData
 //{
 //    FORCEDINLINE CMimeData(
 //        cstring id, void* data, const szptr& size, bool doClean = false) :

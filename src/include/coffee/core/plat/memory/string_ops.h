@@ -3,10 +3,9 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/standard_exceptions.h>
 
-#include <cstdlib>
-#include <cstring>
-#include <cwchar>
+#include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 namespace Coffee {
 namespace str {
@@ -93,7 +92,7 @@ FORCEDINLINE size_t len(const CharType* s)
     if(!s)
         return 0;
 
-    return strlen(s);
+    return ::strlen(s);
 }
 
 template<
@@ -104,7 +103,7 @@ FORCEDINLINE size_t len(const CharType* s)
     if(!s)
         return 0;
 
-    return wcslen(s);
+    return ::wcslen(s);
 }
 
 namespace compare_ops {
@@ -126,7 +125,7 @@ template<
     typename char_of_type<CharType, wchar_t>::type*        = nullptr>
 FORCEDINLINE size_t cmp(const CharType* s1, const CharType* s2)
 {
-    return wcscmp(s1, s2);
+    return ::wcscmp(s1, s2);
 }
 
 template<
@@ -136,7 +135,7 @@ template<
     typename char_of_type<CharType, char>::type*               = nullptr>
 FORCEDINLINE bool cmp(const CharType* s1, const CharType* s2)
 {
-    return strcmp(s1, s2) == 0;
+    return ::strcmp(s1, s2) == 0;
 }
 
 template<
@@ -146,18 +145,18 @@ template<
     typename char_of_type<CharType, wchar_t>::type*            = nullptr>
 FORCEDINLINE bool cmp(const CharType* s1, const CharType* s2)
 {
-    return wcscmp(s1, s2) == 0;
+    return ::wcscmp(s1, s2) == 0;
 }
 
 #if defined(COFFEE_UNIXPLAT)
 #define C_CASECMP strcasecmp
 #define C_WCASECMP wcscasecmp
 #elif defined(COFFEE_WINDOWS_UWP)
-#define C_CASECMP _stricmp
-#define C_WCASECMP _wcsicmp
+#define C_CASECMP ::_stricmp
+#define C_WCASECMP ::_wcsicmp
 #else
-#define C_CASECMP stricmp
-#define C_WCASECMP wcsicmp
+#define C_CASECMP ::stricmp
+#define C_WCASECMP ::wcsicmp
 #endif
 
 template<
@@ -231,7 +230,7 @@ template<
 FORCEDINLINE const CharType* find(
     const CharType* haystack, const CharType* needle)
 {
-    return strstr(haystack, needle);
+    return ::strstr(haystack, needle);
 }
 
 template<
@@ -242,7 +241,7 @@ template<
 FORCEDINLINE const CharType* find(
     const CharType* haystack, const CharType* needle)
 {
-    return wcsstr(haystack, needle);
+    return ::wcsstr(haystack, needle);
 }
 
 template<
@@ -250,10 +249,9 @@ template<
     typename CharType,
     typename find_mode_of_type<FindMode, find_default>::type* = nullptr,
     typename char_of_type<CharType, char>::type*              = nullptr>
-FORCEDINLINE const CharType* find(
-    const CharType* haystack, CharType needle)
+FORCEDINLINE const CharType* find(const CharType* haystack, CharType needle)
 {
-    return strchr(haystack, needle);
+    return ::strchr(haystack, needle);
 }
 
 template<
@@ -261,10 +259,9 @@ template<
     typename CharType,
     typename find_mode_of_type<FindMode, find_default>::type* = nullptr,
     typename char_of_type<CharType, wchar_t>::type*           = nullptr>
-FORCEDINLINE const CharType* find(
-    const CharType* haystack, CharType needle)
+FORCEDINLINE const CharType* find(const CharType* haystack, CharType needle)
 {
-    return wcschr(haystack, needle);
+    return ::wcschr(haystack, needle);
 }
 
 template<
@@ -272,8 +269,7 @@ template<
     typename CharType,
     typename find_mode_of_type<FindMode, find_reverse>::type* = nullptr,
     typename char_of_type<CharType, char>::type*              = nullptr>
-FORCEDINLINE const CharType* find(
-    const CharType* haystack, CharType needle)
+FORCEDINLINE const CharType* find(const CharType* haystack, CharType needle)
 {
     return strrchr(haystack, needle);
 }
@@ -283,10 +279,9 @@ template<
     typename CharType,
     typename find_mode_of_type<FindMode, find_reverse>::type* = nullptr,
     typename char_of_type<CharType, wchar_t>::type*           = nullptr>
-FORCEDINLINE const CharType* find(
-    const CharType* haystack, CharType needle)
+FORCEDINLINE const CharType* find(const CharType* haystack, CharType needle)
 {
-    return wcsrchr(haystack, needle);
+    return ::wcsrchr(haystack, needle);
 }
 
 template<
@@ -297,7 +292,7 @@ template<
 FORCEDINLINE const CharType* find(
     const CharType* haystack, const CharType* needle)
 {
-    return strpbrk(haystack, needle);
+    return ::strpbrk(haystack, needle);
 }
 
 template<
@@ -308,7 +303,7 @@ template<
 FORCEDINLINE const CharType* find(
     const CharType* haystack, const CharType* needle)
 {
-    return wcspbrk(haystack, needle);
+    return ::wcspbrk(haystack, needle);
 }
 
 } // namespace find_ops
@@ -324,8 +319,7 @@ FORCEDINLINE const CharType* find(
 }
 
 template<typename FindMode = find_default, typename CharType = char>
-FORCEDINLINE const CharType* find(
-    const CharType* haystack, CharType needle)
+FORCEDINLINE const CharType* find(const CharType* haystack, CharType needle)
 {
     return find_ops::find<FindMode, CharType>(haystack, needle);
 }
@@ -442,7 +436,7 @@ FORCEDINLINE PodType from_string(const CharType* s)
     else if(cmp<comp_nocase>(s, "false"))
         return false;
 
-    Throw(undefined_behavior("not a boolean string"));
+    Throw(std::invalid_argument("not a boolean string"));
 }
 
 template<
@@ -459,7 +453,7 @@ FORCEDINLINE PodType from_string(const CharType* s)
     else if(cmp<comp_nocase>(s, L"false"))
         return false;
 
-    Throw(undefined_behavior("not a boolean string"));
+    Throw(std::invalid_argument("not a boolean string"));
 }
 
 } // namespace str

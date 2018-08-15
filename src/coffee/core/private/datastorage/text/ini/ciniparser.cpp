@@ -8,6 +8,30 @@ namespace DataStorage {
 namespace TextStorage {
 namespace CINI {
 
+static SimpleIniParser::variant_t* get_value(
+    SimpleIniParser::document_t& doc, cstring tvalu)
+{
+    bool mismatch = false;
+
+    auto itype = quiet_exception::call<std::invalid_argument>(
+        str::from_string<i64>, mismatch, tvalu);
+
+    if(!mismatch)
+        return doc.newInteger(itype);
+
+    auto dtype = quiet_exception::call<std::invalid_argument>(
+        str::from_string<bigscalar>, mismatch, tvalu);
+    if(!mismatch)
+        return doc.newFloat(dtype);
+
+    bool btype = quiet_exception::call<std::invalid_argument, bool>(
+        str::from_string<bool>, mismatch, tvalu);
+    if(!mismatch)
+        return doc.newBool(btype);
+
+    return doc.newString(tvalu);
+}
+
 SimpleIniParser::document_t SimpleIniParser::Read(
     const Bytes& source, bool unixmode)
 {
@@ -81,28 +105,8 @@ SimpleIniParser::document_t SimpleIniParser::Read(
                     tvalu.clear();
                     tvalu.insert(0, t2, t1 - t2);
                     str::trim::both(tvalu);
-                    bool eval;
 
-                    i64 itype = str::from_string<i64>(tvalu.c_str());
-                    if(eval)
-                    {
-                        cval = doc.newInteger(itype);
-                    } else
-                    {
-                        auto dtype = str::from_string<bigscalar>(tvalu.c_str());
-                        if(eval)
-                        {
-                            cval = doc.newFloat(dtype);
-                        } else
-                        {
-                            eval       = true;
-                            bool btype = str::from_string<bool>(tvalu.c_str());
-                            if(eval)
-                                cval = doc.newBool(btype);
-                            else
-                                cval = doc.newString(tvalu.c_str());
-                        }
-                    }
+                    cval = get_value(doc, tvalu.c_str());
 
                     /* If a section has been found previously, put it in there
                      */

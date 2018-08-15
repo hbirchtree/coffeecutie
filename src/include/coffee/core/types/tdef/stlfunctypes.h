@@ -203,6 +203,44 @@ Function<void(Args...)> func(
 }
 } // namespace bind_this
 
+namespace quiet_exception {
+
+template<
+    typename ExceptType,
+    typename RType,
+    typename... Args,
+    typename std::enable_if<!std::is_same<RType, void>::value>::type* = nullptr>
+RType call(RType (*fun)(Args...), bool& triggered, Args... args)
+{
+    try
+    {
+        RType v   = fun(args...);
+        triggered = false;
+        return v;
+    } catch(ExceptType const&)
+    {
+        triggered = true;
+        return RType();
+    }
+}
+
+template<
+    typename ExceptType,
+    typename RType,
+    typename... Args,
+    typename std::enable_if<std::is_same<RType, void>::value>::type* = nullptr>
+void call(RType (*fun)(Args...), Args... args)
+{
+    try
+    {
+        fun(args...);
+    } catch(ExceptType const&)
+    {
+    }
+}
+
+} // namespace quiet_exception
+
 /*!
  * \brief single-fire conditional
  */
