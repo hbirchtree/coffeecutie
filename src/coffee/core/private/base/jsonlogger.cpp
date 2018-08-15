@@ -50,6 +50,10 @@ static JsonLogState& GetLogState()
     return *C_DCAST<JsonLogState>(State::PeekState("jsonLog").get());
 }
 
+#if defined(COFFEE_WINDOWS)
+#define fileno _fileno
+#endif
+
 static void JsonLogger(
     FILE* pipe, CString const& message, Severity sev, u32 level, u32)
 {

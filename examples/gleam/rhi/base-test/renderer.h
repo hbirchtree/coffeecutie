@@ -38,9 +38,11 @@ using GLM        = GLEAMAPI;
 
 struct RuntimeState
 {
+    CGCamera camera;
+
     bigscalar time_base     = 0.;
     bool      debug_enabled = false;
-    u8     padding[7];
+    u8        padding[7];
 };
 
 static const constexpr szptr num_textures = 5;
@@ -114,36 +116,27 @@ class TransformContainer : public Components::ComponentContainer<TransformTag>
     }
 };
 
-class CameraContainer : public Components::ComponentContainer<CameraTag>
+class CameraContainer : public Components::Subsystem<CameraTag>
 {
-    CGCamera camera;
+    CGCamera* camera;
 
   public:
-    CameraContainer()
+    CameraContainer(CGCamera* camera_ptr) : camera(camera_ptr)
     {
-        camera.aspect      = 1.6f;
-        camera.fieldOfView = 90.f;
-        camera.zVals.far_  = 100.f;
+        camera->aspect      = 1.6f;
+        camera->fieldOfView = 90.f;
+        camera->zVals.far_  = 100.f;
 
-        camera.position = {0, 0, -10};
+        camera->position = {0, 0, -10};
     }
 
-    virtual void register_entity(u64) override
+    virtual CGCamera const& get() const
     {
+        return *camera;
     }
-    virtual void unregister_entity(u64) override
+    virtual CGCamera& get()
     {
-    }
-    virtual CGCamera* get(u64) override
-    {
-        return &camera;
-    }
-    virtual void prealloc(szptr) override
-    {
-    }
-    virtual bool contains_entity(u64) const override
-    {
-        return true;
+        return *camera;
     }
 };
 
@@ -175,8 +168,13 @@ class TimeSystem : public Components::Subsystem<TimeTag>
 
 struct RendererState
 {
+    RendererState() : camera_cnt(&r_state.camera)
+    {
+    }
+
     // State that can be loaded from disk
-    RuntimeState r_state;
+    RuntimeState          r_state;
+    ShPtr<Store::SaveApi> save_api;
 
     RuntimeQueue*            rt_queue;
     ShPtr<ASIO::ASIO_Worker> net_worker;
@@ -265,7 +263,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     d->g_data.reset();
 
-    //    Store::RestoreMemory(Bytes::Create(d->r_state), 0);
+    d->save_api = Store::CreateDefaultSave();
+    d->save_api->restore(Bytes::Create(d->r_state));
 
     cVerbose("Entering run() function");
 
@@ -523,8 +522,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
 
-    d->entities.register_component(d->camera_cnt);
     d->entities.register_component(g.transform_cnt);
+    d->entities.register_subsystem(d->camera_cnt);
     d->entities.register_subsystem(d->timing_sys);
 
     Components::EntityRecipe floor_object;
@@ -671,5 +670,5 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     GLM::UnloadAPI();
 
     cDebug("Saving time: {0}", d->r_state.time_base);
-    Store::SaveMemory(Bytes::Create(d->r_state), 0);
+    d->save_api->save(Bytes::Create(d->r_state));
 }

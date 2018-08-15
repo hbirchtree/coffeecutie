@@ -7,12 +7,28 @@
 namespace Coffee {
 namespace Store {
 
-i64 AvailableSaveMemory()
+SaveApi::~SaveApi()
 {
-    return -1;
 }
 
-u16 AvailableSaveSlots()
+FilesystemApi::FilesystemApi() : m_app(ApplicationData())
+{
+}
+
+FilesystemApi::FilesystemApi(const ApplicationData_t& app) : m_app(app)
+{
+}
+
+FilesystemApi::~FilesystemApi()
+{
+}
+
+u64 FilesystemApi::availableMemory()
+{
+    return static_cast<u64>(-1);
+}
+
+FilesystemApi::slot_count_t FilesystemApi::availableSlots()
 {
     return 1;
 }
@@ -48,18 +64,28 @@ void emscripten_callback_error(void* arg)
 }
 #endif
 
-szptr RestoreMemory(Bytes&& data, u16 slot)
+#if defined(COFFEE_EMSCRIPTEN)
+static CString CreateSaveString(u16 slot)
 {
-    cVerbose(
-        8,
-        "Loading memory: {0}+{1} <- slot {2} ::",
-        str::print::pointerify(data.data),
-        data.size,
-        slot);
+    return cStringFormat(
+        "{0}-{1}.data", ApplicationData().application_name, slot);
+}
+#else
+static Url CreateSaveUrl(u16 slot)
+{
+    return MkUrl(
+        Path("CoffeeData").addExtension(cast_pod(slot)).addExtension("bin"),
+        RSCA::ConfigFile);
+}
+#endif
+
+szptr FilesystemApi::restore(Bytes&& data, slot_count_t slot)
+{
+    if(!data.data)
+        return 0;
 
 #if defined(COFFEE_EMSCRIPTEN)
-    CString save_file = cStringFormat(
-        "{0}_Slot-{1}.dat", ApplicationData().application_name, slot);
+    CString save_file = CreateSaveString(slot);
 
     static DataStatus data_status = {0, 0, data.data, &data.size};
     emscripten_idb_async_load(
@@ -71,47 +97,32 @@ szptr RestoreMemory(Bytes&& data, u16 slot)
 
     return data.size;
 #else
-    CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
-    cVerbose(8, "Pre-creating resource");
-    Resource rsc(file_str.c_str(), RSCA::ConfigFile);
+    Resource rsc(CreateSaveUrl(slot));
 
-    cVerbose(8, "Created resource");
+    if(!FileExists(rsc))
+        return 0;
 
-    cDebug("Config file: {0}", rsc.resource());
-
-    if(!CResources::FilePull(rsc) && rsc.size <= data.size)
+    if(!FilePull(rsc) && rsc.size <= data.size)
     {
         data.size = 0;
         return data.size;
     }
 
-    cVerbose(8, "Pulled resource");
-
-    if(!data.data || !rsc.data || rsc.size < 1 || rsc.size >= data.size)
+    if(!rsc.data || rsc.size < 1 || rsc.size > data.size)
     {
         return rsc.size;
     }
 
-    cVerbose(
-        8,
-        "Validated resource, got {0}+{1}",
-        str::print::pointerify(rsc.data),
-        rsc.size);
-
     MemCpy(C_OCAST<Bytes>(rsc), data);
-    cVerbose(8, "Copied data from mapping to memory");
-
-    cVerbose(8, "Memory load succeeded, got {0} bytes", data.size);
 
     return rsc.size;
 #endif
 }
 
-szptr SaveMemory(Bytes const& data, uint16 slot)
+szptr FilesystemApi::save(Bytes const& data, slot_count_t slot)
 {
 #if defined(COFFEE_EMSCRIPTEN)
-    CString save_file = cStringFormat(
-        "{0}_Slot-{1}.dat", ApplicationData().application_name, slot);
+    CString save_file = CreateSaveString(slot);
 
     static int32 status = 0;
 
@@ -126,14 +137,12 @@ szptr SaveMemory(Bytes const& data, uint16 slot)
 
     return data.size;
 #else
-    CString  file_str = cStringFormat("CoffeeData.{0}.bin", slot);
-    Resource rsc(file_str.c_str(), RSCA::ConfigFile);
+    Resource rsc(CreateSaveUrl(slot));
 
     /* I promise not to overwrite your data... */
     rsc = data;
 
-    if(!CResources::FileCommit(
-           rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile))
+    if(!FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile))
         return 0;
 
     return rsc.size;

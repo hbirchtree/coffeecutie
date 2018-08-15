@@ -126,7 +126,7 @@ static void native_print(FILE* stream, CString const& formatted, Severity sev)
         flag = EM_LOG_ERROR;
     emscripten_log(flag, "%s", formatted.c_str());
 #elif defined(COFFEE_WINDOWS_UWP)
-    CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted);
+    CWString formatted_w = str::encode::to<wbyte_t>(formatted);
     OutputDebugString(formatted_w.c_str());
 #elif defined(COFFEE_WINDOWS)
     if(Env::GetVar("VisualStudioVersion").size())

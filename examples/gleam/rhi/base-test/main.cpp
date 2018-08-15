@@ -41,7 +41,7 @@ i32 coffee_main(i32, cstring_w*)
     renderer->installEventHandler(
         {WindowManagerFullscreen<CDRenderer>, nullptr, renderer});
     renderer->installEventHandler(
-        {StandardCamera<CGCamera>, nullptr, loop->d()->camera_cnt.get(0)});
+        {StandardCamera<CGCamera>, nullptr, &loop->d()->camera_cnt.get()});
 
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)
