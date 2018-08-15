@@ -1,6 +1,7 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/string_casting.h>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/CMath>
 
 using namespace Coffee;
 
@@ -9,13 +10,13 @@ bool interpret_integers()
     do
     {
         {
-            u64 test = cast_string<u64>("123.15");
+            u64 test = cast_string<u64>("123");
             if(test != 123)
                 break;
         }
         {
             bigscalar test = cast_string<bigscalar>("123.15");
-            if(test != 123.15)
+            if(!CMath::floating_equal(test, 123.15))
                 break;
         }
         return true;

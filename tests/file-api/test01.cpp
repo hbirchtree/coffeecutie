@@ -18,7 +18,8 @@ bool filewrite_test()
     Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
-    return CResources::FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard);
+    return CResources::FileCommit(
+        rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
 }
 
 bool fileread_test()

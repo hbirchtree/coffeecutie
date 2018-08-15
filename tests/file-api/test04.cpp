@@ -37,7 +37,8 @@ bool filewrite_test()
 
     dynamic_store = C_OCAST<Bytes>(rsc);
 
-    bool stat = FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard);
+    bool stat =
+        FileCommit(rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;

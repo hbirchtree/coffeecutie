@@ -26,7 +26,7 @@ bool filedel_test()
 
 bool check_literal_constructor()
 {
-    auto r = "testfile.txt"_rsc;
+    CResources::Resource r = "testfile.txt"_rsc;
 
     // This could be a compile-time test, but we'll do it at runtime
     return std::is_same<Resource, decltype(r)>::value;
@@ -36,19 +36,12 @@ bool check_move_constructor()
 {
     Resource r1 = Resource(testfile);
 
-    bool status = true;
-
-    FileMap(r1, RSCA::ReadWrite | RSCA::NewFile, 100);
+    r1.data = C_RCAST<void*>(0x2);
+    r1.size = 100;
 
     Resource r2 = std::move(r1);
 
-    if(r1.data)
-        status = false;
-
-    FileUnmap(r1);
-    FileUnmap(r2);
-
-    return status;
+    return r1.data == nullptr;
 }
 
 bool filestat_test()

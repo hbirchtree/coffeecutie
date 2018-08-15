@@ -1,7 +1,7 @@
 coffee_add_test ( Unit_File_API_Correctness
     "Cu_FileCorrectness" test09.cpp CoffeeCore )
 
-coffee_add_test ( Unit_File_Manupulate01
+coffee_add_test ( Unit_File_Manipulate01
     "Cu_FileManipulate" test06.cpp CoffeeCore )
 
 coffee_add_test ( Unit_File_Write01 "Cu_FileCpy" test01.cpp CoffeeCore )

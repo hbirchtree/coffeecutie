@@ -260,7 +260,7 @@ u32 LinuxSysInfo::CpuCount()
         res      = cached_cpuinfo_string.find(':', res) + 1;
         auto end = cached_cpuinfo_string.find('\n', res);
 
-        CString result = cached_cpuinfo_string.substr(res, end);
+        CString result = cached_cpuinfo_string.substr(res, end - res);
         str::trim::both(result);
 
         u32 c = cast_string<u32>(result) + 1;

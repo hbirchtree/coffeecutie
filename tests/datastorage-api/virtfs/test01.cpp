@@ -65,7 +65,8 @@ bool virtfs_serialize()
     output.data = outputData.data();
     output.size = outputData.size();
 
-    FileCommit(output);
+    if(!FileCommit(output, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard))
+        return false;
 
     if(!VFS::OpenVFS(FileGetDescriptor(output),
                              &readVfs))

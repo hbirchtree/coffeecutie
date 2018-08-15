@@ -73,10 +73,13 @@ template<
  */
 bool floating_equal(T const& v1, T const& v2)
 {
+    if(v1 == v2)
+        return true;
+
     const auto epsilon = std::numeric_limits<T>::epsilon();
 
-    const auto lower = v1 - epsilon;
-    const auto upper = v1 + epsilon;
+    const auto lower = v1 - epsilon * 10;
+    const auto upper = v1 + epsilon * 10;
 
     return lower < v2 && upper > v2;
 }
