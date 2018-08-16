@@ -40,9 +40,9 @@ struct RuntimeState
 {
     CGCamera camera;
 
-    bigscalar time_base     = 0.;
-    bool      debug_enabled = false;
-    u8        padding[7];
+    i64  time_base     = 0.;
+    bool debug_enabled = false;
+    u8   padding[7];
 };
 
 static const constexpr szptr num_textures = 5;
@@ -84,7 +84,7 @@ class TransformContainer : public Components::ComponentContainer<TransformTag>
         Components::ContainerProxy& container,
         Components::Entity&         entity) override
     {
-        auto camera = *container.get<CameraTag>(entity.id);
+        auto camera = container.subsystem<CameraTag>().get();
 
         camera.position.x() -= 0.1f;
 
@@ -142,19 +142,31 @@ class CameraContainer : public Components::Subsystem<CameraTag>
 
 class TimeSystem : public Components::Subsystem<TimeTag>
 {
+  public:
     using system_clock = Chrono::high_resolution_clock;
 
+  private:
     Chrono::seconds_float    loop_time;
     system_clock::time_point start_time;
 
+    system_clock::time_point prev_time;
+
   public:
-    TimeSystem() : loop_time(), start_time(system_clock::now())
+    TimeSystem() :
+        loop_time(), start_time(system_clock::now()), prev_time(start_time)
     {
+    }
+
+    virtual system_clock::time_point& get_start()
+    {
+        return start_time;
     }
 
     virtual void start_frame() override
     {
-        loop_time = system_clock::now() - start_time;
+        auto current = system_clock::now();
+        loop_time += current - prev_time;
+        prev_time = current;
     }
     virtual Chrono::seconds_float const& get() const override
     {
@@ -526,11 +538,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     d->entities.register_subsystem(d->camera_cnt);
     d->entities.register_subsystem(d->timing_sys);
 
+    d->timing_sys.get_start() = TimeSystem::system_clock::time_point(
+        Chrono::milliseconds(d->r_state.time_base));
+
     Components::EntityRecipe floor_object;
     Components::EntityRecipe base_object;
 
-    floor_object.components = {typeid(CameraTag).hash_code(),
-                               typeid(TransformTag).hash_code()};
+    floor_object.components = {typeid(TransformTag).hash_code()};
     floor_object.interval   = Chrono::milliseconds(10);
     base_object             = floor_object;
 
@@ -670,5 +684,10 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     GLM::UnloadAPI();
 
     cDebug("Saving time: {0}", d->r_state.time_base);
+
+    d->r_state.time_base = Chrono::duration_cast<Chrono::milliseconds>(
+                               (d->timing_sys.get_start() + d->timing_sys.get())
+                                   .time_since_epoch())
+                               .count();
     d->save_api->save(Bytes::Create(d->r_state));
 }
