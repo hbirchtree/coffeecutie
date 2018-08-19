@@ -143,19 +143,6 @@ FORCEDINLINE std::basic_string<OutCharType> convertformat(
 }
 
 namespace convert {
-
-template<typename T1, typename T2>
-struct is_similar
-{
-    static constexpr bool integral_value =
-        std::is_integral<T1>::value && std::is_integral<T2>::value &&
-        std::numeric_limits<T1>::max() == std::numeric_limits<T2>::max() &&
-        std::numeric_limits<T1>::min() == std::numeric_limits<T2>::min() &&
-        std::is_signed<T1>::value == std::is_signed<T2>::value;
-
-    static constexpr bool value = integral_value;
-};
-
 #define FMT_TYPE const constexpr cstring
 #if defined(PRIu8a)
 #define FMT_STR(bits, fmt) FMT_TYPE fmt##bits##_fmt = "%" PRI##fmt##bits

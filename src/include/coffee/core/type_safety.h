@@ -56,6 +56,18 @@ struct is_specialized<Template<Args...>, Template>
     static constexpr bool value = true;
 };
 
+template<typename T1, typename T2>
+struct is_similar
+{
+    static constexpr bool integral_value =
+        std::is_integral<T1>::value && std::is_integral<T2>::value &&
+        std::numeric_limits<T1>::max() == std::numeric_limits<T2>::max() &&
+        std::numeric_limits<T1>::min() == std::numeric_limits<T2>::min() &&
+        std::is_signed<T1>::value == std::is_signed<T2>::value;
+
+    static constexpr bool value = integral_value;
+};
+
 } // namespace Coffee
 
 #undef E_IF

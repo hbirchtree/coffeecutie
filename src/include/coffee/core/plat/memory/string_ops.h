@@ -336,16 +336,16 @@ namespace convert_ops {
         return ::converter(n, end_ptr);                                     \
     }
 
-#define STRTOIB_FUNCTION(itype, converter, stype)                           \
-    template<                                                               \
-        typename CType,                                                     \
-        typename ConvertMode,                                               \
-        typename std::enable_if<std::is_same<CType, itype>::value>::type* = \
-            nullptr>                                                        \
-    FORCEDINLINE itype to_int(const stype* n, stype** end_ptr)              \
-    {                                                                       \
-        static_assert(ConvertMode::base >= 2, "Invalid conversion base");   \
-        return C_FCAST<itype>(::converter(n, end_ptr, ConvertMode::base));  \
+#define STRTOIB_FUNCTION(itype, converter, stype)                          \
+    template<                                                              \
+        typename CType,                                                    \
+        typename ConvertMode,                                              \
+        typename std::enable_if<is_similar<CType, itype>::value>::type* =  \
+            nullptr>                                                       \
+    FORCEDINLINE itype to_int(const stype* n, stype** end_ptr)             \
+    {                                                                      \
+        static_assert(ConvertMode::base >= 2, "Invalid conversion base");  \
+        return C_FCAST<itype>(::converter(n, end_ptr, ConvertMode::base)); \
     }
 
 #define STRTOI_FUNCTION(itype, converter)         \

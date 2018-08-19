@@ -71,6 +71,11 @@ coffee_library (
     private/base/cfiles.cpp
     private/base/url.cpp
 
+    #
+    # This one is pretty important, let's keep it here
+    #
+    private/plat/timing/profiling.cpp
+
     LIBRARIES
     ${STANDARDLIBS_LIBRARIES}
 
@@ -177,7 +182,6 @@ coffee_library (
 
     SOURCES
     private/profiler/profiling_export.cpp
-    private/plat/timing/profiling.cpp
 
     LIBRARIES CoffeeCore_Base CoffeeCore_PlatformData
     )
