@@ -143,6 +143,19 @@ FORCEDINLINE std::basic_string<OutCharType> convertformat(
 }
 
 namespace convert {
+
+template<typename T1, typename T2>
+struct is_similar
+{
+    static constexpr bool integral_value =
+        std::is_integral<T1>::value && std::is_integral<T2>::value &&
+        std::numeric_limits<T1>::max() == std::numeric_limits<T2>::max() &&
+        std::numeric_limits<T1>::min() == std::numeric_limits<T2>::min() &&
+        std::is_signed<T1>::value == std::is_signed<T2>::value;
+
+    static constexpr bool value = integral_value;
+};
+
 #define FMT_TYPE const constexpr cstring
 #if defined(PRIu8a)
 #define FMT_STR(bits, fmt) FMT_TYPE fmt##bits##_fmt = "%" PRI##fmt##bits
@@ -210,36 +223,36 @@ SCALAR_CONVERT(scalar, "%f")
 #undef SCALAR_CONVERT
 
 /* Unsigned integer conversion */
-#define INTEGER_CONVERT(itype, fmt)                                         \
-    template<                                                               \
-        typename IType,                                                     \
-        typename TargetType = itype,                                        \
-        typename std::enable_if<std::is_same<IType, itype>::value>::type* = \
-            nullptr>                                                        \
-    FORCEDINLINE CString to_string(IType s)                                 \
-    {                                                                       \
-        if(s == 0)                                                          \
-            return "0";                                                     \
-        itype   ss = s;                                                     \
-        CString str;                                                        \
-        str.resize(C_CAST<size_t>(snprintf(nullptr, 0, fmt, ss)) + 1);      \
-        snprintf(&str[0], str.size() + 1, fmt, ss);                         \
-        str.resize(str.size() - 1);                                         \
-        return str;                                                         \
+#define INTEGER_CONVERT(itype, fmt)                                       \
+    template<                                                             \
+        typename IType,                                                   \
+        typename TargetType = itype,                                      \
+        typename std::enable_if<is_similar<IType, itype>::value>::type* = \
+            nullptr>                                                      \
+    FORCEDINLINE CString to_string(IType s)                               \
+    {                                                                     \
+        if(s == 0)                                                        \
+            return "0";                                                   \
+        itype   ss = s;                                                   \
+        CString str;                                                      \
+        str.resize(C_CAST<size_t>(snprintf(nullptr, 0, fmt, ss)) + 1);    \
+        snprintf(&str[0], str.size() + 1, fmt, ss);                       \
+        str.resize(str.size() - 1);                                       \
+        return str;                                                       \
     }
 
-#define INTEGER_COERCE_CONVERT(target_type, coerce_type)                      \
-    template<                                                                 \
-        typename IType,                                                       \
-        typename TargetType = target_type,                                    \
-        typename CoerceType = coerce_type,                                    \
-        typename std::enable_if<                                              \
-            std::is_same<IType, target_type>::value &&                        \
-            !std::is_same<target_type, coerce_type>::value>::type* = nullptr> \
-    FORCEDINLINE CString to_string(IType s)                                   \
-    {                                                                         \
-        return to_string<coerce_type>(C_FCAST<coerce_type>(s));               \
-    }
+//#define INTEGER_COERCE_CONVERT(target_type, coerce_type)                      \
+//    template<                                                                 \
+//        typename IType,                                                       \
+//        typename TargetType = target_type,                                    \
+//        typename CoerceType = coerce_type,                                    \
+//        typename std::enable_if<                                              \
+//            std::is_same<IType, target_type>::value &&                        \
+//            !std::is_same<target_type, coerce_type>::value>::type* = nullptr> \
+//    FORCEDINLINE CString to_string(IType s)                                   \
+//    {                                                                         \
+//        return to_string<coerce_type>(C_FCAST<coerce_type>(s));               \
+//    }
 
 // INTEGER_CONVERT(size_t, fmt_size_t_fmt)
 
@@ -253,17 +266,17 @@ INTEGER_CONVERT(i32, i32_fmt)
 INTEGER_CONVERT(i16, i16_fmt)
 INTEGER_CONVERT(i8, i8_fmt)
 
-INTEGER_COERCE_CONVERT(long long, i64)
-INTEGER_COERCE_CONVERT(unsigned long long, u64)
+// INTEGER_COERCE_CONVERT(long long, i64)
+// INTEGER_COERCE_CONVERT(unsigned long long, u64)
 
-#if defined(COFFEE_WINDOWS)
-INTEGER_CONVERT(unsigned long, u32_fmt)
-#else
-INTEGER_COERCE_CONVERT(unsigned long, u64)
-INTEGER_COERCE_CONVERT(long, i64)
-#endif
+//#if defined(COFFEE_WINDOWS)
+// INTEGER_CONVERT(unsigned long, u32_fmt)
+//#else
+// INTEGER_COERCE_CONVERT(unsigned long, u64)
+// INTEGER_COERCE_CONVERT(long, i64)
+//#endif
 
-#undef INTEGER_COERCE_CONVERT
+//#undef INTEGER_COERCE_CONVERT
 #undef INTEGER_CONVERT
 
 template<
@@ -290,7 +303,7 @@ FORCEDINLINE CString hexify(u64 s, bool trim_zero = false)
         trim::right_zero(str);
     return str;
 }
-}
+} // namespace convert
 
 namespace print {
 FORCEDINLINE CString pointerify(u64 const& ptr)
