@@ -377,6 +377,8 @@ bool GLEAM_API::LoadAPI(
 
     ConstructContextObjects(store);
 
+    Debug::GetExtensions(store->inst_data->dbgContext);
+
     /* First, check if an extension is available for behavior */
     if(!Env::ExistsVar("GLEAM_DISABLE_EXTENSIONS"))
         SetExtensionFeatures(store);

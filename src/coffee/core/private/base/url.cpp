@@ -490,6 +490,44 @@ CString to_string(const Url& url)
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
+struct UrlParseCache : State::GlobalState
+{
+    virtual ~UrlParseCache();
+    Regex::Pattern pattern;
+};
+
+UrlParseCache::~UrlParseCache()
+{
+}
+
+UrlParseCache& GetCache()
+{
+    constexpr cstring url_pattern =
+        "^"                                     /* from start */
+        "([A-Za-z0-9\\.]*[A-Za-z0-9])://"       /* protocol */
+        "([A-Za-z0-9-_$\\.\\,\\+!\\*'\\(\\)]+)" /* host */
+        "(:([0-9]+)/(.*)|:([0-9]+)|/(.+)|)"     /* port and resource */
+        "$"                                     /* to end */
+        ;
+
+    constexpr cstring pattern_key = "urlParsePattern";
+
+    auto ptr = State::PeekState(pattern_key);
+
+    if(ptr)
+        return *C_DCAST<UrlParseCache>(ptr.get());
+
+    auto patt = MkShared<UrlParseCache>();
+
+    Profiler::DeepPushContext(URLPARSE_TAG "Regex compile");
+    patt->pattern = Regex::Compile(url_pattern);
+    Profiler::DeepPopContext();
+
+    State::SwapState(pattern_key, patt);
+
+    return *C_DCAST<UrlParseCache>(patt.get());
+}
+
 UrlParse UrlParse::From(const Url& url)
 {
     enum RegexEnum
@@ -503,23 +541,11 @@ UrlParse UrlParse::From(const Url& url)
         URL_Resource,
     };
 
-    constexpr cstring url_pattern =
-        "^"                                     /* from start */
-        "([A-Za-z0-9\\.]*[A-Za-z0-9])://"       /* protocol */
-        "([A-Za-z0-9-_$\\.\\,\\+!\\*'\\(\\)]+)" /* host */
-        "(:([0-9]+)/(.*)|:([0-9]+)|/(.+)|)"     /* port and resource */
-        "$"                                     /* to end */
-        ;
-
     DProfContext _(URLPARSE_TAG);
     UrlParse     p = {};
 
-    Profiler::DeepPushContext(URLPARSE_TAG "Regex compile");
-    auto patt = Regex::Compile(url_pattern);
-    Profiler::DeepPopContext();
-
     Profiler::DeepPushContext(URLPARSE_TAG "Regex");
-    auto matches = Regex::Match(patt, *url, true);
+    auto matches = Regex::Match(GetCache().pattern, *url, true);
     Profiler::DeepPopContext();
 
     if(!matches.size())

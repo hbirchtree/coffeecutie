@@ -565,6 +565,9 @@ bool RuntimeQueue::CancelTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
 void RuntimeQueue::AwaitTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
 {
+    if(taskId == 0)
+        return;
+
     if(context->shutdownFlag.load())
     {
         ec = RQE::ShuttingDown;

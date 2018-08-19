@@ -165,7 +165,7 @@ void PrintAsciiTable(u64 const& time_accum, szptr suc)
     header.push_back("Description");
     header.push_back("Passed");
     header.push_back("Required");
-    header.push_back("Time");
+    header.push_back("Time (us)");
 
     Table::Table table(header);
     table.push_back(Table::GenColumn(titles));
@@ -196,6 +196,8 @@ void RunTest(Test const& test, TestInstance& test_info)
 
     auto start_time = Chrono::steady_clock::now();
     bool res        = false;
+
+    Profiler::PushContext(test_info.title);
     try
     {
         res = test.test();
@@ -205,7 +207,9 @@ void RunTest(Test const& test, TestInstance& test_info)
             "exception encountered: {0}: {1}",
             Stacktracer::DemangleSymbol(typeid(e).name()),
             e.what());
+        Profiler::Profile("exception");
     }
+    Profiler::PopContext();
 
     test_info.submit(
         res,

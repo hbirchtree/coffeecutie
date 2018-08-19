@@ -51,17 +51,17 @@ FORCEDINLINE void assertTrue_impl(bool result, const char* context)
         throw test_failure(context);
 }
 
-template<typename T>
-FORCEDINLINE void assertEquals_impl(T v1, T v2, const char* context)
+template<typename T1, typename T2 = T1>
+FORCEDINLINE void assertEquals_impl(T1 v1, T2 v2, const char* context)
 {
     if(v1 != v2)
         throw test_failure(context);
 }
 
-template<typename T1, typename T2>
-FORCEDINLINE void assertEquals_impl(T1 v1, T2 v2, const char* context)
+template<typename T1, typename T2 = T1>
+FORCEDINLINE void assertNotEquals_impl(T1 v1, T2 v2, const char* context)
 {
-    if(v1 != v2)
+    if(v1 == v2)
         throw test_failure(context);
 }
 
@@ -74,16 +74,21 @@ FORCEDINLINE void True(bool result)
     assertion::assertTrue_impl(result, "boolean check failed");
 }
 
-template<typename T>
-FORCEDINLINE void Equals(T v1, T v2)
+FORCEDINLINE void False(bool result)
 {
-    assertion::assertEquals_impl<T>(v1, v2, "equivalence failed");
+    assertion::assertTrue_impl(!result, "boolean check failed");
 }
 
-template<typename T1, typename T2>
+template<typename T1, typename T2 = T1>
 FORCEDINLINE void Equals(T1 v1, T2 v2)
 {
     assertion::assertEquals_impl<T1, T2>(v1, v2, "equivalence failed");
+}
+
+template<typename T1, typename T2 = T1>
+FORCEDINLINE void NotEquals(T1 v1, T2 v2)
+{
+    assertion::assertNotEquals_impl<T1, T2>(v1, v2, "equivalence failed");
 }
 
 } // namespace assert
@@ -95,6 +100,12 @@ FORCEDINLINE void Equals(T1 v1, T2 v2)
         v1,                       \
         v2,                       \
         ASSERT_CONTEXT "equivalence failed: " C_STR(v1) " != " C_STR(v2))
+
+#define assertNotEquals(v1, v2)      \
+    assertion::assertNotEquals_impl( \
+        v1,                          \
+        v2,                          \
+        ASSERT_CONTEXT "equivalence failed: " C_STR(v1) " == " C_STR(v2))
 
 #define assertTrue(val)         \
     assertion::assertTrue_impl( \

@@ -66,6 +66,7 @@ enum class header_field : u8
     accept_encoding,
     accept_language,
     connection,
+    content_disposition,
     content_encoding,
     content_language,
     content_length,
@@ -168,6 +169,18 @@ enum status_value
 static constexpr plain_string line_separator    = "\r\n";
 static constexpr plain_string header_terminator = "\r\n\r\n";
 
+struct header_traits
+{
+    using string_type  = string;
+    using value_type   = string::value_type;
+    using plain_string = const value_type*;
+
+    static constexpr plain_string header_separator  = http::line_separator;
+    static constexpr plain_string header_terminator = http::header_terminator;
+
+    static constexpr plain_string header_end = "\r";
+};
+
 struct header_t
 {
     header_t() :
@@ -180,7 +193,7 @@ struct header_t
     std::map<header_field, string> standard_fields;
     std::map<string, string>       fields;
 
-    u16     code; /*!< response-only */
+    u16       code; /*!< response-only */
     version_t version;
     method_t  method;
 };
@@ -242,6 +255,8 @@ inline plain_string field(header_field f)
         return "Accept-Language";
     case header_field::connection:
         return "Connection";
+    case header_field::content_disposition:
+        return "Content-Disposition";
     case header_field::content_encoding:
         return "Content-Encoding";
     case header_field::content_language:
@@ -358,6 +373,8 @@ inline header_field field(string const& f)
         return header_field::accept_language;
     if(util::strings::iequals(f, "Connection"))
         return header_field::connection;
+    if(util::strings::iequals(f, "Content-Disposition"))
+        return header_field::content_disposition;
     if(util::strings::iequals(f, "Content-Encoding"))
         return header_field::content_encoding;
     if(util::strings::iequals(f, "Content-Language"))
@@ -412,10 +429,11 @@ namespace serialize {
  * \param header
  * \return
  */
+template<typename Traits = header_traits>
 inline string request_line(header_t const& header)
 {
     return to_string::method(header.method) + string(" ") + header.resource +
-           " " + to_string::version(header.version) + line_separator;
+           " " + to_string::version(header.version) + Traits::header_separator;
 }
 
 /*!
@@ -424,48 +442,55 @@ inline string request_line(header_t const& header)
  * \param header
  * \return
  */
+template<typename Traits = header_traits>
 inline string response_line(header_t const& header)
 {
     return to_string::version(header.version) + string(" ") +
-           cast_pod(header.code) + " " + header.message + line_separator;
+           cast_pod(header.code) + " " + header.message +
+           Traits::header_separator;
 }
 
+template<typename Traits = header_traits>
 inline string field(string const& key, string const& value)
 {
-    return key + ": " + value + line_separator;
+    return key + ": " + value + Traits::header_separator;
 }
 
+template<typename Traits = header_traits>
 inline string fields(header_t const& header)
 {
     string out;
 
     for(auto const& field : header.standard_fields)
-        out += serialize::field(to_string::field(field.first), field.second);
+        out += serialize::field<Traits>(
+            to_string::field(field.first), field.second);
 
     for(auto const& field : header.fields)
-        out += serialize::field(field.first, field.second);
+        out += serialize::field<Traits>(field.first, field.second);
 
     return out;
 }
 
+template<typename Traits = header_traits>
 inline string request(header_t const& header)
 {
     string out;
 
-    out += serialize::request_line(header);
-    out += serialize::fields(header);
-    out += line_separator;
+    out += serialize::request_line<Traits>(header);
+    out += serialize::fields<Traits>(header);
+    out += Traits::header_separator;
 
     return out;
 }
 
+template<typename Traits = header_traits>
 inline string response(header_t const& header)
 {
     string out;
 
-    out += serialize::response_line(header);
-    out += serialize::fields(header);
-    out += line_separator;
+    out += serialize::response_line<Traits>(header);
+    out += serialize::fields<Traits>(header);
+    out += Traits::header_separator;
 
     return out;
 }
@@ -538,9 +563,43 @@ inline optional_field field_classify(string const& line)
 
 struct field_iterator
 {
+    struct field_value
+    {
+        string m_value;
+
+        string str() const
+        {
+            return m_value;
+        }
+
+        std::pair<string, string> pair() const
+        {
+            auto split = m_value.find('=');
+
+            if(split == string::npos)
+                return {};
+
+            return {m_value.substr(0, split), m_value.substr(split + 1)};
+        }
+    };
+
+    field_iterator() : m_pos(string::npos)
+    {
+    }
+
     field_iterator(string const& value, string::value_type sep) :
         m_value(" " + value), m_pos(0), m_separator(sep)
     {
+    }
+
+    bool operator==(field_iterator const& it) const
+    {
+        return it.m_pos == m_pos;
+    }
+
+    bool operator!=(field_iterator const& it) const
+    {
+        return it.m_pos != m_pos;
     }
 
     field_iterator& operator++()
@@ -553,18 +612,18 @@ struct field_iterator
         return *this;
     }
 
-    string operator*()
+    field_value operator*()
     {
         auto next_value = m_value.find(m_separator, m_pos + 1);
 
         auto value = m_value.substr(m_pos + 1, next_value - 1);
 
-        return util::strings::trim(value);
+        return {util::strings::trim(value)};
     }
 
   private:
     string             m_value;
-    szptr              m_pos;
+    size_t             m_pos;
     string::value_type m_separator;
 };
 } // namespace parse
@@ -673,9 +732,9 @@ struct path_iterator
     }
 
   private:
-    szptr  m_pos;
+    size_t m_pos;
     string m_resource;
-    szptr  m_query_start;
+    size_t m_query_start;
 };
 
 struct query_iterator
@@ -716,7 +775,7 @@ struct query_iterator
         return m_pos == string::npos;
     }
 
-    szptr  m_pos;
+    size_t m_pos;
     string m_resource;
 };
 } // namespace resource
@@ -757,12 +816,10 @@ inline result request(request_t const& rq)
 } // namespace validate
 
 namespace stream {
-inline header_t read_response(std::istream& h)
+using progress_fun = std::function<void(size_t, size_t)>;
+
+inline header_t& read_header(header_t& out, std::istream& h)
 {
-    header_t out = {};
-
-    header::parse::response_line(out, h);
-
     string line_store;
     while(std::getline(h, line_store) && line_store != "\r")
     {
@@ -777,8 +834,19 @@ inline header_t read_response(std::istream& h)
     return out;
 }
 
-inline payload_t read_payload(
-    std::istream& p, size_t len, std::function<void(size_t)> progress = nullptr)
+inline header_t read_response(std::istream& h)
+{
+    header_t out = {};
+
+    header::parse::response_line(out, h);
+
+    read_header(out, h);
+
+    return out;
+}
+
+inline payload_t read_payload_deterministic(
+    std::istream& p, size_t len, progress_fun progress = nullptr)
 {
     payload_t payload;
     payload.resize(len);
@@ -790,13 +858,194 @@ inline payload_t read_payload(
     while(p.read(&payload_ptr[offset], buf_size - offset) && offset < buf_size)
     {
         if(progress)
-            progress(payload.size());
+            progress(payload.size(), len);
         offset += p.gcount();
     }
 
     return payload;
 }
 
+inline payload_t read_payload_indeterminate(
+    std::istream& p, progress_fun progress)
+{
+    payload_t payload;
+    size_t    offset = 0;
+
+    constexpr size_t bufsize = 4096;
+
+    // TODO: Find out how to detect EOF for HTTP(S) streams with std::istream
+    while(!p.eof())
+    {
+        payload.resize(payload.size() + bufsize);
+        auto read = p.readsome(&payload[offset], bufsize);
+
+        if(progress)
+            progress(payload.size(), payload.size());
+
+        const auto read_diff = bufsize - C_FCAST<size_t>(read);
+
+        if(read_diff > 0)
+        {
+            payload.resize(payload.size() - read_diff);
+            break;
+        }
+    }
+
+    return payload;
+}
+
+inline payload_t read_payload(
+    std::istream& p, size_t len, progress_fun progress = nullptr)
+{
+    if(len == 0)
+        return read_payload_indeterminate(p, progress);
+    else
+        return read_payload_deterministic(p, len, progress);
+}
+
 } // namespace stream
+
+namespace multipart {
+struct missing_terminator : std::out_of_range
+{
+    using out_of_range::out_of_range;
+};
+
+struct part_iterator
+{
+    using part = std::pair<header_t, payload_t>;
+    static constexpr cstring multipart_terminator = "--";
+
+    part_iterator(string bound, payload_t& payload) :
+        m_boundary(bound), m_payload(payload), m_pos(0), m_ended(false)
+    {
+        ++(*this);
+    }
+
+    static inline part_iterator sentinel(payload_t& p)
+    {
+        part_iterator out("", p);
+        out.m_ended = true;
+        return out;
+    }
+
+    bool operator==(part_iterator const& other)
+    {
+        return m_ended == other.m_ended;
+    }
+
+    bool operator!=(part_iterator const& other)
+    {
+        return m_ended != other.m_ended;
+    }
+
+    size_t next_section()
+    {
+        void* ptr = ::memmem(
+            &m_payload.at(m_pos),
+            C_FCAST<size_t>(m_payload.size() - m_pos),
+            m_boundary.data(),
+            C_FCAST<size_t>(m_boundary.size()));
+
+        if(ptr == nullptr)
+        {
+            auto remaining = m_payload.size() - m_pos;
+
+            if(remaining < 2)
+                Throw(
+                    std::out_of_range("multipart body EOF without terminator"));
+
+            /* Check for terminator */
+            void* terminator_ptr = ::memmem(
+                &m_payload.at(m_pos), remaining, multipart_terminator, 2);
+
+            if(terminator_ptr == nullptr)
+                Throw(missing_terminator("failed to locate terminator"));
+
+            return static_cast<size_t>(-1);
+        }
+
+        return C_FCAST<size_t>(C_RCAST<char*>(ptr) - &m_payload[0]);
+    }
+
+    part_iterator& operator++()
+    {
+        if(!m_ended)
+        {
+            m_pos = next_section() + m_boundary.size();
+
+            if(next_section() == static_cast<size_t>(-1))
+                m_ended = true;
+        }
+
+        return *this;
+    }
+
+    part operator*()
+    {
+        auto end = next_section();
+
+        auto start = m_pos;
+
+        auto len = end - start;
+
+        header_t           header;
+        std::istringstream header_strm(string(&m_payload.at(m_pos), len));
+
+        auto first_char = header_strm.peek();
+
+        if(first_char == http::line_separator[0] ||
+           first_char == http::line_separator[1])
+        {
+            string discard;
+            std::getline(header_strm, discard);
+        }
+
+        stream::read_header(header, header_strm);
+
+        size_t header_len = C_FCAST<size_t, off_t>(header_strm.tellg());
+
+        auto      payload_len = end - start - header_len;
+        payload_t part_payload;
+        part_payload.insert(
+            part_payload.begin(),
+            m_payload.begin() + C_FCAST<off_t>(m_pos + header_len),
+            m_payload.begin() +
+                C_FCAST<off_t>(m_pos + header_len + payload_len));
+
+        return {header, part_payload};
+    }
+
+  private:
+    string     m_boundary;
+    payload_t& m_payload;
+    size_t     m_pos;
+    bool       m_ended;
+};
+
+struct parser
+{
+    string    m_boundary;
+    payload_t m_payload;
+
+    part_iterator m_sentinel;
+
+    parser(string boundary, payload_t&& payload) :
+        m_boundary(boundary), m_payload(std::move(payload)),
+        m_sentinel(part_iterator::sentinel(m_payload))
+    {
+    }
+
+    part_iterator begin()
+    {
+        return part_iterator(m_boundary, m_payload);
+    }
+
+    part_iterator& end()
+    {
+        return m_sentinel;
+    }
+};
+} // namespace multipart
 
 } // namespace http
