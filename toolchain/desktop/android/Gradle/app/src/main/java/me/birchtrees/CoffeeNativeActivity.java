@@ -40,7 +40,6 @@ public final class CoffeeNativeActivity extends NativeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
-            tryLoad("assimp");
             tryLoad("openal");
             super.onCreate(savedInstanceState);
         }catch(Exception e)
@@ -67,42 +66,6 @@ public final class CoffeeNativeActivity extends NativeActivity {
         }
 
         System.loadLibrary(getLibraryName());
-
-        smuggleVariable(10, getCacheDir().getAbsolutePath());
-        smuggleVariable(11,
-                    Integer.toString(
-                        getResources()
-                            .getDisplayMetrics()
-                            .densityDpi)
-                    );
-
-        try
-        {
-            String[] sysAbis = android.os.Build.SUPPORTED_ABIS;
-            String supportedAbis = "";
-
-            for(int i=0; i<sysAbis.length; i++)
-                supportedAbis = supportedAbis + " " + sysAbis[i];
-
-            supportedAbis = supportedAbis.trim();
-
-            smuggleVariable(12, supportedAbis);
-        }catch(NoSuchFieldError e)
-        {
-            smuggleVariable(12,
-                android.os.Build.CPU_ABI + " "
-                + android.os.Build.CPU_ABI2);
-        }
-
-        if(getIntent().getExtras() != null)
-        {
-            Intent extra = getIntent();
-
-            for(String k : extra.getExtras().keySet())
-            {
-                smuggleVariable(13, k + "=" + extra.getStringExtra(k));
-            }
-        }
     }
 
     protected void onResume() {
@@ -135,6 +98,4 @@ public final class CoffeeNativeActivity extends NativeActivity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
-
-    private native void smuggleVariable(int id, String data);
 }

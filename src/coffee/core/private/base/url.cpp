@@ -93,13 +93,6 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     cmd.type = Android_QueryCachePath;
 
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    paths.cacheDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
-
-    paths.tempDir = paths.cacheDir;
-
 #elif defined(COFFEE_LINUX)
 
     /* Asset directories may be in AppImages or Snaps */
@@ -214,10 +207,6 @@ STATICINLINE SystemPaths GetSystemPaths()
 }
 
 #if defined(COFFEE_ANDROID)
-static char javaioFile[] = "java.io.File";
-#endif
-
-#if defined(COFFEE_ANDROID)
 /*!
  * \brief Get a system-directed file path
  * This is used on Android for creating temporary files.
@@ -225,6 +214,8 @@ static char javaioFile[] = "java.io.File";
  */
 CString GetSystemDirectedPath(cstring suffix, RSCA storage)
 {
+    DProfContext _("JNI path resolution");
+
     using namespace ::jnipp_operators;
 
     //    using FileType = JavaClass<javaioFile, void, void>;
@@ -368,8 +359,13 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::CachedFile:
     {
+#if defined(COFFEE_ANDROID)
+        tempStore =
+            MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
+#else
         DirFun::MkDir(paths.cacheDir, true, ec);
         tempStore = paths.cacheDir + urlPart;
+#endif
         break;
     }
     default:
@@ -520,7 +516,7 @@ UrlParseCache& GetCache()
     auto patt = MkShared<UrlParseCache>();
 
     Profiler::DeepPushContext(URLPARSE_TAG "Regex compile");
-    patt->pattern = Regex::Compile(url_pattern);
+    patt->pattern = Regex::compile_pattern(url_pattern);
     Profiler::DeepPopContext();
 
     State::SwapState(pattern_key, patt);
@@ -544,27 +540,28 @@ UrlParse UrlParse::From(const Url& url)
     DProfContext _(URLPARSE_TAG);
     UrlParse     p = {};
 
-    Profiler::DeepPushContext(URLPARSE_TAG "Regex");
-    auto matches = Regex::Match(GetCache().pattern, *url, true);
-    Profiler::DeepPopContext();
+    Vector<CString> matches;
 
-    if(!matches.size())
-        return p;
-
-    p.m_protocol = matches[1].s_match[0];
-    p.m_host     = matches[2].s_match[0];
-
-    if(matches[URL_Port].s_match[0].size())
     {
-        p.m_port     = cast_string<u32>(matches[URL_Port].s_match[0]);
-        p.m_resource = matches[URL_PortResource].s_match[0];
-    } else if(matches[URL_PortOnly].s_match[0].size())
+        DProfContext _(URLPARSE_TAG "Regex");
+        if(!Regex::match(GetCache().pattern, *url, matches))
+            return p;
+    }
+
+    p.m_protocol = matches[1];
+    p.m_host     = matches[2];
+
+    if(matches[URL_Port].size())
     {
-        p.m_port = cast_string<u32>(matches[URL_PortOnly].s_match[0]);
+        p.m_port     = cast_string<u32>(matches[URL_Port]);
+        p.m_resource = matches[URL_PortResource];
+    } else if(matches[URL_PortOnly].size())
+    {
+        p.m_port = cast_string<u32>(matches[URL_PortOnly]);
     } else
     {
         p.m_port     = 0;
-        p.m_resource = matches[URL_Resource].s_match[0];
+        p.m_resource = matches[URL_Resource];
     }
 
     return p;

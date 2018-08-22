@@ -4,6 +4,7 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/string_casting.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
 #include <coffee/core/CDebug>
 
@@ -189,7 +190,7 @@ Set<CString> LinuxSysInfo::CPUFlags()
         result = get_linux_property(cached_cpuinfo_string, query_linaro);
 
     if(!result.size())
-        return {};
+        return Set<CString>();
 
     str::trim::both(result);
 
@@ -253,8 +254,8 @@ u32 LinuxSysInfo::CpuCount()
 
     CPUInfoString();
 
-    u32 count = 0;
-    auto   res   = cached_cpuinfo_string.find(query);
+    u32  count = 0;
+    auto res   = cached_cpuinfo_string.find(query);
     while(res != cached_cpuinfo_string.npos)
     {
         res      = cached_cpuinfo_string.find(':', res) + 1;
@@ -264,7 +265,7 @@ u32 LinuxSysInfo::CpuCount()
         str::trim::both(result);
 
         u32 c = cast_string<u32>(result) + 1;
-        count    = CMath::max(count, c);
+        count = CMath::max(count, c);
 
         res = cached_cpuinfo_string.find(query, end);
     }
@@ -395,7 +396,7 @@ Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
             Url cpu =
                 p + Path::Mk(e.name.c_str()) + Path::Mk(root_paths[i].suffix);
             CString tmp = LFileFun::sys_read((*cpu).c_str());
-            tmp = tmp.substr(0, tmp.find('\n'));
+            tmp         = tmp.substr(0, tmp.find('\n'));
             if(tmp.size())
                 freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
         }

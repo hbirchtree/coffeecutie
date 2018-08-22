@@ -61,7 +61,6 @@ struct ScopedJNI
 
     ~ScopedJNI()
     {
-//        javaVm->DetachCurrentThread();
     }
 
     JNIEnv* env()
@@ -69,6 +68,28 @@ struct ScopedJNI
         return jniEnvironment;
     }
 };
+
+struct intent
+{
+    intent();
+
+    std::string action();
+
+    std::string data();
+
+    std::set<std::string> categories();
+
+    std::map<std::string, std::string> extras();
+
+    int flags();
+
+private:
+    jnipp::wrapping::jobject m_intent;
+};
+
+extern std::vector<std::string> cpu_abis();
+
+extern int app_dpi();
 
 } // namespace android
 

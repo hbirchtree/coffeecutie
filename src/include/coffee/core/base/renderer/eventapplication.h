@@ -115,9 +115,10 @@ void WrapEventFunction(void* data, int event)
     case CoffeeHandle_Setup:
         if(CurrentState == 0)
         {
+            CString error;
             Profiler::DeepPushContext("Renderer::Setup");
             /* By default, try to load the highest GL version */
-            if(LoadHighestVersion(&edata->r(), edata->visual, nullptr))
+            if(LoadHighestVersion(&edata->r(), edata->visual, &error))
             {
                 Profiler::DeepPopContext();
                 Profiler::DeepPushContext("Event::Setup");
@@ -127,7 +128,8 @@ void WrapEventFunction(void* data, int event)
             } else
             {
                 Profiler::DeepPopContext();
-                throw undefined_behavior("EventApplication::setup failed");
+                throw undefined_behavior(
+                    "EventApplication::setup failed: " + error);
             }
         }
         break;

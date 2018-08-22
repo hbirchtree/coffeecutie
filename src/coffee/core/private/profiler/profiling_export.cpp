@@ -297,7 +297,7 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 
 void ExitRoutine()
 {
-#ifdef COFFEE_LOWFAT
+#if defined(COFFEE_LOWFAT) || defined(NDEBUG)
     return;
 #endif
 

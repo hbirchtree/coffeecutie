@@ -105,13 +105,13 @@ static void CoffeeInit_Internal(u32 flags)
 #ifndef NDEBUG
 //    PrintingVerbosityLevel() = 8;
 //    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
-#else
-    Coffee::PrintingVerbosityLevel()          = 1;
-#endif
 
-#ifndef NDEBUG
     /* Allow core dump by default in debug mode */
     ProcessProperty::CoreDumpEnable();
+
+    State::GetProfilerStore()->enable();
+#else
+    Coffee::PrintingVerbosityLevel()          = 1;
 #endif
 
 #if defined(COFFEE_ANDROID)
@@ -148,7 +148,6 @@ static void CoffeeInit_Internal(u32 flags)
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
 
-    State::GetProfilerStore()->enable();
     CurrentThread::SetName("Main");
 #endif
 }

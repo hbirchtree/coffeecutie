@@ -7,35 +7,34 @@
 
 #include <coffee/core/CRegex>
 
-#include <cxxabi.h>     //Demangling function names
+#include <cxxabi.h> //Demangling function names
 
 #if defined(COFFEE_USE_UNWIND)
 #define UNW_LOCAL_ONLY
-#include <libunwind.h>  //For retrieving the callstack
+#include <libunwind.h> //For retrieving the callstack
 #endif
 
-namespace Coffee{
-namespace Environment{
-namespace Posix{
+namespace Coffee {
+namespace Environment {
+namespace Posix {
 
-CString PosixStacktracer::DemangleSymbol(const char *sym)
+CString PosixStacktracer::DemangleSymbol(const char* sym)
 {
 #ifndef COFFEE_LOWFAT
-    i32 stat = 0;
+    i32       stat   = 0;
     Ptr<char> symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
-    if(stat==0)
+    if(stat == 0)
     {
         CString outSymbol = symbol.ptr;
         CFree(symbol);
         return outSymbol;
-    }
-    else
+    } else
 #endif
         return sym;
 }
 
 StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
-        u32 start, i32 length)
+    u32 start, i32 length)
 {
     Stacktrace t;
 #ifndef COFFEE_LOWFAT
@@ -47,9 +46,9 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
     }
 
     unw_cursor_t cursor;
-    unw_init_local(&cursor,unwind_context);
+    unw_init_local(&cursor, unwind_context);
 
-    for(uint32 i=0;i<start;i++)
+    for(uint32 i = 0; i < start; i++)
         unw_step(&cursor);
 
     CString temp_buf;
@@ -57,13 +56,17 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
 
     int32 depth = 0;
 
-    while(unw_step(&cursor)>0)
+    while(unw_step(&cursor) > 0)
     {
-        unw_word_t offset,pc;
-        unw_get_reg(&cursor,UNW_REG_IP,&pc);
-        if(pc==0)
+        unw_word_t offset, pc;
+        unw_get_reg(&cursor, UNW_REG_IP, &pc);
+        if(pc == 0)
             break;
-        if(unw_get_proc_name(&cursor,&temp_buf[0],temp_buf.size()*sizeof(char),&offset)==0)
+        if(unw_get_proc_name(
+               &cursor,
+               &temp_buf[0],
+               temp_buf.size() * sizeof(char),
+               &offset) == 0)
         {
             CString fname = DemangleSymbol(temp_buf);
             t.push_back(fname);
@@ -96,30 +99,30 @@ CString PosixStacktracer::GetStackframeName(u32 depth)
 CString PosixStacktracer::GetStackFuncName(u32 depth)
 {
 #ifndef COFFEE_LOWFAT
-    static bool rgx_compiled;
+    static bool           rgx_compiled;
     static Regex::Pattern rgx;
 
     CString frame = GetStackframeName(depth + 1);
 
     if(!rgx_compiled)
     {
-        rgx = Regex::Compile("^(.*)\\(.*$");
+        rgx = Regex::compile_pattern("^(.*)\\(.*$");
     }
 
-    auto result = Regex::Match(rgx, frame, true);
+    Vector<CString> result;
 
-    if(result.size() < 2 || result[1].s_match.size() < 1)
+    if(!Regex::match(rgx, frame, result))
         return frame;
 
-    return result[1].s_match.front();
+    return result[1];
 #else
     return {};
 #endif
 }
 
-}
+} // namespace Posix
 
-}
-}
+} // namespace Environment
+} // namespace Coffee
 
 #endif

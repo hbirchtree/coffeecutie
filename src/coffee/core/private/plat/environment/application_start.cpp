@@ -85,7 +85,9 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, u32 flags = 0)
 
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
+#if !defined(NDEBUG)
     State::GetProfilerStore()->disable();
+#endif
     exit(stat);
 #else
     return stat;

@@ -2,15 +2,16 @@
 
 #include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
-#include <coffee/core/CDebug>
 #include <coffee/core/CMD>
 #include <coffee/core/plat/plat_environment.h>
+
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Net {
 void ProfilingExport()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && !defined(NDEBUG)
     cVerbose(10, "Checking for network profiling...");
 
     const constexpr cstring network_server = "COFFEE_REPORT_URL";

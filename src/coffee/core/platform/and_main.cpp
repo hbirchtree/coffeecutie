@@ -23,75 +23,7 @@ using namespace jnipp;
 
 namespace android {
 
-static std::map<std::string, std::string> intentVariables;
-static std::string                        Android_cacheDir;
-static std::string                        Android_abis;
-static int                                Android_DPI;
-
 } // namespace android
-
-extern "C" {
-
-JNIEXPORT __attribute__((used)) __attribute__((visibility("default"))) void
-Java_me_birchtrees_CoffeeNativeActivity_smuggleVariable(
-    JNIEnv* env, jobject, jint id, jstring data)
-{
-    using namespace android;
-
-    auto string_data = env->GetStringUTFChars(data, nullptr);
-
-    if(!string_data)
-        return;
-
-    //    Coffee::cDebug("Data {0}: {1}", id, CString(string_data));
-
-    switch(id)
-    {
-    case 10:
-    {
-        /* Cache directory */
-        Android_cacheDir = string_data;
-
-        break;
-    }
-    case 11:
-    {
-        /* DPI report */
-        Android_DPI = Coffee::cast_string<Coffee::i32>(string_data);
-
-        break;
-    }
-    case 12:
-    {
-        /* ABI strings */
-        Android_abis = string_data;
-
-        break;
-    }
-
-    case 13:
-    {
-        /* Importing Intent extras as environment variables */
-
-        Coffee::CString sdata = string_data;
-        auto            split = sdata.find('=');
-        if(split == Coffee::CString::npos)
-            break;
-        auto keyName = sdata.substr(0, split);
-        auto varName = sdata.substr(split + 1, sdata.size() - split - 1);
-
-        intentVariables[keyName] = varName;
-        setenv(keyName.c_str(), varName.c_str(), 1);
-
-        break;
-    }
-    default:
-        break;
-    }
-
-    env->ReleaseStringUTFChars(data, string_data);
-}
-}
 
 namespace android {
 
@@ -198,7 +130,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
     case APP_CMD_RESUME:
     case APP_CMD_PAUSE:
-//    case APP_CMD_DESTROY:
+        //    case APP_CMD_DESTROY:
     case APP_CMD_STOP:
     {
         cDebug("Lifecycle event triggered: {0}", event);
@@ -514,7 +446,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             out->store_string = coffee_app->activity->externalDataPath;
             break;
         case Android_QueryCachePath:
-            out->store_string = Android_cacheDir;
+            Throw(implementation_error("deprecated function"));
             break;
 #if ANDROID_API_LEVEL >= 13
         case Android_QueryObbPath:
@@ -523,7 +455,13 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 #endif
 
         case Android_QueryPlatformABIs:
-            out->store_string = Android_abis;
+            out->store_string = {};
+
+            for(auto abi : android::cpu_abis())
+                out->store_string += abi + " ";
+
+            out->store_string = str::trim::both(out->store_string);
+
             break;
 
         case Android_QueryReleaseName:
@@ -552,7 +490,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             break;
 
         case Android_QueryDeviceDPI:
-            out->data.scalarI64 = Android_DPI;
+            out->data.scalarI64 = android::app_dpi();
             break;
 
         case Android_QueryNativeWindow:
@@ -590,7 +528,51 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
     }
 }
 
-extern CString GetSystemDirectedPath(cstring suffix, RSCA storage);
+STATICINLINE void GetExtras()
+{
+    using namespace jnipp_operators;
+
+    jobject native_app = coffee_app->activity->clazz;
+
+    /* CLasses */
+    auto NativeActivity = "android.app.NativeActivity"_jclass;
+
+    /* Methods */
+
+    auto activityObject = NativeActivity(native_app);
+
+    {
+        /* Get display DPI */
+
+        cDebug("Display DPI: {0}", android::app_dpi());
+    }
+
+    {
+        /* Get system ABIs */
+        for(auto const& abi : android::cpu_abis())
+            cDebug("{0}", abi);
+    }
+
+    {
+        /* Intent extras */
+
+        intent appIntent;
+
+        cDebug("Intent summary:");
+
+        cDebug("App URI: {0}", appIntent.data());
+
+        for(auto e : appIntent.extras())
+            cDebug("{0} = {1}", e.first, e.second);
+
+        cDebug("App action: {0}", appIntent.action());
+
+        for(auto cat : appIntent.categories())
+            cDebug("{0}", cat);
+
+        cDebug("App flags: {0}", str::convert::hexify(appIntent.flags()));
+    }
+}
 
 STATICINLINE void InitializeState(struct android_app* state)
 {
@@ -620,6 +602,8 @@ STATICINLINE void InitializeState(struct android_app* state)
     cDebug("State:       {0}", str::print::pointerify(state));
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
+
+//    GetExtras();
 
     jnipp::SwapJNI(nullptr);
 }
@@ -699,6 +683,162 @@ JavaVM* GetVM()
 }
 
 } // namespace jnipp
+
+namespace android {
+
+using namespace Coffee;
+using namespace jnipp_operators;
+
+intent::intent() : m_intent(nullptr, nullptr)
+{
+    auto activity =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto Intent = "android.content.Intent"_jclass;
+
+    auto getIntent = "getIntent"_jmethod.ret("android.content.Intent");
+
+    m_intent = Intent(activity[getIntent]());
+}
+
+std::string intent::action()
+{
+    auto getAction = "getAction"_jmethod.ret("java.lang.String");
+
+    return jnipp::java::type_unwrapper<std::string>(m_intent[getAction]());
+}
+
+std::string intent::data()
+{
+    auto Uri = "android.net.Uri"_jclass;
+
+    auto getData  = "getData"_jmethod.ret("android.net.Uri");
+    auto toString = "toString"_jmethod.ret("java.lang.String");
+
+    auto intentData = m_intent[getData]();
+
+    if(!java::objects::not_null(intentData))
+        return {};
+
+    auto intentUri = Uri(intentData);
+
+    return jnipp::java::type_unwrapper<std::string>(intentUri[toString]());
+}
+
+std::set<std::string> intent::categories()
+{
+    auto Set = "java.util.Set"_jclass;
+
+    auto getCategories = "getCategories"_jmethod.ret("java.util.Set");
+    auto toArray = "toArray"_jmethod.ret<jobjectArray>("java.lang.Object");
+
+    auto categorySet = Set(m_intent[getCategories]());
+    auto categoryArray =
+        jnipp::java::array_type_unwrapper<jobjectArray>(categorySet[toArray]());
+
+    std::set<std::string> outCategories;
+
+    for(auto category : *categoryArray)
+        outCategories.insert(
+            jnipp::java::type_unwrapper<std::string>(category));
+
+    return outCategories;
+}
+
+std::map<std::string, std::string> intent::extras()
+{
+    std::map<std::string, std::string> out;
+
+    auto Bundle = "android.os.Bundle"_jclass;
+    auto Set    = "java.util.Set"_jclass;
+
+    auto getExtras      = "getExtras"_jmethod.ret("android.os.Bundle");
+    auto getStringExtra = "getStringExtra"_jmethod.ret("java.lang.String")
+                              .arg<std::string>("java.lang.String");
+    auto keySet   = "keySet"_jmethod.ret("java.util.Set");
+    auto setArray = "toArray"_jmethod.ret<jobjectArray>("java.lang.Object");
+
+    auto extrasRef = m_intent[getExtras]().l;
+
+    if(jnipp::java::objects::not_null(extrasRef))
+    {
+        auto extras       = Bundle(extrasRef);
+        auto extrasKeySet = Set(extras[keySet]().l);
+
+        auto extraKeys = jnipp::java::array_type_unwrapper<jobjectArray>(
+            extrasKeySet[setArray]());
+
+        for(auto key : *extraKeys)
+        {
+            std::string key_s = jnipp::java::type_unwrapper<std::string>(key);
+            std::string value = jnipp::java::type_unwrapper<std::string>(
+                m_intent[getStringExtra](key_s));
+            out[key_s] = value;
+        }
+    }
+
+    return out;
+}
+
+int intent::flags()
+{
+    auto getFlags = "getFlags"_jmethod.ret<jint>();
+
+    return jnipp::java::type_unwrapper<jint>(m_intent[getFlags]());
+}
+
+std::vector<std::string> cpu_abis()
+{
+    auto Build = "android.os.Build"_jclass;
+
+    std::vector<std::string> out;
+
+    try
+    {
+        auto SUPPORTED_ABIS =
+            "SUPPORTED_ABIS"_jfield.as<jobjectArray>("java.lang.String");
+
+        auto abis = jnipp::java::array_type_unwrapper<jobjectArray>(
+            *Build[SUPPORTED_ABIS]);
+
+        for(auto abi : *abis)
+            out.push_back(jnipp::java::type_unwrapper<std::string>(abi));
+    } catch(jnipp::java_exception const&)
+    {
+        auto CPU_ABI  = "CPU_ABI"_jfield.as("java.lang.String");
+        auto CPU_ABI2 = "CPU_ABI2"_jfield.as("java.lang.String");
+
+        out.push_back(
+            jnipp::java::type_unwrapper<std::string>(*Build[CPU_ABI]));
+        out.push_back(
+            jnipp::java::type_unwrapper<std::string>(*Build[CPU_ABI2]));
+    }
+
+    return out;
+}
+
+int app_dpi()
+{
+    auto activityObject =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+
+    auto Resources      = "android.content.res.Resources"_jclass;
+    auto DisplayMetrics = "android.util.DisplayMetrics"_jclass;
+
+    auto getResources =
+        "getResources"_jmethod.ret("android.content.res.Resources");
+    auto getDisplayMetrics =
+        "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
+
+    auto resourceObject = Resources(activityObject[getResources]().l);
+    auto displayMetrics = DisplayMetrics(resourceObject[getDisplayMetrics]().l);
+
+    auto displayDpi = C_CAST<jint>(jnipp::java::type_unwrapper<jint>(
+        *displayMetrics["densityDpi"_jfield.as<jint>()]));
+
+    return displayDpi;
+}
+
+} // namespace android
 
 void android_main(struct android_app* state)
 {

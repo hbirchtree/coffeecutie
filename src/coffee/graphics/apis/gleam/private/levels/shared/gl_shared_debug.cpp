@@ -85,24 +85,25 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
         if(str.size() <= 0)
             break;
 
-        Regex::Pattern p = Regex::Compile(
+        Regex::Pattern p = Regex::compile_pattern(
             "^"
             "(OpenGL ES )?"
             "([0-9]+)\\.([0-9]+)(\\.([0-9]+))?"
             " (((\\()?(Core|Compatibility) Profile( Context)?(\\))?) )?"
             "(.*)" /*  */
             "$");
-        auto match = Regex::Match(p, str, true);
-        if(match.size() < 3)
+
+        Vector<CString> match;
+        if(!Regex::match(p, str, match))
             break;
 
-        ver.major = cast_string<u8>(match.at(2).s_match[0]);
-        ver.minor = cast_string<u8>(match.at(3).s_match[0]);
+        ver.major = cast_string<u8>(match.at(2));
+        ver.minor = cast_string<u8>(match.at(3));
 
-        if(match.at(5).s_match[0].size())
-            ver.revision = cast_string<u8>(match.at(5).s_match[0]);
+        if(match.at(5).size())
+            ver.revision = cast_string<u8>(match.at(5));
 
-        ver.driver = match.at(11).s_match[0];
+        ver.driver = match.at(11);
 
     } while(false);
 
@@ -138,22 +139,23 @@ Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
 
     do
     {
-        Regex::Pattern pa = Regex::Compile(
+        Regex::Pattern pa = Regex::compile_pattern(
             "^"
             "(OpenGL ES GLSL ES )?"     /* OpenGL ES label */
             "([0-9]+)\\.([0-9]+)"       /* version */
             "(\\.([0-9]+))?"            /* optional specifier of some sort */
             "( (- )?([Bb]uild )?(.*))?" /* driver */
             "$");
-        auto match = Regex::Match(pa, str, true);
 
-        if(!match.size())
+        Vector<CString> match;
+
+        if(!Regex::match(pa, str, match))
             continue;
 
-        ver.major = cast_string<u8>(match.at(2).s_match[0]);
-        ver.minor = cast_string<u8>(match.at(3).s_match[0]);
+        ver.major = cast_string<u8>(match.at(2));
+        ver.minor = cast_string<u8>(match.at(3));
 
-        ver.driver = match.at(8).s_match[0];
+        ver.driver = match.at(8);
 
     } while(false);
 

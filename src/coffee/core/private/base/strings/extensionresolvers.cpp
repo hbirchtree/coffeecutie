@@ -1,65 +1,63 @@
+#include <coffee/core/CRegex>
 #include <coffee/core/base/strings/extensionresolvers.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/CRegex>
 #include <coffee/core/plat/plat_memory.h>
 
 #include <type_traits>
 
-namespace Coffee{
-namespace Strings{
+namespace Coffee {
+namespace Strings {
 
 using namespace Mem;
 
-CString extArgReplacePhrase(const CString &fmt, const CString &phrase, const CString &replace)
+CString extArgReplacePhrase(
+    const CString& fmt, const CString& phrase, const CString& replace)
 {
-    return str::replace::str(fmt,phrase,replace);
+    return str::replace::str(fmt, phrase, replace);
 }
 
-CString extArgReplace(const CString &fmt, const size_t &index, const CString &replace)
+CString extArgReplace(
+    const CString& fmt, const size_t& index, const CString& replace)
 {
     CString subfmt = "{" + cast_pod(index) + "}";
-    return str::replace::str(fmt,subfmt,replace);
+    return str::replace::str(fmt, subfmt, replace);
 }
 
-template<typename T,
+template<
+    typename T,
 
-         typename std::enable_if<
-             std::is_floating_point<T>::value, bool>::type*
-         = nullptr
+    typename std::enable_if<std::is_floating_point<T>::value, bool>::type* =
+        nullptr
 
-         >
-CString cStringReplace(
-        CString const& fmt, size_t const& index,
-        T const& arg)
+    >
+CString cStringReplace(CString const& fmt, size_t const& index, T const& arg)
 {
     /* Regexes, man, these fucking regexes */
-    Regex::Pattern patt = Regex::Compile(".*?(\\{\\d+:(\\d+)\\}).*");
-    auto match = Regex::Match(patt,fmt,true);
+    Regex::Pattern  patt = Regex::compile_pattern(".*?(\\{\\d+:(\\d+)\\}).*");
+    Vector<CString> match;
 
-    if(match.size()>=3)
-    {
-        u32 prec = str::from_string<u32>(match[2].s_match[0].c_str());
+    if(!Regex::match(patt, fmt, match))
+        return extArgReplace(fmt, index, Strings::to_string(arg));
 
-        CString rep;
+    u32 prec = str::from_string<u32>(match[2].c_str());
+
+    CString rep;
 #ifdef COFFEE_USE_IOSTREAMS
-        std::stringstream ss;
-        ss << std::fixed << std::setprecision(prec) << arg;
-        ss >> rep;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(prec) << arg;
+    ss >> rep;
 #else
-        rep = str::convert::to_string(arg);
-        auto dot1 = rep.find('.');
-        auto dot2 = rep.find(',');
-        if(dot1)
-            rep.resize(dot1+1+prec,'0');
-        else if(dot2)
-            rep.resize(dot2+1+prec,'0');
+    rep       = str::convert::to_string(arg);
+    auto dot1 = rep.find('.');
+    auto dot2 = rep.find(',');
+    if(dot1)
+        rep.resize(dot1 + 1 + prec, '0');
+    else if(dot2)
+        rep.resize(dot2 + 1 + prec, '0');
 #endif
 
-        return extArgReplacePhrase(fmt,match[1].s_match[0],rep);
-    }
-    else
-        return extArgReplace(fmt,index,Strings::to_string(arg));
+    return extArgReplacePhrase(fmt, match[1], rep);
 }
 
-}
-}
+} // namespace Strings
+} // namespace Coffee

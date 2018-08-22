@@ -121,6 +121,7 @@ using Profiler = ::profiler::
 
 using DataPoint = Profiler::datapoint;
 
+#if !defined(NDEBUG)
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(
@@ -207,6 +208,58 @@ struct SimpleProfilerImpl
         return *context;
     }
 };
+#else
+struct SimpleProfilerImpl
+{
+    STATICINLINE void PushContext(
+        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+    {
+    }
+
+    STATICINLINE void PopContext()
+    {
+    }
+
+    STATICINLINE void Profile(
+        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+    {
+    }
+
+    STATICINLINE void DeepPushContext(
+        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+    {
+    }
+
+    STATICINLINE void DeepPopContext()
+    {
+    }
+
+    STATICINLINE void DeepProfile(
+        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+    {
+    }
+
+    C_DEPRECATED
+    STATICINLINE void SetDeepProfileMode(bool state)
+    {
+    }
+
+    C_DEPRECATED
+    STATICINLINE void AddExtraData(CString const& key, CString const& value)
+    {
+    }
+
+    STATICINLINE PExtraData* ExtraInfo()
+    {
+        return nullptr;
+    }
+
+    STATICINLINE i64 StartTime()
+    {
+        return 0;
+    }
+};
+#endif
 
 struct ProfilerContext
 {
