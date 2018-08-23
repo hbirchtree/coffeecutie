@@ -15,7 +15,7 @@ dist: trusty
 env:
   global:
   - MAKEFILE_DIR=toolchain/makers
-  - DEPENDENCIES=
+  - DEPENDENCIES=hbirchtree/openal%hbirchtree/bullet%hbirchtree/shaderc%hbirchtree/assimp%hbirchtree/libav%hbirchtree/glslang%hbirchtree/openssl%hbirchtree/sdl2%hbirchtree/spirv-cross%hbirchtree/squish%
   - CONFIGURATION=Release
   matrix:
   - BUILDVARIANT=android.armv7a.kitkat.gles2

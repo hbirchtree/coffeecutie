@@ -69,6 +69,7 @@ DEPENDENCIES="$(build_info dependencies)"
 DEPENDENCIES="$(echo $DEPENDENCIES | sed -e 's/ /%/g')"
 MAKEFILE_DIR=$(build_info makefile_location)
 SCRIPT_DIR=
+NODEPS=${NODEPS:-1}
 
 MULTI_DIR="$PWD/../multi_build"
 

@@ -905,6 +905,7 @@ inline payload_t read_payload(
 
 } // namespace stream
 
+#if !defined(COFFEE_WINDOWS)
 namespace multipart {
 struct missing_terminator : std::out_of_range
 {
@@ -1047,5 +1048,6 @@ struct parser
     }
 };
 } // namespace multipart
+#endif
 
 } // namespace http

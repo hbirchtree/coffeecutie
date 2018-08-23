@@ -49,3 +49,15 @@ version:
   patch: 0
   release: 0
 versionprefix: automated-release-
+
+dependencies:
+  hbirchtree/assimp: v4.1.0
+  hbirchtree/glslang: v1
+  hbirchtree/shaderc: v1
+  hbirchtree/spirv-cross: v1
+  hbirchtree/squish: v1
+  hbirchtree/bullet: v2.88
+  hbirchtree/libav: v1
+  hbirchtree/openal: v1.18.2
+  hbirchtree/openssl: v1
+  hbirchtree/sdl2: v2.0.8
