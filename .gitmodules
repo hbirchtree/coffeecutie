@@ -7,9 +7,6 @@
 [submodule "libs/tinyxml2"]
 	path = src/libs/tinyxml2
 	url = https://github.com/leethomason/tinyxml2.git
-#[submodule "libs/openvr"]
-#	path = src/libs/openvr
-#	url = https://github.com/ValveSoftware/openvr.git
 [submodule "libs/asio"]
 	path = src/libs/asio
 	url = https://github.com/chriskohlhoff/asio.git
