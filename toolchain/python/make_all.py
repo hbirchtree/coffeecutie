@@ -75,7 +75,7 @@ def create_dependencies(precompiled_deps, base_config):
 
         update_cmd = Command()
         update_cmd.flags = COMMAND_FLAGS.IGNORED
-        update_cmd.command = '$(dep.type) pull -C $(dep.source_root)'
+        update_cmd.command = '$(dep.type) -C $(dep.source_root) pull'
 
         mkdir_cmd.command = var_templates.resolve_variable(vars, mkdir_cmd.command)[0]
         clone_cmd.command = var_templates.resolve_variable(vars, clone_cmd.command)[0]

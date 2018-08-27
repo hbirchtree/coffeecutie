@@ -35,12 +35,12 @@ FORCE:
 native-libs:
 	mkdir -p $(BUILD_DIR)/dependencies/native-libs
 	-git clone --recursive --depth 1 https://github.com/hbirchtree/native-library-bundle.git $(BUILD_DIR)/dependencies/native-libs
-	-git pull -C $(BUILD_DIR)/dependencies/native-libs
+	-git -C $(BUILD_DIR)/dependencies/native-libs pull
 
 rpi-sdk:
 	mkdir -p $(BUILD_DIR)/dependencies/raspberry-sysroot
 	-git clone --recursive --depth 1 https://github.com/hbirchtree/raspberry-sysroot.git $(BUILD_DIR)/dependencies/raspberry-sysroot
-	-git pull -C $(BUILD_DIR)/dependencies/raspberry-sysroot
+	-git -C $(BUILD_DIR)/dependencies/raspberry-sysroot pull
 
 # Device-oriented build for ARM64 and ARMv7-A
 # Compiler: Clang
