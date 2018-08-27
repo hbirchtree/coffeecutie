@@ -103,7 +103,9 @@ if __name__ == '__main__':
                 print(v)
         else:
             print(values)
-    except [IndexError, KeyError]:
+    except IndexError:
+        pass
+    except KeyError:
         pass
 
     exit(0)

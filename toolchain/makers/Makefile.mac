@@ -1,1 +1,127 @@
-Makefile.linux
+BUILD_DIR ?= $(PWD)
+BUILD_MODE ?= containerized
+CONFIGURATION ?= Debug
+GENERATE_PROGRAMS ?= OFF
+HEADLESS ?= ON
+MAKEFILE_DIR ?= $(SOURCE_DIR)
+ROOT_DIR ?= $(MAKEFILE_DIR)
+SOURCE_DIR ?= $(PWD)/..
+
+ifeq ($(BUILD_MODE), bare)
+	ANDROID_NDK_INTERNAL := $(ANDROID_NDK)
+	ANDROID_SDK_INTERNAL := $(ANDROID_SDK)
+	CMAKE_BUILD_DIR := $(BUILD_DIR)
+	CMAKE_INSTALL_DIR := $(BUILD_DIR)/build
+	CMAKE_SOURCE_DIR := $(SOURCE_DIR)
+	COFFEE_ROOT_DIR := $(COFFEE_DIR)
+	NATIVE_LIBRARY_DIR := $(BUILD_DIR)/dependencies/native-libs
+	RUNNER := Makefile.workspace
+endif
+
+
+ifeq ($(BUILD_MODE), containerized)
+	ANDROID_NDK_INTERNAL := /home/coffee/android-ndk-linux
+	ANDROID_SDK_INTERNAL := /home/coffee/android-sdk-linux
+	CMAKE_BUILD_DIR := /home/coffee/build
+	CMAKE_INSTALL_DIR := /home/coffee/out
+	CMAKE_SOURCE_DIR := /home/coffee/project
+	COFFEE_ROOT_DIR := /home/coffee/library
+	NATIVE_LIBRARY_DIR := /nativelibs
+	RUNNER := Makefile.multi
+endif
+
+FORCE:
+
+native-libs:
+	mkdir -p $(BUILD_DIR)/dependencies/native-libs
+	-git clone --recursive --depth 1 https://github.com/hbirchtree/native-library-bundle.git $(BUILD_DIR)/dependencies/native-libs
+	-git pull -C $(BUILD_DIR)/dependencies/native-libs
+
+rpi-sdk:
+	mkdir -p $(BUILD_DIR)/dependencies/raspberry-sysroot
+	-git clone --recursive --depth 1 https://github.com/hbirchtree/raspberry-sysroot.git $(BUILD_DIR)/dependencies/raspberry-sysroot
+	-git pull -C $(BUILD_DIR)/dependencies/raspberry-sysroot
+
+# Device-oriented build for ARM64 and ARMv7-A
+# Compiler: Clang
+ios: FORCE native-libs
+	make -f $(ROOT_DIR)/Makefile.mac-base build \
+	-e EXTRA_OPTIONS=" \
+	$(SOURCE_DIR) \
+	-G'Xcode' \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
+	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
+	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=ios
+
+# iOS simulator build
+# Compiler: Clang
+ios.x86_64: FORCE native-libs
+	make -f $(ROOT_DIR)/Makefile.mac-base build \
+	-e EXTRA_OPTIONS=" \
+	$(SOURCE_DIR) \
+	-G'Xcode' \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
+	-DIOS_PLATFORM=SIMULATOR64 \
+	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
+	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86_64 \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86_64 \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=ios.x86_64
+
+# iOS simulator build
+# Compiler: Clang
+ios.x86: FORCE native-libs
+	make -f $(ROOT_DIR)/Makefile.mac-base build \
+	-e EXTRA_OPTIONS=" \
+	$(SOURCE_DIR) \
+	-G'Xcode' \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
+	-DIOS_PLATFORM=SIMULATOR \
+	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
+	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86 \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86 \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=ios.x86
+
+# Apple OS X
+# Compiler: Clang
+osx: FORCE native-libs
+	make -f $(ROOT_DIR)/Makefile.mac-base build \
+	-e EXTRA_OPTIONS=" \
+	$(SOURCE_DIR) \
+	-G'Xcode' \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-generic.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/osx-generic_osx.toolchain.cmake \
+	-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
+	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/osx \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=osx
+

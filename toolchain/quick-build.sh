@@ -43,7 +43,10 @@
 # BUILD_MODE=...    -- Specify 'containerized' to build in Docker,
 #                   --  or 'bare' to build without containerization.
 #                   -- Applies only to Linux.
-# 
+#
+
+set -x
+set -e
 
 function build_info()
 {
@@ -66,7 +69,7 @@ function get_travis_platform()
 TRAVIS_OS_NAME=$(get_travis_platform)
 BUILDVARIANT=$1
 DEPENDENCIES="$(build_info dependencies)"
-DEPENDENCIES="$(echo $DEPENDENCIES | sed -e 's/ /%/g')"
+DEPENDENCIES="$(echo ${DEPENDENCIES} | sed -e 's/ /%/g')"
 MAKEFILE_DIR=$(build_info makefile_location)
 SCRIPT_DIR=
 NODEPS=${NODEPS:-1}
@@ -75,13 +78,13 @@ MULTI_DIR="$PWD/../multi_build"
 
 mkdir -p "$MULTI_DIR"
 
-if [ ! -z $LOCALLIB ]; then
+if [ ! -z ${LOCALLIB} ]; then
     echo " * Using local library build"
     NODEPS=1
-    [ ! -d "$MULTI_DIR/coffee_lib" ] && ln -s $LOCALLIB "$MULTI_DIR/coffee_lib"
+    [ ! -d "$MULTI_DIR/coffee_lib" ] && ln -s ${LOCALLIB} "$MULTI_DIR/coffee_lib"
 fi
 
-[ -z $MAKEFILE_DIR ] && echo "No Makefile directory found" && exit 1
+[ -z ${MAKEFILE_DIR} ] && echo "No Makefile directory found" && exit 1
 
 export TRAVIS_OS_NAME
 export BUILDVARIANT
@@ -89,4 +92,6 @@ export DEPENDENCIES
 export MAKEFILE_DIR
 export NODEPS
 
-$(build_info script_location)/travis-build.sh
+source $(build_info script_location)/travis-build-common.sh
+
+build_target "${BUILDVARIANT}"

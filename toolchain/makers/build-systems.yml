@@ -1,0 +1,50 @@
+# The following variables are defined in makefile-generator.py:
+#  build-arch: target architecture, eg. ubuntu.amd64
+#  dep-target: current build dependency, eg. sdl2, assimp
+.*:
+  +container-opts:
+    - -v $(build-dep.build-root):$(container.build):rw
+    - -v $(bdep.root):$(container.src):ro
+    - -v $(build-dep.install-root):$(container.install):rw
+    - -v $(project.src)/toolchain/cmake:/home/coffee/cmake-project:ro
+    - --workdir $(container.build)
+  =dependencies:
+    - $(dep-target).source
+    - $(dep-target).$(build-arch).build_dir
+    - $(dep-target).$(build-arch).install_dir
+  =target-name: $(dep-target).$(build-arch)
+  =bdep.root: $(build-dep.root)/$(dep-target)/source
+  =host.arch: x86_64-linux-gnu
+  =toolchain-dir: $(cmake-project.src)
+  =cmake.install: $(build-dep.install)
+  =program.workdir: $(build-dep.build)
+  ^make$:
+    =container-opts:
+      - -v $(bdep.root):$(container.src):rw
+      - -v $(build-dep.install-root):$(container.install):rw
+      - --workdir $(container.src)
+^cmake$:
+  =build.build-type: Release
+  =cmake.src: $(build-dep.src)
+  +cmake-opts:
+    - -DCMAKE_BUILD_TYPE=$(build.build-type)
+    - -DCMAKE_INSTALL_PREFIX=$(build-dep.install)
+^automake$:
+  =target: custom
+  =program.exec: sh -c
+  =program.arguments:
+    - \'
+    - cd $(build-dep.build) &&
+    - $(build-dep.src)/configure $(automake.opts) &&
+    - make -j4 &&
+    - make install
+    - \'
+^make$:
+  =target: custom
+  =program.exec: sh
+  =program.arguments:
+    - -c
+    - \'
+    - mkdir -p $(container.install)/include $(container.install)/lib &&
+    - make -f $(container.src)/Makefile -e CPPFLAGS=-fPIC -e INSTALL_DIR=$(container.install) install
+    - \'

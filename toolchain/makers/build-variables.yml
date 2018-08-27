@@ -1,0 +1,53 @@
+# for switching between Dockerized and native build environments
+runner-choice: $(env:RUNNER)
+# the top-level directory for containing build data
+multi:
+  root: $(env:BUILD_DIR)
+# directories in real filesystem, never in container
+project:
+  src: $(env:SOURCE_DIR)
+  build: $(multi.root)
+  install: $(multi.root)/build
+# when running in a Docker container, these paths are used
+# Apple builds work differently, dereferenced through $(cmake.*)
+container:
+  src: /home/coffee/project
+  build: /home/coffee/build
+  install: /home/coffee/out
+# dereference point for Apple builds, where Docker does not exist
+# Apple platforms simply use $(project.*)
+cmake:
+  src: $(env:CMAKE_SOURCE_DIR)
+  build: $(env:CMAKE_BUILD_DIR)
+  install: $(env:CMAKE_INSTALL_DIR)
+  coffee-lib: $(env:COFFEE_ROOT_DIR)
+  native-lib: $(env:NATIVE_LIBRARY_DIR)
+# already-compiled dependencies
+dep:
+  root: $(project.build)/dependencies
+# .prettyname is used within native-library-bundle for platform names
+# .build-type is just configuration mode
+build:
+  prettyname: Nothing
+  build-type: $(env:CONFIGURATION)
+# For importing the Coffee library
+lib:
+  flavor: ERROR_ABORT_DELET_THIS
+  root: $(env:COFFEE_DIR)
+  target: /home/coffee/library
+
+# this is the entire Android build prelaod,
+#  determining all properties for Android builds
+android:
+  stl: c++_static
+  toolchain: clang
+  features: rtti;exceptions
+  graphics: gles-2
+  api: 9
+  abi: nothing
+  arm-neon: OFF
+  gles20: ON
+  ndk: $(env:ANDROID_NDK_INTERNAL)
+  sdk: $(env:ANDROID_SDK_INTERNAL)
+
+toolchain-dir: $(env:SOURCE_DIR)/toolchain

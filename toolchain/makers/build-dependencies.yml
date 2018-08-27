@@ -1,0 +1,122 @@
+binary-dependencies:
+  native-libs:
+    type: git # type of dependency, decides procedure on how to use it
+    source: https://github.com/hbirchtree/native-library-bundle.git # in case of git, online url
+    root: $(dep.root)/native-libs # root is the native filesystem path
+    target: /nativelibs # target is only used with containers
+  rpi-sdk:
+    type: git
+    source: https://github.com/hbirchtree/raspberry-sysroot.git
+    root: $(dep.root)/raspberry-sysroot
+    target: /rpi-sysroot
+  emscripten:
+    type: empty
+    root: $(dep.root)/emsdk_portable
+    target: /home/coffee/emsdk_portable
+
+build-dependencies:
+  appimg-runtime:
+    platforms: .*(ubuntu|fedora|raspberry|coverage|maemo).*
+    source: git:https://github.com/AppImage/AppImageKit.git
+    type: make
+  assimp:
+    platforms: ^[^d].*$
+    source: git:https://github.com/assimp/assimp.git
+    type: cmake
+    cmake-opts:
+      - -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF
+      - -DASSIMP_BUILD_BLEND_IMPORTER=ON
+      - -DASSIMP_BUILD_FBX_IMPORTER=ON
+      - -DASSIMP_BUILD_COLLADA_IMPORTER=ON
+      - -DASSIMP_BUILD_ASSIMP_TOOLS=OFF
+      - -DASSIMP_BUILD_TESTS=OFF
+      - -DBUILD_SHARED_LIBS=OFF
+      - -DBUILD_TESTING=OFF
+  glslang:
+    platforms: .*(ubuntu|osx).*
+    source: git:https://github.com/KhronosGroup/glslang.git
+    type: cmake
+    cmake-opts:
+      - -DBUILD_TESTING=OFF
+  bullet:
+    platforms: ^[^d].*$
+    source: git:https://github.com/bulletphysics/bullet3.git
+    type: cmake
+    cmake-opts:
+      - -DBUILD_BULLET2_DEMOS=OFF
+      - -DBUILD_UNIT_TESTS=OFF
+      - -DBUILD_CPU_DEMOS=OFF
+      - -DBUILD_EXTRAS=OFF
+      - -DUSE_GRAPHICAL_BENCHMARK=OFF
+      - -DINSTALL_LIBS=ON
+  openal:
+    platforms: ^[^d].*$
+    source: git:https://github.com/kcat/openal-soft.git
+    type: cmake
+    cmake-opts:
+      - -DALSOFT_EXAMPLES=OFF
+      - -DALSOFT_TESTS=OFF
+      - -DALSOFT_UTILS=OFF
+  sdl2:
+    platforms: .*(^[^d].*$|ubuntu|fedora|raspberry|coverage|mingw).*
+    source: hg:https://hg.libsdl.org/SDL
+    type: automake
+    ac-opts:
+#      - --host=$(host.arch)
+      - --disable-shared
+      - --disable-atomic
+      - --disable-filesystem
+      - --disable-threads
+      - --disable-timers
+      - --disable-audio
+      - --disable-loadso
+      - --disable-cpuinfo
+      - --disable-video-vulkan
+      - --prefix=$(build-dep.install)
+  openssl:
+    platforms: ^[^d].*$
+    # There's a special place in hell for project-specific
+    #  build processes like this one
+    type: openssl
+  squish:
+    platforms: .*(ubuntu|osx).*
+    type: make
+    source: git:https://github.com/Cavewhere/squish.git
+  shaderc:
+    platforms: .*(ubuntu|osx).*
+    type: cmake
+    cmake-opts:
+      - -DCMAKE_C_COMPILER=gcc
+      - -DCMAKE_CXX_COMPILER=g++
+      - -DSHADERC_SKIP_TESTS=ON
+      - -DENABLE_HLSL=OFF
+    source: git:https://github.com/hbirchtree/shaderc.git
+  spirv-cross:
+    platforms: .*(ubuntu|osx).*
+    type: cmake
+    cmake-opts:
+      - -DCMAKE_CXX_FLAGS="-fPIC"
+      - -DCMAKE_C_COMPILER=gcc
+      - -DCMAKE_CXX_COMPILER=g++
+    source: git:https://github.com/hbirchtree/SPIRV-Cross.git
+
+variables:
+  #  dep-target: $(dependency) # Are used for build dependencies
+  #  build-arch: ARCH_DUMMY # ^
+  #  bdep.root: BDEP_DUMMY # ^
+  # sub-path for building dependencies, not downloading
+  cmake-project.src: /home/coffee/cmake-project # ^
+  build-dep:
+    root: $(project.build)/build-dependencies
+    src-root: $(build-dep.root)/$(dep-target)/source
+    src: $(container.src)
+    install: $(container.install)
+    install-root: $(build-dep.root)/$(dep-target)/install/$(build-arch)
+    build: $(container.build)
+    build-root: $(build-dep.root)/$(dep-target)/build/$(build-arch)
+
+templates:
+  .*(osx|ios).*:
+    =build-dep.src: $(build-dep.src-root)
+    =build-dep.install: $(build-dep.install-root)
+    =build-dep.build: $(build-dep.build-root)

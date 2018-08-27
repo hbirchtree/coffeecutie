@@ -1,46 +1,21 @@
 #!/bin/bash
 
-SOURCE_DIR="$PWD"
-INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
-SCRIPT_DIR="$SOURCE_DIR/$($INFOPY --source-dir "$SOURCE_DIR" script_location)"
+set -e
+set -x
 
-if [[ $BUILDVARIANT = "coverage" ]]; then
-    SEARCH_DIR=$SOURCE_DIR/multi_build/coverage
-    mv $SEARCH_DIR/coverage.info.cleaned $SEARCH_DIR/coverage.info
-    bash <(curl -s https://codecov.io/bash) -X gcov -s $SEARCH_DIR || echo "Codecov did not collect coverage reports"
-fi
+source $(dirname $0)/travis-build-common.sh
+source $(dirname $0)/travis-deploy-common.sh
 
-HELPER="$SCRIPT_DIR/travis-helper.py"
-GITHUBPY="$SCRIPT_DIR/github_api.py"
+BINARY_ASSET="$TRAVIS_BUILD_DIR/binaries_${DEPLOYED_BUILDVARIANT}.tar.gz"
+LIBRARY_ASSET="$TRAVIS_BUILD_DIR/libraries_${DEPLOYED_BUILDVARIANT}.tar.gz"
+TARGET_SLUG="$(get_deploy_slug)"
 
-DEPLOY_ASSET="libraries_$BUILDVARIANT.tar.gz"
-DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
+notify "Creating artifacts"
 
-function github_api()
-{
-    case ${TRAVIS_OS_NAME} in
-#    "osx")
-#        $GITHUBPY --api-token ${GITHUB_TOKEN} $@
-#    ;;
-    *)
-        python3 $GITHUBPY --api-token ${GITHUB_TOKEN} $@
-    ;;
-    esac
-}
+collect_coverage
 
-TARGET_TAG=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)
+package_binaries "${BUILD_DIR}" "$BINARY_ASSET"
+package_libraries "${BUILD_DIR}" "$LIBRARY_ASSET"
 
-if [[ -z $TARGET_TAG ]]; then
-    echo " * Could not find tag, will not deploy"
-    exit 0
-fi
-
-TARGET_RELEASE=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TARGET_TAG$" | cut -d'|' -f 1)
-
-if [[ -z $TARGET_RELEASE ]]; then
-    github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Autorelease" "Autorelease"
-fi
-
-echo " * Deploying $DEPLOY_ASSET to $TARGET_TAG"
-github_api push asset "$TRAVIS_REPO_SLUG:$TARGET_TAG" "$DEPLOY_ASSET"
-github_api push asset "$TRAVIS_REPO_SLUG:$TARGET_TAG" "$DEPLOY_BINS"
+deploy_asset "$BINARY_ASSET" ${TARGET_SLUG}
+deploy_asset "$LIBRARY_ASSET" ${TARGET_SLUG}

@@ -50,7 +50,7 @@ version:
   release: 0
 versionprefix: automated-release-
 
-dependencies:
+base_dependencies:
   hbirchtree/assimp: v4.1.0
   hbirchtree/glslang: v1
   hbirchtree/shaderc: v1

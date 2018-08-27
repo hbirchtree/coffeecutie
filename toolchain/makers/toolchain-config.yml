@@ -1,0 +1,243 @@
+#
+# Templates
+# Apply variables based on regex matching in a tree
+# Nodes starting with = overwrite a variable, + appends to a the variable's list
+# Other nodes are branching regexes
+# Regexes follow Python rules
+# Some variables are only there for descriptive reasons
+#
+=target: multi
+=cmake-target:
+  - install
+=generator: Ninja
+=build-type: $(build.build-type)
+=preload: nothing.cmake
+=lib.flavor: $(target-name)
+=program.workdir: $(env:CMAKE_BUILD_DIR)
+
+# Default dependency
+=dependencies: native-libs
+
+# Default container options
+=container-opts: ''
+
+# Default CMake options
+=cmake-opts:
+  - $(cmake.src)
+  - -G'$(generator)'
+  - -C$(toolchain-dir)/Preload/$(preload)
+  - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
+
+# unused, but links build dependencies to platforms
+=build-deps:
+  - assimp
+  - openal
+  - bullet
+  - openssl
+
+.*(osx|ios).*:
+  =runner-choice: Makefile.mac-base
+  =target: build
+  =build.prettyname: Apple
+  =generator: Xcode
+  =compiler: Clang
+  =cmake.src: $(project.src)
+  =cmake.build: $(project.build)
+  =cmake.install: $(project.install)
+  =cmake.coffee-lib: $(lib.root)
+  =cmake.native-lib: $(dependencies.native-libs.root)
+  =cmake-project.src: $(project.src)/cmake
+  =program.workdir: $(project.build)/$(target-name)
+  =container-opts:
+  .*osx.*:
+    =description: Apple OS X
+    =flavor: mac-osx
+    =toolchain: osx-generic_osx.toolchain.cmake
+    =preload: osx-generic.cmake
+    +cmake-opts:
+      - -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
+  .*ios.*:
+    =toolchain: all-ios.toolchain.cmake
+    =preload: osx-ios.cmake
+  .*ios$:
+    =description: Device-oriented build for ARM64 and ARMv7-A
+  .*ios.x86.*:
+    =description: iOS simulator build
+    .*x86_64:
+      +cmake-opts:
+        - -DIOS_PLATFORM=SIMULATOR64
+    .*x86$:
+      +cmake-opts:
+        - -DIOS_PLATFORM=SIMULATOR
+
+# For Ubuntu, Fedora, docs and coverage, specify generic preload
+.*(ubuntu|docs|coverage|fedora).*:
+  .*(amd64.*|docs|coverage):
+    =container: ubuntu
+  .*(amd64.*|docs|coverage|fedora):
+    =toolchain: linux-generic_linux.toolchain.cmake
+  +build-deps:
+    - appimg-runtime
+    - SDL2
+
+.*(ubuntu|fedora|coverage|android|steam|emscripten|raspberry|maemo|mingw).*:
+  =generator: CodeBlocks - Ninja
+
+# Some parameters to make coverage testing work
+.*coverage:
+  =description: Coverage build using same config as Ubuntu
+  =compiler: Clang
+  =preload: linux-coverage.cmake
+  =build-type: Debug
+  +container-opts:
+    - -e CC=
+    - -e CXX=
+
+.*docs:
+  =description: Documentation build using only Doxygen
+  =compiler: Doxygen
+  =preload: docs-all.cmake
+
+.*ubuntu.*:
+  =description: Ubuntu build in a Ubuntu Docker
+  =compiler: GCC 5+
+  =preload: linux-generic.cmake
+  .*i686.*:
+    =container: ubuntu-i686
+    =toolchain: linux-generic-i686_linux.toolchain.cmake
+  .*gles.*:
+    =preload: linux-gles.cmake
+  .*gles2:
+    =preload: linux-gles20.cmake
+
+.*fedora.*:
+  =description: Fedora build in a Fedora Docker
+  =compiler: GCC 5+
+  =preload: linux-fedora.cmake
+  =container: fedora
+
+
+.*steam.*:
+  =description: Build against the SteamRT SDK
+  =compiler: GCC 4.8.4
+  =preload: linux-steam.cmake
+  =toolchain: linux-steam_linux.toolchain.cmake
+  =container: steam
+
+
+.*emscripten.*:
+  =description: Emscripten with WebAsm and asm.js
+  =compiler: Clang 4+
+  =container: emscripten
+  =preload: js-emscripten.cmake
+  =toolchain: js-emscripten.toolchain.cmake
+  =generator: Unix Makefiles
+  +dependencies:
+    - emscripten
+  +cmake-opts:
+    - -DEMSCRIPTEN_ROOT_PATH=$(dependencies.emscripten.target)/emscripten/master
+  +container-opts:
+    - -e EMSCRIPTEN=$(dependencies.emscripten.target)/emscripten/master
+  .*wasm.*:
+    =preload: js-emscripten-wasm.cmake
+
+
+.*android.*:
+  =description: Android builds, ARMv8-A and ARMv7-A mostly
+  =compiler: Clang
+  # Architecture specifics
+  .*armv8a.*:
+    =android.abi: arm64-v8a
+  .*armv7a.*:
+    =android.abi: 'armeabi-v7a with NEON'
+  .*armeabi.*:
+    =android.abi: armeabi
+  .*(x86\.).*:
+    =android.abi: x86
+  .*(x86_64).*:
+    =android.abi: x86_64
+  .*(mips\.).*:
+    =android.abi: mips
+  .*(mips64).*:
+    =android.abi: mips64
+  # Specifying native API level
+  .*(jelly|kitkat).*:
+    =android.api: 19
+  .*(lollipop|marshmallow).*:
+    =android.api: 21
+  .*nougat.*:
+    =android.api: 24
+  # Graphical properties
+  .*gles3.*:
+    =android.gles20: OFF
+
+  =android.toolchain: clang
+  +cmake-opts:
+    # Yay! Configuring the entire Android toolchain
+    - -DANDROID_NDK=$(android.ndk)
+    - -DANDROID_SDK=$(android.sdk)
+    - -DANDROID_TOOLCHAIN=$(android.toolchain)
+    - -DANDROID_STL=$(android.stl)
+    - -DANDROID_PLATFORM=android-$(android.api)
+    - -DANDROID_ABI='$(android.abi)'
+    - -DANDROID_CPP_FEATURES=$(android.features)
+    - -DANDROID_ARM_NEON=$(android.arm-neon)
+  =container: android
+  =toolchain: all-android.toolchain.cmake
+
+
+.*maemo.*:
+  =description: Maemo 5 builds, performed within a Maemo 5 armel chroot
+  =compiler: GCC 6
+  =preload: linux-maemo.cmake
+  =toolchain: linux-maemo-armv7_linux.toolchain.cmake
+  =container: hbirch/maemo-builder:v3
+  =build.build-type: Release
+  =target: multi.make8
+  =generator: Unix Makefiles
+  =container-opts:
+    - -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
+    - -v $(lib.root):/maemo/$(lib.target):ro
+    - -v $(project.src):/maemo/$(container.src):ro
+    - -v $(project.install):/maemo/$(container.install):rw
+    - -v $(project.build)/$(target-name):/maemo/$(container.build):rw
+
+
+.*raspberry.*:
+  =description: Raspberry Pi ARMv6 build
+  =compiler: GCC 4.9
+  =preload: linux-raspberry.cmake
+  =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
+  =container: raspberry
+  +dependencies: rpi-sdk
+  +container-opts:
+    - -v $(dependencies.rpi-sdk.root)/$(dependencies.rpi-sdk.path):$(dependencies.rpi-sdk.target):ro
+  +cmake-opts:
+    - -DRASPBERRY_SDK=$(dependencies.rpi-sdk.target)
+  .*armhf.*:
+    =dependencies.rpi-sdk.path: architectures/rpi-SDL2-X11-armv6
+
+
+.*mingw.*:
+  =description: MinGW64 environment in Ubuntu Docker
+  =compiler: GCC 5+
+  =toolchain: windows-mingw64_linux.toolchain.cmake
+  =preload: windows-mingw64.cmake
+  =container: mingw64
+
+.*(ubuntu.*|coverage|docs):
+  =build.prettyname: Ubuntu
+.*(fedora.*):
+  =build.prettyname: Fedora
+.*(steam.*):
+  =build.prettyname: SteamOS
+.*(maemo.*):
+  =build.prettyname: Maemo
+.*(android.*):
+  =build.prettyname: Android
+.*(raspberry.*):
+  =build.prettyname: RaspberryPi
+.*(mingw.*):
+  =build.prettyname: MinGW
+.*(emscripten.*):
+  =build.prettyname: Emscripten
