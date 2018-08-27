@@ -12,7 +12,7 @@ TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR:-${PWD}}
 #######################################
 GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
 CONFIGURATION=${CONFIGURATION:-Debug}
-CMAKE_TARGET=${CMAKE_TARGET:-install}
+#CMAKE_TARGET=${CMAKE_TARGET:-install}
 
 
 #######################################
