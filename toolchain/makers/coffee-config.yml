@@ -39,6 +39,7 @@
     - -DBUILD_GLES_20=$(android.gles20)
     - -DBUILD_TESTS=OFF
     - -DBUILD_SDL2=OFF
+  =target: multi.ensureinstall
   =cmake-target:
     - AndroidPackage
 .*(ubuntu|fedora|coverage|android|docs|steam|raspberry|emscripten).*:

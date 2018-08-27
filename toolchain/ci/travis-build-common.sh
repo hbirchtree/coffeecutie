@@ -148,7 +148,7 @@ function container_run()
 {
     case "${TRAVIS_OS_NAME}" in
     "linux")
-        local CONTAINER_DATA=`grep "^$2:" "$CI_DIR/$MAKEFILE" -A 5 | grep 'DOCKER_CONTAINER\|DOCKER_CONFIG'`
+        local CONTAINER_DATA=`grep "^$2:" "$CI_DIR/$MAKEFILE" -A 30 | grep 'DOCKER_CONTAINER\|DOCKER_CONFIG'`
 
         if [ -z `echo ${CONTAINER_DATA} | grep DOCKER_CONTFIG` ]; then
             make -s -f ${CI_DIR}/Makefile.multi custom -e CUSTOM_COMMAND="$1" -e DOCKER_CONFIG=`echo ${CONTAINER_DATA} | cut -d '"' -f 2`
@@ -177,13 +177,7 @@ function download_dependencies()
 
 function build_standalone()
 {
-    #####################################################
-    # Set some default targets
-    #####################################################
-    [ -z ${CONFIGURATION} ] && export CONFIGURATION=Debug
-    [ -z ${CMAKE_TARGET} ] && export CMAKE_TARGET=install
     [ ! -z ${TRAVIS} ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
-    [ -z ${GENERATE_PROGRAMS} ] && export GENERATE_PROGRAMS=ON
 
     if [ ! -z ${TRAVIS} ]; then
         echo "#####################################################"

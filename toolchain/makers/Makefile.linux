@@ -45,7 +45,7 @@ rpi-sdk:
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.gingerbread.gles2: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -88,7 +88,7 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.kitkat.gles2: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -131,7 +131,7 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.lollipop.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -174,7 +174,7 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.nougat.gles2: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -217,7 +217,7 @@ android.armv7a.nougat.gles2: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.nougat.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -260,7 +260,7 @@ android.armv7a.nougat.gles3: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv8a.lollipop.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -303,7 +303,7 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv8a.nougat.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -346,7 +346,7 @@ android.armv8a.nougat.gles3: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.mips.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -389,7 +389,7 @@ android.mips.kitkat: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.mips64.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -432,7 +432,7 @@ android.mips64.kitkat: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.x86.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -475,7 +475,7 @@ android.x86.kitkat: FORCE native-libs
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.x86_64.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \

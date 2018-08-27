@@ -28,10 +28,13 @@ multi: multi-config
 	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
 
 multi.twostage: multi-config
-	sh -c '\
-	    $(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_ALL_TARGET) && \
-		$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1 && \
-		$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)'
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_ALL_TARGET)
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
+
+multi.ensureinstall: multi-config
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target install
 
 multi.make8: multi-config
 	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8
