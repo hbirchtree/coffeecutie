@@ -22,7 +22,7 @@ deploy_script:
 environment:
   BUILD_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: cmake.exe
-  DEPENDENCIES: hbirchtree/openal;hbirchtree/bullet;hbirchtree/shaderc;hbirchtree/assimp;hbirchtree/libav;hbirchtree/glslang;hbirchtree/openssl;hbirchtree/sdl2;hbirchtree/spirv-cross;hbirchtree/squish;
+  DEPENDENCIES: ''
   DEPLOY_PATTERNS: ''
   GITHUB_TOKEN:
     secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ

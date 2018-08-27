@@ -79,13 +79,13 @@ def parse_linux_targets():
                                     target_struct[k])
         return el
 
-    for f in ['%s/makers/targets.yml' % dirname(__file__), '%s/ci/targets.yml' % (dirname(__file__))]:
+    for f in ['%s/makers/build-targets-linux.yml' % dirname(__file__), '%s/makers/build-targets-mac.yml']:
         try:
             src = parse_yaml(f)
 
             _TARGET_NAMES['linux'] = {}
 
-            _tmp_targets = src['targets']['coffee']
+            _tmp_targets = src
 
             for root in _tmp_targets:
                 targets = gen_targs('', _tmp_targets[root])
