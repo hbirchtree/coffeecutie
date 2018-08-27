@@ -24,10 +24,10 @@
     - -DGENERATE_APPIMAGE=ON
     - -DBUILD_ETC2COMP=ON
 .*coverage:
+  =target: multi.twostage
   =cmake-target:
     - all
-    - CoverageTest@1
-  =target: multi.twostage
+    - CoverageTest
 .*ubuntu.amd64.*:
   +cmake-opts:
     - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
@@ -39,10 +39,8 @@
     - -DBUILD_GLES_20=$(android.gles20)
     - -DBUILD_TESTS=OFF
     - -DBUILD_SDL2=OFF
-  =target: multi.twostage
   =cmake-target:
-    - install
-    - AndroidPackage@1
+    - AndroidPackage
 .*(ubuntu|fedora|coverage|android|docs|steam|raspberry|emscripten).*:
   +cmake-opts:
     - -DBUILD_ASSIMP=ON

@@ -60,7 +60,8 @@ ios: FORCE native-libs
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ios
+	-e BUILD_NAME=ios \
+	-e CMAKE_TARGET=install
 
 # iOS simulator build
 # Compiler: Clang
@@ -81,7 +82,8 @@ ios.x86_64: FORCE native-libs
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ios.x86_64
+	-e BUILD_NAME=ios.x86_64 \
+	-e CMAKE_TARGET=install
 
 # iOS simulator build
 # Compiler: Clang
@@ -102,7 +104,8 @@ ios.x86: FORCE native-libs
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ios.x86
+	-e BUILD_NAME=ios.x86 \
+	-e CMAKE_TARGET=install
 
 # Apple OS X
 # Compiler: Clang
@@ -123,5 +126,6 @@ osx: FORCE native-libs
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=osx
+	-e BUILD_NAME=osx \
+	-e CMAKE_TARGET=install
 

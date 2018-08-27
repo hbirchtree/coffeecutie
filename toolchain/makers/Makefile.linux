@@ -45,7 +45,7 @@ rpi-sdk:
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.gingerbread.gles2: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -80,15 +80,15 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.gingerbread.gles2
+	-e BUILD_NAME=android.armv7a.gingerbread.gles2 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.kitkat.gles2: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -123,15 +123,15 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.kitkat.gles2
+	-e BUILD_NAME=android.armv7a.kitkat.gles2 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.lollipop.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -166,15 +166,15 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.lollipop.gles3
+	-e BUILD_NAME=android.armv7a.lollipop.gles3 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.nougat.gles2: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -209,15 +209,15 @@ android.armv7a.nougat.gles2: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.nougat.gles2
+	-e BUILD_NAME=android.armv7a.nougat.gles2 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv7a.nougat.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -252,15 +252,15 @@ android.armv7a.nougat.gles3: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.nougat.gles3
+	-e BUILD_NAME=android.armv7a.nougat.gles3 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv8a.lollipop.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -295,15 +295,15 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv8a.lollipop.gles3
+	-e BUILD_NAME=android.armv8a.lollipop.gles3 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.armv8a.nougat.gles3: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -338,15 +338,15 @@ android.armv8a.nougat.gles3: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv8a.nougat.gles3
+	-e BUILD_NAME=android.armv8a.nougat.gles3 \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.mips.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -381,15 +381,15 @@ android.mips.kitkat: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.mips.kitkat
+	-e BUILD_NAME=android.mips.kitkat \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.mips64.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -424,15 +424,15 @@ android.mips64.kitkat: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.mips64.kitkat
+	-e BUILD_NAME=android.mips64.kitkat \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.x86.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -467,15 +467,15 @@ android.x86.kitkat: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.x86.kitkat
+	-e BUILD_NAME=android.x86.kitkat \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
 android.x86_64.kitkat: FORCE native-libs
-	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
@@ -510,10 +510,10 @@ android.x86_64.kitkat: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
-	-e CMAKE_SECOND_TARGET=AndroidPackage@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.x86_64.kitkat
+	-e BUILD_NAME=android.x86_64.kitkat \
+	-e CMAKE_TARGET=AndroidPackage
 
 # Coverage build using same config as Ubuntu
 # Compiler: Clang
@@ -543,10 +543,10 @@ coverage: FORCE native-libs
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=ubuntu \
-	-e CMAKE_SECOND_TARGET=CoverageTest@1 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=coverage
+	-e BUILD_NAME=coverage \
+	-e CMAKE_SECOND_TARGET=CoverageTest
 
 # Documentation build using only Doxygen
 # Compiler: Doxygen
@@ -576,7 +576,8 @@ docs: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=docs
+	-e BUILD_NAME=docs \
+	-e CMAKE_TARGET=install
 
 # Emscripten with WebAsm and asm.js
 # Compiler: Clang 4+
@@ -608,7 +609,8 @@ emscripten.asmjs: FORCE native-libs
 	-e DOCKER_CONFIG=emscripten \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=emscripten.asmjs
+	-e BUILD_NAME=emscripten.asmjs \
+	-e CMAKE_TARGET=install
 
 # Emscripten with WebAsm and asm.js
 # Compiler: Clang 4+
@@ -640,7 +642,8 @@ emscripten.wasm: FORCE native-libs
 	-e DOCKER_CONFIG=emscripten \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=emscripten.wasm
+	-e BUILD_NAME=emscripten.wasm \
+	-e CMAKE_TARGET=install
 
 # Fedora build in a Fedora Docker
 # Compiler: GCC 5+
@@ -670,7 +673,8 @@ fedora.amd64: FORCE native-libs
 	-e DOCKER_CONFIG=fedora \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=fedora.amd64
+	-e BUILD_NAME=fedora.amd64 \
+	-e CMAKE_TARGET=install
 
 # Maemo 5 builds, performed within a Maemo 5 armel chroot
 # Compiler: GCC 6
@@ -703,7 +707,8 @@ maemo.armel: FORCE native-libs
 	-e DOCKER_CONTAINER=hbirch/maemo-builder:v3 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=maemo.armel
+	-e BUILD_NAME=maemo.armel \
+	-e CMAKE_TARGET=install
 
 # MinGW64 environment in Ubuntu Docker
 # Compiler: GCC 5+
@@ -732,7 +737,8 @@ mingw.w64: FORCE native-libs
 	-e DOCKER_CONFIG=mingw64 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=mingw.w64
+	-e BUILD_NAME=mingw.w64 \
+	-e CMAKE_TARGET=install
 
 # Raspberry Pi ARMv6 build
 # Compiler: GCC 4.9
@@ -764,7 +770,8 @@ raspberry.armhf: FORCE native-libs rpi-sdk
 	-e DOCKER_CONFIG=raspberry \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=raspberry.armhf
+	-e BUILD_NAME=raspberry.armhf \
+	-e CMAKE_TARGET=install
 
 # Build against the SteamRT SDK
 # Compiler: GCC 4.8.4
@@ -794,7 +801,8 @@ steam.amd64: FORCE native-libs
 	-e DOCKER_CONFIG=steam \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=steam.amd64
+	-e BUILD_NAME=steam.amd64 \
+	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
@@ -827,7 +835,8 @@ ubuntu.amd64: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.amd64
+	-e BUILD_NAME=ubuntu.amd64 \
+	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
@@ -867,7 +876,8 @@ ubuntu.amd64.tools: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.amd64.tools
+	-e BUILD_NAME=ubuntu.amd64.tools \
+	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
@@ -900,7 +910,8 @@ ubuntu.amd64.gles2: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.amd64.gles2
+	-e BUILD_NAME=ubuntu.amd64.gles2 \
+	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
@@ -933,7 +944,8 @@ ubuntu.amd64.gles3: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.amd64.gles3
+	-e BUILD_NAME=ubuntu.amd64.gles3 \
+	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
@@ -963,7 +975,8 @@ ubuntu.i686.gles: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu-i686 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.i686.gles
+	-e BUILD_NAME=ubuntu.i686.gles \
+	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
@@ -993,5 +1006,6 @@ ubuntu.i686.gles2: FORCE native-libs
 	-e DOCKER_CONFIG=ubuntu-i686 \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.i686.gles2
+	-e BUILD_NAME=ubuntu.i686.gles2 \
+	-e CMAKE_TARGET=install
 

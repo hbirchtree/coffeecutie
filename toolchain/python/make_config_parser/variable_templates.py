@@ -35,7 +35,7 @@ def key_is_pattern(var):
 #
 #
 
-_resolve_pattern = re.compile('\$\((.*?)\)')
+_resolve_pattern = re.compile(r'[^\\]?\$\((.*?)\)')
 
 def extract_variables_unfiltered(value):
     return list(re.findall(_resolve_pattern, value))
@@ -135,7 +135,7 @@ def finalize_var(value):
     out_value = value
     for env_var in extract_variables_unfiltered(value):
         if env_var[:4] != 'env:':
-            raise RuntimeError("bad substitution: " + env_var)
+            continue
         out_value = out_value.replace('$(%s)' % env_var, '$(%s)' % env_var[4:])
     return out_value
 

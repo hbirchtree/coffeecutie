@@ -176,20 +176,21 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
             else:
                 cmd.command += "\n-e DOCKER_CONFIG=$(container)"
 
-        # Multiple targets means it runs in a two-phase process
-        for i, cmake_target in enumerate(vars['cmake-target']):
-            if i == 0:
-                pass
-            elif i == 1:
-                cmd.command += "\n-e CMAKE_SECOND_TARGET=%s" % cmake_target
-            else:
-                raise RuntimeError("don't know what to do with target: " + cmake_target)
-
         cmd.command += "\n-e CMAKE_BUILD_DIR=$(cmake.build)"
         cmd.command += "\n-e OUTPUT_DIR=$(env:BUILD_DIR)"
         cmd.command += "\n-e BUILD_NAME=$(target-name)"
 
         cmd.command = var_templates.resolve_variable(vars, cmd.command)[0].replace(';', '\\;')
+
+        # Multiple targets means it runs in a two-phase process
+        for i, cmake_target in enumerate(vars['cmake-target']):
+            if i == 0:
+                if len(vars['cmake-target']) == 1:
+                    cmd.command += "\n-e CMAKE_TARGET=%s" % cmake_target
+            elif i == 1:
+                cmd.command += "\n-e CMAKE_SECOND_TARGET=%s" % cmake_target
+            else:
+                raise RuntimeError("don't know what to do with target: " + cmake_target)
 
         # Generate Makefile entry
         compile_target = Target()
@@ -210,26 +211,22 @@ if __name__ == '__main__':
 
     # Load pre-compiled dependencies and variables
     base_config = {}
-    # base_config = yml.create_plain_variables(precompiled_deps, base_config, 'dependencies')
     base_config = yml.create_plain_variables(convert_to_cmake(yml.read_yaml('build-variables.yml')), base_config)
     var_templates.resolve_variables(base_config, loose_resolve=True)
 
-    force_target = Target()
-    force_target.target_name = 'FORCE'
-
-    make_targets = [force_target]
-
     blocks = create_global_variables(precompiled_deps, base_config)
 
+    force_target = Target()
+    force_target.target_name = 'FORCE'
+    make_targets = [force_target]
     make_targets += create_dependencies(precompiled_deps, base_config)
 
-    linux_make_targets = yml.deepcopy(make_targets)
-    mac_make_targets = yml.deepcopy(make_targets)
-
     linux_targets = yml.create_target_listing('build-targets-linux.yml')
+    linux_make_targets = yml.deepcopy(make_targets)
     linux_make_targets += create_target_definitions(precompiled_deps, base_config, linux_targets, force_target)
 
     mac_targets = yml.create_target_listing('build-targets-mac.yml')
+    mac_make_targets = yml.deepcopy(make_targets)
     mac_make_targets += create_target_definitions(precompiled_deps, base_config, mac_targets, force_target)
 
     with open('Makefile.linux', 'w') as mak:
