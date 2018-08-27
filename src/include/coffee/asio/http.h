@@ -4,6 +4,10 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <iterator>
 
+#if !defined(COFFEE_WINDOWS)
+#define COFFEE_HTTP_MULTIPART
+#endif
+
 namespace http {
 
 using namespace ::Coffee::Primitives;
@@ -905,7 +909,7 @@ inline payload_t read_payload(
 
 } // namespace stream
 
-#if !defined(COFFEE_WINDOWS)
+#if defined(COFFEE_HTTP_MULTIPART)
 namespace multipart {
 struct missing_terminator : std::out_of_range
 {

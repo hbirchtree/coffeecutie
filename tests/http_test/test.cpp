@@ -158,6 +158,7 @@ bool response_read_payload()
     return true;
 }
 
+#if defined(COFFEE_HTTP_MULTIPART)
 static constexpr cstring test_multipart_body =
     R"(this text is garbage and won't be included
 some more
@@ -208,6 +209,12 @@ bool multipart_process()
 
     return true;
 }
+#else
+bool multipart_process()
+{
+    return true;
+}
+#endif
 
 COFFEE_TEST_SUITE(7) = {{url_parsing, "Parse HTTP URL"},
                         {url_query_parsing, "Parsing HTTP URL queries"},
