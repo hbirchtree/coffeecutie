@@ -121,8 +121,11 @@
   =description: Build against the SteamRT SDK
   =compiler: GCC 4.8.4
   =preload: linux-steam.cmake
-  =toolchain: linux-steam_linux.toolchain.cmake
+  =toolchain: cxx11.toolchain.cmake
   =container: steam
+  +container-opts:
+    - -e CC=clang-3.6
+    - -e CXX=clang++-3.6
 
 
 .*emscripten.*:

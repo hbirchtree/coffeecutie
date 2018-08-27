@@ -7,16 +7,6 @@
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/input/cinput.h>
 
-//#if !defined(COFFEE_INJECTS_EVENTS_EXTERNALLY)
-//void* coffee_event_handling_data;
-
-//void(*CoffeeEventHandle)(void*, int);
-//void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
-
-//void(*CoffeeForeignSignalHandle)(int);
-//void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
-//#endif
-
 bool CoffeeEventHandleCall(int event)
 {
     if(CoffeeEventHandle && coffee_event_handling_data)

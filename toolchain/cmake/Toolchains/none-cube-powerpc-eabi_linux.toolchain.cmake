@@ -7,8 +7,6 @@ set ( CMAKE_EXECUTABLE_SUFFIX "elf" )
 
 set ( GAMECUBE TRUE )
 
-set ( CMAKE_CXX_COMPILE_FEATURES cxx_constexpr )
-
 set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
 set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
 
@@ -17,7 +15,7 @@ find_program ( ELF2DOL elf2dol )
 set ( ELF2DOL "${ELF2DOL}" CACHE STRING "" )
 
 set ( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -I$ENV{PPCPORTLIBS_CUBE}/include" CACHE STRING "" )
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -std=c++11 -I$ENV{PPCPORTLIBS_CUBE}/include" CACHE STRING "" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -I$ENV{PPCPORTLIBS_CUBE}/include" CACHE STRING "" )
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")

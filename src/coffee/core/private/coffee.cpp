@@ -103,8 +103,8 @@ static void CoffeeInit_Internal(u32 flags)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
-//    PrintingVerbosityLevel() = 8;
-//    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
+    //    PrintingVerbosityLevel() = 8;
+    //    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
 
     /* Allow core dump by default in debug mode */
     ProcessProperty::CoreDumpEnable();
@@ -346,9 +346,6 @@ void CoffeeTerminate()
 {
     cVerbose(5, "Terminating");
 
-    //    runtime_queue_error qec;
-    //    RuntimeQueue::TerminateThreads(qec);
-
 #ifndef COFFEE_LOWFAT
 
 #ifndef NDEBUG
@@ -410,11 +407,7 @@ void InstallDefaultSigHandlers()
 #if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE)
     std::set_terminate([]() {
         Stacktracer::ExceptionStacktrace(std::current_exception());
-        //#ifndef COFFEE_CUSTOM_EXIT_HANDLING
-        //        exit(1);
-        //#else
         abort();
-        //#endif
     });
 #endif
 }

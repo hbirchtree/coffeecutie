@@ -784,7 +784,7 @@ steam.amd64: FORCE native-libs
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-steam_linux.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/cxx11.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/steam.amd64 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/SteamOS \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -792,6 +792,8 @@ steam.amd64: FORCE native-libs
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
+	-e CC=clang-3.6 \
+	-e CXX=clang++-3.6 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \

@@ -1,13 +1,12 @@
 #pragma once
 
-#include "plat_primary_identify.h"
 #include "plat_arch_identify.h"
+#include "plat_primary_identify.h"
 
 /* Platform specifications:
  * COFFEE_ARCH_LLP64 - Uses ull as opposed to ul
  * COFFEE_USE_TERMINAL_CTL - insert ASCII commands for color and etc.
  * COFFEE_USE_UNWIND - use Unwind stack backtracing
- * COFFEE_USE_IOCTL_TERM_SIZE - allow requesting terminal size from ioctl()
  *
  * COFFEE_LIL_ENDIAN - Little endian system
  * COFFEE_BIG_ENDIAN - Big endian system, quite rare
@@ -76,17 +75,12 @@
  * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms
  *  with isolation
  *
- * COFFEE_PROFILER_TRACING - print the events coming to the profiler, adds a lot of runtime cost
- *
  * COFFEE_LOWFAT - disable or remove a lot of code, reduces library size a lot
  * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
  *
  * COFFEE_SDL_MAIN - use SDL_main on start, allowing SDL to create its state
  * COFFEE_CUSTOM_MAIN - use a magical main entry point somewhere else
  * COFFEE_CUSTOM_EXIT_HANDLING - use magical event handling, exiting main()
- *
- * COFFEE_INJECTS_EVENTS_EXTERNALLY - whether it is necessary to allow an
- *      external library to inject events into the program's event loop
  *
  * COFFEE_LOWFAT - disable tons of features for size, most of these changes
  *  are not noticeable for end-user applications with GUIs
@@ -100,8 +94,6 @@
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
 //#define COFFEE_GLES20_MODE
 //#define COFFEE_LOWFAT
-//#define COFFEE_PROFILER_TRACING
-//#define COFFEE_DISABLE_PROFILER
 
 /*
  *
@@ -119,14 +111,13 @@
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
-#if ((defined(COFFEE_WINDOWS) \
-    || defined(COFFEE_EMSCRIPTEN) \
-    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) \
-    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) \
-    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) \
-    || (defined(COFFEE_LINUX) && __SIZEOF_PTRDIFF_T__ == 4) ) \
-    && __LP64__ != 1) \
-    || defined(COFFEE_APPLE)
+#if((defined(COFFEE_WINDOWS) || defined(COFFEE_EMSCRIPTEN) ||   \
+     (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) || \
+     (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) ||  \
+     (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) ||   \
+     (defined(COFFEE_LINUX) && __SIZEOF_PTRDIFF_T__ == 4)) &&   \
+    __LP64__ != 1) ||                                           \
+    defined(COFFEE_APPLE)
 #define COFFEE_ARCH_LLP64
 #endif
 
@@ -149,7 +140,6 @@
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
-#define COFFEE_INJECTS_EVENTS_EXTERNALLY
 #endif
 
 /*
@@ -210,8 +200,7 @@
 #define COFFEE_ONLY_GLES20
 #endif
 
-#if defined(COFFEE_APPLE_MOBILE)\
-    || defined(COFFEE_GLES20_MODE)
+#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_GLES20_MODE)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
 #endif
@@ -230,7 +219,8 @@
  *
  */
 
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || \
+    defined(COFFEE_ANDROID)
 #define COFFEE_DISABLE_SRGB_SUPPORT
 #define COFFEE_USE_IMMERSIVE_VIEW
 #define COFFEE_ALWAYS_VSYNC
@@ -303,24 +293,13 @@
 #endif
 
 /* Unwind and terminal control signals are desktop-only */
-#if (defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) \
-    && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__) \
-    && !defined(COFFEE_APPLE_MOBILE) \
-    && !defined(COFFEE_MAEMO)
+#if(defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) &&           \
+    !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE_MOBILE) && \
+    !defined(COFFEE_MAEMO)
 #define COFFEE_USE_TERMINAL_CTL
 #if defined(LIBUNWIND_ENABLED)
 #define COFFEE_USE_UNWIND
 #endif
-#endif
-
-/* Terminal size: useless on Android */
-#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
-#define COFFEE_USE_IOCTL_TERM_SIZE
-#endif
-
-#if (__GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ ==  9)) || \
-    defined(COFFEE_ANDROID)
-#define COFFEE_BAD_REGEX
 #endif
 
 /* This enables safer, but a bit slower functions for some core functions */
@@ -352,9 +331,8 @@
 #define COFFEE_NO_ATEXIT
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) \
-    || defined(COFFEE_NACL) || defined(COFFEE_MAEMO) \
-    || defined(COFFEE_APPLE)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || \
+    defined(COFFEE_NACL) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE
 #endif
 
@@ -362,8 +340,7 @@
 #define COFFEE_USE_EXECVPE
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
-    || defined(COFFEE_MAEMO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
 #define COFFEE_NO_PTHREAD_SETNAME_NP
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
@@ -384,11 +361,10 @@
  * #define COFFEE_XCODE_NO_TLS
  */
 
-#if defined(COFFEE_EMSCRIPTEN) \
-    || defined(COFFEE_RASPBERRYPI) \
-    || defined(COFFEE_MAEMO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_RASPBERRYPI) || \
+    defined(COFFEE_MAEMO)
 #define thread_local
-#elif (defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
+#elif(defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
 #define thread_local __thread
 #endif
 
@@ -398,8 +374,8 @@
  *
  */
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) \
-    || defined(COFFEE_NACL)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || \
+    defined(COFFEE_NACL)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
@@ -409,8 +385,7 @@
  *
  */
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
-    || defined(COFFEE_GEKKO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_GEKKO)
 
 #if !defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_STUBBED_SYSINFO
@@ -446,28 +421,23 @@
  *
  */
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
-    || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || \
+    defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 
-#if !defined(COFFEE_RASPBERRY_DMX) && \
-    !defined(COFFEE_USE_LINUX_GLX) && \
-    !defined(COFFEE_USE_MAEMO_EGL) && \
-    !defined(COFFEE_USE_MAEMO_X11) && \
+#if !defined(COFFEE_RASPBERRY_DMX) && !defined(COFFEE_USE_LINUX_GLX) && \
+    !defined(COFFEE_USE_MAEMO_EGL) && !defined(COFFEE_USE_MAEMO_X11) && \
     defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_GL
 #endif
 
-#if !defined(COFFEE_RASPBERRY_DMX) && \
-    !defined(COFFEE_USE_LINUX_GLX) && \
-    !defined(COFFEE_USE_MAEMO_X11) && \
-    defined(COFFEE_USE_SDL2)
+#if !defined(COFFEE_RASPBERRY_DMX) && !defined(COFFEE_USE_LINUX_GLX) && \
+    !defined(COFFEE_USE_MAEMO_X11) && defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_WINDOW
 #endif
 
-#if !defined(COFFEE_RASPBERRY_DMX) && \
-    !defined(COFFEE_USE_MAEMO_X11) && \
+#if !defined(COFFEE_RASPBERRY_DMX) && !defined(COFFEE_USE_MAEMO_X11) && \
     defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_EVENT
 #endif
