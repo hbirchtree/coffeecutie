@@ -1,15 +1,15 @@
-CMAKE               := cmake
+CMAKE               ?= cmake
 
-BUILD_DIR           := $(PWD)
+BUILD_DIR           ?= $(PWD)
 
-BUILD_NAME          := ubuntu
-CMAKE_TARGET        := install
-CMAKE_SECOND_TARGET := CoverageTest
-CMAKE_ALL_TARGET    := all
-EXTRA_OPTIONS       := -DGENERATE_PROGRAMS=OFF -DCOFFEE_BUILD_ASSIMP=ON
+BUILD_NAME          ?= ubuntu
+CMAKE_TARGET        ?= install
+CMAKE_SECOND_TARGET ?= CoverageTest
+CMAKE_ALL_TARGET    ?= all
+EXTRA_OPTIONS       ?=
 
-CMAKE_BUILD_DIR 	:= $(CMAKE_BUILD_DIR)
-INTERNAL_BUILD_DIR  := $(CMAKE_BUILD_DIR)/$(BUILD_NAME)
+CMAKE_BUILD_DIR 	?= $(CMAKE_BUILD_DIR)
+INTERNAL_BUILD_DIR  ?= $(CMAKE_BUILD_DIR)/$(BUILD_NAME)
 
 all: multi
 
