@@ -46,7 +46,7 @@ def create_dependencies(precompiled_deps, base_config):
     #
     make_targets = []
 
-    for dep in precompiled_deps:
+    for dep in sorted(list(precompiled_deps.keys())):
         dep_info = precompiled_deps[dep]
         dep_type = dep_info['type']
 
@@ -159,7 +159,7 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
             vars, "make -f $(env:ROOT_DIR)/$(runner-choice) $(target)")[0]
 
         cmd.command += "\n-e EXTRA_OPTIONS=\""
-        for opt in vars['cmake-opts']:
+        for opt in sorted(list(vars['cmake-opts'])):
             cmd.command += "\n" + opt
         cmd.command += "\""
 
@@ -194,7 +194,10 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
         # Generate Makefile entry
         compile_target = Target()
         compile_target.target_name = target
-        compile_target.dependencies = [force_target] + [Target(name) for name in vars['dependencies']]
+        compile_target.dependencies = [force_target] + [
+            Target(name) for name in target_dependencies
+            if precompiled_deps[name]['type'] != 'empty'
+        ]
         compile_target.commands.append(cmd)
 
         make_targets.append(compile_target)

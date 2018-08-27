@@ -48,29 +48,29 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-9 \
 	-DANDROID_ABI='armeabi-v7a with NEON' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread.gles2 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.gingerbread.gles2 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-9 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread.gles2 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.gingerbread.gles2 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -91,29 +91,29 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-19 \
 	-DANDROID_ABI='armeabi-v7a with NEON' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.kitkat.gles2 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.kitkat.gles2 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-19 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.kitkat.gles2 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.kitkat.gles2 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -134,29 +134,29 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-21 \
 	-DANDROID_ABI='armeabi-v7a with NEON' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.lollipop.gles3 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.lollipop.gles3 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=OFF \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.lollipop.gles3 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.lollipop.gles3 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -177,29 +177,29 @@ android.armv7a.nougat.gles2: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-24 \
 	-DANDROID_ABI='armeabi-v7a with NEON' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles2 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles2 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles2 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles2 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -220,29 +220,29 @@ android.armv7a.nougat.gles3: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-24 \
 	-DANDROID_ABI='armeabi-v7a with NEON' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles3 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles3 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=OFF \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles3 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles3 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -263,29 +263,29 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-21 \
 	-DANDROID_ABI='arm64-v8a' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.lollipop.gles3 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.lollipop.gles3 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=OFF \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.lollipop.gles3 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.lollipop.gles3 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -306,29 +306,29 @@ android.armv8a.nougat.gles3: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-24 \
 	-DANDROID_ABI='arm64-v8a' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.nougat.gles3 \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.nougat.gles3 \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=OFF \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.nougat.gles3 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.nougat.gles3 \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -349,29 +349,29 @@ android.mips.kitkat: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-19 \
 	-DANDROID_ABI='mips' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.kitkat \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips.kitkat \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-19 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.kitkat \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips.kitkat \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -392,29 +392,29 @@ android.mips64.kitkat: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-19 \
 	-DANDROID_ABI='mips64' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.kitkat \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-19 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.kitkat \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -435,29 +435,29 @@ android.x86.kitkat: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-19 \
 	-DANDROID_ABI='x86' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.kitkat \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86.kitkat \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-19 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.kitkat \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86.kitkat \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -478,29 +478,29 @@ android.x86_64.kitkat: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
-	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
-	-DANDROID_TOOLCHAIN=clang \
-	-DANDROID_STL=c++_static \
-	-DANDROID_PLATFORM=android-19 \
 	-DANDROID_ABI='x86_64' \
-	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_ARM_NEON=OFF \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.kitkat \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.kitkat \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-19 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
-	-DBUILD_TESTS=OFF \
 	-DBUILD_SDL2=OFF \
-	-DBUILD_ASSIMP=ON" \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.kitkat \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.kitkat \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -521,17 +521,17 @@ coverage: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-coverage.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/coverage \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e CC= \
@@ -554,17 +554,17 @@ docs: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/docs-all.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/docs \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/docs \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -580,22 +580,22 @@ docs: FORCE native-libs
 
 # Emscripten with WebAsm and asm.js
 # Compiler: Clang 4+
-emscripten.asmjs: FORCE native-libs emscripten
+emscripten.asmjs: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/emscripten.asmjs \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Emscripten \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/emscripten.asmjs \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
@@ -612,22 +612,22 @@ emscripten.asmjs: FORCE native-libs emscripten
 
 # Emscripten with WebAsm and asm.js
 # Compiler: Clang 4+
-emscripten.wasm: FORCE native-libs emscripten
+emscripten.wasm: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten-wasm.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/emscripten.wasm \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Emscripten \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/emscripten.wasm \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
@@ -648,17 +648,17 @@ fedora.amd64: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-fedora.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Fedora \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/fedora.amd64 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Fedora \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -667,7 +667,7 @@ fedora.amd64: FORCE native-libs
 	-v $(BUILD_DIR)/fedora.amd64:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
-	-e DOCKER_CONFIG=ubuntu \
+	-e DOCKER_CONFIG=fedora \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=fedora.amd64
@@ -678,16 +678,16 @@ maemo.armel: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi.make8 \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'Unix Makefiles' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-maemo.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Maemo \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/maemo.armel \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/maemo.armel \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Maemo \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	-v $(BUILD_DIR)/dependencies/native-libs:/maemo//nativelibs:ro \
 	-v $(COFFEE_DIR):/maemo//home/coffee/library:ro \
@@ -711,16 +711,16 @@ mingw.w64: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/windows-mingw64.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/windows-mingw64_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/MinGW \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/mingw.w64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/windows-mingw64_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/mingw.w64 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS)" \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/MinGW \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -740,18 +740,18 @@ raspberry.armhf: FORCE native-libs rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-raspberry.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
-	-DRASPBERRY_SDK=/rpi-sysroot \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/RaspberryPi \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/raspberry.armhf \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/RaspberryPi \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DRASPBERRY_SDK=/rpi-sysroot \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/raspberry-sysroot/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro \
@@ -772,17 +772,17 @@ steam.amd64: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-steam_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/SteamOS \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-steam_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/steam.amd64 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/SteamOS \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -802,20 +802,20 @@ ubuntu.amd64: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-generic.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DGENERATE_APPIMAGE=ON \
-	-DBUILD_ASSIMP=ON" \
+	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -835,27 +835,27 @@ ubuntu.amd64.tools: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-generic.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.tools \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.tools \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
-	-DGENERATE_APPIMAGE=ON \
 	-DBUILD_ASSIMP=ON \
-	-DBUILD_UTILITIES=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_ETC2COMP=ON \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_TESTS=OFF \
+	-DBUILD_UTILITIES=ON \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.tools \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.tools \
+	-DGENERATE_APPIMAGE=ON \
+	-DGENERATE_APPIMAGE=ON \
 	-DGENERATE_FLATPAK=OFF \
 	-DGENERATE_SNAPPY=OFF \
-	-DGENERATE_APPIMAGE=ON \
-	-DBUILD_ETC2COMP=ON" \
+	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -875,20 +875,20 @@ ubuntu.amd64.gles2: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles20.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles2 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.gles2 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DGENERATE_APPIMAGE=ON \
-	-DBUILD_ASSIMP=ON" \
+	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -908,20 +908,20 @@ ubuntu.amd64.gles3: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles3 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.gles3 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DGENERATE_APPIMAGE=ON \
-	-DBUILD_ASSIMP=ON" \
+	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -941,17 +941,17 @@ ubuntu.i686.gles: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.i686.gles \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
@@ -971,17 +971,17 @@ ubuntu.i686.gles2: FORCE native-libs
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-G'CodeBlocks - Ninja' \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles20.cmake \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles2 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.i686.gles2 \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-DBUILD_ASSIMP=ON" \
+	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \

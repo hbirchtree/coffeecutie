@@ -72,7 +72,7 @@
 
 # For Ubuntu, Fedora, docs and coverage, specify generic preload
 .*(ubuntu|docs|coverage|fedora).*:
-  .*(amd64.*|docs|coverage):
+  (ubuntu.amd64.*|coverage|docs):
     =container: ubuntu
   .*(amd64.*|docs|coverage|fedora):
     =toolchain: linux-generic_linux.toolchain.cmake
@@ -80,7 +80,7 @@
     - appimg-runtime
     - SDL2
 
-.*(ubuntu|fedora|coverage|android|steam|emscripten|raspberry|maemo|mingw).*:
+.*(ubuntu|fedora|coverage|android|steam|raspberry|mingw).*:
   =generator: CodeBlocks - Ninja
 
 # Some parameters to make coverage testing work
@@ -105,7 +105,7 @@
   .*i686.*:
     =container: ubuntu-i686
     =toolchain: linux-generic-i686_linux.toolchain.cmake
-  .*gles.*:
+  .*gles[^2]?$:
     =preload: linux-gles.cmake
   .*gles2:
     =preload: linux-gles20.cmake
