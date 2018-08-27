@@ -12,7 +12,7 @@ TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR:-${PWD}}
 #######################################
 GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
 CONFIGURATION=${CONFIGURATION:-Debug}
-#CMAKE_TARGET=${CMAKE_TARGET:-install}
+CMAKE_TARGET=${CMAKE_TARGET:-}
 
 
 #######################################
@@ -200,6 +200,8 @@ function build_standalone()
         echo
     fi
 
+    [ ! -z $CMAKE_TARGET ] && _CMAKE_TARGET_OPT=-e CMAKE_TARGET="$CMAKE_TARGET"
+
     #####################################################
     # This invokes the build
     # Docker configuration and similar is auto-generated
@@ -208,7 +210,7 @@ function build_standalone()
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
         -e COFFEE_DIR="$COFFEE_DIR" \
-        -e CMAKE_TARGET="$CMAKE_TARGET" \
+        ${_CMAKE_TARGET_OPT:-} \
         -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS" \
         $@
 
