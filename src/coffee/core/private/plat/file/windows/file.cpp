@@ -44,7 +44,6 @@ win_handle WinFileApi::GetFileHandle(Url const& fn, RSCA acc)
 #ifdef COFFEE_WINDOWS_UWP
     CWString fn_w = str::encode::to<wbyte_t>(url);
     return CreateFile2(&fn_w[0], f.open, f.share, f.create, nullptr);
-    return INVALID_HANDLE_VALUE;
 #else
     return CreateFile(
         url.c_str(), f.open, f.share, nullptr, f.create, f.attr, nullptr);

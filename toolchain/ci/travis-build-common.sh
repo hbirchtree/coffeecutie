@@ -255,19 +255,23 @@ function build_target()
 
 function package_libraries()
 {
+    local _BASEDIR=${TAR_BASE:-build}
+
     tar -zcf "$2" -C ${1} \
-            --exclude=build/*/bin \
-            --exclude=build/*/packaged \
-            build/
+            --exclude=${_BASEDIR}/*/bin \
+            --exclude=${_BASEDIR}/*/packaged \
+            ${_BASEDIR}/
 }
 
 function package_binaries()
 {
+    local _BASEDIR=${TAR_BASE:-build}
+
     tar -zcf "$2" -C $1 \
-            --exclude=build/*/include \
-            --exclude=build/*/lib \
-            --exclude=build/*/share \
-            build/
+            --exclude=${_BASEDIR}/*/include \
+            --exclude=${_BASEDIR}/*/lib \
+            --exclude=${_BASEDIR}/*/share \
+            ${_BASEDIR}/
 }
 
 function main()

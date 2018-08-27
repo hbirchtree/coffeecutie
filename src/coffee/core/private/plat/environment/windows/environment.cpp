@@ -11,27 +11,15 @@ namespace Environment {
 namespace Windows {
 CString WindowsEnvFun::ExecutableName(cstring_w)
 {
-#ifdef COFFEE_WINDOWS_UWP
     CWString excname;
-#else
-    CString excname;
-#endif
     excname.resize(MAX_PATH);
 
-    GetModuleFileName(nullptr, &excname[0], excname.size());
-    excname.resize(str::find(excname.c_str(), '\0') - excname.c_str());
-#ifdef COFFEE_WINDOWS_UWP
-    excname = str::replace::str(excname, L"\\", L"/");
-#else
-    excname = str::replace::str(excname, "\\", "/");
-#endif
+    GetModuleFileNameW(nullptr, &excname[0], excname.size());
+    excname.resize(excname.find(L'\0'));
 
-#ifdef COFFEE_WINDOWS_UWP
-    CString out(excname.begin(), excname.end());
-    return out;
-#else
-    return excname;
-#endif
+    excname = str::replace::str(excname, L"\\", L"/");
+
+    return str::encode::to<char>(excname);
 }
 
 CString WindowsEnvFun::GetVar(cstring v)
@@ -87,22 +75,13 @@ bool WindowsEnvFun::ExistsVar(cstring v)
 
 Url WindowsEnvFun::CurrentDir()
 {
-#ifdef COFFEE_WINDOWS_UWP
     CWString out;
-#else
-    CString out;
-#endif
-
-    out.resize(GetCurrentDirectory(0, nullptr));
-    GetCurrentDirectory(out.size(), &out[0]);
+    out.resize(GetCurrentDirectoryW(0, nullptr));
+    GetCurrentDirectoryW(out.size(), &out[0]);
     out.resize(out.size() - 1);
-#ifdef COFFEE_WINDOWS_UWP
+
     out = str::replace::str(out, L"\\", L"/");
-    return MkUrl(CString(out.begin(), out.end()), RSCA::SystemFile);
-#else
-    out = str::replace::str(out, "\\", "/");
-    return MkUrl(out, RSCA::SystemFile);
-#endif
+    return MkUrl(str::encode::to<char>(out), RSCA::SystemFile);
 }
 
 Url WindowsEnvFun::GetUserData(cstring org, cstring app)

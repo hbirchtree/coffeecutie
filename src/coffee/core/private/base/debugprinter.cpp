@@ -125,12 +125,10 @@ static void native_print(FILE* stream, CString const& formatted, Severity sev)
     else if(formatted[0] == 'F')
         flag = EM_LOG_ERROR;
     emscripten_log(flag, "%s", formatted.c_str());
-#elif defined(COFFEE_WINDOWS_UWP)
-    CWString formatted_w = str::encode::to<wbyte_t>(formatted);
-    OutputDebugString(formatted_w.c_str());
 #elif defined(COFFEE_WINDOWS)
+    auto formatted_w = str::encode::to<wchar_t>(formatted);
     if(Env::GetVar("VisualStudioVersion").size())
-        OutputDebugString(formatted.c_str());
+        OutputDebugStringW(formatted_w.c_str());
     else
         Mem::Puts(stream, formatted.c_str());
 #else
