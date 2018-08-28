@@ -4,6 +4,7 @@
 #include <coffee/core/CMD>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/base/jsonlogger.h>
+#include <coffee/core/coffee_args.h>
 #include <coffee/core/coffee_signals.h>
 #include <coffee/core/coffee_version.h>
 #include <coffee/core/internal_state.h>
@@ -218,88 +219,9 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
     if(!(flags & DiscardArgumentHandler))
     {
-        ArgumentParser parser;
-        parser.addSwitch(
-            "help", "help", "h", "Print help information and exit");
-
-        parser.addSwitch(
-            "version",
-            "version",
-            nullptr,
-            "Print version information and exit");
-
-        parser.addSwitch(
-            "verbose",
-            nullptr,
-            "v",
-            "Print verbose messages to terminal while running");
-
-        parser.addSwitch("quiet", nullptr, "q", "Be quiet");
-
-        parser.addSwitch(
-            "licenses",
-            "licenses",
-            nullptr,
-            "Print license information and exit");
-
-        parser.addSwitch(
-            "dprofile", "deep-profile", nullptr, "Enable deep profiling");
-
-        parser.addSwitch("json", "json", nullptr, "Output information as JSON");
-
-        parser.addPositionalArgument(
-            "resource_prefix",
-
-            "Change resource prefix"
-            " (only works if application does not"
-            " override resource prefix)");
-
-        auto args = parser.parseArguments(GetInitArgs());
-
-        for(Pair<CString, u32> sw_ : args.switches)
-        {
-            auto sw = sw_.first;
-            if(sw == "help")
-            {
-                PrintVersionInfo();
-                PrintHelpInfo(parser);
-                return 0;
-            } else if(sw == "verbose")
-            {
-                Coffee::PrintingVerbosityLevel() += sw_.second;
-            } else if(sw == "quiet")
-            {
-                Coffee::PrintingVerbosityLevel() -= sw_.second;
-            } else if(sw == "version")
-            {
-                PrintVersionInfo();
-                PrintBuildInfo();
-                return 0;
-            } else if(sw == "licenses")
-            {
-                PrintLicenseInfo();
-                return 0;
-            } else if(sw == "dprofile")
-            {
-                Profiler::SetDeepProfileMode(true);
-            } else if(sw == "json")
-            {
-                DebugFun::SetLogInterface(
-                    SetupJsonLogger("application.json"_tmp));
-            }
-        }
-
-        for(auto arg : args.arguments)
-        {
-            if(arg.first == "resource_prefix")
-                CResources::FileResourcePrefix(arg.second.c_str());
-        }
-
-        for(auto pos : args.positional)
-        {
-            if(pos.first == "resource_prefix")
-                CResources::FileResourcePrefix(pos.second.c_str());
-        }
+        auto parser = BaseArgParser::GetBase();
+        auto args   = parser.parseArguments(GetInitArgs());
+        BaseArgParser::PerformDefaults(parser, args);
     } else
     {
         Coffee::PrintingVerbosityLevel() = 1;
@@ -418,5 +340,99 @@ void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)
     Coffee::PrintingVerbosityLevel() = level;
 #endif
 }
+
+namespace BaseArgParser {
+
+ArgumentParser& GetBase()
+{
+    static ArgumentParser parser;
+
+    if(!parser.arguments.size())
+    {
+        parser.addSwitch(
+            "help", "help", "h", "Print help information and exit");
+
+        parser.addSwitch(
+            "version",
+            "version",
+            nullptr,
+            "Print version information and exit");
+
+        parser.addSwitch(
+            "verbose",
+            nullptr,
+            "v",
+            "Print verbose messages to terminal while running");
+
+        parser.addSwitch("quiet", nullptr, "q", "Be quiet");
+
+        parser.addSwitch(
+            "licenses",
+            "licenses",
+            nullptr,
+            "Print license information and exit");
+
+        parser.addSwitch(
+            "dprofile", "deep-profile", nullptr, "Enable deep profiling");
+
+        parser.addSwitch("json", "json", nullptr, "Output information as JSON");
+
+        parser.addPositionalArgument(
+            "resource_prefix",
+
+            "Change resource prefix"
+            " (only works if application does not"
+            " override resource prefix)");
+    }
+}
+
+int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
+{
+    for(Pair<CString, u32> sw_ : args.switches)
+    {
+        auto sw = sw_.first;
+        if(sw == "help")
+        {
+            PrintVersionInfo();
+            PrintHelpInfo(parser);
+            return 0;
+        } else if(sw == "verbose")
+        {
+            Coffee::PrintingVerbosityLevel() += sw_.second;
+        } else if(sw == "quiet")
+        {
+            Coffee::PrintingVerbosityLevel() -= sw_.second;
+        } else if(sw == "version")
+        {
+            PrintVersionInfo();
+            PrintBuildInfo();
+            return 0;
+        } else if(sw == "licenses")
+        {
+            PrintLicenseInfo();
+            return 0;
+        } else if(sw == "dprofile")
+        {
+            Profiler::SetDeepProfileMode(true);
+        } else if(sw == "json")
+        {
+            DebugFun::SetLogInterface(SetupJsonLogger("application.json"_tmp));
+        }
+    }
+
+    for(auto arg : args.arguments)
+    {
+        if(arg.first == "resource_prefix")
+            CResources::FileResourcePrefix(arg.second.c_str());
+    }
+
+    for(auto pos : args.positional)
+    {
+        if(pos.first == "resource_prefix")
+            CResources::FileResourcePrefix(pos.second.c_str());
+    }
+}
+
+} // namespace BaseArgParser
 
 } // namespace Coffee

@@ -39,9 +39,6 @@ extern void SetCurrentApp(CoffeeApplicationData const& app);
 
 extern CoffeeApplicationData const& GetCurrentApp();
 
-//A simpler implementation of QObject
-class CObject;
-
 namespace CResources {
 
 extern void FileResourcePrefix(cstring prefix);
