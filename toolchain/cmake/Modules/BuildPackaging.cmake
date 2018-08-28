@@ -56,6 +56,9 @@ function(COFFEE_APPLICATION)
         BUNDLE_BINARIES
         # For licenses, will be merged into binary
         BUNDLE_LICENSES
+
+        # Protocol schemes to register the application with
+        SCHEMES
         )
     set ( switches
         # Indicates building a console application. Mostly used on OSX to
@@ -95,14 +98,21 @@ function(COFFEE_APPLICATION)
 
     if(ANDROID)
         ANDROIDAPK_PACKAGE(
-            "${APP_TARGET}"
-            "${APP_PACKAGE_PREFIX}"
-            "${APP_TITLE}" "${APP_VERSION_CODE}"
-            "${APP_COPYRIGHT}" "${APP_COMPANY}"
-            "${SOURCES_MOD}"
-            "${APP_RESOURCES}"
-            "${APP_BUNDLE_LIBRARIES}"
-            "${ICON_ASSET}" )
+            TARGET "${APP_TARGET}"
+
+            TITLE "${APP_TITLE}"
+            DOM_NAME "${APP_PACKAGE_PREFIX}"
+            VERSION_CODE "${APP_VERSION_CODE}"
+            COPYRIGHT "${APP_COPYRIGHT}"
+            COMPANY "${APP_COMPANY}"
+
+            SOURCES ${SOURCES_MOD}
+            RESOURCES ${APP_RESOURCES}
+            BUNDLE_LIBRARIES ${APP_BUNDLE_LIBRARIES}
+
+            APK_TARGET 27
+            APK_MIN_TARGET ${ANDROID_NATIVE_API_LEVEL}
+            )
     elseif(WIN32)
         WINPE_PACKAGE(
             ${APP_TARGET}

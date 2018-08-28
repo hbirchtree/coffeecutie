@@ -384,6 +384,8 @@ ArgumentParser& GetBase()
             " (only works if application does not"
             " override resource prefix)");
     }
+
+    return parser;
 }
 
 int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
