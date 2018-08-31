@@ -14,9 +14,8 @@
 #endif
 
 #if defined(COFFEE_GEKKO)
-#include <gccore.h>
-#include <ogcsys.h>
 #include <sys/timespec.h>
+extern "C" int nanosleep(struct timespec* tb);
 #endif
 
 namespace Coffee {
@@ -80,7 +79,7 @@ struct Thread
 
   private:
 #if defined(COFFEE_GEKKO)
-    lwp_t                 m_threadHandle;
+    long unsigned int     m_threadHandle;
     std::function<void()> m_threadLambda;
 #endif
 };
@@ -267,7 +266,7 @@ struct concurrent_notif
     }
 
     template<typename Dur>
-    FORCEDINLINE std::cv_status await(Dur const& dur)
+    FORCEDINLINE cv_status await(Dur const& dur)
     {
         UqLock lock(awaiter);
 

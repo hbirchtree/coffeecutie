@@ -153,6 +153,33 @@ function(COFFEE_APPLICATION)
             "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
 
+        file ( WRITE "${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}.desktop"
+"[Desktop Entry]
+Version=1.0
+Type=Application
+Name=${APP_TITLE}
+Comment=${APP_TITLE}
+Icon=coffee-${APP_TARGET}
+Categories=Game;
+Terminal=false
+Exec=${APP_TARGET} %s
+StartupNotify=true
+StartupWMClass=${APP_TARGET}
+"
+            )
+
+        set ( XDG_SCHEMES )
+
+        foreach ( SCHEME ${APP_SCHEMES} )
+            set ( XDG_SCHEMES "x-scheme-handler/${SCHEME}\;${XDG_SCHEMES}" )
+        endforeach()
+
+        if( NOT "${XDG_SCHEMES}" STREQUAL "" )
+            file ( APPEND "${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}.desktop"
+                "MimeType=${XDG_SCHEMES}\n"
+                )
+        endif()
+
         if(GENERATE_APPIMAGE)
             APPIMAGE_PACKAGE(
                 ${APP_TARGET}
@@ -187,7 +214,7 @@ function(COFFEE_APPLICATION)
         endif()
     elseif(GAMECUBE OR WII)
         GAMECUBE_PACKAGE(
-            TARGET ${APP_TARGET}
+            TARGET "${APP_TARGET}"
             SOURCES ${SOURCES_MOD}
             )
     else()

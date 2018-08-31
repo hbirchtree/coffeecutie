@@ -10,6 +10,7 @@ namespace Profiling {
 
 using namespace DataStorage::TextStorage::RJSON;
 
+#if !defined(COFFEE_DISABLE_PROFILER)
 static constexpr cstring event_format =
     R"({"ts":{0},"name":"{1}","pid":1,"tid":"{2}","cat":"{3}","ph":"{4}","s":"t"},
 )";
@@ -49,19 +50,27 @@ JsonProfileWriter::~JsonProfileWriter()
 
     FileFun::Close(std::move(logfile), ec);
 }
+#endif
 
 ShPtr<State::GlobalState> CreateJsonProfiler()
 {
+#if !defined(COFFEE_DISABLE_PROFILER)
     auto profile = MkUrl("profile.json", RSCA::TempFile);
 
     FileFun::file_error ec;
     FileFun::Truncate(profile, 0, ec);
 
+    C_ERROR_CHECK(ec);
+
     return MkShared<JsonProfileWriter>(profile);
+#else
+    return {};
+#endif
 }
 
 void JsonPush(ThreadState& tdata, DataPoint const& point)
 {
+#if !defined(COFFEE_DISABLE_PROFILER)
     auto profileData = C_DCAST<JsonProfileWriter>(tdata.writer);
 
     if(!profileData)
@@ -98,6 +107,7 @@ void JsonPush(ThreadState& tdata, DataPoint const& point)
     C_ERROR_CHECK(ec);
 
     profileData->event_count++;
+#endif
 }
 
 } // namespace Profiling

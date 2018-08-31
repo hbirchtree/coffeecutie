@@ -47,9 +47,15 @@ coffee_test (
     dummy.cpp
 
     LIBRARIES
-    CoffeeCore CoffeeGLeamCommon
+    CoffeeCore
     )
 
+if(BUILD_GLEAM)
+    target_link_libraries ( Unit_IncludeAll
+        PUBLIC
+        CoffeeGLeamCommon
+        )
+endif()
 if(BUILD_ASSIMP)
     target_link_libraries ( Unit_IncludeAll
         PUBLIC

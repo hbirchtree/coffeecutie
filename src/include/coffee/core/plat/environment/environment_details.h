@@ -140,6 +140,14 @@ struct EnvInterface
     {
         return Variables();
     }
+
+    STATICINLINE CString ConcatPath(cstring p1, cstring p2)
+    {
+        if(str::len(p1) > 0)
+            return CString(p1) + "/" + p2;
+        else
+            return p2;
+    }
 };
 
 namespace CmdColor

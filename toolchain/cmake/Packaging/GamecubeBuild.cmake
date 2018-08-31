@@ -4,9 +4,10 @@ macro ( GAMECUBE_PACKAGE )
         ""
         "TARGET"
         "SOURCES"
+        ${ARGN}
         )
 
-    add_executable ( ${GC_TARGET} ${GC_SOURCES} )
+    add_executable ( "${GC_TARGET}" ${GC_SOURCES} )
     add_custom_command (
         TARGET "${GC_TARGET}"
         POST_BUILD

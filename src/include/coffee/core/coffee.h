@@ -47,8 +47,4 @@ extern CString const& GetFileResourcePrefix();
 
 }
 
-namespace CFunctional{}
-
-using namespace CFunctional;
-
 } //Coffee

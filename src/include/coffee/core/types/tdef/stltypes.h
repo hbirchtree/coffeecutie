@@ -29,7 +29,7 @@
 #include <type_traits>
 
 #if defined(COFFEE_GEKKO)
-#include <gccore.h>
+using mutex_handle_t = long unsigned int;
 #endif
 
 namespace Coffee {
@@ -45,25 +45,108 @@ struct Mutex
     void lock();
     bool try_lock();
     void unlock();
-#if defined(COFFEE_GEKKO)
   private:
-    ::u32 m_mutexHandle;
+#if defined(COFFEE_GEKKO)
+    long unsigned int m_mutexHandle;
 #endif
 };
-struct Lock
+
+struct RecMutex
 {
-    Lock(Mutex& m) : m_mutex(m)
+    RecMutex();
+    ~RecMutex();
+    void lock();
+    bool try_lock();
+    void unlock();
+  private:
+#if defined(COFFEE_GEKKO)
+    long unsigned int m_mutexHandle;
+#endif
+};
+
+enum class cv_status
+{
+    no_timeout,
+    timeout,
+};
+
+template<typename MutexType = Mutex>
+struct BaseLock
+{
+    BaseLock(MutexType& m) : m_mutex(m)
     {
         m_mutex.lock();
     }
-    ~Lock()
+    ~BaseLock()
     {
         m_mutex.unlock();
     }
 
   private:
+    MutexType& m_mutex;
+};
+
+using Lock = BaseLock<>;
+using RecLock = BaseLock<RecMutex>;
+
+struct UqLock
+{
+    // TODO: implement std::defer_lock and friends
+    UqLock(Mutex& m) : m_mutex(m)
+    {
+        m_mutex.lock();
+    }
+    ~UqLock()
+    {
+        m_mutex.unlock();
+    }
+
+    Mutex* mutex()
+    {
+        return &m_mutex;
+    }
+
+  private:
     Mutex& m_mutex;
 };
+
+struct CondVar
+{
+    CondVar();
+    ~CondVar();
+
+    void wait(UqLock& lock);
+
+    template<typename Rep, typename Dur>
+    cv_status wait_for(UqLock& lock, std::chrono::duration<Rep, Dur> const& dur)
+    {
+        return wait_limited(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(dur)
+                    .count()
+                    );
+    }
+    
+    template<typename Rep, typename Dur>
+    cv_status wait_until(
+            UqLock& lock)
+    {
+        return cv_status::timeout;
+    }
+
+    void notify_all();
+    void notify_one();
+
+  private:
+    cv_status wait_limited(long wait_ns);
+
+#if defined(COFFEE_GEKKO)
+    Mutex m_signalLock;
+    std::atomic<unsigned int> m_waiters;
+    std::atomic<unsigned int> m_signals;
+    long unsigned int m_syncQueue;
+#endif
+};
+
 #else
 using RecMutex = std::recursive_mutex;
 using Mutex    = std::mutex;
@@ -72,6 +155,7 @@ using RecLock  = std::lock_guard<RecMutex>;
 
 using UqLock  = std::unique_lock<Mutex>;
 using CondVar = std::condition_variable;
+using cv_status = std::cv_status;
 #endif
 
 using ErrCode = std::error_code;

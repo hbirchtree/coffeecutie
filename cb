@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_DIR=$(dirname ${0})
+BASE_DIR=$(readlink -f $(dirname ${0}))
 TC_DIR=${BASE_DIR}/toolchain
 
 # For Firebase reporting
@@ -46,7 +46,9 @@ case $1 in
     "regen")
         case $3 in
         "linux")
-            ${TC_DIR}/python/makefile-generator.py ${TC_DIR}/makers/targets.yml ${TC_DIR}/makers/Makefile.$3
+            pushd ${TC_DIR}/makers
+            PYTHONPATH=$TC_DIR ${TC_DIR}/python/make_all.py
+            popd
         ;;
         *)
             echo \

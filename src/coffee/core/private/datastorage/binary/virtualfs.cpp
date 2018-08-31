@@ -85,6 +85,9 @@ bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
         auto& arr = data_arrays[i];
         if(file.flags & File_Compressed)
         {
+#if defined(COFFEE_BUILD_NO_COMPRESSION)
+            cFatal("Compression is not supported!");
+#else
             Zlib::Compress(filenames[i].data, &arr, {});
             cVerbose(
                 10,
@@ -92,6 +95,7 @@ bool GenVirtFS(const Vector<VirtDesc>& filenames, Vector<byte_t>* output)
                 filenames[i].data.size,
                 arr.size);
             file.size = arr.size;
+#endif
         } else
         {
             arr.data     = filenames[i].data.data;
@@ -148,8 +152,12 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(const VFS* vfs, const VFile* file)
 
         if(file->flags & File_Compressed)
         {
+#if defined(COFFEE_BUILD_NO_COMPRESSION)
+            cFatal("Compression is not supported!");
+#else
             if(!Zlib::Decompress(Bytes(srcPtr, srcSize, srcSize), &data, {}))
                 cWarning(VIRTFS_API "Failed to decompress file");
+#endif
         } else
         {
             data.data = srcPtr;

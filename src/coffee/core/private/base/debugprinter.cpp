@@ -152,8 +152,9 @@ void OutputPrinterImpl::fprintf_platform_tagged(
     if(PrintingVerbosityLevel() < level)
         return;
 
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_EMSCRIPTEN)
+#if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
     CString formatted;
+#if !defined(COFFEE_SIMPLE_PRINT)
     if(!(flags & Flag_NoContext))
     {
         AddContextString(formatted, sev);
@@ -163,6 +164,7 @@ void OutputPrinterImpl::fprintf_platform_tagged(
 
         (formatted += ": ") += formatted_raw;
     } else
+#endif
         formatted = formatted_raw;
 
     if(!(flags & Flag_NoNewline))

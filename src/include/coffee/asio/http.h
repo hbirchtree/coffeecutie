@@ -4,7 +4,7 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <iterator>
 
-#if !defined(COFFEE_WINDOWS)
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
 #endif
 

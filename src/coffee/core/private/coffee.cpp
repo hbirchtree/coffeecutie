@@ -104,13 +104,13 @@ static void CoffeeInit_Internal(u32 flags)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
-    //    PrintingVerbosityLevel() = 8;
-    //    DefaultPrintOutputPipe   = DefaultDebugOutputPipe;
 
     /* Allow core dump by default in debug mode */
     ProcessProperty::CoreDumpEnable();
 
+#if !defined(COFFEE_DISABLE_PROFILER)
     State::GetProfilerStore()->enable();
+#endif
 #else
     Coffee::PrintingVerbosityLevel()          = 1;
 #endif
@@ -162,9 +162,12 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
+
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
+
+    Coffee::PrintingVerbosityLevel() = 1;
 
 #ifndef COFFEE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
@@ -221,14 +224,17 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     {
         auto parser = BaseArgParser::GetBase();
         auto args   = parser.parseArguments(GetInitArgs());
-        BaseArgParser::PerformDefaults(parser, args);
+        auto ret = BaseArgParser::PerformDefaults(parser, args);
+
+        if(ret > 0)
+            return ret;
     } else
     {
         Coffee::PrintingVerbosityLevel() = 1;
     }
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_DEFAULT_VERBOSITY)
     Coffee::PrintingVerbosityLevel() = 12;
 #endif
 
@@ -249,6 +255,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     cVerbose(8, "Entering main function");
     Profiler::PushContext("main()");
 #endif
+
 
     i32 result = mainfun(argc, argv);
 
@@ -433,6 +440,8 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
         if(pos.first == "resource_prefix")
             CResources::FileResourcePrefix(pos.second.c_str());
     }
+
+    return -1;
 }
 
 } // namespace BaseArgParser

@@ -13,6 +13,7 @@ static SimpleIniParser::variant_t* get_value(
 {
     bool mismatch = false;
 
+#if !defined(COFFEE_NO_EXCEPTION_QUIET)
     auto itype = quiet_exception::call<std::invalid_argument>(
         str::from_string<i64>, mismatch, tvalu);
 
@@ -28,6 +29,7 @@ static SimpleIniParser::variant_t* get_value(
         str::from_string<bool>, mismatch, tvalu);
     if(!mismatch)
         return doc.newBool(btype);
+#endif
 
     return doc.newString(tvalu);
 }

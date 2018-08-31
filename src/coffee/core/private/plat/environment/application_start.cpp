@@ -16,6 +16,8 @@ extern int InitCOMInterface();
 #include <coffee/core/CDebug>
 
 #if defined(COFFEE_GEKKO)
+#include <gccore.h>
+
 GXRModeObj* gamecube_rmode = NULL;
 void*       gamecube_xfb   = NULL;
 
@@ -38,11 +40,13 @@ void GCVideoInit()
 
     console_init(
         gamecube_xfb,
-        20,
-        20,
+        60,
+        60,
         gamecube_rmode->fbWidth,
         gamecube_rmode->xfbHeight,
         gamecube_rmode->fbWidth * 2);
+
+    printf("- Gamecube video initialized\n");
 }
 
 void GCInfiniteLoop()
@@ -56,7 +60,7 @@ void GCInfiniteLoop()
 
 using namespace Coffee;
 
-int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, u32 flags = 0)
+int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0)
 {
 #ifndef COFFEE_LOWFAT
     cDebug("Entering deref_main() at {0}", str::print::pointerify(deref_main));

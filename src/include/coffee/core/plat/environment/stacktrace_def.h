@@ -75,8 +75,15 @@ struct StacktracerDef
         return {};
     }
 
-    static void ExceptionStacktrace(ExceptionPtr const&)
+    static void ExceptionStacktrace(ExceptionPtr const& exc)
     {
+        try
+        {
+            std::rethrow_exception(exc);
+        } catch(std::exception const& e)
+        {
+            printf("Caught exception: %s: %s\n", typeid(e).name(), e.what());
+        }
     }
 };
 

@@ -121,7 +121,7 @@ using Profiler = ::profiler::
 
 using DataPoint = Profiler::datapoint;
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(

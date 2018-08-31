@@ -165,6 +165,15 @@
 //#define COFFEE_DISABLE_PROFILER
 #endif
 
+#if defined(COFFEE_GEKKO)
+#define COFFEE_NO_EXCEPTION_QUIET
+#define COFFEE_NO_EXCEPTION_DUMP
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
+#define COFFEE_DEFAULT_VERBOSITY
+#endif
+
 /*
  *
  * Library-bound switches
@@ -183,6 +192,10 @@
 
 /* Disable profiler in release mode */
 #if defined(NDEBUG)
+#define COFFEE_DISABLE_PROFILER
+#endif
+
+#if defined(COFFEE_GEKKO)
 #define COFFEE_DISABLE_PROFILER
 #endif
 
@@ -271,12 +284,14 @@
  *
  */
 
-#if !defined(COFFEE_WINDOWS)
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
 /* Zlib comes bundled with pretty much all POSIX systems
  *  except Windows */
 #define COFFEE_BUILD_ZLIB
 #elif defined(COFFEE_WINDOWS) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0602
 #define COFFEE_BUILD_WINDOWS_DEFLATE
+#else
+#define COFFEE_BUILD_NO_COMPRESSION
 #endif
 
 /*
@@ -374,9 +389,12 @@
  *
  */
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_NACL)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
+#endif
+
+#if defined(COFFEE_GEKKO)
+#define COFFEE_SIMPLE_PRINT
 #endif
 
 /*

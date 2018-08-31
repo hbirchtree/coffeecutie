@@ -228,6 +228,13 @@
   =preload: windows-mingw64.cmake
   =container: mingw64
 
+.*gamecube.*:
+  =description: Nintendo Gamecube through DevkitPPC
+  =compiler: GCC 6+
+  =toolchain: none-cube-powerpc-eabi_linux.toolchain.cmake
+  =preload: gamecube.cmake
+  =container: ubuntu
+
 .*(ubuntu.*|coverage|docs):
   =build.prettyname: Ubuntu
 .*(fedora.*):
@@ -244,3 +251,5 @@
   =build.prettyname: MinGW
 .*(emscripten.*):
   =build.prettyname: Emscripten
+.*(gamecube.*):
+  =build.prettyname: GCN/DevkitPPC

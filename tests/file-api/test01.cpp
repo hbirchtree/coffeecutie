@@ -24,8 +24,8 @@ bool filewrite_test()
 
 bool fileread_test()
 {
-    CResources::Resource rsc(writetest);
-    CResources::FilePull(rsc);
+    Resource rsc(writetest);
+    FilePull(rsc);
 
     cDebug(
         "\nTheirs:\n{1}\nMine:\n{0}",
@@ -45,7 +45,7 @@ bool filesize_test()
 {
     file_error ec;
 
-    szptr size   = CResources::FileFun::Size(writetest, ec);
+    szptr size   = FileFun::Size(writetest, ec);
     szptr target = sizeof(write_data);
     cDebug("{0}?={1}", size, target);
 

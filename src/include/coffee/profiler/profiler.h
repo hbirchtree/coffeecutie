@@ -4,6 +4,9 @@
 #include <string>
 #include <thread>
 
+// Requires #define PROFILER_CUSTOM_THREAD_NS ...
+#define PROFILER_CUSTOM_THREADLIB
+
 //#define PROFILER_STD_TYPES
 
 #if !defined(PROFILER_STD_TYPES)
@@ -37,12 +40,20 @@ using u16     = ::uint16_t;
 using u32     = ::uint32_t;
 
 #else
+#ifndef PROFILER_CUSTOM_THREAD_NS
+#define PROFILER_CUSTOM_THREAD_NS ::Coffee::CurrentThread
+#endif
+
 template<typename T>
 using ptr                   = ::Coffee::ShPtr<T>;
 using clock                 = ::Coffee::Chrono::steady_clock;
 using thread                = ::Coffee::Thread;
 using thread_id             = ::Coffee::ThreadId::Hash;
 using thread_id_constructor = ::Coffee::ThreadId;
+
+namespace this_thread {
+using namespace PROFILER_CUSTOM_THREAD_NS;
+}
 
 using namespace ::Coffee::Primitives;
 #endif
@@ -131,7 +142,7 @@ struct prof_common
     {
         data           = {};
         data.ts        = prof_types::clock::now().time_since_epoch();
-        data.tid       = thread_id_constructor()(std::this_thread::get_id());
+        data.tid       = thread_id_constructor()(this_thread::get_id());
         data.component = opt.component();
     }
 };

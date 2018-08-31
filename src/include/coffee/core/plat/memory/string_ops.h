@@ -154,6 +154,9 @@ FORCEDINLINE bool cmp(const CharType* s1, const CharType* s2)
 #elif defined(COFFEE_WINDOWS_UWP)
 #define C_CASECMP ::_stricmp
 #define C_WCASECMP ::_wcsicmp
+#elif defined(COFFEE_GEKKO)
+#define C_CASECMP ::strcasecmp
+#define C_WCASECMP ::wcscasecmp
 #else
 #define C_CASECMP ::stricmp
 #define C_WCASECMP ::wcsicmp

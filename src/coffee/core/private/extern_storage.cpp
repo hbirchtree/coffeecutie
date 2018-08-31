@@ -1,8 +1,10 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/plat/plat_environment.h>
+#if !defined(COFFEE_DISABLE_PROFILER)
 #include <coffee/core/plat/timing/profiling.h>
 #include <coffee/core/profiler/profiling-export.h>
+#endif
 
 #include <coffee/core/internal_state.h>
 
@@ -254,6 +256,7 @@ const ShPtr<GlobalState>& PeekState(cstring key)
 }
 }
 
+namespace CResources {
 /*
  *
  * File resource prefix stuff, used by file API
@@ -263,18 +266,20 @@ const ShPtr<GlobalState>& PeekState(cstring key)
  *
  */
 
-void CResources::FileResourcePrefix(cstring prefix)
+void FileResourcePrefix(cstring prefix)
 {
     C_PTR_CHECK(State::ISTATE);
     State::ISTATE->resource_prefix = prefix;
 }
 
-CString const& CResources::GetFileResourcePrefix()
+CString const& GetFileResourcePrefix()
 {
     //    fprintf(stdout, "GET: %p\n", &State::internal_state);
     fflush(stdout);
     C_PTR_CHECK(State::ISTATE);
     return State::ISTATE->resource_prefix;
+}
+
 }
 
 void SetCurrentApp(CoffeeApplicationData const& app)

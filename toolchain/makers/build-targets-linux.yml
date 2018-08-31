@@ -52,3 +52,5 @@ raspberry:
   - armhf
 mingw:
   - w64
+gamecube:
+  - .

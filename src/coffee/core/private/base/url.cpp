@@ -197,11 +197,21 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_GEKKO)
 
-    paths.configDir = MkUrl("/MEM0", RSCA::SystemFile);
+    /* Corresponds to memory cards on GC */
+    paths.configDir = MkUrl("MEM0:/", RSCA::SystemFile);
+    // TODO: Should correspond to block storage on Wii
+
+    /* Corresponds to GC/Wii storage media */
+    paths.assetDir = MkUrl("GCM:/", RSCA::SystemFile);
+
+    /* Emulated as in-memory storage */
+    paths.tempDir = MkUrl("TMP:/", RSCA::SystemFile);
+    paths.cacheDir = paths.tempDir;
 
 #else
 #error Unimplemented filesystem path handling, fix it!
 #endif
+
 
     return paths;
 }
@@ -288,11 +298,14 @@ CString Url::operator*() const
 
 CString Url::operator*()
 {
-    Url const& self  = *this;
-    auto       deref = *self;
+    if(!cachedUrl.size())
+    {
+        Url const& self  = *this;
+        auto       deref = *self;
 
-    cachedUrl = deref;
-    return deref;
+        cachedUrl = deref;
+    }
+    return cachedUrl;
 }
 
 Url Url::operator+(const Path& path) const

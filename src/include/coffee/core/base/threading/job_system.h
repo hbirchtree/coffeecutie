@@ -75,7 +75,11 @@ FORCEDINLINE void ParallelForEach(
     ContainerT& container, Function<void(T&)>&& pred, u32 num_workers = 0)
 {
 #if __cplusplus < 201703L
+#if defined(COFFEE_NO_THREADLIB)
+    auto thread_count = 1UL;
+#else
     auto thread_count = std::thread::hardware_concurrency();
+#endif
 
     if(num_workers > 0)
         thread_count = num_workers;
