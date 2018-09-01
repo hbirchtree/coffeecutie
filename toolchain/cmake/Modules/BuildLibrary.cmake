@@ -77,8 +77,6 @@ macro( GENERATE_FINDSCRIPT )
     # Dedupe it, because it's a lot
     list( REMOVE_DUPLICATES CONF_INCLUDE_DIRS )
 
-    export ( PACKAGE ${PROJECT_NAME} )
-
     export (
         TARGETS ${LIBRARY_DEFINITIONS}
 #        NAMESPACE ${PROJECT_NAME}::

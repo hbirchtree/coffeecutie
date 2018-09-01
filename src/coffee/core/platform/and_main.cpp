@@ -428,6 +428,9 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
     using namespace ::jnipp_operators;
 
+    android::ScopedJNI _(coffee_app->activity->vm);
+    jnipp::SwapJNI(&_);
+
     switch(evtype)
     {
     case CoffeeForeign_RequestPlatformData:

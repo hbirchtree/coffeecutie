@@ -220,7 +220,6 @@ function(ANDROIDAPK_PACKAGE)
 
         # For now, manage release builds through Android Studio
         set ( RELEASE_PREFIX "debug" )
-        set ( ANDROID_APK_DEBUGGABLE "true" )
 
         set ( ANDROID_APK_FILE_OUTPUT
             "${ANDROID_APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${RELEASE_PREFIX}.apk" )
