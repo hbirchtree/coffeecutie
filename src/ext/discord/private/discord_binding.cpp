@@ -1,5 +1,6 @@
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/internal_state.h>
+#include <coffee/core/plat/environment.h>
 #include <coffee/discord/discord_binding.h>
 #include <discord_register.h>
 #include <discord_rpc.h>
@@ -125,7 +126,7 @@ DiscordService::DiscordService(ShPtr<DiscordDelegate> delegate) :
 void DiscordService::initialize(DiscordOptions const& options)
 {
     cstring steamId = nullptr;
-    m_options = options;
+    m_options       = options;
 
     if(options.steamId.size())
         steamId = options.steamId.c_str();

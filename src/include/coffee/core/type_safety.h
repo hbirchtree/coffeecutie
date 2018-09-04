@@ -9,7 +9,7 @@
 
 /* Wrap text that is used for debugging with this, and it will disappear
  *  in release-mode */
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && !defined(NDEBUG)
 #define DTEXT(text) text
 #else
 #define DTEXT(text) ""
@@ -22,7 +22,7 @@
 #define IS_CLS std::is_class
 #define IS_POLY std::is_polymorphic
 
-#ifndef COFFEE_LOWFAT
+#if defined(COFFEE_USE_EXCEPTIONS)
 template<typename T>
 [[noreturn]] inline void Throw(T&& exception)
 {

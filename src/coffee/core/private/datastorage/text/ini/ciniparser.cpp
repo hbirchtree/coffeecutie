@@ -2,6 +2,7 @@
 
 #include <coffee/core/CDebug>
 #include <coffee/core/string_casting.h>
+#include <coffee/core/types/tdef/stlfunctypes.h>
 
 namespace Coffee {
 namespace DataStorage {

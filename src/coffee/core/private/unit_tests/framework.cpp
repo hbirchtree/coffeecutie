@@ -184,6 +184,27 @@ void PrintAsciiTable(u64 const& time_accum, szptr suc)
     cBasicPrint("-- Passed: {0}/{1}", suc, result.size());
 }
 
+struct TemporaryState
+{
+    TemporaryState():
+        m_state(State::GetInternalState()),
+        m_tstate(State::GetInternalThreadState())
+    {
+        State::SetInternalState(State::CreateNewState());
+        State::SetInternalThreadState(State::CreateNewThreadState());
+    }
+
+    ~TemporaryState()
+    {
+        State::SetInternalState(m_state);
+        State::SetInternalThreadState(m_tstate);
+    }
+
+private:
+    State::P<InternalState> m_state;
+    State::P<InternalThreadState> m_tstate;
+};
+
 void RunTest(Test const& test, TestInstance& test_info)
 {
     test_info.from_test(test);
@@ -200,6 +221,8 @@ void RunTest(Test const& test, TestInstance& test_info)
     Profiler::PushContext(test_info.title);
     try
     {
+        TemporaryState _;
+
         res = test.test();
     } catch(std::exception const& e)
     {
@@ -220,6 +243,9 @@ void RunTest(Test const& test, TestInstance& test_info)
 
 int run_tests(u32 num, Test const* tests, int argc, char** argv)
 {
+    State::SetInternalState(State::CreateNewState());
+    State::SetInternalThreadState(State::CreateNewThreadState());
+
     SetPrintingVerbosity(10);
     auto args = AppArg::Clone(argc, argv);
 

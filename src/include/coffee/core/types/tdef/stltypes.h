@@ -205,18 +205,11 @@ using Map = std::map<T1, T2>;
 template<typename T1, typename T2>
 using MultiMap = std::multimap<T1, T2>;
 
-#ifndef COFFEE_LOWFAT
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
 
 template<typename T, class Deleter = std::default_delete<T>>
 using UqPtr = std::unique_ptr<T, Deleter>;
-#else
-template<typename T>
-using ShPtr = Ptr<T>;
-template<typename T, class Deleter = std::default_delete<T>>
-using UqPtr = Ptr<T>;
-#endif
 
 template<typename T>
 using WkPtr = std::weak_ptr<T>;

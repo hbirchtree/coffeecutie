@@ -51,17 +51,17 @@ coffee_test (
     )
 
 if(BUILD_GLEAM)
-    target_link_libraries ( Unit_IncludeAll
+    target_link_libraries ( Dummy_Target
         PUBLIC
         CoffeeGLeamCommon
         )
 endif()
 if(BUILD_ASSIMP)
-    target_link_libraries ( Unit_IncludeAll
+    target_link_libraries ( Dummy_Target
         PUBLIC
         CoffeeAssimp
         )
-    target_compile_definitions ( Unit_IncludeAll
+    target_compile_definitions ( Dummy_Target
         PUBLIC
         HAS_ASSIMP
         )

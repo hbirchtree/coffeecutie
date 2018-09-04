@@ -8,12 +8,13 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 
+#include <coffee/core/plat/environment.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/interfaces/cgraphics_pixops.h>
 
-#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 
 #include "gleam_internal_types.h"
 

@@ -3,6 +3,7 @@
 #include <coffee/core/CInput>
 #include <coffee/core/CProfiling>
 #include <coffee/core/coffee.h>
+#include <coffee/core/plat/environment.h>
 #include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/CImage>

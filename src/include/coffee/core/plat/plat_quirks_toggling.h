@@ -140,6 +140,7 @@
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
+#define COFFEE_CUSTOM_STACKTRACE
 #endif
 
 /*
@@ -148,10 +149,10 @@
  *
  */
 
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_LOWFAT)
+//#if !defined(COFFEE_ANDROID) && !defined(COFFEE_LOWFAT)
 #define COFFEE_USE_EXCEPTIONS
 #define COFFEE_USE_RTTI
-#endif
+//#endif
 
 /*
  *
@@ -197,6 +198,21 @@
 
 #if defined(COFFEE_GEKKO)
 #define COFFEE_DISABLE_PROFILER
+#endif
+
+/*
+ *
+ * Filesystem switches
+ *
+ */
+
+#if defined(COFFEE_ANDROID) || \
+    (defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP))
+#define COFFEE_VIRTUAL_ASSETS
+#endif
+
+#if defined(COFFEE_ANDROID)
+#define COFFEE_DYNAMIC_TEMPFILES
 #endif
 
 /*

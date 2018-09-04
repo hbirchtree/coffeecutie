@@ -30,7 +30,7 @@ def appveyor_gen_config(build_info, repo_dir):
         'version': '{build}',
         'skip_tags': True,
         'branches': {
-            'only': deploy_info[0]
+            'only': deploy_info.build_branches
         },
         'configuration': ['Debug'],
         'platform': 'x64',

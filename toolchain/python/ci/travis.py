@@ -61,7 +61,7 @@ def travis_gen_config(build_info, repo_dir):
                 'allow_failures': try_get_key(build_info, 'allow_fail', [])
             },
         'branches': {
-            'only': deploy_data.deploy_branches
+            'only': deploy_data.build_branches
         },
         'apt': {'update': True},
         'before_script': script_locs.deps,

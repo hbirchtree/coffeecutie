@@ -1,12 +1,15 @@
+#include <coffee/core/internal_state.h>
+
 #include <coffee/core/CDebug>
+#include <coffee/core/base/printing/log_interface.h>
+#include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/plat/plat_environment.h>
+
 #if !defined(COFFEE_DISABLE_PROFILER)
 #include <coffee/core/plat/timing/profiling.h>
 #include <coffee/core/profiler/profiling-export.h>
 #endif
-
-#include <coffee/core/internal_state.h>
 
 #ifdef COFFEE_USE_TERMINAL_CTL
 #include <coffee/core/plat/memory/cmd_unixterm.h>
@@ -20,10 +23,10 @@ struct InternalState
     {
     }
 
-#ifndef COFFEE_LOWFAT
     LogInterface logger = {OutputPrinter::fprintf_platform,
                            OutputPrinter::fprintf_platform_tagged};
 
+#ifndef COFFEE_LOWFAT
     Mutex printer_lock;
 #endif
 
@@ -132,8 +135,6 @@ P<InternalThreadState> CreateNewThreadState()
 
 void SetInternalState(P<InternalState> state)
 {
-    //    fprintf(stdout, "SET: %p\n", &State::internal_state);
-    fflush(stdout);
     ISTATE = state;
 }
 
@@ -159,7 +160,8 @@ void SetInternalThreadState(P<InternalThreadState> state)
 {
     TSTATE = state;
 
-    RegisterProfilerThreadState();
+    if(state)
+        RegisterProfilerThreadState();
 }
 
 P<InternalThreadState>& GetInternalThreadState()
@@ -280,7 +282,7 @@ CString const& GetFileResourcePrefix()
     return State::ISTATE->resource_prefix;
 }
 
-}
+} // namespace CResources
 
 void SetCurrentApp(CoffeeApplicationData const& app)
 {
@@ -316,15 +318,12 @@ u8& PrintingVerbosityLevel()
 
 namespace DebugFun {
 
-#ifndef COFFEE_LOWFAT
 void SetLogInterface(LogInterface intf)
 {
     C_PTR_CHECK(State::ISTATE);
     State::ISTATE->logger = intf;
 }
-#endif
 
-#ifndef COFFEE_LOWFAT
 Coffee::DebugFun::LogInterface GetLogInterface()
 {
     if(State::ISTATE)
@@ -333,8 +332,7 @@ Coffee::DebugFun::LogInterface GetLogInterface()
         return {OutputPrinter::fprintf_platform,
                 OutputPrinter::fprintf_platform_tagged};
 }
-#endif
-}
+} // namespace DebugFun
 
 namespace State {
 

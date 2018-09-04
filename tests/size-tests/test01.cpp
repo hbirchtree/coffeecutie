@@ -1,4 +1,5 @@
 #include <coffee/core/CUnitTesting>
+#include <coffee/core/plat/plat_stacktrace.h>
 
 #include <coffee/core/CInput>
 #include <coffee/core/string_casting.h>

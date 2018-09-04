@@ -1,15 +1,19 @@
 #include <coffee/core/coffee.h>
 
 #include <coffee/core/CFiles>
+#include <coffee/core/formatting.h>
+
 #include <coffee/core/CMD>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/base/jsonlogger.h>
+#include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/coffee_signals.h>
 #include <coffee/core/coffee_version.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
@@ -162,7 +166,6 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
-
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
@@ -224,7 +227,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     {
         auto parser = BaseArgParser::GetBase();
         auto args   = parser.parseArguments(GetInitArgs());
-        auto ret = BaseArgParser::PerformDefaults(parser, args);
+        auto ret    = BaseArgParser::PerformDefaults(parser, args);
 
         if(ret > 0)
             return ret;
@@ -255,7 +258,6 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     cVerbose(8, "Entering main function");
     Profiler::PushContext("main()");
 #endif
-
 
     i32 result = mainfun(argc, argv);
 
@@ -333,7 +335,7 @@ void GotoApplicationDir()
 
 void InstallDefaultSigHandlers()
 {
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE)
+#if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
         Stacktracer::ExceptionStacktrace(std::current_exception());
         abort();
@@ -343,9 +345,7 @@ void InstallDefaultSigHandlers()
 
 void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)
 {
-#ifndef COFFEE_LOWFAT
     Coffee::PrintingVerbosityLevel() = level;
-#endif
 }
 
 namespace BaseArgParser {

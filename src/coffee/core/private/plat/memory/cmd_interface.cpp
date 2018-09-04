@@ -1,4 +1,5 @@
 #include <coffee/core/plat/memory/cmd_interface.h>
+#include <coffee/core/plat/plat_stacktrace.h>
 
 #include <coffee/core/CDebug>
 

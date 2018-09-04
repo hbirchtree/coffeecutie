@@ -257,7 +257,7 @@ void Resource::readResponseHeader(std::istream& http_istream)
         m_response.header = http::stream::read_response(http_istream);
     }
 
-    if(PrintingVerbosityLevel() >= 12)
+#if !defined(NDEBUG)
     {
         cVerbose(
             12,
@@ -274,6 +274,7 @@ void Resource::readResponseHeader(std::istream& http_istream)
         for(auto const& header : m_response.header.fields)
             cVerbose(12, NETRSC_TAG "-- {0}: {1}", header.first, header.second);
     }
+#endif
 }
 
 void Resource::readResponsePayload(std::istream& http_istream)

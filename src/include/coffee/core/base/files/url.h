@@ -176,6 +176,11 @@ struct UrlParse
     u32     m_port;
 };
 
+FORCEDINLINE Url MkInvalidUrl()
+{
+    return {{}, Url::Undefined, RSCA::None, HTTPAccess::None, {}};
+}
+
 FORCEDINLINE Url MkUrl(cstring urlString)
 {
     return {urlString, Url::Local, RSCA::AssetFile, HTTPAccess::None, {}};

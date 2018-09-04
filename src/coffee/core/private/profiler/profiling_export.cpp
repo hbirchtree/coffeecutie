@@ -1,17 +1,16 @@
 #include <coffee/core/profiler/profiling-export.h>
 
-#include <coffee/core/base/files/url.h>
-
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
-
+#include <coffee/core/base/files/url.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_mem_macros.h>
-
+#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
+
+#include <coffee/core/CDebug>
 
 #ifndef COFFEE_LOWFAT
 
@@ -77,12 +76,12 @@ STATICINLINE void PutEvents(
         auto tidVal  = FromString(tid, alloc);
         auto nameVal = FromString(p.name, alloc);
 
-//        o.AddMember(
-//            "ts",
-//            JSON::Value(
-//                Chrono::duration_cast<Chrono::microseconds>(p.ts).count() -
-//                start),
-//            alloc);
+        //        o.AddMember(
+        //            "ts",
+        //            JSON::Value(
+        //                Chrono::duration_cast<Chrono::microseconds>(p.ts).count()
+        //                - start),
+        //            alloc);
 
         o.AddMember("name", nameVal, alloc);
         o.AddMember("pid", JSON::Value(1), alloc);

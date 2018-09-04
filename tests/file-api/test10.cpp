@@ -7,7 +7,7 @@ using namespace Coffee;
 
 bool url_bad_deref()
 {
-    /**/
+#ifdef COFFEE_USE_EXCEPTIONS
     Url f = {};
 
     try
@@ -18,10 +18,14 @@ bool url_bad_deref()
     {
         return true;
     }
+#else
+    return true;
+#endif
 }
 
 bool url_get_dereferenced()
 {
+#ifdef COFFEE_USE_EXCEPTIONS
     Url f = MkUrl("testfile");
 
     try
@@ -32,6 +36,9 @@ bool url_get_dereferenced()
     {
         return false;
     }
+#else
+    return true;
+#endif
 }
 
 template<RSCA Storage>

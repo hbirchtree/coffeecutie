@@ -2,6 +2,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_saving.h>
+#include <coffee/core/internal_state.h>
 #include <coffee/core/plat/plat_environment.h>
 
 namespace Coffee {
@@ -11,7 +12,7 @@ SaveApi::~SaveApi()
 {
 }
 
-FilesystemApi::FilesystemApi() : m_app(ApplicationData())
+FilesystemApi::FilesystemApi() : m_app(GetCurrentApp())
 {
 }
 
@@ -68,7 +69,7 @@ void emscripten_callback_error(void* arg)
 static CString CreateSaveString(u16 slot)
 {
     return cStringFormat(
-        "{0}-{1}.data", ApplicationData().application_name, slot);
+        "{0}-{1}.data", GetCurrentApp().application_name, slot);
 }
 #else
 static Url CreateSaveUrl(u16 slot)
@@ -89,7 +90,7 @@ szptr FilesystemApi::restore(Bytes&& data, slot_count_t slot)
 
     static DataStatus data_status = {0, 0, data.data, &data.size};
     emscripten_idb_async_load(
-        ApplicationData().organization_name.c_str(),
+        m_app.organization_name.c_str(),
         save_file.c_str(),
         &data_status,
         emscripten_callback_load,
@@ -127,7 +128,7 @@ szptr FilesystemApi::save(Bytes const& data, slot_count_t slot)
     static int32 status = 0;
 
     emscripten_idb_async_store(
-        ApplicationData().organization_name.c_str(),
+        m_app.organization_name.c_str(),
         save_file.c_str(),
         C_FCAST<void*>(data.data),
         data.size,

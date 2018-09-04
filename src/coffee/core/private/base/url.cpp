@@ -4,7 +4,8 @@
 #include <coffee/core/base/files/cfiles.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_resource.h>
-#include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/formatting.h>
+#include <coffee/core/plat/environment.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/timing/profiling.h>
 
@@ -77,6 +78,11 @@ Url GetAppleStoragePath()
 STATICINLINE SystemPaths GetSystemPaths()
 {
     SystemPaths paths;
+
+    paths.assetDir  = MkInvalidUrl();
+    paths.cacheDir  = MkInvalidUrl();
+    paths.configDir = MkInvalidUrl();
+    paths.tempDir   = MkInvalidUrl();
 
     CString const& _coffee_resource_prefix = GetFileResourcePrefix();
 
@@ -205,13 +211,12 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.assetDir = MkUrl("GCM:/", RSCA::SystemFile);
 
     /* Emulated as in-memory storage */
-    paths.tempDir = MkUrl("TMP:/", RSCA::SystemFile);
+    paths.tempDir  = MkUrl("TMP:/", RSCA::SystemFile);
     paths.cacheDir = paths.tempDir;
 
 #else
 #error Unimplemented filesystem path handling, fix it!
 #endif
-
 
     return paths;
 }
@@ -343,8 +348,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     {
     case RSCA::AssetFile:
     {
-#if defined(COFFEE_ANDROID) || \
-    (defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP))
+#if defined(COFFEE_VIRTUAL_ASSETS)
         /* Because Android uses a virtual filesystem,
          *  we do not go deeper to find a RSCA::SystemFile URL */
         return urlPart.internUrl.c_str();
@@ -361,7 +365,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::TemporaryFile:
     {
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_DYNAMIC_TEMPFILES)
         tempStore =
             MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
@@ -372,7 +376,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::CachedFile:
     {
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_DYNAMIC_TEMPFILES)
         tempStore =
             MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else

@@ -2,7 +2,9 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/coffee.h>
+#include <coffee/core/plat/environment/argument_parse.h>
 #include <coffee/core/plat/plat_linking.h>
+#include <coffee/core/plat/plat_sysinfo.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/interfaces/content_pipeline.h>
 
