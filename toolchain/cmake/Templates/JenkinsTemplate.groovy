@@ -55,7 +55,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
 
     if (platform == 'linux' || platform == 'osx')
     {
-        cmd = "\"${srcDir}/@SCRIPT_DIR@/travis-build.sh\""
+        cmd = "\"@UNIX_BUILD_SCRIPT@\""
         job.with {
             steps {
                 environmentVariables {
@@ -71,7 +71,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
         }
     }else if(platform == 'windows')
     {
-        cmd = "powershell \"${srcDir}\\@SCRIPT_DIR@\\appveyor-build.ps1\""
+        cmd = "powershell \"@WINDOWS_BUILD_SCRIPT@\""
 
         job.with {
             steps {

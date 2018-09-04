@@ -25,7 +25,11 @@ env:
   - BUILDVARIANT=fedora.amd64
   - BUILDVARIANT=raspberry.armhf
   - BUILDVARIANT=steam.amd64
+  - BUILDVARIANT=testing.linux.lowfat.debug
+  - BUILDVARIANT=testing.linux.lowfat.release
+  - BUILDVARIANT=testing.linux.release
   - BUILDVARIANT=ubuntu.amd64
+  - BUILDVARIANT=ubuntu.i686.gles
   - BUILDVARIANT=ios.x86_64
   - BUILDVARIANT=osx
   - BUILDVARIANT=coverage
@@ -36,6 +40,10 @@ matrix:
   - env: BUILDVARIANT=uwp.amd64
   - env: BUILDVARIANT=uwp.arm
   - env: BUILDVARIANT=raspberry.armhf
+  - env: BUILDVARIANT=testing.linux.lowfat.debug
+  - env: BUILDVARIANT=testing.linux.lowfat.release
+  - env: BUILDVARIANT=testing.linux.release
+  - env: BUILDVARIANT=ubuntu.i686.gles
   exclude:
   - env: BUILDVARIANT=android.armv7a.kitkat.gles2
     os: osx
@@ -51,7 +59,15 @@ matrix:
     os: osx
   - env: BUILDVARIANT=steam.amd64
     os: osx
+  - env: BUILDVARIANT=testing.linux.lowfat.debug
+    os: osx
+  - env: BUILDVARIANT=testing.linux.lowfat.release
+    os: osx
+  - env: BUILDVARIANT=testing.linux.release
+    os: osx
   - env: BUILDVARIANT=ubuntu.amd64
+    os: osx
+  - env: BUILDVARIANT=ubuntu.i686.gles
     os: osx
   - env: BUILDVARIANT=ios.x86_64
     os: linux

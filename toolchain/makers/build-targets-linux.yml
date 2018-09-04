@@ -41,6 +41,13 @@ steam:
   - amd64
 coverage:
   - .
+testing:
+  linux:
+    lowfat:
+      - debug
+      - release
+    release:
+      - .
 docs:
   - .
 emscripten:

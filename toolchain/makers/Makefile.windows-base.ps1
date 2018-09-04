@@ -61,11 +61,6 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
         -C"$SrcDir/toolchain/cmake/Preload/$preload.cmake" `
         -DCMAKE_INSTALL_PREFIX="$Pwd/Out" `
         $ExtraArgs
-	
-	if($LibVariant.startsWith("win32"))
-	{
-		& $CMakeBin --build . --target RUN_TESTS
-	}
 }
 
 function CompileProject($preload, $arch, $config, $BuildDir) {

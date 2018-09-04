@@ -44,6 +44,10 @@ matrix:
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: uwp.arm
   - BUILDVARIANT: raspberry.armhf
+  - BUILDVARIANT: testing.linux.lowfat.debug
+  - BUILDVARIANT: testing.linux.lowfat.release
+  - BUILDVARIANT: testing.linux.release
+  - BUILDVARIANT: ubuntu.i686.gles
   exclude:
   - BUILDVARIANT: uwp.amd64
     image: Visual Studio 2015

@@ -16,6 +16,7 @@ TARGET_SLUG="$(get_deploy_slug)"
 
 notify "Creating artifacts"
 
+[ -f ${SOURCE_DIR}/deploy-trigger.sh ] && source ${SOURCE_DIR}/deploy-trigger.sh && exit 0
 
 package_binaries "${BUILD_DIR}" "$BINARY_ASSET"
 package_libraries "${BUILD_DIR}" "$LIBRARY_ASSET"

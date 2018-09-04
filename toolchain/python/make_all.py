@@ -225,7 +225,7 @@ if __name__ == '__main__':
     linux_make_targets = yml.deepcopy(make_targets)
     linux_make_targets += create_target_definitions(precompiled_deps, base_config, linux_targets, force_target)
 
-    mac_targets = yml.create_target_listing('build-targets-mac.yml')
+    mac_targets = yml.create_target_listing('build-targets-osx.yml')
     mac_make_targets = yml.deepcopy(make_targets)
     mac_make_targets += create_target_definitions(precompiled_deps, base_config, mac_targets, force_target)
 

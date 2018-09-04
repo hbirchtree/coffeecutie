@@ -8,4 +8,6 @@ notify "Building $BUILDVARIANT"
 
 download_dependencies "${DEPENDENCIES}" || die "Failed to download dependencies"
 
+[ -f ${SOURCE_DIR}/build-trigger.sh ] && source ${SOURCE_DIR}/build-trigger.sh && exit 0
+
 build_target "${BUILDVARIANT}"

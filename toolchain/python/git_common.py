@@ -1,7 +1,49 @@
-import configure_ci
 from python.common import *
 
 _git_dir = None
+
+
+def sshgit_to_https(url):
+    import re
+    # git@github.com:hbirchtree/coffeecutie.git
+    # ssh://git@github.com/hbirchtree/coffeecutie.git
+    patterns = [re.compile('^.*git@([^/:]+)[:/](.+)'),
+                # re.compile('ssh://git@([^/]+)/(.+)')
+                ]
+
+    for patt in patterns:
+        match = patt.findall(url)
+        if match:
+            return 'https://%s/%s' % (match[0][0], match[0][1])
+    return url
+
+
+def git_get_origin(repo_dir):
+    import re
+    with open('%s/.git/config' % repo_dir, mode='r') as f:
+        data = f.read()
+
+        remote_patt = re.compile('\[remote .*')
+        prop_patt = re.compile('^\s+([a-z]+)\s*=\s*([\W\w]+)$')
+
+        block_started = True
+        for line in data.split('\n'):
+            if len(line) < 1:
+                continue
+            if remote_patt.match(line):
+                block_started = True
+                continue
+            if block_started:
+                match = prop_patt.findall(line)
+                if not match:
+                    block_started = False
+                    continue
+                if match[0][0] == 'url':
+                    return match[0][1]
+                print(match)
+
+
+        raise RuntimeError('Failed to parse')
 
 
 def git_get_commit(repo_dir):
@@ -16,7 +58,7 @@ def git_get_commit(repo_dir):
 
 def git_get_slug(repo_dir):
     import re
-    origin = configure_ci.git_get_origin(repo_dir)
+    origin = git_get_origin(repo_dir)
     patt = re.compile('^.*[/:](\S+\/\S+)\.git$')
     match = patt.findall(origin)
 

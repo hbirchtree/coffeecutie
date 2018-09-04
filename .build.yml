@@ -3,6 +3,10 @@ allow_fail:
 - env: BUILDVARIANT=uwp.amd64
 - env: BUILDVARIANT=uwp.arm
 - env: BUILDVARIANT=raspberry.armhf
+- env: BUILDVARIANT=testing.linux.lowfat.debug
+- env: BUILDVARIANT=testing.linux.lowfat.release
+- env: BUILDVARIANT=testing.linux.release
+- env: BUILDVARIANT=ubuntu.i686.gles
 branches:
 - build: true
   deploy: true
@@ -25,19 +29,24 @@ platforms:
   fedora:
   - amd64
   osx:
-  - osx
-  - ios.x86_64
+  - .
+  ios:
+  - x86_64
   raspberry:
   - armhf
   steam:
   - amd64
   ubuntu:
+    amd64:
+    - .
+    i686:
+    - gles
+  win32:
   - amd64
-  - i686
-  - armhf
-  windows:
-  - win32
-  - uwp
+  uwp:
+  - amd64
+  testing:
+  - linux
 script_location: toolchain/ci
 secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ

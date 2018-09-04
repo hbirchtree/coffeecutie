@@ -23,11 +23,16 @@
     - -DGENERATE_SNAPPY=OFF
     - -DGENERATE_APPIMAGE=ON
     - -DBUILD_ETC2COMP=ON
-.*coverage:
+coverage:
   =target: multi.twostage
   =cmake-target:
     - all
     - CoverageTest
+testing.linux.*:
+  =target: multi.twostage
+  =cmake-target:
+    - all
+    - test
 .*ubuntu.amd64.*:
   +cmake-opts:
     - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
@@ -42,6 +47,6 @@
   =target: multi.ensureinstall
   =cmake-target:
     - AndroidPackage
-.*(ubuntu|fedora|coverage|android|docs|steam|raspberry|emscripten).*:
+.*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten).*:
   +cmake-opts:
     - -DBUILD_ASSIMP=ON

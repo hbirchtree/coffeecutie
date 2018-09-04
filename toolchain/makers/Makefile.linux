@@ -836,6 +836,119 @@ steam.amd64: FORCE native-libs
 	-e BUILD_NAME=steam.amd64 \
 	-e CMAKE_TARGET=install
 
+# Lowfat debug-mode testing
+# Compiler: GCC 5+
+testing.linux.lowfat.debug: FORCE native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EXAMPLES=OFF \
+	-DCMAKE_BUILD_TYPE=Debug \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.lowfat.debug \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/testing.linux.lowfat.debug \
+	-DLOWFAT_BUILD=ON \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-DSKIP_HIGHMEM_TESTS=ON \
+	-DSKIP_LINKAGE_TEST=ON \
+	-DSKIP_OPENVR_TEST=ON \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-e CC= \
+	-e CXX= \
+	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/testing.linux.lowfat.debug:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=ubuntu \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=testing.linux.lowfat.debug \
+	-e CMAKE_SECOND_TARGET=test
+
+# Lowfat release-mode testing
+# Compiler: GCC 5+
+testing.linux.lowfat.release: FORCE native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EXAMPLES=OFF \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.lowfat.release \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/testing.linux.lowfat.release \
+	-DLOWFAT_BUILD=ON \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-DSKIP_HIGHMEM_TESTS=ON \
+	-DSKIP_LINKAGE_TEST=ON \
+	-DSKIP_OPENVR_TEST=ON \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-e CC= \
+	-e CXX= \
+	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/testing.linux.lowfat.release:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=ubuntu \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=testing.linux.lowfat.release \
+	-e CMAKE_SECOND_TARGET=test
+
+# Release-mode testing
+# Compiler: GCC 5+
+testing.linux.release: FORCE native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EXAMPLES=OFF \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.release \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/testing.linux.release \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-DSKIP_HIGHMEM_TESTS=ON \
+	-DSKIP_LINKAGE_TEST=ON \
+	-DSKIP_OPENVR_TEST=ON \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-e CC= \
+	-e CXX= \
+	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/testing.linux.release:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=ubuntu \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=testing.linux.release \
+	-e CMAKE_SECOND_TARGET=test
+
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
 ubuntu.amd64: FORCE native-libs

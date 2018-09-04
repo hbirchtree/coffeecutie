@@ -84,7 +84,7 @@ MAKEFILE_DIR="$SOURCE_DIR/$(${INFOPY} --source-dir ${SOURCE_DIR} makefile_locati
 
 CI_DIR="$MAKEFILE_DIR"
 
-HELPER="$SCRIPT_DIR/travis-helper.py"
+HELPER="$SCRIPT_DIR/get_matching_release.py"
 GITHUBPY="$SCRIPT_DIR/github_api.py"
 
 
@@ -125,13 +125,15 @@ function download_libraries()
     local CURRENT_ASSET="$(github_api list asset ${slug}:${LATEST_RELEASE} | grep "libraries_${3}.tar.gz" | head -1)"
     #echo Asset $CURRENT_ASSET
 
-    [[ -z ${CURRENT_ASSET} ]] && echo "Failed to find ${slug} for $3" && return 1
+    [[ -z ${CURRENT_ASSET} ]] && echo "Failed to find ${slug}:$3" && return 1
 
     notify "Found assets: $CURRENT_ASSET (from $LATEST_RELEASE)"
     local ASSET_ID="$(echo ${CURRENT_ASSET} | cut -d'|' -f 3)"
     local ASSET_FN="$PWD/$(echo ${CURRENT_ASSET} | cut -d'|' -f 5)"
 
     github_api pull asset $2 ${ASSET_ID}
+
+    [ ! -f ${ASSET_FN} ] && echo "Failed to pull asset" && return 1
 
     local PREV_WD="$PWD"
 
