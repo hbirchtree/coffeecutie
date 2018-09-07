@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/base/files/url.h>
+#include <coffee/core/plat/memory/string_ops.h>
 
 namespace Coffee{
 namespace Environment{
