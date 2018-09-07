@@ -24,7 +24,6 @@ platforms:
   - armv7a.kitkat.gles2
   - armv8a.nougat.gles3
   emscripten:
-  - asmjs
   - wasm
   fedora:
   - amd64

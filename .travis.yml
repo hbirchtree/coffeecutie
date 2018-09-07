@@ -20,7 +20,6 @@ env:
   matrix:
   - BUILDVARIANT=android.armv7a.kitkat.gles2
   - BUILDVARIANT=android.armv8a.nougat.gles3
-  - BUILDVARIANT=emscripten.asmjs
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
   - BUILDVARIANT=raspberry.armhf
@@ -48,8 +47,6 @@ matrix:
   - env: BUILDVARIANT=android.armv7a.kitkat.gles2
     os: osx
   - env: BUILDVARIANT=android.armv8a.nougat.gles3
-    os: osx
-  - env: BUILDVARIANT=emscripten.asmjs
     os: osx
   - env: BUILDVARIANT=emscripten.wasm
     os: osx
