@@ -243,7 +243,6 @@ void RunTest(Test const& test, TestInstance& test_info)
 
 int run_tests(u32 num, Test const* tests, int argc, char** argv)
 {
-    State::SetInternalState(State::CreateNewState());
     State::SetInternalThreadState(State::CreateNewThreadState());
 
     SetPrintingVerbosity(10);
