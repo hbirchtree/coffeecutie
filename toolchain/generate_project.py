@@ -8,6 +8,8 @@ from python.git_common import *
 from python.project_generator import *
 from python.project_generator import _settings as run_settings
 
+import configure_ci
+
 _dry_run = True
 _verbose = False
 

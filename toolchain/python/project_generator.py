@@ -272,8 +272,6 @@ class StepUpdateBuildInfo(ProjectStep):
                             dry_run=_settings.dry,
                             verbose=_settings.verbose)
 
-            configure_ci.parse_linux_targets()
-
             if 'dependencies' in structure:
                 v = structure['dependencies']
 
