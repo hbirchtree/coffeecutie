@@ -515,6 +515,49 @@ android.x86_64.kitkat: FORCE native-libs
 	-e BUILD_NAME=android.x86_64.kitkat \
 	-e CMAKE_TARGET=AndroidPackage
 
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86_64.nougat: FORCE native-libs
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86_64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.nougat \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.nougat \
+	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
+	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86_64.nougat:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86_64.nougat \
+	-e CMAKE_TARGET=AndroidPackage
+
 # Coverage build using same config as Ubuntu
 # Compiler: Clang
 coverage: FORCE native-libs

@@ -26,6 +26,8 @@ android:
   x86_64:
     kitkat:
       - .
+    nougat:
+      - .
 ubuntu:
   amd64:
     - .

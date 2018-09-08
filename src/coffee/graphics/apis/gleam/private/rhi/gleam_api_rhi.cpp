@@ -438,13 +438,14 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, u32)
         Face::Both,
         (rstate.wireframeRender()) ? DrawMode::Line : DrawMode::Fill);
 #endif
-
+#if GL_VERSION_VERIFY(0x300, 0x320)
     {
         if(rstate.discard())
             GLC::Enable(Feature::RasterizerDiscard);
         else
             GLC::Disable(Feature::RasterizerDiscard);
     }
+#endif
 
     //    GLC::ColorLogicOp(rstate.colorOp());
     //    if(!GLEAM_FEATURES.draw_color_mask)

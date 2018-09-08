@@ -47,28 +47,9 @@ case $1 in
     ${TC_DIR}/git-gen-release.sh ${@:2}
 ;;
 "makefile-generator")
-    MAKERS_DIR=${BASE_DIR}
-    case $2 in
-    "regen")
-        case $3 in
-        "linux")
-            pushd ${TC_DIR}/makers
-            PYTHONPATH=$TC_DIR ${TC_DIR}/python/make_all.py
-            popd
-        ;;
-        *)
-            echo \
-"Options: 
-linux - Generate for Linux and OSX, despite the name"
-        ;;
-        esac
-    ;;
-    *)
-        echo \
-"Options: 
-regen - Regenerate meta-build system"
-    ;;
-    esac
+    pushd ${TC_DIR}/makers
+    PYTHONPATH=$TC_DIR ${TC_DIR}/python/make_all.py
+    popd
 ;;
 "format")
     if [ -z $CLANG_FORMAT ]; then
