@@ -44,7 +44,11 @@ case $1 in
     ${TC_DIR}/update-local-tools.sh ${@:2}
 ;;
 "gen-release")
-    ${TC_DIR}/git-gen-release.sh ${@:2}
+    set -e
+    ${0} version ${@:2}
+    git -C ${BASE_DIR} add ${BASE_DIR}/.build.yml
+    git commit --verbose
+    ${TC_DIR}/git-gen-release.sh none
 ;;
 "makefile-generator")
     pushd ${TC_DIR}/makers
