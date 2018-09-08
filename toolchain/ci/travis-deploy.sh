@@ -16,7 +16,7 @@ TARGET_SLUG="$(get_deploy_slug)"
 
 notify "Creating artifacts"
 
-[ -f ${SOURCE_DIR}/deploy-trigger.sh ] && source ${SOURCE_DIR}/deploy-trigger.sh && exit 0
+[ -f ${SOURCE_DIR}/deploy-script.sh ] && source ${SOURCE_DIR}/deploy-script.sh && exit 0
 
 pushd $TRAVIS_BUILD_DIR
 
@@ -25,5 +25,7 @@ package_libraries "${BUILD_DIR}" "$LIBRARY_ASSET"
 
 deploy_asset "$BINARY_ASSET" ${TARGET_SLUG}
 deploy_asset "$LIBRARY_ASSET" ${TARGET_SLUG}
+
+[ -f ${SOURCE_DIR}/deploy-post-trigger.sh ] && source ${SOURCE_DIR}/deploy-post-trigger.sh
 
 popd
