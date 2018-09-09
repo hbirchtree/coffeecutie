@@ -15,6 +15,7 @@ tar -zcf "${PRESSURE_ASSET}" -C "${BUILD_DIR}" \
         build/*/lib/*Pressurize* \
     )
 
+deploy_asset "${PRESSURE_ASSET}" ${TARGET_SLUG}
+
 popd
 
-deploy_asset "${PRESSURE_ASSET}" ${TARGET_SLUG}
