@@ -138,7 +138,7 @@ coffee_library (
     LIBRARIES CoffeeCore ${RENDERER_LIBS}
     )
 
-if(APPLE)
+if(APPLE AND IOS)
     target_link_libraries ( CoffeeRenderer_Default PUBLIC
         CoffeeWindow_GLKit
         )
