@@ -38,7 +38,7 @@ if(BUILD_OPENGL)
         CoffeeCore
         )
 
-    if(BUILD_GLES)
+    if(BUILD_GLES AND NOT APPLE)
         target_link_libraries ( CoffeeContext_EGL PUBLIC
             EGL
             )
@@ -90,7 +90,7 @@ coffee_library (
     LIBRARIES CoffeeCore
     )
 
-if(APPLE)
+if(APPLE AND IOS)
     coffee_library (
         TARGET CoffeeWindow_GLKit
         SOURCES
@@ -105,31 +105,24 @@ if(APPLE)
         "-framework QuartzCore"
         )
 
-    if(IOS)
-        # Add CEAGL layer, to provide EGL
-        target_include_directories ( CoffeeBinding_GLAD PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-            )
-        target_include_directories ( CoffeeWindow_GLKit PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-            )
-        target_include_directories ( CoffeeContext_EGL PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-            )
+    # Add CEAGL layer, to provide EGL
+    target_include_directories ( CoffeeBinding_GLAD PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+        )
+    target_include_directories ( CoffeeWindow_GLKit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+        )
+    target_include_directories ( CoffeeContext_EGL PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+        )
 
-        target_link_libraries ( CoffeeWindow_GLKit PUBLIC
-            "-framework CoreMotion"
-            "-framework GameController"
-            "-framework OpenGLES"
-            "-framework UIKit"
-            "-framework GLKit"
-            )
-    else()
-        target_link_libraries ( CoffeeWindow_GLKit PUBLIC
-            "-framework OpenGL"
-            "-framework AppKit"
-            )
-    endif()
+    target_link_libraries ( CoffeeWindow_GLKit PUBLIC
+        "-framework CoreMotion"
+        "-framework GameController"
+        "-framework OpenGLES"
+        "-framework UIKit"
+        "-framework GLKit"
+        )
 endif()
 
 coffee_library (

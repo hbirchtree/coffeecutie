@@ -7,7 +7,7 @@
 #include <coffee/core/string_casting.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
-#include "../private/plat/sensor/android/android_sensors.h"
+#include "../../private/plat/sensor/android/android_sensors.h"
 
 #include <coffee/core/CDebug>
 

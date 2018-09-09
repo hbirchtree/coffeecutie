@@ -11,7 +11,7 @@ set ( NDK_HELPER_INCLUDE_DIR
     ${ANDROID_SOURCES_ANDROID}/ndk_helper
     CACHE PATH "NDK helper include directory" )
 set ( NDK_HELPER_SOURCES
-    "${ANDROID_SOURCES_ANDROID}/ndk_helper/gestureDetector.cpp;${ANDROID_SOURCES_ANDROID}/ndk_helper/JNIHelper.cpp"
+    "${ANDROID_SOURCES_ANDROID}/ndk_helper/gestureDetector.cpp"
     CACHE STRING "NDK helper source files" )
 
 set ( CPUFEATURES_INCLUDE_DIR

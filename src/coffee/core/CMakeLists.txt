@@ -285,7 +285,7 @@ if(ANDROID)
     find_package( AndroidGlue REQUIRED )
 
     target_sources ( CoffeeCore_Application PRIVATE
-        platform/and_main.cpp
+        platform/android/and_main.cpp
         ${ANDROID_GLUE_SOURCES}
         )
 
@@ -305,6 +305,7 @@ if(ANDROID)
 
         ${NDK_HELPER_SOURCES}
         ${CPUFEATURES_SOURCES}
+        platform/android/JNIHelper.cpp
 
         private/plat/file/android/file.cpp
 
@@ -336,6 +337,15 @@ endif()
 #
 #
 if(APPLE)
+    if(NOT IOS)
+        target_link_libraries ( CoffeeCore_Base PUBLIC
+            "-framework CoreGraphics"
+            "-framework QuartzCore"
+            "-framework OpenGL"
+            "-framework AppKit"
+            )
+    endif()
+
     target_sources ( CoffeeCore_Base PRIVATE
         #
         # System information queries
