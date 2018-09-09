@@ -49,6 +49,31 @@ if(BUILD_GLEAM)
         )
 endif()
 
+if(BUILD_ANGLE)
+    find_package( ANGLE REQUIRED )
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        AngleEGL AngleGLESv2
+        )
+elseif(BUILD_GLES AND NOT APPLE)
+    if(ANDROID AND NOT BUILD_GLES_20)
+        # On Android, GLES 3.x is used through a different library
+        target_link_libraries ( CoffeeGLeamCommon PUBLIC
+            GLESv3
+            )
+    else()
+        # Elsewhere, just use GLESv2
+        target_link_libraries ( CoffeeGLeamCommon PUBLIC
+            GLESv2
+            )
+    endif()
+
+    if(MAEMO)
+        target_link_libraries ( CoffeeGLeamCommon PUBLIC
+            IMGegl
+            )
+    endif()
+endif()
+
 if(BUILD_GLES_20 OR BUILD_ANGLE)
     target_compile_definitions ( CoffeeGLeamCommon PUBLIC
         -DCOFFEE_GLES20_MODE

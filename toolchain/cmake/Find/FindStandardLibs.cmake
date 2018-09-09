@@ -17,14 +17,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
             )
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
-
-    if(BUILD_GLES)
-        list ( APPEND CORE_EXTRA_LIBRARIES EGL GLESv2 )
-    endif()
 endif()
 
 if(BUILD_SDL2)
-    if(SDL_POWER_PLUGIN_ENABLED OR ANDROID OR WIN_UWP)
+    if(SDL_POWER_PLUGIN_ENABLED OR WIN_UWP)
         # We use SDL2 for some platform functionality, like power info
         # On Android, it is also used to read assets and
         #  acquiring device info.
@@ -50,52 +46,16 @@ if(APPLE)
         "-framework AudioToolbox"
         "-framework CoreAudio"
         "-framework CoreFoundation"
-        "-framework CoreGraphics"
         "-framework Foundation"
-        #        "-framework OpenAL"
-        "-framework QuartzCore"
         )
-    if(IOS)
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            "-framework CoreMotion"
-            "-framework GameController"
-            "-framework OpenGLES"
-            "-framework UIKit"
-            "-framework GLKit"
-            )
-    else()
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            "-framework OpenGL"
-            "-framework AppKit"
-            )
-    endif()
 endif()
 
 if(ANDROID)
     # Add the Android logging library, as well as android and GLESv*
     list ( APPEND CORE_EXTRA_LIBRARIES
-        # Logging and Android functions
+        # Logging and basic Android functions
         log android
-        # All Android targets use EGL
-        EGL
         )
-
-    # If we are building a GLESv3-exclusive target, drop GLESv2
-    if(BUILD_GLES_20)
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            GLESv2
-            )
-    else()
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            GLESv3
-            )
-    endif()
-
-    if(BUILD_SDL2)
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            SDL2
-            )
-    endif()
 endif()
 
 if(RASPBERRY)
@@ -105,11 +65,6 @@ if(RASPBERRY)
     list ( APPEND CORE_EXTRA_LIBRARIES
         #        GLESv2
         bcm_host
-
-        #        asound
-        #        pulse-simple pulse
-        #        X11 Xext Xcursor Xinerama Xi Xrandr Xss Xxf86vm xkbcommon
-        #        wayland-egl wayland-client wayland-cursor
         )
 endif()
 
@@ -147,19 +102,6 @@ if(WIN32)
 
     list ( APPEND CORE_EXTRA_LIBRARIES
         cabinet
-        )
-
-    if(BUILD_ANGLE)
-        find_package( ANGLE REQUIRED )
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            AngleEGL AngleGLESv2
-            )
-    endif()
-endif()
-
-if(MAEMO)
-    list ( APPEND CORE_EXTRA_LIBRARIES
-        GLESv2 IMGegl
         )
 endif()
 

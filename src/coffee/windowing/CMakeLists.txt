@@ -1,42 +1,4 @@
-set ( X11_SRCS
-    private/windowing/x11/x11_window.cpp
-    )
-
-set ( DMX_SRCS
-    private/windowing/dispmanx/dispmanx_window.cpp
-    )
-
-set ( EGL_SRCS
-    private/graphics/egl/egl_renderer.cpp
-    )
-
-set ( GLX_SRCS
-    private/graphics/glx/glx_renderer.cpp
-    )
-
-set ( GLKit_SRCS
-    private/windowing/glkit/glk_window.cpp
-    )
-
-set ( NDKWindow_SRCS
-    private/windowing/ndkwindow/ndk_window.cpp
-    )
-
-set ( OGC_SRCS
-    private/windowing/ogc/ogc_window.cpp
-    )
-
-if(APPLE AND IOS)
-    list ( APPEND GLKit_SRCS
-        private/graphics/ceagl/private/eagl_bind.mm
-        private/graphics/ceagl/private/EGLView.m
-        private/windowing/glkit/glk_window.mm
-        private/windowing/glkit/AppDelegate.m
-        )
-endif()
-
 set ( GLAD_SRCS
-    private/binding/glad/gleamrenderer.cpp
     )
 
 set ( Renderer_SRCS
@@ -45,24 +7,15 @@ set ( Renderer_SRCS
     private/stub/stub.cpp
     )
 
-if(BUILD_GLES AND NOT BUILD_GLES_20)
-    list(APPEND GLAD_SRCS private/binding/glad/glad_es/glad.c)
-elseif(NOT BUILD_GLES)
-    list(APPEND GLAD_SRCS private/binding/glad/glad/glad.c)
-endif()
-
 if(BUILD_OPENGL)
     set ( RENDERER_LIBS
         CoffeeWindow_X11
-        CoffeeWindow_DMX
-        CoffeeWindow_GLKit
         CoffeeWindow_NDKWindow
 
         CoffeeContext_GLX
         CoffeeContext_EGL
 
         CoffeeBinding_GLAD
-
 
         CoffeeGLeamRHI
         )
@@ -79,55 +32,105 @@ endif()
 if(BUILD_OPENGL)
     coffee_library (
         TARGET CoffeeContext_EGL
-        SOURCES ${EGL_SRCS}
-        LIBRARIES CoffeeCore
+        SOURCES
+        private/graphics/egl/egl_renderer.cpp
+        LIBRARIES
+        CoffeeCore
+        EGL
         )
 
     coffee_library (
         TARGET CoffeeContext_GLX
-        SOURCES ${GLX_SRCS}
+        SOURCES
+        private/graphics/glx/glx_renderer.cpp
         LIBRARIES CoffeeCore
         )
 
     coffee_library (
         TARGET CoffeeBinding_GLAD
-        SOURCES ${GLAD_SRCS}
+        SOURCES
+        private/binding/glad/gleamrenderer.cpp
         LIBRARIES CoffeeCore CoffeeGLeamCommon
         )
 
-    target_link_libraries ( CoffeeBinding_GLAD
-        PRIVATE
-        CoffeeCore
-        )
+    if(BUILD_GLES AND NOT BUILD_GLES_20)
+        target_sources ( CoffeeBinding_GLAD PRIVATE
+            private/binding/glad/glad_es/glad.c
+            )
+    elseif(NOT BUILD_GLES)
+        target_sources ( CoffeeBinding_GLAD PRIVATE
+            private/binding/glad/glad/glad.c
+            )
+    endif()
 endif(BUILD_OPENGL)
 
 coffee_library (
     TARGET CoffeeWindow_OGC
-    SOURCES ${OGC_SRCS}
+    SOURCES
+    private/windowing/ogc/ogc_window.cpp
     LIBRARIES CoffeeCore
     )
 
 coffee_library (
     TARGET CoffeeWindow_X11
-    SOURCES ${X11_SRCS}
+    SOURCES
+    private/windowing/x11/x11_window.cpp
     LIBRARIES CoffeeCore
     )
 
 coffee_library (
     TARGET CoffeeWindow_DMX
-    SOURCES ${DMX_SRCS}
+    SOURCES
+    private/windowing/dispmanx/dispmanx_window.cpp
     LIBRARIES CoffeeCore
     )
 
-coffee_library (
-    TARGET CoffeeWindow_GLKit
-    SOURCES ${GLKit_SRCS}
-    LIBRARIES CoffeeCore
-    )
+if(APPLE)
+    coffee_library (
+        TARGET CoffeeWindow_GLKit
+        SOURCES
+        private/windowing/glkit/glk_window.cpp
+        private/graphics/ceagl/private/eagl_bind.mm
+        private/graphics/ceagl/private/EGLView.m
+        private/windowing/glkit/glk_window.mm
+        private/windowing/glkit/AppDelegate.m
+        LIBRARIES
+        CoffeeCore
+        "-framework CoreGraphics"
+        "-framework QuartzCore"
+        )
+
+    if(IOS)
+        # Add CEAGL layer, to provide EGL
+        target_include_directories ( CoffeeBinding_GLAD PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+            )
+        target_include_directories ( CoffeeWindow_GLKit PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+            )
+        target_include_directories ( CoffeeContext_EGL PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+            )
+
+        target_link_libraries ( CoffeeWindow_GLKit PUBLIC
+            "-framework CoreMotion"
+            "-framework GameController"
+            "-framework OpenGLES"
+            "-framework UIKit"
+            "-framework GLKit"
+            )
+    else()
+        target_link_libraries ( CoffeeWindow_GLKit PUBLIC
+            "-framework OpenGL"
+            "-framework AppKit"
+            )
+    endif()
+endif()
 
 coffee_library (
     TARGET CoffeeWindow_NDKWindow
-    SOURCES ${NDKWindow_SRCS}
+    SOURCES
+    private/windowing/ndkwindow/ndk_window.cpp
     LIBRARIES CoffeeCore
     )
 
@@ -137,20 +140,9 @@ coffee_library (
     LIBRARIES CoffeeCore ${RENDERER_LIBS}
     )
 
-target_link_libraries( CoffeeWindow_NDKWindow
-    PRIVATE
-    CoffeeCore
-    )
-
-if(APPLE AND IOS)
-    target_include_directories ( CoffeeBinding_GLAD PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-        )
-    target_include_directories ( CoffeeWindow_GLKit PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-        )
-    target_include_directories ( CoffeeContext_EGL PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+if(APPLE)
+    target_link_libraries ( CoffeeRenderer_Default PUBLIC
+        CoffeeWindow_GLKit
         )
 endif()
 
