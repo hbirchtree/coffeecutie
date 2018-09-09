@@ -36,8 +36,13 @@ if(BUILD_OPENGL)
         private/graphics/egl/egl_renderer.cpp
         LIBRARIES
         CoffeeCore
-        EGL
         )
+
+    if(BUILD_GLES)
+        target_link_libraries ( CoffeeContext_EGL PUBLIC
+            EGL
+            )
+    endif()
 
     coffee_library (
         TARGET CoffeeContext_GLX
