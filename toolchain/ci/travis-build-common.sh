@@ -173,7 +173,7 @@ function download_dependencies()
     OLD_IFS=$IFS
     IFS='%'
     for dep in $1; do
-        [ -z ${NODEPS} ] && IFS=${OLD_IFS} download_libraries dependencies "$dep" "$1" || return 1
+        [ -z ${NODEPS} ] && IFS=${OLD_IFS} download_libraries dependencies "$dep" "$BUILDVARIANT" || return 1
     done
 }
 

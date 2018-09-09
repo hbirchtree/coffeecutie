@@ -6,12 +6,15 @@ cd $env:BUILD_DIR
 $PYTHON = "C:\Python36\python.exe"
 
 function build_info(){
-    . $PYTHON $env:SOURCE_DIR\buildinfo.py $args
+    . $PYTHON $env:SOURCE_DIR\toolchain\buildinfo.py $args
 }
 
 $LIBRARY_DIR = "$env:BUILD_DIR\libraries"
 
 rm -r $LIBRARY_DIR
+
+$VCPP_VERSION = $env:APPVEYOR_BUILD_WORKER_IMAGE.split(" ")[2]
+$BUILDVARIANT_VERSION = "$VCPP_VERSION+$env:BUILDVARIANT"
 
 ForEach($dep in $env:DEPENDENCIES -split ";") {
     if ($dep.Length -eq 0) {
@@ -42,10 +45,10 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
         $assets = $release.assets
 
         ForEach($asset in $assets) {
-            if ($asset.name.Contains("$env:BUILDVARIANT")) {
+            if ($asset.name.Contains("$env:BUILDVARIANT_VERSION")) {
                 $zipfile = $asset.name
                 $dest_dir = $LIBRARY_DIR
-                echo "Downloading $dep $env:BUILDVARIANT library..."
+                echo "Downloading $dep $env:BUILDVARIANT_VERSION library..."
                 Invoke-WebRequest $asset.browser_download_url -UseBasicParsing -OutFile $zipfile
                 echo "Successfully downloaded library for $dep!"
 

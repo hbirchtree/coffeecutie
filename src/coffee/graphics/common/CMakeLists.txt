@@ -52,6 +52,7 @@ if(BUILD_OPENGL AND BUILD_GLEAM AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT APPLE
     coffee_library (
         TARGET CoffeeOpenGLQuery
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES private/query/opengl_query.cpp
 
         LIBRARIES
