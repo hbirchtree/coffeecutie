@@ -32,7 +32,7 @@ T max(T v1, T v2)
 #endif
 
 template<typename T>
-bool IsPower2(T const& n)
+inline bool IsPower2(T const& n)
 {
     return n != 0 && (n & (n - 1)) == 0;
 }
@@ -49,13 +49,13 @@ constexpr bigscalar e  = M_E;
 #endif
 
 template<typename T>
-T radians(const T& degrees)
+inline T radians(const T& degrees)
 {
     return (degrees * CMath::pi) / T(180);
 }
 
 template<typename T>
-T mix(T a, T b, T f)
+inline T mix(T a, T b, T f)
 {
     return a * (T(1) - f) + b * f;
 }
@@ -71,7 +71,7 @@ template<
  * \param v2
  * \return
  */
-bool floating_equal(T const& v1, T const& v2)
+FORCEDINLINE bool floating_equal(T const& v1, T const& v2)
 {
     if(v1 == v2)
         return true;

@@ -6,8 +6,8 @@ using namespace Coffee;
 
 bool linear_lerp()
 {
-    auto lower_test = Lerp::Linear(1.f, 2.f, 0.25f);
-    auto upper_test = Lerp::Linear(1.f, 2.f, 0.75f);
+    auto lower_test = Lerp<>::Linear(1.f, 2.f, 0.25f);
+    auto upper_test = Lerp<>::Linear(1.f, 2.f, 0.75f);
 
     if(!CMath::floating_equal(lower_test, 1.25f))
         return false;

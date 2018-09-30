@@ -215,4 +215,11 @@ _cbasic_tvector<T, 3> quaternion_to_direction(
     return dir;
 }
 
+template<typename T>
+_cbasic_tquaternion<T> lock_axis(
+        _cbasic_tquaternion<T> const& v, _cbasic_tvector<T, 3> const& axes)
+{
+    return v;
+}
+
 }

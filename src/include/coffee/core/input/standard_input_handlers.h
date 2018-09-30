@@ -1,12 +1,12 @@
 #pragma once
 
-#include <coffee/core/base/types/cdisplay.h>
 #include "cinputfunctions.h"
-#include <coffee/core/types/edef/logicenum.h>
 #include <coffee/core/base/renderer/eventapplication.h>
+#include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/types/edef/logicenum.h>
 
-namespace Coffee{
-namespace StandardInput{
+namespace Coffee {
+namespace StandardInput {
 
 using namespace CInput;
 
@@ -21,9 +21,9 @@ template<typename InputRegister, const CIEvent::EventType EventType>
 bool StandardKeyRegister(InputRegister& keyRegister,
                          const CIEvent& e, c_cptr data)
 {
-    static_assert(EventType == CIEvent::Keyboard ||
-                  EventType == CIEvent::MouseButton,
-                  "Invalid template argument for function");
+    static_assert(
+        EventType == CIEvent::Keyboard || EventType == CIEvent::MouseButton,
+        "Invalid template argument for function");
 
     if(e.type != EventType)
         return false;
@@ -39,7 +39,7 @@ bool StandardKeyRegister(InputRegister& keyRegister,
 
         bool pressed = ev.mod & CIKeyEvent::PressedModifier;
 
-        auto v = keyRegister[ev.key];
+        auto v              = keyRegister[ev.key];
         keyRegister[ev.key] = pressed | (v ^ (v & 0x1));
         break;
     }
@@ -49,7 +49,7 @@ bool StandardKeyRegister(InputRegister& keyRegister,
 
         bool pressed = ev.mod & CIMouseButtonEvent::Pressed;
 
-        auto v = keyRegister[ev.btn];
+        auto v              = keyRegister[ev.btn];
         keyRegister[ev.btn] = pressed | (v ^ (v & 0x1));
 
         break;
@@ -75,7 +75,7 @@ void StandardKeyRegisterImpl(void* reg, const CIEvent& e, c_cptr data)
 
     auto& regRef = *C_FCAST<RegisterType*>(reg);
 
-    StandardKeyRegister<RegisterType, EventType>(regRef, e,  data);
+    StandardKeyRegister<RegisterType, EventType>(regRef, e, data);
 }
 
 template<typename Camera>
@@ -89,22 +89,21 @@ bool StandardCameraMoveInput(Camera& c, Map<u16, u16>& reg)
 {
     using Reg = Map<u16, u16>;
 
-    static Set<u16> keys = {
-        CK_w, CK_s, CK_a, CK_d, CK_q, CK_e
-    };
+    static Set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
 
-    Reg::const_iterator it = std::find_if(reg.begin(), reg.end(),
-                 [](Pair<const u16,u16>& p) {
-        return keys.find(p.first) != keys.end();
-    });
+    Reg::const_iterator it =
+        std::find_if(reg.begin(), reg.end(), [](Pair<const u16, u16>& p) {
+            return keys.find(p.first) != keys.end();
+        });
 
     if(it == reg.end())
         return false;
 
-    auto camDirection = quaternion_to_direction<CameraDirection::Forward>(c.rotation);
-    const auto camUp = Vecf3(0, 1.f, 0);
-    auto camRight = cross(camUp, camDirection);
-    scalar acceleration = 5.f;
+    auto camDirection =
+        quaternion_to_direction<CameraDirection::Forward>(c.rotation);
+    const auto camUp        = Vecf3(0, 1.f, 0);
+    auto       camRight     = cross(camUp, camDirection);
+    scalar     acceleration = 5.f;
 
     if(reg[CK_LShift] & 0x1)
         acceleration = 10.f;
@@ -185,34 +184,39 @@ template<typename Camera>
  * \param lookSensitivityX
  * \param lookSensitivityY
  */
-void ControllerCamera(Camera& cam, CIControllerState const& state,
-                      i16 deadzone = 6000, scalar moveSensitivity = 0.3f,
-                      scalar lookSensitivityX = 0.02f,
-                      scalar lookSensitivityY = -0.02f)
+void ControllerCamera(
+    Camera&                  cam,
+    CIControllerState const& state,
+    i16                      deadzone         = 6000,
+    scalar                   moveSensitivity  = 0.3f,
+    scalar                   lookSensitivityX = 0.02f,
+    scalar                   lookSensitivityY = -0.02f)
 {
     Vecf3& position = cam.position;
     Quatf& rotation = cam.rotation;
 
     const auto forward =
-            quaternion_to_direction<CameraDirection::Forward>(rotation);
+        quaternion_to_direction<CameraDirection::Forward>(rotation);
     const auto right =
-            quaternion_to_direction<CameraDirection::Right>(rotation);
+        quaternion_to_direction<CameraDirection::Right>(rotation);
 
-    position += forward * FilterJoystickInput(state.axes.e.l_y,
-                                              deadzone,
-                                              moveSensitivity);
-    position += right * FilterJoystickInput(state.axes.e.l_x,
-                                              deadzone,
-                                              moveSensitivity);
+    const auto acceleration = 1.f + convert_i16_f(state.axes.e.t_l) * 19.f;
 
-    auto pitch = FilterJoystickInput(state.axes.e.r_x,
-                                     deadzone, lookSensitivityX);
-    auto yaw = FilterJoystickInput(state.axes.e.r_y,
-                                   deadzone, lookSensitivityY);
+    position +=
+        forward * acceleration *
+        FilterJoystickInput(state.axes.e.l_y, deadzone, moveSensitivity);
+    position +=
+        right * acceleration *
+        FilterJoystickInput(state.axes.e.l_x, deadzone, moveSensitivity);
+
+    auto pitch =
+        FilterJoystickInput(state.axes.e.r_x, deadzone, lookSensitivityX);
+    auto yaw =
+        FilterJoystickInput(state.axes.e.r_y, deadzone, lookSensitivityY);
 
     rotation = normalize_quat(Quatf(1, 0, pitch, 0) * rotation);
     rotation = normalize_quat(Quatf(1, yaw, 0, 0) * rotation);
 }
 
-}
-}
+} // namespace StandardInput
+} // namespace Coffee

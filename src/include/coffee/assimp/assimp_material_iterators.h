@@ -1,15 +1,15 @@
 #pragma once
 
+#include "assimp_data.h"
+#include "cassimpimporters.h"
 #include <assimp/material.h>
 #include <assimp/scene.h>
-#include "cassimpimporters.h"
-#include "assimp_data.h"
 #include <coffee/core/VirtualFS>
-#include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/types/edef/pixenum.h>
 
-namespace Coffee{
-namespace ASSIMP{
+namespace Coffee {
+namespace ASSIMP {
 
 struct MaterialParser
 {
@@ -20,7 +20,7 @@ struct MaterialParser
     enum PropertyClass : u16
     {
         /* Base types, may be texture type depending on Texture flag */
-        PDiffuse  = 0x1,
+        PDiffuse = 0x1,
         /*!<
          * opacity is baked into A component here
          */
@@ -29,7 +29,7 @@ struct MaterialParser
         PNormal   = 0x10,
         PEmissive = 0x20,
 
-        PSurface  = 0x80,
+        PSurface = 0x80,
         /*!<
          * R = reflectivity
          * G = shininess
@@ -41,7 +41,7 @@ struct MaterialParser
         PLightMap = 0x2000,
 
         /* Marks it as a texture */
-        PTexture  = 0x4000,
+        PTexture = 0x4000,
     };
 
     struct MaterialMesh
@@ -52,19 +52,19 @@ struct MaterialParser
 
     struct Property
     {
-        u64 data_offset;
-        u32 material;
+        u64           data_offset;
+        u32           material;
         PropertyClass property;
-        u16 _pad;
+        u16           _pad;
 
         template<typename T>
         T const* data(MaterialCollection const& col) const
         {
+            C_THIS_CHECK
+
             byte_t const* basePtr = C_RCAST<byte_t const*>(&col);
 
-            return C_RCAST<T const*>(basePtr
-                                     + col.data_segment
-                                     + data_offset);
+            return C_RCAST<T const*>(basePtr + col.data_segment + data_offset);
         }
     };
 
@@ -82,23 +82,32 @@ struct MaterialParser
 
         cstring name(MaterialCollection const& col) const
         {
-            byte_t const* basePtr = C_RCAST<byte_t const*>(&col);
-            szptr total_offset = col.string_segment + name_offset;
+            byte_t const* basePtr      = C_RCAST<byte_t const*>(&col);
+            szptr         total_offset = col.string_segment + name_offset;
             return C_RCAST<cstring>(&basePtr[total_offset]);
         }
 
-        Property const* property(
-                MaterialCollection const& col,
-                u32 property,
-                u32 idx = 0
-                ) const
+        Tup<Property const*, u64> propertyBase(
+            MaterialCollection const& col) const
         {
-            byte_t const* basePtr = C_RCAST<byte_t const*>(&col)
-                    + col.property_segment;
+            byte_t const* basePtr =
+                C_RCAST<byte_t const*>(&col) + col.property_segment;
 
-            auto properties = C_RCAST<Property const*>(basePtr);
+            auto properties    = C_RCAST<Property const*>(basePtr);
             auto numProperties = col.data_segment - col.property_segment;
             numProperties /= sizeof(Property);
+
+            return std::make_tuple<Property const*, u64>(
+                std::move(properties), std::move(numProperties));
+        }
+
+        Property const* property(
+            MaterialCollection const& col, u32 property, u32 idx = 0) const
+        {
+            Property const* properties    = nullptr;
+            u64             numProperties = 0;
+
+            std::tie(properties, numProperties) = propertyBase(col);
 
             auto selfIdx = this->index(col);
 
@@ -106,8 +115,8 @@ struct MaterialParser
                 return nullptr;
 
             for(auto i : Range<>(numProperties))
-                if(properties[i].material == selfIdx
-                        && properties[i].property == property)
+                if(properties[i].material == selfIdx &&
+                   properties[i].property == property)
                 {
                     if(idx-- > 0)
                         continue;
@@ -117,13 +126,98 @@ struct MaterialParser
 
             return nullptr;
         }
+
+        struct PropertyIterator
+        {
+            PropertyIterator(
+                Property const* base_ptr, u64 num_props, szptr selfIdx) :
+                m_idx(0),
+                m_selfIdx(selfIdx), base_ptr(base_ptr), num_props(num_props)
+            {
+                if(num_props == 0)
+                    m_idx = C_CAST<u32>(-1);
+            }
+
+            PropertyIterator() : m_idx(C_CAST<u32>(-1))
+            {
+            }
+
+            void find_next()
+            {
+                do
+                {
+                    if((m_idx + 1) < num_props)
+                        m_idx++;
+                    else
+                        return;
+
+                    if((m_idx + 1) == num_props)
+                    {
+                        m_idx = C_CAST<u32>(-1);
+                        return;
+                    }
+
+                    if(base_ptr[m_idx].material == m_selfIdx)
+                        return;
+
+                } while(true);
+            }
+
+            PropertyIterator& operator++()
+            {
+                if(m_idx == C_CAST<u32>(-1))
+                    Throw(std::out_of_range("bad increment"));
+
+                find_next();
+
+                return *this;
+            }
+
+            Property const& operator*()
+            {
+                return base_ptr[m_idx];
+            }
+
+            bool operator==(PropertyIterator const& other) const
+            {
+                return other.m_idx == m_idx;
+            }
+
+            bool operator!=(PropertyIterator const& other) const
+            {
+                return !(other == *this);
+            }
+
+          private:
+            u32 m_idx;
+
+            szptr           m_selfIdx;
+            Property const* base_ptr;
+            u64             num_props;
+        };
+
+        quick_container<PropertyIterator> properties(
+            MaterialCollection const& col) const
+        {
+            Property const* properties    = nullptr;
+            u64             numProperties = 0;
+            szptr           selfIdx       = index(col);
+
+            std::tie(properties, numProperties) = propertyBase(col);
+
+            return quick_container<PropertyIterator>(
+                [=]() {
+                    return PropertyIterator(properties, numProperties, selfIdx);
+                },
+                []() { return PropertyIterator(); });
+        }
     };
 
     struct MatTex
     {
         u64 path_offset; /*!< Byte offset to path in string store */
 
-        u32 uvIdx;
+        u32    uvIdx;
         scalar blend;
 
         Vecf2 offset;
@@ -135,8 +229,8 @@ struct MaterialParser
 
         cstring path(MaterialCollection const& col) const
         {
-            byte_t const* basePtr = C_RCAST<byte_t const*>(&col);
-            szptr total_offset = col.string_segment + path_offset;
+            byte_t const* basePtr      = C_RCAST<byte_t const*>(&col);
+            szptr         total_offset = col.string_segment + path_offset;
             return C_RCAST<cstring>(&basePtr[total_offset]);
         }
     };
@@ -191,17 +285,15 @@ struct MaterialParser
 
     struct MaterialSerializer
     {
-        MaterialSerializer():
-            header()
+        MaterialSerializer() : header()
         {
         }
 
         MaterialCollection header;
-        Vector<byte_t> data;
+        Vector<byte_t>     data;
     };
 
-    static
-    szptr PropertySize(PropertyClass c)
+    static szptr PropertySize(PropertyClass c)
     {
         switch(c)
         {
@@ -215,41 +307,44 @@ struct MaterialParser
     struct AssimpProperty
     {
         cstring v1;
-        u32 v2;
-        u32 v3;
+        u32     v2;
+        u32     v3;
     };
 
     STATICINLINE
     PropertyClass TranslateTexType(aiTextureType type);
 
-    template<typename T> STATICINLINE
-    AssimpProperty TranslatePropertyType(PropertyClass type);
+    template<typename T>
+    STATICINLINE AssimpProperty TranslatePropertyType(PropertyClass type);
 
-    static
-    void ProcessTextureType(
-            aiMaterial const& material,
-            Vector<byte_t>& textureMaterials,
-            Vector<CString>& stringStore,
-            Vector<Property>& properties,
-            szptr& stringStoreSize,
-            u32 materialIdx,
-            Vector<CString> const& baseDirs,
-            aiTextureType texType = aiTextureType_DIFFUSE
-            )
+    static void ProcessTextureType(
+        aiMaterial const&      material,
+        Vector<byte_t>&        textureMaterials,
+        Vector<CString>&       stringStore,
+        Vector<Property>&      properties,
+        szptr&                 stringStoreSize,
+        u32                    materialIdx,
+        Vector<CString> const& baseDirs,
+        aiTextureType          texType = aiTextureType_DIFFUSE)
     {
-        aiString t_path;
-        u32 t_uvIdx;
-        float t_blend;
+        aiString         t_path;
+        u32              t_uvIdx;
+        float            t_blend;
         aiTextureMapping t_map;
         aiTextureMapMode t_mapMode;
-        aiTextureOp t_op;
+        aiTextureOp      t_op;
 
         for(auto i : Range<>(material.GetTextureCount(texType)))
         {
-            material.GetTexture(texType, C_FCAST<u32>(i), &t_path,
-                                &t_map, &t_uvIdx, &t_blend,
-                                &t_op, &t_mapMode);
-
+            material.GetTexture(
+                texType,
+                C_FCAST<u32>(i),
+                &t_path,
+                &t_map,
+                &t_uvIdx,
+                &t_blend,
+                &t_op,
+                &t_mapMode);
 
             MatTex texData = {
                 stringStoreSize,
@@ -269,16 +364,10 @@ struct MaterialParser
             szptr dataStoreSize = textureMaterials.size();
 
             textureMaterials.insert(
-                        textureMaterials.end(),
-                        texDataRef.begin(), texDataRef.end()
-                        );
+                textureMaterials.end(), texDataRef.begin(), texDataRef.end());
 
-            properties.push_back({
-                        dataStoreSize,
-                        materialIdx,
-                        TranslateTexType(texType),
-                        0
-                        });
+            properties.push_back(
+                {dataStoreSize, materialIdx, TranslateTexType(texType), 0});
 
             CString path = t_path.C_Str();
 
@@ -291,13 +380,12 @@ struct MaterialParser
     }
 
     template<typename T>
-    static
-    void ProcessProperty(
-            aiMaterial const& material,
-            Vector<byte_t>& storage,
-            Vector<Property>& properties,
-            PropertyClass c, u32 materialIdx
-            )
+    static void ProcessProperty(
+        aiMaterial const& material,
+        Vector<byte_t>&   storage,
+        Vector<Property>& properties,
+        PropertyClass     c,
+        u32               materialIdx)
     {
         Bytes colorBytes = {};
 
@@ -326,45 +414,32 @@ struct MaterialParser
         }
         }
 
-        properties.push_back({
-                                 storage.size(),
-                                 materialIdx,
-                                 c,
-                                 0
-                             });
+        properties.push_back({storage.size(), materialIdx, c, 0});
 
         colorBytes = Bytes::Create(color);
-        storage.insert(storage.end(),
-                       colorBytes.begin(),
-                       colorBytes.end());
+        storage.insert(storage.end(), colorBytes.begin(), colorBytes.end());
     }
 
-    static
-    bool ExtractDescriptors(
-            ASSIMP::AssimpPtr& scene,
-            MaterialSerializer& materialsData,
-            Vector<aiTextureType> const& textureTypes,
-            Vector<PropertyClass> const& materialProps,
-            Vector<CString> const& baseDirs = {}
-            )
+    static bool ExtractDescriptors(
+        ASSIMP::AssimpPtr&           scene,
+        MaterialSerializer&          materialsData,
+        Vector<aiTextureType> const& textureTypes,
+        Vector<PropertyClass> const& materialProps,
+        Vector<CString> const&       baseDirs = {})
     {
         szptr stringStoreSize = 0;
 
         auto materials = scene->scene->mMaterials;
 
-        Vector<Property> properties;
-        Vector<Material> materialStore;
-        Vector<CString> string_store;
+        Vector<Property>     properties;
+        Vector<Material>     materialStore;
+        Vector<CString>      string_store;
         Vector<MaterialMesh> materialMeshConnection;
 
         for(auto i : Range<>(scene->scene->mNumMeshes))
         {
             auto const& mesh = *scene->scene->mMeshes[i];
-            materialMeshConnection.push_back(
-            {
-                            mesh.mMaterialIndex,
-                            i
-                        });
+            materialMeshConnection.push_back({mesh.mMaterialIndex, i});
         }
 
         for(auto i : Range<>(scene->scene->mNumMaterials))
@@ -377,21 +452,24 @@ struct MaterialParser
             for(aiTextureType texType : textureTypes)
             {
                 ProcessTextureType(
-                            material, materialsData.data,
-                            string_store,
-                            properties,
-                            stringStoreSize,
-                            C_FCAST<u32>(i),
-                            baseDirs,
-                            texType
-                            );
+                    material,
+                    materialsData.data,
+                    string_store,
+                    properties,
+                    stringStoreSize,
+                    C_FCAST<u32>(i),
+                    baseDirs,
+                    texType);
             }
 
             for(auto prop : materialProps)
             {
                 ProcessProperty<aiColor3D>(
-                            material, materialsData.data,
-                            properties, prop, C_FCAST<u32>(i));
+                    material,
+                    materialsData.data,
+                    properties,
+                    prop,
+                    C_FCAST<u32>(i));
             }
 
             materialStore.emplace_back();
@@ -401,21 +479,17 @@ struct MaterialParser
             stringStoreSize += name.length + 1;
         }
 
-
-        auto& data = materialsData.data;
+        auto& data            = materialsData.data;
         szptr dataSegmentSize = data.size();
 
         Bytes materialRef = Bytes::CreateFrom(materialStore);
-        Bytes meshRef = Bytes::CreateFrom(materialMeshConnection);
+        Bytes meshRef     = Bytes::CreateFrom(materialMeshConnection);
         Bytes propertyRef = Bytes::CreateFrom(properties);
-        Bytes headerRef = Bytes::Create(materialsData.header);
+        Bytes headerRef   = Bytes::Create(materialsData.header);
 
-        data.insert(data.begin(),
-                    propertyRef.begin(), propertyRef.end());
-        data.insert(data.begin(),
-                    meshRef.begin(), meshRef.end());
-        data.insert(data.begin(),
-                    materialRef.begin(), materialRef.end());
+        data.insert(data.begin(), propertyRef.begin(), propertyRef.end());
+        data.insert(data.begin(), meshRef.begin(), meshRef.end());
+        data.insert(data.begin(), materialRef.begin(), materialRef.end());
 
         for(auto const& str : string_store)
         {
@@ -430,35 +504,34 @@ struct MaterialParser
 
         header.num_materials = materialStore.size();
 
-        header.material_mesh_segment = sizeof(MaterialCollection)
-                + sizeof(Material) * materialStore.size();
-        header.property_segment = header.material_mesh_segment
-                + sizeof(MaterialMesh) * materialMeshConnection.size();
-        header.data_segment = header.property_segment
-                + sizeof(Property) * properties.size();
-        header.string_segment = header.data_segment
-                + dataSegmentSize;
+        header.material_mesh_segment = sizeof(MaterialCollection) +
+                                       sizeof(Material) * materialStore.size();
+        header.property_segment =
+            header.material_mesh_segment +
+            sizeof(MaterialMesh) * materialMeshConnection.size();
+        header.data_segment =
+            header.property_segment + sizeof(Property) * properties.size();
+        header.string_segment = header.data_segment + dataSegmentSize;
 
-        data.insert(data.begin(),
-                    headerRef.begin(), headerRef.end());
+        data.insert(data.begin(), headerRef.begin(), headerRef.end());
 
-//        MaterialCollection* coll = C_RCAST<MaterialCollection*>(
-//                    data.data());
+        //        MaterialCollection* coll = C_RCAST<MaterialCollection*>(
+        //                    data.data());
 
-//        for(auto i : Range<>(coll->num_materials))
-//        {
-//            auto const& m = coll->material(i);
+        //        for(auto i : Range<>(coll->num_materials))
+        //        {
+        //            auto const& m = coll->material(i);
 
-//            auto diffTex = m.property(*coll, PTexture|PDiffuse);
+        //            auto diffTex = m.property(*coll, PTexture|PDiffuse);
 
-//            cDebug("Material: {0}: {1} {2} {3}", i,
-//                   m.name(*coll),
-//                   *m.property(*coll, PDiffuse)->data<Vecf3>(*coll),
-//                   (diffTex)
-//                   ? diffTex->data<MatTex>(*coll)->path(*coll)
-//                   : ""
-//                     );
-//        }
+        //            cDebug("Material: {0}: {1} {2} {3}", i,
+        //                   m.name(*coll),
+        //                   *m.property(*coll, PDiffuse)->data<Vecf3>(*coll),
+        //                   (diffTex)
+        //                   ? diffTex->data<MatTex>(*coll)->path(*coll)
+        //                   : ""
+        //                     );
+        //        }
 
         return true;
     }
@@ -468,32 +541,32 @@ C_FLAGS(MaterialParser::PropertyClass, u16);
 
 FORCEDINLINE
 MaterialParser::PropertyClass MaterialParser::TranslateTexType(
-        aiTextureType type)
+    aiTextureType type)
 {
     switch(type)
     {
     case aiTextureType_OPACITY:
     case aiTextureType_DIFFUSE:
-        return PTexture|PDiffuse;
+        return PTexture | PDiffuse;
     case aiTextureType_AMBIENT:
-        return PTexture|PAmbient;
+        return PTexture | PAmbient;
     case aiTextureType_SPECULAR:
-        return PTexture|PSpecular;
+        return PTexture | PSpecular;
     case aiTextureType_EMISSIVE:
-        return PTexture|PEmissive;
+        return PTexture | PEmissive;
 
     case aiTextureType_NORMALS:
-        return PTexture|PNormal;
+        return PTexture | PNormal;
 
     case aiTextureType_LIGHTMAP:
-        return PTexture|PLightMap;
+        return PTexture | PLightMap;
     case aiTextureType_DISPLACEMENT:
     case aiTextureType_HEIGHT:
-        return PTexture|PHeight;
+        return PTexture | PHeight;
 
     case aiTextureType_REFLECTION:
     case aiTextureType_SHININESS:
-        return PTexture|PSurface;
+        return PTexture | PSurface;
 
     default:
         return PTexture;
@@ -501,11 +574,8 @@ MaterialParser::PropertyClass MaterialParser::TranslateTexType(
 }
 
 template<>
-FORCEDINLINE
-MaterialParser::AssimpProperty
-MaterialParser::TranslatePropertyType<aiColor3D>(
-        MaterialParser::PropertyClass type
-        )
+FORCEDINLINE MaterialParser::AssimpProperty MaterialParser::
+    TranslatePropertyType<aiColor3D>(MaterialParser::PropertyClass type)
 {
     switch(type)
     {
@@ -522,5 +592,5 @@ MaterialParser::TranslatePropertyType<aiColor3D>(
     }
 }
 
-}
-}
+} // namespace ASSIMP
+} // namespace Coffee

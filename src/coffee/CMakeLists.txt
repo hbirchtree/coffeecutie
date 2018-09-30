@@ -36,10 +36,6 @@ if(BUILD_SDL2)
     add_subdirectory(sdl2)
 endif()
 
-if(BUILD_OPENVR)
-
-endif()
-
 coffee_bundle_includes ( "${CMAKE_CURRENT_SOURCE_DIR}/../include" )
 
 coffee_library (

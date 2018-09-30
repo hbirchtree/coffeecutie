@@ -76,8 +76,7 @@ void GLEAM_RenderTarget::dealloc()
     m_handle.release();
 }
 
-void GLEAM_RenderTarget::attachSurface(
-    const GLEAM_Surface& s, u32 idx, u32 mip)
+void GLEAM_RenderTarget::attachSurface(const GLEAM_Surface2D &s, u32 idx, u32 mip)
 {
     fb_bind(m_type, m_handle);
 
@@ -105,8 +104,7 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy& rb)
         fb_bind(m_type, glhnd());
 }
 
-void GLEAM_RenderTarget::attachDepthStencilSurface(
-    const GLEAM_Surface& s, u32 mip)
+void GLEAM_RenderTarget::attachDepthStencilSurface(const GLEAM_Surface2D &s, u32 mip)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -129,7 +127,7 @@ void GLEAM_RenderTarget::attachDepthStencilSurface(
     }
 }
 
-void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface& s, u32 mip)
+void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface2D& s, u32 mip)
 {
     fb_bind(m_type, m_handle);
 

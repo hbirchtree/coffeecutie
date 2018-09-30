@@ -28,17 +28,25 @@ if(BUILD_GLEAM)
         TARGET CoffeeGLeamRHI
         SOURCES
         private/rhi/gleam_rhi.cpp
+
         private/rhi/gleam_api_query.cpp
         private/rhi/gleam_api_rhi.cpp
         private/rhi/gleam_api_draw.cpp
+
         private/rhi/gleam_buffer_rhi.cpp
+
         private/rhi/gleam_framebuffer_rhi.cpp
+
         private/rhi/gleam_profiler_rhi.cpp
         private/rhi/gleam_query_rhi.cpp
         private/rhi/gleam_quad_draw.cpp
+
         private/rhi/gleam_shader_rhi.cpp
         private/rhi/gleam_shader_uniforms.cpp
+
+        private/rhi/gleam_sampler_rhi.cpp
         private/rhi/gleam_surface_rhi.cpp
+
         private/rhi/gleam_vertex_rhi.cpp
 
         LIBRARIES

@@ -76,6 +76,23 @@ struct Resource : ByteProvider
         return *this;
     }
 
+    FORCEDINLINE Resource& operator=(Resource&& other)
+    {
+        this->data = other.data;
+        this->size = other.size;
+        this->flags = other.flags;
+        this->m_platform_data = std::move(other.m_platform_data);
+        this->m_resource = std::move(other.m_resource);
+
+        other.data = nullptr;
+        other.size = 0;
+        other.flags = Undefined;
+        other.m_platform_data.reset();
+        other.m_resource.clear();
+
+        return *this;
+    }
+
     operator Bytes();
 
     operator Path() const;

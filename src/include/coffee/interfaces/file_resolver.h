@@ -1,20 +1,20 @@
 #pragma once
 #include <coffee/core/CFiles>
-#include <coffee/interfaces/byte_provider.h>
 #include <coffee/core/type_safety.h>
-#include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/core/types/tdef/stlfunctypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/interfaces/byte_provider.h>
 
-namespace Coffee{
+namespace Coffee {
 
 /*! \brief
  *
- * Extending some APIs, it becomes necessary to select between multiple file extensions.
- * An example of this is image types, where on some systems DXTn is supported,
- *  others support ETC1, and some support ASTC.
+ * Extending some APIs, it becomes necessary to select between multiple file
+ * extensions. An example of this is image types, where on some systems DXTn is
+ * supported, others support ETC1, and some support ASTC.
  *
  * The #resolve function may transform a Coffee::Url by replacing
- *  the file extension and other properties. 
+ *  the file extension and other properties.
  *
  * An example of this usage is in RHI::GLEAM::TextureResolver(),
  *  which tests for hardware support for different compressed texture formats,
@@ -23,7 +23,7 @@ namespace Coffee{
  *  excessively high resolutions are not loaded on weaker hardware.
  *
  * The #multiplexResolve function is used for cases where a basename is used
- *  to refer to multiple files, and an extension is to be appended. 
+ *  to refer to multiple files, and an extension is to be appended.
  * It is more of a convenience function.
  *
  * An example of its usage is in the case where a model "bob" has the resources
@@ -35,7 +35,7 @@ namespace Coffee{
 struct UrlResolver
 {
     using SingleResolver = Function<Url(Url const&)>;
-    using MultiResolver = Function<Url(Url const&, CString const&)>;
+    using MultiResolver  = Function<Url(Url const&, CString const&)>;
 
     /*!
      * \brief Basic resolver for changing extensions and etc.
@@ -54,27 +54,26 @@ struct UrlResolver
     static Url DefaultMulti(Url const& path, CString const& ext)
     {
         Path newPath = Path(path).addExtension(ext.c_str());
-        Url newUrl = MkUrl(newPath, path.flags);
+        Url  newUrl  = MkUrl(newPath, path.flags);
 
         return newUrl;
     }
 
     static UrlResolver DefaultResolver()
     {
-        return {
-            DefaultSingle, DefaultMulti
-        };
+        return {DefaultSingle, DefaultMulti};
     }
 };
 
-template<typename Resource,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
+template<
+    typename Resource,
+    typename implements<ByteProvider, Resource>::type* = nullptr>
 struct ResourceResolver
 {
-    using Resolver = Function<Resource(Url const&)>;
+    using Resolver  = Function<Resource(Url const&)>;
     using FileQuery = Function<bool(Path const&, Vector<Url>&)>;
 
-    Resolver resolveResource;
+    Resolver  resolveResource;
     FileQuery resourceQuery;
 };
 
@@ -85,7 +84,8 @@ struct ResourceResolver
  *  works with Url instances, not Url and an associated *::Resource type.
  *
  * An example where this is relevant is when creating VirtFS::Resource
- *  instances, which require a reference to the parent VirtFS::VFS upon construction.
+ *  instances, which require a reference to the parent VirtFS::VFS upon
+ * construction.
  *
  * The #extResolver function provided is a convenience function around
  *  UrlResolver::multiplexResolve and #resolver.
@@ -93,29 +93,29 @@ struct ResourceResolver
  */
 struct BytesResolver
 {
-    using Resolver = Function<Bytes(Url const&)>;
+    using Resolver    = Function<Bytes(Url const&)>;
     using ExtResolver = Function<Bytes(Url const&, CString const&)>;
 
-    Resolver resolver;
+    Resolver    resolver;
     ExtResolver extResolver;
 
     template<typename UResolver, typename RResolver>
-    static BytesResolver Create(UResolver const& ur,
-                                RResolver const& rr)
+    static BytesResolver Create(UResolver const& ur, RResolver const& rr)
     {
-        return {
-            [rr, ur](Url const& url)
-            {
-                return rr.resolveResource(ur.resolve(url));
-            },
-            [rr, ur](Url const& url, CString const& ext)
-            {
-                return rr.resolveResource(
-                            ur.multiplexResolve(url, ext)
-                            );
-            }
-        };
+        return {[rr, ur](Url const& url) {
+                    return rr.resolveResource(ur.resolve(url));
+                },
+                [rr, ur](Url const& url, CString const& ext) {
+                    return rr.resolveResource(ur.multiplexResolve(url, ext));
+                }};
     }
 };
 
-}
+template<typename ResolverType>
+struct ResolverPair
+{
+    ResolverType& resolver;
+    Url const&    url;
+};
+
+} // namespace Coffee

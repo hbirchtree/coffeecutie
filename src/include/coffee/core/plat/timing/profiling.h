@@ -81,13 +81,19 @@ struct RuntimeProperties : ThreadInternalState
     }
     static bool enabled()
     {
+        if(!State::ProfilerEnabled())
+            return false;
+
         return State::GetProfilerStore()->flags.enabled;
     }
     static bool deep_enabled()
     {
+        if(!enabled())
+            return false;
+
         auto context = State::GetProfilerStore();
         Lock _(context->access);
-        return enabled() && context->flags.deep_enabled;
+        return context->flags.deep_enabled;
     }
 
     ShPtr<ThreadState> context;

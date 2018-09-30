@@ -64,6 +64,10 @@ struct texture_settings_t : settings_visitor
             {
                 if(m.GetString() == CString("DXT"))
                     formats |= Compress_DXT;
+                else if(m.GetString() == CString("BC7"))
+                    formats |= Compress_BC7;
+                else if(m.GetString() == CString("ASTC"))
+                    formats |= Compress_ASTC;
                 else if(m.GetString() == CString("ETC"))
                     formats |= Compress_ETC;
                 else if(m.GetString() == CString("ATC"))

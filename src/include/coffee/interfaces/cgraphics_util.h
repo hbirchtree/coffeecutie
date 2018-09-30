@@ -127,13 +127,14 @@ FORCEDINLINE bool LoadCompressedTextureMipmap(
     ResourceResolver<Resource> const& rr,
     Function<bool(Url const&)> const& pred,
     Url const&                        baseUrl,
-    i32                               layer = 0)
+    i32                               layer      = 0,
+    u32                               mip_offset = 0)
 {
     Vector<Url> urls;
     if(!rr.resourceQuery(Path(baseUrl).removeExt(), urls))
         return false;
 
-    u32  mip = 0;
+    u32  mip = mip_offset;
     auto it  = urls.begin();
     while((it = std::find_if(it, urls.end(), pred)) != urls.end())
     {

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <coffee/interfaces/byte_provider.h>
-#include <coffee/interfaces/file_resolver.h>
-
 #include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/interfaces/byte_provider.h>
+#include <coffee/interfaces/file_resolver.h>
 
 #include <algorithm>
 
@@ -83,10 +82,7 @@ enum FileFlags
 static const constexpr szptr MaxFileNameLength     = 96;
 static const constexpr szptr MagicLength           = 8;
 static const constexpr char  VFSMagic[MagicLength] = "CfVrtFS";
-static const constexpr u32 VFSMagic_Encoded[2] =
-{
-    0x72566643, 0x534674
-};
+static const constexpr u32   VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
 
 struct VirtualFS
 {
@@ -109,7 +105,7 @@ struct VirtualFS
 
         VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
 
-        IntData magic = IntData::From(VFSMagic_Encoded, 2);
+        IntData magic     = IntData::From(VFSMagic_Encoded, 2);
         IntData fileMagic = IntData::From(temp_vfs->vfs_header, MagicLength);
 
         if(magic[0] != fileMagic[0] || magic[1] != fileMagic[1])

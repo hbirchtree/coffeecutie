@@ -39,11 +39,13 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     void alloc();
     void dealloc();
 
-    void attachSurface(GLEAM_Surface const& s, u32 idx, u32 mip = 0);
+    /* TODO: Layered attachments */
+
+    void attachSurface(GLEAM_Surface2D const& s, u32 idx, u32 mip = 0);
     void attachSurface(GLEAM_RenderDummy const& rb);
 
-    void attachDepthStencilSurface(GLEAM_Surface const& s, u32 mip);
-    void attachDepthSurface(GLEAM_Surface const& s, u32 mip);
+    void attachDepthStencilSurface(GLEAM_Surface2D const& s, u32 mip);
+    void attachDepthSurface(GLEAM_Surface2D const& s, u32 mip);
 
     void blit(
         CRect64 const&      src,

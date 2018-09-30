@@ -187,6 +187,15 @@ CoffeeApplicationData& GetAppData()
     return ISTATE->current_app;
 }
 
+bool ProfilerEnabled()
+{
+#if !defined(COFFEE_DISABLE_PROFILER)
+    return true;
+#else
+    return false;
+#endif
+}
+
 Profiling::PContext* GetProfilerStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)

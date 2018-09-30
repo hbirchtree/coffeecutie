@@ -12,6 +12,23 @@ namespace Coffee {
 #define CONSTEXPR_EXTENDED
 #endif
 
+FORCEDINLINE PixFlg PixComponentToFlag(PixCmp component)
+{
+    switch(component)
+    {
+    case PixCmp::R:
+        return PixFlg::R;
+    case PixCmp::RG:
+        return PixFlg::RG;
+    case PixCmp::RGB:
+        return PixFlg::RGB;
+    case PixCmp::RGBA:
+        return PixFlg::RGBA;
+    default:
+        return PixFlg::None;
+    }
+}
+
 FORCEDINLINE bool IsPixFmtCompressed(PixFmt f)
 {
     switch(f)

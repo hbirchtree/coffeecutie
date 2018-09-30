@@ -28,7 +28,7 @@ FORCEDINLINE void EventHandleControllerInput(
     }else{
         c.axis = false;
         c.index = btn.button;
-        c.button_state = btn.state;
+        c.button_state = btn.state == SDL_PRESSED;
     }
 
     EventPack(ctxt,&e,&c);

@@ -87,6 +87,30 @@ struct _cbasic_size_2d : _cbasic_size
         (*this) = (*this)*d;
         return *this;
     }
+
+    inline T operator[](size_t i) const
+    {
+        switch(i)
+        {
+        case 0:
+            return w;
+        case 1:
+            return h;
+        default:
+            return 0;
+        }
+    }
+
+    inline T& operator[](size_t i)
+    {
+        switch(i)
+        {
+        case 0:
+            return w;
+        case 1:
+            return h;
+        }
+    }
 };
 
 template<typename T,
@@ -122,6 +146,34 @@ struct _cbasic_size_3d : _cbasic_size
     T volume() const
     {
         return width*height*depth;
+    }
+
+    inline T operator[](size_t i) const
+    {
+        switch(i)
+        {
+        case 0:
+            return width;
+        case 1:
+            return height;
+        case 2:
+            return depth;
+        default:
+            return 0;
+        }
+    }
+
+    inline T& operator[](size_t i)
+    {
+        switch(i)
+        {
+        case 0:
+            return width;
+        case 1:
+            return height;
+        case 2:
+            return depth;
+        }
     }
 };
 

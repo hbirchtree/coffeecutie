@@ -319,4 +319,32 @@ FORCEDINLINE szptr GetPixCompressedSize(CompFmt format, Size const& tex_size)
     Throw(implementation_error("size calculation not implemented"));
 }
 
+FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)
+{
+    switch(fmt.base_fmt)
+    {
+    case PixFmt::S3TC: /* Also applies to BCn */
+    {
+        switch(fmt.c_flags)
+        {
+        case CompFlags::S3TC_1:
+            return "dxt1";
+        case CompFlags::S3TC_5:
+            return "dxt5";
+        default:
+            return "bptc";
+        }
+        break;
+    }
+    case PixFmt::ETC1:
+        return "etc1";
+    case PixFmt::ETC2:
+        return "etc2";
+    default:
+        return "";
+    }
+
+    return "";
+}
+
 } // namespace Coffee

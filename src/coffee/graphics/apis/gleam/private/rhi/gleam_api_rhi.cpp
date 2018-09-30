@@ -391,6 +391,8 @@ bool GLEAM_API::LoadAPI(
     m_store = store;
 
     DefaultFramebuffer().size();
+
+    GLC::Enable(Feature::Culling);
     GLC::CullFace(Face::Back);
 
 #if GL_VERSION_VERIFY(0x430, 0x320)

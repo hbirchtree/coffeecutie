@@ -77,6 +77,8 @@ extern P<InternalThreadState>& GetInternalThreadState();
  *
  */
 
+extern bool ProfilerEnabled();
+
 extern Profiling::PContext*    GetProfilerStore();
 extern Profiling::ThreadState* GetProfilerTStore();
 

@@ -27,78 +27,92 @@ enum class LerpType
     Cubic,
 };
 
-using LerpFunction = scalar (*)(scalar v, scalar target, scalar t);
-
-namespace Lerp {
-
-FORCEDINLINE scalar Linear(scalar v, scalar target, scalar t)
+template<
+    typename PodType = scalar,
+    typename std::enable_if<std::is_floating_point<PodType>::value>::type* =
+        nullptr>
+struct Lerp
 {
-    return v + (target - v) * t;
-}
+    STATICINLINE PodType Linear(PodType v, PodType target, PodType t)
+    {
+        return v + (target - v) * t;
+    }
 
-FORCEDINLINE scalar Exponential(scalar v, scalar target, scalar t)
-{
-    return v + (target - v) * CMath::pow(t, 2.f);
-}
+    STATICINLINE PodType Exponential(PodType v, PodType target, PodType t)
+    {
+        return v + (target - v) * CMath::pow(t, 2.f);
+    }
 
-FORCEDINLINE scalar Cubed(scalar v, scalar target, scalar t)
-{
-    return v + (target - v) * CMath::pow(t, 3.f);
-}
+    STATICINLINE PodType Cubed(PodType v, PodType target, PodType t)
+    {
+        return v + (target - v) * CMath::pow(t, 3.f);
+    }
 
-FORCEDINLINE scalar Bounce(scalar v, scalar target, scalar t)
-{
-    using namespace CMath;
+    STATICINLINE PodType Bounce(PodType v, PodType target, PodType t)
+    {
+        using namespace CMath;
 
-    bigscalar t_ = C_CAST<bigscalar>(t);
+        bigscalar t_ = C_CAST<bigscalar>(t);
 
-    /* TODO: Remove double conversions here */
+        /* TODO: Remove double conversions here */
 
-    scalar scale =
-        CMath::max(
-            C_CAST<scalar>(
-                CMath::cos(1.6 * t_) * CMath::cos(t_ * 0.9) *
-                CMath::sin(17.2 * t_ + CMath::pi * 0.5)),
-            0.f) +
-        CMath::max(
-            C_CAST<scalar>(
-                CMath::cos(1.6 * t_) *
-                CMath::sin(17.0 * t_ + pi * 1.5)),
-            0.f);
+        PodType scale =
+            CMath::max(
+                C_CAST<PodType>(
+                    CMath::cos(1.6 * t_) * CMath::cos(t_ * 0.9) *
+                    CMath::sin(17.2 * t_ + CMath::pi * 0.5)),
+                0.f) +
+            CMath::max(
+                C_CAST<scalar>(
+                    CMath::cos(1.6 * t_) * CMath::sin(17.0 * t_ + pi * 1.5)),
+                0.f);
 
-    return v + (target - v) * (1.0f - scale);
-}
+        return v + (target - v) * (1.0f - scale);
+    }
 
-FORCEDINLINE scalar Cubic(scalar v, scalar target, scalar t)
-{
-    using namespace CMath;
+    STATICINLINE PodType Cubic(PodType v, PodType target, PodType t)
+    {
+        using namespace CMath;
 
-    return v + (target - v) * (CMath::pow(t - 0.5f, 3.0f) * 4.f + 0.5f);
-}
+        return v + (target - v) * (CMath::pow(t - 0.5f, 3.0f) * 4.f + 0.5f);
+    }
 
-FORCEDINLINE scalar Ease(scalar v, scalar target, scalar t)
-{
-    return v + (target - v) * (CMath::pow(t - 1.f, 3.0f) + 1.0f);
-}
-} // namespace Lerp
+    template<
+        unsigned int Curvature = 3,
+        typename std::enable_if<
+            (Curvature >= 3) && (Curvature % 2 == 1)>::type* = nullptr>
+    STATICINLINE PodType Ease(PodType v, PodType target, PodType t)
+    {
+        constexpr auto curv = PodType(Curvature);
 
+        return v + (target - v) * (CMath::pow(t - 1.f, curv) + 1.0f);
+    }
+};
+
+template<typename PrimitiveType>
 /*!
  * \brief Storage for data related to interpolation, and also input
  */
 struct LerpStore
 {
-    Vector<scalar>
-                           source; /*!< Source values, from which interpolation starts */
-    Vector<scalar*>        values;  /*!< Output location for values */
-    Vector<scalar>         targets; /*!< Target values */
+    Vector<PrimitiveType>  source;  /*!< Source values  */
+    Vector<PrimitiveType*> values;  /*!< Output location for values */
+    Vector<PrimitiveType>  targets; /*!< Target values */
+
     RuntimeTask::Timepoint start_time;
     RuntimeTask::Timepoint end_time;
     RuntimeTask::Duration  delta;
     scalar                 timescale;
     scalar                 time;
+
+    Function<void()> end_trigger;
 };
 
-template<LerpFunction Func>
+template<
+    typename PrimitiveType,
+    PrimitiveType (*Func)(PrimitiveType, PrimitiveType, scalar)
+
+    >
 /*!
  * \brief Generate a RuntimeTask encapsulating interpolation state
  * \param values Batch of values to be interpolated
@@ -113,10 +127,10 @@ template<LerpFunction Func>
  * \return
  */
 FORCEDINLINE RuntimeTask GenLerpTask(
-    LerpStore*                   store,
-    RuntimeTask::Duration const& time,
-    RuntimeTask::Duration const& timeStep = Chrono::milliseconds(10),
-    Mutex*                       lock     = nullptr)
+    ShPtr<LerpStore<PrimitiveType>> store,
+    RuntimeTask::Duration const&    time,
+    RuntimeTask::Duration const&    timeStep = Chrono::milliseconds(10),
+    ShPtr<Mutex>                    lock     = nullptr)
 {
     /* Why are we here? */
     if(((store->source.size() != store->targets.size()) &&
@@ -167,6 +181,9 @@ FORCEDINLINE RuntimeTask GenLerpTask(
                 RuntimeQueue::CancelTask(RuntimeQueue::GetSelfId(ec), ec);
 
                 C_ERROR_CHECK(ec);
+
+                if(store->end_trigger)
+                    store->end_trigger();
             }
 
             if(lock)

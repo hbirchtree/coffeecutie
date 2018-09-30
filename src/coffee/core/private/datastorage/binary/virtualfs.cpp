@@ -177,9 +177,12 @@ ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
 
     return {[=](Url const& path) { return VirtFS::Resource(vfs, path); },
             [=](Path const& query, Vector<Url>& output) {
+                DProfContext _(DTEXT(VIRTFS_API "Resolving filesystem"));
+
                 vfs_view view(Bytes::From(*vfs));
 
-                auto it = view.begin();
+                DProfContext __(DTEXT(VIRTFS_API "Checking files"));
+                auto         it = view.begin();
                 while((it = view.starting_with(query, it)) != view.end())
                 {
                     output.push_back(MkUrl((*it).name));

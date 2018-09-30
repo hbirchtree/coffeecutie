@@ -25,6 +25,7 @@ extern GLEAM_DataStore* m_store;
 
 struct GLEAM_PboQueue
 {
+    /* TODO: Convert these to use handle semantics */
     struct Pbo
     {
         CGhnd buf;

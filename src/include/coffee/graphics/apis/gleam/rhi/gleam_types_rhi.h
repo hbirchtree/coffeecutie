@@ -1,20 +1,21 @@
 #pragma once
 
-#include <coffee/interfaces/cgraphics_api.h>
 #include <coffee/core/types/cdef/handle.h>
+#include <coffee/interfaces/cgraphics_api.h>
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+#define GLEAM_API_LINKAGE extern
+#define GLEAM_API_CLASS_LINKAGE
 
-using glhnd = generic_handle_t<u32>;
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
+
+using glhnd   = generic_handle_t<u32>;
 using BufType = buf::flags;
 
 struct GLEAM_Options
 {
-    GLEAM_Options():
-        old_shader_processing(true),
-        crash_on_error(false)
+    GLEAM_Options() : old_shader_processing(true), crash_on_error(false)
     {
     }
 
@@ -82,10 +83,10 @@ enum APILevel
     GL_Nothing = 0x0,
 
     /* Desktop GL versions */
-    GL_3_3   = 0x330,
-    GL_4_3   = 0x430,
-    GL_4_5   = 0x450,
-    GL_4_6   = 0x460,
+    GL_3_3 = 0x330,
+    GL_4_3 = 0x430,
+    GL_4_5 = 0x450,
+    GL_4_6 = 0x460,
 
     GLES_MIN = 0x10000,
 
@@ -137,7 +138,7 @@ struct GLEAM_PrfQuery;
 struct GLEAM_PipelineDumper;
 struct GLEAM_Quad_Drawer;
 
-using GLEAM_DrawCall = GraphicsAPI::DrawCall;
+using GLEAM_DrawCall     = GraphicsAPI::DrawCall;
 using GLEAM_DrawInstance = GraphicsAPI::DrawInstanceData;
 
 /* Buffers */
@@ -153,7 +154,6 @@ struct GLEAM_PixelBuffer;
 struct GLEAM_IndirectBuffer;
 
 /* Surfaces */
-struct GLEAM_Surface;
 
 struct GLEAM_Surface2D;
 struct GLEAM_Surface3D;
@@ -196,7 +196,7 @@ struct GLEAM_OccludeQuery;
 
 struct GLEAM_ScopeMarker;
 
-}
-}
+} // namespace GLEAM
+} // namespace RHI
 
-}
+} // namespace Coffee

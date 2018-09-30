@@ -20,6 +20,11 @@ struct generic_handle_t : non_copy
     {
     }
 
+    generic_handle_t(generic_handle_t&& other) : hnd(other.hnd)
+    {
+        other.hnd = hnd_type();
+    }
+
     explicit generic_handle_t(hnd_type handle) : hnd(handle)
     {
     }

@@ -41,8 +41,7 @@ using ResolveResource = Function<Bytes(Url const&, CString const&)>;
 template<typename API>
 static
 bool LoadModel(
-        Url const& base,
-        BytesResolver& resourceResolve,
+        ResolverPair<BytesResolver> const& base,
         SerializedData<API>& output
         )
 {
@@ -65,14 +64,18 @@ bool LoadModel(
         "materials"
     }};
 
+    DProfContext _("ASSIMP::LoadModel");
+
     for(auto ext : extensions)
     {
         if(!ext)
             continue;
 
+        DProfContext _("ASSIMP::Resolving model file");
+
         output.store.push_back(
                     std::move(
-                        resourceResolve.extResolver(base, ext)
+                        base.resolver.extResolver(base.url, ext)
                         ));
 
         /* If file resolution fails, escape! */
@@ -80,23 +83,26 @@ bool LoadModel(
             return false;
     }
 
-    output.draws = SerialArray<typename API::D_DATA>(
-                output.store.at(FI_Draws)
-                );
-    output.attributes = SerialArray<typename API::V_ATTR>(
-                output.store.at(FI_Attributes)
-                );
-    output.draw_call = *C_RCAST<typename API::D_CALL const*>(
-                output.store.at(FI_DCall).data
-                );
-    output.nodes = C_RCAST<SerialHeader const*>(
-                output.store.at(FI_Graph).data
-                );
-    output.materials = C_RCAST<typename SerializedData<API>::MTL const*>(
-                output.store.at(FI_Materials).data
-                );
-    output.vertices = &output.store.at(FI_Vertices);
-    output.elements = &output.store.at(FI_Elements);
+    {
+        DProfContext _("ASSIMP::Setting up model pointers");
+        output.draws = SerialArray<typename API::D_DATA>(
+                    output.store.at(FI_Draws)
+                    );
+        output.attributes = SerialArray<typename API::V_ATTR>(
+                    output.store.at(FI_Attributes)
+                    );
+        output.draw_call = *C_RCAST<typename API::D_CALL const*>(
+                    output.store.at(FI_DCall).data
+                    );
+        output.nodes = C_RCAST<SerialHeader const*>(
+                    output.store.at(FI_Graph).data
+                    );
+        output.materials = C_RCAST<typename SerializedData<API>::MTL const*>(
+                    output.store.at(FI_Materials).data
+                    );
+        output.vertices = &output.store.at(FI_Vertices);
+        output.elements = &output.store.at(FI_Elements);
+    }
 
     return true;
 }
