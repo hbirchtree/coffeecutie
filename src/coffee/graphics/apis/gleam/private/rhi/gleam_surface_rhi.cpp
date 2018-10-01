@@ -129,8 +129,10 @@ template<
 inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL43::TexStorage2D(
         surface.m_type, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
+#endif
 }
 
 template<
@@ -145,8 +147,10 @@ template<
 inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL45::TexStorage2D(
         surface.m_handle, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
+#endif
 }
 
 /*
@@ -171,8 +175,10 @@ inline void surface_initialize(
     PixDesc const&                c,
     i32                           i)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::TexImage3D(
         surface.m_type, i, surface.m_pixfmt, size, c.comp, c.bfmt, nullptr);
+#endif
 }
 
 template<
@@ -191,8 +197,10 @@ inline void surface_initialize(
     Vector<byte_t> const&         data,
     i32                           i)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::TexCompressedImage3D(
         surface.m_type, i, c, size, C_FCAST<i32>(data.size()), data.data());
+#endif
 }
 
 template<
@@ -207,8 +215,10 @@ template<
 inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL43::TexStorage3D(
         surface.m_type, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
+#endif
 }
 
 template<
@@ -223,8 +233,10 @@ template<
 inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     CGL45::TexStorage3D(
         surface.m_handle, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
+#endif
 }
 
 template<
