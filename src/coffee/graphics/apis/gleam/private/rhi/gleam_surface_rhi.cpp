@@ -348,13 +348,16 @@ inline void surface_internal_alloc(
 Tup<u32, u32> surface_get_levels(
     glhnd const& m_handle, TexComp::tex_flag m_type)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     i32 base = 0, max = 0;
 
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
     {
         CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &max);
         CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &base);
     } else
+#endif
     {
         CGL33::TexBind(m_type, m_handle);
 
@@ -363,24 +366,29 @@ Tup<u32, u32> surface_get_levels(
     }
 
     return std::make_tuple(C_FCAST<u32>(base), C_FCAST<u32>(max));
+#endif
 }
 
 void surface_set_levels(
     glhnd const& m_handle, TexComp::tex_flag m_type, u32 base, u32 max)
 {
+#if GL_VERSION_VERIFY(0x300, 0x300)
     i32 _base = C_FCAST<i32>(base), _max = C_FCAST<i32>(max);
 
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
     {
         CGL45::TexParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &_max);
         CGL45::TexParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &_base);
     } else
+#endif
     {
         CGL33::TexBind(m_type, m_handle);
 
         CGL33::TexParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &_max);
         CGL33::TexParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &_base);
     }
+#endif
 }
 
 } // namespace detail
