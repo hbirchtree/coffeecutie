@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Fix for github:travis-ci/travis-ci#4704
+python -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
+
 case "${TRAVIS_OS_NAME}" in
 "linux")
     echo " * Travis/CI people, if you are seeing this, some systems require extended binary format support to work :/"
