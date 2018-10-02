@@ -87,7 +87,7 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
         Size const&  size,
         const Bytes& data,
         gleam_error& ec,
-        CPoint       offset = {0, 0},
+        Point        offset = {0, 0},
         u32          mip    = 0);
 
     void upload(
@@ -118,27 +118,27 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
     GLEAM_API_CLASS_LINKAGE void allocate(CSize3 size, PixCmp c);
 
     GLEAM_API_CLASS_LINKAGE void upload(
-        PixDesc        pfmt,
-        CSize3 const&  size,
-        Bytes const&   data,
-        CPoint3 const& offset = {0, 0, 0},
-        u32            mip    = 0);
+        PixDesc       pfmt,
+        Size3 const&  size,
+        Bytes const&  data,
+        Point3 const& offset = {0, 0, 0},
+        u32           mip    = 0);
 
     GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt         fmt,
-        PixCmp         comp,
-        CSize3 const&  size,
-        Bytes const&   data,
-        CPoint3 const& offset = {0, 0, 0},
-        u32            mip    = 0);
+        BitFmt        fmt,
+        PixCmp        comp,
+        Size3 const&  size,
+        Bytes const&  data,
+        Point3 const& offset = {0, 0, 0},
+        u32           mip    = 0);
 
     GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt         fmt,
-        PixCmp         comp,
-        CSize3 const&  size,
-        c_cptr         data,
-        CPoint3 const& offset = {0, 0, 0},
-        u32            mip    = 0)
+        BitFmt        fmt,
+        PixCmp        comp,
+        Size3 const&  size,
+        c_cptr        data,
+        Point3 const& offset = {0, 0, 0},
+        u32           mip    = 0)
     {
         Bytes dataS;
         dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));

@@ -23,6 +23,8 @@
     - -DGENERATE_SNAPPY=OFF
     - -DGENERATE_APPIMAGE=ON
     - -DBUILD_ETC2COMP=ON
+    - -DBUILD_SDL2=OFF
+    - -DBUILD_HEADFUL=OFF
 coverage:
   =target: multi.twostage
   =cmake-target:

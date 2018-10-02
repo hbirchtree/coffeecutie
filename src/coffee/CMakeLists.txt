@@ -6,11 +6,15 @@ option ( BUILD_CEF      "Build with Chromium Embedded Framework"    OFF )
 option ( BUILD_OPENVR   "Build with OpenVR integration"             OFF )
 option ( BUILD_SDL2     "Build with SDL2 graphics backend"          ON  )
 
+option ( BUILD_HEADFUL  "Build with graphics/windowing support"     ON )
+
 add_subdirectory(core)
 add_subdirectory(image)
 
-add_subdirectory(graphics)
-add_subdirectory(windowing)
+if(BUILD_HEADFUL)
+    add_subdirectory(graphics)
+    add_subdirectory(windowing)
+endif()
 
 if(BUILD_ASIO)
     add_subdirectory(asio)

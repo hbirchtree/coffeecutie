@@ -26,11 +26,6 @@ if(ANDROID)
     set ( ANDROID_PROJECT_INPUT "${COFFEE_DESKTOP_DIRECTORY}/android"
         CACHE STRING "" )
 
-    set ( ANDROID_PROJECT_TEMPLATE_DIR "${ANDROID_PROJECT_INPUT}/Template"
-        CACHE STRING "" )
-    set ( ANDROID_PROJECT_CONFIG_DIR "${ANDROID_PROJECT_INPUT}/Config"
-        CACHE STRING "" )
-
     set ( ANDROID_BUILD_OUTPUT "${COFFEE_DEPLOY_DIRECTORY}/android-apk"
         CACHE STRING "" )
 
@@ -66,7 +61,7 @@ function(ANDROIDAPK_PACKAGE)
         SOURCES
 
         RESOURCES
-        BUNDLE_LIBS
+        BUNDLE_LIBRARIES
 
         )
 
@@ -102,7 +97,7 @@ function(ANDROIDAPK_PACKAGE)
 
     list ( APPEND DEPENDENCIES "$<TARGET_FILE:${AAPK_TARGET}>" )
 
-    list ( APPEND DEPENDENCIES "${AAPK_BUNDLE_LIBS}" )
+    list ( APPEND DEPENDENCIES "${AAPK_BUNDLE_LIBRARIES}" )
 
     ############################################################################
     ############################################################################
@@ -267,13 +262,13 @@ function(ANDROIDAPK_PACKAGE)
 
         # Fill in AndroidManifest with info create above
         configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/native/AndroidManifest.xml.in"
+            "${ANDROID_PROJECT_INPUT}/AndroidManifest.xml.in"
             "${BUILD_OUTDIR}/${MANIFEST_PREFIX}/AndroidManifest.xml"
             @ONLY
             )
         # Configure strings.xml with app info
         configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/strings.xml.in"
+            "${ANDROID_PROJECT_INPUT}/strings.xml.in"
             "${BUILD_OUTDIR}/${APK_RSC_PREFIX}/values/strings.xml"
             @ONLY
             )
@@ -282,7 +277,7 @@ function(ANDROIDAPK_PACKAGE)
             "ndk.dir=${ANDROID_NDK}")
 
         configure_file (
-            "${ANDROID_PROJECT_INPUT}/GradleTemplate/build.gradle.in"
+            "${ANDROID_PROJECT_INPUT}/build.gradle.in"
             "${BUILD_OUTDIR}/app/build.gradle"
             )
 
@@ -307,8 +302,7 @@ function(ANDROIDAPK_PACKAGE)
         #
         # Install asset files
         #
-        foreach (resc ${AAPKG_RESOURCES})
-            message ( "RSC ${resc}" )
+        foreach (resc ${AAPK_RESOURCES})
             add_custom_command ( TARGET "${AAPK_TARGET}.project"
                 PRE_BUILD
                 COMMAND ${CMAKE_COMMAND} -E

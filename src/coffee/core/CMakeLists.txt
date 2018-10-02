@@ -266,12 +266,14 @@ if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
         find_package ( SDL2 QUIET )
     endif()
 
-    target_sources ( CoffeeCore_Base PRIVATE
-        private/plat/environment/sdlpowerinfo.cpp
+    coffee_library (
+        TARGET CoffeeSDLPowerInfo
+        SOURCES private/plat/environment/sdlpowerinfo.cpp
+        LIBRARIES CoffeeCore_Base SDL2
         )
 
-    target_link_libraries ( CoffeeCore_Base PRIVATE
-        SDL2
+    target_link_libraries ( CoffeeCore INTERFACE
+        CoffeeSDLPowerInfo
         )
 endif()
 

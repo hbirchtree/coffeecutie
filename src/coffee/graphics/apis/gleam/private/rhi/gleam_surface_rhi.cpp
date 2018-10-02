@@ -54,6 +54,60 @@ void surface_dealloc(glhnd& m_handle)
     m_handle.release();
 }
 
+/*
+ *
+ * Surface sampling levels
+ *
+ * Will opt for direct_state_access when possible
+ * Does not support negative levels
+ */
+
+Tup<u32, u32> surface_get_levels(
+    glhnd const& m_handle, TexComp::tex_flag m_type)
+{
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    i32 base = 0, max = 0;
+
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    if(GLEAM_FEATURES.direct_state)
+    {
+        CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &max);
+        CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &base);
+    } else
+#endif
+    {
+        CGL33::TexBind(m_type, m_handle);
+
+        CGL33::TexGetParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &max);
+        CGL33::TexGetParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &base);
+    }
+
+    return std::make_tuple(C_FCAST<u32>(base), C_FCAST<u32>(max));
+#endif
+}
+
+void surface_set_levels(
+    glhnd const& m_handle, TexComp::tex_flag m_type, u32 base, u32 max)
+{
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    i32 _base = C_FCAST<i32>(base), _max = C_FCAST<i32>(max);
+
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+    if(GLEAM_FEATURES.direct_state)
+    {
+        CGL45::TexParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &_max);
+        CGL45::TexParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &_base);
+    } else
+#endif
+    {
+        CGL33::TexBind(m_type, m_handle);
+
+        CGL33::TexParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &_max);
+        CGL33::TexParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &_base);
+    }
+#endif
+}
+
 enum SurfaceQuirks
 {
     Dim3D_Texture     = 0x1,
@@ -247,8 +301,6 @@ template<
 inline void surface_gles20_3d_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size, PixDesc const& c)
 {
-    CGL33::TexBind(surface.m_type, surface.m_handle);
-
     i32 square_size = TEX_SQUARE_GRID_SIZE(size.depth);
 
     CGL33::TexImage2D(
@@ -320,12 +372,13 @@ inline void surface_internal_alloc(
         return;
     }
 
-    /* 3D texture implementation for GLES 2.0 */
     if(!is_immutable_texture && GLEAM_FEATURES.gles20 && is_3d_texture)
     {
+        /* 3D texture implementation for GLES 2.0 */
         surface_gles20_3d_initialize<SurfaceQuirks>(surface, size, p_fmt);
     } else if(!is_immutable_texture)
     {
+        /* Traditional TexImage*D */
         SizeT c_size = size;
         u32   i      = 0;
         while(i < surface.m_mips)
@@ -342,6 +395,7 @@ inline void surface_internal_alloc(
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else if(GLEAM_FEATURES.texture_storage)
     {
+    /* Immutable textures, optionally using direct_state_access */
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
             surface_initialize<
@@ -357,50 +411,9 @@ inline void surface_internal_alloc(
         Throw(implementation_error("no fallback allocation found"));
 }
 
-Tup<u32, u32> surface_get_levels(
-    glhnd const& m_handle, TexComp::tex_flag m_type)
+template<u32 SurfaceQuirks, typename SizeT, typename PointT>
+inline void surface_internal_upload(GLEAM_Surface<SizeT, PointT>& surface)
 {
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    i32 base = 0, max = 0;
-
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
-    if(GLEAM_FEATURES.direct_state)
-    {
-        CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &max);
-        CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &base);
-    } else
-#endif
-    {
-        CGL33::TexBind(m_type, m_handle);
-
-        CGL33::TexGetParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &max);
-        CGL33::TexGetParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &base);
-    }
-
-    return std::make_tuple(C_FCAST<u32>(base), C_FCAST<u32>(max));
-#endif
-}
-
-void surface_set_levels(
-    glhnd const& m_handle, TexComp::tex_flag m_type, u32 base, u32 max)
-{
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    i32 _base = C_FCAST<i32>(base), _max = C_FCAST<i32>(max);
-
-#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
-    if(GLEAM_FEATURES.direct_state)
-    {
-        CGL45::TexParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &_max);
-        CGL45::TexParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &_base);
-    } else
-#endif
-    {
-        CGL33::TexBind(m_type, m_handle);
-
-        CGL33::TexParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &_max);
-        CGL33::TexParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &_base);
-    }
-#endif
 }
 
 } // namespace detail
@@ -468,10 +481,10 @@ void GLEAM_Surface2D::allocate(CSize size, PixCmp c)
 
 void GLEAM_Surface2D::upload(
     PixDesc      pfmt,
-    const CSize& size,
+    const Size&  size,
     const Bytes& data,
     gleam_error& ec,
-    CPoint       offset,
+    Point        offset,
     u32          mip)
 {
     c_cptr data_ptr = data.data;
