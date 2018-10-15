@@ -1,14 +1,13 @@
-#ifndef COPENAL_HEADER
-#define COPENAL_HEADER
+#pragma once
 
 #include <coffee/audio/caudio.h>
-#include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/tdef/stlfunctypes.h>
 #include <coffee/core/types/vector_types.h>
 
-namespace Coffee{
-namespace CAudio{
+namespace Coffee {
+namespace CAudio {
 
 struct OpenAL
 {
@@ -17,10 +16,10 @@ struct OpenAL
     struct ALhnd;
     struct ALcapdevice;
 
-    using ALCallback = void(*)(Severity,cstring);
-    using ALVersion = _cbasic_version<i32>;
-    using ALbuffer = ALhnd;
-    using ALsource = ALhnd;
+    using ALCallback = void (*)(Severity, cstring);
+    using ALVersion  = _cbasic_version<i32>;
+    using ALbuffer   = ALhnd;
+    using ALsource   = ALhnd;
 
     enum class PlaybackState
     {
@@ -32,10 +31,10 @@ struct OpenAL
 
     enum class SourceProperty
     {
-	None,
+        None,
 
-	Relative,
-	Looping,
+        Relative,
+        Looping,
 
         Pitch,
         Gain,
@@ -61,39 +60,39 @@ struct OpenAL
 
     enum class Attenuation
     {
-	None	 = 0,
+        None = 0,
         /*Inverse, Linear and Exponent cannot be combined.*/
         Inverse  = 1,
         Linear   = 2,
         Exponent = 3,
 
-        Clamped  = 0x10,
+        Clamped = 0x10,
     };
 
     enum class ContextProperty
     {
-	DevSpecifier,
-	CaptureDevSpecifier,
+        DevSpecifier,
+        CaptureDevSpecifier,
 
-	DefaultDev,
+        DefaultDev,
         DefaultCapDev,
 
-	Version,
-	Renderer,
-	Vendor,
-	Extensions,
+        Version,
+        Renderer,
+        Vendor,
+        Extensions,
 
-	Doppler,
-	SpeedOfSound,
-	AttenuationModl,
+        Doppler,
+        SpeedOfSound,
+        AttenuationModl,
     };
 
     enum class ListenerProperty
     {
-	Gain,
-	Position,
-	Velocity,
-	Orientation,
+        Gain,
+        Position,
+        Velocity,
+        Orientation,
     };
 
     enum class Feature
@@ -102,8 +101,8 @@ struct OpenAL
     };
 
     static ALcontext* CreateContext();
-    static void DeleteContext(ALcontext* ctxt);
-    static void ContextCurrent(ALcontext* ctxt);
+    static void       DeleteContext(ALcontext* ctxt);
+    static void       ContextCurrent(ALcontext* ctxt);
 
     static void ContextSuspend(ALcontext* ctxt);
     static void ContextProcess(ALcontext* ctxt);
@@ -125,14 +124,14 @@ struct OpenAL
     static void ContextSetf(ContextProperty p, const scalar* v);
 
     static ALbuffer* BufAlloc();
-    static void BufFree(ALbuffer* b);
-    static void BufData(ALbuffer* b, SampleFormat f, const Bytes& d);
+    static void      BufFree(ALbuffer* b);
+    static void      BufData(ALbuffer* b, SampleFormat f, const Bytes& d);
     static ALbuffer* BufCreate(SampleFormat f, const Bytes& d);
 
     static ALsource* SrcAlloc();
-    static void SrcFree(ALsource* s);
+    static void      SrcFree(ALsource* s);
 
-    static void SrcState(ALsource** s,PlaybackState m);
+    static void SrcState(ALsource** s, PlaybackState m);
 
     static void SrcSetBuffer(ALsource* s, const ALbuffer& b);
     static void SrcQueueBuffers(ALsource* s, u32 n, const ALbuffer** b);
@@ -165,11 +164,11 @@ struct OpenAL
         static bool IsBuffer(ALbuffer* b);
         static bool IsSource(ALsource* s);
 
-	static void GetBool(ALdev* d, ContextProperty p, bool* v);
-	static void GetInt(ALdev* d, ContextProperty p, i32* v);
-	static void GetScalar(ALdev* d, ContextProperty p, scalar* v);
-	static void GetBigScalar(ALdev* d, ContextProperty p, bigscalar* v);
-	static cstring GetString(ALdev* d, ContextProperty p);
+        static void    GetBool(ALdev* d, ContextProperty p, bool* v);
+        static void    GetInt(ALdev* d, ContextProperty p, i32* v);
+        static void    GetScalar(ALdev* d, ContextProperty p, scalar* v);
+        static void    GetBigScalar(ALdev* d, ContextProperty p, bigscalar* v);
+        static cstring GetString(ALdev* d, ContextProperty p);
 
         static cstring* GetDevices(ALcontext* d);
         static cstring* GetCaptureDevices(ALcontext* d);
@@ -181,13 +180,13 @@ struct OpenAL
     };
 };
 
-C_FLAGS(OpenAL::Attenuation,u32);
+C_FLAGS(OpenAL::Attenuation, u32);
 
 /*!
  * \brief Basic wrapping for OpenAL, nothing extensive
  *
  */
-namespace COpenAL{
+namespace COpenAL {
 
 struct CALhnd;
 struct CALCaptureDevice;
@@ -235,11 +234,11 @@ enum class CSourceProperty : uint8
 
 enum class CDistanceModel : uint8
 {
-    InverseDistance = 1,
-    InverseDistanceClamped = 2,
-    LinearDistance = 3,
-    LinearDistanceClamped = 4,
-    ExponentDistance = 5,
+    InverseDistance         = 1,
+    InverseDistanceClamped  = 2,
+    LinearDistance          = 3,
+    LinearDistanceClamped   = 4,
+    ExponentDistance        = 5,
     ExponentDistanceClamped = 6,
 };
 
@@ -275,11 +274,11 @@ struct CALListener
 {
     CALListener();
 
-    CVec3 orientation_forward; /*!< Listener orientation*/
-    CVec3 orientation_up; /*!< Listener orientation*/
+    Vecf3 orientation_forward; /*!< Listener orientation*/
+    Vecf3 orientation_up;      /*!< Listener orientation*/
 
-    CVec3 position; /*!< Listener position*/
-    CVec3 velocity; /*!< Listener velocity*/
+    Vecf3 position; /*!< Listener position*/
+    Vecf3 velocity; /*!< Listener velocity*/
 
     scalar gain; /*!< Audio gain*/
 };
@@ -291,14 +290,14 @@ struct CALSource
 {
     CALSource();
 
-    CVec3 position; /*!< Source position*/
-    CVec3 velocity; /*!< Source velocity*/
-    CVec3 direction; /*!< Source direction vector*/
-    CALhnd* handle; /*!< AL handle*/
-    uint16 state; /*!< Source state*/
+    Vecf3   position;  /*!< Source position*/
+    Vecf3   velocity;  /*!< Source velocity*/
+    Vecf3   direction; /*!< Source direction vector*/
+    CALhnd* handle;    /*!< AL handle*/
+    uint16  state;     /*!< Source state*/
 };
 
-extern CALVersion context_version(CALContext *ctxt);
+extern CALVersion context_version(CALContext* ctxt);
 
 /*!
  * \brief Create an OpenAL context
@@ -310,19 +309,17 @@ extern CALContext* context_create(cstring device = nullptr);
  * \param callback
  */
 extern void context_set_debug_callback(
-        CALContext *context, CALCallback callback);
+    CALContext* context, CALCallback callback);
 /*!
  * \brief Destroy an OpenAL context
  * \param context Context object to destroy
  */
-extern void context_destroy(
-        CALContext* context);
+extern void context_destroy(CALContext* context);
 /*!
  * \brief Make the context current to this thread
  * \param context Context to make current
  */
-extern bool context_make_current(
-        CALContext* context);
+extern bool context_make_current(CALContext* context);
 /*!
  * \brief Check if an extension is supported
  * \param context
@@ -330,35 +327,30 @@ extern bool context_make_current(
  * \return True if supported
  */
 extern bool context_check_extension(
-        const CALContext* context, cstring extension);
+    const CALContext* context, cstring extension);
 /*!
  * \brief Check if error is present. If it is, call context's callback
  * \param context
  */
-extern void context_get_error(
-        const CALContext* context = nullptr);
+extern void context_get_error(const CALContext* context = nullptr);
 
 extern u32 context_max_sources(const CALContext* context = nullptr);
 
 /*!
- * \brief Create an audio capture device and initialize it with codec information. OpenAL does the rest.
- * \param context
- * \param device
- * \param fmt
+ * \brief Create an audio capture device and initialize it with codec
+ * information. OpenAL does the rest. \param context \param device \param fmt
  * \return A valid pointer if the function succeeded
  */
 extern CALCaptureDevice* capture_create(
-        CALContext* context,
-        cstring device,
-	const AudioFormat &fmt, u32 samples);
+    CALContext* context, cstring device, const AudioFormat& fmt, u32 samples);
 /*!
  * \brief Free the audio capture device when you are done with it.
  * \param dev
  */
-extern void capture_free(CALCaptureDevice *dev);
+extern void capture_free(CALCaptureDevice* dev);
 
 extern void capture_start(CALCaptureDevice* dev);
-extern void capture_grab_samples(CALCaptureDevice* dev, AudioSample &sample);
+extern void capture_grab_samples(CALCaptureDevice* dev, AudioSample& sample);
 extern void capture_stop(CALCaptureDevice* dev);
 
 /*!
@@ -366,8 +358,7 @@ extern void capture_stop(CALCaptureDevice* dev);
  * \param buffer
  * \param sample
  */
-extern void alAlloc(
-	CALBuffer* buffer, const AudioSample* sample);
+extern void alAlloc(CALBuffer* buffer, const AudioSample* sample);
 /*!
  * \brief Allocate audio buffer
  * \param buffer
@@ -400,58 +391,53 @@ extern void listener_set(const CALListener* listener);
  * \param source
  * \return
  */
-extern i32 source_get_offset_seconds(
-        const CALSource* source);
+extern i32 source_get_offset_seconds(const CALSource* source);
 /*!
  * \brief Get sample offset into buffer
  * \param source
  * \return
  */
-extern i32 source_get_offset_samples(
-        const CALSource* source);
+extern i32 source_get_offset_samples(const CALSource* source);
 /*!
  * \brief Get byte offset into buffer
  * \param source
  * \return
  */
-extern i32 source_get_offset_bytes(
-        const CALSource* source);
+extern i32 source_get_offset_bytes(const CALSource* source);
 
 /*!
  * \brief Set second offset into buffer
  * \param source
  * \param off
  */
-extern void source_set_offset_seconds(
-        CALSource* source, i32 const& off);
+extern void source_set_offset_seconds(CALSource* source, i32 const& off);
 /*!
  * \brief Set sample offset into buffer
  * \param source
  * \param off
  */
-extern void source_set_offset_samples(
-        CALSource* source, i32 const& off);
+extern void source_set_offset_samples(CALSource* source, i32 const& off);
 /*!
  * \brief Set byte offset into buffer
  * \param source
  * \param off
  */
-extern void source_set_offset_bytes(
-        CALSource* source, const i32 &off);
+extern void source_set_offset_bytes(CALSource* source, const i32& off);
 
 /*!
  * \brief Set source playback mode
  * \param source
  * \param state
  */
-extern void source_set_state(
-        CALSource* source, CALPlaybackState state);
+extern void source_set_state(CALSource* source, CALPlaybackState state);
 
 extern bool source_playing(CALSource* source);
 
 extern void source_transform(
-        CALSource* source, const CVec3 &position,
-        const CVec3 &velocity, const CVec3 &direction);
+    CALSource*   source,
+    const Vecf3& position,
+    const Vecf3& velocity,
+    const Vecf3& direction);
 
 /*!
  * \brief Set playback mode for multiple sources
@@ -460,9 +446,7 @@ extern void source_transform(
  * \param state
  */
 extern void source_set_states(
-        const CALSource **sources,
-        szptr numSources,
-        CALPlaybackState state);
+    const CALSource** sources, szptr numSources, CALPlaybackState state);
 
 /*!
  * \brief Queue buffers for playback
@@ -471,7 +455,7 @@ extern void source_set_states(
  * \param buffers
  */
 extern void source_queue_buffers(
-        CALSource* source, szptr numBuffers, const CALBuffer * const* buffers);
+    CALSource* source, szptr numBuffers, const CALBuffer* const* buffers);
 /*!
  * \brief Dequeue buffers if it has not been played yet
  * \param source
@@ -479,7 +463,7 @@ extern void source_queue_buffers(
  * \param buffers
  */
 extern void source_dequeue_buffers(
-        CALSource* source, szptr numBuffers, const CALBuffer * const* buffers);
+    CALSource* source, szptr numBuffers, const CALBuffer* const* buffers);
 
 /*!
  * \brief Set integer property of source
@@ -488,7 +472,7 @@ extern void source_dequeue_buffers(
  * \param val
  */
 extern void source_seti(
-        CALSource* source, CSourceProperty const& prop, const i32* val);
+    CALSource* source, CSourceProperty const& prop, const i32* val);
 /*!
  * \brief Set scalar property of source
  * \param source
@@ -496,41 +480,35 @@ extern void source_seti(
  * \param val
  */
 extern void source_setf(
-        CALSource* source, CSourceProperty const& prop, const scalar *val);
-
+    CALSource* source, CSourceProperty const& prop, const scalar* val);
 
 extern void source_seti(
-        CALSource* source, CSourceProperty const& prop, i32 const& val);
+    CALSource* source, CSourceProperty const& prop, i32 const& val);
 extern void source_setf(
-        CALSource* source, CSourceProperty const& prop, scalar const& val);
+    CALSource* source, CSourceProperty const& prop, scalar const& val);
 
-extern i32 source_geti(
-        CALSource* source, CSourceProperty const& prop);
-extern scalar source_getf(
-        CALSource* source, CSourceProperty const& prop);
+extern i32    source_geti(CALSource* source, CSourceProperty const& prop);
+extern scalar source_getf(CALSource* source, CSourceProperty const& prop);
 
 /*!
  * \brief Fill buffer with data, sets full buffer
  * \param buffer
  * \param sample
  */
-extern void buffer_data(
-	CALBuffer* buffer, const AudioSample* sample);
+extern void buffer_data(CALBuffer* buffer, const AudioSample* sample);
 
-extern void context_set_distance_model(const CDistanceModel &m);
+extern void context_set_distance_model(const CDistanceModel& m);
 
-extern void context_devices_output(Vector<cstring>& devices);
-extern void context_devices_input(Vector<cstring>& devices);
+extern void    context_devices_output(Vector<cstring>& devices);
+extern void    context_devices_input(Vector<cstring>& devices);
 extern cstring context_device_default();
 
-}
-}
-namespace Strings{
+} // namespace COpenAL
+} // namespace CAudio
+namespace Strings {
 
 extern CString to_string(CAudio::COpenAL::CALBuffer const& buf);
 extern CString to_string(CAudio::COpenAL::CALSource const& src);
 
-}
-}
-
-#endif
+} // namespace Strings
+} // namespace Coffee

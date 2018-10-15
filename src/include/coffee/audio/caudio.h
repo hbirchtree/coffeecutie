@@ -1,14 +1,13 @@
-#ifndef CAUDIO_FUN
-#define CAUDIO_FUN
+#pragma once
 
-#include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/base/files/cfiles.h>
+#include <coffee/core/types/tdef/integertypes.h>
 
-namespace Coffee{
+namespace Coffee {
 /*!
  * \brief General audio rendering functions
  */
-namespace CAudio{
+namespace CAudio {
 
 /*!
  * \brief Basic audio sample formats
@@ -44,7 +43,8 @@ struct AudioFormat
 {
     AudioFormat();
 
-    union{
+    union
+    {
         u32 samplerate; /*!< Samplerate, typically 44.1kHz*/
         u32 frequency;
     };
@@ -59,17 +59,17 @@ struct AudioSample
 {
     using short_data = _cbasic_data_chunk<short>;
 
-    short_data container;
-    short* data = nullptr; /*!< Pointer to audio data*/
-    AudioFormat fmt; /*!< Format specification*/
-    u32 samples;
+    short_data  container;
+    short*      data = nullptr; /*!< Pointer to audio data*/
+    AudioFormat fmt;            /*!< Format specification*/
+    u32         samples;
 };
 
-extern bigscalar GetSampleLength(const AudioSample &smp);
+extern bigscalar GetSampleLength(const AudioSample& smp);
 
 extern szptr GetSampleDataSize(AudioFormat const& fmt, szptr samples);
 
-namespace Stb{
+namespace Stb {
 
 /*!
  * \brief Import a Vorbis audio sample
@@ -78,9 +78,7 @@ namespace Stb{
  */
 extern bool LoadVorbis(AudioSample* smp, Bytes const& src);
 
-}
+} // namespace Stb
 
-}
-}
-
-#endif
+} // namespace CAudio
+} // namespace Coffee

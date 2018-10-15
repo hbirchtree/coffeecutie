@@ -11,7 +11,8 @@ export TRAVIS_REPO_URL="$(git remote get-url $(git remote | head -1))"
 
 function all_source_files()
 {
-  find ${BASE_DIR}/src/coffee ${BASE_DIR}/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
+    local SRC_BASE_DIR=$(dirname ${0})
+    find ${SRC_BASE_DIR}/src/coffee ${SRC_BASE_DIR}/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
 }
 
 case $1 in
@@ -67,8 +68,8 @@ case $1 in
 ;;
 "include-guards")
     for f in $(all_source_files); do
-        if [ ! -z "$(head -1 $@ | grep '#ifndef ')" ]; then
-            echo $@
+        if [ ! -z "$(head -1 $f | grep '#ifndef ')" ]; then
+            echo $f
         fi
     done
 ;;
@@ -107,6 +108,11 @@ case $1 in
         egrep '(u|)int(8|16|32|64)' $f /dev/null
     done
 ;;
+"get-notes")
+    for f in $(all_source_files); do
+        egrep  '(//|/\*)\s?(TODO|NOTE|WARNING|BUG|FIXME)' $f /dev/null
+    done
+;;
 *)
 echo "Available tools: 
 
@@ -143,6 +149,8 @@ Code tools:
     stl-guards          - Usage of std::* types
 
     type-guards         - Usage of deprecated [u]int[8|16|32|64] types
+
+    get-notes           - Get notes/todos from code
     "
 ;;
 esac

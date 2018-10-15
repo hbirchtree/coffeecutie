@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_DATASTORAGE_TEXT_INI_H
-#define COFFEE_CORE_DATASTORAGE_TEXT_INI_H
+#pragma once
 
 #include <coffee/core/CFiles>
 #include <coffee/core/types/tdef/integertypes.h>
@@ -9,14 +8,7 @@ namespace DataStorage {
 namespace TextStorage {
 namespace CINI {
 
-struct IniParserDef
-{
-    struct Document;
-
-    static Document Read(CResources::Resource const& source);
-};
-
-struct SimpleIniParser : IniParserDef
+struct SimpleIniParser
 {
     struct document_t;
     struct section_t;
@@ -72,7 +64,7 @@ struct SimpleIniParser : IniParserDef
       protected:
         union
         {
-            i64     v1;
+            i64       v1;
             bigscalar v2;
             bool      v4;
         };
@@ -195,8 +187,7 @@ struct SimpleIniParser : IniParserDef
         MultiMap<CString, section_t*> m_section_map;
     };
 
-    static document_t Read(
-        Bytes const& source, bool unixmode = true);
+    static document_t Read(Bytes const& source, bool unixmode = true);
 
     static CString Write(document_t const& doc);
 
@@ -219,5 +210,3 @@ struct SimpleIniParser : IniParserDef
 using INI = DataStorage::TextStorage::CINI::SimpleIniParser;
 
 } // namespace Coffee
-
-#endif

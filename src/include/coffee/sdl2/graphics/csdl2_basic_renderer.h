@@ -37,7 +37,7 @@ class SDL2SpriteRenderer : public SpriteApplication, public SDL2ContextUser
     bool spritesPostInit(CString*);
     void spritesTerminate();
 
-    void setClearColor(Renderer const& r, CRGBA const& color);
+    void setClearColor(Renderer const& r, rgba_t const& color);
     void clearBuffer(Renderer const& r);
     void swapBuffers(Renderer const& r);
 

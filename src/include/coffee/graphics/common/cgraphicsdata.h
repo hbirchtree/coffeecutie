@@ -1,28 +1,21 @@
-#ifndef CGRAPHICSDATA_H
-#define CGRAPHICSDATA_H
+#pragma once
 
-#include <coffee/core/types/graphics_types.h>
 #include <coffee/core/types/cmatrix_functions.h>
+#include <coffee/core/types/graphics_types.h>
 
-namespace Coffee{
+namespace Coffee {
 /*!
  * \brief Graphics rendering data, mostly for creating matrices
  */
-namespace CGraphicsData{
+namespace SceneGraph {
 
-typedef _cbasic_graphics_camera<scalar> CGCamera;
+using CGCamera = _cbasic_graphics_camera<scalar>;
 
-typedef _cbasic_graphics_transform<scalar> CTransform;
+using CTransform = _cbasic_graphics_transform<scalar>;
 
-typedef _cbasic_rect<scalar> CViewport;
-typedef _cbasic_rect<i32> CScissorViewport;
-typedef _cbasic_range<bigscalar> CDepthViewport;
+} // namespace SceneGraph
 
-} //CGraphicsData
-
-using namespace CGraphicsData;
+using namespace SceneGraph;
 using Transform = CTransform;
 
-} //Coffee
-
-#endif // CGRAPHICSDATA_H
+} // namespace Coffee

@@ -1,29 +1,28 @@
-#ifndef COFFEE_CORE_DATASTORAGE_TEXT_JSON_H
-#define COFFEE_CORE_DATASTORAGE_TEXT_JSON_H
+#pragma once
 
 #include <coffee/core/coffee_mem_macros.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
-#include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 
-namespace Coffee{
-namespace DataStorage{
-namespace TextStorage{
-namespace RJSON{
+namespace Coffee {
+namespace DataStorage {
+namespace TextStorage {
+namespace RJSON {
 
 using namespace rapidjson;
 
 struct RapidJson
 {
     using Document = rapidjson::Document;
-    using Value = rapidjson::Value;
+    using Value    = rapidjson::Value;
 
     using WriteBuf = rapidjson::StringBuffer;
-    using Writer = rapidjson::Writer<rapidjson::StringBuffer>;
+    using Writer   = rapidjson::Writer<rapidjson::StringBuffer>;
 
     STATICINLINE Document Read(cstring data)
     {
@@ -42,12 +41,10 @@ struct RapidJson
     }
 };
 
-}
-}
-}
+} // namespace RJSON
+} // namespace TextStorage
+} // namespace DataStorage
 
 using JSON = DataStorage::TextStorage::RJSON::RapidJson;
 
-}
-
-#endif
+} // namespace Coffee

@@ -53,7 +53,7 @@ void entity_process(ContainerProxy& c)
     ProfContext _("Component");
     auto&       m = c.get<TagMatf4>();
 
-    m = CGraphicsData::GenPerspective(90.f, 1.f, {0.1f, 100.f});
+    m = SceneGraph::GenPerspective(90.f, 1.f, {0.1f, 100.f});
     m = m * (Matf4() * 1.f);
 }
 

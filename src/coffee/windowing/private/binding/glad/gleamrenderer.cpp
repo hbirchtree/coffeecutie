@@ -1,6 +1,5 @@
 #include <coffee/windowing/binding/glad/gleamrenderer.h>
 
-#include <coffee/core/coffee_strings.h>
 #include <coffee/core/platform_data.h>
 
 #include <coffee/core/CDebug>
@@ -217,12 +216,12 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
     Profiler::DeepPopContext();
 
     Profiler::DeepProfile(GLR_API "Loading GL function pointers");
-    cVerbose(7, GLR_API "Function pointer checks succeeded: {0}", status);
+    cVerbose(7, GLR_API "Function pointer checks: {0}", status);
 
     if(!status)
     {
         if(err)
-            *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;
+            *err = "Failed to set up OpenGL function pointers";
         Profiler::DeepProfile(GLR_API "glad failed to load");
         return false;
     }
@@ -240,15 +239,14 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 
         DProfContext b(GLR_API "Adding GL information to profiler");
 
-        Profiler::AddExtraData(
-            "gl:renderer", Strings::to_string(GDEBUG::Renderer()));
-        Profiler::AddExtraData(
+        ExtraData::Add("gl:renderer", Strings::to_string(GDEBUG::Renderer()));
+        ExtraData::Add(
             "gl:version", Strings::to_string(GDEBUG::ContextVersion()));
-        Profiler::AddExtraData(
+        ExtraData::Add(
             "gl:glsl_version",
             Strings::to_string(GDEBUG::ShaderLanguageVersion()));
-        Profiler::AddExtraData("gl:extensions", ctxt.extensionList);
-        Profiler::AddExtraData("gl:driver", GDEBUG::ContextVersion().driver);
+        ExtraData::Add("gl:extensions", ctxt.extensionList);
+        ExtraData::Add("gl:driver", GDEBUG::ContextVersion().driver);
 
         GDEBUG::InitCompressedFormats(ctxt);
 
@@ -263,7 +261,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 
         internalFormats = str::trim::right(internalFormats);
 
-        Profiler::AddExtraData("gl:texformats", internalFormats);
+        ExtraData::Add("gl:texformats", internalFormats);
 
         /* TODO: Add GL limits to extra data */
 
@@ -305,7 +303,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
             limits += label + "=" + cast_pod(limit) + ",";
         }
 
-        Profiler::AddExtraData("gl:limits", limits);
+        ExtraData::Add("gl:limits", limits);
 
         PopDebugGroup();
     }

@@ -246,7 +246,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     Profiler::PopContext();
 
     if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
-        Profiler::SetDeepProfileMode(true);
+        State::GetProfilerStore()->flags.deep_enabled = true;
 
     if(!(flags & SilentInit))
         cVerbose(1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
@@ -422,7 +422,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
             return 0;
         } else if(sw == "dprofile")
         {
-            Profiler::SetDeepProfileMode(true);
+            State::GetProfilerStore()->flags.deep_enabled = true;
         } else if(sw == "json")
         {
             DebugFun::SetLogInterface(SetupJsonLogger("application.json"_tmp));

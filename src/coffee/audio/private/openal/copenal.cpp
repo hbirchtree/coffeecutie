@@ -477,9 +477,9 @@ void source_set_offset_bytes(CALSource* source, i32 const& off)
 
 void source_transform(
     CALSource*   source,
-    const CVec3& position,
-    const CVec3& velocity,
-    const CVec3& direction)
+    Vecf3 const& position,
+    Vecf3 const& velocity,
+    Vecf3 const& direction)
 {
     _al_check_rsc(source);
 

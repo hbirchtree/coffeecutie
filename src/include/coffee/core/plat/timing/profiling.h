@@ -127,6 +127,29 @@ using Profiler = ::profiler::
 
 using DataPoint = Profiler::datapoint;
 
+struct ExtraDataImpl
+{
+    STATICINLINE void Add(CString const& k, CString const& v)
+    {
+        auto context = State::GetProfilerStore();
+
+        C_PTR_CHECK(context);
+
+        Lock _(context->access);
+
+        context->extra_data[k] = v;
+    }
+
+    STATICINLINE PExtraData Get()
+    {
+        auto context = State::GetProfilerStore();
+
+        C_PTR_CHECK(context);
+
+        return context->extra_data;
+    }
+};
+
 #if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
 struct SimpleProfilerImpl
 {
@@ -160,31 +183,27 @@ struct SimpleProfilerImpl
         Profiler::lib::profile(name);
     }
 
-    C_DEPRECATED
+    C_DEPRECATED_S("Doesn't do anything")
     STATICINLINE void InitProfiler()
     {
     }
 
-    C_DEPRECATED
+    C_DEPRECATED_S("use State::GetProfilerStore()")
     STATICINLINE void DisableProfiler()
     {
     }
 
-    C_DEPRECATED
+    C_DEPRECATED_S("use State::GetProfilerStore()->flags instead")
     STATICINLINE void SetDeepProfileMode(bool state)
     {
     }
 
-    C_DEPRECATED
+    C_DEPRECATED_S("use ExtraData::Add() instead")
     STATICINLINE void AddExtraData(CString const& key, CString const& value)
     {
-        auto& context = Context();
-        Lock  _(context.access);
-
-        context.extra_data[key] = value;
     }
 
-    C_DEPRECATED
+    C_DEPRECATED_S("use ExtraData::Get() instead")
     STATICINLINE PExtraData* ExtraInfo()
     {
         return &Context().extra_data;
@@ -308,6 +327,7 @@ extern ShPtr<State::GlobalState> CreateJsonProfiler();
 using DProfContext = Profiling::DeepProfilerContext;
 using ProfContext  = Profiling::ProfilerContext;
 using Profiler     = Profiling::SimpleProfilerImpl;
+using ExtraData    = Profiling::ExtraDataImpl;
 
 #define DPROF_CONTEXT_FUNC(PREFIX) \
     DProfContext _(PREFIX + CString(__FUNCTION__) + "()")

@@ -3,7 +3,7 @@
 #include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/plat/timing/timing_def.h>
+#include <coffee/core/plat/plat_timing.h>
 #include <coffee/core/string_casting.h>
 
 #if defined(COFFEE_ANDROID)

@@ -1,21 +1,21 @@
 #pragma once
 
+#include "cblam_map.h"
+#include "cblam_scenario.h"
+#include "cblam_structures.h"
 #include <algorithm>
 #include <functional>
 #include <iterator>
-#include "cblam_structures.h"
-#include "cblam_scenario.h"
-#include "cblam_map.h"
 
-namespace Coffee{
-namespace Blam{
+namespace Coffee {
+namespace Blam {
 
 struct map_container
 {
     map_container(c_ptr map, version_t ver)
     {
         this->map = file_header_get(map, ver);
-        tags = tag_index_get(this->map);
+        tags      = tag_index_get(this->map);
     }
 
     bool is_valid()
@@ -24,14 +24,12 @@ struct map_container
     }
 
     file_header_t const* map;
-    tag_index_t tags;
+    tag_index_t          tags;
 
     operator cstring()
     {
         return file_header_full_mapname(map);
     }
-
-
 
     cstring get_name(index_item_t const* idx)
     {
@@ -45,17 +43,17 @@ struct map_container
 
 class tag_index_view
 {
-    tag_index_t& m_idx;
+    tag_index_t&         m_idx;
     file_header_t const* m_file;
-    index_item_t const* m_root;
+    index_item_t const*  m_root;
 
-public:
-
-    class index_iterator : public Iterator<ForwardIteratorTag, index_item_t const*>
+  public:
+    class index_iterator
+        : public Iterator<ForwardIteratorTag, index_item_t const*>
     {
         friend class tag_index_view;
 
-        i32 i;
+        i32             i;
         tag_index_view* idx;
 
         index_item_t const* deref()
@@ -65,19 +63,16 @@ public:
             return &idx->m_root[i];
         }
 
-		index_item_t const* deref() const
-		{
-			return &tag_index_get_items(idx->m_file)[i];
-		}
+        index_item_t const* deref() const
+        {
+            return &tag_index_get_items(idx->m_file)[i];
+        }
 
-        index_iterator(tag_index_view& idx, i32 i):
-            i(i),
-            idx(&idx)
+        index_iterator(tag_index_view& idx, i32 i) : i(i), idx(&idx)
         {
         }
 
-    public:
-
+      public:
         index_iterator& operator=(const index_iterator& other)
         {
             if(other == *this)
@@ -90,12 +85,12 @@ public:
             return *this;
         }
 
-        bool operator !=(index_iterator const& other) const
+        bool operator!=(index_iterator const& other) const
         {
             return i != other.i;
         }
 
-        bool operator ==(index_iterator const& other) const
+        bool operator==(index_iterator const& other) const
         {
             return i == other.i;
         }
@@ -111,10 +106,10 @@ public:
             return deref();
         }
 
-		index_item_t const* operator*() const
-		{
-			return deref();
-		}
+        index_item_t const* operator*() const
+        {
+            return deref();
+        }
 
         operator cstring()
         {
@@ -124,10 +119,8 @@ public:
 
     using iterator = index_iterator;
 
-    tag_index_view(map_container& map):
-        m_idx(map.tags),
-        m_file(map.map),
-        m_root(nullptr)
+    tag_index_view(map_container& map) :
+        m_idx(map.tags), m_file(map.map), m_root(nullptr)
     {
     }
 
@@ -150,5 +143,5 @@ public:
     }
 };
 
-}
-}
+} // namespace Blam
+} // namespace Coffee

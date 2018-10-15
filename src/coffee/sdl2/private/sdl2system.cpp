@@ -1,6 +1,5 @@
 #include <coffee/sdl2/sdl2system.h>
 
-#include <coffee/core/coffee_strings.h>
 #include <coffee/core/CProfiling>
 #include "types/sdl2datatypes.h"
 
@@ -15,8 +14,7 @@ bool SDL2::Init()
     DProfContext a("SDL2 Init");
     if(SDL_Init(0)<0)
     {
-        cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
-             CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        cTag("SDL", "Failed to init: {0}", SDL_GetError());
         return false;
     }
     Profiler::DeepProfile("SDL2 Initialization");

@@ -119,7 +119,7 @@ struct RenderData
     Sprites::Renderer r;
     Sprites::Texture  t;
     Sprites::Sprite   sprite;
-    CRGBA             clearCol;
+    rgba_t            clearCol;
 };
 
 i32 coffee_main(i32, cstring_w*)
@@ -165,7 +165,8 @@ i32 coffee_main(i32, cstring_w*)
 
             /* Copy texture into texture memory */
             {
-                CRGBA* pdata = C_FCAST<CRGBA*>(data->rend.mapTexture(data->t));
+                rgba_t* pdata =
+                    C_FCAST<rgba_t*>(data->rend.mapTexture(data->t));
                 MemCpy(
                     C_OCAST<Bytes>(img),
                     Bytes::From(pdata, img.size.area() * img.bpp));
@@ -182,7 +183,7 @@ i32 coffee_main(i32, cstring_w*)
         /* Show the window */
         test.showWindow();
 
-        data->clearCol = CRGBA(127, 0, 0);
+        data->clearCol = rgba_t(127, 0, 0);
 
         /* Set clear color for buffer */
         data->rend.setClearColor(data->r, data->clearCol);

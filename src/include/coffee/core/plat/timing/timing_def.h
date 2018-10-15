@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_PLAT_TIMING_DEF_H
-#define COFFEE_CORE_PLAT_TIMING_DEF_H
+#pragma once
 
 #include "../../types/cdef/timetypes.h"
 #include "../../types/tdef/stltypes.h"
@@ -176,8 +175,3 @@ using Time = TimeDef;
 #endif
 
 } // namespace Coffee
-
-#endif
-
-#include "unix/timers.h"
-#include "windows/timers.h"

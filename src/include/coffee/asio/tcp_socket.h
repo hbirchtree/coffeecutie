@@ -352,9 +352,6 @@ struct socket_base : std::istream, std::ostream, non_copy
             return;
         }
 
-        auto avail = recvp.in_avail();
-        auto size  = recvp.size();
-
         asio::async_read(
             socket,
             recvp,

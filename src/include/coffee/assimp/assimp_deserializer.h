@@ -1,24 +1,24 @@
 #pragma once
 
-#include <coffee/interfaces/cgraphics_api_basic.h>
-#include <coffee/interfaces/file_resolver.h>
-#include <coffee/core/type_safety.h>
 #include <coffee/core/base/files/url.h>
+#include <coffee/core/type_safety.h>
 #include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/interfaces/cgraphics_api_basic.h>
+#include <coffee/interfaces/file_resolver.h>
 
 #include "assimp_iterators.h"
 #include "assimp_material_iterators.h"
 
-namespace Coffee{
-namespace ASSIMP{
+namespace Coffee {
+namespace ASSIMP {
 
-template<typename API,
+template<
+    typename API,
 
-         typename implements<RHI::GraphicsAPI_Base, API>::type*
-         = nullptr
+    typename implements<RHI::GraphicsAPI_Base, API>::type* = nullptr
 
-         >
+    >
 struct SerializedData
 {
     using SNL = MeshLoader::SerialNodeList;
@@ -28,22 +28,18 @@ struct SerializedData
 
     SerialArray<typename API::V_ATTR> attributes;
     SerialArray<typename API::D_DATA> draws;
-    typename API::D_CALL draw_call;
-    SNL::SerialHeader const* nodes;
-    MTL const* materials;
-    Bytes const* vertices;
-    Bytes const* elements;
+    typename API::D_CALL              draw_call;
+    SNL::SerialHeader const*          nodes;
+    MTL const*                        materials;
+    Bytes const*                      vertices;
+    Bytes const*                      elements;
 };
-
 
 using ResolveResource = Function<Bytes(Url const&, CString const&)>;
 
 template<typename API>
-static
-bool LoadModel(
-        ResolverPair<BytesResolver> const& base,
-        SerializedData<API>& output
-        )
+static bool LoadModel(
+    ResolverPair<BytesResolver> const& base, SerializedData<API>& output)
 {
     using SerialHeader = typename SerializedData<API>::SNL::SerialHeader;
 
@@ -58,11 +54,13 @@ bool LoadModel(
         FI_Materials,
     };
 
-    Array<cstring, 7> extensions = {{
-        "vertices", "elements", "draws",
-        "attributes", "dcall", "graph",
-        "materials"
-    }};
+    Array<cstring, 7> extensions = {{"vertices",
+                                     "elements",
+                                     "draws",
+                                     "attributes",
+                                     "dcall",
+                                     "graph",
+                                     "materials"}};
 
     DProfContext _("ASSIMP::LoadModel");
 
@@ -74,9 +72,7 @@ bool LoadModel(
         DProfContext _("ASSIMP::Resolving model file");
 
         output.store.push_back(
-                    std::move(
-                        base.resolver.extResolver(base.url, ext)
-                        ));
+            std::move(base.resolver.extResolver(base.url, ext)));
 
         /* If file resolution fails, escape! */
         if(!output.store.back().data)
@@ -85,21 +81,16 @@ bool LoadModel(
 
     {
         DProfContext _("ASSIMP::Setting up model pointers");
-        output.draws = SerialArray<typename API::D_DATA>(
-                    output.store.at(FI_Draws)
-                    );
-        output.attributes = SerialArray<typename API::V_ATTR>(
-                    output.store.at(FI_Attributes)
-                    );
+        output.draws =
+            SerialArray<typename API::D_DATA>(output.store.at(FI_Draws));
+        output.attributes =
+            SerialArray<typename API::V_ATTR>(output.store.at(FI_Attributes));
         output.draw_call = *C_RCAST<typename API::D_CALL const*>(
-                    output.store.at(FI_DCall).data
-                    );
-        output.nodes = C_RCAST<SerialHeader const*>(
-                    output.store.at(FI_Graph).data
-                    );
+            output.store.at(FI_DCall).data);
+        output.nodes =
+            C_RCAST<SerialHeader const*>(output.store.at(FI_Graph).data);
         output.materials = C_RCAST<typename SerializedData<API>::MTL const*>(
-                    output.store.at(FI_Materials).data
-                    );
+            output.store.at(FI_Materials).data);
         output.vertices = &output.store.at(FI_Vertices);
         output.elements = &output.store.at(FI_Elements);
     }
@@ -107,5 +98,5 @@ bool LoadModel(
     return true;
 }
 
-}
-}
+} // namespace ASSIMP
+} // namespace Coffee

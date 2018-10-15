@@ -1,67 +1,72 @@
-#ifndef COFFEE_TYPES_GRAPHICS_TYPES_H
-#define COFFEE_TYPES_GRAPHICS_TYPES_H
+#pragma once
 
 #include "cdef/geometry.h"
 #include "vector_types.h"
 
-namespace Coffee{
-namespace CGraphicsData{
+namespace Coffee {
+namespace SceneGraph {
 
-template<typename T,
-
-         typename is_pod<T>::type* = nullptr
-
-         >
-struct _cbasic_graphics_camera
+enum CameraType
 {
-    FORCEDINLINE _cbasic_graphics_camera():
-        rotation(),
-        orthoview(T(0),T(0),T(1),T(1)),
-        position(T(0)),
-        zVals(T(1),T(100)),
-        fieldOfView(T(85)),
-        aspect(T(1)),
-        flags(CameraFlags::Perspective)
+    Perspective,
+    Orthographic,
+};
+
+template<typename T>
+struct _cbasic_camera_base
+{
+    FORCEDINLINE _cbasic_camera_base() :
+        rotation(), position(T(0)), zVals(T(1), T(100))
     {
     }
 
-    enum class CameraFlags : uint8{
-        Perspective = 0x0,
-        Orthographic = 0x1,
-    };
-
     _cbasic_tquaternion<T> rotation;
-    _cbasic_rect<T> orthoview;
-    _cbasic_vec3<T> position;
+    _cbasic_vec3<T>        position;
+    _cbasic_range<T>       zVals;
+};
 
-    _cbasic_range<T> zVals;
+template<typename T>
+struct _cbasic_camera : _cbasic_camera_base<T>
+{
+    FORCEDINLINE _cbasic_camera() : fieldOfView(T(85)), aspect(T(1))
+    {
+    }
 
     T fieldOfView;
     T aspect;
-
-    CameraFlags flags;
 };
 
-template<typename T,
+template<typename T>
+struct _cbasic_camera_ortho : _cbasic_camera_base<T>
+{
+    FORCEDINLINE _cbasic_camera_ortho() : orthoview(T(0), T(0), T(1), T(1))
+    {
+    }
 
-         typename is_pod<T>::type* = nullptr
+    _cbasic_rect<T> orthoview;
+};
 
-         >
+template<typename T>
+using _cbasic_graphics_camera = _cbasic_camera<T>;
+
+template<typename T>
+using camera = _cbasic_camera<T>;
+
+template<typename T>
+using camera_ortho = _cbasic_camera_ortho<T>;
+
+template<typename T>
 struct _cbasic_graphics_transform
 {
-    FORCEDINLINE _cbasic_graphics_transform():
-        rotation(),
-        position(0),
-        scale(1.0)
+    FORCEDINLINE _cbasic_graphics_transform() :
+        rotation(), position(0), scale(1.0)
     {
     }
 
     _cbasic_tquaternion<T> rotation;
-    _cbasic_vec3<T> position;
-    _cbasic_vec3<T> scale;
+    _cbasic_vec3<T>        position;
+    _cbasic_vec3<T>        scale;
 };
 
-}
-}
-
-#endif
+} // namespace SceneGraph
+} // namespace Coffee

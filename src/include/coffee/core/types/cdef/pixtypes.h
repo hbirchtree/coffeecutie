@@ -4,7 +4,7 @@
 #include "../tdef/stltypes.h"
 #include "geometry.h"
 
-namespace Coffee{
+namespace Coffee {
 
 template<typename T, u32 min_value = 0, u32 max_value = 0>
 struct rgba_untyped
@@ -15,28 +15,27 @@ struct rgba_untyped
 /*!
  * \brief Used for storing typical 8-bit color with alpha
  */
-struct CRGBA
+struct rgba_t
 {
-    CRGBA():
-        i(0)
+    rgba_t() : i(0)
     {
     }
-    CRGBA(u8 r,u8 g,u8 b,u8 a = 255):
-        r(r),g(g),b(b),a(a)
+    rgba_t(u8 r, u8 g, u8 b, u8 a = 255) : r(r), g(g), b(b), a(a)
     {
     }
 
-    union{
+    union
+    {
         u32 i;
         struct
         {
-            u8 r,g,b,a;
+            u8 r, g, b, a;
         };
     };
     u32 rgba() const
     {
 #if defined(COFFEE_LIL_ENDIAN)
-        CRGBA t;
+        rgba_t t;
         t.r = b;
         t.g = g;
         t.b = r;
@@ -48,28 +47,25 @@ struct CRGBA
     }
 };
 
-struct CRGB
+struct rgb_t
 {
-    union{
+    union
+    {
         uint24 i;
         struct
         {
-            u8 r,g,b;
+            u8 r, g, b;
         };
     };
 };
 
-struct CColorMask
+struct colormask_t
 {
-    bool r:1;
-    bool g:1;
-    bool b:1;
-    bool a:1;
-    u8 padding:4;
+    bool r : 1;
+    bool g : 1;
+    bool b : 1;
+    bool a : 1;
+    u8   padding : 4;
 };
 
-using rgba_t = CRGBA;
-using rgb_t = CRGB;
-using colormask_t = CColorMask;
-
-}
+} // namespace Coffee

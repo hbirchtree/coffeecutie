@@ -1,25 +1,26 @@
-#ifndef COFFEE_CORE_DIALOGS_FUNCTIONAL_H
-#define COFFEE_CORE_DIALOGS_FUNCTIONAL_H
+#pragma once
 
 #include <coffee/core/coffee_macros.h>
-#include <coffee/core/types/composite_types.h>
-#include <coffee/core/base/threading/cthreading.h>
+#include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/edef/colorenum.h>
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
 /*!
- * \brief Used for minor messages and similar, implemented on window system-layer
+ * \brief Used for minor messages and similar, implemented on window
+ * system-layer
  */
 struct DialogInterface
 {
     struct WinHnd;
     struct MsgWinHnd;
 
-    static WinHnd* CreateDWindow(cstring title, WinHnd* parent = nullptr);
-    static MsgWinHnd* CreateMessageDialog(cstring title, WinHnd* parent = nullptr);
+    static WinHnd*    CreateDWindow(cstring title, WinHnd* parent = nullptr);
+    static MsgWinHnd* CreateMessageDialog(
+        cstring title, WinHnd* parent = nullptr);
 
     static void SetDialogSeverity(MsgWinHnd*, Severity);
 
@@ -39,28 +40,25 @@ struct SplashInterface
 
     struct Title
     {
-        FORCEDINLINE Title(CString t,
-                           Color c = Color::White,
-                           Alignment a = AlignUndefined,
-                           int s = 12):
+        FORCEDINLINE Title(
+            CString   t,
+            Color     c = Color::White,
+            Alignment a = AlignUndefined,
+            int       s = 12) :
             m_title(t),
-            m_align(a),
-            m_col(c),
-            m_size(s)
+            m_align(a), m_col(c), m_size(s)
         {
         }
-        FORCEDINLINE Title(Title const& t):
-            m_title(t.m_title),
-            m_align(t.m_align),
-            m_col(t.m_col),
+        FORCEDINLINE Title(Title const& t) :
+            m_title(t.m_title), m_align(t.m_align), m_col(t.m_col),
             m_size(t.m_size)
         {
         }
 
-        const CString m_title;
+        const CString   m_title;
         const Alignment m_align;
-        const Color m_col;
-        const int m_size;
+        const Color     m_col;
+        const int       m_size;
     };
 
     static SplashHandle* CreateSplash();
@@ -68,19 +66,18 @@ struct SplashInterface
     static void ShowSplash(SplashHandle*);
     static void HideSplash(SplashHandle*);
 
-    static void SetSize(SplashHandle*,CSize const&);
+    static void SetSize(SplashHandle*, CSize const&);
 
-    static void SetTitle(SplashHandle*,Title const&);
-    static void SetSubText(SplashHandle*,Title const&);
+    static void SetTitle(SplashHandle*, Title const&);
+    static void SetSubText(SplashHandle*, Title const&);
 
     static void SetProgress(SplashHandle*, scalar);
     static void Repaint(SplashHandle*);
 
-    static bool SetBitmap(SplashHandle*,PixelFormat,CSize const&,const byte_t*);
+    static bool SetBitmap(
+        SplashHandle*, PixelFormat, CSize const&, const byte_t*);
 
     static void DestroySplash(SplashHandle*);
 };
 
-}
-
-#endif
+} // namespace Coffee

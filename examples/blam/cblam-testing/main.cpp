@@ -22,7 +22,7 @@ struct texture_data_t
     cstring             tag_name;
 };
 
-using rgba_color_t = CRGBA;
+using rgba_color_t = rgba_t;
 
 #define bmpEndianSwap64(x)                                                 \
     (((x & 0xFF00000000000000) >> 56) | ((x & 0x00FF000000000000) >> 40) | \

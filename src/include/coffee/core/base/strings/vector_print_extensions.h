@@ -7,17 +7,17 @@
 namespace Coffee{
 namespace Strings{
 
-extern CString to_string(CQuat const& v);
+extern CString to_string(Quatf const& v);
 
-extern CString to_string(CVec4 const& v);
+extern CString to_string(Vecf4 const& v);
 
-extern CString to_string(CVec3 const& v);
+extern CString to_string(Vecf3 const& v);
 
-extern CString to_string(CVec2 const& v);
+extern CString to_string(Vecf2 const& v);
 
-extern CString to_string(CMat4 const& v);
+extern CString to_string(Matf4 const& v);
 
-extern CString to_string(CMat3 const& v);
+extern CString to_string(Matf3 const& v);
 
 extern CString to_string(BoundBox const& box);
 

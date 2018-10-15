@@ -289,10 +289,10 @@ int run_tests(u32 num, Test const* tests, int argc, char** argv)
     for(u64 v : test_times)
         time_accum += v;
 
-    Profiler::AddExtraData("testing:title", GetCurrentApp().application_name);
-    Profiler::AddExtraData("testing:bmark", cast_pod(time_accum));
-    Profiler::AddExtraData("testing:result", fmt("{0},{1}", suc, num));
-    Profiler::AddExtraData("testing:mem", cast_pod(ProcessProperty::Mem(0)));
+    ExtraData::Add("testing:title", GetCurrentApp().application_name);
+    ExtraData::Add("testing:bmark", cast_pod(time_accum));
+    ExtraData::Add("testing:result", fmt("{0},{1}", suc, num));
+    ExtraData::Add("testing:mem", cast_pod(ProcessProperty::Mem(0)));
 
     for(auto i : Range<>(test_results.size()))
     {
@@ -315,7 +315,7 @@ int run_tests(u32 num, Test const* tests, int argc, char** argv)
 
         cOutputPrint("{0}", buf.GetString());
 
-        Profiler::AddExtraData("testing:jsonresult", buf.GetString());
+        ExtraData::Add("testing:jsonresult", buf.GetString());
     }
 
     cDebug("Memory consumption: {0} kB", ProcessProperty::Mem(0));

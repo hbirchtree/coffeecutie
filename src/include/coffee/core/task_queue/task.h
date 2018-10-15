@@ -119,6 +119,10 @@ class RuntimeQueue
 
         Map<ThreadId::Hash, RuntimeQueue>       queues;
         Map<ThreadId::Hash, Thread>             queueThreads;
+        /*!
+         * \brief Contains all data necessary to manage a worker thread.
+         * Needs to be a ShPtr<T> in order to avoid early destruction.
+         */
         Map<ThreadId::Hash, ShPtr<semaphore_t>> queueFlags;
     };
 

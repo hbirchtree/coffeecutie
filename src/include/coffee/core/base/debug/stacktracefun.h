@@ -1,11 +1,10 @@
-#ifndef COFFEE_CORE_BASE_DEBUG_STACKTRACE_H
-#define COFFEE_CORE_BASE_DEBUG_STACKTRACE_H
+#pragma once
 
-#include "debug_interface.h"
 #include "../../plat/environment/stacktrace_def.h"
+#include "debug_interface.h"
 
-namespace Coffee{
-namespace DebugFun{
+namespace Coffee {
+namespace DebugFun {
 
 struct StacktraceFunImpl : StacktraceFunDef
 {
@@ -17,7 +16,5 @@ struct StacktraceFunImpl : StacktraceFunDef
 
 using StacktraceFun = StacktraceFunImpl;
 
-}
-}
-
-#endif
+} // namespace DebugFun
+} // namespace Coffee

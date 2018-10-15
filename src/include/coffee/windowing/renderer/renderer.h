@@ -1,29 +1,29 @@
-#ifndef CSDL2RENDERER_H
-#define CSDL2RENDERER_H
+#pragma once
 
 #include <coffee/core/CDRendererBase>
 #include <coffee/windowing/stub/stub.h>
 
-namespace Coffee{
+namespace Coffee {
 
 using CDRendererBase = Display::CDRendererBase;
 using namespace CInput;
 
-namespace Display{
+namespace Display {
 
-class RendererInterface :
-        public CDRendererBase,
-        public virtual EventApplication,
-        public virtual WindowManagerClient,
-        public virtual GLLoader,
-        public virtual GLApplication
+class RendererInterface : public CDRendererBase,
+                          public virtual EventApplication,
+                          public virtual WindowManagerClient,
+                          public virtual GLLoader,
+                          public virtual GLApplication
 {
-public:
+  public:
     RendererInterface(CObject* parent = nullptr) :
-        GLLoader(this),
-        CDRendererBase(parent)
-    {}
-    virtual ~RendererInterface() {}
+        GLLoader(this), CDRendererBase(parent)
+    {
+    }
+    virtual ~RendererInterface()
+    {
+    }
 };
 
 using CSDL2Renderer = RendererInterface;
@@ -35,7 +35,5 @@ FORCEDINLINE UqPtr<CSDL2Renderer> CreateRendererUq()
     return UqPtr<CSDL2Renderer>(CreateRenderer());
 }
 
-}
-}
-
-#endif // CSDL2RENDERER_H
+} // namespace Display
+} // namespace Coffee

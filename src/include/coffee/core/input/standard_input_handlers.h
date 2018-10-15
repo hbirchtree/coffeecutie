@@ -1,6 +1,5 @@
 #pragma once
 
-#include "cinputfunctions.h"
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/types/edef/logicenum.h>
@@ -158,7 +157,18 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
     case CIEvent::MouseMove:
     {
         auto ev = C_CAST<const CIMouseMoveEvent*>(data);
-        MouseRotate(camera.rotation, ev);
+
+        auto& cqt = camera.rotation;
+
+        auto yaw   = 0.01f * ev->delta.y;
+        auto pitch = 0.01f * ev->delta.x;
+
+        cqt = normalize_quat(Quatf(1, 0, pitch, 0) * cqt);
+
+        cqt.x() = CMath::max(-0.5f, CMath::min(0.5f, cqt.x()));
+
+        cqt = normalize_quat(Quatf(1, yaw, 0, 0) * cqt);
+
         break;
     }
     default:

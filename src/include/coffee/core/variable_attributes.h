@@ -3,11 +3,18 @@
 #include "plat/plat_primary_identify.h"
 #include "plat/plat_compiler_identify.h"
 
-#if (__cplusplus >= 201703L) && 0
+#define VERIFY_CPP_FEATURE(version, attrib) \
+    (__cplusplus >= version) || \
+    (defined(__has_cpp_attribute ) && __has_cpp_attribute(attrib))
+
+/*
+ * [[maybe_unused]], for parameters
+ *
+ */
+#if VERIFY_CPP_FEATURE(201703L, maybe_unused)
 #define UNUSED_PARAM [[maybe_unused]]
 
-#elif defined(COFFEE_GCC) || defined(COFFEE_CLANG) \
-    && !defined(COFFEE_MAEMO)
+#elif defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define UNUSED_PARAM __attribute__((unused))
 
 #else
@@ -15,29 +22,35 @@
 
 #endif
 
-#if (__cplusplus >= 201703L)
+/*
+ * [[maybe_unused]], for variables
+ *
+ */
+#if VERIFY_CPP_FEATURE(201703L, maybe_unused)
 #define C_MAYBE_UNUSED [[maybe_unused]]
 
-#elif (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) \
-    && !defined(COFFEE_MAEMO)
+#elif defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_MAYBE_UNUSED __attribute__((unused))
 
 #else
 #define C_MAYBE_UNUSED
 #endif
 
-#if (__cplusplus >= 201403L)
+/*
+ * [[deprecated]]
+ *
+ */
+#if VERIFY_CPP_FEATURE(201403L, deprecated)
 #define C_DEPRECATED [[deprecated]]
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 
-#elif (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) \
-    && !defined(COFFEE_MAEMO)
+#elif defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_DEPRECATED __attribute__((deprecated))
-#define C_DEPRECATED_S(reason) C_DEPRECATED
+#define C_DEPRECATED_S(reason) __attribute__((deprecated(reason, "")))
 
 #elif defined(COFFEE_MSVC)
 #define C_DEPRECATED __declspec(deprecated)
-#define C_DEPRECATED_S(reason) C_DEPRECATED
+#define C_DEPRECATED_S(reason) __declspec(deprecated(reason))
 
 #else
 #define C_DEPRECATED
@@ -45,33 +58,42 @@
 
 #endif
 
-#if !defined(COFFEE_MAEMO) && !defined(COFFEE_ANDROID)
+/*
+ * [[noreturn]]
+ *
+ */
 #define C_NORETURN [[noreturn]]
 
+/*
+ * [[nodiscard]]
+ *
+ */
+#if VERIFY_CPP_FEATURE(201703L, nodiscard)
+#define NO_DISCARD [[nodiscard]]
+
+#elif defined(COFFEE_GCC)
+#define NO_DISCARD [[gnu::warn_unused_result]]
+
+#elif defined(COFFEE_CLANG)
+#define NO_DISCARD [[clang::warn_unused_result]]
+
+#elif defined(COFFEE_MSVC)
+#define NO_DISCARD _Must_inspect_result_
+
 #else
-#define C_NORETURN
+#define NO_DISCARD
 
 #endif
 
+/*
+ * has_include
+ *
+ */
 #if (__cplusplus >= 201703L)
 #define C_HAS_INCLUDE(header) __has_include(header)
 #else
 #define C_HAS_INCLUDE(header) 0
 
-#endif
-
-#if defined(__has_cpp_attribute ) && (__cplusplus >= 201703L)
-
-#if __has_cpp_attribute(nodiscard)
-#define NO_DISCARD [[nodiscard]]
-#endif
-
-#elif defined(COFFEE_GCC)
-#define NO_DISCARD [[gnu::warn_unused_result]]
-#elif defined(COFFEE_CLANG)
-#define NO_DISCARD [[clang::warn_unused_result]]
-#else
-#define NO_DISCARD
 #endif
 
 #define C_OPTIONAL
@@ -81,3 +103,5 @@ struct C_DEPRECATED_TYPE
 {
     /*C_DEPRECATED*/ typedef T type;
 };
+
+#undef VERIFY_CPP_FEATURE

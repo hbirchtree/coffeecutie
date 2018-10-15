@@ -2,18 +2,17 @@
 
 #include "asio_data.h"
 
-namespace Coffee{
-namespace ASIO{
+namespace Coffee {
+namespace ASIO {
 
 struct UDPSocketImpl : ASIO_Client
 {
-    using proto = asio::ip::udp;
+    using proto    = asio::ip::udp;
     using endpoint = asio::ip::udp::endpoint;
 
     class Socket : public asio::ip::udp::socket
     {
-    public:
-
+      public:
         Socket(AsioContext_internal context, proto prot) :
             asio::ip::udp::socket(context->service)
         {
@@ -31,8 +30,8 @@ struct UDPSocketImpl : ASIO_Client
     };
 };
 
-}
+} // namespace ASIO
 
 using UDP = ASIO::UDPSocketImpl;
 
-}
+} // namespace Coffee

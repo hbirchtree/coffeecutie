@@ -1,29 +1,32 @@
-#ifndef COFFEE_GRAPICS_APIS_GLCORE_GLTYPES_H
-#define COFFEE_GRAPICS_APIS_GLCORE_GLTYPES_H
+#pragma once
 
 #include <coffee/core/types/tdef/stlfunctypes.h>
 
-namespace Coffee{
+namespace Coffee {
 /*!
  * \brief Wrapper around OpenGL's calls into Coffee types
  * Also used as a safety net for non-C++-friendly functions
  */
-namespace CGL{
+namespace CGL {
 
 /*!
  * \brief An objectified OpenGL context
  */
 struct CGL_Context
 {
-    virtual ~CGL_Context(){}
-    virtual bool acquireContext() = 0;
-    virtual bool releaseContext() = 0;
-    virtual const ThreadId &currentThread() = 0;
+    virtual ~CGL_Context()
+    {
+    }
+    virtual bool            acquireContext() = 0;
+    virtual bool            releaseContext() = 0;
+    virtual const ThreadId& currentThread()  = 0;
 };
 
 struct CGL_WorkerContext : public CGL_Context
 {
-    virtual ~CGL_WorkerContext(){}
+    virtual ~CGL_WorkerContext()
+    {
+    }
 };
 
 /*!
@@ -31,24 +34,40 @@ struct CGL_WorkerContext : public CGL_Context
  */
 struct CGL_Layer
 {
-    using InterceptFunction = void(*)(cstring);
+    using InterceptFunction = void (*)(cstring);
 
-    static bool Initialize(){return false;}
-    static bool Terminate(){return false;}
+    static bool Initialize()
+    {
+        return false;
+    }
+    static bool Terminate()
+    {
+        return false;
+    }
 
-    static void InsertCallInterceptPre(InterceptFunction){}
-    static void InsertCallInterceptPost(InterceptFunction){}
+    static void InsertCallInterceptPre(InterceptFunction)
+    {
+    }
+    static void InsertCallInterceptPost(InterceptFunction)
+    {
+    }
 
-    static CGL_Context* CreateContext(){return nullptr;}
-    static bool DeleteContext(CGL_Context*){return false;}
+    static CGL_Context* CreateContext()
+    {
+        return nullptr;
+    }
+    static bool DeleteContext(CGL_Context*)
+    {
+        return false;
+    }
 };
 /*!
- * \brief A thread-local scoped OpenGL context, acquired on creation and released on deletion
+ * \brief A thread-local scoped OpenGL context, acquired on creation and
+ * released on deletion
  */
 struct CGL_ScopedContext
 {
-    CGL_ScopedContext(CGL_Context* ctxt):
-        m_ctxt(ctxt)
+    CGL_ScopedContext(CGL_Context* ctxt) : m_ctxt(ctxt)
     {
         if(m_ctxt)
             m_ctxt->acquireContext();
@@ -58,11 +77,10 @@ struct CGL_ScopedContext
         if(m_ctxt)
             m_ctxt->releaseContext();
     }
-protected:
+
+  protected:
     CGL_Context* m_ctxt;
 };
 
-}
-}
-
-#endif
+} // namespace CGL
+} // namespace Coffee

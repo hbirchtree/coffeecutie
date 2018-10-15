@@ -3,7 +3,6 @@
 #include "../types/sdl2datatypes.h"
 #include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
-#include <coffee/core/coffee_strings.h>
 
 namespace Coffee {
 namespace Display {
@@ -31,15 +30,9 @@ bool SDL2SpriteRenderer::spritesPreInit(CString* err)
 {
     if(SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
     {
-        cLog(
-            __FILE__,
-            __LINE__,
-            CFStrings::SDL2_Library_Name,
-            CFStrings::SDL2_Library_FailureInit,
-            SDL_GetError());
+        cTag("SDLSpriteRenderer", "Failed to init: {0}", SDL_GetError());
         if(err)
-            *err = cStringFormat(
-                CFStrings::SDL2_Library_FailureInit, SDL_GetError());
+            *err = cStringFormat("Failed to init: {0}", SDL_GetError());
     }
     Profiler::DeepProfile("Initialize sprite rendering");
     return true;
@@ -63,7 +56,7 @@ void SDL2SpriteRenderer::spritesTerminate()
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void SDL2SpriteRenderer::setClearColor(const Renderer& r, const CRGBA& color)
+void SDL2SpriteRenderer::setClearColor(const Renderer& r, const rgba_t& color)
 {
     SDL_Renderer* ren = m_context->renderers[r];
     SDL_SetRenderDrawColor(ren, color.r, color.g, color.b, color.a);
@@ -100,12 +93,7 @@ void SDL2SpriteRenderer::destroyRenderer(Renderer t)
 }
 
 bool SDL2SpriteRenderer::createTexture(
-    Renderer     r,
-    u32       c,
-    Texture*     t,
-    PixelFormat  fmt,
-    RSCA         acc,
-    CSize const& size)
+    Renderer r, u32 c, Texture* t, PixelFormat fmt, RSCA acc, CSize const& size)
 {
     Uint32 sdlfmt = 0;
     switch(fmt)
@@ -204,7 +192,7 @@ bool SDL2SpriteRenderer::uploadTexture(
                m_context->textures[tex].tex,
                &sec,
                data.data,
-               (data.size.w) * sizeof(CRGBA)) == 0;
+               (data.size.w) * sizeof(rgba_t)) == 0;
 }
 
 void* SDL2SpriteRenderer::mapTexture(Texture tex)

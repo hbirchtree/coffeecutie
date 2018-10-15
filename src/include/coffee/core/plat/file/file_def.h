@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_PLAT_FILE_DEF_H
-#define COFFEE_CORE_PLAT_FILE_DEF_H
+#pragma once
 
 #include "../../base/files/url.h"
 #include "../../types/cdef/memtypes.h"
@@ -311,5 +310,3 @@ struct DirFunDef : FileBase<NestedError>
 using namespace CResources;
 
 } // namespace Coffee
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef CIMAGE_LIB
-#define CIMAGE_LIB
+#pragma once
 
 #include <coffee/core/CFiles>
 #include <coffee/core/types/cdef/geometry.h>
@@ -356,5 +355,3 @@ using ImgConst = CStbImageConst;
 } // namespace Stb
 
 } // namespace Coffee
-
-#endif

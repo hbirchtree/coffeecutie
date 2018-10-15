@@ -119,7 +119,7 @@ bool floating_point_format()
 
 bool vector_format()
 {
-    CVec3 vec(1);
+    Vecf3 vec(1);
 
     CString real = "v(1.,1.,1.)";
     CString test = cStringFormat("{0}", vec);

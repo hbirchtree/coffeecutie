@@ -1,27 +1,28 @@
-#ifndef COFFEE_CORE_PLAT_ENV_PROCESS_DEF_H
-#define COFFEE_CORE_PLAT_ENV_PROCESS_DEF_H
+#pragma once
 
-#include <coffee/core/types/tdef/stlfunctypes.h>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/tdef/stlfunctypes.h>
 
-namespace Coffee{
-namespace Environment{
+namespace Coffee {
+namespace Environment {
 struct ProcessPropertyDef
 {
     /* Memory in this context is returned in kB */
 
     using PID = u64;
     /*!
-     * \brief Initializes core dumping for the process, useful for information on crashes
+     * \brief Initializes core dumping for the process, useful for information
+     * on crashes
      */
     static void CoreDumpEnable()
     {
     }
     /*!
-    * \brief Idea from: http://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/
-    * \param thread
-    * \param core
-    */
+     * \brief Idea from:
+     * http://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/
+     * \param thread
+     * \param core
+     */
     static bool CoreAffinity(Thread&, CoreCnt)
     {
         return false;
@@ -36,9 +37,8 @@ struct ProcessPropertyDef
         return 0;
     }
     /*!
-     * \brief Return process' resident memory usage, as in used memory within physical storage
-     * \param pid Target PID
-     * \return
+     * \brief Return process' resident memory usage, as in used memory within
+     * physical storage \param pid Target PID \return
      */
     static MemUnit MemResident(PID)
     {
@@ -105,8 +105,5 @@ struct ProcessPropertyDef
     }
 };
 
-}
-}
-
-#endif
-
+} // namespace Environment
+} // namespace Coffee

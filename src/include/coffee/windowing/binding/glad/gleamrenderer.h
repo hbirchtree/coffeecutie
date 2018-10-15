@@ -1,30 +1,26 @@
-#ifndef COFFEE_GRAPHICS_APIS_GLEAM_RENDERER_RENDERER_H
-#define COFFEE_GRAPHICS_APIS_GLEAM_RENDERER_RENDERER_H
+#pragma once
 
-#include <coffee/core/base/renderer/glloader.h>
 #include <coffee/core/base/renderer/glapplication.h>
+#include <coffee/core/base/renderer/glloader.h>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-class GLeamRenderer :
-        public virtual GLLoader
+class GLeamRenderer : public virtual GLLoader
 {
-public:
+  public:
     GLeamRenderer(GLApplication* app);
     virtual ~GLeamRenderer();
 
-    virtual void bindingCallback(const void * report) const;
-protected:
+    virtual void bindingCallback(const void* report) const;
 
-    bool bindingPreInit(const GLProperties&,CString*);
-    bool bindingInit(const GLProperties&,CString*);
-    bool bindingPostInit(const GLProperties &p,CString*);
+  protected:
+    bool bindingPreInit(const GLProperties&, CString*);
+    bool bindingInit(const GLProperties&, CString*);
+    bool bindingPostInit(const GLProperties& p, CString*);
 
     void bindingTerminate();
 };
 
-}
-}
-
-#endif
+} // namespace Display
+} // namespace Coffee

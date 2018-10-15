@@ -6,7 +6,7 @@
 namespace Coffee{
 namespace NoiseGen{
 
-scalar Perlin(const CVec3 &pos, const _cbasic_vec3<i32> &wrap)
+scalar Perlin(Vecf3 const& pos, Veci3 const& wrap)
 {
     return stb_perlin_noise3(pos.x(),pos.y(),pos.z(),wrap.x(),wrap.y(),wrap.z());
 }

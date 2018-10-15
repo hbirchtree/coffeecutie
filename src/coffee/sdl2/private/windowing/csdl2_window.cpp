@@ -1,16 +1,16 @@
 ﻿#include <coffee/sdl2/windowing/csdl2_window.h>
 
 #if defined(COFFEE_USE_SDL_WINDOW)
-#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 
 #include "sdl2helpers.h"
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
+bool SDL2Window::windowPreInit(const CDProperties& p, CString*)
 {
     DProfContext a("Configuring SDL subsystems");
 
@@ -23,10 +23,9 @@ bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
     sigaction(SIGINT, nullptr, &action);
 #endif
 
-    if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0)
+    if(SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
     {
-        cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
-             CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        cTag(SDLWM_API, "Failed to init: {0}", SDL_GetError());
         setSDL2Context(nullptr);
         return false;
     }
@@ -37,11 +36,12 @@ bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
 
     /* Create SDL2 context object */
     setSDL2Context(new Context);
-    new (&getSDL2Context()->thread) ThreadId;
+    new(&getSDL2Context()->thread) ThreadId;
 
     SDL_version ver;
     SDL_GetVersion(&ver);
-    m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
+    m_contextString =
+        cStringFormat("SDL {0}.{1}.{2}", ver.major, ver.minor, ver.patch);
 
     return true;
 }
@@ -54,48 +54,51 @@ bool SDL2Window::windowInit(const CDProperties& p, CString* err)
     m_window_flags |= SDL2::InterpretWindowFlags(p.flags);
 
     /* Create the platform window */
-    const CSize& winsize = p.size;
+    const CSize&   winsize  = p.size;
     const cstring& wintitle = p.title;
 
-    getSDL2Context()->window =
-            SDL_CreateWindow(wintitle,
-                             SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,
-                             winsize.w,winsize.h,
-                             m_window_flags);
-
+    getSDL2Context()->window = SDL_CreateWindow(
+        wintitle,
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        winsize.w,
+        winsize.h,
+        m_window_flags);
 
     /* Validate the window pointer, may have failed */
-    if(!getSDL2Context()->window){
+    if(!getSDL2Context()->window)
+    {
         if(err)
-            *err = cStringFormat(CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+            *err = cStringFormat("Failed to init: {0}", SDL_GetError());
         return false;
     }
     return true;
 }
 
-bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
+bool SDL2Window::windowPostInit(const CDProperties& p, CString*)
 {
     DProfContext a("Post-configuring window");
 
     /* Show window if requested */
-//    if(p.flags&CDProperties::Visible)
-//        showWindow();
+    //    if(p.flags&CDProperties::Visible)
+    //        showWindow();
 
     /* Set windowed fullscreen if requested */
-    if(p.flags&CDProperties::Windowed)
-        SDL_SetWindowFullscreen(getSDL2Context()->window,0);
+    if(p.flags & CDProperties::Windowed)
+        SDL_SetWindowFullscreen(getSDL2Context()->window, 0);
 
 #if !defined(COFFEE_FRAGILE_FRAMEBUFFER)
     /* Finally, push a resize event */
     {
         SDL_Event wev;
         wev.window.event = SDL_WINDOWEVENT_RESIZED;
-        CSize win_size = windowSize();
-        cVerbose(7, "Pushing resize event with: {0}x{1}", win_size.w, win_size.h);
+        CSize win_size   = windowSize();
+        cVerbose(
+            7, "Pushing resize event with: {0}x{1}", win_size.w, win_size.h);
         wev.window.data1 = win_size.w;
         wev.window.data2 = win_size.h;
-        if(SDL_PushEvent(&wev)!=1)
-            cVerbose(5,"Failed to push resize event!");
+        if(SDL_PushEvent(&wev) != 1)
+            cVerbose(5, "Failed to push resize event!");
     }
 #endif
 
@@ -117,15 +120,15 @@ void SDL2Window::windowTerminate()
 CSize SDL2Window::windowSize() const
 {
     CSize size = {};
-    SDL_GetWindowSize(getSDL2Context()->window,&size.w,&size.h);
+    SDL_GetWindowSize(getSDL2Context()->window, &size.w, &size.h);
     return size;
 }
 
-void SDL2Window::setWindowSize(const CSize &size)
+void SDL2Window::setWindowSize(const CSize& size)
 {
-    SDL_SetWindowSize(getSDL2Context()->window,size.w,size.h);
-    SDL_SetWindowMinimumSize(getSDL2Context()->window,size.w,size.h);
-    SDL_SetWindowMaximumSize(getSDL2Context()->window,size.w,size.h);
+    SDL_SetWindowSize(getSDL2Context()->window, size.w, size.h);
+    SDL_SetWindowMinimumSize(getSDL2Context()->window, size.w, size.h);
+    SDL_SetWindowMaximumSize(getSDL2Context()->window, size.w, size.h);
 }
 
 CDWindow* SDL2Window::window()
@@ -138,9 +141,9 @@ uint32 SDL2Window::windowState() const
     return SDL2::GetWindowFlags(getSDL2Context()->window);
 }
 
-void SDL2Window::setWindowState(const CDProperties::State &state)
+void SDL2Window::setWindowState(const CDProperties::State& state)
 {
-    SDL2::SetWindowFlags(getSDL2Context()->window,state);
+    SDL2::SetWindowFlags(getSDL2Context()->window, state);
 }
 
 bool SDL2Window::screensaverMode()
@@ -164,13 +167,13 @@ CString SDL2Window::windowLibrary() const
 CPoint SDL2Window::windowPosition() const
 {
     CPoint pos;
-    SDL_GetWindowSize(getSDL2Context()->window,&pos.x,&pos.y);
+    SDL_GetWindowSize(getSDL2Context()->window, &pos.x, &pos.y);
     return pos;
 }
 
 void SDL2Window::setWindowPosition(const CPoint& pos)
 {
-    SDL_SetWindowPosition(getSDL2Context()->window,pos.x,pos.y);
+    SDL_SetWindowPosition(getSDL2Context()->window, pos.x, pos.y);
 }
 
 bool SDL2Window::showWindow()
@@ -207,7 +210,7 @@ void SDL2Window::popErrorMessage(Severity s, cstring title, cstring msg)
         break;
     }
 
-    SDL_ShowSimpleMessageBox(flags,title,msg,NULL);
+    SDL_ShowSimpleMessageBox(flags, title, msg, NULL);
 }
 
 bool SDL2Window::closeWindow()
@@ -221,9 +224,9 @@ CString SDL2Window::windowTitle() const
     return SDL_GetWindowTitle(getSDL2Context()->window);
 }
 
-void SDL2Window::setWindowTitle(const CString &title)
+void SDL2Window::setWindowTitle(const CString& title)
 {
-    SDL_SetWindowTitle(getSDL2Context()->window,title.c_str());
+    SDL_SetWindowTitle(getSDL2Context()->window, title.c_str());
 }
 
 CDMonitor SDL2Window::monitor()
@@ -231,24 +234,24 @@ CDMonitor SDL2Window::monitor()
     CDMonitor mon;
 
     SDL_DisplayMode dm;
-    if(SDL_GetCurrentDisplayMode(initialProperties().monitor,&dm)<0)
-        cDebug("Failed to get monitor information: {0}",SDL_GetError());
-    else{
-
-        mon.refresh = dm.refresh_rate;
+    if(SDL_GetCurrentDisplayMode(initialProperties().monitor, &dm) < 0)
+        cDebug("Failed to get monitor information: {0}", SDL_GetError());
+    else
+    {
+        mon.refresh      = dm.refresh_rate;
         mon.screenArea.w = dm.w;
         mon.screenArea.h = dm.h;
-        mon.name = SDL_GetDisplayName(initialProperties().monitor);
-        mon.index = initialProperties().monitor;
+        mon.name         = SDL_GetDisplayName(initialProperties().monitor);
+        mon.index        = initialProperties().monitor;
 
-        //TODO: Add color space
-        //TODO: Add physical dimensions
-        //TODO: Add screenArea offsets
+        // TODO: Add color space
+        // TODO: Add physical dimensions
+        // TODO: Add screenArea offsets
     }
 
     return mon;
 }
 
-}
-}
+} // namespace Display
+} // namespace Coffee
 #endif

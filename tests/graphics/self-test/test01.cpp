@@ -16,7 +16,7 @@ bool framebuffer_read()
     GFX::DumpFramebuffer(
         GFX::DefaultFramebuffer(), PixFmt::RGBA8, BitFmt::UByte, framebuffer);
 
-    CRGBA color = {0, 255, 0, 255};
+    rgba_t color = {0, 255, 0, 255};
 
     if(framebuffer.size() < sizeof(color))
         return false;

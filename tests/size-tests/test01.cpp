@@ -167,7 +167,7 @@ static void CheckSize(Vector<CString>& names, Vector<szptr>& sizes)
     names.push_back(type_name);
     sizes.push_back(sizeof(T));
 
-    Profiler::AddExtraData(
+    ExtraData::Add(
         fmt("sizeof:{0}", str::replace::str(type_name, "::", "_")),
         cast_pod(sizeof(T)));
 }

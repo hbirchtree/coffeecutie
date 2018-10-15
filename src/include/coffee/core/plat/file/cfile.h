@@ -2,7 +2,6 @@
 
 #include <cstdio>
 
-#include "../../coffee_strings.h"
 #include "file_def.h"
 
 namespace Coffee {

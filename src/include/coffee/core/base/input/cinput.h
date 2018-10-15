@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../../types/composite_types.h"
+#include "../../types/cdef/geometry.h"
+#include "../../types/tdef/integertypes.h"
+
 #include "../../types/vector_types.h"
 #include "cinput_keymap.h"
 
@@ -18,7 +20,7 @@ constexpr szptr ci_max_text_edit_size = 32;
  */
 struct CIEvent
 {
-    enum EventType : uint8
+    enum EventType : u8
     {
         NoneType,
 
@@ -113,16 +115,16 @@ struct CITextEvent
  */
 struct CIMouseMoveEvent
 {
-    CPointF origin; /*!< Absolute position*/
-    CPointF delta;  /*!< Relative movement since last poll*/
+    PtF origin; /*!< Absolute position*/
+    PtF delta;  /*!< Relative movement since last poll*/
     union
     {
         u8   btn = 0; /*!< Button held down while moved*/
         bool hover;
     };
 
-    u8     pad1;
-    uint16 pad2;
+    u8  pad1;
+    u16 pad2;
 };
 
 /*!

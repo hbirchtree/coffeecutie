@@ -1,7 +1,7 @@
 #pragma once
 
-namespace Coffee{
-namespace Net{
+namespace Coffee {
+namespace Net {
 
 /*!
  * \brief Send a Chrome trace over HTTP to address specified
@@ -11,5 +11,5 @@ extern void ProfilingExport();
 
 extern void RegisterProfiling();
 
-}
-}
+} // namespace Net
+} // namespace Coffee

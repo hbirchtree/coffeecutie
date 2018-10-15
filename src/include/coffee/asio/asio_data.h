@@ -1,5 +1,4 @@
-#ifndef COFFEE_ASIO_ASIO_DATA_H
-#define COFFEE_ASIO_ASIO_DATA_H
+#pragma once
 
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
@@ -61,5 +60,3 @@ using asio_context = ASIO_Client::AsioContext_internal;
 
 } // namespace ASIO
 } // namespace Coffee
-
-#endif

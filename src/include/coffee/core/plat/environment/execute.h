@@ -1,9 +1,8 @@
-#ifndef COFFEE_CORE_PLAT_ENV_EXEC_H
-#define COFFEE_CORE_PLAT_ENV_EXEC_H
+#pragma once
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/tdef/integertypes.h>
 
-namespace Coffee{
+namespace Coffee {
 
 /*!
  * \brief Unsafe way of running another process
@@ -15,6 +14,4 @@ inline int Command(cstring cmd)
     return system(cmd);
 }
 
-}
-
-#endif
+} // namespace Coffee

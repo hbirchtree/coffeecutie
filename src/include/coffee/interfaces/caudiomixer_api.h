@@ -1,17 +1,16 @@
-#ifndef COFFEE_AUDIO_MIXER_H
-#define COFFEE_AUDIO_MIXER_H
+#pragma once
 
 #include <coffee/core/CObject>
+#include <coffee/core/coffee_message_macros.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/vector_types.h>
-#include <coffee/core/coffee_message_macros.h>
 
-namespace Coffee{
-namespace CAudio{
-namespace CSoundAbstraction{
+namespace Coffee {
+namespace CAudio {
+namespace CSoundAbstraction {
 
-//ST = stream/track/source type, BT = buffer type
-template<class ST,class BT>
+// ST = stream/track/source type, BT = buffer type
+template<class ST, class BT>
 class CSoundDevice;
 
 struct CSoundTransform
@@ -63,12 +62,14 @@ struct CSoundProperty
 
     union
     {
-        struct{
+        struct
+        {
             /* Simple tickers, still properties */
-            struct{
-                bool relative:1;
-                bool spatial:1;
-                bool looping:1;
+            struct
+            {
+                bool relative : 1;
+                bool spatial : 1;
+                bool looping : 1;
             };
             /* Because we might make a lot of calls to the audio API,
              *  we will minimize it by allowing partial application.
@@ -80,25 +81,25 @@ struct CSoundProperty
 
     enum ActiveProperty
     {
-        Cone_Inner          = 0x1,
-        Cone_Outer          = 0x2,
-        Cone_Outer_Gain     = 0x4,
-        XF_Position         = 0x8,
-        XF_Velocity         = 0x10,
-        XF_Direction        = 0x20,
-        Gain_Min            = 0x40,
-        Gain_Base           = 0x80,
-        Gain_Max            = 0x100,
-        Rolloff             = 0x200,
-        Ref_Dist            = 0x400,
-        Max_Dist            = 0x800,
-        Pitch               = 0x1000,
-        Relative            = 0x2000,
-        Spatialized         = 0x4000,
-        Looping             = 0x8000,
+        Cone_Inner      = 0x1,
+        Cone_Outer      = 0x2,
+        Cone_Outer_Gain = 0x4,
+        XF_Position     = 0x8,
+        XF_Velocity     = 0x10,
+        XF_Direction    = 0x20,
+        Gain_Min        = 0x40,
+        Gain_Base       = 0x80,
+        Gain_Max        = 0x100,
+        Rolloff         = 0x200,
+        Ref_Dist        = 0x400,
+        Max_Dist        = 0x800,
+        Pitch           = 0x1000,
+        Relative        = 0x2000,
+        Spatialized     = 0x4000,
+        Looping         = 0x8000,
 
-        ActiveProperty_All  = 0xFFFF,
-        ActiveProperty_Num  = 16,
+        ActiveProperty_All = 0xFFFF,
+        ActiveProperty_Num = 16,
     };
 };
 
@@ -106,7 +107,8 @@ struct CListenerProperty
 {
     struct Transform : public CSoundTransform::Transform
     {
-        struct {
+        struct
+        {
             Vecf3 forward;
             Vecf3 up;
         } orientation;
@@ -117,7 +119,7 @@ struct CListenerProperty
 
 class CSoundFormat
 {
-public:
+  public:
     virtual ~CSoundFormat()
     {
     }
@@ -142,17 +144,16 @@ public:
      */
     virtual u8 bitDepth() const = 0;
 
-    virtual void setSamplerate(const u32& smrt) = 0;
+    virtual void setSamplerate(const u32& smrt)   = 0;
     virtual void setChannels(const uint16& chans) = 0;
-    virtual void setBitDepth(const u8& bitd) = 0;
+    virtual void setBitDepth(const u8& bitd)      = 0;
 };
 
-template<class ST,class BT>
+template<class ST, class BT>
 class CSoundBuffer : public CObject
 {
-public:
-    CSoundBuffer(CObject* parent):
-        CObject(parent)
+  public:
+    CSoundBuffer(CObject* parent) : CObject(parent)
     {
     }
     virtual ~CSoundBuffer()
@@ -163,7 +164,7 @@ public:
      * \brief Get the owner sound device
      * \return
      */
-    virtual const CSoundDevice<ST,BT>& device() = 0;
+    virtual const CSoundDevice<ST, BT>& device() = 0;
     /*!
      * \brief Get size of buffer
      * \return
@@ -190,12 +191,11 @@ public:
 
     virtual BT* object() = 0;
 };
-template<class ST,class BT>
+template<class ST, class BT>
 class CSoundSample : public CObject
 {
-public:
-    CSoundSample(CObject* parent):
-        CObject(parent)
+  public:
+    CSoundSample(CObject* parent) : CObject(parent)
     {
     }
     virtual ~CSoundSample()
@@ -205,39 +205,38 @@ public:
      * \brief Get the owner sound device
      * \return
      */
-    virtual const CSoundDevice<ST,BT>& device() = 0;
+    virtual const CSoundDevice<ST, BT>& device() = 0;
 
-    virtual CSoundBuffer<ST,BT>& buffer() = 0;
-    virtual CSoundFormat& format() = 0;
-    virtual u64 samples() const = 0;
+    virtual CSoundBuffer<ST, BT>& buffer()        = 0;
+    virtual CSoundFormat&         format()        = 0;
+    virtual u64                   samples() const = 0;
 
-    virtual u64 pts() const = 0;
+    virtual u64  pts() const            = 0;
     virtual void setPts(const u64& pts) = 0;
 
-    virtual CSoundProperty const* properties() = 0;
+    virtual CSoundProperty const* properties()                 = 0;
     virtual void assignProperties(CSoundProperty const* props) = 0;
 };
-template<class ST,class BT>
+template<class ST, class BT>
 /*!
  * \brief Responsible for queueing up sound samples and playing them back
  */
 class CSoundTrack : public CObject
 {
-public:
-    CSoundTrack(CObject* parent):
-        CObject(parent)
+  public:
+    CSoundTrack(CObject* parent) : CObject(parent)
     {
     }
     virtual ~CSoundTrack()
     {
     }
 
-    virtual const CSoundDevice<ST,BT>& device() = 0;
+    virtual const CSoundDevice<ST, BT>& device() = 0;
     /*!
      * \brief Queue a sound sample for playback
      * \param sample
      */
-    virtual void queueSample(CSoundSample<ST,BT>& sample) = 0;
+    virtual void queueSample(CSoundSample<ST, BT>& sample) = 0;
     /*!
      * \brief Progress and garbage-collect the sound track
      * \param ts
@@ -247,24 +246,23 @@ public:
     virtual ST* object() = 0;
 
     virtual void assignProperties(CSoundProperty const* props) = 0;
-    virtual void assignProperties(CListenerProperty const*) = 0;
+    virtual void assignProperties(CListenerProperty const*)    = 0;
 };
-template<class ST,class BT>
+template<class ST, class BT>
 class CSoundStream : public CObject
 {
-public:
-    CSoundStream(CObject* parent):
-        CObject(parent)
+  public:
+    CSoundStream(CObject* parent) : CObject(parent)
     {
     }
     virtual ~CSoundStream()
     {
     }
 
-    virtual const CSoundDevice<ST,BT>& device() = 0;
+    virtual const CSoundDevice<ST, BT>& device() = 0;
 
     virtual void startStream() = 0;
-    virtual void stopStream() = 0;
+    virtual void stopStream()  = 0;
     virtual void pauseStream() = 0;
 
     /*!
@@ -274,18 +272,21 @@ public:
      * \param fmt
      * \param samples
      */
-    virtual void feedData(c_cptr data,const CSoundFormat& fmt,
-                          const szptr& samples) = 0;
+    virtual void feedData(
+        c_cptr data, const CSoundFormat& fmt, const szptr& samples) = 0;
     /*!
      * \brief Insert sound buffer into stream.
      *  Will always queue after previous invocations.
      * \param buffer
      */
-    virtual void feedBuffer(CSoundBuffer<ST,BT>& buffer) = 0;
+    virtual void feedBuffer(CSoundBuffer<ST, BT>& buffer) = 0;
 
-    //TODO: Add PTS processing to sound streams
-    virtual void feedDataTimed(c_cptr data, const CSoundFormat& fmt,
-                               const szptr& samples, const u64& pts)
+    // TODO: Add PTS processing to sound streams
+    virtual void feedDataTimed(
+        c_cptr              data,
+        const CSoundFormat& fmt,
+        const szptr&        samples,
+        const u64&          pts)
     {
         C_UNUSED(data);
         C_UNUSED(fmt);
@@ -310,26 +311,25 @@ public:
 
     virtual ST* object() = 0;
 };
-template<class ST,class BT>
+template<class ST, class BT>
 class CSoundMixer : public CObject
 {
-public:
-    CSoundMixer(CObject* parent):
-        CObject(parent)
+  public:
+    CSoundMixer(CObject* parent) : CObject(parent)
     {
     }
     virtual ~CSoundMixer()
     {
     }
 
-    virtual u64 createTrack() = 0;
-    virtual CSoundTrack<ST,BT>& soundtrack(const u64& track) = 0;
+    virtual u64                  createTrack()                = 0;
+    virtual CSoundTrack<ST, BT>& soundtrack(const u64& track) = 0;
 };
 
 class CSoundDeviceIdentifier
 {
-public:
-    virtual szptr deviceIndex() const = 0;
+  public:
+    virtual szptr   deviceIndex() const = 0;
     virtual cstring stringIdentifier() const
     {
         return nullptr;
@@ -339,34 +339,33 @@ public:
         return 0;
     }
 };
-template<class ST,class BT>
+template<class ST, class BT>
 class CSoundDevice : public CObject
 {
-public:
-    CSoundDevice(CObject* parent):
-        CObject(parent)
+  public:
+    CSoundDevice(CObject* parent) : CObject(parent)
     {
     }
     virtual ~CSoundDevice()
     {
     }
 
-    virtual CSoundMixer<ST,BT>& mixer() = 0;
-    virtual CSoundFormat& outputFormat() = 0;
+    virtual CSoundMixer<ST, BT>& mixer()        = 0;
+    virtual CSoundFormat&        outputFormat() = 0;
 
-    virtual bool isCaptureDevice() = 0;
-    virtual CSoundStream<ST,BT>& captureStreamer() = 0;
+    virtual bool                  isCaptureDevice() = 0;
+    virtual CSoundStream<ST, BT>& captureStreamer() = 0;
 
-    virtual CSoundBuffer<ST,BT>& genBuffer() = 0;
-    virtual CSoundSample<ST,BT>& genSample(CSoundBuffer<ST,BT> &buf,
-                                           CSoundFormat &fmt) = 0;
-    virtual CSoundStream<ST,BT>& genStream(CSoundFormat& fmt) = 0;
+    virtual CSoundBuffer<ST, BT>& genBuffer() = 0;
+    virtual CSoundSample<ST, BT>& genSample(
+        CSoundBuffer<ST, BT>& buf, CSoundFormat& fmt)          = 0;
+    virtual CSoundStream<ST, BT>& genStream(CSoundFormat& fmt) = 0;
 };
 
-template<class ST,class BT>
+template<class ST, class BT>
 class CSoundArbiter
 {
-public:
+  public:
     CSoundArbiter()
     {
     }
@@ -376,52 +375,55 @@ public:
 
     virtual CSoundDeviceIdentifier& defaultSoundDevice() = 0;
 
-    virtual u32 numberSoundDevices() = 0;
+    virtual u32 numberSoundDevices()      = 0;
     virtual u32 numberSoundInputDevices() = 0;
 
-    virtual CSoundDeviceIdentifier& soundDevice(const szptr& devEnum) = 0;
+    virtual CSoundDeviceIdentifier& soundDevice(const szptr& devEnum)      = 0;
     virtual CSoundDeviceIdentifier& soundInputDevice(const szptr& devEnum) = 0;
 
-    virtual CSoundDevice<ST,BT>* createDevice(const CSoundDeviceIdentifier& id) = 0;
+    virtual CSoundDevice<ST, BT>* createDevice(
+        const CSoundDeviceIdentifier& id) = 0;
     /*!
      * \brief Create a capture device
      * \param p_id Parent device, if applicable
      * \param id Capture device
      * \return
      */
-    virtual CSoundDevice<ST,BT>* createInputDevice(
-            const CSoundDeviceIdentifier& p_id,
-            const CSoundDeviceIdentifier& id) = 0;
+    virtual CSoundDevice<ST, BT>* createInputDevice(
+        const CSoundDeviceIdentifier& p_id,
+        const CSoundDeviceIdentifier& id) = 0;
 };
 
 /*!
  * \brief A simple namespace for all our audio API features
  */
-template<typename ArbiterT,typename FormatT,typename StreamT,typename BufferT>
+template<
+    typename ArbiterT,
+    typename FormatT,
+    typename StreamT,
+    typename BufferT>
 struct AudioAPI
 {
     using Arbiter = ArbiterT;
 
     /* Device-mixer API */
-    using Device = CSoundDevice<StreamT,BufferT>;
-    using Mixer = CSoundMixer<StreamT,BufferT>;
+    using Device = CSoundDevice<StreamT, BufferT>;
+    using Mixer  = CSoundMixer<StreamT, BufferT>;
 
     /* Audio track API */
-    using Track = CSoundTrack<StreamT,BufferT>;
-    using Sample = CSoundSample<StreamT,BufferT>;
+    using Track  = CSoundTrack<StreamT, BufferT>;
+    using Sample = CSoundSample<StreamT, BufferT>;
     /* Audio stream API */
-    using Stream = CSoundStream<StreamT,BufferT>;
+    using Stream = CSoundStream<StreamT, BufferT>;
 
     /* Basic buffers */
-    using Buffer = CSoundBuffer<StreamT,BufferT>;
+    using Buffer = CSoundBuffer<StreamT, BufferT>;
     using Format = FormatT;
 
-    using Properties = CSoundProperty;
+    using Properties       = CSoundProperty;
     using ListenProperties = CListenerProperty;
 };
 
-}
-}
-}
-
-#endif
+} // namespace CSoundAbstraction
+} // namespace CAudio
+} // namespace Coffee

@@ -19,6 +19,7 @@ CString extArgReplacePhrase(
 CString extArgReplace(
     const CString& fmt, const size_t& index, const CString& replace)
 {
+    // TODO: This needs optimizations
     CString subfmt = "{" + cast_pod(index) + "}";
     return str::replace::str(fmt, subfmt, replace);
 }

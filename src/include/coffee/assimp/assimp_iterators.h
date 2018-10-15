@@ -1,19 +1,19 @@
 #pragma once
 
-#include "cassimpimporters.h"
 #include "assimp_data.h"
+#include "cassimpimporters.h"
 
-#include <assimp/scene.h>
-#include <assimp/vector3.h>
-#include <assimp/vector2.h>
 #include <assimp/color4.h>
+#include <assimp/scene.h>
+#include <assimp/vector2.h>
+#include <assimp/vector3.h>
 
+#include <coffee/core/CProfiling>
 #include <coffee/graphics/common/SMesh>
 #include <coffee/interfaces/cgraphics_api.h>
-#include <coffee/core/CProfiling>
 
-namespace Coffee{
-namespace ASSIMP{
+namespace Coffee {
+namespace ASSIMP {
 
 struct MeshLoader
 {
@@ -26,43 +26,40 @@ struct MeshLoader
         QuirkCompressElements = 0x1,
         /*!< When possible, use a smaller data type for element indices */
         QuirkCompressVertices = 0x2,
-        /*!< When possible, use lower-precision format for storing vertex data */
+        /*!< When possible, use lower-precision format for storing vertex data
+         */
         QuirkElementVertexOffset = 0x4,
         /*!< Add vertex offsets to elements */
     };
 
     struct Attr
     {
-        Attr(AttrType t, u32 ch = 0):
-            type(t),
-            channel(ch)
+        Attr(AttrType t, u32 ch = 0) : type(t), channel(ch)
         {
         }
 
         AttrType type;
-        u32 channel;
+        u32      channel;
     };
 
     struct DrawInfo
     {
-        DrawInfo():
-            element_type(TypeEnum::UInt),
-            quirks(0)
+        DrawInfo() : element_type(TypeEnum::UInt), quirks(0)
         {
         }
 
         TypeEnum element_type;
-        u32 quirks;
+        u32      quirks;
     };
 
-    template<typename To, typename From = u32,
-             typename std::enable_if<std::is_integral<To>::value
-                                     >::type* = nullptr,
-             typename std::enable_if<std::is_integral<From>::value
-                                     >::type* = nullptr,
-             typename std::enable_if<
-                 std::is_signed<To>::value == std::is_signed<From>::value
-                 >::type* = nullptr>
+    template<
+        typename To,
+        typename From                                                 = u32,
+        typename std::enable_if<std::is_integral<To>::value>::type*   = nullptr,
+        typename std::enable_if<std::is_integral<From>::value>::type* = nullptr,
+        typename std::enable_if<
+            std::is_signed<To>::value == std::is_signed<From>::value>::type* =
+            nullptr>
     /*!
      * \brief integer_downcast is aimed for the current scenario:
      *  - The integers are within a continuous range
@@ -79,14 +76,14 @@ struct MeshLoader
         if(!target || !src)
             return size / (sizeof(From) / sizeof(To));
 
-        From const* srcT = C_RCAST<From const*>(src);
-        To* trgT = C_RCAST<To*>(target);
-        szptr icount = size / sizeof(From);
+        From const* srcT   = C_RCAST<From const*>(src);
+        To*         trgT   = C_RCAST<To*>(target);
+        szptr       icount = size / sizeof(From);
 
-        for(szptr i=0; i<icount; i++)
+        for(szptr i = 0; i < icount; i++)
         {
             From const& s = srcT[i];
-            To& t = trgT[i];
+            To&         t = trgT[i];
 
             t = C_FCAST<To>(s);
         }
@@ -94,32 +91,30 @@ struct MeshLoader
         return size / (sizeof(From) / sizeof(To));
     }
 
-    template<typename T,
-             typename is_pod<T>::type* = nullptr
-             >
+    template<typename T, typename is_pod<T>::type* = nullptr>
     static T integer_range_get_max(T const* src, szptr count)
     {
         T max = std::numeric_limits<T>::min();
-        for(szptr i=0; i<count; i++)
+        for(szptr i = 0; i < count; i++)
             max = CMath::max(max, src[i]);
 
         return max;
     }
 
-    template<typename To, typename From = scalar,
-             typename std::enable_if<
-                 std::is_signed<To>::value>::type* = nullptr,
-             typename std::enable_if<
-                 std::is_integral<To>::value>::type* = nullptr>
+    template<
+        typename To,
+        typename From                                               = scalar,
+        typename std::enable_if<std::is_signed<To>::value>::type*   = nullptr,
+        typename std::enable_if<std::is_integral<To>::value>::type* = nullptr>
     /* For simple down-cast from floating-point to i16 and i8, scales  */
     static szptr integer_transform(c_ptr target, c_cptr src, szptr size)
     {
         if(!target || !src)
             return size / (sizeof(From) / sizeof(To));
 
-        From const* srcT = C_RCAST<From const*>(src);
-        To* trgT = C_RCAST<To*>(target);
-        szptr icount = size / sizeof(From);
+        From const* srcT   = C_RCAST<From const*>(src);
+        To*         trgT   = C_RCAST<To*>(target);
+        szptr       icount = size / sizeof(From);
 
         auto constexpr to_min = std::numeric_limits<To>::min();
         auto constexpr to_max = std::numeric_limits<To>::max();
@@ -127,20 +122,18 @@ struct MeshLoader
         scalar from_min = std::numeric_limits<scalar>::infinity();
         scalar from_max = -std::numeric_limits<scalar>::infinity();
 
-        for(szptr i=0; i<icount; i++)
+        for(szptr i = 0; i < icount; i++)
         {
             from_min = CMath::min(from_min, srcT[i]);
             from_max = CMath::max(from_max, srcT[i]);
         }
 
-        for(szptr i=0; i<icount; i++)
+        for(szptr i = 0; i < icount; i++)
         {
             From const& s = srcT[i];
-            To& t = trgT[i];
+            To&         t = trgT[i];
 
-            To res = (((s - from_min) *
-                       (1.0 / from_max) * 2.0) - 1.0)
-                    * to_max;
+            To res = (((s - from_min) * (1.0 / from_max) * 2.0) - 1.0) * to_max;
 
             t = res;
         }
@@ -148,29 +141,33 @@ struct MeshLoader
         return size / (sizeof(From) / sizeof(To));
     }
 
-    template<szptr Size, /* Size of structure that is copied */
-             szptr Stride /* Size of entire structure */
-             >
+    template<
+        szptr Size,  /* Size of structure that is copied */
+        szptr Stride /* Size of entire structure */
+        >
     /*!
-     * \brief jumping_memcpy is made for the case where you want to copy a vec2 out of a vec3 structure. This is specifically used for Assimp's vec3 texture coordinates, because we mostly use vec2 for TCs.
-     * \param target
+     * \brief jumping_memcpy is made for the case where you want to copy a vec2
+     * out of a vec3 structure. This is specifically used for Assimp's vec3
+     * texture coordinates, because we mostly use vec2 for TCs. \param target
      * \param source
      * \param size
      * \return
      */
-    static szptr jumping_memcpy(c_ptr target, c_cptr source, szptr size)
+    static szptr
+    jumping_memcpy(c_ptr target, c_cptr source, szptr size)
     {
-        static_assert(Stride > Size,
-                      "Stride has to be larger than Size"
-                      " for this to be effective");
+        static_assert(
+            Stride > Size,
+            "Stride has to be larger than Size"
+            " for this to be effective");
 
         if(target && source)
         {
-            szptr ptr = 0;
+            szptr ptr  = 0;
             szptr tptr = 0;
 
-            byte_t* raw_target = C_RCAST<byte_t*>(target);
-            byte_t const* raw_sauce = C_RCAST<byte_t const*>(source);
+            byte_t*       raw_target = C_RCAST<byte_t*>(target);
+            byte_t const* raw_sauce  = C_RCAST<byte_t const*>(source);
 
             while(ptr + Stride <= size)
             {
@@ -201,12 +198,11 @@ struct MeshLoader
             return size;
         }
 
-        ChainedBytes():
-            refs()
+        ChainedBytes() : refs()
         {
         }
 
-        using xf = szptr(*)(c_ptr target, c_cptr source, szptr size);
+        using xf = szptr (*)(c_ptr target, c_cptr source, szptr size);
 
         Vector<Bytes> refs;
         /* transform works as such: when given a memory region source+size,
@@ -225,7 +221,7 @@ struct MeshLoader
             if(ref_transform.size() == 0)
             {
                 ref_transform.reserve(refs.size());
-                for(szptr i=0;i<refs.size();i++)
+                for(szptr i = 0; i < refs.size(); i++)
                     ref_transform.push_back(default_transform);
             }
         }
@@ -239,9 +235,8 @@ struct MeshLoader
             szptr i = 0;
             for(auto const& data : refs)
             {
-                size += ref_transform[i](
-                        nullptr, nullptr, data.size);
-                i ++;
+                size += ref_transform[i](nullptr, nullptr, data.size);
+                i++;
             }
 
             return size;
@@ -258,8 +253,7 @@ struct MeshLoader
             szptr i = 0;
             for(auto const& data : refs)
             {
-                szptr est = ref_transform[i](
-                            nullptr, nullptr, data.size);
+                szptr est = ref_transform[i](nullptr, nullptr, data.size);
                 if(ptr + est > size)
                     return false;
                 ptr += est;
@@ -267,7 +261,7 @@ struct MeshLoader
             }
 
             ptr = 0;
-            i = 0;
+            i   = 0;
 
             byte_t* targetP = C_RCAST<byte_t*>(target);
 
@@ -289,8 +283,8 @@ struct MeshLoader
         struct NodeData
         {
             Matf4 xf;
-            u64 parent; /*!< index of parent node */
-            u32 objectName; /*!< Index of object name in string store */
+            u64   parent;     /*!< index of parent node */
+            u32   objectName; /*!< Index of object name in string store */
             ASSIMP::ObjectDesc::ObjectType type;
             i32 mesh; /*!< if >=0, index of mesh in related draw data */
             u32 _pad;
@@ -299,10 +293,10 @@ struct MeshLoader
         struct SerialNodeData
         {
             Matf4 xf;
-            u64 parent; /*!< Index of parent node */
-            u64 objectName; /*!< Byte offset to name, null-terminated */
+            u64   parent;     /*!< Index of parent node */
+            u64   objectName; /*!< Byte offset to name, null-terminated */
             ASSIMP::ObjectDesc::ObjectType type;
-            i32 mesh;
+            i32                            mesh;
 
             /*!
              * \brief Access name when serialized
@@ -315,7 +309,7 @@ struct MeshLoader
                 {
                     byte_t const* baseHdr = C_RCAST<byte_t const*>(&hdr);
                     return C_RCAST<cstring>(&baseHdr[objectName]);
-                }else
+                } else
                     return nullptr;
             }
             /*!
@@ -323,8 +317,7 @@ struct MeshLoader
              * \param hdr Related header
              * \return
              */
-            SerialNodeData const* parentData(
-                    SerialHeader const& hdr) const
+            SerialNodeData const* parentData(SerialHeader const& hdr) const
             {
                 return hdr.node(parent);
             }
@@ -332,8 +325,7 @@ struct MeshLoader
              * \brief Access the full transform of the node,
              *  including parents
              */
-            Matf4 transform(
-                    SerialHeader const& hdr) const
+            Matf4 transform(SerialHeader const& hdr) const
             {
                 if(parent < hdr.num_nodes)
                     return hdr.node(parent)->transform(hdr) * xf;
@@ -359,9 +351,9 @@ struct MeshLoader
                 if(i < num_nodes)
                 {
                     SerialNodeData const* nodes =
-                            C_RCAST<SerialNodeData const*>(&this[1]);
+                        C_RCAST<SerialNodeData const*>(&this[1]);
                     return &nodes[i];
-                }else
+                } else
                     return nullptr;
             }
             /*!
@@ -381,34 +373,31 @@ struct MeshLoader
             szptr indexOf(SerialNodeData const* node) const
             {
                 SerialNodeData const* base =
-                        C_RCAST<SerialNodeData const*>(&this[1]);
+                    C_RCAST<SerialNodeData const*>(&this[1]);
 
                 return C_FCAST<szptr>(node - base);
             }
 
-            struct iterator
-                    : Iterator<ForwardIteratorTag, SerialNodeData>
+            struct iterator : Iterator<ForwardIteratorTag, SerialNodeData>
             {
-                iterator(SerialHeader const* hdr, szptr parent):
-                    m_hdr(hdr),
-                    m_parent(parent),
-                    m_current(0)
+                iterator(SerialHeader const* hdr, szptr parent) :
+                    m_hdr(hdr), m_parent(parent), m_current(0)
                 {
                     this->operator++();
                 }
-                iterator():
-                    m_hdr(nullptr),
-                    m_parent(C_CAST<szptr>(-1)),
+                iterator() :
+                    m_hdr(nullptr), m_parent(C_CAST<szptr>(-1)),
                     m_current(C_CAST<szptr>(-1))
                 {
                 }
 
                 iterator& operator++()
                 {
-                    do {
+                    do
+                    {
                         m_current++;
-                    } while(m_current < m_hdr->num_nodes
-                            && m_hdr->node(m_current)->parent != m_parent);
+                    } while(m_current < m_hdr->num_nodes &&
+                            m_hdr->node(m_current)->parent != m_parent);
 
                     if(m_current >= m_hdr->num_nodes)
                         m_current = C_CAST<szptr>(-1);
@@ -434,18 +423,16 @@ struct MeshLoader
                         return *m_hdr->node(m_current);
                 }
 
-            private:
+              private:
                 SerialHeader const* m_hdr;
-                szptr m_parent;
-                szptr m_current;
+                szptr               m_parent;
+                szptr               m_current;
             };
 
             struct child_container
             {
-                child_container(SerialHeader const* hdr,
-                                szptr parent):
-                    m_hdr(hdr),
-                    m_parent(parent)
+                child_container(SerialHeader const* hdr, szptr parent) :
+                    m_hdr(hdr), m_parent(parent)
                 {
                 }
 
@@ -457,9 +444,10 @@ struct MeshLoader
                 {
                     return iterator();
                 }
-            private:
+
+              private:
                 SerialHeader const* m_hdr;
-                szptr m_parent;
+                szptr               m_parent;
             };
 
             child_container childrenOf(szptr node) const
@@ -469,8 +457,8 @@ struct MeshLoader
         };
 
         Vector<NodeData> nodes;
-        Vector<CString> stringStore;
-        u64 rootNode;
+        Vector<CString>  stringStore;
+        u64              rootNode;
 
         szptr size()
         {
@@ -480,9 +468,7 @@ struct MeshLoader
             for(auto const& s : stringStore)
                 stringStoreSize += s.size() + 1;
 
-            return sizeof(SerialHeader)
-                    + nodeDataSize
-                    + stringStoreSize;
+            return sizeof(SerialHeader) + nodeDataSize + stringStoreSize;
         }
 
         bool cpy(void* target, szptr size)
@@ -493,36 +479,37 @@ struct MeshLoader
             SerialHeader header;
             header.num_nodes = nodes.size();
             header.data_size = this->size() - sizeof(SerialHeader);
-            header.rootNode = this->rootNode;
+            header.rootNode  = this->rootNode;
 
             byte_t* basePtr = C_RCAST<byte_t*>(target);
-            szptr offset = 0;
+            szptr   offset  = 0;
 
             Bytes baseView = Bytes::From(basePtr, size);
 
             MemCpy(Bytes::Create(header), baseView);
-//            MemCpy(basePtr, &header, sizeof(header));
+            //            MemCpy(basePtr, &header, sizeof(header));
             offset += sizeof(header);
             SerialNodeData* nodeData =
-                    C_RCAST<SerialNodeData*>(&basePtr[offset]);
+                C_RCAST<SerialNodeData*>(&basePtr[offset]);
             for(auto const& node : nodes)
             {
                 SerialNodeData newNode;
-                newNode.xf = node.xf;
-                newNode.parent = node.parent;
-                newNode.type = node.type;
-                newNode.mesh = node.mesh;
+                newNode.xf         = node.xf;
+                newNode.parent     = node.parent;
+                newNode.type       = node.type;
+                newNode.mesh       = node.mesh;
                 newNode.objectName = 0; /* Must be set later */
                 MemCpy(Bytes::Create(newNode), baseView.at(offset));
-//                MemCpy(&basePtr[offset], &newNode, sizeof(SerialNodeData));
+                //                MemCpy(&basePtr[offset], &newNode,
+                //                sizeof(SerialNodeData));
                 offset += sizeof(SerialNodeData);
             }
             for(auto i : Range<>(stringStore.size()))
             {
-                auto const& s = stringStore.at(i);
+                auto const& s          = stringStore.at(i);
                 nodeData[i].objectName = offset;
                 MemCpy(s, baseView.at(offset));
-//                MemCpy(&basePtr[offset], &s[0], s.size());
+                //                MemCpy(&basePtr[offset], &s[0], s.size());
                 offset += s.size() + 1;
             }
 
@@ -530,69 +517,62 @@ struct MeshLoader
         }
     };
 
-    template<typename GFX,
+    template<
+        typename GFX,
 
-             typename implements<RHI::GraphicsAPI_Base, GFX>::type*
-             = nullptr
+        typename implements<RHI::GraphicsAPI_Base, GFX>::type* = nullptr
 
-             >
+        >
     struct BufferDescription
     {
-//        using GFX = RHI::NullAPI;
+        //        using GFX = RHI::NullAPI;
 
-        typename GFX::D_CALL call;
+        typename GFX::D_CALL         call;
         Vector<typename GFX::V_ATTR> attributes;
         Vector<typename GFX::D_DATA> draws;
-        Vector<Mesh> meshdata;
+        Vector<Mesh>                 meshdata;
 
-        ChainedBytes vertexData;
-        ChainedBytes elementData;
+        ChainedBytes   vertexData;
+        ChainedBytes   elementData;
         SerialNodeList nodes;
     };
 
-    static
-    void traverse_nodes(
-            ASSIMP::Node* current,
-            szptr parentIdx,
-            Vector<ObjectDesc> const& descs,
-            SerialNodeList& nodes)
+    static void traverse_nodes(
+        ASSIMP::Node*             current,
+        szptr                     parentIdx,
+        Vector<ObjectDesc> const& descs,
+        SerialNodeList&           nodes)
     {
         szptr i = nodes.nodes.size();
 
-//        auto& desc = descs.at(i);
+        //        auto& desc = descs.at(i);
 
         nodes.stringStore.push_back(current->objectName());
 
-        nodes.nodes.push_back({
-                                  current->transform,
-                                  parentIdx,
-                                  C_FCAST<u32>(i),
-                                  ObjectDesc::Mesh,
-                                  current->mesh,
-                                  0
-                              });
+        nodes.nodes.push_back({current->transform,
+                               parentIdx,
+                               C_FCAST<u32>(i),
+                               ObjectDesc::Mesh,
+                               current->mesh,
+                               0});
 
         for(auto child : current->children())
         {
-            traverse_nodes(C_CAST<ASSIMP::Node*>(child),
-                           i,
-                           descs, nodes);
+            traverse_nodes(C_CAST<ASSIMP::Node*>(child), i, descs, nodes);
         }
     }
 
-    template<typename API,
+    template<
+        typename API,
 
-             typename implements<RHI::GraphicsAPI_Base, API>::type*
-             = nullptr
+        typename implements<RHI::GraphicsAPI_Base, API>::type* = nullptr
 
-             >
-    static
-    bool ExtractDescriptors(
-            ASSIMP::AssimpPtr& scene,
-            Vector<Attr>const& attributes,
-            DrawInfo const& draw,
-            BufferDescription<API>& buffers
-            )
+        >
+    static bool ExtractDescriptors(
+        ASSIMP::AssimpPtr&      scene,
+        Vector<Attr> const&     attributes,
+        DrawInfo const&         draw,
+        BufferDescription<API>& buffers)
     {
         DProfContext _("Creating Assimp descriptors");
 
@@ -605,19 +585,13 @@ struct MeshLoader
         Vector<Mesh>& meshes = buffers.meshdata;
         meshes.resize(meshes.size() + C_FCAST<szptr>(meshCount));
 
-        buffers.attributes.resize(
-                    attributes.size());
-        buffers.draws.resize(
-                    C_FCAST<szptr>(meshCount));
+        buffers.attributes.resize(attributes.size());
+        buffers.draws.resize(C_FCAST<szptr>(meshCount));
         buffers.vertexData.refs.resize(
-                    C_FCAST<szptr>(meshCount) * attributes.size()
-                    );
-        buffers.elementData.refs.resize(
-                    C_FCAST<szptr>(meshCount));
+            C_FCAST<szptr>(meshCount) * attributes.size());
+        buffers.elementData.refs.resize(C_FCAST<szptr>(meshCount));
 
-        szptr mesh_buffer_size = 0,
-                element_buffer_size = 0,
-                vertex_size = 0;
+        szptr mesh_buffer_size = 0, element_buffer_size = 0, vertex_size = 0;
 
         buffers.call.m_idxd = true;
         buffers.call.setPrim(Prim::Triangle);
@@ -628,23 +602,23 @@ struct MeshLoader
         for(auto i : Range<i32>(meshCount))
         {
             auto& mesh = meshes[i];
-            auto& di = buffers.draws[i];
+            auto& di   = buffers.draws[i];
 
             ASSIMP::GetMeshData(scene, i, mesh);
 
             di.m_eltype = TypeEnum::UInt;
-            di.m_elems = mesh.attrSize(M::Indices) / sizeof(u32);
-            di.m_eoff = element_buffer_size / sizeof(u32);
-            di.m_verts = mesh.attrSize(M::Position) / sizeof(Vecf3);
-            di.m_voff = vertex_size;
+            di.m_elems  = mesh.attrSize(M::Indices) / sizeof(u32);
+            di.m_eoff   = element_buffer_size / sizeof(u32);
+            di.m_verts  = mesh.attrSize(M::Position) / sizeof(Vecf3);
+            di.m_voff   = vertex_size;
 
             if(draw.quirks & QuirkElementVertexOffset)
             {
                 /* For OpenGL ES 2.0, there is no such thing as
                  *  a vertex offset. This simplifies that situation. */
                 u32* elements = mesh.getAttributeData<u32>(M::Indices);
-                auto indices = mesh.attrCount(M::Indices, sizeof(u32));
-                for(szptr i=0; i<indices; i++)
+                auto indices  = mesh.attrCount(M::Indices, sizeof(u32));
+                for(szptr i = 0; i < indices; i++)
                 {
                     elements[i] += di.m_voff;
                     di.m_voff = 0;
@@ -656,15 +630,15 @@ struct MeshLoader
              *  Instead, the whole batch has a single classification. */
             if(draw.quirks & QuirkCompressElements)
                 max_element = CMath::max(
-                            integer_range_get_max(
-                                mesh.getAttributeData<u32>(M::Indices),
-                                mesh.attrCount(M::Indices, sizeof(u32))),
-                            max_element);
+                    integer_range_get_max(
+                        mesh.getAttributeData<u32>(M::Indices),
+                        mesh.attrCount(M::Indices, sizeof(u32))),
+                    max_element);
 
             for(auto j : Range<i32>(attributes.size()))
             {
-                szptr attr_size = mesh.attrSize(attributes[j].type,
-                                                attributes[j].channel);
+                szptr attr_size =
+                    mesh.attrSize(attributes[j].type, attributes[j].channel);
 
                 /* We do not support 3D texture coordinates, really,
                  *  they are kind of useless for fast 3D. We use the
@@ -675,7 +649,7 @@ struct MeshLoader
                 }
 
                 /* Calculate attribute offsets */
-                for(i32 k=j+1;k<attributes.size();k++)
+                for(i32 k = j + 1; k < attributes.size(); k++)
                     buffers.attributes[k].m_boffset += attr_size;
 
                 /* Calculate total vertex buffer size for all attributes */
@@ -689,8 +663,8 @@ struct MeshLoader
 
             /* Add element buffer to ChainedBytes structure */
             auto& ebuf = buffers.elementData.refs[i];
-            ebuf.size = mesh.attrSize(M::Indices);
-            ebuf.data = mesh.getAttributeData<byte_t>(M::Indices);
+            ebuf.size  = mesh.attrSize(M::Indices);
+            ebuf.data  = mesh.getAttributeData<byte_t>(M::Indices);
         }
 
         TypeEnum idx_type = TypeEnum::UInt;
@@ -700,8 +674,7 @@ struct MeshLoader
         else if(max_element <= std::numeric_limits<u16>::max())
             idx_type = TypeEnum::UShort;
 
-        if((draw.quirks & QuirkCompressElements)
-                && idx_type != TypeEnum::UInt)
+        if((draw.quirks & QuirkCompressElements) && idx_type != TypeEnum::UInt)
         {
             auto transform = ChainedBytes::default_transform;
             switch(idx_type)
@@ -717,7 +690,7 @@ struct MeshLoader
             }
 
             buffers.elementData.ref_transform.reserve(
-                        buffers.elementData.refs.size());
+                buffers.elementData.refs.size());
             for(auto i : Range<>(buffers.elementData.refs.size()))
             {
                 C_UNUSED(i);
@@ -731,35 +704,33 @@ struct MeshLoader
         }
 
         i32 bufIdx = 0;
-        buffers.vertexData.ref_transform.resize(
-                    buffers.vertexData.refs.size());
+        buffers.vertexData.ref_transform.resize(buffers.vertexData.refs.size());
         for(auto const& attr : attributes)
-            for(auto i :  Range<i32>(meshCount))
+            for(auto i : Range<i32>(meshCount))
             {
                 auto& buf = buffers.vertexData.refs[bufIdx];
 
-                buf.size = meshes[i].attrSize(
-                            attr.type, attr.channel);
-                buf.data = meshes[i].getAttributeData<byte_t>(
-                            attr.type, attr.channel);
+                buf.size = meshes[i].attrSize(attr.type, attr.channel);
+                buf.data =
+                    meshes[i].getAttributeData<byte_t>(attr.type, attr.channel);
 
                 if(attr.type == AttrType::TexCoord)
                     buffers.vertexData.ref_transform[bufIdx] =
-                            jumping_memcpy<sizeof(Vecf2), sizeof(Vecf3)>;
+                        jumping_memcpy<sizeof(Vecf2), sizeof(Vecf3)>;
                 else
                     buffers.vertexData.ref_transform[bufIdx] =
-                            ChainedBytes::default_transform;
+                        ChainedBytes::default_transform;
 
-                bufIdx ++;
+                bufIdx++;
             }
 
         /* Initialize some vertex attribute information */
         for(auto i : Range<i32>(attributes.size()))
         {
-            auto& vd = buffers.attributes[i];
-            vd.m_idx = i; /* The user will have to define this or bind it */
+            auto& vd    = buffers.attributes[i];
+            vd.m_idx    = i; /* The user will have to define this or bind it */
             vd.m_bassoc = i;
-            vd.m_type = TypeEnum::Scalar;
+            vd.m_type   = TypeEnum::Scalar;
             switch(attributes[i].type)
             {
             case M::Color:
@@ -783,7 +754,7 @@ struct MeshLoader
         Vector<ASSIMP::ObjectDesc> sceneObjects;
         if(ASSIMP::GetSceneObjects(scene, sceneObjects))
         {
-            ASSIMP::Node* rootNode = nullptr;
+            ASSIMP::Node*    rootNode = nullptr;
             ASSIMP::NodeList nodes;
             if(!ASSIMP::GetRawSceneRoot(scene, &rootNode, nodes))
                 return false;
@@ -793,8 +764,8 @@ struct MeshLoader
             serialNodes.stringStore.reserve(nodes.size());
             serialNodes.rootNode = 0;
 
-            traverse_nodes(rootNode, C_CAST<szptr>(-1),
-                           sceneObjects, serialNodes);
+            traverse_nodes(
+                rootNode, C_CAST<szptr>(-1), sceneObjects, serialNodes);
         }
 
         /* TODO: If user is requesting a different
@@ -806,5 +777,5 @@ struct MeshLoader
     }
 };
 
-}
-}
+} // namespace ASSIMP
+} // namespace Coffee

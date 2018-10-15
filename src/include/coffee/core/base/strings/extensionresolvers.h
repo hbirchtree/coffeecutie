@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
-#define COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
+#pragma once
 
 #include "../../coffee_mem_macros.h"
 #include "../../plat/memory/stlstring_ops.h"
@@ -41,7 +40,7 @@ inline CString to_string(T* v)
     if(v)
     {
         CWString out_w = v;
-        out = CString(out_w.begin(), out_w.end());
+        out            = CString(out_w.begin(), out_w.end());
     } else
         out = "0x0";
     return out;
@@ -123,5 +122,3 @@ inline CString cStringResolve(CString const& fmt, size_t)
 
 } // namespace Strings
 } // namespace Coffee
-
-#endif

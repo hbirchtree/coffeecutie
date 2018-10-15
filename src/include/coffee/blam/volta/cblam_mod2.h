@@ -1,10 +1,9 @@
-#ifndef CBLAM_MOD2
-#define CBLAM_MOD2
+#pragma once
 
 #include "cblam_structures.h"
 
-namespace Coffee{
-namespace Blam{
+namespace Coffee {
+namespace Blam {
 
 /*!
  * \brief Used as index for LOD levels of a mesh
@@ -44,32 +43,34 @@ struct blam_shader_desc
 struct blam_mod2_region_permutation
 {
     byte_t name[32];
-    u32 flags[8];
-    i16 meshindex_lod[5];
-    i16 reserved[7];
+    u32    flags[8];
+    i16    meshindex_lod[5];
+    i16    reserved[7];
 };
 
 struct blam_mod2_region
 {
-    byte_t name[64];
+    byte_t                                    name[64];
     reflexive_t<blam_mod2_region_permutation> permutations;
 };
 
 struct blam_mod2_geometry_header
 {
-    u32 unknown[9];
+    u32                 unknown[9];
     reflexive_t<byte_t> mesh_headers;
 };
 
 struct blam_mod2_marker
 {
-    byte_t name[32];
-    u32 unknown[5];
+    byte_t              name[32];
+    u32                 unknown[5];
     reflexive_t<byte_t> chunk;
 };
 
 /*!
- * \brief Header extracted from mod2 data. This is the first piece of data referenced by the map, containing further references to parts of the model as well as how to display it.
+ * \brief Header extracted from mod2 data. This is the first piece of data
+ * referenced by the map, containing further references to parts of the model as
+ * well as how to display it.
  */
 struct blam_mod2_header
 {
@@ -96,11 +97,11 @@ struct blam_mod2_header
 
     u32 unknown2[29];
 
-    reflexive_t<blam_mod2_marker> markers;
-    reflexive_t<byte_t> nodes;
-    reflexive_t<blam_mod2_region> regions;
+    reflexive_t<blam_mod2_marker>          markers;
+    reflexive_t<byte_t>                    nodes;
+    reflexive_t<blam_mod2_region>          regions;
     reflexive_t<blam_mod2_geometry_header> geometries;
-    reflexive_t<blam_shader_desc> shaders;
+    reflexive_t<blam_shader_desc>          shaders;
 };
 
 /*!
@@ -109,12 +110,12 @@ struct blam_mod2_header
 struct blam_mod2_bsp_header
 {
     byte_t data[500];
-//    blam_tagref lightmaps_tag;
-//    uint32 unknown1[37];
-//    blam_reflexive<byte> shaders;
-//    blam_reflexive<byte> collision_bsp_header;
-//    blam_reflexive<byte> nodes;
-//    uint32 unknown2[6];
+    //    blam_tagref lightmaps_tag;
+    //    uint32 unknown1[37];
+    //    blam_reflexive<byte> shaders;
+    //    blam_reflexive<byte> collision_bsp_header;
+    //    blam_reflexive<byte> nodes;
+    //    uint32 unknown2[6];
 };
 
 /*!
@@ -125,11 +126,7 @@ struct blam_mod2_bsp_header
  * \return A valid pointer to the referenced model, or NULL if it is invalid
  */
 extern const blam_mod2_header* blam_mod2_get_header(
-        const index_item_t* item,
-        const file_header_t* map,
-        i32 magic);
+    const index_item_t* item, const file_header_t* map, i32 magic);
 
-}
-}
-
-#endif
+} // namespace Blam
+} // namespace Coffee

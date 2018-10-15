@@ -4,15 +4,15 @@
 
 struct aiScene;
 
-namespace Assimp{
+namespace Assimp {
 class Importer;
 }
 
-namespace Coffee{
+namespace Coffee {
 /*!
  * \brief ASSIMP bindings with utility functions
  */
-namespace ASSIMP{
+namespace ASSIMP {
 
 struct AssimpData;
 
@@ -29,8 +29,8 @@ struct Importer_deleter
 struct AssimpData
 {
     UqPtr<::Assimp::Importer, Importer_deleter> importer;
-    const ::aiScene* scene;
+    const ::aiScene*                            scene;
 };
 
-}
-}
+} // namespace ASSIMP
+} // namespace Coffee

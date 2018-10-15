@@ -53,7 +53,7 @@ Sprites::Texture sprite_load(
         size->h = img.size.h;
     }
 
-    CRGBA* data = C_CAST<CRGBA*>(instance->mapTexture(out));
+    rgba_t* data = C_CAST<rgba_t*>(instance->mapTexture(out));
     MemCpy(C_OCAST<Bytes>(img), Bytes::From(data, img.size.area() * img.bpp));
     instance->unmapTexture(out);
 
@@ -97,7 +97,7 @@ i32 coffee_main(i32, cstring_w*)
     /* Create a rendering instance */
     Sprites::Renderer inst = rend.createRenderer();
 
-    rend.setClearColor(inst, CRGBA(0, 0, 0, 255));
+    rend.setClearColor(inst, rgba_t(0, 0, 0, 255));
     rend.clearBuffer(inst);
 
     /* Create sprites */
@@ -225,7 +225,7 @@ i32 coffee_main(i32, cstring_w*)
 
     while(!winhost.closeFlag())
     {
-        rend.setClearColor(inst, CRGBA(0, 0, 0, 255));
+        rend.setClearColor(inst, rgba_t(0, 0, 0, 255));
         rend.clearBuffer(inst);
 
         {

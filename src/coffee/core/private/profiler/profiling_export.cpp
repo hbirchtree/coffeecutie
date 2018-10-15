@@ -135,10 +135,7 @@ STATICINLINE void PutArgs(
 STATICINLINE void PutExtraData(
     JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    if(!Coffee::Profiler::ExtraInfo())
-        return;
-
-    for(auto info : *Coffee::Profiler::ExtraInfo())
+    for(auto info : ExtraData::Get())
     {
         target.AddMember(
             FromString(info.first, alloc),

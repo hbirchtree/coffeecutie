@@ -12,8 +12,8 @@ namespace NoiseGen{
  * \return The noise value
  */
 extern scalar Perlin(
-        const CVec3& pos,
-        const _cbasic_vec3<i32>& wrap = _cbasic_vec3<i32>(255));
+        const Vecf3& pos,
+        const Veci3& wrap = Veci3(255));
 
 /*!
  * \brief Makes transfers the floating-point range [0.0,1.0] to integer [0,255]

@@ -141,19 +141,19 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
             return m_colOp;
         }
-        CColorMask colorMask() const
+        colormask_t colorMask() const
         {
             return m_colMask;
         }
 
-        u32        m_culling;
-        LogicOp    m_colOp;
-        CColorMask m_colMask;
-        bool       m_discard;
-        bool       m_wireframe;
-        bool       m_polysmooth;
-        bool       m_dither;
-        bool       m_doCull;
+        u32         m_culling;
+        LogicOp     m_colOp;
+        colormask_t m_colMask;
+        bool        m_discard;
+        bool        m_wireframe;
+        bool        m_polysmooth;
+        bool        m_dither;
+        bool        m_doCull;
     };
 
     struct TessellatorState
@@ -516,7 +516,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_instanced;
         }
 
-        u64   m_boffset;
+        u64      m_boffset;
         u32      m_bassoc;
         u32      m_idx;
         u32      m_size;
@@ -1144,8 +1144,8 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         TypeEnum m_eltype;
 
         i32 m_voff;
-        u32   m_eoff;
-        u32   m_ioff;
+        u32 m_eoff;
+        u32 m_ioff;
     };
 
     /*!

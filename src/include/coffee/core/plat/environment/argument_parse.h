@@ -1,13 +1,9 @@
-#ifndef ARGUMENT_PARSE
-#define ARGUMENT_PARSE
+#pragma once
 
-#define COFFEE_MAX_FILEPATH_BUFFER_SIZE 255
-#define COFFEE_ARG_SWITCH '-'
-
-#include "../platform_detect.h"
 #include "../memory/cmemory.h"
+#include "../platform_detect.h"
 
-namespace Coffee{
+namespace Coffee {
 
 struct _cbasic_arg_container;
 
@@ -15,7 +11,7 @@ using AppArg = _cbasic_arg_container;
 
 struct ArgumentResult
 {
-    Map<CString, u32> switches;
+    Map<CString, u32>     switches;
     Map<CString, CString> arguments;
     Map<CString, CString> positional;
 };
@@ -35,14 +31,13 @@ struct ArgumentParser
         cstring help;
     };
 
-    void addSwitch(cstring name, cstring longname, cstring shortname,
-                   cstring help);
+    void addSwitch(
+        cstring name, cstring longname, cstring shortname, cstring help);
 
-    void addArgument(cstring name, cstring longname, cstring shortname,
-                     cstring help);
+    void addArgument(
+        cstring name, cstring longname, cstring shortname, cstring help);
 
-    void addPositionalArgument(cstring name,
-                               cstring help);
+    void addPositionalArgument(cstring name, cstring help);
 
     ArgumentResult parseArguments(AppArg& args);
 
@@ -50,9 +45,7 @@ struct ArgumentParser
 
     Vector<aargswitch> switches;
     Vector<aargswitch> arguments;
-    Vector<apos> posargs;
+    Vector<apos>       posargs;
 };
 
-}
-
-#endif
+} // namespace Coffee

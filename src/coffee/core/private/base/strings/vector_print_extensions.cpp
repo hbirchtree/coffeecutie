@@ -52,32 +52,32 @@ static inline CString matrix_to_string(
     return out;
 }
 
-CString to_string(CQuat const& v)
+CString to_string(Quatf const& v)
 {
     return vector_to_string<scalar, 4, 'q'>(v);
 }
 
-CString to_string(CVec4 const& v)
+CString to_string(Vecf4 const& v)
 {
     return vector_to_string<scalar, 4, 'v'>(v);
 }
 
-CString to_string(CVec3 const& v)
+CString to_string(Vecf3 const& v)
 {
     return vector_to_string<scalar, 3, 'v'>(v);
 }
 
-CString to_string(CVec2 const& v)
+CString to_string(Vecf2 const& v)
 {
     return vector_to_string<scalar, 2, 'v'>(v);
 }
 
-CString to_string(CMat4 const& v)
+CString to_string(Matf4 const& v)
 {
     return matrix_to_string<scalar, 4, 'm'>(v);
 }
 
-CString to_string(CMat3 const& v)
+CString to_string(Matf3 const& v)
 {
     return matrix_to_string<scalar, 3, 'm'>(v);
 }

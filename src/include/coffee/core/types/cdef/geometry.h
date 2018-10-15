@@ -110,6 +110,8 @@ struct _cbasic_size_2d : _cbasic_size
         case 1:
             return h;
         }
+
+        return w;
     }
 };
 
@@ -174,6 +176,8 @@ struct _cbasic_size_3d : _cbasic_size
         case 2:
             return depth;
         }
+
+        return width;
     }
 };
 
