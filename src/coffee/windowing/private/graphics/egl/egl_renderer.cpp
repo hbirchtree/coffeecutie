@@ -341,7 +341,7 @@ bool EGLRenderer::contextInit(const GLProperties &, CString *)
     return true;
 }
 
-bool EGLRenderer::contextPostInit(const GLProperties &, CString *err)
+bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 {
     m_eglData = UqPtr<EGL_Data>(new EGL_Data);
     m_eglData->surface = nullptr;

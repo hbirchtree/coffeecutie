@@ -64,11 +64,11 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
             set ( ENV_VARS ${PACKAGE_DIRECTORY_ENV_VARS} )
         endif()
 
-        add_custom_command ( TARGET ${TARGET}
-            PRE_BUILD
+        file ( GLOB_RECURSE VFS_DEPENDS
+            "${VFS_SOURCE}/*"
+            )
 
-            COMMAND
-            ${CMAKE_COMMAND} -E make_directory ${OUTPUT_DIR}
+        add_custom_command ( OUTPUT ${VFS_TARGET}
 
             COMMAND
             ${CMAKE_COMMAND} -E env
@@ -79,7 +79,17 @@ if(PRESSURE_COOKER_BIN AND PRESSURE_COOKER_LIB_DIR)
                 ${PACKAGING_ARGS}
                 ${VFS_SOURCE}
                 ${VFS_TARGET}
+
+            DEPENDS ${VFS_DEPENDS}
             )
+
+        add_custom_target ( ${TARGET}
+            COMMAND
+            ${CMAKE_COMMAND} -E make_directory ${OUTPUT_DIR}
+
+            DEPENDS ${VFS_TARGET}
+            )
+
     endmacro()
 endif()
 
