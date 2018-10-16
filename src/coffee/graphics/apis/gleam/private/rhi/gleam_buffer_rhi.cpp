@@ -56,7 +56,7 @@ void GLEAM_VBuffer::commit(BytesConst const& data)
     }
 }
 
-Bytes GLEAM_VBuffer::map(szptr offset, szptr size, gleam_error& ec)
+Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
 {
     void* out_ptr = nullptr;
 
@@ -94,8 +94,6 @@ Bytes GLEAM_VBuffer::map(szptr offset, szptr size, gleam_error& ec)
             out_ptr = CGL33::BufMapRange(
                 m_type, C_FCAST<ptroff>(offset), C_FCAST<ptroff>(size), acc);
     } else
-#else
-    C_UNUSED(offset);
 #endif
     {
         // TODO: Fix cases where offset is used for something!!!

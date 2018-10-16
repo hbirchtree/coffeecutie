@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../../coffee_assert_macros.h"
-#include "../../types/tdef/integertypes.h"
 #include "../../types/cdef/infotypes.h"
+#include "../../types/tdef/integertypes.h"
 #include "../platform_detect.h"
 
-namespace Coffee{
-namespace Library{
+namespace Coffee {
+namespace Library {
 
 struct FunctionLoad_def
 {
@@ -29,15 +29,8 @@ struct FunctionLoad_def
      * \return Pointer to the loaded library, platform-specific data
      */
     Library* GetLibrary(
-            cstring name,
-            error_type& ec,
-            LoadFlags flags = NoFlags,
-            Version const* ver = nullptr)
+        cstring, error_type&, LoadFlags = NoFlags, Version const* = nullptr)
     {
-        C_UNUSED(ec);
-        C_UNUSED(name);
-        C_UNUSED(flags);
-        C_UNUSED(ver);
         return nullptr;
     }
 
@@ -53,18 +46,15 @@ struct FunctionLoad_def
      * \param lib
      * \return
      */
-    bool UnloadLibrary(Library* lib,
-                       error_type& ec)
+    bool UnloadLibrary(Library*, error_type&)
     {
-        C_UNUSED(ec);
-        C_UNUSED(lib);
         return false;
     }
 
     template<typename RType, typename... Args>
     struct Loader
     {
-        using Fun = RType(*)(Args...);
+        using Fun = RType (*)(Args...);
 
         STATICINLINE
         /*!
@@ -73,14 +63,8 @@ struct FunctionLoad_def
          * \param funcName Name of function to load
          * \return
          */
-        Fun GetFunction(
-                Library* lib,
-                cstring funcName,
-                error_type& ec)
+        Fun GetFunction(Library*, cstring, error_type&)
         {
-            C_UNUSED(lib);
-            C_UNUSED(funcName);
-            C_UNUSED(ec);
             return nullptr;
         }
     };
@@ -89,34 +73,33 @@ struct FunctionLoad_def
 template<typename FunctionLoader>
 struct ObjectLoader_def
 {
-    template<typename Obj,typename... Args>
+    template<typename Obj, typename... Args>
     struct ObjConstructor
     {
-        using LoaderFunction = Obj*(*)(Args...);
+        using LoaderFunction = Obj* (*)(Args...);
 
         LoaderFunction loader;
     };
 
-    template<typename Obj,typename... Args> STATICINLINE
-    /*!
-     * \brief Load an object constructor from a file
-     * \param library Loaded library which should contain the function
-     * \param constructor Name of constructor to load
-     * \return
-     */
-    ObjConstructor<Obj> GetConstructor(
-            typename FunctionLoader::Library* library,
-            cstring constructor,
-            typename FunctionLoader::error_type& ec)
+    template<typename Obj, typename... Args>
+    STATICINLINE
+        /*!
+         * \brief Load an object constructor from a file
+         * \param library Loaded library which should contain the function
+         * \param constructor Name of constructor to load
+         * \return
+         */
+        ObjConstructor<Obj>
+        GetConstructor(
+            typename FunctionLoader::Library*,
+            cstring,
+            typename FunctionLoader::error_type&)
     {
-        C_UNUSED(library);
-        C_UNUSED(constructor);
-        C_UNUSED(ec);
         return {};
     }
 };
 
 const constexpr cstring DefaultConstructorFunction = "CoffeeLoader";
 
-}
-}
+} // namespace Library
+} // namespace Coffee

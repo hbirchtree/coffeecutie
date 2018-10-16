@@ -167,11 +167,8 @@ bool X11Window::closeWindow()
     return false;
 }
 
-void X11Window::popErrorMessage(Severity s, cstring title, cstring msg)
+void X11Window::popErrorMessage(Severity, cstring, cstring)
 {
-    C_UNUSED(s);
-    C_UNUSED(title);
-    C_UNUSED(msg);
 }
 
 bool X11Window::windowPreInit(const CDProperties &, CString *err)
@@ -493,9 +490,8 @@ bool X11Window::screensaverMode()
     return false;
 }
 
-void X11Window::setScreensaverMode(bool m)
+void X11Window::setScreensaverMode(bool)
 {
-    C_UNUSED(m);
 }
 
 CString X11Window::windowLibrary() const

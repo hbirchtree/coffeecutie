@@ -655,10 +655,8 @@ void RuntimeQueue::TerminateThread(RuntimeQueue* thread, rqe& ec)
     context->queueThreads.erase(tid);
 }
 
-void RuntimeQueue::TerminateThreads(rqe& ec)
+void RuntimeQueue::TerminateThreads(rqe&)
 {
-    C_UNUSED(ec);
-
     context->shutdownFlag.store(true);
     Lock _(context->globalMod);
 

@@ -64,7 +64,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     {
     };
 
-    static void LoadAPI(bool UNUSED_PARAM debug_mode)
+    static void LoadAPI(C_UNUSED(bool debug_mode))
     {
     }
 

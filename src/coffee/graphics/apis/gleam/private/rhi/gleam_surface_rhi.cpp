@@ -421,8 +421,8 @@ inline void surface_internal_upload(GLEAM_Surface<SizeT, PointT>& surface)
 /* TODO: If a texture format is reversed, eg. BGRA, BGR
  *  or simply reversed (RGBA -> ABGR), use swizzling
  *  as fallback on OpenGL ES */
-C_MAYBE_UNUSED STATICINLINE void texture_swizzle(
-    TexComp::tex_flag type, glhnd const& tex_hnd, PixCmp cmp, PixCmp target)
+C_UNUSED(STATICINLINE void texture_swizzle(
+    TexComp::tex_flag type, glhnd const& tex_hnd, PixCmp cmp, PixCmp target))
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::TexBind(type, tex_hnd);

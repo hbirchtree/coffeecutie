@@ -318,9 +318,8 @@ class EventApplication : public InputApplication
      * application. \param eventloop Generic pointer to EventLoopData<>
      * structure
      */
-    virtual void registerEventLoop(void* eventloop)
+    virtual void registerEventLoop(void*)
     {
-        C_UNUSED(eventloop);
     }
 
     template<typename Renderer, typename Data>

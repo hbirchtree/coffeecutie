@@ -117,14 +117,12 @@ struct FileFunDef : FileBase<NestedError>, NodeTypeBase
      * \return
      */
     static FileMapping Map(
-        Url const& fname, RSCA access, szptr size, szptr offset, file_error& ec)
+        C_UNUSED(Url const& fname),
+        C_UNUSED(RSCA access),
+        C_UNUSED(szptr size),
+        C_UNUSED(szptr offset),
+        file_error&)
     {
-        C_UNUSED(fname);
-        C_UNUSED(access);
-        C_UNUSED(size);
-        C_UNUSED(offset);
-        C_UNUSED(ec);
-
         return {};
     }
     static bool Unmap(FileMapping&&, file_error&)
@@ -133,40 +131,25 @@ struct FileFunDef : FileBase<NestedError>, NodeTypeBase
     }
 
     static bool MapCache(
-        void* mapping_ptr,
-        szptr mapping_size,
-        szptr cache_offset,
-        szptr cache_size,
+        C_UNUSED(void* mapping_ptr),
+        C_UNUSED(szptr mapping_size),
+        C_UNUSED(szptr cache_offset),
+        C_UNUSED(szptr cache_size),
         file_error&)
     {
-        C_UNUSED(mapping_ptr);
-        C_UNUSED(mapping_size);
-        C_UNUSED(cache_offset);
-        C_UNUSED(cache_size);
-
         return false;
     }
     static bool MapUncache(
-        c_ptr       mapping_ptr,
-        szptr       mapping_size,
-        szptr       cache_offset,
-        szptr       cache_size,
-        file_error& ec)
+        C_UNUSED(c_ptr mapping_ptr),
+        C_UNUSED(szptr mapping_size),
+        C_UNUSED(szptr cache_offset),
+        C_UNUSED(szptr cache_size),
+        file_error&)
     {
-        C_UNUSED(mapping_ptr);
-        C_UNUSED(mapping_size);
-        C_UNUSED(cache_offset);
-        C_UNUSED(cache_size);
-        C_UNUSED(ec);
-
         return false;
     }
-    static bool MapSync(c_ptr ptr, szptr size, file_error& ec)
+    static bool MapSync(C_UNUSED(c_ptr ptr), C_UNUSED(szptr size), file_error&)
     {
-        C_UNUSED(ptr);
-        C_UNUSED(size);
-        C_UNUSED(ec);
-
         return false;
     }
 

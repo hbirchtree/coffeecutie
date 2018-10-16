@@ -60,15 +60,9 @@ Sprites::Texture sprite_load(
     return out;
 }
 
-void SDL_Handler(void*, SDL_Event* const& ev, c_cptr)
-{
-    //    cDebug("Event received: {0}", ev->type);
-}
-
 i32 coffee_main(i32, cstring_w*)
 {
-    SubsystemWrapper<SDL2::SDL2> sys1;
-    C_UNUSED(sys1);
+    C_UNUSED(SubsystemWrapper<SDL2::SDL2> sys1);
 
     i32 majGL = 2, minGL = 0;
     RHI::GLEAM::GLEAM_API::GetDefaultVersion(majGL, minGL);
@@ -83,8 +77,6 @@ i32 coffee_main(i32, cstring_w*)
         SDL2Dialog::ErrorMessage("Failed to create window", err.c_str());
         return 1;
     }
-
-    winhost.installEventHandler({SDL_Handler, nullptr, nullptr});
 
     /* Attaching the sprite instance to the window */
     Sprites rend(&winhost);

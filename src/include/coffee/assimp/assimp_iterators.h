@@ -153,8 +153,7 @@ struct MeshLoader
      * \param size
      * \return
      */
-    static szptr
-    jumping_memcpy(c_ptr target, c_cptr source, szptr size)
+    static szptr jumping_memcpy(c_ptr target, c_cptr source, szptr size)
     {
         static_assert(
             Stride > Size,
@@ -691,9 +690,8 @@ struct MeshLoader
 
             buffers.elementData.ref_transform.reserve(
                 buffers.elementData.refs.size());
-            for(auto i : Range<>(buffers.elementData.refs.size()))
+            for(C_UNUSED(auto i) : Range<>(buffers.elementData.refs.size()))
             {
-                C_UNUSED(i);
                 buffers.elementData.ref_transform.push_back(transform);
             }
 

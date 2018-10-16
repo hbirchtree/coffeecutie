@@ -343,7 +343,7 @@ void InstallDefaultSigHandlers()
 #endif
 }
 
-void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)
+void SetPrintingVerbosity(C_UNUSED(u8 level))
 {
     Coffee::PrintingVerbosityLevel() = level;
 }

@@ -124,8 +124,7 @@ struct RenderData
 
 i32 coffee_main(i32, cstring_w*)
 {
-    SubsystemWrapper<SDL2::SDL2> sys1;
-    C_UNUSED(sys1);
+    C_UNUSED(SubsystemWrapper<SDL2::SDL2> sys1);
 
     /* Set file prefix, basically a cwd but only for resources */
     cDebug("Current directory: {0}", Env::CurrentDir());

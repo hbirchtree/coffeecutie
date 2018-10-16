@@ -112,9 +112,8 @@ FORCEDINLINE void ParallelForEach(
         }
     };
 
-    for(const auto i : Range<>(thread_count))
+    for(C_UNUSED(const auto i) : Range<>(thread_count))
     {
-        C_UNUSED(i);
         tasks.push_back(RunAsync(runner));
     }
 

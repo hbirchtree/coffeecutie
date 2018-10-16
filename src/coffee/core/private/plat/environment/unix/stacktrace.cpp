@@ -34,7 +34,7 @@ CString PosixStacktracer::DemangleSymbol(const char* sym)
 }
 
 StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
-    u32 start, i32 length)
+    C_UNUSED(u32 start), C_UNUSED(i32 length))
 {
     Stacktrace t;
 #ifndef COFFEE_LOWFAT
@@ -76,9 +76,6 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
         if(length != (-1) && depth == length)
             break;
     }
-#else
-    C_UNUSED(start);
-    C_UNUSED(length);
 #endif
 #endif
     return t;

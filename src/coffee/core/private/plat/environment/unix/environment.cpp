@@ -40,8 +40,7 @@ Url PosixEnvironmentFun::CurrentDir()
 {
     CString dir;
     dir.resize(PATH_MAX);
-    auto cwd = getcwd(&dir[0], dir.size());
-    C_UNUSED(cwd);
+    getcwd(&dir[0], dir.size());
     auto idx = dir.find('\0');
     if(idx != CString::npos)
         dir.resize(idx);

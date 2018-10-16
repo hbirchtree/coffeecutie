@@ -9,7 +9,7 @@
 
 extern "C" GpuQueryFunction* GetGpuQuery();
 
-bool HasExtension(Coffee::CString const& ext_name)
+bool HasExtension(C_UNUSED(Coffee::CString const& ext_name))
 {
     using namespace Coffee;
     using namespace CGL;
@@ -18,8 +18,6 @@ bool HasExtension(Coffee::CString const& ext_name)
     for(auto i : Range<i32>(Debug::GetInteger(GL_NUM_EXTENSIONS)))
         if(Debug::GetStringi(GL_EXTENSIONS, C_FCAST<u32>(i)) == ext_name)
             return true;
-#else
-    C_UNUSED(ext_name);
 #endif
 
     return false;

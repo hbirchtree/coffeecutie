@@ -154,12 +154,11 @@ void SDL2SpriteRenderer::destroyTexture(u32 c, SpriteApplication::Texture* t)
 }
 
 void SDL2SpriteRenderer::createSpriteAtlas(
-    const SpriteApplication::Texture& t,
+    C_UNUSED(const SpriteApplication::Texture& t),
     const Vector<SpriteApplication::SpriteSource>&,
     u32&,
     Vector<SDL2SpriteRenderer::Sprite>&)
 {
-    C_UNUSED(t);
 }
 
 bool SDL2SpriteRenderer::createSprite(

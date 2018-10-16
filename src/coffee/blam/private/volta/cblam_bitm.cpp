@@ -27,9 +27,8 @@ const bitm_image_t *bitm_get(
         const index_item_t *item,
         const file_header_t *map,
         i32 magic,
-        i32* numImages)
+        C_UNUSED(i32* numImages))
 {
-    C_UNUSED(numImages);
     bitm_header_t hdr = _bitm_get_header(map,item->offset-magic);
 
     if(!hdr.imageCount)

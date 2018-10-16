@@ -127,10 +127,9 @@ void SDL2EventHandler::eventHandleI(const CIEvent& event, c_cptr data)
     internalProcessEvent(event, data);
 }
 
-void SDL2EventHandler::hapticInsert(const CIHapticEvent& e, c_cptr data)
+void SDL2EventHandler::hapticInsert(
+    const CIHapticEvent& e, C_UNUSED(c_cptr data))
 {
-    C_UNUSED(data);
-
     if(getSDL2Context())
         SDL_HapticRumblePlay(
             getSDL2Context()->haptics[e.rumble_input.index],
@@ -178,9 +177,8 @@ bool SDL2EventHandler::textInputMode() const
     return SDL_IsTextInputActive();
 }
 
-void SDL2EventHandler::setKeyboardRepeat(bool m)
+void SDL2EventHandler::setKeyboardRepeat(C_UNUSED(bool m))
 {
-    C_UNUSED(m);
 }
 
 bool SDL2EventHandler::isMouseGrabbed() const

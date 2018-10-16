@@ -15,8 +15,7 @@ bool test_buffer_api(Args... args)
     buffer.alloc();
     buffer.commit(sizeof(Vecf3), &test_vec);
 
-    auto mapped_ptr = buffer.map(0, sizeof(scalar));
-    C_UNUSED(mapped_ptr);
+    C_UNUSED(auto mapped_ptr = buffer.map(0, sizeof(scalar)));
 
     buffer.unmap();
     buffer.dealloc();
@@ -95,15 +94,10 @@ bool test_api()
         data.size = 0;
         s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
-        u32 size = s_2d.arraySize();
-        bool is_array = s_2d.isArray();
-        auto fmt = s_2d.format();
-        u32 mips = s_2d.mipmaps();
-
-        C_UNUSED(size);
-        C_UNUSED(is_array);
-        C_UNUSED(fmt);
-        C_UNUSED(mips);
+        C_UNUSED(u32 size = s_2d.arraySize());
+        C_UNUSED(bool is_array = s_2d.isArray());
+        C_UNUSED(auto fmt = s_2d.format());
+        C_UNUSED(u32 mips = s_2d.mipmaps());
 
         typename A::SM_2D sample_2d;
         sample_2d.alloc();
@@ -116,9 +110,7 @@ bool test_api()
         Vecf2 lrng = {0.f, 0.2f};
         sample_2d.setLODRange(lrng);
         sample_2d.setEdgePolicy(0, WrapPolicy::Clamp);
-        typename A::UNIFSMP hand = sample_2d.handle();
-
-        C_UNUSED(hand);
+        C_UNUSED(typename A::UNIFSMP hand = sample_2d.handle());
 
         sample_2d.bind(0);
 
@@ -139,15 +131,10 @@ bool test_api()
         data.size = 0;
         s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
-        u32 size = s_2d.arraySize();
-        bool is_array = s_2d.isArray();
-        auto fmt = s_2d.format();
-        u32 mips = s_2d.mipmaps();
-
-        C_UNUSED(size);
-        C_UNUSED(is_array);
-        C_UNUSED(fmt);
-        C_UNUSED(mips);
+        C_UNUSED(u32 size = s_2d.arraySize());
+        C_UNUSED(bool is_array = s_2d.isArray());
+        C_UNUSED(auto fmt = s_2d.format());
+        C_UNUSED(u32 mips = s_2d.mipmaps());
 
         s_2d.dealloc();
     }
@@ -165,15 +152,10 @@ bool test_api()
         data.size = 0;
         s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
-        u32 size = s_2d.arraySize();
-        bool is_array = s_2d.isArray();
-        auto fmt = s_2d.format();
-        u32 mips = s_2d.mipmaps();
-
-        C_UNUSED(size);
-        C_UNUSED(is_array);
-        C_UNUSED(fmt);
-        C_UNUSED(mips);
+        C_UNUSED(u32 size = s_2d.arraySize());
+        C_UNUSED(bool is_array = s_2d.isArray());
+        C_UNUSED(auto fmt = s_2d.format());
+        C_UNUSED(u32 mips = s_2d.mipmaps());
 
         s_2d.dealloc();
     }
@@ -191,15 +173,10 @@ bool test_api()
         data.size = 0;
         s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
-        u32 size = s_2d.arraySize();
-        bool is_array = s_2d.isArray();
-        auto fmt = s_2d.format();
-        u32 mips = s_2d.mipmaps();
-
-        C_UNUSED(size);
-        C_UNUSED(is_array);
-        C_UNUSED(fmt);
-        C_UNUSED(mips);
+        C_UNUSED(u32 size = s_2d.arraySize());
+        C_UNUSED(bool is_array = s_2d.isArray());
+        C_UNUSED(auto fmt = s_2d.format());
+        C_UNUSED(u32 mips = s_2d.mipmaps());
 
         s_2d.dealloc();
     }
@@ -217,15 +194,10 @@ bool test_api()
         data.size = 0;
         s_2d.upload({BitFmt::Byte, PixCmp::RGBA}, s, data, p, 0);
 
-        u32 size = s_2d.arraySize();
-        bool is_array = s_2d.isArray();
-        auto fmt = s_2d.format();
-        u32 mips = s_2d.mipmaps();
-
-        C_UNUSED(size);
-        C_UNUSED(is_array);
-        C_UNUSED(fmt);
-        C_UNUSED(mips);
+        C_UNUSED(u32 size = s_2d.arraySize());
+        C_UNUSED(bool is_array = s_2d.isArray());
+        C_UNUSED(auto fmt = s_2d.format());
+        C_UNUSED(u32 mips = s_2d.mipmaps());
 
         s_2d.dealloc();
     }

@@ -220,13 +220,12 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer* buffer)
 #endif
 }
 
-void GLEAM_VertDescriptor::bind(u32 vertexOffset)
+void GLEAM_VertDescriptor::bind(C_UNUSED(u32 vertexOffset))
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
         CGL33::VAOBind(m_handle);
-        C_UNUSED(vertexOffset);
     } else
 #endif
         for(Pair<u32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)

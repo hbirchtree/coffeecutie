@@ -283,15 +283,11 @@ class CSoundStream : public CObject
 
     // TODO: Add PTS processing to sound streams
     virtual void feedDataTimed(
-        c_cptr              data,
-        const CSoundFormat& fmt,
-        const szptr&        samples,
-        const u64&          pts)
+        C_UNUSED(c_cptr data),
+        C_UNUSED(const CSoundFormat& fmt),
+        C_UNUSED(const szptr& samples),
+        C_UNUSED(const u64& pts))
     {
-        C_UNUSED(data);
-        C_UNUSED(fmt);
-        C_UNUSED(samples);
-        C_UNUSED(pts);
     }
 
     /*!

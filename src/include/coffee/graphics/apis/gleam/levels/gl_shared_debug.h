@@ -143,11 +143,9 @@ struct CGL_Shared_Debug
 
     static void SetDebugMode(bool enabled);
 
-    STATICINLINE void SetDebugLevel(Severity s, bool enabled)
+    STATICINLINE void SetDebugLevel(
+        C_UNUSED(Severity s), C_UNUSED(bool enabled))
     {
-        C_UNUSED(s);
-        C_UNUSED(enabled);
-
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageControl(
             GL_DONT_CARE,
@@ -159,22 +157,16 @@ struct CGL_Shared_Debug
 #endif
     }
 
-    STATICINLINE void SetObjectLabel(Object t, CGhnd h, cstring s)
+    STATICINLINE void SetObjectLabel(
+        C_UNUSED(Object t), C_UNUSED(CGhnd h), C_UNUSED(cstring s))
     {
-        C_UNUSED(t);
-        C_UNUSED(h);
-        C_UNUSED(s);
-
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glObjectLabel(to_enum(t), h, -1, s);
 #endif
     }
 
-    STATICINLINE void SetDebugGroup(cstring n, u32 id = 0)
+    STATICINLINE void SetDebugGroup(C_UNUSED(cstring n), C_UNUSED(u32 id) = 0)
     {
-        C_UNUSED(n);
-        C_UNUSED(id);
-
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, id, -1, n);
 #endif
@@ -191,23 +183,18 @@ struct CGL_Shared_Debug
         DebugMessage(s, t, n.c_str());
     }
 
-    STATICINLINE void DebugMessage(Severity s, DebugType t, cstring n)
+    STATICINLINE void DebugMessage(
+        C_UNUSED(Severity s), C_UNUSED(DebugType t), C_UNUSED(cstring n))
     {
-        C_UNUSED(s);
-        C_UNUSED(t);
-        C_UNUSED(n);
-
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageInsert(
             GL_DEBUG_SOURCE_APPLICATION, to_enum(t), 0, to_enum(s), -1, n);
 #endif
     }
 
-    STATICINLINE void DebugSetCallback(CGcallback c, void* param)
+    STATICINLINE void DebugSetCallback(
+        C_UNUSED(CGcallback c), C_UNUSED(void* param))
     {
-        C_UNUSED(c);
-        C_UNUSED(param);
-
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageCallback(c, param);
 #endif
@@ -215,7 +202,7 @@ struct CGL_Shared_Debug
 
     /* Extensions */
 
-    static void GetExtensions(Context &ctxt);
+    static void GetExtensions(Context& ctxt);
 
     STATICINLINE bool CheckExtensionSupported(Context& ctxt, cstring id)
     {
@@ -257,7 +244,7 @@ struct CGL_Shared_Debug
     {
     }
 
-    static bool CompressedFormatSupport(Context &ctxt, PixelFormat t);
+    static bool CompressedFormatSupport(Context& ctxt, PixelFormat t);
 
     STATICINLINE bool InternalFormatSupport(PixelFormat)
     {

@@ -4,8 +4,8 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 
-#include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 
 namespace Coffee {
 namespace RHI {
@@ -621,8 +621,6 @@ void GLEAM_API::Draw(
 {
     DPROF_CONTEXT_FUNC(GLM_API);
 
-    C_UNUSED(vertices);
-
     DrwMd mode = {d.primitive(), d.primitiveMode()};
 
     if(query)
@@ -673,26 +671,19 @@ void GLEAM_API::Draw(
 }
 
 void GLEAM_API::DrawConditional(
-    const GLEAM_Pipeline&   pipeline,
-    const PipelineState&    ustate,
-    V_DESC&                 vertices,
-    const DrawCall&         d,
-    const DrawInstanceData& i,
-    OccludeQuery&           c,
-    gleam_error&            ec)
+    C_UNUSED(const GLEAM_Pipeline& pipeline),
+    C_UNUSED(const PipelineState& ustate),
+    C_UNUSED(V_DESC& vertices),
+    C_UNUSED(const DrawCall& d),
+    C_UNUSED(const DrawInstanceData& i),
+    C_UNUSED(OccludeQuery& c),
+    C_UNUSED(gleam_error& ec))
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
     CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
     Draw(pipeline, ustate, vertices, d, i, ec);
     CGL33::ConditionalRenderEnd();
-#else
-    C_UNUSED(pipeline);
-    C_UNUSED(ustate);
-    C_UNUSED(vertices);
-    C_UNUSED(d);
-    C_UNUSED(i);
-    C_UNUSED(c);
 #endif
 }
 

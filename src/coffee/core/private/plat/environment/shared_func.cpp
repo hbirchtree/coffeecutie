@@ -54,9 +54,8 @@ ThrdCnt SysInfoDef::SmartParallelism(u64 worksize, u64 weight)
 }
 
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_WINDOWS)
-HWDeviceInfo SysInfoDef::Processor(u32 i)
+HWDeviceInfo SysInfoDef::Processor(C_UNUSED(u32 i))
 {
-    C_UNUSED(i);
     return HWDeviceInfo("Generic Processor","0x0");
 }
 #endif

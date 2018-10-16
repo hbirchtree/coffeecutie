@@ -12,13 +12,13 @@
  *
  */
 #if VERIFY_CPP_FEATURE(201703L, maybe_unused)
-#define UNUSED_PARAM [[maybe_unused]]
+#define UNUSED_PARAM(type, name) [[maybe_unused]] type name
 
 #elif defined(COFFEE_GCC) || defined(COFFEE_CLANG)
-#define UNUSED_PARAM __attribute__((unused))
+#define UNUSED_PARAM(type, name) __attribute__((unused)) type name
 
 #else
-#define UNUSED_PARAM
+#define UNUSED_PARAM(type, name) type name
 
 #endif
 
@@ -27,13 +27,13 @@
  *
  */
 #if VERIFY_CPP_FEATURE(201703L, maybe_unused)
-#define C_MAYBE_UNUSED [[maybe_unused]]
+#define C_UNUSED(var_decl) [[maybe_unused]] var_decl
 
 #elif defined(COFFEE_GCC) || defined(COFFEE_CLANG)
-#define C_MAYBE_UNUSED __attribute__((unused))
+#define C_UNUSED(var_decl) __attribute__((unused)) var_decl
 
 #else
-#define C_MAYBE_UNUSED
+#define C_UNUSED(var_decl) var_decl
 #endif
 
 /*

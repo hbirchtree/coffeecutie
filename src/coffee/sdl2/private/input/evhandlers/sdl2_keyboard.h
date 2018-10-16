@@ -14,11 +14,9 @@ using namespace CInput;
 
 FORCEDINLINE void EventHandleKeys(
         SDL2EventHandler* ctxt,
-        Uint32 type,
+        C_UNUSED(Uint32 type),
         const SDL_KeyboardEvent& key)
 {
-    C_UNUSED(type);
-
     CIEvent e;
     CIKeyEvent k;
 

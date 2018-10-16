@@ -503,12 +503,12 @@ FORCEDINLINE CString encode(c_cptr ptr, szptr len)
     return out;
 }
 
-FORCEDINLINE bool decode(byte_t const* i_ptr, szptr i_len, Vector<byte_t>* out)
+FORCEDINLINE bool decode(
+    C_UNUSED(byte_t const* i_ptr),
+    C_UNUSED(szptr i_len),
+    C_UNUSED(Vector<byte_t>* out))
 {
     /*TODO: Implement Base64 decoding*/
-    C_UNUSED(i_ptr);
-    C_UNUSED(i_len);
-    C_UNUSED(out);
     return false;
 }
 } // namespace b64

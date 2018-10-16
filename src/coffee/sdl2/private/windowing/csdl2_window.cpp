@@ -10,11 +10,9 @@
 namespace Coffee {
 namespace Display {
 
-bool SDL2Window::windowPreInit(const CDProperties& p, CString*)
+bool SDL2Window::windowPreInit(const CDProperties&, CString*)
 {
     DProfContext a("Configuring SDL subsystems");
-
-    C_UNUSED(p);
 
     m_window_flags = 0;
 

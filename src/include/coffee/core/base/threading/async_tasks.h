@@ -72,10 +72,9 @@ template<typename T>
  * \param f A future to be checked
  * \return True if the value is available
  */
-FORCEDINLINE bool FutureAvailable(Future<T> const& f)
+FORCEDINLINE bool FutureAvailable(C_UNUSED(Future<T> const& f))
 {
 #if defined(COFFEE_NO_FUTURES)
-    C_UNUSED(f);
     return true;
 #else
     if(!f.valid())

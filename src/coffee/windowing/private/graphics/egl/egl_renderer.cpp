@@ -331,24 +331,18 @@ EGLRenderer::~EGLRenderer()
 {
 }
 
-bool EGLRenderer::contextPreInit(const GLProperties &props, CString *)
+bool EGLRenderer::contextPreInit(const GLProperties &, CString *)
 {
-    C_UNUSED(props);
     return true;
 }
 
-bool EGLRenderer::contextInit(const GLProperties &props, CString *err)
+bool EGLRenderer::contextInit(const GLProperties &, CString *)
 {
-    C_UNUSED(props);
-    C_UNUSED(err);
-
     return true;
 }
 
-bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
+bool EGLRenderer::contextPostInit(const GLProperties &, CString *err)
 {
-    C_UNUSED(props);
-
     m_eglData = UqPtr<EGL_Data>(new EGL_Data);
     m_eglData->surface = nullptr;
     m_eglData->context = nullptr;

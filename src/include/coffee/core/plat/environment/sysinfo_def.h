@@ -74,9 +74,8 @@ struct SysInfoDef
      * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    CoreCnt CoreCount(u32 i = 0)
+    CoreCnt CoreCount(C_UNUSED(u32 i) = 0)
     {
-        C_UNUSED(i);
         return 0;
     }
 
@@ -195,9 +194,8 @@ struct SysInfoDef
      * \param i Processor to examine
      * \return
      */
-    Vector<bigscalar> ProcessorFrequencies(u32 i = 0)
+    Vector<bigscalar> ProcessorFrequencies(C_UNUSED(u32 i) = 0)
     {
-        C_UNUSED(i);
         return {};
     }
 
@@ -209,9 +207,8 @@ struct SysInfoDef
      * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    bigscalar ProcessorFrequency(u32 i = 0)
+    bigscalar ProcessorFrequency(C_UNUSED(u32 i) = 0)
     {
-        C_UNUSED(i);
         return 1.0;
     }
 
@@ -246,9 +243,8 @@ struct SysInfoDef
      * \param i Processor to examine, max count is CpuCount()
      * \return
      */
-    MemUnit ProcessorCacheSize(u32 i = 0)
+    MemUnit ProcessorCacheSize(C_UNUSED(u32 i) = 0)
     {
-        C_UNUSED(i);
         return 0;
     }
 

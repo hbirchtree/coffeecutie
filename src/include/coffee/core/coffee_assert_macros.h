@@ -66,7 +66,7 @@ template<typename T> FORCEDINLINE
 /*!
  * \brief Use this to mark variables as unused to avoid compiler warnings. We can get away with this.
  */
-void C_UNUSED(T const&)
+void C_UNUSED_VAR(T const&)
 {
 }
 

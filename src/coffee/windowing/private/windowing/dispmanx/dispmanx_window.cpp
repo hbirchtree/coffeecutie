@@ -18,17 +18,15 @@ struct DISPMAN_Data
     EGL_DISPMANX_WINDOW_T window;
 };
 
-bool DispmanXWindow::windowPreInit(const CDProperties &props, CString *err)
+bool DispmanXWindow::windowPreInit(const CDProperties &, CString *)
 {
     bcm_host_init();
     m_dmData = nullptr;
 
-    C_UNUSED(props);
-    C_UNUSED(err);
     return true;
 }
 
-bool DispmanXWindow::windowInit(const CDProperties &props, CString *err)
+bool DispmanXWindow::windowInit(const CDProperties &, CString *)
 {
     _cbasic_size_2d<u32> screen_size = {};
     const u16 display_num = 0;
@@ -63,15 +61,11 @@ bool DispmanXWindow::windowInit(const CDProperties &props, CString *err)
     m_dmData->window.width = screen_size.w;
     m_dmData->window.height = screen_size.h;
 
-    C_UNUSED(props);
-    C_UNUSED(err);
     return true;
 }
 
-bool DispmanXWindow::windowPostInit(const CDProperties &props, CString *err)
+bool DispmanXWindow::windowPostInit(const CDProperties &, CString *)
 {
-    C_UNUSED(props);
-    C_UNUSED(err);
     return true;
 }
 
@@ -101,9 +95,8 @@ uint32 DispmanXWindow::windowState() const
     return Display::CDProperties::FullScreen;
 }
 
-void DispmanXWindow::setWindowState(const CDProperties::State &s)
+void DispmanXWindow::setWindowState(const CDProperties::State &)
 {
-    C_UNUSED(s);
 }
 
 CSize DispmanXWindow::windowSize() const
@@ -111,9 +104,8 @@ CSize DispmanXWindow::windowSize() const
     return {m_dmData->window.width, m_dmData->window.height};
 }
 
-void DispmanXWindow::setWindowSize(const CSize &s)
+void DispmanXWindow::setWindowSize(const CSize &)
 {
-    C_UNUSED(s);
 }
 
 CPoint DispmanXWindow::windowPosition() const
@@ -121,9 +113,8 @@ CPoint DispmanXWindow::windowPosition() const
     return {0,0};
 }
 
-void DispmanXWindow::setWindowPosition(const CPoint &p)
+void DispmanXWindow::setWindowPosition(const CPoint &)
 {
-    C_UNUSED(p);
 }
 
 CString DispmanXWindow::windowTitle() const
@@ -131,9 +122,8 @@ CString DispmanXWindow::windowTitle() const
     return {};
 }
 
-void DispmanXWindow::setWindowTitle(const CString &tl)
+void DispmanXWindow::setWindowTitle(const CString &)
 {
-    C_UNUSED(tl);
 }
 
 bool DispmanXWindow::screensaverMode()
@@ -141,9 +131,8 @@ bool DispmanXWindow::screensaverMode()
     return true;
 }
 
-void DispmanXWindow::setScreensaverMode(bool m)
+void DispmanXWindow::setScreensaverMode(bool)
 {
-    C_UNUSED(m);
 }
 
 CString DispmanXWindow::windowLibrary() const
