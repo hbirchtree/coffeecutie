@@ -12,7 +12,7 @@
 #include <ctime>
 #include <time.h>
 
-#if defined(COFFEE_WINDOWS) || defined(COFFEE_NACL)
+#if defined(COFFEE_WINDOWS)
 #include <iomanip>
 #include <sstream>
 #endif

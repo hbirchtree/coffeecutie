@@ -1,5 +1,6 @@
 #include <coffee/assimp/assimp_iterators.h>
 #include <coffee/assimp/assimp_material_iterators.h>
+#include <coffee/assimp/assimp_animation_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/types/tdef/stltypes.h>
@@ -213,7 +214,7 @@ void AssimpProcessor::process(
             ASSIMP::MeshLoader::ExtractDescriptors(
                 scene, settings.attributes, dinfo, bdesc);
 
-            ASSIMP::MaterialParser::MaterialSerializer materials;
+            ASSIMP::MaterialParser::MaterialSerializer materials = {};
 
             ASSIMP::MaterialParser::ExtractDescriptors(
                 scene,
@@ -222,9 +223,17 @@ void AssimpProcessor::process(
                 settings.properties,
                 *baseDirs);
 
+            ASSIMP::AnimationParser::AnimationHeap animations = {};
+
+            ASSIMP::AnimationParser::Extract(scene, bdesc.nodes, animations);
+
             cursor.progress(
                 PRESSURE_LIB "Processed {0} materials",
                 materials.header.num_materials);
+
+            cursor.progress(
+                PRESSURE_LIB "Processed {0} animations",
+                animations.header.animations.num);
 
             auto vertex     = baseFname.addExtension("vertices");
             auto element    = baseFname.addExtension("elements");
@@ -233,6 +242,7 @@ void AssimpProcessor::process(
             auto drawcall   = baseFname.addExtension("dcall");
             auto graph      = baseFname.addExtension("graph");
             auto materialFn = baseFname.addExtension("materials");
+            auto animFn     = baseFname.addExtension("animations");
 
             Bytes vertexBytes;
 

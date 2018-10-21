@@ -1,60 +1,72 @@
 #pragma once
 
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL) && !defined(GEKKO)
-#define USE_ARPA
+#include <coffee/core/types/tdef/integertypes.h>
+
+#if defined(COFFEE_WINDOWS)
+#include <coffee/core/plat/plat_windows.h>
+#elif defined(COFFEE_GEKKO)
+#include <network.h>
+#else
 #include <arpa/inet.h>
 #endif
 
-#include "../../types/tdef/integertypes.h"
-#include "../../coffee_mem_macros.h"
+namespace Coffee {
+namespace endian {
 
-namespace Coffee{
-namespace Mem{
-
-/* Endian conversion */
-FORCEDINLINE u32 ForeignEndian32(u32 i)
+struct net_order
 {
-#ifdef USE_ARPA
-    return htonl(i);
-#else
-    return  ((i >> 24) & 0x000000FF) |
-            ((i >> 8) & 0x0000FF00) |
-            ((i << 8) & 0x00FF0000) |
-            ((i << 24) & 0xFF000000);
-#endif
-}
+};
 
-FORCEDINLINE uint16 ForeignEndian16(uint16 i)
+struct host_order
 {
-#ifdef USE_ARPA
-    return htons(i);
-#else
-    /* TODO: Fix this */
-    return 0;
-#endif
-}
+};
 
-FORCEDINLINE u32 NativeEndian32(u32 i)
+template<typename Type, typename Direction>
+struct conversion_param
 {
-#ifdef USE_ARPA
-    return ntohl(i);
-#else
-    /* TODO: Fix this */
-    return 0;
-#endif
-}
+    using direction = Direction;
+    using type      = Type;
+};
 
-FORCEDINLINE uint16 NativeEndian16(uint16 i)
+using u16_host = conversion_param<u16, host_order>;
+using u16_net  = conversion_param<u16, net_order>;
+
+using u32_host = conversion_param<u32, host_order>;
+using u32_net  = conversion_param<u32, net_order>;
+
+#define ENDIAN_TEMPLATE(out_type, order)                               \
+    template<                                                          \
+        typename Param,                                                \
+        typename std::enable_if<                                       \
+            std::is_same<typename Param::type, out_type>::value &&     \
+                std::is_same<typename Param::direction, order>::value, \
+            Param>::type* = nullptr>
+
+ENDIAN_TEMPLATE(u16, host_order)
+FORCEDINLINE typename Param::type to(typename Param::type v)
 {
-#ifdef USE_ARPA
-    return ntohs(i);
-#else
-    /* TODO: Fix this */
-    return 0;
-#endif
+    return ntohs(v);
 }
 
-}
+ENDIAN_TEMPLATE(u16, net_order)
+FORCEDINLINE typename Param::type to(typename Param::type v)
+{
+    return htons(v);
 }
 
-#undef USE_ARPA
+ENDIAN_TEMPLATE(u32, host_order)
+FORCEDINLINE typename Param::type to(typename Param::type v)
+{
+    return ntohl(v);
+}
+
+ENDIAN_TEMPLATE(u32, net_order)
+FORCEDINLINE typename Param::type to(typename Param::type v)
+{
+    return htonl(v);
+}
+
+#undef ENDIAN_TEMPLATE
+
+} // namespace endian
+} // namespace Coffee

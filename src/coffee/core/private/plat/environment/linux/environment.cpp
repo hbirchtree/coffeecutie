@@ -9,9 +9,9 @@ namespace Linux {
 
 CString LinuxEnv::ExecutableName(cstring_w)
 {
-    cstring_w p = realpath("/proc/self/exe", nullptr);
-    CString   v = p;
-    Mem::CFree(p);
+    Ptr<char, ptr_opts::managed_ptr> p = realpath("/proc/self/exe", nullptr);
+
+    CString v = p.get();
     return v;
 }
 

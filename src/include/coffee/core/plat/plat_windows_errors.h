@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/plat/plat_windows.h>
+#include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee {
@@ -12,7 +12,7 @@ struct win32_error_category : error_category
     virtual std::string message(int error_code) const;
 };
 
-using win32_error_code = domain_error_code<DWORD, win32_error_category>;
+using win32_error_code = domain_error_code<u32, win32_error_category>;
 
 } // namespace Win32
 } // namespace Coffee

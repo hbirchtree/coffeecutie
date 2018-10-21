@@ -35,12 +35,14 @@ bool LoadScene(UqPtr<AssimpData>& target, const Bytes& source, cstring hint)
     data = MkUq<AssimpData>();
 
     u32 aiFlags = aiProcess_CalcTangentSpace | aiProcess_Triangulate |
-                  aiProcess_OptimizeMeshes | aiProcess_SortByPType;
+                  aiProcess_OptimizeMeshes | aiProcess_SortByPType |
+                  aiProcess_ValidateDataStructure |
+                  aiProcess_RemoveRedundantMaterials | aiProcess_FindInstances;
 
     data->importer = MkUqDST<::Assimp::Importer, Importer_deleter>();
 
     data->scene = data->importer->ReadFileFromMemory(
-            source.data, source.size, aiFlags, hint);
+        source.data, source.size, aiFlags, hint);
 
     if(!data->scene)
     {

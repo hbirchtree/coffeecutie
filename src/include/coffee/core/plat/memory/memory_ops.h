@@ -107,45 +107,5 @@ C_DEPRECATED FORCEDINLINE void MemClear(c_ptr start, szptr len)
     memset(start, 0, len);
 }
 
-/* Memory allocation */
-C_DEPRECATED FORCEDINLINE void* Alloc(szptr datasize)
-{
-    return malloc(datasize);
-}
-
-C_DEPRECATED FORCEDINLINE void* Realloc(c_ptr ptr, szptr datasize)
-{
-    return realloc(ptr, datasize);
-}
-
-C_DEPRECATED FORCEDINLINE void* Calloc(szptr unit, szptr num)
-{
-    return calloc(unit, num);
-}
-
-template<typename T>
-C_DEPRECATED FORCEDINLINE T* AllocT(szptr datasize)
-{
-    return static_cast<T*>(malloc(datasize));
-}
-
-template<typename T>
-C_DEPRECATED FORCEDINLINE T* ReallocT(T* ptr, szptr datasize)
-{
-    return reinterpret_cast<T*>(realloc(ptr, datasize));
-}
-
-template<typename T>
-C_DEPRECATED FORCEDINLINE T* CallocT(szptr unit, szptr num)
-{
-    return reinterpret_cast<T*>(calloc(unit, num));
-}
-
-template<typename T>
-C_DEPRECATED FORCEDINLINE T* CallocPtrs(szptr num)
-{
-    return reinterpret_cast<T*>(calloc(sizeof(T), num));
-}
-
 } // namespace Mem
 } // namespace Coffee

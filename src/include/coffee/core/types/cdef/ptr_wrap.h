@@ -9,86 +9,38 @@ namespace Coffee {
 
 /* Some poorly written safety extensions */
 
+namespace ptr_opts {
+
+struct unowned_ptr
+{
+};
+
+struct managed_ptr
+{
+};
+
+} // namespace ptr_opts
+
+namespace detail {
+
 template<
     typename T,
     typename std::enable_if<!std::is_same<T, void>::value>::type* = nullptr>
-struct Ptr
+struct PtrCommon
 {
     T* ptr;
 
-    Ptr() : ptr(nullptr)
+    PtrCommon() : ptr(nullptr)
     {
     }
-    Ptr(T* ptr) : ptr(ptr)
+    PtrCommon(T* ptr) : ptr(ptr)
     {
     }
-//    Ptr(Ptr<T>&& ptr) : ptr(ptr.ptr)
-//    {
-//    }
 
-    STATICINLINE Ptr<T> Alloc(size_t num)
+    STATICINLINE PtrCommon<T> Alloc(size_t num)
     {
-        Ptr<T> outPtr = C_RCAST<T*>(calloc(num * sizeof(T), 1));
+        PtrCommon<T> outPtr = C_RCAST<T*>(calloc(num * sizeof(T), 1));
         return outPtr;
-    }
-
-    FORCEDINLINE ~Ptr()
-    {
-#if !defined(NDEBUG) && !defined(COFFEE_LOWFAT)
-        if(ptr)
-            Throw(memory_error("pointer was not freed!"));
-#endif
-    }
-
-    FORCEDINLINE operator T*()
-    {
-        return ptr;
-    }
-
-    FORCEDINLINE operator const T*() const
-    {
-        return ptr;
-    }
-
-    FORCEDINLINE T* operator->()
-    {
-        return ptr;
-    }
-
-    FORCEDINLINE const T* operator->() const
-    {
-        return ptr;
-    }
-
-    FORCEDINLINE T& operator*()
-    {
-#if !defined(NDEBUG)
-        if(!ptr)
-            Throw(undefined_behavior("nullptr deref"));
-#endif
-        return *ptr;
-    }
-
-    FORCEDINLINE T const& operator*() const
-    {
-#if !defined(NDEBUG)
-        if(!ptr)
-            Throw(undefined_behavior("nullptr deref"));
-#endif
-        return *ptr;
-    }
-
-//    FORCEDINLINE Ptr<T>& operator=(Ptr<T>&& other)
-//    {
-//        ptr       = other.ptr;
-//        other.ptr = nullptr;
-//        return *this;
-//    }
-
-    FORCEDINLINE Ptr<T>& operator=(T* otherPtr)
-    {
-        ptr = otherPtr;
-        return *this;
     }
 
     /* For replacing other std::*_ptr types */
@@ -105,12 +57,102 @@ struct Ptr
     {
         return ptr;
     }
+
+    FORCEDINLINE const T* get() const
+    {
+        return ptr;
+    }
+};
+
+template<typename T, typename Param = ptr_opts::unowned_ptr>
+struct PtrDestructor : public PtrCommon<T>
+{
+    FORCEDINLINE ~PtrDestructor()
+    {
+#if !defined(NDEBUG) && !defined(COFFEE_LOWFAT)
+        if(this->get())
+            Throw(memory_error("pointer was not freed!"));
+#endif
+    }
+};
+
+template<typename T>
+struct PtrDestructor<T, ptr_opts::managed_ptr> : PtrCommon<T>
+{
+    FORCEDINLINE ~PtrDestructor()
+    {
+        if(this->get())
+            free(this->get());
+    }
+};
+
+} // namespace detail
+
+template<typename T, typename Param = ptr_opts::unowned_ptr>
+struct Ptr : detail::PtrDestructor<T, Param>
+{
+    Ptr()
+    {
+        this->ptr = nullptr;
+    }
+
+    Ptr(T* from)
+    {
+        this->ptr = from;
+    }
+
+    C_DELETE_COPY_CONSTRUCTOR(Ptr);
+    C_MOVE_CONSTRUCTOR(Ptr);
+
+    FORCEDINLINE operator T*()
+    {
+        return this->get();
+    }
+
+    FORCEDINLINE operator const T*() const
+    {
+        return this->get();
+    }
+
+    FORCEDINLINE T* operator->()
+    {
+        return this->get();
+    }
+
+    FORCEDINLINE const T* operator->() const
+    {
+        return this->get();
+    }
+
+    FORCEDINLINE T& operator*()
+    {
+#if !defined(NDEBUG)
+        if(!this->get())
+            Throw(undefined_behavior("nullptr deref"));
+#endif
+        return *this->get();
+    }
+
+    FORCEDINLINE T const& operator*() const
+    {
+#if !defined(NDEBUG)
+        if(!this->get())
+            Throw(undefined_behavior("nullptr deref"));
+#endif
+        return *this->get();
+    }
+
+    FORCEDINLINE Ptr<T>& operator=(T* otherPtr)
+    {
+        this->ptr = otherPtr;
+        return *this;
+    }
 };
 
 template<typename T>
 FORCEDINLINE void CFree(Ptr<T>& ptr)
 {
-    free(ptr);
+    free(ptr.ptr);
     ptr = nullptr;
 }
 

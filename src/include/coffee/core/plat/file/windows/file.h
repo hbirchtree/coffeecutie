@@ -8,6 +8,7 @@
 
 #include <sys/stat.h>
 
+#include "../../plat_windows.h"
 #include "../../plat_windows_errors.h"
 
 namespace Coffee {
@@ -17,7 +18,7 @@ namespace Windows {
 using namespace Coffee::Win32;
 
 using win32_file_error =
-    nested_domain_error_code<DWORD, win32_error_category, FILE_error_code>;
+    nested_domain_error_code<u32, win32_error_category, FILE_error_code>;
 
 struct WinFileApi
 {

@@ -228,20 +228,6 @@ SCALAR_CONVERT(scalar, "%f")
         return str;                                                       \
     }
 
-//#define INTEGER_COERCE_CONVERT(target_type, coerce_type)                      \
-//    template<                                                                 \
-//        typename IType,                                                       \
-//        typename TargetType = target_type,                                    \
-//        typename CoerceType = coerce_type,                                    \
-//        typename std::enable_if<                                              \
-//            std::is_same<IType, target_type>::value &&                        \
-//            !std::is_same<target_type, coerce_type>::value>::type* = nullptr> \
-//    FORCEDINLINE CString to_string(IType s)                                   \
-//    {                                                                         \
-//        return to_string<coerce_type>(C_FCAST<coerce_type>(s));               \
-//    }
-
-// INTEGER_CONVERT(size_t, fmt_size_t_fmt)
 
 INTEGER_CONVERT(u64, u64_fmt)
 INTEGER_CONVERT(u32, u32_fmt)
@@ -253,17 +239,6 @@ INTEGER_CONVERT(i32, i32_fmt)
 INTEGER_CONVERT(i16, i16_fmt)
 INTEGER_CONVERT(i8, i8_fmt)
 
-// INTEGER_COERCE_CONVERT(long long, i64)
-// INTEGER_COERCE_CONVERT(unsigned long long, u64)
-
-//#if defined(COFFEE_WINDOWS)
-// INTEGER_CONVERT(unsigned long, u32_fmt)
-//#else
-// INTEGER_COERCE_CONVERT(unsigned long, u64)
-// INTEGER_COERCE_CONVERT(long, i64)
-//#endif
-
-//#undef INTEGER_COERCE_CONVERT
 #undef INTEGER_CONVERT
 
 template<

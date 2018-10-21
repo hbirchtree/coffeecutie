@@ -4,7 +4,6 @@
 #include "cassimpimporters.h"
 #include <assimp/material.h>
 #include <assimp/scene.h>
-#include <coffee/core/VirtualFS>
 #include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/core/types/edef/pixenum.h>
 

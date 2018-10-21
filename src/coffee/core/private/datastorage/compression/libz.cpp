@@ -1,3 +1,5 @@
+#include <coffee/core/plat/plat_quirks_toggling.h>
+
 #include <coffee/core/datastorage/compression/libz.h>
 
 #if defined(COFFEE_BUILD_ZLIB)
@@ -7,7 +9,36 @@
 namespace Coffee {
 namespace Compression {
 
-using Opts = LibZCompressor::Opts;
+const char* zlib_error_category::name() const noexcept
+{
+    return "zlib_error_category";
+}
+
+#define ZLIB_ERROR_MSG(code) \
+    case code:               \
+        return C_STR(code);
+
+std::string zlib_error_category::message(int error_code) const
+{
+    switch(error_code)
+    {
+        ZLIB_ERROR_MSG(Z_STREAM_END);
+        ZLIB_ERROR_MSG(Z_NEED_DICT);
+        ZLIB_ERROR_MSG(Z_STREAM_ERROR);
+        ZLIB_ERROR_MSG(Z_DATA_ERROR);
+        ZLIB_ERROR_MSG(Z_MEM_ERROR);
+        ZLIB_ERROR_MSG(Z_BUF_ERROR);
+        ZLIB_ERROR_MSG(Z_VERSION_ERROR);
+
+    case Z_ERRNO:
+        return std::string("Z_ERRNO: ") + strerror(errno);
+
+    default:
+        return "No error";
+    }
+}
+
+using Opts = ZlibCompressor::Opts;
 
 using inflate_init_fun = int (*)(z_streamp, const char*, int);
 using deflate_init_fun = int (*)(z_streamp, int, const char*, int);
@@ -21,7 +52,8 @@ template<
     deflate_init_fun InitD = nullptr,
     process_fun      Proc  = nullptr,
     end_fun          End   = nullptr>
-bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
+bool compression_routine(
+    Bytes const& input, Bytes* output, Opts const& opts, zlib_error_code& ret)
 {
     Vector<byte_t> compress_store;
     compress_store.resize(opts.chunk_size);
@@ -37,7 +69,7 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
     strm.avail_in = C_FCAST<u32>(input.size);
     strm.next_in  = input.data;
 
-    int ret = Z_OK;
+    ret = Z_OK;
 
     if(InitD != nullptr)
         ret = deflateInit(&strm, opts.level);
@@ -96,36 +128,45 @@ bool compression_routine(Bytes const& input, Bytes* output, Opts const& opts)
     return true;
 }
 
-bool LibZCompressor::Compress(
-    Bytes const& uncompressed, Bytes* target, Opts const& opts)
+bool ZlibCompressor::Compress(
+    Bytes const&     uncompressed,
+    Bytes*           target,
+    Opts const&      opts,
+    zlib_error_code& ec)
 {
     return compression_routine<nullptr, deflateInit_, deflate, deflateEnd>(
-        uncompressed, target, opts);
+        uncompressed, target, opts, ec);
 }
 
-bool LibZCompressor::Decompress(
-    Bytes const& compressed, Bytes* target, Opts const& opts)
+bool ZlibCompressor::Decompress(
+    Bytes const&     compressed,
+    Bytes*           target,
+    Opts const&      opts,
+    zlib_error_code& ec)
 {
     return compression_routine<inflateInit_, nullptr, inflate, inflateEnd>(
-        compressed, target, opts);
+        compressed, target, opts, ec);
 }
 
 } // namespace Compression
 } // namespace Coffee
 #elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
-#include <coffee/core/CDebug>
 #include <coffee/core/plat/plat_windows.h>
 #include <compressapi.h>
+
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Compression {
 
-bool LibZCompressor::Compress(
-    Bytes const& uncompressed, Bytes* target, Opts const& opts)
+bool DeflateCompressor::Compress(
+    Bytes const&        uncompressed,
+    Bytes*              target,
+    Opts const&         opts,
+    deflate_error_code& ec)
 {
     COMPRESSOR_HANDLE cHnd = nullptr;
-    Win32::win32_error_code ec;
 
     auto succ = ::CreateCompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &cHnd);
 
@@ -170,11 +211,13 @@ bool LibZCompressor::Compress(
     return true;
 }
 
-bool LibZCompressor::Decompress(
-    Bytes const& compressed, Bytes* target, Opts const& opts)
+bool DeflateCompressor::Decompress(
+    Bytes const&        compressed,
+    Bytes*              target,
+    Opts const&         opts,
+    deflate_error_code& ec)
 {
     DECOMPRESSOR_HANDLE cHnd = nullptr;
-    Win32::win32_error_code ec;
 
     auto succ = ::CreateDecompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &cHnd);
 
@@ -183,8 +226,7 @@ bool LibZCompressor::Decompress(
         ec = GetLastError();
 
         cWarning(
-            "LibZCompressor::Failed to create decompressor: {0}",
-            ec.message());
+            "LibZCompressor::Failed to create decompressor: {0}", ec.message());
         return false;
     }
 

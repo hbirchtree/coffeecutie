@@ -92,7 +92,7 @@ enum class tag_class_t
 
 FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)
 {
-    auto v1_i = Mem::ForeignEndian32(C_CAST<u32>(v1));
+    auto v1_i = endian::to<endian::u32_host>(C_CAST<u32>(v1));
     auto v2_i = C_CAST<u32>(v2);
 
     return v1_i == v2_i || v1 == v2;

@@ -32,6 +32,11 @@ struct Path
     {
     }
 
+    STATICINLINE Path Mk(cstring p)
+    {
+        return Path(p);
+    }
+
     CString internUrl;
 
     Path         removeExt() const;
@@ -56,11 +61,6 @@ struct Path
     Path operator+(Path const& path) const;
 
     Path& operator=(Url const& url);
-
-    STATICINLINE Path Mk(cstring p)
-    {
-        return Path(p);
-    }
 
     FORCEDINLINE bool operator<(Path const& other) const
     {

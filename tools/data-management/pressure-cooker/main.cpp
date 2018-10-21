@@ -120,7 +120,8 @@ void csv_parse(CString const& v, Vector<CString>& out)
 void load_extension(cstring name)
 {
     FunctionLoader::error_type ec;
-    auto                       library =
+
+    auto library =
         FunctionLoader::GetLibrary(name, ec, FunctionLoader::NoFlags);
 
     if(!library)
@@ -174,12 +175,14 @@ void test_vfs(
     /* This part is about testing */
     Bytes vfsData = Bytes::CreateFrom(outputData);
 
+    VirtFS::vfs_error_code ec;
+
     VirtFS::VFS const* vfs = nullptr;
-    VirtFS::VFS::OpenVFS(vfsData, &vfs);
+    VirtFS::VFS::OpenVFS(vfsData, &vfs, ec);
 
     for(auto& desc : descriptors)
     {
-        auto file = VirtFS::VFS::GetFile(vfs, desc.filename.c_str());
+        auto file = VirtFS::VFS::GetFile(vfs, desc.filename.c_str(), ec);
 
         if(!file)
             continue;
@@ -398,9 +401,14 @@ i32 coffee_main(i32, cstring_w*)
 
     cursor.progress("Creating filesystem...");
 
-    if(!VirtFS::GenVirtFS(descriptors, &outputData))
+    VirtFS::vfs_error_code virt_ec;
+
+    if(!VirtFS::GenVirtFS(descriptors, &outputData, virt_ec))
     {
-        cursor.print("{0}:0: Failed to create VirtFS", outputVfs.internUrl);
+        cursor.print(
+            "{0}:0: Failed to create VirtFS: {1}",
+            outputVfs.internUrl,
+            virt_ec.message());
     } else
         cursor.complete(
             "Filesystem created! ({0}MB)", outputData.size() / 1_MB);

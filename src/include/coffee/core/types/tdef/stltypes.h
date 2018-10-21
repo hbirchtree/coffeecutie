@@ -34,7 +34,7 @@ using mutex_handle_t = long unsigned int;
 
 namespace Coffee {
 
-using CString = std::string; /*!< Typical string object */
+using CString  = std::string; /*!< Typical string object */
 using CWString = std::wstring;
 
 #if defined(COFFEE_NO_THREADLIB)
@@ -45,6 +45,7 @@ struct Mutex
     void lock();
     bool try_lock();
     void unlock();
+
   private:
 #if defined(COFFEE_GEKKO)
     long unsigned int m_mutexHandle;
@@ -58,6 +59,7 @@ struct RecMutex
     void lock();
     bool try_lock();
     void unlock();
+
   private:
 #if defined(COFFEE_GEKKO)
     long unsigned int m_mutexHandle;
@@ -86,7 +88,7 @@ struct BaseLock
     MutexType& m_mutex;
 };
 
-using Lock = BaseLock<>;
+using Lock    = BaseLock<>;
 using RecLock = BaseLock<RecMutex>;
 
 struct UqLock
@@ -121,14 +123,11 @@ struct CondVar
     cv_status wait_for(UqLock& lock, std::chrono::duration<Rep, Dur> const& dur)
     {
         return wait_limited(
-                    std::chrono::duration_cast<std::chrono::nanoseconds>(dur)
-                    .count()
-                    );
+            std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count());
     }
-    
+
     template<typename Rep, typename Dur>
-    cv_status wait_until(
-            UqLock& lock)
+    cv_status wait_until(UqLock& lock)
     {
         return cv_status::timeout;
     }
@@ -140,10 +139,10 @@ struct CondVar
     cv_status wait_limited(long wait_ns);
 
 #if defined(COFFEE_GEKKO)
-    Mutex m_signalLock;
+    Mutex                     m_signalLock;
     std::atomic<unsigned int> m_waiters;
     std::atomic<unsigned int> m_signals;
-    long unsigned int m_syncQueue;
+    long unsigned int         m_syncQueue;
 #endif
 };
 
@@ -153,8 +152,8 @@ using Mutex    = std::mutex;
 using Lock     = std::lock_guard<Mutex>;
 using RecLock  = std::lock_guard<RecMutex>;
 
-using UqLock  = std::unique_lock<Mutex>;
-using CondVar = std::condition_variable;
+using UqLock    = std::unique_lock<Mutex>;
+using CondVar   = std::condition_variable;
 using cv_status = std::cv_status;
 #endif
 
@@ -176,12 +175,12 @@ using AtomicUInt64 = std::atomic_uint_fast64_t;
 using AtomicBool = std::atomic_bool;
 
 using atomic_bool = std::atomic_bool;
-using atomic_i8 = std::atomic_int_fast8_t;
-using atomic_i16 = std::atomic_int_fast16_t;
-using atomic_i32 = std::atomic_int_fast32_t;
-using atomic_i64 = std::atomic_int_fast64_t;
+using atomic_i8   = std::atomic_int_fast8_t;
+using atomic_i16  = std::atomic_int_fast16_t;
+using atomic_i32  = std::atomic_int_fast32_t;
+using atomic_i64  = std::atomic_int_fast64_t;
 
-using atomic_u8 = std::atomic_uint_fast8_t;
+using atomic_u8  = std::atomic_uint_fast8_t;
 using atomic_u16 = std::atomic_uint_fast16_t;
 using atomic_u32 = std::atomic_uint_fast32_t;
 using atomic_u64 = std::atomic_uint_fast64_t;
@@ -607,6 +606,9 @@ struct nested_empty_error_code
 
 } // namespace Coffee
 
+#define C_ERROR_CODE_OUT_OF_BOUNDS() \
+    Throw(undefined_behavior("invalid error code"))
+
 #define C_STR_HELPER(x) #x
 #define C_STR(x) C_STR_HELPER(x)
 
@@ -620,9 +622,9 @@ struct nested_empty_error_code
                                  ":" C_STR(__LINE__)));
 
 #ifndef NDEBUG
-#define C_ERROR_CHECK(ec)                            \
-    {                                                \
-        if(ec)                                       \
+#define C_ERROR_CHECK(ec)                              \
+    {                                                  \
+        if(ec)                                         \
             Throw(implementation_error(ec.message())); \
     }
 #else

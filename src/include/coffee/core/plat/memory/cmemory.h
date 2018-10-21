@@ -2,7 +2,6 @@
 
 #include "../platform_detect.h"
 
-#include "endian_ops.h"
 #include "memory_ops.h"
 #include "output_ops.h"
 #include "stlstring_ops.h"

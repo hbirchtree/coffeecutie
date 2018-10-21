@@ -21,12 +21,14 @@ namespace Posix {
 CString PosixStacktracer::DemangleSymbol(const char* sym)
 {
 #ifndef COFFEE_LOWFAT
-    i32       stat   = 0;
-    Ptr<char> symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
+    i32 stat = 0;
+
+    Ptr<char, ptr_opts::managed_ptr> symbol =
+        abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
+
     if(stat == 0)
     {
         CString outSymbol = symbol.ptr;
-        CFree(symbol);
         return outSymbol;
     } else
 #endif

@@ -363,7 +363,7 @@
 #endif
 
 #if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_NACL) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
+    defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE
 #endif
 
@@ -371,7 +371,7 @@
 #define COFFEE_USE_EXECVPE
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_MAEMO)
 #define COFFEE_NO_PTHREAD_SETNAME_NP
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
@@ -419,7 +419,7 @@
  *
  */
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_GEKKO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
 
 #if !defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_STUBBED_SYSINFO
@@ -455,8 +455,8 @@
  *
  */
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || \
-    defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
+    defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 

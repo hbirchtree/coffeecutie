@@ -1,48 +1,45 @@
+#include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/datastorage/binary/virtualfs.h>
-#include <coffee/core/CFiles>
 
 using namespace Coffee;
 
 using RSC = Coffee::CResources::Resource;
 
-static const cstring test_txt_content =
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        "TEST DATA LOL"
-        ;
+static const cstring test_txt_content = "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL"
+                                        "TEST DATA LOL";
 
 using VFS = VirtFS::VFS;
 
-bool gen_dummy_virtfs(Vector<byte_t>& outputData,
-                      Vector<VirtFS::VirtDesc>& inputData,
-                      VFS const** vfs)
+bool gen_dummy_virtfs(
+    Vector<byte_t>&           outputData,
+    Vector<VirtFS::VirtDesc>& inputData,
+    VFS const**               vfs)
 {
     inputData.emplace_back(
-            "test.txt",
-            Bytes::CreateString(test_txt_content),
-            VirtFS::File_Compressed
-        );
+        "test.txt",
+        Bytes::CreateString(test_txt_content),
+        VirtFS::File_Compressed);
     inputData.emplace_back(
-            "test2.txt",
-            Bytes::CreateString(test_txt_content),
-            0
-        );
+        "test2.txt", Bytes::CreateString(test_txt_content), 0);
 
-    if(!VirtFS::GenVirtFS(inputData, &outputData))
+    VirtFS::vfs_error_code ec;
+
+    if(!VirtFS::GenVirtFS(inputData, &outputData, ec))
         return false;
 
-    if(!VFS::OpenVFS(Bytes::CreateFrom(outputData), vfs))
+    if(!VFS::OpenVFS(Bytes::CreateFrom(outputData), vfs, ec))
         return false;
 
     return true;
@@ -50,9 +47,9 @@ bool gen_dummy_virtfs(Vector<byte_t>& outputData,
 
 bool virtfs_serialize()
 {
-    Vector<byte_t> outputData;
+    Vector<byte_t>           outputData;
     Vector<VirtFS::VirtDesc> inputData;
-    VFS const* readVfs = nullptr;
+    VFS const*               readVfs = nullptr;
 
     if(!gen_dummy_virtfs(outputData, inputData, &readVfs))
         return false;
@@ -68,8 +65,9 @@ bool virtfs_serialize()
     if(!FileCommit(output, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard))
         return false;
 
-    if(!VFS::OpenVFS(FileGetDescriptor(output),
-                             &readVfs))
+    VirtFS::vfs_error_code ec;
+
+    if(!VFS::OpenVFS(FileGetDescriptor(output), &readVfs, ec))
         return false;
 
     VirtFS::Resource rsc(readVfs, MkUrl("test2.txt"));
@@ -87,9 +85,9 @@ bool virtfs_serialize()
 
 bool virtfs_iterator()
 {
-    Vector<byte_t> outputData;
+    Vector<byte_t>           outputData;
     Vector<VirtFS::VirtDesc> inputData;
-    VFS const* readVfs = nullptr;
+    VFS const*               readVfs = nullptr;
 
     if(!gen_dummy_virtfs(outputData, inputData, &readVfs))
         return false;
@@ -104,9 +102,7 @@ bool virtfs_iterator()
     return true;
 }
 
-COFFEE_TEST_SUITE(2) = {
-    {virtfs_serialize, "VirtFS serialization"},
-    {virtfs_iterator, "VirtFS iterators"}
-};
+COFFEE_TEST_SUITE(2) = {{virtfs_serialize, "VirtFS serialization"},
+                        {virtfs_iterator, "VirtFS iterators"}};
 
 COFFEE_EXEC_TESTS();

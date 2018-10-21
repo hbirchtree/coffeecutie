@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/core/plat/memory/endian_ops.h>
 #include <coffee/core/types/cdef/memsafe.h>
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/interfaces/byte_provider.h>
@@ -40,6 +41,32 @@ struct VirtualFS;
 using VFS   = VirtualFS;
 using VFile = VirtualFile;
 
+enum class VFSError : int
+{
+    NotFound = 1,
+    NotVFS,
+    EndianMismatch,
+
+    CompressionUnsupported,
+    CompressionError,
+
+    /* Creation of a VFS */
+    NoFilesProvided,
+    FilenameTooLong,
+};
+
+struct vfs_error_category : error_category
+{
+    virtual const char* name() const noexcept override;
+    virtual std::string message(int error_code) const override;
+};
+
+using vfs_error_code = domain_error_code<VFSError, vfs_error_category>;
+
+/*!
+ * \brief In-memory wrapper that handles opening
+ *  the VirtualFile from a VirtualFS, while complying with ByteProvider.
+ */
 struct Resource : ByteProvider
 {
   private:
@@ -79,10 +106,17 @@ enum FileFlags
     File_Compressed = 0x1,
 };
 
-static const constexpr szptr MaxFileNameLength     = 96;
-static const constexpr szptr MagicLength           = 8;
-static const constexpr char  VFSMagic[MagicLength] = "CfVrtFS";
-static const constexpr u32   VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
+static const constexpr u32 VFSVersion = 2;
+
+static const constexpr szptr MaxPrefixLength    = 32;
+static const constexpr szptr MaxExtensionLength = 16;
+
+static const constexpr szptr MaxFileNameLength   = 96;
+static const constexpr szptr MagicLength         = 8;
+static const constexpr szptr MagicLength_Encoded = MagicLength / sizeof(u32);
+
+static const constexpr char VFSMagic[MagicLength] = "CfVrtFS";
+static const constexpr u32  VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
 
 struct VirtualFS
 {
@@ -94,14 +128,25 @@ struct VirtualFS
      * \param vfs
      * \return
      */
-    static bool OpenVFS(Bytes const& src, VirtualFS const** vfs)
+    static bool OpenVFS(
+        Bytes const& src, VirtualFS const** vfs, vfs_error_code& ec)
     {
+        static_assert(
+            MagicLength == MagicLength_Encoded * sizeof(u32),
+            "Invalid magic length");
+        static_assert(
+            sizeof(VFSMagic) == sizeof(VFSMagic_Encoded),
+            "Invalid magic length for data");
+
         using IntData = _cbasic_data_chunk<u32>;
 
         *vfs = nullptr;
 
         if(src.size < sizeof(VirtualFS))
+        {
+            ec = VFSError::NotVFS;
             return false;
+        }
 
         VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
 
@@ -109,18 +154,33 @@ struct VirtualFS
         IntData fileMagic = IntData::From(temp_vfs->vfs_header, MagicLength);
 
         if(magic[0] != fileMagic[0] || magic[1] != fileMagic[1])
+        {
+            /* It's nice to specify if the endian is wrong here */
+            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0]) &&
+               magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
+                ec = VFSError::EndianMismatch;
+            else
+                ec = VFSError::NotVFS;
+
             return false;
+        }
 
         *vfs = temp_vfs;
 
         return true;
     }
 
-    char vfs_header[MagicLength]; /*!< Magic file header */
+    u32 vfs_header[MagicLength]; /*!< Magic file header */
 
     u64 num_files;   /*!< Number of VFile entries */
     u64 data_offset; /*!< Offset from start of this structure to the data
                         segment */
+
+    /*  */
+    u32 virtfs_version;
+
+    /* Extensions */
+    u64 indices_offset;
 
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'.
@@ -128,7 +188,8 @@ struct VirtualFS
      * \param name
      * \return nullptr if file not found
      */
-    static VFile const* GetFile(VFS const* vfs, cstring name);
+    static VFile const* GetFile(
+        VFS const* vfs, cstring name, vfs_error_code& ec);
 
     /*!
      * \brief Given a VFS, get the handle to the idx'th file.
@@ -136,7 +197,7 @@ struct VirtualFS
      * \param idx
      * \return nullptr if file not found
      */
-    static VFile const* GetFile(VFS const* vfs, szptr idx);
+    static VFile const* GetFile(VFS const* vfs, szptr idx, vfs_error_code& ec);
 
     /*!
      * \brief Given a VFS and a valid file within, return the
@@ -146,9 +207,96 @@ struct VirtualFS
      * \param file
      * \return
      */
-    static Bytes GetData(VFS const* vfs, VFile const* file);
+    static Bytes GetData(VFS const* vfs, VFile const* file, vfs_error_code& ec);
 
     static ResourceResolver<VirtFS::Resource> GetResolver(VirtualFS const* vfs);
+};
+
+struct VirtualIndex : non_copy
+{
+    enum class index_t : u32
+    {
+        directory_tree = 0x10,
+        file_extension = 0x20,
+    };
+
+    u64     next_index; /*!< Number of bytes till next index from here */
+    index_t kind;       /*!< Describes which index structure is valid */
+
+    const void* data() const
+    {
+        return &this[1];
+    }
+
+    const VirtualIndex* next() const
+    {
+        const byte_t* basePtr = C_RCAST<const byte_t*>(this);
+
+        return C_RCAST<const VirtualIndex*>(basePtr + next_index);
+    }
+
+    /*!
+     * \brief Describes a list of files sharing a common file extension
+     */
+    struct extension_data_t
+    {
+        char ext[MaxExtensionLength];
+        u64  num_files;
+
+        _cbasic_data_chunk<const u64> indices(VirtualIndex const& idx)
+        {
+            return _cbasic_data_chunk<const u64>::From(
+                C_RCAST<const u64*>(idx.data()), num_files);
+        }
+    };
+
+    /*!
+     * \brief Describes a binary tree of the file hierarchy
+     * The tree works as so:
+     *
+     *                              . (root)
+     *                           /      |
+     *                     textures/   ...
+     *                   /      |        /      |
+     *                t1.png t2.png  shaders/  ...
+     */
+    struct directory_data_t
+    {
+        struct node_t
+        {
+            char prefix[MaxPrefixLength];
+            u32  left;
+            u32  right;
+        };
+
+        struct leaf_t
+        {
+            static const constexpr u64 mask_value =
+                std::numeric_limits<u64>::max();
+
+            u64 mask;
+            u64 fileIdx;
+        };
+
+        union node_base_t
+        {
+            node_t node;
+            leaf_t leaf;
+
+            bool is_leaf() const
+            {
+                return leaf.mask == leaf_t::mask_value;
+            }
+        };
+
+        u64 num_nodes;
+    };
+
+    union
+    {
+        directory_data_t directory;
+        extension_data_t extension;
+    };
 };
 
 PACKEDSTRUCT VirtualFile
@@ -161,7 +309,8 @@ PACKEDSTRUCT VirtualFile
     const u32 _pad = 0;
 };
 
-FORCEDINLINE VFile const* VirtualFS::GetFile(VFS const* vfs, cstring name)
+FORCEDINLINE VFile const* VirtualFS::GetFile(
+    VFS const* vfs, cstring name, vfs_error_code& ec)
 {
     /* We start finding files after the VirtualFS structure */
     VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
@@ -176,6 +325,7 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(VFS const* vfs, cstring name)
             return &current_file;
     }
 
+    ec = VFSError::NotFound;
     return nullptr;
 }
 
@@ -190,9 +340,11 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     {
     }
 
-    vfs_iterator(VFS const* vfs, szptr idx) :
-        m_vfs(vfs), m_idx(idx), m_file(vfs ? VFS::GetFile(vfs, idx) : nullptr)
+    vfs_iterator(VFS const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
     {
+        vfs_error_code ec;
+        m_file = vfs ? VFS::GetFile(vfs, idx, ec) : nullptr;
+
         if(!m_vfs)
             m_idx = npos;
     }
@@ -225,13 +377,15 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
 
     operator Bytes()
     {
-        return VFS::GetData(m_vfs, m_file);
+        vfs_error_code ec;
+        return VFS::GetData(m_vfs, m_file, ec);
     }
 
   private:
     void update_file()
     {
-        m_file = VFS::GetFile(m_vfs, m_idx);
+        vfs_error_code ec;
+        m_file = VFS::GetFile(m_vfs, m_idx, ec);
     }
 
     VFS const*   m_vfs;
@@ -239,13 +393,18 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
     VFile const* m_file;
 };
 
+/*!
+ * \brief Nearly STL-compatible wrapper around VirtualFS,
+ *  allowing iteration and some convenience functions
+ */
 struct vfs_view
 {
     using iterator = vfs_iterator;
 
     vfs_view(Bytes const& base)
     {
-        VFS::OpenVFS(base, &m_vfs);
+        vfs_error_code ec;
+        VFS::OpenVFS(base, &m_vfs, ec);
     }
 
     iterator begin() const
@@ -278,6 +437,11 @@ struct vfs_view
     VFS const* m_vfs;
 };
 
+/*!
+ * \brief In-memory description of a to-be VirtualFile.
+ * Used dynamic storage, and should never be read from disk.
+ * Should be passed to GenVirtFS()
+ */
 struct VirtDesc
 {
     VirtDesc(cstring fname, Bytes&& data, u32 flags = 0) :
@@ -300,7 +464,7 @@ struct VirtDesc
 };
 
 extern bool GenVirtFS(
-    Vector<VirtDesc> const& filenames, Vector<byte_t>* output);
+    Vector<VirtDesc>& filenames, Vector<byte_t>* output, vfs_error_code& ec);
 
 FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
@@ -309,12 +473,16 @@ FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
     return out;
 }
 
-FORCEDINLINE VFile const* VirtualFS::GetFile(const VFS* vfs, szptr idx)
+FORCEDINLINE VFile const* VirtualFS::GetFile(
+    const VFS* vfs, szptr idx, vfs_error_code& ec)
 {
     VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
 
     if(idx >= vfs->num_files)
+    {
+        ec = VFSError::NotFound;
         return nullptr;
+    }
 
     return &vf_start[idx];
 }

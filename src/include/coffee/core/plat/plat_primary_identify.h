@@ -33,8 +33,8 @@
 #endif
 
 /* Windows macro, only one for now */
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW32__) \
-    || defined(WIN32) || defined(WINUWP)
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || \
+    defined(__MINGW32__) || defined(WIN32) || defined(WINUWP)
 #define C_SYSTEM_STRING "Windows"
 #if defined(WINUWP)
 #define COFFEE_WINDOWS_UWP
@@ -74,14 +74,8 @@
 #define COFFEE_EMSCRIPTEN
 #endif
 
-#if defined(__NATIVE_CLIENT__)
-#define C_SYSTEM_STRING "Native Client"
-#define COFFEE_NACL
-#endif
-
 /* Generic UNIX, mostly for POSIX libraries */
-#if (defined(__unix__) || defined(COFFEE_APPLE)) && \
-    !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL)
+#if(defined(__unix__) || defined(COFFEE_APPLE)) && !defined(COFFEE_WINDOWS)
 #define COFFEE_UNIXPLAT
 #endif
 
