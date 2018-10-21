@@ -97,6 +97,11 @@ macro( APPIMAGE_PACKAGE
         COPYONLY
         )
     configure_file (
+        "${APPIMAGE_CONFIG_DIR}/set_icon.py"
+        "${APPIMAGE_INTERMEDIATE_DIR}/set_icon.py"
+        COPYONLY
+        )
+    configure_file (
         "${APPIMAGE_CONFIG_DIR}/application.desktop.in"
         "${APPIMAGE_INTERMEDIATE_DIR}/${APPIMAGE_INTERNALNAME}.desktop"
         @ONLY
