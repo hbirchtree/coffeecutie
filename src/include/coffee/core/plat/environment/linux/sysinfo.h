@@ -1,10 +1,9 @@
 #pragma once
 
-#include "../../platform_detect.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 
-#include "../../../coffee_message_macros.h"
 #include "../sysinfo_def.h"
 
 #if !defined(COFFEE_ANDROID)
@@ -12,12 +11,12 @@
 #endif
 
 #include <sys/sysinfo.h>
-#include <unistd.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 
-namespace Coffee{
-namespace Environment{
-namespace Linux{
+namespace Coffee {
+namespace Environment {
+namespace Linux {
 struct LinuxSysInfo : SysInfoDef
 {
     static CString CPUInfoString(bool force = false);
@@ -25,7 +24,6 @@ struct LinuxSysInfo : SysInfoDef
     static Set<CString> CPUFlags();
 
     static NetStatusFlags NetStatus();
-
 
     static u32 CpuCount();
 
@@ -54,7 +52,7 @@ struct LinuxSysInfo : SysInfoDef
     {
         struct sysinfo inf;
         sysinfo(&inf);
-        return inf.totalram*inf.mem_unit;
+        return inf.totalram * inf.mem_unit;
     }
 
     STATICINLINE u64 MemAvailable()
@@ -67,21 +65,21 @@ struct LinuxSysInfo : SysInfoDef
         free += inf.bufferram;
         free += CachedMemory();
 
-        return free*inf.mem_unit;
+        return free * inf.mem_unit;
     }
 
     STATICINLINE u64 SwapTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
-        return inf.totalswap*inf.mem_unit;
+        return inf.totalswap * inf.mem_unit;
     }
 
     STATICINLINE u64 SwapAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
-        return inf.freeswap*inf.mem_unit;
+        return inf.freeswap * inf.mem_unit;
     }
 
     static HWDeviceInfo Processor();
@@ -108,23 +106,23 @@ struct LinuxSysInfo : SysInfoDef
 
     static HWDeviceInfo BIOS();
 
-private:
-    static void FreeCPUInfoString();
+  private:
+    static void    FreeCPUInfoString();
     static CString cached_cpuinfo_string;
 };
 
 struct LinuxPowerInfo :
-        #if !defined(COFFEE_ANDROID)
-        _SDLPowerInfo
-        #else
-        PowerInfoDef
-        #endif
+#if !defined(COFFEE_ANDROID)
+    _SDLPowerInfo
+#else
+    PowerInfoDef
+#endif
 {
     static Temp CpuTemperature();
 };
 
-}
-}
+} // namespace Linux
+} // namespace Environment
 
 #if !defined(COFFEE_ANDROID)
 using PowerInfo = Environment::Linux::LinuxPowerInfo;
@@ -133,6 +131,6 @@ using SysInfo = Environment::Linux::LinuxSysInfo;
 #endif
 #endif
 
-}
+} // namespace Coffee
 
 #endif

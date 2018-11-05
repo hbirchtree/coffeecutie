@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../../base/files/url.h"
-#include "../../types/cdef/memtypes.h"
 #include "../../types/edef/resenum.h"
-#include "../../types/tdef/integertypes.h"
-#include "../../types/tdef/stltypes.h"
+#include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace CResources {

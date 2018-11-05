@@ -180,14 +180,9 @@ def gen_feature_bucket(bucket):
 
 print('#pragma once')
 
-print('#include "shared/gl_shared_types.h"')
-print('#include "shared/gl_shared_enum_convert.h"')
-print('#include <coffee/core/types/tdef/integertypes.h>')
-print('#include <coffee/core/types/cdef/memtypes.h>')
-print('#include <coffee/core/types/cdef/geometry.h>')
-print('#include <coffee/core/types/vector_types.h>')
+print('#include "all_levels_include.h"')
 print()
-print('#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)')
+print('#if defined(COFFEE_GCC)')
 print('#pragma GCC diagnostic push')
 print('#pragma GCC diagnostic ignored "-Wpointer-bool-conversion"')
 print('#endif')

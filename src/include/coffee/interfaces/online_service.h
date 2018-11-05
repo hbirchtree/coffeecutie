@@ -1,8 +1,8 @@
 #pragma once
 
 #include <coffee/core/base/files/url.h>
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace Online {

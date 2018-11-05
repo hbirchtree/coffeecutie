@@ -11,7 +11,7 @@ namespace Coffee {
 namespace Net {
 void ProfilingExport()
 {
-#if !defined(COFFEE_LOWFAT) && !defined(NDEBUG)
+#if !defined(COFFEE_LOWFAT) && MODE_DEBUG
     cVerbose(10, "Checking for network profiling...");
 
     const constexpr cstring network_server = "COFFEE_REPORT_URL";

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "coffee_version.h"
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/functional_types.h>
 
 namespace Coffee {
 
@@ -92,7 +92,7 @@ extern Mutex& GetPrinterLock();
 
 extern BuildInfo& GetBuildInfo();
 
-extern CoffeeApplicationData& GetAppData();
+extern AppData& GetAppData();
 
 extern ShPtr<GlobalState> SwapState(cstring key, ShPtr<GlobalState> const& ptr);
 extern ShPtr<GlobalState> const& PeekState(cstring key);

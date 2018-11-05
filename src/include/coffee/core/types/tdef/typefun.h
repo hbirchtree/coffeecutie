@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../plat/plat_quirks_toggling.h"
+#include <coffee/core/base.h>
 
 #include "integertypes.h"
 #if defined(COFFEE_USE_RTTI)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace Strings {

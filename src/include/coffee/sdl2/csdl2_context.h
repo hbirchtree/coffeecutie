@@ -1,8 +1,8 @@
 #pragma once
 
 #include <coffee/core/CDisplay>
-#include <coffee/core/types/tdef/stltypes.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/stl/types.h>
+#include <peripherals/libc/types.h>
 #include "csdl2_pubtypes.h"
 
 #include <coffee/core/base/renderer/baseapplication.h>

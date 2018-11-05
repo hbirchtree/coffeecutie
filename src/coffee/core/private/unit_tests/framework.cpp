@@ -5,12 +5,12 @@
 #include <coffee/core/CPlatform>
 #include <coffee/core/plat/environment/argument_parse.h>
 #include <coffee/core/profiler/profiling-export.h>
-#include <coffee/core/string_casting.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/terminal/table-print.h>
-#include <coffee/core/types/cdef/memtypes.h>
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/types/chunk.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/types.h>
 
 #include <coffee/core/CDebug>
 
@@ -44,14 +44,14 @@ struct TestInstance
 
 static Vector<cstring> titles;
 static Vector<cstring> descriptions;
-static Vector<u64>  test_times;
+static Vector<u64>     test_times;
 static Vector<bool>    result;
 static Vector<bool>    required;
 
 void WriteJsonData(
     JSON::WriteBuf& buf,
     szptr const&    suc,
-    u64 const&   total_time,
+    u64 const&      total_time,
     Test const*     tests)
 {
     JSON::Writer root(buf);
@@ -186,7 +186,7 @@ void PrintAsciiTable(u64 const& time_accum, szptr suc)
 
 struct TemporaryState
 {
-    TemporaryState():
+    TemporaryState() :
         m_state(State::GetInternalState()),
         m_tstate(State::GetInternalThreadState())
     {
@@ -200,8 +200,8 @@ struct TemporaryState
         State::SetInternalThreadState(m_tstate);
     }
 
-private:
-    State::P<InternalState> m_state;
+  private:
+    State::P<InternalState>       m_state;
     State::P<InternalThreadState> m_tstate;
 };
 

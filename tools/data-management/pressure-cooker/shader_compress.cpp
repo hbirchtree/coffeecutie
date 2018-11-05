@@ -1,6 +1,6 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
 

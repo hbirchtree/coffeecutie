@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gleam_types_rhi.h"
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace RHI {

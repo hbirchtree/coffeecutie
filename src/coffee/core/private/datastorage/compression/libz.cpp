@@ -1,6 +1,7 @@
-#include <coffee/core/plat/plat_quirks_toggling.h>
+#include <coffee/core/base.h>
 
 #include <coffee/core/datastorage/compression/libz.h>
+#include <coffee/core/plat/timing/profiling.h>
 
 #if defined(COFFEE_BUILD_ZLIB)
 
@@ -55,6 +56,8 @@ template<
 bool compression_routine(
     Bytes const& input, Bytes* output, Opts const& opts, zlib_error_code& ret)
 {
+    DProfContext _("zlib::Compression routine");
+
     Vector<byte_t> compress_store;
     compress_store.resize(opts.chunk_size);
 

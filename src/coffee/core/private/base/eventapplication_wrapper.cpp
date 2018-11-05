@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <coffee/core/plat/plat_quirks_toggling.h>
+#include <coffee/core/base.h>
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 
 #include <coffee/core/base/renderer/eventapplication.h>

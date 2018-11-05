@@ -3,15 +3,15 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
 #include <coffee/core/terminal/terminal_cursor.h>
-#include <coffee/core/type_safety.h>
-#include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
+#include <peripherals/stl/type_safety.h>
+#include <peripherals/stl/types.h>
 
 #define TEXCOMPRESS_API "TextureCooker::"
 
-namespace TexCompress{
+namespace TexCompress {
 
 using namespace CoffeePipeline;
 
@@ -39,9 +39,9 @@ enum CompressFormats
 
 struct texture_settings_t : settings_visitor
 {
-    i32 max_size, min_size;
-    u32 channels;
-    u32 formats;
+    i32            max_size, min_size;
+    u32            channels;
+    u32            formats;
     stb::ImageHint flags;
 
     virtual CString type()
@@ -116,4 +116,4 @@ enum ImageProcessor
 #endif
 };
 
-}
+} // namespace TexCompress

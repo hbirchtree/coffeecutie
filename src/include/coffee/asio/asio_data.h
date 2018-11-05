@@ -1,14 +1,14 @@
 #pragma once
 
-#include <coffee/core/plat/plat_quirks_toggling.h>
+#include <coffee/core/base.h>
 
 #include <asio.hpp>
 #if defined(ASIO_USE_SSL)
 #include <asio/ssl.hpp>
 #endif
 
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 /*!

@@ -1,5 +1,5 @@
 #include <coffee/core/CApplication>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/libc/types.h>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 

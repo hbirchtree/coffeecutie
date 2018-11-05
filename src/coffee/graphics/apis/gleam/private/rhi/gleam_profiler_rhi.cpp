@@ -82,7 +82,7 @@ u64 GLEAM_PrfQuery::resultu()
 #endif
 }
 
-#ifdef NDEBUG
+#if MODE_RELEASE
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
     GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t, b)
 {
@@ -163,7 +163,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
 
 GLEAM_DBufQuery::~GLEAM_DBufQuery()
 {
-#ifndef NDEBUG
+#if MODE_DEBUG
     auto& m_quad_drawer = m_store->debug_drawer;
 
     if(GL_DEBUG_MODE && m_enabled)
@@ -176,7 +176,7 @@ GLEAM_DBufQuery::~GLEAM_DBufQuery()
 
 void GLEAM_DBufQuery::resize(const CSize& s)
 {
-#ifndef NDEBUG
+#if MODE_DEBUG
     if(GL_DEBUG_MODE && m_enabled)
     {
         cVerbose(5, "New framebuffer dimensions: {0}", s);
@@ -188,7 +188,7 @@ void GLEAM_DBufQuery::resize(const CSize& s)
 
 void GLEAM_DBufQuery::begin()
 {
-#ifndef NDEBUG
+#if MODE_DEBUG
     if(GL_DEBUG_MODE && m_enabled)
         m_dtarget.bind(FramebufferT::All);
 #endif
@@ -196,7 +196,7 @@ void GLEAM_DBufQuery::begin()
 
 void GLEAM_DBufQuery::end()
 {
-#ifndef NDEBUG
+#if MODE_DEBUG
     auto& m_quad_drawer = m_store->debug_drawer;
 
     if(GL_DEBUG_MODE && m_enabled)

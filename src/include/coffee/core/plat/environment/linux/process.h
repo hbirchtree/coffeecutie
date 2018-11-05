@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../../plat_primary_identify.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 
 #include "../process_def.h"
 #include <coffee/core/types/edef/resenum.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 
 #include <sys/resource.h>
 #include <unistd.h>

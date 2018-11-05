@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../../types/vector_types.h"
 #include "../../types/cdef/geometry.h"
-#include "../../types/tdef/stltypes.h"
+#include "../../types/vector_types.h"
+#include <peripherals/stl/types.h>
 
-namespace Coffee{
-namespace Strings{
+namespace Coffee {
+namespace Strings {
 
 extern CString to_string(Quatf const& v);
 
@@ -21,5 +21,5 @@ extern CString to_string(Matf3 const& v);
 
 extern CString to_string(BoundBox const& box);
 
-}
-}
+} // namespace Strings
+} // namespace Coffee

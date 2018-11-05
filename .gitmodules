@@ -20,7 +20,7 @@
 	path = tools/automation
 	url = https://github.com/hbirchtree/coffeecutie-automation-tools.git
 [submodule "include/coffee/jni"]
-	path = src/include/coffee/jni
+	path = src/coffee/core/platform/android/include/jni
 	url = https://github.com/hbirchtree/inline-jni.git
 [submodule "coffee/windowing/private/graphics/ceagl"]
 	path = src/coffee/windowing/private/graphics/ceagl

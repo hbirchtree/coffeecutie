@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/plat/plat_quirks_toggling.h>
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_USE_SDL_EVENT)
 #include <coffee/sdl2/input/csdl2_eventhandler.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "integertypes.h"
+#include <peripherals/libc/types.h>
 
 namespace Coffee{
 

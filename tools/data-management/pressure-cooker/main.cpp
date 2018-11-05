@@ -3,8 +3,8 @@
 #include <coffee/core/VirtualFS>
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/environment/argument_parse.h>
-#include <coffee/core/plat/plat_linking.h>
-#include <coffee/core/plat/plat_sysinfo.h>
+#include <coffee/core/plat/linking.h>
+#include <coffee/core/plat/sysinfo.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/interfaces/content_pipeline.h>
 
@@ -163,6 +163,9 @@ void parse_args(ArgumentResult& args)
         } else if(arg.first == "basedir")
         {
             csv_parse(arg.second, baseDirs);
+        } else if(arg.first == "deep_profile")
+        {
+            State::GetProfilerStore()->flags.deep_enabled = true;
         }
     }
 }
@@ -231,6 +234,11 @@ i32 coffee_main(i32, cstring_w*)
 
     {
         ArgumentParser parser;
+
+#if MODE_DEBUG
+        parser.addSwitch(
+            "deep_profile", "deep-profile", "d", "Enable deep profiling");
+#endif
 
         parser.addPositionalArgument(
             "resource_dir", "Source resource directory");
@@ -311,6 +319,8 @@ i32 coffee_main(i32, cstring_w*)
 
     /* List files */
     {
+        ProfContext _("Collecting files");
+
         DirFun::DirList content;
         if(!DirFun::Ls(rscDir, content, ec))
         {
@@ -355,6 +365,7 @@ i32 coffee_main(i32, cstring_w*)
 
     cursor.setProgress(progressFun);
 
+    Profiler::PushContext("Filtering files");
     for(auto& desc : descriptors)
     {
         auto url = MkUrl(desc.filename.c_str());
@@ -384,11 +395,13 @@ i32 coffee_main(i32, cstring_w*)
         [](VirtFS::VirtDesc const& desc) { return desc.data.size == 0; });
 
     descriptors.erase(removeIt, descriptors.end());
+    Profiler::PopContext();
 
     cursor.progress("Post-processing files...");
 
     for(auto proc : extProcessors)
     {
+        ProfContext _("Running extension");
         proc->setCacheBaseDirectory(cacheDir);
 
         proc->setInternalState(
@@ -426,13 +439,17 @@ i32 coffee_main(i32, cstring_w*)
         cursor.print("");
 
     /* Unmap all files */
+    Profiler::PushContext("Unmapping resources");
     for(auto& rsc : resources)
     {
         FileUnmap(rsc);
     }
+    Profiler::PopContext();
 
     /* At this point, we are writing the VFS to disk */
     {
+        ProfContext _("Writing to disk");
+
         Resource output(outputVfs);
 
         FileOpenMap(

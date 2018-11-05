@@ -108,6 +108,16 @@ case $1 in
         egrep '(u|)int(8|16|32|64)' $f /dev/null
     done
 ;;
+"query-source")
+    for f in $(all_source_files); do
+        egrep $2 $f /dev/null
+    done
+;;
+"filter-source")
+    for f in $(all_source_files); do
+        echo sed -e ${@:2} $f
+    done
+;;
 "get-notes")
     for f in $(all_source_files); do
         egrep  '(//|/\*)\s?(TODO|NOTE|WARNING|BUG|FIXME)' $f /dev/null
@@ -149,6 +159,9 @@ Code tools:
     stl-guards          - Usage of std::* types
 
     type-guards         - Usage of deprecated [u]int[8|16|32|64] types
+
+    query-source        - Search through codebase
+    filter-source       - Perform sed regex operations on codebase
 
     get-notes           - Get notes/todos from code
     "

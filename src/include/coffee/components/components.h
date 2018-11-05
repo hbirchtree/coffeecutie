@@ -1,8 +1,8 @@
 #pragma once
 
 #include <algorithm>
-#include <coffee/core/types/tdef/stlfunctypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace Components {
@@ -372,9 +372,9 @@ struct ContainerProxy : non_copy
     {
         typename ComponentType::type* v = get<ComponentType>(current_entity);
 
-#ifndef NDEBUG
+#if MODE_DEBUG
         if(!v)
-            throw undefined_behavior("entity not found in container");
+            Throw(undefined_behavior("entity not found in container"));
 #endif
 
         return *v;

@@ -1,11 +1,11 @@
 #include <coffee/core/base/jsonlogger.h>
 
 #include <coffee/core/CMD>
-#include <coffee/core/formatting.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/formatting.h>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/plat_file.h>
-#include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/plat/file.h>
+#include <coffee/core/plat/timing.h>
 
 #include <coffee/core/base/printing/outputprinter.h>
 

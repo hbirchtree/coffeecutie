@@ -4,7 +4,7 @@
 #include <coffee/core/VirtualFS>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/libc/types.h>
 
 namespace Coffee {
 struct TerminalCursor;

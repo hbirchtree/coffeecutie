@@ -252,6 +252,7 @@ target_link_libraries ( CoffeeCore INTERFACE
     CoffeeCore_Saving
     CoffeeCore_TerminalPrinting
     CoffeeCore_VirtFS
+    PeripheralThreadNaming
     )
 
 #
@@ -289,6 +290,10 @@ if(ANDROID)
     target_sources ( CoffeeCore_Application PRIVATE
         platform/android/and_main.cpp
         ${ANDROID_GLUE_SOURCES}
+        )
+
+    target_include_directories ( CoffeeCore_Base PRIVATE
+        platform/android/include
         )
 
     #
@@ -495,9 +500,12 @@ endif()
 #
 #
 if(GAMECUBE)
-    target_sources ( CoffeeCore_Base PRIVATE
-        private/types/tdef/thread_types.cpp
+    target_link_libraries ( CoffeeCore_Base PUBLIC
+        GeckoThreads
         )
+#    target_sources ( CoffeeCore_Base PRIVATE
+#        private/types/tdef/thread_types.cpp
+#        )
 endif()
 
 coffee_bundle_includes (

@@ -195,7 +195,7 @@ Bytes WinFileFun::Read(FileHandle const& h, uint64 size, file_error& ec)
             BOOL stat = ReadFile(
                 C_OCAST<HANDLE>(h.file), &d.data[i], chnk, &size, nullptr);
 
-#ifndef NDEBUG
+#if MODE_DEBUG
             ec.as<win32_error_code>() = GetLastError();
             if(ec)
                 return {};
@@ -204,7 +204,7 @@ Bytes WinFileFun::Read(FileHandle const& h, uint64 size, file_error& ec)
             SetFilePointer(
                 C_OCAST<HANDLE>(h.file), chnk, nullptr, FILE_CURRENT);
 
-#ifndef NDEBUG
+#if MODE_DEBUG
             ec.as<win32_error_code>() = GetLastError();
             if(ec)
                 return {};
@@ -256,7 +256,7 @@ bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, file_error& ec)
             BOOL stat = WriteFile(
                 C_OCAST<HANDLE>(fh.file), &d.data[i], chnk, &size, nullptr);
 
-#ifndef NDEBUG
+#if MODE_DEBUG
             ec.as<win32_error_code>() = GetLastError();
             if(ec)
                 return {};
@@ -265,7 +265,7 @@ bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, file_error& ec)
             SetFilePointer(
                 C_OCAST<HANDLE>(fh.file), chnk, nullptr, FILE_CURRENT);
 
-#ifndef NDEBUG
+#if MODE_DEBUG
             ec.as<win32_error_code>() = GetLastError();
             if(ec)
                 return {};
@@ -297,7 +297,7 @@ bool WinFileFun::Exists(Url const& fn, file_error& ec)
     auto url = *fn;
 
     HANDLE fh = INVALID_HANDLE_VALUE;
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
     fh = CreateFile(url.c_str(), 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     ec.as<win32_error_code>() = GetLastError();
 #endif
@@ -326,7 +326,7 @@ szptr WinFileFun::Size(WinFileFun::FileHandle const& fh, file_error& ec)
         }
         return e.QuadPart;
     }
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
     auto resourceSize         = SizeofResource(nullptr, fh.rsrc);
     ec.as<win32_error_code>() = GetLastError();
     return resourceSize;
@@ -337,7 +337,7 @@ szptr WinFileFun::Size(WinFileFun::FileHandle const& fh, file_error& ec)
 szptr WinFileFun::Size(Url const& fn, file_error& ec)
 {
     auto url = *fn;
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
     if(feval(fn.flags & RSCA::AssetFile))
     {
         HRSRC rsc_h               = open_rsc(url.c_str(), ec);
@@ -350,7 +350,7 @@ szptr WinFileFun::Size(Url const& fn, file_error& ec)
     {
         LARGE_INTEGER e;
         HANDLE        f = INVALID_HANDLE_VALUE;
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
         f = CreateFile(
             url.c_str(), GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
 #else
@@ -379,7 +379,7 @@ bool WinFileFun::Touch(NodeType t, Url const& n, file_error& ec)
     case NodeType::File:
     {
         HANDLE f = INVALID_HANDLE_VALUE;
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
         f = CreateFile(
             url.c_str(),
             0,
@@ -446,7 +446,7 @@ WinFileFun::FileMapping WinFileFun::Map(
 
         HRSRC rsc = open_rsc(url.c_str(), ec);
 
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
         if(rsc && off + size <= SizeofResource(nullptr, rsc))
         {
             HGLOBAL lsrc = LoadResource(nullptr, rsc);
@@ -477,7 +477,7 @@ WinFileFun::FileMapping WinFileFun::Map(
     offsize_.QuadPart = offsize;
 
     HANDLE mh = nullptr;
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
     mh = CreateFileMapping(
         C_OCAST<HANDLE>(fh),
         nullptr,
@@ -547,7 +547,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
     DWORD         fl1 = WinFileApi::GetMappingFlags(acc);
     LARGE_INTEGER s;
     s.QuadPart = size;
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
     b.mapping = CreateFileMapping(
         INVALID_HANDLE_VALUE, nullptr, fl1, s.HighPart, s.LowPart, nullptr);
 #else
@@ -562,7 +562,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
 
     DWORD fl2 = WinFileApi::GetMappingViewFlags(acc);
 
-#ifndef COFFEE_WINDOWS_UWP
+#ifdef COFFEE_WINDOWS_WIN32
     b.data = C_RCAST<byte_t*>(
         MapViewOfFile(C_OCAST<HANDLE>(b.mapping), fl2, 0, 0, size));
 #else

@@ -23,7 +23,7 @@ CString SysInfoDef::GetSystemString()
 
 CString SysInfoDef::HostName()
 {
-#if !defined(NDEBUG)
+#if MODE_DEBUG
 
 #if defined(COFFEE_UNIXPLAT) || defined(COFFEE_WINDOWS)
     /* For now, we assume this works. We might implement a better one where it retries upon failure. */

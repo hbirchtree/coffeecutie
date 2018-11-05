@@ -1,9 +1,9 @@
 #pragma once
 
-#include <coffee/core/coffee_mem_macros.h>
+#include <coffee/core/base.h>
 #include <coffee/core/types/edef/resenum.h>
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 
@@ -53,6 +53,8 @@ struct Path
 
     Path canonical() const;
 
+    Vector<Path> components() const;
+
     Path         operator+(cstring component) const;
     FORCEDINLINE Path operator+(CString const& component) const
     {
@@ -80,6 +82,11 @@ struct Path
     FORCEDINLINE bool operator!=(Path const& other) const
     {
         return internUrl != other.internUrl;
+    }
+
+    FORCEDINLINE bool operator<=(Path const& other) const
+    {
+        return internUrl <= other.internUrl;
     }
 };
 

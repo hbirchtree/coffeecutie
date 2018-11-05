@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 
 struct aiScene;
 

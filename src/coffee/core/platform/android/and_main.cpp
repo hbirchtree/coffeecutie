@@ -4,8 +4,8 @@
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/profiler/profiling-export.h>
-#include <coffee/core/string_casting.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/types.h>
 
 #include "../../private/plat/sensor/android/android_sensors.h"
 

@@ -27,9 +27,16 @@ option ( GENERATE_HTML
 option ( GENERATE_WASM
     "Generate WASM version of code, not asm.js" OFF )
 
-set ( EM_COMMON "-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy -s USE_SDL=2 -s USE_ZLIB=1 -O2 -fPIC" )
+set ( EM_COMMON "-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy -s USE_SDL=2 -s USE_ZLIB=1 -fPIC -g4" )
 
 set ( SHELL_FILE "${CMAKE_SOURCE_DIR}/toolchain/desktop/emscripten/template.html" )
+
+set ( CMAKE_C_FLAGS_DEBUG           "${CMAKE_C_FLAGS_DEBUG} -g4"
+    CACHE STRING "" )
+set ( CMAKE_CXX_FLAGS_DEBUG         "${CMAKE_CXX_FLAGS_DEBUG} -g4"
+    CACHE STRING "" )
+set ( CMAKE_EXE_LINKER_FLAGS_DEBUG  "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -g4"
+    CACHE STRING "" )
 
 if(GENERATE_WASM)
     message ( STATUS "Generating WASM assembly" )

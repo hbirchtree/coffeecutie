@@ -34,7 +34,7 @@ struct InternalState
     CString resource_prefix = "./";
 
     /* Application info */
-    CoffeeApplicationData current_app = {};
+    AppData current_app = {};
 
     BuildInfo build = {};
 
@@ -181,7 +181,7 @@ BuildInfo& GetBuildInfo()
     return ISTATE->build;
 }
 
-CoffeeApplicationData& GetAppData()
+AppData& GetAppData()
 {
     C_PTR_CHECK(ISTATE);
     return ISTATE->current_app;
@@ -293,13 +293,13 @@ CString const& GetFileResourcePrefix()
 
 } // namespace CResources
 
-void SetCurrentApp(CoffeeApplicationData const& app)
+void SetCurrentApp(const AppData& app)
 {
     C_PTR_CHECK(State::ISTATE);
     State::ISTATE->current_app = app;
 }
 
-CoffeeApplicationData const& GetCurrentApp()
+AppData const& GetCurrentApp()
 {
     C_PTR_CHECK(State::ISTATE);
     return State::ISTATE->current_app;

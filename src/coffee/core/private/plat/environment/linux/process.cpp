@@ -1,12 +1,10 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/plat/environment/linux/process.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 
 namespace Coffee {
 namespace Environment {
 namespace Linux {
-
-using namespace Mem;
 
 struct mem_usage
 {

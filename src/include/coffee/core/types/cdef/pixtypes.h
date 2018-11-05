@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../tdef/integertypes.h"
-#include "../tdef/stltypes.h"
 #include "geometry.h"
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 

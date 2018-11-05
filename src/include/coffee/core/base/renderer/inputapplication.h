@@ -2,7 +2,7 @@
 
 #include "../input/cinput.h"
 #include "../types/cdisplay.h"
-#include "../../types/tdef/integertypes.h"
+#include <peripherals/libc/types.h>
 
 namespace Coffee{
 

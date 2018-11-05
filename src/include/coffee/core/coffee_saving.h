@@ -1,8 +1,8 @@
 #pragma once
 
-#include "types/cdef/memsafe.h"
-#include "types/tdef/integertypes.h"
+#include "types/chunk.h"
 #include <coffee/core/application_data.h>
+#include <peripherals/libc/types.h>
 
 namespace Coffee {
 namespace Store {
@@ -54,13 +54,13 @@ struct FilesystemApi : SaveApi
     szptr        restore(Bytes&& data, slot_count_t slot = 0);
     szptr        save(Bytes const& data, slot_count_t slot = 0);
 
-    ApplicationData_t const& m_app;
+    AppData const& m_app;
 
     FilesystemApi();
-    FilesystemApi(ApplicationData_t const& app);
+    FilesystemApi(AppData const& app);
 
     friend ShPtr<SaveApi> CreateDefaultSave();
-    friend ShPtr<SaveApi> CreateDefaultSave(ApplicationData_t const&);
+    friend ShPtr<SaveApi> CreateDefaultSave(AppData const&);
 };
 
 FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave()
@@ -68,7 +68,7 @@ FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave()
     return MkShared<FilesystemApi>();
 }
 
-FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave(ApplicationData_t const& app)
+FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave(AppData const& app)
 {
     return MkShared<FilesystemApi>(app);
 }

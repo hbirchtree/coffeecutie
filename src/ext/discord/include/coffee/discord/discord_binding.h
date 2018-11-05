@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/functional_types.h>
 #include <coffee/interfaces/online_service.h>
 
 struct DiscordRichPresence;

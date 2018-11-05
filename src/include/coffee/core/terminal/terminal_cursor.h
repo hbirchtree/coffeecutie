@@ -1,8 +1,10 @@
 #pragma once
 
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/type_safety.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/type_safety.h>
+#include <peripherals/stl/types.h>
+
 #include <coffee/core/CDebug>
 
 #if defined(COFFEE_LINUX)
@@ -10,24 +12,18 @@
 #include <unistd.h>
 #endif
 
-namespace Coffee{
+namespace Coffee {
 
 /*!
  * \brief Terminal cursor for doing fancy progress bars and stuff
  */
 struct TerminalCursor
 {
-    const Array<cstring, 4> progress_bar =
-    {
-      {"◷", "◶", "◵", "◴"}
-    };
+    const Array<cstring, 4> progress_bar = {{"◷", "◶", "◵", "◴"}};
 
     const cstring progress_complete = "◉";
 
-    TerminalCursor():
-        m_lastLength(0),
-        m_progressIdx(0),
-        m_overwriteMode(false)
+    TerminalCursor() : m_lastLength(0), m_progressIdx(0), m_overwriteMode(false)
     {
 #if defined(COFFEE_LINUX)
         m_interactive = isatty(fileno(stderr));
@@ -53,9 +49,7 @@ struct TerminalCursor
         CString output = cStringFormat(fmt, args...);
 
         if(m_lastLength > output.size())
-            output.insert(output.end(),
-                          m_lastLength - output.size(),
-                          ' ');
+            output.insert(output.end(), m_lastLength - output.size(), ' ');
 
         szptr terminalWidth = 0;
 #if defined(COFFEE_LINUX)
@@ -79,7 +73,7 @@ struct TerminalCursor
 
         print_nonl(outFmt, output);
         CurrentThread::sleep_for(Chrono::milliseconds(100));
-        m_lastLength = output.size();
+        m_lastLength    = output.size();
         m_overwriteMode = true;
     }
 
@@ -95,9 +89,7 @@ struct TerminalCursor
             this->overwrite(fmt, args...);
 
         CString newFmt =
-                progress_bar[m_progressIdx]
-                + ("  " + m_progressMeter())
-                + fmt;
+            progress_bar[m_progressIdx] + ("  " + m_progressMeter()) + fmt;
         this->overwrite(newFmt.c_str(), args...);
 
         m_progressIdx = (++m_progressIdx % progress_bar.size());
@@ -106,10 +98,7 @@ struct TerminalCursor
     template<typename... Args>
     void complete(cstring fmt, Args... args)
     {
-        CString newFmt =
-                progress_complete
-                + CString("  ")
-                + fmt;
+        CString newFmt = progress_complete + CString("  ") + fmt;
 
         this->overwrite(newFmt.c_str(), args...);
         m_progressIdx = 0;
@@ -129,15 +118,15 @@ struct TerminalCursor
 
         print_basic(outFmt, output);
         m_overwriteMode = false;
-        m_lastLength = 0;
+        m_lastLength    = 0;
     }
 
-private:
+  private:
     Function<CString()> m_progressMeter;
-    szptr m_lastLength;
-    szptr m_progressIdx;
-    bool m_interactive;
-    bool m_overwriteMode;
+    szptr               m_lastLength;
+    szptr               m_progressIdx;
+    bool                m_interactive;
+    bool                m_overwriteMode;
 };
 
-}
+} // namespace Coffee

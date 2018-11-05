@@ -29,9 +29,9 @@ FORCEDINLINE CGenum to_enum(DrwMd m)
 }
 
 CGenum to_enum(
-    PixelFormat f,
-    PixelFlags  e = PixelFlags::None,
-    CompFlags   d = CompFlags::CompressionNone);
+    PixFmt    f,
+    PixFlg    e = PixFlg::None,
+    CompFlags d = CompFlags::CompressionNone);
 
 CGenum to_enum(Filtering p, Filtering s = Filtering::None);
 

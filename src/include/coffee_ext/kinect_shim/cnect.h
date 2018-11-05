@@ -1,7 +1,7 @@
 #ifndef COFFEE_EXT_FREENECT_CNECT_H
 #define COFFEE_EXT_FREENECT_CNECT_H
 
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/libc/types.h>
 #include <coffee/core/types/vector_types.h>
 #include <coffee/core/types/cdef/pixtypes.h>
 

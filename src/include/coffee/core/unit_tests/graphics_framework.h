@@ -3,7 +3,7 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/functional_types.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/windowing/renderer/renderer.h>
 

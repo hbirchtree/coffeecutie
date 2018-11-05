@@ -6,7 +6,7 @@
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 
 #include <iostream>
 

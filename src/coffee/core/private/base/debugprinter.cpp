@@ -3,8 +3,8 @@
 #include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/plat/plat_timing.h>
-#include <coffee/core/string_casting.h>
+#include <coffee/core/plat/timing.h>
+#include <peripherals/stl/string_casting.h>
 
 #if defined(COFFEE_ANDROID)
 #include <android/log.h>
@@ -80,10 +80,9 @@ static void AddContextString(CString& prefix, Severity sev)
 #endif
 }
 
-static void native_print(FILE* stream, CString const& formatted, Severity sev)
+static void native_print(
+    FILE* stream, CString const& formatted, C_UNUSED(Severity sev))
 {
-    C_USED(sev);
-
     /* If printing to file, don't lock IO */
     bool locking       = (stream == stdout || stream == stderr);
     bool locking_state = C_OCAST<bool>(State::GetInternalState());

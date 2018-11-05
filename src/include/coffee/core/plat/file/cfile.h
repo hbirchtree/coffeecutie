@@ -304,10 +304,8 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
      * \param map
      * \return
      */
-    STATICINLINE bool Unmap(FileMapping&& map, file_error&)
+    STATICINLINE bool Unmap(C_UNUSED(FileMapping&& map), file_error&)
     {
-        C_USED(map);
-
         return true;
     }
     STATICINLINE bool Exists(Url const& fn, file_error& ec)

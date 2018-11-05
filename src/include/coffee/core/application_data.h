@@ -1,11 +1,11 @@
 #pragma once
 
-#include "types/tdef/stltypes.h"
-#include "types/tdef/integertypes.h"
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
-namespace Coffee{
+namespace Coffee {
 
-struct ApplicationData_t
+struct AppData
 {
     CString organization_name;
     CString application_name;
@@ -13,4 +13,4 @@ struct ApplicationData_t
     u32 version_code;
 };
 
-}
+} // namespace Coffee

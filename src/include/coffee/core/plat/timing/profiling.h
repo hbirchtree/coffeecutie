@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/internal_state.h>
-#include <coffee/profiler/profiler.h>
+#include <peripherals/profiler/profiler.h>
 
 #ifndef COFFEE_COMPONENT_NAME
 #define COFFEE_COMPONENT_NAME "(unknown)"
@@ -150,7 +150,7 @@ struct ExtraDataImpl
     }
 };
 
-#if !defined(NDEBUG) && !defined(COFFEE_DISABLE_PROFILER)
+#if MODE_DEBUG && !defined(COFFEE_DISABLE_PROFILER)
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(

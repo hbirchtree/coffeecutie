@@ -1,14 +1,13 @@
 #pragma once
 
-#include <coffee/core/types/cdef/memtypes.h>
-#include <coffee/core/types/cdef/memsafe.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/chunk.h>
+#include <peripherals/libc/types.h>
 
-namespace Coffee{
+namespace Coffee {
 /*!
  * \brief Wrappers for compression libraries
  */
-namespace Compression{
+namespace Compression {
 
 struct Compressor_def
 {
@@ -16,15 +15,15 @@ struct Compressor_def
     {
     };
 
-    static bool Compress(Bytes const&,Bytes*, Opts const&)
+    static bool Compress(Bytes const&, Bytes*, Opts const&)
     {
         return false;
     }
-    static bool Decompress(Bytes const&,Bytes*, Opts const&)
+    static bool Decompress(Bytes const&, Bytes*, Opts const&)
     {
         return false;
     }
 };
 
-}
-}
+} // namespace Compression
+} // namespace Coffee

@@ -16,7 +16,7 @@ FilesystemApi::FilesystemApi() : m_app(GetCurrentApp())
 {
 }
 
-FilesystemApi::FilesystemApi(const ApplicationData_t& app) : m_app(app)
+FilesystemApi::FilesystemApi(const AppData& app) : m_app(app)
 {
 }
 

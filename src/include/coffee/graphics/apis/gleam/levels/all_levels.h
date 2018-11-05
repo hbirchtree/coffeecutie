@@ -1,13 +1,7 @@
 #pragma once
+#include "all_levels_include.h"
 
-#include "gl_shared_enum_convert.h"
-
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/cdef/memtypes.h>
-#include <coffee/core/types/cdef/geometry.h>
-#include <coffee/core/types/vector_types.h>
-
-#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#if defined(COFFEE_GCC)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-bool-conversion"
 #endif

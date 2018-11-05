@@ -80,11 +80,11 @@ i32 coffee_main(i32, cstring_w*)
     Profiler::PushContext("Create 200 entities");
 
     entities.prealloc(rec1, 100);
-    for(auto i : Range<>(100))
+    for(C_UNUSED(auto i) : Range<>(100))
         entities.create_entity(rec1);
 
     entities.prealloc(rec2, 500000);
-    for(auto i : Range<>(500000))
+    for(C_UNUSED(auto i) : Range<>(500000))
         entities.create_entity(rec2);
     Profiler::PopContext();
 
@@ -95,7 +95,7 @@ i32 coffee_main(i32, cstring_w*)
 //    for(auto& o : entities.select(0))
 //        cBasicPrint("Object: {0} {1}", o.id, o.interval.count());
 
-    for(auto i : Range<>(10))
+    for(C_UNUSED(auto i) : Range<>(10))
         entities.exec();
 
     Profiler::PopContext();
@@ -104,7 +104,7 @@ i32 coffee_main(i32, cstring_w*)
 //    CurrentThread::sleep_for(Chrono::milliseconds(1));
 //    Profiler::PopContext();
 
-    ComponentContainerBase& t1 = matrix_store;
+    C_UNUSED(ComponentContainerBase& t1) = matrix_store;
 
     return 0;
 }

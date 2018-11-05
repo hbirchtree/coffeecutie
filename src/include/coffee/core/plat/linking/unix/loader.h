@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../plat_primary_identify.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE) || defined(COFFEE_ANDROID)
 

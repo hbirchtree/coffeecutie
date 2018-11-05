@@ -82,7 +82,7 @@ CALBuffer::CALBuffer() : handle(nullptr)
 
 ALenum _al_get_model(const CDistanceModel& m)
 {
-    return AL_DISTANCE_MODEL + (u32)m;
+    return AL_DISTANCE_MODEL + C_CAST<i32>(m);
 }
 ALuint _al_get_handle(const CALBuffer* b)
 {
@@ -154,17 +154,17 @@ CALContext* context_create(cstring device)
         return nullptr;
     }
 
-    cMsg(
+    cTag(
         "ALC",
         "Initialized, using device: {0}",
         alcGetString(context->device, ALC_DEVICE_SPECIFIER));
 
-    context->context = alcCreateContext(context->device, NULL);
+    context->context = alcCreateContext(context->device, nullptr);
 
     context_make_current(context);
 
     CALVersion ver = context_version(context);
-    cMsg("ALC", "Context version: {0}.{1}", ver.major, ver.minor);
+    cTag("ALC", "Context version: {0}.{1}", ver.major, ver.minor);
 
     return context;
 }
@@ -184,7 +184,7 @@ void context_destroy(CALContext* context)
         cWarning("Failed to close AL device");
     context->context = nullptr;
     context->device  = nullptr;
-    cMsg("ALC", "Destroyed");
+    cTag("ALC", "Destroyed");
 
     delete context;
 }
@@ -235,10 +235,10 @@ void context_set_debug_callback(CALContext* context, CALCallback callback)
 
 void context_devices_output(Vector<cstring>& devices)
 {
-    if(!alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+    if(!alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT"))
         return;
 
-    const ALCchar* devices_c = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+    const ALCchar* devices_c = alcGetString(nullptr, ALC_DEVICE_SPECIFIER);
 
     szptr i = 0;
     while(*devices_c)
@@ -252,10 +252,10 @@ void context_devices_output(Vector<cstring>& devices)
 
 void context_devices_input(Vector<cstring>& devices)
 {
-    if(!alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+    if(!alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT"))
         return;
 
-    const ALCchar* cdevices = alcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
+    const ALCchar* cdevices = alcGetString(nullptr, ALC_CAPTURE_DEVICE_SPECIFIER);
 
     if(!cdevices)
         return;
@@ -272,7 +272,7 @@ void context_devices_input(Vector<cstring>& devices)
 
 cstring context_device_default()
 {
-    return alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+    return alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER);
 }
 
 void alAlloc(CALBuffer* buffer)
@@ -310,9 +310,9 @@ void listener_set(const CALListener* listener)
     alListenerf(AL_GAIN, listener->gain);
     context_get_error();
 
-    alListenerfv(AL_POSITION, (scalar*)&listener->position);
+    alListenerfv(AL_POSITION, C_RCAST<const scalar*>(&listener->position));
     context_get_error();
-    alListenerfv(AL_VELOCITY, (scalar*)&listener->velocity);
+    alListenerfv(AL_VELOCITY, C_RCAST<const scalar*>(&listener->velocity));
     context_get_error();
     scalar* orient = new scalar[6];
 

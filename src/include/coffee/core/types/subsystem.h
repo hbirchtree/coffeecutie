@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../coffee_mem_macros.h"
-#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/plat/platform_detect.h>
+#include <peripherals/libc/types.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct Subsystem
 {
@@ -30,7 +30,7 @@ FORCEDINLINE void StopSubsystem()
 template<typename Sys>
 class SubsystemWrapper
 {
-public:
+  public:
     template<typename... Args>
     SubsystemWrapper(Args... arg)
     {
@@ -47,4 +47,4 @@ public:
     }
 };
 
-}
+} // namespace Coffee

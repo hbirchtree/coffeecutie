@@ -1,22 +1,21 @@
 #pragma once
 
-#include "../plat_primary_identify.h"
-#include "../../coffee_mem_macros.h"
 #include "../../base/math/cmath.h"
 #include "../../types/cdef/infotypes.h"
+#include <coffee/core/base.h>
 
-#include "../memory/stlstring_ops.h"
-#include "../memory/string_ops.h"
-#include "../../types/tdef/stlfunctypes.h"
+#include <peripherals/libc/string_ops.h>
+#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/stlstring_ops.h>
 
-namespace Coffee{
+namespace Coffee {
 
 struct SysInfoDef
 {
     enum NetStatusFlags
     {
         NetStatDisconnected = 0x0,
-        NetStatConnected = 0x1,
+        NetStatConnected    = 0x1,
 
         NetStatLocalOnly = 0x2,
     };
@@ -42,18 +41,20 @@ struct SysInfoDef
     }
 
     static
-    /*!
-     * \brief Return a primary operating system identifier, no version
-     * \return
-     */
-    CString GetSystemString();
+        /*!
+         * \brief Return a primary operating system identifier, no version
+         * \return
+         */
+        CString
+        GetSystemString();
 
     static
-    /*!
-     * \brief Only for use in safe environments, such as internal servers.
-     * \return
-     */
-    CString HostName();
+        /*!
+         * \brief Only for use in safe environments, such as internal servers.
+         * \return
+         */
+        CString
+        HostName();
 
     STATICINLINE
     /*!
@@ -97,20 +98,21 @@ struct SysInfoDef
      */
     ThrdCnt Parallelism()
     {
-        return ThreadCount()*64;
+        return ThreadCount() * 64;
     }
 
     static
-    /*!
-     * \brief Calculate a 'smart' amount of tasks to launch based
-     *  upon amount of tasks
-     * \param worksize Amount of tasks
-     * \param weight Weight given to each tasks. Should only be
-     *  modified if each task is significant in size.
-     * \return An estimated value for what would be a suitable
-     *  amount of tasks
-     */
-    ThrdCnt SmartParallelism(u64 worksize, u64 weight = 1);
+        /*!
+         * \brief Calculate a 'smart' amount of tasks to launch based
+         *  upon amount of tasks
+         * \param worksize Amount of tasks
+         * \param weight Weight given to each tasks. Should only be
+         *  modified if each task is significant in size.
+         * \return An estimated value for what would be a suitable
+         *  amount of tasks
+         */
+        ThrdCnt
+        SmartParallelism(u64 worksize, u64 weight = 1);
 
     STATICINLINE
     /*!
@@ -161,8 +163,8 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Available free swap space in system, not very useful, system-managed
-     * \return
+     * \brief Available free swap space in system, not very useful,
+     * system-managed \return
      */
     MemUnit SwapAvailable()
     {
@@ -170,19 +172,20 @@ struct SysInfoDef
     }
 
     static
-    /*!
-     * \brief The CPUID of the processor.
-     * On x86, Intel should return GenuineIntel, AMD
-     * should return AuthenticAMD.
-     * On virtual machines, as long as it is returned from CPUID,
-     *  anything is acceptable.
-     * On ARM Linux systems the definition
-     *  is more coarse, as Linaro+ kernels
-     *  do not provide full information.
-     * \param i Processor to examine, max count is CpuCount()
-     * \return
-     */
-    HWDeviceInfo Processor(u32 i = 0);
+        /*!
+         * \brief The CPUID of the processor.
+         * On x86, Intel should return GenuineIntel, AMD
+         * should return AuthenticAMD.
+         * On virtual machines, as long as it is returned from CPUID,
+         *  anything is acceptable.
+         * On ARM Linux systems the definition
+         *  is more coarse, as Linaro+ kernels
+         *  do not provide full information.
+         * \param i Processor to examine, max count is CpuCount()
+         * \return
+         */
+        HWDeviceInfo
+        Processor(u32 i = 0);
 
     STATICINLINE
     /*!
@@ -264,8 +267,8 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Whether the 32-bit system supports PAE, doesn't really apply to 64-bit
-     * \return
+     * \brief Whether the 32-bit system supports PAE, doesn't really apply to
+     * 64-bit \return
      */
     bool HasPAE()
     {
@@ -289,8 +292,7 @@ struct SysInfoDef
      *  but laptops and phones will.
      * \return
      */
-    static
-    HWDeviceInfo DeviceName();
+    static HWDeviceInfo DeviceName();
 
     /*!
      * \brief If possible, return the motherboard information from
@@ -299,16 +301,14 @@ struct SysInfoDef
      * eg. flo for Nexus 7 (2013).
      * \return
      */
-    static
-    HWDeviceInfo Motherboard();
+    static HWDeviceInfo Motherboard();
 
     /*!
      * \brief Mostly for laptops and phones, return a description
      *  of the chassis vendor.
      * \return
      */
-    static
-    HWDeviceInfo Chassis();
+    static HWDeviceInfo Chassis();
 
     /*!
      * \brief Provide a BIOS version for the motherboard.
@@ -316,10 +316,8 @@ struct SysInfoDef
      *  bootloader or firmware version for phone.
      * \return
      */
-    static
-    HWDeviceInfo BIOS();
+    static HWDeviceInfo BIOS();
 };
-
 
 struct PowerInfoDef
 {
@@ -331,8 +329,8 @@ struct PowerInfoDef
 
     STATICINLINE
     /*!
-     * \brief If device is connected to wall power, often same as charging status,
-     *   but primarily refers to having little limitation to power usage.
+     * \brief If device is connected to wall power, often same as charging
+     * status, but primarily refers to having little limitation to power usage.
      * \return
      */
     bool IsPowered()
@@ -382,15 +380,24 @@ struct PowerInfoDef
      */
     Temp CpuTemperature()
     {
-        return {0.f,0.f};
+        return {0.f, 0.f};
     }
 };
 
 struct DeviceInfoDef
 {
-    static CString Manufacturer(){return {};}
-    static CString Model(){return {};}
-    static CString Board(){return {};}
+    static CString Manufacturer()
+    {
+        return {};
+    }
+    static CString Model()
+    {
+        return {};
+    }
+    static CString Board()
+    {
+        return {};
+    }
 
     struct Screen
     {
@@ -402,23 +409,29 @@ struct DeviceInfoDef
         };
 
         scalar size;
-        u32 density;
-        u32 res_x;
-        u32 res_y;
+        u32    density;
+        u32    res_x;
+        u32    res_y;
 
         u32 color_space;
 
         TouchType touch_type;
     };
 
-    static Screen Screen(){return {};}
+    static Screen Screen()
+    {
+        return {};
+    }
 
-    static scalar Weight(){return {};}
+    static scalar Weight()
+    {
+        return {};
+    }
 };
 
 #if defined(COFFEE_STUBBED_SYSINFO)
-using SysInfo = SysInfoDef;
+using SysInfo   = SysInfoDef;
 using PowerInfo = PowerInfoDef;
 #endif
 
-}
+} // namespace Coffee

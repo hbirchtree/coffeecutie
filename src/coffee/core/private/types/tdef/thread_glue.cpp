@@ -1,5 +1,5 @@
 #include <coffee/core/internal_state.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/functional_types.h>
 
 namespace Coffee {
 

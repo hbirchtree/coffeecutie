@@ -1,7 +1,5 @@
 #include <coffee/image/ctextrender.h>
 
-#include <coffee/core/types/cdef/memsafe.h>
-
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
 

@@ -2,7 +2,7 @@
 #include <coffee/core/plat/plat_file.h>
 
 #include <coffee/core/plat/plat_memory.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 #include <coffee/core/CDebug>
 
 #define const_string static const constexpr cstring

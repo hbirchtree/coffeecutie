@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/task_queue/task.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/functional_types.h>
 
 namespace Coffee{
 namespace RHI{

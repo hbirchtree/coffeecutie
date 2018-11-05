@@ -3,11 +3,11 @@
 #include <coffee/core/CRegex>
 #include <coffee/core/base/files/cfiles.h>
 #include <coffee/core/coffee.h>
-#include <coffee/core/coffee_resource.h>
 #include <coffee/core/formatting.h>
 #include <coffee/core/plat/environment.h>
-#include <coffee/core/plat/plat_file.h>
+#include <coffee/core/plat/file.h>
 #include <coffee/core/plat/timing/profiling.h>
+#include <coffee/core/resource_prefix.h>
 
 #include <coffee/core/CDebug>
 
@@ -282,7 +282,7 @@ CString Url::operator*() const
         if(!feval(flags & RSCA::NoDereference))
             derefPath = FileFun::DereferenceLink(
                 MkUrl(derefPath.c_str(), RSCA::SystemFile), ec);
-#ifndef NDEBUG
+#if MODE_DEBUG
         if(ec)
             cWarning("{0}", ec.message());
 #endif
@@ -391,7 +391,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
         return {};
     }
     }
-#ifndef NDEBUG
+#if MODE_DEBUG
     if(ec)
         cWarning("{0}", ec.message());
 #endif
@@ -422,7 +422,7 @@ Path Path::fileBasename() const
 {
     file_error ec;
     Path       p = Path{DirFun::Basename(internUrl, ec).internUrl};
-#ifndef NDEBUG
+#if MODE_DEBUG
     if(ec)
         cWarning("{0}", ec.message());
 #endif
@@ -444,7 +444,7 @@ Path Path::dirname() const
 {
     file_error ec;
     Path       p = Path{DirFun::Dirname(internUrl.c_str(), ec).internUrl};
-#ifndef NDEBUG
+#if MODE_DEBUG
     if(ec)
         cWarning("{0}", ec.message());
 #endif
@@ -455,11 +455,26 @@ Path Path::canonical() const
 {
     file_error ec;
     Path       p = Path{FileFun::CanonicalName(MkUrl(*this), ec)};
-#ifndef NDEBUG
+#if MODE_DEBUG
     if(ec)
         cWarning("{0}", ec.message());
 #endif
     return p;
+}
+
+Vector<Path> Path::components() const
+{
+    Vector<Path> out;
+
+    Path base = *this;
+
+    while(base != Path("."))
+    {
+        out.push_back(base);
+        base = base.dirname();
+    }
+
+    return out;
 }
 
 Path Path::operator+(cstring component) const

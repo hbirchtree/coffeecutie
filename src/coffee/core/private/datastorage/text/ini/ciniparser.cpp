@@ -1,8 +1,8 @@
 #include <coffee/core/datastorage/text/ini/ciniparser.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/string_casting.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/functional_types.h>
 
 namespace Coffee {
 namespace DataStorage {

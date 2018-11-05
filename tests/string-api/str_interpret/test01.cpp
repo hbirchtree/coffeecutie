@@ -1,6 +1,6 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/string_casting.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/libc/types.h>
 #include <coffee/core/CMath>
 
 using namespace Coffee;

@@ -2,7 +2,7 @@
 
 #include <coffee/core/base/textprocessing/cregex.h>
 #include <coffee/core/plat/timing/profiling.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 #include <coffee/core/types/cdef/memsafe.h>
 
 #include <coffee/core/CDebug>
@@ -257,7 +257,7 @@ void Resource::readResponseHeader(std::istream& http_istream)
         m_response.header = http::stream::read_response(http_istream);
     }
 
-#if !defined(NDEBUG)
+#if MODE_DEBUG
     {
         cVerbose(
             12,

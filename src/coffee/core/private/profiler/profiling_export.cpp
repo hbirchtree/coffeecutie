@@ -3,12 +3,11 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
+#include <coffee/core/base.h>
 #include <coffee/core/base/files/url.h>
 #include <coffee/core/coffee.h>
-#include <coffee/core/coffee_mem_macros.h>
+#include <coffee/core/plat/file.h>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/plat/plat_file.h>
-#include <coffee/core/plat/plat_quirks_toggling.h>
 
 #include <coffee/core/CDebug>
 
@@ -60,8 +59,6 @@ STATICINLINE void PutEvents(
     JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
     /* Some parsing information */
-    auto start = Coffee::Profiler::StartTime();
-
     for(Profiling::DataPoint const& p : GetSortedDataPoints())
     {
         JSON::Value o;
@@ -293,7 +290,7 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 
 void ExitRoutine()
 {
-#if defined(COFFEE_LOWFAT) || defined(NDEBUG)
+#if defined(COFFEE_LOWFAT) || MODE_RELEASE
     return;
 #endif
 

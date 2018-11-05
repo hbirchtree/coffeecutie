@@ -2,8 +2,8 @@
 
 #include "../../types/cdef/infotypes.h"
 #include "../../types/cdef/pixtypes.h"
-#include "../../types/edef/enumfun.h"
 #include <coffee/interfaces/cgraphics_api_basic.h>
+#include <peripherals/enum/helpers.h>
 
 namespace Coffee {
 namespace Display {
@@ -75,8 +75,8 @@ struct CDMonitor
     CSize        phySize;    /*!< Physical size of monitor*/
     CSize        resolution;
     CDColorSpace colorBits;    /*!< Color depth bits*/
-    i32        refresh : 24; /*!< Refresh rate*/
-    u8        index;        /*!< Real monitor index*/
+    i32          refresh : 24; /*!< Refresh rate*/
+    u8           index;        /*!< Real monitor index*/
 };
 
 /*!
@@ -231,10 +231,9 @@ struct CDProperties
         Resizable = 0x040, /*!< Resizable mode*/
 
         Undecorated = 0x080, /*!< Decorated mode*/
-        Floating =
-            0x100,       /*!< Floating mode, not supported by all platforms and
-                            context managers*/
-        Visible = 0x200, /*!< Visibility*/
+        Floating = 0x100, /*!< Floating mode, not supported by all platforms and
+                             context managers*/
+        Visible = 0x200,  /*!< Visibility*/
 
         HighDPI = 0x400, /*!< HighDPI mode for platforms that support it (not
                             Windows)*/

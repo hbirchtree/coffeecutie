@@ -1,7 +1,8 @@
 #include <coffee/core/coffee.h>
 
 #include <coffee/core/plat/environment/linux/environment.h>
-#include <coffee/core/plat/plat_file.h>
+#include <coffee/core/plat/file.h>
+#include <peripherals/semantic/ptr_wrap.h>
 
 namespace Coffee {
 namespace Environment {

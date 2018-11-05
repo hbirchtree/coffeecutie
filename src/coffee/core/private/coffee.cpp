@@ -12,9 +12,8 @@
 #include <coffee/core/coffee_version.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/plat/environment/process_def.h>
-#include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/plat/file.h>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/plat/plat_file.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/cdef/infotypes.h>
@@ -46,7 +45,7 @@ extern void SetBuildInfo(BuildInfo& binfo);
  * \brief Provides application-specific information
  * \param appdata
  */
-extern void SetApplicationData(CoffeeApplicationData& appdata);
+extern void SetApplicationData(AppData& appdata);
 
 #if defined(COFFEE_APPLE)
 extern Url GetAppleStoragePath();
@@ -107,7 +106,7 @@ FORCEDINLINE void PrintLicenseInfo()
 static void CoffeeInit_Internal(u32 flags)
 {
 #ifndef COFFEE_LOWFAT
-#ifndef NDEBUG
+#if MODE_DEBUG
 
     /* Allow core dump by default in debug mode */
     ProcessProperty::CoreDumpEnable();
@@ -153,7 +152,7 @@ static void CoffeeInit_Internal(u32 flags)
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
 
-    CurrentThread::SetName("Main");
+    CurrentThread::SetName(State::GetAppData().application_name);
 #endif
 }
 
@@ -217,7 +216,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());
 #endif
 
-#ifndef NDEBUG
+#if MODE_DEBUG
     InstallDefaultSigHandlers();
 #endif
 
@@ -279,7 +278,7 @@ void CoffeeTerminate()
 
 #ifndef COFFEE_LOWFAT
 
-#ifndef NDEBUG
+#if MODE_DEBUG
 #if defined(COFFEE_LINUX)
     /* Do runtime leak checks for POSIX resources,
      *  useful when debugging resource APIs */

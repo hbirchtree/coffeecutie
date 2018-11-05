@@ -5,7 +5,7 @@
 #include <coffee/core/types/edef/colorenum.h>
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 

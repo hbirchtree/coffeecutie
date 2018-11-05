@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../../plat_primary_identify.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_APPLE)
 
 #include "../unix/file.h"
 
-namespace Coffee{
-namespace CResources{
+namespace Coffee {
+namespace CResources {
 
 using FileFun = Posix::PosixFileFun;
-using DirFun = Posix::PosixDirFun;
+using DirFun  = Posix::PosixDirFun;
 
-}
-}
+} // namespace CResources
+} // namespace Coffee
 
 #endif

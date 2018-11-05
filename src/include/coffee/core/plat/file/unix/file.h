@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../plat_primary_identify.h"
 #include "../cfile.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_APPLE)
 // ???
@@ -157,7 +157,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         return C_OCAST<int>(fh.fd) != 0;
     }
-    STATICINLINE bool Close(FH&&, file_error& ec)
+    STATICINLINE bool Close(FH&&, file_error&)
     {
         return true;
     }
@@ -202,28 +202,31 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE bool Write(FH const& f_h, Bytes const& d, file_error& ec)
     {
-        szptr i    = 0;
-        szptr it   = 0;
-        szptr chnk = 0;
-        errno      = 0;
+        ptroff i    = 0;
+        szptr  it   = 0;
+        ptroff chnk = 0;
+        errno       = 0;
+
+        ptroff s_size = C_FCAST<ptroff>(d.size);
+
         while(i < d.size)
         {
-            chnk = ((d.size - i) < Int32_Max) ? (d.size - i) : Int32_Max;
+            chnk = ((s_size - i) < Int32_Max) ? (s_size - i) : Int32_Max;
             i += write(f_h.fd, &(C_CAST<byte_t*>(d.data)[i]), chnk);
             if(ErrnoCheck(ec, nullptr, f_h.fd) && it != 0)
                 break;
             it++;
         }
-        return i == d.size;
+        return i == C_FCAST<ptroff>(d.size);
     }
 
     STATICINLINE
     FM Map(
         Url const& filename, RSCA acc, szptr offset, szptr size, file_error& ec)
     {
-        auto   url       = *filename;
-        u64 pa_offset = offset & ~(PageSize());
-        errno            = 0;
+        auto url       = *filename;
+        u64  pa_offset = offset & ~(PageSize());
+        errno          = 0;
 
         if(pa_offset != offset)
             return {};

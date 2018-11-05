@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/plat/plat_primary_identify.h>
+#include <coffee/core/plat/platform_detect.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>

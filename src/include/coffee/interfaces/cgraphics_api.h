@@ -3,12 +3,11 @@
 #include "cgraphics_api_basic.h"
 #include "cgraphics_api_thread.h"
 
-#include <coffee/core/types/cdef/funtypes.h>
-#include <coffee/core/types/cdef/memtypes.h>
-#include <coffee/core/types/cdef/pixtypes.h>
+#include <coffee/core/types/chunk.h>
 
 #include <coffee/core/types/vector_types.h>
 
+#include <coffee/core/types/cdef/pixtypes.h>
 #include <coffee/core/types/edef/colorenum.h>
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/edef/graphicsenum.h>
@@ -757,12 +756,12 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     struct Surface
     {
         Surface(
-            PixelFormat fmt,
-            bool        isArray   = false,
-            u32         arraySize = 0,
-            u32         mips      = 1,
-            u32         flags     = 0,
-            RSCA        cl        = RSCA::ReadOnly) :
+            PixFmt fmt,
+            bool   isArray   = false,
+            u32    arraySize = 0,
+            u32    mips      = 1,
+            u32    flags     = 0,
+            RSCA   cl        = RSCA::ReadOnly) :
             m_pixfmt(fmt),
             b_array(isArray), m_arrsize(arraySize), m_mips(mips),
             m_flags(flags), m_access(cl)
@@ -807,7 +806,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
             return m_mips;
         }
-        PixelFormat format() const
+        PixFmt format() const
         {
             return m_pixfmt;
         }
@@ -818,17 +817,17 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_;
         }
 
-        CSize texSize() const
+        Size texSize() const
         {
             return {};
         }
 
-        PixelFormat m_pixfmt;
-        bool        b_array;
-        u32         m_arrsize;
-        u32         m_mips;
-        u32         m_flags;
-        RSCA        m_access;
+        PixFmt m_pixfmt;
+        bool   b_array;
+        u32    m_arrsize;
+        u32    m_mips;
+        u32    m_flags;
+        RSCA   m_access;
     };
 
     using Surface2D   = Surface<CSize, CPoint> /* Simple 2D texture */;
@@ -947,7 +946,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct RenderDummy
     {
-        void allocate(PixelFormat, DBuffers, u32, CSize)
+        void allocate(PixFmt, DBuffers, u32, CSize)
         {
         }
         void deallocate()
@@ -1360,7 +1359,7 @@ struct NullAPI : GraphicsAPI
     /* Null renderer types, do not inherit from these */
     struct S_2D : Surface2D
     {
-        S_2D(PixelFormat fmt, u32 mips = 1, u32 flags = 0) :
+        S_2D(PixFmt fmt, u32 mips = 1, u32 flags = 0) :
             Surface2D(fmt, false, 0, mips, flags)
         {
         }
@@ -1368,7 +1367,7 @@ struct NullAPI : GraphicsAPI
     };
     struct S_3D : Surface3D
     {
-        S_3D(PixelFormat fmt, u32 mips = 1, u32 flags = 0) :
+        S_3D(PixFmt fmt, u32 mips = 1, u32 flags = 0) :
             Surface3D(fmt, false, 0, mips, flags)
         {
         }
@@ -1378,7 +1377,7 @@ struct NullAPI : GraphicsAPI
 
     struct S_2DA : Surface2DArray
     {
-        S_2DA(PixelFormat fmt, u32 mips = 1, u32 flags = 0) :
+        S_2DA(PixFmt fmt, u32 mips = 1, u32 flags = 0) :
             Surface2DArray(fmt, false, 0, mips, flags)
         {
         }

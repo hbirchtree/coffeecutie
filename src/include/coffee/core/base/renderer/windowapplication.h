@@ -2,7 +2,7 @@
 
 #include "../types/cdisplay.h"
 #include "../../types/edef/dbgenum.h"
-#include "../../types/tdef/stltypes.h"
+#include <peripherals/stl/types.h>
 
 namespace Coffee{
 namespace Display{

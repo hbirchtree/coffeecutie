@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/cdef/memtypes.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/base/files/url.h>
 
 namespace Coffee{

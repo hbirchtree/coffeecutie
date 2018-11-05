@@ -9,7 +9,7 @@
 #include <coffee/core/CThreading>
 #include <coffee/core/CThreadingTypes>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 #include <coffee/core/types/cdef/memsafe.h>
 
 /* Graphics API interfaces */

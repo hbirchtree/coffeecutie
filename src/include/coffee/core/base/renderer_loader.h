@@ -1,9 +1,9 @@
 #pragma once
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/base.h>
 #include <coffee/core/base/renderer/initapplication.h>
 #include <coffee/core/base/types/cdisplay.h>
-#include <coffee/core/coffee_mem_macros.h>
 
 namespace Coffee {
 namespace Display {

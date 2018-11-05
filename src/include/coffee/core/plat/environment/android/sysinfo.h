@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../plat_primary_identify.h"
+#include <coffee/core/base.h>
 
 #ifdef COFFEE_ANDROID
 
@@ -10,19 +10,18 @@
 #include "../sdlpowerinfo.h"
 #endif
 
-namespace Coffee{
-namespace Environment{
-namespace Android{
+namespace Coffee {
+namespace Environment {
+namespace Android {
 struct AndroidSysInfo : Linux::LinuxSysInfo
 {
-    static CString GetSystemVersion();
+    static CString      GetSystemVersion();
     static HWDeviceInfo DeviceName();
     static HWDeviceInfo Motherboard();
 
-    static u32 CoreCount();
+    static u32     CoreCount();
     static ThrdCnt ThreadCount();
 };
-
 
 #if defined(COFFEE_USE_SDL2)
 struct AndroidPowerInfo : _SDLPowerInfo
@@ -34,12 +33,12 @@ struct AndroidPowerInfo : PowerInfoDef
 };
 #endif
 
-}
-}
+} // namespace Android
+} // namespace Environment
 
 using PowerInfo = Environment::Android::AndroidPowerInfo;
-using SysInfo = Environment::Android::AndroidSysInfo;
+using SysInfo   = Environment::Android::AndroidSysInfo;
 
-}
+} // namespace Coffee
 
 #endif

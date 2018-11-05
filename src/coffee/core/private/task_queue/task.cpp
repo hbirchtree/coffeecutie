@@ -1,7 +1,7 @@
-#include <coffee/core/plat/plat_stacktrace.h>
 #include <coffee/core/task_queue/task.h>
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/plat/stacktrace.h>
 
 #include <coffee/core/CDebug>
 
@@ -240,7 +240,8 @@ static void ImpCreateNewThreadQueue(
                    "\n"
                    "{0}: {1}"
                    "\n",
-            ec.message(), ec.error_message);
+            ec.message(),
+            ec.error_message);
 }
 
 RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name, rqe& ec)

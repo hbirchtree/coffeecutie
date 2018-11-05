@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../types/cdef/geometry.h"
-#include "../../types/tdef/integertypes.h"
+#include <peripherals/libc/types.h>
 
 #include "../../types/vector_types.h"
 #include "cinput_keymap.h"

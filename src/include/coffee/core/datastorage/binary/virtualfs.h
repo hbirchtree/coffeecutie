@@ -1,10 +1,10 @@
 #pragma once
 
 #include <coffee/core/plat/memory/endian_ops.h>
-#include <coffee/core/types/cdef/memsafe.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/file_resolver.h>
+#include <peripherals/libc/types.h>
 
 #include <algorithm>
 
@@ -37,6 +37,7 @@ namespace VirtFS {
 
 struct VirtualFile;
 struct VirtualFS;
+struct VirtualIndex;
 
 using VFS   = VirtualFS;
 using VFile = VirtualFile;
@@ -46,6 +47,9 @@ enum class VFSError : int
     NotFound = 1,
     NotVFS,
     EndianMismatch,
+
+    VersionMismatch,
+    NoIndexing,
 
     CompressionUnsupported,
     CompressionError,
@@ -106,9 +110,28 @@ enum FileFlags
     File_Compressed = 0x1,
 };
 
-static const constexpr u32 VFSVersion = 2;
+enum class Version : u32
+{
+    v1,
+    v2,
+};
 
-static const constexpr szptr MaxPrefixLength    = 32;
+enum class LookupMethod : u32
+{
+    linear_search,
+    binary_tree,
+};
+
+enum class TreeStrategy : u32
+{
+    first_prefix,
+    exact,
+};
+
+static const constexpr Version VFSVersion = Version::v2;
+
+static const constexpr szptr MaxPrefixLength    = 40;
+static const constexpr szptr MaxLeafLength      = MaxPrefixLength - sizeof(u64);
 static const constexpr szptr MaxExtensionLength = 16;
 
 static const constexpr szptr MaxFileNameLength   = 96;
@@ -170,25 +193,108 @@ struct VirtualFS
         return true;
     }
 
-    u32 vfs_header[MagicLength]; /*!< Magic file header */
+    u32 vfs_header[MagicLength_Encoded]; /*!< Magic file header */
 
     u64 num_files;   /*!< Number of VFile entries */
     u64 data_offset; /*!< Offset from start of this structure to the data
                         segment */
 
-    /*  */
-    u32 virtfs_version;
+    /* Version field, introduced in v2 */
+    u32 backcomp_sentinel; /*!< This value will be checked to see if a file
+                              supports versioning */
+    Version virtfs_version;
 
-    /* Extensions */
-    u64 indices_offset;
+    u64 files_offset; /*!< Offset from start of this structure to the file
+                         segment, introduced in v2 */
 
+    /* Extensions, introduced in v2 */
+    struct index_data_t
+    {
+        u64 num;
+        u64 offset; /*!< Offset from start of this structure to  */
+    };
+
+    index_data_t ext_index;
+
+    FORCEDINLINE Version version() const
+    {
+        if(backcomp_sentinel != std::numeric_limits<u32>::max())
+            return Version::v1;
+
+        return virtfs_version;
+    }
+
+    FORCEDINLINE const void* files() const
+    {
+        szptr offset = 0;
+
+        switch(version())
+        {
+        case Version::v1:
+            offset += sizeof(u32) * MagicLength_Encoded + sizeof(u64) * 2;
+            break;
+        default:
+            offset = files_offset;
+            break;
+        }
+
+        return C_RCAST<const char*>(&this[0]) + offset;
+    }
+
+    FORCEDINLINE const void* data() const
+    {
+        return C_RCAST<const char*>(&this[0]) + data_offset;
+    }
+
+    FORCEDINLINE const VirtualIndex* indices() const
+    {
+        return C_RCAST<const VirtualIndex*>(
+            C_RCAST<const char*>(&this[0]) + ext_index.offset);
+    }
+
+    template<
+        LookupMethod Method = LookupMethod::linear_search,
+        typename std::enable_if<Method == LookupMethod::linear_search>::type* =
+            nullptr>
     /*!
-     * \brief Given a VFS, get the handle to a file with the name `name'.
-     * \param vfs
-     * \param name
+     * \brief Given a VFS, get the handle to a file with the name `name'. This
+     * performs a linear search through the VFS, which becomes slow on larger
+     * filesystems.
+     *
+     * This function is kept for backward-compatibility,
+     * eg. if older tools are used with a newer library.
+     *
+     * \param vfs Target VFS
+     * \param name Filename to perform search with
      * \return nullptr if file not found
      */
-    static VFile const* GetFile(
+    STATICINLINE VFile const* GetFile(
+        VFS const* vfs, cstring name, vfs_error_code& ec)
+    {
+        return GetFileLinear(vfs, name, ec);
+    }
+
+    template<
+        LookupMethod Method,
+        typename std::enable_if<Method == LookupMethod::binary_tree>::type* =
+            nullptr>
+    /*!
+     * \brief GetFile, but using a binary tree to lookup the file.
+     * This has a better worst-case performance than
+     * GetFile<linear_search>(...).
+     *
+     * \param vfs
+     * \param name
+     * \param ec
+     * \return
+     */
+    STATICINLINE VFile const* GetFile(
+        VFS const* vfs, cstring name, vfs_error_code& ec)
+    {
+        return GetFileTreeExact(vfs, name, ec);
+    }
+
+    static VFile const* SearchFile(
         VFS const* vfs, cstring name, vfs_error_code& ec);
 
     /*!
@@ -210,6 +316,13 @@ struct VirtualFS
     static Bytes GetData(VFS const* vfs, VFile const* file, vfs_error_code& ec);
 
     static ResourceResolver<VirtFS::Resource> GetResolver(VirtualFS const* vfs);
+
+  private:
+    static VFile const* GetFileLinear(
+        VFS const* vfs, cstring name, vfs_error_code& ec);
+
+    static VFile const* GetFileTreeExact(
+        VFS const* vfs, cstring name, vfs_error_code& ec);
 };
 
 struct VirtualIndex : non_copy
@@ -225,6 +338,11 @@ struct VirtualIndex : non_copy
 
     const void* data() const
     {
+        static_assert(
+            sizeof(directory_data_t::node_t) ==
+                sizeof(directory_data_t::leaf_t),
+            "Mismatching node and leaf size");
+
         return &this[1];
     }
 
@@ -243,7 +361,7 @@ struct VirtualIndex : non_copy
         char ext[MaxExtensionLength];
         u64  num_files;
 
-        _cbasic_data_chunk<const u64> indices(VirtualIndex const& idx)
+        _cbasic_data_chunk<const u64> indices(VirtualIndex const& idx) const
         {
             return _cbasic_data_chunk<const u64>::From(
                 C_RCAST<const u64*>(idx.data()), num_files);
@@ -262,11 +380,38 @@ struct VirtualIndex : non_copy
      */
     struct directory_data_t
     {
+        u64 num_nodes;
+
         struct node_t
         {
+            static const constexpr u32 sentinel_value =
+                std::numeric_limits<u32>::max();
+
             char prefix[MaxPrefixLength];
             u32  left;
             u32  right;
+
+            inline szptr prefix_length() const
+            {
+                return str::len(prefix);
+            }
+
+            inline szptr longest_match(CString const& other) const
+            {
+                auto comparison = other.substr(0, str::len(prefix));
+
+                return str::cmp(prefix, comparison.c_str());
+            }
+
+            inline bool operator<=(CString const other) const
+            {
+                return prefix <= other;
+            }
+
+            inline bool operator>=(CString const other) const
+            {
+                return prefix >= other;
+            }
         };
 
         struct leaf_t
@@ -274,8 +419,19 @@ struct VirtualIndex : non_copy
             static const constexpr u64 mask_value =
                 std::numeric_limits<u64>::max();
 
-            u64 mask;
-            u64 fileIdx;
+            u64  mask;
+            char prefix[MaxLeafLength];
+            u64  fileIdx;
+
+            inline szptr prefix_length() const
+            {
+                return str::len(prefix);
+            }
+
+            inline void set_mask()
+            {
+                mask = mask_value;
+            }
         };
 
         union node_base_t
@@ -283,13 +439,18 @@ struct VirtualIndex : non_copy
             node_t node;
             leaf_t leaf;
 
-            bool is_leaf() const
+            inline bool is_leaf() const
             {
                 return leaf.mask == leaf_t::mask_value;
             }
         };
 
-        u64 num_nodes;
+        _cbasic_data_chunk<const node_base_t> nodes(
+            VirtualIndex const& idx) const
+        {
+            return _cbasic_data_chunk<const node_base_t>::From(
+                C_RCAST<const node_base_t*>(idx.data()), num_nodes);
+        }
     };
 
     union
@@ -309,11 +470,11 @@ PACKEDSTRUCT VirtualFile
     const u32 _pad = 0;
 };
 
-FORCEDINLINE VFile const* VirtualFS::GetFile(
+FORCEDINLINE VFile const* VirtualFS::GetFileLinear(
     VFS const* vfs, cstring name, vfs_error_code& ec)
 {
     /* We start finding files after the VirtualFS structure */
-    VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
+    VFile const* vf_start = C_RCAST<VFile const*>(vfs->files());
 
     auto searchName = CString(name);
 
@@ -329,18 +490,32 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(
     return nullptr;
 }
 
-struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
+FORCEDINLINE VFile const* VirtualFS::GetFile(
+    const VFS* vfs, szptr idx, vfs_error_code& ec)
+{
+    VFile const* vf_start = C_RCAST<VFile const*>(vfs->files());
+
+    if(idx >= vfs->num_files)
+    {
+        ec = VFSError::NotFound;
+        return nullptr;
+    }
+
+    return &vf_start[idx];
+}
+
+struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
 {
     static constexpr szptr npos = C_CAST<szptr>(-1);
 
     /*!
      * \brief constructor for end-iterator
      */
-    vfs_iterator() : m_idx(npos), m_file(nullptr)
+    vfs_linear_iterator() : m_idx(npos), m_file(nullptr)
     {
     }
 
-    vfs_iterator(VFS const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
+    vfs_linear_iterator(VFS const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
     {
         vfs_error_code ec;
         m_file = vfs ? VFS::GetFile(vfs, idx, ec) : nullptr;
@@ -349,21 +524,71 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
             m_idx = npos;
     }
 
-    vfs_iterator& operator++()
+    void update_idx()
     {
-        m_idx++;
         if(m_idx < m_vfs->num_files)
             update_file();
         else
             m_idx = npos;
+    }
+
+    vfs_linear_iterator& operator++()
+    {
+        m_idx++;
+        update_idx();
         return *this;
     }
 
-    bool operator!=(vfs_iterator const& other) const
+    vfs_linear_iterator& operator--()
+    {
+        m_idx--;
+        update_idx();
+        return *this;
+    }
+
+    vfs_linear_iterator operator+(difference_type i)
+    {
+        auto off_idx = C_FCAST<difference_type>(m_idx);
+        off_idx += i;
+        m_idx = C_FCAST<szptr>(off_idx);
+
+        update_idx();
+        return *this;
+    }
+
+    vfs_linear_iterator operator-(difference_type i)
+    {
+        auto off_idx = C_FCAST<difference_type>(m_idx);
+        off_idx -= i;
+        m_idx = C_FCAST<szptr>(off_idx);
+
+        update_idx();
+        return *this;
+    }
+
+    vfs_linear_iterator& operator+=(difference_type i)
+    {
+        *this = (*this) + i;
+        return *this;
+    }
+
+    vfs_linear_iterator& operator-=(difference_type i)
+    {
+        *this = (*this) - i;
+        return *this;
+    }
+
+    difference_type operator-(vfs_linear_iterator& other)
+    {
+        return C_FCAST<difference_type>(m_idx) -
+               C_FCAST<difference_type>(other.m_idx);
+    }
+
+    bool operator!=(vfs_linear_iterator const& other) const
     {
         return other.m_idx != m_idx;
     }
-    bool operator==(vfs_iterator const& other) const
+    bool operator==(vfs_linear_iterator const& other) const
     {
         return other.m_idx == m_idx;
     }
@@ -396,10 +621,12 @@ struct vfs_iterator : Iterator<ForwardIteratorTag, VFile>
 /*!
  * \brief Nearly STL-compatible wrapper around VirtualFS,
  *  allowing iteration and some convenience functions
+ *
+ * This is only useful if you want to view *every* file in the filesystem.
  */
 struct vfs_view
 {
-    using iterator = vfs_iterator;
+    using iterator = vfs_linear_iterator;
 
     vfs_view(Bytes const& base)
     {
@@ -417,6 +644,7 @@ struct vfs_view
         return iterator();
     }
 
+    C_DEPRECATED_S("Use GetFile<binary_tree> for better performance")
     iterator starting_with(Path const& path, iterator start)
     {
         return std::find_if(start, end(), [&](VFile const& file) {
@@ -471,20 +699,6 @@ FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
     Url out      = MkUrl(url);
     out.category = Url::Memory;
     return out;
-}
-
-FORCEDINLINE VFile const* VirtualFS::GetFile(
-    const VFS* vfs, szptr idx, vfs_error_code& ec)
-{
-    VFile const* vf_start = C_RCAST<VFile const*>(&vfs[1]);
-
-    if(idx >= vfs->num_files)
-    {
-        ec = VFSError::NotFound;
-        return nullptr;
-    }
-
-    return &vf_start[idx];
 }
 
 FORCEDINLINE cstring Resource::resource() const

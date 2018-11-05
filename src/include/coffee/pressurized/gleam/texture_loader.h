@@ -1,8 +1,8 @@
 #pragma once
 
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 #include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 #include <coffee/interfaces/file_resolver.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>

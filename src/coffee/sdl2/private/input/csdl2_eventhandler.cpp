@@ -59,12 +59,11 @@ bool SDL2EventHandler::inputInit(CString*)
 
     if(FileExists(mapping))
     {
-        cMsg("SDL2", "Found game controller mappings");
-        FileMap(mapping);
-        SDL_RWops* fsrc = SDL_RWFromConstMem(mapping.data, mapping.size);
+        cTag("SDL2", "Found game controller mappings");
+        auto map = C_OCAST<Bytes>(mapping);
+        SDL_RWops* fsrc = SDL_RWFromConstMem(map.data, C_FCAST<int>(map.size));
         SDL_GameControllerAddMappingsFromRW(fsrc, 0);
         SDL_FreeRW(fsrc);
-        FileUnmap(mapping);
     } else
         Profiler::DeepProfile(SDLEV_API "Failed to locate gamecontrollerdb");
     return true;

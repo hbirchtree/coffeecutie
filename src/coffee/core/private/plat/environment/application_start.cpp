@@ -1,4 +1,4 @@
-#include <coffee/core/plat/plat_primary_identify.h>
+#include <coffee/core/base.h>
 
 #include <string>
 
@@ -60,7 +60,8 @@ void GCInfiniteLoop()
 
 using namespace Coffee;
 
-int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0)
+int deref_main(
+    CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0)
 {
 #ifndef COFFEE_LOWFAT
     cDebug("Entering deref_main() at {0}", str::print::pointerify(deref_main));
@@ -68,7 +69,7 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 fl
 
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
     !defined(__MINGW64__)
-#ifdef NDEBUG
+#if MODE_RELEASE
     ShowWindow(GetConsoleWindow(), SW_HIDE);
 #else
     if(Env::GetVar("VisualStudioVersion").size())
@@ -87,9 +88,8 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 fl
     GCInfiniteLoop();
 #endif
 
-
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
-#if !defined(NDEBUG)
+#if MODE_DEBUG
     State::GetProfilerStore()->disable();
 #endif
     exit(stat);
@@ -107,7 +107,7 @@ extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv)
 
 namespace Coffee {
 
-const CoffeeApplicationData& ApplicationData()
+const AppData& ApplicationData()
 {
     return GetCurrentApp();
 }

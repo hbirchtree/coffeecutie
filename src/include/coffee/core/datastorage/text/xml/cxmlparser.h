@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../../base/files/cfiles.h"
-#include "../../../types/tdef/integertypes.h"
+#include <peripherals/libc/types.h>
 
 #include <tinyxml2.h>
 

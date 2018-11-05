@@ -3,7 +3,7 @@
 #include <coffee/core/base/files/url.h>
 #include <coffee/core/type_safety.h>
 #include <coffee/core/types/cdef/memtypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
 

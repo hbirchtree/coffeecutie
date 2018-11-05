@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../coffee_mem_macros.h"
+#include <coffee/core/base.h>
 
 #ifndef COFFEE_LOWFAT
 #include "../printing/outputprinter.h"
@@ -102,7 +102,7 @@ FORCEDINLINE void cDebug(cstring str, Arg... args)
 #endif
 }
 
-#ifndef NDEBUG
+#if MODE_DEBUG
 template<typename... Arg>
 /*!
  * \brief Verbose message
@@ -190,17 +190,8 @@ FORCEDINLINE void cTag(u32 level, cstring tag, cstring str, Arg... args)
 }
 
 template<typename... Arg>
-C_DEPRECATED FORCEDINLINE void cLog(
-    cstring file, i64 line, cstring id, cstring msg, Arg... args)
+C_DEPRECATED FORCEDINLINE void cLog(cstring, i64, cstring, cstring, Arg...)
 {
-#ifndef COFFEE_LOWFAT
-/* TODO: Pipe this to a proper logger */
-#ifndef NDEBUG
-//    CString logr = cStringFormat("{0}:{1}@{2}", id, file, line);
-//    CString fmt  = logr + msg;
-//    DebugPrinter::cDebug(fmt.c_str(), args...);
-#endif
-#endif
 }
 
 template<typename... Arg>

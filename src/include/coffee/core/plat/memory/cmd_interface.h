@@ -1,5 +1,6 @@
 #pragma once
-#include "../../coffee_mem_macros.h"
+
+#include <coffee/core/base.h>
 
 #include "../../types/cdef/geometry.h"
 #include "cmemory.h"

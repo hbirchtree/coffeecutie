@@ -1,7 +1,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 
 #define CFILES_TAG "File::"
 
@@ -163,8 +163,8 @@ bool FileUnmap(Resource& resc)
     }
 
     resc.m_platform_data->m_mapping = {};
-    resc.data = nullptr;
-    resc.size = 0;
+    resc.data                       = nullptr;
+    resc.size                       = 0;
 
     resc.flags ^= Resource::Mapped;
 
@@ -174,8 +174,7 @@ bool FileUnmap(Resource& resc)
     return s;
 }
 
-bool
-FileOpenMap(Resource& resc, szptr size, RSCA acc)
+bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
 {
     file_error ec;
 

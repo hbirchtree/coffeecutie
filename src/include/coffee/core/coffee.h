@@ -1,22 +1,20 @@
 #pragma once
 
-#include "coffee_signals.h"
 #include "argument_handling.h"
-#include "types/tdef/fntypes.h"
+#include "coffee_signals.h"
 #include "coffee_version.h"
+#include "types/tdef/fntypes.h"
 
-#include "platform_data.h"
 #include "eventprocess.h"
+#include "platform_data.h"
 
-namespace Coffee{
+namespace Coffee {
 
 /*!
  * \brief This function handles initial program startup
  */
 extern i32 CoffeeMain(
-        CoffeeMainWithArgs mainfun,
-        i32 argc, cstring_w *argv,
-        u32 flags = 0);
+    CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags = 0);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.
@@ -33,11 +31,11 @@ COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
 
 extern void SetDefaultWindowName(cstring appname);
 
-COFFEE_APP_FUNC CoffeeApplicationData const& ApplicationData();
+COFFEE_APP_FUNC AppData const& ApplicationData();
 
-extern void SetCurrentApp(CoffeeApplicationData const& app);
+extern void SetCurrentApp(AppData const& app);
 
-extern CoffeeApplicationData const& GetCurrentApp();
+extern AppData const& GetCurrentApp();
 
 namespace CResources {
 
@@ -45,6 +43,6 @@ extern void FileResourcePrefix(cstring prefix);
 
 extern CString const& GetFileResourcePrefix();
 
-}
+} // namespace CResources
 
-} //Coffee
+} // namespace Coffee

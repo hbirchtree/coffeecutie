@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../../coffee_assert_macros.h"
 #include "../../types/cdef/infotypes.h"
-#include "../../types/tdef/integertypes.h"
-#include "../platform_detect.h"
+#include <coffee/core/base.h>
+#include <peripherals/libc/types.h>
 
 namespace Coffee {
 namespace Library {

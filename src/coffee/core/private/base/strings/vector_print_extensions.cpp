@@ -1,5 +1,5 @@
 #include <coffee/core/base/strings/vector_print_extensions.h>
-#include <coffee/core/string_casting.h>
+#include <peripherals/stl/string_casting.h>
 
 namespace Coffee{
 namespace Strings{

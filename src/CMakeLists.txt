@@ -1,3 +1,6 @@
+# Contains platform layer replacements
+add_subdirectory(peripheral)
+
 # Add subdir for core modules
 add_subdirectory(coffee)
 

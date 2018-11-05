@@ -2,8 +2,9 @@
 
 #if defined(COFFEE_UNIXPLAT)
 
-#include <coffee/core/coffee_assert_macros.h>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/base.h>
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/semantic/ptr_wrap.h>
 
 #include <coffee/core/CRegex>
 
@@ -17,6 +18,8 @@
 namespace Coffee {
 namespace Environment {
 namespace Posix {
+
+using namespace ::semantic;
 
 CString PosixStacktracer::DemangleSymbol(const char* sym)
 {

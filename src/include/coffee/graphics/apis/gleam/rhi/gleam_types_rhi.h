@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/cdef/handle.h>
+#include <peripherals/semantic/handle.h>
 #include <coffee/interfaces/cgraphics_api.h>
 
 #define GLEAM_API_LINKAGE extern

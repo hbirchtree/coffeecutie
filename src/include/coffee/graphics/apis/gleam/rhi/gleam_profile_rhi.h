@@ -1,13 +1,13 @@
 #pragma once
 
-#include "gleam_types_rhi.h"
 #include "gleam_framebuffer_rhi.h"
-#include "gleam_surface_rhi.h"
 #include "gleam_query_rhi.h"
+#include "gleam_surface_rhi.h"
+#include "gleam_types_rhi.h"
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
 struct GLEAM_PrfQuery : GraphicsProfiler::PerfQuery, GLEAM_Query
 {
@@ -29,8 +29,9 @@ struct GLEAM_DBufQuery : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>
 
     void begin();
     void end();
-protected:
-#ifndef NDEBUG
+
+  protected:
+#if MODE_DEBUG
     CSize m_size;
 
     GLEAM_Surface2D m_depth_stencil;
@@ -45,8 +46,8 @@ protected:
 
 struct GLEAM_ScopeMarker : GraphicsDebug::ScopeMarker
 {
-    explicit GLEAM_ScopeMarker(CString const tag)
-        : GLEAM_ScopeMarker(tag.c_str())
+    explicit GLEAM_ScopeMarker(CString const tag) :
+        GLEAM_ScopeMarker(tag.c_str())
     {
     }
     GLEAM_ScopeMarker(cstring tag);
@@ -54,6 +55,6 @@ struct GLEAM_ScopeMarker : GraphicsDebug::ScopeMarker
     ~GLEAM_ScopeMarker();
 };
 
-}
-}
-}
+} // namespace GLEAM
+} // namespace RHI
+} // namespace Coffee

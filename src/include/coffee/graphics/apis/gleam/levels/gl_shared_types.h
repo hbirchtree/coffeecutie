@@ -2,17 +2,17 @@
 
 #include "gl_shared_include.h"
 
-#include <coffee/core/types/cdef/handle.h>
 #include <coffee/core/types/edef/dbgenum.h>
-#include <coffee/core/types/edef/enumfun.h>
 #include <coffee/core/types/edef/graphicsenum.h>
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/enum/helpers.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/semantic/handle.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace CGL {
 
-using glhnd = generic_handle_t<u32>;
+using glhnd = semantic::generic_handle_t<u32>;
 
 template<size_t Major, size_t Minor, bool ES = false>
 struct gl_ver_t
@@ -152,7 +152,7 @@ struct CGDbgMsg
     Severity       sev;
     DebugComponent comp;
     DebugType      type;
-    u32         id;
+    u32            id;
 };
 
 enum class BufBit

@@ -1,6 +1,6 @@
 #include <coffee/core/plat/environment/emscripten/sysinfo.h>
 
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee{
 namespace Environment{

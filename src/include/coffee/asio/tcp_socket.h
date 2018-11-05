@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/plat/timing/profiling.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/stl/functional_types.h>
 #include <iostream>
 
 #include "asio_data.h"

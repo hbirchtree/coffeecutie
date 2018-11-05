@@ -1,8 +1,8 @@
 #pragma once
 
-#include <coffee/core/coffee_mem_macros.h>
-#include <coffee/core/types/tdef/integertypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/base.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>

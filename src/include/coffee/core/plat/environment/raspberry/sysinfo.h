@@ -1,12 +1,13 @@
 #pragma once
-#include "../../plat_primary_identify.h"
+
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_RASPBERRYPI)
 #include "../linux/sysinfo.h"
 
-namespace Coffee{
-namespace Environment{
-namespace Raspberry{
+namespace Coffee {
+namespace Environment {
+namespace Raspberry {
 
 struct RaspberrySysInfo : Linux::LinuxSysInfo
 {
@@ -20,10 +21,10 @@ struct RaspberrySysInfo : Linux::LinuxSysInfo
     }
 };
 
-}
-}
+} // namespace Raspberry
+} // namespace Environment
 
 using SysInfo = Environment::Raspberry::RaspberrySysInfo;
 
-}
+} // namespace Coffee
 #endif

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../types/cdef/memtypes.h"
-#include "../../types/edef/enumfun.h"
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/enum/helpers.h>
 #include "../../types/edef/resenum.h"
-#include "../../types/tdef/integertypes.h"
-#include "../../types/tdef/stltypes.h"
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 #include <coffee/interfaces/byte_provider.h>
 
 namespace Coffee {

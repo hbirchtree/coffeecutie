@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../../coffee_mem_macros.h"
-#include "../../plat/memory/stlstring_ops.h"
-#include "../../plat/plat_quirks_toggling.h"
-#include "../../string_casting.h"
+#include <coffee/core/base.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace Strings {

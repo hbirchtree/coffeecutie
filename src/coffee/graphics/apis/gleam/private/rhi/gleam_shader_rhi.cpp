@@ -2,7 +2,7 @@
 
 #include "gleam_internal_types.h"
 #include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 

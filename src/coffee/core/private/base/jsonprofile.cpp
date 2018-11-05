@@ -1,5 +1,5 @@
 #include <coffee/core/datastorage/text/json/cjsonparser.h>
-#include <coffee/core/plat/plat_file.h>
+#include <coffee/core/plat/file.h>
 #include <coffee/core/plat/timing/profiling.h>
 #include <rapidjson/filewritestream.h>
 
@@ -89,6 +89,11 @@ void JsonPush(ThreadState& tdata, DataPoint const& point)
     default:
         break;
     }
+
+    auto thread_name = ThreadGetName(point.tid);
+
+    if(!thread_name.size())
+        thread_name = str::print::pointerify(point.tid);
 
     auto event =
         fmt(event_format,

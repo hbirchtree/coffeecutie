@@ -10,13 +10,13 @@ struct GLEAM_RenderDummy : GraphicsAPI::RenderDummy
 {
     friend struct GLEAM_RenderTarget;
 
-    void allocate(PixelFormat fmt, DBuffers buf, u32 index, CSize size);
+    void allocate(PixFmt fmt, DBuffers buf, u32 index, CSize size);
     void deallocate();
 
   protected:
     glhnd    m_handle;
     DBuffers m_type;
-    u32   m_attachment;
+    u32      m_attachment;
 };
 
 struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget

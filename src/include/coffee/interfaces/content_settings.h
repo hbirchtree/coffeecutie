@@ -2,7 +2,7 @@
 
 #include <coffee/core/CFiles>
 #include <coffee/core/datastorage/text/json/cjsonparser.h>
-#include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/chunk.h>
 
 namespace Coffee {
 
@@ -21,7 +21,7 @@ struct settings_visitor
      */
     void parse(Path const& basepath)
     {
-        m_dirname = basepath.dirname();
+        m_dirname  = basepath.dirname();
         m_basename = basepath.fileBasename();
 
         auto directoryDesc =

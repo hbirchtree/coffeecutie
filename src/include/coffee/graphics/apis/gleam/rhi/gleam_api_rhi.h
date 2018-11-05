@@ -4,7 +4,7 @@
 #include "gleam_types_rhi.h"
 
 #include <coffee/core/base/types/cdisplay.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 #include <coffee/interfaces/file_resolver.h>
 
 namespace Coffee {

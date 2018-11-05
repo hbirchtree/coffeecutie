@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../../types/cdef/timetypes.h"
-#include "../../types/tdef/stltypes.h"
+#include <peripherals/stl/types.h>
 
-#include "../plat_primary_identify.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_USE_CHRONOTIME)
 #include <chrono>

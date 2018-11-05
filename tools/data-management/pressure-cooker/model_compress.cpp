@@ -1,12 +1,14 @@
+#include <coffee/assimp/assimp_animation_iterators.h>
 #include <coffee/assimp/assimp_iterators.h>
 #include <coffee/assimp/assimp_material_iterators.h>
-#include <coffee/assimp/assimp_animation_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/core/CFiles>
-#include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/interfaces/cgraphics_api.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
+
+#include <peripherals/stl/threads/job_system.h>
+#include <peripherals/stl/types.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/core/terminal/terminal_cursor.h>
@@ -184,8 +186,12 @@ void AssimpProcessor::process(
     ASSIMP::MeshLoader::DrawInfo dinfo;
     dinfo.quirks = ASSIMP::MeshLoader::QuirkCompressElements;
 
-    for(auto file : targets)
-    {
+    Mutex files_lock;
+
+    //    for(auto file : targets)
+    Function<void(CString&)> fileWorker = [&](CString& file) {
+        DProfContext _(PRESSURE_LIB "Processing file");
+
         auto filePath = Path(file);
 
         CResources::Resource sceneFile(MkUrl(filePath.internUrl.c_str()));
@@ -199,7 +205,7 @@ void AssimpProcessor::process(
                    scene,
                    C_OCAST<Bytes>(sceneFile),
                    Path(file).extension().c_str()))
-                continue;
+                return;
 
             auto baseFname = filePath.removeExt();
 
@@ -250,6 +256,8 @@ void AssimpProcessor::process(
 
             bdesc.vertexData.cpy(vertexBytes.data, vertexBytes.size);
 
+            files_lock.lock();
+
             files.push_back(
                 {vertex.internUrl.c_str(),
                  std::move(vertexBytes),
@@ -280,8 +288,12 @@ void AssimpProcessor::process(
             files.push_back({materialFn.internUrl.c_str(),
                              Bytes::CopyFrom(materials.data),
                              0});
+
+            files_lock.unlock();
         }
-    }
+    };
+
+    Threads::ParallelForEach(targets, std::move(fileWorker));
 
     auto removePred = [&](VirtFS::VirtDesc const& file) {
         auto ext = Path(file.filename).extension();

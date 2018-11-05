@@ -1,7 +1,8 @@
-#include <coffee/core/base/textprocessing/cregex.h>
-#include <coffee/core/plat/plat_memory.h>
-#include <coffee/core/string_casting.h>
 #include <coffee/graphics/apis/gleam/levels/gl_shared_debug.h>
+
+#include <coffee/core/base/textprocessing/cregex.h>
+#include <coffee/core/plat/memory.h>
+#include <peripherals/stl/string_casting.h>
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
 #include <CEAGL/eagl.h>
@@ -12,9 +13,8 @@
 namespace Coffee {
 namespace CGL {
 
-void CGL_Shared_Debug::SetDebugMode(bool enabled)
+void CGL_Shared_Debug::SetDebugMode(C_UNUSED(bool enabled))
 {
-    C_USED(enabled);
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(enabled)
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

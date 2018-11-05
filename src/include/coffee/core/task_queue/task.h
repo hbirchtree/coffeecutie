@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/core/types/edef/enumfun.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <peripherals/enum/helpers.h>
+#include <peripherals/stl/functional_types.h>
 
 namespace Coffee {
 
@@ -117,8 +117,8 @@ class RuntimeQueue
         Mutex       globalMod;
         atomic_bool shutdownFlag;
 
-        Map<ThreadId::Hash, RuntimeQueue>       queues;
-        Map<ThreadId::Hash, Thread>             queueThreads;
+        Map<ThreadId::Hash, RuntimeQueue> queues;
+        Map<ThreadId::Hash, Thread>       queueThreads;
         /*!
          * \brief Contains all data necessary to manage a worker thread.
          * Needs to be a ShPtr<T> in order to avoid early destruction.
@@ -356,7 +356,7 @@ class RuntimeQueue
     static QueueContextPtr GetQueueContext();
 
     RuntimeTask::Timepoint mNextWakeup;
-    RecMutex            mTasksLock;
+    RecMutex               mTasksLock;
 
   private:
     u64  enqueue(RuntimeTask&& task);

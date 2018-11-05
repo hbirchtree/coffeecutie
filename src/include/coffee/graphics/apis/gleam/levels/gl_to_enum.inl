@@ -9,6 +9,8 @@
 namespace Coffee {
 namespace CGL {
 
+using namespace enum_helpers;
+
 inline CGenum to_enum(Severity s)
 {
     switch(s)
@@ -326,7 +328,7 @@ inline CGenum to_enum(bool pack, PixelOperation f)
     }
 }
 
-inline CGenum to_enum(PixelFormat f, PixFlg e, CompFlags d)
+inline CGenum to_enum(PixFmt f, PixFlg e, CompFlags d)
 {
     using P = PixFmt;
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
@@ -723,29 +725,30 @@ inline CGenum to_enum(Operator f)
     }
 }
 
-inline CGenum texture_to_enum(TexComp::tex_flag f)
+inline CGenum texture_to_enum(tex::flag f)
 {
-    using namespace TexComp;
+    using namespace tex;
+    using namespace typing::graphics::texture_composition;
 
     switch(f)
     {
-    case tex_2d::value:
+    case t2d::value:
         return GL_TEXTURE_2D;
-    case tex_cube::value:
+    case cube::value:
         return GL_TEXTURE_CUBE_MAP;
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    case tex_2d_ms::value:
+    case t2d_ms::value:
         return GL_TEXTURE_2D_MULTISAMPLE;
-    case tex_2d_array::value:
+    case t2d_array::value:
         return GL_TEXTURE_2D_ARRAY;
-    case tex_2d_array_ms::value:
+    case t2d_array_ms::value:
         return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 
-    case tex_3d::value:
+    case t3d::value:
         return GL_TEXTURE_3D;
 
-    case tex_cube_array::value:
+    case cube_array::value:
         return GL_TEXTURE_CUBE_MAP_ARRAY;
 #endif
 
@@ -753,7 +756,7 @@ inline CGenum texture_to_enum(TexComp::tex_flag f)
         break;
     }
 
-    if(f & tex_cube::value)
+    if(f & cube::value)
     {
         switch(f & DIRECTIONS_MASK)
         {
@@ -821,39 +824,39 @@ inline CGenum to_enum(LogicOp op)
 }
 #endif
 
-inline CGenum buffer_to_enum(BufferComp::buf_flag f)
+inline CGenum buffer_to_enum(buf::flags f)
 {
-    using namespace BufferComp;
+    using namespace buf;
 
     switch(f)
     {
-    case buf_vertex::value:
+    case vertex::value:
         return GL_ARRAY_BUFFER;
-    case buf_elements::value:
+    case elements::value:
         return GL_ELEMENT_ARRAY_BUFFER;
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
-    case buf_feedback::value:
+    case feedback::value:
         return GL_TRANSFORM_FEEDBACK_BUFFER;
-    case buf_constants_ro::value:
+    case constants_ro::value:
         return GL_UNIFORM_BUFFER;
-    case buf_pixel_pack::value:
+    case pixel_pack::value:
         return GL_PIXEL_PACK_BUFFER;
-    case buf_pixel_unpack::value:
+    case pixel_unpack::value:
         return GL_PIXEL_UNPACK_BUFFER;
 #endif
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    case buf_draw_indirect::value:
+    case draw_indirect::value:
         return GL_DRAW_INDIRECT_BUFFER;
-    case buf_compute_indirect::value:
+    case compute_indirect::value:
         return GL_DISPATCH_INDIRECT_BUFFER;
 
-    case buf_constants_rw::value:
+    case constants_rw::value:
         return GL_SHADER_STORAGE_BUFFER;
-    case buf_atomic::value:
+    case atomic::value:
         return GL_ATOMIC_COUNTER_BUFFER;
-    case buf_query::value:
+    case buf::query::value:
         return GL_QUERY_BUFFER;
 #endif
     }
@@ -946,7 +949,7 @@ inline CGenum to_enum3(RSCA acc)
 inline CGenum to_enum(PixCmp f, PixFmt hint)
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    PixFlg flags = GetPixSampleType(hint);
+    PixFlg flags = convert::to<PixFlg>(hint);
 #endif
 
     switch(f)
@@ -1061,70 +1064,70 @@ inline CGenum to_enum(TypeEnum f)
     }
 }
 
-inline CGenum to_enum(BitFormat f)
+inline CGenum to_enum(BitFmt f)
 {
     switch(f)
     {
     /* Apparently, this is as far as the OpenGL ES 2.0 standard goes */
-    case BitFormat::UByte:
+    case BitFmt::UByte:
         return GL_UNSIGNED_BYTE;
-    case BitFormat::UShort_565:
+    case BitFmt::UShort_565:
         return GL_UNSIGNED_SHORT_5_6_5;
-    case BitFormat::UShort_5551:
+    case BitFmt::UShort_5551:
         return GL_UNSIGNED_SHORT_5_5_5_1;
-    case BitFormat::UShort_4444:
+    case BitFmt::UShort_4444:
         return GL_UNSIGNED_SHORT_4_4_4_4;
 
 #if !defined(COFFEE_ONLY_GLES20)
-    case BitFormat::Byte:
+    case BitFmt::Byte:
         return GL_BYTE;
-    case BitFormat::Short:
+    case BitFmt::Short:
         return GL_SHORT;
-    case BitFormat::Int:
+    case BitFmt::Int:
         return GL_INT;
-    case BitFormat::UShort:
+    case BitFmt::UShort:
         return GL_UNSIGNED_SHORT;
-    case BitFormat::UInt:
+    case BitFmt::UInt:
         return GL_UNSIGNED_INT;
 
 #ifdef COFFEE_GLEAM_DESKTOP
-    case BitFormat::UByte_233R:
+    case BitFmt::UByte_233R:
         return GL_UNSIGNED_BYTE_2_3_3_REV;
-    case BitFormat::UByte_332:
+    case BitFmt::UByte_332:
         return GL_UNSIGNED_BYTE_3_3_2;
-    case BitFormat::UShort_4444R:
+    case BitFmt::UShort_4444R:
         return GL_UNSIGNED_SHORT_4_4_4_4_REV;
-    case BitFormat::UShort_565R:
+    case BitFmt::UShort_565R:
         return GL_UNSIGNED_SHORT_5_6_5_REV;
-    case BitFormat::UShort_1555R:
+    case BitFmt::UShort_1555R:
         return GL_UNSIGNED_SHORT_1_5_5_5_REV;
-    case BitFormat::UIntR:
+    case BitFmt::UIntR:
         return GL_UNSIGNED_INT_8_8_8_8_REV;
-    case BitFormat::UInt_1010102:
+    case BitFmt::UInt_1010102:
         return GL_UNSIGNED_INT_10_10_10_2;
 #endif
 
-    case BitFormat::UInt_5999R:
+    case BitFmt::UInt_5999R:
         return GL_UNSIGNED_INT_5_9_9_9_REV;
-    case BitFormat::UInt_2101010R:
+    case BitFmt::UInt_2101010R:
         return GL_UNSIGNED_INT_2_10_10_10_REV;
 
-    case BitFormat::Scalar_16:
+    case BitFmt::Scalar_16:
         return GL_HALF_FLOAT;
-    case BitFormat::Scalar_32:
+    case BitFmt::Scalar_32:
         return GL_FLOAT;
 
     case BitFmt::Scalar_11_11_10:
         return GL_UNSIGNED_INT_10F_11F_11F_REV;
 
-    case BitFormat::UInt24_8:
+    case BitFmt::UInt24_8:
         return GL_UNSIGNED_INT_24_8;
-    case BitFormat::Scalar_32_Int_24_8:
+    case BitFmt::Scalar_32_Int_24_8:
         return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 #else
         /* In order to keep compatibility, we fall back to normal format,
          *  and OpenGL ES 2.0 does not support depth+stencil formats. */
-    case BitFormat::UInt24_8:
+    case BitFmt::UInt24_8:
         return GL_UNSIGNED_BYTE;
 #endif
 
@@ -1133,26 +1136,26 @@ inline CGenum to_enum(BitFormat f)
     }
 }
 
-inline CGenum query_to_enum(QueryComp::query_flag f)
+inline CGenum query_to_enum(query::flags f)
 {
-    using namespace QueryComp;
+    using namespace query;
 
     switch(f)
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    case query_any_samples::value:
+    case any_samples::value:
         return GL_ANY_SAMPLES_PASSED;
-    case query_any_samples_conservative::value:
+    case any_samples_conservative::value:
         return GL_ANY_SAMPLES_PASSED_CONSERVATIVE;
-    case query_feedback_primitives::value:
+    case feedback_primitives::value:
         return GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN;
 #endif
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    case query_samples::value:
+    case samples::value:
         return GL_SAMPLES_PASSED;
-    case query_primitives::value:
+    case primitives::value:
         return GL_PRIMITIVES_GENERATED;
-    case query_timing::value:
+    case timing::value:
         return GL_TIME_ELAPSED;
 #endif
     }

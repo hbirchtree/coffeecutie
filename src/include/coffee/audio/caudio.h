@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/base/files/cfiles.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/libc/types.h>
 
 namespace Coffee {
 /*!

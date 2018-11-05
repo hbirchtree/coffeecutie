@@ -54,6 +54,8 @@ static CString srpad(CString src, szptr len)
 static void normal_printing(
     VirtFS::vfs_view& vfsView, bool human_readable, u32 columns)
 {
+    ProfContext _("Listing all files");
+
     szptr rsizePadLength = 0;
     szptr sizePadLength  = 0;
 
@@ -106,23 +108,21 @@ static void normal_printing(
 }
 
 static i32 extract_file(
-    VirtFS::vfs_view& view,
-    CString           source_file,
-    CString           output_file,
-    RSCA              write_flags)
+    VirtFS::VirtualFS const* vfs,
+    CString                  source_file,
+    CString                  output_file,
+    RSCA                     write_flags)
 {
-    auto it =
-        std::find_if(view.begin(), view.end(), [&](VirtFS::VFile const& file) {
-            return source_file == file.name;
-        });
+    ProfContext _("Searching for file");
 
-    if(it == view.end())
-    {
-        cBasicPrint("{0}: file not found", source_file);
-        return 1;
-    }
+    Profiler::PushContext("Search");
+    VirtFS::Resource resource(vfs, MkUrl(source_file));
+    Profiler::PopContext();
 
-    auto data         = C_OCAST<Bytes>(it);
+    VirtFS::vfs_error_code ec;
+    VirtFS::VFS::SearchFile(vfs, source_file.c_str(), ec);
+
+    auto data         = C_OCAST<Bytes>(resource);
     auto output_fname = output_file;
 
     if(output_file == "-")
@@ -141,7 +141,7 @@ static i32 extract_file(
         }
 
         output = data;
-        if(!FileCommit(output, write_flags))
+        if(!FileCommit(output, write_flags | RSCA::NewFile | RSCA::WriteOnly))
         {
             cBasicPrint("{0}: failed to write file", output_fname);
             return 1;
@@ -163,8 +163,9 @@ i32 coffee_main(i32, cstring_w*)
 
     /* End of messing with the environment */
 
-
     Url targetFile = {};
+
+    Profiler::PushContext("Parsing arguments");
 
     ArgumentParser parser;
 
@@ -180,6 +181,11 @@ i32 coffee_main(i32, cstring_w*)
     parser.addSwitch("size", nullptr, "c", "Show compressed size");
     parser.addSwitch("rsize", nullptr, "r", "Show real size");
 
+#if MODE_DEBUG
+    parser.addSwitch(
+        "deep_profile", "deep-profile", nullptr, "Enable deep profiling");
+#endif
+
     auto args = parser.parseArguments(GetInitArgs());
 
     for(auto pos : args.positional)
@@ -194,6 +200,9 @@ i32 coffee_main(i32, cstring_w*)
         return 1;
     }
 
+    if(args.switches.find("deep_profile")->second > 0)
+        State::GetProfilerStore()->flags.deep_enabled = true;
+
     auto targetResource = targetFile.rsc<Resource>();
     auto targetData     = C_OCAST<Bytes>(targetResource);
 
@@ -204,6 +213,7 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     VirtFS::vfs_view vfsView(targetData);
+    auto vfsData = _cbasic_data_chunk<const VirtFS::VirtualFS>(targetData);
 
     if(vfsView.begin() == vfsView.end())
     {
@@ -222,12 +232,14 @@ i32 coffee_main(i32, cstring_w*)
     else if(args.switches.find("size") != args.switches.end())
         shown_columns |= Show_Size;
 
+    Profiler::PopContext();
+
     if(get_file != args.arguments.end())
     {
         auto out_it = args.arguments.find("outfile");
 
         return extract_file(
-            vfsView,
+            vfsData.data,
             get_file->second,
             out_it != args.arguments.end() ? out_it->second : "",
             forceful ? RSCA::Discard : RSCA::None);

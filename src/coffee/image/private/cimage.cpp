@@ -1,7 +1,8 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/image/cimage.h>
+
+#include <coffee/core/CDebug>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>

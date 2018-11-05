@@ -1,8 +1,8 @@
 #pragma once
 
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 
-namespace Coffee{
+namespace Coffee {
 
 //#define COFFEE_USE_OLD_MESH_MAP
 
@@ -20,9 +20,11 @@ struct _cbasic_mesh
 
         Indices,
 
-        Position, TexCoord,
+        Position,
+        TexCoord,
         Normal,
-        Tangent, Bitangent,
+        Tangent,
+        Bitangent,
 
         Color,
     };
@@ -30,44 +32,39 @@ struct _cbasic_mesh
     using attr_component = byte_t;
     struct attr
     {
-        attr():
-            data(),
-            mem(),
-            attr_index(0)
+        attr() : data(), mem(), attr_index(0)
         {
         }
         attr(attr&& a)
         {
-            data = std::move(a.data);
-            mem = std::move(a.mem);
+            data       = std::move(a.data);
+            mem        = std::move(a.mem);
             attr_index = a.attr_index;
         }
 
         Vector<attr_component> data;
-        Bytes mem;
-        u32 attr_index;
+        Bytes                  mem;
+        u32                    attr_index;
     };
 
     using AttributeType_t = uint16;
 
-    _cbasic_mesh(bool referenced):
-        referenced_attributes(referenced)
+    _cbasic_mesh(bool referenced) : referenced_attributes(referenced)
     {
     }
 
-    _cbasic_mesh():
-        _cbasic_mesh(false)
+    _cbasic_mesh() : _cbasic_mesh(false)
     {
     }
 
     template<typename K, typename V>
-    using maptype = MultiMap<K,V>;
+    using maptype = MultiMap<K, V>;
 
     using map_container = maptype<AttributeType_t, attr>;
-    using map_pair = Pair<AttributeType_t, attr>;
+    using map_pair      = Pair<AttributeType_t, attr>;
 
     map_container attributes;
-    const bool referenced_attributes;
+    const bool    referenced_attributes;
 
     using iterator = map_container::iterator;
 
@@ -99,7 +96,7 @@ struct _cbasic_mesh
         {
             if(it->second.attr_index == idx)
                 return &it->second;
-            it ++;
+            it++;
         }
         return nullptr;
     }
@@ -114,7 +111,7 @@ struct _cbasic_mesh
         {
             if(it->second.attr_index == idx)
                 return &it->second;
-            it ++;
+            it++;
         }
         return nullptr;
     }
@@ -134,7 +131,7 @@ struct _cbasic_mesh
     }
 
     FORCEDINLINE
-    szptr attrCount(AttributeType_t t,szptr stride, u32 idx = 0) const
+    szptr attrCount(AttributeType_t t, szptr stride, u32 idx = 0) const
     {
         return attrSize(t, idx) / stride;
     }
@@ -150,10 +147,12 @@ struct _cbasic_mesh
     }
 
     template<typename VT>
-    FORCEDINLINE
-    void addAttributeData(
-            AttributeType_t a, VT const* ptr, szptr num, u32 idx = 0,
-            bool alloc_mem = false)
+    FORCEDINLINE void addAttributeData(
+        AttributeType_t a,
+        VT const*       ptr,
+        szptr           num,
+        u32             idx       = 0,
+        bool            alloc_mem = false)
     {
         auto data_ptr = attrGet(a, idx);
         if(!data_ptr)
@@ -168,26 +167,25 @@ struct _cbasic_mesh
             if(referenced_attributes)
             {
                 auto& data = data_ptr->mem;
-                data.size = num * sizeof(VT);
+                data.size  = num * sizeof(VT);
                 if(alloc_mem)
                 {
                     data = Bytes::Alloc(data.size);
                     MemCpy(Bytes::From(ptr, num), data);
-                }
-                else
+                } else
                     data.data = C_RCAST<byte_t*>(C_CCAST<VT*>(ptr));
-            }else{
+            } else
+            {
                 auto& data = data_ptr->data;
                 data.insert(
-                            data.end(),
-                            C_RCAST<byte_t const*>(&ptr[0]),
-                        C_RCAST<byte_t const*>(&ptr[num]));
+                    data.end(),
+                    C_RCAST<byte_t const*>(&ptr[0]),
+                    C_RCAST<byte_t const*>(&ptr[num]));
             }
         }
     }
     template<typename VT>
-    FORCEDINLINE
-    VT* getAttributeData(AttributeType_t attr, u32 idx = 0)
+    FORCEDINLINE VT* getAttributeData(AttributeType_t attr, u32 idx = 0)
     {
         auto ptr = attrGet(attr, idx);
         if(ptr)
@@ -200,8 +198,8 @@ struct _cbasic_mesh
         return nullptr;
     }
     template<typename VT>
-    FORCEDINLINE
-    VT const* getAttributeData(AttributeType_t attr, u32 idx = 0) const
+    FORCEDINLINE VT const* getAttributeData(
+        AttributeType_t attr, u32 idx = 0) const
     {
         auto ptr = attrGetConst(attr, idx);
         if(ptr)
@@ -223,4 +221,4 @@ struct _cbasic_mesh
 
 using Mesh = _cbasic_mesh;
 
-}
+} // namespace Coffee

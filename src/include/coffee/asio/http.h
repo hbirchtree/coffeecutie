@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/core/string_casting.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/libc/types.h>
 #include <iterator>
 
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)

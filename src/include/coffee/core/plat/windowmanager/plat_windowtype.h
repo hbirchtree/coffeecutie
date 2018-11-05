@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../types/cdef/geometry.h"
-#include "../../types/tdef/integertypes.h"
+#include <peripherals/libc/types.h>
 #include "../platform_detect.h"
 
 #if defined(COFFEE_X11) || defined(COFFEE_USE_MAEMO_X11)

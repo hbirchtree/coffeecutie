@@ -321,7 +321,7 @@ void GLXRenderer::contextTerminate()
 
 void GLXRenderer::swapBuffers()
 {
-#ifndef NDEBUG
+#if MODE_DEBUG
     CASSERT(C_OCAST<bool>(m_gxData));
     CASSERT(m_gxData->display);
     CASSERT(m_gxData->window);

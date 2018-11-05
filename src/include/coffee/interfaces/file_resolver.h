@@ -1,9 +1,9 @@
 #pragma once
 #include <coffee/core/CFiles>
-#include <coffee/core/type_safety.h>
-#include <coffee/core/types/tdef/stlfunctypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
 #include <coffee/interfaces/byte_provider.h>
+#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/type_safety.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 

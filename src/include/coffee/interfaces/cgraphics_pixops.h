@@ -4,88 +4,16 @@
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
 
-#include <coffee/core/type_safety.h>
-#include <coffee/core/types/tdef/standard_exceptions.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/standard_exceptions.h>
+#include <peripherals/stl/type_safety.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 
-FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixCmp comp, szptr pixels)
+FORCEDINLINE szptr GetPixSize(BitFmt fmt, PixCmp comp, szptr pixels)
 {
-    using B = BitFormat;
-
-    szptr pxsz = 0;
-    switch(fmt)
-    {
-    case B::Byte:
-    case B::ByteR:
-    case B::UByte:
-    case B::UByteR:
-    case B::UByte_332:
-    case B::UByte_233R:
-        pxsz = 1;
-        break;
-    case B::Short:
-    case B::ShortR:
-    case B::UShort:
-    case B::UShortR:
-    case B::UShort_4444:
-    case B::UShort_4444R:
-    case B::UShort_565:
-    case B::UShort_565R:
-    case B::UShort_5551:
-    case B::UShort_1555R:
-    case B::Scalar_16:
-        pxsz = 2;
-        break;
-    case B::Int:
-    case B::IntR:
-    case B::UInt:
-    case B::UIntR:
-    case B::UInt_5999R:
-    case B::UInt_1010102:
-    case B::UInt_2101010R:
-    case B::Scalar_32:
-    case B::Scalar_11_11_10:
-    case B::UInt24_8:
-        pxsz = 4;
-        break;
-    case B::Scalar_64:
-    case B::Scalar_32_Int_24_8:
-        pxsz = 8;
-        break;
-
-    default:
-        Throw(implementation_error("size calculation not implemented"));
-    }
-    switch(comp)
-    {
-    case PixCmp::R:
-    case PixCmp::G:
-    case PixCmp::B:
-    case PixCmp::A:
-    case PixCmp::Stencil:
-    case PixCmp::Depth:
-    case PixCmp::DepthStencil:
-        pxsz *= 1;
-        break;
-    case PixCmp::RG:
-        pxsz *= 2;
-        break;
-    case PixCmp::RGB:
-    case PixCmp::BGR:
-        pxsz *= 3;
-        break;
-    case PixCmp::RGBA:
-    case PixCmp::BGRA:
-        pxsz *= 4;
-        break;
-
-    default:
-        Throw(implementation_error("size calculation not implemented"));
-    }
-
-    return pxsz * pixels;
+    return typing::properties::get<typing::properties::pixel_size>(
+        fmt, comp, pixels);
 }
 
 FORCEDINLINE u32 GetPixBlockSize(Size const& size, Size const& blockSize)
@@ -101,74 +29,16 @@ FORCEDINLINE u32 GetPixBlockSize(Size const& size, Size const& blockSize)
 
 FORCEDINLINE Size GetPixCompressedBlockSize(CompFmt format)
 {
-    switch(format.base_fmt)
-    {
-    case PixFmt::ETC1:
-    case PixFmt::ETC2:
-    case PixFmt::S3TC:
-    case PixFmt::ATC:
-        return {4, 4};
-    case PixFmt::ASTC:
-    {
-        static_assert(
-            C_CAST<u8>(CompFlags::ASTC_4x4) == 1, "assumption broken");
-        static_assert(
-            C_CAST<u8>(CompFlags::ASTC_12x12) == 14, "assumption broken");
+    auto block_dim =
+        typing::properties::get<typing::properties::block_size>(format);
 
-        static const constexpr Array<Size, 14> ASTC_Block_Sizes = {{
-            {4, 4},
-
-            {5, 4},
-            {5, 5},
-
-            {6, 5},
-            {6, 6},
-
-            {8, 5},
-            {8, 6},
-            {8, 8},
-
-            {10, 5},
-            {10, 6},
-            {10, 8},
-            {10, 10},
-
-            {12, 10},
-            {12, 12},
-        }};
-        const u8                               block_idx =
-            C_CAST<u8>(format.c_flags) - C_CAST<u8>(CompFlags::ASTC_4x4);
-
-        return ASTC_Block_Sizes.at(block_idx);
-    }
-    case PixFmt::PVRTC2:
-    {
-        Size block_size = {4, 4};
-
-        if(feval(format.c_flags & CompFlags::bpp_2))
-            block_size.w = 8;
-
-        return block_size;
-    }
-    default:
-        break;
-    }
-
-    return {1, 1};
+    return {block_dim.w, block_dim.h};
 }
 
 FORCEDINLINE bool CompressedFormatSupportsSubTexture(CompFmt format)
 {
-    switch(format.base_fmt)
-    {
-    case PixFmt::PVRTC:
-    case PixFmt::ATC:
-    case PixFmt::ETC1:
-        return false;
-
-    default:
-        return true;
-    }
+    return typing::properties::get<typing::properties::supports_subtextures>(
+        format);
 }
 
 /*!

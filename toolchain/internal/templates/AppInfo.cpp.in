@@ -14,7 +14,7 @@ int Java_org_libsdl_app_SDLActivity_nativeInit__Ljava_lang_Object_2(
 #ifndef COFFEE_LOWFAT
 namespace Coffee{
 
-void SetApplicationData(CoffeeApplicationData& appdata)
+void SetApplicationData(AppData& appdata)
 {
     appdata.application_name = "@APP_TITLE@";
     appdata.organization_name = "@APP_COMPANY@";
@@ -25,7 +25,7 @@ void SetApplicationData(CoffeeApplicationData& appdata)
 #else
 namespace Coffee{
 
-void SetApplicationData(CoffeeApplicationData&)
+void SetApplicationData(AppData&)
 {
 }
 

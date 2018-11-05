@@ -2,8 +2,8 @@
 
 #include "cimage.h"
 #include <coffee/core/types/cdef/geometry.h>
-#include <coffee/core/types/cdef/memtypes.h>
-#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/chunk.h>
+#include <peripherals/libc/types.h>
 
 namespace Coffee {
 namespace TrueType {

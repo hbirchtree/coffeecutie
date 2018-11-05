@@ -1,8 +1,8 @@
-#include <coffee/core/types/tdef/stlfunctypes.h>
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/types.h>
 
 #if defined(COFFEE_GEKKO)
-#include <coffee/core/types/tdef/integertypes.h>
+#include <peripherals/libc/types.h>
 #include <gccore.h>
 
 namespace Coffee{

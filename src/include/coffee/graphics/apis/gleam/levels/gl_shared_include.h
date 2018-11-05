@@ -18,7 +18,7 @@
  * OpenGL on desktop only dynamically loads functions, as this works everywhere.
  */
 
-#include <coffee/core/coffee_mem_macros.h>
+#include <coffee/core/plat/platform_detect.h>
 
 #ifdef COFFEE_GLEAM_DESKTOP
 

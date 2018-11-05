@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../plat_quirks_toggling.h"
+#include <coffee/core/base.h>
 
 #if defined(COFFEE_UNIXPLAT)
 

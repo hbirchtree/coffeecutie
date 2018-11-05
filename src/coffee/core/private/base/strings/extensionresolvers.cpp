@@ -1,9 +1,8 @@
-#include <coffee/core/CRegex>
 #include <coffee/core/base/strings/extensionresolvers.h>
-#include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/plat/plat_memory.h>
 
-#include <type_traits>
+#include <coffee/core/CRegex>
+#include <coffee/core/plat/memory.h>
+#include <peripherals/stl/stlstring_ops.h>
 
 namespace Coffee {
 namespace Strings {

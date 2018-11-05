@@ -1,13 +1,10 @@
 #pragma once
 
-#include "../../coffee_mem_macros.h"
-#include "../tdef/stltypes.h"
-#include "../tdef/integertypes.h"
+#include <coffee/core/base.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
-#include "../../plat/memory/string_ops.h"
-#include <coffee/core/coffee_mem_macros.h>
-
-namespace Coffee{
+namespace Coffee {
 
 /*!
  * \brief Describes details of a hardware device, only informative
@@ -15,38 +12,34 @@ namespace Coffee{
 struct HWDeviceInfo
 {
     FORCEDINLINE HWDeviceInfo()
-    {}
-    FORCEDINLINE HWDeviceInfo(CString model,
-                              CString firmware):
-        model(model),
-        firmware(firmware)
-    {}
-    FORCEDINLINE HWDeviceInfo(CString manufacturer,
-                              CString model,
-                              CString firmware):
+    {
+    }
+    FORCEDINLINE HWDeviceInfo(CString model, CString firmware) :
+        model(model), firmware(firmware)
+    {
+    }
+    FORCEDINLINE HWDeviceInfo(
+        CString manufacturer, CString model, CString firmware) :
         manufacturer(manufacturer),
-        model(model),
-        firmware(firmware)
-    {}
-    FORCEDINLINE HWDeviceInfo(CString manufacturer,
-                  CString model,
-                  CString firmware,
-                  CString serial):
-    manufacturer(manufacturer),
-    model(model),
-    firmware(firmware),
-    serial(serial)
-    {}
-//    FORCEDINLINE HWDeviceInfo(HWDeviceInfo&& dev):
-//        HWDeviceInfo(dev.manufacturer, dev.model,
-//                     dev.firmware, dev.serial)
-//    {
-//    }
-//    FORCEDINLINE HWDeviceInfo(const HWDeviceInfo& dev):
-//        HWDeviceInfo(dev.manufacturer, dev.model,
-//                     dev.firmware, dev.serial)
-//    {
-//    }
+        model(model), firmware(firmware)
+    {
+    }
+    FORCEDINLINE HWDeviceInfo(
+        CString manufacturer, CString model, CString firmware, CString serial) :
+        manufacturer(manufacturer),
+        model(model), firmware(firmware), serial(serial)
+    {
+    }
+    //    FORCEDINLINE HWDeviceInfo(HWDeviceInfo&& dev):
+    //        HWDeviceInfo(dev.manufacturer, dev.model,
+    //                     dev.firmware, dev.serial)
+    //    {
+    //    }
+    //    FORCEDINLINE HWDeviceInfo(const HWDeviceInfo& dev):
+    //        HWDeviceInfo(dev.manufacturer, dev.model,
+    //                     dev.firmware, dev.serial)
+    //    {
+    //    }
 
     const CString manufacturer;
     const CString model;
@@ -56,48 +49,41 @@ struct HWDeviceInfo
 
 struct SWVersionInfo
 {
-    FORCEDINLINE SWVersionInfo(CString const& name,
-                               u32 major,
-                               u32 minor):
-        name(name),
-        product(0),
-        major_(major),
-        minor_(minor),
-        patch(0),
+    FORCEDINLINE SWVersionInfo(CString const& name, u32 major, u32 minor) :
+        name(name), product(0), major_(major), minor_(minor), patch(0),
         build("")
     {
     }
 
-    FORCEDINLINE SWVersionInfo(CString const& name,
-                               u32 prod,
-                               u32 major,
-                               u32 minor,
-                               u32 patch,
-                               CString const& build):
+    FORCEDINLINE SWVersionInfo(
+        CString const& name,
+        u32            prod,
+        u32            major,
+        u32            minor,
+        u32            patch,
+        CString const& build) :
         name(name),
-        product(prod),
-        major_(major),
-        minor_(minor),
-        patch(patch),
-        build(build)
+        product(prod), major_(major), minor_(minor), patch(patch), build(build)
     {
     }
-    FORCEDINLINE SWVersionInfo():
-        SWVersionInfo({}, 0, 0)
-    {}
+    FORCEDINLINE SWVersionInfo() : SWVersionInfo({}, 0, 0)
+    {
+    }
 
     const CString name;
 
     const u32 product;
-    union{
+    union
+    {
         const u32 major;
         const u32 major_;
     };
-    union{
+    union
+    {
         const u32 minor;
         const u32 minor_;
     };
-    const u32 patch;
+    const u32     patch;
     const CString build;
 };
 
@@ -113,55 +99,54 @@ struct _cbasic_version
 
     inline bool operator>=(const _cbasic_version<T>& v) const
     {
-        if(this->major>v.major)
+        if(this->major > v.major)
             return true;
-        if(this->major==v.major)
+        if(this->major == v.major)
         {
-            if(this->minor>v.minor)
+            if(this->minor > v.minor)
                 return true;
-            if(this->minor==v.minor)
+            if(this->minor == v.minor)
             {
-                if(this->revision>=v.revision)
+                if(this->revision >= v.revision)
                     return true;
                 else
                     return false;
-            }else
+            } else
                 return false;
-        }else
+        } else
             return false;
     }
     inline bool operator<(const _cbasic_version<T>& v) const
     {
-        return !((*this)>=v);
+        return !((*this) >= v);
     }
     inline bool operator<=(const _cbasic_version<T>& v) const
     {
-        if(this->major<v.major)
+        if(this->major < v.major)
             return true;
-        if(this->major==v.major)
+        if(this->major == v.major)
         {
-            if(this->minor<v.minor)
+            if(this->minor < v.minor)
                 return true;
-            if(this->minor==v.minor)
+            if(this->minor == v.minor)
             {
-                if(this->revision<=v.revision)
+                if(this->revision <= v.revision)
                     return true;
                 else
                     return false;
-            }else
+            } else
                 return false;
-        }else
+        } else
             return false;
     }
     inline bool operator>(const _cbasic_version<T>& v) const
     {
-        return !((*this)<=v);
+        return !((*this) <= v);
     }
     inline bool operator==(const _cbasic_version<T>& v) const
     {
-        return this->major==v.major
-                &&this->minor==v.minor
-                &&this->revision==v.revision;
+        return this->major == v.major && this->minor == v.minor &&
+               this->revision == v.revision;
     }
 };
 
@@ -176,17 +161,17 @@ struct _cbasic_arg_container
     cstring_w programName() const;
 
     Vector<cstring_w> const& arguments() const;
-    Vector<CString> const& originalArguments() const;
+    Vector<CString> const&   originalArguments() const;
 
     Vector<cstring_w> m_ptrStorage;
 
-private:
-    cstring_w m_programName;
+  private:
+    cstring_w       m_programName;
     Vector<CString> m_storage;
-    bool string_containment;
+    bool            string_containment;
 };
 
-using AppArg = _cbasic_arg_container;
+using AppArg  = _cbasic_arg_container;
 using Version = _cbasic_version<u32>;
 
-}
+} // namespace Coffee

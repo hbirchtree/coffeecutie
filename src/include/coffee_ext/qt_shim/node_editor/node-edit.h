@@ -1,7 +1,7 @@
 #ifndef COFFEE_EXT_QT_SHIM_QT_NODE_EDITOR_NODE_EDIT_H
 #define COFFEE_EXT_QT_SHIM_QT_NODE_EDITOR_NODE_EDIT_H
 
-#include <coffee/core/types/tdef/stltypes.h>
+#include <peripherals/stl/types.h>
 #include <coffee/core/types/cdef/memtypes.h>
 
 #include <QtCore/QDebug>

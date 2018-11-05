@@ -363,7 +363,7 @@ bool GLEAM_API::LoadAPI(
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
     store->options = options;
-#ifndef NDEBUG
+#if MODE_DEBUG
     store->DEBUG_MODE = debug;
     if(!debug)
     {
