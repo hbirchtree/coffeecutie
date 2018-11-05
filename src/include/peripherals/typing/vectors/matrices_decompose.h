@@ -2,7 +2,8 @@
 
 #include "matrices.h"
 
-namespace Coffee {
+namespace typing {
+namespace vectors {
 namespace decompose {
 
 enum DecompositionType
@@ -20,18 +21,18 @@ template<
     u32 Variant,
     typename T,
     typename std::enable_if<Variant == translation>::type* = nullptr>
-FORCEDINLINE _cbasic_tvector<T, 3> get(_cbasic_tmatrix<T, 4> const& from)
+FORCEDINLINE tvector<T, 3> get(tmatrix<T, 4> const& from)
 {
-    return _cbasic_tvector<T, 3>(from[3]);
+    return tvector<T, 3>(from[3]);
 }
 
 template<
     u32 Variant,
     typename T,
     typename std::enable_if<Variant == scale>::type* = nullptr>
-FORCEDINLINE _cbasic_tvector<T, 3> get(_cbasic_tmatrix<T, 4> const& from)
+FORCEDINLINE tvector<T, 3> get(tmatrix<T, 4> const& from)
 {
-    using vec_t = _cbasic_tvector<T, 3>;
+    using vec_t = tvector<T, 3>;
 
     return vec_t(
         length(vec_t(from[0])), length(vec_t(from[1])), length(vec_t(from[2])));
@@ -41,13 +42,13 @@ template<
     u32 Variant,
     typename T,
     typename std::enable_if<Variant == rotation>::type* = nullptr>
-FORCEDINLINE _cbasic_tmatrix<T, 4> get(_cbasic_tmatrix<T, 4> const& from)
+FORCEDINLINE tmatrix<T, 4> get(tmatrix<T, 4> const& from)
 {
-    using vec_t = _cbasic_tvector<T, 3>;
+    using vec_t = tvector<T, 3>;
 
-    _cbasic_tmatrix<T, 4> out;
+    tmatrix<T, 4> out;
 
-    auto scale = _cbasic_tvector<T, 4>(
+    auto scale = tvector<T, 4>(
         length(vec_t(from[0])),
         length(vec_t(from[1])),
         length(vec_t(from[2])),
@@ -64,13 +65,13 @@ template<
     u32 Variant,
     typename T,
     typename std::enable_if<Variant == rotation_post>::type* = nullptr>
-FORCEDINLINE _cbasic_tmatrix<T, 4> get(_cbasic_tmatrix<T, 4> const& from)
+FORCEDINLINE tmatrix<T, 4> get(tmatrix<T, 4> const& from)
 {
-    using vec_t = _cbasic_tvector<T, 3>;
+    using vec_t = tvector<T, 3>;
 
-    _cbasic_tmatrix<T, 4> out;
+    tmatrix<T, 4> out;
 
-    auto scale = _cbasic_tvector<T, 4>(
+    auto scale = tvector<T, 4>(
         length(vec_t(from[0])),
         length(vec_t(from[1])),
         length(vec_t(from[2])),
@@ -85,3 +86,4 @@ FORCEDINLINE _cbasic_tmatrix<T, 4> get(_cbasic_tmatrix<T, 4> const& from)
 
 } // namespace decompose
 } // namespace Coffee
+}

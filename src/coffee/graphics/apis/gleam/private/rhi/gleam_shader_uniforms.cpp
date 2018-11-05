@@ -28,7 +28,6 @@ void SetUniform_wrapf(
         return;
     }
 
-    C_USED(prog);
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniffv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
@@ -47,7 +46,6 @@ void SetUniform_wrapf_m(
         return;
     }
 
-    C_USED(prog);
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Uniffv(
@@ -68,7 +66,6 @@ void SetUniform_wrapi(
         return;
     }
 
-    C_USED(prog);
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
         CGL43::Unifiv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));

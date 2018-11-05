@@ -9,7 +9,7 @@
 #include "inputapplication.h"
 #include "windowmanagerclient.h"
 
-#include <coffee/core/base/threading/async_tasks.h>
+#include <peripherals/stl/threads/async_tasks.h>
 
 namespace Coffee {
 
@@ -51,7 +51,7 @@ FORCEDINLINE Future<void> LaunchAsync(T* r, CDProperties const& p)
         r->run();
         r->cleanup();
     };
-    return Threads::RunAsync(fn);
+    return threads::RunAsync(fn);
 }
 
 } // namespace Display

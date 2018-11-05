@@ -694,6 +694,14 @@ struct nested_empty_error_code
 #define C_ERROR_CHECK(ec)
 #endif
 
+#if MODE_DEBUG
+#define CASSERT(condition) \
+    if(!(condition)) \
+        Throw(undefined_behavior("assertion failed: " C_STR(condition)));
+#else
+#define CASSERT(condition)
+#endif
+
 namespace Coffee {
 
 using namespace ::stl_types;

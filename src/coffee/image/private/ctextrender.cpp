@@ -1,5 +1,7 @@
 #include <coffee/image/ctextrender.h>
 
+#include <coffee/core/CMath>
+
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
 

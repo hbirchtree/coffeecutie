@@ -304,7 +304,7 @@ struct bitm_texture_t
     i16       mipmaps;    /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
     PixCmp    format;     /*!< Texture format, DXT or RGBA*/
     PixFmt    cformat;    /*!< Compression format, if applicable*/
-    BitFormat dformat;    /*!< Data format of texture data*/
+    BitFmt    dformat;    /*!< Data format of texture data*/
     TexType   type;       /*!< Texture type, 2D, 3D and cubes*/
     uint16    blocksize;  /*!< Block size of DXT* formats*/
 };

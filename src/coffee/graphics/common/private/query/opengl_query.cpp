@@ -1,7 +1,7 @@
-#include <coffee/core/type_safety.h>
 #include <coffee/graphics/apis/gleam/levels/all_levels.h>
 #include <coffee/graphics/apis/gleam/levels/gl_loader.h>
 #include <coffee/graphics/common/query/gpu_query.h>
+#include <peripherals/stl/type_safety.h>
 
 #define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX 0x9047
 #define GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX 0x9048

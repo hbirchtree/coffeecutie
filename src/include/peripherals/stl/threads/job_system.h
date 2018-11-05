@@ -7,7 +7,7 @@
 #include <peripherals/stl/types.h>
 
 namespace stl_types {
-namespace Threads {
+namespace threads {
 
 template<typename Ctxt, typename IterType>
 /*!

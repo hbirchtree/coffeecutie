@@ -7,14 +7,14 @@
 
 namespace stl_types {
 
-using namespace ::libc_types;
-
 #if defined(COFFEE_NO_THREADLIB)
 namespace CurrentThread {
 extern u32 get_id();
 }
 #endif
-namespace Threads {
+namespace threads {
+
+using namespace ::libc_types;
 
 template<typename thread_t>
 struct ThreadId_t

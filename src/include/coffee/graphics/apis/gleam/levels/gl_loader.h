@@ -2,7 +2,7 @@
 
 #include "gl_shared_debug.h"
 
-#include <coffee/core/coffee_mem_macros.h>
+#include <coffee/core/base.h>
 #include <coffee/graphics/common/gltypes.h>
 
 namespace Coffee {
@@ -12,13 +12,11 @@ struct Loader
 {
     STATICINLINE bool LoadBinding(
 #if !defined(COFFEE_LINKED_GLES)
-        CGL_Context* ctxt, GLADloadproc fun, void** ptr_check)
+        CGL_Context* ctxt, C_UNUSED(GLADloadproc fun), void** ptr_check)
 #else
-        CGL_Context* ctxt, void* fun, void** ptr_check)
+        CGL_Context* ctxt, C_UNUSED(void* fun), void** ptr_check)
 #endif
     {
-        C_USED(fun);
-
         if(!ctxt->acquireContext())
             return false;
 

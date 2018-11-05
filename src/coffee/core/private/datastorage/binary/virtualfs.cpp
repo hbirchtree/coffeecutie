@@ -1,8 +1,10 @@
+#include <coffee/core/datastorage/binary/virtualfs.h>
+
 #include <coffee/core/CProfiling>
 #include <coffee/core/base/files/url.h>
-#include <peripherals/stl/threads/job_system.h>
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/core/CMath>
 #include <coffee/core/datastorage/compression/libz.h>
+#include <peripherals/stl/threads/job_system.h>
 
 #include <coffee/core/CDebug>
 
@@ -493,7 +495,7 @@ bool GenVirtFS(
 #endif
             }
         };
-        Threads::ParallelForEach(Range<>(filenames.size()), std::move(worker));
+        threads::ParallelForEach(Range<>(filenames.size()), std::move(worker));
     }
 
     {

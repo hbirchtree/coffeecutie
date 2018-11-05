@@ -1,16 +1,19 @@
 #pragma once
 
-#include "graphics_types.h"
-#include <coffee/core/coffee_assert_macros.h>
+#include "camera.h"
+#include "transform.h"
 
-namespace Coffee {
-namespace SceneGraph {
+namespace typing {
+namespace vectors {
+namespace scene {
+
+using namespace stl_types::math;
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenOrthographic(
-    _cbasic_rect<T> const& view, const _cbasic_range<T>& zfield)
+FORCEDINLINE tmatrix<T, 4> GenOrthographic(
+    geometry::rect<T> const& view, const geometry::range<T>& zfield)
 {
-    _cbasic_tmatrix<T, 4> mat;
+    tmatrix<T, 4> mat;
 
     mat[0][0] = T(2) / (view.right() - view.left());
     mat[1][1] = T(2) / (view.top() - view.bottom());
@@ -24,12 +27,12 @@ FORCEDINLINE _cbasic_tmatrix<T, 4> GenOrthographic(
 }
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenInfinitePerspective(
+FORCEDINLINE tmatrix<T, 4> GenInfinitePerspective(
     const T& fov, const T& aspect, const T& near_)
 {
-    _cbasic_tmatrix<T, 4> out;
+    tmatrix<T, 4> out;
 
-    T foc = 1. / CMath::tan(fov / 2.);
+    T foc = 1. / tan(fov / 2.);
 
     T e = std::numeric_limits<scalar>::epsilon();
 
@@ -42,14 +45,14 @@ FORCEDINLINE _cbasic_tmatrix<T, 4> GenInfinitePerspective(
 }
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenPerspective(
-    const T& fov, const T& aspect, const _cbasic_range<T>& zfield)
+FORCEDINLINE tmatrix<T, 4> GenPerspective(
+    const T& fov, const T& aspect, const geometry::range<T>& zfield)
 {
-    CASSERT(CMath::abs(aspect - CMath::numeric_limits<T>::epsilon()) > T(0));
+    CASSERT(abs(aspect - numeric_limits<T>::epsilon()) > T(0));
 
-    _cbasic_tmatrix<T, 4> matrix;
+    tmatrix<T, 4> matrix;
 
-    T thalffov = CMath::tan(CMath::radians(fov) / T(2));
+    T thalffov = tan(radians(fov) / T(2));
 
     matrix[0][0] = T(1) / (aspect * thalffov);
     matrix[1][1] = T(1) / (thalffov);
@@ -70,13 +73,13 @@ template<typename T>
  * hardware-independent. \param clipPlane \param perspective \param out
  */
 FORCEDINLINE void GenUserClipSpace(
-    const _cbasic_tvector<T, 4>& clipPlane,
-    const _cbasic_tmatrix<T, 4>& perspective,
-    _cbasic_tmatrix<T, 4>&       out)
+    const tvector<T, 4>& clipPlane,
+    const tmatrix<T, 4>& perspective,
+    tmatrix<T, 4>&       out)
 {
     out    = perspective;
     out[3] = clipPlane;
-    out[3] += _cbasic_tvector<T, 4>(0, 0, 1, 0);
+    out[3] += tvector<T, 4>(0, 0, 1, 0);
 }
 
 template<typename T>
@@ -88,12 +91,12 @@ template<typename T>
  * \param corner
  */
 FORCEDINLINE void GenUserClipSpaceScale(
-    const _cbasic_tvector<T, 4>& clipPlane,
-    const _cbasic_tmatrix<T, 4>& perspective,
-    _cbasic_tvector<T, 4>&       corner)
+    const tvector<T, 4>& clipPlane,
+    const tmatrix<T, 4>& perspective,
+    tvector<T, 4>&       corner)
 {
-    corner = _cbasic_tvector<T, 4>(
-        CMath::signbit(clipPlane.x()), CMath::signbit(clipPlane.y()), 1.f, 1.f);
+    corner = tvector<T, 4>(
+        signbit(clipPlane.x()), signbit(clipPlane.y()), 1.f, 1.f);
 
     corner = corner * inverse(perspective);
 }
@@ -106,12 +109,12 @@ template<typename T>
  * \param rot
  * \return
  */
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenTransform(
-    _cbasic_vec3<T> const&        pos,
-    _cbasic_vec3<T> const&        scl,
-    _cbasic_tquaternion<T> const& rot)
+FORCEDINLINE tmatrix<T, 4> GenTransform(
+    tvector<T, 3> const&  pos,
+    tvector<T, 3> const&  scl,
+    tquaternion<T> const& rot)
 {
-    _cbasic_tmatrix<T, 4> mat;
+    tmatrix<T, 4> mat;
 
     mat = scale(mat, scl);
     mat = mat * matrixify(rot);
@@ -121,15 +124,15 @@ FORCEDINLINE _cbasic_tmatrix<T, 4> GenTransform(
 }
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenOrthographic(
-    _cbasic_graphics_camera<T> const& camera)
+FORCEDINLINE tmatrix<T, 4> GenOrthographic(
+    camera<T> const& camera)
 {
     return GenOrthographic<T>(camera.orthoview, camera.zVals);
 }
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenPerspective(
-    _cbasic_graphics_camera<T> const& camera)
+FORCEDINLINE tmatrix<T, 4> GenPerspective(
+    camera<T> const& camera)
 {
     return GenPerspective<T>(camera.fieldOfView, camera.aspect, camera.zVals);
 }
@@ -140,8 +143,8 @@ template<typename T>
  * \param transform
  * \return
  */
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenTransform(
-    _cbasic_graphics_transform<T> const& transform)
+FORCEDINLINE tmatrix<T, 4> GenTransform(
+    transform<T> const& transform)
 {
     return GenTransform<T>(
         transform.position, transform.scale, transform.rotation);
@@ -153,11 +156,11 @@ template<typename T>
  * \param camera
  * \return
  */
-FORCEDINLINE _cbasic_tmatrix<T, 4> GenTransform(
-    _cbasic_graphics_camera<T> const& camera)
+FORCEDINLINE tmatrix<T, 4> GenTransform(
+    camera<T> const& camera)
 {
     return GenTransform<T>(
-        camera.position, _cbasic_vec3<T>(1.0), camera.rotation);
+        camera.position, tvector<T, 3>(1.0), camera.rotation);
 }
 
 template<typename T>
@@ -168,13 +171,13 @@ template<typename T>
  * \param subject
  * \return
  */
-FORCEDINLINE _cbasic_tmatrix<T, 3> GenLookat(
-    const _cbasic_tvector<T, 3>& observer,
-    const _cbasic_tvector<T, 3>& up,
-    const _cbasic_tvector<T, 3>& subject)
+FORCEDINLINE tmatrix<T, 3> GenLookat(
+    const tvector<T, 3>& observer,
+    const tvector<T, 3>& up,
+    const tvector<T, 3>& subject)
 {
-    typedef _cbasic_tvector<T, 3> tvec3;
-    typedef _cbasic_tmatrix<T, 4> tmat3;
+    typedef tvector<T, 3> tvec3;
+    typedef tmatrix<T, 4> tmat3;
 
     tvec3 dir  = normalize(subject - observer);
     tvec3 side = cross(dir, up);
@@ -188,10 +191,6 @@ FORCEDINLINE _cbasic_tmatrix<T, 3> GenLookat(
     return mat;
 }
 
-} // namespace SceneGraph
-
-namespace Mat {
-
-using namespace SceneGraph;
+}
 }
 } // namespace Coffee

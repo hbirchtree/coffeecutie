@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cblam_structures.h"
-#include <coffee/core/coffee_macros.h>
 
 namespace Coffee {
 namespace Blam {

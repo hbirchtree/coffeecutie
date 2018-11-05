@@ -1,12 +1,14 @@
-#include <coffee/CGraphics>
-#include <coffee/CSDL2>
 #include <coffee/asio/asio_worker.h>
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/core/types/chunk.h>
+#include <coffee/core/types/graphics_types.h>
 #include <coffee/core/base/files/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
+#include <coffee/windowing/renderer/renderer.h>
+
+#include <coffee/core/CDebug>
 
 #include <coffee/components/components.h>
 

@@ -3,7 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <coffee/core/base.h>
+#include <peripherals/identify/compiler/function_inlining.h>
+#include <peripherals/identify/compiler/struct_packing.h>
+#include <peripherals/identify/compiler/variable_attributes.h>
 
 namespace libc_types {
 
@@ -146,7 +148,7 @@ using u24 = uint24;
 
 FORCEDINLINE scalar convert_i16_f(i16 v)
 {
-    return C_CAST<scalar>(v) / Int16_Max;
+    return static_cast<scalar>(v) / Int16_Max;
 }
 }
 

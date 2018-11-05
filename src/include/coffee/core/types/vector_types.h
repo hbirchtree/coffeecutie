@@ -1,25 +1,34 @@
 #pragma once
 
-#include "vectors.h"
-#include "matrices.h"
-#include "quaternion.h"
+#include <peripherals/typing/vectors/matrices.h>
+#include <peripherals/typing/vectors/quaternion.h>
+#include <peripherals/typing/vectors/vectors.h>
 
-#include "matrices_decompose.h"
-#include "quaternion_matrix_ops.h"
+#include <peripherals/typing/vectors/matrices_decompose.h>
+#include <peripherals/typing/vectors/quaternion_matrix_ops.h>
 
 namespace Coffee{
 
-template<typename T>
-using _cbasic_vec2 = _cbasic_tvector<T,2>;
+template<typename T, size_t Num>
+using _cbasic_tvector = typing::vectors::tvector<T,Num>;
+
+template<typename T, size_t Num>
+using _cbasic_tmatrix = typing::vectors::tmatrix<T, Num>;
+
+template<typename T, size_t NumM, size_t NumN>
+using _cbasic_tmnmatrix = typing::vectors::tmnmatrix<T, NumM, NumN>;
 
 template<typename T>
-using _cbasic_vec3 = _cbasic_tvector<T,3>;
+using _cbasic_vec2 = typing::vectors::tvector<T,2>;
 
 template<typename T>
-using _cbasic_vec4 = _cbasic_tvector<T,4>;
+using _cbasic_vec3 = typing::vectors::tvector<T,3>;
 
 template<typename T>
-using _cbasic_quat = _cbasic_tquaternion<T>;
+using _cbasic_vec4 = typing::vectors::tvector<T,4>;
+
+template<typename T>
+using _cbasic_quat = typing::vectors::tquaternion<T>;
 
 using Vecf2 = _cbasic_vec2<scalar>;
 using Vecf3 = _cbasic_vec3<scalar>;

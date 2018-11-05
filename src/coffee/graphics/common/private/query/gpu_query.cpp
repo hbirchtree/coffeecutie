@@ -1,5 +1,5 @@
 #include <coffee/core/CDebug>
-#include <coffee/core/plat/plat_linking.h>
+#include <coffee/core/plat/linking.h>
 #include <coffee/graphics/common/query/gpu_query.h>
 
 namespace Coffee {

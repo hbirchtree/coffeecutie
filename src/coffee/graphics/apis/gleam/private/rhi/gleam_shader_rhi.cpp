@@ -939,11 +939,9 @@ GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline& pipeline) :
 {
 }
 
-void GLEAM_PipelineDumper::dump(cstring out)
+void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
 {
     // TODO: This function
-
-    C_USED(out);
 
     if(GLEAM_FEATURES.gles20)
         return;

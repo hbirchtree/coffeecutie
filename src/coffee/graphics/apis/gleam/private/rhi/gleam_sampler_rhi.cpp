@@ -77,9 +77,8 @@ void GLEAM_Sampler::dealloc()
 #endif
 }
 
-void GLEAM_Sampler::setLODRange(const Vecf2& range)
+void GLEAM_Sampler::setLODRange(C_UNUSED(const Vecf2& range))
 {
-    C_USED(range);
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
@@ -89,9 +88,8 @@ void GLEAM_Sampler::setLODRange(const Vecf2& range)
 #endif
 }
 
-void GLEAM_Sampler::setLODBias(scalar bias)
+void GLEAM_Sampler::setLODBias(C_UNUSED(scalar bias))
 {
-    C_USED(bias);
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(!GLEAM_FEATURES.gles20)
     {

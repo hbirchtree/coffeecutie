@@ -1,4 +1,5 @@
-#include <coffee/CAudio>
+#include <coffee/audio/caudio.h>
+#include <coffee/audio/abstraction/openal/copenalabstract.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>

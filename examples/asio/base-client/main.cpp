@@ -1,6 +1,7 @@
-#include <coffee/CAsio>
 #include <coffee/asio/http.h>
 #include <coffee/asio/net_resource.h>
+#include <coffee/asio/tcp_socket.h>
+#include <coffee/asio/udp_socket.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>

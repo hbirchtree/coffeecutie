@@ -1,23 +1,24 @@
 #pragma once
 
-#include <coffee/core/types/edef/logicenum.h>
+#include <peripherals/typing/enum/graphics/direction.h>
 #include "vectors.h"
 
-namespace Coffee{
+namespace typing {
+namespace vectors {
 
 template<typename T>
-struct _cbasic_tquaternion : _cbasic_tvector<T,4>
+struct tquaternion : tvector<T,4>
 {
-    using _cbasic_tvector<T,4>::_cbasic_tvector;
+    using tvector<T,4>::tvector;
 
     FORCEDINLINE
-    _cbasic_tquaternion():
-        _cbasic_tvector<T,4>()
+    tquaternion():
+        tvector<T,4>()
     {
         (*this)[3] = T(1);
     }
     FORCEDINLINE
-    _cbasic_tquaternion(T w,T x,T y,T z)
+    tquaternion(T w,T x,T y,T z)
     {
         (*this)[0] = x;
         (*this)[1] = y;
@@ -29,13 +30,13 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
      * \param euler
      */
     FORCEDINLINE
-    _cbasic_tquaternion(const _cbasic_tvector<T,3>& euler)
+    tquaternion(const tvector<T,3>& euler)
     {
-        _cbasic_tvector<T,3> c,s;
+        tvector<T,3> c,s;
         for(size_t i=0;i<3;i++)
         {
-            c[i] += CMath::cos(euler[i]*T(0.5));
-            s[i] += CMath::sin(euler[i]*T(0.5));
+            c[i] += cos(euler[i]*T(0.5));
+            s[i] += sin(euler[i]*T(0.5));
         }
         (*this)[0] = c[0]*c[1]*c[2] + s[0]*s[1]*s[2];
         (*this)[1] = s[0]*c[1]*c[2] - c[0]*s[1]*s[2];
@@ -44,10 +45,10 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
     }
 
     FORCEDINLINE
-    _cbasic_tquaternion<T> operator*(
-            const _cbasic_tquaternion<T>& v) const
+    tquaternion<T> operator*(
+            const tquaternion<T>& v) const
     {
-        _cbasic_tquaternion<T> vnew;
+        tquaternion<T> vnew;
 
         vnew.w() = this->w()*v.w() - this->x()*v.x() - this->y()*v.y() - this->z()*v.z();
         vnew.x() = this->w()*v.x() + this->x()*v.w() + this->y()*v.z() - this->z()*v.y();
@@ -58,10 +59,10 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
     }
 
     STATICINLINE
-    _cbasic_tquaternion<T> from_euler(
-            const _cbasic_tvector<T, 3>& euler)
+    tquaternion<T> from_euler(
+            const tvector<T, 3>& euler)
     {
-        return _cbasic_tquaternion<T>(euler);
+        return tquaternion<T>(euler);
     }
 
     FORCEDINLINE
@@ -110,10 +111,10 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
 template<typename T>
 FORCEDINLINE
 T dot(
-        const _cbasic_tquaternion<T>& v1,
-        const _cbasic_tquaternion<T>& v2)
+        const tquaternion<T>& v1,
+        const tquaternion<T>& v2)
 {
-    _cbasic_tvector<T,4> tmp;
+    tvector<T,4> tmp;
     tmp[0] = v1.x()*v2.x();
     tmp[1] = v1.y()*v2.y();
     tmp[2] = v1.z()*v2.z();
@@ -124,30 +125,30 @@ T dot(
 template<typename T>
 FORCEDINLINE
 T length(
-        const _cbasic_tquaternion<T>& v)
+        const tquaternion<T>& v)
 {
     return sqrt(dot(v,v));
 }
 
 template<typename T>
 FORCEDINLINE
-_cbasic_tquaternion<T> normalize_quat(
-        const _cbasic_tquaternion<T>& v)
+tquaternion<T> normalize_quat(
+        const tquaternion<T>& v)
 {
     T len = length(v);
     if(len <= T(0))
-        return _cbasic_tquaternion<T>();
+        return tquaternion<T>();
     len = T(1)/len;
-    return _cbasic_tquaternion<T>(v.w()*len,v.x()*len,v.y()*len,v.z()*len);
+    return tquaternion<T>(v.w()*len,v.x()*len,v.y()*len,v.z()*len);
 }
 
 template<CameraDirection Direction, typename T>
 FORCEDINLINE
-_cbasic_tvector<T, 3> quaternion_to_direction(
-        _cbasic_tquaternion<T> const& q)
+tvector<T, 3> quaternion_to_direction(
+        tquaternion<T> const& q)
 {
     const auto imm_mat = matrixify_mat3(q);
-    auto comp = _cbasic_tvector<T, 3>();
+    auto comp = tvector<T, 3>();
     switch(Direction)
     {
     case CameraDirection::Forward:
@@ -166,10 +167,11 @@ _cbasic_tvector<T, 3> quaternion_to_direction(
 }
 
 template<typename T>
-_cbasic_tquaternion<T> lock_axis(
-        _cbasic_tquaternion<T> const& v, _cbasic_tvector<T, 3> const& axes)
+tquaternion<T> lock_axis(
+        tquaternion<T> const& v, tvector<T, 3> const& axes)
 {
     return v;
 }
 
+}
 }

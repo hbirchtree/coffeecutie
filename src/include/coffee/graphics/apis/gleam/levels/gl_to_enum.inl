@@ -949,7 +949,7 @@ inline CGenum to_enum3(RSCA acc)
 inline CGenum to_enum(PixCmp f, PixFmt hint)
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    PixFlg flags = convert::to<PixFlg>(hint);
+    PixFlg flags = typing::convert::to<PixFlg>(hint);
 #endif
 
     switch(f)

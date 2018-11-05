@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../base/math/cmath.h"
 #include "../../types/cdef/infotypes.h"
 #include <coffee/core/base.h>
+#include <coffee/core/CMath>
 
 #include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/functional_types.h>

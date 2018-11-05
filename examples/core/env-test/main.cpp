@@ -2,7 +2,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/plat_sensor.h>
+#include <coffee/core/plat/sensor.h>
 
 #include <coffee/asio/http.h>
 

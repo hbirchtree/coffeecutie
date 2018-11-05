@@ -1,6 +1,6 @@
 #include <coffee/blam/volta/cblam_map.h>
-#include <coffee/core/plat/plat_memory.h>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/plat/memory.h>
+#include <coffee/core/types/chunk.h>
 
 namespace Coffee {
 namespace Blam {

@@ -7,7 +7,7 @@
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/plat/platform_detect.h>
 
-#include <coffee/core/plat/plat_windowmanager.h>
+#include <coffee/core/plat/windowmanager.h>
 
 namespace Coffee {
 namespace SDL2 {

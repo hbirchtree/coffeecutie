@@ -3,7 +3,7 @@
 #include <coffee/core/base/textprocessing/cregex.h>
 #include <coffee/core/plat/timing/profiling.h>
 #include <peripherals/stl/string_casting.h>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 
 #include <coffee/core/CDebug>
 

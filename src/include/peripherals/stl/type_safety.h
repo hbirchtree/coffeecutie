@@ -346,7 +346,7 @@ static inline constexpr D C_RCAST(T from)
     return reinterpret_cast<D>(from);
 }
 
-namespace Coffee {
+namespace type_safety {
 
 template<typename Interface, typename Implementation>
 /*!

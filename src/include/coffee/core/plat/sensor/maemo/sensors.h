@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/plat/plat_primary_identify.h>
+#include <coffee/core/plat/platform_detect.h>
 #include "../sensor_def.h"
 
 #if defined(COFFEE_MAEMO)

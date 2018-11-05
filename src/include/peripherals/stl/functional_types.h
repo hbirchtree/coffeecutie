@@ -91,7 +91,7 @@ using Thread       = std::thread;
 template<typename FunSignature>
 using Function = std::function<FunSignature>;
 
-using ThreadId = Threads::ThreadId_t<Thread>;
+using ThreadId = threads::ThreadId_t<Thread>;
 
 namespace CurrentThread {
 #if defined(COFFEE_NO_THREADLIB)
@@ -136,8 +136,8 @@ extern CString ThreadGetName(ThreadId::Hash t);
 namespace Chrono {
 using namespace std::chrono;
 
-using seconds_float  = duration<scalar>;
-using seconds_double = duration<bigscalar>;
+using seconds_float  = duration<libc_types::scalar>;
+using seconds_double = duration<libc_types::bigscalar>;
 
 } // namespace Chrono
 

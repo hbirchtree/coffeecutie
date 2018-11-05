@@ -1,11 +1,16 @@
 #include <coffee/components/components.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
-#include <coffee/core/types/cmatrix_functions.h>
+#include <peripherals/typing/vectors/matrix_functions.h>
 #include <coffee/core/types/vector_types.h>
 
 using namespace Coffee;
 using namespace Components;
+
+namespace SceneGraph {
+
+using namespace typing::vectors::scene;
+}
 
 enum ObjectFlags
 {

@@ -244,9 +244,9 @@ struct CGL_Shared_Debug
     {
     }
 
-    static bool CompressedFormatSupport(Context& ctxt, PixelFormat t);
+    static bool CompressedFormatSupport(Context& ctxt, PixFmt t);
 
-    STATICINLINE bool InternalFormatSupport(PixelFormat)
+    STATICINLINE bool InternalFormatSupport(PixFmt)
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
         return true;

@@ -1,12 +1,12 @@
 #pragma once
 
 #if defined(FEATURE_ENABLE_CoffeeASIO)
-#include <coffee/CAsio>
 #include <coffee/asio/http.h>
+#include <coffee/asio/tcp_socket.h>
 #endif
 
 #include <coffee/core/base/files/url.h>
-#include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/interfaces/byte_provider.h>
 
 namespace Coffee {

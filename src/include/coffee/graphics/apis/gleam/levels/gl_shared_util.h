@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/CImage>
+#include <coffee/image/cimage.h>
 #include <coffee/core/CFiles>
 
 #include "gl_shared_types.h"
@@ -18,13 +18,11 @@ struct CGLUtil
      */
     template<typename GL>
     static void DumpTexture(
-        typename GL::Texture t, typename GL::CGhnd h, u32 l, cstring fn)
+            C_UNUSED(typename GL::Texture t),
+            C_UNUSED(typename GL::CGhnd h),
+            C_UNUSED(u32 l),
+            C_UNUSED(cstring fn))
     {
-        C_USED(t);
-        C_USED(h);
-        C_USED(l);
-        C_USED(fn);
-
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 
         CSize tsize;

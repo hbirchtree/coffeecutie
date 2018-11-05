@@ -29,7 +29,7 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
     friend struct GLEAM_RenderTarget;
 
     GLEAM_Surface(
-        TexComp::tex_flag type, PixelFormat fmt, u32 mips, u32 texflags = 0) :
+        TexComp::tex_flag type, PixFmt fmt, u32 mips, u32 texflags = 0) :
         GraphicsAPI::Surface<SizeT, PointT>(fmt, false, 0, mips, texflags),
         m_type(type), m_handle(0)
     {
@@ -78,7 +78,7 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
 {
     friend struct GLEAM_Sampler2D;
 
-    GLEAM_Surface2D(PixelFormat fmt, u32 mips = 1, u32 texflags = 0);
+    GLEAM_Surface2D(PixFmt fmt, u32 mips = 1, u32 texflags = 0);
 
     void allocate(Size size, PixCmp c);
 
@@ -106,14 +106,14 @@ struct GLEAM_SurfaceCube : GLEAM_Surface2D
 {
     friend struct GLEAM_SamplerCube;
 
-    GLEAM_SurfaceCube(PixelFormat fmt, u32 mips = 1, u32 texflags = 0);
+    GLEAM_SurfaceCube(PixFmt fmt, u32 mips = 1, u32 texflags = 0);
 };
 
 struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
 {
     friend struct GLEAM_Sampler3D;
 
-    GLEAM_Surface3D_Base(tex::flag t, PixelFormat fmt, u32 mips, u32 texflags);
+    GLEAM_Surface3D_Base(tex::flag t, PixFmt fmt, u32 mips, u32 texflags);
 
     GLEAM_API_CLASS_LINKAGE void allocate(CSize3 size, PixCmp c);
 
@@ -150,7 +150,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler3D;
-    GLEAM_Surface3D(PixelFormat fmt, u32 mips = 1, u32 texflags = 0) :
+    GLEAM_Surface3D(PixFmt fmt, u32 mips = 1, u32 texflags = 0) :
         GLEAM_Surface3D_Base(tex::t3d::value, fmt, mips, texflags)
     {
     }
@@ -159,7 +159,7 @@ struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
 {
     friend struct GLEAM_Sampler2DArray;
-    GLEAM_Surface2DArray(PixelFormat fmt, u32 mips = 1, u32 texflags = 0) :
+    GLEAM_Surface2DArray(PixFmt fmt, u32 mips = 1, u32 texflags = 0) :
         GLEAM_Surface3D_Base(tex::t2d_array::value, fmt, mips, texflags)
     {
     }
@@ -170,7 +170,7 @@ struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
     friend struct GLEAM_SamplerCube;
 
     GLEAM_API_CLASS_LINKAGE GLEAM_SurfaceCubeArray(
-        PixelFormat fmt, u32 mips = 1, u32 texflags = 0);
+        PixFmt fmt, u32 mips = 1, u32 texflags = 0);
 };
 
 struct GLEAM_SamplerHandle

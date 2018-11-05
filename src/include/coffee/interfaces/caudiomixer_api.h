@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/core/CObject>
-#include <coffee/core/coffee_message_macros.h>
 #include <peripherals/libc/types.h>
 #include <coffee/core/types/vector_types.h>
 

@@ -41,6 +41,21 @@ enum class TexType
     Cube
 };
 
+namespace TexComp {
+
+using namespace ::typing::graphics::texture_composition;
+}
+
+namespace BufferComp {
+
+using namespace ::typing::graphics::buffer_composition;
+}
+
+namespace QueryComp {
+
+using namespace ::typing::graphics::query_composition;
+}
+
 namespace tex {
 
 using namespace ::typing::graphics::tex;

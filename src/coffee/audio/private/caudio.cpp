@@ -4,7 +4,7 @@
 #include <stb.h>
 #include <stb_vorbis.c>
 
-#include <coffee/core/plat/plat_memory.h>
+#include <coffee/core/plat/memory.h>
 #include <coffee/core/CMath>
 #include <coffee/core/CProfiling>
 

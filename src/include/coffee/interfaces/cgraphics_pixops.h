@@ -1,6 +1,7 @@
 #pragma once
 
-#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/core/CMath>
+#include <coffee/core/types/geometry.h>
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
 

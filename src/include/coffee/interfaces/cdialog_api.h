@@ -1,6 +1,5 @@
 #pragma once
 
-#include <coffee/core/coffee_macros.h>
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/edef/colorenum.h>
 #include <coffee/core/types/edef/dbgenum.h>
@@ -75,7 +74,7 @@ struct SplashInterface
     static void Repaint(SplashHandle*);
 
     static bool SetBitmap(
-        SplashHandle*, PixelFormat, CSize const&, const byte_t*);
+        SplashHandle*, PixFmt, CSize const&, const byte_t*);
 
     static void DestroySplash(SplashHandle*);
 };

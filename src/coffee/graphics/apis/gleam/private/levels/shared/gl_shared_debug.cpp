@@ -190,7 +190,7 @@ HWDeviceInfo CGL_Shared_Debug::Renderer()
     return HWDeviceInfo(vendor, device, driver);
 }
 
-bool CGL_Shared_Debug::CompressedFormatSupport(Context& ctxt, PixelFormat t)
+bool CGL_Shared_Debug::CompressedFormatSupport(Context& ctxt, PixFmt t)
 {
     /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
     i32 target = C_CAST<i32>(to_enum(t));

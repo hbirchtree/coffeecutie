@@ -1,6 +1,6 @@
 #include <coffee/audio/openal/copenal.h>
 #include <coffee/core/CDebug>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/core/types/map.h>
 
 #include <al.h>

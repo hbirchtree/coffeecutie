@@ -46,10 +46,10 @@ void GLEAM_API::DumpFramebuffer(
         return;
 
     storage.resize(
-        GetPixSize(BitFormat::UByte, GetPixComponent(c), size.area()));
+        properties::get<properties::pixel_size>(BitFmt::UByte, typing::convert::to<PixCmp>(c), size.area()));
 
     fb.use(FramebufferT::Read);
-    CGL33::ReadPixels(0, 0, size, GetPixComponent(c), dt, &storage[0]);
+    CGL33::ReadPixels(0, 0, size, typing::convert::to<PixCmp>(c), dt, &storage[0]);
 }
 
 void GLEAM_API::GetDefaultVersion(i32& major, i32& minor)
@@ -463,9 +463,8 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, u32)
         GLC::Disable(Feature::Culling);
 }
 
-void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
+void GLEAM_API::SetTessellatorState(C_UNUSED(const TSLRSTATE& tstate))
 {
-    C_USED(tstate);
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(Extensions::TessellationSupported(CGL_DBG_CTXT))
     {
@@ -476,9 +475,8 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 #endif
 }
 
-void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, u32 i)
+void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
 {
-    C_USED(i);
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(vstate.multiview())
     {

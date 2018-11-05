@@ -5,7 +5,7 @@
 #include <peripherals/stl/functional_types.h>
 
 namespace stl_types {
-namespace Threads {
+namespace threads {
 
 template<typename... Args>
 /*!

@@ -27,7 +27,8 @@ void surface_allocate(
 #endif
         CGL33::TexAlloc(Span<CGhnd>::From(m_handle));
 
-    if(!feval(m_flags & GLEAM_API::TextureImmutable) || IsPixFmtCompressed(fmt))
+    if(!feval(m_flags & GLEAM_API::TextureImmutable)
+            || properties::get<properties::is_compressed>(fmt))
     {
     /* We must set this to register a proper mipmap level */
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -44,7 +45,8 @@ void surface_allocate(
 
 void surface_flag(u32& m_flags, PixFmt fmt)
 {
-    if(!GLEAM_FEATURES.texture_storage || IsPixFmtCompressed(fmt))
+    if(!GLEAM_FEATURES.texture_storage
+            || properties::get<properties::is_compressed>(fmt))
         m_flags = m_flags & (~GLEAM_API::TextureImmutable);
 }
 
@@ -332,10 +334,10 @@ inline void surface_internal_alloc(
     const bool     is_immutable_texture =
         feval(surface.m_flags & GLEAM_API::TextureImmutable);
 
-    auto    bit_fmt = GetPreferredBitFmt(surface.m_pixfmt);
+    auto    bit_fmt = convert::to<BitFmt>(surface.m_pixfmt);
     CompFmt c_fmt(
         surface.m_pixfmt,
-        PixComponentToFlag(c),
+        convert::to<PixFlg>(c),
         (CompFlags)(surface.m_flags >> 10));
     PixDesc p_fmt(surface.m_pixfmt, bit_fmt, c);
 
@@ -344,7 +346,7 @@ inline void surface_internal_alloc(
     if(!GLEAM_FEATURES.direct_state || !is_immutable_texture)
         CGL33::TexBind(surface.m_type, surface.m_handle);
 
-    if(IsPixFmtCompressed(surface.m_pixfmt))
+    if(properties::get<properties::is_compressed>(surface.m_pixfmt))
     {
         Vector<byte_t> empty;
 
@@ -469,7 +471,7 @@ STATICINLINE bool texture_check_bounds(
     return r;
 }
 
-GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt, u32 mips, u32 texflags) :
+GLEAM_Surface2D::GLEAM_Surface2D(PixFmt fmt, u32 mips, u32 texflags) :
     GLEAM_Surface(TexComp::tex_2d::value, fmt, mips, texflags)
 {
 }
@@ -497,7 +499,7 @@ void GLEAM_Surface2D::upload(
         return;
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    if(!IsPixFmtCompressed(pxfmt))
+    if(!properties::get<properties::is_compressed>(pxfmt))
         texture_pbo_upload(
             GetPixSize(fmt, comp, size.convert<u32>().area()),
             data,
@@ -507,9 +509,9 @@ void GLEAM_Surface2D::upload(
 
     CGL33::TexBind(m_type, m_handle);
 
-    if(IsPixFmtCompressed(pxfmt))
+    if(properties::get<properties::is_compressed>(pxfmt))
     {
-        auto pflags = PixComponentToFlag(comp);
+        auto pflags = convert::to<PixFlg>(comp);
 
         CGL33::TexCompressedImage2D(
             m_type,
@@ -530,7 +532,7 @@ void GLEAM_Surface2D::upload(
                 C_FCAST<i32>(mip),
                 offset,
                 size,
-                GetPixComponent(m_pixfmt),
+                convert::to<PixCmp>(m_pixfmt),
                 fmt,
                 data_ptr);
         }
@@ -540,17 +542,16 @@ void GLEAM_Surface2D::upload(
     }
 }
 
-GLEAM_SurfaceCube::GLEAM_SurfaceCube(PixelFormat fmt, u32 mips, u32 texflags) :
+GLEAM_SurfaceCube::GLEAM_SurfaceCube(PixFmt fmt, u32 mips, u32 texflags) :
     GLEAM_Surface2D(fmt, mips, texflags)
 {
 }
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
-    tex::flag t, PixelFormat fmt, u32 mips, u32 texflags) :
+    tex::flag t, PixFmt fmt, u32 mips, u32 texflags) :
     GLEAM_Surface(
         (GL_CURR_API == GLES_2_0) ? tex::t2d::value : t, fmt, mips, texflags)
 {
-    C_USED(t);
 }
 
 void GLEAM_Surface3D_Base::allocate(CSize3 size, PixCmp c)
@@ -572,7 +573,7 @@ void GLEAM_Surface3D_Base::upload(
     auto comp  = pfmt.comp;
     auto fmt   = pfmt.bfmt;
 
-    if(!IsPixFmtCompressed(pxfmt) &&
+    if(!properties::get<properties::is_compressed>(pxfmt) &&
        !texture_check_bounds(data, comp, fmt, msz.volume()))
         return;
 
@@ -582,7 +583,7 @@ void GLEAM_Surface3D_Base::upload(
         /* If we want to use DMA transfer */
         c_cptr data_ptr = data.data;
 
-        if(!IsPixFmtCompressed(pxfmt))
+        if(!properties::get<properties::is_compressed>(pxfmt))
             texture_pbo_upload(
                 GetPixSize(fmt, comp, size.convert<u32>().volume()),
                 data,
@@ -593,7 +594,7 @@ void GLEAM_Surface3D_Base::upload(
             CGL33::TexBind(m_type, m_handle);
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-        if(IsPixFmtCompressed(pxfmt) && GLEAM_FEATURES.direct_state)
+        if(properties::get<properties::is_compressed>(pxfmt) && GLEAM_FEATURES.direct_state)
         {
             CGL45::TexCompressedSubImage3D(
                 m_handle,
@@ -603,7 +604,7 @@ void GLEAM_Surface3D_Base::upload(
                 pfmt.c,
                 C_FCAST<i32>(data.size),
                 data.data);
-        } else if(IsPixFmtCompressed(pxfmt))
+        } else if(properties::get<properties::is_compressed>(pxfmt))
         {
             CGL33::TexCompressedSubImage3D(
                 m_type, mip, offset, size, pfmt.c, data.size, data.data);
@@ -614,7 +615,7 @@ void GLEAM_Surface3D_Base::upload(
                 mip,
                 offset,
                 size,
-                GetPixComponent(m_pixfmt),
+                convert::to<PixCmp>(m_pixfmt),
                 fmt,
                 data_ptr);
         } else
@@ -625,7 +626,7 @@ void GLEAM_Surface3D_Base::upload(
                 mip,
                 offset,
                 size,
-                GetPixComponent(pxfmt),
+                convert::to<PixCmp>(pxfmt),
                 pfmt.bfmt,
                 data_ptr);
         }
@@ -657,7 +658,7 @@ void GLEAM_Surface3D_Base::upload(
                 C_FCAST<i32>(mip),
                 mofi,
                 {size.width, size.height},
-                GetPixComponent(m_pixfmt),
+                convert::to<PixCmp>(m_pixfmt),
                 fmt,
                 data.data);
         }
@@ -665,7 +666,7 @@ void GLEAM_Surface3D_Base::upload(
 }
 
 void GLEAM_Surface3D_Base::upload(
-    BitFormat      fmt,
+    BitFmt      fmt,
     PixCmp         comp,
     CSize3 const&  size,
     Bytes const&   data,
@@ -676,7 +677,7 @@ void GLEAM_Surface3D_Base::upload(
 }
 
 GLEAM_SurfaceCubeArray::GLEAM_SurfaceCubeArray(
-    PixelFormat fmt, u32 mips, u32 texflags) :
+    PixFmt fmt, u32 mips, u32 texflags) :
     GLEAM_Surface2DArray(fmt, mips, texflags)
 {
 }

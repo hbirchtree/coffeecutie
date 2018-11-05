@@ -3,14 +3,15 @@
 #include "matrices.h"
 #include "quaternion.h"
 
-namespace Coffee {
+namespace typing {
+namespace vectors {
 
 template<typename T>
-FORCEDINLINE _cbasic_tmatrix<T, 4> matrixify(const _cbasic_tquaternion<T>& q)
+FORCEDINLINE tmatrix<T, 4> matrixify(const tquaternion<T>& q)
 {
-    _cbasic_tmatrix<T, 3> m3 = matrixify_mat3(q);
+    tmatrix<T, 3> m3 = matrixify_mat3(q);
 
-    _cbasic_tmatrix<T, 4> res;
+    tmatrix<T, 4> res;
 
     for(size_t i = 0; i < 3; i++)
         for(size_t j = 0; j < 3; j++)
@@ -22,10 +23,10 @@ FORCEDINLINE _cbasic_tmatrix<T, 4> matrixify(const _cbasic_tquaternion<T>& q)
 
 template<typename T>
 FORCEDINLINE
-_cbasic_tmatrix<T,3> matrixify_mat3(
-        const _cbasic_tquaternion<T>& q)
+tmatrix<T,3> matrixify_mat3(
+        const tquaternion<T>& q)
 {
-    _cbasic_tmatrix<T,3> Result;
+    tmatrix<T,3> Result;
 
     T qxx(q.x() * q.x());
     T qyy(q.y() * q.y());
@@ -53,3 +54,4 @@ _cbasic_tmatrix<T,3> matrixify_mat3(
 }
 
 } // namespace Coffee
+}

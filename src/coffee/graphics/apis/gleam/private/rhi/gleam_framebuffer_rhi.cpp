@@ -34,7 +34,7 @@ FORCEDINLINE void fb_bind(FramebufferT t, glhnd const& h)
 }
 
 void GLEAM_RenderDummy::allocate(
-    PixelFormat fmt, DBuffers buf, u32 index, CSize size)
+    PixFmt fmt, DBuffers buf, u32 index, CSize size)
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
@@ -216,9 +216,8 @@ CSize GLEAM_RenderTarget::size()
     return out;
 }
 
-void GLEAM_RenderTarget::clear(u32 i, Vecf4 const& color)
+void GLEAM_RenderTarget::clear(C_UNUSED(u32 i), Vecf4 const& color)
 {
-    C_USED(i);
     fb_bind(FramebufferT::Draw, m_handle);
     if(GLEAM_FEATURES.is_gles)
     {

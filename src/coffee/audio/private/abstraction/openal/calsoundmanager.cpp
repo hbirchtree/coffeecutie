@@ -45,11 +45,8 @@ CALSoundManager::~CALSoundManager()
 CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
 {
     if(odevices.size() < 1)
-    {
-        cWarning("Failed to find any audio output devices!");
-        cWarning("I shall now perform my next trick: RUNOUTTHEWINDOW()");
-        RUNOUTTHEWINDOW();
-    }
+        Throw(undefined_behavior("No sound device found"));
+
     return v_odevices[d_idx];
 }
 
