@@ -207,7 +207,7 @@ bool LoadData(
 
     if(!stb_templates::LoadFromMemory(src, target, scomp))
     {
-        ec = STBError::InvalidPixelFormat;
+        ec = STBError::InvalidPixFmt;
         return false;
     }
 
@@ -244,7 +244,7 @@ image<PixType> Resize(
     if(target.w > 96 || !sharpen)
     {
         if(!stb_templates::ResizeImage(img, target, out_image, channels, ec))
-            ec = STBError::InvalidPixelFormat;
+            ec = STBError::InvalidPixFmt;
     } else
     {
         stb_templates::NearestNeighborResize(
@@ -431,7 +431,7 @@ std::string stb_error_category::message(int error_code) const
         return "Resizing error";
     case STBError::InvalidComponents:
         return "Invalid components specified";
-    case STBError::InvalidPixelFormat:
+    case STBError::InvalidPixFmt:
         return "Invalid pixel format specified";
     }
 

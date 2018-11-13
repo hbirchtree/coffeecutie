@@ -78,25 +78,25 @@ void QtSplash::Repaint(QtSplash::SplashHandle *s)
     s->splash->repaint();
 }
 
-bool QtSplash::SetBitmap(SplashHandle *s, PixelFormat fmt, const CSize &size, const byte_t *data)
+bool QtSplash::SetBitmap(SplashHandle *s, PixFmt fmt, const CSize &size, const byte_t *data)
 {
     QImage::Format qfmt = QImage::Format_Invalid;
 
     switch(fmt)
     {
-    case PixelFormat::R8UI:
+    case PixFmt::R8UI:
         qfmt = QImage::Format_Mono;
         break;
-    case PixelFormat::RGB4UI:
+    case PixFmt::RGB4UI:
         qfmt = QImage::Format_RGB444;
         break;
-    case PixelFormat::RGB5UI:
+    case PixFmt::RGB5UI:
         qfmt = QImage::Format_RGB555;
         break;
-    case PixelFormat::RGB8UI:
+    case PixFmt::RGB8UI:
         qfmt = QImage::Format_RGB888;
         break;
-    case PixelFormat::RGBA8UI:
+    case PixFmt::RGBA8UI:
         qfmt = QImage::Format_RGBA8888;
         break;
     default:

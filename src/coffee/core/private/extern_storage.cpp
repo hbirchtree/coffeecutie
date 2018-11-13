@@ -16,6 +16,7 @@
 #endif
 
 namespace Coffee {
+namespace State {
 
 struct InternalState
 {
@@ -114,8 +115,6 @@ struct InternalThreadState
     ShPtr<Profiling::ThreadState> profiler_data;
 #endif
 };
-
-namespace State {
 
 #define ISTATE internal_state
 #define TSTATE thread_state
@@ -265,7 +264,7 @@ const ShPtr<GlobalState>& PeekState(cstring key)
     C_PTR_CHECK(ISTATE);
     return ISTATE->pointer_storage[key];
 }
-}
+} // namespace State
 
 namespace CResources {
 /*

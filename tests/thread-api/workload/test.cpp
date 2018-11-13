@@ -1,5 +1,5 @@
 #include <coffee/core/CThreading>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/core/terminal/table-print.h>
 
 #include <coffee/core/CDebug>
@@ -39,7 +39,7 @@ bool workload_test()
 
     auto start_time = Chrono::high_resolution_clock::now();
 
-    Threads::ParallelFor(kern, data.size.area() / 64, &data).get();
+    threads::ParallelFor(kern, data.size.area() / 64, &data).get();
     timing.push_back(
         Chrono::duration_cast<Chrono::microseconds>(Clock::now() - start_time));
 

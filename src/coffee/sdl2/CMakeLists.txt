@@ -8,6 +8,10 @@ if(NOT EMSCRIPTEN)
         )
 endif()
 
+if(TARGET CoffeeGLeamCommon)
+    list ( APPEND LIBS CoffeeGLeamCommon )
+endif()
+
 coffee_library (
     TARGET CoffeeSDL2
     SOURCES
@@ -21,6 +25,10 @@ coffee_library (
     private/input/evhandlers/sdl2eventhandlers.cpp
 
     LIBRARIES CoffeeCore ${LIBS}
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
     )
 
 target_compile_definitions ( CoffeeSDL2 PUBLIC

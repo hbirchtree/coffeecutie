@@ -7,6 +7,7 @@ coffee_library (
     
     LIBRARIES CoffeeCore Assimp
     HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${ASSIMP_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${ASSIMP_INCLUDE_DIR}/..>
     $<INSTALL_INTERFACE:include>

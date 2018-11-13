@@ -28,7 +28,7 @@ bool test_texture_formats()
     for(auto i : Range<>(C_CAST<u32>(PixFmt::MAX_PIXFMT) - 1))
     {
         auto fmt = C_CAST<PixFmt>(i + 1);
-        create_tex_format<A>(fmt, GetPixComponent(fmt));
+        create_tex_format<A>(fmt, convert::to<PixCmp>(fmt));
     }
 
     return true;

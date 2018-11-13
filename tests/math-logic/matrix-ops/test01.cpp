@@ -1,6 +1,6 @@
-#include <coffee/CGraphics>
 #include <coffee/core/CMath>
 #include <coffee/core/CUnitTesting>
+#include <coffee/core/types/graphics_types.h>
 
 using namespace Coffee;
 using namespace SceneGraph;

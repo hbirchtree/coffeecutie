@@ -93,12 +93,12 @@ void SDL2SpriteRenderer::destroyRenderer(Renderer t)
 }
 
 bool SDL2SpriteRenderer::createTexture(
-    Renderer r, u32 c, Texture* t, PixelFormat fmt, RSCA acc, CSize const& size)
+    Renderer r, u32 c, Texture* t, PixFmt fmt, RSCA acc, CSize const& size)
 {
     Uint32 sdlfmt = 0;
     switch(fmt)
     {
-    case PixelFormat::RGBA8:
+    case PixFmt::RGBA8:
         sdlfmt = SDL_PIXELFORMAT_ABGR8888;
         break;
     default:

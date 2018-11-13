@@ -183,7 +183,8 @@ void TextureCooker::process(
 
         for(auto ext : imageExtensions)
             /* Check if we recognize the extension */
-            if(str::cmp<str::comp_nocase>(path.extension().c_str(), ext.c_str()))
+            if(str::cmp<str::comp_nocase>(
+                   path.extension().c_str(), ext.c_str()))
             {
                 if(ext == "")
                     continue;
@@ -209,7 +210,7 @@ void TextureCooker::process(
 
     Map<ThreadId::Hash, Vector<VirtFS::VirtDesc>> threadFiles;
 
-    Threads::ParallelForEach<FileContainer, FileElement>(
+    threads::ParallelForEach<FileContainer, FileElement>(
         targets,
         [&](FileElement& e) {
             CompressTextureSet(threadFiles[ThreadId().hash()], e, this, cursor);

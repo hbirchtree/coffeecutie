@@ -18,9 +18,11 @@ coffee_library (
     CoffeeGraphicsAPI
 
     HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/toolchain/internal/include>
+
+    $<INSTALL_INTERFACE:include>
     )
 
 if(BUILD_GLEAM)

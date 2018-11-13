@@ -1,5 +1,5 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/core/unit_tests/graphics_framework.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>

@@ -38,7 +38,7 @@ bool compressed_format_coverage()
     PixFmt_iterator fmt;
     while(fmt)
     {
-        if(IsPixFmtCompressed(fmt))
+        if(properties::get<properties::is_compressed>(fmt))
         {
             /* TODO: Do something */
         }
@@ -54,15 +54,15 @@ bool regular_format_coverage()
 
     while(fmt)
     {
-        if(!IsPixFmtCompressed(fmt) && fmt != PixFmt::None)
+        if(!properties::get<properties::is_compressed>(fmt) && fmt != PixFmt::None)
         {
-            auto sampleType = GetPixSampleType(fmt);
+            auto sampleType = convert::to<PixFlg>(fmt);
 
             if(sampleType == PixFlg::None)
                 throw implementation_error("no sample type");
 
-            auto component = GetPixComponent(fmt);
-            auto bitFmt    = GetPreferredBitFmt(fmt);
+            auto component = convert::to<PixCmp>(fmt);
+            auto bitFmt    = convert::to<BitFmt>(fmt);
 
             if(component == PixCmp::None)
                 throw implementation_error("no sample type");

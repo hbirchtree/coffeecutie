@@ -1,9 +1,0 @@
-#pragma once
-
-#include "plat/memory/cmd_interface.h"
-
-#if defined(COFFEE_USE_TERMINAL_CTL)
-#include "plat/memory/cmd_unixterm.h"
-#else
-#include "plat/memory/cmd_dummy.h"
-#endif

@@ -1,5 +1,5 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/plat/plat_stacktrace.h>
+#include <coffee/core/plat/stacktrace.h>
 #include <coffee/core/types/edef/graphicsenum.h>
 
 using namespace Coffee;

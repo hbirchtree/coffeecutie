@@ -1,4 +1,4 @@
-#include <coffee/CBlam>
+#include <coffee/blam/cblam.h>
 #include <coffee/blam/volta/blam_stl.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>

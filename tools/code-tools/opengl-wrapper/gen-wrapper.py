@@ -212,6 +212,6 @@ for b in sorted(list(buckets)):
 print('} // CGL')
 print('} // Coffee')
 print()
-print('#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)')
+print('#if defined(COFFEE_GCC)')
 print('#pragma GCC diagnostic pop')
 print('#endif')

@@ -4,7 +4,6 @@ set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY
 add_subdirectory(cmd-api)
 add_subdirectory(datastorage-api)
 add_subdirectory(file-api)
-add_subdirectory(function-tests)
 add_subdirectory(graphics)
 add_subdirectory(http_test)
 add_subdirectory(image-api)
@@ -48,6 +47,8 @@ coffee_test (
 
     LIBRARIES
     CoffeeCore
+    CoffeeAudio
+    CoffeeBlam
     )
 
 if(BUILD_GLEAM)

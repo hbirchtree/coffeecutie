@@ -4,8 +4,6 @@
 
 namespace stl_types {
 
-using namespace Coffee;
-
 struct ThreadNames : State::GlobalState
 {
     virtual ~ThreadNames();

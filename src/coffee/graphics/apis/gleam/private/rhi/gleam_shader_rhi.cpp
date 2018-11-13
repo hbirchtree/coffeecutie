@@ -2,9 +2,9 @@
 
 #include "gleam_internal_types.h"
 #include <coffee/core/plat/memory/stlstring_ops.h>
-#include <peripherals/stl/types.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 namespace RHI {
@@ -450,10 +450,10 @@ void GLEAM_Shader::dealloc(gleam_error& ec)
 }
 
 bool GLEAM_Pipeline::attach(
-    const GLEAM_Shader& shader, const ShaderStage& stages, gleam_error& ec)
+    const GLEAM_Shader& shader,
+    C_UNUSED(const ShaderStage& stages),
+    gleam_error& ec)
 {
-    C_USED(stages);
-
     if(!shader.m_handle)
     {
         ec = APIE::InvalidObject;
@@ -607,7 +607,7 @@ bool GLEAM_ShaderUniformState::setUniform(
     else
         return false;
 
-    u32 idx      = value.m_idx;
+    u32 idx         = value.m_idx;
     data->flags     = value.m_flags;
     m_uniforms[idx] = {data, value.stages};
     return true;
@@ -631,7 +631,7 @@ bool GLEAM_ShaderUniformState::setSampler(
     if(!translate_sampler_type(samplerType, value.m_flags))
         return false;
 
-    u32 idx      = value.m_idx;
+    u32 idx         = value.m_idx;
     m_samplers[idx] = {sampler, value.stages};
     return true;
 }
@@ -651,7 +651,7 @@ bool GLEAM_ShaderUniformState::setUBuffer(
     else
         return false;
 
-    u32 idx      = value.m_idx;
+    u32 idx         = value.m_idx;
     m_ubuffers[idx] = {sec, buf, value.stages};
     return true;
 }
@@ -671,7 +671,7 @@ bool GLEAM_ShaderUniformState::setSBuffer(
     else
         return false;
 
-    u32 idx      = value.m_idx;
+    u32 idx         = value.m_idx;
     m_sbuffers[idx] = {sec, buf, value.stages};
     return true;
 }
@@ -955,7 +955,7 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
     }
     if(*bin_fmts <= 0)
     {
-//        cVerbose(6, "No GL program binary formats supported");
+        //        cVerbose(6, "No GL program binary formats supported");
         return;
     }
     if(Extensions::GetProgramBinarySupported(CGL_DBG_CTXT) &&
@@ -970,7 +970,7 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
 
         /* We'll fit the binary type in here */
         program_data.resize(sizeof(GL_CURR_API) + sizeof(CGenum));
-//        cVerbose(6, "About to get program binary");
+        //        cVerbose(6, "About to get program binary");
         /* Append program data */
         CGL43::ProgramGetiv(
             m_pipeline.m_handle, GL_PROGRAM_BINARY_LENGTH, &progLen);
@@ -982,7 +982,7 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
         if(!progLen)
             return;
 
-//        cVerbose(6, "Acquired program binary");
+        //        cVerbose(6, "Acquired program binary");
         /* Insert API version */
         //        MemCpy(&program_data[0], &GL_CURR_API, sizeof(GL_CURR_API));
         /* Put binary type in there */
@@ -993,17 +993,17 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
         output.data = program_data.data();
         if(!CResources::FileCommit(output, RSCA::Discard))
             return;
-//            cVerbose(
-//                5,
-//                "Dumped program ({0}) into file {1}",
-//                m_pipeline.m_handle.hnd,
-//                output.resource());
-//        else
-//            cVerbose(
-//                5,
-//                "Dumping program ({0}) into file {1} failed",
-//                m_pipeline.m_handle.hnd,
-//                output.resource());
+        //            cVerbose(
+        //                5,
+        //                "Dumped program ({0}) into file {1}",
+        //                m_pipeline.m_handle.hnd,
+        //                output.resource());
+        //        else
+        //            cVerbose(
+        //                5,
+        //                "Dumping program ({0}) into file {1} failed",
+        //                m_pipeline.m_handle.hnd,
+        //                output.resource());
     } else if(GLEAM_FEATURES.separable_programs)
     {
         /* With pipeline objects we must fetch several

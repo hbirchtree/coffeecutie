@@ -1,3 +1,20 @@
+add_library ( WindowingInclude INTERFACE )
+
+target_include_directories ( WindowingInclude INTERFACE
+
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    )
+
+install (
+    TARGETS WindowingInclude
+    EXPORT ${PROJECT_NAME}
+    )
+
+register_library ( WindowingInclude
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    )
+
 set ( GLAD_SRCS
     )
 
@@ -34,8 +51,7 @@ if(BUILD_OPENGL)
         TARGET CoffeeContext_EGL
         SOURCES
         private/graphics/egl/egl_renderer.cpp
-        LIBRARIES
-        CoffeeCore
+        LIBRARIES CoffeeCore WindowingInclude CoffeeGLeamCommon
         )
 
     if(BUILD_GLES AND NOT APPLE)
@@ -48,14 +64,14 @@ if(BUILD_OPENGL)
         TARGET CoffeeContext_GLX
         SOURCES
         private/graphics/glx/glx_renderer.cpp
-        LIBRARIES CoffeeCore
+        LIBRARIES CoffeeCore CoffeeGLeamCommon WindowingInclude
         )
 
     coffee_library (
         TARGET CoffeeBinding_GLAD
         SOURCES
         private/binding/glad/gleamrenderer.cpp
-        LIBRARIES CoffeeCore CoffeeGLeamCommon
+        LIBRARIES CoffeeCore CoffeeGLeamCommon WindowingInclude
         )
 
     if(BUILD_GLES AND NOT BUILD_GLES_20)
@@ -73,21 +89,21 @@ coffee_library (
     TARGET CoffeeWindow_OGC
     SOURCES
     private/windowing/ogc/ogc_window.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES CoffeeCore WindowingInclude
     )
 
 coffee_library (
     TARGET CoffeeWindow_X11
     SOURCES
     private/windowing/x11/x11_window.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES CoffeeCore CoffeeGLeamCommon WindowingInclude
     )
 
 coffee_library (
     TARGET CoffeeWindow_DMX
     SOURCES
     private/windowing/dispmanx/dispmanx_window.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES CoffeeCore WindowingInclude
     )
 
 if(APPLE AND IOS)
@@ -101,6 +117,7 @@ if(APPLE AND IOS)
         private/windowing/glkit/AppDelegate.m
         LIBRARIES
         CoffeeCore
+        WindowingInclude
         "-framework CoreGraphics"
         "-framework QuartzCore"
         )
@@ -129,13 +146,13 @@ coffee_library (
     TARGET CoffeeWindow_NDKWindow
     SOURCES
     private/windowing/ndkwindow/ndk_window.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES CoffeeCore WindowingInclude
     )
 
 coffee_library (
     TARGET CoffeeRenderer_Default
     SOURCES ${Renderer_SRCS}
-    LIBRARIES CoffeeCore ${RENDERER_LIBS}
+    LIBRARIES CoffeeCore WindowingInclude ${RENDERER_LIBS}
     )
 
 if(APPLE AND IOS)

@@ -54,10 +54,6 @@ coffee_library (
     # Argument handling
     private/argument_handling.cpp
     private/types/cdef/infotypes.cpp
-    private/plat/environment/argument_parse.cpp
-
-    private/plat/environment/shared_func.cpp
-    private/plat/memory/cmd_interface.cpp
 
     #
     # Task queues, for easier time scheduling
@@ -67,20 +63,16 @@ coffee_library (
     #
     # File-related functionality
     #
-    private/plat/file/file_common.cpp
     private/base/cfiles.cpp
-    private/base/url.cpp
-
-    #
-    # This one is pretty important, let's keep it here
-    #
-    private/plat/timing/profiling.cpp
 
     LIBRARIES
     ${STANDARDLIBS_LIBRARIES}
+    PeripheralLib
+    PeripheralPlatform
 
     HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
 
     $<INSTALL_INTERFACE:include>
@@ -110,19 +102,6 @@ coffee_library (
     LIBRARIES
     CoffeeCore_Base
     CoffeeCore_Compression
-    )
-
-#
-# Linked only by applications, contains main()
-#
-coffee_library (
-    TARGET CoffeeCore_Application
-
-    SOURCES
-    private/coffee.cpp
-    private/plat/environment/application_start.cpp
-
-    LIBRARIES CoffeeCore_Base
     )
 
 #
@@ -235,9 +214,11 @@ install(
     EXPORT ${PROJECT_NAME}
     )
 
-register_library ( CoffeeCore "${CMAKE_SOURCE_DIR}/include/coffee/core" )
+register_library ( CoffeeCore
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core" )
 
 target_include_directories ( CoffeeCore_Base PUBLIC
+
     $<BUILD_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
     )
@@ -255,240 +236,10 @@ target_link_libraries ( CoffeeCore INTERFACE
     PeripheralThreadNaming
     )
 
-#
-#
-# SDL power management info
-#
-#
-if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
-        (ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
-
-    if(NOT TARGET SDL2)
-        find_package ( SDL2 QUIET )
-    endif()
-
-    coffee_library (
-        TARGET CoffeeSDLPowerInfo
-        SOURCES private/plat/environment/sdlpowerinfo.cpp
-        LIBRARIES CoffeeCore_Base SDL2
-        )
-
+if(TARGET CoffeeSDLPowerInfo)
     target_link_libraries ( CoffeeCore INTERFACE
         CoffeeSDLPowerInfo
         )
-endif()
-
-#
-#
-# Android, there's a lot of weird stuff here because NativeActivity sucks
-# Generally should not be touched
-#
-#
-if(ANDROID)
-    find_package( AndroidGlue REQUIRED )
-
-    target_sources ( CoffeeCore_Application PRIVATE
-        platform/android/and_main.cpp
-        ${ANDROID_GLUE_SOURCES}
-        )
-
-    target_include_directories ( CoffeeCore_Base PRIVATE
-        platform/android/include
-        )
-
-    #
-    # native_app_glue has a lot of spam in debug mode, we disable that
-    #
-    set_source_files_properties (
-        ${ANDROID_GLUE_SOURCES}
-        PROPERTIES
-        COMPILE_DEFINITIONS "NDEBUG"
-        )
-
-    target_sources ( CoffeeCore_Base PRIVATE
-        private/plat/environment/android/environment.cpp
-        private/plat/sensor/android/sensor.cpp
-        private/plat/file/linux/file.cpp
-
-        ${NDK_HELPER_SOURCES}
-        ${CPUFEATURES_SOURCES}
-        platform/android/JNIHelper.cpp
-
-        private/plat/file/android/file.cpp
-
-        # For reading process information
-        private/plat/environment/linux/process.cpp
-        private/plat/environment/linux/sysinfo.cpp
-        private/plat/environment/android/sysinfo.cpp
-        )
-
-    target_compile_definitions ( CoffeeCore_Base PUBLIC
-        -DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}
-        )
-
-    target_compile_options ( CoffeeCore_Base PUBLIC
-        # This flag gives a lot of false positives for aligned accesses
-        -Wno-address-of-packed-member
-        )
-
-    target_include_directories ( CoffeeCore_Base PUBLIC
-        $<BUILD_INTERFACE:${ANDROID_GLUE_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${NDK_HELPER_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${CPUFEATURES_INCLUDE_DIR}>
-        )
-endif()
-
-#
-#
-# Apple iOS/OS X-specific code
-#
-#
-if(APPLE)
-    if(NOT IOS)
-        target_link_libraries ( CoffeeCore_Base PUBLIC
-            "-framework CoreGraphics"
-            "-framework QuartzCore"
-            "-framework OpenGL"
-            "-framework AppKit"
-            )
-    endif()
-
-    target_sources ( CoffeeCore_Base PRIVATE
-        #
-        # System information queries
-        #
-        private/plat/environment/osx/sysinfo.cpp
-        private/plat/environment/osx/environment.cpp
-        # Some functions are exposed by Obj-C
-        private/plat/environment/osx/system_interface.m
-
-        private/plat/file/osx/file.cpp
-        )
-endif()
-
-#
-#
-# Portable POSIX code
-#
-#
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
-    target_sources ( CoffeeCore_Base PRIVATE
-
-        #
-        # POSIX environment functions
-        #
-        private/plat/environment/unix/environment.cpp
-
-        #
-        # Stacktrace using libunwind
-        #
-        private/plat/environment/unix/stacktrace.cpp
-
-        #
-        # Dynamic linking (libdl)
-        #
-        private/plat/linking/unix/loader.cpp
-
-        #
-        # File management
-        #
-        private/plat/file/unix/posix_shared.cpp
-        private/plat/file/unix/file.cpp
-        )
-
-    find_package( Unwind QUIET )
-    if(UNWIND_FOUND)
-        add_definitions(
-            -DLIBUNWIND_ENABLED
-            )
-    endif()
-endif()
-
-#
-#
-# Linux desktop-specific code
-#
-#
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    target_sources ( CoffeeCore_Base PRIVATE
-        #
-        # Linux-specific system calls and behavior all around
-        #
-        private/plat/environment/linux/environment.cpp
-        private/plat/environment/linux/stacktrace.cpp
-        private/plat/environment/linux/process.cpp
-        private/plat/environment/linux/sysinfo.cpp
-
-        private/plat/file/linux/file.cpp
-        )
-endif()
-
-#
-#
-# Emscripten-specific code
-#
-#
-if(EMSCRIPTEN)
-    target_sources ( CoffeeCore_Base PRIVATE
-        #
-        # Like POSIX, but limited
-        #
-        private/plat/environment/unix/environment.cpp
-        private/plat/environment/emscripten/sysinfo.cpp
-        )
-endif()
-
-#
-#
-# Raspberry Pi-specific code
-#
-#
-if(RASPBERRY)
-    target_sources ( CoffeeCore_Base PRIVATE
-        #
-        # Extracts Raspberry Pi board name
-        #
-        private/plat/environment/raspberry/sysinfo.cpp
-        )
-endif()
-
-#
-#
-# Maemo-specific code
-#
-#
-if(MAEMO)
-    target_sources ( CoffeeCore_Base PRIVATE
-        #
-        # Accelerometers, light sensors and etc.
-        #
-        private/plat/sensor/maemo/sensors.cpp
-        )
-endif()
-
-#
-#
-# Windows Win32/UWP-specific code
-#
-#
-if(WIN32)
-    target_sources ( CoffeeCore_Base PRIVATE
-        private/plat/environment/windows/environment.cpp
-        private/plat/environment/windows/sysinfo.cpp
-
-        private/plat/file/windows/file.cpp
-
-		private/plat/plat_windows_errors.cpp
-        )
-    if(NOT WIN_UWP AND NOT MINGW64)
-        target_sources ( CoffeeCore_Base PRIVATE
-            private/plat/environment/windows/windows_startup.cpp
-            )
-    elseif(WIN_UWP)
-        target_sources ( CoffeeCore_Base PRIVATE
-            private/plat/environment/windows/windows_startup_uwp.cpp
-            )
-    endif()
 endif()
 
 #
@@ -503,9 +254,6 @@ if(GAMECUBE)
     target_link_libraries ( CoffeeCore_Base PUBLIC
         GeckoThreads
         )
-#    target_sources ( CoffeeCore_Base PRIVATE
-#        private/types/tdef/thread_types.cpp
-#        )
 endif()
 
 coffee_bundle_includes (

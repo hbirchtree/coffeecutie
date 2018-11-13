@@ -1,0 +1,11 @@
+#!/bin/bash
+
+TARGET=$1
+TARGET_FILE=${TARGET_FILE:-/tmp/$RANDOM.elf}
+EXEC_FILE=$(realpath $2)
+ARGS=${@:3}
+PORT=${PORT:-22}
+
+scp -P $PORT $EXEC_FILE $TARGET:$TARGET_FILE
+ssh -p $PORT $TARGET -- exec $TARGET_FILE $ARGS
+ssh -p $PORT $TARGET -- rm $TARGET_FILE

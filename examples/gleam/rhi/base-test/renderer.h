@@ -1,9 +1,9 @@
 #include <coffee/asio/asio_worker.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/core/base/files/url.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/core/types/graphics_types.h>
-#include <coffee/core/base/files/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/windowing/renderer/renderer.h>
@@ -33,6 +33,7 @@
 
 using namespace Coffee;
 using namespace Display;
+using namespace SceneGraph;
 
 using CDRenderer = CSDL2Renderer;
 using GLM        = GLEAMAPI;
@@ -378,9 +379,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     /* Uploading textures */
     g.eyetex = new GLM::S_2DA(
-        PixelFormat::RGBA8,
-        1,
-        GLM::TextureDMABuffered | GLM::TextureAutoMipmapped);
+        PixFmt::RGBA8, 1, GLM::TextureDMABuffered | GLM::TextureAutoMipmapped);
     auto& eyetex = *g.eyetex;
 
     eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
@@ -411,7 +410,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                 &img, BytesConst(imdata.data, imdata.size, imdata.size));
 
             eyetex.upload(
-                BitFormat::UByte,
+                BitFmt::UByte,
                 PixCmp::RGBA,
                 {img.size.w, img.size.h, 1},
                 img.data,

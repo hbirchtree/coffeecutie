@@ -23,6 +23,10 @@ coffee_library (
     private/net_profiling.cpp
 
     LIBRARIES CoffeeCore ${LIBS}
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
     )
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )

@@ -3,5 +3,5 @@ coffee_test (
     TITLE "Cu_HttpBasic"
 
     SOURCES test.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES CoffeeCore CoffeeASIO
     )

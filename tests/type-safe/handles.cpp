@@ -1,12 +1,12 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/handle.h>
+#include <peripherals/semantic/handle.h>
 
 using namespace Coffee;
 
 template<typename T>
 DENYINLINE void handle_out_of_scope(T some_value)
 {
-    generic_handle_t<T, false> handle(some_value);
+    semantic::generic_handle_t<T, false> handle(some_value);
     handle.handle_check();
     handle.release();
 }
@@ -14,7 +14,7 @@ DENYINLINE void handle_out_of_scope(T some_value)
 template<typename T>
 DENYINLINE void handle_released(T some_value)
 {
-    generic_handle_t<T, false> handle(some_value);
+    semantic::generic_handle_t<T, false> handle(some_value);
 
     handle.release();
 
@@ -23,15 +23,17 @@ DENYINLINE void handle_released(T some_value)
 
 bool integer_handle()
 {
-    try {
+    try
+    {
         throw resource_leak("derp");
-    }catch(...)
+    } catch(...)
     {
     }
 
     handle_out_of_scope<unsigned int>(0);
 
-    try{
+    try
+    {
         handle_out_of_scope<unsigned int>(1);
 
         return false;
@@ -51,7 +53,8 @@ bool pointer_handle()
 
     handle_out_of_scope<void*>(nullptr);
 
-    try{
+    try
+    {
         handle_out_of_scope<void*>(&sample);
 
         return false;

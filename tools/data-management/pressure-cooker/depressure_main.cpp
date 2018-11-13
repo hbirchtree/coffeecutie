@@ -1,10 +1,12 @@
 #include <coffee/core/CApplication>
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/environment/argument_parse.h>
 #include <coffee/core/terminal/table-print.h>
+#include <coffee/core/CMath>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 
@@ -213,7 +215,7 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     VirtFS::vfs_view vfsView(targetData);
-    auto vfsData = _cbasic_data_chunk<const VirtFS::VirtualFS>(targetData);
+    auto vfsData = mem_chunk<const VirtFS::VirtualFS>(targetData);
 
     if(vfsView.begin() == vfsView.end())
     {

@@ -8,6 +8,8 @@ option ( BUILD_SDL2     "Build with SDL2 graphics backend"          ON  )
 
 option ( BUILD_HEADFUL  "Build with graphics/windowing support"     ON )
 
+add_subdirectory(application)
+
 add_subdirectory(core)
 add_subdirectory(image)
 

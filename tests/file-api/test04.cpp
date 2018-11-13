@@ -1,6 +1,6 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 
 using namespace Coffee;
 

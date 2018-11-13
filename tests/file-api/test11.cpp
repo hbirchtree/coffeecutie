@@ -1,7 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 
 using namespace Coffee;
 
@@ -77,7 +77,7 @@ bool memcpy_variable()
 bool memcpy_stl_variable()
 {
     Vector<byte_t> source;
-    Bytes target = Bytes::Alloc(100);
+    Bytes          target = Bytes::Alloc(100);
 
     source.resize(100);
 
@@ -93,7 +93,7 @@ bool memcpy_stl_variable()
 
 bool memcpy_to_stl_variable()
 {
-    Bytes source = Bytes::Alloc(100);
+    Bytes          source = Bytes::Alloc(100);
     Vector<byte_t> target;
 
     target.reserve(100);

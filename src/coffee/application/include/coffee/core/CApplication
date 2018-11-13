@@ -1,0 +1,3 @@
+#pragma once
+
+#include <coffee/core/plat/environment/application_start.h>

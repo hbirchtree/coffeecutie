@@ -1,0 +1,3 @@
+#pragma once
+
+#include <coffee/core/unit_tests/framework.h>

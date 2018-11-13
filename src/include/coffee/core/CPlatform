@@ -1,7 +1,0 @@
-#pragma once
-
-#include "plat/file.h"
-#include "plat/linking.h"
-#include "plat/memory.h"
-#include "plat/plat_environment.h"
-#include "plat/timing.h"

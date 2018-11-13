@@ -4,9 +4,8 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/coffee.h>
 #include <coffee/core/plat/environment.h>
-#include <coffee/core/types/cdef/memsafe.h>
-
-#include <coffee/CImage>
+#include <coffee/core/types/chunk.h>
+#include <coffee/image/cimage.h>
 
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2SpriteWindow>
@@ -149,7 +148,7 @@ i32 coffee_main(i32, cstring_w*)
                data->r,
                1,
                &data->t,
-               PixelFormat::RGBA8UI,
+               PixFmt::RGBA8UI,
                RSCA::Streaming,
                CSize(128, 128)))
         {

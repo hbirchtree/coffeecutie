@@ -1,3 +1,4 @@
+#include <coffee/core/CMath>
 #include <coffee/core/CUnitTesting>
 #include <coffee/image/cimage.h>
 

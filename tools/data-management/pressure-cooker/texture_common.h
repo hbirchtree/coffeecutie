@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/CFiles>
+#include <coffee/core/CMath>
 #include <coffee/core/coffee.h>
 #include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/image/cimage.h>

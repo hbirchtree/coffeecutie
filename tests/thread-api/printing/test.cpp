@@ -21,8 +21,8 @@ bool mutex_locking()
 
     Cmd::AltScreen();
 
-    auto t1 = Threads::RunAsync(message_test);
-    auto t2 = Threads::RunAsync(message_test);
+    auto t1 = threads::RunAsync(message_test);
+    auto t2 = threads::RunAsync(message_test);
     t1.get();
     t2.get();
 

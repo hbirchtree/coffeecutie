@@ -1,5 +1,5 @@
 #include <coffee/core/coffee.h>
-#include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/chunk.h>
 #include <coffee/core/types/vector_types.h>
 
 #include <coffee/core/CUnitTesting>

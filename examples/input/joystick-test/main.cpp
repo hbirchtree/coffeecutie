@@ -1,14 +1,13 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
+
+#include <coffee/image/cimage.h>
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2System>
 #include <coffee/sdl2/CSDL2WindowHost>
-
-#include <coffee/core/types/map.h>
-#include <coffee/image/cimage.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
 
@@ -43,7 +42,7 @@ Sprites::Texture sprite_load(
         *renderer,
         1,
         &out,
-        PixelFormat::RGBA8,
+        PixFmt::RGBA8,
         RSCA::Streaming,
         {img.size.w, img.size.h});
 
@@ -133,44 +132,43 @@ i32 coffee_main(i32, cstring_w*)
         rend.createSprite(controller_atlas, src, &sprite);
     };
 
-    _cbasic_static_map<Sprites::SpriteSource, Sprites::Sprite&, 23> sprite_map =
-        {
-            {{256, 0, 128, 128}, analog_sprite},
+    Vector<Pair<Sprites::SpriteSource, Sprites::Sprite&>> sprite_map = {
+        {{256, 0, 128, 128}, analog_sprite},
 
-            {{256, 128, 96, 64}, menu_sprite},
-            {{256, 192, 96, 64}, menu_p_sprite},
+        {{256, 128, 96, 64}, menu_sprite},
+        {{256, 192, 96, 64}, menu_p_sprite},
 
-            {{128, 512 - 128, 128, 128}, dpad_bg_sprite},
+        {{128, 512 - 128, 128, 128}, dpad_bg_sprite},
 
-            {{293, 384, 50, 43}, dpad_up_sprite},
-            {{293, 472, 50, 40}, dpad_dp_sprite},
-            {{256, 427, 37, 45}, dpad_lp_sprite},
-            {{343, 427, 38, 45}, dpad_rp_sprite},
+        {{293, 384, 50, 43}, dpad_up_sprite},
+        {{293, 472, 50, 40}, dpad_dp_sprite},
+        {{256, 427, 37, 45}, dpad_lp_sprite},
+        {{343, 427, 38, 45}, dpad_rp_sprite},
 
-            {{0, 0, 256, 256}, analog_back_sprite},
+        {{0, 0, 256, 256}, analog_back_sprite},
 
-            {{128, 256, 96, 32}, trigger_sprite},
-            {{0, 256, 96, 256}, trigger_back_sprite},
+        {{128, 256, 96, 32}, trigger_sprite},
+        {{0, 256, 96, 256}, trigger_back_sprite},
 
-            {{640, 256, 128, 64}, shoulderl_sprite},
-            {{768, 256, 128, 64}, shoulderl_p_sprite},
+        {{640, 256, 128, 64}, shoulderl_sprite},
+        {{768, 256, 128, 64}, shoulderl_p_sprite},
 
-            {{384, 256, 128, 64}, shoulderr_sprite},
-            {{512, 256, 128, 64}, shoulderr_p_sprite},
+        {{384, 256, 128, 64}, shoulderr_sprite},
+        {{512, 256, 128, 64}, shoulderr_p_sprite},
 
-            {{384, 0, 128, 128}, button_a_sprite},
-            {{384, 128, 128, 128}, button_x_sprite},
-            {{640, 0, 128, 128}, button_b_sprite},
-            {{640, 128, 128, 128}, button_y_sprite},
+        {{384, 0, 128, 128}, button_a_sprite},
+        {{384, 128, 128, 128}, button_x_sprite},
+        {{640, 0, 128, 128}, button_b_sprite},
+        {{640, 128, 128, 128}, button_y_sprite},
 
-            {{512, 0, 128, 128}, button_ap_sprite},
-            {{512, 128, 128, 128}, button_xp_sprite},
-            {{768, 0, 128, 128}, button_bp_sprite},
-            {{768, 128, 128, 128}, button_yp_sprite},
-        };
+        {{512, 0, 128, 128}, button_ap_sprite},
+        {{512, 128, 128, 128}, button_xp_sprite},
+        {{768, 0, 128, 128}, button_bp_sprite},
+        {{768, 128, 128, 128}, button_yp_sprite},
+    };
 
-    for(size_t i = 0; i < 23; i++)
-        bind_sprite(sprite_map[i].key, sprite_map[i].value);
+    for(auto const& v : sprite_map)
+        bind_sprite(v.first, v.second);
 
     /* Install standard event handlers */
     winhost.installEventHandler(
