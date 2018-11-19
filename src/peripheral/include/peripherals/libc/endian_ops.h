@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #endif
 
+namespace libc {
 namespace endian {
 
 struct net_order
@@ -69,3 +70,4 @@ FORCEDINLINE typename Param::type to(typename Param::type v)
 #undef ENDIAN_TEMPLATE
 
 } // namespace endian
+} // namespace libc

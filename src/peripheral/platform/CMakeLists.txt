@@ -230,7 +230,7 @@ if(WIN32)
 
         platforms/win32/file.cpp
 
-        platforms/win32/errors.cpp
+#        platforms/win32/errors.cpp
         )
     if(NOT WIN_UWP AND NOT MINGW64)
         target_sources ( PeripheralPlatform PRIVATE

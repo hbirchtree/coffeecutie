@@ -9,21 +9,6 @@ namespace Coffee {
 namespace CResources {
 namespace Posix {
 
-const char* posix_error_category::name() const noexcept
-{
-    return "posix_error_code";
-}
-
-std::string posix_error_category::message(int error_code) const
-{
-    char* posix_error_msg = strerror(error_code);
-
-    if(!posix_error_msg)
-        return "No error";
-
-    return posix_error_msg;
-}
-
 FileFunDef<>::NodeType PosixFileMod_def::Stat(Url const& fn, file_error&)
 {
     auto        url = *fn;

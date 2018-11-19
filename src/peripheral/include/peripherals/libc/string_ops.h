@@ -8,6 +8,7 @@
 #include <peripherals/stl/standard_exceptions.h>
 #include <peripherals/stl/type_safety.h>
 
+namespace libc {
 namespace str {
 
 using namespace libc_types;
@@ -452,3 +453,4 @@ FORCEDINLINE PodType from_string(const CharType* s)
 }
 
 } // namespace str
+} // namespace libc

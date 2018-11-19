@@ -65,14 +65,6 @@ struct posix_fd
     }
 };
 
-struct posix_error_category : error_category
-{
-    virtual const char* name() const noexcept;
-    virtual std::string message(int error_code) const;
-};
-
-using posix_error_code = domain_error_code<int, posix_error_category>;
-
 struct PosixApi
 {
     struct FileHandle

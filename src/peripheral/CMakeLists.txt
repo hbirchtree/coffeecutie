@@ -1,17 +1,14 @@
-add_library ( PeripheralLib INTERFACE )
+coffee_library (
+    TARGET PeripheralLib
+    SOURCES
+    private/error_types.cpp
 
-target_include_directories ( PeripheralLib INTERFACE
+    HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     )
 
-install (
-    TARGETS PeripheralLib
-    EXPORT ${PROJECT_NAME}
-    )
-
-register_library ( PeripheralLib
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories ( PeripheralLib PUBLIC
     )
 
 ############################################################

@@ -11,6 +11,8 @@ template<
     typename hnd_type,
     bool enable_exception = true,
 
+    hnd_type InvalidValue = hnd_type(),
+
     typename std::enable_if<
         std::is_pod<hnd_type>::value ||
         std::is_pointer<hnd_type>::value>::type* = nullptr
@@ -24,7 +26,7 @@ struct generic_handle_t : non_copy
 
     generic_handle_t(generic_handle_t&& other) : hnd(other.hnd)
     {
-        other.hnd = hnd_type();
+        other.hnd = InvalidValue;
     }
 
     explicit generic_handle_t(hnd_type handle) : hnd(handle)
@@ -34,7 +36,7 @@ struct generic_handle_t : non_copy
     void handle_check()
     {
 #if MODE_DEBUG
-        if(hnd != hnd_type())
+        if(hnd != InvalidValue)
             Throw(resource_leak("resource leakage detected"));
 #endif
     }
@@ -62,7 +64,7 @@ struct generic_handle_t : non_copy
 
     bool operator!() const
     {
-        return hnd == hnd_type();
+        return hnd == InvalidValue;
     }
 
     explicit operator hnd_type() const
@@ -70,9 +72,14 @@ struct generic_handle_t : non_copy
         return hnd;
     }
 
+    operator bool() const
+    {
+        return hnd != InvalidValue;
+    }
+
     void release()
     {
-        hnd = hnd_type();
+        hnd = InvalidValue;
     }
 
     generic_handle_t<hnd_type>& operator=(hnd_type otherHandle)
