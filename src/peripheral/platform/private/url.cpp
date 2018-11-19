@@ -1,15 +1,19 @@
-#include <coffee/url/url.h>
+#include <url/url.h>
 
-#include <coffee/core/CRegex>
-#include <coffee/core/base/files/cfiles.h>
-#include <coffee/core/coffee.h>
-#include <coffee/core/formatting.h>
-#include <coffee/core/plat/environment.h>
-#include <coffee/core/plat/file.h>
-#include <coffee/core/plat/timing/profiling.h>
-#include <coffee/core/resource_prefix.h>
+#include <peripherals/error/file_base.h>
+#include <peripherals/libc/string_ops.h>
+#include <peripherals/stl/stlstring_ops.h>
+#include <peripherals/stl/string_casting.h>
+#include <plat/regex.h>
+//#include <coffee/core/base/files/cfiles.h>
+//#include <coffee/core/coffee.h>
+//#include <coffee/core/formatting.h>
+//#include <coffee/core/plat/environment.h>
+//#include <coffee/core/plat/file.h>
+//#include <coffee/core/plat/timing/profiling.h>
+//#include <coffee/core/resource_prefix.h>
 
-#include <coffee/core/CDebug>
+//#include <coffee/core/CDebug>
 
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>
@@ -35,9 +39,10 @@ using WPkg = ::Windows::ApplicationModel::Package;
 #include <CoreFoundation/CFString.h>
 #endif
 
-namespace Coffee {
+namespace platform {
+namespace url {
 
-using namespace CResources;
+using namespace url::constructors;
 
 struct SystemPaths
 {
@@ -502,19 +507,6 @@ Path& Path::operator=(const Url& url)
     return *this;
 }
 
-namespace Strings {
-CString to_string(const Path& path)
-{
-    return "path(" + path.internUrl + ")";
-}
-
-CString to_string(const Url& url)
-{
-    return "url(" + url.internUrl + "," +
-           str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
-}
-} // namespace Strings
-
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
@@ -599,4 +591,23 @@ UrlParse UrlParse::From(const Url& url)
     return p;
 }
 
+} // namespace url
+} // namespace platform
+
+namespace Coffee {
+namespace Strings {
+using namespace ::stl_types;
+using namespace ::platform::url;
+
+CString to_string(const Path& path)
+{
+    return "path(" + path.internUrl + ")";
+}
+
+CString to_string(const Url& url)
+{
+    return "url(" + url.internUrl + "," +
+           libc::str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
+}
+} // namespace Strings
 } // namespace Coffee

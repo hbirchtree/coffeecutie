@@ -11,7 +11,6 @@ void register_atexit(exit_handler hnd)
 #else
     if(::atexit(hnd) != 0)
     {
-
     }
 #endif
 }

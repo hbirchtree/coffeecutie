@@ -90,6 +90,9 @@
  *
  */
 
+#include "cpp_quirks.h"
+#include "posix_quirks.h"
+
 /* General configuration changers */
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
 //#define COFFEE_GLES20_MODE
@@ -164,10 +167,8 @@
  *
  */
 
-//#if !defined(COFFEE_ANDROID) && !defined(COFFEE_LOWFAT)
 #define COFFEE_USE_EXCEPTIONS
 #define COFFEE_USE_RTTI
-//#endif
 
 /*
  *
@@ -178,12 +179,6 @@
 #if defined(COFFEE_ANDROID) || defined(COFFEE_LOWFAT)
 /* For Android, we limit inlining for size reasons */
 #define COFFEE_LIMIT_INLINE
-//#define COFFEE_DISABLE_PROFILER
-#endif
-
-#if defined(COFFEE_GEKKO)
-#define COFFEE_NO_EXCEPTION_QUIET
-#define COFFEE_NO_EXCEPTION_DUMP
 #endif
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
@@ -230,84 +225,7 @@
 #define COFFEE_DYNAMIC_TEMPFILES
 #endif
 
-/*
- *
- * OpenGL/ES
- *
- */
 
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
-#define COFFEE_LINKED_GLES
-#endif
-
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
-#define COFFEE_ONLY_GLES20
-#endif
-
-#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_GLES20_MODE)
-#define COFFEE_LINKED_GLES
-#define COFFEE_ONLY_GLES20
-#endif
-
-#define COFFEE_GLES20_EXTENSIONS
-
-#if defined(COFFEE_EMSCRIPTEN)
-#define COFFEE_WEBGL
-#define COFFEE_LINKED_GLES
-#define COFFEE_LINKED_GLES20
-#endif
-
-/*
- *
- * Display stack
- *
- */
-
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || \
-    defined(COFFEE_ANDROID)
-#define COFFEE_DISABLE_SRGB_SUPPORT
-#define COFFEE_USE_IMMERSIVE_VIEW
-#define COFFEE_ALWAYS_VSYNC
-#endif
-
-#if defined(COFFEE_MAEMO)
-#define COFFEE_FRAGILE_FRAMEBUFFER
-#define COFFEE_ALWAYS_VSYNC
-#define COFFEE_X11_HILDON
-#endif
-
-#if defined(COFFEE_WINDOWS) && defined(COFFEE_GLES20_MODE)
-#define COFFEE_USE_MAEMO_EGL
-#define COFFEE_USE_WINDOWS_ANGLE
-#endif
-
-#if defined(COFFEE_ANDROID)
-#define COFFEE_USE_ANDROID_NATIVEWIN
-#define COFFEE_USE_MAEMO_EGL
-#endif
-
-#if defined(COFFEE_APPLE_MOBILE)
-#define COFFEE_USE_APPLE_GLKIT
-#define COFFEE_USE_MAEMO_EGL
-#endif
-
-#if defined(COFFEE_RASPBERRYPI)
-//#define COFFEE_RASPBERRY_DMX
-//#define COFFEE_USE_MAEMO_EGL
-#endif
-
-#if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
-/* This is the super-fast X11 combination, SDL2 can't even
- *  be compared to this */
-/* The window is guaranteed to show within 500ms */
-#if !defined(COFFEE_GLEAM_DESKTOP)
-/* You cannot load OpenGL (non-ES) with EGL :( */
-#define COFFEE_USE_MAEMO_EGL
-#else
-#define COFFEE_USE_LINUX_GLX
-#endif
-#define COFFEE_USE_MAEMO_X11
-#endif
 
 /*
  *
@@ -331,7 +249,7 @@
  *
  */
 
-/* Standard flags */
+/* Default to using std::chrono for conversion, clocks and etc. */
 #define COFFEE_USE_CHRONOTIME
 
 #if defined(COFFEE_MAEMO) || defined(COFFEE_GEKKO)
@@ -346,72 +264,6 @@
 #if defined(LIBUNWIND_ENABLED)
 #define COFFEE_USE_UNWIND
 #endif
-#endif
-
-/* This enables safer, but a bit slower functions for some core functions */
-/* dirname(), basename() */
-#define COFFEE_USE_POSIX_BASENAME
-
-#if defined(COFFEE_MAEMO)
-/* C++ features that don't work */
-#define COFFEE_NO_FUTURES
-#define COFFEE_NO_EXCEPTION_RETHROW
-#define COFFEE_NO_TERMINATION_HANDLER
-
-/* Strict POSIX rules apply sometimes */
-#define COFFEE_NO_HUGETLB
-#define COFFEE_NO_MMAP64
-#define COFFEE_NO_CANONICALIZE
-#define COFFEE_NO_RUSAGE_THREAD
-#endif
-
-#if defined(COFFEE_ANDROID)
-#define COFFEE_NO_PTHREAD_GETNAME_NP
-#endif
-
-#if defined(COFFEE_APPLE_MOBILE)
-#define COFFEE_NO_SYSTEM_CMD
-#endif
-
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)
-#define COFFEE_NO_ATEXIT
-#endif
-
-#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
-#define COFFEE_NO_EXECVPE
-#endif
-
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_EXECVPE)
-#define COFFEE_USE_EXECVPE
-#endif
-
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_MAEMO)
-#define COFFEE_NO_PTHREAD_SETNAME_NP
-#define COFFEE_NO_PTHREAD_GETNAME_NP
-#endif
-
-/*
- *
- * thread_local workarounds
- *
- */
-
-#if defined(COFFEE_EMSCRIPTEN)
-#define COFFEE_NO_TLS
-#endif
-
-/*
- * Support for thread_local arrived in Xcode 8.
- * If you are on Xcode 7 or below, take this.
- * #define COFFEE_XCODE_NO_TLS
- */
-
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_RASPBERRYPI) || \
-    defined(COFFEE_MAEMO)
-#define thread_local
-#elif(defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
-#define thread_local __thread
 #endif
 
 /*
@@ -459,37 +311,11 @@
  */
 
 #if defined(COFFEE_GEKKO)
-#define COFFEE_NO_THREADLIB
-#define COFFEE_NO_FUTURES
+/* For more correct types IRT what all the libraries use */
 #define COFFEE_PLAIN_INT_TYPES
 #endif
 
-/*
- *
- * SDL stuff, because it is default
- *
- */
-
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
-    defined(COFFEE_WINDOWS_UWP)
-#define COFFEE_NO_SYSTEM_CMD
-#endif
-
-#if !defined(COFFEE_RASPBERRY_DMX) && !defined(COFFEE_USE_LINUX_GLX) && \
-    !defined(COFFEE_USE_MAEMO_EGL) && !defined(COFFEE_USE_MAEMO_X11) && \
-    defined(COFFEE_USE_SDL2)
-#define COFFEE_USE_SDL_GL
-#endif
-
-#if !defined(COFFEE_RASPBERRY_DMX) && !defined(COFFEE_USE_LINUX_GLX) && \
-    !defined(COFFEE_USE_MAEMO_X11) && defined(COFFEE_USE_SDL2)
-#define COFFEE_USE_SDL_WINDOW
-#endif
-
-#if !defined(COFFEE_RASPBERRY_DMX) && !defined(COFFEE_USE_MAEMO_X11) && \
-    defined(COFFEE_USE_SDL2)
-#define COFFEE_USE_SDL_EVENT
-#endif
+#include "video_quirks.h"
 
 /*
  *

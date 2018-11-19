@@ -9,9 +9,9 @@ using namespace stl_types;
 
 template<
     typename hnd_type,
-    bool enable_exception = true,
-
-    hnd_type InvalidValue = hnd_type(),
+    bool     enable_exception    = true,
+    hnd_type InvalidValue        = hnd_type(),
+    void (*close_func)(hnd_type) = nullptr,
 
     typename std::enable_if<
         std::is_pod<hnd_type>::value ||
@@ -46,6 +46,10 @@ struct generic_handle_t : non_copy
         typename std::enable_if<enable_exception, Dummy>::type* = nullptr>
     void handle_check_enable()
     {
+        static_assert(
+            enable_exception && close_func,
+            "close function will never be called");
+
         handle_check();
     }
     template<
@@ -53,6 +57,8 @@ struct generic_handle_t : non_copy
         typename std::enable_if<!enable_exception, Dummy>::type* = nullptr>
     void handle_check_enable()
     {
+        if(close_func && hnd != InvalidValue)
+            close_func(hnd);
     }
 
     ~generic_handle_t()

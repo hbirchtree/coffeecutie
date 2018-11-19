@@ -6,16 +6,18 @@
 #include <coffee/core/plat/plat_windows.h>
 #endif
 
-namespace Coffee{
+namespace Coffee {
 
 CString SysInfoDef::GetSystemString()
 {
     /* Please don't ask about the leading space :) */
     const constexpr cstring _fmt = "%.3s%u_%s ";
-    int len = snprintf(nullptr,0,_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
+    int                     len =
+        snprintf(nullptr, 0, _fmt, C_SYSTEM_STRING, BitNess(), COFFEE_ARCH);
     CString base;
     base.resize(len);
-    snprintf(&base[0],base.size(),_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
+    snprintf(
+        &base[0], base.size(), _fmt, C_SYSTEM_STRING, BitNess(), COFFEE_ARCH);
     base.resize(base.find('\0'));
     base = str::fmt::lower(base);
     return base;
@@ -26,10 +28,11 @@ CString SysInfoDef::HostName()
 #if MODE_DEBUG
 
 #if defined(COFFEE_UNIXPLAT) || defined(COFFEE_WINDOWS)
-    /* For now, we assume this works. We might implement a better one where it retries upon failure. */
+    /* For now, we assume this works. We might implement a better one where it
+     * retries upon failure. */
     CString _m;
     _m.resize(60);
-    gethostname(&_m[0],_m.size());
+    gethostname(&_m[0], _m.size());
     _m.resize(_m.find('\0'));
     return _m;
 #else
@@ -43,27 +46,27 @@ CString SysInfoDef::HostName()
 
 ThrdCnt SysInfoDef::SmartParallelism(u64 worksize, u64 weight)
 {
-    if(worksize*weight <= ThreadCount())
+    if(worksize * weight <= ThreadCount())
     {
         return 1;
-    }else if(worksize*weight <= CMath::pow(Parallelism(),3))
+    } else if(worksize * weight <= CMath::pow(Parallelism(), 3))
     {
         return ThreadCount();
-    }else
+    } else
         return Parallelism();
 }
 
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_WINDOWS)
 HWDeviceInfo SysInfoDef::Processor(C_UNUSED(u32 i))
 {
-    return HWDeviceInfo("Generic Processor","0x0");
+    return HWDeviceInfo("Generic Processor", "0x0");
 }
 #endif
 
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_ANDROID)
 HWDeviceInfo SysInfoDef::DeviceName()
 {
-    return HWDeviceInfo("Generic","Device","0x0");
+    return HWDeviceInfo("Generic", "Device", "0x0");
 }
 
 HWDeviceInfo SysInfoDef::Motherboard()
@@ -82,4 +85,4 @@ HWDeviceInfo SysInfoDef::BIOS()
 }
 #endif
 
-}
+} // namespace Coffee

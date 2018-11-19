@@ -20,7 +20,7 @@ if(GAMECUBE)
         TARGET GeckoThreads
         LIBRARIES
         SOURCES
-        stl_replacements/gecko/threads.cpp
+        stl_replacements/gekko/threads.cpp
         )
 endif()
 
