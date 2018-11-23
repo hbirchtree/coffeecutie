@@ -2,12 +2,14 @@
 
 #include "../coffee.h"
 
-namespace Coffee{
-
+namespace platform {
+namespace url {
 struct Url;
+}
+} // namespace platform
 
-namespace Profiling{
-
+namespace Coffee {
+namespace Profiling {
 
 /*!
  * \brief Print profiler data to terminal
@@ -18,7 +20,7 @@ COFFEE_APP_FUNC void PrintProfilerData();
  * \brief Export profiler data to a file
  * \param target
  */
-COFFEE_APP_FUNC void ExportProfilerData(CString &target);
+COFFEE_APP_FUNC void ExportProfilerData(CString& target);
 
 /*!
  * \brief Export profiler data to Chrome tracing format
@@ -32,7 +34,7 @@ COFFEE_APP_FUNC void ExportChromeTracerData(CString& target);
  * \param outfile
  */
 COFFEE_APP_FUNC void ExportStringToFile(
-        CString const& data, Url const& outfile);
+    CString const& data, platform::url::Url const& outfile);
 
 /*!
  * \brief Called on exit to conclude profiling session
@@ -42,5 +44,5 @@ COFFEE_APP_FUNC void ExportStringToFile(
  */
 COFFEE_APP_FUNC void ExitRoutine();
 
-}
-}
+} // namespace Profiling
+} // namespace Coffee

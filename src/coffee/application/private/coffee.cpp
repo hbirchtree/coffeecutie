@@ -1,22 +1,22 @@
 #include <coffee/core/coffee.h>
 
 #include <coffee/core/CFiles>
-#include <coffee/core/formatting.h>
-
 #include <coffee/core/CMD>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/base/jsonlogger.h>
 #include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/coffee_args.h>
-#include <coffee/core/coffee_signals.h>
-#include <coffee/core/coffee_version.h>
+#include <coffee/core/formatting.h>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/environment/process_def.h>
-#include <coffee/core/plat/file.h>
-#include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/platform_data.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/cdef/infotypes.h>
+#include <peripherals/build/license.h>
+#include <platforms/environment.h>
+#include <platforms/file.h>
+#include <platforms/process.h>
+#include <platforms/sysinfo.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
@@ -24,6 +24,8 @@
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
 #endif
+
+using namespace ::platform::info;
 
 namespace Coffee {
 
@@ -80,12 +82,12 @@ FORCEDINLINE void PrintArchitectureInfo()
         State::GetBuildInfo().platform,
         State::GetBuildInfo().compiler,
         State::GetBuildInfo().architecture);
-    cOutputPrint("Executing on {0}", PlatformData::SystemDisplayString());
+    cOutputPrint("Executing on {0}", info::system_name());
     cOutputPrint("Device: {0}", SysInfo::DeviceName());
 #endif
 }
 
-FORCEDINLINE void PrintHelpInfo(ArgumentParser const& arg)
+FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
 {
     cOutputPrint("{0}", arg.helpMessage());
 }

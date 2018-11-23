@@ -4,7 +4,7 @@
 
 #include <coffee/core/base.h>
 #include <coffee/core/base/types/cdisplay.h>
-#include <coffee/core/plat/memory/string_ops.h>
+#include <coffee/core/string_ops.h>
 
 namespace Coffee {
 namespace CGL {
@@ -316,7 +316,7 @@ struct CGL_Shared_Debug
         return i == GL_TRUE;
     }
 
-        /* Get*i_v */
+    /* Get*i_v */
 #if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE int32 GetIntegerI(CGenum e, uint32 i)
     {

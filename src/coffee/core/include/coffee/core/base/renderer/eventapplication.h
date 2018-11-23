@@ -2,11 +2,9 @@
 
 #include "inputapplication.h"
 #include <coffee/core/CMD>
-#include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/base/renderer_loader.h>
-#include <coffee/core/eventprocess.h>
-#include <coffee/core/plat/timing.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/foreign/foreign.h>
 
 #include <coffee/core/CProfiling>
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <coffee/core/plat/environment.h>
-#include <coffee/core/plat/memory/cmemory.h>
+#include <platforms/environment.h>
 
 #include "../strings/string_format.h"
 #include "log_interface.h"

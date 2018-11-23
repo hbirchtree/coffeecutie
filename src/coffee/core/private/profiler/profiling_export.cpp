@@ -4,10 +4,10 @@
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base.h>
-#include <coffee/core/base/files/url.h>
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/file.h>
-#include <coffee/core/plat/plat_environment.h>
+#include <platforms/environment.h>
+#include <platforms/file.h>
+#include <url/url.h>
 
 #include <coffee/core/CDebug>
 
@@ -15,6 +15,8 @@
 
 namespace Coffee {
 namespace Profiling {
+
+using namespace ::platform::profiling;
 
 static Vector<DataPoint> GetSortedDataPoints()
 {

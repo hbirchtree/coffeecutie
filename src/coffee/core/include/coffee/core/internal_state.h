@@ -1,8 +1,10 @@
 #pragma once
 
-#include "coffee_version.h"
-#include <peripherals/stl/functional_types.h>
 #include <coffee/core/base_state.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/build/application.h>
+#include <peripherals/stl/thread_types.h>
 
 namespace Coffee {
 
@@ -82,8 +84,6 @@ extern bool& GetAlternateTerminal();
 extern Mutex& GetPrinterLock();
 
 extern BuildInfo& GetBuildInfo();
-
-extern AppData& GetAppData();
 
 } // namespace State
 

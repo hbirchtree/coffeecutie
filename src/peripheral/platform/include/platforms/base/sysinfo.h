@@ -4,7 +4,7 @@
 #include <peripherals/stl/math.h>
 
 #include <peripherals/libc/string_ops.h>
-#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/thread_types.h>
 #include <peripherals/stl/types.h>
 
 #include <coffee/core/types/hardware_info.h>
@@ -92,7 +92,7 @@ struct SysInfoDef
      */
     ThrdCnt ThreadCount()
     {
-        ThrdCnt c = stl_types::CurrentThread::hardware_concurrency();
+        ThrdCnt c = stl_types::Thread::hardware_concurrency();
         return c;
     }
 

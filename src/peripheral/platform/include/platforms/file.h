@@ -1,3 +1,5 @@
+#pragma once
+
 #include "android/file.h"
 #include "libc/file.h"
 #include "linux/file.h"

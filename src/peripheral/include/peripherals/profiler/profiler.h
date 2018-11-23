@@ -11,7 +11,8 @@
 
 #if !defined(PROFILER_STD_TYPES)
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/thread_types.h>
+#include <peripherals/stl/time_types.h>
 #include <peripherals/stl/types.h>
 #else
 #include <stdint.h>

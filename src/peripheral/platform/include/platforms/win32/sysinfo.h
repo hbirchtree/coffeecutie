@@ -1,4 +1,7 @@
-#include "../../platform_detect.h"
+#pragma once
+
+#include <peripherals/base.h>
+
 #ifdef COFFEE_WINDOWS
 
 #pragma once
@@ -11,7 +14,7 @@
 #include <intrin.h>
 
 namespace Coffee {
-namespace Environment{
+namespace Environment {
 namespace Windows {
 struct WindowsSysInfo : SysInfoDef
 {
@@ -66,7 +69,7 @@ struct WindowsSysInfo : SysInfoDef
 
     struct proc_info
     {
-        struct  cache
+        struct cache
         {
             uint16 l1;
             uint16 l1_d_size;
@@ -80,7 +83,7 @@ struct WindowsSysInfo : SysInfoDef
         };
         struct proc
         {
-            cache cache;
+            cache  cache;
             uint32 cores;
             uint32 threads;
         };
@@ -103,7 +106,7 @@ struct WindowsSysInfo : SysInfoDef
 
         proc_info info = GetProcInfo();
 
-        for (proc_info::proc const& p : info.processors)
+        for(proc_info::proc const& p : info.processors)
             c += p.cores;
 
         return c;
@@ -155,11 +158,11 @@ struct WindowsSysInfo : SysInfoDef
     {
         LARGE_INTEGER e;
         QueryPerformanceFrequency(&e);
-        return e.QuadPart/1000000.0;
+        return e.QuadPart / 1000000.0;
     }
     STATICINLINE bool HasFPU()
     {
-        return IsProcessorFeaturePresent(PF_FLOATING_POINT_EMULATED)==0;
+        return IsProcessorFeaturePresent(PF_FLOATING_POINT_EMULATED) == 0;
     }
     STATICINLINE bool HasPAE()
     {
@@ -180,18 +183,18 @@ struct WindowsSysInfo : SysInfoDef
     }
     static CString GetSystemVersion();
 
-	static HWDeviceInfo DeviceName();
+    static HWDeviceInfo DeviceName();
 
-	static HWDeviceInfo Motherboard();
+    static HWDeviceInfo Motherboard();
 
-	static HWDeviceInfo Chassis();
+    static HWDeviceInfo Chassis();
 };
 
-}
-}
+} // namespace Windows
+} // namespace Environment
 
 using PowerInfo = PowerInfoDef;
-using SysInfo = Environment::Windows::WindowsSysInfo;
-}
+using SysInfo   = Environment::Windows::WindowsSysInfo;
+} // namespace Coffee
 
 #endif

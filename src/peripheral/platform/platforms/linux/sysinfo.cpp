@@ -1,25 +1,23 @@
 #include <platforms/linux/sysinfo.h>
 
 #include <coffee/core/platform_data.h>
+#include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 
-#include <coffee/core/CDebug>
-
-namespace Coffee {
-namespace Environment {
+namespace platform {
+namespace env {
 namespace Linux {
 
-CString LinuxSysInfo::cached_cpuinfo_string;
+CString SysInfo::cached_cpuinfo_string;
 
 #define DMI_PATH "/sys/class/dmi/id/"
 static const constexpr cstring invalid_info_string = "To Be Filled By O.E.M.";
 
-using DirFun = CResources::Linux::LinuxDirFun;
-
-using LFileFun = CResources::Linux::LinuxFileFun;
+using DirFun   = file::DirFun;
+using LFileFun = file::Linux::FileFun;
 
 /* More paths to inspect:
  *
@@ -37,14 +35,14 @@ static CString get_lsb_release()
 {
 #ifndef COFFEE_LOWFAT
     CString version = LFileFun::sys_read("/etc/lsb-release");
-    cstring desc    = str::find(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = str::find(desc, '=') + 1) &&
-       (desc = str::find(desc, '"') + 1))
+    cstring desc    = libc::str::find(version.c_str(), "DISTRIB_DESCRIPTION");
+    if(desc && (desc = libc::str::find(desc, '=') + 1) &&
+       (desc = libc::str::find(desc, '"') + 1))
     {
-        cstring end = str::find(desc, '"');
-        if(end || (end = str::find(desc, '\0')))
+        cstring end = libc::str::find(desc, '"');
+        if(end || (end = libc::str::find(desc, '\0')))
         {
-            CString desc_std(desc, end - desc);
+            CString desc_std(desc, C_FCAST<szptr>(end - desc));
             return desc_std;
         }
     }
@@ -100,12 +98,14 @@ CString get_kern_arch()
         return d.machine;
 }
 
-PlatformData::DeviceType get_device_variant()
+info::DeviceType get_device_variant()
 {
+    using namespace platform::info;
+
 #if defined(COFFEE_MAEMO)
-    return PlatformData::DevicePhone;
+    return DevicePhone;
 #elif defined(COFFEE_RASPBERRYPI)
-    return PlatformData::DeviceIOT;
+    return DeviceIOT;
 #endif
     CString input = LFileFun::sys_read("/sys/class/dmi/id/chassis_type");
 
@@ -116,38 +116,38 @@ PlatformData::DeviceType get_device_variant()
     case 0x1:
     case 0x2:
     case 0x19:
-        return PlatformData::DeviceUnknown;
+        return DeviceUnknown;
     case 0x3:
     case 0x4:
     case 0x5:
     case 0x6:
     case 0x7:
-        return PlatformData::DeviceDesktop;
+        return DeviceDesktop;
     case 0x8:
     case 0x9:
     case 0xa:
     case 0xc:
     case 0xe:
     case 0xf:
-        return PlatformData::DeviceLaptop;
+        return DeviceLaptop;
     case 0xb:
-        return PlatformData::DeviceTablet;
+        return DeviceTablet;
     case 0xd:
-        return PlatformData::DeviceAllInOne;
+        return DeviceAllInOne;
     case 0x11:
     case 0x17:
     case 0x1c:
     case 0x1d:
-        return PlatformData::DeviceServer;
+        return DeviceServer;
     case 0x10:
     case 0x18:
-        return PlatformData::DeviceIOT;
+        return DeviceIOT;
     default:
-        return PlatformData::DeviceUnknown;
+        return DeviceUnknown;
     }
 }
 
-CString LinuxSysInfo::GetSystemVersion()
+CString SysInfo::GetSystemVersion()
 {
     CString tmp = get_lsb_release();
     if(tmp.size() <= 0)
@@ -155,12 +155,12 @@ CString LinuxSysInfo::GetSystemVersion()
     return tmp;
 }
 
-void LinuxSysInfo::FreeCPUInfoString()
+void SysInfo::FreeCPUInfoString()
 {
     cached_cpuinfo_string.resize(0);
 }
 
-CString LinuxSysInfo::CPUInfoString(bool force)
+CString SysInfo::CPUInfoString(bool force)
 {
     /* We don't want to read it tons of times */
     if(!cached_cpuinfo_string.empty() && !force)
@@ -176,7 +176,7 @@ CString LinuxSysInfo::CPUInfoString(bool force)
     return data;
 }
 
-Set<CString> LinuxSysInfo::CPUFlags()
+Set<CString> SysInfo::CPUFlags()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query_linaro = "Features";
@@ -214,16 +214,16 @@ Set<CString> LinuxSysInfo::CPUFlags()
 #endif
 }
 
-SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
+SysInfoDef::NetStatusFlags SysInfo::NetStatus()
 {
 #ifndef COFFEE_LOWFAT
     static const constexpr cstring net_path = "/sys/class/net/";
 
     DirFun::DirList list;
 
-    file_error ec;
+    file::file_error ec;
 
-    DirFun::Ls(MkUrl(net_path, RSCA::SystemFile), list, ec);
+    DirFun::Ls(url::constructors::MkUrl(net_path, RSCA::SystemFile), list, ec);
 
     bool has_loopback = false;
     for(DirFun::DirItem_t const& dir : list)
@@ -247,7 +247,7 @@ SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
     return NetStatDisconnected;
 }
 
-u32 LinuxSysInfo::CpuCount()
+u32 SysInfo::CpuCount()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "physical id";
@@ -265,7 +265,7 @@ u32 LinuxSysInfo::CpuCount()
         str::trim::both(result);
 
         u32 c = cast_string<u32>(result) + 1;
-        count = CMath::max(count, c);
+        count = math::max(count, c);
 
         res = cached_cpuinfo_string.find(query, end);
     }
@@ -276,7 +276,7 @@ u32 LinuxSysInfo::CpuCount()
 #endif
 }
 
-u32 LinuxSysInfo::CoreCount()
+u32 SysInfo::CoreCount()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "cpu cores";
@@ -287,10 +287,10 @@ u32 LinuxSysInfo::CoreCount()
 
     if(!result.size())
     {
-    /* Some Android devices are bad at reporting CPU cores
-     *  using the hardware_concurrency API. For this reason,
-     *  we default to NPROC and hope that phones won't have
-     *  multi-socket setups anytime soon. */
+        /* Some Android devices are bad at reporting CPU cores
+         *  using the hardware_concurrency API. For this reason,
+         *  we default to NPROC and hope that phones won't have
+         *  multi-socket setups anytime soon. */
 #if defined(COFFEE_ANDROID)
         auto procs = sysconf(_SC_NPROCESSORS_ONLN);
 #else
@@ -308,7 +308,7 @@ u32 LinuxSysInfo::CoreCount()
 #endif
 }
 
-u64 LinuxSysInfo::CachedMemory()
+u64 SysInfo::CachedMemory()
 {
 #ifndef COFFEE_LOWFAT
     CString data = LFileFun::sys_read("/proc/meminfo");
@@ -331,7 +331,7 @@ u64 LinuxSysInfo::CachedMemory()
     return 0;
 }
 
-HWDeviceInfo LinuxSysInfo::Processor()
+info::HardwareDevice SysInfo::Processor()
 {
 #ifndef COFFEE_LOWFAT
     const cstring mk_query = "vendor_id";
@@ -355,14 +355,16 @@ HWDeviceInfo LinuxSysInfo::Processor()
     str::trim::both(md_str);
     str::trim::both(fw_str);
 
-    return HWDeviceInfo(mk_str, md_str, fw_str);
+    return info::HardwareDevice(mk_str, md_str, fw_str);
 #else
     return {};
 #endif
 }
 
-Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
+Vector<bigscalar> SysInfo::ProcessorFrequencies()
 {
+    using namespace url::constructors;
+
 #ifndef COFFEE_LOWFAT
     static const constexpr struct
     {
@@ -376,8 +378,8 @@ Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
 
     for(size_t i = 0; i < 3; i++)
     {
-        file_error ec;
-        Url        p = MkUrl(root_paths[i].prefix, RSCA::SystemFile);
+        file::file_error ec;
+        Url              p = MkUrl(root_paths[i].prefix, RSCA::SystemFile);
 
         DirFun::DirList cpus;
         DirFun::Ls(p, cpus, ec);
@@ -411,7 +413,7 @@ Vector<bigscalar> LinuxSysInfo::ProcessorFrequencies()
     return {};
 }
 
-bigscalar LinuxSysInfo::ProcessorFrequency()
+bigscalar SysInfo::ProcessorFrequency()
 {
 #ifndef COFFEE_LOWFAT
 #if defined(__arm__)
@@ -437,14 +439,14 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
 
     str::trim::both(res);
 
-    return CMath::floor(cast_string<bigscalar>(res)) / 1000;
+    return math::floor(cast_string<bigscalar>(res)) / 1000;
 #endif
 #else
     return 0.0;
 #endif
 }
 
-bool LinuxSysInfo::HasFPU()
+bool SysInfo::HasFPU()
 {
 #ifndef COFFEE_LOWFAT
 #if defined(COFFEE_MAEMO)
@@ -481,7 +483,7 @@ bool LinuxSysInfo::HasFPU()
 #endif
 }
 
-bool LinuxSysInfo::HasFPUExceptions()
+bool SysInfo::HasFPUExceptions()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "fpu_exception";
@@ -491,13 +493,13 @@ bool LinuxSysInfo::HasFPUExceptions()
     CString result = get_linux_property(cached_cpuinfo_string, query);
     str::trim::both(result);
 
-    return str::cmp(result.c_str(), "yes");
+    return libc::str::cmp(result.c_str(), "yes");
 #else
     return false;
 #endif
 }
 
-u64 LinuxSysInfo::ProcessorCacheSize()
+u64 SysInfo::ProcessorCacheSize()
 {
 #ifndef COFFEE_LOWFAT
     const cstring query = "cache size";
@@ -518,7 +520,7 @@ u64 LinuxSysInfo::ProcessorCacheSize()
 #endif
 }
 
-bool LinuxSysInfo::HasHyperThreading()
+bool SysInfo::HasHyperThreading()
 {
 #ifndef COFFEE_LOWFAT
     Set<CString> flags = CPUFlags();
@@ -534,11 +536,11 @@ bool LinuxSysInfo::HasHyperThreading()
 #endif
 }
 
-HWDeviceInfo LinuxSysInfo::DeviceName()
+info::HardwareDevice SysInfo::DeviceName()
 {
 #ifndef COFFEE_LOWFAT
 #if defined(COFFEE_MAEMO)
-    return HWDeviceInfo(
+    return info::HardwareDevice(
         "Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
 #else
     static const cstring prod_ver = DMI_PATH "/product_version";
@@ -570,18 +572,19 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
     if(product.size() > 0 && manufac != invalid_info_string)
         prod = product.c_str();
 
-    return HWDeviceInfo(manf, prod, get_kern_name() + (" " + get_kern_ver()));
+    return info::HardwareDevice(
+        manf, prod, get_kern_name() + (" " + get_kern_ver()));
 #endif
 #else
     return {};
 #endif
 }
 
-HWDeviceInfo LinuxSysInfo::Motherboard()
+info::HardwareDevice SysInfo::Motherboard()
 {
 #ifndef COFFEE_LOWFAT
 #if defined(COFFEE_MAEMO)
-    return HWDeviceInfo("Nokia", "RX-51", "0x0");
+    return info::HardwareDevice("Nokia", "RX-51", "0x0");
 #else
     static const cstring mb_manuf = DMI_PATH "/board_vendor";
     static const cstring mb_model = DMI_PATH "/board_name";
@@ -591,14 +594,14 @@ HWDeviceInfo LinuxSysInfo::Motherboard()
     CString model = LFileFun::sys_read(mb_model);
     CString version = LFileFun::sys_read(mb_version);
 
-    return HWDeviceInfo(manuf, model, version);
+    return info::HardwareDevice(manuf, model, version);
 #endif
 #else
     return {};
 #endif
 }
 
-HWDeviceInfo LinuxSysInfo::Chassis()
+info::HardwareDevice SysInfo::Chassis()
 {
 #ifndef COFFEE_LOWFAT
     static const cstring ch_manuf   = DMI_PATH "/chassis_vendor";
@@ -623,13 +626,13 @@ HWDeviceInfo LinuxSysInfo::Chassis()
     if(version.size() && version != invalid_info_string)
         versn_c = version.c_str();
 
-    return HWDeviceInfo(manuf_c, model_c, versn_c);
+    return info::HardwareDevice(manuf_c, model_c, versn_c);
 #else
     return {};
 #endif
 }
 
-HWDeviceInfo LinuxSysInfo::BIOS()
+info::HardwareDevice SysInfo::BIOS()
 {
 #ifndef COFFEE_LOWFAT
     static const cstring bios_manuf   = DMI_PATH "/bios_vendor";
@@ -654,15 +657,17 @@ HWDeviceInfo LinuxSysInfo::BIOS()
     if(version.size() && version != invalid_info_string)
         versn_c = version.c_str();
 
-    return HWDeviceInfo(manuf_c, name_c, versn_c);
+    return info::HardwareDevice(manuf_c, name_c, versn_c);
 #else
     return {};
 #endif
 }
 
 #if !defined(COFFEE_ANDROID)
-PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
+PowerInfoDef::Temp PowerInfo::CpuTemperature()
 {
+    using namespace url::constructors;
+
 #ifndef COFFEE_LOWFAT
     static const constexpr cstring thermal_class = "/sys/class/thermal";
     static const constexpr cstring hwmon_class   = "/sys/class/hwmon";
@@ -673,7 +678,7 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
     Path            tmp, tmp2;
     Url             base = MkUrl("", RSCA::SystemFile);
 
-    file_error ec;
+    file::file_error ec;
 
     if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst, ec))
     {
@@ -733,5 +738,5 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 #endif
 
 } // namespace Linux
-} // namespace Environment
-} // namespace Coffee
+} // namespace env
+} // namespace platform

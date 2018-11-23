@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 
 #if defined(COFFEE_RASPBERRYPI)
 #include "../linux/sysinfo.h"

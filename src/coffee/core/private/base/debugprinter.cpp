@@ -2,9 +2,9 @@
 
 #include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/plat/timing.h>
+#include <peripherals/libc/output_ops.h>
 #include <peripherals/stl/string_casting.h>
+#include <platforms/environment.h>
 
 #if defined(COFFEE_ANDROID)
 #include <android/log.h>
@@ -56,7 +56,8 @@ static void AddContextString(CString& prefix, Severity sev)
 {
     cstring severity_str = severity_string(sev);
 
-    CString cclock = Time::ClockString();
+//    CString cclock = Time::ClockString();
+    CString cclock = "00:00:00";
 #if defined(COFFEE_WINDOWS)
     /* VC++ fills the string with \0, and does not ignore it
      *  while appending. This is a big problem. */
@@ -66,7 +67,8 @@ static void AddContextString(CString& prefix, Severity sev)
 #endif
 
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
-    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
+//    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
+    CString ms_time = "0000";
     CString clock =
         cStringFormat("{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
     prefix = cStringFormat("{0}:", clock.c_str());
@@ -131,7 +133,7 @@ static void native_print(
     else
         Mem::Puts(stream, formatted.c_str());
 #else
-    Mem::Puts(stream, formatted.c_str());
+    libc::io::put(stream, formatted.c_str());
 #endif
 
 #ifndef COFFEE_LOWFAT

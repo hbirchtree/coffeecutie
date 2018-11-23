@@ -1,6 +1,8 @@
 #include <platforms/linux/process.h>
 
+#include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/string_casting.h>
+#include <platforms/file.h>
 
 namespace platform {
 namespace env {
@@ -15,14 +17,12 @@ struct mem_usage
     u64 data;
 };
 
-LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(
-    LinuxProcessProperty::PID)
+ProcessProperty::MemUnit ProcessProperty::Mem(ProcessProperty::PID)
 {
 #ifndef COFFEE_LOWFAT
-    file_error ec;
+    file::file_error ec;
 
-    CString mem_info =
-        CResources::Linux::LinuxFileFun::sys_read("/proc/self/statm", ec);
+    CString mem_info = file::Linux::FileFun::sys_read("/proc/self/statm", ec);
 
     mem_usage usage = {};
 
@@ -58,14 +58,15 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(
 #endif
 }
 
-bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
+bool MemMap::GetProcMap(ProcessProperty::PID pid, MemMap::ProcMap& target)
 {
+    using namespace ::semantic;
+
 #ifndef COFFEE_LOWFAT
-    file_error ec;
+    file::file_error ec;
 
     CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
-    CString maps_info =
-        CResources::Linux::LinuxFileFun::sys_read(maps_file.c_str(), ec);
+    CString maps_info = file::Linux::FileFun::sys_read(maps_file.c_str(), ec);
 
     szptr end       = maps_info.find('\n');
     szptr pos       = 0;
@@ -93,12 +94,14 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
                 case 1:
                 {
                     szptr   mid = sec.find('-');
-                    CString tmp = str::encapsulate(sec.data(), mid);
+                    CString tmp = ::str::encapsulate(sec.data(), mid);
                     file.start =
-                        str::from_string<u64, str::convert_base_16>(tmp.data());
+                        libc::str::from_string<u64, libc::str::convert_base_16>(
+                            tmp.data());
                     tmp = &sec[mid + 1];
                     file.end =
-                        str::from_string<u64, str::convert_base_16>(tmp.data());
+                        libc::str::from_string<u64, libc::str::convert_base_16>(
+                            tmp.data());
                     break;
                 }
                 case 2:
@@ -117,8 +120,9 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
                 }
                 case 3:
                 {
-                    file.offset = str::from_string<u64, str::convert_base_16>(
-                        sec.c_str());
+                    file.offset =
+                        libc::str::from_string<u64, libc::str::convert_base_16>(
+                            sec.c_str());
                     break;
                 }
                 case 4:

@@ -1,7 +1,7 @@
 #include <coffee/core/base.h>
 
 #include <coffee/core/datastorage/compression/libz.h>
-#include <coffee/core/plat/timing/profiling.h>
+#include <platforms/profiling.h>
 
 #if defined(COFFEE_BUILD_ZLIB)
 

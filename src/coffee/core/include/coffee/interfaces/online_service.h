@@ -1,11 +1,15 @@
 #pragma once
 
-#include <coffee/core/base/files/url.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
+#include <url/url.h>
 
-namespace Coffee {
-namespace Online {
+namespace platform {
+namespace online {
+
+using namespace ::libc_types;
+using namespace ::stl_types;
+using namespace ::platform::url;
 
 enum class FriendStatus
 {
@@ -163,5 +167,5 @@ class Service
     virtual void poll() = 0;
 };
 
-} // namespace Online
-} // namespace Coffee
+} // namespace online
+} // namespace platform

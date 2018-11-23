@@ -1,7 +1,8 @@
 #pragma once
 
-#include <coffee/core/plat/memory/stlstring_ops.h>
-#include <peripherals/stl/types.h>
+#include <coffee/core/stl_types.h>
+#include <coffee/core/stlstring_ops.h>
+#include <peripherals/stl/time_types.h>
 
 namespace Coffee {
 namespace Strings {
@@ -12,7 +13,7 @@ template<
     typename std::enable_if<
         std::is_signed<Rep>::value && std::is_integral<Rep>::value>::type* =
         nullptr>
-inline CString to_string(std::chrono::duration<Rep, Ratio> const& duration)
+inline CString to_string(Chrono::duration<Rep, Ratio> const& duration)
 {
     using namespace str::convert;
 

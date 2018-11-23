@@ -1,4 +1,4 @@
-#include <coffee/core/plat/platform_detect.h>
+#include <coffee/core/base.h>
 
 #include "levels/all_levels.h"
 
@@ -20,8 +20,8 @@ using CGLES32 = CGL_32<GLESVER_32>;
 using CGL_Lowest = CGLES20;
 #endif
 
-}
+} // namespace CGL
 } // namespace Coffee
 
-#include "levels/gl_shared_util.h"
 #include "levels/gl_loader.h"
+#include "levels/gl_shared_util.h"

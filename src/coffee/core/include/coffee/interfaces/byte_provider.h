@@ -1,9 +1,9 @@
 #pragma once
 
-#include <coffee/core/base/files/url.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
+#include <url/url.h>
 
-namespace Coffee {
+namespace semantic {
 /*!
  * \brief
  * This class is used to indicate that it can be static_cast'ed to Bytes
@@ -33,9 +33,9 @@ struct ByteProvider
         return Bytes();
     }
 
-    operator Path() const
+    operator platform::url::Path() const
     {
-        return Path();
+        return platform::url::Path();
     }
 };
-} // namespace Coffee
+} // namespace semantic

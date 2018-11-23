@@ -54,7 +54,7 @@ bool PosixFileMod_def::Touch(NodeType t, Url const& fn, file_error& ec)
     }
     case NodeType::Directory:
     {
-        return PosixDirFun::MkDir(fn, false, ec);
+        return posix::DirFun::MkDir(fn, false, ec);
     }
     default:
         return false;
@@ -193,7 +193,7 @@ void PosixFileMod_def::Truncate(const Url& fn, szptr size, file_error& ec)
     close(fd);
 }
 
-bool PosixDirFun::ChDir(Url const& dir, file_error& ec)
+bool posix::DirFun::ChDir(Url const& dir, file_error& ec)
 {
     auto url  = *dir;
     bool stat = chdir(url.c_str()) == 0;
@@ -205,7 +205,7 @@ bool PosixDirFun::ChDir(Url const& dir, file_error& ec)
     return true;
 }
 
-bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
+bool posix::DirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
 {
     auto url = *dname;
     if(!createParent)
@@ -236,7 +236,7 @@ bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
     return stat;
 }
 
-bool PosixDirFun::RmDir(Url const& dname, file_error& ec)
+bool posix::DirFun::RmDir(Url const& dname, file_error& ec)
 {
     auto url  = *dname;
     bool stat = rmdir(url.c_str()) == 0 || (errno = 0);
@@ -244,7 +244,7 @@ bool PosixDirFun::RmDir(Url const& dname, file_error& ec)
     return stat;
 }
 
-bool PosixDirFun::Ls(
+bool posix::DirFun::Ls(
     Url const& dname, DirFunDef::DirList& entries, file_error& ec)
 {
     auto url = *dname;
@@ -305,7 +305,7 @@ bool PosixDirFun::Ls(
     return true;
 }
 
-Url PosixDirFun::Basename(CString const& n, file_error& ec)
+Url posix::DirFun::Basename(CString const& n, file_error& ec)
 {
 #if !defined(COFFEE_USE_POSIX_BASENAME)
     if(str::len(n) < 1)
@@ -328,7 +328,7 @@ Url PosixDirFun::Basename(CString const& n, file_error& ec)
 #endif
 }
 
-Url PosixDirFun::Dirname(CString const& fname, file_error& ec)
+Url posix::DirFun::Dirname(CString const& fname, file_error& ec)
 {
 #if !defined(COFFEE_USE_POSIX_BASENAME)
     int64 idx = Search::ChrFindR(fname, '/') - fname;

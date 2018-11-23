@@ -41,13 +41,13 @@ namespace stl_types {
 template<typename T>
 T cast_string(CString const& val)
 {
-    return str::from_string<T>(val.c_str());
+    return libc::str::from_string<T>(val.c_str());
 }
 
 template<typename T>
 T cast_string(CWString const& val)
 {
-    return str::from_string<T>(val.c_str());
+    return libc::str::from_string<T>(val.c_str());
 }
 
 template<typename T>

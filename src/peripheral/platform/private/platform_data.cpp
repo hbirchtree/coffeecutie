@@ -139,14 +139,12 @@ extern scalar dpi()
 }
 extern SafeArea safe_area()
 {
+    SafeArea area = {};
 #if defined(COFFEE_APPLE_MOBILE)
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_GetSafeMargins, &area, nullptr, nullptr);
-
-    return true;
-#else
-    return false;
 #endif
+    return area;
 }
 } // namespace display
 
@@ -168,7 +166,7 @@ DeviceType variant()
 
     return DevicePhone;
 #elif defined(COFFEE_LINUX)
-    return Environment::Linux::get_device_variant();
+    return env::Linux::get_device_variant();
 #elif defined(COFFEE_RASPBERRY)
     return DeviceIOT;
 #elif defined(COFFEE_EMSCRIPTEN)

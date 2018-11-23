@@ -1,10 +1,13 @@
 #pragma once
 
-#include <coffee/core/plat/memory/cmemory.h>
-#include <coffee/core/types/edef/dbgenum.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/typing/enum/debug/severity.h>
 
 namespace Coffee {
 namespace DebugFun {
+
+using Severity = semantic::debug::Severity;
 
 using LogInterfaceBasic = void (*)(FILE*, CString const&, Severity, u32, u32);
 using LogInterfaceTagged =

@@ -21,7 +21,7 @@ namespace posix {
 using namespace ::stl_types;
 using namespace ::semantic;
 
-CString PosixStacktracer::DemangleSymbol(const char* sym)
+CString Stacktracer::DemangleSymbol(const char* sym)
 {
 #ifndef COFFEE_LOWFAT
     i32 stat = 0;
@@ -38,7 +38,7 @@ CString PosixStacktracer::DemangleSymbol(const char* sym)
         return sym;
 }
 
-StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
+StacktracerDef::Stacktrace Stacktracer::GetRawStackframes(
     C_UNUSED(u32 start), C_UNUSED(i32 length))
 {
     Stacktrace t;
@@ -86,7 +86,7 @@ StacktracerDef::Stacktrace PosixStacktracer::GetRawStackframes(
     return t;
 }
 
-CString PosixStacktracer::GetStackframeName(u32 depth)
+CString Stacktracer::GetStackframeName(u32 depth)
 {
 #ifndef COFFEE_LOWFAT
     Stacktrace trace = GetRawStackframes(depth, 2);
@@ -98,22 +98,22 @@ CString PosixStacktracer::GetStackframeName(u32 depth)
 #endif
 }
 
-CString PosixStacktracer::GetStackFuncName(u32 depth)
+CString Stacktracer::GetStackFuncName(u32 depth)
 {
 #ifndef COFFEE_LOWFAT
     static bool           rgx_compiled;
-    static Regex::Pattern rgx;
+    static regex::Pattern rgx;
 
     CString frame = GetStackframeName(depth + 1);
 
     if(!rgx_compiled)
     {
-        rgx = Regex::compile_pattern("^(.*)\\(.*$");
+        rgx = regex::compile_pattern("^(.*)\\(.*$");
     }
 
     Vector<CString> result;
 
-    if(!Regex::match(rgx, frame, result))
+    if(!regex::match(rgx, frame, result))
         return frame;
 
     return result[1];

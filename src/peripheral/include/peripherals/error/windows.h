@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
 namespace platform {
@@ -13,7 +14,8 @@ struct win32_error_category : error_category
     virtual std::string message(int error_code) const;
 };
 
-using win32_error_code = domain_error_code<u32, win32_error_category>;
+using win32_error_code =
+    domain_error_code<libc_types::u32, win32_error_category>;
 
 } // namespace file
 } // namespace platform

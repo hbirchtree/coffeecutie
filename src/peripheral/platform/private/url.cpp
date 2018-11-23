@@ -1,20 +1,15 @@
 #include <url/url.h>
 
+#include <coffee/core/base_state.h>
+#include <coffee/core/resource_prefix.h>
 #include <peripherals/error/file_base.h>
 #include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/regex.h>
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/string_casting.h>
-
-//#include <coffee/core/base/files/cfiles.h>
-//#include <coffee/core/coffee.h>
-//#include <coffee/core/formatting.h>
-//#include <coffee/core/plat/environment.h>
-//#include <coffee/core/plat/file.h>
-//#include <coffee/core/plat/timing/profiling.h>
-//#include <coffee/core/resource_prefix.h>
-
-//#include <coffee/core/CDebug>
+#include <platforms/environment.h>
+#include <platforms/file.h>
+#include <platforms/profiling.h>
 
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>
@@ -39,6 +34,9 @@ using WPkg = ::Windows::ApplicationModel::Package;
 #include <CoreFoundation/CFBundle.h>
 #include <CoreFoundation/CFString.h>
 #endif
+
+using namespace Coffee::State;
+using namespace ::enum_helpers;
 
 namespace platform {
 namespace url {
@@ -90,7 +88,7 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.configDir = MkInvalidUrl();
     paths.tempDir   = MkInvalidUrl();
 
-    CString const& _coffee_resource_prefix = GetFileResourcePrefix();
+    CString const& _coffee_resource_prefix = file::GetResourcePrefix();
 
 #if defined(COFFEE_ANDROID)
 
@@ -127,33 +125,33 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
     paths.cacheDir = Env::GetUserHome() + Path{".cache"} +
-                     Path{GetCurrentApp().organization_name} +
-                     Path{GetCurrentApp().application_name};
+                     Path{GetAppData().organization_name} +
+                     Path{GetAppData().application_name};
 
     /* Temporary files go in /tmp */
-    paths.tempDir = MkUrl("/tmp", RSCA::SystemFile) +
-                    Path{GetCurrentApp().application_name};
+    paths.tempDir =
+        MkUrl("/tmp", RSCA::SystemFile) + Path{GetAppData().application_name};
 
     /* TODO: Implement this here */
-//    const constexpr cstring var_snappy = "SNAP_USER_COMMON";
+    //    const constexpr cstring var_snappy = "SNAP_USER_COMMON";
 
-//    if(Env::ExistsVar(var_snappy))
-//    {
-//        return MkUrl(Env::GetVar(var_snappy), RSCA::SystemFile);
-//    } else
-//    {
-//        if(!orgname && !appname)
-//        {
-//            orgname = GetCurrentApp().organization_name.c_str();
-//            appname = GetCurrentApp().application_name.c_str();
-//        }
+    //    if(Env::ExistsVar(var_snappy))
+    //    {
+    //        return MkUrl(Env::GetVar(var_snappy), RSCA::SystemFile);
+    //    } else
+    //    {
+    //        if(!orgname && !appname)
+    //        {
+    //            orgname = GetCurrentApp().organization_name.c_str();
+    //            appname = GetCurrentApp().application_name.c_str();
+    //        }
 
-//        Path homedir =
-//            ((Path(GetUserHome()) + ".local/share") + orgname) + appname;
-//        return MkUrl(homedir, RSCA::SystemFile);
-//    }
+    //        Path homedir =
+    //            ((Path(GetUserHome()) + ".local/share") + orgname) + appname;
+    //        return MkUrl(homedir, RSCA::SystemFile);
+    //    }
 
-//    paths.configDir = Env::GetUserData(nullptr, nullptr);
+    //    paths.configDir = Env::GetUserData(nullptr, nullptr);
 
 #elif defined(COFFEE_WINDOWS)
 
@@ -295,7 +293,7 @@ CString Url::operator*() const
     {
     case Local:
     {
-        file_error ec;
+        file::file_error ec;
 
         if(cachedUrl.size())
             return cachedUrl;
@@ -305,11 +303,10 @@ CString Url::operator*() const
         derefPath         = str::replace::str(derefPath, "//", "/");
 #if !defined(COFFEE_EMSCRIPTEN)
         if(!feval(flags & RSCA::NoDereference))
-            derefPath = FileFun::DereferenceLink(
+            derefPath = file::FileFun::DereferenceLink(
                 MkUrl(derefPath.c_str(), RSCA::SystemFile), ec);
 #if MODE_DEBUG
-        if(ec)
-            cWarning("{0}", ec.message());
+        C_ERROR_CHECK(ec);
 #endif
 #endif
         return derefPath;
@@ -357,8 +354,8 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
 
-    file_error ec;
-    auto       paths = GetSystemPaths();
+    file::file_error ec;
+    auto             paths = GetSystemPaths();
 
     auto urlPart = Path{suffix};
 
@@ -384,7 +381,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::ConfigFile:
     {
-        DirFun::MkDir(paths.configDir, true, ec);
+        file::DirFun::MkDir(paths.configDir, true, ec);
         tempStore = paths.configDir + urlPart;
         break;
     }
@@ -394,7 +391,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
         tempStore =
             MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
-        DirFun::MkDir(paths.tempDir, true, ec);
+        file::DirFun::MkDir(paths.tempDir, true, ec);
         tempStore = paths.tempDir + urlPart;
 #endif
         break;
@@ -405,7 +402,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
         tempStore =
             MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
-        DirFun::MkDir(paths.cacheDir, true, ec);
+        file::DirFun::MkDir(paths.cacheDir, true, ec);
         tempStore = paths.cacheDir + urlPart;
 #endif
         break;
@@ -417,8 +414,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     }
 #if MODE_DEBUG
-    if(ec)
-        cWarning("{0}", ec.message());
+    C_ERROR_CHECK(ec);
 #endif
     tempStore.flags |= storageMask & RSCA::NoDereference;
     return *tempStore;
@@ -445,11 +441,10 @@ Path Path::addExtension(cstring ext) const
 
 Path Path::fileBasename() const
 {
-    file_error ec;
-    Path       p = Path{DirFun::Basename(internUrl, ec).internUrl};
+    file::file_error ec;
+    Path             p = Path{file::DirFun::Basename(internUrl, ec).internUrl};
 #if MODE_DEBUG
-    if(ec)
-        cWarning("{0}", ec.message());
+    C_ERROR_CHECK(ec);
 #endif
     return p;
 }
@@ -457,7 +452,7 @@ Path Path::fileBasename() const
 CString Path::extension() const
 {
     auto it     = internUrl.rfind(".");
-    auto sep_it = internUrl.rfind(DirFun::GetPathSep());
+    auto sep_it = internUrl.rfind(file::DirFun::GetPathSep());
 
     if(it == CString::npos || (sep_it != CString::npos && sep_it > it))
         return {};
@@ -467,22 +462,20 @@ CString Path::extension() const
 
 Path Path::dirname() const
 {
-    file_error ec;
-    Path       p = Path{DirFun::Dirname(internUrl.c_str(), ec).internUrl};
+    file::file_error ec;
+    Path p = Path{file::DirFun::Dirname(internUrl.c_str(), ec).internUrl};
 #if MODE_DEBUG
-    if(ec)
-        cWarning("{0}", ec.message());
+    C_ERROR_CHECK(ec);
 #endif
     return p;
 }
 
 Path Path::canonical() const
 {
-    file_error ec;
-    Path       p = Path{FileFun::CanonicalName(MkUrl(*this), ec)};
+    file::file_error ec;
+    Path             p = Path{file::FileFun::CanonicalName(MkUrl(*this), ec)};
 #if MODE_DEBUG
-    if(ec)
-        cWarning("{0}", ec.message());
+    C_ERROR_CHECK(ec);
 #endif
     return p;
 }
@@ -530,10 +523,10 @@ Path& Path::operator=(const Url& url)
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
-struct UrlParseCache : State::GlobalState
+struct UrlParseCache : Coffee::State::GlobalState
 {
     virtual ~UrlParseCache();
-    Regex::Pattern pattern;
+    regex::Pattern pattern;
 };
 
 UrlParseCache::~UrlParseCache()
@@ -552,7 +545,7 @@ UrlParseCache& GetCache()
 
     constexpr cstring pattern_key = "urlParsePattern";
 
-    auto ptr = State::PeekState(pattern_key);
+    auto ptr = Coffee::State::PeekState(pattern_key);
 
     if(ptr)
         return *C_DCAST<UrlParseCache>(ptr.get());
@@ -560,7 +553,7 @@ UrlParseCache& GetCache()
     auto patt = MkShared<UrlParseCache>();
 
     Profiler::DeepPushContext(URLPARSE_TAG "Regex compile");
-    patt->pattern = Regex::compile_pattern(url_pattern);
+    patt->pattern = regex::compile_pattern(url_pattern);
     Profiler::DeepPopContext();
 
     State::SwapState(pattern_key, patt);
@@ -588,7 +581,7 @@ UrlParse UrlParse::From(const Url& url)
 
     {
         DProfContext _(URLPARSE_TAG "Regex");
-        if(!Regex::match(GetCache().pattern, *url, matches))
+        if(!regex::match(GetCache().pattern, *url, matches))
             return p;
     }
 
@@ -627,7 +620,7 @@ CString to_string(const Path& path)
 CString to_string(const Url& url)
 {
     return "url(" + url.internUrl + "," +
-           libc::str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
+           ::str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

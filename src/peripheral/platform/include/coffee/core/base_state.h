@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peripherals/build/application.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
@@ -32,6 +33,8 @@ extern bool ProfilerEnabled();
 
 extern PContext*    GetProfilerStore();
 extern ThreadState* GetProfilerTStore();
+
+extern platform::info::AppData& GetAppData();
 
 } // namespace State
 } // namespace Coffee

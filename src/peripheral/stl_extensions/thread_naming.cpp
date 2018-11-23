@@ -1,4 +1,4 @@
-#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/thread_types.h>
 
 #include <coffee/core/base_state.h>
 

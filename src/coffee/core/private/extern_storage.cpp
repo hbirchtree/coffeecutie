@@ -3,12 +3,13 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/base/printing/log_interface.h>
 #include <coffee/core/base/printing/outputprinter.h>
-#include <coffee/core/base/renderer/eventapplication_wrapper.h>
-#include <coffee/core/plat/plat_environment.h>
+#include <coffee/foreign/foreign.h>
+#include <platforms/argument_parse.h>
+#include <platforms/environment.h>
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-#include <coffee/core/plat/timing/profiling.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <platforms/profiling.h>
 #endif
 
 namespace Coffee {
@@ -31,18 +32,18 @@ struct InternalState
     CString resource_prefix = "./";
 
     /* Application info */
-    AppData current_app = {};
+    platform::info::AppData current_app = {};
 
     BuildInfo build = {};
 
-    AppArg initial_args = {};
+    platform::args::AppArg initial_args = {};
 
 #if defined(COFFEE_USE_UNWIND)
     unw_context_t* unwind_context = nullptr;
 #endif
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-    Profiling::PContext profiler_store;
+    profiling::PContext profiler_store;
 #endif
 
     Map<CString, ShPtr<State::GlobalState>> pointer_storage;
@@ -67,12 +68,12 @@ struct InternalThreadState
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     InternalThreadState() :
-        current_thread_id(), profiler_data(MkShared<Profiling::ThreadState>())
+        current_thread_id(), profiler_data(MkShared<profiling::ThreadState>())
     {
-        using RuntimeProperties = Profiling::Profiler::runtime_options;
+        using RuntimeProperties = profiling::Profiler::runtime_options;
         auto runtimeProps       = MkUq<RuntimeProperties>();
 
-        runtimeProps->push               = Profiling::JsonPush;
+        runtimeProps->push               = profiling::JsonPush;
         runtimeProps->context            = profiler_data;
         runtimeProps->context->thread_id = current_thread_id.hash();
 
@@ -88,7 +89,7 @@ struct InternalThreadState
 
     ~InternalThreadState()
     {
-        using RuntimeOptions = Profiling::Profiler::runtime_options;
+        using RuntimeOptions = profiling::Profiler::runtime_options;
 
         RuntimeOptions* internal_state =
             C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
@@ -100,7 +101,7 @@ struct InternalThreadState
     }
 
     ThreadId                      current_thread_id;
-    ShPtr<Profiling::ThreadState> profiler_data;
+    ShPtr<profiling::ThreadState> profiler_data;
 #endif
 };
 
@@ -168,7 +169,7 @@ BuildInfo& GetBuildInfo()
     return ISTATE->build;
 }
 
-AppData& GetAppData()
+info::AppData& GetAppData()
 {
     C_PTR_CHECK(ISTATE);
     return ISTATE->current_app;
@@ -183,7 +184,7 @@ bool ProfilerEnabled()
 #endif
 }
 
-Profiling::PContext* GetProfilerStore()
+profiling::PContext* GetProfilerStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     C_PTR_CHECK(ISTATE);
@@ -193,7 +194,7 @@ Profiling::PContext* GetProfilerStore()
 #endif
 }
 
-Profiling::ThreadState* GetProfilerTStore()
+profiling::ThreadState* GetProfilerTStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     if(!TSTATE)
@@ -204,14 +205,6 @@ Profiling::ThreadState* GetProfilerTStore()
     Throw(implementation_error("profiler disabled"));
 #endif
 }
-
-#if defined(COFFEE_USE_TERMINAL_CTL)
-bool& GetAlternateTerminal()
-{
-    C_PTR_CHECK(ISTATE);
-    return ISTATE->bits.terminal_alternate_buffer;
-}
-#endif
 
 Mutex& GetPrinterLock()
 {
@@ -280,19 +273,19 @@ CString const& GetFileResourcePrefix()
 
 } // namespace CResources
 
-void SetCurrentApp(const AppData& app)
+void SetCurrentApp(const info::AppData& app)
 {
     C_PTR_CHECK(State::ISTATE);
     State::ISTATE->current_app = app;
 }
 
-AppData const& GetCurrentApp()
+info::AppData const& GetCurrentApp()
 {
     C_PTR_CHECK(State::ISTATE);
     return State::ISTATE->current_app;
 }
 
-AppArg& GetInitArgs()
+args::AppArg& GetInitArgs()
 {
     C_PTR_CHECK(State::ISTATE);
     return State::ISTATE->initial_args;

@@ -10,6 +10,9 @@ namespace semantic {
 template<typename T>
 struct SerialArray
 {
+    using size_type       = libc_types::szptr;
+    using difference_type = libc_types::ptroff;
+
     SerialArray() : m_data(nullptr), m_size(0)
     {
     }
@@ -24,7 +27,7 @@ struct SerialArray
             m_size = 0;
     }
 
-    static const constexpr szptr npos = C_CAST<szptr>(-1);
+    static const constexpr size_type npos = C_CAST<size_type>(-1);
 
     struct iterator : stl_types::Iterator<stl_types::ForwardIteratorTag, T>
     {
@@ -64,7 +67,7 @@ struct SerialArray
 
       private:
         SerialArray<T>* m_base;
-        szptr           m_idx;
+        size_type       m_idx;
     };
 
     NO_DISCARD iterator begin()
@@ -80,7 +83,7 @@ struct SerialArray
         return iterator();
     }
 
-    T const& operator[](szptr i)
+    T const& operator[](size_type i)
     {
 #if MODE_DEBUG
         if(i > m_size)
@@ -90,14 +93,14 @@ struct SerialArray
             return m_data[i];
     }
 
-    szptr size() const
+    size_type size() const
     {
         return m_size;
     }
 
   private:
-    T const* m_data;
-    szptr    m_size;
+    T const*  m_data;
+    size_type m_size;
 };
 
 } // namespace semantic

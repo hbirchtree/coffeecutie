@@ -1,9 +1,8 @@
 #pragma once
 
-#include "argument_handling.h"
-#include "types/tdef/fntypes.h"
-
-#include "platform_data.h"
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/build/application.h>
 
 namespace Coffee {
 
@@ -28,18 +27,10 @@ COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
 
 extern void SetDefaultWindowName(cstring appname);
 
-COFFEE_APP_FUNC AppData const& ApplicationData();
+COFFEE_APP_FUNC platform::info::AppData const& ApplicationData();
 
-extern void SetCurrentApp(AppData const& app);
+extern void SetCurrentApp(platform::info::AppData const& app);
 
-extern AppData const& GetCurrentApp();
-
-namespace CResources {
-
-extern void FileResourcePrefix(cstring prefix);
-
-extern CString const& GetFileResourcePrefix();
-
-} // namespace CResources
+extern platform::info::AppData const& GetCurrentApp();
 
 } // namespace Coffee

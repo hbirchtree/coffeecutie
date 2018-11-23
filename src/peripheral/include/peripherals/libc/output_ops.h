@@ -12,6 +12,9 @@
 
 #include <stdio.h>
 
+#define DefaultDebugOutputPipe libc::io::io_handles::err
+#define DefaultPrintOutputPipe libc::io::io_handles::out
+
 namespace libc {
 namespace io {
 

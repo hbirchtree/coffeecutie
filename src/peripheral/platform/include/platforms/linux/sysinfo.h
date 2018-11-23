@@ -82,7 +82,7 @@ struct SysInfo : SysInfoDef
         return inf.freeswap * inf.mem_unit;
     }
 
-    static HWDeviceInfo Processor();
+    static info::HardwareDevice Processor();
 
     static Vector<bigscalar> ProcessorFrequencies();
 
@@ -98,13 +98,13 @@ struct SysInfo : SysInfoDef
 
     static CString GetSystemVersion();
 
-    static HWDeviceInfo DeviceName();
+    static info::HardwareDevice DeviceName();
 
-    static HWDeviceInfo Motherboard();
+    static info::HardwareDevice Motherboard();
 
-    static HWDeviceInfo Chassis();
+    static info::HardwareDevice Chassis();
 
-    static HWDeviceInfo BIOS();
+    static info::HardwareDevice BIOS();
 
   private:
     static void    FreeCPUInfoString();

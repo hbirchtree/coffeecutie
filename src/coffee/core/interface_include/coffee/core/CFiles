@@ -1,5 +1,5 @@
 #pragma once
 
 #include <coffee/core/base/files/cfiles.h>
-#include <coffee/core/base/files/url.h>
-#include <coffee/core/plat/file.h>
+#include <platforms/file.h>
+#include <url/url.h>

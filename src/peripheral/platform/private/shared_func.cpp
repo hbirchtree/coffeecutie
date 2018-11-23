@@ -61,31 +61,31 @@ ThrdCnt SysInfoDef::SmartParallelism(u64 worksize, u64 weight)
 }
 
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_WINDOWS)
-HWDeviceInfo SysInfoDef::Processor(C_UNUSED(u32 i))
+info::HardwareDevice SysInfoDef::Processor(C_UNUSED(u32 i))
 {
-    return HWDeviceInfo("Generic Processor", "0x0");
+    return info::HardwareDevice("Generic Processor", "0x0");
 }
 #endif
 
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_ANDROID)
-HWDeviceInfo SysInfoDef::DeviceName()
+info::HardwareDevice SysInfoDef::DeviceName()
 {
-    return HWDeviceInfo("Generic", "Device", "0x0");
+    return info::HardwareDevice("Generic", "Device", "0x0");
 }
 
-HWDeviceInfo SysInfoDef::Motherboard()
+info::HardwareDevice SysInfoDef::Motherboard()
 {
-    return HWDeviceInfo("Generic", "Motherboard", "0x0");
+    return info::HardwareDevice("Generic", "Motherboard", "0x0");
 }
 
-HWDeviceInfo SysInfoDef::Chassis()
+info::HardwareDevice SysInfoDef::Chassis()
 {
-    return HWDeviceInfo("Generic", "Chassis", "0x0");
+    return info::HardwareDevice("Generic", "Chassis", "0x0");
 }
 
-HWDeviceInfo SysInfoDef::BIOS()
+info::HardwareDevice SysInfoDef::BIOS()
 {
-    return HWDeviceInfo("Generic", "BIOS", "0x0");
+    return info::HardwareDevice("Generic", "BIOS", "0x0");
 }
 #endif
 

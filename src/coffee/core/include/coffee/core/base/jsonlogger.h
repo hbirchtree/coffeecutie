@@ -1,10 +1,10 @@
 #pragma once
 
-#include <coffee/core/base/files/url.h>
 #include <coffee/core/base/printing/log_interface.h>
+#include <url/url.h>
 
-namespace Coffee{
+namespace Coffee {
 
-extern DebugFun::LogInterface SetupJsonLogger(Url const& jsonFilename);
-
+extern DebugFun::LogInterface SetupJsonLogger(
+    platform::url::Url const& jsonFilename);
 }

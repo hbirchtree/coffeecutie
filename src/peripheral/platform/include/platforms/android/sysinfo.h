@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 
 #ifdef COFFEE_ANDROID
 

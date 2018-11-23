@@ -4,8 +4,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/formatting.h>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/file.h>
-#include <coffee/core/plat/timing.h>
+#include <platforms/file.h>
 
 #include <coffee/core/base/printing/outputprinter.h>
 
@@ -15,7 +14,7 @@ struct JsonLogState : State::GlobalState
 {
     virtual ~JsonLogState();
 
-    FileFun::FileHandle handle;
+    file::FileFun::FileHandle handle;
 };
 
 static const cstring JsonTaggedFormat =
@@ -68,8 +67,9 @@ static void JsonLogger(
         level,
         Time::Microsecond() / 1000);
 
-    FileFun::file_error ec;
-    FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);
+    file::file_error ec;
+    file::FileFun::Write(
+        jsonLog, semantic::Bytes::CreateString(json_msg.c_str()), ec);
 }
 
 static void JsonTagLogger(

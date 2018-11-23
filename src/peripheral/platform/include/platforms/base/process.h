@@ -1,10 +1,14 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/thread_types.h>
 
-namespace Coffee {
-namespace Environment {
+namespace platform {
+namespace env {
+
+using namespace ::libc_types;
+using namespace ::stl_types;
+
 struct ProcessPropertyDef
 {
     /* Memory in this context is returned in kB */
@@ -105,5 +109,5 @@ struct ProcessPropertyDef
     }
 };
 
-} // namespace Environment
-} // namespace Coffee
+} // namespace env
+} // namespace platform

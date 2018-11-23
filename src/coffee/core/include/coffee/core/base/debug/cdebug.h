@@ -2,6 +2,8 @@
 
 #include <coffee/core/base.h>
 
+#include <peripherals/libc/output_ops.h>
+
 #ifndef COFFEE_LOWFAT
 #include "../printing/outputprinter.h"
 #endif
@@ -32,7 +34,7 @@ FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
     OutputPrinter::fprintf(
-        DefaultDebugOutputPipe,
+        libc::io::io_handles::err,
         Severity::Information,
         1,
         OutputPrinter::Flag_NoContext,

@@ -1,7 +1,7 @@
 #include <coffee/interfaces/online_service.h>
 
-namespace Coffee {
-namespace Online {
+namespace platform {
+namespace online {
 
 User::~User()
 {
@@ -39,5 +39,5 @@ Service::~Service()
 {
 }
 
-} // namespace Online
-} // namespace Coffee
+} // namespace online
+} // namespace platform

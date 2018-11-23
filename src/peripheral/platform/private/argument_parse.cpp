@@ -148,7 +148,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg& args)
 
 CString ArgumentParser::helpMessage() const
 {
-    auto out = cStringFormat("{0}", platform::env::ExecutableName());
+    auto out = cStringFormat("{0}", Env::ExecutableName());
 
     CString desc = {};
 

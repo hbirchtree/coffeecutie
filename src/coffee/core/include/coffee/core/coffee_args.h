@@ -1,9 +1,11 @@
 #pragma once
 
-#include "plat/environment/argument_parse.h"
+#include <platforms/argument_parse.h>
 
 namespace Coffee {
 namespace BaseArgParser {
+
+using namespace ::platform::args;
 
 extern ArgumentParser& GetBase();
 

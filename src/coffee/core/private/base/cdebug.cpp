@@ -1,4 +1,4 @@
-#include <coffee/core/terminal/terminal_cursor.h>
+#include <coffee/core/terminal/cursor.h>
 
 namespace Coffee{
 

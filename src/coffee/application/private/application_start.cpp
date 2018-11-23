@@ -103,11 +103,11 @@ extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv)
     return deref_main(mainfun, argc, argv);
 }
 
-#include <coffee/core/coffee_version.h>
+#include <peripherals/build/application.h>
 
 namespace Coffee {
 
-const AppData& ApplicationData()
+const platform::info::AppData& ApplicationData()
 {
     return GetCurrentApp();
 }
