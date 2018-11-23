@@ -2,9 +2,10 @@
 
 #include <peripherals/error/file_base.h>
 #include <peripherals/libc/string_ops.h>
+#include <peripherals/stl/regex.h>
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/string_casting.h>
-#include <plat/regex.h>
+
 //#include <coffee/core/base/files/cfiles.h>
 //#include <coffee/core/coffee.h>
 //#include <coffee/core/formatting.h>
@@ -133,7 +134,26 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.tempDir = MkUrl("/tmp", RSCA::SystemFile) +
                     Path{GetCurrentApp().application_name};
 
-    paths.configDir = Env::GetUserData(nullptr, nullptr);
+    /* TODO: Implement this here */
+//    const constexpr cstring var_snappy = "SNAP_USER_COMMON";
+
+//    if(Env::ExistsVar(var_snappy))
+//    {
+//        return MkUrl(Env::GetVar(var_snappy), RSCA::SystemFile);
+//    } else
+//    {
+//        if(!orgname && !appname)
+//        {
+//            orgname = GetCurrentApp().organization_name.c_str();
+//            appname = GetCurrentApp().application_name.c_str();
+//        }
+
+//        Path homedir =
+//            ((Path(GetUserHome()) + ".local/share") + orgname) + appname;
+//        return MkUrl(homedir, RSCA::SystemFile);
+//    }
+
+//    paths.configDir = Env::GetUserData(nullptr, nullptr);
 
 #elif defined(COFFEE_WINDOWS)
 

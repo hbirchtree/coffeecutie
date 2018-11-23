@@ -1,5 +1,6 @@
 #include <peripherals/error/file_base.h>
 #include <peripherals/error/posix.h>
+#include <peripherals/error/regex.h>
 #include <peripherals/error/windows.h>
 
 namespace platform {
@@ -39,12 +40,44 @@ std::string file_error_category::message(int error_code) const
 } // namespace file
 } // namespace platform
 
+namespace stl_types {
+namespace regex {
+
+const char* regex_error_category::name() const noexcept
+{
+    return "regex_error";
+}
+
+std::string regex_error_category::message(int) const
+{
+    return {};
+}
+
+} // namespace regex
+} // namespace stl_types
+
 #if defined(COFFEE_POSIX_ERRNO)
 
 #include <cstring>
+#include <errno.h>
 
 namespace platform {
 namespace file {
+namespace posix {
+
+bool collect_error(posix_error_code& ec)
+{
+    if(errno != 0)
+    {
+        ec    = errno;
+        errno = 0;
+        return true;
+    }
+
+    return false;
+}
+
+} // namespace posix
 
 const char* posix_error_category::name() const noexcept
 {
@@ -73,6 +106,8 @@ std::string posix_error_category::message(int error_code) const
  */
 
 #if defined(COFFEE_WINDOWS)
+
+#include <peripherals/platform/windows.h>
 
 namespace platform {
 namespace file {

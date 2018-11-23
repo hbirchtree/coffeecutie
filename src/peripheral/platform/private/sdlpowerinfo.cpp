@@ -1,4 +1,4 @@
-#include <coffee/core/plat/environment/sdlpowerinfo.h>
+#include <platforms/base/power.h>
 
 #if defined(COFFEE_USE_SDL2)
 #include <SDL_power.h>

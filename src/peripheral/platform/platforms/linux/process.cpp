@@ -1,9 +1,9 @@
-#include <coffee/core/CFiles>
-#include <coffee/core/plat/environment/linux/process.h>
+#include <platforms/linux/process.h>
+
 #include <peripherals/stl/string_casting.h>
 
-namespace Coffee {
-namespace Environment {
+namespace platform {
+namespace env {
 namespace Linux {
 
 struct mem_usage
@@ -158,5 +158,5 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap& target)
 }
 
 } // namespace Linux
-} // namespace Environment
-} // namespace Coffee
+} // namespace env
+} // namespace platform

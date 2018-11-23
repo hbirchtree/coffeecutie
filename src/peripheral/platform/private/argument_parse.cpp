@@ -1,28 +1,25 @@
-#include <coffee/core/plat/environment/argument_parse.h>
-#include <coffee/core/types/cdef/infotypes.h>
-#include <coffee/core/plat/environment.h>
-#include <coffee/core/CDebug>
+#include <platforms/argument_parse.h>
 
-#include <coffee/core/CFiles>
+#include <algorithm>
+#include <peripherals/libc/string_ops.h>
+#include <platforms/environment.h>
 
-namespace Coffee{
+namespace platform {
+namespace args {
 
 void ArgumentParser::addSwitch(
-        cstring name,
-        cstring longname, cstring shortname, cstring help)
+    cstring name, cstring longname, cstring shortname, cstring help)
 {
     this->switches.push_back({name, longname, shortname, help});
 }
 
 void ArgumentParser::addArgument(
-        cstring name,
-        cstring longname, cstring shortname, cstring help)
+    cstring name, cstring longname, cstring shortname, cstring help)
 {
     this->arguments.push_back({name, longname, shortname, help});
 }
 
-void ArgumentParser::addPositionalArgument(
-        cstring name, cstring help)
+void ArgumentParser::addPositionalArgument(cstring name, cstring help)
 {
     this->posargs.push_back({name, help});
 }
@@ -30,14 +27,14 @@ void ArgumentParser::addPositionalArgument(
 u32 short_arg_match(cstring specifiedArgs, cstring target)
 {
     u32 result = 0;
-    for(auto i : Range<>(str::len(specifiedArgs)))
+    for(auto i : Range<>(libc::str::len(specifiedArgs)))
         if(specifiedArgs[i] == target[0])
             result++;
 
     return result;
 }
 
-ArgumentResult ArgumentParser::parseArguments(AppArg &args)
+ArgumentResult ArgumentParser::parseArguments(AppArg& args)
 {
     enum arg_class_t
     {
@@ -53,7 +50,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
     cstring arg_p = nullptr;
 
     szptr num_positionals = 0;
-    szptr arg_idx = 0;
+    szptr arg_idx         = 0;
 
     Vector<bool> consumed;
     consumed.resize(args.m_ptrStorage.size());
@@ -65,8 +62,8 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
         if(!arg)
             continue;
 
-        auto is_consumed = consumed.at(arg_idx - 1);
-        CString arg_w = arg;
+        auto    is_consumed = consumed.at(arg_idx - 1);
+        CString arg_w       = arg;
 
         if(consumer)
         {
@@ -77,34 +74,26 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
         }
 
         arg_class_t arg_t = arg_posit;
-        arg_p  = nullptr;
+        arg_p             = nullptr;
 
         if(arg_w.substr(0, 2) == "--")
         {
             arg_t = arg_long;
             arg_p = &arg_w[2];
-        }
-        else if(arg_w.substr(0, 1) == "-")
+        } else if(arg_w.substr(0, 1) == "-")
         {
             arg_t = arg_short;
             arg_p = &arg_w[1];
-        }
-        else if(num_positionals < posargs.size())
+        } else if(num_positionals < posargs.size())
         {
             arg_t = arg_posit;
 
-            result.positional.insert({
-                                         posargs.at(num_positionals).name,
-                                         arg_w
-                                     });
+            result.positional.insert({posargs.at(num_positionals).name, arg_w});
             is_consumed.flip();
             num_positionals++;
             continue;
-        }else
-        {
-            cVerbose(10, "Unused arguments found: {0}", arg_w);
+        } else
             continue;
-        }
 
         u32 short_matches = 0;
 
@@ -113,13 +102,9 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
             if(sw.shortname)
                 short_matches = short_arg_match(arg_p, sw.shortname);
 
-            if((sw.longname
-                && arg_t == arg_long
-                && str::cmp(arg_p, sw.longname))
-                    ||
-                    (sw.shortname
-                     && arg_t == arg_short
-                     && short_matches > 0))
+            if((sw.longname && arg_t == arg_long &&
+                libc::str::cmp(arg_p, sw.longname)) ||
+               (sw.shortname && arg_t == arg_short && short_matches > 0))
             {
                 result.switches[sw.name] += short_matches;
                 is_consumed.flip();
@@ -131,10 +116,9 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
             if(arg.shortname)
                 short_matches = short_arg_match(arg_p, arg.shortname);
 
-            if((arg.longname && arg_t == arg_long
-                && str::cmp(arg_p, arg.longname))
-                    || (arg.shortname && arg_t == arg_short
-                        && short_matches > 0))
+            if((arg.longname && arg_t == arg_long &&
+                libc::str::cmp(arg_p, arg.longname)) ||
+               (arg.shortname && arg_t == arg_short && short_matches > 0))
             {
                 consumer = &arg;
                 is_consumed.flip();
@@ -149,13 +133,12 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
         if(consumed.at(i))
             args.m_ptrStorage.at(i) = nullptr;
 
-    auto it = args.m_ptrStorage.end();;
+    auto it = args.m_ptrStorage.end();
+    ;
 
     while((it = std::find(
-               args.m_ptrStorage.begin(),
-               args.m_ptrStorage.end(),
-               nullptr))
-          != args.m_ptrStorage.end())
+               args.m_ptrStorage.begin(), args.m_ptrStorage.end(), nullptr)) !=
+          args.m_ptrStorage.end())
     {
         args.m_ptrStorage.erase(it);
     }
@@ -165,10 +148,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg &args)
 
 CString ArgumentParser::helpMessage() const
 {
-    auto out = cStringFormat(
-                "{0}",
-                Env::ExecutableName()
-    );
+    auto out = cStringFormat("{0}", platform::env::ExecutableName());
 
     CString desc = {};
 
@@ -177,9 +157,8 @@ CString ArgumentParser::helpMessage() const
 
     for(auto p : posargs)
     {
-        out += cStringFormat(" [{0}]",  p.name);
-        desc += cStringFormat("\n  {0}\t\t{1}\n",
-                              p.name,  p.help);
+        out += cStringFormat(" [{0}]", p.name);
+        desc += cStringFormat("\n  {0}\t\t{1}\n", p.name, p.help);
     }
 
     if(arguments.size() || switches.size())
@@ -193,22 +172,19 @@ CString ArgumentParser::helpMessage() const
         if(a.longname && a.shortname)
             out += " ";
         if(a.shortname)
-            (out += "-") +=  a.shortname;
+            (out += "-") += a.shortname;
 
         out += " ";
         out += a.name;
         out += "]";
 
         if(a.longname && a.shortname)
-            desc += cStringFormat("\n  -{0}, --{1}\t\t{2}",
-                                  a.shortname, a.longname,
-                                  a.help);
+            desc += cStringFormat(
+                "\n  -{0}, --{1}\t\t{2}", a.shortname, a.longname, a.help);
         else if(a.longname)
-            desc += cStringFormat("\n      --{0}\t\t{1}",
-                                  a.longname, a.help);
+            desc += cStringFormat("\n      --{0}\t\t{1}", a.longname, a.help);
         else if(a.shortname)
-            desc += cStringFormat("\n  -{0}\t\t\t{1}",
-                                  a.shortname, a.help);
+            desc += cStringFormat("\n  -{0}\t\t\t{1}", a.shortname, a.help);
     }
 
     for(auto s : switches)
@@ -219,25 +195,21 @@ CString ArgumentParser::helpMessage() const
         if(s.longname && s.shortname)
             out += " ";
         if(s.shortname)
-            (out += "-") +=  s.shortname;
+            (out += "-") += s.shortname;
 
         out += "]";
 
         if(s.longname && s.shortname)
-            desc += cStringFormat("\n  -{0}, --{1}\t\t{2}",
-                                  s.shortname, s.longname,
-                                  s.help);
+            desc += cStringFormat(
+                "\n  -{0}, --{1}\t\t{2}", s.shortname, s.longname, s.help);
         else if(s.longname)
-            desc += cStringFormat("\n      --{0}\t\t{1}",
-                                  s.longname, s.help);
+            desc += cStringFormat("\n      --{0}\t\t{1}", s.longname, s.help);
         else if(s.shortname)
-            desc += cStringFormat("\n  -{0}\t\t\t{1}",
-                                  s.shortname, s.help);
+            desc += cStringFormat("\n  -{0}\t\t\t{1}", s.shortname, s.help);
     }
 
     return out + desc;
 }
 
-
-
-}
+} // namespace args
+} // namespace platform

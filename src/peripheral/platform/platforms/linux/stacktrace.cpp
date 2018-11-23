@@ -1,14 +1,16 @@
-#include <coffee/core/plat/environment/linux/stacktrace.h>
-#include <coffee/core/CMD>
+#include <platforms/linux/stacktrace.h>
 
-#include <coffee/core/CDebug>
+#include <peripherals/libc/terminal.h>
+#include <peripherals/stl/stlstring_ops.h>
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_EXCEPTION_RETHROW)
 #include <execinfo.h>
 #endif
 
-namespace Coffee {
-namespace Environment {
+using namespace ::stl_types;
+
+namespace platform {
+namespace env {
 namespace Linux {
 
 STATICINLINE CString DemangleBacktrace(char* sym)
@@ -28,9 +30,9 @@ STATICINLINE CString DemangleBacktrace(char* sym)
     return sym_;
 }
 
-void LinuxStacktracer::ExceptionStacktrace(const ExceptionPtr& exc_ptr)
+void Stacktracer::ExceptionStacktrace(const ExceptionPtr& exc_ptr)
 {
-#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_EXCEPTION_RETHROW)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_NO_EXCEPTION_RETHROW) && 0
     static constexpr szptr MAX_CONTEXT = 20;
 
     void* tracestore[MAX_CONTEXT];
@@ -41,11 +43,11 @@ void LinuxStacktracer::ExceptionStacktrace(const ExceptionPtr& exc_ptr)
             std::rethrow_exception(exc_ptr);
     } catch(std::exception& e)
     {
-        if(Cmd::Interactive())
+        if(libc::io::terminal::interactive())
             cBasicPrint(
                 "{0}",
                 str::transform::multiply(
-                    '-', C_FCAST<u32>(Cmd::TerminalSize().w)));
+                    '-', libc::io::terminal::size().first));
         cBasicPrint("exception encountered:");
         cBasicPrint(
             " >> {0}: {1}",
@@ -71,7 +73,7 @@ void LinuxStacktracer::ExceptionStacktrace(const ExceptionPtr& exc_ptr)
 #endif
 }
 
-CString LinuxStacktracer::GetFuncName_Internal(void* funcPtr)
+CString Stacktracer::GetFuncName_Internal(void* funcPtr)
 {
     auto funcName = backtrace_symbols(&funcPtr, 1);
 
@@ -85,5 +87,5 @@ CString LinuxStacktracer::GetFuncName_Internal(void* funcPtr)
 }
 
 } // namespace Linux
-} // namespace Environment
-} // namespace Coffee
+} // namespace env
+} // namespace platform

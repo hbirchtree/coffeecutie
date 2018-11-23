@@ -150,28 +150,6 @@ struct _cbasic_version
     }
 };
 
-struct _cbasic_arg_container
-{
-    friend struct ArgumentParser;
-
-    void rebuildArgs();
-
-    static _cbasic_arg_container Clone(i32 argc, cstring_w* argv);
-
-    cstring_w programName() const;
-
-    Vector<cstring_w> const& arguments() const;
-    Vector<CString> const&   originalArguments() const;
-
-    Vector<cstring_w> m_ptrStorage;
-
-  private:
-    cstring_w       m_programName;
-    Vector<CString> m_storage;
-    bool            string_containment;
-};
-
-using AppArg  = _cbasic_arg_container;
 using Version = _cbasic_version<u32>;
 
 } // namespace Coffee

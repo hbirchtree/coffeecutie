@@ -1,15 +1,15 @@
-#include <coffee/core/plat/file/unix/file.h>
-
-#include <coffee/core/CDebug>
+#include <platforms/posix/file.h>
 
 #include <fcntl.h>
 #include <stdlib.h>
 
-namespace Coffee {
-namespace CResources {
-namespace Posix {
+using namespace enum_helpers;
 
-FileFunDef<>::NodeType PosixFileMod_def::Stat(Url const& fn, file_error&)
+namespace platform {
+namespace file {
+namespace posix {
+
+NodeType PosixFileMod_def::Stat(Url const& fn, file_error&)
 {
     auto        url = *fn;
     struct stat fs  = {};
@@ -193,13 +193,13 @@ void PosixFileMod_def::Truncate(const Url& fn, szptr size, file_error& ec)
     close(fd);
 }
 
-bool Posix::PosixDirFun::ChDir(Url const& dir, file_error& ec)
+bool PosixDirFun::ChDir(Url const& dir, file_error& ec)
 {
     auto url  = *dir;
     bool stat = chdir(url.c_str()) == 0;
     if(!stat)
     {
-        PosixFileFun::ErrnoCheck(ec, url.c_str());
+        posix::FileFun::ErrnoCheck(ec, url.c_str());
         return false;
     }
     return true;
@@ -211,7 +211,7 @@ bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
     if(!createParent)
     {
         bool stat = mkdir(url.c_str(), S_IRWXU | S_IRWXG) == 0;
-        PosixFileFun::ErrnoCheck(ec, url.c_str());
+        posix::FileFun::ErrnoCheck(ec, url.c_str());
         return stat;
     }
 
@@ -228,19 +228,19 @@ bool PosixDirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
         {
             *p = 0;
             mkdir(tmp, S_IRWXU);
-            PosixFileFun::ErrnoCheck(ec, tmp);
+            posix::FileFun::ErrnoCheck(ec, tmp);
             *p = '/';
         }
     bool stat = mkdir(tmp, S_IRWXU) == 0 || (errno == EEXIST);
-    PosixFileFun::ErrnoCheck(ec, tmp);
+    posix::FileFun::ErrnoCheck(ec, tmp);
     return stat;
 }
 
-bool Posix::PosixDirFun::RmDir(Url const& dname, file_error& ec)
+bool PosixDirFun::RmDir(Url const& dname, file_error& ec)
 {
     auto url  = *dname;
     bool stat = rmdir(url.c_str()) == 0 || (errno = 0);
-    PosixFileFun::ErrnoCheck(ec, url.c_str());
+    posix::FileFun::ErrnoCheck(ec, url.c_str());
     return stat;
 }
 
@@ -252,7 +252,7 @@ bool PosixDirFun::Ls(
 
     if(!dr)
     {
-        PosixFileFun::ErrnoCheck(ec, url.c_str());
+        posix::FileFun::ErrnoCheck(ec, url.c_str());
         return false;
     }
 
@@ -260,37 +260,38 @@ bool PosixDirFun::Ls(
 
     while((dir_ent = readdir(dr)) != nullptr)
     {
-        Type t = Type::None;
+        NodeType t = NodeType::None;
 
         switch(dir_ent->d_type)
         {
         case DT_BLK:
-            t = Type::Block;
+            t = NodeType::Block;
             break;
         case DT_CHR:
-            t = Type::Character;
+            t = NodeType::Character;
             break;
         case DT_DIR:
-            t = Type::Directory;
+            t = NodeType::Directory;
             break;
         case DT_LNK:
-            t = Type::Link;
+            t = NodeType::Link;
             break;
         case DT_FIFO:
-            t = Type::FIFO;
+            t = NodeType::FIFO;
             break;
         case DT_REG:
-            t = Type::File;
+            t = NodeType::File;
             break;
         case DT_SOCK:
-            t = Type::Socket;
+            t = NodeType::Socket;
             break;
         default:
-            t = PosixFileFun::Stat(MkUrl(dir_ent->d_name), ec);
+            t = posix::FileFun::Stat(constructors::MkUrl(dir_ent->d_name), ec);
             break;
         }
 
-        if(str::cmp(dir_ent->d_name, ".") || str::cmp(dir_ent->d_name, ".."))
+        if(libc::str::cmp(dir_ent->d_name, ".") ||
+           libc::str::cmp(dir_ent->d_name, ".."))
             continue;
 
         entries.push_back({dir_ent->d_name, t});
@@ -298,7 +299,7 @@ bool PosixDirFun::Ls(
 
     closedir(dr);
 
-    PosixFileFun::ErrnoCheck(ec, url.c_str());
+    posix::FileFun::ErrnoCheck(ec, url.c_str());
     errno = 0;
 
     return true;
@@ -322,8 +323,8 @@ Url PosixDirFun::Basename(CString const& n, file_error& ec)
     // This one is slower, but more compliant
     CString out   = n;
     CString out_s = basename(&out[0]);
-    PosixFileFun::ErrnoCheck(ec);
-    return MkUrl(out_s, RSCA::SystemFile);
+    posix::FileFun::ErrnoCheck(ec);
+    return constructors::MkUrl(out_s, RSCA::SystemFile);
 #endif
 }
 
@@ -342,12 +343,12 @@ Url PosixDirFun::Dirname(CString const& fname, file_error& ec)
     // This one is slower, but more compliant
     CString out   = fname;
     CString out_s = dirname(&out[0]);
-    PosixFileFun::ErrnoCheck(ec);
-    return MkUrl(out_s, RSCA::SystemFile);
+    posix::FileFun::ErrnoCheck(ec);
+    return constructors::MkUrl(out_s, RSCA::SystemFile);
 #endif
 }
 
-u32 Posix::PosixFileMod_def::PageSize()
+u32 PosixFileMod_def::PageSize()
 {
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
     return static_cast<u32>(sysconf(_SC_PAGESIZE) - 1);
@@ -381,13 +382,6 @@ int PosixFileMod_def::MappingFlags(RSCA acc)
 
     if(feval(acc & RSCA::ExclusiveLocking))
         mapping |= MAP_LOCKED;
-
-//    if(feval(acc&(RSCA::Streaming)))
-//        mapping |= MAP_POPULATE;
-//    if(feval(acc&RSCA::GreedyCache))
-//        mapping |= MAP_POPULATE|MAP_LOCKED;
-//    if(feval(acc&RSCA::NoCache))
-//        mapping |= MAP_NONBLOCK;
 #endif
 
     return mapping;
@@ -445,6 +439,6 @@ int PosixFileMod_def::PosixRscFlags(RSCA acc)
     return oflags;
 }
 
-} // namespace Posix
-} // namespace CResources
-} // namespace Coffee
+} // namespace posix
+} // namespace file
+} // namespace platform

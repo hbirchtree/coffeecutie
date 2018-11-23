@@ -73,11 +73,6 @@ extern P<InternalThreadState>& GetInternalThreadState();
  *
  */
 
-extern bool ProfilerEnabled();
-
-extern Profiling::PContext*    GetProfilerStore();
-extern Profiling::ThreadState* GetProfilerTStore();
-
 extern ThreadId& GetCurrentThreadId();
 
 #if defined(COFFEE_USE_TERMINAL_CTL)

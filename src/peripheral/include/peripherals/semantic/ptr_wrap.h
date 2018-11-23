@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 #include <peripherals/stl/standard_exceptions.h>
 
 namespace semantic {

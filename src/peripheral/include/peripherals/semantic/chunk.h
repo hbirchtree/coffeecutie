@@ -19,21 +19,23 @@ template<typename T>
  */
 struct mem_chunk
 {
+    using size_type       = libc_types::szptr;
+    using difference_type = libc_types::ptroff;
     /* Here's some iterator magic, for compatbility with STL containers */
 
     template<typename T_access = T>
     struct iterator_base : stl_types::Iterator<stl_types::ForwardIteratorTag, T>
     {
         using value_type      = T_access;
-        using difference_type = ptroff;
+        using difference_type = typename mem_chunk<T_access>::difference_type;
 
         friend struct mem_chunk;
 
-        iterator_base(mem_chunk<T>& chunk, szptr i = 0) :
+        iterator_base(mem_chunk<T>& chunk, size_type i = 0) :
             m_chunk(&chunk), m_idx(i), m_readonly(false)
         {
         }
-        iterator_base(mem_chunk<T> const& chunk, szptr i = 0) :
+        iterator_base(mem_chunk<T> const& chunk, size_type i = 0) :
             m_chunk(C_CCAST<mem_chunk<T>*>(&chunk)), m_idx(i), m_readonly(true)
         {
         }
@@ -50,27 +52,27 @@ struct mem_chunk
             return *this;
         }
 
-        iterator_base operator+(ptroff inc)
+        iterator_base operator+(difference_type inc)
         {
             auto copy = *this;
             copy.m_idx += inc;
             return *this;
         }
 
-        iterator_base operator-(ptroff inc)
+        iterator_base operator-(difference_type inc)
         {
             auto copy = *this;
             copy.m_idx -= inc;
             return *this;
         }
 
-        iterator_base& operator+=(ptroff inc)
+        iterator_base& operator+=(difference_type inc)
         {
             m_idx += inc;
             return *this;
         }
 
-        iterator_base& operator-=(ptroff inc)
+        iterator_base& operator-=(difference_type inc)
         {
             m_idx -= inc;
             return *this;
@@ -114,17 +116,15 @@ struct mem_chunk
         }
 
       private:
-        mem_chunk* m_chunk;
-        szptr      m_idx;
-        bool       m_readonly;
+        mem_chunk*        m_chunk;
+        libc_types::szptr m_idx;
+        bool              m_readonly;
     };
 
     using iterator       = iterator_base<>;
     using const_iterator = iterator_base<const T>;
 
-    using value_type      = T;
-    using size_type       = szptr;
-    using difference_type = typename iterator::difference_type;
+    using value_type = T;
 
     FORCEDINLINE
     mem_chunk(mem_chunk<T>&& other) :
@@ -143,7 +143,7 @@ struct mem_chunk
     }
 
     FORCEDINLINE
-    mem_chunk(T* data, szptr size, szptr elements) :
+    mem_chunk(T* data, size_type size, size_type elements) :
         data(data), size(size), elements(elements)
     {
 #if MODE_DEBUG
@@ -271,7 +271,7 @@ struct mem_chunk
          * \return
          */
         mem_chunk<T>
-        Unsafe(T2* data = nullptr, szptr size = 0, szptr elements = 0)
+        Unsafe(T2* data = nullptr, size_type size = 0, size_type elements = 0)
     {
         mem_chunk<T> out;
 
@@ -288,7 +288,7 @@ struct mem_chunk
             nullptr>
     NO_DISCARD STATICINLINE mem_chunk<T> Alloc(SizeT num)
     {
-        return Alloc(C_FCAST<szptr>(num));
+        return Alloc(C_FCAST<size_type>(num));
     }
 
     template<typename DT, typename is_not_virtual<DT>::type* = nullptr>
@@ -300,9 +300,9 @@ struct mem_chunk
     template<
         typename Dummy                                               = void,
         typename std::enable_if<std::is_pod<T>::value, Dummy>::type* = nullptr>
-    NO_DISCARD STATICINLINE mem_chunk<T> CreateString(cstring src)
+    NO_DISCARD STATICINLINE mem_chunk<T> CreateString(libc_types::cstring src)
     {
-        auto len = str::len(src);
+        auto len = libc::str::len(src);
 
         return {C_FCAST<T*>(src), len, len / sizeof(T)};
     }
@@ -310,7 +310,7 @@ struct mem_chunk
     template<
         typename Dummy                                                = void,
         typename std::enable_if<!std::is_pod<T>::value, Dummy>::type* = nullptr>
-    NO_DISCARD STATICINLINE mem_chunk<T> CreateString(cstring)
+    NO_DISCARD STATICINLINE mem_chunk<T> CreateString(libc_types::cstring)
     {
         return {};
     }
@@ -336,7 +336,7 @@ struct mem_chunk
          * \return
          */
         mem_chunk<T>
-        From(T2* data, szptr size)
+        From(T2* data, size_type size)
     {
         return {C_FCAST<T*>(data),
                 size * sizeof(T2),
@@ -356,7 +356,7 @@ struct mem_chunk
          * \return
          */
         mem_chunk<T>
-        From(T2* data, szptr size)
+        From(T2* data, size_type size)
     {
         return {C_FCAST<T*>(data), size, size / sizeof(T)};
     }
@@ -422,7 +422,7 @@ struct mem_chunk
         return out;
     }
 
-    STATICINLINE szptr nmax(szptr v1, szptr v2)
+    STATICINLINE size_type nmax(size_type v1, size_type v2)
     {
         if(v1 < v2)
             return v2;
@@ -464,7 +464,7 @@ struct mem_chunk
         typename Dummy = void,
         typename std::enable_if<!std::is_void<T>::value, Dummy>::type* =
             nullptr>
-    T& operator[](szptr i)
+    T& operator[](size_type i)
     {
         return data[i];
     }
@@ -472,7 +472,7 @@ struct mem_chunk
         typename Dummy = void,
         typename std::enable_if<!std::is_void<T>::value, Dummy>::type* =
             nullptr>
-    T const& operator[](szptr i) const
+    T const& operator[](size_type i) const
     {
         return data[i];
     }
@@ -509,15 +509,18 @@ struct mem_chunk
      * \param size
      * \return
      */
-    NO_DISCARD FORCEDINLINE mem_chunk<T> at(szptr offset, szptr size = 0)
+    NO_DISCARD FORCEDINLINE mem_chunk<T> at(
+        size_type offset, size_type size = 0)
     {
+        using namespace ::libc_types;
+
         if(offset > this->size || offset + size > this->size)
             return {};
 
         if(!data)
             return {};
 
-        byte_t* basePtr = C_RCAST<byte_t*>(data);
+        u8* basePtr = C_RCAST<u8*>(data);
 
         if(size == 0)
             size = this->size - offset;
@@ -534,7 +537,7 @@ struct mem_chunk
             (size * sizeof(T)) / sizeof(T2));
     }
 
-    FORCEDINLINE mem_chunk<T>& resize(szptr newSize)
+    FORCEDINLINE mem_chunk<T>& resize(size_type newSize)
     {
         data = C_RCAST<T*>(realloc(data, newSize));
 
@@ -620,11 +623,11 @@ struct mem_chunk
     /*!
      * \brief Size in bytes
      */
-    szptr size;
+    size_type size;
     /*!
      * \brief Number of elements, if applicable
      */
-    szptr elements;
+    size_type elements;
 
   private:
     void (*m_destr)(mem_chunk<T>&) = nullptr;
@@ -633,8 +636,8 @@ struct mem_chunk
 
 #undef BYTE_API
 
-using Bytes      = mem_chunk<byte_t>;
-using BytesConst = mem_chunk<const byte_t>;
+using Bytes      = mem_chunk<libc_types::u8>;
+using BytesConst = mem_chunk<const libc_types::u8>;
 
 template<typename T>
 using _cbasic_data_chunk = mem_chunk<T>;

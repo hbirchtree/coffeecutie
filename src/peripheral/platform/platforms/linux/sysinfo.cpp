@@ -1,10 +1,10 @@
-#include <coffee/core/plat/environment/linux/sysinfo.h>
+#include <platforms/linux/sysinfo.h>
 
-#include <coffee/core/plat/file.h>
-#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/platform_data.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
+#include <platforms/environment.h>
+#include <platforms/file.h>
 
 #include <coffee/core/CDebug>
 

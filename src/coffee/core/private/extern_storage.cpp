@@ -11,10 +11,6 @@
 #include <coffee/core/profiler/profiling-export.h>
 #endif
 
-#ifdef COFFEE_USE_TERMINAL_CTL
-#include <coffee/core/plat/memory/cmd_unixterm.h>
-#endif
-
 namespace Coffee {
 namespace State {
 
@@ -53,19 +49,11 @@ struct InternalState
 
     struct internal_bits_t
     {
-        internal_bits_t() :
-            printing_verbosity(0)
-#if defined(COFFEE_USE_TERMINAL_CTL)
-            ,
-            terminal_alternate_buffer(false)
-#endif
+        internal_bits_t() : printing_verbosity(0)
         {
         }
 
         u8 printing_verbosity;
-#if defined(COFFEE_USE_TERMINAL_CTL)
-        bool terminal_alternate_buffer;
-#endif
     };
 
     union

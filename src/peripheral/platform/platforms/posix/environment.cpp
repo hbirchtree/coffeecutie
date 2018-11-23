@@ -1,4 +1,4 @@
-#include <coffee/core/plat/environment/unix/environment.h>
+#include <platforms/posix/environment.h>
 
 #if defined(COFFEE_APPLE)
 #include <coffee/core/plat/environment/osx/environment.h>
@@ -13,30 +13,33 @@
 #include <limits.h>
 #include <unistd.h>
 
-namespace Coffee {
-namespace Environment {
-namespace Posix {
+namespace platform {
+namespace env {
+namespace posix {
 
-bool PosixEnvironmentFun::PrependVar(cstring var, cstring val)
+using namespace libc;
+using namespace url::constructors;
+
+bool EnvironmentF::PrependVar(cstring var, cstring val)
 {
     CString new_val = val;
     new_val += GetVar(var);
     return SetVar(var, new_val.c_str());
 }
 
-bool PosixEnvironmentFun::AppendVar(cstring var, cstring val)
+bool EnvironmentF::AppendVar(cstring var, cstring val)
 {
     CString new_val = GetVar(var);
     new_val += val;
     return SetVar(var, new_val.c_str());
 }
 
-CString PosixEnvironmentFun::ConcatPath(cstring v1, cstring v2)
+CString EnvironmentF::ConcatPath(cstring v1, cstring v2)
 {
     return v1 + GetPathSep() + v2;
 }
 
-Url PosixEnvironmentFun::CurrentDir()
+Url EnvironmentF::CurrentDir()
 {
     CString dir;
     dir.resize(PATH_MAX);
@@ -47,7 +50,7 @@ Url PosixEnvironmentFun::CurrentDir()
     return MkUrl(dir, RSCA::SystemFile);
 }
 
-EnvInterface::Variables PosixEnvironmentFun::Environment()
+EnvInterface::Variables EnvironmentF::Environment()
 {
     Variables e;
     char*     envar = environ[0];
@@ -73,7 +76,7 @@ EnvInterface::Variables PosixEnvironmentFun::Environment()
     return e;
 }
 
-} // namespace Posix
+} // namespace posix
 
 #if defined(COFFEE_APPLE)
 CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
@@ -96,7 +99,7 @@ CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
 }
 #endif
 
-CString& Posix::PosixTerminalColorCodes::ColorText(
+CString& posix::TerminalColorCodes::ColorText(
     CString& text, EnvColorCodes::CmdFormat fmt)
 {
 #if !defined(COFFEE_ANDROID)
@@ -159,5 +162,5 @@ CString& Posix::PosixTerminalColorCodes::ColorText(
 #endif
 }
 
-} // namespace Environment
-} // namespace Coffee
+} // namespace env
+} // namespace platform

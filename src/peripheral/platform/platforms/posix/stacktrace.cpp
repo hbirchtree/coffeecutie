@@ -1,12 +1,11 @@
-#include <coffee/core/plat/environment/unix/stacktrace.h>
+#include <platforms/posix/stacktrace.h>
 
 #if defined(COFFEE_UNIXPLAT)
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/ptr_wrap.h>
-
-#include <coffee/core/CRegex>
+#include <peripherals/stl/regex.h>
 
 #include <cxxabi.h> //Demangling function names
 
@@ -15,10 +14,11 @@
 #include <libunwind.h> //For retrieving the callstack
 #endif
 
-namespace Coffee {
-namespace Environment {
-namespace Posix {
+namespace platform {
+namespace env {
+namespace posix {
 
+using namespace ::stl_types;
 using namespace ::semantic;
 
 CString PosixStacktracer::DemangleSymbol(const char* sym)
@@ -122,9 +122,9 @@ CString PosixStacktracer::GetStackFuncName(u32 depth)
 #endif
 }
 
-} // namespace Posix
+} // namespace posix
 
-} // namespace Environment
-} // namespace Coffee
+} // namespace env
+} // namespace platform
 
 #endif

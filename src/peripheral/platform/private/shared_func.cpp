@@ -1,4 +1,7 @@
-#include <coffee/core/plat/environment/sysinfo_def.h>
+#include <platforms/base/sysinfo.h>
+
+#include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/stlstring_ops.h>
 
 #if defined(COFFEE_UNIXPLAT)
 #include <unistd.h>
@@ -6,7 +9,8 @@
 #include <coffee/core/plat/plat_windows.h>
 #endif
 
-namespace Coffee {
+namespace platform {
+namespace env {
 
 CString SysInfoDef::GetSystemString()
 {
@@ -49,7 +53,7 @@ ThrdCnt SysInfoDef::SmartParallelism(u64 worksize, u64 weight)
     if(worksize * weight <= ThreadCount())
     {
         return 1;
-    } else if(worksize * weight <= CMath::pow(Parallelism(), 3))
+    } else if(worksize * weight <= stl_types::math::pow(Parallelism(), 3))
     {
         return ThreadCount();
     } else
@@ -85,4 +89,5 @@ HWDeviceInfo SysInfoDef::BIOS()
 }
 #endif
 
-} // namespace Coffee
+} // namespace env
+} // namespace platform

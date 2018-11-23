@@ -1,11 +1,8 @@
 #pragma once
 
 #include "argument_handling.h"
-#include "coffee_signals.h"
-#include "coffee_version.h"
 #include "types/tdef/fntypes.h"
 
-#include "eventprocess.h"
 #include "platform_data.h"
 
 namespace Coffee {

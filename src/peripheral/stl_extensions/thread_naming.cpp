@@ -1,6 +1,8 @@
 #include <peripherals/stl/functional_types.h>
 
-#include <coffee/core/internal_state.h>
+#include <coffee/core/base_state.h>
+
+using namespace ::Coffee;
 
 namespace stl_types {
 

@@ -1,8 +1,10 @@
-#include <coffee/core/plat/linking/unix/loader.h>
+#include <platforms/posix/loader.h>
 
-namespace Coffee {
-namespace Library {
-namespace Posix {
+#include <peripherals/stl/string_casting.h>
+
+namespace platform {
+namespace ld {
+namespace posix {
 
 const char* linking_error_category::name() const noexcept
 {
@@ -20,11 +22,11 @@ std::string linking_error_category::message(int error_code) const
     }
 }
 
-UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
-    cstring                        libName,
-    error_type&                    ec,
-    PosixFunctionLoader::LoadFlags flags,
-    const Version*                 ver)
+UqPtr<FunctionLoader::Library> FunctionLoader::GetLibrary(
+    cstring                   libName,
+    error_type&               ec,
+    FunctionLoader::LoadFlags flags,
+    const Version*            ver)
 {
     CString perm[4];
 #if defined(COFFEE_LINUX)
@@ -37,14 +39,13 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
     if(ver)
     {
 #if defined(COFFEE_LINUX)
-        perm[1] = perm[0] + "." + str::convert::to_string(ver->major);
-        perm[2] = perm[1] + "." + str::convert::to_string(ver->minor);
-        perm[3] = perm[2] + "." + str::convert::to_string(ver->revision);
+        perm[1] = perm[0] + "." + cast_pod(ver->major);
+        perm[2] = perm[1] + "." + cast_pod(ver->minor);
+        perm[3] = perm[2] + "." + cast_pod(ver->revision);
 #elif defined(COFFEE_APPLE)
-        perm[1] = perm[0] + str::convert::to_string(ver->major);
-        perm[2] = perm[1] + str::convert::to_string(ver->minor);
-        perm[3] = perm[2] + str::convert::to_string(ver->revision) +
-                  shared_object_extension;
+        perm[1] = perm[0] + cast_pod(ver->major);
+        perm[2] = perm[1] + cast_pod(ver->minor);
+        perm[3] = perm[2] + cast_pod(ver->revision) + shared_object_extension;
 
         perm[0] = perm[0] + shared_object_extension;
         perm[1] = perm[1] + shared_object_extension;
@@ -80,7 +81,7 @@ UqPtr<PosixFunctionLoader::Library> PosixFunctionLoader::GetLibrary(
     }
 }
 
-bool PosixFunctionLoader::UnloadLibrary(UqPtr<Library>&& lib, error_type& ec)
+bool FunctionLoader::UnloadLibrary(UqPtr<Library>&& lib, error_type& ec)
 {
     bool stat = dlclose(lib->handle) == 0;
 
@@ -90,6 +91,6 @@ bool PosixFunctionLoader::UnloadLibrary(UqPtr<Library>&& lib, error_type& ec)
     return stat;
 }
 
-} // namespace Posix
-} // namespace Library
-} // namespace Coffee
+} // namespace posix
+} // namespace ld
+} // namespace platform

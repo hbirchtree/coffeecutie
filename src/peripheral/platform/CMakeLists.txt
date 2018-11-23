@@ -5,10 +5,9 @@ coffee_library (
     PeripheralUrl
 
     SOURCES
-    private/file_common.cpp
     private/argument_parse.cpp
+    private/platform_data.cpp
     private/shared_func.cpp
-    private/cmd_interface.cpp
     private/url.cpp
 
     #
@@ -144,7 +143,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
         #
         # File management
         #
-        platforms/posix/posix_shared.cpp
         platforms/posix/file.cpp
         )
 

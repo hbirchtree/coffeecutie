@@ -19,12 +19,6 @@
 #include <windows.h>
 
 #undef ERROR
-//#undef far
-//#undef near
-//#undef minor
-//#undef major
-
-//#undef CreateWindow
 
 namespace platform {
 

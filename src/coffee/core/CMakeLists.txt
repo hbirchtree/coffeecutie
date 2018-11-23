@@ -21,10 +21,6 @@ coffee_library (
     # Core functionality, state and etc.
     #
     private/extern_storage.cpp
-    # Operating system signal handling
-    private/coffee_signals.cpp
-    # Library versioning
-    private/application_data.cpp
 
     # Thread code
     private/types/tdef/thread_glue.cpp
@@ -36,9 +32,6 @@ coffee_library (
     private/base/debugprinter.cpp
     private/base/jsonlogger.cpp
     private/base/jsonprofile.cpp
-
-    # Wrapper around std::regex
-    private/base/cregex.cpp
 
     #
     # to_string(...) functions
@@ -120,14 +113,14 @@ coffee_library (
 #
 # Useful system information, such as display DPI and system name
 #
-coffee_library (
-    TARGET CoffeeCore_PlatformData
+#coffee_library (
+#    TARGET CoffeeCore_PlatformData
 
-    SOURCES
-    private/platform_data.cpp
+#    SOURCES
+#    private/platform_data.cpp
 
-    LIBRARIES CoffeeCore_Base
-    )
+#    LIBRARIES CoffeeCore_Base
+#    )
 
 #
 # Utilities for printing in the terminal
@@ -228,7 +221,7 @@ target_link_libraries ( CoffeeCore INTERFACE
     CoffeeCore_Compression
     CoffeeCore_EventApplicationC
     CoffeeCore_OldBlob
-    CoffeeCore_PlatformData
+#    CoffeeCore_PlatformData
     CoffeeCore_Profiling
     CoffeeCore_Saving
     CoffeeCore_TerminalPrinting

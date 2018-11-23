@@ -1,11 +1,11 @@
-#include <coffee/core/plat/timing/profiling.h>
+#include <platforms/profiling.h>
 
-namespace Coffee {
-namespace Profiling {
+namespace platform {
+namespace profiling {
 
 ThreadInternalState::~ThreadInternalState()
 {
 }
 
-} // namespace Profiling
-} // namespace Coffee
+} // namespace profiling
+} // namespace platform
