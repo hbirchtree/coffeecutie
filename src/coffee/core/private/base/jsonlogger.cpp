@@ -6,9 +6,15 @@
 #include <coffee/core/internal_state.h>
 #include <platforms/file.h>
 
+#include <peripherals/libc/signals.h>
+
 #include <coffee/core/base/printing/outputprinter.h>
 
 namespace Coffee {
+
+using namespace ::platform::file;
+using namespace ::semantic;
+using namespace ::semantic::debug;
 
 struct JsonLogState : State::GlobalState
 {
@@ -100,7 +106,7 @@ static void JsonLoggerExit()
 {
     auto jsonLog = std::move(GetLogState().handle);
 
-    FileFun::file_error ec;
+    file_error ec;
     FileFun::Write(jsonLog, Bytes::CreateString("{}\n]\n"), ec);
 
     DebugFun::SetLogInterface(
@@ -112,9 +118,9 @@ JsonLogState::~JsonLogState()
 {
 }
 
-DebugFun::LogInterface SetupJsonLogger(Url const& jsonFilename)
+DebugFun::LogInterface SetupJsonLogger(platform::url::Url const& jsonFilename)
 {
-    FileFun::file_error ec;
+    file_error ec;
     FileFun::Truncate(jsonFilename, 0, ec);
 
     auto jsonFile = FileFun::Open(
@@ -127,7 +133,7 @@ DebugFun::LogInterface SetupJsonLogger(Url const& jsonFilename)
     auto jsonState    = MkShared<JsonLogState>();
     jsonState->handle = std::move(jsonFile);
     State::SwapState("jsonLog", jsonState);
-    Cmd::RegisterAtExit(JsonLoggerExit);
+    libc::signal::register_atexit(JsonLoggerExit);
 
     return {JsonLogger, JsonTagLogger};
 }

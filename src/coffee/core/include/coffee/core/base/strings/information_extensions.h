@@ -9,11 +9,11 @@ namespace Strings {
 
 /* Extension resolvers */
 
-extern cstring to_string(DebugComponent const& arg);
+extern cstring to_string(debug::Component const& arg);
 
-extern cstring to_string(DebugType const& arg);
+extern cstring to_string(debug::Type const& arg);
 
-extern cstring to_string(Severity const& arg);
+extern cstring to_string(debug::Severity const& arg);
 
 extern CString to_string(_cbasic_version<u8>& arg);
 

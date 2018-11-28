@@ -1,23 +1,26 @@
-#include <coffee/core/plat/environment/osx/environment.h>
-#include <coffee/core/coffee.h>
+#include <platforms/osx/environment.h>
 
-namespace Coffee{
-namespace Environment{
-namespace Mac{
+#include <coffee/core/base_state.h>
 
-Url MacEnv::GetUserData(cstring orgname, cstring appname)
+namespace platform{
+namespace env{
+namespace mac{
+
+using namespace ::Coffee::State;
+
+Url EnvironmentF::GetUserData(cstring orgname, cstring appname)
 {
     if(!orgname && !appname)
     {
-        orgname = ApplicationData().organization_name.c_str();
-        appname = ApplicationData().application_name.c_str();
+        orgname = GetAppData().organization_name.c_str();
+        appname = GetAppData().application_name.c_str();
     }
 
     CString dir = GetVar("HOME");
     dir = ConcatPath(dir.c_str(),"Library/Application Support");
     dir = ConcatPath(dir.c_str(),orgname);
     dir = ConcatPath(dir.c_str(),appname);
-    return MkUrl(dir, RSCA::SystemFile);
+    return constructors::MkUrl(dir, RSCA::SystemFile);
 }
 
 }

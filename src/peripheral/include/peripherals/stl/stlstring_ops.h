@@ -40,6 +40,14 @@ FORCEDINLINE std::basic_string<CharType> encapsulate(
     return target;
 }
 
+template<typename CharType>
+FORCEDINLINE std::basic_string<CharType> encapsulate(const CharType* src)
+{
+    std::basic_string<CharType> target;
+    target = src;
+    return target;
+}
+
 namespace transform {
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> printclean(

@@ -205,8 +205,8 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     auto library = MkUrl(home.c_str()) + Path{"Library"};
 
-    auto app_path = Path{GetCurrentApp().organization_name} +
-                    Path{GetCurrentApp().application_name};
+    auto app_path = Path{GetAppData().organization_name} +
+                    Path{GetAppData().application_name};
 
     paths.configDir = library + Path{"Application Support"} + app_path;
 

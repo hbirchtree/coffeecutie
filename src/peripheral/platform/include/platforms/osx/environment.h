@@ -7,21 +7,21 @@
 #include <platforms/posix/environment.h>
 #include <platforms/posix/file.h>
 
-#include "../../memory/stlstring_ops.h"
+#include <peripherals/stl/stlstring_ops.h>
 
 namespace platform {
 namespace env {
 namespace mac {
 
-struct MacEnv : Posix::PosixEnvironmentFun
+struct EnvironmentF : posix::EnvironmentF
 {
     static CString ExecutableName(cstring_w = nullptr);
 
     STATICINLINE Url ApplicationDir()
     {
-        CResources::Posix::PosixDirFun::file_error ec;
+        file::posix::FileFun::file_error ec;
         CString                                    execname = ExecutableName();
-        return CResources::Posix::PosixDirFun::Dirname(execname.c_str(), ec);
+        return file::posix::DirFun::Dirname(execname.c_str(), ec);
     }
     static Url GetUserData(cstring orgname, cstring appname);
 };
@@ -35,11 +35,11 @@ struct MacColorMap : Posix::PosixTerminalColorCodes
 } // namespace mac
 } // namespace env
 
-using Env_ = Environment::Mac::MacEnv;
+using Env_ = env::mac::EnvironmentF;
 #if defined(COFFEE_APPLE_DESKTOP)
 using ColorMap_ = Environment::Mac::MacColorMap;
 #else
-using ColorMap_ = Environment::EnvColorCodes;
+using ColorMap_ = env::EnvColorCodes;
 #endif
 
 } // namespace platform

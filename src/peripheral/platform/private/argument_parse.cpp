@@ -148,7 +148,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg& args)
 
 CString ArgumentParser::helpMessage() const
 {
-    auto out = cStringFormat("{0}", Env::ExecutableName());
+    auto out = Env::ExecutableName();
 
     CString desc = {};
 
@@ -157,8 +157,9 @@ CString ArgumentParser::helpMessage() const
 
     for(auto p : posargs)
     {
-        out += cStringFormat(" [{0}]", p.name);
-        desc += cStringFormat("\n  {0}\t\t{1}\n", p.name, p.help);
+        out += " [" + str::encapsulate(p.name) + "]";
+        desc += "\n  " + str::encapsulate(p.name)
+                + "\t\t" + str::encapsulate(p.help) + "\n";
     }
 
     if(arguments.size() || switches.size())
@@ -179,12 +180,15 @@ CString ArgumentParser::helpMessage() const
         out += "]";
 
         if(a.longname && a.shortname)
-            desc += cStringFormat(
-                "\n  -{0}, --{1}\t\t{2}", a.shortname, a.longname, a.help);
+            desc += "\n  -" + str::encapsulate(a.shortname)
+                    + ", --" + str::encapsulate(a.longname)
+                    + "\t\t" + str::encapsulate(a.help);
         else if(a.longname)
-            desc += cStringFormat("\n      --{0}\t\t{1}", a.longname, a.help);
+            desc += "\n      --" + str::encapsulate(a.longname)
+                    + "\t\t" + str::encapsulate(a.help);
         else if(a.shortname)
-            desc += cStringFormat("\n  -{0}\t\t\t{1}", a.shortname, a.help);
+                desc += "\n  -" + str::encapsulate(a.shortname)
+                        + "\t\t\t" + str::encapsulate(a.help);
     }
 
     for(auto s : switches)
@@ -200,12 +204,15 @@ CString ArgumentParser::helpMessage() const
         out += "]";
 
         if(s.longname && s.shortname)
-            desc += cStringFormat(
-                "\n  -{0}, --{1}\t\t{2}", s.shortname, s.longname, s.help);
+            desc += "\n  -" + str::encapsulate(s.shortname)
+                    + ", --" + str::encapsulate(s.longname)
+                    + "\t\t" + str::encapsulate(s.help);
         else if(s.longname)
-            desc += cStringFormat("\n      --{0}\t\t{1}", s.longname, s.help);
+            desc += "\n      --" + str::encapsulate(s.longname)
+                    + "\t\t" + str::encapsulate(s.help);
         else if(s.shortname)
-            desc += cStringFormat("\n  -{0}\t\t\t{1}", s.shortname, s.help);
+                desc += "\n  -" + str::encapsulate(s.shortname)
+                        + "\t\t\t" + str::encapsulate(s.help);
     }
 
     return out + desc;

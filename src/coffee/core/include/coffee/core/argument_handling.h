@@ -4,7 +4,7 @@
 
 namespace Coffee{
 
-extern AppArg& GetInitArgs();
+extern platform::info::AppArg& GetInitArgs();
 
 namespace Strings{
 

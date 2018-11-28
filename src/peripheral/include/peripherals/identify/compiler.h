@@ -22,7 +22,7 @@
 
 
 /* GCC compiler identification */
-#if defined(__GNUC__) && defined(__cplusplus)
+#if defined(__GNUC__)
 
 #undef C_SYSTEM_BITNESS
 
@@ -46,7 +46,7 @@
 #endif
 
 /* Clang can identify as an apache attack helicopter at times. */
-#if defined(__clang__) && defined(__cplusplus)
+#if defined(__clang__)
 #undef COFFEE_GCC
 #define COFFEE_CLANG
 
@@ -78,7 +78,7 @@
 #endif
 
 /* This wasn't so hard, really. */
-#if defined(_MSC_VER) && defined(__cplusplus)
+#if defined(_MSC_VER)
 
 #define COFFEE_MSVCXX
 #define C_COMPILER_STRING "MSVC++" _MSC_VER

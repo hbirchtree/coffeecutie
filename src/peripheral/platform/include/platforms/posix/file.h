@@ -42,9 +42,11 @@ struct PosixApi
 {
     struct FileHandle
     {
-        FileHandle() : fd(0)
+        FileHandle() : fd()
         {
         }
+
+        C_MOVE_CONSTRUCTOR(FileHandle);
 
         posix_fd fd;
     };

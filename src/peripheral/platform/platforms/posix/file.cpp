@@ -121,7 +121,7 @@ CString PosixFileMod_def::CanonicalName(Url const& fn, file_error& ec)
     out.resize(FILENAME_MAX);
     if(!realpath(url.c_str(), &out[0]))
         out.resize(0);
-    out.resize(str::len(out.c_str()));
+    out.resize(libc::str::len(out.c_str()));
     return out;
 #endif
 }

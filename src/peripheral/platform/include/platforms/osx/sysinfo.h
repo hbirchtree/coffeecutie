@@ -4,21 +4,20 @@
 
 #if defined(COFFEE_APPLE)
 
-#include "../sdlpowerinfo.h"
-#include "../sysinfo_def.h"
+#include <platforms/base/sysinfo.h>
 
 #include <stdio.h>
 
-namespace Coffee {
-namespace Environment {
-namespace Mac {
+namespace platform {
+namespace env {
+namespace mac {
 
-struct MacSysInfo : SysInfoDef
+struct SysInfo : SysInfoDef
 {
     static CString      GetSystemVersion();
-    static HWDeviceInfo DeviceName();
+    static info::HardwareDevice DeviceName();
 
-    static HWDeviceInfo Processor();
+    static info::HardwareDevice Processor();
 
     static bigscalar ProcessorFrequency();
 
@@ -33,13 +32,10 @@ struct MacSysInfo : SysInfoDef
     static bool HasHyperThreading();
 };
 
-using MacPowerInfo = _SDLPowerInfo;
-
 } // namespace Mac
 } // namespace Environment
 
-using PowerInfo = Environment::Mac::MacPowerInfo;
-using SysInfo   = Environment::Mac::MacSysInfo;
+using SysInfo   = env::mac::SysInfo;
 
 } // namespace Coffee
 #endif

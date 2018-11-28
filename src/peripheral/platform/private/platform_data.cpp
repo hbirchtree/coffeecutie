@@ -130,7 +130,7 @@ extern scalar dpi()
 
     float maxDpi = 0.f;
     for(auto const& dpi : dpis)
-        maxDpi = CMath::max(dpi, maxDpi);
+        maxDpi = math::max(dpi, maxDpi);
 
     return maxDpi;
 #else

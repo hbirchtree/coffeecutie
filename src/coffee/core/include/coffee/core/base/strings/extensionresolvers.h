@@ -3,6 +3,7 @@
 #include <coffee/core/base.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
+#include <peripherals/stl/type_safety.h>
 
 namespace Coffee {
 namespace Strings {

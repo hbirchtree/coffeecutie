@@ -1,9 +1,10 @@
 #pragma once
 
+#include <coffee/core/stl_types.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/thread_types.h>
 #include <peripherals/stl/type_safety.h>
-#include <peripherals/stl/types.h>
 
 #include <coffee/core/CDebug>
 

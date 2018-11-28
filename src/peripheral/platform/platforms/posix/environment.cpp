@@ -1,7 +1,7 @@
 #include <platforms/posix/environment.h>
 
 #if defined(COFFEE_APPLE)
-#include <coffee/core/plat/environment/osx/environment.h>
+#include <platforms/osx/environment.h>
 
 #if !defined(COFFEE_APPLE_MOBILE)
 #include <libproc.h>
@@ -59,11 +59,11 @@ EnvInterface::Variables EnvironmentF::Environment()
     cstring   q;
     while(envar)
     {
-        q = str::find(envar, "=");
+        q = libc::str::find(envar, "=");
         if(!q)
             continue;
         v1.insert(0, C_CAST<cstring>(envar), C_CAST<size_t>(q - envar));
-        v2.insert(0, C_CAST<cstring>(q + 1), str::len(q + 1));
+        v2.insert(0, C_CAST<cstring>(q + 1), libc::str::len(q + 1));
 
         e.insert(VarPair(v1, v2));
 
@@ -79,7 +79,7 @@ EnvInterface::Variables EnvironmentF::Environment()
 } // namespace posix
 
 #if defined(COFFEE_APPLE)
-CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
+CString mac::EnvironmentF::ExecutableName(cstring_w)
 {
 #if !defined(COFFEE_APPLE_MOBILE)
     int   ret;
