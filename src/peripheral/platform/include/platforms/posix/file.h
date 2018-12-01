@@ -46,8 +46,6 @@ struct PosixApi
         {
         }
 
-        C_MOVE_CONSTRUCTOR(FileHandle);
-
         posix_fd fd;
     };
 
@@ -105,7 +103,7 @@ struct PosixFileFun_def : PosixFileMod_def
         auto fd =
             posix_fd(open(url.c_str(), PosixRscFlags(ac), S_IRWXU | S_IRGRP));
 
-        if(fd == -1)
+        if(!fd)
         {
             ErrnoCheck(ec, url.c_str());
             return {};

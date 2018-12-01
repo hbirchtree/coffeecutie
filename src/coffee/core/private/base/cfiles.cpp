@@ -1,12 +1,15 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
-#include <coffee/core/plat/plat_environment.h>
 #include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/math.h>
+#include <platforms/environment.h>
+#include <url/url.h>
 
 #define CFILES_TAG "File::"
 
 namespace Coffee {
-namespace CResources {
+
+using namespace ::platform::file;
 
 struct Resource::ResourceData
 {
@@ -22,7 +25,7 @@ void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
 }
 
 Resource::Resource(cstring rsrc, RSCA acc) :
-    Resource(MkUrl(rsrc, acc & RSCA::StorageMask))
+    Resource(constructors::MkUrl(rsrc, acc & RSCA::StorageMask))
 {
 }
 
@@ -108,7 +111,7 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
 
     resc.size = FileFun::Size(resc.m_platform_data->m_url, ec);
-    resc.size = CMath::max(resc.size, size);
+    resc.size = math::max(resc.size, size);
 
     if(resc.size == 0)
     {
@@ -286,10 +289,8 @@ bool FileMkdir(Url const& dirname, bool recursive)
     return status;
 }
 
-} // namespace CResources
-
 namespace Strings {
-CString to_string(const CResources::Resource& r)
+CString to_string(Resource const& r)
 {
     return CString("rsc(") + str::print::pointerify(r.data) + "+" +
            cast_pod(r.size) + ")";

@@ -6,6 +6,8 @@
 namespace Coffee {
 namespace Strings {
 
+using namespace semantic::debug;
+
 cstring to_string(const Severity& sev)
 {
     switch(sev)
@@ -30,49 +32,49 @@ cstring to_string(const Severity& sev)
     return "";
 }
 
-cstring to_string(const DebugType& type)
+cstring to_string(const Type& type)
 {
     switch(type)
     {
-    case DebugType::Compatibility:
+    case Type::Compatibility:
         return "Compatibility";
-    case DebugType::Compliance:
+    case Type::Compliance:
         return "Compliance";
-    case DebugType::Deprecated:
+    case Type::Deprecated:
         return "Deprecated";
-    case DebugType::Information:
+    case Type::Information:
         return "Information";
-    case DebugType::Marker:
+    case Type::Marker:
         return "Marker";
-    case DebugType::Performance:
+    case Type::Performance:
         return "Performance";
-    case DebugType::UndefinedBehavior:
+    case Type::UndefinedBehavior:
         return "Undefined behavior";
-    case DebugType::Other:
+    case Type::Other:
         return "Other";
     }
     return "";
 }
 
-cstring to_string(const DebugComponent& comp)
+cstring to_string(const Component& comp)
 {
     switch(comp)
     {
-    case DebugComponent::Audio:
+    case Component::Audio:
         return "Debug::Audio";
-    case DebugComponent::Core:
+    case Component::Core:
         return "Debug::Core";
-    case DebugComponent::Extension:
+    case Component::Extension:
         return "Debug::Extension";
-    case DebugComponent::GraphicsAPI:
+    case Component::GraphicsAPI:
         return "Debug::GraphicsAPI";
-    case DebugComponent::Interface:
+    case Component::Interface:
         return "Debug::Interface";
-    case DebugComponent::LibraryLoader:
+    case Component::LibraryLoader:
         return "Debug::LibraryLoader";
-    case DebugComponent::Media:
+    case Component::Media:
         return "Debug::Media";
-    case DebugComponent::ShaderCompiler:
+    case Component::ShaderCompiler:
         return "Debug::ShaderCompiler";
     }
     return "";

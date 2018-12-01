@@ -53,8 +53,10 @@ struct UrlResolver
 
     static Url DefaultMulti(Url const& path, CString const& ext)
     {
+        using namespace platform::url;
+
         Path newPath = Path(path).addExtension(ext.c_str());
-        Url  newUrl  = MkUrl(newPath, path.flags);
+        Url  newUrl  = constructors::MkUrl(newPath, path.flags);
 
         return newUrl;
     }
@@ -67,7 +69,7 @@ struct UrlResolver
 
 template<
     typename Resource,
-    typename implements<ByteProvider, Resource>::type* = nullptr>
+    typename implements<semantic::ByteProvider, Resource>::type* = nullptr>
 struct ResourceResolver
 {
     using Resolver  = Function<Resource(Url const&)>;

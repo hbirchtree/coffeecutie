@@ -5,7 +5,7 @@
 
 namespace semantic {
 
-enum class Delay : u8
+enum class Delay : libc_types::u8
 {
     Wait,
     NoWait

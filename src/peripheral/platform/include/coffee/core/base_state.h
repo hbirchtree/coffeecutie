@@ -18,8 +18,6 @@ struct ThreadState;
 namespace Coffee {
 namespace State {
 
-using namespace ::platform::profiling;
-
 struct GlobalState
 {
     virtual ~GlobalState();
@@ -31,8 +29,8 @@ extern stl_types::ShPtr<GlobalState> const& PeekState(libc_types::cstring key);
 
 extern bool ProfilerEnabled();
 
-extern PContext*    GetProfilerStore();
-extern ThreadState* GetProfilerTStore();
+extern platform::profiling::PContext*    GetProfilerStore();
+extern platform::profiling::ThreadState* GetProfilerTStore();
 
 extern platform::info::AppData& GetAppData();
 

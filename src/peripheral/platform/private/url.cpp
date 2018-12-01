@@ -35,8 +35,11 @@ using WPkg = ::Windows::ApplicationModel::Package;
 #include <CoreFoundation/CFString.h>
 #endif
 
-using namespace Coffee::State;
+using namespace ::Coffee;
 using namespace ::enum_helpers;
+
+using Profiler = platform::profiling::SimpleProfilerImpl;
+using DProfContext = platform::profiling::DeepProfilerContext;
 
 namespace platform {
 namespace url {
@@ -81,6 +84,8 @@ Url GetAppleStoragePath()
 
 STATICINLINE SystemPaths GetSystemPaths()
 {
+    using namespace ::Coffee::State;
+
     SystemPaths paths;
 
     paths.assetDir  = MkInvalidUrl();

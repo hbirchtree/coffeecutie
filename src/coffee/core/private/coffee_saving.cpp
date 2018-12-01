@@ -3,7 +3,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_saving.h>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/plat_environment.h>
+#include <platforms/environment.h>
 
 namespace Coffee {
 namespace Store {
@@ -74,7 +74,7 @@ static CString CreateSaveString(u16 slot)
 #else
 static Url CreateSaveUrl(u16 slot)
 {
-    return MkUrl(
+    return platform::url::constructors::MkUrl(
         Path("CoffeeData").addExtension(cast_pod(slot)).addExtension("bin"),
         RSCA::ConfigFile);
 }

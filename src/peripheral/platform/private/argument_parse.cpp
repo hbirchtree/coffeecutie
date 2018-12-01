@@ -7,6 +7,50 @@
 namespace platform {
 namespace args {
 
+void AppArg::rebuildArgs()
+{
+    for(auto i : Range<>(m_storage.size()))
+        m_ptrStorage.push_back(&m_storage[i][0]);
+}
+
+AppArg AppArg::Clone(i32 argc, cstring_w *argv)
+{
+    AppArg arg;
+
+    if(argc > 0)
+        arg.m_programName = argv[0];
+
+    argc--;
+    argv++;
+
+    if(argc < 0)
+        argc = 0;
+
+    arg.m_storage.reserve(C_FCAST<u32>(argc));
+
+    for(auto i : Range<>(C_FCAST<u32>(argc)))
+        arg.m_storage.push_back(argv[i]);
+
+    arg.rebuildArgs();
+
+    return arg;
+}
+
+CString AppArg::programName() const
+{
+    return m_programName;
+}
+
+Vector<cstring_w> const& AppArg::arguments() const
+{
+    return m_ptrStorage;
+}
+
+Vector<CString> const& AppArg::originalArguments() const
+{
+    return m_storage;
+}
+
 void ArgumentParser::addSwitch(
     cstring name, cstring longname, cstring shortname, cstring help)
 {

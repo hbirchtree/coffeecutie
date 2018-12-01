@@ -1,6 +1,6 @@
 #include <coffee/core/datastorage/text/json/cjsonparser.h>
-#include <coffee/core/plat/file.h>
-#include <coffee/core/plat/timing/profiling.h>
+#include <platforms/file.h>
+#include <platforms/profiling.h>
 #include <rapidjson/filewritestream.h>
 
 #include <coffee/core/CDebug>
@@ -9,6 +9,7 @@ namespace Coffee {
 namespace Profiling {
 
 using namespace DataStorage::TextStorage::RJSON;
+using namespace ::platform::file;
 
 #if !defined(COFFEE_DISABLE_PROFILER)
 static constexpr cstring event_format =
@@ -55,7 +56,7 @@ JsonProfileWriter::~JsonProfileWriter()
 ShPtr<State::GlobalState> CreateJsonProfiler()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
-    auto profile = MkUrl("profile.json", RSCA::TempFile);
+    auto profile = constructors::MkUrl("profile.json", RSCA::TempFile);
 
     FileFun::file_error ec;
     FileFun::Truncate(profile, 0, ec);
@@ -68,8 +69,10 @@ ShPtr<State::GlobalState> CreateJsonProfiler()
 #endif
 }
 
-void JsonPush(ThreadState& tdata, DataPoint const& point)
+void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 {
+    using namespace profiling;
+
 #if !defined(COFFEE_DISABLE_PROFILER)
     auto profileData = C_DCAST<JsonProfileWriter>(tdata.writer);
 

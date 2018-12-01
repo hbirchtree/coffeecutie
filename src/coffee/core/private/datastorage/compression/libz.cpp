@@ -1,5 +1,6 @@
 #include <coffee/core/base.h>
 
+#include <coffee/core/CProfiling>
 #include <coffee/core/datastorage/compression/libz.h>
 #include <platforms/profiling.h>
 

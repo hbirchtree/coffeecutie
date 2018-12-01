@@ -77,10 +77,6 @@ extern P<InternalThreadState>& GetInternalThreadState();
 
 extern ThreadId& GetCurrentThreadId();
 
-#if defined(COFFEE_USE_TERMINAL_CTL)
-extern bool& GetAlternateTerminal();
-#endif
-
 extern Mutex& GetPrinterLock();
 
 extern BuildInfo& GetBuildInfo();

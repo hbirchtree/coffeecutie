@@ -18,15 +18,10 @@ template<
         std::is_pointer<hnd_type>::value>::type* = nullptr
 
     >
-struct generic_handle_t : non_copy
+struct generic_handle_t
 {
     generic_handle_t() : hnd(hnd_type())
     {
-    }
-
-    generic_handle_t(generic_handle_t&& other) : hnd(other.hnd)
-    {
-        other.hnd = InvalidValue;
     }
 
     explicit generic_handle_t(hnd_type handle) : hnd(handle)
@@ -66,8 +61,6 @@ struct generic_handle_t : non_copy
         handle_check_enable();
     }
 
-    C_DELETE_COPY_CONSTRUCTOR(generic_handle_t);
-
     bool operator!() const
     {
         return hnd == InvalidValue;
@@ -100,7 +93,7 @@ struct generic_handle_t : non_copy
     {
         handle_check();
 
-        hnd = otherHandle.hnd;
+        hnd = std::move(otherHandle.hnd);
         otherHandle.release();
         return *this;
     }

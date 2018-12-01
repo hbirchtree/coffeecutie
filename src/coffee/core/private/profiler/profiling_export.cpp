@@ -1,12 +1,16 @@
 #include <coffee/core/profiler/profiling-export.h>
 
+#include <coffee/core/argument_handling.h>
+#include <coffee/core/base.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CJSONParser>
-#include <coffee/core/CProfiling>
-#include <coffee/core/base.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/CProfiling>
+#include <coffee/core/internal_state.h>
+#include <coffee/core/platform_data.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
+#include <platforms/sysinfo.h>
 #include <url/url.h>
 
 #include <coffee/core/CDebug>
@@ -298,7 +302,7 @@ void ExitRoutine()
 
     State::GetProfilerStore()->disable();
 
-    file_error ec;
+    file::file_error ec;
 
     /* Verify if we should export profiler data */
     {
@@ -307,7 +311,7 @@ void ExitRoutine()
         {
             auto log_name = (Path{Env::ExecutableName()}.fileBasename());
 
-            auto log_url = MkUrl("", RSCA::TemporaryFile);
+            auto log_url = url::constructors::MkUrl("", RSCA::TemporaryFile);
 
             auto log_url2 =
                 log_url +
@@ -320,7 +324,7 @@ void ExitRoutine()
             cVerbose(
                 6,
                 "Saved profiler data to: {0}",
-                FileFun::CanonicalName(log_url, ec));
+                file::FileFun::CanonicalName(log_url, ec));
         }
     }
 }

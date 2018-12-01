@@ -1,7 +1,3 @@
 #pragma once
 
-//#if defined(COFFEE_USE_TERMINAL_CTL)
-//#include <coffee/core/plat/memory/cmd_unixterm.h>
-//#else
-//#include <coffee/core/plat/memory/cmd_dummy.h>
-//#endif
+#error STOP

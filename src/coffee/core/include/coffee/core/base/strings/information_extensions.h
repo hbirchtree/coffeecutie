@@ -3,6 +3,8 @@
 #include "extensionresolvers.h"
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/types/edef/dbgenum.h>
+#include <coffee/core/types/hardware_info.h>
+#include <coffee/core/types/software_info.h>
 
 namespace Coffee {
 namespace Strings {

@@ -1,19 +1,16 @@
 #pragma once
 
-#include <coffee/core/plat/memory/endian_ops.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/file_resolver.h>
+#include <peripherals/libc/endian_ops.h>
 #include <peripherals/libc/types.h>
 
 #include <algorithm>
 
 namespace Coffee {
 
-struct Url;
-namespace CResources {
 struct Resource;
-}
 
 /*! \brief VirtualFS is used to store an asset file system in a single file.
  * Referring into it is done using filenames, and all the files are
@@ -71,7 +68,7 @@ using vfs_error_code = domain_error_code<VFSError, vfs_error_category>;
  * \brief In-memory wrapper that handles opening
  *  the VirtualFile from a VirtualFS, while complying with ByteProvider.
  */
-struct Resource : ByteProvider
+struct Resource : semantic::ByteProvider
 {
   private:
     VFS const*   filesystem;
@@ -161,6 +158,7 @@ struct VirtualFS
             sizeof(VFSMagic) == sizeof(VFSMagic_Encoded),
             "Invalid magic length for data");
 
+        using namespace libc;
         using IntData = _cbasic_data_chunk<u32>;
 
         *vfs = nullptr;
@@ -393,14 +391,14 @@ struct VirtualIndex : non_copy
 
             inline szptr prefix_length() const
             {
-                return str::len(prefix);
+                return libc::str::len(prefix);
             }
 
             inline szptr longest_match(CString const& other) const
             {
-                auto comparison = other.substr(0, str::len(prefix));
+                auto comparison = other.substr(0, libc::str::len(prefix));
 
-                return str::cmp(prefix, comparison.c_str());
+                return libc::str::cmp(prefix, comparison.c_str());
             }
 
             inline bool operator<=(CString const other) const
@@ -425,7 +423,7 @@ struct VirtualIndex : non_copy
 
             inline szptr prefix_length() const
             {
-                return str::len(prefix);
+                return libc::str::len(prefix);
             }
 
             inline void set_mask()
@@ -696,7 +694,9 @@ extern bool GenVirtFS(
 
 FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
-    Url out      = MkUrl(url);
+    using namespace platform::url;
+
+    Url out      = constructors::MkUrl(url);
     out.category = Url::Memory;
     return out;
 }

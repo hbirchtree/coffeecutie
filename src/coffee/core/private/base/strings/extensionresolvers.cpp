@@ -1,13 +1,11 @@
 #include <coffee/core/base/strings/extensionresolvers.h>
 
 #include <coffee/core/CRegex>
-#include <coffee/core/plat/memory.h>
+#include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/stlstring_ops.h>
 
 namespace Coffee {
 namespace Strings {
-
-using namespace Mem;
 
 CString extArgReplacePhrase(
     const CString& fmt, const CString& phrase, const CString& replace)
@@ -33,13 +31,13 @@ template<
 CString cStringReplace(CString const& fmt, size_t const& index, T const& arg)
 {
     /* Regexes, man, these fucking regexes */
-    Regex::Pattern  patt = Regex::compile_pattern(".*?(\\{\\d+:(\\d+)\\}).*");
+    regex::Pattern  patt = regex::compile_pattern(".*?(\\{\\d+:(\\d+)\\}).*");
     Vector<CString> match;
 
-    if(!Regex::match(patt, fmt, match))
+    if(!regex::match(patt, fmt, match))
         return extArgReplace(fmt, index, Strings::to_string(arg));
 
-    u32 prec = str::from_string<u32>(match[2].c_str());
+    u32 prec = libc::str::from_string<u32>(match[2].c_str());
 
     CString rep;
 #ifdef COFFEE_USE_IOSTREAMS

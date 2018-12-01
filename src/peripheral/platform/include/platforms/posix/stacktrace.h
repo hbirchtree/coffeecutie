@@ -51,6 +51,9 @@ struct Stacktracer : StacktracerDef
 };
 
 } // namespace posix
+
+using Stacktracer = posix::Stacktracer;
+
 } // namespace env
 } // namespace platform
 

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "types/chunk.h"
-#include <coffee/core/application_data.h>
-#include <peripherals/libc/types.h>
+#include <peripherals/build/application.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
 
 namespace Coffee {
 namespace Store {
@@ -47,6 +48,8 @@ struct SaveApi
 
 struct FilesystemApi : SaveApi
 {
+    using AppData = platform::info::AppData;
+
     virtual ~FilesystemApi();
 
     u64          availableMemory();
@@ -68,7 +71,8 @@ FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave()
     return MkShared<FilesystemApi>();
 }
 
-FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave(AppData const& app)
+FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave(
+        platform::info::AppData const& app)
 {
     return MkShared<FilesystemApi>(app);
 }

@@ -5,6 +5,7 @@
 
 #include <peripherals/identify/identify.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/type_safety.h>
 
 namespace libc {
 namespace ptr {
@@ -59,6 +60,8 @@ FORCEDINLINE void* put_value(T in)
 template<typename T>
 FORCEDINLINE T extract(void* ptr)
 {
+    using namespace ::type_safety;
+
     static_assert(sizeof(T) <= sizeof(void*), "Type too large");
 
     return C_CAST<T>(C_FCAST<uintptr_t>(ptr));

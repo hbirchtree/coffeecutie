@@ -1,9 +1,10 @@
 #pragma once
 
 #include "inputapplication.h"
-#include <coffee/core/CMD>
 #include <coffee/core/base/renderer_loader.h>
 #include <coffee/core/task_queue/task.h>
+#include <peripherals/stl/time_types.h>
+#include <peripherals/libc/signals.h>
 #include <coffee/foreign/foreign.h>
 
 #include <coffee/core/CProfiling>
@@ -166,6 +167,7 @@ void WrapEventFunction(void* data, int event)
             Profiler::DeepPopContext();
 
 #if defined(COFFEE_NO_ATEXIT)
+            /* TODO: Fix atexit() handlers */
             auto const& ex = Cmd::GetAtExit();
             for(auto it = ex.rbegin(); it != ex.rend(); it++)
                 (*it)();
@@ -289,10 +291,10 @@ class EventApplication : public InputApplication
     {
         static u64 start_time = 0;
         if(start_time == 0)
-            start_time = Time::CurrentTimestamp<Chrono::microseconds>();
+            start_time = Time<>::CurrentTimestamp<Chrono::microseconds>();
 
         return bigscalar(
-                   Time::CurrentTimestamp<Chrono::microseconds>() -
+                   Time<>::CurrentTimestamp<Chrono::microseconds>() -
                    start_time) *
                1_us;
     }
@@ -451,7 +453,7 @@ class EventApplication : public InputApplication
             1);
 #endif
 
-        Cmd::RegisterAtExit([]() { local_event_data.release(); });
+        libc::signal::register_atexit([]() { local_event_data.release(); });
 
 #if defined(COFFEE_USE_APPLE_GLKIT) || \
     defined(COFFEE_USE_ANDROID_NATIVEWIN) || defined(COFFEE_EMSCRIPTEN)
@@ -477,7 +479,7 @@ class EventApplication : public InputApplication
         auto ev_flags = local_event_data->flags;
 
         /* For timed runs, set the starting time */
-        time.start = Time::CurrentTimestamp();
+        time.start = Time<>::CurrentTimestamp();
 
         /* In this case, event processing happens in a tight
          *  loop that happens regardless of outside events.
@@ -490,7 +492,7 @@ class EventApplication : public InputApplication
             CoffeeEventHandleCall(CoffeeHandle_Loop);
 
             if(ev_flags & ELD::TimeLimited &&
-               Time::CurrentTimestamp() > (time.start + time.max))
+               Time<>::CurrentTimestamp() > (time.start + time.max))
             {
                 auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);

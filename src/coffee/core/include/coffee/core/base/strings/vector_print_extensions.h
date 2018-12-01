@@ -2,7 +2,7 @@
 
 #include "../../types/cdef/geometry.h"
 #include "../../types/vector_types.h"
-#include <peripherals/stl/types.h>
+#include <coffee/core/stl_types.h>
 
 namespace Coffee {
 namespace Strings {

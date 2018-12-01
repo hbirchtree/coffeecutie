@@ -1,11 +1,10 @@
 #include <coffee/core/base/jsonlogger.h>
 
-#include <coffee/core/CMD>
 #include <coffee/core/coffee.h>
 #include <coffee/core/formatting.h>
 #include <coffee/core/internal_state.h>
 #include <platforms/file.h>
-
+#include <peripherals/stl/time_types.h>
 #include <peripherals/libc/signals.h>
 
 #include <coffee/core/base/printing/outputprinter.h>
@@ -15,6 +14,7 @@ namespace Coffee {
 using namespace ::platform::file;
 using namespace ::semantic;
 using namespace ::semantic::debug;
+using namespace ::stl_types;
 
 struct JsonLogState : State::GlobalState
 {
@@ -71,7 +71,7 @@ static void JsonLogger(
         DebugFun::severity_string(sev),
         fileno(pipe),
         level,
-        Time::Microsecond() / 1000);
+        Time<>::Microsecond() / 1000);
 
     file::file_error ec;
     file::FileFun::Write(
@@ -96,7 +96,7 @@ static void JsonTagLogger(
         fileno(pipe),
         level,
         tag,
-        Time::Microsecond() / 1000);
+        Time<>::Microsecond() / 1000);
 
     FileFun::file_error ec;
     FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);

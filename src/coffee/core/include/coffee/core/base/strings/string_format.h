@@ -1,7 +1,7 @@
 #pragma once
 
-#include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
 
 namespace Coffee {
 namespace Strings {

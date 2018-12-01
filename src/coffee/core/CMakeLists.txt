@@ -46,7 +46,6 @@ coffee_library (
 
     # Argument handling
     private/argument_handling.cpp
-    private/types/cdef/infotypes.cpp
 
     #
     # Task queues, for easier time scheduling

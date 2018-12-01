@@ -7,6 +7,8 @@
 #include <peripherals/typing/vectors/matrices_decompose.h>
 #include <peripherals/typing/vectors/quaternion_matrix_ops.h>
 
+#include <coffee/core/libc_types.h>
+
 namespace Coffee{
 
 namespace decompose {

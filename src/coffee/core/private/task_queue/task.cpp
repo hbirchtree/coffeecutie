@@ -1,11 +1,14 @@
 #include <coffee/core/task_queue/task.h>
 
+#include <coffee/core/internal_state.h>
 #include <coffee/core/CProfiling>
-#include <coffee/core/plat/stacktrace.h>
+#include <platforms/stacktrace.h>
 
 #include <coffee/core/CDebug>
 
 #define RQ_API "RuntimeQueue::"
+
+using Stacktracer = platform::env::Stacktracer;
 
 namespace Coffee {
 

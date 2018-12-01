@@ -327,14 +327,6 @@ extern void JsonPush(ThreadState& state, DataPoint const& data);
 extern ShPtr<State::GlobalState> CreateJsonProfiler();
 
 } // namespace profiling
-
-using DProfContext = profiling::DeepProfilerContext;
-using ProfContext  = profiling::ProfilerContext;
-using Profiler     = profiling::SimpleProfilerImpl;
-using ExtraData    = profiling::ExtraDataImpl;
-
-#define DPROF_CONTEXT_FUNC(PREFIX) \
-    DProfContext _(PREFIX + CString(__FUNCTION__) + "()")
 } // namespace platform
 
 #undef current_thread_id

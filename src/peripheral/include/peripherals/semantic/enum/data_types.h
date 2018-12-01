@@ -5,7 +5,7 @@
 
 namespace semantic {
 
-enum class TypeEnum : u8
+enum class TypeEnum : libc_types::u8
 {
     UByte,
     Byte,

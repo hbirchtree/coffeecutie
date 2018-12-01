@@ -20,7 +20,7 @@ struct AppArg
 
     static AppArg Clone(i32 argc, cstring_w* argv);
 
-    cstring_w programName() const;
+    CString programName() const;
 
     Vector<cstring_w> const& arguments() const;
     Vector<CString> const&   originalArguments() const;

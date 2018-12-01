@@ -1,22 +1,23 @@
 #pragma once
 
+#include "../../types/edef/resenum.h"
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <coffee/core/types/chunk.h>
+#include <coffee/interfaces/byte_provider.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/enum/helpers.h>
-#include "../../types/edef/resenum.h"
-#include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
-#include <coffee/interfaces/byte_provider.h>
+#include <url/url.h>
 
 namespace Coffee {
 
-struct Url;
-
-namespace CResources {
+using Url = platform::url::Url;
+using Path = platform::url::Path;
 
 /*!
  * \brief A data resource which location cannot be changed.
  */
-struct Resource : ByteProvider
+struct Resource : semantic::ByteProvider
 {
   private:
     CString m_resource; /*!< URL for the resource*/
@@ -159,33 +160,31 @@ C_DEPRECATED FORCEDINLINE bool FileCommit(
  */
 extern bool FileMkdir(const Url& dirname, bool recursive);
 
-} // namespace CResources
-
-FORCEDINLINE Bytes FileGetDescriptor(CResources::Resource& resc)
+FORCEDINLINE Bytes FileGetDescriptor(Resource& resc)
 {
     return {C_CAST<byte_t*>(resc.data), resc.size, resc.size};
 }
-FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
+FORCEDINLINE BytesConst FileGetDescriptor(Resource const& resc)
 {
     return {C_CAST<byte_t const*>(resc.data), resc.size, resc.size};
 }
 
-FORCEDINLINE CResources::Resource operator"" _rsc(const char* fn, size_t)
+FORCEDINLINE Resource operator"" _rsc(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::AssetFile);
+    return Resource(fn, RSCA::AssetFile);
 }
 
-FORCEDINLINE CResources::Resource operator"" _config(const char* fn, size_t)
+FORCEDINLINE Resource operator"" _config(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::ConfigFile);
+    return Resource(fn, RSCA::ConfigFile);
 }
 
-FORCEDINLINE CResources::Resource operator"" _sysfile(const char* fn, size_t)
+FORCEDINLINE Resource operator"" _sysfile(const char* fn, size_t)
 {
-    return CResources::Resource(fn, RSCA::SystemFile);
+    return Resource(fn, RSCA::SystemFile);
 }
 
 namespace Strings {
-extern CString to_string(CResources::Resource const& r);
+extern CString to_string(Resource const& r);
 }
 } // namespace Coffee

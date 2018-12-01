@@ -6,6 +6,8 @@
 #include <peripherals/typing/geometry/rect.h>
 #include <peripherals/typing/geometry/size.h>
 
+#include <peripherals/libc/types.h>
+
 namespace Coffee {
 
 using _cbasic_size = typing::geometry::base_size;
@@ -37,64 +39,64 @@ using _cbasic_boundingbox = typing::geometry::boundingbox<T>;
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
-using CSize = _cbasic_size_2d<i32>;
+using CSize = _cbasic_size_2d<libc_types::i32>;
 
 using Size = CSize;
 
-using CSize3 = _cbasic_size_3d<i32>;
+using CSize3 = _cbasic_size_3d<libc_types::i32>;
 
 using Size3 = CSize3;
 /*!
  * \brief Heavy-duty size structure
  */
-using CSize64 = _cbasic_size_2d<u64>;
+using CSize64 = _cbasic_size_2d<libc_types::u64>;
 /*!
  * \brief Size for inaccurate measurements
  */
-using CSizeF = _cbasic_size_2d<scalar>;
+using CSizeF = _cbasic_size_2d<libc_types::scalar>;
 /*!
  * \brief Size of accurate measurements
  */
-using CSizeD = _cbasic_size_2d<bigscalar>;
+using CSizeD = _cbasic_size_2d<libc_types::bigscalar>;
 
 /*!
  * \brief Used for window rectangles
  */
-using CRect = _cbasic_rect<i32>;
+using CRect = _cbasic_rect<libc_types::i32>;
 
-using CRect64 = _cbasic_rect<i64>;
+using CRect64 = _cbasic_rect<libc_types::i64>;
 /*!
  * \brief Used for orthographic view rectangle
  */
-using CRectF = _cbasic_rect<scalar>;
+using CRectF = _cbasic_rect<libc_types::scalar>;
 /*!
  * \brief Used for high-accuracy orthographic view rectangle
  */
-using CRectD = _cbasic_rect<bigscalar>;
+using CRectD = _cbasic_rect<libc_types::bigscalar>;
 
 /*!
  * \brief 32-bit integer point
  */
-using CPoint = _cbasic_point_2d<i32>;
+using CPoint = _cbasic_point_2d<libc_types::i32>;
 
-using CPoint3 = _cbasic_point_3d<i32>;
+using CPoint3 = _cbasic_point_3d<libc_types::i32>;
 /*!
  * \brief Single-precision floating-point point
  */
-using CPointF = _cbasic_point_2d<scalar>;
+using CPointF = _cbasic_point_2d<libc_types::scalar>;
 /*!
  * \brief Double-precision floating-point point
  */
-using CPointD = _cbasic_point_2d<bigscalar>;
+using CPointD = _cbasic_point_2d<libc_types::bigscalar>;
 
 /*!
  * \brief Standard clipping type
  */
-using ZField = _cbasic_range<scalar>;
+using ZField = _cbasic_range<libc_types::scalar>;
 
-using ZField64 = _cbasic_range<bigscalar>;
+using ZField64 = _cbasic_range<libc_types::bigscalar>;
 
-using BoundBox = _cbasic_boundingbox<scalar>;
+using BoundBox = _cbasic_boundingbox<libc_types::scalar>;
 
 using PtF = CPointF;
 using PtD = CPointD;

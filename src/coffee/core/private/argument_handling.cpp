@@ -3,7 +3,7 @@
 
 namespace Coffee{
 
-CString Strings::to_string(const AppArg &args)
+CString Strings::to_string(const platform::args::AppArg &args)
 {
     CString out = "AppArg(";
 #ifndef COFFEE_LOWFAT

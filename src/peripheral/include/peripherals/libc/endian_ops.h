@@ -14,6 +14,8 @@
 namespace libc {
 namespace endian {
 
+using namespace ::libc_types;
+
 struct net_order
 {
 };

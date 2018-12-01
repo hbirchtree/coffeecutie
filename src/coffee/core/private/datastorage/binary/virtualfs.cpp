@@ -1,10 +1,11 @@
 #include <coffee/core/datastorage/binary/virtualfs.h>
 
 #include <coffee/core/CProfiling>
-#include <coffee/core/base/files/url.h>
 #include <coffee/core/CMath>
 #include <coffee/core/datastorage/compression/libz.h>
 #include <peripherals/stl/threads/job_system.h>
+#include <peripherals/libc/memory_ops.h>
+#include <url/url.h>
 
 #include <coffee/core/CDebug>
 
@@ -521,7 +522,8 @@ bool GenVirtFS(
             }
 
             /* We want to align data to 8-byte boundaries */
-            data_size = Mem::AlignOffsetForward(8, data_size);
+            data_size = libc::align::align<libc::align::dir_forward>(
+                        8, data_size);
 
             file.offset = data_size;
             file.rsize  = filenames[i].data.size;
@@ -866,6 +868,8 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
 
 ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
 {
+    using namespace platform::url;
+
     if(!vfs)
         Throw(undefined_behavior(VIRTFS_API "got null vfs!"));
 
@@ -879,7 +883,7 @@ ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
                 auto         it = view.begin();
                 while((it = view.starting_with(query, it)) != view.end())
                 {
-                    output.push_back(MkUrl((*it).name));
+                    output.push_back(constructors::MkUrl((*it).name));
                     ++it;
                 }
 

@@ -1,14 +1,15 @@
 #pragma once
 
-#include "types/cdef/infotypes.h"
+#include <coffee/core/stl_types.h>
+#include <platforms/argument_parse.h>
 
 namespace Coffee{
 
-extern platform::info::AppArg& GetInitArgs();
+extern platform::args::AppArg& GetInitArgs();
 
 namespace Strings{
 
-extern CString to_string(AppArg const& args);
+extern CString to_string(platform::args::AppArg const& args);
 
 }
 }

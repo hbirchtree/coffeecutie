@@ -1,23 +1,26 @@
 #include <coffee/core/coffee.h>
 
 #include <coffee/core/CFiles>
-#include <coffee/core/CMD>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/base/jsonlogger.h>
 #include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/coffee_args.h>
-#include <coffee/core/formatting.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/resource_prefix.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/cdef/infotypes.h>
 #include <peripherals/build/license.h>
+#include <peripherals/libc/signals.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/process.h>
+#include <platforms/stacktrace.h>
 #include <platforms/sysinfo.h>
+#include <url/url.h>
 
+#include <coffee/core/formatting.h>
 #include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
 
@@ -25,7 +28,7 @@
 #include <android_native_app_glue.h>
 #endif
 
-using namespace ::platform::info;
+using namespace ::platform;
 
 namespace Coffee {
 
@@ -47,7 +50,7 @@ extern void SetBuildInfo(BuildInfo& binfo);
  * \brief Provides application-specific information
  * \param appdata
  */
-extern void SetApplicationData(AppData& appdata);
+extern void SetApplicationData(info::AppData& appdata);
 
 #if defined(COFFEE_APPLE)
 extern Url GetAppleStoragePath();
@@ -143,7 +146,7 @@ static void CoffeeInit_Internal(u32 flags)
     if(!SysInfo::HasPAE() && !PlatformData::IsMobile())
     {
         cOutputPrint("Unsupported system, insufficient addressing space");
-        Cmd::Exit(1);
+        libc::signal::exit(libc::signal::sig::general_error);
     }
 #endif
 
@@ -183,7 +186,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #endif
 
     /* Must be created before ThreadState, but after internal state */
-    State::SwapState("jsonProfiler", Profiling::CreateJsonProfiler());
+    State::SwapState("jsonProfiler", profiling::CreateJsonProfiler());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     /* On Android and iOS, we want to terminate the profiler early */
@@ -205,7 +208,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #endif
 
     /* Set the program arguments so that we can look at them later */
-    GetInitArgs() = AppArg::Clone(argc, argv);
+    GetInitArgs() = ::platform::args::AppArg::Clone(argc, argv);
 
 #if defined(COFFEE_ANDROID)
 #pragma clang diagnostic push
@@ -215,7 +218,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #endif
 
 #if defined(COFFEE_APPLE)
-    FileResourcePrefix(GetAppleStoragePath().internUrl.c_str());
+    file::ResourcePrefix(GetAppleStoragePath().internUrl.c_str());
 #endif
 
 #if MODE_DEBUG
@@ -254,7 +257,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     /* This is a bit more versatile than simple procedures
      */
-    Cmd::RegisterAtExit(CoffeeTerminate);
+    libc::signal::register_atexit(CoffeeTerminate);
 
     cVerbose(8, "Entering main function");
     Profiler::PushContext("main()");
@@ -322,23 +325,25 @@ void CoffeeTerminate()
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     Profiling::ExitRoutine();
 #endif
-    Cmd::ResetScreen();
 #endif
 }
 
 void GotoApplicationDir()
 {
-    file_error ec;
+    using namespace ::platform::url;
+
+    file::file_error ec;
 
     Url dir = Env::ApplicationDir();
-    DirFun::ChDir(MkUrl(dir), ec);
+    file::DirFun::ChDir(constructors::MkUrl(dir), ec);
 }
 
 void InstallDefaultSigHandlers()
 {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
-        Stacktracer::ExceptionStacktrace(std::current_exception());
+        platform::env::Stacktracer::ExceptionStacktrace(
+                    std::current_exception());
         abort();
     });
 #endif
@@ -398,6 +403,8 @@ ArgumentParser& GetBase()
 
 int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
 {
+    using namespace ::platform::url::constructors;
+
     for(Pair<CString, u32> sw_ : args.switches)
     {
         auto sw = sw_.first;
@@ -433,13 +440,13 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
     for(auto arg : args.arguments)
     {
         if(arg.first == "resource_prefix")
-            CResources::FileResourcePrefix(arg.second.c_str());
+            file::ResourcePrefix(arg.second.c_str());
     }
 
     for(auto pos : args.positional)
     {
         if(pos.first == "resource_prefix")
-            CResources::FileResourcePrefix(pos.second.c_str());
+            file::ResourcePrefix(pos.second.c_str());
     }
 
     return -1;
