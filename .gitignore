@@ -10,6 +10,8 @@ bin
 build
 build_*
 multi_build
+!build*.cpp
+!build*.h
 
 # JetBrains/CLion
 .idea
