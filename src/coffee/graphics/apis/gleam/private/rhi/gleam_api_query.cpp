@@ -1,8 +1,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 
 #include "gleam_internal_types.h"
-#include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/types/cdef/infotypes.h>
+#include <peripherals/stl/string_ops.h>
 
 namespace Coffee {
 namespace RHI {

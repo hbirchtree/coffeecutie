@@ -1,16 +1,17 @@
 #pragma once
 
-#include <coffee/core/datastorage/binary/virtualfs.h>
-#include <squish.h>
-
 #include "texture_common.h"
+#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/core/resource_prefix.h>
+#include <peripherals/stl/string_casting.h>
+#include <squish.h>
 
 namespace TexCompress {
 
 static void CompressDXT(
     common_tools_t&                      t,
     Pair<CString, ImageProcessor> const& file,
-    CSize const&                         size,
+    Size const&                          size,
     Bytes const&                         inputData,
     Path const&                          outName)
 {
@@ -31,7 +32,7 @@ static void CompressDXT(
 
     if(fail)
     {
-        auto offender = Path(GetFileResourcePrefix()) + file.first;
+        auto offender = Path(file::ResourcePrefix()) + file.first;
         t.cursor.print(reason, size, offender.internUrl);
         return;
     }

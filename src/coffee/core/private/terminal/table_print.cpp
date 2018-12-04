@@ -1,13 +1,13 @@
-#include <coffee/core/CMath>
 #include <coffee/core/terminal/table.h>
-#include <coffee/core/types/cdef/geometry.h>
+
+#include <coffee/core/CMath>
 
 namespace Coffee {
 
 CString TablePrinter_Basic::GenTable(
     const TablePrinter_Basic::Table&  table,
     const TablePrinter_Basic::Header& head,
-    CSize*                            size)
+    Size*                             size)
 {
 #ifndef COFFEE_LOWFAT
     const ColSize header_pad = 1;
@@ -82,8 +82,8 @@ CString TablePrinter_Basic::GenTable(
 
     if(size)
     {
-        size->w = C_FCAST<i32>(acc);
-        size->h = C_FCAST<i32>(row_count + 2);
+        size->w = C_FCAST<u32>(acc);
+        size->h = C_FCAST<u32>(row_count + 2);
     }
 
     return ss.str();

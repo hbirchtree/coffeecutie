@@ -1,17 +1,23 @@
 #include <coffee/core/CApplication>
+#include <coffee/core/CArgParser>
+#include <coffee/core/CDynamicLink>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 #include <coffee/core/VirtualFS>
-#include <coffee/core/coffee.h>
-#include <coffee/core/plat/environment/argument_parse.h>
-#include <coffee/core/plat/linking.h>
-#include <coffee/core/plat/sysinfo.h>
-#include <coffee/core/terminal/terminal_cursor.h>
+#include <coffee/core/internal_state.h>
+#include <coffee/core/resource_prefix.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <peripherals/stl/string_casting.h>
+#include <platforms/sysinfo.h>
+
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
+#include <coffee/core/terminal/cursor.h>
+
 using namespace Coffee;
-using namespace Library;
+using namespace platform::url::constructors;
 
 static Vector<CString> compressFilter = {"fbx",
                                          "bin",
@@ -44,8 +50,8 @@ void recurse_directories(
 
     switch(item.type)
     {
-    case DirFun::Type::File:
-    case DirFun::Type::Link:
+    case FileType::File:
+    case FileType::Link:
     {
         auto filename = (prepath + Path(item.name.c_str()));
 
@@ -69,7 +75,7 @@ void recurse_directories(
         files.emplace_back(filename.internUrl.c_str(), Bytes(), flag);
         break;
     }
-    case DirFun::Type::Directory:
+    case FileType::Directory:
     {
         Path path = prepath + item.name.c_str();
 
@@ -119,10 +125,10 @@ void csv_parse(CString const& v, Vector<CString>& out)
 
 void load_extension(cstring name)
 {
-    FunctionLoader::error_type ec;
+    load::Function::error_type ec;
 
     auto library =
-        FunctionLoader::GetLibrary(name, ec, FunctionLoader::NoFlags);
+        load::Function::GetLibrary(name, ec, load::Function::NoFlags);
 
     if(!library)
     {
@@ -132,8 +138,8 @@ void load_extension(cstring name)
 
     using T = CoffeePipeline::FileProcessor;
 
-    auto constructor = ObjectLoader::GetConstructor<T>(
-        library, DefaultConstructorFunction, ec);
+    auto constructor = load::Object::GetConstructor<T>(
+        library, load::DefaultConstructorFunction, ec);
 
     if(!constructor.loader)
         return;
@@ -219,16 +225,16 @@ i32 coffee_main(i32, cstring_w*)
 
     /* End of messing with the environment */
 
-    Url                          outputVfs;
-    Path                         cacheDir;
-    auto                         rscDir = "."_url;
-    Vector<VirtFS::VirtDesc>     descriptors;
-    Vector<CResources::Resource> resources;
-    u64                          totalSize = 0;
-    Vector<byte_t>               outputData;
-    TerminalCursor               cursor;
-    bool                         showStats = false;
-    file_error                   ec;
+    Url                      outputVfs;
+    Path                     cacheDir;
+    auto                     rscDir = "."_url;
+    Vector<VirtFS::VirtDesc> descriptors;
+    Vector<Resource>         resources;
+    u64                      totalSize = 0;
+    Vector<byte_t>           outputData;
+    TerminalCursor           cursor;
+    bool                     showStats = false;
+    file_error               ec;
 
     u32 globalNumWorkers = C_FCAST<u32>(SysInfo::ThreadCount());
 
@@ -314,7 +320,7 @@ i32 coffee_main(i32, cstring_w*)
         if(args.arguments.find("cachedir") != args.arguments.end())
             cacheDir = Path(args.arguments.find("cachedir")->second);
 
-        FileResourcePrefix(args.positional["resource_dir"].c_str());
+        file::ResourcePrefix(args.positional["resource_dir"].c_str());
     }
 
     /* List files */

@@ -5,7 +5,6 @@ namespace signal {
 
 void register_atexit(exit_handler hnd)
 {
-    static_assert (false, "");
 #if defined(COFFEE_NO_ATEXIT)
 
 #else

@@ -1,11 +1,12 @@
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/plat_environment.h>
-#include <peripherals/stl/string_casting.h>
+#include <coffee/core/resource_prefix.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
+#include <peripherals/stl/string_casting.h>
+#include <platforms/environment.h>
+#include <platforms/stacktrace.h>
 
-#include <coffee/core/CDebug>
-#include <coffee/core/terminal/terminal_cursor.h>
+#include <coffee/core/terminal/cursor.h>
 
 /* External dependencies */
 
@@ -18,6 +19,8 @@
 #include <spirv-tools/opt/pass.h>
 #include <spirv_glsl.hpp>
 #endif
+
+#include <coffee/core/CDebug>
 
 #define SHD_API "PressurizeShaders::"
 
@@ -106,7 +109,7 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
             res.content_length = data.size;
 
             res.source_name        = requested_source;
-            res.source_name_length = str::len(requested_source);
+            res.source_name_length = libc::str::len(requested_source);
 
             res.user_data = r;
 
@@ -630,9 +633,9 @@ static void GenerateGLSL(
     {
         cursor.print(
             "{0}:{1}:{2}: {3}\n{4}",
-            GetFileResourcePrefix() + "/" + srcFile.internUrl,
+            file::ResourcePrefix() + "/" + srcFile.internUrl,
             0,
-            Stacktracer::DemangleSymbol(typeid(e).name()),
+            platform::env::Stacktracer::DemangleSymbol(typeid(e).name()),
             e.what(),
             compiler.get_partial_source());
         return;
@@ -739,7 +742,7 @@ void ShaderProcessor::process(
         {
             cursor.print(
                 "{0}:0: Failed to compile GLSL to SPIR-V",
-                (Path(GetFileResourcePrefix()) + path.first).internUrl);
+                (Path(file::ResourcePrefix()) + path.first).internUrl);
             continue;
         }
 

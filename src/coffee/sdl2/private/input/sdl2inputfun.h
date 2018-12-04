@@ -8,7 +8,7 @@
 namespace Coffee {
 namespace Display {
 
-using namespace CInput;
+using namespace Input;
 
 /*!
  * \brief Opens and acquires a haptic device for a joystick
@@ -33,15 +33,18 @@ CIEvent* sdl2_controller_get_haptic(
         int      idx   = SDL_HapticIndex(dev);
         cstring  hname = SDL_HapticName(idx);
         CIEvent* ev    = (CIEvent*)calloc(
-            1, sizeof(CIEvent) + sizeof(CIHapticEvent) + str::len(hname) - 6);
+            1,
+            sizeof(CIEvent) + sizeof(CIHapticEvent) + libc::str::len(hname) -
+                6);
         ev->type         = CIEvent::HapticDev;
         CIHapticEvent* h = (CIHapticEvent*)&ev[1];
-        memcpy((byte_t*)&h->rumble_device.name, hname, str::len(hname) + 1);
+        memcpy(
+            (byte_t*)&h->rumble_device.name, hname, libc::str::len(hname) + 1);
         h->rumble_device.index = index;
 
         if(SDL_HapticRumbleInit(dev) == 0)
             return ev;
-        Mem::CFree(ev);
+        ::free(ev);
         SDL_HapticClose(dev);
     }
     return nullptr;
@@ -82,7 +85,7 @@ void _sdl2_controllers_handle(
 
             m_context->haptics[ev->controller] = hdev;
             haptictarget->hapticInsert((const CIHapticEvent&)hev[1], nullptr);
-            Mem::CFree(hev);
+            ::free(hev);
         } else
             cMsg(
                 "SDL2",

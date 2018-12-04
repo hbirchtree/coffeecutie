@@ -27,8 +27,8 @@ void surface_allocate(
 #endif
         CGL33::TexAlloc(Span<CGhnd>::From(m_handle));
 
-    if(!feval(m_flags & GLEAM_API::TextureImmutable)
-            || properties::get<properties::is_compressed>(fmt))
+    if(!feval(m_flags & GLEAM_API::TextureImmutable) ||
+       properties::get<properties::is_compressed>(fmt))
     {
     /* We must set this to register a proper mipmap level */
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -45,8 +45,8 @@ void surface_allocate(
 
 void surface_flag(u32& m_flags, PixFmt fmt)
 {
-    if(!GLEAM_FEATURES.texture_storage
-            || properties::get<properties::is_compressed>(fmt))
+    if(!GLEAM_FEATURES.texture_storage ||
+       properties::get<properties::is_compressed>(fmt))
         m_flags = m_flags & (~GLEAM_API::TextureImmutable);
 }
 
@@ -360,7 +360,7 @@ inline void surface_internal_alloc(
         {
             empty.resize(
                 GetPixCompressedSize(
-                    c_fmt, _cbasic_size_2d<i32>(c_size[0], c_size[1])) *
+                    c_fmt, size_2d<i32>(c_size[0], c_size[1])) *
                 num_layers);
 
             surface_initialize<SurfaceQuirks | Compression_Impl>(
@@ -476,7 +476,7 @@ GLEAM_Surface2D::GLEAM_Surface2D(PixFmt fmt, u32 mips, u32 texflags) :
 {
 }
 
-void GLEAM_Surface2D::allocate(CSize size, PixCmp c)
+void GLEAM_Surface2D::allocate(Size size, PixCmp c)
 {
     detail::surface_internal_alloc<0>(*this, size, c);
 }
@@ -554,17 +554,17 @@ GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
 {
 }
 
-void GLEAM_Surface3D_Base::allocate(CSize3 size, PixCmp c)
+void GLEAM_Surface3D_Base::allocate(Size3 size, PixCmp c)
 {
     detail::surface_internal_alloc<detail::Dim3D_Texture>(*this, size, c);
 }
 
 void GLEAM_Surface3D_Base::upload(
-    PixDesc        pfmt,
-    CSize3 const&  size,
-    Bytes const&   data,
-    CPoint3 const& offset,
-    u32            mip)
+    PixDesc       pfmt,
+    Size3 const&  size,
+    Bytes const&  data,
+    Point3 const& offset,
+    u32           mip)
 {
     auto msz = size.convert<u32>();
     auto mof = offset.convert<u32>();
@@ -594,7 +594,8 @@ void GLEAM_Surface3D_Base::upload(
             CGL33::TexBind(m_type, m_handle);
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-        if(properties::get<properties::is_compressed>(pxfmt) && GLEAM_FEATURES.direct_state)
+        if(properties::get<properties::is_compressed>(pxfmt) &&
+           GLEAM_FEATURES.direct_state)
         {
             CGL45::TexCompressedSubImage3D(
                 m_handle,
@@ -666,12 +667,12 @@ void GLEAM_Surface3D_Base::upload(
 }
 
 void GLEAM_Surface3D_Base::upload(
-    BitFmt      fmt,
-    PixCmp         comp,
-    CSize3 const&  size,
-    Bytes const&   data,
-    CPoint3 const& offset,
-    u32            mip)
+    BitFmt        fmt,
+    PixCmp        comp,
+    Size3 const&  size,
+    Bytes const&  data,
+    Point3 const& offset,
+    u32           mip)
 {
     upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
 }

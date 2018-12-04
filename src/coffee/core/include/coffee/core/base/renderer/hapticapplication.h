@@ -1,15 +1,12 @@
 #pragma once
 
-#include "../input/cinput.h"
+#include <coffee/core/types/input/event_types.h>
 
-namespace Coffee{
-
-using namespace CInput;
-
-namespace Display{
+namespace Coffee {
+namespace Display {
 class HapticApplication
 {
-public:
+  public:
     /*!
      * \brief Function for handling haptic events.
      *  A user will call this with a constructed event e
@@ -17,8 +14,8 @@ public:
      * \param e
      * \param data
      */
-    virtual void hapticInsert(const CIHapticEvent& e, c_cptr data) = 0;
+    virtual void hapticInsert(const Input::CIHapticEvent& e, c_cptr data) = 0;
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee

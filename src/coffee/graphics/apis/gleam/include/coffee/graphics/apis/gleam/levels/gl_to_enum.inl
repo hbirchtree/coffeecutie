@@ -2,17 +2,15 @@
 
 #include "gl_shared_types.h"
 
-#include <coffee/core/types/edef/logicenum.h>
-#include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/edef/resenum.h>
-
 namespace Coffee {
 namespace CGL {
 
 using namespace enum_helpers;
 
-inline CGenum to_enum(Severity s)
+inline CGenum to_enum(debug::Severity s)
 {
+    using namespace semantic::debug;
+
     switch(s)
     {
 #if GL_VERSION_VERIFY(0x330, 0x320)
@@ -35,26 +33,28 @@ inline CGenum to_enum(Severity s)
     }
 }
 
-inline CGenum to_enum(DebugType t)
+inline CGenum to_enum(debug::Type t)
 {
+    using namespace semantic::debug;
+
     switch(t)
     {
 #if GL_VERSION_VERIFY(0x330, 0x320)
-    case DebugType::Compatibility:
+    case Type::Compatibility:
         return GL_DEBUG_TYPE_PORTABILITY;
-    case DebugType::Compliance:
+    case Type::Compliance:
         return GL_DEBUG_TYPE_PORTABILITY;
-    case DebugType::Deprecated:
+    case Type::Deprecated:
         return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
-    case DebugType::Performance:
+    case Type::Performance:
         return GL_DEBUG_TYPE_PERFORMANCE;
-    case DebugType::Marker:
+    case Type::Marker:
         return GL_DEBUG_TYPE_MARKER;
-    case DebugType::UndefinedBehavior:
+    case Type::UndefinedBehavior:
         return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
 
-    case DebugType::Other:
-    case DebugType::Information:
+    case Type::Other:
+    case Type::Information:
         return GL_DEBUG_TYPE_OTHER;
 #else
     default:
@@ -949,7 +949,7 @@ inline CGenum to_enum3(RSCA acc)
 inline CGenum to_enum(PixCmp f, PixFmt hint)
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    PixFlg flags = typing::convert::to<PixFlg>(hint);
+    PixFlg flags = typing::pixels::convert::to<PixFlg>(hint);
 #endif
 
     switch(f)

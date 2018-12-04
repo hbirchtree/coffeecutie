@@ -3,8 +3,6 @@
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
-#include <coffee/core/types/cdef/geometry.h>
-
 #if defined(COFFEE_USE_ANDROID_NATIVEWIN)
 
 namespace Coffee{

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cimage.h"
-#include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/chunk.h>
 #include <peripherals/libc/types.h>
 

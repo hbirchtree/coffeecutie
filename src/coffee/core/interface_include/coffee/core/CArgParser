@@ -1,3 +1,10 @@
 #pragma once
 
-#include "plat/environment/argument_parse.h"
+#include <coffee/core/argument_handling.h>
+#include <platforms/argument_parse.h>
+
+namespace Coffee {
+using ::platform::args::AppArg;
+using ::platform::args::ArgumentParser;
+using ::platform::args::ArgumentResult;
+} // namespace Coffee

@@ -1,10 +1,11 @@
-#include <coffee/audio/caudio.h>
 #include <coffee/audio/abstraction/openal/copenalabstract.h>
+#include <coffee/audio/caudio.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/interfaces/full_launcher.h>
+#include <coffee/strings/libc_types.h>
 #include <coffee/windowing/renderer/renderer.h>
 
 #include <coffee/core/CDebug>
@@ -12,7 +13,7 @@
 using namespace Coffee;
 using namespace Display;
 using namespace CAudio;
-using namespace CInput;
+using namespace Input;
 
 using AL = COpenAL::OpenALAPI;
 
@@ -31,7 +32,7 @@ i32 coffee_main(i32, cstring_w*)
     RuntimeQueue::CreateNewQueue("Main");
 
     AutoExec<GLEAMAPI, Display::CSDL2Renderer, AudioData>(
-        [](Display::CSDL2Renderer& r, AudioData* data, CDProperties&) {
+        [](Display::CSDL2Renderer& r, AudioData* data, Properties&) {
             r.installEventHandler(
                 {[](c_ptr up, CIEvent const& e, c_cptr data) {
                      AudioData* m = C_FCAST<AudioData*>(up);
@@ -55,6 +56,7 @@ i32 coffee_main(i32, cstring_w*)
                              m_track_2->queueSample(*m_sample_2);
                              break;
                          }
+                         break;
                      }
                      case CIEvent::MouseButton:
                      {
@@ -90,7 +92,7 @@ i32 coffee_main(i32, cstring_w*)
             // Read audio sample from file
             auto rsc = "healing.ogg"_rsc;
             cDebug("Resource");
-            CResources::FileMap(rsc);
+            FileMap(rsc);
             cDebug(
                 "Mapping file succeeded, size={0},ptr={1}",
                 rsc.size,
@@ -121,8 +123,8 @@ i32 coffee_main(i32, cstring_w*)
                     man.defaultSoundDevice().stringIdentifier());
             }
             AL::Mixer& mixer    = dev->mixer();
-            u64     trackId1 = mixer.createTrack();
-            u64     trackId2 = mixer.createTrack();
+            u64        trackId1 = mixer.createTrack();
+            u64        trackId2 = mixer.createTrack();
             AL::Track& track1   = mixer.soundtrack(trackId1);
             AL::Track& track2   = mixer.soundtrack(trackId2);
 

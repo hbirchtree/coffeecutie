@@ -6,8 +6,6 @@
 #include <peripherals/stl/thread_types.h>
 #include <peripherals/stl/type_safety.h>
 
-#include <coffee/core/CDebug>
-
 #if defined(COFFEE_LINUX)
 #include <sys/ioctl.h>
 #include <unistd.h>

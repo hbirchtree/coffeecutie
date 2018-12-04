@@ -103,7 +103,7 @@ void SDL2EventHandler::inputTerminate()
         SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);
 }
 
-void SDL2EventHandler::eventHandleD(const CDEvent& e, c_cptr d)
+void SDL2EventHandler::eventHandleD(const Event& e, c_cptr d)
 {
     internalProcessEvent(e, d);
 }
@@ -136,7 +136,7 @@ void SDL2EventHandler::hapticInsert(
             e.rumble_input.duration);
 }
 
-void SDL2EventHandler::setTextArea(const CRect& area)
+void SDL2EventHandler::setTextArea(const Rect& area)
 {
     SDL_Rect r;
 
@@ -158,7 +158,7 @@ void SDL2EventHandler::eventHandle(const CIEvent& event, c_cptr data)
     this->eventHandleI(event, data);
 }
 
-void SDL2EventHandler::eventHandle(const CDEvent& event, c_cptr data)
+void SDL2EventHandler::eventHandle(const Event& event, c_cptr data)
 {
     this->eventHandleD(event, data);
 }
@@ -194,14 +194,14 @@ void SDL2EventHandler::setMouseGrabbing(bool grab)
             getSDL2Context()->window, (grab) ? SDL_TRUE : SDL_FALSE);
 }
 
-CPoint SDL2EventHandler::mousePosition() const
+Point SDL2EventHandler::mousePosition() const
 {
-    CPoint p;
+    Point p;
     SDL_GetMouseState(&p.x, &p.y);
     return p;
 }
 
-void SDL2EventHandler::setMousePosition(const CPoint& pos)
+void SDL2EventHandler::setMousePosition(const Point& pos)
 {
     if(getSDL2Context())
         SDL_WarpMouseInWindow(getSDL2Context()->window, pos.x, pos.y);
@@ -314,7 +314,7 @@ bool SDL2EventHandler::closeFlag() const
         return EventApplication::closeFlag();
 }
 
-void SDL2EventHandler::internalProcessEvent(const CDEvent& e, c_cptr d)
+void SDL2EventHandler::internalProcessEvent(const Event& e, c_cptr d)
 {
     for(EventHandlerD& eh : m_eventhandlers_windw)
         eh.func(eh.user_ptr, e, d);
@@ -359,7 +359,7 @@ void SDL2EventHandler::injectEvent(const CIEvent& e, c_cptr d)
     eventHandleI(e, d);
 }
 
-void SDL2EventHandler::injectEvent(const CDEvent& e, c_cptr d)
+void SDL2EventHandler::injectEvent(const Event& e, c_cptr d)
 {
     eventHandleD(e, d);
 }

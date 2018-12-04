@@ -7,7 +7,17 @@
 namespace typing {
 namespace graphics {
 
+enum class TexType
+{
+    None,
+    T2D,
+    T2A,
+    T3D,
+    Cube
+};
+
 namespace texture_composition {
+
 
 enum TextureType_t
 {

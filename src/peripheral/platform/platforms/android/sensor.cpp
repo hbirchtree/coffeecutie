@@ -1,11 +1,12 @@
-#include <coffee/core/plat/sensor/android/sensor.h>
+#include <platforms/android/sensor.h>
 
-#include <coffee/core/CDebug>
 #include <android/sensor.h>
 
-namespace Coffee{
-namespace Sensor{
-namespace Android{
+#include <coffee/core/CDebug>
+
+namespace platform {
+namespace sensor {
+namespace android {
 
 static ASensorManager* s_sensor_man = nullptr;
 
@@ -24,20 +25,20 @@ static const ASensor* m_sensors[SENS_Count] = {};
 
 void Android_InitSensors()
 {
-    cVerbose(5,"Initializing Android Sensor Manager");
+    cVerbose(5, "Initializing Android Sensor Manager");
     s_sensor_man = ASensorManager_getInstance();
 
     ASensorList sensors;
-    int num_sensors = ASensorManager_getSensorList(s_sensor_man,&sensors);
+    int num_sensors = ASensorManager_getSensorList(s_sensor_man, &sensors);
 
     scalar scores[6] = {};
 
-    for(int i=0;i<num_sensors;i++)
+    for(int i = 0; i < num_sensors; i++)
     {
         const ASensor* sens = sensors[i];
-        scalar res = ASensor_getResolution(sens);
-        int type = ASensor_getType(sens);
-        int j;
+        scalar         res  = ASensor_getResolution(sens);
+        int            type = ASensor_getType(sens);
+        int            j;
 
         switch(type)
         {
@@ -59,27 +60,33 @@ void Android_InitSensors()
         }
         if(j == -1)
         {
-            cVerbose(5,"Unknown sensor type: {0}, name={1},vendor={2}",type,
-                   ASensor_getName(sens),ASensor_getVendor(sens));
+            cVerbose(
+                5,
+                "Unknown sensor type: {0}, name={1},vendor={2}",
+                type,
+                ASensor_getName(sens),
+                ASensor_getVendor(sens));
             continue;
         }
 
         if(scores[j] == 0. || scores[j] > res)
         {
-            scores[j] = res;
+            scores[j]    = res;
             m_sensors[j] = sens;
         }
     }
 
-    for(int i=0;i<6;i++)
+    for(int i = 0; i < 6; i++)
     {
         if(m_sensors[i])
         {
             auto s = m_sensors[i];
-            cVerbose(5,"Selecting sensor {0} {1} for {2}",
-                     ASensor_getVendor(s),
-                     ASensor_getName(s),
-                     ASensor_getType(s));
+            cVerbose(
+                5,
+                "Selecting sensor {0} {1} for {2}",
+                ASensor_getVendor(s),
+                ASensor_getName(s),
+                ASensor_getType(s));
         }
     }
 }
@@ -87,36 +94,36 @@ void Android_DestroySensors()
 {
 }
 
-Vecf3 Android_SensorAPI::Gravity()
+Vecf3 Sensor::Gravity()
 {
     return {};
 }
 
-Vecf3 Android_SensorAPI::Acceleration()
+Vecf3 Sensor::Acceleration()
 {
     return {};
 }
 
-Vecf3 Android_SensorAPI::Orientation()
+Vecf3 Sensor::Orientation()
 {
     return {};
 }
 
-Vecf3 Android_SensorAPI::Gyroscope()
+Vecf3 Sensor::Gyroscope()
 {
     return {};
 }
 
-Vecf3 Android_SensorAPI::Magnetometer()
+Vecf3 Sensor::Magnetometer()
 {
     return {};
 }
 
-scalar Android_SensorAPI::Lux()
+scalar Sensor::Lux()
 {
     return 0.f;
 }
 
-}
-}
-}
+} // namespace android
+} // namespace sensor
+} // namespace platform

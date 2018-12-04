@@ -1,21 +1,21 @@
 #pragma once
 
 #include "windowapplication.h"
+#include <coffee/core/types/point.h>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
 class WindowManagerClient : public WindowApplication
 {
-public:
-
+  public:
     /* Properties */
 
     /*!
-     * \brief Get window information, including window pointer, title, size, position.
-     * \return Struct containing window information
+     * \brief Get window information, including window pointer, title, size,
+     * position. \return Struct containing window information
      */
-    virtual CDWindow* window() = 0;
+    virtual Window* window() = 0;
 
     /* Appearance */
 
@@ -28,29 +28,29 @@ public:
      * \brief Set new window state according
      * \param s
      */
-    virtual void setWindowState(const CDProperties::State &s) = 0;
+    virtual void setWindowState(const Properties::State& s) = 0;
 
     /*!
      * \brief Get current window size
      * \return
      */
-    virtual CSize windowSize() const = 0;
+    virtual Size windowSize() const = 0;
     /*!
      * \brief Set new window size
      * \param s
      */
-    virtual void  setWindowSize(const CSize& s) = 0;
+    virtual void setWindowSize(const Size& s) = 0;
 
     /*!
      * \brief Get current window position
      * \return
      */
-    virtual CPoint windowPosition() const = 0;
+    virtual Point windowPosition() const = 0;
     /*!
      * \brief Set new window position
      * \param p
      */
-    virtual void setWindowPosition(const CPoint& p) = 0;
+    virtual void setWindowPosition(const Point& p) = 0;
 
     /*!
      * \brief Get current window title if possible
@@ -79,5 +79,5 @@ public:
     virtual CString windowLibrary() const = 0;
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee

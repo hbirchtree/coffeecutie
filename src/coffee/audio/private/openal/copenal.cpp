@@ -1,7 +1,15 @@
 #include <coffee/audio/openal/copenal.h>
-#include <coffee/core/CDebug>
+
+#include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/core/types/map.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/thread_types.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CDebug>
 
 #include <al.h>
 #include <alc.h>
@@ -245,7 +253,7 @@ void context_devices_output(Vector<cstring>& devices)
     {
         devices.resize(i + 1);
         devices[i] = devices_c;
-        devices_c += str::len(devices_c) + 1;
+        devices_c += libc::str::len(devices_c) + 1;
         i++;
     }
 }
@@ -255,7 +263,8 @@ void context_devices_input(Vector<cstring>& devices)
     if(!alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT"))
         return;
 
-    const ALCchar* cdevices = alcGetString(nullptr, ALC_CAPTURE_DEVICE_SPECIFIER);
+    const ALCchar* cdevices =
+        alcGetString(nullptr, ALC_CAPTURE_DEVICE_SPECIFIER);
 
     if(!cdevices)
         return;
@@ -265,7 +274,7 @@ void context_devices_input(Vector<cstring>& devices)
     {
         devices.resize(i + 1);
         devices[i] = cdevices;
-        cdevices += str::len(cdevices) + 1;
+        cdevices += libc::str::len(cdevices) + 1;
         i++;
     }
 }
@@ -391,8 +400,7 @@ void source_dequeue_buffers(
     context_get_error();
 }
 
-void source_seti(
-    CALSource* source, CSourceProperty const& prop, const i32* val)
+void source_seti(CALSource* source, CSourceProperty const& prop, const i32* val)
 {
     _al_check_rsc(source);
     alSourceiv(
@@ -495,8 +503,7 @@ void source_transform(
         source, CSourceProperty::Direction, (const scalar*)&source->direction);
 }
 
-void source_seti(
-    CALSource* source, CSourceProperty const& prop, const i32& val)
+void source_seti(CALSource* source, CSourceProperty const& prop, const i32& val)
 {
     source_seti(source, prop, &val);
 }

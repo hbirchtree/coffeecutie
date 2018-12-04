@@ -3,9 +3,8 @@
 #include "gleam_shader_rhi.h"
 #include "gleam_types_rhi.h"
 
-#include <coffee/core/base/types/cdisplay.h>
-#include <peripherals/stl/types.h>
 #include <coffee/interfaces/file_resolver.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 
@@ -188,7 +187,7 @@ struct GLEAM_API : GraphicsAPI
 
     static void GetDefaultVersion(i32& major, i32& minor);
 
-    static void GetDefaultProperties(Display::CDProperties& properties);
+    static void GetDefaultProperties(Display::Properties& properties);
 
     static bool LoadAPI(
         DataStore store, bool debug = false, GLEAM_Options const& options = {});

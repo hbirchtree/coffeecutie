@@ -1,11 +1,14 @@
-#include "gleam_internal_types.h"
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
+
+#include "gleam_internal_types.h"
+#include <algorithm>
+#include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/CProfiling>
 
 namespace Coffee {
 namespace RHI {
@@ -602,7 +605,7 @@ void GLEAM_API::MultiDraw(
     {
         Debug::DebugMessage(
             Severity::Critical,
-            DebugType::Other,
+            debug::Type::Other,
             ec.category().message(ec.value()).c_str());
     }
 
@@ -654,7 +657,7 @@ void GLEAM_API::Draw(
     {
         Debug::DebugMessage(
             Severity::Critical,
-            DebugType::Other,
+            debug::Type::Other,
             "GLEAM context error: " + ec.message());
     }
 

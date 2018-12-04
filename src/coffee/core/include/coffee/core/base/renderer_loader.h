@@ -3,7 +3,8 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/base.h>
 #include <coffee/core/base/renderer/initapplication.h>
-#include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/types/display/gl_properties.h>
+#include <coffee/core/types/display/properties.h>
 
 namespace Coffee {
 namespace Display {
@@ -15,7 +16,7 @@ template<
 
     >
 STATICINLINE bool LoadHighestVersion(
-    Renderer* renderer, CDProperties& properties, CString* err)
+    Renderer* renderer, Properties& properties, CString* err)
 {
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
     return renderer->init(properties, err);
@@ -30,11 +31,11 @@ STATICINLINE bool LoadHighestVersion(
 
     static const constexpr Array<GLEnv, 8> GLVersions = {{
 #if !defined(COFFEE_ONLY_GLES20)
-        {GLProperties::GLES, 3, 2},
-        {GLProperties::GLES, 3, 1},
-        {GLProperties::GLES, 3, 0},
+        {GL::Properties::GLES, 3, 2},
+        {GL::Properties::GLES, 3, 1},
+        {GL::Properties::GLES, 3, 0},
 #endif
-        {GLProperties::GLES, 2, 0},
+        {GL::Properties::GLES, 2, 0},
 
 #if !defined(COFFEE_APPLE)
         {0x0, 4, 6},
@@ -57,7 +58,7 @@ STATICINLINE bool LoadHighestVersion(
 
         if((properties.gl.flags & env.requirements) == env.requirements)
         {
-            CDProperties c = properties;
+            Properties c = properties;
 
             c.gl.version.major = env.maj;
             c.gl.version.minor = env.min;

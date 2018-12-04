@@ -1,10 +1,10 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
 
 #include "gleam_internal_types.h"
-#include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/stl_types.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
-#include <peripherals/stl/types.h>
+#include <peripherals/stl/string_ops.h>
 
 namespace Coffee {
 namespace RHI {
@@ -349,7 +349,7 @@ bool GLEAM_Shader::compile(
 
         shaderSrcLens.reserve(shaderSrcVec.size() + 1);
         for(cstring fragment : shaderSrcVec)
-            shaderSrcLens.push_back(C_FCAST<i32>(str::len(fragment)));
+            shaderSrcLens.push_back(C_FCAST<i32>(libc::str::len(fragment)));
 
         const i32*     shaderLens = shaderSrcLens.data();
         cstring* const shaderSrc  = shaderSrcVec.data();
@@ -966,7 +966,7 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
         i32            progLen = 0;
 
         /* Just dump the program binary, nothing else is needed */
-        CResources::Resource output(out, RSCA::NewFile);
+        Resource output(out, RSCA::NewFile);
 
         /* We'll fit the binary type in here */
         program_data.resize(sizeof(GL_CURR_API) + sizeof(CGenum));
@@ -991,7 +991,7 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
         /* Create the output resource */
         output.size = program_data.size();
         output.data = program_data.data();
-        if(!CResources::FileCommit(output, RSCA::Discard))
+        if(!FileCommit(output, RSCA::Discard))
             return;
         //            cVerbose(
         //                5,

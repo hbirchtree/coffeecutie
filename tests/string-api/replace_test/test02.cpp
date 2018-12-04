@@ -1,6 +1,22 @@
+#include <coffee/core/CArgParser>
 #include <coffee/core/coffee.h>
+#include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
+#include <coffee/core/types/debug/component.h>
+#include <coffee/core/types/debug/severity.h>
+#include <coffee/core/types/debug/type.h>
+#include <coffee/core/types/display/properties.h>
+#include <coffee/core/types/hardware_info.h>
+#include <coffee/core/types/software_info.h>
 #include <coffee/core/types/vector_types.h>
+#include <coffee/core/types/version.h>
+#include <peripherals/stl/string_ops.h>
+#include <peripherals/typing/geometry/bounding_box.h>
+
+#include <coffee/strings/geometry_types.h>
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CUnitTesting>
 
@@ -94,7 +110,7 @@ bool pointer_allocated_format()
 
     snprintf(&real[0], real.size(), "Pointer: %p", ptr);
 
-    real.resize(str::find(real.c_str(), '\0') - real.c_str());
+    real.resize(libc::str::find(real.c_str(), '\0') - real.c_str());
 
     CString test = cStringFormat("Pointer: {0}", ptr);
     if(real != test)
@@ -166,7 +182,7 @@ bool swver_fmt()
 
 bool bbox_fmt()
 {
-    cStringFormat("{0}", BoundBox(1, 1, 1, false));
+    cStringFormat("{0}", typing::geometry::boundingbox<i32>(1, 1, 1, false));
     return true;
 }
 
@@ -205,16 +221,17 @@ const constexpr CoffeeTest::Test _tests[27] = {
     {vector_format, "Floating-point vector", "", true, false},
 
     {enum_fmt<Severity, Severity::Fatal>, "Severity formatting"},
-    {enum_fmt<DebugType, DebugType::Other>, "DebugType formatting"},
-    {enum_fmt<DebugComponent, DebugComponent::Extension>, "DbgCmp formatting"},
+    {enum_fmt<debug::Type, debug::Type::Other>, "DebugType formatting"},
+    {enum_fmt<debug::Component, debug::Component::Extension>,
+     "DbgCmp formatting"},
 
     {hwdevice_fmt, "HWDeviceInfo format"},
     {swver_fmt, "SWVersionInfo format"},
     {bbox_fmt, "BoundBox format"},
 
-    {generic_fmt<Display::CDContextBits>, "ContextBits format"},
-    {generic_fmt<Display::CGLVersion>, "CGLVersion format"},
-    {generic_fmt<Display::CDMonitor>, "CDMonitor format"},
+    {generic_fmt<Display::ContextBits>, "ContextBits format"},
+    {generic_fmt<Display::GL::Version>, "CGLVersion format"},
+    {generic_fmt<Display::Monitor>, "CDMonitor format"},
     {generic_fmt<Version>, "Version format"},
 
     {generic_fmt<Vecf2>, "Vecf2 format"},

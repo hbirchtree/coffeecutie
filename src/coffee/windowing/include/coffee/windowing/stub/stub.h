@@ -4,7 +4,6 @@
 #include <coffee/core/base/renderer/inputapplication.h>
 #include <coffee/core/base/renderer/windowapplication.h>
 #include <coffee/core/base/renderer/windowmanagerclient.h>
-#include <coffee/core/base/types/cdisplay.h>
 
 #if defined(FEATURE_ENABLE_CoffeeGLeamCommon)
 #include <coffee/core/base/renderer/glapplication.h>
@@ -20,30 +19,30 @@ class StubWindowManagerClient : public virtual WindowManagerClient
     virtual ~StubWindowManagerClient();
 
   public:
-    virtual CDMonitor monitor();
-    virtual bool      showWindow();
-    virtual bool      hideWindow();
-    virtual bool      closeWindow();
-    virtual void      popErrorMessage(Severity, cstring, cstring);
+    virtual Monitor monitor();
+    virtual bool    showWindow();
+    virtual bool    hideWindow();
+    virtual bool    closeWindow();
+    virtual void    popErrorMessage(debug::Severity, cstring, cstring);
 
   protected:
-    virtual bool windowPreInit(const CDProperties&, CString*);
-    virtual bool windowInit(const CDProperties&, CString*);
-    virtual bool windowPostInit(const CDProperties&, CString*);
+    virtual bool windowPreInit(const Properties&, CString*);
+    virtual bool windowInit(const Properties&, CString*);
+    virtual bool windowPostInit(const Properties&, CString*);
     virtual void windowTerminate();
 
   public:
-    virtual CDWindow* window();
-    virtual u32       windowState() const;
-    virtual void      setWindowState(const CDProperties::State&);
-    virtual CSize     windowSize() const;
-    virtual void      setWindowSize(const CSize&);
-    virtual CPoint    windowPosition() const;
-    virtual void      setWindowPosition(const CPoint&);
-    virtual CString   windowTitle() const;
-    virtual void      setWindowTitle(const CString&);
-    virtual bool      screensaverMode();
-    virtual void      setScreensaverMode(bool);
+    virtual Window* window();
+    virtual u32     windowState() const;
+    virtual void    setWindowState(const Properties::State&);
+    virtual Size    windowSize() const;
+    virtual void    setWindowSize(const Size&);
+    virtual Point   windowPosition() const;
+    virtual void    setWindowPosition(const Point&);
+    virtual CString windowTitle() const;
+    virtual void    setWindowTitle(const CString&);
+    virtual bool    screensaverMode();
+    virtual void    setScreensaverMode(bool);
 };
 
 #if defined(FEATURE_ENABLE_CoffeeGLeamCommon)
@@ -53,16 +52,16 @@ class StubGLApplication : public virtual GLApplication
     virtual ~StubGLApplication();
 
   public:
-    virtual bool contextPreInit(const GLProperties&, CString*);
-    virtual bool contextInit(const GLProperties&, CString*);
-    virtual bool contextPostInit(const GLProperties&, CString*);
+    virtual bool contextPreInit(const GL::Properties&, CString*);
+    virtual bool contextInit(const GL::Properties&, CString*);
+    virtual bool contextPostInit(const GL::Properties&, CString*);
     virtual void contextTerminate();
 
     virtual void                   swapBuffers();
-    virtual CSize                  framebufferSize() const;
+    virtual Size                   framebufferSize() const;
     virtual int                    swapInterval() const;
     virtual void                   setSwapInterval(const int&);
-    virtual CDContextBits          context();
+    virtual ContextBits            context();
     virtual ThreadId               contextThread();
     virtual CGL::CGL_Context*      glContext();
     virtual CGL::CGL_ScopedContext scopedContext();
@@ -76,9 +75,9 @@ class StubGLLoader : public virtual GLLoader
     StubGLLoader();
     virtual ~StubGLLoader();
 
-    virtual bool bindingPreInit(const GLProperties&, CString*);
-    virtual bool bindingInit(const GLProperties&, CString*);
-    virtual bool bindingPostInit(const GLProperties&, CString*);
+    virtual bool bindingPreInit(const GL::Properties&, CString*);
+    virtual bool bindingInit(const GL::Properties&, CString*);
+    virtual bool bindingPostInit(const GL::Properties&, CString*);
     virtual void bindingTerminate();
 };
 #endif
@@ -104,22 +103,22 @@ class StubEventApplication : public virtual EventApplication
     {
     }
 
-    virtual void eventHandleD(const CDEvent&, c_cptr)
+    virtual void eventHandleD(const Event&, c_cptr)
     {
     }
-    virtual void eventHandleI(const CIEvent&, c_cptr)
+    virtual void eventHandleI(const Input::CIEvent&, c_cptr)
     {
     }
-    virtual void eventHandle(const CIHapticEvent&, c_cptr)
+    virtual void eventHandle(const Input::CIHapticEvent&, c_cptr)
     {
     }
-    virtual void eventHandle(const CIEvent&, c_cptr)
+    virtual void eventHandle(const Input::CIEvent&, c_cptr)
     {
     }
-    virtual void eventHandle(const CDEvent&, c_cptr)
+    virtual void eventHandle(const Event&, c_cptr)
     {
     }
-    virtual CIControllerState getControllerState(uint16)
+    virtual Input::CIControllerState getControllerState(uint16)
     {
         return {};
     }
@@ -138,11 +137,11 @@ class StubEventApplication : public virtual EventApplication
     virtual void setRelativeMouse(bool)
     {
     }
-    virtual CPoint mousePosition() const
+    virtual Point mousePosition() const
     {
         return {};
     }
-    virtual void setMousePosition(const CPoint&)
+    virtual void setMousePosition(const Point&)
     {
     }
     virtual void setKeyboardRepeat(bool)
@@ -156,10 +155,10 @@ class StubEventApplication : public virtual EventApplication
     {
     }
 
-    virtual void injectEvent(const CIEvent&, c_cptr)
+    virtual void injectEvent(const Input::CIEvent&, c_cptr)
     {
     }
-    virtual void injectEvent(const CDEvent&, c_cptr)
+    virtual void injectEvent(const Event&, c_cptr)
     {
     }
 };

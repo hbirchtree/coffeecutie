@@ -1,6 +1,7 @@
 #include <coffee/asio/tcp_socket.h>
 #include <coffee/core/CApplication>
-#include <coffee/core/CMD>
+#include <coffee/strings/libc_types.h>
+#include <peripherals/libc/signals.h>
 
 #include <coffee/core/CDebug>
 
@@ -20,7 +21,7 @@ void ExitFun()
 
 i32 coffee_main(i32, cstring_w*)
 {
-    Cmd::RegisterAtExit(ExitFun);
+    libc::signal::register_atexit(ExitFun);
 
     CString user    = "testuser";
     CString channel = "#test";

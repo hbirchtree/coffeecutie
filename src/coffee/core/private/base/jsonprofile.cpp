@@ -1,12 +1,16 @@
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
-#include <platforms/file.h>
 #include <platforms/profiling.h>
+
+#include <coffee/core/datastorage/text/json/cjsonparser.h>
+#include <peripherals/stl/string_ops.h>
+#include <platforms/file.h>
 #include <rapidjson/filewritestream.h>
 
-#include <coffee/core/CDebug>
+#include <coffee/strings/libc_types.h>
 
-namespace Coffee {
-namespace Profiling {
+#include <coffee/core/formatting.h>
+
+namespace platform {
+namespace profiling {
 
 using namespace DataStorage::TextStorage::RJSON;
 using namespace ::platform::file;
@@ -98,13 +102,13 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     if(!thread_name.size())
         thread_name = str::print::pointerify(point.tid);
 
-    auto event =
-        fmt(event_format,
-            Chrono::duration_cast<Chrono::microseconds>(point.ts).count(),
-            point.name,
-            ThreadGetName(point.tid),
-            point.component,
-            eventType);
+    auto event = Strings::fmt(
+        event_format,
+        Chrono::duration_cast<Chrono::microseconds>(point.ts).count(),
+        point.name,
+        ThreadGetName(point.tid),
+        point.component,
+        eventType);
 
     event = str::transform::printclean(event);
 

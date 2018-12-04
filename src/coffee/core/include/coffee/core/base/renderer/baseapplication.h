@@ -8,7 +8,7 @@ namespace Display{
 class BaseApplication
 {
 protected:
-    virtual const CDProperties &initialProperties() = 0;
+    virtual const Properties &initialProperties() = 0;
 };
 
 }

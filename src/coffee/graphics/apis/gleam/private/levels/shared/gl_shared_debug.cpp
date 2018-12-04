@@ -1,7 +1,6 @@
 #include <coffee/graphics/apis/gleam/levels/gl_shared_debug.h>
 
-#include <coffee/core/base/textprocessing/cregex.h>
-#include <coffee/core/plat/memory.h>
+#include <coffee/core/CRegex>
 #include <peripherals/stl/string_casting.h>
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
@@ -56,9 +55,9 @@ void CGL_Shared_Debug::GetExtensions(Context& ctxt)
 #endif
 }
 
-Display::CGLVersion CGL_Shared_Debug::ContextVersion()
+Display::GL::Version CGL_Shared_Debug::ContextVersion()
 {
-    Display::CGLVersion ver = {};
+    Display::GL::Version ver = {};
 
     ver.major    = 0;
     ver.minor    = 0;
@@ -85,7 +84,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
         if(str.size() <= 0)
             break;
 
-        Regex::Pattern p = Regex::compile_pattern(
+        regex::Pattern p = regex::compile_pattern(
             "^"
             "(OpenGL ES )?"
             "([0-9]+)\\.([0-9]+)(\\.([0-9]+))?"
@@ -94,7 +93,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
             "$");
 
         Vector<CString> match;
-        if(!Regex::match(p, str, match))
+        if(!regex::match(p, str, match))
             break;
 
         ver.major = cast_string<u8>(match.at(2));
@@ -110,9 +109,9 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
     return ver;
 }
 
-Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
+Display::GL::Version CGL_Shared_Debug::ShaderLanguageVersion()
 {
-    Display::CGLVersion ver = {};
+    Display::GL::Version ver = {};
 
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
     ver.revision = 1;
@@ -139,7 +138,7 @@ Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
 
     do
     {
-        Regex::Pattern pa = Regex::compile_pattern(
+        regex::Pattern pa = regex::compile_pattern(
             "^"
             "(OpenGL ES GLSL ES )?"     /* OpenGL ES label */
             "([0-9]+)\\.([0-9]+)"       /* version */
@@ -149,7 +148,7 @@ Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
 
         Vector<CString> match;
 
-        if(!Regex::match(pa, str, match))
+        if(!regex::match(pa, str, match))
             continue;
 
         ver.major = cast_string<u8>(match.at(2));
@@ -390,9 +389,9 @@ cstring CGL_Shared_Limits::MaxName(u32 v)
     return nullptr;
 }
 
-_cbasic_size_2d<i32> CGL_Shared_Limits::MaxSize(u32 v)
+size_2d<i32> CGL_Shared_Limits::MaxSize(u32 v)
 {
-    _cbasic_size_2d<i32> size;
+    size_2d<i32> size;
 
     GLuint pname = limit_map_2d[v].i;
 

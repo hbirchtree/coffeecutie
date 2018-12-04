@@ -10,7 +10,7 @@ struct GLEAM_RenderDummy : GraphicsAPI::RenderDummy
 {
     friend struct GLEAM_RenderTarget;
 
-    void allocate(PixFmt fmt, DBuffers buf, u32 index, CSize size);
+    void allocate(PixFmt fmt, DBuffers buf, u32 index, Size size);
     void deallocate();
 
   protected:
@@ -48,15 +48,15 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     void attachDepthSurface(GLEAM_Surface2D const& s, u32 mip);
 
     void blit(
-        CRect64 const&      src,
+        Rect64 const&      src,
         GLEAM_RenderTarget& target,
-        CRect64 const&      tgt,
+        Rect64 const&      tgt,
         DBuffers            buf,
         Filtering           flt);
 
-    void resize(u32 i, CRect64 const& view);
+    void resize(u32 i, Rect64 const& view);
 
-    CSize size();
+    Size size();
 
     void clear(u32 i, Vecf4 const& color);
     void clear(bigscalar depth);
@@ -71,7 +71,7 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
 
     glhnd        m_handle;
     FramebufferT m_type;
-    CSize        m_size;
+    Size        m_size;
 };
 
 } // namespace GLEAM

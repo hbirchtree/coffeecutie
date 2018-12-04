@@ -15,9 +15,9 @@ class GLeamRenderer : public virtual GLLoader
     virtual void bindingCallback(const void* report) const;
 
   protected:
-    bool bindingPreInit(const GLProperties&, CString*);
-    bool bindingInit(const GLProperties&, CString*);
-    bool bindingPostInit(const GLProperties& p, CString*);
+    bool bindingPreInit(const GL::Properties&, CString*);
+    bool bindingInit(const GL::Properties&, CString*);
+    bool bindingPostInit(const GL::Properties& p, CString*);
 
     void bindingTerminate();
 };

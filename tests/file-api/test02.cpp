@@ -10,28 +10,27 @@ static byte_t sample_storage[Unit_kB * 100] = {"I'M THE TRASHMAN!\n"};
 
 bool filewrite_test()
 {
-    CResources::Resource rsc(small_map_test);
+    Resource rsc(small_map_test);
 
     rsc = Bytes::From(sample_storage, sizeof(sample_storage));
 
-    return CResources::FileCommit(
-        rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
+    return FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 }
 
 bool filemap_test()
 {
     file_error ec;
 
-    CResources::Resource rsc(small_map_test);
-    CResources::FileMap(rsc);
+    Resource rsc(small_map_test);
+    FileMap(rsc);
     if(!rsc.data)
         return false;
     bool status = MemCmp(
         Bytes::From(sample_storage, sizeof(sample_storage)),
         C_OCAST<Bytes>(rsc));
-    CResources::FileUnmap(rsc);
+    FileUnmap(rsc);
 
-    CResources::FileFun::Rm(small_map_test, ec);
+    FileFun::Rm(small_map_test, ec);
 
     return status;
 }

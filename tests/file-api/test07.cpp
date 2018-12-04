@@ -1,10 +1,12 @@
 #include <coffee/core/CFiles>
+#include <coffee/strings/libc_types.h>
+
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
-using File = CResources::FileFun;
-using Dir  = CResources::DirFun;
+using File = FileFun;
+using Dir  = DirFun;
 
 const Url testpath = MkUrl("test_level1/test_level2", RSCA::TemporaryFile);
 const Url testdir  = MkUrl("test_dir", RSCA::TemporaryFile);
@@ -17,7 +19,7 @@ bool dirstat_test()
         return false;
     Profiler::Profile("Creating single-level directory");
 
-    if(File::Stat(testdir, ec) != File::Directory)
+    if(File::Stat(testdir, ec) != FileType::Directory)
         return false;
     Profiler::Profile("lstat() on file, success");
 
@@ -25,7 +27,7 @@ bool dirstat_test()
         return false;
     Profiler::Profile("Deleting directory");
 
-    if(File::Stat(testdir, ec) != File::None)
+    if(File::Stat(testdir, ec) != FileType::None)
         return false;
     Profiler::Profile("lstat() on file, failure");
 
@@ -78,8 +80,8 @@ bool dirlist_test()
     Profiler::Profile("Concatenating paths");
 
     if(!(Dir::MkDir(testpath, true, ec) &&
-         File::Touch(File::File, file1, ec)) &&
-       File::Touch(File::File, file2, ec))
+         File::Touch(FileType::File, file1, ec)) &&
+       File::Touch(FileType::File, file2, ec))
         return false;
     Profiler::Profile("Prerequisites");
 

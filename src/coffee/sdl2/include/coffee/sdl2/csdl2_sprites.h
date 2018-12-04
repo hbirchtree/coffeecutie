@@ -5,30 +5,23 @@
 #if defined(COFFEE_USE_SDL_WINDOW)
 #include "csdl2_windowhost.h"
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-class SimpleSpriteRenderer :
-        public SDL2SpriteRenderer,
-        public SDL2WindowHost
+class SimpleSpriteRenderer : public SDL2SpriteRenderer, public SDL2WindowHost
 {
-public:
-    SimpleSpriteRenderer(CObject* parent = nullptr):
-        SDL2WindowHost(parent)
+  public:
+    SimpleSpriteRenderer(CObject* parent = nullptr) : SDL2WindowHost(parent)
     {
     }
 
-    bool init(CDProperties const& props,CString* err)
+    bool init(Properties const& props, CString* err)
     {
-        return
-        hostPreInit(props,err) &&
-        spritesPreInit(err) &&
+        return hostPreInit(props, err) && spritesPreInit(err) &&
 
-        hostInit(props,err) &&
-        spritesInit(err) &&
+               hostInit(props, err) && spritesInit(err) &&
 
-        hostPostInit(props,err) &&
-        spritesPostInit(err);
+               hostPostInit(props, err) && spritesPostInit(err);
     }
     void cleanup()
     {
@@ -37,6 +30,6 @@ public:
     }
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee
 #endif

@@ -4,7 +4,6 @@
 #include <stb.h>
 #include <stb_vorbis.c>
 
-#include <coffee/core/plat/memory.h>
 #include <coffee/core/CMath>
 #include <coffee/core/CProfiling>
 
@@ -40,7 +39,7 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
 
     audio_data::SetDestr(smp->container, [](audio_data& data)
     {
-        Mem::CFree(data.data);
+        ::free(data.data);
     });
 
     smp->fmt.bitdepth = smp->samples / smp->fmt.samplerate * smp->fmt.channels;

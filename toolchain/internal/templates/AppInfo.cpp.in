@@ -1,33 +1,35 @@
-#include <coffee/core/plat/environment/application_start.h>
+#include <coffee/application/application_start.h>
+#include <peripherals/build/application.h>
 
 #if defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2)
-extern "C" int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jobject array);
+extern "C" int Java_org_libsdl_app_SDLActivity_nativeInit(
+    JNIEnv* env, jclass cls, jobject array);
 
-__attribute__ ((visibility ("default")))
-int Java_org_libsdl_app_SDLActivity_nativeInit__Ljava_lang_Object_2(
-        JNIEnv* env, jclass cls, jobject array)
+__attribute__((visibility("default"))) int
+Java_org_libsdl_app_SDLActivity_nativeInit__Ljava_lang_Object_2(
+    JNIEnv* env, jclass cls, jobject array)
 {
     return Java_org_libsdl_app_SDLActivity_nativeInit(env, cls, array);
 }
 #endif
 
 #ifndef COFFEE_LOWFAT
-namespace Coffee{
+namespace Coffee {
 
-void SetApplicationData(AppData& appdata)
+void SetApplicationData(platform::info::AppData& appdata)
 {
-    appdata.application_name = "@APP_TITLE@";
+    appdata.application_name  = "@APP_TITLE@";
     appdata.organization_name = "@APP_COMPANY@";
-    appdata.version_code = @APP_VERSION@;
+    appdata.version_code      = @APP_VERSION@;
 }
 
-}
+} // namespace Coffee
 #else
-namespace Coffee{
+namespace Coffee {
 
 void SetApplicationData(AppData&)
 {
 }
 
-}
+} // namespace Coffee
 #endif

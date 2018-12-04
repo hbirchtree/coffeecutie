@@ -8,13 +8,17 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 
-#include <coffee/core/plat/environment.h>
+#include <coffee/core/CProfiling>
 #include <coffee/core/platform_data.h>
-#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/core/stl_types.h>
+#include <coffee/core/types/display/properties.h>
 #include <coffee/interfaces/cgraphics_pixops.h>
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+#include <peripherals/stl/string_ops.h>
+#include <platforms/environment.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/CProfiling>
 
 #include "gleam_internal_types.h"
 
@@ -45,11 +49,14 @@ void GLEAM_API::DumpFramebuffer(
     if(size.area() <= 0)
         return;
 
-    storage.resize(
-        properties::get<properties::pixel_size>(BitFmt::UByte, typing::convert::to<PixCmp>(c), size.area()));
+    storage.resize(properties::get<properties::pixel_size>(
+        BitFmt::UByte,
+        typing::pixels::convert::to<PixCmp>(c),
+        C_FCAST<szptr>(size.area())));
 
     fb.use(FramebufferT::Read);
-    CGL33::ReadPixels(0, 0, size, typing::convert::to<PixCmp>(c), dt, &storage[0]);
+    CGL33::ReadPixels(
+        0, 0, size, typing::pixels::convert::to<PixCmp>(c), dt, &storage[0]);
 }
 
 void GLEAM_API::GetDefaultVersion(i32& major, i32& minor)
@@ -68,23 +75,23 @@ void GLEAM_API::GetDefaultVersion(i32& major, i32& minor)
 #endif
 }
 
-void GLEAM_API::GetDefaultProperties(Display::CDProperties& props)
+void GLEAM_API::GetDefaultProperties(Display::Properties& props)
 {
-    props.gl.flags |= Display::GLProperties::GLNoFlag
+    props.gl.flags |= Display::GL::Properties::GLNoFlag
 #if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
-                      | Display::GLProperties::GLSRGB
+                      | Display::GL::Properties::GLSRGB
 #endif
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-                      | Display::GLProperties::GLES
+                      | Display::GL::Properties::GLES
 #endif
 #if defined(COFFEE_ALWAYS_VSYNC)
-                      | Display::GLProperties::GLVSync;
+                      | Display::GL::Properties::GLVSync;
 #endif
     ;
 
 #if defined(COFFEE_USE_IMMERSIVE_VIEW)
-    props.flags ^= Display::CDProperties::Windowed;
-    props.flags |= Display::CDProperties::FullScreen;
+    props.flags ^= Display::Properties::Windowed;
+    props.flags |= Display::Properties::FullScreen;
 #endif
 
 #if defined(COFFEE_MAEMO)
@@ -118,10 +125,10 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
 
     cVerbose(10, GLM_API "Matching GL API...");
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
-    const Display::CGLVersion ver33(3, 3);
-    const Display::CGLVersion ver43(4, 3);
-    const Display::CGLVersion ver45(4, 5);
-    const Display::CGLVersion ver46(4, 6);
+    const Display::GL::Version ver33(3, 3);
+    const Display::GL::Version ver43(4, 3);
+    const Display::GL::Version ver45(4, 5);
+    const Display::GL::Version ver46(4, 6);
 
     /* If higher level of API is not achieved, stay at the lower one */
     if(ver >= ver46)
@@ -203,7 +210,7 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     cVerbose(
         4,
         GLM_API "Initialized API level {0}",
-        str::print::pointerify(store->CURR_API));
+        stl_types::str::print::pointerify(store->CURR_API));
 
     return true;
 }
@@ -482,12 +489,12 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
     {
         if(Extensions::ViewportArraySupported(CGL_DBG_CTXT))
         {
-            Vector<CRectF> varr;
+            Vector<RectF> varr;
 
             for(uint32 k = i; k < vstate.viewCount(); k++)
             {
-                CRectF& e = varr[k];
-                auto    s = vstate.view(k);
+                RectF& e = varr[k];
+                auto   s = vstate.view(k);
 
                 e.x = s.x;
                 e.y = s.y;
@@ -529,8 +536,8 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
     {
         if(vstate.m_view.size() > 0)
         {
-            auto    sview = vstate.view(0);
-            CRect64 tview(sview.x, sview.y, sview.w, sview.h);
+            auto   sview = vstate.view(0);
+            Rect64 tview(sview.x, sview.y, sview.w, sview.h);
             GLC::Viewport(tview.x, tview.y, tview.size().convert<i32>());
         }
         if(vstate.m_depth.size() > 0)
@@ -541,8 +548,8 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
 #endif
         if(vstate.m_scissor.size() > 0)
         {
-            auto    sview = vstate.scissor(0);
-            CRect64 tview(sview.x, sview.y, sview.w, sview.h);
+            auto   sview = vstate.scissor(0);
+            Rect64 tview(sview.x, sview.y, sview.w, sview.h);
             GLC::Scissor(tview.x, tview.y, tview.size().convert<i32>());
             GLC::Enable(Feature::ScissorTest);
         } else

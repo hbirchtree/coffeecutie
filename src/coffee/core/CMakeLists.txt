@@ -36,9 +36,7 @@ coffee_library (
     #
     # to_string(...) functions
     #
-    private/base/strings/extensionresolvers.cpp
-    private/base/strings/information_extensions.cpp
-    private/base/strings/vector_print_extensions.cpp
+    private/strings.cpp
 
     #
     # Internal platform layer, cross-platform
@@ -154,7 +152,7 @@ coffee_library (
     SOURCES
     private/profiler/profiling_export.cpp
 
-    LIBRARIES CoffeeCore_Base CoffeeCore_PlatformData
+    LIBRARIES CoffeeCore_Base
     )
 
 #

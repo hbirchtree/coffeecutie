@@ -5,50 +5,51 @@
 #if defined(COFFEE_USE_SDL_WINDOW)
 #include "../csdl2_context.h"
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-class SDL2Window :
-        public virtual WindowManagerClient,
-        public virtual SDL2ContextUser
+class SDL2Window : public virtual WindowManagerClient,
+                   public virtual SDL2ContextUser
 {
-public:
-    virtual ~SDL2Window() {}
-    virtual CDMonitor monitor();
+  public:
+    virtual ~SDL2Window()
+    {
+    }
+    virtual Monitor monitor();
 
     virtual bool showWindow();
     virtual bool hideWindow();
     virtual bool closeWindow();
 
-    virtual void popErrorMessage(Severity s, cstring title, cstring msg);
+    virtual void popErrorMessage(debug::Severity s, cstring title, cstring msg);
 
-protected:
-    virtual bool windowPreInit(const CDProperties &p, CString *err);
-    virtual bool windowInit(const CDProperties& p, CString *err);
-    virtual bool windowPostInit(const CDProperties& p, CString *err);
+  protected:
+    virtual bool windowPreInit(const Properties& p, CString* err);
+    virtual bool windowInit(const Properties& p, CString* err);
+    virtual bool windowPostInit(const Properties& p, CString* err);
     virtual void windowTerminate();
 
-public:
-	virtual CDWindow *window();
+  public:
+    virtual Window* window();
 
-	virtual uint32 windowState() const;
-	virtual void setWindowState(const CDProperties::State &s);
+    virtual u32  windowState() const;
+    virtual void setWindowState(const Properties::State& s);
 
-	virtual CSize windowSize() const;
-	virtual void setWindowSize(const CSize &s);
+    virtual Size windowSize() const;
+    virtual void setWindowSize(const Size& s);
 
-	virtual CPoint windowPosition() const;
-	virtual void setWindowPosition(const CPoint &p);
+    virtual Point windowPosition() const;
+    virtual void  setWindowPosition(const Point& p);
 
-	virtual CString windowTitle() const;
-    virtual void setWindowTitle(const CString &tl);
+    virtual CString windowTitle() const;
+    virtual void    setWindowTitle(const CString& tl);
 
-	virtual bool screensaverMode();
-	virtual void setScreensaverMode(bool m);
+    virtual bool screensaverMode();
+    virtual void setScreensaverMode(bool m);
 
     virtual CString windowLibrary() const;
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee
 #endif

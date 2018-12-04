@@ -12,7 +12,7 @@ bool TiffDecode(
     Pair<CString, ImageProcessor> const& file,
     PixCmp                               cmp,
     BitFmt&                              bfmt,
-    CSize&                               size,
+    Size&                                size,
     Bytes&                               data,
     Resource&                            r)
 {

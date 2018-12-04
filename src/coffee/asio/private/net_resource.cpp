@@ -1,9 +1,12 @@
 #include <coffee/asio/net_resource.h>
 
-#include <coffee/core/base/textprocessing/cregex.h>
-#include <coffee/core/plat/timing/profiling.h>
-#include <peripherals/stl/string_casting.h>
+#include <coffee/core/CProfiling>
+#include <coffee/core/CRegex>
 #include <coffee/core/types/chunk.h>
+#include <peripherals/enum/helpers.h>
+#include <peripherals/stl/string_casting.h>
+
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -11,6 +14,8 @@
 
 namespace Coffee {
 namespace Net {
+
+using namespace ::enum_helpers;
 
 void Resource::initRsc(const Url& url)
 {
@@ -66,7 +71,6 @@ void Resource::initRsc(const Url& url)
         m_access = m_access & (m_access ^ HTTPAccess::Secure);
     }
 #endif
-
 
     {
         DProfContext b(DTEXT(NETRSC_TAG "Connecting to host"));

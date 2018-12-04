@@ -10,7 +10,7 @@ namespace Coffee {
 /*!
  * \brief This function handles initial program startup
  */
-extern i32 CoffeeMain(
+COFFEE_APP_FUNC i32 CoffeeMain(
     CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags = 0);
 
 /*!
@@ -25,8 +25,6 @@ COFFEE_APP_FUNC void GotoApplicationDir();
 COFFEE_APP_FUNC void InstallDefaultSigHandlers();
 
 COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
-
-extern void SetDefaultWindowName(cstring appname);
 
 COFFEE_APP_FUNC platform::info::AppData const& ApplicationData();
 

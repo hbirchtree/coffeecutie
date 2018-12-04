@@ -1,21 +1,27 @@
-#include <coffee/core/unit_tests/framework.h>
-
 #include <coffee/core/CJSONParser>
-#include <coffee/core/CMD>
 #include <coffee/core/CPlatform>
-#include <coffee/core/plat/environment/argument_parse.h>
+#include <coffee/core/internal_state.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/core/terminal/table-print.h>
 #include <coffee/core/types/chunk.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
+#include <platforms/argument_parse.h>
+#include <platforms/process.h>
+#include <platforms/stacktrace.h>
 
-#include <coffee/core/CDebug>
+#include <coffee/strings/libc_types.h>
+
+/* This is placed here because it includes CDebug */
+#include <coffee/core/unit_tests/framework.h>
+
+#include <coffee/core/terminal/table.h>
 
 namespace CoffeeTest {
 
+using namespace ::platform::args;
+using namespace ::platform::env;
 using namespace Coffee;
 
 struct TestInstance
@@ -201,8 +207,8 @@ struct TemporaryState
     }
 
   private:
-    State::P<InternalState>       m_state;
-    State::P<InternalThreadState> m_tstate;
+    State::P<State::InternalState>       m_state;
+    State::P<State::InternalThreadState> m_tstate;
 };
 
 void RunTest(Test const& test, TestInstance& test_info)

@@ -1,8 +1,12 @@
 #pragma once
 
 #include <coffee/core/CFiles>
-#include <coffee/core/types/cdef/geometry.h>
-#include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/types/pixel_components.h>
+#include <coffee/core/types/pixel_format.h>
+#include <coffee/core/types/pixel_transform.h>
+#include <coffee/core/types/rgba.h>
+#include <coffee/core/types/size.h>
 
 namespace Coffee {
 namespace IMG {
@@ -41,7 +45,7 @@ struct serial_image
     const u16 desc_size = sizeof(serial_image);
     const u16 desc_vers = 2;
 
-    _cbasic_size_2d<u32> size;
+    size_2d<u32> size;
 
     union
     {
@@ -274,7 +278,7 @@ namespace IMG {
 using stb::stb_error;
 
 STATICINLINE bool Load(
-    Bytes& r, PixCmp cmp, BitFmt& fmt, Bytes& data, CSize& res)
+    Bytes& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     stb_error ec;
 
@@ -294,7 +298,7 @@ STATICINLINE bool Load(
 }
 
 STATICINLINE bool Load(
-    Bytes&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, CSize& res)
+    Bytes&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     return Load(r, cmp, fmt, data, res);
 }

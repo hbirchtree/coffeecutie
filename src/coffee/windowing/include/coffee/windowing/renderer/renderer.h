@@ -4,10 +4,7 @@
 #include <coffee/windowing/stub/stub.h>
 
 namespace Coffee {
-
 using CDRendererBase = Display::CDRendererBase;
-using namespace CInput;
-
 namespace Display {
 
 class RendererInterface : public CDRendererBase,

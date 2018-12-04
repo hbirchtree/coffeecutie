@@ -43,13 +43,13 @@ protected:
         m_ctxt = context;
     }
 
-    const CDProperties &initialProperties()
+    const Properties &initialProperties()
     {
         return m_properties;
     }
 
     u32 m_window_flags;
-    CDProperties m_properties;
+    Properties m_properties;
     CString m_contextString;
 
 private:

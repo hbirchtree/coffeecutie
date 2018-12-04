@@ -1,3 +1,5 @@
+#include <coffee/strings/libc_types.h>
+
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/coffee_saving.h>
 
@@ -35,7 +37,7 @@ bool save_to_disk()
 {
     auto storeApi = Store::CreateDefaultSave();
 
-    TestStructure data      = {};
+    TestStructure data = {};
 
     cVerbose(5, "Separate operation");
     storeApi->save(Bytes::Create(data));

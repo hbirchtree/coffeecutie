@@ -1,75 +1,73 @@
 #pragma once
 
-#include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/graphics/apis/gleam/levels/gl_shared_types.h>
 
-namespace Coffee{
+namespace Coffee {
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
-DebugType gl_converttype(GLuint type)
+debug::Type gl_converttype(GLuint type)
 {
     switch(type)
     {
     case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        return DebugType::Deprecated;
+        return debug::Type::Deprecated;
     case GL_DEBUG_TYPE_ERROR:
-        return DebugType::UndefinedBehavior;
+        return debug::Type::UndefinedBehavior;
     case GL_DEBUG_TYPE_MARKER:
-        return DebugType::Marker;
+        return debug::Type::Marker;
     case GL_DEBUG_TYPE_OTHER:
-        return DebugType::Other;
+        return debug::Type::Other;
     case GL_DEBUG_TYPE_PERFORMANCE:
-        return DebugType::Performance;
+        return debug::Type::Performance;
     case GL_DEBUG_TYPE_PORTABILITY:
-        return DebugType::Compliance;
+        return debug::Type::Compliance;
     case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        return DebugType::UndefinedBehavior;
+        return debug::Type::UndefinedBehavior;
     case GL_DEBUG_TYPE_POP_GROUP:
-        return DebugType::Information;
+        return debug::Type::Information;
     case GL_DEBUG_TYPE_PUSH_GROUP:
-        return DebugType::Information;
+        return debug::Type::Information;
     default:
-        return DebugType::Information;
+        return debug::Type::Information;
     }
 }
 
-Severity gl_convertsev(GLuint sev)
+debug::Severity gl_convertsev(GLuint sev)
 {
     switch(sev)
     {
     case GL_DEBUG_SEVERITY_HIGH:
-        return Severity::High;
+        return debug::Severity::High;
     case GL_DEBUG_SEVERITY_MEDIUM:
-        return Severity::Medium;
+        return debug::Severity::Medium;
     case GL_DEBUG_SEVERITY_LOW:
-        return Severity::Low;
+        return debug::Severity::Low;
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-        return Severity::Information;
+        return debug::Severity::Information;
     default:
-        return Severity::Information;
+        return debug::Severity::Information;
     }
 }
 
-DebugComponent gl_convertcomp(GLuint src)
+debug::Component gl_convertcomp(GLuint src)
 {
     switch(src)
     {
     case GL_DEBUG_SOURCE_API:
-        return DebugComponent::GraphicsAPI;
+        return debug::Component::GraphicsAPI;
     case GL_DEBUG_SOURCE_APPLICATION:
-        return DebugComponent::Core;
+        return debug::Component::Core;
     case GL_DEBUG_SOURCE_OTHER:
-        return DebugComponent::Interface;
+        return debug::Component::Interface;
     case GL_DEBUG_SOURCE_SHADER_COMPILER:
-        return DebugComponent::ShaderCompiler;
+        return debug::Component::ShaderCompiler;
     case GL_DEBUG_SOURCE_THIRD_PARTY:
-        return DebugComponent::GraphicsAPI;
+        return debug::Component::GraphicsAPI;
     case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        return DebugComponent::GraphicsAPI;
+        return debug::Component::GraphicsAPI;
     default:
-        return DebugComponent::GraphicsAPI;
+        return debug::Component::GraphicsAPI;
     }
 }
 #endif
-
 }

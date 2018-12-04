@@ -2,7 +2,6 @@
 
 #include <platforms/environment.h>
 
-#include "../strings/string_format.h"
 #include "log_interface.h"
 
 namespace Coffee {

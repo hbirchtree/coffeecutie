@@ -18,7 +18,7 @@ using namespace ::libc_types;
 extern const cstring architecture;
 extern const cstring build_version;
 extern const cstring compiler;
-extern const cstring platform;
+extern const cstring platform_identity;
 
 } // namespace info
 } // namespace platform

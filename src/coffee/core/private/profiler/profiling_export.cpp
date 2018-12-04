@@ -1,13 +1,15 @@
 #include <coffee/core/profiler/profiling-export.h>
 
-#include <coffee/core/argument_handling.h>
-#include <coffee/core/base.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CJSONParser>
-#include <coffee/core/coffee.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/argument_handling.h>
+#include <coffee/core/base.h>
+#include <coffee/core/coffee.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>
+#include <coffee/strings/info.h>
+#include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/sysinfo.h>

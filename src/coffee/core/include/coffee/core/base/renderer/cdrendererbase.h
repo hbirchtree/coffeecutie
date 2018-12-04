@@ -1,20 +1,15 @@
 #pragma once
 
-#include "../types/cobject.h"
-
 #include "eventapplication.h"
 #include "glapplication.h"
 #include "hapticapplication.h"
 #include "initapplication.h"
 #include "inputapplication.h"
 #include "windowmanagerclient.h"
-
+#include <coffee/core/types/cobject.h>
 #include <peripherals/stl/threads/async_tasks.h>
 
 namespace Coffee {
-
-using namespace CInput;
-
 namespace Display {
 
 /*!
@@ -43,7 +38,7 @@ template<
     class T,
     typename implements<EventApplication, T>::type* = nullptr,
     typename implements<InitApplication, T>::type*  = nullptr>
-FORCEDINLINE Future<void> LaunchAsync(T* r, CDProperties const& p)
+FORCEDINLINE Future<void> LaunchAsync(T* r, Properties const& p)
 {
     Function<void()> fn = [r, p]() {
         CString err;

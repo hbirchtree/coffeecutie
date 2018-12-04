@@ -82,7 +82,7 @@ public:
 
     virtual ~CSDL2Renderer_Internal();
 
-    bool init(const CDProperties &, CString*err);
+    bool init(const Properties &, CString*err);
     void cleanup();
     virtual void run();
 

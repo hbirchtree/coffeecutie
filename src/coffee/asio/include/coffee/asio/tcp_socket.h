@@ -1,8 +1,8 @@
 #pragma once
 
-#include <coffee/core/plat/timing/profiling.h>
-#include <peripherals/stl/functional_types.h>
+#include <coffee/core/CProfiling>
 #include <iostream>
+#include <peripherals/stl/functional_types.h>
 
 #include "asio_data.h"
 
@@ -633,7 +633,7 @@ struct ssl_socket
 } // namespace ASIO
 
 namespace TCP {
-using Socket    = ASIO::tcp_sockets::raw_socket;
+using Socket = ASIO::tcp_sockets::raw_socket;
 #if defined(ASIO_USE_SSL)
 using SSLSocket = ASIO::tcp_sockets::ssl_socket;
 #endif

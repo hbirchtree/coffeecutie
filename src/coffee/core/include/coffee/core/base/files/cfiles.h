@@ -1,17 +1,17 @@
 #pragma once
 
-#include "../../types/edef/resenum.h"
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
+#include <coffee/core/types/rsca.h>
 #include <coffee/interfaces/byte_provider.h>
-#include <peripherals/semantic/chunk.h>
 #include <peripherals/enum/helpers.h>
+#include <peripherals/semantic/chunk.h>
 #include <url/url.h>
 
 namespace Coffee {
 
-using Url = platform::url::Url;
+using Url  = platform::url::Url;
 using Path = platform::url::Path;
 
 /*!
@@ -33,12 +33,12 @@ struct Resource : semantic::ByteProvider
 
   public:
     friend bool FilePull(Resource& resc);
-    friend bool FileCommit(Resource& resc, RSCA acc);
+    friend bool FileCommit(Resource& resc, semantic::RSCA acc);
 
     friend bool FileMap(Resource& resc, RSCA acc, szptr size);
     friend bool FileUnmap(Resource& resc);
 
-    friend bool FileOpenMap(Resource& resc, szptr size, RSCA acc);
+    friend bool FileOpenMap(Resource& resc, szptr size, semantic::RSCA acc);
 
     friend bool FileExists(const Resource& resc);
     friend void FileFree(Resource& resc);
@@ -48,7 +48,7 @@ struct Resource : semantic::ByteProvider
      * \param url Path to resource
      */
     Resource(Url const& url);
-    Resource(cstring rsrc, RSCA acc = RSCA::AssetFile);
+    Resource(cstring rsrc, semantic::RSCA acc = semantic::RSCA::AssetFile);
     Resource(Resource&& rsc);
     ~Resource();
 
@@ -79,14 +79,14 @@ struct Resource : semantic::ByteProvider
 
     FORCEDINLINE Resource& operator=(Resource&& other)
     {
-        this->data = other.data;
-        this->size = other.size;
-        this->flags = other.flags;
+        this->data            = other.data;
+        this->size            = other.size;
+        this->flags           = other.flags;
         this->m_platform_data = std::move(other.m_platform_data);
-        this->m_resource = std::move(other.m_resource);
+        this->m_resource      = std::move(other.m_resource);
 
-        other.data = nullptr;
-        other.size = 0;
+        other.data  = nullptr;
+        other.size  = 0;
         other.flags = Undefined;
         other.m_platform_data.reset();
         other.m_resource.clear();

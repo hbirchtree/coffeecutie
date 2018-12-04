@@ -2,6 +2,8 @@ coffee_library (
     TARGET PeripheralLib
     SOURCES
     private/error_types.cpp
+    private/build_info.cpp
+    private/libc_functions.cpp
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

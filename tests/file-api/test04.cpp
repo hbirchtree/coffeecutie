@@ -52,7 +52,7 @@ bool fileread_test()
     Resource rsc(writetest);
     Profiler::Profile("Pre-reading setup");
 
-    status = CResources::FilePull(rsc);
+    status = FilePull(rsc);
     Profiler::Profile("Reading massive data");
 
     if(status)

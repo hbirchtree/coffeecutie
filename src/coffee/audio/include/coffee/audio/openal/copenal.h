@@ -1,10 +1,10 @@
 #pragma once
 
 #include <coffee/audio/caudio.h>
-#include <coffee/core/types/cdef/infotypes.h>
-#include <coffee/core/types/edef/dbgenum.h>
-#include <peripherals/stl/functional_types.h>
+#include <coffee/core/types/debug/severity.h>
 #include <coffee/core/types/vector_types.h>
+#include <coffee/core/types/version.h>
+#include <peripherals/stl/functional_types.h>
 
 namespace Coffee {
 namespace CAudio {
@@ -16,8 +16,8 @@ struct OpenAL
     struct ALhnd;
     struct ALcapdevice;
 
-    using ALCallback = void (*)(Severity, cstring);
-    using ALVersion  = _cbasic_version<i32>;
+    using ALCallback = void (*)(debug::Severity, cstring);
+    using ALVersion  = version<i32>;
     using ALbuffer   = ALhnd;
     using ALsource   = ALhnd;
 
@@ -190,7 +190,7 @@ namespace COpenAL {
 
 struct CALhnd;
 struct CALCaptureDevice;
-using CALVersion = _cbasic_version<i32>;
+using CALVersion = version<i32>;
 
 enum class CALPlaybackState : uint8
 {

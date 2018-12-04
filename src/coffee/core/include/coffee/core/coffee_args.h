@@ -9,7 +9,8 @@ using namespace ::platform::args;
 
 extern ArgumentParser& GetBase();
 
-extern int PerformDefaults(ArgumentParser& parser, ArgumentResult& args);
+COFFEE_APP_FUNC int PerformDefaults(
+    ArgumentParser& parser, ArgumentResult& args);
 
 } // namespace BaseArgParser
 } // namespace Coffee

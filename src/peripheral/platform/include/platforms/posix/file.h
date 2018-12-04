@@ -46,6 +46,19 @@ struct PosixApi
         {
         }
 
+        FileHandle(FileHandle&& f) : fd(std::move(f.fd))
+        {
+            f.fd.release();
+        }
+
+        FileHandle& operator=(FileHandle&& other)
+        {
+            this->fd = std::move(other.fd);
+            other.fd.release();
+
+            return *this;
+        }
+
         posix_fd fd;
     };
 
@@ -54,8 +67,6 @@ struct PosixApi
 
 struct PosixFileMod_def : public CommonFileFun<posix_error_code>
 {
-    static bool ErrnoCheck(file_error& ec, cstring ref = nullptr, int fd = -1);
-
     static NodeType Stat(Url const& fn, file_error&);
 
     static bool Touch(NodeType t, Url const& fn, file_error& ec);
@@ -105,7 +116,7 @@ struct PosixFileFun_def : PosixFileMod_def
 
         if(!fd)
         {
-            ErrnoCheck(ec, url.c_str());
+            collect_error_to(ec);
             return {};
         }
 
@@ -150,8 +161,9 @@ struct PosixFileFun_def : PosixFileMod_def
         while(i < szp)
         {
             chnk = ((szp - i) < Int32_Max) ? (szp - i) : Int32_Max;
-            i += read(f_h.fd, &((C_CAST<byte_t*>(data.data))[i]), chnk);
-            if(ErrnoCheck(ec))
+            i += read(
+                C_CAST<int>(f_h.fd), &((C_CAST<byte_t*>(data.data))[i]), chnk);
+            if(collect_error_to(ec))
                 break;
         }
 
@@ -177,7 +189,7 @@ struct PosixFileFun_def : PosixFileMod_def
         {
             chnk = ((s_size - i) < Int32_Max) ? (s_size - i) : Int32_Max;
             i += write(f_h.fd, &(C_CAST<byte_t*>(d.data)[i]), chnk);
-            if(ErrnoCheck(ec, nullptr, f_h.fd) && it != 0)
+            if(collect_error_to(ec) && it != 0)
                 break;
             it++;
         }
@@ -204,7 +216,7 @@ struct PosixFileFun_def : PosixFileMod_def
         int fd = open(url.c_str(), oflags);
         if(fd < 0)
         {
-            ErrnoCheck(ec);
+            collect_error_to(ec);
             return {};
         }
 
@@ -225,12 +237,12 @@ struct PosixFileFun_def : PosixFileMod_def
 
         if(!addr || addr == MAP_FAILED)
         {
-            ErrnoCheck(ec, url.c_str(), fd);
+            collect_error_to(ec);
             return {};
         }
 
         if(::close(fd) != 0)
-            ErrnoCheck(ec);
+            collect_error_to(ec);
 
         FM out(addr, size, size);
         out.assignAccess(acc);
@@ -255,7 +267,7 @@ struct PosixFileFun_def : PosixFileMod_def
             return true;
         } else
         {
-            ErrnoCheck(ec, "munmap()");
+            collect_error_to(ec);
             return false;
         }
     }
@@ -287,7 +299,7 @@ struct PosixFileFun_def : PosixFileMod_def
         errno    = 0;
         auto ret = msync(ptr, size, MS_SYNC | MS_INVALIDATE);
 
-        ErrnoCheck(ec);
+        posix::collect_error_to(ec);
 
         return ret;
     }
@@ -330,7 +342,7 @@ struct PosixFileFun_def : PosixFileMod_def
         errno = 0;
         munmap(buf.data, buf.size);
 
-        ErrnoCheck(ec);
+        posix::collect_error_to(ec);
     }
 
     STATICINLINE szptr Size(FH const& fh, file_error& ec)
@@ -341,7 +353,7 @@ struct PosixFileFun_def : PosixFileMod_def
         if(fh.fd)
         {
             if(fstat(fh.fd, &st) != 0)
-                ErrnoCheck(ec);
+                collect_error_to(ec);
 
             return C_FCAST<size_type>(st.st_size);
         } else

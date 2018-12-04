@@ -1,5 +1,4 @@
 #include <coffee/blam/volta/cblam_map.h>
-#include <coffee/core/plat/memory.h>
 #include <coffee/core/types/chunk.h>
 
 namespace Coffee {
@@ -9,7 +8,7 @@ cstring file_header_full_mapname(const file_header_t* map)
 {
     for(i32 i = 0; i < blam_num_map_names; i++)
     {
-        if(str::cmp(map->name, blam_map_names[i].key))
+        if(libc::str::cmp(map->name, blam_map_names[i].key))
             return blam_map_names[i].value;
     }
     return map->name;

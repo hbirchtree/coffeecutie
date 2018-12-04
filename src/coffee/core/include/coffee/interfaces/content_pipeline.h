@@ -3,8 +3,9 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/memory/stlstring_ops.h>
-#include <peripherals/libc/types.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/stl/string_ops.h>
 
 namespace Coffee {
 struct TerminalCursor;
@@ -41,7 +42,8 @@ struct FileProcessor
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor) = 0;
 
     virtual void setInternalState(
-        ShPtr<InternalState> state, ShPtr<InternalThreadState> tstate)
+        ShPtr<State::InternalState>       state,
+        ShPtr<State::InternalThreadState> tstate)
     {
         State::SetInternalState(state);
         State::SetInternalThreadState(tstate);

@@ -3,12 +3,14 @@
 #include "caudiomixer_api.h"
 #include <coffee/audio/caudio.h>
 #include <coffee/core/CFiles>
+#include <coffee/interfaces/byte_provider.h>
 
-namespace Coffee{
-namespace CAudio{
+namespace Coffee {
+namespace CAudio {
 
-template<typename Resource,
-         typename implements<ByteProvider, Resource>::type* = nullptr>
+template<
+    typename Resource,
+    typename implements<semantic::ByteProvider, Resource>::type* = nullptr>
 FORCEDINLINE bool LoadVorbisFromFile(AudioSample& sample, Resource&& file)
 {
     bool status = true;
@@ -19,9 +21,11 @@ FORCEDINLINE bool LoadVorbisFromFile(AudioSample& sample, Resource&& file)
     return status;
 }
 
-template<typename T,
-         typename std::enable_if<
-             std::is_base_of<CSoundAbstraction::CSoundFormat, T>::value>::type* = nullptr>
+template<
+    typename T,
+    typename std::enable_if<
+        std::is_base_of<CSoundAbstraction::CSoundFormat, T>::value>::type* =
+        nullptr>
 FORCEDINLINE void AbstractFormatFromAudio(AudioFormat const& from, T& to)
 {
     to.setSamplerate(from.samplerate);
@@ -29,5 +33,5 @@ FORCEDINLINE void AbstractFormatFromAudio(AudioFormat const& from, T& to)
     to.setBitDepth(from.bitdepth);
 }
 
-}
-}
+} // namespace CAudio
+} // namespace Coffee

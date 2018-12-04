@@ -1,18 +1,19 @@
 #pragma once
 
-#include "../sensor_def.h"
+#include <platforms/base/sensor.h>
 
 #if defined(COFFEE_ANDROID)
 
-namespace Coffee{
-namespace Sensor{
-namespace Android{
+namespace platform {
+namespace sensor {
+namespace android {
 
-struct Android_SensorAPI : SensorAPI_Def
+struct Sensor : Sensor_Def
 {
-private:
+  private:
     struct AndroidSensorData;
-public:
+
+  public:
     static Vecf3 Gravity();
     static Vecf3 Acceleration();
 
@@ -24,10 +25,10 @@ public:
     static scalar Lux();
 };
 
-}
+} // namespace android
 
-using Sensors = Android::Android_SensorAPI;
+using Sensors = android::Sensor;
 
-}
-}
+} // namespace sensor
+} // namespace platform
 #endif

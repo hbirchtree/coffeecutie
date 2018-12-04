@@ -1,38 +1,36 @@
 #include <coffee/blam/volta/cblam_scenario_loader.h>
 
-#include <coffee/core/CDebug>
-#include <coffee/blam/volta/cblam_map.h>
 #include <coffee/blam/volta/blam_stl.h>
+#include <coffee/blam/volta/cblam_map.h>
 
-namespace Coffee{
-namespace Blam{
+#include <coffee/strings/libc_types.h>
 
-const scenario *scn_get(tag_index_view& tags)
+#include <coffee/core/CDebug>
+
+namespace Coffee {
+namespace Blam {
+
+const scenario* scn_get(tag_index_view& tags)
 {
-    static const auto pred = [](index_item_t const* v)
-    {
+    static const auto pred = [](index_item_t const* v) {
         return tag_class_cmp(v->tagclass_e[0], tag_class_t::scnr);
     };
 
-    auto base_it = std::find_if(tags.begin(), tags.end(),
-                                pred);
+    auto base_it = std::find_if(tags.begin(), tags.end(), pred);
 
     if(base_it == tags.end())
         return nullptr;
 
     auto base = *base_it;
 
-    cDebug("Scenario name: {0},offset={1}",
-           index_item_get_string(base,tags.file(),tags.tags()),
-           base->offset-tags.tags()->index_magic);
+    cDebug(
+        "Scenario name: {0},offset={1}",
+        index_item_get_string(base, tags.file(), tags.tags()),
+        base->offset - tags.tags()->index_magic);
 
     return C_CAST<const scenario*>(
-                blam_mptr(
-                    tags.file(),
-                    tags.tags()->index_magic,
-                    base->offset)
-                );
+        blam_mptr(tags.file(), tags.tags()->index_magic, base->offset));
 }
 
-}
-}
+} // namespace Blam
+} // namespace Coffee

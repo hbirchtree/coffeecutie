@@ -1,6 +1,7 @@
 #include <coffee/image/ctextrender.h>
 
 #include <coffee/core/CMath>
+#include <coffee/core/types/rect.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
@@ -69,7 +70,7 @@ Bytes& StbFontRenderer::RenderText(
     Bytes&                output,
     Size&                 imageSize)
 {
-    using irect = _cbasic_rect<int>;
+    using irect = rect<int>;
 
     auto stb_data = &data->info;
     auto scale    = properties.scale;
@@ -94,8 +95,8 @@ Bytes& StbFontRenderer::RenderText(
 
         x += scale * (ax + kern);
 
-        imageSize.w = CMath::max(imageSize.w, x + (bbox.w - bbox.x));
-        imageSize.h = CMath::max(imageSize.h, y + (bbox.h - bbox.y));
+        imageSize.w = CMath::max<u32>(imageSize.w, x + (bbox.w - bbox.x));
+        imageSize.h = CMath::max<u32>(imageSize.h, y + (bbox.h - bbox.y));
     }
 
     bit_w      = C_FCAST<szptr>(imageSize.w);

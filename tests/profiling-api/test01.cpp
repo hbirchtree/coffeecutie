@@ -1,6 +1,8 @@
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/CProfiling>
-#include <coffee/core/CDebug>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/time_types.h>
+
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
@@ -14,7 +16,7 @@ bool context_pushing()
     auto start = Clock::now();
 
     /* Pushing context */
-    for(u32 i=0;i<testing_amount;i++)
+    for(u32 i = 0; i < testing_amount; i++)
         Profiler::PushContext("Test context");
 
     cDebug("Pushing context: {0}", Clock::now() - start);
@@ -22,7 +24,7 @@ bool context_pushing()
     start = Clock::now();
 
     /* Popping context */
-    for(u32 i=0;i<testing_amount;i++)
+    for(u32 i = 0; i < testing_amount; i++)
         Profiler::PopContext();
 
     cDebug("Popping context: {0}", Clock::now() - start);
@@ -35,7 +37,7 @@ bool profile_pushing()
     auto start = Clock::now();
 
     /* Test performance of profiling function */
-    for(u32 i=0;i<testing_amount;i++)
+    for(u32 i = 0; i < testing_amount; i++)
         Profiler::Profile("Value");
 
     cDebug("Profiling: {0}", Clock::now() - start);
@@ -45,7 +47,6 @@ bool profile_pushing()
 
 const constexpr CoffeeTest::Test _tests[2] = {
     {context_pushing, "Pushing profiling context"},
-    {profile_pushing, "Pushing profiling point"}
-};
+    {profile_pushing, "Pushing profiling point"}};
 
 COFFEE_RUN_TESTS(_tests);

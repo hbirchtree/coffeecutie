@@ -1,8 +1,10 @@
 #pragma once
 
 #include <algorithm>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
 #include <peripherals/stl/functional_types.h>
-#include <peripherals/stl/types.h>
+#include <peripherals/stl/time_types.h>
 
 namespace Coffee {
 namespace Components {

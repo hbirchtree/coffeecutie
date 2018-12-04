@@ -1,8 +1,7 @@
 #include "sdl2eventhandlers.h"
 
-#include <coffee/core/CDebug>
-
 #if defined(COFFEE_USE_SDL_EVENT)
+#include <coffee/strings/libc_types.h>
 
 #include "sdl2_controller.h"
 #include "sdl2_keyboard.h"
@@ -11,89 +10,104 @@
 #include "sdl2_touch.h"
 #include "sdl2_window.h"
 
-namespace Coffee{
-namespace SDL2{
+#include <coffee/core/CDebug>
 
-void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
+namespace Coffee {
+namespace SDL2 {
+
+void EventHandleAll(SDL2EventHandler* ctxt, const SDL_Event* ev)
 {
-    switch(ev->type){
+    switch(ev->type)
+    {
     case SDL_APP_TERMINATING:
-    case SDL_QUIT:{
-        EventAtomic<CIEvent>(ctxt,CIEvent::QuitSign);
+    case SDL_QUIT:
+    {
+        EventAtomic<CIEvent>(ctxt, CIEvent::QuitSign);
         break;
     }
 
-    case SDL_WINDOWEVENT:{
-        EventHandleWindow(ctxt,ev->window);
+    case SDL_WINDOWEVENT:
+    {
+        EventHandleWindow(ctxt, ev->window);
         break;
     }
 
     case SDL_KEYDOWN:
-    case SDL_KEYUP:{
-        EventHandleKeys(ctxt,ev->type,ev->key);
+    case SDL_KEYUP:
+    {
+        EventHandleKeys(ctxt, ev->type, ev->key);
         break;
     }
 
     case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:{
-        EventHandleMouseBtn(ctxt,ev->button);
+    case SDL_MOUSEBUTTONUP:
+    {
+        EventHandleMouseBtn(ctxt, ev->button);
         break;
     }
-    case SDL_MOUSEMOTION:{
-        EventHandleMouseMove(ctxt,ev->motion);
+    case SDL_MOUSEMOTION:
+    {
+        EventHandleMouseMove(ctxt, ev->motion);
         break;
     }
-    case SDL_MOUSEWHEEL:{
-        EventHandleMouseWheel(ctxt,ev->wheel);
+    case SDL_MOUSEWHEEL:
+    {
+        EventHandleMouseWheel(ctxt, ev->wheel);
         break;
     }
     case SDL_JOYDEVICEADDED:
-    case SDL_JOYDEVICEREMOVED:{
+    case SDL_JOYDEVICEREMOVED:
+    {
         SDL_ControllerDeviceEvent dev;
-        dev.type = (ev->type==SDL_JOYDEVICEADDED)
-                ? SDL_CONTROLLERDEVICEADDED
-                : SDL_CONTROLLERDEVICEREMOVED;
-        dev.which = ev->jdevice.which;
+        dev.type = (ev->type == SDL_JOYDEVICEADDED)
+                       ? SDL_CONTROLLERDEVICEADDED
+                       : SDL_CONTROLLERDEVICEREMOVED;
+        dev.which     = ev->jdevice.which;
         dev.timestamp = ev->jdevice.timestamp;
-        EventHandleControllerUpdate(ctxt,dev);
+        EventHandleControllerUpdate(ctxt, dev);
         break;
     }
 
     case SDL_CONTROLLERAXISMOTION:
     case SDL_CONTROLLERBUTTONDOWN:
-    case SDL_CONTROLLERBUTTONUP:{
-        EventHandleControllerInput(ctxt,ev->type,ev->caxis,ev->cbutton);
+    case SDL_CONTROLLERBUTTONUP:
+    {
+        EventHandleControllerInput(ctxt, ev->type, ev->caxis, ev->cbutton);
         break;
     }
     case SDL_CONTROLLERDEVICEADDED:
     case SDL_CONTROLLERDEVICEREMOVED:
-    case SDL_CONTROLLERDEVICEREMAPPED:{
-        EventHandleControllerUpdate(ctxt,ev->cdevice);
+    case SDL_CONTROLLERDEVICEREMAPPED:
+    {
+        EventHandleControllerUpdate(ctxt, ev->cdevice);
         break;
     }
-    case SDL_DROPFILE:{
-        EventHandleDrop(ctxt,ev->drop);
+    case SDL_DROPFILE:
+    {
+        EventHandleDrop(ctxt, ev->drop);
         break;
     }
-    case SDL_TEXTEDITING:{
-        EventHandleInputEdit(ctxt,ev->edit);
+    case SDL_TEXTEDITING:
+    {
+        EventHandleInputEdit(ctxt, ev->edit);
         break;
     }
-    case SDL_TEXTINPUT:{
-        EventHandleInput(ctxt,ev->text);
+    case SDL_TEXTINPUT:
+    {
+        EventHandleInput(ctxt, ev->text);
         break;
     }
 
     case SDL_FINGERDOWN:
     case SDL_FINGERUP:
-        EventHandleTap(ctxt,ev->tfinger);
+        EventHandleTap(ctxt, ev->tfinger);
         break;
     case SDL_FINGERMOTION:
-        EventHandleTMotion(ctxt,ev->tfinger);
+        EventHandleTMotion(ctxt, ev->tfinger);
         break;
 
     case SDL_MULTIGESTURE:
-        EventHandleMultiTouch(ctxt,ev->mgesture);
+        EventHandleMultiTouch(ctxt, ev->mgesture);
         break;
 
     case SDL_DOLLARGESTURE:
@@ -102,17 +116,17 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
         break;
 
     case SDL_APP_WILLENTERBACKGROUND:
-        EventAtomic<CDEvent>(ctxt,CDEvent::TransitionBackground);
+        EventAtomic<Event>(ctxt, Event::TransitionBackground);
         break;
     case SDL_APP_DIDENTERBACKGROUND:
-        EventAtomic<CDEvent>(ctxt,CDEvent::IsBackground);
+        EventAtomic<Event>(ctxt, Event::IsBackground);
         break;
 
     case SDL_APP_WILLENTERFOREGROUND:
-        EventAtomic<CDEvent>(ctxt,CDEvent::TransitionForeground);
+        EventAtomic<Event>(ctxt, Event::TransitionForeground);
         break;
     case SDL_APP_DIDENTERFOREGROUND:
-        EventAtomic<CDEvent>(ctxt,CDEvent::IsForeground);
+        EventAtomic<Event>(ctxt, Event::IsForeground);
         break;
 
         /* Stub these useless things */
@@ -123,7 +137,7 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
         break;
     default:
     {
-        cDebug("Unhandled SDL event: type={0}",ev->type);
+        cDebug("Unhandled SDL event: type={0}", ev->type);
         break;
     }
     }
@@ -131,6 +145,6 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
     return;
 }
 
-}
-}
+} // namespace SDL2
+} // namespace Coffee
 #endif

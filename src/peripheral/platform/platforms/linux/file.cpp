@@ -17,7 +17,7 @@ CString FileFun::sys_read(cstring fn, file_error& ec)
 
     if(!fh)
     {
-        ErrnoCheck(ec, fn, -1);
+        posix::collect_error_to(ec);
         return out;
     } else
         errno = 0;

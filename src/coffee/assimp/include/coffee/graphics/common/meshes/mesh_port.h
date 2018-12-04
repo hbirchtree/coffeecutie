@@ -21,7 +21,7 @@ void SerializeMesh(_cbasic_mesh& mesh,
 }
 
 FORCEDINLINE
-bool DeserializeMesh(CResources::Resource const& source, _cbasic_mesh* dest)
+bool DeserializeMesh(Resource const& source, _cbasic_mesh* dest)
 {
     return dest->attributes.size()>0;
 }

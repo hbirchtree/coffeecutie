@@ -12,7 +12,7 @@ bool filedel_test()
 {
     file_error ec;
 
-    if(!File::Touch(File::File, testfile, ec))
+    if(!File::Touch(FileType::File, testfile, ec))
         return false;
 
     if(!File::Exists(testfile, ec))
@@ -26,7 +26,7 @@ bool filedel_test()
 
 bool check_literal_constructor()
 {
-    CResources::Resource r = "testfile.txt"_rsc;
+    Resource r = "testfile.txt"_rsc;
 
     // This could be a compile-time test, but we'll do it at runtime
     return std::is_same<Resource, decltype(r)>::value;
@@ -48,13 +48,13 @@ bool filestat_test()
 {
     file_error ec;
 
-    if(!File::Touch(File::File, testfile, ec))
+    if(!File::Touch(FileType::File, testfile, ec))
         return false;
-    if(File::Stat(testfile, ec) != File::File)
+    if(File::Stat(testfile, ec) != FileType::File)
         return false;
     if(!File::Rm(testfile, ec))
         return false;
-    if(File::Stat(testfile, ec) != File::None)
+    if(File::Stat(testfile, ec) != FileType::None)
         return false;
 
     return true;

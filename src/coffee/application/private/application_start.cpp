@@ -1,6 +1,11 @@
+#include <coffee/core/CProfiling>
 #include <coffee/core/base.h>
+#include <coffee/core/coffee.h>
+#include <peripherals/stl/string_ops.h>
 
-#include <string>
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CDebug>
 
 #if defined(COFFEE_WINDOWS) && !defined(__MINGW64__)
 #if !defined(COFFEE_WINDOWS_UWP)
@@ -9,11 +14,6 @@ extern bool WMI_Query(
 #endif
 extern int InitCOMInterface();
 #endif
-
-#include <coffee/core/CProfiling>
-#include <coffee/core/coffee.h>
-
-#include <coffee/core/CDebug>
 
 #if defined(COFFEE_GEKKO)
 #include <gccore.h>

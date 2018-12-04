@@ -1,36 +1,39 @@
-#include <coffee/core/terminal/cursor.h>
+#include <coffee/strings/libc_types.h>
 
-namespace Coffee{
+#include <coffee/core/terminal/cursor.h>
+#include <coffee/strings/format.h>
+
+#include <coffee/core/CDebug>
+
+namespace Coffee {
 
 /* Move exported functions to common place, not spreading it like this */
-
-using namespace DebugFun;
 
 /* The below functions are exported to SWIG */
 
 void cDebug(cstring f)
 {
 #ifndef COFFEE_LOWFAT
-    cDebug("{0}",f);
+    cDebug("{0}", f);
 #endif
 }
 void cWarning(cstring f)
 {
 #ifndef COFFEE_LOWFAT
-    cWarning("{0}",f);
+    cWarning("{0}", f);
 #endif
 }
 void cFatal(cstring f)
 {
 #ifndef COFFEE_LOWFAT
-    cFatal("{0}",f);
+    cFatal("{0}", f);
 #endif
 }
 void cLog(cstring id, cstring msg)
 {
 #ifndef COFFEE_LOWFAT
     /* TODO: Pipe this to a proper logger */
-    cBasicPrint("LOGR_EXTERNAL:{0}: {1}",id,msg);
+    cBasicPrint("LOGR_EXTERNAL:{0}: {1}", id, msg);
 #endif
 }
 
@@ -48,4 +51,4 @@ void TerminalCursor::print_nonl(CString const& fmt, CString const& output)
 #endif
 }
 
-}
+} // namespace Coffee

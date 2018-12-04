@@ -2,15 +2,14 @@
 
 #include "gl_shared_include.h"
 
-#include <coffee/core/types/edef/dbgenum.h>
-#include <coffee/core/types/edef/graphicsenum.h>
-#include <peripherals/enum/helpers.h>
-#include <peripherals/libc/types.h>
-#include <peripherals/semantic/handle.h>
-#include <peripherals/stl/types.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <coffee/interfaces/cgraphics_types.h>
 
 namespace Coffee {
 namespace CGL {
+
+using namespace RHI;
 
 using glhnd = semantic::generic_handle_t<u32>;
 
@@ -148,11 +147,11 @@ struct CGpixfmt
 
 struct CGDbgMsg
 {
-    CString        msg;
-    Severity       sev;
-    DebugComponent comp;
-    DebugType      type;
-    u32            id;
+    CString          msg;
+    debug::Severity  sev;
+    debug::Component comp;
+    debug::Type      type;
+    u32              id;
 };
 
 enum class BufBit
@@ -316,6 +315,8 @@ enum class PatchProperty
     DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,
 #endif
 };
+
+using ShaderStage = typing::graphics::ShaderStage;
 
 C_FLAGS(BufBit, u32);
 C_FLAGS(ShaderStage, u32);

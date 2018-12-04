@@ -94,7 +94,7 @@ bool MemMap::GetProcMap(ProcessProperty::PID pid, MemMap::ProcMap& target)
                 case 1:
                 {
                     szptr   mid = sec.find('-');
-                    CString tmp = ::str::encapsulate(sec.data(), mid);
+                    CString tmp = str::encapsulate(sec.data(), mid);
                     file.start =
                         libc::str::from_string<u64, libc::str::convert_base_16>(
                             tmp.data());

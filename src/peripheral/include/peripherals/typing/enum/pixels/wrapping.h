@@ -4,7 +4,7 @@
 #include <peripherals/libc/types.h>
 
 namespace typing {
-enum class WrapPolicy : u8
+enum class WrapPolicy : libc_types::u8
 {
     Repeat,
     MirrorRepeat,

@@ -94,7 +94,7 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
         PixDesc      pfmt,
         Size const&  size,
         const Bytes& data,
-        CPoint       offset = {0, 0},
+        Point       offset = {0, 0},
         u32          mip    = 0)
     {
         gleam_error ec;
@@ -115,7 +115,7 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
 
     GLEAM_Surface3D_Base(tex::flag t, PixFmt fmt, u32 mips, u32 texflags);
 
-    GLEAM_API_CLASS_LINKAGE void allocate(CSize3 size, PixCmp c);
+    GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
 
     GLEAM_API_CLASS_LINKAGE void upload(
         PixDesc       pfmt,

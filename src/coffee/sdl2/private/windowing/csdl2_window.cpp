@@ -1,16 +1,18 @@
 ﻿#include <coffee/sdl2/windowing/csdl2_window.h>
 
 #if defined(COFFEE_USE_SDL_WINDOW)
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/strings/libc_types.h>
 
 #include "sdl2helpers.h"
+
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Display {
 
-bool SDL2Window::windowPreInit(const CDProperties&, CString*)
+bool SDL2Window::windowPreInit(const Properties&, CString*)
 {
     DProfContext a("Configuring SDL subsystems");
 
@@ -44,7 +46,7 @@ bool SDL2Window::windowPreInit(const CDProperties&, CString*)
     return true;
 }
 
-bool SDL2Window::windowInit(const CDProperties& p, CString* err)
+bool SDL2Window::windowInit(const Properties& p, CString* err)
 {
     DProfContext a("Creating SDL window");
 
@@ -52,7 +54,7 @@ bool SDL2Window::windowInit(const CDProperties& p, CString* err)
     m_window_flags |= SDL2::InterpretWindowFlags(p.flags);
 
     /* Create the platform window */
-    const CSize&   winsize  = p.size;
+    const Size&    winsize  = p.size;
     const cstring& wintitle = p.title;
 
     getSDL2Context()->window = SDL_CreateWindow(
@@ -73,7 +75,7 @@ bool SDL2Window::windowInit(const CDProperties& p, CString* err)
     return true;
 }
 
-bool SDL2Window::windowPostInit(const CDProperties& p, CString*)
+bool SDL2Window::windowPostInit(const Properties& p, CString*)
 {
     DProfContext a("Post-configuring window");
 
@@ -82,7 +84,7 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString*)
     //        showWindow();
 
     /* Set windowed fullscreen if requested */
-    if(p.flags & CDProperties::Windowed)
+    if(p.flags & Properties::Windowed)
         SDL_SetWindowFullscreen(getSDL2Context()->window, 0);
 
 #if !defined(COFFEE_FRAGILE_FRAMEBUFFER)
@@ -90,7 +92,7 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString*)
     {
         SDL_Event wev;
         wev.window.event = SDL_WINDOWEVENT_RESIZED;
-        CSize win_size   = windowSize();
+        Size win_size    = windowSize();
         cVerbose(
             7, "Pushing resize event with: {0}x{1}", win_size.w, win_size.h);
         wev.window.data1 = win_size.w;
@@ -115,21 +117,21 @@ void SDL2Window::windowTerminate()
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-CSize SDL2Window::windowSize() const
+Size SDL2Window::windowSize() const
 {
-    CSize size = {};
+    size_2d<i32> size = {};
     SDL_GetWindowSize(getSDL2Context()->window, &size.w, &size.h);
-    return size;
+    return size.convert<u32>();
 }
 
-void SDL2Window::setWindowSize(const CSize& size)
+void SDL2Window::setWindowSize(const Size& size)
 {
     SDL_SetWindowSize(getSDL2Context()->window, size.w, size.h);
     SDL_SetWindowMinimumSize(getSDL2Context()->window, size.w, size.h);
     SDL_SetWindowMaximumSize(getSDL2Context()->window, size.w, size.h);
 }
 
-CDWindow* SDL2Window::window()
+Window* SDL2Window::window()
 {
     return SDL2::GetWindow(getSDL2Context()->window);
 }
@@ -139,7 +141,7 @@ uint32 SDL2Window::windowState() const
     return SDL2::GetWindowFlags(getSDL2Context()->window);
 }
 
-void SDL2Window::setWindowState(const CDProperties::State& state)
+void SDL2Window::setWindowState(const Properties::State& state)
 {
     SDL2::SetWindowFlags(getSDL2Context()->window, state);
 }
@@ -162,14 +164,14 @@ CString SDL2Window::windowLibrary() const
     return m_contextString;
 }
 
-CPoint SDL2Window::windowPosition() const
+Point SDL2Window::windowPosition() const
 {
-    CPoint pos;
+    Point pos;
     SDL_GetWindowSize(getSDL2Context()->window, &pos.x, &pos.y);
     return pos;
 }
 
-void SDL2Window::setWindowPosition(const CPoint& pos)
+void SDL2Window::setWindowPosition(const Point& pos)
 {
     SDL_SetWindowPosition(getSDL2Context()->window, pos.x, pos.y);
 }
@@ -227,9 +229,9 @@ void SDL2Window::setWindowTitle(const CString& title)
     SDL_SetWindowTitle(getSDL2Context()->window, title.c_str());
 }
 
-CDMonitor SDL2Window::monitor()
+Monitor SDL2Window::monitor()
 {
-    CDMonitor mon;
+    Monitor mon;
 
     SDL_DisplayMode dm;
     if(SDL_GetCurrentDisplayMode(initialProperties().monitor, &dm) < 0)

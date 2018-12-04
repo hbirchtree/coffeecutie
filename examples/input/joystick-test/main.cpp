@@ -16,7 +16,7 @@
 using namespace Coffee;
 using namespace Display;
 
-using RSC         = CResources::Resource;
+using RSC         = Resource;
 using BasicWindow = SDL2WindowHost;
 using Sprites     = SDL2SpriteRenderer;
 
@@ -29,10 +29,10 @@ Sprites::Texture sprite_load(
     Sprites::Texture out;
 
     RSC analog_rsc(source, RSCA::AssetFile);
-    if(!CResources::FileMap(analog_rsc))
+    if(!FileMap(analog_rsc))
     {
-        SDL2Dialog::ErrorMessage(
-            "Failed to load resource", "Couldn't find texture");
+//        SDL2Dialog::ErrorMessage(
+//            "Failed to load resource", "Couldn't find texture");
         return {};
     }
     stb::image_rw img;
@@ -73,7 +73,7 @@ i32 coffee_main(i32, cstring_w*)
     BasicWindow winhost;
     if(!winhost.init(visual, &err))
     {
-        SDL2Dialog::ErrorMessage("Failed to create window", err.c_str());
+//        SDL2Dialog::ErrorMessage("Failed to create window", err.c_str());
         return 1;
     }
 
@@ -81,7 +81,7 @@ i32 coffee_main(i32, cstring_w*)
     Sprites rend(&winhost);
     if(!rend.init(&err))
     {
-        SDL2Dialog::ErrorMessage("Failed to initialize renderer", err.c_str());
+//        SDL2Dialog::ErrorMessage("Failed to initialize renderer", err.c_str());
         return 1;
     }
 
@@ -219,15 +219,15 @@ i32 coffee_main(i32, cstring_w*)
         rend.clearBuffer(inst);
 
         {
-            CSize win_size     = winhost.windowSize();
+            Size win_size     = winhost.windowSize();
             f32   scale_factor = .5f;
 
             if(win_size.w >= 960 && win_size.h >= 640)
                 scale_factor = 1.f;
 
             /* Ensure proper scaling by using half scaling under this size */
-            win_size.w = CMath::max(win_size.w, 960);
-            win_size.h = CMath::max(win_size.h, 640);
+            win_size.w = CMath::max<u32>(win_size.w, 960);
+            win_size.h = CMath::max<u32>(win_size.h, 640);
 
             auto ctl        = winhost.getControllerState(0);
             f32  axes_ruler = win_size.h - 256.f;

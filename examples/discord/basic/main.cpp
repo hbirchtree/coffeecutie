@@ -1,5 +1,9 @@
 #include <coffee/core/CApplication>
+#include <coffee/core/CFiles>
+#include <coffee/core/stl_types.h>
 #include <coffee/discord/discord_binding.h>
+#include <coffee/strings/libc_types.h>
+#include <peripherals/stl/thread_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -7,19 +11,16 @@ using namespace Coffee;
 
 i32 cmain(i32 argc, cstring_w* argv)
 {
-    using namespace Online;
+    using namespace online;
 
-    auto delegate = MkShared<Discord::DiscordDelegate>();
-    delegate->ready = [](Discord::PlayerInfo const& player)
-    {
+    auto delegate   = MkShared<Discord::DiscordDelegate>();
+    delegate->ready = [](Discord::PlayerInfo const& player) {
         cDebug("{0} {1}", player.avatarUrl, player.userTag);
     };
-    delegate->error = [](Discord::discord_error const& ec)
-    {
+    delegate->error = [](Discord::discord_error const& ec) {
         cDebug("{0}: {1}", ec.message(), ec.error_message);
     };
-    delegate->disconnected = [](Discord::discord_error const& ec)
-    {
+    delegate->disconnected = [](Discord::discord_error const& ec) {
         cDebug("{0}: {1}", ec.message(), ec.error_message);
     };
 

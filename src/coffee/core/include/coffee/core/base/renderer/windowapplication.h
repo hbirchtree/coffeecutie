@@ -1,20 +1,21 @@
 #pragma once
 
-#include "../types/cdisplay.h"
-#include "../../types/edef/dbgenum.h"
+#include <coffee/core/types/debug/severity.h>
+#include <coffee/core/types/display/monitor.h>
+#include <coffee/core/types/display/properties.h>
 #include <peripherals/stl/types.h>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
 class WindowApplication
 {
-public:
+  public:
     /*!
      * \brief Get monitor information, physical size, bits etc.
      * \return Struct containing monitor information
      */
-    virtual CDMonitor monitor() = 0;
+    virtual Monitor monitor() = 0;
 
     /*!
      * \brief Show window
@@ -39,14 +40,16 @@ public:
      * \param title Title of the message box
      * \param msg Messaing in the message box
      */
-    virtual void popErrorMessage(Severity s, cstring title, cstring msg) = 0;
-protected:
-    virtual bool windowPreInit(const CDProperties&,CString*) = 0;
-    virtual bool windowInit(const CDProperties&,CString*) = 0;
-    virtual bool windowPostInit(const CDProperties&,CString*) = 0;
+    virtual void popErrorMessage(
+        debug::Severity s, cstring title, cstring msg) = 0;
+
+  protected:
+    virtual bool windowPreInit(const Properties&, CString*)  = 0;
+    virtual bool windowInit(const Properties&, CString*)     = 0;
+    virtual bool windowPostInit(const Properties&, CString*) = 0;
 
     virtual void windowTerminate() = 0;
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee

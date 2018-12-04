@@ -1,5 +1,6 @@
-#include "linking/libraries.h"
+#pragma once
 
-#include "linking/emscripten/loader.h"
-#include "linking/unix/loader.h"
-#include "linking/windows/loader.h"
+#include "posix/loader.h"
+#include "win32/loader.h"
+
+#include "base/loader.h"

@@ -3,12 +3,19 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CMath>
 #include <coffee/core/coffee.h>
-#include <coffee/core/terminal/terminal_cursor.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
 #include <peripherals/stl/type_safety.h>
 #include <peripherals/stl/types.h>
+
+#include <coffee/core/CJSONParser>
+
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CDebug>
+#include <coffee/core/terminal/cursor.h>
 
 #define TEXCOMPRESS_API "TextureCooker::"
 

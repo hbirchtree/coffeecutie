@@ -3,6 +3,8 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
+#include <utility>
+
 namespace semantic {
 
 using namespace stl_types;
@@ -42,7 +44,7 @@ struct generic_handle_t
     void handle_check_enable()
     {
         static_assert(
-            enable_exception && close_func,
+            !(enable_exception && close_func),
             "close function will never be called");
 
         handle_check();
@@ -66,12 +68,12 @@ struct generic_handle_t
         return hnd == InvalidValue;
     }
 
-    explicit operator hnd_type() const
+    operator hnd_type() const
     {
         return hnd;
     }
 
-    operator bool() const
+    explicit operator bool() const
     {
         return hnd != InvalidValue;
     }

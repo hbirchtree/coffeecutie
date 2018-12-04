@@ -1,10 +1,15 @@
 #include <coffee/core/CApplication>
+#include <coffee/core/CArgParser>
 #include <coffee/core/CFiles>
+#include <coffee/core/CMath>
+#include <coffee/core/CProfiling>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/environment/argument_parse.h>
-#include <coffee/core/terminal/table-print.h>
-#include <coffee/core/CMath>
+#include <peripherals/stl/string_casting.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/terminal/table.h>
 
 #include <coffee/core/CDebug>
 
@@ -28,9 +33,9 @@ static void pretty_print(VirtFS::vfs_view& vfsView)
         auto perc = u32(scalar(file.size) * 100.f / scalar(file.rsize));
 
         table[0].push_back(file.name);
-        table[1].push_back(to_string(file.rsize));
-        table[2].push_back(to_string(file.size));
-        table[3].push_back(to_string(perc));
+        table[1].push_back(str::convert::to_string(file.rsize));
+        table[2].push_back(str::convert::to_string(file.size));
+        table[3].push_back(str::convert::to_string(perc));
     }
 
     cOutputPrintNoNL("{0}", Table::GenTable(table, tableCols));
@@ -115,6 +120,8 @@ static i32 extract_file(
     CString                  output_file,
     RSCA                     write_flags)
 {
+    using namespace ::enum_helpers;
+
     ProfContext _("Searching for file");
 
     Profiler::PushContext("Search");
@@ -215,7 +222,7 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     VirtFS::vfs_view vfsView(targetData);
-    auto vfsData = mem_chunk<const VirtFS::VirtualFS>(targetData);
+    auto             vfsData = mem_chunk<const VirtFS::VirtualFS>(targetData);
 
     if(vfsView.begin() == vfsView.end())
     {

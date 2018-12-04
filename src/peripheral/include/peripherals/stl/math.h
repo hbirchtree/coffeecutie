@@ -6,6 +6,7 @@
 #include <peripherals/libc/types.h>
 
 #define _USE_MATH_DEFINES
+#include <cmath>
 #include <math.h>
 
 #include "rng.h"
@@ -83,5 +84,5 @@ FORCEDINLINE bool floating_equal(T const& v1, T const& v2)
     return lower < v2 && upper > v2;
 }
 
-}
-}
+} // namespace math
+} // namespace stl_types

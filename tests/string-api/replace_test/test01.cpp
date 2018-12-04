@@ -1,4 +1,6 @@
 #include <coffee/core/CUnitTesting>
+#include <coffee/core/stl_types.h>
+#include <peripherals/stl/string_ops.h>
 
 using namespace Coffee;
 

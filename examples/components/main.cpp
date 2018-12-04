@@ -1,8 +1,10 @@
 #include <coffee/components/components.h>
 #include <coffee/core/CApplication>
-#include <coffee/core/CDebug>
-#include <peripherals/typing/vectors/matrix_functions.h>
+#include <coffee/core/CProfiling>
 #include <coffee/core/types/vector_types.h>
+#include <peripherals/typing/vectors/matrix_functions.h>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 using namespace Components;
@@ -97,19 +99,19 @@ i32 coffee_main(i32, cstring_w*)
     for(auto& o : entities.select(OF_Test_1))
         o.interval = Chrono::milliseconds(20);
 
-//    for(auto& o : entities.select(0))
-//        cBasicPrint("Object: {0} {1}", o.id, o.interval.count());
+    //    for(auto& o : entities.select(0))
+    //        cBasicPrint("Object: {0} {1}", o.id, o.interval.count());
 
     for(C_UNUSED(auto i) : Range<>(10))
         entities.exec();
 
     Profiler::PopContext();
 
-//    Profiler::PushContext("Control");
-//    CurrentThread::sleep_for(Chrono::milliseconds(1));
-//    Profiler::PopContext();
+    //    Profiler::PushContext("Control");
+    //    CurrentThread::sleep_for(Chrono::milliseconds(1));
+    //    Profiler::PopContext();
 
-    C_UNUSED(ComponentContainerBase& t1) = matrix_store;
+    C_UNUSED(ComponentContainerBase & t1) = matrix_store;
 
     return 0;
 }

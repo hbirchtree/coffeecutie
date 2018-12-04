@@ -3,6 +3,8 @@
 #include <coffee/core/CProfiling>
 #include "types/sdl2datatypes.h"
 
+#include <coffee/strings/libc_types.h>
+
 #include <coffee/core/CDebug>
 
 namespace Coffee{

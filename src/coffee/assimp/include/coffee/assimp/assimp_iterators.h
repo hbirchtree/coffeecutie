@@ -11,9 +11,15 @@
 #include <coffee/core/CProfiling>
 #include <coffee/graphics/common/SMesh>
 #include <coffee/interfaces/cgraphics_api.h>
+#include <peripherals/semantic/enum/data_types.h>
+#include <peripherals/typing/enum/graphics/primitive.h>
 
 namespace Coffee {
 namespace ASSIMP {
+
+using ::semantic::TypeEnum;
+using Prim    = ::typing::graphics::primitive::base;
+using PrimCre = ::typing::graphics::primitive::creation;
 
 struct MeshLoader
 {
@@ -363,7 +369,7 @@ struct MeshLoader
             SerialNodeData const* node(cstring name) const
             {
                 for(auto i : Range<>(num_nodes))
-                    if(str::cmp(node(i)->name(*this), name))
+                    if(libc::str::cmp(node(i)->name(*this), name))
                         return node(i);
 
                 return nullptr;

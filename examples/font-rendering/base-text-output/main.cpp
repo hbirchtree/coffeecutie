@@ -1,5 +1,6 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 #include <coffee/image/cimage.h>
 #include <coffee/image/ctextrender.h>
 

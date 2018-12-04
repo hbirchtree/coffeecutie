@@ -4,8 +4,8 @@
 #include <coffee/core/base.h>
 #include <coffee/foreign/foreign.h>
 
-#include <coffee/core/base/input/cinput.h>
 #include <coffee/core/base/renderer/eventapplication.h>
+#include <coffee/core/types/input/event_types.h>
 
 bool CoffeeEventHandleCall(int event)
 {
@@ -45,10 +45,10 @@ void CfResizeHandler(
 {
     CfResizeEventData* evdata = C_FCAST<CfResizeEventData*>(p2);
 
-    CDEvent dEv = {};
-    dEv.type    = CDEvent::Resize;
+    Event dEv = {};
+    dEv.type  = Event::Resize;
 
-    CDResizeEvent rEv = {C_FCAST<i32>(evdata->w), C_FCAST<i32>(evdata->h)};
+    ResizeEvent rEv = {evdata->w, evdata->h};
 
     app->injectEvent(dEv, &rEv);
 }
@@ -58,12 +58,12 @@ void CfTouchHandler(
 {
     CfTouchEventData* evdata = C_FCAST<CfTouchEventData*>(p2);
 
-    CIEvent iEv = {};
+    Input::CIEvent iEv = {};
 
-    CITouchTapEvent     tap;
-    CIMTouchMotionEvent pan;
-    CITouchPinchEvent   pinch;
-    CITouchRotateEvent  rotate;
+    Input::CITouchTapEvent     tap;
+    Input::CIMTouchMotionEvent pan;
+    Input::CITouchPinchEvent   pinch;
+    Input::CITouchRotateEvent  rotate;
 
     c_cptr data = nullptr;
 
@@ -71,7 +71,7 @@ void CfTouchHandler(
     {
     case CfTouchTap:
     {
-        iEv.type = CIEvent::TouchTap;
+        iEv.type = Input::CIEvent::TouchTap;
         data     = &tap;
 
         tap.pos.x = evdata->event.tap.x;
@@ -81,7 +81,7 @@ void CfTouchHandler(
     }
     case CfTouchPan:
     {
-        iEv.type = CIEvent::TouchPan;
+        iEv.type = Input::CIEvent::TouchPan;
         data     = &pan;
 
         pan.origin.x = evdata->event.pan.ox;
@@ -98,7 +98,7 @@ void CfTouchHandler(
     }
     case CfTouchPinch:
     {
-        iEv.type = CIEvent::TouchPinch;
+        iEv.type = Input::CIEvent::TouchPinch;
         data     = &pinch;
 
         pinch.origin.x = evdata->event.pinch.x;
@@ -109,7 +109,7 @@ void CfTouchHandler(
     }
     case CfTouchRotate:
     {
-        iEv.type = CIEvent::TouchRotate;
+        iEv.type = Input::CIEvent::TouchRotate;
         data     = &rotate;
 
         rotate.origin.x = evdata->event.rotate.x;

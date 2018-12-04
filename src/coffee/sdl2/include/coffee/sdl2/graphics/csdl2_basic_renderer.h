@@ -45,33 +45,25 @@ class SDL2SpriteRenderer : public SpriteApplication, public SDL2ContextUser
     void     destroyRenderer(Renderer t);
 
     bool createTexture(
-        Renderer     r,
-        u32       c,
-        Texture*     t,
-        PixFmt  fmt,
-        RSCA         acc,
-        CSize const& size);
+        Renderer r, u32 c, Texture* t, PixFmt fmt, RSCA acc, Size const& size);
     void destroyTexture(u32 c, Texture* t);
 
     bool createSprite(Texture const&, SpriteSource const&, Sprite*);
 
     void createSpriteAtlas(
-        Texture const& t,
-        Vector<SpriteSource> const&,
-        u32&,
-        Vector<Sprite>&);
+        Texture const& t, Vector<SpriteSource> const&, u32&, Vector<Sprite>&);
 
     bool uploadTexture(
-        Texture tex, const CRect& region, stb::image_rw const& data);
+        Texture tex, const Rect& region, stb::image_rw const& data);
 
     void* mapTexture(Texture tex);
     bool  unmapTexture(Texture tex);
 
     void drawSprite(
-        Renderer       r,
-        CPointF const& pos,
-        CSizeF const&  scale,
-        Sprite const&  sprite);
+        Renderer               r,
+        PtF const&             pos,
+        size_2d<scalar> const& scale,
+        Sprite const&          sprite);
 };
 
 } // namespace Display

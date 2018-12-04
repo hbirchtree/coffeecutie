@@ -1,9 +1,11 @@
 #include <coffee/asio/net_resource.h>
+#include <coffee/core/CFiles>
 #include <coffee/core/internal_state.h>
-#include <coffee/core/plat/environment.h>
 #include <coffee/discord/discord_binding.h>
+#include <coffee/strings/libc_types.h>
 #include <discord_register.h>
 #include <discord_rpc.h>
+#include <platforms/environment.h>
 
 #include <coffee/core/CDebug>
 
@@ -12,6 +14,8 @@
 
 namespace Coffee {
 namespace Discord {
+
+using namespace platform;
 
 static constexpr cstring DiscordAvatarFmt =
     DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}";
@@ -36,13 +40,13 @@ STATICINLINE void ClearPresence(DiscordRichPresence& p)
     p.instance    = 0;
 }
 
-struct DiscordService : Online::Service, State::GlobalState
+struct DiscordService : online::Service, State::GlobalState
 {
     DiscordRichPresence m_cachedPresence;
     DiscordOptions      m_options;
 
-    ShPtr<Online::GameDelegate>     game;
-    ShPtr<Online::PresenceDelegate> presence;
+    ShPtr<online::GameDelegate>     game;
+    ShPtr<online::PresenceDelegate> presence;
     ShPtr<DiscordDelegate>          m_delegate;
 
     DiscordService(ShPtr<DiscordDelegate> delegate);
@@ -51,13 +55,13 @@ struct DiscordService : Online::Service, State::GlobalState
 
     virtual ~DiscordService();
 
-    virtual ShPtr<Online::GameDelegate>        getGame();
-    virtual ShPtr<Online::PresenceDelegate>    getPresence();
-    virtual ShPtr<Online::AchievementDelegate> getAchievements()
+    virtual ShPtr<online::GameDelegate>        getGame();
+    virtual ShPtr<online::PresenceDelegate>    getPresence();
+    virtual ShPtr<online::AchievementDelegate> getAchievements()
     {
         return {};
     }
-    virtual ShPtr<Online::FriendDelegate> getFriends()
+    virtual ShPtr<online::FriendDelegate> getFriends()
     {
         return {};
     }
@@ -97,7 +101,7 @@ static DiscordService& GetService()
     return *ptr;
 }
 
-ShPtr<Online::Service> CreateService(
+ShPtr<online::Service> CreateService(
     DiscordOptions&& options, ShPtr<DiscordDelegate> delegate)
 {
     auto discordService = MkShared<DiscordService>(delegate);
@@ -219,12 +223,12 @@ DiscordService::~DiscordService()
     Discord_Shutdown();
 }
 
-ShPtr<Online::GameDelegate> DiscordService::getGame()
+ShPtr<online::GameDelegate> DiscordService::getGame()
 {
     return game;
 }
 
-ShPtr<Online::PresenceDelegate> DiscordService::getPresence()
+ShPtr<online::PresenceDelegate> DiscordService::getPresence()
 {
     return presence;
 }
@@ -269,7 +273,7 @@ DiscordPresenceDelegate::DiscordPresenceDelegate(
     static_assert(DISCORD_REPLY_IGNORE == ReplyIgnore, "bad enum");
 }
 
-void DiscordPresenceDelegate::put(Online::PartyDesc&& party)
+void DiscordPresenceDelegate::put(online::PartyDesc&& party)
 {
     m_desc = std::move(party);
 

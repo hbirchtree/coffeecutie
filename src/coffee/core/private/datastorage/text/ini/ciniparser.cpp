@@ -1,13 +1,23 @@
 #include <coffee/core/datastorage/text/ini/ciniparser.h>
 
-#include <coffee/core/CDebug>
-#include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/functional_types.h>
+
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/libc/string_ops.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/string_ops.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/strings/format.h>
 
 namespace Coffee {
 namespace DataStorage {
 namespace TextStorage {
 namespace CINI {
+
+using namespace libc;
 
 static SimpleIniParser::variant_t* get_value(
     SimpleIniParser::document_t& doc, cstring tvalu)
@@ -16,18 +26,18 @@ static SimpleIniParser::variant_t* get_value(
 
 #if !defined(COFFEE_NO_EXCEPTION_QUIET)
     auto itype = quiet_exception::call<std::invalid_argument>(
-        str::from_string<i64>, mismatch, tvalu);
+        libc::str::from_string<i64>, mismatch, tvalu);
 
     if(!mismatch)
         return doc.newInteger(itype);
 
     auto dtype = quiet_exception::call<std::invalid_argument>(
-        str::from_string<bigscalar>, mismatch, tvalu);
+        libc::str::from_string<bigscalar>, mismatch, tvalu);
     if(!mismatch)
         return doc.newFloat(dtype);
 
     bool btype = quiet_exception::call<std::invalid_argument, bool>(
-        str::from_string<bool>, mismatch, tvalu);
+        libc::str::from_string<bool>, mismatch, tvalu);
     if(!mismatch)
         return doc.newBool(btype);
 #endif
@@ -68,14 +78,14 @@ SimpleIniParser::document_t SimpleIniParser::Read(
     t4 = nullptr;
     while(ref && ref < end)
     {
-        t1 = str::find(ref, linesep);
+        t1 = libc::str::find(ref, linesep);
         if(t1)
         {
             switch(ref[0])
             {
             /* Sections */
             case sec_ld[0]:
-                t2 = str::find(ref, sec_rd);
+                t2 = libc::str::find(ref, sec_rd);
                 if(t2 && t2 < t1)
                 {
                     /* Create new section, insert name */
@@ -94,20 +104,20 @@ SimpleIniParser::document_t SimpleIniParser::Read(
             default:
             {
                 /* Find name-value delimiter */
-                t2 = str::find(ref, del_vl);
+                t2 = libc::str::find(ref, del_vl);
                 if(t2 && t2 < t1)
                 {
                     /* Extract value name */
                     tname.clear();
                     tname.insert(0, ref, t2 - ref);
-                    str::trim::both(tname);
+                    stl_types::str::trim::both(tname);
 
                     /* Extract value, create variant */
                     cval = nullptr;
                     t2 += 1;
                     tvalu.clear();
                     tvalu.insert(0, t2, t1 - t2);
-                    str::trim::both(tvalu);
+                    stl_types::str::trim::both(tvalu);
 
                     cval = get_value(doc, tvalu.c_str());
 
@@ -147,7 +157,7 @@ CString SimpleIniParser::Write(const SimpleIniParser::document_t& doc)
     {
         if(outdata.size() > 0)
             outdata.append(linesep);
-        outdata.append(cStringFormat("[{0}]{1}", s.first, linesep));
+        outdata.append(Strings::cStringFormat("[{0}]{1}", s.first, linesep));
         for(Pair<CString, variant_t*> const& v : s.second->values())
         {
             PairToString(v, t1, outdata, linesep);
@@ -178,11 +188,12 @@ void SimpleIniParser::PairToString(
     case variant_t::String:
     {
         cstring cs = v.second->getString();
-        t1.insert(0, cs, str::len(cs));
+        t1.insert(0, cs, libc::str::len(cs));
         break;
     }
     }
-    outdata.append(cStringFormat("{0} = {1}{2}", v.first, t1, linesep));
+    outdata.append(
+        Strings::cStringFormat("{0} = {1}{2}", v.first, t1, linesep));
 }
 
 } // namespace CINI

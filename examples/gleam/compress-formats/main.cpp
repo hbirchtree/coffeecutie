@@ -1,6 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/interfaces/full_launcher.h>
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -20,18 +21,18 @@ i32 coffee_main(i32, cstring_w*)
     AutoExec<API, Ren, Empty>(
         [](Ren& renderer, Empty*) {
 
+            auto api = API::GetLoadAPI();
 
-        auto api = API::GetLoadAPI();
+            if(!api(true))
+            {
+                renderer.closeWindow();
+                return;
+            }
 
-        if(!api(true))
-        {
-            renderer.closeWindow();
-            return;
-        }
+            auto empty = CompFlags::CompressionNone;
 
-        auto empty = CompFlags::CompressionNone;
-
-        cBasicPrint(R"(
+            cBasicPrint(
+                R"(
 Hardware texture compression support:
 
 Universal formats:
@@ -55,37 +56,38 @@ Mobile formats:
  - PVRTC2 (2bpp): {12}
  - PVRTC2 (4bpp): {13}
 )",
-            /* S3TC/BCn/DXTn formats */
-            API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC1),
-            API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC3),
-            API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC4),
-            API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC5),
-            API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC6H),
-            API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC7),
+                /* S3TC/BCn/DXTn formats */
+                API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC1),
+                API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC3),
+                API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC4),
+                API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC5),
+                API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC6H),
+                API::TextureFormatSupport(PixFmt::S3TC, CompFlags::BC7),
 
-            /* ASTC can be tested without flags */
-            API::TextureFormatSupport(PixFmt::ASTC, empty),
+                /* ASTC can be tested without flags */
+                API::TextureFormatSupport(PixFmt::ASTC, empty),
 
-            /* ETC1 and ETC2 are package-deals */
-            API::TextureFormatSupport(PixFmt::ETC1, empty),
-            API::TextureFormatSupport(PixFmt::ETC2, empty),
+                /* ETC1 and ETC2 are package-deals */
+                API::TextureFormatSupport(PixFmt::ETC1, empty),
+                API::TextureFormatSupport(PixFmt::ETC2, empty),
 
-            /* ATC is mobile only */
-            API::TextureFormatSupport(PixFmt::ATC, empty),
+                /* ATC is mobile only */
+                API::TextureFormatSupport(PixFmt::ATC, empty),
 
-            API::TextureFormatSupport(PixFmt::PVRTC, CompFlags::bpp_2),
-            API::TextureFormatSupport(PixFmt::PVRTC, CompFlags::bpp_4),
-            API::TextureFormatSupport(PixFmt::PVRTC2, CompFlags::bpp_2),
-            API::TextureFormatSupport(PixFmt::PVRTC2, CompFlags::bpp_4)
-                    );
+                API::TextureFormatSupport(PixFmt::PVRTC, CompFlags::bpp_2),
+                API::TextureFormatSupport(PixFmt::PVRTC, CompFlags::bpp_4),
+                API::TextureFormatSupport(PixFmt::PVRTC2, CompFlags::bpp_2),
+                API::TextureFormatSupport(PixFmt::PVRTC2, CompFlags::bpp_4));
 
-        API::UnloadAPI();
+            API::UnloadAPI();
 
-        renderer.closeWindow();
+            renderer.closeWindow();
 
-    }, [](Ren&, Empty*) {}, [](Ren&, Empty*) {});
+        },
+        [](Ren&, Empty*) {},
+        [](Ren&, Empty*) {});
 
-        return 0;
+    return 0;
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

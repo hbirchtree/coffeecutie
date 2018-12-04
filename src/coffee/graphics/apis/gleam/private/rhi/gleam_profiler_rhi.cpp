@@ -4,6 +4,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_framebuffer_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_quad_draw.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/strings/info.h>
 
 #include <coffee/core/CDebug>
 
@@ -89,8 +90,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
 #else
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
     GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t, b), m_size(t.size()),
-    m_depth_stencil(PixFmt::Depth24Stencil8, 1),
-    m_color(PixFmt::RGBA8, 1)
+    m_depth_stencil(PixFmt::Depth24Stencil8, 1), m_color(PixFmt::RGBA8, 1)
 {
     auto& m_quad_drawer = m_store->debug_drawer;
 
@@ -107,11 +107,9 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
     //    }
 
     if(GL_CURR_API == GL_4_3)
-        m_enabled =
-            CGL::Debug::InternalFormatSupport(PixFmt::Depth24Stencil8);
+        m_enabled = CGL::Debug::InternalFormatSupport(PixFmt::Depth24Stencil8);
     else
-        m_enabled =
-            CGL::Debug::InternalFormatSupport(PixFmt::Depth24Stencil8);
+        m_enabled = CGL::Debug::InternalFormatSupport(PixFmt::Depth24Stencil8);
 
     if(!m_enabled && (GL_CURR_API == GLES_2_0 || GL_CURR_API == GLES_3_0 ||
                       GL_CURR_API == GLES_3_2))
@@ -174,7 +172,7 @@ GLEAM_DBufQuery::~GLEAM_DBufQuery()
 #endif
 }
 
-void GLEAM_DBufQuery::resize(const CSize& s)
+void GLEAM_DBufQuery::resize(const Size& s)
 {
 #if MODE_DEBUG
     if(GL_DEBUG_MODE && m_enabled)

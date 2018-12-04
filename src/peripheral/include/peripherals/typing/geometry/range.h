@@ -10,7 +10,7 @@ using namespace type_safety;
 template<
     typename T,
 
-    typename is_pod<T>::type* = nullptr
+    typename type_safety::is_pod<T>::type* = nullptr
 
     >
 struct range

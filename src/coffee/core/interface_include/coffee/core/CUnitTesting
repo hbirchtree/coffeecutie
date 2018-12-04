@@ -1,3 +1,4 @@
 #pragma once
 
+#include <coffee/core/CApplication>
 #include <coffee/core/unit_tests/framework.h>

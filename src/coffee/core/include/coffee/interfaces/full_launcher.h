@@ -30,10 +30,10 @@ struct EventLoopSpawner
 
 template<typename GAPI, typename R, typename D>
 i32 AutoExec(
-    Function<void(R&, D*, Display::CDProperties&)>&& presetup,
-    Display::LoopFunction<R, D>&&                    setup,
-    Display::LoopFunction<R, D>&&                    loop,
-    Display::LoopFunction<R, D>&&                    cleanup)
+    Function<void(R&, D*, Display::Properties&)>&& presetup,
+    Display::LoopFunction<R, D>&&                  setup,
+    Display::LoopFunction<R, D>&&                  loop,
+    Display::LoopFunction<R, D>&&                  cleanup)
 {
     using namespace Display;
 
@@ -70,7 +70,7 @@ i32 AutoExec(
     Display::LoopFunction<R, D>&& cleanup)
 {
     return AutoExec<GAPI, R, D>(
-        [](R&, D*, Display::CDProperties&) {},
+        [](R&, D*, Display::Properties&) {},
         std::move(setup),
         std::move(loop),
         std::move(cleanup));

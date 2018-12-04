@@ -68,7 +68,7 @@ bool PosixFileMod_def::Rm(Url const& fn, file_error& ec)
 
     auto url  = *fn;
     bool stat = unlink(url.c_str()) == 0;
-    ErrnoCheck(ec, url.c_str());
+    posix::collect_error_to(ec);
     return stat;
 }
 
@@ -96,7 +96,7 @@ CString PosixFileMod_def::DereferenceLink(Url const& fn, file_error& ec)
     else
         return out = url.c_str();
 
-    ErrnoCheck(ec, url.c_str());
+    posix::collect_error_to(ec);
 
     return out;
 }
@@ -110,7 +110,7 @@ CString PosixFileMod_def::CanonicalName(Url const& fn, file_error& ec)
     cstring_w name = canonicalize_file_name(url.c_str());
     if(!name)
     {
-        ErrnoCheck(ec, url.c_str());
+        posix::collect_error_to(ec);
         return {};
     }
     CString out = name;
@@ -136,7 +136,7 @@ bool PosixFileMod_def::Ln(Url const& src, Url const& target, file_error& ec)
         return true;
     else
     {
-        ErrnoCheck(ec, targetUrl.c_str());
+        posix::collect_error_to(ec);
         return false;
     }
 }
@@ -147,7 +147,7 @@ szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
     struct stat st  = {};
 
     if(lstat(url.c_str(), &st) != 0)
-        ErrnoCheck(ec, url.c_str());
+        posix::collect_error_to(ec);
 
     return C_FCAST<szptr>(st.st_size);
 }
@@ -187,7 +187,7 @@ void PosixFileMod_def::Truncate(const Url& fn, szptr size, file_error& ec)
     if(ftruncate(fd, C_FCAST<ptroff>(size)) != 0)
 #endif
     {
-        ErrnoCheck(ec, url.c_str(), -1);
+        posix::collect_error_to(ec);
     }
 
     close(fd);
@@ -199,7 +199,7 @@ bool posix::DirFun::ChDir(Url const& dir, file_error& ec)
     bool stat = chdir(url.c_str()) == 0;
     if(!stat)
     {
-        posix::FileFun::ErrnoCheck(ec, url.c_str());
+        posix::collect_error_to(ec);
         return false;
     }
     return true;
@@ -211,7 +211,7 @@ bool posix::DirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
     if(!createParent)
     {
         bool stat = mkdir(url.c_str(), S_IRWXU | S_IRWXG) == 0;
-        posix::FileFun::ErrnoCheck(ec, url.c_str());
+        posix::collect_error_to(ec);
         return stat;
     }
 
@@ -228,11 +228,11 @@ bool posix::DirFun::MkDir(Url const& dname, bool createParent, file_error& ec)
         {
             *p = 0;
             mkdir(tmp, S_IRWXU);
-            posix::FileFun::ErrnoCheck(ec, tmp);
+            posix::collect_error_to(ec);
             *p = '/';
         }
     bool stat = mkdir(tmp, S_IRWXU) == 0 || (errno == EEXIST);
-    posix::FileFun::ErrnoCheck(ec, tmp);
+    posix::collect_error_to(ec);
     return stat;
 }
 
@@ -240,7 +240,7 @@ bool posix::DirFun::RmDir(Url const& dname, file_error& ec)
 {
     auto url  = *dname;
     bool stat = rmdir(url.c_str()) == 0 || (errno = 0);
-    posix::FileFun::ErrnoCheck(ec, url.c_str());
+    posix::collect_error_to(ec);
     return stat;
 }
 
@@ -252,7 +252,7 @@ bool posix::DirFun::Ls(
 
     if(!dr)
     {
-        posix::FileFun::ErrnoCheck(ec, url.c_str());
+        posix::collect_error_to(ec);
         return false;
     }
 
@@ -299,7 +299,7 @@ bool posix::DirFun::Ls(
 
     closedir(dr);
 
-    posix::FileFun::ErrnoCheck(ec, url.c_str());
+    posix::collect_error_to(ec);
     errno = 0;
 
     return true;
@@ -323,7 +323,7 @@ Url posix::DirFun::Basename(CString const& n, file_error& ec)
     // This one is slower, but more compliant
     CString out   = n;
     CString out_s = basename(&out[0]);
-    posix::FileFun::ErrnoCheck(ec);
+    posix::collect_error_to(ec);
     return constructors::MkUrl(out_s, RSCA::SystemFile);
 #endif
 }
@@ -343,7 +343,7 @@ Url posix::DirFun::Dirname(CString const& fname, file_error& ec)
     // This one is slower, but more compliant
     CString out   = fname;
     CString out_s = dirname(&out[0]);
-    posix::FileFun::ErrnoCheck(ec);
+    posix::collect_error_to(ec);
     return constructors::MkUrl(out_s, RSCA::SystemFile);
 #endif
 }

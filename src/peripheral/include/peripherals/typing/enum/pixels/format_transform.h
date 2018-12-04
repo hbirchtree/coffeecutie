@@ -8,6 +8,7 @@
 #include <peripherals/typing/enum/pixels/format.h>
 
 namespace typing {
+namespace pixels {
 
 #if __cpp_constexpr >= 201304
 #define CONSTEXPR_EXTENDED constexpr
@@ -642,6 +643,6 @@ struct PixInfoDefault
 {
 };
 #endif
-
-#undef CONSTEXPR_EXTENDED
 }
+} // namespace typing
+#undef CONSTEXPR_EXTENDED

@@ -1,0 +1,11 @@
+#pragma once
+
+#include <platforms/linking.h>
+
+namespace Coffee {
+namespace load {
+using Function = ::platform::ld::FunctionLoader;
+using Object   = ::platform::ld::ObjectLoader;
+using ::platform::ld::DefaultConstructorFunction;
+} // namespace load
+} // namespace Coffee

@@ -1,4 +1,4 @@
-#include <coffee/core/coffee_version.h>
+#include <peripherals/build/license.h>
 
 #ifndef COFFEE_LOWFAT
 const char* CoffeeLicenseString[] =

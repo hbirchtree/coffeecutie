@@ -1,6 +1,9 @@
-#include <coffee/core/CDebug>
-#include <coffee/core/plat/linking.h>
+#include <coffee/core/types/hardware_info.h>
+#include <coffee/core/types/software_info.h>
 #include <coffee/graphics/common/query/gpu_query.h>
+#include <platforms/linking.h>
+
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace GpuInfo {
@@ -55,7 +58,7 @@ struct _GpuQueryDef
 
 bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error& ec)
 {
-    using namespace Library;
+    using namespace platform::ld;
 
     Vector<cstring> libs = {"CoffeeNVIDIAQuery",
                             "CoffeeAMDQuery",
@@ -162,7 +165,7 @@ std::string gpu_query_category::message(int error_code) const
         return "Library implementation";
     }
 
-	throw implementation_error("unimplemented error message");
+    throw implementation_error("unimplemented error message");
 }
 
 } // namespace Coffee

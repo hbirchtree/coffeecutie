@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../types/cdisplay.h"
 #include "glapplication.h"
 
 namespace Coffee{
@@ -33,13 +32,13 @@ protected:
      * \brief Function called to initialize
      *  binding library like glbinding, called before context is created
      */
-    virtual bool bindingPreInit(const GLProperties&,CString*) = 0;
-    virtual bool bindingInit(const GLProperties&,CString*) = 0;
+    virtual bool bindingPreInit(const GL::Properties&,CString*) = 0;
+    virtual bool bindingInit(const GL::Properties&,CString*) = 0;
     /*!
      * \brief Function called to initialize binding
      *  library like glbinding, called after context is created
      */
-    virtual bool bindingPostInit(const GLProperties&,CString*) = 0;
+    virtual bool bindingPostInit(const GL::Properties&,CString*) = 0;
     /*!
      * \brief Function called to terminate binding library like glbinding
      */

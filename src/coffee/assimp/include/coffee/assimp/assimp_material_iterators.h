@@ -4,11 +4,15 @@
 #include "cassimpimporters.h"
 #include <assimp/material.h>
 #include <assimp/scene.h>
-#include <coffee/core/plat/memory/stlstring_ops.h>
-#include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/stl_types.h>
+#include <coffee/core/types/rsca.h>
+#include <peripherals/stl/string_ops.h>
+#include <peripherals/typing/enum/pixels/wrapping.h>
 
 namespace Coffee {
 namespace ASSIMP {
+
+using ::typing::WrapPolicy;
 
 struct MaterialParser
 {

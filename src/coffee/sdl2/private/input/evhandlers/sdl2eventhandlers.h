@@ -9,6 +9,8 @@
 namespace Coffee{
 namespace SDL2{
 
+using namespace Display;
+
 template<typename T>
 FORCEDINLINE void EventAtomic(SDL2EventHandler* ctxt, typename T::EventType type)
 {

@@ -3,8 +3,10 @@
 #include "gl_shared_enum_convert.h"
 
 #include <coffee/core/base.h>
-#include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/string_ops.h>
+#include <coffee/core/types/display/gl_properties.h>
+#include <coffee/core/types/hardware_info.h>
+#include <coffee/core/types/software_info.h>
 
 namespace Coffee {
 namespace CGL {
@@ -108,7 +110,7 @@ struct CGL_Shared_Limits
     static i32     Max(u32 v);
     static cstring MaxName(u32 v);
 
-    static _cbasic_size_2d<i32> MaxSize(u32 v);
+    static size_2d<i32> MaxSize(u32 v);
 
     template<u32 ShaderBase>
     STATICINLINE i32 ShaderMax(MaxLimit v)
@@ -144,7 +146,7 @@ struct CGL_Shared_Debug
     static void SetDebugMode(bool enabled);
 
     STATICINLINE void SetDebugLevel(
-        C_UNUSED(Severity s), C_UNUSED(bool enabled))
+        C_UNUSED(debug::Severity s), C_UNUSED(bool enabled))
     {
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageControl(
@@ -178,13 +180,16 @@ struct CGL_Shared_Debug
 #endif
     }
 
-    STATICINLINE void DebugMessage(Severity s, DebugType t, CString const& n)
+    STATICINLINE void DebugMessage(
+        debug::Severity s, debug::Type t, CString const& n)
     {
         DebugMessage(s, t, n.c_str());
     }
 
     STATICINLINE void DebugMessage(
-        C_UNUSED(Severity s), C_UNUSED(DebugType t), C_UNUSED(cstring n))
+        C_UNUSED(debug::Severity s),
+        C_UNUSED(debug::Type t),
+        C_UNUSED(cstring n))
     {
 #if GL_VERSION_VERIFY(0x330, 0x320)
         glDebugMessageInsert(
@@ -214,11 +219,11 @@ struct CGL_Shared_Debug
 
     /* Context information */
 
-    static Display::CGLVersion ContextVersion();
+    static Display::GL::Version ContextVersion();
 
     /* GLSL information */
 
-    static Display::CGLVersion ShaderLanguageVersion();
+    static Display::GL::Version ShaderLanguageVersion();
 
     /* Rendering device info */
 
@@ -254,9 +259,9 @@ struct CGL_Shared_Debug
         return false;
 #endif
     }
-    STATICINLINE CSize InternalFormatMaxResolution2D()
+    STATICINLINE Size InternalFormatMaxResolution2D()
     {
-        CSize sz;
+        Size sz;
         sz.w = sz.h = GetInteger(GL_MAX_TEXTURE_SIZE);
         return sz;
     }
@@ -276,11 +281,11 @@ struct CGL_Shared_Debug
 
     /* Get*v */
 
-    STATICINLINE CSize GetViewport()
+    STATICINLINE Size GetViewport()
     {
-        CRect r;
+        rect<i32> r;
         GetIntegerv(GL_VIEWPORT, r.data);
-        return r.size();
+        return r.convert<u32>().size();
     }
 
     STATICINLINE void GetIntegerv(CGenum e, i32* v)
@@ -316,7 +321,7 @@ struct CGL_Shared_Debug
         return i == GL_TRUE;
     }
 
-    /* Get*i_v */
+        /* Get*i_v */
 #if GL_VERSION_VERIFY(0x300, 0x300)
     STATICINLINE int32 GetIntegerI(CGenum e, uint32 i)
     {

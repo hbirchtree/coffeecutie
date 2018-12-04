@@ -26,7 +26,7 @@ bool StbDecode(
     Pair<CString, ImageProcessor> const&,
     PixCmp    cmp,
     BitFmt&   bfmt,
-    CSize&    size,
+    Size&     size,
     Bytes&    data,
     Resource& r)
 {
@@ -40,7 +40,7 @@ static Map<
         Pair<CString, ImageProcessor> const&,
         PixCmp,
         BitFmt&,
-        CSize&,
+        Size&,
         Bytes&,
         Resource&)>
     image_decoders = {{ImageProc_stb, StbDecode},
@@ -51,7 +51,7 @@ static Map<
 
 static Size ScaleSize(Size const& size, i32 target_size)
 {
-    Size target_size_ = {target_size, target_size};
+    size_2d<i32> target_size_ = {target_size, target_size};
 
     /* Non-quadratic, clamp largest size, scale the other */
     if(size.w != size.h)
@@ -68,7 +68,7 @@ static Size ScaleSize(Size const& size, i32 target_size)
                             target_size};
     }
 
-    return target_size_;
+    return target_size_.convert<u32>();
 }
 
 static Tup<Bytes, Size> ScaleImage(
@@ -92,14 +92,14 @@ static void CompressTextureSet(
     FileProcessor*                       cooker,
     TerminalCursor&                      cursor)
 {
-    CResources::Resource r(MkUrl(file.first.c_str()));
+    Resource r(MkUrl(file.first.c_str()));
 
     auto outName = Path(file.first).removeExt();
 
     PixCmp cmp = PixCmp::RGBA;
     BitFmt bfmt;
     Bytes  data;
-    CSize  size;
+    Size   size;
 
     auto decoder = image_decoders.find(file.second);
 
@@ -183,7 +183,7 @@ void TextureCooker::process(
 
         for(auto ext : imageExtensions)
             /* Check if we recognize the extension */
-            if(str::cmp<str::comp_nocase>(
+            if(libc::str::cmp<libc::str::comp_nocase>(
                    path.extension().c_str(), ext.c_str()))
             {
                 if(ext == "")

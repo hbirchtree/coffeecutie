@@ -7,16 +7,19 @@
 #include <peripherals/typing/vectors/matrices_decompose.h>
 #include <peripherals/typing/vectors/quaternion_matrix_ops.h>
 
-#include <coffee/core/libc_types.h>
+#include <peripherals/libc/types.h>
 
-namespace Coffee{
+namespace typing {
+namespace vector_types {
+
+using namespace ::libc_types;
 
 namespace decompose {
 using namespace typing::vectors::decompose;
 }
 
 template<typename T, size_t Num>
-using _cbasic_tvector = typing::vectors::tvector<T,Num>;
+using _cbasic_tvector = typing::vectors::tvector<T, Num>;
 
 template<typename T, size_t Num>
 using _cbasic_tmatrix = typing::vectors::tmatrix<T, Num>;
@@ -25,13 +28,13 @@ template<typename T, size_t NumM, size_t NumN>
 using _cbasic_tmnmatrix = typing::vectors::tmnmatrix<T, NumM, NumN>;
 
 template<typename T>
-using _cbasic_vec2 = typing::vectors::tvector<T,2>;
+using _cbasic_vec2 = typing::vectors::tvector<T, 2>;
 
 template<typename T>
-using _cbasic_vec3 = typing::vectors::tvector<T,3>;
+using _cbasic_vec3 = typing::vectors::tvector<T, 3>;
 
 template<typename T>
-using _cbasic_vec4 = typing::vectors::tvector<T,4>;
+using _cbasic_vec4 = typing::vectors::tvector<T, 4>;
 
 template<typename T>
 using _cbasic_quat = typing::vectors::tquaternion<T>;
@@ -55,28 +58,34 @@ using Vecui4 = _cbasic_vec4<u32>;
 using Quatf = _cbasic_quat<scalar>;
 using Quatd = _cbasic_quat<bigscalar>;
 
-using Matf2 = _cbasic_tmatrix<scalar,2>;
-using Matf3 = _cbasic_tmatrix<scalar,3>;
-using Matf4 = _cbasic_tmatrix<scalar,4>;
+using Matf2 = _cbasic_tmatrix<scalar, 2>;
+using Matf3 = _cbasic_tmatrix<scalar, 3>;
+using Matf4 = _cbasic_tmatrix<scalar, 4>;
 
-using Matf2_3 = _cbasic_tmnmatrix<scalar,2,3>;
-using Matf2_4 = _cbasic_tmnmatrix<scalar,2,4>;
-using Matf3_4 = _cbasic_tmnmatrix<scalar,3,4>;
+using Matf2_3 = _cbasic_tmnmatrix<scalar, 2, 3>;
+using Matf2_4 = _cbasic_tmnmatrix<scalar, 2, 4>;
+using Matf3_4 = _cbasic_tmnmatrix<scalar, 3, 4>;
 
-using Matf3_2 = _cbasic_tmnmatrix<scalar,3,2>;
-using Matf4_2 = _cbasic_tmnmatrix<scalar,4,2>;
-using Matf4_3 = _cbasic_tmnmatrix<scalar,4,3>;
+using Matf3_2 = _cbasic_tmnmatrix<scalar, 3, 2>;
+using Matf4_2 = _cbasic_tmnmatrix<scalar, 4, 2>;
+using Matf4_3 = _cbasic_tmnmatrix<scalar, 4, 3>;
 
 using Matd2 = _cbasic_tmatrix<bigscalar, 2>;
 using Matd3 = _cbasic_tmatrix<bigscalar, 3>;
 using Matd4 = _cbasic_tmatrix<bigscalar, 4>;
 
-using Matd2_3 = _cbasic_tmnmatrix<bigscalar,2,3>;
-using Matd2_4 = _cbasic_tmnmatrix<bigscalar,2,4>;
-using Matd3_4 = _cbasic_tmnmatrix<bigscalar,3,4>;
+using Matd2_3 = _cbasic_tmnmatrix<bigscalar, 2, 3>;
+using Matd2_4 = _cbasic_tmnmatrix<bigscalar, 2, 4>;
+using Matd3_4 = _cbasic_tmnmatrix<bigscalar, 3, 4>;
 
-using Matd3_2 = _cbasic_tmnmatrix<bigscalar,3,2>;
-using Matd4_2 = _cbasic_tmnmatrix<bigscalar,4,2>;
-using Matd4_3 = _cbasic_tmnmatrix<bigscalar,4,3>;
+using Matd3_2 = _cbasic_tmnmatrix<bigscalar, 3, 2>;
+using Matd4_2 = _cbasic_tmnmatrix<bigscalar, 4, 2>;
+using Matd4_3 = _cbasic_tmnmatrix<bigscalar, 4, 3>;
 
+} // namespace vector_types
+} // namespace typing
+
+namespace Coffee {
+
+using namespace ::typing::vector_types;
 }

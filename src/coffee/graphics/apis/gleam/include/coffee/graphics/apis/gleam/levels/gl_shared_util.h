@@ -25,7 +25,7 @@ struct CGLUtil
     {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 
-        CSize tsize;
+        Size tsize;
         GL::TexGetLevelParameteriv(t, l, GL_TEXTURE_WIDTH, &tsize.w);
         GL::TexGetLevelParameteriv(t, l, GL_TEXTURE_HEIGHT, &tsize.h);
 
@@ -35,12 +35,12 @@ struct CGLUtil
         GL::TexGetImage(t, 0, PixCmp::RGBA, PixFmt::RGBA8, data);
         GL::TexBind(t, 0);
 
-        CResources::Resource rsc(fn);
+        Resource rsc(fn);
 
         auto outData = PNG::Save(stb::image_const::From(rsc, tsize));
         rsc          = outData;
 
-        CResources::FileCommit(rsc);
+        FileCommit(rsc);
 #endif
     }
 };

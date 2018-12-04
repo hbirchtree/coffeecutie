@@ -90,8 +90,6 @@ struct FILEApi
         void*                     data;
         szptr                     size;
     };
-
-    static void CheckError(FILE* fd, FILE_error_code& ec);
 };
 
 template<
@@ -132,7 +130,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(!fh.handle)
         {
             ec = FileError::NotFound;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
             return {};
         }
 
@@ -157,7 +155,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(stat != 0)
         {
             ec = FileError::SystemError;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
         }
 
         return stat == 0;
@@ -185,7 +183,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(rsize != esize)
         {
             ec = FileError::ReadFailed;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
             return {};
         }
 
@@ -202,7 +200,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(stat != 0)
         {
             ec = FileError::SystemError;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
         }
 
         return stat == 0;
@@ -217,7 +215,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(wsize != d.size)
         {
             ec = FileError::WriteFailed;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
             return false;
         }
 
@@ -235,7 +233,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         } else
         {
             ec = FileError::NotFound;
-            FILEApi::CheckError(f.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
             return 0;
         }
     }
@@ -250,7 +248,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(res != 0)
         {
             ec = FileError::SystemError;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
             return 0;
         }
 
@@ -260,7 +258,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
         if(res != 0)
         {
             ec = FileError::SystemError;
-            FILEApi::CheckError(fh.handle, ec.template as<FILE_error_code>());
+            posix::collect_error_to(ec);
             return 0;
         }
 

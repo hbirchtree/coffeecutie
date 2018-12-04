@@ -1,9 +1,9 @@
 #include <coffee/asio/asio_worker.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
-#include <coffee/core/base/files/url.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/core/types/graphics_types.h>
+#include <coffee/core/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/windowing/renderer/renderer.h>
@@ -34,6 +34,7 @@
 using namespace Coffee;
 using namespace Display;
 using namespace SceneGraph;
+using namespace Coffee::RHI::Datatypes;
 
 using CDRenderer = CSDL2Renderer;
 using GLM        = GLEAMAPI;
@@ -366,8 +367,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         bool isGles = (GLM::LevelIsOfClass(GLM::Level(), GLM::APIClass::GLES));
         bool isGles20 = GLM::Level() == RHI::GLEAM::GLES_2_0;
 
-        CResources::Resource v_rsc(shader_files[isGles * 2 + isGles20 * 2]);
-        CResources::Resource f_rsc(shader_files[isGles * 2 + isGles20 * 2 + 1]);
+        Resource v_rsc(shader_files[isGles * 2 + isGles20 * 2]);
+        Resource f_rsc(shader_files[isGles * 2 + isGles20 * 2 + 1]);
 
         if(!RHI::LoadPipeline<GLM>(eye_pip, v_rsc, f_rsc))
         {
@@ -458,7 +459,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         Discord::CreateService({"468164529617109002", 256}, callbacks);
 
     service->getPresence()->put({"", 1, 1, {}, {}});
-    service->getGame()->put(Online::GameDelegate::Builder(
+    service->getGame()->put(online::GameDelegate::Builder(
         {}, "Messing around", MkUrl("coffee_cup")));
 
     RuntimeQueue::QueuePeriodic(

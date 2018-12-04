@@ -1,10 +1,12 @@
 #include <coffee/windowing/binding/glad/gleamrenderer.h>
 
+#include <coffee/core/CProfiling>
 #include <coffee/core/platform_data.h>
+#include <coffee/graphics/apis/gleam/gleam.h>
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/CProfiling>
-#include <coffee/graphics/apis/gleam/gleam.h>
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
 #include <CEAGL/eagl.h>
@@ -30,7 +32,7 @@ using GLDEBUG = CGL::CGL43;
 using GLDEBUG = CGL::CGLES32;
 #endif
 
-using GL     = CGL::CGL_Lowest;
+using GLI    = CGL::CGL_Lowest;
 using GDEBUG = CGL::Debug;
 
 static void PushDebugGroup(cstring n)
@@ -97,17 +99,17 @@ void GLeamRenderer::bindingCallback(const void* report) const
     C_BREAK();
 }
 
-bool GLeamRenderer::bindingPreInit(const GLProperties&, CString*)
+bool GLeamRenderer::bindingPreInit(const GL::Properties&, CString*)
 {
     return true;
 }
 
-bool GLeamRenderer::bindingInit(const GLProperties&, CString*)
+bool GLeamRenderer::bindingInit(const GL::Properties&, CString*)
 {
     return true;
 }
 
-bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
+bool GLeamRenderer::bindingPostInit(const GL::Properties& p, CString* err)
 {
     DProfContext a(GLR_API "Binding initialization");
 
@@ -145,13 +147,13 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
 #endif
 
     Profiler::DeepPushContext(GLR_API "Loading GLAD binding");
-    if(!(p.flags & GLProperties::Flags::GLES))
+    if(!(p.flags & GL::Properties::Flags::GLES))
     {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-        const static CGLVersion v33(3, 3);
-        const static CGLVersion v43(4, 3);
-        const static CGLVersion v45(4, 5);
-        const static CGLVersion v46(4, 6);
+        const static GL::Version v33(3, 3);
+        const static GL::Version v43(4, 3);
+        const static GL::Version v45(4, 5);
+        const static GL::Version v46(4, 6);
 
         if(p.version >= v45)
         {
@@ -309,7 +311,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString* err)
     }
 
 #if !defined(COFFEE_WINDOWS) && GL_VERSION_VERIFY(0x330, 0x320)
-    if(p.flags & GLProperties::GLDebug && glDebugMessageCallback)
+    if(p.flags & GL::Properties::GLDebug && glDebugMessageCallback)
     {
         DProfContext b(GLR_API "Configuring GL context debugging");
         GDEBUG::SetDebugMode(true);

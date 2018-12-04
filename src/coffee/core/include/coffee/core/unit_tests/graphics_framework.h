@@ -1,13 +1,14 @@
 #pragma once
 
-#include <coffee/core/CDebug>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <peripherals/stl/functional_types.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/windowing/renderer/renderer.h>
+#include <peripherals/stl/functional_types.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
+
+#include <coffee/core/CDebug>
 
 namespace CoffeeTest {
 
@@ -26,8 +27,8 @@ void windowing_wrap(WFun&& func)
 
     AutoExec<API, Display::RendererInterface, Empty>(
         std::move(func),
-    [](Display::RendererInterface&, Empty*) {},
-    [](Display::RendererInterface&, Empty*) {});
+        [](Display::RendererInterface&, Empty*) {},
+        [](Display::RendererInterface&, Empty*) {});
 }
 
 int gfx_main_proper(Coffee::u32 num, Test const* tests, int argc, char** argv)

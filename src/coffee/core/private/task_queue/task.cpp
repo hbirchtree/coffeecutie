@@ -1,8 +1,11 @@
 #include <coffee/core/task_queue/task.h>
 
-#include <coffee/core/internal_state.h>
+#include <algorithm>
 #include <coffee/core/CProfiling>
+#include <coffee/core/internal_state.h>
 #include <platforms/stacktrace.h>
+
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 

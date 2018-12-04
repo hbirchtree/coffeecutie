@@ -2,8 +2,10 @@
 
 #include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
-#include <coffee/core/CMD>
-#include <coffee/core/plat/plat_environment.h>
+#include <peripherals/libc/signals.h>
+#include <platforms/environment.h>
+
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -86,7 +88,7 @@ void ProfilingExport()
 
 void RegisterProfiling()
 {
-    Cmd::RegisterAtExit(ProfilingExport);
+    libc::signal::register_atexit(ProfilingExport);
 }
 
 } // namespace Net

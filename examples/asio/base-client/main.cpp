@@ -5,12 +5,11 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
-#include <coffee/core/CTiming>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/core/url.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/CMD>
 
 using namespace Coffee;
 
@@ -42,8 +41,6 @@ i32 coffee_main(i32, cstring_w*)
 
         C_ERROR_CHECK(ec);
     }
-
-    CElapsedTimer tim;
 
     if(false)
     {
@@ -314,7 +311,7 @@ i32 coffee_main(i32, cstring_w*)
                 //                    Cmd::ReadString(&test_log[0],
                 //                    test_log.size(), stdin);
                 test_socket.send_to(asio::buffer(test_log), *it);
-                cDebug("{0}", Time::Microsecond());
+                cDebug("{0}", Time<>::Microsecond());
                 //                }
                 //            CString recv;
                 //            recv.resize(20);

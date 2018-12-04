@@ -3,13 +3,15 @@
 #include <coffee/core/CInput>
 #include <coffee/core/CProfiling>
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/environment.h>
+#include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/image/cimage.h>
-
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2System>
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+#include <peripherals/stl/time_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -21,23 +23,23 @@ using Sprites     = SDL2SpriteRenderer;
 
 const constexpr szptr num_points = 10;
 
-CPointF sprite_pos[num_points] = {};
-CSizeF  sprite_scale           = {1, 1};
-CSize   window_size            = {};
+static PtF             sprite_pos[num_points] = {};
+static size_2d<scalar> sprite_scale           = {1, 1};
+static Size            window_size            = {};
 
-bool exit_flag = false;
-
-void WindowResize_1(void*, const CDEvent& e, c_cptr d)
+void WindowResize_1(void*, const Event& e, c_cptr d)
 {
-    if(e.type == CDEvent::Resize)
+    if(e.type == Event::Resize)
     {
-        auto ev     = (CDResizeEvent const*)d;
+        auto ev     = (ResizeEvent const*)d;
         window_size = *ev;
     }
 }
 
-void TouchInput_1(void*, const CIEvent& e, c_cptr d)
+void TouchInput_1(void*, const Input::CIEvent& e, c_cptr d)
 {
+    using namespace Input;
+
     if(e.type == CIEvent::MultiTouch)
     {
         const CIMTouchMotionEvent& tch = *(const CIMTouchMotionEvent*)d;
@@ -46,7 +48,7 @@ void TouchInput_1(void*, const CIEvent& e, c_cptr d)
             scalar v = tch.dist;
             v /= Int16_Max;
             v += 1.f;
-            CSizeF s = {v, v};
+            size_2d<scalar> s = {v, v};
             sprite_scale.w *= s.w;
             sprite_scale.h *= s.h;
         }
@@ -97,8 +99,10 @@ void TouchInput_1(void*, const CIEvent& e, c_cptr d)
     }
 }
 
-void ExitHandler_1(void* ptr, const CIEvent& e, c_cptr d)
+void ExitHandler_1(void* ptr, const Input::CIEvent& e, c_cptr d)
 {
+    using namespace Input;
+
     SDL2WindowHost* host = (SDL2WindowHost*)ptr;
 
     if(e.type == CIEvent::QuitSign)
@@ -150,7 +154,7 @@ i32 coffee_main(i32, cstring_w*)
                &data->t,
                PixFmt::RGBA8UI,
                RSCA::Streaming,
-               CSize(128, 128)))
+               Size(128, 128)))
         {
             Profiler::Profile("Texture creation");
 
@@ -175,7 +179,7 @@ i32 coffee_main(i32, cstring_w*)
         }
 
         /* Create a sprite from the texture */
-        CRect src(0, 0, 128, 128);
+        Rect src(0, 0, 128, 128);
         data->rend.createSprite(data->t, src, &data->sprite);
 
         /* Show the window */
@@ -197,7 +201,7 @@ i32 coffee_main(i32, cstring_w*)
             data->rend.drawSprite(
                 data->r, sprite_pos[i], sprite_scale, data->sprite);
 
-        data->clearCol.r = (Time::CurrentTimestamp() * 1000) % 255;
+        data->clearCol.r = (Time<>::CurrentTimestamp() * 1000) % 255;
 
         data->rend.swapBuffers(data->r);
         test.pollEvents();

@@ -1,14 +1,16 @@
-#include "sensor/sensor_def.h"
-#include "sensor/android/sensor.h"
-#include "sensor/maemo/sensors.h"
+#pragma once
 
-namespace Coffee{
-namespace Sensor{
+#include "android/sensor.h"
+#include "maemo/sensor.h"
+
+#include "base/sensor.h"
+
+namespace Coffee {
 
 #if !defined(COFFEE_ANDROID) && !defined(COFFEE_MAEMO)
 /* This is an optional API, so we put this here */
-using Sensors = SensorAPI_Def;
+using Sensor = platform::sensor::Sensor_Def;
+#else
+using Sensor = platform::sensor::Sensor;
 #endif
-
-}
 }

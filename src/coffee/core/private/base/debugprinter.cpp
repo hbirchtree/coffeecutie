@@ -1,10 +1,13 @@
-#include <coffee/core/formatting.h>
-
-#include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/internal_state.h>
 #include <peripherals/libc/output_ops.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/formatting.h>
+
+#include <coffee/core/base/printing/outputprinter.h>
 
 #if defined(COFFEE_ANDROID)
 #include <android/log.h>
@@ -56,7 +59,7 @@ static void AddContextString(CString& prefix, Severity sev)
 {
     cstring severity_str = severity_string(sev);
 
-//    CString cclock = Time::ClockString();
+    //    CString cclock = Time::ClockString();
     CString cclock = "00:00:00";
 #if defined(COFFEE_WINDOWS)
     /* VC++ fills the string with \0, and does not ignore it
@@ -67,7 +70,7 @@ static void AddContextString(CString& prefix, Severity sev)
 #endif
 
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
-//    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
+    //    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
     CString ms_time = "0000";
     CString clock =
         cStringFormat("{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
@@ -75,10 +78,11 @@ static void AddContextString(CString& prefix, Severity sev)
     prefix.append(CurrentThread::GetName() + ":");
     prefix.push_back(severity_str[0]);
 
-    ColorMap::ColorText(
+    platform::ColorMap::ColorText(
         prefix,
-        ColorMap::CombineFormat(
-            ColorMap::CmdColor::Green, ColorMap::CmdColor::Blue));
+        platform::ColorMap::CombineFormat(
+            platform::ColorMap::CmdColor::Green,
+            platform::ColorMap::CmdColor::Blue));
 #endif
 }
 

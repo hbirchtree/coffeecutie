@@ -3,9 +3,9 @@
 #include "inputapplication.h"
 #include <coffee/core/base/renderer_loader.h>
 #include <coffee/core/task_queue/task.h>
-#include <peripherals/stl/time_types.h>
-#include <peripherals/libc/signals.h>
 #include <coffee/foreign/foreign.h>
+#include <peripherals/libc/signals.h>
+#include <peripherals/stl/time_types.h>
 
 #include <coffee/core/CProfiling>
 
@@ -55,7 +55,7 @@ struct EventLoopData
         } time;
     };
 
-    CDProperties visual;
+    Properties visual;
 
     FORCEDINLINE Renderer& r()
     {
@@ -237,8 +237,8 @@ class EventApplication : public InputApplication
         void*   user_ptr;
     };
 
-    using EventHandlerI = EventHandler<CIEvent>;
-    using EventHandlerD = EventHandler<CDEvent>;
+    using EventHandlerI = EventHandler<Input::CIEvent>;
+    using EventHandlerD = EventHandler<Event>;
 
     /*!
      * \brief Function driving the render loop
@@ -269,9 +269,9 @@ class EventApplication : public InputApplication
         return false;
     }
 
-    virtual void injectEvent(CIEvent const&, c_cptr) = 0;
+    virtual void injectEvent(Input::CIEvent const&, c_cptr) = 0;
 
-    virtual void injectEvent(CDEvent const&, c_cptr) = 0;
+    virtual void injectEvent(Event const&, c_cptr) = 0;
 
     virtual Vector<EventHandlerI>* getEventHandlersI()
     {
@@ -339,9 +339,9 @@ class EventApplication : public InputApplication
 
 #define SUSPRESUME_FUN(var, cond, fun, extrafun)               \
     template<typename Renderer, typename Data>                 \
-    static void var(void* ptr, CDEvent const& e, c_cptr)       \
+    static void var(void* ptr, Event const& e, c_cptr)         \
     {                                                          \
-        if(e.type == CDEvent::cond)                            \
+        if(e.type == Event::cond)                              \
         {                                                      \
             EventLoopData<Renderer, Data>& evdata =            \
                 *C_FCAST<EventLoopData<Renderer, Data>*>(ptr); \
@@ -381,7 +381,7 @@ class EventApplication : public InputApplication
 
     template<typename Renderer, typename Data>
     C_DEPRECATED static i32 execEventLoop(
-        EventLoopData<Renderer, Data>& ev, CDProperties& visual, CString& err)
+        EventLoopData<Renderer, Data>& ev, Properties& visual, CString& err)
     {
         return execEventLoop(
             MkUqWrap<EventLoopData<Renderer, Data>>(&ev), visual, err);
@@ -396,7 +396,7 @@ class EventApplication : public InputApplication
         >
     static i32 execEventLoop(
         UqPtr<EventLoopData<Renderer, Data>>&& ev,
-        CDProperties&                          visual,
+        Properties&                          visual,
         CString&)
     {
         if(!ev)
@@ -494,7 +494,8 @@ class EventApplication : public InputApplication
             if(ev_flags & ELD::TimeLimited &&
                Time<>::CurrentTimestamp() > (time.start + time.max))
             {
-                auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
+                auto qevent =
+                    Input::CIEvent::Create(0, Input::CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);
             }
         }

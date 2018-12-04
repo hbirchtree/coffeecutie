@@ -4,7 +4,7 @@
 #include <peripherals/libc/types.h>
 
 namespace typing {
-enum class PixelOperation : u8
+enum class PixelOperation : libc_types::u8
 {
     SwapEndiannes,
     Alignment,

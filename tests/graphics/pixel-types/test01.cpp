@@ -1,5 +1,4 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/edef/pixenum.h>
 #include <coffee/interfaces/cgraphics_pixops.h>
 
 using namespace Coffee;
@@ -54,7 +53,8 @@ bool regular_format_coverage()
 
     while(fmt)
     {
-        if(!properties::get<properties::is_compressed>(fmt) && fmt != PixFmt::None)
+        if(!properties::get<properties::is_compressed>(fmt) &&
+           fmt != PixFmt::None)
         {
             auto sampleType = convert::to<PixFlg>(fmt);
 

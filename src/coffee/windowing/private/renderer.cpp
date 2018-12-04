@@ -35,7 +35,7 @@ CSDL2Renderer_Internal::~CSDL2Renderer_Internal()
     cleanup();
 }
 
-bool CSDL2Renderer_Internal::init(const CDProperties& props, CString* err)
+bool CSDL2Renderer_Internal::init(const Properties& props, CString* err)
 {
 #if defined(COFFEE_USE_SDL_EVENT) || defined(COFFEE_USE_SDL_GL) || \
     defined(COFFEE_USE_SDL_WINDOW)

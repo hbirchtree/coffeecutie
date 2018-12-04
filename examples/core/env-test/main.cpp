@@ -1,17 +1,18 @@
 #include <coffee/asio/net_profiling.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
+#include <coffee/core/CPlatform>
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/sensor.h>
+#include <platforms/sensor.h>
 
-#include <coffee/asio/http.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/CPlatform>
-
-#include <stack>
 
 using namespace Coffee;
+using namespace platform::file;
+using namespace platform::url::constructors;
 
 i32 coffee_main(i32, cstring_w*)
 {
@@ -41,23 +42,23 @@ i32 coffee_main(i32, cstring_w*)
 
         Profiler::Profile("Print some data");
 
-        if(!CResources::FileMkdir(cfg_dir, true))
+        if(!FileMkdir(cfg_dir, true))
             cWarning("Failed to create settings directory");
         else
         {
             Url test_file = cfg_dir + Path{"test_file.sav"};
-            FileFun::Touch(FileFun::File, test_file, ec);
+            FileFun::Touch(file::File, test_file, ec);
         }
         Profiler::Profile("Create directory recursively");
     }
     Profiler::PopContext();
 
-    cDebug("Sensor gravity: {0}", Sensor::Sensors::Gravity());
-    cDebug("Sensor gyro: {0}", Sensor::Sensors::Gyroscope());
-    cDebug("Sensor lux: {0}", Sensor::Sensors::Lux());
-    cDebug("Sensor steps: {0}", Sensor::Sensors::StepCounter());
-    cDebug("Sensor acceleration: {0}", Sensor::Sensors::Acceleration());
-    cDebug("Sensor orientation: {0}", Sensor::Sensors::Orientation());
+    cDebug("Sensor gravity: {0}", Sensor::Gravity());
+    cDebug("Sensor gyro: {0}", Sensor::Gyroscope());
+    cDebug("Sensor lux: {0}", Sensor::Lux());
+    cDebug("Sensor steps: {0}", Sensor::StepCounter());
+    cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
+    cDebug("Sensor orientation: {0}", Sensor::Orientation());
 
     return 0;
 }

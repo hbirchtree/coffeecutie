@@ -2,7 +2,6 @@ coffee_library (
     TARGET PeripheralPlatform
     LIBRARIES
     PeripheralLib
-    PeripheralUrl
 
     SOURCES
     private/argument_parse.cpp

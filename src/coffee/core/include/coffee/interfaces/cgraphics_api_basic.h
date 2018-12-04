@@ -1,14 +1,12 @@
 #pragma once
 
-#include <peripherals/libc/types.h>
+#include <coffee/core/libc_types.h>
 
-namespace Coffee{
-namespace Display{
-
-struct CDProperties;
-
+namespace Coffee {
+namespace Display {
+struct Properties;
 }
-namespace RHI{
+namespace RHI {
 
 struct GraphicsAPI_Base
 {
@@ -16,10 +14,10 @@ struct GraphicsAPI_Base
     {
     }
 
-    static void GetDefaultProperties(Display::CDProperties&)
+    static void GetDefaultProperties(Display::Properties&)
     {
     }
 };
 
-}
-}
+} // namespace RHI
+} // namespace Coffee

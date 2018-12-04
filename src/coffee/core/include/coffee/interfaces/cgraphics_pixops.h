@@ -1,20 +1,17 @@
 #pragma once
 
 #include <coffee/core/CMath>
-#include <coffee/core/types/geometry.h>
-#include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/edef/resenum.h>
 
-#include <peripherals/stl/standard_exceptions.h>
-#include <peripherals/stl/type_safety.h>
-#include <peripherals/stl/types.h>
+#include <coffee/core/types/pixel_components.h>
+#include <coffee/core/types/pixel_transform.h>
+#include <coffee/core/types/size.h>
 
 namespace Coffee {
 
 FORCEDINLINE szptr GetPixSize(BitFmt fmt, PixCmp comp, szptr pixels)
 {
-    return typing::properties::get<typing::properties::pixel_size>(
-        fmt, comp, pixels);
+    return typing::pixels::properties::get<
+        typing::pixels::properties::pixel_size>(fmt, comp, pixels);
 }
 
 FORCEDINLINE u32 GetPixBlockSize(Size const& size, Size const& blockSize)
@@ -31,15 +28,16 @@ FORCEDINLINE u32 GetPixBlockSize(Size const& size, Size const& blockSize)
 FORCEDINLINE Size GetPixCompressedBlockSize(CompFmt format)
 {
     auto block_dim =
-        typing::properties::get<typing::properties::block_size>(format);
+        typing::pixels::properties::get<typing::pixels::properties::block_size>(
+            format);
 
-    return {block_dim.w, block_dim.h};
+    return {C_FCAST<u32>(block_dim.w), C_FCAST<u32>(block_dim.h)};
 }
 
 FORCEDINLINE bool CompressedFormatSupportsSubTexture(CompFmt format)
 {
-    return typing::properties::get<typing::properties::supports_subtextures>(
-        format);
+    return typing::pixels::properties::get<
+        typing::pixels::properties::supports_subtextures>(format);
 }
 
 /*!
@@ -74,6 +72,8 @@ FORCEDINLINE bool CompressedFormatSupportsSubTexture(CompFmt format)
  */
 FORCEDINLINE szptr GetPixCompressedSize(CompFmt format, Size const& tex_size)
 {
+    using namespace ::enum_helpers;
+
     auto fmt    = format.base_fmt;
     auto cflags = format.c_flags;
     auto pflags = format.p_flags;
@@ -167,14 +167,14 @@ FORCEDINLINE szptr GetPixCompressedSize(CompFmt format, Size const& tex_size)
     }
     case PixFmt::PVRTC:
     {
-        Size pvrtc_size = {CMath::max(tex_size.w, 8),
-                           CMath::max(tex_size.h, 8)};
+        Size pvrtc_size = {CMath::max<u32>(tex_size.w, 8),
+                           CMath::max<u32>(tex_size.h, 8)};
         u32  bpp        = 4;
 
         if(feval(cflags & CompFlags::bpp_2))
         {
             bpp          = 2;
-            pvrtc_size.w = CMath::max(pvrtc_size.w, 16);
+            pvrtc_size.w = CMath::max<u32>(pvrtc_size.w, 16);
         }
 
         return (C_FCAST<u32>(pvrtc_size.area()) * bpp + 7) / 8;

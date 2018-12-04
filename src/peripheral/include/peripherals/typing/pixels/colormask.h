@@ -5,7 +5,7 @@
 namespace typing {
 namespace pixels {
 
-struct colormask_t
+struct colormask
 {
     bool           r : 1;
     bool           g : 1;

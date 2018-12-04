@@ -132,7 +132,7 @@ struct AnimationParser
         szptr stringIndex = store.storeSize;
 
         store.references.push_back(string.C_Str());
-        store.storeSize += str::len(string.C_Str()) + 1;
+        store.storeSize += libc::str::len(string.C_Str()) + 1;
 
         return stringIndex;
     }

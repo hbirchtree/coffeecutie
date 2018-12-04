@@ -93,7 +93,7 @@ void SDL2SpriteRenderer::destroyRenderer(Renderer t)
 }
 
 bool SDL2SpriteRenderer::createTexture(
-    Renderer r, u32 c, Texture* t, PixFmt fmt, RSCA acc, CSize const& size)
+    Renderer r, u32 c, Texture* t, PixFmt fmt, RSCA acc, Size const& size)
 {
     Uint32 sdlfmt = 0;
     switch(fmt)
@@ -179,7 +179,7 @@ bool SDL2SpriteRenderer::createSprite(
 }
 
 bool SDL2SpriteRenderer::uploadTexture(
-    Texture tex, CRect const& region, const stb::image_rw& data)
+    Texture tex, Rect const& region, const stb::image_rw& data)
 {
     SDL_Rect sec;
     sec.x = region.x;
@@ -212,7 +212,10 @@ bool SDL2SpriteRenderer::unmapTexture(SpriteApplication::Texture tex)
 }
 
 void SDL2SpriteRenderer::drawSprite(
-    Renderer r, const CPointF& pos, const CSizeF& scale, const Sprite& sprite)
+    Renderer               r,
+    const PtF&             pos,
+    const size_2d<scalar>& scale,
+    const Sprite&          sprite)
 {
     SDL_Rect src;
     src.w = sprite.rect.w;

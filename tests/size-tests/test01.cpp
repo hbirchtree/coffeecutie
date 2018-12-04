@@ -1,13 +1,13 @@
-#include <coffee/core/CUnitTesting>
-#include <coffee/core/plat/stacktrace.h>
-
 #include <coffee/core/CInput>
+#include <coffee/strings/libc_types.h>
 #include <peripherals/stl/string_casting.h>
+#include <platforms/stacktrace.h>
 
-#include <coffee/core/terminal/table-print.h>
+#include <coffee/core/CUnitTesting>
+#include <coffee/core/terminal/table.h>
 
 using namespace Coffee;
-using namespace CInput;
+using namespace Input;
 
 bool basic_tests()
 {
@@ -163,7 +163,8 @@ bool data_unit_tests()
 template<typename T>
 static void CheckSize(Vector<CString>& names, Vector<szptr>& sizes)
 {
-    CString type_name = Stacktracer::DemangleSymbol(typeid(T).name());
+    CString type_name =
+        platform::env::Stacktracer::DemangleSymbol(typeid(T).name());
     names.push_back(type_name);
     sizes.push_back(sizeof(T));
 

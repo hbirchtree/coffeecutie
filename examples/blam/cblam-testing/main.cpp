@@ -3,11 +3,13 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/stl_types.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/full_launcher.h>
+#include <coffee/strings/libc_types.h>
 #include <coffee/windowing/renderer/renderer.h>
+#include <peripherals/stl/string_ops.h>
 
 #include <coffee/core/CDebug>
 

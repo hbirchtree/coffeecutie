@@ -38,7 +38,7 @@ using WPkg = ::Windows::ApplicationModel::Package;
 using namespace ::Coffee;
 using namespace ::enum_helpers;
 
-using Profiler = platform::profiling::SimpleProfilerImpl;
+using Profiler     = platform::profiling::SimpleProfilerImpl;
 using DProfContext = platform::profiling::DeepProfilerContext;
 
 namespace platform {
@@ -93,7 +93,7 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.configDir = MkInvalidUrl();
     paths.tempDir   = MkInvalidUrl();
 
-    CString const& _coffee_resource_prefix = file::GetResourcePrefix();
+    CString const& _coffee_resource_prefix = file::ResourcePrefix();
 
 #if defined(COFFEE_ANDROID)
 
@@ -138,25 +138,21 @@ STATICINLINE SystemPaths GetSystemPaths()
         MkUrl("/tmp", RSCA::SystemFile) + Path{GetAppData().application_name};
 
     /* TODO: Implement this here */
-    //    const constexpr cstring var_snappy = "SNAP_USER_COMMON";
+    const constexpr cstring var_snappy_config = "SNAP_USER_COMMON";
 
-    //    if(Env::ExistsVar(var_snappy))
-    //    {
-    //        return MkUrl(Env::GetVar(var_snappy), RSCA::SystemFile);
-    //    } else
-    //    {
-    //        if(!orgname && !appname)
-    //        {
-    //            orgname = GetCurrentApp().organization_name.c_str();
-    //            appname = GetCurrentApp().application_name.c_str();
-    //        }
+    if(Env::ExistsVar(var_snappy_config))
+    {
+        paths.configDir =
+            MkUrl(Env::GetVar(var_snappy_config), RSCA::SystemFile);
+    } else
+    {
+        cstring orgname = GetAppData().organization_name.c_str();
+        cstring appname = GetAppData().application_name.c_str();
 
-    //        Path homedir =
-    //            ((Path(GetUserHome()) + ".local/share") + orgname) + appname;
-    //        return MkUrl(homedir, RSCA::SystemFile);
-    //    }
-
-    //    paths.configDir = Env::GetUserData(nullptr, nullptr);
+        Path homedir =
+            ((Path(Env::GetUserHome()) + ".local/share") + orgname) + appname;
+        paths.configDir = MkUrl(homedir, RSCA::SystemFile);
+    }
 
 #elif defined(COFFEE_WINDOWS)
 
@@ -625,7 +621,7 @@ CString to_string(const Path& path)
 CString to_string(const Url& url)
 {
     return "url(" + url.internUrl + "," +
-           ::str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
+           str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

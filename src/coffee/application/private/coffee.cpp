@@ -1,28 +1,32 @@
 #include <coffee/core/coffee.h>
 
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/base/jsonlogger.h>
-#include <coffee/core/base/printing/outputprinter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/resource_prefix.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/core/types/cdef/infotypes.h>
+#include <url/url.h>
+
+#include <peripherals/build/build_info.h>
 #include <peripherals/build/license.h>
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/string_ops.h>
+
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/process.h>
 #include <platforms/stacktrace.h>
 #include <platforms/sysinfo.h>
-#include <url/url.h>
 
-#include <coffee/core/formatting.h>
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+
 #include <coffee/core/CDebug>
-#include <coffee/core/CProfiling>
 
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
@@ -181,7 +185,14 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     SetApplicationData(State::GetAppData());
     /* BuildInfo contains information on the compiler, architecture
      *  and platform */
-    SetBuildInfo(State::GetBuildInfo());
+    {
+        auto& buildInfo = State::GetBuildInfo();
+
+        buildInfo.architecture  = platform::info::architecture;
+        buildInfo.build_version = platform::info::build_version;
+        buildInfo.compiler      = platform::info::compiler;
+        buildInfo.platform      = platform::info::platform_identity;
+    }
 
 #endif
 
@@ -279,6 +290,9 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
 void CoffeeTerminate()
 {
+    using namespace ::platform::file;
+    using namespace ::platform::url::constructors;
+
     cVerbose(5, "Terminating");
 
 #ifndef COFFEE_LOWFAT
@@ -300,7 +314,7 @@ void CoffeeTerminate()
             cBasicPrint("{0} : {1}", f.name, (procFd + f.name).canonical());
         }
 
-    using MMAP = Environment::Linux::MemMap;
+    using MMAP = env::Linux::MemMap;
 
     MMAP::ProcMap mem_map;
     MMAP::GetProcMap(ProcessProperty::Pid(), mem_map);
@@ -343,7 +357,7 @@ void InstallDefaultSigHandlers()
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
-                    std::current_exception());
+            std::current_exception());
         abort();
     });
 #endif

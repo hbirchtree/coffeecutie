@@ -1,18 +1,20 @@
 #include <coffee/core/CObject>
+
+#include <algorithm>
+
 #include <coffee/core/CDebug>
 
 namespace Coffee {
 
-CObject::CObject():
-    m_parent(nullptr)
+CObject::CObject() : m_parent(nullptr)
 {
 }
 
-CObject::CObject(CObject *parent):
-    CObject()
+CObject::CObject(CObject* parent) : CObject()
 {
     m_parent = parent;
-    if(parent){
+    if(parent)
+    {
         parent->m_children.push_back(this);
     }
 }
@@ -25,17 +27,17 @@ CObject::~CObject()
         delete child;
 }
 
-CObject *CObject::parent() const
+CObject* CObject::parent() const
 {
     return m_parent;
 }
 
-CObject *CObject::parent()
+CObject* CObject::parent()
 {
     return m_parent;
 }
 
-void CObject::setParent(CObject *parent)
+void CObject::setParent(CObject* parent)
 {
     if(parent == this)
         return;
@@ -56,30 +58,29 @@ void NamedObject::setObjectName(cstring name)
     this->m_objectName = name;
 }
 
-const Vector<MultiParentObject *> &MultiParentObject::children() const
+const Vector<MultiParentObject*>& MultiParentObject::children() const
 {
     return m_children;
 }
 
-void CObject::removeChild(CObject *child)
+void CObject::removeChild(CObject* child)
 {
     MultiParentObject::removeChild(child);
 }
 
-void MultiParentObject::addChild(MultiParentObject *child)
+void MultiParentObject::addChild(MultiParentObject* child)
 {
     m_children.push_back(child);
 }
 
-void MultiParentObject::removeChild(MultiParentObject *child)
+void MultiParentObject::removeChild(MultiParentObject* child)
 {
-    std::remove_if(m_children.begin(), m_children.end(),
-                   [&](MultiParentObject* it){
-        if( it == child )
-            return true;
-        return false;
-    });
+    std::remove_if(
+        m_children.begin(), m_children.end(), [&](MultiParentObject* it) {
+            if(it == child)
+                return true;
+            return false;
+        });
 }
 
 } // namespace Coffee
-

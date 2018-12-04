@@ -1,6 +1,3 @@
-#include "base/strings/extensionresolvers.h"
-#include "base/strings/vector_print_extensions.h"
-#include "base/strings/information_extensions.h"
-#include "base/strings/chrono_resolvers.h"
+#pragma once
 
-#include "base/strings/string_format.h"
+#include <coffee/strings/format.h>

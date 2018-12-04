@@ -1,15 +1,19 @@
 #include <coffee/core/CFiles>
+#include <coffee/strings/libc_types.h>
+#include <peripherals/stl/string_ops.h>
+
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
-using FileInterface       = FileFunDef<>;
+using FileInterface       = platform::file::FileFunDef<>;
 using NativeFileInterface = FileFun;
 
 template<
     typename FileApi,
     typename NestedError,
-    typename implements<FileFunDef<NestedError>, FileApi>::type* = nullptr>
+    typename implements<platform::file::FileFunDef<NestedError>, FileApi>::
+        type* = nullptr>
 bool api_test()
 {
     /* This test suite tests whether the function signature of the
@@ -47,7 +51,7 @@ bool api_test()
     FileApi::DereferenceLink(testingUrl, ec);
     FileApi::Exists(testingUrl, ec);
     FileApi::Size(testingUrl, ec);
-    FileApi::Touch(FileApi::NodeType::File, testingUrl, ec);
+    FileApi::Touch(FileType::File, testingUrl, ec);
     FileApi::Stat(testingUrl, ec);
     FileApi::Ln(testingUrl, testingUrl, ec);
     FileApi::Rm(testingUrl, ec);
@@ -94,6 +98,8 @@ bool url_api()
 
     return false;
 }
+
+using namespace ::platform::file;
 
 COFFEE_TEST_SUITE(4) = {
     {api_test<FileInterface, FileInterface::file_error::nested_error_type>,

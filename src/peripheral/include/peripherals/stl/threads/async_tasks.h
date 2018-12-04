@@ -3,6 +3,7 @@
 #include <coffee/core/base.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/thread_types.h>
 
 namespace stl_types {
 namespace threads {
@@ -100,5 +101,5 @@ FORCEDINLINE void sleepMillis(u64 mll)
     CurrentThread::sleep_for(Chrono::milliseconds(mll));
 }
 
-} // namespace Threads
+} // namespace threads
 } // namespace stl_types

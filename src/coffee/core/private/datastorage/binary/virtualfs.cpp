@@ -1,11 +1,13 @@
 #include <coffee/core/datastorage/binary/virtualfs.h>
 
-#include <coffee/core/CProfiling>
 #include <coffee/core/CMath>
+#include <coffee/core/CProfiling>
 #include <coffee/core/datastorage/compression/libz.h>
-#include <peripherals/stl/threads/job_system.h>
 #include <peripherals/libc/memory_ops.h>
+#include <peripherals/stl/threads/job_system.h>
 #include <url/url.h>
+
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -522,8 +524,8 @@ bool GenVirtFS(
             }
 
             /* We want to align data to 8-byte boundaries */
-            data_size = libc::align::align<libc::align::dir_forward>(
-                        8, data_size);
+            data_size =
+                libc::align::align<libc::align::dir_forward>(8, data_size);
 
             file.offset = data_size;
             file.rsize  = filenames[i].data.size;

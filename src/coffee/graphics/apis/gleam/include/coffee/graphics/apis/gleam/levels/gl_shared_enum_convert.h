@@ -1,12 +1,15 @@
 #pragma once
 
 #include "gl_shared_types.h"
-#include <coffee/core/types/edef/logicenum.h>
-#include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/filtering.h>
+#include <coffee/core/types/pixel_format.h>
+#include <peripherals/typing/enum/graphics/primitive.h>
 
 namespace Coffee {
 namespace CGL {
+
+using Prim    = typing::graphics::primitive::base;
+using PrimCre = typing::graphics::primitive::creation;
 
 struct DrwMd
 {

@@ -1,10 +1,11 @@
 #pragma once
 
-#include <peripherals/libc/types.h>
-#include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/types/hardware_info.h>
+#include <coffee/core/types/software_info.h>
 #include <iterator>
+#include <peripherals/libc/types.h>
 
-namespace Coffee{
+namespace Coffee {
 
 enum class GpuQueryError
 {
@@ -21,16 +22,13 @@ enum class GpuQueryError
 
 struct gpu_query_category : error_category
 {
-    virtual const char *name() const noexcept override;
+    virtual const char* name() const noexcept override;
     virtual std::string message(int error_code) const override;
 };
 
 using gpu_query_error = domain_error_code<GpuQueryError, gpu_query_category>;
 
-struct SWVersionInfo;
-struct HWDeviceInfo;
-
-namespace GpuInfo{
+namespace GpuInfo {
 
 struct MemStatus
 {
@@ -60,38 +58,42 @@ struct TransferStatus
 };
 enum class Clock
 {
-    Graphics, Memory, VideoDecode, VideoEncode
+    Graphics,
+    Memory,
+    VideoDecode,
+    VideoEncode
 };
 enum class PMode
 {
-    Performance, Powersave
+    Performance,
+    Powersave
 };
 
 using gpucount_t = u32;
-using proc_t = u32;
+using proc_t     = u32;
 
 struct GpuQueryInterface
 {
-    using PGetDriver = SWVersionInfo(*)();
-    using PGetNumGpus = gpucount_t(*)();
-    using PGpuModel = HWDeviceInfo(*)(gpucount_t);
-    using PMemoryInfo = MemStatus(*)(gpucount_t);
-    using PProcMemoryUse = u64(*)(gpucount_t,proc_t);
-    using PGetTemperature = TempRange(*)(gpucount_t);
-    using PGetClock = ClockRange(*)(gpucount_t,Clock);
-    using PGetPowerMode = PMode(*)(gpucount_t);
-    using PGetUsage = UsageMeter(*)(gpucount_t);
-    using PGetPcieTransfer = TransferStatus(*)(gpucount_t);
+    using PGetDriver       = SWVersionInfo (*)();
+    using PGetNumGpus      = gpucount_t (*)();
+    using PGpuModel        = HWDeviceInfo (*)(gpucount_t);
+    using PMemoryInfo      = MemStatus (*)(gpucount_t);
+    using PProcMemoryUse   = u64 (*)(gpucount_t, proc_t);
+    using PGetTemperature  = TempRange (*)(gpucount_t);
+    using PGetClock        = ClockRange (*)(gpucount_t, Clock);
+    using PGetPowerMode    = PMode (*)(gpucount_t);
+    using PGetUsage        = UsageMeter (*)(gpucount_t);
+    using PGetPcieTransfer = TransferStatus (*)(gpucount_t);
 
-    PGetDriver GetDriver;
-    PGetNumGpus GetNumGpus;
-    PGpuModel GpuModel;
-    PMemoryInfo MemoryInfo;
-    PProcMemoryUse ProcMemoryUse;
-    PGetTemperature GetTemperature;
-    PGetClock GetClock;
-    PGetPowerMode GetPowerMode;
-    PGetUsage GetUsage;
+    PGetDriver       GetDriver;
+    PGetNumGpus      GetNumGpus;
+    PGpuModel        GpuModel;
+    PMemoryInfo      MemoryInfo;
+    PProcMemoryUse   ProcMemoryUse;
+    PGetTemperature  GetTemperature;
+    PGetClock        GetClock;
+    PGetPowerMode    GetPowerMode;
+    PGetUsage        GetUsage;
     PGetPcieTransfer GetPcieTransfer;
 };
 
@@ -103,23 +105,33 @@ extern GpuQueryInterface GetDefault();
  * \param loc Where to put the query pointers
  * \return True if external library was loaded, false if internal dummy
  */
-extern bool LoadDefaultGpuQuery(GpuQueryInterface &loc, gpu_query_error& ec);
+extern bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error& ec);
 
 class GpuView
 {
-    gpucount_t m_gpu;
+    gpucount_t         m_gpu;
     GpuQueryInterface& m_interface;
-public:
-    GpuView(gpucount_t i, GpuQueryInterface& interface):
-        m_gpu(i),
-        m_interface(interface)
+
+  public:
+    GpuView(gpucount_t i, GpuQueryInterface& interface) :
+        m_gpu(i), m_interface(interface)
     {
     }
 
-#define GPU_GLUE(outtype, fun, interface) outtype fun() const \
-    { if(m_interface.interface) return m_interface.interface(m_gpu); return {};}
-#define GPU_GLUE_2(outtype, fun, t2, interface) outtype fun(t2 arg2) const \
-    {if(m_interface.interface) return m_interface.interface(m_gpu, arg2); return {};}
+#define GPU_GLUE(outtype, fun, interface)        \
+    outtype fun() const                          \
+    {                                            \
+        if(m_interface.interface)                \
+            return m_interface.interface(m_gpu); \
+        return {};                               \
+    }
+#define GPU_GLUE_2(outtype, fun, t2, interface)        \
+    outtype fun(t2 arg2) const                         \
+    {                                                  \
+        if(m_interface.interface)                      \
+            return m_interface.interface(m_gpu, arg2); \
+        return {};                                     \
+    }
 
     GPU_GLUE(HWDeviceInfo, model, GpuModel)
     GPU_GLUE(MemStatus, mem, MemoryInfo)
@@ -139,27 +151,25 @@ class GpuQueryView
 {
     GpuQueryInterface& m_interface;
 
-public:
+  public:
     class GpuQueryIterator : public Iterator<ForwardIteratorTag, GpuView>
     {
         friend class GpuQueryView;
 
-        gpucount_t m_gpu;
+        gpucount_t    m_gpu;
         GpuQueryView* m_view;
 
-        GpuQueryIterator(GpuQueryView& view, gpucount_t i):
-            m_gpu(i),
-            m_view(&view)
+        GpuQueryIterator(GpuQueryView& view, gpucount_t i) :
+            m_gpu(i), m_view(&view)
         {
         }
 
-    public:
-
-        bool operator !=(GpuQueryIterator const& other)
+      public:
+        bool operator!=(GpuQueryIterator const& other)
         {
             return m_gpu != other.m_gpu;
         }
-        bool operator ==(GpuQueryIterator const& other)
+        bool operator==(GpuQueryIterator const& other)
         {
             return !(m_gpu != other.m_gpu);
         }
@@ -178,8 +188,7 @@ public:
 
     using iterator = GpuQueryIterator;
 
-    GpuQueryView(GpuQueryInterface& interface):
-        m_interface(interface)
+    GpuQueryView(GpuQueryInterface& interface) : m_interface(interface)
     {
     }
 
@@ -193,15 +202,15 @@ public:
     }
 };
 
-}
-}
+} // namespace GpuInfo
+} // namespace Coffee
 
 /*!
  * \brief Allow creating a constructor in external library
  */
 struct GpuQueryFunction
 {
-    using Getter = Coffee::GpuInfo::GpuQueryInterface(*)();
+    using Getter = Coffee::GpuInfo::GpuQueryInterface (*)();
 
     Getter ptr;
 };

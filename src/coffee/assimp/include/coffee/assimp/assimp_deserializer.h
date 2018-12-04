@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/core/base/files/url.h>
 #include <coffee/core/types/chunk.h>
+#include <coffee/core/url.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
 #include <peripherals/stl/type_safety.h>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <peripherals/stl/string_casting.h>
-#include <peripherals/libc/types.h>
 #include <iterator>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/string_casting.h>
 
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
@@ -10,10 +10,10 @@
 
 namespace http {
 
-using namespace ::Coffee::Primitives;
+using namespace ::libc_types;
 
-using ::Coffee::cast_pod;
-using ::Coffee::cast_string;
+using ::stl_types::cast_pod;
+using ::stl_types::cast_string;
 
 using string       = std::string;
 using plain_string = const string::value_type*;

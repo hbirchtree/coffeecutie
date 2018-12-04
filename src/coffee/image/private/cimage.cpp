@@ -59,8 +59,8 @@ bool LoadFromMemory(BytesConst const& src, image_rw* target, int req_comp)
     target->data = stbi_load_from_memory(
         C_RCAST<const byte_t*>(src.data),
         C_FCAST<int>(src.size),
-        &target->size.w,
-        &target->size.h,
+        C_RCAST<i32*>(&target->size.w),
+        C_RCAST<i32*>(&target->size.h),
         &target->bpp,
         req_comp);
 
@@ -73,8 +73,8 @@ bool LoadFromMemory(BytesConst const& src, image_float* target, int req_comp)
     target->data = stbi_loadf_from_memory(
         C_RCAST<const byte_t*>(src.data),
         C_FCAST<int>(src.size),
-        &target->size.w,
-        &target->size.h,
+        C_RCAST<i32*>(&target->size.w),
+        C_RCAST<i32*>(&target->size.h),
         &target->bpp,
         req_comp);
 
@@ -95,8 +95,8 @@ static void NearestNeighborResize(
     Size const&                  srcSize_,
     Size const&                  outSize_)
 {
-    _cbasic_size_2d<u32> srcSize = srcSize_.convert<u32>();
-    _cbasic_size_2d<u32> outSize = outSize_.convert<u32>();
+    size_2d<u32> srcSize = srcSize_.convert<u32>();
+    size_2d<u32> outSize = outSize_.convert<u32>();
 
     const auto pixel_ratio_w = srcSize.w / outSize.h;
     const auto pixel_ratio_h = srcSize.h / outSize.h;
@@ -232,6 +232,8 @@ template<typename PixType>
 image<PixType> Resize(
     image<PixType> const& img, const Size& target, int channels, ImageHint hint)
 {
+    using namespace ::enum_helpers;
+
     Bytes          data = Bytes::Alloc(target.area() * channels);
     image<PixType> out_image;
     stb_error      ec;

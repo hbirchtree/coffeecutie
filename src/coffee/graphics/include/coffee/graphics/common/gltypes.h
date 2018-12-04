@@ -1,6 +1,7 @@
 #pragma once
 
-#include <peripherals/stl/functional_types.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/stl/thread_types.h>
 
 namespace Coffee {
 /*!

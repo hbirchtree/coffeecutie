@@ -1,6 +1,10 @@
 #include <coffee/core/CMath>
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/types/graphics_types.h>
+#include <coffee/core/types/vector_types.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/vector_types.h>
+
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 using namespace SceneGraph;

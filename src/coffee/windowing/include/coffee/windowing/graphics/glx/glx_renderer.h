@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/base/renderer/glapplication.h>
-#include <coffee/core/base/types/cobject.h>
+#include <coffee/core/types/cobject.h>
 
 #if defined(COFFEE_USE_LINUX_GLX)
 

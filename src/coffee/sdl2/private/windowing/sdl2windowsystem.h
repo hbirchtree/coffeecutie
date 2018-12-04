@@ -1,14 +1,16 @@
 #pragma once
 
 #include "../types/sdl2datatypes.h"
-#include <coffee/core/plat/windowmanager/plat_windowtype.h>
+#include <platforms/windowmanager.h>
+
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace SDL2 {
 
-void GetWindowPtr(SDL_Window* window, CDWindow* win)
+void GetWindowPtr(SDL_Window* window, Window* win)
 {
     SDL_SysWMinfo info;
 

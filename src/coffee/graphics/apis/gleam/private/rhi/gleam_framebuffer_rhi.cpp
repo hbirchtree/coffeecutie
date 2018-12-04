@@ -34,7 +34,7 @@ FORCEDINLINE void fb_bind(FramebufferT t, glhnd const& h)
 }
 
 void GLEAM_RenderDummy::allocate(
-    PixFmt fmt, DBuffers buf, u32 index, CSize size)
+    PixFmt fmt, DBuffers buf, u32 index, Size size)
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
@@ -76,7 +76,8 @@ void GLEAM_RenderTarget::dealloc()
     m_handle.release();
 }
 
-void GLEAM_RenderTarget::attachSurface(const GLEAM_Surface2D &s, u32 idx, u32 mip)
+void GLEAM_RenderTarget::attachSurface(
+    const GLEAM_Surface2D& s, u32 idx, u32 mip)
 {
     fb_bind(m_type, m_handle);
 
@@ -104,7 +105,8 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy& rb)
         fb_bind(m_type, glhnd());
 }
 
-void GLEAM_RenderTarget::attachDepthStencilSurface(const GLEAM_Surface2D &s, u32 mip)
+void GLEAM_RenderTarget::attachDepthStencilSurface(
+    const GLEAM_Surface2D& s, u32 mip)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -139,9 +141,9 @@ void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface2D& s, u32 mip)
 }
 
 void GLEAM_RenderTarget::blit(
-    const CRect64&      src,
+    Rect64 const&       src,
     GLEAM_RenderTarget& target,
-    const CRect64&      tgt,
+    Rect64 const&       tgt,
     DBuffers            buf,
     Filtering           flt)
 {
@@ -180,23 +182,23 @@ void GLEAM_RenderTarget::blit(
 #endif
 }
 
-void GLEAM_RenderTarget::resize(u32 i, CRect64 const& view)
+void GLEAM_RenderTarget::resize(u32 i, Rect64 const& view)
 {
     auto sz_arm_printable = view.convert<i32>();
     // TODO: Information
-//    cVerbose(
-//        10,
-//        GLM_API "Resizing render target {0} to {1}x{2}",
-//        m_handle.hnd,
-//        sz_arm_printable.w,
-//        sz_arm_printable.h);
+    //    cVerbose(
+    //        10,
+    //        GLM_API "Resizing render target {0} to {1}x{2}",
+    //        m_handle.hnd,
+    //        sz_arm_printable.w,
+    //        sz_arm_printable.h);
 
     m_size = sz_arm_printable.size();
 }
 
-CSize GLEAM_RenderTarget::size()
+Size GLEAM_RenderTarget::size()
 {
-    CSize out;
+    Size out;
 
     if(m_size.area() == 0)
     {
@@ -227,11 +229,8 @@ void GLEAM_RenderTarget::clear(C_UNUSED(u32 i), Vecf4 const& color)
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else
         CGL43::BufClearfv(
-            GL_COLOR,
-            C_FCAST<i32>(i),
-            Span<scalar>::Create(color));
+            GL_COLOR, C_FCAST<i32>(i), Span<scalar>::Create(color));
 #endif
-
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth)

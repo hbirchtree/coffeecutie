@@ -217,11 +217,6 @@ FORCEDINLINE Url operator"" _url(const char* url, size_t)
     return MkUrl(url);
 }
 
-FORCEDINLINE Url operator"" _web(const char* url, size_t)
-{
-    return {url, Url::Networked, RSCA::None, HTTPAccess::DefaultAccess, {}};
-}
-
 /*
  *
  * Location constructors

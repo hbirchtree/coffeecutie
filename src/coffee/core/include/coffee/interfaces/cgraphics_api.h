@@ -2,29 +2,28 @@
 
 #include "cgraphics_api_basic.h"
 #include "cgraphics_api_thread.h"
-
-#include <coffee/core/types/chunk.h>
-
-#include <coffee/core/types/vector_types.h>
-
-#include <coffee/core/types/cdef/pixtypes.h>
-#include <coffee/core/types/edef/colorenum.h>
-#include <coffee/core/types/edef/dbgenum.h>
-#include <coffee/core/types/edef/graphicsenum.h>
-#include <coffee/core/types/edef/logicenum.h>
-#include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/edef/resenum.h>
-
 #include "cgraphics_pixops.h"
+#include <coffee/core/types/chunk.h>
+#include <coffee/interfaces/cgraphics_types.h>
+
+namespace platform {
+namespace info {
+
+struct HardwareDevice;
+struct SoftwareVersion;
+
+} // namespace info
+} // namespace platform
 
 namespace Coffee {
 
-struct HWDeviceInfo;
-struct SWVersionInfo;
+using HWDeviceInfo  = platform::info::HardwareDevice;
+using SWVersionInfo = platform::info::SoftwareVersion;
 
 namespace Display {
-struct CDProperties;
+struct Properties;
 }
+
 namespace RHI {
 
 struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
@@ -175,9 +174,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct ViewportState
     {
-        using VRect  = CRect;
-        using DField = ZField64;
-        using SRect  = CRect;
+        using VRect  = Rect;
+        using DField = typing::graphics::field<bigscalar>;
+        using SRect  = Rect;
 
         ViewportState(szptr views) : m_mview(false)
         {
@@ -338,15 +337,15 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
     struct DebugMessage
     {
-        DebugComponent component() const
+        debug::Component component() const
         {
             return m_comp;
         }
-        DebugType type() const
+        debug::Type type() const
         {
             return m_type;
         }
-        Severity severity() const
+        debug::Severity severity() const
         {
             return m_sev;
         }
@@ -359,10 +358,10 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_msg;
         }
 
-        DebugComponent m_comp;
-        DebugType      m_type;
-        Severity       m_sev;
-        CString        m_msg;
+        debug::Component m_comp;
+        debug::Type      m_type;
+        debug::Severity  m_sev;
+        CString          m_msg;
     };
 
     /*!
@@ -830,12 +829,12 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         RSCA   m_access;
     };
 
-    using Surface2D   = Surface<CSize, CPoint> /* Simple 2D texture */;
-    using Surface3D   = Surface<CSize3, CPoint3> /* Simple 3D texture */;
-    using SurfaceCube = Surface<CSize, CPoint> /* Cubemap texture */;
+    using Surface2D   = Surface<Size, Point> /* Simple 2D texture */;
+    using Surface3D   = Surface<Size3, Point3> /* Simple 3D texture */;
+    using SurfaceCube = Surface<Size, Point> /* Cubemap texture */;
 
-    using Surface2DArray   = Surface<CSize3, CPoint3> /* 2D texture array */;
-    using SurfaceCubeArray = Surface<CSize3, CPoint3> /* Cubemap array */;
+    using Surface2DArray   = Surface<Size3, Point3> /* 2D texture array */;
+    using SurfaceCubeArray = Surface<Size3, Point3> /* Cubemap array */;
 
     /*!
      * \brief Used to address a sampler from the shaders
@@ -946,7 +945,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct RenderDummy
     {
-        void allocate(PixFmt, DBuffers, u32, CSize)
+        void allocate(PixFmt, DBuffers, u32, Size)
         {
         }
         void deallocate()
@@ -967,7 +966,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         /*!
          * \brief Do a framebuffer blit  to another framebuffer
          */
-        void blit(CRect64 const&, RenderTarget&, CRect64 const&, DBuffers) const
+        void blit(Rect64 const&, RenderTarget&, Rect64 const&, DBuffers) const
         {
         }
 
@@ -991,7 +990,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        void resize(u32, CRect64 const&)
+        void resize(u32, Rect64 const&)
         {
         }
 
@@ -1286,7 +1285,7 @@ struct GraphicsProfiler
             return true;
         }
 
-        void resize(CSize const&)
+        void resize(Size const&)
         {
         }
 
@@ -1363,7 +1362,7 @@ struct NullAPI : GraphicsAPI
             Surface2D(fmt, false, 0, mips, flags)
         {
         }
-        CSize m_size;
+        Size m_size;
     };
     struct S_3D : Surface3D
     {
@@ -1371,7 +1370,7 @@ struct NullAPI : GraphicsAPI
             Surface3D(fmt, false, 0, mips, flags)
         {
         }
-        CSize3 m_size;
+        Size3 m_size;
     };
     using S_Cube = SurfaceCube;
 
@@ -1381,7 +1380,7 @@ struct NullAPI : GraphicsAPI
             Surface2DArray(fmt, false, 0, mips, flags)
         {
         }
-        CSize3 m_size;
+        Size3 m_size;
     };
 
     using API_CONTEXT = Function<bool(bool)>;

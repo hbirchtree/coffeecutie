@@ -1,9 +1,10 @@
 #pragma once
 
+#if defined(COFFEE_COMPILE_APPLICATION)
 #include <coffee/core/CApplication>
-#include <coffee/core/CMD>
+#endif
+
 #include <coffee/core/CProfiling>
-#include <coffee/core/types/cdef/infotypes.h>
 
 #include <coffee/core/CDebug>
 

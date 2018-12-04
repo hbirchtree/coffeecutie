@@ -1,11 +1,17 @@
 #include <coffee/core/base/jsonlogger.h>
 
 #include <coffee/core/coffee.h>
-#include <coffee/core/formatting.h>
 #include <coffee/core/internal_state.h>
-#include <platforms/file.h>
-#include <peripherals/stl/time_types.h>
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/time_types.h>
+#include <platforms/file.h>
+
+/* to_string functions for formatting */
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/formatting.h>
 
 #include <coffee/core/base/printing/outputprinter.h>
 
@@ -20,7 +26,7 @@ struct JsonLogState : State::GlobalState
 {
     virtual ~JsonLogState();
 
-    file::FileFun::FileHandle handle;
+    FileFun::FileHandle handle;
 };
 
 static const cstring JsonTaggedFormat =
@@ -68,14 +74,13 @@ static void JsonLogger(
     auto json_msg = Strings::fmt(
         JsonFormat,
         filtered_message,
-        DebugFun::severity_string(sev),
+        Strings::to_string(sev),
         fileno(pipe),
         level,
         Time<>::Microsecond() / 1000);
 
-    file::file_error ec;
-    file::FileFun::Write(
-        jsonLog, semantic::Bytes::CreateString(json_msg.c_str()), ec);
+    file_error ec;
+    FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);
 }
 
 static void JsonTagLogger(
@@ -92,7 +97,7 @@ static void JsonTagLogger(
     auto json_msg = Strings::fmt(
         JsonTaggedFormat,
         filtered_message,
-        DebugFun::severity_string(sev),
+        Strings::to_string(sev),
         fileno(pipe),
         level,
         tag,

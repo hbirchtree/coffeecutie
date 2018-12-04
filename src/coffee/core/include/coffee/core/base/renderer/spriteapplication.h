@@ -1,8 +1,11 @@
 #pragma once
 
-#include "../../types/edef/pixenum.h"
-#include "../../types/edef/resenum.h"
-#include "../types/cdisplay.h"
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
+#include <coffee/core/types/pixel_format.h>
+#include <coffee/core/types/rect.h>
+#include <coffee/core/types/rsca.h>
+#include <coffee/core/types/size.h>
 
 namespace Coffee {
 namespace Display {
@@ -11,7 +14,7 @@ class SpriteApplication
 {
   public:
     /* Types */
-    using SpriteSource = CRect;
+    using SpriteSource = Rect;
 
     /*! In-memory texture data, user is given handle */
     using Texture = u64;
@@ -39,12 +42,12 @@ class SpriteApplication
     virtual void     destroyRenderer(Renderer t) = 0;
 
     virtual bool createTexture(
-        Renderer     r,
-        u32          c,
-        Texture*     t,
-        PixFmt       fmt,
-        RSCA         acc,
-        CSize const& size)                     = 0;
+        Renderer    r,
+        u32         c,
+        Texture*    t,
+        PixFmt      fmt,
+        RSCA        acc,
+        Size const& size)                      = 0;
     virtual void destroyTexture(u32, Texture*) = 0;
 
     virtual bool createSprite(Texture const&, SpriteSource const&, Sprite*) = 0;

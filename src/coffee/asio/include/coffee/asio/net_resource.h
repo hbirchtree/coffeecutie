@@ -5,12 +5,16 @@
 #include <coffee/asio/tcp_socket.h>
 #endif
 
-#include <coffee/core/base/files/url.h>
 #include <coffee/core/types/chunk.h>
+#include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
+#include <peripherals/semantic/enum/http_access.h>
 
 namespace Coffee {
 namespace Net {
+
+using namespace ::semantic;
+using namespace ::platform::url;
 
 FORCEDINLINE bool Supported()
 {
@@ -109,9 +113,20 @@ FORCEDINLINE Url
 
 #endif
 
-FORCEDINLINE Url operator"" _http(const char* url, size_t)
+FORCEDINLINE platform::url::Url operator"" _http(const char* url, size_t)
 {
-    return Net::MkUrl(url, HTTPAccess::GET);
+    return Net::MkUrl(url, semantic::HTTPAccess::GET);
+}
+
+FORCEDINLINE platform::url::Url operator"" _https(const char* url, size_t)
+{
+    return Net::MkUrl(
+        url, semantic::HTTPAccess::GET | semantic::HTTPAccess::Secure);
+}
+
+FORCEDINLINE platform::url::Url operator"" _web(const char* url, size_t)
+{
+    return Net::MkUrl(url, semantic::HTTPAccess::DefaultAccess);
 }
 
 } // namespace Coffee

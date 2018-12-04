@@ -7,6 +7,7 @@
 #undef Undefined
 
 namespace typing {
+namespace pixels {
 
 using namespace ::libc_types;
 
@@ -235,4 +236,5 @@ enum class BitFmt : u8
     Undefined,
 };
 
+} // namespace pixels
 } // namespace typing

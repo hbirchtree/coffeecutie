@@ -1,3 +1,4 @@
+#include <coffee/asio/net_resource.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
 
@@ -100,11 +101,12 @@ bool url_get_string()
     return true;
 }
 
+#if defined(FEATURE_ENABLE_CoffeeASIO)
 bool url_parsing_http()
 {
     const Url http_url = "http://coffee.birchtrees.me/some/path/with/Stuff"_web;
-    const Url https_url     = "https://coffee.birchtrees.me/examples"_web;
-    const Url http_port_url = "http://coffee.birchtrees.me:8080/stuff"_web;
+    const Url https_url      = "https://coffee.birchtrees.me/examples"_web;
+    const Url http_port_url  = "http://coffee.birchtrees.me:8080/stuff"_web;
     const Url http_port2_url = "http://coffee.birchtrees.me:8080"_web;
 
     auto http_parse = UrlParse::From(http_url);
@@ -164,6 +166,17 @@ bool url_parsing_custom_uri()
 
     return true;
 }
+#else
+bool url_parsing_http()
+{
+    return true;
+}
+
+bool url_parsing_custom_uri()
+{
+    return true;
+}
+#endif
 
 COFFEE_TEST_SUITE(16) = {
     {url_bad_deref, "Url bad dereferencing"},

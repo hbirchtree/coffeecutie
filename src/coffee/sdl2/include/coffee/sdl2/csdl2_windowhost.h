@@ -6,36 +6,35 @@
 #include "input/csdl2_eventhandler.h"
 #include <coffee/core/CDRendererBase>
 
-namespace Coffee{
-namespace Display{
+namespace Coffee {
+namespace Display {
 
-class SDL2WindowHost :
-        public SDL2Window,
-        public SDL2EventHandler,
-        public CDRendererBase
+class SDL2WindowHost : public SDL2Window,
+                       public SDL2EventHandler,
+                       public CDRendererBase
 {
-public:
-    SDL2WindowHost(CObject* parent = nullptr):
-        CDRendererBase(parent)
+  public:
+    SDL2WindowHost(CObject* parent = nullptr) : CDRendererBase(parent)
     {
     }
 
-    bool hostPreInit(const CDProperties &props,CString*err)
+    bool hostPreInit(const Properties& props, CString* err)
     {
-        return windowPreInit(props,err) && inputPreInit(err);
+        return windowPreInit(props, err) && inputPreInit(err);
     }
-    bool hostInit(const CDProperties &props,CString* err)
+    bool hostInit(const Properties& props, CString* err)
     {
-        return windowInit(props,err) && inputInit(err);
+        return windowInit(props, err) && inputInit(err);
     }
-    bool hostPostInit(const CDProperties &props,CString* err)
+    bool hostPostInit(const Properties& props, CString* err)
     {
-        return windowPostInit(props,err) && inputPostInit(err);
+        return windowPostInit(props, err) && inputPostInit(err);
     }
 
-    bool init(const CDProperties &props,CString* err)
+    bool init(const Properties& props, CString* err)
     {
-        return hostPreInit(props,err) && hostInit(props,err) && hostPostInit(props,err);
+        return hostPreInit(props, err) && hostInit(props, err) &&
+               hostPostInit(props, err);
     }
     void run()
     {
@@ -46,17 +45,17 @@ public:
         windowTerminate();
     }
 
-    void eventHandleD(const CDEvent &e, c_cptr d)
+    void eventHandleD(const Event& e, c_cptr d)
     {
-        SDL2EventHandler::eventHandleD(e,d);
+        SDL2EventHandler::eventHandleD(e, d);
     }
 
-    void eventHandleI(const CIEvent& e, c_cptr data)
+    void eventHandleI(const Input::CIEvent& e, c_cptr data)
     {
-        SDL2EventHandler::eventHandleI(e,data);
+        SDL2EventHandler::eventHandleI(e, data);
     }
 };
 
-}
-}
+} // namespace Display
+} // namespace Coffee
 #endif

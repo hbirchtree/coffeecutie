@@ -3,15 +3,16 @@
 #include <coffee/assimp/assimp_material_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/stl_types.h>
 #include <coffee/interfaces/cgraphics_api.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
-
+#include <peripherals/libc/string_ops.h>
+#include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/threads/job_system.h>
-#include <peripherals/stl/types.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/terminal/terminal_cursor.h>
+#include <coffee/core/terminal/cursor.h>
 
 #define PRESSURE_LIB "PressurizeModels::"
 
@@ -25,7 +26,7 @@ static Vector<CString> const* baseDirs = nullptr;
 bool supported(CString const& otherExt)
 {
     for(auto ext : assimpExtensions)
-        if(ext && str::cmp<str::comp_nocase>(ext, otherExt.c_str()))
+        if(ext && libc::str::cmp<libc::str::comp_nocase>(ext, otherExt.c_str()))
             return true;
     return false;
 }
@@ -194,7 +195,7 @@ void AssimpProcessor::process(
 
         auto filePath = Path(file);
 
-        CResources::Resource sceneFile(MkUrl(filePath.internUrl.c_str()));
+        Resource sceneFile(MkUrl(filePath.internUrl.c_str()));
 
         {
             cursor.progress(PRESSURE_LIB "Processing {0}", filePath);
@@ -299,7 +300,7 @@ void AssimpProcessor::process(
         auto ext = Path(file.filename).extension();
 
         for(auto otherExt : assimpExtensions)
-            if(str::cmp<str::comp_nocase>(ext.c_str(), otherExt))
+            if(libc::str::cmp<libc::str::comp_nocase>(ext.c_str(), otherExt))
                 return true;
         return false;
     };

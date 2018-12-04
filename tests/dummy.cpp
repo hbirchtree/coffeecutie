@@ -4,10 +4,8 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/CDisplay>
 #include <coffee/core/CFiles>
-#include <coffee/core/CMD>
 #include <coffee/core/CMath>
 #include <coffee/core/CThreading>
-#include <coffee/core/plat/plat_environment.h>
 #include <peripherals/stl/string_casting.h>
 #include <coffee/core/types/chunk.h>
 

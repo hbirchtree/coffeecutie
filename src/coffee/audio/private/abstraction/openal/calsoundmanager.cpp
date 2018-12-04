@@ -25,7 +25,7 @@ CALSoundManager::CALSoundManager()
     szptr i = 0;
     for(cstring dev : odevices)
     {
-        if(str::cmp(odevices[i],def_str))
+        if(libc::str::cmp(odevices[i],def_str))
             d_idx = i;
         v_odevices.push_back(CALSoundDeviceIdentifier(i,dev));
         i++;

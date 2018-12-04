@@ -3,17 +3,21 @@
 /* In the future, we might use this for packing-sensitive structs */
 #define BL_STRUCT struct
 
-#include <coffee/core/types/cdef/geometry.h>
-#include <coffee/core/types/cdef/pixtypes.h>
-#include <coffee/core/types/edef/graphicsenum.h>
-#include <coffee/core/types/edef/pixenum.h>
-#include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/libc_types.h>
 #include <coffee/core/types/map.h>
+#include <coffee/core/types/pixel_components.h>
+#include <coffee/core/types/pixel_format.h>
+#include <coffee/core/types/point.h>
+#include <coffee/core/types/rgba.h>
+#include <coffee/core/types/size.h>
+#include <peripherals/typing/enum/graphics/texture_types.h>
 
 #include "blam_tag_classes.h"
 
 namespace Coffee {
 namespace Blam {
+
+using TexType = typing::graphics::TexType;
 
 using bl_tag    = char[4];
 using bl_string = char[32];
@@ -31,11 +35,11 @@ struct tagref_t
 /*!
  * \brief Blam, at least for Halo 1, uses int16 to store bitmap sizes
  */
-using bl_size_t = _cbasic_size_2d<i16>;
+using bl_size_t = size_2d<i16>;
 /*!
  * \brief As with blam_size, int16 is standard size for Halo 1.
  */
-using bl_point_t = _cbasic_point_2d<i16>;
+using bl_point_t = point_2d<i16>;
 
 /*!
  * \brief Function pointers for blam bitmap processing, raw function pointer is
@@ -79,39 +83,38 @@ constexpr cstring header_head = "deah"; /*!< Header of file header*/
 constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
 
 constexpr i32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
-constexpr _cbasic_static_map<char[15], char[28], 28> blam_map_names =
-    {
-        // Single player maps
-        {"a10", "Pillar of Autumn"},
-        {"a30", "Halo"},
-        {"a50", "Truth and Reconciliation"},
-        {"b30", "Silent Cartographer"},
-        {"b40", "Assault on the Control Room"},
-        {"c10", "343 Guilty Spark"},
-        {"c20", "The Library"},
-        {"c40", "Two Betrayals"},
-        {"d20", "Keyes"},
-        {"d40", "The Maw"},
+constexpr _cbasic_static_map<char[15], char[28], 28> blam_map_names = {
+    // Single player maps
+    {"a10", "Pillar of Autumn"},
+    {"a30", "Halo"},
+    {"a50", "Truth and Reconciliation"},
+    {"b30", "Silent Cartographer"},
+    {"b40", "Assault on the Control Room"},
+    {"c10", "343 Guilty Spark"},
+    {"c20", "The Library"},
+    {"c40", "Two Betrayals"},
+    {"d20", "Keyes"},
+    {"d40", "The Maw"},
 
-        // Multi-player maps
-        {"beavercreek", "Beaver Creek"},
-        {"bloodgulch", "Blood Gulch"},
-        {"boardingaction", "Boarding Action"},
-        {"carousel", "Derelict"},
-        {"chillout", "Chill Out"},
-        {"deathisland", "Death Island"},
-        {"damnation", "Damnation"},
-        {"dangercanyon", "Danger Canyon"},
-        {"gephyrophobia", "Gephyrophobia"},
-        {"hangemhigh", "Hang 'em High"},
-        {"icefields", "Ice Fields"},
-        {"longest", "Longest"},
-        {"prisoner", "Prisoner"},
-        {"putput", "Chiron TL34"},
-        {"ratrace", "Rat Race"},
-        {"sidewinder", "Sidewinder"},
-        {"timberland", "Timberland"},
-        {"wizard", "Wizard"},
+    // Multi-player maps
+    {"beavercreek", "Beaver Creek"},
+    {"bloodgulch", "Blood Gulch"},
+    {"boardingaction", "Boarding Action"},
+    {"carousel", "Derelict"},
+    {"chillout", "Chill Out"},
+    {"deathisland", "Death Island"},
+    {"damnation", "Damnation"},
+    {"dangercanyon", "Danger Canyon"},
+    {"gephyrophobia", "Gephyrophobia"},
+    {"hangemhigh", "Hang 'em High"},
+    {"icefields", "Ice Fields"},
+    {"longest", "Longest"},
+    {"prisoner", "Prisoner"},
+    {"putput", "Chiron TL34"},
+    {"ratrace", "Rat Race"},
+    {"sidewinder", "Sidewinder"},
+    {"timberland", "Timberland"},
+    {"wizard", "Wizard"},
 }; /*!< A mapping of map names which this library can recognize. These are the
       stock maps.*/
 
@@ -299,14 +302,14 @@ struct bitm_image_t
  */
 struct bitm_texture_t
 {
-    CSize3    resolution; /*!< Size of texture*/
-    c_cptr    data;       /*!< Pointer to described data*/
-    i16       mipmaps;    /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
-    PixCmp    format;     /*!< Texture format, DXT or RGBA*/
-    PixFmt    cformat;    /*!< Compression format, if applicable*/
-    BitFmt    dformat;    /*!< Data format of texture data*/
-    TexType   type;       /*!< Texture type, 2D, 3D and cubes*/
-    uint16    blocksize;  /*!< Block size of DXT* formats*/
+    Size3   resolution; /*!< Size of texture*/
+    c_cptr  data;       /*!< Pointer to described data*/
+    i16     mipmaps;    /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
+    PixCmp  format;     /*!< Texture format, DXT or RGBA*/
+    PixFmt  cformat;    /*!< Compression format, if applicable*/
+    BitFmt  dformat;    /*!< Data format of texture data*/
+    TexType type;       /*!< Texture type, 2D, 3D and cubes*/
+    uint16  blocksize;  /*!< Block size of DXT* formats*/
 };
 
 FORCEDINLINE

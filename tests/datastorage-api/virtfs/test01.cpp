@@ -1,10 +1,12 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
-using RSC = Coffee::CResources::Resource;
+using RSC = Coffee::Resource;
 
 static const cstring test_txt_content = "TEST DATA LOL"
                                         "TEST DATA LOL"

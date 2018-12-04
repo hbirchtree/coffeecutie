@@ -119,9 +119,8 @@ static void CompressETC_With(
 
         IMG::serial_image imgDesc = {};
 
-        imgDesc.size =
-            _cbasic_size_2d<i32>(mip.uiExtendedWidth, mip.uiExtendedHeight)
-                .convert<u32>();
+        imgDesc.size = size_2d<i32>(mip.uiExtendedWidth, mip.uiExtendedHeight)
+                           .convert<u32>();
 
         auto fmt          = GetETCFormat(format);
         imgDesc.v2.format = fmt;
@@ -146,13 +145,13 @@ static void CompressETC_With(
 
 static bool CompressETC12(
     common_tools_t& t,
-    CSize const&    size,
+    Size const&    size,
     Bytes const&    inputData,
     Path const&     outName)
 {
     u32 num_mipmaps = 1;
     {
-        i32 tex_size = CMath::min(size.w, t.compress.max_size);
+        i32 tex_size = CMath::min<i32>(size.w, t.compress.max_size);
 
         while(tex_size > t.compress.min_size)
         {

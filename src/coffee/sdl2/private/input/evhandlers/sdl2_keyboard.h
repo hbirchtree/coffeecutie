@@ -7,37 +7,35 @@
 #include "sdl2_inputmap.h"
 #include "sdl2eventhandlers.h"
 
-namespace Coffee{
-namespace SDL2{
+namespace Coffee {
+namespace SDL2 {
 
-using namespace CInput;
+using namespace Input;
 
 FORCEDINLINE void EventHandleKeys(
-        SDL2EventHandler* ctxt,
-        C_UNUSED(Uint32 type),
-        const SDL_KeyboardEvent& key)
+    SDL2EventHandler* ctxt, C_UNUSED(Uint32 type), const SDL_KeyboardEvent& key)
 {
-    CIEvent e;
+    CIEvent    e;
     CIKeyEvent k;
 
     e.type = CIEvent::Keyboard;
-    e.ts = key.timestamp;
+    e.ts   = key.timestamp;
 
     if(key.repeat)
-        k.mod = k.mod|CIKeyEvent::RepeatedModifier;
-    if(key.type==SDL_KEYDOWN)
-        k.mod = k.mod|CIKeyEvent::PressedModifier;
-    k.mod = k.mod|InterpretKeyModifier(key.keysym.mod);
+        k.mod = k.mod | CIKeyEvent::RepeatedModifier;
+    if(key.type == SDL_KEYDOWN)
+        k.mod = k.mod | CIKeyEvent::PressedModifier;
+    k.mod = k.mod | InterpretKeyModifier(key.keysym.mod);
 
-    if(key.keysym.sym<256)
-        k.key = key.keysym.sym; //SDL uses Latin-1 (mostly, except for keypad)
+    if(key.keysym.sym < 256)
+        k.key = key.keysym.sym; // SDL uses Latin-1 (mostly, except for keypad)
     else
         k.key = InterpretKeySymbol(key.keysym.sym);
 
     k.scan = key.keysym.scancode;
 
-    EventPack(ctxt,&e,&k);
+    EventPack(ctxt, &e, &k);
 }
 
-}
-}
+} // namespace SDL2
+} // namespace Coffee

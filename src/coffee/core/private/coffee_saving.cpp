@@ -3,6 +3,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_saving.h>
 #include <coffee/core/internal_state.h>
+#include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 
 namespace Coffee {

@@ -1,6 +1,10 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/CUnitTesting>
+#include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
+#include <coffee/strings/libc_types.h>
+#include <peripherals/stl/string_ops.h>
+
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
@@ -18,8 +22,7 @@ bool filewrite_test()
     Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
-    return CResources::FileCommit(
-        rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
+    return FileCommit(rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
 }
 
 bool fileread_test()

@@ -232,6 +232,7 @@ StartupWMClass=${APP_TARGET}
     target_compile_definitions ( ${APP_TARGET}
         PRIVATE
         -DCOFFEE_COMPONENT_NAME="${APP_TARGET}"
+        -DCOFFEE_COMPILE_APPLICATION=1
         )
 
     target_enable_cxx11(${APP_TARGET})

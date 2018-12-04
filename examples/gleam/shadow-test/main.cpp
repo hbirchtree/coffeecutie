@@ -2,9 +2,12 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
 #include <coffee/core/coffee.h>
+#include <coffee/core/platform_data.h>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/strings/libc_types.h>
 #include <coffee/windowing/renderer/renderer.h>
+#include <peripherals/stl/time_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -55,10 +58,10 @@ void loop_fun(CDRenderer& renderer, SharedData* data)
 {
     RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
 
-    if(data->frame_ts <= Time::CurrentTimestamp())
+    if(data->frame_ts <= Time<>::CurrentTimestamp())
     {
         cDebug("FPS: {0}", data->frame_count);
-        data->frame_ts    = Time::CurrentTimestamp() + 1;
+        data->frame_ts    = Time<>::CurrentTimestamp() + 1;
         data->frame_count = 0;
     }
     data->frame_count++;
@@ -88,9 +91,9 @@ i32 coffee_main(i32, cstring_w*)
     ELoop& eventloop   = *globLoop;
     eventloop.time.max = 10;
 
-    CDProperties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
-    visual.flags ^= CDProperties::Windowed;
-    visual.flags |= CDProperties::WindowedFullScreen;
+    Properties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
+    visual.flags ^= Properties::Windowed;
+    visual.flags |= Properties::WindowedFullScreen;
 
     cDebug("Visual: {0}", visual.gl.version);
 

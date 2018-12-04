@@ -1,4 +1,4 @@
-#include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/types/display/properties.h>
 
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>
@@ -6,14 +6,15 @@
 namespace Coffee {
 namespace Display {
 
-CDProperties GetDefaultVisual(const i32& ctxtMajorVer, const i32& ctxtMinorVer)
+Properties GetDefaultVisual(const i32& ctxtMajorVer, const i32& ctxtMinorVer)
 {
-    CDProperties props = {};
+    Properties props = {};
 
-    props.flags = CDProperties::Resizable | CDProperties::Windowed |
-                  CDProperties::Visible;
+    props.flags =
+        Properties::Resizable | Properties::Windowed | Properties::Visible;
 
-    props.gl.flags = GLProperties::GLAutoResize | GLProperties::GLCoreProfile;
+    props.gl.flags =
+        GL::Properties::GLAutoResize | GL::Properties::GLCoreProfile;
 
 #ifndef COFFEE_LOWFAT
     props.title = State::GetBuildInfo().default_window_name.c_str();
@@ -23,8 +24,8 @@ CDProperties GetDefaultVisual(const i32& ctxtMajorVer, const i32& ctxtMinorVer)
     props.size.h  = 720;
     props.monitor = 0;
 
-    props.gl.version.major = ctxtMajorVer;
-    props.gl.version.minor = ctxtMinorVer;
+    props.gl.version.major = C_FCAST<u8>(ctxtMajorVer);
+    props.gl.version.minor = C_FCAST<u8>(ctxtMinorVer);
 
     props.gl.bits.depth   = 24;
     props.gl.bits.stencil = 8;

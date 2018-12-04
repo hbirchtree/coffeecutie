@@ -1,1 +1,3 @@
-#include "windowmanager/plat_windowtype.h"
+#pragma once
+
+#include "base/windowtype.h"

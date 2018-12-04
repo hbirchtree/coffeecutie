@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/core/CFiles>
-#include <coffee/core/types/edef/graphicsenum.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>

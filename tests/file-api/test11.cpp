@@ -2,6 +2,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/types/chunk.h>
+#include <coffee/core/types/vector_types.h>
 
 using namespace Coffee;
 

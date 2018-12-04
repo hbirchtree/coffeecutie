@@ -4,7 +4,7 @@
 
 using namespace Coffee;
 
-using Scratch = CResources::FileFun::ScratchBuf;
+using Scratch = FileFun::ScratchBuf;
 
 bool filescratch_test()
 {
@@ -18,7 +18,7 @@ bool filescratch_test()
     szptr size = 512 * 1024 * 1024;
 #endif
 
-    Scratch f = CResources::FileFun::ScratchBuffer(size, RSCA::ReadWrite, ec);
+    Scratch f = FileFun::ScratchBuffer(size, RSCA::ReadWrite, ec);
 
     /* If true, no buffer was mapped */
     if(!f)
@@ -31,7 +31,7 @@ bool filescratch_test()
 
     cstring test_data = "TESTDATA";
 
-    szptr sz    = str::len(test_data);
+    szptr sz    = libc::str::len(test_data);
     szptr times = size / sz - size % sz;
 
     Bytes testMem = Bytes::From(test_data, sz);
@@ -49,7 +49,7 @@ bool filescratch_test()
             break;
         }
 
-    CResources::FileFun::ScratchUnmap(std::move(f), ec);
+    FileFun::ScratchUnmap(std::move(f), ec);
 
     return flag;
 }

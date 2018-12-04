@@ -247,32 +247,6 @@ const ShPtr<GlobalState>& PeekState(cstring key)
 }
 } // namespace State
 
-namespace CResources {
-/*
- *
- * File resource prefix stuff, used by file API
- *
- * This works as a proxy between CoffeeCore_Application
- *  and the core library
- *
- */
-
-void FileResourcePrefix(cstring prefix)
-{
-    C_PTR_CHECK(State::ISTATE);
-    State::ISTATE->resource_prefix = prefix;
-}
-
-CString const& GetFileResourcePrefix()
-{
-    //    fprintf(stdout, "GET: %p\n", &State::internal_state);
-    fflush(stdout);
-    C_PTR_CHECK(State::ISTATE);
-    return State::ISTATE->resource_prefix;
-}
-
-} // namespace CResources
-
 void SetCurrentApp(const info::AppData& app)
 {
     C_PTR_CHECK(State::ISTATE);
@@ -332,6 +306,38 @@ GlobalState::~GlobalState()
 } // namespace State
 
 } // namespace Coffee
+
+namespace platform {
+namespace file {
+
+using namespace ::libc_types;
+using namespace ::Coffee;
+
+/*
+ *
+ * File resource prefix stuff, used by file API
+ *
+ * This works as a proxy between CoffeeCore_Application
+ *  and the core library
+ *
+ */
+
+void ResourcePrefix(cstring prefix)
+{
+    C_PTR_CHECK(State::ISTATE);
+    State::ISTATE->resource_prefix = prefix;
+}
+
+CString const& ResourcePrefix()
+{
+    //    fprintf(stdout, "GET: %p\n", &State::internal_state);
+    fflush(stdout);
+    C_PTR_CHECK(State::ISTATE);
+    return State::ISTATE->resource_prefix;
+}
+
+} // namespace file
+} // namespace platform
 
 /*
  * These declarations are library-local storage for event handling

@@ -1,4 +1,6 @@
 #include <coffee/core/CFiles>
+#include <coffee/strings/libc_types.h>
+
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
@@ -13,15 +15,15 @@ bool link_create_test()
 
     bool status = true;
     /* Creating a target file */
-    if(!FileFun::Touch(FileFun::File, target_test, ec))
+    if(!FileFun::Touch(FileType::File, target_test, ec))
         status = false;
-    if(status && FileFun::Stat(target_test, ec) != FileFun::File)
+    if(status && FileFun::Stat(target_test, ec) != FileType::File)
         status = false;
     /* Creating link to existing file */
     if(status && !FileFun::Ln(target_test, link_test, ec))
         status = false;
     /* Getting correct result upon lstat() */
-    if(status && FileFun::Stat(link_test, ec) != FileFun::Link)
+    if(status && FileFun::Stat(link_test, ec) != FileType::Link)
         status = false;
 
     /* Verify that links are deletable */
@@ -41,7 +43,7 @@ bool link_create_hanging_test()
     if(!FileFun::Ln(target_test, link_test, ec))
         status = false;
     /* Getting correct result upon lstat() */
-    if(FileFun::Stat(link_test, ec) != FileFun::Link)
+    if(FileFun::Stat(link_test, ec) != FileType::Link)
         status = false;
 
     /* Symlinks are verified deletable from last test */
@@ -74,7 +76,7 @@ bool link_canonical_test()
     file_error ec;
     bool       status = true;
 
-    FileFun::Touch(FileFun::File, target_test, ec);
+    FileFun::Touch(FileType::File, target_test, ec);
     if(!FileFun::Ln(target_test, link_test, ec))
         status = false;
 

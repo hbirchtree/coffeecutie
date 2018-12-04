@@ -17,27 +17,26 @@ bool readwrite_file()
     auto testFile     = MkUrl("test.ini", RSCA::TemporaryFile);
     auto testFileDupe = MkUrl("test.ini.ini", RSCA::TemporaryFile);
 
-    CResources::Resource testfile(testFile);
+    Resource testfile(testFile);
 
     testfile = Bytes::CreateString(test_ini_doc);
 
-    CResources::FileCommit(
-        testfile, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
+    FileCommit(testfile, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 
-    CResources::FileMap(testfile);
+    FileMap(testfile);
     Profiler::Profile("Mapping time");
 
     INI::Document doc2 = INI::Read(testfile);
     Profiler::Profile("Reading time");
 
-    CResources::Resource rsc(testFileDupe);
-    CString              docData = INI::Write(doc2);
-    rsc                          = Bytes::CreateString(docData.c_str());
+    Resource rsc(testFileDupe);
+    CString  docData = INI::Write(doc2);
+    rsc              = Bytes::CreateString(docData.c_str());
 
-    CResources::FileCommit(rsc, RSCA::Discard | RSCA::NewFile);
+    FileCommit(rsc, RSCA::Discard | RSCA::NewFile);
     Profiler::Profile("Write-back");
 
-    CResources::FileUnmap(testfile);
+    FileUnmap(testfile);
     Profiler::Profile("Unmapping");
     return true;
 }
@@ -69,16 +68,15 @@ bool write_file()
 
     Profiler::Profile("Creating and setting values");
 
-    CResources::Resource rsc(testfile);
+    Resource rsc(testfile);
     Profiler::Profile("File object");
     CString docData = INI::Write(doc);
     rsc             = Bytes::CreateString(docData.c_str());
     Profiler::Profile("Writing object to file");
-    CResources::FileCommit(
-        rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
+    FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
     Profiler::Profile("Committing file");
 
-    auto res = CResources::FileFun::Exists(testfile, ec);
+    auto res = FileFun::Exists(testfile, ec);
 
     return res;
 }

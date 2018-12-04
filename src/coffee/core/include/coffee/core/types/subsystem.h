@@ -1,7 +1,6 @@
 #pragma once
 
-#include <coffee/core/plat/platform_detect.h>
-#include <peripherals/libc/types.h>
+#include <coffee/core/libc_types.h>
 
 namespace Coffee {
 

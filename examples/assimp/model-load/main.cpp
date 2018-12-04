@@ -1,5 +1,4 @@
 #include <coffee/core/CApplication>
-#include <coffee/core/CDebug>
 
 #include <coffee/assimp/assimp_data.h>
 #include <coffee/assimp/assimp_deserializer.h>
@@ -7,13 +6,17 @@
 #include <coffee/assimp/assimp_material_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/graphics/common/SMesh>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/vector_types.h>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 
 i32 coffee_main(i32, cstring_w*)
 {
-    auto sceneFile = CResources::Resource("metro.fbx", RSCA::None);
-    if(CResources::FileMap(sceneFile, RSCA::ReadOnly))
+    auto sceneFile = Resource("metro.fbx", RSCA::None);
+    if(FileMap(sceneFile, RSCA::ReadOnly))
     {
         using Node = ASSIMP::Node;
 
