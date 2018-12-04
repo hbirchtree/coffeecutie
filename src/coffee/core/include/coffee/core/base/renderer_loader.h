@@ -30,12 +30,14 @@ STATICINLINE bool LoadHighestVersion(
     };
 
     static const constexpr Array<GLEnv, 8> GLVersions = {{
+#if !defined(COFFEE_GLEAM_DESKTOP)
 #if !defined(COFFEE_ONLY_GLES20)
         {GL::Properties::GLES, 3, 2},
         {GL::Properties::GLES, 3, 1},
         {GL::Properties::GLES, 3, 0},
 #endif
         {GL::Properties::GLES, 2, 0},
+#endif
 
 #if !defined(COFFEE_APPLE)
         {0x0, 4, 6},

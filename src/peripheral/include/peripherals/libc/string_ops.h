@@ -216,6 +216,28 @@ FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2)
     return compare_ops::cmp<CompMode, CharType>(s1, s2);
 }
 
+template<typename CharType>
+FORCEDINLINE szptr longest_prefix(const CharType* s1, const CharType* s2)
+{
+    /* TODO: Add C++17 std::mismatch() here */
+    const auto len1 = str::len(s1);
+    const auto len2 = str::len(s2);
+
+    const auto minlen = (len1 < len2) ? len1 : len2;
+
+    szptr prefix = 0;
+
+    for(szptr i = 0; i < minlen; i++)
+    {
+        if(s1[prefix] == s2[prefix])
+            prefix++;
+        else
+            return prefix;
+    }
+
+    return prefix;
+}
+
 namespace find_ops {
 
 template<
@@ -379,7 +401,7 @@ STRTOF_ALL()
 #undef STRTOI_ALL
 #undef STRTOF_FUNCTION
 #undef STRTOF_ALL
-}
+} // namespace convert_ops
 
 template<
     typename PodType,

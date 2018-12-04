@@ -172,7 +172,7 @@ bool GLeamRenderer::bindingPostInit(const GL::Properties& p, CString* err)
             status = CGL::Loader::LoadBinding(
                 m_app->glContext(),
                 procload,
-                reinterpret_cast<void**>(&glCreateSamplers));
+                reinterpret_cast<void**>(&glGenSamplers));
         }
 #endif
     } else

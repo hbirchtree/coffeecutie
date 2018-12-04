@@ -190,7 +190,10 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_APPLE)
 
-    paths.assetDir = MkUrl(_coffee_resource_prefix.c_str(), RSCA::SystemFile);
+    if(_coffee_resource_prefix.size() > 0)
+        paths.assetDir = MkUrl(_coffee_resource_prefix, RSCA::SystemFile);
+    else
+        paths.assetDir = GetAppleStoragePath();
 
     auto home = Env::GetVar("HOME");
 #if defined(COFFEE_APPLE_MOBILE)

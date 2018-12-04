@@ -8,6 +8,8 @@
 
 using namespace Coffee;
 
+using PowerInfo = platform::env::PowerInfoDef;
+
 bool sysinfo_printing()
 {
     cDebug("Device name: {0}", SysInfo::DeviceName());

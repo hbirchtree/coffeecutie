@@ -8,6 +8,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/url.h>
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 

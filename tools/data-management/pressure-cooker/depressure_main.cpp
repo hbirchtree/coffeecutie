@@ -260,6 +260,29 @@ i32 coffee_main(i32, cstring_w*)
         return 0;
     }
 
+    VirtFS::vfs_error_code ec;
+    auto node = VirtFS::VFS::SearchFile(vfsData.data, "textures/SurfaceImperfections", ec);
+
+    Queue<decltype(node)> outNodes;
+    outNodes.push(node);
+
+    while(!outNodes.empty())
+    {
+        auto node = outNodes.front();
+        outNodes.pop();
+
+        if(node.node->is_leaf())
+        {
+            cDebug("File: {0}", node.node->leaf.fileIdx);
+            continue;
+        }
+
+        if(node.left().valid())
+            outNodes.push(node.left());
+        if(node.right().valid())
+            outNodes.push(node.right());
+    }
+
     normal_printing(vfsView, human_readable, shown_columns);
 
     return 0;

@@ -10,6 +10,10 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+target_compile_definitions ( PeripheralLib PRIVATE
+    -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
+    )
+
 target_include_directories ( PeripheralLib PUBLIC
     )
 

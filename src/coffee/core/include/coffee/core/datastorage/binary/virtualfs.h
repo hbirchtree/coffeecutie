@@ -138,6 +138,193 @@ static const constexpr szptr MagicLength_Encoded = MagicLength / sizeof(u32);
 static const constexpr char VFSMagic[MagicLength] = "CfVrtFS";
 static const constexpr u32  VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
 
+struct VirtualIndex : non_copy
+{
+    enum class index_t : u32
+    {
+        directory_tree = 0x10,
+        file_extension = 0x20,
+    };
+
+    u64     next_index; /*!< Number of bytes till next index from here */
+    index_t kind;       /*!< Describes which index structure is valid */
+
+    const void* data() const
+    {
+        static_assert(
+            sizeof(directory_data_t::node_t) ==
+                sizeof(directory_data_t::leaf_t),
+            "Mismatching node and leaf size");
+
+        return &this[1];
+    }
+
+    const VirtualIndex* next() const
+    {
+        const byte_t* basePtr = C_RCAST<const byte_t*>(this);
+
+        return C_RCAST<const VirtualIndex*>(basePtr + next_index);
+    }
+
+    /*!
+     * \brief Describes a list of files sharing a common file extension
+     */
+    struct extension_data_t
+    {
+        char ext[MaxExtensionLength];
+        u64  num_files;
+
+        _cbasic_data_chunk<const u64> indices(VirtualIndex const& idx) const
+        {
+            return _cbasic_data_chunk<const u64>::From(
+                C_RCAST<const u64*>(idx.data()), num_files);
+        }
+    };
+
+    /*!
+     * \brief Describes a binary tree of the file hierarchy
+     * The tree works as so:
+     *
+     *                              . (root)
+     *                           /      |
+     *                     textures/   ...
+     *                   /      |        /      |
+     *                t1.png t2.png  shaders/  ...
+     */
+    struct directory_data_t
+    {
+        u64 num_nodes;
+
+        struct node_t
+        {
+            static const constexpr u32 sentinel_value =
+                std::numeric_limits<u32>::max();
+
+            char prefix[MaxPrefixLength];
+            u32  left;
+            u32  right;
+
+            inline szptr prefix_length() const
+            {
+                return libc::str::len(prefix);
+            }
+
+            inline ptroff longest_match(CString const& other) const
+            {
+                auto comparison = other.substr(0, libc::str::len(prefix));
+
+                return libc::str::longest_prefix(prefix, comparison.c_str());
+            }
+
+            inline bool operator<=(CString const other) const
+            {
+                return prefix <= other;
+            }
+
+            inline bool operator>=(CString const other) const
+            {
+                return prefix >= other;
+            }
+        };
+
+        struct leaf_t
+        {
+            static const constexpr u64 mask_value =
+                std::numeric_limits<u64>::max();
+
+            u64  mask;
+            char prefix[MaxLeafLength];
+            u64  fileIdx;
+
+            inline szptr prefix_length() const
+            {
+                return libc::str::len(prefix);
+            }
+
+            inline void set_mask()
+            {
+                mask = mask_value;
+            }
+        };
+
+        union node_base_t
+        {
+            node_t node;
+            leaf_t leaf;
+            u32 flags;
+
+            enum node_flags
+            {
+                prefix_carry = 0x1,
+            };
+
+            inline bool is_leaf() const
+            {
+                return leaf.mask == leaf_t::mask_value;
+            }
+        };
+
+        _cbasic_data_chunk<const node_base_t> nodes(
+            VirtualIndex const& idx) const
+        {
+            return _cbasic_data_chunk<const node_base_t>::From(
+                C_RCAST<const node_base_t*>(idx.data()), num_nodes);
+        }
+
+        struct node_container_t
+        {
+            node_container_t() : node(nullptr), index(nullptr)
+            {
+            }
+
+            node_container_t(
+                node_base_t const* node, VirtualIndex const* index) :
+                node(node),
+                index(index)
+            {
+            }
+
+            node_base_t const*  node;
+            VirtualIndex const* index;
+
+            FORCEDINLINE bool valid()
+            {
+                return node && index;
+            }
+
+            FORCEDINLINE node_container_t left()
+            {
+                if(!valid())
+                    Throw(undefined_behavior("bad dereference"));
+
+                if(node->node.left == node->node.sentinel_value)
+                    return {};
+
+                return {&index->directory.nodes(*index)[node->node.left],
+                        index};
+            }
+
+            FORCEDINLINE node_container_t right()
+            {
+                if(!valid())
+                    Throw(undefined_behavior("bad dereference"));
+
+                if(node->node.right == node->node.sentinel_value)
+                    return {};
+
+                return {&index->directory.nodes(*index)[node->node.right],
+                        index};
+            }
+        };
+    };
+
+    union
+    {
+        directory_data_t directory;
+        extension_data_t extension;
+    };
+};
+
 struct VirtualFS
 {
     /*!
@@ -292,7 +479,7 @@ struct VirtualFS
         return GetFileTreeExact(vfs, name, ec);
     }
 
-    static VFile const* SearchFile(
+    static VirtualIndex::directory_data_t::node_container_t SearchFile(
         VFS const* vfs, cstring name, vfs_error_code& ec);
 
     /*!
@@ -303,6 +490,7 @@ struct VirtualFS
      */
     static VFile const* GetFile(VFS const* vfs, szptr idx, vfs_error_code& ec);
 
+    /* TODO: Return read-only pointer here */
     /*!
      * \brief Given a VFS and a valid file within, return the
      *  data. If the file is compressed, decompression
@@ -321,141 +509,6 @@ struct VirtualFS
 
     static VFile const* GetFileTreeExact(
         VFS const* vfs, cstring name, vfs_error_code& ec);
-};
-
-struct VirtualIndex : non_copy
-{
-    enum class index_t : u32
-    {
-        directory_tree = 0x10,
-        file_extension = 0x20,
-    };
-
-    u64     next_index; /*!< Number of bytes till next index from here */
-    index_t kind;       /*!< Describes which index structure is valid */
-
-    const void* data() const
-    {
-        static_assert(
-            sizeof(directory_data_t::node_t) ==
-                sizeof(directory_data_t::leaf_t),
-            "Mismatching node and leaf size");
-
-        return &this[1];
-    }
-
-    const VirtualIndex* next() const
-    {
-        const byte_t* basePtr = C_RCAST<const byte_t*>(this);
-
-        return C_RCAST<const VirtualIndex*>(basePtr + next_index);
-    }
-
-    /*!
-     * \brief Describes a list of files sharing a common file extension
-     */
-    struct extension_data_t
-    {
-        char ext[MaxExtensionLength];
-        u64  num_files;
-
-        _cbasic_data_chunk<const u64> indices(VirtualIndex const& idx) const
-        {
-            return _cbasic_data_chunk<const u64>::From(
-                C_RCAST<const u64*>(idx.data()), num_files);
-        }
-    };
-
-    /*!
-     * \brief Describes a binary tree of the file hierarchy
-     * The tree works as so:
-     *
-     *                              . (root)
-     *                           /      |
-     *                     textures/   ...
-     *                   /      |        /      |
-     *                t1.png t2.png  shaders/  ...
-     */
-    struct directory_data_t
-    {
-        u64 num_nodes;
-
-        struct node_t
-        {
-            static const constexpr u32 sentinel_value =
-                std::numeric_limits<u32>::max();
-
-            char prefix[MaxPrefixLength];
-            u32  left;
-            u32  right;
-
-            inline szptr prefix_length() const
-            {
-                return libc::str::len(prefix);
-            }
-
-            inline szptr longest_match(CString const& other) const
-            {
-                auto comparison = other.substr(0, libc::str::len(prefix));
-
-                return libc::str::cmp(prefix, comparison.c_str());
-            }
-
-            inline bool operator<=(CString const other) const
-            {
-                return prefix <= other;
-            }
-
-            inline bool operator>=(CString const other) const
-            {
-                return prefix >= other;
-            }
-        };
-
-        struct leaf_t
-        {
-            static const constexpr u64 mask_value =
-                std::numeric_limits<u64>::max();
-
-            u64  mask;
-            char prefix[MaxLeafLength];
-            u64  fileIdx;
-
-            inline szptr prefix_length() const
-            {
-                return libc::str::len(prefix);
-            }
-
-            inline void set_mask()
-            {
-                mask = mask_value;
-            }
-        };
-
-        union node_base_t
-        {
-            node_t node;
-            leaf_t leaf;
-
-            inline bool is_leaf() const
-            {
-                return leaf.mask == leaf_t::mask_value;
-            }
-        };
-
-        _cbasic_data_chunk<const node_base_t> nodes(
-            VirtualIndex const& idx) const
-        {
-            return _cbasic_data_chunk<const node_base_t>::From(
-                C_RCAST<const node_base_t*>(idx.data()), num_nodes);
-        }
-    };
-
-    union
-    {
-        directory_data_t directory;
-        extension_data_t extension;
-    };
 };
 
 PACKEDSTRUCT VirtualFile

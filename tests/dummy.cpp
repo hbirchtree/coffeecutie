@@ -24,7 +24,6 @@
 #include <coffee/interfaces/file_resolver.h>
 
 /* Common graphics stuff */
-#include <coffee/graphics/common/SMesh>
 #include <coffee/graphics/common/cgraphicsdata.h>
 #include <coffee/graphics/common/gltypes.h>
 #include <coffee/graphics/common/query/gpu_query.h>

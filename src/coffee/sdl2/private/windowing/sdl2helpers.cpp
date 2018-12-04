@@ -58,6 +58,10 @@ Uint32 InterpretWindowFlags(Properties::State const& flags)
     res |= _coffee_sdl2_toggle_flag(
         flags & Properties::State::Visible, SDL_WINDOW_SHOWN);
 
+#if defined(COFFEE_APPLE)
+    res |= SDL_WINDOW_ALLOW_HIGHDPI;
+#endif
+
     return res;
 }
 
@@ -99,6 +103,10 @@ void SetContextProperties(const GL::Properties& props)
 
     if(props.flags & GL::Properties::Flags::GLRobust)
         cflags |= SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
+
+#if defined(COFFEE_APPLE)
+    cflags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+#endif
 
     if(!(props.flags & GL::Properties::Flags::GLES))
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, cflags);

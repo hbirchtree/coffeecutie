@@ -186,10 +186,6 @@ coffee_library (
     LIBRARIES CoffeeCore_Base
     )
 
-target_compile_definitions ( CoffeeCore_Base PUBLIC
-    -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
-    )
-
 if(LOWFAT_BUILD)
     target_compile_definitions (  CoffeeCore_Base PUBLIC
         -DCOFFEE_LOWFAT

@@ -124,6 +124,7 @@ struct directory_index_t
 };
 
 using node_t = VirtualIndex::directory_data_t::node_t;
+using node_base_t = VirtualIndex::directory_data_t::node_base_t;
 
 using child_slice = slice<const Vector<Path>, Vector<Path>::const_iterator>;
 using part_slice  = slice<const child_slice, child_slice::iterator>;
@@ -260,11 +261,13 @@ static void GenPrefixNodes(
 
         if(node_type == link_node_type::node)
         {
+            node.node.flags = 0;
             node.node.node.left  = node_t::sentinel_value;
             node.node.node.right = node_t::sentinel_value;
             CharInsert(remaining_suffix, node.node.node.prefix, prefix_len);
         } else
         {
+            node.node.flags = 0;
             node.node.leaf.set_mask();
             node.node.leaf.fileIdx = 0;
             CharInsert(remaining_suffix, node.node.leaf.prefix, prefix_len);
@@ -286,6 +289,7 @@ static void GenPrefixNodes(
 
     new_node.node.node.left  = node_t::sentinel_value;
     new_node.node.node.right = node_t::sentinel_value;
+    new_node.node.flags = node_base_t::prefix_carry;
     CharInsert(cut_prefix, new_node.node.node.prefix, MaxPrefixLength);
 
     new_node_parent.children.push_back(Path(new_parent));
@@ -471,7 +475,6 @@ bool GenVirtFS(
         DProfContext __(VIRTFS_API "Compressing files");
 
         Function<void(szptr&)> worker = [&](szptr& i) {
-
             auto& file     = files[i];
             auto& src_file = filenames[i];
             auto& in_data  = filenames[i].data;
@@ -734,37 +737,38 @@ static node_base_t const* GetNode(u32 idx, node_list_t const& nodes)
 
 } // namespace index_lookup
 
-VFile const* VirtualFS::SearchFile(
+VirtualIndex::directory_data_t::node_container_t VirtualFS::SearchFile(
     VFS const* vfs, cstring name, vfs_error_code& ec)
 {
+    using node_base_t = VirtualIndex::directory_data_t::node_base_t;
+
     auto index =
         index_lookup::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
 
     if(!index)
     {
         ec = VFSError::NoIndexing;
-        return nullptr;
+        return {};
     }
 
     CString prefix        = index_lookup::FilterTreeName(name);
     szptr   currentPrefix = 0;
+    szptr   prefixLen     = prefix.size();
 
     auto nodes = index->directory.nodes(*index);
 
     auto currentNode = &nodes[0];
 
     if(currentNode->is_leaf())
-        return nullptr;
-
-    for(auto i : Range<>(index->directory.num_nodes))
-    {
-        cDebug("- {0}", nodes[i].node.prefix);
-    }
+        return {};
 
     while(currentNode)
     {
         if(currentNode->is_leaf())
-            return nullptr;
+            return {};
+
+        if(currentPrefix == prefixLen)
+            return {currentNode, index};
 
         auto& node = currentNode->node;
 
@@ -784,12 +788,14 @@ VFile const* VirtualFS::SearchFile(
         if(left_match > right_match)
         {
             currentNode = left_node;
-            currentPrefix += left_node->node.prefix_length();
+            if(left_node->flags & node_base_t::prefix_carry)
+                currentPrefix += left_node->node.prefix_length();
             continue;
         } else if(right_match > left_match)
         {
             currentNode = right_node;
-            currentPrefix += right_node->node.prefix_length();
+            if(left_node->flags & node_base_t::prefix_carry)
+                currentPrefix += right_node->node.prefix_length();
             continue;
         }
 
@@ -803,7 +809,7 @@ VFile const* VirtualFS::SearchFile(
         }
     }
 
-    return nullptr;
+    return {};
 }
 
 VFile const* VirtualFS::GetFileTreeExact(

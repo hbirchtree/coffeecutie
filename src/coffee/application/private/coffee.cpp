@@ -34,6 +34,16 @@
 
 using namespace ::platform;
 
+namespace platform {
+namespace url {
+
+#if defined(COFFEE_APPLE)
+extern Url GetAppleStoragePath();
+#endif
+
+}
+}
+
 namespace Coffee {
 
 enum StartFlags
@@ -55,10 +65,6 @@ extern void SetBuildInfo(BuildInfo& binfo);
  * \param appdata
  */
 extern void SetApplicationData(info::AppData& appdata);
-
-#if defined(COFFEE_APPLE)
-extern Url GetAppleStoragePath();
-#endif
 
 FORCEDINLINE void PrintVersionInfo()
 {
@@ -226,10 +232,6 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     app_dummy();
 #pragma clang diagnostic pop
-#endif
-
-#if defined(COFFEE_APPLE)
-    file::ResourcePrefix(GetAppleStoragePath().internUrl.c_str());
 #endif
 
 #if MODE_DEBUG

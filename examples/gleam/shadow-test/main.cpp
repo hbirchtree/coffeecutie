@@ -5,6 +5,7 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/windowing/renderer/renderer.h>
 #include <peripherals/stl/time_types.h>
@@ -41,6 +42,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
         "Framebuffer size: {0}, window size: {1}",
         renderer.framebufferSize(),
         renderer.windowSize());
+    cDebug("Framebuffer scale: {0}", PlatformData::DeviceDPI());
     cDebug("Monitor: {0}", renderer.monitor());
 
     data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();

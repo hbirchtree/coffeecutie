@@ -1,18 +1,18 @@
 #include <coffee/asio/asio_worker.h>
+#include <coffee/components/components.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/core/coffee_saving.h>
+#include <coffee/core/platform_data.h>
+#include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/core/types/graphics_types.h>
 #include <coffee/core/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/graphics/common/query/gpu_query.h>
 #include <coffee/image/cimage.h>
-#include <coffee/windowing/renderer/renderer.h>
-
-#include <coffee/core/CDebug>
-
-#include <coffee/components/components.h>
-
 #include <coffee/interfaces/cgraphics_util.h>
+#include <coffee/windowing/renderer/renderer.h>
 
 #if defined(FEATURE_ENABLE_CoffeeASIO)
 #include <coffee/asio/net_resource.h>
@@ -22,12 +22,10 @@
 #include <coffee/discord/discord_binding.h>
 #endif
 
-#include <coffee/core/coffee_saving.h>
-#include <coffee/core/platform_data.h>
+#include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
 
-#include <coffee/graphics/common/query/gpu_query.h>
-
-#include <coffee/core/task_queue/task.h>
+#include <coffee/core/CDebug>
 
 //#define USE_NULL_RENDERER
 
@@ -641,8 +639,9 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
 
         g.time_value = 0.f
-            /*(CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f) +
-                0.5f*/;
+            /*(CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f)
+               + 0.5f*/
+            ;
 
         GLM::DefaultFramebuffer().use(FramebufferT::All);
         GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);

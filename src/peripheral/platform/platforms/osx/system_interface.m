@@ -32,7 +32,10 @@ void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis)
     {
         NSArray<NSScreen *> *screens = [NSScreen screens];
         for(size_t i=0; i<screens.count; i++)
-            dpis[i] = screens[i].backingScaleFactor;
+        {
+            NSScreen* screen = screens[i];
+            dpis[i] = screen.backingScaleFactor;
+        }
     }
 #endif
 }

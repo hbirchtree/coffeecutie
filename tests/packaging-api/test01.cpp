@@ -1,6 +1,8 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/types/chunk.h>
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 

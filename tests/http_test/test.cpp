@@ -1,6 +1,8 @@
 #include <coffee/asio/http.h>
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CFiles>
+#include <coffee/strings/libc_types.h>
+
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;

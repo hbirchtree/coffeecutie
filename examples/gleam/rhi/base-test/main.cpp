@@ -20,9 +20,9 @@ i32 coffee_main(i32, cstring_w*)
     Net::RegisterProfiling();
 #endif
 
-    CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
+    Properties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
-    props.gl.flags |= GLProperties::GLDebug | GLProperties::GLVSync;
+    props.gl.flags |= GL::Properties::GLDebug | GL::Properties::GLVSync;
 
     EDATA*       loop  = new EDATA{CreateRendererUq(),
                             MkUq<RendererState>(),

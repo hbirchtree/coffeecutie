@@ -1,13 +1,13 @@
 #pragma once
 
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <coffee/core/base/types/cdisplay.h>
-#include <coffee/core/types/edef/logicenum.h>
+#include <coffee/core/types/direction.h>
+#include <coffee/core/types/input/event_types.h>
 
 namespace Coffee {
 namespace StandardInput {
 
-using namespace CInput;
+using namespace Input;
 
 template<typename InputRegister, const CIEvent::EventType EventType>
 /*!

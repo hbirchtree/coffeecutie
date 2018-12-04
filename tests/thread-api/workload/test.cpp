@@ -1,9 +1,10 @@
 #include <coffee/core/CThreading>
 #include <coffee/core/types/chunk.h>
-#include <coffee/core/terminal/table-print.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/time_types.h>
 
-#include <coffee/core/CDebug>
 #include <coffee/core/CUnitTesting>
+#include <coffee/core/terminal/table.h>
 
 using namespace Coffee;
 
@@ -13,8 +14,8 @@ bool workload_test()
 {
     struct DataSet
     {
-        CSize64 size;
-        u8*  value;
+        size_2d<u64> size;
+        u8*          value;
     } data;
     data.size.w = 1024 * 1024;
     data.size.h = 1024;

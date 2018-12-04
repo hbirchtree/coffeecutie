@@ -16,7 +16,6 @@ coffee_library (
     TARGET CoffeeSDL2
     SOURCES
     private/sdl2system.cpp
-    private/windowing/csdl2_dialogs.cpp
     private/graphics/csdl2_basic_renderer.cpp
     private/graphics/csdl2_gl_renderer.cpp
     private/input/csdl2_eventhandler.cpp
