@@ -10,8 +10,6 @@ extern u8& PrintingVerbosityLevel();
 
 namespace DebugFun {
 
-using namespace Strings;
-
 extern cstring severity_string(Severity sev);
 
 /*!

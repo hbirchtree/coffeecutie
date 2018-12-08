@@ -1,16 +1,18 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CArgParser>
 #include <coffee/core/CDynamicLink>
+#include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/core/CSysInfo>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/resource_prefix.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <peripherals/stl/string_casting.h>
-#include <platforms/sysinfo.h>
 
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -363,7 +365,7 @@ i32 coffee_main(i32, cstring_w*)
             totalSize /= 1_kB;
         }
 
-        CString progress = cStringFormat(
+        CString progress = Strings::cStringFormat(
             "{0} files/{1}{2}: ", descriptors.size(), totalSize, ext);
 
         return progress;

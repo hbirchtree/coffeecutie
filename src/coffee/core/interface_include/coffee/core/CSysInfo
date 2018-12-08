@@ -1,0 +1,8 @@
+#pragma once
+
+#include <platforms/sysinfo.h>
+
+namespace Coffee {
+using ::platform::PowerInfo;
+using ::platform::SysInfo;
+} // namespace Coffee

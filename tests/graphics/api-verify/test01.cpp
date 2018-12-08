@@ -1,9 +1,12 @@
+#include <coffee/core/types/type_enum.h>
 #include <coffee/core/unit_tests/graphics_framework.h>
 #include <coffee/interfaces/cgraphics_api.h>
+#include <coffee/interfaces/cgraphics_types.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
 
 using namespace Coffee;
+using namespace RHI::Datatypes;
 
 template<typename BUFAPI, typename... Args>
 bool test_buffer_api(Args... args)
@@ -48,19 +51,19 @@ bool test_api()
 
     /* Indirect draw buffer */
     test_buffer_api<typename A::BUF_DRAW>(
-                default_access, 0x0, sizeof(Vecf3), 100);
+        default_access, 0x0, sizeof(Vecf3), 100);
 
     typename A::V_ATTR vert_attr;
 
-    vert_attr.m_bassoc = 0;
-    vert_attr.m_boffset = 0;
-    vert_attr.m_flags = 0;
-    vert_attr.m_idx = 0;
+    vert_attr.m_bassoc    = 0;
+    vert_attr.m_boffset   = 0;
+    vert_attr.m_flags     = 0;
+    vert_attr.m_idx       = 0;
     vert_attr.m_instanced = false;
-    vert_attr.m_off = 0;
-    vert_attr.m_size = 3;
-    vert_attr.m_stride = sizeof(Vecf3);
-    vert_attr.m_type = TypeEnum::Scalar;
+    vert_attr.m_off       = 0;
+    vert_attr.m_size      = 3;
+    vert_attr.m_stride    = sizeof(Vecf3);
+    vert_attr.m_type      = TypeEnum::Scalar;
 
     typename A::V_DESC vert_desc;
 
@@ -83,8 +86,8 @@ bool test_api()
 
     {
         typename A::S_2D s_2d(PixFmt::RGBA8, 1, 0);
-        CSize s = {512, 512};
-        CPoint p = {0, 0};
+        Size             s = {512, 512};
+        Point            p = {0, 0};
 
         s_2d.allocate(s, PixCmp::RGBA);
         s = {0, 0};
@@ -103,8 +106,8 @@ bool test_api()
         sample_2d.alloc();
 
         sample_2d.attach(&s_2d);
-        sample_2d.setFiltering(Filtering::Linear, Filtering::Linear,
-                               Filtering::Nearest);
+        sample_2d.setFiltering(
+            Filtering::Linear, Filtering::Linear, Filtering::Nearest);
         sample_2d.enableShadowSampler();
         sample_2d.setLODBias(0.f);
         Vecf2 lrng = {0.f, 0.2f};
@@ -120,8 +123,8 @@ bool test_api()
 
     {
         typename A::S_3D s_2d(PixFmt::RGBA8, 1, 0);
-        CSize3 s = {512, 512, 2};
-        CPoint3 p = {0, 0, 0};
+        Size3            s = {512, 512, 2};
+        Point3           p = {0, 0, 0};
 
         s_2d.allocate(s, PixCmp::RGBA);
         s = {0, 0, 0};
@@ -141,8 +144,8 @@ bool test_api()
 
     {
         typename A::S_2DA s_2d(PixFmt::RGBA8, 1, 0);
-        CSize3 s = {512, 512, 2};
-        CPoint3 p = {0, 0, 0};
+        Size3             s = {512, 512, 2};
+        Point3            p = {0, 0, 0};
 
         s_2d.allocate(s, PixCmp::RGBA);
         s = {0, 0, 0};
@@ -162,8 +165,8 @@ bool test_api()
 
     {
         typename A::S_Cube s_2d(PixFmt::RGBA8, 1, 0);
-        CSize s = {512, 512};
-        CPoint p = {0, 0};
+        Size               s = {512, 512};
+        Point              p = {0, 0};
 
         s_2d.allocate(s, PixCmp::RGBA);
         s = {0, 0};
@@ -183,8 +186,8 @@ bool test_api()
 
     {
         typename A::S_CubeA s_2d(PixFmt::RGBA8, 1, 0);
-        CSize3 s = {512, 512, 2};
-        CPoint3 p = {0, 0, 0};
+        Size3               s = {512, 512, 2};
+        Point3              p = {0, 0, 0};
 
         s_2d.allocate(s, PixCmp::RGBA);
         s = {0, 0, 0};
@@ -208,8 +211,11 @@ bool test_api()
 }
 
 COFFEE_TEST_SUITE(2) = {
-{test_api<RHI::NullAPI>,"Null API", nullptr, false, false},
-{test_api<RHI::GLEAM::GLEAM_API>,"GLEAM OpenGL API", nullptr, false, false}
-};
+    {test_api<RHI::NullAPI>, "Null API", nullptr, false, false},
+    {test_api<RHI::GLEAM::GLEAM_API>,
+     "GLEAM OpenGL API",
+     nullptr,
+     false,
+     false}};
 
 COFFEE_GFX_RUN_TESTS(_tests);

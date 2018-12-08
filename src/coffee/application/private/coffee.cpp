@@ -25,6 +25,7 @@
 
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -40,9 +41,8 @@ namespace url {
 #if defined(COFFEE_APPLE)
 extern Url GetAppleStoragePath();
 #endif
-
 }
-}
+} // namespace platform
 
 namespace Coffee {
 

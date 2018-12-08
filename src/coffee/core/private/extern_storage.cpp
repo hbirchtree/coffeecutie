@@ -12,6 +12,8 @@
 #include <platforms/profiling.h>
 #endif
 
+using namespace ::platform;
+
 namespace Coffee {
 namespace State {
 

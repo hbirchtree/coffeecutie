@@ -22,3 +22,9 @@ extern stl_types::CString const& ResourcePrefix();
 
 } // namespace file
 } // namespace platform
+
+namespace Coffee {
+namespace file {
+using namespace ::platform::file;
+}
+} // namespace Coffee

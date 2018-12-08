@@ -3,6 +3,7 @@
 #include <coffee/core/CProfiling>
 #include <coffee/image/cimage.h>
 #include <coffee/image/ctextrender.h>
+#include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 

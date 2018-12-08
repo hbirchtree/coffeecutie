@@ -115,7 +115,8 @@ struct Url
     /*!
      * \brief Does the same as const operator*, except it caches the value for
      * later dereferences. Currently not very useful since most `FileFun::*`
-     * functions do not take `Url&`, but rather `Url const&`. \return
+     * functions do not take `Url&`, but rather `Url const&`.
+     * \return
      */
     CString operator*();
 
@@ -237,10 +238,3 @@ FORCEDINLINE Url operator"" _cache(const char* url, size_t)
 } // namespace constructors
 } // namespace url
 } // namespace platform
-
-namespace Coffee {
-namespace Strings {
-extern stl_types::CString to_string(platform::url::Url const& url);
-extern stl_types::CString to_string(platform::url::Path const& path);
-} // namespace Strings
-} // namespace Coffee

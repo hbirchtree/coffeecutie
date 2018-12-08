@@ -2,12 +2,14 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/internal_state.h>
 #include <coffee/discord/discord_binding.h>
+#include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 #include <discord_register.h>
 #include <discord_rpc.h>
 #include <platforms/environment.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/core/CStringFormat>
 
 #define DISCORD_EP "https://cdn.discordapp.com"
 #define DISCORD_TAG "DiscordRPC"

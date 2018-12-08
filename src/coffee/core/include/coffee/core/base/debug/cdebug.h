@@ -11,7 +11,6 @@
 namespace Coffee {
 
 namespace DebugFun {
-using namespace Strings;
 
 /*!
  * \brief Different severities for debug messages
@@ -209,6 +208,6 @@ C_DEPRECATED FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 }
 } // namespace DebugFun
 
-using namespace Coffee::DebugFun;
+using namespace DebugFun;
 
 } // namespace Coffee

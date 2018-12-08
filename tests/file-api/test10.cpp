@@ -1,5 +1,8 @@
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CFiles>
+#include <coffee/strings/url_types.h>
+
+#include <coffee/core/CStringFormat>
 #include <coffee/core/CUnitTesting>
 
 using namespace assertion;

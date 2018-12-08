@@ -22,6 +22,8 @@
 
 #include "gleam_internal_types.h"
 
+using namespace ::platform;
+
 namespace Coffee {
 namespace RHI {
 namespace GLEAM {

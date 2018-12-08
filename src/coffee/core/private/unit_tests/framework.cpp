@@ -86,7 +86,7 @@ void WriteJsonData(
                 root.String(tests[i].title);
             else
             {
-                CString fmt = cStringFormat("Test {0}", i);
+                CString fmt = Strings::cStringFormat("Test {0}", i);
                 root.String(fmt.c_str());
             }
 
@@ -117,7 +117,7 @@ void WriteJsonData(
                     root.String(o.title);
                 else
                 {
-                    CString fmt = cStringFormat("Test {0}", i);
+                    CString fmt = Strings::cStringFormat("Test {0}", i);
                     root.String(fmt.c_str());
                 }
 

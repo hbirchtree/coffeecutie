@@ -2,11 +2,11 @@
 #include <coffee/core/resource_prefix.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 #include <platforms/stacktrace.h>
-
-#include <coffee/core/terminal/cursor.h>
 
 /* External dependencies */
 
@@ -21,6 +21,7 @@
 #endif
 
 #include <coffee/core/CDebug>
+#include <coffee/core/terminal/cursor.h>
 
 #define SHD_API "PressurizeShaders::"
 

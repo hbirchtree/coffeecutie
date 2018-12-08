@@ -19,6 +19,8 @@
 
 #ifndef COFFEE_LOWFAT
 
+using namespace ::platform;
+
 namespace Coffee {
 namespace Profiling {
 

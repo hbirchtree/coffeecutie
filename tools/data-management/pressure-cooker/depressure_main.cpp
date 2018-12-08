@@ -14,6 +14,7 @@
 #include <coffee/core/CDebug>
 
 using namespace Coffee;
+using namespace ::platform;
 
 enum ColumnsShown
 {
@@ -261,7 +262,8 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     VirtFS::vfs_error_code ec;
-    auto node = VirtFS::VFS::SearchFile(vfsData.data, "textures/SurfaceImperfections", ec);
+
+    auto node = VirtFS::VFS::SearchFile(vfsData.data, "blendcache_Shine/4", ec);
 
     Queue<decltype(node)> outNodes;
     outNodes.push(node);
@@ -273,7 +275,7 @@ i32 coffee_main(i32, cstring_w*)
 
         if(node.node->is_leaf())
         {
-            cDebug("File: {0}", node.node->leaf.fileIdx);
+            cDebug("File: {0}", node.file(vfsData.data)->name);
             continue;
         }
 

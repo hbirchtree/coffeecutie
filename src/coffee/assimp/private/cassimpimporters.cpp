@@ -1,19 +1,18 @@
 #include <coffee/assimp/cassimpimporters.h>
 
 #include <coffee/assimp/assimp_data.h>
-
-#include <coffee/core/CThreading>
-
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/CRegex>
-
+#include <coffee/core/CThreading>
 #include <coffee/graphics/common/SMesh>
 #include <coffee/graphics/common/scene/cnode.h>
+#include <coffee/strings/libc_types.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace ASSIMP {

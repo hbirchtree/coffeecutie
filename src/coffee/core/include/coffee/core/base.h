@@ -11,6 +11,5 @@ namespace stl_types {
 
 namespace Coffee {
 using namespace ::libc_types;
-using namespace ::platform;
 using namespace ::stl_types;
 } // namespace Coffee

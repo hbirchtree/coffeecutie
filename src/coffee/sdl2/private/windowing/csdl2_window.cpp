@@ -8,6 +8,7 @@
 #include "sdl2helpers.h"
 
 #include <coffee/core/CDebug>
+#include <coffee/core/CStringFormat>
 
 namespace Coffee {
 namespace Display {
@@ -40,8 +41,8 @@ bool SDL2Window::windowPreInit(const Properties&, CString*)
 
     SDL_version ver;
     SDL_GetVersion(&ver);
-    m_contextString =
-        cStringFormat("SDL {0}.{1}.{2}", ver.major, ver.minor, ver.patch);
+    m_contextString = Strings::cStringFormat(
+        "SDL {0}.{1}.{2}", ver.major, ver.minor, ver.patch);
 
     return true;
 }

@@ -2,15 +2,19 @@
 
 #include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
+#include <coffee/core/CEnvironment>
 #include <peripherals/libc/signals.h>
-#include <platforms/environment.h>
 
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 
 #include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Net {
+
+using namespace ::semantic;
+
 void ProfilingExport()
 {
 #if !defined(COFFEE_LOWFAT) && MODE_DEBUG

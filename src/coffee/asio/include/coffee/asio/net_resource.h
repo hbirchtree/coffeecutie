@@ -13,9 +13,6 @@
 namespace Coffee {
 namespace Net {
 
-using namespace ::semantic;
-using namespace ::platform::url;
-
 FORCEDINLINE bool Supported()
 {
 #if !defined(COFFEE_EMSCRIPTEN) && !defined(COFFEE_WINDOWS_UWP)
@@ -27,7 +24,7 @@ FORCEDINLINE bool Supported()
 
 #if defined(FEATURE_ENABLE_CoffeeASIO)
 
-struct Resource : ByteProvider
+struct Resource : semantic::ByteProvider
 {
   private:
     Url                m_resource;
@@ -40,7 +37,7 @@ struct Resource : ByteProvider
     http::request_t  m_request;
     http::response_t m_response;
 
-    HTTPAccess m_access;
+    semantic::HTTPAccess m_access;
 
     asio::error_code m_error;
 
@@ -97,16 +94,18 @@ struct Resource : ByteProvider
     }
 };
 
-FORCEDINLINE Url
-             MkUrl(CString const& url, HTTPAccess access = HTTPAccess::DefaultAccess)
+FORCEDINLINE Url MkUrl(
+    CString const&       url,
+    semantic::HTTPAccess access = semantic::HTTPAccess::DefaultAccess)
 {
-    return {url.c_str(), Url::Networked, RSCA::None, access, {}};
+    return {url.c_str(), Url::Networked, semantic::RSCA::None, access, {}};
 }
 
-FORCEDINLINE Url
-             MkUrl(cstring url, HTTPAccess access = HTTPAccess::DefaultAccess)
+FORCEDINLINE Url MkUrl(
+    cstring              url,
+    semantic::HTTPAccess access = semantic::HTTPAccess::DefaultAccess)
 {
-    return {url, Url::Networked, RSCA::None, access, {}};
+    return {url, Url::Networked, semantic::RSCA::None, access, {}};
 }
 
 } // namespace Net

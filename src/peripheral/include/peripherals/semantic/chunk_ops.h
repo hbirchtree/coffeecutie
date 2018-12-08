@@ -70,5 +70,11 @@ FORCEDINLINE void MemClear(T& mem)
     std::fill(mem.begin(), mem.end(), typename T::value_type());
 }
 
+template<typename T>
+FORCEDINLINE void MemClear(T&& mem)
+{
+    std::fill(mem.begin(), mem.end(), typename T::value_type());
+}
+
 } // namespace chunk_ops
 } // namespace semantic

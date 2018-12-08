@@ -3,6 +3,7 @@
 #include <coffee/core/stl_types.h>
 #include <coffee/discord/discord_binding.h>
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 #include <peripherals/stl/thread_types.h>
 
 #include <coffee/core/CDebug>
@@ -11,7 +12,7 @@ using namespace Coffee;
 
 i32 cmain(i32 argc, cstring_w* argv)
 {
-    using namespace online;
+    using namespace platform::online;
 
     auto delegate   = MkShared<Discord::DiscordDelegate>();
     delegate->ready = [](Discord::PlayerInfo const& player) {

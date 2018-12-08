@@ -1,14 +1,13 @@
+#include <coffee/core/CEnvironment>
 #include <coffee/core/CMath>
 #include <coffee/core/CPlatform>
+#include <coffee/core/CSysInfo>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
-#include <platforms/sysinfo.h>
 
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
-
-using PowerInfo = platform::env::PowerInfoDef;
 
 bool sysinfo_printing()
 {

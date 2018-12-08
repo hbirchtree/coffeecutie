@@ -1,11 +1,13 @@
 #include <coffee/asio/net_profiling.h>
 #include <coffee/core/CApplication>
+#include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
 #include <coffee/core/CPlatform>
 #include <coffee/core/coffee.h>
 #include <platforms/sensor.h>
 
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 #include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
@@ -47,7 +49,7 @@ i32 coffee_main(i32, cstring_w*)
         else
         {
             Url test_file = cfg_dir + Path{"test_file.sav"};
-            FileFun::Touch(file::File, test_file, ec);
+            FileFun::Touch(FileType::File, test_file, ec);
         }
         Profiler::Profile("Create directory recursively");
     }

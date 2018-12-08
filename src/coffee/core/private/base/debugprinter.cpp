@@ -72,9 +72,9 @@ static void AddContextString(CString& prefix, Severity sev)
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
     //    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
     CString ms_time = "0000";
-    CString clock =
-        cStringFormat("{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
-    prefix = cStringFormat("{0}:", clock.c_str());
+    CString clock   = Strings::cStringFormat(
+        "{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
+    prefix = Strings::cStringFormat("{0}:", clock.c_str());
     prefix.append(CurrentThread::GetName() + ":");
     prefix.push_back(severity_str[0]);
 

@@ -12,6 +12,8 @@
 
 #define NETRSC_TAG "NetRsc::"
 
+using namespace ::semantic;
+
 namespace Coffee {
 namespace Net {
 

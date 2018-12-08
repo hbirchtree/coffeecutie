@@ -40,7 +40,7 @@ struct TablePrinter_Basic
         for(szptr i = 0; i < num; i++)
         {
             T const& ref = val[i];
-            CString  v   = cStringFormat("{0}", ref);
+            CString  v   = Strings::cStringFormat("{0}", ref);
             vec.push_back(v);
         }
         return vec;
@@ -51,7 +51,7 @@ struct TablePrinter_Basic
     {
         Column vec;
         for(T const& v : col)
-            vec.push_back(cStringFormat("{0}", v));
+            vec.push_back(Strings::cStringFormat("{0}", v));
         return vec;
     }
 

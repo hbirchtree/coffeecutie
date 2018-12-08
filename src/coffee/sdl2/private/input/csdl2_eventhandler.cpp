@@ -3,6 +3,7 @@
 #if defined(COFFEE_USE_SDL_EVENT)
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/strings/libc_types.h>
 
 #include "evhandlers/sdl2eventhandlers.h"
 #include "sdl2inputfun.h"
@@ -60,7 +61,7 @@ bool SDL2EventHandler::inputInit(CString*)
     if(FileExists(mapping))
     {
         cTag("SDL2", "Found game controller mappings");
-        auto map = C_OCAST<Bytes>(mapping);
+        auto       map  = C_OCAST<Bytes>(mapping);
         SDL_RWops* fsrc = SDL_RWFromConstMem(map.data, C_FCAST<int>(map.size));
         SDL_GameControllerAddMappingsFromRW(fsrc, 0);
         SDL_FreeRW(fsrc);

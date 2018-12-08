@@ -1,3 +1,4 @@
+#include <coffee/core/CEnvironment>
 #include <peripherals/stl/threads/job_system.h>
 
 #include "texture_common.h"

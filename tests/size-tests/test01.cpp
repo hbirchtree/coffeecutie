@@ -3,6 +3,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <platforms/stacktrace.h>
 
+#include <coffee/core/CStringFormat>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/terminal/table.h>
 

@@ -1,5 +1,6 @@
 #include <coffee/strings/libc_types.h>
 
+#include <coffee/core/CStringFormat>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/coffee_saving.h>
 

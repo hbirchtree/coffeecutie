@@ -1,5 +1,6 @@
 #include <coffee/core/CFiles>
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 
 #include <coffee/core/CUnitTesting>
 

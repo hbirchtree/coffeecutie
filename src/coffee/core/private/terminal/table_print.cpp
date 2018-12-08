@@ -1,3 +1,5 @@
+#include <coffee/core/CStringFormat>
+
 #include <coffee/core/terminal/table.h>
 
 #include <coffee/core/CMath>

@@ -457,7 +457,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         Discord::CreateService({"468164529617109002", 256}, callbacks);
 
     service->getPresence()->put({"", 1, 1, {}, {}});
-    service->getGame()->put(online::GameDelegate::Builder(
+    service->getGame()->put(platform::online::GameDelegate::Builder(
         {}, "Messing around", MkUrl("coffee_cup")));
 
     RuntimeQueue::QueuePeriodic(

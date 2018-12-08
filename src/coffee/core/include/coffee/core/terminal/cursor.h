@@ -1,7 +1,7 @@
 #pragma once
 
+#include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
-#include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/thread_types.h>
 #include <peripherals/stl/type_safety.h>
@@ -45,7 +45,7 @@ struct TerminalCursor
             return;
         }
 
-        CString output = cStringFormat(fmt, args...);
+        CString output = Strings::cStringFormat(fmt, args...);
 
         if(m_lastLength > output.size())
             output.insert(output.end(), m_lastLength - output.size(), ' ');
@@ -106,7 +106,7 @@ struct TerminalCursor
     template<typename... Args>
     void print(cstring fmt, Args... args)
     {
-        CString output = cStringFormat(fmt, args...);
+        CString output = Strings::cStringFormat(fmt, args...);
 
         cstring outFmt = nullptr;
 

@@ -1,4 +1,5 @@
 #include <coffee/core/CApplication>
+#include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
 #include <coffee/core/CProfiling>
@@ -11,6 +12,7 @@
 #include <coffee/sdl2/CSDL2System>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 #include <peripherals/stl/time_types.h>
 
 #include <coffee/core/CDebug>

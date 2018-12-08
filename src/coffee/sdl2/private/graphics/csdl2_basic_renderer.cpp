@@ -1,8 +1,11 @@
 #include <coffee/sdl2/graphics/csdl2_basic_renderer.h>
 
 #include "../types/sdl2datatypes.h"
-#include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CDebug>
+#include <coffee/core/CStringFormat>
 
 namespace Coffee {
 namespace Display {

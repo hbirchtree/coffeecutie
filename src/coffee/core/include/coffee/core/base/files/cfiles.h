@@ -47,7 +47,7 @@ struct Resource : semantic::ByteProvider
      * \brief Constructs a resource
      * \param url Path to resource
      */
-    Resource(Url const& url);
+    explicit Resource(Url const& url);
     Resource(cstring rsrc, semantic::RSCA acc = semantic::RSCA::AssetFile);
     Resource(Resource&& rsc);
     ~Resource();
@@ -182,9 +182,5 @@ FORCEDINLINE Resource operator"" _config(const char* fn, size_t)
 FORCEDINLINE Resource operator"" _sysfile(const char* fn, size_t)
 {
     return Resource(fn, RSCA::SystemFile);
-}
-
-namespace Strings {
-extern CString to_string(Resource const& r);
 }
 } // namespace Coffee

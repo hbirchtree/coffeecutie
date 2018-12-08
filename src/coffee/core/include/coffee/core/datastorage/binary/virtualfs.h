@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/chunk.h>
+#include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/file_resolver.h>
 #include <peripherals/libc/endian_ops.h>
@@ -229,6 +230,10 @@ struct VirtualIndex : non_copy
 
         struct leaf_t
         {
+            leaf_t() : mask()
+            {
+            }
+
             static const constexpr u64 mask_value =
                 std::numeric_limits<u64>::max();
 
@@ -247,15 +252,26 @@ struct VirtualIndex : non_copy
             }
         };
 
-        union node_base_t
+        struct node_base_t
         {
-            node_t node;
-            leaf_t leaf;
+            node_base_t() : flags(0)
+            {
+                node.left  = 0;
+                node.right = 0;
+                MemClear(Bytes::From(node.prefix, MaxPrefixLength));
+            }
+
+            union
+            {
+                node_t node;
+                leaf_t leaf;
+            };
             u32 flags;
 
             enum node_flags
             {
-                prefix_carry = 0x1,
+                prefix_carry     = 0x1,
+                prefix_directory = 0x2,
             };
 
             inline bool is_leaf() const
@@ -287,6 +303,8 @@ struct VirtualIndex : non_copy
             node_base_t const*  node;
             VirtualIndex const* index;
 
+            VFile const* file(const VirtualFS* vfs);
+
             FORCEDINLINE bool valid()
             {
                 return node && index;
@@ -315,6 +333,12 @@ struct VirtualIndex : non_copy
                 return {&index->directory.nodes(*index)[node->node.right],
                         index};
             }
+        };
+
+        enum class search_strategy
+        {
+            exact,    /*!< All or nothing search, needs exact prefix match */
+            earliest, /*!< Return at earliest detection */
         };
     };
 
@@ -479,8 +503,13 @@ struct VirtualFS
         return GetFileTreeExact(vfs, name, ec);
     }
 
+    using search_strategy = VirtualIndex::directory_data_t::search_strategy;
+
     static VirtualIndex::directory_data_t::node_container_t SearchFile(
-        VFS const* vfs, cstring name, vfs_error_code& ec);
+        VFS const*      vfs,
+        cstring         name,
+        vfs_error_code& ec,
+        search_strategy strat = search_strategy::exact);
 
     /*!
      * \brief Given a VFS, get the handle to the idx'th file.
@@ -553,6 +582,15 @@ FORCEDINLINE VFile const* VirtualFS::GetFile(
     }
 
     return &vf_start[idx];
+}
+
+FORCEDINLINE VFile const* VirtualIndex::directory_data_t::node_container_t::
+    file(VirtualFS const* vfs)
+{
+    if(node && node->is_leaf())
+        return &C_RCAST<VFile const*>(vfs->files())[node->leaf.fileIdx];
+
+    return nullptr;
 }
 
 struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
@@ -747,9 +785,7 @@ extern bool GenVirtFS(
 
 FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
-    using namespace platform::url;
-
-    Url out      = constructors::MkUrl(url);
+    Url out      = MkUrl(url);
     out.category = Url::Memory;
     return out;
 }
