@@ -261,12 +261,13 @@ struct VirtualIndex : non_copy
                 MemClear(Bytes::From(node.prefix, MaxPrefixLength));
             }
 
+            u32 flags;
+            u32 _pad;
             union
             {
                 node_t node;
                 leaf_t leaf;
             };
-            u32 flags;
 
             enum node_flags
             {
@@ -337,8 +338,11 @@ struct VirtualIndex : non_copy
 
         enum class search_strategy
         {
-            exact,    /*!< All or nothing search, needs exact prefix match */
-            earliest, /*!< Return at earliest detection */
+            exact,    /*!< All or nothing search, needs exact prefix match.
+                            Aims for log N lookup for single files. */
+            earliest, /*!< Return at earliest detection.
+                            Is used for finding all files in a directory,
+                            files with same name but different extension. */
         };
     };
 

@@ -14,7 +14,7 @@ namespace mac {
 
 struct SysInfo : SysInfoDef
 {
-    static CString      GetSystemVersion();
+    static CString              GetSystemVersion();
     static info::HardwareDevice DeviceName();
 
     static info::HardwareDevice Processor();
@@ -32,10 +32,11 @@ struct SysInfo : SysInfoDef
     static bool HasHyperThreading();
 };
 
-} // namespace Mac
-} // namespace Environment
+} // namespace mac
+} // namespace env
 
-using SysInfo   = env::mac::SysInfo;
+using SysInfo = env::mac::SysInfo;
+using PowerInfo = env::PowerInfoDef;
 
-} // namespace Coffee
+} // namespace platform
 #endif

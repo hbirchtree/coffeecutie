@@ -265,25 +265,27 @@ i32 coffee_main(i32, cstring_w*)
 
     auto node = VirtFS::VFS::SearchFile(vfsData.data, "blendcache_Shine/4", ec);
 
-    Queue<decltype(node)> outNodes;
-    outNodes.push(node);
+    cDebug("Got: {0}", node.valid());
 
-    while(!outNodes.empty())
-    {
-        auto node = outNodes.front();
-        outNodes.pop();
+//    Queue<decltype(node)> outNodes;
+//    outNodes.push(node);
 
-        if(node.node->is_leaf())
-        {
-            cDebug("File: {0}", node.file(vfsData.data)->name);
-            continue;
-        }
+//    while(!outNodes.empty())
+//    {
+//        auto node = outNodes.front();
+//        outNodes.pop();
 
-        if(node.left().valid())
-            outNodes.push(node.left());
-        if(node.right().valid())
-            outNodes.push(node.right());
-    }
+//        if(node.node->is_leaf())
+//        {
+//            cDebug("File: {0}", node.file(vfsData.data)->name);
+//            continue;
+//        }
+
+//        if(node.left().valid())
+//            outNodes.push(node.left());
+//        if(node.right().valid())
+//            outNodes.push(node.right());
+//    }
 
     normal_printing(vfsView, human_readable, shown_columns);
 

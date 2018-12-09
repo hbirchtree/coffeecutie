@@ -270,7 +270,7 @@ bool GenVirtFS(
 
             MemClear(extensionData);
 
-            index_creation::CharInsert(
+            dir_index::CharInsert(
                 index.first, outIndex.extension.ext, MaxExtensionLength);
             outIndex.extension.num_files = index.second.size();
 
@@ -309,8 +309,8 @@ bool GenVirtFS(
         auto files  = _cbasic_data_chunk<const VFile>::From(
             vfsRef->files(), vfsRef->num_files * sizeof(VFile));
 
-        index_creation::directory_index_t dirIndex =
-            index_creation::GenDirectoryIndex(files);
+        dir_index::directory_index_t dirIndex =
+            dir_index::Generate(files);
 
         auto prevSize = output->size();
         output->resize(output->size() + dirIndex.totalSize);
@@ -413,18 +413,25 @@ VirtualIndex::directory_data_t::node_container_t VirtualFS::SearchFile(
         if(currentNode->is_leaf())
             return {};
 
-        if(currentPrefix == prefixLen)
-            return {currentNode, index};
+        if(strat == search_strategy::exact)
+        {
+            /* Exact match */
+            if(currentPrefix == prefixLen)
+                return {currentNode, index};
 
-        if(currentPrefix > prefixLen)
-            return {};
+            /* It's longer than our prefix, mismatch */
+            if(currentPrefix > prefixLen)
+                return {};
+        }
+
+        cDebug("Entry: {0}", currentNode->node.prefix);
 
         auto& node = currentNode->node;
 
         auto left_node  = index_lookup::GetNode(node.left, nodes);
         auto right_node = index_lookup::GetNode(node.right, nodes);
 
-        /* First look for longest match */
+        /* First look for longest match within each tree */
         auto left_match =
             left_node
                 ? left_node->node.longest_match(prefix.substr(currentPrefix))
@@ -434,9 +441,20 @@ VirtualIndex::directory_data_t::node_container_t VirtualFS::SearchFile(
                 ? right_node->node.longest_match(prefix.substr(currentPrefix))
                 : 0;
 
+        cDebug("Left: {0}", left_node->node.prefix);
+        cDebug("Right: {0}", right_node->node.prefix);
+
+        if(strat == search_strategy::earliest)
+        {
+            /* Both children are equally matching, let's leave */
+            if(left_match == right_match && left_match > 0)
+                return {currentNode, index};
+        }
+
         if(left_match > right_match)
         {
             currentNode = left_node;
+            cDebug("Prefix match: {0}", currentNode->node.prefix);
             if(left_node->flags & node_base_t::prefix_directory)
                 currentPrefix += left_node->node.prefix_length() + 1;
             else if(left_node->flags & node_base_t::prefix_carry)
@@ -445,6 +463,7 @@ VirtualIndex::directory_data_t::node_container_t VirtualFS::SearchFile(
         } else if(right_match > left_match)
         {
             currentNode = right_node;
+            cDebug("Prefix match: {0}", currentNode->node.prefix);
             if(right_node->flags & node_base_t::prefix_directory)
                 currentPrefix += right_node->node.prefix_length() + 1;
             else if(right_node->flags & node_base_t::prefix_carry)
@@ -453,13 +472,31 @@ VirtualIndex::directory_data_t::node_container_t VirtualFS::SearchFile(
         }
 
         /* Look for ordering if there is no prefix match */
-        if(left_node->node >= prefix.substr(currentPrefix))
+        auto left_order =
+            left_node ? left_node->node >= prefix.substr(currentPrefix) : false;
+        auto right_order =
+            right_node ? right_node->node <= prefix.substr(currentPrefix)
+                       : false;
+
+        if(strat == search_strategy::earliest)
+        {
+            /* If the left and right range include the query, we pick both */
+            if(left_order && right_order)
+                return {currentNode, index};
+        }
+
+        if(left_order)
         {
             currentNode = left_node;
-        } else if(right_node->node <= prefix.substr(currentPrefix))
+            continue;
+        } else if(right_order)
         {
             currentNode = right_node;
+            continue;
         }
+
+        /* Failed to select entry */
+        return {};
     }
 
     return {};

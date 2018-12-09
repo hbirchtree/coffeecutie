@@ -27,6 +27,7 @@ C_DEPRECATED_S(
         Ctxt                           context,
         IterType                       weight = 1)
 {
+    return {};
 }
 
 namespace detail {

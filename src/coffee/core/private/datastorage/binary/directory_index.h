@@ -17,7 +17,7 @@
 namespace Coffee {
 namespace VirtFS {
 
-namespace index_creation {
+namespace dir_index {
 
 /*!
  * \brief Insert into a static array the std::string
@@ -199,6 +199,14 @@ static szptr GetNodeTypeMaxLen(link_node_type t)
     return MaxPrefixLength;
 }
 
+/*!
+ * \brief When a node's name is too long to fit in 40/32 bytes, we split it.
+ * When splitting the names, the prefix is always carried.
+ * \param stems
+ * \param prefix
+ * \param remaining_suffix
+ * \param node_type
+ */
 static void GenPrefixNodes(
     Map<Path, node_info_t>& stems,
     CString                 prefix,
@@ -223,7 +231,6 @@ static void GenPrefixNodes(
 
         if(node_type == link_node_type::node)
         {
-            node.node.flags      = 0;
             node.node.node.left  = node_t::sentinel_value;
             node.node.node.right = node_t::sentinel_value;
             node.node.flags =
@@ -231,7 +238,6 @@ static void GenPrefixNodes(
             CharInsert(remaining_suffix, node.node.node.prefix, prefix_len);
         } else
         {
-            node.node.flags = 0;
             node.node.leaf.set_mask();
             node.node.leaf.fileIdx = 0;
             node.node.flags        = node_base_t::prefix_carry;
@@ -315,7 +321,49 @@ static void PrintDirIndex(
     cBasicPrint("}");
 }
 
-static directory_index_t GenDirectoryIndex(
+namespace opt_detail {
+
+static void AdoptNode(node_working_set_t& set, u32* from_to)
+{
+    u32 from = *from_to;
+    auto& source = set.outNodes.at(from);
+    *from_to = source.node.left;
+}
+
+static bool NeedsOptimization(node_working_set_t& set, u32 idx = 0)
+{
+    auto& node = set.outNodes.at(idx);
+
+    /* Can't do anything with leaves */
+    if(node.is_leaf())
+        return false;
+
+    /* Run the process for the children first */
+    if(node.node.left != node_t::sentinel_value)
+        if(NeedsOptimization(set, node.node.left))
+            AdoptNode(set, &node.node.left);
+    if(node.node.right != node_t::sentinel_value)
+        if(NeedsOptimization(set, node.node.right))
+            AdoptNode(set, &node.node.right);
+
+    /* Left node will always exist, only check right */
+    if(node.node.right != node_t::sentinel_value)
+        return false;
+
+    auto& only_child = set.outNodes.at(node.node.left);
+
+    /* Check if this node carries or is a directory, in which case it's useful */
+    if(node.flags != 0)
+        return false;
+
+    /* In this case, the node does not do anything productive
+     *  if prefixes are the same */
+    return true;
+}
+
+}
+
+static directory_index_t Generate(
     _cbasic_data_chunk<const VFile> const& files)
 {
     DProfContext _(VIRTFS_API "Generating directory index");
@@ -326,12 +374,16 @@ static directory_index_t GenDirectoryIndex(
     Map<Path, node_info_t>          stems;
     Vector<dir_data_t::node_base_t> outNodes;
 
+    /* This part is only used as the root of the tree,
+     *  and is never included in paths. */
     auto& rootStem = stems[Path(".")];
     CharInsert(".", rootStem.node.node.prefix, MaxPrefixLength);
 
     Profiler::DeepPushContext(VIRTFS_API "Creating directory stems");
 
-    /* This function requires the sequential searching */
+    /* We create nodes for every file, splitting them if necessary.
+     * We call them stems because a node may be the stem of a file's name,
+     *  and we can use lexicographical ordering to find them. */
     u64 fileIdx = 0;
     for(auto const& file : files)
     {
@@ -368,8 +420,8 @@ static directory_index_t GenDirectoryIndex(
 
     Profiler::DeepPushContext(VIRTFS_API "Sorting tree nodes");
 
-    /* Because std::set is hard to use with custom types, we do this */
-    /* std::set would have been really nice to have */
+    /* With the created stems, we sort their children to allow
+     *  binary partitioning later. This allows efficient log N lookups. */
     for(auto& stem : stems)
     {
         if(stem.second.node.is_leaf())
@@ -386,11 +438,18 @@ static directory_index_t GenDirectoryIndex(
 
     Profiler::DeepPopContext();
 
+    /* Finally construct a binary tree of the files and their children.
+     * Binary trees were chosen for simplicity in on-disk storage. */
     node_working_set_t work_set = {outNodes, stems};
     {
         DProfContext _(VIRTFS_API "Emitting tree nodes");
         VirtRecurseChildren(work_set, "./", stems[Path(".")]);
     }
+
+    /* As a last pass, we optimize the binary tree,
+     *  fixing nodes with only a single child.
+     * This is a very minor improvement. */
+//    opt_detail::NeedsOptimization(work_set);
 
     for(auto const& stem : stems)
     {
