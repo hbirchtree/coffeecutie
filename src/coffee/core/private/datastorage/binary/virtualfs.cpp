@@ -309,8 +309,7 @@ bool GenVirtFS(
         auto files  = _cbasic_data_chunk<const VFile>::From(
             vfsRef->files(), vfsRef->num_files * sizeof(VFile));
 
-        dir_index::directory_index_t dirIndex =
-            dir_index::Generate(files);
+        dir_index::directory_index_t dirIndex = dir_index::Generate(files);
 
         auto prevSize = output->size();
         output->resize(output->size() + dirIndex.totalSize);
@@ -333,191 +332,28 @@ bool GenVirtFS(
     return true;
 }
 
-namespace index_lookup {
-
-using node_base_t = VirtualIndex::directory_data_t::node_base_t;
-using node_t      = VirtualIndex::directory_data_t::node_t;
-
-using node_list_t = _cbasic_data_chunk<node_base_t const>;
-
-static VirtualIndex const* FindIndex(
-    VFS const* vfs, VirtualIndex::index_t kind, vfs_error_code& ec)
-{
-    if(vfs->version() == Version::v1)
-    {
-        ec = VFSError::VersionMismatch;
-        return nullptr;
-    }
-
-    if(vfs->ext_index.num == 0)
-    {
-        ec = VFSError::NoIndexing;
-        return nullptr;
-    }
-
-    VirtualIndex const* index = vfs->indices();
-
-    for(C_UNUSED(auto i) : Range<>(vfs->ext_index.num + 1))
-    {
-        if(index->kind == kind)
-            return index;
-
-        index = index->next();
-    }
-
-    return nullptr;
-}
-
-STATICINLINE CString FilterTreeName(cstring name)
-{
-    return name;
-}
-
-static node_base_t const* GetNode(u32 idx, node_list_t const& nodes)
-{
-    if(idx == node_t::sentinel_value)
-        return nullptr;
-
-    return &nodes[idx];
-}
-
-} // namespace index_lookup
-
-VirtualIndex::directory_data_t::node_container_t VirtualFS::SearchFile(
+directory_data_t::result_t VirtualFS::SearchFile(
     VFS const* vfs, cstring name, vfs_error_code& ec, search_strategy strat)
 {
-    using node_base_t = VirtualIndex::directory_data_t::node_base_t;
-
-    auto index =
-        index_lookup::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
-
-    if(!index)
-    {
-        ec = VFSError::NoIndexing;
-        return {};
-    }
-
-    CString prefix        = index_lookup::FilterTreeName(name);
-    szptr   currentPrefix = 0;
-    szptr   prefixLen     = prefix.size();
-
-    auto nodes = index->directory.nodes(*index);
-
-    auto currentNode = &nodes[0];
-
-    if(currentNode->is_leaf())
-        return {};
-
-    while(currentNode)
-    {
-        if(currentNode->is_leaf())
-            return {};
-
-        if(strat == search_strategy::exact)
-        {
-            /* Exact match */
-            if(currentPrefix == prefixLen)
-                return {currentNode, index};
-
-            /* It's longer than our prefix, mismatch */
-            if(currentPrefix > prefixLen)
-                return {};
-        }
-
-        cDebug("Entry: {0}", currentNode->node.prefix);
-
-        auto& node = currentNode->node;
-
-        auto left_node  = index_lookup::GetNode(node.left, nodes);
-        auto right_node = index_lookup::GetNode(node.right, nodes);
-
-        /* First look for longest match within each tree */
-        auto left_match =
-            left_node
-                ? left_node->node.longest_match(prefix.substr(currentPrefix))
-                : 0;
-        auto right_match =
-            right_node
-                ? right_node->node.longest_match(prefix.substr(currentPrefix))
-                : 0;
-
-        cDebug("Left: {0}", left_node->node.prefix);
-        cDebug("Right: {0}", right_node->node.prefix);
-
-        if(strat == search_strategy::earliest)
-        {
-            /* Both children are equally matching, let's leave */
-            if(left_match == right_match && left_match > 0)
-                return {currentNode, index};
-        }
-
-        if(left_match > right_match)
-        {
-            currentNode = left_node;
-            cDebug("Prefix match: {0}", currentNode->node.prefix);
-            if(left_node->flags & node_base_t::prefix_directory)
-                currentPrefix += left_node->node.prefix_length() + 1;
-            else if(left_node->flags & node_base_t::prefix_carry)
-                currentPrefix += left_node->node.prefix_length();
-            continue;
-        } else if(right_match > left_match)
-        {
-            currentNode = right_node;
-            cDebug("Prefix match: {0}", currentNode->node.prefix);
-            if(right_node->flags & node_base_t::prefix_directory)
-                currentPrefix += right_node->node.prefix_length() + 1;
-            else if(right_node->flags & node_base_t::prefix_carry)
-                currentPrefix += right_node->node.prefix_length();
-            continue;
-        }
-
-        /* Look for ordering if there is no prefix match */
-        auto left_order =
-            left_node ? left_node->node >= prefix.substr(currentPrefix) : false;
-        auto right_order =
-            right_node ? right_node->node <= prefix.substr(currentPrefix)
-                       : false;
-
-        if(strat == search_strategy::earliest)
-        {
-            /* If the left and right range include the query, we pick both */
-            if(left_order && right_order)
-                return {currentNode, index};
-        }
-
-        if(left_order)
-        {
-            currentNode = left_node;
-            continue;
-        } else if(right_order)
-        {
-            currentNode = right_node;
-            continue;
-        }
-
-        /* Failed to select entry */
-        return {};
-    }
-
-    return {};
+    return dir_index::lookup::SearchFile(vfs, name, ec, strat);
 }
 
-VFile const* VirtualFS::GetFileTreeExact(
-    const VFS* vfs, cstring name, vfs_error_code& ec)
-{
-    auto index =
-        index_lookup::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
+//VFile const* VirtualFS::GetFileTreeExact(
+//    const VFS* vfs, cstring name, vfs_error_code& ec)
+//{
+//    auto index =
+//        index_common::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
 
-    if(!index)
-    {
-        ec = VFSError::NoIndexing;
-        return nullptr;
-    }
+//    if(!index)
+//    {
+//        ec = VFSError::NoIndexing;
+//        return nullptr;
+//    }
 
-    CString filename = index_lookup::FilterTreeName(name);
+//    CString filename = dir_index::lookup::FilterTreeName(name);
 
-    return nullptr;
-}
+//    return nullptr;
+//}
 
 Bytes Coffee::VirtFS::VirtualFS::GetData(
     const VFS* vfs, const VFile* file, vfs_error_code& ec)

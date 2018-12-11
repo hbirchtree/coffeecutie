@@ -4,6 +4,7 @@
 #include <string.h>
 #include <wchar.h>
 
+#include <peripherals/enum/helpers.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/standard_exceptions.h>
 #include <peripherals/stl/type_safety.h>
@@ -14,12 +15,17 @@ namespace str {
 using namespace libc_types;
 using namespace type_safety;
 
-template<bool CaseInsensitive, bool NoIndex, bool Bounded = false>
+template<
+    bool CaseInsensitive,
+    bool NoIndex,
+    bool Bounded    = false,
+    bool EnumResult = false>
 struct comparison_mode
 {
     static constexpr bool ignore_case = CaseInsensitive;
     static constexpr bool no_index    = NoIndex;
     static constexpr bool bounded     = Bounded;
+    static constexpr bool enum_result = EnumResult;
 };
 
 /* bool result types */
@@ -51,6 +57,18 @@ using find_default = find_mode<false, false>;
 using find_char    = find_mode<false, false>;
 using find_tokens  = find_mode<false, true>;
 using find_reverse = find_mode<true, false>;
+
+enum class lexical_order
+{
+    before = 0x1,
+    equal  = 0x2,
+    after  = 0x4,
+
+    bequal = before | equal,
+    aequal = after | equal,
+};
+
+C_FLAGS(lexical_order, u8);
 
 template<
     typename FindMode,
@@ -142,9 +160,9 @@ template<
     typename std::enable_if<
         comparison_of_type<CompMode, comp_bound>::value>::type* = nullptr,
     typename char_of_type<CharType, char>::type*                = nullptr>
-FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2)
+FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2, szptr len)
 {
-    return ::strncmp(s1, s2);
+    return ::strncmp(s1, s2, len);
 }
 
 template<
@@ -153,9 +171,9 @@ template<
     typename std::enable_if<
         comparison_of_type<CompMode, comp_bound>::value>::type* = nullptr,
     typename char_of_type<CharType, wchar_t>::type*             = nullptr>
-FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2)
+FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2, szptr len)
 {
-    return ::wcsncmp(s1, s2);
+    return ::wcsncmp(s1, s2, len);
 }
 
 #if defined(COFFEE_UNIXPLAT)
@@ -202,18 +220,37 @@ FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2)
 template<
     typename CompMode                                  = comp_default,
     typename CharType                                  = char,
-    typename std::enable_if<CompMode::no_index>::type* = nullptr>
-FORCEDINLINE bool cmp(const CharType* s1, const CharType* s2)
+    typename std::enable_if<CompMode::no_index>::type* = nullptr,
+    typename... Args>
+FORCEDINLINE bool cmp(const CharType* s1, const CharType* s2, Args... args)
 {
-    return compare_ops::cmp<CompMode, CharType>(s1, s2) == 0;
+    return compare_ops::cmp<CompMode, CharType>(s1, s2, args...) == 0;
 }
 template<
     typename CompMode                                   = comp_default,
     typename CharType                                   = char,
-    typename std::enable_if<!CompMode::no_index>::type* = nullptr>
-FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2)
+    typename std::enable_if<!CompMode::no_index>::type* = nullptr,
+    typename... Args>
+FORCEDINLINE ptrdiff_t cmp(const CharType* s1, const CharType* s2, Args... args)
 {
-    return compare_ops::cmp<CompMode, CharType>(s1, s2);
+    return compare_ops::cmp<CompMode, CharType>(s1, s2, args...);
+}
+
+template<
+    typename CompMode = comp_idx,
+    typename CharType = char,
+    typename... Args>
+FORCEDINLINE lexical_order
+             cmp_enum(const CharType* s1, const CharType* s2, Args... args)
+{
+    auto result = cmp<comp_idx_bound, CharType>(s1, s2, args...);
+
+    if(result < 0)
+        return lexical_order::before;
+    else if(result > 0)
+        return lexical_order::after;
+    else
+        return lexical_order::equal;
 }
 
 template<typename CharType>
@@ -225,6 +262,24 @@ FORCEDINLINE szptr longest_prefix(const CharType* s1, const CharType* s2)
 
     const auto minlen = (len1 < len2) ? len1 : len2;
 
+    szptr prefix = 0;
+
+    for(szptr i = 0; i < minlen; i++)
+    {
+        if(s1[prefix] == s2[prefix])
+            prefix++;
+        else
+            return prefix;
+    }
+
+    return prefix;
+}
+
+template<typename CharType>
+FORCEDINLINE szptr
+             longest_prefix(const CharType* s1, const CharType* s2, szptr minlen)
+{
+    /* TODO: Add C++17 std::mismatch() here */
     szptr prefix = 0;
 
     for(szptr i = 0; i < minlen; i++)

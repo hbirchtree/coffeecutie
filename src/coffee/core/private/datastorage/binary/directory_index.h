@@ -10,6 +10,8 @@
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/url_types.h>
 
+#include "index_common.h"
+
 #include <coffee/core/CDebug>
 
 #define VIRTFS_API "VirtFS::"
@@ -25,12 +27,13 @@ namespace dir_index {
  * \param ptr
  * \param size
  */
-static void CharInsert(CString const& src, char* ptr, szptr size)
+NO_DISCARD static u8 CharInsert(CString const& src, char* ptr, szptr size)
 {
     if(src.size() > (size - 1))
         Throw(std::out_of_range("entry too long"));
 
     MemCpy(Bytes::From(src.data(), src.size()), Bytes::From(ptr, size));
+    return C_FCAST<u8>(src.size());
 }
 
 struct node_info_t
@@ -103,7 +106,8 @@ static u32 VirtPartitionChildren(
     {
         auto& node = set.outNodes.back();
         node.flags = flags;
-        CharInsert(prefix, node.node.prefix, MaxPrefixLength);
+        node.node.len_info.prefix =
+            CharInsert(prefix, node.node.prefix, MaxPrefixLength);
     }
 
     /* In this case, we have reached the bottom of the children tree,
@@ -235,13 +239,15 @@ static void GenPrefixNodes(
             node.node.node.right = node_t::sentinel_value;
             node.node.flags =
                 node_base_t::prefix_carry | node_base_t::prefix_directory;
-            CharInsert(remaining_suffix, node.node.node.prefix, prefix_len);
+            node.node.node.len_info.prefix =
+                CharInsert(remaining_suffix, node.node.node.prefix, prefix_len);
         } else
         {
             node.node.leaf.set_mask();
             node.node.leaf.fileIdx = 0;
             node.node.flags        = node_base_t::prefix_carry;
-            CharInsert(remaining_suffix, node.node.leaf.prefix, prefix_len);
+            node.node.node.len_info.prefix =
+                CharInsert(remaining_suffix, node.node.leaf.prefix, prefix_len);
         }
 
         parent.children.push_back(Path(append_prefix + remaining_suffix));
@@ -261,7 +267,8 @@ static void GenPrefixNodes(
     new_node.node.node.left  = node_t::sentinel_value;
     new_node.node.node.right = node_t::sentinel_value;
     new_node.node.flags      = node_base_t::prefix_carry;
-    CharInsert(cut_prefix, new_node.node.node.prefix, MaxPrefixLength);
+    new_node.node.node.len_info.prefix =
+        CharInsert(cut_prefix, new_node.node.node.prefix, MaxPrefixLength);
 
     new_node_parent.children.push_back(Path(new_parent));
 
@@ -323,11 +330,12 @@ static void PrintDirIndex(
 
 namespace opt_detail {
 
-static void AdoptNode(node_working_set_t& set, u32* from_to)
+static void AdoptNode(
+    node_working_set_t& set, directory_data_t::child_t<u32>* from_to)
 {
-    u32 from = *from_to;
+    u32   from   = *from_to;
     auto& source = set.outNodes.at(from);
-    *from_to = source.node.left;
+    *from_to     = source.node.left;
 }
 
 static bool NeedsOptimization(node_working_set_t& set, u32 idx = 0)
@@ -339,32 +347,29 @@ static bool NeedsOptimization(node_working_set_t& set, u32 idx = 0)
         return false;
 
     /* Run the process for the children first */
-    if(node.node.left != node_t::sentinel_value)
+    if(node.node.left.valid())
         if(NeedsOptimization(set, node.node.left))
             AdoptNode(set, &node.node.left);
-    if(node.node.right != node_t::sentinel_value)
+    if(node.node.right.valid())
         if(NeedsOptimization(set, node.node.right))
             AdoptNode(set, &node.node.right);
 
     /* Left node will always exist, only check right */
-    if(node.node.right != node_t::sentinel_value)
+    if(node.node.right.valid())
         return false;
 
-    auto& only_child = set.outNodes.at(node.node.left);
-
-    /* Check if this node carries or is a directory, in which case it's useful */
+    /* Check if this node carries or is a directory, in which case it's useful
+     */
     if(node.flags != 0)
         return false;
 
-    /* In this case, the node does not do anything productive
-     *  if prefixes are the same */
+    /* In this case, the node does not do anything productive */
     return true;
 }
 
-}
+} // namespace opt_detail
 
-static directory_index_t Generate(
-    _cbasic_data_chunk<const VFile> const& files)
+static directory_index_t Generate(_cbasic_data_chunk<const VFile> const& files)
 {
     DProfContext _(VIRTFS_API "Generating directory index");
 
@@ -377,7 +382,8 @@ static directory_index_t Generate(
     /* This part is only used as the root of the tree,
      *  and is never included in paths. */
     auto& rootStem = stems[Path(".")];
-    CharInsert(".", rootStem.node.node.prefix, MaxPrefixLength);
+    rootStem.node.node.len_info.prefix =
+        CharInsert(".", rootStem.node.node.prefix, MaxPrefixLength);
 
     Profiler::DeepPushContext(VIRTFS_API "Creating directory stems");
 
@@ -449,7 +455,7 @@ static directory_index_t Generate(
     /* As a last pass, we optimize the binary tree,
      *  fixing nodes with only a single child.
      * This is a very minor improvement. */
-//    opt_detail::NeedsOptimization(work_set);
+    opt_detail::NeedsOptimization(work_set);
 
     for(auto const& stem : stems)
     {
@@ -472,7 +478,260 @@ static directory_index_t Generate(
     return {std::move(outIndex), indexSize, std::move(outNodes)};
 }
 
-} // namespace index_creation
+namespace lookup {
+
+using node_base_t = VirtualIndex::directory_data_t::node_base_t;
+using node_t      = VirtualIndex::directory_data_t::node_t;
+
+using node_list_t = _cbasic_data_chunk<node_base_t const>;
+
+STATICINLINE CString FilterTreeName(cstring name)
+{
+    return name;
+}
+
+static node_base_t const* GetNode(u32 idx, node_list_t const& nodes)
+{
+    if(idx == node_t::sentinel_value)
+        return nullptr;
+
+    return &nodes[idx];
+}
+
+static bool SelectNodes(
+    directory_data_t::cached_index& cache_idx,
+    node_base_t const*              nodes,
+    u32                             idx = 0)
+{
+    auto const& node = nodes[idx];
+
+    if(node.is_leaf())
+        return cache_idx.node_match.at(idx);
+
+    auto left = node.node.left.valid()
+                    ? SelectNodes(cache_idx, nodes, node.node.left)
+                    : false;
+    auto right = node.node.right.valid()
+                     ? SelectNodes(cache_idx, nodes, node.node.right)
+                     : false;
+
+    return (cache_idx.node_match.at(idx) = left || right);
+}
+
+static u32 GetFirstSelected(
+    directory_data_t::cached_index& cache_idx,
+    node_base_t const*              nodes,
+    u32                             idx = 0)
+{
+    if(!cache_idx.node_match.at(idx))
+        return node_t::sentinel_value;
+
+    auto const& node = nodes[idx];
+
+    if(node.is_leaf())
+        return cache_idx.node_match.at(idx);
+
+    u8 num_matches = 0;
+
+    if(node.node.left.valid())
+        num_matches += cache_idx.node_match.at(node.node.left);
+    if(node.node.right.valid())
+        num_matches += cache_idx.node_match.at(node.node.right);
+
+    if(num_matches == 2)
+        return idx;
+    else if(num_matches == 1)
+    {
+        auto valid_left =
+            node.node.left.valid() && cache_idx.node_match.at(node.node.left);
+        auto valid_right =
+            node.node.right.valid() && cache_idx.node_match.at(node.node.right);
+
+        return valid_left
+                   ? GetFirstSelected(cache_idx, nodes, node.node.left)
+                   : valid_right
+                         ? GetFirstSelected(cache_idx, nodes, node.node.right)
+                         : node_t::sentinel_value;
+    } else
+        return node_t::sentinel_value;
+}
+
+static bool NodeMatching(
+    node_base_t const* node,
+    CString const&     prefix,
+    szptr              currentPrefix,
+    szptr              prefixLen)
+{
+    return (currentPrefix + node->longest_match(prefix)) == prefixLen;
+}
+
+directory_data_t::result_t SearchFile(
+    VFS const* vfs, cstring name, vfs_error_code& ec, search_strategy strat)
+{
+    using node_base_t = VirtualIndex::directory_data_t::node_base_t;
+
+    auto index =
+        index_common::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
+
+    if(!index)
+    {
+        ec = VFSError::NoIndexing;
+        return {{}, {}, strat};
+    }
+
+    CString prefix        = lookup::FilterTreeName(name);
+    szptr   currentPrefix = 0;
+    szptr   prefixLen     = prefix.size();
+
+    auto nodes = index->directory.nodes(*index);
+
+    auto currentNode = &nodes[0];
+
+    if(currentNode->is_leaf())
+        return {{}, {}, strat};
+
+    /* exact matching can achieve log N by not doing any backtracking */
+    if(strat == search_strategy::exact)
+        while(currentNode)
+        {
+            /* Exact match */
+            if(currentPrefix +
+                   currentNode->longest_match(prefix, currentPrefix) ==
+               prefixLen)
+                return {{}, {currentNode, index}, strat};
+
+            /* Can't go further with leaf node */
+            if(currentNode->is_leaf())
+                return {{}, {}, strat};
+
+            /* It's longer than our prefix, mismatch */
+            if(currentPrefix > prefixLen)
+                return {{}, {}, strat};
+
+            auto& node = currentNode->node;
+
+            auto left_node  = lookup::GetNode(node.left, nodes);
+            auto right_node = lookup::GetNode(node.right, nodes);
+
+            /* First look for longest match within each tree */
+            auto left_match =
+                left_node ? left_node->longest_match(prefix, currentPrefix) : 0;
+            auto right_match =
+                right_node ? right_node->longest_match(prefix, currentPrefix)
+                           : 0;
+
+            if(left_match > right_match)
+            {
+                currentNode = left_node;
+                if(left_node->flags & node_base_t::prefix_directory)
+                    currentPrefix += left_node->prefix_length() + 1;
+                else if(left_node->flags & node_base_t::prefix_carry)
+                    currentPrefix += left_node->prefix_length();
+                continue;
+            } else if(right_match > left_match)
+            {
+                currentNode = right_node;
+                if(right_node->flags & node_base_t::prefix_directory)
+                    currentPrefix += right_node->prefix_length() + 1;
+                else if(right_node->flags & node_base_t::prefix_carry)
+                    currentPrefix += right_node->prefix_length();
+                continue;
+            }
+
+            using lex_order = libc::str::lexical_order;
+            using namespace ::enum_helpers;
+
+            auto left_lex_order = libc::str::cmp_enum(
+                left_node->node.prefix,
+                &prefix[currentPrefix],
+                (std::min<u32>)(
+                    prefix.size() - currentPrefix,
+                    left_node->prefix_length()));
+            auto right_lex_order = libc::str::cmp_enum(
+                right_node->node.prefix,
+                &prefix[currentPrefix],
+                (std::min<u32>)(
+                    prefix.size() - currentPrefix,
+                    right_node->prefix_length()));
+
+            /* Look for ordering if there is no prefix match */
+            auto left_order =
+                left_node ? (feval(left_lex_order & lex_order::aequal)) : false;
+            auto right_order =
+                right_node ? (feval(right_lex_order & lex_order::bequal))
+                           : false;
+
+            if(left_order)
+            {
+                currentNode = left_node;
+                continue;
+            } else if(right_order)
+            {
+                currentNode = right_node;
+                continue;
+            }
+
+            /* Failed to select entry */
+            return {{}, {}, strat};
+        }
+    /* Earliest matching creates a bitmap of matching nodes.
+     * This can be used later to combine bitmaps, ANDing or ORing them. */
+    else if(strat == search_strategy::earliest)
+    {
+        directory_data_t::cached_index cache_index;
+        /* 2 values per node: flag for left and right */
+        cache_index.node_match.resize(index->directory.num_nodes * 2);
+
+        Deque<Pair<u32, szptr>> disco_nodes; /* node_idx, prefix match length */
+        disco_nodes.push_back({0, 0});
+
+        while(!disco_nodes.empty())
+        {
+            auto node_data = disco_nodes.front();
+            currentNode    = lookup::GetNode(node_data.first, nodes);
+            disco_nodes.pop_front();
+
+            /* Check if leaf node matches the prefix */
+            if(currentNode->is_leaf())
+            {
+                auto match_len = node_data.second;
+                match_len +=
+                    currentNode->longest_match(prefix.substr(node_data.second));
+
+                if(match_len >= prefixLen)
+                    cache_index.node_match.at(node_data.first) = 1;
+
+                continue;
+            }
+
+            auto match_len = node_data.second;
+            auto prefix_match =
+                currentNode->longest_match(prefix.substr(node_data.second));
+
+            match_len += currentNode->flags & node_base_t::prefix_directory
+                             ? prefix_match + 1
+                             : currentNode->flags & node_base_t::prefix_carry
+                                   ? prefix_match
+                                   : 0;
+
+            if(currentNode->node.left.valid())
+                disco_nodes.push_back({currentNode->node.left, match_len});
+            if(currentNode->node.right.valid())
+                disco_nodes.push_back({currentNode->node.right, match_len});
+        }
+
+        if(SelectNodes(cache_index, nodes.data))
+            cache_index.sub_root = GetFirstSelected(cache_index, nodes.data);
+
+        return {cache_index, {}, strat};
+    }
+
+    return {{}, {}, strat};
+}
+
+} // namespace lookup
+
+} // namespace dir_index
 
 } // namespace VirtFS
 } // namespace Coffee
