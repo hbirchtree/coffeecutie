@@ -90,7 +90,7 @@ template<
  * \param pred Predicate function for items from said container
  */
 FORCEDINLINE void ParallelForEach(
-    ContainerT& container, Function<void(T&)>&& pred, u32 num_workers = 0)
+    ContainerT& container, Function<void(T&)>&& pred, szptr num_workers = 0)
 {
 #if __cplusplus < 201703L
 #if defined(COFFEE_NO_THREADLIB)
@@ -126,7 +126,7 @@ FORCEDINLINE void ParallelForEach(
 
 template<typename ContainerT, typename T>
 FORCEDINLINE void ParallelForEach(
-    ContainerT&& container, Function<void(T&)>&& pred, u32 num_workers = 0)
+    ContainerT&& container, Function<void(T&)>&& pred, szptr num_workers = 0)
 {
     ParallelForEach(container, std::move(pred), num_workers);
 }

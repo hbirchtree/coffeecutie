@@ -23,6 +23,9 @@ case $1 in
         BUILDVARIANT=${@:2} ${TC_DIR}/ci/travis-build.sh
     fi
 ;;
+"quick-build-deps")
+    pip install PyYaml
+;;
 "ci")
     ${TC_DIR}/configure_ci.py ${@:2}
 ;;

@@ -592,8 +592,9 @@ struct VirtualFS
     /* TODO: Return read-only pointer here */
     /*!
      * \brief Given a VFS and a valid file within, return the
-     *  data. If the file is compressed, decompression
-     *  will be done internally.
+     *  data.
+     * If the file is compressed, decompression will be done internally.
+     * A compressed file will be decompressed for each call to GetData().
      * \param vfs
      * \param file
      * \return
@@ -643,7 +644,7 @@ FORCEDINLINE VFile const* VirtualFS::GetFileLinear(
 FORCEDINLINE VFile const* VirtualFS::GetFileTreeExact(
     const VFS* vfs, cstring name, vfs_error_code& ec)
 {
-    auto file = SearchFile(vfs, name, ec, search_strategy::exact);
+    auto file      = SearchFile(vfs, name, ec, search_strategy::exact);
     auto vfs_files = C_RCAST<VFile const*>(vfs->files());
 
     if(file.node.node)
@@ -862,8 +863,16 @@ struct VirtDesc
     u32 flags;
 };
 
+struct generation_settings
+{
+    szptr workers = 0; /*!< 0 will default to maximum */
+};
+
 extern bool GenVirtFS(
-    Vector<VirtDesc>& filenames, Vector<byte_t>* output, vfs_error_code& ec);
+    Vector<VirtDesc>&     filenames,
+    Vector<byte_t>*       output,
+    vfs_error_code&       ec,
+    generation_settings&& settings = {});
 
 FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {

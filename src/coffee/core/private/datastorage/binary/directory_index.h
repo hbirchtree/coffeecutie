@@ -455,16 +455,15 @@ static directory_index_t Generate(_cbasic_data_chunk<const VFile> const& files)
     /* As a last pass, we optimize the binary tree,
      *  fixing nodes with only a single child.
      * This is a very minor improvement. */
-    opt_detail::NeedsOptimization(work_set);
-
-    for(auto const& stem : stems)
     {
-        cDebug("{0} ({1})", stem.first, stem.second.node.is_leaf());
-
-        for(auto const& child : stem.second.children)
-            cDebug("- {0}", child);
+        DProfContext _(VIRTFS_API "Optimizing tree");
+        opt_detail::NeedsOptimization(work_set);
     }
-    PrintDirIndex(outNodes);
+
+    {
+        DProfContext _(VIRTFS_API "Printing tree");
+        PrintDirIndex(outNodes);
+    }
 
     auto indexSize = sizeof(VirtualIndex) +
                      outNodes.size() * sizeof(dir_data_t::node_base_t);

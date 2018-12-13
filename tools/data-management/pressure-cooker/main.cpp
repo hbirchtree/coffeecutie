@@ -424,7 +424,8 @@ i32 coffee_main(i32, cstring_w*)
 
     VirtFS::vfs_error_code virt_ec;
 
-    if(!VirtFS::GenVirtFS(descriptors, &outputData, virt_ec))
+    if(!VirtFS::GenVirtFS(
+           descriptors, &outputData, virt_ec, {globalNumWorkers}))
     {
         cursor.print(
             "{0}:0: Failed to create VirtFS: {1}",

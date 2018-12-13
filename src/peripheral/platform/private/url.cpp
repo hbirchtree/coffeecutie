@@ -205,7 +205,8 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.cacheDir  = base + Path{"Library"} + Path{"Caches"};
 
 #else
-    paths.tempDir = MkUrl("/tmp", RSCA::SystemFile);
+    paths.tempDir =
+        MkUrl("/tmp", RSCA::SystemFile) + Path(GetAppData().application_name);
 
     auto library = MkUrl(home.c_str()) + Path{"Library"};
 

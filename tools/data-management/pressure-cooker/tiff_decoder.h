@@ -1,9 +1,9 @@
 #pragma once
 
-#include "texture_common.h"
-
 #if defined(HAVE_LIBTIFF)
 #include <tiffio.h>
+
+#include "texture_common.h"
 
 namespace TexCompress {
 

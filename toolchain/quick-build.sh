@@ -46,7 +46,7 @@
 #
 
 set -x
-set -e
+set -euf -o pipefail
 
 function build_info()
 {
@@ -73,6 +73,7 @@ DEPENDENCIES="$(echo ${DEPENDENCIES} | sed -e 's/ /%/g')"
 MAKEFILE_DIR=$(build_info makefile_location)
 SCRIPT_DIR=
 NODEPS=${NODEPS:-1}
+LOCALLIB=${LOCALLIB:-}
 
 MULTI_DIR="$PWD/../multi_build"
 

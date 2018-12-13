@@ -77,7 +77,10 @@ static bool VirtDesc_Sort(VirtDesc const& d1, VirtDesc const& d2)
 }
 
 bool GenVirtFS(
-    Vector<VirtDesc>& filenames, Vector<byte_t>* output, vfs_error_code& ec)
+    Vector<VirtDesc>&     filenames,
+    Vector<byte_t>*       output,
+    vfs_error_code&       ec,
+    generation_settings&& settings)
 {
     DProfContext _(VIRTFS_API "Generating VirtFS");
 
@@ -147,7 +150,8 @@ bool GenVirtFS(
 #endif
             }
         };
-        threads::ParallelForEach(Range<>(filenames.size()), std::move(worker));
+        threads::ParallelForEach(
+            Range<>(filenames.size()), std::move(worker), settings.workers);
     }
 
     {
@@ -212,9 +216,15 @@ bool GenVirtFS(
         MemCpy(Bytes::CreateFrom(files), *output);
     }
 
-    files.resize(0);
+    {
+        DProfContext _(VIRTFS_API "Free'ing input files");
+        files.resize(0);
+    }
+    {
+        DProfContext _(VIRTFS_API "Allocating output buffer");
+        output->resize(output->capacity());
+    }
 
-    output->resize(output->capacity());
     Bytes outputView = Bytes::CreateFrom(*output);
 
     for(auto i : Range<>(filenames.size()))
@@ -337,23 +347,6 @@ directory_data_t::result_t VirtualFS::SearchFile(
 {
     return dir_index::lookup::SearchFile(vfs, name, ec, strat);
 }
-
-//VFile const* VirtualFS::GetFileTreeExact(
-//    const VFS* vfs, cstring name, vfs_error_code& ec)
-//{
-//    auto index =
-//        index_common::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
-
-//    if(!index)
-//    {
-//        ec = VFSError::NoIndexing;
-//        return nullptr;
-//    }
-
-//    CString filename = dir_index::lookup::FilterTreeName(name);
-
-//    return nullptr;
-//}
 
 Bytes Coffee::VirtFS::VirtualFS::GetData(
     const VFS* vfs, const VFile* file, vfs_error_code& ec)

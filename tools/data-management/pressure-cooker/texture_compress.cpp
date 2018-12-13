@@ -1,12 +1,10 @@
+/* Image decoders, TIFF needs to avoid uint* typedefs */
+#include "tiff_decoder.h"
+
 #include <coffee/core/CEnvironment>
 #include <peripherals/stl/threads/job_system.h>
 
 #include "texture_common.h"
-
-#include <coffee/core/CDebug>
-
-/* Image decoders */
-#include "tiff_decoder.h"
 
 /* Image compressors */
 #include "dxt_compression.h"
