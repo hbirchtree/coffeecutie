@@ -4,40 +4,39 @@
 
 #ifdef COFFEE_ANDROID
 
-#include "../../../coffee_message_macros.h"
-#include "../unix/file.h"
+#include <platforms/posix/file.h>
 
 struct AAsset;
 
-namespace Coffee {
-namespace CResources {
-namespace Android {
+namespace platform {
+namespace file {
+namespace android {
 
-struct AndroidFileApi
+struct FileApi
 {
-    struct FileHandle : Posix::PosixApi::FileHandle
+    struct FileHandle : posix::PosixApi::FileHandle
     {
         AAsset* fp;
     };
 };
 
-struct AndroidFileFun : Posix::PosixFileFun_def<
+struct FileFun : posix::PosixFileFun_def<
 
-                            AndroidFileApi::FileHandle,
-                            FileFunDef<>::FileMapping,
-                            FileFunDef<>::ScratchBuf
+                     FileApi::FileHandle,
+                     FileFunDef<>::FileMapping,
+                     FileFunDef<>::ScratchBuf
 
-                            >
+                     >
 {
-    using FileHandle = AndroidFileApi::FileHandle;
+    using FileHandle = FileApi::FileHandle;
 
     struct FileMapping : FileFunDef<>::FileMapping
     {
         FileHandle handle;
     };
 
-    using Ancestor = Posix::PosixFileFun_def<
-        AndroidFileApi::FileHandle,
+    using Ancestor = posix::PosixFileFun_def<
+        FileApi::FileHandle,
         FileFunDef<>::FileMapping,
         FileFunDef<>::ScratchBuf>;
 
@@ -57,11 +56,11 @@ struct AndroidFileFun : Posix::PosixFileFun_def<
     static bool Unmap(FileMapping&& mp, file_error& ec);
 };
 
-} // namespace Android
+} // namespace android
 
-using FileFun = Android::AndroidFileFun;
-using DirFun  = Posix::PosixDirFun;
+using FileFun = android::FileFun;
+using DirFun  = posix::DirFun;
 
-} // namespace CResources
-} // namespace Coffee
+} // namespace file
+} // namespace platform
 #endif

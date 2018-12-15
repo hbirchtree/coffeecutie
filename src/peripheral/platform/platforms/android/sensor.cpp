@@ -2,8 +2,6 @@
 
 #include <android/sensor.h>
 
-#include <coffee/core/CDebug>
-
 namespace platform {
 namespace sensor {
 namespace android {
@@ -25,7 +23,6 @@ static const ASensor* m_sensors[SENS_Count] = {};
 
 void Android_InitSensors()
 {
-    cVerbose(5, "Initializing Android Sensor Manager");
     s_sensor_man = ASensorManager_getInstance();
 
     ASensorList sensors;
@@ -60,12 +57,12 @@ void Android_InitSensors()
         }
         if(j == -1)
         {
-            cVerbose(
-                5,
-                "Unknown sensor type: {0}, name={1},vendor={2}",
-                type,
-                ASensor_getName(sens),
-                ASensor_getVendor(sens));
+//            cVerbose(
+//                5,
+//                "Unknown sensor type: {0}, name={1},vendor={2}",
+//                type,
+//                ASensor_getName(sens),
+//                ASensor_getVendor(sens));
             continue;
         }
 
@@ -81,12 +78,12 @@ void Android_InitSensors()
         if(m_sensors[i])
         {
             auto s = m_sensors[i];
-            cVerbose(
-                5,
-                "Selecting sensor {0} {1} for {2}",
-                ASensor_getVendor(s),
-                ASensor_getName(s),
-                ASensor_getType(s));
+//            cVerbose(
+//                5,
+//                "Selecting sensor {0} {1} for {2}",
+//                ASensor_getVendor(s),
+//                ASensor_getName(s),
+//                ASensor_getType(s));
         }
     }
 }

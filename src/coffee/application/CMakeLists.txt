@@ -19,6 +19,7 @@ if(ANDROID)
 
     target_sources ( CoffeeCore_Application PRIVATE
         platform/android/and_main.cpp
+        platform/android/JNIHelper.cpp
         ${ANDROID_GLUE_SOURCES}
         )
 

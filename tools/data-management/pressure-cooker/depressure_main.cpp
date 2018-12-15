@@ -158,6 +158,7 @@ static i32 extract_file(
     return 0;
 }
 
+#if MODE_DEBUG
 DENYINLINE void binary_bench(
     mem_chunk<const VirtFS::VFS>& vfsData, szptr& thing)
 {
@@ -199,6 +200,8 @@ DENYINLINE void sequential_bench(VirtFS::vfs_view& vfsView, szptr& thing)
 DENYINLINE void benchy(
     mem_chunk<const VirtFS::VFS>& vfsData, VirtFS::vfs_view& vfsView)
 {
+    ProfContext _("Benchmark");
+
     szptr thing = 0;
 
     binary_bench(vfsData, thing);
@@ -206,6 +209,7 @@ DENYINLINE void benchy(
 
     cDebug("Got: {0}", thing);
 }
+#endif
 
 i32 coffee_main(i32, cstring_w*)
 {
@@ -309,35 +313,9 @@ i32 coffee_main(i32, cstring_w*)
         return 0;
     }
 
+#if MODE_DEBUG
     benchy(vfsData, vfsView);
-
-    //    auto node = VirtFS::VFS::SearchFile(
-    //                vfsData.data,
-    //                "textures/stuff/C++-kildefil.cpp",
-    //                ec,
-    //                VirtFS::search_strategy::exact);
-
-    //    cDebug("Node: {0}", node.node.node->prefix());
-
-    //    Queue<decltype(node)> outNodes;
-    //    outNodes.push(node);
-
-    //    while(!outNodes.empty())
-    //    {
-    //        auto node = outNodes.front();
-    //        outNodes.pop();
-
-    //        if(node.node->is_leaf())
-    //        {
-    //            cDebug("File: {0}", node.file(vfsData.data)->name);
-    //            continue;
-    //        }
-
-    //        if(node.left().valid())
-    //            outNodes.push(node.left());
-    //        if(node.right().valid())
-    //            outNodes.push(node.right());
-    //    }
+#endif
 
     normal_printing(vfsView, human_readable, shown_columns);
 

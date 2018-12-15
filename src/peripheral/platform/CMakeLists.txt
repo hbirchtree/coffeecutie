@@ -62,8 +62,6 @@ if(ANDROID)
         ${NDK_HELPER_SOURCES}
         ${CPUFEATURES_SOURCES}
 
-        platform/android/JNIHelper.cpp
-        platforms/android/environment.cpp
         platforms/android/sensor.cpp
         platforms/android/file.cpp
         platforms/android/sysinfo.cpp

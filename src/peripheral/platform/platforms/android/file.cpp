@@ -1,18 +1,20 @@
-#include <coffee/core/plat/file/android/file.h>
+#include <platforms/android/file.h>
 
-#include <coffee/core/plat/plat_file.h>
-#include <coffee/core/CDebug>
+#include <peripherals/enum/helpers.h>
+#include <platforms/base/file.h>
 
 #include <android/asset_manager.h>
-#include <coffee/android/android_main.h>
+//#include <coffee/android/android_main.h>
 
-namespace Coffee {
-namespace CResources {
-namespace Android {
+using namespace ::enum_helpers;
+
+namespace platform {
+namespace file {
+namespace android {
 
 static AAssetManager* m_android_asset_manager = nullptr;
 
-AAssetManager* and_asset_manager(file_error& ec)
+AAssetManager* and_asset_manager(FileFun::file_error& ec)
 {
     if(!m_android_asset_manager)
     {
@@ -35,8 +37,8 @@ AAssetManager* and_asset_manager(file_error& ec)
     return m_android_asset_manager;
 }
 
-AndroidFileFun::FileHandle AndroidFileFun::Open(
-    const Url& fn, RSCA ac, file_error& ec)
+FileFun::FileHandle FileFun::Open(
+    const Url& fn, RSCA ac, FileFun::file_error& ec)
 {
     auto       url = *fn;
     FileHandle fh  = {};
@@ -52,14 +54,14 @@ AndroidFileFun::FileHandle AndroidFileFun::Open(
         fh.fp = fp;
     } else
     {
-        fh = Ancestor::Open(fn, ac, ec);
+        fh    = Ancestor::Open(fn, ac, ec);
         fh.fp = nullptr;
     }
 
     return fh;
 }
 
-bool AndroidFileFun::Close(FileHandle&& fh, file_error& ec)
+bool FileFun::Close(FileHandle&& fh, file_error& ec)
 {
     if(fh.fp)
         AAsset_close(fh.fp);
@@ -68,7 +70,7 @@ bool AndroidFileFun::Close(FileHandle&& fh, file_error& ec)
     return true;
 }
 
-Bytes AndroidFileFun::Read(FileHandle const& fh, szptr size, file_error& ec)
+Bytes FileFun::Read(FileHandle const& fh, szptr size, file_error& ec)
 {
     if(fh.fp)
     {
@@ -87,7 +89,7 @@ Bytes AndroidFileFun::Read(FileHandle const& fh, szptr size, file_error& ec)
         return Ancestor::Read(fh, size, ec);
 }
 
-bool AndroidFileFun::Write(FileHandle const& fh, const Bytes& d, file_error& ec)
+bool FileFun::Write(FileHandle const& fh, const Bytes& d, file_error& ec)
 {
     if(fh.fp)
     {
@@ -98,7 +100,7 @@ bool AndroidFileFun::Write(FileHandle const& fh, const Bytes& d, file_error& ec)
         return Ancestor::Write(fh, d, ec);
 }
 
-szptr AndroidFileFun::Size(AndroidFileFun::FileHandle const& fh, file_error& ec)
+szptr FileFun::Size(FileFun::FileHandle const& fh, file_error& ec)
 {
     if(fh.fp)
     {
@@ -111,7 +113,7 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle const& fh, file_error& ec)
         return Ancestor::Size(fh, ec);
 }
 
-szptr AndroidFileFun::Size(Url const& fn, file_error& ec)
+szptr FileFun::Size(Url const& fn, file_error& ec)
 {
     auto url = *fn;
     if(feval(fn.flags & RSCA::AssetFile))
@@ -132,7 +134,7 @@ szptr AndroidFileFun::Size(Url const& fn, file_error& ec)
         return Ancestor::Size(fn, ec);
 }
 
-AndroidFileFun::FileMapping AndroidFileFun::Map(
+FileFun::FileMapping FileFun::Map(
     const Url& fn, RSCA acc, szptr offset, szptr size, file_error& ec)
 {
     auto url = *fn;
@@ -174,7 +176,7 @@ AndroidFileFun::FileMapping AndroidFileFun::Map(
     }
 }
 
-bool AndroidFileFun::Unmap(AndroidFileFun::FileMapping&& mp, file_error& ec)
+bool FileFun::Unmap(FileFun::FileMapping&& mp, file_error& ec)
 {
     if(mp.handle.fd)
     {
@@ -182,12 +184,12 @@ bool AndroidFileFun::Unmap(AndroidFileFun::FileMapping&& mp, file_error& ec)
     } else
     {
         Ancestor::FileMapping map = {};
-        map.data = mp.data;
-        map.size = mp.size;
+        map.data                  = mp.data;
+        map.size                  = mp.size;
         return Ancestor::Unmap(std::move(map), ec);
     }
 }
 
-} // namespace Android
-} // namespace CResources
-} // namespace Coffee
+} // namespace android
+} // namespace file
+} // namespace platform

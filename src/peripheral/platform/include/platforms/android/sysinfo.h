@@ -10,14 +10,14 @@
 #include "../sdlpowerinfo.h"
 #endif
 
-namespace Coffee {
-namespace Environment {
-namespace Android {
-struct AndroidSysInfo : Linux::LinuxSysInfo
+namespace platform {
+namespace env {
+namespace android {
+struct SysInfo : Linux::SysInfo
 {
     static CString      GetSystemVersion();
-    static HWDeviceInfo DeviceName();
-    static HWDeviceInfo Motherboard();
+    static info::HardwareDevice DeviceName();
+    static info::HardwareDevice Motherboard();
 
     static u32     CoreCount();
     static ThrdCnt ThreadCount();
@@ -33,12 +33,12 @@ struct AndroidPowerInfo : PowerInfoDef
 };
 #endif
 
-} // namespace Android
-} // namespace Environment
+} // namespace android
+} // namespace env
 
 using PowerInfo = Environment::Android::AndroidPowerInfo;
 using SysInfo   = Environment::Android::AndroidSysInfo;
 
-} // namespace Coffee
+} // namespace platform
 
 #endif
