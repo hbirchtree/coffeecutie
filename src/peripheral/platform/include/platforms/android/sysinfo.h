@@ -24,11 +24,11 @@ struct SysInfo : Linux::SysInfo
 };
 
 #if defined(COFFEE_USE_SDL2)
-struct AndroidPowerInfo : _SDLPowerInfo
+struct PowerInfo : _SDLPowerInfo
 {
 };
 #else
-struct AndroidPowerInfo : PowerInfoDef
+struct PowerInfo : PowerInfoDef
 {
 };
 #endif
@@ -36,8 +36,8 @@ struct AndroidPowerInfo : PowerInfoDef
 } // namespace android
 } // namespace env
 
-using PowerInfo = Environment::Android::AndroidPowerInfo;
-using SysInfo   = Environment::Android::AndroidSysInfo;
+using PowerInfo = env::android::PowerInfo;
+using SysInfo   = env::android::SysInfo;
 
 } // namespace platform
 

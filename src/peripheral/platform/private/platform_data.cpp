@@ -20,6 +20,8 @@ using namespace ::stl_types;
 
 namespace platform {
 
+using namespace Coffee;
+
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 namespace env {
 namespace Linux {

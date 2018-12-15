@@ -1,3 +1,3 @@
 #pragma once
 
-using CoffeeMainWithArgs = int(int, char**);
+using CoffeeMainWithArgs = int(*)(int, char**);

@@ -2,7 +2,7 @@
 
 #include <peripherals/base.h>
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 
 #include <platforms/base/process.h>
 

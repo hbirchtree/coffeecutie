@@ -17,9 +17,9 @@
 #define main Coffee_main
 
 #if defined(COFFEE_APPLE_MOBILE)
-extern Coffee::CoffeeMainWithArgs apple_entry_point;
+extern CoffeeMainWithArgs apple_entry_point;
 #elif defined(COFFEE_ANDROID)
-extern Coffee::CoffeeMainWithArgs android_entry_point;
+extern CoffeeMainWithArgs android_entry_point;
 #endif
 
 #endif

@@ -26,32 +26,32 @@ void NDKWindow::inputTerminate()
 {
 }
 
-void NDKWindow::eventHandleD(const CDEvent &e, c_cptr data)
+void NDKWindow::eventHandleD(const Event &e, c_cptr data)
 {
 
 }
 
-void NDKWindow::eventHandleI(const CIEvent &e, c_cptr data)
+void NDKWindow::eventHandleI(const Input::CIEvent &e, c_cptr data)
 {
 
 }
 
-void NDKWindow::eventHandle(const CIHapticEvent &haptic, c_cptr data)
+void NDKWindow::eventHandle(const Input::CIHapticEvent &haptic, c_cptr data)
 {
 
 }
 
-void NDKWindow::eventHandle(const CIEvent &event, c_cptr data)
+void NDKWindow::eventHandle(const Input::CIEvent &event, c_cptr data)
 {
 
 }
 
-void NDKWindow::eventHandle(const CDEvent &event, c_cptr data)
+void NDKWindow::eventHandle(const Event &event, c_cptr data)
 {
 
 }
 
-CIControllerState NDKWindow::getControllerState(uint16 index)
+Input::CIControllerState NDKWindow::getControllerState(u16 index)
 {
     return {};
 }
@@ -74,12 +74,12 @@ void NDKWindow::setRelativeMouse(bool enable)
 {
 }
 
-CPoint NDKWindow::mousePosition() const
+Point NDKWindow::mousePosition() const
 {
     return {};
 }
 
-void NDKWindow::setMousePosition(const CPoint &p)
+void NDKWindow::setMousePosition(const Point &p)
 {
 }
 
@@ -96,7 +96,7 @@ void NDKWindow::setTextInputMode(bool m)
 {
 }
 
-CDMonitor NDKWindow::monitor()
+Monitor NDKWindow::monitor()
 {
     return {};
 }
@@ -116,21 +116,21 @@ bool NDKWindow::closeWindow()
     return false;
 }
 
-void NDKWindow::popErrorMessage(Severity s, cstring title, cstring msg)
+void NDKWindow::popErrorMessage(debug::Severity s, cstring title, cstring msg)
 {
 }
 
-bool NDKWindow::windowPreInit(const CDProperties &, CString *)
-{
-    return true;
-}
-
-bool NDKWindow::windowInit(const CDProperties &, CString *)
+bool NDKWindow::windowPreInit(const Properties &, CString *)
 {
     return true;
 }
 
-bool NDKWindow::windowPostInit(const CDProperties &, CString *)
+bool NDKWindow::windowInit(const Properties &, CString *)
+{
+    return true;
+}
+
+bool NDKWindow::windowPostInit(const Properties &, CString *)
 {
     return true;
 }
@@ -139,52 +139,52 @@ void NDKWindow::windowTerminate()
 {
 }
 
-void NDKWindow::injectEvent(const CIEvent &ev, c_cptr data)
+void NDKWindow::injectEvent(const Input::CIEvent &ev, c_cptr data)
 {
     for(auto eh : m_eventhandlers_input)
         eh.func(eh.user_ptr, ev, data);
 }
 
-void NDKWindow::injectEvent(const CDEvent &ev, c_cptr data)
+void NDKWindow::injectEvent(const Event &ev, c_cptr data)
 {
     for(auto eh : m_eventhandlers_windw)
         eh.func(eh.user_ptr, ev, data);
 }
 
-CDWindow *NDKWindow::window()
+Window *NDKWindow::window()
 {
     return nullptr;
 }
 
-uint32 NDKWindow::windowState() const
+u32 NDKWindow::windowState() const
 {
     return 0;
 }
 
-void NDKWindow::setWindowState(const CDProperties::State &s)
+void NDKWindow::setWindowState(const Properties::State &s)
 {
 }
 
-CSize NDKWindow::windowSize() const
+Size NDKWindow::windowSize() const
 {
     int winSize[2] = {};
 
     CoffeeForeignSignalHandleNA(CoffeeForeign_GetWinSize,
                                 winSize, nullptr, nullptr);
 
-    return {winSize[0], winSize[1]};
+    return {C_FCAST<u32>(winSize[0]), C_FCAST<u32>(winSize[1])};
 }
 
-void NDKWindow::setWindowSize(const CSize &s)
+void NDKWindow::setWindowSize(const Size &s)
 {
 }
 
-CPoint NDKWindow::windowPosition() const
+Point NDKWindow::windowPosition() const
 {
     return {};
 }
 
-void NDKWindow::setWindowPosition(const CPoint &p)
+void NDKWindow::setWindowPosition(const Point &p)
 {
 }
 

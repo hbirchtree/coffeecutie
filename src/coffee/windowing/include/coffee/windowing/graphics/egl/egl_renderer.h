@@ -5,7 +5,7 @@
 #if defined(COFFEE_USE_MAEMO_EGL)
 
 #include <coffee/core/base/renderer/glapplication.h>
-#include <coffee/core/base/types/cobject.h>
+#include <coffee/core/types/cobject.h>
 
 namespace Coffee{
 namespace Display{
@@ -35,15 +35,15 @@ public:
     EGLRenderer();
     virtual ~EGLRenderer();
 
-    bool contextPreInit(const GLProperties &props, CString *);
-    bool contextInit(const GLProperties &props, CString *err);
-    bool contextPostInit(const GLProperties &props, CString *err);
+    bool contextPreInit(const GL::Properties &props, CString *);
+    bool contextInit(const GL::Properties &props, CString *err);
+    bool contextPostInit(const GL::Properties &props, CString *err);
     void contextTerminate();
     void swapBuffers();
-    CSize framebufferSize() const;
+    Size framebufferSize() const;
     int swapInterval() const;
     void setSwapInterval(const int &i);
-    CDContextBits context();
+    ContextBits context();
     ThreadId contextThread();
 
     virtual CGL::CGL_Context *glContext();

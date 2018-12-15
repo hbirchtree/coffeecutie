@@ -13,6 +13,8 @@ find_path ( STB_INCLUDE_DIR
 
     PATH_SUFFIXES
     stb
+
+    NO_CMAKE_FIND_ROOT_PATH
     )
 
 INCLUDE(FindPackageHandleStandardArgs)

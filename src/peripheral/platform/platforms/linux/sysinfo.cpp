@@ -216,7 +216,7 @@ Set<CString> SysInfo::CPUFlags()
 
 SysInfoDef::NetStatusFlags SysInfo::NetStatus()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     static const constexpr cstring net_path = "/sys/class/net/";
 
     DirFun::DirList list;
@@ -249,7 +249,7 @@ SysInfoDef::NetStatusFlags SysInfo::NetStatus()
 
 u32 SysInfo::CpuCount()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     const cstring query = "physical id";
 
     CPUInfoString();
@@ -278,7 +278,7 @@ u32 SysInfo::CpuCount()
 
 u32 SysInfo::CoreCount()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     const cstring query = "cpu cores";
 
     CPUInfoString();
@@ -310,7 +310,7 @@ u32 SysInfo::CoreCount()
 
 u64 SysInfo::CachedMemory()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     CString data = LFileFun::sys_read("/proc/meminfo");
 
     auto idx = data.find("\nCached:");
@@ -333,7 +333,7 @@ u64 SysInfo::CachedMemory()
 
 info::HardwareDevice SysInfo::Processor()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     const cstring mk_query = "vendor_id";
     const cstring md_query = "model name";
     const cstring fw_query = "microcode";
@@ -365,7 +365,7 @@ Vector<bigscalar> SysInfo::ProcessorFrequencies()
 {
     using namespace url::constructors;
 
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     static const constexpr struct
     {
         cstring prefix;
@@ -415,7 +415,7 @@ Vector<bigscalar> SysInfo::ProcessorFrequencies()
 
 bigscalar SysInfo::ProcessorFrequency()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
 #if defined(__arm__)
     /* We assume that ARM platforms use Linaro-derived kernels,
      *  this applies to IoT devices and Androids. */
@@ -448,7 +448,7 @@ bigscalar SysInfo::ProcessorFrequency()
 
 bool SysInfo::HasFPU()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
 #if defined(COFFEE_MAEMO)
     const cstring query = "vfpv3";
 #elif defined(COFFEE_ANDROID)
@@ -485,7 +485,7 @@ bool SysInfo::HasFPU()
 
 bool SysInfo::HasFPUExceptions()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     const cstring query = "fpu_exception";
 
     CPUInfoString();
@@ -501,7 +501,7 @@ bool SysInfo::HasFPUExceptions()
 
 u64 SysInfo::ProcessorCacheSize()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     const cstring query = "cache size";
 
     CPUInfoString();
@@ -522,7 +522,7 @@ u64 SysInfo::ProcessorCacheSize()
 
 bool SysInfo::HasHyperThreading()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     Set<CString> flags = CPUFlags();
 
     auto it = flags.find("ht");
@@ -538,7 +538,7 @@ bool SysInfo::HasHyperThreading()
 
 info::HardwareDevice SysInfo::DeviceName()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
 #if defined(COFFEE_MAEMO)
     return info::HardwareDevice(
         "Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
@@ -582,7 +582,7 @@ info::HardwareDevice SysInfo::DeviceName()
 
 info::HardwareDevice SysInfo::Motherboard()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
 #if defined(COFFEE_MAEMO)
     return info::HardwareDevice("Nokia", "RX-51", "0x0");
 #else
@@ -603,7 +603,7 @@ info::HardwareDevice SysInfo::Motherboard()
 
 info::HardwareDevice SysInfo::Chassis()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     static const cstring ch_manuf   = DMI_PATH "/chassis_vendor";
     static const cstring ch_model   = DMI_PATH "/chassis_name";
     static const cstring ch_version = DMI_PATH "/chassis_version";
@@ -634,7 +634,7 @@ info::HardwareDevice SysInfo::Chassis()
 
 info::HardwareDevice SysInfo::BIOS()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
     static const cstring bios_manuf   = DMI_PATH "/bios_vendor";
     static const cstring bios_name    = DMI_PATH "/board_version";
     static const cstring bios_version = DMI_PATH "/bios_version";

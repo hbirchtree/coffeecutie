@@ -1,6 +1,9 @@
 #include <platforms/android/sysinfo.h>
 
 #include <jni.h>
+#include <coffee/android/android_main.h>
+#include <coffee/core/stl_types.h>
+#include <peripherals/stl/string_casting.h>
 
 extern "C" {
 #include <cpu-features.h>
@@ -8,9 +11,13 @@ extern "C" {
 
 //#include <coffee/android/android_main.h>
 
+using namespace Coffee;
+
 namespace platform {
 namespace env {
 namespace Linux {
+
+
 extern CString get_kern_arch();
 }
 namespace android {

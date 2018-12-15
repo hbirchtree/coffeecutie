@@ -135,7 +135,7 @@ static void CoffeeInit_Internal(u32 flags)
 
 #if defined(COFFEE_ANDROID)
     State::GetBuildInfo().plat_tmp_string =
-        cStringFormat("Android ({0})", __ANDROID_API__);
+        Strings::cStringFormat("Android ({0})", __ANDROID_API__);
     State::GetBuildInfo().platform =
         State::GetBuildInfo().plat_tmp_string.c_str();
 #endif
@@ -207,7 +207,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     /* On Android and iOS, we want to terminate the profiler early */
-    CmdInterface::BasicTerm::RegisterAtExit([]() {
+    libc::signal::register_atexit([]() {
         State::SwapState("jsonProfiler", ShPtr<State::GlobalState>());
     });
 #endif
@@ -218,7 +218,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
-    CmdInterface::BasicTerm::RegisterAtExit([]() {
+    libc::signal::register_atexit([]() {
         runtime_queue_error ec;
         RuntimeQueue::TerminateThreads(ec);
     });

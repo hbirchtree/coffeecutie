@@ -143,11 +143,11 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     else if(ver >= ver33)
         store->CURR_API = GL_3_3;
 #else
-    const Display::CGLVersion ver20es(2, 0);
+    const Display::GL::Version ver20es(2, 0);
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
-    const Display::CGLVersion ver30es(3, 0);
-    const Display::CGLVersion ver32es(3, 2);
+    const Display::GL::Version ver30es(3, 0);
+    const Display::GL::Version ver32es(3, 2);
 
     if(ver >= ver32es)
         store->CURR_API = GLES_3_2;

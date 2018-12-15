@@ -1,9 +1,9 @@
 #pragma once
 
-#include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/stl_types.h>
 
-#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#include <coffee/foreign/foreign.h>
 #include <coffee/jni/jnipp.h>
 
 #include <android/asset_manager.h>
@@ -16,13 +16,13 @@ struct AAssetManager;
 
 namespace android {
 
-struct jni_error_category : Coffee::error_category
+struct jni_error_category : stl_types::error_category
 {
     virtual const char* name() const noexcept;
     virtual std::string message(int error_code) const;
 };
 
-using jni_error_code = Coffee::domain_error_code<jint, jni_error_category>;
+using jni_error_code = stl_types::domain_error_code<jint, jni_error_category>;
 
 struct ScopedJNI
 {

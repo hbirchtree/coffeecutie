@@ -2,7 +2,7 @@
 
 #include <peripherals/base.h>
 
-#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
 
 #include <platforms/base/environment.h>
 

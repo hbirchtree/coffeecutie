@@ -243,7 +243,7 @@ function build_target()
     ;;
     "osx")
         requires make tar python3
-        MAKEFILE="Makefile.mac"
+        #MAKEFILE="Makefile.mac"
     ;;
     *)
         exit 1

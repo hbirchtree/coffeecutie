@@ -178,10 +178,10 @@ bool GLeamRenderer::bindingPostInit(const GL::Properties& p, CString* err)
     } else
     {
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-        const static CGLVersion v20es(2, 0);
+        const static GL::Version v20es(2, 0);
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-        const static CGLVersion v30es(3, 0);
-        const static CGLVersion v32es(3, 2);
+        const static GL::Version v30es(3, 0);
+        const static GL::Version v32es(3, 2);
 #endif
 
 #if !defined(COFFEE_LINKED_GLES)

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import python.make_config_parser.variable_templates as var_templates
 import python.make_config_parser.name_generator as ng
@@ -179,6 +179,10 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
         cmd.command += "\n-e CMAKE_BUILD_DIR=$(cmake.build)"
         cmd.command += "\n-e OUTPUT_DIR=$(env:BUILD_DIR)"
         cmd.command += "\n-e BUILD_NAME=$(target-name)"
+
+        if 'environment-vars' in vars:
+            for opt in vars['environment-vars']:
+                cmd.command += "\n" + opt.replace('"', '\\"')
 
         cmd.command = var_templates.resolve_variable(vars, cmd.command)[0].replace(';', '\\;')
 

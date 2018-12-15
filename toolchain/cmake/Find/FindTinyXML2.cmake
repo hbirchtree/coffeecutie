@@ -13,6 +13,16 @@ find_path ( TINYXML2_INCLUDE_DIR
 
     PATH_SUFFIXES
     tinyxml2
+
+    NO_CMAKE_FIND_ROOT_PATH
+    )
+
+find_path ( TINYXML2_INCLUDE_DIR
+    NAMES
+    tinyxml2.h
+
+    PATH_SUFFIXES
+    tinyxml2
     )
 
 INCLUDE(FindPackageHandleStandardArgs)

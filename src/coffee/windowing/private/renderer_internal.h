@@ -4,17 +4,19 @@
 
 #include <coffee/core/CDRendererBase>
 
-#include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
 #include <coffee/windowing/graphics/egl/egl_renderer.h>
 #include <coffee/windowing/graphics/glx/glx_renderer.h>
 
-#include <coffee/sdl2/windowing/csdl2_window.h>
 #include <coffee/windowing/windowing/x11/x11_window.h>
 #include <coffee/windowing/windowing/dispmanx/dispmanx_window.h>
 #include <coffee/windowing/windowing/glkit/glk_window.h>
 #include <coffee/windowing/windowing/ndkwindow/ndk_window.h>
 
+#if defined(FEATURE_ENABLE_CoffeeSDL2)
+#include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
+#include <coffee/sdl2/windowing/csdl2_window.h>
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
+#endif
 
 #include <coffee/windowing/binding/glad/gleamrenderer.h>
 

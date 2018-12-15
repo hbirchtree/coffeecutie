@@ -83,6 +83,7 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv7a.gingerbread.gles2 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -126,6 +127,7 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv7a.kitkat.gles2 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -169,6 +171,7 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv7a.lollipop.gles3 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -212,6 +215,7 @@ android.armv7a.nougat.gles2: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv7a.nougat.gles2 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -255,6 +259,7 @@ android.armv7a.nougat.gles3: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv7a.nougat.gles3 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -298,6 +303,7 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv8a.lollipop.gles3 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -341,6 +347,7 @@ android.armv8a.nougat.gles3: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.armv8a.nougat.gles3 \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -384,6 +391,7 @@ android.mips.kitkat: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.mips.kitkat \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/mips/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -427,6 +435,7 @@ android.mips64.kitkat: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.mips64.kitkat \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/mips64/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -470,6 +479,7 @@ android.x86.kitkat: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.x86.kitkat \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/x86/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -513,6 +523,7 @@ android.x86_64.kitkat: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.x86_64.kitkat \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
@@ -556,6 +567,7 @@ android.x86_64.nougat: FORCE native-libs
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=android.x86_64.nougat \
+	-e OPENSSL_ROOT_DIR=$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Coverage build using same config as Ubuntu

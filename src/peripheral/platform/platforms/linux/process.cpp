@@ -1,5 +1,6 @@
 #include <platforms/linux/process.h>
 
+#include <coffee/core/libc_types.h>
 #include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/file.h>
@@ -7,6 +8,8 @@
 namespace platform {
 namespace env {
 namespace Linux {
+
+using namespace ::Coffee;
 
 struct mem_usage
 {

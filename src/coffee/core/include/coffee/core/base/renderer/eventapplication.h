@@ -168,9 +168,10 @@ void WrapEventFunction(void* data, int event)
 
 #if defined(COFFEE_NO_ATEXIT)
             /* TODO: Fix atexit() handlers */
-            auto const& ex = Cmd::GetAtExit();
-            for(auto it = ex.rbegin(); it != ex.rend(); it++)
-                (*it)();
+            libc::signal::exit(libc::signal::sig::abort);
+//            auto const& ex = Cmd::GetAtExit();
+//            for(auto it = ex.rbegin(); it != ex.rend(); it++)
+//                (*it)();
 #endif
         }
         break;

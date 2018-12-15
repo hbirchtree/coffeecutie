@@ -4,13 +4,15 @@
 #include <platforms/base/file.h>
 
 #include <android/asset_manager.h>
-//#include <coffee/android/android_main.h>
+#include <coffee/android/android_main.h>
 
 using namespace ::enum_helpers;
 
 namespace platform {
 namespace file {
 namespace android {
+
+using namespace ::Coffee;
 
 static AAssetManager* m_android_asset_manager = nullptr;
 

@@ -15,6 +15,17 @@ find_path ( RAPIDJSON_INCLUDE_DIR_TMP
     PATH_SUFFIXES
     include/
     rapidjson/include/
+
+    NO_CMAKE_FIND_ROOT_PATH
+    )
+
+find_path ( RAPIDJSON_INCLUDE_DIR_TMP
+    NAMES
+    rapidjson/rapidjson.h
+    
+    PATH_SUFFIXES
+    include/
+    rapidjson/include/
     )
 
 if(RAPIDJSON_INCLUDE_DIR_TMP)

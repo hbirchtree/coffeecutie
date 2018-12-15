@@ -38,5 +38,8 @@ if(ANDROID)
         $<BUILD_INTERFACE:${NDK_HELPER_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${CPUFEATURES_INCLUDE_DIR}>
         )
+    target_include_directories( CoffeeCore_Application PRIVATE
+        platform/android/include
+        )
 
 endif()
