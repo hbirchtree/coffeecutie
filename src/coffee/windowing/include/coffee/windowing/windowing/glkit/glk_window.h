@@ -17,7 +17,7 @@ class GLKWindow :
     friend class EGLRenderer;
     
 protected:
-    CDProperties m_properties;
+    Properties m_properties;
     
     Vector<EventHandlerI> m_eventhandlers_input;
     Vector<EventHandlerD> m_eventhandlers_windw;
@@ -27,19 +27,19 @@ public:
     virtual ~GLKWindow();
     
     // Windowing
-    CDMonitor monitor();
+    Monitor monitor();
     bool showWindow();
     bool hideWindow();
     bool closeWindow();
-    void popErrorMessage(Severity s, cstring title, cstring msg);
+    void popErrorMessage(debug::Severity s, cstring title, cstring msg);
     
-    CDWindow *window();
+    Window *window();
     uint32 windowState() const;
-    void setWindowState(const CDProperties::State &s);
-    CSize windowSize() const;
-    void setWindowSize(const CSize &s);
-    CPoint windowPosition() const;
-    void setWindowPosition(const CPoint &p);
+    void setWindowState(const Properties::State &s);
+    Size windowSize() const;
+    void setWindowSize(const Size &s);
+    Point windowPosition() const;
+    void setWindowPosition(const Point &p);
     CString windowTitle() const;
     void setWindowTitle(const CString &tl);
     bool screensaverMode();
@@ -47,9 +47,9 @@ public:
     CString windowLibrary() const;
 
 
-    bool windowPreInit(const CDProperties &, CString *err);
-    bool windowInit(const CDProperties &props, CString * err);
-    bool windowPostInit(const CDProperties &, CString *);
+    bool windowPreInit(const Properties &, CString *err);
+    bool windowInit(const Properties &props, CString * err);
+    bool windowPostInit(const Properties &, CString *);
     void windowTerminate();
     
     // Event handling
@@ -58,15 +58,15 @@ public:
     bool inputPostInit(CString*){return true;}
     void inputTerminate(){}
     
-    void eventHandleD(const CDEvent& e, c_cptr d);
-    void eventHandleI(const CIEvent& e, c_cptr d);
+    void eventHandleD(const Event& e, c_cptr d);
+    void eventHandleI(const Input::CIEvent& e, c_cptr d);
     
-    void eventHandle(const CIHapticEvent& e, c_cptr d);
-    void eventHandle(const CDEvent& e, c_cptr d);
-    void eventHandle(const CIEvent& e, c_cptr d);
+    void eventHandle(const Input::CIHapticEvent& e, c_cptr d);
+    void eventHandle(const Event& e, c_cptr d);
+    void eventHandle(const Input::CIEvent& e, c_cptr d);
     
-    void injectEvent(CIEvent const& e, c_cptr d);
-    void injectEvent(CDEvent const& e, c_cptr d);
+    void injectEvent(Input::CIEvent const& e, c_cptr d);
+    void injectEvent(Event const& e, c_cptr d);
     
     bool installEventHandler(EventHandlerD eh);
     bool installEventHandler(EventHandlerI eh);
@@ -77,15 +77,15 @@ public:
     bool relativeMouse() const {return true;}
     void setRelativeMouse(bool){}
     
-    CPoint mousePosition() const {return {};}
-    void setMousePosition(CPoint const&){}
+    Point mousePosition() const {return {};}
+    void setMousePosition(Point const&){}
     
     void setKeyboardRepeat(bool){}
     bool textInputMode() const {return false;}
     
     void setTextInputMode(bool){}
     
-    CIControllerState getControllerState(uint16) {return {};}
+    Input::CIControllerState getControllerState(u16) {return {};}
 };
 
 }

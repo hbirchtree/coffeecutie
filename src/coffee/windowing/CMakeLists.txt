@@ -123,6 +123,7 @@ if(APPLE AND IOS)
         LIBRARIES
         Core
         WindowingInclude
+        GLeamCommon
         "-framework CoreGraphics"
         "-framework QuartzCore"
         )

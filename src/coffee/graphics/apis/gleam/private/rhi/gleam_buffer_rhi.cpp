@@ -11,8 +11,8 @@ STATICINLINE void VerifyBuffer(glhnd const& h)
 
     if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h.hnd))
         return;
-//        cWarning("Invalid use of buffer API,"
-//                 " buffer handle is not valid");
+    //        cWarning("Invalid use of buffer API,"
+    //                 " buffer handle is not valid");
 }
 
 void GLEAM_VBuffer::alloc()
@@ -146,7 +146,10 @@ void GLEAM_VBuffer::unbind() const
 }
 
 void GLEAM_BindableBuffer::bindrange(
-    u32 idx, szptr off, szptr size, gleam_error& ec) const
+    UNUSED_PARAM(u32, idx),
+    UNUSED_PARAM(szptr, off),
+    UNUSED_PARAM(szptr, size),
+    gleam_error& ec) const
 {
 #if GL_VERSION_VERIFY(0x330, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -156,10 +159,6 @@ void GLEAM_BindableBuffer::bindrange(
         CGL33::BufBindRange(
             m_type, idx, m_handle, C_FCAST<ptroff>(off), C_FCAST<ptroff>(size));
     } else
-#else
-    C_USED(idx);
-    C_USED(off);
-    C_USED(size);
 #endif
     {
         ec = APIE::UnimplementedPath;

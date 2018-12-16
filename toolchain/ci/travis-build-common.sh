@@ -243,7 +243,9 @@ function build_target()
     ;;
     "osx")
         requires make tar python3
-        #MAKEFILE="Makefile.mac"
+        if [[ "$BUILDVARIANT" = "ios"* ]] || [[ "$BUILDVARIANT" = "osx"* ]]; then
+            MAKEFILE="Makefile.mac"
+        fi
     ;;
     *)
         exit 1

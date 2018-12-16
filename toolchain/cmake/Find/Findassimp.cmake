@@ -12,6 +12,8 @@ FIND_PATH( ASSIMP_INCLUDE_DIR_TMP
     ${COFFEE_ROOT_DIR}
 
     PATH_SUFFIXES include include/assimp
+
+    NO_CMAKE_FIND_ROOT_PATH
     )
 
 FIND_LIBRARY(
@@ -23,6 +25,8 @@ FIND_LIBRARY(
     "lib/${CMAKE_LIBRARY_ARCHITECTURE}" # CMake architecture path
     "lib/${ANDROID_ABI}"
     "${ANDROID_ABI}"
+
+    NO_CMAKE_FIND_ROOT_PATH
     )
 
 FIND_LIBRARY(
@@ -33,6 +37,9 @@ FIND_LIBRARY(
     64/link lib lib64
     "lib/${CMAKE_LIBRARY_ARCHITECTURE}" # CMake architecture path
     "lib/${ANDROID_ABI}"
+    "${ANDROID_ABI}"
+
+    NO_CMAKE_FIND_ROOT_PATH
     )
 
 # Static zlib for platforms shipping without it
@@ -43,6 +50,8 @@ FIND_LIBRARY(
     PATHS ${CMAKE_BINARY_DIR}/libs/lib ${COFFEE_ROOT_DIR} ${NATIVE_LIBRARY_DIR}
     PATH_SUFFIXES
     "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
+
+    NO_CMAKE_FIND_ROOT_PATH
     )
 
 set ( LINK_MODE STATIC )

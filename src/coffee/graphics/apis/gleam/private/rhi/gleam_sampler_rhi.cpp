@@ -10,7 +10,7 @@ namespace detail {
 
 enum GraphicsCompatibility
 {
-    Everything  = 0x0,
+    Everything    = 0x0,
     Dim3_Textures = 0x1,
 };
 
@@ -109,7 +109,8 @@ void GLEAM_Sampler::setLODBias(C_UNUSED(scalar bias))
 #endif
 }
 
-void GLEAM_Sampler::setEdgePolicy(u8 dim, WrapPolicy p)
+void GLEAM_Sampler::setEdgePolicy(
+    UNUSED_PARAM(u8, dim), UNUSED_PARAM(WrapPolicy, p))
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -132,13 +133,13 @@ void GLEAM_Sampler::setEdgePolicy(u8 dim, WrapPolicy p)
 
         CGL33::SamplerParameteri(m_handle, d, to_enum(p));
     }
-#else
-    C_USED(dim);
-    C_USED(p);
 #endif
 }
 
-void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
+void GLEAM_Sampler::setFiltering(
+    UNUSED_PARAM(Filtering, mag),
+    UNUSED_PARAM(Filtering, min),
+    UNUSED_PARAM(Filtering, mip))
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -150,10 +151,6 @@ void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
         min_filter[1]     = to_enum(min);
         CGL33::SamplerParameteriv(m_handle, GL_TEXTURE_MIN_FILTER, min_filter);
     }
-#else
-    C_USED(mag);
-    C_USED(min);
-    C_USED(mip);
 #endif
 }
 

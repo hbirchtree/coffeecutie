@@ -12,7 +12,7 @@
 #import <CoreMotion/CoreMotion.h>
 
 // This is where all the foreign stuff comes from
-#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#include <coffee/foreign/foreign.h>
 
 // For accessibility from other parts of the Objective-C code
 // We will be using this to attach a GLKViewController

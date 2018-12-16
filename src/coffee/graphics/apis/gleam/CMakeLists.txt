@@ -62,6 +62,12 @@ if(BUILD_GLEAM)
         )
 endif()
 
+if(APPLE AND IOS)
+    target_compile_definitions ( GLeamCommon PUBLIC
+        -DGLES_SILENCE_DEPRECATION=1
+        )
+endif()
+
 if(BUILD_ANGLE)
     find_package( ANGLE REQUIRED )
     list ( APPEND CORE_EXTRA_LIBRARIES

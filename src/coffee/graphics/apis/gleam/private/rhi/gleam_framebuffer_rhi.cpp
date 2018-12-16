@@ -33,8 +33,7 @@ FORCEDINLINE void fb_bind(FramebufferT t, glhnd const& h)
     CGL33::FBBind(b, h.hnd);
 }
 
-void GLEAM_RenderDummy::allocate(
-    PixFmt fmt, DBuffers buf, u32 index, Size size)
+void GLEAM_RenderDummy::allocate(PixFmt fmt, DBuffers buf, u32 index, Size size)
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
@@ -141,11 +140,11 @@ void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface2D& s, u32 mip)
 }
 
 void GLEAM_RenderTarget::blit(
-    Rect64 const&       src,
-    GLEAM_RenderTarget& target,
-    Rect64 const&       tgt,
-    DBuffers            buf,
-    Filtering           flt)
+    UNUSED_PARAM(Rect64 const&, src),
+    UNUSED_PARAM(GLEAM_RenderTarget&, target),
+    UNUSED_PARAM(Rect64 const&, tgt),
+    UNUSED_PARAM(DBuffers, buf),
+    UNUSED_PARAM(Filtering, flt))
 {
     GLEAM_ScopeMarker sc(GLM_API "blit");
 
@@ -172,12 +171,6 @@ void GLEAM_RenderTarget::blit(
         this->unbind(FramebufferT::Read);
         target.unbind(FramebufferT::Draw);
     }
-#else
-    C_USED(src);
-    C_USED(target);
-    C_USED(tgt);
-    C_USED(buf);
-    C_USED(flt);
     // TODO: We could implement this with a slow method and give lots of errors
 #endif
 }

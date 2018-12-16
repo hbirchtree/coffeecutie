@@ -123,7 +123,6 @@ macro( GENERATE_FINDSCRIPT )
 endmacro()
 
 function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
-
     if(ANDROID)
         install(
             TARGETS
@@ -136,16 +135,19 @@ function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
             RUNTIME DESTINATION "lib/${ANDROID_ABI}"
             PUBLIC_HEADER DESTINATION include
             )
-    elseif(NOT (APPLE AND NOT IOS AND NOT LIB_LINKABLE))
+    else()
         install(
             TARGETS ${LIB_TARGET}
 
             EXPORT ${PROJECT_NAME}
 
+            FRAMEWORK DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             ARCHIVE DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             LIBRARY DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             RUNTIME DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             PUBLIC_HEADER DESTINATION include
+
+            COMPONENT bin
             )
     endif()
 

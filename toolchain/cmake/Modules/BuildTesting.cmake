@@ -76,7 +76,7 @@ function(COFFEE_TEST)
             INFO_STRING "Unit test - ${TEST_TITLE}"
             COPYRIGHT "Testing"
             SOURCES ${SOURCES_MOD}
-            LIBRARIES ${TEST_LIBRARIES} CoffeeTesting
+            LIBRARIES ${TEST_LIBRARIES} Testing
             )
     else()
         add_executable ( "${TEST_TITLE}" ${SOURCES_MOD} )

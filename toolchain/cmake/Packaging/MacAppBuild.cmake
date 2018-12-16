@@ -35,18 +35,18 @@ macro( MACFRAMEWORK_PACKAGE
     # TODO: Process resource files
     # TODO: Process header files
 
-    install(
-        TARGETS "${TARGET}"
+#    install(
+#        TARGETS "${TARGET}"
 
-        EXPORT ${PROJECT_NAME}
+#        EXPORT ${PROJECT_NAME}
 
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        FRAMEWORK DESTINATION frameworks
-        PUBLIC_HEADER DESTINATION include
+#        LIBRARY DESTINATION lib
+#        ARCHIVE DESTINATION lib
+#        FRAMEWORK DESTINATION frameworks
+#        PUBLIC_HEADER DESTINATION include
 
-        COMPONENT bin
-        )
+#        COMPONENT bin
+#        )
 endmacro()
 
 macro( MACAPP_PACKAGE
@@ -114,10 +114,13 @@ macro( MACAPP_PACKAGE
     endif()
 
     if(IOS)
-        target_link_libraries ( ${TARGET}
-            PUBLIC
-            CoffeeWindow_GLKit
-            )
+        set ( GLKIT_LIB Coffee::WindowGLKit )
+        if("${PROJECT_NAME}" STREQUAL "Coffee")
+            set ( GLKIT_LIB WindowGLKit )
+        endif()
+
+        target_link_libraries ( ${TARGET} PUBLIC ${GLKIT_LIB} )
+
         set ( IOS_NAME "${TITLE}" )
         set ( IOS_IDENTIFIER "${TITLE}" )
         set ( IOS_INFO "${INFO_STRING}" )

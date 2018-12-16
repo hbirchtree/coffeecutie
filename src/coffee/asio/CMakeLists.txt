@@ -2,7 +2,7 @@ option ( BUILD_OPENSSL "Build ASIO with OpenSSL support" ON )
 
 # OpenSSL used for ASIO networking
 if(BUILD_OPENSSL)
-    find_package(OpenSSL REQUIRED)
+    find_package(OpenSSL REQUIRED )
 endif()
 
 if(TARGET OpenSSL::SSL)

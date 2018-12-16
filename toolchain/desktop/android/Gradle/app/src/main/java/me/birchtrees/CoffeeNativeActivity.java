@@ -4,15 +4,13 @@ import android.app.NativeActivity;
 import android.content.ComponentName;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.content.Intent;
+import android.view.DisplayCutout;
 import android.view.View;
+import android.view.WindowManager;
 
 public final class CoffeeNativeActivity extends NativeActivity {
-
-    /* Reference:
-     * https://stackoverflow.com/questions/41059909/hiding-the-navigation-bar-in-pure-android-native
-     */
 
     private String getLibraryName() {
         try {
@@ -49,8 +47,14 @@ public final class CoffeeNativeActivity extends NativeActivity {
             System.loadLibrary(getLibraryName());
             return;
         }
+
+
+        /* Reference:
+         * https://stackoverflow.com/questions/41059909/hiding-the-navigation-bar-in-pure-android-native
+         */
         //Hide toolbar
         int SDK_INT = android.os.Build.VERSION.SDK_INT;
+
         if(SDK_INT >= 19)
         {
             setImmersiveSticky();
@@ -85,9 +89,7 @@ public final class CoffeeNativeActivity extends NativeActivity {
         {
             setImmersiveSticky();
         }
-
     }
-    // Our popup window, you will call it from your C/C++ code later
 
     void setImmersiveSticky() {
         View decorView = getWindow().getDecorView();
@@ -97,5 +99,9 @@ public final class CoffeeNativeActivity extends NativeActivity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+
+        if(Build.VERSION.SDK_INT >= 28)
+            getWindow().getAttributes().layoutInDisplayCutoutMode
+                    = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
     }
 }
