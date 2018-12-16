@@ -237,10 +237,16 @@ StartupWMClass=${APP_TARGET}
 
     target_enable_cxx11(${APP_TARGET})
 
+    set ( CORE_APP_LIB Coffee::CoreApplication )
+
+    if("${PROJECT_NAME}" STREQUAL "Coffee")
+        set ( CORE_APP_LIB CoreApplication )
+    endif()
+
     target_link_libraries ( ${APP_TARGET}
         PUBLIC
         ${APP_LIBRARIES}
-        CoffeeCore_Application
+        ${CORE_APP_LIB}
         )
 
 endfunction()

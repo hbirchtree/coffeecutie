@@ -49,19 +49,21 @@ endif()
 if(ANDROID)
     find_package( AndroidGlue REQUIRED )
 
-#    target_sources ( CoffeeCore_Application PRIVATE
-#        platform/android/and_main.cpp
-#        ${ANDROID_GLUE_SOURCES}
-#        )
+    add_export( GlueCpuFeatures "" )
+    add_export( Glue "" )
+    add_export( GlueNdkHelper "" )
+
+    target_link_libraries ( PeripheralPlatform PUBLIC
+        GlueCpuFeatures
+        Glue
+        GlueNdkHelper
+        )
 
     target_include_directories ( PeripheralPlatform PRIVATE
         platform/android/include
         )
 
     target_sources ( PeripheralPlatform PRIVATE
-        ${NDK_HELPER_SOURCES}
-        ${CPUFEATURES_SOURCES}
-
         platforms/android/sensor.cpp
         platforms/android/file.cpp
         platforms/android/sysinfo.cpp
@@ -80,9 +82,6 @@ if(ANDROID)
         )
 
     target_include_directories ( PeripheralPlatform PUBLIC
-        $<BUILD_INTERFACE:${ANDROID_GLUE_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${NDK_HELPER_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${CPUFEATURES_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include>
         )
 endif()

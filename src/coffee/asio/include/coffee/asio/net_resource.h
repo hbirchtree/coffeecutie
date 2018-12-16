@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(FEATURE_ENABLE_CoffeeASIO)
+#if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/http.h>
 #include <coffee/asio/tcp_socket.h>
 #endif
@@ -22,7 +22,7 @@ FORCEDINLINE bool Supported()
 #endif
 }
 
-#if defined(FEATURE_ENABLE_CoffeeASIO)
+#if defined(FEATURE_ENABLE_ASIO)
 
 struct Resource : semantic::ByteProvider
 {

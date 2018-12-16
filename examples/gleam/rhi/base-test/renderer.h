@@ -1,4 +1,3 @@
-#include <coffee/asio/asio_worker.h>
 #include <coffee/components/components.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
@@ -14,7 +13,8 @@
 #include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
 
-#if defined(FEATURE_ENABLE_CoffeeASIO)
+#if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
 #endif
 
@@ -189,8 +189,10 @@ struct RendererState
     RuntimeState          r_state;
     ShPtr<Store::SaveApi> save_api;
 
-    RuntimeQueue*            rt_queue;
+    RuntimeQueue* rt_queue;
+#if defined(FEATURE_ENABLE_ASIO)
     ShPtr<ASIO::ASIO_Worker> net_worker;
+#endif
 
     ScopedTask component_task;
 
@@ -268,7 +270,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     auto onlineWorker =
         RuntimeQueue::CreateNewThreadQueue("Online Worker", rqec);
 
+#if defined(FEATURE_ENABLE_ASIO)
     d->net_worker = ASIO::GenWorker();
+#endif
 
     C_ERROR_CHECK(rqec);
 
@@ -393,7 +397,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             return;
     }
 
-#if defined(FEATURE_ENABLE_CoffeeASIO)
+#if defined(FEATURE_ENABLE_ASIO)
     /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
@@ -660,7 +664,9 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     runtime_queue_error ec;
     RuntimeQueue::TerminateThread(d->rt_queue, ec);
 
+#if defined(FEATURE_ENABLE_ASIO)
     d->net_worker->stop();
+#endif
 
     d->entities.reset();
 

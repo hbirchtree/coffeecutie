@@ -4,5 +4,5 @@ coffee_test (
 
     SOURCES test01.cpp
 
-    LIBRARIES CoffeeCore
+    LIBRARIES Core
     )

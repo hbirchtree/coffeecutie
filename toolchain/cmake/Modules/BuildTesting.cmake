@@ -90,14 +90,18 @@ function(COFFEE_TEST)
             )
     endif()
 
+    set ( CORE_TESTING_LIB Coffee::Testing Coffee::CoreApplication )
+    if("${PROJECT_NAME}" STREQUAL "Coffee")
+        set ( CORE_TESTING_LIB Testing CoreApplication )
+    endif()
 
     if((NOT ANDROID) AND (NOT IOS))
         target_link_libraries ( ${TEST_TITLE}
             PUBLIC
 
             ${TEST_LIBRARIES}
-            CoffeeTesting
-            CoffeeCore_Application
+            Testing
+            CoreApplication
             )
     endif()
 

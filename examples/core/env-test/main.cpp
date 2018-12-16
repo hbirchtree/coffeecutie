@@ -1,4 +1,3 @@
-#include <coffee/asio/net_profiling.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
@@ -12,13 +11,17 @@
 
 #include <coffee/core/CDebug>
 
+#if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/net_profiling.h>
+#endif
+
 using namespace Coffee;
 using namespace platform::file;
 using namespace platform::url::constructors;
 
 i32 coffee_main(i32, cstring_w*)
 {
-#if defined(FEATURE_ENABLE_CoffeeASIO)
+#if defined(FEATURE_ENABLE_ASIO)
     Net::RegisterProfiling();
 #endif
 

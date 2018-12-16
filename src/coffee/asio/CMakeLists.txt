@@ -5,9 +5,6 @@ if(BUILD_OPENSSL)
     find_package(OpenSSL REQUIRED)
 endif()
 
-set ( CoffeeASIO_SRCS
-    )
-
 if(TARGET OpenSSL::SSL)
     set ( LIBS OpenSSL::SSL )
 else()
@@ -15,14 +12,14 @@ else()
 endif()
 
 coffee_library (
-    TARGET CoffeeASIO
+    TARGET ASIO
 
     SOURCES
     private/asio_worker.cpp
     private/net_resource.cpp
     private/net_profiling.cpp
 
-    LIBRARIES CoffeeCore ${LIBS}
+    LIBRARIES Core ${LIBS}
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -31,22 +28,27 @@ coffee_library (
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 
-target_include_directories ( CoffeeASIO SYSTEM PUBLIC
+target_include_directories ( ASIO SYSTEM PUBLIC
     $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
     $<INSTALL_INTERFACE:include>
     )
 
 if(BUILD_OPENSSL)
-    target_include_directories ( CoffeeASIO SYSTEM PUBLIC
+    target_include_directories ( ASIO SYSTEM PUBLIC
         $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
         )
-    target_compile_definitions ( CoffeeASIO PUBLIC
+    target_compile_definitions ( ASIO PUBLIC
         -DCOFFEE_ENABLE_SSL
         )
 endif()
 
-target_compile_definitions( CoffeeASIO PUBLIC
+target_compile_definitions( ASIO PUBLIC
     -DASIO_STANDALONE
     )
 
-coffee_bundle_includes ( "${ASIO_DIR}/asio/include" )
+coffee_bundle (
+    DESTINATION libs
+
+    HEADER_DIRECTORIES
+    "${ASIO_DIR}/asio/include"
+    )

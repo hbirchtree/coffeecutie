@@ -12,7 +12,7 @@ coffee_library (
     private/cappuccino.cpp
 
     LIBRARIES
-    CoffeeCore
+    Core
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

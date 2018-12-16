@@ -1,3 +1,7 @@
+find_package ( StandardLibs REQUIRED )
+
+add_export ( StandardLibs "" )
+
 coffee_library (
     TARGET PeripheralLib
     SOURCES
@@ -5,10 +9,14 @@ coffee_library (
     private/build_info.cpp
     private/libc_functions.cpp
 
+    LIBRARIES
+    StandardLibs
+
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     )
+
 
 target_compile_definitions ( PeripheralLib PRIVATE
     -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
@@ -37,7 +45,7 @@ endif()
 
 coffee_library (
     TARGET PeripheralThreadNaming
-    LIBRARIES CoffeeCore_Base
+    LIBRARIES CoreBase
     SOURCES
     stl_extensions/thread_naming.cpp
     )

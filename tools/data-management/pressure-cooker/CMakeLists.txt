@@ -27,7 +27,7 @@ coffee_application (
     USE_CMD
     TITLE "Pressure Cooker"
     SOURCES main.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES Core
     BUNDLE_LIBRARIES ${PRESSURIZERS}
     )
 
@@ -36,7 +36,7 @@ coffee_application (
     USE_CMD
     TITLE "Depressurizer"
     SOURCES depressure_main.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES Core
     )
 
 if(BUILD_ASSIMP)
@@ -45,7 +45,7 @@ if(BUILD_ASSIMP)
         LINKABLE
         LINKAGE SHARED
         SOURCES model_compress.cpp
-        LIBRARIES CoffeeCore CoffeeAssimp
+        LIBRARIES Core AssimpTools
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
@@ -72,7 +72,7 @@ if(SQUISH_FOUND)
         texture_common.h
         tiff_decoder.h
 
-        LIBRARIES CoffeeImage CoffeeCore Squish
+        LIBRARIES Image Core Squish
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
@@ -163,7 +163,7 @@ if(SHADERC_FOUND)
         LINKABLE
         LINKAGE SHARED
         SOURCES shader_compress.cpp
-        LIBRARIES CoffeeCore shaderc
+        LIBRARIES Core shaderc
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 

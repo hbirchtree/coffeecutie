@@ -6,5 +6,5 @@ coffee_test (
     test01.cpp
 
     LIBRARIES
-    CoffeeImage
+    Image
     )

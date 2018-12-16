@@ -6,28 +6,31 @@ if(WIN32 AND WIN_UWP)
 endif()
 
 coffee_library (
-    TARGET CoffeeGLeamCommon
+    TARGET GLeamCommon
 
     SOURCES
     private/levels/glbase.cpp
     private/levels/shared/gl_shared_debug.cpp
 
     LIBRARIES
-    CoffeeCore
-    CoffeeImage
-    CoffeeGraphicsAPI
+    Core
+    Image
+    GraphicsAPI
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/toolchain/internal/include>
 
     $<INSTALL_INTERFACE:include>
     )
 
+target_include_directories ( GLeamCommon PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>
+    )
+
 if(BUILD_GLEAM)
     coffee_library (
-        TARGET CoffeeGLeamRHI
+        TARGET GLeamRHI
         SOURCES
         private/rhi/gleam_rhi.cpp
 
@@ -52,7 +55,7 @@ if(BUILD_GLEAM)
         private/rhi/gleam_vertex_rhi.cpp
 
         LIBRARIES
-        CoffeeGLeamCommon
+        GLeamCommon
 
         HEADER_DIRS
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/include>
@@ -67,29 +70,29 @@ if(BUILD_ANGLE)
 elseif(BUILD_GLES AND NOT APPLE)
     if(ANDROID AND NOT BUILD_GLES_20)
         # On Android, GLES 3.x is used through a different library
-        target_link_libraries ( CoffeeGLeamCommon PUBLIC
+        target_link_libraries ( GLeamCommon PUBLIC
             GLESv3
             )
     else()
         # Elsewhere, just use GLESv2
-        target_link_libraries ( CoffeeGLeamCommon PUBLIC
+        target_link_libraries ( GLeamCommon PUBLIC
             GLESv2
             )
     endif()
 
     if(MAEMO)
-        target_link_libraries ( CoffeeGLeamCommon PUBLIC
+        target_link_libraries ( GLeamCommon PUBLIC
             IMGegl
             )
     endif()
 endif()
 
 if(BUILD_GLES_20 OR BUILD_ANGLE)
-    target_compile_definitions ( CoffeeGLeamCommon PUBLIC
+    target_compile_definitions ( GLeamCommon PUBLIC
         -DCOFFEE_GLES20_MODE
         )
 elseif(NOT BUILD_GLES)
-    target_compile_definitions ( CoffeeGLeamCommon PUBLIC
+    target_compile_definitions ( GLeamCommon PUBLIC
         -DCOFFEE_GLEAM_DESKTOP
         )
 endif()

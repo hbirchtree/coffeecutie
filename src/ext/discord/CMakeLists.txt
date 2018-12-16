@@ -8,7 +8,7 @@ coffee_library (
     NO_EXPORT
 
     SOURCES private/discord_binding.cpp
-    LIBRARIES CoffeeCore COnlineService CoffeeASIO
+    LIBRARIES Core OnlineService ASIO
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 

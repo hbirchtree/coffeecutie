@@ -2,9 +2,9 @@ coffee_application (
     TARGET EnvTest
     TITLE "Environment Data"
     SOURCES main.cpp
-    LIBRARIES CoffeeCore
+    LIBRARIES Core
     )
 
-if(TARGET CoffeeASIO)
-    target_link_libraries ( EnvTest PUBLIC CoffeeASIO )
+if(TARGET ASIO)
+    target_link_libraries ( EnvTest PUBLIC ASIO )
 endif()

@@ -1,15 +1,20 @@
 coffee_library (
-    TARGET CoffeeGraphicsAPI
+    TARGET GraphicsAPI
     SOURCES private/query/gpu_query.cpp
     )
 
-target_include_directories ( CoffeeGraphicsAPI PUBLIC
+target_include_directories ( GraphicsAPI PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:include>
     )
 
-target_link_libraries ( CoffeeGraphicsAPI PRIVATE
-    CoffeeCore
+coffee_bundle (
+    HEADER_DIRECTORIES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    )
+
+target_link_libraries ( GraphicsAPI PRIVATE
+    Core
     )
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
@@ -20,24 +25,24 @@ find_package( LibDRM QUIET )
 
 if(NVIDIAML_FOUND)
     coffee_library (
-        TARGET CoffeeNVIDIAQuery
+        TARGET NVIDIAQuery
         LINKAGE SHARED
         SOURCES
         private/query/nvidia_query.cpp
 
         LIBRARIES
         ${NVIDIAML_LIBRARIES}
-        CoffeeCore
+        Core
         )
 
-    target_include_directories( CoffeeNVIDIAQuery PRIVATE
+    target_include_directories( NVIDIAQuery PRIVATE
         $<BUILD_INTERFACE:${NVIDIAML_INCLUDE_DIR}>
         )
 endif()
 
 if(LIBDRM_FOUND AND FALSE)
     coffee_library (
-        TARGET CoffeeLibDRMQuery
+        TARGET LibDRMQuery
         LINKAGE SHARED
         SOURCES
         private/query/libdrm_query.cpp
@@ -45,24 +50,24 @@ if(LIBDRM_FOUND AND FALSE)
 
         LIBRARIES
         ${LIBDRM_LIBRARIES}
-        CoffeeCore
+        Core
         )
 
-    target_include_directories( CoffeeLibDRMQuery PRIVATE
+    target_include_directories( LibDRMQuery PRIVATE
         $<BUILD_INTERFACE:${LIBDRM_INCLUDE_DIR}>
         )
 endif()
 
 if(BUILD_OPENGL AND BUILD_GLEAM AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT APPLE)
     coffee_library (
-        TARGET CoffeeOpenGLQuery
+        TARGET OpenGLQuery
         LINKAGE SHARED
         NO_EXPORT
         SOURCES private/query/opengl_query.cpp
 
         LIBRARIES
-        CoffeeCore
-        CoffeeBinding_GLAD
-        CoffeeGLeamCommon
+        Core
+        BindingGLAD
+        GLeamCommon
         )
 endif()

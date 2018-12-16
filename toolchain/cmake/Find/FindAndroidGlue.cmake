@@ -20,3 +20,42 @@ set ( CPUFEATURES_INCLUDE_DIR
 set ( CPUFEATURES_SOURCES
     "${ANDROID_SOURCES_ANDROID}/cpufeatures/cpu-features.c"
     CACHE STRING "CPU features source files" )
+
+if(NOT TARGET Glue AND NOT TARGET GlueCpuFeatures AND NOT TARGET GlueNdkHelper)
+    add_library ( Glue INTERFACE )
+    add_library ( GlueCpuFeatures INTERFACE )
+    add_library ( GlueNdkHelper INTERFACE )
+
+    target_sources ( GlueCpuFeatures INTERFACE
+        ${CPUFEATURES_SOURCES}
+        )
+
+    target_sources ( Glue INTERFACE
+        ${ANDROID_GLUE_SOURCES}
+        )
+
+    target_sources ( GlueNdkHelper INTERFACE
+        ${NDK_HELPER_SOURCES}
+        )
+
+    target_include_directories ( GlueCpuFeatures INTERFACE
+        ${CPUFEATURES_INCLUDE_DIR}
+        )
+
+    target_include_directories ( Glue INTERFACE
+        ${ANDROID_GLUE_INCLUDE_DIR}
+        )
+
+    target_include_directories ( GlueNdkHelper INTERFACE
+        ${NDK_HELPER_INCLUDE_DIR}
+        )
+
+    #
+    # native_app_glue has a lot of spam in debug mode, we disable that
+    #
+    set_source_files_properties (
+        ${ANDROID_GLUE_SOURCES}
+        PROPERTIES
+        COMPILE_DEFINITIONS "NDEBUG"
+        )
+endif()

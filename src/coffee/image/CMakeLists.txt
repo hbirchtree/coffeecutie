@@ -1,9 +1,9 @@
 find_package ( stb REQUIRED )
 
 coffee_library (
-    TARGET CoffeeImage
+    TARGET Image
 
-    LIBRARIES CoffeeCore
+    LIBRARIES Core
 
     SOURCES
     private/cimage.cpp
@@ -15,6 +15,6 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
-target_include_directories ( CoffeeImage SYSTEM PRIVATE
+target_include_directories ( Image SYSTEM PRIVATE
     $<BUILD_INTERFACE:${STB_INCLUDE_DIR}>
     )

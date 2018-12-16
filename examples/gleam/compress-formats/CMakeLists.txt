@@ -6,6 +6,6 @@ coffee_application (
     main.cpp
 
     LIBRARIES
-    CoffeeGLeamRHI
-    CoffeeRenderer_Default
+    GLeamRHI
+    RendererDefault
     )

@@ -46,21 +46,21 @@ coffee_test (
     dummy.cpp
 
     LIBRARIES
-    CoffeeCore
-    CoffeeAudio
-    CoffeeBlam
+    Core
+    Audio
+    Blam
     )
 
 if(BUILD_GLEAM)
     target_link_libraries ( Dummy_Target
         PUBLIC
-        CoffeeGLeamCommon
+        GLeamCommon
         )
 endif()
 if(BUILD_ASSIMP)
     target_link_libraries ( Dummy_Target
         PUBLIC
-        CoffeeAssimp
+        AssimpTools
         )
     target_compile_definitions ( Dummy_Target
         PUBLIC

@@ -5,7 +5,7 @@ coffee_test (
     SOURCES handles.cpp
 
     LIBRARIES
-    CoffeeCore
+    Core
     )
 
 coffee_test (
@@ -15,5 +15,5 @@ coffee_test (
     SOURCES test_error_codes.cpp
 
     LIBRARIES
-    CoffeeCore
+    Core
     )

@@ -26,7 +26,11 @@
   - $(cmake.src)
   - -G'$(generator)'
   - -C$(toolchain-dir)/Preload/$(preload)
-  - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
+
+# Android toolchain is always sourced from the Android NDK
+^((?!android).)*$:
+    +cmake-opts:
+      - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
 
 # unused, but links build dependencies to platforms
 =build-deps:
@@ -209,6 +213,7 @@ testing.linux.*:
     - -DANDROID_ABI='$(android.abi)'
     - -DANDROID_CPP_FEATURES=$(android.features)
     - -DANDROID_ARM_NEON=$(android.arm-neon)
+    - -DCMAKE_TOOLCHAIN_FILE=$(android.ndk)/build/cmake/android.toolchain.cmake
   +environment-vars:
     - -e OPENSSL_ROOT_DIR=$(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl
   =container: android

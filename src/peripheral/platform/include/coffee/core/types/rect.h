@@ -4,8 +4,8 @@
 
 namespace Coffee {
 
-using Rect   = typing::geometry::rect<libc_types::u32>;
-using Rect64 = typing::geometry::rect<libc_types::u64>;
+using Rect   = typing::geometry::rect<libc_types::i32>;
+using Rect64 = typing::geometry::rect<libc_types::i64>;
 
 template<typename T>
 using rect = typing::geometry::rect<T>;

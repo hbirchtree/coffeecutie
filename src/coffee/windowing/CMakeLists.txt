@@ -6,6 +6,11 @@ target_include_directories ( WindowingInclude INTERFACE
     $<INSTALL_INTERFACE:include>
     )
 
+coffee_bundle(
+    HEADER_DIRECTORIES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
 install (
     TARGETS WindowingInclude
     EXPORT ${PROJECT_NAME}
@@ -26,89 +31,89 @@ set ( Renderer_SRCS
 
 if(BUILD_OPENGL)
     set ( RENDERER_LIBS
-        CoffeeWindow_X11
-        CoffeeWindow_NDKWindow
+        WindowX11
+        WindowNDKWindow
 
-        CoffeeContext_GLX
-        CoffeeContext_EGL
+        ContextGLX
+        ContextEGL
 
-        CoffeeBinding_GLAD
+        BindingGLAD
 
-        CoffeeGLeamRHI
+        GLeamRHI
         )
 elseif(GAMECUBE)
     set ( RENDERER_LIBS
-        CoffeeWindow_OGC
+        WindowOGC
         )
 endif()
 
 if(BUILD_SDL2)
-    list ( APPEND RENDERER_LIBS CoffeeSDL2 )
+    list ( APPEND RENDERER_LIBS SDL2Backend )
 endif()
 
 if(BUILD_OPENGL)
     coffee_library (
-        TARGET CoffeeContext_EGL
+        TARGET ContextEGL
         SOURCES
         private/graphics/egl/egl_renderer.cpp
-        LIBRARIES CoffeeCore WindowingInclude CoffeeGLeamCommon
+        LIBRARIES Core WindowingInclude GLeamCommon
         )
 
     if(BUILD_GLES AND NOT APPLE)
-        target_link_libraries ( CoffeeContext_EGL PUBLIC
+        target_link_libraries ( ContextEGL PUBLIC
             EGL
             )
     endif()
 
     coffee_library (
-        TARGET CoffeeContext_GLX
+        TARGET ContextGLX
         SOURCES
         private/graphics/glx/glx_renderer.cpp
-        LIBRARIES CoffeeCore CoffeeGLeamCommon WindowingInclude
+        LIBRARIES Core GLeamCommon WindowingInclude
         )
 
     coffee_library (
-        TARGET CoffeeBinding_GLAD
+        TARGET BindingGLAD
         SOURCES
         private/binding/glad/gleamrenderer.cpp
-        LIBRARIES CoffeeCore CoffeeGLeamCommon WindowingInclude
+        LIBRARIES Core GLeamCommon WindowingInclude
         )
 
     if(BUILD_GLES AND NOT BUILD_GLES_20)
-        target_sources ( CoffeeBinding_GLAD PRIVATE
+        target_sources ( BindingGLAD PRIVATE
             private/binding/glad/glad_es/glad.c
             )
     elseif(NOT BUILD_GLES)
-        target_sources ( CoffeeBinding_GLAD PRIVATE
+        target_sources ( BindingGLAD PRIVATE
             private/binding/glad/glad/glad.c
             )
     endif()
 endif(BUILD_OPENGL)
 
 coffee_library (
-    TARGET CoffeeWindow_OGC
+    TARGET WindowOGC
     SOURCES
     private/windowing/ogc/ogc_window.cpp
-    LIBRARIES CoffeeCore WindowingInclude
+    LIBRARIES Core WindowingInclude
     )
 
 coffee_library (
-    TARGET CoffeeWindow_X11
+    TARGET WindowX11
     SOURCES
     private/windowing/x11/x11_window.cpp
-    LIBRARIES CoffeeCore CoffeeGLeamCommon WindowingInclude
+    LIBRARIES Core GLeamCommon WindowingInclude
     )
 
 coffee_library (
-    TARGET CoffeeWindow_DMX
+    TARGET WindowDMX
     SOURCES
     private/windowing/dispmanx/dispmanx_window.cpp
-    LIBRARIES CoffeeCore WindowingInclude
+    LIBRARIES Core WindowingInclude
     )
 
 if(APPLE AND IOS)
     coffee_library (
-        TARGET CoffeeWindow_GLKit
+        TARGET WindowGLKit
         SOURCES
         private/windowing/glkit/glk_window.cpp
         private/graphics/ceagl/private/eagl_bind.mm
@@ -116,24 +121,24 @@ if(APPLE AND IOS)
         private/windowing/glkit/glk_window.mm
         private/windowing/glkit/AppDelegate.m
         LIBRARIES
-        CoffeeCore
+        Core
         WindowingInclude
         "-framework CoreGraphics"
         "-framework QuartzCore"
         )
 
     # Add CEAGL layer, to provide EGL
-    target_include_directories ( CoffeeBinding_GLAD PRIVATE
+    target_include_directories ( BindingGLAD PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )
-    target_include_directories ( CoffeeWindow_GLKit PRIVATE
+    target_include_directories ( WindowGLKit PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )
-    target_include_directories ( CoffeeContext_EGL PRIVATE
+    target_include_directories ( ContextEGL PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
         )
 
-    target_link_libraries ( CoffeeWindow_GLKit PUBLIC
+    target_link_libraries ( WindowGLKit PUBLIC
         "-framework CoreMotion"
         "-framework GameController"
         "-framework OpenGLES"
@@ -143,26 +148,26 @@ if(APPLE AND IOS)
 endif()
 
 coffee_library (
-    TARGET CoffeeWindow_NDKWindow
+    TARGET WindowNDKWindow
     SOURCES
     private/windowing/ndkwindow/ndk_window.cpp
-    LIBRARIES CoffeeCore WindowingInclude
+    LIBRARIES Core WindowingInclude
     )
 
 coffee_library (
-    TARGET CoffeeRenderer_Default
+    TARGET RendererDefault
     SOURCES ${Renderer_SRCS}
-    LIBRARIES CoffeeCore WindowingInclude ${RENDERER_LIBS}
+    LIBRARIES Core WindowingInclude ${RENDERER_LIBS}
     )
 
 if(APPLE AND IOS)
-    target_link_libraries ( CoffeeRenderer_Default PUBLIC
-        CoffeeWindow_GLKit
+    target_link_libraries ( RendererDefault PUBLIC
+        WindowGLKit
         )
 endif()
 
 if(BUILD_OPENGL)
-    target_compile_definitions ( CoffeeRenderer_Default
+    target_compile_definitions ( RendererDefault
         PUBLIC
         -DCOFFEE_ENABLE_OPENGL
         )
@@ -170,32 +175,32 @@ endif(BUILD_OPENGL)
 
 if(NOT EMSCRIPTEN AND BUILD_SDL2 AND BUILD_OPENGL)
     find_package(SDL2 REQUIRED)
-    target_include_directories ( CoffeeBinding_GLAD PRIVATE
+    target_include_directories ( BindingGLAD PRIVATE
         ${SDL2_INCLUDE_DIR}
         ${STANDARDLIBS_INCLUDE_DIR}
         )
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID
         AND NOT EMSCRIPTEN AND NOT BUILD_SDL2)
-    target_compile_definitions ( CoffeeRenderer_Default PUBLIC
+    target_compile_definitions ( RendererDefault PUBLIC
         -DCOFFEE_LINUX_LIGHTWEIGHT_WM
         )
 
     find_package ( X11 QUIET )
 
     if(NOT BUILD_GLES)
-        target_link_libraries ( CoffeeContext_GLX PUBLIC
+        target_link_libraries ( ContextGLX PUBLIC
             Xrender GL
             ${X11_LIBRARIES}
             )
-        target_include_directories( CoffeeContext_GLX PRIVATE
+        target_include_directories( ContextGLX PRIVATE
             ${X11_INCLUDE_DIR}
             )
     endif()
 
-    target_link_libraries ( CoffeeWindow_X11 PUBLIC
+    target_link_libraries ( WindowX11 PUBLIC
         ${X11_LIBRARIES}
         )
-    target_include_directories( CoffeeWindow_X11 PRIVATE
+    target_include_directories( WindowX11 PRIVATE
         ${X11_INCLUDE_DIR}
         )
 endif()

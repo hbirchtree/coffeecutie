@@ -5,5 +5,5 @@ coffee_test (
     test1.cpp
 
     LIBRARIES
-    CoffeeCore
+    Core
     )

@@ -2,6 +2,7 @@
 
 #include <coffee/core/libc_types.h>
 #include <coffee/core/types/application_main.h>
+#include <peripherals/base.h>
 
 #if defined(COFFEE_LOWFAT)
 #include <coffee/core/task_queue/task.h>

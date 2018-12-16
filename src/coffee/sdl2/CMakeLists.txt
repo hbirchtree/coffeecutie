@@ -8,12 +8,12 @@ if(NOT EMSCRIPTEN)
         )
 endif()
 
-if(TARGET CoffeeGLeamCommon)
-    list ( APPEND LIBS CoffeeGLeamCommon )
+if(TARGET GLeamCommon)
+    list ( APPEND LIBS GLeamCommon )
 endif()
 
 coffee_library (
-    TARGET CoffeeSDL2
+    TARGET SDL2Backend
     SOURCES
     private/sdl2system.cpp
     private/graphics/csdl2_basic_renderer.cpp
@@ -23,22 +23,25 @@ coffee_library (
     private/windowing/sdl2helpers.cpp
     private/input/evhandlers/sdl2eventhandlers.cpp
 
-    LIBRARIES CoffeeCore ${LIBS}
+    LIBRARIES Core ${LIBS}
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     )
 
-target_compile_definitions ( CoffeeSDL2 PUBLIC
+target_compile_definitions ( SDL2Backend PUBLIC
     -DCOFFEE_USE_SDL2=1
     )
 
 if(NOT EMSCRIPTEN)
-    target_include_directories ( CoffeeSDL2 PRIVATE
+    target_include_directories ( SDL2Backend PRIVATE
         $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
         )
 
-    coffee_bundle_includes( ${SDL2_INCLUDE_DIR} )
-    coffee_bundle_library( ${SDL2_LIBRARY} )
+    coffee_bundle(
+        DESTINATION libs
+        HEADER_DIRECTORIES ${SDL2_INCLUDE_DIR}
+        LIBRARIES ${SDL2_LIBRARY}
+        )
 endif()

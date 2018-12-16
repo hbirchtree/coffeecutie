@@ -1,5 +1,6 @@
 # Contains some code for packaging frameworks
 include ( MacAppBuild )
+include ( InstallConvenience )
 
 set_property (GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS "" )
 set_property (GLOBAL PROPERTY CF_INCLUDE_DIRS "" )
@@ -8,8 +9,21 @@ macro( REGISTER_LIBRARY LIBNAME INC_DIR )
     get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
     set_property(GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS "${LIBNAME};${LIBRARY_DEFINITIONS}" )
 
-    get_property( INC_DIRS GLOBAL PROPERTY CF_INCLUDE_DIRS )
-    set_property(GLOBAL PROPERTY CF_INCLUDE_DIRS "${INC_DIR};${INC_DIRS}" )
+#    get_property( INC_DIRS GLOBAL PROPERTY CF_INCLUDE_DIRS )
+#    set_property(GLOBAL PROPERTY CF_INCLUDE_DIRS "${INC_DIR};${INC_DIRS}" )
+    foreach ( INC ${INC_DIR} )
+        if("${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
+            string ( REGEX REPLACE "^.*BUILD_INTERFACE:(.*)\>+$" "\\1"
+                INC_
+                "${INC}"
+                )
+            string ( REPLACE ">" "" INC_ "${INC_}" )
+            coffee_bundle (
+                HEADER_DIRECTORIES
+                ${INC_}
+                )
+        endif()
+    endforeach()
 endmacro()
 
 macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
@@ -79,7 +93,7 @@ macro( GENERATE_FINDSCRIPT )
 
     export (
         TARGETS ${LIBRARY_DEFINITIONS}
-#        NAMESPACE ${PROJECT_NAME}::
+        NAMESPACE ${PROJECT_NAME}::
         FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
         )
 
@@ -103,7 +117,7 @@ macro( GENERATE_FINDSCRIPT )
 
     install (
         EXPORT ${PROJECT_NAME}
-#        NAMESPACE ${PROJECT_NAME}::
+        NAMESPACE ${PROJECT_NAME}::
         DESTINATION share
         )
 endmacro()

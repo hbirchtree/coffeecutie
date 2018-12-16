@@ -2,7 +2,7 @@ coffee_application (
     TARGET TextRenderTest
     TITLE "Text Rendering"
     SOURCES main.cpp
-    LIBRARIES CoffeeImage CoffeeCore
+    LIBRARIES Image Core
     )
 
 target_include_directories( TextRenderTest

@@ -3,8 +3,6 @@ if(ANDROID)
         message ( FATAL "Invalid configuration" )
     endif()
 
-    find_package ( AndroidToolkit )
-
     include ( InkscapeResize )
     include ( PermissionList )
 

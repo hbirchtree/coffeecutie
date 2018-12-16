@@ -5,7 +5,7 @@
 #include <coffee/core/base/renderer/windowapplication.h>
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
-#if defined(FEATURE_ENABLE_CoffeeGLeamCommon)
+#if defined(FEATURE_ENABLE_GLeamCommon)
 #include <coffee/core/base/renderer/glapplication.h>
 #include <coffee/core/base/renderer/glloader.h>
 #endif
@@ -45,7 +45,7 @@ class StubWindowManagerClient : public virtual WindowManagerClient
     virtual void    setScreensaverMode(bool);
 };
 
-#if defined(FEATURE_ENABLE_CoffeeGLeamCommon)
+#if defined(FEATURE_ENABLE_GLeamCommon)
 class StubGLApplication : public virtual GLApplication
 {
   public:

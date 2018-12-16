@@ -14,8 +14,8 @@
 
 //#include "../../private/plat/sensor/android/android_sensors.h"
 
-#include <coffee/strings/libc_types.h>
 #include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
 #include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
@@ -99,7 +99,7 @@ static char AndroidViewType[]   = "android.view.View";
 static char javaioFile[]        = "java.io.File";
 
 extern CoffeeMainWithArgs android_entry_point;
-extern void*                      coffee_event_handling_data;
+extern void*              coffee_event_handling_data;
 extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv);
 
 namespace Coffee {
@@ -191,10 +191,10 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
         libc::signal::exit(libc::signal::sig::abort);
 
-//        auto exit_func = CmdInterface::BasicTerm::GetAtExit();
+        //        auto exit_func = CmdInterface::BasicTerm::GetAtExit();
 
-//        for(auto func : exit_func)
-//            func();
+        //        for(auto func : exit_func)
+        //            func();
 
         break;
     }
@@ -275,7 +275,7 @@ int32_t AndroidHandleInputCmd(
         tev.type             = CfTouch_None;
 
         auto tapCoord = PtF{AMotionEvent_getX(event, pointerIdx),
-                                AMotionEvent_getY(event, pointerIdx)}
+                            AMotionEvent_getY(event, pointerIdx)}
                             .convert<u32>();
 
         if(dubtap.Detect(event) & flag)
@@ -326,7 +326,7 @@ int32_t AndroidHandleInputCmd(
                 AMotionEvent_getHistorySize(event));
 
             PtF pinch_point = {(points.x() + points.z()) / 2.f,
-                                   (points.y() + points.w()) / 2.f};
+                               (points.y() + points.w()) / 2.f};
 
             tev.type          = CfTouchType::CfTouchPinch;
             tev.event.pinch.x = C_CAST<u32>(pinch_point.x);
@@ -410,8 +410,8 @@ static void AndroidForeignSignalHandle(int evtype)
     case CoffeeForeign_ActivateMotion:
     {
         /* TODO: Fix sensor code */
-//        Sensor::Android::Android_InitSensors();
-//        libc::signal::register_atexit(Sensor::Android::Android_DestroySensors);
+        //        Sensor::Android::Android_InitSensors();
+        //        libc::signal::register_atexit(Sensor::Android::Android_DestroySensors);
 
         break;
     }
@@ -592,7 +592,8 @@ STATICINLINE void InitializeState(struct android_app* state)
 {
     using namespace jnipp_operators;
 
-    platform::Env::SetVar("COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports");
+    platform::Env::SetVar(
+        "COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports");
 
     coffee_app = state;
 
@@ -617,7 +618,7 @@ STATICINLINE void InitializeState(struct android_app* state)
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
 
-//    GetExtras();
+    //    GetExtras();
 
     jnipp::SwapJNI(nullptr);
 }

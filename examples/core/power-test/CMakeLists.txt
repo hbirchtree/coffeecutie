@@ -4,7 +4,5 @@ coffee_application (
     SOURCES main.cpp
 
     LIBRARIES
-    CoffeeCore
-    ${SDL2_LIBRARY}
-    ${SDL2_LIBRARIES}
+    Core
     )

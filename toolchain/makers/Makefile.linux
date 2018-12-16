@@ -65,7 +65,7 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread.gles2 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.gingerbread.gles2 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -109,7 +109,7 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.kitkat.gles2 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.kitkat.gles2 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -153,7 +153,7 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.lollipop.gles3 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.lollipop.gles3 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -197,7 +197,7 @@ android.armv7a.nougat.gles2: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles2 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles2 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -241,7 +241,7 @@ android.armv7a.nougat.gles3: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles3 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles3 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -285,7 +285,7 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.lollipop.gles3 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.lollipop.gles3 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -329,7 +329,7 @@ android.armv8a.nougat.gles3: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.nougat.gles3 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.nougat.gles3 \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -373,7 +373,7 @@ android.mips.kitkat: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.kitkat \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips.kitkat \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -417,7 +417,7 @@ android.mips64.kitkat: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.kitkat \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -461,7 +461,7 @@ android.x86.kitkat: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.kitkat \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86.kitkat \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -505,7 +505,7 @@ android.x86_64.kitkat: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.kitkat \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.kitkat \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
@@ -549,7 +549,7 @@ android.x86_64.nougat: FORCE native-libs
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.nougat \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/all-android.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.nougat \
 	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
 	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
