@@ -198,11 +198,17 @@ struct GLEAM_API : GraphicsAPI
     static API_CONTEXT GetLoadAPI(GLEAM_Options const& options = {});
 
     /* i specifies view index for indexed views, 0 for  */
-    static void SetRasterizerState(RASTSTATE const& rstate, u32 = 0);
+    static void SetRasterizerState(RASTSTATE const& rstate);
     static void SetViewportState(VIEWSTATE const& vstate, u32 i = 0);
     static void SetBlendState(BLNDSTATE const& bstate, u32 i = 0);
     static void SetDepthState(DEPTSTATE const& dstate, u32 i = 0);
     static void SetStencilState(STENSTATE const& sstate, u32 i = 0);
+
+    static void GetRasterizerState(RASTSTATE& rstate);
+    static void GetViewportState(VIEWSTATE& vstate, u32 i = 0);
+    static void GetBlendState(BLNDSTATE& bstate, u32 i = 0);
+    static void GetDepthState(DEPTSTATE& dstate, u32 i = 0);
+    static void GetStencilState(STENSTATE& sstate, u32 i = 0);
 
     static void GetShaderUniformState(
         PIP const&        pipeline,

@@ -404,6 +404,8 @@ bool GLEAM_API::LoadAPI(
     GLC::Enable(Feature::Culling);
     GLC::CullFace(Face::Back);
 
+    GLC::FrontFace(GL_CCW);
+
 #if GL_VERSION_VERIFY(0x430, 0x320)
     if(glPopDebugGroup)
         CGL::Debug::UnsetDebugGroup();
@@ -435,7 +437,7 @@ bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
     return m_store != nullptr;
 }
 
-void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, u32)
+void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
 {
     {
         if(rstate.dither())
@@ -458,7 +460,7 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, u32)
     }
 #endif
 
-    //    GLC::ColorLogicOp(rstate.colorOp());
+    //    CGL33::ColorLogicOp(rstate.colorOp());
     //    if(!GLEAM_FEATURES.draw_color_mask)
     //        GLC::ColorMask(rstate.colorMask());
     //    else
@@ -472,9 +474,44 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate, u32)
         GLC::Disable(Feature::Culling);
 }
 
+void GLEAM_API::GetRasterizerState(GLEAM_API::RASTSTATE& rstate)
+{
+    rstate.m_dither = GLC::IsEnabled(Feature::Dither);
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    rstate.m_discard = GLC::IsEnabled(Feature::RasterizerDiscard);
+#endif
+    rstate.m_doCull = GLC::IsEnabled(Feature::Culling);
+
+#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
+    {
+        /* TODO: Get* for PolygonMode() */
+    }
+#endif
+
+    {
+        i32 culled_faces = 0;
+        CGL33::IntegerGetv(GL_CULL_FACE_MODE, &culled_faces);
+
+        switch(culled_faces)
+        {
+        case GL_FRONT:
+            rstate.m_culling = C_CAST<u32>(Face::Front);
+            break;
+        case GL_BACK:
+            rstate.m_culling = C_CAST<u32>(Face::Back);
+            break;
+        case GL_FRONT_AND_BACK:
+            rstate.m_culling = C_CAST<u32>(Face::Both);
+            break;
+        default:
+            Throw(implementation_error("unhandled face value"));
+        }
+    }
+}
+
 void GLEAM_API::SetTessellatorState(C_UNUSED(const TSLRSTATE& tstate))
 {
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x400, 0x320)
     if(Extensions::TessellationSupported(CGL_DBG_CTXT))
     {
         CGL43::PatchParameteri(PatchProperty::Vertices, tstate.patchCount());
@@ -486,9 +523,13 @@ void GLEAM_API::SetTessellatorState(C_UNUSED(const TSLRSTATE& tstate))
 
 void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
 {
+    if(!Extensions::ViewportArraySupported(CGL_DBG_CTXT) && i >= 1)
+        Throw(implementation_error("viewport arrays not supported"));
+
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     if(vstate.multiview())
     {
+#if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
         if(Extensions::ViewportArraySupported(CGL_DBG_CTXT))
         {
             Vector<RectF> varr;
@@ -518,7 +559,9 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
             GLC::Enablei(Feature::ClipDist, 2);
             GLC::Enablei(Feature::ClipDist, 3);
 
-        } else if(Extensions::ClipDistanceSupported(CGL_DBG_CTXT))
+        } else
+#endif
+            if(Extensions::ClipDistanceSupported(CGL_DBG_CTXT))
         {
             /* TODO: Expand on this feature */
             GLC::Enablei(Feature::ClipDist, 0);
@@ -559,6 +602,21 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
     }
 }
 
+void GLEAM_API::GetViewportState(GLEAM_API::VIEWSTATE& vstate, u32 i)
+{
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    CGL33::IntegerGeti_v(GL_VIEWPORT, i, vstate.m_view.at(0).data);
+    CGL33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
+#else
+    CGL33::IntegerGetv(GL_VIEWPORT, vstate.m_view.at(0).data);
+    CGL33::IntegerGetv(GL_SCISSOR_BOX, vstate.m_scissor.at(0).data);
+#endif
+
+    typing::graphics::field<scalar> tmp_field;
+    CGL33::ScalarfGetv(GL_SCISSOR_BOX, tmp_field.data);
+    vstate.m_depth.at(0) = tmp_field.convert<bigscalar>();
+}
+
 void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
@@ -570,7 +628,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
             GLC::Disable(Feature::Blend);
     }
 #if GL_VERSION_VERIFY(0x300, 0x320)
-    else if(GLEAM_FEATURES.viewport_indexed)
+    else
     {
         if(bstate.blend())
             GLC::Enablei(Feature::Blend, i);
@@ -610,6 +668,19 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
     /*TODO: Find semantics for SampleCoverage*/
 }
 
+void GLEAM_API::GetBlendState(GLEAM_API::BLNDSTATE& bstate, u32 i)
+{
+    if(!GLEAM_FEATURES.viewport_indexed)
+    {
+        bstate.m_doBlend = GLC::IsEnabled(Feature::Blend);
+    } else
+    {
+        bstate.m_doBlend = GLC::IsEnabledi(Feature::Blend, i);
+    }
+
+    /* TODO: Blend functions */
+}
+
 void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, u32 i)
 {
     if(dstate.testDepth())
@@ -640,6 +711,15 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, u32 i)
     }
 }
 
+void GLEAM_API::GetDepthState(GLEAM_API::DEPTSTATE& dstate, u32 i)
+{
+    dstate.m_test = GLC::IsEnabled(Feature::DepthTest);
+
+    u8 mask = 0;
+    CGL33::BoolGetv(GL_DEPTH_WRITEMASK, &mask);
+    dstate.m_mask = mask;
+}
+
 void GLEAM_API::SetStencilState(const STENSTATE& sstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
@@ -662,6 +742,14 @@ void GLEAM_API::SetStencilState(const STENSTATE& sstate, u32 i)
     //    GLC::StencilFuncSeparate(Face::Both,0x00000000);
 
     /*TODO: Implement functionality for more operations */
+}
+
+void GLEAM_API::GetStencilState(GLEAM_API::STENSTATE& sstate, u32 i)
+{
+    if(!GLEAM_FEATURES.viewport_indexed)
+        sstate.m_test = GLC::IsEnabled(Feature::StencilTest);
+    else
+        sstate.m_test = GLC::IsEnabledi(Feature::StencilTest, i);
 }
 
 void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
@@ -762,7 +850,7 @@ std::string api_error::message(int error_code) const
         return "No error";
     }
 
-    throw implementation_error("unimplemented error message");
+    C_ERROR_CODE_OUT_OF_BOUNDS();
 }
 
 } // namespace GLEAM

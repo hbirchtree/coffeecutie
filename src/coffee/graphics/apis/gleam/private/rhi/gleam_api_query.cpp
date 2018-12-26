@@ -25,7 +25,7 @@ bool GLEAM_API::GetAPIVersion(
         gl_ver.major,
         gl_ver.minor,
         0,
-        str::print::pointerify(Level()));
+        Strings::to_string(Level()));
     return true;
 }
 

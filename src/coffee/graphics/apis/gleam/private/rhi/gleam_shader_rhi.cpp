@@ -3,6 +3,7 @@
 #include "gleam_internal_types.h"
 #include <coffee/core/stl_types.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 #include <peripherals/stl/string_ops.h>
 
@@ -362,8 +363,6 @@ bool GLEAM_Shader::compile(
         i32 stat = 0;
         CGL33::ShaderGetiv(m_handle, GL_COMPILE_STATUS, &stat);
 
-        CGL33::ShaderCompile(m_handle);
-
         if(GL_DEBUG_MODE && stat != GL_TRUE)
         {
             CString infoLog;
@@ -690,6 +689,8 @@ void GetShaderUniforms(
     Vector<GLEAM_ProgramParameter>*  params,
     Vector<GLEAM_ProgramParameter>*  outputs)
 {
+    GLEAM_API::DBG::SCOPE _(GLM_API "GetShaderUniforms");
+
     using namespace ShaderTypes;
 
     if(!GLEAM_FEATURES.separable_programs)

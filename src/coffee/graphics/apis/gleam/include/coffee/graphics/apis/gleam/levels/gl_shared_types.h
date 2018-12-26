@@ -161,21 +161,6 @@ enum class BufBit
     Stencil = 0x4,
 };
 
-enum class Face
-{
-    None     = 0x0,
-    Front    = 0x1,
-    Back     = 0x2,
-    Both     = 0x3,
-    FaceMask = Both,
-};
-
-enum class VertexWinding
-{
-    CCW,
-    CW
-};
-
 enum class AttribMode
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)

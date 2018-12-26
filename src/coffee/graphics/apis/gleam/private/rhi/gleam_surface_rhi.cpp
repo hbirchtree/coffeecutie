@@ -1,5 +1,6 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_profile_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 
 #include <coffee/interfaces/cgraphics_pixops.h>
@@ -20,6 +21,8 @@ namespace detail {
 void surface_allocate(
     u32 m_flags, glhnd& m_handle, u32 mips, PixFmt fmt, TexComp::tex_flag type)
 {
+    GLEAM_API::DBG::SCOPE _(GLM_API "Surface allocation");
+
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
         CGL45::TexAllocEx(type, Span<CGhnd>::From(m_handle));

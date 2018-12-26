@@ -293,11 +293,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                                                       "floor-tile.png"};
 
     const scalar vertexdata[] = {
-        -1.f, -1.f, 0.f,  0.f,  0.f, 1.f, -1.f, 0.f,
-        1.f,  0.f,  -1.f, 1.f,  0.f, 0.f, 1.f,
+        -1.f, -1.f, 0.f,  0.f,  0.f,
+        1.f, -1.f, 0.f, 1.f,  0.f,
+        -1.f, 1.f,  0.f, 0.f, 1.f,
 
-        -1.f, 1.f,  0.f,  0.f,  1.f, 1.f, 1.f,  0.f,
-        1.f,  1.f,  1.f,  -1.f, 0.f, 1.f, 0.f,
+        -1.f, 1.f,  0.f,  0.f,  1.f,
+        1.f,  -1.f, 0.f, 1.f, 0.f,
+        1.f, 1.f,  0.f, 1.f,  1.f,
     };
 
     cVerbose("Loading GLeam API");

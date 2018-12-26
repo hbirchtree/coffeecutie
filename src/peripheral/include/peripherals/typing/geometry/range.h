@@ -13,7 +13,7 @@ template<
     typename type_safety::is_pod<T>::type* = nullptr
 
     >
-struct range
+union range
 {
     range() : near_(0.1), far_(10)
     {
@@ -22,8 +22,11 @@ struct range
     {
     }
 
-    T near_;
-    T far_;
+    struct {
+        T near_;
+        T far_;
+    };
+    T data[2];
 };
 
 }

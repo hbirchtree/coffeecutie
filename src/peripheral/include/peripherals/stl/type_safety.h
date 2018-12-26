@@ -278,6 +278,17 @@ static inline D C_FCAST(T from)
     return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
 
+template<
+    typename D,
+    typename T,
+    typename std::enable_if<
+        std::is_floating_point<D>::value &&
+        std::is_floating_point<T>::value>::type* = nullptr>
+static inline D C_FCAST(T from)
+{
+    return static_cast<D>(from);
+}
+
 template<typename D, typename T>
 /*!
  * \brief C_CAST is for the cases where a static cast is acceptable. For

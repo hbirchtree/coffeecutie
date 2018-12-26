@@ -25,6 +25,8 @@
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 #include <peripherals/typing/enum/graphics/shader_types.h>
 #include <peripherals/typing/enum/graphics/texture_types.h>
+#include <peripherals/typing/enum/graphics/vertex_face.h>
+#include <peripherals/typing/enum/graphics/vertex_winding.h>
 #include <peripherals/typing/enum/logic/comparison.h>
 #include <peripherals/typing/enum/logic/operator.h>
 #include <peripherals/typing/enum/logic/value_policy.h>
@@ -49,6 +51,9 @@ using typing::ValueHandling;
 using typing::WrapPolicy;
 using typing::graphics::ProfilingTerm;
 using typing::graphics::ShaderStage;
+
+using Face = typing::graphics::VertexFace;
+using typing::graphics::VertexWinding;
 
 using DBuffers     = typing::graphics::color_buffer;
 using FramebufferT = typing::graphics::framebuffer_type;
