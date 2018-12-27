@@ -691,24 +691,21 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, u32 i)
         return;
     }
 
-    if(dstate.testDepth())
-    {
-        GLC::DepthMask(dstate.mask());
+    GLC::DepthMask(dstate.mask());
 
-        if(dstate.fun())
-            GLC::DepthFunc(to_enum(C_CAST<ValueComparison>(dstate.fun())));
+    if(dstate.fun())
+        GLC::DepthFunc(to_enum(C_CAST<ValueComparison>(dstate.fun())));
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
-        if(GLEAM_FEATURES.depth_clamp)
-        {
-            if(dstate.clampDepth())
-                GLC::Enablei(Feature::DepthClamp, i);
-            else
-                GLC::Disablei(Feature::DepthClamp, i);
-        }
-#endif
-        /*TODO: Implement clamping*/
+    if(GLEAM_FEATURES.depth_clamp)
+    {
+        if(dstate.clampDepth())
+            GLC::Enablei(Feature::DepthClamp, i);
+        else
+            GLC::Disablei(Feature::DepthClamp, i);
     }
+#endif
+    /*TODO: Implement clamping*/
 }
 
 void GLEAM_API::GetDepthState(GLEAM_API::DEPTSTATE& dstate, u32 i)
