@@ -42,6 +42,9 @@ STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
     auto& context = GetContext();
     Lock  _(context.access);
 
+    if(context.names.find(hs) != context.names.end())
+        return;
+
     context.names[hs] = name;
 }
 

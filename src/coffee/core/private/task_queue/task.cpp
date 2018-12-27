@@ -628,6 +628,7 @@ void RuntimeQueue::AwaitTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
         return;
     }
 
+    DProfContext _(RQ_API "Awaiting task...");
     CurrentThread::sleep_until(task->time);
 
     {

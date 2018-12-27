@@ -133,8 +133,10 @@ using DataPoint = Profiler::datapoint;
 
 struct ExtraDataImpl
 {
-    STATICINLINE void Add(CString const& k, CString const& v)
+    STATICINLINE void Add(
+        UNUSED_PARAM(CString const&, k), UNUSED_PARAM(CString const&, v))
     {
+#if MODE_DEBUG
         auto context = State::GetProfilerStore();
 
         C_PTR_CHECK(context);
@@ -142,15 +144,18 @@ struct ExtraDataImpl
         Lock _(context->access);
 
         context->extra_data[k] = v;
+#endif
     }
 
     STATICINLINE PExtraData Get()
     {
+#if MODE_DEBUG
         auto context = State::GetProfilerStore();
 
         C_PTR_CHECK(context);
 
         return context->extra_data;
+#endif
     }
 };
 
