@@ -31,7 +31,7 @@ struct InternalState
 #endif
 
     /* Resources */
-    CString resource_prefix = "./";
+    CString resource_prefix;
 
     /* Application info */
     platform::info::AppData current_app = {};
@@ -330,12 +330,20 @@ void ResourcePrefix(cstring prefix)
     State::ISTATE->resource_prefix = prefix;
 }
 
-CString const& ResourcePrefix()
+CString const& ResourcePrefix(bool fallback)
 {
     //    fprintf(stdout, "GET: %p\n", &State::internal_state);
     fflush(stdout);
     C_PTR_CHECK(State::ISTATE);
-    return State::ISTATE->resource_prefix;
+    auto const& out = State::ISTATE->resource_prefix;
+
+    if(fallback && out.size() == 0)
+    {
+        static CString fallback = "./";
+        return fallback;
+    }
+
+    return out;
 }
 
 } // namespace file

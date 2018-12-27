@@ -663,17 +663,20 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
 void RendererCleanup(CDRenderer&, RendererState* d)
 {
+    Profiler::PushContext("Stopping workers");
     runtime_queue_error ec;
     RuntimeQueue::TerminateThread(d->rt_queue, ec);
 
 #if defined(FEATURE_ENABLE_ASIO)
     d->net_worker->stop();
 #endif
+    Profiler::PopContext();
 
     d->entities.reset();
 
     auto& g = d->g_data;
 
+    Profiler::PushContext("GPU resources");
     g.vertbuf->dealloc();
     g.eyetex->dealloc();
     g.vertdesc.dealloc();
@@ -681,6 +684,7 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     g.f_shader.dealloc();
     g.eye_pip.dealloc();
     g.eyesamp.dealloc();
+    Profiler::PopContext();
 
     delete g.vertbuf;
     g.vertbuf = nullptr;
@@ -691,6 +695,7 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     g.loader = nullptr;
     GLM::UnloadAPI();
 
+    Profiler::PushContext("Saving time");
     cDebug("Saving time: {0}", d->r_state.time_base);
 
     d->r_state.time_base = Chrono::duration_cast<Chrono::milliseconds>(
@@ -698,4 +703,5 @@ void RendererCleanup(CDRenderer&, RendererState* d)
                                    .time_since_epoch())
                                .count();
     d->save_api->save(Bytes::Create(d->r_state));
+    Profiler::PopContext();
 }
