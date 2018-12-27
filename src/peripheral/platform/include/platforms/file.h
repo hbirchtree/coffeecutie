@@ -11,6 +11,11 @@
 namespace platform {
 namespace file {
 
+#if defined(COFFEE_EMSCRIPTEN)
+using FileFun = CFILEFun;
+using DirFun  = posix::DirFun;
+#endif
+
 using file_error = FileFun::file_error;
 }
 } // namespace platform

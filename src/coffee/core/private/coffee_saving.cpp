@@ -1,10 +1,15 @@
-#include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_saving.h>
 #include <coffee/core/internal_state.h>
+
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CDebug>
+#include <coffee/strings/format.h>
 
 namespace Coffee {
 namespace Store {
@@ -69,7 +74,7 @@ void emscripten_callback_error(void* arg)
 #if defined(COFFEE_EMSCRIPTEN)
 static CString CreateSaveString(u16 slot)
 {
-    return cStringFormat(
+    return Strings::cStringFormat(
         "{0}-{1}.data", GetCurrentApp().application_name, slot);
 }
 #else

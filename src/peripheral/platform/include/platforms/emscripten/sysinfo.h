@@ -4,39 +4,36 @@
 
 #if defined(COFFEE_EMSCRIPTEN)
 
-#include "../sysinfo_def.h"
+#include <coffee/core/types/hardware_info.h>
 #include <malloc.h>
+#include <platforms/base/sysinfo.h>
 
 extern "C" char* get_user_agent();
 
-namespace Coffee {
-namespace Environment{
-namespace Emscripten {
+namespace platform {
+namespace env {
+namespace emscripten {
 
-struct EmSysInfo : SysInfoDef
+struct SysInfo : SysInfoDef
 {
     static CString GetSystemVersion();
 
-    STATICINLINE HWDeviceInfo DeviceName()
+    STATICINLINE info::HardwareDevice DeviceName()
     {
         cstring_w userAgentRaw = get_user_agent();
         if(!userAgentRaw)
-            return HWDeviceInfo("Generic", "Browser", "1.0");
+            return info::HardwareDevice("Generic", "Browser", "1.0");
 
         CString userAgent = userAgentRaw;
         free(userAgentRaw);
-        return HWDeviceInfo(userAgent, "", "1.0");
+        return info::HardwareDevice(userAgent, "", "1.0");
     }
 };
-struct EmPowerInfo : PowerInfoDef
-{
-};
 
-}
-}
+} // namespace emscripten
+} // namespace env
 
-using PowerInfo = Environment::Emscripten::EmPowerInfo;
-using SysInfo = Environment::Emscripten::EmSysInfo;
+using SysInfo = env::emscripten::SysInfo;
 
-}
+} // namespace platform
 #endif

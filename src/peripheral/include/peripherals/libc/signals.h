@@ -28,7 +28,11 @@ enum class sig
     abort             = SIGABRT,
 
     /* May only be sent */
+#if defined(COFFEE_WINDOWS)
+    kill = 101,
+#else
     kill = SIGKILL,
+#endif
 };
 
 FORCEDINLINE void install(sig signal, sig_handler h)

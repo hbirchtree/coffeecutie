@@ -673,10 +673,13 @@ void GLEAM_API::GetBlendState(GLEAM_API::BLNDSTATE& bstate, u32 i)
     if(!GLEAM_FEATURES.viewport_indexed)
     {
         bstate.m_doBlend = GLC::IsEnabled(Feature::Blend);
-    } else
+    }
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    else
     {
         bstate.m_doBlend = GLC::IsEnabledi(Feature::Blend, i);
     }
+#endif
 
     /* TODO: Blend functions */
 }
@@ -745,8 +748,10 @@ void GLEAM_API::GetStencilState(GLEAM_API::STENSTATE& sstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
         sstate.m_test = GLC::IsEnabled(Feature::StencilTest);
+#if GL_VERSION_VERIFY(0x300, 0x300)
     else
         sstate.m_test = GLC::IsEnabledi(Feature::StencilTest, i);
+#endif
 }
 
 void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)

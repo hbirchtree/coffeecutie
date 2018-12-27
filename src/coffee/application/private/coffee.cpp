@@ -202,8 +202,10 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
 #endif
 
+#if !defined(COFFEE_DISABLE_PROFILER)
     /* Must be created before ThreadState, but after internal state */
     State::SwapState("jsonProfiler", profiling::CreateJsonProfiler());
+#endif
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     /* On Android and iOS, we want to terminate the profiler early */
@@ -276,7 +278,19 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     Profiler::PushContext("main()");
 #endif
 
-    i32 result = mainfun(argc, argv);
+    i32 result = -1;
+
+#if defined(COFFEE_EMSCRIPTEN)
+    try
+    {
+#endif
+        result = mainfun(argc, argv);
+#if defined(COFFEE_EMSCRIPTEN)
+    } catch(std::exception const& ex)
+    {
+        cBasicPrint("Exception: {0}", ex.what());
+    }
+#endif
 
 #ifndef COFFEE_LOWFAT
     Profiler::PopContext();

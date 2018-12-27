@@ -1,25 +1,27 @@
-#include <coffee/core/plat/environment/emscripten/sysinfo.h>
-#include <coffee/core/CDebug>
+#include <platforms/emscripten/sysinfo.h>
+
+#include <peripherals/stl/types.h>
 
 #include <emscripten.h>
 
 /* Can be used for workarounds, if necessary */
 EM_JS(char*, get_user_agent, (), {
     var lengthBytes = lengthBytesUTF8(navigator.userAgent) + 1;
-    var wasmString = _malloc(lengthBytes);
+    var wasmString  = _malloc(lengthBytes);
     stringToUTF8(navigator.userAgent, wasmString, lengthBytes + 1);
     return wasmString;
 });
 
-namespace Coffee{
-namespace Environment{
-namespace Emscripten{
+namespace platform {
+namespace env {
+namespace emscripten {
 
-CString EmSysInfo::GetSystemVersion()
+CString SysInfo::GetSystemVersion()
 {
-    return cStringFormat("{0}.{1}.{2}", __EMSCRIPTEN_major__, __EMSCRIPTEN_minor__, __EMSCRIPTEN_tiny__);
+    return C_STR(__EMSCRIPTEN_major__) "." C_STR(
+        __EMSCRIPTEN_minor__) "." C_STR(__EMSCRIPTEN_tiny__);
 }
 
-}
-}
-}
+} // namespace emscripten
+} // namespace env
+} // namespace platform

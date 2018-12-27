@@ -100,6 +100,7 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
 {
     using file_error  = typename CommonFileFun<NestedError>::file_error;
     using FileMapping = FILEApi::FileMapping;
+    using FileHandle  = FH;
 
     STATICINLINE FH Open(Url const& fn, RSCA ac, file_error& ec)
     {

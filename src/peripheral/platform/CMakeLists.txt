@@ -181,6 +181,7 @@ if(EMSCRIPTEN)
         # Like POSIX, but limited
         #
         platforms/posix/environment.cpp
+        platforms/posix/file.cpp
         platforms/emscripten/sysinfo.cpp
         )
 endif()

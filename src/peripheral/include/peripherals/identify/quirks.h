@@ -206,7 +206,7 @@
 #define COFFEE_DISABLE_PROFILER
 #endif
 
-#if defined(COFFEE_GEKKO)
+#if defined(COFFEE_GEKKO) || defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_DISABLE_PROFILER
 #endif
 

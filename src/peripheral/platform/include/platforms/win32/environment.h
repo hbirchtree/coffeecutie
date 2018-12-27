@@ -4,8 +4,8 @@
 
 #ifdef COFFEE_WINDOWS
 
-#include "../../file/windows/file.h"
-#include "../environment_details.h"
+#include <platforms/base/environment.h>
+#include <platforms/win32/file.h>
 
 namespace platform {
 namespace env {

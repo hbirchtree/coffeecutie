@@ -3,6 +3,10 @@
 #include <peripherals/error/regex.h>
 #include <peripherals/error/windows.h>
 
+#include <peripherals/stl/string_ops.h>
+
+using namespace ::stl_types::str;
+
 namespace platform {
 namespace file {
 

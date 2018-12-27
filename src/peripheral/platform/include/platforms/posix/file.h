@@ -5,6 +5,8 @@
 #include <peripherals/semantic/handle.h>
 #include <platforms/libc/file.h>
 
+#if defined(COFFEE_UNIXPLAT)
+
 #if defined(COFFEE_APPLE)
 // ???
 #include <mach/vm_statistics.h>
@@ -421,3 +423,4 @@ using DirFun  = posix::DirFun;
 
 } // namespace file
 } // namespace platform
+#endif

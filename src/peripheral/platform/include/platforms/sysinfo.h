@@ -1,5 +1,7 @@
 #pragma once
 
+#include "power.h"
+
 #include "android/sysinfo.h"
 #include "emscripten/sysinfo.h"
 #include "linux/sysinfo.h"
