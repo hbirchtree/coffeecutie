@@ -33,6 +33,13 @@ find_path ( OPENAL_INCLUDE_DIR
 find_path ( OPENAL_INCLUDE_DIR
     al.h
     alc.h
+
+    PATH_SUFFIXES
+    include
+    include/AL
+
+    PATHS
+    ${OPENAL_SEARCH_PATHS}
     )
 
 find_library ( OPENAL_LIBRARY_TMP

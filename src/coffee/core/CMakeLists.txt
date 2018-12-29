@@ -179,7 +179,7 @@ coffee_library (
     )
 
 if(LOWFAT_BUILD)
-    target_compile_definitions (  Core_Base PUBLIC
+    target_compile_definitions (  CoreBase PUBLIC
         -DCOFFEE_LOWFAT
         )
 endif()
@@ -222,7 +222,7 @@ endif()
 #
 #
 if(GAMECUBE)
-    target_link_libraries ( Core_Base PUBLIC
+    target_link_libraries ( CoreBase PUBLIC
         GeckoThreads
         )
 endif()
