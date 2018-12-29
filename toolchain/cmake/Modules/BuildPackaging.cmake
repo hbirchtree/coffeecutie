@@ -110,7 +110,7 @@ function(COFFEE_APPLICATION)
             RESOURCES ${APP_RESOURCES}
             BUNDLE_LIBRARIES ${APP_BUNDLE_LIBRARIES}
 
-            APK_TARGET 27
+            APK_TARGET 28
             APK_MIN_TARGET ${ANDROID_NATIVE_API_LEVEL}
             )
     elseif(WIN32)

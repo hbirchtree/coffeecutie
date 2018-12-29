@@ -155,6 +155,8 @@ struct ExtraDataImpl
         C_PTR_CHECK(context);
 
         return context->extra_data;
+#else
+        return {};
 #endif
     }
 };

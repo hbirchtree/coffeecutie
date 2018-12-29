@@ -423,7 +423,7 @@ bigscalar SysInfo::ProcessorFrequency()
     auto      freqs = ProcessorFrequencies();
     bigscalar maxf  = 0.0;
     for(auto f : freqs)
-        maxf = CMath::max(maxf, f);
+        maxf = math::max(maxf, f);
 
     return maxf;
 #else

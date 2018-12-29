@@ -3,15 +3,16 @@
 #include <peripherals/base.h>
 
 #if defined(COFFEE_RASPBERRYPI)
-#include "../linux/sysinfo.h"
+#include <coffee/core/types/hardware_info.h>
+#include <platforms/linux/sysinfo.h>
 
-namespace Coffee {
-namespace Environment {
-namespace Raspberry {
+namespace platform {
+namespace env {
+namespace raspberry {
 
-struct RaspberrySysInfo : Linux::LinuxSysInfo
+struct SysInfo : Linux::SysInfo
 {
-    static HWDeviceInfo DeviceName();
+    static info::HardwareDevice DeviceName();
 
     static bigscalar ProcessorFrequency();
 
@@ -21,10 +22,10 @@ struct RaspberrySysInfo : Linux::LinuxSysInfo
     }
 };
 
-} // namespace Raspberry
-} // namespace Environment
+} // namespace raspberry
+} // namespace env
 
-using SysInfo = Environment::Raspberry::RaspberrySysInfo;
+using SysInfo = env::raspberry::SysInfo;
 
-} // namespace Coffee
+} // namespace platform
 #endif

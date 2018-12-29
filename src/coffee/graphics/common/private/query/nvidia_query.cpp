@@ -1,7 +1,8 @@
-#include <peripherals/stl/string_casting.h>
-#include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/types/hardware_info.h>
+#include <coffee/core/types/software_info.h>
 #include <coffee/graphics/common/query/gpu_query.h>
 #include <nvml.h>
+#include <peripherals/stl/string_casting.h>
 
 namespace Coffee {
 namespace GpuInfo {
@@ -38,8 +39,8 @@ SWVersionInfo GetDriver()
 
     return SWVersionInfo(
         "NVIDIA",
-        str::from_string<u32>(major.c_str()),
-        str::from_string<u32>(minor.c_str()));
+        libc::str::from_string<u32>(major.c_str()),
+        libc::str::from_string<u32>(minor.c_str()));
 }
 
 gpucount_t GetNumGpus()

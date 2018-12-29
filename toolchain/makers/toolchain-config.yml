@@ -203,6 +203,7 @@ testing.linux.*:
     =android.gles20: OFF
 
   =android.toolchain: clang
+  =android.ssl.dir: $(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl
   +cmake-opts:
     # Yay! Configuring the entire Android toolchain
     - -DANDROID_NDK=$(android.ndk)
@@ -214,8 +215,11 @@ testing.linux.*:
     - -DANDROID_CPP_FEATURES=$(android.features)
     - -DANDROID_ARM_NEON=$(android.arm-neon)
     - -DCMAKE_TOOLCHAIN_FILE=$(android.ndk)/build/cmake/android.toolchain.cmake
-  +environment-vars:
-    - -e OPENSSL_ROOT_DIR=$(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl
+    - -DOPENSSL_INCLUDE_DIR=\\\"$(android.ssl.dir)/include\\\"
+    - -DOPENSSL_SSL_LIBRARY=\\\"$(android.ssl.dir)/lib/libssl.a\\\"
+    - -DOPENSSL_CRYPTO_LIBRARY=\\\"$(android.ssl.dir)/lib/libcrypto.a\\\"
+  #  +environment-vars:
+  # - -e OPENSSL_ROOT_DIR="$(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl"
   =container: android
   =toolchain: all-android.toolchain.cmake
 

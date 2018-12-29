@@ -33,6 +33,7 @@ if(NVIDIAML_FOUND)
         LIBRARIES
         ${NVIDIAML_LIBRARIES}
         Core
+        GraphicsAPI
         )
 
     target_include_directories( NVIDIAQuery PRIVATE
@@ -69,5 +70,6 @@ if(BUILD_OPENGL AND BUILD_GLEAM AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT APPLE
         Core
         BindingGLAD
         GLeamCommon
+        GraphicsAPI
         )
 endif()

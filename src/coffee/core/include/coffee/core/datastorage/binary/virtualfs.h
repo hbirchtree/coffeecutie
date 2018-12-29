@@ -865,7 +865,11 @@ struct VirtDesc
 
 struct generation_settings
 {
-    szptr workers = 0; /*!< 0 will default to maximum */
+    generation_settings(szptr workers = 0) : workers(workers)
+    {
+    }
+
+    szptr workers; /*!< 0 will default to maximum */
 };
 
 extern bool GenVirtFS(
