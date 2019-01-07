@@ -68,7 +68,7 @@ extern void SetApplicationData(info::AppData& appdata);
 
 FORCEDINLINE void PrintVersionInfo()
 {
-#if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
+#if !MODE_LOWFAT && !defined(COFFEE_LOADABLE_LIBRARY)
     auto const& app_data = ApplicationData();
 
     cOutputPrint(
@@ -107,7 +107,7 @@ FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
 
 FORCEDINLINE void PrintLicenseInfo()
 {
-#if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
+#if !MODE_LOWFAT && !defined(COFFEE_LOADABLE_LIBRARY)
     cVerbose(6, "Number of licenses to print: {0}", CoffeeLicenseCount);
     for(unsigned int i = 0; i < CoffeeLicenseCount; i++)
     {
@@ -120,7 +120,7 @@ FORCEDINLINE void PrintLicenseInfo()
 
 static void CoffeeInit_Internal(u32 flags)
 {
-#ifndef COFFEE_LOWFAT
+#if !MODE_LOWFAT
 #if MODE_DEBUG
 
     /* Allow core dump by default in debug mode */
@@ -186,7 +186,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     Coffee::PrintingVerbosityLevel() = 1;
 
-#ifndef COFFEE_LOWFAT
+#if !MODE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
     SetApplicationData(State::GetAppData());
     /* BuildInfo contains information on the compiler, architecture
@@ -240,7 +240,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     InstallDefaultSigHandlers();
 #endif
 
-#if !defined(COFFEE_LOWFAT)
+#if !MODE_LOWFAT
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
     if(!(flags & DiscardArgumentHandler))
     {
@@ -292,7 +292,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     }
 #endif
 
-#ifndef COFFEE_LOWFAT
+#if !MODE_LOWFAT
     Profiler::PopContext();
 
     cBasicPrint(
@@ -311,7 +311,7 @@ void CoffeeTerminate()
 
     cVerbose(5, "Terminating");
 
-#ifndef COFFEE_LOWFAT
+#if !MODE_LOWFAT
 
 #if MODE_DEBUG
 #if defined(COFFEE_LINUX)
@@ -463,7 +463,9 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
             State::GetProfilerStore()->flags.deep_enabled = true;
         } else if(sw == "json")
         {
+#if !MODE_LOWFAT
             DebugFun::SetLogInterface(SetupJsonLogger("application.json"_tmp));
+#endif
         }
     }
 

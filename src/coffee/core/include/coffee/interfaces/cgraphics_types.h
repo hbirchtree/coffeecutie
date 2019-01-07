@@ -15,6 +15,7 @@
 #include <peripherals/enum/helpers.h>
 #include <peripherals/semantic/enum/data_types.h>
 #include <peripherals/semantic/handle.h>
+#include <peripherals/typing/enum/debug/severity.h>
 #include <peripherals/typing/enum/delay.h>
 #include <peripherals/typing/enum/graphics/buffer_types.h>
 #include <peripherals/typing/enum/graphics/color_buffer.h>

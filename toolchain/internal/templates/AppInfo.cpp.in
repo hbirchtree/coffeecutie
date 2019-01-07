@@ -27,7 +27,7 @@ void SetApplicationData(platform::info::AppData& appdata)
 #else
 namespace Coffee {
 
-void SetApplicationData(AppData&)
+void SetApplicationData(platform::info::AppData&)
 {
 }
 

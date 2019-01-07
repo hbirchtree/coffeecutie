@@ -77,7 +77,7 @@ struct ObjectLoader : ObjectLoader_def<FunctionLoader>
     using Loader = FunctionLoader;
 
     template<typename Obj, typename... Args>
-    STATICINLINE ObjConstructor<Obj> GetConstructor(
+    STATICINLINE ObjConstructor<Obj, Args...> GetConstructor(
         UqPtr<Loader::Library>& library,
         cstring                 constructor,
         Loader::error_type&     ec)

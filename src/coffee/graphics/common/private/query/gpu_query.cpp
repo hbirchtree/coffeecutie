@@ -91,7 +91,7 @@ bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error& ec)
             FunctionLoader::UnloadLibrary(std::move(lib), loader_ec);
             continue;
         }
-        GpuQueryFunction* fun = ldr.loader();
+        auto fun = ldr();
         if(!fun)
         {
             ec = mf;

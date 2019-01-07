@@ -684,6 +684,15 @@ struct ShaderProcessor : FileProcessor
     virtual void setBaseDirectories(const Vector<CString>&)
     {
     }
+
+    virtual cstring name() const
+    {
+        return "ShaderProcessor"
+        #if defined(HAVE_SPIRVCROSS)
+               "+spirvcross"
+        #endif
+                ;
+    }
 };
 
 COFFAPI FileProcessor* CoffeeLoader()

@@ -7,6 +7,10 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/type_safety.h>
 
+#if defined(COFFEE_LINUX)
+#include <unistd.h>
+#endif
+
 namespace libc {
 namespace ptr {
 
@@ -96,4 +100,20 @@ FORCEDINLINE szptr align(szptr alignment, szptr off)
 }
 
 } // namespace align
+namespace mem {
+
+using namespace ::libc_types;
+
+FORCEDINLINE u32 page_size()
+{
+#if defined(COFFEE_UNIXPLAT)
+    int pagesize = ::sysconf(_SC_PAGESIZE);
+
+    return C_FCAST<u32>(pagesize > 0 ? pagesize : 4_kB);
+#else
+    return 4_kB;
+#endif
+}
+
+}
 } // namespace libc

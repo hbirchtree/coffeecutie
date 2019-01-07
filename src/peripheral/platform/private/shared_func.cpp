@@ -48,18 +48,6 @@ CString SysInfoDef::HostName()
 #endif
 }
 
-ThrdCnt SysInfoDef::SmartParallelism(u64 worksize, u64 weight)
-{
-    if(worksize * weight <= ThreadCount())
-    {
-        return 1;
-    } else if(worksize * weight <= stl_types::math::pow(Parallelism(), 3))
-    {
-        return ThreadCount();
-    } else
-        return Parallelism();
-}
-
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_WINDOWS)
 info::HardwareDevice SysInfoDef::Processor(C_UNUSED(u32 i))
 {

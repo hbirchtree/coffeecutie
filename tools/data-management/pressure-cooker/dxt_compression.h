@@ -62,6 +62,8 @@ static void CompressDXT(
             outName.addExtension(sizeString.c_str()).addExtension(ext);
         auto mipImg = outName.addExtension(sizeString.c_str());
 
+        auto test_time = Chrono::from_unix(0);
+
         if(t.compress.channels == 3)
             mipImg = mipImg.addExtension("jpg");
         else

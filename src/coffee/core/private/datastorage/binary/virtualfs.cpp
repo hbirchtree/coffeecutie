@@ -316,7 +316,7 @@ bool GenVirtFS(
         DProfContext _(VIRTFS_API "Inserting directory index");
 
         auto vfsRef = outputView.as<VFS>().data;
-        auto files  = _cbasic_data_chunk<const VFile>::From(
+        auto files  = mem_chunk<const VFile>::From(
             vfsRef->files(), vfsRef->num_files * sizeof(VFile));
 
         dir_index::directory_index_t dirIndex = dir_index::Generate(files);
@@ -343,9 +343,13 @@ bool GenVirtFS(
 }
 
 directory_data_t::result_t VirtualFS::SearchFile(
-    VFS const* vfs, cstring name, vfs_error_code& ec, search_strategy strat)
+    VFS const*                            vfs,
+    cstring                               name,
+    vfs_error_code&                       ec,
+    search_strategy                       strat,
+    directory_data_t::cached_index const* filter)
 {
-    return dir_index::lookup::SearchFile(vfs, name, ec, strat);
+    return dir_index::lookup::SearchFile(vfs, name, ec, strat, filter);
 }
 
 Bytes Coffee::VirtFS::VirtualFS::GetData(

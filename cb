@@ -23,6 +23,13 @@ case $1 in
         BUILDVARIANT=${@:2} ${TC_DIR}/ci/travis-build.sh
     fi
 ;;
+"list-targets")
+    grep '^[a-z]' toolchain/makers/Makefile.linux | grep FORCE | cut -d':' -f 1
+    grep '^[a-z]' toolchain/makers/Makefile.mac | grep FORCE | cut -d':' -f 1
+
+    echo "
+To build a target, execute $0 quick-build [target]"
+;;
 "quick-build-deps")
     pip install PyYaml
 ;;
@@ -134,6 +141,7 @@ Project management:
 
 Build tools:
     quick-build         - Use pre-defined build environments
+    list-targets        - List all available targets for building
     extract-tools       - Extract compiled tools into deployment directory
     extract-native-libs - Extract compiled libraries into deployment directory
     makefile-generator  - Regenerate meta-build system

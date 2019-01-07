@@ -18,6 +18,18 @@ struct TextureCooker : FileProcessor
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor);
 
     virtual void setBaseDirectories(const Vector<CString>&);
+
+    virtual cstring name() const
+    {
+        return "TextureCooker"
+        #if defined(HAVE_LIBTIFF)
+            "+libtiff"
+        #endif
+        #if defined(HAVE_ETC2COMP)
+            "+etc2comp"
+        #endif
+                ;
+    }
 };
 
 bool StbDecode(
@@ -198,9 +210,10 @@ void TextureCooker::process(
             }
     }
 
+    /* Set default texture sizes, for the cases where nothing is specified.
+     * There is also a program-defined default to fallback to. */
     if(Env::ExistsVar(TEX_MAX_SIZE))
         max_texture_size = cast_string<i32>(Env::GetVar(TEX_MAX_SIZE));
-
     if(Env::ExistsVar(TEX_MIN_SIZE))
         min_texture_size = cast_string<i32>(Env::GetVar(TEX_MIN_SIZE));
 
@@ -209,6 +222,7 @@ void TextureCooker::process(
 
     Map<ThreadId::Hash, Vector<VirtFS::VirtDesc>> threadFiles;
 
+    /* Each thread works on a texture and its mipmaps. */
     threads::ParallelForEach<FileContainer, FileElement>(
         targets,
         [&](FileElement& e) {

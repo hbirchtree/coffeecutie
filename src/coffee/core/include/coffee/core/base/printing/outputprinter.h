@@ -3,11 +3,9 @@
 #include <platforms/environment.h>
 
 #include "log_interface.h"
+#include "verbosity_level.h"
 
 namespace Coffee {
-
-extern u8& PrintingVerbosityLevel();
-
 namespace DebugFun {
 
 extern cstring severity_string(Severity sev);

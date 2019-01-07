@@ -139,6 +139,11 @@ struct AssimpProcessor : FileProcessor
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor);
 
     virtual void setBaseDirectories(const Vector<CString>& dirs);
+
+    virtual cstring name() const
+    {
+        return "AssimpProcessor";
+    }
 };
 
 COFFAPI FileProcessor* CoffeeLoader()

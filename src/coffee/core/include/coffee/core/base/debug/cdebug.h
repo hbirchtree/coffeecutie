@@ -4,6 +4,8 @@
 
 #include <peripherals/libc/output_ops.h>
 
+#include "../printing/verbosity_level.h"
+
 #ifndef COFFEE_LOWFAT
 #include "../printing/outputprinter.h"
 #endif

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/time_types.h>
 #include <url/url.h>
 
 namespace semantic {
@@ -38,4 +39,13 @@ struct ByteProvider
         return platform::url::Path();
     }
 };
+
+struct DataTimestamp
+{
+    operator stl_types::Chrono::steady_clock::time_point() const
+    {
+        return {};
+    }
+};
+
 } // namespace semantic

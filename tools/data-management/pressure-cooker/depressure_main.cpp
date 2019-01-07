@@ -158,6 +158,38 @@ static i32 extract_file(
     return 0;
 }
 
+static i32 query_file(VirtFS::VirtualFS const* vfs, CString const& pattern)
+{
+    VirtFS::vfs_error_code ec;
+
+    ProfContext _("Finding matches in VFS");
+
+    Profiler::PushContext("Querying VFS");
+    auto it = VirtFS::VirtualFS::SearchFile(
+        vfs, pattern.c_str(), ec, VirtFS::search_strategy::earliest);
+
+    C_ERROR_CHECK(ec);
+    Profiler::PopContext();
+
+    if(!it.index.sub_root.valid())
+        return 1;
+
+    Profiler::PushContext("Listing files");
+
+    auto files = C_RCAST<VirtFS::VFile const*>(vfs->files());
+    auto nodes = it.index.nodes();
+
+    for(auto i : Range<>(it.index.node_match.size()))
+    {
+        if(it.index.node_match.at(i) && nodes[i].is_leaf())
+            cBasicPrint("{0}", files[nodes[i].leaf.fileIdx].name);
+    }
+
+    Profiler::PopContext();
+
+    return 0;
+}
+
 #if MODE_DEBUG
 DENYINLINE void binary_bench(
     mem_chunk<const VirtFS::VFS>& vfsData, szptr& thing)
@@ -232,6 +264,7 @@ i32 coffee_main(i32, cstring_w*)
     parser.addPositionalArgument("vfs-file", "target virtual file system");
 
     parser.addArgument("infile", "in-file", "g", "Get file from the VFS");
+    parser.addArgument("search", "find", nullptr, "Do a prefix search");
     parser.addArgument("outfile", "out-file", "o", "Output file when using -g");
 
     parser.addSwitch("pretty", "pretty", "p", "Print in a pretty fashion");
@@ -286,6 +319,7 @@ i32 coffee_main(i32, cstring_w*)
     u32  shown_columns   = 0;
     bool forceful        = args.switches.find("force") != args.switches.end();
     auto get_file        = args.arguments.find("infile");
+    auto search_file     = args.arguments.find("search");
     bool human_readable  = args.switches.find("human") != args.switches.end();
     bool pretty_printing = args.switches.find("pretty") != args.switches.end();
 
@@ -305,6 +339,11 @@ i32 coffee_main(i32, cstring_w*)
             get_file->second,
             out_it != args.arguments.end() ? out_it->second : "",
             forceful ? RSCA::Discard : RSCA::None);
+    }
+
+    if(search_file != args.arguments.end())
+    {
+        return query_file(vfsData.data, search_file->second);
     }
 
     if(pretty_printing)

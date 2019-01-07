@@ -1,5 +1,7 @@
 #include <platforms/posix/file.h>
 
+#include <peripherals/libc/memory_ops.h>
+
 #include <fcntl.h>
 #include <stdlib.h>
 
@@ -350,11 +352,7 @@ Url posix::DirFun::Dirname(CString const& fname, file_error& ec)
 
 u32 PosixFileMod_def::PageSize()
 {
-#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
-    return static_cast<u32>(sysconf(_SC_PAGESIZE) - 1);
-#else
-    return 8;
-#endif
+    return libc::mem::page_size();
 }
 
 int PosixFileMod_def::MappingFlags(RSCA acc)

@@ -565,7 +565,11 @@ static bool NodeMatching(
 }
 
 directory_data_t::result_t SearchFile(
-    VFS const* vfs, cstring name, vfs_error_code& ec, search_strategy strat)
+    VFS const*                            vfs,
+    cstring                               name,
+    vfs_error_code&                       ec,
+    search_strategy                       strat,
+    directory_data_t::cached_index const* filter)
 {
     using node_base_t = VirtualIndex::directory_data_t::node_base_t;
 
@@ -585,6 +589,11 @@ directory_data_t::result_t SearchFile(
     auto nodes = index->directory.nodes(*index);
 
     auto currentNode = &nodes[0];
+
+    if(filter)
+    {
+        currentNode = &nodes[filter->sub_root];
+    }
 
     if(currentNode->is_leaf())
         return {{}, {}, strat};
@@ -611,6 +620,15 @@ directory_data_t::result_t SearchFile(
 
             auto left_node  = lookup::GetNode(node.left, nodes);
             auto right_node = lookup::GetNode(node.right, nodes);
+
+            /* If a filter is applied, don't traverse unmarked nodes */
+            if(filter)
+            {
+                if(node.left.valid() && !filter->node_match.at(node.left))
+                    left_node = nullptr;
+                if(node.left.valid() && !filter->node_match.at(node.right))
+                    right_node = nullptr;
+            }
 
             /* First look for longest match within each tree */
             auto left_match =
@@ -643,15 +661,13 @@ directory_data_t::result_t SearchFile(
             auto left_lex_order = libc::str::cmp_enum(
                 left_node->node.prefix,
                 &prefix[currentPrefix],
-                (std::min<u32>)(
-                    prefix.size() - currentPrefix,
-                    left_node->prefix_length()));
+                (std::min<
+                    u32>)(prefix.size() - currentPrefix, left_node->prefix_length()));
             auto right_lex_order = libc::str::cmp_enum(
                 right_node->node.prefix,
                 &prefix[currentPrefix],
-                (std::min<u32>)(
-                    prefix.size() - currentPrefix,
-                    right_node->prefix_length()));
+                (std::min<
+                    u32>)(prefix.size() - currentPrefix, right_node->prefix_length()));
 
             /* Look for ordering if there is no prefix match */
             auto left_order =
@@ -680,6 +696,7 @@ directory_data_t::result_t SearchFile(
         directory_data_t::cached_index cache_index;
         /* 2 values per node: flag for left and right */
         cache_index.node_match.resize(index->directory.num_nodes * 2);
+        cache_index.virt_index = index;
 
         Deque<Pair<u32, szptr>> disco_nodes; /* node_idx, prefix match length */
         disco_nodes.push_back({0, 0});
@@ -695,7 +712,7 @@ directory_data_t::result_t SearchFile(
             {
                 auto match_len = node_data.second;
                 match_len +=
-                    currentNode->longest_match(prefix.substr(node_data.second));
+                    currentNode->longest_match(prefix, node_data.second);
 
                 if(match_len >= prefixLen)
                     cache_index.node_match.at(node_data.first) = 1;
@@ -705,7 +722,7 @@ directory_data_t::result_t SearchFile(
 
             auto match_len = node_data.second;
             auto prefix_match =
-                currentNode->longest_match(prefix.substr(node_data.second));
+                currentNode->longest_match(prefix, node_data.second);
 
             match_len += currentNode->flags & node_base_t::prefix_directory
                              ? prefix_match + 1
@@ -713,10 +730,13 @@ directory_data_t::result_t SearchFile(
                                    ? prefix_match
                                    : 0;
 
+            /* !filter shortcircuits if-statement, very important */
             if(currentNode->node.left.valid())
-                disco_nodes.push_back({currentNode->node.left, match_len});
+                if(!filter || filter->node_match.at(currentNode->node.left))
+                    disco_nodes.push_back({currentNode->node.left, match_len});
             if(currentNode->node.right.valid())
-                disco_nodes.push_back({currentNode->node.right, match_len});
+                if(!filter || filter->node_match.at(currentNode->node.right))
+                    disco_nodes.push_back({currentNode->node.right, match_len});
         }
 
         if(SelectNodes(cache_index, nodes.data))

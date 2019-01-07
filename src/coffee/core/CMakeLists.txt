@@ -25,7 +25,7 @@ coffee_library (
     private/extern_storage.cpp
 
     # Thread code
-    private/types/tdef/thread_glue.cpp
+#    private/types/tdef/thread_glue.cpp
 
     #
     # Debug functions

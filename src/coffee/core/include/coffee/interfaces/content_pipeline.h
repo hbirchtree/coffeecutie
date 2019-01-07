@@ -84,6 +84,11 @@ struct FileProcessor
         output = content;
         FileCommit(output, RSCA::Discard);
     }
+
+    virtual cstring name() const
+    {
+        return nullptr;
+    }
 };
 
 } // namespace CoffeePipeline

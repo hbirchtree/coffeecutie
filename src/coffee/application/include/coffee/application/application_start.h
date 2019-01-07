@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/core/internal_state.h>
 #include <coffee/core/libc_types.h>
 #include <coffee/core/types/application_main.h>
 #include <peripherals/base.h>

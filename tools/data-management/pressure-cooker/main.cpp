@@ -41,7 +41,7 @@ static Vector<CString> ignoreFiler = {
 
 static Vector<CString> baseDirs = {};
 
-static Vector<CoffeePipeline::FileProcessor*> extProcessors;
+static Vector<UqPtr<CoffeePipeline::FileProcessor>> extProcessors;
 
 void recurse_directories(
     Path const&               prepath,
@@ -138,15 +138,15 @@ void load_extension(cstring name)
         return;
     }
 
-    using T = CoffeePipeline::FileProcessor;
+    using FileProcessor = CoffeePipeline::FileProcessor;
 
-    auto constructor = load::Object::GetConstructor<T>(
+    auto constructor = load::Object::GetConstructor<FileProcessor>(
         library, load::DefaultConstructorFunction, ec);
 
-    if(!constructor.loader)
+    if(!constructor.valid())
         return;
 
-    extProcessors.push_back(constructor.loader());
+    extProcessors.push_back(constructor());
 }
 
 void parse_args(ArgumentResult& args)
@@ -221,7 +221,9 @@ i32 coffee_main(i32, cstring_w*)
      * We unset environment variables that may affect the input to the program.
      */
 
-    /* AppImage, Snappy and Flatpak storage locations */
+    /* AppImage, Snappy and Flatpak storage locations.
+     * The resource prefix is intentionally used as the root for VFS resources.
+     */
     Env::UnsetVar("APPIMAGE_DATA_DIR");
     Env::UnsetVar("SNAP");
 
@@ -287,7 +289,7 @@ i32 coffee_main(i32, cstring_w*)
             "workers",
             "jobs",
             "j",
-            "Max number of workers, defaults to number of cores on the system");
+            "Max number of workers (defaults to number of threads on system)");
 
         parser.addArgument(
             "cachedir",
@@ -295,6 +297,12 @@ i32 coffee_main(i32, cstring_w*)
             "m",
             "Caching directory for optimizing"
             " cooking time");
+
+        parser.addSwitch(
+            "list_extensions",
+            "list-extensions",
+            nullptr,
+            "List loaded extensions (for troubleshooting)");
 
         parser.addSwitch(
             "statistics", "stats", "s", "Show statistics for files afterwards");
@@ -323,6 +331,16 @@ i32 coffee_main(i32, cstring_w*)
             cacheDir = Path(args.arguments.find("cachedir")->second);
 
         file::ResourcePrefix(args.positional["resource_dir"].c_str());
+
+        if(args.switches.find("list_extensions") != args.switches.end())
+        {
+            cBasicPrint("Loaded extensions:");
+            for(auto const& ext : extProcessors)
+            {
+                cBasicPrint(
+                    "- {0}", ext->name() ? ext->name() : "<unnamed extension>");
+            }
+        }
     }
 
     /* List files */
@@ -407,7 +425,7 @@ i32 coffee_main(i32, cstring_w*)
 
     cursor.progress("Post-processing files...");
 
-    for(auto proc : extProcessors)
+    for(auto const& proc : extProcessors)
     {
         ProfContext _("Running extension");
         proc->setCacheBaseDirectory(cacheDir);

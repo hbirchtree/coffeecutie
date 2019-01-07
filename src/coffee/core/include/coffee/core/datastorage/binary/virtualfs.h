@@ -24,13 +24,14 @@ struct Resource;
  *
  * Layout of a .cvfs file:
  *
- * |---------------|----------|----------|--------------|
- * | VFS struct[0] | VFile[0] | VFile[1] | Blob data    |
- * |---------------|----------|----------|--------------|
+ * |---------------|-------|----------|----------|--------------|
+ * | VFS struct[0] |[other]| VFile[0] | VFile[1] | Blob data    |
+ * |---------------|-------|----------|----------|--------------|
  *
  * VirtualFS struct serves as a header, with a magic segment.
  * VirtualFile structures refer into the Blob data segment.
  *
+ * All offsets in VFS use offsets based on global offsets in the header.
  */
 namespace VirtFS {
 
@@ -295,7 +296,7 @@ struct directory_data_t
         }
     };
 
-    _cbasic_data_chunk<const node_base_t> nodes(VirtualIndex const& idx) const;
+    mem_chunk<const node_base_t> nodes(VirtualIndex const& idx) const;
 
     struct node_container_t
     {
@@ -325,8 +326,11 @@ struct directory_data_t
 
     struct cached_index
     {
-        bit_vector   node_match;
-        child_t<u32> sub_root;
+        bit_vector          node_match;
+        child_t<u32>        sub_root;
+        VirtualIndex const* virt_index;
+
+        mem_chunk<const node_base_t> nodes() const;
     };
 
     struct result_t
@@ -374,9 +378,9 @@ struct VirtualIndex : non_copy
         char ext[MaxExtensionLength];
         u64  num_files;
 
-        _cbasic_data_chunk<const u64> indices(VirtualIndex const& idx) const
+        mem_chunk<const u64> indices(VirtualIndex const& idx) const
         {
-            return _cbasic_data_chunk<const u64>::From(
+            return mem_chunk<const u64>::From(
                 C_RCAST<const u64*>(idx.data()), num_files);
         }
     };
@@ -390,10 +394,10 @@ struct VirtualIndex : non_copy
     };
 };
 
-FORCEDINLINE _cbasic_data_chunk<const directory_data_t::node_base_t>
-             directory_data_t::nodes(const VirtualIndex& idx) const
+FORCEDINLINE mem_chunk<const directory_data_t::node_base_t> directory_data_t::
+    nodes(const VirtualIndex& idx) const
 {
-    return _cbasic_data_chunk<const node_base_t>::From(
+    return mem_chunk<const node_base_t>::From(
         C_RCAST<const node_base_t*>(idx.data()), num_nodes);
 }
 
@@ -421,6 +425,12 @@ FORCEDINLINE directory_data_t::node_container_t directory_data_t::
     return {&index->directory.nodes(*index)[node->node.left], index};
 }
 
+FORCEDINLINE mem_chunk<const directory_data_t::node_base_t> directory_data_t::
+    cached_index::nodes() const
+{
+    return virt_index->directory.nodes(*virt_index);
+}
+
 struct VirtualFS
 {
     /*!
@@ -442,7 +452,7 @@ struct VirtualFS
             "Invalid magic length for data");
 
         using namespace libc;
-        using IntData = _cbasic_data_chunk<u32>;
+        using IntData = mem_chunk<u32>;
 
         *vfs = nullptr;
 
@@ -576,10 +586,11 @@ struct VirtualFS
     }
 
     static directory_data_t::result_t SearchFile(
-        VFS const*      vfs,
-        cstring         name,
-        vfs_error_code& ec,
-        search_strategy strat = search_strategy::exact);
+        VFS const*                            vfs,
+        cstring                               name,
+        vfs_error_code&                       ec,
+        search_strategy                       strat  = search_strategy::exact,
+        const directory_data_t::cached_index* filter = nullptr);
 
     /*!
      * \brief Given a VFS, get the handle to the idx'th file.

@@ -83,9 +83,23 @@ struct ObjectLoader_def
     template<typename Obj, typename... Args>
     struct ObjConstructor
     {
+        using return_type    = Obj;
+        using signature_type = return_type(Args...);
+
         using LoaderFunction = Obj* (*)(Args...);
 
         LoaderFunction loader;
+
+        inline bool valid() const
+        {
+            return loader;
+        }
+
+        inline UqPtr<Obj> operator()(Args... args) const
+        {
+            auto ptr = loader(args...);
+            return MkUqWrap<Obj>(ptr);
+        }
     };
 
     template<typename Obj, typename... Args>
@@ -96,7 +110,7 @@ struct ObjectLoader_def
          * \param constructor Name of constructor to load
          * \return
          */
-        ObjConstructor<Obj>
+        ObjConstructor<Obj, Args...>
         GetConstructor(
             typename FunctionLoader::Library*,
             cstring,

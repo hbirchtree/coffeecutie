@@ -121,6 +121,12 @@
 #define MODE_DEBUG 0
 #endif
 
+#if defined(COFFEE_LOWFAT)
+#define MODE_LOWFAT 1
+#else
+#define MODE_LOWFAT 0
+#endif
+
 /*
  *
  * Extra architecture info

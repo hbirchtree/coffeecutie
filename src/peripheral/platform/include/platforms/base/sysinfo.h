@@ -106,17 +106,6 @@ struct SysInfoDef
         return ThreadCount() * 64;
     }
 
-    /*!
-     * \brief Calculate a 'smart' amount of tasks to launch based
-     *  upon amount of tasks
-     * \param worksize Amount of tasks
-     * \param weight Weight given to each tasks. Should only be
-     *  modified if each task is significant in size.
-     * \return An estimated value for what would be a suitable
-     *  amount of tasks
-     */
-    static ThrdCnt SmartParallelism(u64 worksize, u64 weight = 1);
-
     STATICINLINE
     /*!
      * \brief Whether the system supports virtual memory.
