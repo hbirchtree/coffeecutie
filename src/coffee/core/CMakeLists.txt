@@ -187,13 +187,8 @@ endif()
 add_library ( RapidJSON  INTERFACE )
 add_library ( Core INTERFACE )
 
-install(
-    TARGETS RapidJSON Core
-    EXPORT ${PROJECT_NAME}
-    )
-
-register_library ( Core
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core" )
+add_export ( Core      "" )
+add_export ( RapidJSON "" )
 
 target_link_libraries ( Core INTERFACE
     CoreBase
