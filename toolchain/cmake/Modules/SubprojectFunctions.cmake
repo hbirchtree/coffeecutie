@@ -198,14 +198,16 @@ endmacro()
 # Helper for importing Coffee libraries
 ################################################################################
 
-macro( IMPORT_COFFEE_LIB LIBNAME DEPENDENCY )
+function( IMPORT_COFFEE_LIB LIBNAME DEPENDENCY )
     if( ${${LIBNAME}_DIR} )
         include( ${${LIBNAME}_DIR}/${LIBNAME}Config.cmake )
         return()
     endif()
+    
     if( ${COFFEE_ROOT_DIR} )
         include( ${COFFEE_ROOT_DIR}/share/${LIBNAME}Config.cmake )
         return()
     endif()
+
     find_package( ${LIBNAME} ${DEPENDENCY} )
-endmacro()
+endfunction()
