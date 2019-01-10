@@ -199,12 +199,7 @@ endmacro()
 ################################################################################
 
 function( IMPORT_COFFEE_LIB LIBNAME DEPENDENCY )
-    if( ${${LIBNAME}_DIR} )
-        include( ${${LIBNAME}_DIR}/${LIBNAME}Config.cmake )
-        return()
-    endif()
-    
-    if( ${COFFEE_ROOT_DIR} )
+    if( DEFINED COFFEE_ROOT_DIR )
         include( ${COFFEE_ROOT_DIR}/share/${LIBNAME}Config.cmake )
         return()
     endif()
