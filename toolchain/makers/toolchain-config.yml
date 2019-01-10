@@ -47,7 +47,7 @@
   =compiler: Clang
   =cmake.src: $(project.src)
   =cmake.build: $(project.build)/$(target-name)
-  =cmake.install: $(project.install)/$(target-name)
+  =cmake.install: $(project.install)
   =cmake.coffee-lib: $(lib.root)
   =cmake.native-lib: $(dependencies.native-libs.root)
   =cmake-project.src: $(project.src)/cmake

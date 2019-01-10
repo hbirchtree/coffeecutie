@@ -51,7 +51,7 @@ ios: FORCE native-libs
 	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios/ios \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios \
 	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
@@ -72,7 +72,7 @@ ios.x86_64: FORCE native-libs
 	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86_64/ios.x86_64 \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86_64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86_64 \
 	-DIOS_PLATFORM=SIMULATOR64 \
@@ -94,7 +94,7 @@ ios.x86: FORCE native-libs
 	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86/ios.x86 \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86 \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86 \
 	-DIOS_PLATFORM=SIMULATOR \
@@ -116,7 +116,7 @@ osx: FORCE native-libs
 	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-generic.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx/osx \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/osx-generic_osx.toolchain.cmake \
 	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/osx \
 	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
