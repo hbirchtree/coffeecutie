@@ -1,6 +1,7 @@
 coffee_library (
     TARGET GraphicsAPI
     SOURCES private/query/gpu_query.cpp
+    LIBRARIES Core
     )
 
 target_include_directories ( GraphicsAPI PUBLIC
@@ -11,10 +12,6 @@ target_include_directories ( GraphicsAPI PUBLIC
 coffee_bundle (
     HEADER_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    )
-
-target_link_libraries ( GraphicsAPI PRIVATE
-    Core
     )
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
