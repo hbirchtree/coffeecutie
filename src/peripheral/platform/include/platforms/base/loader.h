@@ -77,35 +77,35 @@ struct FunctionLoad_def
     };
 };
 
+template<typename Obj, typename... Args>
+struct ObjConstructor
+{
+    using return_type    = UqPtr<Obj>;
+    using signature_type = return_type(Args...);
+
+    /*! Needs to use a C-compatible signature,
+     * and no type-safety guarantees across shared libraries.
+     * If all fails, it will be a glorious train crash.
+     */
+    using LoaderFunction = Obj* (*)(Args...);
+
+    LoaderFunction loader;
+
+    inline bool valid() const
+    {
+        return loader;
+    }
+
+    inline return_type operator()(Args... args) const
+    {
+        auto ptr = loader(args...);
+        return MkUqWrap<Obj>(ptr);
+    }
+};
+
 template<typename FunctionLoader>
 struct ObjectLoader_def
 {
-    template<typename Obj, typename... Args>
-    struct ObjConstructor
-    {
-        using return_type    = UqPtr<Obj>;
-        using signature_type = UqPtr<return_type>(Args...);
-
-        /*! Needs to use a C-compatible signature,
-         * and no type-safety guarantees across shared libraries.
-         * If all fails, it will be a glorious train crash.
-         */
-        using LoaderFunction = Obj* (*)(Args...);
-
-        LoaderFunction loader;
-
-        inline bool valid() const
-        {
-            return loader;
-        }
-
-        inline return_type operator()(Args... args) const
-        {
-            auto ptr = loader(args...);
-            return MkUqWrap<Obj>(ptr);
-        }
-    };
-
     template<typename Obj, typename... Args>
     STATICINLINE
         /*!

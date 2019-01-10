@@ -83,7 +83,7 @@ bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error& ec)
         auto ldr = ObjectLoader::GetConstructor<GpuQueryFunction>(
             lib, "GetGpuQuery", loader_ec);
 
-        if(!ldr.loader)
+        if(!ldr.valid())
         {
             ec = loader_ec.message();
             ec = GpuQueryError::SymbolResolution;
