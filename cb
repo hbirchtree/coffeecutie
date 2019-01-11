@@ -6,8 +6,8 @@ BASE_DIR=$(readlink -f $(dirname ${0}))
 TC_DIR=${BASE_DIR}/toolchain
 
 # For Firebase reporting
-export TRAVIS_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-export TRAVIS_REPO_URL="$(git remote get-url $(git remote | head -1))"
+export TRAVIS_BRANCH="$(git -C ${BASE_DIR} rev-parse --abbrev-ref HEAD)"
+export TRAVIS_REPO_URL="$(git -C ${BASE_DIR} remote get-url $(git -C ${BASE_DIR} remote | head -1))"
 
 function all_source_files()
 {

@@ -10,7 +10,7 @@ if(BUILD_LIBRARIES)
     import_coffee_lib ( Coffee REQUIRED )
     # Some dependencies
     find_package ( StandardLibs REQUIRED )
-    if(TARGET CoffeeSDL2)
+    if(TARGET Coffee::SDL2Backend)
         find_package ( SDL2 REQUIRED )
     endif()
 

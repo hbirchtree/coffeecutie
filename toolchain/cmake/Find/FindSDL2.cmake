@@ -244,10 +244,13 @@ if(NOT EMSCRIPTEN)
         add_library( SDL2 STATIC IMPORTED )
     endif()
 
+    set ( SDL2_REQUIRED_VARS SDL2_LIBRARY )
+
     if(APPLE AND NOT IOS AND "${SDL2_LIBRARY}" MATCHES ".framework")
         set_property ( TARGET SDL2 PROPERTY FRAMEWORK 1)
         set ( SDL2_LIBRARY_PATH "${SDL2_LIBRARY}/SDL2" )
     else()
+        list ( APPEND SDL2_REQUIRED_VARS SDL2_INCLUDE_DIR )
         set ( SDL2_LIBRARY_PATH "${SDL2_LIBRARY}" )
     endif()
 
@@ -261,7 +264,6 @@ if(NOT EMSCRIPTEN)
 
     FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2
         REQUIRED_VARS
-        SDL2_LIBRARY
-        SDL2_INCLUDE_DIR
+        ${SDL2_REQUIRED_VARS}
         )
 endif()
