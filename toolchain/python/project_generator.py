@@ -293,7 +293,7 @@ class StepUpdateBuildInfo(ProjectStep):
         # If it does not exist, configure a new one
         else:
             structure = configure_ci.parse_yaml(src_file)
-            configure_ci.parse_linux_targets()
+            #configure_ci.parse_linux_targets()
 
             structure['dependencies'][engine_slug] = engine_version
 

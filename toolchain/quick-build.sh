@@ -95,7 +95,7 @@ export NODEPS
 
 source $(build_info script_location)/travis-build-common.sh
 
-if [ -z ${NODEPS} ]; then
+if [ "${NODEPS}" != "1" ]; then
     download_dependencies "${DEPENDENCIES}" || die "Failed to download dependencies"
 fi
 

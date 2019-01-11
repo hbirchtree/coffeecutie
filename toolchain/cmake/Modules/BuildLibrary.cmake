@@ -35,11 +35,15 @@ macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
         )
 endmacro()
 
-macro( GENERATE_FINDSCRIPT )
+function( GENERATE_FINDSCRIPT )
     get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
     get_property( INC_DIRS_ GLOBAL PROPERTY CF_INCLUDE_DIRS )
 
     get_property( COMP_DEFS_RAW DIRECTORY . PROPERTY COMPILE_DEFINITIONS )
+
+    if ( "${CF_LIBRARY_DEFINITIONS}" STREQUAL "" )
+        return()
+    endif()
 
     set ( CONFIG_H "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Def.h" )
     file ( WRITE "${CONFIG_H}" "#pragma once\n\n" )
@@ -120,7 +124,7 @@ macro( GENERATE_FINDSCRIPT )
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION share
         )
-endmacro()
+endfunction()
 
 function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
     if(ANDROID)
