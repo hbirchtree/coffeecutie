@@ -149,7 +149,7 @@ template<typename T, size_t Size>
 FORCEDINLINE tmatrix<T, Size> operator+(
     tmatrix<T, Size> const& src, tmatrix<T, Size> const& matrix)
 {
-    tmatrix<T, 4> newmat(src);
+    tmatrix<T, Size> newmat(src);
 
     newmat += matrix;
 
@@ -160,7 +160,7 @@ template<typename T, size_t Size>
 FORCEDINLINE tmatrix<T, Size> operator-(
     tmatrix<T, Size> const& src, tmatrix<T, Size> const& matrix)
 {
-    tmatrix<T, 4> newmat(src);
+    tmatrix<T, Size> newmat(src);
 
     newmat -= matrix;
 
@@ -220,29 +220,29 @@ FORCEDINLINE tmatrix<T, Size> operator*(
  *
  */
 
-template<typename T>
-FORCEDINLINE tmatrix<T, 4> translation(
-    const tmatrix<T, 4>& mat, const tvector<T, 3>& vector)
+template<typename T, size_t Size>
+FORCEDINLINE tmatrix<T, Size> translation(
+    const tmatrix<T, Size>& mat, const tvector<T, Size - 1>& vector)
 {
-    tmatrix<T, 4> newmat(mat);
+    tmatrix<T, Size> newmat(mat);
 
-    newmat[3] = tvector<T, 4>(T(0));
+    newmat[Size - 1] = tvector<T, Size>(T(0));
 
-    for(size_t i = 0; i < 3; i++)
-        newmat[3] += mat[i] * vector[i];
-    newmat[3] += mat[3];
+    for(size_t i = 0; i < (Size - 1); i++)
+        newmat[Size - 1] += mat[i] * vector[i];
+    newmat[Size - 1] += mat[Size - 1];
 
     return newmat;
 }
 
-template<typename T>
-FORCEDINLINE tmatrix<T, 4> scale(
-    const tmatrix<T, 4>& matrix, const tvector<T, 3>& vector)
+template<typename T, size_t Size>
+FORCEDINLINE tmatrix<T, Size> scale(
+    const tmatrix<T, Size>& matrix, const tvector<T, Size - 1>& vector)
 {
-    tmatrix<T, 4> newmat(matrix);
-    for(size_t i = 0; i < 3; i++)
+    tmatrix<T, Size> newmat(matrix);
+    for(size_t i = 0; i < (Size - 1); i++)
         newmat[i] *= vector[i];
-    newmat[3] = matrix[3];
+    newmat[Size - 1] = matrix[Size - 1];
     return newmat;
 }
 
@@ -265,6 +265,8 @@ FORCEDINLINE tmatrix<T, 4> rotate(
 
     tvector<T, 3> axis(normalize(vector));
     //    tvector<T,3> temp((T(1) - c)*axis);
+
+    return {};
 }
 
 template<typename T, size_t Size>
@@ -284,11 +286,11 @@ FORCEDINLINE tmatrix<T, Size> transpose(const tmatrix<T, Size>& m)
     return n;
 }
 
-template<typename T>
+template<typename T, size_t Size>
 /* TODO: Fix this function!*/
-FORCEDINLINE tvector<T, 4> get_translation(const tmatrix<T, 4>& m)
+FORCEDINLINE tvector<T, Size> get_translation(const tmatrix<T, Size>& m)
 {
-    return m[3];
+    return m[Size - 1];
 }
 
 template<typename T>

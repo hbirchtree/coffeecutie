@@ -482,6 +482,12 @@ struct error_code : std::error_code
     {
         assign(error_code, category());
     }
+
+    FORCEDINLINE std::string message() const
+    {
+        auto msg = std::error_code::message();
+        return error_message.size() ? msg + ": " + error_message : msg;
+    }
 };
 
 struct sentinel_error_code
