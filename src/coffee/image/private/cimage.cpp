@@ -211,12 +211,12 @@ bool LoadData(
         return false;
     }
 
+    target->bpp = scomp;
     target->data_owner = Bytes::From(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
     DataSetDestr(target->data_owner);
 
-    target->bpp = scomp;
 
     if(!target->data)
     {

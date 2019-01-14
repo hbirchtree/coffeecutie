@@ -363,22 +363,27 @@ bool GLEAM_Shader::compile(
         i32 stat = 0;
         CGL33::ShaderGetiv(m_handle, GL_COMPILE_STATUS, &stat);
 
-        if(GL_DEBUG_MODE && stat != GL_TRUE)
+        if(stat != GL_TRUE)
         {
-            CString infoLog;
-            i32     logLen = 0;
-            i32     dummy  = 0;
-
-            CGL33::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
-            logLen++;
-            infoLog.resize(C_FCAST<szptr>(logLen));
-            CGL33::ShaderGetInfoLog(m_handle, logLen, &dummy, &infoLog[0]);
-            szptr idx = 0;
-            if((idx = infoLog.find('\0')) != CString::npos)
+            if(GL_DEBUG_MODE)
             {
-                infoLog.resize(infoLog.find('\0'));
-                ec = infoLog;
+                CString infoLog;
+                i32     logLen = 0;
+                i32     dummy  = 0;
+
+                CGL33::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+                logLen++;
+                infoLog.resize(C_FCAST<szptr>(logLen));
+                CGL33::ShaderGetInfoLog(m_handle, logLen, &dummy, &infoLog[0]);
+                szptr idx = 0;
+                if((idx = infoLog.find('\0')) != CString::npos)
+                {
+                    infoLog.resize(infoLog.find('\0'));
+                    ec = infoLog;
+                }
             }
+
+            dealloc(ec);
             ec = APIError::ShaderCompileFailed;
             return false;
         }
@@ -395,23 +400,29 @@ bool GLEAM_Shader::compile(
         i32 link_state = 0;
         CGL43::ProgramGetiv(m_handle, GL_VALIDATE_STATUS, &link_state);
 
-        if(GL_DEBUG_MODE && !m_handle && link_state != GL_TRUE)
+        if(!m_handle || link_state != GL_TRUE)
         {
-            CString infoLog;
-            i32     logLen = 0;
-
-            CGL43::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
-            logLen++;
-            infoLog.resize(C_FCAST<szptr>(logLen));
-            CGL43::ProgramGetInfoLog(m_handle, logLen, nullptr, &infoLog[0]);
-
-            szptr idx;
-
-            if((idx = infoLog.find('\0')) != CString::npos)
+            if(GL_DEBUG_MODE)
             {
-                infoLog.resize(infoLog.find('\0'));
-                ec = infoLog;
+                CString infoLog;
+                i32     logLen = 0;
+
+                CGL43::ProgramGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
+                logLen++;
+                infoLog.resize(C_FCAST<szptr>(logLen));
+                CGL43::ProgramGetInfoLog(
+                    m_handle, logLen, nullptr, &infoLog[0]);
+
+                szptr idx;
+
+                if((idx = infoLog.find('\0')) != CString::npos)
+                {
+                    infoLog.resize(infoLog.find('\0'));
+                    ec = infoLog;
+                }
             }
+
+            dealloc(ec);
             ec = APIError::ShaderCompileFailed;
             return false;
         }

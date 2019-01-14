@@ -35,13 +35,13 @@ macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
         )
 endmacro()
 
-function( GENERATE_FINDSCRIPT )
+macro( GENERATE_FINDSCRIPT )
     get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
     get_property( INC_DIRS_ GLOBAL PROPERTY CF_INCLUDE_DIRS )
 
     get_property( COMP_DEFS_RAW DIRECTORY . PROPERTY COMPILE_DEFINITIONS )
 
-    if ( "${CF_LIBRARY_DEFINITIONS}" STREQUAL "" )
+    if ( "${LIBRARY_DEFINITIONS}" STREQUAL "" )
         return()
     endif()
 
@@ -124,7 +124,7 @@ function( GENERATE_FINDSCRIPT )
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION share
         )
-endfunction()
+endmacro()
 
 function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
     if(ANDROID)

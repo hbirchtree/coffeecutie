@@ -41,11 +41,9 @@ i32 AutoExec(
 
     auto eld_ptr = MkUqWrap<ELD>(new ELD{Display::CreateRendererUq(),
                                          MkUq<D>(),
-                                         setup,
-                                         loop,
-                                         cleanup,
-                                         0,
-                                         {},
+                                         std::move(setup),
+                                         std::move(loop),
+                                         std::move(cleanup),
                                          {}});
 
     auto visual = Display::GetDefaultVisual<GAPI>();

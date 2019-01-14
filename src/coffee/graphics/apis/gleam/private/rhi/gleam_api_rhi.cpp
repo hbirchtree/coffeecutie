@@ -827,7 +827,7 @@ std::string api_error::message(int error_code) const
     case APIError::ShaderStageNotValid:
         return "Invalid shader stage";
     case APIError::ShaderNoData:
-        return "Shader constant without data";
+        return "Shader compile without data";
     case APIError::PipelineValidationError:
         return "Pipeline validation failed";
     case APIError::PipelineLinkError:

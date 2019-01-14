@@ -285,14 +285,11 @@ STATICINLINE bool Load(
     stb::image_rw img;
     bool          stat = stb::LoadData(&img, C_OCAST<BytesConst>(r), ec, cmp);
 
-    img.disown();
-
     fmt  = BitFmt::UByte;
-    data = C_OCAST<Bytes>(img);
+    data = std::move(img.data_owner);
     res  = img.size;
-    Bytes::SetDestr(data, [](Bytes& b) {
 
-    });
+    img.disown();
 
     return stat;
 }

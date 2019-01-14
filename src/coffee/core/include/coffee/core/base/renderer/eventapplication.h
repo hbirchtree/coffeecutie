@@ -32,6 +32,22 @@ template<
     >
 struct EventLoopData
 {
+    using LFun = LoopFunction<Renderer, ShareData>;
+
+    EventLoopData(
+        UqPtr<Renderer>&&  r,
+        UqPtr<ShareData>&& d,
+        LFun&&             s,
+        LFun&&             l,
+        LFun&&             c,
+        Properties&&       visual,
+        u32                flags = 0) :
+
+        renderer(std::move(r)),
+        data(std::move(d)), setup(s), loop(l), cleanup(c), visual(visual), flags(flags)
+    {
+    }
+
     enum Flags
     {
         TimeLimited = 0x1,

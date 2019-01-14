@@ -8,6 +8,8 @@
 
 #include "cgraphics_pixops.h"
 
+#include <algorithm>
+
 namespace Coffee {
 namespace RHI {
 
@@ -221,24 +223,39 @@ FORCEDINLINE bool LoadPipeline(
     typename GFX::SHD   frag;
 
     if(!LoadShader<GFX>(vert, std::move(vert_file), ShaderStage::Vertex, ec))
+    {
+        C_ERROR_CHECK(ec);
         return false;
+    }
     if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment, ec))
+    {
+        C_ERROR_CHECK(ec);
         return false;
+    }
 
     auto& vert_ref = pip.storeShader(std::move(vert));
     auto& frag_ref = pip.storeShader(std::move(frag));
 
     if(!pip.attach(vert_ref, ShaderStage::Vertex, ec))
+    {
+        C_ERROR_CHECK(ec);
         return false;
+    }
     if(!pip.attach(frag_ref, ShaderStage::Fragment, ec))
+    {
+        C_ERROR_CHECK(ec);
         return false;
+    }
 
     bool status = pip.assemble(ec);
+    C_ERROR_CHECK(ec);
 
     if(!status)
     {
         vert_ref.dealloc(ec);
+        C_ERROR_CHECK(ec);
         frag_ref.dealloc(ec);
+        C_ERROR_CHECK(ec);
     }
 
     return true;
