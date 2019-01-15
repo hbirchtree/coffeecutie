@@ -32,6 +32,14 @@ template<
     >
 struct EventLoopData
 {
+    struct DummyDeprecationWorkaround
+    {
+        struct
+        {
+            Timestamp _v1, _v2;
+        };
+    };
+
     using LFun = LoopFunction<Renderer, ShareData>;
 
     EventLoopData(
@@ -44,7 +52,22 @@ struct EventLoopData
         u32                flags = 0) :
 
         renderer(std::move(r)),
-        data(std::move(d)), setup(s), loop(l), cleanup(c), visual(visual), flags(flags)
+        data(std::move(d)), setup(s), loop(l), cleanup(c), visual(visual),
+        flags(flags)
+    {
+    }
+
+    C_DEPRECATED_S("Use leaner initializer")
+    EventLoopData(
+        UqPtr<Renderer>&&  r,
+        UqPtr<ShareData>&& d,
+        LFun&&             s,
+        LFun&&             l,
+        LFun&&             c,
+        u32                flags,
+        DummyDeprecationWorkaround&&,
+        Properties&& visual) :
+        EventLoopData(r, d, s, l, c, visual, flags)
     {
     }
 
@@ -412,9 +435,7 @@ class EventApplication : public InputApplication
 
         >
     static i32 execEventLoop(
-        UqPtr<EventLoopData<Renderer, Data>>&& ev,
-        Properties&                          visual,
-        CString&)
+        UqPtr<EventLoopData<Renderer, Data>>&& ev, Properties& visual, CString&)
     {
         if(!ev)
             return -1;

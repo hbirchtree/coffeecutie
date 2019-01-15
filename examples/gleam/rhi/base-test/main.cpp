@@ -4,6 +4,7 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
+#include <coffee/interfaces/full_launcher.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
@@ -20,34 +21,24 @@ i32 coffee_main(i32, cstring_w*)
     Net::RegisterProfiling();
 #endif
 
-    Properties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
-
-    props.gl.flags |= GL::Properties::GLDebug | GL::Properties::GLVSync;
-
-    EDATA*       loop  = new EDATA{CreateRendererUq(),
-                            MkUq<RendererState>(),
-                            SetupRendering,
-                            RendererLoop,
-                            RendererCleanup};
-
-    auto renderer = loop->renderer.get();
-    /* Install some standard event handlers */
-    renderer->installEventHandler(
-        {EscapeCloseWindow<CDRenderer>, nullptr, renderer});
-    renderer->installEventHandler(
-        {WindowManagerCloseWindow<CDRenderer>, nullptr, renderer});
-    renderer->installEventHandler(
-        {ResizeWindowUniversal<GLM>, nullptr, renderer});
-    renderer->installEventHandler(
-        {WindowManagerFullscreen<CDRenderer>, nullptr, renderer});
-    renderer->installEventHandler(
-        {StandardCamera<CGCamera>, nullptr, &loop->d()->camera_cnt.get()});
-
     CString err;
-    if(CDRenderer::execEventLoop(*loop, props, err) != 0)
-        cWarning("Failed to start: {0}", err);
+    return AutoExec<GLM, CDRenderer, RendererState>(
+        [](CDRenderer& r, RendererState* d, Display::Properties& props) {
+            props.gl.flags |= GL::Properties::GLDebug | GL::Properties::GLVSync;
 
-    return 0;
+            /* Install some standard event handlers */
+            r.installEventHandler({EscapeCloseWindow<CDRenderer>, nullptr, &r});
+            r.installEventHandler(
+                {WindowManagerCloseWindow<CDRenderer>, nullptr, &r});
+            r.installEventHandler({ResizeWindowUniversal<GLM>, nullptr, &r});
+            r.installEventHandler(
+                {WindowManagerFullscreen<CDRenderer>, nullptr, &r});
+            r.installEventHandler(
+                {StandardCamera<CGCamera>, nullptr, &d->camera_cnt.get()});
+        },
+        SetupRendering,
+        RendererLoop,
+        RendererCleanup);
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

@@ -7,6 +7,8 @@
 #include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/image/cimage.h>
+#include <coffee/interfaces/cgraphics_api.h>
+#include <coffee/interfaces/full_launcher.h>
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2System>
@@ -223,8 +225,12 @@ i32 coffee_main(i32, cstring_w*)
 
     using ELD = EventLoopData<BasicWindow, RenderData>;
 
-    ELD* eventData = new ELD{
-        MkUq<BasicWindow>(), MkUq<RenderData>(), setup, loop, cleanup, 0, {}};
+    ELD* eventData = new ELD{MkUq<BasicWindow>(),
+                             MkUq<RenderData>(),
+                             setup,
+                             loop,
+                             cleanup,
+                             std::move(visual)};
 
     eventData->renderer->installEventHandler(
         {TouchInput_1, nullptr, eventData->renderer.get()});

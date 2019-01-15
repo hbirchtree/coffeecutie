@@ -5,6 +5,7 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/interfaces/full_launcher.h>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/windowing/renderer/renderer.h>
@@ -82,44 +83,27 @@ i32 coffee_main(i32, cstring_w*)
 
     CString err;
 
-    ELoop* globLoop = new ELoop{Display::CreateRendererUq(),
-                                MkUq<SharedData>(),
-                                setup_fun,
-                                loop_fun,
-                                cleanup_fun,
-                                ELoop::TimeLimited,
-                                {}};
+    return AutoExec<RHI::GLEAM::GLEAM_API, CDRenderer, SharedData>(
+        [](CDRenderer& r, SharedData*, Display::Properties& visual) {
+            visual.flags ^= Properties::Windowed;
+            visual.flags |= Properties::WindowedFullScreen;
 
-    ELoop& eventloop   = *globLoop;
-    eventloop.time.max = 10;
-
-    Properties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
-    visual.flags ^= Properties::Windowed;
-    visual.flags |= Properties::WindowedFullScreen;
-
-    cDebug("Visual: {0}", visual.gl.version);
-
-    eventloop.r().installEventHandler(
-        {EventHandlers::EscapeCloseWindow<CDRenderer>,
-         nullptr,
-         &eventloop.r()});
-    eventloop.r().installEventHandler(
-        {EventHandlers::ExitOnQuitSignal<CDRenderer>, nullptr, &eventloop.r()});
-    eventloop.r().installEventHandler(
-        {EventHandlers::WindowManagerCloseWindow<CDRenderer>,
-         nullptr,
-         &eventloop.r()});
-    eventloop.r().installEventHandler(
-        {EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>,
-         nullptr,
-         &eventloop.r()});
-
-    i32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
-
-    if(stat != 0)
-        cDebug("Init error: {0}", err);
-
-    return stat;
+            r.installEventHandler(
+                {EventHandlers::EscapeCloseWindow<CDRenderer>, nullptr, &r});
+            r.installEventHandler(
+                {EventHandlers::ExitOnQuitSignal<CDRenderer>, nullptr, &r});
+            r.installEventHandler(
+                {EventHandlers::WindowManagerCloseWindow<CDRenderer>,
+                 nullptr,
+                 &r});
+            r.installEventHandler(
+                {EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>,
+                 nullptr,
+                 &r});
+        },
+        setup_fun,
+        loop_fun,
+        cleanup_fun);
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

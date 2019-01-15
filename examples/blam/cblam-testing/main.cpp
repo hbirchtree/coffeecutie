@@ -429,90 +429,85 @@ int coffee_main(i32, cstring_w*)
             }),
         index_view.end());
 
-    auto event =
-        Display::MkEventLoop(Display::CreateRendererUq(), MkUq<Empty>());
-
     using API = RHI::GLEAM::GLEAM_API;
     using C   = CompFlags;
 
-    event->setup = [&](Display::RendererInterface& r, Empty*) {
-        /* OpenGL context time! */
+    AutoExec<API, Display::RendererInterface, Empty>(
+        [&](Display::RendererInterface& r, Empty*) {
+            /* OpenGL context time! */
 
-        auto context = API::GetLoadAPI();
+            auto context = API::GetLoadAPI();
 
-        if(!context(true))
-        {
-            r.closeWindow();
-            return;
-        }
-
-        for(auto bitm : texture_vec)
-        {
-            if(bitm->offset == 0)
-                continue;
-
-            auto head = bitm->to_reflexive<bitm_header_t>().data(
-                mapfile.data, index_view.tags()->index_magic);
-
-            if(head->imageCount > 10 || head->imageCount < 0 ||
-               head->imageOffset == 0)
-                continue;
-
-            auto label = map.get_name(bitm);
-
-            API::DBG::SCOPE img_scope(label);
-
-            //            for(auto i : Range<i32>(head->imageCount))
+            if(!context(true))
             {
-                auto image = head->image_headers().data(
+                r.closeWindow();
+                return;
+            }
+
+            for(auto bitm : texture_vec)
+            {
+                if(bitm->offset == 0)
+                    continue;
+
+                auto head = bitm->to_reflexive<bitm_header_t>().data(
                     mapfile.data, index_view.tags()->index_magic);
 
-                auto texture = bitm_get_texture(image, bitmfile.data);
+                if(head->imageCount > 10 || head->imageCount < 0 ||
+                   head->imageOffset == 0)
+                    continue;
 
-                u32 flgs = 0;
+                auto label = map.get_name(bitm);
 
-                switch(image->format)
+                API::DBG::SCOPE img_scope(label);
+
+                //            for(auto i : Range<i32>(head->imageCount))
                 {
-                case bitm_format::DXT1:
-                    flgs = C_CAST<u32>(C::S3TC_1);
-                    break;
-                case bitm_format::DXT2AND3:
-                    flgs = C_CAST<u32>(C::S3TC_3);
-                    break;
-                case bitm_format::DXT4AND5:
-                    flgs = C_CAST<u32>(C::S3TC_5);
-                    break;
-                default:
-                    break;
+                    auto image = head->image_headers().data(
+                        mapfile.data, index_view.tags()->index_magic);
+
+                    auto texture = bitm_get_texture(image, bitmfile.data);
+
+                    u32 flgs = 0;
+
+                    switch(image->format)
+                    {
+                    case bitm_format::DXT1:
+                        flgs = C_CAST<u32>(C::S3TC_1);
+                        break;
+                    case bitm_format::DXT2AND3:
+                        flgs = C_CAST<u32>(C::S3TC_3);
+                        break;
+                    case bitm_format::DXT4AND5:
+                        flgs = C_CAST<u32>(C::S3TC_5);
+                        break;
+                    default:
+                        break;
+                    }
+
+                    flgs <<= 10;
+
+                    API::S_2D tex_handle(texture.cformat, 1, flgs);
+
+                    tex_handle.allocate(
+                        image->isize.convert<i32>(), texture.format);
+
+                    tex_handle.upload(
+                        {texture.cformat, texture.dformat, texture.format},
+                        image->isize.convert<i32>(),
+                        {(byte_t*)texture.data,
+                         (szptr)texture_size(image),
+                         (szptr)texture_size(image)});
+
+                    tex_handle.dealloc();
                 }
-
-                flgs <<= 10;
-
-                API::S_2D tex_handle(texture.cformat, 1, flgs);
-
-                tex_handle.allocate(
-                    image->isize.convert<i32>(), texture.format);
-
-                tex_handle.upload(
-                    {texture.cformat, texture.dformat, texture.format},
-                    image->isize.convert<i32>(),
-                    {(byte_t*)texture.data,
-                     (szptr)texture_size(image),
-                     (szptr)texture_size(image)});
-
-                tex_handle.dealloc();
             }
-        }
 
-        RHI::GLEAM::GLEAM_API::UnloadAPI();
+            RHI::GLEAM::GLEAM_API::UnloadAPI();
 
-        r.closeWindow();
+            r.closeWindow();
 
-        exit(0);
-    };
-
-    AutoExec<API, Display::RendererInterface, Empty>(
-        [](Display::RendererInterface&, Empty*) {},
+            exit(0);
+        },
         [](Display::RendererInterface&, Empty*) {},
         [](Display::RendererInterface&, Empty*) {});
 
