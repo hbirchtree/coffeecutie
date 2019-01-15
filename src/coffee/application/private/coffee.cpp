@@ -166,8 +166,6 @@ static void CoffeeInit_Internal(u32 flags)
 #else
     State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
 #endif
-
-    CurrentThread::SetName(State::GetAppData().application_name);
 #endif
 }
 
@@ -189,6 +187,9 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #if !MODE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
     SetApplicationData(State::GetAppData());
+
+    CurrentThread::SetName(State::GetAppData().application_name);
+
     /* BuildInfo contains information on the compiler, architecture
      *  and platform */
     {

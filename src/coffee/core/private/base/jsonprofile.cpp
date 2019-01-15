@@ -1,5 +1,6 @@
 #include <platforms/profiling.h>
 
+#include <coffee/core/coffee.h>
 #include <coffee/core/datastorage/text/json/cjsonparser.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/file.h>
@@ -17,13 +18,19 @@ using namespace ::platform::file;
 
 #if !defined(COFFEE_DISABLE_PROFILER)
 static constexpr cstring event_format =
-    R"({"ts":{0},"name":"{1}","pid":1,"tid":"{2}","cat":"{3}","ph":"{4}","s":"t"},
+    R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
 )";
 
 struct JsonProfileWriter : State::GlobalState
 {
     JsonProfileWriter(Url outputProfile)
     {
+        /* We keep a reference to this pointer in order to extend its lifespan.
+         * In the destructor we need it for finalizing the thread names. */
+        threadState = State::PeekState("threadNames");
+        if(!threadState)
+            Throw(undefined_behavior("thread naming is not initialized!"));
+
         FileFun::file_error ec;
         logfile = FileFun::Open(
             outputProfile,
@@ -40,9 +47,9 @@ struct JsonProfileWriter : State::GlobalState
         C_ERROR_CHECK(ec);
     }
 
-    FileFun::FileHandle logfile;
-
-    AtomicUInt64 event_count;
+    FileFun::FileHandle       logfile;
+    ShPtr<State::GlobalState> threadState;
+    AtomicUInt64              event_count;
 
     virtual ~JsonProfileWriter();
 };
@@ -50,6 +57,20 @@ struct JsonProfileWriter : State::GlobalState
 JsonProfileWriter::~JsonProfileWriter()
 {
     FileFun::file_error ec;
+
+    auto thread_names = Strings::fmt(
+        R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
+        GetCurrentApp().application_name);
+
+    for(auto const& thread : stl_types::ThreadGetNames())
+    {
+        thread_names += Strings::fmt(
+            R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",
+            thread.first,
+            thread.second);
+    }
+
+    FileFun::Write(logfile, Bytes::CreateString(thread_names.c_str()), ec);
 
     FileFun::Write(logfile, Bytes::CreateString(R"({}]})"), ec);
 
@@ -106,7 +127,7 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
         event_format,
         Chrono::duration_cast<Chrono::microseconds>(point.ts).count(),
         point.name,
-        ThreadGetName(point.tid),
+        point.tid,
         point.component,
         eventType);
 
@@ -122,5 +143,5 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 #endif
 }
 
-} // namespace Profiling
-} // namespace Coffee
+} // namespace profiling
+} // namespace platform

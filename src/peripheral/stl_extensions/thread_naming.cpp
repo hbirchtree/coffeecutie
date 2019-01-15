@@ -97,6 +97,11 @@ CString ThreadGetName(ThreadId::Hash t)
     return LoadThreadName(t);
 }
 
+Map<ThreadId::Hash,CString> ThreadGetNames()
+{
+    return GetContext().names;
+}
+
 namespace CurrentThread {
 
 bool SetName(CString const& name)

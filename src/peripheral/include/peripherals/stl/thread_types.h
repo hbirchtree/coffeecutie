@@ -128,6 +128,8 @@ extern CString ThreadGetName(Thread& t);
 extern bool    ThreadSetName(ThreadId::Hash t, CString const& name);
 extern CString ThreadGetName(ThreadId::Hash t);
 
+extern Map<ThreadId::Hash,CString> ThreadGetNames();
+
 /*!
  * \brief single-fire conditional
  */
