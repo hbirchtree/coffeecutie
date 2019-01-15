@@ -22,6 +22,8 @@ template<
     >
 struct generic_handle_t
 {
+    using handle_type = hnd_type;
+
     generic_handle_t() : hnd(hnd_type())
     {
     }

@@ -8,11 +8,6 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
-static Map<FramebufferT, CGhnd> fb_cached_binds = {
-    {FramebufferT::Draw, 0},
-    {FramebufferT::Read, 0},
-};
-
 FORCEDINLINE FramebufferT
              fb_check_binding(FramebufferT t, FramebufferT b, glhnd const& h)
 {
@@ -171,22 +166,19 @@ void GLEAM_RenderTarget::blit(
         this->unbind(FramebufferT::Read);
         target.unbind(FramebufferT::Draw);
     }
-    // TODO: We could implement this with a slow method and give lots of errors
+        // TODO: We could implement this with a slow method and give lots of
+        // errors
 #endif
 }
 
 void GLEAM_RenderTarget::resize(u32 i, Rect64 const& view)
 {
-    auto sz_arm_printable = view.convert<i32>();
-    // TODO: Information
-    //    cVerbose(
-    //        10,
-    //        GLM_API "Resizing render target {0} to {1}x{2}",
-    //        m_handle.hnd,
-    //        sz_arm_printable.w,
-    //        sz_arm_printable.h);
+    m_size = view.convert<i32>().size();
 
-    m_size = sz_arm_printable.size();
+    if(fb_cached_binds[FramebufferT::Draw] == m_handle)
+    {
+        CGL33::Viewport(0, 0, m_size);
+    }
 }
 
 Size GLEAM_RenderTarget::size()

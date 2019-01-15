@@ -1,14 +1,14 @@
 #pragma once
 
-#include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
 
 #define GLM_API "GLEAM_API::"
 
-namespace Coffee{
-namespace RHI{
-namespace GLEAM{
+namespace Coffee {
+namespace RHI {
+namespace GLEAM {
 
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
 using CGL33 = CGL::CGLES30;
@@ -29,28 +29,37 @@ struct GLEAM_PboQueue
     struct Pbo
     {
         CGhnd buf;
-        u32 flags;
+        u32   flags;
     };
     Vector<Pbo> buffers;
-    u32 idx = 0;
-    Pbo& current()
+    u32         idx = 0;
+    Pbo&        current()
     {
         Pbo& ref = buffers.at(idx++);
-        idx = idx % buffers.size();
+        idx      = idx % buffers.size();
         return ref;
     }
 };
 
 struct GLEAM_Instance_Data
 {
+    GLEAM_Instance_Data() :
+        framebufferBinds({{FramebufferT::Draw, 0}, {FramebufferT::Read, 0}})
+    {
+        GL_CACHED.NUM_PROGRAM_BINARY_FORMATS = -1;
+    }
+
 #if GL_VERSION_VERIFY(0x300, 0x300)
     GLEAM_PboQueue pboQueue;
 #endif
-    struct {
-    i32 NUM_PROGRAM_BINARY_FORMATS = -1;
+    struct
+    {
+        i32 NUM_PROGRAM_BINARY_FORMATS;
     } GL_CACHED;
 
     Debug::CGL_Shared_Debug::Context dbgContext;
+
+    Map<FramebufferT, glhnd::handle_type> framebufferBinds;
 };
 
 inline APILevel gl_level_from_string(CString const& str)
@@ -72,10 +81,9 @@ inline APILevel gl_level_from_string(CString const& str)
     else
         return GL_Nothing;
 }
-
 }
-}
-}
+} // namespace RHI
+} // namespace Coffee
 
 #define GLEAM_API_THREAD m_store->GpuThread
 #define GL_CURR_API m_store->CURR_API
@@ -84,11 +92,9 @@ inline APILevel gl_level_from_string(CString const& str)
 #define GLEAM_FEATURES RHI::GLEAM::m_store->features
 #define GLEAM_OPTIONS RHI::GLEAM::m_store->options
 #define CGL_DBG_CTXT GLEAM_API_INSTANCE_DATA->dbgContext
+#define fb_cached_binds GLEAM_API_INSTANCE_DATA->framebufferBinds
 
-#define GLEAM_VERSION_CHECK(desktop_ver, es_ver) \
-    (\
-     (APILevelIsOfClass(GL_CURR_API, APIClass::GLCore) && \
-        GL_CURR_API > desktop_ver) || \
-     (APILevelIsOfClass(GL_CURR_API, APIClass::GLES) && \
-        GL_CURR_API > es_ver)\
-    )
+#define GLEAM_VERSION_CHECK(desktop_ver, es_ver)          \
+    ((APILevelIsOfClass(GL_CURR_API, APIClass::GLCore) && \
+      GL_CURR_API > desktop_ver) ||                       \
+     (APILevelIsOfClass(GL_CURR_API, APIClass::GLES) && GL_CURR_API > es_ver))
