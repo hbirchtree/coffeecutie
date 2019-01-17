@@ -56,7 +56,8 @@ STATICINLINE CString LoadThreadName(ThreadId::Hash hs)
     return context.names[hs];
 }
 
-bool ThreadSetName(Thread& t, CString const& name)
+namespace Threads {
+bool SetName(Thread& t, CString const& name)
 {
     SaveThreadName(ThreadId(t.get_id()).hash(), name);
 
@@ -71,7 +72,7 @@ bool ThreadSetName(Thread& t, CString const& name)
 #endif
 }
 
-CString ThreadGetName(Thread& t)
+CString GetName(Thread& t)
 {
     CString out;
     out.resize(17);
@@ -86,21 +87,22 @@ CString ThreadGetName(Thread& t)
 #endif
 }
 
-bool ThreadSetName(ThreadId::Hash t, CString const& name)
+bool SetName(ThreadId::Hash t, CString const& name)
 {
     SaveThreadName(t, name);
     return true;
 }
 
-CString ThreadGetName(ThreadId::Hash t)
+CString GetName(ThreadId::Hash t)
 {
     return LoadThreadName(t);
 }
 
-Map<ThreadId::Hash,CString> ThreadGetNames()
+Map<ThreadId::Hash, CString> GetNames()
 {
     return GetContext().names;
 }
+} // namespace Threads
 
 namespace CurrentThread {
 

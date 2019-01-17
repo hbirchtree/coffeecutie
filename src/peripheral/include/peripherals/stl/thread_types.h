@@ -122,13 +122,33 @@ extern bool    SetName(CString const& name);
 extern CString GetName();
 } // namespace CurrentThread
 
-extern bool    ThreadSetName(Thread& t, CString const& name);
-extern CString ThreadGetName(Thread& t);
+namespace Threads {
+extern bool SetName(Thread& t, CString const& name);
+extern bool SetName(ThreadId::Hash& t, CString const& name);
 
-extern bool    ThreadSetName(ThreadId::Hash t, CString const& name);
-extern CString ThreadGetName(ThreadId::Hash t);
+extern CString GetName(Thread& t);
+extern CString GetName(ThreadId::Hash& t);
 
-extern Map<ThreadId::Hash,CString> ThreadGetNames();
+extern Map<ThreadId::Hash, CString> GetNames();
+} // namespace Threads
+
+FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
+{
+    return Threads::SetName(t, name);
+}
+FORCEDINLINE CString ThreadGetName(Thread& t)
+{
+    return Threads::GetName(t);
+}
+
+FORCEDINLINE bool ThreadSetName(ThreadId::Hash t, CString const& name)
+{
+    return Threads::SetName(t, name);
+}
+FORCEDINLINE CString ThreadGetName(ThreadId::Hash t)
+{
+    return Threads::GetName(t);
+}
 
 /*!
  * \brief single-fire conditional
