@@ -10,15 +10,6 @@ namespace stl_types {
 namespace threads {
 
 template<typename Ctxt, typename IterType>
-/*!
- * \brief A parallelized for-loop, which can be fed with a data set (context)
- * and kernel to do processing. It is recommended to process blocks of data
- * instead of single elements, as this avoids a lot of function overhead. This
- * function works at its peak when compiled with "-O3". \param kernel Run on
- * each iteration \param iterations Number of iterations in total \param context
- * \param weight A specific weight given to each job, used to determine how many
- * tasks can be run in parallel on each core \return
- */
 C_DEPRECATED_S(
     "Use ParallelForEach instead, it will use the C++17 functions later")
     FORCEDINLINE Future<void> ParallelFor(
@@ -37,7 +28,7 @@ template<
     typename T,
     typename IteratorT,
     typename StorageType =
-        typename decltype(std::mem_fun(&IteratorT::operator*))::result_type>
+        typename declmemtype(IteratorT::operator*)>
 Function<void(szptr)> get_worker(
     Mutex&               work_lock,
     Function<void(T&)>&& pred,

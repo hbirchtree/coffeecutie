@@ -1,5 +1,6 @@
 osx:
   - .
+  - coverage
 ios:
   - .
   - x86_64

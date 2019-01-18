@@ -1,6 +1,7 @@
 #pragma once
 
 #include "threads/thread_id.h"
+#include <coffee/core/base_state.h>
 #include <peripherals/identify/identify.h>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/types.h>
@@ -127,9 +128,10 @@ extern bool SetName(Thread& t, CString const& name);
 extern bool SetName(ThreadId::Hash& t, CString const& name);
 
 extern CString GetName(Thread& t);
-extern CString GetName(ThreadId::Hash& t);
+extern CString GetName(ThreadId::Hash const& t);
 
-extern Map<ThreadId::Hash, CString> GetNames();
+extern Map<ThreadId::Hash, CString> GetNames(
+    Coffee::State::GlobalState* context = nullptr);
 } // namespace Threads
 
 FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)

@@ -68,6 +68,17 @@ struct is_similar
     static constexpr bool value = integral_value;
 };
 
+template<typename T>
+struct remove_cvref
+{
+    using type =
+    typename std::remove_cv<
+    typename std::remove_reference<T>::type>::type;
+};
+
+template<typename T>
+using remove_cvref_t = typename remove_cvref<T>::type;
+
 } // namespace type_safety
 
 #undef E_IF

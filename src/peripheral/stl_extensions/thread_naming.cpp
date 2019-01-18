@@ -1,6 +1,7 @@
 #include <peripherals/stl/thread_types.h>
 
 #include <coffee/core/base_state.h>
+#include <peripherals/stl/functional_types.h>
 
 using namespace ::Coffee;
 
@@ -18,19 +19,26 @@ ThreadNames::~ThreadNames()
 {
 }
 
-STATICINLINE ThreadNames& GetContext()
+STATICINLINE ThreadNames& GetContext(State::GlobalState* context = nullptr)
 {
-    auto ptr = State::PeekState("threadNames");
+    State::GlobalState* castablePtr = context;
 
-    if(!ptr)
+    remove_cvref_t<declreturntype(State::PeekState)> ptr;
+
+    if(!castablePtr)
     {
-        State::SwapState("threadNames", MkShared<ThreadNames>());
         ptr = State::PeekState("threadNames");
+        if(!ptr)
+        {
+            State::SwapState("threadNames", MkShared<ThreadNames>());
+            ptr = State::PeekState("threadNames");
+        }
+        castablePtr = ptr.get();
     }
 
-    C_PTR_CHECK(ptr);
+    C_PTR_CHECK(castablePtr);
 
-    auto threadNames = C_DCAST<ThreadNames>(ptr.get());
+    auto threadNames = C_DCAST<ThreadNames>(castablePtr);
 
     C_PTR_CHECK(threadNames);
 
@@ -93,14 +101,14 @@ bool SetName(ThreadId::Hash t, CString const& name)
     return true;
 }
 
-CString GetName(ThreadId::Hash t)
+CString GetName(ThreadId::Hash const& t)
 {
     return LoadThreadName(t);
 }
 
-Map<ThreadId::Hash, CString> GetNames()
+Map<ThreadId::Hash, CString> GetNames(State::GlobalState* context)
 {
-    return GetContext().names;
+    return GetContext(context).names;
 }
 } // namespace Threads
 

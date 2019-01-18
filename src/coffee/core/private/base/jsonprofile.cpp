@@ -62,7 +62,7 @@ JsonProfileWriter::~JsonProfileWriter()
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
         GetCurrentApp().application_name);
 
-    for(auto const& thread : stl_types::Threads::GetNames())
+    for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
         thread_names += Strings::fmt(
             R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",

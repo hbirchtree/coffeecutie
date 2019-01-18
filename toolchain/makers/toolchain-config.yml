@@ -60,6 +60,14 @@
     =preload: osx-generic.cmake
     +cmake-opts:
       - -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
+    .*coverage.*:
+      +cmake-opts:
+        - -DBUILD_COVERAGE=ON
+        - -DBUILD_ASAN=ON
+        - -DBUILD_EXAMPLES=OFF
+        - -DSKIP_HIGHMEM_TESTS=ON
+        - -DSKIP_LINKAGE_TEST=ON
+        - -DSKIP_OPENVR_TEST=ON
   .*ios.*:
     =toolchain: all-ios.toolchain.cmake
     =preload: osx-ios.cmake
@@ -75,7 +83,7 @@
         - -DIOS_PLATFORM=SIMULATOR
 
 # For Ubuntu, Fedora, docs and coverage, specify generic preload
-.*(ubuntu|docs|coverage|testing.linux|fedora).*:
+(ubuntu|docs|coverage|testing.linux|fedora).*:
   (ubuntu.amd64.*|coverage|testing.linux|docs):
     =container: ubuntu
   .*(amd64.*|docs|coverage|testing.linux|fedora):
@@ -84,7 +92,7 @@
     - appimg-runtime
     - SDL2
 
-.*(ubuntu|fedora|coverage|testing.linux|android|steam|raspberry|mingw).*:
+(ubuntu|fedora|coverage|testing.linux|android|steam|raspberry|mingw).*:
   =generator: CodeBlocks - Ninja
 
 # Some parameters to make coverage testing work
@@ -270,7 +278,7 @@ testing.linux.*:
   =preload: gamecube.cmake
   =container: ubuntu
 
-.*(ubuntu.*|coverage|testing.linux|docs):
+(ubuntu.*|coverage|testing.linux|docs):
   =build.prettyname: Ubuntu
 .*(fedora.*):
   =build.prettyname: Fedora

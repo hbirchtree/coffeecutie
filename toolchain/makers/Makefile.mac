@@ -129,3 +129,32 @@ osx: FORCE native-libs
 	-e BUILD_NAME=osx \
 	-e CMAKE_TARGET=install
 
+# Apple OS X
+# Compiler: Clang
+osx.coverage: FORCE native-libs
+	make -f $(ROOT_DIR)/Makefile.mac-base build \
+	-e EXTRA_OPTIONS=" \
+	$(SOURCE_DIR) \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-generic.cmake \
+	-DBUILD_ASAN=ON \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_COVERAGE=ON \
+	-DBUILD_EXAMPLES=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx.coverage \
+	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/osx-generic_osx.toolchain.cmake \
+	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/osx.coverage \
+	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
+	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-DSKIP_HIGHMEM_TESTS=ON \
+	-DSKIP_LINKAGE_TEST=ON \
+	-DSKIP_OPENVR_TEST=ON \
+	-G'Xcode'" \
+	-e CMAKE_BUILD_DIR=$(BUILD_DIR)/osx.coverage \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=osx.coverage \
+	-e CMAKE_TARGET=install
+
