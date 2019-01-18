@@ -32,6 +32,7 @@ bool integer_handle()
 
     handle_out_of_scope<unsigned int>(0);
 
+#if MODE_DEBUG
     try
     {
         handle_out_of_scope<unsigned int>(1);
@@ -40,6 +41,7 @@ bool integer_handle()
     } catch(...)
     {
     }
+#endif
 
     handle_released<unsigned int>(0);
     handle_released<unsigned int>(1);
@@ -53,6 +55,7 @@ bool pointer_handle()
 
     handle_out_of_scope<void*>(nullptr);
 
+#if MODE_DEBUG
     try
     {
         handle_out_of_scope<void*>(&sample);
@@ -61,6 +64,7 @@ bool pointer_handle()
     } catch(...)
     {
     }
+#endif
 
     handle_released<void*>(nullptr);
     handle_released<void*>(&sample);
