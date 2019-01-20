@@ -210,25 +210,26 @@ C_DEPRECATED FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 }
 } // namespace DebugFun
 
-#define CLOG_FUNCTION(logFunction)         \
-    template<typename... Args>             \
-    static void logFunction(Args... args)  \
-    {                                      \
-        DebugFun::c##logFunction(args...); \
+#define CLOG_FUNCTION(LogFun)             \
+    template<typename... Args>            \
+    static void LogFun(Args... args)      \
+    {                                     \
+        using namespace Coffee::DebugFun; \
+        LogFun(args...);                  \
     }
 
 struct DebugLogger
 {
-    CLOG_FUNCTION(OutputPrint)
-    CLOG_FUNCTION(BasicPrint)
-    CLOG_FUNCTION(OutputPrintNoNL)
-    CLOG_FUNCTION(BasicPrintNoNL)
+    CLOG_FUNCTION(cOutputPrint)
+    CLOG_FUNCTION(cBasicPrint)
+    CLOG_FUNCTION(cOutputPrintNoNL)
+    CLOG_FUNCTION(cBasicPrintNoNL)
 
-    CLOG_FUNCTION(Tag)
-    CLOG_FUNCTION(Fatal)
-    CLOG_FUNCTION(Warning)
-    CLOG_FUNCTION(Debug)
-    CLOG_FUNCTION(Verbose)
+    CLOG_FUNCTION(cTag)
+    CLOG_FUNCTION(cFatal)
+    CLOG_FUNCTION(cWarning)
+    CLOG_FUNCTION(cDebug)
+    CLOG_FUNCTION(cVerbose)
 };
 
 #undef LOG_FUNCTION
