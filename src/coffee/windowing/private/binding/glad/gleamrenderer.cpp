@@ -2,6 +2,7 @@
 
 #include <coffee/core/CProfiling>
 #include <coffee/core/platform_data.h>
+#include <coffee/core/types/debug/severity.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
@@ -316,7 +317,7 @@ bool GLeamRenderer::bindingPostInit(const GL::Properties& p, CString* err)
         DProfContext b(GLR_API "Configuring GL context debugging");
         GDEBUG::SetDebugMode(true);
         GDEBUG::DebugSetCallback(gleamcallback, this);
-        GDEBUG::SetDebugLevel(Severity::Information, false);
+        GDEBUG::SetDebugLevel(debug::Severity::Information, false);
     }
 #endif
 

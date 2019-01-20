@@ -22,6 +22,7 @@
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
+using namespace Coffee::debug;
 
 bool basic_format()
 {

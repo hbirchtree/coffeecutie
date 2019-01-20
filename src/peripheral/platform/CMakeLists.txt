@@ -1,7 +1,9 @@
 coffee_library (
     TARGET PeripheralPlatform
+
     LIBRARIES
     PeripheralLib
+    CoreState
 
     SOURCES
     private/argument_parse.cpp

@@ -3,15 +3,15 @@ set(ASSIMP_ROOT_DIR "${ASSIMP_ROOT_DIR}"
 
 FIND_PATH( ASSIMP_INCLUDE_DIR_TMP
 
-    Importer.hpp
+    assimp/Importer.hpp
 
     PATHS
-    ${NATIVE_LIBRARY_DIR}
     ${CMAKE_BINARY_DIR}/libs/
+    ${COFFEE_ROOT_DIR}/libs/
     ${COFFEE_EXT_LIBRARY_DIR}/assimp/
-    ${COFFEE_ROOT_DIR}
+    ${NATIVE_LIBRARY_DIR}
 
-    PATH_SUFFIXES include include/assimp
+    PATH_SUFFIXES include include
 
     NO_CMAKE_FIND_ROOT_PATH
     )

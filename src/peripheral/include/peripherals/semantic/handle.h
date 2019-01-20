@@ -20,16 +20,22 @@ template<
         std::is_pointer<hnd_type>::value>::type* = nullptr
 
     >
-struct generic_handle_t
+struct generic_handle_t : non_copy
 {
     using handle_type = hnd_type;
 
-    generic_handle_t() : hnd(hnd_type())
+    generic_handle_t() : hnd(InvalidValue)
     {
     }
 
     explicit generic_handle_t(hnd_type handle) : hnd(handle)
     {
+    }
+
+    generic_handle_t(generic_handle_t&& other) noexcept
+    {
+        hnd = std::move(other.hnd);
+        other.release();
     }
 
     void handle_check()
@@ -85,19 +91,19 @@ struct generic_handle_t
         hnd = InvalidValue;
     }
 
-    generic_handle_t<hnd_type>& operator=(hnd_type otherHandle)
+    generic_handle_t& operator=(hnd_type otherHandle) noexcept
     {
         handle_check();
         hnd = otherHandle;
         return *this;
     }
 
-    generic_handle_t<hnd_type>& operator=(
-        generic_handle_t<hnd_type>&& otherHandle)
+    generic_handle_t& operator=(
+        generic_handle_t&& otherHandle) noexcept
     {
         handle_check();
 
-        hnd = std::move(otherHandle.hnd);
+        hnd = otherHandle.hnd;
         otherHandle.release();
         return *this;
     }

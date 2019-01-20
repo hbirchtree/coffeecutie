@@ -52,6 +52,7 @@ using typing::ValueHandling;
 using typing::WrapPolicy;
 using typing::graphics::ProfilingTerm;
 using typing::graphics::ShaderStage;
+using debug::Severity;
 
 using Face = typing::graphics::VertexFace;
 using typing::graphics::VertexWinding;

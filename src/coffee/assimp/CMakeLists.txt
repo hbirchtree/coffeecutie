@@ -8,7 +8,7 @@ coffee_library (
     LIBRARIES Core Assimp
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:libs/include>
     )
 
 target_include_directories ( AssimpTools PUBLIC

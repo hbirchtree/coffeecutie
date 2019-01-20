@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/standard_exceptions.h>
 
 namespace stl_types {
 namespace Chrono {
@@ -14,9 +15,7 @@ using Clock = Chrono::steady_clock;
 
 inline Clock::time_point from_unix(libc_types::u64 ts)
 {
-    ::time_t stuff;
-
-
+    Throw(::implementation_error("unimplemented conversion"));
 
     Clock::time_point out;
     out += seconds(ts);
@@ -26,6 +25,8 @@ inline Clock::time_point from_unix(libc_types::u64 ts)
 template<typename Clock = high_resolution_clock, typename Unit = seconds>
 inline libc_types::u64 to_unix(typename Clock::time_point ts)
 {
+    Throw(::implementation_error("untested conversion"));
+
     return duration_cast<Unit>(ts.time_since_epoch()).count();
 }
 
@@ -37,9 +38,8 @@ struct Time
     template<typename Period = Chrono::milliseconds>
     STATICINLINE typename Period::rep CurrentTimestamp()
     {
-        return Chrono::duration_cast<Period>(
-                    Clock::now().time_since_epoch())
-                .count();
+        return Chrono::duration_cast<Period>(Clock::now().time_since_epoch())
+            .count();
     }
 
     STATICINLINE Chrono::microseconds::rep Microsecond()

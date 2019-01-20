@@ -94,7 +94,7 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
         PixDesc      pfmt,
         Size const&  size,
         const Bytes& data,
-        Point       offset = {0, 0},
+        Point        offset = {0, 0},
         u32          mip    = 0)
     {
         gleam_error ec;
@@ -231,6 +231,8 @@ struct GLEAM_Sampler_Base : GLEAM_Sampler
 
 struct GLEAM_Sampler2D : GLEAM_Sampler_Base<GLEAM_Surface2D>
 {
+    using GLEAM_Sampler_Base<GLEAM_Surface2D>::GLEAM_Sampler_Base;
+
     GLEAM_API_CLASS_LINKAGE void bind(u32 i);
     GLEAM_API_CLASS_LINKAGE GLEAM_SamplerHandle handle();
 };

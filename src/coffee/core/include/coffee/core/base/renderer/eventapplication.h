@@ -67,7 +67,14 @@ struct EventLoopData
         u32                flags,
         DummyDeprecationWorkaround&&,
         Properties&& visual) :
-        EventLoopData(r, d, s, l, c, visual, flags)
+        EventLoopData(
+            std::move(r),
+            std::move(d),
+            std::move(s),
+            std::move(l),
+            std::move(c),
+            std::move(visual),
+            flags)
     {
     }
 

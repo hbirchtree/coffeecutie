@@ -1,6 +1,19 @@
 find_package ( RapidJson REQUIRED )
 find_package ( TinyXML2 REQUIRED )
 
+add_library ( CoreCommon INTERFACE )
+
+target_include_directories ( CoreCommon INTERFACE
+    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+
+target_link_libraries ( CoreCommon INTERFACE
+    PeripheralLib
+    PeripheralPlatform
+    )
+
 coffee_library (
     TARGET XML
     SOURCES
@@ -16,50 +29,21 @@ target_include_directories ( XML PUBLIC
     )
 
 coffee_library (
-    TARGET CoreBase
+    TARGET CoreDebug
 
     SOURCES
-    #
-    # Core functionality, state and etc.
-    #
-    private/extern_storage.cpp
-
-    # Thread code
-#    private/types/tdef/thread_glue.cpp
-
     #
     # Debug functions
     #
     private/base/cdebug.cpp
     private/base/debugprinter.cpp
-    private/base/jsonlogger.cpp
-    private/base/jsonprofile.cpp
 
     #
     # to_string(...) functions
     #
     private/strings.cpp
 
-    #
-    # Internal platform layer, cross-platform
-    #
-
-    # Argument handling
-    private/argument_handling.cpp
-
-    #
-    # Task queues, for easier time scheduling
-    #
-    private/task_queue/task.cpp
-
-    #
-    # File-related functionality
-    #
-    private/base/cfiles.cpp
-
-    LIBRARIES
-    PeripheralLib
-    PeripheralPlatform
+    LIBRARIES CoreCommon
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -67,9 +51,56 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
-target_include_directories ( CoreBase PUBLIC
-    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
+coffee_library (
+    TARGET CoreState
+
+    SOURCES
+    #
+    # Core functionality, state and etc.
+    #
+    private/extern_storage.cpp
+
+    LIBRARIES
+    CoreCommon
+    CoreDebug
+    )
+
+coffee_library (
+    TARGET CoreFile
+
+    SOURCES
+    #
+    # File-related functionality
+    #
+    private/base/cfiles.cpp
+
+    LIBRARIES
+    CoreCommon
+    )
+
+coffee_library (
+    TARGET CoreQueue
+
+    SOURCES
+    #
+    # Task queues, for easier time scheduling
+    #
+    private/task_queue/task.cpp
+
+    LIBRARIES
+    CoreCommon
+    PeripheralThreadNaming
+    )
+
+coffee_library (
+    TARGET CoreJsonLogger
+
+    SOURCES
+    private/base/jsonlogger.cpp
+    private/base/jsonprofile.cpp
+
+    LIBRARIES
+    CoreCommon
     )
 
 #
@@ -81,7 +112,7 @@ coffee_library (
     SOURCES
     private/datastorage/compression/libz.cpp
 
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 #
@@ -94,7 +125,7 @@ coffee_library (
     private/datastorage/binary/virtualfs.cpp
 
     LIBRARIES
-    CoreBase
+    CoreCommon
     CoreCompression
     )
 
@@ -108,7 +139,7 @@ coffee_library (
     private/base/eventapplication_wrapper.cpp
     private/base/cdisplay.cpp
 
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 #
@@ -120,7 +151,7 @@ coffee_library (
     SOURCES
     private/terminal/table_print.cpp
 
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 #
@@ -132,7 +163,7 @@ coffee_library (
     SOURCES
     private/coffee_saving.cpp
 
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 #
@@ -144,7 +175,7 @@ coffee_library (
     SOURCES
     private/profiler/profiling_export.cpp
 
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 #
@@ -157,7 +188,7 @@ coffee_library (
     # Object ownership and labeling
     private/base/cobject.cpp
 
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 #
@@ -165,7 +196,7 @@ coffee_library (
 #
 coffee_library (
     TARGET INI
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     SOURCES private/datastorage/text/ini/ciniparser.cpp
     )
 
@@ -175,11 +206,11 @@ coffee_library (
 coffee_library (
     TARGET Testing
     SOURCES private/unit_tests/framework.cpp
-    LIBRARIES CoreBase
+    LIBRARIES CoreCommon
     )
 
 if(LOWFAT_BUILD)
-    target_compile_definitions (  CoreBase PUBLIC
+    target_compile_definitions (  CoreCommon INTERFACE
         -DCOFFEE_LOWFAT
         )
 endif()
@@ -187,11 +218,12 @@ endif()
 add_library ( RapidJSON  INTERFACE )
 add_library ( Core INTERFACE )
 
-add_export ( Core      "" )
-add_export ( RapidJSON "" )
+add_export ( Core       "" )
+add_export ( RapidJSON  "" )
+add_export ( CoreCommon "" )
 
 target_link_libraries ( Core INTERFACE
-    CoreBase
+    CoreCommon
     CoreCompression
     CoreEventApplicationC
     CoreOldBlob
@@ -199,26 +231,17 @@ target_link_libraries ( Core INTERFACE
     CoreSaving
     CoreTerminal
     CoreVirtFS
+    CoreQueue
+    CoreFile
+    CoreJsonLogger
+    CoreState
+
     PeripheralThreadNaming
     )
 
 if(TARGET SDLPowerInfo)
-    target_link_libraries ( Core INTERFACE
+    target_link_libraries ( CoreCommon INTERFACE
         SDLPowerInfo
-        )
-endif()
-
-#
-#
-# Alternative thread implementations
-# Used for platforms without std::thread/std::mutex support
-# Implemented here:
-#  - Gamecube/Wii LWP
-#
-#
-if(GAMECUBE)
-    target_link_libraries ( CoreBase PUBLIC
-        GeckoThreads
         )
 endif()
 

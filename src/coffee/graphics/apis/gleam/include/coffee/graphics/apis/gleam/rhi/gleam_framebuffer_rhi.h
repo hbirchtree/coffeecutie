@@ -30,6 +30,21 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     {
     }
 
+    GLEAM_RenderTarget(GLEAM_RenderTarget&& other) :
+        m_handle(std::move(other.m_handle)), m_type(std::move(other.m_type)),
+        m_size(std::move(other.m_size))
+    {
+    }
+
+    GLEAM_RenderTarget& operator=(GLEAM_RenderTarget&& other)
+    {
+        m_handle = std::move(other.m_handle);
+        m_size = std::move(other.m_size);
+        m_type = other.m_type;
+
+        return *this;
+    }
+
     void use(FramebufferT t)
     {
         validate();
@@ -48,9 +63,9 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     void attachDepthSurface(GLEAM_Surface2D const& s, u32 mip);
 
     void blit(
-        Rect64 const&      src,
+        Rect64 const&       src,
         GLEAM_RenderTarget& target,
-        Rect64 const&      tgt,
+        Rect64 const&       tgt,
         DBuffers            buf,
         Filtering           flt);
 
@@ -71,7 +86,7 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
 
     glhnd        m_handle;
     FramebufferT m_type;
-    Size        m_size;
+    Size         m_size;
 };
 
 } // namespace GLEAM

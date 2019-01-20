@@ -25,14 +25,6 @@ target_compile_definitions ( PeripheralLib PRIVATE
 # STL extensions, replacing STL where it does not exist
 ############################################################
 
-if(GAMECUBE)
-    coffee_library (
-        TARGET GeckoThreads
-        LIBRARIES
-        SOURCES
-        stl_replacements/gekko/threads.cpp
-        )
-endif()
 
 ############################################################
 # Backup thread naming
@@ -41,10 +33,30 @@ endif()
 
 coffee_library (
     TARGET PeripheralThreadNaming
-    LIBRARIES CoreBase
+    LIBRARIES CoreState
     SOURCES
     stl_extensions/thread_naming.cpp
     )
+
+#
+#
+# Alternative thread implementations
+# Used for platforms without std::thread/std::mutex support
+# Implemented here:
+#  - Gamecube/Wii LWP
+#
+#
+if(GAMECUBE)
+    coffee_library (
+        TARGET GeckoThreads
+        LIBRARIES
+        SOURCES
+        stl_replacements/gekko/threads.cpp
+        )
+    target_link_libraries ( PeripheralThreadNaming INTERFACE
+        GeckoThreads
+        )
+endif()
 
 ############################################################
 # Platform layer

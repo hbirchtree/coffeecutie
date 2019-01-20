@@ -1,9 +1,9 @@
 #pragma once
 
-#include <peripherals/stl/string_casting.h>
-#include <coffee/core/types/edef/pixenum.h>
-#include <peripherals/stl/types.h>
+#include <coffee/core/types/enum/pixenum.h>
 #include <coffee/interfaces/file_resolver.h>
+#include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/types.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
 

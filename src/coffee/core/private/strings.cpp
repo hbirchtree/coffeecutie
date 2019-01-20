@@ -8,6 +8,7 @@
 #include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
+#include <platforms/argument_parse.h>
 
 namespace Coffee {
 namespace Strings {
@@ -327,6 +328,25 @@ CString to_string(const Display::Monitor& arg)
         arg.colorBits.green,
         arg.colorBits.blue,
         arg.colorBits.extra);
+}
+
+CString to_string(const platform::args::AppArg& args)
+{
+    CString out = "AppArg(";
+#ifndef COFFEE_LOWFAT
+
+    bool touched = false;
+
+    for(cstring_w arg : args.arguments())
+    {
+        if(touched)
+            out += ", ";
+        ((out += "'") += (arg) ? arg : "NULL") += "'";
+        touched = true;
+    }
+#endif
+
+    return out + ")";
 }
 
 } // namespace Strings

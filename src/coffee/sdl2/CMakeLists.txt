@@ -27,7 +27,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:libs/include>
     )
 
 target_compile_definitions ( SDL2Backend PUBLIC

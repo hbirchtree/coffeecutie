@@ -3,6 +3,7 @@
 #if defined(COFFEE_USE_SDL_WINDOW)
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/core/types/debug/severity.h>
 #include <coffee/strings/libc_types.h>
 
 #include "sdl2helpers.h"
@@ -189,24 +190,24 @@ bool SDL2Window::hideWindow()
     return true;
 }
 
-void SDL2Window::popErrorMessage(Severity s, cstring title, cstring msg)
+void SDL2Window::popErrorMessage(debug::Severity s, cstring title, cstring msg)
 {
     Uint32 flags = 0;
 
     switch(s)
     {
-    case Severity::Critical:
-    case Severity::Fatal:
-    case Severity::High:
+    case debug::Severity::Critical:
+    case debug::Severity::Fatal:
+    case debug::Severity::High:
         flags |= SDL_MESSAGEBOX_ERROR;
         break;
-    case Severity::Low:
-    case Severity::Medium:
+    case debug::Severity::Low:
+    case debug::Severity::Medium:
         flags |= SDL_MESSAGEBOX_WARNING;
         break;
-    case Severity::Information:
-    case Severity::Verbose:
-    case Severity::Debug:
+    case debug::Severity::Information:
+    case debug::Severity::Verbose:
+    case debug::Severity::Debug:
         flags |= SDL_MESSAGEBOX_INFORMATION;
         break;
     }

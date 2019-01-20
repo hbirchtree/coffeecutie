@@ -297,7 +297,8 @@ Coffee::DebugFun::LogInterface GetLogInterface()
         return {OutputPrinter::fprintf_platform,
                 OutputPrinter::fprintf_platform_tagged};
 }
-} // namespace DebugFun
+
+}
 
 namespace State {
 

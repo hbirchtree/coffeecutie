@@ -164,7 +164,7 @@ struct PosixFileFun_def : PosixFileMod_def
         {
             chnk = ((szp - i) < Int32_Max) ? (szp - i) : Int32_Max;
             i += read(
-                C_CAST<int>(f_h.fd), &((C_CAST<byte_t*>(data.data))[i]), chnk);
+                C_OCAST<int>(f_h.fd), &((C_CAST<byte_t*>(data.data))[i]), chnk);
             if(collect_error_to(ec))
                 break;
         }
