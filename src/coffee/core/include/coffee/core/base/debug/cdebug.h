@@ -134,9 +134,11 @@ FORCEDINLINE void cVerbose(cstring str, Arg... args)
 #endif
 }
 #else
-/* Disable the function, not even compiling it */
-/* We take no chances */
-#define cVerbose(...)
+/* Disable the function in release */
+template<typename... Arg>
+FORCEDINLINE void cVerbose(Arg...)
+{
+}
 #endif
 
 template<typename... Arg>
@@ -210,38 +212,21 @@ C_DEPRECATED FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 }
 } // namespace DebugFun
 
+#define LOG_FUNCTION(LogFun)              \
+    template<typename... Args>            \
+    static void LogFun(Args... args)      \
+    {                                     \
+        using namespace Coffee::DebugFun; \
+        DebugFun::c##LogFun(args...);     \
+    }
+
 struct DebugLogger
 {
-    template<typename... Args>
-    static void Warning(Args... args)
-    {
-        using namespace Coffee::DebugFun;
-        DebugFun::cWarning(args...);
-    }
-    template<typename... Args>
-    static void Debug(Args... args)
-    {
-        using namespace Coffee::DebugFun;
-        DebugFun::cDebug(args...);
-    }
-    template<typename... Args>
-    static void Fatal(Args... args)
-    {
-        using namespace Coffee::DebugFun;
-        DebugFun::cFatal(args...);
-    }
-    template<typename... Args>
-    static void Verbose(Args... args)
-    {
-        using namespace Coffee::DebugFun;
-        DebugFun::cVerbose(args...);
-    }
-    template<typename... Args>
-    static void Tag(Args... args)
-    {
-        using namespace Coffee::DebugFun;
-        DebugFun::cTag(args...);
-    }
+    LOG_FUNCTION(Tag)
+    LOG_FUNCTION(Verbose)
+    LOG_FUNCTION(Debug)
+    LOG_FUNCTION(Warning)
+    LOG_FUNCTION(Fatal)
 };
 
 #undef CLOG_FUNCTION
