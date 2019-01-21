@@ -210,29 +210,41 @@ C_DEPRECATED FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 }
 } // namespace DebugFun
 
-#define CLOG_FUNCTION(LogFun)             \
-    template<typename... Args>            \
-    static void LogFun(Args... args)      \
-    {                                     \
-        using namespace Coffee::DebugFun; \
-        LogFun(args...);                  \
-    }
-
 struct DebugLogger
 {
-    CLOG_FUNCTION(cOutputPrint)
-    CLOG_FUNCTION(cBasicPrint)
-    CLOG_FUNCTION(cOutputPrintNoNL)
-    CLOG_FUNCTION(cBasicPrintNoNL)
-
-    CLOG_FUNCTION(cTag)
-    CLOG_FUNCTION(cFatal)
-    CLOG_FUNCTION(cWarning)
-    CLOG_FUNCTION(cDebug)
-    CLOG_FUNCTION(cVerbose)
+    template<typename... Args>
+    static void Warning(Args... args)
+    {
+        using namespace Coffee::DebugFun;
+        DebugFun::cWarning(args...);
+    }
+    template<typename... Args>
+    static void Debug(Args... args)
+    {
+        using namespace Coffee::DebugFun;
+        DebugFun::cDebug(args...);
+    }
+    template<typename... Args>
+    static void Fatal(Args... args)
+    {
+        using namespace Coffee::DebugFun;
+        DebugFun::cFatal(args...);
+    }
+    template<typename... Args>
+    static void Verbose(Args... args)
+    {
+        using namespace Coffee::DebugFun;
+        DebugFun::cVerbose(args...);
+    }
+    template<typename... Args>
+    static void Tag(Args... args)
+    {
+        using namespace Coffee::DebugFun;
+        DebugFun::cTag(args...);
+    }
 };
 
-#undef LOG_FUNCTION
+#undef CLOG_FUNCTION
 
 using namespace DebugFun;
 
