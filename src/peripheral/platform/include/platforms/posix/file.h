@@ -55,8 +55,9 @@ struct PosixApi
 
         FileHandle& operator=(FileHandle&& other)
         {
-            this->fd = std::move(other.fd);
-            other.fd.release();
+            FileHandle other_local = std::move(other);
+            this->fd = std::move(other_local.fd);
+            other_local.fd.release();
 
             return *this;
         }

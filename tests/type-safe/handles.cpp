@@ -26,7 +26,7 @@ bool integer_handle()
     try
     {
         throw resource_leak("derp");
-    } catch(...)
+    } catch(resource_leak const&)
     {
     }
 
@@ -37,8 +37,8 @@ bool integer_handle()
     {
         handle_out_of_scope<unsigned int>(1);
 
-        return false;
-    } catch(...)
+        Throw(test_failure("handle error not triggered on out of scope"));
+    } catch(resource_leak const&)
     {
     }
 #endif
@@ -60,8 +60,8 @@ bool pointer_handle()
     {
         handle_out_of_scope<void*>(&sample);
 
-        return false;
-    } catch(...)
+        Throw(test_failure("handle error not triggered on out of scope"));
+    } catch(resource_leak const&)
     {
     }
 #endif
@@ -72,9 +72,35 @@ bool pointer_handle()
     return true;
 }
 
-COFFEE_TEST_SUITE(2) = {
-    {integer_handle, "Integer handles"},
-    {pointer_handle, "Pointer handles"},
-};
+bool handle_transfer()
+{
+    using semantic::generic_handle_t;
+
+    /* std::move() handle */
+    try
+    {
+        generic_handle_t<int, true, -1> hnd1;
+        generic_handle_t<int, true, -1> hnd2;
+
+        /* Verify initial value */
+        assert::Equals(C_OCAST<int>(hnd1), -1);
+        assert::Equals(C_OCAST<int>(hnd2), -1);
+
+        /* See that value is transferred, source is left invalid */
+        hnd1 = 1;
+        hnd2 = std::move(hnd1);
+
+        assert::Equals(C_OCAST<int>(hnd1), -1);
+        assert::Equals(C_OCAST<int>(hnd2), 1);
+    } catch(resource_leak const&)
+    {
+    }
+
+    return true;
+}
+
+COFFEE_TEST_SUITE(3) = {{integer_handle, "Integer handles"},
+                        {pointer_handle, "Pointer handles"},
+                        {handle_transfer, "Transfer of handle"}};
 
 COFFEE_EXEC_TESTS()
