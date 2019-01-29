@@ -2,6 +2,7 @@
 
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
+#include <peripherals/typing/logging.h>
 
 namespace platform {
 namespace env {
@@ -79,7 +80,8 @@ struct StacktracerDef
         return {};
     }
 
-    static void ExceptionStacktrace(ExceptionPtr const& exc)
+    static void ExceptionStacktrace(ExceptionPtr const& exc,
+                                    typing::logging::LogInterfaceBasic)
     {
         try
         {

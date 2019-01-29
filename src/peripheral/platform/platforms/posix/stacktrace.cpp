@@ -3,15 +3,21 @@
 #if defined(COFFEE_UNIXPLAT)
 
 #include <peripherals/base.h>
+#include <peripherals/libc/output_ops.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/ptr_wrap.h>
 #include <peripherals/stl/regex.h>
+#include <peripherals/stl/string_ops.h>
 
 #include <cxxabi.h> //Demangling function names
 
 #if defined(COFFEE_USE_UNWIND)
 #define UNW_LOCAL_ONLY
 #include <libunwind.h> //For retrieving the callstack
+#endif
+
+#if defined(COFFEE_GLIBC_STACKTRACE)
+#include <execinfo.h>
 #endif
 
 namespace platform {
@@ -123,6 +129,93 @@ CString Stacktracer::GetStackFuncName(u32 depth)
 }
 
 } // namespace posix
+
+namespace glibc {
+
+STATICINLINE CString DemangleBacktrace(char* sym)
+{
+    CString sym_      = sym;
+    auto    sym_end   = sym_.rfind('+');
+    auto    sym_begin = sym_.rfind('(', sym_end);
+    if(sym_end != CString::npos && sym_begin != CString::npos)
+    {
+        auto sym_length = sym_end - sym_begin - 1;
+        auto sym_target = sym_.substr(sym_begin + 1, sym_length);
+
+        sym_ = str::replace::str(
+            sym_, sym_target, Stacktracer::DemangleSymbol(sym_target));
+    }
+
+    return sym_;
+}
+
+static void DefaultedPrint(
+    typing::logging::LogInterfaceBasic logger, CString const& line)
+{
+    using semantic::debug::Severity;
+    using namespace libc::io;
+
+    logger(io_handles::err, line, Severity::Critical, 1, 0);
+}
+
+void Stacktracer::ExceptionStacktrace(
+    const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
+{
+#if defined(COFFEE_GLIBC_STACKTRACE)
+    static constexpr szptr MAX_CONTEXT = 20;
+
+    void* tracestore[MAX_CONTEXT];
+
+    try
+    {
+        if(exc_ptr)
+            std::rethrow_exception(exc_ptr);
+    } catch(std::exception& e)
+    {
+        if(libc::io::terminal::interactive())
+            DefaultedPrint(
+                log,
+                str::transform::multiply(
+                    '-', libc::io::terminal::size().first));
+        DefaultedPrint(log, "exception encountered:");
+        DefaultedPrint(
+            log,
+            " >> " + Stacktracer::DemangleSymbol(typeid(e).name()) + ": " +
+                e.what());
+        auto num  = backtrace(tracestore, MAX_CONTEXT);
+        auto syms = backtrace_symbols(tracestore, num);
+        if(syms && num)
+        {
+            DefaultedPrint(log, "dumping stacktrace:");
+            for(auto i : Range<>(C_FCAST<szptr>(num)))
+            {
+                if(syms[i])
+                {
+                    DefaultedPrint(log, " >> " + DemangleBacktrace(syms[i]));
+                } else
+                    DefaultedPrint(
+                        log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
+            }
+        }
+        free(syms);
+    }
+#endif
+}
+
+CString Stacktracer::GetFuncName_Internal(void* funcPtr)
+{
+    auto funcName = backtrace_symbols(&funcPtr, 1);
+
+    if(!funcName)
+        return {};
+
+    CString out = DemangleBacktrace(funcName[0]);
+    free(funcName);
+
+    return out;
+}
+
+} // namespace glibc
 
 } // namespace env
 } // namespace platform

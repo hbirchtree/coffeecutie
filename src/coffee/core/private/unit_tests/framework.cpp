@@ -229,15 +229,19 @@ void RunTest(Test const& test, TestInstance& test_info)
     Profiler::PushContext(test_info.title);
     try
     {
-        TemporaryState _;
+        C_UNUSED(TemporaryState _);
 
         res = test.test();
     } catch(std::exception const& e)
     {
-        cWarning(
-            "exception encountered: {0}: {1}",
-            Stacktracer::DemangleSymbol(typeid(e).name()),
-            e.what());
+#if !MODE_LOWFAT
+        platform::env::Stacktracer::ExceptionStacktrace(
+            std::current_exception(),
+            DebugFun::OutputPrinter::fprintf_platform);
+#else
+        platform::env::Stacktracer::ExceptionStacktrace(
+            std::current_exception(), typing::logging::fprintf_logger);
+#endif
         Profiler::Profile("exception");
     }
     Profiler::PopContext();

@@ -41,7 +41,7 @@ namespace url {
 #if defined(COFFEE_APPLE)
 extern Url GetAppleStoragePath();
 #endif
-}
+} // namespace url
 } // namespace platform
 
 namespace Coffee {
@@ -374,7 +374,7 @@ void InstallDefaultSigHandlers()
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
-            std::current_exception());
+            std::current_exception(), typing::logging::fprintf_logger);
         abort();
     });
 #endif

@@ -52,7 +52,36 @@ struct Stacktracer : StacktracerDef
 
 } // namespace posix
 
+/* glibc-like stacktraces exist on Linux and Darwin */
+#if(defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) && \
+    !defined(COFFEE_NO_EXCEPTION_RETHROW)
+
+#define COFFEE_GLIBC_STACKTRACE 1
+
+namespace glibc {
+
+struct Stacktracer : posix::Stacktracer
+{
+    static void ExceptionStacktrace(
+        ExceptionPtr const& exc_ptr, typing::logging::LogInterfaceBasic log);
+
+    static CString GetFuncName_Internal(void* funcPtr);
+
+    template<typename T>
+    STATICINLINE CString GetFuncName(T funcPtr)
+    {
+        return GetFuncName_Internal(C_RCAST<void*>(funcPtr));
+    }
+};
+
+} // namespace glibc
+#endif
+
+#if defined(COFFEE_GLIBC_STACKTRACE)
+using Stacktracer = glibc::Stacktracer;
+#else
 using Stacktracer = posix::Stacktracer;
+#endif
 
 } // namespace env
 } // namespace platform
