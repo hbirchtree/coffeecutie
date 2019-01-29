@@ -280,11 +280,7 @@ namespace print {
 template<typename CharType = char>
 FORCEDINLINE std::basic_string<CharType> pointerify(u64 const& ptr)
 {
-#ifndef COFFEE_LOWFAT
     return "0x" + convert::hexify(ptr);
-#else
-    return {};
-#endif
 }
 template<
     typename T,
