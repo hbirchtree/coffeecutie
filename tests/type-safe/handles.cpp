@@ -72,6 +72,15 @@ bool pointer_handle()
     return true;
 }
 
+static int transfer_value_handle = -1;
+static int transfer_num_calls = 0;
+
+void transfer_close_function(int h)
+{
+    transfer_value_handle = h;
+    transfer_num_calls ++;
+}
+
 bool handle_transfer()
 {
     using semantic::generic_handle_t;
@@ -79,8 +88,8 @@ bool handle_transfer()
     /* std::move() handle */
     try
     {
-        generic_handle_t<int, true, -1> hnd1;
-        generic_handle_t<int, true, -1> hnd2;
+        generic_handle_t<int, false, -1, transfer_close_function> hnd1;
+        generic_handle_t<int, false, -1, transfer_close_function> hnd2;
 
         /* Verify initial value */
         assert::Equals(C_OCAST<int>(hnd1), -1);
@@ -95,6 +104,9 @@ bool handle_transfer()
     } catch(resource_leak const&)
     {
     }
+
+    assert::Equals(transfer_value_handle, 1);
+    assert::Equals(transfer_num_calls, 1);
 
     return true;
 }

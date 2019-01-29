@@ -134,8 +134,9 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         return C_OCAST<int>(fh.fd) != 0;
     }
-    STATICINLINE bool Close(FH&&, file_error&)
+    STATICINLINE bool Close(FH&& handle, file_error&)
     {
+        C_UNUSED(FH handleToDestroy) = std::move(handle);
         return true;
     }
 

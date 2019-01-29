@@ -224,6 +224,8 @@ void RunTest(Test const& test, TestInstance& test_info)
     auto start_time = Chrono::steady_clock::now();
     bool res        = false;
 
+    cDebug("Starting test {0}", test_info.title);
+
     Profiler::PushContext(test_info.title);
     try
     {

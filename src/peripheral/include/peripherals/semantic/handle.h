@@ -99,9 +99,8 @@ struct generic_handle_t : non_copy
     }
 
     generic_handle_t& operator=(
-        generic_handle_t&& otherHandle) noexcept
+        generic_handle_t&& other) noexcept
     {
-        generic_handle_t other = std::move(otherHandle);
         handle_check();
         hnd = other.hnd;
         other.release();
