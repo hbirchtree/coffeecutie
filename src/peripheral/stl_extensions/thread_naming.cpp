@@ -4,6 +4,7 @@
 #include <peripherals/stl/functional_types.h>
 
 using namespace ::Coffee;
+using ::type_safety::remove_cvref_t;
 
 namespace stl_types {
 

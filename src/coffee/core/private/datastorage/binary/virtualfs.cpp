@@ -400,6 +400,7 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
 ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
 {
     using namespace platform::url;
+    using dir_data_index = directory_data_t;
 
     if(!vfs)
         Throw(undefined_behavior(VIRTFS_API "got null vfs!"));
@@ -408,14 +409,52 @@ ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
             [=](Path const& query, Vector<Url>& output) {
                 DProfContext _(DTEXT(VIRTFS_API "Resolving filesystem"));
 
-                vfs_view view(Bytes::From(*vfs));
+                vfs_error_code ec;
 
-                DProfContext __(DTEXT(VIRTFS_API "Checking files"));
-                auto         it = view.begin();
-                while((it = view.starting_with(query, it)) != view.end())
+                if(vfs->supportsIndex(VirtualIndex::index_t::directory_tree))
                 {
-                    output.push_back(constructors::MkUrl((*it).name));
-                    ++it;
+                    auto index = VFS::SearchFile(
+                        vfs,
+                        query.internUrl.c_str(),
+                        ec,
+                        search_strategy::earliest);
+
+                    C_ERROR_CHECK(ec);
+
+                    DProfContext __(DTEXT(VIRTFS_API "Checking files"));
+
+                    /* Every child node necessarily has a lower index than its
+                     * parent
+                     */
+                    auto node_start = index.index.sub_root;
+                    auto files      = C_RCAST<VFile const*>(vfs->files());
+                    auto nodes      = index.index.nodes();
+
+                    for(auto i :
+                        Range<>(index.index.node_match.size() - node_start))
+                    {
+                        auto const idx = node_start + i;
+
+                        if(!index.index.node_match.at(idx))
+                            continue;
+
+                        if(!nodes[idx].is_leaf())
+                            continue;
+
+                        auto const& node = files[nodes[idx].leaf.fileIdx];
+
+                        output.push_back(constructors::MkUrl(node.name));
+                    }
+                } else
+                {
+                    vfs_view view(Bytes::From(*vfs));
+
+                    auto it = view.begin();
+                    while((it = view.starting_with(query, it)) != view.end())
+                    {
+                        output.push_back(constructors::MkUrl((*it).name));
+                        ++it;
+                    }
                 }
 
                 return true;

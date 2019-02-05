@@ -153,6 +153,8 @@ static const constexpr u32  VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
  */
 struct directory_data_t
 {
+    using index_type = u32;
+
     u64 num_nodes;
 
     template<typename T>
@@ -193,12 +195,12 @@ struct directory_data_t
 
     struct node_t
     {
-        static const constexpr u32 sentinel_value =
-            std::numeric_limits<u32>::max();
+        static const constexpr index_type sentinel_value =
+            std::numeric_limits<index_type>::max();
 
-        char         prefix[MaxPrefixLength];
-        child_t<u32> left;
-        child_t<u32> right;
+        char                prefix[MaxPrefixLength];
+        child_t<index_type> left;
+        child_t<index_type> right;
 
         union
         {
@@ -327,7 +329,7 @@ struct directory_data_t
     struct cached_index
     {
         bit_vector          node_match;
-        child_t<u32>        sub_root;
+        child_t<index_type> sub_root;
         VirtualIndex const* virt_index;
 
         mem_chunk<const node_base_t> nodes() const;
@@ -513,6 +515,18 @@ struct VirtualFS
             return Version::v1;
 
         return virtfs_version;
+    }
+
+    FORCEDINLINE bool supportsIndex(VirtualIndex::index_t type) const
+    {
+        if(version() == Version::v1)
+            return false;
+
+        for(auto i : Range<>(ext_index.num))
+            if(indices()[0].kind == type)
+                return true;
+
+        return false;
     }
 
     FORCEDINLINE const void* files() const

@@ -130,6 +130,8 @@ CString Stacktracer::GetStackFuncName(u32 depth)
 
 } // namespace posix
 
+
+#if defined(COFFEE_GLIBC_STACKTRACE)
 namespace glibc {
 
 STATICINLINE CString DemangleBacktrace(char* sym)
@@ -161,7 +163,6 @@ static void DefaultedPrint(
 void Stacktracer::ExceptionStacktrace(
     const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
 {
-#if defined(COFFEE_GLIBC_STACKTRACE)
     static constexpr szptr MAX_CONTEXT = 20;
 
     void* tracestore[MAX_CONTEXT];
@@ -199,7 +200,6 @@ void Stacktracer::ExceptionStacktrace(
         }
         free(syms);
     }
-#endif
 }
 
 CString Stacktracer::GetFuncName_Internal(void* funcPtr)
@@ -216,6 +216,7 @@ CString Stacktracer::GetFuncName_Internal(void* funcPtr)
 }
 
 } // namespace glibc
+#endif
 
 } // namespace env
 } // namespace platform

@@ -3,10 +3,12 @@
 
 using namespace Coffee;
 
+using semantic::handle_modes::auto_close;
+
 template<typename T>
 DENYINLINE void handle_out_of_scope(T some_value)
 {
-    semantic::generic_handle_t<T, false> handle(some_value);
+    semantic::generic_handle_t<T, auto_close> handle(some_value);
     handle.handle_check();
     handle.release();
 }
@@ -14,7 +16,7 @@ DENYINLINE void handle_out_of_scope(T some_value)
 template<typename T>
 DENYINLINE void handle_released(T some_value)
 {
-    semantic::generic_handle_t<T, false> handle(some_value);
+    semantic::generic_handle_t<T, auto_close> handle(some_value);
 
     handle.release();
 
@@ -88,8 +90,8 @@ bool handle_transfer()
     /* std::move() handle */
     try
     {
-        generic_handle_t<int, false, -1, transfer_close_function> hnd1;
-        generic_handle_t<int, false, -1, transfer_close_function> hnd2;
+        generic_handle_t<int, auto_close, -1, transfer_close_function> hnd1;
+        generic_handle_t<int, auto_close, -1, transfer_close_function> hnd2;
 
         /* Verify initial value */
         assert::Equals(C_OCAST<int>(hnd1), -1);

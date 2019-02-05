@@ -9,9 +9,25 @@ namespace semantic {
 
 using namespace stl_types;
 
+namespace handle_modes {
+
+struct no_op
+{
+};
+
+struct auto_close
+{
+};
+
+struct exception_on_destruct
+{
+};
+
+} // namespace handle_modes
+
 template<
     typename hnd_type,
-    bool     enable_exception    = true,
+    typename HandleMode          = handle_modes::exception_on_destruct,
     hnd_type InvalidValue        = hnd_type(),
     void (*close_func)(hnd_type) = nullptr,
 
@@ -22,6 +38,9 @@ template<
     >
 struct generic_handle_t : non_copy
 {
+    static constexpr bool exceptions_mode =
+        std::is_same<handle_modes::exception_on_destruct, HandleMode>::value;
+
     using handle_type = hnd_type;
 
     generic_handle_t() : hnd(InvalidValue)
@@ -47,24 +66,37 @@ struct generic_handle_t : non_copy
     }
 
     template<
-        typename Dummy                                          = int,
-        typename std::enable_if<enable_exception, Dummy>::type* = nullptr>
+        typename Dummy = int,
+        typename std::enable_if<
+            std::is_same<handle_modes::exception_on_destruct, HandleMode>::
+                value,
+            Dummy>::type* = nullptr>
     void handle_check_enable()
     {
         static_assert(
-            !(enable_exception && close_func),
+            !(exceptions_mode && close_func),
             "close function will never be called");
 
         handle_check();
     }
     template<
-        typename Dummy                                           = int,
-        typename std::enable_if<!enable_exception, Dummy>::type* = nullptr>
+        typename Dummy = int,
+        typename std::enable_if<
+            std::is_same<handle_modes::auto_close, HandleMode>::value,
+            Dummy>::type* = nullptr>
     void handle_check_enable()
     {
-        if(close_func && hnd != InvalidValue)
+        if(static_cast<bool>(close_func) && hnd != InvalidValue)
             close_func(hnd);
     }
+//    template<
+//        typename Dummy = int,
+//        typename std::enable_if<
+//            std::is_same<handle_modes::no_op, HandleMode>::value,
+//            Dummy>::type* = nullptr>
+//    void handle_check_enable()
+//    {
+//    }
 
     ~generic_handle_t()
     {
@@ -98,8 +130,7 @@ struct generic_handle_t : non_copy
         return *this;
     }
 
-    generic_handle_t& operator=(
-        generic_handle_t&& other) noexcept
+    generic_handle_t& operator=(generic_handle_t&& other) noexcept
     {
         handle_check();
         hnd = other.hnd;

@@ -37,8 +37,11 @@ FORCEDINLINE void posix_close_fun(int fd)
 
 } // namespace detail
 
-using posix_fd =
-    semantic::generic_handle_t<int, false, -1, detail::posix_close_fun>;
+using posix_fd = semantic::generic_handle_t<
+    int,
+    handle_modes::auto_close,
+    -1,
+    detail::posix_close_fun>;
 
 struct PosixApi
 {
@@ -56,7 +59,7 @@ struct PosixApi
         FileHandle& operator=(FileHandle&& other)
         {
             FileHandle other_local = std::move(other);
-            this->fd = std::move(other_local.fd);
+            this->fd               = std::move(other_local.fd);
             other_local.fd.release();
 
             return *this;
