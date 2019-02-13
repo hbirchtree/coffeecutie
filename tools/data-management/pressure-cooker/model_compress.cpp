@@ -301,7 +301,7 @@ void AssimpProcessor::process(
         }
     };
 
-    threads::ParallelForEach(targets, std::move(fileWorker));
+    threads::Parallel::ForEach(targets, std::move(fileWorker));
 
     auto removePred = [&](VirtFS::VirtDesc const& file) {
         auto ext = Path(file.filename).extension();

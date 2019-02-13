@@ -155,6 +155,7 @@ using Lock     = std::lock_guard<Mutex>;
 using RecLock  = std::lock_guard<RecMutex>;
 
 using UqLock    = std::unique_lock<Mutex>;
+using UqRecLock = std::unique_lock<RecMutex>;
 using CondVar   = std::condition_variable;
 using cv_status = std::cv_status;
 #endif
@@ -362,6 +363,8 @@ struct range
         T m_idx;
         T m_end;
     };
+
+    using value_type = T;
 
     range(T len) : m_len(len)
     {

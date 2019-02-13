@@ -52,8 +52,8 @@ struct EventLoopData
         u32                flags = 0) :
 
         renderer(std::move(r)),
-        data(std::move(d)), setup(s), loop(l), cleanup(c), visual(visual),
-        flags(flags)
+        data(std::move(d)), setup(s), loop(l), cleanup(c), flags(flags),
+        visual(visual)
     {
     }
 

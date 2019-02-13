@@ -20,9 +20,11 @@ namespace State {
 
 struct GlobalState
 {
+    stl_types::Mutex access;
     virtual ~GlobalState();
 };
 
+extern stl_types::UqLock          LockState(libc_types::cstring key);
 extern stl_types::ShPtr<GlobalState> SwapState(
     libc_types::cstring key, stl_types::ShPtr<GlobalState> const& ptr);
 extern stl_types::ShPtr<GlobalState> const& PeekState(libc_types::cstring key);

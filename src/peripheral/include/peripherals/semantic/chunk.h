@@ -93,20 +93,7 @@ struct mem_chunk
             return other.m_idx != m_idx;
         }
 
-        T const& operator*() const
-        {
-#if MODE_DEBUG
-            if(m_idx > m_chunk->elements)
-                Throw(std::out_of_range("index out of bounds"));
-#endif
-            return m_chunk->data[m_idx];
-        }
-
-        template<
-            typename Dummy = void,
-            typename std::enable_if<!std::is_const<T_access>::value, Dummy>::
-                type* = nullptr>
-        T& operator*()
+        T_access& operator*() const
         {
 #if MODE_DEBUG
             if(m_idx > m_chunk->elements)

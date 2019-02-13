@@ -17,7 +17,7 @@ class CALSoundManager : public CSoundArbiter<CALSource,CALBuffer>
     Vector<CALSoundDeviceIdentifier> v_odevices;
 
     u32 d_idx = 0;
-    u32 padding;
+    C_UNUSED(u32 padding);
 
 public:
     CALSoundManager();

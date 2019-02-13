@@ -555,15 +555,6 @@ static u32 GetFirstSelected(
         return node_t::sentinel_value;
 }
 
-static bool NodeMatching(
-    node_base_t const* node,
-    CString const&     prefix,
-    szptr              currentPrefix,
-    szptr              prefixLen)
-{
-    return (currentPrefix + node->longest_match(prefix)) == prefixLen;
-}
-
 directory_data_t::result_t SearchFile(
     VFS const*                            vfs,
     cstring                               name,

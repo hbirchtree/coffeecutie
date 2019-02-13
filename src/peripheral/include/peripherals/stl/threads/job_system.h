@@ -6,17 +6,19 @@
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/types.h>
 
+using JobProfiler = Coffee::Profiler;
+
 namespace stl_types {
 namespace threads {
 
 template<typename Ctxt, typename IterType>
 C_DEPRECATED_S(
     "Use ParallelForEach instead, it will use the C++17 functions later")
-    FORCEDINLINE Future<void> ParallelFor(
-        Function<void(IterType, Ctxt)> kernel,
-        IterType                       iterations,
-        Ctxt                           context,
-        IterType                       weight = 1)
+FORCEDINLINE Future<void> ParallelFor(
+    Function<void(IterType, Ctxt)> kernel,
+    IterType                       iterations,
+    Ctxt                           context,
+    IterType                       weight = 1)
 {
     return {};
 }
@@ -24,16 +26,68 @@ C_DEPRECATED_S(
 namespace detail {
 
 template<
-    typename ContainerT,
-    typename T,
-    typename IteratorT,
-    typename StorageType =
-        typename declmemtype(IteratorT::operator*)>
+    typename Parameters,
+    typename std::enable_if<Parameters::batch_size >= 2>::type* = nullptr>
 Function<void(szptr)> get_worker(
-    Mutex&               work_lock,
-    Function<void(T&)>&& pred,
-    IteratorT&           container_it,
-    IteratorT&           container_end)
+    Mutex&                                              work_lock,
+    Function<void(typename Parameters::storage_type)>&& pred,
+    typename Parameters::iterator&                      container_it,
+    typename Parameters::iterator&                      container_end)
+{
+    return [&](szptr worker_i) {
+        CurrentThread::SetName(
+            "ParallelForEach::runner " + str::convert::to_string(worker_i));
+
+        JobProfiler::PushContext("Queue");
+
+        while(true)
+        {
+            /* Fetch work item, exit if there is no
+             * more work to do */
+            JobProfiler::PushContext("Awaiting lock");
+            work_lock.lock();
+            if(container_it == container_end)
+            {
+                work_lock.unlock();
+                JobProfiler::PopContext();
+                break;
+            }
+            JobProfiler::PopContext();
+
+            JobProfiler::PushContext("Taking work item");
+            /* The work item is copied to the worker */
+            auto q_it = container_it;
+            for(C_UNUSED(auto _) : Range<>(Parameters::batch_size))
+            {
+                if(container_it == container_end)
+                    break;
+
+                ++container_it;
+            }
+            auto q_end = container_it;
+
+            work_lock.unlock();
+            JobProfiler::PopContext();
+
+            JobProfiler::PushContext("Running work item(s)");
+            /* Run predicate on work item */
+            for(; q_it != q_end; ++q_it)
+                pred(*q_it);
+            JobProfiler::PopContext();
+
+        }
+        JobProfiler::PopContext();
+    };
+}
+
+template<
+    typename Parameters,
+    typename std::enable_if<Parameters::batch_size == 1>::type* = nullptr>
+Function<void(szptr)> get_worker(
+    Mutex&                                              work_lock,
+    Function<void(typename Parameters::storage_type)>&& pred,
+    typename Parameters::iterator&                      container_it,
+    typename Parameters::iterator&                      container_end)
 {
     return [&](szptr worker_i) {
         CurrentThread::SetName(
@@ -50,9 +104,8 @@ Function<void(szptr)> get_worker(
                 break;
             }
 
-            /* The work item is copied to the worker
-             */
-            StorageType item = *container_it;
+            /* The work item is copied to the worker */
+            typename Parameters::storage_type item = *container_it;
             ++container_it;
             work_lock.unlock();
 
@@ -64,10 +117,22 @@ Function<void(szptr)> get_worker(
 
 } // namespace detail
 
+template<size_t BatchSize, class ContainerT>
+struct parametric_parallel
+{
+    using container_type = typename remove_cvref<ContainerT>::type;
+    using value_type     = typename container_type::value_type;
+    using iterator       = typename container_type::iterator;
+    using storage_type   = typename declmemtype(iterator::operator*);
+
+    static constexpr size_t batch_size = BatchSize;
+};
+
+namespace Parallel {
+
 template<
     typename ContainerT,
-    typename T         = typename ContainerT::value_type,
-    typename IteratorT = typename ContainerT::iterator>
+    typename Parameters = parametric_parallel<1, ContainerT>>
 /*!
  * \brief Parallel for-each loop over container. On C++17 compilers
  *  this will use std::for_each with parallel execution.
@@ -80,8 +145,10 @@ template<
  * \param container Any iterable container
  * \param pred Predicate function for items from said container
  */
-FORCEDINLINE void ParallelForEach(
-    ContainerT& container, Function<void(T&)>&& pred, szptr num_workers = 0)
+FORCEDINLINE void ForEach(
+    ContainerT&                                         container,
+    Function<void(typename Parameters::storage_type)>&& pred,
+    szptr                                               num_workers = 0)
 {
 #if __cplusplus < 201703L
 #if defined(COFFEE_NO_THREADLIB)
@@ -100,7 +167,7 @@ FORCEDINLINE void ParallelForEach(
 
     tasks.reserve(thread_count);
 
-    Function<void(szptr)> runner = detail::get_worker<ContainerT, T, IteratorT>(
+    Function<void(szptr)> runner = detail::get_worker<Parameters>(
         work_lock, std::move(pred), container_it, container_end);
 
     for(const auto i : Range<>(thread_count))
@@ -111,16 +178,23 @@ FORCEDINLINE void ParallelForEach(
     for(auto& task : tasks)
         task.get();
 #else
-    throw implementation_error("C++17 code for this not written yet!");
+    static_assert(false, "Missing C++17 implementation");
 #endif
 }
 
-template<typename ContainerT, typename T>
-FORCEDINLINE void ParallelForEach(
-    ContainerT&& container, Function<void(T&)>&& pred, szptr num_workers = 0)
+template<
+    typename ContainerT,
+    typename Parameters = parametric_parallel<1, ContainerT>>
+FORCEDINLINE void Consume(
+    ContainerT&&                                        container,
+    Function<void(typename Parameters::storage_type)>&& pred,
+    szptr                                               num_workers = 0)
 {
-    ParallelForEach(container, std::move(pred), num_workers);
+    typename Parameters::container_type container_store = std::move(container);
+    ForEach<typename Parameters::container_type, Parameters>(
+        container_store, std::move(pred), num_workers);
+}
 }
 
-} // namespace Threads
+} // namespace threads
 } // namespace stl_types

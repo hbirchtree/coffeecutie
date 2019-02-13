@@ -1,3 +1,7 @@
+#define JOB_SYSTEM_PROFILE 1
+
+#include <coffee/core/CProfiling>
+
 #include <coffee/core/CThreading>
 #include <coffee/core/types/chunk.h>
 #include <coffee/strings/libc_types.h>
@@ -6,29 +10,27 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/terminal/table.h>
 
+#include <coffee/core/types/vector_types.h>
+
 using namespace Coffee;
 
 using Clock = Chrono::high_resolution_clock;
 
 bool workload_test()
 {
-    struct DataSet
-    {
-        size_2d<u64> size;
-        u8*          value;
-    } data;
-    data.size.w = 1024 * 1024;
-    data.size.h = 1024;
+    PrintingVerbosityLevel() = 10;
 
-    Bytes workspace = Bytes::Alloc(data.size.area());
+    size_2d<u64> size;
+    size.w = 128;
+    size.h = 128;
 
-    data.value = C_CAST<u8*>(workspace.data);
+    mem_chunk<Matf4> workspace = mem_chunk<Matf4>::Alloc(size.area());
 
     Profiler::Profile("Memory allocation");
 
-    Function<void(u64, DataSet*)> kern = [](u64 i, DataSet* d) {
-        for(i32 j = 0; j < 64; j++)
-            d->value[i * 64 + j] /= 2;
+    Function<void(Matf4&)> kern = [](Matf4& v) {
+        ProfContext _("Running kernel");
+        v = typing::vectors::inverse(v);
     };
 
     Vector<Chrono::microseconds> timing;
@@ -38,19 +40,27 @@ bool workload_test()
 
     Profiler::Profile("Task setup");
 
+    Profiler::PushContext("Parallel");
     auto start_time = Chrono::high_resolution_clock::now();
 
-    threads::ParallelFor(kern, data.size.area() / 64, &data).get();
+    threads::Parallel::ForEach<
+        decltype(workspace),
+        threads::parametric_parallel<8, decltype(workspace)>>(
+        workspace, std::move(kern));
     timing.push_back(
         Chrono::duration_cast<Chrono::microseconds>(Clock::now() - start_time));
 
+    Profiler::PopContext();
+
+    Profiler::PushContext("Serial");
     start_time = Chrono::high_resolution_clock::now();
-    for(u64 i = 0; i < data.size.area(); i++)
+    for(auto& v : workspace)
     {
-        data.value[i] /= 2;
+        kern(v);
     }
     timing.push_back(
         Chrono::duration_cast<Chrono::microseconds>(Clock::now() - start_time));
+    Profiler::PopContext();
 
     Table::Header head;
     head.push_back("Workload type");

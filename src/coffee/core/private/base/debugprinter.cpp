@@ -59,8 +59,7 @@ static void AddContextString(CString& prefix, Severity sev)
 {
     cstring severity_str = severity_string(sev);
 
-    //    CString cclock = Time::ClockString();
-    CString cclock = "00:00:00";
+    CString cclock = TimeFormatter<>::String("%H:%M:%S");
 #if defined(COFFEE_WINDOWS)
     /* VC++ fills the string with \0, and does not ignore it
      *  while appending. This is a big problem. */
@@ -70,8 +69,7 @@ static void AddContextString(CString& prefix, Severity sev)
 #endif
 
 #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
-    //    CString ms_time = cast_pod((Time::Microsecond() / 1000) % 1000);
-    CString ms_time = "0000";
+    CString ms_time = cast_pod((Time<>::Microsecond() / 1000) % 1000);
     CString clock   = Strings::cStringFormat(
         "{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
     prefix = Strings::cStringFormat("{0}:", clock.c_str());
@@ -135,7 +133,7 @@ static void native_print(
     if(Env::GetVar("VisualStudioVersion").size())
         OutputDebugStringW(formatted_w.c_str());
     else
-        Mem::Puts(stream, formatted.c_str());
+        libc::io::put(stream, formatted.c_str());
 #else
     libc::io::put(stream, formatted.c_str());
 #endif

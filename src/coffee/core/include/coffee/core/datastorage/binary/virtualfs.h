@@ -522,7 +522,7 @@ struct VirtualFS
         if(version() == Version::v1)
             return false;
 
-        for(auto i : Range<>(ext_index.num))
+        for(C_UNUSED(auto _) : Range<>(ext_index.num))
             if(indices()[0].kind == type)
                 return true;
 

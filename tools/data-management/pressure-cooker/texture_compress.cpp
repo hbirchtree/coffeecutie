@@ -223,11 +223,11 @@ void TextureCooker::process(
     Map<ThreadId::Hash, Vector<VirtFS::VirtDesc>> threadFiles;
 
     /* Each thread works on a texture and its mipmaps. */
-    threads::ParallelForEach<FileContainer, FileElement>(
+    threads::Parallel::ForEach(
         targets,
-        [&](FileElement& e) {
+        static_cast<Function<void(FileElement&)>>([&](FileElement& e) {
             CompressTextureSet(threadFiles[ThreadId().hash()], e, this, cursor);
-        },
+        }),
         this->numWorkers);
 
     for(auto& thread : threadFiles)

@@ -233,6 +233,16 @@ ThreadId& GetCurrentThreadId()
 #endif
 }
 
+stl_types::UqLock LockState(libc_types::cstring key)
+{
+    C_PTR_CHECK(ISTATE);
+
+    if(ISTATE->pointer_storage.find(key) == ISTATE->pointer_storage.end())
+        return stl_types::UqLock();
+
+    return UqLock(ISTATE->pointer_storage[key]->access);
+}
+
 ShPtr<GlobalState> SwapState(cstring key, ShPtr<GlobalState> const& ptr)
 {
     C_PTR_CHECK(ISTATE);
@@ -298,7 +308,7 @@ Coffee::DebugFun::LogInterface GetLogInterface()
                 OutputPrinter::fprintf_platform_tagged};
 }
 
-}
+} // namespace DebugFun
 
 namespace State {
 

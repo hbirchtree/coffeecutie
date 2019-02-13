@@ -158,7 +158,7 @@ struct EntityContainer : non_copy
             return other.it != it;
         }
 
-        Entity& operator*()
+        Entity& operator*() const
         {
             if(it == m_container->entities.end())
                 throw std::out_of_range("bad iterator");
@@ -239,6 +239,16 @@ struct EntityContainer : non_copy
         subsystems.emplace(type_id, adapted);
     }
 
+    inline void add_component(u64 entity_id, size_t type_id)
+    {
+        container(type_id).register_entity(entity_id);
+    }
+    template<typename T>
+    inline void add_component(u64 entity_id)
+    {
+        add_component(entity_id, typeid(T).hash_code());
+    }
+
     Entity& create_entity(EntityRecipe const& recipe)
     {
         entity_counter++;
@@ -253,7 +263,7 @@ struct EntityContainer : non_copy
         entity.next_run = clock::now();
 
         for(auto type_id : recipe.components)
-            container(type_id).register_entity(entity_counter);
+            add_component(entity_counter, type_id);
 
         return entity;
     }

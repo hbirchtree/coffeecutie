@@ -123,7 +123,7 @@ bool GenVirtFS(
     {
         DProfContext __(VIRTFS_API "Compressing files");
 
-        Function<void(szptr&)> worker = [&](szptr& i) {
+        Function<void(szptr)> worker = [&](szptr i) {
             auto& file     = files[i];
             auto& src_file = filenames[i];
             auto& in_data  = filenames[i].data;
@@ -150,8 +150,10 @@ bool GenVirtFS(
 #endif
             }
         };
-        threads::ParallelForEach(
-            Range<>(filenames.size()), std::move(worker), settings.workers);
+        threads::Parallel::Consume(
+            Range<>(filenames.size()),
+            std::move(worker),
+            settings.workers);
     }
 
     {
@@ -400,7 +402,6 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
 ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
 {
     using namespace platform::url;
-    using dir_data_index = directory_data_t;
 
     if(!vfs)
         Throw(undefined_behavior(VIRTFS_API "got null vfs!"));

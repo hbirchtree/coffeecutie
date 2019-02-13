@@ -1,7 +1,10 @@
 #pragma once
 
 #include <chrono>
+#include <ctime>
+#include <iomanip>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/standard_exceptions.h>
 
 namespace stl_types {
@@ -13,21 +16,26 @@ using seconds_double = duration<libc_types::bigscalar>;
 
 using Clock = Chrono::steady_clock;
 
-inline Clock::time_point from_unix(libc_types::u64 ts)
+inline time_point<Clock, Chrono::seconds> from_unix(libc_types::u64 ts)
 {
-    Throw(::implementation_error("unimplemented conversion"));
+    static_assert(
+        std::is_pod<std::time_t>::value, "std::time_t is not a POD type");
 
-    Clock::time_point out;
-    out += seconds(ts);
-    return out;
+    std::time_t ts_unix = C_FCAST<std::time_t>(ts);
+    auto        immTs   = Chrono::system_clock::from_time_t(ts_unix);
+
+    return time_point<Clock, seconds>(
+        seconds(duration_cast<seconds>(immTs.time_since_epoch()).count()));
 }
 
-template<typename Clock = high_resolution_clock, typename Unit = seconds>
-inline libc_types::u64 to_unix(typename Clock::time_point ts)
+inline libc_types::u64 to_unix(Clock::time_point ts)
 {
-    Throw(::implementation_error("untested conversion"));
+    static_assert(
+        std::is_pod<std::time_t>::value, "std::time_t is not a POD type");
 
-    return duration_cast<Unit>(ts.time_since_epoch()).count();
+    return C_FCAST<libc_types::u64>(
+        Chrono::system_clock::to_time_t(system_clock::time_point(
+            seconds(duration_cast<seconds>(ts.time_since_epoch()).count()))));
 }
 
 } // namespace Chrono
@@ -50,6 +58,23 @@ struct Time
     STATICINLINE Chrono::microseconds::rep Millisecond()
     {
         return CurrentTimestamp<Chrono::milliseconds>();
+    }
+};
+
+template<typename Clock = Chrono::system_clock, typename CharT = char>
+struct TimeFormatter
+{
+    STATICINLINE typename std::basic_string<CharT> String(const CharT* fmt)
+    {
+        auto time      = std::time(nullptr);
+        auto localTime = std::localtime(&time);
+
+        std::basic_string<CharT>       out;
+        std::basic_stringstream<CharT> ss(out);
+
+        ss << std::put_time<CharT>(localTime, fmt);
+
+        return ss.str();
     }
 };
 

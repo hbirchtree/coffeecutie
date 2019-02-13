@@ -12,7 +12,6 @@ struct ThreadNames : State::GlobalState
 {
     virtual ~ThreadNames();
 
-    Mutex                        access;
     Map<ThreadId::Hash, CString> names;
 };
 
@@ -31,8 +30,8 @@ STATICINLINE ThreadNames& GetContext(State::GlobalState* context = nullptr)
         ptr = State::PeekState("threadNames");
         if(!ptr)
         {
-            State::SwapState("threadNames", MkShared<ThreadNames>());
-            ptr = State::PeekState("threadNames");
+            ptr = MkShared<ThreadNames>();
+            State::SwapState("threadNames", ptr);
         }
         castablePtr = ptr.get();
     }
@@ -48,8 +47,8 @@ STATICINLINE ThreadNames& GetContext(State::GlobalState* context = nullptr)
 
 STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
 {
+    C_UNUSED(auto state) = State::LockState("threadNames");
     auto& context = GetContext();
-    Lock  _(context.access);
 
     if(context.names.find(hs) != context.names.end())
         return;
@@ -59,8 +58,8 @@ STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
 
 STATICINLINE CString LoadThreadName(ThreadId::Hash hs)
 {
+    C_UNUSED(auto state) = State::LockState("threadNames");
     auto& context = GetContext();
-    Lock  _(context.access);
 
     return context.names[hs];
 }
@@ -109,6 +108,7 @@ CString GetName(ThreadId::Hash const& t)
 
 Map<ThreadId::Hash, CString> GetNames(State::GlobalState* context)
 {
+    C_UNUSED(auto state) = State::LockState("threadNames");
     return GetContext(context).names;
 }
 } // namespace Threads
