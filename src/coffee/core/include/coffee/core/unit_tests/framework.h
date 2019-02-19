@@ -38,6 +38,18 @@ struct Test
                                test */
 };
 
+struct StartupMessage
+{
+    StartupMessage(const char* msg)
+    {
+        using Coffee::DebugFun::OutputPrinter;
+        using Coffee::DebugFun::Severity;
+
+        OutputPrinter::fprintf_platform(
+            stderr, msg, Severity::Information, 0, 0);
+    }
+};
+
 using TestList = Test*;
 
 extern int run_tests(Coffee::u32 num, Test const* tests, int argc, char** argv);
@@ -94,6 +106,9 @@ FORCEDINLINE void NotEquals(T1 v1, T2 v2)
 
 } // namespace assert
 
+template<size_t NumTests>
+using TestArray = Coffee::Array<CoffeeTest::Test, NumTests>;
+
 #define ASSERT_CONTEXT __FILE__ ":" C_STR(__LINE__) ": "
 
 #define assertEquals(v1, v2)      \
@@ -116,17 +131,27 @@ FORCEDINLINE void NotEquals(T1 v1, T2 v2)
     assertion::assertTrue_impl( \
         !val, ASSERT_CONTEXT "boolean check failed: !" C_STR(val))
 
-#define COFFEE_RUN_TESTS(test_list)                                \
-    int ref_main(int argc, char** argv)                            \
-    {                                                              \
-        size_t num = sizeof(test_list) / sizeof(CoffeeTest::Test); \
-                                                                   \
-        return CoffeeTest::run_tests(                              \
-            C_CAST<Coffee::u32>(num), test_list, argc, argv);      \
-    }                                                              \
+#define COFFEE_RUN_TESTS(test_list)                                  \
+    int ref_main(int argc, char** argv)                              \
+    {                                                                \
+        size_t num = test_list.size();                               \
+                                                                     \
+        return CoffeeTest::run_tests(                                \
+            C_CAST<Coffee::u32>(num), test_list.data(), argc, argv); \
+    }                                                                \
     COFFEE_APPLICATION_MAIN(ref_main)
 
-#define COFFEE_TEST_SUITE(num_tests) \
-    const constexpr CoffeeTest::Test _tests[num_tests]
+#define COFFEE_TEST_SUITE(num_tests) const constexpr TestArray<num_tests> _tests
 
 #define COFFEE_EXEC_TESTS() COFFEE_RUN_TESTS(_tests)
+
+#define COFFEE_TESTS_BEGIN(num) COFFEE_TEST_SUITE(num) = {{
+#define COFFEE_TESTS_END() \
+    }                      \
+    }                      \
+    ;                      \
+    COFFEE_EXEC_TESTS()
+
+#define COFFEE_TESTS_DISCLAIMER(id, msg)        \
+    extern CoffeeTest::StartupMessage msg_##id; \
+    CoffeeTest::StartupMessage        msg_##id(msg);

@@ -22,7 +22,8 @@ bool table_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {table_test, "Print a table", nullptr, false, false}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_RUN_TESTS(_tests);
+{table_test, "Print a table", nullptr, false, false},
+
+COFFEE_TESTS_END()

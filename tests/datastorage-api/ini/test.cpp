@@ -81,9 +81,9 @@ bool write_file()
     return res;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {readwrite_file, "Reading INI file from disk"},
-    {write_file, "Writing INI document to disk"},
-};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {readwrite_file, "Reading INI file from disk"},
+    {write_file, "Writing INI document to disk"}
+
+COFFEE_TESTS_END()

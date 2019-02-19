@@ -3,6 +3,7 @@
 #include <coffee/core/CProfiling>
 
 #include <coffee/core/CThreading>
+#include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/time_types.h>
@@ -75,7 +76,59 @@ bool workload_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {workload_test, "Threaded workload test", nullptr, true, false}};
+bool queue_workload_test()
+{
+    Vector<RuntimeQueue*> queues;
+    queues.reserve(Thread::hardware_concurrency());
 
-COFFEE_RUN_TESTS(_tests);
+    runtime_queue_error ec;
+    for(auto i : Range<>(Thread::hardware_concurrency()))
+    {
+        queues.push_back(
+            RuntimeQueue::CreateNewThreadQueue("Queue " + cast_pod(i), ec));
+        C_ERROR_CHECK(ec);
+    }
+
+    Vector<u64> taskIds;
+    taskIds.reserve(Thread::hardware_concurrency() * 128);
+
+    Vector<Matf4> data;
+    data.reserve(Thread::hardware_concurrency() * 128);
+    szptr i = 0;
+
+    for(auto queue : queues)
+    {
+        for(C_UNUSED(auto _) : Range<>(128))
+        {
+            ec = runtime_queue_error();
+            auto id = RuntimeQueue::QueueImmediate(
+                queue,
+                Chrono::seconds(0),
+                [&]() { data[i] = typing::vectors::inverse(data[i]); },
+                ec);
+            C_ERROR_CHECK(ec);
+            i++;
+            taskIds.push_back(id);
+        }
+    }
+
+    for(auto i : Range<>(Thread::hardware_concurrency()))
+        for(auto j : Range<>(128))
+        {
+            RuntimeQueue::AwaitTask(
+                queues.at(i)->threadId(), taskIds[i * 128 + j], ec);
+            C_ERROR_CHECK(ec);
+        }
+
+    return true;
+}
+
+COFFEE_TESTS_DISCLAIMER(
+    1, "This test may consume all cores and a lot of memory")
+
+COFFEE_TESTS_BEGIN(2)
+
+    {workload_test, "Threaded workload test"},
+    {queue_workload_test, "Threaded workload test using queues"}
+
+COFFEE_TESTS_END();

@@ -72,10 +72,11 @@ FORCEDINLINE void PrintVersionInfo()
     auto const& app_data = ApplicationData();
 
     cOutputPrint(
-        "{0}, released by {1}, version {2}",
+        "{0}, released by {1}, version {2} ({3} mode)",
         app_data.application_name,
         app_data.organization_name,
-        app_data.version_code);
+        app_data.version_code,
+        platform::info::build_mode);
 #endif
 }
 

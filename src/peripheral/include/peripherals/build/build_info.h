@@ -19,6 +19,7 @@ extern const cstring architecture;
 extern const cstring build_version;
 extern const cstring compiler;
 extern const cstring platform_identity;
+extern const cstring build_mode;
 
 } // namespace info
 } // namespace platform

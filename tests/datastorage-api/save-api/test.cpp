@@ -67,8 +67,8 @@ bool save_to_disk()
     return data_cpy == data;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {save_to_disk, "Saving and loading from disk"},
-};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_RUN_TESTS(_tests)
+    {save_to_disk, "Saving and loading from disk"}
+
+COFFEE_TESTS_END()
