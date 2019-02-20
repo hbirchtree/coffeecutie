@@ -72,7 +72,11 @@ struct TimeFormatter
         std::basic_string<CharT>       out;
         std::basic_stringstream<CharT> ss(out);
 
+#if __cplusplus >= 201103L
         ss << std::put_time<CharT>(localTime, fmt);
+#else
+        ss << std::time_put<CharT>(localTime, fmt);
+#endif
 
         return ss.str();
     }

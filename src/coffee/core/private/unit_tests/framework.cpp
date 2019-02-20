@@ -247,7 +247,7 @@ void RunTest(Test const& test, TestInstance& test_info)
         res = test.test();
     }
 #if !MODE_CRASHTEST
-    catch(std::exception const& e)
+    catch(std::exception const&)
     {
 #if !MODE_LOWFAT
         platform::env::Stacktracer::ExceptionStacktrace(
