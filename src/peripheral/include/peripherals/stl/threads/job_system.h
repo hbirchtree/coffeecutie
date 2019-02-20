@@ -6,7 +6,9 @@
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/types.h>
 
+#if defined(THREAD_PROFILING)
 using JobProfiler = Coffee::Profiler;
+#endif
 
 namespace stl_types {
 namespace threads {
@@ -38,23 +40,31 @@ Function<void(szptr)> get_worker(
         CurrentThread::SetName(
             "ParallelForEach::runner " + str::convert::to_string(worker_i));
 
+#if defined(THREAD_PROFILING)
         JobProfiler::PushContext("Queue");
+#endif
 
         while(true)
         {
             /* Fetch work item, exit if there is no
              * more work to do */
+#if defined(THREAD_PROFILING)
             JobProfiler::PushContext("Awaiting lock");
+#endif
             work_lock.lock();
             if(container_it == container_end)
             {
                 work_lock.unlock();
+#if defined(THREAD_PROFILING)
                 JobProfiler::PopContext();
+#endif
                 break;
             }
+#if defined(THREAD_PROFILING)
             JobProfiler::PopContext();
 
             JobProfiler::PushContext("Taking work item");
+#endif
             /* The work item is copied to the worker */
             auto q_it = container_it;
             for(C_UNUSED(auto _) : Range<>(Parameters::batch_size))
@@ -67,16 +77,22 @@ Function<void(szptr)> get_worker(
             auto q_end = container_it;
 
             work_lock.unlock();
+#if defined(THREAD_PROFILING)
             JobProfiler::PopContext();
 
             JobProfiler::PushContext("Running work item(s)");
+#endif
             /* Run predicate on work item */
             for(; q_it != q_end; ++q_it)
                 pred(*q_it);
+#if defined(THREAD_PROFILING)
             JobProfiler::PopContext();
+#endif
 
         }
+#if defined(THREAD_PROFILING)
         JobProfiler::PopContext();
+#endif
     };
 }
 

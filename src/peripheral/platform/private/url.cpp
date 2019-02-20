@@ -215,7 +215,7 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     paths.configDir = library + Path{"Application Support"} + app_path;
 
-    paths.configDir = library + Path{"Caches"} + app_path;
+    paths.cacheDir = library + Path{"Caches"} + app_path;
 #endif
 
 #elif defined(COFFEE_EMSCRIPTEN)

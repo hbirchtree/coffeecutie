@@ -14,6 +14,8 @@
 
 #include <coffee/strings/libc_types.h>
 
+#define MODE_CRASHTEST 0
+
 /* This is placed here because it includes CDebug */
 #include <coffee/core/unit_tests/framework.h>
 
@@ -236,12 +238,16 @@ void RunTest(Test const& test, TestInstance& test_info)
     cDebug("Starting test {0}", test_info.title);
 
     Profiler::PushContext(test_info.title);
+#if !MODE_CRASHTEST
     try
+#endif
     {
         C_UNUSED(TemporaryState _);
 
         res = test.test();
-    } catch(std::exception const& e)
+    }
+#if !MODE_CRASHTEST
+    catch(std::exception const& e)
     {
 #if !MODE_LOWFAT
         platform::env::Stacktracer::ExceptionStacktrace(
@@ -253,6 +259,7 @@ void RunTest(Test const& test, TestInstance& test_info)
 #endif
         Profiler::Profile("exception");
     }
+#endif
     Profiler::PopContext();
 
     test_info.submit(

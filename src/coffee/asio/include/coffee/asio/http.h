@@ -946,6 +946,9 @@ struct part_iterator
 
     size_t next_section()
     {
+        if(m_payload.size() <= m_pos)
+            return static_cast<size_t>(-1);
+
         void* ptr = ::memmem(
             &m_payload.at(m_pos),
             C_FCAST<size_t>(m_payload.size() - m_pos),
@@ -970,7 +973,7 @@ struct part_iterator
             return static_cast<size_t>(-1);
         }
 
-        return C_FCAST<size_t>(C_RCAST<char*>(ptr) - &m_payload[0]);
+        return C_FCAST<size_t>(C_RCAST<char*>(ptr) - &m_payload.at(0));
     }
 
     part_iterator& operator++()
