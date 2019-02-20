@@ -6,8 +6,8 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CMath>
 #include <coffee/core/CThreading>
-#include <peripherals/stl/string_casting.h>
 #include <coffee/core/types/chunk.h>
+#include <peripherals/stl/string_casting.h>
 
 /* Graphics API interfaces */
 #include <coffee/interfaces/cgraphics_api.h>
@@ -51,6 +51,8 @@ bool dummy_test()
     return true;
 }
 
-COFFEE_TEST_SUITE(1) = {{dummy_test, "Dummy test for coverage"}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_EXEC_TESTS()
+    {dummy_test, "Dummy test for coverage"}
+
+COFFEE_TESTS_END()

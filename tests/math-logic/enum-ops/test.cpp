@@ -97,7 +97,8 @@ bool assign_xor()
 }
 } // namespace ClassTests
 
-const constexpr CoffeeTest::Test _tests[12] = {
+COFFEE_TESTS_BEGIN(12)
+
     {IntegerTests::_and, "Bitwise AND on integer enum"},
     {IntegerTests::_or, "Bitwise OR on integer enum"},
     {IntegerTests::_xor, "Bitwise XOR on integer enum"},
@@ -110,7 +111,6 @@ const constexpr CoffeeTest::Test _tests[12] = {
     {ClassTests::_xor, "Bitwise XOR on class enum"},
     {ClassTests::assign_and, "Bitwise AND on class enum with &="},
     {ClassTests::assign_or, "Bitwise OR on class enum with |="},
-    {ClassTests::assign_xor, "Bitwise XOR on class enum with ^="},
-};
+    {ClassTests::assign_xor, "Bitwise XOR on class enum with ^="}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

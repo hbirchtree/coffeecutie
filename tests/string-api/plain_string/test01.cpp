@@ -155,6 +155,8 @@ bool plain_operations()
     return true;
 }
 
-COFFEE_TEST_SUITE(1) = {{plain_operations, "Plain string operations"}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_EXEC_TESTS()
+    {plain_operations, "Plain string operations"}
+
+COFFEE_TESTS_END()

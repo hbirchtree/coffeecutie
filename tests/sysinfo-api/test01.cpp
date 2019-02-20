@@ -34,7 +34,8 @@ bool sysinfo_printing()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {sysinfo_printing, "Basic SysInfo information"}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_RUN_TESTS(_tests);
+    {sysinfo_printing, "Basic SysInfo information"}
+
+COFFEE_TESTS_END()

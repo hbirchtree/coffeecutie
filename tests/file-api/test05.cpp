@@ -31,8 +31,8 @@ bool filewrite_large_test()
 
     Profiler::Profile("Copying data into segment");
 
-    bool stat = FileCommit(
-        rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
+    bool stat =
+        FileCommit(rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;
@@ -68,12 +68,13 @@ bool filemap_large_test()
     return stat;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
+COFFEE_TESTS_BEGIN(2)
+
     {filewrite_large_test,
      "Large file writing",
      "Allocates 5GB of data and writes it to disk"},
     {filemap_large_test,
      "Large file mapping",
-     "Mapping a large file into memory"}};
+     "Mapping a large file into memory"}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

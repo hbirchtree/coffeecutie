@@ -221,7 +221,8 @@ bool pix_size_tests()
     return false;
 }
 
-const constexpr CoffeeTest::Test _tests[7] = {
+COFFEE_TESTS_BEGIN(7)
+
     {basic_tests,
      "Integer sizes",
      "Checking the storage of integer types",
@@ -244,7 +245,6 @@ const constexpr CoffeeTest::Test _tests[7] = {
      "Check sizes of input structures",
      "Useful for aligning data optimally",
      true,
-     false},
-};
+     false}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

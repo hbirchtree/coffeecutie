@@ -54,11 +54,11 @@ bool filescratch_test()
     return flag;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
+COFFEE_TESTS_BEGIN(1)
+
     {filescratch_test,
      "Scratch buffers",
      "Creating and using a scratch buffer",
-     true},
-};
+     true}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

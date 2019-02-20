@@ -52,8 +52,9 @@ bool matrix_decompose()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {matrix_translation_test, "Matrix translation"},
-    {matrix_decompose, "Matrix decomposition"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {matrix_translation_test, "Matrix translation"},
+    {matrix_decompose, "Matrix decomposition"}
+
+COFFEE_TESTS_END()

@@ -110,14 +110,14 @@ bool dirlist_test()
     return true;
 }
 
-COFFEE_TEST_SUITE(4) = {
+COFFEE_TESTS_BEGIN(4)
+
     {dirbasename_test, "Directory basename", "Getting the directory of a file"},
     {basename_test, "Basename operation", "Getting the basename of paths"},
 
     {dirstat_test,
      "Directory testing",
      "Using lstat() to check directory status"},
-    {dirlist_test, "Directory listing", "Listing entries in a directory"},
-};
+    {dirlist_test, "Directory listing", "Listing entries in a directory"}
 
-COFFEE_EXEC_TESTS();
+COFFEE_TESTS_END()

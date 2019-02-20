@@ -39,9 +39,9 @@ bool decode_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {encode_test, "Encoding Base64", ""},
-    {decode_test, "Decoding Base64", "", true, false},
-};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {encode_test, "Encoding Base64", ""},
+    {decode_test, "Decoding Base64", "", true, false}
+
+COFFEE_TESTS_END()

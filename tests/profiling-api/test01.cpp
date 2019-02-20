@@ -45,8 +45,9 @@ bool profile_pushing()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {context_pushing, "Pushing profiling context"},
-    {profile_pushing, "Pushing profiling point"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {context_pushing, "Pushing profiling context"},
+    {profile_pushing, "Pushing profiling point"}
+
+COFFEE_TESTS_END()

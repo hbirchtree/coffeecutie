@@ -7,12 +7,12 @@ bool example_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _run_tests[1] = {
-    {example_test /* Test function */,
-     "Short title","Longer description",
-     false /* Optional? */,
-     false /* Cascading failure? */},
-    /* Empty tests are ignored */
-};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_RUN_TESTS(_run_tests);
+    {example_test /* Test function */,
+     "Short title",
+     "Longer description",
+     false /* Optional? */,
+     false /* Cascading failure? */}
+
+COFFEE_TESTS_END()

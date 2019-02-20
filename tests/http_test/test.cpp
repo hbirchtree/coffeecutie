@@ -219,12 +219,14 @@ bool multipart_process()
 }
 #endif
 
-COFFEE_TEST_SUITE(7) = {{url_parsing, "Parse HTTP URL"},
-                        {url_query_parsing, "Parsing HTTP URL queries"},
-                        {header_field_list, "Header field value parsing"},
-                        {request_process, "Request parsing"},
-                        {response_process, "Response parsing"},
-                        {response_read_payload, "Read response with payload"},
-                        {multipart_process, "Multiparty body processing"}};
+COFFEE_TESTS_BEGIN(7)
 
-COFFEE_EXEC_TESTS()
+    {url_parsing, "Parse HTTP URL"},
+    {url_query_parsing, "Parsing HTTP URL queries"},
+    {header_field_list, "Header field value parsing"},
+    {request_process, "Request parsing"},
+    {response_process, "Response parsing"},
+    {response_read_payload, "Read response with payload"},
+    {multipart_process, "Multiparty body processing"}
+
+COFFEE_TESTS_END()

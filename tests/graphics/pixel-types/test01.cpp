@@ -75,9 +75,11 @@ bool regular_format_coverage()
     return true;
 }
 
-COFFEE_TEST_SUITE(2) = {{compressed_format_coverage,
-                         "Compressed format coverage",
-                         "Checking compatibility with functions"},
-                        {regular_format_coverage, "Regular format coverage"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_EXEC_TESTS()
+    {compressed_format_coverage,
+     "Compressed format coverage",
+     "Checking compatibility with functions"},
+    {regular_format_coverage, "Regular format coverage"}
+
+COFFEE_TESTS_END()

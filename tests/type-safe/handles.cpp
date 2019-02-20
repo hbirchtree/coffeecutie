@@ -75,12 +75,12 @@ bool pointer_handle()
 }
 
 static int transfer_value_handle = -1;
-static int transfer_num_calls = 0;
+static int transfer_num_calls    = 0;
 
 void transfer_close_function(int h)
 {
     transfer_value_handle = h;
-    transfer_num_calls ++;
+    transfer_num_calls++;
 }
 
 bool handle_transfer()
@@ -113,8 +113,10 @@ bool handle_transfer()
     return true;
 }
 
-COFFEE_TEST_SUITE(3) = {{integer_handle, "Integer handles"},
-                        {pointer_handle, "Pointer handles"},
-                        {handle_transfer, "Transfer of handle"}};
+COFFEE_TESTS_BEGIN(3)
 
-COFFEE_EXEC_TESTS()
+    {integer_handle, "Integer handles"},
+    {pointer_handle, "Pointer handles"},
+    {handle_transfer, "Transfer of handle"}
+
+COFFEE_TESTS_END()

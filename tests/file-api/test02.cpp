@@ -35,8 +35,9 @@ bool filemap_test()
     return status;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {filewrite_test, "File writing", "Really just prepares for the next test"},
-    {filemap_test, "File mapping"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {filewrite_test, "File writing", "Really just prepares for the next test"},
+    {filemap_test, "File mapping"}
+
+COFFEE_TESTS_END()

@@ -104,7 +104,9 @@ bool virtfs_iterator()
     return true;
 }
 
-COFFEE_TEST_SUITE(2) = {{virtfs_serialize, "VirtFS serialization"},
-                        {virtfs_iterator, "VirtFS iterators"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_EXEC_TESTS();
+    {virtfs_serialize, "VirtFS serialization"},
+    {virtfs_iterator, "VirtFS iterators"}
+
+COFFEE_TESTS_END()

@@ -72,13 +72,13 @@ bool fileread_test()
     return status;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
+COFFEE_TESTS_BEGIN(2)
+
     {filewrite_test,
      "Massive file writing",
      "Writing lots of text data to disk"},
     {fileread_test,
      "Massive file reading",
-     "Reading lots of text data from disk"},
-};
+     "Reading lots of text data from disk"}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

@@ -64,9 +64,10 @@ bool casting_signed_unsigned()
 // static constexpr bool supports_safe_cast = true;
 #endif
 
-COFFEE_TEST_SUITE(3) = {
+COFFEE_TESTS_BEGIN(3)
+
     {enum_cast, "Casting enums to int"},
     {downcasting_u32_u16, "Downcasting", nullptr, true, false},
-    {casting_signed_unsigned, "Unsigned casting", nullptr, true, false}};
+    {casting_signed_unsigned, "Unsigned casting", nullptr, true, false}
 
-COFFEE_EXEC_TESTS();
+COFFEE_TESTS_END()

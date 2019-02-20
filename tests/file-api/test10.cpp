@@ -181,7 +181,8 @@ bool url_parsing_custom_uri()
 }
 #endif
 
-COFFEE_TEST_SUITE(16) = {
+COFFEE_TESTS_BEGIN(16)
+
     {url_bad_deref, "Url bad dereferencing"},
     {url_get_dereferenced, "Url dereferencing"},
     {url_get_storage<RSCA::SystemFile>, "Url dereference class", "SystemFile"},
@@ -197,7 +198,6 @@ COFFEE_TEST_SUITE(16) = {
     {url_get_string, "Path get to_string"},
     {url_path_get_from_url, "Path get from Url"},
     {url_parsing_http, "HTTP URL parsing"},
-    {url_parsing_custom_uri, "Parsing custom URI scheme"},
-};
+    {url_parsing_custom_uri, "Parsing custom URI scheme"}
 
-COFFEE_EXEC_TESTS()
+COFFEE_TESTS_END()

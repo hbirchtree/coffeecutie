@@ -104,7 +104,8 @@ bool resource_write_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[5] = {
+COFFEE_TESTS_BEGIN(5)
+
     {resource_exist_test,
      "Resource existence",
      "Test whether the resources are there"},
@@ -126,7 +127,6 @@ const constexpr CoffeeTest::Test _tests[5] = {
     {resource_write_test,
      "Resource writing",
      "If the resources are writable",
-     true},
-};
+     true}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

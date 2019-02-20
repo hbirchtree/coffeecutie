@@ -18,8 +18,8 @@ bool linear_lerp()
     return true;
 }
 
-COFFEE_TEST_SUITE(1) = {
-    {linear_lerp, "Linear lerp"},
-};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_EXEC_TESTS()
+    {linear_lerp, "Linear lerp"}
+
+COFFEE_TESTS_END()

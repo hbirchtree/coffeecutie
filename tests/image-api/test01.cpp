@@ -31,7 +31,9 @@ bool float_cast()
            CMath::floating_equal(output.data[2], 0.f);
 }
 
-COFFEE_TEST_SUITE(2) = {{touch_functions, "Touching functions"},
-                        {float_cast, "Casting an image to floating-point"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_EXEC_TESTS()
+    {touch_functions, "Touching functions"},
+    {float_cast, "Casting an image to floating-point"}
+
+COFFEE_TESTS_END()

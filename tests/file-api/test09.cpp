@@ -71,8 +71,9 @@ bool test_url_version(RSCA access)
             "URL mapping({1}): test -> {0}",
             test_string,
             str::print::pointerify(C_CAST<u32>(access)));
-    } catch(std::runtime_error const&)
+    } catch(std::runtime_error const& e)
     {
+        cWarning("Got error: {0}", e.what());
         return false;
     }
     return true;
@@ -80,6 +81,8 @@ bool test_url_version(RSCA access)
 
 bool url_api()
 {
+    PrintingVerbosityLevel() = 10;
+
     do
     {
         if(!test_url_version(RSCA::SystemFile))
@@ -101,7 +104,8 @@ bool url_api()
 
 using namespace ::platform::file;
 
-COFFEE_TEST_SUITE(4) = {
+COFFEE_TESTS_BEGIN(4)
+
     {api_test<FileInterface, FileInterface::file_error::nested_error_type>,
      "Interface",
      "Testing that the unimplemented interface is properly tested",
@@ -123,6 +127,6 @@ COFFEE_TEST_SUITE(4) = {
      "URL API",
      "Testing whether the platform's URL API is working as intended",
      false,
-     true}};
+     true}
 
-COFFEE_EXEC_TESTS();
+COFFEE_TESTS_END()

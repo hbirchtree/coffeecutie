@@ -1,7 +1,7 @@
-#include <coffee/core/CUnitTesting>
-#include <peripherals/stl/string_casting.h>
-#include <peripherals/libc/types.h>
 #include <coffee/core/CMath>
+#include <coffee/core/CUnitTesting>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/string_casting.h>
 
 using namespace Coffee;
 
@@ -55,19 +55,20 @@ bool convert_string()
 
 bool string_literal_test()
 {
-//    bigscalar cast_test_f = "127"_bigscalar;
-//    uint64    cast_test_u = "127"_u64;
-//    int64     cast_test_i = "-127"_i64;
+    //    bigscalar cast_test_f = "127"_bigscalar;
+    //    uint64    cast_test_u = "127"_u64;
+    //    int64     cast_test_i = "-127"_i64;
 
-//    if(cast_test_f != 127 || cast_test_u != 127 || cast_test_i != -127)
-//        return false;
+    //    if(cast_test_f != 127 || cast_test_u != 127 || cast_test_i != -127)
+    //        return false;
 
     return true;
 }
 
-static const CoffeeTest::Test string_tests[3] = {
+COFFEE_TESTS_BEGIN(3)
+
     {interpret_integers, "Interpreting integers from strings"},
     {convert_string, "String conversion of POD types", "", true},
-    {string_literal_test, "Interpreting string literals"}};
+    {string_literal_test, "Interpreting string literals"}
 
-COFFEE_RUN_TESTS(string_tests)
+COFFEE_TESTS_END()

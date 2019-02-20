@@ -94,8 +94,9 @@ bool deep_error_casting()
     return inner_value == 3 && middle_value == 2 && outer_value == 1;
 }
 
-COFFEE_TEST_SUITE(2) = {
-    {simple_error_casting, "Error casting", "1 level of nesting"},
-    {deep_error_casting, "Deep error casting", "2 levels of nesting"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_EXEC_TESTS()
+    {simple_error_casting, "Error casting", "1 level of nesting"},
+    {deep_error_casting, "Deep error casting", "2 levels of nesting"}
+
+COFFEE_TESTS_END()

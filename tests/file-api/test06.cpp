@@ -60,7 +60,8 @@ bool filestat_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[4] = {
+COFFEE_TESTS_BEGIN(4)
+
     {filedel_test, "File handling", "Creating and deleting a file"},
     {check_move_constructor,
      "Constructor test 1",
@@ -68,7 +69,6 @@ const constexpr CoffeeTest::Test _tests[4] = {
     {check_move_constructor,
      "Constructor test 2",
      "Verifying std::move for Resource"},
-    {filestat_test, "File testing", "Using stat() to check file status"},
-};
+    {filestat_test, "File testing", "Using stat() to check file status"}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

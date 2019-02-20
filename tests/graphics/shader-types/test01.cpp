@@ -34,6 +34,8 @@ bool shader_types_uniform_flags()
     return true;
 }
 
-COFFEE_TEST_SUITE(1) = {{shader_types_uniform_flags, "Uniform types"}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_RUN_TESTS(_tests);
+    {shader_types_uniform_flags, "Uniform types"}
+
+COFFEE_TESTS_END()

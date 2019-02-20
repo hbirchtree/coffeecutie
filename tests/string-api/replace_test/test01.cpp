@@ -19,8 +19,9 @@ bool replace_test()
     return test_string == final_string;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {compare_test, "C-string comparison"},
-    {replace_test, "STL string replacement", "Used for resource operations"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {compare_test, "C-string comparison"},
+    {replace_test, "STL string replacement", "Used for resource operations"}
+
+COFFEE_TESTS_END()

@@ -31,7 +31,8 @@ bool mutex_locking()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {mutex_locking, "Locked printing"}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_RUN_TESTS(_tests);
+    {mutex_locking, "Locked printing"}
+
+COFFEE_TESTS_END()

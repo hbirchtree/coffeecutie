@@ -127,7 +127,8 @@ bool memcpy_tofrom_stl_variable()
     return memcmp(&source[0], &target[0], target.size()) == 0;
 }
 
-COFFEE_TEST_SUITE(9) = {
+COFFEE_TESTS_BEGIN(9)
+
     {wrap_other_type, "Wrap data type of different size"},
     {unsafe_data_wrap, "Wrapping regular data", "Uses unsafe semantics"},
     {unsafe_data_wrap_2,
@@ -139,7 +140,6 @@ COFFEE_TEST_SUITE(9) = {
     {memcpy_variable, "MemCpy() between Bytes containers"},
     {memcpy_stl_variable, "MemCpy() from STL container to Bytes"},
     {memcpy_to_stl_variable, "MemCpy() from Bytes to STL container"},
-    {memcpy_tofrom_stl_variable, "Wrapping between STL containers"},
-};
+    {memcpy_tofrom_stl_variable, "Wrapping between STL containers"}
 
-COFFEE_EXEC_TESTS();
+COFFEE_TESTS_END()

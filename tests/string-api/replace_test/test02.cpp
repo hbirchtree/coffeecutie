@@ -207,7 +207,8 @@ static constexpr bool has_broken_ptr_fmt = true;
 static constexpr bool has_broken_ptr_fmt = false;
 #endif
 
-const constexpr CoffeeTest::Test _tests[27] = {
+COFFEE_TESTS_BEGIN(27)
+
     {basic_format, "Basic text formatting"},
     {string_format, "Basic text insertion, part 1", "Has special characters"},
     {cstring_format, "Basic text insertion, part 2", "Has special characters"},
@@ -243,6 +244,6 @@ const constexpr CoffeeTest::Test _tests[27] = {
     {generic_fmt<Matf3>, "Matf3 format"},
     {generic_fmt<Matf4>, "Matf4 format"},
     {generic_fmt<Quatf>, "Quatf format"},
-    {apparg_fmt, "AppArg format"}};
+    {apparg_fmt, "AppArg format"}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()
