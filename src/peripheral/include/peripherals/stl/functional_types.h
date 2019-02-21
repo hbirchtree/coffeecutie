@@ -46,16 +46,44 @@ function_traits_impl<std::function<R(Args...)>> function_traits(R (*)(Args...))
     return function_traits_impl<std::function<R(Args...)>>();
 }
 
-} // namespace stl_types
-
-#define declmemtype(fun) decltype(std::mem_fun(&fun))::result_type
-#define declreturntype(fun) \
-    decltype(stl_types::function_traits(&fun))::result_type
-
-namespace stl_types {
-
 template<typename FunSignature>
 using Function = std::function<FunSignature>;
+
+template<typename T>
+struct WkPtrUnwrap
+{
+    WkPtrUnwrap(WkPtr<T>&& ptr)
+    {
+        lock = ptr.lock();
+    }
+    WkPtrUnwrap(WkPtr<T>& ptr)
+    {
+        lock = ptr.lock();
+    }
+
+    void operator()(Function<void(T*)>&& present)
+    {
+        if(!lock)
+            return;
+
+        present(lock.get());
+    }
+
+    operator bool() const
+    {
+        return static_cast<bool>(lock);
+    }
+
+    ShPtr<T> lock;
+};
+
+template<typename PtrType>
+FORCEDINLINE void ApplyIfValid(
+    PtrType&& ptr, Function<void(typename PtrType::element_type*)>&& func)
+{
+    WkPtrUnwrap<typename PtrType::element_type> wrapper(std::move(ptr));
+    wrapper(std::move(func));
+}
 
 namespace bind_this {
 template<
@@ -158,3 +186,7 @@ void call(RType (*fun)(Args...), Args... args)
 } // namespace quiet_exception
 
 } // namespace stl_types
+
+#define declmemtype(fun) decltype(std::mem_fun(&fun))::result_type
+#define declreturntype(fun) \
+    decltype(stl_types::function_traits(&fun))::result_type

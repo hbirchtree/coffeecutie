@@ -10,7 +10,6 @@
 #include <platforms/argument_parse.h>
 #include <platforms/process.h>
 #include <platforms/stacktrace.h>
-#include <coffee/core/internal_state.h>
 
 #include <coffee/strings/libc_types.h>
 
@@ -199,7 +198,7 @@ struct TemporaryState
         m_state(State::GetInternalState()),
         m_tstate(State::GetInternalThreadState())
     {
-        auto profiler = State::PeekState("jsonProfiler");
+        auto profiler    = State::PeekState("jsonProfiler");
         auto threadNames = State::PeekState("threadNames");
 
         State::SetInternalState(State::CreateNewState());
@@ -208,7 +207,9 @@ struct TemporaryState
         State::SwapState("jsonProfiler", profiler);
         State::SwapState("threadNames", threadNames);
 
-        State::GetProfilerStore()->flags.enabled = true;
+        ApplyIfValid(State::GetProfilerStore(), [](auto context) {
+            context->flags.enabled = true;
+        });
     }
 
     ~TemporaryState()

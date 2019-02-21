@@ -28,6 +28,10 @@
 #include <system_error>
 #include <type_traits>
 
+#if __cplusplus >= 201703L
+#include <optional>
+#endif
+
 #if defined(COFFEE_GEKKO)
 using mutex_handle_t = long unsigned int;
 #endif
@@ -675,6 +679,56 @@ struct nested_empty_error_code
 {
     using nested_error_type = NestedError;
 };
+
+#if __cplusplus < 201703L
+using bad_optional_access = undefined_behavior;
+
+template<typename T>
+struct Optional
+{
+    Optional() : valid(false)
+    {
+    }
+    Optional(T&& value) : value(value), valid(true)
+    {
+    }
+
+    T& operator->() const
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return value;
+    }
+
+    T& operator*() const
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return value;
+    }
+
+    operator bool() const
+    {
+        return valid;
+    }
+
+    Optional& operator=(T&& v)
+    {
+        value = std::move(v);
+        valid = true;
+
+        return *this;
+    }
+
+    T value;
+    bool valid;
+};
+#else
+template<typename T>
+using Optional = std::optional<T>;
+#endif
 
 } // namespace stl_types
 

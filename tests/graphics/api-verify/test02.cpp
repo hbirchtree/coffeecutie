@@ -2,13 +2,13 @@
 #include <coffee/interfaces/cgraphics_api.h>
 
 #if defined(COFFEE_GLEAM_DESKTOP)
-#include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/graphics/apis/CGLeam>
+#include <coffee/graphics/apis/CGLeamRHI>
 #endif
 
 using namespace Coffee;
 
-//using GFXAPI = RHI::NullAPI;
+// using GFXAPI = RHI::NullAPI;
 
 template<typename GFXAPI>
 void create_tex_format(PixFmt fmt, PixCmp cmp)
@@ -36,11 +36,9 @@ bool test_texture_formats()
 
 using GFX = RHI::GLEAM::GLEAM_API;
 
-COFFEE_TEST_SUITE(1) = {
-{
-        CoffeeTest::GraphicsWrap<test_texture_formats<GFX>, GFX>,
-        "Texture format verification"
-}
-};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_GFX_RUN_TESTS(_tests);
+    {CoffeeTest::GraphicsWrap<test_texture_formats<GFX>, GFX>,
+     "Texture format verification"}
+
+COFFEE_TESTS_END()

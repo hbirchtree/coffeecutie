@@ -210,12 +210,9 @@ bool test_api()
     return true;
 }
 
-COFFEE_TEST_SUITE(2) = {
-    {test_api<RHI::NullAPI>, "Null API", nullptr, false, false},
-    {test_api<RHI::GLEAM::GLEAM_API>,
-     "GLEAM OpenGL API",
-     nullptr,
-     false,
-     false}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_GFX_RUN_TESTS(_tests);
+    {test_api<RHI::NullAPI>, "Null API", nullptr, false, false},
+    {test_api<RHI::GLEAM::GLEAM_API>, "GLEAM OpenGL API", nullptr, false, false}
+
+COFFEE_TESTS_END()

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <peripherals/libc/time_ops.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/standard_exceptions.h>
@@ -67,18 +68,18 @@ struct TimeFormatter
     STATICINLINE typename std::basic_string<CharT> String(const CharT* fmt)
     {
         auto time      = std::time(nullptr);
+
+        std::basic_string<CharT> out;
+
+#if __cplusplus >= 201403L
         auto localTime = std::localtime(&time);
-
-        std::basic_string<CharT>       out;
         std::basic_stringstream<CharT> ss(out);
-
-#if __cplusplus >= 201103L
         ss << std::put_time<CharT>(localTime, fmt);
 #else
-        ss << std::time_put<CharT>(localTime, fmt);
+        out = libc::time::time_to_str(time, fmt);
 #endif
 
-        return ss.str();
+        return out;
     }
 };
 

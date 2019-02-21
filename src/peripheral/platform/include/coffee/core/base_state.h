@@ -24,17 +24,22 @@ struct GlobalState
     virtual ~GlobalState();
 };
 
-extern stl_types::UqLock          LockState(libc_types::cstring key);
+extern stl_types::UqLock LockState(libc_types::cstring key);
+inline stl_types::UqLock LockState(GlobalState& state)
+{
+    return stl_types::UqLock(state.access);
+}
+
 extern stl_types::ShPtr<GlobalState> SwapState(
     libc_types::cstring key, stl_types::ShPtr<GlobalState> const& ptr);
 extern stl_types::ShPtr<GlobalState> const& PeekState(libc_types::cstring key);
 
 extern bool ProfilerEnabled();
 
-extern platform::profiling::PContext*    GetProfilerStore();
-extern platform::profiling::ThreadState* GetProfilerTStore();
+extern stl_types::ShPtr<platform::profiling::PContext>    GetProfilerStore();
+extern stl_types::ShPtr<platform::profiling::ThreadState> GetProfilerTStore();
 
-extern platform::info::AppData& GetAppData();
+extern stl_types::ShPtr<platform::info::AppData> GetAppData();
 
 } // namespace State
 } // namespace Coffee

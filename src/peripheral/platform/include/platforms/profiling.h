@@ -69,6 +69,16 @@ struct PContext
         flags.enabled      = false;
         flags.deep_enabled = false;
     }
+
+    static ShPtr<PContext> ProfilerStore()
+    {
+        return State::GetProfilerStore();
+    }
+
+    static ShPtr<ThreadState> ProfilerTStore()
+    {
+        return State::GetProfilerTStore();
+    }
 };
 
 template<typename Context, typename Clock, typename Types>
@@ -81,21 +91,30 @@ struct RuntimeProperties : ThreadInternalState
     static ThisType& get_properties()
     {
         return *C_DCAST<ThisType>(
-            State::GetProfilerTStore()->internal_state.get());
+            PContext::ProfilerTStore()->internal_state.get());
     }
     static bool enabled()
     {
         if(!State::ProfilerEnabled())
             return false;
 
-        return State::GetProfilerStore()->flags.enabled;
+        auto context = PContext::ProfilerStore();
+
+        if(!context)
+            return false;
+
+        return context->flags.enabled;
     }
     static bool deep_enabled()
     {
         if(!enabled())
             return false;
 
-        auto context = State::GetProfilerStore();
+        auto context = PContext::ProfilerStore();
+
+        if(!context)
+            return false;
+
         Lock _(context->access);
         return context->flags.deep_enabled;
     }
@@ -104,11 +123,11 @@ struct RuntimeProperties : ThreadInternalState
 
     void push_stack(CString const& frame)
     {
-        State::GetProfilerTStore()->context_stack.push_back(frame);
+        PContext::ProfilerTStore()->context_stack.push_back(frame);
     }
     CString pop_stack()
     {
-        auto& thread_store = *State::GetProfilerTStore();
+        auto& thread_store = *PContext::ProfilerTStore();
 
         if(!thread_store.context_stack.size())
             return {};
@@ -137,7 +156,7 @@ struct ExtraDataImpl
         UNUSED_PARAM(CString const&, k), UNUSED_PARAM(CString const&, v))
     {
 #if MODE_DEBUG
-        auto context = State::GetProfilerStore();
+        auto context = PContext::ProfilerStore();
 
         C_PTR_CHECK(context);
 
@@ -150,7 +169,7 @@ struct ExtraDataImpl
     STATICINLINE PExtraData Get()
     {
 #if MODE_DEBUG
-        auto context = State::GetProfilerStore();
+        auto context = PContext::ProfilerStore();
 
         C_PTR_CHECK(context);
 
@@ -228,7 +247,7 @@ struct SimpleProfilerImpl
   private:
     STATICINLINE ThreadState& ThreadContext()
     {
-        auto state = State::GetProfilerTStore();
+        auto state = PContext::ProfilerTStore();
 
         C_PTR_CHECK(state);
 
@@ -237,7 +256,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE PContext& Context()
     {
-        auto context = State::GetProfilerStore();
+        auto context = PContext::ProfilerStore();
 
         C_PTR_CHECK(context);
 

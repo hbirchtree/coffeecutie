@@ -90,7 +90,7 @@ int deref_main(
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
 #if MODE_DEBUG
-    State::GetProfilerStore()->disable();
+    platform::profiling::PContext::ProfilerStore()->disable();
 #endif
     exit(stat);
 #else

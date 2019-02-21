@@ -128,7 +128,8 @@ static void CoffeeInit_Internal(u32 flags)
     ProcessProperty::CoreDumpEnable();
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-    State::GetProfilerStore()->enable();
+    WkPtrUnwrap<platform::profiling::PContext> store(State::GetProfilerStore());
+    store([](platform::profiling::PContext* context) { context->enable(); });
 #endif
 #else
     Coffee::PrintingVerbosityLevel()          = 1;
@@ -183,13 +184,23 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
 
+    libc::signal::register_atexit([]() {
+        /* On exit, set InternalState pointer to null */
+        State::SetInternalState({});
+    });
+
     Coffee::PrintingVerbosityLevel() = 1;
 
 #if !MODE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
-    SetApplicationData(State::GetAppData());
-
-    CurrentThread::SetName(State::GetAppData().application_name);
+    {
+        auto appData = State::GetAppData();
+        if(appData)
+        {
+            SetApplicationData(*appData);
+            CurrentThread::SetName(appData->application_name);
+        }
+    }
 
     /* BuildInfo contains information on the compiler, architecture
      *  and platform */
@@ -267,7 +278,13 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     Profiler::PopContext();
 
     if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
-        State::GetProfilerStore()->flags.deep_enabled = true;
+    {
+        ApplyIfValid(
+            State::GetProfilerStore(),
+            [](platform::profiling::PContext* context) {
+                context->flags.deep_enabled = true;
+            });
+    }
 
     if(!(flags & SilentInit))
         cVerbose(1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
@@ -462,7 +479,9 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
             return 0;
         } else if(sw == "dprofile")
         {
-            State::GetProfilerStore()->flags.deep_enabled = true;
+            ApplyIfValid(State::GetProfilerStore(), [](auto context) {
+                context->flags.deep_enabled = true;
+            });
         } else if(sw == "json")
         {
 #if !MODE_LOWFAT

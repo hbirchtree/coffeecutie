@@ -19,7 +19,11 @@ namespace State {
 
 struct InternalState
 {
-    InternalState() : bits()
+    using StateStorage = Map<CString, ShPtr<State::GlobalState>>;
+
+    InternalState() :
+        current_app(MkShared<platform::info::AppData>()),
+        profiler_store(MkShared<profiling::PContext>()), bits()
     {
     }
 
@@ -34,7 +38,7 @@ struct InternalState
     CString resource_prefix;
 
     /* Application info */
-    platform::info::AppData current_app = {};
+    ShPtr<platform::info::AppData> current_app;
 
     BuildInfo build = {};
 
@@ -45,10 +49,10 @@ struct InternalState
 #endif
 
 #if !defined(COFFEE_DISABLE_PROFILER)
-    profiling::PContext profiler_store;
+    ShPtr<profiling::PContext> profiler_store;
 #endif
 
-    Map<CString, ShPtr<State::GlobalState>> pointer_storage;
+    StateStorage pointer_storage;
 
     struct internal_bits_t
     {
@@ -79,9 +83,10 @@ struct InternalThreadState
         runtimeProps->context            = profiler_data;
         runtimeProps->context->thread_id = current_thread_id.hash();
 
-        Lock _(State::internal_state->profiler_store.access);
+        Lock _(State::internal_state->profiler_store->access);
 
-        auto& globalState = State::internal_state->profiler_store.thread_states;
+        auto& globalState =
+            State::internal_state->profiler_store->thread_states;
 
         globalState[current_thread_id.hash()] = profiler_data;
 
@@ -138,10 +143,13 @@ STATICINLINE void RegisterProfilerThreadState()
 #if !defined(COFFEE_DISABLE_PROFILER)
     if(ISTATE)
     {
-        auto tid = ThreadId().hash();
+        auto tid   = ThreadId().hash();
+        auto store = GetProfilerStore();
 
-        Lock _(GetProfilerStore()->access);
-        GetProfilerStore()->thread_states[tid] = TSTATE->profiler_data;
+        C_PTR_CHECK(store);
+
+        Lock _(store->access);
+        store->thread_states[tid] = TSTATE->profiler_data;
     }
 #endif
 }
@@ -171,9 +179,10 @@ BuildInfo& GetBuildInfo()
     return ISTATE->build;
 }
 
-info::AppData& GetAppData()
+ShPtr<info::AppData> GetAppData()
 {
-    C_PTR_CHECK(ISTATE);
+    if(!ISTATE)
+        return {};
     return ISTATE->current_app;
 }
 
@@ -186,23 +195,25 @@ bool ProfilerEnabled()
 #endif
 }
 
-profiling::PContext* GetProfilerStore()
+ShPtr<profiling::PContext> GetProfilerStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
-    C_PTR_CHECK(ISTATE);
-    return &ISTATE->profiler_store;
+    if(!ISTATE)
+        return {};
+
+    return ISTATE->profiler_store;
 #else
     Throw(implementation_error("profiler disabled"));
 #endif
 }
 
-profiling::ThreadState* GetProfilerTStore()
+ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
 {
 #if !defined(COFFEE_DISABLE_PROFILER)
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
-    return TSTATE->profiler_data.get();
+    return TSTATE->profiler_data;
 #else
     Throw(implementation_error("profiler disabled"));
 #endif
@@ -262,13 +273,13 @@ const ShPtr<GlobalState>& PeekState(cstring key)
 void SetCurrentApp(const info::AppData& app)
 {
     C_PTR_CHECK(State::ISTATE);
-    State::ISTATE->current_app = app;
+    *State::ISTATE->current_app = app;
 }
 
 info::AppData const& GetCurrentApp()
 {
     C_PTR_CHECK(State::ISTATE);
-    return State::ISTATE->current_app;
+    return *State::ISTATE->current_app;
 }
 
 args::AppArg& GetInitArgs()

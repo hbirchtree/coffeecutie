@@ -95,6 +95,8 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     CString const& _coffee_resource_prefix = file::ResourcePrefix();
 
+    auto& appData = *GetAppData();
+
 #if defined(COFFEE_ANDROID)
 
     AndroidForeignCommand cmd;
@@ -130,12 +132,12 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
     paths.cacheDir = Env::GetUserHome() + Path{".cache"} +
-                     Path{GetAppData().organization_name} +
-                     Path{GetAppData().application_name};
+                     Path{appData.organization_name} +
+                     Path{appData.application_name};
 
     /* Temporary files go in /tmp */
     paths.tempDir =
-        MkUrl("/tmp", RSCA::SystemFile) + Path{GetAppData().application_name};
+        MkUrl("/tmp", RSCA::SystemFile) + Path{appData.application_name};
 
     /* TODO: Implement this here */
     const constexpr cstring var_snappy_config = "SNAP_USER_COMMON";
@@ -146,8 +148,8 @@ STATICINLINE SystemPaths GetSystemPaths()
             MkUrl(Env::GetVar(var_snappy_config), RSCA::SystemFile);
     } else
     {
-        cstring orgname = GetAppData().organization_name.c_str();
-        cstring appname = GetAppData().application_name.c_str();
+        cstring orgname = appData.organization_name.c_str();
+        cstring appname = appData.application_name.c_str();
 
         Path homedir =
             ((Path(Env::GetUserHome()) + ".local/share") + orgname) + appname;
@@ -206,12 +208,12 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #else
     paths.tempDir =
-        MkUrl("/tmp", RSCA::SystemFile) + Path(GetAppData().application_name);
+        MkUrl("/tmp", RSCA::SystemFile) + Path(appData.application_name);
 
     auto library = MkUrl(home.c_str(), RSCA::SystemFile) + Path{"Library"};
 
-    auto app_path = Path{GetAppData().organization_name} +
-                    Path{GetAppData().application_name};
+    auto app_path =
+        Path{appData.organization_name} + Path{appData.application_name};
 
     paths.configDir = library + Path{"Application Support"} + app_path;
 

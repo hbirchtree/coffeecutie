@@ -93,7 +93,7 @@ bool queue_workload_test()
     taskIds.reserve(Thread::hardware_concurrency() * 128);
 
     Vector<Matf4> data;
-    data.reserve(Thread::hardware_concurrency() * 128);
+    data.resize(Thread::hardware_concurrency() * 128);
     szptr i = 0;
 
     for(auto queue : queues)
@@ -104,7 +104,7 @@ bool queue_workload_test()
             auto id = RuntimeQueue::QueueImmediate(
                 queue,
                 Chrono::seconds(0),
-                [&]() { data[i] = typing::vectors::inverse(data[i]); },
+                [&data, i]() { data[i] = typing::vectors::inverse(data[i]); },
                 ec);
             C_ERROR_CHECK(ec);
             i++;

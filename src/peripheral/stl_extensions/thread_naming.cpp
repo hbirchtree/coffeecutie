@@ -108,7 +108,7 @@ CString GetName(ThreadId::Hash const& t)
 
 Map<ThreadId::Hash, CString> GetNames(State::GlobalState* context)
 {
-    C_UNUSED(auto state) = State::LockState("threadNames");
+    C_UNUSED(auto state) = State::LockState(*context);
     return GetContext(context).names;
 }
 } // namespace Threads

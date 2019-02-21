@@ -28,6 +28,7 @@ struct JsonProfileWriter : State::GlobalState
         /* We keep a reference to this pointer in order to extend its lifespan.
          * In the destructor we need it for finalizing the thread names. */
         threadState = State::PeekState("threadNames");
+        appData = State::GetAppData();
         if(!threadState)
             Throw(undefined_behavior("thread naming is not initialized!"));
 
@@ -47,9 +48,10 @@ struct JsonProfileWriter : State::GlobalState
         C_ERROR_CHECK(ec);
     }
 
-    FileFun::FileHandle       logfile;
-    ShPtr<State::GlobalState> threadState;
-    AtomicUInt64              event_count;
+    FileFun::FileHandle            logfile;
+    ShPtr<State::GlobalState>      threadState;
+    ShPtr<platform::info::AppData> appData;
+    AtomicUInt64                   event_count;
 
     virtual ~JsonProfileWriter();
 };
@@ -60,7 +62,7 @@ JsonProfileWriter::~JsonProfileWriter()
 
     auto thread_names = Strings::fmt(
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
-        GetCurrentApp().application_name);
+        appData ? appData->application_name : "Coffee App");
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {

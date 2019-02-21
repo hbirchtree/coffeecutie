@@ -173,7 +173,9 @@ void parse_args(ArgumentResult& args)
             csv_parse(arg.second, baseDirs);
         } else if(arg.first == "deep_profile")
         {
-            State::GetProfilerStore()->flags.deep_enabled = true;
+            ApplyIfValid(State::GetProfilerStore(), [](auto context) {
+                context->flags.deep_enabled = true;
+            });
         }
     }
 }

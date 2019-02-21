@@ -27,11 +27,12 @@ bool framebuffer_read()
         Bytes::From(color));
 }
 
-COFFEE_TEST_SUITE(1) = {
+COFFEE_TESTS_BEGIN(1)
+
     {CoffeeTest::GraphicsWrap<framebuffer_read, GFX>,
      "Framebuffer read-back",
      "Verify that it is possible to read framebuffer pixels",
      false,
-     false}};
+     false}
 
-COFFEE_GFX_RUN_TESTS(_tests);
+COFFEE_TESTS_END()
