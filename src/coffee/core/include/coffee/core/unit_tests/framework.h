@@ -49,7 +49,7 @@ struct StartupMessage
         OutputPrinter::fprintf_platform(
             stderr, msg, Severity::Information, 0, 0);
 #else
-        fprintf(stderr, 'TESTING: %s\n', msg);
+        fprintf(stderr, "TESTING: %s\n", msg);
 #endif
     }
 };
