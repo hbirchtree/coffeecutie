@@ -10,10 +10,12 @@ using namespace ::Coffee::State;
 
 Url EnvironmentF::GetUserData(cstring orgname, cstring appname)
 {
-    if(!orgname && !appname)
+    auto appData = GetAppData();
+
+    if(!orgname && !appname && appData)
     {
-        orgname = GetAppData().organization_name.c_str();
-        appname = GetAppData().application_name.c_str();
+        orgname = appData->organization_name.c_str();
+        appname = appData->application_name.c_str();
     }
 
     CString dir = GetVar("HOME");
