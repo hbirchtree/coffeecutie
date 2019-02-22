@@ -207,9 +207,10 @@ struct TemporaryState
         State::SwapState("jsonProfiler", profiler);
         State::SwapState("threadNames", threadNames);
 
-        ApplyIfValid(State::GetProfilerStore(), [](auto context) {
-            context->flags.enabled = true;
-        });
+        auto profilerState = State::GetProfilerStore();
+
+        if(profilerState)
+            profilerState->flags.enabled = true;
     }
 
     ~TemporaryState()

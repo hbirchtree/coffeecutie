@@ -304,8 +304,10 @@ void ExitRoutine()
     return;
 #endif
 
-    ApplyIfValid(
-        State::GetProfilerStore(), [](auto context) { context->disable(); });
+    auto profilerStore = State::GetProfilerStore();
+
+    if(profilerStore)
+        profilerStore->disable();
 
     file::file_error ec;
 

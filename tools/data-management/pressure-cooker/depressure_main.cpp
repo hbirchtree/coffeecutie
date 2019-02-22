@@ -295,9 +295,12 @@ i32 coffee_main(i32, cstring_w*)
 
 #if MODE_DEBUG
     if(args.switches.find("deep_profile")->second > 0)
-        ApplyIfValid(State::GetProfilerStore(), [](auto context) {
-            context->flags.deep_enabled = true;
-        });
+    {
+        auto profilerState = State::GetProfilerStore();
+
+        if(profilerState)
+            profilerState->flags.deep_enabled = true;
+    }
 #endif
 
     auto targetResource = targetFile.rsc<Resource>();

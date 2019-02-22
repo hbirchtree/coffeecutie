@@ -279,11 +279,10 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
     {
-        ApplyIfValid(
-            State::GetProfilerStore(),
-            [](platform::profiling::PContext* context) {
-                context->flags.deep_enabled = true;
-            });
+        auto profilerState = State::GetProfilerStore();
+
+        if(profilerState)
+            profilerState->flags.deep_enabled = true;
     }
 
     if(!(flags & SilentInit))
@@ -479,9 +478,10 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
             return 0;
         } else if(sw == "dprofile")
         {
-            ApplyIfValid(State::GetProfilerStore(), [](auto context) {
-                context->flags.deep_enabled = true;
-            });
+            auto profilerState = State::GetProfilerStore();
+
+            if(profilerState)
+                profilerState->flags.deep_enabled = true;
         } else if(sw == "json")
         {
 #if !MODE_LOWFAT

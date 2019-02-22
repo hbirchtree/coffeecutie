@@ -1,0 +1,26 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  paths:
+    include:
+    - examples/*
+    - src/*
+    - tests/*
+    - toolchain/*
+
+pool:
+  vmImage: 'Ubuntu-16.04'
+
+steps:
+- checkout: self
+  submodules: true
+- script: |
+    echo "Hello World!"
+    ./cb quick-build ubuntu.amd64
+    echo "Goodbye cruel world!"
+  displayName: 'Build ubuntu-amd64'
+  env:
+    CONFIGURATION: Release

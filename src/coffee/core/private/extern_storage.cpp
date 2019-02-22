@@ -23,7 +23,10 @@ struct InternalState
 
     InternalState() :
         current_app(MkShared<platform::info::AppData>()),
-        profiler_store(MkShared<profiling::PContext>()), bits()
+    #if !defined(COFFEE_DISABLE_PROFILER)
+        profiler_store(MkShared<profiling::PContext>()),
+    #endif
+        bits()
     {
     }
 

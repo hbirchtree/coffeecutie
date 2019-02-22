@@ -25,9 +25,10 @@ void ProfilingExport()
     {
         cVerbose(10, "Network export starting");
 
-        ApplyIfValid(
-            State::GetProfilerStore(),
-            [](platform::profiling::PContext* context) { context->disable(); });
+        auto profilerState = State::GetProfilerStore();
+
+        if(profilerState)
+            profilerState->disable();
 
         State::SwapState(ASIO::context_name, {});
 
