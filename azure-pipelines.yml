@@ -11,8 +11,17 @@ trigger:
     - tests/*
     - toolchain/*
 
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-16.04'
+    mac:
+      imageName: 'macos-10.13'
+    windows:
+      imageName: 'vs2017-win2016'
+
 pool:
-  vmImage: 'Ubuntu-16.04'
+  vmImage: $(imageName)
 
 steps:
 - checkout: self
@@ -21,6 +30,13 @@ steps:
     echo "Hello World!"
     ./cb quick-build ubuntu.amd64
     echo "Goodbye cruel world!"
-  displayName: 'Build ubuntu-amd64'
+  displayName: 'Build Ubuntu amd64'
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  env:
+    CONFIGURATION: Release
+- script: |
+    ./cb quick-build osx
+  displayName: 'Build OSX 64-bit'
+  condition: eq( variables['Agent.OS'], 'Darwin' )
   env:
     CONFIGURATION: Release
