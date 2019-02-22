@@ -4,6 +4,10 @@
 #include <coffee/core/CApplication>
 #endif
 
+#if MODE_LOWFAT
+#include <stdio.h>
+#endif
+
 #include <coffee/core/CProfiling>
 
 #include <coffee/core/CDebug>

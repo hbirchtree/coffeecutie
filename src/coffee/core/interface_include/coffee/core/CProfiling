@@ -4,11 +4,11 @@
 
 namespace Coffee {
 
-using Profiler = platform::profiling::SimpleProfilerImpl;
-using ProfContext = platform::profiling::ProfilerContext;
+using Profiler     = platform::profiling::SimpleProfilerImpl;
+using ProfContext  = platform::profiling::ProfilerContext;
 using DProfContext = platform::profiling::DeepProfilerContext;
-using ExtraData = platform::profiling::ExtraDataImpl;
+using ExtraData    = platform::profiling::ExtraDataImpl;
 
 #define DPROF_CONTEXT_FUNC(PREFIX) \
     DProfContext _(PREFIX + CString(__FUNCTION__) + "()")
-}
+} // namespace Coffee
