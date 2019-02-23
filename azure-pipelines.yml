@@ -27,16 +27,22 @@ steps:
 - checkout: self
   submodules: true
 - script: |
-    echo "Hello World!"
+    ./toolchain/ci/travis-deps.sh
     ./cb quick-build ubuntu.amd64
-    echo "Goodbye cruel world!"
   displayName: 'Build Ubuntu amd64'
   condition: eq( variables['Agent.OS'], 'Linux' )
   env:
     CONFIGURATION: Release
+    TRAVIS_OS_NAME: linux
 - script: |
+    ./toolchain/ci/travis-deps.sh
     ./cb quick-build osx
   displayName: 'Build OSX 64-bit'
   condition: eq( variables['Agent.OS'], 'Darwin' )
   env:
     CONFIGURATION: Release
+    TRAVIS_OS_NAME: darwin
+- powershell: |
+    ./toolchain/ci/appveyor-deps.ps1
+    ./cb.ps1 quick-build win32.amd64
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
