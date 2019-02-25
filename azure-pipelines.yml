@@ -80,6 +80,9 @@ jobs:
   - powershell: |
       ./toolchain/ci/appveyor-deps.ps1
     displayName: "Downloading system dependencies"
+    env:
+      AZURE_IMAGE: "vs2017-win2016"
+      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
   - powershell: |
       ./cb.ps1 quick-build $(variant)
     displayName: "Build $(variant)"
