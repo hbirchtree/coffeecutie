@@ -3,6 +3,7 @@
 #include <coffee/core/CInput>
 #include <coffee/core/coffee.h>
 #include <coffee/core/platform_data.h>
+#include <coffee/core/types/debug/severity.h>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/interfaces/full_launcher.h>
@@ -52,7 +53,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
         cDebug("Failed to initialize graphics API");
     }
 
-    renderer.popErrorMessage(Severity::Information, "Hello!", "Goodbye");
+    renderer.popErrorMessage(debug::Severity::Information, "Hello!", "Goodbye");
 
     renderer.showWindow();
 }

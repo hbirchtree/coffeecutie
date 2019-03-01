@@ -152,7 +152,7 @@ function container_run()
     "linux")
         local CONTAINER_DATA=`grep "^$2:" "$CI_DIR/$MAKEFILE" -A 30 | grep 'DOCKER_CONTAINER\|DOCKER_CONFIG'`
 
-        if [ -z `echo ${CONTAINER_DATA} | grep DOCKER_CONTFIG` ]; then
+        if [ -z `echo ${CONTAINER_DATA} | grep DOCKER_CONFIG` ]; then
             make -s -f ${CI_DIR}/Makefile.multi custom -e CUSTOM_COMMAND="$1" -e DOCKER_CONFIG=`echo ${CONTAINER_DATA} | cut -d '"' -f 2`
         else
             make -s -f ${CI_DIR}/Makefile.multi custom -e CUSTOM_COMMAND="$1" -e DOCKER_CONTAINER=`echo ${CONTAINER_DATA} | cut -d '"' -f 2`
@@ -179,6 +179,7 @@ function download_dependencies()
 
 function build_standalone()
 {
+    mkdir -p "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
     [ ! -z ${TRAVIS} ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
 
     if [ ! -z ${TRAVIS} ]; then
@@ -255,6 +256,8 @@ function build_target()
     build_standalone "${BUILDVARIANT}"
 
     [ ! -z ${TRAVIS} ] && sudo chown -R $(whoami) ${BUILD_DIR}
+
+    return 0
 }
 
 function package_libraries()

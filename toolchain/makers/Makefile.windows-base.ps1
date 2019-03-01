@@ -46,12 +46,27 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     
     DownloadNativeLibs
 
+	#gci env:* | sort-object name
+
     if($env:APPVEYOR_BUILD_WORKER_IMAGE -eq "Visual Studio 2017")
     {
         $Generator = "Visual Studio 15 2017 $arch".Trim()
     }else{
+		
         $Generator = "Visual Studio 14 2015 $arch".Trim()
     }
+	if ( "$env:AZURE_IMAGE" -eq "" ) {
+		echo "Not running on Azure Pipelines"
+	} else {
+		echo "Azure Pipelines detected: $env:AZURE_IMAGE"
+		if($env:AZURE_IMAGE.substring(2, 4) -eq "2017")
+		{
+			echo "Setting Visual Studio 2017 as environment"
+			$Generator = "Visual Studio 15 2017 $arch".Trim()
+		}
+	}
+
+	echo "Using $Generator"
 
     & $CMakeBin $SrcDir `
         -G"$Generator" `

@@ -5,7 +5,7 @@
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_FORCE_PACKING __attribute__((packed))
 #elif defined(COFFEE_MSVCXX)
-#include "plat/plat_windows.h"
+#include <peripherals/platform/windows.h>
 //TODO: Fix struct packing on Windows, this is broken
 #define C_FORCE_PACKING //UNALIGNED
 #else

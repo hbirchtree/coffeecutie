@@ -16,4 +16,8 @@ case "${TRAVIS_OS_NAME}" in
     pip3 install pyyaml requests
     exit 0
 ;;
+*)
+    echo " * No OS name was provided, this is an error"
+    exit 1
+;;
 esac

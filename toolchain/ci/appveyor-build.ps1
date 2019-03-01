@@ -3,17 +3,21 @@ $PrevPwd = $Pwd
 mkdir $env:BUILD_DIR
 cd $env:BUILD_DIR
 
-$PYTHON = "C:\Python36\python.exe"
-
 function build_info(){
-    . $PYTHON $env:SOURCE_DIR\toolchain\buildinfo.py $args
+    python $env:SOURCE_DIR\toolchain\buildinfo.py $args
 }
 
+
 $LIBRARY_DIR = "$env:BUILD_DIR\libraries"
+md -Force $LIBRARY_DIR
 
 rm -r $LIBRARY_DIR
 
-$VCPP_VERSION = $env:APPVEYOR_BUILD_WORKER_IMAGE.split(" ")[2]
+if ( "$env:APPVEYOR_BUILD_WORKER_IMAGE" -eq "" ) {
+    $VCPP_VERSION = $env:AZURE_IMAGE.split("-")[0].substring(2)
+} else {
+    $VCPP_VERSION = $env:APPVEYOR_BUILD_WORKER_IMAGE.split(" ")[2]
+}
 $BUILDVARIANT_VERSION = "$VCPP_VERSION+$env:BUILDVARIANT"
 
 ForEach($dep in $env:DEPENDENCIES -split ";") {
