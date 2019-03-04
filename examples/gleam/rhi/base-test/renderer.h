@@ -56,64 +56,140 @@ struct TransformPair
 };
 
 using TransformTag = Components::TagType<TransformPair, i32>;
+using MatrixTag    = Components::TagType<Pair<Matf4*, Matf4*>, i32>;
 using CameraTag    = Components::TagType<CGCamera, i32>;
 using TimeTag      = Components::TagType<Chrono::seconds_float, i32>;
 
-class TransformContainer : public Components::ComponentContainer<TransformTag>
+static constexpr u32 FloorTag    = 0x1;
+static constexpr u32 BaseItemTag = 0x2;
+
+using TransformContainer =
+    Components::Allocators::VectorContainer<TransformTag>;
+
+struct MatrixContainer
+    : Components::Allocators::VectorBaseContainer<MatrixTag, Matf4>
 {
-    Map<u64, TransformPair> m_objects;
-    Span<Matf4>             m_matrices;
+    Map<u64, type> m_pairs;
 
+    virtual void register_entity(u64 id)
+    {
+        VectorBaseContainer::register_entity(id);
+
+        m_data.push_back({});
+        m_pairs.insert(
+            {id,
+             {&m_data.at(m_data.size() - 1), &m_data.at(m_data.size() - 2)}});
+    }
+
+    virtual void unregister_entity(u64 id)
+    {
+        VectorBaseContainer::unregister_entity(id);
+    }
+
+    virtual MatrixTag::type* get(u64 id)
+    {
+        auto it = m_mapping.find(id);
+
+        if(it == m_mapping.end())
+            return nullptr;
+
+        auto& out = m_pairs.at(id);
+
+        out = {&m_data.at((*it).second), &m_data.at((*it).second + 1)};
+
+        return &out;
+    }
+};
+
+class TransformVisitor : public Components::EntityVisitor<
+                             Components::TypeList<TransformTag, MatrixTag>,
+                             Components::TypeList<CameraTag>>
+{
   public:
-    TransformContainer(Span<Matf4>&& matrices) : m_matrices(std::move(matrices))
+    TransformVisitor()
     {
     }
 
-    virtual void register_entity(u64 id) override
-    {
-        m_objects[id] = {};
-    }
-    virtual void unregister_entity(u64 id) override
-    {
-        m_objects.erase(id);
-    }
-    virtual TransformPair* get(u64 id) override
-    {
-        return &m_objects[id];
-    }
     virtual bool visit(
-        Components::ContainerProxy& container,
-        Components::Entity&         entity) override
+        Proxy&                        container,
+        const Components::Entity&     entity,
+        const Components::time_point& current) override
     {
         auto camera = container.subsystem<CameraTag>().get();
 
         camera.position.x() -= 0.1f;
 
         auto  projection    = GenPerspective<scalar>(camera);
-        auto& object_matrix = m_objects[entity.id].second;
-
-        auto left_idx  = (entity.id - 1) * 2;
-        auto right_idx = left_idx + 1;
+        auto& object_matrix = container.get<TransformTag>(entity.id)->second;
 
         auto output_matrix =
             projection * GenTransform<scalar>(camera) * object_matrix;
 
-        m_matrices[left_idx] = output_matrix;
+        auto mats = container.get<MatrixTag>(entity.id);
+
+        *mats->first = output_matrix;
 
         camera.position.x() += 0.2f;
 
-        m_matrices[right_idx] =
-            projection * GenTransform<scalar>(camera) * object_matrix;
+        *mats->second =
+                projection * GenTransform<scalar>(camera) * object_matrix;
 
         return true;
     }
+};
 
-    virtual void prealloc(szptr) override
+class FloorVisitor : public Components::EntityVisitor<
+                         Components::TypeList<TransformTag>,
+                         Components::TypeList<TimeTag>>
+{
+  public:
+    FloorVisitor() : VisitorType(FloorTag)
     {
     }
-    virtual bool contains_entity(u64 id) const override
+
+    virtual bool visit(
+        Proxy&                    c,
+        const Components::Entity& entity,
+        const Components::time_point&) override
     {
-        return m_objects.find(id) != m_objects.end();
+        auto& xf = *c.get<TransformTag>(entity.id);
+
+        auto time = c.subsystem<TimeTag>().get();
+
+        xf.first.position.x() = CMath::sin(time.count() * 2.f) * xf.mask.x();
+        xf.first.position.y() = CMath::cos(time.count() * 2.f) * xf.mask.y();
+
+        xf.first.rotation.y() = CMath::sin(time.count());
+        xf.first.rotation     = normalize_quat(xf.first.rotation);
+
+        xf.second = GenTransform<scalar>(xf.first);
+
+        return true;
+    }
+};
+
+class BaseItemVisitor : public Components::EntityVisitor<
+                            Components::TypeList<TransformTag>,
+                            Components::TypeList<TimeTag>>
+{
+  public:
+    BaseItemVisitor() : VisitorType(BaseItemTag)
+    {
+    }
+
+    virtual bool visit(
+        Proxy&                    c,
+        const Components::Entity& entity,
+        const Components::time_point&) override
+    {
+        auto& xf   = *c.get<TransformTag>(entity.id);
+        auto  time = c.subsystem<TimeTag>().get().count();
+
+        xf.first.position.x() = CMath::sin(time * 4.f);
+
+        xf.second = GenTransform<scalar>(xf.first);
+
+        return true;
     }
 };
 
@@ -163,7 +239,8 @@ class TimeSystem : public Components::Subsystem<TimeTag>
         return start_time;
     }
 
-    virtual void start_frame() override
+    virtual void start_frame(
+        Components::ContainerProxy&, Components::time_point const&) override
     {
         auto current = system_clock::now();
         loop_time += current - prev_time;
@@ -205,8 +282,7 @@ struct RendererState
     struct RGraphicsData
     {
         RGraphicsData() :
-            transform_cnt(Span<Matf4>::From(object_matrices, 128)),
-            params(eye_pip)
+            transform_cnt(), params(eye_pip), object_matrices(matrix_cnt.m_data)
         {
         }
 
@@ -228,6 +304,7 @@ struct RendererState
         }
 
         TransformContainer transform_cnt;
+        MatrixContainer    matrix_cnt;
 
         // GLEAM data
         GLM::API_CONTEXT loader = nullptr;
@@ -245,8 +322,8 @@ struct RendererState
         const scalar eyetexGridSize = 2.f;
 
         // Graphics data
-        Matf4  object_matrices[128] = {};
-        scalar time_value;
+        Vector<Matf4>& object_matrices;
+        scalar         time_value;
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
@@ -293,13 +370,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                                                       "floor-tile.png"};
 
     const scalar vertexdata[] = {
-        -1.f, -1.f, 0.f,  0.f,  0.f,
-        1.f, -1.f, 0.f, 1.f,  0.f,
-        -1.f, 1.f,  0.f, 0.f, 1.f,
+        -1.f, -1.f, 0.f,  0.f, 0.f, 1.f, -1.f, 0.f,
+        1.f,  0.f,  -1.f, 1.f, 0.f, 0.f, 1.f,
 
-        -1.f, 1.f,  0.f,  0.f,  1.f,
-        1.f,  -1.f, 0.f, 1.f, 0.f,
-        1.f, 1.f,  0.f, 1.f,  1.f,
+        -1.f, 1.f,  0.f,  0.f, 1.f, 1.f, -1.f, 0.f,
+        1.f,  0.f,  1.f,  1.f, 0.f, 1.f, 1.f,
     };
 
     cVerbose("Loading GLeam API");
@@ -358,7 +433,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     /* Compiling shaders and assemble a graphics pipeline */
 
-    do
     {
         ProfContext             b("Shader compilation");
         const constexpr cstring shader_files[] = {"vr/vshader.glsl",
@@ -378,8 +452,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         {
             cFatal("Failed to load shaders");
         }
-
-    } while(false);
+    }
     cVerbose("Compiled shaders");
 
     /* Uploading textures */
@@ -508,7 +581,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     for(auto& constant : g.params.constants())
     {
         if(constant.m_name == "transform")
-            g.params.set_constant(constant, Bytes::From(g.object_matrices, 6));
+            g.params.set_constant(
+                constant, Bytes::CreateFrom(g.object_matrices));
         else if(constant.m_name == "texdata")
             g.params.set_sampler(constant, g.eyesamp.handle());
         else if(constant.m_name == "mx")
@@ -540,6 +614,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
 
     d->entities.register_component(g.transform_cnt);
+    d->entities.register_component(g.matrix_cnt);
+    d->entities.register_system(MkUq<TransformVisitor>());
+    d->entities.register_system(MkUq<FloorVisitor>());
+    d->entities.register_system(MkUq<BaseItemVisitor>());
     d->entities.register_subsystem(d->camera_cnt);
     d->entities.register_subsystem(d->timing_sys);
 
@@ -549,32 +627,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     Components::EntityRecipe floor_object;
     Components::EntityRecipe base_object;
 
-    floor_object.components = {typeid(TransformTag).hash_code()};
+    floor_object.components = {typeid(TransformTag).hash_code(),
+                               typeid(MatrixTag).hash_code()};
     floor_object.interval   = Chrono::milliseconds(10);
     base_object             = floor_object;
-
-    floor_object.loop = [](Components::ContainerProxy& c) {
-        auto& xf = c.get<TransformTag>();
-
-        auto time = c.subsystem<TimeTag>().get();
-
-        xf.first.position.x() = CMath::sin(time.count() * 2.f) * xf.mask.x();
-        xf.first.position.y() = CMath::cos(time.count() * 2.f) * xf.mask.y();
-
-        xf.first.rotation.y() = CMath::sin(time.count());
-        xf.first.rotation     = normalize_quat(xf.first.rotation);
-
-        xf.second = GenTransform<scalar>(xf.first);
-    };
-
-    base_object.loop = [](Components::ContainerProxy& c) {
-        auto& xf   = c.get<TransformTag>();
-        auto  time = c.subsystem<TimeTag>().get().count();
-
-        xf.first.position.x() = CMath::sin(time * 4.f);
-
-        xf.second = GenTransform<scalar>(xf.first);
-    };
 
     floor_object.tags = 0x1;
     base_object.tags  = 0x2;
@@ -627,6 +683,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         for(auto dev : GpuInfo::GpuQueryView(interf))
             cDebug("Video memory: {0}:{1}", dev.mem().total, dev.mem().free);
     }
+
+    g.params.get_constant_data("transform") =
+        Bytes::CreateFrom(g.matrix_cnt.m_data);
+
+    g.params.build_state();
 }
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)

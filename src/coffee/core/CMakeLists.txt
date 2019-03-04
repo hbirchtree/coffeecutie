@@ -201,6 +201,15 @@ coffee_library (
     )
 
 #
+# Entity-Component-System implementation
+#
+coffee_library (
+    TARGET EntComp
+    LIBRARIES CoreCommon
+    SOURCES private/components/allocators.cpp
+    )
+
+#
 # Unit test librar that dies properly when a test fails
 #
 coffee_library (

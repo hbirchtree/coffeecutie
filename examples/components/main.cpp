@@ -69,12 +69,10 @@ i32 coffee_main(i32, cstring_w*)
     EntityContainer entities;
 
     EntityRecipe rec1 = {{typeid(TagMatf4).hash_code()},
-                         entity_process,
                          Chrono::milliseconds(10),
                          OF_Test_1};
 
     EntityRecipe rec2 = {{typeid(TagMatf4).hash_code()},
-                         entity_process,
                          Chrono::milliseconds(10),
                          OF_Test_2};
 
