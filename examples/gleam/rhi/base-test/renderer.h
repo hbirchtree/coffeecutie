@@ -111,8 +111,8 @@ class TransformVisitor : public Components::EntityVisitor<
     }
 
     virtual bool visit(
-        Proxy&                        container,
-        const Components::Entity&     entity,
+        Proxy& container,
+        const Components::Entity&,
         const Components::time_point& current) override
     {
         auto camera = container.subsystem<CameraTag>().get();
@@ -120,19 +120,19 @@ class TransformVisitor : public Components::EntityVisitor<
         camera.position.x() -= 0.1f;
 
         auto  projection    = GenPerspective<scalar>(camera);
-        auto& object_matrix = container.get<TransformTag>(entity.id)->second;
+        auto& object_matrix = container.get<TransformTag>().second;
 
         auto output_matrix =
             projection * GenTransform<scalar>(camera) * object_matrix;
 
-        auto mats = container.get<MatrixTag>(entity.id);
+        auto& mats = container.get<MatrixTag>();
 
-        *mats->first = output_matrix;
+        *mats.first = output_matrix;
 
         camera.position.x() += 0.2f;
 
-        *mats->second =
-                projection * GenTransform<scalar>(camera) * object_matrix;
+        *mats.second =
+            projection * GenTransform<scalar>(camera) * object_matrix;
 
         return true;
     }
@@ -148,11 +148,11 @@ class FloorVisitor : public Components::EntityVisitor<
     }
 
     virtual bool visit(
-        Proxy&                    c,
-        const Components::Entity& entity,
+        Proxy& c,
+        const Components::Entity&,
         const Components::time_point&) override
     {
-        auto& xf = *c.get<TransformTag>(entity.id);
+        auto& xf = c.get<TransformTag>();
 
         auto time = c.subsystem<TimeTag>().get();
 
@@ -179,10 +179,10 @@ class BaseItemVisitor : public Components::EntityVisitor<
 
     virtual bool visit(
         Proxy&                    c,
-        const Components::Entity& entity,
+        const Components::Entity&,
         const Components::time_point&) override
     {
-        auto& xf   = *c.get<TransformTag>(entity.id);
+        auto& xf   = c.get<TransformTag>();
         auto  time = c.subsystem<TimeTag>().get().count();
 
         xf.first.position.x() = CMath::sin(time * 4.f);

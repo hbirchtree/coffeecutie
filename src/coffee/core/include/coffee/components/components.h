@@ -153,7 +153,7 @@ struct EntityContainer : non_copy
         entity_query& operator++()
         {
             if(!pred)
-                throw undefined_behavior("bad function");
+                Throw(undefined_behavior("bad function"));
 
             it = std::find_if(++it, m_container->entities.end(), pred);
 
@@ -173,7 +173,7 @@ struct EntityContainer : non_copy
         Entity& operator*() const
         {
             if(it == m_container->entities.end())
-                throw std::out_of_range("bad iterator");
+                Throw(std::out_of_range("bad iterator"));
 
             return *it;
         }
@@ -371,6 +371,8 @@ struct EntityContainer : non_copy
 struct ContainerProxy : non_copy
 {
     friend struct EntityContainer;
+    template<typename T1, typename T2>
+    friend struct EntityVisitor;
 
     FORCEDINLINE
     quick_container<EntityContainer::entity_query> select(u32 tags)
@@ -403,7 +405,7 @@ struct ContainerProxy : non_copy
 
 #if MODE_DEBUG
         if(!v)
-            Throw(undefined_behavior("entity not found in container"));
+            Throw(undefined_behavior("component not found"));
 #endif
 
         return *v;
@@ -434,9 +436,16 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<typename ComponentType>
-    FORCEDINLINE typename ComponentType::type* get()
+    FORCEDINLINE typename ComponentType::type& get()
     {
-        return get<ComponentType>(current_entity);
+        auto v = get<ComponentType>(current_entity);
+
+#if MODE_DEBUG
+        if(!v)
+            Throw(undefined_behavior("component not found"));
+#endif
+
+        return *v;
     }
 
     template<typename OutputType>
@@ -476,6 +485,17 @@ struct EntityVisitor : EntityVisitorBase
 template<typename T>
 using CNT = ComponentContainer<T>;
 
+struct dependency_node
+{
+    size_t dependency;
+};
+
+struct node_association
+{
+    size_t nodes[2];
+    size_t strength; /* How many common components */
+};
+
 FORCEDINLINE
 void EntityContainer::exec()
 {
@@ -502,12 +522,12 @@ FORCEDINLINE void EntityContainer::register_component(
     static const type_hash type_id = typeid(ComponentType).hash_code();
 
     if(components.find(type_id) != components.end())
-        throw implementation_error("cannot register type twice");
+        Throw(implementation_error("cannot register type twice"));
 
     auto adapted = C_DCAST<ComponentContainerBase>(&c);
 
     if(C_RCAST<void*>(adapted) != C_RCAST<void*>(&c))
-        throw implementation_error("pointer casts will fail");
+        Throw(implementation_error("pointer casts will fail"));
 
     components.emplace(type_id, adapted);
 }
@@ -594,7 +614,10 @@ bool EntityVisitor<CompList, SubsysList>::dispatch(
     Proxy proxy(container);
 
     for(auto const& entity : proxy.select(tags))
+    {
+        proxy.current_entity = entity.id;
         this->visit(proxy, entity, current);
+    }
 
     return true;
 }
