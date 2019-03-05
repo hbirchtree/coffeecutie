@@ -55,10 +55,20 @@ struct TransformPair
     Vecf3     mask;
 };
 
-using TransformTag = Components::TagType<TransformPair, i32>;
-using MatrixTag    = Components::TagType<Pair<Matf4*, Matf4*>, i32>;
-using CameraTag    = Components::TagType<CGCamera, i32>;
-using TimeTag      = Components::TagType<Chrono::seconds_float, i32>;
+struct CameraData
+{
+    CGCamera* camera_source;
+
+    Matf4 projection;
+    Matf4 transform;
+
+    const scalar eye_distance = 0.1f;
+};
+
+using TransformTag = Components::TagType<TransformPair>;
+using MatrixTag    = Components::TagType<Pair<Matf4*, Matf4*>>;
+using CameraTag    = Components::TagType<CameraData>;
+using TimeTag      = Components::TagType<Chrono::seconds_float>;
 
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
@@ -111,28 +121,29 @@ class TransformVisitor : public Components::EntityVisitor<
     }
 
     virtual bool visit(
-        Proxy& container,
+        Proxy& c,
         const Components::Entity&,
-        const Components::time_point& current) override
+        const Components::time_point&) override
     {
-        auto camera = container.subsystem<CameraTag>().get();
+        auto camera        = c.subsystem<CameraTag>().get();
+        auto camera_source = *camera.camera_source;
 
-        camera.position.x() -= 0.1f;
+        camera_source.position.x() -= camera.eye_distance;
 
-        auto  projection    = GenPerspective<scalar>(camera);
-        auto& object_matrix = container.get<TransformTag>().second;
+        auto& object_matrix = c.get<TransformTag>().second;
 
-        auto output_matrix =
-            projection * GenTransform<scalar>(camera) * object_matrix;
+        auto output_matrix = camera.projection *
+                             GenTransform<scalar>(camera_source) *
+                             object_matrix;
 
-        auto& mats = container.get<MatrixTag>();
+        auto& mats = c.get<MatrixTag>();
 
         *mats.first = output_matrix;
 
-        camera.position.x() += 0.2f;
+        camera_source.position.x() += camera.eye_distance * 2;
 
-        *mats.second =
-            projection * GenTransform<scalar>(camera) * object_matrix;
+        *mats.second = camera.projection * GenTransform<scalar>(camera_source) *
+                       object_matrix;
 
         return true;
     }
@@ -178,7 +189,7 @@ class BaseItemVisitor : public Components::EntityVisitor<
     }
 
     virtual bool visit(
-        Proxy&                    c,
+        Proxy& c,
         const Components::Entity&,
         const Components::time_point&) override
     {
@@ -195,25 +206,36 @@ class BaseItemVisitor : public Components::EntityVisitor<
 
 class CameraContainer : public Components::Subsystem<CameraTag>
 {
-    CGCamera* camera;
-
   public:
-    CameraContainer(CGCamera* camera_ptr) : camera(camera_ptr)
-    {
-        camera->aspect      = 1.6f;
-        camera->fieldOfView = 90.f;
-        camera->zVals.far_  = 100.f;
+    CameraData camera;
 
-        camera->position = {0, 0, -10};
+    CameraContainer(CGCamera* camera_ptr)
+    {
+        camera.camera_source = camera_ptr;
     }
 
-    virtual CGCamera const& get() const
+    void reset()
     {
-        return *camera;
+        camera.camera_source->aspect      = 1.6f;
+        camera.camera_source->fieldOfView = 90.f;
+        camera.camera_source->zVals.far_  = 100.f;
+
+        camera.camera_source->position = {0, 0, -10};
     }
-    virtual CGCamera& get()
+
+    virtual void start_frame(ContainerProxy&, time_point const&)
     {
-        return *camera;
+        camera.projection = GenPerspective<scalar>(*camera.camera_source);
+        camera.transform = GenTransform<scalar>(*camera.camera_source);
+    }
+
+    virtual CameraData const& get() const
+    {
+        return camera;
+    }
+    virtual CameraData& get()
+    {
+        return camera;
     }
 };
 
@@ -258,7 +280,7 @@ class TimeSystem : public Components::Subsystem<TimeTag>
 
 struct RendererState
 {
-    RendererState() : camera_cnt(&r_state.camera)
+    RendererState() : camera_cnt(nullptr)
     {
     }
 
@@ -659,6 +681,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.mask.x() = 1;
         xf.mask.y() = 0.2f;
     }
+
+    d->camera_cnt.camera.camera_source = &d->r_state.camera;
+    d->camera_cnt.reset();
 
     d->entities.exec();
 
