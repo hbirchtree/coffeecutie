@@ -24,7 +24,8 @@ struct VectorBaseContainer : ComponentContainer<ComponentType>
     virtual void prealloc(szptr count);
     virtual bool contains_entity(u64 id) const;
 
-    //    virtual typename ComponentType::type* get(u64 id);
+    virtual vector_type&       get_storage();
+    virtual vector_type const& get_storage() const;
 };
 
 template<typename ComponentType, typename AllocationType>
@@ -56,6 +57,20 @@ inline bool VectorBaseContainer<ComponentType, AllocationType>::contains_entity(
     return m_mapping.find(id) != m_mapping.end();
 }
 
+template<typename ComponentType, typename AllocationType>
+typename VectorBaseContainer<ComponentType, AllocationType>::vector_type&
+VectorBaseContainer<ComponentType, AllocationType>::get_storage()
+{
+    return m_data;
+}
+
+template<typename ComponentType, typename AllocationType>
+const typename VectorBaseContainer<ComponentType, AllocationType>::vector_type&
+VectorBaseContainer<ComponentType, AllocationType>::get_storage() const
+{
+    return m_data;
+}
+
 template<
     typename ComponentType,
     typename AllocationType = typename ComponentType::type>
@@ -77,6 +92,6 @@ inline typename ComponentType::type* VectorContainer<
     return &this->m_data.at((*it).second);
 }
 
-}
-}
-}
+} // namespace Allocators
+} // namespace Components
+} // namespace Coffee

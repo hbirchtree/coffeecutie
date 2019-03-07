@@ -126,22 +126,22 @@ struct EntityContainer : non_copy
      */
 
     template<typename ComponentType>
-    void register_component(ComponentContainer<ComponentType>& c);
+    void register_component(UqPtr<ComponentContainer<ComponentType>>&& c);
 
     template<typename OutputType>
-    void register_subsystem(Subsystem<OutputType>& sys)
+    void register_subsystem(UqPtr<Subsystem<OutputType>>&& sys)
     {
         static const type_hash type_id = typeid(OutputType).hash_code();
 
         if(subsystems.find(type_id) != subsystems.end())
             throw implementation_error("cannot register subsystem twice");
 
-        auto adapted = C_DCAST<SubsystemBase>(&sys);
+        auto adapted = C_DCAST<SubsystemBase>(sys.get());
 
-        if(C_RCAST<void*>(adapted) != C_RCAST<void*>(&sys))
+        if(C_RCAST<void*>(adapted) != C_RCAST<void*>(sys.get()))
             throw implementation_error("pointer casts will fail");
 
-        subsystems.emplace(type_id, adapted);
+        subsystems.emplace(type_id, std::move(sys));
     }
 
     void register_system(UqPtr<EntityVisitorBase>&& visitor)
@@ -211,6 +211,26 @@ struct EntityContainer : non_copy
         return *it->second;
     }
 
+    template<typename ComponentContainerType>
+    ComponentContainerType& container_cast()
+    {
+        using component_type = typename ComponentContainerType::tag_type;
+
+        const type_hash type_id = typeid(component_type).hash_code();
+
+        auto it = components.find(type_id);
+
+        if(it == components.end())
+            Throw(undefined_behavior("component not found"));
+
+        auto ptr = C_DCAST<ComponentContainerType>(it->second.get());
+
+        if(ptr)
+            return *ptr;
+        else
+            Throw(undefined_behavior("component not found"));
+    }
+
     template<typename ComponentType>
     ComponentContainer<ComponentType>& container()
     {
@@ -221,9 +241,29 @@ struct EntityContainer : non_copy
         auto it = components.find(type_id);
 
         if(it == components.end())
-            throw undefined_behavior("component not found");
+            Throw(undefined_behavior("component not found"));
 
-        return *C_FCAST<container_t*>(it->second);
+        return *C_FCAST<container_t*>(it->second.get());
+    }
+
+    template<typename SubsystemType>
+    SubsystemType& subsystem_cast()
+    {
+        using output_type = typename SubsystemType::tag_type;
+
+        const type_hash type_id = typeid(output_type).hash_code();
+
+        auto it = subsystems.find(type_id);
+
+        if(it == subsystems.end())
+            Throw(undefined_behavior("subsystem not found"));
+
+        auto ptr = C_DCAST<SubsystemType>(it->second.get());
+
+        if(ptr)
+            return *ptr;
+        else
+            Throw(undefined_behavior("subsystem not found"));
     }
 
     template<typename OutputType>
@@ -236,9 +276,9 @@ struct EntityContainer : non_copy
         auto it = subsystems.find(type_id);
 
         if(it == subsystems.end())
-            throw undefined_behavior("subsystem not found");
+            Throw(undefined_behavior("subsystem not found"));
 
-        return *C_FCAST<subsystem_t*>(it->second);
+        return *C_FCAST<subsystem_t*>(it->second.get());
     }
 
     template<typename ComponentType>
@@ -247,17 +287,17 @@ struct EntityContainer : non_copy
         return container<ComponentType>().get(id);
     }
 
-    using subsystem_map = Map<type_hash, SubsystemBase*>;
+    using subsystem_map           = Map<type_hash, SubsystemBase*>;
     using component_container_map = Map<type_hash, ComponentContainerBase*>;
 
   private:
     u64            entity_counter; /*!< For enumerating entities */
     Vector<Entity> entities;
 
-    Map<type_hash, SubsystemBase*>          subsystems; /*!< Not really systems */
-    Map<type_hash, ComponentContainerBase*> components;
-    Vector<UqPtr<EntityVisitorBase>>        visitors;
+    Map<type_hash, UqPtr<ComponentContainerBase>> components;
+    Map<type_hash, UqPtr<SubsystemBase>> subsystems; /*!< Not really systems */
+    Vector<UqPtr<EntityVisitorBase>>     visitors;
 };
 
-}
-}
+} // namespace Components
+} // namespace Coffee

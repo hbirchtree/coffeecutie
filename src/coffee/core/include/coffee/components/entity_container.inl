@@ -26,20 +26,20 @@ void EntityContainer::exec()
 
 template<typename ComponentType>
 FORCEDINLINE void EntityContainer::register_component(
-    ComponentContainer<ComponentType>& c)
+    UqPtr<ComponentContainer<ComponentType>>&& c)
 {
     static const type_hash type_id = typeid(ComponentType).hash_code();
 
     if(components.find(type_id) != components.end())
         Throw(implementation_error("cannot register type twice"));
 
-    auto adapted = C_DCAST<ComponentContainerBase>(&c);
+    auto adapted = C_DCAST<ComponentContainerBase>(c.get());
 
-    if(C_RCAST<void*>(adapted) != C_RCAST<void*>(&c))
+    if(C_RCAST<void*>(adapted) != C_RCAST<void*>(c.get()))
         Throw(implementation_error("pointer casts will fail"));
 
-    components.emplace(type_id, adapted);
+    components.emplace(type_id, std::move(c));
 }
 
-}
-}
+} // namespace Components
+} // namespace Coffee

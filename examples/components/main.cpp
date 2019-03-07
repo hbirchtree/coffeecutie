@@ -77,9 +77,8 @@ i32 coffee_main(i32, cstring_w*)
                          OF_Test_2};
 
     Profiler::PushContext("Register component");
-    MatrixContainer matrix_store;
 
-    entities.register_component(matrix_store);
+    entities.register_component<TagMatf4>(MkUq<MatrixContainer>());
     Profiler::PopContext();
 
     Profiler::PushContext("Create 200 entities");
@@ -108,8 +107,6 @@ i32 coffee_main(i32, cstring_w*)
     //    Profiler::PushContext("Control");
     //    CurrentThread::sleep_for(Chrono::milliseconds(1));
     //    Profiler::PopContext();
-
-    C_UNUSED(ComponentContainerBase & t1) = matrix_store;
 
     return 0;
 }

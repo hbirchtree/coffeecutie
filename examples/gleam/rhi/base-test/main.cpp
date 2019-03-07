@@ -33,8 +33,6 @@ i32 coffee_main(i32, cstring_w*)
             r.installEventHandler({ResizeWindowUniversal<GLM>, nullptr, &r});
             r.installEventHandler(
                 {WindowManagerFullscreen<CDRenderer>, nullptr, &r});
-            r.installEventHandler(
-                {StandardCamera<CGCamera>, nullptr, &d->camera_cnt.get()});
         },
         SetupRendering,
         RendererLoop,

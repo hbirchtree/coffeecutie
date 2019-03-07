@@ -39,7 +39,8 @@ using GLM        = GLEAMAPI;
 
 struct RuntimeState
 {
-    CGCamera camera;
+    //    CGCamera camera;
+    byte_t camera_pad[sizeof(CGCamera)];
 
     i64  time_base     = 0.;
     bool debug_enabled = false;
@@ -57,7 +58,7 @@ struct TransformPair
 
 struct CameraData
 {
-    CGCamera* camera_source;
+    CGCamera camera_source;
 
     Matf4 projection;
     Matf4 transform;
@@ -69,6 +70,11 @@ using TransformTag = Components::TagType<TransformPair>;
 using MatrixTag    = Components::TagType<Pair<Matf4*, Matf4*>>;
 using CameraTag    = Components::TagType<CameraData>;
 using TimeTag      = Components::TagType<Chrono::seconds_float>;
+#if defined(FEATURE_ENABLE_ASIO)
+using ASIOTag = Components::TagType<ShPtr<ASIO::ASIO_Worker>>;
+#endif
+using FrameTag = Components::TagType<u32>;
+using StateTag = Components::TagType<RuntimeState>;
 
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
@@ -126,7 +132,7 @@ class TransformVisitor : public Components::EntityVisitor<
         const Components::time_point&) override
     {
         auto camera        = c.subsystem<CameraTag>().get();
-        auto camera_source = *camera.camera_source;
+        auto camera_source = camera.camera_source;
 
         camera_source.position.x() -= camera.eye_distance;
 
@@ -204,55 +210,36 @@ class BaseItemVisitor : public Components::EntityVisitor<
     }
 };
 
-class CameraContainer : public Components::Subsystem<CameraTag>
+class CameraContainer : public Components::Globals::ValueSubsystem<CameraTag>
 {
   public:
-    CameraData camera;
-
-    CameraContainer(CGCamera* camera_ptr)
+    CameraContainer()
     {
-        camera.camera_source = camera_ptr;
     }
 
     void reset()
     {
-        camera.camera_source->aspect      = 1.6f;
-        camera.camera_source->fieldOfView = 90.f;
-        camera.camera_source->zVals.far_  = 100.f;
+        get().camera_source.aspect      = 1.6f;
+        get().camera_source.fieldOfView = 90.f;
+        get().camera_source.zVals.far_  = 100.f;
 
-        camera.camera_source->position = {0, 0, -10};
+        get().camera_source.position = {0, 0, -10};
     }
 
     virtual void start_frame(ContainerProxy&, time_point const&)
     {
-        camera.projection = GenPerspective<scalar>(*camera.camera_source);
-        camera.transform = GenTransform<scalar>(*camera.camera_source);
-    }
-
-    virtual CameraData const& get() const
-    {
-        return camera;
-    }
-    virtual CameraData& get()
-    {
-        return camera;
+        get().projection = GenPerspective<scalar>(get().camera_source);
+        get().transform  = GenTransform<scalar>(get().camera_source);
     }
 };
 
-class TimeSystem : public Components::Subsystem<TimeTag>
+class TimeSystem : public Components::Globals::ValueSubsystem<TimeTag>
 {
   public:
     using system_clock = Chrono::high_resolution_clock;
 
-  private:
-    Chrono::seconds_float    loop_time;
-    system_clock::time_point start_time;
-
-    system_clock::time_point prev_time;
-
-  public:
-    TimeSystem() :
-        loop_time(), start_time(system_clock::now()), prev_time(start_time)
+    TimeSystem(system_clock::time_point const& start) :
+        start_time(system_clock::now()), prev_time(start_time)
     {
     }
 
@@ -265,87 +252,97 @@ class TimeSystem : public Components::Subsystem<TimeTag>
         Components::ContainerProxy&, Components::time_point const&) override
     {
         auto current = system_clock::now();
-        loop_time += current - prev_time;
+        get() += current - prev_time;
         prev_time = current;
+
+        current_time = get().count();
     }
-    virtual Chrono::seconds_float const& get() const override
+
+    scalar& get_time()
     {
-        return loop_time;
+        return current_time;
     }
-    virtual Chrono::seconds_float& get() override
+
+  private:
+    scalar                   current_time;
+    system_clock::time_point start_time;
+    system_clock::time_point prev_time;
+};
+
+#if defined(FEATURE_ENABLE_ASIO)
+class ASIOSystem : public Components::Globals::ValueSubsystem<ASIOTag>
+{
+  public:
+    ASIOSystem()
     {
-        return loop_time;
+        get() = ASIO::GenWorker();
+    }
+
+    void stop()
+    {
+        get()->stop();
+    }
+};
+#endif
+
+struct FrameCounter : public Components::Globals::ValueSubsystem<FrameTag>
+{
+  public:
+    virtual void start_frame(ContainerProxy&, time_point const&)
+    {
+        get()++;
     }
 };
 
+using RuntimeStateSystem = Components::Globals::ValueSubsystem<StateTag>;
+
 struct RendererState
 {
-    RendererState() : camera_cnt(nullptr)
+    RendererState()
     {
     }
 
     // State that can be loaded from disk
-    RuntimeState          r_state;
-    ShPtr<Store::SaveApi> save_api;
-
-    RuntimeQueue* rt_queue;
-#if defined(FEATURE_ENABLE_ASIO)
-    ShPtr<ASIO::ASIO_Worker> net_worker;
-#endif
-
-    ScopedTask component_task;
-
+    ShPtr<Store::SaveApi>       saving;
+    ScopedTask                  component_task;
     Components::EntityContainer entities;
-    CameraContainer             camera_cnt;
-    TimeSystem                  timing_sys;
-
-    u32 frameCount;
+    RuntimeQueue*               component_queue;
 
     struct RGraphicsData
     {
-        RGraphicsData() :
-            transform_cnt(), params(eye_pip), object_matrices(matrix_cnt.m_data)
+        RGraphicsData() : params(eye_pip)
         {
         }
 
         void reset()
         {
-            loader     = nullptr;
-            vertbuf    = nullptr;
+            loader     = {};
+            vertbuf    = {};
             vertdesc   = {};
             v_shader   = {};
             f_shader   = {};
             eye_pip    = {};
-            eyetex     = nullptr;
+            eyetex     = {};
             eyesamp    = {};
-            time_value = 0;
             blendstate = {};
             deptstate  = {};
             rpass_s    = {};
             rpass      = {};
         }
 
-        TransformContainer transform_cnt;
-        MatrixContainer    matrix_cnt;
-
         // GLEAM data
         GLM::API_CONTEXT loader = nullptr;
 
-        GLM::BUF_A* vertbuf;
-        GLM::V_DESC vertdesc = {};
+        UqPtr<GLM::BUF_A> vertbuf;
+        GLM::V_DESC       vertdesc = {};
 
         GLM::SHD                    v_shader = {};
         GLM::SHD                    f_shader = {};
         GLM::PIP                    eye_pip  = {};
         RHI::shader_param_view<GLM> params;
 
-        GLM::S_2DA*  eyetex;
-        GLM::SM_2DA  eyesamp        = {};
-        const scalar eyetexGridSize = 2.f;
-
-        // Graphics data
-        Vector<Matf4>& object_matrices;
-        scalar         time_value;
+        UqPtr<GLM::S_2DA> eyetex;
+        GLM::SM_2DA       eyesamp = {};
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
@@ -365,22 +362,18 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 {
     runtime_queue_error rqec;
     RuntimeQueue::CreateNewQueue("Main");
-    d->rt_queue = RuntimeQueue::CreateNewThreadQueue("Component Worker", rqec);
+    d->component_queue =
+        RuntimeQueue::CreateNewThreadQueue("Component Worker", rqec);
+
     auto onlineWorker =
         RuntimeQueue::CreateNewThreadQueue("Online Worker", rqec);
 
-#if defined(FEATURE_ENABLE_ASIO)
-    d->net_worker = ASIO::GenWorker();
-#endif
-
     C_ERROR_CHECK(rqec);
 
-    RendererState::RGraphicsData& g = d->g_data;
+    RendererState::RGraphicsData& g        = d->g_data;
+    auto&                         entities = d->entities;
 
     d->g_data.reset();
-
-    d->save_api = Store::CreateDefaultSave();
-    d->save_api->restore(Bytes::Create(d->r_state));
 
     cVerbose("Entering run() function");
 
@@ -412,7 +405,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         return;
     }
 
-    g.vertbuf      = new GLM::BUF_A(RSCA::ReadOnly, sizeof(vertexdata));
+    g.vertbuf      = MkUq<GLM::BUF_A>(RSCA::ReadOnly, sizeof(vertexdata));
     auto& vertbuf  = *g.vertbuf;
     auto& vertdesc = g.vertdesc;
 
@@ -478,7 +471,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Compiled shaders");
 
     /* Uploading textures */
-    g.eyetex = new GLM::S_2DA(
+    g.eyetex = MkUq<GLM::S_2DA>(
         PixFmt::RGBA8, 1, GLM::TextureDMABuffered | GLM::TextureAutoMipmapped);
     auto& eyetex = *g.eyetex;
 
@@ -495,6 +488,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     }
 
 #if defined(FEATURE_ENABLE_ASIO)
+    entities.register_subsystem<ASIOTag>(MkUq<ASIOSystem>());
+
     /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
@@ -575,6 +570,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     Profiler::PopContext();
     cVerbose("Uploading textures");
 
+    {
     /* Attaching the texture data to a sampler object */
     auto& eyesamp = g.eyesamp;
     eyesamp       = {};
@@ -582,83 +578,61 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     eyesamp.attach(&eyetex);
     eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
     cVerbose("Setting sampler properties");
-
-    /* We create some pipeline state, such as blending and viewport state */
-    auto& blendstate = g.blendstate;
-    auto& deptstate  = g.deptstate;
-
-    blendstate.m_doBlend = true;
-    deptstate.m_test     = true;
-    deptstate.m_func     = C_CAST<u32>(ValueComparison::Less);
-
-    /* Applying state information */
-    GLM::SetBlendState(g.blendstate);
-    GLM::SetDepthState(deptstate);
-    cVerbose("Set renderer state");
-
-    /* We query the current pipeline for possible uniform/texture/buffer values
-     */
-    g.params.get_pipeline_params();
-
-    for(auto& constant : g.params.constants())
-    {
-        if(constant.m_name == "transform")
-            g.params.set_constant(
-                constant, Bytes::CreateFrom(g.object_matrices));
-        else if(constant.m_name == "texdata")
-            g.params.set_sampler(constant, g.eyesamp.handle());
-        else if(constant.m_name == "mx")
-            g.params.set_constant(constant, Bytes::Create(g.time_value));
-        else if(constant.m_name == "texdata_gridSize")
-            g.params.set_constant(constant, Bytes::Create(g.eyetexGridSize));
     }
 
-    g.params.build_state();
+    {
+        /* We create some pipeline state, such as blending and viewport state */
+        auto& blendstate = g.blendstate;
+        auto& deptstate  = g.deptstate;
 
-    cVerbose("Acquire and set shader uniforms");
+        blendstate.m_doBlend = true;
+        deptstate.m_test     = true;
+        deptstate.m_func     = C_CAST<u32>(ValueComparison::Less);
 
-    /* Vertex descriptors are based upon the ideas from GL4.3 */
-    vertdesc.bind();
-    vertdesc.bindBuffer(0, vertbuf);
+        /* Applying state information */
+        GLM::SetBlendState(g.blendstate);
+        GLM::SetDepthState(deptstate);
+        cVerbose("Set renderer state");
+    }
 
-    GLM::PreDrawCleanup();
+    entities.register_component<TransformTag>(MkUq<TransformContainer>());
+    entities.register_component<MatrixTag>(MkUq<MatrixContainer>());
 
-    g.rpass_s.pipeline    = &g.eye_pip;
-    g.rpass_s.blend       = &g.blendstate;
-    g.rpass_s.depth       = &g.deptstate;
-    g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
+    entities.register_system(MkUq<TransformVisitor>());
+    entities.register_system(MkUq<FloorVisitor>());
+    entities.register_system(MkUq<BaseItemVisitor>());
 
-    g.call.m_inst = true;
+    entities.register_subsystem<StateTag>(MkUq<RuntimeStateSystem>());
+    entities.register_subsystem<FrameTag>(MkUq<FrameCounter>());
+    entities.register_subsystem<CameraTag>(MkUq<CameraContainer>());
 
-    g.rpass_s.draws.push_back(
-        {&g.vertdesc, &g.params.get_state(), g.call, g.instdata});
+    {
+        RuntimeState state = {};
+        d->saving          = Store::CreateDefaultSave();
 
-    GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
+        d->saving->restore(Bytes::Create(state));
+        entities.register_subsystem<TimeTag>(
+            MkUq<TimeSystem>(TimeSystem::system_clock::time_point(
+                Chrono::milliseconds(state.time_base))));
 
-    d->entities.register_component(g.transform_cnt);
-    d->entities.register_component(g.matrix_cnt);
-    d->entities.register_system(MkUq<TransformVisitor>());
-    d->entities.register_system(MkUq<FloorVisitor>());
-    d->entities.register_system(MkUq<BaseItemVisitor>());
-    d->entities.register_subsystem(d->camera_cnt);
-    d->entities.register_subsystem(d->timing_sys);
+        entities.subsystem<StateTag>().get() = state;
+    }
 
-    d->timing_sys.get_start() = TimeSystem::system_clock::time_point(
-        Chrono::milliseconds(d->r_state.time_base));
+    {
+        Components::EntityRecipe floor_object;
+        Components::EntityRecipe base_object;
 
-    Components::EntityRecipe floor_object;
-    Components::EntityRecipe base_object;
+        floor_object.components = {typeid(TransformTag).hash_code(),
+                                   typeid(MatrixTag).hash_code()};
+        floor_object.interval   = Chrono::milliseconds(10);
+        base_object             = floor_object;
 
-    floor_object.components = {typeid(TransformTag).hash_code(),
-                               typeid(MatrixTag).hash_code()};
-    floor_object.interval   = Chrono::milliseconds(10);
-    base_object             = floor_object;
+        floor_object.tags = 0x1;
+        base_object.tags  = 0x2;
 
-    floor_object.tags = 0x1;
-    base_object.tags  = 0x2;
-
-    d->entities.create_entity(base_object);
-    d->entities.create_entity(floor_object);
+        entities.create_entity(base_object);
+        entities.create_entity(floor_object);
+    }
 
     for(auto& entity : d->entities.select(0x1))
     {
@@ -682,13 +656,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.mask.y() = 0.2f;
     }
 
-    d->camera_cnt.camera.camera_source = &d->r_state.camera;
-    d->camera_cnt.reset();
-
-    d->entities.exec();
+    entities.exec();
 
     d->component_task = ScopedTask(
-        d->rt_queue->threadId(),
+        d->component_queue->threadId(),
         {[d]() {
              Profiler::PushContext("Components::exec()");
              d->entities.exec();
@@ -709,10 +680,47 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             cDebug("Video memory: {0}:{1}", dev.mem().total, dev.mem().free);
     }
 
-    g.params.get_constant_data("transform") =
-        Bytes::CreateFrom(g.matrix_cnt.m_data);
+    /* We query the current pipeline for possible uniform/texture/buffer values
+     */
+    g.params.get_pipeline_params();
+
+    for(auto& constant : g.params.constants())
+    {
+        if(constant.m_name == "transform")
+            g.params.set_constant(
+                constant,
+                Bytes::CreateFrom(
+                    entities.container_cast<MatrixContainer>().get_storage()));
+        else if(constant.m_name == "texdata")
+            g.params.set_sampler(constant, g.eyesamp.handle());
+        else if(constant.m_name == "mx")
+            g.params.set_constant(
+                constant,
+                Bytes::Create(
+                    entities.subsystem_cast<TimeSystem>().get_time()));
+    }
 
     g.params.build_state();
+
+    cVerbose("Acquire and set shader uniforms");
+
+    /* Vertex descriptors are based upon the ideas from GL4.3 */
+    vertdesc.bind();
+    vertdesc.bindBuffer(0, vertbuf);
+
+    GLM::PreDrawCleanup();
+
+    g.rpass_s.pipeline    = &g.eye_pip;
+    g.rpass_s.blend       = &g.blendstate;
+    g.rpass_s.depth       = &g.deptstate;
+    g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
+
+    g.call.m_inst = true;
+
+    g.rpass_s.draws.push_back(
+        {&g.vertdesc, &g.params.get_state(), g.call, g.instdata});
+
+    GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
 }
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
@@ -730,11 +738,6 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         DProfContext __("Exclusive context");
         RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
 
-        g.time_value = 0.f
-            /*(CMath::sin(d->entities.subsystem<TimeTag>().get().count()) / 2.f)
-               + 0.5f*/
-            ;
-
         GLM::DefaultFramebuffer().use(FramebufferT::All);
         GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
 
@@ -751,14 +754,15 @@ void RendererCleanup(CDRenderer&, RendererState* d)
 {
     Profiler::PushContext("Stopping workers");
     runtime_queue_error ec;
-    RuntimeQueue::TerminateThread(d->rt_queue, ec);
+    RuntimeQueue::TerminateThread(d->component_queue, ec);
+
+    auto& entities = d->entities;
 
 #if defined(FEATURE_ENABLE_ASIO)
-    d->net_worker->stop();
+    entities.subsystem_cast<ASIOSystem>().stop();
 #endif
-    Profiler::PopContext();
 
-    d->entities.reset();
+    Profiler::PopContext();
 
     auto& g = d->g_data;
 
@@ -772,22 +776,22 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     g.eyesamp.dealloc();
     Profiler::PopContext();
 
-    delete g.vertbuf;
-    g.vertbuf = nullptr;
-
-    delete g.eyetex;
-    g.eyetex = nullptr;
-
     g.loader = nullptr;
     GLM::UnloadAPI();
 
-    Profiler::PushContext("Saving time");
-    cDebug("Saving time: {0}", d->r_state.time_base);
+    auto& state = entities.subsystem<StateTag>().get();
 
-    d->r_state.time_base = Chrono::duration_cast<Chrono::milliseconds>(
-                               (d->timing_sys.get_start() + d->timing_sys.get())
-                                   .time_since_epoch())
-                               .count();
-    d->save_api->save(Bytes::Create(d->r_state));
+    Profiler::PushContext("Saving time");
+    cDebug("Saving time: {0}", state.time_base);
+
+    state.time_base =
+        Chrono::duration_cast<Chrono::milliseconds>(
+            (entities.subsystem_cast<TimeSystem>().get_start() +
+             entities.subsystem_cast<TimeSystem>().get())
+                .time_since_epoch())
+            .count();
+    d->saving->save(Bytes::Create(state));
     Profiler::PopContext();
+
+    d->entities.reset();
 }

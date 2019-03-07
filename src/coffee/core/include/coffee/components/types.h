@@ -87,7 +87,8 @@ struct EntityVisitorBase : non_copy
 template<typename ComponentType>
 struct ComponentContainer : ComponentContainerBase
 {
-    using type = typename ComponentType::type;
+    using tag_type = ComponentType;
+    using type     = typename ComponentType::type;
 
     virtual type* get(u64 id) = 0;
 };
@@ -108,11 +109,33 @@ struct SubsystemBase : non_copy
 template<typename OutputType>
 struct Subsystem : SubsystemBase
 {
-    using type = typename OutputType::type;
+    using tag_type = OutputType;
+    using type     = typename OutputType::type;
 
     virtual type const& get() const = 0;
     virtual type&       get()       = 0;
 };
 
+namespace Globals {
+
+template<typename T>
+struct ValueSubsystem : Subsystem<T>
+{
+    using type = typename Subsystem<T>::type;
+
+    virtual type const& get() const
+    {
+        return m_value;
+    }
+    virtual type& get()
+    {
+        return m_value;
+    }
+
+  private:
+    type m_value;
+};
+
+} // namespace Globals
 } // namespace Components
 } // namespace Coffee
