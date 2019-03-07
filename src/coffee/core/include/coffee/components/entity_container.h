@@ -1,9 +1,14 @@
 #pragma once
 
+#include <algorithm>
 #include <coffee/components/types.h>
 
 namespace Coffee {
 namespace Components {
+
+namespace detail {
+struct visitor_path;
+}
 
 struct EntityContainer : non_copy
 {
@@ -286,6 +291,10 @@ struct EntityContainer : non_copy
     {
         return container<ComponentType>().get(id);
     }
+
+    /* For optimizations */
+
+    Vector<detail::visitor_path> create_task_graph();
 
     using subsystem_map           = Map<type_hash, SubsystemBase*>;
     using component_container_map = Map<type_hash, ComponentContainerBase*>;

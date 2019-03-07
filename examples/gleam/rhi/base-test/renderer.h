@@ -39,8 +39,7 @@ using GLM        = GLEAMAPI;
 
 struct RuntimeState
 {
-    //    CGCamera camera;
-    byte_t camera_pad[sizeof(CGCamera)];
+    CGCamera camera;
 
     i64  time_base     = 0.;
     bool debug_enabled = false;
@@ -210,11 +209,23 @@ class BaseItemVisitor : public Components::EntityVisitor<
     }
 };
 
+class BasicVisitor : public Components::EntityVisitor<
+                         Components::TypeList<TimeTag>,
+                         Components::TypeList<TimeTag>>
+{
+    virtual bool visit(
+        Proxy&, Components::Entity const&, Components::time_point const&)
+    {
+        return true;
+    }
+};
+
 class CameraContainer : public Components::Globals::ValueSubsystem<CameraTag>
 {
   public:
     CameraContainer()
     {
+        reset();
     }
 
     void reset()
@@ -241,6 +252,7 @@ class TimeSystem : public Components::Globals::ValueSubsystem<TimeTag>
     TimeSystem(system_clock::time_point const& start) :
         start_time(system_clock::now()), prev_time(start_time)
     {
+        get_start() = start;
     }
 
     virtual system_clock::time_point& get_start()
@@ -287,10 +299,20 @@ class ASIOSystem : public Components::Globals::ValueSubsystem<ASIOTag>
 
 struct FrameCounter : public Components::Globals::ValueSubsystem<FrameTag>
 {
+    time_point next_print;
+
   public:
-    virtual void start_frame(ContainerProxy&, time_point const&)
+    virtual void start_frame(ContainerProxy&, time_point const& current)
     {
         get()++;
+
+        if(next_print < current)
+        {
+            next_print = current + Chrono::seconds(1);
+
+            cDebug("FPS: {0}", get());
+            get() = 0;
+        }
     }
 };
 
@@ -571,13 +593,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Uploading textures");
 
     {
-    /* Attaching the texture data to a sampler object */
-    auto& eyesamp = g.eyesamp;
-    eyesamp       = {};
-    eyesamp.alloc();
-    eyesamp.attach(&eyetex);
-    eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
-    cVerbose("Setting sampler properties");
+        /* Attaching the texture data to a sampler object */
+        auto& eyesamp = g.eyesamp;
+        eyesamp       = {};
+        eyesamp.alloc();
+        eyesamp.attach(&eyetex);
+        eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
+        cVerbose("Setting sampler properties");
     }
 
     {
@@ -601,6 +623,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     entities.register_system(MkUq<TransformVisitor>());
     entities.register_system(MkUq<FloorVisitor>());
     entities.register_system(MkUq<BaseItemVisitor>());
+    entities.register_system(MkUq<BasicVisitor>());
 
     entities.register_subsystem<StateTag>(MkUq<RuntimeStateSystem>());
     entities.register_subsystem<FrameTag>(MkUq<FrameCounter>());
@@ -627,14 +650,14 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         floor_object.interval   = Chrono::milliseconds(10);
         base_object             = floor_object;
 
-        floor_object.tags = 0x1;
-        base_object.tags  = 0x2;
+        floor_object.tags = FloorTag;
+        base_object.tags  = BaseItemTag;
 
         entities.create_entity(base_object);
         entities.create_entity(floor_object);
     }
 
-    for(auto& entity : d->entities.select(0x1))
+    for(auto& entity : d->entities.select(FloorTag))
     {
         auto& xf = *d->entities.get<TransformTag>(entity.id);
 
@@ -645,7 +668,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         xf.mask.y() = 2;
     }
 
-    for(auto& entity : d->entities.select(0x2))
+    for(auto& entity : d->entities.select(BaseItemTag))
     {
         auto& xf = *d->entities.get<TransformTag>(entity.id);
 
@@ -658,17 +681,19 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     entities.exec();
 
-    d->component_task = ScopedTask(
-        d->component_queue->threadId(),
-        {[d]() {
-             Profiler::PushContext("Components::exec()");
-             d->entities.exec();
-             Profiler::PopContext();
-         },
-         {},
-         std::chrono::milliseconds(10),
-         RuntimeTask::Periodic,
-         0});
+    auto stuff = entities.create_task_graph();
+
+    //    d->component_task = ScopedTask(
+    //        d->component_queue->threadId(),
+    //        {[d]() {
+    //             Profiler::PushContext("Components::exec()");
+    //             d->entities.exec();
+    //             Profiler::PopContext();
+    //         },
+    //         {},
+    //         std::chrono::milliseconds(10),
+    //         RuntimeTask::Periodic,
+    //         0});
 
     GpuInfo::GpuQueryInterface interf;
     gpu_query_error            ec;
@@ -733,6 +758,11 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 
     renderer.pollEvents();
 
+    {
+        DProfContext _("Components");
+        d->entities.exec();
+    }
+
     auto const& component_task = d->component_task;
     {
         DProfContext __("Exclusive context");
@@ -784,13 +814,15 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     Profiler::PushContext("Saving time");
     cDebug("Saving time: {0}", state.time_base);
 
-    state.time_base =
-        Chrono::duration_cast<Chrono::milliseconds>(
-            (entities.subsystem_cast<TimeSystem>().get_start() +
-             entities.subsystem_cast<TimeSystem>().get())
-                .time_since_epoch())
-            .count();
+    state.time_base = Chrono::duration_cast<Chrono::milliseconds>(
+                          (entities.subsystem_cast<TimeSystem>().get_start() +
+                           entities.subsystem_cast<TimeSystem>().get())
+                              .time_since_epoch())
+                          .count();
+
+    state.camera = entities.subsystem<CameraTag>().get().camera_source;
     d->saving->save(Bytes::Create(state));
+
     Profiler::PopContext();
 
     d->entities.reset();
