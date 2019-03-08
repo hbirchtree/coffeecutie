@@ -2,6 +2,7 @@
 
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
+#include <peripherals/enum/helpers.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/type_list.h>
@@ -30,6 +31,14 @@ struct TaggedTypeWrapper
 
 template<typename WrappedType, typename TaggedType = void>
 using TagType = TaggedTypeWrapper<WrappedType, TaggedType>;
+
+enum class VisitorFlags : u32
+{
+    None,
+    MainThread = 0x1, /* Must run on main-thread */
+};
+
+C_FLAGS(VisitorFlags, u32);
 
 struct EntityRecipe
 {
@@ -68,15 +77,16 @@ struct EntityVisitorBase : non_copy
 
     type_hashes const components;
     type_hashes const subsystems;
-
-    u32 tags;
+    VisitorFlags      flags;
+    u32               tags;
 
     EntityVisitorBase(
-        type_hashes&& components, type_hashes&& subsystems, u32 tags = 0) :
+        type_hashes&& components,
+        type_hashes&& subsystems,
+        u32           tags  = 0,
+        VisitorFlags  flags = VisitorFlags::None) :
         components(std::move(components)),
-        subsystems(std::move(subsystems)),
-
-        tags(tags)
+        subsystems(std::move(subsystems)), flags(flags), tags(tags)
     {
     }
 

@@ -293,11 +293,9 @@ struct EntityContainer : non_copy
     }
 
     /* For optimizations */
+    using visitor_graph = Set<Vector<bool>>;
 
-    Vector<detail::visitor_path> create_task_graph();
-
-    using subsystem_map           = Map<type_hash, SubsystemBase*>;
-    using component_container_map = Map<type_hash, ComponentContainerBase*>;
+    visitor_graph create_task_graph();
 
   private:
     u64            entity_counter; /*!< For enumerating entities */

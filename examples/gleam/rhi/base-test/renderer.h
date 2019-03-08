@@ -20,6 +20,7 @@
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
 #include <coffee/discord/discord_binding.h>
+#include <coffee/discord/discord_system.h>
 #endif
 
 #include <coffee/strings/info.h>
@@ -217,6 +218,27 @@ class BasicVisitor : public Components::EntityVisitor<
         Proxy&, Components::Entity const&, Components::time_point const&)
     {
         return true;
+    }
+
+  public:
+    BasicVisitor(VisitorFlags flags) : VisitorType(0, flags)
+    {
+    }
+};
+
+class Basic2Visitor : public Components::EntityVisitor<
+                          Components::TypeList<CameraTag>,
+                          Components::TypeList<TimeTag>>
+{
+    virtual bool visit(
+        Proxy&, Components::Entity const&, Components::time_point const&)
+    {
+        return true;
+    }
+
+  public:
+    Basic2Visitor(VisitorFlags flags) : VisitorType(0, flags)
+    {
     }
 };
 
@@ -542,7 +564,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     auto callbacks = MkShared<Discord::DiscordDelegate>();
 
     auto mainQueue   = RuntimeQueue::GetCurrentQueue(rqec);
-    callbacks->ready = [mainQueue, &eyetex](Discord::PlayerInfo const& info) {
+    callbacks->ready = [mainQueue, &eyetex](Discord::PlayerInfo&& info) {
         cDebug("Identified as: {0}", info.userTag);
 
         auto rsc = Net::Resource(ASIO::GetContext(), info.avatarUrl);
@@ -617,17 +639,22 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         cVerbose("Set renderer state");
     }
 
-    entities.register_component<TransformTag>(MkUq<TransformContainer>());
-    entities.register_component<MatrixTag>(MkUq<MatrixContainer>());
+    {
+        using Components::VisitorFlags;
 
-    entities.register_system(MkUq<TransformVisitor>());
-    entities.register_system(MkUq<FloorVisitor>());
-    entities.register_system(MkUq<BaseItemVisitor>());
-    entities.register_system(MkUq<BasicVisitor>());
+        entities.register_component<TransformTag>(MkUq<TransformContainer>());
+        entities.register_component<MatrixTag>(MkUq<MatrixContainer>());
 
-    entities.register_subsystem<StateTag>(MkUq<RuntimeStateSystem>());
-    entities.register_subsystem<FrameTag>(MkUq<FrameCounter>());
-    entities.register_subsystem<CameraTag>(MkUq<CameraContainer>());
+        entities.register_system(MkUq<TransformVisitor>());
+        entities.register_system(MkUq<FloorVisitor>());
+        entities.register_system(MkUq<BaseItemVisitor>());
+        entities.register_system(MkUq<BasicVisitor>(VisitorFlags::MainThread));
+        entities.register_system(MkUq<Basic2Visitor>(VisitorFlags::MainThread));
+
+        entities.register_subsystem<StateTag>(MkUq<RuntimeStateSystem>());
+        entities.register_subsystem<FrameTag>(MkUq<FrameCounter>());
+        entities.register_subsystem<CameraTag>(MkUq<CameraContainer>());
+    }
 
     {
         RuntimeState state = {};
@@ -718,11 +745,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                     entities.container_cast<MatrixContainer>().get_storage()));
         else if(constant.m_name == "texdata")
             g.params.set_sampler(constant, g.eyesamp.handle());
-        else if(constant.m_name == "mx")
-            g.params.set_constant(
-                constant,
-                Bytes::Create(
-                    entities.subsystem_cast<TimeSystem>().get_time()));
+//        else if(constant.m_name == "mx")
+//            g.params.set_constant(
+//                constant,
+//                Bytes::Create(
+//                    entities.subsystem_cast<TimeSystem>().get_time()));
     }
 
     g.params.build_state();

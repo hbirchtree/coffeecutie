@@ -106,12 +106,12 @@ struct DiscordDelegate : non_copy
 {
     using JoinReply = DiscordPresenceDelegate::JoinReply;
 
-    Function<void(PlayerInfo const&)>       ready;
+    Function<void(PlayerInfo&&)>            ready;
     Function<void(discord_error const& ec)> disconnected;
     Function<void(discord_error const& ec)> error;
 
-    Function<void(PlayerInfo const&)>            joinRequest;
-    Function<void(PlayerInfo const&, JoinReply)> joinReply;
+    Function<void(PlayerInfo&&)>            joinRequest;
+    Function<void(PlayerInfo&&, JoinReply)> joinReply;
 
     Function<void(CString const&)> spectate;
     Function<void(CString const&)> joinGame;

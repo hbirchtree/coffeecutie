@@ -10,31 +10,31 @@ namespace detail {
 
 using node_id = size_t;
 
-struct visitor_path
+FORCEDINLINE void assign_reachables(
+    Vector<bool>& matrix,
+    size_t        size,
+    node_id       source_node,
+    node_id       current_node)
 {
-    static constexpr node_id sentinel = std::numeric_limits<node_id>::max();
-
-    node_id   nodes[2];
-    type_hash association;
-};
-
-FORCEDINLINE void explore_graph(
-    Set<node_id>& out, Vector<visitor_path> const& graph, node_id current_node)
-{
-    for(auto const& node : graph)
-        if(node.nodes[0] == current_node)
-            if(node.nodes[1] != visitor_path::sentinel)
-            {
-                out.insert(node.nodes[1]);
-                explore_graph(out, graph, node.nodes[1]);
-            }
+    for(auto i : Range<>(size))
+        if(matrix[size * current_node + i] && !matrix[size * source_node + i])
+        {
+            matrix[size * source_node + i] = true;
+            assign_reachables(matrix, size, source_node, i);
+        }
 }
 
-FORCEDINLINE Vector<visitor_path> create_visitor_graph(
+FORCEDINLINE void expand_neighbor_matrix(
+    Vector<bool>& matrix, size_t size, node_id current_node)
+{
+    for(auto i : Range<>(size))
+        if(i != current_node && matrix[size * current_node + i])
+            assign_reachables(matrix, size, current_node, i);
+}
+
+FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     Vector<UqPtr<EntityVisitorBase>> const& visitors)
 {
-    Vector<visitor_path> graph;
-
     Map<type_hash, Vector<node_id>> buckets;
 
     /* Add visitors to buckets */
@@ -47,11 +47,11 @@ FORCEDINLINE Vector<visitor_path> create_visitor_graph(
         idx++;
     }
 
-    auto neigh_size = visitors.size();
+    auto         neigh_size = visitors.size();
     Vector<bool> neighbor_matrix;
     neighbor_matrix.resize(visitors.size() * visitors.size());
 
-    /* Create a minimal spanning tree between all visitors in bucket */
+    /* Create a neighbor matrix for the nodes */
     for(auto const& bucket : buckets)
     {
         /* TODO: Handle visitors with exclusive access */
@@ -63,13 +63,13 @@ FORCEDINLINE Vector<visitor_path> create_visitor_graph(
         }
 
         auto start = bucket.second.begin();
-        auto it1 = start;
-        auto it2 = start + 1;
+        auto it1   = start;
+        auto it2   = start + 1;
 
         for(; it2 != bucket.second.end(); it1++, it2++)
         {
-            auto x = it1 - start;
-            auto y = it2 - start;
+            auto x = C_FCAST<size_t>(it1 - start);
+            auto y = C_FCAST<size_t>(it2 - start);
 
             bool val = true;
 
@@ -81,7 +81,53 @@ FORCEDINLINE Vector<visitor_path> create_visitor_graph(
         }
     }
 
-    return graph;
+    /* Connect all nodes that run on main thread, grouping them together */
+    {
+        auto const is_mainthread = [](UqPtr<EntityVisitorBase> const& p) {
+            return (p->flags & VisitorFlags::MainThread) ==
+                   VisitorFlags::MainThread;
+        };
+
+        auto start = visitors.begin();
+
+        auto it1 = std::find_if(start, visitors.end(), is_mainthread);
+
+        while(it1 != visitors.end())
+        {
+            auto new_start = it1 + 1;
+            auto it2 = std::find_if(new_start, visitors.end(), is_mainthread);
+
+#if MODE_DEBUG
+            if(it1 == it2)
+                Throw(undefined_behavior("incorrect grouping"));
+#endif
+            if(it2 == visitors.end())
+                break;
+
+            auto x = C_FCAST<size_t>(it1 - start);
+            auto y = C_FCAST<size_t>(it2 - start);
+
+            neighbor_matrix.at(neigh_size * y + x) = true;
+            neighbor_matrix.at(neigh_size * x + y) = true;
+
+            it1 = it2;
+        }
+    }
+
+    /* Expand neighbor matrix completely */
+    for(auto i : Range<>(neigh_size))
+        expand_neighbor_matrix(neighbor_matrix, neigh_size, i);
+
+    /* De-duplicate neighbor matrix rows to create task queues */
+    Set<Vector<bool>> unique_rows;
+    for(auto i : Range<>(neigh_size))
+    {
+        unique_rows.insert(Vector<bool>(
+            neighbor_matrix.begin() + C_FCAST<ssize_t>(neigh_size * i),
+            neighbor_matrix.begin() + C_FCAST<ssize_t>(neigh_size * (i + 1))));
+    }
+
+    return unique_rows;
 }
 
 } // namespace detail
@@ -105,7 +151,7 @@ void EntityContainer::exec()
         subsys.second->end_frame(proxy, time_now);
 }
 
-Vector<detail::visitor_path> EntityContainer::create_task_graph()
+EntityContainer::visitor_graph EntityContainer::create_task_graph()
 {
     return detail::create_visitor_graph(visitors);
 }

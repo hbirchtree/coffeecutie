@@ -121,7 +121,7 @@ ShPtr<online::Service> CreateService(
         Discord_Register(options.appId.c_str(), executable.c_str());
     }
 
-    return discordService;
+    return std::move(discordService);
 }
 
 DiscordService::DiscordService(ShPtr<DiscordDelegate> delegate) :
@@ -148,7 +148,7 @@ void DiscordService::initialize(DiscordOptions const& options)
         auto& delegate = GetService().delegate();
 
         if(delegate.ready)
-            delegate.ready(info);
+            delegate.ready(std::move(info));
     };
     handlers.disconnected = [](int err, cstring message) {
         discord_error ec;
@@ -193,10 +193,10 @@ void DiscordService::initialize(DiscordOptions const& options)
         auto& delegate = GetService().delegate();
 
         if(delegate.joinRequest)
-            GetService().delegate().joinRequest(info);
+            GetService().delegate().joinRequest(std::move(info));
     };
 
-    m_delegate->joinReply = [&](PlayerInfo const&                  playerInfo,
+    m_delegate->joinReply = [&](PlayerInfo&&                       playerInfo,
                                 DiscordPresenceDelegate::JoinReply reply) {
         Discord_Respond(playerInfo.userId.c_str(), reply);
     };
