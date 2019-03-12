@@ -397,9 +397,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     RendererState::RGraphicsData& g        = d->g_data;
     auto&                         entities = d->entities;
 
+#if defined(FEATURE_ENABLE_DiscordLatte)
     entities.register_subsystem<Discord::Tag>(MkUq<Discord::Subsystem>(
         onlineWorker, Discord::DiscordOptions{"468164529617109002", 256}));
+#endif
+#if defined(FEATURE_ENABLE_ASIO)
     entities.register_subsystem<ASIO::Tag>(MkUq<ASIO::Subsystem>());
+#endif
     entities.register_subsystem<IMG::ImageCoderTag>(
         MkUq<IMG::ImageCoderSubsystem>("stb::DecoderQueue"));
     d->g_data.reset();
