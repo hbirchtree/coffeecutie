@@ -10,7 +10,7 @@ namespace detail {
 
 using node_id = size_t;
 
-FORCEDINLINE void assign_reachables(
+void assign_reachables(
     Vector<bool>& matrix,
     size_t        size,
     node_id       source_node,

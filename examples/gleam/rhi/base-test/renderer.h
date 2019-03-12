@@ -9,17 +9,16 @@
 #include <coffee/core/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/graphics/common/query/gpu_query.h>
-#include <coffee/image/cimage.h>
+#include <coffee/image/image_coder_system.h>
 #include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/asio_worker.h>
+#include <coffee/asio/asio_system.h>
 #include <coffee/asio/net_resource.h>
 #endif
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
-#include <coffee/discord/discord_binding.h>
 #include <coffee/discord/discord_system.h>
 #endif
 
@@ -70,11 +69,8 @@ using TransformTag = Components::TagType<TransformPair>;
 using MatrixTag    = Components::TagType<Pair<Matf4*, Matf4*>>;
 using CameraTag    = Components::TagType<CameraData>;
 using TimeTag      = Components::TagType<Chrono::seconds_float>;
-#if defined(FEATURE_ENABLE_ASIO)
-using ASIOTag = Components::TagType<ShPtr<ASIO::ASIO_Worker>>;
-#endif
-using FrameTag = Components::TagType<u32>;
-using StateTag = Components::TagType<RuntimeState>;
+using FrameTag     = Components::TagType<u32>;
+using StateTag     = Components::TagType<RuntimeState>;
 
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
@@ -303,22 +299,6 @@ class TimeSystem : public Components::Globals::ValueSubsystem<TimeTag>
     system_clock::time_point prev_time;
 };
 
-#if defined(FEATURE_ENABLE_ASIO)
-class ASIOSystem : public Components::Globals::ValueSubsystem<ASIOTag>
-{
-  public:
-    ASIOSystem()
-    {
-        get() = ASIO::GenWorker();
-    }
-
-    void stop()
-    {
-        get()->stop();
-    }
-};
-#endif
-
 struct FrameCounter : public Components::Globals::ValueSubsystem<FrameTag>
 {
     time_point next_print;
@@ -417,6 +397,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     RendererState::RGraphicsData& g        = d->g_data;
     auto&                         entities = d->entities;
 
+    entities.register_subsystem<Discord::Tag>(MkUq<Discord::Subsystem>(
+        onlineWorker, Discord::DiscordOptions{"468164529617109002", 256}));
+    entities.register_subsystem<ASIO::Tag>(MkUq<ASIO::Subsystem>());
+    entities.register_subsystem<IMG::ImageCoderTag>(
+        MkUq<IMG::ImageCoderSubsystem>("stb::DecoderQueue"));
     d->g_data.reset();
 
     cVerbose("Entering run() function");
@@ -532,13 +517,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     }
 
 #if defined(FEATURE_ENABLE_ASIO)
-    entities.register_subsystem<ASIOTag>(MkUq<ASIOSystem>());
-
     /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
         auto rsc = "http://i.imgur.com/nQdOmCJ.png"_http.rsc<Net::Resource>(
-            ASIO::GetContext());
+            entities.subsystem_cast<ASIO::Subsystem>().context());
 
         if(rsc.fetch())
         {
@@ -561,53 +544,55 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     }
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
-    auto callbacks = MkShared<Discord::DiscordDelegate>();
+    {
+        runtime_queue_error rqec;
+        auto& discord   = entities.subsystem_cast<Discord::Subsystem>();
+        auto& imgCoder  = entities.subsystem_cast<IMG::ImageCoderSubsystem>();
+        auto& network   = entities.subsystem_cast<ASIO::Subsystem>();
+        auto  mainQueue = RuntimeQueue::GetCurrentQueue(rqec);
 
-    auto mainQueue   = RuntimeQueue::GetCurrentQueue(rqec);
-    callbacks->ready = [mainQueue, &eyetex](Discord::PlayerInfo&& info) {
-        cDebug("Identified as: {0}", info.userTag);
+        C_ERROR_CHECK(rqec);
 
-        auto rsc = Net::Resource(ASIO::GetContext(), info.avatarUrl);
+        RuntimeQueue::QueuePeriodic(
+            onlineWorker,
+            Chrono::milliseconds(100),
+            [mainQueue, &discord, &network, &imgCoder, &eyetex]() {
+                ProfContext _("Awaiting Discord");
+                if(discord.awaitReady(Chrono::milliseconds(10)))
+                {
+                    cDebug("User ID: {0}", discord.playerInfo().userTag);
 
-        if(rsc.fetch())
-        {
-            auto imdata = rsc.data();
+                    auto rsc = MkShared<Net::Resource>(
+                        network.context(), discord.playerInfo().avatarUrl);
 
-            /* TODO: Make this a move operation */
-            ShPtr<stb::image_rw> img = MkShared<stb::image_rw>();
-            stb::LoadData(
-                img.get(), BytesConst(imdata.data, imdata.size, imdata.size));
+                    if(rsc->fetch())
+                    {
+                        runtime_queue_error ec;
+                        imgCoder.decode(rsc->data(), std::move(rsc))
+                            .then(mainQueue, [&](stb::image_rw&& img) {
+                                ProfContext _("Uploading texture");
+                                eyetex.upload(
+                                    PixDesc(
+                                        eyetex.m_pixfmt,
+                                        BitFmt::UByte,
+                                        PixCmp::RGBA),
+                                    {img.size.w, img.size.h, 1},
+                                    C_OCAST<Bytes>(img),
+                                    {});
+                            });
+                    }
 
-            auto imageUpload = [img, &eyetex]() {
-                cDebug("Uploading");
-                eyetex.upload(
-                    PixDesc(eyetex.m_pixfmt, BitFmt::UByte, PixCmp::RGBA),
-                    {img->size.w, img->size.h, 1},
-                    C_OCAST<Bytes>(*img),
-                    {});
-            };
+                    runtime_queue_error ec;
+                    RuntimeQueue::CancelTask(RuntimeQueue::GetSelfId(ec), ec);
+                }
+            },
+            rqec);
 
-            runtime_queue_error ec;
-            RuntimeQueue::QueueShot(
-                mainQueue, Chrono::seconds(1), imageUpload, ec);
-        }
-    };
-
-    auto service =
-        Discord::CreateService({"468164529617109002", 256}, callbacks);
-
-    service->getPresence()->put({"", 1, 1, {}, {}});
-    service->getGame()->put(platform::online::GameDelegate::Builder(
-        {}, "Messing around", MkUrl("coffee_cup")));
-
-    RuntimeQueue::QueuePeriodic(
-        onlineWorker,
-        Chrono::milliseconds(100),
-        [service]() {
-            ProfContext _("Discord poll");
-            service->poll();
-        },
-        rqec);
+        discord.start();
+    }
+//    service->getPresence()->put({"", 1, 1, {}, {}});
+//    service->getGame()->put(platform::online::GameDelegate::Builder(
+//        {}, "Messing around", MkUrl("coffee_cup")));
 #endif
 #endif
 
@@ -708,20 +693,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     entities.exec();
 
-    auto stuff = entities.create_task_graph();
-
-    //    d->component_task = ScopedTask(
-    //        d->component_queue->threadId(),
-    //        {[d]() {
-    //             Profiler::PushContext("Components::exec()");
-    //             d->entities.exec();
-    //             Profiler::PopContext();
-    //         },
-    //         {},
-    //         std::chrono::milliseconds(10),
-    //         RuntimeTask::Periodic,
-    //         0});
-
     GpuInfo::GpuQueryInterface interf;
     gpu_query_error            ec;
     GpuInfo::LoadDefaultGpuQuery(interf, ec);
@@ -745,11 +716,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                     entities.container_cast<MatrixContainer>().get_storage()));
         else if(constant.m_name == "texdata")
             g.params.set_sampler(constant, g.eyesamp.handle());
-//        else if(constant.m_name == "mx")
-//            g.params.set_constant(
-//                constant,
-//                Bytes::Create(
-//                    entities.subsystem_cast<TimeSystem>().get_time()));
+        //        else if(constant.m_name == "mx")
+        //            g.params.set_constant(
+        //                constant,
+        //                Bytes::Create(
+        //                    entities.subsystem_cast<TimeSystem>().get_time()));
     }
 
     g.params.build_state();
@@ -816,7 +787,7 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     auto& entities = d->entities;
 
 #if defined(FEATURE_ENABLE_ASIO)
-    entities.subsystem_cast<ASIOSystem>().stop();
+    entities.subsystem_cast<ASIO::Subsystem>().stop();
 #endif
 
     Profiler::PopContext();

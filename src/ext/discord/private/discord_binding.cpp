@@ -89,6 +89,7 @@ static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
     info.avatarUrl = avatarUrl;
     info.userTag   = fmt("{0}#{1}", user->username, user->discriminator);
     info.username  = user->username;
+    info.userId    = user->userId;
 
     return info;
 }
@@ -208,15 +209,8 @@ void DiscordService::initialize(DiscordOptions const& options)
     m_cachedPresence.startTimestamp =
         Chrono::seconds(std::time(nullptr)).count();
 
-    presence = MkShared<
-        DiscordPresenceDelegate,
-        DiscordOptions const&,
-        DiscordRichPresence*>(options, &m_cachedPresence);
-
-    game = MkShared<
-        DiscordGameDelegate,
-        DiscordOptions const&,
-        DiscordRichPresence*>(options, &m_cachedPresence);
+    presence = MkShared<DiscordPresenceDelegate>(options, &m_cachedPresence);
+    game     = MkShared<DiscordGameDelegate>(options, &m_cachedPresence);
 }
 
 DiscordService::~DiscordService()

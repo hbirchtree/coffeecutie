@@ -187,9 +187,19 @@ struct concurrent_notif
 
     FORCEDINLINE void notify()
     {
-        UqLock _(prep_lock);
+        (void)notify(Chrono::seconds(10));
+    }
+
+    template<typename Dur = Chrono::system_clock::duration>
+    NO_DISCARD FORCEDINLINE bool notify(Dur const&)
+    {
+        UqLock _(prep_lock, std::try_to_lock);
+
+        if(!_.owns_lock())
+            return false;
 
         variable.notify_all();
+        return true;
     }
 };
 } // namespace stl_types

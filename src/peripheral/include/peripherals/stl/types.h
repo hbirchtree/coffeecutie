@@ -264,7 +264,7 @@ template<typename T, typename... Args>
  */
 inline UqPtr<T> MkUq(Args... a)
 {
-    return UqPtr<T>(new T(a...));
+    return UqPtr<T>(new T(std::forward<Args>(a)...));
 }
 template<typename T>
 inline UqPtr<T> MkUqWrap(T* ptr)
@@ -274,13 +274,13 @@ inline UqPtr<T> MkUqWrap(T* ptr)
 template<typename T, class Deleter, typename... Args>
 inline UqPtr<T, Deleter> MkUqDST(Args... a)
 {
-    return UqPtr<T, Deleter>(new T(a...));
+    return UqPtr<T, Deleter>(new T(std::forward<Args>(a)...));
 }
 
 template<typename T, typename... Args>
 inline ShPtr<T> MkShared(Args... a)
 {
-    return ShPtr<T>(new T(a...));
+    return ShPtr<T>(new T(std::forward<Args>(a)...));
 }
 
 /*

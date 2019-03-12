@@ -374,6 +374,8 @@ bool Resource::push(http::method_t method, const Bytes& data)
 
     cVerbose(8, NETRSC_TAG "Sending request:\n{0}", header);
 
+    Profiler::DeepPushContext(NETRSC_TAG "Writing header");
+
 #if defined(ASIO_USE_SSL)
     if(secure())
         ssl->write(header);
@@ -391,8 +393,12 @@ bool Resource::push(http::method_t method, const Bytes& data)
         }
     }
 
+    Profiler::DeepPopContext();
+
     if(has_payload)
     {
+        DProfContext _(NETRSC_TAG "Writing payload");
+
         cVerbose(
             12,
             NETRSC_TAG "Pushed payload size: {0}",

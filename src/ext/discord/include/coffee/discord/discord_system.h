@@ -28,22 +28,24 @@ struct Subsystem : Components::Globals::ValueSubsystem<Tag>
 
         C_ERROR_CHECK(ec);
 
+        get().delegate   = MkShared<DiscordDelegate>();
         delegate().ready = [&](Discord::PlayerInfo&& info) {
             m_playerInfo = std::move(info);
+            if(!readyWait.mutx.try_lock())
+                readyWait.var.notify_all();
         };
     }
 
     void start()
     {
-        auto& _service = service();
-
         get().service = CreateService(std::move(m_options), get().delegate);
+        auto _service = get().service;
 
         runtime_queue_error ec;
         RuntimeQueue::QueuePeriodic(
             m_discordQueue,
             Chrono::milliseconds(100),
-            [&_service]() { _service.poll(); },
+            [_service]() { _service->poll(); },
             ec);
     }
 
@@ -72,10 +74,31 @@ struct Subsystem : Components::Globals::ValueSubsystem<Tag>
         return *get().service;
     }
 
+    bool awaitReady(RuntimeTask::clock::duration timeout)
+    {
+        UqLock lk(readyWait.mutx, std::try_to_lock);
+
+        if(!lk.owns_lock())
+            return true;
+
+        return readyWait.var.wait_for(lk, timeout) == cv_status::no_timeout;
+    }
+
+    PlayerInfo const& playerInfo() const
+    {
+        return m_playerInfo;
+    }
+
   private:
     RuntimeQueue*  m_discordQueue;
     RuntimeQueue*  m_mainQueue;
     DiscordOptions m_options;
+
+    struct
+    {
+        CondVar var;
+        Mutex   mutx;
+    } readyWait;
 
     PlayerInfo m_playerInfo;
 };

@@ -83,6 +83,7 @@ i32 coffee_main(i32, cstring_w*)
         //        Profiler::Profile("Receive response");
     }
 
+    /*
 #if defined(ASIO_USE_SSL)
     {
         using namespace http::header;
@@ -189,11 +190,12 @@ i32 coffee_main(i32, cstring_w*)
         connection.sync_close();
     }
 #endif
-
+*/
+    for(auto i : Range<>(10))
     {
         TCP::Socket connection(net_context);
 
-        connection.connect("coffee.birchtrees.me", "http");
+        connection.connect("example.com", "http");
 
         connection.sync_close();
     }
