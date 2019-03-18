@@ -72,8 +72,7 @@ template<typename T>
 struct remove_cvref
 {
     using type =
-    typename std::remove_cv<
-    typename std::remove_reference<T>::type>::type;
+        typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 };
 
 template<typename T>
@@ -381,6 +380,17 @@ struct implements
     typedef typename std::enable_if<
         std::is_base_of<Interface, Implementation>::value>::type    type;
 #endif
+};
+
+template<typename Implementation>
+struct implementation
+{
+    template<typename Interface>
+    struct implements
+    {
+        static constexpr bool value =
+            std::is_base_of<Interface, Implementation>::value;
+    };
 };
 
 template<typename T>

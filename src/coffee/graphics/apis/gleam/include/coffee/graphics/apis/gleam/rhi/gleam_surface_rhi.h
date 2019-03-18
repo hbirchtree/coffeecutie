@@ -76,6 +76,8 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
 
 struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
 {
+    using sampler_type = GLEAM_Sampler2D;
+
     friend struct GLEAM_Sampler2D;
 
     GLEAM_Surface2D(PixFmt fmt, u32 mips = 1, u32 texflags = 0);
@@ -104,6 +106,8 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
 
 struct GLEAM_SurfaceCube : GLEAM_Surface2D
 {
+    using sampler_type = GLEAM_SamplerCube;
+
     friend struct GLEAM_SamplerCube;
 
     GLEAM_SurfaceCube(PixFmt fmt, u32 mips = 1, u32 texflags = 0);
@@ -149,6 +153,8 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 {
+    using sampler_type = GLEAM_Sampler3D;
+
     friend struct GLEAM_Sampler3D;
     GLEAM_Surface3D(PixFmt fmt, u32 mips = 1, u32 texflags = 0) :
         GLEAM_Surface3D_Base(tex::t3d::value, fmt, mips, texflags)
@@ -158,6 +164,8 @@ struct GLEAM_Surface3D : GLEAM_Surface3D_Base
 
 struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
 {
+    using sampler_type = GLEAM_Sampler2DArray;
+
     friend struct GLEAM_Sampler2DArray;
     GLEAM_Surface2DArray(PixFmt fmt, u32 mips = 1, u32 texflags = 0) :
         GLEAM_Surface3D_Base(tex::t2d_array::value, fmt, mips, texflags)
@@ -167,6 +175,8 @@ struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
 
 struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
 {
+    using sampler_type = GLEAM_SamplerCubeArray;
+
     friend struct GLEAM_SamplerCube;
 
     GLEAM_API_CLASS_LINKAGE GLEAM_SurfaceCubeArray(

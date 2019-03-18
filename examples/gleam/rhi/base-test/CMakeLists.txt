@@ -10,6 +10,7 @@ coffee_application (
     GLeamRHI
     RendererDefault
     Core
+    EntComp
 
     RESOURCES
     "${COFFEE_ASSET_DIRECTORY}/eye-demo/"

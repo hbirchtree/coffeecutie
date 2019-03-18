@@ -300,6 +300,11 @@ struct shader_param_view
     {
     }
 
+    Pipeline& pipeline()
+    {
+        return m_pipeline;
+    }
+
     /*!
      * \brief Retrieve pipeline constants and parameters for iteration
      *

@@ -61,9 +61,7 @@ struct Entity : non_copy
 
 struct ComponentContainerBase : non_copy
 {
-    virtual ~ComponentContainerBase()
-    {
-    }
+    virtual ~ComponentContainerBase();
 
     virtual void register_entity(u64 id)       = 0;
     virtual void unregister_entity(u64 id)     = 0;
@@ -90,6 +88,8 @@ struct EntityVisitorBase : non_copy
     {
     }
 
+    virtual ~EntityVisitorBase();
+
     virtual bool dispatch(
         EntityContainer& container, const time_point& current) = 0;
 };
@@ -107,6 +107,8 @@ struct SubsystemBase : non_copy
 {
     using ContainerProxy = Components::ContainerProxy;
     using time_point     = Components::time_point;
+
+    virtual ~SubsystemBase();
 
     virtual void start_frame(ContainerProxy&, time_point const&)
     {
@@ -133,11 +135,11 @@ struct ValueSubsystem : Subsystem<T>
 {
     using type = typename Subsystem<T>::type;
 
-    virtual type const& get() const
+    virtual type const& get() const override
     {
         return m_value;
     }
-    virtual type& get()
+    virtual type& get() override
     {
         return m_value;
     }
@@ -146,6 +148,8 @@ struct ValueSubsystem : Subsystem<T>
     type m_value;
 };
 
-} // namespace Globals
+}
+
+// namespace Globals
 } // namespace Components
 } // namespace Coffee
