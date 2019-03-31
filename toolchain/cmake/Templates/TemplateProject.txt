@@ -1,0 +1,64 @@
+project ( @PJNAME@ )
+cmake_minimum_required(VERSION 3.1)
+
+# Get the macros and etc.
+include( toolchain/cmake/Modules/SubprojectFunctions.cmake )
+Init_Subproject()
+
+if(BUILD_LIBRARIES)
+    # Base library
+    import_coffee_lib ( Coffee REQUIRED )
+    # Some dependencies
+    find_package ( StandardLibs REQUIRED )
+    if(TARGET Coffee::SDL2Backend)
+        find_package ( SDL2 REQUIRED )
+    endif()
+
+    # Application definition
+    coffee_application (
+            #
+            # Bare minimum stuff
+            #
+
+            TARGET @PJNAME@
+            
+            SOURCES
+            @SRCS@
+
+            LIBRARIES 
+            # Linked dependencies here
+            BUNDLE_LIBRARIES 
+            # Put shared libraries and etc. here
+
+            #
+            # Optional goodies
+            #
+
+            BUNDLE_BINARIES 
+            # Nothing here
+            
+            # Application resources
+            RESOURCES
+            ${CMAKE_SOURCE_DIR}/rsrc/@PJNAME@
+ 
+            # App meta-data
+            TITLE "@TITLE@"
+            COMPANY "@COMPANY@"
+            COPYRIGHT "@COPYRIGHT@"
+            VERSION_CODE "1"
+            INFO_STRING "@DESC@"
+           
+            PERMISSIONS
+            OPENGL
+            AUDIO
+            ENVIRONMENT_SENSORS
+            NETWORK_CONNECT
+            JOYSTICK
+            
+            BUNDLE_LICENSES ${LICENSES}
+           )
+endif()
+
+add_subdirectory(toolchain/docs-gen)
+
+End_Subproject()

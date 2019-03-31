@@ -1,0 +1,54 @@
+=toolchain-dir: $(cmake.src)/toolchain/cmake
++cmake-opts:
+  - -DNATIVE_LIBRARY_DIR=$(cmake.native-lib)/$(build.prettyname)
+  - -DNATIVE_LIBRARY_ROOT=$(cmake.native-lib)
+  - -DCMAKE_BUILD_TYPE=$(build-type)
+  - -DCMAKE_INSTALL_PREFIX=$(cmake.install)/$(target-name)
+  - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
+  - -DBUILD_BINARIES=$(env:GENERATE_PROGRAMS)
+  - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
++container-opts:
+  - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
+  - -v $(project.src):$(container.src):ro
+  - -v $(project.install):$(container.install):rw
+  - -v $(project.build)/$(target-name):$(container.build):rw
+  - -v $(lib.root):$(lib.target):ro
+  - --workdir "$(env:CMAKE_BUILD_DIR)"
+.*tools:
+  +cmake-opts:
+    - -DBUILD_UTILITIES=ON
+    - -DBUILD_EXAMPLES=OFF
+    - -DBUILD_TESTS=OFF
+    - -DGENERATE_FLATPAK=OFF
+    - -DGENERATE_SNAPPY=OFF
+    - -DGENERATE_APPIMAGE=ON
+    - -DBUILD_ETC2COMP=ON
+    - -DBUILD_SDL2=OFF
+    - -DBUILD_HEADFUL=OFF
+coverage:
+  =target: multi.twostage
+  =cmake-target:
+    - all
+    - CoverageTest
+testing.linux.*:
+  =target: multi.twostage
+  =cmake-target:
+    - all
+    - test
+.*ubuntu.amd64.*:
+  +cmake-opts:
+    - -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs
+    - -DAPPIMAGE_RUNTIME_BINARY=$(env:NATIVE_LIBRARY_DIR)/$(build.prettyname)/util/x86_64-linux-gnu/runtime
+    - -DGENERATE_APPIMAGE=ON
+.*android.*:
+  +cmake-opts:
+    - -DBUILD_GLES=ON
+    - -DBUILD_GLES_20=$(android.gles20)
+    - -DBUILD_TESTS=OFF
+    - -DBUILD_SDL2=OFF
+  =target: multi.ensureinstall
+  =cmake-target:
+    - AndroidPackage
+.*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten).*:
+  +cmake-opts:
+    - -DBUILD_ASSIMP=ON

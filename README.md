@@ -1,4 +1,5 @@
 # CoffeeCutie
+<img src="./toolchain/desktop/common/icon.svg" alt="Logo" width="100px"> 
 A C++ game engine/rendering engine written in a very C-influenced way.
 
 # Build status

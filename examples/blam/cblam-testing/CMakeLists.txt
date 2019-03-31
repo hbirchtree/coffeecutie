@@ -3,6 +3,6 @@ coffee_application (
     TITLE "Blam Loader"
     SOURCES main.cpp
     LIBRARIES
-    CoffeeBlam CoffeeCore CoffeeImage
-    CoffeeRenderer_Default CoffeeGLeamRHI
+    Blam Core Image
+    RendererDefault GLeamRHI
     )

@@ -1,96 +1,134 @@
-#include <coffee/core/CUnitTesting>
+#define JOB_SYSTEM_PROFILE 1
+
+#include <coffee/core/CProfiling>
+
 #include <coffee/core/CThreading>
-#include <coffee/core/types/cdef/memsafe.h>
-#include <coffee/core/CDebug>
+#include <coffee/core/task_queue/task.h>
+#include <coffee/core/types/chunk.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/time_types.h>
+
+#include <coffee/core/CUnitTesting>
+#include <coffee/core/terminal/table.h>
+
+#include <coffee/core/types/vector_types.h>
 
 using namespace Coffee;
 
+using Clock = Chrono::high_resolution_clock;
+
 bool workload_test()
 {
+    PrintingVerbosityLevel() = 10;
 
-    struct DataSet
-    {
-        CSize64 size;
-        uint8* value;
-    } data;
-    data.size.w = 1024*1024;
-    data.size.h = 1024;
+    size_2d<u64> size;
+    size.w = 128;
+    size.h = 128;
 
-    Bytes workspace = Bytes::Alloc(data.size.area());
+    mem_chunk<Matf4> workspace = mem_chunk<Matf4>::Alloc(size.area());
 
-    data.value = C_CAST<uint8*>(workspace.data);
+    Profiler::Profile("Memory allocation");
 
-//    if(!data.value)
-//    {
-//        cDebug("Failed to allocate {0} B of memory",data.size.area());
-//        /* If we fail to allocate the memory, try again with less memory, reducing it */
-//        /* This may be a problem with low-memory systems (eg. RPi) */
-//        uint64 sz = 1024;
-//        while(!data.value)
-//        {
-//            sz /= 2;
-
-//            data.size.w = sz * sz;
-//            data.size.h = sz;
-
-//            cDebug("Reducing to {0} B of memory",data.size.area());
-
-//            data.value = C_CAST<uint8*>(Alloc(data.size.area()));
-
-//            if(sz <= 2)
-//                break;
-//        }
-
-//        if(!data.value)
-//        {
-//            cWarning("Failed to allocate memory :(");
-//            return false;
-//        }else
-//            cDebug("Settling with {0} B of memory",data.size.area());
-//    }
-
-	Profiler::Profile("Memory allocation");
-
-    Function<void(uint64,DataSet*)> kern = [](uint64 i, DataSet* d)
-    {
-        for(int32 j=0;j<64;j++)
-            d->value[i*64+j] /= 2;
+    Function<void(Matf4&)> kern = [](Matf4& v) {
+        ProfContext _("Running kernel");
+        v = typing::vectors::inverse(v);
     };
 
-	Vector<uint64> timing;
-	Vector<CString> titles;
-	titles.push_back("Parallel");
-	titles.push_back("Serial");
+    Vector<Chrono::microseconds> timing;
+    Vector<CString>              titles;
+    titles.push_back("Parallel");
+    titles.push_back("Serial");
 
-    CElapsedTimer t;
+    Profiler::Profile("Task setup");
 
-	Profiler::Profile("Task setup");
+    Profiler::PushContext("Parallel");
+    auto start_time = Chrono::high_resolution_clock::now();
 
-    t.start();
-    Threads::ParallelFor(kern,data.size.area()/64,&data).get();
-	timing.push_back(t.elapsed());
-    t.start();
-    for(uint64 i=0;i<data.size.area();i++)
+    threads::Parallel::ForEach<
+        decltype(workspace),
+        threads::parametric_parallel<8, decltype(workspace)>>(
+        workspace, std::move(kern));
+    timing.push_back(
+        Chrono::duration_cast<Chrono::microseconds>(Clock::now() - start_time));
+
+    Profiler::PopContext();
+
+    Profiler::PushContext("Serial");
+    start_time = Chrono::high_resolution_clock::now();
+    for(auto& v : workspace)
     {
-        data.value[i] /= 2;
+        kern(v);
     }
-	timing.push_back(t.elapsed());
+    timing.push_back(
+        Chrono::duration_cast<Chrono::microseconds>(Clock::now() - start_time));
+    Profiler::PopContext();
 
-	Table::Header head;
-	head.push_back("Workload type");
-	head.push_back("Time score");
+    Table::Header head;
+    head.push_back("Workload type");
+    head.push_back("Time score");
 
     Table::Table table(head);
-	table.push_back(Table::GenColumn(titles.data(),titles.size()));
-	table.push_back(Table::GenColumn(timing.data(),timing.size()));
+    table.push_back(Table::GenColumn(titles.data(), titles.size()));
+    table.push_back(Table::GenColumn(timing.data(), timing.size()));
 
     cBasicPrint("{0}", table);
 
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
-    {workload_test,"Threaded workload test", nullptr, true, false}
-};
+bool queue_workload_test()
+{
+    Vector<RuntimeQueue*> queues;
+    queues.reserve(Thread::hardware_concurrency());
 
-COFFEE_RUN_TESTS(_tests);
+    runtime_queue_error ec;
+    for(auto i : Range<>(Thread::hardware_concurrency()))
+    {
+        queues.push_back(
+            RuntimeQueue::CreateNewThreadQueue("Queue " + cast_pod(i), ec));
+        C_ERROR_CHECK(ec);
+    }
+
+    Vector<u64> taskIds;
+    taskIds.reserve(Thread::hardware_concurrency() * 128);
+
+    Vector<Matf4> data;
+    data.resize(Thread::hardware_concurrency() * 128);
+    szptr i = 0;
+
+    for(auto queue : queues)
+    {
+        for(C_UNUSED(auto _) : Range<>(128))
+        {
+            ec = runtime_queue_error();
+            auto id = RuntimeQueue::QueueImmediate(
+                queue,
+                Chrono::seconds(0),
+                [&data, i]() { data[i] = typing::vectors::inverse(data[i]); },
+                ec);
+            C_ERROR_CHECK(ec);
+            i++;
+            taskIds.push_back(id);
+        }
+    }
+
+    for(auto i : Range<>(Thread::hardware_concurrency()))
+        for(auto j : Range<>(128))
+        {
+            RuntimeQueue::AwaitTask(
+                queues.at(i)->threadId(), taskIds[i * 128 + j], ec);
+            C_ERROR_CHECK(ec);
+        }
+
+    return true;
+}
+
+COFFEE_TESTS_DISCLAIMER(
+    1, "This test may consume all cores and a lot of memory")
+
+COFFEE_TESTS_BEGIN(2)
+
+    {workload_test, "Threaded workload test"},
+    {queue_workload_test, "Threaded workload test using queues"}
+
+COFFEE_TESTS_END();

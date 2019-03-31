@@ -1,0 +1,41 @@
+CMAKE               ?= cmake
+
+BUILD_DIR           ?= $(PWD)
+
+BUILD_NAME          ?= ubuntu
+CMAKE_TARGET        ?= install
+CMAKE_SECOND_TARGET ?= CoverageTest
+CMAKE_ALL_TARGET    ?= all
+EXTRA_OPTIONS       ?=
+
+CMAKE_BUILD_DIR 	?= $(CMAKE_BUILD_DIR)
+INTERNAL_BUILD_DIR  ?= $(CMAKE_BUILD_DIR)/$(BUILD_NAME)
+
+all: multi
+
+multi-mk-build:
+	mkdir -p $(BUILD_DIR)/$(BUILD_NAME)/out
+	
+multi-mk-output:
+	mkdir -p $(BUILD_DIR)/build/$(BUILD_NAME)
+
+multi-prepare: multi-mk-build multi-mk-output
+
+multi-config: multi-prepare
+	sh -c "cd $(INTERNAL_BUILD_DIR) && $(CMAKE) $(EXTRA_OPTIONS)"
+
+multi: multi-config
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
+
+multi.twostage: multi-config
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_ALL_TARGET)
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
+
+multi.ensureinstall: multi-config
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target install
+
+multi.make8: multi-config
+	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8
+

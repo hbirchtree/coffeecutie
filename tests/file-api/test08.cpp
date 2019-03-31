@@ -1,104 +1,100 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/CUnitTesting>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
 
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
-const Url link_test = MkUrl("symlink.txt",
-                            RSCA::SpecifyStorage
-                            |RSCA::TemporaryFile
-                            |RSCA::NoDereference);
-const Url target_test = MkUrl("target.txt",
-                              RSCA::SpecifyStorage
-                              |RSCA::TemporaryFile);
+const Url link_test =
+    MkUrl("symlink.txt", RSCA::TemporaryFile | RSCA::NoDereference);
+const Url target_test = MkUrl("target.txt", RSCA::TemporaryFile);
 
 bool link_create_test()
 {
-    bool status = true;
+    file_error ec;
+
+    FileFun::Rm(target_test, ec);
+    FileFun::Rm(link_test, ec);
+
     /* Creating a target file */
-    if(!FileFun::Touch(FileFun::File,target_test))
-        status = false;
-    if(status && FileFun::Stat(target_test) != FileFun::File)
-        status = false;
+    assertTrue(FileFun::Touch(FileType::File, target_test, ec));
+    assertEquals(FileFun::Stat(target_test, ec), FileType::File);
     /* Creating link to existing file */
-    if(status && !FileFun::Ln(target_test,link_test))
-        status = false;
+    assertTrue(FileFun::Ln(target_test, link_test, ec));
     /* Getting correct result upon lstat() */
-    if(status && FileFun::Stat(link_test) != FileFun::Link)
-        status = false;
+    assertEquals(FileFun::Stat(link_test, ec), FileType::Link);
 
     /* Verify that links are deletable */
-    status = status && FileFun::Rm(link_test);
-    FileFun::Rm(target_test);
-    FileFun::Rm(link_test);
+    assertTrue(FileFun::Rm(link_test, ec));
 
-    return status;
+    FileFun::Rm(target_test, ec);
+    FileFun::Rm(link_test, ec);
+
+    return true;
 }
 
 bool link_create_hanging_test()
 {
-    bool status = true;
+    file_error ec;
+
     /* Creating link to non-existent file */
-    if(!FileFun::Ln(target_test,link_test))
-        status = false;
+    assertTrue(FileFun::Ln(target_test, link_test, ec));
     /* Getting correct result upon lstat() */
-    if(FileFun::Stat(link_test) != FileFun::Link)
-        status = false;
+    assertEquals(FileFun::Stat(link_test, ec), FileType::Link);
 
     /* Symlinks are verified deletable from last test */
-    FileFun::Rm(link_test);
+    FileFun::Rm(link_test, ec);
 
-    return status;
+    return true;
 }
 
 bool link_dereference_test()
 {
-    bool status = true;
+    file_error ec;
 
-    if(!FileFun::Ln(target_test,link_test))
-        status =  false;
+    assertTrue(FileFun::Ln(target_test, link_test, ec));
 
-    auto gotPath = FileFun::DereferenceLink(link_test);
+    auto gotPath = FileFun::DereferenceLink(link_test, ec);
 
-    if(status && gotPath != *target_test)
-        status = false;
+    assertEquals(gotPath, *target_test);
 
     /* Symlinks are verified deletable from last test */
-    FileFun::Rm(link_test);
+    FileFun::Rm(link_test, ec);
 
-    return status;
+    return true;
 }
 
 bool link_canonical_test()
 {
-    bool status = true;
+    file_error ec;
 
-    FileFun::Touch(FileFun::File,target_test);
-    if(!FileFun::Ln(target_test,link_test))
-        status =  false;
+    FileFun::Rm(target_test, ec);
+    FileFun::Rm(link_test, ec);
 
-    auto gotPath = FileFun::CanonicalName(link_test);
+    assertTrue(FileFun::Touch(FileType::File, target_test, ec));
+    assertTrue(FileFun::Ln(target_test, link_test, ec));
 
-    if(status && gotPath != *target_test)
-    {
-        cWarning("Canonical name test:\n {0} != {1}",
-                 FileFun::CanonicalName(link_test),
-                 target_test);
-        status = false;
-    }
+    auto gotPath = FileFun::CanonicalName(link_test, ec);
+
+    assertNotEquals(gotPath, *target_test);
 
     /* Symlinks are verified deletable from last test */
-    FileFun::Rm(link_test);
-    FileFun::Rm(target_test);
+    assertTrue(FileFun::Rm(link_test, ec));
+    assertTrue(FileFun::Rm(target_test, ec));
 
-    return status;
+    return true;
 }
 
-const constexpr CoffeeTest::Test _run_tests[4] = {
-    {link_create_test,"Normal symlink",nullptr,false,true},
-    {link_create_hanging_test,"Creating a hanging symlink",nullptr,false,true},
-    {link_dereference_test,"Dereferencing a symlink",nullptr,false,true},
-    {link_canonical_test,"Canonicalizing symlink",nullptr,false,true},
-};
+COFFEE_TESTS_BEGIN(4)
 
-COFFEE_RUN_TESTS(_run_tests);
+    {link_create_test, "Normal symlink", nullptr, false, true},
+    {link_create_hanging_test,
+     "Creating a hanging symlink",
+     nullptr,
+     false,
+     true},
+    {link_dereference_test, "Dereferencing a symlink", nullptr, false, true},
+    {link_canonical_test, "Canonicalizing symlink", nullptr, false, true}
+
+COFFEE_TESTS_END()

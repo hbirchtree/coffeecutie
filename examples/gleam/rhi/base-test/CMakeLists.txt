@@ -1,5 +1,3 @@
-project ( GLeamBaseTest )
-
 coffee_application (
     TARGET GLeamBaseTest_RHI
     TITLE "GLeam Basic RHI"
@@ -9,12 +7,20 @@ coffee_application (
     renderer.h
 
     LIBRARIES
-    CoffeeGLeamRHI
-    CoffeeRenderer_Default
-    CoffeeCore
+    GLeamRHI
+    RendererDefault
+    Core
+    EntComp
 
     RESOURCES
     "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
-
-    USE_ASIO
     )
+
+
+if(TARGET ASIO)
+    target_link_libraries ( GLeamBaseTest_RHI PUBLIC ASIO )
+endif()
+
+if(TARGET DiscordLatte)
+    target_link_libraries ( GLeamBaseTest_RHI PUBLIC DiscordLatte )
+endif()

@@ -1,0 +1,12 @@
+#include <peripherals/build/license.h>
+
+#ifndef COFFEE_LOWFAT
+const char* CoffeeLicenseString[] =
+    {
+        @LICENSE_DATA@
+    };
+unsigned int CoffeeLicenseCount = @LICENSE_COUNT@;
+#else
+const char* CoffeeLicenseString[] = {};
+unsigned int CoffeeLicenseCount = 0;
+#endif

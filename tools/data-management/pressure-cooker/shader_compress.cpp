@@ -1,9 +1,14 @@
-#include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/string_casting.h>
+#include <coffee/core/coffee.h>
+#include <coffee/core/resource_prefix.h>
 #include <coffee/interfaces/content_pipeline.h>
+#include <coffee/interfaces/content_settings.h>
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
+#include <peripherals/stl/string_casting.h>
+#include <platforms/environment.h>
+#include <platforms/stacktrace.h>
 
-#include <coffee/core/CDebug>
-#include <coffee/core/terminal/terminal_cursor.h>
+/* External dependencies */
 
 #include <glslang/Public/ShaderLang.h>
 #include <shaderc/shaderc.hpp>
@@ -15,10 +20,39 @@
 #include <spirv_glsl.hpp>
 #endif
 
+#include <coffee/core/CDebug>
+#include <coffee/core/terminal/cursor.h>
+
 #define SHD_API "PressurizeShaders::"
 
 using namespace CoffeePipeline;
 using namespace Coffee;
+
+struct shader_settings_t : settings_visitor
+{
+    Vector<u32> shader_versions;
+    Path        target_file;
+
+    virtual CString type()
+    {
+        return "shader";
+    }
+    virtual void visit(CString const& member, JSON::Value const& value)
+    {
+        if(member == "versions")
+        {
+            auto vers = value.GetArray();
+            shader_versions.clear();
+            shader_versions.reserve(vers.Size());
+            for(auto& v : vers)
+                if(v.IsInt())
+                    shader_versions.push_back(v.GetUint());
+        } else if(member == "target")
+        {
+            target_file = dirname() + value.GetString();
+        }
+    }
+};
 
 using Pass      = spvtools::opt::Pass;
 using PassToken = spvtools::Optimizer::PassToken;
@@ -76,7 +110,7 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
             res.content_length = data.size;
 
             res.source_name        = requested_source;
-            res.source_name_length = StrLen(requested_source);
+            res.source_name_length = libc::str::len(requested_source);
 
             res.user_data = r;
 
@@ -476,8 +510,7 @@ Associated source:
 {2})",
             module.GetErrorMessage(),
             path,
-            StrUtil::encapsulate(
-                C_RCAST<const char*>(source.data), source.size));
+            str::encapsulate(C_RCAST<const char*>(source.data), source.size));
         cursor.progress(SHD_API "Skipping shader");
         return {};
     }
@@ -601,9 +634,9 @@ static void GenerateGLSL(
     {
         cursor.print(
             "{0}:{1}:{2}: {3}\n{4}",
-            GetFileResourcePrefix() + "/" + srcFile.internUrl,
+            file::ResourcePrefix() + "/" + srcFile.internUrl,
             0,
-            Stacktracer::DemangleSymbol(typeid(e).name()),
+            platform::env::Stacktracer::DemangleSymbol(typeid(e).name()),
             e.what(),
             compiler.get_partial_source());
         return;
@@ -651,6 +684,15 @@ struct ShaderProcessor : FileProcessor
     virtual void setBaseDirectories(const Vector<CString>&)
     {
     }
+
+    virtual cstring name() const
+    {
+        return "ShaderProcessor"
+        #if defined(HAVE_SPIRVCROSS)
+               "+spirvcross"
+        #endif
+                ;
+    }
 };
 
 COFFAPI FileProcessor* CoffeeLoader()
@@ -683,8 +725,20 @@ void ShaderProcessor::process(
     Vector<VirtFS::VirtDesc> newFiles;
     newFiles.reserve(selection.size() * 5);
 
+    const Vector<u32> default_shader_versions = {10200, 10300, 330, 430, 460};
+
     for(auto const& path : selection)
     {
+        shader_settings_t settings;
+
+        settings.shader_versions = default_shader_versions;
+        settings.target_file     = path.first.removeExt();
+
+        settings.parse(path.first.removeExt());
+
+        settings.target_file =
+            settings.target_file.addExtension(path.first.extension());
+
         /* Generate optimized SPIR-V binary */
         Vector<u32> optimized = CompileSpirV(
             cursor,
@@ -698,7 +752,7 @@ void ShaderProcessor::process(
         {
             cursor.print(
                 "{0}:0: Failed to compile GLSL to SPIR-V",
-                (Path(GetFileResourcePrefix()) + path.first).internUrl);
+                (Path(file::ResourcePrefix()) + path.first).internUrl);
             continue;
         }
 
@@ -728,19 +782,40 @@ void ShaderProcessor::process(
 
         /* With the generated SPIR-V, cross-compile it to
          *  various GLSL/ES versions, for portability */
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {100, true});
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {300, true});
+        for(auto ver : settings.shader_versions)
+        {
+            bool is_es    = ver > 10000;
+            u32  glsl_ver = ver;
 
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {330, false});
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {430, false});
-        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {460, false});
+            if(glsl_ver > 10000)
+            {
+                glsl_ver -= 10000;
+                if(glsl_ver == 200)
+                    glsl_ver = 100;
+            }
+
+            GenerateGLSL(
+                cursor,
+                newFiles,
+                settings.target_file,
+                unoptimized,
+                {glsl_ver, is_es});
+        }
+
+        //        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {300,
+        //        true});
+
+        //        GenerateGLSL(cursor, newFiles, path.first, unoptimized, {330,
+        //        false}); GenerateGLSL(cursor, newFiles, path.first,
+        //        unoptimized, {430, false}); GenerateGLSL(cursor, newFiles,
+        //        path.first, unoptimized, {460, false});
     }
 
     files.reserve(files.size() + newFiles.size());
 
     for(auto& desc : newFiles)
     {
-        cacheFile(desc.filename, desc.data);
+        cacheFile(Path(desc.filename), desc.data);
         files.insert(files.end(), std::move(desc));
     }
 }

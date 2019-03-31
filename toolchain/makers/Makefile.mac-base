@@ -1,0 +1,36 @@
+CMAKE := cmake
+GIT := git
+
+BUILD_NAME := mac-osx
+
+CMAKE_BUILD_DIR  := $(PWD)/$(BUILD_NAME)
+OUTPUT_DIR := $(PWD)/build/$(BUILD_NAME)
+SOURCE_DIR := $(PWD)/..
+
+TOOLCHAIN := osx-generic_osx.toolchain.cmake
+PRELOAD := osx-generic.cmake
+
+CMAKE_DIR := $(SOURCE_DIR)/cmake
+TOOL_DIR := $(CMAKE_DIR)/Toolchains
+PRLD_DIR := $(CMAKE_DIR)/Preload
+
+NATIVE_LIB_DIR := $(PWD)/dependencies/native-libs
+
+CMAKE_OPTS := $(EXTRA_OPTIONS)
+
+CUSTOM_COMMAND := 
+
+all: build
+
+make-dirs:
+	mkdir -p \
+		$(CMAKE_BUILD_DIR)
+
+config: make-dirs
+	sh -c 'cd $(CMAKE_BUILD_DIR) && ls && CC=clang CXX=clang++ $(CMAKE) $(CMAKE_OPTS)'
+
+build: config
+	$(CMAKE) --build $(CMAKE_BUILD_DIR) --config $(CONFIGURATION) --target $(CMAKE_TARGET)
+
+custom:
+	$(CUSTOM_COMMAND)

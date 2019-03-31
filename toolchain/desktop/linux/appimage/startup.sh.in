@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Add icon for the file
+ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
+ICON_NAME="@APPIMAGE_INTERNALNAME@.svg"
+
+if [ ! -f "${ICON_DIR}/${ICON_NAME}" ]; then
+    mkdir -p "${ICON_DIR}"
+    cp "${APPDIR}/${ICON_NAME}" "${ICON_DIR}/${ICON_NAME}"
+    python "${APPDIR}/set_icon.py" "${APPIMAGE}" "${ICON_DIR}/${ICON_NAME}"
+fi
+
+# This is used by the application
+export APPIMAGE_DATA_DIR="${APPDIR}/assets"
+
+# Set up environment
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${APPDIR}/lib"
+export XDG_DATA_HOME="${APPDIR}/share"
+export XDG_DATA_DIRS="$XDG_DATA_DIRS:${APPDIR}/share"
+
+# Coffee-specific
+export COFFEE_NO_PROFILER_EXPORT="1"
+
+# Executing application, we might as well destroy the current bash shell
+exec "${APPDIR}/@APPIMAGE_EXEC@" $@

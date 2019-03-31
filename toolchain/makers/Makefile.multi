@@ -1,0 +1,73 @@
+DOCKER 					?= docker
+CMAKE  					?= cmake
+
+OUTPUT_DIR				?= $(PWD)
+
+BUILD_NAME				?= ubuntu
+CMAKE_TARGET			?= install
+CMAKE_SECOND_TARGET		?= CoverageTest
+CMAKE_ALL_TARGET    	?= all
+EXTRA_OPTIONS 			:= 
+
+DOCKER_CONFIG 			?= ubuntu
+DOCKER_CONTAINER		?= hbirch/coffeecutie:$(DOCKER_CONFIG)
+DOCKER_EXTRA_OPTIONS	:=
+
+CMAKE_BUILD_DIR 		?= $(CMAKE_BUILD_DIR)
+
+CUSTOM_COMMAND			:=
+
+CTEST_OUTPUT_ON_FAILURE := 1
+
+
+all: multi
+
+multi-mk-build:
+	mkdir -p $(OUTPUT_DIR)/$(BUILD_NAME)/out
+	
+multi-mk-output:
+	mkdir -p $(OUTPUT_DIR)/build/$(BUILD_NAME)
+
+multi-prepare: multi-mk-build multi-mk-output
+
+multi-config: multi-prepare
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			sh -c "cd $(CMAKE_BUILD_DIR) && $(CMAKE) $(EXTRA_OPTIONS)"
+
+custom:
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			$(CUSTOM_COMMAND)
+
+multi: multi-config
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET)
+
+multi.twostage: multi-config
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			sh -c '\
+			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target all && \
+			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1 && \
+			  $(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET)'
+
+multi.ensureinstall: multi-config
+	$(DOCKER) run --rm \
+	    $(DOCKER_EXTRA_OPTIONS) \
+	    $(DOCKER_CONTAINER) \
+	        sh -c '\
+	          $(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) && \
+	          $(CMAKE) --build $(CMAKE_BUILD_DIR) --target install'
+
+multi.make8: multi-config
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			sh -c "$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8"
+

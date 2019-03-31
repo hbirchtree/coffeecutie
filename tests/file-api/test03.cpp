@@ -1,13 +1,15 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 
 using namespace Coffee;
 
-using Scratch = CResources::FileFun::ScratchBuf;
+using Scratch = FileFun::ScratchBuf;
 
 bool filescratch_test()
 {
+    file_error ec;
+
 #if defined(COFFEE_RASPBERRYPI)
     /* Raspberry Pi has limited memory, and often does not have swap */
     /* 256MB devices are out of the question */
@@ -16,8 +18,7 @@ bool filescratch_test()
     szptr size = 512 * 1024 * 1024;
 #endif
 
-    Scratch f =
-        CResources::FileFun::ScratchBuffer(size, ResourceAccess::ReadWrite);
+    Scratch f = FileFun::ScratchBuffer(size, RSCA::ReadWrite, ec);
 
     /* If true, no buffer was mapped */
     if(!f)
@@ -30,34 +31,34 @@ bool filescratch_test()
 
     cstring test_data = "TESTDATA";
 
-    szptr sz    = StrLen(test_data);
+    szptr sz    = libc::str::len(test_data);
     szptr times = size / sz - size % sz;
 
     Bytes testMem = Bytes::From(test_data, sz);
 
-    for(uint32 i = 0; i < times; i++)
+    for(u32 i = 0; i < times; i++)
         MemCpy(testMem, f.at(sz * i, sz));
     //        MemCpy(&((byte_t*)f.ptr)[sz*i],test_data,sz);
 
     bool flag = true;
 
-    for(uint32 i = 0; i < times; i++)
+    for(u32 i = 0; i < times; i++)
         if(!MemCmp(f.at(sz * i, sz), testMem))
         {
             flag = false;
             break;
         }
 
-    CResources::FileFun::ScratchUnmap(std::move(f));
+    FileFun::ScratchUnmap(std::move(f), ec);
 
     return flag;
 }
 
-const constexpr CoffeeTest::Test _tests[1] = {
+COFFEE_TESTS_BEGIN(1)
+
     {filescratch_test,
      "Scratch buffers",
      "Creating and using a scratch buffer",
-     true},
-};
+     true}
 
-COFFEE_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

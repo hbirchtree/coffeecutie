@@ -4,13 +4,15 @@ set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY
 add_subdirectory(cmd-api)
 add_subdirectory(datastorage-api)
 add_subdirectory(file-api)
-add_subdirectory(function-tests)
+add_subdirectory(graphics)
+add_subdirectory(http_test)
+add_subdirectory(image-api)
 add_subdirectory(math-logic)
 add_subdirectory(profiling-api)
 add_subdirectory(size-tests)
 add_subdirectory(string-api)
 add_subdirectory(sysinfo-api)
-add_subdirectory(graphics)
+add_subdirectory(type-safe)
 
 if(NOT EMSCRIPTEN)
     add_subdirectory(thread-api)
@@ -19,9 +21,6 @@ endif()
 if(NOT SKIP_LINKAGE_TEST)
     add_subdirectory(link-api)
 endif()
-#if(COFFEE_BUILD_OPENVR AND NOT SKIP_OPENVR_TEST)
-#    add_subdirectory(vr-api)
-#endif()
 
 # This needs different testing and setup
 if(NOT ANDROID AND NOT WIN32)
@@ -33,7 +32,7 @@ endif()
 
 if(NOT SKIP_GRAPHIC_TESTS)
     add_subdirectory(window-api/basic)
-    add_subdirectory(graphics/api_verify)
+    add_subdirectory(graphics/api-verify)
     add_subdirectory(graphics/self-test)
 endif()
 
@@ -47,5 +46,24 @@ coffee_test (
     dummy.cpp
 
     LIBRARIES
-    CoffeeCore CoffeeAssimp
+    Core
+    Audio
+    Blam
     )
+
+if(BUILD_GLEAM)
+    target_link_libraries ( Dummy_Target
+        PUBLIC
+        GLeamCommon
+        )
+endif()
+if(BUILD_ASSIMP)
+    target_link_libraries ( Dummy_Target
+        PUBLIC
+        AssimpTools
+        )
+    target_compile_definitions ( Dummy_Target
+        PUBLIC
+        HAS_ASSIMP
+        )
+endif()

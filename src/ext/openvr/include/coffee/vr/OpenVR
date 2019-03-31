@@ -1,0 +1,240 @@
+#pragma once
+
+#include <coffee/CGraphics>
+#include <coffee/core/CDebug>
+#include <coffee/graphics/apis/CGLeamRHI>
+
+#include <openvr.h>
+
+namespace Coffee {
+namespace VR {
+
+template<typename GAPI>
+struct OpenVR
+{
+    static const constexpr scalar Default_Fov = 60.f;
+
+    using RTargetSize = _cbasic_size_2d<uint32>;
+
+    struct DATA
+    {
+        /* Framebuffer storage */
+        typename GAPI::FB_T  vr_target;
+        typename GAPI::S_2D* vr_ctarget;
+        typename GAPI::S_2D* vr_dtarget;
+
+        /* OpenVR storage */
+        vr::Texture_t         render_handle;
+        vr::VRTextureBounds_t render_bounds[2];
+
+        vr::TrackedDevicePose_t device_poses[vr::k_unMaxTrackedDeviceCount];
+    };
+
+    STATICINLINE bool Active()
+    {
+        return vr::VRCompositor() && vr::VRSystem();
+    }
+
+    /*!
+     * \brief Initializing the OpenVR API, connecting to Steam and etc.
+     */
+    STATICINLINE void Init()
+    {
+        vr::EVRInitError err;
+        if(vr::VR_Init(&err, vr::VRApplication_Scene) && Active())
+        {
+            cVerbose(5, "Initialized VR system");
+        } else
+        {
+            cVerbose(
+                5,
+                "Failed to initialize VR system: {0}",
+                vr::VR_GetVRInitErrorAsEnglishDescription(err));
+        }
+    }
+
+    STATICINLINE void Shutdown()
+    {
+        if(vr::VRSystem())
+            vr::VR_Shutdown();
+    }
+
+    /*!
+     * \brief Size of the rendering target per-eye
+     * \param d_w
+     * \param d_h
+     * \return
+     */
+    STATICINLINE RTargetSize
+                 GetRenderTargetSize(uint32 d_w = 720, uint32 d_h = 960)
+    {
+        if(vr::VRSystem())
+            vr::VRSystem()->GetRecommendedRenderTargetSize(&d_w, &d_h);
+        return {d_w, d_h};
+    }
+
+    /*!
+     * \brief Size of the entire viewport required to render the scene with
+     * split-screen stereo rendering \return
+     */
+    STATICINLINE CRect GetViewportSize()
+    {
+        auto _s = GetRenderTargetSize();
+        return {0, 0, C_CAST<int32>(_s.w * 2), C_CAST<int32>(_s.h)};
+    }
+
+    /*!
+     * \brief Create a framebuffer target ready for VR rendering
+     * \param c_fmt Color format for the color buffer
+     * \param d_fmt Depth format for the depth/stencil buffer
+     * \return A reference to the internal VR-ready framebuffer
+     */
+    STATICINLINE typename GAPI::FB_T& GenRenderTarget(
+        DATA&                     d,
+        typename GAPI::VIEWSTATE& vrstate,
+        PixFmt                    c_fmt = PixFmt::SRGB8A8,
+        PixFmt                    d_fmt = PixFmt::Depth24Stencil8)
+    {
+        CSize s = GetViewportSize().size();
+
+        d.vr_target.alloc();
+        d.vr_ctarget = new typename GAPI::S_2D(c_fmt, 1);
+        d.vr_dtarget = new typename GAPI::S_2D(d_fmt, 1);
+
+        d.render_bounds[0].uMin = d.render_bounds[0].vMin = 0.0;
+        d.render_bounds[1].vMin                           = 0.0;
+        d.render_bounds[0].uMax = d.render_bounds[1].uMin = 0.5;
+        d.render_bounds[1].uMax                           = 1.0;
+        d.render_bounds[0].vMax = d.render_bounds[1].vMax = 1.0;
+
+        d.vr_ctarget->allocate(s, PixCmp::RGBA);
+        d.vr_dtarget->allocate(s, PixCmp::Depth);
+
+        d.vr_target.attachDepthStencilSurface(*d.vr_dtarget, 0);
+        d.vr_target.attachSurface(*d.vr_ctarget, 0);
+
+        d.vr_target.resize(0, {0, 0, s.w, s.h});
+
+        d.render_handle.eType       = vr::API_OpenGL;
+        d.render_handle.eColorSpace = vr::ColorSpace_Gamma;
+        d.render_handle.handle      = FitIntegerInPtr(d.vr_ctarget->handle());
+
+        CRect vws = GetViewportSize();
+        vrstate.m_view.push_back(vws);
+        vrstate.m_scissor.push_back(vws);
+
+        return d.vr_target;
+    }
+
+    /*!
+     * \brief Returns OpenVR perspective matrices with API-defined FOV, suitable
+     * for fetching once If no HMD is active, default perspective matrix is
+     * returned \param matrices Destination of matrices \param clip Clipping
+     * specifications
+     */
+    STATICINLINE void GetPerspectiveMatrices(
+        Vector<Matf4>& matrices, ZField const& clip)
+    {
+        if(vr::VRSystem())
+        {
+            for(uint8 i = 0; i < 2; i++)
+            {
+                auto mat = vr::VRSystem()->GetProjectionMatrix(
+                    static_cast<vr::EVREye>(i),
+                    clip.near_,
+                    clip.far_,
+                    vr::API_OpenGL);
+                TransferVRMatrix(mat, matrices[i]);
+            }
+        } else
+        {
+            auto     vw        = GetRenderTargetSize();
+            CGCamera camera    = {};
+            camera.zVals       = clip;
+            camera.aspect      = scalar(vw.w) / scalar(vw.h);
+            camera.fieldOfView = Default_Fov;
+            for(uint8 i = 0; i < 2; i++)
+                matrices[i] = GenPerspective(camera);
+        }
+    }
+
+    /*!
+     * \brief Returns transfroms per-eye, suitable for fetching once
+     * If no HMD is active, default matrix is returned
+     * \param matrices Destination of matrices
+     */
+    STATICINLINE void GetTransformMatrices(Vector<Matf4>& matrices)
+    {
+        Matf4 aspect_scaling = scale(Matf4(), Vecf3(0.5, 1, 1));
+
+        if(vr::VRSystem())
+        {
+            for(uint8 i = 0; i < 2; i++)
+            {
+                auto mat = vr::VRSystem()->GetEyeToHeadTransform(
+                    static_cast<vr::EVREye>(i));
+                TransferVRMatrix(mat, matrices[i]);
+                matrices[i] = matrices[i] * aspect_scaling;
+            }
+        } else
+        {
+            for(uint8 i = 0; i < 2; i++)
+            {
+                matrices[i] = Matf4() * aspect_scaling;
+            }
+        }
+    }
+
+    /*!
+     * \brief Get transforms of devices; HMD, controllers and etc.
+     * \param headPose Reference to the destination of the HMD's transform
+     */
+    STATICINLINE void GetPoses(DATA& d, Matf4& headPose)
+    {
+        if(!vr::VRCompositor())
+            return;
+
+        vr::VRCompositor()->WaitGetPoses(
+            d.device_poses, vr::k_unMaxTrackedDeviceCount, nullptr, 0);
+
+        auto& headPoseObj = d.device_poses[vr::k_unTrackedDeviceIndex_Hmd];
+
+        if(headPoseObj.bPoseIsValid)
+        {
+            auto& mat = headPoseObj.mDeviceToAbsoluteTracking;
+            TransferVRMatrix(mat, headPose);
+        }
+    }
+
+    STATICINLINE void SubmitFrames(DATA& d, CSize const& tgtSize)
+    {
+        auto p = vr::VRCompositor();
+        if(p)
+            for(int i = 0; i < 2; i++)
+                p->Submit(
+                    C_CAST<vr::EVREye>(i),
+                    &d.render_handle,
+                    &d.render_bounds[i]);
+
+        d.vr_target.blit(
+            C_CAST<CRect64>(GetRenderTargetSize()),
+            GAPI::DefaultFramebuffer(),
+            CRect64(tgtSize.convert<int64>()),
+            DBuffers::Color,
+            Filtering::Linear);
+    }
+
+  protected:
+    template<typename MatType>
+    STATICINLINE void TransferVRMatrix(MatType const& source, Matf4& target)
+    {
+        MemCpy(&target, &source, sizeof(source));
+    }
+    STATICINLINE CString GetTrackedDeviceString()
+    {
+        return {};
+    }
+};
+
+} // namespace VR
+} // namespace Coffee

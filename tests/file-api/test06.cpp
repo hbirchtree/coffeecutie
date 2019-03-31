@@ -1,74 +1,74 @@
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
+#include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
 
-const Url testfile = MkUrl("fileapi_testfile.txt",
-                           ResourceAccess::SpecifyStorage
-                           |ResourceAccess::TemporaryFile);
+const Url testfile =
+    MkUrl("fileapi_testfile.txt", RSCA::TemporaryFile);
 
 using File = FileFun;
 
 bool filedel_test()
 {
-    if(!File::Touch(File::File,testfile))
+    file_error ec;
+
+    if(!File::Touch(FileType::File, testfile, ec))
         return false;
 
-    if(!File::Exists(testfile))
+    if(!File::Exists(testfile, ec))
         return false;
 
-    if(!File::Rm(testfile))
+    if(!File::Rm(testfile, ec))
         return false;
 
-    return !File::Exists(testfile);
+    return !File::Exists(testfile, ec);
 }
 
 bool check_literal_constructor()
 {
-    auto r = "testfile.txt"_rsc;
+    Resource r = "testfile.txt"_rsc;
 
     // This could be a compile-time test, but we'll do it at runtime
-    return std::is_same<Resource, decltype (r)>::value;
+    return std::is_same<Resource, decltype(r)>::value;
 }
 
 bool check_move_constructor()
 {
     Resource r1 = Resource(testfile);
 
-    bool status = true;
-
-    FileMap(r1, ResourceAccess::ReadWrite|ResourceAccess::NewFile, 100);
+    r1.data = C_RCAST<void*>(0x2);
+    r1.size = 100;
 
     Resource r2 = std::move(r1);
 
-    if(r1.data)
-        status = false;
-
-    FileUnmap(r1);
-    FileUnmap(r2);
-
-    return status;
+    return r1.data == nullptr;
 }
 
 bool filestat_test()
 {
-    if(!File::Touch(File::File,testfile))
+    file_error ec;
+
+    if(!File::Touch(FileType::File, testfile, ec))
         return false;
-    if(File::Stat(testfile) != File::File)
+    if(File::Stat(testfile, ec) != FileType::File)
         return false;
-    if(!File::Rm(testfile))
+    if(!File::Rm(testfile, ec))
         return false;
-    if(File::Stat(testfile) != File::None)
+    if(File::Stat(testfile, ec) != FileType::None)
         return false;
 
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[4] = {
-    {filedel_test,"File handling","Creating and deleting a file"},
-    {check_move_constructor,"Constructor test 1","Verifying literal constructor"},
-    {check_move_constructor,"Constructor test 2","Verifying std::move for Resource"},
-    {filestat_test,"File testing","Using stat() to check file status"},
-};
+COFFEE_TESTS_BEGIN(4)
 
-COFFEE_RUN_TESTS(_tests);
+    {filedel_test, "File handling", "Creating and deleting a file"},
+    {check_move_constructor,
+     "Constructor test 1",
+     "Verifying literal constructor"},
+    {check_move_constructor,
+     "Constructor test 2",
+     "Verifying std::move for Resource"},
+    {filestat_test, "File testing", "Using stat() to check file status"}
+
+COFFEE_TESTS_END()

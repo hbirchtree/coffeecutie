@@ -1,5 +1,5 @@
 before_build:
-- ps: tools\ci\appveyor-build.ps1
+- ps: toolchain\ci\appveyor-build.ps1
 before_deploy:
 - cmd: cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%
 branches:
@@ -18,7 +18,7 @@ clone_script:
 configuration:
 - Debug
 deploy_script:
-- ps: tools\ci\appveyor-deploy.ps1
+- ps: toolchain\ci\appveyor-deploy.ps1
 environment:
   BUILD_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: cmake.exe
@@ -26,7 +26,7 @@ environment:
   DEPLOY_PATTERNS: ''
   GITHUB_TOKEN:
     secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
-  MAKEFILE_DIR: tools\makers
+  MAKEFILE_DIR: toolchain\makers
   NOBUILD: 1
   SAME_BUILD_DIR: 1
   SOURCE_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%\src
@@ -37,19 +37,20 @@ image:
 - Visual Studio 2015
 - Visual Studio 2017
 install:
-- ps: tools\ci\appveyor-deps.ps1
+- ps: toolchain\ci\appveyor-deps.ps1
 matrix:
   allow_failures:
   - BUILDVARIANT: maemo.armel
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: uwp.arm
-  - BUILDVARIANT: coverage
   - BUILDVARIANT: raspberry.armhf
+  - BUILDVARIANT: testing.linux.lowfat.debug
+  - BUILDVARIANT: testing.linux.lowfat.release
+  - BUILDVARIANT: testing.linux.release
+  - BUILDVARIANT: ubuntu.i686.gles
   exclude:
   - BUILDVARIANT: uwp.amd64
     image: Visual Studio 2015
-  - BUILDVARIANT: win32.amd64
-    image: Visual Studio 2017
 platform: x64
 skip_tags: true
 version: '{build}'

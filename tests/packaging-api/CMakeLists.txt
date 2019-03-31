@@ -7,6 +7,6 @@ coffee_application (
 
     SOURCES test01.cpp
 
-    LIBRARIES CoffeeCore CoffeeTesting
+    LIBRARIES Core Testing
     RESOURCES "${COFFEE_ASSET_DIRECTORY}/packaging-test"
     )

@@ -1,46 +1,43 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
 
 using namespace Coffee;
 
-const Url small_map_test = MkUrl(
-    "file_map_small.bin",
-    ResourceAccess::SpecifyStorage | ResourceAccess::TemporaryFile);
+const Url small_map_test = MkUrl("file_map_small.bin", RSCA::TemporaryFile);
 
-byte_t sample_storage[Unit_kB * 100] = {"I'M THE TRASHMAN!\n"};
+static byte_t sample_storage[Unit_kB * 100] = {"I'M THE TRASHMAN!\n"};
 
 bool filewrite_test()
 {
-    CResources::Resource rsc(small_map_test);
+    Resource rsc(small_map_test);
 
     rsc = Bytes::From(sample_storage, sizeof(sample_storage));
 
-    return CResources::FileCommit(
-        rsc,
-        false,
-        ResourceAccess::WriteOnly | ResourceAccess::Discard |
-            ResourceAccess::NewFile);
+    return FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 }
 
 bool filemap_test()
 {
-    CResources::Resource rsc(small_map_test);
-    CResources::FileMap(rsc);
+    file_error ec;
+
+    Resource rsc(small_map_test);
+    FileMap(rsc);
     if(!rsc.data)
         return false;
     bool status = MemCmp(
         Bytes::From(sample_storage, sizeof(sample_storage)),
         C_OCAST<Bytes>(rsc));
-    CResources::FileUnmap(rsc);
+    FileUnmap(rsc);
 
-    CResources::FileFun::Rm(small_map_test);
+    FileFun::Rm(small_map_test, ec);
 
     return status;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {filewrite_test, "File writing", "Really just prepares for the next test"},
-    {filemap_test, "File mapping"}};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {filewrite_test, "File writing", "Really just prepares for the next test"},
+    {filemap_test, "File mapping"}
+
+COFFEE_TESTS_END()

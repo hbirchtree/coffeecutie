@@ -1,14 +1,25 @@
 #include <coffee/core/CApplication>
-#include <coffee/interfaces/content_pipeline.h>
+#include <coffee/core/CArgParser>
+#include <coffee/core/CDynamicLink>
+#include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
+#include <coffee/core/CSysInfo>
 #include <coffee/core/VirtualFS>
-#include <coffee/core/coffee.h>
-#include <coffee/core/plat/plat_linking.h>
-#include <coffee/core/terminal/terminal_cursor.h>
+#include <coffee/core/internal_state.h>
+#include <coffee/core/resource_prefix.h>
+#include <coffee/interfaces/content_pipeline.h>
+#include <peripherals/stl/string_casting.h>
+
+#include <coffee/strings/libc_types.h>
+#include <coffee/strings/url_types.h>
+
 #include <coffee/core/CDebug>
 
+#include <coffee/core/terminal/cursor.h>
+
 using namespace Coffee;
-using namespace Library;
+using namespace platform::url::constructors;
 
 static Vector<CString> compressFilter = {"fbx",
                                          "bin",
@@ -30,17 +41,19 @@ static Vector<CString> ignoreFiler = {
 
 static Vector<CString> baseDirs = {};
 
-static Vector<CoffeePipeline::FileProcessor*> extProcessors;
+static Vector<UqPtr<CoffeePipeline::FileProcessor>> extProcessors;
 
 void recurse_directories(
     Path const&               prepath,
     DirFun::DirItem_t const&  item,
     Vector<VirtFS::VirtDesc>& files)
 {
+    file_error ec;
+
     switch(item.type)
     {
-    case DirFun::Type::File:
-    case DirFun::Type::Link:
+    case FileType::File:
+    case FileType::Link:
     {
         auto filename = (prepath + Path(item.name.c_str()));
 
@@ -64,14 +77,14 @@ void recurse_directories(
         files.emplace_back(filename.internUrl.c_str(), Bytes(), flag);
         break;
     }
-    case DirFun::Type::Directory:
+    case FileType::Directory:
     {
         Path path = prepath + item.name.c_str();
 
         auto            url = MkUrl(path.internUrl.c_str());
         DirFun::DirList content;
 
-        DirFun::Ls(MkUrl(path.internUrl.c_str()), content, true);
+        DirFun::Ls(MkUrl(path.internUrl.c_str()), content, ec);
 
         std::for_each(
             content.begin(),
@@ -114,23 +127,26 @@ void csv_parse(CString const& v, Vector<CString>& out)
 
 void load_extension(cstring name)
 {
-    auto library = FunctionLoader::GetLibrary(name, FunctionLoader::NoFlags);
+    load::Function::error_type ec;
+
+    auto library =
+        load::Function::GetLibrary(name, ec, load::Function::NoFlags);
 
     if(!library)
     {
-        cWarning("Failed to load library: {0}", FunctionLoader::LinkError());
+        cWarning("Failed to load library: {0}", ec.message());
         return;
     }
 
-    using T = CoffeePipeline::FileProcessor;
+    using FileProcessor = CoffeePipeline::FileProcessor;
 
-    auto constructor = ObjectLoader::GetConstructor<T>(
-        library, DefaultConstructorFunction, nullptr);
+    auto constructor = load::Object::GetConstructor<FileProcessor>(
+        library, load::DefaultConstructorFunction, ec);
 
-    if(!constructor.loader)
+    if(!constructor.valid())
         return;
 
-    extProcessors.push_back(constructor.loader());
+    extProcessors.push_back(constructor());
 }
 
 void parse_args(ArgumentResult& args)
@@ -155,6 +171,12 @@ void parse_args(ArgumentResult& args)
         } else if(arg.first == "basedir")
         {
             csv_parse(arg.second, baseDirs);
+        } else if(arg.first == "deep_profile")
+        {
+            auto profilerState = State::GetProfilerStore();
+
+            if(profilerState)
+                profilerState->flags.deep_enabled = true;
         }
     }
 }
@@ -167,12 +189,14 @@ void test_vfs(
     /* This part is about testing */
     Bytes vfsData = Bytes::CreateFrom(outputData);
 
+    VirtFS::vfs_error_code ec;
+
     VirtFS::VFS const* vfs = nullptr;
-    VirtFS::VFS::OpenVFS(vfsData, &vfs);
+    VirtFS::VFS::OpenVFS(vfsData, &vfs, ec);
 
     for(auto& desc : descriptors)
     {
-        auto file = VirtFS::VFS::GetFile(vfs, desc.filename.c_str());
+        auto file = VirtFS::VFS::GetFile(vfs, desc.filename.c_str(), ec);
 
         if(!file)
             continue;
@@ -196,18 +220,38 @@ void test_vfs(
 
 i32 coffee_main(i32, cstring_w*)
 {
-    Url                          outputVfs;
-    Path                         cacheDir;
-    auto                         rscDir = "."_url;
-    Vector<VirtFS::VirtDesc>     descriptors;
-    Vector<CResources::Resource> resources;
-    u64                          totalSize = 0;
-    Vector<byte_t>               outputData;
-    TerminalCursor               cursor;
-    bool                         showStats = false;
+    /* Very important:
+     * We unset environment variables that may affect the input to the program.
+     */
+
+    /* AppImage, Snappy and Flatpak storage locations.
+     * The resource prefix is intentionally used as the root for VFS resources.
+     */
+    Env::UnsetVar("APPIMAGE_DATA_DIR");
+    Env::UnsetVar("SNAP");
+
+    /* End of messing with the environment */
+
+    Url                      outputVfs;
+    Path                     cacheDir;
+    auto                     rscDir = "."_url;
+    Vector<VirtFS::VirtDesc> descriptors;
+    Vector<Resource>         resources;
+    u64                      totalSize = 0;
+    Vector<byte_t>           outputData;
+    TerminalCursor           cursor;
+    bool                     showStats = false;
+    file_error               ec;
+
+    u32 globalNumWorkers = C_FCAST<u32>(SysInfo::ThreadCount());
 
     {
         ArgumentParser parser;
+
+#if MODE_DEBUG
+        parser.addSwitch(
+            "deep_profile", "deep-profile", "d", "Enable deep profiling");
+#endif
 
         parser.addPositionalArgument(
             "resource_dir", "Source resource directory");
@@ -245,11 +289,23 @@ i32 coffee_main(i32, cstring_w*)
             " Even embedded in models.");
 
         parser.addArgument(
+            "workers",
+            "jobs",
+            "j",
+            "Max number of workers (defaults to number of threads on system)");
+
+        parser.addArgument(
             "cachedir",
             "cache",
             "m",
             "Caching directory for optimizing"
             " cooking time");
+
+        parser.addSwitch(
+            "list_extensions",
+            "list-extensions",
+            nullptr,
+            "List loaded extensions (for troubleshooting)");
 
         parser.addSwitch(
             "statistics", "stats", "s", "Show statistics for files afterwards");
@@ -264,6 +320,9 @@ i32 coffee_main(i32, cstring_w*)
 
         if(args.switches.find("statistics") != args.switches.end())
             showStats = true;
+        if(args.arguments.find("workers") != args.arguments.end())
+            globalNumWorkers =
+                cast_string<u32>(args.arguments.find("workers")->second);
 
         parse_args(args);
 
@@ -274,13 +333,25 @@ i32 coffee_main(i32, cstring_w*)
         if(args.arguments.find("cachedir") != args.arguments.end())
             cacheDir = Path(args.arguments.find("cachedir")->second);
 
-        FileResourcePrefix(args.positional["resource_dir"].c_str());
+        file::ResourcePrefix(args.positional["resource_dir"].c_str());
+
+        if(args.switches.find("list_extensions") != args.switches.end())
+        {
+            cBasicPrint("Loaded extensions:");
+            for(auto const& ext : extProcessors)
+            {
+                cBasicPrint(
+                    "- {0}", ext->name() ? ext->name() : "<unnamed extension>");
+            }
+        }
     }
 
     /* List files */
     {
+        ProfContext _("Collecting files");
+
         DirFun::DirList content;
-        if(!DirFun::Ls(rscDir, content, true))
+        if(!DirFun::Ls(rscDir, content, ec))
         {
             cFatal("{0}:0: Failed to list resource directory", *rscDir);
             return 1;
@@ -315,7 +386,7 @@ i32 coffee_main(i32, cstring_w*)
             totalSize /= 1_kB;
         }
 
-        CString progress = cStringFormat(
+        CString progress = Strings::cStringFormat(
             "{0} files/{1}{2}: ", descriptors.size(), totalSize, ext);
 
         return progress;
@@ -323,6 +394,7 @@ i32 coffee_main(i32, cstring_w*)
 
     cursor.setProgress(progressFun);
 
+    Profiler::PushContext("Filtering files");
     for(auto& desc : descriptors)
     {
         auto url = MkUrl(desc.filename.c_str());
@@ -338,7 +410,7 @@ i32 coffee_main(i32, cstring_w*)
             continue;
         }
 
-        auto fsize = FileFun::Size(url);
+        auto fsize = FileFun::Size(url, ec);
         cursor.progress(
             "Adding file: {0}, {1} bytes, {2}",
             url,
@@ -346,26 +418,43 @@ i32 coffee_main(i32, cstring_w*)
             (desc.flags == VirtFS::File_Compressed) ? "(compressed)" : "");
     }
 
+    auto removeIt = std::remove_if(
+        descriptors.begin(),
+        descriptors.end(),
+        [](VirtFS::VirtDesc const& desc) { return desc.data.size == 0; });
+
+    descriptors.erase(removeIt, descriptors.end());
+    Profiler::PopContext();
+
     cursor.progress("Post-processing files...");
 
-    for(auto proc : extProcessors)
+    for(auto const& proc : extProcessors)
     {
+        ProfContext _("Running extension");
         proc->setCacheBaseDirectory(cacheDir);
 
         proc->setInternalState(
             State::GetInternalState(), State::GetInternalThreadState());
         proc->setBaseDirectories(baseDirs);
+        proc->numWorkers = globalNumWorkers;
 
         proc->process(descriptors, cursor);
     }
 
     cursor.progress("Creating filesystem...");
 
-    if(!VirtFS::GenVirtFS(descriptors, &outputData))
+    VirtFS::vfs_error_code virt_ec;
+
+    if(!VirtFS::GenVirtFS(
+           descriptors, &outputData, virt_ec, {globalNumWorkers}))
     {
-        cursor.print("{0}:0: Failed to create VirtFS", outputVfs.internUrl);
+        cursor.print(
+            "{0}:0: Failed to create VirtFS: {1}",
+            outputVfs.internUrl,
+            virt_ec.message());
     } else
-        cursor.complete("Filesystem created!");
+        cursor.complete(
+            "Filesystem created! ({0}MB)", outputData.size() / 1_MB);
 
     /* Give some statistics on the created filesystem */
     if(showStats)
@@ -380,24 +469,24 @@ i32 coffee_main(i32, cstring_w*)
         cursor.print("");
 
     /* Unmap all files */
+    Profiler::PushContext("Unmapping resources");
     for(auto& rsc : resources)
     {
         FileUnmap(rsc);
     }
+    Profiler::PopContext();
 
     /* At this point, we are writing the VFS to disk */
     {
-        Resource output(outputVfs);
-        //        output = Bytes::CreateFrom(outputData);
+        ProfContext _("Writing to disk");
 
-        //        FileCommit(output, false, RSCA::Discard);
+        Resource output(outputVfs);
+
         FileOpenMap(
             output, outputData.size(), RSCA::ReadWrite | RSCA::Persistent);
 
         Bytes outputView = output;
-
         MemCpy(outputData, outputView);
-//        MemCpy(output.data, outputData.data(), output.size);
     }
 
     return 0;

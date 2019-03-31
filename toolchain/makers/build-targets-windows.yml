@@ -1,0 +1,7 @@
+uwp:
+  - amd64
+  - x86
+  - arm
+win32:
+  - amd64
+  - x86

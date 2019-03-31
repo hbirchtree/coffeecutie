@@ -1,5 +1,6 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
+#include <coffee/core/types/rgba.h>
 #include <coffee/core/unit_tests/graphics_framework.h>
 
 #include <coffee/graphics/apis/CGLeamRHI>
@@ -16,19 +17,22 @@ bool framebuffer_read()
     GFX::DumpFramebuffer(
         GFX::DefaultFramebuffer(), PixFmt::RGBA8, BitFmt::UByte, framebuffer);
 
-    CRGBA color = {0, 255, 0, 255};
+    rgba_t color = {0, 255, 0, 255};
 
     if(framebuffer.size() < sizeof(color))
         return false;
 
-    return MemCmp(Bytes::CreateFrom(framebuffer), Bytes::From(color));
+    return MemCmp(
+        Bytes::CreateFrom(framebuffer).at(0, sizeof(color)),
+        Bytes::From(color));
 }
 
-COFFEE_TEST_SUITE(1) = {
+COFFEE_TESTS_BEGIN(1)
+
     {CoffeeTest::GraphicsWrap<framebuffer_read, GFX>,
      "Framebuffer read-back",
      "Verify that it is possible to read framebuffer pixels",
      false,
-     false}};
+     false}
 
-COFFEE_GFX_RUN_TESTS(_tests);
+COFFEE_TESTS_END()

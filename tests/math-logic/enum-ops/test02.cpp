@@ -1,5 +1,5 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/type_safety.h>
+#include <peripherals/stl/type_safety.h>
 
 using namespace Coffee;
 
@@ -59,15 +59,15 @@ bool casting_signed_unsigned()
 }
 
 #if defined(COFFEE_WINDOWS)
-//static constexpr bool supports_safe_cast = false;
+// static constexpr bool supports_safe_cast = false;
 #else
-//static constexpr bool supports_safe_cast = true;
+// static constexpr bool supports_safe_cast = true;
 #endif
 
-COFFEE_TEST_SUITE(3) = {
-{enum_cast, "Casting enums to int"},
-{downcasting_u32_u16, "Downcasting", nullptr, true, false},
-{casting_signed_unsigned, "Unsigned casting", nullptr, true, false}
-};
+COFFEE_TESTS_BEGIN(3)
 
-COFFEE_EXEC_TESTS();
+    {enum_cast, "Casting enums to int"},
+    {downcasting_u32_u16, "Downcasting", nullptr, true, false},
+    {casting_signed_unsigned, "Unsigned casting", nullptr, true, false}
+
+COFFEE_TESTS_END()

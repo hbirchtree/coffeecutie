@@ -1,1 +1,2 @@
-add_subdirectory(shader_types)
+add_subdirectory(shader-types)
+add_subdirectory(pixel-types)

@@ -4,5 +4,5 @@ coffee_application (
     COMPANY "Coffee Guy"
     VERSION_CODE 1
     SOURCES main.cpp
-    LIBRARIES CoffeeAssimp CoffeeCore
+    LIBRARIES AssimpTools Core
     )

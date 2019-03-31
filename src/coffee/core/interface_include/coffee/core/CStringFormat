@@ -1,0 +1,11 @@
+#pragma once
+
+#include <coffee/strings/format.h>
+
+namespace Coffee{
+namespace Strings{
+}
+
+using namespace Strings;
+
+}

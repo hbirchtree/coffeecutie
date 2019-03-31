@@ -4,13 +4,10 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/CDisplay>
 #include <coffee/core/CFiles>
-#include <coffee/core/CMD>
 #include <coffee/core/CMath>
 #include <coffee/core/CThreading>
-#include <coffee/core/CThreadingTypes>
-#include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/string_casting.h>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/types/chunk.h>
+#include <peripherals/stl/string_casting.h>
 
 /* Graphics API interfaces */
 #include <coffee/interfaces/cgraphics_api.h>
@@ -27,7 +24,6 @@
 #include <coffee/interfaces/file_resolver.h>
 
 /* Common graphics stuff */
-#include <coffee/graphics/common/SMesh>
 #include <coffee/graphics/common/cgraphicsdata.h>
 #include <coffee/graphics/common/gltypes.h>
 #include <coffee/graphics/common/query/gpu_query.h>
@@ -43,16 +39,20 @@
 #include <coffee/image/cimage.h>
 
 /* ASSIMP APIs */
+#if defined(HAS_ASSIMP)
 #include <coffee/assimp/assimp_deserializer.h>
 #include <coffee/assimp/assimp_iterators.h>
 #include <coffee/assimp/assimp_material_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
+#endif
 
 bool dummy_test()
 {
     return true;
 }
 
-COFFEE_TEST_SUITE(1) = {{dummy_test, "Dummy test for coverage"}};
+COFFEE_TESTS_BEGIN(1)
 
-COFFEE_EXEC_TESTS()
+    {dummy_test, "Dummy test for coverage"}
+
+COFFEE_TESTS_END()

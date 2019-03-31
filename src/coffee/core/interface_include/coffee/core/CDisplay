@@ -1,0 +1,8 @@
+#pragma once
+
+#include <coffee/core/types/display/colorspace.h>
+#include <coffee/core/types/display/context_bits.h>
+#include <coffee/core/types/display/event.h>
+#include <coffee/core/types/display/monitor.h>
+#include <coffee/core/types/display/properties.h>
+#include <coffee/core/types/display/window.h>

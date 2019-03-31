@@ -1,4 +1,4 @@
-def linux_targets = ['ubuntu.amd64', 'steam.amd64', 'raspberry.armhf', 'maemo.armel', 'fedora.amd64', 'emscripten.wasm', 'emscripten.asmjs', 'android.armv8a.nougat.gles3', 'android.armv7a.nougat.gles2', 'android.armv7a.kitkat.gles2', ]
+def linux_targets = ['ubuntu.i686.gles', 'ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'steam.amd64', 'raspberry.armhf', 'fedora.amd64', 'emscripten.wasm', 'android.armv8a.nougat.gles3', 'android.armv7a.kitkat.gles2', ]
 def osx_targets = ['osx', 'ios.x86_64', ]
 def windows_targets = ['win32.amd64', 'uwp.amd64', ]
 
@@ -26,9 +26,6 @@ void GetSourceStep(job, repoUrl, srcDir)
                 branch('${GH_BRANCH}')
                 extensions {
                     relativeTargetDirectory(srcDir)
-                    submoduleOptions {
-                        recursive(true)
-                    }
                     cloneOptions {
                         shallow(true)
                     }
@@ -50,15 +47,21 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
         }
     }
 
+    job.with {
+        steps {
+            shell("git -C \"${srcDir}\" submodule update --init --recursive")
+        }
+    }
+
     if (platform == 'linux' || platform == 'osx')
     {
-        cmd = "\"${srcDir}/tools/ci/travis-build.sh\""
+        cmd = "\"${srcDir}/toolchain/ci/travis-build.sh\""
         job.with {
             steps {
                 environmentVariables {
                     env('TRAVIS_OS_NAME', platform)
                     env('TRAVIS_BUILD_DIR', srcDir)
-                    env('MAKEFILE_DIR', 'tools/makers')
+                    env('MAKEFILE_DIR', 'toolchain/makers')
                     env('DEPENDENCIES', '')
                     env('GITHUB_TOKEN', '${GH_API_TOKEN}')
                     env('MANUAL_DEPLOY', '1')
@@ -68,7 +71,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
         }
     }else if(platform == 'windows')
     {
-        cmd = "powershell \"${srcDir}\\tools/ci\\appveyor-build.ps1\""
+        cmd = "powershell \"${srcDir}\toolchain\ci\appveyor-build.ps1\""
 
         job.with {
             steps {
@@ -76,7 +79,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
                     env('APPVEYOR_BUILD_FOLDER', srcDir)
                     env('BUILD_DIR', '${WORKSPACE}/build_' + target)
                     env('CMAKE_BIN', 'C:\\Program Files\\CMake\\bin\\cmake.exe')
-                    env('MAKEFILE_DIR', 'tools/makers')
+                    env('MAKEFILE_DIR', 'toolchain/makers')
                     env('DEPENDENCIES', '')
                     env('GITHUB_TOKEN', '${GITHUB_TOKEN}')
                     env('BUILDVARIANT', target)

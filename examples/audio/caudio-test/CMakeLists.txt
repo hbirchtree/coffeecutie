@@ -6,8 +6,7 @@ coffee_application (
     SOURCES main.cpp
 
     LIBRARIES
-    CoffeeOpenAL CoffeeRenderer_Default
-    CoffeeGLeamRHI CoffeeCore
+    OpenALMix RendererDefault GLeamRHI Core
 
     BUNDLE_LIBRARIES ${OPENAL_LIBRARY}
 

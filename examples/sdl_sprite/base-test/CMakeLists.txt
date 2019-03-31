@@ -7,9 +7,9 @@ coffee_application (
     SOURCES main.cpp
 
     LIBRARIES
-    CoffeeSDL2
-    CoffeeRenderer_Default
-    CoffeeImage
+    SDL2Backend
+    RendererDefault
+    Image
 
     RESOURCES
     ${COFFEE_ASSET_DIRECTORY}/ctest_hud

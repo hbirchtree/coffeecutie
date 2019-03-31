@@ -4,5 +4,5 @@ coffee_application (
     TARGET SwigNativeTest
     TITLE "Native SWIG test"
     SOURCES main.cpp
-    LIBRARIES CoffeeSwigShim CoffeeRenderer_Default CoffeeCore
+    LIBRARIES SwigShim RendererDefault Core
     )

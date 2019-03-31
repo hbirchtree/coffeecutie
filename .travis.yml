@@ -1,7 +1,9 @@
 after_success:
-- tools/ci/travis-deploy.sh
+- toolchain/ci/travis-deploy.sh
+apt:
+  update: true
 before_script:
-- tools/ci/travis-deps.sh
+- toolchain/ci/travis-deps.sh
 branches:
   only:
   - master
@@ -12,20 +14,21 @@ compiles:
 dist: trusty
 env:
   global:
-  - MAKEFILE_DIR=tools/makers
+  - MAKEFILE_DIR=toolchain/makers
   - DEPENDENCIES=
-  - CONFIGURATION=Debug
+  - CONFIGURATION=Release
   matrix:
   - BUILDVARIANT=android.armv7a.kitkat.gles2
-  - BUILDVARIANT=android.armv7a.nougat.gles2
   - BUILDVARIANT=android.armv8a.nougat.gles3
-  - BUILDVARIANT=emscripten.asmjs
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
-  - BUILDVARIANT=maemo.armel
   - BUILDVARIANT=raspberry.armhf
   - BUILDVARIANT=steam.amd64
+  - BUILDVARIANT=testing.linux.lowfat.debug
+  - BUILDVARIANT=testing.linux.lowfat.release
+  - BUILDVARIANT=testing.linux.release
   - BUILDVARIANT=ubuntu.amd64
+  - BUILDVARIANT=ubuntu.i686.gles
   - BUILDVARIANT=ios.x86_64
   - BUILDVARIANT=osx
   - BUILDVARIANT=coverage
@@ -35,28 +38,33 @@ matrix:
   - env: BUILDVARIANT=maemo.armel
   - env: BUILDVARIANT=uwp.amd64
   - env: BUILDVARIANT=uwp.arm
-  - env: BUILDVARIANT=coverage
   - env: BUILDVARIANT=raspberry.armhf
+  - env: BUILDVARIANT=testing.linux.lowfat.debug
+  - env: BUILDVARIANT=testing.linux.lowfat.release
+  - env: BUILDVARIANT=testing.linux.release
+  - env: BUILDVARIANT=ubuntu.i686.gles
   exclude:
   - env: BUILDVARIANT=android.armv7a.kitkat.gles2
     os: osx
-  - env: BUILDVARIANT=android.armv7a.nougat.gles2
-    os: osx
   - env: BUILDVARIANT=android.armv8a.nougat.gles3
-    os: osx
-  - env: BUILDVARIANT=emscripten.asmjs
     os: osx
   - env: BUILDVARIANT=emscripten.wasm
     os: osx
   - env: BUILDVARIANT=fedora.amd64
     os: osx
-  - env: BUILDVARIANT=maemo.armel
-    os: osx
   - env: BUILDVARIANT=raspberry.armhf
     os: osx
   - env: BUILDVARIANT=steam.amd64
     os: osx
+  - env: BUILDVARIANT=testing.linux.lowfat.debug
+    os: osx
+  - env: BUILDVARIANT=testing.linux.lowfat.release
+    os: osx
+  - env: BUILDVARIANT=testing.linux.release
+    os: osx
   - env: BUILDVARIANT=ubuntu.amd64
+    os: osx
+  - env: BUILDVARIANT=ubuntu.i686.gles
     os: osx
   - env: BUILDVARIANT=ios.x86_64
     os: linux
@@ -70,7 +78,7 @@ os:
 - linux
 - osx
 script:
-- tools/ci/travis-build.sh
+- toolchain/ci/travis-build.sh
 services:
 - docker
 sudo: required

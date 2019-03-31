@@ -1,0 +1,3 @@
+set ( BUILD_ASSIMP  ON CACHE BOOL "" )
+set ( BUILD_GLES    ON CACHE BOOL "" )
+set ( BUILD_GLES_20 ON CACHE BOOL "" )

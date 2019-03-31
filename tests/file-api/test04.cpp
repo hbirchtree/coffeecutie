@@ -1,24 +1,20 @@
-#include <coffee/core/CUnitTesting>
 #include <coffee/core/CFiles>
-#include <coffee/core/types/cdef/memsafe.h>
+#include <coffee/core/CUnitTesting>
+#include <coffee/core/types/chunk.h>
 
 using namespace Coffee;
 
-const Url testfile = MkUrl("fileapi_testfile.txt",
-                           ResourceAccess::SpecifyStorage
-                           |ResourceAccess::TemporaryFile);
-const Url writetest = MkUrl("file_write_large.bin",
-                            ResourceAccess::SpecifyStorage
-                            |ResourceAccess::TemporaryFile);
+const Url testfile  = MkUrl("fileapi_testfile.txt", RSCA::TemporaryFile);
+const Url writetest = MkUrl("file_write_large.bin", RSCA::TemporaryFile);
 
 using File = FileFun;
 
-byte_t write_data[100] = {
-    "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n"
-};
+static byte_t write_data[100] = {"I'M THE TRASHMAN. I THROW GARBAGE ALL OVER "
+                                 "THE RING, AND THEN I START EATING "
+                                 "GARBAGE.\n"};
 
-const szptr dynamic_size = 5_GB;
-Bytes dynamic_store = {};
+static const szptr dynamic_size  = 5_GB;
+static Bytes       dynamic_store = {};
 
 bool filewrite_test()
 {
@@ -31,21 +27,18 @@ bool filewrite_test()
     Bytes rscView = rsc;
 
     {
-//        byte_t* dest = (byte_t*)rsc.data;
         /* Write some data below 4GB mark */
-//        MemCpy(dest,write_data,sizeof(write_data));
-        MemCpy(Bytes::From(write_data, 100), rscView.at(0));
+        MemCpy(Bytes::From(write_data, 100), rscView.at(0, 100));
         /* Write data above 4GB mark, requires 64-bit. Fuck 32-bit. */
-        MemCpy(Bytes::From(write_data, 100), rscView.at(4_GB));
-//        MemCpy(&dest[4_GB],write_data,sizeof(write_data));
+        MemCpy(Bytes::From(write_data, 100), rscView.at(4_GB, 100));
     }
+
     Profiler::Profile("Copying data into segment");
 
     dynamic_store = C_OCAST<Bytes>(rsc);
 
-    bool stat = FileCommit(rsc,false,
-                           ResourceAccess::WriteOnly
-                           |ResourceAccess::Discard);
+    bool stat =
+        FileCommit(rsc, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;
@@ -53,12 +46,13 @@ bool filewrite_test()
 
 bool fileread_test()
 {
-    bool status = true;
+    bool       status = true;
+    file_error ec;
 
     Resource rsc(writetest);
     Profiler::Profile("Pre-reading setup");
 
-    status = CResources::FilePull(rsc);
+    status = FilePull(rsc);
     Profiler::Profile("Reading massive data");
 
     if(status)
@@ -71,19 +65,20 @@ bool fileread_test()
             Profiler::Profile("Comparing 5GB of data");
         }
 
-        CResources::FileFree(rsc);
-        Profiler::Profile("Freeing 5GB of data");
-
-        File::Rm(writetest);
+        File::Rm(writetest, ec);
         Profiler::Profile("Deleting file");
     }
 
     return status;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {filewrite_test,"Massive file writing","Writing lots of text data to disk"},
-    {fileread_test,"Massive file reading","Reading lots of text data from disk"},
-};
+COFFEE_TESTS_BEGIN(2)
 
-COFFEE_RUN_TESTS(_tests);
+    {filewrite_test,
+     "Massive file writing",
+     "Writing lots of text data to disk"},
+    {fileread_test,
+     "Massive file reading",
+     "Reading lots of text data from disk"}
+
+COFFEE_TESTS_END()

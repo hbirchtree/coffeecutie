@@ -1,12 +1,20 @@
 #include <coffee/core/CApplication>
-#include <coffee/core/CDebug>
+#include <coffee/core/CArgParser>
 #include <coffee/core/CFiles>
+#include <coffee/core/CMath>
+#include <coffee/core/CProfiling>
 #include <coffee/core/VirtualFS>
 #include <coffee/core/coffee.h>
-#include <coffee/core/plat/environment/argument_parse.h>
-#include <coffee/core/terminal/table-print.h>
+#include <peripherals/stl/string_casting.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/terminal/table.h>
+
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
+using namespace ::platform;
 
 enum ColumnsShown
 {
@@ -26,9 +34,9 @@ static void pretty_print(VirtFS::vfs_view& vfsView)
         auto perc = u32(scalar(file.size) * 100.f / scalar(file.rsize));
 
         table[0].push_back(file.name);
-        table[1].push_back(to_string(file.rsize));
-        table[2].push_back(to_string(file.size));
-        table[3].push_back(to_string(perc));
+        table[1].push_back(str::convert::to_string(file.rsize));
+        table[2].push_back(str::convert::to_string(file.size));
+        table[3].push_back(str::convert::to_string(perc));
     }
 
     cOutputPrintNoNL("{0}", Table::GenTable(table, tableCols));
@@ -48,12 +56,14 @@ static CString humanize_size(szptr size)
 
 static CString srpad(CString src, szptr len)
 {
-    return StrUtil::rpad(src, ' ', len);
+    return str::pad::right(src, ' ', len);
 }
 
 static void normal_printing(
     VirtFS::vfs_view& vfsView, bool human_readable, u32 columns)
 {
+    ProfContext _("Listing all files");
+
     szptr rsizePadLength = 0;
     szptr sizePadLength  = 0;
 
@@ -106,23 +116,20 @@ static void normal_printing(
 }
 
 static i32 extract_file(
-    VirtFS::vfs_view& view,
-    CString           source_file,
-    CString           output_file,
-    RSCA              write_flags)
+    VirtFS::VirtualFS const* vfs,
+    CString                  source_file,
+    CString                  output_file,
+    RSCA                     write_flags)
 {
-    auto it =
-        std::find_if(view.begin(), view.end(), [&](VirtFS::VFile const& file) {
-            return source_file == file.name;
-        });
+    using namespace ::enum_helpers;
 
-    if(it == view.end())
-    {
-        cBasicPrint("{0}: file not found", source_file);
-        return 1;
-    }
+    ProfContext _("Searching for file");
 
-    auto data         = C_OCAST<Bytes>(it);
+    Profiler::PushContext("Search");
+    VirtFS::Resource resource(vfs, MkUrl(source_file));
+    Profiler::PopContext();
+
+    auto data         = C_OCAST<Bytes>(resource);
     auto output_fname = output_file;
 
     if(output_file == "-")
@@ -141,7 +148,7 @@ static i32 extract_file(
         }
 
         output = data;
-        if(!FileCommit(output, false, write_flags))
+        if(!FileCommit(output, write_flags | RSCA::NewFile | RSCA::WriteOnly))
         {
             cBasicPrint("{0}: failed to write file", output_fname);
             return 1;
@@ -151,15 +158,113 @@ static i32 extract_file(
     return 0;
 }
 
+static i32 query_file(VirtFS::VirtualFS const* vfs, CString const& pattern)
+{
+    VirtFS::vfs_error_code ec;
+
+    ProfContext _("Finding matches in VFS");
+
+    Profiler::PushContext("Querying VFS");
+    auto it = VirtFS::VirtualFS::SearchFile(
+        vfs, pattern.c_str(), ec, VirtFS::search_strategy::earliest);
+
+    C_ERROR_CHECK(ec);
+    Profiler::PopContext();
+
+    if(!it.index.sub_root.valid())
+        return 1;
+
+    Profiler::PushContext("Listing files");
+
+    auto files = C_RCAST<VirtFS::VFile const*>(vfs->files());
+    auto nodes = it.index.nodes();
+
+    for(auto i : Range<>(it.index.node_match.size()))
+    {
+        if(it.index.node_match.at(i) && nodes[i].is_leaf())
+            cBasicPrint("{0}", files[nodes[i].leaf.fileIdx].name);
+    }
+
+    Profiler::PopContext();
+
+    return 0;
+}
+
+#if MODE_DEBUG
+DENYINLINE void binary_bench(
+    mem_chunk<const VirtFS::VFS>& vfsData, szptr& thing)
+{
+    VirtFS::vfs_error_code ec;
+
+    {
+        ProfContext a1("Binary tree");
+        for(C_UNUSED(auto _) : Range<>(1000))
+        {
+            auto node = VirtFS::VFS::SearchFile(
+                vfsData.data,
+                "textures/stuff/C++-kildefil.cpp",
+                ec,
+                VirtFS::search_strategy::exact);
+
+            thing += node.node.node->leaf.fileIdx;
+        }
+    }
+}
+
+DENYINLINE void sequential_bench(VirtFS::vfs_view& vfsView, szptr& thing)
+{
+    ProfContext a2("Sequential search");
+    for(C_UNUSED(auto _) : Range<>(1000))
+    {
+        CString              query("textures/stuff/C++-kildefil.cpp");
+        VirtFS::VFile const* file = nullptr;
+        for(auto it = vfsView.begin(); it != vfsView.end(); ++it)
+            if((*it).name == query)
+            {
+                file = &(*it);
+                break;
+            }
+
+        thing += file->flags;
+    }
+}
+
+DENYINLINE void benchy(
+    mem_chunk<const VirtFS::VFS>& vfsData, VirtFS::vfs_view& vfsView)
+{
+    ProfContext _("Benchmark");
+
+    szptr thing = 0;
+
+    binary_bench(vfsData, thing);
+    sequential_bench(vfsView, thing);
+
+    cDebug("Got: {0}", thing);
+}
+#endif
+
 i32 coffee_main(i32, cstring_w*)
 {
+    /* Very important:
+     * We unset environment variables that may affect the input to the program.
+     */
+
+    /* AppImage, Snappy and Flatpak storage locations */
+    Env::UnsetVar("APPIMAGE_DATA_DIR");
+    Env::UnsetVar("SNAP");
+
+    /* End of messing with the environment */
+
     Url targetFile = {};
+
+    Profiler::PushContext("Parsing arguments");
 
     ArgumentParser parser;
 
     parser.addPositionalArgument("vfs-file", "target virtual file system");
 
     parser.addArgument("infile", "in-file", "g", "Get file from the VFS");
+    parser.addArgument("search", "find", nullptr, "Do a prefix search");
     parser.addArgument("outfile", "out-file", "o", "Output file when using -g");
 
     parser.addSwitch("pretty", "pretty", "p", "Print in a pretty fashion");
@@ -168,6 +273,11 @@ i32 coffee_main(i32, cstring_w*)
     parser.addSwitch("human", nullptr, "h", "Human-readable size");
     parser.addSwitch("size", nullptr, "c", "Show compressed size");
     parser.addSwitch("rsize", nullptr, "r", "Show real size");
+
+#if MODE_DEBUG
+    parser.addSwitch(
+        "deep_profile", "deep-profile", nullptr, "Enable deep profiling");
+#endif
 
     auto args = parser.parseArguments(GetInitArgs());
 
@@ -183,6 +293,16 @@ i32 coffee_main(i32, cstring_w*)
         return 1;
     }
 
+#if MODE_DEBUG
+    if(args.switches.find("deep_profile")->second > 0)
+    {
+        auto profilerState = State::GetProfilerStore();
+
+        if(profilerState)
+            profilerState->flags.deep_enabled = true;
+    }
+#endif
+
     auto targetResource = targetFile.rsc<Resource>();
     auto targetData     = C_OCAST<Bytes>(targetResource);
 
@@ -193,6 +313,7 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     VirtFS::vfs_view vfsView(targetData);
+    auto             vfsData = mem_chunk<const VirtFS::VirtualFS>(targetData);
 
     if(vfsView.begin() == vfsView.end())
     {
@@ -203,6 +324,7 @@ i32 coffee_main(i32, cstring_w*)
     u32  shown_columns   = 0;
     bool forceful        = args.switches.find("force") != args.switches.end();
     auto get_file        = args.arguments.find("infile");
+    auto search_file     = args.arguments.find("search");
     bool human_readable  = args.switches.find("human") != args.switches.end();
     bool pretty_printing = args.switches.find("pretty") != args.switches.end();
 
@@ -211,15 +333,22 @@ i32 coffee_main(i32, cstring_w*)
     else if(args.switches.find("size") != args.switches.end())
         shown_columns |= Show_Size;
 
+    Profiler::PopContext();
+
     if(get_file != args.arguments.end())
     {
         auto out_it = args.arguments.find("outfile");
 
         return extract_file(
-            vfsView,
+            vfsData.data,
             get_file->second,
             out_it != args.arguments.end() ? out_it->second : "",
             forceful ? RSCA::Discard : RSCA::None);
+    }
+
+    if(search_file != args.arguments.end())
+    {
+        return query_file(vfsData.data, search_file->second);
     }
 
     if(pretty_printing)
@@ -227,6 +356,10 @@ i32 coffee_main(i32, cstring_w*)
         pretty_print(vfsView);
         return 0;
     }
+
+#if MODE_DEBUG
+    benchy(vfsData, vfsView);
+#endif
 
     normal_printing(vfsView, human_readable, shown_columns);
 

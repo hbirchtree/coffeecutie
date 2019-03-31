@@ -1,0 +1,65 @@
+android:
+  armv8a:
+    nougat:
+      - gles3
+    lollipop:
+      - gles3
+  armv7a:
+    nougat:
+      - gles2
+      - gles3
+    lollipop:
+      - gles3
+    kitkat:
+      - gles2
+    gingerbread:
+      - gles2
+  mips:
+    kitkat:
+      - .
+  mips64:
+    kitkat:
+      - .
+  x86:
+    kitkat:
+      - .
+  x86_64:
+    kitkat:
+      - .
+    nougat:
+      - .
+ubuntu:
+  amd64:
+    - .
+    - tools
+    - gles2
+    - gles3
+  i686:
+    - gles
+    - gles2
+fedora:
+  - amd64
+steam:
+  - amd64
+coverage:
+  - .
+testing:
+  linux:
+    lowfat:
+      - debug
+      - release
+    release:
+      - .
+docs:
+  - .
+emscripten:
+  - asmjs
+  - wasm
+maemo:
+  - armel
+raspberry:
+  - armhf
+mingw:
+  - w64
+gamecube:
+  - .
