@@ -1,5 +1,14 @@
 if(NOT EMSCRIPTEN)
     if(NOT TARGET SDL2)
+        if(ANDROID)
+            dependency_get (
+                REQUIRED
+                SOURCE hbirchtree/native-library-bundle
+                TAG ${NATIVE_LIB_BUNDLE_TAG}
+                NAMES sdl2
+                )
+        endif()
+
         find_package ( SDL2 REQUIRED )
     endif()
 

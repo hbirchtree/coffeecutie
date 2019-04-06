@@ -1,3 +1,13 @@
+dependency_get (
+    SOURCE hbirchtree/native-library-bundle
+    TAG ${NATIVE_LIB_BUNDLE_TAG}
+    NAMES
+        squish
+        shaderc
+        spirvcross
+        glslang
+    )
+
 find_package( Squish QUIET     )
 find_package( TIFF QUIET       )
 find_package( shaderc QUIET    )

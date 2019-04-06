@@ -69,6 +69,7 @@ if(APPLE AND IOS)
 endif()
 
 if(BUILD_ANGLE)
+    # TODO: Write wrapper for importing/downloading choco packages
     find_package( ANGLE REQUIRED )
     list ( APPEND CORE_EXTRA_LIBRARIES
         AngleEGL AngleGLESv2

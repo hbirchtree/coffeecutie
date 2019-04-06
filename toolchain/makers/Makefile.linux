@@ -14,7 +14,6 @@ ifeq ($(BUILD_MODE), bare)
 	CMAKE_INSTALL_DIR := $(BUILD_DIR)/build
 	CMAKE_SOURCE_DIR := $(SOURCE_DIR)
 	COFFEE_ROOT_DIR := $(COFFEE_DIR)
-	NATIVE_LIBRARY_DIR := $(BUILD_DIR)/dependencies/native-libs
 	RUNNER := Makefile.workspace
 endif
 
@@ -26,7 +25,6 @@ ifeq ($(BUILD_MODE), containerized)
 	CMAKE_INSTALL_DIR := /home/coffee/out
 	CMAKE_SOURCE_DIR := /home/coffee/project
 	COFFEE_ROOT_DIR := /home/coffee/library
-	NATIVE_LIBRARY_DIR := /nativelibs
 	RUNNER := Makefile.multi
 endif
 
@@ -44,7 +42,7 @@ rpi-sdk:
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.gingerbread.gles2: FORCE native-libs
+android.armv7a.gingerbread.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -66,17 +64,11 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread.gles2 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.gingerbread.gles2 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.gingerbread.gles2 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv7a.gingerbread.gles2:/home/coffee/build:rw \
@@ -90,7 +82,7 @@ android.armv7a.gingerbread.gles2: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.kitkat.gles2: FORCE native-libs
+android.armv7a.kitkat.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -112,17 +104,11 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.kitkat.gles2 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.kitkat.gles2 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.kitkat.gles2 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv7a.kitkat.gles2:/home/coffee/build:rw \
@@ -136,7 +122,7 @@ android.armv7a.kitkat.gles2: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.lollipop.gles3: FORCE native-libs
+android.armv7a.lollipop.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -158,17 +144,11 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.lollipop.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.lollipop.gles3 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.lollipop.gles3 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv7a.lollipop.gles3:/home/coffee/build:rw \
@@ -182,7 +162,7 @@ android.armv7a.lollipop.gles3: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.nougat.gles2: FORCE native-libs
+android.armv7a.nougat.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -204,17 +184,11 @@ android.armv7a.nougat.gles2: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles2 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles2 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.nougat.gles2 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv7a.nougat.gles2:/home/coffee/build:rw \
@@ -228,7 +202,7 @@ android.armv7a.nougat.gles2: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.nougat.gles3: FORCE native-libs
+android.armv7a.nougat.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -250,17 +224,11 @@ android.armv7a.nougat.gles3: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv7a.nougat.gles3 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/armeabi-v7a with NEON/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.nougat.gles3 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv7a.nougat.gles3:/home/coffee/build:rw \
@@ -274,7 +242,7 @@ android.armv7a.nougat.gles3: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv8a.lollipop.gles3: FORCE native-libs
+android.armv8a.lollipop.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -296,17 +264,11 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.lollipop.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.lollipop.gles3 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.lollipop.gles3 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv8a.lollipop.gles3:/home/coffee/build:rw \
@@ -320,7 +282,7 @@ android.armv8a.lollipop.gles3: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv8a.nougat.gles3: FORCE native-libs
+android.armv8a.nougat.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -342,17 +304,11 @@ android.armv8a.nougat.gles3: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.nougat.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.armv8a.nougat.gles3 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/arm64-v8a/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.nougat.gles3 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.armv8a.nougat.gles3:/home/coffee/build:rw \
@@ -366,7 +322,7 @@ android.armv8a.nougat.gles3: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.mips.kitkat: FORCE native-libs
+android.mips.kitkat: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -388,17 +344,11 @@ android.mips.kitkat: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.kitkat \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips.kitkat \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/mips/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/mips/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/mips/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.mips.kitkat \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.mips.kitkat:/home/coffee/build:rw \
@@ -412,7 +362,7 @@ android.mips.kitkat: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.mips64.kitkat: FORCE native-libs
+android.mips64.kitkat: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -434,17 +384,11 @@ android.mips64.kitkat: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.kitkat \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.mips64.kitkat \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/mips64/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/mips64/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/mips64/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.mips64.kitkat \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.mips64.kitkat:/home/coffee/build:rw \
@@ -458,7 +402,7 @@ android.mips64.kitkat: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.x86.kitkat: FORCE native-libs
+android.x86.kitkat: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -480,17 +424,11 @@ android.x86.kitkat: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.kitkat \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86.kitkat \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.x86.kitkat \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.x86.kitkat:/home/coffee/build:rw \
@@ -504,7 +442,7 @@ android.x86.kitkat: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.x86_64.kitkat: FORCE native-libs
+android.x86_64.kitkat: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -526,17 +464,11 @@ android.x86_64.kitkat: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.kitkat \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.kitkat \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.kitkat \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.x86_64.kitkat:/home/coffee/build:rw \
@@ -550,7 +482,7 @@ android.x86_64.kitkat: FORCE native-libs
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.x86_64.nougat: FORCE native-libs
+android.x86_64.nougat: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -572,17 +504,11 @@ android.x86_64.nougat: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.nougat \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/android.x86_64.nougat \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Android \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
-	-DOPENSSL_CRYPTO_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl/lib/libcrypto.a\\\" \
-	-DOPENSSL_INCLUDE_DIR=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl/include\\\" \
-	-DOPENSSL_SSL_LIBRARY=\\\"$(NATIVE_LIBRARY_DIR)/Android/libraries/x86_64/ssl/lib/libssl.a\\\" \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.nougat \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/android.x86_64.nougat:/home/coffee/build:rw \
@@ -596,7 +522,7 @@ android.x86_64.nougat: FORCE native-libs
 
 # Coverage build using same config as Ubuntu
 # Compiler: Clang
-coverage: FORCE native-libs
+coverage: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -606,16 +532,13 @@ coverage: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/coverage \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=coverage \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e CC= \
 	-e CXX= \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/coverage:/home/coffee/build:rw \
@@ -629,7 +552,7 @@ coverage: FORCE native-libs
 
 # Documentation build using only Doxygen
 # Compiler: Doxygen
-docs: FORCE native-libs
+docs: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -639,14 +562,11 @@ docs: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/docs \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/docs \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=docs \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/docs:/home/coffee/build:rw \
@@ -660,7 +580,7 @@ docs: FORCE native-libs
 
 # Emscripten with WebAsm and asm.js
 # Compiler: Clang 4+
-emscripten.asmjs: FORCE native-libs
+emscripten.asmjs: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -670,16 +590,13 @@ emscripten.asmjs: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/emscripten.asmjs \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Emscripten \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=emscripten.asmjs \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/emscripten.asmjs:/home/coffee/build:rw \
@@ -693,7 +610,7 @@ emscripten.asmjs: FORCE native-libs
 
 # Emscripten with WebAsm and asm.js
 # Compiler: Clang 4+
-emscripten.wasm: FORCE native-libs
+emscripten.wasm: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -703,16 +620,13 @@ emscripten.wasm: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/emscripten.wasm \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Emscripten \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/emscripten.wasm:/home/coffee/build:rw \
@@ -726,7 +640,7 @@ emscripten.wasm: FORCE native-libs
 
 # Fedora build in a Fedora Docker
 # Compiler: GCC 5+
-fedora.amd64: FORCE native-libs
+fedora.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -736,14 +650,11 @@ fedora.amd64: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/fedora.amd64 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Fedora \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=fedora.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/fedora.amd64:/home/coffee/build:rw \
@@ -757,7 +668,7 @@ fedora.amd64: FORCE native-libs
 
 # Nintendo Gamecube through DevkitPPC
 # Compiler: GCC 6+
-gamecube: FORCE native-libs
+gamecube: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -766,14 +677,11 @@ gamecube: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/gamecube \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/none-cube-powerpc-eabi_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/gamecube \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/GCN/DevkitPPC \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=gamecube \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/gamecube:/home/coffee/build:rw \
@@ -787,7 +695,7 @@ gamecube: FORCE native-libs
 
 # Maemo 5 builds, performed within a Maemo 5 armel chroot
 # Compiler: GCC 6
-maemo.armel: FORCE native-libs
+maemo.armel: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.make8 \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -796,18 +704,14 @@ maemo.armel: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/maemo.armel \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/maemo.armel \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Maemo \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=maemo.armel \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
-	-v $(BUILD_DIR)/dependencies/native-libs:/maemo//nativelibs:ro \
 	-v $(COFFEE_DIR):/maemo//home/coffee/library:ro \
 	-v $(SOURCE_DIR):/maemo//home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/maemo//home/coffee/out:rw \
 	-v $(BUILD_DIR)/maemo.armel:/maemo//home/coffee/build:rw \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/maemo.armel:/home/coffee/build:rw \
@@ -821,7 +725,7 @@ maemo.armel: FORCE native-libs
 
 # MinGW64 environment in Ubuntu Docker
 # Compiler: GCC 5+
-mingw.w64: FORCE native-libs
+mingw.w64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -830,14 +734,11 @@ mingw.w64: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/mingw.w64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/windows-mingw64_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/mingw.w64 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/MinGW \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=mingw.w64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/mingw.w64:/home/coffee/build:rw \
@@ -851,7 +752,7 @@ mingw.w64: FORCE native-libs
 
 # Raspberry Pi ARMv6 build
 # Compiler: GCC 4.9
-raspberry.armhf: FORCE native-libs rpi-sdk
+raspberry.armhf: FORCE rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -861,16 +762,13 @@ raspberry.armhf: FORCE native-libs rpi-sdk
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/raspberry.armhf \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/RaspberryPi \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=raspberry.armhf \
 	-DRASPBERRY_SDK=/rpi-sysroot \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(BUILD_DIR)/dependencies/raspberry-sysroot/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/raspberry.armhf:/home/coffee/build:rw \
@@ -884,7 +782,7 @@ raspberry.armhf: FORCE native-libs rpi-sdk
 
 # Build against the SteamRT SDK
 # Compiler: GCC 4.8.4
-steam.amd64: FORCE native-libs
+steam.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -894,16 +792,13 @@ steam.amd64: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/cxx11.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/steam.amd64 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/SteamOS \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=steam.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e CC=clang-3.6 \
 	-e CXX=clang++-3.6 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/steam.amd64:/home/coffee/build:rw \
@@ -917,7 +812,7 @@ steam.amd64: FORCE native-libs
 
 # Lowfat debug-mode testing
 # Compiler: GCC 5+
-testing.linux.lowfat.debug: FORCE native-libs
+testing.linux.lowfat.debug: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -928,10 +823,8 @@ testing.linux.lowfat.debug: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.lowfat.debug \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/testing.linux.lowfat.debug \
+	-DGIT_DEP_BUILDVARIANT=testing.linux.lowfat.debug \
 	-DLOWFAT_BUILD=ON \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \
 	-DSKIP_LINKAGE_TEST=ON \
@@ -941,7 +834,6 @@ testing.linux.lowfat.debug: FORCE native-libs
 	 \
 	-e CC= \
 	-e CXX= \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.lowfat.debug:/home/coffee/build:rw \
@@ -955,7 +847,7 @@ testing.linux.lowfat.debug: FORCE native-libs
 
 # Lowfat release-mode testing
 # Compiler: GCC 5+
-testing.linux.lowfat.release: FORCE native-libs
+testing.linux.lowfat.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -966,10 +858,8 @@ testing.linux.lowfat.release: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.lowfat.release \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/testing.linux.lowfat.release \
+	-DGIT_DEP_BUILDVARIANT=testing.linux.lowfat.release \
 	-DLOWFAT_BUILD=ON \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \
 	-DSKIP_LINKAGE_TEST=ON \
@@ -979,7 +869,6 @@ testing.linux.lowfat.release: FORCE native-libs
 	 \
 	-e CC= \
 	-e CXX= \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.lowfat.release:/home/coffee/build:rw \
@@ -993,7 +882,7 @@ testing.linux.lowfat.release: FORCE native-libs
 
 # Release-mode testing
 # Compiler: GCC 5+
-testing.linux.release: FORCE native-libs
+testing.linux.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1004,9 +893,7 @@ testing.linux.release: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.release \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/testing.linux.release \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=testing.linux.release \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \
 	-DSKIP_LINKAGE_TEST=ON \
@@ -1016,7 +903,6 @@ testing.linux.release: FORCE native-libs
 	 \
 	-e CC= \
 	-e CXX= \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.release:/home/coffee/build:rw \
@@ -1030,7 +916,7 @@ testing.linux.release: FORCE native-libs
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
-ubuntu.amd64: FORCE native-libs
+ubuntu.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1041,16 +927,13 @@ ubuntu.amd64: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64 \
 	-DGENERATE_APPIMAGE=ON \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/ubuntu.amd64:/home/coffee/build:rw \
@@ -1064,7 +947,7 @@ ubuntu.amd64: FORCE native-libs
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
-ubuntu.amd64.tools: FORCE native-libs
+ubuntu.amd64.tools: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1081,19 +964,16 @@ ubuntu.amd64.tools: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.tools \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.tools \
 	-DGENERATE_APPIMAGE=ON \
 	-DGENERATE_APPIMAGE=ON \
 	-DGENERATE_FLATPAK=OFF \
 	-DGENERATE_SNAPPY=OFF \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64.tools \
 	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/ubuntu.amd64.tools:/home/coffee/build:rw \
@@ -1107,7 +987,7 @@ ubuntu.amd64.tools: FORCE native-libs
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
-ubuntu.amd64.gles2: FORCE native-libs
+ubuntu.amd64.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1118,16 +998,13 @@ ubuntu.amd64.gles2: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles2 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.gles2 \
 	-DGENERATE_APPIMAGE=ON \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64.gles2 \
 	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/ubuntu.amd64.gles2:/home/coffee/build:rw \
@@ -1141,7 +1018,7 @@ ubuntu.amd64.gles2: FORCE native-libs
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
-ubuntu.amd64.gles3: FORCE native-libs
+ubuntu.amd64.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1152,16 +1029,13 @@ ubuntu.amd64.gles3: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.amd64.gles3 \
 	-DGENERATE_APPIMAGE=ON \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64.gles3 \
 	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/ubuntu.amd64.gles3:/home/coffee/build:rw \
@@ -1175,7 +1049,7 @@ ubuntu.amd64.gles3: FORCE native-libs
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
-ubuntu.i686.gles: FORCE native-libs
+ubuntu.i686.gles: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1185,14 +1059,11 @@ ubuntu.i686.gles: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.i686.gles \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.i686.gles \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/ubuntu.i686.gles:/home/coffee/build:rw \
@@ -1206,7 +1077,7 @@ ubuntu.i686.gles: FORCE native-libs
 
 # Ubuntu build in a Ubuntu Docker
 # Compiler: GCC 5+
-ubuntu.i686.gles2: FORCE native-libs
+ubuntu.i686.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1216,14 +1087,11 @@ ubuntu.i686.gles2: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles2 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_ROOT_DIR)/ubuntu.i686.gles2 \
-	-DNATIVE_LIBRARY_DIR=$(NATIVE_LIBRARY_DIR)/Ubuntu \
-	-DNATIVE_LIBRARY_ROOT=$(NATIVE_LIBRARY_DIR) \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.i686.gles2 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/native-libs:/nativelibs:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/ubuntu.i686.gles2:/home/coffee/build:rw \

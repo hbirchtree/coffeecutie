@@ -11,6 +11,10 @@ include ( toolchain/cmake/Modules/SubprojectFunctions.cmake )
 
 init_project()
 
+include ( GitDependencies )
+
+set ( NATIVE_LIB_BUNDLE_TAG "rel-0.3.1.0.4" )
+
 set ( COFFEE_EXT_LIBRARY_DIR
     "${CMAKE_SOURCE_DIR}/src/libs"
     )
