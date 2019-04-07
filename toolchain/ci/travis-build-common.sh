@@ -2,6 +2,8 @@
 
 source $(dirname ${BASH_SOURCE})/travis-common.sh
 
+env
+
 #######################################
 # Create build directory and go to it
 #######################################
