@@ -19,8 +19,9 @@ if(BUILD_OPENSSL)
     endif()
 
     find_package ( OpenSSL REQUIRED )
-    find_package ( Threads QUIET )
 endif()
+
+find_package ( Threads QUIET )
 
 if(TARGET OpenSSL::SSL)
     set ( LIBS OpenSSL::SSL Threads::Threads )
