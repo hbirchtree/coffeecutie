@@ -19,12 +19,13 @@ if(BUILD_OPENSSL)
     endif()
 
     find_package ( OpenSSL REQUIRED )
+    find_package ( Threads QUIET )
 endif()
 
 if(TARGET OpenSSL::SSL)
-    set ( LIBS OpenSSL::SSL )
+    set ( LIBS OpenSSL::SSL Threads::Threads )
 else()
-    set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> pthread )
+    set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> Threads::Threads )
 endif()
 
 coffee_library (
