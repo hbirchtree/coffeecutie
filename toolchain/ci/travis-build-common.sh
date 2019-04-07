@@ -150,6 +150,8 @@ function build_standalone()
 
 function build_target()
 {
+    umask 000
+
     [[ -z ${TRAVIS_BUILD_DIR} ]] && TRAVIS_BUILD_DIR=${SOURCE_DIR}
 
     local BUILDVARIANT="$1"
