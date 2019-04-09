@@ -65,43 +65,17 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-SET(SDL2_SEARCH_PATHS
-    ~/Library/Frameworks
-    /Library/Frameworks
-    /usr/local
-    /usr
-    /sw # Fink
-    /opt/local # DarwinPorts
-    /opt/csw # Blastwave
-    /opt
-    ${CMAKE_BINARY_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${RASPBERRY_SDK}/usr
-    )
-
-if(NOT WIN_UWP)
-	list ( APPEND SDL2_SEARCH_PATHS
-		"C:/SDL2_64/"
-		"C:/SDL2/"
-		)
-endif()
-
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
-    HINTS
-    $ENV{SDL2DIR}
     PATH_SUFFIXES include/SDL2 include
-    PATHS ${SDL2_SEARCH_PATHS}
     )
 
 get_filename_component ( SDL2_INCLUDE_DIR "${SDL2_INCLUDE_DIR}" REALPATH )
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
   NAMES
-  SDL2 SDL2-2 SDL2-2.0
+  SDL2
   libSDL2.DLL # This one is for MinGW
 
-  HINTS
-  $ENV{SDL2DIR}
   PATH_SUFFIXES
 
   lib # Default stuff
@@ -112,8 +86,6 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
 
   "lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL}" # CMake architecture path
   "lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL}/Release"
-
-  PATHS ${SDL2_SEARCH_PATHS}
   )
 
 IF(NOT SDL2_BUILDING_LIBRARY)
