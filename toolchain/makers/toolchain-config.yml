@@ -20,13 +20,14 @@
 
 # Default container options
 =container-opts: ''
+=git-dep-target: $(target-name)
 
 # Default CMake options
 =cmake-opts:
   - $(cmake.src)
   - -G'$(generator)'
   - -C$(toolchain-dir)/Preload/$(preload)
-  - -DGIT_DEP_BUILDVARIANT=$(target-name)
+  - -DGIT_DEP_BUILDVARIANT=$(git-dep-target)
 
 # Android toolchain is always sourced from the Android NDK
 ^((?!android).)*$:
@@ -102,6 +103,7 @@ coverage:
   =compiler: Clang
   =preload: linux-coverage.cmake
   =build-type: Debug
+  =git-dep-target: ubuntu.amd64
   +container-opts:
     - -e CC=
     - -e CXX=

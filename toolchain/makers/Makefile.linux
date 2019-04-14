@@ -532,7 +532,7 @@ coverage: FORCE
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=coverage \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
