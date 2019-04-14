@@ -24,12 +24,14 @@ target_include_directories ( Audio SYSTEM PRIVATE
     )
 
 if(BUILD_OPENAL)
-    dependency_get (
-        REQUIRED
-        SOURCE hbirchtree/native-library-bundle
-        TAG ${NATIVE_LIB_BUNDLE_TAG}
-        NAMES openal
-        )
+    if(NOT APPLE)
+        dependency_get (
+            REQUIRED
+            SOURCE hbirchtree/native-library-bundle
+            TAG ${NATIVE_LIB_BUNDLE_TAG}
+            NAMES openal
+            )
+    endif()
 
     find_package( OpenAL REQUIRED )
 
