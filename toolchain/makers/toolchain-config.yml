@@ -110,6 +110,7 @@ coverage:
 
 testing.linux.*:
   =compiler: GCC 5+
+  =git-dep-target: ubuntu.amd64
   +container-opts:
     - -e CC=
     - -e CXX=

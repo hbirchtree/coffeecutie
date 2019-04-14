@@ -823,7 +823,7 @@ testing.linux.lowfat.debug: FORCE
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.lowfat.debug \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=testing.linux.lowfat.debug \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DLOWFAT_BUILD=ON \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \
@@ -858,7 +858,7 @@ testing.linux.lowfat.release: FORCE
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.lowfat.release \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=testing.linux.lowfat.release \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DLOWFAT_BUILD=ON \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \
@@ -893,7 +893,7 @@ testing.linux.release: FORCE
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/testing.linux.release \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=testing.linux.release \
+	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \
 	-DSKIP_LINKAGE_TEST=ON \
