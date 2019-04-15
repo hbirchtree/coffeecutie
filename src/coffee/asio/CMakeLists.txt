@@ -12,7 +12,7 @@ if(BUILD_OPENSSL)
     set ( OPENSSL_ROOT_DIR "${GIT_DEP_DIR}/openssl" )
     set ( ENV{OPENSSL_ROOT_DIR} "${GIT_DEP_DIR}/openssl" )
 
-    if(ANDROID)
+    if(ANDROID OR (APPLE AND IOS))
         set ( OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a" )
         set ( OPENSSL_SSL_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libssl.a" )
         set ( OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include" )

@@ -92,12 +92,12 @@ function ( DEPENDENCY_GET )
         #
         execute_process (
             COMMAND ${CMAKE_COMMAND} -E make_directory
-                "${DEP_LIB_LOCATION}/${NAME}"
+                "${LOCAL_DIR}"
             )
 
         execute_process (
             COMMAND ${CMAKE_COMMAND} -E tar xf "${LOCAL_FILE}"
-            WORKING_DIRECTORY "${DEP_LIB_LOCATION}/${NAME}"
+            WORKING_DIRECTORY "${LOCAL_DIR}"
             )
     endforeach()
 
