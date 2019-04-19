@@ -175,20 +175,11 @@ if(BUILD_OPENGL)
 endif(BUILD_OPENGL)
 
 if(NOT EMSCRIPTEN AND BUILD_SDL2 AND BUILD_OPENGL)
-    dependency_get (
-        REQUIRED
-        SOURCE hbirchtree/native-library-bundle
-        TAG ${NATIVE_LIB_BUNDLE_TAG}
-        NAMES sdl2
-        )
-
-    find_package(SDL2 REQUIRED)
-
     target_include_directories ( BindingGLAD PRIVATE
         ${STANDARDLIBS_INCLUDE_DIR}
         )
     target_link_libraries ( BindingGLAD PRIVATE
-        SDL2
+        SDL2Backend
         )
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID
         AND NOT EMSCRIPTEN AND NOT BUILD_SDL2)

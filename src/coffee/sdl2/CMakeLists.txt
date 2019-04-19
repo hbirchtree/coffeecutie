@@ -11,7 +11,7 @@ if(NOT EMSCRIPTEN)
     endif()
 
     set ( LIBS
-        SDL2
+        SDL2::SDL2-static
         )
 endif()
 
@@ -44,6 +44,7 @@ target_compile_definitions ( SDL2Backend PUBLIC
 if(NOT EMSCRIPTEN)
     target_include_directories ( SDL2Backend PRIVATE
         $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}/SDL2>
         )
 
     coffee_bundle(
