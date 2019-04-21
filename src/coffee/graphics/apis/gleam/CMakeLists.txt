@@ -19,7 +19,6 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/toolchain/internal/include>
 
     $<INSTALL_INTERFACE:include>
     )
@@ -101,5 +100,23 @@ if(BUILD_GLES_20 OR BUILD_ANGLE)
 elseif(NOT BUILD_GLES)
     target_compile_definitions ( GLeamCommon PUBLIC
         -DCOFFEE_GLEAM_DESKTOP
+        )
+endif()
+
+if(NOT BUILD_GLES)
+    coffee_bundle (
+        DESTINATION ""
+        HEADER_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/gl_include/glad"
+        )
+    target_include_directories ( GLeamCommon PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gl_include>
+        )
+else()
+    coffee_bundle (
+        DESTINATION ""
+        HEADER_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/gles_include/glad_es"
+        )
+    target_include_directories ( GLeamCommon PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gles_include>
         )
 endif()
