@@ -199,7 +199,7 @@ function package_libraries()
 
 function package_binaries()
 {
-    local _BASEDIR=${TAR_BASE:-build/$BUILDVARIANT}
+    local _BASEDIR=${TAR_BASE:-$1/build/$BUILDVARIANT}
     local _OUTFILE=${PWD}/$2
 
     pushd $_BASEDIR
