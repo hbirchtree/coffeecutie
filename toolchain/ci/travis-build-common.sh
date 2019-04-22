@@ -184,23 +184,33 @@ function build_target()
 
 function package_libraries()
 {
-    local _BASEDIR=${TAR_BASE:-build}
+    local _BASEDIR=${TAR_BASE:-build/$BUILDVARIANT}
+    local _OUTFILE=${PWD}/$2
 
-    tar -zcf "$2" -C ${1} \
+    pushd $_BASEDIR
+
+    tar -zcf "$_OUTFILE" \
             --exclude=${_BASEDIR}/*/bin \
             --exclude=${_BASEDIR}/*/packaged \
-            ${_BASEDIR}/
+            .
+
+    popd
 }
 
 function package_binaries()
 {
-    local _BASEDIR=${TAR_BASE:-build}
+    local _BASEDIR=${TAR_BASE:-build/$BUILDVARIANT}
+    local _OUTFILE=${PWD}/$2
 
-    tar -zcf "$2" -C $1 \
+    pushd $_BASEDIR
+
+    tar -zcf "$_OUTFILE" \
             --exclude=${_BASEDIR}/*/include \
             --exclude=${_BASEDIR}/*/lib \
             --exclude=${_BASEDIR}/*/share \
-            ${_BASEDIR}/
+            .
+
+    popd
 }
 
 function main()
