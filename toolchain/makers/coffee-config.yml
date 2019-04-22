@@ -1,14 +1,11 @@
 =toolchain-dir: $(cmake.src)/toolchain/cmake
 +cmake-opts:
-  - -DNATIVE_LIBRARY_DIR=$(cmake.native-lib)/$(build.prettyname)
-  - -DNATIVE_LIBRARY_ROOT=$(cmake.native-lib)
   - -DCMAKE_BUILD_TYPE=$(build-type)
   - -DCMAKE_INSTALL_PREFIX=$(cmake.install)/$(target-name)
-  - -DCOFFEE_ROOT_DIR=$(cmake.coffee-lib)/$(lib.flavor)
   - -DBUILD_BINARIES=$(env:GENERATE_PROGRAMS)
   - -DSKIP_GRAPHIC_TESTS=$(env:HEADLESS)
 +container-opts:
-  - -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
+    #- -v $(dependencies.native-libs.root):$(dependencies.native-libs.target):ro
   - -v $(project.src):$(container.src):ro
   - -v $(project.install):$(container.install):rw
   - -v $(project.build)/$(target-name):$(container.build):rw

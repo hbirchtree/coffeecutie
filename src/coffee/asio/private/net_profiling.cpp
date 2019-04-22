@@ -17,6 +17,9 @@ using namespace ::semantic;
 
 void ProfilingExport()
 {
+    using http::header::classify_status;
+    using http::response_class;
+
 #if !defined(COFFEE_LOWFAT) && MODE_DEBUG
     cVerbose(10, "Checking for network profiling...");
 
@@ -69,7 +72,8 @@ void ProfilingExport()
 
         reportBinRsc.push(chromeData);
 
-        if(reportBinRsc.responseCode() != 200)
+        auto response_status = classify_status(reportBinRsc.responseCode());
+        if(response_status != response_class::success)
         {
             cWarning(
                 "Got bad response from server: {1}\n{0}",

@@ -24,6 +24,20 @@ struct RapidJson
     using WriteBuf = rapidjson::StringBuffer;
     using Writer   = rapidjson::Writer<rapidjson::StringBuffer>;
 
+    struct Object : Value
+    {
+        Object() {
+            Value::SetObject();
+        }
+    };
+
+    struct Array : Value
+    {
+        Array() {
+            Value::SetArray();
+        }
+    };
+
     STATICINLINE Document Read(cstring data)
     {
         Document doc;

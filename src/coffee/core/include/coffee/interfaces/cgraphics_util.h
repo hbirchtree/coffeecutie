@@ -229,6 +229,7 @@ FORCEDINLINE bool LoadPipeline(
     }
     if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment, ec))
     {
+        vert.dealloc();
         C_ERROR_CHECK(ec);
         return false;
     }

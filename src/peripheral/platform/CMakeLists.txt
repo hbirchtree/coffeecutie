@@ -30,6 +30,12 @@ if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
         (ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
 
     if(NOT TARGET SDL2)
+        dependency_get (
+            SOURCE hbirchtree/native-library-bundle
+            TAG ${NATIVE_LIB_BUNDLE_TAG}
+            NAMES sdl2
+            )
+
         find_package ( SDL2 QUIET )
     endif()
 

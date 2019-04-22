@@ -14,7 +14,6 @@ ifeq ($(BUILD_MODE), bare)
 	CMAKE_INSTALL_DIR := $(BUILD_DIR)/build
 	CMAKE_SOURCE_DIR := $(SOURCE_DIR)
 	COFFEE_ROOT_DIR := $(COFFEE_DIR)
-	NATIVE_LIBRARY_DIR := $(BUILD_DIR)/dependencies/native-libs
 	RUNNER := Makefile.workspace
 endif
 
@@ -26,7 +25,6 @@ ifeq ($(BUILD_MODE), containerized)
 	CMAKE_INSTALL_DIR := /home/coffee/out
 	CMAKE_SOURCE_DIR := /home/coffee/project
 	COFFEE_ROOT_DIR := /home/coffee/library
-	NATIVE_LIBRARY_DIR := /nativelibs
 	RUNNER := Makefile.multi
 endif
 
@@ -44,7 +42,7 @@ rpi-sdk:
 
 # Device-oriented build for ARM64 and ARMv7-A
 # Compiler: Clang
-ios: FORCE native-libs
+ios: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
@@ -53,9 +51,7 @@ ios: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios \
-	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
-	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DGIT_DEP_BUILDVARIANT=ios \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR)/ios \
@@ -65,7 +61,7 @@ ios: FORCE native-libs
 
 # iOS simulator build
 # Compiler: Clang
-ios.x86_64: FORCE native-libs
+ios.x86_64: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
@@ -74,10 +70,8 @@ ios.x86_64: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86_64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86_64 \
+	-DGIT_DEP_BUILDVARIANT=ios.x86_64 \
 	-DIOS_PLATFORM=SIMULATOR64 \
-	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
-	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR)/ios.x86_64 \
@@ -87,7 +81,7 @@ ios.x86_64: FORCE native-libs
 
 # iOS simulator build
 # Compiler: Clang
-ios.x86: FORCE native-libs
+ios.x86: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
@@ -96,10 +90,8 @@ ios.x86: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/ios.x86 \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/ios.x86 \
+	-DGIT_DEP_BUILDVARIANT=ios.x86 \
 	-DIOS_PLATFORM=SIMULATOR \
-	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
-	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Xcode'" \
 	-e CMAKE_BUILD_DIR=$(BUILD_DIR)/ios.x86 \
@@ -109,7 +101,7 @@ ios.x86: FORCE native-libs
 
 # Apple OS X
 # Compiler: Clang
-osx: FORCE native-libs
+osx: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
@@ -118,9 +110,7 @@ osx: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/osx-generic_osx.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/osx \
-	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
-	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DGIT_DEP_BUILDVARIANT=osx \
 	-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Xcode'" \
@@ -131,7 +121,7 @@ osx: FORCE native-libs
 
 # Apple OS X
 # Compiler: Clang
-osx.coverage: FORCE native-libs
+osx.coverage: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
@@ -144,9 +134,7 @@ osx.coverage: FORCE native-libs
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(BUILD_DIR)/build/osx.coverage \
 	-DCMAKE_TOOLCHAIN_FILE=$(SOURCE_DIR)/toolchain/cmake/Toolchains/osx-generic_osx.toolchain.cmake \
-	-DCOFFEE_ROOT_DIR=$(COFFEE_DIR)/osx.coverage \
-	-DNATIVE_LIBRARY_DIR=$(BUILD_DIR)/dependencies/native-libs/Apple \
-	-DNATIVE_LIBRARY_ROOT=$(BUILD_DIR)/dependencies/native-libs \
+	-DGIT_DEP_BUILDVARIANT=osx.coverage \
 	-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-DSKIP_HIGHMEM_TESTS=ON \

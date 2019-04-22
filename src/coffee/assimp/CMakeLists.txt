@@ -1,3 +1,10 @@
+dependency_get (
+    REQUIRED
+    SOURCE hbirchtree/native-library-bundle
+    TAG ${NATIVE_LIB_BUNDLE_TAG}
+    NAMES assimp
+    )
+
 find_package(assimp REQUIRED)
 
 coffee_library (

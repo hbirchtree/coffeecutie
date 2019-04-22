@@ -28,9 +28,30 @@ struct AllocatorData
         {
         }
 
+        ~PipelineData()
+        {
+            pipeline.dealloc();
+        }
+
         typename API::PIP pipeline;
         PipelineParams    params;
     };
+
+    ~AllocatorData()
+    {
+#define DEALLOC_BLOCK(TYPE, VAR) {for(auto& buf : VAR) buf->dealloc();}
+
+        DEALLOC_BLOCK(typename API::V_DESC, vertex_desc);
+
+        DEALLOC_BLOCK(typename API::BUF_A, array_bufs);
+        DEALLOC_BLOCK(typename API::BUF_E, element_bufs);
+        DEALLOC_BLOCK(typename API::BUF_U, uniform_bufs);
+        DEALLOC_BLOCK(typename API::BUF_S, shader_bufs);
+        DEALLOC_BLOCK(typename API::BUF_P, pixel_bufs);
+        DEALLOC_BLOCK(typename API::BUF_DRAW, indirect_bufs);
+
+#undef DEALLOC_BLOCK
+    }
 
     ApiStore<typename API::V_DESC> vertex_desc;
     ApiStore<PipelineData>         pipelines;
@@ -146,7 +167,7 @@ struct GraphicsAllocator
 
     ~GraphicsAllocator()
     {
-        API::UnloadAPI();
+//        API::UnloadAPI();
     }
 
     template<size_t NumAttribs>
