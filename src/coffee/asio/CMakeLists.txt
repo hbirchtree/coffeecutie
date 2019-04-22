@@ -2,13 +2,35 @@ option ( BUILD_OPENSSL "Build ASIO with OpenSSL support" ON )
 
 # OpenSSL used for ASIO networking
 if(BUILD_OPENSSL)
-    find_package(OpenSSL REQUIRED )
+    dependency_get (
+        REQUIRED
+        SOURCE hbirchtree/native-library-bundle
+        TAG ${NATIVE_LIB_BUNDLE_TAG}
+        NAMES openssl
+        )
+
+    set ( OPENSSL_ROOT_DIR "${GIT_DEP_DIR}/openssl" )
+    set ( ENV{OPENSSL_ROOT_DIR} "${GIT_DEP_DIR}/openssl" )
+
+    if(ANDROID OR (APPLE AND IOS))
+        set ( OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a" )
+        set ( OPENSSL_SSL_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libssl.a" )
+        set ( OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include" )
+    endif()
+
+    find_package ( OpenSSL REQUIRED )
 endif()
+
 
 if(TARGET OpenSSL::SSL)
     set ( LIBS OpenSSL::SSL )
 else()
-    set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> )
+    set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> Threads::Threads )
+endif()
+
+find_package ( Threads QUIET )
+if(TARGET Threads::Threads)
+    set ( LIBS ${LIBS} Threads::Threads )
 endif()
 
 coffee_library (

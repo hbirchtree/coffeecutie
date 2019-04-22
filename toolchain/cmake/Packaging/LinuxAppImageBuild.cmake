@@ -17,7 +17,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
         CACHE FILEPATH "Default icon for AppImages" )
 endif()
 
-macro( APPIMAGE_PACKAGE
+function( APPIMAGE_PACKAGE
         TARGET
         APPIMAGE_TITLE
         DATA
@@ -25,6 +25,20 @@ macro( APPIMAGE_PACKAGE
         ICON_ASSET )
     string ( TOLOWER "${APPIMAGE_TITLE}" APPIMAGE_INTERNALNAME )
     string ( MAKE_C_IDENTIFIER "${APPIMAGE_INTERNALNAME}" APPIMAGE_INTERNALNAME )
+
+    if(NOT EXISTS "${APPIMAGE_RUNTIME_BINARY}")
+        find_program ( RUNTIME_BIN_TMP
+            runtime
+            )
+
+        if(NOT EXISTS "${RUNTIME_BIN_TMP}")
+            message ( STATUS "No runtime binary for AppImage" )
+            return()
+        else()
+            set ( APPIMAGE_RUNTIME_BINARY "${RUNTIME_BIN_TMP}" CACHE PATH "" FORCE )
+        endif()
+
+    endif()
 
     # Some prerequisites
     # TITLE here is used as the name of the final AppImage as well as the desktop entry's name
@@ -196,4 +210,4 @@ macro( APPIMAGE_PACKAGE
         PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE
         )
-endmacro()
+endfunction()

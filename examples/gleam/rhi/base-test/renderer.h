@@ -29,6 +29,8 @@
 
 #include <coffee/core/CDebug>
 
+#undef FEATURE_ENABLE_ASIO
+
 //#define USE_NULL_RENDERER
 
 using namespace Coffee;
@@ -453,11 +455,11 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         const bool isGles20 = GLM::Level() == RHI::GLEAM::GLES_2_0;
 
         Resource v_rsc(
-            (isGles) ? "vr/vshader_es.glsl"
-                     : (isGles20) ? "vr/vshader_es2.glsl" : "vr/vshader.glsl");
+            (isGles20) ? "vr/vshader_es2.glsl"
+                     : (isGles) ? "vr/vshader_es.glsl" : "vr/vshader.glsl");
         Resource f_rsc(
-            (isGles) ? "vr/fshader_es.glsl"
-                     : (isGles20) ? "vr/fshader_es2.glsl" : "vr/fshader.glsl");
+            (isGles20) ? "vr/fshader_es2.glsl"
+                     : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
 
         params = &gfx.alloc_standard_pipeline<2, Resource>(
             {{std::move(v_rsc), std::move(f_rsc)}});

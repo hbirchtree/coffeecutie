@@ -7,17 +7,6 @@ allow_fail:
 - env: BUILDVARIANT=testing.linux.lowfat.release
 - env: BUILDVARIANT=testing.linux.release
 - env: BUILDVARIANT=ubuntu.i686.gles
-base_dependencies:
-  hbirchtree/assimp: v4.1.0
-  hbirchtree/bullet: v2.88
-  hbirchtree/glslang: v1
-  hbirchtree/libav: v1
-  hbirchtree/openal: v1.18.2
-  hbirchtree/openssl: v1
-  hbirchtree/sdl2: v2.0.8
-  hbirchtree/shaderc: v1
-  hbirchtree/spirv-cross: v1
-  hbirchtree/squish: v1
 branches:
 - build: true
   deploy: true
@@ -66,5 +55,5 @@ version:
   major: 4
   minor: 4
   patch: 1
-  release: 0
+  release: 1
 versionprefix: automated-release-

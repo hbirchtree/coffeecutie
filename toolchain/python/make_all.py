@@ -141,6 +141,7 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
 
         # Add specified dependencies to environment
         target_dependencies = vars['dependencies']
+        target_dependencies = [x for x in target_dependencies if x != "None"]
         for dep in target_dependencies:
             yml.create_plain_variables(precompiled_deps[dep], vars, 'dependencies.%s' % dep)
         verify_dependencies(vars, target_dependencies)

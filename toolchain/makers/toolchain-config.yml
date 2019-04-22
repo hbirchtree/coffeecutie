@@ -16,16 +16,18 @@
 =program.workdir: $(env:CMAKE_BUILD_DIR)
 
 # Default dependency
-=dependencies: native-libs
+=dependencies: 
 
 # Default container options
 =container-opts: ''
+=git-dep-target: $(target-name)
 
 # Default CMake options
 =cmake-opts:
   - $(cmake.src)
   - -G'$(generator)'
   - -C$(toolchain-dir)/Preload/$(preload)
+  - -DGIT_DEP_BUILDVARIANT=$(git-dep-target)
 
 # Android toolchain is always sourced from the Android NDK
 ^((?!android).)*$:
@@ -49,7 +51,7 @@
   =cmake.build: $(project.build)/$(target-name)
   =cmake.install: $(project.install)
   =cmake.coffee-lib: $(lib.root)
-  =cmake.native-lib: $(dependencies.native-libs.root)
+  #=cmake.native-lib: $(dependencies.native-libs.root)
   =cmake-project.src: $(project.src)/cmake
   =program.workdir: $(project.build)/$(target-name)
   =container-opts:
@@ -101,12 +103,14 @@ coverage:
   =compiler: Clang
   =preload: linux-coverage.cmake
   =build-type: Debug
+  =git-dep-target: ubuntu.amd64
   +container-opts:
     - -e CC=
     - -e CXX=
 
 testing.linux.*:
   =compiler: GCC 5+
+  =git-dep-target: ubuntu.amd64
   +container-opts:
     - -e CC=
     - -e CXX=
@@ -223,9 +227,6 @@ testing.linux.*:
     - -DANDROID_CPP_FEATURES=$(android.features)
     - -DANDROID_ARM_NEON=$(android.arm-neon)
     - -DCMAKE_TOOLCHAIN_FILE=$(android.ndk)/build/cmake/android.toolchain.cmake
-    - -DOPENSSL_INCLUDE_DIR=\\\"$(android.ssl.dir)/include\\\"
-    - -DOPENSSL_SSL_LIBRARY=\\\"$(android.ssl.dir)/lib/libssl.a\\\"
-    - -DOPENSSL_CRYPTO_LIBRARY=\\\"$(android.ssl.dir)/lib/libcrypto.a\\\"
   #  +environment-vars:
   # - -e OPENSSL_ROOT_DIR="$(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl"
   =container: android
@@ -242,7 +243,7 @@ testing.linux.*:
   =target: multi.make8
   =generator: Unix Makefiles
   =container-opts:
-    - -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
+      #- -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
     - -v $(lib.root):/maemo/$(lib.target):ro
     - -v $(project.src):/maemo/$(container.src):ro
     - -v $(project.install):/maemo/$(container.install):rw
