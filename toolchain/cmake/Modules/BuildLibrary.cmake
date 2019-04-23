@@ -116,13 +116,13 @@ macro( GENERATE_FINDSCRIPT )
         FILES
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        DESTINATION share
+        DESTINATION lib/cmake/${PROJECT_NAME}
         )
 
     install (
         EXPORT ${PROJECT_NAME}
         NAMESPACE ${PROJECT_NAME}::
-        DESTINATION share
+        DESTINATION lib/cmake/${PROJECT_NAME}
         )
 endmacro()
 
