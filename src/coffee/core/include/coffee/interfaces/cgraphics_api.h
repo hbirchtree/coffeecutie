@@ -746,15 +746,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         }
     };
 
-    /*!
-     * \brief Rendering surface, can be rendered to by RenderTarget
-     *  or used as texture.
-     * Should support PBO upload for OpenGL
-     */
-    template<typename CSizeT, typename PointT>
-    struct Surface
+    struct SurfaceBase
     {
-        Surface(
+        SurfaceBase(
             PixFmt fmt,
             bool   isArray   = false,
             u32    arraySize = 0,
@@ -767,32 +761,6 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        /*!
-         * \brief Allocates any data necessary for this surface to exist.
-         */
-        void allocate(CSizeT const&, PixCmp)
-        {
-        }
-        void dealloc()
-        {
-        }
-
-        /*!
-         * \brief A safe variant of `upload()`, can check
-         *  bounds before copying a texture from memory.
-         * The version of `upload()` taking a pointer has no
-         *  ability to check this.
-         * Please use this one for sanity.
-         */
-        void upload(
-            PixDesc, CSizeT const&, Bytes const&, PointT const& = {}, u32 = 0)
-        {
-        }
-
-        u32 size() const
-        {
-            return 0;
-        }
         bool isArray() const
         {
             return b_array;
@@ -810,6 +778,60 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_pixfmt;
         }
 
+        PixFmt m_pixfmt;
+        bool   b_array;
+        u32    m_arrsize;
+        u32    m_mips;
+        u32    m_flags;
+        RSCA   m_access;
+    };
+
+    /*!
+     * \brief Rendering surface, can be rendered to by RenderTarget
+     *  or used as texture.
+     * Should support PBO upload for OpenGL
+     */
+    template<typename SizeT, typename PointT>
+    struct Surface : SurfaceBase
+    {
+        Surface(
+            PixFmt fmt,
+            bool   isArray   = false,
+            u32    arraySize = 0,
+            u32    mips      = 1,
+            u32    flags     = 0,
+            RSCA   cl        = RSCA::ReadOnly) :
+            SurfaceBase(fmt, isArray, arraySize, mips, flags, cl)
+        {
+        }
+
+        /*!
+         * \brief Allocates any data necessary for this surface to exist.
+         */
+        void allocate(SizeT const&, PixCmp)
+        {
+        }
+        void dealloc()
+        {
+        }
+
+        /*!
+         * \brief A safe variant of `upload()`, can check
+         *  bounds before copying a texture from memory.
+         * The version of `upload()` taking a pointer has no
+         *  ability to check this.
+         * Please use this one for sanity.
+         */
+        void upload(
+            PixDesc, SizeT const&, Bytes const&, PointT const& = {}, u32 = 0)
+        {
+        }
+
+        u32 size() const
+        {
+            return 0;
+        }
+
         u8& glTexHandle()
         {
             static u8 m_;
@@ -820,13 +842,6 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
             return {};
         }
-
-        PixFmt m_pixfmt;
-        bool   b_array;
-        u32    m_arrsize;
-        u32    m_mips;
-        u32    m_flags;
-        RSCA   m_access;
     };
 
     using Surface2D   = Surface<Size, Point> /* Simple 2D texture */;

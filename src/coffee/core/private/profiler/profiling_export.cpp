@@ -156,83 +156,112 @@ STATICINLINE void PutRuntimeInfo(
 {
     auto const& buildi = State::GetBuildInfo();
 
-    target.AddMember(
-        "build.version", FromString(buildi.build_version, alloc), alloc);
-    target.AddMember(
-        "build.compiler", FromString(buildi.compiler, alloc), alloc);
-    target.AddMember(
-        "build.architecture", FromString(buildi.architecture, alloc), alloc);
+    JSON::Object build;
 
-    target.AddMember(
-        "runtime.system",
+    build.AddMember("version", FromString(buildi.build_version, alloc), alloc);
+    build.AddMember("compiler", FromString(buildi.compiler, alloc), alloc);
+    build.AddMember(
+        "architecture", FromString(buildi.architecture, alloc), alloc);
+    build.AddMember(
+                "buildMode",
+                FromString(PlatformData::IsDebug() ? "DEBUG" : "RELEASE", alloc),
+                alloc);
+
+    target.AddMember("build", build, alloc);
+
+    JSON::Object runtime;
+
+    runtime.AddMember(
+        "system",
         FromString(PlatformData::SystemDisplayString(), alloc),
         alloc);
-    target.AddMember(
-        "device",
+
+    auto cwd = Env::CurrentDir();
+    runtime.AddMember("cwd", FromString(AnonymizePath(cwd), alloc), alloc);
+
+    {
+        JSON::Array args;
+        PutArgs(args, alloc);
+
+        runtime.AddMember("arguments", args, alloc);
+    }
+
+    target.AddMember("runtime", runtime, alloc);
+
+    JSON::Object device;
+
+    device.AddMember(
+        "name",
         FromString(Strings::to_string(SysInfo::DeviceName()), alloc),
         alloc);
-
-    target.AddMember("device.dpi", PlatformData::DeviceDPI(), alloc);
-    target.AddMember("device.type", PlatformData::DeviceVariant(), alloc);
-    target.AddMember("device.platform", PlatformData::PlatformVariant(), alloc);
-    target.AddMember("device.debug", PlatformData::IsDebug(), alloc);
-
-    target.AddMember(
-        "device.version",
+    device.AddMember("dpi", PlatformData::DeviceDPI(), alloc);
+    device.AddMember("type", PlatformData::DeviceVariant(), alloc);
+    device.AddMember("platform", PlatformData::PlatformVariant(), alloc);
+    device.AddMember(
+        "version",
         FromString(Strings::to_string(SysInfo::GetSystemVersion()), alloc),
         alloc);
-    target.AddMember(
-        "device.motherboard",
+    device.AddMember(
+        "motherboard",
         FromString(Strings::to_string(SysInfo::Motherboard()), alloc),
         alloc);
-    target.AddMember(
-        "device.chassis",
+    device.AddMember(
+        "chassis",
         FromString(Strings::to_string(SysInfo::Chassis()), alloc),
         alloc);
 
 #if defined(COFFEE_INTERNAL_BUILD)
-    target.AddMember(
-        "device.hostname",
+    device.AddMember(
+        "hostname",
         FromString(Strings::to_string(SysInfo::HostName()), alloc),
         alloc);
 #endif
 
+    target.AddMember("device", device, alloc);
+
+    JSON::Object processor;
+
     auto pinfo = SysInfo::Processor();
-    target.AddMember(
-        "processor.manufacturer", FromString(pinfo.manufacturer, alloc), alloc);
-    target.AddMember("processor.model", FromString(pinfo.model, alloc), alloc);
-    target.AddMember(
-        "processor.firmware", FromString(pinfo.firmware, alloc), alloc);
+    processor.AddMember(
+        "manufacturer", FromString(pinfo.manufacturer, alloc), alloc);
+    processor.AddMember("model", FromString(pinfo.model, alloc), alloc);
+    processor.AddMember("firmware", FromString(pinfo.firmware, alloc), alloc);
 
-    auto freqs = SysInfo::ProcessorFrequencies();
-    if(freqs.size())
     {
-        JSON::Value freq_j;
-        freq_j.SetArray();
-        for(auto f : freqs)
-            freq_j.PushBack(f, alloc);
-        target.AddMember("processor.frequency", freq_j, alloc);
-    } else
-        target.AddMember(
-            "processor.frequency", SysInfo::ProcessorFrequency(), alloc);
+        auto freqs = SysInfo::ProcessorFrequencies();
 
-    target.AddMember("processor.cores", SysInfo::CoreCount(), alloc);
-    target.AddMember("processor.threads", SysInfo::ThreadCount(), alloc);
+        JSON::Array freq_j;
+        if(freqs.size())
+            for(auto f : freqs)
+                freq_j.PushBack(f, alloc);
+        else
+            freq_j.PushBack(SysInfo::ProcessorFrequency(), alloc);
 
-    target.AddMember(
-        "processor.hyperthreading", SysInfo::HasHyperThreading(), alloc);
-    target.AddMember("processor.pae", SysInfo::HasPAE(), alloc);
-    target.AddMember("processor.fpu", SysInfo::HasFPU(), alloc);
+        processor.AddMember("frequencies", freq_j, alloc);
+    }
 
-    target.AddMember("memory.bank", SysInfo::MemTotal(), alloc);
-    target.AddMember("memory.virtual.total", SysInfo::SwapTotal(), alloc);
-    target.AddMember(
-        "memory.virtual.available", SysInfo::SwapAvailable(), alloc);
+    processor.AddMember("cores", SysInfo::CoreCount(), alloc);
+    processor.AddMember("threads", SysInfo::ThreadCount(), alloc);
 
-    auto cwd = Env::CurrentDir();
+    processor.AddMember("hyperthreading", SysInfo::HasHyperThreading(), alloc);
+    processor.AddMember("pae", SysInfo::HasPAE(), alloc);
+    processor.AddMember("fpu", SysInfo::HasFPU(), alloc);
 
-    target.AddMember(
-        "runtime.cwd", FromString(AnonymizePath(cwd), alloc), alloc);
+    target.AddMember("processor", processor, alloc);
+
+    {
+        JSON::Object memory;
+
+        memory.AddMember("bank", SysInfo::MemTotal(), alloc);
+
+        JSON::Object virtmem;
+        virtmem.AddMember("total", SysInfo::SwapTotal(), alloc);
+        virtmem.AddMember("available", SysInfo::SwapAvailable(), alloc);
+
+        memory.AddMember("virtual", virtmem, alloc);
+
+        target.AddMember("memory", memory, alloc);
+    }
 }
 
 } // namespace CT_Stuff
@@ -244,37 +273,27 @@ void ExportChromeTracerData(CString& target)
     JSON::Document doc;
     doc.SetObject();
 
-    JSON::Value events;
-    events.SetArray();
+    auto& alloc = doc.GetAllocator();
+
+    JSON::Array events;
     PutEvents(events, doc.GetAllocator());
 
-    JSON::Value args;
-    args.SetArray();
-    PutArgs(args, doc.GetAllocator());
-
-    JSON::Value extraData;
-    extraData.SetObject();
+    JSON::Object extraData;
     PutExtraData(extraData, doc.GetAllocator());
 
+    JSON::Object application;
+
     auto appd = ApplicationData();
-    doc.AddMember(
-        "application.name",
-        FromString(appd.application_name, doc.GetAllocator()),
-        doc.GetAllocator());
-    doc.AddMember(
-        "application.org",
-        FromString(appd.organization_name, doc.GetAllocator()),
-        doc.GetAllocator());
-    doc.AddMember(
-        "application.version",
-        ApplicationData().version_code,
-        doc.GetAllocator());
-    PutRuntimeInfo(doc, doc.GetAllocator());
-    doc.AddMember("runtime.arguments", args, doc.GetAllocator());
+    application.AddMember(
+        "name", FromString(appd.application_name, alloc), alloc);
+    application.AddMember(
+        "organization", FromString(appd.organization_name, alloc), alloc);
+    application.AddMember("version", ApplicationData().version_code, alloc);
 
-    doc.AddMember("extra", extraData, doc.GetAllocator());
-
-    doc.AddMember("traceEvents", events, doc.GetAllocator());
+    doc.AddMember("application", application, alloc);
+    PutRuntimeInfo(doc, alloc);
+    doc.AddMember("extra", extraData, alloc);
+    doc.AddMember("traceEvents", events, alloc);
 
     target = JSON::Serialize(doc);
 }

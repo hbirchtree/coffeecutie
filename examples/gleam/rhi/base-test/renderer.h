@@ -22,10 +22,14 @@
 #include <coffee/discord/discord_system.h>
 #endif
 
+#include <coffee/interfaces/graphics_subsystem.h>
+
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
+
+#undef FEATURE_ENABLE_ASIO
 
 //#define USE_NULL_RENDERER
 
@@ -36,6 +40,9 @@ using namespace Coffee::RHI::Datatypes;
 
 using CDRenderer = CSDL2Renderer;
 using GLM        = GLEAMAPI;
+
+using GfxTag = RHI::Components::AllocatorTag<GLM>;
+using GfxSys = RHI::Components::GraphicsAllocator<GLM>;
 
 struct RuntimeState
 {
@@ -91,11 +98,6 @@ struct MatrixContainer
         m_pairs.insert(
             {id,
              {&m_data.at(m_data.size() - 1), &m_data.at(m_data.size() - 2)}});
-    }
-
-    virtual void unregister_entity(u64 id)
-    {
-        VectorBaseContainer::unregister_entity(id);
     }
 
     virtual MatrixTag::type* get(u64 id)
@@ -334,51 +336,23 @@ struct RendererState
 
     struct RGraphicsData
     {
-        RGraphicsData() : params(eye_pip)
+        RGraphicsData()
         {
         }
 
         void reset()
         {
-            loader     = {};
-            vertbuf    = {};
-            vertdesc   = {};
-            v_shader   = {};
-            f_shader   = {};
-            eye_pip    = {};
-            eyetex     = {};
-            eyesamp    = {};
             blendstate = {};
             deptstate  = {};
-            rpass_s    = {};
-            rpass      = {};
         }
 
-        // GLEAM data
-        GLM::API_CONTEXT loader = nullptr;
-
-        UqPtr<GLM::BUF_A> vertbuf;
-        GLM::V_DESC       vertdesc = {};
-
-        GLM::SHD                    v_shader = {};
-        GLM::SHD                    f_shader = {};
-        GLM::PIP                    eye_pip  = {};
-        RHI::shader_param_view<GLM> params;
-
-        UqPtr<GLM::S_2DA> eyetex;
-        GLM::SM_2DA       eyesamp = {};
-
-        Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
-
-        GLM::D_DATA instdata = {6, 0, 4};
-
-        // View information
+        Vecf4          clear_col  = {.267f, .267f, .267f, 1.f};
+        GLM::D_DATA    instdata   = {6, 0, 4};
         GLM::BLNDSTATE blendstate = {};
         GLM::DEPTSTATE deptstate  = {};
         GLM::D_CALL    call       = {};
-
-        GLM::RenderPass rpass_s = {};
-        GLM::OPT_DRAW   rpass   = {};
+        GLM::OPT_DRAW  draws      = {};
+        GLM::PIP*      pipeline;
     } g_data;
 };
 
@@ -431,26 +405,20 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
      */
     GLM::OPTS load_opts      = {};
     load_opts.crash_on_error = true;
-    g.loader                 = GLM::GetLoadAPI(load_opts);
-    if(!g.loader(PlatformData::IsDebug()))
-    {
-        cDebug("Failed to load GLEAM API");
-        return;
-    }
 
-    g.vertbuf      = MkUq<GLM::BUF_A>(RSCA::ReadOnly, sizeof(vertexdata));
-    auto& vertbuf  = *g.vertbuf;
-    auto& vertdesc = g.vertdesc;
+    auto& gfx = entities.register_subsystem_inplace<GfxTag, GfxSys>(
+        load_opts, PlatformData::IsDebug());
 
-    cVerbose("Entering GL initialization stage");
+    GLM::V_DESC* vao = nullptr;
+
     /* Uploading vertex data and creating descriptors */
     {
-        Profiler::PushContext("Vertex data upload");
+        ProfContext _("Vertex data upload");
 
-        vertdesc.alloc();
-        vertbuf.alloc();
+        auto array_buf =
+            gfx.alloc_buffer<GLM::BUF_A>(RSCA::ReadOnly, sizeof(vertexdata));
 
-        vertbuf.commit(sizeof(vertexdata), vertexdata);
+        array_buf->commit(sizeof(vertexdata), vertexdata);
 
         /*
          * Specifying a vertex format which is applied.
@@ -468,62 +436,64 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         tc.m_type      = TypeEnum::Scalar;
         tc.m_stride    = sizeof(Vecf3) + sizeof(Vecf2);
 
-        /* Finally we add these attributes to the descriptor */
-        vertdesc.addAttribute(pos);
-        vertdesc.addAttribute(tc);
+        auto verts = gfx.alloc_desc<2>({{pos, tc}});
 
-        Profiler::PopContext();
+        verts->bindBuffer(0, *array_buf);
+
+        vao = verts.get();
     }
-
-    cVerbose("Generated vertex buffers");
-
-    auto& eye_pip = g.eye_pip;
 
     /* Compiling shaders and assemble a graphics pipeline */
 
+    GfxSys::AllocData::PipelineParams* params = nullptr;
+
     {
-        ProfContext             b("Shader compilation");
-        const constexpr cstring shader_files[] = {"vr/vshader.glsl",
-                                                  "vr/fshader.glsl",
-                                                  "vr/vshader_es.glsl",
-                                                  "vr/fshader_es.glsl",
-                                                  "vr/vshader_es2.glsl",
-                                                  "vr/fshader_es2.glsl"};
+        ProfContext b("Shader compilation");
 
-        bool isGles = (GLM::LevelIsOfClass(GLM::Level(), GLM::APIClass::GLES));
-        bool isGles20 = GLM::Level() == RHI::GLEAM::GLES_2_0;
+        const bool isGles =
+            (GLM::LevelIsOfClass(GLM::Level(), GLM::APIClass::GLES));
+        const bool isGles20 = GLM::Level() == RHI::GLEAM::GLES_2_0;
 
-        Resource v_rsc(shader_files[isGles * 2 + isGles20 * 2]);
-        Resource f_rsc(shader_files[isGles * 2 + isGles20 * 2 + 1]);
+        Resource v_rsc(
+            (isGles20) ? "vr/vshader_es2.glsl"
+                     : (isGles) ? "vr/vshader_es.glsl" : "vr/vshader.glsl");
+        Resource f_rsc(
+            (isGles20) ? "vr/fshader_es2.glsl"
+                     : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
 
-        if(!RHI::LoadPipeline<GLM>(eye_pip, v_rsc, f_rsc))
-        {
-            cFatal("Failed to load shaders");
-        }
+        params = &gfx.alloc_standard_pipeline<2, Resource>(
+            {{std::move(v_rsc), std::move(f_rsc)}});
     }
-    cVerbose("Compiled shaders");
 
-    /* Uploading textures */
-    g.eyetex = MkUq<GLM::S_2DA>(
+    auto mainTexture = gfx.alloc_surface_sampler<GLM::S_2DA>(
         PixFmt::RGBA8, 1, GLM::TextureDMABuffered | GLM::TextureAutoMipmapped);
-    auto& eyetex = *g.eyetex;
 
-    eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
-    cVerbose("Texture allocation");
-
-    Profiler::PushContext("Texture loading");
-    for(i32 i = 0; i < eyetex.m_size.depth; i++)
+    auto& mainSurface = *std::get<1>(mainTexture);
     {
-        Resource rsc(textures[i], RSCA::AssetFile);
+        /* Uploading textures */
+        {
+            auto& mainSampler = *std::get<0>(mainTexture);
+            mainSampler.setFiltering(Filtering::Linear, Filtering::Linear);
+        }
 
-        if(!RHI::LoadTexture<GLM>(eyetex, std::move(rsc), i))
-            return;
+        mainSurface.allocate({1024, 1024, 4}, PixCmp::RGBA);
+        cVerbose("Texture allocation");
+
+        ProfContext _("Texture loading");
+        for(i32 i = 0; i < mainSurface.m_size.depth; i++)
+        {
+            Resource rsc(textures[i], RSCA::AssetFile);
+
+            if(!RHI::LoadTexture<GLM>(mainSurface, std::move(rsc), i))
+                return;
+        }
     }
 
 #if defined(FEATURE_ENABLE_ASIO)
     /* We download a spicy meme and paste it into the texture */
     if(Net::Supported())
     {
+        ProfContext _("Downloading meme");
         auto rsc = "http://i.imgur.com/nQdOmCJ.png"_http.rsc<Net::Resource>(
             entities.subsystem_cast<ASIO::Subsystem>().context());
 
@@ -535,7 +505,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             stb::LoadData(
                 &img, BytesConst(imdata.data, imdata.size, imdata.size));
 
-            eyetex.upload(
+            mainSurface.upload(
                 BitFmt::UByte,
                 PixCmp::RGBA,
                 {img.size.w, img.size.h, 1},
@@ -549,6 +519,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
     {
+        ProfContext _("Downloading Discord profile picture");
+
         runtime_queue_error rqec;
         auto& discord   = entities.subsystem_cast<Discord::Subsystem>();
         auto& imgCoder  = entities.subsystem_cast<IMG::ImageCoderSubsystem>();
@@ -560,7 +532,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         RuntimeQueue::QueuePeriodic(
             onlineWorker,
             Chrono::milliseconds(100),
-            [mainQueue, &discord, &network, &imgCoder, &eyetex]() {
+            [mainQueue, &discord, &network, &imgCoder, &mainSurface]() {
                 ProfContext _("Awaiting Discord");
                 if(discord.awaitReady(Chrono::milliseconds(10)))
                 {
@@ -575,9 +547,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                         imgCoder.decode(rsc->data(), std::move(rsc))
                             .then(mainQueue, [&](stb::image_rw&& img) {
                                 ProfContext _("Uploading texture");
-                                eyetex.upload(
+                                mainSurface.upload(
                                     PixDesc(
-                                        eyetex.m_pixfmt,
+                                        mainSurface.m_pixfmt,
                                         BitFmt::UByte,
                                         PixCmp::RGBA),
                                     {img.size.w, img.size.h, 1},
@@ -599,19 +571,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 //        {}, "Messing around", MkUrl("coffee_cup")));
 #endif
 #endif
-
-    Profiler::PopContext();
-    cVerbose("Uploading textures");
-
-    {
-        /* Attaching the texture data to a sampler object */
-        auto& eyesamp = g.eyesamp;
-        eyesamp       = {};
-        eyesamp.alloc();
-        eyesamp.attach(&eyetex);
-        eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
-        cVerbose("Setting sampler properties");
-    }
 
     {
         /* We create some pipeline state, such as blending and viewport state */
@@ -709,45 +668,41 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     /* We query the current pipeline for possible uniform/texture/buffer values
      */
-    g.params.get_pipeline_params();
+    params->get_pipeline_params();
 
-    for(auto& constant : g.params.constants())
+    for(auto& constant : params->constants())
     {
         if(constant.m_name == "transform")
-            g.params.set_constant(
+            params->set_constant(
                 constant,
                 Bytes::CreateFrom(
                     entities.container_cast<MatrixContainer>().get_storage()));
         else if(constant.m_name == "texdata")
-            g.params.set_sampler(constant, g.eyesamp.handle());
-        //        else if(constant.m_name == "mx")
-        //            g.params.set_constant(
-        //                constant,
-        //                Bytes::Create(
-        //                    entities.subsystem_cast<TimeSystem>().get_time()));
+            params->set_sampler(constant, std::get<0>(mainTexture)->handle());
     }
 
-    g.params.build_state();
+    params->build_state();
+
+    g.pipeline = &params->pipeline();
 
     cVerbose("Acquire and set shader uniforms");
 
-    /* Vertex descriptors are based upon the ideas from GL4.3 */
-    vertdesc.bind();
-    vertdesc.bindBuffer(0, vertbuf);
-
     GLM::PreDrawCleanup();
 
-    g.rpass_s.pipeline    = &g.eye_pip;
-    g.rpass_s.blend       = &g.blendstate;
-    g.rpass_s.depth       = &g.deptstate;
-    g.rpass_s.framebuffer = &GLM::DefaultFramebuffer();
+    {
+        GLM::RenderPass pass;
 
-    g.call.m_inst = true;
+        pass.pipeline    = &params->pipeline();
+        pass.blend       = &g.blendstate;
+        pass.depth       = &g.deptstate;
+        pass.framebuffer = &GLM::DefaultFramebuffer();
 
-    g.rpass_s.draws.push_back(
-        {&g.vertdesc, &g.params.get_state(), g.call, g.instdata});
+        g.call.m_inst = true;
 
-    GLM::OptimizeRenderPass(g.rpass_s, g.rpass);
+        pass.draws.push_back({vao, &params->get_state(), g.call, g.instdata});
+
+        GLM::OptimizeRenderPass(pass, g.draws);
+    }
 }
 
 void RendererLoop(CDRenderer& renderer, RendererState* d)
@@ -773,7 +728,7 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         GLM::DefaultFramebuffer().use(FramebufferT::All);
         GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
 
-        GLM::MultiDraw(g.eye_pip, g.rpass);
+        GLM::MultiDraw(*g.pipeline, g.draws);
 
         RuntimeQueue::Unblock(
             component_task.threadId(), component_task.id(), ec);
@@ -795,21 +750,6 @@ void RendererCleanup(CDRenderer&, RendererState* d)
 #endif
 
     Profiler::PopContext();
-
-    auto& g = d->g_data;
-
-    Profiler::PushContext("GPU resources");
-    g.vertbuf->dealloc();
-    g.eyetex->dealloc();
-    g.vertdesc.dealloc();
-    g.v_shader.dealloc();
-    g.f_shader.dealloc();
-    g.eye_pip.dealloc();
-    g.eyesamp.dealloc();
-    Profiler::PopContext();
-
-    g.loader = nullptr;
-    GLM::UnloadAPI();
 
     auto& state = entities.subsystem<StateTag>().get();
 

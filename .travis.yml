@@ -1,3 +1,11 @@
+addons:
+  homebrew:
+    packages:
+    - sdl2
+    - cmake
+    - python3
+    - python
+    - jq
 after_success:
 - toolchain/ci/travis-deploy.sh
 apt:

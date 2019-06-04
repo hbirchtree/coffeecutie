@@ -4,18 +4,6 @@ source $(dirname $0)/travis-common.sh
 
 [ -z ${BUILDVARIANT} ] && die "No BUILDVARIANT specified"
 
-TRAVIS_REPO_SLUG=${TRAVIS_REPO_SLUG:-}
-TRAVIS_COMMIT=${TRAVIS_COMMIT:-0000}
-TRAVIS_OS_NAME=${TRAVIS_OS_NAME:-linux}
-GITHUB_TOKEN=${GITHUB_TOKEN:-}
-
-SOURCE_DIR="$PWD"
-INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
-SCRIPT_DIR="$SOURCE_DIR/$(${INFOPY} --source-dir "$SOURCE_DIR" script_location)"
-
-HELPER="$SCRIPT_DIR/travis-helper.py"
-GITHUBPY="$SCRIPT_DIR/github_api.py"
-
 #DEPLOY_ASSET="libraries_$BUILDVARIANT.tar.gz"
 #DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
 

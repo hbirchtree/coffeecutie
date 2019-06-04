@@ -10,27 +10,8 @@ namespace detail {
 
 using node_id = size_t;
 
-void assign_reachables(
-    Vector<bool>& matrix,
-    size_t        size,
-    node_id       source_node,
-    node_id       current_node)
-{
-    for(auto i : Range<>(size))
-        if(matrix[size * current_node + i] && !matrix[size * source_node + i])
-        {
-            matrix[size * source_node + i] = true;
-            assign_reachables(matrix, size, source_node, i);
-        }
-}
-
-FORCEDINLINE void expand_neighbor_matrix(
-    Vector<bool>& matrix, size_t size, node_id current_node)
-{
-    for(auto i : Range<>(size))
-        if(i != current_node && matrix[size * current_node + i])
-            assign_reachables(matrix, size, current_node, i);
-}
+extern void expand_neighbor_matrix(
+    Vector<bool>& matrix, size_t size, node_id current_node);
 
 FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     Vector<UqPtr<EntityVisitorBase>> const& visitors)
@@ -151,7 +132,7 @@ void EntityContainer::exec()
         subsys.second->end_frame(proxy, time_now);
 }
 
-EntityContainer::visitor_graph EntityContainer::create_task_graph()
+FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()
 {
     return detail::create_visitor_graph(visitors);
 }

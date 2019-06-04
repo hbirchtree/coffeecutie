@@ -154,6 +154,21 @@ struct EntityContainer : non_copy
         visitors.push_back(std::move(visitor));
     }
 
+    template<typename OutputType, typename AllocType, typename... Args>
+    AllocType& register_subsystem_inplace(Args... args)
+    {
+        register_subsystem<OutputType>(
+            MkUq<AllocType>(std::forward<Args>(args)...));
+
+        return subsystem_cast<AllocType>();
+    }
+
+    template<typename SystemType, typename... Args>
+    void register_inplace(Args... args)
+    {
+        register_system(MkUq<SystemType>(std::forward<Args>(args)...));
+    }
+
     inline void add_component(u64 entity_id, size_t type_id)
     {
         container(type_id).register_entity(entity_id);

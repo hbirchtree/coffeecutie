@@ -65,7 +65,7 @@ void loop_fun(CDRenderer& renderer, SharedData* data)
     if(data->frame_ts <= Time<>::CurrentTimestamp())
     {
         cDebug("FPS: {0}", data->frame_count);
-        data->frame_ts    = Time<>::CurrentTimestamp() + 1;
+        data->frame_ts    = Time<>::CurrentTimestamp() + 1000;
         data->frame_count = 0;
     }
     data->frame_count++;

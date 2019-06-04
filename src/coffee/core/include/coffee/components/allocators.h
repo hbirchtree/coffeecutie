@@ -19,10 +19,10 @@ struct VectorBaseContainer : ComponentContainer<ComponentType>
     map_type    m_mapping;
     vector_type m_data;
 
-    virtual void register_entity(u64 id);
-    virtual void unregister_entity(u64 id);
-    virtual void prealloc(szptr count);
-    virtual bool contains_entity(u64 id) const;
+    virtual void register_entity(u64 id) override;
+    virtual void unregister_entity(u64 id) override;
+    virtual void prealloc(szptr count) override;
+    virtual bool contains_entity(u64 id) const override;
 
     virtual vector_type&       get_storage();
     virtual vector_type const& get_storage() const;
