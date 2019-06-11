@@ -147,7 +147,7 @@ FORCEDINLINE std::basic_string<OutCharType> convertformat(
 {
     return std::basic_string<OutCharType>(input.begin(), input.end());
 }
-}
+} // namespace trim
 
 namespace convert {
 #define FMT_TYPE const constexpr cstring
@@ -436,6 +436,93 @@ FORCEDINLINE std::basic_string<CharType> str(
 }
 
 } // namespace replace
+
+namespace split {
+
+template<typename CharType>
+struct spliterator : Iterator<std::forward_iterator_tag, CharType>
+{
+    using string_type = std::basic_string<CharType>;
+    using sep_type    = CharType;
+
+    spliterator() : source(nullptr), sep(sep_type()), idx(string_type::npos)
+    {
+    }
+
+    spliterator(string_type const& source, sep_type sep) :
+        source(&source), sep(sep), idx(0)
+    {
+    }
+
+    spliterator operator++() const
+    {
+        auto cpy = *this;
+        cpy.idx = next_idx();
+
+        if(cpy.idx > source->size())
+            cpy.idx = string_type::npos;
+
+        return cpy;
+    }
+
+    spliterator& operator++(int)
+    {
+        idx = next_idx();
+
+        if(idx > source->size())
+            idx = string_type::npos;
+
+        return *this;
+    }
+
+    string_type operator*() const
+    {
+        return source->substr(idx, len());
+    }
+
+    bool operator!=(spliterator const& other) const
+    {
+        return idx != other.idx;
+    }
+
+  private:
+    typename string_type::size_type len() const
+    {
+        auto it = next_idx();
+
+        return it - idx;
+    }
+
+    typename string_type::size_type next_idx() const
+    {
+        return source->find(sep, idx + 1);
+    }
+
+    string_type const*              source;
+    sep_type                        sep;
+    typename string_type::size_type idx;
+};
+
+template<typename CharType>
+FORCEDINLINE quick_container<spliterator<CharType>> str(
+    std::basic_string<CharType> const& source, CharType sep)
+{
+    using str_type = std::basic_string<CharType>;
+
+    auto it = source.find(sep);
+
+    if(it == str_type::npos)
+        return quick_container<spliterator<CharType>>(
+            []() { return spliterator<CharType>(); },
+            []() { return spliterator<CharType>(); });
+
+    return quick_container<spliterator<CharType>>(
+        [&]() { return spliterator<CharType>(source, sep); },
+        []() { return spliterator<CharType>(); });
+}
+
+} // namespace split
+
 } // namespace str
 } // namespace stl_types
 

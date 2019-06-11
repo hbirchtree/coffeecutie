@@ -165,11 +165,6 @@ struct GraphicsAllocator
         }
     }
 
-    ~GraphicsAllocator()
-    {
-//        API::UnloadAPI();
-    }
-
     template<size_t NumAttribs>
     ShPtr<typename API::V_DESC> alloc_desc(
         Array<typename API::V_ATTR, NumAttribs>&& attribs)

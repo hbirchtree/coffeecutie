@@ -17,6 +17,11 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     {
     }
 
+    ~GLEAM_VBuffer()
+    {
+        dealloc();
+    }
+
     void alloc();
     void dealloc();
 

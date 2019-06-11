@@ -137,8 +137,24 @@ namespace glibc {
 STATICINLINE CString DemangleBacktrace(char* sym)
 {
     CString sym_      = sym;
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+    /* glibc's format */
     auto    sym_end   = sym_.rfind('+');
+
+#if defined(COFFEE_APPLE)
+    /* macOS format looks like this:
+     * 0   GLeamBaseTest_RHI                   0x000000010030c86a SIGNATURE + 0
+     *                                  What we want    ~~~~~~~~~^
+     * We fix this by adjusting the beginning index
+     */
+    auto sym_begin = sym_.rfind(' ', sym_end);
+    sym_begin = sym_.rfind(' ', sym_begin - 1);
+
+    sym_end -= 1;
+#else
     auto    sym_begin = sym_.rfind('(', sym_end);
+#endif
+
     if(sym_end != CString::npos && sym_begin != CString::npos)
     {
         auto sym_length = sym_end - sym_begin - 1;
@@ -147,6 +163,7 @@ STATICINLINE CString DemangleBacktrace(char* sym)
         sym_ = str::replace::str(
             sym_, sym_target, Stacktracer::DemangleSymbol(sym_target));
     }
+#endif
 
     return sym_;
 }

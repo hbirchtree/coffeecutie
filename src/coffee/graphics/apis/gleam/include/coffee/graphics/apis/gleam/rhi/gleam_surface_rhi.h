@@ -37,6 +37,11 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
         detail::surface_allocate(texflags, m_handle, mips, fmt, type);
     }
 
+    ~GLEAM_Surface()
+    {
+        dealloc();
+    }
+
     void dealloc()
     {
         detail::surface_dealloc(m_handle);
@@ -211,6 +216,11 @@ struct GLEAM_SamplerHandle
 struct GLEAM_Sampler : GraphicsAPI::Sampler
 {
     GLEAM_Sampler();
+
+    ~GLEAM_Sampler()
+    {
+        dealloc();
+    }
 
     GLEAM_API_CLASS_LINKAGE void alloc();
     GLEAM_API_CLASS_LINKAGE void dealloc();
