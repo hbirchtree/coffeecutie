@@ -40,7 +40,7 @@ i32 coffee_main(i32, cstring_w*)
         CString exe_name = Env::ExecutableName();
         Profiler::Profile("Get application location");
 
-        cDebug("Settings directory: {0}", *cfg_dir);
+        cDebug("Settings directory: {0}", cfg_dir);
         cDebug("Program directory:  {0}", app_dir);
         cDebug("Launching from      {0}", exe_name);
         cDebug("Current directory:  {0}", Env::CurrentDir());

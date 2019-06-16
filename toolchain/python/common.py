@@ -49,8 +49,11 @@ def run_command(program, args, workdir=curdir, dry_run=True, verbose=False):
     if uname().system == 'Darwin':
         program_mapping['copy_dir'] = 'rsync'
         program_mapping['update_file'] = 'rsync'
-        program_args_mapping['copy_dir'] = ['-ur']
+        program_args_mapping['copy_dir'] = ['-av']
         program_args_mapping['update_file'] = ['-u']
+
+        if program == 'copy_dir':
+            args[0] = args[0] + '/'
 
     args = program_args_mapping[program] + args
     program = program_mapping[program]

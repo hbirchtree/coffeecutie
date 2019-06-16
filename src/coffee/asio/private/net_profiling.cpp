@@ -99,6 +99,7 @@ void ProfilingExport()
 
 void RegisterProfiling()
 {
+    cVerbose(10, "Registering network profiling");
     libc::signal::register_atexit(ProfilingExport);
 }
 
