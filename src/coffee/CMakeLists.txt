@@ -13,6 +13,10 @@ add_subdirectory(application)
 add_subdirectory(core)
 add_subdirectory(image)
 
+if(BUILD_SDL2)
+    add_subdirectory(sdl2)
+endif()
+
 if(BUILD_HEADFUL)
     add_subdirectory(graphics)
     add_subdirectory(windowing)
@@ -38,9 +42,6 @@ if(BUILD_AUDIO)
     add_subdirectory(audio)
 endif()
 
-if(BUILD_SDL2)
-    add_subdirectory(sdl2)
-endif()
 
 coffee_library (
     TARGET OnlineService

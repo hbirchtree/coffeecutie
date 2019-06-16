@@ -370,8 +370,3 @@ endif()
 # complain about unused CMake variable.
 if(CMAKE_CROSSCOMPILING_EMULATOR)
 endif()
-
-set ( CMAKE_FIND_ROOT_PATH
-    "${NATIVE_LIBRARY_DIR};${COFFEE_ROOT_DIR}"
-    CACHE STRING ""
-    )
