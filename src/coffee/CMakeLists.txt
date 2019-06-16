@@ -13,12 +13,15 @@ add_subdirectory(application)
 add_subdirectory(core)
 add_subdirectory(image)
 
+if(BUILD_HEADFUL)
+    add_subdirectory(graphics)
+endif()
+
 if(BUILD_SDL2)
     add_subdirectory(sdl2)
 endif()
 
 if(BUILD_HEADFUL)
-    add_subdirectory(graphics)
     add_subdirectory(windowing)
 endif()
 
