@@ -722,7 +722,7 @@ struct Optional
         return *this;
     }
 
-    T value;
+    T    value;
     bool valid;
 };
 #else
@@ -748,10 +748,11 @@ using Optional = std::optional<T>;
                                  ":" C_STR(__LINE__)));
 
 #if MODE_DEBUG
-#define C_ERROR_CHECK(ec)                              \
-    {                                                  \
-        if(ec)                                         \
-            Throw(implementation_error(ec.message())); \
+#define C_ERROR_CHECK(ec)                                           \
+    {                                                               \
+        if(ec)                                                      \
+            Throw(implementation_error(                             \
+                __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
     }
 #else
 #define C_ERROR_CHECK(ec)

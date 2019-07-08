@@ -102,4 +102,16 @@ extern int deref_main(
         return deref_main(mainfun, argv, argc, flags); \
     }
 
+#define COFFEE_SIMPLE_MAIN(mainfun)                       \
+    namespace {                                           \
+    int simplified_main(int, char**)                      \
+    {                                                     \
+        mainfun(0, nullptr);                              \
+    }                                                     \
+    }                                                     \
+    int main(int argv, char** argc)                       \
+    {                                                     \
+        return deref_main(::simplified_main, argv, argc); \
+    }
+
 #endif

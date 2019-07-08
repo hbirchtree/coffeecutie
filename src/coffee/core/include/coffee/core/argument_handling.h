@@ -7,9 +7,4 @@ namespace Coffee{
 
 extern platform::args::AppArg& GetInitArgs();
 
-namespace Strings{
-
-extern CString to_string(platform::args::AppArg const& args);
-
-}
 }
