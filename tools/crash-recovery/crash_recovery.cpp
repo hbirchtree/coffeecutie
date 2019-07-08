@@ -182,10 +182,12 @@ i32 crash_main(i32, cstring_w*)
     multipartData += stderrBuf;
     multipartData += "-------CrashRecovery--\r\n\r\n";
 
+    cDebug("Payload: {0} bytes", multipartData.size());
+
     auto worker = ASIO::GenWorker();
 
     Net::Resource crashPush(
-        worker->context, "http://localhost:8080/api/v2/crash/"_http);
+        worker->context, Net::MkUrl(platform::Env::GetVar("CRASH_API")));
 
     crashPush.getRequest().header.version = http::version_t::v10;
 
