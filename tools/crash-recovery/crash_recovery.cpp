@@ -189,8 +189,6 @@ i32 crash_main(i32, cstring_w*)
     Net::Resource crashPush(
         worker->context, Net::MkUrl(platform::Env::GetVar("CRASH_API")));
 
-    crashPush.getRequest().header.version = http::version_t::v10;
-
     crashPush.setHeaderField(
         http::header_field::content_type,
         "multipart/form-data; boundary=-----CrashRecovery");
