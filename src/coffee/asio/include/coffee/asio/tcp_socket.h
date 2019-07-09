@@ -555,7 +555,7 @@ struct ssl_socket
         socket.lowest_layer().set_option(asio::ip::tcp::no_delay(true));
 
         socket.set_verify_mode(asio::ssl::verify_peer);
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE)
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE) && !defined(COFFEE_LINUX)
         if(do_verify)
         {
             socket.set_verify_callback(

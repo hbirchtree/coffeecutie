@@ -14,6 +14,12 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <algorithm>
+
+#if defined(COFFEE_LINUX)
+#include <sys/wait.h>
+#endif
+
 namespace posix {
 
 using posix_ec = platform::file::posix_error_code;
