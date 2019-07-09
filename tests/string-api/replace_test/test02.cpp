@@ -13,6 +13,7 @@
 #include <peripherals/stl/string_ops.h>
 #include <peripherals/typing/geometry/bounding_box.h>
 
+#include <coffee/strings/arguments.h>
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
