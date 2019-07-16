@@ -92,7 +92,9 @@ i32 crash_main(i32, cstring_w*)
     handles.push_back({spawnInfo.out, POLL_IN, 0});
     handles.push_back({spawnInfo.err, POLL_IN, 0});
 
-    while(!posix::proc::is_exited(spawnInfo.child))
+    int exitCode = -1;
+
+    while(!posix::proc::is_exited(spawnInfo.child, &exitCode))
     {
         int ret = poll(handles.data(), handles.size(), 500);
 
@@ -126,11 +128,10 @@ i32 crash_main(i32, cstring_w*)
     }
 
     cDebug("Waiting...");
-    int exitCode = -1;
     posix::proc::wait_for(posix::proc::wait_by::any, ec, 0, &exitCode);
     C_ERROR_CHECK(ec);
 
-    cDebug("Child exited with: {0}", exitCode);
+    cDebug("Child exited with: {0}", posix::proc::code_to_string(exitCode));
 
     if(exitCode == 0)
         return 0;
@@ -141,6 +142,7 @@ i32 crash_main(i32, cstring_w*)
     CString       multipartData;
 
     Url profileLocation;
+    Url machineProfileLocation;
 
     {
         auto appNameIdx = stdoutBuf.find(",");
@@ -152,6 +154,11 @@ i32 crash_main(i32, cstring_w*)
             profileLocation = MkUrl(
                 platform::url::Path("..") + Path(appName) + "profile.json",
                 semantic::RSCA::TempFile);
+            machineProfileLocation = MkUrl(
+                platform::url::Path("..") + Path(appName) +
+                    (DirFun::Basename(args.at(0), fec).internUrl +
+                     "-chrome.json"),
+                semantic::RSCA::TempFile);
         }
     }
 
@@ -159,8 +166,8 @@ i32 crash_main(i32, cstring_w*)
     {
         cDebug("Located profile: {0}", *profileLocation);
         multipartData += multipartTerminator;
-        multipartData +=
-            "Content-Type: text/plain\r\nContent-Disposition: form-data; name=\"profile\"\r\n\r\n";;
+        multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
+                         "form-data; name=\"profile\"\r\n\r\n";
         auto profileResource = Resource(profileLocation);
         auto profileData     = C_OCAST<Bytes>(profileResource);
         multipartData.insert(
@@ -168,17 +175,30 @@ i32 crash_main(i32, cstring_w*)
         multipartData += http::line_separator;
     }
 
+    if(platform::file::FileFun::Exists(machineProfileLocation, fec))
+    {
+        cDebug("Located machine profile: {0}", *machineProfileLocation);
+        multipartData += multipartTerminator;
+        multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
+                         "form-data; name=\"machineProfile\"\r\n\r\n";
+        auto machineProfile = Resource(machineProfileLocation);
+        auto machineData     = C_OCAST<Bytes>(machineProfile);
+        multipartData.insert(
+            multipartData.end(), machineData.begin(), machineData.end());
+        multipartData += http::line_separator;
+    }
+
     multipartData += multipartTerminator;
-    multipartData +=
-        "Content-Type: text/plain\r\nContent-Disposition: form-data; name=\"exitcode\"\r\n\r\n";
+    multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
+                     "form-data; name=\"exitCode\"\r\n\r\n";
     multipartData += Strings::to_string(exitCode) + http::line_separator;
     multipartData += multipartTerminator;
-    multipartData +=
-        "Content-Type: text/plain\r\nContent-Disposition: form-data; name=\"stdout\"\r\n\r\n";
+    multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
+                     "form-data; name=\"stdout\"\r\n\r\n";
     multipartData += stdoutBuf;
     multipartData += multipartTerminator;
-    multipartData +=
-        "Content-Type: text/plain\r\nContent-Disposition: form-data; name=\"stderr\"\r\n\r\n";
+    multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
+                     "form-data; name=\"stderr\"\r\n\r\n";
     multipartData += stderrBuf;
     multipartData += "-------CrashRecovery--\r\n\r\n";
 
@@ -198,7 +218,7 @@ i32 crash_main(i32, cstring_w*)
            Bytes::From(multipartData.data(), multipartData.size())))
     {
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());
-    }else
+    } else
     {
         auto responseData = crashPush.data();
         cDebug("{0}", CString(responseData.begin(), responseData.end()));

@@ -130,16 +130,15 @@ CString Stacktracer::GetStackFuncName(u32 depth)
 
 } // namespace posix
 
-
 #if defined(COFFEE_GLIBC_STACKTRACE)
 namespace glibc {
 
 STATICINLINE CString DemangleBacktrace(char* sym)
 {
-    CString sym_      = sym;
+    CString sym_ = sym;
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
     /* glibc's format */
-    auto    sym_end   = sym_.rfind('+');
+    auto sym_end = sym_.rfind('+');
 
 #if defined(COFFEE_APPLE)
     /* macOS format looks like this:
@@ -148,11 +147,11 @@ STATICINLINE CString DemangleBacktrace(char* sym)
      * We fix this by adjusting the beginning index
      */
     auto sym_begin = sym_.rfind(' ', sym_end);
-    sym_begin = sym_.rfind(' ', sym_begin - 1);
+    sym_begin      = sym_.rfind(' ', sym_begin - 1);
 
     sym_end -= 1;
 #else
-    auto    sym_begin = sym_.rfind('(', sym_end);
+    auto sym_begin = sym_.rfind('(', sym_end);
 #endif
 
     if(sym_end != CString::npos && sym_begin != CString::npos)
@@ -165,7 +164,36 @@ STATICINLINE CString DemangleBacktrace(char* sym)
     }
 #endif
 
+#if defined(COFFEE_APPLE)
+    auto const is_space = [](CString::value_type v) {
+        return !std::isspace(v);
+    };
+
+    auto crop = sym_.find(' ');
+
+    auto crop_it = std::find_if(sym_.begin() + crop, sym_.end(), is_space);
+
+    auto cursor_start = crop_it - sym_.begin();
+    auto cursor_end = sym_.find(' ', cursor_start);
+
+    auto module = sym_.substr(cursor_start, cursor_end - cursor_start);
+
+    crop_it = std::find_if(sym_.begin() + cursor_end, sym_.end(), is_space);
+    cursor_start = crop_it - sym_.begin();
+    cursor_end = sym_.find(' ', cursor_start);
+
+    auto address = sym_.substr(cursor_start, cursor_end - cursor_start);
+
+    crop_it = std::find_if(sym_.begin() + cursor_end, sym_.end(), is_space);
+    cursor_start = crop_it - sym_.begin();
+    cursor_end = sym_.find(' ', cursor_start);
+
+    auto func = sym_.substr(cursor_start, CString::npos);
+
+    return module + "(" + func + ") [" + address + "]";
+#else
     return sym_;
+#endif
 }
 
 static void DefaultedPrint(

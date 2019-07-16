@@ -84,13 +84,18 @@ FORCEDINLINE pid_t
     return out;
 }
 
-FORCEDINLINE bool is_exited(pid_t target)
+FORCEDINLINE bool is_exited(pid_t target, int* exitCode)
 {
     int   status = 0xFFFF;
     pid_t pid    = ::waitpid(target, &status, WNOHANG);
 
     if(pid < 0)
         return true;
+
+    if(WEXITSTATUS(status) != 0xFF)
+    {
+        *exitCode = status & 0xFF;
+    }
 
     return WIFEXITED(status);
 }
@@ -212,6 +217,29 @@ spawn_info spawn(exec_info<ArgType> const& exec)
     C_ERROR_CHECK(ec);
 
     return {out.read, err.read, in.write, childPid};
+}
+
+inline const char* code_to_string(int exit_code)
+{
+#define CODE_TO_STRING(code) case code: return #code;
+
+    switch(exit_code)
+    {
+    CODE_TO_STRING(SIGINT);
+    CODE_TO_STRING(SIGQUIT);
+    CODE_TO_STRING(SIGILL);
+    CODE_TO_STRING(SIGTRAP);
+    CODE_TO_STRING(SIGABRT);
+    CODE_TO_STRING(SIGFPE);
+#if !defined(COFFEE_WINDOWS)
+    CODE_TO_STRING(SIGKILL);
+#endif
+    CODE_TO_STRING(SIGSEGV);
+    CODE_TO_STRING(SIGBUS);
+    CODE_TO_STRING(SIGTERM);
+    default: return "0";
+    }
+#undef CODE_TO_STRING
 }
 
 } // namespace proc
