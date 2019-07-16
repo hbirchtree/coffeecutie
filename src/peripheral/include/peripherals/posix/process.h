@@ -78,7 +78,7 @@ FORCEDINLINE pid_t
         status ? status : nullptr,
         0);
 
-    if(WIFEXITED(out))
+    if(WIFEXITED(*status) || WIFSIGNALED(*status))
         collect_error(ec);
 
     return out;
@@ -92,10 +92,12 @@ FORCEDINLINE bool is_exited(pid_t target, int* exitCode)
     if(pid < 0)
         return true;
 
-    if(WEXITSTATUS(status) != 0xFF)
-    {
-        *exitCode = status & 0xFF;
-    }
+    if(WIFEXITED(status))
+        *exitCode = WEXITSTATUS(status);
+    else if(WIFSIGNALED(status))
+        *exitCode = WTERMSIG(status);
+    else if(WCOREDUMP(status))
+        *exitCode = -6;
 
     return WIFEXITED(status);
 }
@@ -207,7 +209,6 @@ spawn_info spawn(exec_info<ArgType> const& exec)
         /* It should never get here */
         libc::signal::exit(sig::general_error);
     }
-    fprintf(stderr, "parent: %i\n", childPid);
 
     fd::close(out.write, ec);
     C_ERROR_CHECK(ec);
@@ -237,7 +238,8 @@ inline const char* code_to_string(int exit_code)
     CODE_TO_STRING(SIGSEGV);
     CODE_TO_STRING(SIGBUS);
     CODE_TO_STRING(SIGTERM);
-    default: return "0";
+        case -6: return "COREDUMPED";
+        default: return "0";
     }
 #undef CODE_TO_STRING
 }

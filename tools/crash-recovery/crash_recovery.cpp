@@ -128,8 +128,11 @@ i32 crash_main(i32, cstring_w*)
     }
 
     cDebug("Waiting...");
-    posix::proc::wait_for(posix::proc::wait_by::any, ec, 0, &exitCode);
-    C_ERROR_CHECK(ec);
+    if(exitCode == -1)
+    {
+        posix::proc::wait_for(posix::proc::wait_by::any, ec, 0, &exitCode);
+        C_ERROR_CHECK(ec);
+    }
 
     cDebug("Child exited with: {0}", posix::proc::code_to_string(exitCode));
 
