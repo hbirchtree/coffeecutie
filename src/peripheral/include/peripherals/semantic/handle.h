@@ -74,7 +74,7 @@ struct generic_handle_t : non_copy
     void handle_check_enable()
     {
         static_assert(
-            !(exceptions_mode && close_func),
+            !(exceptions_mode && static_cast<bool>(close_func)),
             "close function will never be called");
 
         handle_check();

@@ -489,6 +489,8 @@ i32 coffee_main(i32, cstring_w*)
         MemCpy(outputData, outputView);
     }
 
+    libc::io::terminal::bell();
+
     return 0;
 }
 
