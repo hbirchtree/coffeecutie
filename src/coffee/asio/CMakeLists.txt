@@ -6,7 +6,7 @@ if(BUILD_OPENSSL)
         REQUIRED
         SOURCE hbirchtree/native-library-bundle
         TAG ${NATIVE_LIB_BUNDLE_TAG}
-        NAMES openssl
+        NAMES openssl=OpenSSL
         )
 
     set ( OPENSSL_ROOT_DIR "${GIT_DEP_DIR}/openssl" )

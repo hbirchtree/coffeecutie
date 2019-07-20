@@ -5,7 +5,7 @@ function ( DEPENDENCY_GET )
 
     cmake_parse_arguments ( DEP
         "REQUIRED"
-        "EXTENSION;SOURCE;TAG;CACHE_LOCATION;LIB_LOCATION"
+        "EXTENSION;SOURCE;TAG;CACHE_LOCATION;LIB_LOCATION;SIDELOAD"
         "NAMES"
 
         ${ARGN}
@@ -44,6 +44,10 @@ function ( DEPENDENCY_GET )
 
         set ( LOCAL_DIR "${DEP_LIB_LOCATION}/${NAME}" )
 
+        if(NOT "${DEP_SIDELOAD}" STREQUAL "")
+            set ( LOCAL_DIR "${DEP_SIDELOAD}" )
+        endif()
+
         #
         # In order to avoid globbing up the CMAKE_PREFIX_PATH,
         #  we only append it when it's not there.
@@ -67,6 +71,11 @@ function ( DEPENDENCY_GET )
         endif()
 
         set ( ${DEP_ALIAS}_DIR "${LOCAL_DIR}" )
+
+        if(NOT "${DEP_SIDELOAD}" STREQUAL "")
+            message ( STATUS "Sideloading ${NAME} from ${DEP_SIDELOAD}" )
+            continue()
+        endif()
 
         set ( FILE_URL "${BASE_URL}/${NAME}_${GIT_DEP_BUILDVARIANT}.${DEP_EXTENSION}" )
         set ( LOCAL_FILE "${DEP_CACHE_LOCATION}/${NAME}.${DEP_EXTENSION}" )
