@@ -77,6 +77,11 @@ CString SysInfo::GetSystemVersion()
     return "Android API " + cast_pod(cmd.data.scalarI64);
 }
 
+info::HardwareDevice SysInfo::Processor()
+{
+    return HWDeviceInfo();
+}
+
 HWDeviceInfo SysInfo::DeviceName()
 {
     AndroidForeignCommand cmd;
@@ -95,7 +100,13 @@ HWDeviceInfo SysInfo::DeviceName()
 
     auto product = cmd.store_string;
 
-    return HWDeviceInfo(brand, product, "0x0");
+    cmd.type = Android_QueryReleaseName;
+    CoffeeForeignSignalHandleNA(
+        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+    auto version = cmd.store_string;
+
+    return HWDeviceInfo(brand, product, version);
 }
 
 HWDeviceInfo SysInfo::Motherboard()

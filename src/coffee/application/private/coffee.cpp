@@ -189,7 +189,9 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         State::SetInternalState({});
     });
 
+#if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
     Coffee::PrintingVerbosityLevel() = 1;
+#endif
 
 #if !MODE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
