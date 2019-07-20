@@ -8,8 +8,6 @@
       android:versionName="@ANDROID_VERSION_NAME@"
       android:installLocation="auto">
 
-    <!-- Android 2.3.3 should be the minimal for ES 2.0 -->
-    <uses-sdk android:minSdkVersion="@ANDROID_API_MIN_TARGET@" android:targetSdkVersion="@ANDROID_API_TARGET@" />
     @ANDROID_FEATURES@
 
     <!-- Allow writing to external storage -->

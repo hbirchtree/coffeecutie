@@ -192,6 +192,15 @@ FORCEDINLINE stl_types::Pair<u32, u32> size()
 #endif
 }
 
+FORCEDINLINE void bell()
+{
+#if defined(COFFEE_UNIXPLAT)
+    printf("\a");
+#elif defined(COFFEE_WINDOWS)
+    /* TODO: Implement Windows console bell */
+#endif
+}
+
 } // namespace terminal
 
 } // namespace io

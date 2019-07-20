@@ -19,6 +19,7 @@
 #include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/strings/format.h>
 
 #include <android/looper.h>
 #include <android/native_activity.h>
@@ -435,6 +436,20 @@ static std::string GetBuildField(wrapping::jfield<T>&& field)
     return java::type_unwrapper<std::string>(fieldValue);
 }
 
+template<typename T>
+static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
+{
+    using namespace ::jnipp_operators;
+
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
+
+    jvalue fieldValue =
+        *"android.os.Build$VERSION"_jclass[field.as("java.lang.String")];
+
+    return java::type_unwrapper<std::string>(fieldValue);
+}
+
 static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
     using namespace ::jnipp_operators;
@@ -479,7 +494,12 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             break;
 
         case Android_QueryReleaseName:
-            out->store_string = GetBuildField("BOARD"_jfield);
+            out->store_string = Strings::fmt(
+                "Android {0} ({1})",
+                GetBuildVersionField("RELEASE"_jfield),
+                (coffee_app->activity->sdkVersion >= 23)
+                    ? GetBuildVersionField("SECURITY_PATCH"_jfield)
+                    : CString());
             break;
         case Android_QueryDeviceBoardName:
             out->store_string = GetBuildField("BOARD"_jfield);
@@ -576,8 +596,21 @@ STATICINLINE void GetExtras()
 
         cDebug("App URI: {0}", appIntent.data());
 
-        for(auto e : appIntent.extras())
+        auto extras = appIntent.extras();
+
+        for(auto e : extras)
+        {
+            if(e.first.substr(0, 7) != "COFFEE_")
+                continue;
+
+            platform::Env::SetVar(e.first.c_str(), e.second.c_str());
             cDebug("{0} = {1}", e.first, e.second);
+        }
+
+        auto verbosity = extras.find("COFFEE_VERBOSITY");
+        if(verbosity != extras.end())
+            Coffee::SetPrintingVerbosity(
+                stl_types::cast_string<u8>(verbosity->second));
 
         cDebug("App action: {0}", appIntent.action());
 
@@ -591,9 +624,6 @@ STATICINLINE void GetExtras()
 STATICINLINE void InitializeState(struct android_app* state)
 {
     using namespace jnipp_operators;
-
-    platform::Env::SetVar(
-        "COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports");
 
     coffee_app = state;
 
@@ -618,7 +648,7 @@ STATICINLINE void InitializeState(struct android_app* state)
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
 
-    //    GetExtras();
+    GetExtras();
 
     jnipp::SwapJNI(nullptr);
 }
@@ -785,8 +815,17 @@ std::map<std::string, std::string> intent::extras()
         for(auto key : *extraKeys)
         {
             std::string key_s = jnipp::java::type_unwrapper<std::string>(key);
+
+            auto extraVal = m_intent[getStringExtra](key_s);
+
+            if(!jnipp::java::objects::not_null(extraVal))
+            {
+                cDebug("Extra value not included: {0}", key_s);
+                continue;
+            }
+
             std::string value = jnipp::java::type_unwrapper<std::string>(
-                m_intent[getStringExtra](key_s));
+                extraVal);
             out[key_s] = value;
         }
     }

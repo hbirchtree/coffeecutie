@@ -187,7 +187,7 @@ struct concurrent_notif
 
     FORCEDINLINE void notify()
     {
-        (void)notify(Chrono::seconds(10));
+        (void)notify(Chrono::seconds(1));
     }
 
     template<typename Dur = Chrono::system_clock::duration>

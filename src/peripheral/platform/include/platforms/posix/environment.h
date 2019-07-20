@@ -70,7 +70,7 @@ struct TerminalColorCodes : EnvColorCodes
 } // namespace posix
 } // namespace env
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
 using ColorMap_ = env::posix::TerminalColorCodes;
 using Env_      = env::posix::EnvironmentF;
 #endif
