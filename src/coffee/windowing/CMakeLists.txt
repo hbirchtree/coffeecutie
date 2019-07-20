@@ -178,7 +178,7 @@ if(NOT EMSCRIPTEN AND BUILD_SDL2 AND BUILD_OPENGL)
     target_include_directories ( BindingGLAD PRIVATE
         ${STANDARDLIBS_INCLUDE_DIR}
         )
-    target_link_libraries ( BindingGLAD PRIVATE
+    target_link_libraries ( BindingGLAD PUBLIC
         SDL2Backend
         )
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID
