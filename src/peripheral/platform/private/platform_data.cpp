@@ -38,7 +38,6 @@ CString system_name()
 {
 #ifndef COFFEE_LOWFAT
     //    const constexpr cstring _fmt = "%s %s %u-bit (%s ";
-    const constexpr cstring _fmt      = "%s %s (%s ";
     CString                 sys_ver   = SysInfo::GetSystemVersion();
     CString                 sys_name  = C_SYSTEM_STRING;
     CString                 curr_arch = COFFEE_ARCH;
@@ -46,27 +45,8 @@ CString system_name()
     sys_name  = env::Linux::get_kern_name();
     curr_arch = env::Linux::get_kern_arch();
 #endif
-    int len = snprintf(
-        nullptr,
-        0,
-        _fmt,
-        sys_name.c_str(),
-        sys_ver.c_str(),
-        //                       C_SYSTEM_BITNESS,
-        curr_arch.c_str());
-    CString base;
-    base.resize(len);
-    snprintf(
-        &base[0],
-        base.size(),
-        _fmt,
-        sys_name.c_str(),
-        sys_ver.c_str(),
-        //            C_SYSTEM_BITNESS,
-        curr_arch.c_str());
-    base.resize(base.find('\0'));
-    /* What the fuck. Where does the rest of the string go? */
-    base.append(")");
+
+    CString base = sys_name + " " + sys_ver + " (" + curr_arch + ")";
 
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
     typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
