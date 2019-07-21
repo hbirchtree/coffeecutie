@@ -4,7 +4,7 @@ if(NOT EMSCRIPTEN)
             REQUIRED
             SOURCE hbirchtree/native-library-bundle
             TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES sdl2
+            NAMES sdl2=SDL2
             )
 
         find_package ( SDL2 REQUIRED )
@@ -58,6 +58,6 @@ if(NOT EMSCRIPTEN)
     dependency_link (
         TARGET SDL2Backend
         DEPENDENCIES
-            sdl2
+            sdl2=SDL2
         )
 endif()
