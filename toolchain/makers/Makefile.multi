@@ -42,7 +42,13 @@ custom:
 		$(DOCKER_CONTAINER) \
 			$(CUSTOM_COMMAND)
 
-multi: multi-config
+cmake_version:
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			$(CMAKE) --version
+
+multi: multi-config cmake_version
 	$(DOCKER) run --rm \
 		$(DOCKER_EXTRA_OPTIONS) \
 		$(DOCKER_CONTAINER) \

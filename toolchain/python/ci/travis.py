@@ -66,7 +66,7 @@ def travis_gen_config(build_info, repo_dir):
         'apt': {'update': True},
         'addons': 
             {
-                'homebrew': {'packages': ['sdl2', 'cmake', 'python3', 'python', 'jq']}
+                'homebrew': {'update': True, 'packages': ['sdl2', 'cmake', 'python3', 'python', 'jq']}
             },
         'before_script': script_locs.deps,
         'script': script_locs.build,

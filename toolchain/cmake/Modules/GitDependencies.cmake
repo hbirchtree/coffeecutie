@@ -164,8 +164,12 @@ function( DEPENDENCY_LINK )
 
     get_property ( EXPORT_PROPS TARGET "${LINK_TARGET}" PROPERTY EXPORT_PROPERTIES )
     set_property ( TARGET "${LINK_TARGET}" PROPERTY
-        EXPORT_PROPERTIES ${EXPORT_PROPS} GIT_DEPS
+        EXPORT_PROPERTIES "${EXPORT_PROPS};GIT_DEPS"
         )
+
+    get_property ( EXPORT_PROPS TARGET "${LINK_TARGET}" PROPERTY EXPORT_PROPERTIES )
+
+    message ( "Export Props: ${EXPORT_PROPS}" )
 
 endfunction()
 
@@ -240,6 +244,7 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
                     endif()
 
                     list ( GET LIB_LIST 0 LIB_PACKAGE )
+                    message ( "----- Package: ${LIB_PACKAGE}" )
                     find_package( ${LIB_PACKAGE} REQUIRED )
                 endif()
 

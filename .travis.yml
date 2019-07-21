@@ -6,6 +6,7 @@ addons:
     - python3
     - python
     - jq
+    update: true
 after_success:
 - toolchain/ci/travis-deploy.sh
 apt:
