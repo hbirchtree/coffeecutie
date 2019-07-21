@@ -35,7 +35,7 @@ struct state_pimpl
 {
     state_pimpl();
 
-    using GlobalState = GlobalState;
+    using GlobalState = detail::GlobalState;
 
     FORCEDINLINE stl_types::UqLock LockState(GlobalState& state)
     {
