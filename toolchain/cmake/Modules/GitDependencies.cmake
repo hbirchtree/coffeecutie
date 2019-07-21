@@ -156,7 +156,7 @@ function( DEPENDENCY_LINK )
                 )
         else()
             set_property ( TARGET "${LINK_TARGET}" PROPERTY
-                GIT_DEPS
+                git_deps
                 "${DEP},${GIT_DEPENDENCIES_${DEP}_VERSION},${GIT_DEPENDENCIES_${DEP}_SOURCE},${GIT_DEPENDENCIES_${DEP}_EXTENSION}"
                 )
         endif()
