@@ -1,16 +1,14 @@
 #include <platforms/osx/environment.h>
 
-#include <coffee/core/base_state.h>
+#include <platforms/pimpl_state.h>
 
 namespace platform{
 namespace env{
 namespace mac{
 
-using namespace ::Coffee::State;
-
 Url EnvironmentF::GetUserData(cstring orgname, cstring appname)
 {
-    auto appData = GetAppData();
+    auto appData = state->GetAppData();
 
     if(!orgname && !appname && appData)
     {

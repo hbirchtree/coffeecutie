@@ -41,7 +41,7 @@ coffee_library (
     private/net_resource.cpp
     private/net_profiling.cpp
 
-    LIBRARIES Core ${LIBS}
+    LIBRARIES Core CoreState ${LIBS}
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

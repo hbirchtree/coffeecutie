@@ -3,7 +3,6 @@ coffee_library (
 
     LIBRARIES
     PeripheralLib
-    CoreState
 
     SOURCES
     private/argument_parse.cpp

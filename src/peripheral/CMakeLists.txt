@@ -33,7 +33,7 @@ target_compile_definitions ( PeripheralLib PRIVATE
 
 coffee_library (
     TARGET PeripheralThreadNaming
-    LIBRARIES CoreState
+    LIBRARIES PeripheralPlatform
     SOURCES
     stl_extensions/thread_naming.cpp
     )

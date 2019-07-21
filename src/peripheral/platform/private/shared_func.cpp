@@ -1,5 +1,7 @@
 #include <platforms/base/sysinfo.h>
 
+#include <platforms/pimpl_state.h>
+
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/stlstring_ops.h>
 
@@ -78,4 +80,26 @@ info::HardwareDevice SysInfoDef::BIOS()
 #endif
 
 } // namespace env
+
+namespace detail {
+
+GlobalState::~GlobalState()
+{
+}
+
+state_pimpl::state_pimpl() :
+    m_LockState(nullptr),
+    SwapState(nullptr),
+    PeekState(nullptr),
+    ProfilerEnabled(nullptr),
+    GetProfilerStore(nullptr),
+    GetProfilerTStore(nullptr),
+    GetAppData(nullptr)
+{
+}
+
+}
+
+stl_types::UqPtr<detail::state_pimpl> state = MkUq<detail::state_pimpl>();
+
 } // namespace platform

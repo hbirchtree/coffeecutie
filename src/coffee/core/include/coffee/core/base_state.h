@@ -3,6 +3,7 @@
 #include <peripherals/build/application.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
+#include <platforms/pimpl_state.h>
 
 /* This is an API with limited access to CoffeeCore's internal state */
 
@@ -18,11 +19,7 @@ struct ThreadState;
 namespace Coffee {
 namespace State {
 
-struct GlobalState
-{
-    stl_types::Mutex access;
-    virtual ~GlobalState();
-};
+using GlobalState = platform::detail::GlobalState;
 
 extern stl_types::UqLock LockState(libc_types::cstring key);
 inline stl_types::UqLock LockState(GlobalState& state)

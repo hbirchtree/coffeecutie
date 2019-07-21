@@ -100,7 +100,7 @@ coffee_library (
     private/base/jsonprofile.cpp
 
     LIBRARIES
-    CoreCommon
+    CoreCommon PeripheralThreadNaming
     )
 
 #

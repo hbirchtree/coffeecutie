@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/core/base_state.h>
 #include <peripherals/profiler/profiler.h>
+#include <platforms/pimpl_state.h>
 
 #ifndef COFFEE_COMPONENT_NAME
 #define COFFEE_COMPONENT_NAME "(unknown)"
@@ -10,7 +10,6 @@
 namespace platform {
 namespace profiling {
 
-using namespace ::Coffee;
 using namespace ::libc_types;
 using namespace ::stl_types;
 
@@ -30,7 +29,7 @@ struct ThreadInternalState
 
 struct ThreadState
 {
-    State::GlobalState*        writer;
+    GlobalState*               writer;
     Vector<CString>            context_stack;
     ThreadId::Hash             thread_id;
     UqPtr<ThreadInternalState> internal_state;
@@ -72,12 +71,12 @@ struct PContext
 
     static ShPtr<PContext> ProfilerStore()
     {
-        return State::GetProfilerStore();
+        return state->GetProfilerStore();
     }
 
     static ShPtr<ThreadState> ProfilerTStore()
     {
-        return State::GetProfilerTStore();
+        return state->GetProfilerTStore();
     }
 };
 
@@ -95,7 +94,7 @@ struct RuntimeProperties : ThreadInternalState
     }
     static bool enabled()
     {
-        if(!State::ProfilerEnabled())
+        if(!state || !state->ProfilerEnabled())
             return false;
 
         auto context = PContext::ProfilerStore();
@@ -349,8 +348,8 @@ struct DeepProfilerContext
     }
 };
 
-extern void JsonPush(ThreadState& state, DataPoint const& data);
-extern ShPtr<State::GlobalState> CreateJsonProfiler();
+extern void               JsonPush(ThreadState& state, DataPoint const& data);
+extern ShPtr<GlobalState> CreateJsonProfiler();
 
 } // namespace profiling
 } // namespace platform

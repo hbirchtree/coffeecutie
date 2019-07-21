@@ -171,6 +171,22 @@ static void CoffeeInit_Internal(u32 flags)
 #endif
 }
 
+static void SetPlatformState()
+{
+    /* Initialize state management in ::platform namespace */
+    auto& platState = platform::state;
+
+    platState->m_LockState = State::LockState;
+    platState->SwapState = State::SwapState;
+    platState->PeekState = State::PeekState;
+
+    platState->ProfilerEnabled = State::ProfilerEnabled;
+    platState->GetProfilerStore = State::GetProfilerStore;
+    platState->GetProfilerTStore = State::GetProfilerTStore;
+
+    platState->GetAppData = State::GetAppData;
+}
+
 void CoffeeInit(bool)
 {
     CoffeeInit_Internal(0x0);
@@ -188,6 +204,8 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         /* On exit, set InternalState pointer to null */
         State::SetInternalState({});
     });
+
+    SetPlatformState();
 
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
     Coffee::PrintingVerbosityLevel() = 1;

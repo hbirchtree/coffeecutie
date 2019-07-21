@@ -1,6 +1,6 @@
 #include <url/url.h>
 
-#include <coffee/core/base_state.h>
+#include <platforms/pimpl_state.h>
 #include <coffee/core/resource_prefix.h>
 #include <peripherals/error/file_base.h>
 #include <peripherals/libc/string_ops.h>
@@ -84,8 +84,6 @@ Url GetAppleStoragePath()
 
 STATICINLINE SystemPaths GetSystemPaths()
 {
-    using namespace ::Coffee::State;
-
     SystemPaths paths;
 
     paths.assetDir  = MkInvalidUrl();
@@ -95,7 +93,7 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     CString const& _coffee_resource_prefix = file::ResourcePrefix();
 
-    auto& appData = *GetAppData();
+    auto& appData = *state->GetAppData();
 
 #if defined(COFFEE_ANDROID)
 
@@ -530,7 +528,7 @@ Path& Path::operator=(const Url& url)
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
-struct UrlParseCache : Coffee::State::GlobalState
+struct UrlParseCache : GlobalState
 {
     virtual ~UrlParseCache();
     regex::Pattern pattern;
@@ -552,7 +550,7 @@ UrlParseCache& GetCache()
 
     constexpr cstring pattern_key = "urlParsePattern";
 
-    auto ptr = Coffee::State::PeekState(pattern_key);
+    auto ptr = state->PeekState(pattern_key);
 
     if(ptr)
         return *C_DCAST<UrlParseCache>(ptr.get());
@@ -563,7 +561,7 @@ UrlParseCache& GetCache()
     patt->pattern = regex::compile_pattern(url_pattern);
     Profiler::DeepPopContext();
 
-    State::SwapState(pattern_key, patt);
+    state->SwapState(pattern_key, patt);
 
     return *C_DCAST<UrlParseCache>(patt.get());
 }

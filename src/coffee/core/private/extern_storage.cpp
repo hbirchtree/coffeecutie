@@ -323,15 +323,6 @@ Coffee::DebugFun::LogInterface GetLogInterface()
 }
 
 } // namespace DebugFun
-
-namespace State {
-
-GlobalState::~GlobalState()
-{
-}
-
-} // namespace State
-
 } // namespace Coffee
 
 namespace platform {
