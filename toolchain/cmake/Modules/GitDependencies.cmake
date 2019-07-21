@@ -145,13 +145,26 @@ function( DEPENDENCY_LINK )
         )
 
     foreach ( DEP ${LINK_DEPENDENCIES} )
-        set_property ( TARGET "${LINK_TARGET}" APPEND PROPERTY
-            GIT_DEPS
-            "${DEP},${GIT_DEPENDENCIES_${DEP}_VERSION},${GIT_DEPENDENCIES_${DEP}_SOURCE},${GIT_DEPENDENCIES_${DEP}_EXTENSION}"
-            )
+        get_property ( PROPERTY_EXISTS TARGET "${LINK_TARGET}" PROPERTY GIT_DEPS SET )
+
+        if(PROPERTY_EXISTS)
+            get_property ( GIT_DEPS TARGET "${LINK_TARGET}" PROPERTY GIT_DEPS )
+            set_property ( TARGET "${LINK_TARGET}" PROPERTY
+                GIT_DEPS
+                ${GIT_DEPS}
+                "${DEP},${GIT_DEPENDENCIES_${DEP}_VERSION},${GIT_DEPENDENCIES_${DEP}_SOURCE},${GIT_DEPENDENCIES_${DEP}_EXTENSION}"
+                )
+        else()
+            set_property ( TARGET "${LINK_TARGET}" PROPERTY
+                GIT_DEPS
+                "${DEP},${GIT_DEPENDENCIES_${DEP}_VERSION},${GIT_DEPENDENCIES_${DEP}_SOURCE},${GIT_DEPENDENCIES_${DEP}_EXTENSION}"
+                )
+        endif()
     endforeach()
-    set_property ( TARGET "${LINK_TARGET}" APPEND PROPERTY
-        EXPORT_PROPERTIES "GIT_DEPS"
+
+    get_property ( EXPORT_PROPS TARGET "${LINK_TARGET}" PROPERTY EXPORT_PROPERTIES )
+    set_property ( TARGET "${LINK_TARGET}" PROPERTY
+        EXPORT_PROPERTIES ${EXPORT_PROPS} GIT_DEPS
         )
 
 endfunction()

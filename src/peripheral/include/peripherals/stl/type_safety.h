@@ -26,7 +26,7 @@
 template<typename T>
 [[noreturn]] inline void Throw(T&& exception)
 {
-    throw exception;
+    throw std::move(exception);
 }
 #else
 #define Throw(a) abort()
