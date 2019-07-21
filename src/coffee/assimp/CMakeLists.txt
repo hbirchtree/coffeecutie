@@ -36,3 +36,9 @@ if(DEFINED IRRXML_LIBRARIES)
         LIBRARIES ${IRRXML_LIBRARIES}
         )
 endif()
+
+dependency_link (
+    TARGET AssimpTools
+    DEPENDENCIES
+        assimp
+    )

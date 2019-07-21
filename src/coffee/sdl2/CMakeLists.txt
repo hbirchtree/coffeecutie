@@ -53,3 +53,11 @@ if(NOT EMSCRIPTEN)
         LIBRARIES ${SDL2_LIBRARY}
         )
 endif()
+
+if(NOT EMSCRIPTEN)
+    dependency_link (
+        TARGET SDL2Backend
+        DEPENDENCIES
+            sdl2
+        )
+endif()

@@ -42,6 +42,10 @@ function ( DEPENDENCY_GET )
             set ( DEP_ALIAS "${NAME}" )
         endif()
 
+        set ( "GIT_DEPENDENCIES_${NAME_COMBO}_VERSION" ${DEP_TAG} PARENT_SCOPE )
+        set ( "GIT_DEPENDENCIES_${NAME_COMBO}_SOURCE" ${DEP_SOURCE} PARENT_SCOPE )
+        set ( "GIT_DEPENDENCIES_${NAME_COMBO}_EXTENSION" ${DEP_EXTENSION} PARENT_SCOPE )
+
         set ( LOCAL_DIR "${DEP_LIB_LOCATION}/${NAME}" )
 
         if(NOT "${DEP_SIDELOAD}" STREQUAL "")
@@ -129,3 +133,114 @@ function ( DEPENDENCY_GET )
     endforeach()
 
 endfunction()
+
+function( DEPENDENCY_LINK )
+
+    cmake_parse_arguments ( LINK
+        ""
+        "TARGET"
+        "DEPENDENCIES"
+
+        ${ARGN}
+        )
+
+    foreach ( DEP ${LINK_DEPENDENCIES} )
+        set_property ( TARGET "${LINK_TARGET}" APPEND PROPERTY
+            GIT_DEPS
+            "${DEP},${GIT_DEPENDENCIES_${DEP}_VERSION},${GIT_DEPENDENCIES_${DEP}_SOURCE},${GIT_DEPENDENCIES_${DEP}_EXTENSION}"
+            )
+    endforeach()
+    set_property ( TARGET "${LINK_TARGET}" APPEND PROPERTY
+        EXPORT_PROPERTIES "GIT_DEPS"
+        )
+
+endfunction()
+
+set ( GIT_DEPS_RESOLVED ";" )
+
+macro( DEPENDENCY_RESOLVE_INTERNAL )
+
+    cmake_parse_arguments ( RES
+        ""
+        "TARGET"
+        ""
+
+        ${ARGN}
+        )
+
+    if(NOT "${GIT_DEPS_RESOLVED}" MATCHES ";${RES_TARGET};" AND NOT "${RES_TARGET}" STREQUAL "")
+        message ( "-- ${RES_TARGET}" )
+        set ( GIT_DEPS_RESOLVED "${GIT_DEPS_RESOLVED}${RES_TARGET};" )
+
+        get_target_property( "LIB_TYPE" "${RES_TARGET}" TYPE )
+
+        if(NOT "${LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
+            get_property ( GIT_DEPS_DEFINED TARGET "${RES_TARGET}" PROPERTY GIT_DEPS SET )
+
+            if(GIT_DEPS_DEFINED)
+                get_property ( GIT_DEPS TARGET "${RES_TARGET}" PROPERTY GIT_DEPS )
+                message ( "---- Deps: ${GIT_DEPS}" )
+                foreach( DEP ${GIT_DEPS} )
+                    if("${DEP}" STREQUAL "")
+                        continue()
+                    endif()
+
+                    string ( REPLACE "," ";" DEP_DATA "${DEP}" )
+                    list ( GET DEP_DATA 0 NAME )
+                    list ( GET DEP_DATA 1 VERSION )
+                    list ( GET DEP_DATA 2 SOURCE )
+                    list ( GET DEP_DATA 3 EXTENSION )
+
+                    string ( REPLACE "=" ";" NAME_LIST "${NAME}" )
+                    list ( LENGTH NAME_LIST NAME_LEN )
+                    if(${NAME_LEN} GREATER 1)
+                        list ( GET NAME_LIST 1 DEP_NAME )
+                    else()
+                        set ( DEP_NAME "${NAME}" )
+                    endif()
+
+                    dependency_get (
+                        REQUIRED
+                        SOURCE ${SOURCE}
+                        TAG ${VERSION}
+                        NAMES ${NAME}
+                        EXTENSION ${EXTENSION}
+                        SIDELOAD "${${DEP_NAME}_LOCAL_BUILD}"
+                        )
+                endforeach()
+            endif()
+        endif()
+
+        get_property ( LINK_LIBS_DEFINED TARGET "${RES_TARGET}" PROPERTY INTERFACE_LINK_LIBRARIES SET )
+
+        if(LINK_LIBS_DEFINED)
+            get_property ( LINK_LIBS TARGET "${RES_TARGET}" PROPERTY INTERFACE_LINK_LIBRARIES )
+
+            message ( "--- Deps: ${LINK_LIBS}" )
+            foreach( LIB ${LINK_LIBS} )
+                message ( "---- Dep: ${LIB}" )
+                if(NOT TARGET "${LIB}" AND NOT "${LIB}" MATCHES "-framework")
+                    string ( REPLACE "::" ";" LIB_LIST "${LIB}" )
+                    list ( LENGTH LIB_LIST LIB_LEN )
+                    if(${LIB_LEN} LESS 2)
+                        continue()
+                    endif()
+
+                    list ( GET LIB_LIST 0 LIB_PACKAGE )
+                    find_package( ${LIB_PACKAGE} REQUIRED )
+                endif()
+
+                if(TARGET "${LIB}")
+                    dependency_resolve_internal ( TARGET ${LIB} )
+                endif()
+            endforeach()
+        endif()
+    endif()
+    message ( "${GIT_DEPS_RESOLVED}" )
+endmacro()
+
+macro( DEPENDENCY_RESOLVE )
+    foreach ( DEP ${ARGN} )
+        dependency_resolve_internal ( TARGET ${DEP} )
+    endforeach()
+endmacro()

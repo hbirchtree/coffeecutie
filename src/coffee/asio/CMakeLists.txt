@@ -62,6 +62,12 @@ if(BUILD_OPENSSL)
     target_compile_definitions ( ASIO PUBLIC
         -DCOFFEE_ENABLE_SSL
         )
+
+    dependency_link (
+        TARGET ASIO
+        DEPENDENCIES
+            openssl=OpenSSL
+        )
 endif()
 
 target_compile_definitions( ASIO PUBLIC

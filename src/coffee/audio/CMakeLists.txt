@@ -57,6 +57,11 @@ if(BUILD_OPENAL)
             PUBLIC
             OpenAL
             )
+        dependency_link (
+            TARGET OpenALMix
+            DEPENDENCIES
+                openal
+            )
     elseif( WIN32 )
         target_link_libraries ( OpenALMix
             PUBLIC

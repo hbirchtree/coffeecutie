@@ -45,6 +45,12 @@ if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
         HEADER_DIRS
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         )
+
+    dependency_link (
+        TARGET CoffeeSDLPowerInfo
+        DEPENDENCIES
+            sdl2
+        )
 endif()
 
 #

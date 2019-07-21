@@ -54,6 +54,7 @@ if(BUILD_ASSIMP)
         TARGET PressurizeModels
         LINKABLE
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES model_compress.cpp
         LIBRARIES Core AssimpTools
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -76,6 +77,7 @@ if(SQUISH_FOUND)
         TARGET PressurizeTextures
         LINKABLE
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES
         texture_compress.cpp
         dxt_compression.h
@@ -172,6 +174,7 @@ if(SHADERC_FOUND)
         TARGET PressurizeShaders
         LINKABLE
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES shader_compress.cpp
         LIBRARIES Core shaderc
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
