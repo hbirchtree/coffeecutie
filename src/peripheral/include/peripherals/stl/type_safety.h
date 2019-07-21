@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <type_traits>
+#include <utility>
 
 /* Wrap text that is used for debugging with this, and it will disappear
  *  in release-mode */
