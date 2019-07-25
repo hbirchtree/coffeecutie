@@ -2,7 +2,7 @@
 
 #include <peripherals/base.h>
 
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_EMSCRIPTEN)
 
 #include <platforms/base/stacktrace.h>
 

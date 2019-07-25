@@ -589,7 +589,7 @@ emscripten.asmjs: FORCE
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/emscripten/master/cmake/Modules/Platform/Emscripten.cmake \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
 	-DGIT_DEP_BUILDVARIANT=emscripten.asmjs \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
@@ -597,6 +597,7 @@ emscripten.asmjs: FORCE
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/emscripten.asmjs:/home/coffee/build:rw \
@@ -619,7 +620,7 @@ emscripten.wasm: FORCE
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/emscripten/master/cmake/Modules/Platform/Emscripten.cmake \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
@@ -627,6 +628,7 @@ emscripten.wasm: FORCE
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/emscripten.wasm:/home/coffee/build:rw \
@@ -789,6 +791,7 @@ steam.amd64: FORCE
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_CPP11=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/cxx11.toolchain.cmake \

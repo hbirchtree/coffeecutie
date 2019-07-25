@@ -30,7 +30,7 @@
   - -DGIT_DEP_BUILDVARIANT=$(git-dep-target)
 
 # Android toolchain is always sourced from the Android NDK
-^((?!android).)*$:
+^((?!android|emscripten).)*$:
     +cmake-opts:
       - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
 
@@ -163,6 +163,8 @@ testing.linux.*:
   =preload: linux-steam.cmake
   =toolchain: cxx11.toolchain.cmake
   =container: steam
+  +cmake-opts:
+    - -DBUILD_CPP11=ON
   +container-opts:
     - -e CC=clang-3.6
     - -e CXX=clang++-3.6
@@ -175,12 +177,16 @@ testing.linux.*:
   =preload: js-emscripten.cmake
   =toolchain: js-emscripten.toolchain.cmake
   =generator: Unix Makefiles
+  =emscripten.root: $(dependencies.emscripten.target)/emscripten/master
+  =emscripten.cmake: $(emscripten.root)/cmake
   +dependencies:
     - emscripten
   +cmake-opts:
-    - -DEMSCRIPTEN_ROOT_PATH=$(dependencies.emscripten.target)/emscripten/master
+    - -DEMSCRIPTEN_ROOT_PATH=$(emscripten.root)
+    - -DCMAKE_TOOLCHAIN_FILE=$(emscripten.cmake)/Modules/Platform/Emscripten.cmake
   +container-opts:
-    - -e EMSCRIPTEN=$(dependencies.emscripten.target)/emscripten/master
+    - -e EMSCRIPTEN=$(emscripten.root)
+    - -e CMAKE='emcmake cmake'
   .*wasm.*:
     =preload: js-emscripten-wasm.cmake
 

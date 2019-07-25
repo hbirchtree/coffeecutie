@@ -97,7 +97,7 @@ template<typename CharType>
  */
 FORCEDINLINE std::basic_string<CharType>& left(std::basic_string<CharType>& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), NOT_FN(std::isspace)));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c);}));
     return s;
 }
 
@@ -105,7 +105,7 @@ template<typename CharType>
 FORCEDINLINE std::basic_string<CharType>& right(std::basic_string<CharType>& s)
 {
     s.erase(
-        std::find_if(s.rbegin(), s.rend(), NOT_FN(std::isspace)).base(),
+        std::find_if(s.rbegin(), s.rend(), [](int c) {return !std::isspace(c);}).base(),
         s.end());
     return s;
 }

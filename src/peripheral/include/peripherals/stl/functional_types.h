@@ -187,6 +187,7 @@ void call(RType (*fun)(Args...), Args... args)
 
 } // namespace stl_types
 
-#define declmemtype(fun) decltype(std::mem_fun(&fun))::result_type
+#define declmemtype(fun) decltype(std::mem_fn(&fun))::result_type
+
 #define declreturntype(fun) \
     decltype(stl_types::function_traits(&fun))::result_type

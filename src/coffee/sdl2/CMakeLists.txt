@@ -52,6 +52,13 @@ if(NOT EMSCRIPTEN)
         HEADER_DIRECTORIES ${SDL2_INCLUDE_DIR}
         LIBRARIES ${SDL2_LIBRARY}
         )
+else()
+    target_compile_options ( SDL2Backend PUBLIC
+            "-s " USE_SDL=2
+       )
+    target_link_options ( SDL2Backend PUBLIC
+            "-s " USE_SDL=2
+       )
 endif()
 
 if(NOT EMSCRIPTEN)

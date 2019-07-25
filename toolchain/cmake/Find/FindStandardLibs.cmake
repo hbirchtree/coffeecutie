@@ -127,7 +127,7 @@ if(NOT TARGET StandardLibs)
 
     if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE)
         find_package(Threads REQUIRED)
-        list( APPEND CORE_EXTRA_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} )
+        list( APPEND CORE_EXTRA_LIBRARIES Threads::Threads )
     endif()
 
     add_library ( StandardLibs INTERFACE )
@@ -138,6 +138,25 @@ if(NOT TARGET StandardLibs)
     target_include_directories ( StandardLibs INTERFACE
         ${CORE_INCLUDE_DIR}
         )
+
+    if(EMSCRIPTEN)
+        target_compile_options ( StandardLibs INTERFACE
+            "-s            " ALLOW_MEMORY_GROWTH=1
+            "-s           " SAFE_HEAP=1
+            "-s          " DISABLE_EXCEPTION_CATCHING=0
+            "-s         " DEMANGLE_SUPPORT=1
+            "--no-heap-copy"
+            "-fPIC"
+           )
+       target_link_options ( StandardLibs INTERFACE
+            "-s            " ALLOW_MEMORY_GROWTH=1
+            "-s           " SAFE_HEAP=1
+            "-s          " DISABLE_EXCEPTION_CATCHING=0
+            "-s         " DEMANGLE_SUPPORT=1
+            "--no-heap-copy"
+            "-fPIC"
+           )
+    endif()
 endif()
 
 message ( STATUS "Standardlibs in use: ${CORE_EXTRA_LIBRARIES}" )

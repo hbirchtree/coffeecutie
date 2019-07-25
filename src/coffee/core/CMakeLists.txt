@@ -115,6 +115,15 @@ coffee_library (
     LIBRARIES CoreCommon
     )
 
+if(EMSCRIPTEN)
+    target_compile_options ( CoreCompression PUBLIC
+        "-s" USE_ZLIB=1
+       )
+   target_link_options ( CoreCompression PUBLIC
+        "-s" USE_ZLIB=1
+       )
+endif()
+
 #
 # Virtual filesystem
 #

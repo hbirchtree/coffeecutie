@@ -44,3 +44,7 @@
 /* In this case it only supports POD types, __thread is an old feature */
 #define thread_local __thread
 #endif
+
+#if defined(COFFEE_EMSCRIPTEN)
+#define COFFEE_NO_EXECUTION_H
+#endif

@@ -54,6 +54,12 @@ multi: multi-config cmake_version
 		$(DOCKER_CONTAINER) \
 			$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET)
 
+multi.emmake: multi-config cmake_version
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			emmake make $(CMAKE_TARGET)
+
 multi.twostage: multi-config
 	$(DOCKER) run --rm \
 		$(DOCKER_EXTRA_OPTIONS) \

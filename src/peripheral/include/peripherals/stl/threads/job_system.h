@@ -1,10 +1,15 @@
 #pragma once
 
-#include "async_tasks.h"
+#if  __cplusplus >= 201703L && !defined(COFFEE_NO_EXECUTION_H)
+#include <execution>
+#endif
+
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/types.h>
+
+#include "async_tasks.h"
 
 #if defined(THREAD_PROFILING)
 using JobProfiler = Coffee::Profiler;
@@ -166,7 +171,7 @@ FORCEDINLINE void ForEach(
     Function<void(typename Parameters::storage_type)>&& pred,
     szptr                                               num_workers = 0)
 {
-#if __cplusplus < 201703L
+#if __cplusplus < 201703L || defined(COFFEE_NO_EXECUTION_H)
 #if defined(COFFEE_NO_THREADLIB)
     auto thread_count = 1UL;
 #else
@@ -194,7 +199,11 @@ FORCEDINLINE void ForEach(
     for(auto& task : tasks)
         task.get();
 #else
-    static_assert(false, "Missing C++17 implementation");
+    std::for_each(
+        std::execution::par_unseq,
+        std::begin(container),
+        std::end(container),
+        pred);
 #endif
 }
 
