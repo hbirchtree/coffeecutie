@@ -104,10 +104,10 @@
  * has_include
  *
  */
-#if(__cplusplus >= 201703L)
+#if __cplusplus >= 201703L
 #define C_HAS_INCLUDE(header) __has_include(header)
 #else
-#define C_HAS_INCLUDE(header) 0
+#define C_HAS_INCLUDE(header) (0)
 
 #endif
 

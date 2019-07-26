@@ -1,8 +1,5 @@
 #pragma once
 
-#if  __cplusplus >= 201703L && C_HAS_INCLUDE(<execution>)
-#include <execution>
-#endif
 
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
@@ -10,6 +7,10 @@
 #include <peripherals/stl/types.h>
 
 #include "async_tasks.h"
+
+#if  __cplusplus >= 201703L && C_HAS_INCLUDE(<execution>)
+#include <execution>
+#endif
 
 #if defined(THREAD_PROFILING)
 using JobProfiler = Coffee::Profiler;
