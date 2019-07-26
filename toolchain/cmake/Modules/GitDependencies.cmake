@@ -169,7 +169,7 @@ function( DEPENDENCY_LINK )
 
     get_property ( EXPORT_PROPS TARGET "${LINK_TARGET}" PROPERTY EXPORT_PROPERTIES )
 
-    message ( "Export props: ${EXPORT_PROPS}" )
+    # message ( "Export props: ${EXPORT_PROPS}" )
 
 endfunction()
 
@@ -186,7 +186,7 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
         )
 
     if(NOT "${GIT_DEPS_RESOLVED}" MATCHES ";${RES_TARGET};" AND NOT "${RES_TARGET}" STREQUAL "")
-        message ( "-- ${RES_TARGET}" )
+        # message ( "-- ${RES_TARGET}" )
         set ( GIT_DEPS_RESOLVED "${GIT_DEPS_RESOLVED}${RES_TARGET};" )
 
         get_target_property( "LIB_TYPE" "${RES_TARGET}" TYPE )
@@ -196,7 +196,7 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
 
             if(GIT_DEPS_DEFINED)
                 get_property ( GIT_DEPS TARGET "${RES_TARGET}" PROPERTY git_deps )
-                message ( "---- Deps: ${GIT_DEPS}" )
+                # message ( "---- Deps: ${GIT_DEPS}" )
                 foreach( DEP ${GIT_DEPS} )
                     if("${DEP}" STREQUAL "")
                         continue()
@@ -233,9 +233,9 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
         if(LINK_LIBS_DEFINED)
             get_property ( LINK_LIBS TARGET "${RES_TARGET}" PROPERTY INTERFACE_LINK_LIBRARIES )
 
-            message ( "--- Deps: ${LINK_LIBS}" )
+            # message ( "--- Deps: ${LINK_LIBS}" )
             foreach( LIB ${LINK_LIBS} )
-                message ( "---- Dep: ${LIB}" )
+                # message ( "---- Dep: ${LIB}" )
                 if(NOT TARGET "${LIB}" AND NOT "${LIB}" MATCHES "-framework")
                     string ( REPLACE "::" ";" LIB_LIST "${LIB}" )
                     list ( LENGTH LIB_LIST LIB_LEN )
@@ -244,7 +244,7 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
                     endif()
 
                     list ( GET LIB_LIST 0 LIB_PACKAGE )
-                    message ( "----- Package: ${LIB_PACKAGE}" )
+                    # message ( "----- Package: ${LIB_PACKAGE}" )
                     find_package( ${LIB_PACKAGE} REQUIRED )
                 endif()
 
@@ -254,7 +254,7 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
             endforeach()
         endif()
     endif()
-    message ( "${GIT_DEPS_RESOLVED}" )
+    # message ( "${GIT_DEPS_RESOLVED}" )
 endmacro()
 
 macro( DEPENDENCY_RESOLVE )

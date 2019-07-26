@@ -185,9 +185,17 @@ void call(RType (*fun)(Args...), Args... args)
 
 } // namespace quiet_exception
 
+template<typename T, typename... Args>
+using mem_args_tuple = std::tuple<T*, Args...>;
+
 } // namespace stl_types
 
-#define declmemtype(fun) decltype(std::mem_fn(&fun))::result_type
+#if __cplusplus >= 201703L
+#define declmemtype(T, fun) \
+    decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
+#else
+#define declmemtype(T, fun) typename decltype(std::mem_fn(&T::fun))::result_type
+#endif
 
 #define declreturntype(fun) \
     decltype(stl_types::function_traits(&fun))::result_type
