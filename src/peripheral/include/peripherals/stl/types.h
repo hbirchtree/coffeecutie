@@ -28,7 +28,7 @@
 #include <system_error>
 #include <type_traits>
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
 #include <optional>
 #endif
 
@@ -680,7 +680,10 @@ struct nested_empty_error_code
     using nested_error_type = NestedError;
 };
 
-#if __cplusplus < 201703L
+#if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
+template<typename T>
+using Optional = std::optional<T>;
+#else
 using bad_optional_access = undefined_behavior;
 
 template<typename T>
@@ -725,9 +728,6 @@ struct Optional
     T    value;
     bool valid;
 };
-#else
-template<typename T>
-using Optional = std::optional<T>;
 #endif
 
 } // namespace stl_types

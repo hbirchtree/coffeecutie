@@ -1,6 +1,6 @@
 #pragma once
 
-#if  __cplusplus >= 201703L && !defined(COFFEE_NO_EXECUTION_H)
+#if  __cplusplus >= 201703L && C_HAS_INCLUDE(<execution>)
 #include <execution>
 #endif
 
@@ -171,7 +171,13 @@ FORCEDINLINE void ForEach(
     Function<void(typename Parameters::storage_type)>&& pred,
     szptr                                               num_workers = 0)
 {
-#if __cplusplus < 201703L || defined(COFFEE_NO_EXECUTION_H)
+#if __cplusplus >= 201703L && C_HAS_INCLUDE(<execution>)
+    std::for_each(
+        std::execution::par_unseq,
+        std::begin(container),
+        std::end(container),
+        pred);
+#else
 #if defined(COFFEE_NO_THREADLIB)
     auto thread_count = 1UL;
 #else
@@ -198,12 +204,6 @@ FORCEDINLINE void ForEach(
 
     for(auto& task : tasks)
         task.get();
-#else
-    std::for_each(
-        std::execution::par_unseq,
-        std::begin(container),
-        std::end(container),
-        pred);
 #endif
 }
 
