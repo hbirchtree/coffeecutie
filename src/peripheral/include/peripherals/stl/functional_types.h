@@ -215,7 +215,7 @@ struct mem_function_traits
 //#define declmemtype(T, fun) \
 //    decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
 #else
-#define declmemtype(fun) typename decltype(std::mem_fn(&fun))::result_type
+#define declmemtype(fun) decltype(std::mem_fn(fun))::result_type
 #endif
 
 #define declreturntype(fun) \
