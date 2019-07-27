@@ -145,7 +145,7 @@ struct parametric_parallel
     using container_type = typename remove_cvref<ContainerT>::type;
     using value_type     = typename container_type::value_type;
     using iterator       = typename container_type::iterator;
-    using storage_type   = declmemtype(iterator, operator*);
+    using storage_type   = typename declmemtype(&iterator::operator*);
 
     static constexpr size_t batch_size = BatchSize;
 };

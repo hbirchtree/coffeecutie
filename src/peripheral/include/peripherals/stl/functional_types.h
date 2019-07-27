@@ -188,11 +188,32 @@ void call(RType (*fun)(Args...), Args... args)
 template<typename T, typename... Args>
 using mem_args_tuple = std::tuple<T*, Args...>;
 
+template<class T,
+         typename R,
+         typename... Args>
+struct mem_function_traits
+{
+    using class_type  = T;
+    using result_type = R;
+    using args_tuple  = mem_args_tuple<T, Args...>;
+
+    using signature = R(Args...);
+
+    mem_function_traits(R (T::*)(Args...) const)
+    {
+    }
+    mem_function_traits(R (T::*)(Args...))
+    {
+    }
+};
+
 } // namespace stl_types
 
 #if __cplusplus >= 201703L
-#define declmemtype(T, fun) \
-    decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
+#define declmemtype(fun) \
+    decltype(mem_function_traits(fun))::result_type
+//#define declmemtype(T, fun) \
+//    decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
 #else
 #define declmemtype(T, fun) typename decltype(std::mem_fn(&T::fun))::result_type
 #endif
