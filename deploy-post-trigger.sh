@@ -2,7 +2,7 @@ PRESSURE_ASSET="pressurecooker_${BUILDVARIANT}.tar.gz"
 
 # Package and release PressureCooker as its own bundle
 
-pushd "${BUILD_DIR}/build/${BUILDVARIANT}"
+pushd "${BUILD_DIR}/${BUILDVARIANT}"
 
 # Path to PressureCooker and the extensions may vary,
 #  therefore using $(ls ...) to add them conditionally
