@@ -1,14 +1,16 @@
+set ( SHADERC_PATHS
+    /usr
+    /usr/local
+    ${CMAKE_SOURCE_DIR}/libs
+    ${SHADERC_DIR}
+    )
+
 find_path ( SHADERC_INCLUDE_DIR_TMP
     NAMES
     shaderc/shaderc.h
     shaderc/shaderc.hpp
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SHADERC_PATHS}
 
     PATH_SUFFIXES
     include
@@ -17,12 +19,7 @@ find_path ( SHADERC_INCLUDE_DIR_TMP
 find_library ( SHADERC_LIBRARY_TMP
     NAMES shaderc_combined
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SHADERC_PATHS}
 
     PATH_SUFFIXES
     lib

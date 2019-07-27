@@ -2,11 +2,14 @@ dependency_get (
     SOURCE hbirchtree/native-library-bundle
     TAG ${NATIVE_LIB_BUNDLE_TAG}
     NAMES
-        squish
-        shaderc
-        spirvcross
-        glslang
+        squish=SQUISH
+        shaderc=SHADERC
+        spirvcross=SPVCROSS
+        glslang=GLSLANG
     )
+
+# SPIR-V Tools is built with Shaderc
+set ( SPVTOOLS_DIR "${SHADERC_DIR}" )
 
 find_package( Squish QUIET     )
 find_package( TIFF QUIET       )
@@ -98,7 +101,7 @@ if(SQUISH_FOUND)
     if(TIFF_FOUND)
         target_compile_definitions ( PressurizeTextures
             PRIVATE
-            -DHAVE_LIBTIFF
+            HAVE_LIBTIFF
             )
 
         target_link_libraries ( PressurizeTextures
@@ -169,7 +172,7 @@ else()
     message ( STATUS "Skipping PressurizeTextures" )
 endif()
 
-if(SHADERC_FOUND)
+if(SHADERC_FOUND AND SPVTOOLS_FOUND)
     coffee_library (
         TARGET PressurizeShaders
         LINKABLE

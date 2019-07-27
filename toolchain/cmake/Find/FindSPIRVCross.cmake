@@ -1,13 +1,22 @@
+set ( SPVCROSS_PATHS
+    /usr
+    /usr/local
+    ${CMAKE_SOURCE_DIR}/libs
+    ${SPVCROSS_DIR}
+    )
+
+set ( SPVCROSS_SUFFIXES
+    lib
+    lib/${CMAKE_LIBRARY_ARCHITECTURE}
+    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
+    "lib/${WINDOWS_ABI}"
+    )
+
 find_path ( SPVCROSS_INCLUDE_DIR_TMP
     NAMES
     spirv_glsl.hpp
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVCROSS_PATHS}
 
     PATH_SUFFIXES
     include/spirv_cross
@@ -16,12 +25,7 @@ find_path ( SPVCROSS_INCLUDE_DIR_TMP
 find_library ( SPVCROSS_CORE_LIBRARY_TMP
     NAMES spirv-cross-core
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVCROSS_PATHS}
 
     PATH_SUFFIXES
     lib
@@ -33,52 +37,25 @@ find_library ( SPVCROSS_CORE_LIBRARY_TMP
 find_library ( SPVCROSS_CPP_LIBRARY_TMP
     NAMES spirv-cross-cpp
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVCROSS_PATHS}
 
-    PATH_SUFFIXES
-    lib
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-    "lib/${WINDOWS_ABI}"
+    PATH_SUFFIXES ${SPVCROSS_SUFFIXES}
     )
 
 find_library ( SPVCROSS_UTIL_LIBRARY_TMP
     NAMES spirv-cross-util
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVCROSS_PATHS}
 
-    PATH_SUFFIXES
-    lib
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-    "lib/${WINDOWS_ABI}"
+    PATH_SUFFIXES ${SPVCROSS_SUFFIXES}
     )
 
 find_library ( SPVCROSS_GLSL_LIBRARY_TMP
     NAMES spirv-cross-glsl
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVCROSS_PATHS}
 
-    PATH_SUFFIXES
-    lib
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-    "lib/${WINDOWS_ABI}"
+    PATH_SUFFIXES ${SPVCROSS_SUFFIXES}
     )
 
 if(NOT TARGET spvcross)

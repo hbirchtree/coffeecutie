@@ -1,16 +1,16 @@
-find_path ( SQUISH_INCLUDE_DIR_TMP
-    NAMES
-    squish.h
-
-    PATHS
+set ( SQUISH_PATHS
     /usr
     /usr/local
     /Library/Frameworks
     ~/Library/Frameworks
-    ${COFFEE_EXT_LIBRARY_DIR}/stb
-    ${CMAKE_SOURCE_DIR}/libs
-    ${COFFEE_ROOT_DIR}
-    ${NATIVE_LIBRARY_DIR}
+    ${SQUISH_DIR}
+    )
+
+find_path ( SQUISH_INCLUDE_DIR_TMP
+    NAMES
+    squish.h
+
+    PATHS ${SQUISH_PATHS}
 
     PATH_SUFFIXES
     include
@@ -19,13 +19,7 @@ find_path ( SQUISH_INCLUDE_DIR_TMP
 find_library ( SQUISH_LIBRARY_TMP
     NAMES squish
 
-    PATHS
-    /usr
-    /usr/local
-    /Library/Frameworks
-    ~/Library/Frameworks
-    ${COFFEE_ROOT_DIR}
-    ${NATIVE_LIBRARY_DIR}
+    PATHS ${SQUISH_PATHS}
 
     PATH_SUFFIXES
     lib # Default stuff

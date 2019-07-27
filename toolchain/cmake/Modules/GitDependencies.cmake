@@ -74,7 +74,7 @@ function ( DEPENDENCY_GET )
             endif()
         endif()
 
-        set ( ${DEP_ALIAS}_DIR "${LOCAL_DIR}" )
+        set ( ${DEP_ALIAS}_DIR "${LOCAL_DIR}" PARENT_SCOPE )
 
         if(NOT "${DEP_SIDELOAD}" STREQUAL "")
             message ( STATUS "Sideloading ${NAME} from ${DEP_SIDELOAD}" )

@@ -68,7 +68,7 @@ void surface_dealloc(glhnd& m_handle)
  */
 
 Tup<u32, u32> surface_get_levels(
-    glhnd const& m_handle, TexComp::tex_flag m_type)
+    glhnd const& m_handle, TexComp::tex_flag m_type, gleam_error& ec)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     i32 base = 0, max = 0;
@@ -88,6 +88,11 @@ Tup<u32, u32> surface_get_levels(
     }
 
     return std::make_tuple(C_FCAST<u32>(base), C_FCAST<u32>(max));
+
+#else
+
+    ec = APIError::UnimplementedPath;
+    return std::make_tuple(u32(), u32());
 #endif
 }
 
