@@ -31,78 +31,6 @@ static PtF             sprite_pos[num_points] = {};
 static size_2d<scalar> sprite_scale           = {1, 1};
 static Size            window_size            = {};
 
-void WindowResize_1(void*, const Event& e, c_cptr d)
-{
-    if(e.type == Event::Resize)
-    {
-        auto ev     = (ResizeEvent const*)d;
-        window_size = *ev;
-    }
-}
-
-void TouchInput_1(void*, const Input::CIEvent& e, c_cptr d)
-{
-    using namespace Input;
-
-    if(e.type == CIEvent::MultiTouch)
-    {
-        const CIMTouchMotionEvent& tch = *(const CIMTouchMotionEvent*)d;
-        if(tch.fingers == 2)
-        {
-            scalar v = tch.dist;
-            v /= Int16_Max;
-            v += 1.f;
-            size_2d<scalar> s = {v, v};
-            sprite_scale.w *= s.w;
-            sprite_scale.h *= s.h;
-        }
-    } else if(e.type == CIEvent::TouchMotion)
-    {
-        const CITouchMotionEvent& tch = *(const CITouchMotionEvent*)d;
-        if(tch.finger > num_points)
-            return;
-        if(!tch.hover)
-        {
-            sprite_pos[tch.finger] = tch.origin;
-            sprite_pos[tch.finger].x *= window_size.w;
-            sprite_pos[tch.finger].y *= window_size.h;
-            sprite_pos[tch.finger].x -= 64;
-            sprite_pos[tch.finger].y -= 64;
-        }
-    } else if(e.type == CIEvent::MouseMove)
-    {
-        const CIMouseMoveEvent& mbn = *(const CIMouseMoveEvent*)d;
-        if(mbn.btn != 0)
-        {
-            sprite_pos[0] = mbn.origin;
-            sprite_pos[0].x -= 64;
-            sprite_pos[0].y -= 64;
-        }
-    } else if(e.type == CIEvent::TouchTap)
-    {
-        const CITouchTapEvent& tch = *(const CITouchTapEvent*)d;
-        if(tch.finger > num_points)
-            return;
-        if(tch.pressed)
-        {
-            sprite_pos[tch.finger] = tch.pos;
-            sprite_pos[tch.finger].x *= window_size.w;
-            sprite_pos[tch.finger].y *= window_size.h;
-            sprite_pos[tch.finger].x -= 64;
-            sprite_pos[tch.finger].y -= 64;
-        }
-    } else if(e.type == CIEvent::MouseButton)
-    {
-        const CIMouseButtonEvent& mbn = *(const CIMouseButtonEvent*)d;
-        if(mbn.mod & CIMouseButtonEvent::Pressed)
-        {
-            sprite_pos[0] = mbn.pos;
-            sprite_pos[0].x -= 64;
-            sprite_pos[0].y -= 64;
-        }
-    }
-}
-
 void ExitHandler_1(void* ptr, const Input::CIEvent& e, c_cptr d)
 {
     using namespace Input;
@@ -225,22 +153,79 @@ i32 coffee_main(i32, cstring_w*)
 
     using ELD = EventLoopData<BasicWindow, RenderData>;
 
-    ELD* eventData = new ELD{MkUq<BasicWindow>(),
-                             MkUq<RenderData>(),
-                             setup,
-                             loop,
-                             cleanup,
-                             std::move(visual)};
+    auto eventData = MkSharedMove<ELD>(ELD{MkShared<BasicWindow>(),
+                                           MkShared<RenderData>(),
+                                           setup,
+                                           loop,
+                                           cleanup,
+                                           std::move(visual)});
 
-    eventData->renderer->installEventHandler(
-        {TouchInput_1, nullptr, eventData->renderer.get()});
-    eventData->renderer->installEventHandler(
-        {ExitHandler_1, nullptr, eventData->renderer.get()});
-    eventData->renderer->installEventHandler(
-        {WindowResize_1, nullptr, eventData->renderer.get()});
+    using DHandler = EventApplication::EventHandler<Display::Event>;
+    using IHandler = EventApplication::EventHandler<Input::CIEvent>;
+
+    using namespace Input;
+    using namespace EventHandlers;
+
+    auto& renderer = eventData->r();
+
+    renderer.installEventHandler(IHandler::MkFunc<CIMTouchMotionEvent>(
+        [](CIEvent const&, CIMTouchMotionEvent const* tch) {
+            if(tch->fingers == 2)
+            {
+                scalar v = tch->dist;
+                v /= Int16_Max;
+                v += 1.f;
+                size_2d<scalar> s = {v, v};
+                sprite_scale.w *= s.w;
+                sprite_scale.h *= s.h;
+            }
+        }));
+    renderer.installEventHandler(IHandler::MkFunc<CITouchMotionEvent>(
+        [](CIEvent const&, CITouchMotionEvent const* tch) {
+            if(tch->finger > num_points)
+                return;
+            if(!tch->hover)
+            {
+                sprite_pos[tch->finger] = tch->origin;
+                sprite_pos[tch->finger].x *= window_size.w;
+                sprite_pos[tch->finger].y *= window_size.h;
+                sprite_pos[tch->finger].x -= 64;
+                sprite_pos[tch->finger].y -= 64;
+            }
+        }));
+    renderer.installEventHandler(IHandler::MkFunc<CIMouseMoveEvent>(
+        [](CIEvent const&, CIMouseMoveEvent const* mbn) {
+            if(mbn->btn != 0)
+            {
+                sprite_pos[0] = mbn->origin;
+                sprite_pos[0].x -= 64;
+                sprite_pos[0].y -= 64;
+            }
+        }));
+    renderer.installEventHandler(IHandler::MkFunc<CITouchTapEvent>(
+        [](CIEvent const&, CITouchTapEvent const* tch) {
+            if(tch->finger > num_points)
+                return;
+            if(tch->pressed)
+            {
+                sprite_pos[tch->finger] = tch->pos;
+                sprite_pos[tch->finger].x *= window_size.w;
+                sprite_pos[tch->finger].y *= window_size.h;
+                sprite_pos[tch->finger].x -= 64;
+                sprite_pos[tch->finger].y -= 64;
+            }
+        }));
+    renderer.installEventHandler(DHandler::MkFunc<Display::ResizeEvent>(
+        [](Display::Event const&, Display::ResizeEvent const* rev) {
+            window_size = *rev;
+        }));
+    renderer.installEventHandler(
+        IHandler::MkHandler(ExitOn<OnQuit>(eventData->renderer)));
+    renderer.installEventHandler(
+        IHandler::MkHandler(ExitOn<OnKey<CK_Escape>>(eventData->renderer)));
 
     CString err;
-    BasicWindow::execEventLoop(*eventData, visual, err);
+    BasicWindow::execEventLoop(std::move(eventData), visual, err);
 
     return 0;
 }

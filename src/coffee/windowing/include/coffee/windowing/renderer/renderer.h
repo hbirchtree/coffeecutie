@@ -32,5 +32,10 @@ FORCEDINLINE UqPtr<CSDL2Renderer> CreateRendererUq()
     return UqPtr<CSDL2Renderer>(CreateRenderer());
 }
 
+FORCEDINLINE ShPtr<CSDL2Renderer> CreateRendererSh()
+{
+    return ShPtr<CSDL2Renderer>(CreateRenderer());
+}
+
 } // namespace Display
 } // namespace Coffee

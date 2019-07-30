@@ -1,10 +1,12 @@
 #pragma once
 
+#include <coffee/core/stl_types.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/core/types/rect.h>
 
 #include "../base/renderer/windowapplication.h"
+#include "../base/renderer/windowmanagerclient.h"
 
 namespace Coffee {
 namespace Display {
@@ -13,111 +15,143 @@ namespace EventHandlers {
 using namespace Input;
 
 template<class GLM>
-FORCEDINLINE void ResizeWindowUniversal(const Event& e, c_cptr data)
+struct WindowResize
 {
-    if(e.type == Event::Resize)
+    using event_type = ResizeEvent;
+
+    WindowResize()
     {
-        auto   rev = C_CAST<const ResizeEvent*>(data);
+    }
+
+    void operator()(Event const& e, ResizeEvent const* rev) const
+    {
         Rect64 view(0, 0, rev->w, rev->h);
         GLM::DefaultFramebuffer().resize(0, view);
     }
-}
+};
 
-template<typename T>
-FORCEDINLINE void ExitOnQuitSignal(void* rp, const CIEvent& e, c_cptr)
+struct OnQuit
 {
-    T* r = C_FCAST<T*>(rp);
-    if(e.type == CIEvent::QuitSign)
-        r->closeWindow();
-}
+};
 
-template<class GL>
-FORCEDINLINE void ResizeWindow(const Event& e, c_cptr data)
+template<InputCode Key>
+struct OnKey
 {
-    if(e.type == Event::Resize)
+    static constexpr InputCode key = Key;
+};
+
+template<typename Event>
+struct ExitOn
+{
+    using event_type = CIKeyEvent;
+
+    ExitOn(ShPtr<WindowApplication> const& renderer) : m_renderer(renderer)
     {
-        auto    rev = C_CAST<const ResizeEvent*>(data);
-        Rect64 view(0, 0, rev->w, rev->h);
-        GL::ViewportSet(view);
     }
-}
 
-template<typename T>
-FORCEDINLINE void EscapeCloseWindow(T* r, const CIEvent& e, c_cptr data)
-{
-    if(e.type == CIEvent::Keyboard)
+    template<
+        typename Dummy = void,
+        typename std::enable_if<std::is_same<Event, OnQuit>::value, Dummy>::
+            type* = nullptr>
+    void operator()(CIEvent const& e, c_cptr) const
     {
-        auto kev = C_CAST<const CIKeyEvent*>(data);
-        if(kev->key == CK_Escape)
-            r->closeWindow();
-    }
-}
-
-template<typename T>
-FORCEDINLINE void WindowManagerCloseWindow(
-    T* r, const Event& event, c_cptr data)
-{
-    if(event.type == Event::State)
-    {
-        const StateEvent* sev = C_CAST<const StateEvent*>(data);
-        if(sev->type == StateEvent::Closed)
-            r->closeWindow();
-    }
-}
-
-template<typename T>
-FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
-{
-#if !defined(COFFEE_ANDROID) || !defined(COFFEE_APPLE_MOBILE)
-    if(e.type == CIEvent::Keyboard)
-    {
-        auto kev = C_CAST<CIKeyEvent const*>(data);
-
-        if(kev->mod & CIKeyEvent::RepeatedModifier ||
-           kev->mod & CIKeyEvent::PressedModifier)
+        if(e.type != CIEvent::QuitSign)
             return;
 
-        switch(kev->key)
+        auto ptr = m_renderer.lock();
+
+        if(!ptr)
+            Throw(undefined_behavior("expired pointer"));
+
+        ptr->closeWindow();
+    }
+
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_same<Event, OnQuit>::value, Dummy>::
+            type* = nullptr>
+    void operator()(CIEvent const&, CIKeyEvent const* ev) const
+    {
+        if(ev->key != Event::key)
+            return;
+
+        auto ptr = m_renderer.lock();
+
+        if(!ptr)
+            Throw(undefined_behavior("expired pointer"));
+
+        ptr->closeWindow();
+    }
+
+  private:
+    WkPtr<WindowApplication> m_renderer;
+};
+
+template<
+    InputCode                Key,
+    CIKeyEvent::KeyModifiers Mods = CIKeyEvent::KeyModifiers::NoneModifier>
+struct KeyCombo
+{
+    static constexpr InputCode                key       = Key;
+    static constexpr CIKeyEvent::KeyModifiers modifiers = Mods;
+};
+
+namespace detail {
+
+template<class K>
+STATICINLINE bool check_key(CIKeyEvent const& keyEvent)
+{
+    constexpr auto mods = K::modifiers;
+
+    return (keyEvent.mod & (CIKeyEvent::PressedModifier |
+                            CIKeyEvent::RepeatedModifier)) == 0 &&
+           keyEvent.key == K::key && (keyEvent.mod & mods) == mods;
+}
+
+template<
+    class K,
+    class... KeyCombos,
+    typename std::enable_if<sizeof...(KeyCombos) >= 1>::type* = nullptr>
+STATICINLINE bool check_key(CIKeyEvent const& keyEvent)
+{
+    return check_key<K>(keyEvent) || check_key<KeyCombos...>(keyEvent);
+}
+
+} // namespace detail
+
+template<class... KeyCombo>
+struct AnyKey
+{
+    STATICINLINE bool filter(CIKeyEvent const& keyEvent)
+    {
+        return detail::check_key<KeyCombo...>(keyEvent);
+    }
+};
+
+template<typename Event>
+struct FullscreenOn
+{
+    using event_type = CIKeyEvent;
+
+    FullscreenOn(ShPtr<WindowManagerClient> const& renderer) :
+        m_renderer(renderer)
+    {
+    }
+
+    void operator()(CIEvent const&, CIKeyEvent const* keyEvent) const
+    {
+        if(Event::filter(*keyEvent))
         {
-        case CK_EnterCR:
-        case CK_EnterNL:
-            if(!(kev->mod & CIKeyEvent::LAltModifier))
-                break;
-        case CK_F11:
-            if(r->windowState() & Properties::Windowed)
-                r->setWindowState(Properties::WindowedFullScreen);
+            if(m_renderer->windowState() & Properties::Windowed)
+                m_renderer->setWindowState(Properties::WindowedFullScreen);
             else
-                r->setWindowState(Properties::Windowed);
-            break;
-        default:
-            break;
+                m_renderer->setWindowState(Properties::Windowed);
         }
     }
-#endif
-}
 
-/* These are pluggable event handlers */
-
-template<typename WindowHandler>
-void EscapeCloseWindow(void* r, CIEvent const& e, c_cptr data)
-{
-    EscapeCloseWindow<WindowHandler>(C_CAST<WindowHandler*>(r), e, data);
-}
-template<typename WindowHandler>
-void WindowManagerCloseWindow(void* r, Event const& e, c_cptr data)
-{
-    WindowManagerCloseWindow<WindowHandler>(C_CAST<WindowHandler*>(r), e, data);
-}
-template<typename WindowHandler>
-void WindowManagerFullscreen(void* r, CIEvent const& e, c_cptr data)
-{
-    WindowManagerFullscreen(C_CAST<WindowHandler*>(r), e, data);
-}
-template<typename GraphicsHandler>
-void ResizeWindowUniversal(void*, Event const& e, c_cptr data)
-{
-    ResizeWindowUniversal<GraphicsHandler>(e, data);
-}
+  private:
+    ShPtr<WindowManagerClient> m_renderer;
+};
 
 } // namespace EventHandlers
 } // namespace Display

@@ -283,6 +283,12 @@ inline ShPtr<T> MkShared(Args... a)
     return ShPtr<T>(new T(std::forward<Args>(a)...));
 }
 
+template<typename T>
+inline ShPtr<T> MkSharedMove(T&& v)
+{
+    return ShPtr<T>(new T(std::move(v)));
+}
+
 /*
  *
  * Here comes a couple of custom classes and wrappers

@@ -43,8 +43,8 @@ struct EventLoopData
     using LFun = LoopFunction<Renderer, ShareData>;
 
     EventLoopData(
-        UqPtr<Renderer>&&  r,
-        UqPtr<ShareData>&& d,
+        ShPtr<Renderer>&&  r,
+        ShPtr<ShareData>&& d,
         LFun&&             s,
         LFun&&             l,
         LFun&&             c,
@@ -59,8 +59,8 @@ struct EventLoopData
 
     C_DEPRECATED_S("Use leaner initializer")
     EventLoopData(
-        UqPtr<Renderer>&&  r,
-        UqPtr<ShareData>&& d,
+        ShPtr<Renderer>&&  r,
+        ShPtr<ShareData>&& d,
         LFun&&             s,
         LFun&&             l,
         LFun&&             c,
@@ -83,8 +83,8 @@ struct EventLoopData
         TimeLimited = 0x1,
     };
 
-    UqPtr<Renderer>  renderer;
-    UqPtr<ShareData> data;
+    ShPtr<Renderer>  renderer;
+    ShPtr<ShareData> data;
 
     LoopFunction<Renderer, ShareData> setup;
     LoopFunction<Renderer, ShareData> loop;
@@ -274,14 +274,61 @@ class EventApplication : public InputApplication
     {
     }
 
-    template<typename EvType>
+    template<class EvType>
     struct EventHandler
     {
-        using FPtr = void (*)(void*, EvType const& e, c_cptr);
+        using FPtr = void(EvType const&, c_cptr);
 
-        FPtr    func;
-        cstring name;
-        void*   user_ptr;
+        EventHandler(Function<FPtr>&& func, cstring name = nullptr) :
+            func(func), name(name)
+        {
+        }
+
+        template<typename DataType>
+        static EventHandler MkFunc(
+            Function<void(EvType const&, DataType const*)>&& func,
+            cstring                                          name = nullptr)
+        {
+            return EventHandler(
+                [func](EvType const& e, c_cptr data) {
+                    if(e.type == DataType::event_type)
+                        func(e, C_RCAST<DataType const*>(data));
+                },
+                name);
+        }
+
+        template<typename EType>
+        static EventHandler MkAtomic(
+            EType filter, Function<void()>&& func, cstring name = nullptr)
+        {
+            return EventHandler(
+                [func, filter](EvType const& e, c_cptr) {
+                    if(e.type == filter)
+                        func();
+                },
+                name);
+        }
+
+        template<
+            class EHandler,
+            typename std::enable_if<std::is_class<EHandler>::value>::type* =
+                nullptr>
+        static EventHandler MkHandler(
+            EHandler&& handler, cstring name = nullptr)
+        {
+            return EventHandler(
+                [handler](EvType const& e, c_cptr data) {
+                    if(e.type == EHandler::event_type::event_type)
+                        handler(
+                            e,
+                            C_RCAST<typename EHandler::event_type const*>(
+                                data));
+                },
+                name);
+        }
+
+        cstring        name;
+        Function<FPtr> func;
     };
 
     using EventHandlerI = EventHandler<Input::CIEvent>;
@@ -384,17 +431,16 @@ class EventApplication : public InputApplication
 #endif
     }
 
-#define SUSPRESUME_FUN(var, cond, fun, extrafun)               \
-    template<typename Renderer, typename Data>                 \
-    static void var(void* ptr, Event const& e, c_cptr)         \
-    {                                                          \
-        if(e.type == Event::cond)                              \
-        {                                                      \
-            EventLoopData<Renderer, Data>& evdata =            \
-                *C_FCAST<EventLoopData<Renderer, Data>*>(ptr); \
-            extrafun(evdata);                                  \
-            evdata.fun(evdata.r(), evdata.d());                \
-        }                                                      \
+#define SUSPRESUME_FUN(var, cond, fun, extrafun)                       \
+    template<typename Renderer, typename Data>                         \
+    static void var(                                                   \
+        EventLoopData<Renderer, Data>& evdata, Event const& e, c_cptr) \
+    {                                                                  \
+        if(e.type == Event::cond)                                      \
+        {                                                              \
+            extrafun(evdata);                                          \
+            evdata.fun(evdata.r(), evdata.d());                        \
+        }                                                              \
     }
 
     SUSPRESUME_FUN(resumeFunction, IsForeground, setup, resumeExtra)
@@ -442,7 +488,7 @@ class EventApplication : public InputApplication
 
         >
     static i32 execEventLoop(
-        UqPtr<EventLoopData<Renderer, Data>>&& ev, Properties& visual, CString&)
+        ShPtr<EventLoopData<Renderer, Data>>&& ev, Properties& visual, CString&)
     {
         if(!ev)
             return -1;
@@ -456,15 +502,20 @@ class EventApplication : public InputApplication
 
         Renderer& r = ev->r();
 
+        WkPtr<ELD> borrowedEv = ev;
+
         /* Because MSVC++ sucks, I can't use a struct initializer list for this
          * :( */
-        EventHandlerD suspend_data = {};
-        EventHandlerD resume_data  = {};
-        suspend_data.user_ptr = resume_data.user_ptr = ev.get();
-        suspend_data.func = suspendFunction<Renderer, Data>;
-        resume_data.func  = resumeFunction<Renderer, Data>;
-        suspend_data.name = suspend_str;
-        resume_data.name  = resume_str;
+        EventHandlerD suspend_data =
+            EventHandlerD::MkAtomic(Event::IsBackground, [borrowedEv]() {
+                auto ptr = borrowedEv.lock();
+                ptr->cleanup(ptr->r(), ptr->d());
+            });
+        EventHandlerD resume_data =
+            EventHandlerD::MkAtomic(Event::IsBackground, [borrowedEv]() {
+                auto ptr = borrowedEv.lock();
+                ptr->setup(ptr->r(), ptr->d());
+            });
 
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
@@ -479,7 +530,7 @@ class EventApplication : public InputApplication
 
         using namespace CfEventFunctions;
 
-        static UqPtr<ELD> local_event_data = std::move(ev);
+        static ShPtr<ELD> local_event_data = std::move(ev);
 
         local_event_data->visual   = visual;
         coffee_event_handling_data = local_event_data.get();
@@ -498,7 +549,7 @@ class EventApplication : public InputApplication
             1);
 #endif
 
-        libc::signal::register_atexit([]() { local_event_data.release(); });
+        libc::signal::register_atexit([]() { local_event_data = {}; });
 
 #if defined(COFFEE_USE_APPLE_GLKIT) || \
     defined(COFFEE_USE_ANDROID_NATIVEWIN) || defined(COFFEE_EMSCRIPTEN)
@@ -555,6 +606,9 @@ class EventApplication : public InputApplication
     {
     }
 };
+
+template<class T>
+using EHandle = EventApplication::EventHandler<T>;
 
 } // namespace Display
 } // namespace Coffee

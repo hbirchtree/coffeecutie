@@ -288,7 +288,7 @@ void SDL2EventHandler::pollEvents()
     {
         SDL2::EventHandleAll(this, &ev);
         for(EventHandlerSDL const& eh : m_eventhandlers_sdl)
-            eh.func(eh.user_ptr, &ev, nullptr);
+            eh.func(&ev, nullptr);
     }
 
 #if defined(COFFEE_USE_MAEMO_X11)
@@ -318,13 +318,13 @@ bool SDL2EventHandler::closeFlag() const
 void SDL2EventHandler::internalProcessEvent(const Event& e, c_cptr d)
 {
     for(EventHandlerD& eh : m_eventhandlers_windw)
-        eh.func(eh.user_ptr, e, d);
+        eh.func(e, d);
 }
 
 void SDL2EventHandler::internalProcessEvent(const CIEvent& e, c_cptr d)
 {
     for(EventHandlerI& eh : m_eventhandlers_input)
-        eh.func(eh.user_ptr, e, d);
+        eh.func(e, d);
 }
 
 bool SDL2EventHandler::installEventHandler(EventHandlerI e)

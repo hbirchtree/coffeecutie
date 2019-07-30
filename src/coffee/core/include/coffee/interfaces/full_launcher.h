@@ -30,7 +30,7 @@ struct EventLoopSpawner
 
 template<typename GAPI, typename R, typename D>
 i32 AutoExec(
-    Function<void(R&, D*, Display::Properties&)>&& presetup,
+    Function<void(ShPtr<R>, ShPtr<D>, Display::Properties&)>&& presetup,
     Display::LoopFunction<R, D>&&                  setup,
     Display::LoopFunction<R, D>&&                  loop,
     Display::LoopFunction<R, D>&&                  cleanup)
@@ -39,8 +39,8 @@ i32 AutoExec(
 
     using ELD = EventLoopData<R, D>;
 
-    auto eld_ptr = MkUqWrap<ELD>(new ELD{Display::CreateRendererUq(),
-                                         MkUq<D>(),
+    auto eld_ptr = MkSharedMove<ELD>({Display::CreateRendererSh(),
+                                         MkShared<D>(),
                                          std::move(setup),
                                          std::move(loop),
                                          std::move(cleanup),
@@ -49,7 +49,7 @@ i32 AutoExec(
     auto visual = Display::GetDefaultVisual<GAPI>();
 
     if(presetup)
-        presetup(eld_ptr->r(), eld_ptr->d(), visual);
+        presetup(eld_ptr->renderer, eld_ptr->data, visual);
 
     CString error;
 
@@ -68,7 +68,7 @@ i32 AutoExec(
     Display::LoopFunction<R, D>&& cleanup)
 {
     return AutoExec<GAPI, R, D>(
-        [](R&, D*, Display::Properties&) {},
+        [](ShPtr<R>, ShPtr<D>, Display::Properties&) {},
         std::move(setup),
         std::move(loop),
         std::move(cleanup));

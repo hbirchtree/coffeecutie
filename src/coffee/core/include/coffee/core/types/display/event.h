@@ -37,10 +37,17 @@ struct Event
     }
 };
 
+template<Event::EventType Type>
+struct BaseEvent
+{
+    using parent_type = Event;
+    static constexpr Event::EventType event_type = Type;
+};
+
 /*!
  * \brief Window state event
  */
-struct StateEvent
+struct StateEvent : BaseEvent<Event::State>
 {
     StateEvent() : type()
     {
@@ -63,7 +70,7 @@ struct StateEvent
 /*!
  * \brief Window focus event
  */
-struct FocusEvent
+struct FocusEvent : BaseEvent<Event::Focus>
 {
     FocusEvent() : mod()
     {
@@ -81,8 +88,15 @@ struct FocusEvent
 
 C_FLAGS(FocusEvent::FocusMask, u8);
 
-using MoveEvent   = Point;
-using ResizeEvent = Size;
+struct MoveEvent : Point, BaseEvent<Event::Move>
+{
+    using Point::point_2d;
+};
+
+struct ResizeEvent : Size, BaseEvent<Event::Resize>
+{
+    using Size::size_2d;
+};
 
 } // namespace Display
 } // namespace Coffee
