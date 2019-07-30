@@ -101,7 +101,7 @@ i32 coffee_main(i32, cstring_w*)
             r->installEventHandler(
                 EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r)));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                FullscreenOn<AnyKey<
+                FullscreenOn<AnyIKey<
                     KeyCombo<
                         CK_EnterNL,
                         CIKeyEvent::KeyModifiers::RAltModifier>,

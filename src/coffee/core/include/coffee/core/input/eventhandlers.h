@@ -120,7 +120,7 @@ STATICINLINE bool check_key(CIKeyEvent const& keyEvent)
 } // namespace detail
 
 template<class... KeyCombo>
-struct AnyKey
+struct AnyIKey
 {
     STATICINLINE bool filter(CIKeyEvent const& keyEvent)
     {
