@@ -22,11 +22,11 @@ deploy_asset "${PRESSURE_ASSET}" ${TARGET_SLUG}
 # CrashRecovery, for sending diagnostics on crashes
 tar -zcf "${CRASH_ASSET}" \
     $(ls \
-        bin/CrashRecovery* 
+        bin/CrashRecovery* \
         bin/*/CrashRecovery* 
     )
 
-deploy "${CRASH_ASSET}" ${TARGET_SLUG}
+deploy_asset "${CRASH_ASSET}" ${TARGET_SLUG}
 
 popd
 
