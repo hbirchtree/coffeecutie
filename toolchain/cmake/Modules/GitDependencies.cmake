@@ -46,7 +46,11 @@ function ( DEPENDENCY_GET )
         set ( "GIT_DEPENDENCIES_${NAME_COMBO}_SOURCE" ${DEP_SOURCE} PARENT_SCOPE )
         set ( "GIT_DEPENDENCIES_${NAME_COMBO}_EXTENSION" ${DEP_EXTENSION} PARENT_SCOPE )
 
-        set ( LOCAL_DIR "${DEP_LIB_LOCATION}/${NAME}" )
+        set ( LIB_HASH "${NAME}:${DEP_TAG}:${DEP_SOURCE}" )
+
+        string ( SHA1 LIB_HASH "${LIB_HASH}" )
+
+        set ( LOCAL_DIR "${DEP_LIB_LOCATION}/${LIB_HASH}" )
 
         if(NOT "${DEP_SIDELOAD}" STREQUAL "")
             set ( LOCAL_DIR "${DEP_SIDELOAD}" )
@@ -82,7 +86,7 @@ function ( DEPENDENCY_GET )
         endif()
 
         set ( FILE_URL "${BASE_URL}/${NAME}_${GIT_DEP_BUILDVARIANT}.${DEP_EXTENSION}" )
-        set ( LOCAL_FILE "${DEP_CACHE_LOCATION}/${NAME}.${DEP_EXTENSION}" )
+        set ( LOCAL_FILE "${DEP_CACHE_LOCATION}/${LIB_HASH}.${DEP_EXTENSION}" )
         set ( VERSION_FILE "${LOCAL_FILE}.version" )
         set ( TARGET_LOCATION "${DEP_LIB_LOCATION}" )
 
