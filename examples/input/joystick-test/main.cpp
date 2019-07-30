@@ -31,8 +31,8 @@ Sprites::Texture sprite_load(
     RSC analog_rsc(source, RSCA::AssetFile);
     if(!FileMap(analog_rsc))
     {
-//        SDL2Dialog::ErrorMessage(
-//            "Failed to load resource", "Couldn't find texture");
+        //        SDL2Dialog::ErrorMessage(
+        //            "Failed to load resource", "Couldn't find texture");
         return {};
     }
     stb::image_rw img;
@@ -70,10 +70,12 @@ i32 coffee_main(i32, cstring_w*)
 
     CString err;
 
-    BasicWindow winhost;
+    auto winhost_ptr = MkShared<BasicWindow>();
+    auto& winhost = *winhost_ptr;
     if(!winhost.init(visual, &err))
     {
-//        SDL2Dialog::ErrorMessage("Failed to create window", err.c_str());
+        //        SDL2Dialog::ErrorMessage("Failed to create window",
+        //        err.c_str());
         return 1;
     }
 
@@ -81,7 +83,8 @@ i32 coffee_main(i32, cstring_w*)
     Sprites rend(&winhost);
     if(!rend.init(&err))
     {
-//        SDL2Dialog::ErrorMessage("Failed to initialize renderer", err.c_str());
+        //        SDL2Dialog::ErrorMessage("Failed to initialize renderer",
+        //        err.c_str());
         return 1;
     }
 
@@ -171,12 +174,12 @@ i32 coffee_main(i32, cstring_w*)
         bind_sprite(v.first, v.second);
 
     /* Install standard event handlers */
-    winhost.installEventHandler(
-        {EventHandlers::EscapeCloseWindow<BasicWindow>, nullptr, &winhost});
-    winhost.installEventHandler(
-        {EventHandlers::WindowManagerCloseWindow<BasicWindow>,
-         nullptr,
-         &winhost});
+    winhost.installEventHandler(EHandle<Input::CIEvent>::MkHandler(
+        EventHandlers::ExitOn<EventHandlers::OnKey<Input::CK_Escape>>(
+            winhost_ptr)));
+    winhost.installEventHandler(EHandle<Input::CIEvent>::MkHandler(
+        EventHandlers::ExitOn<EventHandlers::OnQuit>(
+            winhost_ptr)));
 
     auto draw_element = [&](Sprites::Sprite const& unpressed,
                             Sprites::Sprite const* pressed,
@@ -220,7 +223,7 @@ i32 coffee_main(i32, cstring_w*)
 
         {
             Size win_size     = winhost.windowSize();
-            f32   scale_factor = .5f;
+            f32  scale_factor = .5f;
 
             if(win_size.w >= 960 && win_size.h >= 640)
                 scale_factor = 1.f;
