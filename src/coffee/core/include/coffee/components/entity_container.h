@@ -286,12 +286,12 @@ struct EntityContainer : non_copy
             Throw(undefined_behavior("subsystem not found"));
     }
 
-    template<typename OutputType>
-    Subsystem<OutputType>& subsystem()
+    template<typename TagType>
+    Subsystem<TagType>& subsystem()
     {
-        using subsystem_t = Subsystem<OutputType>;
+        using subsystem_t = Subsystem<TagType>;
 
-        const type_hash type_id = typeid(OutputType).hash_code();
+        const type_hash type_id = typeid(TagType).hash_code();
 
         auto it = subsystems.find(type_id);
 
