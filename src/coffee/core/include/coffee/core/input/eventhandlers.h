@@ -59,10 +59,7 @@ struct ExitOn
             return;
 
         auto ptr = m_renderer.lock();
-
-        if(!ptr)
-            Throw(undefined_behavior("expired pointer"));
-
+        C_PTR_CHECK(ptr);
         ptr->closeWindow();
     }
 
@@ -76,10 +73,7 @@ struct ExitOn
             return;
 
         auto ptr = m_renderer.lock();
-
-        if(!ptr)
-            Throw(undefined_behavior("expired pointer"));
-
+        C_PTR_CHECK(ptr);
         ptr->closeWindow();
     }
 

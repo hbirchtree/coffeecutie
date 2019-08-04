@@ -1,7 +1,9 @@
 #!/bin/bash
 
 ICON_DESTINATION="Coffee.iconset"
-SRC_ICON="../common/icon_large.png"
+SRC_ICON="$1"
+
+echo "gen_icons.sh: Using icon ${SRC_ICON}"
 
 mkdir -p ${ICON_DESTINATION}
 
