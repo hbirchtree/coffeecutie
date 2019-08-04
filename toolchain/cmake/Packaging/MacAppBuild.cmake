@@ -174,8 +174,12 @@ macro( MACAPP_PACKAGE
             )
 
         get_filename_component ( ICON_BASENAME "${OSX_ICON}" NAME )
+        add_custom_target ( ${TARGET}.resources
+            COMMAND
+                ${CMAKE_COMMAND} -E make_directory ${RESOURCE_DIR}
+            )
         add_custom_target ( ${TARGET}.icns
-            DEPENDS ${OSX_ICON}
+            DEPENDS ${OSX_ICON} ${TARGET}.resources
             COMMAND
                 qlmanage -t -s 512 -o . ${OSX_ICON}
             COMMAND
