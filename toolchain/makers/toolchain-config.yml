@@ -175,7 +175,6 @@ testing.linux.*:
   =compiler: Clang 4+
   =container: emscripten
   =preload: js-emscripten.cmake
-  =toolchain: js-emscripten.toolchain.cmake
   =generator: Unix Makefiles
   =emscripten.root: $(dependencies.emscripten.target)/emscripten/master
   =emscripten.cmake: $(emscripten.root)/cmake
@@ -233,10 +232,7 @@ testing.linux.*:
     - -DANDROID_CPP_FEATURES=$(android.features)
     - -DANDROID_ARM_NEON=$(android.arm-neon)
     - -DCMAKE_TOOLCHAIN_FILE=$(android.ndk)/build/cmake/android.toolchain.cmake
-  #  +environment-vars:
-  # - -e OPENSSL_ROOT_DIR="$(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl"
   =container: android
-  =toolchain: all-android.toolchain.cmake
 
 
 .*maemo.*:
