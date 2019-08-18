@@ -6,9 +6,7 @@
 #include <coffee/core/task_queue/task.h>
 #include <coffee/interfaces/full_launcher.h>
 
-#if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
-#endif
 
 using EDATA = EventLoopData<CDRenderer, RendererState>;
 
@@ -20,9 +18,7 @@ i32 coffee_main(i32, cstring_w*)
     using Display::Event;
     using Input::CIEvent;
 
-#if defined(FEATURE_ENABLE_ASIO)
     Net::RegisterProfiling();
-#endif
 
     CString err;
     return AutoExec<GLM, CDRenderer, RendererState>(
@@ -44,9 +40,6 @@ i32 coffee_main(i32, cstring_w*)
                         CK_EnterNL,
                         CIKeyEvent::KeyModifiers::RAltModifier>,
                     KeyCombo<CK_F11>>>(r)));
-            //            r->installEventHandler(
-            //                {WindowManagerFullscreen<CDRenderer>, nullptr,
-            //                &r});
         },
         SetupRendering,
         RendererLoop,

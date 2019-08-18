@@ -5,10 +5,22 @@
 
 namespace Coffee {
 namespace Components {
+namespace Convenience {
+
+template<typename T>
+FORCEDINLINE declmemtype(&std::type_info::hash_code) type_hash_v()
+{
+    return typeid(T).hash_code();
+}
+
+}
 
 namespace detail {
 struct visitor_path;
 }
+
+template<typename ContainerType>
+struct EntityRef;
 
 struct EntityContainer : non_copy
 {
@@ -133,6 +145,13 @@ struct EntityContainer : non_copy
     template<typename ComponentType>
     void register_component(UqPtr<ComponentContainer<ComponentType>>&& c);
 
+    template<typename ContainerType, typename... Args>
+    void register_component_inplace(Args... args)
+    {
+        register_component<typename ContainerType::tag_type>(
+            MkUq<ContainerType>(std::forward<Args>(args)...));
+    }
+
     template<typename OutputType>
     void register_subsystem(UqPtr<Subsystem<OutputType>>&& sys)
     {
@@ -187,9 +206,7 @@ struct EntityContainer : non_copy
         auto& entity = entities.back();
 
         entity.id       = entity_counter;
-        entity.interval = recipe.interval;
         entity.tags     = recipe.tags;
-        entity.next_run = clock::now();
 
         for(auto type_id : recipe.components)
             add_component(entity_counter, type_id);
@@ -219,6 +236,18 @@ struct EntityContainer : non_copy
                     *this, container<ComponentType>());
             },
             [=]() { return entity_query(*this); });
+    }
+
+    template<typename Matcher>
+    quick_container<entity_query> match()
+    {
+        return quick_container<entity_query>(
+                    [=]() {
+            return entity_query(*this, [=](Entity const& e)
+            {
+                return Matcher::match(*this, e.id);
+            });
+        }, [=]() {return entity_query(*this);});
     }
 
     ComponentContainerBase& container(size_t type_id)
@@ -306,6 +335,9 @@ struct EntityContainer : non_copy
     {
         return container<ComponentType>().get(id);
     }
+
+    EntityRef<EntityContainer> ref(Entity& entity);
+    EntityRef<EntityContainer> ref(u64 entity);
 
     /* For optimizations */
     using visitor_graph = Set<Vector<bool>>;

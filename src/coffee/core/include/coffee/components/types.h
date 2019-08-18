@@ -43,19 +43,13 @@ C_FLAGS(VisitorFlags, u32);
 struct EntityRecipe
 {
     Vector<size_t> components;
-    duration       interval;
     u32            tags;
 };
 
 struct Entity : non_copy
 {
     u64 id;
-
-    duration   interval;
-    time_point next_run;
-
     u32 tags;
-
     u32 _pad = 0;
 };
 
@@ -101,6 +95,11 @@ struct ComponentContainer : ComponentContainerBase
     using type     = typename ComponentType::type;
 
     virtual type* get(u64 id) = 0;
+
+    virtual type const* get(u64 id) const final
+    {
+        return C_CCAST<ComponentContainer<ComponentType>*>(this)->get(id);
+    }
 };
 
 struct SubsystemBase : non_copy

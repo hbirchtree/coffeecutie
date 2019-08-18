@@ -33,6 +33,10 @@
 #include <android_native_app_glue.h>
 #endif
 
+#if defined(COFFEE_UNIXPLAT)
+#include <peripherals/posix/process.h>
+#endif
+
 using namespace ::platform;
 
 namespace platform {
@@ -177,11 +181,11 @@ static void SetPlatformState()
     auto& platState = platform::state;
 
     platState->m_LockState = State::LockState;
-    platState->SwapState = State::SwapState;
-    platState->PeekState = State::PeekState;
+    platState->SwapState   = State::SwapState;
+    platState->PeekState   = State::PeekState;
 
-    platState->ProfilerEnabled = State::ProfilerEnabled;
-    platState->GetProfilerStore = State::GetProfilerStore;
+    platState->ProfilerEnabled   = State::ProfilerEnabled;
+    platState->GetProfilerStore  = State::GetProfilerStore;
     platState->GetProfilerTStore = State::GetProfilerTStore;
 
     platState->GetAppData = State::GetAppData;
@@ -406,14 +410,41 @@ void GotoApplicationDir()
     file::DirFun::ChDir(constructors::MkUrl(dir), ec);
 }
 
+#if COFFEE_GLIBC_STACKTRACE
+void generic_stacktrace(int sig)
+{
+    using semantic::debug::Severity;
+    using namespace libc::io;
+
+    auto sig_string = posix::proc::code_to_string(sig);
+
+    fprintf(stderr, "signal encountered:\n");
+    fprintf(stderr, " >> %s\n", sig_string);
+
+    platform::env::Stacktracer::Backtrace(typing::logging::fprintf_logger);
+
+    posix::proc::send_sig(getpid(), libc::signal::sig::kill);
+}
+#endif
+
 void InstallDefaultSigHandlers()
 {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
+#if COFFEE_GLIBC_STACKTRACE
+    platform::env::Stacktracer::Backtrace();
+#endif
+
     std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
             std::current_exception(), typing::logging::fprintf_logger);
         abort();
     });
+
+    libc::signal::install(libc::signal::sig::abort, generic_stacktrace);
+    libc::signal::install(libc::signal::sig::fpe, generic_stacktrace);
+    libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
+    libc::signal::install(libc::signal::sig::bus_error, generic_stacktrace);
+    libc::signal::install(libc::signal::sig::segfault, generic_stacktrace);
 #endif
 }
 

@@ -4,6 +4,7 @@
 #include <coffee/android/android_main.h>
 #include <coffee/core/stl_types.h>
 #include <peripherals/stl/string_casting.h>
+#include <platforms/file.h>
 
 extern "C" {
 #include <cpu-features.h>
@@ -17,10 +18,12 @@ namespace platform {
 namespace env {
 namespace Linux {
 
-
 extern CString get_kern_arch();
+
 }
 namespace android {
+
+using LFileFun = file::Linux::FileFun;
 
 JNIEnv* jni_getEnv()
 {
@@ -75,11 +78,6 @@ CString SysInfo::GetSystemVersion()
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
     return "Android API " + cast_pod(cmd.data.scalarI64);
-}
-
-info::HardwareDevice SysInfo::Processor()
-{
-    return HWDeviceInfo();
 }
 
 HWDeviceInfo SysInfo::DeviceName()

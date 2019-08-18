@@ -205,13 +205,41 @@ static void DefaultedPrint(
     logger(io_handles::err, line, Severity::Critical, 1, 0);
 }
 
+void Stacktracer::Backtrace(typing::logging::LogInterfaceBasic log)
+{
+    static constexpr szptr MAX_CONTEXT = 21;
+    static void* tracestore[MAX_CONTEXT];
+
+    for(szptr i=0; i<MAX_CONTEXT; i++)
+        tracestore[i] = nullptr;
+
+    auto num  = backtrace(tracestore, MAX_CONTEXT);
+
+    if(!log)
+    {
+        backtrace_symbols(nullptr, 0);
+        return;
+    }
+
+    auto syms = backtrace_symbols(tracestore, num);
+    if(syms && num)
+    {
+        DefaultedPrint(log, "dumping stacktrace:");
+        for(auto i : Range<>(C_FCAST<szptr>(num)))
+        {
+            if(syms[i])
+            {
+                DefaultedPrint(log, " >> " + DemangleBacktrace(syms[i]));
+            } else
+                DefaultedPrint(
+                    log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
+        }
+    }
+}
+
 void Stacktracer::ExceptionStacktrace(
     const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
 {
-    static constexpr szptr MAX_CONTEXT = 20;
-
-    void* tracestore[MAX_CONTEXT];
-
     try
     {
         if(exc_ptr)
@@ -228,22 +256,7 @@ void Stacktracer::ExceptionStacktrace(
             log,
             " >> " + Stacktracer::DemangleSymbol(typeid(e).name()) + ": " +
                 e.what());
-        auto num  = backtrace(tracestore, MAX_CONTEXT);
-        auto syms = backtrace_symbols(tracestore, num);
-        if(syms && num)
-        {
-            DefaultedPrint(log, "dumping stacktrace:");
-            for(auto i : Range<>(C_FCAST<szptr>(num)))
-            {
-                if(syms[i])
-                {
-                    DefaultedPrint(log, " >> " + DemangleBacktrace(syms[i]));
-                } else
-                    DefaultedPrint(
-                        log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
-            }
-        }
-        free(syms);
+        Backtrace(log);
     }
 }
 

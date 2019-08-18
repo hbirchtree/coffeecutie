@@ -220,6 +220,16 @@ spawn_info spawn(exec_info<ArgType> const& exec)
     return {out.read, err.read, in.write, childPid};
 }
 
+inline void send_sig(pid_t target, libc::signal::sig signal)
+{
+    errno = 0;
+    ::kill(target, static_cast<int>(signal));
+
+    posix_ec ec;
+    collect_error(ec);
+    C_ERROR_CHECK(ec);
+}
+
 inline const char* code_to_string(int exit_code)
 {
 #define CODE_TO_STRING(code) case code: return #code;

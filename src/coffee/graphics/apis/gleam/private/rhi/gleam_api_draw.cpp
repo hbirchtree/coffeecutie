@@ -14,21 +14,80 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
+using draw_hash =
+    Tup<GLEAM_API::PSTATE*, GLEAM_API::V_DESC*, u32, u32, u32, u32, TypeEnum>;
+
+static draw_hash hash_draw(GLEAM_API::RenderPass::DrawCall const& drawCall)
+{
+    auto const& draw = drawCall.d_data;
+
+    /* TODO: Use a proper, lightweight hash */
+
+    return std::make_tuple(
+        drawCall.state,
+        drawCall.vertices,
+        draw.m_elems,
+        draw.m_verts,
+        draw.m_eoff,
+        draw.m_voff,
+        draw.m_eltype);
+}
+
+static GLEAM_API::D_DATA collapse_draw(
+    GLEAM_API::D_DATA& d1, GLEAM_API::D_DATA& d2)
+{
+    auto out = d1;
+
+    out.m_insts += d2.m_insts;
+
+    d1.m_ioff = 0;
+    d2.m_ioff = 0;
+
+    return out;
+}
+
 void GLEAM_API::OptimizeRenderPass(
     GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer)
 {
     DProfContext _(GLM_API "Optimizing RenderPass");
 
-    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
-    auto&                                       cmdBufs = buffer.cmdBufs;
+    Map<draw_hash, Vector<RenderPass::DrawCall*>> draws;
 
+    for(auto& draw : rpass.draws)
+        draws[hash_draw(draw)].push_back(&draw);
+
+    u32                          globalInstanceOffset = 0;
+    Vector<RenderPass::DrawCall> collectedDraws;
+    collectedDraws.reserve(draws.size());
+
+    for(auto& bucket : draws)
+    {
+        D_DATA collected  = bucket.second.front()->d_data;
+        collected.m_insts = 0;
+        collected.m_ioff  = 0;
+        for(auto& draw : bucket.second)
+        {
+            draw->d_data.m_ioff = globalInstanceOffset + collected.m_insts;
+            collected.m_insts += draw->d_data.m_insts;
+        }
+
+        globalInstanceOffset += collected.m_insts;
+
+        collectedDraws.push_back(*bucket.second.front());
+        collectedDraws.back().d_data = collected;
+
+        bucket.second.clear();
+    }
+
+    rpass.draws = std::move(collectedDraws);
+
+    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
     for(auto& call : rpass.draws)
     {
         vert_sort[call.vertices].push_back(&call);
     }
 
-    /* TODO: Add step to de-duplicate D_DATA into instancing */
-
+    auto& cmdBufs = buffer.cmdBufs;
     for(auto& group : vert_sort)
     {
         Map<PSTATE*, Vector<RenderPass::DrawCall*>> ustate_sort;
@@ -148,7 +207,7 @@ static bool InternalDraw(
 
         if(d.instanced())
         {
-        /* TODO: Implement the disabled drawcalls using other means */
+            /* TODO: Implement the disabled drawcalls using other means */
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
             if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0 &&
                i.vertexOffset() != 0)

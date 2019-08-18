@@ -434,7 +434,9 @@ i32 coffee_main(i32, cstring_w*)
         proc->setCacheBaseDirectory(cacheDir);
 
         proc->setInternalState(
-            State::GetInternalState(), State::GetInternalThreadState());
+            State::GetInternalState(),
+            State::GetInternalThreadState(),
+            platform::state);
         proc->setBaseDirectories(baseDirs);
         proc->numWorkers = globalNumWorkers;
 

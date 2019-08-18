@@ -18,7 +18,6 @@ struct SysInfo : Linux::SysInfo
     static CString      GetSystemVersion();
     static info::HardwareDevice DeviceName();
     static info::HardwareDevice Motherboard();
-    static info::HardwareDevice Processor();
 
     static u32     CoreCount();
     static ThrdCnt ThreadCount();
