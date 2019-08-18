@@ -72,6 +72,10 @@ union SafeArea
 extern CString system_name();
 
 namespace device {
+namespace system {
+extern CString runtime_kernel();
+extern CString runtime_arch();
+}
 namespace display {
 
 extern scalar   dpi();

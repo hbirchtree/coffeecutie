@@ -52,6 +52,8 @@ STATICINLINE ShPtr<ASIO_Worker> GenWorker()
     auto taskId = RuntimeQueue::QueueImmediate(
         queue, Chrono::milliseconds(0), RunWorker, ec);
 
+    C_ERROR_CHECK(ec);
+
     worker->runner_task = taskId;
 
     return worker;

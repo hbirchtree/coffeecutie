@@ -775,7 +775,7 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
     {
         Profiler::DeepProfile(RQ_API "Entering deep sleep");
         if(mNextWakeup < current)
-            return Chrono::seconds(10);
+            return Chrono::seconds(1);
         else
             return mNextWakeup - current;
     } else

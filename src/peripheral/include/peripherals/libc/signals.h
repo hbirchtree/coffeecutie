@@ -26,8 +26,11 @@ enum class sig
     fpe               = SIGFPE,
     segfault          = SIGSEGV,
     abort             = SIGABRT,
+    bus_error         = SIGBUS,
 
-    /* May only be sent */
+    ill_op = illegal_operation,
+
+/* May only be sent */
 #if defined(COFFEE_WINDOWS)
     kill = 101,
 #else
