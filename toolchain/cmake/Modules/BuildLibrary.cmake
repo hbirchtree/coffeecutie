@@ -252,7 +252,7 @@ macro(COFFEE_LIBRARY)
 
     target_compile_definitions ( ${LIB_TARGET}
         PUBLIC
-        -DFEATURE_ENABLE_${LIB_TARGET}
+        -DFEATURE_ENABLE_${LIB_TARGET}=1
         )
 
     if(NOT LIB_NO_EXPORT)

@@ -266,12 +266,9 @@ struct socket_base : std::istream, std::ostream, non_copy
     }
 
     void async_write_receive(
-        std::tuple<async_ptr<>> fun, asio::error_code ec, size_t sz)
+        async_ptr<> call, asio::error_code ec, size_t sz)
     {
         DProfContext _(DTEXT(ASIO_TAG "write receive"));
-
-        async_ptr<> call;
-        std::tie(call) = fun;
 
         trans.consume(sz);
         async_dispatch_skiperror(call, ec);
@@ -315,11 +312,8 @@ struct socket_base : std::istream, std::ostream, non_copy
         socket.wait(sock_t::wait_error, ec);
     }
 
-    void async_close_receive(std::tuple<async_ptr<>> fun)
+    void async_close_receive(async_ptr<> calls)
     {
-        async_ptr<> calls;
-        std::tie(calls) = fun;
-
         close_internal();
 
         calls->on_complete();
@@ -473,12 +467,9 @@ struct raw_socket : socket_base<socket_types::raw, socket_types::raw>
     }
 
     void connect_handler(
-        std::tuple<async_ptr<>> fun, asio::error_code ec, resolver_iter)
+        async_ptr<> call, asio::error_code ec, resolver_iter)
     {
         DProfContext _(DTEXT(ASIO_TAG "connect"));
-        async_ptr<>  call;
-        std::tie(call) = fun;
-
         async_dispatch(call, ec);
     }
 
@@ -543,11 +534,9 @@ struct ssl_socket
     {
     }
 
-    void connect_handler(async_ptr<> fun, asio::error_code ec, resolver_iter it)
+    void connect_handler(async_ptr<> calls, asio::error_code ec, resolver_iter it)
     {
         DProfContext _(DTEXT(ASIO_TAG "connect"));
-        async_ptr<>  calls;
-        std::tie(calls) = fun;
 
         if(ec)
         {
@@ -582,16 +571,13 @@ struct ssl_socket
             std::bind(
                 &ssl_socket::handshake_handler,
                 this,
-                fun,
+                calls,
                 std::placeholders::_1));
     }
 
-    void handshake_handler(std::tuple<async_ptr<>> fun, asio::error_code ec)
+    void handshake_handler(async_ptr<> calls, asio::error_code ec)
     {
         DProfContext _(DTEXT(ASIO_TAG "handshake"));
-        async_ptr<>  calls;
-        std::tie(calls) = fun;
-
         async_dispatch(calls, ec);
     }
 

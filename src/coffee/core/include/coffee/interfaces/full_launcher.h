@@ -53,12 +53,23 @@ i32 AutoExec(
 
     CString error;
 
+#if defined(COFFEE_EMSCRIPTEN)
+    try 
+    {
+#endif
     auto res =
         EventApplication::execEventLoop(std::move(eld_ptr), visual, error);
-
+    
     /* TODO: Error handling */
-
+    
     return res;
+
+#if defined(COFFEE_EMSCRIPTEN)
+    } catch (std::exception const& e) {
+        printf("Exception: %s\n", e.what());
+        return -1;
+    }
+#endif
 }
 
 template<typename GAPI, typename R, typename D>

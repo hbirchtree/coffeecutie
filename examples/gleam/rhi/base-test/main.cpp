@@ -18,7 +18,9 @@ i32 coffee_main(i32, cstring_w*)
     using Display::Event;
     using Input::CIEvent;
 
+#if defined(FEATURE_ENABLE_ASIO)
     Net::RegisterProfiling();
+#endif
 
     CString err;
     return AutoExec<GLM, CDRenderer, RendererState>(

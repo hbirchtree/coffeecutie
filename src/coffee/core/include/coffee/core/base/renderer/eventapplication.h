@@ -280,7 +280,7 @@ class EventApplication : public InputApplication
         using FPtr = void(EvType const&, c_cptr);
 
         EventHandler(Function<FPtr>&& func, cstring name = nullptr) :
-            func(func), name(name)
+            name(name), func(func)
         {
         }
 
@@ -496,9 +496,6 @@ class EventApplication : public InputApplication
         Profiler::DeepPushContext("EventApplication::execEventLoop");
 
         using ELD = EventLoopData<Renderer, Data>;
-
-        static cstring suspend_str = "Suspend handler";
-        static cstring resume_str  = "Resume handler";
 
         Renderer& r = ev->r();
 
