@@ -8,7 +8,7 @@ namespace Components {
 namespace Convenience {
 
 template<typename T>
-FORCEDINLINE declmemtype(&std::type_info::hash_code) type_hash_v()
+FORCEDINLINE typename declmemtype(&std::type_info::hash_code) type_hash_v()
 {
     return typeid(T).hash_code();
 }

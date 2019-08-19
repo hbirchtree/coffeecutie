@@ -14,6 +14,11 @@
 #include <signal.h>
 #include <unistd.h>
 
+#if defined(COFFEE_ANDROID) || defined(COFFEE_LINUX)
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
+
 #include <algorithm>
 
 #if defined(COFFEE_LINUX)
@@ -57,8 +62,8 @@ namespace proc {
 
 enum class wait_by
 {
-    any       = WAIT_ANY,
-    pid_group = WAIT_MYPGRP,
+    any       = -1,
+    pid_group = 0,
     child_pid = 1,
 };
 
@@ -68,15 +73,18 @@ enum class fork_process
     parent,
 };
 
+FORCEDINLINE pid_t wait_by_to_value(wait_by cond, pid_t target)
+{
+    if(cond == wait_by::any || cond == wait_by::pid_group)
+        return static_cast<pid_t>(cond);
+    else
+        return target;
+}
+
 FORCEDINLINE pid_t
              wait_for(wait_by flag, posix_ec& ec, pid_t target = 0, int* status = nullptr)
 {
-    pid_t out = ::waitpid(
-        flag == wait_by::any
-            ? WAIT_ANY
-            : (flag == wait_by::pid_group ? WAIT_MYPGRP : target),
-        status ? status : nullptr,
-        0);
+    pid_t out = ::waitpid(wait_by_to_value(flag, target), status, 0);
 
     if(WIFEXITED(*status) || WIFSIGNALED(*status))
         collect_error(ec);
@@ -183,7 +191,7 @@ spawn_info spawn(exec_info<ArgType> const& exec)
         ec = 0;
 
         platform::file::file_error fec;
-        auto working_dir = exec.working_dir;
+        auto                       working_dir = exec.working_dir;
         if(!working_dir.isLocal())
             working_dir = MkUrl(".");
         platform::file::DirFun::ChDir(working_dir, fec);
@@ -232,24 +240,28 @@ inline void send_sig(pid_t target, libc::signal::sig signal)
 
 inline const char* code_to_string(int exit_code)
 {
-#define CODE_TO_STRING(code) case code: return #code;
+#define CODE_TO_STRING(code) \
+    case code:               \
+        return #code;
 
     switch(exit_code)
     {
-    CODE_TO_STRING(SIGINT);
-    CODE_TO_STRING(SIGQUIT);
-    CODE_TO_STRING(SIGILL);
-    CODE_TO_STRING(SIGTRAP);
-    CODE_TO_STRING(SIGABRT);
-    CODE_TO_STRING(SIGFPE);
+        CODE_TO_STRING(SIGINT);
+        CODE_TO_STRING(SIGQUIT);
+        CODE_TO_STRING(SIGILL);
+        CODE_TO_STRING(SIGTRAP);
+        CODE_TO_STRING(SIGABRT);
+        CODE_TO_STRING(SIGFPE);
 #if !defined(COFFEE_WINDOWS)
-    CODE_TO_STRING(SIGKILL);
+        CODE_TO_STRING(SIGKILL);
 #endif
-    CODE_TO_STRING(SIGSEGV);
-    CODE_TO_STRING(SIGBUS);
-    CODE_TO_STRING(SIGTERM);
-        case -6: return "COREDUMPED";
-        default: return "0";
+        CODE_TO_STRING(SIGSEGV);
+        CODE_TO_STRING(SIGBUS);
+        CODE_TO_STRING(SIGTERM);
+    case -6:
+        return "COREDUMPED";
+    default:
+        return "0";
     }
 #undef CODE_TO_STRING
 }
