@@ -430,21 +430,21 @@ void generic_stacktrace(int sig)
 void InstallDefaultSigHandlers()
 {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
-#if COFFEE_GLIBC_STACKTRACE
-    platform::env::Stacktracer::Backtrace();
-#endif
-
     std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
             std::current_exception(), typing::logging::fprintf_logger);
         abort();
     });
 
+#if COFFEE_GLIBC_STACKTRACE
+    platform::env::Stacktracer::Backtrace();
+
     libc::signal::install(libc::signal::sig::abort, generic_stacktrace);
     libc::signal::install(libc::signal::sig::fpe, generic_stacktrace);
     libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
     libc::signal::install(libc::signal::sig::bus_error, generic_stacktrace);
     libc::signal::install(libc::signal::sig::segfault, generic_stacktrace);
+#endif
 #endif
 }
 

@@ -60,6 +60,8 @@ FORCEDINLINE void replace_fd(fd_t target, fd_t source, posix_ec& ec)
 } // namespace fd
 namespace proc {
 
+#if !defined(COFFEE_NO_WAITPID)
+
 enum class wait_by
 {
     any       = -1,
@@ -109,6 +111,8 @@ FORCEDINLINE bool is_exited(pid_t target, int* exitCode)
 
     return WIFEXITED(status);
 }
+
+#endif
 
 FORCEDINLINE void execv(
     stl_types::CString const&       program,

@@ -159,15 +159,20 @@ struct GLEAM_API : GraphicsAPI
 
     struct RenderPass
     {
-        PIP*  pipeline;
-        FB_T* framebuffer;
+        PIP*  pipeline    = nullptr;
+        FB_T* framebuffer = nullptr;
 
-        BLNDSTATE* blend;
-        RASTSTATE* raster;
-        DEPTSTATE* depth;
+        BLNDSTATE* blend  = nullptr;
+        RASTSTATE* raster = nullptr;
+        DEPTSTATE* depth  = nullptr;
 
         struct DrawCall
         {
+            DrawCall(V_DESC* v, PSTATE* s, D_CALL call, D_DATA data) :
+                vertices(v), state(s), d_call(call), d_data(data)
+            {
+            }
+
             V_DESC* vertices;
             PSTATE* state;
             D_CALL  d_call;
