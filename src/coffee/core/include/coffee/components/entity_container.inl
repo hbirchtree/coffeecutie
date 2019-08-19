@@ -157,12 +157,12 @@ FORCEDINLINE void EntityContainer::register_component(
 
 FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity &entity)
 {
-    return EntityRef(entity.id, this);
+    return EntityRef<EntityContainer>(entity.id, this);
 }
 
 FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(u64 entity)
 {
-    return EntityRef(entity, this);
+    return EntityRef<EntityContainer>(entity, this);
 }
 
 } // namespace Components
