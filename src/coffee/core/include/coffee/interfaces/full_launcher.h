@@ -17,7 +17,7 @@ struct EventLoopSpawner
 
     STATICINLINE UqPtr<ELD> Spawn()
     {
-        return MkUqWrap<ELD>(new ELD{Display::CreateRendererUq(),
+        return MkUqWrap<ELD>(new ELD{Display::CreateRendererSh(),
                                      MkUq<D>(),
                                      SetupFunction,
                                      LoopFunction,

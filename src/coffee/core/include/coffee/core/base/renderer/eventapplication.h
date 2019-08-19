@@ -472,14 +472,6 @@ class EventApplication : public InputApplication
         }
     };
 
-    template<typename Renderer, typename Data>
-    C_DEPRECATED static i32 execEventLoop(
-        EventLoopData<Renderer, Data>& ev, Properties& visual, CString& err)
-    {
-        return execEventLoop(
-            MkUqWrap<EventLoopData<Renderer, Data>>(&ev), visual, err);
-    }
-
     template<
         typename Renderer,
         typename Data,
@@ -597,6 +589,14 @@ class EventApplication : public InputApplication
 
         return 0;
 #endif
+    }
+
+    template<typename Renderer, typename Data>
+    C_DEPRECATED static i32 execEventLoop(
+        EventLoopData<Renderer, Data>&& ev, Properties& visual, CString& err)
+    {
+        return execEventLoop(
+            MkSharedMove<EventLoopData<Renderer, Data>>(std::move(ev)), visual, err);
     }
 
     void exec()

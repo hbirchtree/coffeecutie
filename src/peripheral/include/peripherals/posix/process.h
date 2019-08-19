@@ -60,19 +60,17 @@ FORCEDINLINE void replace_fd(fd_t target, fd_t source, posix_ec& ec)
 } // namespace fd
 namespace proc {
 
-#if !defined(COFFEE_NO_WAITPID)
+enum class fork_process
+{
+    child,
+    parent,
+};
 
 enum class wait_by
 {
     any       = -1,
     pid_group = 0,
     child_pid = 1,
-};
-
-enum class fork_process
-{
-    child,
-    parent,
 };
 
 FORCEDINLINE pid_t wait_by_to_value(wait_by cond, pid_t target)
@@ -83,6 +81,7 @@ FORCEDINLINE pid_t wait_by_to_value(wait_by cond, pid_t target)
         return target;
 }
 
+#if !defined(COFFEE_NO_WAITPID)
 FORCEDINLINE pid_t
              wait_for(wait_by flag, posix_ec& ec, pid_t target = 0, int* status = nullptr)
 {

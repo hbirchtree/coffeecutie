@@ -45,6 +45,6 @@
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
 
-#if !defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_NO_WAITPID
 #endif
