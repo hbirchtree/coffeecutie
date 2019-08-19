@@ -142,13 +142,13 @@ void NDKWindow::windowTerminate()
 void NDKWindow::injectEvent(const Input::CIEvent &ev, c_cptr data)
 {
     for(auto eh : m_eventhandlers_input)
-        eh.func(eh.user_ptr, ev, data);
+        eh.func(ev, data);
 }
 
 void NDKWindow::injectEvent(const Event &ev, c_cptr data)
 {
     for(auto eh : m_eventhandlers_windw)
-        eh.func(eh.user_ptr, ev, data);
+        eh.func(ev, data);
 }
 
 Window *NDKWindow::window()

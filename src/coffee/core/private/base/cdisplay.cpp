@@ -10,8 +10,8 @@ Properties GetDefaultVisual(const i32& ctxtMajorVer, const i32& ctxtMinorVer)
 {
     Properties props = {};
 
-    props.flags =
-        Properties::Resizable | Properties::Windowed | Properties::Visible;
+    props.flags = Properties::Resizable | Properties::Windowed |
+                  Properties::Visible | Properties::HighDPI;
 
     props.gl.flags =
         GL::Properties::GLAutoResize | GL::Properties::GLCoreProfile;

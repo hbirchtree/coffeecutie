@@ -1,3 +1,5 @@
+#include <coffee/components/proxy.h>
+
 #include <coffee/components/components.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
@@ -12,6 +14,8 @@
 #include <coffee/image/image_coder_system.h>
 #include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
+
+#include <coffee/components/entity_selectors.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/asio_system.h>
@@ -461,7 +465,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             (isGles20) ? "vr/fshader_es2.glsl"
                      : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
 
-        params = &gfx.alloc_standard_pipeline<2, Resource>(
+        params = &gfx.alloc_standard_pipeline<2>(
             {{std::move(v_rsc), std::move(f_rsc)}});
     }
 
@@ -622,7 +626,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
         floor_object.components = {typeid(TransformTag).hash_code(),
                                    typeid(MatrixTag).hash_code()};
-        floor_object.interval   = Chrono::milliseconds(10);
         base_object             = floor_object;
 
         floor_object.tags = FloorTag;

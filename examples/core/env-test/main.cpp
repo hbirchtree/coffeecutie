@@ -4,10 +4,12 @@
 #include <coffee/core/CPlatform>
 #include <coffee/core/coffee.h>
 #include <platforms/sensor.h>
+#include <platforms/sysinfo.h>
 
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/url_types.h>
 #include <coffee/strings/vector_types.h>
+#include <coffee/strings/info.h>
 
 #include <coffee/core/CDebug>
 
@@ -57,6 +59,8 @@ i32 coffee_main(i32, cstring_w*)
         Profiler::Profile("Create directory recursively");
     }
     Profiler::PopContext();
+
+    cBasicPrint("Processor: {0}", platform::SysInfo::Processor());
 
     cDebug("Sensor gravity: {0}", Sensor::Gravity());
     cDebug("Sensor gyro: {0}", Sensor::Gyroscope());

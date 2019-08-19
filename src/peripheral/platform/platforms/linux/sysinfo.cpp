@@ -333,23 +333,31 @@ u64 SysInfo::CachedMemory()
 
 info::HardwareDevice SysInfo::Processor()
 {
-#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
+#if !defined(COFFEE_LOWFAT) && \
+    (defined(COFFEE_LINUX) || defined(COFFEE_ANDROID))
     const cstring mk_query = "vendor_id";
     const cstring md_query = "model name";
     const cstring fw_query = "microcode";
 
-    const cstring mk_query_linaro = "Hardware";
+    const cstring md_query_linaro = "Hardware";
     const cstring fw_query_linaro = "Revision";
+
+    const cstring mk_query_arm = "CPU implementer";
+    const cstring fw_query_arm = "CPU revision";
 
     CPUInfoString();
 
     CString mk_str = get_linux_property(cached_cpuinfo_string, mk_query);
+    if(!mk_str.size())
+        mk_str = get_linux_property(cached_cpuinfo_string, mk_query_arm);
     CString md_str = get_linux_property(cached_cpuinfo_string, md_query);
     if(!md_str.size())
-        md_str = get_linux_property(cached_cpuinfo_string, mk_query_linaro);
+        md_str = get_linux_property(cached_cpuinfo_string, md_query_linaro);
     CString fw_str = get_linux_property(cached_cpuinfo_string, fw_query);
     if(!fw_str.size())
         fw_str = get_linux_property(cached_cpuinfo_string, fw_query_linaro);
+    if(!fw_str.size())
+        fw_str = get_linux_property(cached_cpuinfo_string, fw_query_arm);
 
     str::trim::both(mk_str);
     str::trim::both(md_str);

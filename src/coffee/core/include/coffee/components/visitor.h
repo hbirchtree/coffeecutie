@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/components/proxy.h>
-#include <coffee/components/types.h>
+#include "proxy.h"
+#include "types.h"
 
 namespace Coffee {
 namespace Components {
@@ -33,6 +33,12 @@ struct EntityVisitor : EntityVisitorBase
     virtual bool visit(Proxy&, Entity const&, time_point const&)
     {
         return false;
+    }
+
+protected:
+    void set_current_entity(Proxy& proxy, u64 id)
+    {
+        proxy.current_entity = id;
     }
 };
 

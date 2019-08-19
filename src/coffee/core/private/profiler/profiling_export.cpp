@@ -163,9 +163,9 @@ STATICINLINE void PutRuntimeInfo(
     build.AddMember(
         "architecture", FromString(buildi.architecture, alloc), alloc);
     build.AddMember(
-                "buildMode",
-                FromString(PlatformData::IsDebug() ? "DEBUG" : "RELEASE", alloc),
-                alloc);
+        "buildMode",
+        FromString(PlatformData::IsDebug() ? "DEBUG" : "RELEASE", alloc),
+        alloc);
 
     target.AddMember("build", build, alloc);
 
@@ -174,6 +174,14 @@ STATICINLINE void PutRuntimeInfo(
     runtime.AddMember(
         "system",
         FromString(PlatformData::SystemDisplayString(), alloc),
+        alloc);
+    runtime.AddMember(
+        "architecture",
+        FromString(platform::info::device::system::runtime_arch(), alloc),
+        alloc);
+    runtime.AddMember(
+        "kernel",
+        FromString(platform::info::device::system::runtime_kernel(), alloc),
         alloc);
 
     auto cwd = Env::CurrentDir();

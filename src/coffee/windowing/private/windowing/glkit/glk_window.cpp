@@ -192,14 +192,14 @@ void GLKWindow::eventHandle(const Event& e, c_cptr d)
 {
     for(EventHandlerD const& eh : m_eventhandlers_windw)
     {
-        eh.func(eh.user_ptr, e, d);
+        eh.func(e, d);
     }
 }
 void GLKWindow::eventHandle(const Input::CIEvent& e, c_cptr d)
 {
     for(EventHandlerI const& eh : m_eventhandlers_input)
     {
-        eh.func(eh.user_ptr, e, d);
+        eh.func(e, d);
     }
 }
 

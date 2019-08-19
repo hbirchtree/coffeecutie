@@ -182,6 +182,8 @@ struct concurrent_notif
     {
         UqLock lock(awaiter);
 
+        prep_lock.unlock();
+
         return variable.wait_for(lock, dur);
     }
 

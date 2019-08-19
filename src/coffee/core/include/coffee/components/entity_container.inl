@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/components/entity_container.h>
+#include <coffee/components/entity_reference.h>
 #include <coffee/components/visitor.h>
 
 namespace Coffee {
@@ -152,6 +153,16 @@ FORCEDINLINE void EntityContainer::register_component(
         Throw(implementation_error("pointer casts will fail"));
 
     components.emplace(type_id, std::move(c));
+}
+
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity &entity)
+{
+    return EntityRef(entity.id, this);
+}
+
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(u64 entity)
+{
+    return EntityRef(entity, this);
 }
 
 } // namespace Components

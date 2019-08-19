@@ -85,22 +85,27 @@ i32 coffee_main(i32, cstring_w*)
     CString err;
 
     return AutoExec<RHI::GLEAM::GLEAM_API, CDRenderer, SharedData>(
-        [](CDRenderer& r, SharedData*, Display::Properties& visual) {
+        [](ShPtr<CDRenderer> r,
+           ShPtr<SharedData>,
+           Display::Properties& visual) {
             visual.flags ^= Properties::Windowed;
             visual.flags |= Properties::WindowedFullScreen;
 
-            r.installEventHandler(
-                {EventHandlers::EscapeCloseWindow<CDRenderer>, nullptr, &r});
-            r.installEventHandler(
-                {EventHandlers::ExitOnQuitSignal<CDRenderer>, nullptr, &r});
-            r.installEventHandler(
-                {EventHandlers::WindowManagerCloseWindow<CDRenderer>,
-                 nullptr,
-                 &r});
-            r.installEventHandler(
-                {EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>,
-                 nullptr,
-                 &r});
+            using namespace Input;
+            using namespace EventHandlers;
+
+            r->installEventHandler(
+                EHandle<Event>::MkHandler(WindowResize<GLEAMAPI>()));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                ExitOn<OnKey<Input::CK_Escape>>(r)));
+            r->installEventHandler(
+                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r)));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                FullscreenOn<AnyIKey<
+                    KeyCombo<
+                        CK_EnterNL,
+                        CIKeyEvent::KeyModifiers::RAltModifier>,
+                    KeyCombo<CK_F11>>>(r)));
         },
         setup_fun,
         loop_fun,

@@ -139,6 +139,12 @@ i32 crash_main(i32, cstring_w*)
     if(exitCode == 0)
         return 0;
 
+    if(!platform::Env::ExistsVar("CRASH_API"))
+    {
+        cDebug("CRASH_API not set, nowhere to submit to");
+        return 1;
+    }
+
     using Coffee::JSON;
 
     cstring const multipartTerminator = "-------CrashRecovery\r\n";

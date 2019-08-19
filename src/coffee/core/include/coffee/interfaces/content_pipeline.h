@@ -42,11 +42,14 @@ struct FileProcessor
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor) = 0;
 
     virtual void setInternalState(
-        ShPtr<State::InternalState>       state,
-        ShPtr<State::InternalThreadState> tstate)
+        ShPtr<State::InternalState>          state,
+        ShPtr<State::InternalThreadState>    tstate,
+        UqPtr<platform::detail::state_pimpl> const& pimpl)
     {
         State::SetInternalState(state);
         State::SetInternalThreadState(tstate);
+
+        *platform::state = *pimpl;
     }
 
     virtual void setBaseDirectories(Vector<CString> const& dirs) = 0;

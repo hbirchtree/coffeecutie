@@ -9,8 +9,8 @@ if(BUILD_OPENSSL)
         NAMES openssl=OpenSSL
         )
 
-    set ( OPENSSL_ROOT_DIR "${GIT_DEP_DIR}/openssl" )
-    set ( ENV{OPENSSL_ROOT_DIR} "${GIT_DEP_DIR}/openssl" )
+    set ( OPENSSL_ROOT_DIR "${OpenSSL_DIR}" )
+    set ( ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}" )
 
     if(ANDROID OR (APPLE AND IOS))
         set ( OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a" )

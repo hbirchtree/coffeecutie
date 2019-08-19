@@ -32,35 +32,53 @@ struct socket_base : std::istream, std::ostream, non_copy
     template<typename... Args>
     struct async_callbacks
     {
-        static void default_error_callback(asio::error_code ec)
+        static void default_error_callback(
+            concurrent_notif&, asio::error_code ec)
         {
             Throw(resource_error(ec.message()));
         }
 
         async_callbacks() :
-            on_complete([](Args...) {
+            m_on_complete([](concurrent_notif&, Args...) {
                 Throw(implementation_error(DTEXT("No callback registered")));
             }),
-            on_error(default_error_callback)
-        {
-        }
-
-        async_callbacks(Function<void(Args...)>&& on_complete) :
-            on_complete(on_complete), on_error(default_error_callback)
+            m_on_error(default_error_callback)
         {
         }
 
         async_callbacks(
-            Function<void(Args...)>&&          on_complete,
-            Function<void(asio::error_code)>&& on_error) :
-            on_complete(on_complete),
-            on_error(on_error)
+            Function<void(concurrent_notif&, Args...)>&& on_complete) :
+            m_on_complete(on_complete),
+            m_on_error(default_error_callback)
         {
         }
 
-        Function<void(Args...)>          on_complete;
-        Function<void(asio::error_code)> on_error;
+        async_callbacks(
+            Function<void(concurrent_notif&, Args...)>&&          on_complete,
+            Function<void(concurrent_notif&, asio::error_code)>&& on_error) :
+            m_on_complete(on_complete),
+            m_on_error(on_error)
+        {
+        }
+
+        void on_complete(Args... args)
+        {
+            m_on_complete(notif, args...);
+        }
+
+        void on_error(asio::error_code ec)
+        {
+            m_on_error(notif, ec);
+        }
+
+        Function<void(concurrent_notif&, Args...)>          m_on_complete;
+        Function<void(concurrent_notif&, asio::error_code)> m_on_error;
+
+        concurrent_notif notif;
     };
+
+    template<typename... Args>
+    using async_ptr = ShPtr<async_callbacks<Args...>>;
 
     asio_context context;
     sock_t       socket;
@@ -116,8 +134,8 @@ struct socket_base : std::istream, std::ostream, non_copy
 
     socket_base<SocketType, LowestLayerType>& write(Vector<char>& buf)
     {
-        concurrent_notif var;
-        var.prepare_lock();
+        auto var = MkShared<concurrent_notif>();
+        var->prepare_lock();
 
         auto ref = asio::dynamic_vector_buffer<
             Vector<char>::value_type,
@@ -125,19 +143,19 @@ struct socket_base : std::istream, std::ostream, non_copy
 
         asio::error_code ec;
         asio::async_write(
-            socket, std::move(ref), [&](asio::error_code, size_t) {
-                var.notify();
+            socket, std::move(ref), [var](asio::error_code, size_t) {
+                var->notify();
             });
 
-        var.await();
+        var->await();
 
         return *this;
     }
 
     socket_base<SocketType, LowestLayerType>& write(CString& buf)
     {
-        concurrent_notif var;
-        var.prepare_lock();
+        auto var = MkShared<concurrent_notif>();
+        var->prepare_lock();
 
         auto ref = asio::dynamic_string_buffer<
             CString::value_type,
@@ -146,54 +164,56 @@ struct socket_base : std::istream, std::ostream, non_copy
 
         asio::error_code ec;
         asio::async_write(
-            socket, std::move(ref), [&](asio::error_code, size_t) {
-                var.notify();
+            socket, std::move(ref), [var](asio::error_code, size_t) {
+                var->notify();
             });
 
-        var.await();
+        var->await();
 
         return *this;
     }
 
     template<typename... Args>
-    async_callbacks<Args...> gen_handler(
+    async_ptr<Args...> gen_handler(
         Function<void(Args...)>&&          completion,
         Function<void(asio::error_code)>&& errored)
     {
-        return async_callbacks<Args...>(
+        return MkShared<async_callbacks<Args...>>(
             std::move(completion), std::move(errored));
     }
 
     void resolve_handler(
-        std::tuple<
-            LowestLayerType*,
-            async_callbacks<asio::error_code, resolver_iter>> fun,
-        asio::error_code                                      ec,
-        resolver_iter                                         r)
+        LowestLayerType*                           socket_layer,
+        async_ptr<asio::error_code, resolver_iter> calls,
+        asio::error_code                           ec,
+        resolver_iter                              r)
     {
         DProfContext _(DTEXT(ASIO_TAG "resolve"));
 
-        async_callbacks<asio::error_code, resolver_iter> calls;
-        LowestLayerType*                                 socket_layer = nullptr;
-
-        std::tie(socket_layer, calls) = fun;
-
         if(ec)
         {
-            calls.on_error(ec);
+            calls->on_error(ec);
             lastError = ec;
             return;
         }
 
         using it_type = decltype(r);
 
-        asio::async_connect(*socket_layer, r, it_type(), calls.on_complete);
+        asio::async_connect(
+            *socket_layer,
+            r,
+            it_type(),
+            std::bind(
+                &async_callbacks<asio::error_code, resolver_iter>::on_complete,
+                calls,
+                std::placeholders::_1,
+                std::placeholders::_2));
     }
 
     template<typename... Args>
     void async_connect_dispatch(
-        LowestLayerType&                                 socket_layer,
-        async_callbacks<asio::error_code, resolver_iter> onConnect,
+        LowestLayerType*                           socket_layer,
+        async_ptr<asio::error_code, resolver_iter> callback,
         Args... args)
     {
         asio::ip::tcp::resolver::query q(args...);
@@ -202,63 +222,55 @@ struct socket_base : std::istream, std::ostream, non_copy
 
         context->resolver.async_resolve(
             q,
-            bind_this::func(
-                this,
-                &socket_base::resolve_handler,
-                std::make_tuple(&socket_layer, onConnect)));
+            [this, callback, socket_layer](
+                asio::error_code ec, resolver_iter it) {
+                this->resolve_handler(socket_layer, callback, ec, it);
+            });
     }
 
     template<typename... Args>
     void async_dispatch(
-        async_callbacks<Args...> const& calls,
-        asio::error_code                ec,
-        Args... args)
+        async_ptr<Args...>& calls, asio::error_code ec, Args... args)
     {
         DProfContext _(DTEXT(ASIO_TAG "async dispatch"));
         if(ec)
         {
-            calls.on_error(ec);
+            calls->on_error(ec);
             lastError = ec;
             return;
         }
 
-        calls.on_complete(args...);
+        calls->on_complete(args...);
     }
 
     template<typename... Args>
     void async_dispatch_skiperror(
-        async_callbacks<Args...> const& calls,
-        asio::error_code                ec,
-        Args... args)
+        async_ptr<Args...>& calls, asio::error_code ec, Args... args)
     {
         DProfContext _(DTEXT(ASIO_TAG "async dispatch"));
         if(ec)
         {
-            calls.on_error(ec);
+            calls->on_error(ec);
             lastError = ec;
         }
 
-        calls.on_complete(args...);
+        calls->on_complete(args...);
     }
     void async_read_some_receive(
-        std::tuple<async_callbacks<size_t>> funs,
-        asio::error_code                    ec,
-        size_t                              amount_data)
+        async_ptr<size_t> calls, asio::error_code ec, size_t amount_data)
     {
-        DProfContext            _(DTEXT(ASIO_TAG "read receive"));
-        async_callbacks<size_t> calls;
-        std::tie(calls) = funs;
+        DProfContext _(DTEXT(ASIO_TAG "read receive"));
 
         std::istream::rdbuf(&recvp);
         async_dispatch_skiperror(calls, ec, amount_data);
     }
 
     void async_write_receive(
-        std::tuple<async_callbacks<>> fun, asio::error_code ec, size_t sz)
+        std::tuple<async_ptr<>> fun, asio::error_code ec, size_t sz)
     {
         DProfContext _(DTEXT(ASIO_TAG "write receive"));
 
-        async_callbacks<> call;
+        async_ptr<> call;
         std::tie(call) = fun;
 
         trans.consume(sz);
@@ -303,52 +315,57 @@ struct socket_base : std::istream, std::ostream, non_copy
         socket.wait(sock_t::wait_error, ec);
     }
 
-    void async_close_receive(std::tuple<async_callbacks<>> fun)
+    void async_close_receive(std::tuple<async_ptr<>> fun)
     {
-        async_callbacks<> calls;
+        async_ptr<> calls;
         std::tie(calls) = fun;
 
         close_internal();
 
-        calls.on_complete();
+        calls->on_complete();
     }
 
     template<typename T>
-    void async_read_until(T const& delim, async_callbacks<size_t>&& callbacks)
+    void async_read_until(T const& delim, async_ptr<size_t> callbacks)
     {
         asio::async_read_until(
             socket,
             recvp,
             delim,
-            bind_this::func(
-                this, &socket_base::async_read_some_receive, callbacks));
+            std::bind(
+                &socket_base::async_read_some_receive,
+                this,
+                callbacks,
+                std::placeholders::_1,
+                std::placeholders::_2));
     }
 
     template<typename T>
     size_t read_until(T const& delim)
     {
-        size_t           out = 0;
-        concurrent_notif var;
-        var.prepare_lock();
+        size_t out = 0;
 
-        async_read_until(
-            delim,
-            {[&](size_t amount_bytes) {
-                 out = amount_bytes;
-                 var.notify();
-             },
-             [&](asio::error_code) { var.notify(); }});
+        async_ptr<size_t> callback = MkShared<async_callbacks<size_t>>(
+            [&out](concurrent_notif& var, size_t amount_bytes) {
+                out = amount_bytes;
+                var.notify();
+            },
+            [](concurrent_notif& var, asio::error_code) { var.notify(); });
 
-        var.await();
+        auto& var = callback->notif;
+
+        callback->notif.prepare_lock();
+        async_read_until(delim, callback);
+        callback->notif.await();
+
         return out;
     }
 
-    void async_read_some(
-        size_t amount_bytes, async_callbacks<size_t>&& callbacks)
+    void async_read_some(size_t amount_bytes, async_ptr<size_t> callbacks)
     {
         if(amount_bytes < recvp.in_avail())
         {
-            callbacks.on_complete(amount_bytes);
+            callbacks->on_complete(amount_bytes);
             return;
         }
 
@@ -356,25 +373,29 @@ struct socket_base : std::istream, std::ostream, non_copy
             socket,
             recvp,
             asio::transfer_exactly(amount_bytes - recvp.in_avail()),
-            bind_this::func(
-                this, &socket_base::async_read_some_receive, callbacks));
+            std::bind(
+                &socket_base::async_read_some_receive,
+                this,
+                callbacks,
+                std::placeholders::_1,
+                std::placeholders::_2));
     }
 
     size_t read_some(size_t amount_bytes)
     {
-        size_t           out = 0;
-        concurrent_notif var;
-        var.prepare_lock();
+        size_t out = 0;
 
-        async_read_some(
-            amount_bytes,
-            {[&](size_t amount_bytes) {
-                 out = amount_bytes;
-                 var.notify();
-             },
-             [&](asio::error_code) { var.notify(); }});
+        auto callback = MkShared<async_callbacks<size_t>>(
+            [&out](concurrent_notif& var, size_t amount_bytes) {
+                out = amount_bytes;
+                var.notify();
+            },
+            [](concurrent_notif& var, asio::error_code) { var.notify(); });
 
-        var.await();
+        callback->notif.prepare_lock();
+        async_read_some(amount_bytes, callback);
+        callback->notif.await();
+
         return out;
     }
 
@@ -390,76 +411,57 @@ struct socket_base : std::istream, std::ostream, non_copy
                  async_callbacks<>::default_error_callback}));
     }
 
-    void async_write(async_callbacks<>&& callbacks)
+    void async_write(async_ptr<> callbacks)
     {
         //        std::ostream::flush();
 
         asio::async_write(
             socket,
             trans.data(),
-            bind_this::func(
-                this, &socket_base::async_write_receive, std::move(callbacks)));
-    }
-
-    asio::error_code pull(size_t amount_bytes)
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous read"));
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_read_some(amount_bytes, [&](size_t) { var.notify(); });
-
-        var.await();
-
-        return lastError;
+            std::bind(
+                &socket_base::async_write_receive,
+                this,
+                std::move(callbacks),
+                std::placeholders::_1,
+                std::placeholders::_2)
+            //            bind_this::func(
+            //                this, &socket_base::async_write_receive,
+            //                std::move(callbacks))
+        );
     }
 
     asio::error_code flush()
     {
-        DProfContext     _(DTEXT(ASIO_TAG "flushing"));
-        concurrent_notif var;
-        var.prepare_lock();
+        DProfContext _(DTEXT(ASIO_TAG "flushing"));
 
-        async_write(
-            {[&]() { var.notify(); }, [&](asio::error_code) { var.notify(); }});
+        auto callbacks = MkShared<async_callbacks<>>(
+            [](concurrent_notif& var) { var.notify(); },
+            [](concurrent_notif& var, asio::error_code) { var.notify(); });
 
-        var.await();
+        callbacks->notif.prepare_lock();
+        async_write(callbacks);
+        callbacks->notif.await();
 
         return lastError;
     }
 
-    void async_close(Function<void()>&& onClose)
+    void async_close(async_ptr<> callback)
     {
-        context->service.post(bind_this::func(
-            this,
-            &socket_base::async_close_receive,
-            {std::move(onClose), async_callbacks<>::default_error_callback}));
+        context->service.post(std::bind(
+            &socket_base::async_close_receive, this, std::move(callback)));
     }
 
     void sync_close()
     {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous close"));
-        concurrent_notif var;
-        var.prepare_lock();
+        DProfContext _(DTEXT(ASIO_TAG "synchronous close"));
 
-        async_close([&]() { var.notify(); });
+        auto callback = MkShared<async_callbacks<>>(
+            [](concurrent_notif& var) { var.notify(); },
+            async_callbacks<>::default_error_callback);
 
-        var.await();
-    }
-
-    asio::error_code pull()
-    {
-        DProfContext _(DTEXT(ASIO_TAG "synchronous read"));
-
-        concurrent_notif var;
-
-        var.prepare_lock();
-
-        async_read_all([&](size_t) { var.notify(); });
-
-        var.await();
-
-        return lastError;
+        callback->notif.prepare_lock();
+        async_close(callback);
+        callback->notif.await();
     }
 };
 
@@ -471,46 +473,51 @@ struct raw_socket : socket_base<socket_types::raw, socket_types::raw>
     }
 
     void connect_handler(
-        std::tuple<async_callbacks<>> fun, asio::error_code ec, resolver_iter)
+        std::tuple<async_ptr<>> fun, asio::error_code ec, resolver_iter)
     {
-        DProfContext      _(DTEXT(ASIO_TAG "connect"));
-        async_callbacks<> call;
+        DProfContext _(DTEXT(ASIO_TAG "connect"));
+        async_ptr<>  call;
         std::tie(call) = fun;
 
         async_dispatch(call, ec);
     }
 
     template<typename... Args>
-    void async_connect(async_callbacks<> callbacks, Args... args)
+    void async_connect(async_ptr<> callbacks, Args... args)
     {
-        auto error_copy = callbacks.on_error;
-
         async_connect_dispatch(
-            socket,
-            bind_this::func(
-                C_CAST<socket_base*>(this),
-                &socket_base::resolve_handler,
-                std::make_tuple(
-                    &socket,
-                    gen_handler(
-                        bind_this::func(
-                            this, &raw_socket::connect_handler, callbacks),
-                        std::move(error_copy)))),
+            &socket,
+            MkShared<async_callbacks<asio::error_code, resolver_iter>>(
+                [callbacks, this](
+                    concurrent_notif&,
+                    asio::error_code ec,
+                    resolver_iter    iter) {
+                    this->connect_handler(callbacks, ec, iter);
+                },
+                [callbacks](concurrent_notif&, asio::error_code ec) {
+                    callbacks->on_error(ec);
+                }),
             args...);
     }
 
-    template<typename... Args>
-    void connect(Args... args)
+    template<typename Dur, typename... Args>
+    NO_DISCARD asio::error_code connect(Dur const& timeout, Args... args)
     {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous connect"));
-        concurrent_notif var;
+        DProfContext _(DTEXT(ASIO_TAG "synchronous connect"));
+
+        auto callback = MkShared<async_callbacks<>>(
+            [](concurrent_notif& var) { var.notify(); },
+            [](concurrent_notif& var, asio::error_code) { var.notify(); });
+        auto& var = callback->notif;
+
         var.prepare_lock();
+        async_connect(callback, args...);
 
-        async_connect(
-            {[&]() { var.notify(); }, [&](asio::error_code) { var.notify(); }},
-            args...);
-
-        var.await();
+        if(var.await(timeout) == cv_status::timeout)
+            return asio::error_code(
+                asio::error::timed_out, asio::error::misc_category);
+        else
+            return asio::error_code();
     }
 };
 
@@ -536,18 +543,15 @@ struct ssl_socket
     {
     }
 
-    void connect_handler(
-        std::tuple<async_callbacks<>> fun,
-        asio::error_code              ec,
-        resolver_iter                 it)
+    void connect_handler(async_ptr<> fun, asio::error_code ec, resolver_iter it)
     {
-        DProfContext      _(DTEXT(ASIO_TAG "connect"));
-        async_callbacks<> calls;
+        DProfContext _(DTEXT(ASIO_TAG "connect"));
+        async_ptr<>  calls;
         std::tie(calls) = fun;
 
         if(ec)
         {
-            calls.on_error(ec);
+            calls->on_error(ec);
             lastError = ec;
             return;
         }
@@ -575,55 +579,60 @@ struct ssl_socket
 
         socket.async_handshake(
             sock_t::client,
-            bind_this::func(this, &ssl_socket::handshake_handler, fun));
+            std::bind(
+                &ssl_socket::handshake_handler,
+                this,
+                fun,
+                std::placeholders::_1));
     }
 
-    void handshake_handler(
-        std::tuple<async_callbacks<>> fun, asio::error_code ec)
+    void handshake_handler(std::tuple<async_ptr<>> fun, asio::error_code ec)
     {
-        DProfContext      _(DTEXT(ASIO_TAG "handshake"));
-        async_callbacks<> calls;
+        DProfContext _(DTEXT(ASIO_TAG "handshake"));
+        async_ptr<>  calls;
         std::tie(calls) = fun;
 
         async_dispatch(calls, ec);
     }
 
     template<typename... Args>
-    void async_connect(async_callbacks<>&& callbacks, bool verify, Args... args)
+    void async_connect(async_ptr<> callbacks, bool verify, Args... args)
     {
-        auto error_copy = callbacks.on_error;
         this->do_verify = verify;
 
         async_connect_dispatch(
-            socket.next_layer(),
-            bind_this::func(
-                C_CAST<socket_base*>(this),
-                &socket_base::resolve_handler,
-                &socket.next_layer(),
-                gen_handler(
-                    bind_this::func(
-                        this, &ssl_socket::connect_handler, callbacks),
-                    std::move(error_copy))),
+            &socket.next_layer(),
+            MkShared<async_callbacks<asio::error_code, resolver_iter>>(
+                [callbacks, this](
+                    concurrent_notif&,
+                    asio::error_code ec,
+                    resolver_iter    iter) {
+                    this->connect_handler(callbacks, ec, iter);
+                },
+                [callbacks](concurrent_notif&, asio::error_code ec) {
+                    callbacks->on_error(ec);
+                }),
             args...);
     }
 
-    template<typename... Args>
-    void connect(bool verify, Args... args)
+    template<typename Dur, typename... Args>
+    NO_DISCARD asio::error_code connect(
+        bool verify, Dur const& timeout, Args... args)
     {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous connect"));
-        asio::error_code ec;
-        concurrent_notif var;
-        var.prepare_lock();
+        DProfContext _(DTEXT(ASIO_TAG "synchronous connect"));
 
-        async_connect(
-            {[&]() { var.notify(); }, [&](asio::error_code) { var.notify(); }},
-            verify,
-            args...);
+        auto callback = MkShared<async_callbacks<>>(
+            [](concurrent_notif& var) { var.notify(); },
+            [](concurrent_notif& var, asio::error_code) { var.notify(); });
+        callback->notif.prepare_lock();
 
-        var.await();
+        async_connect(callback, verify, args...);
 
-        if(ec)
-            lastError = ec;
+        if(callback->notif.await(timeout) == cv_status::timeout)
+            return asio::error_code(
+                asio::error::timed_out, asio::error::misc_category);
+        else
+            return asio::error_code();
     }
 };
 #endif

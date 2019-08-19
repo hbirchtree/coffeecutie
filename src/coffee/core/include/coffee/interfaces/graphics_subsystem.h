@@ -39,7 +39,11 @@ struct AllocatorData
 
     ~AllocatorData()
     {
-#define DEALLOC_BLOCK(TYPE, VAR) {for(auto& buf : VAR) buf->dealloc();}
+#define DEALLOC_BLOCK(TYPE, VAR) \
+    {                            \
+        for(auto& buf : VAR)     \
+            buf->dealloc();      \
+    }
 
         DEALLOC_BLOCK(typename API::V_DESC, vertex_desc);
 
@@ -183,22 +187,22 @@ struct GraphicsAllocator
         return vao;
     }
 
-    template<
-        size_t NumShaders = 2,
-        typename ResourceT,
-        typename std::enable_if<implementation<ResourceT>::template implements<
-            ResourceT>::value>::type* = nullptr>
+    template<size_t NumShaders = 2>
     typename AllocData::PipelineParams& alloc_standard_pipeline(
-        Array<ResourceT, NumShaders>&& shaders)
+        Array<Bytes, NumShaders>&& shaders)
     {
         auto& store = this->get().pipelines;
         store.push_back(MkShared<typename AllocData::PipelineData>());
 
         auto& pipeline = *store.back();
 
-        if(!RHI::LoadPipeline<API>(pipeline.pipeline, shaders[0], shaders[1]))
+        if(!RHI::LoadPipeline<API>(
+               pipeline.pipeline, std::move(shaders[0]), std::move(shaders[1])))
             Throw(
                 undefined_behavior("shader compile/pipeline assembly failed"));
+
+        pipeline.params.get_pipeline_params();
+        pipeline.params.get_state();
 
         return pipeline.params;
     }

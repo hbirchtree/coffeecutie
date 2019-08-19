@@ -6,9 +6,7 @@
 #include <coffee/core/task_queue/task.h>
 #include <coffee/interfaces/full_launcher.h>
 
-#if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
-#endif
 
 using EDATA = EventLoopData<CDRenderer, RendererState>;
 
@@ -17,22 +15,31 @@ i32 coffee_main(i32, cstring_w*)
     using namespace EventHandlers;
     using namespace StandardInput;
 
-#if defined(FEATURE_ENABLE_ASIO)
+    using Display::Event;
+    using Input::CIEvent;
+
     Net::RegisterProfiling();
-#endif
 
     CString err;
     return AutoExec<GLM, CDRenderer, RendererState>(
-        [](CDRenderer& r, RendererState* d, Display::Properties& props) {
+        [](ShPtr<CDRenderer>    r,
+           ShPtr<RendererState>,
+           Display::Properties& props) {
             props.gl.flags |= GL::Properties::GLDebug | GL::Properties::GLVSync;
 
             /* Install some standard event handlers */
-            r.installEventHandler({EscapeCloseWindow<CDRenderer>, nullptr, &r});
-            r.installEventHandler(
-                {WindowManagerCloseWindow<CDRenderer>, nullptr, &r});
-            r.installEventHandler({ResizeWindowUniversal<GLM>, nullptr, &r});
-            r.installEventHandler(
-                {WindowManagerFullscreen<CDRenderer>, nullptr, &r});
+            r->installEventHandler(
+                EHandle<Event>::MkHandler(WindowResize<GLM>()));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                ExitOn<OnKey<Input::CK_Escape>>(r)));
+            r->installEventHandler(
+                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r)));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                FullscreenOn<AnyIKey<
+                    KeyCombo<
+                        CK_EnterNL,
+                        CIKeyEvent::KeyModifiers::RAltModifier>,
+                    KeyCombo<CK_F11>>>(r)));
         },
         SetupRendering,
         RendererLoop,

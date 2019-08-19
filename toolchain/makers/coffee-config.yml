@@ -22,6 +22,9 @@
     - -DBUILD_ETC2COMP=ON
     - -DBUILD_SDL2=OFF
     - -DBUILD_HEADFUL=OFF
+osx:
+  +cmake-opts:
+    - -DBUILD_ETC2COMP=ON
 coverage:
   =target: multi.twostage
   =cmake-target:
@@ -46,6 +49,6 @@ testing.linux.*:
   =target: multi.ensureinstall
   =cmake-target:
     - AndroidPackage
-.*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten).*:
+.*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten|osx).*:
   +cmake-opts:
     - -DBUILD_ASSIMP=ON

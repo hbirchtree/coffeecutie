@@ -55,26 +55,13 @@ struct MatrixContainer : ComponentContainer<TagMatf4>
     }
 };
 
-void entity_process(ContainerProxy& c)
-{
-    ProfContext _("Component");
-    auto&       m = c.get<TagMatf4>();
-
-    m = SceneGraph::GenPerspective(90.f, 1.f, {0.1f, 100.f});
-    m = m * (Matf4() * 1.f);
-}
-
 i32 coffee_main(i32, cstring_w*)
 {
     EntityContainer entities;
 
-    EntityRecipe rec1 = {{typeid(TagMatf4).hash_code()},
-                         Chrono::milliseconds(10),
-                         OF_Test_1};
+    EntityRecipe rec1 = {{typeid(TagMatf4).hash_code()}, OF_Test_1};
 
-    EntityRecipe rec2 = {{typeid(TagMatf4).hash_code()},
-                         Chrono::milliseconds(10),
-                         OF_Test_2};
+    EntityRecipe rec2 = {{typeid(TagMatf4).hash_code()}, OF_Test_2};
 
     Profiler::PushContext("Register component");
 
@@ -93,8 +80,6 @@ i32 coffee_main(i32, cstring_w*)
     Profiler::PopContext();
 
     Profiler::PushContext("Updating entities");
-    for(auto& o : entities.select(OF_Test_1))
-        o.interval = Chrono::milliseconds(20);
 
     //    for(auto& o : entities.select(0))
     //        cBasicPrint("Object: {0} {1}", o.id, o.interval.count());

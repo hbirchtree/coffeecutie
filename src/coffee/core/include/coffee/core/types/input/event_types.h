@@ -52,6 +52,8 @@ struct CIEvent
         /* These originate from SDL */
         MultiTouch,
         Gesture,
+
+        Sensor,
     };
     u32       ts   = 0;        /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
@@ -68,10 +70,17 @@ struct CIEvent
     }
 };
 
+template<CIEvent::EventType Type>
+struct BaseEvent
+{
+    using parent_type = CIEvent;
+    static constexpr CIEvent::EventType event_type = Type;
+};
+
 /*!
  * \brief Keyboard events
  */
-struct CIKeyEvent
+struct CIKeyEvent : BaseEvent<CIEvent::Keyboard>
 {
     enum KeyModifiers : uint16
     {
@@ -104,7 +113,7 @@ struct CIKeyEvent
 /*!
  * \brief Text input event
  */
-struct CITextEvent
+struct CITextEvent : BaseEvent<CIEvent::TextInput>
 {
     byte_t character = 0;
 };
@@ -112,7 +121,7 @@ struct CITextEvent
 /*!
  * \brief Mouse movement event
  */
-struct CIMouseMoveEvent
+struct CIMouseMoveEvent : BaseEvent<CIEvent::MouseMove>
 {
     PtF origin; /*!< Absolute position*/
     PtF delta;  /*!< Relative movement since last poll*/
@@ -129,7 +138,7 @@ struct CIMouseMoveEvent
 /*!
  * \brief Mouse button event
  */
-struct CIMouseButtonEvent
+struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
 {
     enum ButtonModifier : uint8
     {
@@ -159,7 +168,7 @@ struct CIMouseButtonEvent
 /*!
  * \brief Mouse scroll event
  */
-struct CIScrollEvent
+struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
 {
     PtF delta;   /*!< Delta for scroll*/
     u8  mod = 0; /*!< Current mouse modifiers*/
@@ -179,7 +188,7 @@ struct CIWriteEvent
 /*!
  * \brief Text editing event, modifies a text input field
  */
-struct CIWEditEvent
+struct CIWEditEvent : BaseEvent<CIEvent::TextEdit>
 {
     i32     cursor; /*!< Cursor position*/
     i32     len;    /*!< Text length*/
@@ -189,7 +198,7 @@ struct CIWEditEvent
 /*!
  * \brief Atomic input event type
  */
-struct CIControllerAtomicEvent
+struct CIControllerAtomicEvent : BaseEvent<CIEvent::Controller>
 {
     /*!
      * \brief Masks used to extract state
@@ -250,7 +259,7 @@ inline i16 CIControllerAtomicEvent::axis_value<i16>() const
 /*!
  * \brief Atomic controller disconnect and connect events
  */
-struct CIControllerAtomicUpdateEvent
+struct CIControllerAtomicUpdateEvent : BaseEvent<CIEvent::ControllerUpdate>
 {
     cstring name;
     union
@@ -320,7 +329,7 @@ struct CIControllerState
 /*!
  * \brief Haptic events used for rumble.
  */
-struct CIHapticEvent
+struct CIHapticEvent : BaseEvent<CIEvent::Haptic>
 {
     union
     {
@@ -342,7 +351,7 @@ struct CIHapticEvent
 /*!
  * \brief Drag-and-drop event
  */
-struct CIDropEvent
+struct CIDropEvent : BaseEvent<CIEvent::Drop>
 {
     /*!
      * \brief Data type for event
@@ -375,7 +384,7 @@ struct CIDropEvent
  * \brief Sensor event, enumerated with ID, can provide uint64 value or
  * bigscalar value.
  */
-struct CISensorEvent
+struct CISensorEvent : BaseEvent<CIEvent::Sensor>
 {
     u64 id; /*!< Enumeration ID*/
     union
@@ -399,7 +408,7 @@ struct CISensorEvent
     };
 };
 
-struct CITouchTapEvent
+struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
 {
     enum TouchType
     {
@@ -418,7 +427,7 @@ struct CITouchTapEvent
     };
 };
 
-struct CITouchMotionEvent
+struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
 {
     enum TouchType
     {
@@ -438,7 +447,7 @@ struct CITouchMotionEvent
     };
 };
 
-struct CIMTouchMotionEvent
+struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
 {
     PtF origin;
     PtF translation;
@@ -455,7 +464,7 @@ struct CIMTouchMotionEvent
     };
 };
 
-struct CIGestureEvent
+struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
 {
     PtF origin;
     union
@@ -470,13 +479,13 @@ struct CIGestureEvent
     };
 };
 
-struct CITouchPinchEvent
+struct CITouchPinchEvent : BaseEvent<CIEvent::TouchPinch>
 {
     PtF    origin;
     scalar factor;
 };
 
-struct CITouchRotateEvent
+struct CITouchRotateEvent : BaseEvent<CIEvent::TouchRotate>
 {
     PtF    origin;
     scalar radians;

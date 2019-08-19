@@ -81,18 +81,26 @@ void Resource::initRsc(const Url& url)
         {
             ssl = MkUq<TCP::SSLSocket>(m_ctxt);
 
-            ssl->connect(
-                verify_https, m_request.host, cast_pod(m_request.port));
+            m_error = ssl->connect(
+                verify_https,
+                std::chrono::seconds(10),
+                m_request.host,
+                cast_pod(m_request.port));
 
-            m_error = ssl->error();
+            if(!m_error)
+                m_error = ssl->error();
         } else
 #endif
         {
             normal = MkUq<TCP::Socket>(m_ctxt);
 
-            normal->connect(m_request.host, cast_pod(m_request.port));
+            m_error = normal->connect(
+                std::chrono::seconds(10),
+                m_request.host,
+                cast_pod(m_request.port));
 
-            m_error = normal->error();
+            if(!m_error)
+                m_error = normal->error();
         }
     }
 
@@ -145,7 +153,6 @@ Resource::Resource(ASIO::asio_context ctxt, const Url& url) :
 
     fields[field::accept] = content_type(content::any);
 
-    //    HTTP::InitializeRequest(m_request);
     initRsc(url);
 }
 

@@ -32,60 +32,37 @@ i32 coffee_main(i32, cstring_w*)
     RuntimeQueue::CreateNewQueue("Main");
 
     AutoExec<GLEAMAPI, Display::CSDL2Renderer, AudioData>(
-        [](Display::CSDL2Renderer& r, AudioData* data, Properties&) {
-            r.installEventHandler(
-                {[](c_ptr up, CIEvent const& e, c_cptr data) {
-                     AudioData* m = C_FCAST<AudioData*>(up);
+        [](ShPtr<Display::CSDL2Renderer> r,
+           ShPtr<AudioData>              data,
+           Properties&) {
+            WkPtr<AudioData> borrow = data;
 
-                     auto& m_track_1  = m->m_track_1;
-                     auto& m_track_2  = m->m_track_2;
-                     auto& m_sample_1 = m->m_sample_1;
-                     auto& m_sample_2 = m->m_sample_2;
+            r->installEventHandler(EHandle<CIEvent>::MkFunc<CIKeyEvent>(
+                [borrow](CIEvent const& e, CIKeyEvent const* kev) {
+                    auto m = borrow.lock();
 
-                     switch(e.type)
-                     {
-                     case CIEvent::Keyboard:
-                     {
-                         const CIKeyEvent* kev = (const CIKeyEvent*)data;
-                         switch(kev->key)
-                         {
-                         case CK_Space:
-                             m_track_1->queueSample(*m_sample_1);
-                             break;
-                         case CK_LShift:
-                             m_track_2->queueSample(*m_sample_2);
-                             break;
-                         }
-                         break;
-                     }
-                     case CIEvent::MouseButton:
-                     {
-                         const CIMouseButtonEvent& mev =
-                             *(const CIMouseButtonEvent*)data;
-                         if(mev.mod & CIMouseButtonEvent::Pressed)
-                         {
-                             m_track_1->queueSample(*m_sample_1);
-                         } else
-                         {
-                             m_track_2->queueSample(*m_sample_2);
-                         }
-                         break;
-                     }
-                     default:
-                         break;
-                     }
-                 },
-                 "Input handler",
-                 data});
-            r.installEventHandler(
-                {EventHandlers::EscapeCloseWindow<CSDL2Renderer>,
-                 "Escape handler",
-                 &r});
-            r.installEventHandler(
-                {EventHandlers::WindowManagerCloseWindow<CSDL2Renderer>,
-                 "Close handler",
-                 &r});
+                    auto& m_track_1  = m->m_track_1;
+                    auto& m_track_2  = m->m_track_2;
+                    auto& m_sample_1 = m->m_sample_1;
+                    auto& m_sample_2 = m->m_sample_2;
 
+                    switch(kev->key)
+                    {
+                    case CK_Space:
+                        m_track_1->queueSample(*m_sample_1);
+                        break;
+                    case CK_LShift:
+                        m_track_2->queueSample(*m_sample_2);
+                        break;
+                    }
+                },
+                "Input handler"));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                EventHandlers::ExitOn<EventHandlers::OnKey<CK_Escape>>(r),
+                "Escape handler"));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                EventHandlers::ExitOn<EventHandlers::OnQuit>(r),
+                "Close handler"));
         },
         [&](Display::CSDL2Renderer& r, AudioData* d) {
             AudioSample smp;

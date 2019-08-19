@@ -157,6 +157,25 @@ DeviceType variant()
     return DeviceUnknown;
 #endif
 }
+
+CString system::runtime_kernel()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    return env::Linux::get_kern_name();
+#else
+    return C_SYSTEM_STRING;
+#endif
+}
+
+CString system::runtime_arch()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    return env::Linux::get_kern_arch();
+#else
+    return COFFEE_ARCH;
+#endif
+}
+
 } // namespace device
 
 namespace platform {

@@ -130,8 +130,13 @@ struct mem_chunk
     }
 
     FORCEDINLINE
-    mem_chunk(T* data, size_type size, size_type elements) :
-        data(data), size(size), elements(elements)
+    mem_chunk(
+        T*        data,
+        size_type size,
+        size_type elements,
+        RSCA      access = RSCA::ReadOnly) :
+        data(data),
+        size(size), elements(elements), m_access(access)
     {
 #if MODE_DEBUG
         if((size && !data) || (size && !elements) || (!size && data))
@@ -145,14 +150,14 @@ struct mem_chunk
             !std::is_void<typename std::remove_cv<T>::type>::value,
             Dummy>::type* = nullptr>
     FORCEDINLINE mem_chunk(T& value) :
-        data(&value), size(sizeof(T)), elements(1)
+        data(&value), size(sizeof(T)), elements(1), m_access(RSCA::ReadWrite)
     {
     }
 
     FORCEDINLINE
     mem_chunk(stl_types::Vector<T>& array) :
         data(array.data()), size(sizeof(T) * array.size()),
-        elements(array.size())
+        elements(array.size()), m_access(RSCA::ReadWrite | RSCA::Immutable)
     {
     }
 
@@ -163,7 +168,7 @@ struct mem_chunk
             nullptr>
     FORCEDINLINE mem_chunk(mem_chunk<T2> const& other) :
         data(C_RCAST<T*>(other.data)), size(other.size),
-        elements(other.elements)
+        elements(other.elements), m_access(other.access())
     {
     }
 
@@ -193,11 +198,13 @@ struct mem_chunk
         elements = other.elements;
         size     = other.size;
         m_destr  = other.m_destr;
+        m_access = other.m_access;
 
         other.data     = nullptr;
         other.elements = 0;
         other.size     = 0;
         other.m_destr  = nullptr;
+        other.m_access = RSCA::None;
 
         return *this;
     }
@@ -238,6 +245,7 @@ struct mem_chunk
 
         out.size     = sizeof(T) * num;
         out.elements = num;
+        out.m_access = RSCA::ReadWrite;
 
         mem_chunk<T>::SetDestr(out, [](mem_chunk<T>& d) { free(d.data); });
 
@@ -265,6 +273,7 @@ struct mem_chunk
         out.data     = C_RCAST<T*>(data);
         out.size     = size;
         out.elements = elements;
+        out.m_access = RSCA::ReadOnly | RSCA::Immutable;
 
         return out;
     }
@@ -470,6 +479,7 @@ struct mem_chunk
         data     = C_FCAST<T*>(vec.data());
         size     = vec.size() * sizeof(typename VectorT::value_type);
         elements = vec.size();
+        m_access = RSCA::ReadWrite;
 
         return *this;
     }
@@ -480,6 +490,7 @@ struct mem_chunk
         data     = C_FCAST<T*>(vec.data());
         size     = vec.size() * sizeof(T2);
         elements = vec.size();
+        m_access = RSCA::ReadWrite;
 
         return *this;
     }
@@ -526,6 +537,9 @@ struct mem_chunk
 
     FORCEDINLINE mem_chunk<T>& resize(size_type newSize)
     {
+        if(enum_helpers::feval(m_access & RSCA::Immutable))
+            Throw(undefined_behavior(BYTE_API "cannot resize immutable chunk"));
+
         data = C_RCAST<T*>(realloc(data, newSize));
 
         if(!data)
@@ -542,6 +556,11 @@ struct mem_chunk
         return *this;
     }
 
+    FORCEDINLINE RSCA access() const
+    {
+        return m_access;
+    }
+
     /*!
      * \brief Remove ownership of memory.
      * All responsibility is left to the user.
@@ -555,7 +574,7 @@ struct mem_chunk
     {
 #if MODE_DEBUG
         if(elements == 0)
-            Throw(implementation_error(BYTE_API "no elements"));
+            return end();
 #endif
 
         return iterator(*this);
@@ -570,7 +589,7 @@ struct mem_chunk
     {
 #if MODE_DEBUG
         if(elements == 0)
-            Throw(implementation_error(BYTE_API "no elements"));
+            return end();
 #endif
 
         return const_iterator(*this);
