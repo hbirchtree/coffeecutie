@@ -217,7 +217,7 @@ void Stacktracer::Backtrace(typing::logging::LogInterfaceBasic log)
 
     if(!log)
     {
-        backtrace_symbols(nullptr, 0);
+        backtrace_symbols(tracestore, num);
         return;
     }
 

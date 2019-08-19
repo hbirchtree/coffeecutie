@@ -120,3 +120,9 @@ struct C_DEPRECATED_TYPE
 };
 
 #undef VERIFY_CPP_FEATURE
+
+#if defined(COFFEE_CLANG) || defined(COFFEE_GCC)
+#define COFFEE_DISABLE_ASAN __attribute__((no_sanitize("address")))
+#else
+#define COFFEE_DISABLE_ASAN
+#endif

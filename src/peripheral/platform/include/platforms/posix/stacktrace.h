@@ -62,7 +62,8 @@ namespace glibc {
 
 struct Stacktracer : posix::Stacktracer
 {
-    static void Backtrace(typing::logging::LogInterfaceBasic log = nullptr);
+    COFFEE_DISABLE_ASAN static void Backtrace(
+        typing::logging::LogInterfaceBasic log = nullptr);
 
     static void ExceptionStacktrace(
         ExceptionPtr const& exc_ptr, typing::logging::LogInterfaceBasic log);
