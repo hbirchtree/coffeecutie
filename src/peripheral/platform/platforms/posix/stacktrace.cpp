@@ -218,11 +218,7 @@ COFFEE_DISABLE_ASAN void Stacktracer::Backtrace(typing::logging::LogInterfaceBas
 
     if(!log)
     {
-        backtrace_symbols(tracestore, num);
-        libc::signal::register_atexit([]()
-        {
-            ::free(backtrace_symbols(tracestore, MAX_CONTEXT));
-        });
+        free(backtrace_symbols(tracestore, num));
         return;
     }
 
@@ -239,6 +235,7 @@ COFFEE_DISABLE_ASAN void Stacktracer::Backtrace(typing::logging::LogInterfaceBas
                 DefaultedPrint(
                     log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
         }
+        free(syms);
     }
 }
 
