@@ -18,6 +18,7 @@
 
 #if defined(COFFEE_GLIBC_STACKTRACE)
 #include <execinfo.h>
+#include <peripherals/libc/signals.h>
 #endif
 
 namespace platform {
@@ -205,7 +206,7 @@ static void DefaultedPrint(
     logger(io_handles::err, line, Severity::Critical, 1, 0);
 }
 
-void Stacktracer::Backtrace(typing::logging::LogInterfaceBasic log)
+COFFEE_DISABLE_ASAN void Stacktracer::Backtrace(typing::logging::LogInterfaceBasic log)
 {
     static constexpr szptr MAX_CONTEXT = 21;
     static void* tracestore[MAX_CONTEXT];
@@ -213,11 +214,15 @@ void Stacktracer::Backtrace(typing::logging::LogInterfaceBasic log)
     for(szptr i=0; i<MAX_CONTEXT; i++)
         tracestore[i] = nullptr;
 
-    auto num  = backtrace(tracestore, MAX_CONTEXT);
+    auto num = backtrace(tracestore, MAX_CONTEXT);
 
     if(!log)
     {
         backtrace_symbols(tracestore, num);
+        libc::signal::register_atexit([]()
+        {
+            ::free(backtrace_symbols(tracestore, MAX_CONTEXT));
+        });
         return;
     }
 
