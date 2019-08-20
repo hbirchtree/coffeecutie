@@ -200,6 +200,10 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
+#if MODE_DEBUG
+    InstallDefaultSigHandlers();
+#endif
+
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
     State::SetInternalState(State::CreateNewState());
@@ -271,10 +275,6 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     app_dummy();
 #pragma clang diagnostic pop
-#endif
-
-#if MODE_DEBUG
-    InstallDefaultSigHandlers();
 #endif
 
 #if !MODE_LOWFAT
