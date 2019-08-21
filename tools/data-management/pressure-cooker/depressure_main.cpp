@@ -342,7 +342,7 @@ i32 coffee_main(i32, cstring_w*)
         return extract_file(
             vfsData.data,
             get_file->second,
-            out_it != args.arguments.end() ? out_it->second : "",
+            out_it != args.arguments.end() ? out_it->second : "-",
             forceful ? RSCA::Discard : RSCA::None);
     }
 

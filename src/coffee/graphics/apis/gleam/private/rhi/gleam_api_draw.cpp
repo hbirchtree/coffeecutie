@@ -64,7 +64,7 @@ void GLEAM_API::OptimizeRenderPass(
     {
         D_DATA collected  = bucket.second.front()->d_data;
         collected.m_insts = 0;
-        collected.m_ioff  = 0;
+        collected.m_ioff  = globalInstanceOffset;
         for(auto& draw : bucket.second)
         {
             draw->d_data.m_ioff = globalInstanceOffset + collected.m_insts;
@@ -79,10 +79,8 @@ void GLEAM_API::OptimizeRenderPass(
         bucket.second.clear();
     }
 
-    rpass.draws = std::move(collectedDraws);
-
     Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
-    for(auto& call : rpass.draws)
+    for(auto& call : collectedDraws)
     {
         vert_sort[call.vertices].push_back(&call);
     }

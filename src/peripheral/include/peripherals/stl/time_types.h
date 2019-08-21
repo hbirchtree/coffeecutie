@@ -75,6 +75,7 @@ struct TimeFormatter
         auto localTime = std::localtime(&time);
         std::basic_stringstream<CharT> ss(out);
         ss << std::put_time<CharT>(localTime, fmt);
+        out = ss.str();
 #else
         out = libc::time::time_to_str(time, fmt);
 #endif

@@ -77,7 +77,11 @@ void SetUniform_wrapi(
 #if GL_VERSION_VERIFY(0x330, 0x300)
 template<typename T>
 void SetUniform_wrapui(
-    glhnd const& prog, uint32 idx, const T* data, szptr arr_size, gleam_error& ec)
+    glhnd const& prog,
+    uint32       idx,
+    const T*     data,
+    szptr        arr_size,
+    gleam_error& ec)
 {
     if(!data)
     {

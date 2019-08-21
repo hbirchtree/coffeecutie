@@ -59,15 +59,26 @@ i32 crash_main(i32, cstring_w*)
 
     args.push_back(nullptr);
 
-    if(args.size() < 2)
+    if(args.size() < 1)
     {
         cOutputPrint("No program specified");
         return -1;
     }
 
+    Vector<CString> apitrace_args;
+
     posix_ec   ec;
     file_error fec;
     Url        workingDir;
+
+    if(platform::Env::ExistsVar("CRASH_APITRACE"))
+    {
+        apitrace_args.push_back(platform::Env::GetVar("CRASH_APITRACE"));
+        apitrace_args.push_back("trace");
+
+        for(auto it=apitrace_args.rbegin(); it != apitrace_args.rend(); ++it)
+            args.insert(args.begin(), C_CCAST<cstring_w>(it->c_str()));
+    }
 
     if(platform::Env::ExistsVar("CRASH_WORKING_DIR"))
         workingDir = MkUrl(platform::Env::GetVar("CRASH_WORKING_DIR"));
