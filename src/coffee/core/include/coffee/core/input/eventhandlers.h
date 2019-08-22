@@ -43,7 +43,10 @@ struct OnKey
 template<typename Event>
 struct ExitOn
 {
-    using event_type = CIKeyEvent;
+    using event_type = typename std::conditional<
+        std::is_same<Event, OnQuit>::value,
+        Input::BaseEvent<CIEvent::QuitSign>,
+        CIKeyEvent>::type;
 
     ExitOn(ShPtr<WindowApplication> const& renderer) : m_renderer(renderer)
     {
