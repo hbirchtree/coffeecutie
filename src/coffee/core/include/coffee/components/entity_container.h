@@ -22,6 +22,9 @@ struct visitor_path;
 template<typename ContainerType>
 struct EntityRef;
 
+template<typename ContainerType, typename ComponentType>
+struct ComponentRef;
+
 struct EntityContainer : non_copy
 {
     friend struct Entity;
@@ -338,6 +341,9 @@ struct EntityContainer : non_copy
 
     EntityRef<EntityContainer> ref(Entity& entity);
     EntityRef<EntityContainer> ref(u64 entity);
+
+    template<typename ComponentTag>
+    ComponentRef<EntityContainer, ComponentTag> ref_comp(u64 entity);
 
     /* For optimizations */
     using visitor_graph = Set<Vector<bool>>;

@@ -11,14 +11,13 @@ using namespace Input;
 
 template<typename InputRegister, const CIEvent::EventType EventType>
 /*!
- * \brief By default, event handlers only receive state changes. This function captures the state of keyboard and mouse clicks into a register which allows random access to keys.
- * \param keyRegister A std::map-like structure with operator[]
- * \param e
- * \param data
- * \return true when an event was found
+ * \brief By default, event handlers only receive state changes. This function
+ * captures the state of keyboard and mouse clicks into a register which allows
+ * random access to keys. \param keyRegister A std::map-like structure with
+ * operator[] \param e \param data \return true when an event was found
  */
-bool StandardKeyRegister(InputRegister& keyRegister,
-                         const CIEvent& e, c_cptr data)
+bool StandardKeyRegister(
+    InputRegister& keyRegister, const CIEvent& e, c_cptr data)
 {
     static_assert(
         EventType == CIEvent::Keyboard || EventType == CIEvent::MouseButton,
@@ -60,13 +59,13 @@ bool StandardKeyRegister(InputRegister& keyRegister,
     return true;
 }
 
-template<const CIEvent::EventType EventType,
-         typename  KeyType = u16, typename StorageType = u16>
+template<
+    const CIEvent::EventType EventType,
+    typename KeyType     = u16,
+    typename StorageType = u16>
 /*!
- * \brief StandardKeyRegisterKB is a key register for input devices, suitable to be hooked up with installEventHandler().
- * \param reg
- * \param e
- * \param data
+ * \brief StandardKeyRegisterKB is a key register for input devices, suitable to
+ * be hooked up with installEventHandler(). \param reg \param e \param data
  */
 void StandardKeyRegisterImpl(void* reg, const CIEvent& e, c_cptr data)
 {
@@ -77,67 +76,88 @@ void StandardKeyRegisterImpl(void* reg, const CIEvent& e, c_cptr data)
     StandardKeyRegister<RegisterType, EventType>(regRef, e, data);
 }
 
-template<typename Camera>
+template<typename CameraPtr>
 /*!
  * \brief Camera movement dependent on a fixed update cycle
  * \param c
  * \param reg
  * \return true when Camera reference is updated
  */
-bool StandardCameraMoveInput(Camera& c, Map<u16, u16>& reg)
+struct StandardCameraMoveInput
 {
-    using namespace typing::vectors;
+    using event_type = CIKeyEvent;
 
     using Reg = Map<u16, u16>;
 
-    static Set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
-
-    Reg::const_iterator it =
-        std::find_if(reg.begin(), reg.end(), [](Pair<const u16, u16>& p) {
-            return keys.find(p.first) != keys.end();
-        });
-
-    if(it == reg.end())
-        return false;
-
-    auto camDirection =
-        quaternion_to_direction<CameraDirection::Forward>(c.rotation);
-    const auto camUp        = Vecf3(0, 1.f, 0);
-    auto       camRight     = cross(camUp, camDirection);
-    scalar     acceleration = 5.f;
-
-    if(reg[CK_LShift] & 0x1)
-        acceleration = 10.f;
-
-    while(it != reg.end())
+    StandardCameraMoveInput(CameraPtr cam) : m_camera(cam)
     {
-        if((*it).second & 0x1)
-            switch((*it).first)
-            {
-            case CK_w:
-                c.position -= camDirection * 0.05f * acceleration;
-                break;
-            case CK_s:
-                c.position += camDirection * 0.05f * acceleration;
-                break;
-            case CK_a:
-                c.position -= camRight * 0.05f * acceleration;
-                break;
-            case CK_d:
-                c.position += camRight * 0.05f * acceleration;
-                break;
-            case CK_q:
-                c.position.y() += 0.05f * acceleration;
-                break;
-            case CK_e:
-                c.position.y() -= 0.05f * acceleration;
-                break;
-            }
-        it++;
     }
 
-    return true;
-}
+    inline bool has_key(u16 key) const
+    {
+        auto it = m_reg.find(key);
+
+        return it != m_reg.end() && (it->second & 0x1);
+    }
+
+    void operator()(CIEvent const& e, CIKeyEvent const* ev) const
+    {
+        using namespace typing::vectors;
+        static const Set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
+
+        StandardKeyRegister<Reg, CIEvent::Keyboard>(
+            C_CCAST<Reg&>(m_reg), e, ev);
+
+        Reg::const_iterator it = std::find_if(
+            m_reg.cbegin(), m_reg.cend(), [](Pair<const u16, u16> const& p) {
+                return keys.find(p.first) != keys.cend();
+            });
+
+        auto& c = *m_camera;
+
+        if(it == m_reg.end())
+            return;
+
+        auto camDirection =
+            quaternion_to_direction<CameraDirection::Forward>(c.rotation);
+        const auto camUp        = Vecf3(0, 1.f, 0);
+        auto       camRight     = cross(camUp, camDirection);
+        scalar     acceleration = 5.f;
+
+        if(has_key(CK_LShift))
+            acceleration = 10.f;
+
+        while(it != m_reg.end())
+        {
+            if((*it).second & 0x1)
+                switch((*it).first)
+                {
+                case CK_w:
+                    c.position -= camDirection * 0.05f * acceleration;
+                    break;
+                case CK_s:
+                    c.position += camDirection * 0.05f * acceleration;
+                    break;
+                case CK_a:
+                    c.position -= camRight * 0.05f * acceleration;
+                    break;
+                case CK_d:
+                    c.position += camRight * 0.05f * acceleration;
+                    break;
+                case CK_q:
+                    c.position.y() += 0.05f * acceleration;
+                    break;
+                case CK_e:
+                    c.position.y() -= 0.05f * acceleration;
+                    break;
+                }
+            it++;
+        }
+    }
+
+    CameraPtr m_camera;
+    Reg       m_reg;
+};
 
 template<typename Camera>
 /*!

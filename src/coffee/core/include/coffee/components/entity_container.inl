@@ -155,7 +155,7 @@ FORCEDINLINE void EntityContainer::register_component(
     components.emplace(type_id, std::move(c));
 }
 
-FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity &entity)
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity& entity)
 {
     return EntityRef<EntityContainer>(entity.id, this);
 }
@@ -163,6 +163,13 @@ FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity &entity)
 FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(u64 entity)
 {
     return EntityRef<EntityContainer>(entity, this);
+}
+
+template<typename ComponentTag>
+ComponentRef<EntityContainer, ComponentTag> EntityContainer::ref_comp(
+    u64 entity)
+{
+    return ComponentRef<EntityContainer, ComponentTag>(entity, this);
 }
 
 } // namespace Components

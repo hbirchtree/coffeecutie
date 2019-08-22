@@ -45,5 +45,27 @@ struct EntityRef
     ContainerType* container;
 };
 
+template<typename ContainerType, typename ComponentType>
+struct ComponentRef
+{
+    ComponentRef(u64 id, ContainerType* container) :
+        m_id(id), m_ref(container)
+    {
+    }
+
+    typename ComponentType::type& operator*() const
+    {
+        return *m_ref->template get<ComponentType>(m_id);
+    }
+
+    typename ComponentType::type& operator->() const
+    {
+        return *m_ref->template get<ComponentType>(m_id);
+    }
+
+    u64            m_id;
+    ContainerType* m_ref;
+};
+
 } // namespace Components
 } // namespace Coffee
