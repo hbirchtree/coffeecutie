@@ -33,19 +33,6 @@ static draw_hash hash_draw(GLEAM_API::RenderPass::DrawCall const& drawCall)
         draw.m_eltype);
 }
 
-static GLEAM_API::D_DATA collapse_draw(
-    GLEAM_API::D_DATA& d1, GLEAM_API::D_DATA& d2)
-{
-    auto out = d1;
-
-    out.m_insts += d2.m_insts;
-
-    d1.m_ioff = 0;
-    d2.m_ioff = 0;
-
-    return out;
-}
-
 void GLEAM_API::OptimizeRenderPass(
     GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer)
 {

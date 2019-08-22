@@ -698,7 +698,7 @@ struct Optional
     Optional() : valid(false)
     {
     }
-    Optional(T&& value) : value(value), valid(true)
+    Optional(T&& value) : m_value(value), valid(true)
     {
     }
 
@@ -707,7 +707,7 @@ struct Optional
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
 
-        return value;
+        return m_value;
     }
 
     T& operator*() const
@@ -715,7 +715,7 @@ struct Optional
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
 
-        return value;
+        return m_value;
     }
 
     operator bool() const
@@ -723,15 +723,23 @@ struct Optional
         return valid;
     }
 
+    T& value()
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
     Optional& operator=(T&& v)
     {
-        value = std::move(v);
+        m_value = std::move(v);
         valid = true;
 
         return *this;
     }
 
-    T    value;
+    T    m_value;
     bool valid;
 };
 #endif

@@ -25,19 +25,8 @@ macro ( SNAPPY_TRANSLATE_ARCH_NAME OUTPUT_VAR )
 endmacro()
 
 macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
-    set ( ${PERMISSION_OUTPUT}
-#        "system-observe"
-#        "hardware-observe"
+    set ( ${PERMISSION_OUTPUT} )
 
-#        "network"
-#        "network-observe"
-#        "network-bind"
-
-#        "opengl"
-#        "x11"
-
-#        "pulseaudio"
-        )
     foreach( PARAM ${PERMISSIONS_LIST} )
         get_permission_flag( ${PARAM} PARAM_ENABLED )
         if( "${PARAM_ENABLED}" STREQUAL "1" )
@@ -45,9 +34,21 @@ macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
             # Snapcraft does not like it if we have non-unique elements in the list, we therefore verify this
             if("${PARAM}" MATCHES "SIMPLE_GRAPHICS" OR "${PARAM}" MATCHES "OPENGL")
                 # SDL2 needs to create a Unix socket, therefore we need this
-                set ( PARAM_TRANS "x11;opengl;network-bind;network" )
+                set ( PARAM_TRANS
+                    x11
+                    opengl
+                    network-bind
+                    network
+                    desktop
+                    desktop-legacy
+                    home
+                    unity7
+                    wayland
+                    screen-inhibit-control
+                    joystick
+                    )
             elseif("${PARAM}" MATCHES "AUDIO")
-                set ( PARAM_TRANS "pulseaudio" )
+                set ( PARAM_TRANS pulseaudio )
             elseif("${PARAM}" MATCHES "JOYSTICK")
                 set ( PARAM_TRANS "system-observe;hardware-observe" )
             elseif("${PARAM}" MATCHES "BROWSER")
@@ -147,6 +148,11 @@ macro ( SNAPPY_PACKAGE
         "parts:\n"
         "  binary-import:\n"
         "    plugin: copy\n"
+        "    stage-packages:\n"
+        "      - libxcursor1\n"
+        "      - libxinerama1\n"
+        "      - libxrandr2\n"
+        "      - libsdl2-2.0-0\n"
         "    files:\n"
 	"      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
         "      \"${SNAPPY_PKG_DIR}/snap-select.sh\": \"bin/${TARGET}\"\n"

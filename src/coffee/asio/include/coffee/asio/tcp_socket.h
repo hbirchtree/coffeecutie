@@ -346,8 +346,6 @@ struct socket_base : std::istream, std::ostream, non_copy
             },
             [](concurrent_notif& var, asio::error_code) { var.notify(); });
 
-        auto& var = callback->notif;
-
         callback->notif.prepare_lock();
         async_read_until(delim, callback);
         callback->notif.await();

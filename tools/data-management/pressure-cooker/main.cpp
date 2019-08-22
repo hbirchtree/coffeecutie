@@ -134,7 +134,7 @@ void load_extension(cstring name)
 
     if(!library)
     {
-        cWarning("Failed to load library: {0}", ec.message());
+        C_ERROR_CHECK(ec);
         return;
     }
 
