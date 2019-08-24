@@ -204,6 +204,18 @@ struct GraphicsAllocator
         pipeline.params.get_pipeline_params();
         pipeline.params.get_state();
 
+        using namespace ShaderTypes;
+
+        for(auto const& v : pipeline.params.constants())
+        {
+            if(v.m_flags & ShaderType_t::Sampler_v)
+                pipeline.params.set_sampler(v, {});
+            else
+                pipeline.params.set_constant(v, Bytes());
+        }
+
+        pipeline.params.build_state();
+
         return pipeline.params;
     }
 

@@ -55,6 +55,11 @@ struct size_2d : base_size
         return w * h;
     }
 
+    T aspect() const
+    {
+        return w / h;
+    }
+
     template<typename U>
     inline size_2d<U> convert() const
     {

@@ -4,6 +4,8 @@
 #include <coffee/core/types/direction.h>
 #include <coffee/core/types/input/event_types.h>
 
+#include <algorithm>
+
 namespace Coffee {
 namespace StandardInput {
 
@@ -100,13 +102,15 @@ struct StandardCameraMoveInput
         return it != m_reg.end() && (it->second & 0x1);
     }
 
-    void operator()(CIEvent const& e, CIKeyEvent const* ev) const
+    void register_key(CIEvent const& e, CIKeyEvent const* ev)
+    {
+        StandardKeyRegister<Reg, CIEvent::Keyboard>(m_reg, e, ev);
+    }
+
+    void tick() const
     {
         using namespace typing::vectors;
         static const Set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
-
-        StandardKeyRegister<Reg, CIEvent::Keyboard>(
-            C_CCAST<Reg&>(m_reg), e, ev);
 
         Reg::const_iterator it = std::find_if(
             m_reg.cbegin(), m_reg.cend(), [](Pair<const u16, u16> const& p) {
