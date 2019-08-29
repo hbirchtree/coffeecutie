@@ -39,6 +39,15 @@ inline libc_types::u64 to_unix(Clock::time_point ts)
             seconds(duration_cast<seconds>(ts.time_since_epoch()).count()))));
 }
 
+template<class Timepoint>
+inline libc_types::scalar to_float(Timepoint const& dur)
+{
+    return duration_cast<seconds_float>(
+               time_point_cast<steady_clock::time_point>(dur)
+                   .time_since_epoch())
+        .count();
+}
+
 } // namespace Chrono
 
 template<typename Clock = Chrono::system_clock>
@@ -67,12 +76,12 @@ struct TimeFormatter
 {
     STATICINLINE typename std::basic_string<CharT> String(const CharT* fmt)
     {
-        auto time      = std::time(nullptr);
+        auto time = std::time(nullptr);
 
         std::basic_string<CharT> out;
 
 #if __cplusplus >= 201403L
-        auto localTime = std::localtime(&time);
+        auto                           localTime = std::localtime(&time);
         std::basic_stringstream<CharT> ss(out);
         ss << std::put_time<CharT>(localTime, fmt);
         out = ss.str();

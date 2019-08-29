@@ -399,7 +399,7 @@ bool GLEAM_API::LoadAPI(
 
     m_store = store;
 
-    DefaultFramebuffer().size();
+    DefaultFramebuffer()->size();
 
     GLC::Enable(Feature::Culling);
     GLC::CullFace(Face::Back);
@@ -780,7 +780,7 @@ void GLEAM_API::DisposePixelBuffers()
 #endif
 }
 
-GLEAM_API::FB_T& GLEAM_API::DefaultFramebuffer()
+ShPtr<GLEAM_API::FB_T> GLEAM_API::DefaultFramebuffer()
 {
     return m_store->DefaultFramebuffer;
 }

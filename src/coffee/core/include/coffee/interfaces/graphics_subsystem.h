@@ -24,17 +24,18 @@ struct AllocatorData
 
     struct PipelineData
     {
-        PipelineData() : params(pipeline)
+        PipelineData() :
+            pipeline(MkShared<typename API::PIP>()), params(pipeline)
         {
         }
 
         ~PipelineData()
         {
-            pipeline.dealloc();
+            pipeline->dealloc();
         }
 
-        typename API::PIP pipeline;
-        PipelineParams    params;
+        ShPtr<typename API::PIP> pipeline;
+        PipelineParams           params;
     };
 
     ~AllocatorData()
@@ -197,7 +198,7 @@ struct GraphicsAllocator
         auto& pipeline = *store.back();
 
         if(!RHI::LoadPipeline<API>(
-               pipeline.pipeline, std::move(shaders[0]), std::move(shaders[1])))
+               *pipeline.pipeline, std::move(shaders[0]), std::move(shaders[1])))
             Throw(
                 undefined_behavior("shader compile/pipeline assembly failed"));
 

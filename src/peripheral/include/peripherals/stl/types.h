@@ -744,6 +744,21 @@ struct Optional
 };
 #endif
 
+template<typename T>
+inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
+{
+#if MODE_DEBUG
+    auto ptr_lock = ptr.lock();
+
+    if(!ptr_lock)
+        Throw(undefined_behavior("failed to lock WkPtr"));
+
+    return ptr_lock;
+#else
+    return ptr.lock();
+#endif
+}
+
 } // namespace stl_types
 
 #define C_ERROR_CODE_OUT_OF_BOUNDS() \

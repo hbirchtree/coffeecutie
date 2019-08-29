@@ -55,9 +55,9 @@ struct size_2d : base_size
         return w * h;
     }
 
-    T aspect() const
+    scalar aspect() const
     {
-        return w / h;
+        return scalar(w) / scalar(h);
     }
 
     template<typename U>

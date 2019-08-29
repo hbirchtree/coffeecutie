@@ -5,6 +5,8 @@
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
+#include <peripherals/typing/enum/graphics/shader_stage.h>
+#include <peripherals/typing/enum/graphics/shader_types.h>
 
 #include "cgraphics_pixops.h"
 
@@ -297,11 +299,16 @@ struct shader_param_view
         return [=](const_desc& desc) { return desc.name == param_name; };
     }
 
-    shader_param_view(Pipeline& pip) : m_pipeline(pip)
+    shader_param_view(WkPtr<Pipeline> pip) : m_pipeline(pip)
     {
     }
 
     Pipeline& pipeline()
+    {
+        return *unwrap_ptr(m_pipeline);
+    }
+
+    WkPtr<Pipeline> pipeline_ptr()
     {
         return m_pipeline;
     }
@@ -322,7 +329,7 @@ struct shader_param_view
         m_constant_values.clear();
 
         GFX::GetShaderUniformState(
-            m_pipeline, &m_constant_desc, &m_parameter_desc);
+            *unwrap_ptr(m_pipeline), &m_constant_desc, &m_parameter_desc);
     }
 
     constant_desc_it constants_begin()
@@ -485,7 +492,7 @@ struct shader_param_view
 
   private:
     ProgState m_cached_state;
-    Pipeline& m_pipeline;
+    WkPtr<Pipeline> m_pipeline;
 };
 
 } // namespace RHI

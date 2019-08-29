@@ -25,7 +25,7 @@ static draw_hash hash_draw(GLEAM_API::RenderPass::DrawCall const& drawCall)
 
     return std::make_tuple(
         drawCall.state,
-        drawCall.vertices,
+        drawCall.vertices.lock().get(),
         draw.m_elems,
         draw.m_verts,
         draw.m_eoff,
@@ -66,10 +66,10 @@ void GLEAM_API::OptimizeRenderPass(
         bucket.second.clear();
     }
 
-    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
+    Map<WkPtr<V_DESC>*, Vector<RenderPass::DrawCall*>> vert_sort;
     for(auto& call : collectedDraws)
     {
-        vert_sort[call.vertices].push_back(&call);
+        vert_sort[&call.vertices].push_back(&call);
     }
 
     auto& cmdBufs = buffer.cmdBufs;
@@ -86,7 +86,8 @@ void GLEAM_API::OptimizeRenderPass(
 
         for(auto& ustate_group : ustate_sort)
         {
-            cmdBufs.push_back({*group.first, *ustate_group.first, {}});
+            cmdBufs.push_back(
+                CommandBuffer{*group.first, ustate_group.first, {}});
             auto& cmd_buf = cmdBufs.back();
 
             cmd_buf.commands.reserve(ustate_group.second.size());
@@ -192,7 +193,7 @@ static bool InternalDraw(
 
         if(d.instanced())
         {
-            /* TODO: Implement the disabled drawcalls using other means */
+        /* TODO: Implement the disabled drawcalls using other means */
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
             if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0 &&
                i.vertexOffset() != 0)
@@ -512,9 +513,9 @@ void GLEAM_API::MultiDraw(
     /* We will use these to allow use of existing state.
      * We will treat program uniform state as atomic,
      *  because it can be a lot to compare */
-    V_DESC* p_vertices   = nullptr;
-    PSTATE* p_state      = nullptr;
-    i32     vertexOffset = 0;
+    ShPtr<V_DESC> p_vertices;
+    PSTATE*       p_state;
+    i32           vertexOffset = 0;
 
     glhnd vertexHandle(0);
     i32   baseInstanceLoc = -1;
@@ -566,19 +567,21 @@ void GLEAM_API::MultiDraw(
         {
             auto& buffer = *mdData.first;
 
-            if(&buffer.vertices != p_vertices)
+            auto tmp_vert = unwrap_ptr(buffer.vertices);
+
+            if(tmp_vert != p_vertices)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "VBuffer::bind");
-                buffer.vertices.bind();
-                p_vertices = &buffer.vertices;
+                p_vertices = tmp_vert;
+                p_vertices->bind();
             }
 
-            if(&buffer.state != p_state)
+            if(buffer.state != p_state)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "SetShaderUniformState");
-                for(auto const& s : buffer.state)
+                p_state = buffer.state;
+                for(auto const& s : *p_state)
                     SetShaderUniformState(pipeline, s.first, *s.second, ec);
-                p_state = &buffer.state;
             }
 
             InternalMultiDraw(mdData.second, ec);
@@ -590,21 +593,21 @@ void GLEAM_API::MultiDraw(
          *  multiple calls to Draw() */
         for(auto& buffer : draws.cmdBufs)
         {
-            if(&buffer.vertices != p_vertices)
+            auto tmp_vert  = unwrap_ptr(buffer.vertices);
+
+            if(tmp_vert != p_vertices)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "VBuffer::bind");
-                if(GLEAM_FEATURES.gles20)
-                    vertexOffset = 0;
-                buffer.vertices.bind();
-                p_vertices = &buffer.vertices;
+                p_vertices = tmp_vert;
+                p_vertices->bind();
             }
 
-            if(&buffer.state != p_state)
+            if(buffer.state != p_state)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "SetShaderUniformState");
-                for(auto const& s : buffer.state)
+                p_state = buffer.state;
+                for(auto const& s : *p_state)
                     SetShaderUniformState(pipeline, s.first, *s.second, ec);
-                p_state = &buffer.state;
             }
 
             for(auto& cmd : buffer.commands)
@@ -626,7 +629,7 @@ void GLEAM_API::MultiDraw(
                     if(cmd.data.vertexOffset() != vertexOffset)
                     {
                         vertexOffset = cmd.data.vertexOffset();
-                        buffer.vertices.bind(vertexOffset);
+                        p_vertices->bind(vertexOffset);
                     }
                 }
                 if(GLEAM_FEATURES.gles20 && cmd.data.instances() > 1)

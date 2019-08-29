@@ -23,10 +23,10 @@ struct WindowResize
     {
     }
 
-    void operator()(Event const& e, ResizeEvent const* rev) const
+    void operator()(Event const&, ResizeEvent const* rev) const
     {
         Rect64 view(0, 0, rev->w, rev->h);
-        GLM::DefaultFramebuffer().resize(0, view);
+        GLM::DefaultFramebuffer()->resize(0, view);
     }
 };
 

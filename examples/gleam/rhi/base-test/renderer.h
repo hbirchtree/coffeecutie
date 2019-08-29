@@ -350,13 +350,13 @@ struct RendererState
             deptstate  = {};
         }
 
-        Vecf4          clear_col  = {.267f, .267f, .267f, 1.f};
-        GLM::D_DATA    instdata   = {6, 0, 4};
-        GLM::BLNDSTATE blendstate = {};
-        GLM::DEPTSTATE deptstate  = {};
-        GLM::D_CALL    call       = {};
-        GLM::OPT_DRAW  draws      = {};
-        GLM::PIP*      pipeline;
+        Vecf4           clear_col  = {.267f, .267f, .267f, 1.f};
+        GLM::D_DATA     instdata   = {6, 0, 4};
+        GLM::BLNDSTATE  blendstate = {};
+        GLM::DEPTSTATE  deptstate  = {};
+        GLM::D_CALL     call       = {};
+        GLM::OPT_DRAW   draws      = {};
+        WkPtr<GLM::PIP> pipeline;
     } g_data;
 };
 
@@ -413,7 +413,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     auto& gfx = entities.register_subsystem_inplace<GfxTag, GfxSys>(
         load_opts, PlatformData::IsDebug());
 
-    GLM::V_DESC* vao = nullptr;
+    ShPtr<GLM::V_DESC> vao = nullptr;
 
     /* Uploading vertex data and creating descriptors */
     {
@@ -440,11 +440,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         tc.m_type      = TypeEnum::Scalar;
         tc.m_stride    = sizeof(Vecf3) + sizeof(Vecf2);
 
-        auto verts = gfx.alloc_desc<2>({{pos, tc}});
-
-        verts->bindBuffer(0, *array_buf);
-
-        vao = verts.get();
+        vao = gfx.alloc_desc<2>({{pos, tc}});
+        vao->bindBuffer(0, *array_buf);
     }
 
     /* Compiling shaders and assemble a graphics pipeline */
@@ -460,10 +457,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
         Resource v_rsc(
             (isGles20) ? "vr/vshader_es2.glsl"
-                     : (isGles) ? "vr/vshader_es.glsl" : "vr/vshader.glsl");
+                       : (isGles) ? "vr/vshader_es.glsl" : "vr/vshader.glsl");
         Resource f_rsc(
             (isGles20) ? "vr/fshader_es2.glsl"
-                     : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
+                       : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
 
         params = &gfx.alloc_standard_pipeline<2>(
             {{std::move(v_rsc), std::move(f_rsc)}});
@@ -686,7 +683,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     params->build_state();
 
-    g.pipeline = &params->pipeline();
+    g.pipeline = params->pipeline_ptr();
 
     cVerbose("Acquire and set shader uniforms");
 
@@ -695,10 +692,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     {
         GLM::RenderPass pass;
 
-        pass.pipeline    = &params->pipeline();
-        pass.blend       = &g.blendstate;
-        pass.depth       = &g.deptstate;
-        pass.framebuffer = &GLM::DefaultFramebuffer();
+        pass.pipeline    = params->pipeline_ptr();
+        pass.blend       = g.blendstate;
+        pass.depth       = g.deptstate;
+        pass.framebuffer = GLM::DefaultFramebuffer();
 
         g.call.m_inst = true;
 
@@ -728,10 +725,10 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         DProfContext __("Exclusive context");
         RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
 
-        GLM::DefaultFramebuffer().use(FramebufferT::All);
-        GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
+        GLM::DefaultFramebuffer()->use(FramebufferT::All);
+        GLM::DefaultFramebuffer()->clear(0, g.clear_col, 1.);
 
-        GLM::MultiDraw(*g.pipeline, g.draws);
+        GLM::MultiDraw(*unwrap_ptr(g.pipeline), g.draws);
 
         RuntimeQueue::Unblock(
             component_task.threadId(), component_task.id(), ec);

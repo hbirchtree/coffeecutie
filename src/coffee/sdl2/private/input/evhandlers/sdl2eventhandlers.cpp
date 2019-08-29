@@ -134,6 +134,7 @@ void EventHandleAll(SDL2EventHandler* ctxt, const SDL_Event* ev)
     case SDL_JOYBUTTONDOWN:
     case SDL_JOYBUTTONUP:
     case SDL_JOYHATMOTION:
+    case SDL_JOYBALLMOTION:
         break;
     default:
     {

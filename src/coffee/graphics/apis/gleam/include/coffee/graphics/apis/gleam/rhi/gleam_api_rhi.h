@@ -100,8 +100,8 @@ struct GLEAM_API : GraphicsAPI
 
     struct CommandBuffer
     {
-        V_DESC& vertices;
-        PSTATE& state;
+        WkPtr<V_DESC> vertices;
+        PSTATE*       state;
 
         struct Command
         {
@@ -159,24 +159,24 @@ struct GLEAM_API : GraphicsAPI
 
     struct RenderPass
     {
-        PIP*  pipeline    = nullptr;
-        FB_T* framebuffer = nullptr;
+        WkPtr<PIP>  pipeline;
+        WkPtr<FB_T> framebuffer;
 
-        BLNDSTATE* blend  = nullptr;
-        RASTSTATE* raster = nullptr;
-        DEPTSTATE* depth  = nullptr;
+        BLNDSTATE blend;
+        RASTSTATE raster;
+        DEPTSTATE depth;
 
         struct DrawCall
         {
-            DrawCall(V_DESC* v, PSTATE* s, D_CALL call, D_DATA data) :
+            DrawCall(WkPtr<V_DESC> v, PSTATE* s, D_CALL call, D_DATA data) :
                 vertices(v), state(s), d_call(call), d_data(data)
             {
             }
 
-            V_DESC* vertices;
-            PSTATE* state;
-            D_CALL  d_call;
-            D_DATA  d_data;
+            WkPtr<V_DESC> vertices;
+            PSTATE*       state;
+            D_CALL        d_call;
+            D_DATA        d_data;
         };
 
         Vector<DrawCall> draws;
@@ -337,7 +337,7 @@ struct GLEAM_API : GraphicsAPI
         DrawConditional(pipeline, ustate, vertices, d, i, c, ec);
     }
 
-    static FB_T& DefaultFramebuffer();
+    static ShPtr<FB_T> DefaultFramebuffer();
 
     using APIClass = RHI::GLEAM::APIClass;
     static APILevel Level();

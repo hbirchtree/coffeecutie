@@ -60,7 +60,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
 
 void loop_fun(CDRenderer& renderer, SharedData* data)
 {
-    RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
+    RHI::GLEAM::GLEAM_API::DefaultFramebuffer()->clear(0, {1.f, 1.f, 0.f, 0.1f});
 
     if(data->frame_ts <= Time<>::CurrentTimestamp())
     {
