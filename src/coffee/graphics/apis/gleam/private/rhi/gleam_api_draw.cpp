@@ -688,7 +688,7 @@ void GLEAM_API::Draw(
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x330)
     if(m_store->features.qcom_tiling)
     {
-        auto size = GLEAM_API::DefaultFramebuffer().size();
+        auto size = GLEAM_API::DefaultFramebuffer()->size();
         glStartTilingQCOM(
             0,
             0,
