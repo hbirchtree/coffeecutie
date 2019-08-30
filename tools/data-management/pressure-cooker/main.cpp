@@ -470,6 +470,8 @@ i32 coffee_main(i32, cstring_w*)
     } else
         cursor.print("");
 
+    descriptors.clear();
+
     /* Unmap all files */
     Profiler::PushContext("Unmapping resources");
     for(auto& rsc : resources)

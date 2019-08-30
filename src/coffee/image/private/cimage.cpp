@@ -30,15 +30,10 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     MemCpy(Bytes::From(data, size), target->at(offset));
 }
 
-void ImageFreePtr(void* img)
-{
-    stbi_image_free(img);
-}
-
-void DataSetDestr(Bytes& b)
+inline void DataSetDestr(Bytes& b)
 {
     Bytes::SetDestr(b, [](Bytes& b) {
-        ImageFreePtr(b.data);
+        stbi_image_free(b.data);
         b.data     = nullptr;
         b.size     = 0;
         b.elements = 0;

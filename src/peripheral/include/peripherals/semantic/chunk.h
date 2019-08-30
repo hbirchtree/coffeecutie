@@ -194,6 +194,11 @@ struct mem_chunk
 
     mem_chunk& operator=(mem_chunk&& other)
     {
+        if(data && m_destr)
+        {
+            m_destr(*this);
+        }
+
         data     = other.data;
         elements = other.elements;
         size     = other.size;
