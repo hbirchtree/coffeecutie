@@ -120,6 +120,9 @@ struct SubsystemBase : non_copy
     virtual void end_frame(ContainerProxy&, time_point const&)
     {
     }
+
+  protected:
+    EntityContainer& get_container(ContainerProxy& proxy);
 };
 
 template<typename OutputType>

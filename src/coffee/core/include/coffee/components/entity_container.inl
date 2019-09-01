@@ -172,5 +172,11 @@ ComponentRef<EntityContainer, ComponentTag> EntityContainer::ref_comp(
     return ComponentRef<EntityContainer, ComponentTag>(entity, this);
 }
 
+inline EntityContainer& SubsystemBase::get_container(
+    SubsystemBase::ContainerProxy& proxy)
+{
+    return proxy.m_container;
+}
+
 } // namespace Components
 } // namespace Coffee

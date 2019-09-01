@@ -98,7 +98,7 @@ void SDL2EventHandler::inputTerminate()
             getSDL2Context()->controllers)
         {
             SDL_HapticClose(getSDL2Context()->haptics[con.first]);
-            SDL_GameControllerClose(getSDL2Context()->controllers[con.first]);
+            SDL_GameControllerClose(con.second);
         }
     SDL_QuitSubSystem(
         SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);

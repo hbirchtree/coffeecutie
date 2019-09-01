@@ -61,37 +61,86 @@ bool StandardKeyRegister(
     return true;
 }
 
-template<
-    const CIEvent::EventType EventType,
-    typename KeyType     = u16,
-    typename StorageType = u16>
-/*!
- * \brief StandardKeyRegisterKB is a key register for input devices, suitable to
- * be hooked up with installEventHandler(). \param reg \param e \param data
- */
-void StandardKeyRegisterImpl(void* reg, const CIEvent& e, c_cptr data)
+struct StandardCameraOpts
 {
-    using RegisterType = Map<KeyType, StorageType>;
+    StandardCameraOpts()
+    {
+        accel.base = 5.f;
+        accel.alt  = 10.f;
 
-    auto& regRef = *C_FCAST<RegisterType*>(reg);
+        up = {0, 1, 0};
+    }
 
-    StandardKeyRegister<RegisterType, EventType>(regRef, e, data);
-}
+    struct
+    {
+        scalar base, alt;
+    } accel;
 
-template<typename CameraPtr>
+    Vecf3 up;
+};
+
+template<typename CameraPtr, typename CameraOptsPtr>
 /*!
  * \brief Camera movement dependent on a fixed update cycle
  * \param c
  * \param reg
  * \return true when Camera reference is updated
  */
-struct StandardCameraMoveInput
+struct StandardCamera
 {
-    using event_type = CIKeyEvent;
+    struct KeyboardInput
+    {
+        using event_type = CIKeyEvent;
+
+        KeyboardInput(WkPtr<StandardCamera> cam) : m_container(cam)
+        {
+        }
+
+        void operator()(CIEvent const& e, CIKeyEvent const* ev) const
+        {
+            StandardKeyRegister<Reg, CIEvent::Keyboard>(
+                m_container.lock().get()->m_reg, e, ev);
+        }
+
+        WkPtr<StandardCamera> m_container;
+    };
+
+    struct MouseInput
+    {
+        using event_type = CIMouseMoveEvent;
+
+        MouseInput(
+            CameraPtr cam, u32 button = CIMouseButtonEvent::LeftButton) :
+            m_button(button),
+            m_container(cam)
+        {
+        }
+
+        void operator()(CIEvent const& e, CIMouseMoveEvent const* ev) const
+        {
+            if(ev->btn != m_button)
+                return;
+
+            auto& cqt = (*m_container).rotation;
+
+            auto yaw   = 0.01f * ev->delta.y;
+            auto pitch = 0.01f * ev->delta.x;
+
+            cqt = normalize_quat(Quatf(1, 0, pitch, 0) * cqt);
+
+            cqt.x() = CMath::max(-0.5f, CMath::min(0.5f, cqt.x()));
+
+            cqt = normalize_quat(Quatf(1, yaw, 0, 0) * cqt);
+        }
+
+        u32       m_button;
+        CameraPtr m_container;
+    };
 
     using Reg = Map<u16, u16>;
 
-    StandardCameraMoveInput(CameraPtr cam) : m_camera(cam)
+    StandardCamera(CameraPtr cam, CameraOptsPtr opts) :
+        m_opts(opts), m_camera(cam)
     {
     }
 
@@ -102,12 +151,7 @@ struct StandardCameraMoveInput
         return it != m_reg.end() && (it->second & 0x1);
     }
 
-    void register_key(CIEvent const& e, CIKeyEvent const* ev)
-    {
-        StandardKeyRegister<Reg, CIEvent::Keyboard>(m_reg, e, ev);
-    }
-
-    void tick() const
+    void tick()
     {
         using namespace typing::vectors;
         static const Set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
@@ -159,102 +203,104 @@ struct StandardCameraMoveInput
         }
     }
 
-    CameraPtr m_camera;
-    Reg       m_reg;
+    CameraOptsPtr m_opts;
+    CameraPtr     m_camera;
+    Reg           m_reg;
 };
 
-template<typename Camera>
-/*!
- * \brief Perform standard camera operations
- * Allows control with WASD and mouse
- * Is used as an event handler
- * User pointer should be a camera structure with
- *  .position and .rotation
- * \param r Pointer to a CGCamera structure or similar
- * \param e An event
- * \param data
- */
-void StandardCamera(void* r, const CIEvent& e, c_cptr data)
+struct ControllerOpts
 {
-    Camera& camera = *C_CAST<Camera*>(r);
-
-    switch(e.type)
+    ControllerOpts()
     {
-    case CIEvent::MouseMove:
+        deadzone    = 6000;
+        curve       = 19.f;
+        sens.move.x = sens.move.y = 0.15f;
+        sens.look.x = sens.look.y = 0.005f;
+
+        invertYLook();
+    }
+
+    struct
     {
-        auto ev = C_CAST<const CIMouseMoveEvent*>(data);
+        struct
+        {
+            scalar x, y;
+        } move;
+        struct
+        {
+            scalar x, y;
+        } look;
+    } sens;
 
-        auto& cqt = camera.rotation;
+    i16    deadzone;
+    scalar curve;
 
-        auto yaw   = 0.01f * ev->delta.y;
-        auto pitch = 0.01f * ev->delta.x;
-
-        cqt = normalize_quat(Quatf(1, 0, pitch, 0) * cqt);
-
-        cqt.x() = CMath::max(-0.5f, CMath::min(0.5f, cqt.x()));
-
-        cqt = normalize_quat(Quatf(1, yaw, 0, 0) * cqt);
-
-        break;
+    FORCEDINLINE bool isYLookInverted() const
+    {
+        return sens.look.y < 0;
     }
-    default:
-        break;
+
+    FORCEDINLINE void invertYLook()
+    {
+        sens.look.y *= -1.f;
     }
-}
+};
 
-FORCEDINLINE scalar FilterJoystickInput(i16 raw, i16 deadzone, scalar sens)
+template<typename CameraPtr, typename OptsPtr>
+struct ControllerCamera
 {
-    if(raw > deadzone || (-raw) > deadzone)
-        return convert_i16_f(raw) * sens;
-    return 0.f;
-}
+    ControllerCamera(CameraPtr cam, OptsPtr options) :
+        m_camera(cam), m_opts(options)
+    {
+    }
 
-template<typename Camera>
-/*!
- * \brief Allow control with generic game controller
- * Requires state-dump from joystick on every frame
- * \param cam Camera for a given player
- * \param state Controller state dump for a given controller
- * \param deadzone
- * \param moveSensitivity
- * \param lookSensitivityX
- * \param lookSensitivityY
- */
-void ControllerCamera(
-    Camera&                  cam,
-    CIControllerState const& state,
-    i16                      deadzone         = 6000,
-    scalar                   moveSensitivity  = 0.3f,
-    scalar                   lookSensitivityX = 0.02f,
-    scalar                   lookSensitivityY = -0.02f)
-{
-    using namespace typing::vectors;
+    void operator()(CIControllerState const& state)
+    {
+        using namespace typing::vectors;
 
-    Vecf3& position = cam.position;
-    Quatf& rotation = cam.rotation;
+        Vecf3& position = (*m_camera).position;
+        Quatf& rotation = (*m_camera).rotation;
 
-    const auto forward =
-        quaternion_to_direction<CameraDirection::Forward>(rotation);
-    const auto right =
-        quaternion_to_direction<CameraDirection::Right>(rotation);
+        const auto forward =
+            quaternion_to_direction<CameraDirection::Forward>(rotation);
+        const auto right =
+            quaternion_to_direction<CameraDirection::Right>(rotation);
 
-    const auto acceleration = 1.f + convert_i16_f(state.axes.e.t_l) * 19.f;
+        auto const& opt = opts();
 
-    position +=
-        forward * acceleration *
-        FilterJoystickInput(state.axes.e.l_y, deadzone, moveSensitivity);
-    position +=
-        right * acceleration *
-        FilterJoystickInput(state.axes.e.l_x, deadzone, moveSensitivity);
+        const auto acceleration =
+            1.f + convert_i16_f(state.axes.e.t_l) * opt.curve;
 
-    auto pitch =
-        FilterJoystickInput(state.axes.e.r_x, deadzone, lookSensitivityX);
-    auto yaw =
-        FilterJoystickInput(state.axes.e.r_y, deadzone, lookSensitivityY);
+        position += right * acceleration *
+                    FilterJoystickInput(state.axes.e.l_x, opt.sens.move.x);
+        position += forward * acceleration *
+                    FilterJoystickInput(state.axes.e.l_y, opt.sens.move.y);
 
-    rotation = normalize_quat(Quatf(1, 0, pitch, 0) * rotation);
-    rotation = normalize_quat(Quatf(1, yaw, 0, 0) * rotation);
-}
+        auto pitch = FilterJoystickInput(state.axes.e.r_x, opt.sens.look.x);
+        auto yaw   = FilterJoystickInput(state.axes.e.r_y, opt.sens.look.y);
+
+        rotation = normalize_quat(Quatf(1, 0, pitch, 0) * rotation);
+        rotation = normalize_quat(Quatf(1, yaw, 0, 0) * rotation);
+    }
+
+    ControllerOpts& opts()
+    {
+        return *m_opts;
+    }
+
+  private:
+    FORCEDINLINE scalar FilterJoystickInput(i16 raw, scalar sens)
+    {
+        if(raw > opts().deadzone || (-raw) > opts().deadzone)
+        {
+            return convert_i16_f(raw) * sens;
+        }
+        return 0.f;
+    }
+
+    CameraPtr m_camera;
+    OptsPtr   m_opts;
+};
 
 } // namespace StandardInput
 } // namespace Coffee

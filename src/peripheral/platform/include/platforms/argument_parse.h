@@ -30,7 +30,6 @@ struct AppArg
   private:
     cstring_w       m_programName;
     Vector<CString> m_storage;
-    bool            string_containment;
 };
 
 struct ArgumentResult

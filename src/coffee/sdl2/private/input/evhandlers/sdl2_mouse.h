@@ -45,7 +45,7 @@ FORCEDINLINE void EventHandleMouseMove(
     m.origin.y = motion.y;
     m.delta.x  = motion.xrel;
     m.delta.y  = motion.yrel;
-    m.btn      = InterpretMouseBtnMask(motion.state);
+    m.btn      = InterpretMouseBtn(motion.state);
 
     EventPack(ctxt, &e, &m);
 }

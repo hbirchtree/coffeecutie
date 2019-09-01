@@ -12,6 +12,7 @@ struct ContainerProxy : non_copy
     friend struct EntityContainer;
     template<typename T1, typename T2>
     friend struct EntityVisitor;
+    friend struct SubsystemBase;
 
     FORCEDINLINE
     quick_container<EntityContainer::entity_query> select(u32 tags)
