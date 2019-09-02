@@ -54,7 +54,10 @@ struct ContainerProxy : non_copy
     }
 };
 
-template<typename ComponentList, typename SubsystemList>
+template<
+    typename ComponentList,
+    typename SubsystemList,
+    typename ServiceList = TypeList<void>>
 struct ConstrainedProxy : ContainerProxy
 {
     ConstrainedProxy(EntityContainer& container) : ContainerProxy(container)
@@ -131,6 +134,13 @@ struct ConstrainedProxy : ContainerProxy
         type_list::
             type_in_list<typename SubsystemType::tag_type, SubsystemList>();
         return m_container.subsystem_cast<SubsystemType>();
+    }
+
+    template<typename Service>
+    FORCEDINLINE Service* service()
+    {
+        type_list::type_in_list<Service, ServiceList>();
+        return m_container.service<Service>();
     }
 };
 

@@ -13,7 +13,7 @@ FORCEDINLINE typename declmemtype(&std::type_info::hash_code) type_hash_v()
     return typeid(T).hash_code();
 }
 
-}
+} // namespace Convenience
 
 namespace detail {
 struct visitor_path;
@@ -191,6 +191,20 @@ struct EntityContainer : non_copy
         register_system(MkUq<SystemType>(std::forward<Args>(args)...));
     }
 
+    template<typename ServiceType, typename SubsystemType>
+    void register_subsystem_services(SubsystemType* subsystem)
+    {
+        static_assert(
+            std::is_same<type_hash, size_t>::value, "Mismatched types");
+
+        auto types = type_list::collect_list<typename ServiceType::services>();
+
+        for(type_hash v : types)
+        {
+            services.insert({v, subsystem});
+        }
+    }
+
     inline void add_component(u64 entity_id, size_t type_id)
     {
         container(type_id).register_entity(entity_id);
@@ -208,8 +222,8 @@ struct EntityContainer : non_copy
         entities.emplace_back();
         auto& entity = entities.back();
 
-        entity.id       = entity_counter;
-        entity.tags     = recipe.tags;
+        entity.id   = entity_counter;
+        entity.tags = recipe.tags;
 
         for(auto type_id : recipe.components)
             add_component(entity_counter, type_id);
@@ -245,12 +259,12 @@ struct EntityContainer : non_copy
     quick_container<entity_query> match()
     {
         return quick_container<entity_query>(
-                    [=]() {
-            return entity_query(*this, [=](Entity const& e)
-            {
-                return Matcher::match(*this, e.id);
-            });
-        }, [=]() {return entity_query(*this);});
+            [=]() {
+                return entity_query(*this, [=](Entity const& e) {
+                    return Matcher::match(*this, e.id);
+                });
+            },
+            [=]() { return entity_query(*this); });
     }
 
     ComponentContainerBase& container(size_t type_id)
@@ -333,6 +347,18 @@ struct EntityContainer : non_copy
         return *C_FCAST<subsystem_t*>(it->second.get());
     }
 
+    template<typename Service>
+    Service* service()
+    {
+        const type_hash type_id = typeid(Service).hash_code();
+        auto it = services.find(type_id);
+
+        if(it == services.end())
+            return nullptr;
+
+        return C_DCAST<Service>(it->second);
+    }
+
     template<typename ComponentType>
     typename ComponentType::type* get(u64 id)
     {
@@ -355,8 +381,9 @@ struct EntityContainer : non_copy
     Vector<Entity> entities;
 
     Map<type_hash, UqPtr<ComponentContainerBase>> components;
-    Map<type_hash, UqPtr<SubsystemBase>> subsystems; /*!< Not really systems */
-    Vector<UqPtr<EntityVisitorBase>>     visitors;
+    Map<type_hash, UqPtr<SubsystemBase>>          subsystems;
+    Vector<UqPtr<EntityVisitorBase>>              visitors;
+    Map<type_hash, SubsystemBase*>                services;
 };
 
 } // namespace Components

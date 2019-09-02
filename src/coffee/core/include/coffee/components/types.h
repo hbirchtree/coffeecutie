@@ -7,6 +7,8 @@
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/type_list.h>
 
+#define ENTCOMP_CREATE_TAG(name) struct name { using type = libc_types::u32; };
+
 namespace Coffee {
 namespace Components {
 

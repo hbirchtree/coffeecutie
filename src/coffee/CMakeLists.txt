@@ -5,6 +5,7 @@ option ( BUILD_BLAM     "Build Blam! data readers"                  ON  )
 option ( BUILD_CEF      "Build with Chromium Embedded Framework"    OFF )
 option ( BUILD_OPENVR   "Build with OpenVR integration"             OFF )
 option ( BUILD_SDL2     "Build with SDL2 graphics backend"          ON  )
+option ( BUILD_COMPONENT_APP "Build component-based application"    ON  )
 
 option ( BUILD_HEADFUL  "Build with graphics/windowing support"     ON )
 
@@ -15,6 +16,10 @@ add_subdirectory(image)
 
 if(BUILD_HEADFUL)
     add_subdirectory(graphics)
+endif()
+
+if(BUILD_COMPONENT_APP)
+    add_subdirectory(comp_app)
 endif()
 
 if(BUILD_SDL2)

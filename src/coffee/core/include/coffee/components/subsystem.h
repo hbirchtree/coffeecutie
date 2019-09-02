@@ -6,20 +6,22 @@
 namespace Coffee {
 namespace Components {
 
-template<typename T, typename CompList, typename SubsysList>
+template<
+    typename T,
+    typename CompList    = TypeList<void>,
+    typename SubsysList  = TypeList<void>,
+    typename ServiceList = TypeList<void>>
 struct RestrictedSubsystem : Subsystem<T>
 {
-    using Proxy = ConstrainedProxy<CompList, SubsysList>;
+    using Proxy = ConstrainedProxy<CompList, SubsysList, ServiceList>;
 
-    virtual void start_frame(
-        ContainerProxy& proxy, time_point const& t) override final
+    virtual void start_frame(ContainerProxy& proxy, time_point const& t) final
     {
         Proxy p(this->get_container(proxy));
         start_restricted(p, t);
     }
 
-    virtual void end_frame(
-        ContainerProxy& proxy, time_point const& t) override final
+    virtual void end_frame(ContainerProxy& proxy, time_point const& t) final
     {
         Proxy p(this->get_container(proxy));
         end_restricted(p, t);
