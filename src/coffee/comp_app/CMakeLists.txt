@@ -2,8 +2,10 @@ coffee_library (
     TARGET ComponentApp
     SOURCES
     private/subsystems.cpp
+    private/comp_app.cpp
 
     LIBRARIES
+    EntComp
     Core
 
     HEADER_DIRS
