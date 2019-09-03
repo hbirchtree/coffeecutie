@@ -7,6 +7,7 @@
 #include <coffee/core/types/input/event_types.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/thread_types.h>
+#include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/geometry/point.h>
 #include <peripherals/typing/geometry/size.h>
 
@@ -18,6 +19,11 @@ using namespace Coffee::Components;
 
 using WindowState = Coffee::Display::Properties::State;
 } // namespace detail
+
+using text_type  = Coffee::CString const&;
+using position_t = typing::geometry::point_2d<libc_types::i32>;
+using size_2d_t  = typing::geometry::size_2d<libc_types::i32>;
+using PixFmt     = typing::pixels::PixFmt;
 
 template<class ExposedType, class... OtherServices>
 struct AppServiceTraits
@@ -59,9 +65,6 @@ struct AppService : detail::RestrictedSubsystem<AppServiceTraits<ExposedType>>
 
 struct Windowing : AppService<Windowing>
 {
-    using position_t = typing::geometry::point_2d<libc_types::i32>;
-    using size_2d_t  = typing::geometry::size_2d<libc_types::i32>;
-
     virtual ~Windowing();
 
     virtual void show()  = 0;
@@ -78,8 +81,6 @@ struct Windowing : AppService<Windowing>
 
 struct Dialogs : AppService<Dialogs>
 {
-    using text_type = Coffee::CString const&;
-
     using prompt_callback  = Coffee::Function<void(text_type)>;
     using confirm_callback = Coffee::Function<void(bool)>;
 
@@ -94,24 +95,19 @@ struct Dialogs : AppService<Dialogs>
 
 struct DisplayInfo : AppService<DisplayInfo>
 {
-    using position_t = typing::geometry::point_2d<libc_types::i32>;
-    using size_2d_t  = typing::geometry::size_2d<libc_types::i32>;
-
-    virtual libc_types::u32 monitorCount() const = 0;
-
-    virtual size_2d_t size(libc_types::u32 idx) = 0;
+    virtual libc_types::u32 count() const             = 0;
+    virtual size_2d_t       size(libc_types::u32 idx) = 0;
 };
 
 struct ScreensaverInfo : AppService<ScreensaverInfo>
 {
-    virtual bool isEnabled() const = 0;
-    virtual void disable()         = 0;
-    virtual void enable()          = 0;
+    virtual bool isEnabled() const        = 0;
+    virtual void setEnabled(bool enabled) = 0;
 };
 
 struct WindowInfo : AppService<WindowInfo>
 {
-    virtual Coffee::CString name() = 0;
+    virtual text_type name() = 0;
 };
 
 template<typename EventType>
@@ -123,19 +119,27 @@ struct EventBus : AppService<EventBus<EventType>>
 
 struct MouseInput : AppService<MouseInput>
 {
-    using position_t = typing::geometry::point_2d<libc_types::i32>;
+    using MouseButton = Coffee::Input::CIMouseButtonEvent::MouseButton;
 
     virtual bool mouseGrabbed() const       = 0;
     virtual void setMouseGrab(bool enabled) = 0;
 
-    virtual position_t position();
-    virtual void       warp(position_t const& newPos);
+    virtual position_t  position() const               = 0;
+    virtual void        warp(position_t const& newPos) = 0;
+    virtual MouseButton buttons() const                = 0;
 };
 
 struct KeyboardInput : AppService<KeyboardInput>
 {
+    using KeyModifiers = Coffee::Input::CIKeyEvent::KeyModifiers;
+
     virtual void openVirtual() const
     {
+    }
+
+    virtual KeyModifiers key(libc_types::u32) const
+    {
+        return KeyModifiers::NoneModifier;
     }
 };
 
@@ -143,12 +147,16 @@ struct ControllerInput : AppService<ControllerInput>
 {
     using controller_map = Coffee::Input::CIControllerState;
 
-    virtual libc_types::u32 controllerCount() const              = 0;
-    virtual controller_map  controllerState(libc_types::u32 idx) = 0;
+    virtual libc_types::u32 count() const              = 0;
+    virtual controller_map  state(libc_types::u32 idx) = 0;
 };
 
-struct InputCache : AppService<InputCache>
+struct TouchInput : AppService<TouchInput>
 {
+    virtual libc_types::u32 points() const = 0;
+
+    virtual position_t position(libc_types::u32 idx) const      = 0;
+    virtual position_t startPosition(libc_types::u32 idx) const = 0;
 };
 
 struct GraphicsBinding : AppService<GraphicsBinding>
@@ -161,9 +169,18 @@ struct GraphicsContext : AppService<GraphicsContext>
     virtual void swapBuffers() = 0;
 };
 
+struct GraphicsFramebuffer : AppService<GraphicsFramebuffer>
+{
+    virtual size_2d_t size() const          = 0;
+    virtual PixFmt    format() const        = 0;
+    virtual PixFmt    depthFormat() const   = 0;
+    virtual PixFmt    stencilFormat() const = 0;
+};
+
 struct GraphicsThreadInfo : AppService<GraphicsThreadInfo>
 {
-    virtual stl_types::ThreadId::Hash thread() = 0;
+    virtual stl_types::ThreadId::Hash thread()                   = 0;
+    virtual void                      makeCurrent(app_error& ec) = 0;
 };
 
 struct GraphicsSwap : AppService<GraphicsSwap>
