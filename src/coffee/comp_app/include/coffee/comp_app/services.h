@@ -32,9 +32,17 @@ struct AppServiceTraits
     using services = typename detail::TypeList<ExposedType, OtherServices...>;
 };
 
-template<class ExposedType>
-struct AppService : detail::RestrictedSubsystem<AppServiceTraits<ExposedType>>
+template<
+    class ExposedType,
+    typename ServiceList = detail::TypeList<ExposedType>>
+struct AppService : detail::RestrictedSubsystem<
+                        AppServiceTraits<ExposedType>,
+                        detail::TypeList<void>,
+                        detail::TypeList<void>,
+                        ServiceList>
 {
+    using services = ServiceList;
+
     virtual ~AppService()
     {
     }
@@ -63,6 +71,21 @@ struct AppService : detail::RestrictedSubsystem<AppServiceTraits<ExposedType>>
     }
 };
 
+struct AppLoadableService
+{
+    virtual void load(app_error&)
+    {
+    }
+    virtual void unload(app_error&)
+    {
+    }
+};
+
+struct AppInfo : AppService<AppInfo>
+{
+    virtual void add(text_type key, text_type value) = 0;
+};
+
 struct Windowing : AppService<Windowing>
 {
     virtual ~Windowing();
@@ -74,6 +97,15 @@ struct Windowing : AppService<Windowing>
     virtual void       resize(size_2d_t const& newSize) = 0;
     virtual position_t position() const                 = 0;
     virtual void       move(position_t const& newPos)   = 0;
+
+    virtual void fullscreenBorderless()
+    {
+        setState(detail::WindowState::WindowedFullScreen);
+    }
+    virtual void fullscreenExclusive()
+    {
+        setState(detail::WindowState::FullScreen);
+    }
 
     virtual detail::WindowState setState()                          = 0;
     virtual void                setState(detail::WindowState state) = 0;
@@ -95,8 +127,26 @@ struct Dialogs : AppService<Dialogs>
 
 struct DisplayInfo : AppService<DisplayInfo>
 {
-    virtual libc_types::u32 count() const             = 0;
-    virtual size_2d_t       size(libc_types::u32 idx) = 0;
+    virtual libc_types::u32 count() const                   = 0;
+    virtual libc_types::u32 currentDisplay() const          = 0;
+    virtual size_2d_t       virtualSize() const             = 0;
+    virtual size_2d_t       size(libc_types::u32 idx) const = 0;
+};
+
+struct SingleDisplayInfo : DisplayInfo
+{
+    virtual libc_types::u32 count() const final
+    {
+        return 1;
+    }
+    virtual libc_types::u32 currentDisplay() const final
+    {
+        return 0;
+    }
+    virtual size_2d_t size(libc_types::u32) const final
+    {
+        return virtualSize();
+    }
 };
 
 struct ScreensaverInfo : AppService<ScreensaverInfo>
@@ -107,7 +157,12 @@ struct ScreensaverInfo : AppService<ScreensaverInfo>
 
 struct WindowInfo : AppService<WindowInfo>
 {
-    virtual text_type name() = 0;
+    virtual text_type name() const               = 0;
+    virtual void      setName(text_type newName) = 0;
+};
+
+struct NativeWindowInfo : AppService<NativeWindowInfo>
+{
 };
 
 template<typename EventType>
@@ -143,6 +198,34 @@ struct KeyboardInput : AppService<KeyboardInput>
     }
 };
 
+struct BasicKeyboardInput : KeyboardInput
+{
+    using register_type = stl_types::Map<libc_types::u32, KeyModifiers>;
+
+    struct EventHandler
+    {
+        EventHandler(register_type& registr) : m_register(registr)
+        {
+        }
+        using event_type = Coffee::Input::CIKeyEvent;
+
+        void operator()(Coffee::Input::CIEvent const&, event_type const* ev)
+        {
+            m_register[ev->key] = ev->mod;
+        }
+        register_type& m_register;
+    };
+
+    virtual KeyModifiers key(libc_types::u32 key) const
+    {
+        auto it = m_register.find(key);
+        return it == m_register.end() ? KeyModifiers::NoneModifier : it->second;
+    }
+
+  private:
+    stl_types::Map<libc_types::u32, KeyModifiers> m_register;
+};
+
 struct ControllerInput : AppService<ControllerInput>
 {
     using controller_map = Coffee::Input::CIControllerState;
@@ -161,25 +244,25 @@ struct TouchInput : AppService<TouchInput>
 
 struct GraphicsBinding : AppService<GraphicsBinding>
 {
-    virtual void load(app_error& ec) = 0;
 };
 
 struct GraphicsContext : AppService<GraphicsContext>
 {
-    virtual void swapBuffers() = 0;
+    virtual void swapBuffers(app_error& ec) = 0;
 };
 
 struct GraphicsFramebuffer : AppService<GraphicsFramebuffer>
 {
-    virtual size_2d_t size() const          = 0;
-    virtual PixFmt    format() const        = 0;
-    virtual PixFmt    depthFormat() const   = 0;
-    virtual PixFmt    stencilFormat() const = 0;
+    virtual libc_types::u32 buffers() const       = 0;
+    virtual size_2d_t       size() const          = 0;
+    virtual PixFmt          format() const        = 0;
+    virtual PixFmt          depthFormat() const   = 0;
+    virtual PixFmt          stencilFormat() const = 0;
 };
 
 struct GraphicsThreadInfo : AppService<GraphicsThreadInfo>
 {
-    virtual stl_types::ThreadId::Hash thread()                   = 0;
+    virtual stl_types::ThreadId::Hash thread() const             = 0;
     virtual void                      makeCurrent(app_error& ec) = 0;
 };
 

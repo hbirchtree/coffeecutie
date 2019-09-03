@@ -60,6 +60,10 @@ template<
     typename ServiceList = TypeList<void>>
 struct ConstrainedProxy : ContainerProxy
 {
+    using component_list = ComponentList;
+    using subsystem_list = SubsystemList;
+    using service_list   = ServiceList;
+
     ConstrainedProxy(EntityContainer& container) : ContainerProxy(container)
     {
     }
@@ -141,6 +145,12 @@ struct ConstrainedProxy : ContainerProxy
     {
         type_list::type_in_list<Service, ServiceList>();
         return m_container.service<Service>();
+    }
+
+    template<class BaseType>
+    FORCEDINLINE int services_with()
+    {
+        return m_container.services_with<BaseType>();
     }
 };
 

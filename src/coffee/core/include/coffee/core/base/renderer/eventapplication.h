@@ -317,7 +317,7 @@ class EventApplication : public InputApplication
             EHandler&& handler, cstring name = nullptr)
         {
             return EventHandler(
-                [handler](EvType const& e, c_cptr data) {
+                [handler](EvType const& e, c_cptr data) mutable {
                     if(e.type == EHandler::event_type::event_type)
                         handler(
                             e,

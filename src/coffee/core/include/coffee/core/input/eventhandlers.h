@@ -23,7 +23,7 @@ struct WindowResize
     {
     }
 
-    void operator()(Event const&, ResizeEvent const* rev) const
+    void operator()(Event const&, ResizeEvent const* rev)
     {
         Rect64 view(0, 0, rev->w, rev->h);
         GLM::DefaultFramebuffer()->resize(0, view);
@@ -56,7 +56,7 @@ struct ExitOn
         typename Dummy = void,
         typename std::enable_if<std::is_same<Event, OnQuit>::value, Dummy>::
             type* = nullptr>
-    void operator()(CIEvent const& e, c_cptr) const
+    void operator()(CIEvent const& e, c_cptr)
     {
         if(e.type != CIEvent::QuitSign)
             return;
@@ -70,7 +70,7 @@ struct ExitOn
         typename Dummy = void,
         typename std::enable_if<!std::is_same<Event, OnQuit>::value, Dummy>::
             type* = nullptr>
-    void operator()(CIEvent const&, CIKeyEvent const* ev) const
+    void operator()(CIEvent const&, CIKeyEvent const* ev)
     {
         if(ev->key != Event::key)
             return;
@@ -135,7 +135,7 @@ struct FullscreenOn
     {
     }
 
-    void operator()(CIEvent const&, CIKeyEvent const* keyEvent) const
+    void operator()(CIEvent const&, CIKeyEvent const* keyEvent)
     {
         if(Event::filter(*keyEvent))
         {

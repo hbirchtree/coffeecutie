@@ -351,12 +351,18 @@ struct EntityContainer : non_copy
     Service* service()
     {
         const type_hash type_id = typeid(Service).hash_code();
-        auto it = services.find(type_id);
+        auto            it      = services.find(type_id);
 
         if(it == services.end())
             return nullptr;
 
         return C_DCAST<Service>(it->second);
+    }
+
+    template<class BaseType>
+    int services_with()
+    {
+        return 0;
     }
 
     template<typename ComponentType>

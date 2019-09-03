@@ -96,7 +96,7 @@ struct StandardCamera
         {
         }
 
-        void operator()(CIEvent const& e, CIKeyEvent const* ev) const
+        void operator()(CIEvent const& e, CIKeyEvent const* ev)
         {
             StandardKeyRegister<Reg, CIEvent::Keyboard>(
                 m_container.lock().get()->m_reg, e, ev);
@@ -116,7 +116,7 @@ struct StandardCamera
         {
         }
 
-        void operator()(CIEvent const& e, CIMouseMoveEvent const* ev) const
+        void operator()(CIEvent const& e, CIMouseMoveEvent const* ev)
         {
             if(ev->btn != m_button)
                 return;
