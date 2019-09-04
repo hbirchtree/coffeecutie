@@ -50,6 +50,12 @@ struct AppService : detail::RestrictedSubsystem<
                         detail::TypeList<void>,
                         ServiceList>
 {
+    using subsystem_type = typename detail::RestrictedSubsystem<
+        AppServiceTraits<ExposedType>,
+        detail::TypeList<void>,
+        detail::TypeList<void>,
+        ServiceList>;
+
     using services = ServiceList;
 
     virtual ~AppService()
@@ -66,7 +72,12 @@ struct AppService : detail::RestrictedSubsystem<
             container.register_subsystem_inplace<tag_type, InternalType>(
                 std::forward<Args>(args)...);
 
-        container.register_subsystem_services<tag_type>(&subsys);
+        using service_types = AppServiceTraits<
+            ExposedType,
+            InternalType,
+            AppService<ExposedType>>;
+
+        container.register_subsystem_services<service_types>(&subsys);
 
         return subsys;
     }
@@ -186,8 +197,74 @@ struct EventBus : AppService<EventBus<EventType>>
     {
     }
 
-    virtual void inject(EventType& ev, libc_types::c_ptr data)  = 0;
+    virtual void inject(EventType& ev, libc_types::c_ptr data)
+    {
+        process(ev, data);
+    }
     virtual void process(EventType& ev, libc_types::c_ptr data) = 0;
+};
+
+template<typename EventType>
+struct BasicEventBus : EventBus<EventType>
+{
+    using type = BasicEventBus<EventType>;
+
+    virtual ~BasicEventBus()
+    {
+    }
+
+    struct EvData
+    {
+        libc_types::u32                                          prio;
+        stl_types::Function<void(EventType&, libc_types::c_ptr)> handler;
+    };
+
+    template<typename HandlerType>
+    void addEventHandler(libc_types::u32 prio, HandlerType&& hnd)
+    {
+        auto handler = [hnd](EventType& ev, libc_types::c_ptr data) mutable {
+            if(ev.type == HandlerType::event_type::event_type)
+                hnd(ev, C_RCAST<typename HandlerType::event_type*>(data));
+        };
+
+        m_handlers.push_back({prio, std::move(handler)});
+    }
+
+    template<typename SubEventType>
+    void addEventFunction(
+        libc_types::u32                                        prio,
+        stl_types::Function<void(EventType&, SubEventType*)>&& hnd)
+    {
+        auto handler = [hnd](EventType& ev, libc_types::c_ptr data) mutable {
+            if(ev.type == SubEventType::event_type)
+                hnd(ev, C_RCAST<SubEventType*>(data));
+        };
+
+        m_handlers.push_back({prio, std::move(handler)});
+    }
+
+    virtual void process(EventType& ev, libc_types::c_ptr data) final
+    {
+        for(auto& e : m_handlers)
+            e.handler(ev, data);
+    }
+
+    stl_types::Vector<EvData> m_handlers;
+
+    static bool sort_handlers(EvData const& e1, EvData const& e2)
+    {
+        return e1.prio > e2.prio;
+    }
+
+    void start_restricted(
+        typename EventBus<EventType>::Proxy&,
+        typename EventBus<EventType>::time_point const&)
+    {
+        std::sort(
+            m_handlers.begin(),
+            m_handlers.end(),
+            &BasicEventBus::sort_handlers);
+    }
 };
 
 struct MouseInput : AppService<MouseInput>

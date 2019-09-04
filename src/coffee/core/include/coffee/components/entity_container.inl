@@ -155,6 +155,43 @@ FORCEDINLINE void EntityContainer::register_component(
     components.emplace(type_id, std::move(c));
 }
 
+#if MODE_DEBUG
+template<typename ServiceType, typename SubsystemType>
+struct service_test
+{
+    template<typename T>
+    struct dynamic_test
+    {
+        void operator()(SubsystemType* sub)
+        {
+            C_PTR_CHECK_MSG(C_DCAST<typename T::type>(sub), "service cast mismatch");
+        }
+    };
+
+    void check_subsystems(SubsystemType* sub)
+    {
+        type_list::for_each<typename ServiceType::services, dynamic_test>(sub);
+    }
+};
+#endif
+
+template<typename ServiceType, typename SubsystemType>
+void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
+{
+    static_assert(std::is_same<type_hash, size_t>::value, "Mismatched types");
+
+    auto types = type_list::collect_list<typename ServiceType::services>();
+
+#if MODE_DEBUG
+    service_test<ServiceType, SubsystemType>().check_subsystems(subsystem);
+#endif
+
+    for(type_hash v : types)
+    {
+        services.insert({v, subsystem});
+    }
+}
+
 FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity& entity)
 {
     return EntityRef<EntityContainer>(entity.id, this);

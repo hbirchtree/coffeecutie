@@ -33,6 +33,52 @@ struct AppLoader : AppService<
     using services = Proxy::service_list;
 
     template<typename T>
+    struct service_register
+    {
+        struct noop
+        {
+            void operator()(T&, detail::EntityContainer&, app_error&)
+            {
+            }
+        };
+        struct load
+        {
+            void operator()(
+                T& service, detail::EntityContainer& e, app_error& ec)
+            {
+                service.load(e, ec);
+            }
+        };
+
+        void operator()(detail::EntityContainer& e, app_error& ec)
+        {
+            using namespace type_safety;
+
+            auto& service = T::template register_service<T>(e);
+
+            using operation = typename std::conditional<
+                implementation<T>::template implements<
+                    AppLoadableService>::value,
+                load,
+                noop>::type;
+
+            operation()(service, e, ec);
+
+            C_ERROR_CHECK(ec);
+        }
+    };
+
+    template<typename Services>
+    bool load_all(detail::EntityContainer& e, app_error& ec)
+    {
+        using namespace type_safety::type_list;
+
+        for_each<Services, service_register>(std::ref(e), std::ref(ec));
+
+        return true;
+    }
+
+    template<typename T>
     struct service_loader
     {
         void operator()(Proxy& p, app_error& ec)

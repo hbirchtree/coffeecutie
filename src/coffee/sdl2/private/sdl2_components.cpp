@@ -1,5 +1,6 @@
 #include <coffee/sdl2_comp/app_components.h>
 
+#include <coffee/components/entity_container.inl>
 #include <SDL.h>
 #include <peripherals/stl/string_casting.h>
 
@@ -53,7 +54,7 @@ void Context::load(entity_container& c, comp_app::app_error&)
 
     C_EXPECT_ZERO(SDL_Init(0));
 
-    c.register_subsystem_services<Context>(this);
+    c.register_subsystem_services<comp_app::AppServiceTraits<Context>>(this);
 
     if(!info)
         return;
@@ -262,6 +263,41 @@ void Windowing::setState(comp_app::detail::WindowState state)
 
     if(state & F::Focused)
         SDL_RaiseWindow(m_window);
+}
+
+comp_app::size_2d_t DisplayInfo::virtualSize() const
+{
+    size_2d_t out;
+    SDL_Rect displayRect = {};
+    for(auto i : Range<int>(SDL_GetNumVideoDisplays()))
+    {
+        SDL_GetDisplayBounds(i, &displayRect);
+        out.w = std::max(out.w, displayRect.x + displayRect.w);
+        out.h = std::max(out.h, displayRect.y + displayRect.h);
+    }
+    return out;
+}
+
+libc_types::u32 DisplayInfo::count() const
+{
+    return C_FCAST<libc_types::u32>(SDL_GetNumVideoDisplays());
+}
+
+libc_types::u32 DisplayInfo::currentDisplay() const
+{
+    return C_FCAST<libc_types::u32>(SDL_GetWindowDisplayIndex(nullptr));
+}
+
+comp_app::size_2d_t DisplayInfo::size(libc_types::u32 idx) const
+{
+    SDL_Rect rect;
+    SDL_GetDisplayBounds(C_FCAST<libc_types::i32>(idx), &rect);
+    return {rect.w, rect.h};
+}
+
+comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32 idx) const
+{
+    return {};
 }
 
 } // namespace sdl2

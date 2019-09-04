@@ -192,18 +192,7 @@ struct EntityContainer : non_copy
     }
 
     template<typename ServiceType, typename SubsystemType>
-    void register_subsystem_services(SubsystemType* subsystem)
-    {
-        static_assert(
-            std::is_same<type_hash, size_t>::value, "Mismatched types");
-
-        auto types = type_list::collect_list<typename ServiceType::services>();
-
-        for(type_hash v : types)
-        {
-            services.insert({v, subsystem});
-        }
-    }
+    void register_subsystem_services(SubsystemType* subsystem);
 
     inline void add_component(u64 entity_id, size_t type_id)
     {
@@ -348,7 +337,7 @@ struct EntityContainer : non_copy
     }
 
     template<typename Service>
-    Service* service()
+    typename Service::type* service()
     {
         const type_hash type_id = typeid(Service).hash_code();
         auto            it      = services.find(type_id);
@@ -356,7 +345,7 @@ struct EntityContainer : non_copy
         if(it == services.end())
             return nullptr;
 
-        return C_DCAST<Service>(it->second);
+        return C_DCAST<typename Service::type>(it->second);
     }
 
     template<class BaseType>
