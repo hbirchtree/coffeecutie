@@ -124,7 +124,7 @@ struct SubsystemBase : non_copy
     }
 
   protected:
-    EntityContainer& get_container(ContainerProxy& proxy);
+    static EntityContainer& get_container(ContainerProxy& proxy);
 };
 
 template<typename OutputType>

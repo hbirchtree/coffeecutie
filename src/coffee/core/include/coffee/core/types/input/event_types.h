@@ -77,6 +77,16 @@ struct BaseEvent
     static constexpr CIEvent::EventType event_type = Type;
 };
 
+struct CIQuit : BaseEvent<CIEvent::QuitSign>
+{
+    bool shouldClose = true;
+
+    void deny()
+    {
+        shouldClose = false;
+    }
+};
+
 /*!
  * \brief Keyboard events
  */
@@ -123,6 +133,10 @@ struct CITextEvent : BaseEvent<CIEvent::TextInput>
  */
 struct CIMouseMoveEvent : BaseEvent<CIEvent::MouseMove>
 {
+    CIMouseMoveEvent(PtF o = {}, PtF d = {}) : origin(o), delta(d)
+    {
+    }
+
     PtF origin; /*!< Absolute position*/
     PtF delta;  /*!< Relative movement since last poll*/
     union
@@ -140,14 +154,14 @@ struct CIMouseMoveEvent : BaseEvent<CIEvent::MouseMove>
  */
 struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
 {
-    enum ButtonModifier : uint8
+    enum ButtonModifier : u8
     {
         NoneModifier = 0x0,
 
         DoubleClick = 0x1,
         Pressed     = 0x2,
     };
-    enum MouseButton : uint8
+    enum MouseButton : u8
     {
         NoneBtn = 0x0,
 

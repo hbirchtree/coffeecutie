@@ -40,7 +40,7 @@ struct AppLoader : AppService<
             auto ptr = C_DCAST<AppLoadableService>(p.service<T>());
 
             if(ptr)
-                ptr->load(ec);
+                ptr->load(get_container(p), ec);
         }
     };
 

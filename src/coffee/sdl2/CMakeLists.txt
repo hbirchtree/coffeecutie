@@ -68,3 +68,17 @@ if(NOT EMSCRIPTEN)
             sdl2=SDL2
         )
 endif()
+
+coffee_library (
+    TARGET SDL2Components
+    SOURCES
+    private/sdl2_components.cpp
+
+    LIBRARIES
+    ComponentApp
+    ${LIBS}
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:libs/include>
+    )

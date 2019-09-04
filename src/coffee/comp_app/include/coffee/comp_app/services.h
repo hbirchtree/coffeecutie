@@ -20,16 +20,25 @@ using namespace Coffee::Components;
 using WindowState = Coffee::Display::Properties::State;
 } // namespace detail
 
-using text_type  = Coffee::CString const&;
-using position_t = typing::geometry::point_2d<libc_types::i32>;
-using size_2d_t  = typing::geometry::size_2d<libc_types::i32>;
-using PixFmt     = typing::pixels::PixFmt;
+using text_type   = Coffee::CString const&;
+using text_type_t = Coffee::CString;
+using position_t  = typing::geometry::point_2d<libc_types::i32>;
+using size_2d_t   = typing::geometry::size_2d<libc_types::i32>;
+using PixFmt      = typing::pixels::PixFmt;
 
 template<class ExposedType, class... OtherServices>
 struct AppServiceTraits
 {
     using type     = ExposedType;
     using services = typename detail::TypeList<ExposedType, OtherServices...>;
+};
+
+struct WindowConfig
+{
+    text_type_t         title;
+    size_2d_t           size;
+    position_t          position;
+    detail::WindowState flags;
 };
 
 template<
@@ -48,16 +57,18 @@ struct AppService : detail::RestrictedSubsystem<
     }
 
     template<typename InternalType, typename... Args>
-    static void register_service(
+    static InternalType& register_service(
         detail::EntityContainer& container, Args... args)
     {
-        using tag_type = AppServiceTraits<ExposedType, InternalType>;
+        using tag_type = AppServiceTraits<ExposedType>;
 
         auto& subsys =
             container.register_subsystem_inplace<tag_type, InternalType>(
                 std::forward<Args>(args)...);
 
         container.register_subsystem_services<tag_type>(&subsys);
+
+        return subsys;
     }
 
     virtual ExposedType& get() final
@@ -73,10 +84,12 @@ struct AppService : detail::RestrictedSubsystem<
 
 struct AppLoadableService
 {
-    virtual void load(app_error&)
+    using entity_container = detail::EntityContainer;
+
+    virtual void load(entity_container&, app_error&)
     {
     }
-    virtual void unload(app_error&)
+    virtual void unload(entity_container&, app_error&)
     {
     }
 };
@@ -107,7 +120,7 @@ struct Windowing : AppService<Windowing>
         setState(detail::WindowState::FullScreen);
     }
 
-    virtual detail::WindowState setState()                          = 0;
+    virtual detail::WindowState state() const                       = 0;
     virtual void                setState(detail::WindowState state) = 0;
 };
 
@@ -127,10 +140,11 @@ struct Dialogs : AppService<Dialogs>
 
 struct DisplayInfo : AppService<DisplayInfo>
 {
-    virtual libc_types::u32 count() const                   = 0;
-    virtual libc_types::u32 currentDisplay() const          = 0;
-    virtual size_2d_t       virtualSize() const             = 0;
-    virtual size_2d_t       size(libc_types::u32 idx) const = 0;
+    virtual size_2d_t       virtualSize() const                     = 0;
+    virtual libc_types::u32 count() const                           = 0;
+    virtual libc_types::u32 currentDisplay() const                  = 0;
+    virtual size_2d_t       size(libc_types::u32 idx) const         = 0;
+    virtual size_2d_t       physicalSize(libc_types::u32 idx) const = 0;
 };
 
 struct SingleDisplayInfo : DisplayInfo
@@ -168,8 +182,12 @@ struct NativeWindowInfo : AppService<NativeWindowInfo>
 template<typename EventType>
 struct EventBus : AppService<EventBus<EventType>>
 {
-    virtual void inject(EventType ev, libc_types::c_ptr data)  = 0;
-    virtual void process(EventType ev, libc_types::c_ptr data) = 0;
+    virtual ~EventBus()
+    {
+    }
+
+    virtual void inject(EventType& ev, libc_types::c_ptr data)  = 0;
+    virtual void process(EventType& ev, libc_types::c_ptr data) = 0;
 };
 
 struct MouseInput : AppService<MouseInput>

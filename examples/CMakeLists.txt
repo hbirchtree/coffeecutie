@@ -13,6 +13,7 @@ add_subdirectory (core/gpu-query)
 
 if(NOT LOWFAT_BUILD)
     add_subdirectory (components)
+    add_subdirectory (gleam/comp_app)
 endif()
 
 # ASIO examples, we leave this as core

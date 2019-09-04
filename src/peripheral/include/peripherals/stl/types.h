@@ -771,6 +771,9 @@ inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
     if(!ptr)                                                    \
         Throw(undefined_behavior("bad pointer deref: " __FILE__ \
                                  ":" C_STR(__LINE__)));
+#define C_PTR_CHECK_MSG(ptr, msg) \
+    if(!ptr) Throw(undefined_behavior("bad pointer deref: " msg));
+
 #define C_THIS_CHECK                                              \
     if(!this)                                                     \
         Throw(undefined_behavior("bad access to *this: " __FILE__ \

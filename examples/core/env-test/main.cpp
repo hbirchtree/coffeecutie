@@ -6,8 +6,6 @@
 #include <platforms/sensor.h>
 #include <platforms/sysinfo.h>
 
-#include <coffee/comp_app/subsystems.h>
-
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/url_types.h>
@@ -70,23 +68,6 @@ i32 coffee_main(i32, cstring_w*)
     cDebug("Sensor steps: {0}", Sensor::StepCounter());
     cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
     cDebug("Sensor orientation: {0}", Sensor::Orientation());
-
-    {
-        comp_app::detail::EntityContainer cont;
-
-        auto& keyb = cont.register_subsystem_inplace<
-            comp_app::KeyboardInput::tag_type,
-            comp_app::KeyboardInput>();
-        cont.register_subsystem_services<comp_app::KeyboardInput>(&keyb);
-
-        auto                       window = comp_app::AppLoader();
-        comp_app::AppLoader::Proxy p(cont);
-
-        comp_app::app_error app_ec;
-        window.init(p, app_ec);
-
-        cDebug("Windowing: {0}", sizeof(window));
-    }
 
     return 0;
 }

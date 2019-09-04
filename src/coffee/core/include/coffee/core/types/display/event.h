@@ -53,7 +53,7 @@ struct StateEvent : BaseEvent<Event::State>
     {
     }
 
-    enum StateChange : uint8
+    enum StateChange : u8
     {
         Minimized = 0x01,
         Maximized = 0x02,
@@ -72,17 +72,19 @@ struct StateEvent : BaseEvent<Event::State>
  */
 struct FocusEvent : BaseEvent<Event::Focus>
 {
-    FocusEvent() : mod()
+    enum FocusMask : u8
     {
-    }
-
-    enum FocusMask : uint8
-    {
+        None    = 0x0,
         Mouse   = 0x1,
         Enter   = 0x2,
         Exposed = 0x4,
         Leave   = 0x8,
     };
+
+    FocusEvent(FocusMask mod = None) : mod(mod)
+    {
+    }
+
     FocusMask mod; /*!< Type of focus event*/
 };
 
