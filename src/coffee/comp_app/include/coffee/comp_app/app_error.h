@@ -23,6 +23,7 @@ enum class AppError
 
     /* Graphics context errors */
     NoContext,
+    ContextDowngrade,
     FramebufferMismatch,   /*!< Desired framebuffer config not available */
     ContextAlreadyCurrent, /*!< Semantic error by user */
     ContextNotAvailable,   /*!< Temporarily unavailable */

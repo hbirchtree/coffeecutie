@@ -8,6 +8,8 @@
 #include <coffee/sdl2_comp/app_components.h>
 
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/geometry_types.h>
+#include <coffee/strings/info.h>
 
 #include <coffee/core/CDebug>
 
@@ -37,10 +39,10 @@ i32 coffee_main(i32, cstring_w*)
     windowConf.size  = {1024, 768};
     windowConf.title = "Hello World";
 
-    glConf.framebufferFmt = typing::pixels::PixFmt::SRGB8;
-    glConf.profile |= comp_app::GLConfig::Debug;
-    glConf.version.major = 4;
-    glConf.version.minor = 6;
+    glConf.framebufferFmt = typing::pixels::PixFmt::RGBA8;
+//    glConf.profile |= comp_app::GLConfig::Debug;
+    glConf.version.major = 3;
+    glConf.version.minor = 3;
 
     using AppServices = comp_app::detail::TypeList<
     sdl2::Context,
@@ -60,6 +62,11 @@ i32 coffee_main(i32, cstring_w*)
 
     inputs.addEventFunction<CIQuit>(0, [](CIEvent&, CIQuit* quit) {});
     inputs.addEventFunction<CIQuit>(10, [](CIEvent&, CIQuit* quit) {});
+
+    auto& displays = *e.service<sdl2::DisplayInfo>();
+
+    for(auto i : stl_types::Range<libc_types::u32>(displays.count()))
+        Coffee::cDebug("- {0}", displays.size(i));
 
     C_ERROR_CHECK(ec);
 

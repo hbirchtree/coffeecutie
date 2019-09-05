@@ -357,10 +357,6 @@ void GLContext::setupAttributes(entity_container& c)
     {
         Sint32 contextProfile = SDL_GL_CONTEXT_PROFILE_CORE;
 
-#if defined(COFFEE_APPLE)
-        contextProfile = SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
-#endif
-
         if(glConfig.profile & GLConfig::Embedded)
             contextProfile = SDL_GL_CONTEXT_PROFILE_ES;
 
@@ -368,7 +364,7 @@ void GLContext::setupAttributes(entity_container& c)
     }
 
     {
-        Sint32 contextFlags = 0;
+        Sint32 contextFlags = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
 #if defined(COFFEE_APPLE)
         contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
@@ -394,13 +390,39 @@ void GLContext::setupAttributes(entity_container& c)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, depth_stencil.stencil);
 }
 
+template<typename version>
+struct try_create_context
+{
+    void operator()(
+        SDL_Window*                 window,
+        SDL_GLContext*              m_context,
+        comp_app::GLConfig::Profile profile)
+    {
+        if((profile & version::profile) == 0 || *m_context)
+            return;
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, version::major);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, version::minor);
+
+        *m_context = SDL_GL_CreateContext(window);
+
+        if(*m_context)
+            SDL_GetError();
+    }
+};
+
 void GLContext::load(entity_container& c, comp_app::app_error& ec)
 {
     using GLConfig = comp_app::GLConfig;
 
-    auto window = c.service<Windowing>()->m_window;
+    auto  window   = c.service<Windowing>()->m_window;
+    auto& glConfig = comp_app::AppLoader::config<GLConfig>(c);
 
-    m_context = SDL_GL_CreateContext(window);
+    m_context = nullptr;
+
+    type_safety::type_list::
+        for_each_rev<GLConfig::valid_versions, try_create_context>(
+            window, &m_context, glConfig.profile);
 
     if(!m_context)
     {
@@ -415,7 +437,6 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
         ec = comp_app::AppError::SystemError;
     }
 
-    auto& glConfig = comp_app::AppLoader::config<GLConfig>(c);
     c.service<GLSwapControl>()->setSwapInterval(glConfig.swapInterval);
 
     m_container = &c;
@@ -462,7 +483,7 @@ comp_app::size_2d_t GLFramebuffer::size() const
     return out;
 }
 
-void ControllerInput::load(entity_container &, comp_app::app_error& ec)
+void ControllerInput::load(entity_container&, comp_app::app_error& ec)
 {
     if(SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0)
     {
@@ -475,7 +496,7 @@ void ControllerInput::load(entity_container &, comp_app::app_error& ec)
     SDL_GetError();
 }
 
-void ControllerInput::unload(entity_container &, comp_app::app_error &)
+void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
     for(auto controller : m_controllers)
         SDL_GameControllerClose(C_RCAST<SDL_GameController*>(controller));
@@ -488,7 +509,6 @@ void ControllerInput::unload(entity_container &, comp_app::app_error &)
 void ControllerInput::start_restricted(Proxy& p, time_point const&)
 {
     using namespace Coffee::Input;
-
 
     auto    inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
     CIEvent inputEv;
@@ -510,7 +530,7 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
 
             m_controllers.push_back(controller);
             SDL_GameControllerRumble(controller, 500, 4000, 2000);
-        }else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
+        } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
         {
         }
     }
@@ -537,8 +557,8 @@ ControllerInput::controller_map ControllerInput::state(
     controller_map out;
 
     out.buttons.e.a = BTN(controller, SDL_CONTROLLER_BUTTON_A);
-    out.axes.e.l_x = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX);
-    out.axes.e.l_y = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY);
+    out.axes.e.l_x  = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX);
+    out.axes.e.l_y  = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY);
 
 #undef BTN
 #undef AXIS

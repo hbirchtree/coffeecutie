@@ -104,7 +104,6 @@ struct ControllerInput : comp_app::ControllerInput, comp_app::AppLoadableService
     virtual comp_app::text_type_t name(libc_types::u32 idx) const final;
 
     stl_types::Vector<void*> m_controllers;
-
 };
 
 } // namespace sdl2
