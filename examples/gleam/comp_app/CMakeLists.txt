@@ -2,5 +2,5 @@ coffee_application (
     TARGET CompAppTest
     TITLE "Component app"
     SOURCES main.cpp
-    LIBRARIES SDL2Components
+    LIBRARIES SDL2Components GLeamRHI BindingGLAD
     )

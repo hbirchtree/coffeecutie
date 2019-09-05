@@ -327,6 +327,8 @@ enum format_property
     is_compressed,
     pixel_size,
 
+    layout,
+
     /* For compressed formats */
     block_size,
     supports_subtextures,
@@ -582,6 +584,104 @@ FORCEDINLINE bool get(CompFmt format)
 
     default:
         return true;
+    }
+}
+
+struct layout_t
+{
+    u8 r, g, b, a;
+
+    u8 depth, stencil;
+
+    static layout_t rgba(u8 v)
+    {
+        return {v, v, v, v, 0, 0};
+    }
+    static layout_t rgba(u8 v, u8 a)
+    {
+        return {v, v, v, a, 0, 0};
+    }
+    static layout_t ds(u8 depth, u8 stencil)
+    {
+        return {0, 0, 0, 0, depth, stencil};
+    }
+};
+
+template<format_property Prop,
+         typename std::enable_if<Prop == layout>::type* = nullptr>
+FORCEDINLINE layout_t get(PixFmt fmt)
+{
+    using F = PixFmt;
+
+    switch(fmt)
+    {
+    case F::RGBA2:
+        return layout_t::rgba(2);
+    case F::RGBA4:
+        return layout_t::rgba(4);
+    case F::RGBA8:
+    case F::RGBA8I:
+    case F::RGBA8UI:
+        return layout_t::rgba(8);
+    case F::RGBA12:
+        return layout_t::rgba(12);
+    case F::RGBA16:
+    case F::RGBA16I:
+    case F::RGBA16UI:
+    case F::RGBA16F:
+        return layout_t::rgba(16);
+    case F::RGBA32F:
+    case F::RGBA32I:
+    case F::RGBA32UI:
+        return layout_t::rgba(32);
+    case F::RGB5A1:
+        return layout_t::rgba(5, 1);
+    case F::RGB10A2:
+    case F::RGB10A2UI:
+        return layout_t::rgba(10, 2);
+
+    case F::R3G3B2:
+        return {3, 3, 2, 0, 0, 0};
+    case F::RGB4:
+        return layout_t::rgba(4, 0);
+    case F::RGB5:
+        return layout_t::rgba(5, 0);
+    case F::RGB565:
+        return {5, 6, 5, 0, 0, 0};
+    case F::RGB8:
+        return layout_t::rgba(8, 0);
+    case F::RGB10:
+        return layout_t::rgba(10, 0);
+    case F::RGB12:
+        return layout_t::rgba(12, 0);
+    case F::RGB16F:
+    case F::RGB16:
+        return layout_t::rgba(16, 0);
+    case F::RGB9E5:
+        return layout_t::rgba(9, 0);
+    case F::R11G11B10F:
+        return {11, 11, 10, 0, 0, 0};
+    case F::RGB32F:
+    case F::RGB32I:
+    case F::RGB32UI:
+        return layout_t::rgba(32, 0);
+
+    case F::SRGB8:
+        return {8, 8, 8, 0, 0, 0};
+    case F::SRGB8A8:
+        return {8, 8, 8, 8, 0, 0};
+
+    case F::Depth16:
+        return layout_t::ds(16, 0);
+    case F::Depth24Stencil8:
+        return layout_t::ds(24, 8);
+    case F::Depth32F:
+        return layout_t::ds(32, 0);
+    case F::Depth32FStencil8:
+        return layout_t::ds(32, 8);
+
+    default:
+        Throw(undefined_behavior("layout not defined"));
     }
 }
 

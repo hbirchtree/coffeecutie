@@ -184,6 +184,10 @@ struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
  */
 struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
 {
+    CIScrollEvent(PtF delta = {}, u8 mod = 0) : delta(delta), mod(mod)
+    {
+    }
+
     PtF delta;   /*!< Delta for scroll*/
     u8  mod = 0; /*!< Current mouse modifiers*/
 

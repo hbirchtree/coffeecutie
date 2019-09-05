@@ -5,6 +5,7 @@
 
 struct SDL_Window;
 struct SDL_Surface;
+using SDL_GLContext = void*;
 
 namespace sdl2 {
 
@@ -29,10 +30,14 @@ struct Context : comp_app::AppService<
 
 struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
 {
+    using type = Windowing;
+
     virtual ~Windowing();
 
-    virtual void load(entity_container&, comp_app::app_error& ec) final;
+    virtual void load(entity_container& c, comp_app::app_error& ec) final;
     virtual void unload(entity_container& c, comp_app::app_error& ec) final;
+
+    virtual void start_restricted(Proxy& p, time_point const&) final;
 
     virtual void show() final;
     virtual void close() final;
@@ -45,17 +50,61 @@ struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
     virtual comp_app::detail::WindowState state() const final;
     virtual void setState(comp_app::detail::WindowState state) final;
 
-    SDL_Window*  m_window;
-    SDL_Surface* m_surface;
+    SDL_Window* m_window = nullptr;
 };
 
 struct DisplayInfo : comp_app::DisplayInfo
 {
     virtual comp_app::size_2d_t virtualSize() const final;
-    virtual libc_types::u32 count() const final;
-    virtual libc_types::u32 currentDisplay() const final;
+    virtual libc_types::u32     count() const final;
+    virtual libc_types::u32     currentDisplay() const final;
     virtual comp_app::size_2d_t size(libc_types::u32 idx) const final;
     virtual comp_app::size_2d_t physicalSize(libc_types::u32 idx) const final;
+};
+
+struct GLContext : comp_app::GraphicsContext, comp_app::AppLoadableService
+{
+    using type = GLContext;
+
+    void setupAttributes(entity_container& c);
+
+    virtual void load(entity_container& c, comp_app::app_error& ec) final;
+    virtual void unload(entity_container& c, comp_app::app_error& ec) final;
+
+    virtual void end_restricted(Proxy& p, time_point const&) final;
+    virtual void swapBuffers(comp_app::app_error& ec) final;
+
+    SDL_GLContext     m_context   = nullptr;
+    entity_container* m_container = nullptr;
+};
+
+struct GLSwapControl : comp_app::GraphicsSwapControl
+{
+    virtual libc_types::i32 swapInterval() const final;
+    virtual void            setSwapInterval(libc_types::i32 interval) final;
+};
+
+struct GLFramebuffer : comp_app::GraphicsFramebuffer,
+                       comp_app::AppLoadableService
+{
+    virtual void load(entity_container &c, comp_app::app_error &) final;
+    virtual comp_app::size_2d_t size() const final;
+
+    entity_container* m_container;
+};
+
+struct ControllerInput : comp_app::ControllerInput, comp_app::AppLoadableService
+{
+    virtual void load(entity_container &, comp_app::app_error& ec) final;
+    virtual void unload(entity_container &, comp_app::app_error& ec) final;
+    virtual void start_restricted(Proxy& p, time_point const&) final;
+
+    virtual libc_types::u32 count() const final;
+    virtual controller_map state(libc_types::u32 idx) const final;
+    virtual comp_app::text_type_t name(libc_types::u32 idx) const final;
+
+    stl_types::Vector<void*> m_controllers;
+
 };
 
 } // namespace sdl2

@@ -12,9 +12,6 @@ namespace comp_app {
 
 using Coffee::Components::Convenience::type_hash_v;
 
-template<typename T>
-using AppValue = detail::Globals::ValueSubsystem<T>;
-
 using AppLoaderTag = detail::TagType<libc_types::u32, libc_types::u32>;
 
 struct AppLoader : AppService<
@@ -35,70 +32,98 @@ struct AppLoader : AppService<
     template<typename T>
     struct service_register
     {
-        struct noop
-        {
-            void operator()(T&, detail::EntityContainer&, app_error&)
-            {
-            }
-        };
-        struct load
-        {
-            void operator()(
-                T& service, detail::EntityContainer& e, app_error& ec)
-            {
-                service.load(e, ec);
-            }
-        };
-
         void operator()(detail::EntityContainer& e, app_error& ec)
         {
             using namespace type_safety;
 
             auto& service = T::template register_service<T>(e);
 
-            using operation = typename std::conditional<
-                implementation<T>::template implements<
-                    AppLoadableService>::value,
-                load,
-                noop>::type;
+            C_ERROR_CHECK(ec);
+        }
+    };
 
-            operation()(service, e, ec);
+    template<typename T>
+    struct service_loader
+    {
+        void operator()(detail::EntityContainer& p, app_error& ec)
+        {
+            auto ptr = C_DCAST<AppLoadableService>(p.service<T>());
+
+            if(ptr)
+                ptr->load(p, ec);
+
+            C_ERROR_CHECK(ec);
+        }
+    };
+
+    template<typename T>
+    struct service_unloader
+    {
+        void operator()(detail::EntityContainer& p, app_error& ec)
+        {
+            auto ptr = C_DCAST<AppLoadableService>(p.service<T>());
+
+            if(ptr)
+                ptr->unload(p, ec);
 
             C_ERROR_CHECK(ec);
         }
     };
 
     template<typename Services>
-    bool load_all(detail::EntityContainer& e, app_error& ec)
+    void load_all(detail::EntityContainer& e, app_error& ec)
     {
         using namespace type_safety::type_list;
 
         for_each<Services, service_register>(std::ref(e), std::ref(ec));
+        for_each<Services, service_loader>(std::ref(e), std::ref(ec));
 
-        return true;
+        m_configs.clear();
+        m_configStore.clear();
     }
 
-    template<typename T>
-    struct service_loader
-    {
-        void operator()(Proxy& p, app_error& ec)
-        {
-            auto ptr = C_DCAST<AppLoadableService>(p.service<T>());
-
-            if(ptr)
-                ptr->load(get_container(p), ec);
-        }
-    };
-
-    bool init(Proxy& p, app_error& ec)
+    template<typename Services>
+    void unload_all(detail::EntityContainer& e, app_error& ec)
     {
         using namespace type_safety::type_list;
 
-        p.service<Windowing>();
+        for_each_rev<Services, service_unloader>(std::ref(e), std::ref(ec));
+    }
 
-        for_each<services, service_loader>(std::ref(p), std::ref(ec));
+    template<class Config>
+    void addConfig(stl_types::UqPtr<Config>&& ptr)
+    {
+        auto const type_id = type_hash_v<Config>();
 
-        return true;
+        m_configStore.emplace_back(std::move(ptr));
+        m_configs.insert({type_id, m_configStore.back().get()});
+    }
+
+    template<class Config>
+    Config& config()
+    {
+        auto const type_id = type_hash_v<Config>();
+
+        auto it = m_configs.find(type_id);
+
+        if(it == m_configs.end())
+            Throw(undefined_behavior("failed to find config"));
+
+        auto ptr = C_DCAST<Config>(it->second);
+
+        if(!ptr)
+            Throw(undefined_behavior("config cast failed"));
+
+        return *ptr;
+    }
+
+    stl_types::Vector<stl_types::UqPtr<detail::SubsystemBase>> m_configStore;
+    stl_types::Map<detail::type_hash, detail::SubsystemBase*> m_configs;
+
+    template<class Config>
+    static Config& config(detail::EntityContainer& container)
+    {
+        return container.service<AppLoader>()->config<Config>();
     }
 };
 

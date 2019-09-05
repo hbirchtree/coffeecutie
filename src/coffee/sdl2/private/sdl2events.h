@@ -142,6 +142,25 @@ EVENT_TRANSLATE(CIMouseMoveEvent)
             Coffee::PtF(ev.motion.xrel, ev.motion.yrel)};
 }
 
+EVENT_TRANSLATE(CIScrollEvent)
+{
+    return {typing::geometry::point_2d<libc_types::i32>(ev.wheel.x, ev.wheel.y)
+                .convert<libc_types::scalar>(),
+            0};
+}
+
+EVENT_TRANSLATE(CIControllerAtomicUpdateEvent)
+{
+    CIControllerAtomicUpdateEvent out;
+
+    auto& device = ev.cdevice;
+
+    out.controller = device.which;
+    out.connected = device.type != SDL_CONTROLLERDEVICEREMOVED;
+
+    return out;
+}
+
 EVENT_TRANSLATE(CIQuit)
 {
     return {};

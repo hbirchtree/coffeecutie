@@ -33,12 +33,35 @@ struct AppServiceTraits
     using services = typename detail::TypeList<ExposedType, OtherServices...>;
 };
 
-struct WindowConfig
+template<class ConfigType>
+struct ConfigTraits
+{
+    using type = ConfigType;
+};
+
+template<class ExposedConfig>
+struct Config : detail::Subsystem<ConfigTraits<ExposedConfig>>
+{
+    using type = ExposedConfig;
+
+    virtual ExposedConfig const& get() const final
+    {
+        return *C_RCAST<ExposedConfig const*>(this);
+    }
+    virtual ExposedConfig& get() final
+    {
+        return *C_RCAST<ExposedConfig*>(this);
+    }
+};
+
+struct WindowConfig : Config<WindowConfig>
 {
     text_type_t         title;
     size_2d_t           size;
     position_t          position;
-    detail::WindowState flags;
+    detail::WindowState flags = detail::WindowState::Resizable |
+                                detail::WindowState::Windowed |
+                                detail::WindowState::Visible;
 };
 
 template<
@@ -325,8 +348,9 @@ struct ControllerInput : AppService<ControllerInput>
 {
     using controller_map = Coffee::Input::CIControllerState;
 
-    virtual libc_types::u32 count() const              = 0;
-    virtual controller_map  state(libc_types::u32 idx) = 0;
+    virtual libc_types::u32 count() const                    = 0;
+    virtual controller_map  state(libc_types::u32 idx) const = 0;
+    virtual text_type_t     name(libc_types::u32 idx) const  = 0;
 };
 
 struct TouchInput : AppService<TouchInput>
@@ -348,11 +372,23 @@ struct GraphicsContext : AppService<GraphicsContext>
 
 struct GraphicsFramebuffer : AppService<GraphicsFramebuffer>
 {
-    virtual libc_types::u32 buffers() const       = 0;
+    virtual libc_types::u32 buffers() const
+    {
+        return 1;
+    }
     virtual size_2d_t       size() const          = 0;
-    virtual PixFmt          format() const        = 0;
-    virtual PixFmt          depthFormat() const   = 0;
-    virtual PixFmt          stencilFormat() const = 0;
+    virtual PixFmt          format() const
+    {
+        return PixFmt::None;
+    }
+    virtual PixFmt          depthFormat() const
+    {
+        return PixFmt::None;
+    }
+    virtual PixFmt          stencilFormat() const
+    {
+        return PixFmt::None;
+    }
 };
 
 struct GraphicsThreadInfo : AppService<GraphicsThreadInfo>
@@ -361,7 +397,7 @@ struct GraphicsThreadInfo : AppService<GraphicsThreadInfo>
     virtual void                      makeCurrent(app_error& ec) = 0;
 };
 
-struct GraphicsSwap : AppService<GraphicsSwap>
+struct GraphicsSwapControl : AppService<GraphicsSwapControl>
 {
     virtual libc_types::i32 swapInterval() const                      = 0;
     virtual void            setSwapInterval(libc_types::i32 interval) = 0;

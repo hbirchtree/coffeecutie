@@ -22,6 +22,7 @@ enum class AppError
     NoWindow,
 
     /* Graphics context errors */
+    NoContext,
     FramebufferMismatch,   /*!< Desired framebuffer config not available */
     ContextAlreadyCurrent, /*!< Semantic error by user */
     ContextNotAvailable,   /*!< Temporarily unavailable */

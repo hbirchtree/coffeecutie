@@ -125,8 +125,7 @@ namespace detail {
 template<
     typename Head,
     typename Tail,
-    template<typename T>
-    class Pred,
+    template<typename T> class Pred,
     typename... Args,
     typename std::enable_if<std::is_same<Tail, empty_list>::value>::type* =
         nullptr>
@@ -138,8 +137,19 @@ void for_each_operator(Args... args)
 template<
     typename Head,
     typename Tail,
-    template<typename T>
-    class Pred,
+    template<typename T> class Pred,
+    typename... Args,
+    typename std::enable_if<std::is_same<Tail, empty_list>::value>::type* =
+        nullptr>
+void for_each_operator_rev(Args... args)
+{
+    Pred<Head>()(std::forward<Args>(args)...);
+}
+
+template<
+    typename Head,
+    typename Tail,
+    template<typename T> class Pred,
     typename... Args,
     typename std::enable_if<!std::is_same<Tail, empty_list>::value>::type* =
         nullptr>
@@ -149,6 +159,20 @@ void for_each_operator(Args... args)
     for_each_operator<typename Tail::head, typename Tail::tail, Pred>(args...);
 }
 
+template<
+    typename Head,
+    typename Tail,
+    template<typename T> class Pred,
+    typename... Args,
+    typename std::enable_if<!std::is_same<Tail, empty_list>::value>::type* =
+        nullptr>
+void for_each_operator_rev(Args... args)
+{
+    for_each_operator_rev<typename Tail::head, typename Tail::tail, Pred>(
+        args...);
+    Pred<Head>()(std::forward<Args>(args)...);
+}
+
 } // namespace detail
 
 template<typename Types, template<typename T> class Pred, typename... Args>
@@ -156,6 +180,13 @@ FORCEDINLINE void for_each(Args... args)
 {
     detail::for_each_operator<typename Types::head, typename Types::tail, Pred>(
         std::forward<Args>(args)...);
+}
+template<typename Types, template<typename T> class Pred, typename... Args>
+FORCEDINLINE void for_each_rev(Args... args)
+{
+    detail::
+        for_each_operator_rev<typename Types::head, typename Types::tail, Pred>(
+            std::forward<Args>(args)...);
 }
 
 } // namespace type_list
