@@ -7,9 +7,21 @@
 #include <coffee/graphics/apis/gleam/levels/gl_shared_include.h>
 #include <coffee/sdl2_comp/app_components.h>
 
-#include <coffee/strings/libc_types.h>
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
+#include <coffee/strings/libc_types.h>
+
+namespace Coffee {
+namespace Strings {
+
+static CString to_string(comp_app::ControllerInput::controller_map const& box)
+{
+    return cStringFormat(
+        "mapping:{0}:{1}:{2}", box.buttons.e.a, box.axes.e.l_x, box.axes.e.l_y);
+}
+
+} // namespace Strings
+} // namespace Coffee
 
 #include <coffee/core/CDebug>
 
@@ -19,6 +31,7 @@ i32 coffee_main(i32, cstring_w*)
 {
     using GFX = Coffee::RHI::GLEAM::GLEAM_API;
 
+    using namespace Coffee;
     using namespace Coffee::Components;
     using namespace Coffee::Display;
     using namespace Coffee::Input;
@@ -40,20 +53,20 @@ i32 coffee_main(i32, cstring_w*)
     windowConf.title = "Hello World";
 
     glConf.framebufferFmt = typing::pixels::PixFmt::RGBA8;
-//    glConf.profile |= comp_app::GLConfig::Debug;
+    //    glConf.profile |= comp_app::GLConfig::Debug;
     glConf.version.major = 3;
     glConf.version.minor = 3;
 
     using AppServices = comp_app::detail::TypeList<
-    sdl2::Context,
-    sdl2::Windowing,
-    sdl2::DisplayInfo,
-    sdl2::GLSwapControl,
-    sdl2::GLContext,
-    sdl2::GLFramebuffer,
-    sdl2::ControllerInput,
-    comp_app::BasicEventBus<CIEvent>,
-    comp_app::BasicEventBus<Event>>;
+        sdl2::Context,
+        sdl2::Windowing,
+        sdl2::DisplayInfo,
+        sdl2::GLSwapControl,
+        sdl2::GLContext,
+        sdl2::GLFramebuffer,
+        sdl2::ControllerInput,
+        comp_app::BasicEventBus<CIEvent>,
+        comp_app::BasicEventBus<Event>>;
 
     loader.load_all<AppServices>(e, ec);
 
@@ -62,15 +75,32 @@ i32 coffee_main(i32, cstring_w*)
 
     inputs.addEventFunction<CIQuit>(0, [](CIEvent&, CIQuit* quit) {});
     inputs.addEventFunction<CIQuit>(10, [](CIEvent&, CIQuit* quit) {});
+    inputs.addEventFunction<CIControllerAtomicUpdateEvent>(
+        10, [](CIEvent&, CIControllerAtomicUpdateEvent* ev) {
+            cDebug("Controller: {0} -> {1}", ev->controller, ev->connected);
+        });
 
-    auto& displays = *e.service<sdl2::DisplayInfo>();
+    auto& displays = *e.service<comp_app::DisplayInfo>();
 
+    cDebug("{0}", displays.virtualSize());
     for(auto i : stl_types::Range<libc_types::u32>(displays.count()))
-        Coffee::cDebug("- {0}", displays.size(i));
+        cDebug("- {0}", displays.size(i));
 
     C_ERROR_CHECK(ec);
 
-    Coffee::RuntimeQueue::CreateNewQueue("Main");
+    RuntimeQueue::CreateNewQueue("Main");
+
+    runtime_queue_error rqec;
+    RuntimeQueue::QueuePeriodic(
+        RuntimeQueue::GetCurrentQueue(rqec),
+        Chrono::milliseconds(100),
+        [&e]() {
+            auto dump = e.service<sdl2::ControllerInput>();
+
+            for(auto i : Range<u32>(dump->count()))
+                cDebug("Controller {0}: {1}", dump->name(i), dump->state(i));
+        },
+        rqec);
 
     if(!gladLoadGL())
     {
@@ -85,13 +115,9 @@ i32 coffee_main(i32, cstring_w*)
 
     while(!context.m_shouldClose)
     {
-        auto dump = e.service<sdl2::ControllerInput>();
-        Coffee::cDebug("A: {0}", dump->state(0).buttons.e.a);
-        Coffee::cDebug("LX: {0}", dump->state(0).axes.e.l_x);
-        Coffee::cDebug("LY: {0}", dump->state(0).axes.e.l_y);
-
         GFX::DefaultFramebuffer()->clear(0, Coffee::Vecf4(0.2f));
         e.exec();
+        RuntimeQueue::GetCurrentQueue(rqec)->executeTasks();
     }
 
     loader.unload_all<AppServices>(e, ec);

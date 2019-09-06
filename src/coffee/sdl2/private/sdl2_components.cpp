@@ -95,42 +95,31 @@ void Context::end_restricted(Proxy& p, time_point const&)
     CIEvent inputEv;
 
     SDL_Event event;
-    while(SDL_PollEvent(&event))
+    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_QUIT, SDL_QUIT))
     {
-        switch(event.type)
-        {
-        case SDL_KEYUP:
-        case SDL_KEYDOWN:
-            EMIT_IEVENT(translate::event<CIKeyEvent>(event));
-            break;
+//        case SDL_KEYUP:
+//        case SDL_KEYDOWN:
+//            EMIT_IEVENT(translate::event<CIKeyEvent>(event));
+//            break;
 
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEBUTTONDOWN:
-            EMIT_IEVENT(translate::event<CIMouseButtonEvent>(event));
-            break;
+//        case SDL_MOUSEBUTTONUP:
+//        case SDL_MOUSEBUTTONDOWN:
+//            EMIT_IEVENT(translate::event<CIMouseButtonEvent>(event));
+//            break;
 
-        case SDL_MOUSEMOTION:
-            EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event));
-            break;
+//        case SDL_MOUSEMOTION:
+//            EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event));
+//            break;
 
-        case SDL_MOUSEWHEEL:
-            EMIT_IEVENT(translate::event<CIScrollEvent>(event));
-            break;
+//        case SDL_MOUSEWHEEL:
+//            EMIT_IEVENT(translate::event<CIScrollEvent>(event));
+//            break;
 
-        case SDL_QUIT:
-        {
-            auto data    = translate::event<CIQuit>(event);
-            inputEv.type = data.event_type;
-            inputBus->process(inputEv, &data);
+        auto data    = translate::event<CIQuit>(event);
+        inputEv.type = data.event_type;
+        inputBus->process(inputEv, &data);
 
-            m_shouldClose = data.shouldClose;
-            break;
-        }
-        default:
-            break;
-        }
-
-        inputEv = {};
+        m_shouldClose = data.shouldClose;
     }
 }
 
@@ -205,6 +194,7 @@ void Windowing::start_restricted(Proxy& p, time_point const&)
     }
 
     SDL_Event event;
+    SDL_PumpEvents();
 
     while(SDL_PeepEvents(
         &event,
@@ -492,17 +482,21 @@ void ControllerInput::load(entity_container&, comp_app::app_error& ec)
         return;
     }
 
-    SDL_InitSubSystem(SDL_INIT_HAPTIC);
     SDL_GetError();
 }
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
-    for(auto controller : m_controllers)
-        SDL_GameControllerClose(C_RCAST<SDL_GameController*>(controller));
+    for(auto const& controller : m_controllers)
+        SDL_GameControllerClose(
+            C_RCAST<SDL_GameController*>(controller.second));
+
+    for(auto i : stl_types::Range<int>(SDL_NumJoysticks()))
+    {
+        SDL_JoystickClose(SDL_JoystickOpen(i));
+    }
 
     SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER);
-    SDL_QuitSubSystem(SDL_INIT_HAPTIC);
     SDL_GetError();
 }
 
@@ -514,28 +508,57 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
     CIEvent inputEv;
 
     SDL_Event event;
+    SDL_PumpEvents();
 
     while(SDL_PeepEvents(
         &event,
         1,
         SDL_GETEVENT,
         SDL_CONTROLLERDEVICEADDED,
-        SDL_CONTROLLERDEVICEREMAPPED))
+        SDL_CONTROLLERDEVICEREMOVED))
     {
-        EMIT_IEVENT(translate::event<CIControllerAtomicUpdateEvent>(event));
 
         if(event.type == SDL_CONTROLLERDEVICEADDED)
         {
             auto controller = SDL_GameControllerOpen(event.cdevice.which);
 
-            m_controllers.push_back(controller);
-            SDL_GameControllerRumble(controller, 500, 4000, 2000);
+            if(!controller)
+            {
+                Throw(undefined_behavior("failed to open controller device"));
+            }
+
+            auto joystick   = SDL_GameControllerGetJoystick(controller);
+
+            auto playerIdx  = SDL_GameControllerGetPlayerIndex(controller);
+            auto instanceId = SDL_JoystickInstanceID(joystick);
+
+            playerIdx = playerIdx >= 0 ? playerIdx : m_playerIndex.size();
+
+            m_playerIndex.insert({playerIdx, controller});
+            m_controllers.insert({instanceId, controller});
+
+            SDL_GameControllerRumble(controller, 7000, 9000, 200);
+
+            event.cdevice.which = playerIdx;
         } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
         {
+            event.cdevice.which = controllerDisconnect(event.cdevice.which);
         }
+
+        EMIT_IEVENT(translate::event<CIControllerAtomicUpdateEvent>(event));
     }
 
-    SDL_GameControllerUpdate();
+    while(SDL_PeepEvents(
+        &event,
+        1,
+        SDL_GETEVENT,
+        SDL_CONTROLLERAXISMOTION,
+        SDL_CONTROLLERBUTTONUP))
+        ;
+
+    while(SDL_PeepEvents(
+        &event, 1, SDL_GETEVENT, SDL_JOYAXISMOTION, SDL_JOYDEVICEREMOVED))
+        ;
 }
 
 libc_types::u32 ControllerInput::count() const
@@ -546,19 +569,40 @@ libc_types::u32 ControllerInput::count() const
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
-    if(idx >= m_controllers.size())
+    auto it = m_playerIndex.find(idx);
+
+    if(it == m_playerIndex.end())
         return {};
 
-    auto controller = C_RCAST<SDL_GameController*>(m_controllers.at(idx));
+    auto controller = C_RCAST<SDL_GameController*>(it->second);
 
 #define BTN SDL_GameControllerGetButton
 #define AXIS SDL_GameControllerGetAxis
 
     controller_map out;
 
-    out.buttons.e.a = BTN(controller, SDL_CONTROLLER_BUTTON_A);
-    out.axes.e.l_x  = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX);
-    out.axes.e.l_y  = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY);
+    out.buttons.e.a      = BTN(controller, SDL_CONTROLLER_BUTTON_A);
+    out.buttons.e.b      = BTN(controller, SDL_CONTROLLER_BUTTON_B);
+    out.buttons.e.x      = BTN(controller, SDL_CONTROLLER_BUTTON_X);
+    out.buttons.e.y      = BTN(controller, SDL_CONTROLLER_BUTTON_Y);
+    out.buttons.e.b_l    = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+    out.buttons.e.b_r    = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+    out.buttons.e.s_l    = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK);
+    out.buttons.e.s_r    = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+    out.buttons.e.p_up   = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
+    out.buttons.e.p_down = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+    out.buttons.e.p_left = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+    out.buttons.e.p_right = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+    out.buttons.e.back    = BTN(controller, SDL_CONTROLLER_BUTTON_BACK);
+    out.buttons.e.start   = BTN(controller, SDL_CONTROLLER_BUTTON_START);
+    out.buttons.e.guide   = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
+
+    out.axes.e.l_x = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX);
+    out.axes.e.l_y = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY);
+    out.axes.e.r_x = AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTX);
+    out.axes.e.r_y = AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTY);
+    out.axes.e.t_l = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+    out.axes.e.t_r = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 
 #undef BTN
 #undef AXIS
@@ -568,10 +612,43 @@ ControllerInput::controller_map ControllerInput::state(
 
 comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 {
-    auto name = SDL_GameControllerName(
-        C_RCAST<SDL_GameController*>(m_controllers.at(idx)));
+    auto it = m_playerIndex.find(idx);
+
+    if(it == m_playerIndex.end())
+        return {};
+
+    auto name =
+        SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
     return name ? name : CString();
+}
+
+int ControllerInput::controllerDisconnect(int device)
+{
+    auto it = m_controllers.find(device);
+
+    if(it == m_controllers.end())
+    {
+        Throw(undefined_behavior("failed to close device"));
+    }
+
+    auto controller = C_RCAST<SDL_GameController*>(it->second);
+    auto joystick   = SDL_GameControllerGetJoystick(controller);
+
+    auto instanceIdx = SDL_JoystickInstanceID(joystick);
+
+    SDL_GameControllerClose(controller);
+
+    decltype(m_playerIndex)::key_type delete_key = -1;
+
+    for(auto const& v : m_playerIndex)
+        if(v.second == it->second)
+            delete_key = v.first;
+
+    m_playerIndex.erase(delete_key);
+    m_controllers.erase(instanceIdx);
+
+    return delete_key;
 }
 
 } // namespace sdl2

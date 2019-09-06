@@ -87,7 +87,7 @@ struct GLSwapControl : comp_app::GraphicsSwapControl
 struct GLFramebuffer : comp_app::GraphicsFramebuffer,
                        comp_app::AppLoadableService
 {
-    virtual void load(entity_container &c, comp_app::app_error &) final;
+    virtual void load(entity_container& c, comp_app::app_error&) final;
     virtual comp_app::size_2d_t size() const final;
 
     entity_container* m_container;
@@ -95,15 +95,18 @@ struct GLFramebuffer : comp_app::GraphicsFramebuffer,
 
 struct ControllerInput : comp_app::ControllerInput, comp_app::AppLoadableService
 {
-    virtual void load(entity_container &, comp_app::app_error& ec) final;
-    virtual void unload(entity_container &, comp_app::app_error& ec) final;
+    virtual void load(entity_container&, comp_app::app_error& ec) final;
+    virtual void unload(entity_container&, comp_app::app_error& ec) final;
     virtual void start_restricted(Proxy& p, time_point const&) final;
 
-    virtual libc_types::u32 count() const final;
-    virtual controller_map state(libc_types::u32 idx) const final;
+    virtual libc_types::u32       count() const final;
+    virtual controller_map        state(libc_types::u32 idx) const final;
     virtual comp_app::text_type_t name(libc_types::u32 idx) const final;
 
-    stl_types::Vector<void*> m_controllers;
+    int controllerDisconnect(int device);
+
+    stl_types::Map<int, void*> m_controllers;
+    stl_types::Map<int, void*> m_playerIndex;
 };
 
 } // namespace sdl2
