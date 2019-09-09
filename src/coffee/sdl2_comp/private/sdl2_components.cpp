@@ -795,6 +795,9 @@ void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
 #elif defined(COFFEE_USE_WINDOWS_ANGLE)
     info.window  = windowInfo.info.win.window;
     info.display = windowInfo.info.win.hdc;
+#elif defined(SDL_VIDEO_DRIVER_COCOA)
+    info.window = windowInfo.info.cocoa.window;
+    info.display = nullptr;
 #else
     static_assert(false, "missing video driver");
 #endif
