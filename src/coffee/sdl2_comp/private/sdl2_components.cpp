@@ -1,6 +1,5 @@
 #include <coffee/sdl2_comp/app_components.h>
 
-#include <SDL.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/entity_container.inl>
@@ -8,6 +7,8 @@
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
 #include "sdl2events.h"
+
+#include <SDL.h>
 
 #define NOT_ZERO(v) (v < 0)
 
@@ -34,7 +35,7 @@ static const stl_types::MultiMap<Uint32, F> window_flag_mapping = {
     {SDL_WINDOW_FULLSCREEN, F::FullScreen},
     {SDL_WINDOW_FULLSCREEN_DESKTOP, F::WindowedFullScreen}};
 
-::Uint32 window_to_sdl2(comp_app::detail::WindowState state)
+static ::Uint32 window_to_sdl2(comp_app::detail::WindowState state)
 {
     Uint32 out = 0;
 
@@ -45,7 +46,7 @@ static const stl_types::MultiMap<Uint32, F> window_flag_mapping = {
     return out;
 }
 
-libc_types::u16 window_from_sdl2(::Uint32 state)
+static libc_types::u16 window_from_sdl2(::Uint32 state)
 {
     libc_types::u16 out = 0;
 
@@ -55,6 +56,8 @@ libc_types::u16 window_from_sdl2(::Uint32 state)
 
     return out;
 }
+
+static void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info);
 
 using namespace stl_types;
 
@@ -97,24 +100,6 @@ void Context::end_restricted(Proxy& p, time_point const&)
     SDL_Event event;
     while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_QUIT, SDL_QUIT))
     {
-//        case SDL_KEYUP:
-//        case SDL_KEYDOWN:
-//            EMIT_IEVENT(translate::event<CIKeyEvent>(event));
-//            break;
-
-//        case SDL_MOUSEBUTTONUP:
-//        case SDL_MOUSEBUTTONDOWN:
-//            EMIT_IEVENT(translate::event<CIMouseButtonEvent>(event));
-//            break;
-
-//        case SDL_MOUSEMOTION:
-//            EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event));
-//            break;
-
-//        case SDL_MOUSEWHEEL:
-//            EMIT_IEVENT(translate::event<CIScrollEvent>(event));
-//            break;
-
         auto data    = translate::event<CIQuit>(event);
         inputEv.type = data.event_type;
         inputBus->process(inputEv, &data);
@@ -149,12 +134,13 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     Uint32 extraFlags = SDL_WINDOW_ALLOW_HIGHDPI;
 
-    if(c.service<sdl2::GLContext>())
+    auto glContext = c.service<GLContext>();
+    if(glContext)
+    {
         extraFlags |= SDL_WINDOW_OPENGL;
-    else
+        glContext->setupAttributes(c);
+    } else
         extraFlags |= SDL_WINDOW_VULKAN;
-
-    c.service<GLContext>()->setupAttributes(c);
 
     m_window = SDL_CreateWindow(
         config.title.c_str(),
@@ -170,6 +156,12 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         ec = SDL_GetError();
         return;
     }
+
+    auto nativeWindowInfo = c.service<comp_app::PtrNativeWindowInfo>();
+    if(nativeWindowInfo)
+        getWindow(m_window, *nativeWindowInfo);
+
+    m_container = &c;
 }
 
 void Windowing::unload(entity_container&, comp_app::app_error&)
@@ -289,6 +281,11 @@ void Windowing::setState(comp_app::detail::WindowState state)
 
     if(state & F::Focused)
         SDL_RaiseWindow(m_window);
+}
+
+bool Windowing::notifiedClose() const
+{
+    return m_container->service<Context>()->m_shouldClose;
 }
 
 comp_app::size_2d_t DisplayInfo::virtualSize() const
@@ -425,9 +422,16 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
     {
         ec = SDL_GetError();
         ec = comp_app::AppError::SystemError;
+        return;
     }
 
     c.service<GLSwapControl>()->setSwapInterval(glConfig.swapInterval);
+
+    {
+        auto& bindConf =
+            comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
+        bindConf.loader = SDL_GL_GetProcAddress;
+    }
 
     m_container = &c;
 }
@@ -436,18 +440,6 @@ void GLContext::unload(entity_container& c, comp_app::app_error& ec)
 {
     if(m_context)
         SDL_GL_DeleteContext(m_context);
-}
-
-void GLContext::end_restricted(Proxy& p, time_point const&)
-{
-    comp_app::app_error ec;
-    swapBuffers(ec);
-    C_ERROR_CHECK(ec);
-}
-
-void GLContext::swapBuffers(comp_app::app_error& ec)
-{
-    SDL_GL_SwapWindow(m_container->service<sdl2::Windowing>()->m_window);
 }
 
 libc_types::i32 GLSwapControl::swapInterval() const
@@ -465,6 +457,11 @@ void GLFramebuffer::load(entity_container& c, comp_app::app_error&)
     m_container = &c;
 }
 
+void GLFramebuffer::swapBuffers(comp_app::app_error& ec)
+{
+    SDL_GL_SwapWindow(m_container->service<sdl2::Windowing>()->m_window);
+}
+
 comp_app::size_2d_t GLFramebuffer::size() const
 {
     size_2d_t out;
@@ -473,8 +470,15 @@ comp_app::size_2d_t GLFramebuffer::size() const
     return out;
 }
 
-void ControllerInput::load(entity_container&, comp_app::app_error& ec)
+void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
+    auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
+
+    if(!config.mapping.empty())
+        SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG, "controllerdb.txt");
+    if(config.options & comp_app::ControllerConfig::BackgroundInput)
+        SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
     if(SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0)
     {
         ec = SDL_GetError();
@@ -482,7 +486,13 @@ void ControllerInput::load(entity_container&, comp_app::app_error& ec)
         return;
     }
 
-    SDL_GetError();
+    {
+        constexpr auto max_val  = std::numeric_limits<libc_types::i16>::max();
+        auto           dead_val = max_val - config.deadzone;
+
+        m_axisScale    = max_val / libc_types::scalar(dead_val);
+        m_axisDeadzone = config.deadzone;
+    }
 }
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
@@ -515,9 +525,8 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
         1,
         SDL_GETEVENT,
         SDL_CONTROLLERDEVICEADDED,
-        SDL_CONTROLLERDEVICEREMOVED))
+        SDL_CONTROLLERDEVICEREMAPPED))
     {
-
         if(event.type == SDL_CONTROLLERDEVICEADDED)
         {
             auto controller = SDL_GameControllerOpen(event.cdevice.which);
@@ -527,7 +536,7 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
                 Throw(undefined_behavior("failed to open controller device"));
             }
 
-            auto joystick   = SDL_GameControllerGetJoystick(controller);
+            auto joystick = SDL_GameControllerGetJoystick(controller);
 
             auto playerIdx  = SDL_GameControllerGetPlayerIndex(controller);
             auto instanceId = SDL_JoystickInstanceID(joystick);
@@ -597,10 +606,10 @@ ControllerInput::controller_map ControllerInput::state(
     out.buttons.e.start   = BTN(controller, SDL_CONTROLLER_BUTTON_START);
     out.buttons.e.guide   = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
 
-    out.axes.e.l_x = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX);
-    out.axes.e.l_y = AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY);
-    out.axes.e.r_x = AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTX);
-    out.axes.e.r_y = AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTY);
+    out.axes.e.l_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX));
+    out.axes.e.l_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY));
+    out.axes.e.r_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTX));
+    out.axes.e.r_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTY));
     out.axes.e.t_l = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
     out.axes.e.t_r = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 
@@ -621,6 +630,25 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
         SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
     return name ? name : CString();
+}
+
+libc_types::i16 ControllerInput::rescale(libc_types::i16 value) const
+{
+    if(value < 0)
+    {
+        if(value > -m_axisDeadzone)
+            value = 0;
+        else
+            value += m_axisDeadzone;
+    } else if(value > 0)
+    {
+        if(value < m_axisDeadzone)
+            value = 0;
+        else
+            value -= m_axisDeadzone;
+    }
+
+    return libc_types::i16(m_axisScale * value);
 }
 
 int ControllerInput::controllerDisconnect(int device)
@@ -649,6 +677,127 @@ int ControllerInput::controllerDisconnect(int device)
     m_controllers.erase(instanceIdx);
 
     return delete_key;
+}
+
+void KeyboardInput::start_restricted(Proxy& p, time_point const&)
+{
+    using namespace Coffee::Input;
+
+    CIEvent   inputEv;
+    SDL_Event event;
+
+    auto inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
+
+    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYUP, SDL_KEYDOWN))
+    {
+        auto ev            = translate::event<CIKeyEvent>(event);
+        m_register[ev.key] = ev.mod;
+        EMIT_IEVENT(ev);
+    }
+}
+
+void KeyboardInput::openVirtual() const
+{
+    SDL_StartTextInput();
+}
+
+void MouseInput::load(entity_container& e, comp_app::app_error&)
+{
+    m_container = &e;
+}
+
+void MouseInput::start_restricted(Proxy& p, time_point const&)
+{
+    using namespace Coffee::Input;
+
+    CIEvent inputEv;
+    auto    inputBus = m_container->service<comp_app::EventBus<CIEvent>>();
+
+    SDL_Event event;
+    while(SDL_PeepEvents(
+        &event, 1, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEWHEEL))
+    {
+        switch(event.type)
+        {
+        case SDL_MOUSEMOTION:
+            EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event));
+            break;
+        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEBUTTONDOWN:
+        {
+            auto ev = translate::event<CIMouseButtonEvent>(event);
+            EMIT_IEVENT(ev);
+
+            if(event.button.state == SDL_PRESSED)
+                m_buttons |= ev.btn;
+            else
+                m_buttons &= (m_buttons ^ ev.btn);
+
+            break;
+        }
+        case SDL_MOUSEWHEEL:
+            EMIT_IEVENT(translate::event<CIScrollEvent>(event));
+            break;
+        }
+    }
+}
+
+bool MouseInput::mouseGrabbed() const
+{
+    return SDL_GetRelativeMouseMode();
+}
+
+void MouseInput::setMouseGrab(bool enabled)
+{
+    SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+}
+
+comp_app::position_t MouseInput::position() const
+{
+    position_t out;
+    if(SDL_GetRelativeMouseMode())
+        SDL_GetRelativeMouseState(&out.x, &out.y);
+    else
+        SDL_GetMouseState(&out.x, &out.y);
+
+    return out;
+}
+
+void MouseInput::warp(const comp_app::position_t& newPos)
+{
+    SDL_WarpMouseInWindow(
+        m_container->service<Windowing>()->m_window, newPos.x, newPos.y);
+}
+
+MouseInput::MouseButton MouseInput::buttons() const
+{
+    return m_buttons;
+}
+
+} // namespace sdl2
+
+#include <SDL_syswm.h>
+
+namespace sdl2 {
+
+void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
+{
+    using namespace comp_app;
+
+    SDL_SysWMinfo windowInfo;
+    SDL_VERSION(&windowInfo.version);
+    SDL_GetWindowWMInfo(window, &windowInfo);
+
+#if defined(SDL_VIDEO_DRIVER_X11)
+    info.window =
+        C_RCAST<PtrNativeWindowInfo::NWindow>(windowInfo.info.x11.window);
+    info.display = windowInfo.info.x11.display;
+#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+    info.window  = windowInfo.info.win.window;
+    info.display = windowInfo.info.win.hdc;
+#else
+    static_assert(false, "missing video driver");
+#endif
 }
 
 } // namespace sdl2

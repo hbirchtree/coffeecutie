@@ -9,7 +9,6 @@ coffee_library (
     TARGET GLeamCommon
 
     SOURCES
-    private/levels/glbase.cpp
     private/levels/shared/gl_shared_debug.cpp
 
     LIBRARIES

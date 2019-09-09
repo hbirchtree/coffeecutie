@@ -12,3 +12,12 @@ coffee_library (
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     )
+
+coffee_library (
+    TARGET ComponentBundleSetup
+    SOURCES private/bundle.cpp
+    LIBRARIES ComponentBundle
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
+    $<INSTALL_INTERFACE:include>
+    )

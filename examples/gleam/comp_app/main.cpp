@@ -1,11 +1,11 @@
-#include <coffee/comp_app/gl_config.h>
-#include <coffee/comp_app/subsystems.h>
 #include <coffee/components/components.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/CGLeamRHI>
-#include <coffee/graphics/apis/gleam/levels/gl_shared_include.h>
-#include <coffee/sdl2_comp/app_components.h>
+
+#include <coffee/comp_app/gl_config.h>
+#include <coffee/comp_app/subsystems.h>
+#include <coffee/comp_app/bundle.h>
 
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
@@ -17,7 +17,28 @@ namespace Strings {
 static CString to_string(comp_app::ControllerInput::controller_map const& box)
 {
     return cStringFormat(
-        "mapping:{0}:{1}:{2}", box.buttons.e.a, box.axes.e.l_x, box.axes.e.l_y);
+        "controller_map("
+        "L({0},{1}):R({2},{3}):TRIG({4}:{5})"
+        ":A={6}:B={7}:X={8}:Y={9}"
+        ":BL={10}:BR={11}:SL={12}:SR={13}"
+        ":START={14}:BACK={15}"
+        ")",
+        box.axes.e.l_x,
+        box.axes.e.l_y,
+        box.axes.e.r_x,
+        box.axes.e.r_y,
+        box.axes.e.t_l,
+        box.axes.e.t_r,
+        box.buttons.e.a,
+        box.buttons.e.b,
+        box.buttons.e.x,
+        box.buttons.e.y,
+        box.buttons.e.b_l,
+        box.buttons.e.b_r,
+        box.buttons.e.s_l,
+        box.buttons.e.s_r,
+        box.buttons.e.start,
+        box.buttons.e.back);
 }
 
 } // namespace Strings
@@ -43,35 +64,29 @@ i32 coffee_main(i32, cstring_w*)
     auto& loader =
         comp_app::AppLoader::register_service<comp_app::AppLoader>(e);
 
-    loader.addConfig(stl_types::MkUq<comp_app::WindowConfig>());
-    loader.addConfig(stl_types::MkUq<comp_app::GLConfig>());
+    comp_app::configureDefaults(loader);
 
-    auto& windowConf = loader.config<comp_app::WindowConfig>();
-    auto& glConf     = loader.config<comp_app::GLConfig>();
+    {
+        auto& windowConf = loader.config<comp_app::WindowConfig>();
+        auto& glConf     = loader.config<comp_app::GLConfig>();
+        auto& ctlrConf   = loader.config<comp_app::ControllerConfig>();
 
-    windowConf.size  = {1024, 768};
-    windowConf.title = "Hello World";
+        windowConf.size  = {1024, 768};
+        windowConf.title = "Hello World";
 
-    glConf.framebufferFmt = typing::pixels::PixFmt::RGBA8;
-    //    glConf.profile |= comp_app::GLConfig::Debug;
-    glConf.version.major = 3;
-    glConf.version.minor = 3;
+        glConf.framebufferFmt = typing::pixels::PixFmt::RGBA8;
 
-    using AppServices = comp_app::detail::TypeList<
-        sdl2::Context,
-        sdl2::Windowing,
-        sdl2::DisplayInfo,
-        sdl2::GLSwapControl,
-        sdl2::GLContext,
-        sdl2::GLFramebuffer,
-        sdl2::ControllerInput,
-        comp_app::BasicEventBus<CIEvent>,
-        comp_app::BasicEventBus<Event>>;
+        glConf.profile = comp_app::GLConfig::Core;
+        glConf.profile |= comp_app::GLConfig::Debug;
+        glConf.version.major = 3;
+        glConf.version.minor = 3;
 
-    loader.load_all<AppServices>(e, ec);
+        ctlrConf.options = comp_app::ControllerConfig::BackgroundInput;
+    }
+
+    comp_app::addDefaults(e, loader, ec);
 
     auto& inputs  = *e.service<comp_app::BasicEventBus<CIEvent>>();
-    auto& context = *e.service<sdl2::Context>();
 
     inputs.addEventFunction<CIQuit>(0, [](CIEvent&, CIQuit* quit) {});
     inputs.addEventFunction<CIQuit>(10, [](CIEvent&, CIQuit* quit) {});
@@ -80,11 +95,14 @@ i32 coffee_main(i32, cstring_w*)
             cDebug("Controller: {0} -> {1}", ev->controller, ev->connected);
         });
 
-    auto& displays = *e.service<comp_app::DisplayInfo>();
+    auto displays = e.service<comp_app::DisplayInfo>();
 
-    cDebug("{0}", displays.virtualSize());
-    for(auto i : stl_types::Range<libc_types::u32>(displays.count()))
-        cDebug("- {0}", displays.size(i));
+    if(displays)
+    {
+        cDebug("{0}", displays->virtualSize());
+        for(auto i : stl_types::Range<libc_types::u32>(displays->count()))
+            cDebug("- {0}", displays->size(i));
+    }
 
     C_ERROR_CHECK(ec);
 
@@ -95,32 +113,30 @@ i32 coffee_main(i32, cstring_w*)
         RuntimeQueue::GetCurrentQueue(rqec),
         Chrono::milliseconds(100),
         [&e]() {
-            auto dump = e.service<sdl2::ControllerInput>();
+            auto dump  = e.service<comp_app::ControllerInput>();
+            auto mouse = e.service<comp_app::MouseInput>();
 
             for(auto i : Range<u32>(dump->count()))
                 cDebug("Controller {0}: {1}", dump->name(i), dump->state(i));
+
+            cDebug(
+                "Mouse state: {0} {1}",
+                mouse->position(),
+                C_CAST<u32>(mouse->buttons()));
         },
         rqec);
 
-    if(!gladLoadGL())
-    {
-        Coffee::cDebug("GL_VERSION: {0}", glGetString(GL_VERSION));
-        return 1;
-    }
-
     auto api = GFX::GetLoadAPI({});
 
-    if(!api(false))
+    if(!api(true))
         return 1;
 
-    while(!context.m_shouldClose)
+    while(!e.service<comp_app::Windowing>()->notifiedClose())
     {
-        GFX::DefaultFramebuffer()->clear(0, Coffee::Vecf4(0.2f));
+        GFX::DefaultFramebuffer()->clear(0, Coffee::Vecf4(0.5f, 0, 0, 1.f));
         e.exec();
         RuntimeQueue::GetCurrentQueue(rqec)->executeTasks();
     }
-
-    loader.unload_all<AppServices>(e, ec);
 
     return 0;
 }

@@ -21,6 +21,13 @@ enum class AppError
 
     NoWindow,
 
+    NoFramebuffer,
+    InvalidFramebufferConfig,
+    InvalidSwapInterval,
+    SwapBuffersFailed,
+
+    FramebufferTeardownFail,
+
     /* Graphics context errors */
     NoContext,
     ContextDowngrade,
@@ -28,6 +35,9 @@ enum class AppError
     ContextAlreadyCurrent, /*!< Semantic error by user */
     ContextNotAvailable,   /*!< Temporarily unavailable */
     ContextInvalidated,    /*!< Resources were freed externally */
+
+    /* Binding errors (eg. GL binding) */
+    BindingFailed,
 };
 
 struct application_error_category : stl_types::error_category

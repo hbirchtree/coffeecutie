@@ -78,15 +78,10 @@ if(BUILD_OPENGL)
         private/binding/glad/gleamrenderer.cpp
         LIBRARIES Core GLeamCommon WindowingInclude
         )
-
     if(BUILD_GLES AND NOT BUILD_GLES_20)
-        target_sources ( BindingGLAD PRIVATE
-            private/binding/glad/glad_es/glad.c
-            )
+        target_link_libraries( BindingGLAD PUBLIC GLAD_ES )
     elseif(NOT BUILD_GLES)
-        target_sources ( BindingGLAD PRIVATE
-            private/binding/glad/glad/glad.c
-            )
+        target_link_libraries( BindingGLAD PUBLIC GLAD_Core )
     endif()
 endif(BUILD_OPENGL)
 

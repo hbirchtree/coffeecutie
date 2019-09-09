@@ -120,11 +120,13 @@ struct AppLoadableService
 {
     using entity_container = detail::EntityContainer;
 
-    virtual void load(entity_container&, app_error&)
+    virtual void load(entity_container& e, app_error& ec)
     {
+        (void)e, (void)ec;
     }
-    virtual void unload(entity_container&, app_error&)
+    virtual void unload(entity_container& e, app_error& ec)
     {
+        (void)e, (void)ec;
     }
 };
 
@@ -156,6 +158,11 @@ struct Windowing : AppService<Windowing>
 
     virtual detail::WindowState state() const                       = 0;
     virtual void                setState(detail::WindowState state) = 0;
+
+    virtual bool notifiedClose() const
+    {
+        return false;
+    }
 };
 
 struct Dialogs : AppService<Dialogs>
@@ -205,12 +212,23 @@ struct ScreensaverInfo : AppService<ScreensaverInfo>
 
 struct WindowInfo : AppService<WindowInfo>
 {
-    virtual text_type name() const               = 0;
-    virtual void      setName(text_type newName) = 0;
+    virtual text_type_t name() const               = 0;
+    virtual void        setName(text_type newName) = 0;
 };
 
 struct NativeWindowInfo : AppService<NativeWindowInfo>
 {
+};
+
+struct PtrNativeWindowInfo : NativeWindowInfo
+{
+    using type = PtrNativeWindowInfo;
+
+    using NDisplay = void*;
+    using NWindow  = void*;
+
+    NDisplay display;
+    NWindow  window;
 };
 
 template<typename EventType>
@@ -334,14 +352,27 @@ struct BasicKeyboardInput : KeyboardInput
         register_type& m_register;
     };
 
-    virtual KeyModifiers key(libc_types::u32 key) const
+    virtual KeyModifiers key(libc_types::u32 key) const final
     {
         auto it = m_register.find(key);
         return it == m_register.end() ? KeyModifiers::NoneModifier : it->second;
     }
 
-  private:
+  protected:
     stl_types::Map<libc_types::u32, KeyModifiers> m_register;
+};
+
+struct ControllerConfig : Config<ControllerConfig>
+{
+    enum Options
+    {
+        None            = 0x0,
+        BackgroundInput = 0x1,
+    };
+
+    text_type_t     mapping;
+    libc_types::i16 deadzone = 6000;
+    Options         options  = None;
 };
 
 struct ControllerInput : AppService<ControllerInput>
@@ -361,34 +392,47 @@ struct TouchInput : AppService<TouchInput>
     virtual position_t startPosition(libc_types::u32 idx) const = 0;
 };
 
+struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
+{
+    using loader_func = void* (*)(const char*);
+
+    loader_func loader = nullptr;
+};
+
 struct GraphicsBinding : AppService<GraphicsBinding>
 {
 };
 
 struct GraphicsContext : AppService<GraphicsContext>
 {
-    virtual void swapBuffers(app_error& ec) = 0;
 };
 
 struct GraphicsFramebuffer : AppService<GraphicsFramebuffer>
 {
+    virtual void end_restricted(Proxy&, time_point const&) final
+    {
+        app_error ec;
+        swapBuffers(ec);
+        C_ERROR_CHECK(ec);
+    }
     virtual libc_types::u32 buffers() const
     {
         return 1;
     }
-    virtual size_2d_t       size() const          = 0;
-    virtual PixFmt          format() const
+    virtual size_2d_t size() const = 0;
+    virtual PixFmt    format() const
     {
         return PixFmt::None;
     }
-    virtual PixFmt          depthFormat() const
+    virtual PixFmt depthFormat() const
     {
         return PixFmt::None;
     }
-    virtual PixFmt          stencilFormat() const
+    virtual PixFmt stencilFormat() const
     {
         return PixFmt::None;
     }
+    virtual void swapBuffers(app_error& ec) = 0;
 };
 
 struct GraphicsThreadInfo : AppService<GraphicsThreadInfo>

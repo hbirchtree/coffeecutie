@@ -71,19 +71,22 @@ struct AppLoader : AppService<
     };
 
     template<typename Services>
-    void load_all(detail::EntityContainer& e, app_error& ec)
+    void loadAll(detail::EntityContainer& e, app_error& ec)
     {
         using namespace type_safety::type_list;
 
         for_each<Services, service_register>(std::ref(e), std::ref(ec));
         for_each<Services, service_loader>(std::ref(e), std::ref(ec));
+    }
 
+    void clearConfigs()
+    {
         m_configs.clear();
         m_configStore.clear();
     }
 
     template<typename Services>
-    void unload_all(detail::EntityContainer& e, app_error& ec)
+    void unloadAll(detail::EntityContainer& e, app_error& ec)
     {
         using namespace type_safety::type_list;
 
@@ -97,6 +100,23 @@ struct AppLoader : AppService<
 
         m_configStore.emplace_back(std::move(ptr));
         m_configs.insert({type_id, m_configStore.back().get()});
+    }
+
+    template<typename T>
+    struct config_adder
+    {
+        void operator()(AppLoader& ldr)
+        {
+            ldr.addConfig(stl_types::MkUq<T>());
+        }
+    };
+
+    template<typename Configs>
+    void addConfigs()
+    {
+        using namespace type_safety::type_list;
+
+        for_each<Configs, config_adder>(std::ref(*this));
     }
 
     template<class Config>
