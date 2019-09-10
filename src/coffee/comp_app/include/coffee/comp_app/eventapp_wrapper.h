@@ -110,6 +110,7 @@ struct AutoExec
 
         /* TODO: Unload all services */
 #endif
+        return 0;
     }
 };
 
