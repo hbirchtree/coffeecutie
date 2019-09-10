@@ -106,42 +106,42 @@ coffee_library (
     LIBRARIES Core WindowingInclude
     )
 
-if(APPLE AND IOS)
-    coffee_library (
-        TARGET WindowGLKit
-        SOURCES
-        private/windowing/glkit/glk_window.cpp
-        private/graphics/ceagl/private/eagl_bind.mm
-        private/graphics/ceagl/private/EGLView.m
-        private/windowing/glkit/glk_window.mm
-        private/windowing/glkit/AppDelegate.m
-        LIBRARIES
-        Core
-        WindowingInclude
-        GLeamCommon
-        "-framework CoreGraphics"
-        "-framework QuartzCore"
-        )
+#if(APPLE AND IOS)
+#    coffee_library (
+#        TARGET WindowGLKit
+#        SOURCES
+#        private/windowing/glkit/glk_window.cpp
+#        private/graphics/ceagl/private/eagl_bind.mm
+#        private/graphics/ceagl/private/EGLView.m
+#        private/windowing/glkit/glk_window.mm
+#        private/windowing/glkit/AppDelegate.m
+#        LIBRARIES
+#        Core
+#        WindowingInclude
+#        GLeamCommon
+#        "-framework CoreGraphics"
+#        "-framework QuartzCore"
+#        )
 
-    # Add CEAGL layer, to provide EGL
-    target_include_directories ( BindingGLAD PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-        )
-    target_include_directories ( WindowGLKit PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-        )
-    target_include_directories ( ContextEGL PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
-        )
+#    # Add CEAGL layer, to provide EGL
+#    target_include_directories ( BindingGLAD PRIVATE
+#        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+#        )
+#    target_include_directories ( WindowGLKit PRIVATE
+#        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+#        )
+#    target_include_directories ( ContextEGL PRIVATE
+#        ${CMAKE_CURRENT_SOURCE_DIR}/private/graphics/ceagl/include
+#        )
 
-    target_link_libraries ( WindowGLKit PUBLIC
-        "-framework CoreMotion"
-        "-framework GameController"
-        "-framework OpenGLES"
-        "-framework UIKit"
-        "-framework GLKit"
-        )
-endif()
+#    target_link_libraries ( WindowGLKit PUBLIC
+#        "-framework CoreMotion"
+#        "-framework GameController"
+#        "-framework OpenGLES"
+#        "-framework UIKit"
+#        "-framework GLKit"
+#        )
+#endif()
 
 coffee_library (
     TARGET WindowNDKWindow

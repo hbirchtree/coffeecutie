@@ -3,9 +3,10 @@
 #include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 
+#include <coffee/comp_app/bundle.h>
+#include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
-#include <coffee/comp_app/bundle.h>
 
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
@@ -57,7 +58,7 @@ i32 coffee_main(i32, cstring_w*)
     using namespace Coffee::Display;
     using namespace Coffee::Input;
 
-    EntityContainer e;
+    EntityContainer& e = comp_app::createContainer();
 
     comp_app::app_error ec;
 
@@ -86,7 +87,7 @@ i32 coffee_main(i32, cstring_w*)
 
     comp_app::addDefaults(e, loader, ec);
 
-    auto& inputs  = *e.service<comp_app::BasicEventBus<CIEvent>>();
+    auto& inputs = *e.service<comp_app::BasicEventBus<CIEvent>>();
 
     inputs.addEventFunction<CIQuit>(0, [](CIEvent&, CIQuit* quit) {});
     inputs.addEventFunction<CIQuit>(10, [](CIEvent&, CIQuit* quit) {});
@@ -109,36 +110,48 @@ i32 coffee_main(i32, cstring_w*)
     RuntimeQueue::CreateNewQueue("Main");
 
     runtime_queue_error rqec;
-    RuntimeQueue::QueuePeriodic(
-        RuntimeQueue::GetCurrentQueue(rqec),
-        Chrono::milliseconds(100),
-        [&e]() {
-            auto dump  = e.service<comp_app::ControllerInput>();
-            auto mouse = e.service<comp_app::MouseInput>();
+        RuntimeQueue::QueuePeriodic(
+            RuntimeQueue::GetCurrentQueue(rqec),
+            Chrono::milliseconds(100),
+            [&e]() {
+                auto dump  = e.service<comp_app::ControllerInput>();
+                auto mouse = e.service<comp_app::MouseInput>();
 
-            for(auto i : Range<u32>(dump->count()))
-                cDebug("Controller {0}: {1}", dump->name(i), dump->state(i));
+                if(!dump || !mouse)
+                    return;
 
-            cDebug(
-                "Mouse state: {0} {1}",
-                mouse->position(),
-                C_CAST<u32>(mouse->buttons()));
-        },
-        rqec);
+                for(auto i : Range<u32>(dump->count()))
+                    cDebug("Controller {0}: {1}", dump->name(i),
+                    dump->state(i));
+
+                cDebug(
+                    "Mouse state: {0} {1}",
+                    mouse->position(),
+                    C_CAST<u32>(mouse->buttons()));
+            },
+            rqec);
 
     auto api = GFX::GetLoadAPI({});
 
     if(!api(true))
         return 1;
 
-    while(!e.service<comp_app::Windowing>()->notifiedClose())
-    {
-        GFX::DefaultFramebuffer()->clear(0, Coffee::Vecf4(0.5f, 0, 0, 1.f));
-        e.exec();
-        RuntimeQueue::GetCurrentQueue(rqec)->executeTasks();
-    }
+    comp_app::AutoExec<int, int>::addTo(
+        e,
+        [](int&, int*) {
 
-    return 0;
+        },
+        [](int&, int*) {
+
+        },
+        [](int&, int*) {
+            GFX::DefaultFramebuffer()->clear(0, Vecf4(0.5f, 0, 0, 1));
+        },
+        [](int&, int*) {
+
+        });
+
+    return comp_app::AutoExec<int, int>::exec(e);
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

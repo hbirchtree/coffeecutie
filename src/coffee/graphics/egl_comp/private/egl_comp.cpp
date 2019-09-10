@@ -5,7 +5,11 @@
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
+#if defined(FEATURE_ENABLE_AppDelegate)
+#include <CEAGL/eagl.h>
+#else
 #include <EGL/egl.h>
+#endif
 
 #if !defined(EGL_VERSION_1_3)
 #error EGL version 1.3 is required
@@ -50,7 +54,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     }
 
 #if defined(EGL_VERSION_1_2)
-
+#if !defined(COFFEE_APPLE)
     if(config.profile & comp_app::GLConfig::Core)
     {
 #if defined(EGL_VERSION_1_4)
@@ -62,6 +66,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     {
         C_PTR_CHECK(eglBindAPI(EGL_OPENGL_ES_API));
     }
+#endif
 #else
     static_assert(false, "unsupported EGL");
 #endif

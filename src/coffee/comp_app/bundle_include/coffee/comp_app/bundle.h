@@ -4,6 +4,8 @@
 
 namespace comp_app {
 
+extern detail::EntityContainer& createContainer();
+
 extern void configureDefaults(AppLoader& loader);
 
 extern void addDefaults(

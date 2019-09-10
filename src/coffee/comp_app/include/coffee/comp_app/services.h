@@ -165,6 +165,26 @@ struct Windowing : AppService<Windowing>
     }
 };
 
+struct StaticWindowing : Windowing
+{
+    virtual void show() final
+    {
+    }
+    virtual void close() final
+    {
+    }
+    virtual void resize(size_2d_t const&) final
+    {
+    }
+    virtual position_t position() const final
+    {
+        return {};
+    }
+    virtual void move(position_t const&) final
+    {
+    }
+};
+
 struct Dialogs : AppService<Dialogs>
 {
     using prompt_callback  = Coffee::Function<void(text_type)>;
@@ -400,6 +420,10 @@ struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
 };
 
 struct GraphicsBinding : AppService<GraphicsBinding>
+{
+};
+
+struct LinkedGraphicsBinding : GraphicsBinding
 {
 };
 

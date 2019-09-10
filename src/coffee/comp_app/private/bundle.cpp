@@ -1,7 +1,9 @@
 #include <coffee/comp_app/bundle.h>
 
+#include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
+#include <coffee/foreign/foreign.h>
 #include <platforms/environment.h>
 
 #if defined(FEATURE_ENABLE_EGLComponent)
@@ -20,7 +22,55 @@
 #include <coffee/sdl2_comp/app_components.h>
 #endif
 
+#if defined(FEATURE_ENABLE_GLKitComponent)
+#include <coffee/glkit/glkit_comp.h>
+#endif
+
 namespace comp_app {
+
+detail::EntityContainer& createContainer()
+{
+    static stl_types::ShPtr<detail::EntityContainer> container;
+
+    if(!container)
+        container = stl_types::MkShared<detail::EntityContainer>();
+
+    using namespace Coffee;
+
+    coffee_event_handling_data = container.get();
+    CoffeeEventHandle = [](void*, int event)
+    {
+        runtime_queue_error ec;
+
+        switch(event)
+        {
+        case CoffeeHandle_Setup:
+        {
+            break;
+        }
+        case CoffeeHandle_Loop:
+        {
+            container->exec();
+
+            RuntimeQueue::GetCurrentQueue(ec)->executeTasks();
+            C_ERROR_CHECK(ec);
+            break;
+        }
+        case CoffeeHandle_Cleanup:
+        {
+            /* TODO: Unload all services */
+            container->services_with<AppLoadableService>();
+            break;
+        }
+        }
+    };
+    CoffeeEventHandleNA = [](void*, int event, void*, void*, void*)
+    {
+
+    };
+
+    return *container;
+}
 
 void configureDefaults(AppLoader& loader)
 {
@@ -66,6 +116,8 @@ void addDefaults(
     loader.loadAll<sdl2::Services>(container, ec);
 #elif defined(FEATURE_ENABLE_X11Component)
     loader.loadAll<x11::Services>(container, ec);
+#elif defined(FEATURE_ENABLE_GLKitComponent)
+    loader.loadAll<glkit::Services>(container, ec);
 #else
 #error No window manager
 #endif
@@ -83,7 +135,9 @@ void addDefaults(
 #endif
 
     /* Selection of GL binding */
-#if defined(FEATURE_ENABLE_GLADComponent)
+#if defined(FEATURE_ENABLE_AppDelegate)
+    loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
+#elif defined(FEATURE_ENABLE_GLADComponent)
     loader.loadAll<glad::Services>(container, ec);
 #else
 #error No OpenGL/ES binding

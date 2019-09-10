@@ -21,6 +21,8 @@ add_subdirectory(application)
 add_subdirectory(core)
 add_subdirectory(image)
 
+set ( CEAGL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/windowing/private/graphics/ceagl" )
+
 if(BUILD_HEADFUL)
     add_subdirectory(graphics)
 endif()

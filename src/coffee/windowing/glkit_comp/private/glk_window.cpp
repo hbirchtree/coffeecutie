@@ -1,7 +1,5 @@
 #include <coffee/windowing/windowing/glkit/glk_window.h>
 
-#if defined(COFFEE_USE_APPLE_GLKIT)
-
 #include <CEAGL/eagl.h>
 #include <coffee/foreign/foreign.h>
 #include <platforms/windowmanager.h>
@@ -216,5 +214,3 @@ bool GLKWindow::installEventHandler(EventHandlerI eh)
 
 } // namespace Display
 } // namespace Coffee
-
-#endif

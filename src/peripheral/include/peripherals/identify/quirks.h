@@ -164,7 +164,9 @@
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
+#if defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_STACKTRACE
+#endif
 #endif
 
 /*
