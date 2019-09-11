@@ -89,8 +89,6 @@ i32 coffee_main(i32, cstring_w*)
 
     auto& inputs = *e.service<comp_app::BasicEventBus<CIEvent>>();
 
-    inputs.addEventFunction<CIQuit>(0, [](CIEvent&, CIQuit* quit) {});
-    inputs.addEventFunction<CIQuit>(10, [](CIEvent&, CIQuit* quit) {});
     inputs.addEventFunction<CIControllerAtomicUpdateEvent>(
         10, [](CIEvent&, CIControllerAtomicUpdateEvent* ev) {
             cDebug("Controller: {0} -> {1}", ev->controller, ev->connected);
