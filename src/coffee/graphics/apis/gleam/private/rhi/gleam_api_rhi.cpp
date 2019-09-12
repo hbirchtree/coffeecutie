@@ -674,7 +674,7 @@ void GLEAM_API::GetBlendState(GLEAM_API::BLNDSTATE& bstate, u32 i)
     {
         bstate.m_doBlend = GLC::IsEnabled(Feature::Blend);
     }
-#if GL_VERSION_VERIFY(0x300, 0x300)
+#if GL_VERSION_VERIFY(0x300, 0x320)
     else
     {
         bstate.m_doBlend = GLC::IsEnabledi(Feature::Blend, i);
@@ -748,7 +748,7 @@ void GLEAM_API::GetStencilState(GLEAM_API::STENSTATE& sstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
         sstate.m_test = GLC::IsEnabled(Feature::StencilTest);
-#if GL_VERSION_VERIFY(0x300, 0x300)
+#if GL_VERSION_VERIFY(0x300, 0x320)
     else
         sstate.m_test = GLC::IsEnabledi(Feature::StencilTest, i);
 #endif

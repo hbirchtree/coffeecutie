@@ -26,6 +26,10 @@
 #include <coffee/glkit/glkit_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_ANativeComponent)
+#include <coffee/anative/anative_comp.h>
+#endif
+
 namespace comp_app {
 
 detail::EntityContainer& createContainer()
@@ -38,8 +42,7 @@ detail::EntityContainer& createContainer()
     using namespace Coffee;
 
     coffee_event_handling_data = container.get();
-    CoffeeEventHandle = [](void*, int event)
-    {
+    CoffeeEventHandle          = [](void*, int event) {
         runtime_queue_error ec;
 
         switch(event)
@@ -64,8 +67,7 @@ detail::EntityContainer& createContainer()
         }
         }
     };
-    CoffeeEventHandleNA = [](void*, int event, void*, void*, void*)
-    {
+    CoffeeEventHandleNA = [](void*, int event, void*, void*, void*) {
 
     };
 
@@ -118,6 +120,8 @@ void addDefaults(
     loader.loadAll<x11::Services>(container, ec);
 #elif defined(FEATURE_ENABLE_GLKitComponent)
     loader.loadAll<glkit::Services>(container, ec);
+#elif defined(FEATURE_ENABLE_ANativeComponent)
+    loader.loadAll<anative::Services>(container, ec);
 #else
 #error No window manager
 #endif
@@ -135,7 +139,8 @@ void addDefaults(
 #endif
 
     /* Selection of GL binding */
-#if defined(FEATURE_ENABLE_AppDelegate)
+#if defined(FEATURE_ENABLE_AppDelegate) || \
+    defined(FEATURE_ENABLE_ANativeComponent)
     loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
 #elif defined(FEATURE_ENABLE_GLADComponent)
     loader.loadAll<glad::Services>(container, ec);

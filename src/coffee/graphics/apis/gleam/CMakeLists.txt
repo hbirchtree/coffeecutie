@@ -94,7 +94,15 @@ endif()
 
 if(BUILD_GLES_20 OR BUILD_ANGLE)
     target_compile_definitions ( GLeamCommon PUBLIC
+        -DCOFFEE_LINKED_GLES
         -DCOFFEE_GLES20_MODE
+        )
+elseif(BUILD_GLES)
+    target_compile_definitions ( GLeamCommon PUBLIC
+        -DCOFFEE_LINKED_GLES
+#        -DCOFFEE_LINKED_GLES32
+        -DCOFFEE_LINKED_GLES31
+        -DCOFFEE_LINKED_GLES30
         )
 elseif(NOT BUILD_GLES)
     target_compile_definitions ( GLeamCommon PUBLIC

@@ -264,7 +264,7 @@ STATICINLINE bool translate_sampler_type(tex::flag& samplerType, u32 m_flags)
     }
 }
 
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x330, 0x310)
 STATICINLINE void ProgramInputGet(
     glhnd const&                    hnd,
     ShaderStage                     stages,

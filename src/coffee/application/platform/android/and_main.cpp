@@ -44,9 +44,12 @@ namespace android {
 
 enum AndroidAppState
 {
-    AndroidApp_Hidden,
-    AndroidApp_Visible,
+    AndroidApp_Hidden      = 0x1,
+    AndroidApp_Visible     = 0x2,
+    AndroidApp_Initialized = 0x4,
 };
+
+C_FLAGS(AndroidAppState, Coffee::u32);
 
 struct AndroidSensorData
 {
@@ -149,12 +152,20 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         /* Lifecycle events we care about */
     case APP_CMD_INIT_WINDOW:
     {
+        if(!(app_internal_state->currentState & AndroidApp_Initialized))
+        {
+            deref_main_c(android_entry_point, 0, nullptr);
+            app_internal_state->currentState |= AndroidApp_Initialized;
+        }
+
         CoffeeEventHandleCall(CoffeeHandle_Setup);
 
         ANativeActivity_setWindowFlags(
             app->activity,
             AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON,
             AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON);
+
+        cDebug("Window: {0}", coffee_app->window);
 
         /* Intentional fallthrough, we need to push a resize event */
     }
@@ -176,14 +187,16 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     {
         CoffeeEventHandleCall(CoffeeHandle_IsForeground);
 
-        app_internal_state->currentState = AndroidApp_Visible;
+        app_internal_state->currentState =
+            AndroidApp_Visible | AndroidApp_Initialized;
         break;
     }
     case APP_CMD_LOST_FOCUS:
     {
         CoffeeEventHandleCall(CoffeeHandle_IsBackground);
 
-        app_internal_state->currentState = AndroidApp_Hidden;
+        app_internal_state->currentState =
+            AndroidApp_Hidden | AndroidApp_Initialized;
         break;
     }
     case APP_CMD_TERM_WINDOW:
@@ -529,6 +542,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 
         case Android_QueryNativeWindow:
             out->data.ptr = coffee_app->window;
+            cDebug("Window ptr: {0}", coffee_app->window);
             break;
         case Android_QueryActivity:
             out->data.ptr = coffee_app->activity->clazz;
@@ -824,8 +838,8 @@ std::map<std::string, std::string> intent::extras()
                 continue;
             }
 
-            std::string value = jnipp::java::type_unwrapper<std::string>(
-                extraVal);
+            std::string value =
+                jnipp::java::type_unwrapper<std::string>(extraVal);
             out[key_s] = value;
         }
     }
@@ -897,10 +911,6 @@ int app_dpi()
 void android_main(struct android_app* state)
 {
     Coffee::InitializeState(state);
-
-    deref_main_c(android_entry_point, 0, nullptr);
-
     Coffee::SetPrintingVerbosity(15);
-
     Coffee::StartEventProcessing();
 }

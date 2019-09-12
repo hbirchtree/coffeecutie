@@ -412,6 +412,8 @@ struct CGL_Shared_Debug
         return glIsProgramPipeline(h) == GL_TRUE;
     }
 
+#endif
+#if GL_VERSION_VERIFY(0x330, 0x320)
     /* IsEnabled */
     STATICINLINE
     bool IsEnabledi(Feature f, int32 i)

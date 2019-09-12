@@ -19,6 +19,14 @@ void Binding::load(entity_container& e, comp_app::app_error& ec)
     }
 #elif defined(GLADCOMP_COMPILE_ES)
     auto loader = e.service<comp_app::GraphicsBindingConfig>()->loader;
+
+    if(!loader)
+    {
+        ec = "No dynamic loader provided";
+        ec = comp_app::AppError::BindingFailed;
+        return;
+    }
+
     if(!gladLoadGLES2Loader(loader))
     {
         ec = comp_app::AppError::BindingFailed;

@@ -77,7 +77,7 @@ i32 coffee_main(i32, cstring_w*)
 
         glConf.framebufferFmt = typing::pixels::PixFmt::RGBA8;
 
-        glConf.profile = comp_app::GLConfig::Core;
+        glConf.profile = comp_app::GLConfig::Embedded;
         glConf.profile |= comp_app::GLConfig::Debug;
         glConf.version.major = 3;
         glConf.version.minor = 3;

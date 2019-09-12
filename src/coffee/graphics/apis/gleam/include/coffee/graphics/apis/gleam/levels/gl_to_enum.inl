@@ -738,18 +738,20 @@ inline CGenum texture_to_enum(tex::flag f)
         return GL_TEXTURE_CUBE_MAP;
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    case t2d_ms::value:
-        return GL_TEXTURE_2D_MULTISAMPLE;
     case t2d_array::value:
         return GL_TEXTURE_2D_ARRAY;
-    case t2d_array_ms::value:
-        return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
-
     case t3d::value:
         return GL_TEXTURE_3D;
-
+#if GL_VERSION_VERIFY(0x300, 0x310)
+    case t2d_ms::value:
+        return GL_TEXTURE_2D_MULTISAMPLE;
+#endif
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    case t2d_array_ms::value:
+        return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
     case cube_array::value:
         return GL_TEXTURE_CUBE_MAP_ARRAY;
+#endif
 #endif
 
     default:
