@@ -6,10 +6,17 @@
 
 namespace comp_app {
 
+struct EventMain : AppLoadableService
+{
+    using type = EventMain;
+};
+
 template<typename R, typename D>
 struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
-                                 AppLoadableService
+                                 EventMain
 {
+    using type = EventapplicationWrapper<R, D>;
+
     using loop_fun     = stl_types::Function<void(R&, D*)>;
     using service_type = AppService<EventapplicationWrapper<R, D>>;
 
@@ -91,6 +98,9 @@ struct AutoExec
 
         app_error ec;
         app->loadAll<detail::TypeList<EventAppType>>(container, ec);
+        auto service = container.service<EventAppType>();
+        container.register_subsystem_services<AppServiceTraits<EventMain>>(
+            service);
     }
 
     static int exec(detail::EntityContainer& container)
@@ -108,7 +118,7 @@ struct AutoExec
                 queue->executeTasks();
         }
 
-        /* TODO: Unload all services */
+            /* TODO: Unload all services */
 #endif
         return 0;
     }

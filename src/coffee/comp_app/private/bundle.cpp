@@ -1,5 +1,6 @@
 #include <coffee/comp_app/bundle.h>
 
+#include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
@@ -49,6 +50,9 @@ detail::EntityContainer& createContainer()
         {
         case CoffeeHandle_Setup:
         {
+            app_error ec;
+            container->service<EventMain>()->load(*container, ec);
+            C_ERROR_CHECK(ec);
             break;
         }
         case CoffeeHandle_Loop:

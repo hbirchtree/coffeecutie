@@ -2,6 +2,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/core/coffee.h>
 
 #include <coffee/comp_app/bundle.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
@@ -57,6 +58,8 @@ i32 coffee_main(i32, cstring_w*)
     using namespace Coffee::Components;
     using namespace Coffee::Display;
     using namespace Coffee::Input;
+
+    SetPrintingVerbosity(15);
 
     EntityContainer& e = comp_app::createContainer();
 
