@@ -703,7 +703,7 @@ STATICINLINE void StartEventProcessing()
 
         HandleEvents();
 
-        if(app_internal_state->currentState == AndroidApp_Visible)
+        if(app_internal_state->currentState & AndroidApp_Visible)
             CoffeeEventHandleCall(CoffeeHandle_Loop);
     }
 }
