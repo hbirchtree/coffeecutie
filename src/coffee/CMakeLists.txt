@@ -33,8 +33,10 @@ if(BUILD_COMPONENT_APP)
     add_library ( ComponentBundle INTERFACE )
 
     if(BUILD_OPENGL)
-        add_subdirectory(graphics/comp_app)
-        target_link_libraries ( ComponentBundle INTERFACE GLADComponent )
+        if(NOT EMSCRIPTEN)
+            add_subdirectory(graphics/comp_app)
+            target_link_libraries ( ComponentBundle INTERFACE GLADComponent )
+        endif()
 
         if(BUILD_EGL)
             add_subdirectory(graphics/egl_comp)

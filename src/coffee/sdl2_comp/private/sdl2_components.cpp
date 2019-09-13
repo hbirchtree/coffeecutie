@@ -538,7 +538,11 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
 
             auto joystick = SDL_GameControllerGetJoystick(controller);
 
+#if SDL_MAJOR_VERSION >= 2 && SDL_MINOR_VERSION >= 0 && SDL_PATCHLEVEL >= 8
             auto playerIdx  = SDL_GameControllerGetPlayerIndex(controller);
+#else
+            auto playerIdx = -1;
+#endif
             auto instanceId = SDL_JoystickInstanceID(joystick);
 
             playerIdx = playerIdx >= 0 ? playerIdx : m_playerIndex.size();
@@ -546,7 +550,9 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
             m_playerIndex.insert({playerIdx, controller});
             m_controllers.insert({instanceId, controller});
 
+#if SDL_MAJOR_VERSION >= 2 && SDL_MINOR_VERSION >= 0 && SDL_PATCHLEVEL >= 8
             SDL_GameControllerRumble(controller, 7000, 9000, 200);
+#endif
 
             event.cdevice.which = playerIdx;
         } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
@@ -792,12 +798,14 @@ void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
     info.window =
         C_RCAST<PtrNativeWindowInfo::NWindow>(windowInfo.info.x11.window);
     info.display = windowInfo.info.x11.display;
-#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+#elif defined(SDL_VIDEO_DRIVER_WINDOWS)
     info.window  = windowInfo.info.win.window;
     info.display = windowInfo.info.win.hdc;
 #elif defined(SDL_VIDEO_DRIVER_COCOA)
     info.window = windowInfo.info.cocoa.window;
     info.display = nullptr;
+#elif defined(SDL_VIDEO_DRIVER_EMSCRIPTEN)
+    /* There's nothing here? */
 #else
     static_assert(false, "missing video driver");
 #endif
