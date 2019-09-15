@@ -120,7 +120,6 @@ void configureDefaults(AppLoader& loader)
     loader.addConfigs<detail::TypeList<GLConfig>>();
 
     auto& glConfig          = loader.config<GLConfig>();
-    glConfig.profile        = GLConfig::Core;
     glConfig.framebufferFmt = PixFmt::RGBA8;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
 
@@ -128,6 +127,10 @@ void configureDefaults(AppLoader& loader)
     glConfig.profile       = GLConfig::Embedded;
     glConfig.version.major = 3;
     glConfig.version.minor = 0;
+#else
+    glConfig.profile       = GLConfig::Core;
+    glConfig.version.major = 3;
+    glConfig.version.minor = 3;
 #endif
 
 #if defined(COFFEE_EMSCRIPTEN)

@@ -350,6 +350,7 @@ void GLContext::setupAttributes(entity_container& c)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, contextProfile);
     }
 
+#if !defined(COFFEE_ONLY_GLES20)
     {
         Sint32 contextFlags = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
@@ -360,8 +361,9 @@ void GLContext::setupAttributes(entity_container& c)
         if(glConfig.profile & GLConfig::Debug)
             contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 
-        //        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
     }
+#endif
 
     using namespace typing::pixels;
 
