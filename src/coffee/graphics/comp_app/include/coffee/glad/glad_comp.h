@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/comp_app/services.h>
-#include <coffee/comp_app/gl_config.h>
 
 namespace glad {
 

@@ -125,6 +125,8 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     cVerbose(10, GLM_API "Getting GL context version");
     auto ver = CGL::Debug::ContextVersion();
 
+    cVerbose(11, GLM_API "Got version {0}", ver);
+
     cVerbose(10, GLM_API "Matching GL API...");
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
     const Display::GL::Version ver33(3, 3);

@@ -4,5 +4,5 @@ coffee_application (
     SOURCES main.cpp
     LIBRARIES
     Blam Core Image
-    RendererDefault GLeamRHI
+    DropinRenderer GLeamRHI
     )

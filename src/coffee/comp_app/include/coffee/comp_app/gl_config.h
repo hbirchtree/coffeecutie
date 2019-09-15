@@ -51,6 +51,11 @@ struct GLConfig : Config<GLConfig>
         static_version<3, 0, Embedded>,
         static_version<3, 1, Embedded>,
         static_version<3, 2, Embedded>>;
+
+    using gl33_version = static_version<3, 3>;
+
+    using gles2_version = static_version<2, 0, Embedded>;
+    using gles3_version = static_version<3, 0, Embedded>;
 };
 
 C_FLAGS(GLConfig::Profile, libc_types::u32);

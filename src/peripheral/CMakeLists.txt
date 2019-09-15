@@ -21,6 +21,45 @@ target_compile_definitions ( PeripheralLib PRIVATE
     -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
     )
 
+if(EMSCRIPTEN)
+    if("${EMSCRIPTEN_SOURCEMAP_BASE}" STREQUAL "")
+        set ( EMSCRIPTEN_SOURCEMAP_BASE "http://localhost:8000" )
+    endif()
+
+    set ( EMSCRIPTEN_SOURCEMAP_BASE "${EMSCRIPTEN_SOURCEMAP_BASE}"
+        CACHE STRING "Emscripten sourcemap base URL"
+        )
+
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        target_compile_options ( PeripheralLib PUBLIC
+            -g4
+            "-s                              " DEMANGLE_SUPPORT=1
+            )
+        target_link_options ( PeripheralLib PUBLIC
+            -g4
+            "-s                            " DEMANGLE_SUPPORT=1
+            --source-map-base "${EMSCRIPTEN_SOURCEMAP_BASE}"
+            )
+    elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+        target_compile_options ( PeripheralLib PUBLIC
+            -g4 -O1
+            "-s                                 " DEMANGLE_SUPPORT=1
+            )
+        target_link_options ( PeripheralLib PUBLIC
+            -g4 -O1
+            "-s                                " DEMANGLE_SUPPORT=1
+            --source-map-base "${EMSCRIPTEN_SOURCEMAP_BASE}"
+            )
+    else()
+        target_compile_options ( PeripheralLib PUBLIC
+            -O3
+            )
+        target_link_options ( PeripheralLib PUBLIC
+            -O3
+            )
+    endif()
+endif()
+
 ############################################################
 # STL extensions, replacing STL where it does not exist
 ############################################################

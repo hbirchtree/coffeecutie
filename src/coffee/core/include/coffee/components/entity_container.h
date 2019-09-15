@@ -348,6 +348,41 @@ struct EntityContainer : non_copy
         return C_DCAST<typename Service::type>(it->second);
     }
 
+    template<typename Service>
+    struct ServiceRef
+    {
+        ServiceRef(EntityContainer* container)
+            : m_container(container)
+        {
+        }
+
+        Service* lock()
+        {
+            return m_container->service<Service>();
+        }
+
+        Service& operator*()
+        {
+            auto ptr = m_container->service<Service>();
+            C_PTR_CHECK(ptr);
+            return *ptr;
+        }
+
+        operator Service*()
+        {
+            return lock();
+        }
+
+    private:
+        EntityContainer* m_container;
+    };
+
+    template<typename Service>
+    ServiceRef<Service> service_ref()
+    {
+        return ServiceRef<Service>(this);
+    }
+
     template<class BaseType>
     int services_with()
     {

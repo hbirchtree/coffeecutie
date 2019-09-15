@@ -7,5 +7,5 @@ coffee_application (
 
     LIBRARIES
     GLeamRHI
-    RendererDefault
+    DropinRenderer
     )

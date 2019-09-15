@@ -304,6 +304,11 @@ struct BasicEventBus : EventBus<EventType>
         m_handlers.push_back({prio, std::move(handler)});
     }
 
+    void addEventData(EvData&& data)
+    {
+        m_handlers.push_back(std::move(data));
+    }
+
     virtual void process(EventType& ev, libc_types::c_ptr data) final
     {
         for(auto& e : m_handlers)

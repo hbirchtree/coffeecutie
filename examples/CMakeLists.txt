@@ -33,7 +33,7 @@ endif()
 # SDL2
 #
 
-if(BUILD_SDL2)
+if(BUILD_SDL2 AND FALSE)
     # Sprite rendering with SDL2
     add_subdirectory(sdl_sprite/base-test)
     # Joystick visualizer

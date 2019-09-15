@@ -1,11 +1,16 @@
 #include <coffee/comp_app/bundle.h>
 
 #include <coffee/comp_app/eventapp_wrapper.h>
+#include <coffee/comp_app/gl_config.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/foreign/foreign.h>
 #include <platforms/environment.h>
+
+#if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten/emscripten.h>
+#endif
 
 #if defined(FEATURE_ENABLE_EGLComponent)
 #include <coffee/egl/egl_comp.h>
@@ -20,7 +25,7 @@
 #endif
 
 #if defined(FEATURE_ENABLE_SDL2Components)
-#include <coffee/sdl2_comp/app_components.h>
+#include <coffee/sdl2_comp/sdl2_components.h>
 #endif
 
 #if defined(FEATURE_ENABLE_GLKitComponent)
@@ -33,6 +38,28 @@
 
 namespace comp_app {
 
+#if defined(COFFEE_EMSCRIPTEN)
+void emscripten_loop()
+{
+    static bool isLoaded = false;
+
+    try
+    {
+        if(!isLoaded)
+        {
+            CoffeeEventHandle(nullptr, CoffeeHandle_Setup);
+            isLoaded = true;
+        }
+
+        CoffeeEventHandle(nullptr, CoffeeHandle_Loop);
+    } catch(std::exception const& e)
+    {
+        emscripten_log(EM_LOG_ERROR, "Exception encountered: %s", e.what());
+        emscripten_pause_main_loop();
+    }
+}
+#endif
+
 detail::EntityContainer& createContainer()
 {
     static stl_types::ShPtr<detail::EntityContainer> container;
@@ -44,6 +71,8 @@ detail::EntityContainer& createContainer()
 
     coffee_event_handling_data = container.get();
     CoffeeEventHandle          = [](void*, int event) {
+        using namespace Coffee;
+
         runtime_queue_error ec;
 
         switch(event)
@@ -51,7 +80,9 @@ detail::EntityContainer& createContainer()
         case CoffeeHandle_Setup:
         {
             app_error ec;
-            container->service<EventMain>()->load(*container, ec);
+            auto      eventMain = container->service<EventMain>();
+            C_PTR_CHECK(eventMain);
+            eventMain->load(*container, ec);
             C_ERROR_CHECK(ec);
             break;
         }
@@ -84,13 +115,25 @@ void configureDefaults(AppLoader& loader)
         detail::
             TypeList<WindowConfig, ControllerConfig, GraphicsBindingConfig>>();
 
-#if defined(FEATURE_ENABLE_GLADComponent)
+#if defined(FEATURE_ENABLE_GLADComponent) || \
+    defined(FEATURE_ENABLE_SDL2Components)
     loader.addConfigs<detail::TypeList<GLConfig>>();
 
     auto& glConfig          = loader.config<GLConfig>();
     glConfig.profile        = GLConfig::Core;
     glConfig.framebufferFmt = PixFmt::RGBA8;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
+
+#if defined(COFFEE_LINKED_GLES)
+    glConfig.profile       = GLConfig::Embedded;
+    glConfig.version.major = 3;
+    glConfig.version.minor = 0;
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN)
+    glConfig.version.major = 2;
+    glConfig.version.minor = 0;
+#endif
 #endif
 
 #if defined(FEATURE_ENABLE_X11Component)

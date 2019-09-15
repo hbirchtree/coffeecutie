@@ -83,3 +83,8 @@ multi.make8: multi-config
 		$(DOCKER_CONTAINER) \
 			sh -c "$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8"
 
+shell:
+	$(DOCKER) run -ti --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			bash

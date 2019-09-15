@@ -5,12 +5,56 @@
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/core/types/rect.h>
 
+#if defined(FEATURE_ENABLE_ComponentApp)
+#include <coffee/comp_app/services.h>
+#else
 #include "../base/renderer/windowapplication.h"
 #include "../base/renderer/windowmanagerclient.h"
+#endif
 
 namespace Coffee {
 namespace Display {
 namespace EventHandlers {
+
+namespace detail {
+
+#if defined(FEATURE_ENABLE_ComponentApp)
+void closeWindow(comp_app::Windowing* window)
+{
+    window->close();
+}
+void setState(comp_app::Windowing* window, Properties::State state)
+{
+    window->setState(state);
+}
+Properties::State getState(comp_app::Windowing* window)
+{
+    return window->state();
+}
+
+using WindowPtr =
+    comp_app::detail::EntityContainer::ServiceRef<comp_app::Windowing>;
+using WindowManPtr =
+    comp_app::detail::EntityContainer::ServiceRef<comp_app::Windowing>;
+#else
+void closeWindow(WindowApplication* window)
+{
+    window->closeWindow();
+}
+void setState(WindowManagerClient* window, Properties::State state)
+{
+    window->setWindowState(state);
+}
+u32 getState(WindowManagerClient* window)
+{
+    return window->windowState();
+}
+
+using WindowPtr    = WkPtr<WindowApplication>;
+using WindowManPtr = WkPtr<WindowManagerClient>;
+#endif
+
+} // namespace detail
 
 using namespace Input;
 
@@ -40,7 +84,7 @@ struct OnKey
     static constexpr InputCode key = Key;
 };
 
-template<typename Event>
+template<typename Event, typename WindowAppPtr = detail::WindowPtr>
 struct ExitOn
 {
     using event_type = typename std::conditional<
@@ -48,7 +92,7 @@ struct ExitOn
         Input::BaseEvent<CIEvent::QuitSign>,
         CIKeyEvent>::type;
 
-    ExitOn(ShPtr<WindowApplication> const& renderer) : m_renderer(renderer)
+    ExitOn(WindowAppPtr renderer) : m_renderer(renderer)
     {
     }
 
@@ -63,7 +107,7 @@ struct ExitOn
 
         auto ptr = m_renderer.lock();
         C_PTR_CHECK(ptr);
-        ptr->closeWindow();
+        detail::closeWindow(ptr);
     }
 
     template<
@@ -77,11 +121,11 @@ struct ExitOn
 
         auto ptr = m_renderer.lock();
         C_PTR_CHECK(ptr);
-        ptr->closeWindow();
+        detail::closeWindow(ptr);
     }
 
   private:
-    WkPtr<WindowApplication> m_renderer;
+    WindowAppPtr m_renderer;
 };
 
 template<
@@ -125,13 +169,12 @@ struct AnyIKey
     }
 };
 
-template<typename Event>
+template<typename Event, typename WindowManPtr = detail::WindowManPtr>
 struct FullscreenOn
 {
     using event_type = CIKeyEvent;
 
-    FullscreenOn(ShPtr<WindowManagerClient> const& renderer) :
-        m_renderer(renderer)
+    FullscreenOn(WindowManPtr renderer) : m_renderer(renderer)
     {
     }
 
@@ -139,15 +182,15 @@ struct FullscreenOn
     {
         if(Event::filter(*keyEvent))
         {
-            if(m_renderer->windowState() & Properties::Windowed)
-                m_renderer->setWindowState(Properties::WindowedFullScreen);
+            if(detail::getState(m_renderer) & Properties::Windowed)
+                detail::setState(m_renderer, Properties::WindowedFullScreen);
             else
-                m_renderer->setWindowState(Properties::Windowed);
+                detail::setState(m_renderer, Properties::Windowed);
         }
     }
 
   private:
-    ShPtr<WindowManagerClient> m_renderer;
+    WindowManPtr m_renderer;
 };
 
 } // namespace EventHandlers

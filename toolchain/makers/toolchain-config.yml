@@ -14,6 +14,7 @@
 =preload: nothing.cmake
 =lib.flavor: $(target-name)
 =program.workdir: $(env:CMAKE_BUILD_DIR)
+=shell: ''
 
 # Default dependency
 =dependencies: 
@@ -43,7 +44,8 @@
 
 .*(osx|ios).*:
   =runner-choice: Makefile.mac-base
-  =target: build
+  ^((?!\$\(shell\)).)*$: # Don't apply this to shell targets
+      =target: build
   =build.prettyname: Apple
   =generator: Xcode
   =compiler: Clang
@@ -299,3 +301,5 @@ testing.linux.*:
   =build.prettyname: Emscripten
 .*(gamecube.*):
   =build.prettyname: GCN/DevkitPPC
+.*\$\(shell\)$:
+  =target: shell

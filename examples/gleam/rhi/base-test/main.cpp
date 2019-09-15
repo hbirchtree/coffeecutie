@@ -8,8 +8,6 @@
 
 #include <coffee/asio/net_profiling.h>
 
-using EDATA = EventLoopData<CDRenderer, RendererState>;
-
 i32 coffee_main(i32, cstring_w*)
 {
     using namespace EventHandlers;
@@ -33,15 +31,15 @@ i32 coffee_main(i32, cstring_w*)
             r->installEventHandler(
                 EHandle<Event>::MkHandler(WindowResize<GLM>()));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                ExitOn<OnKey<Input::CK_Escape>>(r)));
+                ExitOn<OnKey<Input::CK_Escape>>(r->window())));
             r->installEventHandler(
-                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r)));
+                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r->window())));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
                 FullscreenOn<AnyIKey<
                     KeyCombo<
                         CK_EnterNL,
                         CIKeyEvent::KeyModifiers::RAltModifier>,
-                    KeyCombo<CK_F11>>>(r)));
+                    KeyCombo<CK_F11>>>(r->window())));
         },
         SetupRendering,
         RendererLoop,

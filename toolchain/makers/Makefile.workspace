@@ -42,3 +42,5 @@ multi.ensureinstall: multi-config
 multi.make8: multi-config
 	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8
 
+shell:
+	bash

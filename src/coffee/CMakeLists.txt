@@ -33,6 +33,10 @@ if(BUILD_COMPONENT_APP)
     add_library ( ComponentBundle INTERFACE )
 
     if(BUILD_OPENGL)
+        if(BUILD_GLEAM)
+            target_link_libraries ( ComponentBundle INTERFACE GLVersion )
+        endif()
+
         if(NOT EMSCRIPTEN)
             add_subdirectory(graphics/comp_app)
             target_link_libraries ( ComponentBundle INTERFACE GLADComponent )
@@ -71,7 +75,7 @@ if(BUILD_COMPONENT_APP)
 endif()
 
 if(BUILD_HEADFUL)
-    add_subdirectory(windowing)
+#    add_subdirectory(windowing)
 endif()
 
 if(BUILD_ASIO)

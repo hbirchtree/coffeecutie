@@ -37,3 +37,6 @@ build: config
 
 custom:
 	$(CUSTOM_COMMAND)
+
+shell:
+	bash

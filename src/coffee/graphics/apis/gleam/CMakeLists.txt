@@ -5,6 +5,27 @@ if(WIN32 AND WIN_UWP)
     option ( BUILD_ANGLE "Build with OpenGL ES 2.0 backed by ANGLE" ON )
 endif()
 
+add_library ( GLVersion INTERFACE )
+
+if(BUILD_GLES_20 OR BUILD_ANGLE)
+    target_compile_definitions ( GLVersion INTERFACE
+        -DCOFFEE_LINKED_GLES
+        -DCOFFEE_GLES20_MODE
+        )
+elseif(BUILD_GLES)
+    target_compile_definitions ( GLVersion INTERFACE
+        -DCOFFEE_LINKED_GLES
+        -DCOFFEE_LINKED_GLES31
+        -DCOFFEE_LINKED_GLES30
+        )
+elseif(NOT BUILD_GLES)
+    target_compile_definitions ( GLVersion INTERFACE
+        -DCOFFEE_GLEAM_DESKTOP
+        )
+endif()
+
+add_export ( GLVersion "" )
+
 coffee_library (
     TARGET GLeamCommon
 
@@ -15,6 +36,7 @@ coffee_library (
     Core
     Image
     GraphicsAPI
+    GLVersion
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -90,6 +112,10 @@ elseif(BUILD_GLES AND NOT APPLE)
             IMGegl
             )
     endif()
+elseif(APPLE AND IOS)
+    target_link_libraries ( GLeamCommon PUBLIC
+        "-framework OpenGLES"
+        )
 endif()
 
 if(BUILD_GLES_20 OR BUILD_ANGLE)
@@ -100,7 +126,6 @@ if(BUILD_GLES_20 OR BUILD_ANGLE)
 elseif(BUILD_GLES)
     target_compile_definitions ( GLeamCommon PUBLIC
         -DCOFFEE_LINKED_GLES
-#        -DCOFFEE_LINKED_GLES32
         -DCOFFEE_LINKED_GLES31
         -DCOFFEE_LINKED_GLES30
         )

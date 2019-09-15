@@ -21,3 +21,12 @@ coffee_library (
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
     $<INSTALL_INTERFACE:include>
     )
+
+coffee_library (
+    TARGET DropinRenderer
+    SOURCES private/dropin.cpp
+    LIBRARIES ComponentBundleSetup
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dropin_include>
+    $<INSTALL_INTERFACE:include>
+    )

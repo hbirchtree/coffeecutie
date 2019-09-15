@@ -145,7 +145,7 @@ coffee_library (
     TARGET CoreEventApplicationC
 
     SOURCES
-    private/base/eventapplication_wrapper.cpp
+#    private/base/eventapplication_wrapper.cpp
     private/base/cdisplay.cpp
 
     LIBRARIES CoreCommon
@@ -243,7 +243,7 @@ add_export ( CoreCommon "" )
 target_link_libraries ( Core INTERFACE
     CoreCommon
     CoreCompression
-    CoreEventApplicationC
+#    CoreEventApplicationC
     CoreOldBlob
     CoreProfiling
     CoreSaving

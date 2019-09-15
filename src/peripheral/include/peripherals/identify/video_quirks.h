@@ -6,16 +6,8 @@
  *
  */
 
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
-#define COFFEE_LINKED_GLES
-#endif
-
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
-#define COFFEE_ONLY_GLES20
-#endif
-
-#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_GLES20_MODE)
-#define COFFEE_LINKED_GLES
+#if defined(COFFEE_GLES20_MODE) || \
+    defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
 #define COFFEE_ONLY_GLES20
 #endif
 
@@ -23,8 +15,6 @@
 
 #if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_WEBGL
-#define COFFEE_LINKED_GLES
-#define COFFEE_LINKED_GLES20
 #endif
 
 /*

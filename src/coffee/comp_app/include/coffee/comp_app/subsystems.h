@@ -75,6 +75,8 @@ struct AppLoader : AppService<
     {
         using namespace type_safety::type_list;
 
+        ec = AppError::None;
+
         for_each<Services, service_register>(std::ref(e), std::ref(ec));
         for_each<Services, service_loader>(std::ref(e), std::ref(ec));
     }
@@ -94,12 +96,14 @@ struct AppLoader : AppService<
     }
 
     template<class Config>
-    void addConfig(stl_types::UqPtr<Config>&& ptr)
+    Config& addConfig(stl_types::UqPtr<Config>&& ptr)
     {
         auto const type_id = type_hash_v<Config>();
 
         m_configStore.emplace_back(std::move(ptr));
         m_configs.insert({type_id, m_configStore.back().get()});
+
+        return *C_DCAST<Config>(m_configStore.back().get());
     }
 
     template<typename T>
@@ -127,7 +131,9 @@ struct AppLoader : AppService<
         auto it = m_configs.find(type_id);
 
         if(it == m_configs.end())
-            Throw(undefined_behavior("failed to find config"));
+            Throw(undefined_behavior(
+                std::string("failed to find config: ") +
+                typeid(Config).name()));
 
         auto ptr = C_DCAST<Config>(it->second);
 
@@ -138,7 +144,7 @@ struct AppLoader : AppService<
     }
 
     stl_types::Vector<stl_types::UqPtr<detail::SubsystemBase>> m_configStore;
-    stl_types::Map<detail::type_hash, detail::SubsystemBase*> m_configs;
+    stl_types::Map<detail::type_hash, detail::SubsystemBase*>  m_configs;
 
     template<class Config>
     static Config& config(detail::EntityContainer& container)

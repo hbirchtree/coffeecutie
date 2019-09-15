@@ -8,7 +8,7 @@ coffee_application (
 
     LIBRARIES
     GLeamRHI
-    RendererDefault
+    DropinRenderer
     Core
     EntComp
 
@@ -17,9 +17,9 @@ coffee_application (
     )
 
 
-#if(TARGET ASIO)
+if(TARGET ASIO)
     target_link_libraries ( GLeamBaseTest_RHI PUBLIC ASIO )
-#endif()
+endif()
 
 if(TARGET DiscordLatte)
     target_link_libraries ( GLeamBaseTest_RHI PUBLIC DiscordLatte )

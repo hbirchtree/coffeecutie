@@ -58,10 +58,11 @@ i32 coffee_main(i32, cstring_w*)
                 },
                 "Input handler"));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                EventHandlers::ExitOn<EventHandlers::OnKey<CK_Escape>>(r),
+                EventHandlers::ExitOn<EventHandlers::OnKey<CK_Escape>>(
+                    r->window()),
                 "Escape handler"));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                EventHandlers::ExitOn<EventHandlers::OnQuit>(r),
+                EventHandlers::ExitOn<EventHandlers::OnQuit>(r->window()),
                 "Close handler"));
         },
         [&](Display::CSDL2Renderer& r, AudioData* d) {

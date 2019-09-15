@@ -11,7 +11,6 @@ coffee_library (
     "-framework CoreMotion"
     "-framework GameController"
     "-framework GLKit"
-    "-framework OpenGLES"
     "-framework QuartzCore"
     "-framework UIKit"
 
@@ -22,6 +21,6 @@ coffee_library (
 coffee_library (
     TARGET GLKitComponent
     SOURCES private/glk_comp.cpp
-    LIBRARIES ComponentApp AppDelegate
+    LIBRARIES ComponentApp AppDelegate GLeamCommon
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )

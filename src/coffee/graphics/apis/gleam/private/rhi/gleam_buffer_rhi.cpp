@@ -74,8 +74,8 @@ Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
         return {};
     }
 
-#if GL_VERSION_VERIFY(0x330, 0x300) && !defined(COFFEE_WEBGL)
-    if(!GLEAM_FEATURES.gles20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
+    if(!GLEAM_FEATURES.gles20 && !GLEAM_FEATURES.webgl)
     {
         VerifyBuffer(m_handle);
 
@@ -112,8 +112,8 @@ Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
 
 void GLEAM_VBuffer::unmap()
 {
-#if GL_VERSION_VERIFY(0x330, 0x300) && !defined(COFFEE_WEBGL)
-    if(!GLEAM_FEATURES.gles20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
+    if(!GLEAM_FEATURES.gles20 && !GLEAM_FEATURES.webgl)
     {
         VerifyBuffer(m_handle);
 

@@ -367,10 +367,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     d->component_queue =
         RuntimeQueue::CreateNewThreadQueue("Component Worker", rqec);
 
+#if defined(FEATURE_ENABLE_DiscordLatte)
     auto onlineWorker =
         RuntimeQueue::CreateNewThreadQueue("Online Worker", rqec);
 
     C_ERROR_CHECK(rqec);
+#endif
 
     RendererState::RGraphicsData& g        = d->g_data;
     auto&                         entities = d->entities;

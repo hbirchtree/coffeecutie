@@ -68,6 +68,12 @@ struct GLEAM_DataStore
         const bool base_instance = false;
         const bool direct_state  = false;
 #endif
+
+#if defined(COFFEE_WEBGL)
+        const bool webgl = true;
+#else
+        const bool webgl = false;
+#endif
     } features;
 
 #if MODE_DEBUG

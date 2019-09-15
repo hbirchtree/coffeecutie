@@ -36,6 +36,7 @@ enum class AppError
     ContextAlreadyCurrent, /*!< Semantic error by user */
     ContextNotAvailable,   /*!< Temporarily unavailable */
     ContextInvalidated,    /*!< Resources were freed externally */
+    ContextFailedBind,
 
     /* Binding errors (eg. GL binding) */
     BindingFailed,

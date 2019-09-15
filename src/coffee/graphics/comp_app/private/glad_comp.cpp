@@ -1,5 +1,7 @@
 #include <coffee/glad/glad_comp.h>
 
+#include <coffee/comp_app/gl_config.h>
+
 #if defined(GLADCOMP_COMPILE_CORE)
 #include <glad/glad.h>
 #elif defined(GLADCOMP_COMPILE_ES)
@@ -36,4 +38,4 @@ void Binding::load(entity_container& e, comp_app::app_error& ec)
 #endif
 }
 
-}
+} // namespace glad

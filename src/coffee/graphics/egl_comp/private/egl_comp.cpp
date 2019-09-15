@@ -58,13 +58,23 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     if(config.profile & comp_app::GLConfig::Core)
     {
 #if defined(EGL_VERSION_1_4)
-        C_PTR_CHECK(eglBindAPI(EGL_OPENGL_API));
+        if(!eglBindAPI(EGL_OPENGL_API))
+        {
+            ec = "failed to bind EGL API OpenGL";
+            ec = comp_app::AppError::ContextFailedBind;
+            return;
+        }
 #else
         Throw(undefined_behavior("OpenGL is not supported on this target"));
 #endif
     } else if(config.profile & comp_app::GLConfig::Embedded)
     {
-        C_PTR_CHECK(eglBindAPI(EGL_OPENGL_ES_API));
+        if(!eglBindAPI(EGL_OPENGL_ES_API))
+        {
+            ec = "failed to bind EGL API OpenGLES";
+            ec = comp_app::AppError::ContextFailedBind;
+            return;
+        }
     }
 #endif
 #else

@@ -32,6 +32,11 @@ macro ( EMSCRIPTEN_PACKAGE )
         LINK_FLAGS "${${EM_TARGET}_RSC_FLAGS}"
         )
 
+    add_custom_command ( TARGET ${EM_TARGET}
+        COMMAND ${COFFEE_DESKTOP_DIRECTORY}/emscripten/fix-source-map.py
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EM_TARGET}.bundle/${EM_TARGET}.wasm.map
+        )
+
     install(
         DIRECTORY
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EM_TARGET}.bundle

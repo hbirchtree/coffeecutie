@@ -28,10 +28,12 @@
 osx:
   +cmake-opts:
     - -DBUILD_ETC2COMP=ON
-ios:
+ios.*:
   +cmake-opts:
     - -DBUILD_GLKIT=ON
     - -DBUILD_SDL2=OFF
+    - -DBUILD_GLES=ON
+    - -DBUILD_GLES_20=OFF
 coverage:
   =target: multi.twostage
   =cmake-target:
@@ -54,13 +56,19 @@ testing.linux.*:
     - -DBUILD_ANATIVE=ON
     - -DBUILD_TESTS=OFF
     - -DBUILD_SDL2=OFF
-  =target: multi.ensureinstall
+  ^((?!\$\(shell\)).)*$:
+    =target: multi.ensureinstall
   =cmake-target:
     - AndroidPackage
-emscripten:
+emscripten.*:
   +cmake-opts:
     - -DBUILD_SDL2=ON
-gamecube:
+    - -DBUILD_OPENSSL=OFF
+    - -DBUILD_AUDIO=OFF
+    - -DBUILD_GLES=ON
+    - -DBUILD_GLES_20=OFF
+    - -DGENERATE_HTML=ON
+gamecube.*:
   +cmake-opts:
     - -DBUILD_LIBOGC=ON
 .*maemo.*:

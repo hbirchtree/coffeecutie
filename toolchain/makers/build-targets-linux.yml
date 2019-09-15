@@ -2,12 +2,15 @@ android:
   armv8a:
     nougat:
       - gles3
+      - gles3$(shell)
     lollipop:
       - gles3
   armv7a:
     nougat:
       - gles2
+      - gles2$(shell)
       - gles3
+      - gles3$(shell)
     lollipop:
       - gles3
     kitkat:
@@ -55,10 +58,13 @@ docs:
 emscripten:
   - asmjs
   - wasm
+  - wasm$(shell)
 maemo:
   - armel
+  - armel$(shell)
 raspberry:
   - armhf
+  - armhf$(shell)
 mingw:
   - w64
 gamecube:

@@ -29,7 +29,6 @@ struct SharedData
     RHI::GLEAM::GLEAM_API::API_CONTEXT api;
 };
 
-using ELoop   = EventLoopData<CDRenderer, SharedData>;
 using CGL_DBG = CGL::CGL_Shared_Debug;
 
 void setup_fun(CDRenderer& renderer, SharedData* data)
@@ -97,15 +96,15 @@ i32 coffee_main(i32, cstring_w*)
             r->installEventHandler(
                 EHandle<Event>::MkHandler(WindowResize<GLEAMAPI>()));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                ExitOn<OnKey<Input::CK_Escape>>(r)));
+                ExitOn<OnKey<Input::CK_Escape>>(r->window())));
             r->installEventHandler(
-                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r)));
+                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r->window())));
             r->installEventHandler(EHandle<CIEvent>::MkHandler(
                 FullscreenOn<AnyIKey<
                     KeyCombo<
                         CK_EnterNL,
                         CIKeyEvent::KeyModifiers::RAltModifier>,
-                    KeyCombo<CK_F11>>>(r)));
+                    KeyCombo<CK_F11>>>(r->window())));
         },
         setup_fun,
         loop_fun,

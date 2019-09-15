@@ -264,7 +264,7 @@ STATICINLINE bool translate_sampler_type(tex::flag& samplerType, u32 m_flags)
     }
 }
 
-#if GL_VERSION_VERIFY(0x330, 0x310)
+#if GL_VERSION_VERIFY(0x330, 0x310) && !defined(COFFEE_WEBGL)
 STATICINLINE void ProgramInputGet(
     glhnd const&                    hnd,
     ShaderStage                     stages,
@@ -704,7 +704,7 @@ void GetShaderUniforms(
 
     using namespace ShaderTypes;
 
-    if(!GLEAM_FEATURES.separable_programs)
+    if(!GLEAM_FEATURES.separable_programs || GLEAM_FEATURES.webgl)
     {
         /* Does not differentiate between shader stages and
          *  their uniforms */
@@ -847,7 +847,7 @@ void GetShaderUniforms(
             }
         }
     }
-#if GL_VERSION_VERIFY(0x430, 0x310)
+#if GL_VERSION_VERIFY(0x430, 0x310) && !defined(COFFEE_WEBGL)
     else if(GLEAM_FEATURES.separable_programs)
     {
         enum GL_PROP_IDX

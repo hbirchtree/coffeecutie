@@ -1,4 +1,4 @@
-#include <coffee/sdl2_comp/app_components.h>
+#include <coffee/sdl2_comp/sdl2_components.h>
 
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
@@ -114,7 +114,7 @@ Windowing::~Windowing()
 
 void Windowing::load(entity_container& c, comp_app::app_error& ec)
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_EMSCRIPTEN)
     struct sigaction action;
     sigaction(SIGINT, nullptr, &action);
 #endif
@@ -126,7 +126,7 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         return;
     }
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) && !defined(COFFEE_EMSCRIPTEN)
     sigaction(SIGINT, &action, nullptr);
 #endif
 
@@ -360,7 +360,7 @@ void GLContext::setupAttributes(entity_container& c)
         if(glConfig.profile & GLConfig::Debug)
             contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
+        //        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
     }
 
     using namespace typing::pixels;
@@ -407,9 +407,14 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
 
     m_context = nullptr;
 
+#if defined(COFFEE_EMSCRIPTEN)
+    try_create_context<GLConfig::gles2_version>()(
+        window, &m_context, glConfig.profile);
+#else
     type_safety::type_list::
         for_each_rev<GLConfig::valid_versions, try_create_context>(
             window, &m_context, glConfig.profile);
+#endif
 
     if(!m_context)
     {
@@ -425,7 +430,9 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
         return;
     }
 
+#if !defined(COFFEE_EMSCRIPTEN)
     c.service<GLSwapControl>()->setSwapInterval(glConfig.swapInterval);
+#endif
 
     {
         auto& bindConf =
@@ -472,6 +479,7 @@ comp_app::size_2d_t GLFramebuffer::size() const
 
 void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
+#if !defined(COFFEE_EMSCRIPTEN)
     auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
 
     if(!config.mapping.empty())
@@ -493,10 +501,12 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
         m_axisScale    = max_val / libc_types::scalar(dead_val);
         m_axisDeadzone = config.deadzone;
     }
+#endif
 }
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
+#if !defined(COFFEE_EMSCRIPTEN)
     for(auto const& controller : m_controllers)
         SDL_GameControllerClose(
             C_RCAST<SDL_GameController*>(controller.second));
@@ -508,10 +518,12 @@ void ControllerInput::unload(entity_container&, comp_app::app_error&)
 
     SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER);
     SDL_GetError();
+#endif
 }
 
 void ControllerInput::start_restricted(Proxy& p, time_point const&)
 {
+#if !defined(COFFEE_EMSCRIPTEN)
     using namespace Coffee::Input;
 
     auto    inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
@@ -539,7 +551,7 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
             auto joystick = SDL_GameControllerGetJoystick(controller);
 
 #if SDL_MAJOR_VERSION >= 2 && SDL_MINOR_VERSION >= 0 && SDL_PATCHLEVEL >= 8
-            auto playerIdx  = SDL_GameControllerGetPlayerIndex(controller);
+            auto playerIdx = SDL_GameControllerGetPlayerIndex(controller);
 #else
             auto playerIdx = -1;
 #endif
@@ -574,6 +586,7 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
     while(SDL_PeepEvents(
         &event, 1, SDL_GETEVENT, SDL_JOYAXISMOTION, SDL_JOYDEVICEREMOVED))
         ;
+#endif
 }
 
 libc_types::u32 ControllerInput::count() const
@@ -591,10 +604,12 @@ ControllerInput::controller_map ControllerInput::state(
 
     auto controller = C_RCAST<SDL_GameController*>(it->second);
 
+    controller_map out;
+
+#if !defined(COFFEE_EMSCRIPTEN)
+
 #define BTN SDL_GameControllerGetButton
 #define AXIS SDL_GameControllerGetAxis
-
-    controller_map out;
 
     out.buttons.e.a      = BTN(controller, SDL_CONTROLLER_BUTTON_A);
     out.buttons.e.b      = BTN(controller, SDL_CONTROLLER_BUTTON_B);
@@ -622,6 +637,8 @@ ControllerInput::controller_map ControllerInput::state(
 #undef BTN
 #undef AXIS
 
+#endif
+
     return out;
 }
 
@@ -632,10 +649,12 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
     if(it == m_playerIndex.end())
         return {};
 
+#if !defined(COFFEE_EMSCRIPTEN)
     auto name =
         SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
     return name ? name : CString();
+#endif
 }
 
 libc_types::i16 ControllerInput::rescale(libc_types::i16 value) const
@@ -802,7 +821,7 @@ void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
     info.window  = windowInfo.info.win.window;
     info.display = windowInfo.info.win.hdc;
 #elif defined(SDL_VIDEO_DRIVER_COCOA)
-    info.window = windowInfo.info.cocoa.window;
+    info.window  = windowInfo.info.cocoa.window;
     info.display = nullptr;
 #elif defined(SDL_VIDEO_DRIVER_EMSCRIPTEN)
     /* There's nothing here? */

@@ -26,8 +26,8 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         {
         }
         EventConfig(
-            stl_types::UqPtr<R>&& r,
-            stl_types::UqPtr<D>&& d,
+            stl_types::ShPtr<R>&& r,
+            stl_types::ShPtr<D>&& d,
             loop_fun&&            s,
             loop_fun&&            l,
             loop_fun&&            c) :
@@ -37,8 +37,8 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         {
         }
 
-        stl_types::UqPtr<R> m_renderer;
-        stl_types::UqPtr<D> m_data;
+        stl_types::ShPtr<R> m_renderer;
+        stl_types::ShPtr<D> m_data;
         loop_fun            m_setup, m_loop, m_cleanup;
     };
 
@@ -68,7 +68,16 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
     EventConfig m_config;
 };
 
-template<typename R, typename D>
+namespace detail {
+
+struct DummyData
+{
+    static constexpr void (*EmscriptenLoop)() = nullptr;
+};
+
+} // namespace detail
+
+template<typename R = int, typename D = int>
 struct AutoExec
 {
     using presetup_fun = stl_types::Function<void(R&, D*)>;
@@ -84,28 +93,35 @@ struct AutoExec
         using EventAppType = EventapplicationWrapper<R, D>;
 
         auto app      = container.service<AppLoader>();
-        auto renderer = stl_types::MkUq<R>();
-        auto data     = stl_types::MkUq<D>();
+        auto renderer = stl_types::MkShared<R>();
+        auto data     = stl_types::MkShared<D>();
 
-        presetup(*renderer, data.get());
-
-        app->addConfig(stl_types::MkUq<typename EventAppType::EventConfig>(
-            std::move(renderer),
-            std::move(data),
-            std::move(setup),
-            std::move(loop),
-            std::move(cleanup)));
+        auto& config =
+            app->addConfig(stl_types::MkUq<typename EventAppType::EventConfig>(
+                std::move(renderer),
+                std::move(data),
+                std::move(setup),
+                std::move(loop),
+                std::move(cleanup)));
 
         app_error ec;
         app->loadAll<detail::TypeList<EventAppType>>(container, ec);
+
         auto service = container.service<EventAppType>();
+        presetup(*service->m_config.m_renderer, service->m_config.m_data.get());
         container.register_subsystem_services<AppServiceTraits<EventMain>>(
             service);
     }
+};
 
+template<typename BundleData>
+struct ExecLoop
+{
     static int exec(detail::EntityContainer& container)
     {
-#if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
+#if defined(COFFEE_EMSCRIPTEN)
+        emscripten_set_main_loop(BundleData::EmscriptenLoop, -1, 1);
+#elif !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         Coffee::runtime_queue_error ec;
         auto queue = Coffee::RuntimeQueue::GetCurrentQueue(ec);
         C_ERROR_CHECK(ec);

@@ -65,7 +65,7 @@ if(BUILD_OPENGL AND BUILD_GLEAM AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT APPLE
 
         LIBRARIES
         Core
-        BindingGLAD
+        GLAD
         GLeamCommon
         GraphicsAPI
         )

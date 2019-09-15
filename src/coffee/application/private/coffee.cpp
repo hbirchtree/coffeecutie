@@ -330,7 +330,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #if defined(COFFEE_EMSCRIPTEN)
     } catch(std::exception const& ex)
     {
-        cBasicPrint("Exception: {0}", ex.what());
+        emscripten_log(EM_LOG_ERROR, "Exception encountered: %s", ex.what());
     }
 #endif
 

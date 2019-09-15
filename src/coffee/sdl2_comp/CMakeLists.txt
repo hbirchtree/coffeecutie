@@ -46,5 +46,6 @@ else()
        )
     target_link_options ( SDL2Components PUBLIC
             "-s " USE_SDL=2
+#            "-s       " USE_WEBGL2=1
        )
 endif()
