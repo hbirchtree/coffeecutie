@@ -55,7 +55,7 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    setenv("COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports", 1);
+    setenv("COFFEE_REPORT_URL", "https://reports.birchy.dev/", 1);
 
     appdelegate_ptr = self;
     appdelegate_typed = self;
@@ -73,8 +73,6 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     
     // Call the Coffee entrypoint, it will set up a bunch of things
     deref_main_c(apple_entry_point, 0, NULL);
-    
-    CoffeeEventHandleCall(CoffeeHandle_Setup);
 
     if(self.window.rootViewController == nil)
     {

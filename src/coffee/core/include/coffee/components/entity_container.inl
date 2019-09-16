@@ -2,6 +2,7 @@
 
 #include <coffee/components/entity_container.h>
 #include <coffee/components/entity_reference.h>
+#include <coffee/components/service_query.h>
 #include <coffee/components/visitor.h>
 
 namespace Coffee {
@@ -207,6 +208,24 @@ ComponentRef<EntityContainer, ComponentTag> EntityContainer::ref_comp(
     u64 entity)
 {
     return ComponentRef<EntityContainer, ComponentTag>(entity, this);
+}
+
+template<typename Service>
+ServiceRef<Service> EntityContainer::service_ref()
+{
+    return ServiceRef<Service>(this);
+}
+
+template<class BaseType>
+quick_container<service_query<BaseType>> EntityContainer::services_with()
+{
+    using query_type = service_query<BaseType>;
+
+    return {
+        [this]() {
+            return query_type(*this, query_type::begin_iterator());
+        },
+        [this]() { return query_type(*this, query_type::end_iterator()); }};
 }
 
 inline EntityContainer& SubsystemBase::get_container(

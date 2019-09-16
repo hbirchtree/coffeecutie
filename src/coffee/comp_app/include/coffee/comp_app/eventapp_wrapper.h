@@ -42,6 +42,10 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         stl_types::ShPtr<D> m_data;
         loop_fun            m_setup, m_loop, m_cleanup;
     };
+    
+    EventapplicationWrapper() : m_loaded(false)
+    {
+    }
 
     virtual void load(entity_container& e, app_error& ec) final
     {
@@ -54,19 +58,25 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         m_config.m_cleanup  = std::move(config.m_cleanup);
 
         m_config.m_setup(*m_config.m_renderer, m_config.m_data.get());
+        m_loaded = true;
     }
     virtual void unload(entity_container& e, app_error& ec) final
     {
         m_config.m_cleanup(*m_config.m_renderer, m_config.m_data.get());
+        m_loaded = false;
     }
     virtual void start_restricted(
         typename service_type::Proxy&,
         typename service_type::time_point const&) final
     {
+        if(!m_loaded)
+            return;
+        
         m_config.m_loop(*m_config.m_renderer, m_config.m_data.get());
     }
 
     EventConfig m_config;
+    bool m_loaded;
 };
 
 namespace detail {
@@ -177,6 +187,8 @@ struct ExecLoop
                 queue->executeTasks();
         }
 
+        for(auto& service : container.services_with<AppLoadableService>())
+            service.unload(container, appec);
         /* TODO: Unload all services */
 #endif
         return 0;

@@ -36,6 +36,17 @@
 #include <coffee/anative/anative_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_AppDelegate) || \
+    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
+#define USES_LINKED_GL 1
+#endif
+
+#if defined(FEATURE_ENABLE_GLADComponent) || \
+    defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
+#define USES_GL 1
+#endif
+
+
 namespace comp_app {
 
 #if defined(COFFEE_EMSCRIPTEN)
@@ -90,14 +101,17 @@ detail::EntityContainer& createContainer()
         {
             container->exec();
 
-            RuntimeQueue::GetCurrentQueue(ec)->executeTasks();
-            C_ERROR_CHECK(ec);
+            auto queue = RuntimeQueue::GetCurrentQueue(ec);
+            if(queue)
+                queue->executeTasks();
             break;
         }
         case CoffeeHandle_Cleanup:
         {
             /* TODO: Unload all services */
-            container->services_with<AppLoadableService>();
+            app_error appec;
+            for(auto& service : container->services_with<AppLoadableService>())
+                service.unload(*container, appec);
             break;
         }
         }
@@ -115,8 +129,7 @@ void configureDefaults(AppLoader& loader)
         detail::
             TypeList<WindowConfig, ControllerConfig, GraphicsBindingConfig>>();
 
-#if defined(FEATURE_ENABLE_GLADComponent) || \
-    defined(FEATURE_ENABLE_SDL2Components)
+#if USES_GL
     loader.addConfigs<detail::TypeList<GLConfig>>();
 
     auto& glConfig          = loader.config<GLConfig>();

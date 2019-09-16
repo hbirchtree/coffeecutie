@@ -33,7 +33,7 @@ ios.*:
     - -DBUILD_GLKIT=ON
     - -DBUILD_SDL2=OFF
     - -DBUILD_GLES=ON
-    - -DBUILD_GLES_20=OFF
+    - -DBUILD_GLES_20=ON
 coverage:
   =target: multi.twostage
   =cmake-target:

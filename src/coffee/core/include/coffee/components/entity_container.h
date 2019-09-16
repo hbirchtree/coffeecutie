@@ -25,9 +25,17 @@ struct EntityRef;
 template<typename ContainerType, typename ComponentType>
 struct ComponentRef;
 
+template<typename Service>
+struct ServiceRef;
+
+template<typename T>
+struct service_query;
+
 struct EntityContainer : non_copy
 {
     friend struct Entity;
+    template<typename T>
+    friend struct service_query;
 
     EntityContainer() : entity_counter(0)
     {
@@ -65,11 +73,7 @@ struct EntityContainer : non_copy
 
         entity_query& operator++()
         {
-            if(!pred)
-                Throw(undefined_behavior("bad function"));
-
             it = std::find_if(++it, m_container->entities.end(), pred);
-
             return *this;
         }
 
@@ -349,45 +353,10 @@ struct EntityContainer : non_copy
     }
 
     template<typename Service>
-    struct ServiceRef
-    {
-        ServiceRef(EntityContainer* container)
-            : m_container(container)
-        {
-        }
-
-        Service* lock()
-        {
-            return m_container->service<Service>();
-        }
-
-        Service& operator*()
-        {
-            auto ptr = m_container->service<Service>();
-            C_PTR_CHECK(ptr);
-            return *ptr;
-        }
-
-        operator Service*()
-        {
-            return lock();
-        }
-
-    private:
-        EntityContainer* m_container;
-    };
-
-    template<typename Service>
-    ServiceRef<Service> service_ref()
-    {
-        return ServiceRef<Service>(this);
-    }
+    ServiceRef<Service> service_ref();
 
     template<class BaseType>
-    int services_with()
-    {
-        return 0;
-    }
+    quick_container<service_query<BaseType>> services_with();
 
     template<typename ComponentType>
     typename ComponentType::type* get(u64 id)
