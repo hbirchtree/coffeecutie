@@ -3,9 +3,8 @@
 #include <coffee/comp_app/bundle.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/subsystems.h>
-#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <coffee/core/types/display/properties.h>
+#include <coffee/windowing/renderer/renderer.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
 
@@ -37,19 +36,11 @@ libc_types::i32 AutoExec(
     comp_app::configureDefaults(loader);
     comp_app::addDefaults(container, loader, ec);
 
+    auto container_ptr = &container;
+
     comp_app::AutoExec<R, D>::addTo(
         container,
-        [ presetup, container = &container ](R & renderer, D * data) {
-            renderer.m_container = container;
-
-            auto eventApp = container->service<EventAppType>();
-
-            Display::Properties props;
-            presetup(
-                eventApp->m_config.m_renderer,
-                eventApp->m_config.m_data,
-                props);
-        },
+        std::move(presetup),
         std::move(setup),
         std::move(loop),
         std::move(cleanup));

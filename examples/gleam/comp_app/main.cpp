@@ -82,7 +82,6 @@ i32 coffee_main(i32, cstring_w*)
 
         glConf.framebufferFmt = typing::pixels::PixFmt::RGB565;
 
-        glConf.profile = comp_app::GLConfig::Embedded;
         glConf.profile |= comp_app::GLConfig::Debug;
         glConf.version.major = 2;
         glConf.version.minor = 0;
@@ -133,11 +132,8 @@ i32 coffee_main(i32, cstring_w*)
 //        },
 //        rqec);
 
-    comp_app::AutoExec<int, int>::addTo(
+    comp_app::AutoExecEx<>::addTo(
         e,
-        [](int&, int*) {
-
-        },
         [](int&, int*) {
             static auto api = GFX::GetLoadAPI({});
 
