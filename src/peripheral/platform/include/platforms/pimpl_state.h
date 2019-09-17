@@ -10,7 +10,7 @@ namespace profiling {
 struct PContext;
 struct ThreadState;
 
-}
+} // namespace profiling
 namespace detail {
 
 struct GlobalState
@@ -21,15 +21,17 @@ struct GlobalState
 
 using global_state_ptr = stl_types::ShPtr<GlobalState>;
 
-using lock_state_fn = stl_types::UqLock(*)(libc_types::cstring);
-using swap_state_fn = global_state_ptr(*)(libc_types::cstring, global_state_ptr const&);
-using peek_state_fn = global_state_ptr const&(*)(libc_types::cstring);
+using lock_state_fn = stl_types::UqLock (*)(libc_types::cstring);
+using swap_state_fn =
+    global_state_ptr (*)(libc_types::cstring, global_state_ptr const&);
+using peek_state_fn = global_state_ptr const& (*)(libc_types::cstring);
 
-using profiler_enabled_fn = bool(*)();
-using profiler_store_fn = stl_types::ShPtr<platform::profiling::PContext>(*)();
-using thread_store_fn = stl_types::ShPtr<platform::profiling::ThreadState>(*)();
+using profiler_enabled_fn = bool (*)();
+using profiler_store_fn = stl_types::ShPtr<platform::profiling::PContext> (*)();
+using thread_store_fn =
+    stl_types::ShPtr<platform::profiling::ThreadState> (*)();
 
-using app_data_fn = stl_types::ShPtr<platform::info::AppData>(*)();
+using app_data_fn = stl_types::ShPtr<platform::info::AppData> (*)();
 
 struct state_pimpl
 {
@@ -51,15 +53,15 @@ struct state_pimpl
     peek_state_fn PeekState;
 
     profiler_enabled_fn ProfilerEnabled;
-    profiler_store_fn GetProfilerStore;
-    thread_store_fn GetProfilerTStore;
+    profiler_store_fn   GetProfilerStore;
+    thread_store_fn     GetProfilerTStore;
 
     app_data_fn GetAppData;
 };
 
-}
+} // namespace detail
 
 extern stl_types::UqPtr<detail::state_pimpl> state;
 using GlobalState = detail::GlobalState;
 
-}
+} // namespace platform

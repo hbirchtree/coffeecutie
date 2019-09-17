@@ -1,6 +1,7 @@
 #include <coffee/glad/glad_comp.h>
 
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/components/components.h>
 
 #if defined(GLADCOMP_COMPILE_CORE)
 #include <glad/glad.h>

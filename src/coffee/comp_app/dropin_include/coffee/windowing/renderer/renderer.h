@@ -60,11 +60,17 @@ struct CSDL2Renderer
 
     Size windowSize() const
     {
-        return m_container->service<comp_app::Windowing>()->size();
+        auto window = m_container->service<comp_app::Windowing>();
+        if(window)
+            return window->size();
+        return {};
     }
     Size framebufferSize() const
     {
-        return m_container->service<comp_app::GraphicsFramebuffer>()->size();
+        auto fb = m_container->service<comp_app::GraphicsFramebuffer>();
+        if(fb)
+            return fb->size();
+        return {};
     }
     int monitor() const
     {
@@ -76,18 +82,24 @@ struct CSDL2Renderer
     }
     void setWindowTitle(CString const& title)
     {
-        m_container->service<comp_app::WindowInfo>()->setName(title);
+        auto winInfo = m_container->service<comp_app::WindowInfo>();
+        if(winInfo)
+            winInfo->setName(title);
     }
     void showWindow()
     {
-        m_container->service<comp_app::Windowing>()->show();
+        auto window = m_container->service<comp_app::Windowing>();
+        if(window)
+            window->show();
     }
     void closeWindow()
     {
-        m_container->service<comp_app::Windowing>()->close();
+        auto window = m_container->service<comp_app::Windowing>();
+        if(window)
+            window->close();
     }
 
-    comp_app::detail::EntityContainer::ServiceRef<comp_app::Windowing> window()
+    comp_app::detail::ServiceRef<comp_app::Windowing> window()
     {
         return m_container->service_ref<comp_app::Windowing>();
     }

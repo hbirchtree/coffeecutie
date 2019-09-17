@@ -509,9 +509,9 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
 #if !defined(COFFEE_EMSCRIPTEN)
-    for(auto const& controller : m_controllers)
-        SDL_GameControllerClose(
-            C_RCAST<SDL_GameController*>(controller.second));
+    //    for(auto const& controller : m_controllers)
+    //        SDL_GameControllerClose(
+    //            C_RCAST<SDL_GameController*>(controller.second));
 
     for(auto i : stl_types::Range<int>(SDL_NumJoysticks()))
     {
@@ -799,6 +799,26 @@ void MouseInput::warp(const comp_app::position_t& newPos)
 MouseInput::MouseButton MouseInput::buttons() const
 {
     return m_buttons;
+}
+
+void WindowInfo::load(entity_container& e, comp_app::app_error&)
+{
+    m_container = &e;
+}
+
+comp_app::text_type_t WindowInfo::name() const
+{
+    auto name = SDL_GetWindowTitle(m_container->service<Windowing>()->m_window);
+
+    if(name)
+        return name;
+    return {};
+}
+
+void WindowInfo::setName(comp_app::text_type newName)
+{
+    SDL_SetWindowTitle(
+        m_container->service<Windowing>()->m_window, newName.c_str());
 }
 
 } // namespace sdl2

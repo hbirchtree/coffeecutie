@@ -54,7 +54,16 @@ struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
 
     SDL_Window* m_window = nullptr;
     entity_container* m_container = nullptr;
+};
 
+struct WindowInfo : comp_app::WindowInfo, comp_app::AppLoadableService
+{
+    virtual void load(entity_container& e, comp_app::app_error&) final;
+
+    virtual comp_app::text_type_t name() const final;
+    virtual void setName(comp_app::text_type newName) final;
+
+    entity_container* m_container = nullptr;
 };
 
 struct DisplayInfo : comp_app::DisplayInfo
@@ -143,6 +152,7 @@ struct MouseInput : comp_app::MouseInput, comp_app::AppLoadableService
 using Services = comp_app::detail::TypeList<
     Context,
     Windowing,
+    WindowInfo,
     DisplayInfo,
     comp_app::PtrNativeWindowInfo,
     ControllerInput,

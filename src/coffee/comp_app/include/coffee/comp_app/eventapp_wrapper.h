@@ -2,7 +2,9 @@
 
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/properties.h>
+#include <platforms/pimpl_state.h>
 
+#include "gl_config.h"
 #include "subsystems.h"
 
 namespace comp_app {
@@ -42,7 +44,7 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         stl_types::ShPtr<D> m_data;
         loop_fun            m_setup, m_loop, m_cleanup;
     };
-    
+
     EventapplicationWrapper() : m_loaded(false)
     {
     }
@@ -71,12 +73,12 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
     {
         if(!m_loaded)
             return;
-        
+
         m_config.m_loop(*m_config.m_renderer, m_config.m_data.get());
     }
 
     EventConfig m_config;
-    bool m_loaded;
+    bool        m_loaded;
 };
 
 namespace detail {
@@ -134,9 +136,23 @@ struct AutoExecEx
 
         EventAppType::template register_service<EventAppType>(container);
 
+        auto& windowConfig = app->config<WindowConfig>();
+        auto& glConfig = app->config<GLConfig>();
+
         Coffee::Display::Properties props;
+
+        props.title = windowConfig.title.c_str();
+        props.size = windowConfig.size;
+        props.gl.version.major = glConfig.version.major;
+        props.gl.version.minor = glConfig.version.minor;
+
         detail::addContainer<R>(renderer, container);
         presetup(config.m_renderer, config.m_data, props);
+
+        windowConfig.title = props.title;
+        windowConfig.size = props.size;
+        glConfig.version.major = props.gl.version.major;
+        glConfig.version.minor = props.gl.version.minor;
 
         auto service = container.service<EventAppType>();
         container.register_subsystem_services<AppServiceTraits<EventMain>>(
@@ -168,11 +184,18 @@ struct ExecLoop
 {
     static int exec(detail::EntityContainer& container)
     {
+        Coffee::runtime_queue_error ec;
+
+        if(!Coffee::RuntimeQueue::GetCurrentQueue(ec))
+            Coffee::RuntimeQueue::CreateNewQueue(
+                        platform::state->GetAppData()->application_name);
+
+        ec.clear();
+
 #if defined(COFFEE_EMSCRIPTEN)
         emscripten_set_main_loop(BundleData::EmscriptenLoop, -1, 1);
 #elif !defined(COFFEE_CUSTOM_EXIT_HANDLING)
-        Coffee::runtime_queue_error ec;
-        app_error appec;
+        app_error                   appec;
 
         auto queue = Coffee::RuntimeQueue::GetCurrentQueue(ec);
         C_ERROR_CHECK(ec);
@@ -189,7 +212,7 @@ struct ExecLoop
 
         for(auto& service : container.services_with<AppLoadableService>())
             service.unload(container, appec);
-        /* TODO: Unload all services */
+            /* TODO: Unload all services */
 #endif
         return 0;
     }

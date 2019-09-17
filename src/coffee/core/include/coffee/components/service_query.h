@@ -12,27 +12,27 @@ struct service_query : Iterator<ForwardIteratorTag, T>
 {
     using subsystem_iterator =
         decltype(EntityContainer::subsystems)::const_iterator;
-    using subsystem_ref = decltype(EntityContainer::subsystems)::const_reference;
+    using subsystem_ref =
+        decltype(EntityContainer::subsystems)::const_reference;
     using service_predicate = Function<bool(subsystem_ref)>;
 
-    struct begin_iterator
+    struct begin_iterator_t
     {
     };
-    struct end_iterator
+    struct end_iterator_t
     {
     };
 
-    service_query(EntityContainer& c, begin_iterator) :
-        pred([](subsystem_ref e) {
-            return C_DCAST<T>(e.second.get());
-        }),
+    service_query(EntityContainer& c, begin_iterator_t) :
+        pred([](subsystem_ref e) { return C_DCAST<T>(e.second.get()); }),
         m_container(&c)
     {
         initialize_iterator();
     }
 
-    service_query(EntityContainer& c, end_iterator) : m_container(&c)
+    service_query(EntityContainer& c, end_iterator_t) : m_container(&c)
     {
+        it = m_container->subsystems.end();
     }
 
     service_query& operator++()

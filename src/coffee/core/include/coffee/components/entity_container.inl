@@ -165,7 +165,8 @@ struct service_test
     {
         void operator()(SubsystemType* sub)
         {
-            C_PTR_CHECK_MSG(C_DCAST<typename T::type>(sub), "service cast mismatch");
+            C_PTR_CHECK_MSG(
+                C_DCAST<typename T::type>(sub), "service cast mismatch");
         }
     };
 
@@ -221,11 +222,13 @@ quick_container<service_query<BaseType>> EntityContainer::services_with()
 {
     using query_type = service_query<BaseType>;
 
-    return {
-        [this]() {
-            return query_type(*this, query_type::begin_iterator());
-        },
-        [this]() { return query_type(*this, query_type::end_iterator()); }};
+    return {[this]() {
+                return query_type(
+                    *this, typename query_type::begin_iterator_t());
+            },
+            [this]() {
+                return query_type(*this, typename query_type::end_iterator_t());
+            }};
 }
 
 inline EntityContainer& SubsystemBase::get_container(
