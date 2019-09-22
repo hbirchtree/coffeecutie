@@ -1,4 +1,8 @@
 #include <coffee/comp_app/app_wrap.h>
+#include <coffee/comp_app/bundle.h>
+#include <coffee/comp_app/eventapp_wrapper.h>
+#include <coffee/comp_app/gl_config.h>
+#include <coffee/comp_app/subsystems.h>
 #include <coffee/components/components.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/coffee.h>
@@ -6,11 +10,6 @@
 #include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/interfaces/graphics_subsystem.h>
-
-#include <coffee/comp_app/bundle.h>
-#include <coffee/comp_app/eventapp_wrapper.h>
-#include <coffee/comp_app/gl_config.h>
-#include <coffee/comp_app/subsystems.h>
 
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
