@@ -5,6 +5,7 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/interfaces/graphics_subsystem.h>
 
 #include <coffee/comp_app/bundle.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
@@ -54,12 +55,13 @@ using namespace ::libc_types;
 
 i32 coffee_main(i32, cstring_w*)
 {
-    using GFX = Coffee::RHI::GLEAM::GLEAM_API;
-
     using namespace Coffee;
     using namespace Coffee::Components;
     using namespace Coffee::Display;
     using namespace Coffee::Input;
+
+    using GFX     = RHI::GLEAM::GLEAM_API;
+    using GFX_SYS = RHI::Components::GraphicsAllocator<GFX>;
 
     SetPrintingVerbosity(15);
 
@@ -140,18 +142,15 @@ i32 coffee_main(i32, cstring_w*)
     comp_app::AppContainer<APIData>::addTo(
         e,
         [](EntityContainer& e, APIData& d) {
-            d.context = GLEAMAPI::GetLoadAPI({});
-            if(!d.context(true))
-                return;
+            e.register_subsystem_inplace<GFX_SYS::tag_type, GFX_SYS>(
+                GFX::OPTS(), true);
         },
         [](EntityContainer& e,
            APIData&,
            comp_app::AppContainer<int>::time_point const&) {
             GLEAMAPI::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1});
         },
-        [](EntityContainer& e, APIData& d) {
-            d.context = nullptr;
-        });
+        [](EntityContainer& e, APIData& d) { d.context = nullptr; });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);
 }
