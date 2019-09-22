@@ -1,5 +1,6 @@
 #pragma once
 
+#include "entity_container.inl"
 #include "proxy.h"
 #include "types.h"
 
