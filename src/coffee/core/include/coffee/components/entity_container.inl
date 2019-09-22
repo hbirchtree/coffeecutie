@@ -231,7 +231,7 @@ quick_container<service_query<BaseType>> EntityContainer::services_with()
             }};
 }
 
-inline EntityContainer& SubsystemBase::get_container(
+FORCEDINLINE EntityContainer& SubsystemBase::get_container(
     SubsystemBase::ContainerProxy& proxy)
 {
     return proxy.m_container;
