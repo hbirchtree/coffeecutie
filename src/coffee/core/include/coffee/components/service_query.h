@@ -11,9 +11,9 @@ template<typename T>
 struct service_query : Iterator<ForwardIteratorTag, T>
 {
     using subsystem_iterator =
-        decltype(EntityContainer::subsystems)::const_iterator;
+        typename decltype(EntityContainer::subsystems)::const_iterator;
     using subsystem_ref =
-        decltype(EntityContainer::subsystems)::const_reference;
+        typename decltype(EntityContainer::subsystems)::const_reference;
     using service_predicate = Function<bool(subsystem_ref)>;
 
     struct begin_iterator_t
