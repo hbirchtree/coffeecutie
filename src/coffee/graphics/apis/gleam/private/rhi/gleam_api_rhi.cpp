@@ -865,7 +865,6 @@ cstring to_string(RHI::GLEAM::APILevel lev)
 {
     using LEV = RHI::GLEAM::APILevel;
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     switch(lev)
     {
     case LEV::GL_3_3:
@@ -876,12 +875,7 @@ cstring to_string(RHI::GLEAM::APILevel lev)
         return "Desktop GL 4.5";
     case LEV::GL_4_6:
         return "Desktop GL 4.6";
-    default:
-        break;
-    }
-#else
-    switch(lev)
-    {
+
     case LEV::GLES_2_0:
         return "GL ES 2.0";
     case LEV::GLES_3_0:
@@ -891,7 +885,6 @@ cstring to_string(RHI::GLEAM::APILevel lev)
     default:
         break;
     }
-#endif
 
     return "?";
 }

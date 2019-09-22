@@ -17,11 +17,13 @@
 
 /* General interfaces */
 #include <coffee/interfaces/byte_provider.h>
-#include <coffee/interfaces/caudiomixer_api.h>
-#include <coffee/interfaces/caudiomixer_utils.h>
 #include <coffee/interfaces/cdialog_api.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/file_resolver.h>
+#if defined(FEATURE_ENABLE_Audio)
+#include <coffee/interfaces/caudiomixer_api.h>
+#include <coffee/interfaces/caudiomixer_utils.h>
+#endif
 
 /* Common graphics stuff */
 #include <coffee/graphics/common/cgraphicsdata.h>
@@ -35,8 +37,12 @@
 #include <coffee/blam/cblam.h>
 
 /* STB-related APIs */
+#if defined(FEATURE_ENABLE_Audio)
 #include <coffee/audio/caudio.h>
+#endif
+#if defined(FEATURE_ENABLE_Image)
 #include <coffee/image/cimage.h>
+#endif
 
 /* ASSIMP APIs */
 #if defined(HAS_ASSIMP)

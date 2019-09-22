@@ -47,9 +47,14 @@ coffee_test (
 
     LIBRARIES
     Core
-    Audio
     Blam
     )
+
+if(TARGET Audio)
+    target_link_libraries ( Dummy_Target PRIVATE
+        Audio
+        )
+endif()
 
 if(BUILD_GLEAM)
     target_link_libraries ( Dummy_Target

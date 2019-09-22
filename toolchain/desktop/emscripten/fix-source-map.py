@@ -14,8 +14,12 @@ if 'sources' not in content:
 content['sourcesContent'] = []
 
 for source_file in content['sources']:
-    with open(source_file) as source:
-        content['sourcesContent'].append(source.read())
+    try:
+        with open(source_file) as source:
+            content['sourcesContent'].append(source.read())
+    except IOError:
+        print('%s: No such file' % source_file)
+
 
 with open(argv[1], 'w') as out_file:
     out_file.write(json.dumps(content))

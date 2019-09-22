@@ -1,0 +1,53 @@
+diff -ruN -U1 orig/app/build.gradle new/app/build.gradle
+--- orig/app/build.gradle	2019-09-21 05:02:11.585620603 +0200
++++ new/app/build.gradle	2019-09-21 05:02:20.889639417 +0200
+@@ -1,4 +1,9 @@
+ apply plugin: 'com.android.application'
++apply plugin: 'io.fabric'
++
++crashlytics {
++    enableNdk true
++}
+ 
+ android {
+     compileSdkVersion 28
+@@ -22,3 +27,11 @@
+         }
+     }
+ }
++
++dependencies {
++    implementation 'com.google.firebase:firebase-analytics:17.2.0'
++    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
++    implementation 'com.crashlytics.sdk.android:crashlytics-ndk:2.1.1'
++}
++
++apply plugin: 'com.google.gms.google-services'
+diff -ruN -U1 orig/build.gradle new/build.gradle
+--- orig/build.gradle	2019-09-21 04:44:43.858112119 +0200
++++ new/build.gradle	2019-09-21 04:45:45.478372672 +0200
+@@ -3,14 +3,23 @@
+     repositories {
+         google()
+         jcenter()
++        maven {
++            url 'https://maven.fabric.io/public'
++        }
+     }
++
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:3.1.0'
++        classpath 'com.android.tools.build:gradle:3.5.0'
++
++        // For Crashlytics
++        classpath 'com.google.gms:google-services:4.3.2'
++        classpath 'io.fabric.tools:gradle:1.31.0'
+     }
+ }
+ 
+ allprojects {
+     repositories {
+         jcenter()
++        google()
+     }
+ }

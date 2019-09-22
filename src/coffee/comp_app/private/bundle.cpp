@@ -91,7 +91,7 @@ detail::EntityContainer& createContainer()
         case CoffeeHandle_Setup:
         {
             app_error ec;
-            auto      eventMain = container->service<EventMain>();
+            auto      eventMain = container->service<AppMain>();
             C_PTR_CHECK(eventMain);
             eventMain->load(*container, ec);
             C_ERROR_CHECK(ec);

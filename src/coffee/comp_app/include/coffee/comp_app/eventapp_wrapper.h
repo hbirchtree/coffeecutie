@@ -1,22 +1,17 @@
 #pragma once
 
-#include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/properties.h>
 #include <platforms/pimpl_state.h>
 
+#include "app_main.h"
 #include "gl_config.h"
 #include "subsystems.h"
 
 namespace comp_app {
 
-struct EventMain : AppLoadableService
-{
-    using type = EventMain;
-};
-
 template<typename R, typename D>
 struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
-                                 EventMain
+                                 AppMain
 {
     using type = EventapplicationWrapper<R, D>;
 
@@ -155,7 +150,7 @@ struct AutoExecEx
         glConfig.version.minor = props.gl.version.minor;
 
         auto service = container.service<EventAppType>();
-        container.register_subsystem_services<AppServiceTraits<EventMain>>(
+        container.register_subsystem_services<AppServiceTraits<AppMain>>(
             service);
     }
 
@@ -178,44 +173,5 @@ struct AutoExecEx
 
 template<typename R, typename D>
 using AutoExec = AutoExecEx<D, R>;
-
-template<typename BundleData>
-struct ExecLoop
-{
-    static int exec(detail::EntityContainer& container)
-    {
-        Coffee::runtime_queue_error ec;
-
-        if(!Coffee::RuntimeQueue::GetCurrentQueue(ec))
-            Coffee::RuntimeQueue::CreateNewQueue(
-                        platform::state->GetAppData()->application_name);
-
-        ec.clear();
-
-#if defined(COFFEE_EMSCRIPTEN)
-        emscripten_set_main_loop(BundleData::EmscriptenLoop, -1, 1);
-#elif !defined(COFFEE_CUSTOM_EXIT_HANDLING)
-        app_error                   appec;
-
-        auto queue = Coffee::RuntimeQueue::GetCurrentQueue(ec);
-        C_ERROR_CHECK(ec);
-
-        container.service<EventMain>()->load(container, appec);
-
-        while(!container.service<Windowing>()->notifiedClose())
-        {
-            container.exec();
-
-            if(queue)
-                queue->executeTasks();
-        }
-
-        for(auto& service : container.services_with<AppLoadableService>())
-            service.unload(container, appec);
-            /* TODO: Unload all services */
-#endif
-        return 0;
-    }
-};
 
 } // namespace comp_app

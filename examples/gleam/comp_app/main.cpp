@@ -1,10 +1,10 @@
+#include <coffee/comp_app/app_wrap.h>
 #include <coffee/components/components.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/coffee.h>
+#include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/CGLeamRHI>
-
-#include <coffee/core/input/eventhandlers.h>
 
 #include <coffee/comp_app/bundle.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
@@ -112,38 +112,45 @@ i32 coffee_main(i32, cstring_w*)
     RuntimeQueue::CreateNewQueue("Main");
 
     runtime_queue_error rqec;
-//    RuntimeQueue::QueuePeriodic(
-//        RuntimeQueue::GetCurrentQueue(rqec),
-//        Chrono::milliseconds(100),
-//        [&e]() {
-//            auto dump  = e.service<comp_app::ControllerInput>();
-//            auto mouse = e.service<comp_app::MouseInput>();
+    RuntimeQueue::QueuePeriodic(
+        RuntimeQueue::GetCurrentQueue(rqec),
+        Chrono::milliseconds(100),
+        [&e]() {
+            auto dump  = e.service<comp_app::ControllerInput>();
+            auto mouse = e.service<comp_app::MouseInput>();
 
-//            if(!dump || !mouse)
-//                return;
+            if(!dump || !mouse)
+                return;
 
-//            for(auto i : Range<u32>(dump->count()))
-//                cDebug("Controller {0}: {1}", dump->name(i), dump->state(i));
+            for(auto i : Range<u32>(dump->count()))
+                cDebug("Controller {0}: {1}", dump->name(i), dump->state(i));
 
-//            cDebug(
-//                "Mouse state: {0} {1}",
-//                mouse->position(),
-//                C_CAST<u32>(mouse->buttons()));
-//        },
-//        rqec);
+            cDebug(
+                "Mouse state: {0} {1}",
+                mouse->position(),
+                C_CAST<u32>(mouse->buttons()));
+        },
+        rqec);
 
-    comp_app::AutoExecEx<>::addTo(
+    struct APIData
+    {
+        GLEAMAPI::API_CONTEXT context;
+    };
+
+    comp_app::AppContainer<APIData>::addTo(
         e,
-        [](int&, int*) {
-            static auto api = GFX::GetLoadAPI({});
-
-            C_PTR_CHECK(api(true));
+        [](EntityContainer& e, APIData& d) {
+            d.context = GLEAMAPI::GetLoadAPI({});
+            if(!d.context(true))
+                return;
         },
-        [](int&, int*) {
-            GFX::DefaultFramebuffer()->clear(0, Vecf4(0.5f, 0, 0, 1));
+        [](EntityContainer& e,
+           APIData&,
+           comp_app::AppContainer<int>::time_point const&) {
+            GLEAMAPI::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1});
         },
-        [](int&, int*) {
-
+        [](EntityContainer& e, APIData& d) {
+            d.context = nullptr;
         });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);
