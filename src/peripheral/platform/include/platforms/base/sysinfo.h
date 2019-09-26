@@ -419,10 +419,10 @@ struct DeviceInfoDef
     }
 };
 
-#if defined(COFFEE_STUBBED_SYSINFO)
-using SysInfo   = SysInfoDef;
-using PowerInfo = PowerInfoDef;
-#endif
-
 } // namespace env
+
+#if defined(COFFEE_STUBBED_SYSINFO)
+using SysInfo   = env::SysInfoDef;
+using PowerInfo = env::PowerInfoDef;
+#endif
 } // namespace platform

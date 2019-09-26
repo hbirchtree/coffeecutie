@@ -93,7 +93,7 @@ struct StacktracerDef
     }
 };
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
 using Stacktracer = StacktracerDef;
 #endif
 

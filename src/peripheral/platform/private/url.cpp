@@ -1,6 +1,5 @@
 #include <url/url.h>
 
-#include <platforms/pimpl_state.h>
 #include <coffee/core/resource_prefix.h>
 #include <peripherals/error/file_base.h>
 #include <peripherals/libc/string_ops.h>
@@ -9,6 +8,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
+#include <platforms/pimpl_state.h>
 #include <platforms/profiling.h>
 
 #if defined(COFFEE_ANDROID)
@@ -447,7 +447,7 @@ Path Path::addExtension(cstring ext) const
 Path Path::fileBasename() const
 {
     file::file_error ec;
-    Path             p = Path{file::DirFun::Basename(internUrl, ec).internUrl};
+    Path             p(file::DirFun::Basename(internUrl, ec).internUrl);
 #if MODE_DEBUG
     C_ERROR_CHECK(ec);
 #endif
@@ -468,7 +468,7 @@ CString Path::extension() const
 Path Path::dirname() const
 {
     file::file_error ec;
-    Path p = Path{file::DirFun::Dirname(internUrl.c_str(), ec).internUrl};
+    Path             p(file::DirFun::Dirname(internUrl.c_str(), ec).internUrl);
 #if MODE_DEBUG
     C_ERROR_CHECK(ec);
 #endif
@@ -478,7 +478,7 @@ Path Path::dirname() const
 Path Path::canonical() const
 {
     file::file_error ec;
-    Path             p = Path{file::FileFun::CanonicalName(MkUrl(*this), ec)};
+    Path             p(file::FileFun::CanonicalName(MkUrl(*this), ec));
 #if MODE_DEBUG
     C_ERROR_CHECK(ec);
 #endif

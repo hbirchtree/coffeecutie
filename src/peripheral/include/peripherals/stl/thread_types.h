@@ -1,10 +1,10 @@
 #pragma once
 
 #include "threads/thread_id.h"
-#include <platforms/pimpl_state.h>
 #include <peripherals/identify/identify.h>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/types.h>
+#include <platforms/pimpl_state.h>
 
 #include <functional>
 #include <future>
@@ -57,7 +57,7 @@ using SharedFuture = std::shared_future<RType>;
 #if defined(COFFEE_NO_THREADLIB)
 struct Thread
 {
-    using id = u32;
+    using id = libc_types::u32;
 
     Thread(std::function<void()> f);
     template<
@@ -69,7 +69,7 @@ struct Thread
     {
     }
     Thread();
-    static inline i32 hardware_concurrency()
+    static inline libc_types::i32 hardware_concurrency()
     {
         return 1;
     }

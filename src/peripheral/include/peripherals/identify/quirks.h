@@ -321,6 +321,11 @@
 #if defined(COFFEE_GEKKO)
 /* For more correct types IRT what all the libraries use */
 #define COFFEE_PLAIN_INT_TYPES
+
+#define COFFEE_NO_MMAN
+#define COFFEE_NO_ENDIAN_OPS
+
+#undef COFFEE_USE_POSIX_BASENAME
 #endif
 
 #include "video_quirks.h"

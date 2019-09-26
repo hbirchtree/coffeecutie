@@ -98,10 +98,12 @@ int deref_main(
 #endif
 }
 
+#if !defined(COFFEE_PLAIN_INT_TYPES)
 extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv)
 {
     return deref_main(mainfun, argc, argv);
 }
+#endif
 
 #include <peripherals/build/application.h>
 

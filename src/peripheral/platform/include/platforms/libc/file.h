@@ -41,55 +41,6 @@ struct FILEApi
 
         FILE* handle;
     };
-    struct FileMapping : non_copy
-    {
-        static FileMapping Wrap(
-            FileFunDef<>::FileMapping&& data, FileHandle&& handle)
-        {
-            FileMapping out;
-
-            out.fm_handle = std::move(data);
-            out.handle    = std::move(handle);
-            out.data      = out.fm_handle.data;
-            out.size      = out.fm_handle.size;
-
-            return out;
-        }
-
-        FileMapping() : fm_handle(), handle(), data(nullptr), size(0)
-        {
-        }
-
-        FileMapping(FileMapping&& other) :
-            fm_handle(std::move(other.fm_handle)),
-            handle(std::move(other.handle)), data(other.data), size(other.size)
-        {
-            other.fm_handle = {};
-            other.handle    = {};
-            other.data      = nullptr;
-            other.size      = 0;
-        }
-
-        FileMapping& operator=(FileMapping&& other)
-        {
-            this->fm_handle = std::move(other.fm_handle);
-            this->handle    = std::move(other.handle);
-            this->data      = other.data;
-            this->size      = other.size;
-
-            other.fm_handle = {};
-            other.handle    = {};
-            other.data      = nullptr;
-            other.size      = 0;
-
-            return *this;
-        }
-
-        FileFunDef<>::FileMapping fm_handle;
-        FileHandle                handle;
-        void*                     data;
-        szptr                     size;
-    };
 };
 
 template<
@@ -98,9 +49,14 @@ template<
     typename implements<FILEApi::FileHandle, FH>::type* = nullptr>
 struct CFILEFunBase_def : CommonFileFun<NestedError>
 {
-    using file_error  = typename CommonFileFun<NestedError>::file_error;
-    using FileMapping = FILEApi::FileMapping;
-    using FileHandle  = FH;
+    using file_error = typename CommonFileFun<NestedError>::file_error;
+    using FileHandle = FH;
+
+    using FileMappingImpl = FileMappingDefault<
+        CFILEFunBase_def<NestedError, FH>,
+        typename CommonFileFun<NestedError>::file_error>;
+
+    using FileMapping = typename FileMappingImpl::FileMapping;
 
     STATICINLINE FH Open(Url const& fn, RSCA ac, file_error& ec)
     {
@@ -265,49 +221,22 @@ struct CFILEFunBase_def : CommonFileFun<NestedError>
 
         return fsize;
     }
-    /*!
-     * \brief Wrapped function for platforms without support for file mapping.
-     * \param fname
-     * \param access
-     * \param size
-     * \param offset
-     * \param err
-     * \return
-     */
-    STATICINLINE FileMapping
-                 Map(Url const& fname, RSCA access, szptr offset, szptr size, file_error& ec)
-    {
-        auto  handle = Open(fname, access, ec);
-        szptr r_size = Size(handle, ec);
-        if(size + offset > r_size)
-        {
-            return {};
-        }
 
-        auto data = Read(handle, offset + size, ec);
-        data.assignAccess(access);
-
-        auto f = FileMapping::Wrap(std::move(data), std::move(handle));
-
-        data   = {};
-        handle = {};
-
-        return f;
-    }
-    /*!
-     * \brief Unmap the fake mapping.
-     *  Works by moving the mapping into this scope, deleting it on return.
-     * \param map
-     * \return
-     */
-    STATICINLINE bool Unmap(C_UNUSED(FileMapping&& map), file_error&)
-    {
-        return true;
-    }
     STATICINLINE bool Exists(Url const& fn, file_error& ec)
     {
         FH f = Open(fn, RSCA::ReadOnly, ec);
         return Valid(f, ec);
+    }
+
+    template<typename... Args>
+    STATICINLINE FileMapping Map(Args&&... args)
+    {
+        return FileMappingImpl::Map(std::forward<Args>(args)...);
+    }
+    template<typename... Args>
+    STATICINLINE bool Unmap(Args&&... args)
+    {
+        return FileMappingImpl::Unmap(std::forward<Args>(args)...);
     }
 };
 

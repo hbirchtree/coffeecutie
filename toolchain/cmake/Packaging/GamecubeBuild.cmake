@@ -15,9 +15,7 @@ macro ( GAMECUBE_PACKAGE )
             "$<TARGET_FILE:${GC_TARGET}>"
             "$<TARGET_FILE:${GC_TARGET}>.dol"
         )
-    target_link_libraries ( ${GC_TARGET}
-        PUBLIC
-        CoffeeRenderer_Default
+    target_link_libraries ( ${GC_TARGET} PUBLIC
         )
     install (
         FILES

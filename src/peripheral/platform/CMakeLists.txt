@@ -251,3 +251,15 @@ if(WIN32)
             )
     endif()
 endif()
+
+#
+#
+# Gamecube/Wii-specific code
+#
+#
+if(GAMECUBE OR WII)
+    target_sources ( PeripheralPlatform PRIVATE
+        platforms/posix/file.cpp
+        platforms/posix/environment.cpp
+        )
+endif()

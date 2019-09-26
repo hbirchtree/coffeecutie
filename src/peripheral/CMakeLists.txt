@@ -8,6 +8,7 @@ coffee_library (
     private/error_types.cpp
     private/build_info.cpp
     private/libc_functions.cpp
+    private/pimpl_state.cpp
 
     LIBRARIES
     StandardLibs
@@ -88,7 +89,7 @@ coffee_library (
 if(GAMECUBE)
     coffee_library (
         TARGET GeckoThreads
-        LIBRARIES
+        LIBRARIES PeripheralLib
         SOURCES
         stl_replacements/gekko/threads.cpp
         )

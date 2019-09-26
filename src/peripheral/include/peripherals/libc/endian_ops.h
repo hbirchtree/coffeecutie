@@ -5,8 +5,6 @@
 
 #if defined(COFFEE_WINDOWS)
 #include <coffee/core/plat/plat_windows.h>
-#elif defined(COFFEE_GEKKO)
-#include <network.h>
 #else
 #include <arpa/inet.h>
 #endif

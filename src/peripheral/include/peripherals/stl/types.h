@@ -99,23 +99,38 @@ using RecLock = BaseLock<RecMutex>;
 
 struct UqLock
 {
-    // TODO: implement std::defer_lock and friends
-    UqLock(Mutex& m) : m_mutex(m)
+    UqLock()
     {
-        m_mutex.lock();
+    }
+    UqLock(Mutex& m) : m_mutex(&m), m_hasLock(true)
+    {
+        m_mutex->try_lock();
+    }
+    UqLock(Mutex& m, std::try_to_lock_t) : m_mutex(&m)
+    {
+        m_hasLock = m_mutex->try_lock() == 0;
+    }
+    UqLock(Mutex& m, std::defer_lock_t) : m_mutex(&m), m_hasLock(false)
+    {
     }
     ~UqLock()
     {
-        m_mutex.unlock();
+        m_mutex->unlock();
+    }
+
+    bool owns_lock() const
+    {
+        return m_hasLock;
     }
 
     Mutex* mutex()
     {
-        return &m_mutex;
+        return m_mutex;
     }
 
   private:
-    Mutex& m_mutex;
+    Mutex* m_mutex;
+    bool   m_hasLock;
 };
 
 struct CondVar
@@ -153,15 +168,15 @@ struct CondVar
 };
 
 #else
-using RecMutex = std::recursive_mutex;
-using Mutex    = std::mutex;
-using Lock     = std::lock_guard<Mutex>;
-using RecLock  = std::lock_guard<RecMutex>;
+using RecMutex            = std::recursive_mutex;
+using Mutex               = std::mutex;
+using Lock                = std::lock_guard<Mutex>;
+using RecLock             = std::lock_guard<RecMutex>;
 
-using UqLock    = std::unique_lock<Mutex>;
-using UqRecLock = std::unique_lock<RecMutex>;
-using CondVar   = std::condition_variable;
-using cv_status = std::cv_status;
+using UqLock              = std::unique_lock<Mutex>;
+using UqRecLock           = std::unique_lock<RecMutex>;
+using CondVar             = std::condition_variable;
+using cv_status           = std::cv_status;
 #endif
 
 using ErrCode = std::error_code;
@@ -734,7 +749,7 @@ struct Optional
     Optional& operator=(T&& v)
     {
         m_value = std::move(v);
-        valid = true;
+        valid   = true;
 
         return *this;
     }
@@ -772,7 +787,8 @@ inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
         Throw(undefined_behavior("bad pointer deref: " __FILE__ \
                                  ":" C_STR(__LINE__)));
 #define C_PTR_CHECK_MSG(ptr, msg) \
-    if(!ptr) Throw(undefined_behavior("bad pointer deref: " msg));
+    if(!ptr)                      \
+        Throw(undefined_behavior("bad pointer deref: " msg));
 
 #define C_THIS_CHECK                                              \
     if(!this)                                                     \

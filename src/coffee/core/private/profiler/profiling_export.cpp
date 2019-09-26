@@ -248,7 +248,7 @@ STATICINLINE void PutRuntimeInfo(
         processor.AddMember("frequencies", freq_j, alloc);
     }
 
-    processor.AddMember("cores", SysInfo::CoreCount(), alloc);
+    processor.AddMember<u64>("cores", SysInfo::CoreCount(), alloc);
     processor.AddMember("threads", SysInfo::ThreadCount(), alloc);
 
     processor.AddMember("hyperthreading", SysInfo::HasHyperThreading(), alloc);
@@ -296,7 +296,8 @@ void ExportChromeTracerData(CString& target)
         "name", FromString(appd.application_name, alloc), alloc);
     application.AddMember(
         "organization", FromString(appd.organization_name, alloc), alloc);
-    application.AddMember("version", ApplicationData().version_code, alloc);
+    application.AddMember<u64>(
+        "version", ApplicationData().version_code, alloc);
 
     doc.AddMember("application", application, alloc);
     PutRuntimeInfo(doc, alloc);

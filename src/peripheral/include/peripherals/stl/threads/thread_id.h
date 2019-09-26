@@ -9,7 +9,7 @@ namespace stl_types {
 
 #if defined(COFFEE_NO_THREADLIB)
 namespace CurrentThread {
-extern u32 get_id();
+extern libc_types::u32 get_id();
 }
 #endif
 namespace threads {
@@ -20,11 +20,11 @@ template<typename thread_t>
 struct ThreadId_t
 {
 #if defined(COFFEE_NO_THREADLIB)
-    using thread_id_t = u32;
+    using thread_id_t = libc_types::u32;
 #else
     using thread_id_t = typename thread_t::id;
 #endif
-    using Hash = u64;
+    using Hash = libc_types::u64;
 
     FORCEDINLINE ThreadId_t() :
 #if defined(COFFEE_NO_THREADLIB)

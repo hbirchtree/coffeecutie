@@ -1,7 +1,10 @@
 #pragma once
 
 #include <coffee/core/libc_types.h>
+
+#if !defined(COFFEE_NO_ENDIAN_OPS)
 #include <peripherals/libc/endian_ops.h>
+#endif
 
 namespace Coffee {
 namespace Blam {

@@ -4,9 +4,12 @@
 #include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/file_resolver.h>
-#include <peripherals/libc/endian_ops.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/bit_vector.h>
+
+#if !defined(COFFEE_NO_ENDIAN_OPS)
+#include <peripherals/libc/endian_ops.h>
+#endif
 
 #include <algorithm>
 
@@ -471,11 +474,13 @@ struct VirtualFS
 
         if(magic[0] != fileMagic[0] || magic[1] != fileMagic[1])
         {
+#if !defined(COFFEE_NO_ENDIAN_OPS)
             /* It's nice to specify if the endian is wrong here */
             if(magic[0] == endian::to<endian::u32_net>(fileMagic[0]) &&
                magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
                 ec = VFSError::EndianMismatch;
             else
+#endif
                 ec = VFSError::NotVFS;
 
             return false;
