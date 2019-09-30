@@ -31,6 +31,7 @@ env:
   - BUILDVARIANT=android.armv8a.nougat.gles3
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
+  - BUILDVARIANT=gamecube
   - BUILDVARIANT=raspberry.armhf
   - BUILDVARIANT=steam.amd64
   - BUILDVARIANT=testing.linux.lowfat.debug
@@ -52,6 +53,7 @@ matrix:
   - env: BUILDVARIANT=testing.linux.lowfat.release
   - env: BUILDVARIANT=testing.linux.release
   - env: BUILDVARIANT=ubuntu.i686.gles
+  - env: BUILDVARIANT=gamecube
   exclude:
   - env: BUILDVARIANT=android.armv7a.kitkat.gles2
     os: osx
@@ -60,6 +62,8 @@ matrix:
   - env: BUILDVARIANT=emscripten.wasm
     os: osx
   - env: BUILDVARIANT=fedora.amd64
+    os: osx
+  - env: BUILDVARIANT=gamecube
     os: osx
   - env: BUILDVARIANT=raspberry.armhf
     os: osx
