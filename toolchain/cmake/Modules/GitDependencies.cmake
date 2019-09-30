@@ -1,6 +1,8 @@
 set ( GIT_DEP_DIR "${CMAKE_BINARY_DIR}/dependencies" CACHE PATH "" )
 set ( GIT_DEP_BUILDVARIANT "" CACHE STRING "" )
 
+option ( GIT_DEP_VERBOSE OFF "Verbose actions for GitDependencies" )
+
 function ( DEPENDENCY_GET )
 
     cmake_parse_arguments ( DEP
@@ -189,8 +191,14 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
         ${ARGN}
         )
 
-    if(NOT "${GIT_DEPS_RESOLVED}" MATCHES ";${RES_TARGET};" AND NOT "${RES_TARGET}" STREQUAL "")
-        # message ( "-- ${RES_TARGET}" )
+
+    if(NOT "${GIT_DEPS_RESOLVED}" MATCHES ";${RES_TARGET};"
+            AND NOT "${RES_TARGET}" STREQUAL "")
+
+        if(GIT_DEP_VERBOSE)
+            message ( STATUS "Resolving dependency ${RES_TARGET}" )
+        endif()
+
         set ( GIT_DEPS_RESOLVED "${GIT_DEPS_RESOLVED}${RES_TARGET};" )
 
         get_target_property( "LIB_TYPE" "${RES_TARGET}" TYPE )
@@ -200,7 +208,11 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
 
             if(GIT_DEPS_DEFINED)
                 get_property ( GIT_DEPS TARGET "${RES_TARGET}" PROPERTY git_deps )
-                # message ( "---- Deps: ${GIT_DEPS}" )
+
+                if(GIT_DEP_VERBOSE)
+                    message ( STATUS "${RES_TARGET} depends on: ${GIT_DEPS}" )
+                endif()
+
                 foreach( DEP ${GIT_DEPS} )
                     if("${DEP}" STREQUAL "")
                         continue()
@@ -237,9 +249,7 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
         if(LINK_LIBS_DEFINED)
             get_property ( LINK_LIBS TARGET "${RES_TARGET}" PROPERTY INTERFACE_LINK_LIBRARIES )
 
-            # message ( "--- Deps: ${LINK_LIBS}" )
             foreach( LIB ${LINK_LIBS} )
-                # message ( "---- Dep: ${LIB}" )
                 if(NOT TARGET "${LIB}" AND NOT "${LIB}" MATCHES "-framework")
                     string ( REPLACE "::" ";" LIB_LIST "${LIB}" )
                     list ( LENGTH LIB_LIST LIB_LEN )
@@ -247,8 +257,11 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
                         continue()
                     endif()
 
+                    if(GIT_DEP_VERBOSE)
+                        message ( STATUS "Finding package ${LIB_PACKAGE}" )
+                    endif()
+
                     list ( GET LIB_LIST 0 LIB_PACKAGE )
-                    # message ( "----- Package: ${LIB_PACKAGE}" )
                     find_package( ${LIB_PACKAGE} REQUIRED )
                 endif()
 
@@ -258,7 +271,6 @@ macro( DEPENDENCY_RESOLVE_INTERNAL )
             endforeach()
         endif()
     endif()
-    # message ( "${GIT_DEPS_RESOLVED}" )
 endmacro()
 
 macro( DEPENDENCY_RESOLVE )

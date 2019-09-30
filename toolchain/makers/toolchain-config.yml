@@ -280,8 +280,7 @@ testing.linux.*:
   =description: Nintendo Gamecube through DevkitPPC
   =compiler: GCC 6+
   =toolchain: none-cube-powerpc-eabi_linux.toolchain.cmake
-  =preload: gamecube.cmake
-  =container: ubuntu
+  =container: hbirch/devkit:ppc
 
 (ubuntu.*|coverage|testing.linux|docs):
   =build.prettyname: Ubuntu

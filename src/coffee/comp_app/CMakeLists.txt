@@ -30,3 +30,9 @@ coffee_library (
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dropin_include>
     $<INSTALL_INTERFACE:include>
     )
+
+coffee_bundle (
+    HEADER_DIRECTORIES
+    ${CMAKE_CURRENT_SOURCE_DIR}/bundle_include/coffee
+    ${CMAKE_CURRENT_SOURCE_DIR}/dropin_include/coffee
+    )

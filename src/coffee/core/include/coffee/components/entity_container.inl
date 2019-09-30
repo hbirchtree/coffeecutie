@@ -113,6 +113,18 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     return unique_rows;
 }
 
+FORCEDINLINE SubsystemBase* pointer_extract(
+    Pair<const type_hash, UqPtr<SubsystemBase>> const& sub)
+{
+    return sub.second.get();
+}
+
+FORCEDINLINE bool subsystem_sort(
+    SubsystemBase const* s1, SubsystemBase const* s2)
+{
+    return s1->priority < s2->priority;
+}
+
 } // namespace detail
 
 FORCEDINLINE
@@ -121,8 +133,19 @@ void EntityContainer::exec()
     time_point     time_now = clock::now();
     ContainerProxy proxy(*this);
 
-    for(auto& subsys : subsystems)
-        subsys.second->start_frame(proxy, time_now);
+    Vector<SubsystemBase*> subsystems_;
+    subsystems_.reserve(subsystems.size());
+
+    std::transform(
+        std::cbegin(subsystems),
+        std::cend(subsystems),
+        std::back_inserter(subsystems_),
+        detail::pointer_extract);
+
+    std::sort(subsystems_.begin(), subsystems_.end(), detail::subsystem_sort);
+
+    for(auto& subsys : subsystems_)
+        subsys->start_frame(proxy, time_now);
 
     /* TODO: Put visitors in buckets according to what data they access */
     for(auto const& visitor : visitors)
@@ -130,8 +153,8 @@ void EntityContainer::exec()
         visitor->dispatch(*this, time_now);
     }
 
-    for(auto& subsys : subsystems)
-        subsys.second->end_frame(proxy, time_now);
+    for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
+        (*it)->end_frame(proxy, time_now);
 }
 
 FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()

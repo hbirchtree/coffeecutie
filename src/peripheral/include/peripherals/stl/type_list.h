@@ -190,4 +190,10 @@ FORCEDINLINE void for_each_rev(Args... args)
 }
 
 } // namespace type_list
+
+template<typename... T>
+using type_list_t = type_list::type_list<T...>;
+
+using empty_list_t = type_list_t<void>;
+
 } // namespace type_safety

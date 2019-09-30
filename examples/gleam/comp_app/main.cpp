@@ -68,8 +68,7 @@ i32 coffee_main(i32, cstring_w*)
 
     comp_app::app_error ec;
 
-    auto& loader =
-        comp_app::AppLoader::register_service<comp_app::AppLoader>(e);
+    auto& loader = comp_app::AppLoader::register_service(e);
 
     comp_app::configureDefaults(loader);
 
@@ -140,16 +139,19 @@ i32 coffee_main(i32, cstring_w*)
 
     comp_app::AppContainer<APIData>::addTo(
         e,
-        [](EntityContainer& e, APIData& d) {
+        [](EntityContainer& e, APIData& d, Components::time_point const&) {
             e.register_subsystem_inplace<GFX_SYS::tag_type, GFX_SYS>(
                 GFX::OPTS(), true);
         },
         [](EntityContainer& e,
            APIData&,
-           comp_app::AppContainer<int>::time_point const&) {
+           Components::time_point const&,
+           Components::duration const&) {
             GLEAMAPI::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1});
         },
-        [](EntityContainer& e, APIData& d) { d.context = nullptr; });
+        [](EntityContainer& e, APIData& d, Components::time_point const&) {
+            d.context = nullptr;
+        });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);
 }

@@ -13,11 +13,13 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
 
     using service_type = AppService<AppContainer<DataType>>;
     using Proxy        = typename service_type::Proxy;
+    using duration     = typename service_type::duration;
     using time_point   = typename service_type::time_point;
 
-    using setup_func = stl_types::Function<void(entity_container&, DataType&)>;
-    using loop_func  = stl_types::Function<void(
+    using setup_func = stl_types::Function<void(
         entity_container&, DataType&, time_point const&)>;
+    using loop_func  = stl_types::Function<void(
+        entity_container&, DataType&, time_point const&, duration const&)>;
 
     template<typename... Args>
     static void addTo(entity_container& e, Args... args)
@@ -41,20 +43,27 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
 
     virtual void load(entity_container& e, app_error& ec) final
     {
-        m_setup(e, *m_data);
+        m_setup(e, *m_data, detail::clock::now());
+        detail::SubsystemBase::priority = 8192 * 1024;
     }
     virtual void unload(entity_container& e, app_error& ec) final
     {
-        m_cleanup(e, *m_data);
+        m_cleanup(e, *m_data, detail::clock::now());
     }
     virtual void start_restricted(Proxy& p, time_point const& t) final
     {
-        m_loop(service_type::get_container(p), *m_data, t);
+        m_loop(
+            service_type::get_container(p),
+            *m_data,
+            t,
+            stl_types::Chrono::duration_cast<duration>(t - m_previousTime));
+        m_previousTime = t;
     }
 
   private:
     setup_func m_setup, m_cleanup;
     loop_func  m_loop;
+    time_point m_previousTime;
 
     stl_types::ShPtr<DataType> m_data;
 };

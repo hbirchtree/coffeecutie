@@ -102,6 +102,8 @@ struct AppService : detail::RestrictedSubsystem<
 
         container.register_subsystem_services<service_types>(&subsys);
 
+        subsys.priority = AppService::system_prio;
+
         return subsys;
     }
 

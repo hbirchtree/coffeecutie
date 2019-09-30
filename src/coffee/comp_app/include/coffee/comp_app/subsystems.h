@@ -151,6 +151,11 @@ struct AppLoader : AppService<
     {
         return container.service<AppLoader>()->config<Config>();
     }
+
+    static AppLoader& register_service(detail::EntityContainer& container)
+    {
+        return AppService<AppLoader>::register_service<AppLoader>(container);
+    }
 };
 
 } // namespace comp_app

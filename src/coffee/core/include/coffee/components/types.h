@@ -7,7 +7,11 @@
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/type_list.h>
 
-#define ENTCOMP_CREATE_TAG(name) struct name { using type = libc_types::u32; };
+#define ENTCOMP_CREATE_TAG(name)      \
+    struct name                       \
+    {                                 \
+        using type = libc_types::u32; \
+    };
 
 namespace Coffee {
 namespace Components {
@@ -113,6 +117,10 @@ struct SubsystemBase : non_copy
 {
     using ContainerProxy = Components::ContainerProxy;
     using time_point     = Components::time_point;
+    using duration       = Components::duration;
+
+    static constexpr u32 default_prio = 1024;
+    static constexpr u32 system_prio  = 0;
 
     virtual ~SubsystemBase();
 
@@ -122,6 +130,8 @@ struct SubsystemBase : non_copy
     virtual void end_frame(ContainerProxy&, time_point const&)
     {
     }
+
+    u32 priority = default_prio;
 
   protected:
     static EntityContainer& get_container(ContainerProxy& proxy);
@@ -157,7 +167,7 @@ struct ValueSubsystem : Subsystem<T>
     type m_value;
 };
 
-}
+} // namespace Globals
 
 // namespace Globals
 } // namespace Components

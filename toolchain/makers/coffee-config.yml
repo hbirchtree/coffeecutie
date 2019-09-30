@@ -71,6 +71,9 @@ emscripten.*:
 gamecube.*:
   +cmake-opts:
     - -DBUILD_LIBOGC=ON
+    - -DBUILD_ASIO=OFF
+    - -DBUILD_AUDIO=OFF
+    - -DBUILD_SDL2=OFF
 .*maemo.*:
   +cmake-opts:
     - -DBUILD_SDL2=OFF

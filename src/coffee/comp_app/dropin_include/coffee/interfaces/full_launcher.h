@@ -30,8 +30,7 @@ libc_types::i32 AutoExec(
     comp_app::app_error ec;
 
     auto& container = comp_app::createContainer();
-    auto& loader =
-        comp_app::AppLoader::register_service<comp_app::AppLoader>(container);
+    auto& loader    = comp_app::AppLoader::register_service(container);
 
     comp_app::configureDefaults(loader);
     comp_app::addDefaults(container, loader, ec);
