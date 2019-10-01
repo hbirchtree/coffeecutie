@@ -29,12 +29,14 @@ find_program ( CXX_COMPILER
 set ( CMAKE_C_COMPILER "${C_COMPILER}" )
 set ( CMAKE_CXX_COMPILER "${CXX_COMPILER}" )
 
-message ( "CC = ${CMAKE_C_COMPILER} CXX = ${CMAKE_CXX_COMPILER}" )
-
-get_filename_component ( PORTLIBS_DIR "${CMAKE_C_COMPILER}" DIRECTORY )
-get_filename_component ( PORTLIBS_DIR "${PORTLIBS_DIR}" DIRECTORY )
+if(EXISTS "$ENV{PPCPORTLIBS_CUBE}")
+    set ( PORTLIBS_DIR "$ENV{PPCPORTLIBS_CUBE}" )
+else()
+    get_filename_component ( PORTLIBS_DIR "${CMAKE_C_COMPILER}" DIRECTORY )
+    get_filename_component ( PORTLIBS_DIR "${PORTLIBS_DIR}" DIRECTORY )
+    set ( PORTLIBS_DIR "${PORTLIBS_DIR}/portlibs/cube-${TOOLCHAIN_PREFIX}" )
+endif()
 set ( DEVKITPPC "${DEVKITPPC}" CACHE STRING "" )
-set ( PORTLIBS_DIR "${PORTLIBS_DIR}/portlibs/cube-${TOOLCHAIN_PREFIX}" )
 
 find_program ( ELF2DOL elf2dol )
 
