@@ -1,4 +1,5 @@
 option ( BUILD_OPENGL "Target OpenGL API" ON )
+option ( BUILD_GRAPHICS_COMMON "Build common graphics library" ON )
 
 if(BUILD_OPENGL)
     # GLEAM supports OpenGL 3.3 -> 4.6 and OpenGL ES 2.0 -> 3.2
@@ -11,4 +12,6 @@ if(BUILD_OPENGL)
     endif()
 endif()
 
-add_subdirectory(common)
+if(BUILD_GRAPHICS_COMMON)
+    add_subdirectory(common)
+endif()

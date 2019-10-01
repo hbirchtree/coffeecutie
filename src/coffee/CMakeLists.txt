@@ -33,6 +33,10 @@ if(BUILD_COMPONENT_APP)
     add_library ( ComponentBundle INTERFACE )
 
     if(BUILD_OPENGL)
+        target_compile_definitions ( ComponentBundle INTERFACE
+            -DSELECT_API_OPENGL=1
+            )
+
         if(BUILD_GLEAM)
             target_link_libraries ( ComponentBundle INTERFACE GLVersion )
         endif()
@@ -60,8 +64,8 @@ if(BUILD_COMPONENT_APP)
         target_link_libraries ( ComponentBundle INTERFACE GLKitComponent )
     endif()
     if(BUILD_LIBOGC)
-        add_subdirectory(windowing/libogc_comp)
-        target_link_libraries ( ComponentBundle INTERFACE LibOGCComponent )
+        add_subdirectory(windowing/cog_comp)
+        target_link_libraries ( ComponentBundle INTERFACE CogComponent )
     endif()
     if(BUILD_ANATIVE)
         add_subdirectory(windowing/anative_comp)

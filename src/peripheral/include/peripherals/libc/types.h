@@ -10,8 +10,8 @@
 namespace libc_types {
 
 #if defined(COFFEE_PLAIN_INT_TYPES)
-using int32_t  = long;
-using uint32_t = unsigned long;
+using int32_t  = int;
+using uint32_t = unsigned int;
 #endif
 
 using int8   = C_DEPRECATED_TYPE<int8_t>::type;

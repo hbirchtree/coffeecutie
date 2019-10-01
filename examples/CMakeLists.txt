@@ -9,7 +9,10 @@
 
 add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
-add_subdirectory (core/gpu-query)
+
+if(BUILD_GRAPHICS_COMMON)
+    add_subdirectory (core/gpu-query)
+endif()
 
 if(NOT LOWFAT_BUILD)
     add_subdirectory (components)

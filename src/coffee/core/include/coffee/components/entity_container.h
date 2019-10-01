@@ -7,8 +7,10 @@ namespace Coffee {
 namespace Components {
 namespace Convenience {
 
+using hash_type = declmemtype(&std::type_info::hash_code);
+
 template<typename T>
-FORCEDINLINE typename declmemtype(&std::type_info::hash_code) type_hash_v()
+FORCEDINLINE hash_type type_hash_v()
 {
     return typeid(T).hash_code();
 }

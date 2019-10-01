@@ -185,10 +185,13 @@ void addDefaults(
     loader.loadAll<glkit::Services>(container, ec);
 #elif defined(FEATURE_ENABLE_ANativeComponent)
     loader.loadAll<anative::Services>(container, ec);
+#elif defined(FEATURE_ENABLE_CogComponent)
+    /* There is no window */
 #else
 #error No window manager
 #endif
 
+#if defined(SELECT_API_OPENGL)
     /* Selection of (E)GL context */
 #if defined(FEATURE_ENABLE_SDL2Components)
     sdl2::GLSwapControl::register_service<sdl2::GLSwapControl>(container);
@@ -209,6 +212,14 @@ void addDefaults(
     loader.loadAll<glad::Services>(container, ec);
 #else
 #error No OpenGL/ES binding
+#endif
+
+#elif defined(FEATURE_ENABLE_CogComponent)
+
+
+
+#else
+#error No graphics
 #endif
 }
 

@@ -100,7 +100,7 @@ coffee_library (
     private/base/jsonprofile.cpp
 
     LIBRARIES
-    CoreCommon PeripheralThreadNaming
+    CoreDebug CoreCommon PeripheralThreadNaming
     )
 
 #
@@ -184,7 +184,7 @@ coffee_library (
     SOURCES
     private/profiler/profiling_export.cpp
 
-    LIBRARIES CoreCommon
+    LIBRARIES CoreDebug CoreCommon
     )
 
 #
@@ -224,7 +224,7 @@ coffee_library (
 coffee_library (
     TARGET Testing
     SOURCES private/unit_tests/framework.cpp
-    LIBRARIES CoreCommon
+    LIBRARIES CoreTerminal CoreCommon
     )
 
 if(LOWFAT_BUILD)

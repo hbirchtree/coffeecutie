@@ -54,7 +54,7 @@ struct Mutex
 
   private:
 #if defined(COFFEE_GEKKO)
-    long unsigned int m_mutexHandle;
+    unsigned int m_mutexHandle;
 #endif
 };
 
@@ -68,7 +68,7 @@ struct RecMutex
 
   private:
 #if defined(COFFEE_GEKKO)
-    long unsigned int m_mutexHandle;
+    unsigned int m_mutexHandle;
 #endif
 };
 
@@ -163,15 +163,15 @@ struct CondVar
     Mutex                     m_signalLock;
     std::atomic<unsigned int> m_waiters;
     std::atomic<unsigned int> m_signals;
-    long unsigned int         m_syncQueue;
+    unsigned int              m_syncQueue;
 #endif
 };
 
 #else
-using RecMutex            = std::recursive_mutex;
-using Mutex               = std::mutex;
-using Lock                = std::lock_guard<Mutex>;
-using RecLock             = std::lock_guard<RecMutex>;
+using RecMutex = std::recursive_mutex;
+using Mutex    = std::mutex;
+using Lock     = std::lock_guard<Mutex>;
+using RecLock  = std::lock_guard<RecMutex>;
 
 using UqLock              = std::unique_lock<Mutex>;
 using UqRecLock           = std::unique_lock<RecMutex>;

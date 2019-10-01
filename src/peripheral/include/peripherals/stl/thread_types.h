@@ -14,11 +14,6 @@
 #include <sys/prctl.h>
 #endif
 
-#if defined(COFFEE_GEKKO)
-#include <sys/timespec.h>
-extern "C" int nanosleep(struct timespec* tb);
-#endif
-
 namespace stl_types {
 #if defined(COFFEE_NO_FUTURES)
 template<typename RType>
@@ -79,7 +74,7 @@ struct Thread
 
   private:
 #if defined(COFFEE_GEKKO)
-    long unsigned int     m_threadHandle;
+    unsigned int          m_threadHandle;
     std::function<void()> m_threadLambda;
 #endif
 };
@@ -101,7 +96,7 @@ STATICINLINE void sleep_for(const std::chrono::duration<Rep, Period>& dura)
     sleepyTime.tv_nsec =
         std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count() %
         1000000000;
-    nanosleep(&sleepyTime);
+    nanosleep(&sleepyTime, nullptr);
 #endif
 }
 template<typename Clock, typename Duration>
