@@ -73,3 +73,46 @@ i32 coffee_main(i32, cstring_w*)
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)
+
+//#include <gccore.h>
+
+//GXRModeObj* gamecube_rmode = NULL;
+//void*       gamecube_xfb   = NULL;
+
+//thread_local int dev;
+
+//int main(int, char**)
+//{
+//    VIDEO_Init();
+
+//    gamecube_rmode = VIDEO_GetPreferredMode(NULL);
+
+//    gamecube_xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(gamecube_rmode));
+
+//    VIDEO_Configure(gamecube_rmode);
+//    VIDEO_SetNextFramebuffer(gamecube_xfb);
+//    VIDEO_SetBlack(FALSE);
+//    VIDEO_Flush();
+
+//    VIDEO_WaitVSync();
+//    if(gamecube_rmode->viTVMode & VI_NON_INTERLACE)
+//        VIDEO_WaitVSync();
+
+//    console_init(
+//        gamecube_xfb,
+//        60,
+//        60,
+//        gamecube_rmode->fbWidth,
+//        gamecube_rmode->xfbHeight,
+//        gamecube_rmode->fbWidth * 2);
+
+//    printf("- Gamecube video initialized\n");
+
+//    State::SetInternalState(State::CreateNewState());
+//    State::SetInternalThreadState(State::CreateNewThreadState());
+
+//    while(1)
+//    {
+//        VIDEO_WaitVSync();
+//    }
+//}

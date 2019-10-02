@@ -159,10 +159,12 @@ STATICINLINE void RegisterProfilerThreadState()
 
 void SetInternalThreadState(P<InternalThreadState> state)
 {
+#if !defined(COFFEE_DISABLE_PROFILER)
     TSTATE = state;
 
     if(state)
         RegisterProfilerThreadState();
+#endif
 }
 
 P<InternalThreadState>& GetInternalThreadState()

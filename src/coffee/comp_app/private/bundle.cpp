@@ -36,6 +36,10 @@
 #include <coffee/anative/anative_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_CogComponent)
+#include <coffee/cog_comp/cog_comp.h>
+#endif
+
 #if defined(FEATURE_ENABLE_AppDelegate) || \
     defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
 #define USES_LINKED_GL 1
@@ -45,7 +49,6 @@
     defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
-
 
 namespace comp_app {
 
@@ -216,7 +219,7 @@ void addDefaults(
 
 #elif defined(FEATURE_ENABLE_CogComponent)
 
-
+    loader.loadAll<cog::Services>(container, ec);
 
 #else
 #error No graphics

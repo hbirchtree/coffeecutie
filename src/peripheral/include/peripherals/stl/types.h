@@ -295,7 +295,7 @@ inline UqPtr<T, Deleter> MkUqDST(Args... a)
 template<typename T, typename... Args>
 inline ShPtr<T> MkShared(Args... a)
 {
-    return ShPtr<T>(new T(std::forward<Args>(a)...));
+    return std::make_shared<T>(std::forward<Args>(a)...);
 }
 
 template<typename T>

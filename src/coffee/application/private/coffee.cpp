@@ -322,7 +322,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     i32 result = -1;
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
     try
     {
 #endif
@@ -331,6 +331,11 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     } catch(std::exception const& ex)
     {
         emscripten_log(EM_LOG_ERROR, "Exception encountered: %s", ex.what());
+    }
+#elif defined(COFFEE_GEKKO)
+    } catch(std::exception const& ex)
+    {
+        printf("Exception encountered: %s\n", ex.what());
     }
 #endif
 
@@ -344,7 +349,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
             .count());
 #endif
     return result;
-}
+} // namespace Coffee
 
 void CoffeeTerminate()
 {

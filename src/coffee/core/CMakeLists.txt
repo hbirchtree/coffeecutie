@@ -43,7 +43,7 @@ coffee_library (
     #
     private/strings.cpp
 
-    LIBRARIES CoreCommon
+    LIBRARIES CoreCommon PeripheralThreadNaming
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -60,9 +60,7 @@ coffee_library (
     #
     private/extern_storage.cpp
 
-    LIBRARIES
-    CoreCommon
-    CoreDebug
+    LIBRARIES CoreCommon CoreDebug PeripheralThreadNaming
     )
 
 coffee_library (

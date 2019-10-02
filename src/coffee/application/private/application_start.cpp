@@ -63,7 +63,7 @@ using namespace Coffee;
 int deref_main(
     CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0)
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && 0
     cDebug("Entering deref_main() at {0}", str::print::pointerify(deref_main));
 #endif
 

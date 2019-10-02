@@ -1,3 +1,5 @@
+set ( ELF2DOL "" CACHE STRING "" )
+
 macro ( GAMECUBE_PACKAGE )
     cmake_parse_arguments(
         GC

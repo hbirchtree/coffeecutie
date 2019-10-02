@@ -310,6 +310,7 @@
 
 #if defined(COFFEE_GEKKO)
 #define COFFEE_STUBBED_TIMING
+#define COFFEE_DISABLE_PROFILER
 #endif
 
 /*

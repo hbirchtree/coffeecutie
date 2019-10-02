@@ -359,6 +359,8 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
 
+#if !defined(COFFEE_GEKKO)
+
     file::file_error ec;
     auto             paths = GetSystemPaths();
 
@@ -423,6 +425,14 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
 #endif
     tempStore.flags |= storageMask & RSCA::NoDereference;
     return *tempStore;
+#else
+    switch(storageMask & RSCA::StorageMask)
+    {
+    default:
+        Throw(undefined_behavior("failed to resolve path"));
+    }
+
+#endif
 }
 
 CString Url::DereferenceLocalPath() const
