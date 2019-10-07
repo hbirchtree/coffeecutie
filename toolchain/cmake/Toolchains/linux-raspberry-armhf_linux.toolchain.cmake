@@ -8,8 +8,9 @@ set ( RASPBERRY TRUE )
 
 set ( RASPBERRY_SDK "${RASPBERRY_SDK}" CACHE PATH "" )
 
-set ( SYSROOT_PREFIX "/cross-rpi/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf" )
-set ( CMAKE_SYSROOT "${SYSROOT_PREFIX}/${TOOLCHAIN_PREFIX}/sysroot" )
+set ( SYSROOT_PREFIX "" )
+set ( CMAKE_SYSROOT
+    "/cross-rpi/gcc-arm-8.3-2019.03-x86_64-${TOOLCHAIN_PREFIX}/${TOOLCHAIN_PREFIX}/libc" )
 
 set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
 set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
@@ -17,8 +18,6 @@ set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
 set ( CMAKE_FIND_ROOT_PATH
     ${CMAKE_SYSROOT}
     ${RASPBERRY_SDK}
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
     ${CMAKE_SOURCE_DIR}/src/libs
     )
 

@@ -995,8 +995,8 @@ mingw.w64: FORCE
 	-e BUILD_NAME=mingw.w64 \
 	-e CMAKE_TARGET=install
 
-# Raspberry Pi ARMv6 build
-# Compiler: GCC 4.9
+# Raspberry Pi ARM 32-bit build
+# Compiler: GCC 8.3
 raspberry.armhf: FORCE rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -1008,12 +1008,11 @@ raspberry.armhf: FORCE rpi-sdk
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
 	-DGIT_DEP_BUILDVARIANT=raspberry.armhf \
-	-DRASPBERRY_SDK=/rpi-sysroot \
+	-DRASPBERRY_SDK=/pi-sysroot \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/raspberry-sysroot/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/raspberry.armhf:/home/coffee/build:rw \
@@ -1025,8 +1024,8 @@ raspberry.armhf: FORCE rpi-sdk
 	-e BUILD_NAME=raspberry.armhf \
 	-e CMAKE_TARGET=install
 
-# Raspberry Pi ARMv6 build
-# Compiler: GCC 4.9
+# Raspberry Pi ARM 32-bit build
+# Compiler: GCC 8.3
 raspberry.armhf.shell: FORCE rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
@@ -1038,12 +1037,11 @@ raspberry.armhf.shell: FORCE rpi-sdk
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
 	-DGIT_DEP_BUILDVARIANT=raspberry.armhf \
-	-DRASPBERRY_SDK=/rpi-sysroot \
+	-DRASPBERRY_SDK=/pi-sysroot \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/raspberry-sysroot/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/raspberry.armhf:/home/coffee/build:rw \

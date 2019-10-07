@@ -255,19 +255,14 @@ testing.linux.*:
 
 
 .*raspberry.*:
-  =description: Raspberry Pi ARMv6 build
-  =compiler: GCC 4.9
+  =description: Raspberry Pi ARM 32-bit build
+  =compiler: GCC 8.3
   =preload: linux-raspberry.cmake
   =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
   =container: raspberry
   +dependencies: rpi-sdk
-  +container-opts:
-    - -v $(dependencies.rpi-sdk.root)/$(dependencies.rpi-sdk.path):$(dependencies.rpi-sdk.target):ro
   +cmake-opts:
-    - -DRASPBERRY_SDK=$(dependencies.rpi-sdk.target)
-  .*armhf.*:
-    =dependencies.rpi-sdk.path: architectures/rpi-SDL2-X11-armv6
-
+    - -DRASPBERRY_SDK=/pi-sysroot
 
 .*mingw.*:
   =description: MinGW64 environment in Ubuntu Docker
