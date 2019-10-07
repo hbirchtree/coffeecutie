@@ -1,0 +1,7 @@
+message ( STATUS "${TARGET} : ${TITLE} : ${CMAKE_COMMAND}" )
+
+foreach ( RESC ${DATA} )
+    execute_process (
+        ${CMAKE_COMMAND} -E copy_directory "${RESC}" "${ASSET_DIR}"
+        )
+endforeach()
