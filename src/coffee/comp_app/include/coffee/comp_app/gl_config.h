@@ -8,6 +8,15 @@ namespace comp_app {
 
 struct GLConfig : Config<GLConfig>
 {
+    GLConfig()
+    {
+        if constexpr(versionIsFixed)
+        {
+            version.major = fixed_version::major;
+            version.minor = fixed_version::minor;
+        }
+    }
+
     enum Profile
     {
         Core     = 0x1,
@@ -53,9 +62,23 @@ struct GLConfig : Config<GLConfig>
         static_version<3, 2, Embedded>>;
 
     using gl33_version = static_version<3, 3>;
+    using gl46_version = static_version<4, 6>;
 
     using gles2_version = static_version<2, 0, Embedded>;
     using gles3_version = static_version<3, 0, Embedded>;
+
+    static constexpr bool versionIsFixed = false;
+#if defined(COFFEE_RASPBERRY) || defined(COFFEE_MAEMO)
+    using fixed_version = gles2_version;
+#else
+    using fixed_version = static_version<0, 0>;
+#endif
+
+#if defined(FEATURE_ENABLE_GLAD_Core)
+    using preferred_version = gl46_version;
+#elif defined(FEATURE_ENABLE_GLAD_ES)
+    using preferred_version = gles3_version;
+#endif
 };
 
 C_FLAGS(GLConfig::Profile, libc_types::u32);

@@ -8,8 +8,11 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/interfaces/graphics_subsystem.h>
+
+#if defined(FEATURE_ENABLE_GLeamRHI)
+#include <coffee/graphics/apis/CGLeamRHI>
+#endif
 
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
@@ -59,7 +62,11 @@ i32 coffee_main(i32, cstring_w*)
     using namespace Coffee::Display;
     using namespace Coffee::Input;
 
-    using GFX     = RHI::GLEAM::GLEAM_API;
+#if defined(FEATURE_ENABLE_GLeamRHI)
+    using GFX = RHI::GLEAM::GLEAM_API;
+#else
+    using GFX = RHI::NullAPI;
+#endif
     using GFX_SYS = RHI::Components::GraphicsAllocator<GFX>;
 
     SetPrintingVerbosity(15);
@@ -80,11 +87,18 @@ i32 coffee_main(i32, cstring_w*)
         windowConf.size  = {1024, 768};
         windowConf.title = "Hello World";
 
+#if defined(FEATURE_ENABLE_GLADComponent)
         glConf.framebufferFmt = typing::pixels::PixFmt::RGB565;
 
         glConf.profile |= comp_app::GLConfig::Debug;
+#if defined(FEATURE_ENABLE_GLAD_Core)
+        glConf.version.major = 3;
+        glConf.version.minor = 3;
+#else
         glConf.version.major = 2;
         glConf.version.minor = 0;
+#endif
+#endif
 
         ctlrConf.options = comp_app::ControllerConfig::BackgroundInput;
     }
@@ -107,7 +121,7 @@ i32 coffee_main(i32, cstring_w*)
             cDebug("- {0}", displays->size(i));
     }
 
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK(ec)
 
     RuntimeQueue::CreateNewQueue("Main");
 
@@ -134,7 +148,7 @@ i32 coffee_main(i32, cstring_w*)
 
     struct APIData
     {
-        GLEAMAPI::API_CONTEXT context;
+        GFX::API_CONTEXT context;
     };
 
     comp_app::AppContainer<APIData>::addTo(
@@ -147,7 +161,7 @@ i32 coffee_main(i32, cstring_w*)
            APIData&,
            Components::time_point const&,
            Components::duration const&) {
-            GLEAMAPI::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1});
+            GFX::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1});
         },
         [](EntityContainer& e, APIData& d, Components::time_point const&) {
             d.context = nullptr;

@@ -1,7 +1,7 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( APPIMAGE_CONFIG_DIR "${COFFEE_DESKTOP_DIRECTORY}/linux/appimage" )
 
-    set ( MKSQUASH_PROGRAM CACHE FILEPATH "AppImageAssistant executable" )
+    find_program ( MKSQUASH_PROGRAM mksquashfs )
     set ( APPIMAGE_APPRUN_PROGRAM CACHE FILEPATH "AppImage AppRun executable" )
     set ( APPIMAGE_RUNTIME_BINARY CACHE FILEPATH "AppImage runtime to be embedded into the AppImage" )
 
