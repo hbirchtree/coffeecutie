@@ -10,11 +10,18 @@ struct GLConfig : Config<GLConfig>
 {
     GLConfig()
     {
+#if defined(FEATURE_ENABLE_GLeamCommon)
         if constexpr(versionIsFixed)
         {
             version.major = fixed_version::major;
             version.minor = fixed_version::minor;
+        } else
+        {
+            version.major = preferred_version::major;
+            version.minor = preferred_version::minor;
+            profile       = preferred_version::profile;
         }
+#endif
     }
 
     enum Profile
@@ -23,7 +30,11 @@ struct GLConfig : Config<GLConfig>
         Embedded = 0x2,
         Debug    = 0x4,
 
+#if defined(FEATURE_ENABLE_GLAD_Core)
         Default = Core,
+#else
+        Default = Embedded,
+#endif
 
         ProfileMask = Core | Embedded,
     };
@@ -71,7 +82,7 @@ struct GLConfig : Config<GLConfig>
 #if defined(COFFEE_RASPBERRY) || defined(COFFEE_MAEMO)
     using fixed_version = gles2_version;
 #else
-    using fixed_version = static_version<0, 0>;
+    using fixed_version     = static_version<0, 0>;
 #endif
 
 #if defined(FEATURE_ENABLE_GLAD_Core)

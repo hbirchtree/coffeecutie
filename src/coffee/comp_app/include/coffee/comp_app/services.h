@@ -355,6 +355,10 @@ struct KeyboardInput : AppService<KeyboardInput>
     {
     }
 
+    virtual void closeVirtual() const
+    {
+    }
+
     virtual KeyModifiers key(libc_types::u32) const
     {
         return KeyModifiers::NoneModifier;

@@ -42,8 +42,10 @@ ubuntu:
     - gles2
 fedora:
   - amd64
+  - amd64$(shell)
 steam:
   - amd64
+  - amd64$(shell)
 coverage:
   - .
 testing:
@@ -69,3 +71,4 @@ mingw:
   - w64
 gamecube:
   - .
+  - $(shell)

@@ -175,10 +175,11 @@ void GLEAM_RenderTarget::resize(u32 i, Rect64 const& view)
 {
     m_size = view.convert<i32>().size();
 
-    if(fb_cached_binds[FramebufferT::Draw] == m_handle)
-    {
-        CGL33::Viewport(0, 0, m_size);
-    }
+    auto prevDraw = fb_cached_binds[FramebufferT::Draw];
+
+    CGL33::FBBind(FramebufferT::Draw, m_handle);
+    CGL33::Viewport(0, 0, m_size);
+    CGL33::FBBind(FramebufferT::Draw, prevDraw);
 }
 
 Size GLEAM_RenderTarget::size()

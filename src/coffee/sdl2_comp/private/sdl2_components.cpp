@@ -65,7 +65,7 @@ void Context::load(entity_container& c, comp_app::app_error&)
 {
     auto info = c.service<comp_app::AppInfo>();
 
-    C_EXPECT_ZERO(SDL_Init(0));
+    C_EXPECT_ZERO(SDL_Init(0))
 
     c.register_subsystem_services<comp_app::AppServiceTraits<Context>>(this);
 
@@ -93,7 +93,7 @@ void Context::end_restricted(Proxy& p, time_point const&)
 
     auto inputBus = p.service<comp_app::EventBus<CIEvent>>();
 
-    C_PTR_CHECK_MSG(inputBus, "EventBus<CIEvent> not specified");
+    C_PTR_CHECK_MSG(inputBus, "EventBus<CIEvent> not specified")
 
     CIEvent inputEv;
 
@@ -195,20 +195,20 @@ void Windowing::start_restricted(Proxy& p, time_point const&)
         SDL_WINDOWEVENT,
         SDL_WINDOWEVENT))
     {
-        switch(event.window.type)
+        switch(event.window.event)
         {
         case SDL_WINDOWEVENT_ENTER:
         case SDL_WINDOWEVENT_LEAVE:
         case SDL_WINDOWEVENT_EXPOSED:
         case SDL_WINDOWEVENT_FOCUS_LOST:
         case SDL_WINDOWEVENT_FOCUS_GAINED:
-            EMIT_DEVENT(translate::event<FocusEvent>(event));
+            EMIT_DEVENT(translate::event<FocusEvent>(event))
             break;
         case SDL_WINDOWEVENT_RESIZED:
-            EMIT_DEVENT(translate::event<ResizeEvent>(event));
+            EMIT_DEVENT(translate::event<ResizeEvent>(event))
             break;
         case SDL_WINDOWEVENT_MOVED:
-            EMIT_DEVENT(translate::event<MoveEvent>(event));
+            EMIT_DEVENT(translate::event<MoveEvent>(event))
             break;
         default:
             break;
@@ -318,7 +318,7 @@ comp_app::size_2d_t DisplayInfo::size(libc_types::u32 idx) const
     return {rect.w, rect.h};
 }
 
-comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32 idx) const
+comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32) const
 {
     return {};
 }
@@ -445,7 +445,7 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
     m_container = &c;
 }
 
-void GLContext::unload(entity_container& c, comp_app::app_error& ec)
+void GLContext::unload(entity_container&, comp_app::app_error&)
 {
     if(m_context)
         SDL_GL_DeleteContext(m_context);
@@ -466,7 +466,7 @@ void GLFramebuffer::load(entity_container& c, comp_app::app_error&)
     m_container = &c;
 }
 
-void GLFramebuffer::swapBuffers(comp_app::app_error& ec)
+void GLFramebuffer::swapBuffers(comp_app::app_error&)
 {
     SDL_GL_SwapWindow(m_container->service<sdl2::Windowing>()->m_window);
 }
@@ -559,7 +559,9 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
 #endif
             auto instanceId = SDL_JoystickInstanceID(joystick);
 
-            playerIdx = playerIdx >= 0 ? playerIdx : m_playerIndex.size();
+            playerIdx = playerIdx >= 0
+                            ? playerIdx
+                            : C_FCAST<libc_types::i32>(m_playerIndex.size());
 
             m_playerIndex.insert({playerIdx, controller});
             m_controllers.insert({instanceId, controller});
@@ -574,7 +576,7 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
             event.cdevice.which = controllerDisconnect(event.cdevice.which);
         }
 
-        EMIT_IEVENT(translate::event<CIControllerAtomicUpdateEvent>(event));
+        EMIT_IEVENT(translate::event<CIControllerAtomicUpdateEvent>(event))
     }
 
     while(SDL_PeepEvents(
@@ -599,7 +601,7 @@ libc_types::u32 ControllerInput::count() const
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
-    auto it = m_playerIndex.find(idx);
+    auto it = m_playerIndex.find(C_FCAST<libc_types::i32>(idx));
 
     if(it == m_playerIndex.end())
         return {};
@@ -646,7 +648,7 @@ ControllerInput::controller_map ControllerInput::state(
 
 comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 {
-    auto it = m_playerIndex.find(idx);
+    auto it = m_playerIndex.find(C_FCAST<libc_types::i32>(idx));
 
     if(it == m_playerIndex.end())
         return {};
@@ -719,7 +721,32 @@ void KeyboardInput::start_restricted(Proxy& p, time_point const&)
     {
         auto ev            = translate::event<CIKeyEvent>(event);
         m_register[ev.key] = ev.mod;
-        EMIT_IEVENT(ev);
+        EMIT_IEVENT(ev)
+    }
+
+    while(
+        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_TEXTEDITING, SDL_TEXTINPUT))
+    {
+        switch(event.type)
+        {
+        case SDL_TEXTEDITING:
+        {
+            CIWEditEvent edit;
+            edit.cursor = event.edit.start;
+            edit.len    = event.edit.length;
+            EMIT_IEVENT(edit)
+            break;
+        }
+        case SDL_TEXTINPUT:
+        {
+            CIWriteEvent write;
+            write.text = event.text.text;
+            EMIT_IEVENT(write)
+            break;
+        }
+        default:
+            break;
+        }
     }
 }
 
@@ -728,12 +755,18 @@ void KeyboardInput::openVirtual() const
     SDL_StartTextInput();
 }
 
+void KeyboardInput::closeVirtual() const
+{
+    SDL_StopTextInput();
+}
+
 void MouseInput::load(entity_container& e, comp_app::app_error&)
 {
     m_container = &e;
+    priority    = 256;
 }
 
-void MouseInput::start_restricted(Proxy& p, time_point const&)
+void MouseInput::start_restricted(Proxy&, time_point const&)
 {
     using namespace Coffee::Input;
 
@@ -747,13 +780,13 @@ void MouseInput::start_restricted(Proxy& p, time_point const&)
         switch(event.type)
         {
         case SDL_MOUSEMOTION:
-            EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event));
+            EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event))
             break;
         case SDL_MOUSEBUTTONUP:
         case SDL_MOUSEBUTTONDOWN:
         {
             auto ev = translate::event<CIMouseButtonEvent>(event);
-            EMIT_IEVENT(ev);
+            EMIT_IEVENT(ev)
 
             if(event.button.state == SDL_PRESSED)
                 m_buttons |= ev.btn;
@@ -763,7 +796,7 @@ void MouseInput::start_restricted(Proxy& p, time_point const&)
             break;
         }
         case SDL_MOUSEWHEEL:
-            EMIT_IEVENT(translate::event<CIScrollEvent>(event));
+            EMIT_IEVENT(translate::event<CIScrollEvent>(event))
             break;
         }
     }
@@ -832,7 +865,7 @@ void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
     using namespace comp_app;
 
     SDL_SysWMinfo windowInfo;
-    SDL_VERSION(&windowInfo.version);
+    SDL_VERSION(&windowInfo.version)
     SDL_GetWindowWMInfo(window, &windowInfo);
 
 #if defined(SDL_VIDEO_DRIVER_X11)

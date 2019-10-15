@@ -5,6 +5,24 @@
 #include <coffee/components/service_query.h>
 #include <coffee/components/visitor.h>
 
+#include <platforms/stacktrace.h>
+
+#define ENT_TYPE_NAME(var) \
+    platform::Stacktracer::DemangleSymbol(typeid(var).name())
+
+#define ENT_DBG_TYPE(flag, prefix, var)        \
+    if(debug_flags & flag)                     \
+    {                                          \
+        CString dbg;                           \
+        (dbg += prefix) += ENT_TYPE_NAME(var); \
+        cDebug(dbg.c_str());                   \
+    }
+
+namespace Coffee {
+
+extern void cDebug(cstring f);
+}
+
 namespace Coffee {
 namespace Components {
 
@@ -144,17 +162,33 @@ void EntityContainer::exec()
 
     std::sort(subsystems_.begin(), subsystems_.end(), detail::subsystem_sort);
 
-    for(auto& subsys : subsystems_)
-        subsys->start_frame(proxy, time_now);
+    for(auto& subsys_ptr : subsystems_)
+    {
+        auto& subsys = *subsys_ptr;
+#if MODE_DEBUG
+        ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
+#endif
+        subsys.start_frame(proxy, time_now);
+    }
 
     /* TODO: Put visitors in buckets according to what data they access */
-    for(auto const& visitor : visitors)
+    for(auto const& visitor_ptr : visitors)
     {
-        visitor->dispatch(*this, time_now);
+        auto& visitor = *visitor_ptr;
+#if MODE_DEBUG
+        ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
+#endif
+        visitor.dispatch(*this, time_now);
     }
 
     for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
-        (*it)->end_frame(proxy, time_now);
+    {
+        auto& subsys = *(*it);
+#if MODE_DEBUG
+        ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
+#endif
+        subsys.end_frame(proxy, time_now);
+    }
 }
 
 FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()
@@ -262,3 +296,6 @@ FORCEDINLINE EntityContainer& SubsystemBase::get_container(
 
 } // namespace Components
 } // namespace Coffee
+
+#undef ENT_DBG_TYPE
+#undef ENT_TYPE_NAME

@@ -52,7 +52,7 @@ struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
 
     virtual bool notifiedClose() const final;
 
-    SDL_Window* m_window = nullptr;
+    SDL_Window*       m_window    = nullptr;
     entity_container* m_container = nullptr;
 };
 
@@ -61,7 +61,7 @@ struct WindowInfo : comp_app::WindowInfo, comp_app::AppLoadableService
     virtual void load(entity_container& e, comp_app::app_error&) final;
 
     virtual comp_app::text_type_t name() const final;
-    virtual void setName(comp_app::text_type newName) final;
+    virtual void                  setName(comp_app::text_type newName) final;
 
     entity_container* m_container = nullptr;
 };
@@ -72,7 +72,7 @@ struct DisplayInfo : comp_app::DisplayInfo
     virtual libc_types::u32     count() const final;
     virtual libc_types::u32     currentDisplay() const final;
     virtual comp_app::size_2d_t size(libc_types::u32 idx) const final;
-    virtual comp_app::size_2d_t physicalSize(libc_types::u32 idx) const final;
+    virtual comp_app::size_2d_t physicalSize(libc_types::u32) const final;
 };
 
 struct GLContext : comp_app::GraphicsContext, comp_app::AppLoadableService
@@ -132,10 +132,16 @@ struct KeyboardInput : comp_app::BasicKeyboardInput
     virtual void start_restricted(Proxy& p, time_point const&) final;
 
     virtual void openVirtual() const final;
+    virtual void closeVirtual() const final;
 };
 
 struct MouseInput : comp_app::MouseInput, comp_app::AppLoadableService
 {
+    MouseInput()
+    {
+        priority = default_prio + 100;
+    }
+
     virtual void load(entity_container& e, comp_app::app_error&) override;
     virtual void start_restricted(Proxy&, time_point const&) final;
 

@@ -867,6 +867,34 @@ fedora.amd64: FORCE
 	-e BUILD_NAME=fedora.amd64 \
 	-e CMAKE_TARGET=install
 
+# Fedora build in a Fedora Docker
+# Compiler: GCC 5+
+fedora.amd64.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-fedora.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=fedora.amd64 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/fedora.amd64:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=fedora \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=fedora.amd64 \
+	-e CMAKE_TARGET=install
+
 # Nintendo Gamecube through DevkitPPC
 # Compiler: GCC 6+
 gamecube: FORCE
@@ -900,6 +928,41 @@ gamecube: FORCE
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=gamecube \
+	-e CMAKE_TARGET=install
+
+# Nintendo Gamecube through DevkitPPC
+# Compiler: GCC 6+
+gamecube..shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
+	-DBUILD_AUDIO=OFF \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_BLAM=OFF \
+	-DBUILD_CPP14=ON \
+	-DBUILD_GRAPHICS_COMMON=OFF \
+	-DBUILD_LIBOGC=ON \
+	-DBUILD_OPENGL=OFF \
+	-DBUILD_SDL2=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/gamecube. \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/none-cube-powerpc-eabi_linux.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=gamecube. \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/gamecube.:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONTAINER=hbirch/devkit:ppc \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=gamecube. \
 	-e CMAKE_TARGET=install
 
 # Maemo 5 builds, performed within a Maemo 5 armel chroot
@@ -1057,6 +1120,37 @@ raspberry.armhf.shell: FORCE rpi-sdk
 # Compiler: GCC 4.8.4
 steam.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_CPP11=ON \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/cxx11.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=steam.amd64 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-e CC=clang-3.6 \
+	-e CXX=clang++-3.6 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/steam.amd64:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=steam \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=steam.amd64 \
+	-e CMAKE_TARGET=install
+
+# Build against the SteamRT SDK
+# Compiler: GCC 4.8.4
+steam.amd64.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \

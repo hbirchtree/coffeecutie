@@ -160,12 +160,12 @@ EVENT_TRANSLATE(CIControllerAtomicUpdateEvent)
 
         out.controller = device.which;
         out.connected  = device.type != SDL_CONTROLLERDEVICEREMOVED;
-    }else if (ev.type == SDL_JOYDEVICEREMOVED)
+    } else if(ev.type == SDL_JOYDEVICEREMOVED)
     {
         auto& joydev = ev.jdevice;
 
         out.controller = joydev.which;
-        out.connected = joydev.type != SDL_JOYDEVICEREMOVED;
+        out.connected  = joydev.type != SDL_JOYDEVICEREMOVED;
     }
 
     return out;

@@ -608,14 +608,17 @@ void GLEAM_API::GetViewportState(GLEAM_API::VIEWSTATE& vstate, u32 i)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::IntegerGeti_v(GL_VIEWPORT, i, vstate.m_view.at(0).data);
-    CGL33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
+    if(CGL33::IsEnabled(Feature::ScissorTest))
+        CGL33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
+    else
+        vstate.m_scissor.clear();
 #else
     CGL33::IntegerGetv(GL_VIEWPORT, vstate.m_view.at(0).data);
     CGL33::IntegerGetv(GL_SCISSOR_BOX, vstate.m_scissor.at(0).data);
 #endif
 
     typing::graphics::field<scalar> tmp_field;
-    CGL33::ScalarfGetv(GL_SCISSOR_BOX, tmp_field.data);
+    CGL33::ScalarfGetv(GL_DEPTH_RANGE, tmp_field.data);
     vstate.m_depth.at(0) = tmp_field.convert<bigscalar>();
 }
 

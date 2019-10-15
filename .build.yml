@@ -8,6 +8,7 @@ allow_fail:
 - env: BUILDVARIANT=testing.linux.release
 - env: BUILDVARIANT=ubuntu.i686.gles
 - env: BUILDVARIANT=gamecube
+- env: BUILDVARIANT=steam.amd64
 branches:
 - build: true
   deploy: true
@@ -54,9 +55,9 @@ secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 template_location: toolchain/cmake/Templates
 version:
-  hotfix: 1
+  hotfix: 0
   major: 4
   minor: 4
-  patch: 9
+  patch: 10
   release: 2
 versionprefix: automated-release-

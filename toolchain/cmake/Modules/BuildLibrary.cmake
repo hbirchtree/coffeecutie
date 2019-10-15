@@ -2,6 +2,8 @@
 include ( MacAppBuild )
 include ( InstallConvenience )
 
+include ( CMakePackageConfigHelpers )
+
 set_property (GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS "" )
 set_property (GLOBAL PROPERTY CF_INCLUDE_DIRS "" )
 
@@ -101,15 +103,15 @@ macro( GENERATE_FINDSCRIPT )
         FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
         )
 
-    configure_file(
+    configure_package_config_file (
         "${COFFEE_CMAKE_TEMPLATE_DIR}/Config.cmake.in"
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        @ONLY
+        INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}
         )
-    configure_file(
-        "${COFFEE_CMAKE_TEMPLATE_DIR}/ConfigVersion.cmake.in"
+
+    write_basic_package_version_file (
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        @ONLY
+        COMPATIBILITY ExactVersion
         )
 
     install (

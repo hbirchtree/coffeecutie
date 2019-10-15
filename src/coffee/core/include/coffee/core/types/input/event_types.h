@@ -198,7 +198,7 @@ struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
 /*!
  * \brief Text input event, rich variant
  */
-struct CIWriteEvent
+struct CIWriteEvent : BaseEvent<CIEvent::TextInput>
 {
     cstring text; /*! Submitted text*/
 };

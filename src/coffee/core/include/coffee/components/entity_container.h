@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <coffee/components/types.h>
+#include <coffee/core/base/printing/log_interface.h>
 
 namespace Coffee {
 namespace Components {
@@ -35,11 +36,17 @@ struct service_query;
 
 struct EntityContainer : non_copy
 {
+    enum DebugFlags
+    {
+        Verbose_Subsystems = 0x1,
+        Verbose_Visitors   = 0x2,
+    };
+
     friend struct Entity;
     template<typename T>
     friend struct service_query;
 
-    EntityContainer() : entity_counter(0)
+    EntityContainer() : entity_counter(0), debug_flags(0)
     {
     }
 
@@ -376,6 +383,8 @@ struct EntityContainer : non_copy
     using visitor_graph = Set<Vector<bool>>;
 
     visitor_graph create_task_graph();
+
+    u32 debug_flags;
 
   private:
     u64            entity_counter; /*!< For enumerating entities */
