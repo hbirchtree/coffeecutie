@@ -11,6 +11,8 @@
 #import <CoreMotion/CoreMotion.h>
 
 // This is where all the foreign stuff comes from
+#include <coffee/comp_app/app_events.h>
+#include <coffee/comp_app/bundle.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/libc_types.h>
 #include <coffee/core/types/application_main.h>
@@ -42,6 +44,17 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
 }
 
+using comp_app::LifecycleEvent;
+
+static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
+{
+    using bus_type = comp_app::EventBus<comp_app::AppEvent>;
+    
+    comp_app::AppEvent baseEvent;
+    baseEvent.type = type;
+    comp_app::createContainer().service<bus_type>()->process(baseEvent, event);
+}
+
 @interface AppDelegate ()
 
 @end
@@ -51,20 +64,20 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     setenv("COFFEE_REPORT_URL", "https://reports.birchy.dev/", 1);
-
+    
     uikit_appdelegate = self;
     
     CoffeeForeignSignalHandle = HandleForeignSignals;
     CoffeeForeignSignalHandleNA = HandleForeignSignalsNA;
+    
+    NSLog(@"View controller");
     
     // Call the Coffee entrypoint, it will set up a bunch of things
     Coffee::CoffeeMain(coffee_main_function_ptr, 0, NULL);
     
     self.hasInitialized = FALSE;
     self.window = [[UIWindow alloc] init];
-    
-    self.defaultController = [[UIViewController alloc] init];
-    self.window.rootViewController = self.defaultController;
+    self.window.backgroundColor = [UIColor yellowColor];
 
     NSLog(@"AppDelegate::init");
     
@@ -75,7 +88,9 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
 {
     NSLog(@"AppDelegate::applicationDidReceiveMemoryWarning");
-    CoffeeEventHandleCall(CoffeeHandle_LowMem);
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::LowMemory;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
@@ -87,13 +102,12 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
     
-    CoffeeEventHandleCall(CoffeeHandle_TransBackground);
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::WillEnterBackground;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
     
     NSLog(@"AppDelegate running cleanup");
     CoffeeEventHandleCall(CoffeeHandle_Cleanup);
-    
-    //self.window.rootViewController = self.defaultController;
-    
     self.hasInitialized = FALSE;
 }
 
@@ -102,14 +116,18 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     NSLog(@"AppDelegate::applicationDidEnterBackground");
-    CoffeeEventHandleCall(CoffeeHandle_IsBackground);
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::Background;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
 
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Do data stuff here
     NSLog(@"AppDelegate::applicationWillEnterForeground");
-    CoffeeEventHandleCall(CoffeeHandle_TransForeground);
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::WillEnterForeground;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
 
 
@@ -120,40 +138,45 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     if(!self.hasInitialized)
     {
         NSLog(@"AppDelegate running setup");
-        //self.window = [[UIWindow alloc] init];
+
         self.window.backgroundColor = [UIColor blackColor];
         uikit_window = self.window;
-        
         [self.window makeKeyAndVisible];
-        
+
         CoffeeEventHandleCall(CoffeeHandle_Setup);
         self.hasInitialized = TRUE;
     }
     
-    CoffeeEventHandleCall(CoffeeHandle_IsForeground);
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::Foreground;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
     
     CGSize screenRes = [[UIScreen mainScreen] nativeBounds].size;
     
-    struct CfResizeEventData evdata = {
-        .w = static_cast<uint32_t>(screenRes.width),
-        .h = static_cast<uint32_t>(screenRes.height),
-    };
+    using namespace Coffee::Display;
     
-    DispatchGeneralEvent(CfResizeEvent, &evdata);
+    Event baseEvent;
+    baseEvent.type = Event::Resize;
+    ResizeEvent resize;
+    resize.w = screenRes.width;
+    resize.h = screenRes.height;
+    
+    comp_app::createContainer()
+        .service<comp_app::EventBus<Event>>()->process(baseEvent, &resize);
 }
 
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     NSLog(@"AppDelegate::applicationWillTerminate");
-
-    CoffeeEventHandleCall(CoffeeHandle_IsTerminating);
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::Terminate;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
 
 #if defined(COFFEE_APP_USE_GLKIT)
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    NSLog(@"AppDelegate::glkView");
     if(self.hasInitialized)
         CoffeeEventHandleCall(CoffeeHandle_Loop);
 }
@@ -164,109 +187,11 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 }
 #endif
 
-- (void)handleTap: (UITapGestureRecognizer*) recog
-{
-    CGPoint point = [recog locationInView: self.window.rootViewController.view];
-
-    struct CfTouchEventData ev = {};
-    
-    ev.type =  CfTouchTap;
-    
-    ev.event.tap.x = point.x;
-    ev.event.tap.y = point.y;
-    
-    DispatchGeneralEvent(CfTouchEvent, &ev);
-}
-
-- (void)handlePinch: (UIPinchGestureRecognizer*) recog
-{
-    CGPoint point = [recog locationInView: self.window.rootViewController.view];
-
-    struct CfTouchEventData ev = {};
-    
-    ev.type = CfTouchPinch;
-    
-    ev.event.pinch.x = point.x;
-    ev.event.pinch.y = point.y;
-    
-    ev.event.pinch.factor = recog.scale;
-    
-    DispatchGeneralEvent(CfTouchEvent, &ev);
-}
-
-- (void)handleSwipe: (UISwipeGestureRecognizer*) recog
-{
-//    CGPoint point = [recog locationInView: self.window.rootViewController.view];
-//
-//    struct CfTouchEventData ev = {};
-//    
-//    ev.type =  CfTouchPan;
-//    
-//    ev.event.tap.x = point.x;
-//    ev.event.tap.y = point.y;
-//    
-//    DispatchGeneralEvent(CfTouchEvent, &ev);
-}
-
-- (void)handlePan: (UIPanGestureRecognizer*) recog
-{
-    UIView* targetView = self.window.rootViewController.view;
-
-    CGPoint point = [recog locationInView: targetView];
-    
-    CGPoint translation = [recog translationInView: targetView];
-    CGPoint velocity = [recog velocityInView: targetView];
-
-    struct CfTouchEventData ev = {};
-    
-    ev.type =  CfTouchPan;
-    
-    ev.event.pan.ox = point.x;
-    ev.event.pan.oy = point.y;
-    
-    ev.event.pan.dx = translation.x;
-    ev.event.pan.dy = translation.y;
-    
-    ev.event.pan.vx = velocity.x;
-    ev.event.pan.vy = velocity.y;
-    
-    ev.event.pan.fingerCount = recog.numberOfTouches;
-    
-    DispatchGeneralEvent(CfTouchEvent, &ev);
-}
-
-- (void)handleRotation: (UIRotationGestureRecognizer*) recog
-{
-        CGPoint point = [recog locationInView: self.window.rootViewController.view];
-
-    struct CfTouchEventData ev = {};
-    
-    ev.type = CfTouchRotate;
-    
-    ev.event.rotate.x = point.x;
-    ev.event.rotate.y = point.y;
-    
-    ev.event.rotate.radians = recog.rotation;
-    
-    DispatchGeneralEvent(CfTouchEvent, &ev);
-}
-
-// TODO: Add handlers for touch events and key events
-
 @end
 
 // The simple foreign signal handler
-void HandleForeignSignals(int event)
+void HandleForeignSignals(int)
 {
-    switch(event)
-    {
-        case CoffeeForeign_DidFinish:
-        printf("Oh no! We gonna die!\n");
-        break;
-        default:
-        printf("Unhandled signal: %i\n", event);
-        break;
-    }
 }
 
 // Foreign signal handler

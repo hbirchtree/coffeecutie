@@ -435,7 +435,7 @@ void generic_stacktrace(int sig)
 void InstallDefaultSigHandlers()
 {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
-    std::set_terminate([]() {
+    std::set_terminate([]() {	
         platform::env::Stacktracer::ExceptionStacktrace(
             std::current_exception(), typing::logging::fprintf_logger);
         abort();

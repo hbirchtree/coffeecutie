@@ -11,11 +11,14 @@ extern void* uikit_window;
 
 @interface GestureDelegate : UIResponder<UIGestureRecognizerDelegate>
 
-+ (void)initRecognizers;
+- (void)initRecognizers;
 - (void)handleTap:(UITapGestureRecognizer *)recog;
+- (void)handlePan:(UIPanGestureRecognizer *)recog;
 - (void)handlePinch: (UIPinchGestureRecognizer*) recog;
 - (void)handleSwipe:(UISwipeGestureRecognizer *)recog;
 - (void)handleRotation: (UIRotationGestureRecognizer*) recog;
+
+@property (retain) UIWindow* window;
 
 @end
 
@@ -24,24 +27,36 @@ extern void* uikit_window;
 - (void)handleTap:(UITapGestureRecognizer *)recog
 {
     Coffee::DebugFun::cDebug("Hello tap");
+    CGPoint point = [recog locationInView: self.window.rootViewController.view];
+}
+
+- (void)handlePan:(UIPanGestureRecognizer *)recog
+{
+    UIView* targetView = self.window.rootViewController.view;
+    
+    CGPoint point = [recog locationInView: targetView];
+    
+    CGPoint translation = [recog translationInView: targetView];
+    CGPoint velocity = [recog velocityInView: targetView];
 }
 
 - (void)handlePinch: (UIPinchGestureRecognizer*) recog
 {
-
+    CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)recog
 {
     Coffee::DebugFun::cDebug("Hello swipe");
+    CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
 - (void)handleRotation: (UIRotationGestureRecognizer*) recog
 {
-
+    CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
-- (void)initRecognizers
+- (GestureDelegate*)init
 {
 
 
@@ -65,13 +80,17 @@ extern void* uikit_window;
                                             initWithTarget:self
                                             action:@selector(handleRotation:)];
 
-    UIView* view = ((UIWindow*)uikit_window).rootViewController.view;
+    self.window = (UIWindow*)uikit_window;
+    
+    UIView* view = self.window.rootViewController.view;
 
     [view addGestureRecognizer: tapRecog];
     [view addGestureRecognizer: pinchRecog];
     [view addGestureRecognizer: swipeRecog];
     [view addGestureRecognizer: panRecog];
     [view addGestureRecognizer: rotRecog];
+    
+    return self;
 }
 
 @end
@@ -84,9 +103,7 @@ void GestureInput::load(
 {
     m_container = &e;
 
-    GestureDelegate* gestures = [GestureDelegate alloc];
-    
-    //[gestures initRecognizers];
+    GestureDelegate* gestures = [[GestureDelegate alloc] init];
 }
 
 void GestureInput::start_restricted(Proxy& c, time_point const&)

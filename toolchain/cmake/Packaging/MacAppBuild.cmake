@@ -2,6 +2,7 @@ if(APPLE)
     set ( OSX_DEFAULT_ICON "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.icns" CACHE FILEPATH "" )
     set ( IOS_LOADING_ICON "${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png" CACHE FILEPATH "" )
     set ( IOS_DEFAULT_STORYBOARD "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.storyboard" CACHE FILEPATH "" )
+    set ( IOS_ICON_ASSETS "${COFFEE_DESKTOP_DIRECTORY}/osx/Icons.xcassets" CACHE PATH "" )
     file ( GLOB IMAGES_TMP "${COFFEE_DESKTOP_DIRECTORY}/osx/launch_images/*.png" )
     set ( IMAGES "${IMAGES_TMP}" CACHE FILEPATH "" )
 endif()
@@ -110,7 +111,9 @@ macro( MACAPP_PACKAGE
             ${SOURCES} ${IMAGES}
             ${IOS_DEFAULT_STORYBOARD}
             ${IOS_LOADING_ICON}
+            ${IOS_ICON_ASSETS}
             )
+        message ( "Xcassets: ${IOS_ICON_ASSETS}" )
     endif()
 
     if(IOS)
@@ -133,6 +136,8 @@ macro( MACAPP_PACKAGE
             @ONLY
             )
 
+        file ( GLOB_RECURSE ICON_ASSET_FILES "${IOS_ICON_ASSETS}" )
+
         set_target_properties ( ${TARGET} PROPERTIES
             MACOSX_BUNDLE YES
             MACOSX_BUNDLE_INFO_PLIST "${IOS_PLIST_FILE}"
@@ -142,7 +147,8 @@ macro( MACAPP_PACKAGE
             XCODE_ATTRIBUTE_TARGET_DEVICE_FAMILY "1,2"
             XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
             XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO"
-            RESOURCE "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES}"
+            RESOURCE
+            "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES};${ICON_ASSET_FILES}"
             )
         
             #XCODE_PRODUCT_TYPE "com.apple.product-type.application"

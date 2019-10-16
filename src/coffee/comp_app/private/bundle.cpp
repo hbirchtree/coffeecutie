@@ -1,5 +1,6 @@
 #include <coffee/comp_app/bundle.h>
 
+#include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/core/task_queue/task.h>
@@ -90,8 +91,10 @@ detail::EntityContainer& createContainer()
 {
     static stl_types::ShPtr<detail::EntityContainer> container;
 
-    if(!container)
-        container = stl_types::MkShared<detail::EntityContainer>();
+    if(container)
+        return *container;
+    
+    container = stl_types::MkShared<detail::EntityContainer>();
 
     using namespace Coffee;
 
@@ -111,6 +114,7 @@ detail::EntityContainer& createContainer()
                 if(C_DCAST<AppMain>(&service))
                     continue;
                 service.load(*container, ec);
+                C_ERROR_CHECK(ec)
             }
 
             auto      eventMain = container->service<AppMain>();
@@ -135,6 +139,62 @@ detail::EntityContainer& createContainer()
             for(auto& service : container->services_with<AppLoadableService>())
                 service.unload(*container, appec);
             break;
+        }
+        default:
+        {
+            auto& app_bus = *container->service<EventBus<AppEvent>>();
+            AppEvent appevent;
+            appevent.type = AppEvent::None;
+            union
+            {
+                LifecycleEvent lifecycle;
+                NavigationEvent navi;
+            };
+            switch(event)
+            {
+            case CoffeeHandle_LowMem:
+            case CoffeeHandle_IsTerminating:
+            case CoffeeHandle_IsBackground:
+            case CoffeeHandle_IsForeground:
+            case CoffeeHandle_TransBackground:
+            case CoffeeHandle_TransForeground:
+                appevent.type = AppEvent::LifecycleEvent;
+                break;
+            }
+
+            switch(event)
+            {
+            case CoffeeHandle_LowMem:
+                lifecycle.lifecycle_type = LifecycleEvent::LowMemory;
+                break;
+            case CoffeeHandle_IsTerminating:
+                lifecycle.lifecycle_type = LifecycleEvent::Terminate;
+                break;
+            case CoffeeHandle_IsBackground:
+                lifecycle.lifecycle_type = LifecycleEvent::Background;
+                break;
+            case CoffeeHandle_IsForeground:
+                lifecycle.lifecycle_type = LifecycleEvent::Foreground;
+                break;
+            case CoffeeHandle_TransBackground:
+                lifecycle.lifecycle_type = LifecycleEvent::WillEnterBackground;
+                break;
+            case CoffeeHandle_TransForeground:
+                lifecycle.lifecycle_type = LifecycleEvent::WillEnterForeground;
+                break;
+            }
+            switch(event)
+            {
+            case CoffeeHandle_LowMem:
+            case CoffeeHandle_IsTerminating:
+            case CoffeeHandle_IsBackground:
+            case CoffeeHandle_IsForeground:
+            case CoffeeHandle_TransBackground:
+            case CoffeeHandle_TransForeground:
+                app_bus.process(appevent, &lifecycle);
+                break;
+            }
+
         }
         }
     };
@@ -195,7 +255,8 @@ void addDefaults(
 {
     loader.loadAll<detail::TypeList<
         BasicEventBus<Coffee::Input::CIEvent>,
-        BasicEventBus<Coffee::Display::Event>>>(container, ec);
+        BasicEventBus<Coffee::Display::Event>,
+        BasicEventBus<AppEvent>>>(container, ec);
 
     /* Selection of window/event manager */
 #if defined(FEATURE_ENABLE_SDL2Components)

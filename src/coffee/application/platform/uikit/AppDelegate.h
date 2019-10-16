@@ -21,10 +21,4 @@
 @property (strong, nonatomic) UIWindow *window;
 @property BOOL hasInitialized;
 
-- (void)handleTap: (UITapGestureRecognizer*) recog;
-
-- (void)handleSwipe: (UISwipeGestureRecognizer*) recog;
-
-- (void)handleSwipe: (UISwipeGestureRecognizer*) recog;
-
 @end

@@ -8,11 +8,17 @@ coffee_library (
     private/coffee.cpp
     private/application_start.cpp
 
-    LIBRARIES Core CoreState
+    LIBRARIES Core CoreState ComponentApp
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     )
+
+if(ANDROID OR (APPLE AND IOS))
+    target_link_libraries ( CoreApplication PUBLIC
+        ComponentBundleSetup
+        )
+endif()
 
 if(ANDROID)
     find_package( AndroidGlue REQUIRED )
