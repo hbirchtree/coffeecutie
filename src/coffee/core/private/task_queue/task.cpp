@@ -762,16 +762,18 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext()
 
 RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
 {
-    task_data_t* firstTask = nullptr;
+    RuntimeTask::Timepoint firstTask;
+    bool taskFound = false;
 
     for(auto task : mTasks)
         if(task.alive)
         {
-            firstTask = &task;
+            firstTask = task.task.time;
+            taskFound = true;
             break;
         }
 
-    if(!firstTask)
+    if(!taskFound)
     {
         Profiler::DeepProfile(RQ_API "Entering deep sleep");
         if(mNextWakeup < current)
@@ -780,10 +782,10 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
             return mNextWakeup - current;
     } else
     {
-        if(firstTask->task.time < current)
+        if(firstTask < current)
             return Chrono::milliseconds::zero();
         else
-            return firstTask->task.time - current;
+            return firstTask - current;
     }
 }
 
