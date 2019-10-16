@@ -114,13 +114,6 @@ macro( MACAPP_PACKAGE
     endif()
 
     if(IOS)
-        set ( GLKIT_LIB Coffee::AppDelegate )
-        if("${PROJECT_NAME}" STREQUAL "Coffee")
-            set ( GLKIT_LIB AppDelegate )
-        endif()
-
-        target_link_libraries ( ${TARGET} PUBLIC ${GLKIT_LIB} )
-
         set ( IOS_NAME "${TITLE}" )
         set ( IOS_IDENTIFIER "${TITLE}" )
         set ( IOS_INFO "${INFO_STRING}" )

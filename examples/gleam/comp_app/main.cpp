@@ -165,6 +165,9 @@ i32 coffee_main(i32, cstring_w*)
         },
         [](EntityContainer& e, APIData& d, Components::time_point const&) {
             d.context = nullptr;
+            e.remove_subsystems_matching<
+                Components::matchers::all_subsystems_in<
+                    type_list_t<GFX_SYS>>>();
         });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);

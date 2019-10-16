@@ -40,7 +40,11 @@
 #include <coffee/cog_comp/cog_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_AppDelegate) || \
+#if defined(FEATURE_ENABLE_UIKitGestures)
+#include <coffee/uikit/uikit_comp.h>
+#endif
+
+#if defined(FEATURE_ENABLE_GLKitComponent) || \
     defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
 #define USES_LINKED_GL 1
 #endif
@@ -74,6 +78,14 @@ void emscripten_loop()
 }
 #endif
 
+struct app_loadable_matcher
+{
+    static bool match(Coffee::Components::SubsystemBase* subsys)
+    {
+        return C_DCAST<AppLoadableService>(subsys) != nullptr;
+    }
+};
+
 detail::EntityContainer& createContainer()
 {
     static stl_types::ShPtr<detail::EntityContainer> container;
@@ -94,10 +106,17 @@ detail::EntityContainer& createContainer()
         case CoffeeHandle_Setup:
         {
             app_error ec;
+            for(auto& service : container->services_with<AppLoadableService>())
+            {
+                if(C_DCAST<AppMain>(&service))
+                    continue;
+                service.load(*container, ec);
+            }
+
             auto      eventMain = container->service<AppMain>();
-            C_PTR_CHECK(eventMain);
+            C_PTR_CHECK(eventMain)
             eventMain->load(*container, ec);
-            C_ERROR_CHECK(ec);
+            C_ERROR_CHECK(ec)
             break;
         }
         case CoffeeHandle_Loop:
@@ -208,7 +227,7 @@ void addDefaults(
 #endif
 
     /* Selection of GL binding */
-#if defined(FEATURE_ENABLE_AppDelegate) || \
+#if defined(FEATURE_ENABLE_GLKitComponent) || \
     defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
     loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
 #elif defined(FEATURE_ENABLE_GLADComponent)
@@ -223,6 +242,10 @@ void addDefaults(
 
 #else
 #error No graphics
+#endif
+
+#if defined(FEATURE_ENABLE_UIKitGestures)
+    loader.loadAll<uikit::Services>(container, ec);
 #endif
 }
 

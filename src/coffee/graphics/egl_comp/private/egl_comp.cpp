@@ -5,7 +5,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
-#if defined(FEATURE_ENABLE_AppDelegate)
+#if defined(FEATURE_ENABLE_CEAGL)
 #include <CEAGL/eagl.h>
 #else
 #include <EGL/egl.h>

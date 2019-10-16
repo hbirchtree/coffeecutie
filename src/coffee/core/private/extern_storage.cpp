@@ -368,6 +368,19 @@ CString const& ResourcePrefix(bool fallback)
 } // namespace platform
 
 /*
+ * Pointer to main() function to be used
+ * This storage is for non-standard platforms
+ */
+#if defined(COFFEE_CUSTOM_MAIN)
+CoffeeMainWithArgs coffee_main_function_ptr = nullptr;
+#endif
+
+#if defined(COFFEE_APPLE_MOBILE)
+void* uikit_appdelegate = nullptr;
+void* uikit_window      = nullptr;
+#endif
+
+/*
  * These declarations are library-local storage for event handling
  *
  * They require compatibility with C linkage in order to work with

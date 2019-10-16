@@ -10,7 +10,7 @@ struct GLConfig : Config<GLConfig>
 {
     GLConfig()
     {
-#if defined(FEATURE_ENABLE_GLeamCommon)
+#if defined(FEATURE_ENABLE_GLAD_Core) || defined(FEATURE_ENABLE_GLAD_ES)
         if constexpr(versionIsFixed)
         {
             version.major = fixed_version::major;
@@ -32,8 +32,10 @@ struct GLConfig : Config<GLConfig>
 
 #if defined(FEATURE_ENABLE_GLAD_Core)
         Default = Core,
-#else
+#elif defined(FEATURE_ENABLE_GLAD_ES)
         Default = Embedded,
+#else
+        Default = 0x0,
 #endif
 
         ProfileMask = Core | Embedded,

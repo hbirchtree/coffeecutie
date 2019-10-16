@@ -86,6 +86,9 @@ if(APPLE AND IOS)
     target_compile_definitions ( GLeamCommon PUBLIC
         -DGLES_SILENCE_DEPRECATION=1
         )
+    target_link_libraries ( GLeamCommon PUBLIC
+        CEAGL
+        )
 endif()
 
 if(BUILD_ANGLE)

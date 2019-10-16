@@ -423,6 +423,10 @@ struct TouchInput : AppService<TouchInput>
     virtual position_t startPosition(libc_types::u32 idx) const = 0;
 };
 
+struct GestureInput : AppService<GestureInput>
+{
+};
+
 struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
 {
     using loader_func = void* (*)(const char*);

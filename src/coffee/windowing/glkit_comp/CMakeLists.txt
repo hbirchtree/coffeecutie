@@ -1,26 +1,25 @@
 coffee_library (
-    TARGET AppDelegate
+    TARGET CEAGL
     SOURCES
-    private/AppDelegate.m
-    ${CEAGL_DIR}/private/eagl_bind.mm
-    ${CEAGL_DIR}/private/EGLView.m
+    ${CMAKE_CURRENT_SOURCE_DIR}/ceagl/private/eagl_bind.mm
+    ${CMAKE_CURRENT_SOURCE_DIR}/ceagl/private/EGLView.m
 
     LIBRARIES
     PeripheralPlatform
-    "-framework CoreGraphics"
-    "-framework CoreMotion"
-    "-framework GameController"
     "-framework GLKit"
-    "-framework QuartzCore"
-    "-framework UIKit"
 
     HEADER_DIRS
-    $<BUILD_INTERFACE:${CEAGL_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ceagl/include>
+    )
+
+target_compile_definitions ( CEAGL PRIVATE
+    -DGLES_SILENCE_DEPRECATION
     )
 
 coffee_library (
     TARGET GLKitComponent
-    SOURCES private/glk_comp.cpp
-    LIBRARIES ComponentApp AppDelegate GLeamCommon
+    SOURCES private/glk_comp.mm
+    LIBRARIES ComponentApp CEAGL GLeamCommon
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )

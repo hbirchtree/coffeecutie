@@ -78,7 +78,9 @@ struct AppLoader : AppService<
         ec = AppError::None;
 
         for_each<Services, service_register>(std::ref(e), std::ref(ec));
+#if !defined(COFFEE_CUSTOM_MAIN)
         for_each<Services, service_loader>(std::ref(e), std::ref(ec));
+#endif
     }
 
     void clearConfigs()

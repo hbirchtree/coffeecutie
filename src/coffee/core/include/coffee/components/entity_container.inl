@@ -8,7 +8,7 @@
 #include <platforms/stacktrace.h>
 
 #define ENT_TYPE_NAME(var) \
-    platform::Stacktracer::DemangleSymbol(typeid(var).name())
+    platform::env::Stacktracer::DemangleSymbol(typeid(var).name())
 
 #define ENT_DBG_TYPE(flag, prefix, var)        \
     if(debug_flags & flag)                     \

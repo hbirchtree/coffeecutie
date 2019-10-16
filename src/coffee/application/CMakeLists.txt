@@ -32,5 +32,22 @@ if(ANDROID)
     target_include_directories( CoreApplication PRIVATE
         platform/android/include
         )
+elseif(APPLE AND IOS)
+    option ( IOS_GLKIT_APP "Build iOS with GLKit for OpenGLES support" ON )
 
+    target_sources ( CoreApplication PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platform/uikit/AppDelegate.mm>
+        )
+    target_compile_definitions ( CoreApplication PRIVATE
+        -DGLES_SILENCE_DEPRECATION
+        )
+
+    if(IOS_GLKIT_APP)
+        target_compile_definitions ( CoreApplication PRIVATE
+            -DCOFFEE_APP_USE_GLKIT
+            )
+        target_link_libraries ( CoreApplication PUBLIC
+            CEAGL
+            )
+    endif()
 endif()

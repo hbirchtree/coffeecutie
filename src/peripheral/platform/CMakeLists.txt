@@ -112,6 +112,13 @@ if(APPLE)
             "-framework OpenGL"
             "-framework AppKit"
             )
+    else()
+        target_link_libraries ( PeripheralPlatform PUBLIC
+            "-framework CoreGraphics"
+            "-framework CoreMotion"
+            "-framework QuartzCore"
+            "-framework UIKit"
+            )
     endif()
 
     target_sources ( PeripheralPlatform PRIVATE
@@ -122,8 +129,6 @@ if(APPLE)
         platforms/osx/environment.cpp
         # Some functions are exposed by Obj-C
         platforms/osx/system_interface.m
-
-        platforms/osx/file.cpp
         )
 endif()
 

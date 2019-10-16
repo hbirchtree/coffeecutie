@@ -7,32 +7,27 @@
 //
 
 #import "AppDelegate.h"
-#import <EGLView.h>
 
 #import <CoreMotion/CoreMotion.h>
 
 // This is where all the foreign stuff comes from
+#include <coffee/core/coffee.h>
+#include <coffee/core/libc_types.h>
+#include <coffee/core/types/application_main.h>
 #include <coffee/foreign/foreign.h>
+#include <peripherals/stl/types.h>
 
 // For accessibility from other parts of the Objective-C code
 // We will be using this to attach a GLKViewController
-void* appdelegate_ptr = NULL;
-AppDelegate* appdelegate_typed = NULL;
+// Stored in extern_storage.cpp
+extern void* uikit_appdelegate;
+extern void* uikit_window;
 
 CMMotionManager* app_motionManager = NULL;
 
 // Event handling, sending stuff to Coffee
-void(*CoffeeEventHandle)(void*, int);
-void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
-void* coffee_event_handling_data;
-
-// Receiving stuff
 void(*CoffeeForeignSignalHandle)(int);
 void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
-
-// General initialization
-extern int(*apple_entry_point)(int, char**);
-extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 
 void HandleForeignSignals(int event);
 void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
@@ -40,7 +35,7 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
 void DispatchGeneralEvent(uint32_t type, void* data)
 {
     struct CfGeneralEvent ev = {
-        .type = type,
+        .type = static_cast<CfGeneralEventType>(type),
         .pad = 0,
     };
     
@@ -57,58 +52,21 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 {
     setenv("COFFEE_REPORT_URL", "https://reports.birchy.dev/", 1);
 
-    appdelegate_ptr = self;
-    appdelegate_typed = self;
+    uikit_appdelegate = self;
     
     CoffeeForeignSignalHandle = HandleForeignSignals;
     CoffeeForeignSignalHandleNA = HandleForeignSignalsNA;
     
-    if(self.window)
-    {
-        [self.window dealloc];
-    }
-    
-    self.window = [[UIWindow alloc] init];
-    self.window.backgroundColor = [UIColor redColor];
-    
     // Call the Coffee entrypoint, it will set up a bunch of things
-    deref_main_c(apple_entry_point, 0, NULL);
+    Coffee::CoffeeMain(coffee_main_function_ptr, 0, NULL);
+    
+    self.hasInitialized = FALSE;
+    self.window = [[UIWindow alloc] init];
+    
+    self.defaultController = [[UIViewController alloc] init];
+    self.window.rootViewController = self.defaultController;
 
-    if(self.window.rootViewController == nil)
-    {
-        NSLog(@"No root view controller set up, dying");
-        exit(0);
-    }
-    
-    UITapGestureRecognizer* tapRecog = [[UITapGestureRecognizer alloc]
-                                        initWithTarget:self
-                                        action:@selector(handleTap:)];
-    
-    UIPinchGestureRecognizer* pinchRecog = [[UIPinchGestureRecognizer alloc]
-                                        initWithTarget:self
-                                        action:@selector(handlePinch:)];
-    
-    UISwipeGestureRecognizer* swipeRecog = [[UISwipeGestureRecognizer alloc]
-                                        initWithTarget:self
-                                        action:@selector(handleSwipe:)];
-    
-    UIPanGestureRecognizer* panRecog = [[UIPanGestureRecognizer alloc]
-                                            initWithTarget:self
-                                            action:@selector(handlePan:)];
-    
-    UIRotationGestureRecognizer* rotRecog = [[UIRotationGestureRecognizer alloc]
-                                            initWithTarget:self
-                                            action:@selector(handleRotation:)];
-    
-    UIView* vc_view = self.window.rootViewController.view;
-    
-    [vc_view addGestureRecognizer: tapRecog];
-    [vc_view addGestureRecognizer: pinchRecog];
-    [vc_view addGestureRecognizer: swipeRecog];
-    [vc_view addGestureRecognizer: panRecog];
-    [vc_view addGestureRecognizer: rotRecog];
-    
-    [self.window makeKeyAndVisible];
+    NSLog(@"AppDelegate::init");
     
     return YES;
 }
@@ -116,45 +74,69 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
 {
+    NSLog(@"AppDelegate::applicationDidReceiveMemoryWarning");
     CoffeeEventHandleCall(CoffeeHandle_LowMem);
-    
-    NSLog(@"Low memory warning!");
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
+    NSLog(@"AppDelegate::applicationWillResignActive");
+
+    if(!self.hasInitialized)
+        return;
+    
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
     
     CoffeeEventHandleCall(CoffeeHandle_TransBackground);
     
+    NSLog(@"AppDelegate running cleanup");
     CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+    
+    //self.window.rootViewController = self.defaultController;
+    
+    self.hasInitialized = FALSE;
 }
 
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    NSLog(@"AppDelegate::applicationDidEnterBackground");
     CoffeeEventHandleCall(CoffeeHandle_IsBackground);
 }
 
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Do data stuff here
+    NSLog(@"AppDelegate::applicationWillEnterForeground");
     CoffeeEventHandleCall(CoffeeHandle_TransForeground);
 }
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    CoffeeEventHandleCall(CoffeeHandle_Setup);
+    // Restart any tasks that were paused (or not yet started) while the application was inactive.
+    // If the application was previously in the background, optionally refresh the user interface.
+    NSLog(@"AppDelegate::applicationDidBecomeActive");
+    if(!self.hasInitialized)
+    {
+        NSLog(@"AppDelegate running setup");
+        //self.window = [[UIWindow alloc] init];
+        self.window.backgroundColor = [UIColor blackColor];
+        uikit_window = self.window;
+        
+        [self.window makeKeyAndVisible];
+        
+        CoffeeEventHandleCall(CoffeeHandle_Setup);
+        self.hasInitialized = TRUE;
+    }
     
     CoffeeEventHandleCall(CoffeeHandle_IsForeground);
     
     CGSize screenRes = [[UIScreen mainScreen] nativeBounds].size;
     
     struct CfResizeEventData evdata = {
-        .w = screenRes.width,
-        .h = screenRes.height,
+        .w = static_cast<uint32_t>(screenRes.width),
+        .h = static_cast<uint32_t>(screenRes.height),
     };
     
     DispatchGeneralEvent(CfResizeEvent, &evdata);
@@ -163,18 +145,24 @@ void DispatchGeneralEvent(uint32_t type, void* data)
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    NSLog(@"AppDelegate::applicationWillTerminate");
+
     CoffeeEventHandleCall(CoffeeHandle_IsTerminating);
 }
 
+#if defined(COFFEE_APP_USE_GLKIT)
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    CoffeeEventHandleCall(CoffeeHandle_Loop);
+    NSLog(@"AppDelegate::glkView");
+    if(self.hasInitialized)
+        CoffeeEventHandleCall(CoffeeHandle_Loop);
 }
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
 {
     // NOOP
 }
+#endif
 
 - (void)handleTap: (UITapGestureRecognizer*) recog
 {
@@ -284,6 +272,8 @@ void HandleForeignSignals(int event)
 // Foreign signal handler
 void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
 {
+    AppDelegate* appdelegate_typed = (AppDelegate*)uikit_appdelegate;
+
     switch(event)
     {
         case CoffeeForeign_DisplayMessage:

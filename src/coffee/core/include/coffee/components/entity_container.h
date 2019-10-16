@@ -34,6 +34,31 @@ struct ServiceRef;
 template<typename T>
 struct service_query;
 
+namespace matchers {
+
+template<typename subsystem_list>
+struct all_subsystems_in
+{
+    template<typename T>
+    struct match_single
+    {
+        void operator()(SubsystemBase* sub, bool& match)
+        {
+            match = match || C_DCAST<T>(sub);
+        }
+    };
+
+    static bool match(SubsystemBase* sub)
+    {
+        bool out = false;
+        type_safety::type_list::for_each<subsystem_list, match_single>(
+            sub, std::ref(out));
+        return out;
+    }
+};
+
+} // namespace matchers
+
 struct EntityContainer : non_copy
 {
     enum DebugFlags
@@ -378,6 +403,24 @@ struct EntityContainer : non_copy
 
     template<typename ComponentTag>
     ComponentRef<EntityContainer, ComponentTag> ref_comp(u64 entity);
+
+    template<typename Matcher>
+    void remove_subsystems_matching()
+    {
+        using subsystem_pair = decltype(subsystems)::value_type;
+
+        auto it   = subsystems.begin();
+        auto pred = [](subsystem_pair const& sub) {
+            return Matcher::match(sub.second.get());
+        };
+
+        while(it != subsystems.end())
+        {
+            it = std::find_if(subsystems.begin(), subsystems.end(), pred);
+            if(it != subsystems.end())
+                subsystems.erase(it);
+        }
+    }
 
     /* For optimizations */
     using visitor_graph = Set<Vector<bool>>;

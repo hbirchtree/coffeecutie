@@ -22,12 +22,12 @@
 [submodule "include/coffee/jni"]
 	path = src/peripheral/platform/platforms/android/include/coffee/jni
 	url = https://github.com/hbirchtree/inline-jni.git
-[submodule "coffee/windowing/private/graphics/ceagl"]
-	path = src/coffee/windowing/private/graphics/ceagl
-	url = https://github.com/hbirchtree/ceagl.git
 [submodule "tools/data-management/pressure-cooker/etc2comp"]
 	path = tools/data-management/pressure-cooker/etc2comp
 	url = https://github.com/google/etc2comp.git
 [submodule "src/ext/discord/discord-rpc"]
 	path = src/ext/discord/discord-rpc
 	url = https://github.com/discordapp/discord-rpc.git
+[submodule "src/coffee/windowing/glkit_comp/ceagl"]
+	path = src/coffee/windowing/glkit_comp/ceagl
+	url = git@github.com:hbirchtree/ceagl.git

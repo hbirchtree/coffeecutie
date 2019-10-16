@@ -16,11 +16,20 @@
 #if defined(COFFEE_SDL_MAIN)
 #define main SDL_main
 #elif defined(COFFEE_CUSTOM_MAIN)
+#include <coffee/foreign/foreign.h>
+
 #define main Coffee_main
 
-#if defined(COFFEE_APPLE_MOBILE)
-extern CoffeeMainWithArgs apple_entry_point;
-#elif defined(COFFEE_ANDROID)
+/* bootstrapping class, for handing main function pointer over to loader */
+struct app_main_init
+{
+    app_main_init(CoffeeMainWithArgs main_)
+    {
+        coffee_main_function_ptr = main_;
+    }
+};
+
+#if defined(COFFEE_ANDROID)
 extern CoffeeMainWithArgs android_entry_point;
 #endif
 
@@ -67,7 +76,7 @@ extern int deref_main(
 #if defined(COFFEE_APPLE_MOBILE)
 // This is loaded from AppDelegate.m in CoffeeWindow_GLKit
 #define COFFEE_APPLICATION_MAIN(mainfun) \
-    CoffeeMainWithArgs apple_entry_point = mainfun;
+    static app_main_init _coffee_application_main_init(mainfun);
 
 #elif defined(COFFEE_ANDROID)
 #define COFFEE_APPLICATION_MAIN(mainfun) \

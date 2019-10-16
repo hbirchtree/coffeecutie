@@ -7,7 +7,7 @@ coffee_library(
     )
 
 if(BUILD_GLKIT)
-    target_link_libraries ( EGLComponent PUBLIC AppDelegate )
+    target_link_libraries ( EGLComponent PUBLIC CEAGL )
 else()
     target_link_libraries ( EGLComponent PUBLIC EGL )
 endif()

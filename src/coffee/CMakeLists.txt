@@ -31,6 +31,7 @@ if(BUILD_COMPONENT_APP)
     add_subdirectory(comp_app)
 
     add_library ( ComponentBundle INTERFACE )
+    add_library ( MobileBundle INTERFACE )
 
     if(BUILD_OPENGL)
         target_compile_definitions ( ComponentBundle INTERFACE
@@ -61,7 +62,9 @@ if(BUILD_COMPONENT_APP)
     endif()
     if(BUILD_GLKIT)
         add_subdirectory(windowing/glkit_comp)
+        add_subdirectory(uikit)
         target_link_libraries ( ComponentBundle INTERFACE GLKitComponent )
+        target_link_libraries ( MobileBundle INTERFACE UIKitGestures )
     endif()
     if(BUILD_LIBOGC)
         add_subdirectory(windowing/cog_comp)
@@ -76,6 +79,9 @@ if(BUILD_COMPONENT_APP)
         target_link_libraries ( ComponentBundle INTERFACE SDL2Components )
     endif()
 
+    target_link_libraries ( ComponentBundle INTERFACE MobileBundle )
+
+    add_export ( MobileBundle    "" )
     add_export ( ComponentBundle "" )
 endif()
 
