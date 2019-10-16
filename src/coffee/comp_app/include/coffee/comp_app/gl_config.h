@@ -10,12 +10,13 @@ struct GLConfig : Config<GLConfig>
 {
     GLConfig()
     {
-#if defined(FEATURE_ENABLE_GLAD_Core) || defined(FEATURE_ENABLE_GLAD_ES)
         if constexpr(versionIsFixed)
         {
             version.major = fixed_version::major;
             version.minor = fixed_version::minor;
-        } else
+        }
+#if defined(FEATURE_ENABLE_GLAD_Core) || defined(FEATURE_ENABLE_GLAD_ES)
+        else
         {
             version.major = preferred_version::major;
             version.minor = preferred_version::minor;
