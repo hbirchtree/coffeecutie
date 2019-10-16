@@ -30,4 +30,4 @@
 	url = https://github.com/discordapp/discord-rpc.git
 [submodule "src/coffee/windowing/glkit_comp/ceagl"]
 	path = src/coffee/windowing/glkit_comp/ceagl
-	url = git@github.com:hbirchtree/ceagl.git
+	url = https://github.com/hbirchtree/ceagl.git
