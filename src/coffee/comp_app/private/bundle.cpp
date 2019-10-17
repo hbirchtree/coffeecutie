@@ -289,7 +289,9 @@ void addDefaults(
 
     /* Selection of GL binding */
 #if defined(FEATURE_ENABLE_GLKitComponent) || \
-    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
+    defined(FEATURE_ENABLE_ANativeComponent) || \
+    defined(COFFEE_EMSCRIPTEN) || \
+    defined(COFFEE_RASPBERRYPI)
     loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
 #elif defined(FEATURE_ENABLE_GLADComponent)
     loader.loadAll<glad::Services>(container, ec);

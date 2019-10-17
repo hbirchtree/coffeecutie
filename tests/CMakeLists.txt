@@ -60,6 +60,7 @@ if(BUILD_GLEAM)
     target_link_libraries ( Dummy_Target
         PUBLIC
         GLeamCommon
+        ComponentBundleSetup
         )
 endif()
 if(BUILD_ASSIMP)

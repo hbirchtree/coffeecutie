@@ -880,6 +880,8 @@ void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
     info.display = nullptr;
 #elif defined(SDL_VIDEO_DRIVER_EMSCRIPTEN)
     /* There's nothing here? */
+#elif defined(COFFEE_RASPBERRYPI)
+    /* No data here */
 #else
     static_assert(false, "missing video driver");
 #endif
