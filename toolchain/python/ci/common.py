@@ -81,8 +81,9 @@ def flatten_map(root, include_intermediary=False):
 def load_targets(makers_dir, target_base):
     file_base = '%s/build-targets-%s.yml' % (makers_dir, target_base)
 
-    return TargetContainer(sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=True))),
-                          sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=False))))
+    return TargetContainer(
+            [x for x in sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=True))) if not x.endswith('$(shell)')],
+            [x for x in sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=False))) if not x.endswith('$(shell)')])
 
 
 def intersect_targets(source_targets, source_support_targets, selected_targets):
