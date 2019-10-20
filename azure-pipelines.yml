@@ -40,7 +40,7 @@ jobs:
         variant: ubuntu.amd64
       ubuntu.i686.gles:
         variant: ubuntu.i686.gles
-- job: macOS+iOS
+- job: macOS_and_iOS
   pool:
     vmImage: macos-10.14
   steps:
