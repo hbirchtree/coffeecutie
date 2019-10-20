@@ -57,6 +57,8 @@ function build_standalone()
         ${_CMAKE_TARGET_OPT:-} \
         -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS" \
         $@
+    
+    EXIT_STAT=$?
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
@@ -66,7 +68,6 @@ function build_standalone()
     {
         echo "$BUILD_DATA" | jq $1 | cut -d'"' -f 2
     }
-    EXIT_STAT=$?
     [[ ! "$EXIT_STAT" = 0 ]] && ${CI_DIR}/../notify/firebase/firebase-submit-report.sh "$EXIT_STAT"
 
     if [[ ! -z "$MQTT_USERNAME" ]]; then
