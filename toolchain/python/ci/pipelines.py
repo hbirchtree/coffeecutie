@@ -44,7 +44,7 @@ def pipelines_gen_config(build_info, repo_dir):
                     ]
                 },
                 {
-                    'job': 'macOS+iOS',
+                    'job': 'macOS_and_iOS',
                     'pool': {'vmImage': 'macos-10.14'},
                     'strategy': {
                         'matrix': macos_targets
