@@ -40,7 +40,7 @@ def travis_gen_config(build_info, repo_dir):
     script_locs = get_script_locations(build_info, 'unix')
     return {
         'language': 'cpp',
-        'dist': 'trusty',
+        'dist': 'bionic',
         'sudo': 'required',
         'services': ['docker'],
         'notifications': {
