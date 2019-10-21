@@ -70,13 +70,13 @@ function build_standalone()
     }
     [[ ! "$EXIT_STAT" = 0 ]] && ${CI_DIR}/../notify/firebase/firebase-submit-report.sh "$EXIT_STAT"
 
-    if [[ ! -z "$MQTT_USERNAME" ]]; then
+    if [[ -v MQTT_USERNAME ]]; then
         if [[ "$EXIT_STAT" = 0 ]]; then
             export MQTT_TITLE="Success on $(get_j .build_id)"
         else
-            export MQTT_TITLE="Failure on $(get_j .build_id) with $EXIT_STAT"
+            export MQTT_TITLE="Failure on $(get_j .build_id)"
         fi
-        export MQTT_BODY="Build: $(get_j .build_id), branch: $(get_j .branch), repo: $(get_j .repo), service: $(get_j .service)"
+        export MQTT_BODY="Build: $(get_j .build_id), branch: $(get_j .branch), repo: $(get_j .repo), service: $(get_j .service), exited with $EXIT_STAT"
         export MQTT_ICON="https://cdn.travis-ci.org/favicon-b4e438ec85b9ae88d26b49538bc4e5ce.png"
         export MQTT_URL="$(get_j .build_url)"
         export MQTT_TOPIC="builds/$(get_j .repo)/$(get_j .build_id)"
