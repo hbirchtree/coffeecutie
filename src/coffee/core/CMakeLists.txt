@@ -104,6 +104,15 @@ coffee_library (
 #
 # libz compression and whatever compression Windows has
 #
+if(NOT EMSCRIPTEN)
+    dependency_get (
+        SOURCE hbirchtree/native-library-bundle
+        TAG ${NATIVE_LIB_BUNDLE_TAG}
+        NAMES
+            zlib
+        )
+    find_package ( zlib )
+endif()
 coffee_library (
     TARGET CoreCompression
 
@@ -112,6 +121,16 @@ coffee_library (
 
     LIBRARIES CoreCommon
     )
+if(TARGET zlib::zlibstatic AND NOT EMSCRIPTEN)
+    target_link_libraries ( CoreCompression PUBLIC
+        zlib::zlibstatic
+        )
+    dependency_link (
+        TARGET CoreCompression
+        DEPENDENCIES
+            zlib
+        )
+endif()
 
 if(EMSCRIPTEN)
     target_compile_options ( CoreCompression PUBLIC

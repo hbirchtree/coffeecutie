@@ -57,12 +57,30 @@ function build_standalone()
         ${_CMAKE_TARGET_OPT:-} \
         -e GENERATE_PROGRAMS="$GENERATE_PROGRAMS" \
         $@
+    
+    EXIT_STAT=$?
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
     # We will also submit status to Firebase
-    EXIT_STAT=$?
-    [[ ! "$EXIT_STAT" = 0 ]] && [[ ! -z ${FIREBASE_ENDPOINT} ]] && ${CI_DIR}/../firebase-submit-report.sh "$EXIT_STAT"
+    BUILD_DATA="$(OUTPUT_TYPE=json $CI_DIR/../ci-identify.sh)"
+    function get_j()
+    {
+        echo "$BUILD_DATA" | jq $1 | cut -d'"' -f 2
+    }
+    [[ ! "$EXIT_STAT" = 0 ]] && ${CI_DIR}/../notify/firebase/firebase-submit-report.sh "$EXIT_STAT"
+
+    if [[ "$EXIT_STAT" = 0 ]]; then
+        export MQTT_TITLE="Success on $(get_j .build_id)"
+    else
+        export MQTT_TITLE="Failure on $(get_j .build_id)"
+    fi
+    export MQTT_BODY="Build: $(get_j .build_id), branch: $(get_j .branch), repo: $(get_j .repo), service: $(get_j .service), exited with $EXIT_STAT"
+    export MQTT_ICON="https://cdn.travis-ci.org/favicon-b4e438ec85b9ae88d26b49538bc4e5ce.png"
+    export MQTT_URL="$(get_j .build_url)"
+    export MQTT_TOPIC="builds/$(get_j .repo)/$(get_j .build_id)"
+    ${CI_DIR}/../notify/mqtt/mqtt-notify.sh
+
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 
     echo

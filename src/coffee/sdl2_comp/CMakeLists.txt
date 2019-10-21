@@ -49,3 +49,13 @@ else()
 #            "-s       " USE_WEBGL2=1
        )
 endif()
+
+if(RASPBERRY)
+    target_link_libraries ( SDL2Components PUBLIC
+        bcm_host
+        vchiq_arm
+        vcos
+        EGL
+        GLESv2
+        )
+endif()

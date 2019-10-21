@@ -1,8 +1,88 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
+jobs:
+- job: Linux
+  pool:
+    vmImage: ubuntu-18.04
+  steps:
+  - checkout: self
+    submodules: true
+  - script: ./toolchain/ci/travis-deps.sh
+    displayName: Downloading dependencies
+    env:
+      TRAVIS_OS_NAME: linux
+    
+  - script: ./cb quick-build $(variant)
+    displayName: Building project
+    env:
+      CONFIGURATION: Release
+  strategy:
+    matrix:
+      android.armv7a.kitkat.gles2:
+        variant: android.armv7a.kitkat.gles2
+      android.armv8a.nougat.gles3:
+        variant: android.armv8a.nougat.gles3
+      emscripten.wasm:
+        variant: emscripten.wasm
+      fedora.amd64:
+        variant: fedora.amd64
+      gamecube:
+        variant: gamecube
+      raspberry.armhf:
+        variant: raspberry.armhf
+      steam.amd64:
+        variant: steam.amd64
+      testing.linux.lowfat.debug:
+        variant: testing.linux.lowfat.debug
+      testing.linux.lowfat.release:
+        variant: testing.linux.lowfat.release
+      testing.linux.release:
+        variant: testing.linux.release
+      ubuntu.amd64:
+        variant: ubuntu.amd64
+      ubuntu.i686.gles:
+        variant: ubuntu.i686.gles
+- job: macOS_and_iOS
+  pool:
+    vmImage: macos-10.14
+  steps:
+  - checkout: self
+    submodules: true
+  - script: ./toolchain/ci/travis-deps.sh
+    displayName: Downloading dependencies
+    env:
+      TRAVIS_OS_NAME: osx
+  - script: ./cb quick-build $(variant)
+    displayName: Building project
+    env:
+      CONFIGURATION: Release
+      TRAVIS_OS_NAME: osx
+  strategy:
+    matrix:
+      ios.x86_64:
+        variant: ios.x86_64
+      osx:
+        variant: osx
+- job: Windows
+  pool:
+    vmImage: windows-2019
+  steps:
+  - checkout: self
+    submodules: true
+  - powershell: ./toolchain/ci/appveyor-deps.ps1
+    displayName: Downloading dependencies
+    env:
+      AZURE_IMAGE: vs2019-win2019
+      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+  - powershell: ./cb.ps1 quick-build $(variant)
+    displayName: Downloading dependencies
+    env:
+      AZURE_IMAGE: vs2019-win2019
+      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+  strategy:
+    matrix:
+      uwp.amd64:
+        variant: uwp.amd64
+      win32.amd64:
+        variant: win32.amd64
 trigger:
   paths:
     include:
@@ -10,83 +90,3 @@ trigger:
     - src/*
     - tests/*
     - toolchain/*
-
-jobs:
-- job: 'Linux'
-  pool:
-    vmImage: 'ubuntu-16.04'
-  strategy:
-    matrix:
-      ubuntu.amd64:
-        variant: ubuntu.amd64
-      steam.amd64:
-        variant: steam.amd64
-      fedora.amd64:
-        variant: fedora.amd64
-      emscripten.wasm:
-        variant: emscripten.wasm
-      android.armv8a.nougat.gles3:
-        variant: android.armv8a.nougat.gles3
-      android.armv7a.kitkat.gles2:
-        variant: android.armv7a.kitkat.gles2
-  steps:
-  - checkout: self
-    submodules: true
-  - script: |
-      ./toolchain/ci/travis-deps.sh
-    displayName: "Downloading system dependencies"
-    env:
-      TRAVIS_OS_NAME: linux
-  - script: |
-      ./cb quick-build $(variant)
-    displayName: "Build $(variant)"
-    env:
-      CONFIGURATION: Release
-- job: 'macOS_iOS'
-  pool:
-    vmImage: 'macos-10.13'
-  strategy:
-    matrix:
-      osx:
-        variant: osx
-      ios.x86_64:
-        variant: ios.x86_64
-  steps:
-  - checkout: self
-    submodules: true
-  - script: |
-      ./toolchain/ci/travis-deps.sh
-    displayName: "Downloading system dependencies"
-    env:
-      TRAVIS_OS_NAME: osx
-  - script: |
-      ./cb quick-build $(variant)
-    displayName: "Build $(variant)"
-    env:
-      CONFIGURATION: Release
-      TRAVIS_OS_NAME: osx
-- job: 'Windows'
-  pool:
-    vmImage: 'vs2017-win2016'
-  strategy:
-    matrix:
-      win32.amd64:
-        variant: win32.amd64
-      uwp.amd64:
-        variant: uwp.amd64
-  steps:
-  - checkout: self
-    submodules: true
-  - powershell: |
-      ./toolchain/ci/appveyor-deps.ps1
-    displayName: "Downloading system dependencies"
-    env:
-      AZURE_IMAGE: "vs2017-win2016"
-      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
-  - powershell: |
-      ./cb.ps1 quick-build $(variant)
-    displayName: "Build $(variant)"
-    env:
-      AZURE_IMAGE: "vs2017-win2016"
-      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
-

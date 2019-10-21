@@ -20,7 +20,7 @@ branches:
   - /^feature.*$/
 compiles:
 - clang
-dist: trusty
+dist: bionic
 env:
   global:
   - MAKEFILE_DIR=toolchain/makers
@@ -54,6 +54,7 @@ matrix:
   - env: BUILDVARIANT=testing.linux.release
   - env: BUILDVARIANT=ubuntu.i686.gles
   - env: BUILDVARIANT=gamecube
+  - env: BUILDVARIANT=steam.amd64
   exclude:
   - env: BUILDVARIANT=android.armv7a.kitkat.gles2
     os: osx

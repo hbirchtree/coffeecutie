@@ -59,16 +59,6 @@ if(NOT TARGET StandardLibs)
             )
     endif()
 
-    if(RASPBERRY)
-        # Linkage on Raspberry kind of looks like Android
-        # We also have bcm_host for accessing OpenGL for some reason
-        # Next we might look for OpenMAX?
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            #        GLESv2
-            bcm_host
-            )
-    endif()
-
     if(WIN32)
         # Don't know what this is, but it's necessary
         if(NOT WIN_UWP)
@@ -120,7 +110,7 @@ if(NOT TARGET StandardLibs)
     if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT EMSCRIPTEN)
         # Necessary for Linux and possibly OS X (latter is untested)
         if(NOT GAMECUBE)
-            list ( APPEND CORE_EXTRA_LIBRARIES dl z )
+            list ( APPEND CORE_EXTRA_LIBRARIES dl )
         endif()
         list ( APPEND CORE_EXTRA_LIBRARIES m)
     endif()

@@ -16,7 +16,8 @@ function create_identity()
     \"service\": \"${2:-continuous-integration/unknown-ci}\",
     \"event\": \"${3:-push}\",
     \"branch\": \"${4:-master}\",
-    \"build_id\": \"${build_id:-unknown}\"
+    \"build_id\": \"${build_id:-unknown}\",
+    \"build_url\": \"${6}\"
 }"
     fi
  
@@ -58,7 +59,12 @@ function travis_get_path()
         local branch=`git -C "$TRAVIS_BUILD_DIR" rev-parse --abbrev-ref HEAD`
     fi
 
-    create_identity "$repo_slug" "$CI_PREFIX/travis-ci" "$TRAVIS_BRANCH" "$repo_event" "$identifier"
+    create_identity "$repo_slug" \
+        "$CI_PREFIX/travis-ci" \
+        "$TRAVIS_BRANCH" \
+        "$repo_event" \
+        "$identifier" \
+        "$TRAVIS_JOB_WEB_URL"
 }
 
 function jenkins_get_path()
@@ -81,8 +87,10 @@ CI_IDENTITY="generic-repository/generic-ci/service/push"
 
 if [ ! -z $TRAVIS_BRANCH ]; then
     travis_get_path
-fi
-
-if [ ! -z $JENKINS_URL ]; then
-    jenkins_get_path
+else
+    if [ ! -z $JENKINS_URL ]; then
+        jenkins_get_path
+    else
+        echo ""
+    fi
 fi

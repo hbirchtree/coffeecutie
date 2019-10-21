@@ -8,16 +8,17 @@ case "${TRAVIS_OS_NAME}" in
     echo " * Travis/CI people, if you are seeing this, some systems require extended binary format support to work :/"
     docker run --rm --privileged multiarch/qemu-user-static:register
 
-    sudo apt-get -qy install python-requests python-yaml python3-requests
+    sudo apt-get -qy install python3-pip python-requests python-yaml python3-requests python3-paho-mqtt
 ;;
 "osx")
     #brew install sdl2 cmake openssl python3 python jq
     #brew upgrade python python3
-    pip3 install pyyaml requests
-    exit 0
+    pip3 install pyyaml requests paho-mqtt
 ;;
 *)
     echo " * No OS name was provided, this is an error"
     exit 1
 ;;
 esac
+
+# Common to all platforms
