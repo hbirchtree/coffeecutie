@@ -729,7 +729,7 @@ docs: FORCE
 	-e CMAKE_TARGET=install
 
 # Emscripten with WebAsm and asm.js
-# Compiler: Clang 4+
+# Compiler: Clang 7+
 emscripten.asmjs: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -744,15 +744,15 @@ emscripten.asmjs: FORCE
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
-	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/emscripten/master/cmake/Modules/Platform/Emscripten.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.asmjs \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
 	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
@@ -766,7 +766,7 @@ emscripten.asmjs: FORCE
 	-e CMAKE_TARGET=install
 
 # Emscripten with WebAsm and asm.js
-# Compiler: Clang 4+
+# Compiler: Clang 7+
 emscripten.wasm: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -781,15 +781,15 @@ emscripten.wasm: FORCE
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/emscripten/master/cmake/Modules/Platform/Emscripten.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
 	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
@@ -803,7 +803,7 @@ emscripten.wasm: FORCE
 	-e CMAKE_TARGET=install
 
 # Emscripten with WebAsm and asm.js
-# Compiler: Clang 4+
+# Compiler: Clang 7+
 emscripten.wasm.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
@@ -818,15 +818,15 @@ emscripten.wasm.shell: FORCE
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/emscripten/master/cmake/Modules/Platform/Emscripten.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'Unix Makefiles'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
 	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
@@ -840,7 +840,7 @@ emscripten.wasm.shell: FORCE
 	-e CMAKE_TARGET=install
 
 # Fedora build in a Fedora Docker
-# Compiler: GCC 5+
+# Compiler: GCC 8+
 fedora.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -868,7 +868,7 @@ fedora.amd64: FORCE
 	-e CMAKE_TARGET=install
 
 # Fedora build in a Fedora Docker
-# Compiler: GCC 5+
+# Compiler: GCC 8+
 fedora.amd64.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
@@ -1179,7 +1179,7 @@ steam.amd64.shell: FORCE
 	-e CMAKE_TARGET=install
 
 # Lowfat debug-mode testing
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 testing.linux.lowfat.debug: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -1214,7 +1214,7 @@ testing.linux.lowfat.debug: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Lowfat release-mode testing
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 testing.linux.lowfat.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -1249,7 +1249,7 @@ testing.linux.lowfat.release: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Release-mode testing
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 testing.linux.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -1283,7 +1283,7 @@ testing.linux.release: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -1314,7 +1314,7 @@ ubuntu.amd64: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64.tools: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -1354,7 +1354,7 @@ ubuntu.amd64.tools: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -1385,7 +1385,7 @@ ubuntu.amd64.gles2: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -1416,7 +1416,7 @@ ubuntu.amd64.gles3: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.i686.gles: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
@@ -1444,7 +1444,7 @@ ubuntu.i686.gles: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.i686.gles2: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \

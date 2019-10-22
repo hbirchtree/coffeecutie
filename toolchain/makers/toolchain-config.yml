@@ -111,7 +111,7 @@ coverage:
     - -e CXX=
 
 testing.linux.*:
-  =compiler: GCC 5+
+  =compiler: GCC 7+
   =git-dep-target: ubuntu.amd64
   +container-opts:
     - -e CC=
@@ -142,7 +142,7 @@ testing.linux.*:
 
 .*ubuntu.*:
   =description: Ubuntu build in a Ubuntu Docker
-  =compiler: GCC 5+
+  =compiler: GCC 7+
   =preload: linux-generic.cmake
   .*i686.*:
     =container: ubuntu-i686
@@ -154,7 +154,7 @@ testing.linux.*:
 
 .*fedora.*:
   =description: Fedora build in a Fedora Docker
-  =compiler: GCC 5+
+  =compiler: GCC 8+
   =preload: linux-fedora.cmake
   =container: fedora
 
@@ -174,11 +174,11 @@ testing.linux.*:
 
 .*emscripten.*:
   =description: Emscripten with WebAsm and asm.js
-  =compiler: Clang 4+
+  =compiler: Clang 7+
   =container: emscripten
   =preload: js-emscripten.cmake
   =generator: Unix Makefiles
-  =emscripten.root: $(dependencies.emscripten.target)/emscripten/master
+  =emscripten.root: $(dependencies.emscripten.target)/upstream/emscripten
   =emscripten.cmake: $(emscripten.root)/cmake
   +dependencies:
     - emscripten
