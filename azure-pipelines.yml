@@ -1,19 +1,19 @@
+trigger:
+  paths:
+    include:
+    - examples/*
+    - src/*
+    - tests/*
+    - toolchain/*
+  branches:
+    include:
+    - master
+    - /^testing.*$/
+    - /^feature.*$/
 jobs:
 - job: Linux
   pool:
     vmImage: ubuntu-18.04
-  steps:
-  - checkout: self
-    submodules: true
-  - script: ./toolchain/ci/travis-deps.sh
-    displayName: Downloading dependencies
-    env:
-      TRAVIS_OS_NAME: linux
-    
-  - script: ./cb quick-build $(variant)
-    displayName: Building project
-    env:
-      CONFIGURATION: Release
   strategy:
     matrix:
       android.armv7a.kitkat.gles2:
@@ -40,9 +40,26 @@ jobs:
         variant: ubuntu.amd64
       ubuntu.i686.gles:
         variant: ubuntu.i686.gles
+  steps:
+  - checkout: self
+    submodules: true
+  - script: ./toolchain/ci/travis-deps.sh
+    displayName: Downloading dependencies
+    env:
+      TRAVIS_OS_NAME: linux
+  - script: ./cb quick-build $(variant)
+    displayName: Building project
+    env:
+      CONFIGURATION: Release
 - job: macOS_and_iOS
   pool:
     vmImage: macos-10.14
+  strategy:
+    matrix:
+      ios.x86_64:
+        variant: ios.x86_64
+      osx:
+        variant: osx
   steps:
   - checkout: self
     submodules: true
@@ -55,15 +72,15 @@ jobs:
     env:
       CONFIGURATION: Release
       TRAVIS_OS_NAME: osx
-  strategy:
-    matrix:
-      ios.x86_64:
-        variant: ios.x86_64
-      osx:
-        variant: osx
 - job: Windows
   pool:
     vmImage: windows-2019
+  strategy:
+    matrix:
+      uwp.amd64:
+        variant: uwp.amd64
+      win32.amd64:
+        variant: win32.amd64
   steps:
   - checkout: self
     submodules: true
@@ -77,16 +94,3 @@ jobs:
     env:
       AZURE_IMAGE: vs2019-win2019
       OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
-  strategy:
-    matrix:
-      uwp.amd64:
-        variant: uwp.amd64
-      win32.amd64:
-        variant: win32.amd64
-trigger:
-  paths:
-    include:
-    - examples/*
-    - src/*
-    - tests/*
-    - toolchain/*

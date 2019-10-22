@@ -1,5 +1,5 @@
 from os.path import dirname
-from yaml import load, dump
+from oyaml import load, dump, loader # oyaml allows ordering in dict
 from python.common import try_get_key
 from collections import namedtuple
 
@@ -18,7 +18,7 @@ def assertm(condition, message='BAD ASSERT'):
 
 def parse_yaml(source_file):
     with open(source_file, mode='r') as f:
-        data = load(f.read())
+        data = load(f.read(), Loader=loader.Loader)
         return data
 
 

@@ -22,3 +22,5 @@ case "${TRAVIS_OS_NAME}" in
 esac
 
 # Common to all platforms
+pip3 install oyaml # for ordered yaml creation
+

@@ -1,26 +1,15 @@
-addons:
-  homebrew:
-    packages:
-    - sdl2
-    - cmake
-    - python3
-    - python
-    - jq
-    update: true
-after_success:
-- toolchain/ci/travis-deploy.sh
-apt:
-  update: true
-before_script:
-- toolchain/ci/travis-deps.sh
-branches:
-  only:
-  - master
-  - /^testing.*$/
-  - /^feature.*$/
+language: cpp
+dist: bionic
+sudo: required
+services:
+- docker
+notifications:
+  email: true
+os:
+- linux
+- osx
 compiles:
 - clang
-dist: bionic
 env:
   global:
   - MAKEFILE_DIR=toolchain/makers
@@ -42,8 +31,38 @@ env:
   - BUILDVARIANT=ios.x86_64
   - BUILDVARIANT=osx
   - BUILDVARIANT=coverage
-language: cpp
 matrix:
+  exclude:
+  - os: osx
+    env: BUILDVARIANT=android.armv7a.kitkat.gles2
+  - os: osx
+    env: BUILDVARIANT=android.armv8a.nougat.gles3
+  - os: osx
+    env: BUILDVARIANT=emscripten.wasm
+  - os: osx
+    env: BUILDVARIANT=fedora.amd64
+  - os: osx
+    env: BUILDVARIANT=gamecube
+  - os: osx
+    env: BUILDVARIANT=raspberry.armhf
+  - os: osx
+    env: BUILDVARIANT=steam.amd64
+  - os: osx
+    env: BUILDVARIANT=testing.linux.lowfat.debug
+  - os: osx
+    env: BUILDVARIANT=testing.linux.lowfat.release
+  - os: osx
+    env: BUILDVARIANT=testing.linux.release
+  - os: osx
+    env: BUILDVARIANT=ubuntu.amd64
+  - os: osx
+    env: BUILDVARIANT=ubuntu.i686.gles
+  - os: linux
+    env: BUILDVARIANT=ios.x86_64
+  - os: linux
+    env: BUILDVARIANT=osx
+  - os: osx
+    env: BUILDVARIANT=coverage
   allow_failures:
   - env: BUILDVARIANT=maemo.armel
   - env: BUILDVARIANT=uwp.amd64
@@ -55,44 +74,25 @@ matrix:
   - env: BUILDVARIANT=ubuntu.i686.gles
   - env: BUILDVARIANT=gamecube
   - env: BUILDVARIANT=steam.amd64
-  exclude:
-  - env: BUILDVARIANT=android.armv7a.kitkat.gles2
-    os: osx
-  - env: BUILDVARIANT=android.armv8a.nougat.gles3
-    os: osx
-  - env: BUILDVARIANT=emscripten.wasm
-    os: osx
-  - env: BUILDVARIANT=fedora.amd64
-    os: osx
-  - env: BUILDVARIANT=gamecube
-    os: osx
-  - env: BUILDVARIANT=raspberry.armhf
-    os: osx
-  - env: BUILDVARIANT=steam.amd64
-    os: osx
-  - env: BUILDVARIANT=testing.linux.lowfat.debug
-    os: osx
-  - env: BUILDVARIANT=testing.linux.lowfat.release
-    os: osx
-  - env: BUILDVARIANT=testing.linux.release
-    os: osx
-  - env: BUILDVARIANT=ubuntu.amd64
-    os: osx
-  - env: BUILDVARIANT=ubuntu.i686.gles
-    os: osx
-  - env: BUILDVARIANT=ios.x86_64
-    os: linux
-  - env: BUILDVARIANT=osx
-    os: linux
-  - env: BUILDVARIANT=coverage
-    os: osx
-notifications:
-  email: true
-os:
-- linux
-- osx
+branches:
+  only:
+  - master
+  - /^testing.*$/
+  - /^feature.*$/
+apt:
+  update: true
+addons:
+  homebrew:
+    update: true
+    packages:
+    - sdl2
+    - cmake
+    - python3
+    - python
+    - jq
+before_script:
+- toolchain/ci/travis-deps.sh
 script:
 - toolchain/ci/travis-build.sh
-services:
-- docker
-sudo: required
+after_success:
+- toolchain/ci/travis-deploy.sh

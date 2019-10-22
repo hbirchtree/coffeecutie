@@ -13,10 +13,15 @@ def pipelines_gen_config(build_info, repo_dir):
     macos_targets = {x: {'variant': x} for x in macos_targets }
     windows_targets = {x: {'variant': x} for x in windows_targets }
 
+    include_branches = [x['name'] for x in try_get_key(build_info, 'branches', [])]
+
     return {
             'trigger': {
                 'paths': {
                     'include': ['examples/*', 'src/*', 'tests/*', 'toolchain/*']
+                    },
+                'branches': {
+                    'include': include_branches
                     }
                 },
             'jobs': [
