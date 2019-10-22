@@ -111,7 +111,7 @@ if(NOT EMSCRIPTEN AND NOT APPLE)
         NAMES
             zlib
         )
-    find_package ( zlib REQUIRED )
+    find_package ( zlib )
 endif()
 coffee_library (
     TARGET CoreCompression
