@@ -122,7 +122,6 @@ coffee_library (
     LIBRARIES CoreCommon
     )
 if(TARGET zlib::zlibstatic AND NOT EMSCRIPTEN AND NOT APPLE)
-    message ( "Found zlibstatic" )
     target_link_libraries ( CoreCompression PUBLIC
         zlib::zlibstatic
         )
