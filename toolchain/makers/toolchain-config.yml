@@ -173,11 +173,10 @@ testing.linux.*:
 
 
 .*emscripten.*:
-  =description: Emscripten with WebAsm and asm.js
+  =description: Emscripten with WebAssembly
   =compiler: Clang 7+
   =container: emscripten
   =preload: js-emscripten.cmake
-  =generator: Unix Makefiles
   =emscripten.root: $(dependencies.emscripten.target)/upstream/emscripten
   =emscripten.cmake: $(emscripten.root)/cmake
   +dependencies:

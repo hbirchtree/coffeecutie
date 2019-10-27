@@ -3,6 +3,7 @@
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/core/base_state.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
@@ -93,7 +94,7 @@ detail::EntityContainer& createContainer()
 
     if(container)
         return *container;
-    
+
     container = stl_types::MkShared<detail::EntityContainer>();
 
     using namespace Coffee;
@@ -117,7 +118,7 @@ detail::EntityContainer& createContainer()
                 C_ERROR_CHECK(ec)
             }
 
-            auto      eventMain = container->service<AppMain>();
+            auto eventMain = container->service<AppMain>();
             C_PTR_CHECK(eventMain)
             eventMain->load(*container, ec);
             C_ERROR_CHECK(ec)
@@ -142,12 +143,12 @@ detail::EntityContainer& createContainer()
         }
         default:
         {
-            auto& app_bus = *container->service<EventBus<AppEvent>>();
+            auto&    app_bus = *container->service<EventBus<AppEvent>>();
             AppEvent appevent;
             appevent.type = AppEvent::None;
             union
             {
-                LifecycleEvent lifecycle;
+                LifecycleEvent  lifecycle;
                 NavigationEvent navi;
             };
             switch(event)
@@ -194,7 +195,6 @@ detail::EntityContainer& createContainer()
                 app_bus.process(appevent, &lifecycle);
                 break;
             }
-
         }
         }
     };
@@ -244,7 +244,7 @@ void configureDefaults(AppLoader& loader)
 
     auto& window = loader.config<WindowConfig>();
 
-    window.title = {};
+    window.title = Coffee::State::GetAppData()->application_name;
     window.size  = {1280, 720};
 }
 
@@ -288,9 +288,8 @@ void addDefaults(
 #endif
 
     /* Selection of GL binding */
-#if defined(FEATURE_ENABLE_GLKitComponent) || \
-    defined(FEATURE_ENABLE_ANativeComponent) || \
-    defined(COFFEE_EMSCRIPTEN) || \
+#if defined(FEATURE_ENABLE_GLKitComponent) ||                                 \
+    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN) || \
     defined(COFFEE_RASPBERRYPI)
     loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
 #elif defined(FEATURE_ENABLE_GLADComponent)

@@ -157,6 +157,8 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         return;
     }
 
+    SDL_SetWindowTitle(m_window, config.title.c_str());
+
     auto nativeWindowInfo = c.service<comp_app::PtrNativeWindowInfo>();
     if(nativeWindowInfo)
         getWindow(m_window, *nativeWindowInfo);

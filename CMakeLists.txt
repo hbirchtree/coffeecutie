@@ -20,7 +20,7 @@ dependency_get (
         appimage-runtime
     )
 
-set ( NATIVE_LIB_BUNDLE_TAG "rel-0.3.2.2.6" )
+set ( NATIVE_LIB_BUNDLE_TAG "rel-0.3.2.2.9" )
 
 set ( COFFEE_EXT_LIBRARY_DIR
     "${CMAKE_SOURCE_DIR}/src/libs"

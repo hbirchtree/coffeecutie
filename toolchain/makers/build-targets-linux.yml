@@ -58,7 +58,6 @@ testing:
 docs:
   - .
 emscripten:
-  - asmjs
   - wasm
   - wasm$(shell)
 maemo:

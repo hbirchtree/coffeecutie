@@ -728,44 +728,7 @@ docs: FORCE
 	-e BUILD_NAME=docs \
 	-e CMAKE_TARGET=install
 
-# Emscripten with WebAsm and asm.js
-# Compiler: Clang 7+
-emscripten.asmjs: FORCE
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
-	-e EXTRA_OPTIONS=" \
-	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten.cmake \
-	-DBUILD_ASSIMP=ON \
-	-DBUILD_AUDIO=OFF \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=ON \
-	-DBUILD_OPENSSL=OFF \
-	-DBUILD_SDL2=ON \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
-	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
-	-DGENERATE_HTML=ON \
-	-DGIT_DEP_BUILDVARIANT=emscripten.asmjs \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'Unix Makefiles'" \
-	-e DOCKER_EXTRA_OPTIONS=" \
-	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
-	-e CMAKE='emcmake cmake' \
-	-v $(SOURCE_DIR):/home/coffee/project:ro \
-	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/emscripten.asmjs:/home/coffee/build:rw \
-	-v $(COFFEE_DIR):/home/coffee/library:ro \
-	--workdir \"$(CMAKE_BUILD_DIR)\"" \
-	-e DOCKER_CONFIG=emscripten \
-	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
-	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=emscripten.asmjs \
-	-e CMAKE_TARGET=install
-
-# Emscripten with WebAsm and asm.js
+# Emscripten with WebAssembly
 # Compiler: Clang 7+
 emscripten.wasm: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
@@ -786,7 +749,7 @@ emscripten.wasm: FORCE
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'Unix Makefiles'" \
+	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
@@ -802,7 +765,7 @@ emscripten.wasm: FORCE
 	-e BUILD_NAME=emscripten.wasm \
 	-e CMAKE_TARGET=install
 
-# Emscripten with WebAsm and asm.js
+# Emscripten with WebAssembly
 # Compiler: Clang 7+
 emscripten.wasm.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
@@ -823,7 +786,7 @@ emscripten.wasm.shell: FORCE
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'Unix Makefiles'" \
+	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
