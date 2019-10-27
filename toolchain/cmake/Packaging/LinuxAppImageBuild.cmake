@@ -166,7 +166,7 @@ function( APPIMAGE_PACKAGE
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND
             (NOT "${LIBRARIES}" STREQUAL "" OR NOT "${LIBRARY_FILES}" STREQUAL ""))
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
             COMMAND bash -c '${CMAKE_STRIP} `find ${APPIMAGE_LIBRARY_DIR} -type f`'
             )
