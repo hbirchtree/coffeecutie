@@ -1,0 +1,33 @@
+# Updating MODULE_VERSION
+execute_process (
+    COMMAND "@COFFEE_DESKTOP_DIRECTORY@/version_generate.py"
+    OUTPUT_VARIABLE DATE_VERSION
+    )
+execute_process (
+    COMMAND "@COFFEE_DESKTOP_DIRECTORY@/../version.py" none
+    OUTPUT_VARIABLE RELEASE_VERSION
+    )
+execute_process (
+    COMMAND ${GITCOMMAND} rev-parse HEAD
+    WORKING_DIRECTORY "@COFFEE_DESKTOP_DIRECTORY@"
+    OUTPUT_VARIABLE GIT_VERSION
+    )
+
+string ( REPLACE "\n" "" RELEASE_VERSION "${RELEASE_VERSION}" )
+string ( REPLACE "\n" "" DATE_VERSION "${DATE_VERSION}" )
+string ( REPLACE "\n" "" GIT_VERSION "${GIT_VERSION}" )
+
+set ( MODULE_VERSION "${RELEASE_VERSION}" )
+
+if(GIT_VERSION)
+    set ( MODULE_VERSION "${MODULE_VERSION}-${GIT_VERSION}" )
+endif()
+if(DATE_VERSION)
+    set ( MODULE_VERSION "${MODULE_VERSION}-${DATE_VERSION}" )
+endif()
+
+message ( STATUS "Writing version ${MODULE_VERSION}" )
+
+file ( WRITE "@VERSION_FILE@"
+    "#define MODULE_VERSION \"${MODULE_VERSION}\"\n"
+    )

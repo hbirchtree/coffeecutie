@@ -4,11 +4,13 @@
 #include <peripherals/identify/compiler.h>
 #include <peripherals/stl/types.h>
 
+#include "module_version.h"
+
 namespace platform {
 namespace info {
 
 const cstring architecture      = COFFEE_ARCH;
-const cstring build_version     = C_STR(COFFEE_BUILD_STRING);
+const cstring build_version     = MODULE_VERSION;
 const cstring platform_identity = C_SYSTEM_STRING;
 const cstring compiler          = C_COMPILER_DEFINE_STRING(
     C_COMPILER_NAME,

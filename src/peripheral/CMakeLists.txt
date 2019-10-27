@@ -18,6 +18,8 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+gen_version_header ( PeripheralLib )
+
 target_compile_definitions ( PeripheralLib PRIVATE
     -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
     )
