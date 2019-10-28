@@ -85,7 +85,7 @@ function( APPIMAGE_PACKAGE
     list ( APPEND APPIMAGE_DATA
         ${DATA} )
 
-    add_custom_target ( ${TARGET}.AppImage DEPENDS ${TARGET} )
+    add_custom_target ( ${TARGET}.AppImage ALL DEPENDS ${TARGET} )
 
     add_custom_command ( TARGET ${TARGET}.AppImage
         PRE_BUILD
