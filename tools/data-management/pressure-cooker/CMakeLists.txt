@@ -1,3 +1,5 @@
+option ( PRESSURIZE_FIND_TIFF "Look for libtiff" OFF )
+
 dependency_get (
     SOURCE hbirchtree/native-library-bundle
     TAG ${NATIVE_LIB_BUNDLE_TAG}
@@ -12,10 +14,13 @@ dependency_get (
 set ( SPVTOOLS_DIR "${SHADERC_DIR}" )
 
 find_package( Squish QUIET     )
-find_package( TIFF QUIET       )
 find_package( shaderc QUIET    )
 find_package( SPIRVCross QUIET )
 find_package( SPIRVTools QUIET )
+
+if(PRESSURIZE_FIND_TIFF)
+    find_package( TIFF QUIET )
+endif()
 
 option ( BUILD_ETC2COMP "Build with ETC1/ETC2 compression support" OFF )
 
@@ -40,7 +45,7 @@ coffee_application (
     USE_CMD
     TITLE "Pressure Cooker"
     SOURCES main.cpp
-    LIBRARIES Core
+    LIBRARIES Core CoreVirtFS
     BUNDLE_LIBRARIES ${PRESSURIZERS}
     )
 
@@ -49,7 +54,7 @@ coffee_application (
     USE_CMD
     TITLE "Depressurizer"
     SOURCES depressure_main.cpp
-    LIBRARIES Core
+    LIBRARIES Core CoreVirtFS
     )
 
 if(BUILD_ASSIMP)
@@ -98,7 +103,7 @@ if(SQUISH_FOUND)
             )
     endif()
 
-    if(TIFF_FOUND)
+    if(PRESSURIZE_FIND_TIFF AND TIFF_FOUND)
         target_compile_definitions ( PressurizeTextures
             PRIVATE
             HAVE_LIBTIFF

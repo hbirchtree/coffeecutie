@@ -138,8 +138,21 @@ EVENT_TRANSLATE(CIMouseButtonEvent)
 
 EVENT_TRANSLATE(CIMouseMoveEvent)
 {
-    return {Coffee::PtF(ev.motion.x, ev.motion.y),
+    CIMouseMoveEvent out = {Coffee::PtF(ev.motion.x, ev.motion.y),
             Coffee::PtF(ev.motion.xrel, ev.motion.yrel)};
+
+    auto buttons = SDL_GetMouseState(nullptr, nullptr);
+
+    using BTN = CIMouseButtonEvent;
+
+    out.btn = 0;
+    out.btn |= (buttons & SDL_BUTTON_LMASK) ? BTN::LeftButton : 0;
+    out.btn |= (buttons & SDL_BUTTON_MMASK) ? BTN::MiddleButton : 0;
+    out.btn |= (buttons & SDL_BUTTON_RMASK) ? BTN::RightButton : 0;
+    out.btn |= (buttons & SDL_BUTTON_X1MASK) ? BTN::X1Button : 0;
+    out.btn |= (buttons & SDL_BUTTON_X2MASK) ? BTN::X2Button : 0;
+
+    return out;
 }
 
 EVENT_TRANSLATE(CIScrollEvent)
@@ -180,3 +193,4 @@ EVENT_TRANSLATE(CIQuit)
 
 } // namespace translate
 } // namespace sdl2
+

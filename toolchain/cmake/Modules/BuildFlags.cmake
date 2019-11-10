@@ -43,10 +43,6 @@ if(NOT DEFINED COFFEE_BUILD_STRING)
         )
 endif()
 
-install (
-    FILES "${CMAKE_BINARY_DIR}/VERSION.${PROJECT_NAME}"
-    DESTINATION share
-    )
 
 ################################################################################
 # Disabling dynamic linking on unsupported platforms

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/virtfs/virtualfs.h>
 
 namespace Coffee {
 namespace VirtFS {

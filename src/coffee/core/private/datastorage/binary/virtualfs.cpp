@@ -1,6 +1,6 @@
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/virtfs/virtualfs.h>
 
-#include <coffee/core/datastorage/compression/libz.h>
+#include <coffee/compression/libz.h>
 
 #include "directory_index.h"
 

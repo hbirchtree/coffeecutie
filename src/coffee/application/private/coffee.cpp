@@ -3,7 +3,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/argument_handling.h>
-#include <coffee/core/base/jsonlogger.h>
+#include <coffee/core/logging/jsonlogger.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>

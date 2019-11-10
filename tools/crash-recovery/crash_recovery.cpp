@@ -59,9 +59,12 @@ i32 crash_main(i32, cstring_w*)
 
     args.push_back(nullptr);
 
-    if(args.size() < 1)
+    if(args.size() < 2)
     {
         cOutputPrint("No program specified");
+        cOutputPrint(" - Specify CRASH_API to submit reports");
+        cOutputPrint(" - Specify CRASH_APITRACE to enable apitrace");
+        cOutputPrint(" - Specify CRASH_WORKING_DIR to change working directory of child");
         return -1;
     }
 
@@ -91,6 +94,7 @@ i32 crash_main(i32, cstring_w*)
             platform::url::Path("Resources");
 #endif
 
+    cDebug("Spawning child");
     auto spawnInfo = posix::proc::spawn<char*>({args.at(0), args, workingDir});
 
     posix::fd::close(STDIN_FILENO, ec);
@@ -126,7 +130,10 @@ i32 crash_main(i32, cstring_w*)
                     buf->append(read_output(fd.fd));
 
                     if(len < buf->size())
-                        cDebug("{0}", &buf->at(len));
+                        fprintf(
+                            buf == &stdoutBuf ? stdout : stderr, 
+                            "%s", 
+                            &buf->at(len));
                 }
 
                 fd.revents = 0;

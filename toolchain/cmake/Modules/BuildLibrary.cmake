@@ -7,27 +7,6 @@ include ( CMakePackageConfigHelpers )
 set_property (GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS "" )
 set_property (GLOBAL PROPERTY CF_INCLUDE_DIRS "" )
 
-macro( REGISTER_LIBRARY LIBNAME INC_DIR )
-    get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
-    set_property(GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS "${LIBNAME};${LIBRARY_DEFINITIONS}" )
-
-#    get_property( INC_DIRS GLOBAL PROPERTY CF_INCLUDE_DIRS )
-#    set_property(GLOBAL PROPERTY CF_INCLUDE_DIRS "${INC_DIR};${INC_DIRS}" )
-    foreach ( INC ${INC_DIR} )
-        if("${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
-            string ( REGEX REPLACE "^.*BUILD_INTERFACE:(.*)\>+$" "\\1"
-                INC_
-                "${INC}"
-                )
-            string ( REPLACE ">" "" INC_ "${INC_}" )
-            coffee_bundle (
-                HEADER_DIRECTORIES
-                ${INC_}
-                )
-        endif()
-    endforeach()
-endmacro()
-
 macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
     string ( REGEX REPLACE
         "^.*(INSTALL|BUILD)_INTERFACE:(.*)\>+$"
@@ -37,78 +16,28 @@ macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
         )
 endmacro()
 
-macro( GENERATE_FINDSCRIPT )
-    get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
-    get_property( INC_DIRS_ GLOBAL PROPERTY CF_INCLUDE_DIRS )
-
-    get_property( COMP_DEFS_RAW DIRECTORY . PROPERTY COMPILE_DEFINITIONS )
-
-    if ( "${LIBRARY_DEFINITIONS}" STREQUAL "" )
-        return()
-    endif()
-
-    set ( CONFIG_H "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Def.h" )
-    file ( WRITE "${CONFIG_H}" "#pragma once\n\n" )
-    foreach ( DEF ${COMP_DEFS_RAW} )
-        if( "${DEF}" MATCHES "^.*=.*$" )
-            string ( REGEX REPLACE
-                "^(.*)=(.*)$" "\\1 \\2"
-                DEF "${DEF}"
-                )
-        endif()
-        file ( APPEND "${CONFIG_H}"
-            "#define ${DEF}\n\n"
-            )
-    endforeach()
-
-    install (
-        FILES ${CONFIG_H}
-        DESTINATION include
-        )
-
-    foreach(LIBRARY ${LIBRARY_DEFINITIONS})
-        get_property ( LIB_TYPE TARGET ${LIBRARY} PROPERTY
-            TYPE )
-
-        if(NOT "${LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
-            get_property ( LIB_INCLUDES TARGET ${LIBRARY}
-                PROPERTY INCLUDE_DIRECTORIES )
-            foreach(INC_PATH ${LIB_INCLUDES})
-                set ( INC_DIRS "${INC_DIRS};${INC_PATH}" )
-            endforeach()
-        endif()
-    endforeach()
-
-    set ( CONF_INCLUDE_DIRS "" )
-    # Create a client-reproducible form of the incude directories for deploy
-    foreach ( INC ${INC_DIRS} )
-        if(NOT "${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
-            string ( REGEX REPLACE "^.*INSTALL_INTERFACE:(.*)\>+$" "\${COFFEE_ROOT_DIR}/\\1"
-                INC_
-                "${INC}"
-                )
-            string ( REPLACE ">" "" INC_ "${INC_}" )
-            if(NOT IS_ABSOLUTE "${INC_}")
-                set ( CONF_INCLUDE_DIRS "${INC_};${CONF_INCLUDE_DIRS}" )
+macro( HEADER_INSTALL LIBNAME INC_DIR BASE_PREFIX )
+    foreach ( INC ${INC_DIR} )
+        if("${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
+            extract_header_dir ( "${INC}" INC )
+            set ( PREFIX include )
+            if("${INC}" MATCHES ".*include")
+                set ( PREFIX )
             endif()
+            install (
+                DIRECTORY "${INC}"
+                DESTINATION targets/${LIBNAME}/${PREFIX}/${BASE_PREFIX}
+                )
         endif()
     endforeach()
 
-    # Dedupe it, because it's a lot
-    list( REMOVE_DUPLICATES CONF_INCLUDE_DIRS )
-
-    export (
-        TARGETS ${LIBRARY_DEFINITIONS}
-        NAMESPACE ${PROJECT_NAME}::
-        FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+    target_include_directories ( ${LIBNAME} INTERFACE
+        $<INSTALL_INTERFACE:targets/${LIBNAME}/include>
         )
+endmacro()
 
-    configure_package_config_file (
-        "${COFFEE_CMAKE_TEMPLATE_DIR}/Config.cmake.in"
-        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}
-        )
 
+macro( GENERATE_FINDSCRIPT )
     write_basic_package_version_file (
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
         COMPATIBILITY ExactVersion
@@ -117,18 +46,18 @@ macro( GENERATE_FINDSCRIPT )
     install (
         FILES
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
         DESTINATION lib/cmake/${PROJECT_NAME}
         )
 
     install (
         EXPORT ${PROJECT_NAME}
+        FILE ${PROJECT_NAME}Config.cmake
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION lib/cmake/${PROJECT_NAME}
         )
 endmacro()
 
-function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
+function( ADD_EXPORT LIB_TARGET )
     if(ANDROID)
         install(
             TARGETS
@@ -139,7 +68,7 @@ function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
             ARCHIVE DESTINATION "lib/${ANDROID_ABI}"
             LIBRARY DESTINATION "lib/${ANDROID_ABI}"
             RUNTIME DESTINATION "lib/${ANDROID_ABI}"
-            PUBLIC_HEADER DESTINATION include
+            PUBLIC_HEADER DESTINATION include/${LIB_TARGET}
             )
     else()
         install(
@@ -151,14 +80,11 @@ function( ADD_EXPORT LIB_TARGET LIB_HEADER_DIRS )
             ARCHIVE DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             LIBRARY DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             RUNTIME DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
-            PUBLIC_HEADER DESTINATION include
+            PUBLIC_HEADER DESTINATION include/${LIB_TARGET}
 
             COMPONENT bin
             )
     endif()
-
-    register_library( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
-
 endfunction()
 
 macro(COFFEE_LIBRARY)
@@ -166,7 +92,7 @@ macro(COFFEE_LIBRARY)
         LIB
         "LINKABLE;NO_EXPORT"
         "TARGET;LINKAGE;VERSION_CODE;COPYRIGHT;COMPANY"
-        "SOURCES;LIBRARIES;HEADER_DIRS;RESOURCES;BUNDLE_LIBRARIES;BUNDLE_HEADERS"
+        "SOURCES;LIBRARIES;HEADER_DIRS;HEADER_BASE;RESOURCES;BUNDLE_LIBRARIES;BUNDLE_HEADERS"
         ${ARGN}
         )
 
@@ -259,6 +185,7 @@ macro(COFFEE_LIBRARY)
 
     if(NOT LIB_NO_EXPORT)
         add_export ( ${LIB_TARGET} "${LIB_HEADER_DIRS}" )
+        header_install ( ${LIB_TARGET} "${LIB_HEADER_DIRS}" "${LIB_HEADER_BASE}" )
     endif()
 
 endmacro()

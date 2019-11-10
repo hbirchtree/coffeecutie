@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <coffee/components/types.h>
-#include <coffee/core/base/printing/log_interface.h>
+#include <coffee/core/printing/log_interface.h>
 
 namespace Coffee {
 namespace Components {

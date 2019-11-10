@@ -49,7 +49,7 @@ if(BUILD_OPENAL)
         private/abstraction/openal/calsoundtrack.cpp
         private/abstraction/openal/calsoundsample.cpp
 
-        LIBRARIES Audio
+        LIBRARIES Audio CoreObject
         )
 
     if(NOT APPLE AND NOT WIN32)

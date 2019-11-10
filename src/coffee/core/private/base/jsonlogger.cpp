@@ -1,4 +1,4 @@
-#include <coffee/core/base/jsonlogger.h>
+#include <coffee/core/logging/jsonlogger.h>
 
 #include <coffee/core/coffee.h>
 #include <coffee/core/internal_state.h>
@@ -13,7 +13,7 @@
 
 #include <coffee/core/formatting.h>
 
-#include <coffee/core/base/printing/outputprinter.h>
+#include <coffee/core/printing/outputprinter.h>
 
 namespace Coffee {
 

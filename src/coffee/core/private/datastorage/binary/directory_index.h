@@ -3,7 +3,7 @@
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CMath>
 #include <coffee/core/CProfiling>
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/virtfs/virtualfs.h>
 #include <peripherals/libc/memory_ops.h>
 #include <peripherals/stl/threads/job_system.h>
 

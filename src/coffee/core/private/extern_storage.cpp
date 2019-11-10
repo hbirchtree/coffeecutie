@@ -1,8 +1,8 @@
 #include <coffee/core/internal_state.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/base/printing/log_interface.h>
-#include <coffee/core/base/printing/outputprinter.h>
+#include <coffee/core/printing/log_interface.h>
+#include <coffee/core/printing/outputprinter.h>
 #include <coffee/foreign/foreign.h>
 #include <platforms/argument_parse.h>
 #include <platforms/environment.h>

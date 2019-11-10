@@ -7,7 +7,7 @@
 
 #include <coffee/core/formatting.h>
 
-#include <coffee/core/base/printing/outputprinter.h>
+#include <coffee/core/printing/outputprinter.h>
 
 #if defined(COFFEE_ANDROID)
 #include <android/log.h>
