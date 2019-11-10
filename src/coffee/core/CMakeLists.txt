@@ -7,6 +7,13 @@ target_include_directories ( CoreCommon INTERFACE
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include>
+    )
+
+header_install (
+    CoreCommon
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include>
+    ""
     )
 
 target_link_libraries ( CoreCommon INTERFACE
@@ -48,6 +55,13 @@ coffee_library (
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/debug>
     $<INSTALL_INTERFACE:include>
+    HEADER_BASE coffee/core
+    )
+
+header_install (
+    "CoreDebug"
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/strings>
+    coffee
     )
 
 coffee_library (
@@ -76,7 +90,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/files>
-    HEADER_BASE coffee/core/files
+    HEADER_BASE coffee/core
     )
 
 coffee_library (
@@ -94,7 +108,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/task_queue>
-    HEADER_BASE coffee/core/task_queue
+    HEADER_BASE coffee/core
     )
 
 coffee_library (
@@ -109,7 +123,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/logging>
-    HEADER_BASE coffee/core/logging
+    HEADER_BASE coffee/core
     )
 
 #
@@ -175,7 +189,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/virtfs>
-    HEADER_BASE coffee/virtfs
+    HEADER_BASE coffee
     )
 
 #
@@ -191,7 +205,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
-    HEADER_BASE coffee/core/terminal
+    HEADER_BASE coffee/core
     )
 
 #
@@ -216,7 +230,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/object>
-    HEADER_BASE coffee/core/object
+    HEADER_BASE coffee/core
     )
 
 #
@@ -232,7 +246,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/profiler>
-    HEADER_BASE coffee/core/profiler
+    HEADER_BASE coffee/core
     )
 
 #
@@ -251,6 +265,9 @@ coffee_library (
     TARGET EntComp
     LIBRARIES CoreCommon
     SOURCES private/components/allocators.cpp
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/components>
+    HEADER_BASE coffee
     )
 
 #
@@ -260,6 +277,9 @@ coffee_library (
     TARGET Testing
     SOURCES private/unit_tests/framework.cpp
     LIBRARIES CoreTerminal CoreCommon
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
+    HEADER_BASE coffee/core
     )
 
 if(LOWFAT_BUILD)
@@ -307,8 +327,8 @@ coffee_bundle (
     ${STANDARDLIBS_INCLUDE_DIR}
     )
 
-coffee_bundle (
-    FORCE
-    HEADER_DIRECTORIES
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include/coffee>
+header_install (
+    Core
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
+    ""
     )

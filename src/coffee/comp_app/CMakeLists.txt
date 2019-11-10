@@ -10,7 +10,6 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
     )
 
 coffee_library (
@@ -19,7 +18,6 @@ coffee_library (
     LIBRARIES ComponentApp ComponentBundle
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
-    $<INSTALL_INTERFACE:include>
     )
 
 coffee_library (
@@ -28,11 +26,4 @@ coffee_library (
     LIBRARIES ComponentBundleSetup
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dropin_include>
-    $<INSTALL_INTERFACE:include>
-    )
-
-coffee_bundle (
-    HEADER_DIRECTORIES
-    ${CMAKE_CURRENT_SOURCE_DIR}/bundle_include/coffee
-    ${CMAKE_CURRENT_SOURCE_DIR}/dropin_include/coffee
     )

@@ -17,23 +17,31 @@ macro ( EXTRACT_HEADER_DIR INPUT_DIR OUTPUT_VAR )
 endmacro()
 
 macro( HEADER_INSTALL LIBNAME INC_DIR BASE_PREFIX )
-    foreach ( INC ${INC_DIR} )
-        if("${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
-            extract_header_dir ( "${INC}" INC )
-            set ( PREFIX include )
-            if("${INC}" MATCHES ".*include")
-                set ( PREFIX )
+    if(NOT "${INC_DIR}" STREQUAL "")
+        foreach ( INC ${INC_DIR} )
+            if("${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
+                extract_header_dir ( "${INC}" INC )
+                set ( PREFIX include )
+                if("${INC}" MATCHES ".*include$")
+                    set ( PREFIX )
+                endif()
+                install (
+                    DIRECTORY "${INC}"
+                    DESTINATION targets/${LIBNAME}/${PREFIX}/${BASE_PREFIX}
+                    )
+                string ( REGEX REPLACE ".*\/([^\/]*include)$" "\\1"
+                    BASE_SUFFIX "${INC}"
+                    )
+                if(IS_ABSOLUTE "${BASE_SUFFIX}")
+                    set ( BASE_SUFFIX include )
+                endif()
+                target_include_directories ( ${LIBNAME} INTERFACE
+                    $<INSTALL_INTERFACE:targets/${LIBNAME}/${BASE_SUFFIX}>
+                    )
             endif()
-            install (
-                DIRECTORY "${INC}"
-                DESTINATION targets/${LIBNAME}/${PREFIX}/${BASE_PREFIX}
-                )
-        endif()
-    endforeach()
+        endforeach()
 
-    target_include_directories ( ${LIBNAME} INTERFACE
-        $<INSTALL_INTERFACE:targets/${LIBNAME}/include>
-        )
+    endif()
 endmacro()
 
 

@@ -3,11 +3,10 @@
 #include <coffee/core/base.h>
 
 #include <peripherals/libc/output_ops.h>
-
-#include "../printing/verbosity_level.h"
+#include <coffee/core/printing/verbosity_level.h>
 
 #ifndef COFFEE_LOWFAT
-#include "../printing/outputprinter.h"
+#include <coffee/core/printing/outputprinter.h>
 #endif
 
 namespace Coffee {
