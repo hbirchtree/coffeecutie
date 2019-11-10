@@ -1,6 +1,5 @@
 #pragma once
 
-#include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/types/direction.h>
 #include <coffee/core/types/input/event_types.h>
 
