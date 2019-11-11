@@ -159,7 +159,11 @@ if(TARGET zlib::zlibstatic AND NOT EMSCRIPTEN AND NOT APPLE)
         DEPENDENCIES
             zlib
         )
-elseif(APPLE OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID))
+elseif(ANDROID)
+    target_link_libraries ( CoreCompression PUBLIC
+        z
+        )
+elseif(APPLE OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"))
     target_link_libraries ( CoreCompression PUBLIC
         z
         )

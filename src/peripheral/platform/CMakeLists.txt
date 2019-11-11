@@ -60,21 +60,7 @@ endif()
 #
 #
 if(ANDROID)
-    find_package( AndroidGlue REQUIRED )
-
-    add_export( GlueCpuFeatures "" )
-    add_export( Glue "" )
-    add_export( GlueNdkHelper "" )
-
-    target_link_libraries ( PeripheralPlatform PUBLIC
-        GlueCpuFeatures
-        Glue
-        GlueNdkHelper
-        )
-
-    target_include_directories ( PeripheralPlatform PRIVATE
-        platform/android/include
-        )
+    set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
 
     target_sources ( PeripheralPlatform PRIVATE
         platforms/android/sensor.cpp
@@ -83,6 +69,11 @@ if(ANDROID)
         platforms/linux/file.cpp
         platforms/linux/process.cpp
         platforms/linux/sysinfo.cpp
+
+        platforms/android/jnipp.cpp
+        platforms/android/JNIHelper.cpp
+        ${ANDROID_SOURCES_DIR}/ndk_helper/gestureDetector.cpp
+        ${ANDROID_SOURCES_DIR}/cpufeatures/cpu-features.c
         )
 
     target_compile_definitions ( PeripheralPlatform PUBLIC
@@ -95,7 +86,15 @@ if(ANDROID)
         )
 
     target_include_directories ( PeripheralPlatform PUBLIC
+        $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/native_app_glue>
+        $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/ndk_helper>
+        $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/cpufeatures>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include>
+        )
+    header_install (
+        PeripheralPlatform
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include/coffee/jni>
+        coffee
         )
 endif()
 

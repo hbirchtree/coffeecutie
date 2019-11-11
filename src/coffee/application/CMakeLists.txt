@@ -8,7 +8,7 @@ coffee_library (
     private/coffee.cpp
     private/application_start.cpp
 
-    LIBRARIES Core CoreState ComponentApp
+    LIBRARIES PeripheralPlatform Core CoreState ComponentApp
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
@@ -21,19 +21,11 @@ if(ANDROID OR (APPLE AND IOS))
 endif()
 
 if(ANDROID)
-    find_package( AndroidGlue REQUIRED )
+    set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
 
     target_sources ( CoreApplication PRIVATE
-        platform/android/JNIHelper.cpp
-        )
-    target_sources ( CoreApplication PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platform/android/and_main.cpp>
-        )
-
-    target_include_directories ( CoreApplication PUBLIC
-        $<BUILD_INTERFACE:${ANDROID_GLUE_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${NDK_HELPER_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${CPUFEATURES_INCLUDE_DIR}>
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/android/and_main.cpp
+        ${ANDROID_SOURCES_DIR}/native_app_glue/android_native_app_glue.c
         )
     target_include_directories( CoreApplication PRIVATE
         platform/android/include
