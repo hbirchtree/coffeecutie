@@ -112,6 +112,11 @@ i32 coffee_main(i32, cstring_w*)
             cDebug("Controller: {0} -> {1}", ev->controller, ev->connected);
         });
 
+    inputs.addEventHandler(
+        0,
+        EventHandlers::ExitOn<EventHandlers::OnKey<CK_Escape>>(
+            e.service_ref<comp_app::Windowing>()));
+
     auto displays = e.service<comp_app::DisplayInfo>();
 
     if(displays)

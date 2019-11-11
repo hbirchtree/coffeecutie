@@ -228,6 +228,7 @@ void Windowing::show()
 void Windowing::close()
 {
     SDL_HideWindow(m_window);
+    m_container->service<Context>()->m_shouldClose = true;
 }
 
 comp_app::size_2d_t Windowing::size() const
@@ -719,7 +720,7 @@ void KeyboardInput::start_restricted(Proxy& p, time_point const&)
 
     auto inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
 
-    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYUP, SDL_KEYDOWN))
+    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
     {
         auto ev            = translate::event<CIKeyEvent>(event);
         m_register[ev.key] = ev.mod;
