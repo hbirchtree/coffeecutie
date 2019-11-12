@@ -16,7 +16,6 @@ coffee_library (
     LIBRARIES Core Assimp CoreObject CoreCompression
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:targets/AssimpTools/libs/include>
     )
 
 dependency_link (

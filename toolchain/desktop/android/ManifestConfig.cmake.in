@@ -1,0 +1,72 @@
+set ( PROJECT_DIR "@ANDROID_BUILD_OUTPUT@/@AAPK_TARGET@" )
+set ( MANIFEST_FILE "${MANIFEST_TEMPLATE}" )
+set ( ANDROID_BUILD_TOOLS_VER "@ANDROID_BUILD_TOOLS_VER@" )
+
+#########################################################
+#
+# Android features
+#
+#########################################################
+set ( ANDROID_FEATURES "" )
+
+foreach(feat ${ANDROID_REQUIRED_FEATURES})
+    set ( ANDROID_FEATURES
+        "${ANDROID_FEATURES}
+<uses-feature android:name=\"${feat}\"
+    android:required=\"true\" />")
+endforeach()
+foreach(feat ${ANDROID_OPTIONAL_FEATURES})
+    set ( ANDROID_FEATURES
+        "${ANDROID_FEATURES}
+<uses-feature android:name=\"${feat}\"
+    android:required=\"false\" />")
+endforeach()
+
+if(BUILD_GLES)
+    set ( ANDROID_FEATURES
+        "${ANDROID_FEATURES}
+
+<uses-feature android:glEsVersion=\"0x00020000\"
+    android:required=\"true\" />"
+        )
+
+    set ( ANDROID_FEATURES
+        "${ANDROID_FEATURES}
+<uses-feature android:glEsVersion=\"0x00030000\"
+    android:required=\"false\" />
+<uses-feature android:glEsVersion=\"0x00030001\"
+    android:required=\"false\" />
+<uses-feature android:glEsVersion=\"0x00030002\"
+    android:required=\"false\" />"
+        )
+endif()
+
+#########################################################
+#
+# APK permissions
+#
+#########################################################
+
+foreach(perm ${ANDROID_PERMISSIONS_PRE})
+    set ( ANDROID_PERMISSIONS
+        "${ANDROID_PERMISSIONS}
+<uses-permission android:name=\"${perm}\" />"
+        )
+endforeach()
+
+configure_file (
+    "${MANIFEST_TEMPLATE}"
+    "${PROJECT_DIR}/@MANIFEST_PREFIX@/AndroidManifest.xml"
+    @ONLY
+    )
+
+configure_file (
+    "${BUILD_GRADLE_TEMPLATE}"
+    "${PROJECT_DIR}/app/build.gradle"
+    )
+
+configure_file (
+    "${STRINGS_TEMPLATE}"
+    "${PROJECT_DIR}/@APK_RSC_PREFIX@/values/strings.xml"
+    @ONLY
+    )

@@ -69,7 +69,7 @@ function(ANDROIDAPK_PACKAGE)
     ############################################################################
     ############################################################################
 
-    add_library(${AAPK_TARGET} SHARED ${AAPK_SOURCES} )
+    add_library( ${AAPK_TARGET} SHARED ${AAPK_SOURCES} )
     set_property(TARGET ${AAPK_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     get_property (TARGET_LINK_FLAGS TARGET "${AAPK_TARGET}" PROPERTY LINK_FLAGS)
@@ -102,105 +102,108 @@ function(ANDROIDAPK_PACKAGE)
     ############################################################################
 
     #
-    # AndroidManifest.xml templating
+    # AndroidManifest.xml, build.gradle, strings.xml templating
     #
 
-        set ( ANDROID_APPLICATION_COLOR "#E91E63" )
-        set ( ANDROID_APK_BANNER_DATA "" )
-        set ( ANDROID_APK_LOGO_DATA "" )
-        set ( ANDROID_APPLICATION_NAME "${AAPK_TITLE}" )
-        set ( ANDROID_VERSION_CODE ${AAPK_VERSION_CODE} )
-        set ( ANDROID_VERSION_NAME ${COFFEE_BUILD_STRING} )
+    configure_file (
+        ${ANDROID_PROJECT_INPUT}/ManifestConfig.cmake.in
+        ${AAPK_TARGET}ManifestConfig.cmake
+        @ONLY
+        )
 
-        set ( ANDROID_API_TARGET ${AAPK_APK_TARGET} )
-        set ( ANDROID_API_MIN_TARGET ${AAPK_APK_MIN_TARGET} )
+    #
+    # Execute manifest config
+    # Allows us to pull in target properties
+    #
+    add_custom_command ( TARGET ${AAPK_TARGET}.project
+        COMMAND ${CMAKE_COMMAND}
+-DAAPK_ISGAME="$<TARGET_PROPERTY:${AAPK_TARGET},IS_GAME>"
 
-        set ( ANDROID_APK_IS_GAME "android:isGame=\"true\"" )
+-DANDROID_API_TARGET="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_API_TARGET>"
+-DANDROID_API_MIN_TARGET="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_API_MIN_TARGET>"
 
-        set ( ANDROID_PACKAGE_NAME ${AAPK_DOM_NAME}.${PACKAGE_SUFFIX} )
-        set ( ANDROID_STARTUP_LIBRARY "${AAPK_TARGET}" )
-        set ( ANDROID_ACTIVITY_NAME "${ANDROID_PACKAGE_NAME}.NativeActivity" )
-        set ( ANDROID_APK_NAME "${ANDROID_PACKAGE_NAME}-release-unsigned.apk" )
+-DANDROID_PACKAGE_NAME="$<TARGET_PROPERTY:${AAPK_TARGET},PKG_NAME>"
+-DANDROID_STARTUP_LIBRARY="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_LIB>"
+-DANDROID_STARTUP_FUNCTION="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_START>"
+-DANDROID_ACTIVITY_NAME="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_ACTIVITY>"
 
-        #########################################################
-        #
-        # Android features
-        #
-        #########################################################
-        set ( ANDROID_FEATURES "" )
+-DANDROID_APPLICATION_NAME=$<TARGET_PROPERTY:${AAPK_TARGET},APP_TITLE>
+-DANDROID_APPLICATION_COLOR="$<TARGET_PROPERTY:${AAPK_TARGET},APP_COLOR>"
+-DANDROID_VERSION_NAME="$<TARGET_PROPERTY:${AAPK_TARGET},APP_VERSION_STR>"
+-DANDROID_VERSION_CODE="$<TARGET_PROPERTY:${AAPK_TARGET},APP_VERSION_INT>"
 
-        set ( ANDROID_REQUIRED_FEATURES
-            "android.hardware.faketouch"
-            "android.hardware.gamepad"
-            "android.hardware.screen.landscape"
-            "android.hardware.audio.output"
+-DANDROID_ORIENTATION_MODE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_ORIENTATION>"
+-DAAPK_GLESVER="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_GLES_VERSION>"
+-DANDROID_REQUIRED_FEATURES="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_FEATURES>"
+-DANDROID_OPTIONAL_FEATURES="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_FEATURES_OPTIONAL>"
+-DANDROID_PERMISSIONS_PRE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_PERMISSIONS>"
+
+-DBUILD_GRADLE_TEMPLATE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_BUILD_TEMPLATE>"
+-DSTRINGS_TEMPLATE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_STRINGS_TEMPLATE>"
+-DMANIFEST_TEMPLATE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_MANIFEST_TEMPLATE>"
+
+-P ${AAPK_TARGET}ManifestConfig.cmake
+        )
+
+    set ( ANDROID_REQUIRED_FEATURES
+        "android.hardware.faketouch"
+        "android.hardware.gamepad"
+        "android.hardware.screen.landscape"
+        "android.hardware.audio.output"
+        )
+    set ( ANDROID_OPTIONAL_FEATURES
+        "android.hardware.usb.host"
+        "android.hardware.touchscreen"
+        "android.hardware.touchscreen.multitouch"
+        "android.hardware.touchscreen.multitouch.distinct"
+        "android.hardware.touchscreen.multitouch.jazzhand"
+        "android.hardware.sensor.accelerometer"
+        "android.hardware.sensor.gyroscope"
+        "android.hardware.sensor.hifi_sensors"
+        "android.hardware.opengles.aep"
+        )
+    set ( ANDROID_PERMISSIONS_PRE
+        "android.permission.INTERNET"
+        "android.permission.VIBRATE"
+        )
+
+    set_target_properties ( ${AAPK_TARGET} PROPERTIES
+        ANDROID_API_TARGET ${AAPK_APK_TARGET}
+        ANDROID_API_MIN_TARGET ${AAPK_APK_MIN_TARGET}
+        ANDROID_FEATURES
+            "${ANDROID_REQUIRED_FEATURES}"
+        ANDROID_FEATURES_OPTIONAL
+            "${ANDROID_OPTIONAL_FEATURES}"
+        ANDROID_PERMISSIONS
+            "${ANDROID_PERMISSIONS_PRE}"
+        ANDROID_MANIFEST_TEMPLATE
+            "${ANDROID_PROJECT_INPUT}/AndroidManifest.xml.in"
+        ANDROID_STRINGS_TEMPLATE
+            "${ANDROID_PROJECT_INPUT}/strings.xml.in"
+        ANDROID_BUILD_TEMPLATE
+            "${ANDROID_PROJECT_INPUT}/build.gradle.in"
+        ANDROID_LIB
+            "${AAPK_TARGET}"
+        ANDROID_START
+            "ANativeActivity_onCreate"
+        ANDROID_ACTIVITY
+            "${ANDROID_PACKAGE_NAME}.NativeActivity"
+        ANDROID_ORIENTATION
+            # http://developer.android.com/guide/topics/manifest/activity-element.html
+            "sensorLandscape"
+        )
+
+    if(BUILD_GLES_20)
+        set_target_properties ( ${AAPK_TARGET} PROPERTIES
+            ANDROID_GLES_VERSION
+                "0x00020000"
             )
-
-        set ( ANDROID_OPTIONAL_FEATURES
-            "android.hardware.usb.host"
-            "android.hardware.touchscreen"
-            "android.hardware.touchscreen.multitouch"
-            "android.hardware.touchscreen.multitouch.distinct"
-            "android.hardware.touchscreen.multitouch.jazzhand"
-            "android.hardware.sensor.accelerometer"
-            "android.hardware.sensor.gyroscope"
-            "android.hardware.sensor.hifi_sensors"
-            "android.hardware.opengles.aep"
-            "${ANDROID_CUSTOM_PERMISSIONS}"
+    elseif(BUILD_GLES)
+        set_target_properties ( ${AAPK_TARGET} PROPERTIES
+            ANDROID_GLES_VERSION
+                "0x00030000"
             )
-
-        foreach(feat ${ANDROID_REQUIRED_FEATURES})
-            set ( ANDROID_FEATURES
-                "${ANDROID_FEATURES}
-        <uses-feature android:name=\"${feat}\"
-            android:required=\"true\" />")
-        endforeach()
-        foreach(feat ${ANDROID_OPTIONAL_FEATURES})
-            set ( ANDROID_FEATURES
-                "${ANDROID_FEATURES}
-        <uses-feature android:name=\"${feat}\"
-            android:required=\"false\" />")
-        endforeach()
-
-        if(BUILD_GLES)
-            set ( ANDROID_FEATURES
-                "${ANDROID_FEATURES}
-
-        <uses-feature android:glEsVersion=\"0x00020000\"
-            android:required=\"true\" />"
-                )
-
-            set ( ANDROID_FEATURES
-                "${ANDROID_FEATURES}
-        <uses-feature android:glEsVersion=\"0x00030000\"
-            android:required=\"false\" />
-        <uses-feature android:glEsVersion=\"0x00030001\"
-            android:required=\"false\" />
-        <uses-feature android:glEsVersion=\"0x00030002\"
-            android:required=\"false\" />"
-                )
-        endif()
-
-        #########################################################
-        #
-        # APK permissions
-        #
-        #########################################################
-
-        set ( ANDROID_PERMISSIONS_PRE
-            "android.permission.INTERNET"
-            "android.permission.VIBRATE")
-
-        foreach(perm ${ANDROID_PERMISSIONS_PRE})
-            set ( ANDROID_PERMISSIONS
-                "${ANDROID_PERMISSIONS}
-        <uses-permission android:name=\"${perm}\" />"
-                )
-        endforeach()
-
-        # For valid options, see:
-        # http://developer.android.com/guide/topics/manifest/activity-element.html
-        set ( ANDROID_ORIENTATION_MODE "sensorLandscape" )
+    endif()
 
     ############################################################################
     ############################################################################
@@ -215,7 +218,7 @@ function(ANDROIDAPK_PACKAGE)
         set ( RELEASE_PREFIX "debug" )
 
         set ( ANDROID_APK_FILE_OUTPUT
-            "${ANDROID_APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${RELEASE_PREFIX}.apk" )
+            "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}_${RELEASE_PREFIX}.apk" )
 
         set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${AAPK_TARGET} )
 
@@ -258,26 +261,9 @@ function(ANDROIDAPK_PACKAGE)
             COMMAND chmod +x ${BUILD_OUTDIR}/gradlew
             )
 
-        # Fill in AndroidManifest with info create above
-        configure_file (
-            "${ANDROID_PROJECT_INPUT}/AndroidManifest.xml.in"
-            "${BUILD_OUTDIR}/${MANIFEST_PREFIX}/AndroidManifest.xml"
-            @ONLY
-            )
-        # Configure strings.xml with app info
-        configure_file (
-            "${ANDROID_PROJECT_INPUT}/strings.xml.in"
-            "${BUILD_OUTDIR}/${APK_RSC_PREFIX}/values/strings.xml"
-            @ONLY
-            )
         file ( WRITE "${BUILD_OUTDIR}/local.properties"
             "sdk.dir=${ANDROID_SDK}\n"
             "ndk.dir=${ANDROID_NDK}")
-
-        configure_file (
-            "${ANDROID_PROJECT_INPUT}/build.gradle.in"
-            "${BUILD_OUTDIR}/app/build.gradle"
-            )
 
         #
         # Create project directories
@@ -327,6 +313,7 @@ function(ANDROIDAPK_PACKAGE)
     # Build steps
     #
 
+
         add_custom_command( TARGET "${AAPK_TARGET}.apk"
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E env
@@ -342,6 +329,15 @@ function(ANDROIDAPK_PACKAGE)
             "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
             "${ANDROID_APK_FILE_OUTPUT}"
             )
+        add_custom_target ( "${AAPK_TARGET}.install"
+            COMMAND ${CMAKE_COMMAND} -E env
+            GRADLE_OPTS="-Dorg.gradle.daemon=false"
+            ${BUILD_OUTDIR}/gradlew installDebug
+
+            WORKING_DIRECTORY ${BUILD_OUTDIR}
+            )
+
+        add_dependencies ( "${AAPK_TARGET}.install" "${AAPK_TARGET}.apk" )
 
     ############################################################################
     ############################################################################

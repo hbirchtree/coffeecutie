@@ -48,14 +48,18 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
     )
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 
-target_include_directories ( ASIO SYSTEM PUBLIC
+header_install (
+    ASIO
     $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
-    $<INSTALL_INTERFACE:include>
+    ""
+    )
+
+target_include_directories ( ASIO PUBLIC
+    $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
     )
 
 if(BUILD_OPENSSL)
@@ -75,11 +79,4 @@ endif()
 
 target_compile_definitions( ASIO PUBLIC
     -DASIO_STANDALONE
-    )
-
-coffee_bundle (
-    DESTINATION libs
-
-    HEADER_DIRECTORIES
-    "${ASIO_DIR}/asio/include"
     )
