@@ -86,3 +86,6 @@ gamecube.*:
 .*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten|osx).*:
   +cmake-opts:
     - -DBUILD_ASSIMP=ON
+(ubuntu.amd64|osx).*:
+  +cmake-opts:
+    - -DBUILD_DISCORD_RPC=ON

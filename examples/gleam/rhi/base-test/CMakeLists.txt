@@ -19,8 +19,7 @@ coffee_application (
 
 if(TARGET ASIO)
     target_link_libraries ( GLeamBaseTest_RHI PUBLIC ASIO )
-endif()
-
-if(TARGET DiscordLatte)
-    target_link_libraries ( GLeamBaseTest_RHI PUBLIC DiscordLatte )
+    if(TARGET DiscordLatte)
+        target_link_libraries ( GLeamBaseTest_RHI PUBLIC DiscordLatte )
+    endif()
 endif()

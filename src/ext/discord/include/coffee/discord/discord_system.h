@@ -20,6 +20,8 @@ using Tag = Components::TagType<detail::DiscordData>;
 
 struct Subsystem : Components::Globals::ValueSubsystem<Tag>
 {
+    using tag_type = Tag;
+
     Subsystem(RuntimeQueue* queue, DiscordOptions&& options) :
         m_discordQueue(queue), m_options(std::move(options))
     {

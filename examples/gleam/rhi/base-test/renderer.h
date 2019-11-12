@@ -33,8 +33,6 @@
 
 #include <coffee/core/CDebug>
 
-#undef FEATURE_ENABLE_ASIO
-
 //#define USE_NULL_RENDERER
 
 using namespace Coffee;
@@ -537,6 +535,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             Chrono::milliseconds(100),
             [mainQueue, &discord, &network, &imgCoder, &mainSurface]() {
                 ProfContext _("Awaiting Discord");
+                cDebug("Waiting for discord...");
                 if(discord.awaitReady(Chrono::milliseconds(10)))
                 {
                     cDebug("User ID: {0}", discord.playerInfo().userTag);
@@ -561,17 +560,19 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                             });
                     }
 
+                    discord.game().put(platform::online::GameDelegate::Builder(
+                        "Cool Game", "Gaming", MkUrl("coffee_cup")));
+
                     runtime_queue_error ec;
                     RuntimeQueue::CancelTask(RuntimeQueue::GetSelfId(ec), ec);
                 }
             },
             rqec);
 
+        C_ERROR_CHECK(rqec);
+
         discord.start();
     }
-//    service->getPresence()->put({"", 1, 1, {}, {}});
-//    service->getGame()->put(platform::online::GameDelegate::Builder(
-//        {}, "Messing around", MkUrl("coffee_cup")));
 #endif
 #endif
 
