@@ -2,6 +2,8 @@
 # Shorthand for enabling C++11, with less copy-pasta
 ################################################################################
 
+include (CheckIPOSupported)
+
 if(EMSCRIPTEN)
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17" CACHE STRING "" FORCE )
 endif()
@@ -24,4 +26,16 @@ macro(TARGET_ENABLE_CXX11 TARGET)
     set_property ( TARGET ${TARGET}
         PROPERTY CXX_STANDARD_REQUIRED ON
         )
+endmacro()
+
+macro(TARGET_ENABLE_LTO TARGET)
+    if("${CMAKE_BUILD_TYPE}" MATCHES "Rel*")
+        check_ipo_supported ( RESULT LTOSupported )
+
+        if(LTOSupported)
+            set_property ( TARGET ${TARGET}
+                PROPERTY INTERPROCEDURAL_OPTIMIZATION ON
+                )
+        endif()
+    endif()
 endmacro()

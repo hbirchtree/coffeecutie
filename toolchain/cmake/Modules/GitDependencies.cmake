@@ -68,14 +68,12 @@ function ( DEPENDENCY_GET )
             set (
                 CMAKE_PREFIX_PATH
                     "${CMAKE_PREFIX_PATH};${LOCAL_DIR}"
-                PARENT_SCOPE
                 )
 
             if(DEFINED CMAKE_FIND_ROOT_PATH)
                 set (
                     CMAKE_FIND_ROOT_PATH
                         "${CMAKE_FIND_ROOT_PATH};${LOCAL_DIR}"
-                    PARENT_SCOPE
                     )
             endif()
         endif()
@@ -137,6 +135,9 @@ function ( DEPENDENCY_GET )
             WORKING_DIRECTORY "${LOCAL_DIR}"
             )
     endforeach()
+
+    set ( CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" PARENT_SCOPE )
+    set ( CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${LOCAL_DIR}" PARENT_SCOPE )
 
 endfunction()
 

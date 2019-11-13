@@ -138,6 +138,17 @@ if(NOT EMSCRIPTEN AND NOT APPLE)
         )
     find_package ( zlib )
 endif()
+
+dependency_get (
+    SOURCE hbirchtree/native-library-bundle
+    TAG ${NATIVE_LIB_BUNDLE_TAG}
+    NAMES
+        zstd
+        lz4
+    )
+find_package ( lz4 )
+find_package ( zstd )
+
 coffee_library (
     TARGET CoreCompression
 
@@ -150,6 +161,19 @@ coffee_library (
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/compression>
     HEADER_BASE coffee/compression
     )
+
+if(lz4_FOUND)
+    target_sources ( CoreCompression PRIVATE
+        private/datastorage/compression/lz4_codec.cpp
+        )
+    target_link_libraries ( CoreCompression PUBLIC
+        lz4::lz4
+        )
+endif()
+if(zstd_FOUND)
+
+endif()
+
 if(TARGET zlib::zlibstatic AND NOT EMSCRIPTEN AND NOT APPLE)
     target_link_libraries ( CoreCompression PUBLIC
         zlib::zlibstatic

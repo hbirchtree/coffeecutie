@@ -250,6 +250,7 @@ StartupWMClass=${APP_TARGET}
         )
 
     target_enable_cxx11(${APP_TARGET})
+    target_enable_lto(${APP_TARGET})
 
     set ( CORE_APP_LIB Coffee::CoreApplication )
 

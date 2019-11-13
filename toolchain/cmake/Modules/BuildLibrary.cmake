@@ -169,6 +169,7 @@ macro(COFFEE_LIBRARY)
     endif()
 
     target_enable_cxx11(${LIB_TARGET})
+    target_enable_lto(${LIB_TARGET})
 
     target_include_directories ( ${LIB_TARGET}
         PUBLIC
