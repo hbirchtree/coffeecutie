@@ -4,23 +4,39 @@
 
 namespace lz4 {
 
+enum class lz4_error
+{
+    no_error,
+    exceeds_file_size_limit,
+    compression_failed,
+};
+
+struct lz4_error_category : stl_types::error_category
+{
+    virtual const char* name() const noexcept override;
+    virtual std::string message(int) const override;
+};
+
 using lz4_error_code =
-    stl_types::domain_error_code<int, stl_types::error_category>;
+    stl_types::domain_error_code<lz4_error, lz4_error_category>;
 
 struct compressor : Coffee::Compression::Compressor_def
 {
     using error_code = lz4_error_code;
 
-    struct limits
+    enum class compression_mode
     {
-        static constexpr libc_types::u32 min_compress = 1;
-        static constexpr libc_types::u32 opt_compress = 9;
-        static constexpr libc_types::u32 max_compress = 9;
+        default_,
+        fast,
+        high,
     };
 
     struct opts
     {
-        libc_types::u32 level = limits::opt_compress;
+        compression_mode mode;
+
+        int fast_acceleration; /*!< For compression_mode::fast */
+        int high_compression;  /*!< For compression_mode::high */
     };
 
     static bool Compress(
@@ -30,10 +46,10 @@ struct compressor : Coffee::Compression::Compressor_def
         error_code&            ec);
 
     static bool Decompress(
-            semantic::Bytes const& compressed,
-            semantic::Bytes*       target,
-            opts const&            opts,
-            error_code&            ec);
+        semantic::Bytes const& compressed,
+        semantic::Bytes*       target,
+        opts const&            opts,
+        error_code&            ec);
 };
 
 } // namespace lz4

@@ -167,7 +167,14 @@ if(lz4_FOUND)
         private/datastorage/compression/lz4_codec.cpp
         )
     target_link_libraries ( CoreCompression PUBLIC
-        lz4::lz4
+        lz4::lz4 lz4::lz4hc
+        )
+    target_compile_definitions ( CoreCompression PUBLIC
+        -DCOFFEE_COMPRESS_LZ4
+        )
+    dependency_link (
+        TARGET CoreCompression
+        DEPENDENCIES lz4
         )
 endif()
 if(zstd_FOUND)
