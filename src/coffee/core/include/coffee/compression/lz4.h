@@ -9,6 +9,11 @@ enum class lz4_error
     no_error,
     exceeds_file_size_limit,
     compression_failed,
+
+    not_enough_data,
+    malformed_header,
+    decompression_mismatch_size,
+    decompression_failed,
 };
 
 struct lz4_error_category : stl_types::error_category

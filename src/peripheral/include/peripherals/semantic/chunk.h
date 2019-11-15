@@ -531,11 +531,39 @@ struct mem_chunk
         return From(&basePtr[offset], size);
     }
 
+    NO_DISCARD FORCEDINLINE mem_chunk<T const> at(
+        size_type offset, size_type size = 0) const
+    {
+        using namespace ::libc_types;
+
+        if(offset > this->size || offset + size > this->size)
+            return {};
+
+        if(!data)
+            return {};
+
+        u8 const* basePtr = C_RCAST<u8 const*>(data);
+
+        if(size == 0)
+            size = this->size - offset;
+
+        return From(&basePtr[offset], size);
+    }
+
     template<typename T2>
     FORCEDINLINE mem_chunk<T2> as()
     {
         return mem_chunk<T2>(
             C_RCAST<T2*>(data),
+            size * sizeof(T),
+            (size * sizeof(T)) / sizeof(T2));
+    }
+
+    template<typename T2>
+    FORCEDINLINE mem_chunk<T2 const> as() const
+    {
+        return mem_chunk<T2 const>(
+            C_RCAST<T2 const*>(data),
             size * sizeof(T),
             (size * sizeof(T)) / sizeof(T2));
     }
