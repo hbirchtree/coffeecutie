@@ -29,7 +29,7 @@ macro(TARGET_ENABLE_CXX11 TARGET)
 endmacro()
 
 macro(TARGET_ENABLE_LTO TARGET)
-    if("${CMAKE_BUILD_TYPE}" MATCHES "Rel*")
+    if("${CMAKE_BUILD_TYPE}" MATCHES "Rel*" AND NOT ANDROID AND NOT IOS)
         check_ipo_supported ( RESULT LTOSupported )
 
         if(LTOSupported)
