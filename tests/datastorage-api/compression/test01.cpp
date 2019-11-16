@@ -52,7 +52,7 @@ bool zlib_api()
     system_clock::duration   decompress_time;
     system_clock::time_point start;
 
-    for(auto i : Range<>(100))
+    for(auto i : Range<>(10))
     {
         semantic::Bytes compressed;
 
@@ -70,7 +70,7 @@ bool zlib_api()
 
         if(i == 0)
             cDebug(
-                "Zlib compression: {0} => {1}, ration = {2}",
+                "Zlib compression: {0} => {1}, ratio = {2}",
                 input.size,
                 compressed.size,
                 scalar(input.size) / compressed.size);
@@ -137,11 +137,11 @@ bool lz4_api()
         system_clock::duration   decompress_time = {};
         system_clock::time_point start;
 
-        for(auto i : Range<>(100))
+        for(auto i : Range<>(10))
         {
             semantic::Bytes output;
 
-            lz4::lz4_error_code ec;
+            lz4::error_code ec;
             {
                 start = system_clock::now();
                 lz4::compressor::Compress(input, &output, opt, ec);

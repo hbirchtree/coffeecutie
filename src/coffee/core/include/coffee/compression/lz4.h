@@ -4,7 +4,7 @@
 
 namespace lz4 {
 
-enum class lz4_error
+enum class error
 {
     no_error,
     exceeds_file_size_limit,
@@ -16,19 +16,16 @@ enum class lz4_error
     decompression_failed,
 };
 
-struct lz4_error_category : stl_types::error_category
+struct error_category : stl_types::error_category
 {
     virtual const char* name() const noexcept override;
     virtual std::string message(int) const override;
 };
 
-using lz4_error_code =
-    stl_types::domain_error_code<lz4_error, lz4_error_category>;
+using error_code = stl_types::domain_error_code<error, error_category>;
 
 struct compressor : Coffee::Compression::Compressor_def
 {
-    using error_code = lz4_error_code;
-
     enum class compression_mode
     {
         default_,
@@ -38,6 +35,15 @@ struct compressor : Coffee::Compression::Compressor_def
 
     struct opts
     {
+        STATICINLINE opts high_comp(int level)
+        {
+            return {compression_mode::high, 0, level};
+        }
+        STATICINLINE opts fast_comp(int accel)
+        {
+            return {compression_mode::fast, accel, 0};
+        }
+
         compression_mode mode;
 
         int fast_acceleration; /*!< For compression_mode::fast */

@@ -73,7 +73,7 @@ coffee_library (
     #
     private/extern_storage.cpp
 
-    LIBRARIES CoreCommon CoreDebug PeripheralThreadNaming
+    LIBRARIES CoreCommon CoreJsonLogger CoreDebug PeripheralThreadNaming
     )
 
 coffee_library (
@@ -337,8 +337,8 @@ target_link_libraries ( Core INTERFACE
     CoreTerminal
     CoreQueue
     CoreFile
-    CoreJsonLogger
     CoreState
+    CoreJsonLogger
 
     PeripheralThreadNaming
     )

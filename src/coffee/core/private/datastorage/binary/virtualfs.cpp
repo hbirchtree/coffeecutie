@@ -2,6 +2,10 @@
 
 #include <coffee/compression/libz.h>
 
+#if defined(COFFEE_COMPRESS_LZ4)
+#include <coffee/compression/lz4.h>
+#endif
+
 #include "directory_index.h"
 
 namespace Coffee {
@@ -27,7 +31,9 @@ std::string vfs_error_category::message(int error_code) const
     case E::EndianMismatch:
         return "Virtual filesystem has incompatible endianness";
     case E::CompressionUnsupported:
-        return "Compression is not supported";
+        return "Compression is not supported, platform policy";
+    case E::UnsupportedCompressionCodec:
+        return "Unsupported compression codec";
     case E::CompressionError:
         return "Error while compressing";
     case E::VersionMismatch:
@@ -138,22 +144,50 @@ bool GenVirtFS(
 #else
                 DProfContext _(VIRTFS_API "Compression worker");
 
-                Compression::error_code comp_ec;
-                Zlib::Compress(in_data, &out_data, {}, comp_ec);
-
-                if(comp_ec)
+                switch(settings.file_codec)
                 {
-                    ec = VFSError::CompressionError;
+#if defined(COFFEE_COMPRESS_LZ4)
+                case compression::codec::lz4:
+                {
+                    lz4::error_code comp_ec;
+                    lz4::compressor::Compress(
+                        in_data,
+                        &out_data,
+                        lz4::compressor::opts::high_comp(9),
+                        comp_ec);
+
+                    break;
+                }
+#endif
+#if defined(COFFEE_WINDOWS)
+                case compression::codec::deflate_ms:
+#else
+                case compression::codec::deflate:
+#endif
+                {
+                    Compression::error_code comp_ec;
+                    Zlib::Compress(in_data, &out_data, {}, comp_ec);
+
+                    if(comp_ec)
+                    {
+                        ec = VFSError::CompressionError;
+                    }
+                    break;
+                }
+                default:
+                {
+                    ec = VFSError::UnsupportedCompressionCodec;
+                    break;
+                }
                 }
 
-                file.size = out_data.size;
+                file.codec = settings.file_codec;
+                file.size  = out_data.size;
 #endif
             }
         };
         threads::Parallel::Consume(
-            Range<>(filenames.size()),
-            std::move(worker),
-            settings.workers);
+            Range<>(filenames.size()), std::move(worker), settings.workers);
     }
 
     {
@@ -376,14 +410,48 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
 #else
             DProfContext _(VIRTFS_API "Decompressing file");
 
-            Compression::error_code comp_ec;
-            Zlib::Decompress(
-                Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
-
-            if(comp_ec)
+            switch(file->codec)
             {
-                ec = VFSError::CompressionError;
+            case compression::codec::lz4:
+            {
+#if defined(COFFEE_COMPRESS_LZ4)
+                lz4::error_code comp_ec;
+                lz4::compressor::Decompress(
+                    Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
+
+                if(comp_ec)
+                {
+                    ec = VFSError::CompressionError;
+                    return {};
+                }
+                break;
+#else
+                ec = VFSError::UnsupportedCompressionCodec;
                 return {};
+#endif
+            }
+#if defined(COFFEE_WINDOWS)
+            case compression::codec::deflate_ms:
+#else
+            case compression::codec::deflate:
+#endif
+            {
+                Compression::error_code comp_ec;
+                Zlib::Decompress(
+                    Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
+
+                if(comp_ec)
+                {
+                    ec = VFSError::CompressionError;
+                    return {};
+                }
+                break;
+            }
+            default:
+            {
+                ec = VFSError::UnsupportedCompressionCodec;
+                break;
+            }
             }
 #endif
         } else

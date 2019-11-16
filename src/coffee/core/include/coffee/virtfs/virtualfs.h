@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/compression/standard.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
@@ -56,6 +57,7 @@ enum class VFSError : int
 
     CompressionUnsupported,
     CompressionError,
+    UnsupportedCompressionCodec,
 
     /* Creation of a VFS */
     NoFilesProvided,
@@ -648,7 +650,7 @@ PACKEDSTRUCT VirtualFile
     u64  size;  /*!< Size of file. If compressed, size of compressed file */
     u64  rsize; /*!< Size of file in memory. If compressed, uncompressed size */
     u32  flags;
-    const u32 _pad = 0;
+    compression::codec codec = compression::codec::none;
 };
 
 FORCEDINLINE VFile const* VirtualFS::GetFileLinear(
@@ -895,11 +897,14 @@ struct VirtDesc
 
 struct generation_settings
 {
-    generation_settings(szptr workers = 0) : workers(workers)
+    generation_settings(szptr workers = 0) :
+        workers(workers), file_codec(compression::codec::deflate)
     {
     }
 
     szptr workers; /*!< 0 will default to maximum */
+
+    compression::codec file_codec; /*!< Codec for compressing files */
 };
 
 extern bool GenVirtFS(

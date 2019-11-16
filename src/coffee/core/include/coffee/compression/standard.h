@@ -27,3 +27,21 @@ struct Compressor_def
 
 } // namespace Compression
 } // namespace Coffee
+
+namespace compression {
+
+using compressor_base = Coffee::Compression::Compressor_def;
+
+enum class codec : libc_types::u32
+{
+    none,
+
+    /* zlib/deflate codecs */
+    deflate,
+    deflate_ms,
+
+    /* external codecs */
+    lz4,
+};
+
+} // namespace compression

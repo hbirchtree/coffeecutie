@@ -5,26 +5,26 @@
 
 namespace lz4 {
 
-const char* lz4_error_category::name() const noexcept
+const char* error_category::name() const noexcept
 {
     return "lz4_error_code";
 }
 
-std::string lz4_error_category::message(int error) const
+std::string error_category::message(int error) const
 {
-    switch(C_CAST<lz4_error>(error))
+    switch(C_CAST<lz4::error>(error))
     {
-    case lz4_error::exceeds_file_size_limit:
+    case error::exceeds_file_size_limit:
         return "exceeds_file_size_limit";
-    case lz4_error::compression_failed:
+    case error::compression_failed:
         return "compression_failed";
-    case lz4_error::not_enough_data:
+    case error::not_enough_data:
         return "not_enough_data";
-    case lz4_error::malformed_header:
+    case error::malformed_header:
         return "malformed_header";
-    case lz4_error::decompression_mismatch_size:
+    case error::decompression_mismatch_size:
         return "decompression_mismatch_size";
-    case lz4_error::decompression_failed:
+    case error::decompression_failed:
         return "decompression_failed";
     default:
         return "no_error";
@@ -43,11 +43,11 @@ bool compressor::Compress(
     semantic::Bytes const&  uncompressed,
     semantic::Bytes*        target,
     compressor::opts const& opts,
-    compressor::error_code& ec)
+    error_code&             ec)
 {
     if(uncompressed.size > std::numeric_limits<int>::max())
     {
-        ec = lz4_error::exceeds_file_size_limit;
+        ec = error::exceeds_file_size_limit;
         return false;
     }
 
@@ -105,7 +105,7 @@ bool compressor::Compress(
         return true;
     } else
     {
-        ec = lz4_error::compression_failed;
+        ec = error::compression_failed;
         return false;
     }
 }
@@ -114,17 +114,17 @@ bool compressor::Decompress(
     semantic::Bytes const& compressed,
     semantic::Bytes*       target,
     compressor::opts const&,
-    compressor::error_code& ec)
+    error_code& ec)
 {
     if(compressed.size < sizeof(chunk_header))
     {
-        ec = lz4_error::not_enough_data;
+        ec = error::not_enough_data;
         return false;
     }
 
     if(compressed.size > std::numeric_limits<int>::max())
     {
-        ec = lz4_error::exceeds_file_size_limit;
+        ec = error::exceeds_file_size_limit;
         return false;
     }
 
@@ -132,13 +132,13 @@ bool compressor::Decompress(
 
     if(header.magic != chunk_header::header_magic)
     {
-        ec = lz4_error::malformed_header;
+        ec = error::malformed_header;
         return false;
     }
 
     if(header.real_size > std::numeric_limits<int>::max())
     {
-        ec = lz4_error::exceeds_file_size_limit;
+        ec = error::exceeds_file_size_limit;
         return false;
     }
 
@@ -154,14 +154,14 @@ bool compressor::Decompress(
 
     if(result > 0 && target->size != result)
     {
-        ec = lz4_error::decompression_mismatch_size;
+        ec = error::decompression_mismatch_size;
         return false;
     } else if(result > 0)
     {
         return true;
     } else
     {
-        ec = lz4_error::decompression_failed;
+        ec = error::decompression_failed;
         return false;
     }
 }
