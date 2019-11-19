@@ -21,7 +21,7 @@ function gen_information()
 
 BASEDIR=$(dirname $0)
 IDENTITY="$($BASEDIR/../../ci-identify.sh)"
-JSON_DATA="$(OUTPUT_TYPE=json $BASEDIR/ci-identify.sh)"
+JSON_DATA="$(OUTPUT_TYPE=json $BASEDIR/../../ci-identify.sh)"
 
 function get_q()
 {
