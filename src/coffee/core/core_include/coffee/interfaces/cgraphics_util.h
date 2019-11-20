@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/core/CFiles>
-#include <coffee/image/cimage.h>
 #include <coffee/interfaces/byte_provider.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
@@ -10,11 +9,16 @@
 
 #include "cgraphics_pixops.h"
 
+#if FEATURE_ENABLE_Image
+#include <coffee/image/cimage.h>
+#endif
+
 #include <algorithm>
 
 namespace Coffee {
 namespace RHI {
 
+#if FEATURE_ENABLE_Image
 FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
 {
     auto pix = C_RCAST<IMG::serial_image const*>(img_data.data);
@@ -199,6 +203,7 @@ FORCEDINLINE bool LoadTexture(
 
     return status;
 }
+#endif
 
 template<
     typename GFX,
