@@ -153,6 +153,8 @@ DeviceType variant()
     return DeviceIOT;
 #elif defined(COFFEE_EMSCRIPTEN)
     return DeviceIOT;
+#elif defined(COFFEE_GEKKO)
+    return DeviceConsole;
 #else
     return DeviceUnknown;
 #endif
@@ -225,6 +227,8 @@ Platform variant()
 
 #elif defined(COFFEE_UNIXPLAT)
     return PlatformUnix;
+#elif defined(COFFEE_GEKKO)
+    return PlatformPOSIX;
 #endif
 }
 

@@ -159,8 +159,11 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/compression>
-    HEADER_BASE coffee/compression
+    HEADER_BASE coffee
     )
+
+message ( "LZ4 ${lz4_FOUND}" )
+message ( "ZSTD ${zstd_FOUND}" )
 
 if(lz4_FOUND)
     target_sources ( CoreCompression PRIVATE

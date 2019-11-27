@@ -11,6 +11,12 @@ struct Windowing : comp_app::StaticWindowing
     virtual void setState(comp_app::detail::WindowState) final;
 };
 
-using Services = type_safety::type_list_t<Windowing>;
+struct GraphicsFramebuffer : comp_app::GraphicsFramebuffer
+{
+    virtual comp_app::size_2d_t size() const final;
+    virtual void                swapBuffers(comp_app::app_error& ec) final;
+};
+
+using Services = type_safety::type_list_t<Windowing, GraphicsFramebuffer>;
 
 } // namespace cog

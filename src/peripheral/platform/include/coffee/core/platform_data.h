@@ -19,6 +19,7 @@ enum DeviceType
     DeviceTablet,
     DeviceServer,
     DeviceAllInOne,
+    DeviceConsole,
 };
 
 enum Platform

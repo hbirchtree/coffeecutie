@@ -173,11 +173,6 @@ function( DEPENDENCY_LINK )
         EXPORT_PROPERTIES
             git_deps
         )
-
-    get_property ( EXPORT_PROPS TARGET "${LINK_TARGET}" PROPERTY EXPORT_PROPERTIES )
-
-    # message ( "Export props: ${EXPORT_PROPS}" )
-
 endfunction()
 
 set ( GIT_DEPS_RESOLVED ";" )

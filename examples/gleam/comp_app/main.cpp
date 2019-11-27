@@ -81,12 +81,14 @@ i32 coffee_main(i32, cstring_w*)
 
     {
         auto& windowConf = loader.config<comp_app::WindowConfig>();
-        auto& glConf     = loader.config<comp_app::GLConfig>();
         auto& ctlrConf   = loader.config<comp_app::ControllerConfig>();
 
         windowConf.size  = {1024, 768};
         windowConf.title = "Hello World";
 
+#if defined(FEATURE_ENABLE_GLeamRHI)
+        auto& glConf = loader.config<comp_app::GLConfig>();
+#endif
 #if defined(FEATURE_ENABLE_GLADComponent)
         glConf.framebufferFmt = typing::pixels::PixFmt::RGB565;
 

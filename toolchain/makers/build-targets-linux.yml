@@ -71,3 +71,5 @@ mingw:
 gamecube:
   - .
   - $(shell)
+gamecube$(shell):
+  - .

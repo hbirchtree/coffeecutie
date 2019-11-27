@@ -49,3 +49,9 @@ elseif(APPLE AND IOS)
             )
     endif()
 endif()
+
+if(GAMECUBE)
+    target_link_libraries ( CoreApplication PUBLIC
+        Gexxo # For initializing video
+        )
+endif()

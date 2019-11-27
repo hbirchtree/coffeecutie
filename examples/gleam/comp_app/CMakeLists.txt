@@ -2,5 +2,17 @@ coffee_application (
     TARGET CompAppTest
     TITLE "Component app"
     SOURCES main.cpp
-    LIBRARIES GLeamRHI ComponentBundleSetup
+    LIBRARIES ComponentBundleSetup
     )
+
+if(TARGET GLeamRHI)
+    target_link_libraries ( CompAppTest PUBLIC
+        GLeamRHI
+        )
+endif()
+
+if(TARGET Gexxo)
+    target_link_libraries ( CompAppTest PUBLIC
+        Gexxo
+        )
+endif()

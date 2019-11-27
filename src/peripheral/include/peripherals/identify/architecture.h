@@ -71,7 +71,7 @@
 #elif defined(_ARCH_620) || defined(__ppc620__) || _M_PPC == 620
 #define COFFEE_POWERPC_CPU "620"
 #elif defined(__GEKKO__)
-#define COFFEE_POWERPC_CPU "750CXe (Gekko)"
+#define COFFEE_POWERPC_CPU "750CXe/Gekko"
 #elif defined(_ARCH_PPCGR)
 #define COFFEE_POWERPC_CPU "603/604"
 #else

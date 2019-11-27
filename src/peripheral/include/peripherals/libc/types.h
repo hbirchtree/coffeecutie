@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -149,5 +150,11 @@ using u24 = uint24;
 FORCEDINLINE scalar convert_i16_f(i16 v)
 {
     return static_cast<scalar>(v) / Int16_Max;
+}
+
+template<typename T>
+FORCEDINLINE T convert_f32(f32 v)
+{
+    return static_cast<T>(v * std::numeric_limits<T>::max());
 }
 }

@@ -1452,13 +1452,18 @@ struct NullAPI : GraphicsAPI
 
     using Q_OCC = OccludeQuery;
 
-    static FB_T& DefaultFramebuffer()
+    struct OPTS
+    {
+        int v;
+    };
+
+    static FB_T* DefaultFramebuffer()
     {
         static FB_T m_;
-        return m_;
+        return &m_;
     }
 
-    static API_CONTEXT GetLoadAPI()
+    static API_CONTEXT GetLoadAPI(OPTS const&)
     {
         return [](bool) { return true; };
     }

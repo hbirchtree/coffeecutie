@@ -16,46 +16,7 @@ extern int InitCOMInterface();
 #endif
 
 #if defined(COFFEE_GEKKO)
-#include <gccore.h>
-
-GXRModeObj* gamecube_rmode = NULL;
-void*       gamecube_xfb   = NULL;
-
-void GCVideoInit()
-{
-    VIDEO_Init();
-
-    gamecube_rmode = VIDEO_GetPreferredMode(NULL);
-
-    gamecube_xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(gamecube_rmode));
-
-    VIDEO_Configure(gamecube_rmode);
-    VIDEO_SetNextFramebuffer(gamecube_xfb);
-    VIDEO_SetBlack(FALSE);
-    VIDEO_Flush();
-
-    VIDEO_WaitVSync();
-    if(gamecube_rmode->viTVMode & VI_NON_INTERLACE)
-        VIDEO_WaitVSync();
-
-    console_init(
-        gamecube_xfb,
-        60,
-        60,
-        gamecube_rmode->fbWidth,
-        gamecube_rmode->xfbHeight,
-        gamecube_rmode->fbWidth * 2);
-
-    printf("- Gamecube video initialized\n");
-}
-
-void GCInfiniteLoop()
-{
-    while(1)
-    {
-        VIDEO_WaitVSync();
-    }
-}
+#include <coffee/gexxo/gexxo_api.h>
 #endif
 
 using namespace Coffee;
@@ -79,13 +40,14 @@ int deref_main(
 #elif defined(COFFEE_WINDOWS_UWP)
     InitCOMInterface();
 #elif defined(COFFEE_GEKKO)
-    GCVideoInit();
+    gexxo::initialize();
+    printf("- Gamecube video initialized\n");
 #endif
 
     int stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
 
 #if defined(COFFEE_GEKKO)
-    GCInfiniteLoop();
+    gexxo::infiniteLoop();
 #endif
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
