@@ -80,8 +80,8 @@ struct StacktracerDef
         return {};
     }
 
-    static void ExceptionStacktrace(ExceptionPtr const& exc,
-                                    typing::logging::LogInterfaceBasic)
+    static void ExceptionStacktrace(
+        ExceptionPtr const& exc, typing::logging::LogInterfaceBasic)
     {
         try
         {
@@ -93,7 +93,7 @@ struct StacktracerDef
     }
 };
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
+#if defined(COFFEE_EMSCRIPTEN)
 using Stacktracer = StacktracerDef;
 #endif
 

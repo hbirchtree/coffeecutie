@@ -118,7 +118,8 @@ enum FileFlags
 enum class Version : u32
 {
     v1,
-    v2,
+    v2, /*!< Adds indexing */
+    v3, /*!< Adds more compression formats */
 };
 
 enum class LookupMethod : u32
@@ -136,7 +137,7 @@ enum class search_strategy
                     files with same name but different extension. */
 };
 
-static const constexpr Version VFSVersion = Version::v2;
+static const constexpr Version VFSVersion = Version::v3;
 
 static const constexpr szptr MaxPrefixLength    = 40;
 static const constexpr szptr MaxLeafLength      = MaxPrefixLength - sizeof(u64);

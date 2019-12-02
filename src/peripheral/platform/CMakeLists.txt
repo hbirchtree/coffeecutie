@@ -179,7 +179,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         # Linux-specific system calls and behavior all around
         #
         platforms/linux/environment.cpp
-        platforms/linux/stacktrace.cpp
         platforms/linux/process.cpp
         platforms/linux/sysinfo.cpp
 
@@ -263,7 +262,8 @@ endif()
 #
 if(GAMECUBE OR WII)
     target_sources ( PeripheralPlatform PRIVATE
-        platforms/posix/file.cpp
         platforms/posix/environment.cpp
+        platforms/posix/file.cpp
+        platforms/posix/stacktrace.cpp
         )
 endif()

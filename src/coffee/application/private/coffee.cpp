@@ -3,9 +3,9 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/argument_handling.h>
-#include <coffee/core/logging/jsonlogger.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/internal_state.h>
+#include <coffee/core/logging/jsonlogger.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/resource_prefix.h>
@@ -333,10 +333,21 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         emscripten_log(EM_LOG_ERROR, "Exception encountered: %s", ex.what());
     }
 #elif defined(COFFEE_GEKKO)
-    } catch(std::exception const& ex)
+}
+catch(std::exception const& ex)
+{
+    printf("Exception encountered: %s\n", ex.what());
+
+    try
     {
-        printf("Exception encountered: %s\n", ex.what());
+        std::rethrow_if_nested(ex);
+    } catch(std::exception const& ex2)
+    {
+        printf(" Further information: %s\n", ex2.what());
+    } catch(...)
+    {
     }
+}
 #endif
 
 #if !MODE_LOWFAT
@@ -435,7 +446,7 @@ void generic_stacktrace(int sig)
 void InstallDefaultSigHandlers()
 {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
-    std::set_terminate([]() {	
+    std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
             std::current_exception(), typing::logging::fprintf_logger);
         abort();

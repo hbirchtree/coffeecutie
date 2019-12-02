@@ -97,7 +97,7 @@ struct mem_chunk
         {
 #if MODE_DEBUG
             if(m_idx > m_chunk->elements)
-                Throw(std::out_of_range("index out of bounds"));
+                Throw(std::out_of_range(BYTE_API "index out of bounds"));
 #endif
             return m_chunk->data[m_idx];
         }
@@ -318,6 +318,18 @@ struct mem_chunk
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
     NO_DISCARD STATICINLINE mem_chunk<T> CreateFrom(stl_types::Vector<T2>& data)
+    {
+        return {C_RCAST<T*>(data.data()),
+                data.size() * sizeof(T2),
+                (data.size() * sizeof(T2)) / sizeof(T)};
+    }
+
+    template<
+        typename T2,
+        size_t Size,
+        typename is_not_virtual<T2>::type* = nullptr>
+    NO_DISCARD STATICINLINE mem_chunk<T> CreateFrom(
+        stl_types::Array<T2, Size>& data)
     {
         return {C_RCAST<T*>(data.data()),
                 data.size() * sizeof(T2),
@@ -633,22 +645,28 @@ struct mem_chunk
         return const_iterator(*this, elements);
     }
 
+    C_DEPRECATED
     iterator insert(iterator it, T&& value)
     {
 #if MODE_DEBUG
         if(it.m_idx >= elements)
-            Throw(std::out_of_range("iterator out of bounds"));
+            Throw(
+                std::string(BYTE_API "iterator out of bounds") + " " +
+                std::to_string(it.m_idx) + " >= " + std::to_string(elements));
 #endif
 
         data[it.m_idx] = std::move(value);
         return it;
     }
 
+    C_DEPRECATED
     iterator insert(iterator it, T const& value)
     {
 #if MODE_DEBUG
         if(it.m_idx >= elements)
-            Throw(std::out_of_range("iterator out of bounds"));
+            Throw(std::out_of_range(
+                std::string(BYTE_API "iterator out of bounds") + " " +
+                std::to_string(it.m_idx) + " >= " + std::to_string(elements)));
 #endif
 
         data[it.m_idx] = value;

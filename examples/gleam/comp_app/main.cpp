@@ -13,6 +13,10 @@
 #if defined(FEATURE_ENABLE_GLeamRHI)
 #include <coffee/graphics/apis/CGLeamRHI>
 #endif
+#if defined(FEATURE_ENABLE_Gexxo)
+#include <coffee/gexxo/gexxo_api.h>
+#include <ogc/gx.h>
+#endif
 
 #include <coffee/strings/geometry_types.h>
 #include <coffee/strings/info.h>
@@ -64,6 +68,8 @@ i32 coffee_main(i32, cstring_w*)
 
 #if defined(FEATURE_ENABLE_GLeamRHI)
     using GFX = RHI::GLEAM::GLEAM_API;
+#elif defined(FEATURE_ENABLE_Gexxo)
+    using GFX = gexxo::GXAPI;
 #else
     using GFX = RHI::NullAPI;
 #endif
@@ -156,19 +162,96 @@ i32 coffee_main(i32, cstring_w*)
     struct APIData
     {
         GFX::API_CONTEXT context;
+
+        GFX::PIP          plain_color;
+        GFX::D_DATA       plane_data;
+        GFX::V_DESC       plane_desc;
+        ShPtr<GFX::BUF_A> plane_vertex;
+        ShPtr<GFX::BUF_E> plane_index;
     };
+
+#if defined(COFFEE_GEKKO)
+    Mtx44 perspective;
+    Mtx   modelview;
+#endif
+
+    static Array<u8, 20> vertex_data = {
+        32,  32,  0xff, 0x00, 0xff,
+
+        255, 32,  0xff, 0xff, 0x00,
+
+        32,  255, 0xff, 0x00, 0xff,
+
+        255, 255, 0x00, 0xff, 0xff,
+    };
+    static Array<u8, 4> index_data = {0, 1, 2, 3};
 
     comp_app::AppContainer<APIData>::addTo(
         e,
-        [](EntityContainer& e, APIData& d, Components::time_point const&) {
+#if defined(COFFEE_GEKKO)
+        [&perspective, &modelview](
+#else
+        [](
+#endif
+            EntityContainer& e, APIData& d, Components::time_point const&) {
             e.register_subsystem_inplace<GFX_SYS::tag_type, GFX_SYS>(
                 GFX::OPTS(), true);
+
+            auto& sys = e.subsystem_cast<GFX_SYS>();
+
+            d.plane_vertex = sys.alloc_buffer<GFX::BUF_A>(RSCA::ReadOnly, 0);
+
+            d.plane_data = GFX::D_DATA(3);
+            d.plane_desc = GFX::V_DESC();
+
+            d.plane_vertex->alloc();
+            d.plane_vertex->commit(BytesConst::CreateFrom(vertex_data));
+
+            d.plane_desc.alloc();
+            {
+                GFX::V_ATTR pos, col;
+                pos.m_idx    = 0;
+                col.m_idx    = 1;
+                pos.m_size   = 2;
+                col.m_size   = 3;
+                col.m_off    = sizeof(u8) * 2;
+                pos.m_stride = col.m_stride = sizeof(u8) * 5;
+                pos.m_type = col.m_type = semantic::TypeEnum::UByte;
+                pos.m_bassoc = col.m_bassoc = 0;
+                pos.m_boffset = col.m_boffset = 0;
+                d.plane_desc.addAttribute(pos);
+                d.plane_desc.addAttribute(col);
+                d.plane_desc.bindBuffer(0, *d.plane_vertex);
+            }
+
+#if defined(COFFEE_GEKKO)
+            guOrtho(perspective, 0, 479, 0, 639, 0, 300);
+            GX_LoadProjectionMtx(perspective, GX_ORTHOGRAPHIC);
+
+            guMtxIdentity(modelview);
+            guMtxTransApply(modelview, modelview, 0, 0, -5);
+            GX_LoadPosMtxImm(modelview, GX_PNMTX0);
+
+            GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+            GX_SetColorUpdate(GX_TRUE);
+
+            GFX::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1}, 1);
+#endif
         },
         [](EntityContainer& e,
-           APIData&,
+           APIData&         data,
            Components::time_point const&,
            Components::duration const&) {
-            GFX::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1});
+
+            GFX::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1}, 1);
+
+            GFX::Draw(
+                data.plain_color,
+                {},
+                data.plane_desc,
+                GFX::D_CALL(true, false),
+                data.plane_data);
+
         },
         [](EntityContainer& e, APIData& d, Components::time_point const&) {
             d.context = nullptr;
