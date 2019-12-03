@@ -2,18 +2,17 @@
 
 #include <coffee/blam/volta/blam_stl.h>
 #include <coffee/blam/volta/cblam_map.h>
-
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
+namespace scn {
 
-const scenario* scn_get(tag_index_view& tags)
+const scenario* get(tag_index_view& tags)
 {
     static const auto pred = [](index_item_t const* v) {
-        return tag_class_cmp(v->tagclass_e[0], tag_class_t::scnr);
+        return v->matches(tag_class_t::scnr);
     };
 
     auto base_it = std::find_if(tags.begin(), tags.end(), pred);
@@ -23,14 +22,9 @@ const scenario* scn_get(tag_index_view& tags)
 
     auto base = *base_it;
 
-    cDebug(
-        "Scenario name: {0},offset={1}",
-        index_item_get_string(base, tags.file(), tags.tags()),
-        base->offset - tags.tags()->index_magic);
-
-    return C_CAST<const scenario*>(
-        blam_mptr(tags.file(), tags.tags()->index_magic, base->offset));
+    return magic_ptr<scenario const*>(
+        tags.file(), tags.tags()->index_magic, base->offset);
 }
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace scn
+} // namespace blam

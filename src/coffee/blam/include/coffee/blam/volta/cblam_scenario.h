@@ -5,17 +5,45 @@
 #include "cblam_mod2.h"
 #include "cblam_structures.h"
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
-using scn_chunk = byte_t[100];
+namespace scn {
+
+/* Data which is not part of the structures proper */
+
+union actor_type
+{
+    i16 data;
+
+    inline operator i16() const
+    {
+        return data;
+    }
+    inline bool valid() const
+    {
+        return data != -1;
+    }
+};
+
+enum class ai_state : i16
+{
+    unknown_1 = 0,
+    unknown_2 = 2,
+    unknown_3 = 6,
+    unknown_4 = 7,
+    unknown_5 = 9,
+    unknown_6 = 10,
+    unknown_7 = 11,
+};
+
+} // namespace scn
 
 /*!
  * \brief The blam_bounding_box struct
  */
-struct bl_bounding_box
+struct bounding_box
 {
-    bl_bounding_box() : min(0), max(0)
+    bounding_box() : min(0), max(0)
     {
     }
 
@@ -33,7 +61,11 @@ struct reflex_group
     reflexive_t<T> ref;
 };
 
-struct scn_biped
+namespace scn {
+
+using scn_chunk = byte_t[100];
+
+struct biped
 {
     i16    BipedType;
     i16    unk2;
@@ -43,7 +75,7 @@ struct scn_biped
     u32    unk[24];
 };
 
-struct scn_equip
+struct equip
 {
     i16   numid;
     i16   unk2;
@@ -52,7 +84,7 @@ struct scn_equip
     u32   unk[5];
 };
 
-struct scn_vehicle_spawn
+struct vehicle_spawn
 {
     i16    numid;
     uint16 flag;
@@ -62,7 +94,7 @@ struct scn_vehicle_spawn
     u32    unknown2[24];
 };
 
-struct scn_palette
+struct palette
 {
     bl_tag tag;
     u32    NamePtr;
@@ -71,7 +103,7 @@ struct scn_palette
     u32    unk[8];
 };
 
-struct scn_weapon_spawn
+struct weapon_spawn
 {
     i16    numid;
     uint16 flag;
@@ -81,7 +113,7 @@ struct scn_weapon_spawn
     u32    unknown2[17];
 };
 
-struct scn_weapon_ref
+struct weapon_ref
 {
     i16    numid;
     uint16 flag;
@@ -91,7 +123,7 @@ struct scn_weapon_ref
     u32    unknown2[17];
 };
 
-struct scn_scenery_spawn
+struct scenery_spawn
 {
     i16    numid;
     uint16 flag;
@@ -102,7 +134,7 @@ struct scn_scenery_spawn
     u32    unknown2[10];
 };
 
-struct scn_machine
+struct machine
 {
     i16    MachineType;
     i16    unk2;
@@ -112,7 +144,7 @@ struct scn_machine
     u32    unk[10];
 };
 
-struct scn_sound_scenery
+struct sound_scenery
 {
     i16   SoundType;
     i16   unk2;
@@ -121,14 +153,14 @@ struct scn_sound_scenery
     u32   unk4[5];
 };
 
-struct scn_player_spawn
+struct player_spawn
 {
     Vecf3  pos;
     scalar rot;
     scalar unknown2[9];
 };
 
-struct scn_profile_placement
+struct profile_placement
 {
     bl_string name;
     scalar    health;
@@ -150,7 +182,7 @@ struct scn_profile_placement
     byte_t    zero3[20];
 };
 
-struct scn_multiplayer_flag
+struct multiplayer_flag
 {
     Vecf3  pos;
     scalar yaw;
@@ -160,7 +192,7 @@ struct scn_multiplayer_flag
     u32    unk2[31];
 };
 
-struct scn_multiplayer_equipment
+struct multiplayer_equipment
 {
     u32    unk[16];
     Vecf3  pos;
@@ -172,7 +204,7 @@ struct scn_multiplayer_equipment
     u32    unk3[12];
 };
 
-struct scn_player_starting_profile
+struct player_starting_profile
 {
     u32      unk1_offset;
     byte_t   name[28];
@@ -186,17 +218,17 @@ struct scn_player_starting_profile
     u32      padding2[5];
 };
 
-struct scn_device_group
+struct device_group
 {
     byte_t unk[52];
 };
 
-struct scn_bsp_trigger
+struct bsp_trigger
 {
     u32 unk[2];
 };
 
-struct scn_move_positions
+struct move_positions
 {
     byte_t unk1[32];
     byte_t unk2[4];
@@ -204,21 +236,21 @@ struct scn_move_positions
     u32    unk[5];
 };
 
-struct scn_object_name
+struct object_name
 {
     bl_string name;
     u32       unknown;
 };
 
-struct scn_trigger_volume
+struct trigger_volume
 {
-    u32             unk;
-    bl_string       name;
-    scalar          unk2[9];
-    bl_bounding_box box;
+    u32          unk;
+    bl_string    name;
+    scalar       unk2[9];
+    bounding_box box;
 };
 
-struct scn_actor_variant_ref
+struct actor_variant_ref
 {
     bl_tag tag;
     u32    NamePtr;
@@ -226,7 +258,9 @@ struct scn_actor_variant_ref
     scalar unk2;
 };
 
-struct scn_ai_animation_ref
+namespace ai {
+
+struct animation_ref
 {
     bl_string name;
     i16       unk1;
@@ -234,13 +268,13 @@ struct scn_ai_animation_ref
     u32       unk[14];
 };
 
-struct scn_ai_script_ref
+struct script_ref
 {
     bl_string name;
     u32       unk[15];
 };
 
-struct scn_ai_recording_ref
+struct recording_ref
 {
     u32    unk1[6];
     bl_tag tag;
@@ -248,7 +282,9 @@ struct scn_ai_recording_ref
     u32    unk[2];
 };
 
-struct scn_script_triggers
+} // namespace ai
+
+struct script_triggers
 {
     u32       unk1;
     bl_string name;
@@ -256,7 +292,7 @@ struct scn_script_triggers
     u32       unk[11];
 };
 
-struct scn_globals
+struct globals
 {
     u32       unk1;
     bl_string name;
@@ -266,30 +302,35 @@ struct scn_globals
     u32       unk[9];
 };
 
-struct scn_references
+struct references
 {
     u32       unk1;
     bl_string name;
     u32       unk[15];
 };
 
-struct scn_encounter
+namespace encounter {
+
+struct squad;
+struct squad_spawn;
+
+struct encounter
 {
-    byte_t              text[16];
-    u32                 unk[28];
-    reflexive_t<byte_t> squads;
-    reflexive_t<byte_t> platoons;
-    reflexive_t<byte_t> firingPositions;
-    reflexive_t<byte_t> playerStartLocations;
+    bl_string_var<16>         text;
+    u32                       unk[28];
+    reflexive_t<squad>        squads;
+    reflexive_t<byte_t>       platoons;
+    reflexive_t<byte_t>       firingPositions;
+    reflexive_t<player_spawn> playerStartLocations;
 };
 
-struct scn_encounter_squad
+struct squad
 {
     bl_string           name;
-    i16                 ActorType;
+    actor_type          ActorType;
     i16                 Platoon;
-    i16                 InitialState;
-    i16                 ReturnState;
+    ai_state            InitialState;
+    ai_state            ReturnState;
     u32                 unk1[11];
     u32                 Ai_Attacking;
     u32                 Ai_AttackingSearch;
@@ -306,7 +347,7 @@ struct scn_encounter_squad
     u32                 unk4[3];
 };
 
-struct scn_encounter_squad_spawn
+struct squad_spawn
 {
     Vecf3  pos;
     scalar yaw;
@@ -314,24 +355,26 @@ struct scn_encounter_squad_spawn
     i16    CommandList;
 };
 
-struct scn_encounter_info
+struct info
 {
-    byte_t                text[16];
-    scn_encounter_squad*  pSquads;
-    scn_encounter_squad** ppSquadSpawns;
-    reflexive_t<byte_t>   Platoons;
-    reflexive_t<byte_t>   FiringPositions;
-    reflexive_t<byte_t>   PlayerStartLocations;
+    byte_t              text[16];
+    squad*              pSquads;
+    squad**             ppSquadSpawns;
+    reflexive_t<byte_t> Platoons;
+    reflexive_t<byte_t> FiringPositions;
+    reflexive_t<byte_t> PlayerStartLocations;
 };
 
-struct scn_decal
+} // namespace encounter
+
+struct decal
 {
     i16   unk1;
     i16   unk2;
     Vecf3 pos;
 };
 
-struct scn_decal_ref
+struct decal_ref
 {
     bl_tag tag;
     u32    NamePtr;
@@ -339,21 +382,15 @@ struct scn_decal_ref
     u32    TagId;
 };
 
-struct scn_shader_index
+struct shader_index
 {
     u32 ShaderType;
     u32 ShaderIndex;
 };
 
-struct scn_skybox
-{
-    bl_tag tag;
-    u32    NameRef;
-    u32    unk1;
-    u32    TagId;
-};
+using skybox = tagref_t;
 
-struct scn_starting_equip
+struct starting_equip
 {
     u32      unknown1; /*!< Sometimes 1? */
     u32      index;
@@ -362,7 +399,7 @@ struct scn_starting_equip
     byte_t   padding3[45];
 };
 
-struct scn_control
+struct control
 {
     i16    unk1;
     i16    unk2;
@@ -372,7 +409,7 @@ struct scn_control
     byte_t unk[40];
 };
 
-struct scn_light_fixture
+struct light_fixture
 {
     bl_rgba_t ambient;
     byte_t    unk1[4];
@@ -384,7 +421,7 @@ struct scn_light_fixture
     byte_t    unk3[40];
 };
 
-struct scn_sbsp
+struct sbsp
 {
     u32    header_offset;
     u32    xbox_reflexive_count;
@@ -398,7 +435,7 @@ struct scn_sbsp
  * \brief Is not the same as a blam_mod2_bsp_header, this is extracted from the
  * scenario and references the blam_mod2_bsp_header structure it belongs to.
  */
-struct scn_bsp_header
+struct bsp_header
 {
     u32    offset;
     u32    size;
@@ -415,12 +452,12 @@ struct scn_bsp_header
  */
 struct scenario
 {
-    byte_t                  unk_str1[16];
-    byte_t                  unk_str2[16];
-    byte_t                  unk_str3[16];
-    reflexive_t<scn_skybox> skybox;
-    u32                     zero1;
-    reflexive_t<tagref_t>   child_scenarios;
+    byte_t                unk_str1[16];
+    byte_t                unk_str2[16];
+    byte_t                unk_str3[16];
+    reflexive_t<skybox>   skybox;
+    u32                   zero1;
+    reflexive_t<tagref_t> child_scenarios;
 
     u32 reserved1[46];
 
@@ -432,62 +469,62 @@ struct scenario
     u32 ptr_to_index_end;
     u32 reserved3[57];
 
-    reflexive_t<scn_object_name>    object_names;
-    reflex_group<scn_scenery_spawn> scenery;
-    reflex_group<scn_biped>         biped;
-    reflex_group<scn_vehicle_spawn> vehicle;
-    reflex_group<scn_equip>         equip;
-    reflex_group<scn_weapon_spawn>  weap;
-    reflexive_t<scn_device_group>   device_groups;
-    reflex_group<scn_machine>       machine;
-    reflex_group<scn_control>       control;
-    reflex_group<scn_light_fixture> light_fixture;
-    reflex_group<scn_sound_scenery> snd_scenery;
+    reflexive_t<object_name>    object_names;
+    reflex_group<scenery_spawn> scenery;
+    reflex_group<biped>         biped;
+    reflex_group<vehicle_spawn> vehicle;
+    reflex_group<equip>         equip;
+    reflex_group<weapon_spawn>  weap;
+    reflexive_t<device_group>   device_groups;
+    reflex_group<machine>       machine;
+    reflex_group<control>       control;
+    reflex_group<light_fixture> light_fixture;
+    reflex_group<sound_scenery> snd_scenery;
 
     reflexive_t<scn_chunk> unknown_4[7];
 
-    reflexive_t<scn_player_starting_profile> player_start_profile;
-    reflexive_t<scn_player_spawn>            player_spawn;
-    reflexive_t<scn_trigger_volume>          trigger_volume;
-    reflexive_t<scn_chunk>                   animation;
-    reflexive_t<scn_multiplayer_flag>        multiplayer_flags;
-    reflexive_t<scn_multiplayer_equipment>   multiplayer_equipment;
-    reflexive_t<scn_starting_equip>          starting_equipment;
-    reflexive_t<scn_bsp_trigger>             bsp_switch_trigger;
-    reflex_group<scn_decal>                  decals;
-    reflexive_t<scn_chunk>                   detail_obj_collision_ref;
-    reflexive_t<scn_chunk>                   unknown_5[7];
-    reflexive_t<scn_actor_variant_ref>       actor_variant_ref;
-    reflexive_t<scn_encounter>               encounters;
+    reflexive_t<player_starting_profile> player_start_profile;
+    reflexive_t<player_spawn>            player_spawn;
+    reflexive_t<trigger_volume>          trigger_volume;
+    reflexive_t<scn_chunk>               animation;
+    reflexive_t<multiplayer_flag>        multiplayer_flags;
+    reflexive_t<multiplayer_equipment>   multiplayer_equipment;
+    reflexive_t<starting_equip>          starting_equipment;
+    reflexive_t<bsp_trigger>             bsp_switch_trigger;
+    reflex_group<decal>                  decals;
+    reflexive_t<scn_chunk>               detail_obj_collision_ref;
+    reflexive_t<scn_chunk>               unknown_5[7];
+    reflexive_t<actor_variant_ref>       actor_variant_ref;
+    reflexive_t<encounter::encounter>    encounters;
 
-    reflexive_t<scn_chunk>            command_lists;
-    reflexive_t<scn_chunk>            unknown_6;
-    reflexive_t<scn_chunk>            starting_locations;
-    reflexive_t<scn_chunk>            platoons;
-    reflexive_t<scn_chunk>            ai_conversations;
-    u32                               script_syntax_data_size;
-    u32                               unknown_7;
-    reflexive_t<scn_chunk>            scripts;
-    reflexive_t<scn_chunk>            commands;
-    reflexive_t<scn_chunk>            points;
-    reflexive_t<scn_ai_animation_ref> ai_animation_refs;
-    reflexive_t<scn_globals>          globals;
-    reflexive_t<scn_ai_recording_ref> ai_recording_refs;
-    reflexive_t<scn_chunk>            unknown_8;
-    reflexive_t<scn_chunk>            participants;
-    reflexive_t<scn_chunk>            lines;
-    reflexive_t<scn_script_triggers>  script_triggers;
-    reflexive_t<scn_chunk>            cutscenes_verify;
-    reflexive_t<scn_chunk>            cutscene_titles_verify;
-    reflexive_t<scn_chunk>            source_files;
-    reflexive_t<scn_chunk>            cutscene_flags;
-    reflexive_t<scn_chunk>            cutscene_camera_poi;
-    reflexive_t<scn_chunk>            cutscene_titles;
-    reflexive_t<scn_chunk>            unknown_9[8];
-    u32                               zero2;
-    u32                               unknown_10;
-    reflexive_t<scn_bsp_header>       struct_bsp;
+    reflexive_t<scn_chunk>         command_lists;
+    reflexive_t<scn_chunk>         unknown_6;
+    reflexive_t<scn_chunk>         starting_locations;
+    reflexive_t<scn_chunk>         platoons;
+    reflexive_t<scn_chunk>         ai_conversations;
+    u32                            script_syntax_data_size;
+    u32                            unknown_7;
+    reflexive_t<scn_chunk>         scripts;
+    reflexive_t<scn_chunk>         commands;
+    reflexive_t<scn_chunk>         points;
+    reflexive_t<ai::animation_ref> ai_animation_refs;
+    reflexive_t<globals>           globals;
+    reflexive_t<ai::recording_ref> ai_recording_refs;
+    reflexive_t<scn_chunk>         unknown_8;
+    reflexive_t<scn_chunk>         participants;
+    reflexive_t<scn_chunk>         lines;
+    reflexive_t<script_triggers>   script_triggers;
+    reflexive_t<scn_chunk>         cutscenes_verify;
+    reflexive_t<scn_chunk>         cutscene_titles_verify;
+    reflexive_t<scn_chunk>         source_files;
+    reflexive_t<scn_chunk>         cutscene_flags;
+    reflexive_t<scn_chunk>         cutscene_camera_poi;
+    reflexive_t<scn_chunk>         cutscene_titles;
+    reflexive_t<scn_chunk>         unknown_9[8];
+    u32                            zero2;
+    u32                            unknown_10;
+    reflexive_t<bsp_header>        struct_bsp;
 };
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace scn
+} // namespace blam

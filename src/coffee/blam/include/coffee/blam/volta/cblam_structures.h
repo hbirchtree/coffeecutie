@@ -10,26 +10,55 @@
 #include <coffee/core/types/point.h>
 #include <coffee/core/types/rgba.h>
 #include <coffee/core/types/size.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/enum/graphics/texture_types.h>
+#include <platforms/types/vector_types.h>
 
 #include "blam_tag_classes.h"
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
+using namespace libc_types;
+using stl_types::Array;
+using typing::PixCmp;
+using typing::geometry::point_2d;
+using typing::geometry::size_2d;
+using typing::geometry::size_3d;
+using typing::pixels::BitFmt;
+using typing::pixels::PixFmt;
+using typing::vector_types::Vecf3;
 using TexType = typing::graphics::TexType;
 
-using bl_tag    = char[4];
-using bl_string = char[32];
+using bl_tag = char[4];
+template<size_t Size>
+struct bl_string_var
+{
+    char data[Size];
+
+    stl_types::CString str() const
+    {
+        return stl_types::CString(data, Size);
+    }
+
+    operator cstring() const
+    {
+        return data;
+    }
+};
+using bl_string = bl_string_var<32>;
 using bl_header = char[4];
 using bl_footer = char[4];
 
 struct tagref_t
 {
-    bl_tag tag;
-    i32    string_offset;
-    i32    unknown;
-    i32    tagId;
+    union
+    {
+        bl_tag      tag;
+        tag_class_t tag_class;
+    };
+    u32 string_offset;
+    i32 unknown;
+    u32 tagId;
 };
 
 /*!
@@ -47,7 +76,7 @@ using bl_point_t = point_2d<i16>;
  */
 using BitmProcess = u32 (*)(u32, uint16, byte_t);
 
-using bl_rgba_t = rgba_t;
+using bl_rgba_t = typing::pixels::rgba_t;
 
 /*!
  * \brief Blam maptypes. Names being obvious, the UI type does not give a
@@ -83,7 +112,7 @@ constexpr cstring header_head = "deah"; /*!< Header of file header*/
 constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
 
 constexpr i32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
-constexpr _cbasic_static_map<char[15], char[28], 28> blam_map_names = {
+constexpr stl_types::Array<stl_types::Pair<cstring, cstring>, 28> map_names = {{
     // Single player maps
     {"a10", "Pillar of Autumn"},
     {"a30", "Halo"},
@@ -115,8 +144,8 @@ constexpr _cbasic_static_map<char[15], char[28], 28> blam_map_names = {
     {"sidewinder", "Sidewinder"},
     {"timberland", "Timberland"},
     {"wizard", "Wizard"},
-}; /*!< A mapping of map names which this library can recognize. These are the
-      stock maps.*/
+}}; /*!< A mapping of map names which this library can recognize. These are
+      the stock maps.*/
 
 /*!
  * \brief A file header located from the start of a map file
@@ -171,13 +200,21 @@ struct index_item_t
 {
     union
     {
-        bl_tag      tagclass[3];   /*!< Strings which identify its class*/
-        tag_class_t tagclass_e[3]; /*!< enum-ified tagclass value */
+        Array<bl_tag, 3>      tagclass; /*!< Strings which identify its class*/
+        Array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
-    i32 tagId; /*!< A number representing its ID, only used for enumeration*/
+    u32 tagId; /*!< A number representing its ID, only used for enumeration*/
     u32 string_offset; /*! Magic data offset to a full string for the item*/
     i32 offset;        /*!< A byte offset to associated data*/
     i32 zeroes[2];
+
+    inline bool matches(tag_class_t other) const
+    {
+        for(auto tag : tagclass_e)
+            if(tag == other)
+                return true;
+        return false;
+    }
 
     template<
         typename T,
@@ -207,12 +244,16 @@ struct reflexive_t
      * valid pointer if the reflexive is deemed valid (if the variable zero is
      * indeed zero)
      */
-    const T* data(c_cptr basePtr, u32 magic) const
+    semantic::mem_chunk<T const> data(c_cptr basePtr, u32 magic) const
     {
+        using Output = semantic::mem_chunk<T const>;
+
         if(count == 0 || basePtr == nullptr || zero != 0)
-            return nullptr;
-        const byte_t* b_basePtr = C_CAST<const byte_t*>(basePtr);
-        return (const T*)(b_basePtr + offset - magic);
+            return Output();
+
+        byte_t const* b_basePtr = C_CAST<const byte_t*>(basePtr);
+        return Output::From(
+            C_RCAST<T const*>(b_basePtr + offset - magic), count);
     }
 };
 
@@ -302,14 +343,14 @@ struct bitm_image_t
  */
 struct bitm_texture_t
 {
-    Size3   resolution; /*!< Size of texture*/
-    c_cptr  data;       /*!< Pointer to described data*/
-    i16     mipmaps;    /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
-    PixCmp  format;     /*!< Texture format, DXT or RGBA*/
-    PixFmt  cformat;    /*!< Compression format, if applicable*/
-    BitFmt  dformat;    /*!< Data format of texture data*/
-    TexType type;       /*!< Texture type, 2D, 3D and cubes*/
-    uint16  blocksize;  /*!< Block size of DXT* formats*/
+    size_3d<i32> resolution; /*!< Size of texture*/
+    c_cptr       data;       /*!< Pointer to described data*/
+    i16          mipmaps; /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
+    PixCmp       format;  /*!< Texture format, DXT or RGBA*/
+    PixFmt       cformat; /*!< Compression format, if applicable*/
+    BitFmt       dformat; /*!< Data format of texture data*/
+    TexType      type;    /*!< Texture type, 2D, 3D and cubes*/
+    uint16       blocksize; /*!< Block size of DXT* formats*/
 };
 
 FORCEDINLINE
@@ -332,5 +373,4 @@ reflexive_t<char> bitm_header_t::image_ptr(bitm_image_t const* img) const
 
 C_FLAGS(bitm_flags_t, u16);
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace blam

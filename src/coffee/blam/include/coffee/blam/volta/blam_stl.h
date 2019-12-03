@@ -6,15 +6,15 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <peripherals/semantic/chunk.h>
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
 struct map_container
 {
-    map_container(c_ptr map, version_t ver)
+    map_container(semantic::Bytes map, version_t ver)
     {
-        this->map = file_header_get(map, ver);
+        this->map = file_header_get(map.data, ver);
         tags      = tag_index_get(this->map);
     }
 
@@ -49,7 +49,8 @@ class tag_index_view
 
   public:
     class index_iterator
-        : public Iterator<ForwardIteratorTag, index_item_t const*>
+        : public stl_types::
+              Iterator<stl_types::ForwardIteratorTag, index_item_t const*>
     {
         friend class tag_index_view;
 
@@ -143,5 +144,4 @@ class tag_index_view
     }
 };
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace blam

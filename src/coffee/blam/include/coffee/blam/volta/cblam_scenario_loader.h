@@ -2,10 +2,11 @@
 
 #include "cblam_scenario.h"
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
 class tag_index_view;
+
+namespace scn {
 
 /*!
  * \brief Acquire a map's scenario structure, containing information about
@@ -14,7 +15,6 @@ class tag_index_view;
  * the tag index. This pointer should only invalid if the map as a whole is
  * invalid.
  */
-extern const scenario* scn_get(tag_index_view& tags);
-
-} // namespace Blam
-} // namespace Coffee
+extern const scenario* get(tag_index_view& tags);
+} // namespace scn
+} // namespace blam

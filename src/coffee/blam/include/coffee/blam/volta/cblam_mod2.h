@@ -2,36 +2,15 @@
 
 #include "cblam_structures.h"
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
-/*!
- * \brief Used as index for LOD levels of a mesh
- */
-enum blam_mod2_lod
-{
-    blam_mod2_load_low_ext,
-    blam_mod2_load_low,
-    blam_mod2_load_medium,
-    blam_mod2_load_high,
-    blam_mod2_load_high_ext,
-};
-
-struct blam_uvscale
+struct uvscale
 {
     scalar u;
     scalar v;
 };
 
-struct blam_mod2_report
-{
-    u32 index_offset_start;
-    u32 index_offset_end;
-    u32 vertex_offset_start;
-    u32 vertex_offset_end;
-};
-
-struct blam_shader_desc
+struct shader_desc
 {
     u32 tag;
     u32 namePtr;
@@ -40,7 +19,29 @@ struct blam_shader_desc
     u32 unknown[4];
 };
 
-struct blam_mod2_region_permutation
+namespace mod2 {
+
+/*!
+ * \brief Used as index for LOD levels of a mesh
+ */
+enum mod2_lod
+{
+    mod2_load_low_ext,
+    mod2_load_low,
+    mod2_load_medium,
+    mod2_load_high,
+    mod2_load_high_ext,
+};
+
+struct report
+{
+    u32 index_offset_start;
+    u32 index_offset_end;
+    u32 vertex_offset_start;
+    u32 vertex_offset_end;
+};
+
+struct region_permutation
 {
     byte_t name[32];
     u32    flags[8];
@@ -48,19 +49,19 @@ struct blam_mod2_region_permutation
     i16    reserved[7];
 };
 
-struct blam_mod2_region
+struct region
 {
-    byte_t                                    name[64];
-    reflexive_t<blam_mod2_region_permutation> permutations;
+    byte_t                          name[64];
+    reflexive_t<region_permutation> permutations;
 };
 
-struct blam_mod2_geometry_header
+struct geometry_header
 {
     u32                 unknown[9];
     reflexive_t<byte_t> mesh_headers;
 };
 
-struct blam_mod2_marker
+struct marker
 {
     byte_t              name[32];
     u32                 unknown[5];
@@ -72,7 +73,7 @@ struct blam_mod2_marker
  * referenced by the map, containing further references to parts of the model as
  * well as how to display it.
  */
-struct blam_mod2_header
+struct header
 {
     u32 zero1;
     u32 unknown1;
@@ -93,21 +94,18 @@ struct blam_mod2_header
     i16 nodecount_low;
     i16 nodecount_low_ext;
 
-    blam_uvscale uvscale;
+    uvscale uvscale;
 
     u32 unknown2[29];
 
-    reflexive_t<blam_mod2_marker>          markers;
-    reflexive_t<byte_t>                    nodes;
-    reflexive_t<blam_mod2_region>          regions;
-    reflexive_t<blam_mod2_geometry_header> geometries;
-    reflexive_t<blam_shader_desc>          shaders;
+    reflexive_t<marker>          markers;
+    reflexive_t<byte_t>          nodes;
+    reflexive_t<region>          regions;
+    reflexive_t<geometry_header> geometries;
+    reflexive_t<shader_desc>     shaders;
 };
 
-/*!
- * \brief The blam_mod2_bsp_header struct
- */
-struct blam_mod2_bsp_header
+struct bsp_header
 {
     byte_t data[500];
     //    blam_tagref lightmaps_tag;
@@ -125,8 +123,8 @@ struct blam_mod2_bsp_header
  * \param magic Magic number from the tag index
  * \return A valid pointer to the referenced model, or NULL if it is invalid
  */
-extern const blam_mod2_header* blam_mod2_get_header(
+extern const header* get_header(
     const index_item_t* item, const file_header_t* map, i32 magic);
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace mod2
+} // namespace blam

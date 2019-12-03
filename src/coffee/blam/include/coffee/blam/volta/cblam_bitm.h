@@ -2,8 +2,7 @@
 
 #include "cblam_structures.h"
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
 /*!
  * \brief To acquire a bitmap from a tag item
@@ -14,8 +13,8 @@ namespace Blam {
  * \return
  */
 extern const bitm_image_t* bitm_get(
-    const index_item_t*  item,
-    const file_header_t* map,
+    index_item_t const*  item,
+    file_header_t const* map,
     i32                  magic,
     i32*                 numImages);
 
@@ -28,7 +27,6 @@ extern const bitm_image_t* bitm_get(
  * \return A struct containing data readily digested for GL
  */
 extern bitm_texture_t bitm_get_texture(
-    const bitm_image_t* img, const void* bitmfile);
+    bitm_image_t const* img, c_cptr bitmfile);
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace blam

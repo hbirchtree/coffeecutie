@@ -1,15 +1,26 @@
 #include <coffee/blam/volta/cblam_map.h>
 #include <coffee/core/types/chunk.h>
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
+namespace detail {
+
+c_cptr magic_ptr(c_cptr base, i32 magic, i32 offset)
+{
+    const byte_t* ptr = (C_FCAST<const byte_t*>(base)) + offset - magic;
+    return (ptr < base) ? nullptr : ptr;
+}
+
+} // namespace detail
+
+using semantic::Bytes;
+using namespace semantic::chunk_ops;
 
 cstring file_header_full_mapname(const file_header_t* map)
 {
-    for(i32 i = 0; i < blam_num_map_names; i++)
+    for(auto name : blam::map_names)
     {
-        if(libc::str::cmp(map->name, blam_map_names[i].key))
-            return blam_map_names[i].value;
+        if(libc::str::cmp(C_OCAST<const char*>(map->name), name.first))
+            return name.second;
     }
     return map->name;
 }
@@ -51,19 +62,13 @@ const index_item_t* tag_index_get_items(const file_header_t* file)
     return C_FCAST<const index_item_t*>(&(ptr[1]));
 }
 
-c_cptr blam_mptr(c_cptr base, i32 magic, i32 offset)
-{
-    const byte_t* ptr = (C_FCAST<const byte_t*>(base)) + offset - magic;
-    return (ptr < base) ? nullptr : ptr;
-}
-
 cstring index_item_get_string(
     const index_item_t*  idx,
     const file_header_t* map,
     const tag_index_t*   tagindex)
 {
-    return C_CAST<cstring>(blam_mptr(
-        map, tagindex->index_magic, C_CAST<i32>(idx->string_offset)));
+    return magic_ptr<cstring>(
+        map, tagindex->index_magic, C_CAST<i32>(idx->string_offset));
 }
 
 const index_item_t* tag_index_get_item(
@@ -75,10 +80,7 @@ const index_item_t* tag_index_get_item(
 cstring tagref_get_name(
     const tagref_t* tag, const file_header_t* file, const tag_index_t* tags)
 {
-    return C_CAST<cstring>(
-        blam_mptr(file, tags->index_magic, tag->string_offset));
+    return magic_ptr<cstring>(file, tags->index_magic, tag->string_offset);
 }
 
-} // namespace Blam
-
-} // namespace Coffee
+} // namespace blam

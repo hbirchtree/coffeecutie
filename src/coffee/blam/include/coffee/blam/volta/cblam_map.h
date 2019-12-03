@@ -2,8 +2,7 @@
 
 #include "cblam_structures.h"
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
 
 /*!
  * \brief Get the proper, full name of a map
@@ -53,6 +52,7 @@ extern const index_item_t* tag_index_get_item(
  */
 extern tag_index_t tag_index_get(const file_header_t* file);
 
+namespace detail {
 /*!
  * \brief Used to decode magic index pointers
  * \param base Pointer to the file header
@@ -60,7 +60,15 @@ extern tag_index_t tag_index_get(const file_header_t* file);
  * \param offset Data offset which will be transformed
  * \return A pointer to the described data
  */
-extern const void* blam_mptr(c_cptr base, i32 magic, i32 offset);
+extern const void* magic_ptr(c_cptr base, i32 magic, i32 offset);
+
+} // namespace detail
+
+template<typename T>
+STATICINLINE T magic_ptr(c_cptr base, i32 magic, i32 offset)
+{
+    return C_RCAST<T>(detail::magic_ptr(base, magic, offset));
+}
 
 /*!
  * \brief Acquire the name string for a tag
@@ -84,5 +92,4 @@ extern cstring index_item_get_string(
 extern cstring tagref_get_name(
     const tagref_t* tag, const file_header_t* file, const tag_index_t* tags);
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace blam

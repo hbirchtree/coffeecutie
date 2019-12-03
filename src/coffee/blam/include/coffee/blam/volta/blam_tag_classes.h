@@ -1,13 +1,15 @@
 #pragma once
 
-#include <coffee/core/libc_types.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/type_safety.h>
 
 #if !defined(COFFEE_NO_ENDIAN_OPS)
 #include <peripherals/libc/endian_ops.h>
 #endif
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
+
+using namespace libc_types;
 
 /*!
  * \brief Blam tag classes, sourced from SparkEdit source code
@@ -114,5 +116,4 @@ FORCEDINLINE bool operator!=(tag_class_t t1, tag_class_t t2)
 }
 #endif
 
-} // namespace Blam
-} // namespace Coffee
+} // namespace blam
