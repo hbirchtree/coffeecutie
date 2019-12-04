@@ -388,7 +388,7 @@ struct shader_index
     u32 ShaderIndex;
 };
 
-using skybox = tagref_t;
+using skybox_t = tagref_t;
 
 struct starting_equip
 {
@@ -455,7 +455,7 @@ struct scenario
     byte_t                unk_str1[16];
     byte_t                unk_str2[16];
     byte_t                unk_str3[16];
-    reflexive_t<skybox>   skybox;
+    reflexive_t<skybox_t> skybox_t;
     u32                   zero1;
     reflexive_t<tagref_t> child_scenarios;
 

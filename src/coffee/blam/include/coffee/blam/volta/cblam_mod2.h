@@ -4,7 +4,7 @@
 
 namespace blam {
 
-struct uvscale
+struct uvscale_t
 {
     scalar u;
     scalar v;
@@ -94,7 +94,7 @@ struct header
     i16 nodecount_low;
     i16 nodecount_low_ext;
 
-    uvscale uvscale;
+    uvscale_t uvscale;
 
     u32 unknown2[29];
 
