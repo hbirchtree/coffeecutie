@@ -511,12 +511,15 @@ inline reflexive_t<header> section::to_header(info const& info_data) const
  */
 struct scenario
 {
-    byte_t                unk_str1[16];
-    byte_t                unk_str2[16];
-    byte_t                unk_str3[16];
-    reflexive_t<skybox>   skyboxes;
-    u32                   zero1;
-    reflexive_t<tagref_t> child_scenarios;
+    tagref_t              unk_bsp1; // 16
+    tagref_t              unk_bsp2; // 16
+    tagref_t              unk_sky;  // 16
+//    byte_t unk_str1[16];
+//    byte_t unk_str2[16];
+//    byte_t unk_str3[16];
+    reflexive_t<skybox>   skyboxes; // 12
+    u32                   zero1;    // 4
+    reflexive_t<tagref_t> child_scenarios; // 12
 
     u32 reserved1[46];
 

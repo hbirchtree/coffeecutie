@@ -34,14 +34,23 @@ struct bl_string_var
 {
     char data[Size];
 
-    stl_types::CString str() const
+    inline stl_types::CString str() const
     {
         return stl_types::CString(data, Size);
     }
 
-    operator cstring() const
+    inline operator cstring() const
     {
         return data;
+    }
+
+    template<
+        typename Dummy                                   = void,
+        typename std::enable_if<Size == 4, Dummy>::type* = nullptr>
+    explicit operator u32() const
+    {
+        u32 const* idata = C_RCAST<u32 const*>(data);
+        return *idata;
     }
 };
 using bl_tag    = bl_string_var<4>;
@@ -59,6 +68,11 @@ struct tagref_t
     u32 string_offset;
     i32 unknown;
     u32 tag_id;
+
+    inline bool valid() const
+    {
+        return tag_id != std::numeric_limits<u32>::max();
+    }
 };
 
 struct magic_data_t

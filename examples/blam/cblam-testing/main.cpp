@@ -46,16 +46,6 @@ int coffee_main(i32, cstring_w*)
     blam::tag_index_view index_view(map);
 
     {
-        u32 last_tag = 0;
-        for(auto tag : index_view)
-        {
-            cDebug(
-                "Tag: {0} greater? {1}", tag->tag_id, tag->tag_id > last_tag);
-            last_tag = tag->tag_id;
-        }
-    }
-
-    {
         /* Extracting scenario data */
         const blam::scn::scenario* scn = blam::scn::get(index_view);
 
@@ -83,7 +73,27 @@ int coffee_main(i32, cstring_w*)
     }
 
     auto scenario_header = blam::scn::get(index_view);
+    cDebug("Map offset: {0}", offsetof(blam::scn::scenario,zero1));
     cDebug("Map scenario name: {0}", scenario_header);
+
+//    cDebug(
+//        "Unknown BSP1: {0}, {1}, {2}, {3}",
+//        scenario_header->unk_bsp1.tag.str(),
+//        scenario_header->unk_bsp1.tag_id,
+//        scenario_header->unk_bsp1.string_offset,
+//                scenario_header->unk_sky.valid());
+//    cDebug(
+//        "Unknown BSP1: {0}, {1}, {2}, {3}",
+//        scenario_header->unk_bsp2.tag.str(),
+//        scenario_header->unk_bsp2.tag_id,
+//        scenario_header->unk_bsp2.string_offset,
+//                scenario_header->unk_sky.valid());
+//    cDebug(
+//        "Unknown SKY: {0}, {1}, {2}, {3}",
+//        scenario_header->unk_sky.tag.str(),
+//        scenario_header->unk_sky.tag_id,
+//        scenario_header->unk_sky.string_offset,
+//                scenario_header->unk_sky.valid());
 
     for(auto const& child_scn :
         scenario_header->child_scenarios.data(map.magic))
