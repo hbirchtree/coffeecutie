@@ -29,7 +29,6 @@ using typing::pixels::PixFmt;
 using typing::vector_types::Vecf3;
 using TexType = typing::graphics::TexType;
 
-using bl_tag = char[4];
 template<size_t Size>
 struct bl_string_var
 {
@@ -45,6 +44,7 @@ struct bl_string_var
         return data;
     }
 };
+using bl_tag    = bl_string_var<4>;
 using bl_string = bl_string_var<32>;
 using bl_header = char[4];
 using bl_footer = char[4];
@@ -58,7 +58,13 @@ struct tagref_t
     };
     u32 string_offset;
     i32 unknown;
-    u32 tagId;
+    u32 tag_id;
+};
+
+struct magic_data_t
+{
+    c_cptr base_ptr;
+    i32    magic_offset;
 };
 
 /*!
@@ -101,12 +107,6 @@ enum class version_t : int32
     xbox = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
     pc   = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
 };
-
-constexpr cstring index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
-constexpr cstring index_item_type_bitm = "mtib"; /*!< Tag class for bitmaps*/
-constexpr cstring index_item_type_scnr = "rncs"; /*!< Tag class for scenarios*/
-constexpr cstring index_item_type_sbsp =
-    "psbs"; /*!< Tag class for structured BSP*/
 
 constexpr cstring header_head = "deah"; /*!< Header of file header*/
 constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
@@ -188,8 +188,54 @@ struct tag_index_t
     i32 tagStart;           /*!< ???*/
 };
 
-template<typename T>
-struct reflexive_t;
+struct xbox_reflexive
+{
+};
+struct pc_reflexive
+{
+};
+
+/*!
+ * \brief Points to a chunk of memory within the file
+ */
+template<
+    typename T,
+    typename RType = pc_reflexive,
+    bool           = std::is_same<RType, pc_reflexive>::value>
+struct reflexive_t
+{
+    i32 count;  /*!< Number of elements */
+    i32 offset; /*!< Offset to data within file (this will only refer to data
+                   within the map file)*/
+    i32 zero;
+
+    /*!
+     * \brief Made for simplicity when working with reflexive data. Instead of
+     * several functions performing the same task, this template allows to
+     * access the data much more conveniently. \param basePtr Base pointer of
+     * map in most cases \param magic Magic number from tag index \return A
+     * valid pointer if the reflexive is deemed valid (if the variable zero is
+     * indeed zero)
+     */
+    semantic::mem_chunk<T const> data(magic_data_t const& magic) const
+    {
+        using Output = semantic::mem_chunk<T const>;
+
+        if(count == 0 || zero != 0)
+            return Output();
+
+        byte_t const* base_ptr = C_CAST<const byte_t*>(magic.base_ptr);
+        return Output::From(
+            C_RCAST<T const*>(base_ptr + offset - magic.magic_offset), count);
+    }
+};
+
+template<typename T, typename RType>
+struct reflexive_t<T, RType, false>
+{
+    i32 count;
+    i32 offset;
+};
 
 /*!
  * \brief An item in the tag index, contains tag class (which identifies the
@@ -203,7 +249,7 @@ struct index_item_t
         Array<bl_tag, 3>      tagclass; /*!< Strings which identify its class*/
         Array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
-    u32 tagId; /*!< A number representing its ID, only used for enumeration*/
+    u32 tag_id; /*!< A number representing its ID, only used for enumeration*/
     u32 string_offset; /*! Magic data offset to a full string for the item*/
     i32 offset;        /*!< A byte offset to associated data*/
     i32 zeroes[2];
@@ -221,156 +267,8 @@ struct index_item_t
         typename std::enable_if<std::is_class<T>::value, bool>::type* = nullptr>
     reflexive_t<T> to_reflexive() const
     {
-        return {sizeof(T), offset};
+        return {1, offset};
     }
 };
-
-/*!
- * \brief Points to a chunk of memory within the file
- */
-template<typename T>
-struct reflexive_t
-{
-    i32 count;  /*!< Size of data*/
-    i32 offset; /*!< Offset to data within file (this will only refer to data
-                   within the map file)*/
-    i32 zero;
-
-    /*!
-     * \brief Made for simplicity when working with reflexive data. Instead of
-     * several functions performing the same task, this template allows to
-     * access the data much more conveniently. \param basePtr Base pointer of
-     * map in most cases \param magic Magic number from tag index \return A
-     * valid pointer if the reflexive is deemed valid (if the variable zero is
-     * indeed zero)
-     */
-    semantic::mem_chunk<T const> data(c_cptr basePtr, u32 magic) const
-    {
-        using Output = semantic::mem_chunk<T const>;
-
-        if(count == 0 || basePtr == nullptr || zero != 0)
-            return Output();
-
-        byte_t const* b_basePtr = C_CAST<const byte_t*>(basePtr);
-        return Output::From(
-            C_RCAST<T const*>(b_basePtr + offset - magic), count);
-    }
-};
-
-/*!
- * \brief These are the various texture formats found in the Blam engine
- */
-enum class bitm_format : uint16
-{
-    A8       = 0x00, /*!< 000A -> GL_RED + GL_UNSIGNED_BYTE*/
-    Y8       = 0x01, /*!< LLL0 -> GL_RED + GL_UNSIGNED_BYTE*/
-    AY8      = 0x02, /*!< LLLL -> GL_RED + GL_UNSIGNED_BYTE*/
-    A8Y8     = 0x03, /*!< LLLA1 -> GL_RG + GL_UNSIGNED_BYTE*/
-    R5G6B5   = 0x06, /*!< R5G6B5 -> GL_RGB + GL_UNSIGNED_BYTE_5_6_5*/
-    A1R5G5B5 = 0x08, /*!< RGB5A1 -> GL_RGB + GL_UNSIGNED_SHORT_5_5_5_1*/
-    A4R4G4B4 = 0x09, /*!< RGBA4 -> GL_RGB + GL_UNSIGNED_SHORT_4_4_4_4*/
-    X8R8G8B8 = 0x0A, /*!< RGBX8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
-    A8R8G8B8 = 0x0B, /*!< RGBA8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
-    DXT1     = 0x0E, /*!< DXT1*/
-    DXT2AND3 = 0x0F, /*!< DXT3*/
-    DXT4AND5 = 0x10, /*!< DXT5*/
-    P8       = 0x11, /*!< LLL01 (See A8)*/
-};
-
-/*!
- * \brief Texture types
- */
-enum class bitm_type_t : uint16
-{
-    T2D   = 0x0, /*!< Typical 2D texture*/
-    T3D   = 0x1, /*!< Volume texture*/
-    TCube = 0x2, /*!< Cubemap used for skybox*/
-};
-
-/*!
- * \brief Texture flags
- */
-enum class bitm_flags_t : uint16
-{
-    linear = 0x10,
-};
-
-struct bitm_image_t;
-
-/*!
- * \brief A bitmap header for images
- */
-struct bitm_header_t
-{
-    i32 unknown[22];
-    i32 offset_first; /*!< Offset to the bitm_padding_t structure */
-    i32 unknown23;
-    i32 imageCount;  /*!< Count of images described by this header*/
-    i32 imageOffset; /*!< Data offset to bitm_image_t */
-    i32 unknown25;
-
-    reflexive_t<bitm_image_t> image_headers() const;
-    reflexive_t<char>         image_ptr(bitm_image_t const* img) const;
-};
-
-struct bitm_padding_t
-{
-    i32 unknown[16];
-};
-
-/*!
- * \brief A memory structure for Blam images containing all the necessary
- * information to extract the data.
- */
-struct bitm_image_t
-{
-    i32          id;        /*!< A character string*/
-    bl_size_t    isize;     /*!< Size of image*/
-    i16          depth;     /*!< Depth bits for image*/
-    bitm_type_t  type;      /*!< Type of image*/
-    bitm_format  format;    /*!< Format of image*/
-    bitm_flags_t flags;     /*!< Flags present in image*/
-    bl_point_t   reg_pnt;   /*!< I have no idea what this is.*/
-    i16          mipmaps;   /*!< Number of mipmaps*/
-    i16          pixOffset; /*!< Pixel offset when in use*/
-    i32          offset;    /*!< Data offset*/
-    i32          size;      /*!< Data size in bytes*/
-    i32          unknown[4];
-};
-
-/*!
- * \brief Data ready to be uploaded to the GL
- */
-struct bitm_texture_t
-{
-    size_3d<i32> resolution; /*!< Size of texture*/
-    c_cptr       data;       /*!< Pointer to described data*/
-    i16          mipmaps; /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
-    PixCmp       format;  /*!< Texture format, DXT or RGBA*/
-    PixFmt       cformat; /*!< Compression format, if applicable*/
-    BitFmt       dformat; /*!< Data format of texture data*/
-    TexType      type;    /*!< Texture type, 2D, 3D and cubes*/
-    uint16       blocksize; /*!< Block size of DXT* formats*/
-};
-
-FORCEDINLINE
-reflexive_t<bitm_image_t> bitm_header_t::image_headers() const
-{
-    if(imageCount)
-        return {sizeof(bitm_image_t), imageOffset, 0};
-    else
-        return {0, 0, 0};
-}
-
-FORCEDINLINE
-reflexive_t<char> bitm_header_t::image_ptr(bitm_image_t const* img) const
-{
-    if(!img)
-        return {};
-
-    return {img->size, img->offset, 0};
-}
-
-C_FLAGS(bitm_flags_t, u16);
 
 } // namespace blam

@@ -16,6 +16,7 @@ struct map_container
     {
         this->map = file_header_get(map.data, ver);
         tags      = tag_index_get(this->map);
+        magic     = {map.data, tags.index_magic};
     }
 
     bool is_valid()
@@ -25,6 +26,7 @@ struct map_container
 
     file_header_t const* map;
     tag_index_t          tags;
+    magic_data_t         magic;
 
     operator cstring()
     {
@@ -102,6 +104,26 @@ class tag_index_view
             return *this;
         }
 
+        index_iterator operator++(int)
+        {
+            auto cpy = *this;
+            i++;
+            return cpy;
+        }
+
+        index_iterator operator+(i32 add)
+        {
+            auto cpy = *this;
+            cpy.i += add;
+            return cpy;
+        }
+
+        index_iterator& operator+=(i32 add)
+        {
+            i += add;
+            return *this;
+        }
+
         index_item_t const* operator*()
         {
             return deref();
@@ -141,6 +163,29 @@ class tag_index_view
     iterator end()
     {
         return index_iterator(*this, m_idx.tagCount);
+    }
+
+    iterator find(decltype(tagref_t::tag_id) tag_id)
+    {
+        /* Tag index has sequential tag IDs, allowing binary search */
+        i32  size = m_idx.tagCount;
+        auto it   = begin();
+
+        while(size > 0)
+        {
+            size /= 2;
+
+            auto mid     = it + size;
+            auto mid_tag = (*mid)->tag_id;
+
+            if(mid_tag == tag_id)
+                return mid;
+
+            if(tag_id > mid_tag)
+                it = it + size;
+        }
+
+        return end();
     }
 };
 

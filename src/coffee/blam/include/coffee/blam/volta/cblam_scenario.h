@@ -284,7 +284,7 @@ struct recording_ref
 
 } // namespace ai
 
-struct script_triggers
+struct script_trigger
 {
     u32       unk1;
     bl_string name;
@@ -357,7 +357,7 @@ struct squad_spawn
 
 struct info
 {
-    byte_t              text[16];
+    bl_string_var<16>   text;
     squad*              pSquads;
     squad**             ppSquadSpawns;
     reflexive_t<byte_t> Platoons;
@@ -388,15 +388,15 @@ struct shader_index
     u32 ShaderIndex;
 };
 
-using skybox_t = tagref_t;
+using skybox = tagref_t;
 
 struct starting_equip
 {
-    u32      unknown1; /*!< Sometimes 1? */
-    u32      index;
-    byte_t   padding2[51];
-    tagref_t items[6];
-    byte_t   padding3[45];
+    u32                unknown1; /*!< Sometimes 1? */
+    u32                index;
+    byte_t             padding2[51];
+    Array<tagref_t, 6> items;
+    byte_t             padding3[45];
 };
 
 struct control
@@ -421,31 +421,90 @@ struct light_fixture
     byte_t    unk3[40];
 };
 
-struct sbsp
+namespace bsp {
+
+struct header;
+struct info;
+
+struct section
 {
-    u32    header_offset;
-    u32    xbox_reflexive_count;
-    u32    xbox_reflexive_offset;
-    u32    xbox_lightmap_reflexive_count;
-    u32    xbox_lightmap_reflexive_offset;
-    bl_tag tag;
+    u32 header_offset;
+
+    /* Below values are only valid on Xbox */
+    reflexive_t<byte_t, xbox_reflexive>        xbox_vertices;
+    reflexive_t<light_fixture, xbox_reflexive> xbox_lightmaps;
+    bl_tag                                     tag;
+
+    inline reflexive_t<header> to_header(info const& info_data) const;
 };
 
-/*!
- * \brief Is not the same as a blam_mod2_bsp_header, this is extracted from the
- * scenario and references the blam_mod2_bsp_header structure it belongs to.
- */
-struct bsp_header
+struct info
 {
-    u32    offset;
-    u32    size;
-    u32    magic;
-    u32    zero;
-    bl_tag tag;
-    u32    name_ptr;
-    u32    unknown1;
-    u32    tag_id;
+    u32      offset;
+    u32      size;
+    u32      magic;
+    u32      zero;
+    tagref_t tag;
+
+    inline reflexive_t<section> to_bsp() const
+    {
+        return {1, C_FCAST<i32>(magic - offset)};
+    }
 };
+
+struct header
+{
+    tagref_t            lightmaps;
+    u32                 unknown1[37];
+    reflexive_t<byte_t> shaders;
+    reflexive_t<byte_t> collision_header;
+    reflexive_t<byte_t> nodes;
+    bounding_box        world_bounds;
+    reflexive_t<byte_t> leaves;
+    reflexive_t<byte_t> leaf_surfaces;
+    reflexive_t<byte_t> submesh_tris;
+    reflexive_t<byte_t> submesh_header;
+    reflexive_t<byte_t> chunk_10;
+    reflexive_t<byte_t> chunk_11;
+    reflexive_t<byte_t> chunk_12;
+    reflexive_t<byte_t> clusters;
+    i32                 cluster_data_size;
+    u32                 unknown2;
+    reflexive_t<byte_t> cluster_data;
+    reflexive_t<byte_t> cluster_portals;
+    reflexive_t<byte_t> chunk_16a;
+    reflexive_t<byte_t> breakables_surfaces;
+    reflexive_t<byte_t> fog_planes;
+    reflexive_t<byte_t> fog_regions;
+    reflexive_t<byte_t> fog_weather_pallette;
+    reflexive_t<byte_t> chunk_16f;
+    reflexive_t<byte_t> chunk_16g;
+    reflexive_t<byte_t> weather;
+    reflexive_t<byte_t> weather_polyhedra;
+    reflexive_t<byte_t> chunk_19;
+    reflexive_t<byte_t> chunk_20;
+    reflexive_t<byte_t> pathfinding_surface;
+    reflexive_t<byte_t> chunk_24;
+    reflexive_t<byte_t> background_sound;
+    reflexive_t<byte_t> sound_env;
+    reflexive_t<byte_t> sound_pas_data_size;
+    u32                 unknown3;
+    reflexive_t<byte_t> sound_pas_data;
+    reflexive_t<byte_t> chunk_26;
+    reflexive_t<byte_t> chunk_27;
+    reflexive_t<byte_t> markers;
+    reflexive_t<byte_t> clutter_objects; /*!< aka detail_objects */
+    reflexive_t<byte_t> runtime_decals;
+    u32                 unkown4[9];
+};
+
+inline reflexive_t<header> section::to_header(info const& info_data) const
+{
+    return {1,
+            C_FCAST<i32>(header_offset - (info_data.magic - info_data.offset))};
+}
+
+} // namespace bsp
 
 /*!
  * \brief A Blam! scenario descriptor
@@ -455,7 +514,7 @@ struct scenario
     byte_t                unk_str1[16];
     byte_t                unk_str2[16];
     byte_t                unk_str3[16];
-    reflexive_t<skybox_t> skybox_t;
+    reflexive_t<skybox>   skyboxes;
     u32                   zero1;
     reflexive_t<tagref_t> child_scenarios;
 
@@ -471,14 +530,14 @@ struct scenario
 
     reflexive_t<object_name>    object_names;
     reflex_group<scenery_spawn> scenery;
-    reflex_group<biped>         biped;
-    reflex_group<vehicle_spawn> vehicle;
-    reflex_group<equip>         equip;
-    reflex_group<weapon_spawn>  weap;
+    reflex_group<biped>         bipeds;
+    reflex_group<vehicle_spawn> vehicles;
+    reflex_group<equip>         equips;
+    reflex_group<weapon_spawn>  weapon_spawns;
     reflexive_t<device_group>   device_groups;
-    reflex_group<machine>       machine;
-    reflex_group<control>       control;
-    reflex_group<light_fixture> light_fixture;
+    reflex_group<machine>       machines;
+    reflex_group<control>       controls;
+    reflex_group<light_fixture> light_fixtures;
     reflex_group<sound_scenery> snd_scenery;
 
     reflexive_t<scn_chunk> unknown_4[7];
@@ -513,7 +572,7 @@ struct scenario
     reflexive_t<scn_chunk>         unknown_8;
     reflexive_t<scn_chunk>         participants;
     reflexive_t<scn_chunk>         lines;
-    reflexive_t<script_triggers>   script_triggers;
+    reflexive_t<script_trigger>    script_triggers;
     reflexive_t<scn_chunk>         cutscenes_verify;
     reflexive_t<scn_chunk>         cutscene_titles_verify;
     reflexive_t<scn_chunk>         source_files;
@@ -523,7 +582,7 @@ struct scenario
     reflexive_t<scn_chunk>         unknown_9[8];
     u32                            zero2;
     u32                            unknown_10;
-    reflexive_t<bsp_header>        struct_bsp;
+    reflexive_t<bsp::info>         bsp_info;
 };
 
 } // namespace scn
