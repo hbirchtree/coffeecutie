@@ -70,6 +70,5 @@ mingw:
   - w64
 gamecube:
   - .
-  - $(shell)
 gamecube$(shell):
   - .
