@@ -359,7 +359,7 @@ void examine_map(Resource&& mapfile, T version)
                 base_scenery,
                 base_scenery);
         }
-        for(auto const& equip : scn->multiplayer_equipment.data(map.magic))
+        for(auto const& equip : scn->mp_equipment.data(map.magic))
         {
             cDebug("Equipment spawn: {0}", map.get_name(&equip.item));
 
