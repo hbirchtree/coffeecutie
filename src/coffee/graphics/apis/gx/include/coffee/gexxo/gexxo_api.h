@@ -72,7 +72,7 @@ struct VertexBuffer : Coffee::RHI::GraphicsAPI::VertexBuffer
     }
     FORCEDINLINE void commit(szptr size, c_cptr data = nullptr)
     {
-        commit(semantic::BytesConst::From(data, size));
+        commit(semantic::BytesConst::FromBytes(data, size));
     }
 
     FORCEDINLINE semantic::Bytes map(szptr offset, szptr size)
