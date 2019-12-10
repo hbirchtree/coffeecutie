@@ -299,7 +299,7 @@ struct script_trigger
     u32       unk[11];
 };
 
-struct globals
+struct global
 {
     u32       unk1;
     bl_string name;
@@ -563,11 +563,11 @@ struct submesh_header
     Vecf4                                plane;
     u32                                  breakable_surface;
     u32                                  unknown_count3;
-    reflexive_t<pc_vertex, xbox_variant> vertex;
+    reflexive_t<pc_vertex, xbox_variant> pc_vertices_data;
     u32                                  memory_vertex_offset;
     u32                                  vert_reflexive;
     u32                                  unknown_always_3;
-    reflexive_t<xbox_vertex, xbox_variant> vertex2;
+    reflexive_t<xbox_vertex, xbox_variant> xbox_vertices_data;
     u32                                    memory_lightmap_offset;
     u32                                    lightmap_vert_reflexive;
     u32                                    unknown_zero[2];
@@ -582,14 +582,14 @@ struct submesh_header
 
     inline reflexive_t<pc_vertex, xbox_variant> pc_vertices() const
     {
-        auto base = vertex;
+        auto base = pc_vertices_data;
         base.offset += pc_vertex_data_offset;
         return base;
     }
 
     inline reflexive_t<xbox_vertex, xbox_variant> xbox_vertices() const
     {
-        auto base = vertex2;
+        auto base = xbox_vertices_data;
         base.offset += vertex_data_offset;
         return base;
     }
@@ -799,7 +799,7 @@ struct scenario
         reflexive_t<scn_chunk>            commands;
         reflexive_t<scn_chunk>            points;
         reflexive_t<ai::animation_ref>    ai_animation_refs;
-        reflexive_t<globals>              globals;
+        reflexive_t<global>               globals;
         reflexive_t<ai::recording_ref>    ai_recording_refs;
         reflexive_t<scn_chunk>            unknown_8;
         reflexive_t<scn_chunk>            participants;

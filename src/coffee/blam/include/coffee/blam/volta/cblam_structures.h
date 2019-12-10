@@ -424,7 +424,7 @@ struct tag_index_t : stl_types::non_copy
     }
 };
 
-enum class bitmap_type
+enum class bitmap_type_t
 {
     internal = 0,
     external = 1,
@@ -442,11 +442,11 @@ struct tag_t
         Array<bl_tag, 3>      tagclass; /*!< Strings which identify its class*/
         Array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
-    u32         tag_id;
-    string_ref  name;
-    u32         offset; /*!< A byte offset to associated data*/
-    bitmap_type bitmap_type;
-    i32         padding;
+    u32           tag_id;
+    string_ref    name;
+    u32           offset; /*!< A byte offset to associated data*/
+    bitmap_type_t bitmap_type;
+    i32           padding;
 
     inline bool matches(tag_class_t other) const
     {
