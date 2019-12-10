@@ -4,7 +4,7 @@ namespace blam {
 namespace mod2 {
 
 const header* blam_mod2_get_header(
-    const index_item_t* item, const file_header_t* map, i32 magic)
+    tag_t const* item, file_header_t const* map, i32 magic)
 {
     if(!map || !item)
         return nullptr;

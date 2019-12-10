@@ -3,11 +3,11 @@
 #include "cblam_structures.h"
 
 namespace blam {
-
+namespace bitm {
 /*!
  * \brief These are the various texture formats found in the Blam engine
  */
-enum class bitm_format : uint16
+enum class format_t : u16
 {
     A8       = 0x00, /*!< 000A -> GL_RED + GL_UNSIGNED_BYTE*/
     Y8       = 0x01, /*!< LLL0 -> GL_RED + GL_UNSIGNED_BYTE*/
@@ -27,40 +27,44 @@ enum class bitm_format : uint16
 /*!
  * \brief Texture types
  */
-enum class bitm_type_t : uint16
+enum class type_t : u16
 {
-    T2D   = 0x0, /*!< Typical 2D texture*/
-    T3D   = 0x1, /*!< Volume texture*/
-    TCube = 0x2, /*!< Cubemap used for skybox*/
+    tex_2d    = 0x0, /*!< Typical 2D texture*/
+    tex_3d    = 0x1, /*!< Volume texture*/
+    tex_cude  = 0x2, /*!< Cubemap used for skybox*/
+    tex_white = 0x3,
 };
 
 /*!
  * \brief Texture flags
  */
-enum class bitm_flags_t : uint16
+enum class flags_t : u16
 {
-    linear = 0x10,
+    pow2       = 0x1,
+    compressed = 0x2,
+    palettized = 0x4,
+    swizzled   = 0x8,
+    linear     = 0x10,
+    v16u16     = 0x20,
+
+    unknown_1 = 0x80,
+    unknown_2 = 0x100,
 };
 
-struct bitm_image_t;
+struct padding_t;
+struct image_t;
 
 /*!
  * \brief A bitmap header for images
  */
-struct bitm_header_t
+struct header_t
 {
-    i32 unknown[22];
-    i32 offset_first; /*!< Offset to the bitm_padding_t structure */
-    i32 unknown23;
-    i32 imageCount;  /*!< Count of images described by this header*/
-    i32 imageOffset; /*!< Data offset to bitm_image_t */
-    i32 unknown25;
-
-    reflexive_t<bitm_image_t> image_headers() const;
-    reflexive_t<char>         image_ptr(bitm_image_t const* img) const;
+    i32                    unknown[21];
+    reflexive_t<padding_t> padding_data;
+    reflexive_t<image_t>   images;
 };
 
-struct bitm_padding_t
+struct padding_t
 {
     i32 unknown[16];
 };
@@ -69,26 +73,34 @@ struct bitm_padding_t
  * \brief A memory structure for Blam images containing all the necessary
  * information to extract the data.
  */
-struct bitm_image_t
+struct image_t
 {
-    i32          id;        /*!< A character string*/
-    bl_size_t    isize;     /*!< Size of image*/
-    i16          depth;     /*!< Depth bits for image*/
-    bitm_type_t  type;      /*!< Type of image*/
-    bitm_format  format;    /*!< Format of image*/
-    bitm_flags_t flags;     /*!< Flags present in image*/
-    bl_point_t   reg_pnt;   /*!< I have no idea what this is.*/
-    i16          mipmaps;   /*!< Number of mipmaps*/
-    i16          pixOffset; /*!< Pixel offset when in use*/
-    i32          offset;    /*!< Data offset*/
-    i32          size;      /*!< Data size in bytes*/
-    i32          unknown[4];
+    using img_data = semantic::mem_chunk<const char>;
+
+    bl_tag     sentinel;  /*!< A character string*/
+    bl_size_t  isize;     /*!< Size of image*/
+    i16        depth;     /*!< Depth bits for image*/
+    type_t     type;      /*!< Type of image*/
+    format_t   format;    /*!< Format of image*/
+    flags_t    flags;     /*!< Flags present in image*/
+    bl_point_t reg_pnt;   /*!< I have no idea what this is.*/
+    i16        mipmaps;   /*!< Number of mipmaps*/
+    u16        pixOffset; /*!< Pixel offset when in use*/
+    u32        offset;    /*!< Data offset*/
+    u32        size;      /*!< Data size in bytes*/
+    i32        unknown[4];
+
+    inline semantic::BytesConst data(magic_data_t const& magic) const
+    {
+        reflexive_t<u8> img_data = {size, offset, 0};
+        return img_data.data(magic);
+    }
 };
 
 /*!
  * \brief Data ready to be uploaded to the GL, not part of Blam!
  */
-struct bitm_texture_t
+struct texture_t
 {
     size_3d<i32> resolution; /*!< Size of texture*/
     c_cptr       data;       /*!< Pointer to described data*/
@@ -100,49 +112,8 @@ struct bitm_texture_t
     uint16       blocksize; /*!< Block size of DXT* formats*/
 };
 
-FORCEDINLINE
-reflexive_t<bitm_image_t> bitm_header_t::image_headers() const
-{
-    if(imageCount)
-        return {sizeof(bitm_image_t), imageOffset, 0};
-    else
-        return {0, 0, 0};
-}
+C_FLAGS(flags_t, u16);
 
-FORCEDINLINE
-reflexive_t<char> bitm_header_t::image_ptr(bitm_image_t const* img) const
-{
-    if(!img)
-        return {};
-
-    return {img->size, img->offset, 0};
-}
-
-C_FLAGS(bitm_flags_t, u16);
-
-/*!
- * \brief To acquire a bitmap from a tag item
- * \param item Item which texture should be fetched
- * \param map File header from which we search
- * \param magic Magic tag number
- * \param numImages Number of images are written to this
- * \return
- */
-extern const bitm_image_t* bitm_get(
-    index_item_t const*  item,
-    file_header_t const* map,
-    i32                  magic,
-    i32*                 numImages);
-
-/*!
- * \brief Transforms the image structure to a GL-ready structure which may be
- * uploaded directly, doing any possible decoding on the GPU. The data is read
- * directly from the source file without copying. (Unless the GL does this)
- * \param img
- * \param bitmfile
- * \return A struct containing data readily digested for GL
- */
-extern bitm_texture_t bitm_get_texture(
-    bitm_image_t const* img, c_cptr bitmfile);
+} // namespace bitm
 
 } // namespace blam

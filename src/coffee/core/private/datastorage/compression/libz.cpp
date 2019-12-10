@@ -1,7 +1,7 @@
 #include <coffee/core/base.h>
 
-#include <coffee/core/CProfiling>
 #include <coffee/compression/libz.h>
+#include <coffee/core/CProfiling>
 #include <platforms/profiling.h>
 
 #if defined(COFFEE_BUILD_ZLIB)
@@ -59,16 +59,24 @@ bool compression_routine(
 {
     DProfContext _("zlib::Compression routine");
 
+    bool direct_output = opts.prealloc_size > 0;
+
+    if(direct_output && output->size < opts.prealloc_size)
+        direct_output = false;
+
     Vector<byte_t> compress_store;
-    compress_store.resize(opts.chunk_size);
+    compress_store.resize(direct_output ? opts.prealloc_size : opts.chunk_size);
+
+    byte_t* write_ptr = direct_output ? output->data : compress_store.data();
 
     z_stream strm;
     strm.zalloc = nullptr;
     strm.zfree  = nullptr;
     strm.opaque = nullptr;
 
-    strm.avail_out = C_FCAST<u32>(opts.chunk_size);
-    strm.next_out  = compress_store.data();
+    strm.avail_out = C_FCAST<u32>(
+        direct_output ? opts.prealloc_size : compress_store.size());
+    strm.next_out = write_ptr;
 
     strm.avail_in = C_FCAST<u32>(input.size);
     strm.next_in  = input.data;
@@ -85,17 +93,21 @@ bool compression_routine(
 
     while(strm.avail_in > 0)
     {
-        auto comp_size = compress_store.size();
-        ret            = Proc(&strm, Z_NO_FLUSH);
+        ret = Proc(&strm, Z_NO_FLUSH);
 
         if(ret != Z_OK && ret != Z_STREAM_END)
             return false;
 
         if(strm.avail_out == 0 && strm.avail_in > 0)
         {
+            if(direct_output)
+                Throw(undefined_behavior("Failed direct output"));
+
+            auto comp_size = compress_store.size();
             compress_store.resize(comp_size + opts.chunk_size);
+            write_ptr      = compress_store.data();
             strm.avail_out = C_FCAST<u32>(opts.chunk_size);
-            strm.next_out  = &compress_store[comp_size];
+            strm.next_out  = &write_ptr[comp_size];
         }
     }
 
@@ -110,10 +122,14 @@ bool compression_routine(
 
             if(ret != Z_STREAM_END && strm.avail_out == 0)
             {
+                if(direct_output)
+                    Throw(undefined_behavior("Failed direct output"));
+
                 auto comp_size = compress_store.size();
                 compress_store.resize(comp_size + opts.chunk_size);
+                write_ptr      = compress_store.data();
                 strm.avail_out = C_FCAST<u32>(opts.chunk_size);
-                strm.next_out  = &compress_store[comp_size];
+                strm.next_out  = &write_ptr[comp_size];
             }
         } while(ret != Z_STREAM_END);
     }
@@ -123,11 +139,19 @@ bool compression_routine(
     if(ret != Z_OK)
         return false;
 
-    szptr out_size = compress_store.size() - strm.avail_out;
+    szptr out_size = direct_output ? 0 : compress_store.size() - strm.avail_out;
 
-    (*output) = Bytes::Alloc(out_size);
+    {
+        DProfContext _("zlib::Allocate output");
+        if(output->size < out_size)
+            (*output) = Bytes::Alloc(out_size);
+    }
 
-    MemCpy(Bytes::CreateFrom(compress_store).at(0, output->size), *output);
+    if(!direct_output)
+    {
+        DProfContext _("zlib::Copy to output");
+        MemCpy(Bytes::CreateFrom(compress_store).at(0, output->size), *output);
+    }
 
     return true;
 }

@@ -25,8 +25,8 @@ bitm_header_t _bitm_get_header(const void* base, i32 offset)
 }
 
 const bitm_image_t* bitm_get(
-    const index_item_t*  item,
-    const file_header_t* map,
+    tag_t const*         item,
+    file_header_t const* map,
     i32                  magic,
     C_UNUSED(i32* numImages))
 {

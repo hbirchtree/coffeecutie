@@ -39,12 +39,14 @@ struct ZlibCompressor : Compressor_def
 {
     struct Opts
     {
-        Opts() : chunk_size(1_MB), level(5)
+        Opts(szptr chunk_size = 1_MB, int level = 5, szptr prealloc_size = 0) :
+            chunk_size(chunk_size), level(level), prealloc_size(prealloc_size)
         {
         }
 
         szptr chunk_size;
         int   level;
+        szptr prealloc_size;
     };
 
     static bool Compress(
@@ -95,7 +97,7 @@ using error_code = deflate_error_code;
 using error_code = Coffee::error_code;
 
 #endif
-}
+} // namespace Compression
 
 #if defined(COFFEE_BUILD_ZLIB)
 

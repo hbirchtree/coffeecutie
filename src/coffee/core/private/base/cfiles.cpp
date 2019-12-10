@@ -84,7 +84,7 @@ Resource::operator Path() const
 Resource::operator Bytes()
 {
     if(data && size)
-        return Bytes::From(data, size);
+        return Bytes::FromBytes(data, size);
 
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
         return FileGetDescriptor(*this);

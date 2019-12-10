@@ -352,7 +352,7 @@ bool GenVirtFS(
         DProfContext _(VIRTFS_API "Inserting directory index");
 
         auto vfsRef = outputView.as<VFS>().data;
-        auto files  = mem_chunk<const VFile>::From(
+        auto files  = mem_chunk<const VFile>::FromBytes(
             vfsRef->files(), vfsRef->num_files * sizeof(VFile));
 
         dir_index::directory_index_t dirIndex = dir_index::Generate(files);

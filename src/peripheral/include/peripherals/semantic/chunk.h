@@ -46,24 +46,38 @@ struct mem_chunk
             return *this;
         }
 
+        iterator_base operator++(int)
+        {
+            auto cpy = *this;
+            m_idx++;
+            return cpy;
+        }
+
         iterator_base& operator--()
         {
             m_idx--;
             return *this;
         }
 
+        iterator_base operator--(int)
+        {
+            auto cpy = *this;
+            m_idx--;
+            return cpy;
+        }
+
         iterator_base operator+(difference_type inc)
         {
             auto copy = *this;
             copy.m_idx += inc;
-            return *this;
+            return copy;
         }
 
         iterator_base operator-(difference_type inc)
         {
             auto copy = *this;
             copy.m_idx -= inc;
-            return *this;
+            return copy;
         }
 
         iterator_base& operator+=(difference_type inc)
@@ -369,7 +383,7 @@ struct mem_chunk
          * \return
          */
         mem_chunk<T>
-        From(T2* data, size_type size)
+        FromBytes(T2* data, size_type size)
     {
         return {C_FCAST<T*>(data), size, size / sizeof(T)};
     }

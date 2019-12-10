@@ -107,7 +107,7 @@ Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
         return {};
     }
 
-    return Bytes::From(out_ptr, size);
+    return Bytes::FromBytes(out_ptr, size);
 }
 
 void GLEAM_VBuffer::unmap()

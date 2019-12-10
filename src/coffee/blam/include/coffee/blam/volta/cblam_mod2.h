@@ -124,7 +124,7 @@ struct bsp_header
  * \return A valid pointer to the referenced model, or NULL if it is invalid
  */
 extern const header* get_header(
-    const index_item_t* item, const file_header_t* map, i32 magic);
+    const tag_t* item, const file_header_t* map, i32 magic);
 
 } // namespace mod2
 } // namespace blam

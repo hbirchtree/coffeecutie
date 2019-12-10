@@ -27,7 +27,7 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     else
         target->resize(target->size);
 
-    MemCpy(Bytes::From(data, size), target->at(offset));
+    MemCpy(Bytes::FromBytes(data, size), target->at(offset));
 }
 
 inline void DataSetDestr(Bytes& b)

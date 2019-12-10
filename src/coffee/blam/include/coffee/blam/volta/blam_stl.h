@@ -3,7 +3,9 @@
 #include "cblam_map.h"
 #include "cblam_scenario.h"
 #include "cblam_structures.h"
+
 #include <algorithm>
+#include <coffee/compression/libz.h>
 #include <functional>
 #include <iterator>
 #include <peripherals/semantic/chunk.h>
@@ -12,11 +14,48 @@ namespace blam {
 
 struct map_container
 {
-    map_container(semantic::Bytes map, version_t ver)
+    template<typename T>
+    map_container(semantic::Bytes map, T ver)
     {
-        this->map = file_header_get(map.data, ver);
-        tags      = tag_index_get(this->map);
-        magic     = {map.data, tags.index_magic};
+        this->map = file_header_t::from_data(map, ver);
+
+        if(this->map->version == version_t::xbox)
+        {
+            using namespace Coffee::Compression;
+            using Coffee::Zlib;
+
+            auto compressed_segment = map.at(
+                sizeof(file_header_t),
+                (map.size - sizeof(file_header_t) - this->map->trailing_space));
+
+            /* Time to decompress! */
+            decompressed_store = semantic::Bytes::Alloc(this->map->decomp_len);
+
+            semantic::chunk_ops::MemCpy(
+                semantic::Bytes::From(*this->map),
+                decompressed_store.at(0, sizeof(file_header_t)));
+
+            auto decompressed_region =
+                decompressed_store.at(sizeof(file_header_t));
+
+            zlib_error_code ec;
+            Zlib::Decompress(
+                compressed_segment,
+                &decompressed_region,
+                Zlib::Opts(10_MB),
+                ec);
+            C_ERROR_CHECK(ec);
+
+            this->map = file_header_t::from_data(decompressed_store, ver);
+        }
+
+        if(!this->map)
+            Throw(undefined_behavior("not a valid map"));
+
+        static_assert(sizeof(tag_index_t) == 40, "Invalid tag index size");
+
+        tags  = &tag_index_t::from_header(this->map);
+        magic = tags->get_magic(this->map);
     }
 
     bool is_valid()
@@ -25,53 +64,54 @@ struct map_container
     }
 
     file_header_t const* map;
-    tag_index_t          tags;
+    tag_index_t const*   tags;
     magic_data_t         magic;
+
+    semantic::Bytes decompressed_store;
 
     operator cstring()
     {
-        return file_header_full_mapname(map);
+        return map->full_mapname();
     }
 
-    cstring get_name(index_item_t const* idx)
+    template<typename T>
+    inline cstring get_name(T const* ref) const
     {
-        return index_item_get_string(idx, map, &tags);
-    }
-    cstring get_name(tagref_t const* ref)
-    {
-        return tagref_get_name(ref, map, &tags);
+        return ref->to_name().to_string(magic);
     }
 };
 
 class tag_index_view
 {
-    tag_index_t&         m_idx;
+    tag_index_t const&   m_idx;
     file_header_t const* m_file;
-    index_item_t const*  m_root;
+    magic_data_t         m_magic;
 
   public:
     class index_iterator
         : public stl_types::
-              Iterator<stl_types::ForwardIteratorTag, index_item_t const*>
+              Iterator<stl_types::ForwardIteratorTag, tag_t const*>
     {
         friend class tag_index_view;
 
-        i32             i;
-        tag_index_view* idx;
+        i32                 i;
+        tag_index_view*     idx;
+        magic_data_t const& magic;
 
-        index_item_t const* deref()
+        tag_t const* deref()
         {
-            if(!idx->m_root)
-                idx->m_root = tag_index_get_items(idx->m_file);
-            return &idx->m_root[i];
+            return &(idx->tags()->tags(
+                C_RCAST<file_header_t const*>(magic.base_ptr))[i]);
         }
 
-        index_item_t const* deref() const
+        tag_t const* deref() const
         {
-            return &tag_index_get_items(idx->m_file)[i];
+            return &(idx->tags()->tags(
+                C_RCAST<file_header_t const*>(magic.base_ptr))[i]);
         }
 
-        index_iterator(tag_index_view& idx, i32 i) : i(i), idx(&idx)
+        index_iterator(tag_index_view& idx, i32 i, magic_data_t const& magic) :
+            i(i), idx(&idx), magic(magic)
         {
         }
 
@@ -124,26 +164,29 @@ class tag_index_view
             return *this;
         }
 
-        index_item_t const* operator*()
+        tag_t const* operator*()
         {
             return deref();
         }
 
-        index_item_t const* operator*() const
+        tag_t const* operator*() const
         {
             return deref();
         }
 
         operator cstring()
         {
-            return index_item_get_string(*(*this), idx->m_file, &idx->m_idx);
+            return idx->tags()
+                ->tags(C_RCAST<file_header_t const*>(magic.base_ptr))[i]
+                .to_name()
+                .to_string(magic);
         }
     };
 
     using iterator = index_iterator;
 
     tag_index_view(map_container& map) :
-        m_idx(map.tags), m_file(map.map), m_root(nullptr)
+        m_idx(*map.tags), m_file(map.map), m_magic(map.magic)
     {
     }
 
@@ -158,25 +201,34 @@ class tag_index_view
 
     iterator begin()
     {
-        return index_iterator(*this, 0);
+        return index_iterator(*this, 0, m_magic);
     }
     iterator end()
     {
-        return index_iterator(*this, m_idx.tagCount);
+        return index_iterator(*this, m_idx.tagCount, m_magic);
     }
 
-    iterator find(decltype(tagref_t::tag_id) tag_id)
+    iterator find(tagref_t const& tag)
+    {
+        return find(tag.tag_id);
+    }
+
+    iterator find(u32 tag_id)
     {
         /* Tag index has sequential tag IDs, allowing binary search */
         i32  size = m_idx.tagCount;
         auto it   = begin();
 
-        while(size > 0)
+        while(size > 1)
         {
-            size /= 2;
+            if(size % 2 == 0)
+                size /= 2;
+            else
+                size = size / 2 + 1;
 
             auto mid     = it + size;
             auto mid_tag = (*mid)->tag_id;
+            auto odd_tag = (*it)->tag_id;
 
             if(mid_tag == tag_id)
                 return mid;
