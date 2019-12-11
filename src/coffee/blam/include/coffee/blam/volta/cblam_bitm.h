@@ -2,6 +2,9 @@
 
 #include "cblam_structures.h"
 
+#include <coffee/interfaces/cgraphics_pixops.h>
+#include <peripherals/typing/enum/pixels/format_transform.h>
+
 namespace blam {
 namespace bitm {
 /*!
@@ -51,6 +54,8 @@ enum class flags_t : u16
     unknown_2 = 0x100,
 };
 
+C_FLAGS(flags_t, u16);
+
 struct padding_t;
 struct image_t;
 
@@ -84,16 +89,115 @@ struct image_t
     format_t   format;    /*!< Format of image*/
     flags_t    flags;     /*!< Flags present in image*/
     bl_point_t reg_pnt;   /*!< I have no idea what this is.*/
-    i16        mipmaps;   /*!< Number of mipmaps*/
+    u16        mipmaps;   /*!< Number of mipmaps*/
     u16        pixOffset; /*!< Pixel offset when in use*/
     u32        offset;    /*!< Data offset*/
     u32        size;      /*!< Data size in bytes*/
     i32        unknown[4];
 
-    inline semantic::BytesConst data(magic_data_t const& magic) const
+    inline bool compressed() const
     {
-        reflexive_t<u8> img_data = {size, offset, 0};
-        return img_data.data(magic);
+        switch(format)
+        {
+        case format_t::DXT1:
+        case format_t::DXT2AND3:
+        case format_t::DXT4AND5:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    inline stl_types::Tup<BitFmt, PixCmp> to_fmt() const
+    {
+        switch(format)
+        {
+        case format_t::A8:
+        case format_t::Y8:
+        case format_t::P8:
+        case format_t::AY8:
+            return {BitFmt::UByte, PixCmp::R};
+
+        case format_t::A8Y8:
+            return {BitFmt::UByte, PixCmp::RG};
+        case format_t::R5G6B5:
+            return {BitFmt::UShort_565, PixCmp::R};
+        case format_t::A1R5G5B5:
+            return {BitFmt::UShort_1555R, PixCmp::R};
+        case format_t::A4R4G4B4:
+            return {BitFmt::UShort_4444, PixCmp::R};
+
+        case format_t::A8R8G8B8:
+            return {BitFmt::UByte, PixCmp::RGBA};
+        case format_t::X8R8G8B8:
+            return {BitFmt::UByte, PixCmp::RGBA};
+
+        default:
+            return {BitFmt::Undefined, PixCmp::None};
+        }
+    }
+
+    inline stl_types::Tup<PixFmt, CompFlags> to_compressed_fmt() const
+    {
+        switch(format)
+        {
+        case format_t::DXT1:
+            return {PixFmt::DXTn, CompFlags::S3TC_1};
+        case format_t::DXT2AND3:
+            return {PixFmt::DXTn, CompFlags::S3TC_3};
+        case format_t::DXT4AND5:
+            return {PixFmt::DXTn, CompFlags::S3TC_5};
+        }
+    }
+
+    inline semantic::BytesConst data(
+        magic_data_t const& magic, u16 mipmap = 0) const
+    {
+        using namespace typing::pixels::properties;
+
+        if(mipmap != 0 && mipmap >= mipmaps)
+            Throw(undefined_behavior("mipmap out of range"));
+
+        if(mipmap != 0 && !enum_helpers::feval(flags, flags_t::pow2))
+            Throw(undefined_behavior("non-pow2 texture cannot be mipmapped"));
+
+        auto mipsize = isize;
+        mipsize.w <<= mipmap;
+        mipsize.h <<= mipmap;
+
+        if(!compressed())
+        {
+            BitFmt data_fmt;
+            PixCmp data_layout;
+            std::tie(data_fmt, data_layout) = to_fmt();
+
+            u32 size = get<pixel_size>(data_fmt, data_layout, 1) *
+                       mipsize.convert<u32>().area();
+            u32 mip_offset = 0;
+
+            for(auto i : stl_types::Range<>(mipmap))
+                mip_offset += (isize.area() >> (2 * i));
+
+            return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
+        } else
+        {
+            PixFmt    fmt;
+            CompFlags flags;
+            std::tie(fmt, flags) = to_compressed_fmt();
+            auto comp_fmt        = typing::pixels::CompFmt(fmt, flags);
+
+            u32 size = Coffee::GetPixCompressedSize(comp_fmt, mipsize);
+
+            u32  mip_offset = 0;
+            auto off_size   = isize;
+            for(auto i : stl_types::Range<>(mipmap))
+            {
+                mip_offset += Coffee::GetPixCompressedSize(comp_fmt, off_size);
+                off_size.w << 1;
+                off_size.h << 1;
+            }
+            return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
+        }
     }
 };
 
@@ -111,8 +215,6 @@ struct texture_t
     TexType      type;    /*!< Texture type, 2D, 3D and cubes*/
     uint16       blocksize; /*!< Block size of DXT* formats*/
 };
-
-C_FLAGS(flags_t, u16);
 
 } // namespace bitm
 

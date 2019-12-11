@@ -25,6 +25,7 @@ using typing::geometry::point_2d;
 using typing::geometry::size_2d;
 using typing::geometry::size_3d;
 using typing::pixels::BitFmt;
+using typing::pixels::CompFlags;
 using typing::pixels::PixFmt;
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
@@ -237,6 +238,15 @@ struct magic_data_t
         magic_offset(magic), max_size(max_size)
     {
         this->base_ptr = base_ptr;
+    }
+
+    magic_data_t& operator=(semantic::Bytes const& data)
+    {
+        base_ptr     = data.data;
+        magic_offset = 0;
+        max_size     = data.size;
+
+        return *this;
     }
 
     union

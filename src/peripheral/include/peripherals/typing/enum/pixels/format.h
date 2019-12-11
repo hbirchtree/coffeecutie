@@ -183,10 +183,10 @@ enum class CompFlags : u8
 
     BC1 = S3TC_1,
     BC3 = S3TC_5,
-    BC4, /* R */
-    BC5, /* RG */
-    BC6H,
-    BC7, /* RGBA */
+    BC4,  /* 8-bit R */
+    BC5,  /* 8-bit RG */
+    BC6H, /* RGBA half-precision float */
+    BC7,  /* 8-bit RGBA */
 
     /* BPP specification, meant for PVRTC */
     bpp_2,

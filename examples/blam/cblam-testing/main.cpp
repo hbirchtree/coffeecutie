@@ -28,6 +28,11 @@ void examine_map(Resource&& mapfile, T version)
 
     blam::map_container map(mapfile, version);
 
+    Resource bitmfile = "bitmaps.map"_rsc;
+
+    blam::magic_data_t bitm_magic;
+    bitm_magic = C_OCAST<Bytes>(bitmfile);
+
     if(map.map->is_xbox() && false)
     {
         ProfContext _("Writing cache to file");
@@ -242,13 +247,14 @@ void examine_map(Resource&& mapfile, T version)
                         map.magic);
                 for(auto const& image : bitmap_head[0].images.data(map.magic))
                 {
-                    auto img_data = image.data(map.magic);
+                    auto img_data = image.data(bitm_magic);
                     cDebug(
-                        "Image: {0}x{1}, {2},{3}",
+                        "Image: {0}x{1}, {4} bytes {2},{3}",
                         image.isize.w,
                         image.isize.h,
                         C_CAST<u32>(image.format),
-                        C_CAST<u32>(image.flags));
+                        C_CAST<u32>(image.flags),
+                        image.size);
                 }
                 cDebug("Lightmap: {0}", map.get_name(*lightmap_tag));
             }
