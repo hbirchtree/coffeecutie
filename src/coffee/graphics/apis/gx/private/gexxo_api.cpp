@@ -313,9 +313,9 @@ void Pipeline::bind()
 {
     for(auto const& shader : shaders)
     {
-        CString variant = shader.variant ? shader.variant : "nullptr";
+        stl_types::CString variant = shader.second ? shader.second : "nullptr";
 
-        switch(shader.stage)
+        switch(shader.first)
         {
         case typing::graphics::ShaderStage::Vertex:
         {
