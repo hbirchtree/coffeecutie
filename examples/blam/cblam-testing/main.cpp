@@ -152,6 +152,8 @@ void inspect_bitm(
     blam::magic_data_t const&  bitm_magic,
     blam::tag_t const&         tag)
 {
+    return;
+
     auto const& header =
         tag.to_reflexive<blam::bitm::header_t>().data(map.magic)[0];
 
@@ -215,10 +217,6 @@ void examine_map(Resource&& mapfile, T version)
         C_RCAST<blam::bitm::bitmap_header_t const*>(bitm_magic.base_ptr);
 
     auto bitm_locators = bitm_header->locators();
-
-    for(auto const& locator : bitm_locators)
-    {
-    }
 
     if(map.map->is_xbox() && false)
     {
@@ -439,37 +437,7 @@ void examine_map(Resource&& mapfile, T version)
                 ProfContext _("Image upload");
 
                 auto const& lightmap_tagv = *lightmap_tag;
-                auto const& bitmap_head =
-                    lightmap_tagv->to_reflexive<blam::bitm::header_t>().data(
-                        map.magic);
-                for(auto const& image : bitmap_head[0].images.data(map.magic))
-                {
-                    auto img_data = image.data(bitm_magic);
-                    cDebug(
-                        "Image: {0}x{1}, {4} bytes {2},{3}",
-                        image.isize.w,
-                        image.isize.h,
-                        C_CAST<u32>(image.format),
-                        C_CAST<u32>(image.flags),
-                        image.size);
-
-                    BitFmt bit_fmt;
-                    PixCmp pix_fmt;
-                    std::tie(bit_fmt, pix_fmt) = image.to_fmt();
-
-                    auto size = image.isize.convert<i32>();
-
-                    GLEAMAPI::ERROR ec;
-                    GLEAMAPI::S_2D  surface(image.to_pixfmt());
-                    surface.allocate(size, pix_fmt);
-                    surface.upload(
-                        PixDesc(bit_fmt, pix_fmt),
-                        size,
-                        img_data.as<const u8>(),
-                        ec);
-                    surface.setLevels(0, 0);
-                    surface.dealloc();
-                }
+                inspect_bitm(map, bitm_magic, *lightmap_tagv);
                 cDebug("Lightmap: {0}", map.get_name(*lightmap_tag));
             }
 
@@ -653,7 +621,11 @@ void examine_map(Resource&& mapfile, T version)
 
         auto const& script = scn->scripts.data(map.magic)[0];
         {
-            auto script_chunk = script.opcodes(scn->scripts.count);
+            for(auto const& opcode : script.opcodes(scn->scripts.count))
+            {
+                cDebug("OPCODE: {0}", C_CAST<u16>(opcode.opcode));
+            }
+            auto script_chunk = script.dump(scn->scripts.count);
             cDebug(
                 "Script:\n{0}",
                 str::print::hexdump(
@@ -856,6 +828,43 @@ void examine_map(Resource&& mapfile, T version)
  */
 int coffee_main(i32, cstring_w*)
 {
+    const auto examine_task = []() {
+        Array<Resource, 2> pc_maps = {
+
+            "c10.map"_rsc,
+
+            "bloodgulch.map"_rsc
+
+        };
+        Array<Resource, 2> custom_maps = {
+
+            "hyrule.map"_rsc,
+
+            "bloodgulch_custom.map"_rsc
+
+        };
+        Array<Resource, 2> xbox_maps = {
+
+            "c10_xbox.map"_rsc,
+
+            "bloodgulch_xbox.map"_rsc
+
+        };
+
+        for(auto& map : pc_maps)
+            examine_map(std::move(map), blam::pc_version);
+
+        //            for(auto& map : custom_maps)
+        //                examine_map(std::move(map), blam::custom_version);
+
+        //            for(auto& map : xbox_maps)
+        //                examine_map(std::move(map), blam::xbox_version);
+    };
+
+    examine_task();
+
+    return 0;
+
     using namespace comp_app;
 
     struct NoData
@@ -877,6 +886,15 @@ int coffee_main(i32, cstring_w*)
     comp_app::addDefaults(app, ec);
     C_ERROR_CHECK(ec)
 
+    RuntimeQueue::CreateNewQueue("Blam!");
+
+    runtime_queue_error rqec;
+    RuntimeQueue::QueueShot(
+        RuntimeQueue::GetCurrentQueue(rqec),
+        Chrono::milliseconds(50),
+        examine_task,
+        rqec);
+
     AppContainer<NoData>::addTo(
         app, [](entity_container& e, NoData&, time_point const&) {
             GLEAMAPI::OPTS opts;
@@ -884,37 +902,10 @@ int coffee_main(i32, cstring_w*)
 
             if(!loader(false))
                 return;
-
-            Array<Resource, 2> pc_maps = {
-
-                "c10.map"_rsc,
-
-                "bloodgulch.map"_rsc
-
-            };
-            Array<Resource, 2> custom_maps = {
-
-                "hyrule.map"_rsc,
-
-                "bloodgulch_custom.map"_rsc
-
-            };
-            Array<Resource, 2> xbox_maps = {
-
-                "c10_xbox.map"_rsc,
-
-                "bloodgulch_xbox.map"_rsc
-
-            };
-
-            for(auto& map : pc_maps)
-                examine_map(std::move(map), blam::pc_version);
-            //            for(auto& map : custom_maps)
-            //                examine_map(std::move(map), blam::custom_version);
-            //            for(auto& map : xbox_maps)
-            //                examine_map(std::move(map), blam::xbox_version);
-
-            e.service<comp_app::Windowing>()->close();
+        }, [](entity_container& e, NoData&, time_point const&, duration const&)
+        {
+            runtime_queue_error ec;
+            RuntimeQueue::GetCurrentQueue(ec)->executeTasks();
         });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(app);

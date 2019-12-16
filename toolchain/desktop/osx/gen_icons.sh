@@ -3,7 +3,7 @@
 ICON_DESTINATION="Coffee.iconset"
 SRC_ICON="$1"
 
-echo "gen_icons.sh: Using icon ${SRC_ICON}"
+# echo "gen_icons.sh: Using icon ${SRC_ICON}"
 
 mkdir -p ${ICON_DESTINATION}
 

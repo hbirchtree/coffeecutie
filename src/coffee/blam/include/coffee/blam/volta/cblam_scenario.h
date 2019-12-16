@@ -1,7 +1,5 @@
 #pragma once
 
-#include <coffee/core/types/vector_types.h>
-
 #include "cblam_bytecode.h"
 #include "cblam_mod2.h"
 #include "cblam_structures.h"

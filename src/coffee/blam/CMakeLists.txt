@@ -4,6 +4,8 @@ coffee_library (
     private/volta/cblam_map.cpp
     private/volta/cblam_mod2.cpp
 
+    include/coffee/blam/cblam.h
+
     LIBRARIES Image CoreCompression
 
     HEADER_DIRS

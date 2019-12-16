@@ -1,8 +1,5 @@
 #pragma once
 
-/* In the future, we might use this for packing-sensitive structs */
-#define BL_STRUCT struct
-
 #include <coffee/core/libc_types.h>
 #include <coffee/core/types/map.h>
 #include <coffee/core/types/pixel_components.h>
