@@ -313,9 +313,11 @@ void Pipeline::bind()
 {
     for(auto const& shader : shaders)
     {
-        CString variant = shader.variant ? shader.variant : "nullptr";
+        stl_types::CString variant = shader.second->variant
+                ? shader.second->variant
+                : "nullptr";
 
-        switch(shader.stage)
+        switch(shader.second->stage)
         {
         case typing::graphics::ShaderStage::Vertex:
         {
@@ -346,7 +348,7 @@ void Pipeline::bind()
 
         Throw(undefined_behavior(
             std::string(GEXXO_API "unhandled shader variant: ") +
-            shader.variant));
+            shader.second->variant));
     }
 }
 
