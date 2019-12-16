@@ -329,7 +329,8 @@ struct range
         {
         }
 
-        iterator(T start, T end) : m_idx(start), m_end(end)
+        iterator(T start, T end, T stride) :
+            m_idx(start), m_end(end), m_stride(stride)
         {
             bool correct     = (!range_param::reversed) && start > end;
             bool correct_rev = range_param::reversed && start > end;
@@ -344,9 +345,10 @@ struct range
         iterator& operator++()
         {
             if(range_param::reversed)
-                m_idx--;
-            else
-                m_idx++;
+            {
+                m_idx -= m_stride;
+            } else
+                m_idx += m_stride;
 
             if(m_idx >= m_end)
                 m_idx = npos;
@@ -358,13 +360,7 @@ struct range
         {
             iterator copy = *this;
 
-            if(range_param::reversed)
-                m_idx--;
-            else
-                m_idx++;
-
-            if(m_idx >= m_end)
-                m_idx = npos;
+            ++(*this);
 
             return copy;
         }
@@ -387,17 +383,18 @@ struct range
       private:
         T m_idx;
         T m_end;
+        T m_stride;
     };
 
     using value_type = T;
 
-    range(T len) : m_len(len)
+    range(T len, T stride = 1) : m_len(len), m_stride(stride)
     {
     }
 
     iterator begin()
     {
-        return iterator(0, m_len);
+        return iterator(0, m_len, m_stride);
     }
 
     iterator end()
@@ -407,6 +404,7 @@ struct range
 
   private:
     T m_len;
+    T m_stride;
 };
 
 template<typename T = size_t>

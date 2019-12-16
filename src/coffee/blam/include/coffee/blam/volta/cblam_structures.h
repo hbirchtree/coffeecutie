@@ -27,6 +27,7 @@ using typing::geometry::size_3d;
 using typing::pixels::BitFmt;
 using typing::pixels::CompFlags;
 using typing::pixels::PixFmt;
+using typing::vector_types::Quatf;
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
@@ -55,7 +56,8 @@ struct bl_string_var
         typename std::enable_if<Size != 4, Dummy>::type* = nullptr>
     inline stl_types::CString str() const
     {
-        return stl_types::CString(data, Size);
+        auto end = libc::str::find(data, '\0');
+        return stl_types::CString(data, end);
     }
 
     inline operator cstring() const
@@ -81,7 +83,26 @@ using bl_footer = char[4];
 template<size_t Size>
 struct unicode_var
 {
+    using wide_string = std::basic_string<u16>;
+
     u16 data[Size];
+
+    inline wide_string str() const
+    {
+        constexpr u16 terminator = 0;
+
+        auto out = wide_string(data, Size);
+        auto end = out.find(terminator);
+        if(end != wide_string::npos)
+            out.resize(end);
+        return out;
+    }
+
+    inline stl_types::CString flat_str() const
+    {
+        auto from = str();
+        return stl_types::CString(from.begin(), from.end());
+    }
 };
 
 /*!
@@ -123,6 +144,8 @@ enum class version_t : int32
 {
     xbox = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
     pc   = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
+
+    custom_edition = 609,
 };
 
 struct xbox_version_t
@@ -131,9 +154,79 @@ struct xbox_version_t
 struct pc_version_t
 {
 };
+struct custom_version_t
+{
+};
 
-constexpr xbox_version_t xbox_version;
-constexpr pc_version_t   pc_version;
+constexpr xbox_version_t   xbox_version;
+constexpr pc_version_t     pc_version;
+constexpr custom_version_t custom_version;
+
+namespace vert {
+
+struct compressed
+{
+};
+struct uncompressed
+{
+};
+
+template<
+    typename RType = uncompressed,
+    bool           = std::is_same<RType, uncompressed>::value>
+struct alignas(4) vertex
+{
+    Vecf3 position;
+    Vecf3 normal;
+    Vecf3 binorm;
+    Vecf3 tangent;
+    Vecf2 texcoord;
+    Vecf3 _garbo;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(vertex<uncompressed>) == 68, "Invalid size");
+    }
+};
+
+template<typename RType>
+struct vertex<RType, false>
+{
+    // Compressed Xbox variant
+    Vecf3 position;
+    u32   normal;   /*!< PixFmt::R11G11B10F */
+    u32   binormal; /*!< Same as binormal */
+    u32   tangent;  /*!< Same as normal */
+    Vecf2 texcoord;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(vertex<compressed>) == 32, "Invalid size");
+    }
+};
+
+using face = Array<u16, 3>;
+
+template<
+    typename RType = uncompressed,
+    bool           = std::is_same<RType, uncompressed>::value>
+struct light_vertex
+{
+    Vecf3 normal;
+    Vecf2 texcoord;
+};
+
+template<typename RType>
+struct light_vertex<RType, false>
+{
+    // Compressed Xbox variant
+    u32 normal;   /*!< PixFmt::R11G11B10F */
+    u16 texcoord; /*!< PixFmt::R16, Normalized */
+};
+
+} // namespace vert
 
 constexpr cstring header_head = "daeh"; /*!< Header of file header*/
 constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
@@ -177,7 +270,7 @@ constexpr stl_types::Array<stl_types::Pair<cstring, cstring>, 28> map_names = {{
 /*!
  * \brief A file header located from the start of a map file
  */
-struct file_header_t : stl_types::non_copy
+struct alignas(4) file_header_t : stl_types::non_copy
 {
     bl_header id;      /*!< Header value, should correspond with specific data*/
     version_t version; /*!< Version of Halo, determines the process*/
@@ -218,6 +311,9 @@ struct file_header_t : stl_types::non_copy
      */
     static file_header_t const* from_data(
         semantic::Bytes const& data, pc_version_t);
+
+    static file_header_t const* from_data(
+        semantic::Bytes const& data, custom_version_t);
 
     static file_header_t const* from_data(
         semantic::Bytes const& data, xbox_version_t);
@@ -277,7 +373,7 @@ struct reflexive_t
 };
 
 template<typename T, typename RType>
-struct reflexive_t<T, RType, true>
+struct alignas(4) reflexive_t<T, RType, true>
 {
     u32 count;  /*!< Number of elements */
     u32 offset; /*!< Offset to data within file (this will only refer to data
@@ -312,7 +408,7 @@ struct reflexive_t<T, RType, true>
 };
 
 template<typename T, typename RType>
-struct reflexive_t<T, RType, false>
+struct alignas(4) reflexive_t<T, RType, false>
 {
     u32 count;
     u32 offset;
@@ -333,7 +429,7 @@ struct reflexive_t<T, RType, false>
     }
 };
 
-struct string_ref
+struct alignas(4) string_ref
 {
     u32 offset;
 
@@ -346,7 +442,7 @@ struct string_ref
     }
 };
 
-struct tagref_t
+struct alignas(4) tagref_t
 {
     union
     {
@@ -366,6 +462,11 @@ struct tagref_t
     {
         return name;
     }
+
+    inline bool matches(tag_class_t cls) const
+    {
+        return tag_class == cls;
+    }
 };
 
 struct tag_t;
@@ -374,10 +475,11 @@ struct tag_t;
  * \brief A tag index contains information about the map, its resources and its
  * layout. Bitmaps, sounds, scenarios and etc. are referred to by this index.
  */
-struct tag_index_t : stl_types::non_copy
+struct alignas(4) tag_index_t : stl_types::non_copy
 {
-    using vertex_array = reflexive_t<u32, xbox_variant>;
-    using index_array  = reflexive_t<u32, xbox_variant>;
+    using vertex_array =
+        reflexive_t<vert::vertex<vert::uncompressed>, xbox_variant>;
+    using index_array = reflexive_t<vert::face, xbox_variant>;
 
     i32          index_magic;    /*!< Number used to adjust indexes*/
     u32          base_tag;       /*!< Base tag, smallest tag id */
@@ -387,7 +489,7 @@ struct tag_index_t : stl_types::non_copy
     index_array  index_objects;  /*!< Number of index objects*/
     union
     {
-        bl_tag xbox_tag_sentinel; /*!< Raw model data size*/
+        bl_tag xbox_tag_sentinel;
         u32    raw_model_data_size;
     };
     bl_tag pc_tag_sentinel; /*!< Says "tags" */
@@ -402,6 +504,23 @@ struct tag_index_t : stl_types::non_copy
         return magic_data_t{base_ptr,
                             index_magic - (base->tag_index_offset + index_size),
                             base->decomp_len};
+    }
+
+    inline vertex_array vertex_base() const
+    {
+        return vertex_objects;
+    }
+
+    inline index_array index_base() const
+    {
+        index_array base_reflexive = index_objects;
+        base_reflexive.offset += vertex_objects.offset;
+        return base_reflexive;
+    }
+
+    inline magic_data_t vertex_magic(magic_data_t const& base) const
+    {
+        return magic_data_t{base.base_ptr, 0, base.max_size};
     }
 
     /*!
@@ -434,29 +553,23 @@ struct tag_index_t : stl_types::non_copy
     }
 };
 
-enum class bitmap_type_t
-{
-    internal = 0,
-    external = 1,
-};
-
 /*!
  * \brief An item in the tag index, contains tag class (which identifies the
  * type of item), tag ID (a numerical ID), an offset to a proper string, and an
  * offset to its associated data.
  */
-struct tag_t
+struct alignas(4) tag_t
 {
     union
     {
         Array<bl_tag, 3>      tagclass; /*!< Strings which identify its class*/
         Array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
-    u32           tag_id;
-    string_ref    name;
-    u32           offset; /*!< A byte offset to associated data*/
-    bitmap_type_t bitmap_type;
-    i32           padding;
+    u32        tag_id;
+    string_ref name;
+    u32        offset; /*!< A byte offset to associated data*/
+    u32        unknown;
+    i32        padding;
 
     inline bool matches(tag_class_t other) const
     {
@@ -469,6 +582,9 @@ struct tag_t
     template<typename T>
     reflexive_t<T> to_reflexive() const
     {
+        if(padding != 0)
+            Throw(undefined_behavior("invalid tag"));
+
         return {1, offset};
     }
 
@@ -495,5 +611,49 @@ tag_t const& tag_index_t::scenario(file_header_t const* header) const
 
     return *tag;
 }
+
+struct shader_desc
+{
+    tagref_t ref;
+    u32      padding[4];
+};
+
+struct alignas(4) shader_chicago
+{
+    struct map_t
+    {
+        u32      flags;
+        u16      pad_;
+        u32      pad_1[10];
+        u32      color_func;
+        u32      alpha_func;
+        u32      pad_2[8];
+        scalar   map[4];
+        scalar   mip_bias;
+        tagref_t map5;
+        u32      pad_3[10];
+    };
+
+    u32 counter_limit;
+    u32 flags;
+    u32 map_type;
+
+    struct
+    {
+        u32 blend;
+        u32 fade;
+        u32 fade_source;
+        u32 pad[7];
+    } fb;
+
+    scalar   lens_flare_spacing;
+    tagref_t lens_flare;
+
+    reflexive_t<tagref_t> layers;
+    reflexive_t<map_t>    maps;
+
+    u32 extra_flags;
+    u32 pad[2];
+};
 
 } // namespace blam

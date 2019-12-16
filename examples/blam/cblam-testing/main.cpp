@@ -1,5 +1,6 @@
 #include <coffee/blam/cblam.h>
-#include <coffee/blam/volta/blam_stl.h>
+#include <coffee/comp_app/app_wrap.h>
+#include <coffee/comp_app/bundle.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
@@ -21,6 +22,183 @@ struct Empty
 {
 };
 
+void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
+{
+    blam::tag_index_view idx_view(map);
+
+    auto const& model = tag.to_reflexive<blam::mod2::header>().data(map.magic);
+
+    auto vert_magic         = map.magic;
+    vert_magic.magic_offset = 0;
+
+    auto vertices     = map.tags->vertex_base().data(vert_magic);
+    auto indices      = map.tags->index_base().data(vert_magic);
+    auto vertex_magic = map.tags->vertex_magic(map.magic);
+
+    CString output_name =
+        str::replace::str<char>(tag.name.to_string(map.magic), "\\", "+") +
+        CString("_");
+
+    auto bones = model[0].bones.data(map.magic);
+    for(auto const& bone : bones)
+    {
+        cDebug(
+            "Bone: {0} -> {1} _> {2}",
+            bone.parent != bone.invalid_bone ? bones[bone.parent].name.str()
+                                             : "[none]",
+            bone.name.str(),
+            bone.next_child != bone.invalid_bone
+                ? bones[bone.next_child].name.str()
+                : "[none]");
+    }
+
+    auto geometry = model[0].geometries.data(map.magic);
+
+    for(auto const& shader : model[0].shaders.data(map.magic))
+    {
+        auto it = idx_view.find(shader.ref);
+
+        if(it != idx_view.end())
+        {
+            auto shader_tag = *it;
+            auto shader_data =
+                shader_tag->to_reflexive<blam::shader_chicago>().data(
+                    map.magic);
+            cDebug("Shader: {0} {1}", map.get_name(&shader.ref));
+            cDebug(" - Texture: {0}");
+        }
+    }
+
+    for(auto const& region : model[0].regions.data(map.magic))
+    {
+        auto const& perms = region.permutations.data(map.magic);
+        cDebug("Region: {0}", region.name.str());
+        for(auto const& perm : perms)
+        {
+            cDebug(
+                "LOD: {0} {1} : {2} {3} {4} {5} {6}",
+                region.name.str(),
+                perm.name.str(),
+                perm.meshindex_lod[blam::mod2::lod_low_ext],
+                perm.meshindex_lod[blam::mod2::lod_low],
+                perm.meshindex_lod[blam::mod2::lod_medium],
+                perm.meshindex_lod[blam::mod2::lod_high],
+                perm.meshindex_lod[blam::mod2::lod_high_ext]);
+        }
+    }
+
+    u32 i = 0;
+    for(auto const& geom : model[0].geometries.data(map.magic))
+    {
+        u32 j = 0;
+        for(auto const& mesh : geom.mesh_headers.data(map.magic))
+        {
+            auto vertex_seg = mesh.vertex_segment(*map.tags);
+            auto index_seg  = mesh.index_segment(*map.tags);
+            auto vertex_buf = mesh.vertex_segment(*map.tags).data(vertex_magic);
+            auto index_buf  = mesh.index_segment(*map.tags).data(vertex_magic);
+            cDebug("Mesh!");
+
+            CString out_name = output_name + str::convert::to_string(i) + "_" +
+                               str::convert::to_string(j) + ".obj";
+
+            auto out = fopen(out_name.c_str(), "w+");
+
+            for(auto const& vertex : vertex_buf)
+            {
+                fprintf(
+                    out,
+                    "v %f %f %f\n",
+                    vertex.position.x(),
+                    vertex.position.y(),
+                    vertex.position.z());
+                fprintf(
+                    out,
+                    "vt %f %f\n",
+                    vertex.texcoord.x(),
+                    vertex.texcoord.y());
+                fprintf(
+                    out,
+                    "vn %f %f %f\n",
+                    vertex.normal.x(),
+                    vertex.normal.y(),
+                    vertex.normal.z());
+            }
+
+            u16 const* index_base = &index_buf[0][0];
+
+            if(index_buf.elements > 0)
+                for(auto i : Range<>(index_buf.elements * 3 - 2))
+                {
+                    u16 const* curr_face = &index_base[i];
+                    fprintf(
+                        out,
+                        "f %u %u %u\n",
+                        curr_face[0] + 1,
+                        curr_face[0 + 1] + 1,
+                        curr_face[0 + 2] + 1);
+                }
+
+            fclose(out);
+
+            j++;
+        }
+        i++;
+    }
+}
+
+void inspect_bitm(
+    blam::map_container const& map,
+    blam::magic_data_t const&  bitm_magic,
+    blam::tag_t const&         tag)
+{
+    auto const& header =
+        tag.to_reflexive<blam::bitm::header_t>().data(map.magic)[0];
+
+    auto const& bitmap = header.images.data(map.magic)[0];
+
+    cDebug(
+        "Image header: {2} {0} {1}",
+        bitmap.offset,
+        bitmap.pixOffset,
+        map.get_name(&tag));
+
+    for(auto const& image : header.images.data(map.magic))
+    {
+        semantic::BytesConst img_data;
+
+        img_data = image.data(bitm_magic);
+
+        BitFmt bit_fmt;
+        PixCmp pix_fmt;
+        std::tie(bit_fmt, pix_fmt) = image.to_fmt();
+
+        GLEAMAPI::DBG::SCOPE _(map.get_name(&tag));
+
+        auto size = image.isize.convert<i32>();
+
+        auto fmt = PixDesc(bit_fmt, pix_fmt);
+
+        if(image.compressed())
+        {
+            PixFmt    pfmt;
+            CompFlags cflags;
+            std::tie(pfmt, cflags) = image.to_compressed_fmt();
+
+            fmt = PixDesc(CompFmt(pfmt, cflags));
+        } else
+            fmt.pixfmt = image.to_pixfmt();
+
+        GLEAMAPI::ERROR ec;
+        GLEAMAPI::S_2D  surface(
+            image.to_pixfmt(), 1, C_CAST<u32>(fmt.cmpflg) << 10);
+        surface.allocate(size, fmt.comp);
+        surface.upload(fmt, size, img_data.as<const u8>(), ec);
+        surface.setLevels(0, 0);
+        surface.dealloc();
+    }
+}
+
 template<typename T>
 void examine_map(Resource&& mapfile, T version)
 {
@@ -32,6 +210,15 @@ void examine_map(Resource&& mapfile, T version)
 
     blam::magic_data_t bitm_magic;
     bitm_magic = C_OCAST<Bytes>(bitmfile);
+
+    auto bitm_header =
+        C_RCAST<blam::bitm::bitmap_header_t const*>(bitm_magic.base_ptr);
+
+    auto bitm_locators = bitm_header->locators();
+
+    for(auto const& locator : bitm_locators)
+    {
+    }
 
     if(map.map->is_xbox() && false)
     {
@@ -84,12 +271,20 @@ void examine_map(Resource&& mapfile, T version)
     for(auto tag : index_view)
     {
         cDebug(
-            "Tag: {0} {1} {2} -> {3} : {4}",
+            "Tag: {0} {1} {2} -> {3} : {4} : {5}",
             tag->tagclass[0].str(),
             tag->tagclass[1].str(),
             tag->tagclass[2].str(),
             tag->tag_id,
             map.get_name(tag));
+
+        if(tag->matches(blam::tag_class_t::bitm))
+        {
+            inspect_bitm(map, bitm_magic, *tag);
+        } else if(tag->matches(blam::tag_class_t::mod2))
+        {
+            inspect_model(map, *tag);
+        }
     }
 
     struct mem_map
@@ -241,6 +436,8 @@ void examine_map(Resource&& mapfile, T version)
             auto lightmap_tag = index_view.find(bsp_header.lightmaps);
             if(lightmap_tag != index_view.end())
             {
+                ProfContext _("Image upload");
+
                 auto const& lightmap_tagv = *lightmap_tag;
                 auto const& bitmap_head =
                     lightmap_tagv->to_reflexive<blam::bitm::header_t>().data(
@@ -255,6 +452,23 @@ void examine_map(Resource&& mapfile, T version)
                         C_CAST<u32>(image.format),
                         C_CAST<u32>(image.flags),
                         image.size);
+
+                    BitFmt bit_fmt;
+                    PixCmp pix_fmt;
+                    std::tie(bit_fmt, pix_fmt) = image.to_fmt();
+
+                    auto size = image.isize.convert<i32>();
+
+                    GLEAMAPI::ERROR ec;
+                    GLEAMAPI::S_2D  surface(image.to_pixfmt());
+                    surface.allocate(size, pix_fmt);
+                    surface.upload(
+                        PixDesc(bit_fmt, pix_fmt),
+                        size,
+                        img_data.as<const u8>(),
+                        ec);
+                    surface.setLevels(0, 0);
+                    surface.dealloc();
                 }
                 cDebug("Lightmap: {0}", map.get_name(*lightmap_tag));
             }
@@ -429,6 +643,23 @@ void examine_map(Resource&& mapfile, T version)
             }
         }
 
+        for(auto const& script_trigger : scn->script_triggers.data(map.magic))
+        {
+            cDebug(
+                "Trigger: {0} {1}",
+                script_trigger.name.str(),
+                script_trigger.some_value);
+        }
+
+        auto const& script = scn->scripts.data(map.magic)[0];
+        {
+            auto script_chunk = script.opcodes(scn->scripts.count);
+            cDebug(
+                "Script:\n{0}",
+                str::print::hexdump(
+                    script_chunk.data, script_chunk.elements, true, 4));
+        }
+
         cDebug(
             "Hud messages: {0}",
             scn->ui_text.hud_text.to_name().to_string(map.magic));
@@ -462,9 +693,8 @@ void examine_map(Resource&& mapfile, T version)
         //            cDebug("Scenery tag: {0}", scenery.tag.str());
         //        for(auto const& obj_name : scn->object_names.data(map.magic))
         //            cDebug("Object names: {0}", obj_name.name.str());
-        //        for(auto const& globals : scn->globals.data(map.magic))
-        //            cDebug("Global: {1} -> {0}", globals.pos,
-        //            globals.name.str());
+        for(auto const& globals : scn->globals.data(map.magic))
+            cDebug("Global: {1} -> {0}", globals.type, globals.name.str());
         //        for(auto const& poi :
         //        scn->cutscene_camera_poi.data(map.magic))
         //            cDebug("POI");
@@ -508,18 +738,32 @@ void examine_map(Resource&& mapfile, T version)
 
     auto skybox = scenario_header->skyboxes.data(map.magic);
 
-    cDebug(
-        "Skybox: {0} ({1}) -> {2}",
-        map.get_name(skybox.data),
-        C_CAST<int>(skybox[0].tag_class),
-        skybox[0].tag_id);
+    if(skybox[0].matches(blam::tag_class_t::sky))
+    {
+        cDebug(
+            "Skybox: {0} ({1}) -> {2}",
+            map.get_name(skybox.data),
+            C_CAST<int>(skybox[0].tag_class),
+            skybox[0].tag_id);
 
-    auto skybox_tag = index_view.find(skybox[0]);
+        auto skybox_it = index_view.find(skybox[0]);
 
-    if(skybox_tag != index_view.end())
-        cDebug("Skybox tag: {0}", (*skybox_tag)->tag_id, skybox[0].tag_id);
-    else
-        cDebug("Failed to find tag");
+        if(skybox_it != index_view.end())
+        {
+            auto const& skybox_tag = (*skybox_it);
+            auto const& skybox_data =
+                skybox_tag->to_reflexive<blam::scn::skybox>().data(map.magic);
+
+            if(skybox_data[0].valid())
+            {
+                auto const& model_tag = *index_view.find(skybox_data[0]);
+                inspect_model(map, *model_tag);
+            }
+
+            cDebug("Skybox tag: {0}", skybox_tag->tag_id, skybox[0].tag_id);
+        } else
+            cDebug("Failed to find tag");
+    }
 
     return;
 
@@ -612,19 +856,68 @@ void examine_map(Resource&& mapfile, T version)
  */
 int coffee_main(i32, cstring_w*)
 {
-    auto bitmfile = "bitmaps.map"_rsc;
+    using namespace comp_app;
 
-    //    examine_map("c10.map"_rsc, blam::pc_version);
-    examine_map("bloodgulch.map"_rsc, blam::pc_version);
+    struct NoData
+    {
+    };
 
-    cDebug("{0}", str::transform::multiply('=', 80));
+    using entity_container = comp_app::detail::EntityContainer;
+    using comp_app::detail::duration;
+    using comp_app::detail::time_point;
 
-    //    examine_map("c10_xbox.map"_rsc, blam::xbox_version);
-    //    examine_map("bloodgulch_xbox.map"_rsc, blam::xbox_version);
+    comp_app::app_error ec;
+    entity_container    app;
 
-    //    examine_map("hyrule.map"_rsc);
+    comp_app::configureDefaults(app);
 
-    return 0;
+    auto loader = app.service<comp_app::AppLoader>();
+    loader->config<comp_app::WindowConfig>().size = {40, 40};
+
+    comp_app::addDefaults(app, ec);
+    C_ERROR_CHECK(ec)
+
+    AppContainer<NoData>::addTo(
+        app, [](entity_container& e, NoData&, time_point const&) {
+            GLEAMAPI::OPTS opts;
+            auto           loader = GLEAMAPI::GetLoadAPI(opts);
+
+            if(!loader(false))
+                return;
+
+            Array<Resource, 2> pc_maps = {
+
+                "c10.map"_rsc,
+
+                "bloodgulch.map"_rsc
+
+            };
+            Array<Resource, 2> custom_maps = {
+
+                "hyrule.map"_rsc,
+
+                "bloodgulch_custom.map"_rsc
+
+            };
+            Array<Resource, 2> xbox_maps = {
+
+                "c10_xbox.map"_rsc,
+
+                "bloodgulch_xbox.map"_rsc
+
+            };
+
+            for(auto& map : pc_maps)
+                examine_map(std::move(map), blam::pc_version);
+            //            for(auto& map : custom_maps)
+            //                examine_map(std::move(map), blam::custom_version);
+            //            for(auto& map : xbox_maps)
+            //                examine_map(std::move(map), blam::xbox_version);
+
+            e.service<comp_app::Windowing>()->close();
+        });
+
+    return comp_app::ExecLoop<comp_app::BundleData>::exec(app);
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

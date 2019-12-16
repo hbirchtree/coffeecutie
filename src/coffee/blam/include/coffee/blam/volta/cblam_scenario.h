@@ -2,6 +2,7 @@
 
 #include <coffee/core/types/vector_types.h>
 
+#include "cblam_bytecode.h"
 #include "cblam_mod2.h"
 #include "cblam_structures.h"
 
@@ -293,20 +294,18 @@ struct recording_ref
 
 struct script_trigger
 {
-    u32       unk1;
+    u32       padding_1;
     bl_string name;
     Vecf3     pos;
-    u32       unk[11];
+    u32       some_value;
+    u32       padding[10];
 };
 
 struct global
 {
-    u32       unk1;
     bl_string name;
-    u32       unk2;
-    Vecf3     pos;
-    scalar    unk3[4];
-    u32       unk[9];
+    u16       type;
+    u16       unk3[26];
 };
 
 struct references
@@ -360,16 +359,6 @@ struct squad_spawn
     scalar yaw;
     i16    unk2[5];
     i16    CommandList;
-};
-
-struct info
-{
-    bl_string_var<16>   text;
-    squad*              pSquads;
-    squad**             ppSquadSpawns;
-    reflexive_t<byte_t> Platoons;
-    reflexive_t<byte_t> FiringPositions;
-    reflexive_t<byte_t> PlayerStartLocations;
 };
 
 } // namespace encounter
@@ -430,75 +419,13 @@ struct light_fixture
 
 namespace bsp {
 
-struct compressed_variant
-{
-};
-struct uncompressed_variant
-{
-};
-
-template<
-    typename RType = uncompressed_variant,
-    bool           = std::is_same<RType, uncompressed_variant>::value>
-struct alignas(4) vertex
-{
-    Vecf3 position;
-    Vecf3 normal;
-    Vecf3 binorm;
-    Vecf3 tangent;
-    Vecf2 texcoord;
-
-  private:
-    constexpr void size_check()
-    {
-        static_assert(
-            sizeof(vertex<uncompressed_variant>) == 56, "Invalid size");
-    }
-};
-
-template<typename RType>
-struct vertex<RType, false>
-{
-    // Compressed Xbox variant
-    Vecf3 position;
-    u32   normal;   /*!< PixFmt::R11G11B10F */
-    u32   binormal; /*!< Same as binormal */
-    u32   tangent;  /*!< Same as normal */
-    Vecf2 texcoord;
-
-  private:
-    constexpr void size_check()
-    {
-        static_assert(sizeof(vertex<compressed_variant>) == 32, "Invalid size");
-    }
-};
-
-using vertex_face = Array<u16, 3>;
-
-template<
-    typename RType = uncompressed_variant,
-    bool           = std::is_same<RType, uncompressed_variant>::value>
-struct light_vertex
-{
-    Vecf3 normal;
-    Vecf2 texcoord;
-};
-
-template<typename RType>
-struct light_vertex<RType, false>
-{
-    // Compressed Xbox variant
-    u32 normal;   /*!< PixFmt::R11G11B10F */
-    u16 texcoord; /*!< PixFmt::R16, Normalized */
-};
-
 struct header;
 struct info;
 
 struct section
 {
-    using comp_vertex   = vertex<compressed_variant>;
-    using comp_lightmap = light_vertex<compressed_variant>;
+    using comp_vertex   = vert::vertex<vert::compressed>;
+    using comp_lightmap = vert::light_vertex<vert::compressed>;
 
     u32 header_offset;
 
@@ -539,8 +466,8 @@ struct info
 
 struct submesh_header
 {
-    using pc_vertex   = vertex<uncompressed_variant>;
-    using xbox_vertex = vertex<compressed_variant>;
+    using pc_vertex   = vert::vertex<vert::uncompressed>;
+    using xbox_vertex = vert::vertex<vert::compressed>;
 
     struct dist_light
     {
@@ -594,11 +521,11 @@ struct submesh_header
         return base;
     }
 
-    inline reflexive_t<vertex_face> pc_indices(header const& head) const;
+    inline reflexive_t<vert::face> pc_indices(header const& head) const;
 
     inline u32 index_offset() const
     {
-        return mesh_index_offset * sizeof(vertex_face);
+        return mesh_index_offset * sizeof(vert::face);
     }
     inline u32 base_vertex() const
     {
@@ -620,8 +547,8 @@ struct alignas(4) submesh_group
 
 struct subcluster
 {
-    bounding_box             bounds;
-    reflexive_t<vertex_face> indices;
+    bounding_box            bounds;
+    reflexive_t<vert::face> indices;
 };
 
 struct predicted_resource
@@ -670,13 +597,13 @@ struct header
 {
     tagref_t                       lightmaps;
     u32                            unknown1[37];
-    reflexive_t<byte_t>            shaders;
+    reflexive_t<shader_desc>       shaders;
     reflexive_t<byte_t>            collision_header;
     reflexive_t<byte_t>            nodes;
     bounding_box                   world_bounds;
     reflexive_t<byte_t>            leaves;
     reflexive_t<byte_t>            leaf_surfaces;
-    reflexive_t<vertex_face>       submesh_tri_indices;
+    reflexive_t<vert::face>        submesh_tri_indices;
     reflexive_t<submesh_group>     submesh_groups;
     reflexive_t<byte_t>            chunk_10;
     reflexive_t<byte_t>            chunk_11;
@@ -711,13 +638,13 @@ struct header
     reflexive_t<byte_t>            runtime_decals;
     u32                            unkown4[9];
 
-    inline reflexive_t<vertex_face> all_indices() const
+    inline reflexive_t<vert::face> all_indices() const
     {
         return submesh_tri_indices;
     }
 };
 
-inline reflexive_t<vertex_face> submesh_header::pc_indices(
+inline reflexive_t<vert::face> submesh_header::pc_indices(
     header const& head) const
 {
     return {index_count(), index_offset() + head.submesh_tri_indices.offset, 0};
@@ -795,8 +722,8 @@ struct scenario
         reflexive_t<scn_chunk>            ai_conversations;
         u32                               script_syntax_data_size;
         u32                               unknown_7;
-        reflexive_t<scn_chunk>            scripts;
-        reflexive_t<scn_chunk>            commands;
+        reflexive_t<hsc::script_ref>      scripts;
+        u32                               unknown_9[2];
         reflexive_t<scn_chunk>            points;
         reflexive_t<ai::animation_ref>    ai_animation_refs;
         reflexive_t<global>               globals;
@@ -811,7 +738,7 @@ struct scenario
         reflexive_t<scn_chunk>            cutscene_flags;
         reflexive_t<scn_chunk>            cutscene_camera_poi;
         reflexive_t<scn_chunk>            cutscene_titles_;
-        u32                               padding5[14];
+        u32                               padding5[15];
     };
 
     struct
@@ -841,18 +768,14 @@ struct unicode_ref
 {
     using wide_string = std::basic_string<u16>;
 
-    u32              length;
-    u32              padding;
-    reflexive_t<u16> data;
+    u32                         length;
+    u32                         padding;
+    reflexive_t<unicode_var<1>> data;
 
     inline wide_string str(magic_data_t const& magic, u16 off = 0) const
     {
-        using wide_char = wide_string::value_type;
-
         auto str_data = data.data(magic);
-        return wide_string(
-            C_RCAST<wide_char const*>(str_data.data) + off,
-            length / sizeof(wide_char));
+        return str_data[0].str();
     }
 };
 

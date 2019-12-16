@@ -10,15 +10,6 @@ struct uvscale_t
     scalar v;
 };
 
-struct shader_desc
-{
-    u32 tag;
-    u32 namePtr;
-    u32 zero;
-    u32 shaderTag;
-    u32 unknown[4];
-};
-
 namespace mod2 {
 
 /*!
@@ -26,11 +17,11 @@ namespace mod2 {
  */
 enum mod2_lod
 {
-    mod2_load_low_ext,
-    mod2_load_low,
-    mod2_load_medium,
-    mod2_load_high,
-    mod2_load_high_ext,
+    lod_low_ext,
+    lod_low,
+    lod_medium,
+    lod_high,
+    lod_high_ext,
 };
 
 struct report
@@ -43,88 +34,156 @@ struct report
 
 struct region_permutation
 {
-    byte_t name[32];
-    u32    flags[8];
-    i16    meshindex_lod[5];
-    i16    reserved[7];
+    bl_string name;
+    u32       flags[8];
+    u16       meshindex_lod[5];
+    i16       reserved[7];
 };
 
 struct region
 {
-    byte_t                          name[64];
+    bl_string_var<64>               name;
     reflexive_t<region_permutation> permutations;
+};
+
+enum class model_flags_t : u32
+{
+    blend_shared_normals = 0x1,
+    local_nodes          = 0x2,
+    ignore_skinning      = 0x3,
+};
+
+enum class submesh_flags_t : u32
+{
+    stripped_internal = 0x1,
+    zoner             = 0x2,
+};
+
+enum submesh_centroid
+{
+    submesh_centroid_primary,
+    submesh_centroid_second,
+};
+
+enum submesh_lod_cutoffs
+{
+    submesh_lod_lowest,
+    submesh_lod_low,
+    submesh_lod_medium,
+    submesh_lod_high,
+    submesh_lod_highest,
+};
+
+struct submesh_header
+{
+    submesh_flags_t  flags;
+    u16              shader_idx;
+    u8               prev_idx;
+    u8               next_idx;
+    Array<u16, 2>    centroids;
+    Array<scalar, 2> centroid_weights;
+    Vecf3            centroid;
+
+    u32 pad_[4];
+    u32 sub_count;
+    u32 pad__[4];
+    u32 unknown_count;
+
+    reflexive_t<vert::face, xbox_variant> indices;
+
+    u32 unknown_offset;
+    u32 unknown_count2;
+    u32 vert_count;
+    u32 zero;
+    u32 raw_offset_behavior;
+    u32 vertex_ref_offset;
+    u32 unknown_2[7];
+
+    inline decltype(tag_index_t::vertex_objects) vertex_segment(
+        tag_index_t const& base) const
+    {
+        auto cpy = base.vertex_base();
+        cpy.offset += vertex_ref_offset;
+        cpy.count = vert_count;
+        return cpy;
+    }
+
+    /*!
+     * \brief Gives the indices **for a triangle strip**
+     * Trying to read these as normal triangles will be very bad
+     * \param base
+     */
+    inline decltype(tag_index_t::index_objects) index_segment(
+        tag_index_t const& base) const
+    {
+        auto cpy = base.index_base();
+        cpy.offset += indices.offset;
+        cpy.count = indices.count / 3;
+        return cpy;
+    }
 };
 
 struct geometry_header
 {
-    u32                 unknown[9];
-    reflexive_t<byte_t> mesh_headers;
+    u32                         unknown[9];
+    reflexive_t<submesh_header> mesh_headers;
 };
 
 struct marker
 {
-    byte_t              name[32];
+    bl_string           name;
     u32                 unknown[5];
     reflexive_t<byte_t> chunk;
 };
 
+struct bone
+{
+    static constexpr u16 invalid_bone = std::numeric_limits<u16>::max();
+
+    bl_string name;
+    u16       next_bone;
+    u16       next_child;
+    u16       parent;
+    u16       unknown;
+    Vecf3     translation;
+    Quatf     rotation;
+    scalar    offset;
+    scalar    unknown_[21];
+};
+
 /*!
- * \brief Header extracted from mod2 data. This is the first piece of data
- * referenced by the map, containing further references to parts of the model as
- * well as how to display it.
+ * \brief Header referenced by mod2 tags
  */
 struct header
 {
-    u32 zero1;
-    u32 unknown1;
-    u32 offset1;
-    u32 offset2;
-    u32 offset3;
-    u32 offset4;
-    u32 offset5;
-    i16 lodcutoff_high_ext;
-    i16 lodcutoff_high;
-    i16 lodcutoff_med;
-    i16 lodcutoff_low;
-    i16 lodcutoff_low_ext;
-
-    i16 nodecount_high_ext;
-    i16 nodecount_high;
-    i16 nodecount_med;
-    i16 nodecount_low;
-    i16 nodecount_low_ext;
+    model_flags_t zero1;
+    u32           unknown1;
+    u32           offset1;
+    u32           offset2;
+    u32           offset3;
+    u32           offset4;
+    u32           offset5;
+    i16           lod_cutoff[5];
+    i16           lod_nodecount[5];
 
     uvscale_t uvscale;
 
     u32 unknown2[29];
 
     reflexive_t<marker>          markers;
-    reflexive_t<byte_t>          nodes;
+    reflexive_t<bone>            bones;
     reflexive_t<region>          regions;
     reflexive_t<geometry_header> geometries;
     reflexive_t<shader_desc>     shaders;
-};
 
-struct bsp_header
-{
-    byte_t data[500];
-    //    blam_tagref lightmaps_tag;
-    //    uint32 unknown1[37];
-    //    blam_reflexive<byte> shaders;
-    //    blam_reflexive<byte> collision_bsp_header;
-    //    blam_reflexive<byte> nodes;
-    //    uint32 unknown2[6];
-};
+    inline semantic::mem_chunk<submesh_header const> meshes(
+        magic_data_t const& magic, u32 i = 0) const
+    {
+        auto geom = geometries.data(magic);
 
-/*!
- * \brief Acquire the header of a model from the index item
- * \param item Item for which we acquire a model
- * \param map Map from which we extract a pointer
- * \param magic Magic number from the tag index
- * \return A valid pointer to the referenced model, or NULL if it is invalid
- */
-extern const header* get_header(
-    const tag_t* item, const file_header_t* map, i32 magic);
+        return geom[i].mesh_headers.data(magic);
+    }
+};
 
 } // namespace mod2
 } // namespace blam

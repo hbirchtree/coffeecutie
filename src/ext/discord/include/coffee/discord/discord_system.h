@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/components/types.h>
+#include <coffee/components/components.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/discord/discord_binding.h>
 

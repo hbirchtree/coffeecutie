@@ -361,39 +361,45 @@ FORCEDINLINE szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
 {
     using B = BitFmt;
 
+    /* Packed formats contain RGB/RGBA within a single value */
+    bool packed = false;
+
     szptr pxsz = 0;
     switch(fmt)
     {
+    case B::UByte_332:
+    case B::UByte_233R:
+        packed = true;
     case B::Byte:
     case B::ByteR:
     case B::UByte:
     case B::UByteR:
-    case B::UByte_332:
-    case B::UByte_233R:
         pxsz = 1;
         break;
-    case B::Short:
-    case B::ShortR:
-    case B::UShort:
-    case B::UShortR:
     case B::UShort_4444:
     case B::UShort_4444R:
     case B::UShort_565:
     case B::UShort_565R:
     case B::UShort_5551:
     case B::UShort_1555R:
+        packed = true;
+    case B::Short:
+    case B::ShortR:
+    case B::UShort:
+    case B::UShortR:
     case B::Scalar_16:
         pxsz = 2;
         break;
+    case B::UInt_5999R:
+    case B::UInt_1010102:
+    case B::UInt_2101010R:
+    case B::Scalar_11_11_10:
+        packed = true;
     case B::Int:
     case B::IntR:
     case B::UInt:
     case B::UIntR:
-    case B::UInt_5999R:
-    case B::UInt_1010102:
-    case B::UInt_2101010R:
     case B::Scalar_32:
-    case B::Scalar_11_11_10:
     case B::UInt24_8:
         pxsz = 4;
         break;
@@ -405,32 +411,33 @@ FORCEDINLINE szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
     default:
         Throw(implementation_error("size calculation not implemented"));
     }
-    switch(comp)
-    {
-    case PixCmp::R:
-    case PixCmp::G:
-    case PixCmp::B:
-    case PixCmp::A:
-    case PixCmp::Stencil:
-    case PixCmp::Depth:
-    case PixCmp::DepthStencil:
-        pxsz *= 1;
-        break;
-    case PixCmp::RG:
-        pxsz *= 2;
-        break;
-    case PixCmp::RGB:
-    case PixCmp::BGR:
-        pxsz *= 3;
-        break;
-    case PixCmp::RGBA:
-    case PixCmp::BGRA:
-        pxsz *= 4;
-        break;
+    if(!packed)
+        switch(comp)
+        {
+        case PixCmp::R:
+        case PixCmp::G:
+        case PixCmp::B:
+        case PixCmp::A:
+        case PixCmp::Stencil:
+        case PixCmp::Depth:
+        case PixCmp::DepthStencil:
+            pxsz *= 1;
+            break;
+        case PixCmp::RG:
+            pxsz *= 2;
+            break;
+        case PixCmp::RGB:
+        case PixCmp::BGR:
+            pxsz *= 3;
+            break;
+        case PixCmp::RGBA:
+        case PixCmp::BGRA:
+            pxsz *= 4;
+            break;
 
-    default:
-        Throw(implementation_error("size calculation not implemented"));
-    }
+        default:
+            Throw(implementation_error("size calculation not implemented"));
+        }
 
     return pxsz * pixels;
 }
@@ -607,8 +614,9 @@ struct layout_t
     }
 };
 
-template<format_property Prop,
-         typename std::enable_if<Prop == layout>::type* = nullptr>
+template<
+    format_property Prop,
+    typename std::enable_if<Prop == layout>::type* = nullptr>
 FORCEDINLINE layout_t get(PixFmt fmt)
 {
     using F = PixFmt;
@@ -703,7 +711,7 @@ struct PixDesc
 
     PixDesc(BitFmt bitfmt, PixCmp comp) :
         cmpflg(CompFlags::CompressionNone), pixflg(PixFlg::None), bfmt(bitfmt),
-        comp(comp)
+        comp(comp), pixfmt(PixFmt::None)
     {
     }
 
@@ -743,6 +751,6 @@ struct PixInfoDefault
 {
 };
 #endif
-}
+} // namespace pixels
 } // namespace typing
 #undef CONSTEXPR_EXTENDED

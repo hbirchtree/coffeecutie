@@ -16,7 +16,7 @@ GLEAM_API_LINKAGE void surface_dealloc(glhnd& m_handle);
 GLEAM_API_LINKAGE void surface_flag(u32& m_flags, PixFmt fmt);
 
 GLEAM_API_LINKAGE Tup<u32, u32> surface_get_levels(
-    glhnd const& m_handle, TexComp::tex_flag m_type, gleam_error &ec);
+    glhnd const& m_handle, TexComp::tex_flag m_type, gleam_error& ec);
 
 GLEAM_API_LINKAGE void surface_set_levels(
     glhnd const& m_handle, TexComp::tex_flag m_type, u32 base, u32 max);
@@ -65,7 +65,7 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
     Tup<u32, u32> levels() const
     {
         gleam_error ec;
-        auto out = detail::surface_get_levels(m_handle, m_type, ec);
+        auto        out = detail::surface_get_levels(m_handle, m_type, ec);
         C_ERROR_CHECK(ec);
         return out;
     }
@@ -93,19 +93,19 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
     void allocate(Size size, PixCmp c);
 
     void upload(
-        PixDesc      pfmt,
-        Size const&  size,
-        const Bytes& data,
-        gleam_error& ec,
-        Point        offset = {0, 0},
-        u32          mip    = 0);
+        PixDesc           pfmt,
+        Size const&       size,
+        BytesConst const& data,
+        gleam_error&      ec,
+        Point             offset = {0, 0},
+        u32               mip    = 0);
 
     void upload(
-        PixDesc      pfmt,
-        Size const&  size,
-        const Bytes& data,
-        Point        offset = {0, 0},
-        u32          mip    = 0)
+        PixDesc           pfmt,
+        Size const&       size,
+        BytesConst const& data,
+        Point             offset = {0, 0},
+        u32               mip    = 0)
     {
         gleam_error ec;
         return upload(pfmt, size, data, ec, offset, mip);

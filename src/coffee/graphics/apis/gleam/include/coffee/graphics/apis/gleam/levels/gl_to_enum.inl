@@ -276,7 +276,7 @@ inline CGenum to_enum(Prim p, PrimCre c)
             return GL_TRIANGLES;
         }
 
-            /* PATCHES */
+        /* PATCHES */
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case Prim::Patch:
@@ -405,7 +405,11 @@ inline CGenum to_enum(PixFmt f, PixFlg e, CompFlags d)
                 return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
             else if(feval(e, PixFlg::RGB))
                 return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        } else if(d == CompFlags::S3TC_3)
+        {
+            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
         }
+
 #endif
         break;
 

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <coffee/components/entity_container.h>
-#include <coffee/components/subsystem.h>
-#include <coffee/components/types.h>
+#include <coffee/components/components.h>
 #include <coffee/core/types/display/properties.h>
 #include <coffee/core/types/input/event_types.h>
 #include <peripherals/stl/functional_types.h>

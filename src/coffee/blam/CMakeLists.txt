@@ -11,3 +11,6 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+target_precompile_headers ( Blam PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/blam/cblam.h>
+    )

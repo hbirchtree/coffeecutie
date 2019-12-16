@@ -185,7 +185,7 @@ class tag_index_view
 
     using iterator = index_iterator;
 
-    tag_index_view(map_container& map) :
+    tag_index_view(map_container const& map) :
         m_idx(*map.tags), m_file(map.map), m_magic(map.magic)
     {
     }
@@ -210,6 +210,9 @@ class tag_index_view
 
     iterator find(tagref_t const& tag)
     {
+        if(tag.unknown != 0)
+            Throw(undefined_behavior("invalid tagref_t"));
+
         return find(tag.tag_id);
     }
 

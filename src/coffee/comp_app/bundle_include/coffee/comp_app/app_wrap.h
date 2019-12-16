@@ -21,6 +21,14 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     using loop_func  = stl_types::Function<void(
         entity_container&, DataType&, time_point const&, duration const&)>;
 
+    static void dummy_setup(entity_container&, DataType&, time_point const&)
+    {
+    }
+    static void dummy_loop(
+        entity_container&, DataType&, time_point const&, duration const&)
+    {
+    }
+
     template<typename... Args>
     static void addTo(entity_container& e, Args... args)
     {
@@ -35,8 +43,12 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     {
     }
 
-    AppContainer(setup_func&& setup, loop_func&& loop, setup_func&& cleanup) :
-        m_setup(setup), m_loop(loop), m_cleanup(cleanup),
+    AppContainer(
+        setup_func&& setup,
+        loop_func&&  loop    = dummy_loop,
+        setup_func&& cleanup = dummy_setup) :
+        m_setup(setup),
+        m_loop(loop), m_cleanup(cleanup),
         m_data(stl_types::MkShared<DataType>())
     {
     }

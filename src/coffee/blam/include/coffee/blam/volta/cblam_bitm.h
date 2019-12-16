@@ -7,6 +7,7 @@
 
 namespace blam {
 namespace bitm {
+
 /*!
  * \brief These are the various texture formats found in the Blam engine
  */
@@ -56,6 +57,38 @@ enum class flags_t : u16
 
 C_FLAGS(flags_t, u16);
 
+struct locator_block
+{
+    string_ref name;
+    u32        size;
+    u32        offset;
+};
+
+struct bitmap_header_t
+{
+    u32 unknown;
+    u32 name_block_off;
+
+    u32 locators_offset;
+    u32 locators_count;
+
+    inline cstring get_name(locator_block const& block) const
+    {
+        auto base_ptr = C_RCAST<byte_t const*>(this);
+
+        return C_RCAST<cstring>(base_ptr + name_block_off + block.name.offset);
+    }
+
+    inline semantic::mem_chunk<locator_block const> locators() const
+    {
+        auto base_ptr = C_RCAST<byte_t const*>(this);
+
+        return semantic::mem_chunk<locator_block const>::From(
+            C_RCAST<locator_block const*>(base_ptr + locators_offset),
+            locators_count);
+    }
+};
+
 struct padding_t;
 struct image_t;
 
@@ -64,7 +97,32 @@ struct image_t;
  */
 struct header_t
 {
-    i32                    unknown[21];
+    union
+    {
+        struct
+        {
+            //            u32    _something;
+            u32    type;
+            u32    format;
+            u32    usage;
+            u32    flags;
+            scalar fade_factor;
+            scalar sharpening;
+            scalar bump_amplitude;
+            u32    sprite_budget;
+            u16    sprite_budget_count;
+            u16    color_plate_w;
+            u16    pixel_data;
+            scalar blur_size;
+            scalar alpha_bias;
+            u16    mip_count;
+            u32    sprite_usage;
+            u16    sprite_spacing;
+            u32    _pad[2];
+        };
+        i32 unknown[21];
+    };
+
     reflexive_t<padding_t> padding_data;
     reflexive_t<image_t>   images;
 };
@@ -93,19 +151,11 @@ struct image_t
     u16        pixOffset; /*!< Pixel offset when in use*/
     u32        offset;    /*!< Data offset*/
     u32        size;      /*!< Data size in bytes*/
-    i32        unknown[4];
+    u32        unknown[4];
 
     inline bool compressed() const
     {
-        switch(format)
-        {
-        case format_t::DXT1:
-        case format_t::DXT2AND3:
-        case format_t::DXT4AND5:
-            return true;
-        default:
-            return false;
-        }
+        return enum_helpers::feval(flags & flags_t::compressed);
     }
 
     inline stl_types::Tup<BitFmt, PixCmp> to_fmt() const
@@ -121,11 +171,11 @@ struct image_t
         case format_t::A8Y8:
             return {BitFmt::UByte, PixCmp::RG};
         case format_t::R5G6B5:
-            return {BitFmt::UShort_565, PixCmp::R};
+            return {BitFmt::UShort_565, PixCmp::RGB};
         case format_t::A1R5G5B5:
-            return {BitFmt::UShort_1555R, PixCmp::R};
+            return {BitFmt::UShort_1555R, PixCmp::RGBA};
         case format_t::A4R4G4B4:
-            return {BitFmt::UShort_4444, PixCmp::R};
+            return {BitFmt::UShort_4444, PixCmp::RGBA};
 
         case format_t::A8R8G8B8:
             return {BitFmt::UByte, PixCmp::RGBA};
@@ -134,6 +184,34 @@ struct image_t
 
         default:
             return {BitFmt::Undefined, PixCmp::None};
+        }
+    }
+
+    inline PixFmt to_pixfmt() const
+    {
+        switch(format)
+        {
+        case format_t::A8:
+        case format_t::Y8:
+        case format_t::P8:
+        case format_t::AY8:
+            return PixFmt::R8;
+        case format_t::R5G6B5:
+            return PixFmt::RGB565;
+        case format_t::A8Y8:
+            return PixFmt::RG8;
+        case format_t::A1R5G5B5:
+            return PixFmt::RGB5A1;
+        case format_t::A4R4G4B4:
+            return PixFmt::RGBA4;
+        case format_t::A8R8G8B8:
+            return PixFmt::RGBA8;
+        case format_t::X8R8G8B8:
+            return PixFmt::RGBA8;
+        case format_t::DXT1:
+        case format_t::DXT2AND3:
+        case format_t::DXT4AND5:
+            return PixFmt::DXTn;
         }
     }
 

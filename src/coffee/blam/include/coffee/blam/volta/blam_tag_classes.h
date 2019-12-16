@@ -89,7 +89,8 @@ enum class tag_class_t
     colo = 0x6F6C6F63, /* TAG_COLOR_GROUP */
     elec = 0x15,       /* TAG_LIGHTNING */
     metr = 0x7274656D, /* TAG_METER */
-    schi = 0x69686373, /* TAG_SHADER_TRANSP_VARIANT */
+    schi = 0x69686373, /* TAG_SHADER_CHICAGO */
+    scex = 0x78656373, /* TAG_SHADER_CHICAGO_EXTENDED */
     flag = 0x16,       /* TAG_FLAG */
     foot = 0x746F6F66, /* TAG_MATERIAL_EFFECT */
     vcky = 0x17,       /* TAG_VIRTUAL_KEYBOARD */

@@ -14,6 +14,10 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+target_precompile_headers ( CoreApplication PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/core/CApplication>
+    )
+
 if(ANDROID OR (APPLE AND IOS))
     target_link_libraries ( CoreApplication PUBLIC
         ComponentBundleSetup

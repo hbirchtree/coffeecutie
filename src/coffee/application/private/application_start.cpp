@@ -1,3 +1,4 @@
+#include <coffee/core/CApplication>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base.h>
 #include <coffee/core/coffee.h>
@@ -22,7 +23,7 @@ extern int InitCOMInterface();
 using namespace Coffee;
 
 int deref_main(
-    CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0)
+    CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags)
 {
 #if !defined(COFFEE_LOWFAT) && 0
     cDebug("Entering deref_main() at {0}", str::print::pointerify(deref_main));

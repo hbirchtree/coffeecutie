@@ -538,6 +538,10 @@ struct mem_chunk
      * \param size
      * \return
      */
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
+            nullptr>
     NO_DISCARD FORCEDINLINE mem_chunk<T> at(
         size_type offset, size_type size = 0)
     {
@@ -659,8 +663,11 @@ struct mem_chunk
         return const_iterator(*this, elements);
     }
 
-    C_DEPRECATED
-    iterator insert(iterator it, T&& value)
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
+            nullptr>
+    C_DEPRECATED iterator insert(iterator it, T&& value)
     {
 #if MODE_DEBUG
         if(it.m_idx >= elements)
@@ -673,8 +680,11 @@ struct mem_chunk
         return it;
     }
 
-    C_DEPRECATED
-    iterator insert(iterator it, T const& value)
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
+            nullptr>
+    C_DEPRECATED iterator insert(iterator it, T const& value)
     {
 #if MODE_DEBUG
         if(it.m_idx >= elements)

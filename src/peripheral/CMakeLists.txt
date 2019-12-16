@@ -24,6 +24,18 @@ target_compile_definitions ( PeripheralLib PRIVATE
     -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
     )
 
+target_precompile_headers ( PeripheralLib PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/libc/types.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/functional_types.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/math.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/string_casting.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/string_ops.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/thread_types.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/threads/job_system.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/types.h>
+    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/type_list.h>
+    )
+
 if(EMSCRIPTEN)
     if("${EMSCRIPTEN_SOURCEMAP_BASE}" STREQUAL "")
         set ( EMSCRIPTEN_SOURCEMAP_BASE "http://localhost:8000" )
