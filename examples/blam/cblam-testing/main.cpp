@@ -22,6 +22,8 @@ struct Empty
 {
 };
 
+constexpr bool use_graphics = false;
+
 void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
 {
     blam::tag_index_view idx_view(map);
@@ -152,7 +154,8 @@ void inspect_bitm(
     blam::magic_data_t const&  bitm_magic,
     blam::tag_t const&         tag)
 {
-    return;
+    if(!use_graphics)
+        return;
 
     auto const& header =
         tag.to_reflexive<blam::bitm::header_t>().data(map.magic)[0];
@@ -282,6 +285,15 @@ void examine_map(Resource&& mapfile, T version)
         } else if(tag->matches(blam::tag_class_t::mod2))
         {
             inspect_model(map, *tag);
+        } else if(tag->matches(blam::tag_class_t::actr))
+        {
+            auto actor = tag->to_reflexive<blam::scn::actor>().data(map.magic);
+            cDebug(" - Actor");
+        } else if(tag->matches(blam::tag_class_t::actv))
+        {
+            auto actor_v =
+                tag->to_reflexive<blam::scn::actor_variant>().data(map.magic);
+            cDebug(" - Actor variant");
         }
     }
 
@@ -327,11 +339,83 @@ void examine_map(Resource&& mapfile, T version)
 
     add_mem_map(map.map, "file_header");
 
-    auto tag_base = map.tags->tags(map.map);
+    auto scn = &blam::scn::get_scenario(map.map, map.magic);
 
     {
+        auto dism_file = fopen("script.hsb", "w+");
+
+        for(auto const& global : scn->globals.data(map.magic))
+        {
+            auto glob = Strings::fmt(
+                "#global {0}: {1} @ {2} # {3} => {4}",
+                global.name.str(),
+                global.type,
+                global.index,
+                global.salt,
+                global.value);
+            fprintf(dism_file, "%s\n", glob.c_str());
+        }
+
+        auto const& string_seg = scn->script_string_segment.data(map.magic)[0];
+
+        for(auto i : Range<u32>(1066))
+        {
+            auto str = Strings::fmt(
+                "#str {1} @ {2} = {0}",
+                string_seg.at_indexed(i),
+                i,
+                string_seg.at_indexed(i) - string_seg.at_indexed(0));
+            fprintf(dism_file, "%s\n", str.c_str());
+        }
+
+        auto const& script = scn->scripts.data(map.magic)[0];
+        {
+            auto script_heap = script.dump(scn->scripts.count)
+                                   .as<blam::hsc::opcode_layout const>();
+
+            auto opcode = &script.opcode_first();
+
+            u32 ip = 0;
+
+            while(ip <
+                  scn->script_bytecode_size / sizeof(blam::hsc::opcode_layout))
+            {
+                opcode = &script_heap[ip];
+
+                if(opcode->opcode == blam::hsc::opcode_t::begin &&
+                   opcode->ret_type == blam::hsc::type_t::immediate_val)
+                    fprintf(dism_file, "\n");
+
+                auto dism = Strings::fmt(
+                    "{12} {0}: {11} &{1} [{2} {3} {4} {5}]|[{6} "
+                    "{7}]|{8}|{9} "
+                    "-> "
+                    "{10}",
+                    opcode->opcode,
+                    opcode->data_ptr,
+                    opcode->data_bytes[0],
+                    opcode->data_bytes[1],
+                    opcode->data_bytes[2],
+                    opcode->data_bytes[3],
+                    opcode->data_short[0],
+                    opcode->data_short[1],
+                    opcode->data_int,
+                    opcode->data_real,
+                    opcode->ret_type,
+                    opcode->exp_type,
+                    str::print::pointerify(opcode - script_heap.data));
+
+                fprintf(dism_file, "%s\n", dism.c_str());
+                fflush(dism_file);
+
+                ip++;
+            }
+        }
+    }
+
+    if(false)
+    {
         /* Extracting scenario data */
-        auto scn = &blam::scn::get_scenario(map.map, map.magic);
 
         add_mem_map(scn, "scenario");
 
@@ -619,19 +703,6 @@ void examine_map(Resource&& mapfile, T version)
                 script_trigger.some_value);
         }
 
-        auto const& script = scn->scripts.data(map.magic)[0];
-        {
-            for(auto const& opcode : script.opcodes(scn->scripts.count))
-            {
-                cDebug("OPCODE: {0}", C_CAST<u16>(opcode.opcode));
-            }
-            auto script_chunk = script.dump(scn->scripts.count);
-            cDebug(
-                "Script:\n{0}",
-                str::print::hexdump(
-                    script_chunk.data, script_chunk.elements, true, 4));
-        }
-
         cDebug(
             "Hud messages: {0}",
             scn->ui_text.hud_text.to_name().to_string(map.magic));
@@ -666,7 +737,10 @@ void examine_map(Resource&& mapfile, T version)
         //        for(auto const& obj_name : scn->object_names.data(map.magic))
         //            cDebug("Object names: {0}", obj_name.name.str());
         for(auto const& globals : scn->globals.data(map.magic))
-            cDebug("Global: {1} -> {0}", globals.type, globals.name.str());
+            cDebug(
+                "Global: {1} -> {0}",
+                C_CAST<u16>(globals.type),
+                globals.name.str());
         //        for(auto const& poi :
         //        scn->cutscene_camera_poi.data(map.magic))
         //            cDebug("POI");
@@ -746,9 +820,10 @@ void examine_map(Resource&& mapfile, T version)
             for(auto const& squad : encounter.squads.data(map.magic))
             {
                 cDebug(" - name:{0}", squad.name.str());
-                cDebug("   - actor type:{0}", squad.ActorType.data);
-                cDebug("   - init state:{0}", C_CAST<i16>(squad.InitialState));
-                cDebug("   - return state:{0}", C_CAST<i16>(squad.ReturnState));
+                cDebug("   - actor type:{0}", squad.actor_type.data);
+                cDebug("   - init state:{0}", C_CAST<i16>(squad.initial_state));
+                cDebug(
+                    "   - return state:{0}", C_CAST<i16>(squad.return_state));
             }
 
             for(auto const& loc :
@@ -829,11 +904,11 @@ void examine_map(Resource&& mapfile, T version)
 int coffee_main(i32, cstring_w*)
 {
     const auto examine_task = []() {
-        Array<Resource, 2> pc_maps = {
+        Array<Resource, 1> pc_maps = {
 
             "c10.map"_rsc,
 
-            "bloodgulch.map"_rsc
+//            "bloodgulch.map"_rsc
 
         };
         Array<Resource, 2> custom_maps = {
@@ -861,9 +936,11 @@ int coffee_main(i32, cstring_w*)
         //                examine_map(std::move(map), blam::xbox_version);
     };
 
-    examine_task();
-
-    return 0;
+    if(!use_graphics)
+    {
+        examine_task();
+        return 0;
+    }
 
     using namespace comp_app;
 
@@ -896,14 +973,15 @@ int coffee_main(i32, cstring_w*)
         rqec);
 
     AppContainer<NoData>::addTo(
-        app, [](entity_container& e, NoData&, time_point const&) {
+        app,
+        [](entity_container& e, NoData&, time_point const&) {
             GLEAMAPI::OPTS opts;
             auto           loader = GLEAMAPI::GetLoadAPI(opts);
 
             if(!loader(false))
                 return;
-        }, [](entity_container& e, NoData&, time_point const&, duration const&)
-        {
+        },
+        [](entity_container& e, NoData&, time_point const&, duration const&) {
             runtime_queue_error ec;
             RuntimeQueue::GetCurrentQueue(ec)->executeTasks();
         });

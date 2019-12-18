@@ -5,8 +5,9 @@
 #include "cblam_structures.h"
 
 namespace blam {
-
 namespace scn {
+
+using angle_t = scalar;
 
 /* Data which is not part of the structures proper */
 
@@ -256,13 +257,181 @@ struct trigger_volume
     bounding_box box;
 };
 
-struct actor_variant_ref
+enum class actor_flags_t : u32
 {
-    bl_tag     tag;
-    string_ref name;
-    u32        unk;
-    scalar     unk2;
+    none                     = 0x0,
+    see_in_darkness          = 0x1,
+    sneak_uncovering_target  = 0x2,
+    sneak_uncovering_pursuit = 0x4,
+    /* unused */
+    shoot_at_target_last_location = 0x10,
+    stay_still_crouched           = 0x20,
+    crouch_on_not_combat          = 0x40,
+    crouch_on_guard               = 0x80,
+    /* unused */
+    crouch_shooter          = 0x100,
+    panic_on_surprise       = 0x200,
+    vehicle_with_player     = 0x400,
+    fire_before_aim         = 0x800,
+    no_strafe               = 0x1000,
+    crouch_no_strafe        = 0x2000,
+    defensive_crouch_charge = 0x4000,
+    stalk                   = 0x8000,
+    stalk_freeze_on_exposed = 0x10000,
+    berserk_always          = 0x20000,
+    berserk_panic_moving    = 0x40000,
+    flying                  = 0x80000,
+    panic_for_unstoppable   = 0x100000,
+    crouch_on_hiding        = 0x200000,
+    always_charge_attack    = 0x400000,
+    dive_ledges             = 0x800000,
+    swarm                   = 0x1000000,
+    suicidal_melee          = 0x2000000,
+    crouch_no_move          = 0x4000000,
+    crouch_no_look          = 0x8000000,
+    crouch_on_fire          = 0x10000000,
+    avoid_friendly_fire     = 0x20000000,
 };
+
+enum class actor_ex_flags_t : u32
+{
+    none                       = 0x0,
+    avoid_enemy_attack_vectors = 0x1,
+    stand_to_fire              = 0x2,
+    stop_to_fire               = 0x4,
+    disallow_vehicle_combat    = 0x8,
+    pathfind_ignore_danger     = 0x10,
+    panic_in_group             = 0x20,
+    no_corpse_shoot            = 0x40,
+};
+
+enum class actor_type_t : u32
+{
+    elite,
+    jackal,
+    grunt,
+    hunter,
+    engineer,
+    assassin,
+    player,
+    marine,
+    crew,
+    combat_form,
+    infection_form,
+    carrier_form,
+    monitor,
+    sentinel,
+    none,
+    mounted_weapon,
+};
+
+C_FLAGS(actor_flags_t, u32)
+
+struct actor
+{
+    actor_flags_t    flags;
+    actor_ex_flags_t extra_flags;
+    u32              padding[3];
+    actor_type_t     type;
+    struct /* perception */
+    {
+        scalar  max_vision_dist;
+        angle_t central_vision;
+        angle_t max_vision;
+        angle_t peripheral_vision;
+        scalar  peripheral_dist;
+        Vecf3   stand_gun_offset;
+        Vecf3   crouch_gun_offset;
+        scalar  hearing_dist;
+        scalar  projectile_awareness; /* [0,1] */
+        scalar  vehicle_awareness;    /* [0,1] */
+        scalar  combat_perception_time;
+        scalar  guard_perception_time;
+    };
+    struct /* movement */
+    {
+    };
+    struct /* looking */
+    {
+    };
+    struct /* unopposable */
+    {
+    };
+    struct /* panic */
+    {
+    };
+    struct /* defensive */
+    {
+    };
+};
+
+enum class actor_variant_flags_t : u32
+{
+    none                      = 0x0,
+    shoot_while_flying        = 0x1,
+    interpolate_color_hsv     = 0x2,
+    unlimited_grenades        = 0x4,
+    moveswitch_stay_w_friends = 0x8,
+    active_camo               = 0x10,
+    super_active_camo         = 0x20,
+    no_ranged_weapons         = 0x40,
+    prefer_passenger_seat     = 0x80,
+};
+
+enum class actor_movement_t : u32
+{
+    always_run,
+    always_crouch,
+    switchable,
+};
+
+struct actor_variant
+{
+    using cls = tag_class_t;
+
+    actor_variant_flags_t                           flags;
+    tagref_typed_t<cls::actr>                       actor;
+    tagref_typed_t<cls::bipd, cls::unit, cls::vehi> unit;
+    tagref_typed_t<cls::actv>                       major;
+
+    u32 padding[6];
+
+    struct
+    {
+        actor_movement_t movement;
+        scalar           crouch_chance;
+        Vecf2            crouch_time;
+        Vecf2            run_time;
+    };
+
+    struct
+    {
+        tagref_typed_t<cls::weap> weapon;
+
+        scalar  max_fire_dist;
+        scalar  rate_of_fire;
+        angle_t projectile_error;
+        Vecf2   burst_delay;
+        scalar  retarget_fire_time;
+
+        scalar surprise_delay;
+        scalar surprise_wild_fire_time;
+
+        scalar death_wild_fire_chance;
+        scalar death_wild_fire_time;
+
+        Vecf2 desired_combat_range;
+        Vecf3 custom_stand_gun_offset;
+        Vecf3 custom_crouch_gun_offset;
+
+        Vecf2  target_track;
+        Vecf2  target_lead;
+        scalar dmg_modifier;
+        scalar dmg_per_second;
+    };
+};
+
+using actor_variant_ref = tagref_t;
 
 namespace ai {
 
@@ -299,13 +468,6 @@ struct script_trigger
     u32       padding[10];
 };
 
-struct global
-{
-    bl_string name;
-    u16       type;
-    u16       unk3[26];
-};
-
 struct references
 {
     u32       unk1;
@@ -331,23 +493,23 @@ struct encounter
 struct squad
 {
     bl_string           name;
-    actor_type          ActorType;
-    i16                 Platoon;
-    ai_state            InitialState;
-    ai_state            ReturnState;
+    actor_type          actor_type;
+    u16                 platoon;
+    ai_state            initial_state;
+    ai_state            return_state;
     u32                 unk1[11];
-    u32                 Ai_Attacking;
-    u32                 Ai_AttackingSearch;
-    u32                 Ai_AttackingGuard;
-    u32                 Ai_Defending;
-    u32                 Ai_DefendingSearch;
-    u32                 Ai_DefendingGuard;
-    u32                 Ai_Pursuing;
+    u32                 attacking;
+    u32                 attacking_search;
+    u32                 attacking_guard;
+    u32                 defending;
+    u32                 defending_search;
+    u32                 defending_guard;
+    u32                 pursuing;
     u32                 unk2[3];
-    i16                 NormalDiffCount;
-    i16                 InsaneDiffCount;
+    u16                 normal_diff_count;
+    u16                 insane_diff_count;
     u32                 unk3[20];
-    reflexive_t<byte_t> StartLocations;
+    reflexive_t<byte_t> start_locations;
     u32                 unk4[3];
 };
 
@@ -718,13 +880,13 @@ struct scenario
         reflexive_t<scn_chunk>            starting_locations;
         reflexive_t<scn_chunk>            platoons;
         reflexive_t<scn_chunk>            ai_conversations;
-        u32                               script_syntax_data_size;
+        u32                               script_bytecode_size;
         u32                               unknown_7;
         reflexive_t<hsc::script_ref>      scripts;
         u32                               unknown_9[2];
-        reflexive_t<scn_chunk>            points;
+        reflexive_t<string_segment>       script_string_segment;
         reflexive_t<ai::animation_ref>    ai_animation_refs;
-        reflexive_t<global>               globals;
+        reflexive_t<hsc::global>          globals;
         reflexive_t<ai::recording_ref>    ai_recording_refs;
         reflexive_t<scn_chunk>            unknown_8;
         reflexive_t<scn_chunk>            participants;

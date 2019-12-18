@@ -439,7 +439,8 @@ struct alignas(4) string_ref
     }
 };
 
-struct alignas(4) tagref_t
+template<tag_class_t... Tags>
+struct alignas(4) tagref_typed_t
 {
     union
     {
@@ -465,6 +466,8 @@ struct alignas(4) tagref_t
         return tag_class == cls;
     }
 };
+
+using tagref_t = tagref_typed_t<>;
 
 struct tag_t;
 
@@ -608,6 +611,34 @@ tag_t const& tag_index_t::scenario(file_header_t const* header) const
 
     return *tag;
 }
+
+struct string_segment
+{
+    static constexpr Array<char, 2> string_seg_terminator = {{'\0', '\0'}};
+
+    char base_ptr;
+
+    inline cstring at_indexed(u32 i = 0) const
+    {
+        const char* loc = C_RCAST<const char*>(&base_ptr);
+
+        u32 s_i = 0;
+        while(s_i != i)
+        {
+            loc = C_RCAST<const char*>(
+                ::memchr(loc, '\0', std::numeric_limits<u16>::max()));
+            loc++;
+            s_i++;
+        }
+
+        return C_RCAST<cstring>(loc);
+    }
+
+    inline cstring at(u32 offset = 0) const
+    {
+        return C_RCAST<const char*>(&base_ptr) + offset;
+    }
+};
 
 struct shader_desc
 {

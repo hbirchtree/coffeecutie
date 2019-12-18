@@ -13,6 +13,10 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+target_include_directories ( Blam PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/libs/better-enums>
+    )
+
 target_precompile_headers ( Blam PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:coffee/blam/cblam.h>
     )
