@@ -344,28 +344,30 @@ void examine_map(Resource&& mapfile, T version)
     {
         auto dism_file = fopen("script.hsb", "w+");
 
+        fprintf(dism_file, "section .global\n");
         for(auto const& global : scn->globals.data(map.magic))
         {
             auto glob = Strings::fmt(
-                "#global {0}: {1} @ {2} # {3} => {4}",
+                "global: {0} {1} @{2} #{3} = {4}",
                 global.name.str(),
                 global.type,
                 global.index,
                 global.salt,
                 global.value);
-            fprintf(dism_file, "%s\n", glob.c_str());
+            fprintf(dism_file, "  %s\n", glob.c_str());
         }
 
         auto const& string_seg = scn->script_string_segment.data(map.magic)[0];
 
+        fprintf(dism_file, "\nsection .str\n");
         for(auto i : Range<u32>(1066))
         {
             auto str = Strings::fmt(
-                "#str {1} @ {2} = {0}",
+                "str: {1} @{2} = {0}",
                 string_seg.at_indexed(i),
                 i,
                 string_seg.at_indexed(i) - string_seg.at_indexed(0));
-            fprintf(dism_file, "%s\n", str.c_str());
+            fprintf(dism_file, "  %s\n", str.c_str());
         }
 
         auto const& script = scn->scripts.data(map.magic)[0];
@@ -377,6 +379,8 @@ void examine_map(Resource&& mapfile, T version)
 
             u32 ip = 0;
 
+            fprintf(dism_file, "\nsection .text\n");
+
             while(ip <
                   scn->script_bytecode_size / sizeof(blam::hsc::opcode_layout))
             {
@@ -387,10 +391,10 @@ void examine_map(Resource&& mapfile, T version)
                     fprintf(dism_file, "\n");
 
                 auto dism = Strings::fmt(
-                    "{12} {0}: {11} &{1} [{2} {3} {4} {5}]|[{6} "
-                    "{7}]|{8}|{9} "
-                    "-> "
-                    "{10}",
+                    "{0}"
+                    " [{1}],"
+                    " #{2}, #{3}, #{4}, #{5} | #{6}, #{7} | #{8} | f{9}"
+                    " // Type:{11}, Returns:{10}",
                     opcode->opcode,
                     opcode->data_ptr,
                     opcode->data_bytes[0],
@@ -402,10 +406,13 @@ void examine_map(Resource&& mapfile, T version)
                     opcode->data_int,
                     opcode->data_real,
                     opcode->ret_type,
-                    opcode->exp_type,
-                    str::print::pointerify(opcode - script_heap.data));
+                    opcode->exp_type);
 
-                fprintf(dism_file, "%s\n", dism.c_str());
+                fprintf(
+                    dism_file,
+                    "  %04x %s\n",
+                    opcode - script_heap.data,
+                    dism.c_str());
                 fflush(dism_file);
 
                 ip++;
@@ -908,7 +915,7 @@ int coffee_main(i32, cstring_w*)
 
             "c10.map"_rsc,
 
-//            "bloodgulch.map"_rsc
+            //            "bloodgulch.map"_rsc
 
         };
         Array<Resource, 2> custom_maps = {
