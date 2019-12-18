@@ -343,9 +343,18 @@ void examine_map(Resource&& mapfile, T version)
 
     {
         auto dism_file = fopen("script.hsb", "w+");
+        auto basemap   = Path(mapfile.resource()).fileBasename();
 
+        auto globals = scn->globals.data(map.magic);
+
+        fprintf(
+            dism_file,
+            "; Source file: %s+0x%08x\n",
+            basemap.internUrl.c_str(),
+            C_RCAST<byte_t const*>(globals.data) -
+                C_RCAST<byte_t const*>(mapfile.data));
         fprintf(dism_file, "section .global\n");
-        for(auto const& global : scn->globals.data(map.magic))
+        for(auto const& global : globals)
         {
             auto glob = Strings::fmt(
                 "global: {0} {1} @{2} #{3} = {4}",
@@ -359,7 +368,13 @@ void examine_map(Resource&& mapfile, T version)
 
         auto const& string_seg = scn->script_string_segment.data(map.magic)[0];
 
-        fprintf(dism_file, "\nsection .str\n");
+        fprintf(
+            dism_file,
+            "\n; Source file: %s+0x%08x\n",
+            basemap.internUrl.c_str(),
+            C_RCAST<byte_t const*>(&string_seg) -
+                C_RCAST<byte_t const*>(mapfile.data));
+        fprintf(dism_file, "section .str\n");
         for(auto i : Range<u32>(1066))
         {
             auto str = Strings::fmt(
@@ -379,7 +394,13 @@ void examine_map(Resource&& mapfile, T version)
 
             u32 ip = 0;
 
-            fprintf(dism_file, "\nsection .text\n");
+            fprintf(
+                dism_file,
+                "\n; Source file: %s+0x%08x\n",
+                basemap.internUrl.c_str(),
+                C_RCAST<byte_t const*>(&script) -
+                    C_RCAST<byte_t const*>(mapfile.data));
+            fprintf(dism_file, "section .text\n");
 
             while(ip <
                   scn->script_bytecode_size / sizeof(blam::hsc::opcode_layout))
