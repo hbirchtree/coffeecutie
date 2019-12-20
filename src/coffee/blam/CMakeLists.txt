@@ -4,7 +4,7 @@ coffee_library (
     private/volta/cblam_map.cpp
     private/volta/cblam_mod2.cpp
 
-    include/coffee/blam/cblam.h
+    include/blam/cblam.h
 
     LIBRARIES Image CoreCompression
 
@@ -13,10 +13,6 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
-target_include_directories ( Blam PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/libs/better-enums>
-    )
-
 target_precompile_headers ( Blam PUBLIC
-    $<$<COMPILE_LANGUAGE:CXX>:coffee/blam/cblam.h>
+    $<$<COMPILE_LANGUAGE:CXX>:blam/cblam.h>
     )

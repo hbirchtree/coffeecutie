@@ -34,7 +34,7 @@
 #include <coffee/graphics/apis/CGLeamRHI>
 
 /* Blam! integration */
-#include <coffee/blam/cblam.h>
+#include <blam/cblam.h>
 
 /* STB-related APIs */
 #if defined(FEATURE_ENABLE_Audio)

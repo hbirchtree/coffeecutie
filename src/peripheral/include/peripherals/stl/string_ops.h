@@ -16,21 +16,21 @@
 namespace stl_types {
 namespace str {
 
-using libc_types::szptr;
-using libc_types::cstring;
-using libc_types::lscalar;
 using libc_types::bigscalar;
-using libc_types::scalar;
-using libc_types::u64;
-using libc_types::u32;
-using libc_types::u16;
-using libc_types::u8;
-using libc_types::i64;
-using libc_types::i32;
-using libc_types::i16;
-using libc_types::i8;
-using libc_types::c_cptr;
 using libc_types::byte_t;
+using libc_types::c_cptr;
+using libc_types::cstring;
+using libc_types::i16;
+using libc_types::i32;
+using libc_types::i64;
+using libc_types::i8;
+using libc_types::lscalar;
+using libc_types::scalar;
+using libc_types::szptr;
+using libc_types::u16;
+using libc_types::u32;
+using libc_types::u64;
+using libc_types::u8;
 
 namespace encode {
 template<
@@ -111,7 +111,9 @@ template<typename CharType>
  */
 FORCEDINLINE std::basic_string<CharType>& left(std::basic_string<CharType>& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c);}));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {
+                return !std::isspace(c);
+            }));
     return s;
 }
 
@@ -119,7 +121,9 @@ template<typename CharType>
 FORCEDINLINE std::basic_string<CharType>& right(std::basic_string<CharType>& s)
 {
     s.erase(
-        std::find_if(s.rbegin(), s.rend(), [](int c) {return !std::isspace(c);}).base(),
+        std::find_if(
+            s.rbegin(), s.rend(), [](int c) { return !std::isspace(c); })
+            .base(),
         s.end());
     return s;
 }
@@ -369,6 +373,16 @@ FORCEDINLINE std::basic_string<T> right(
 }
 } // namespace pad
 
+namespace print {
+
+template<typename CharType = char>
+FORCEDINLINE std::basic_string<CharType> pointer_pad(u64 ptr, u32 pad = 0)
+{
+    return pad::left<CharType>(convert::hexify(ptr), '0', pad);
+}
+
+} // namespace print
+
 namespace fmt {
 template<typename CharT>
 FORCEDINLINE std::basic_string<CharT> lower(
@@ -471,7 +485,7 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
     spliterator operator++() const
     {
         auto cpy = *this;
-        cpy.idx = next_idx();
+        cpy.idx  = next_idx();
 
         if(cpy.idx > source->size())
             cpy.idx = string_type::npos;

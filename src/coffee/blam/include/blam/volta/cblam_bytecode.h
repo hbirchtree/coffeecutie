@@ -1,6 +1,8 @@
 #pragma once
 
 #include "cblam_structures.h"
+#define MAGIC_ENUM_RANGE_MIN -10
+#define MAGIC_ENUM_RANGE_MAX 540
 #include "magic_enum.hpp"
 
 namespace blam {
@@ -21,26 +23,17 @@ enum class opcode_t : i16
     cond,
     set_,
 
-    /* Immediate values, data segment contains value */
-    bool_ = 5,
-    real_,
-    short_,
-    long_,
-
-    string_, /* data_ptr contains byte offset in string segment */
-
     /* Logic */
-    //    and_,
-    //    or_,
+    and_,
+    or_,
 
     /* Arithmetic */
-
-    //    add_,
-    //    sub_,
-    //    mul_,
+    add_,
+    sub_,
+    mul_,
     div_,
 
-    min_ = 11,
+    min_,
     max_,
 
     equal,
@@ -50,18 +43,20 @@ enum class opcode_t : i16
     gequals,
     lequals,
 
-    sleep,
+    sleep = 19,
     sleep_until,
     wake,
     inspect,
 
     unit,
+    sound,
+    effect,
 
-    ai_debug_comms_suppress,
-    ai_debug_comms_ignore,
-    ai_debug_comms_focus,
+    //    ai_debug_comms_suppress,
+    //    ai_debug_comms_ignore,
+    //    ai_debug_comms_focus,
 
-    not_,
+    not_ = 27,
 
     print_,
 
@@ -85,7 +80,7 @@ enum class opcode_t : i16
     object_destroy_all,
 
     list_get,
-    list_count,
+    list_count = 46,
 
     effect_new,
     effect_new_on_object_marker,
@@ -102,6 +97,8 @@ enum class opcode_t : i16
 
     script_recompile,
     help,
+
+    _dummy_1,
 
     random_range,
     real_random_range,
@@ -127,7 +124,7 @@ enum class opcode_t : i16
     objects_attach,
     objects_detach,
 
-    gc_now,
+    garbage_collect_now,
 
     object_cannot_take_damage,
     object_can_take_damage,
@@ -179,23 +176,26 @@ enum class opcode_t : i16
     vehicle_riders,
     vehicle_driver,
     vehicle_gunner,
-    unit_get_health,
     unit_get_shield,
+    unit_get_health,
     unit_get_total_grenade_count,
     unit_has_weapon,
     unit_has_weapon_readied,
     unit_doesnt_drop_items,
+    unit_solo_player_integrated_night_vision_is_active,
     unit_impervious,
     unit_suspended,
-    unit_solo_player_integrated_night_vision_is_active,
     units_set_desired_flashlight_state,
     unit_set_desired_flashlight_state,
     unit_get_current_flashlight_state,
+
+    _dummy_135,
 
     device_set_never_appears_locked,
     device_get_power,
     device_set_power,
     device_set_position,
+    device_get_position,
     device_set_position_immediate,
     device_group_get,
     device_group_set,
@@ -227,27 +227,29 @@ enum class opcode_t : i16
     ai_erase_all,
     ai_select,
     ai_deselect,
+    ai_spawn_actor,
     ai_set_respawn,
-    ai_set_deaf,
+    ai_set_deaf = 171,
     ai_set_blind,
+
     ai_magically_see_encounter,
     ai_magically_see_players,
-    ai_magically_see_unit,
+
     ai_timer_start,
     ai_timer_expire,
+    ai_retreat,
     ai_attack,
     ai_defend,
-    ai_retreat,
-    ai_maneuver,
     ai_maneuver_enable,
-    ai_migrate,
+    ai_maneuver,
     ai_migrate_and_speak,
+    ai_migrate,
     ai_migrate_by_unit,
+    ai_living_fraction,
     ai_allegiance,
     ai_allegiance_remove,
     ai_living_count,
-    ai_living_fraction,
-    ai_strength,
+    ai_strength = 190,
     ai_swarm_count,
     ai_nonswarm_count,
     ai_actors,
@@ -257,14 +259,20 @@ enum class opcode_t : i16
     ai_exit_vehicle,
     ai_braindead,
     ai_braindead_by_unit,
-    ai_disregard,
     ai_prefer_target,
-    ai_teleport_to_starting_location,
+    ai_disregard = 200,
+
     ai_renew,
-    ai_try_to_fight_nothing,
+    ai_teleport_to_starting_location,
+
+    _dummy_203,
+    _dummy_204,
+
+    ai_try_to_fight_nothing = 205,
     ai_try_to_fight,
     ai_try_to_fight_player,
-    ai_command_list,
+
+    ai_command_list = 208,
     ai_command_list_by_unit,
     ai_command_list_advance,
     ai_command_list_advance_by_unit,
@@ -276,7 +284,8 @@ enum class opcode_t : i16
     ai_set_current_state,
     ai_playfight,
     ai_status,
-    ai_reconnect,
+
+    ai_reconnect = 220,
     ai_vehicle_encounter,
     ai_vehicle_enterable_distance,
     ai_vehicle_enterable_team,
@@ -286,10 +295,12 @@ enum class opcode_t : i16
     ai_look_at_object,
     ai_stop_looking,
     ai_automatic_migration_target,
-    ai_follow_target_players,
+
+    ai_follow_target_players = 230,
     ai_follow_target_unit,
     ai_follow_target_ai,
     ai_follow_distance,
+
     ai_conversation,
     ai_conversation_stop,
     ai_conversation_advance,
@@ -302,7 +313,7 @@ enum class opcode_t : i16
     ai_allow_dormant,
     ai_allegiance_broken,
 
-    camera_control,
+    camera_control = 246,
     camera_set,
     camera_set_relative,
     camera_set_animation,
@@ -310,10 +321,10 @@ enum class opcode_t : i16
     camera_set_dead,
     camera_time,
 
-    debug_camera_load,
-    debug_camera_save,
+    //    debug_camera_load,
+    //    debug_camera_save,
 
-    game_speed,
+    game_speed = 254,
     game_time,
     game_variant,
     game_difficulty_get,
@@ -329,13 +340,14 @@ enum class opcode_t : i16
 
     crash,
 
-    switch_bsp,
+    switch_bsp = 267,
     structure_bsp_index,
 
     version,
     playback,
     quit,
 
+    /* Unconfirmed */
     texture_cache_flush,
     sound_cache_flush,
     sound_cache_dump_to_file,
@@ -357,28 +369,32 @@ enum class opcode_t : i16
     radiosity_save,
     radiosity_debug_point,
 
-    ai,
-    ai_dialogue_triggers,
+    ai                   = 283,
+    ai_dialogue_triggers = 289,
     ai_grenades,
     ai_lines,
+
+    /* Unconfirmed */
     ai_debug_sound_point_set,
     ai_debug_vocalize,
     ai_debug_teleport_to,
     ai_debug_speak,
     ai_debug_speak_list,
 
+    fade_in = 297,
     fade_out,
 
-    cinematic_start,
+    cinematic_start = 300,
     cinematic_stop,
-    cinematic_abort,
     cinematic_skip_start_internal,
+    cinematic_skip_stop_internal,
+    cinematic_abort,
     cinematic_show_letterbox,
     cinematic_set_title,
     cinematic_set_title_delayed,
     cinematic_suppress_bsp_object_creation,
 
-    attract_mode_start,
+    //    attract_mode_start,
 
     game_won,
     game_lost,
@@ -394,23 +410,25 @@ enum class opcode_t : i16
     game_revert,
     game_reverted,
 
-    core_save,
-    core_save_name,
-    core_load,
-    core_load_at_startup,
-    core_load_name,
+    //    core_save,
+    //    core_save_name,
+    //    core_load,
+    //    core_load_at_startup,
+    //    core_load_name,
 
-    game_skip_ticks,
+    //    game_skip_ticks,
+    sound_impulse_start_ = 323,
 
-    sound_impulse_predict,
-    sound_impulse_start,
-    sound_impulse_time,
-    sound_impulse_stop,
-    sound_looping_predict,
-    sound_looping_start,
-    sound_looping_stop,
-    sound_looping_set_scale,
-    sound_looping_set_alternate,
+    sound_impulse_predict        = 329,
+    sound_looping_set_alternate_ = 329,
+    sound_impulse_start          = 330,
+    sound_impulse_time           = 331,
+    sound_impulse_stop           = 332,
+    sound_looping_predict        = 333,
+    sound_looping_start          = 334,
+    sound_looping_stop           = 335,
+    sound_looping_set_scale      = 336,
+    sound_looping_set_alternate  = 337,
 
     debug_sounds_enable,
     debug_sounds_distances,
@@ -445,7 +463,8 @@ enum class opcode_t : i16
     player_action_test_move_relative_all_directions,
     player_add_equipment,
     debug_teleport_player,
-    show_hud,
+
+    show_hud = 369,
     show_hud_help_text,
     enable_hud_help_flash,
     hud_help_flash_restart,
@@ -484,9 +503,9 @@ enum class opcode_t : i16
 
     structure_lens_flares_place,
 
-    player_effect_set_max_translation,
+    player_effect_set_max_translation = 400,
     player_effect_set_max_rotation,
-    player_effect_set_max_vibrate,
+    player_effect_set_max_rumble,
     player_effect_start,
     player_effect_stop,
 
@@ -498,6 +517,7 @@ enum class opcode_t : i16
     hud_blink_motion_sensor,
     hud_show_crosshair,
     hud_clear_messages,
+    hud_set_help_text,
     hud_set_objective_text,
 
     hud_set_timer_time,
@@ -520,18 +540,21 @@ enum class opcode_t : i16
     rasterizer_lights_reset_for_new_map,
 
     script_screen_effect_set_value,
+
     cinematic_screen_effect_start,
     cinematic_screen_effect_set_convolution,
     cinematic_screen_effect_set_filter,
     cinematic_screen_effect_set_filter_desaturation_tint,
     cinematic_screen_effect_set_video,
-
+    cinematic_screen_effect_stop,
     cinematic_set_near_clip_distance,
+
     fast_setup_network_server,
     profile_unlock_solo_levels,
+
     player0_look_invert_pitch,
     player0_look_pitch_is_inverted,
-    player0_joystick_set_is_normal,
+    player0_joystick_set_is_normal = 445,
 
     ui_widget_show_path,
     display_scenario_help,
@@ -639,17 +662,21 @@ enum class opcode_t : i16
     max_opcode,
 };
 
+enum class xbox_opcode_t : i16
+{
+};
+
 enum class pointer_t : u16
 {
 };
 
 enum class script_type_t : u16
 {
-    static_    = 0,
-    dormant    = 1,
-    stub       = 2,
-    continuous = 5,
-    startup    = 6,
+    startup,
+    dormant,
+    continuous,
+    static_,
+    stub,
 
 };
 
@@ -708,9 +735,9 @@ enum class type_t : i16
 
     /* Not confirmed? */
     string_,
-    trigger_vol,
+    trigger_vol = 11,
     cutscene_flag,
-    cutscene_camera_pnt,
+    cutscene_camera_pnt = 13,
     cutscene_title,
     cutscene_recording,
     device_group,
@@ -749,7 +776,7 @@ enum class type_t : i16
     scenery_name,
 };
 
-struct global
+struct global : stl_types::non_copy
 {
     bl_string name;
     type_t    type;
@@ -767,20 +794,34 @@ struct global
     u32 padding[12];
 };
 
-struct script_header
+struct function_declaration : stl_types::non_copy
+{
+    bl_string     name;
+    script_type_t schedule;
+    type_t        type;
+    u16           index;
+    u16           salt;
+    u8            padding[52];
+};
+
+struct script_header : stl_types::non_copy
 {
     u16 unknown[7];
 };
 
-struct opcode_layout
+struct opcode_layout : stl_types::non_copy
 {
-    u16          index;
-    opcode_t     opcode;
+    u16 index;
+    union
+    {
+        opcode_t opcode;
+        type_t   param_type;
+    };
     type_t       ret_type;
     expression_t exp_type;
     struct
     {
-        u16 ip;
+        u16 ip; /*!< Points to the last parameter for the function */
         u16 salt;
     } next_op;
     u32 data_ptr;
@@ -791,6 +832,15 @@ struct opcode_layout
         u32    data_int;
         scalar data_real;
     };
+
+    inline bool valid() const
+    {
+        i16 opcode_v   = C_CAST<i16>(opcode);
+        i16 opcode_min = C_CAST<i16>(opcode_t::invalid);
+        i16 opcode_max = C_CAST<i16>(opcode_t::max_opcode);
+
+        return opcode_v >= opcode_min && opcode_v < opcode_max;
+    }
 
     inline bool branching() const
     {
@@ -864,10 +914,10 @@ struct opcode_iterator
     bool                          m_is_end;
 };
 
-struct script_ref
+struct script_ref : stl_types::non_copy
 {
     bl_string name;
-    u32       node_count;
+    u32       sentinel_value;
 
     using container_type = stl_types::quick_container<opcode_iterator>;
 
@@ -900,6 +950,68 @@ inline opcode_layout const& opcode_layout::next(script_ref const* script) const
         C_RCAST<opcode_layout const*>(script->opcode_base()) + next_op.ip + 1);
 }
 
+template<typename T>
+inline stl_types::CString to_string(T val)
+{
+    auto out = magic_enum::enum_name(val);
+    if(!out.size())
+        return "[invalid(" + std::to_string(C_CAST<i16>(val)) + ")]";
+    return stl_types::CString(out) + "(" + std::to_string(C_CAST<i16>(val)) +
+           ")";
+}
+
+struct bytecode_pointer
+{
+    static bytecode_pointer start_from(opcode_layout const* base, u16 ip = 0x0)
+    {
+        bytecode_pointer out;
+        out.base       = base;
+        out.current    = &base[ip];
+        out.current_ip = ip;
+        return out;
+    }
+
+    opcode_layout const* base;
+    opcode_layout const* current;
+    u16                  current_ip;
+
+    inline u16 num_params() const
+    {
+        if(current->branching())
+            return current->next_op.ip - current_ip - 1;
+        else
+            return 0;
+    }
+    inline opcode_layout const& param(type_t type, u16 i = 0) const
+    {
+        u16 first_param = current_ip + 1;
+        u16 last_param  = current->next_op.ip;
+
+        if(i > (last_param - first_param + 1))
+            Throw(undefined_behavior("param out of bounds"));
+
+        auto const& out = current[2 + i];
+
+        if(type != out.param_type)
+            Throw(undefined_behavior("param has wrong type"));
+
+        return out;
+    }
+    inline void advance()
+    {
+        if(current->branching())
+        {
+            current_ip = current->next_op.ip + 1;
+            current    = &base[current->next_op.ip + 1];
+        } else
+            current_ip = current->next_op.ip;
+    }
+    inline bool finished() const
+    {
+        return current_ip == std::numeric_limits<u16>::max();
+    }
+};
+
 } // namespace hsc
 } // namespace blam
 
@@ -908,26 +1020,22 @@ namespace Strings {
 
 inline CString to_string(blam::hsc::opcode_t opc)
 {
-    auto out = magic_enum::enum_name(opc);
-    if(!out.size())
-        return "[invalid(" + std::to_string(C_CAST<i16>(opc)) + ")]";
-    return CString(out);
+    return blam::hsc::to_string(opc);
 }
 
-inline CString to_string(blam::hsc::type_t opc)
+inline CString to_string(blam::hsc::type_t type)
 {
-    auto out = magic_enum::enum_name(opc);
-    if(!out.size())
-        return "[invalid(" + std::to_string(C_CAST<i16>(opc)) + ")]";
-    return CString(out);
+    return blam::hsc::to_string(type);
 }
 
-inline CString to_string(blam::hsc::expression_t opc)
+inline CString to_string(blam::hsc::expression_t exp)
 {
-    auto out = magic_enum::enum_name(opc);
-    if(!out.size())
-        return "[invalid(" + std::to_string(C_CAST<i16>(opc)) + ")]";
-    return CString(out);
+    return blam::hsc::to_string(exp);
+}
+
+inline CString to_string(blam::hsc::script_type_t script_type)
+{
+    return blam::hsc::to_string(script_type);
 }
 
 } // namespace Strings

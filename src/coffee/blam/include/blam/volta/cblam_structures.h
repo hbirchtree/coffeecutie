@@ -204,7 +204,8 @@ struct vertex<RType, false>
     }
 };
 
-using face = Array<u16, 3>;
+using idx_t = u16;
+using face  = Array<idx_t, 3>;
 
 template<
     typename RType = uncompressed,
@@ -278,7 +279,7 @@ struct alignas(4) file_header_t : stl_types::non_copy
     u32 reserved_1[2];
     bl_string name;      /*!< Name identifier for map*/
     bl_string buildDate; /*!< Build date for the map file*/
-    maptype_t mapType;   /*!< Type of map, determines whether it is playable*/
+    maptype_t map_type;  /*!< Type of map, determines whether it is playable*/
     i32       unknown_4;
     i32       reserved_2[485];
     bl_footer footer; /*!< Footer value, should correspond with specific data*/
@@ -333,13 +334,18 @@ struct magic_data_t
         this->base_ptr = base_ptr;
     }
 
-    magic_data_t& operator=(semantic::Bytes const& data)
+    inline magic_data_t& operator=(semantic::Bytes const& data)
     {
         base_ptr     = data.data;
         magic_offset = 0;
         max_size     = data.size;
 
         return *this;
+    }
+
+    inline version_t map_version() const
+    {
+        return header_ptr->version;
     }
 
     union
@@ -612,15 +618,39 @@ tag_t const& tag_index_t::scenario(file_header_t const* header) const
     return *tag;
 }
 
-struct string_segment
+struct string_segment_ref
 {
-    static constexpr Array<char, 2> string_seg_terminator = {{'\0', '\0'}};
-
-    char base_ptr;
-
-    inline cstring at_indexed(u32 i = 0) const
+    struct string_ref
     {
-        const char* loc = C_RCAST<const char*>(&base_ptr);
+        const char* data;
+        u32         offset;
+
+        inline cstring str() const
+        {
+            return data;
+        }
+
+        inline bool valid() const
+        {
+            return data[0] != 0 && data[1] != 0 && data[2] != 0;
+        }
+    };
+
+    semantic::mem_chunk<const char> data;
+    u32                             num_strings;
+
+    inline string_ref at(u32 offset = 0) const
+    {
+        auto out = data.at(offset);
+
+        if(!out.size)
+            Throw(undefined_behavior("string out of bounds"));
+        return {out.data, offset};
+    }
+
+    inline string_ref indexed(u32 i = 0) const
+    {
+        const char* loc = data.data;
 
         u32 s_i = 0;
         while(s_i != i)
@@ -631,12 +661,7 @@ struct string_segment
             s_i++;
         }
 
-        return C_RCAST<cstring>(loc);
-    }
-
-    inline cstring at(u32 offset = 0) const
-    {
-        return C_RCAST<const char*>(&base_ptr) + offset;
+        return {C_RCAST<const char*>(loc), C_FCAST<u32>(loc - data.data)};
     }
 };
 

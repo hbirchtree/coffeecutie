@@ -1,4 +1,4 @@
-#include <coffee/blam/cblam.h>
+#include <blam/cblam.h>
 #include <coffee/comp_app/app_wrap.h>
 #include <coffee/comp_app/bundle.h>
 #include <coffee/core/CApplication>
@@ -22,10 +22,44 @@ struct Empty
 {
 };
 
+namespace Coffee {
+namespace Strings {
+
+inline CString to_string(blam::hsc::opcode_layout const& opcode)
+{
+    return fmt(
+        "{0}"
+        " [{1}],"
+        " #{2}, #{3}, #{4}, #{5} | #{6}, #{7} | #{8} | f{9}"
+        " // type:{11}, returns:{10}, next:{13}/{14}, String "
+        "ref:\"{12}\"",
+        opcode.opcode,
+        opcode.data_ptr,
+        opcode.data_bytes[0],
+        opcode.data_bytes[1],
+        opcode.data_bytes[2],
+        opcode.data_bytes[3],
+        opcode.data_short[0],
+        opcode.data_short[1],
+        opcode.data_int,
+        opcode.data_real,
+        opcode.ret_type,
+        opcode.exp_type,
+        "",
+        stl_types::str::print::pointer_pad(opcode.next_op.ip, 4),
+        opcode.next_op.salt);
+}
+
+} // namespace Strings
+} // namespace Coffee
+
 constexpr bool use_graphics = false;
 
 void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
 {
+    if(map.map->is_xbox())
+        return;
+
     blam::tag_index_view idx_view(map);
 
     auto const& model = tag.to_reflexive<blam::mod2::header>().data(map.magic);
@@ -209,17 +243,18 @@ void examine_map(Resource&& mapfile, T version)
 {
     ProfContext _(typeid(T).name());
 
+    if(!FileExists(mapfile))
+    {
+        cWarning("File {0} not found", mapfile.resource());
+        return;
+    }
+
     blam::map_container map(mapfile, version);
-
-    Resource bitmfile = "bitmaps.map"_rsc;
-
-    blam::magic_data_t bitm_magic;
+    Resource            bitmfile = "bitmaps.map"_rsc;
+    blam::magic_data_t  bitm_magic;
     bitm_magic = C_OCAST<Bytes>(bitmfile);
 
-    auto bitm_header =
-        C_RCAST<blam::bitm::bitmap_header_t const*>(bitm_magic.base_ptr);
-
-    auto bitm_locators = bitm_header->locators();
+    auto map_basename = Path(mapfile.resource()).fileBasename().internUrl;
 
     if(map.map->is_xbox() && false)
     {
@@ -241,21 +276,6 @@ void examine_map(Resource&& mapfile, T version)
         } else
             cDebug("Sadface");
     }
-
-    //    auto map_name = map.tags->tags(map.map)->to_name();
-    //    cDebug("Map name: {0}", map_name.to_string(map.magic));
-    //    auto target_offset = 37001189;
-
-    //    auto const& scn_tag = map.tags->scenario(map.map);
-    //    auto const& scenario = scn_tag.to_name().to_string(map.magic);
-    //    cDebug("Scenario name: {0}", scenario);
-    //    auto const& scenario_head =
-    //    scn_tag.to_reflexive<blam::scn::scenario>(); auto const& scenario_data
-    //    = scenario_head.data(map.magic);
-
-    //    cDebug("Scenario stuff: {0}", scenario_data[0].unk_sky.tag.str());
-
-    //    return;
 
     cDebug(
         "Opening map: {0}, build {1}",
@@ -329,28 +349,20 @@ void examine_map(Resource&& mapfile, T version)
              label});
     };
 
-    //    auto vertex_region = map.tags->vertex_objects.data(map.magic);
-    //    auto index_region = map.tags->index_objects.data(map.magic);
-
-    //    add_mem_map_region(
-    //        vertex_region.data, vertex_region.size, "Vertex segment");
-    //    add_mem_map_region(index_region.data, index_region.size, "Index
-    //    segment");
-
     add_mem_map(map.map, "file_header");
 
     auto scn = &blam::scn::get_scenario(map.map, map.magic);
 
     {
-        auto dism_file = fopen("script.hsb", "w+");
-        auto basemap   = Path(mapfile.resource()).fileBasename();
+        auto dism_fn   = "script_" + map_basename + ".hsb";
+        auto dism_file = fopen(dism_fn.c_str(), "w+");
 
         auto globals = scn->globals.data(map.magic);
 
         fprintf(
             dism_file,
             "; Source file: %s+0x%08x\n",
-            basemap.internUrl.c_str(),
+            map_basename.c_str(),
             C_RCAST<byte_t const*>(globals.data) -
                 C_RCAST<byte_t const*>(mapfile.data));
         fprintf(dism_file, "section .global\n");
@@ -366,29 +378,55 @@ void examine_map(Resource&& mapfile, T version)
             fprintf(dism_file, "  %s\n", glob.c_str());
         }
 
-        auto const& string_seg = scn->script_string_segment.data(map.magic)[0];
+        auto const& script_seg = scn->bytecode(map.magic);
+        auto const& string_seg = scn->string_segment(map.magic);
+        auto const& func_seg   = scn->function_table(map.magic);
 
-        fprintf(
-            dism_file,
-            "\n; Source file: %s+0x%08x\n",
-            basemap.internUrl.c_str(),
-            C_RCAST<byte_t const*>(&string_seg) -
-                C_RCAST<byte_t const*>(mapfile.data));
-        fprintf(dism_file, "section .str\n");
-        for(auto i : Range<u32>(1066))
+        if(string_seg.data.data)
         {
-            auto str = Strings::fmt(
-                "str: {1} @{2} = {0}",
-                string_seg.at_indexed(i),
-                i,
-                string_seg.at_indexed(i) - string_seg.at_indexed(0));
-            fprintf(dism_file, "  %s\n", str.c_str());
+            fprintf(
+                dism_file,
+                "\n; Source file: %s+0x%08x\n",
+                map_basename.c_str(),
+                C_RCAST<byte_t const*>(string_seg.data.data) -
+                    C_RCAST<byte_t const*>(mapfile.data));
+            fprintf(dism_file, "section .str\n");
+            for(auto i : Range<u32>(string_seg.num_strings))
+            {
+                auto str = Strings::fmt(
+                    "str: {1} @{2} = \"{0}\"",
+                    string_seg.indexed(i).str(),
+                    i,
+                    string_seg.indexed(i).offset);
+                fprintf(dism_file, "  %s\n", str.c_str());
+            }
+        }
+
+        if(func_seg.data)
+        {
+            fprintf(
+                dism_file,
+                "\n; Source file: %s+0x%08x\n",
+                map_basename.c_str(),
+                C_RCAST<byte_t const*>(func_seg.data) -
+                    C_RCAST<byte_t const*>(mapfile.data));
+            fprintf(dism_file, "section .func\n");
+            for(auto const& function : func_seg)
+            {
+                auto func_def = Strings::fmt(
+                    "script {4} {0} {1} @{2}#{3}",
+                    function.type,
+                    function.name.str(),
+                    str::print::pointer_pad(function.index, 4),
+                    function.salt,
+                    function.schedule);
+                fprintf(dism_file, "  %s\n", func_def.c_str());
+            }
         }
 
         auto const& script = scn->scripts.data(map.magic)[0];
         {
-            auto script_heap = script.dump(scn->scripts.count)
-                                   .as<blam::hsc::opcode_layout const>();
+            auto script_heap = scn->bytecode(map.magic);
 
             auto opcode = &script.opcode_first();
 
@@ -397,47 +435,109 @@ void examine_map(Resource&& mapfile, T version)
             fprintf(
                 dism_file,
                 "\n; Source file: %s+0x%08x\n",
-                basemap.internUrl.c_str(),
+                map_basename.c_str(),
                 C_RCAST<byte_t const*>(&script) -
                     C_RCAST<byte_t const*>(mapfile.data));
             fprintf(dism_file, "section .text\n");
 
-            while(ip <
-                  scn->script_bytecode_size / sizeof(blam::hsc::opcode_layout))
-            {
-                opcode = &script_heap[ip];
+            auto opcode_fn   = "opcodes_" + map_basename + ".txt";
+            auto opcode_data = fopen(opcode_fn.c_str(), "w+");
 
-                if(opcode->opcode == blam::hsc::opcode_t::begin &&
-                   opcode->ret_type == blam::hsc::type_t::immediate_val)
+            auto bytecode = scn->bytecode(map.magic);
+            for(auto const& opcode : bytecode)
+            {
+                if(!opcode.valid())
+                    break;
+
+                if(opcode.opcode == blam::hsc::opcode_t::begin &&
+                   opcode.ret_type == blam::hsc::type_t::immediate_val)
                     fprintf(dism_file, "\n");
 
                 auto dism = Strings::fmt(
                     "{0}"
                     " [{1}],"
                     " #{2}, #{3}, #{4}, #{5} | #{6}, #{7} | #{8} | f{9}"
-                    " // Type:{11}, Returns:{10}",
-                    opcode->opcode,
-                    opcode->data_ptr,
-                    opcode->data_bytes[0],
-                    opcode->data_bytes[1],
-                    opcode->data_bytes[2],
-                    opcode->data_bytes[3],
-                    opcode->data_short[0],
-                    opcode->data_short[1],
-                    opcode->data_int,
-                    opcode->data_real,
-                    opcode->ret_type,
-                    opcode->exp_type);
+                    " // type:{11}, returns:{10}, next:{13}/{14},"
+                    " as param:{15},"
+                    " String ref:\"{12}\"",
+                    opcode.opcode,
+                    opcode.data_ptr,
+                    opcode.data_bytes[0],
+                    opcode.data_bytes[1],
+                    opcode.data_bytes[2],
+                    opcode.data_bytes[3],
+                    opcode.data_short[0],
+                    opcode.data_short[1],
+                    opcode.data_int,
+                    opcode.data_real,
+                    opcode.ret_type,
+                    opcode.exp_type,
+                    string_seg
+                        .at(opcode.data_ptr < string_seg.data.size
+                                ? opcode.data_ptr
+                                : 0)
+                        .str(),
+                    str::print::pointer_pad(opcode.next_op.ip, 4),
+                    opcode.next_op.salt,
+                    opcode.param_type);
+
+                auto opcode_str = Strings::to_string(opcode.opcode);
+                fprintf(
+                    opcode_data,
+                    "\"%s\" = %u ( %s )\n",
+                    string_seg
+                        .at(opcode.data_ptr < string_seg.data.size
+                                ? opcode.data_ptr
+                                : 0)
+                        .str(),
+                    C_CAST<i16>(opcode.opcode),
+                    opcode_str.c_str());
 
                 fprintf(
                     dism_file,
                     "  %04x %s\n",
-                    opcode - script_heap.data,
+                    &opcode - script_heap.data,
                     dism.c_str());
                 fflush(dism_file);
 
                 ip++;
             }
+
+            fclose(opcode_data);
+
+            //            auto bc_ptr =
+            //                blam::hsc::bytecode_pointer::start_from(script_seg.data,
+            //                0xfa);
+
+            //            while(!bc_ptr.finished())
+            //            {
+            //                switch(bc_ptr.current->opcode)
+            //                {
+            //                case blam::hsc::opcode_t::print_:
+            //                {
+            //                    auto const& output =
+            //                        bc_ptr.param(blam::hsc::type_t::string_);
+            //                    printf(
+            //                        "print_: %s\n",
+            //                        string_seg.at(output.data_ptr).str());
+            //                    break;
+            //                }
+            //                case blam::hsc::opcode_t::sleep:
+            //                {
+            //                    printf(
+            //                        "sleep: %u\n",
+            //                        bc_ptr.param(blam::hsc::type_t::short_).data_short[0]);
+            //                    break;
+            //                }
+            //                default:
+            //                    break;
+            //                }
+
+            //                u16 prev_ip = bc_ptr.current_ip;
+            //                bc_ptr.advance();
+            //                printf("ptr: %x -> %x\n", prev_ip,
+            //                bc_ptr.current_ip);
+            //            }
         }
     }
 
@@ -932,11 +1032,20 @@ void examine_map(Resource&& mapfile, T version)
 int coffee_main(i32, cstring_w*)
 {
     const auto examine_task = []() {
-        Array<Resource, 1> pc_maps = {
+        Array<Resource, 12> pc_maps = {
 
+            "bloodgulch.map"_rsc,
+            "ui.map"_rsc,
+            "a10.map"_rsc,
+            "a30.map"_rsc,
+            "a50.map"_rsc,
+            "b30.map"_rsc,
+            "b40.map"_rsc,
             "c10.map"_rsc,
-
-            //            "bloodgulch.map"_rsc
+            "c20.map"_rsc,
+            "c40.map"_rsc,
+            "d20.map"_rsc,
+            "d40.map"_rsc,
 
         };
         Array<Resource, 2> custom_maps = {
@@ -957,11 +1066,11 @@ int coffee_main(i32, cstring_w*)
         for(auto& map : pc_maps)
             examine_map(std::move(map), blam::pc_version);
 
-        //            for(auto& map : custom_maps)
-        //                examine_map(std::move(map), blam::custom_version);
+        //        for(auto& map : custom_maps)
+        //            examine_map(std::move(map), blam::custom_version);
 
-        //            for(auto& map : xbox_maps)
-        //                examine_map(std::move(map), blam::xbox_version);
+        //        for(auto& map : xbox_maps)
+        //            examine_map(std::move(map), blam::xbox_version);
     };
 
     if(!use_graphics)

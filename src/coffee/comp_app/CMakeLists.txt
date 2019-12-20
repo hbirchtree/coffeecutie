@@ -26,6 +26,8 @@ coffee_library (
 
 target_precompile_headers ( ComponentBundleSetup PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/bundle.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/app_wrap.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/AppWrap>
     )
 
 coffee_library (

@@ -32,10 +32,8 @@ Properties::State getState(comp_app::Windowing* window)
     return window->state();
 }
 
-using WindowPtr =
-    comp_app::detail::ServiceRef<comp_app::Windowing>;
-using WindowManPtr =
-    comp_app::detail::ServiceRef<comp_app::Windowing>;
+using WindowPtr    = comp_app::detail::ServiceRef<comp_app::Windowing>;
+using WindowManPtr = comp_app::detail::ServiceRef<comp_app::Windowing>;
 #else
 void closeWindow(WindowApplication* window)
 {

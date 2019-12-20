@@ -1,4 +1,4 @@
-#include <coffee/blam/volta/cblam_map.h>
+#include <blam/volta/cblam_map.h>
 #include <coffee/core/types/chunk.h>
 
 namespace blam {

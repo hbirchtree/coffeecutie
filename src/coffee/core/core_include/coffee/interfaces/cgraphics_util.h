@@ -301,7 +301,7 @@ struct shader_param_view
     static Function<bool(const_desc&)> constant_by_name(
         CString const& param_name)
     {
-        return [=](const_desc& desc) { return desc.name == param_name; };
+        return [=](const_desc& desc) { return desc.name() == param_name; };
     }
 
     shader_param_view(WkPtr<Pipeline> pip) : m_pipeline(pip)
