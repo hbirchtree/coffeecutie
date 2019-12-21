@@ -11,7 +11,7 @@ using angle_t = scalar;
 
 /* Data which is not part of the structures proper */
 
-union actor_type
+union local_actor_type
 {
     i16 data;
 
@@ -138,6 +138,14 @@ struct scenery_spawn
     scalar rot;
     scalar unk1[2];
     u32    unknown2[10];
+};
+
+struct scenery
+{
+    u32                               count;
+    string_ref                        name;
+    u32                               padding[8];
+    tagref_typed_t<tag_class_t::mod2> model;
 };
 
 struct machine
@@ -493,7 +501,7 @@ struct encounter
 struct squad
 {
     bl_string           name;
-    actor_type          actor_type;
+    local_actor_type    actor_type;
     u16                 platoon;
     ai_state            initial_state;
     ai_state            return_state;

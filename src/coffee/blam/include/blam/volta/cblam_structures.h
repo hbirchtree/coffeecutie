@@ -178,17 +178,16 @@ struct alignas(4) vertex
     Vecf3 binorm;
     Vecf3 tangent;
     Vecf2 texcoord;
-    Vecf3 _garbo;
 
   private:
     constexpr void size_check()
     {
-        static_assert(sizeof(vertex<uncompressed>) == 68, "Invalid size");
+        static_assert(sizeof(vertex<uncompressed>) == 56, "Invalid size");
     }
 };
 
 template<typename RType>
-struct vertex<RType, false>
+struct alignas(4) vertex<RType, false>
 {
     // Compressed Xbox variant
     Vecf3 position;
@@ -201,6 +200,42 @@ struct vertex<RType, false>
     constexpr void size_check()
     {
         static_assert(sizeof(vertex<compressed>) == 32, "Invalid size");
+    }
+};
+
+template<
+    typename RType = uncompressed,
+    bool           = std::is_same<RType, uncompressed>::value>
+struct alignas(4) mod2_vertex
+{
+    Vecf3 position;
+    Vecf3 normal;
+    Vecf3 binorm;
+    Vecf3 tangent;
+    Vecf2 texcoord;
+    Vecf3 _garbo;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(mod2_vertex<uncompressed>) == 68, "Invalid size");
+    }
+};
+
+template<typename RType>
+struct alignas(4) mod2_vertex<RType, false>
+{
+    // Compressed Xbox variant
+    Vecf3 position;
+    u32   normal;   /*!< PixFmt::R11G11B10F */
+    u32   binormal; /*!< Same as binormal */
+    u32   tangent;  /*!< Same as normal */
+    Vecf2 texcoord;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(mod2_vertex<compressed>) == 32, "Invalid size");
     }
 };
 
@@ -484,8 +519,8 @@ struct tag_t;
 struct alignas(4) tag_index_t : stl_types::non_copy
 {
     using vertex_array =
-        reflexive_t<vert::vertex<vert::uncompressed>, xbox_variant>;
-    using index_array = reflexive_t<vert::face, xbox_variant>;
+        reflexive_t<vert::mod2_vertex<vert::uncompressed>, xbox_variant>;
+    using index_array = reflexive_t<vert::idx_t, xbox_variant>;
 
     i32          index_magic;    /*!< Number used to adjust indexes*/
     u32          base_tag;       /*!< Base tag, smallest tag id */
@@ -671,7 +706,7 @@ struct shader_desc
     u32      padding[4];
 };
 
-struct alignas(4) shader_chicago
+struct alignas(4) shader_chicago /* aka tag_class_t::scex */
 {
     struct map_t
     {
@@ -707,6 +742,38 @@ struct alignas(4) shader_chicago
 
     u32 extra_flags;
     u32 pad[2];
+};
+
+struct alignas(4) shader_env /* aka tag_class_t::senv */
+{
+    u32        unknown[34];
+    u32        bitmap_tag;
+    string_ref bitmap_name;
+    u32        unknown_[100];
+};
+
+struct alignas(4) shader_model /* aka tag_class_t::soso */
+{
+    u32                               unknown[41];
+    tagref_typed_t<tag_class_t::bitm> bitmap;
+    u32                               unknown_[2];
+    tagref_typed_t<tag_class_t::bitm> detail_textures;
+    u32                               unknown_1[3];
+    scalar                            unknown_s;
+    tagref_typed_t<tag_class_t::bitm> detail_textures_;
+    Vecf3                             unknown_vec;
+    u32                               unknown_3[2];
+    Vecf2                             unknown_pairs[6];
+    //    scalar                            unknown_2[72];
+
+    scalar                            unknown_4[13];
+    tagref_typed_t<tag_class_t::bitm> bitmap_1;
+    scalar                            unknown_5[17];
+    tagref_typed_t<tag_class_t::bitm> bitmap_2;
+    scalar                            unknown_7[17];
+    reflexive_t<byte_t>               unknown_data_1;
+    reflexive_t<byte_t>               unknown_data_2;
+    u32                               unknown_8[10];
 };
 
 } // namespace blam

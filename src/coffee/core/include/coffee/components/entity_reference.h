@@ -41,15 +41,17 @@ struct EntityRef
     }
 
   private:
-    u64              m_id;
+    u64            m_id;
     ContainerType* container;
 };
 
 template<typename ContainerType, typename ComponentType>
 struct ComponentRef
 {
-    ComponentRef(u64 id, ContainerType* container) :
-        m_id(id), m_ref(container)
+    ComponentRef() : m_id(0), m_ref(nullptr)
+    {
+    }
+    ComponentRef(u64 id, ContainerType* container) : m_id(id), m_ref(container)
     {
     }
 

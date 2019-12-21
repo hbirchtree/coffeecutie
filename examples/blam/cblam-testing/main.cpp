@@ -53,7 +53,7 @@ inline CString to_string(blam::hsc::opcode_layout const& opcode)
 } // namespace Strings
 } // namespace Coffee
 
-constexpr bool use_graphics = false;
+constexpr bool use_graphics = true;
 
 void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
 {
@@ -98,10 +98,16 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
         {
             auto shader_tag = *it;
             auto shader_data =
-                shader_tag->to_reflexive<blam::shader_chicago>().data(
-                    map.magic);
+                shader_tag->to_reflexive<blam::shader_model>().data(map.magic);
             cDebug("Shader: {0} {1}", map.get_name(&shader.ref));
-            cDebug(" - Texture: {0}");
+            auto bitm_name = shader_data[0].bitmap.name.to_string(map.magic);
+            auto _0 = shader_data[0].detail_textures.name.to_string(map.magic);
+            auto _1 = shader_data[0].detail_textures_.name.to_string(map.magic);
+            auto _2 = shader_data[0].bitmap_1.name.to_string(map.magic);
+            auto _3 = shader_data[0].bitmap_2.name.to_string(map.magic);
+//            auto _4 = shader_data[0].unknown_data_1.data(map.magic);
+//            auto _5 = shader_data[0].unknown_data_2.data(map.magic);
+            cDebug(" - Texture: {0}, {1}", bitm_name);
         }
     }
 
@@ -161,7 +167,7 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
                     vertex.normal.z());
             }
 
-            u16 const* index_base = &index_buf[0][0];
+            u16 const* index_base = &index_buf[0];
 
             if(index_buf.elements > 0)
                 for(auto i : Range<>(index_buf.elements * 3 - 2))
@@ -541,7 +547,6 @@ void examine_map(Resource&& mapfile, T version)
         }
     }
 
-    if(false)
     {
         /* Extracting scenario data */
 
@@ -1032,20 +1037,20 @@ void examine_map(Resource&& mapfile, T version)
 int coffee_main(i32, cstring_w*)
 {
     const auto examine_task = []() {
-        Array<Resource, 12> pc_maps = {
+        Array<Resource, 1> pc_maps = {
 
-            "bloodgulch.map"_rsc,
-            "ui.map"_rsc,
-            "a10.map"_rsc,
-            "a30.map"_rsc,
-            "a50.map"_rsc,
-            "b30.map"_rsc,
-            "b40.map"_rsc,
+            //            "bloodgulch.map"_rsc,
+            //            "ui.map"_rsc,
+            //            "a10.map"_rsc,
+            //            "a30.map"_rsc,
+            //            "a50.map"_rsc,
+            //            "b30.map"_rsc,
+            //            "b40.map"_rsc,
             "c10.map"_rsc,
-            "c20.map"_rsc,
-            "c40.map"_rsc,
-            "d20.map"_rsc,
-            "d40.map"_rsc,
+            //            "c20.map"_rsc,
+            //            "c40.map"_rsc,
+            //            "d20.map"_rsc,
+            //            "d40.map"_rsc,
 
         };
         Array<Resource, 2> custom_maps = {

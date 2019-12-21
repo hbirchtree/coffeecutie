@@ -89,7 +89,7 @@ struct submesh_header
     u32 pad__[4];
     u32 unknown_count;
 
-    reflexive_t<vert::face, xbox_variant> indices;
+    reflexive_t<vert::idx_t, xbox_variant> indices;
 
     u32 unknown_offset;
     u32 unknown_count2;
@@ -118,7 +118,7 @@ struct submesh_header
     {
         auto cpy = base.index_base();
         cpy.offset += indices.offset;
-        cpy.count = indices.count / 3;
+        cpy.count = indices.count;
         return cpy;
     }
 };

@@ -1,7 +1,7 @@
 # General
 *~
 *.userprefs
-*.user
+*.user*
 .DS_Store
 *.swp
 

@@ -683,6 +683,8 @@ FORCEDINLINE layout_t get(PixFmt fmt)
         return layout_t::ds(16, 0);
     case F::Depth24Stencil8:
         return layout_t::ds(24, 8);
+    case F::Depth16F:
+        return layout_t::ds(16, 0);
     case F::Depth32F:
         return layout_t::ds(32, 0);
     case F::Depth32FStencil8:

@@ -1100,6 +1100,26 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             };
             u8 m_notouch = 0x0;
         };
+
+        inline DrawCall withIndexing()
+        {
+            auto cpy   = *this;
+            cpy.m_idxd = true;
+            return cpy;
+        }
+        inline DrawCall withInstancing()
+        {
+            auto cpy   = *this;
+            cpy.m_inst = true;
+            return cpy;
+        }
+        inline DrawCall withTriStrip()
+        {
+            auto cpy = *this;
+            cpy.setPrim(Prim::Triangle);
+            cpy.setCreat(PrimCre::Strip);
+            return cpy;
+        }
     };
 
     /*!

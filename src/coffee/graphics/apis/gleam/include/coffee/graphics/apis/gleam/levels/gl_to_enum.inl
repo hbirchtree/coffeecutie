@@ -257,7 +257,7 @@ inline CGenum to_enum(Prim p, PrimCre c)
 
     case Prim::Triangle:
 #ifdef COFFEE_GLEAM_DESKTOP
-        if(feval(c & (PrimCre::Adjacency | PrimCre::Strip)))
+        if(feval(c, PrimCre::Adjacency | PrimCre::Strip))
             return GL_TRIANGLE_STRIP_ADJACENCY;
 #endif
         switch(c)

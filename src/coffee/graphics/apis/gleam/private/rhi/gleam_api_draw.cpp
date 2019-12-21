@@ -14,8 +14,9 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
-using draw_hash =
-    Tup<GLEAM_API::PSTATE*, GLEAM_API::V_DESC*, u32, u32, u32, u32, TypeEnum>;
+using draw_hash = Tup<GLEAM_API::PSTATE*, GLEAM_API::V_DESC*, TypeEnum>;
+
+using instance_hash = Tup<u32, u32, u32, u32>;
 
 static draw_hash hash_draw(GLEAM_API::RenderPass::DrawCall const& drawCall)
 {
@@ -24,13 +25,17 @@ static draw_hash hash_draw(GLEAM_API::RenderPass::DrawCall const& drawCall)
     /* TODO: Use a proper, lightweight hash */
 
     return std::make_tuple(
-        drawCall.state,
-        drawCall.vertices.lock().get(),
-        draw.m_elems,
-        draw.m_verts,
-        draw.m_eoff,
-        draw.m_voff,
-        draw.m_eltype);
+        drawCall.state, drawCall.vertices.lock().get(), draw.m_eltype);
+}
+
+static instance_hash instance_hash_draw(
+    GLEAM_API::RenderPass::DrawCall const& drawCall)
+{
+    return std::make_tuple(
+        drawCall.d_data.m_elems,
+        drawCall.d_data.m_eoff,
+        drawCall.d_data.m_verts,
+        drawCall.d_data.m_voff);
 }
 
 void GLEAM_API::OptimizeRenderPass(
@@ -49,27 +54,34 @@ void GLEAM_API::OptimizeRenderPass(
 
     for(auto& bucket : draws)
     {
-        D_DATA collected  = bucket.second.front()->d_data;
-        collected.m_insts = 0;
-        collected.m_ioff  = globalInstanceOffset;
-        for(auto& draw : bucket.second)
+        /* Sort by same mesh for instancing */
+        Map<instance_hash, Vector<RenderPass::DrawCall*>> instance_draws;
+        for(auto draw : bucket.second)
+            instance_draws[instance_hash_draw(*draw)].push_back(draw);
+
+        for(auto const& instance : instance_draws)
         {
-            draw->d_data.m_ioff = globalInstanceOffset + collected.m_insts;
-            collected.m_insts += draw->d_data.m_insts;
+            D_DATA collected  = instance.second.front()->d_data;
+            collected.m_insts = 0;
+            collected.m_ioff  = globalInstanceOffset;
+            for(auto& draw : instance.second)
+            {
+                draw->d_data.m_ioff = globalInstanceOffset + collected.m_insts;
+                collected.m_insts += draw->d_data.m_insts;
+            }
+
+            globalInstanceOffset += collected.m_insts;
+
+            collectedDraws.push_back(*instance.second.front());
+            collectedDraws.back().d_data = collected;
         }
-
-        globalInstanceOffset += collected.m_insts;
-
-        collectedDraws.push_back(*bucket.second.front());
-        collectedDraws.back().d_data = collected;
-
         bucket.second.clear();
     }
 
-    Map<WkPtr<V_DESC>*, Vector<RenderPass::DrawCall*>> vert_sort;
+    Map<ShPtr<V_DESC>, Vector<RenderPass::DrawCall*>> vert_sort;
     for(auto& call : collectedDraws)
     {
-        vert_sort[&call.vertices].push_back(&call);
+        vert_sort[call.vertices.lock()].push_back(&call);
     }
 
     auto& cmdBufs = buffer.cmdBufs;
@@ -87,7 +99,7 @@ void GLEAM_API::OptimizeRenderPass(
         for(auto& ustate_group : ustate_sort)
         {
             cmdBufs.push_back(
-                CommandBuffer{*group.first, ustate_group.first, {}});
+                CommandBuffer{group.first, ustate_group.first, {}});
             auto& cmd_buf = cmdBufs.back();
 
             cmd_buf.commands.reserve(ustate_group.second.size());
@@ -193,7 +205,7 @@ static bool InternalDraw(
 
         if(d.instanced())
         {
-        /* TODO: Implement the disabled drawcalls using other means */
+            /* TODO: Implement the disabled drawcalls using other means */
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
             if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0 &&
                i.vertexOffset() != 0)
@@ -514,7 +526,7 @@ void GLEAM_API::MultiDraw(
      * We will treat program uniform state as atomic,
      *  because it can be a lot to compare */
     ShPtr<V_DESC> p_vertices;
-    PSTATE*       p_state;
+    PSTATE*       p_state      = nullptr;
     i32           vertexOffset = 0;
 
     glhnd vertexHandle(0);
@@ -593,7 +605,7 @@ void GLEAM_API::MultiDraw(
          *  multiple calls to Draw() */
         for(auto& buffer : draws.cmdBufs)
         {
-            auto tmp_vert  = unwrap_ptr(buffer.vertices);
+            auto tmp_vert = unwrap_ptr(buffer.vertices);
 
             if(tmp_vert != p_vertices)
             {

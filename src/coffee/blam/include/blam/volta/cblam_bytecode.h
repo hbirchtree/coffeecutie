@@ -1,9 +1,12 @@
 #pragma once
 
 #include "cblam_structures.h"
+
+#if C_HAS_INCLUDE(<optional>)
 #define MAGIC_ENUM_RANGE_MIN -10
 #define MAGIC_ENUM_RANGE_MAX 540
 #include "magic_enum.hpp"
+#endif
 
 namespace blam {
 namespace hsc {
@@ -953,11 +956,15 @@ inline opcode_layout const& opcode_layout::next(script_ref const* script) const
 template<typename T>
 inline stl_types::CString to_string(T val)
 {
+#if C_HAS_INCLUDE(<optional>)
     auto out = magic_enum::enum_name(val);
     if(!out.size())
         return "[invalid(" + std::to_string(C_CAST<i16>(val)) + ")]";
     return stl_types::CString(out) + "(" + std::to_string(C_CAST<i16>(val)) +
            ")";
+#else
+    return std::to_string(C_CAST<i16>(val));
+#endif
 }
 
 struct bytecode_pointer

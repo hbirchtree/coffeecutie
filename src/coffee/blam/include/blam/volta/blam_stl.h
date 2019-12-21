@@ -208,6 +208,15 @@ class tag_index_view
         return index_iterator(*this, m_idx.tagCount, m_magic);
     }
 
+    template<tag_class_t... Class>
+    iterator find(tagref_typed_t<Class...> const& tag)
+    {
+        /* TODO: Add tag validation */
+
+        auto tag_unwrapped = C_RCAST<tagref_t const&>(tag);
+        return find(tag_unwrapped);
+    }
+
     iterator find(tagref_t const& tag)
     {
         if(tag.unknown != 0)
