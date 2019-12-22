@@ -1,25 +1,24 @@
 # Rendering of Blam maps
 
-Initial rendering, lots of wrong indexes:
-
 ![](update1.png)
-
-Somewhat better, missing scenery, not handling multiple BSPs correctly:
+Initial rendering, lots of wrong indexes everywhere. Unplayable framerates when rendering terrain.
 
 ![](update2.png)
 
-Loading scenery, figuring out that they use `GL_TRIANGLE_STRIP` for rendering. Notice the holes in the tree:
+Somewhat better, missing scenery, not handling multiple BSPs correctly:
 
 ![](update3.png)
 
-Loading all scenery correctly, loads an entire level with poor performance (missing batching for scenery)
+Loading scenery, figuring out that they use `GL_TRIANGLE_STRIP` for rendering. Notice the holes in the tree:
 
 ![](update4.png)
 
-Rendering the entirety of 343 Guilty Spark, including scenery at nice framerates when using batching.
-Also places matrices for scenery in a shader storage buffer.
+Loading all scenery correctly, loads an entire level with poor performance for rendering scenery, as each piece of scenery is a drawcall.
 
 ![](update5.png)
+
+Rendering the entirety of 343 Guilty Spark, including scenery at nice framerates when using batching.
+Also places matrices for scenery in a shader storage buffer to allow batching at all.
 
 # Significant values
 
