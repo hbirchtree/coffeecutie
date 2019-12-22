@@ -30,48 +30,281 @@ using vertex_type = blam::vert::vertex<blam::vert::uncompressed>;
 using Components::ComponentRef;
 using Components::EntityContainer;
 
-struct world_object_t
+using cache_id_t = u64;
+
+struct generation_idx_t
 {
-    Vecf3  position;
-    scalar rotation;
+    generation_idx_t() : i(0), gen(0)
+    {
+    }
+    generation_idx_t(cache_id_t i, u32 gen) : i(i), gen(gen)
+    {
+    }
+
+    cache_id_t i;
+    u32        gen;
+    u32        _pad;
+
+    inline bool valid() const
+    {
+        return i != 0 && gen != 0;
+    }
 };
 
-struct draw_info_t
+template<typename T, typename... IType>
+struct DataCache
 {
-    Vector<GFX::D_DATA> data;
+    static constexpr cache_id_t invalid_id = 0;
+
+    DataCache() : counter(0), generation(1)
+    {
+    }
+
+    inline generation_idx_t predict(IType... param)
+    {
+        auto out  = ++counter;
+        auto item = predict_impl(param...);
+
+        if(!item.valid())
+            return {invalid_id, 0};
+
+        m_cache.insert({out, item});
+        return {out, generation};
+    }
+
+    auto find(generation_idx_t id) const
+    {
+        if(id.gen < generation)
+            Throw(undefined_behavior("stale reference"));
+
+        return m_cache.find(id.i);
+    }
+
+    void evict_all()
+    {
+        evict_impl();
+
+        m_cache.clear();
+        counter = 0;
+        generation++;
+    }
+
+    cache_id_t         counter;
+    Map<cache_id_t, T> m_cache;
+    u32                generation;
+
+    virtual T    predict_impl(IType... param) = 0;
+    virtual void evict_impl()
+    {
+    }
 };
 
-using draw_info_list =
-    Components::Allocators::VectorContainer<Components::TagType<draw_info_t>>;
-
-struct scenery_meta_t
+struct BSPItem
 {
-    ComponentRef<EntityContainer, draw_info_list::tag_type> draw_info;
+    blam::scn::bsp::submesh_header const* mesh;
+    GFX::D_DATA                           draw;
 
-    CString                         name;
-    blam::scn::scenery_spawn const* spawn;
+    inline bool valid() const
+    {
+        return mesh;
+    }
 };
 
-struct bsp_meta_t
+struct ModelItem
 {
-    ComponentRef<EntityContainer, draw_info_list::tag_type> draw_info;
+    struct SubModel
+    {
+        blam::mod2::submesh_header const* header;
+        GFX::D_DATA                       draw;
+    };
+    struct LOD
+    {
+        blam::mod2::geometry_header const* header;
+        Vector<SubModel>                   sub;
+    };
 
-    CString                               name;
-    blam::scn::bsp::submesh_header const* submesh;
+    blam::mod2::header const* header;
+    Array<LOD, 5>             lod_meshes;
+
+    inline bool valid() const
+    {
+        return header;
+    }
 };
 
-using world_object_list = Components::Allocators::VectorContainer<
-    Components::TagType<world_object_t>>;
-using scenery_list = Components::Allocators::VectorContainer<
-    Components::TagType<scenery_meta_t>>;
-using bsp_list =
-    Components::Allocators::VectorContainer<Components::TagType<bsp_meta_t>>;
+struct SceneryItem
+{
+    blam::scn::scenery const* scenery;
+    generation_idx_t          model; /* Reference to cached model */
+
+    inline bool valid() const
+    {
+        return scenery;
+    }
+};
+
+struct BitmapItem
+{
+    blam::bitm::header_t const* header;
+};
+
+struct BitmapCache : DataCache<BitmapItem, blam::tagref_t const&>
+{
+};
+
+struct BSPCache : DataCache<BSPItem, blam::scn::bsp::info const&>
+{
+    Bytes vert_buffer, element_buffer;
+    szptr vert_ptr, element_ptr;
+
+    virtual BSPItem predict_impl(blam::scn::bsp::info const& param) override
+    {
+        return BSPItem();
+    }
+};
+
+struct ModelCache : DataCache<ModelItem, blam::tagref_t const&, u16>
+{
+    ModelCache(blam::map_container const& map) :
+        tags(map.tags), index(map), magic(map.magic),
+        vertex_magic(tags->vertex_magic(magic)), vert_ptr(0), element_ptr(0)
+    {
+    }
+
+    blam::tag_index_t const* tags;
+    blam::tag_index_view     index;
+    blam::magic_data_t       magic;
+    blam::magic_data_t       vertex_magic;
+
+    Bytes vert_buffer, element_buffer;
+    u32   vert_ptr, element_ptr;
+
+    virtual ModelItem predict_impl(
+        blam::tagref_t const& param, u16 lod) override
+    {
+        using namespace blam::mod2;
+
+        auto header_it = index.find(param);
+
+        if(header_it == index.end())
+            return ModelItem();
+
+        auto header =
+            (*header_it)->to_reflexive<blam::mod2::header>().data(magic);
+
+        ModelItem out;
+        out.lod_meshes = {};
+        out.header     = &header[0];
+
+        u32  lod_i      = 0;
+        auto lod_levels = header[0].geometries.data(magic);
+
+        for(auto const& geom : lod_levels)
+        {
+            out.lod_meshes[lod_i].header = &geom;
+
+            for(auto const& model : geom.mesh_headers.data(magic))
+            {
+                auto elements = model.index_segment(*tags).data(vertex_magic);
+                auto vertices = model.vertex_segment(*tags).data(vertex_magic);
+
+                using element_type =
+                    std::remove_const<decltype(elements)::value_type>::type;
+                using vertex_type =
+                    std::remove_const<decltype(vertices)::value_type>::type;
+
+                if(!elements || !vertices)
+                    Throw(undefined_behavior(
+                        "failed to locate element or vertex data"));
+
+                auto& draw_data  = out.lod_meshes[lod_i].sub.emplace_back();
+                draw_data.header = &model;
+                draw_data.draw.m_eltype = semantic::TypeEnum::UShort;
+                draw_data.draw.m_eoff = element_ptr / sizeof(blam::vert::idx_t);
+                draw_data.draw.m_elems = C_FCAST<u32>(elements.elements);
+                draw_data.draw.m_voff =
+                    vert_ptr / sizeof(decltype(vertices)::value_type);
+                draw_data.draw.m_insts = 1;
+
+                MemCpy(vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
+                MemCpy(
+                    elements,
+                    element_buffer.at(element_ptr).as<element_type>());
+
+                vert_ptr += vertices.size;
+                element_ptr += vertices.size;
+            }
+            lod_i++;
+        }
+
+        return out;
+    }
+    virtual void evict_impl() override
+    {
+        vert_ptr    = 0;
+        element_ptr = 0;
+    }
+};
+
+struct SceneryCache : DataCache<SceneryItem, blam::tagref_t const&>
+{
+    SceneryCache(blam::map_container const& map, ModelCache& model_cache) :
+        model_cache(model_cache), magic(map.magic), index(map)
+    {
+    }
+
+    ModelCache&          model_cache;
+    blam::magic_data_t   magic;
+    blam::tag_index_view index;
+
+    Map<i16, generation_idx_t> scenery_to_cache;
+
+    virtual SceneryItem predict_impl(blam::tagref_t const& tag) override
+    {
+        auto it = index.find(tag);
+
+        if(it == index.end())
+            return {};
+
+        auto scenery = (*it)->to_reflexive<blam::scn::scenery>().data(magic);
+
+        if(scenery.elements != 1)
+            Throw(undefined_behavior("no scenery found"));
+
+        SceneryItem out;
+        out.scenery = &scenery[0];
+        out.model   = model_cache.predict(
+            scenery[0].model.to_plain(), blam::mod2::lod_low_ext);
+
+        if(!out.model.valid())
+            return {};
+
+        return out;
+    }
+
+    SceneryItem const* get_scenery(i16 id) const
+    {
+        auto map_it = scenery_to_cache.find(id);
+
+        if(map_it == scenery_to_cache.end())
+            return nullptr;
+
+        auto it = find(map_it->second);
+
+        if(it == m_cache.end())
+            Throw(undefined_behavior(
+                "item found in scenery mapping, but not in cache, stale ID?"));
+
+        return &it->second;
+    }
+};
 
 struct BlamData
 {
     BlamData() :
         map_file(MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile)),
-        map_container(map_file, blam::pc_version),
+        map_container(map_file, blam::pc_version), bsp_cache(),
+        model_cache(map_container), scenery_cache(map_container, model_cache),
         std_camera(MkShared<std_camera_t>(&camera, &camera_opts))
     {
     }
@@ -81,6 +314,7 @@ struct BlamData
     blam::map_container        map_container;
     blam::scn::scenario const* scenario;
 
+    BSPCache            bsp_cache;
     Vector<GFX::D_DATA> bsps;
     ShPtr<GFX::BUF_A>   bsp_buf;
     ShPtr<GFX::BUF_E>   bsp_index;
@@ -89,11 +323,16 @@ struct BlamData
     GFX::RenderPass     bsp_pass;
     GFX::OPT_DRAW       bsp_draw;
 
+    ModelCache         model_cache;
+    SceneryCache       scenery_cache;
     ShPtr<GFX::BUF_A>  scenery_buf;
     ShPtr<GFX::BUF_E>  scenery_index;
     ShPtr<GFX::V_DESC> scenery_attr;
     PIP_PARAM*         scenery_pipeline;
     Vector<Matf4>      scenery_mats;
+    GFX::RenderPass    scenery_pass;
+    GFX::OPT_DRAW      scenery_draw;
+    ShPtr<GFX::BUF_S>  scenery_matrix_store;
 
     camera_t            camera;
     Matf4               camera_matrix;
@@ -136,6 +375,9 @@ void create_resources(EntityContainer& e, BlamData& data)
     data.scenery_index = gfx.alloc_buffer<GFX::BUF_E>(
         RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable, 0);
 
+    data.scenery_matrix_store = gfx.alloc_buffer<GFX::BUF_S>(
+        RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable, sizeof(Matf4), 0);
+
     GFX::V_ATTR pos_attr, tex_attr, nrm_attr, bin_attr, tan_attr;
     pos_attr.m_idx  = 0;
     tex_attr.m_idx  = 1;
@@ -171,6 +413,11 @@ void create_resources(EntityContainer& e, BlamData& data)
         gfx.alloc_desc<5>({{pos_attr, tex_attr, nrm_attr, bin_attr, tan_attr}});
     data.scenery_attr->setIndexBuffer(data.scenery_index.get());
     data.scenery_attr->bindBuffer(0, *data.scenery_buf);
+
+    data.scenery_buf->commit(50_MB);
+    data.scenery_index->commit(25_MB);
+
+    data.scenery_matrix_store->commit(10_MB);
 }
 
 void load_scenario_bsp(EntityContainer& e, BlamData& data)
@@ -273,147 +520,88 @@ void load_scenario_bsp(EntityContainer& e, BlamData& data)
 
 void load_scenario_scenery(EntityContainer& e, BlamData& data)
 {
-    auto  scenario = data.scenario;
-    auto& map      = data.map_container;
-    auto  index    = blam::tag_index_view(data.map_container);
+    data.model_cache.vert_buffer    = data.scenery_buf->map();
+    data.model_cache.element_buffer = data.scenery_index->map();
 
-    auto& magic        = data.map_container.magic;
-    auto  vertex_magic = data.map_container.tags->vertex_magic(magic);
+    auto scenario = data.scenario;
+    auto magic    = data.map_container.magic;
 
-    using Components::Convenience::type_hash_v;
+    auto pipeline = data.scenery_pipeline;
 
-    Components::EntityRecipe scenery_meta;
-    scenery_meta.components = {type_hash_v<draw_info_list::tag_type>()};
-    Components::EntityRecipe scenery_instance;
-    scenery_instance.components = {type_hash_v<scenery_list::tag_type>(),
-                                   type_hash_v<world_object_list::tag_type>()};
+    pipeline->build_state();
 
-    u32 num_vertices = 0, num_elements = 0, base_vertex = 0, base_index = 0;
-
-    Vector<decltype(scenery_meta_t::draw_info)> scenery_refs;
-
+    i16 scenery_id = 0;
     for(auto const& scenery : scenario->scenery.ref.data(magic))
     {
-        auto const& scenery_tag = scenery[0];
-        cDebug("Scenery item {0}", scenery_tag.name.to_string(magic));
-        auto item_it = index.find(scenery_tag);
+        auto id = data.scenery_cache.predict(scenery[0]);
 
-        if(item_it == index.end())
+        if(!id.valid())
             continue;
 
-        auto const& item =
-            (*item_it)->to_reflexive<blam::scn::scenery>().data(magic)[0];
-
-        auto model_it = index.find(item.model);
-
-        if(model_it == index.end())
-            continue;
-
-        auto const& model =
-            (*model_it)->to_reflexive<blam::mod2::header>().data(magic);
-
-        auto scenery_object = e.ref(e.create_entity(scenery_meta));
-        scenery_refs.push_back(
-            e.ref_comp<draw_info_list::tag_type>(scenery_object.id()));
-
-        auto& draw_data = scenery_object.get<draw_info_list::tag_type>();
-
-        for(auto const& geom : model[0].geometries.data(magic))
-            for(auto const& model : geom.mesh_headers.data(magic))
-            {
-                auto indices =
-                    model.index_segment(*map.tags).data(vertex_magic);
-                auto vertices =
-                    model.vertex_segment(*map.tags).data(vertex_magic);
-
-                if(!indices || !vertices)
-                    continue;
-
-                auto& d_data = draw_data.data.emplace_back();
-
-                d_data.m_voff   = base_vertex;
-                d_data.m_eoff   = base_index;
-                d_data.m_elems  = indices.elements;
-                d_data.m_eltype = semantic::TypeEnum::UShort;
-
-                num_vertices += vertices.size;
-                num_elements += indices.size;
-
-                base_vertex += vertices.elements;
-                base_index += indices.elements;
-            }
+        data.scenery_cache.scenery_to_cache.insert({scenery_id++, id});
     }
 
-    data.scenery_buf->commit(num_vertices);
-    data.scenery_index->commit(num_elements);
+    GFX::RenderPass& scenery_pass = data.scenery_pass;
+    scenery_pass.pipeline         = data.scenery_pipeline->pipeline_ptr();
 
-    auto vert_buffer =
-        data.scenery_buf->map(0, num_vertices)
-            .as<blam::vert::mod2_vertex<blam::vert::uncompressed>>();
-    auto idx_buffer =
-        data.scenery_index->map(0, num_elements).as<blam::vert::idx_t>();
-
-    for(auto const& scenery : scenario->scenery.base.data(magic))
+    for(auto const& instance : scenario->scenery.base.data(magic))
     {
-        if(scenery.scenery_id >= scenery_refs.size())
+        auto const& scenery =
+            data.scenery_cache.get_scenery(instance.scenery_id);
+
+        if(!scenery)
             continue;
 
-        auto instance = e.ref(e.create_entity(scenery_instance));
+        auto const& model = (*data.model_cache.find(scenery->model)).second;
 
+        for(auto const& mesh : model.lod_meshes[0].sub)
         {
-            auto& world_pos    = instance.get<world_object_list::tag_type>();
-            world_pos.position = scenery.pos;
-            world_pos.rotation = scenery.rot;
+            data.scenery_mats.push_back(
+                typing::vectors::translation(Matf4(), instance.pos));
+            scenery_pass.draws.push_back(
+                {data.scenery_attr,
+                 &data.scenery_pipeline->get_state(),
+                 GFX::D_CALL().withIndexing().withTriStrip().withInstancing(),
+                 mesh.draw});
         }
-
-        {
-            auto& scenery_info     = instance.get<scenery_list::tag_type>();
-            scenery_info.spawn     = &scenery;
-            scenery_info.draw_info = scenery_refs.at(scenery.scenery_id);
-        }
-    }
-
-    num_elements = num_vertices = 0;
-
-    for(auto const& scenery : scenario->scenery.ref.data(magic))
-    {
-        auto scenery_it = index.find(scenery[0]);
-
-        if(scenery_it == index.end())
-            continue;
-
-        auto model_it = index.find((*scenery_it)
-                                       ->to_reflexive<blam::scn::scenery>()
-                                       .data(magic)[0]
-                                       .model);
-
-        if(model_it == index.end())
-            continue;
-
-        auto const& model =
-            (*model_it)->to_reflexive<blam::mod2::header>().data(magic);
-
-        for(auto const& geom : model[0].geometries.data(magic))
-            for(auto const& model : geom.mesh_headers.data(magic))
-            {
-                auto indices =
-                    model.index_segment(*map.tags).data(vertex_magic);
-                auto vertices =
-                    model.vertex_segment(*map.tags).data(vertex_magic);
-
-                if(!indices || !vertices)
-                    continue;
-
-                MemCpy(indices, idx_buffer.at(num_elements));
-                MemCpy(vertices, vert_buffer.at(num_vertices));
-
-                num_vertices += vertices.size;
-                num_elements += indices.size;
-            }
     }
 
     data.scenery_buf->unmap();
     data.scenery_index->unmap();
+
+    GFX::OptimizeRenderPass(scenery_pass, data.scenery_draw);
+
+    Vector<Matf4> matrices_realloc = std::move(data.scenery_mats);
+    data.scenery_mats.resize(matrices_realloc.size());
+
+    auto matrix_store = data.scenery_matrix_store->map().as<Matf4>();
+
+    u32 mat_idx = 0;
+    for(auto const& draw : scenery_pass.draws)
+    {
+        matrix_store[draw.d_data.m_ioff] = matrices_realloc.at(mat_idx);
+        mat_idx++;
+    }
+
+    data.scenery_matrix_store->unmap();
+
+    GFX::ERROR ec;
+    data.scenery_matrix_store->bindrange(0, 0, 10_MB, ec);
+
+    pipeline->set_constant(
+        *std::find_if(
+            pipeline->constants_begin(),
+            pipeline->constants_end(),
+            pipeline->constant_by_name("camera")),
+        Bytes::From(data.camera_matrix));
+    //    pipeline->set_constant(
+    //        *std::find_if(
+    //            pipeline->constants_begin(),
+    //            pipeline->constants_end(),
+    //            pipeline->constant_by_name("transform")),
+    //        Bytes::CreateFrom(data.scenery_mats));
+    pipeline->build_state();
+    pipeline->get_state();
 }
 
 i32 blam_main(i32, cstring_w*)
@@ -448,13 +636,6 @@ i32 blam_main(i32, cstring_w*)
                 window_config->setName(
                     window_config->name() + " : " + map_name);
             }
-
-            e.register_component<draw_info_list::tag_type>(
-                MkUq<draw_info_list>());
-            e.register_component<scenery_list::tag_type>(MkUq<scenery_list>());
-            e.register_component<world_object_list::tag_type>(
-                MkUq<world_object_list>());
-            e.register_component<bsp_list::tag_type>(MkUq<bsp_list>());
 
             create_resources(e, data);
 
@@ -509,40 +690,49 @@ i32 blam_main(i32, cstring_w*)
             }
 
             GFX::ERROR ec;
-            GFX::MultiDraw(data.bsp_pipeline->pipeline(), data.bsp_draw);
+            GFX::MultiDraw(data.bsp_pipeline->pipeline(), data.bsp_draw, ec);
+            C_ERROR_CHECK(ec)
 
-            for(auto const& scenery : e.select<scenery_list::tag_type>())
-            {
-                auto item = e.get<scenery_list::tag_type>(scenery.id);
+            GFX::MultiDraw(
+                data.scenery_pipeline->pipeline(), data.scenery_draw, ec);
+            C_ERROR_CHECK(ec)
 
-                Matf4 mat =
-                    data.camera_matrix * typing::vectors::translation<scalar>(
-                                             Matf4(), item->spawn->pos);
+            //            for(auto const& scenery :
+            //            e.select<scenery_list::tag_type>())
+            //            {
+            //                auto item =
+            //                e.get<scenery_list::tag_type>(scenery.id);
 
-                auto& draw_info = *item->draw_info;
+            //                Matf4 mat =
+            //                    data.camera_matrix *
+            //                    typing::vectors::translation<scalar>(
+            //                                             Matf4(),
+            //                                             item->spawn->pos);
 
-                for(auto const& draw_ : draw_info.data)
-                {
-                    auto draw    = draw_;
-                    draw.m_insts = 1;
+            //                auto& draw_info = *item->draw_info;
 
-                    data.scenery_pipeline->set_constant(
-                        *std::find_if(
-                            data.scenery_pipeline->constants_begin(),
-                            data.scenery_pipeline->constants_end(),
-                            data.scenery_pipeline->constant_by_name(
-                                "transform")),
-                        Bytes::From(mat));
-                    data.scenery_pipeline->build_state();
+            //                for(auto const& draw_ : draw_info.data)
+            //                {
+            //                    auto draw    = draw_;
+            //                    draw.m_insts = 1;
 
-                    GFX::Draw(
-                        data.scenery_pipeline->pipeline(),
-                        data.scenery_pipeline->get_state(),
-                        *data.scenery_attr,
-                        GFX::D_CALL().withIndexing().withTriStrip(),
-                        draw);
-                }
-            }
+            //                    data.scenery_pipeline->set_constant(
+            //                        *std::find_if(
+            //                            data.scenery_pipeline->constants_begin(),
+            //                            data.scenery_pipeline->constants_end(),
+            //                            data.scenery_pipeline->constant_by_name(
+            //                                "transform")),
+            //                        Bytes::From(mat));
+            //                    data.scenery_pipeline->build_state();
+
+            //                    GFX::Draw(
+            //                        data.scenery_pipeline->pipeline(),
+            //                        data.scenery_pipeline->get_state(),
+            //                        *data.scenery_attr,
+            //                        GFX::D_CALL().withIndexing().withTriStrip(),
+            //                        draw);
+            //                }
+            //            }
         },
         [](EntityContainer& e, BlamData& data, time_point const&) {
 

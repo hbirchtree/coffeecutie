@@ -173,7 +173,7 @@ struct header
     reflexive_t<marker>          markers;
     reflexive_t<bone>            bones;
     reflexive_t<region>          regions;
-    reflexive_t<geometry_header> geometries;
+    reflexive_t<geometry_header> geometries; /* Refers to LODs */
     reflexive_t<shader_desc>     shaders;
 
     inline semantic::mem_chunk<submesh_header const> meshes(

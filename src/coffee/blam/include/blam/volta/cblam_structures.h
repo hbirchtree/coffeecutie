@@ -506,6 +506,11 @@ struct alignas(4) tagref_typed_t
     {
         return tag_class == cls;
     }
+
+    inline tagref_typed_t<> to_plain() const
+    {
+        return *C_RCAST<tagref_typed_t<> const*>(this);
+    }
 };
 
 using tagref_t = tagref_typed_t<>;
