@@ -26,12 +26,15 @@
 #endif
 
 /* Common graphics stuff */
+#if defined(FEATURE_ENABLE_GraphicsAPI)
 #include <coffee/graphics/common/cgraphicsdata.h>
-#include <coffee/graphics/common/gltypes.h>
 #include <coffee/graphics/common/query/gpu_query.h>
+#endif
 
 /* GLEAM graphics API */
+#if defined(FEATURE_ENABLE_GLeamCommon)
 #include <coffee/graphics/apis/CGLeamRHI>
+#endif
 
 /* Blam! integration */
 #include <blam/cblam.h>
