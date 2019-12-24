@@ -2,7 +2,11 @@
 
 #include "cblam_structures.h"
 
-#if C_HAS_INCLUDE(<optional>)
+#if C_HAS_INCLUDE(<optional>) && __cplusplus >= 201703
+#define USE_MAGIC_ENUM 1
+#endif
+
+#if USE_MAGIC_ENUM
 #define MAGIC_ENUM_RANGE_MIN -10
 #define MAGIC_ENUM_RANGE_MAX 540
 #include "magic_enum.hpp"
@@ -956,7 +960,7 @@ inline opcode_layout const& opcode_layout::next(script_ref const* script) const
 template<typename T>
 inline stl_types::CString to_string(T val)
 {
-#if C_HAS_INCLUDE(<optional>)
+#if USE_MAGIC_ENUM
     auto out = magic_enum::enum_name(val);
     if(!out.size())
         return "[invalid(" + std::to_string(C_CAST<i16>(val)) + ")]";
