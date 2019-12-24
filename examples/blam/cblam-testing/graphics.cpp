@@ -862,7 +862,8 @@ struct BlamData
         biped_cache(map_container, model_cache),
         equip_cache(map_container, model_cache),
         weap_cache(map_container, model_cache),
-        std_camera(MkShared<std_camera_t>(&camera, &camera_opts))
+        std_camera(MkShared<std_camera_t>(&camera, &camera_opts)),
+        controller_camera(&camera, &controller_opts)
     {
     }
 
@@ -905,6 +906,9 @@ struct BlamData
     Matf4               camera_matrix;
     StandardCameraOpts  camera_opts;
     ShPtr<std_camera_t> std_camera;
+
+    ControllerOpts                               controller_opts;
+    ControllerCamera<camera_t*, ControllerOpts*> controller_camera;
 };
 
 void create_resources(EntityContainer& e, BlamData& data)
@@ -1240,6 +1244,8 @@ i32 blam_main(i32, cstring_w*)
             GFX::DefaultFramebuffer()->clear(0, {0.5f, 0.5f, 0.9f, 1.f}, 1.0);
 
             data.std_camera->tick();
+            data.controller_camera(
+                e.service<comp_app::ControllerInput>()->state(0));
 
             using namespace typing::vectors::scene;
             {

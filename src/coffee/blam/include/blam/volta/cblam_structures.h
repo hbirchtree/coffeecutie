@@ -44,7 +44,14 @@ struct bl_string_var
             return {};
 
         auto out = stl_types::CString(data, Size);
+#if __cplusplus >= 201703
         std::reverse(out.begin(), out.end());
+#else
+        auto it  = out.begin();
+        auto end = out.end();
+        while((it != end) && (it != --end))
+            std::iter_swap(it++, end);
+#endif
         return out;
     }
 
