@@ -532,11 +532,13 @@ struct BSPCache
 
         for(auto const& group : section.submesh_groups.data(bsp_magic))
         {
-            auto& group_data = out.groups.emplace_back();
+            out.groups.emplace_back();
+            auto& group_data = out.groups.back();
             group_data.group = &group;
             for(auto const& mesh : group.material.data(bsp_magic))
             {
-                auto& mesh_data = group_data.meshes.emplace_back();
+                group_data.meshes.emplace_back();
+                auto& mesh_data = group_data.meshes.back();
 
                 /* Just dig up the textures, long process */
                 mesh_data.color_bitm = bitmap_cache.predict(mesh.shader, 0);
@@ -645,7 +647,8 @@ struct ModelCache
                     Throw(undefined_behavior(
                         "failed to locate element or vertex data"));
 
-                auto& draw_data         = out.mesh.sub.emplace_back();
+                out.mesh.sub.emplace_back();
+                auto& draw_data         = out.mesh.sub.back();
                 draw_data.header        = &model;
                 draw_data.draw.m_eltype = semantic::TypeEnum::UShort;
                 draw_data.draw.m_eoff   = element_ptr / sizeof(element_type);
@@ -687,7 +690,8 @@ struct ModelCache
 
         for(auto const& region : header->regions.data(magic))
         {
-            auto& mod = assem.models.emplace_back();
+            assem.models.emplace_back();
+            auto& mod = assem.models.back();
             for(auto const& perm : region.permutations.data(magic))
             {
                 auto const& lod = perm.meshindex_lod.at(max_lod);

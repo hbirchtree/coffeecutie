@@ -47,8 +47,13 @@ coffee_test (
 
     LIBRARIES
     Core
-    Blam
     )
+
+if(TARGET Blam)
+    target_link_libraries ( Dummy_Target PRIVATE
+        Blam
+        )
+endif()
 
 if(TARGET Audio)
     target_link_libraries ( Dummy_Target PRIVATE
