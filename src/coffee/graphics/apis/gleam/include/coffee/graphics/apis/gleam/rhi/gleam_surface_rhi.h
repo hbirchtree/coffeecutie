@@ -130,19 +130,19 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
     GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
 
     GLEAM_API_CLASS_LINKAGE void upload(
-        PixDesc       pfmt,
-        Size3 const&  size,
-        Bytes const&  data,
-        Point3 const& offset = {0, 0, 0},
-        u32           mip    = 0);
+        PixDesc           pfmt,
+        Size3 const&      size,
+        BytesConst const& data,
+        Point3 const&     offset = {0, 0, 0},
+        u32               mip    = 0);
 
     GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt        fmt,
-        PixCmp        comp,
-        Size3 const&  size,
-        Bytes const&  data,
-        Point3 const& offset = {0, 0, 0},
-        u32           mip    = 0);
+        BitFmt            fmt,
+        PixCmp            comp,
+        Size3 const&      size,
+        BytesConst const& data,
+        Point3 const&     offset = {0, 0, 0},
+        u32               mip    = 0);
 
     GLEAM_API_CLASS_LINKAGE void upload(
         BitFmt        fmt,

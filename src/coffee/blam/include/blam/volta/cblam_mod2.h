@@ -34,10 +34,10 @@ struct report
 
 struct region_permutation
 {
-    bl_string name;
-    u32       flags[8];
-    u16       meshindex_lod[5];
-    i16       reserved[7];
+    bl_string     name;
+    u32           flags[8];
+    Array<u16, 5> meshindex_lod;
+    i16           reserved[7];
 };
 
 struct region

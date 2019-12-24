@@ -112,6 +112,19 @@ using bl_size_t = size_2d<i16>;
 using bl_point_t = point_2d<i16>;
 
 /*!
+ * \brief The blam_bounding_box struct
+ */
+struct bounding_box
+{
+    bounding_box() : min(0), max(0)
+    {
+    }
+
+    Vecf3 min;
+    Vecf3 max;
+};
+
+/*!
  * \brief Function pointers for blam bitmap processing, raw function pointer is
  * much faster than Function
  */
@@ -368,6 +381,11 @@ struct magic_data_t
     {
         this->base_ptr = base_ptr;
     }
+    magic_data_t(semantic::Bytes const& data) :
+        magic_offset(0), max_size(data.size)
+    {
+        base_ptr = data.data;
+    }
 
     inline magic_data_t& operator=(semantic::Bytes const& data)
     {
@@ -599,6 +617,12 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     }
 };
 
+enum class image_storage_t : u32
+{
+    internal = 0,
+    external = 1
+};
+
 /*!
  * \brief An item in the tag index, contains tag class (which identifies the
  * type of item), tag ID (a numerical ID), an offset to a proper string, and an
@@ -614,8 +638,12 @@ struct alignas(4) tag_t
     u32        tag_id;
     string_ref name;
     u32        offset; /*!< A byte offset to associated data*/
-    u32        unknown;
-    i32        padding;
+    union
+    {
+        u32             unknown;
+        image_storage_t storage; /*!< Only applies to custom_edition */
+    };
+    i32 padding;
 
     inline bool matches(tag_class_t other) const
     {
@@ -628,6 +656,24 @@ struct alignas(4) tag_t
     template<typename T>
     reflexive_t<T> to_reflexive() const
     {
+        if(storage == image_storage_t::external && matches(tag_class_t::bitm))
+        {
+            /* If you're here, that means you hit one of Custom Edition's
+             *  externally stored bitmaps, but used the map magic
+             *  to dereference it.
+             * These are located entirely in the bimaps.map file.
+             *
+             * To start you must plug the .offset
+             *  into blam::bitm::bitmap_header_t's get_block() function
+             *  and dereference the reflexive_t<> with block_magic()
+             *  from the bitmap.
+             *
+             * Also remember to use the Custom Edition bitmaps.map.
+             */
+            Throw(undefined_behavior(
+                "bitmap uses external storage, use blam::bitm::bitm_header_t"));
+        }
+
         if(padding != 0)
             Throw(undefined_behavior("invalid tag"));
 
@@ -705,10 +751,33 @@ struct string_segment_ref
     }
 };
 
+struct unicode_reflexive
+{
+    using wide_string = std::basic_string<u16>;
+
+    reflexive_t<u16> data;
+
+    inline wide_string str(magic_data_t const& magic) const
+    {
+        constexpr u16 terminator = 0;
+
+        auto seg = data.data(magic);
+        auto out = wide_string(seg.data, seg.elements);
+        out.resize(out.find(terminator));
+        return out;
+    }
+};
+
+struct mod2_shader
+{
+    tagref_t ref;
+    u32      unknown;
+};
+
 struct shader_desc
 {
     tagref_t ref;
-    u32      padding[4];
+    u32      unknown[4];
 };
 
 struct alignas(4) shader_chicago /* aka tag_class_t::scex */
@@ -751,10 +820,9 @@ struct alignas(4) shader_chicago /* aka tag_class_t::scex */
 
 struct alignas(4) shader_env /* aka tag_class_t::senv */
 {
-    u32        unknown[34];
-    u32        bitmap_tag;
-    string_ref bitmap_name;
-    u32        unknown_[100];
+    u32      unknown[34];
+    tagref_t bitmap;
+    u32      unknown_[98];
 };
 
 struct alignas(4) shader_model /* aka tag_class_t::soso */
@@ -779,6 +847,29 @@ struct alignas(4) shader_model /* aka tag_class_t::soso */
     reflexive_t<byte_t>               unknown_data_1;
     reflexive_t<byte_t>               unknown_data_2;
     u32                               unknown_8[10];
+};
+
+struct multiplayer_scenario
+{
+    struct map_string
+    {
+        reflexive_t<byte_t> unknown_1;
+        u32                 unknown_2;
+        u32                 unknown_3;
+        unicode_reflexive   unknown_4;
+
+        u16 data[32];
+    };
+
+    struct level_ref
+    {
+        tagref_typed_t<tag_class_t::bitm> thumbnail;
+        tagref_typed_t<tag_class_t::ustr> name;
+
+        bl_string_var<36> map_name;
+    };
+
+    reflexive_t<level_ref> unknown_data;
 };
 
 } // namespace blam

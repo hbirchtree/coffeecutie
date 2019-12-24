@@ -57,11 +57,18 @@ enum class flags_t : u16
 
 C_FLAGS(flags_t, u16);
 
+struct header_t;
+
 struct locator_block
 {
     string_ref name;
     u32        size;
     u32        offset;
+
+    inline reflexive_t<header_t> to_reflexive() const
+    {
+        return {1, offset, 0};
+    }
 };
 
 struct bitmap_header_t
@@ -71,6 +78,11 @@ struct bitmap_header_t
 
     u32 locators_offset;
     u32 locators_count;
+
+    static inline bitmap_header_t const* from_data(semantic::Bytes const& data)
+    {
+        return C_RCAST<bitmap_header_t const*>(data.data);
+    }
 
     inline cstring get_name(locator_block const& block) const
     {
@@ -86,6 +98,19 @@ struct bitmap_header_t
         return semantic::mem_chunk<locator_block const>::From(
             C_RCAST<locator_block const*>(base_ptr + locators_offset),
             locators_count);
+    }
+
+    inline magic_data_t block_magic(
+        magic_data_t const& bitm, u32 bitm_idx) const
+    {
+        auto const& loc = locators()[bitm_idx];
+        return magic_data_t(
+            bitm.base_ptr + loc.offset, 0, bitm.max_size - loc.offset);
+    }
+    inline reflexive_t<header_t> get_block(u32 bitm_idx = 0) const
+    {
+        auto const& loc = locators()[bitm_idx];
+        return loc.to_reflexive();
     }
 };
 

@@ -38,6 +38,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         TextureImmutable = 0x4,
         /*!< Create an immutable texture */
 
+        TextureBindless = 0x8,
     };
     enum AttributeFlags
     {

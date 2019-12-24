@@ -60,6 +60,8 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
     if(map.map->is_xbox())
         return;
 
+    return;
+
     blam::tag_index_view idx_view(map);
 
     auto const& model = tag.to_reflexive<blam::mod2::header>().data(map.magic);
@@ -105,8 +107,9 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
             auto _1 = shader_data[0].detail_textures_.name.to_string(map.magic);
             auto _2 = shader_data[0].bitmap_1.name.to_string(map.magic);
             auto _3 = shader_data[0].bitmap_2.name.to_string(map.magic);
-//            auto _4 = shader_data[0].unknown_data_1.data(map.magic);
-//            auto _5 = shader_data[0].unknown_data_2.data(map.magic);
+            //            auto _4 =
+            //            shader_data[0].unknown_data_1.data(map.magic); auto _5
+            //            = shader_data[0].unknown_data_2.data(map.magic);
             cDebug(" - Texture: {0}, {1}", bitm_name);
         }
     }
@@ -295,6 +298,8 @@ void examine_map(Resource&& mapfile, T version)
 
     blam::tag_index_view index_view(map);
 
+    auto tags_ = fopen("tags.txt", "a+");
+
     for(auto tag : index_view)
     {
         cDebug(
@@ -304,6 +309,15 @@ void examine_map(Resource&& mapfile, T version)
             tag->tagclass[2].str(),
             tag->tag_id,
             map.get_name(tag));
+
+        fprintf(
+            tags_,
+            "%s = 0x%x, // %.*s %u\n",
+            tag->tagclass[0].str().c_str(),
+            C_OCAST<u32>(tag->tagclass[0]),
+            4,
+            tag->tagclass[0].data,
+            C_OCAST<u32>(tag->tagclass[0]));
 
         if(tag->matches(blam::tag_class_t::bitm))
         {
@@ -319,9 +333,66 @@ void examine_map(Resource&& mapfile, T version)
         {
             auto actor_v =
                 tag->to_reflexive<blam::scn::actor_variant>().data(map.magic);
+            if(actor_v[0].unit.valid())
+            {
+                auto biped_v = (*index_view.find(actor_v[0].unit))
+                                   ->to_reflexive<blam::scn::biped>()
+                                   .data(map.magic);
+                cDebug("Bip");
+            }
             cDebug(" - Actor variant");
+        } else if(tag->matches(blam::tag_class_t::devi))
+        {
+            auto device_v =
+                tag->to_reflexive<blam::scn::device_group>().data(map.magic);
+            cDebug(" - Device");
+        } else if(tag->matches(blam::tag_class_t::mach))
+        {
+            auto machine =
+                tag->to_reflexive<blam::scn::machine>().data(map.magic);
+            cDebug(" - Machine");
+        } else if(tag->matches(blam::tag_class_t::vehi))
+        {
+            auto vehicle =
+                tag->to_reflexive<blam::scn::vehicle>().data(map.magic);
+            cDebug(" - Vehicle");
+        } else if(tag->matches(blam::tag_class_t::eqip))
+        {
+            auto equp =
+                tag->to_reflexive<blam::scn::equipment>().data(map.magic);
+            cDebug(" - Equip");
+        } else if(tag->matches(blam::tag_class_t::mply))
+        {
+            auto mply =
+                tag->to_reflexive<blam::multiplayer_scenario>().data(map.magic);
+            auto levels = mply[0].unknown_data.data(map.magic);
+            for(auto const& level : levels)
+            {
+                auto full_name =
+                    (*index_view.find(level.name))
+                        ->to_reflexive<blam::multiplayer_scenario::map_string>()
+                        .data(map.magic);
+                auto data1 = full_name[0].unknown_1.data(map.magic);
+                auto data2 = full_name[0].unknown_4.str(map.magic);
+
+                inspect_bitm(
+                    map,
+                    bitm_magic,
+                    *(*index_view.find(level.thumbnail)));
+
+                cDebug(" - Level");
+            }
+            cDebug(" - Multiplayer scenario");
+        } else if(tag->matches(blam::tag_class_t::weap))
+        {
+            auto weap = tag->to_reflexive<blam::scn::unit>().data(map.magic);
+            cDebug(" - Weapon");
         }
     }
+
+    fclose(tags_);
+
+    return;
 
     struct mem_map
     {
@@ -720,7 +791,8 @@ void examine_map(Resource&& mapfile, T version)
                         current_base_off = vertex_data.elements;
                     }
 
-                    for(auto const& idx : index_data)
+                    for(auto const& idx :
+                        index_data.as<blam::vert::face const>())
                     {
                         fprintf(
                             obj_out,
@@ -745,14 +817,13 @@ void examine_map(Resource&& mapfile, T version)
         {
             cDebug(
                 "Scenery: {0} ({4}) @ {1},{2},{3} -> {5} : {6}",
-                scenery.scenery_id,
+                scenery.ref,
                 scenery.pos.x(),
                 scenery.pos.y(),
                 scenery.pos.z(),
                 scenery.flag,
-                scenery_tags[scenery.scenery_id][0].to_name().to_string(
-                    map.magic),
-                scenery_tags[scenery.scenery_id][0].tag.str());
+                scenery_tags[scenery.ref][0].to_name().to_string(map.magic),
+                scenery_tags[scenery.ref][0].tag.str());
 
             base_scenery++;
             fprintf(
@@ -799,12 +870,24 @@ void examine_map(Resource&& mapfile, T version)
         {
             cDebug(
                 "Vehicle: {0} {1}",
-                vehicle_tags[vehicle.vehicle_id][0].name.to_string(map.magic),
+                vehicle_tags[vehicle.ref][0].name.to_string(map.magic),
                 vehicle.flag);
         }
         for(auto const& device_group : scn->device_groups.data(map.magic))
         {
             cDebug("Device group");
+        }
+        for(auto const& machine : scn->machines.ref.data(map.magic))
+        {
+            auto name   = machine[0].name.to_string(map.magic);
+            auto tag_it = (*index_view.find(machine[0]))
+                              ->to_reflexive<blam::scn::machine>()
+                              .data(map.magic);
+            cDebug("Machine");
+        }
+        for(auto const& machine : scn->machines.base.data(map.magic))
+        {
+            cDebug("Machine tag");
         }
 
         for(auto const& ui_string : semantic::mem_chunk<blam::tagref_t>::From(
@@ -865,24 +948,11 @@ void examine_map(Resource&& mapfile, T version)
             }
         }
 
-        //        for(auto const& scenery : scn->scenery.ref.data(map.magic))
-        //            cDebug("Scenery tag: {0}", scenery.tag.str());
-        //        for(auto const& obj_name : scn->object_names.data(map.magic))
-        //            cDebug("Object names: {0}", obj_name.name.str());
         for(auto const& globals : scn->globals.data(map.magic))
             cDebug(
                 "Global: {1} -> {0}",
                 C_CAST<u16>(globals.type),
                 globals.name.str());
-        //        for(auto const& poi :
-        //        scn->cutscene_camera_poi.data(map.magic))
-        //            cDebug("POI");
-        //        for(auto const& poi : scn->cutscene_titles.data(map.magic))
-        //            cDebug("Title");
-        //        for(auto const& poi : scn->cutscene_flags.data(map.magic))
-        //            cDebug("Flags");
-        //        for(auto const& poi : scn->participants.data(map.magic))
-        //            cDebug("Parts");
 
         fclose(scenery_out);
     }
@@ -960,7 +1030,7 @@ void examine_map(Resource&& mapfile, T version)
             }
 
             for(auto const& loc :
-                encounter.playerStartLocations.data(map.magic))
+                encounter.start_locations.data(map.magic))
             {
                 cDebug(" - location: {0}", loc.pos);
             }
@@ -1037,21 +1107,20 @@ void examine_map(Resource&& mapfile, T version)
 int coffee_main(i32, cstring_w*)
 {
     const auto examine_task = []() {
-        Array<Resource, 1> pc_maps = {
+        Array<Resource, 12> pc_maps = {
 
-            //            "bloodgulch.map"_rsc,
-            //            "ui.map"_rsc,
-            //            "a10.map"_rsc,
-            //            "a30.map"_rsc,
-            //            "a50.map"_rsc,
-            //            "b30.map"_rsc,
-            //            "b40.map"_rsc,
+            "bloodgulch.map"_rsc,
+            "ui.map"_rsc,
+            "a10.map"_rsc,
+            "a30.map"_rsc,
+            "a50.map"_rsc,
+            "b30.map"_rsc,
+            "b40.map"_rsc,
             "c10.map"_rsc,
-            //            "c20.map"_rsc,
-            //            "c40.map"_rsc,
-            //            "d20.map"_rsc,
-            //            "d40.map"_rsc,
-
+            "c20.map"_rsc,
+            "c40.map"_rsc,
+            "d20.map"_rsc,
+            "d40.map"_rsc,
         };
         Array<Resource, 2> custom_maps = {
 

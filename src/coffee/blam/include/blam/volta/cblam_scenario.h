@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cblam_bsp_structures.h"
 #include "cblam_bytecode.h"
 #include "cblam_mod2.h"
 #include "cblam_structures.h"
@@ -38,19 +39,6 @@ enum class ai_state : i16
 
 } // namespace scn
 
-/*!
- * \brief The blam_bounding_box struct
- */
-struct bounding_box
-{
-    bounding_box() : min(0), max(0)
-    {
-    }
-
-    Vecf3 min;
-    Vecf3 max;
-};
-
 template<typename T>
 /*!
  * \brief Encapsulates a base and reference reflexive group
@@ -65,49 +53,45 @@ namespace scn {
 
 using scn_chunk = byte_t[100];
 
-struct biped
+struct unit
 {
-    i16    biped_type;
-    i16    unk2;
-    u32    unk3;
-    Vecf3  pos;
-    scalar rot;
-    u32    unk[24];
+    reflexive_t<byte_t>               unknown_r;
+    u32                               padding[4];
+    Vecf3                             unknown_offset;
+    tagref_typed_t<tag_class_t::mod2> model;
+    tagref_typed_t<tag_class_t::antr> anim_trigger;
+    u32                               padding2[10];
+    tagref_typed_t<tag_class_t::coll> collider;
+    tagref_typed_t<tag_class_t::pphy> physics;
+    tagref_typed_t<tag_class_t::shdr> shader;
+    tagref_typed_t<tag_class_t::effe> effect;
 };
 
-struct equip
+using vehicle   = unit;
+using biped     = unit;
+using equipment = unit;
+
+template<size_t Padding>
+struct object_spawn
 {
-    i16   equip_id;
-    i16   unk2;
-    u32   unk3;
+    i16   ref;
+    i16   flag;
+    u32   unknown_2;
     Vecf3 pos;
-    u32   unk[5];
+    Vecf3 rot;
+    u32   unknown_3[Padding];
 };
 
-struct vehicle_spawn
-{
-    i16    vehicle_id;
-    uint16 flag;
-    u32    unknown1;
-    Vecf3  pos;
-    scalar rot;
-    u32    unknown2[24];
-};
+using biped_spawn   = object_spawn<22>;
+using vehicle_spawn = object_spawn<22>;
+using equip_spawn   = object_spawn<2>;
+using scenery_spawn = object_spawn<10>;
+using weapon_spawn  = object_spawn<15>;
 
 struct palette
 {
     tagref_t tag;
     byte_t   unk[32];
-};
-
-struct weapon_spawn
-{
-    i16    weapon_id;
-    uint16 flag;
-    u32    unknown1;
-    Vecf3  pos;
-    scalar rot;
-    u32    unknown2[17];
 };
 
 struct weapon_instance
@@ -119,27 +103,6 @@ struct weapon_instance
 
 using weapon_tagref = reflexive_t<weapon_instance>;
 
-struct weapon_ref
-{
-    i16    weapon_ref_id;
-    uint16 flag;
-    u32    unknown1;
-    Vecf3  pos;
-    scalar rot;
-    u32    unknown2[17];
-};
-
-struct scenery_spawn
-{
-    i16    scenery_id;
-    uint16 flag;
-    u32    unknown1;
-    Vecf3  pos;
-    scalar rot;
-    scalar unk1[2];
-    u32    unknown2[10];
-};
-
 struct scenery
 {
     u32                               count;
@@ -150,7 +113,7 @@ struct scenery
 
 struct machine
 {
-    i16    MachineType;
+    i16    type;
     i16    unk2;
     u32    unk3;
     Vecf3  pos;
@@ -341,7 +304,7 @@ struct actor
     actor_ex_flags_t extra_flags;
     u32              padding[3];
     actor_type_t     type;
-    struct /* perception */
+    struct perception_t /* perception */
     {
         scalar  max_vision_dist;
         angle_t central_vision;
@@ -355,22 +318,22 @@ struct actor
         scalar  vehicle_awareness;    /* [0,1] */
         scalar  combat_perception_time;
         scalar  guard_perception_time;
-    };
-    struct /* movement */
+    } perception;
+    struct movement_t
     {
-    };
-    struct /* looking */
+    } movement;
+    struct looking_t
     {
-    };
-    struct /* unopposable */
+    } looking;
+    struct unopposable_t
     {
-    };
-    struct /* panic */
+    } unopposable;
+    struct panic_t
     {
-    };
-    struct /* defensive */
+    } panic;
+    struct defensive_t
     {
-    };
+    } defensive;
 };
 
 enum class actor_variant_flags_t : u32
@@ -404,15 +367,15 @@ struct actor_variant
 
     u32 padding[6];
 
-    struct
+    struct movement_t
     {
         actor_movement_t movement;
         scalar           crouch_chance;
         Vecf2            crouch_time;
         Vecf2            run_time;
-    };
+    } movement;
 
-    struct
+    struct combat_t
     {
         tagref_typed_t<cls::weap> weapon;
 
@@ -436,7 +399,7 @@ struct actor_variant
         Vecf2  target_lead;
         scalar dmg_modifier;
         scalar dmg_per_second;
-    };
+    } combat;
 };
 
 using actor_variant_ref = tagref_t;
@@ -494,8 +457,8 @@ struct encounter
     u32                       unk[28];
     reflexive_t<squad>        squads;
     reflexive_t<byte_t>       platoons;
-    reflexive_t<byte_t>       firingPositions;
-    reflexive_t<player_spawn> playerStartLocations;
+    reflexive_t<byte_t>       firing_positions;
+    reflexive_t<player_spawn> start_locations;
 };
 
 struct squad
@@ -585,241 +548,6 @@ struct light_fixture
     byte_t    unk3[40];
 };
 
-namespace bsp {
-
-struct header;
-struct info;
-
-struct section
-{
-    using comp_vertex   = vert::vertex<vert::compressed>;
-    using comp_lightmap = vert::light_vertex<vert::compressed>;
-
-    u32 header_offset;
-
-    /* Below values are only valid on Xbox */
-    reflexive_t<comp_vertex, xbox_variant>   xbox_vertices;
-    reflexive_t<comp_lightmap, xbox_variant> xbox_lightmaps;
-    bl_tag                                   tag;
-
-    /*!
-     * \brief to_header
-     * Uses bsp_magic()
-     * \return
-     */
-    inline reflexive_t<header> to_header() const
-    {
-        return {1, header_offset};
-    }
-};
-
-struct info
-{
-    u32      offset;
-    u32      size;
-    u32      magic;
-    u32      zero;
-    tagref_t tag;
-
-    inline magic_data_t bsp_magic(magic_data_t const& map_magic) const
-    {
-        return {map_magic.base_ptr, magic - offset, map_magic.max_size};
-    }
-
-    inline section const& to_bsp(magic_data_t const& magic) const
-    {
-        return *C_RCAST<section const*>(magic.base_ptr + offset);
-    }
-};
-
-struct submesh_header
-{
-    using pc_vertex   = vert::vertex<vert::uncompressed>;
-    using xbox_vertex = vert::vertex<vert::compressed>;
-
-    struct dist_light
-    {
-        Vecf3 color;
-        Vecf3 direction;
-    };
-
-    tagref_t                             shader;
-    u32                                  unknown1;
-    u32                                  mesh_index_offset; /*!< Mesh indices */
-    u32                                  mesh_index_count;
-    Vecf3                                centroid;
-    Vecf3                                ambient_col;
-    u32                                  dist_light_count;
-    Array<dist_light, 2>                 dist_lights;
-    Vecf3                                unknown2;
-    Vecf4                                reflect_tint;
-    Vecf3                                shadow_dir;
-    Vecf3                                shadow_color;
-    Vecf4                                plane;
-    u32                                  breakable_surface;
-    u32                                  unknown_count3;
-    reflexive_t<pc_vertex, xbox_variant> pc_vertices_data;
-    u32                                  memory_vertex_offset;
-    u32                                  vert_reflexive;
-    u32                                  unknown_always_3;
-    reflexive_t<xbox_vertex, xbox_variant> xbox_vertices_data;
-    u32                                    memory_lightmap_offset;
-    u32                                    lightmap_vert_reflexive;
-    u32                                    unknown_zero[2];
-    u32                                    unknown_offset1;
-    u32                                    pc_vertex_data_offset;
-    u32                                    unkown_zero1;
-    u32                                    comp_vertex_buffer_size;
-    u32                                    unkown_zero2;
-    u32                                    unknown_offset2;
-    u32                                    vertex_data_offset;
-    u32                                    unkown_zero3;
-
-    inline reflexive_t<pc_vertex, xbox_variant> pc_vertices() const
-    {
-        auto base = pc_vertices_data;
-        base.offset += pc_vertex_data_offset;
-        return base;
-    }
-
-    inline reflexive_t<xbox_vertex, xbox_variant> xbox_vertices() const
-    {
-        auto base = xbox_vertices_data;
-        base.offset += vertex_data_offset;
-        return base;
-    }
-
-    inline reflexive_t<vert::face> pc_indices(header const& head) const;
-
-    inline u32 index_offset() const
-    {
-        return mesh_index_offset * sizeof(vert::face);
-    }
-    inline u32 base_vertex() const
-    {
-        return mesh_index_offset;
-    }
-    inline u32 index_count() const
-    {
-        return mesh_index_count;
-    }
-};
-
-struct alignas(4) submesh_group
-{
-    u16 lightmap_idx;
-    /* Intentionally leave 2 bytes here for padding */
-    u32                         unknown[4];
-    reflexive_t<submesh_header> material;
-};
-
-struct subcluster
-{
-    bounding_box            bounds;
-    reflexive_t<vert::face> indices;
-};
-
-struct predicted_resource
-{
-    u16 unknown[2];
-    u32 tag_id;
-};
-
-struct cluster_portal
-{
-    i16                front_cluster;
-    i16                back_cluster;
-    i32                plane_index;
-    Vecf3              centroid;
-    scalar             bound_radius;
-    u32                unknown[7];
-    reflexive_t<Vecf3> vertices;
-};
-
-struct cluster
-{
-    i16                             sky;
-    i16                             fog;
-    i16                             background_sound;
-    i16                             sound_env;
-    i16                             weather;
-    i16                             transition_bsp;
-    u32                             unknown1[7];
-    reflexive_t<predicted_resource> predicted_resources;
-    reflexive_t<subcluster>         sub_clusters;
-    u32                             unknown2[7];
-    reflexive_t<i16>                portals;
-};
-
-struct breakable_surface
-{
-    u32 _1;
-    u32 _2;
-    u32 offset;
-    u32 offset2;
-    u32 count;
-    u32 padding[7];
-};
-
-struct header
-{
-    tagref_t                       lightmaps;
-    u32                            unknown1[37];
-    reflexive_t<shader_desc>       shaders;
-    reflexive_t<byte_t>            collision_header;
-    reflexive_t<byte_t>            nodes;
-    bounding_box                   world_bounds;
-    reflexive_t<byte_t>            leaves;
-    reflexive_t<byte_t>            leaf_surfaces;
-    reflexive_t<vert::face>        submesh_tri_indices;
-    reflexive_t<submesh_group>     submesh_groups;
-    reflexive_t<byte_t>            chunk_10;
-    reflexive_t<byte_t>            chunk_11;
-    reflexive_t<byte_t>            chunk_12;
-    reflexive_t<cluster>           clusters;
-    i32                            cluster_data_size;
-    u32                            unknown2;
-    reflexive_t<byte_t>            cluster_data;
-    reflexive_t<cluster_portal>    cluster_portals;
-    reflexive_t<byte_t>            chunk_16a;
-    reflexive_t<breakable_surface> breakables_surfaces;
-    reflexive_t<byte_t>            fog_planes;
-    reflexive_t<byte_t>            fog_regions;
-    reflexive_t<byte_t>            fog_weather_pallette;
-    reflexive_t<byte_t>            chunk_16f;
-    reflexive_t<byte_t>            chunk_16g;
-    reflexive_t<byte_t>            weather;
-    reflexive_t<byte_t>            weather_polyhedra;
-    reflexive_t<byte_t>            chunk_19;
-    reflexive_t<byte_t>            chunk_20;
-    reflexive_t<byte_t>            pathfinding_surface;
-    reflexive_t<byte_t>            chunk_24;
-    reflexive_t<byte_t>            background_sound;
-    reflexive_t<byte_t>            sound_env;
-    i32                            sound_pas_data_size;
-    u32                            unknown3;
-    reflexive_t<byte_t>            sound_pas_data;
-    reflexive_t<byte_t>            chunk_26;
-    reflexive_t<byte_t>            chunk_27;
-    reflexive_t<byte_t>            markers;
-    reflexive_t<byte_t>            clutter_objects; /*!< aka detail_objects */
-    reflexive_t<byte_t>            runtime_decals;
-    u32                            unkown4[9];
-
-    inline reflexive_t<vert::face> all_indices() const
-    {
-        return submesh_tri_indices;
-    }
-};
-
-inline reflexive_t<vert::face> submesh_header::pc_indices(
-    header const& head) const
-{
-    return {index_count(), index_offset() + head.submesh_tri_indices.offset, 0};
-}
-
-} // namespace bsp
-
 /*!
  * \brief A Blam! scenario descriptor
  */
@@ -847,13 +575,13 @@ struct scenario
         u32                    padding2[59];
     };
 
-    struct /* 324-byte block */
+    struct /* 324-byte block, object spawns */
     {
         reflexive_t<object_name>    object_names;
         reflex_group<scenery_spawn> scenery;
-        reflex_group<biped>         bipeds;
+        reflex_group<biped_spawn>   bipeds;
         reflex_group<vehicle_spawn> vehicles;
-        reflex_group<equip>         equips;
+        reflex_group<equip_spawn>   equips;
         reflex_group<weapon_spawn>  weapon_spawns;
         reflexive_t<device_group>   device_groups;
         reflex_group<machine>       machines;

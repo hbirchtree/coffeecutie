@@ -403,7 +403,7 @@ inline CGenum to_enum(PixFmt f, PixFlg e, CompFlags d)
             /* BC1 */
             if(feval(e, PixFlg::RGBA))
                 return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            else if(feval(e, PixFlg::RGB))
+            else
                 return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         } else if(d == CompFlags::S3TC_3)
         {

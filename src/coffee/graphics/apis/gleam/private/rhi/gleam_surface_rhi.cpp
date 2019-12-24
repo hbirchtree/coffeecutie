@@ -572,11 +572,11 @@ void GLEAM_Surface3D_Base::allocate(Size3 size, PixCmp c)
 }
 
 void GLEAM_Surface3D_Base::upload(
-    PixDesc       pfmt,
-    Size3 const&  size,
-    Bytes const&  data,
-    Point3 const& offset,
-    u32           mip)
+    PixDesc                     pfmt,
+    Size3 const&                size,
+    semantic::BytesConst const& data,
+    Point3 const&               offset,
+    u32                         mip)
 {
     auto msz = size.convert<u32>();
     auto mof = offset.convert<u32>();
@@ -679,12 +679,12 @@ void GLEAM_Surface3D_Base::upload(
 }
 
 void GLEAM_Surface3D_Base::upload(
-    BitFmt        fmt,
-    PixCmp        comp,
-    Size3 const&  size,
-    Bytes const&  data,
-    Point3 const& offset,
-    u32           mip)
+    BitFmt            fmt,
+    PixCmp            comp,
+    Size3 const&      size,
+    BytesConst const& data,
+    Point3 const&     offset,
+    u32               mip)
 {
     upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
 }

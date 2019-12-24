@@ -185,6 +185,14 @@ STATICINLINE GLEAM_SamplerHandle SamplerPrepareTexture(
 
     if(!GLEAM_FEATURES.gles20)
         h.m_sampler = m_handle.hnd;
+
+#endif
+#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
+
+    if(m_surface->m_flags & GLEAM_API::TextureBindless)
+        h.texture64 =
+            glGetTextureSamplerHandleARB(m_surface->m_handle.hnd, m_handle.hnd);
+
 #endif
 
     return h;
