@@ -2,7 +2,7 @@ set ( CMAKE_SYSTEM_NAME Linux )
 set ( CMAKE_SYSTEM_PROCESSOR arm )
 set ( CMAKE_SYSTEM_VERSION 1 )
 
-set ( TOOLCHAIN_PREFIX "arm-linux-gnueabihf" )
+set ( TOOLCHAIN_PREFIX "arm-none-linux-gnueabihf" )
 
 set ( RASPBERRY TRUE )
 
@@ -10,7 +10,7 @@ set ( RASPBERRY_SDK "${RASPBERRY_SDK}" CACHE PATH "" )
 
 set ( SYSROOT_PREFIX "" )
 set ( CMAKE_SYSROOT
-    "/cross-rpi/gcc-arm-8.3-2019.03-x86_64-${TOOLCHAIN_PREFIX}/${TOOLCHAIN_PREFIX}/libc" )
+    "/cross-rpi/gcc-arm-9.2-2019.12-x86_64-${TOOLCHAIN_PREFIX}/${TOOLCHAIN_PREFIX}/libc" )
 
 set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
 set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
