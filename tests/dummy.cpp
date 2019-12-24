@@ -37,7 +37,9 @@
 #endif
 
 /* Blam! integration */
+#if defined(FEATURE_ENABLE_Blam)
 #include <blam/cblam.h>
+#endif
 
 /* STB-related APIs */
 #if defined(FEATURE_ENABLE_Audio)

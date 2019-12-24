@@ -21,7 +21,8 @@ constexpr u16 terminator = 0xFFFF;
 
 enum class opcode_t : i16
 {
-    invalid = -1,
+    sentinel = -13622,
+    invalid  = -1,
 
     /* Control flow */
     begin,
@@ -982,9 +983,10 @@ struct bytecode_pointer
         return out;
     }
 
-    opcode_layout const* base;
-    opcode_layout const* current;
-    u16                  current_ip;
+    opcode_layout const*  base;
+    opcode_layout const*  current;
+    u16                   current_ip;
+    stl_types::Deque<u16> link_register;
 
     inline u16 num_params() const
     {
@@ -1020,6 +1022,16 @@ struct bytecode_pointer
     inline bool finished() const
     {
         return current_ip == std::numeric_limits<u16>::max();
+    }
+    inline void jump(u16 ip)
+    {
+        link_register.push_back(current_ip);
+        current_ip = ip;
+    }
+    inline void return_()
+    {
+        current_ip = link_register.back();
+        link_register.pop_back();
     }
 };
 

@@ -14,3 +14,11 @@ coffee_application (
     LIBRARIES
     Blam Core Image DropinRenderer GLeamRHI
     )
+
+coffee_application (
+    TARGET BlamScripting
+    TITLE "Blam Scripting"
+    SOURCES scripting.cpp
+    LIBRARIES
+    Blam Core
+    )
