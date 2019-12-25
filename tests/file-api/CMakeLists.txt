@@ -40,8 +40,14 @@ coffee_test (
     TARGET Unit_Url01
     TITLE "Cu_FileUrl"
     SOURCES test10.cpp
-    LIBRARIES Core ASIO
+    LIBRARIES Core
     )
+
+if(TARGET ASIO)
+    target_link_libraries ( Cu_FileUrl PRIVATE
+        ASIO
+        )
+endif()
 
 coffee_add_test ( Unit_Bytes01 "Cu_Bytes"
     test11.cpp Core

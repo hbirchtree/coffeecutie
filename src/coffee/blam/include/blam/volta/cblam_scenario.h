@@ -649,7 +649,7 @@ struct scenario
     }
     inline string_segment_ref string_segment(magic_data_t const& magic) const
     {
-        constexpr Array<char, 2> terminator = {{0, 0}};
+        constexpr Array<char, 4> terminator = {{0, 0, 0, 0}};
 
         auto string_base = script_string_segment.data(magic);
         auto end         = C_RCAST<const char*>(::memmem(

@@ -1015,23 +1015,41 @@ struct bytecode_pointer
         if(current->branching())
         {
             current_ip = current->next_op.ip + 1;
-            current    = &base[current->next_op.ip + 1];
+            update_opcode();
         } else
             current_ip = current->next_op.ip;
+    }
+    inline void update_opcode()
+    {
+        current = &base[current_ip];
     }
     inline bool finished() const
     {
         return current_ip == std::numeric_limits<u16>::max();
     }
+    inline void call(u16 ip)
+    {
+        /* First, rewind to the start of the function */
+        /* TODO: Find out how to properly do this */
+
+        while(base[--ip].opcode != opcode_t::invalid)
+            ;
+
+        ip++;
+
+        jump(ip);
+    }
     inline void jump(u16 ip)
     {
         link_register.push_back(current_ip);
         current_ip = ip;
+        update_opcode();
     }
     inline void return_()
     {
         current_ip = link_register.back();
         link_register.pop_back();
+        update_opcode();
     }
 };
 

@@ -50,6 +50,13 @@ coffee_library (
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 
+target_precompile_headers ( ASIO PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/http.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/net_resource.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/tcp_socket.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/udp_socket.h>
+    )
+
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 
 header_install (

@@ -276,6 +276,8 @@ testing.linux.*:
   =compiler: GCC 6+
   =toolchain: none-cube-powerpc-eabi_linux.toolchain.cmake
   =container: hbirch/devkit:ppc
+  +cmake-opts:
+    - -DBUILD_GLEAM=OFF
 
 (ubuntu.*|coverage|testing.linux|docs):
   =build.prettyname: Ubuntu
