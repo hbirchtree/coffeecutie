@@ -8,6 +8,7 @@
 #include <coffee/core/types/rgba.h>
 #include <coffee/core/types/size.h>
 #include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/functional_types.h>
 #include <peripherals/typing/enum/graphics/texture_types.h>
 #include <platforms/types/vector_types.h>
 

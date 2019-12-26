@@ -392,7 +392,8 @@ enum class opcode_t : i16
     fade_in = 297,
     fade_out,
 
-    cinematic_start = 300,
+    cinematic_start_ = 299,
+    cinematic_start  = 300,
     cinematic_stop,
     cinematic_skip_start_internal,
     cinematic_skip_stop_internal,
@@ -817,7 +818,7 @@ struct script_header : stl_types::non_copy
     u16 unknown[7];
 };
 
-struct opcode_layout : stl_types::non_copy
+struct opcode_layout
 {
     u16 index;
     union
@@ -835,10 +836,10 @@ struct opcode_layout : stl_types::non_copy
     u32 data_ptr;
     union
     {
-        u8     data_bytes[4];
-        u16    data_short[2];
-        u32    data_int;
-        scalar data_real;
+        scalar        data_real;
+        u32           data_int;
+        Array<u16, 2> data_short;
+        Array<u8, 4>  data_bytes;
     };
 
     inline bool valid() const
@@ -855,8 +856,120 @@ struct opcode_layout : stl_types::non_copy
         return next_op.ip != std::numeric_limits<u16>::max();
     }
 
-    inline opcode_layout const& next(script_ref const* script) const;
+    inline u8 to_bool() const
+    {
+        if(param_type != type_t::bool_)
+            Throw(undefined_behavior("invalid bool"));
+
+        return data_bytes[0];
+    }
+    inline u16 to_u16() const
+    {
+        if(param_type != type_t::short_)
+            Throw(undefined_behavior("invalid u16"));
+
+        return data_short[0];
+    }
+    inline u32 to_u32() const
+    {
+        if(param_type != type_t::long_)
+            Throw(undefined_behavior("invalid u32"));
+
+        return data_int;
+    }
+    inline scalar to_real() const
+    {
+        if(param_type != type_t::real_)
+            Throw(undefined_behavior("invalid real"));
+
+        return data_real;
+    }
+    inline cstring to_str(string_segment_ref const& string_seg) const
+    {
+        if(param_type != type_t::string_)
+            Throw(undefined_behavior("invalid string"));
+
+        return string_seg.at(data_ptr).str();
+    }
+
+    /* Value types for return */
+    static opcode_layout void_()
+    {
+        opcode_layout out;
+        out.ret_type = out.param_type = type_t::void_;
+        out.exp_type                  = expression_t::expression;
+        out.opcode                    = opcode_t::invalid;
+        out.data_int                  = 0;
+        out.next_op.ip                = terminator;
+        out.next_op.salt              = terminator;
+        out.data_ptr                  = 0;
+        return out;
+    }
+    static opcode_layout typed_(type_t rtype)
+    {
+        opcode_layout out = void_();
+        out.ret_type = out.param_type = rtype;
+        return out;
+    }
 };
+
+constexpr u16 variable_length_params = 0xFF;
+
+inline u16 param_count(opcode_layout const& op)
+{
+    using o = opcode_t;
+
+    if(op.exp_type == expression_t::expression)
+        return 0;
+
+    switch(op.opcode)
+    {
+    case o::cinematic_skip_start_internal:
+    case o::cinematic_skip_stop_internal:
+    case o::game_save:
+    case o::game_revert:
+    case o::game_saving:
+    case o::game_reverted:
+    case o::game_save_totally_unsafe:
+    case o::players:
+    case o::begin:
+    case o::cinematic_start_:
+    case o::cinematic_start:
+    case o::cinematic_stop:
+        return 0;
+
+    case o::sleep:
+    case o::ai_dialogue_triggers:
+    case o::list_count:
+    case o::list_get:
+    case o::not_:
+    case o::unit:
+    case o::print_:
+        return 1;
+
+    case o::add_:
+    case o::sub_:
+    case o::mul_:
+    case o::div_:
+    case o::or_:
+    case o::and_:
+    case o::set_:
+    case o::player_effect_set_max_rumble:
+    case o::player_effect_start:
+    case o::real_random_range:
+        return 2;
+
+    case o::player_effect_set_max_translation:
+    case o::player_effect_set_max_rotation:
+        return 3;
+
+    case o::sleep_until:
+        return variable_length_params;
+
+    default:
+        Throw(undefined_behavior("param count not defined"));
+    }
+}
 
 struct script_ref;
 
@@ -952,12 +1065,6 @@ inline opcode_iterator::opcode_iterator(
 {
 }
 
-inline opcode_layout const& opcode_layout::next(script_ref const* script) const
-{
-    return *(
-        C_RCAST<opcode_layout const*>(script->opcode_base()) + next_op.ip + 1);
-}
-
 template<typename T>
 inline stl_types::CString to_string(T val)
 {
@@ -972,8 +1079,26 @@ inline stl_types::CString to_string(T val)
 #endif
 }
 
+struct bytecode_pointer;
+
+using opcode_handler_t =
+    stl_types::Function<opcode_layout(bytecode_pointer&, opcode_layout const&)>;
+
 struct bytecode_pointer
 {
+    struct result_t
+    {
+        type_t type;
+        union
+        {
+            scalar        real_;
+            u32           long_;
+            Array<u16, 2> short_;
+            Array<u8, 4>  byte_;
+        };
+        u32 ptr;
+    };
+
     static bytecode_pointer start_from(opcode_layout const* base, u16 ip = 0x0)
     {
         bytecode_pointer out;
@@ -983,10 +1108,15 @@ struct bytecode_pointer
         return out;
     }
 
-    opcode_layout const*  base;
-    opcode_layout const*  current;
-    u16                   current_ip;
+    opcode_layout const* base;
+    opcode_layout const* current;
+    u16                  current_ip;
+
     stl_types::Deque<u16> link_register;
+    /*!< Return addresses, for calling procedures */
+
+    stl_types::Vector<opcode_layout> value_stack;
+    /*!< Values for consumption by functions */
 
     inline u16 num_params() const
     {
@@ -1003,12 +1133,100 @@ struct bytecode_pointer
         if(i > (last_param - first_param + 1))
             Throw(undefined_behavior("param out of bounds"));
 
-        auto const& out = current[2 + i];
+        auto const& out = value_stack.at(value_stack.size() - i - 1);
 
-        if(type != out.param_type)
+        if(type != out.ret_type)
             Throw(undefined_behavior("param has wrong type"));
 
         return out;
+    }
+    inline opcode_layout evaluate(
+        opcode_layout const& op, opcode_handler_t const& handler)
+    {
+        opcode_layout out;
+        switch(op.exp_type)
+        {
+        case expression_t::expression:
+        {
+            switch(op.param_type)
+            {
+            case type_t::real_:
+                out.data_real = op.data_real;
+                break;
+            case type_t::long_:
+                out.data_int = op.data_int;
+                break;
+            case type_t::short_:
+                out.data_short = op.data_short;
+                break;
+            case type_t::bool_:
+                out.data_bytes = op.data_bytes;
+                break;
+            default:
+                out.data_ptr = op.data_ptr;
+                break;
+            }
+            out.ret_type = out.param_type = op.param_type;
+
+            out.next_op.ip   = terminator;
+            out.next_op.salt = terminator;
+
+            break;
+        }
+        case expression_t::group:
+        {
+            auto start_params = value_stack.size();
+            evaluate_params(handler, param_count(op));
+            out             = handler(*this, op);
+            auto end_params = value_stack.size();
+            if(param_count(op) == variable_length_params)
+                pop_params(end_params - start_params);
+            else
+                pop_params(param_count(op));
+            break;
+        }
+        case expression_t::global_ref:
+            out = op;
+            break;
+        }
+        return out;
+    }
+    inline void evaluate_params(opcode_handler_t const& handler, u16 num)
+    {
+        if(num == 0)
+            return;
+
+        if(num == variable_length_params)
+        {
+            /* Functions like sleep_until() may take an arbitrary amount of
+             * parameters, but points to the last parameter */
+
+            auto end_addr = current->next_op.ip;
+            jump(current_ip + 2);
+
+            do
+            {
+                value_stack.push_back(evaluate(*current, handler));
+                advance();
+            } while(current_ip <= end_addr);
+
+        } else
+        {
+            auto start_param = value_stack.size();
+            jump(current_ip + 2);
+
+            do
+            {
+                value_stack.push_back(evaluate(*current, handler));
+                advance();
+            } while((value_stack.size() - start_param) < num);
+        }
+
+        return_();
+    }
+    inline void pop_params(u16 num)
+    {
+        value_stack.erase(value_stack.end() - num, value_stack.end());
     }
     inline void advance()
     {
@@ -1029,15 +1247,19 @@ struct bytecode_pointer
     }
     inline void call(u16 ip)
     {
-        /* First, rewind to the start of the function */
-        /* TODO: Find out how to properly do this */
+        /* Function table points to the last opcode of a function, followd by
+         * two opcodes with begin(). The last begin() opcode contains the start
+         * of the function */
+        jump(base[ip + 2].next_op.ip + 1);
+    }
+    inline void jump(opcode_layout const& opcode)
+    {
+        auto end = &opcode;
 
-        while(base[--ip].opcode != opcode_t::invalid)
-            ;
+        if((end - base) < 0)
+            Throw(undefined_behavior("invalid jump"));
 
-        ip++;
-
-        jump(ip);
+        jump(C_FCAST<u16>(end - base));
     }
     inline void jump(u16 ip)
     {
