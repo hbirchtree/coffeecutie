@@ -137,12 +137,14 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
     for(auto const& geom : model[0].geometries.data(map.magic))
     {
         u32 j = 0;
-        for(auto const& mesh : geom.mesh_headers.data(map.magic))
+        for(auto const& mesh : geom.meshes<blam::pc_variant>(map.magic))
         {
-            auto vertex_seg = mesh.vertex_segment(*map.tags);
-            auto index_seg  = mesh.index_segment(*map.tags);
-            auto vertex_buf = mesh.vertex_segment(*map.tags).data(vertex_magic);
-            auto index_buf  = mesh.index_segment(*map.tags).data(vertex_magic);
+            auto vertex_seg = mesh.data.vertex_segment(*map.tags);
+            auto index_seg  = mesh.data.index_segment(*map.tags);
+            auto vertex_buf =
+                mesh.data.vertex_segment(*map.tags).data(vertex_magic);
+            auto index_buf =
+                mesh.data.index_segment(*map.tags).data(vertex_magic);
             cDebug("Mesh!");
 
             CString out_name = output_name + str::convert::to_string(i) + "_" +
