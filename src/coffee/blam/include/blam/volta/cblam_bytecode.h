@@ -12,680 +12,23 @@
 #include "magic_enum.hpp"
 #endif
 
+#include "cblam_bytecode_opcodes.h"
+
 namespace blam {
 namespace hsc {
 
+template<typename BC>
 struct script_ref;
 
 constexpr u16 terminator = 0xFFFF;
 
-enum class opcode_t : i16
-{
-    sentinel = -13622,
-    invalid  = -1,
-
-    /* Control flow */
-    begin,
-    begin_random,
-    if_,
-    cond,
-    set_,
-
-    /* Logic */
-    and_,
-    or_,
-
-    /* Arithmetic */
-    add_,
-    sub_,
-    mul_,
-    div_,
-
-    min_,
-    max_,
-
-    equal,
-    nequal,
-    greater,
-    less,
-    gequals,
-    lequals,
-
-    sleep = 19,
-    sleep_until,
-    wake,
-    inspect,
-
-    unit,
-    sound,
-    effect,
-
-    //    ai_debug_comms_suppress,
-    //    ai_debug_comms_ignore,
-    //    ai_debug_comms_focus,
-
-    not_ = 27,
-
-    print_,
-
-    players,
-
-    volume_teleport_players_not_inside,
-    volume_test_object,
-    volume_test_objects,
-    volume_test_objects_all,
-
-    object_teleport,
-    object_set_facing,
-    object_set_shield,
-    object_set_permutation,
-    object_create,
-    object_destroy,
-    object_create_anew,
-    object_create_containing,
-    object_create_anew_containing,
-    object_destroy_containing,
-    object_destroy_all,
-
-    list_get,
-    list_count = 46,
-
-    effect_new,
-    effect_new_on_object_marker,
-
-    damage_new,
-    damage_object,
-
-    objects_can_see_object,
-    objects_can_see_flag,
-    objects_delete_by_definition,
-
-    sound_set_gain,
-    sound_get_gain,
-
-    script_recompile,
-    help,
-
-    _dummy_1,
-
-    random_range,
-    real_random_range,
-
-    numeric_countdown_timer_set,
-    numeric_countdown_timer_get,
-    numeric_countdown_timer_stop,
-    numeric_countdown_timer_restart,
-
-    breakable_surfaces_enable,
-
-    recording_play,
-    recording_play_and_delete,
-    recording_play_and_hover,
-    recording_kill,
-    recording_time,
-
-    object_set_ranged_attack_inhibited,
-    object_set_melee_attack_inhibited,
-    objects_dump_mem,
-    object_set_collidable,
-    object_set_scale,
-    objects_attach,
-    objects_detach,
-
-    garbage_collect_now,
-
-    object_cannot_take_damage,
-    object_can_take_damage,
-
-    object_beautify,
-
-    objects_predict,
-    object_type_predict,
-
-    object_pvs_activate,
-    object_pvs_set_object,
-    object_pvs_set_camera,
-    object_pvs_clear,
-
-    render_lights,
-    scenery_get_animation_time,
-    scenery_animation_start,
-    scenery_animation_start_at_frame,
-
-    render_effects,
-
-    unit_can_blink,
-    unit_open,
-    unit_close,
-    unit_kill,
-    unit_kill_silent,
-    unit_get_custom_animation_time,
-    unit_stop_custom_animation,
-    unit_custom_animation_at_frame,
-    custom_animation,
-    custom_animation_list,
-    unit_is_playing_custom_animation,
-    unit_aim_without_turning,
-    unit_set_emotion,
-    unit_set_enterable_by_player,
-    unit_enter_vehicle,
-    vehicle_test_seat_list,
-    vehicle_test_seat,
-    unit_set_emotion_animation,
-    unit_exit_vehicle,
-    unit_set_maximum_vitality,
-    units_set_maximum_vitality,
-    unit_set_current_vitality,
-    units_set_current_vitality,
-    vehicle_load_magic,
-    vehicle_unload,
-    magic_seat_name,
-    unit_set_seat,
-    vehicle_riders,
-    vehicle_driver,
-    vehicle_gunner,
-    unit_get_shield,
-    unit_get_health,
-    unit_get_total_grenade_count,
-    unit_has_weapon,
-    unit_has_weapon_readied,
-    unit_doesnt_drop_items,
-    unit_solo_player_integrated_night_vision_is_active,
-    unit_impervious,
-    unit_suspended,
-    units_set_desired_flashlight_state,
-    unit_set_desired_flashlight_state,
-    unit_get_current_flashlight_state,
-
-    _dummy_135,
-
-    device_set_never_appears_locked,
-    device_get_power,
-    device_set_power,
-    device_set_position,
-    device_get_position,
-    device_set_position_immediate,
-    device_group_get,
-    device_group_set,
-    device_group_set_immediate,
-    device_one_sided_set,
-    device_operates_automatically_set,
-    device_group_change_only_once_more_set,
-
-    breakable_surfaces_reset,
-
-    cheat_all_powerups,
-    cheat_all_weapons,
-    cheat_spawn_warthog,
-    cheat_all_vehicles,
-    cheat_teleport_to_camera,
-    cheat_active_camouflage,
-    cheat_active_camouflage_local_player,
-    cheats_load,
-
-    ai_free,
-    ai_free_units,
-    ai_attach,
-    ai_attach_free,
-    ai_detach,
-    ai_place,
-    ai_kill,
-    ai_kill_silent,
-    ai_erase,
-    ai_erase_all,
-    ai_select,
-    ai_deselect,
-    ai_spawn_actor,
-    ai_set_respawn,
-    ai_set_deaf = 171,
-    ai_set_blind,
-
-    ai_magically_see_encounter,
-    ai_magically_see_players,
-
-    ai_timer_start,
-    ai_timer_expire,
-    ai_retreat,
-    ai_attack,
-    ai_defend,
-    ai_maneuver_enable,
-    ai_maneuver,
-    ai_migrate_and_speak,
-    ai_migrate,
-    ai_migrate_by_unit,
-    ai_living_fraction,
-    ai_allegiance,
-    ai_allegiance_remove,
-    ai_living_count,
-    ai_strength = 190,
-    ai_swarm_count,
-    ai_nonswarm_count,
-    ai_actors,
-    ai_go_to_vehicle,
-    ai_go_to_vehicle_override,
-    ai_going_to_vehicle,
-    ai_exit_vehicle,
-    ai_braindead,
-    ai_braindead_by_unit,
-    ai_prefer_target,
-    ai_disregard = 200,
-
-    ai_renew,
-    ai_teleport_to_starting_location,
-
-    _dummy_203,
-    _dummy_204,
-
-    ai_try_to_fight_nothing = 205,
-    ai_try_to_fight,
-    ai_try_to_fight_player,
-
-    ai_command_list = 208,
-    ai_command_list_by_unit,
-    ai_command_list_advance,
-    ai_command_list_advance_by_unit,
-    ai_command_list_status,
-    ai_is_attacking,
-    ai_force_active,
-    ai_force_active_by_unit,
-    ai_set_return_state,
-    ai_set_current_state,
-    ai_playfight,
-    ai_status,
-
-    ai_reconnect = 220,
-    ai_vehicle_encounter,
-    ai_vehicle_enterable_distance,
-    ai_vehicle_enterable_team,
-    ai_vehicle_enterable_actor_type,
-    ai_vehicle_enterable_actors,
-    ai_vehicle_enterable_disable,
-    ai_look_at_object,
-    ai_stop_looking,
-    ai_automatic_migration_target,
-
-    ai_follow_target_players = 230,
-    ai_follow_target_unit,
-    ai_follow_target_ai,
-    ai_follow_distance,
-
-    ai_conversation,
-    ai_conversation_stop,
-    ai_conversation_advance,
-    ai_conversation_line,
-    ai_conversation_status,
-    ai_link_activation,
-    ai_berserk,
-    ai_set_team,
-    ai_allow_charge,
-    ai_allow_dormant,
-    ai_allegiance_broken,
-
-    camera_control = 246,
-    camera_set,
-    camera_set_relative,
-    camera_set_animation,
-    camera_set_first_person,
-    camera_set_dead,
-    camera_time,
-
-    //    debug_camera_load,
-    //    debug_camera_save,
-
-    game_speed = 254,
-    game_time,
-    game_variant,
-    game_difficulty_get,
-    game_difficulty_get_real,
-
-    profile_service_clear_timers,
-
-    map_reset,
-    map_name,
-    multiplayer_map_name,
-
-    game_difficulty_set,
-
-    crash,
-
-    switch_bsp = 267,
-    structure_bsp_index,
-
-    version,
-    playback,
-    quit,
-
-    /* Unconfirmed */
-    texture_cache_flush,
-    sound_cache_flush,
-    sound_cache_dump_to_file,
-
-    debug_memory,
-    debug_memory_by_file,
-    debug_memory_for_file,
-    debug_tags,
-
-    profile_reset,
-    profile_dump,
-    profile_activate,
-    profile_deactivate,
-    profile_graph_toggle,
-
-    debug_pvs,
-
-    radiosity_start,
-    radiosity_save,
-    radiosity_debug_point,
-
-    ai                   = 283,
-    ai_dialogue_triggers = 289,
-    ai_grenades,
-    ai_lines,
-
-    /* Unconfirmed */
-    ai_debug_sound_point_set,
-    ai_debug_vocalize,
-    ai_debug_teleport_to,
-    ai_debug_speak,
-    ai_debug_speak_list,
-
-    fade_in = 297,
-    fade_out,
-
-    cinematic_start_ = 299,
-    cinematic_start  = 300,
-    cinematic_stop,
-    cinematic_skip_start_internal,
-    cinematic_skip_stop_internal,
-    cinematic_abort,
-    cinematic_show_letterbox,
-    cinematic_set_title,
-    cinematic_set_title_delayed,
-    cinematic_suppress_bsp_object_creation,
-
-    //    attract_mode_start,
-
-    game_won,
-    game_lost,
-    game_safe_to_save,
-    game_all_quiet,
-    game_safe_to_speak,
-    game_is_cooperative,
-    game_save,
-    game_save_cancel,
-    game_save_no_timeout,
-    game_save_totally_unsafe,
-    game_saving,
-    game_revert,
-    game_reverted,
-
-    //    core_save,
-    //    core_save_name,
-    //    core_load,
-    //    core_load_at_startup,
-    //    core_load_name,
-
-    //    game_skip_ticks,
-    sound_impulse_start_ = 323,
-
-    sound_impulse_predict        = 329,
-    sound_looping_set_alternate_ = 329,
-    sound_impulse_start          = 330,
-    sound_impulse_time           = 331,
-    sound_impulse_stop           = 332,
-    sound_looping_predict        = 333,
-    sound_looping_start          = 334,
-    sound_looping_stop           = 335,
-    sound_looping_set_scale      = 336,
-    sound_looping_set_alternate  = 337,
-
-    debug_sounds_enable,
-    debug_sounds_distances,
-    debug_sounds_wet,
-
-    sound_enable,
-    sound_set_master_gain,
-    sound_get_master_gain,
-    sound_set_music_gain,
-    sound_get_music_gain,
-    sound_set_effects_gain,
-    sound_get_effects_gain,
-    sound_class_set_gain,
-
-    vehicle_hover,
-
-    players_unzoom_all,
-    player_enable_input,
-    player_camera_control,
-    player_action_test_reset,
-    player_action_test_primary_trigger,
-    player_action_test_grenade_trigger,
-    player_action_test_zoom,
-    player_action_test_action,
-    player_action_test_accept,
-    player_action_test_back,
-    player_action_test_look_relative_up,
-    player_action_test_look_relative_down,
-    player_action_test_look_relative_left,
-    player_action_test_look_relative_right,
-    player_action_test_look_relative_all_directions,
-    player_action_test_move_relative_all_directions,
-    player_add_equipment,
-    debug_teleport_player,
-
-    show_hud = 369,
-    show_hud_help_text,
-    enable_hud_help_flash,
-    hud_help_flash_restart,
-
-    activate_nav_point_flag,
-    activate_nav_point_object,
-    activate_team_nav_point_flag,
-    activate_team_nav_point_object,
-    deactivate_nav_point_flag,
-    deactivate_nav_point_object,
-    deactivate_team_nav_point_flag,
-    deactivate_team_nav_point_object,
-    hud_team_icon_set_pos,
-    hud_team_icon_set_scale,
-    hud_team_background_set_pos,
-    hud_team_background_set_scale,
-
-    cls,
-
-    connect,
-    hammer_begin,
-    hammer_stop,
-
-    network_server_dump,
-    network_client_dump,
-    net_graph_clear,
-    net_graph_show,
-
-    play_update_history,
-    show_player_update_stats,
-
-    message_metrics_clear,
-    message_metrics_dump,
-
-    error_overflow_suppression,
-
-    structure_lens_flares_place,
-
-    player_effect_set_max_translation = 400,
-    player_effect_set_max_rotation,
-    player_effect_set_max_rumble,
-    player_effect_start,
-    player_effect_stop,
-
-    hud_show_health,
-    hud_blink_health,
-    hud_show_shield,
-    hud_blink_shield,
-    hud_show_motion_sensor,
-    hud_blink_motion_sensor,
-    hud_show_crosshair,
-    hud_clear_messages,
-    hud_set_help_text,
-    hud_set_objective_text,
-
-    hud_set_timer_time,
-    hud_set_timer_warning_time,
-    hud_set_timer_position,
-    show_hud_timer,
-    pause_hud_timer,
-    hud_get_timer_ticks,
-    time_code_show,
-    time_code_start,
-    time_code_reset,
-
-    reload_shader_transparent_chicago,
-    rasterizer_reload_effects,
-    set_gamma,
-    rasterizer_fixed_function_ambient,
-    rasterizer_decals_flush,
-    rasterizer_fps_accumulate,
-    rasterizer_model_ambient_reflection_tint,
-    rasterizer_lights_reset_for_new_map,
-
-    script_screen_effect_set_value,
-
-    cinematic_screen_effect_start,
-    cinematic_screen_effect_set_convolution,
-    cinematic_screen_effect_set_filter,
-    cinematic_screen_effect_set_filter_desaturation_tint,
-    cinematic_screen_effect_set_video,
-    cinematic_screen_effect_stop,
-    cinematic_set_near_clip_distance,
-
-    fast_setup_network_server,
-    profile_unlock_solo_levels,
-
-    player0_look_invert_pitch,
-    player0_look_pitch_is_inverted,
-    player0_joystick_set_is_normal = 445,
-
-    ui_widget_show_path,
-    display_scenario_help,
-
-    /* Sound commands */
-    sound_enable_eax,
-    sound_eax_enabled,
-    sound_set_env,
-    sound_enable_hardware,
-    sound_set_supplementary_buffers,
-    sound_get_supplementary_buffers,
-    sound_set_rolloff,
-    sound_set_factor,
-
-    /* Input commands */
-    input_get_joy_count,
-    input_is_joy_active,
-    input_activate_joy,
-    input_deactivate_joy,
-    input_find_joystick,
-    input_show_joystick_info,
-    input_find_default,
-    config_one_control,
-    get_pitch_rate,
-    set_yaw_rate,
-    set_pitch_rate,
-    get_digital_forward_throttle,
-    set_digital_forward_throttle,
-    get_digital_strafe_throttle,
-    set_digital_strafe_throttle,
-    get_digital_yaw_increment,
-    set_digital_yaw_increment,
-    get_digital_pitch_increment,
-    set_digital_pitch_increment,
-    get_mouse_forward_threshold,
-    set_mouse_forward_threshold,
-    get_mouse_strafe_threshold,
-    set_mouse_strafe_threshold,
-    get_mouse_yaw_scale,
-    set_mouse_yaw_scale,
-    get_mouse_pitch_scale,
-    set_mouse_pitch_scale,
-    get_gamepad_forward_threshold,
-    set_gamepad_forward_threshold,
-    get_gamepad_strafe_threshold,
-    set_gamepad_strafe_threshold,
-    get_gamepad_yaw_scale,
-    set_gamepad_yaw_scale,
-    set_gamepad_pitch_scale,
-    bind,
-    unbind,
-    print_binds,
-
-    /* Multiplayer commands */
-    sv_end_game,
-    change_team,
-    sv_mapcycle,
-    sv_mapcycle_begin,
-    sv_mapcycle_add,
-    sv_mapcycle_del,
-    sv_map_next,
-    sv_map_reset,
-    sv_map,
-    rcon,
-    sv_rcon_password,
-    sv_say,
-    sv_players,
-    sv_kick,
-    sv_ban,
-    sv_banlist,
-    sv_unban,
-    sv_parameters_reload,
-    sv_parameters_dump,
-    sv_status,
-    sv_name,
-    sv_password,
-    sv_log_note,
-    sv_log_enabled,
-    sv_log_rotation_threshold,
-    sv_log_echo_chat,
-    profile_load,
-    track_remote_player_position_updates,
-    remote_player_stats,
-    sv_get_player_action_queue_length,
-    thread_sleep,
-    checkpoint_save,
-    checkpoint_load,
-    sv_maplist,
-    sv_gamelist,
-    sv_friendly_fire,
-    sv_timelimit,
-    sv_ban_penalty,
-    sv_tk_grace,
-    sv_tk_cooldown,
-    sv_banlist_file,
-    sv_maxplayers,
-    sv_single_flag_force_reset,
-    sv_motd,
-
-    /* Translated object table commands (?) */
-    oid_watch,
-    oid_dump,
-    oid_status,
-
-    max_opcode,
-};
-
-enum class xbox_opcode_t : i16
-{
-};
-
-enum class pointer_t : u16
-{
-};
-
 enum class script_type_t : u16
 {
-    startup,
-    dormant,
-    continuous,
-    static_,
-    stub,
+    startup,    /*!< Executed at beginning */
+    dormant,    /*!< Script that sleeps until (wake) is called on it */
+    continuous, /*!< Script that runs at every tick */
+    static_,    /*!< Script that may be called like a function */
+    stub,       /*!< Unknown? */
 
 };
 
@@ -732,7 +75,10 @@ enum class function_group_t : u16
 
 enum class type_t : i16
 {
-    nothing = -1,
+    unevaluated = -4,
+    number      = -3,
+    any         = -2,
+    nothing     = -1,
     func_name,
     immediate_val = 2,
     passthrough   = 3,
@@ -741,9 +87,10 @@ enum class type_t : i16
     real_         = 6,
     short_        = 7,
     long_         = 8,
+    string_       = 9,
 
-    /* Not confirmed? */
-    string_,
+    script = 10, /* Used by (wake [script]) */
+
     trigger_vol = 11,
     cutscene_flag,
     cutscene_camera_pnt = 13,
@@ -811,6 +158,24 @@ struct function_declaration : stl_types::non_copy
     u16           index;
     u16           salt;
     u8            padding[52];
+
+    inline bool is_callable() const
+    {
+        return schedule == script_type_t::static_;
+    }
+
+    inline bool is_scheduled() const
+    {
+        switch(schedule)
+        {
+        case script_type_t::startup:
+        case script_type_t::dormant:
+        case script_type_t::continuous:
+            return true;
+        default:
+            return false;
+        }
+    }
 };
 
 struct script_header : stl_types::non_copy
@@ -818,12 +183,13 @@ struct script_header : stl_types::non_copy
     u16 unknown[7];
 };
 
+template<typename Bytecode>
 struct opcode_layout
 {
     u16 index;
     union
     {
-        opcode_t opcode;
+        Bytecode opcode;
         type_t   param_type;
     };
     type_t       ret_type;
@@ -837,16 +203,16 @@ struct opcode_layout
     union
     {
         scalar        data_real;
-        u32           data_int;
-        Array<u16, 2> data_short;
+        i32           data_int;
+        Array<i16, 2> data_short;
         Array<u8, 4>  data_bytes;
     };
 
     inline bool valid() const
     {
         i16 opcode_v   = C_CAST<i16>(opcode);
-        i16 opcode_min = C_CAST<i16>(opcode_t::invalid);
-        i16 opcode_max = C_CAST<i16>(opcode_t::max_opcode);
+        i16 opcode_min = C_CAST<i16>(Bytecode::invalid);
+        i16 opcode_max = C_CAST<i16>(Bytecode::max_opcode);
 
         return opcode_v >= opcode_min && opcode_v < opcode_max;
     }
@@ -856,22 +222,34 @@ struct opcode_layout
         return next_op.ip != std::numeric_limits<u16>::max();
     }
 
+    inline void verify_expression() const
+    {
+        if(exp_type != expression_t::expression)
+            Throw(undefined_behavior("not an expression"));
+    }
+
     inline u8 to_bool() const
     {
+        verify_expression();
+
         if(param_type != type_t::bool_)
             Throw(undefined_behavior("invalid bool"));
 
         return data_bytes[0];
     }
-    inline u16 to_u16() const
+    inline i16 to_u16() const
     {
+        verify_expression();
+
         if(param_type != type_t::short_)
             Throw(undefined_behavior("invalid u16"));
 
         return data_short[0];
     }
-    inline u32 to_u32() const
+    inline i32 to_u32() const
     {
+        verify_expression();
+
         if(param_type != type_t::long_)
             Throw(undefined_behavior("invalid u32"));
 
@@ -879,6 +257,8 @@ struct opcode_layout
     }
     inline scalar to_real() const
     {
+        verify_expression();
+
         if(param_type != type_t::real_)
             Throw(undefined_behavior("invalid real"));
 
@@ -886,6 +266,8 @@ struct opcode_layout
     }
     inline cstring to_str(string_segment_ref const& string_seg) const
     {
+        verify_expression();
+
         if(param_type != type_t::string_)
             Throw(undefined_behavior("invalid string"));
 
@@ -893,19 +275,19 @@ struct opcode_layout
     }
 
     /* Value types for return */
-    static opcode_layout void_()
+    static inline opcode_layout void_()
     {
         opcode_layout out;
         out.ret_type = out.param_type = type_t::void_;
         out.exp_type                  = expression_t::expression;
-        out.opcode                    = opcode_t::invalid;
+        out.opcode                    = Bytecode::invalid;
         out.data_int                  = 0;
         out.next_op.ip                = terminator;
         out.next_op.salt              = terminator;
         out.data_ptr                  = 0;
         return out;
     }
-    static opcode_layout typed_(type_t rtype)
+    static inline opcode_layout typed_(type_t rtype)
     {
         opcode_layout out = void_();
         out.ret_type = out.param_type = rtype;
@@ -915,63 +297,472 @@ struct opcode_layout
 
 constexpr u16 variable_length_params = 0xFF;
 
-inline u16 param_count(opcode_layout const& op)
-{
-    using o = opcode_t;
+namespace signatures {
 
-    if(op.exp_type == expression_t::expression)
-        return 0;
+struct sig_v
+{
+    const type_t return_type;
+    const size_t num_params;
+};
+
+template<type_t RType = type_t::void_, type_t... Params>
+struct sig_t
+{
+    static constexpr type_t return_type = RType;
+    static constexpr auto   parameters  = std::make_tuple(Params...);
+    static constexpr size_t num_parameters =
+        std::tuple_size<decltype(parameters)>::value;
+
+    static inline sig_v value = {return_type, num_parameters};
+
+    static constexpr stl_types::Array<type_t, num_parameters + 1>
+        params_static = stl_types::MkArray(type_t::void_, Params...);
+
+    static inline stl_types::Vector<type_t> params()
+    {
+        return stl_types::Vector<type_t>(
+            params_static.begin() + 1, params_static.end());
+    }
+};
+
+struct param_getter
+{
+    using return_type = stl_types::Vector<type_t>;
+
+    template<typename T>
+    static inline return_type get()
+    {
+        return T::params();
+    }
+};
+
+struct num_getter
+{
+    using return_type = signatures::sig_v;
+
+    template<typename T>
+    static inline return_type get()
+    {
+        return T::value;
+    }
+};
+
+} // namespace signatures
+
+template<typename Bytecode = bc::v1, typename Getter = signatures::num_getter>
+inline typename Getter::return_type opcode_signature(
+    opcode_layout<Bytecode> const& op)
+{
+    using o = Bytecode;
+    using t = type_t;
+
+    using namespace signatures;
 
     switch(op.opcode)
     {
-    case o::cinematic_skip_start_internal:
     case o::cinematic_skip_stop_internal:
-    case o::game_save:
+    case o::cinematic_skip_start_internal:
+    case o::cinematic_start:
+    case o::cinematic_start_:
+    case o::cinematic_stop:
+    case o::cinematic_abort:
     case o::game_revert:
+    case o::game_save:
+    case o::game_save_totally_unsafe:
+    case o::game_save_no_timeout:
+    case o::garbage_collect_now:
+        return Getter::template get<sig_t<>>();
+
+    case o::game_is_cooperative:
     case o::game_saving:
     case o::game_reverted:
-    case o::game_save_totally_unsafe:
-    case o::players:
-    case o::begin:
-    case o::cinematic_start_:
-    case o::cinematic_start:
-    case o::cinematic_stop:
-        return 0;
+    case o::game_won:
+        return Getter::template get<sig_t<t::bool_>>();
 
-    case o::sleep:
-    case o::ai_dialogue_triggers:
-    case o::list_count:
-    case o::list_get:
+    case o::game_difficulty_get:
+        return Getter::template get<sig_t<t::game_difficulty>>();
+    case o::game_difficulty_get_real:
+        return Getter::template get<sig_t<t::game_difficulty>>();
+
+    case o::players:
+        return Getter::template get<sig_t<t::obj_list>>();
+
+        /* Logic, arithmetic */
+    case o::or_:
+    case o::and_:
+    case o::greater:
+    case o::less:
+    case o::lequals:
+    case o::gequals:
+    case o::equal:
+    case o::nequal:
+        return Getter::template get<sig_t<t::bool_, t::bool_, t::bool_>>();
     case o::not_:
-    case o::unit:
-    case o::print_:
-        return 1;
+        return Getter::template get<sig_t<t::bool_, t::bool_>>();
 
     case o::add_:
     case o::sub_:
     case o::mul_:
     case o::div_:
-    case o::or_:
-    case o::and_:
-    case o::set_:
-    case o::player_effect_set_max_rumble:
-    case o::player_effect_start:
-    case o::real_random_range:
-        return 2;
+        return Getter::template get<sig_t<t::number, t::number, t::number>>();
 
+    case o::real_random_range:
+        return Getter::template get<sig_t<t::real_, t::real_, t::real_>>();
+    case o::random_range:
+        return Getter::template get<sig_t<t::short_, t::short_, t::short_>>();
+
+        /* Flow control */
+    case o::sleep:
+        return Getter::template get<sig_t<t::void_, t::any>>();
+    case o::sleep_until:
+        return Getter::template get<sig_t<t::void_>>();
+    case o::wake:
+        return Getter::template get<sig_t<t::void_, t::script>>();
+    case o::if_:
+        return Getter::template get<
+            sig_t<t::void_, t::bool_, t::unevaluated>>();
+    case o::begin:
+        return Getter::template get<sig_t<>>();
+
+    case o::print_:
+        return Getter::template get<sig_t<t::void_, t::string_>>();
+
+    case o::fade_in:
+    case o::fade_out:
+        return Getter::template get<
+            sig_t<t::void_, t::real_, t::real_, t::real_, t::short_>>();
+
+        /* List operators */
+    case o::list_get:
+        return Getter::template get<sig_t<t::object, t::obj_list, t::short_>>();
+    case o::list_count:
+        return Getter::template get<sig_t<t::short_, t::obj_list>>();
+
+    case o::unit:
+        return Getter::template get<sig_t<t::unit, t::object>>();
+
+        /* Object operators */
+    case o::object_create:
+    case o::object_destroy:
+    case o::object_create_anew:
+        return Getter::template get<sig_t<t::void_, t::object_name>>();
+    case o::object_create_containing:
+    case o::object_destroy_containing:
+    case o::object_create_anew_containing:
+        return Getter::template get<sig_t<t::void_, t::string_>>();
+    case o::object_beautify:
+        return Getter::template get<sig_t<t::void_, t::object, t::bool_>>();
+    case o::object_destroy_all:
+        return Getter::template get<sig_t<t::void_>>();
+    case o::object_teleport:
+    case o::object_set_facing:
+        return Getter::template get<
+            sig_t<t::void_, t::object_name, t::cutscene_flag>>();
+    case o::objects_attach:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::object_name,
+            t::string_,
+            t::object_name,
+            t::string_>>();
+    case o::objects_detach:
+        return Getter::template get<
+            sig_t<t::void_, t::object_name, t::object_name>>();
+    case o::object_pvs_activate:
+        return Getter::template get<sig_t<t::void_, t::object_name>>();
+
+    case o::object_set_scale:
+        return Getter::template get<
+            sig_t<t::void_, t::object_name, t::real_, t::short_>>();
+    case o::object_set_permutation:
+        return Getter::template get<
+            sig_t<t::void_, t::object_name, t::string_, t::string_>>();
+
+    case o::object_cannot_take_damage:
+        return Getter::template get<sig_t<t::void_, t::object_name>>();
+
+    case o::objects_predict:
+        return Getter::template get<sig_t<t::void_, t::obj_list>>();
+
+    case o::objects_can_see_object:
+        return Getter::template get<
+            sig_t<t::bool_, t::obj_list, t::object_name, t::real_>>();
+    case o::objects_can_see_flag:
+        return Getter::template get<
+            sig_t<t::bool_, t::obj_list, t::cutscene_flag, t::real_>>();
+
+        /* Camera controls */
+    case o::camera_set:
+        return Getter::template get<
+            sig_t<t::void_, t::cutscene_camera_pnt, t::short_>>();
+    case o::camera_time:
+        return Getter::template get<sig_t<t::short_>>();
+    case o::camera_set_first_person:
+        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+    case o::camera_control:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+
+        /* Cinematic controls */
+    case o::cinematic_set_near_clip_distance:
+        return Getter::template get<sig_t<t::void_, t::real_>>();
+    case o::cinematic_screen_effect_start:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+    case o::cinematic_screen_effect_stop:
+        return Getter::template get<sig_t<>>();
+    case o::cinematic_screen_effect_set_convolution:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::short_,
+            t::short_,
+            t::real_,
+            t::real_,
+            t::real_>>();
+    case o::cinematic_show_letterbox:
+        return Getter::template get<sig_t<t::void_, t::cutscene_title>>();
+    case o::cinematic_screen_effect_set_video:
+        return Getter::template get<sig_t<t::void_, t::short_, t::real_>>();
+
+        /* Animation controls */
+    case o::custom_animation:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::unit_name,
+            t::anim_graph,
+            t::string_,
+            t::bool_>>();
+    case o::unit_stop_custom_animation:
+        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+    case o::unit_get_custom_animation_time:
+        return Getter::template get<sig_t<t::real_, t::unit_name, t::real_>>();
+    case o::unit_custom_animation_at_frame:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::unit_name,
+            t::anim_graph,
+            t::string_,
+            t::bool_,
+            t::short_>>();
+
+        /* Unit recording controls */
+    case o::recording_play:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::cutscene_recording>>();
+    case o::recording_time:
+        return Getter::template get<sig_t<t::short_, t::unit_name, t::real_>>();
+    case o::recording_play_and_delete:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::cutscene_recording>>();
+    case o::recording_kill:
+        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+    case o::recording_play_and_hover:
+        return Getter::template get<
+            sig_t<t::void_, t::vehicle_name, t::cutscene_recording>>();
+
+        /* Effects */
+    case o::effect_new_on_object_marker:
+        return Getter::template get<
+            sig_t<t::void_, t::effect, t::object_name, t::string_>>();
+    case o::effect_new:
+        return Getter::template get<sig_t<t::effect, t::cutscene_flag>>();
+
+        /* Device controls */
+    case o::device_set_position:
+    case o::device_set_position_immediate:
+        return Getter::template get<
+            sig_t<t::void_, t::device_name, t::real_>>();
+    case o::device_set_power:
+        return Getter::template get<
+            sig_t<t::void_, t::device_name, t::real_>>();
+    case o::device_get_power:
+    case o::device_get_position:
+        return Getter::template get<sig_t<t::real_, t::device_name>>();
+
+        /* Sound controls */
+    case o::sound_class_set_gain:
+        return Getter::template get<
+            sig_t<t::void_, t::string_, t::real_, t::short_>>();
+    case o::sound_looping_start:
+        return Getter::template get<
+            sig_t<t::void_, t::loop_sound, t::object_name, t::real_>>();
+    case o::sound_looping_stop:
+        return Getter::template get<sig_t<t::void_, t::loop_sound>>();
+    case o::sound_impulse_start:
+        return Getter::template get<
+            sig_t<t::void_, t::sound, t::object_name, t::real_>>();
+    case o::sound_impulse_time:
+        return Getter::template get<sig_t<t::short_, t::sound>>();
+    case o::sound_impulse_stop:
+        return Getter::template get<sig_t<t::void_, t::sound>>();
+    case o::sound_looping_set_alternate:
+    case o::sound_looping_set_alternate_:
+        return Getter::template get<sig_t<t::void_, t::loop_sound, t::bool_>>();
+
+        /* Global variables */
+    case o::set_:
+        return Getter::template get<sig_t<t::void_, t::nothing, t::any>>();
+
+        /* AI operators */
+    case o::ai_dialogue_triggers:
+    case o::ai_grenades:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+    case o::ai_attach_free:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::actor_variant>>();
+    case o::ai_attach:
+        return Getter::template get<sig_t<t::void_, t::unit_name, t::ai>>();
+    case o::ai_erase:
+        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+    case o::ai_erase_all:
+    case o::ai_reconnect:
+        return Getter::template get<sig_t<>>();
+    case o::ai_prefer_target:
+        return Getter::template get<sig_t<t::void_, t::obj_list, t::bool_>>();
+    case o::ai_conversation_stop:
+        return Getter::template get<sig_t<t::void_, t::conversation>>();
+    case o::ai_place:
+    case o::ai_actors:
+    case o::ai_magically_see_players:
+    case o::ai_maneuver:
+    case o::ai_follow_target_unit:
+    case o::ai_try_to_fight_player:
+    case o::ai_attack:
+    case o::ai_spawn_actor:
+        return Getter::template get<sig_t<t::void_, t::ai>>();
+
+    case o::ai_set_blind:
+    case o::ai_set_deaf:
+    case o::ai_set_respawn:
+        return Getter::template get<sig_t<t::void_, t::ai, t::bool_>>();
+
+    case o::ai_living_count:
+    case o::ai_magically_see_encounter:
+        return Getter::template get<sig_t<t::short_, t::ai>>();
+
+    case o::ai_command_list_by_unit:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::ai_cmd_list>>();
+
+    case o::ai_migrate:
+    case o::ai_try_to_fight:
+        return Getter::template get<sig_t<t::void_, t::ai, t::ai>>();
+
+    case o::ai_allegiance:
+    case o::ai_allegiance_remove:
+        return Getter::template get<sig_t<t::void_, t::team, t::team>>();
+
+    /* Effects */
+    case o::player_effect_set_max_rumble:
+        return Getter::template get<sig_t<t::void_, t::real_, t::real_>>();
     case o::player_effect_set_max_translation:
     case o::player_effect_set_max_rotation:
-        return 3;
+        return Getter::template get<
+            sig_t<t::void_, t::real_, t::real_, t::real_>>();
+    case o::player_effect_start:
+        return Getter::template get<sig_t<t::void_, t::real_, t::real_>>();
+    case o::player_effect_stop:
+        return Getter::template get<sig_t<t::void_, t::real_>>();
 
-    case o::sleep_until:
-        return variable_length_params;
+        /* Unit controls */
+    case o::unit_enter_vehicle:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::vehicle_name, t::short_>>();
+    case o::vehicle_hover:
+        return Getter::template get<
+            sig_t<t::void_, t::vehicle_name, t::bool_>>();
+    case o::unit_set_seat:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::string_>>();
+    case o::unit_suspended:
+        return Getter::template get<sig_t<t::void_, t::unit_name, t::bool_>>();
+    case o::unit_set_enterable_by_player:
+        return Getter::template get<sig_t<t::void_, t::unit_name, t::bool_>>();
+    case o::unit_exit_vehicle:
+        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+    case o::unit_impervious:
+        return Getter::template get<sig_t<t::void_, t::obj_list, t::bool_>>();
+    case o::unit_set_maximum_vitality:
+    case o::unit_set_current_vitality:
+        return Getter::template get<
+            sig_t<t::void_, t::unit_name, t::real_, t::real_>>();
+    case o::units_set_current_vitality:
+        return Getter::template get<
+            sig_t<t::void_, t::obj_list, t::real_, t::real_>>();
+
+        /* Trigger volume controls */
+    case o::volume_test_object:
+        return Getter::template get<
+            sig_t<t::bool_, t::trigger_vol, t::object_name>>();
+    case o::volume_test_objects:
+        return Getter::template get<
+            sig_t<t::bool_, t::trigger_vol, t::obj_list>>();
+
+    case o::switch_bsp:
+        return Getter::template get<sig_t<t::void_, t::short_>>();
+    case o::structure_bsp_index:
+        return Getter::template get<sig_t<t::short_>>();
+
+        /* Player controls */
+    case o::show_hud:
+    case o::show_hud_help_text:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+    case o::hud_set_help_text:
+        return Getter::template get<sig_t<t::void_, t::hud_msg>>();
+    case o::hud_set_objective_text:
+        return Getter::template get<sig_t<t::void_, t::hud_msg>>();
+
+    case o::player_enable_input:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+
+        /* Debugging */
+    case o::inspect:
+        return Getter::template get<sig_t<>>();
 
     default:
-        Throw(undefined_behavior("param count not defined"));
+        break;
     }
+    Throw(undefined_behavior("signature not implemented"));
 }
 
-struct script_ref;
+template<typename BC>
+inline u16 param_count(opcode_layout<BC> const& op)
+{
+    if(op.exp_type == expression_t::expression)
+        return 0;
+
+    switch(op.opcode)
+    {
+    case BC::sleep:
+    case BC::sleep_until:
+        return variable_length_params;
+    default:
+        break;
+    }
+
+    return opcode_signature(op).num_params;
+}
+
+inline bool is_number(type_t t)
+{
+    return t == type_t::short_ || t == type_t::long_ || t == type_t::real_;
+}
+
+inline bool is_any(type_t t)
+{
+    return t == type_t::any;
+}
+
+inline bool match_type(type_t t1, type_t t2)
+{
+    using t = type_t;
+
+    if(is_any(t1) || is_any(t2))
+        return true;
+
+    if(t1 == t::number || t2 == t::number)
+        return is_number(t1) || is_number(t2);
+
+    return t1 == t2;
+}
 
 struct opcode_iterator_end_t
 {
@@ -979,8 +770,9 @@ struct opcode_iterator_end_t
 
 constexpr opcode_iterator_end_t opcode_iterator_end;
 
+template<typename BC>
 struct opcode_iterator
-    : stl_types::Iterator<stl_types::ForwardIteratorTag, opcode_layout>
+    : stl_types::Iterator<stl_types::ForwardIteratorTag, opcode_layout<BC>>
 {
     opcode_iterator(semantic::mem_chunk<u8 const>&& script_base);
     opcode_iterator(opcode_iterator_end_t end) :
@@ -1020,36 +812,37 @@ struct opcode_iterator
         return !(*this == other);
     }
 
-    inline opcode_layout const& operator*() const
+    inline opcode_layout<BC> const& operator*() const
     {
-        auto out = m_data.at(m_offset).as<opcode_layout const>();
+        auto out = m_data.at(m_offset).template as<opcode_layout<BC> const>();
         if(!out)
             Throw(undefined_behavior("invalid iterator"));
 
         return out[0];
     }
 
-    script_ref const*             m_script;
+    script_ref<BC> const*         m_script;
     semantic::mem_chunk<u8 const> m_data;
     u32                           m_offset;
     bool                          m_is_end;
 };
 
+template<typename BC>
 struct script_ref : stl_types::non_copy
 {
     bl_string name;
     u32       sentinel_value;
 
-    using container_type = stl_types::quick_container<opcode_iterator>;
+    using container_type = stl_types::quick_container<opcode_iterator<BC>>;
 
     inline u8 const* opcode_base() const
     {
         return C_RCAST<u8 const*>(&this[1]);
     }
 
-    inline opcode_layout const& opcode_first() const
+    inline opcode_layout<BC> const& opcode_first() const
     {
-        return *C_RCAST<opcode_layout const*>(opcode_base());
+        return *C_RCAST<opcode_layout<BC> const*>(opcode_base());
     }
 
     inline semantic::mem_chunk<u8 const> dump(u32 count) const
@@ -1058,10 +851,11 @@ struct script_ref : stl_types::non_copy
     }
 };
 
-inline opcode_iterator::opcode_iterator(
+template<typename BC>
+inline opcode_iterator<BC>::opcode_iterator(
     semantic::mem_chunk<u8 const>&& script_base) :
-    m_script(C_RCAST<script_ref const*>(script_base.data)),
-    m_data(script_base.at(sizeof(script_ref))), m_offset(0), m_is_end(false)
+    m_script(C_RCAST<script_ref<BC> const*>(script_base.data)),
+    m_data(script_base.at(sizeof(script_ref<BC>))), m_offset(0), m_is_end(false)
 {
 }
 
@@ -1079,43 +873,282 @@ inline stl_types::CString to_string(T val)
 #endif
 }
 
+template<typename BC>
 struct bytecode_pointer;
 
-using opcode_handler_t =
-    stl_types::Function<opcode_layout(bytecode_pointer&, opcode_layout const&)>;
-
-struct bytecode_pointer
+struct script_environment
 {
-    struct result_t
+    string_segment_ref const*                       strings;
+    semantic::mem_chunk<function_declaration const> scripts;
+    semantic::mem_chunk<global const>               globals;
+};
+
+enum class sleep_condition
+{
+    undefined,
+    timer,
+    expression,
+};
+
+enum class script_status
+{
+    running,  /*!< Continuous or startup script */
+    ready,    /*!< Signaled for running */
+    sleeping, /*!< Waiting on timer or event */
+    dormant,  /*!< Scripts put to sleep forever */
+    finished, /*!< Startup scripts end up here */
+};
+
+struct global_value
+{
+    global_value(global const* desc) : desc(desc)
     {
-        type_t type;
-        union
-        {
-            scalar        real_;
-            u32           long_;
-            Array<u16, 2> short_;
-            Array<u8, 4>  byte_;
-        };
-        u32 ptr;
+        long_ = 0;
+    }
+
+    global const* desc;
+    union
+    {
+        u32  long_;
+        u16  short_;
+        bool bool_;
+    };
+};
+
+template<typename Bytecode>
+struct wait_condition
+{
+    sleep_condition condition;
+    u16             expression;
+    u32             time; /*!< Time in milliseconds */
+    u16             tickrate;
+};
+
+template<typename Bytecode>
+struct script_context
+{
+    struct object
+    {
     };
 
-    static bytecode_pointer start_from(opcode_layout const* base, u16 ip = 0x0)
+    using wait_condition = hsc::wait_condition<Bytecode>;
+
+    struct script_state
+    {
+        script_state(function_declaration const* func) : function(func)
+        {
+            switch(func->schedule)
+            {
+            case script_type_t::startup:
+            case script_type_t::continuous:
+                status = script_status::running;
+                break;
+            default:
+                status = script_status::dormant;
+                break;
+            }
+
+            ip = func->index;
+        }
+
+        function_declaration const* function;
+        script_status               status;
+        u16                         ip;
+        u16                         script_start, script_end;
+        stl_types::Deque<u16>       link_register;
+        wait_condition              condition;
+
+        inline bool is_ready() const
+        {
+            return status == script_status::ready ||
+                   status == script_status::running;
+        }
+        inline bool is_inactive() const
+        {
+            return status == script_status::sleeping ||
+                   status == script_status::dormant ||
+                   status == script_status::finished;
+        }
+        inline stl_types::CString name() const
+        {
+            return function->name.str();
+        }
+    };
+
+    struct procedure_data
+    {
+        function_declaration const* function;
+        u16                         script_start, script_end;
+    };
+
+    stl_types::Map<u32, procedure_data>        procedures;
+    stl_types::Map<stl_types::CString, object> objects;
+    stl_types::Map<u32, global_value>          globals;
+    stl_types::Map<u32, script_state>          scripts;
+
+    inline function_declaration const* function_by_ptr(u32 ptr) const
+    {
+        auto it = procedures.find(ptr);
+
+        if(it == procedures.end())
+            return nullptr;
+
+        return (*it).second;
+    }
+
+    inline script_state* script_by_ptr(u32 ptr)
+    {
+        auto it = scripts.find(ptr);
+
+        if(it == scripts.end())
+            return nullptr;
+
+        return &(*it).second;
+    }
+
+    inline global_value* global_by_ptr(u32 ptr)
+    {
+        auto it = globals.find(ptr);
+
+        if(it == globals.end())
+            return nullptr;
+
+        return &(*it).second;
+    }
+
+    inline object* object_by_name(u32 ptr)
+    {
+        auto it = objects.find(ptr);
+
+        if(it == objects.end())
+            return nullptr;
+
+        return &(*it).second;
+    }
+
+    inline object& create_object(u32 ptr)
+    {
+        return objects.insert({ptr, object{}});
+    }
+
+    inline void set_script_state(
+        u32 ptr, script_status state, wait_condition cond)
+    {
+        auto script = script_by_ptr(ptr);
+
+        if(!script)
+            Throw(undefined_behavior("failed to change script state"));
+
+        script->status = state;
+    }
+};
+
+enum class script_eval_result
+{
+    running,
+    sleeping
+};
+
+template<typename BC>
+struct bytecode_pointer
+{
+    using ptr_type  = u16;
+    using context_t = script_context<BC>;
+    using eval      = script_eval_result;
+
+    struct result_t
+    {
+        opcode_layout<BC> result;
+        eval              state;
+
+        /* For sleep conditions */
+        wait_condition<BC> condition;
+
+        static result_t return_(opcode_layout<BC> const& out = {})
+        {
+            return {out, eval::running};
+        }
+        static result_t sleep_timeout(i32 time)
+        {
+            return {{},
+                    eval::sleeping,
+                    {sleep_condition::timer, terminator, time, 0}};
+        }
+        static result_t sleep_condition(u16 expr, u16 tick = 1)
+        {
+            return {{},
+                    eval::sleeping,
+                    {sleep_condition::expression, expr, 0, tick}};
+        }
+    };
+
+    using opcode_handler_t = stl_types::Function<result_t(
+        bytecode_pointer<BC>&, opcode_layout<BC> const&)>;
+
+    static bytecode_pointer<BC> start_from(
+        script_environment const& env,
+        opcode_layout<BC> const*  base,
+        ptr_type                  ip = 0x0)
     {
         bytecode_pointer out;
         out.base       = base;
         out.current    = &base[ip];
         out.current_ip = ip;
+
+        /* Initialize script context */
+        for(auto const& script : env.scripts)
+        {
+            auto idx = env.strings->get_index(script.name);
+
+            if(idx == 0)
+                idx = (script.salt << 16) + script.index;
+
+            u16 script_start = base[script.index + 2].next_op.ip + 1,
+                script_end   = script.index;
+
+            if(script.is_callable())
+                out.context.procedures.emplace(
+                    idx,
+                    typename context_t::procedure_data{
+                        &script, script_start, script_end});
+            else if(script.is_scheduled())
+            {
+                out.context.scripts.emplace(
+                    idx, typename context_t::script_state(&script));
+
+                auto it = out.context.scripts.find(idx);
+
+                if(it == out.context.scripts.end())
+                    continue;
+
+                /* Rewind the instruction pointer to start of script */
+                typename context_t::script_state& state = (*it).second;
+
+                state.ip           = script_start;
+                state.script_start = script_start;
+                state.script_end   = script_end;
+            }
+        }
+
+        for(auto const& global : env.globals)
+        {
+            auto idx = env.strings->get_index(global.name);
+            out.context.globals.emplace(idx, global_value(&global));
+        }
+
         return out;
     }
 
-    opcode_layout const* base;
-    opcode_layout const* current;
-    u16                  current_ip;
+    context_t                context;
+    opcode_layout<BC> const* base;
+    opcode_layout<BC> const* current;
+    ptr_type                 current_ip;
+    ptr_type                 script_start, script_end;
 
-    stl_types::Deque<u16> link_register;
+    stl_types::Deque<ptr_type> link_register;
     /*!< Return addresses, for calling procedures */
 
-    stl_types::Vector<opcode_layout> value_stack;
+    stl_types::Vector<opcode_layout<BC>> value_stack;
     /*!< Values for consumption by functions */
 
     inline u16 num_params() const
@@ -1125,25 +1158,25 @@ struct bytecode_pointer
         else
             return 0;
     }
-    inline opcode_layout const& param(type_t type, u16 i = 0) const
+    inline opcode_layout<BC> const& param(type_t type, ptr_type i = 0) const
     {
-        u16 first_param = current_ip + 1;
-        u16 last_param  = current->next_op.ip;
+        ptr_type first_param = current_ip + 1;
+        ptr_type last_param  = current->next_op.ip;
 
         if(i > (last_param - first_param + 1))
             Throw(undefined_behavior("param out of bounds"));
 
         auto const& out = value_stack.at(value_stack.size() - i - 1);
 
-        if(type != out.ret_type)
+        if(!match_type(type, out.ret_type))
             Throw(undefined_behavior("param has wrong type"));
 
         return out;
     }
-    inline opcode_layout evaluate(
-        opcode_layout const& op, opcode_handler_t const& handler)
+    inline result_t evaluate(
+        opcode_layout<BC> const& op, opcode_handler_t const& handler)
     {
-        opcode_layout out;
+        opcode_layout<BC> out = opcode_layout<BC>::void_();
         switch(op.exp_type)
         {
         case expression_t::expression:
@@ -1168,33 +1201,198 @@ struct bytecode_pointer
             }
             out.ret_type = out.param_type = op.param_type;
 
-            out.next_op.ip   = terminator;
-            out.next_op.salt = terminator;
-
             break;
         }
         case expression_t::group:
         {
             auto start_params = value_stack.size();
-            evaluate_params(handler, param_count(op));
-            out             = handler(*this, op);
-            auto end_params = value_stack.size();
+            auto param_state  = evaluate_params(handler, op);
+            auto op_params    = value_stack.size() - start_params;
+
+            if(param_state.state == eval::sleeping)
+                return param_state;
+
+            switch(op.opcode)
+            {
+            case BC::begin:
+            {
+                break;
+            }
+            case BC::set_:
+            {
+                auto global_ =
+                    context.global_by_ptr(param(type_t::any).data_ptr);
+                break;
+            }
+            case BC::wake:
+            {
+                context.set_script_state(
+                    param(type_t::any).data_ptr, script_status::running, {});
+
+                break;
+            }
+            case BC::sleep_until:
+            {
+                opcode_layout<BC> const* condition = nullptr;
+                u16                      tick_rate = 1;
+
+                switch(op_params)
+                {
+                case 1:
+                    condition = &param(type_t::any);
+                    break;
+                case 2:
+                    condition = &param(type_t::any, 1);
+                    tick_rate = param(type_t::short_, 0).to_u16();
+                    break;
+                case 3:
+                    condition = &param(type_t::any, 2);
+                    tick_rate = param(type_t::short_, 1).to_u16();
+                    break;
+                }
+
+                return result_t::sleep_condition(condition - base, tick_rate);
+            }
+            case BC::sleep:
+            {
+                opcode_layout<BC> const* timeout = nullptr;
+                opcode_layout<BC> const* script  = nullptr;
+
+                switch(op_params)
+                {
+                case 1:
+                {
+                    auto const& first = param(type_t::any);
+                    switch(first.param_type)
+                    {
+                    case type_t::real_:
+                    case type_t::short_:
+                    {
+                        timeout = &first;
+                        break;
+                    }
+                    case type_t::script:
+                    {
+                        script = &first;
+                        break;
+                    }
+                    }
+                    break;
+                }
+                case 2:
+                    timeout = &param(type_t::number, 1);
+                    script  = &param(type_t::script, 0);
+                    break;
+                default:
+                    Throw(undefined_behavior("unhandled sleep case"));
+                }
+
+                i16 time = -1;
+                if(timeout)
+                    switch(timeout->param_type)
+                    {
+                    case type_t::real_:
+                        time = deref_real(*timeout);
+                        break;
+                    case type_t::short_:
+                        time = deref_i16(*timeout);
+                        break;
+                    }
+
+                if(script)
+                    context.set_script_state(
+                        script->data_ptr,
+                        script_status::sleeping,
+                        {sleep_condition::timer, terminator, time, 0});
+                else
+                    return result_t::sleep_timeout(time);
+
+                break;
+            }
+            case BC::if_:
+            {
+                auto cond = param(type_t::bool_, 1);
+                auto expr = param(type_t::unevaluated, 0);
+
+                auto result = false;
+
+                switch(cond.exp_type)
+                {
+                case expression_t::expression:
+                    result = cond.to_bool();
+                    break;
+                case expression_t::global_ref:
+                    result = context.global_by_ptr(cond.data_ptr)->bool_;
+                    break;
+                }
+
+                if(result)
+                    evaluate(base[expr.next_op.ip], handler);
+
+                break;
+            }
+            case BC::equal:
+            case BC::nequal:
+            {
+                auto left  = param(type_t::any, 1);
+                auto right = param(type_t::any, 0);
+
+                out = opcode_layout<BC>::typed_(type_t::bool_);
+
+                break;
+            }
+            case BC::and_:
+            case BC::or_:
+            {
+                auto left  = param(type_t::bool_, 1);
+                auto right = param(type_t::bool_, 0);
+
+                out = opcode_layout<BC>::typed_(type_t::bool_);
+
+                break;
+            }
+            default:
+            {
+                auto grp = handler(*this, op);
+
+                if(grp.state == eval::sleeping)
+                    return grp;
+
+                out = grp.result;
+
+                break;
+            }
+            }
+
             if(param_count(op) == variable_length_params)
-                pop_params(end_params - start_params);
+                pop_params(op_params);
             else
                 pop_params(param_count(op));
+
             break;
         }
         case expression_t::global_ref:
+        case expression_t::script_ref:
+        {
             out = op;
             break;
         }
-        return out;
+        default:
+            Throw(undefined_behavior("unhandled expression type"));
+            break;
+        }
+        return result_t::return_(out);
     }
-    inline void evaluate_params(opcode_handler_t const& handler, u16 num)
+    inline result_t evaluate_params(
+        opcode_handler_t const& handler, opcode_layout<BC> const& op)
     {
+        auto num = param_count(op);
+
         if(num == 0)
-            return;
+            return result_t::return_({});
+
+        auto param_types = opcode_signature<BC, signatures::param_getter>(op);
+        u16  param_i     = 0;
 
         if(num == variable_length_params)
         {
@@ -1202,12 +1400,25 @@ struct bytecode_pointer
              * parameters, but points to the last parameter */
 
             auto end_addr = current->next_op.ip;
+
+            if(end_addr == terminator)
+                end_addr = script_end;
+
             jump(current_ip + 2);
 
             do
             {
-                value_stack.push_back(evaluate(*current, handler));
+                auto val = evaluate(*current, handler);
+
+                if(val.state == eval::sleeping)
+                {
+                    return_();
+                    return val;
+                }
+
+                value_stack.push_back(val.result);
                 advance();
+                param_i++;
             } while(current_ip <= end_addr);
 
         } else
@@ -1217,17 +1428,82 @@ struct bytecode_pointer
 
             do
             {
-                value_stack.push_back(evaluate(*current, handler));
+                switch(param_types[param_i])
+                {
+                case type_t::unevaluated:
+                {
+                    value_stack.push_back(
+                        opcode_layout<BC>::typed_(type_t::unevaluated));
+                    value_stack.back().next_op.ip = current_ip;
+                    break;
+                }
+                default:
+                {
+                    auto val = evaluate(*current, handler);
+
+                    if(val.state == eval::sleeping)
+                    {
+                        return_();
+                        return val;
+                    }
+
+                    value_stack.push_back(val.result);
+                    break;
+                }
+                }
+
                 advance();
+                param_i++;
             } while((value_stack.size() - start_param) < num);
         }
 
         return_();
+        return result_t::return_({});
     }
-    inline void pop_params(u16 num)
+    inline void pop_params(ptr_type num)
     {
         value_stack.erase(value_stack.end() - num, value_stack.end());
     }
+
+    inline scalar deref_real(opcode_layout<BC> const& from)
+    {
+        switch(from.exp_type)
+        {
+        case expression_t::expression:
+            return from.to_real();
+        case expression_t::global_ref:
+            return context.global_by_ptr(from.data_ptr)->short_;
+        }
+
+        Throw(undefined_behavior("failed to dereference value"));
+    }
+
+    inline i32 deref_i32(opcode_layout<BC> const& from)
+    {
+        switch(from.exp_type)
+        {
+        case expression_t::expression:
+            return from.to_u32();
+        case expression_t::global_ref:
+            return context.global_by_ptr(from.data_ptr)->short_;
+        }
+
+        Throw(undefined_behavior("failed to dereference value"));
+    }
+
+    inline i16 deref_i16(opcode_layout<BC> const& from)
+    {
+        switch(from.exp_type)
+        {
+        case expression_t::expression:
+            return from.to_u16();
+        case expression_t::global_ref:
+            return context.global_by_ptr(from.data_ptr)->short_;
+        }
+
+        Throw(undefined_behavior("failed to dereference value"));
+    }
+
     inline void advance()
     {
         if(current->branching())
@@ -1243,7 +1519,7 @@ struct bytecode_pointer
     }
     inline bool finished() const
     {
-        return current_ip == std::numeric_limits<u16>::max();
+        return current_ip == std::numeric_limits<ptr_type>::max();
     }
     inline void call(u16 ip)
     {
@@ -1252,16 +1528,16 @@ struct bytecode_pointer
          * of the function */
         jump(base[ip + 2].next_op.ip + 1);
     }
-    inline void jump(opcode_layout const& opcode)
+    inline void jump(opcode_layout<BC> const& opcode)
     {
         auto end = &opcode;
 
         if((end - base) < 0)
             Throw(undefined_behavior("invalid jump"));
 
-        jump(C_FCAST<u16>(end - base));
+        jump(C_FCAST<ptr_type>(end - base));
     }
-    inline void jump(u16 ip)
+    inline void jump(ptr_type ip)
     {
         link_register.push_back(current_ip);
         current_ip = ip;
@@ -1273,6 +1549,76 @@ struct bytecode_pointer
         link_register.pop_back();
         update_opcode();
     }
+
+    inline void restore_state(typename script_context<BC>::script_state& state)
+    {
+        link_register = std::move(state.link_register);
+        current_ip    = state.ip;
+        script_start  = state.script_start;
+        script_end    = state.script_end;
+        update_opcode();
+    }
+    inline void stash_state(typename script_context<BC>::script_state& state)
+    {
+        state.link_register = std::move(link_register);
+        state.ip            = current_ip;
+    }
+
+    inline void execute_state(
+        typename script_context<BC>::script_state& state,
+        opcode_handler_t const&                    handler)
+    {
+        if(state.is_inactive())
+            return;
+
+        restore_state(state);
+
+        eval     run_state = eval::running;
+        result_t result;
+
+        while(!finished() && run_state == eval::running)
+        {
+            result    = evaluate(*current, handler);
+            run_state = result.state;
+            advance();
+        }
+
+        if(run_state == eval::sleeping)
+        {
+            /* TODO: Set up wait_condition */
+            state.status    = script_status::sleeping;
+            state.condition = result.condition;
+        } else if(state.function->schedule == script_type_t::startup)
+        {
+            state.status = script_status::finished;
+        } else if(state.function->schedule == script_type_t::dormant)
+        {
+            state.status = script_status::sleeping;
+            current_ip   = state.script_start;
+        } else
+        {
+            /* Reset bytecode pointer */
+            current_ip = state.script_start;
+        }
+
+        stash_state(state);
+    }
+};
+
+template<typename Bytecode>
+struct types
+{
+    using bytecode_ptr   = bytecode_pointer<Bytecode>;
+    using layout_t       = opcode_layout<Bytecode>;
+    using opcode_t       = Bytecode;
+    using opcode_handler = typename bytecode_ptr::opcode_handler_t;
+    using ptr_type       = typename bytecode_ptr::ptr_type;
+    using result_t       = typename bytecode_ptr::result_t;
+
+    static inline auto signature(layout_t const& opc)
+    {
+        return hsc::opcode_signature<Bytecode>(opc);
+    }
 };
 
 } // namespace hsc
@@ -1281,12 +1627,22 @@ struct bytecode_pointer
 namespace Coffee {
 namespace Strings {
 
-inline CString to_string(blam::hsc::opcode_t opc)
+template<
+    typename BC,
+    typename std::enable_if<
+        std::is_same<BC, blam::hsc::bc::v1>::value ||
+        std::is_same<BC, blam::hsc::bc::v2>::value>::type* = nullptr>
+inline CString to_string(BC opc)
 {
     return blam::hsc::to_string(opc);
 }
 
 inline CString to_string(blam::hsc::type_t type)
+{
+    return blam::hsc::to_string(type);
+}
+
+inline CString to_string(blam::hsc::script_eval_result type)
 {
     return blam::hsc::to_string(type);
 }
@@ -1299,6 +1655,11 @@ inline CString to_string(blam::hsc::expression_t exp)
 inline CString to_string(blam::hsc::script_type_t script_type)
 {
     return blam::hsc::to_string(script_type);
+}
+
+inline CString to_string(blam::hsc::script_status stat)
+{
+    return blam::hsc::to_string(stat);
 }
 
 } // namespace Strings

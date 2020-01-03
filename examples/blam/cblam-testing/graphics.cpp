@@ -4,6 +4,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CArgParser>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 #include <coffee/core/EventHandlers>
 #include <coffee/core/Scene>
 #include <coffee/graphics/apis/CGLeamRHI>
@@ -26,9 +27,26 @@ using std_camera_t = StandardCamera<camera_t*, StandardCameraOpts*>;
 
 using comp_app::detail::duration;
 using comp_app::detail::time_point;
-using vertex_type = blam::vert::vertex<blam::vert::uncompressed>;
+using vertex_type      = blam::vert::vertex<blam::vert::uncompressed>;
+using xbox_vertex_type = blam::vert::vertex<blam::vert::compressed>;
 using Components::ComponentRef;
 using Components::EntityContainer;
+
+using halo_version = blam::pc_version_t;
+
+struct memory_budget
+{
+    static constexpr auto bsp_buffer      = 30_MB;
+    static constexpr auto bsp_elements    = 10_MB;
+    static constexpr auto mesh_buffer     = 20_MB;
+    static constexpr auto mesh_elements   = 10_MB;
+    static constexpr auto matrix_buffer   = 4_MB;
+    static constexpr auto material_buffer = 4_MB;
+
+    static constexpr auto grand_total = bsp_buffer + bsp_elements +
+                                        mesh_buffer + mesh_elements +
+                                        matrix_buffer + material_buffer;
+};
 
 using cache_id_t = u64;
 
@@ -51,7 +69,53 @@ struct generation_idx_t
     }
 };
 
-using bitm_format_hash = Tup<u32, u32, PixFmt, PixCmp, BitFmt, CompFlags>;
+using bitm_format_hash = Tup<PixFmt, PixCmp, BitFmt, CompFlags>;
+
+struct BspReference
+{
+    u32 draw_idx;
+
+    generation_idx_t bsp;
+    generation_idx_t bitmap;
+
+    struct
+    {
+        GFX::D_DATA draw;
+        GFX::D_CALL call;
+    } draw;
+    bool visible = false;
+};
+
+struct ModelReference
+{
+    Matf4 transform;
+    u32   draw_idx;
+
+    generation_idx_t bitmap;
+    generation_idx_t model;
+    struct
+    {
+        GFX::D_DATA draw;
+        GFX::D_CALL call;
+    } draw;
+};
+
+enum ObjectTags
+{
+    ObjectScenery   = 0x1,
+    ObjectEquipment = 0x2,
+    ObjectVehicle   = 0x4,
+    ObjectBiped     = 0x8,
+
+    ObjectMod2 = 0x80,
+    ObjectBsp  = 0x100,
+};
+
+using BspTag   = Components::TagType<BspReference>;
+using ModelTag = Components::TagType<ModelReference>;
+
+using BspStore   = Components::Allocators::VectorContainer<BspTag>;
+using ModelStore = Components::Allocators::VectorContainer<ModelTag>;
 
 template<typename T, typename IdType, typename... IType>
 struct DataCache
@@ -89,7 +153,7 @@ struct DataCache
         return {out, generation};
     }
 
-    auto find(generation_idx_t id) const
+    auto find(generation_idx_t id)
     {
         if(id.gen < generation)
             Throw(undefined_behavior("stale reference"));
@@ -158,6 +222,7 @@ struct ModelItem
     {
         blam::mod2::submesh_header const* header;
         GFX::D_DATA                       draw;
+        generation_idx_t                  color_bitm;
         WkPtr<GFX::PIP>                   shader;
     };
     struct LOD
@@ -218,10 +283,10 @@ struct BitmapItem
     {
         blam::bitm::image_t const* mip;
         PixDesc                    fmt;
-        u32                        index;
         bitm_format_hash           bucket;
 
-        Vecf2 offset;
+        u32   index;
+        Veci2 offset;
         Vecf2 scale;
     } image;
 
@@ -290,7 +355,6 @@ struct BitmapCache
         ShPtr<GFX::SM_2DA> sampler;
         u32                ptr;
         PixDesc            fmt;
-        Size               size;
     };
 
     BitmapCache(
@@ -298,11 +362,14 @@ struct BitmapCache
         blam::magic_data_t const&  bitmap_magic,
         GFX_ALLOC*                 allocator) :
         magic(map.magic),
-        bitm_magic(bitmap_magic), index(map),
+        bitm_magic(
+            map.map->version == blam::version_t::xbox ? magic : bitmap_magic),
+        index(map),
         bitm_header(blam::bitm::bitmap_header_t::from_data(
             Bytes::From(bitmap_magic.base_ptr, bitmap_magic.max_size))),
         allocator(allocator)
     {
+        bitm_magic.magic_offset = 0;
     }
 
     blam::magic_data_t                 magic;
@@ -313,22 +380,14 @@ struct BitmapCache
 
     Map<bitm_format_hash, TextureBucket> tex_buckets;
 
-    static inline bitm_format_hash create_hash(
-        blam::bitm::image_t const& img, PixDesc const& fmt)
+    static inline bitm_format_hash create_hash(PixDesc const& fmt)
     {
-        return std::make_tuple(
-            img.isize.w,
-            img.isize.h,
-            fmt.pixfmt,
-            fmt.comp,
-            fmt.bfmt,
-            fmt.cmpflg);
+        return std::make_tuple(fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
     }
 
-    TextureBucket& get_bucket(
-        blam::bitm::image_t const& img, PixDesc const& fmt)
+    TextureBucket& get_bucket(PixDesc const& fmt)
     {
-        auto hash = create_hash(img, fmt);
+        auto hash = create_hash(fmt);
 
         auto it = tex_buckets.find(hash);
 
@@ -337,19 +396,21 @@ struct BitmapCache
 
         auto& bucket = tex_buckets.insert({hash, {}}).first->second;
 
-        bucket.ptr  = 0;
-        bucket.fmt  = fmt;
-        bucket.size = img.isize;
+        bucket.ptr = 0;
+        bucket.fmt = fmt;
         std::tie(bucket.sampler, bucket.surface) =
             allocator->alloc_surface_sampler<GFX::S_2DA>(
                 fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
+
+        bucket.sampler->setFiltering(
+            Filtering::Linear, Filtering::Linear, Filtering::Linear);
 
         return bucket;
     }
 
     void commit_bitmap(BitmapItem const& img)
     {
-        auto& bucket = get_bucket(*img.image.mip, img.image.fmt);
+        auto& bucket = get_bucket(img.image.fmt);
 
         auto img_data = img.image.mip->data(bitm_magic);
         auto img_size = img.image.mip->isize.convert<i32>();
@@ -358,22 +419,107 @@ struct BitmapCache
             img.image.fmt,
             Size3(img_size.w, img_size.h, 1),
             img_data,
-            Point3(0, 0, img.image.index));
+            Point3(
+                img.image.offset.x(), img.image.offset.y(), img.image.index));
     }
 
     void allocate_storage()
     {
-        Map<bitm_format_hash, u32> count;
+        using size_bucket = Tup<u32, u32>;
+        struct pool_size
+        {
+            u32          num    = 0;
+            u32          layers = 0;
+            size_2d<i32> max    = {};
 
-        for(auto const& bitm : m_cache)
-            count[bitm.second.image.bucket]++;
+            MultiMap<size_bucket, BitmapItem*> images;
+        };
+
+        ProfContext _("Building texture atlases");
+
+        Map<bitm_format_hash, pool_size> fmt_count;
+
+        for(auto& bitm : m_cache)
+        {
+            auto const& fmt = bitm.second.image.fmt;
+            auto        hash =
+                std::make_tuple(fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
+            auto&       pool   = fmt_count[hash];
+            auto const& imsize = bitm.second.image.mip->isize;
+
+            pool.num++;
+            pool.max.w = std::max<u32>(pool.max.w, imsize.w);
+            pool.max.h = std::max<u32>(pool.max.h, imsize.h);
+            pool.images.insert(
+                {std::make_tuple(imsize.w, imsize.h), &bitm.second});
+        }
+
+        for(auto& pool_ : fmt_count)
+        {
+            auto& pool = pool_.second;
+
+            size_2d<i32> offset = {0, 0};
+
+            u32 layer = 0;
+
+            for(auto it = pool.images.rbegin(); it != pool.images.rend(); ++it)
+            {
+                auto img    = it->second;
+                auto imsize = img->image.mip->isize;
+
+                auto img_offset = offset;
+                auto img_layer  = layer;
+
+                size_2d<i32> slack = {pool.max.w - offset.w,
+                                      pool.max.h - offset.h};
+
+                bool fits_width  = (offset.w + imsize.w) <= pool.max.w;
+                i32  height_diff = offset.h - imsize.h;
+
+                if(height_diff < 0)
+                    offset.h += -height_diff;
+
+                if(fits_width)
+                    offset.w += imsize.w;
+                else if((offset.h + imsize.h) <= pool.max.h)
+                {
+                    img_offset.w = 0;
+                    img_offset.h = offset.h;
+                    offset.w     = imsize.w;
+                    offset.h += imsize.h;
+                } else
+                {
+                    layer++;
+                    offset     = imsize;
+                    img_offset = {};
+                    img_layer  = layer;
+                }
+
+                img->image.index  = layer;
+                img->image.offset = {img_offset.w, img_offset.h};
+                img->image.scale  = {imsize.w / scalar(pool.max.w),
+                                    imsize.h / scalar(pool.max.h)};
+
+                cDebug(
+                    "{0}x{1} - {2}x{3} @ {4} ({5},{6})",
+                    img_offset.w,
+                    img_offset.h,
+                    offset.w,
+                    offset.h,
+                    img_layer,
+                    imsize.w,
+                    imsize.h);
+            }
+
+            pool.layers = layer + 1;
+        }
 
         for(auto& bucket : tex_buckets)
         {
             auto& props = bucket.second;
+            auto& pool  = fmt_count[bucket.first];
             props.surface->allocate(
-                Size3(props.size.w, props.size.h, count[bucket.first]),
-                props.fmt.comp);
+                Size3(pool.max.w, pool.max.h, pool.layers), props.fmt.comp);
         }
 
         for(auto const& bitm : m_cache)
@@ -385,10 +531,18 @@ struct BitmapCache
     {
         using blam::tag_class_t;
 
+        if(!shader.valid())
+            return {};
+
         auto it = index.find(shader);
 
         if(it == index.end())
+        {
+            cDebug(
+                "Failed to find shader: {0}",
+                shader.to_name().to_string(magic));
             return {};
+        }
 
         blam::bitm::header_t const* bitm_ptr = nullptr;
 
@@ -402,12 +556,58 @@ struct BitmapCache
             auto shader_env =
                 (*it)->to_reflexive<blam::shader_env>().data(magic);
 
+            if(!shader_env[0].bitmap.valid())
+                return {};
+
             auto bitm_it = index.find(shader_env[0].bitmap);
 
             if(bitm_it == index.end())
-                return {};
+                Throw(undefined_behavior("failed to locate bitmap"));
 
             bitm_tag = (*bitm_it);
+
+            break;
+        }
+        case tag_class_t::schi:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_chicago>().data(magic);
+
+            if(!shader_model[0].bitmap.valid())
+                return {};
+
+            auto bitm_it = index.find(shader_model[0].bitmap);
+
+            if(bitm_it == index.end())
+            {
+                cDebug(
+                    "Failed to find: {0}",
+                    shader_model[0].bitmap.to_name().to_string(magic));
+                return {};
+            }
+
+            bitm_tag = (*bitm_it);
+
+            break;
+        }
+        case tag_class_t::scex:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_chicago_extended>().data(
+                    magic);
+
+            for(auto const& map : shader_model[0].maps.data(magic))
+            {
+                auto bitm_it = index.find(map.map5);
+
+                if(bitm_it == index.end())
+                {
+                    break;
+                    Throw(undefined_behavior("failed to locate map"));
+                }
+
+                bitm_tag = (*bitm_it);
+            }
 
             break;
         }
@@ -419,10 +619,60 @@ struct BitmapCache
             auto bitm_it = index.find(shader_model[0].bitmap);
 
             if(bitm_it == index.end())
-                return {};
+                Throw(undefined_behavior("failed to locate bitmap"));
 
             bitm_tag = (*bitm_it);
 
+            break;
+        }
+        case tag_class_t::sgla:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_glass>().data(magic);
+
+            if(!shader_model[0].bitmap2.valid())
+                break;
+
+            auto bitm_it = index.find(shader_model[0].bitmap2);
+
+            if(bitm_it == index.end())
+                Throw(undefined_behavior("failed to locate bitmap"));
+
+            bitm_tag = (*bitm_it);
+
+            cDebug("Glass shader");
+
+            break;
+        }
+        case tag_class_t::swat:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_water>().data(magic);
+
+            auto bitm_it = index.find(shader_model[0].bitmap);
+
+            if(bitm_it == index.end())
+                Throw(undefined_behavior("failed to locate bitmap"));
+
+            bitm_tag = (*bitm_it);
+
+            cDebug("Water shader");
+
+            break;
+        }
+        case tag_class_t::smet:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_metal>().data(magic);
+
+            auto bitm_it = index.find(shader_model[0].bitmap);
+
+            if(bitm_it == index.end())
+                Throw(undefined_behavior("failed to locate bitmap"));
+
+            bitm_tag = (*bitm_it);
+
+            cDebug("Metal shader");
             break;
         }
         case tag_class_t::bitm:
@@ -436,7 +686,14 @@ struct BitmapCache
         }
 
         if(!bitm_tag)
+        {
+            cDebug(
+                "Failed to get bitmap from: {0} {1}",
+                shader.tag.str(),
+                shader.to_name().to_string(magic));
             return {};
+            Throw(undefined_behavior("failed to get bitmap tag"));
+        }
 
         if(bitm_tag->storage == blam::image_storage_t::external)
         {
@@ -448,7 +705,7 @@ struct BitmapCache
                 bitm_tag->to_reflexive<blam::bitm::header_t>().data(magic).data;
 
         if(!bitm_ptr)
-            return {};
+            Throw(undefined_behavior("failed to get bitmap header"));
 
         auto const& bitm = *bitm_ptr;
 
@@ -457,8 +714,12 @@ struct BitmapCache
 
         GFX::DBG::SCOPE _("BitmapCache::predict_impl");
 
-        auto const& image = bitm.images.data(curr_magic)[idx];
+        auto image_ = bitm.images.data(curr_magic);
+
+        if(image_.data)
         {
+            auto const& image = image_[0];
+
             auto& img = out.image;
             img.mip   = &image;
             img.index = 0;
@@ -467,19 +728,22 @@ struct BitmapCache
             if(image.compressed())
             {
                 std::tie(fmt.pixfmt, fmt.cmpflg) = image.to_compressed_fmt();
+
+                fmt.comp = convert::to<PixCmp>(fmt.c);
             } else
             {
                 fmt.pixfmt                   = image.to_pixfmt();
                 std::tie(fmt.bfmt, fmt.comp) = image.to_fmt();
             }
 
-            auto& bucket = get_bucket(image, fmt);
-            img.bucket   = create_hash(image, fmt);
+            auto& bucket = get_bucket(fmt);
+            img.bucket   = create_hash(fmt);
             img.fmt      = fmt;
 
             img.index = bucket.ptr;
             bucket.ptr++;
-        }
+        } else
+            return {};
 
         return out;
     }
@@ -508,11 +772,12 @@ struct BSPCache
     : DataCache<BSPItem, blam::bsp::info const*, blam::bsp::info const&>
 {
     BSPCache(blam::map_container const& map, BitmapCache& bitmap_cache) :
-        bitmap_cache(bitmap_cache), index(map), magic(map.magic), vert_ptr(0),
-        element_ptr(0)
+        version(map.map->version), bitmap_cache(bitmap_cache), index(map),
+        magic(map.magic), vert_ptr(0), element_ptr(0)
     {
     }
 
+    blam::version_t      version;
     BitmapCache&         bitmap_cache;
     blam::tag_index_view index;
     blam::magic_data_t   magic;
@@ -522,8 +787,9 @@ struct BSPCache
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
     {
-        auto bsp_magic = bsp.bsp_magic(magic);
-        auto section   = bsp.to_bsp(bsp_magic).to_header().data(bsp_magic)[0];
+        auto        bsp_magic = bsp.bsp_magic(magic);
+        auto const& section =
+            bsp.to_bsp(bsp_magic).to_header().data(bsp_magic)[0];
 
         BSPItem out;
         out.mesh = &section;
@@ -542,33 +808,70 @@ struct BSPCache
 
                 /* Just dig up the textures, long process */
                 mesh_data.color_bitm = bitmap_cache.predict(mesh.shader, 0);
-                //                mesh_data.light_bitm =
-                //                    bitmap_cache.resolve(section.lightmaps,
-                //                    group.lightmap_idx);
+                mesh_data.light_bitm =
+                    bitmap_cache.resolve(section.lightmaps, group.lightmap_idx);
 
                 /* ... and moving on */
 
-                auto indices  = mesh.pc_indices(section).data(bsp_magic);
-                auto vertices = mesh.pc_vertices().data(bsp_magic);
+                if(version == blam::version_t::xbox)
+                {
+                    auto indices  = mesh.pc_indices(section).data(bsp_magic);
+                    auto vertices = mesh.xbox_vertices().data(bsp_magic);
 
-                using vertex_type =
-                    std::remove_const<decltype(vertices)::value_type>::type;
-                using element_type =
-                    std::remove_const<decltype(indices)::value_type>::type;
+                    if(!vertices || !indices)
+                    {
+                        group_data.meshes.erase(--group_data.meshes.end());
+                        continue;
+                    }
 
-                mesh_data.mesh          = &mesh;
-                mesh_data.draw.m_eltype = semantic::TypeEnum::UShort;
-                mesh_data.draw.m_eoff = element_ptr / sizeof(blam::vert::idx_t);
-                mesh_data.draw.m_elems = C_FCAST<u32>(indices.elements);
-                mesh_data.draw.m_voff  = vert_ptr / sizeof(vertex_type);
-                mesh_data.draw.m_insts = 1;
+                    using vertex_type =
+                        std::remove_const<decltype(vertices)::value_type>::type;
+                    using element_type =
+                        std::remove_const<decltype(indices)::value_type>::type;
 
-                MemCpy(vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
-                MemCpy(
-                    indices, element_buffer.at(element_ptr).as<element_type>());
+                    mesh_data.mesh          = &mesh;
+                    mesh_data.draw.m_eltype = semantic::TypeEnum::UShort;
+                    mesh_data.draw.m_eoff =
+                        element_ptr / sizeof(blam::vert::idx_t);
+                    mesh_data.draw.m_elems = C_FCAST<u32>(indices.elements);
+                    mesh_data.draw.m_voff  = vert_ptr / sizeof(vertex_type);
+                    mesh_data.draw.m_insts = 1;
 
-                vert_ptr += vertices.size;
-                element_ptr += indices.size;
+                    MemCpy(
+                        vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
+                    MemCpy(
+                        indices,
+                        element_buffer.at(element_ptr).as<element_type>());
+
+                    vert_ptr += vertices.size;
+                    element_ptr += indices.size;
+                } else
+                {
+                    auto indices  = mesh.pc_indices(section).data(bsp_magic);
+                    auto vertices = mesh.pc_vertices().data(bsp_magic);
+
+                    using vertex_type =
+                        std::remove_const<decltype(vertices)::value_type>::type;
+                    using element_type =
+                        std::remove_const<decltype(indices)::value_type>::type;
+
+                    mesh_data.mesh          = &mesh;
+                    mesh_data.draw.m_eltype = semantic::TypeEnum::UShort;
+                    mesh_data.draw.m_eoff =
+                        element_ptr / sizeof(blam::vert::idx_t);
+                    mesh_data.draw.m_elems = C_FCAST<u32>(indices.elements);
+                    mesh_data.draw.m_voff  = vert_ptr / sizeof(vertex_type);
+                    mesh_data.draw.m_insts = 1;
+
+                    MemCpy(
+                        vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
+                    MemCpy(
+                        indices,
+                        element_buffer.at(element_ptr).as<element_type>());
+
+                    vert_ptr += vertices.size;
+                    element_ptr += indices.size;
+                }
             }
         }
 
@@ -580,16 +883,79 @@ struct BSPCache
     }
 };
 
+namespace detail {
+
+template<
+    typename Version,
+    typename std::enable_if<
+        !std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
+static inline auto vertex_data(
+    blam::mod2::submesh_header const& model,
+    blam::magic_data_t const&         magic,
+    blam::tag_index_t const*          tags)
+{
+    return model.vertex_segment(*tags).data(magic);
+}
+
+template<
+    typename Version,
+    typename std::enable_if<
+        std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
+static inline auto vertex_data(
+    blam::mod2::submesh_header const& model,
+    blam::magic_data_t const&         magic,
+    blam::tag_index_t const*)
+{
+    auto const& vertex_ref = model.xbox_vertex_ref().data(magic)[0];
+    return vertex_ref.vertices(model.vert_count).data(magic);
+}
+
+template<
+    typename Version,
+    typename std::enable_if<
+        std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
+static inline auto index_data(
+    blam::mod2::submesh_header const& model,
+    blam::magic_data_t const&         magic,
+    blam::tag_index_t const*          tags)
+{
+    return model.xbox_index_segment().data(magic);
+}
+
+template<
+    typename Version,
+    typename std::enable_if<
+        !std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
+static inline auto index_data(
+    blam::mod2::submesh_header const& model,
+    blam::magic_data_t const&         magic,
+    blam::tag_index_t const*          tags)
+{
+    return model.index_segment(*tags).data(magic);
+}
+
+} // namespace detail
+
+template<typename Version>
 struct ModelCache
     : DataCache<ModelItem, Tup<u32, u16>, blam::tagref_t const&, u16>
 {
+    using Variant = typename std::conditional<
+        std::is_same<Version, blam::xbox_version_t>::value,
+        blam::xbox_variant,
+        blam::pc_variant>::type;
+
     ModelCache(blam::map_container const& map, BitmapCache& bitm_cache) :
-        tags(map.tags), index(map), magic(map.magic),
-        vertex_magic(tags->vertex_magic(magic)), bitm_cache(bitm_cache),
-        vert_ptr(0), element_ptr(0)
+        version(map.map->version), tags(map.tags), index(map), magic(map.magic),
+        vertex_magic(
+            map.map->version == blam::version_t::xbox
+                ? map.magic
+                : tags->vertex_magic(magic)),
+        bitm_cache(bitm_cache), vert_ptr(0), element_ptr(0)
     {
     }
 
+    blam::version_t          version;
     blam::tag_index_t const* tags;
     blam::tag_index_view     index;
     blam::magic_data_t       magic;
@@ -606,10 +972,20 @@ struct ModelCache
         if(header_it == index.end())
             return nullptr;
 
-        auto header =
-            (*header_it)->to_reflexive<blam::mod2::header>().data(magic);
+        auto header = (*header_it)
+                          ->template to_reflexive<blam::mod2::header>()
+                          .data(magic);
 
         return &header[0];
+    }
+
+    inline auto vertex_data(blam::mod2::submesh_header const& model)
+    {
+        return detail::vertex_data<Version>(model, vertex_magic, tags);
+    }
+    inline auto index_data(blam::mod2::submesh_header const& model)
+    {
+        return detail::index_data<Version>(model, vertex_magic, tags);
     }
 
     virtual ModelItem predict_impl(
@@ -626,22 +1002,23 @@ struct ModelCache
         out.mesh   = {};
         out.header = header;
 
-        for(auto const& shader : header->shaders.data(magic))
-            bitm_cache.predict(shader.ref, 0);
+        auto const& shaders = header->shaders.data(magic);
 
         auto const& geom = header[0].geometries.data(magic)[geom_idx];
         {
             out.mesh.header = &geom;
 
-            for(auto const& model : geom.mesh_headers.data(magic))
+            for(auto const& model : geom.template meshes<Variant>(magic))
             {
-                auto elements = model.index_segment(*tags).data(vertex_magic);
-                auto vertices = model.vertex_segment(*tags).data(vertex_magic);
+                auto elements = index_data(model.data);
+                auto vertices = vertex_data(model.data);
 
                 using element_type =
-                    std::remove_const<decltype(elements)::value_type>::type;
+                    typename std::remove_const<typename decltype(
+                        elements)::value_type>::type;
                 using vertex_type =
-                    std::remove_const<decltype(vertices)::value_type>::type;
+                    typename std::remove_const<typename decltype(
+                        vertices)::value_type>::type;
 
                 if(!elements || !vertices)
                     Throw(undefined_behavior(
@@ -649,17 +1026,21 @@ struct ModelCache
 
                 out.mesh.sub.emplace_back();
                 auto& draw_data         = out.mesh.sub.back();
-                draw_data.header        = &model;
+                draw_data.header        = &model.data;
                 draw_data.draw.m_eltype = semantic::TypeEnum::UShort;
                 draw_data.draw.m_eoff   = element_ptr / sizeof(element_type);
                 draw_data.draw.m_elems  = C_FCAST<u32>(elements.elements);
                 draw_data.draw.m_voff   = vert_ptr / sizeof(vertex_type);
                 draw_data.draw.m_insts  = 1;
+                draw_data.color_bitm =
+                    bitm_cache.predict(shaders[model.data.shader_idx].ref, 0);
 
-                MemCpy(vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
+                MemCpy(
+                    vertices,
+                    vert_buffer.at(vert_ptr).template as<vertex_type>());
                 MemCpy(
                     elements,
-                    element_buffer.at(element_ptr).as<element_type>());
+                    element_buffer.at(element_ptr).template as<element_type>());
 
                 vert_ptr += vertices.size;
                 element_ptr += vertices.size;
@@ -668,6 +1049,7 @@ struct ModelCache
 
         return out;
     }
+
     virtual void evict_impl() override
     {
         vert_ptr    = 0;
@@ -703,14 +1085,17 @@ struct ModelCache
     }
 };
 
+template<typename Version>
 struct SceneryCache : DataCache<SceneryItem, u32, blam::tagref_t const&>
 {
-    SceneryCache(blam::map_container const& map, ModelCache& model_cache) :
-        model_cache(model_cache), magic(map.magic), index(map)
+    SceneryCache(
+        blam::map_container const& map, ModelCache<Version>& model_cache) :
+        model_cache(model_cache),
+        magic(map.magic), index(map)
     {
     }
 
-    ModelCache&          model_cache;
+    ModelCache<Version>& model_cache;
     blam::magic_data_t   magic;
     blam::tag_index_view index;
 
@@ -721,7 +1106,8 @@ struct SceneryCache : DataCache<SceneryItem, u32, blam::tagref_t const&>
         if(it == index.end())
             return {};
 
-        auto scenery = (*it)->to_reflexive<blam::scn::scenery>().data(magic);
+        auto scenery =
+            (*it)->template to_reflexive<blam::scn::scenery>().data(magic);
 
         if(scenery.elements != 1)
             Throw(undefined_behavior("no scenery found"));
@@ -742,14 +1128,17 @@ struct SceneryCache : DataCache<SceneryItem, u32, blam::tagref_t const&>
     }
 };
 
+template<typename Version>
 struct VehicleCache : DataCache<VehicleItem, u32, blam::tagref_t const&>
 {
-    VehicleCache(blam::map_container const& map, ModelCache& model_cache) :
-        model_cache(model_cache), magic(map.magic), index(map)
+    VehicleCache(
+        blam::map_container const& map, ModelCache<Version>& model_cache) :
+        model_cache(model_cache),
+        magic(map.magic), index(map)
     {
     }
 
-    ModelCache&          model_cache;
+    ModelCache<Version>& model_cache;
     blam::magic_data_t   magic;
     blam::tag_index_view index;
 
@@ -760,15 +1149,15 @@ struct VehicleCache : DataCache<VehicleItem, u32, blam::tagref_t const&>
         if(it == index.end())
             return {};
 
-        auto vehicle = (*it)->to_reflexive<blam::scn::vehicle>().data(magic);
+        auto vehicle =
+            (*it)->template to_reflexive<blam::scn::vehicle>().data(magic);
 
         if(!vehicle[0].model.valid())
             return {};
 
         VehicleItem out;
         out.vehicle = &vehicle[0];
-        out.model   = model_cache.predict_regions(
-            vehicle[0].model.to_plain(), blam::mod2::lod_high_ext);
+        out.model   = model_cache.predict_regions(vehicle[0].model.to_plain());
 
         return out;
     }
@@ -778,16 +1167,19 @@ struct VehicleCache : DataCache<VehicleItem, u32, blam::tagref_t const&>
     }
 };
 
+template<typename Version>
 struct BipedCache : DataCache<BipedItem, u32, blam::tagref_t const&>
 {
-    BipedCache(blam::map_container const& map, ModelCache& model_cache) :
-        magic(map.magic), index(map), model_cache(model_cache)
+    BipedCache(
+        blam::map_container const& map, ModelCache<Version>& model_cache) :
+        magic(map.magic),
+        index(map), model_cache(model_cache)
     {
     }
 
     blam::magic_data_t   magic;
     blam::tag_index_view index;
-    ModelCache&          model_cache;
+    ModelCache<Version>& model_cache;
 
     virtual BipedItem predict_impl(blam::tagref_t const& bipd) override
     {
@@ -796,12 +1188,12 @@ struct BipedCache : DataCache<BipedItem, u32, blam::tagref_t const&>
         if(it == index.end())
             return {};
 
-        auto biped = (*it)->to_reflexive<blam::scn::biped>().data(magic);
+        auto biped =
+            (*it)->template to_reflexive<blam::scn::biped>().data(magic);
 
         BipedItem out;
         out.header = &biped[0];
-        out.model  = model_cache.predict_regions(
-            biped[0].model.to_plain(), blam::mod2::lod_high_ext);
+        out.model  = model_cache.predict_regions(biped[0].model.to_plain());
 
         return out;
     }
@@ -811,17 +1203,19 @@ struct BipedCache : DataCache<BipedItem, u32, blam::tagref_t const&>
     }
 };
 
-template<typename T>
+template<typename T, typename Version>
 struct EquipmentCache : DataCache<T, u32, blam::tagref_t const&>
 {
-    EquipmentCache(blam::map_container const& map, ModelCache& model_cache) :
-        magic(map.magic), index(map), model_cache(model_cache)
+    EquipmentCache(
+        blam::map_container const& map, ModelCache<Version>& model_cache) :
+        magic(map.magic),
+        index(map), model_cache(model_cache)
     {
     }
 
     blam::magic_data_t   magic;
     blam::tag_index_view index;
-    ModelCache&          model_cache;
+    ModelCache<Version>& model_cache;
 
     virtual T predict_impl(blam::tagref_t const& equip) override
     {
@@ -847,6 +1241,7 @@ struct EquipmentCache : DataCache<T, u32, blam::tagref_t const&>
     }
 };
 
+template<typename Version>
 struct BlamData
 {
     BlamData() :
@@ -854,7 +1249,7 @@ struct BlamData
         bitmap_file(Resource(MkUrl(
             Path(GetInitArgs().arguments().at(0)).dirname() + "bitmaps.map",
             RSCA::SystemFile))),
-        map_container(map_file, blam::pc_version),
+        map_container(map_file, Version()),
         bitm_cache(
             map_container,
             blam::magic_data_t(C_OCAST<Bytes>(bitmap_file)),
@@ -872,10 +1267,10 @@ struct BlamData
     }
 
     /* Blam! data */
-    Resource                   map_file;
-    Resource                   bitmap_file;
-    blam::map_container        map_container;
-    blam::scn::scenario const* scenario;
+    Resource                                      map_file;
+    Resource                                      bitmap_file;
+    blam::map_container                           map_container;
+    blam::scn::scenario<blam::hsc::bc::v2> const* scenario;
 
     BitmapCache bitm_cache;
 
@@ -888,12 +1283,13 @@ struct BlamData
     GFX::RenderPass     bsp_pass;
     GFX::OPT_DRAW       bsp_draw;
 
-    ModelCache                    model_cache;
-    SceneryCache                  scenery_cache;
-    VehicleCache                  vehicle_cache;
-    BipedCache                    biped_cache;
-    EquipmentCache<EquipmentItem> equip_cache;
-    EquipmentCache<WeaponItem>    weap_cache;
+    ModelCache<Version>   model_cache;
+    SceneryCache<Version> scenery_cache;
+    VehicleCache<Version> vehicle_cache;
+    BipedCache<Version>   biped_cache;
+
+    EquipmentCache<EquipmentItem, Version> equip_cache;
+    EquipmentCache<WeaponItem, Version>    weap_cache;
     //    EquipmentCache<MPEquipmentItem> mp_equip_cache;
 
     ShPtr<GFX::BUF_A>  model_buf;
@@ -905,6 +1301,7 @@ struct BlamData
     GFX::RenderPass   model_pass;
     GFX::OPT_DRAW     model_draw;
     ShPtr<GFX::BUF_S> model_matrix_store;
+    ShPtr<GFX::BUF_S> material_store;
 
     camera_t            camera;
     Matf4               camera_matrix;
@@ -915,8 +1312,184 @@ struct BlamData
     ControllerCamera<camera_t*, ControllerOpts*> controller_camera;
 };
 
-void create_resources(EntityContainer& e, BlamData& data)
+template<typename Version>
+struct MeshRenderer : Components::RestrictedSubsystem<
+                          Components::TagType<MeshRenderer<Version>>,
+                          type_list_t<BspTag, ModelTag>,
+                          empty_list_t>
 {
+    using parent_type = Components::RestrictedSubsystem<
+        Components::TagType<MeshRenderer<Version>>,
+        type_list_t<BspTag, ModelTag>,
+        empty_list_t>;
+
+    using Proxy = typename parent_type::Proxy;
+
+    MeshRenderer(BlamData<Version>& data) : m_data(data)
+    {
+    }
+
+    MeshRenderer<Version> const& get() const
+    {
+        return *this;
+    }
+    MeshRenderer<Version>& get()
+    {
+        return *this;
+    }
+
+    void end_restricted(Proxy& p, time_point const& time)
+    {
+        if(time - last_update > Chrono::seconds(1))
+            update_draws(p, time);
+
+        GFX::MultiDraw(m_data.bsp_pipeline->pipeline(), bsp_draw);
+        GFX::MultiDraw(m_data.model_pipeline->pipeline(), model_draw);
+    }
+
+    void update_draws(Proxy& p, time_point const&)
+    {
+        bsp_pass   = {};
+        bsp_draw   = {};
+        model_pass = {};
+        model_draw = {};
+
+        /* Update draws */
+        for(auto& ent : p.select(ObjectBsp))
+        {
+            auto  ref     = p.template ref<Proxy>(ent);
+            auto& bsp_ref = ref.template get<BspTag>();
+
+            if(!bsp_ref.visible)
+                continue;
+
+            bsp_ref.draw_idx = bsp_pass.draws.size();
+            bsp_pass.draws.push_back({m_data.bsp_attr,
+                                      &m_data.bsp_pipeline->get_state(),
+                                      bsp_ref.draw.call,
+                                      bsp_ref.draw.draw});
+        }
+
+        for(auto& ent : p.select(ObjectMod2))
+        {
+            auto  ref     = p.template ref<Proxy>(ent);
+            auto& mod_ref = ref.template get<ModelTag>();
+
+            mod_ref.draw_idx = model_pass.draws.size();
+            model_pass.draws.push_back({m_data.model_attr,
+                                        &m_data.model_pipeline->get_state(),
+                                        mod_ref.draw.call,
+                                        mod_ref.draw.draw});
+        }
+
+        GFX::OptimizeRenderPass(bsp_pass, bsp_draw);
+        GFX::OptimizeRenderPass(model_pass, model_draw);
+
+        /* Update transforms and texture references */
+
+        struct Material
+        {
+            Vecf2 scale;
+            Veci2 offset;
+            u32   source;
+            u32   layer;
+            u32   pad_[2];
+        };
+
+        auto material_store =
+            m_data.material_store->map().template as<Material>();
+
+        auto model_material_store = material_store.at(2_MB);
+        material_store            = material_store.at(0, 2_MB);
+
+        auto matrix_store =
+            m_data.model_matrix_store->map().template as<Matf4>();
+
+        for(auto& ent : p.select(ObjectMod2))
+        {
+            auto            ref     = p.template ref<Proxy>(ent);
+            ModelReference& mod_ref = ref.template get<ModelTag>();
+            auto& draw_data = model_pass.draws.at(mod_ref.draw_idx).d_data;
+
+            matrix_store[draw_data.m_ioff] = mod_ref.transform;
+
+            if(!mod_ref.bitmap.valid())
+                continue;
+
+            Material&   mat    = model_material_store[draw_data.m_ioff];
+            BitmapItem& bitmap = m_data.bitm_cache.find(mod_ref.bitmap)->second;
+
+            mat.layer  = bitmap.image.index;
+            mat.offset = bitmap.image.offset;
+            mat.scale  = bitmap.image.scale;
+
+            auto comp_flags = std::get<3>(bitmap.image.bucket);
+            switch(comp_flags)
+            {
+            case CompFlags::DXT1:
+                mat.source = 0;
+                break;
+            case CompFlags::DXT3:
+                mat.source = 1;
+                break;
+            case CompFlags::DXT5:
+                mat.source = 2;
+                break;
+            }
+        }
+
+        for(auto& ent : p.select(ObjectBsp))
+        {
+            auto  ref     = p.template ref<Proxy>(ent);
+            auto& bsp_ref = ref.template get<BspTag>();
+
+            auto& draw_data = bsp_pass.draws.at(bsp_ref.draw_idx).d_data;
+
+            if(!bsp_ref.bitmap.valid())
+                continue;
+
+            Material&   mat    = material_store[draw_data.m_ioff];
+            BitmapItem& bitmap = m_data.bitm_cache.find(bsp_ref.bitmap)->second;
+
+            mat.layer  = bitmap.image.index;
+            mat.offset = bitmap.image.offset;
+            mat.scale  = bitmap.image.scale;
+
+            auto comp_flags = std::get<3>(bitmap.image.bucket);
+            switch(comp_flags)
+            {
+            case CompFlags::DXT1:
+                mat.source = 0;
+                break;
+            case CompFlags::DXT3:
+                mat.source = 1;
+                break;
+            case CompFlags::DXT5:
+                mat.source = 2;
+                break;
+            }
+        }
+
+        m_data.material_store->unmap();
+        m_data.model_matrix_store->unmap();
+    }
+
+    time_point last_update;
+
+    BlamData<Version>& m_data;
+
+    GFX::RenderPass bsp_pass;
+    GFX::OPT_DRAW   bsp_draw;
+
+    GFX::RenderPass model_pass;
+    GFX::OPT_DRAW   model_draw;
+};
+
+template<typename Version>
+void create_resources(EntityContainer& e, BlamData<Version>& data)
+{
+    ProfContext _(__PRETTY_FUNCTION__);
+
     {
         using namespace Display::EventHandlers;
         auto eventhandler =
@@ -931,6 +1504,11 @@ void create_resources(EntityContainer& e, BlamData& data)
             0, std_camera_t::KeyboardInput(data.std_camera));
         eventhandler->addEventHandler(
             0, std_camera_t::MouseInput(&data.camera));
+
+        auto eventhandler_w =
+            e.service<comp_app::BasicEventBus<Display::Event>>();
+
+        eventhandler_w->addEventHandler(0, WindowResize<GFX>());
     }
 
     /* Set up graphics data */
@@ -953,32 +1531,59 @@ void create_resources(EntityContainer& e, BlamData& data)
     data.model_matrix_store = gfx.alloc_buffer<GFX::BUF_S>(
         RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable, sizeof(Matf4), 0);
 
-    data.bsp_buf->commit(50_MB);
-    data.bsp_index->commit(20_MB);
+    data.material_store = gfx.alloc_buffer<GFX::BUF_S>(
+        RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable,
+        sizeof(Vecf2) + sizeof(Veci2) + sizeof(u32),
+        0);
 
-    data.model_buf->commit(30_MB);
-    data.model_index->commit(15_MB);
+    data.bsp_buf->commit(memory_budget::bsp_buffer);
+    data.bsp_index->commit(memory_budget::bsp_elements);
 
-    data.model_matrix_store->commit(10_MB);
+    data.model_buf->commit(memory_budget::mesh_buffer);
+    data.model_index->commit(memory_budget::mesh_elements);
+
+    data.model_matrix_store->commit(memory_budget::matrix_buffer);
+    data.material_store->commit(memory_budget::material_buffer);
 
     GFX::V_ATTR pos_attr, tex_attr, nrm_attr, bin_attr, tan_attr;
-    pos_attr.m_idx  = 0;
-    tex_attr.m_idx  = 1;
-    nrm_attr.m_idx  = 2;
-    bin_attr.m_idx  = 3;
-    tan_attr.m_idx  = 4;
-    pos_attr.m_off  = offsetof(vertex_type, position);
-    tex_attr.m_off  = offsetof(vertex_type, texcoord);
-    nrm_attr.m_off  = offsetof(vertex_type, normal);
-    bin_attr.m_off  = offsetof(vertex_type, binorm);
-    tan_attr.m_off  = offsetof(vertex_type, tangent);
+    pos_attr.m_idx = 0;
+    tex_attr.m_idx = 1;
+    nrm_attr.m_idx = 2;
+    bin_attr.m_idx = 3;
+    tan_attr.m_idx = 4;
+    if(data.map_container.map->is_xbox())
+    {
+        pos_attr.m_off = offsetof(xbox_vertex_type, position);
+        tex_attr.m_off = offsetof(xbox_vertex_type, texcoord);
+        nrm_attr.m_off = offsetof(xbox_vertex_type, normal);
+        bin_attr.m_off = offsetof(xbox_vertex_type, binorm);
+        tan_attr.m_off = offsetof(xbox_vertex_type, tangent);
+    } else
+    {
+        pos_attr.m_off = offsetof(vertex_type, position);
+        tex_attr.m_off = offsetof(vertex_type, texcoord);
+        nrm_attr.m_off = offsetof(vertex_type, normal);
+        bin_attr.m_off = offsetof(vertex_type, binorm);
+        tan_attr.m_off = offsetof(vertex_type, tangent);
+    }
     tex_attr.m_size = 2;
 
     pos_attr.m_size = nrm_attr.m_size = bin_attr.m_size = tan_attr.m_size = 3;
-    pos_attr.m_type = tex_attr.m_type = nrm_attr.m_type = bin_attr.m_type =
-        tan_attr.m_type = semantic::TypeEnum::Scalar;
-    pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
-        bin_attr.m_stride = tan_attr.m_stride = sizeof(vertex_type);
+    if(data.map_container.map->is_xbox())
+    {
+        pos_attr.m_type = tex_attr.m_type = semantic::TypeEnum::Scalar;
+        nrm_attr.m_type = bin_attr.m_type = tan_attr.m_type =
+            semantic::TypeEnum::Packed_UFloat;
+
+        pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
+            bin_attr.m_stride = tan_attr.m_stride = sizeof(xbox_vertex_type);
+    } else
+    {
+        pos_attr.m_type = tex_attr.m_type = nrm_attr.m_type = bin_attr.m_type =
+            tan_attr.m_type = semantic::TypeEnum::Scalar;
+        pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
+            bin_attr.m_stride = tan_attr.m_stride = sizeof(vertex_type);
+    }
     pos_attr.m_bassoc = tex_attr.m_bassoc = nrm_attr.m_bassoc =
         bin_attr.m_bassoc = tan_attr.m_bassoc = 0;
 
@@ -988,9 +1593,23 @@ void create_resources(EntityContainer& e, BlamData& data)
     data.bsp_attr->bindBuffer(0, *data.bsp_buf);
 
     using model_vertex_type = blam::vert::mod2_vertex<blam::vert::uncompressed>;
+    using xbox_model_vertex_type =
+        blam::vert::mod2_vertex<blam::vert::compressed>;
 
-    pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
-        bin_attr.m_stride = tan_attr.m_stride = sizeof(model_vertex_type);
+    if(data.map_container.map->is_xbox())
+    {
+        tex_attr.m_type = semantic::TypeEnum::Short;
+        tex_attr.m_flags =
+            GLEAMAPI::AttributePacked | GLEAMAPI::AttributeNormalization;
+
+        pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
+            bin_attr.m_stride                 = tan_attr.m_stride =
+                sizeof(xbox_model_vertex_type);
+    } else
+    {
+        pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
+            bin_attr.m_stride = tan_attr.m_stride = sizeof(model_vertex_type);
+    }
 
     data.model_attr =
         gfx.alloc_desc<5>({{pos_attr, tex_attr, nrm_attr, bin_attr, tan_attr}});
@@ -1000,8 +1619,13 @@ void create_resources(EntityContainer& e, BlamData& data)
     data.bitm_cache.allocator = &gfx;
 }
 
-void load_scenario_bsp(EntityContainer& e, BlamData& data)
+template<typename Version>
+void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
 {
+    ProfContext _(__PRETTY_FUNCTION__);
+
+    using namespace Components;
+
     auto& magic = data.map_container.magic;
 
     data.bsp_cache.vert_buffer    = data.bsp_buf->map();
@@ -1020,6 +1644,11 @@ void load_scenario_bsp(EntityContainer& e, BlamData& data)
     auto& bsp_pass       = data.bsp_pass;
     bsp_pass.pipeline    = data.bsp_pipeline->pipeline_ptr();
     bsp_pass.framebuffer = GFX::DefaultFramebuffer();
+
+    EntityRecipe bsp;
+    bsp.components = {type_hash_v<BspTag>()};
+    bsp.tags       = ObjectBsp;
+
     for(auto const& mesh_id : bsp_meshes)
     {
         if(!mesh_id.valid())
@@ -1028,35 +1657,42 @@ void load_scenario_bsp(EntityContainer& e, BlamData& data)
         auto const& mesh = data.bsp_cache.find(mesh_id)->second;
 
         for(auto const& group : mesh.groups)
-            for(auto const& mesh : group.meshes)
+            for(BSPItem::Mesh const& mesh : group.meshes)
             {
-                if(mesh.color_bitm.valid())
-                {
-                    auto const& texture = data.bitm_cache.find(mesh.color_bitm);
+                auto          mesh_ent = e.ref(e.create_entity(bsp));
+                BspReference& bsp_ref  = mesh_ent.get<BspTag>();
 
-                    cDebug(
-                        "Mesh {0} uses texture {1}@{2}",
-                        mesh.mesh,
-                        0,
-                        texture->second.image.index);
-                }
-                bsp_pass.draws.push_back(
-                    {data.bsp_attr,
-                     &data.bsp_pipeline->get_state(),
-                     GFX::D_CALL().withIndexing().withInstancing(),
-                     mesh.draw});
+                bsp_ref.bitmap    = mesh.color_bitm;
+                bsp_ref.bsp       = mesh_id;
+                bsp_ref.visible   = true;
+                bsp_ref.draw.draw = mesh.draw;
+                bsp_ref.draw.call =
+                    GFX::D_CALL().withIndexing().withInstancing();
             }
     }
+
     GFX::OptimizeRenderPass(bsp_pass, data.bsp_draw);
 }
 
-template<typename T, typename CacheType>
+template<typename T, typename CacheType, typename Version>
 void load_unit_group(
     CacheType&                   cache,
     blam::reflex_group<T> const& group,
     blam::magic_data_t const&    magic,
-    BlamData&                    data)
+
+    BlamData<Version>& data,
+
+    EntityContainer& e,
+    u32              tags)
 {
+    ProfContext _(__PRETTY_FUNCTION__);
+
+    using namespace Components;
+
+    EntityRecipe unit;
+    unit.components = {type_hash_v<ModelTag>()};
+    unit.tags       = tags | ObjectMod2;
+
     Map<i16, generation_idx_t> objects;
     i16                        id = 0;
     for(auto const& object : group.ref.data(magic))
@@ -1088,33 +1724,42 @@ void load_unit_group(
 
                 auto const& model = data.model_cache.find(lod)->second.mesh;
 
-                for(auto const& mesh : model.sub)
+                for(ModelItem::SubModel const& mesh : model.sub)
                 {
-                    data.model_mats.push_back(
+                    auto mesh_ent = e.ref(e.create_entity(unit));
+
+                    ModelReference& model = mesh_ent.get<ModelTag>();
+
+                    model.transform =
                         typing::vectors::translation(Matf4(), instance.pos) *
                         typing::vectors::matrixify(
                             typing::vectors::normalize_quat(Quatf(
                                 1,
                                 instance.rot.y(),
                                 instance.rot.z(),
-                                instance.rot.x()))));
-                    data.model_pass.draws.push_back(
-                        {data.model_attr,
-                         &data.model_pipeline->get_state(),
-                         GFX::D_CALL()
-                             .withIndexing()
-                             .withTriStrip()
-                             .withInstancing(),
-                         mesh.draw});
+                                instance.rot.x())));
+                    model.draw.draw = mesh.draw;
+                    model.model     = obj_ref->second;
+                    model.draw.call = GFX::D_CALL()
+                                          .withIndexing()
+                                          .withTriStrip()
+                                          .withInstancing();
+                    model.bitmap = mesh.color_bitm;
                 }
             }
     }
 }
 
-void load_scenario_scenery(EntityContainer& e, BlamData& data)
+template<typename Version>
+void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 {
-    data.model_cache.vert_buffer    = data.model_buf->map();
-    data.model_cache.element_buffer = data.model_index->map();
+    ProfContext _(__PRETTY_FUNCTION__);
+
+    {
+        ProfContext _("Buffer mapping");
+        data.model_cache.vert_buffer    = data.model_buf->map();
+        data.model_cache.element_buffer = data.model_index->map();
+    }
 
     auto scenario = data.scenario;
     auto magic    = data.map_container.magic;
@@ -1123,47 +1768,24 @@ void load_scenario_scenery(EntityContainer& e, BlamData& data)
 
     pipeline->build_state();
 
-    load_unit_group(data.scenery_cache, scenario->scenery, magic, data);
-    load_unit_group(data.vehicle_cache, scenario->vehicles, magic, data);
-    load_unit_group(data.biped_cache, scenario->bipeds, magic, data);
-    load_unit_group(data.equip_cache, scenario->equips, magic, data);
-    load_unit_group(data.weap_cache, scenario->weapon_spawns, magic, data);
-    //    load_unit_group(data.mp_equip_cache, scenario->mp_equipment, magic,
-    //    data);
-
-    GFX::RenderPass& scenery_pass = data.model_pass;
-    scenery_pass.pipeline         = data.model_pipeline->pipeline_ptr();
+    load_unit_group(
+        data.scenery_cache, scenario->scenery, magic, data, e, ObjectScenery);
+    load_unit_group(
+        data.vehicle_cache, scenario->vehicles, magic, data, e, ObjectVehicle);
+    load_unit_group(
+        data.biped_cache, scenario->bipeds, magic, data, e, ObjectBiped);
+    load_unit_group(
+        data.equip_cache, scenario->equips, magic, data, e, ObjectEquipment);
+    load_unit_group(
+        data.weap_cache,
+        scenario->weapon_spawns,
+        magic,
+        data,
+        e,
+        ObjectEquipment);
 
     data.model_buf->unmap();
     data.model_index->unmap();
-
-    GFX::OptimizeRenderPass(scenery_pass, data.model_draw);
-
-    Vector<Matf4> matrices_realloc = std::move(data.model_mats);
-
-    auto matrix_store = data.model_matrix_store->map().as<Matf4>();
-
-    u32 mat_idx = 0;
-    for(auto const& draw : scenery_pass.draws)
-    {
-        matrix_store[draw.d_data.m_ioff] = matrices_realloc.at(mat_idx);
-        mat_idx++;
-    }
-
-    data.model_matrix_store->unmap();
-
-    GFX::ERROR ec;
-    data.model_matrix_store->bindrange(0, 0, 10_MB, ec);
-
-    pipeline->set_constant(
-        *std::find_if(
-            pipeline->constants_begin(),
-            pipeline->constants_end(),
-            pipeline->constant_by_name("camera")),
-        Bytes::From(data.camera_matrix));
-
-    pipeline->build_state();
-    pipeline->get_state();
 }
 
 i32 blam_main(i32, cstring_w*)
@@ -1176,10 +1798,26 @@ i32 blam_main(i32, cstring_w*)
 
     auto loader = e.service<comp_app::AppLoader>();
 
+    cDebug(
+        "Buffer budget: {0} / {1} MB",
+        memory_budget::grand_total,
+        memory_budget::grand_total / Unit_MB);
+
     comp_app::addDefaults(e, *e.service<comp_app::AppLoader>(), app_ec);
-    comp_app::AppContainer<BlamData>::addTo(
+    comp_app::AppContainer<BlamData<halo_version>>::addTo(
         e,
-        [](EntityContainer& e, BlamData& data, time_point const&) {
+        [](EntityContainer&        e,
+           BlamData<halo_version>& data,
+           time_point const&) {
+            ProfContext _(__PRETTY_FUNCTION__);
+
+            e.register_component_inplace<ModelStore>();
+            e.register_component_inplace<BspStore>();
+
+            e.register_subsystem_inplace<
+                Components::TagType<MeshRenderer<halo_version>>,
+                MeshRenderer<halo_version>>(std::ref(data));
+
             if(!FileExists(data.map_file))
                 Throw(undefined_behavior("map file not found"));
 
@@ -1189,7 +1827,7 @@ i32 blam_main(i32, cstring_w*)
 
             data.scenario =
                 data.map_container.tags->scenario(data.map_container.map)
-                    .to_reflexive<blam::scn::scenario>()
+                    .to_reflexive<blam::scn::scenario<blam::hsc::bc::v2>>()
                     .data(magic)
                     .data;
             {
@@ -1211,27 +1849,77 @@ i32 blam_main(i32, cstring_w*)
             data.bsp_pipeline   = &pipeline;
             data.model_pipeline = &scenery_pipeline;
 
-            auto const& view_u = *std::find_if(
-                pipeline.constants_begin(),
-                pipeline.constants_end(),
-                pipeline.constant_by_name("view"));
-
-            //            pipeline.set_sampler(
-            //                *std::find_if(
-            //                    pipeline.constants_begin(),
-            //                    pipeline.constants_end(),
-            //                    pipeline.constant_by_name("color_tex")),
-            //                data.textures[blam::bitm::format_t::DXT1].sampler->handle());
-
-            pipeline.set_constant(view_u, Bytes::From(data.camera_matrix));
-
             pipeline.build_state();
             pipeline.get_state();
+            data.model_pipeline->build_state();
+            data.model_pipeline->get_state();
 
             load_scenario_bsp(e, data);
             load_scenario_scenery(e, data);
 
-            data.bitm_cache.allocate_storage();
+            {
+                ProfContext _("Texture allocation");
+                data.bitm_cache.allocate_storage();
+            }
+
+            GFX::ERROR ec;
+            data.model_matrix_store->bindrange(0, 0, 10_MB, ec);
+            data.material_store->bindrange(1, 0, 2_MB, ec);
+            data.material_store->bindrange(2, 2_MB, 8_MB, ec);
+
+            {
+                auto pipeline = data.model_pipeline;
+                pipeline->set_constant(
+                    "camera", Bytes::From(data.camera_matrix));
+
+                pipeline->set_sampler(
+                    "bc1_tex",
+                    data.bitm_cache
+                        .get_bucket(
+                            PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT1)))
+                        .sampler->handle()
+                        .bind(0));
+                pipeline->set_sampler(
+                    "bc3_tex",
+                    data.bitm_cache
+                        .get_bucket(
+                            PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT3)))
+                        .sampler->handle()
+                        .bind(1));
+                pipeline->set_sampler(
+                    "bc5_tex",
+                    data.bitm_cache
+                        .get_bucket(
+                            PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT5)))
+                        .sampler->handle()
+                        .bind(2));
+
+                pipeline->build_state();
+                pipeline->get_state();
+            }
+
+            pipeline.set_constant("view", Bytes::From(data.camera_matrix));
+            pipeline.set_sampler(
+                "bc1_tex",
+                data.bitm_cache
+                    .get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT1)))
+                    .sampler->handle()
+                    .bind(0));
+            pipeline.set_sampler(
+                "bc3_tex",
+                data.bitm_cache
+                    .get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT3)))
+                    .sampler->handle()
+                    .bind(1));
+            pipeline.set_sampler(
+                "bc5_tex",
+                data.bitm_cache
+                    .get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT5)))
+                    .sampler->handle()
+                    .bind(2));
+
+            pipeline.build_state();
+            pipeline.get_state();
 
             GFX::RASTSTATE cull_disable;
             cull_disable.m_doCull = false;
@@ -1241,15 +1929,16 @@ i32 blam_main(i32, cstring_w*)
             depth_enable.m_test = true;
             GFX::SetDepthState(depth_enable);
         },
-        [](EntityContainer& e,
-           BlamData&        data,
+        [](EntityContainer&        e,
+           BlamData<halo_version>& data,
            time_point const&,
            duration const&) {
             GFX::DefaultFramebuffer()->clear(0, {0.5f, 0.5f, 0.9f, 1.f}, 1.0);
 
             data.std_camera->tick();
-            data.controller_camera(
-                e.service<comp_app::ControllerInput>()->state(0));
+            if(e.service<comp_app::ControllerInput>())
+                data.controller_camera(
+                    e.service<comp_app::ControllerInput>()->state(0));
 
             using namespace typing::vectors::scene;
             {
@@ -1271,7 +1960,9 @@ i32 blam_main(i32, cstring_w*)
                 data.model_pipeline->pipeline(), data.model_draw, ec);
             C_ERROR_CHECK(ec)
         },
-        [](EntityContainer& e, BlamData& data, time_point const&) {
+        [](EntityContainer&        e,
+           BlamData<halo_version>& data,
+           time_point const&) {
 
         });
 

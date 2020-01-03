@@ -34,6 +34,8 @@ using TexType = typing::graphics::TexType;
 template<size_t Size>
 struct bl_string_var
 {
+    static constexpr size_t size = Size;
+
     char data[Size];
 
     template<
@@ -152,6 +154,12 @@ enum class maptype_t : int32
     ui          = 2, /*!< A UI map, used only in the main menu*/
 };
 
+enum class game_difficulty_t : u16
+{
+    insane = 0,
+
+};
+
 /*!
  * \brief Possible Blam versions which we may encounter. The different formats
  * work in different ways. For instance, Xbox stores bitmaps and other data in a
@@ -212,9 +220,9 @@ struct alignas(4) vertex<RType, false>
 {
     // Compressed Xbox variant
     Vecf3 position;
-    u32   normal;   /*!< PixFmt::R11G11B10F */
-    u32   binormal; /*!< Same as binormal */
-    u32   tangent;  /*!< Same as normal */
+    u32   normal;  /*!< PixFmt::R11G11B10F */
+    u32   binorm;  /*!< Same as binormal */
+    u32   tangent; /*!< Same as normal */
     Vecf2 texcoord;
 
   private:
@@ -251,7 +259,11 @@ struct alignas(4) mod2_vertex<RType, false>
     u32   normal;   /*!< PixFmt::R11G11B10F */
     u32   binormal; /*!< Same as binormal */
     u32   tangent;  /*!< Same as normal */
-    Vecf2 texcoord;
+
+    typing::vectors::tvector<i16, 2> texcoord;
+
+    u16 unknown;
+    u16 weight;
 
   private:
     constexpr void size_check()
@@ -276,8 +288,8 @@ template<typename RType>
 struct light_vertex<RType, false>
 {
     // Compressed Xbox variant
-    u32 normal;   /*!< PixFmt::R11G11B10F */
-    u16 texcoord; /*!< PixFmt::R16, Normalized */
+    u32                              normal;   /*!< PixFmt::R11G11B10F */
+    typing::vectors::tvector<i16, 2> texcoord; /*!< PixFmt::R16, Normalized */
 };
 
 } // namespace vert
@@ -320,6 +332,16 @@ constexpr stl_types::Array<stl_types::Pair<cstring, cstring>, 28> map_names = {{
     {"wizard", "Wizard"},
 }}; /*!< A mapping of map names which this library can recognize. These are
       the stock maps.*/
+
+struct map_load_error : std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
+
+struct reflexive_error : std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
 
 /*!
  * \brief A file header located from the start of a map file
@@ -439,6 +461,8 @@ struct reflexive_t
 template<typename T, typename RType>
 struct alignas(4) reflexive_t<T, RType, true>
 {
+    using data_type = T;
+
     u32 count;  /*!< Number of elements */
     u32 offset; /*!< Offset to data within file (this will only refer to data
                    within the map file)*/
@@ -457,23 +481,35 @@ struct alignas(4) reflexive_t<T, RType, true>
         using Output = semantic::mem_chunk<T const>;
 
         if(zero != 0)
-            Throw(undefined_behavior("Invalid reflexive_t"));
+            Throw(reflexive_error("invalid reflexive_t"));
 
         if(count == 0)
             return Output();
 
         if((offset - magic.magic_offset) > magic.max_size)
-            Throw(undefined_behavior("reflexive pointer out of bounds"));
+            Throw(reflexive_error("reflexive pointer out of bounds"));
 
         return Output::From(
             C_RCAST<T const*>(magic.base_ptr + offset - magic.magic_offset),
             count);
+    }
+
+    template<typename T2>
+    inline reflexive_t<T2> as() const
+    {
+        auto cpy   = reflexive_t<T2>();
+        cpy.count  = count;
+        cpy.offset = offset;
+        cpy.zero   = 0;
+        return cpy;
     }
 };
 
 template<typename T, typename RType>
 struct alignas(4) reflexive_t<T, RType, false>
 {
+    using data_type = T;
+
     u32 count;
     u32 offset;
 
@@ -485,7 +521,7 @@ struct alignas(4) reflexive_t<T, RType, false>
             return Output();
 
         if((offset - magic.magic_offset) > magic.max_size)
-            Throw(undefined_behavior("reflexive pointer out of bounds"));
+            Throw(reflexive_error("reflexive pointer out of bounds"));
 
         return Output::From(
             C_RCAST<T const*>(magic.base_ptr + offset - magic.magic_offset),
@@ -678,12 +714,12 @@ struct alignas(4) tag_t
              *
              * Also remember to use the Custom Edition bitmaps.map.
              */
-            Throw(undefined_behavior(
+            Throw(reflexive_error(
                 "bitmap uses external storage, use blam::bitm::bitm_header_t"));
         }
 
         if(padding != 0)
-            Throw(undefined_behavior("invalid tag"));
+            Throw(reflexive_error("invalid tag"));
 
         return {1, offset};
     }
@@ -707,7 +743,7 @@ tag_t const& tag_index_t::scenario(file_header_t const* header) const
     tag_t const* tag = &(tags(header)[0]);
 
     if(!tag->matches(tag_class_t::scnr))
-        Throw(undefined_behavior("Failed to locate scenario header"));
+        Throw(undefined_behavior("failed to locate scenario header"));
 
     return *tag;
 }
@@ -757,6 +793,31 @@ struct string_segment_ref
 
         return {C_RCAST<const char*>(loc), C_FCAST<u32>(loc - data.data)};
     }
+
+    inline u32 get_index(bl_string const& str) const
+    {
+        Array<char, bl_string::size + 1> search;
+        search.fill(0);
+
+        u32 num_chars = 2;
+        for(size_t i = 0; i < bl_string::size; i++)
+        {
+            if(str.data[i] == 0)
+                break;
+            search[1 + i] = str.data[i];
+            num_chars++;
+        }
+
+        const char* ptr = C_RCAST<const char*>(
+            ::memmem(data.data, data.size, search.data(), num_chars));
+
+        if(!ptr)
+            return 0;
+
+        ptr++;
+
+        return ptr - data.data;
+    }
 };
 
 struct unicode_reflexive
@@ -788,7 +849,27 @@ struct shader_desc
     u32      unknown[4];
 };
 
-struct alignas(4) shader_chicago /* aka tag_class_t::scex */
+struct alignas(4) shader_chicago /* aka tag_class_t::schi */
+{
+    u32    unknown_1;
+    scalar unknown_2[7]; /* parameters for shading? */
+    u32    unknown_3[2];
+    u32    unknown_size;
+    u32    unknown_count;
+    u32    zero_1[2];
+
+    tagref_typed_t<tag_class_t::lens> lens_flare;
+
+    u32    zero_2[4];
+    scalar unknown_4;
+    u32    zero_3[25];
+    scalar unknown_5[2];
+    u32    zero_4[4];
+
+    tagref_typed_t<tag_class_t::bitm> bitmap;
+};
+
+struct alignas(4) shader_chicago_extended /* aka tag_class_t::scex */
 {
     struct map_t
     {
@@ -824,6 +905,37 @@ struct alignas(4) shader_chicago /* aka tag_class_t::scex */
 
     u32 extra_flags;
     u32 pad[2];
+};
+
+struct alignas(4) shader_glass
+{
+    u32                               unknown_1[5];
+    Vecf3                             unknown_2;
+    u32                               unknown_3;
+    u32                               unknown_4;
+    u32                               unknown_5[10];
+    scalar                            unknown_6[5];
+    tagref_typed_t<tag_class_t::bitm> bitmap;
+    u32                               unknown_7[5];
+    u32                               unknown_8;
+    scalar                            unknown_9[8];
+    tagref_typed_t<tag_class_t::bitm> bitmap2;
+};
+
+struct alignas(4) shader_metal
+{
+    u32                               unknown_1[19];
+    tagref_typed_t<tag_class_t::bitm> bitmap;
+    u32                               unknown[9];
+    scalar                            unkown_2[8];
+};
+
+struct alignas(4) shader_water
+{
+    u32                               unknown_1[19];
+    tagref_typed_t<tag_class_t::bitm> bitmap;
+
+    u32 unknown[20];
 };
 
 struct alignas(4) shader_env /* aka tag_class_t::senv */

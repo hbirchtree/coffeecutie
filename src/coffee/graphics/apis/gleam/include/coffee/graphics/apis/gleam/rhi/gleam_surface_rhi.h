@@ -214,6 +214,12 @@ struct GLEAM_SamplerHandle
     {
         return m_sampler;
     }
+
+    inline GLEAM_SamplerHandle bind(u32 i = 0)
+    {
+        m_unit = i;
+        return *this;
+    }
 };
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler

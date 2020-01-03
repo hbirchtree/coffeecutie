@@ -551,6 +551,7 @@ struct light_fixture
 /*!
  * \brief A Blam! scenario descriptor
  */
+template<typename Bytecode>
 struct scenario
 {
     struct /* 260-byte block? */
@@ -609,42 +610,43 @@ struct scenario
 
     struct /* 340-byte block */
     {
-        reflexive_t<actor_variant_ref>    actor_variant_refs;
-        reflexive_t<encounter::encounter> encounters;
-        reflexive_t<scn_chunk>            command_lists;
-        reflexive_t<scn_chunk>            unknown_6;
-        reflexive_t<scn_chunk>            starting_locations;
-        reflexive_t<scn_chunk>            platoons;
-        reflexive_t<scn_chunk>            ai_conversations;
-        u32                               script_bytecode_size;
-        u32                               unknown_7;
-        reflexive_t<hsc::script_ref>      scripts;
-        u32                               script_function_table_offset;
-        u32                               script_function_table_size;
-        reflexive_t<char>                 script_string_segment;
-        reflexive_t<ai::animation_ref>    ai_animation_refs;
-        reflexive_t<hsc::global>          globals;
-        reflexive_t<ai::recording_ref>    ai_recording_refs;
-        reflexive_t<scn_chunk>            unknown_8;
-        reflexive_t<scn_chunk>            participants;
-        reflexive_t<scn_chunk>            lines;
-        reflexive_t<script_trigger>       script_triggers;
-        reflexive_t<scn_chunk>            cutscenes_verify;
-        reflexive_t<scn_chunk>            cutscene_titles_verify;
-        reflexive_t<scn_chunk>            source_files;
-        reflexive_t<scn_chunk>            cutscene_flags;
-        reflexive_t<scn_chunk>            cutscene_camera_poi;
-        reflexive_t<scn_chunk>            cutscene_titles_;
-        u32                               padding5[15];
+        reflexive_t<actor_variant_ref>         actor_variant_refs;
+        reflexive_t<encounter::encounter>      encounters;
+        reflexive_t<scn_chunk>                 command_lists;
+        reflexive_t<scn_chunk>                 unknown_6;
+        reflexive_t<scn_chunk>                 starting_locations;
+        reflexive_t<scn_chunk>                 platoons;
+        reflexive_t<scn_chunk>                 ai_conversations;
+        u32                                    script_bytecode_size;
+        u32                                    unknown_7;
+        reflexive_t<hsc::script_ref<Bytecode>> scripts;
+        u32                                    script_function_table_offset;
+        u32                                    script_function_table_size;
+        reflexive_t<char>                      script_string_segment;
+        reflexive_t<ai::animation_ref>         ai_animation_refs;
+        reflexive_t<hsc::global>               globals;
+        reflexive_t<ai::recording_ref>         ai_recording_refs;
+        reflexive_t<scn_chunk>                 unknown_8;
+        reflexive_t<scn_chunk>                 participants;
+        reflexive_t<scn_chunk>                 lines;
+        reflexive_t<script_trigger>            script_triggers;
+        reflexive_t<scn_chunk>                 cutscenes_verify;
+        reflexive_t<scn_chunk>                 cutscene_titles_verify;
+        reflexive_t<scn_chunk>                 source_files;
+        reflexive_t<scn_chunk>                 cutscene_flags;
+        reflexive_t<scn_chunk>                 cutscene_camera_poi;
+        reflexive_t<scn_chunk>                 cutscene_titles_;
+        u32                                    padding5[15];
     };
 
-    inline semantic::mem_chunk<hsc::opcode_layout const> bytecode(
+    inline semantic::mem_chunk<hsc::opcode_layout<Bytecode> const> bytecode(
         magic_data_t const& magic) const
     {
-        auto num_opcodes = (script_bytecode_size - sizeof(hsc::script_ref)) /
-                           sizeof(hsc::opcode_layout);
+        auto num_opcodes =
+            (script_bytecode_size - sizeof(hsc::script_ref<Bytecode>)) /
+            sizeof(hsc::opcode_layout<Bytecode>);
         auto const& script_base = scripts.data(magic)[0].opcode_first();
-        return semantic::mem_chunk<hsc::opcode_layout const>::From(
+        return semantic::mem_chunk<hsc::opcode_layout<Bytecode> const>::From(
             &script_base, num_opcodes);
     }
     inline string_segment_ref string_segment(magic_data_t const& magic) const
@@ -669,7 +671,7 @@ struct scenario
             start_ptr =
                 C_RCAST<const char*>(::memchr(start_ptr, 0, string_base.size));
 
-            if(start_ptr[1] == 0)
+            if(memmem(start_ptr, 4, terminator.data(), terminator.size()))
                 break;
 
             start_ptr++; // Jump over null-terminator
@@ -725,12 +727,13 @@ struct scenario
     reflexive_t<bsp::info> bsp_info;
 };
 
-inline scenario const& get_scenario(
+template<typename Bytecode>
+inline scenario<Bytecode> const& get_scenario(
     file_header_t const* header, magic_data_t const& magic)
 {
     return tag_index_t::from_header(header)
         .scenario(header)
-        .to_reflexive<scenario>()
+        .to_reflexive<scenario<Bytecode>>()
         .data(magic)[0];
 }
 

@@ -13,3 +13,5 @@
 #endif
 /* Forced packing, required for some types to work (uint24 etc.) */
 #define PACKEDSTRUCT struct C_FORCE_PACKING
+
+#define PACKED(decl) decl C_FORCE_PACKING

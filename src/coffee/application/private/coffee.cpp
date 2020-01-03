@@ -543,13 +543,17 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
         {
             PrintLicenseInfo();
             return 0;
-        } else if(sw == "dprofile")
+        }
+#if MODE_DEBUG
+        else if(sw == "dprofile")
         {
             auto profilerState = State::GetProfilerStore();
 
             if(profilerState)
                 profilerState->flags.deep_enabled = true;
-        } else if(sw == "json")
+        }
+#endif
+        else if(sw == "json")
         {
 #if !MODE_LOWFAT
             DebugFun::SetLogInterface(SetupJsonLogger("application.json"_tmp));

@@ -390,6 +390,16 @@ struct shader_param_view
         m_constant_data[const_desc_id{&desc}]   = std::move(data);
         m_constant_values[const_desc_id{&desc}] = const_value();
     }
+    void set_constant(CString const& name, Bytes&& data)
+    {
+        auto it = std::find_if(
+            constants_begin(), constants_end(), constant_by_name(name));
+
+        if(it == constants_end())
+            Throw(undefined_behavior("constant not found"));
+
+        set_constant(*it, std::move(data));
+    }
 
     void set_sampler(const_desc const& desc, sampler_value&& data)
     {
@@ -397,6 +407,17 @@ struct shader_param_view
             return;
 
         m_sampler_handles[const_desc_id{&desc}] = std::move(data);
+    }
+
+    void set_sampler(CString const& sampler, sampler_value&& data)
+    {
+        auto it = std::find_if(
+            constants_begin(), constants_end(), constant_by_name(sampler));
+
+        if(it == constants_end())
+            Throw(undefined_behavior("sampler not found"));
+
+        set_sampler(*it, std::move(data));
     }
 
     Bytes& get_constant_data(CString const& variable)
@@ -496,7 +517,7 @@ struct shader_param_view
     Map<ShaderStage, UniState> m_states;
 
   private:
-    ProgState m_cached_state;
+    ProgState       m_cached_state;
     WkPtr<Pipeline> m_pipeline;
 };
 

@@ -277,7 +277,7 @@ void GLEAM_API::SetShaderUniformState(
             CGL33::SamplerBind(handle->m_unit, shnd);
             shnd.release();
 
-#if GL_VERSION_VERIFY(0x410, 0x320)
+#if GL_VERSION_VERIFY(0x410, 0x310)
             if(GLEAM_FEATURES.separable_programs)
             {
                 /* Set texture handle in shader */

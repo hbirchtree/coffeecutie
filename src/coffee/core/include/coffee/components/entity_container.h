@@ -18,6 +18,8 @@ FORCEDINLINE hash_type type_hash_v()
 
 } // namespace Convenience
 
+using Convenience::type_hash_v;
+
 namespace detail {
 struct visitor_path;
 }

@@ -24,14 +24,6 @@ enum mod2_lod
     lod_high_ext,
 };
 
-struct report
-{
-    u32 index_offset_start;
-    u32 index_offset_end;
-    u32 vertex_offset_start;
-    u32 vertex_offset_end;
-};
-
 struct region_permutation
 {
     bl_string     name;
@@ -74,6 +66,22 @@ enum submesh_lod_cutoffs
     submesh_lod_highest,
 };
 
+struct xbox_ref
+{
+    u32 unknown_;
+    u32 offset;
+    u32 unknown[2];
+
+    inline auto vertices(u32 vert_count) const
+    {
+        reflexive_t<vert::vertex<vert::compressed>> out;
+        out.count  = vert_count;
+        out.offset = offset;
+        out.zero   = 0;
+        return out;
+    }
+};
+
 struct submesh_header
 {
     submesh_flags_t  flags;
@@ -97,7 +105,6 @@ struct submesh_header
     u32 zero;
     u32 raw_offset_behavior;
     u32 vertex_ref_offset;
-    u32 unknown_2[7];
 
     inline decltype(tag_index_t::vertex_objects) vertex_segment(
         tag_index_t const& base) const
@@ -106,6 +113,15 @@ struct submesh_header
         cpy.offset += vertex_ref_offset;
         cpy.count = vert_count;
         return cpy;
+    }
+
+    inline reflexive_t<xbox_ref> xbox_vertex_ref() const
+    {
+        reflexive_t<xbox_ref> out;
+        out.count  = 1;
+        out.offset = vertex_ref_offset;
+        out.zero   = 0;
+        return out;
     }
 
     /*!
@@ -121,12 +137,51 @@ struct submesh_header
         cpy.count = indices.count;
         return cpy;
     }
+    inline tag_index_t::index_array xbox_index_segment() const
+    {
+        return indices;
+    }
+};
+
+template<typename Variant, bool = std::is_same<Variant, pc_variant>::value>
+struct submesh_wrap_header
+{
+    submesh_header data;
+    u32            unknown_2[7];
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(
+            sizeof(submesh_wrap_header<pc_variant>) == 132, "Invalid size");
+    }
+};
+
+template<typename Variant>
+struct submesh_wrap_header<Variant, false>
+{
+    submesh_header data;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(
+            sizeof(submesh_wrap_header<xbox_variant>) == 104, "Invalid size");
+    }
 };
 
 struct geometry_header
 {
-    u32                         unknown[9];
-    reflexive_t<submesh_header> mesh_headers;
+    u32 unknown[9];
+
+    reflexive_t<char> meshes_;
+
+    template<typename Variant>
+    inline semantic::mem_chunk<submesh_wrap_header<Variant> const> meshes(
+        magic_data_t const& magic) const
+    {
+        return meshes_.as<submesh_wrap_header<Variant>>().data(magic);
+    }
 };
 
 struct marker
@@ -173,16 +228,8 @@ struct header
     reflexive_t<marker>          markers;
     reflexive_t<bone>            bones;
     reflexive_t<region>          regions;
-    reflexive_t<geometry_header> geometries; /* Refers to LODs */
+    reflexive_t<geometry_header> geometries;
     reflexive_t<shader_desc>     shaders;
-
-    inline semantic::mem_chunk<submesh_header const> meshes(
-        magic_data_t const& magic, u32 i = 0) const
-    {
-        auto geom = geometries.data(magic);
-
-        return geom[i].mesh_headers.data(magic);
-    }
 };
 
 } // namespace mod2

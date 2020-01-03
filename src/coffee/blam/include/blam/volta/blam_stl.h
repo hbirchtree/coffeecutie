@@ -42,7 +42,7 @@ struct map_container
             Zlib::Decompress(
                 compressed_segment,
                 &decompressed_region,
-                Zlib::Opts(10_MB),
+                Zlib::Opts(10_MB, 5, decompressed_region.size),
                 ec);
             C_ERROR_CHECK(ec);
 

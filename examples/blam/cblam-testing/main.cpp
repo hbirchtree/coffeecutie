@@ -25,7 +25,8 @@ struct Empty
 namespace Coffee {
 namespace Strings {
 
-inline CString to_string(blam::hsc::opcode_layout const& opcode)
+template<typename BC>
+inline CString to_string(blam::hsc::opcode_layout<BC> const& opcode)
 {
     return fmt(
         "{0}"
@@ -53,7 +54,7 @@ inline CString to_string(blam::hsc::opcode_layout const& opcode)
 } // namespace Strings
 } // namespace Coffee
 
-constexpr bool use_graphics = true;
+constexpr bool use_graphics = false;
 
 void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
 {
@@ -210,7 +211,6 @@ void inspect_bitm(
         bitmap.offset,
         bitmap.pixOffset,
         map.get_name(&tag));
-
     for(auto const& image : header.images.data(map.magic))
     {
         semantic::BytesConst img_data;
@@ -286,6 +286,8 @@ void examine_map(Resource&& mapfile, T version)
             cDebug("Sadface");
     }
 
+    ProfContext __("The rest of the process");
+
     cDebug(
         "Opening map: {0}, build {1}",
         C_OCAST<cstring>(map),
@@ -298,6 +300,7 @@ void examine_map(Resource&& mapfile, T version)
 
     blam::tag_index_view index_view(map);
 
+    Profiler::PushContext("Tag search");
     auto tags_ = fopen("tags.txt", "a+");
 
     for(auto tag : index_view)
@@ -376,9 +379,7 @@ void examine_map(Resource&& mapfile, T version)
                 auto data2 = full_name[0].unknown_4.str(map.magic);
 
                 inspect_bitm(
-                    map,
-                    bitm_magic,
-                    *(*index_view.find(level.thumbnail)));
+                    map, bitm_magic, *(*index_view.find(level.thumbnail)));
 
                 cDebug(" - Level");
             }
@@ -391,8 +392,7 @@ void examine_map(Resource&& mapfile, T version)
     }
 
     fclose(tags_);
-
-    return;
+    Profiler::PopContext();
 
     struct mem_map
     {
@@ -428,9 +428,11 @@ void examine_map(Resource&& mapfile, T version)
 
     add_mem_map(map.map, "file_header");
 
-    auto scn = &blam::scn::get_scenario(map.map, map.magic);
+    auto scn = &blam::scn::get_scenario<blam::hsc::bc::v2>(map.map, map.magic);
 
     {
+        Profiler::PushContext("Scripting");
+
         auto dism_fn   = "script_" + map_basename + ".hsb";
         auto dism_file = fopen(dism_fn.c_str(), "w+");
 
@@ -526,7 +528,7 @@ void examine_map(Resource&& mapfile, T version)
                 if(!opcode.valid())
                     break;
 
-                if(opcode.opcode == blam::hsc::opcode_t::begin &&
+                if(opcode.opcode == blam::hsc::bc::v2::begin &&
                    opcode.ret_type == blam::hsc::type_t::immediate_val)
                     fprintf(dism_file, "\n");
 
@@ -558,17 +560,22 @@ void examine_map(Resource&& mapfile, T version)
                     opcode.next_op.salt,
                     opcode.param_type);
 
-                auto opcode_str = Strings::to_string(opcode.opcode);
-                fprintf(
-                    opcode_data,
-                    "\"%s\" = %u ( %s )\n",
-                    string_seg
-                        .at(opcode.data_ptr < string_seg.data.size
-                                ? opcode.data_ptr
-                                : 0)
-                        .str(),
-                    C_CAST<i16>(opcode.opcode),
-                    opcode_str.c_str());
+                if(opcode.exp_type == blam::hsc::expression_t::expression)
+                {
+                    auto opcode_str = Strings::to_string(opcode.opcode);
+                    auto type_str   = Strings::to_string(opcode.param_type);
+                    fprintf(
+                        opcode_data,
+                        "\"%s\" = %u ( %s, %s )\n",
+                        string_seg
+                            .at(opcode.data_ptr < string_seg.data.size
+                                    ? opcode.data_ptr
+                                    : 0)
+                            .str(),
+                        C_CAST<i16>(opcode.opcode),
+                        opcode_str.c_str(),
+                        type_str.c_str());
+                }
 
                 fprintf(
                     dism_file,
@@ -581,41 +588,9 @@ void examine_map(Resource&& mapfile, T version)
             }
 
             fclose(opcode_data);
-
-            //            auto bc_ptr =
-            //                blam::hsc::bytecode_pointer::start_from(script_seg.data,
-            //                0xfa);
-
-            //            while(!bc_ptr.finished())
-            //            {
-            //                switch(bc_ptr.current->opcode)
-            //                {
-            //                case blam::hsc::opcode_t::print_:
-            //                {
-            //                    auto const& output =
-            //                        bc_ptr.param(blam::hsc::type_t::string_);
-            //                    printf(
-            //                        "print_: %s\n",
-            //                        string_seg.at(output.data_ptr).str());
-            //                    break;
-            //                }
-            //                case blam::hsc::opcode_t::sleep:
-            //                {
-            //                    printf(
-            //                        "sleep: %u\n",
-            //                        bc_ptr.param(blam::hsc::type_t::short_).data_short[0]);
-            //                    break;
-            //                }
-            //                default:
-            //                    break;
-            //                }
-
-            //                u16 prev_ip = bc_ptr.current_ip;
-            //                bc_ptr.advance();
-            //                printf("ptr: %x -> %x\n", prev_ip,
-            //                bc_ptr.current_ip);
-            //            }
         }
+
+        Profiler::PopContext();
     }
 
     {
@@ -639,8 +614,12 @@ void examine_map(Resource&& mapfile, T version)
             auto        bsp_magic = bsp_info.bsp_magic(map.magic);
             auto const& bsp_data  = bsp_info.to_bsp(bsp_magic);
 
-            auto some_tag = *index_view.find(bsp_info.tag);
-            cDebug("BSP name: {0}", map.get_name(some_tag));
+            auto some_tag = index_view.find(bsp_info.tag);
+
+            if(some_tag == index_view.end())
+                continue;
+
+            cDebug("BSP name: {0}", map.get_name(*some_tag));
 
             add_mem_map(&bsp_data, "bsp::section");
 
@@ -815,6 +794,9 @@ void examine_map(Resource&& mapfile, T version)
         auto scenery_tags = scn->scenery.ref.data(map.magic);
         for(auto const& scenery : scn->scenery.base.data(map.magic))
         {
+            if(scenery.ref == -1)
+                continue;
+
             cDebug(
                 "Scenery: {0} ({4}) @ {1},{2},{3} -> {5} : {6}",
                 scenery.ref,
@@ -957,7 +939,8 @@ void examine_map(Resource&& mapfile, T version)
         fclose(scenery_out);
     }
 
-    auto scenario_header = &blam::scn::get_scenario(map.map, map.magic);
+    auto scenario_header =
+        &blam::scn::get_scenario<blam::hsc::bc::v2>(map.map, map.magic);
     cDebug("Map scenario name: {0}", scenario_header);
 
     for(auto const& child_scn :
@@ -1029,8 +1012,7 @@ void examine_map(Resource&& mapfile, T version)
                     "   - return state:{0}", C_CAST<i16>(squad.return_state));
             }
 
-            for(auto const& loc :
-                encounter.start_locations.data(map.magic))
+            for(auto const& loc : encounter.start_locations.data(map.magic))
             {
                 cDebug(" - location: {0}", loc.pos);
             }
@@ -1129,11 +1111,22 @@ int coffee_main(i32, cstring_w*)
             "bloodgulch_custom.map"_rsc
 
         };
-        Array<Resource, 2> xbox_maps = {
+        Array<Resource, 13> xbox_maps = {
 
-            "c10_xbox.map"_rsc,
+            "xbox/a10_x.map"_rsc,
+            "xbox/a30_x.map"_rsc,
+            "xbox/a50_x.map"_rsc,
+            "xbox/b30_x.map"_rsc,
+            "xbox/b40_x.map"_rsc,
+            "xbox/c10_x.map"_rsc,
+            "xbox/c20_x.map"_rsc,
+            "xbox/c40_x.map"_rsc,
+            "xbox/d20_x.map"_rsc,
+            "xbox/d40_x.map"_rsc,
 
-            "bloodgulch_xbox.map"_rsc
+            "xbox/beavercreek_x.map"_rsc,
+            "xbox/bloodgulch_x.map"_rsc,
+            "xbox/sidewinder_x.map"_rsc
 
         };
 
@@ -1143,8 +1136,8 @@ int coffee_main(i32, cstring_w*)
         //        for(auto& map : custom_maps)
         //            examine_map(std::move(map), blam::custom_version);
 
-        //        for(auto& map : xbox_maps)
-        //            examine_map(std::move(map), blam::xbox_version);
+        for(auto& map : xbox_maps)
+            examine_map(std::move(map), blam::xbox_version);
     };
 
     if(!use_graphics)

@@ -304,6 +304,34 @@ inline ShPtr<T> MkSharedMove(T&& v)
     return ShPtr<T>(new T(std::move(v)));
 }
 
+namespace detail_array {
+
+template<typename ArrayT, typename T>
+constexpr inline void insert_packed(ArrayT& out, size_t i, T item)
+{
+    out.at(i) = item;
+}
+
+template<typename ArrayT, typename T, typename... Items>
+constexpr inline void insert_packed(
+    ArrayT& out, size_t i, T item, Items... items)
+{
+    insert_packed<ArrayT, T>(out, i, item);
+    insert_packed<ArrayT, Items...>(out, ++i, items...);
+}
+
+} // namespace detail_array
+
+template<typename... Items, size_t Count = sizeof...(Items)>
+constexpr inline auto MkArray(Items... items)
+{
+    using out_type =
+        std::remove_reference_t<decltype(std::get<0>(std::tuple<Items...>()))>;
+    Array<out_type, Count> out = {items...};
+
+    return out;
+}
+
 /*
  *
  * Here comes a couple of custom classes and wrappers

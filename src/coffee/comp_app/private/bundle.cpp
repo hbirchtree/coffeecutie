@@ -3,6 +3,7 @@
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
@@ -90,6 +91,8 @@ struct app_loadable_matcher
 
 detail::EntityContainer& createContainer()
 {
+    Coffee::ProfContext _("comp_app::createContainer");
+
     static stl_types::ShPtr<detail::EntityContainer> container;
 
     if(container)
@@ -207,6 +210,8 @@ detail::EntityContainer& createContainer()
 
 void configureDefaults(AppLoader& loader)
 {
+    Coffee::ProfContext _("comp_app::configureDefaults");
+
     loader.addConfigs<
         detail::
             TypeList<WindowConfig, ControllerConfig, GraphicsBindingConfig>>();
@@ -253,6 +258,8 @@ void addDefaults(
     AppLoader&                            loader,
     app_error&                            ec)
 {
+    Coffee::ProfContext _("comp_app::addDefaults");
+
     loader.loadAll<detail::TypeList<
         BasicEventBus<Coffee::Input::CIEvent>,
         BasicEventBus<Coffee::Display::Event>,

@@ -182,6 +182,10 @@ enum class CompFlags : u8
     S3TC_3,
     S3TC_5, /* RGBA */
 
+    DXT1 = S3TC_1,
+    DXT3 = S3TC_3,
+    DXT5 = S3TC_5,
+
     BC1 = S3TC_1,
     BC3 = S3TC_5,
     BC4,  /* 8-bit R */
@@ -235,6 +239,33 @@ enum class BitFmt : u8
     Scalar_32_Int_24_8,
 
     Undefined,
+};
+
+PACKED(struct) r11g11b10f
+{
+    u16 b : 10;
+    u16 g : 11;
+    u16 r : 11;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
+    }
+};
+
+PACKED(struct) r10g10b10a2
+{
+    u16 r : 10;
+    u16 g : 10;
+    u16 b : 10;
+    u8  a : 2;
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(r10g10b10a2) == 4, "Invalid size");
+    }
 };
 
 } // namespace pixels

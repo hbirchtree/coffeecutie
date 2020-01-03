@@ -17,7 +17,7 @@ using namespace comp_app;
 void Windowing::load(entity_container& e, comp_app::app_error& ec)
 {
     auto display = XOpenDisplay(nullptr);
-    m_display = display;
+    m_display    = display;
 
     if(!display)
     {
@@ -25,11 +25,7 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
         return;
     }
 
-    GLint attrs[] = {
-        GLX_RGBA,
-        GLX_DEPTH_SIZE, 24,
-        GLX_DOUBLEBUFFER, None
-    };
+    GLint attrs[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
 
     auto& windowConf = AppLoader::config<comp_app::WindowConfig>(e);
     auto& x11Conf    = AppLoader::config<X11Config>(e);
@@ -119,7 +115,7 @@ void Windowing::unload(entity_container&, comp_app::app_error&)
     XCloseDisplay(display);
 }
 
-void Windowing::start_restricted(Proxy &, time_point const&)
+void Windowing::start_restricted(Proxy&, time_point const&)
 {
     XEvent event;
     while(XPending(C_RCAST<Display*>(m_display)))
@@ -148,7 +144,23 @@ void Windowing::close()
 
 comp_app::size_2d_t Windowing::size() const
 {
-    return {};
+    typing::geometry::size_2d<unsigned int> out;
+    int x, y;
+    unsigned int border, depth;
+
+    Window ret_window = C_RCAST<Window>(m_window);
+
+    XGetGeometry(
+        C_RCAST<Display*>(m_display),
+        C_RCAST<Drawable>(m_window),
+        &ret_window,
+        &x,
+        &y,
+        &out.w,
+        &out.h,
+        &border,
+        &depth);
+    return out;
 }
 
 void Windowing::resize(const comp_app::size_2d_t& newSize)

@@ -1065,6 +1065,9 @@ inline CGenum to_enum(TypeEnum f)
     case TypeEnum::Scalar:
         return GL_FLOAT;
 
+    case TypeEnum::Packed_UFloat:
+        return GL_UNSIGNED_INT_10F_11F_11F_REV;
+
     default:
         return GL_NONE;
     }
