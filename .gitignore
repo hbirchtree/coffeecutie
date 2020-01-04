@@ -4,6 +4,7 @@
 *.user*
 .DS_Store
 *.swp
+massif.out*
 
 # Directories
 bin

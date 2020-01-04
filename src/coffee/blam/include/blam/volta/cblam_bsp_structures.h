@@ -71,7 +71,7 @@ struct submesh_header
     Array<dist_light, 2>                 dist_lights;
     Vecf3                                unknown2;
     Vecf4                                reflect_tint;
-    Vecf3                                shadow_dir;
+    Vecf3                                shadow_dirw;
     Vecf3                                shadow_color;
     Vecf4                                plane;
     u32                                  breakable_surface;

@@ -108,10 +108,8 @@ struct StandardCamera
     {
         using event_type = CIMouseMoveEvent;
 
-        MouseInput(
-            CameraPtr cam, u32 button = CIMouseButtonEvent::LeftButton) :
-            m_button(button),
-            m_container(cam)
+        MouseInput(CameraPtr cam, u32 button = CIMouseButtonEvent::LeftButton) :
+            m_button(button), m_container(cam)
         {
         }
 
@@ -173,6 +171,8 @@ struct StandardCamera
 
         if(has_key(CK_LShift))
             acceleration = 10.f;
+        if(has_key(CK_LCtrl))
+            acceleration = 100.f;
 
         while(it != m_reg.end())
         {

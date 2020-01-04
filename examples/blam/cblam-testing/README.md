@@ -49,13 +49,24 @@ More models are placed, albeit with wrong rotation in a lot of places. These all
 ![](update8-1.png)
 ![](update8-2.png)
 
-Textures are a bit of a daunting task to combine with batching. Optimally we want to keep the number
- of textures low, and minimize the waste of texture space. This brings texture atlases to mind, as
- most textures have similar formats (DXTn), but different sizes.
-The texture atlas can be trivially optimized by sorting the textures by size, and inserting them in order from largest to smallest.
+Textures are a bit of a daunting task to combine with batching. Optimally we
+ want to keep the number of textures low, and minimize the waste of texture space.
+This brings texture atlases to mind, as most textures have similar formats (DXTn),
+ but different sizes.
+The texture atlas can be trivially optimized by sorting the textures by size,
+ and inserting them in order from largest to smallest.
 The texture coordinates per mesh can be adjusted and wrapped afterwards.
 
-As seen from the images, there are many issues with addressing the textures, some of them are correct, while others are complete garbage.
+As seen from the images, there are many issues with addressing the textures,
+ some of them are correct, while others are complete garbage.
+
+## Progress!
+
+![](update9.png)
+
+After trying many exciting ways of atlasing textures, something finally worked,
+ and I called it a day. For now only the BSP shows the correct textures,
+ but scenery will be there soon enough.
 
 # Bytecode inspection
 

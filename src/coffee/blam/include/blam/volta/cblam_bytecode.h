@@ -1052,9 +1052,13 @@ enum class script_eval_result
 template<typename BC>
 struct bytecode_pointer
 {
-    using ptr_type  = u16;
-    using context_t = script_context<BC>;
-    using eval      = script_eval_result;
+    using ptr_type        = u16;
+    using bytecode_t      = BC;
+    using opcode_layout_t = opcode_layout<BC>;
+    using context_t       = script_context<bytecode_t>;
+    using eval            = script_eval_result;
+    using script_state_t  = typename context_t::script_state;
+    using bytecode_ptr    = bytecode_pointer<BC>;
 
     struct result_t
     {
@@ -1064,7 +1068,7 @@ struct bytecode_pointer
         /* For sleep conditions */
         wait_condition<BC> condition;
 
-        static result_t return_(opcode_layout<BC> const& out = {})
+        static result_t return_(opcode_layout_t const& out = {})
         {
             return {out, eval::running};
         }
@@ -1082,12 +1086,12 @@ struct bytecode_pointer
         }
     };
 
-    using opcode_handler_t = stl_types::Function<result_t(
-        bytecode_pointer<BC>&, opcode_layout<BC> const&)>;
+    using opcode_handler_t =
+        stl_types::Function<result_t(bytecode_ptr&, opcode_layout_t const&)>;
 
-    static bytecode_pointer<BC> start_from(
+    static bytecode_ptr start_from(
         script_environment const& env,
-        opcode_layout<BC> const*  base,
+        opcode_layout_t const*    base,
         ptr_type                  ip = 0x0)
     {
         bytecode_pointer out;
@@ -1139,16 +1143,16 @@ struct bytecode_pointer
         return out;
     }
 
-    context_t                context;
-    opcode_layout<BC> const* base;
-    opcode_layout<BC> const* current;
-    ptr_type                 current_ip;
-    ptr_type                 script_start, script_end;
+    context_t              context;
+    opcode_layout_t const* base;
+    opcode_layout_t const* current;
+    ptr_type               current_ip;
+    ptr_type               script_start, script_end;
 
     stl_types::Deque<ptr_type> link_register;
     /*!< Return addresses, for calling procedures */
 
-    stl_types::Vector<opcode_layout<BC>> value_stack;
+    stl_types::Vector<opcode_layout_t> value_stack;
     /*!< Values for consumption by functions */
 
     inline u16 num_params() const
@@ -1158,7 +1162,7 @@ struct bytecode_pointer
         else
             return 0;
     }
-    inline opcode_layout<BC> const& param(type_t type, ptr_type i = 0) const
+    inline opcode_layout_t const& param(type_t type, ptr_type i = 0) const
     {
         ptr_type first_param = current_ip + 1;
         ptr_type last_param  = current->next_op.ip;
@@ -1174,9 +1178,9 @@ struct bytecode_pointer
         return out;
     }
     inline result_t evaluate(
-        opcode_layout<BC> const& op, opcode_handler_t const& handler)
+        opcode_layout_t const& op, opcode_handler_t const& handler)
     {
-        opcode_layout<BC> out = opcode_layout<BC>::void_();
+        opcode_layout_t out = opcode_layout_t::void_();
         switch(op.exp_type)
         {
         case expression_t::expression:
@@ -1233,8 +1237,8 @@ struct bytecode_pointer
             }
             case BC::sleep_until:
             {
-                opcode_layout<BC> const* condition = nullptr;
-                u16                      tick_rate = 1;
+                opcode_layout_t const* condition = nullptr;
+                u16                    tick_rate = 1;
 
                 switch(op_params)
                 {
@@ -1255,8 +1259,8 @@ struct bytecode_pointer
             }
             case BC::sleep:
             {
-                opcode_layout<BC> const* timeout = nullptr;
-                opcode_layout<BC> const* script  = nullptr;
+                opcode_layout_t const* timeout = nullptr;
+                opcode_layout_t const* script  = nullptr;
 
                 switch(op_params)
                 {
@@ -1337,7 +1341,7 @@ struct bytecode_pointer
                 auto left  = param(type_t::any, 1);
                 auto right = param(type_t::any, 0);
 
-                out = opcode_layout<BC>::typed_(type_t::bool_);
+                out = opcode_layout_t::typed_(type_t::bool_);
 
                 break;
             }
@@ -1347,7 +1351,7 @@ struct bytecode_pointer
                 auto left  = param(type_t::bool_, 1);
                 auto right = param(type_t::bool_, 0);
 
-                out = opcode_layout<BC>::typed_(type_t::bool_);
+                out = opcode_layout_t::typed_(type_t::bool_);
 
                 break;
             }
@@ -1384,7 +1388,7 @@ struct bytecode_pointer
         return result_t::return_(out);
     }
     inline result_t evaluate_params(
-        opcode_handler_t const& handler, opcode_layout<BC> const& op)
+        opcode_handler_t const& handler, opcode_layout_t const& op)
     {
         auto num = param_count(op);
 
@@ -1433,7 +1437,7 @@ struct bytecode_pointer
                 case type_t::unevaluated:
                 {
                     value_stack.push_back(
-                        opcode_layout<BC>::typed_(type_t::unevaluated));
+                        opcode_layout_t::typed_(type_t::unevaluated));
                     value_stack.back().next_op.ip = current_ip;
                     break;
                 }
@@ -1465,7 +1469,7 @@ struct bytecode_pointer
         value_stack.erase(value_stack.end() - num, value_stack.end());
     }
 
-    inline scalar deref_real(opcode_layout<BC> const& from)
+    inline scalar deref_real(opcode_layout_t const& from)
     {
         switch(from.exp_type)
         {
@@ -1478,7 +1482,7 @@ struct bytecode_pointer
         Throw(undefined_behavior("failed to dereference value"));
     }
 
-    inline i32 deref_i32(opcode_layout<BC> const& from)
+    inline i32 deref_i32(opcode_layout_t const& from)
     {
         switch(from.exp_type)
         {
@@ -1491,7 +1495,7 @@ struct bytecode_pointer
         Throw(undefined_behavior("failed to dereference value"));
     }
 
-    inline i16 deref_i16(opcode_layout<BC> const& from)
+    inline i16 deref_i16(opcode_layout_t const& from)
     {
         switch(from.exp_type)
         {
@@ -1519,7 +1523,7 @@ struct bytecode_pointer
     }
     inline bool finished() const
     {
-        return current_ip == std::numeric_limits<ptr_type>::max();
+        return current_ip == terminator;
     }
     inline void call(u16 ip)
     {
@@ -1528,7 +1532,7 @@ struct bytecode_pointer
          * of the function */
         jump(base[ip + 2].next_op.ip + 1);
     }
-    inline void jump(opcode_layout<BC> const& opcode)
+    inline void jump(opcode_layout_t const& opcode)
     {
         auto end = &opcode;
 
@@ -1550,7 +1554,7 @@ struct bytecode_pointer
         update_opcode();
     }
 
-    inline void restore_state(typename script_context<BC>::script_state& state)
+    inline void restore_state(script_state_t& state)
     {
         link_register = std::move(state.link_register);
         current_ip    = state.ip;
@@ -1558,15 +1562,14 @@ struct bytecode_pointer
         script_end    = state.script_end;
         update_opcode();
     }
-    inline void stash_state(typename script_context<BC>::script_state& state)
+    inline void stash_state(script_state_t& state)
     {
         state.link_register = std::move(link_register);
         state.ip            = current_ip;
     }
 
     inline void execute_state(
-        typename script_context<BC>::script_state& state,
-        opcode_handler_t const&                    handler)
+        script_state_t& state, opcode_handler_t const& handler)
     {
         if(state.is_inactive())
             return;

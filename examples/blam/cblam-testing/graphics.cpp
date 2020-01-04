@@ -91,8 +91,10 @@ struct ModelReference
     Matf4 transform;
     u32   draw_idx;
 
-    generation_idx_t bitmap;
-    generation_idx_t model;
+    generation_idx_t                  bitmap;
+    generation_idx_t                  model;
+    blam::scn::object_spawn<0> const* instance;
+
     struct
     {
         GFX::D_DATA draw;
@@ -204,6 +206,7 @@ struct BSPItem
     };
 
     blam::bsp::header const* mesh;
+    blam::tag_t const*       tag;
     Vector<Group>            groups;
 
     inline bool valid() const
@@ -223,7 +226,7 @@ struct ModelItem
         blam::mod2::submesh_header const* header;
         GFX::D_DATA                       draw;
         generation_idx_t                  color_bitm;
-        WkPtr<GFX::PIP>                   shader;
+        blam::tag_t const*                shader;
     };
     struct LOD
     {
@@ -232,6 +235,7 @@ struct ModelItem
     };
 
     blam::mod2::header const* header;
+    blam::tag_t const*        tag;
     LOD                       mesh;
 
     inline bool valid() const
@@ -249,6 +253,7 @@ struct ModelAssembly
 struct SceneryItem
 {
     blam::scn::scenery const* scenery;
+    blam::tag_t const*        tag;
     ModelAssembly             model; /* Reference to cached model */
 
     inline bool valid() const
@@ -260,6 +265,7 @@ struct SceneryItem
 struct VehicleItem
 {
     blam::scn::vehicle const* vehicle;
+    blam::tag_t const*        tag;
     ModelAssembly             model;
 
     inline bool valid() const
@@ -279,6 +285,8 @@ struct BitmapItem
     };
 
     blam::bitm::header_t const* header;
+    blam::tag_t const*          shader_tag;
+    blam::tag_t const*          tag;
     struct
     {
         blam::bitm::image_t const* mip;
@@ -299,6 +307,7 @@ struct BitmapItem
 struct BipedItem
 {
     blam::scn::biped const* header;
+    blam::tag_t const*      tag;
     ModelAssembly           model;
 
     inline bool valid() const
@@ -312,6 +321,7 @@ struct EquipmentItem
     using equipment_type = blam::scn::equipment;
 
     equipment_type const* header;
+    blam::tag_t const*    tag;
     ModelAssembly         model;
 
     inline bool valid() const
@@ -325,6 +335,7 @@ struct MPEquipmentItem
     using equipment_type = blam::scn::multiplayer_equipment;
 
     equipment_type const* header;
+    blam::tag_t const*    tag;
     ModelAssembly         model;
 
     inline bool valid() const
@@ -338,6 +349,7 @@ struct WeaponItem
     using equipment_type = blam::scn::unit;
 
     equipment_type const* header;
+    blam::tag_t const*    tag;
     ModelAssembly         model;
 
     inline bool valid() const
@@ -410,6 +422,8 @@ struct BitmapCache
 
     void commit_bitmap(BitmapItem const& img)
     {
+        GFX::DBG::SCOPE _(img.tag->to_name().to_string(magic));
+
         auto& bucket = get_bucket(img.image.fmt);
 
         auto img_data = img.image.mip->data(bitm_magic);
@@ -480,13 +494,18 @@ struct BitmapCache
                     offset.h += -height_diff;
 
                 if(fits_width)
-                    offset.w += imsize.w;
-                else if((offset.h + imsize.h) <= pool.max.h)
                 {
-                    img_offset.w = 0;
-                    img_offset.h = offset.h;
-                    offset.w     = imsize.w;
-                    offset.h += imsize.h;
+                    img_offset.w = offset.w;
+                    img_offset.h = offset.h - imsize.h;
+                    offset.w += imsize.w;
+                    //                }
+                    //                else if((offset.h + imsize.h) <=
+                    //                pool.max.h)
+                    //                {
+                    //                    img_offset.w = 0;
+                    //                    img_offset.h = offset.h;
+                    //                    offset.w     = imsize.w;
+                    //                    offset.h += imsize.h;
                 } else
                 {
                     layer++;
@@ -710,7 +729,9 @@ struct BitmapCache
         auto const& bitm = *bitm_ptr;
 
         BitmapItem out;
-        out.header = &bitm;
+        out.header     = &bitm;
+        out.tag        = bitm_tag;
+        out.shader_tag = *it;
 
         GFX::DBG::SCOPE _("BitmapCache::predict_impl");
 
@@ -793,6 +814,7 @@ struct BSPCache
 
         BSPItem out;
         out.mesh = &section;
+        out.tag  = *index.find(bsp.tag);
 
         auto shader = section.shaders.data(bsp_magic);
 
@@ -1001,6 +1023,7 @@ struct ModelCache
         ModelItem out;
         out.mesh   = {};
         out.header = header;
+        out.tag    = *index.find(mod2);
 
         auto const& shaders = header->shaders.data(magic);
 
@@ -1034,6 +1057,8 @@ struct ModelCache
                 draw_data.draw.m_insts  = 1;
                 draw_data.color_bitm =
                     bitm_cache.predict(shaders[model.data.shader_idx].ref, 0);
+                draw_data.shader =
+                    *index.find(shaders[model.data.shader_idx].ref.to_plain());
 
                 MemCpy(
                     vertices,
@@ -1325,8 +1350,50 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     using Proxy = typename parent_type::Proxy;
 
+    struct Pass
+    {
+        Pass()
+        {
+        }
+
+        GFX::RenderPass source;
+        GFX::OPT_DRAW   draw;
+
+        decltype(source.draws)& draws()
+        {
+            return source.draws;
+        }
+
+        inline void clear()
+        {
+            source.draws.clear();
+            draw = {};
+        }
+    };
+
+    enum Passes
+    {
+        Pass_Opaque,
+        Pass_Metal,
+        Pass_LastOpaque,
+        Pass_Glass = Pass_LastOpaque,
+
+        Pass_Count,
+    };
+
     MeshRenderer(BlamData<Version>& data) : m_data(data)
     {
+        bsp[Pass_Opaque].source.pipeline = data.bsp_pipeline->pipeline_ptr();
+        bsp[Pass_Metal].source.pipeline  = data.bsp_pipeline->pipeline_ptr();
+        bsp[Pass_Glass].source.pipeline  = data.bsp_pipeline->pipeline_ptr();
+
+        model[Pass_Opaque].source.pipeline =
+            data.model_pipeline->pipeline_ptr();
+        model[Pass_Metal].source.pipeline = data.model_pipeline->pipeline_ptr();
+        model[Pass_Glass].source.pipeline = data.model_pipeline->pipeline_ptr();
+
+        bsp[Pass_Glass].source.blend.m_doBlend   = true;
+        model[Pass_Glass].source.blend.m_doBlend = true;
     }
 
     MeshRenderer<Version> const& get() const
@@ -1343,16 +1410,24 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         if(time - last_update > Chrono::seconds(1))
             update_draws(p, time);
 
-        GFX::MultiDraw(m_data.bsp_pipeline->pipeline(), bsp_draw);
-        GFX::MultiDraw(m_data.model_pipeline->pipeline(), model_draw);
+        for(auto& pass : slice(bsp, 0, Pass_LastOpaque))
+        {
+            GFX::SetBlendState(pass.source.blend);
+            GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
+        }
+        for(auto& pass : slice(model, 0, Pass_LastOpaque))
+        {
+            GFX::SetBlendState(pass.source.blend);
+            GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
+        }
     }
 
     void update_draws(Proxy& p, time_point const&)
     {
-        bsp_pass   = {};
-        bsp_draw   = {};
-        model_pass = {};
-        model_draw = {};
+        for(auto& pass : bsp)
+            pass.clear();
+        for(auto& pass : model)
+            pass.clear();
 
         /* Update draws */
         for(auto& ent : p.select(ObjectBsp))
@@ -1363,11 +1438,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(!bsp_ref.visible)
                 continue;
 
-            bsp_ref.draw_idx = bsp_pass.draws.size();
-            bsp_pass.draws.push_back({m_data.bsp_attr,
-                                      &m_data.bsp_pipeline->get_state(),
-                                      bsp_ref.draw.call,
-                                      bsp_ref.draw.draw});
+            bsp_ref.draw_idx = bsp[Pass_Opaque].draws().size();
+            bsp[Pass_Opaque].draws().push_back(
+                {m_data.bsp_attr,
+                 &m_data.bsp_pipeline->get_state(),
+                 bsp_ref.draw.call,
+                 bsp_ref.draw.draw});
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -1375,15 +1451,17 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             auto  ref     = p.template ref<Proxy>(ent);
             auto& mod_ref = ref.template get<ModelTag>();
 
-            mod_ref.draw_idx = model_pass.draws.size();
-            model_pass.draws.push_back({m_data.model_attr,
-                                        &m_data.model_pipeline->get_state(),
-                                        mod_ref.draw.call,
-                                        mod_ref.draw.draw});
+            mod_ref.draw_idx = model[Pass_Opaque].draws().size();
+            model[Pass_Opaque].draws().push_back(
+                {m_data.model_attr,
+                 &m_data.model_pipeline->get_state(),
+                 mod_ref.draw.call,
+                 mod_ref.draw.draw});
         }
 
-        GFX::OptimizeRenderPass(bsp_pass, bsp_draw);
-        GFX::OptimizeRenderPass(model_pass, model_draw);
+        GFX::OptimizeRenderPass(bsp[Pass_Opaque].source, bsp[Pass_Opaque].draw);
+        GFX::OptimizeRenderPass(
+            model[Pass_Opaque].source, model[Pass_Opaque].draw);
 
         /* Update transforms and texture references */
 
@@ -1409,14 +1487,22 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             auto            ref     = p.template ref<Proxy>(ent);
             ModelReference& mod_ref = ref.template get<ModelTag>();
-            auto& draw_data = model_pass.draws.at(mod_ref.draw_idx).d_data;
+            auto&           draw_data =
+                model[Pass_Opaque].draws().at(mod_ref.draw_idx).d_data;
 
             matrix_store[draw_data.m_ioff] = mod_ref.transform;
 
-            if(!mod_ref.bitmap.valid())
-                continue;
+            Material& mat = model_material_store[draw_data.m_ioff];
 
-            Material&   mat    = model_material_store[draw_data.m_ioff];
+            if(!mod_ref.bitmap.valid())
+            {
+                mat.layer  = 0;
+                mat.offset = {};
+                mat.scale  = {1, 1};
+                mat.source = 2;
+                continue;
+            }
+
             BitmapItem& bitmap = m_data.bitm_cache.find(mod_ref.bitmap)->second;
 
             mat.layer  = bitmap.image.index;
@@ -1440,13 +1526,20 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto& ent : p.select(ObjectBsp))
         {
-            auto  ref     = p.template ref<Proxy>(ent);
-            auto& bsp_ref = ref.template get<BspTag>();
+            auto          ref     = p.template ref<Proxy>(ent);
+            BspReference& bsp_ref = ref.template get<BspTag>();
 
-            auto& draw_data = bsp_pass.draws.at(bsp_ref.draw_idx).d_data;
+            auto& draw_data =
+                bsp[Pass_Opaque].draws().at(bsp_ref.draw_idx).d_data;
+            BSPItem& model = m_data.bsp_cache.find(bsp_ref.bsp)->second;
 
             if(!bsp_ref.bitmap.valid())
+            {
+                //                cDebug(
+                //                    "Missing bitmap: {0}",
+                //                    model.tag->to_name().to_string(m_data.map_container.magic));
                 continue;
+            }
 
             Material&   mat    = material_store[draw_data.m_ioff];
             BitmapItem& bitmap = m_data.bitm_cache.find(bsp_ref.bitmap)->second;
@@ -1468,6 +1561,20 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.source = 2;
                 break;
             }
+
+            continue;
+            cDebug(
+                "Model: {0},{1} : {2} : {3} -> {4}@{5}+{6},{7} -> {8}",
+                model.tag->to_name().to_string(m_data.map_container.magic),
+                "[???]",
+                bitmap.shader_tag->to_name().to_string(
+                    m_data.map_container.magic),
+                bitmap.tag->to_name().to_string(m_data.map_container.magic),
+                bitmap.image.index,
+                magic_enum::enum_name(bitmap.image.fmt.cmpflg),
+                bitmap.image.offset.x(),
+                bitmap.image.offset.y(),
+                mat.source);
         }
 
         m_data.material_store->unmap();
@@ -1478,11 +1585,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     BlamData<Version>& m_data;
 
-    GFX::RenderPass bsp_pass;
-    GFX::OPT_DRAW   bsp_draw;
-
-    GFX::RenderPass model_pass;
-    GFX::OPT_DRAW   model_draw;
+    Array<Pass, Pass_Count> bsp;
+    Array<Pass, Pass_Count> model;
 };
 
 template<typename Version>
@@ -1636,7 +1740,9 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
     /* Start loading up vertex data */
     auto scenario = data.scenario;
     for(auto const& bsp : scenario->bsp_info.data(magic))
+    {
         bsp_meshes.push_back(data.bsp_cache.predict(bsp));
+    }
 
     data.bsp_buf->unmap();
     data.bsp_index->unmap();
@@ -1734,17 +1840,18 @@ void load_unit_group(
                         typing::vectors::translation(Matf4(), instance.pos) *
                         typing::vectors::matrixify(
                             typing::vectors::normalize_quat(Quatf(
-                                1,
-                                instance.rot.y(),
-                                instance.rot.z(),
-                                instance.rot.x())));
+                                1, 0, instance.rot.y(), -instance.rot.x())));
                     model.draw.draw = mesh.draw;
                     model.model     = obj_ref->second;
+                    model.instance =
+                        C_RCAST<decltype(model.instance)>(&instance);
                     model.draw.call = GFX::D_CALL()
                                           .withIndexing()
                                           .withTriStrip()
                                           .withInstancing();
                     model.bitmap = mesh.color_bitm;
+                    model.instance =
+                        C_RCAST<decltype(model.instance)>(&instance);
                 }
             }
     }
@@ -1814,10 +1921,6 @@ i32 blam_main(i32, cstring_w*)
             e.register_component_inplace<ModelStore>();
             e.register_component_inplace<BspStore>();
 
-            e.register_subsystem_inplace<
-                Components::TagType<MeshRenderer<halo_version>>,
-                MeshRenderer<halo_version>>(std::ref(data));
-
             if(!FileExists(data.map_file))
                 Throw(undefined_behavior("map file not found"));
 
@@ -1863,9 +1966,9 @@ i32 blam_main(i32, cstring_w*)
             }
 
             GFX::ERROR ec;
-            data.model_matrix_store->bindrange(0, 0, 10_MB, ec);
+            data.model_matrix_store->bindrange(0, 0, 4_MB, ec);
             data.material_store->bindrange(1, 0, 2_MB, ec);
-            data.material_store->bindrange(2, 2_MB, 8_MB, ec);
+            data.material_store->bindrange(2, 2_MB, 2_MB, ec);
 
             {
                 auto pipeline = data.model_pipeline;
@@ -1921,8 +2024,13 @@ i32 blam_main(i32, cstring_w*)
             pipeline.build_state();
             pipeline.get_state();
 
+            e.register_subsystem_inplace<
+                Components::TagType<MeshRenderer<halo_version>>,
+                MeshRenderer<halo_version>>(std::ref(data));
+
             GFX::RASTSTATE cull_disable;
-            cull_disable.m_doCull = false;
+            cull_disable.m_doCull  = true;
+            cull_disable.m_culling = (u32)typing::graphics::VertexFace::Front;
             GFX::SetRasterizerState(cull_disable);
 
             GFX::DEPTSTATE depth_enable;
@@ -1948,17 +2056,10 @@ i32 blam_main(i32, cstring_w*)
 
                 data.camera_matrix =
                     GenPerspective(data.camera) * GenTransform(data.camera) *
+                    typing::vectors::scale(Matf4(), {10}) *
                     typing::vectors::matrixify(typing::vectors::normalize_quat(
                         Quatf(1, -pi / 4, 0, 0)));
             }
-
-            GFX::ERROR ec;
-            GFX::MultiDraw(data.bsp_pipeline->pipeline(), data.bsp_draw, ec);
-            C_ERROR_CHECK(ec)
-
-            GFX::MultiDraw(
-                data.model_pipeline->pipeline(), data.model_draw, ec);
-            C_ERROR_CHECK(ec)
         },
         [](EntityContainer&        e,
            BlamData<halo_version>& data,
