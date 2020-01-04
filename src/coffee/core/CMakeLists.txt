@@ -171,9 +171,6 @@ coffee_library (
     HEADER_BASE coffee
     )
 
-message ( "LZ4 ${lz4_FOUND}" )
-message ( "ZSTD ${zstd_FOUND}" )
-
 if(lz4_FOUND)
     target_sources ( CoreCompression PRIVATE
         private/datastorage/compression/lz4_codec.cpp

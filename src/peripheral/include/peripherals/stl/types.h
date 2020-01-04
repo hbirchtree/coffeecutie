@@ -468,6 +468,16 @@ struct slice
     {
     }
 
+    iterator begin()
+    {
+        return m_begin;
+    }
+
+    iterator end()
+    {
+        return m_end;
+    }
+
     iterator begin() const
     {
         return m_begin;
