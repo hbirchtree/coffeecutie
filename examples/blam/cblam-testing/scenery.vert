@@ -18,11 +18,13 @@ out gl_PerVertex
 out FragData
 {
     vec2 tex;
+    flat uint instanceId;
 } frag;
 
 void main()
 {
     frag.tex = tex;
+    frag.instanceId = gl_BaseInstance + gl_InstanceID;
     gl_Position =
             camera * matrices.transform[gl_BaseInstance + gl_InstanceID] *
             vec4(position, 1);

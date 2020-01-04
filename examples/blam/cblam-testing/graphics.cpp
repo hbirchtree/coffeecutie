@@ -1499,7 +1499,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.layer  = 0;
                 mat.offset = {};
                 mat.scale  = {1, 1};
-                mat.source = 2;
+                mat.source = 0;
                 continue;
             }
 
@@ -1522,6 +1522,22 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.source = 2;
                 break;
             }
+
+            ModelItem const& model_ =
+                m_data.model_cache.find(mod_ref.model)->second;
+
+//            cDebug(
+//                "Model: {0},{1} : {2} : {3} -> {4}@{5}+{6},{7} -> {8}",
+//                model_.tag->to_name().to_string(m_data.map_container.magic),
+//                "[???]",
+//                bitmap.shader_tag->to_name().to_string(
+//                    m_data.map_container.magic),
+//                bitmap.tag->to_name().to_string(m_data.map_container.magic),
+//                bitmap.image.index,
+//                magic_enum::enum_name(bitmap.image.fmt.cmpflg),
+//                bitmap.image.offset.x(),
+//                bitmap.image.offset.y(),
+//                mat.source);
         }
 
         for(auto& ent : p.select(ObjectBsp))
@@ -1531,15 +1547,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
             auto& draw_data =
                 bsp[Pass_Opaque].draws().at(bsp_ref.draw_idx).d_data;
-            BSPItem& model = m_data.bsp_cache.find(bsp_ref.bsp)->second;
 
             if(!bsp_ref.bitmap.valid())
-            {
-                //                cDebug(
-                //                    "Missing bitmap: {0}",
-                //                    model.tag->to_name().to_string(m_data.map_container.magic));
                 continue;
-            }
 
             Material&   mat    = material_store[draw_data.m_ioff];
             BitmapItem& bitmap = m_data.bitm_cache.find(bsp_ref.bitmap)->second;
@@ -1561,20 +1571,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.source = 2;
                 break;
             }
-
-            continue;
-            cDebug(
-                "Model: {0},{1} : {2} : {3} -> {4}@{5}+{6},{7} -> {8}",
-                model.tag->to_name().to_string(m_data.map_container.magic),
-                "[???]",
-                bitmap.shader_tag->to_name().to_string(
-                    m_data.map_container.magic),
-                bitmap.tag->to_name().to_string(m_data.map_container.magic),
-                bitmap.image.index,
-                magic_enum::enum_name(bitmap.image.fmt.cmpflg),
-                bitmap.image.offset.x(),
-                bitmap.image.offset.y(),
-                mat.source);
         }
 
         m_data.material_store->unmap();

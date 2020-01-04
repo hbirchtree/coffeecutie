@@ -268,5 +268,8 @@ PACKED(struct) r10g10b10a2
     }
 };
 
+using f11 = r11g11b10f;
+using u10 = r10g10b10a2;
+
 } // namespace pixels
 } // namespace typing

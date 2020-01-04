@@ -2,7 +2,7 @@
 
 in FragData {
     vec2 tex;
-    flat int instanceId;
+    flat uint instanceId;
 } frag;
 
 struct Material
@@ -35,7 +35,7 @@ void main()
     else if(mats.instance[frag.instanceId].source == 2)
         tex_dims = vec2(textureSize(bc5_tex, 0).xy);
 
-    vec2 tex_ = frag.tex - vec2(ivec2(frag.tex));
+    vec2 tex_ = frag.tex - floor(frag.tex);
 
     vec2 sample_pos = tex_ * mats.instance[frag.instanceId].scaling
             + mats.instance[frag.instanceId].offset / tex_dims.xy;

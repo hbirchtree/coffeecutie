@@ -68,6 +68,17 @@ After trying many exciting ways of atlasing textures, something finally worked,
  and I called it a day. For now only the BSP shows the correct textures,
  but scenery will be there soon enough.
 
+## Cursed models
+
+![](update10.png)
+
+After finding out that the model instances weren't propagated to the fragment
+ shader for models, they finally look better.
+
+This image is from the start of 343 Guilty Spark, and Sgt Johnson is
+ not supposed to be here. A lot of models look *almost* right, but the
+ texture coordinates are somewhat off.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.

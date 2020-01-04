@@ -219,11 +219,11 @@ template<typename RType>
 struct alignas(4) vertex<RType, false>
 {
     // Compressed Xbox variant
-    Vecf3 position;
-    u32   normal;  /*!< PixFmt::R11G11B10F */
-    u32   binorm;  /*!< Same as binormal */
-    u32   tangent; /*!< Same as normal */
-    Vecf2 texcoord;
+    Vecf3               position;
+    typing::pixels::f11 normal;  /*!< PixFmt::R11G11B10F */
+    typing::pixels::f11 binorm;  /*!< Same as binormal */
+    typing::pixels::f11 tangent; /*!< Same as normal */
+    Vecf2               texcoord;
 
   private:
     constexpr void size_check()
