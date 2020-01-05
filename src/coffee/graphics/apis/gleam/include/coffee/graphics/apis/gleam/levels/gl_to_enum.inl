@@ -853,17 +853,23 @@ inline CGenum buffer_to_enum(buf::flags f)
 #endif
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    case draw_indirect::value:
-        return GL_DRAW_INDIRECT_BUFFER;
-    case compute_indirect::value:
-        return GL_DISPATCH_INDIRECT_BUFFER;
-
-    case constants_rw::value:
-        return GL_SHADER_STORAGE_BUFFER;
-    case atomic::value:
-        return GL_ATOMIC_COUNTER_BUFFER;
     case buf::query::value:
         return GL_QUERY_BUFFER;
+#endif
+
+#if GL_VERSION_VERIFY(0x330, 0x310)
+    case draw_indirect::value:
+        return GL_DRAW_INDIRECT_BUFFER;
+#endif
+#if GL_VERSION_VERIFY(0x420, 0x310)
+    case atomic::value:
+        return GL_ATOMIC_COUNTER_BUFFER;
+#endif
+#if GL_VERSION_VERIFY(0x430, 0x310)
+    case compute_indirect::value:
+        return GL_DISPATCH_INDIRECT_BUFFER;
+    case constants_rw::value:
+        return GL_SHADER_STORAGE_BUFFER;
 #endif
     }
 

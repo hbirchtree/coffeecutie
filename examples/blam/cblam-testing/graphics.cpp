@@ -1619,7 +1619,7 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
     /* Set up graphics data */
     GFX::OPTS options;
     options.crash_on_error        = true;
-    options.old_shader_processing = false;
+    options.old_shader_processing = true;
     auto& gfx = e.register_subsystem_inplace<GFX_ALLOC::tag_type, GFX_ALLOC>(
         options, true);
 
@@ -1922,9 +1922,6 @@ i32 blam_main(i32, cstring_w*)
             e.register_component_inplace<ModelStore>();
             e.register_component_inplace<BspStore>();
 
-            if(!FileExists(data.map_file))
-                Throw(undefined_behavior("map file not found"));
-
             blam::tag_index_view index(data.map_container);
 
             auto& magic = data.map_container.magic;
@@ -1934,6 +1931,8 @@ i32 blam_main(i32, cstring_w*)
                     .to_reflexive<blam::scn::scenario<blam::hsc::bc::v2>>()
                     .data(magic)
                     .data;
+
+            if(e.service<comp_app::WindowInfo>())
             {
                 auto map_name      = data.map_container.map->full_mapname();
                 auto window_config = e.service<comp_app::WindowInfo>();

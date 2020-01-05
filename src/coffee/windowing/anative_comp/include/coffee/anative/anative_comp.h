@@ -13,6 +13,13 @@ struct Windowing : comp_app::StaticWindowing, comp_app::AppLoadableService
     virtual void setState(comp_app::detail::WindowState state) override;
 };
 
+struct ControllerInput : comp_app::ControllerInput
+{
+    virtual libc_types::u32       count() const override;
+    virtual controller_map        state(libc_types::u32 idx) const override;
+    virtual comp_app::text_type_t name(libc_types::u32 idx) const override;
+};
+
 using Services =
     comp_app::detail::TypeList<Windowing, comp_app::PtrNativeWindowInfo>;
 

@@ -1,15 +1,21 @@
-#version 450 core
+#version 310 es
+
+#extension GL_EXT_shader_io_blocks : enable
+
+precision highp float;
+precision highp int;
+precision highp sampler2DArray;
 
 in FragData {
     vec2 tex;
-    flat uint instanceId;
+    flat int instanceId;
 } frag;
 
 struct Material
 {
     vec2 scaling;
     ivec2 offset;
-    uint source;
+    int source;
     uint layer;
 };
 
@@ -38,7 +44,7 @@ void main()
     vec2 tex_ = frag.tex - floor(frag.tex);
 
     vec2 sample_pos = tex_ * mats.instance[frag.instanceId].scaling
-            + mats.instance[frag.instanceId].offset / tex_dims.xy;
+            + vec2(mats.instance[frag.instanceId].offset) / tex_dims.xy;
     uint layer = mats.instance[frag.instanceId].layer;
 
     if(mats.instance[frag.instanceId].source == 0)

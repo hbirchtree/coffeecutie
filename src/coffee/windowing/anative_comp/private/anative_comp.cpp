@@ -15,12 +15,12 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-//    if(!cmd.data.ptr)
-//    {
-//        ec = "ANativeWindow not available";
-//        ec = comp_app::AppError::NoWindow;
-//        return;
-//    }
+    //    if(!cmd.data.ptr)
+    //    {
+    //        ec = "ANativeWindow not available";
+    //        ec = comp_app::AppError::NoWindow;
+    //        return;
+    //    }
 
     auto windowInfo = e.service<comp_app::PtrNativeWindowInfo>();
     if(!windowInfo)
@@ -52,6 +52,20 @@ comp_app::detail::WindowState Windowing::state() const
 
 void Windowing::setState(comp_app::detail::WindowState state)
 {
+}
+
+libc_types::u32 ControllerInput::count() const
+{
+    return 0;
+}
+ControllerInput::controller_map ControllerInput::state(
+    libc_types::u32 idx) const
+{
+    return {};
+}
+comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
+{
+    return "Unknown";
 }
 
 } // namespace anative

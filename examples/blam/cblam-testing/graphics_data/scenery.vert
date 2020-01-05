@@ -1,4 +1,10 @@
-#version 460 core
+#version 310 es
+
+#extension GL_EXT_shader_io_blocks : enable
+
+precision highp float;
+precision highp int;
+precision highp sampler2DArray;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex;
@@ -18,7 +24,7 @@ out gl_PerVertex
 out FragData
 {
     vec2 tex;
-    flat uint instanceId;
+    flat int instanceId;
 } frag;
 
 void main()
