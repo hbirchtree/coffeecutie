@@ -1,5 +1,7 @@
 #include <coffee/android/android_main.h>
 
+#include <coffee/anative/anative_comp.h>
+#include <coffee/comp_app/bundle.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/types/point.h>
@@ -11,8 +13,6 @@
 #include <peripherals/stl/types.h>
 #include <platforms/environment.h>
 #include <platforms/sensor.h>
-
-//#include "../../private/plat/sensor/android/android_sensors.h"
 
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
@@ -98,10 +98,6 @@ std::string jni_error_category::message(int error_code) const
 
 } // namespace android
 
-static char AndroidWindowType[] = "android.view.Window";
-static char AndroidViewType[]   = "android.view.View";
-static char javaioFile[]        = "java.io.File";
-
 extern CoffeeMainWithArgs android_entry_point;
 extern void*              coffee_event_handling_data;
 extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv);
@@ -132,8 +128,21 @@ void (*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
  *
  */
 
+inline void AndroidForwardAppEvent(android_app* app, libc_types::i32 event)
+{
+    auto& entities    = comp_app::createContainer();
+    auto  android_bus = entities.service<anative::AndroidEventBus>();
+
+    if(!android_bus)
+        return;
+
+    android_bus->handleWindowEvent(app, event);
+}
+
 void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 {
+    AndroidForwardAppEvent(app, event);
+
     switch(event)
     {
     case APP_CMD_START:
@@ -233,10 +242,23 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
 }
 
+inline void AndroidForwardInputEvent(AInputEvent* event)
+{
+    auto& entities    = comp_app::createContainer();
+    auto  android_bus = entities.service<anative::AndroidEventBus>();
+
+    if(!android_bus)
+        return;
+
+    android_bus->handleInputEvent(event);
+}
+
 int32_t AndroidHandleInputCmd(
     struct android_app* app, struct AInputEvent* event)
 {
     pthread_mutex_lock(&app->mutex);
+
+    AndroidForwardInputEvent(event);
 
     switch(AInputEvent_getType(event))
     {
@@ -393,6 +415,10 @@ int32_t AndroidHandleInputCmd(
             tev.event.pan.fingerCount = 1;
 
             initial_point = point;
+        } else
+        {
+            cVerbose(
+                INPUT_VERB, "Motion event: {0},{1}", tapCoord.x, tapCoord.y);
         }
 
         if(tev.type != CfTouch_None)
@@ -684,7 +710,7 @@ STATICINLINE void HandleEvents()
             cDebug("User event");
         }
 
-        if(coffee_app->destroyRequested != 0)
+        if(coffee_app->destroyRequested)
         {
             CoffeeEventHandleCall(CoffeeHandle_Cleanup);
             return;

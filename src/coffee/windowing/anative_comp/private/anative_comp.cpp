@@ -3,6 +3,10 @@
 #include <coffee/android/android_main.h>
 #include <coffee/foreign/foreign.h>
 
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/CDebug>
+
 namespace anative {
 
 void Windowing::load(entity_container& e, comp_app::app_error& ec)
@@ -56,16 +60,31 @@ void Windowing::setState(comp_app::detail::WindowState state)
 
 libc_types::u32 ControllerInput::count() const
 {
-    return 0;
+    return m_cache.size();
 }
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
-    return {};
+    return m_cache.at(idx);
 }
 comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 {
-    return "Unknown";
+    return "Generic Controller";
+}
+
+void AndroidEventBus::load(entity_container& e, comp_app::app_error&)
+{
+    m_container = &e;
+}
+
+void AndroidEventBus::handleInputEvent(AInputEvent* event)
+{
+    Coffee::DebugFun::cDebug("Input event: {0}", event);
+}
+
+void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
+{
+    Coffee::DebugFun::cDebug("App event: {0}", event);
 }
 
 } // namespace anative

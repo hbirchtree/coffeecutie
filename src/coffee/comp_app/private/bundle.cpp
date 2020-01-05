@@ -91,8 +91,6 @@ struct app_loadable_matcher
 
 detail::EntityContainer& createContainer()
 {
-    Coffee::ProfContext _("comp_app::createContainer");
-
     static stl_types::ShPtr<detail::EntityContainer> container;
 
     if(container)
