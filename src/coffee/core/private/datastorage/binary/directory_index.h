@@ -85,10 +85,7 @@ static u32 VirtRecurseChildren(
  * \return
  */
 static u32 VirtPartitionChildren(
-    node_working_set_t& set,
-    part_slice const&   children,
-    cstring             prefix,
-    u32                 flags = 0)
+    node_working_set_t& set, part_slice children, cstring prefix, u32 flags = 0)
 {
     auto parentIdx = C_FCAST<u32>(set.outNodes.size());
 

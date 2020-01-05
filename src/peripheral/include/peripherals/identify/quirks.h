@@ -233,8 +233,6 @@
 #define COFFEE_DYNAMIC_TEMPFILES
 #endif
 
-
-
 /*
  *
  * Compression systems
@@ -342,4 +340,11 @@
 #endif
 #if defined(COFFEE_GLEAM_DESKTOP) && defined(COFFEE_USE_MAEMO_EGL)
 #error Invalid configuration detected, cannot use EGL with OpenGL (non-ES)!
+#endif
+
+#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS) || \
+    defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_FIXED_RESOURCE_DIR 1
+#else
+#define COFFEE_FIXED_RESOURCE_DIR 0
 #endif

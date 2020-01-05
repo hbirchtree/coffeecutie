@@ -478,21 +478,31 @@ struct slice
         return m_end;
     }
 
-    iterator begin() const
-    {
-        return m_begin;
-    }
-
-    iterator end() const
-    {
-        return m_end;
-    }
-
     typename container_value_type::size_type size() const
     {
         return m_end - m_begin;
     }
 };
+
+template<
+    typename ContainerType,
+    typename std::enable_if<!std::is_const<ContainerType>::value>::type* =
+        nullptr>
+static inline auto slice_num(
+    ContainerType& c, typename ContainerType::difference_type num)
+{
+    return slice<ContainerType>(std::begin(c), std::begin(c) + num);
+}
+
+template<
+    typename ContainerType,
+    typename std::enable_if<std::is_const<ContainerType>::value>::type* =
+        nullptr>
+static inline auto slice_num(
+    ContainerType& c, typename ContainerType::difference_type num)
+{
+    return slice<ContainerType>(std::cbegin(c), std::cbegin(c) + num);
+}
 
 struct non_copy
 {

@@ -13,6 +13,9 @@ coffee_application (
     SOURCES graphics.cpp
     LIBRARIES
     Blam Core Image DropinRenderer GLeamRHI
+
+    RESOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
     )
 
 coffee_application (

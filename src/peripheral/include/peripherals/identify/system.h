@@ -63,6 +63,7 @@
 #define C_SYSTEM_STRING "iOS"
 #define COFFEE_ARCH_LLP64
 #define COFFEE_APPLE_MOBILE
+#define COFFEE_IOS
 #endif
 
 #endif

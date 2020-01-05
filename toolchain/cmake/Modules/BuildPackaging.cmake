@@ -154,6 +154,8 @@ function(COFFEE_APPLICATION)
             "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
 
+        # TODO: Add use of Path key to desktop file
+
         file ( WRITE "${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}.desktop"
 "[Desktop Entry]
 Version=1.0

@@ -1270,10 +1270,14 @@ template<typename Version>
 struct BlamData
 {
     BlamData() :
+#if defined(COFFEE_ANDROID) || 1
+        map_file(MkUrl("c10.map")), bitmap_file("bitmaps.map"_rsc),
+#else
         map_file(MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile)),
         bitmap_file(Resource(MkUrl(
             Path(GetInitArgs().arguments().at(0)).dirname() + "bitmaps.map",
             RSCA::SystemFile))),
+#endif
         map_container(map_file, Version()),
         bitm_cache(
             map_container,
@@ -1410,12 +1414,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         if(time - last_update > Chrono::seconds(1))
             update_draws(p, time);
 
-        for(auto& pass : slice(bsp, 0, Pass_LastOpaque))
+        for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
         {
             GFX::SetBlendState(pass.source.blend);
             GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
         }
-        for(auto& pass : slice(model, 0, Pass_LastOpaque))
+        for(auto const& pass : slice_num(model, Pass_LastOpaque))
         {
             GFX::SetBlendState(pass.source.blend);
             GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
@@ -1526,18 +1530,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             ModelItem const& model_ =
                 m_data.model_cache.find(mod_ref.model)->second;
 
-//            cDebug(
-//                "Model: {0},{1} : {2} : {3} -> {4}@{5}+{6},{7} -> {8}",
-//                model_.tag->to_name().to_string(m_data.map_container.magic),
-//                "[???]",
-//                bitmap.shader_tag->to_name().to_string(
-//                    m_data.map_container.magic),
-//                bitmap.tag->to_name().to_string(m_data.map_container.magic),
-//                bitmap.image.index,
-//                magic_enum::enum_name(bitmap.image.fmt.cmpflg),
-//                bitmap.image.offset.x(),
-//                bitmap.image.offset.y(),
-//                mat.source);
+            //            cDebug(
+            //                "Model: {0},{1} : {2} : {3} -> {4}@{5}+{6},{7} ->
+            //                {8}",
+            //                model_.tag->to_name().to_string(m_data.map_container.magic),
+            //                "[???]",
+            //                bitmap.shader_tag->to_name().to_string(
+            //                    m_data.map_container.magic),
+            //                bitmap.tag->to_name().to_string(m_data.map_container.magic),
+            //                bitmap.image.index,
+            //                magic_enum::enum_name(bitmap.image.fmt.cmpflg),
+            //                bitmap.image.offset.x(),
+            //                bitmap.image.offset.y(),
+            //                mat.source);
         }
 
         for(auto& ent : p.select(ObjectBsp))

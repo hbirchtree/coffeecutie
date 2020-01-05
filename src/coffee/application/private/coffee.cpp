@@ -564,7 +564,11 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
     for(auto arg : args.arguments)
     {
         if(arg.first == "resource_prefix")
+#if !COFFEE_FIXED_RESOURCE_DIR
             file::ResourcePrefix(arg.second.c_str());
+#else
+            cWarning("Resource directory attempted overridden, denied");
+#endif
     }
 
     for(auto pos : args.positional)
