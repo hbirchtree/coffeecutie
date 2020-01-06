@@ -605,7 +605,7 @@ void GLEAM_Surface3D_Base::upload(
         if(!GLEAM_FEATURES.direct_state)
             CGL33::TexBind(m_type, m_handle);
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(properties::get<properties::is_compressed>(pxfmt) &&
            GLEAM_FEATURES.direct_state)
         {
@@ -617,11 +617,17 @@ void GLEAM_Surface3D_Base::upload(
                 pfmt.c,
                 C_FCAST<i32>(data.size),
                 data.data);
-        } else if(properties::get<properties::is_compressed>(pxfmt))
+        } else
+#endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
+            if(properties::get<properties::is_compressed>(pxfmt))
         {
             CGL33::TexCompressedSubImage3D(
                 m_type, mip, offset, size, pfmt.c, data.size, data.data);
-        } else if(GLEAM_FEATURES.direct_state)
+        } else
+#endif
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+            if(GLEAM_FEATURES.direct_state)
         {
             CGL45::TexSubImage3D(
                 m_handle,
