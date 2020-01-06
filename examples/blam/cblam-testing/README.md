@@ -79,6 +79,16 @@ This image is from the start of 343 Guilty Spark, and Sgt Johnson is
  not supposed to be here. A lot of models look *almost* right, but the
  texture coordinates are somewhat off.
 
+## Alpha to coverage is good
+
+![](update11-1.png)
+![](update11-2.png)
+![](update11-3.png)
+
+By implementing the requirements for sample alpha to coverage
+ (mainly enabling multisampling), plants and other things look much better.
+The people are still cursed, though.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.
