@@ -89,6 +89,22 @@ By implementing the requirements for sample alpha to coverage
  (mainly enabling multisampling), plants and other things look much better.
 The people are still cursed, though.
 
+## A rare new species
+
+![](update12.png)
+
+If you look closely at the above image, you may spot a rare specimen of the
+ Assault Rifle species. These hide in the bushes of Guilty Spark looking for prey,
+ most of which consists of grunts and jackals. They are very shy, and will
+ escape from humans if given the chance. No specimen has been captured alive.
+
+On a more serious note, I found these while wondering
+"Where does the AR gunfire come from during the open parts of Guilty Spark?"
+Turns out they are cinematic props that disappear when the player enters
+ the area.
+
+There are lots of scenery placed around the level, hiding behind corners and such.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.
