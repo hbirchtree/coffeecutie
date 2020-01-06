@@ -668,6 +668,14 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
 #endif
     }
 
+    if(bstate.sampleAlphaCoverage())
+    {
+        CGL33::Enable(Feature::SampleAlphaToCoverage);
+    }else
+    {
+        CGL33::Disable(Feature::SampleAlphaToCoverage);
+    }
+
     /*TODO: Add more advanced blending options*/
 
     /*TODO: Find semantics for SampleCoverage*/

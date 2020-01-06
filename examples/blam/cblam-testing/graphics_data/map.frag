@@ -14,6 +14,7 @@ in FragData {
 struct Material
 {
     vec2 scaling;
+    vec2 uvscale;
     ivec2 offset;
     int source;
     uint layer;

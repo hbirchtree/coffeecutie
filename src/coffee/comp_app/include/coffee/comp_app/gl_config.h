@@ -54,6 +54,12 @@ struct GLConfig : Config<GLConfig>
 
     Profile profile = Default;
 
+    struct multisample_opts
+    {
+        libc_types::i32 samples = 1;
+        bool            enabled = false;
+    } multisampling;
+
     template<libc_types::u32 Maj, libc_types::u32 Min, Profile _Profile = Core>
     struct static_version
     {
@@ -85,7 +91,7 @@ struct GLConfig : Config<GLConfig>
 #if defined(COFFEE_RASPBERRY) || defined(COFFEE_MAEMO)
     using fixed_version = gles2_version;
 #else
-    using fixed_version     = static_version<0, 0>;
+    using fixed_version = static_version<0, 0>;
 #endif
 
 #if defined(FEATURE_ENABLE_GLAD_Core)

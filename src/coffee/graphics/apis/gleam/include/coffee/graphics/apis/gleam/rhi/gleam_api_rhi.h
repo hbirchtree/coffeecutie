@@ -263,7 +263,8 @@ struct GLEAM_API : GraphicsAPI
      * pass by the user code \param buffer An output structure which is ready to
      * be drawn in an optimized fashion.
      */
-    static void OptimizeRenderPass(RenderPass& rpass, OPT_DRAW& buffer);
+    static void OptimizeRenderPass(
+        RenderPass& rpass, OPT_DRAW& buffer, u32 baseinstance = 0);
 
     /*!
      * \brief Providing data output by OptimizeRenderPass(), use this function

@@ -91,9 +91,12 @@ struct ModelReference
     Matf4 transform;
     u32   draw_idx;
 
-    generation_idx_t                  bitmap;
-    generation_idx_t                  model;
+    generation_idx_t bitmap;
+    generation_idx_t model;
+
     blam::scn::object_spawn<0> const* instance;
+    blam::tag_t const*                shader_tag;
+    u32                               current_pass;
 
     struct
     {
@@ -237,6 +240,7 @@ struct ModelItem
     blam::mod2::header const* header;
     blam::tag_t const*        tag;
     LOD                       mesh;
+    Vecf2                     uvscale;
 
     inline bool valid() const
     {
@@ -1021,9 +1025,10 @@ struct ModelCache
             return {};
 
         ModelItem out;
-        out.mesh   = {};
-        out.header = header;
-        out.tag    = *index.find(mod2);
+        out.mesh    = {};
+        out.header  = header;
+        out.tag     = *index.find(mod2);
+        out.uvscale = Vecf2(header->uvscale.u, header->uvscale.v);
 
         auto const& shaders = header->shaders.data(magic);
 
@@ -1270,7 +1275,7 @@ template<typename Version>
 struct BlamData
 {
     BlamData() :
-#if defined(COFFEE_ANDROID) || 1
+#if defined(COFFEE_ANDROID)
         map_file(MkUrl("c10.map")), bitmap_file("bitmaps.map"_rsc),
 #else
         map_file(MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile)),
@@ -1396,8 +1401,23 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         model[Pass_Metal].source.pipeline = data.model_pipeline->pipeline_ptr();
         model[Pass_Glass].source.pipeline = data.model_pipeline->pipeline_ptr();
 
-        bsp[Pass_Glass].source.blend.m_doBlend   = true;
-        model[Pass_Glass].source.blend.m_doBlend = true;
+        {
+            GFX::RASTSTATE& rast = bsp[Pass_Opaque].source.raster;
+            rast.m_doCull        = true;
+            rast.m_culling       = (u32)typing::graphics::VertexFace::Front;
+        }
+        {
+            GFX::RASTSTATE& rast = model[Pass_Opaque].source.raster;
+            rast.m_doCull        = true;
+            rast.m_culling       = (u32)typing::graphics::VertexFace::Front;
+        }
+
+        bsp[Pass_Glass].source.blend.m_doBlend = true;
+        {
+            GFX::BLNDSTATE& blend = model[Pass_Glass].source.blend;
+            blend.m_doBlend       = true;
+            blend.m_alphaCoverage = true;
+        }
     }
 
     MeshRenderer<Version> const& get() const
@@ -1416,13 +1436,24 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
         {
+            GFX::SetRasterizerState(pass.source.raster);
             GFX::SetBlendState(pass.source.blend);
             GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
         }
         for(auto const& pass : slice_num(model, Pass_LastOpaque))
         {
+            GFX::SetRasterizerState(pass.source.raster);
             GFX::SetBlendState(pass.source.blend);
             GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
+        }
+
+        {
+            auto const& pass = model[Pass_Glass];
+            {
+                GFX::SetRasterizerState(pass.source.raster);
+                GFX::SetBlendState(pass.source.blend);
+                GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
+            }
         }
     }
 
@@ -1452,30 +1483,42 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto& ent : p.select(ObjectMod2))
         {
-            auto  ref     = p.template ref<Proxy>(ent);
-            auto& mod_ref = ref.template get<ModelTag>();
+            auto            ref     = p.template ref<Proxy>(ent);
+            ModelReference& mod_ref = ref.template get<ModelTag>();
 
-            mod_ref.draw_idx = model[Pass_Opaque].draws().size();
-            model[Pass_Opaque].draws().push_back(
-                {m_data.model_attr,
-                 &m_data.model_pipeline->get_state(),
-                 mod_ref.draw.call,
-                 mod_ref.draw.draw});
+            auto target_pass = &model[Pass_Opaque].draws();
+
+            if(!mod_ref.shader_tag->matches(blam::tag_class_t::senv))
+            {
+                target_pass          = &model[Pass_Glass].draws();
+                mod_ref.current_pass = Pass_Glass;
+            }
+
+            mod_ref.draw_idx = target_pass->size();
+            target_pass->push_back({m_data.model_attr,
+                                    &m_data.model_pipeline->get_state(),
+                                    mod_ref.draw.call,
+                                    mod_ref.draw.draw});
         }
 
         GFX::OptimizeRenderPass(bsp[Pass_Opaque].source, bsp[Pass_Opaque].draw);
         GFX::OptimizeRenderPass(
             model[Pass_Opaque].source, model[Pass_Opaque].draw);
 
+        GFX::OptimizeRenderPass(
+            model[Pass_Glass].source,
+            model[Pass_Glass].draw,
+            model[Pass_Opaque].draws().size());
+
         /* Update transforms and texture references */
 
         struct Material
         {
             Vecf2 scale;
+            Vecf2 uvscale;
             Veci2 offset;
             u32   source;
             u32   layer;
-            u32   pad_[2];
         };
 
         auto material_store =
@@ -1492,11 +1535,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             auto            ref     = p.template ref<Proxy>(ent);
             ModelReference& mod_ref = ref.template get<ModelTag>();
             auto&           draw_data =
-                model[Pass_Opaque].draws().at(mod_ref.draw_idx).d_data;
+                model[mod_ref.current_pass].draws().at(mod_ref.draw_idx).d_data;
 
             matrix_store[draw_data.m_ioff] = mod_ref.transform;
 
-            Material& mat = model_material_store[draw_data.m_ioff];
+            ModelItem& mod2 = m_data.model_cache.find(mod_ref.model)->second;
+            Material&  mat  = model_material_store[draw_data.m_ioff];
+
+            auto mod_name =
+                mod2.tag->to_name().to_string(m_data.map_container.magic);
 
             if(!mod_ref.bitmap.valid())
             {
@@ -1509,9 +1556,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
             BitmapItem& bitmap = m_data.bitm_cache.find(mod_ref.bitmap)->second;
 
-            mat.layer  = bitmap.image.index;
-            mat.offset = bitmap.image.offset;
-            mat.scale  = bitmap.image.scale;
+            mat.layer   = bitmap.image.index;
+            mat.offset  = bitmap.image.offset;
+            mat.scale   = bitmap.image.scale;
+            mat.uvscale = mod2.uvscale;
 
             auto comp_flags = std::get<3>(bitmap.image.bucket);
             switch(comp_flags)
@@ -1526,23 +1574,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.source = 2;
                 break;
             }
-
-            ModelItem const& model_ =
-                m_data.model_cache.find(mod_ref.model)->second;
-
-            //            cDebug(
-            //                "Model: {0},{1} : {2} : {3} -> {4}@{5}+{6},{7} ->
-            //                {8}",
-            //                model_.tag->to_name().to_string(m_data.map_container.magic),
-            //                "[???]",
-            //                bitmap.shader_tag->to_name().to_string(
-            //                    m_data.map_container.magic),
-            //                bitmap.tag->to_name().to_string(m_data.map_container.magic),
-            //                bitmap.image.index,
-            //                magic_enum::enum_name(bitmap.image.fmt.cmpflg),
-            //                bitmap.image.offset.x(),
-            //                bitmap.image.offset.y(),
-            //                mat.source);
         }
 
         for(auto& ent : p.select(ObjectBsp))
@@ -1850,7 +1881,8 @@ void load_unit_group(
                                           .withIndexing()
                                           .withTriStrip()
                                           .withInstancing();
-                    model.bitmap = mesh.color_bitm;
+                    model.bitmap     = mesh.color_bitm;
+                    model.shader_tag = mesh.shader;
                     model.instance =
                         C_RCAST<decltype(model.instance)>(&instance);
                 }
@@ -1905,6 +1937,8 @@ i32 blam_main(i32, cstring_w*)
     comp_app::configureDefaults(e);
 
     auto loader = e.service<comp_app::AppLoader>();
+
+    loader->config<comp_app::GLConfig>().multisampling.enabled = true;
 
     cDebug(
         "Buffer budget: {0} / {1} MB",

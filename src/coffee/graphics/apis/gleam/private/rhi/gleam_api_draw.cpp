@@ -39,7 +39,7 @@ static instance_hash instance_hash_draw(
 }
 
 void GLEAM_API::OptimizeRenderPass(
-    GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer)
+    GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer, u32 baseinstance)
 {
     DProfContext _(GLM_API "Optimizing RenderPass");
 
@@ -48,7 +48,7 @@ void GLEAM_API::OptimizeRenderPass(
     for(auto& draw : rpass.draws)
         draws[hash_draw(draw)].push_back(&draw);
 
-    u32                          globalInstanceOffset = 0;
+    u32                          globalInstanceOffset = baseinstance;
     Vector<RenderPass::DrawCall> collectedDraws;
     collectedDraws.reserve(draws.size());
 

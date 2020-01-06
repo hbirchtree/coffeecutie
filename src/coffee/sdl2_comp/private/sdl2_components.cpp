@@ -377,6 +377,13 @@ void GLContext::setupAttributes(entity_container& c)
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, color.g);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, color.b);
 
+    if(glConfig.multisampling.enabled)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, SDL_TRUE);
+        SDL_GL_SetAttribute(
+            SDL_GL_MULTISAMPLESAMPLES, glConfig.multisampling.samples);
+    }
+
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, color.a);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depth_stencil.depth);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, depth_stencil.stencil);
