@@ -27,12 +27,24 @@ endif()
 if(ANDROID)
     set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
 
+    set ( APP_GLUE_SRC
+        ${ANDROID_SOURCES_DIR}/native_app_glue/android_native_app_glue.c
+        )
+
     target_sources ( CoreApplication PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/android/and_main.cpp
-        ${ANDROID_SOURCES_DIR}/native_app_glue/android_native_app_glue.c
+        ${APP_GLUE_SRC}
         )
     target_include_directories( CoreApplication PRIVATE
         platform/android/include
+        )
+
+    get_source_file_property (
+        PREV_COMPILE_DEFINITIONS ${APP_GLUE_SRC} COMPILE_DEFINITIONS
+        )
+    set_source_files_properties ( ${APP_GLUE_SRC}
+        PROPERTIES
+        COMPILE_DEFINITIONS "${PREV_COMPILE_DEFINITIONS};NDEBUG=1"
         )
 elseif(APPLE AND IOS)
     option ( IOS_GLKIT_APP "Build iOS with GLKit for OpenGLES support" ON )

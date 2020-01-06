@@ -760,6 +760,9 @@ intent::intent() : m_intent(nullptr, nullptr)
 
 std::string intent::action()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto getAction = "getAction"_jmethod.ret("java.lang.String");
 
     return jnipp::java::type_unwrapper<std::string>(m_intent[getAction]());
@@ -767,6 +770,9 @@ std::string intent::action()
 
 std::string intent::data()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto Uri = "android.net.Uri"_jclass;
 
     auto getData  = "getData"_jmethod.ret("android.net.Uri");
@@ -784,12 +790,20 @@ std::string intent::data()
 
 std::set<std::string> intent::categories()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto Set = "java.util.Set"_jclass;
 
     auto getCategories = "getCategories"_jmethod.ret("java.util.Set");
     auto toArray = "toArray"_jmethod.ret<jobjectArray>("java.lang.Object");
 
-    auto categorySet = Set(m_intent[getCategories]());
+    auto categories = m_intent[getCategories]();
+
+    if(!java::objects::not_null(categories))
+        return {};
+
+    auto categorySet = Set(categories);
     auto categoryArray =
         jnipp::java::array_type_unwrapper<jobjectArray>(categorySet[toArray]());
 
@@ -804,6 +818,9 @@ std::set<std::string> intent::categories()
 
 std::map<std::string, std::string> intent::extras()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     std::map<std::string, std::string> out;
 
     auto Bundle = "android.os.Bundle"_jclass;
@@ -848,6 +865,9 @@ std::map<std::string, std::string> intent::extras()
 
 int intent::flags()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto getFlags = "getFlags"_jmethod.ret<jint>();
 
     return jnipp::java::type_unwrapper<jint>(m_intent[getFlags]());

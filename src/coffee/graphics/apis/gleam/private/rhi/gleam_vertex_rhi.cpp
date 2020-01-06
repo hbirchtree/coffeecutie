@@ -100,7 +100,7 @@ void GLEAM_VertDescriptor::dealloc()
 void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
 {
     m_attributes.push_back(attr);
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
@@ -130,6 +130,7 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
             CGL33::VAOBind(m_handle);
             CGL33::VAOEnableArray(attr.index());
 
+#if GL_VERSION_VERIFY(0x430, 0x310)
             if(GLEAM_FEATURES.vertex_format)
             {
                 if(IsIntegerType(attr.type()) &&
@@ -147,6 +148,7 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute& attr)
                         attr.m_flags & GLEAM_API::AttributeNormalization,
                         attr.offset());
             }
+#endif
         }
     }
 #endif
@@ -158,7 +160,7 @@ void GLEAM_VertDescriptor::bindBuffer(u32 binding, GLEAM_ArrayBuffer& buf)
     {
         m_bufferMapping.insert({binding, buf});
     }
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x330, 0x300)
     else
     {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
@@ -187,6 +189,7 @@ void GLEAM_VertDescriptor::bindBuffer(u32 binding, GLEAM_ArrayBuffer& buf)
             }
         } else
 #endif
+#if GL_VERSION_VERIFY(0x430, 0x310)
             if(GLEAM_FEATURES.vertex_format)
         {
             for(GLEAM_VertAttribute const& attr : m_attributes)
@@ -202,6 +205,7 @@ void GLEAM_VertDescriptor::bindBuffer(u32 binding, GLEAM_ArrayBuffer& buf)
                         CGL43::VAOBindingDivisor(attr.index(), 1);
                 }
         } else
+#endif
         {
             buf.bind();
             vao_apply_buffer(m_attributes, binding, buf);
@@ -228,12 +232,14 @@ void GLEAM_VertDescriptor::bind(C_UNUSED(u32 vertexOffset))
         CGL33::VAOBind(m_handle);
     } else
 #endif
+    {
         for(Pair<u32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
         {
             binding.second.bind();
             vao_apply_buffer(
                 m_attributes, binding.first, binding.second, vertexOffset);
         }
+    }
 
     if(GLEAM_FEATURES.element_buffer_bind && m_ibuffer)
         CGL33::BufBind(m_ibuffer->m_type, m_ibuffer->m_handle);

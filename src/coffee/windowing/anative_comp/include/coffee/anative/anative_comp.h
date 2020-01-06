@@ -18,7 +18,14 @@ struct Windowing : comp_app::StaticWindowing, comp_app::AppLoadableService
 
 struct ControllerInput : comp_app::ControllerInput
 {
+    using type = ControllerInput;
+
+    ControllerInput() : m_cache(1)
+    {
+    }
+
     stl_types::Vector<controller_map> m_cache;
+    stl_types::Map<libc_types::i32, libc_types::u32> m_mapping;
 
     virtual libc_types::u32       count() const override;
     virtual controller_map        state(libc_types::u32 idx) const override;
@@ -30,6 +37,10 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
 {
     virtual void load(entity_container& e, comp_app::app_error&) override;
 
+    void handleKeyEvent(AInputEvent* event);
+    void handleMotionEvent(AInputEvent* event);
+
+    void handleGamepadEvent(AInputEvent* event);
     void handleInputEvent(AInputEvent* event);
     void handleWindowEvent(android_app* app, libc_types::i32 event);
 
