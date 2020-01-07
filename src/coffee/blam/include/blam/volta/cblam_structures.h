@@ -849,6 +849,67 @@ struct shader_desc
     u32      unknown[4];
 };
 
+struct alignas(4) shader_base
+{
+    enum class radiosity_flags : u32
+    {
+        simple_params   = 0x1,
+        ignore_normals  = 0x2,
+        transparent_lit = 0x4,
+    };
+    enum class radiosity_lod : u32
+    {
+        high,
+        medium,
+        low,
+        turd,
+    };
+    enum class detail_map_function : u32
+    {
+        biased_multiply,
+        multiply,
+        biased_add,
+    };
+    enum class animation_function : u32
+    {
+        none,
+    };
+    enum class animation_src : u32
+    {
+        none,
+        A_out,
+        B_out,
+        C_out,
+        D_out,
+    };
+    enum class reflection_map_type : u32
+    {
+        none,
+        bumped_cube,
+        flat_cube,
+        bumped_radiosity,
+    };
+
+    struct detail_map
+    {
+        scalar                            scale;
+        tagref_typed_t<tag_class_t::bitm> map;
+    };
+
+    struct view_props
+    {
+        scalar brightness;
+        Vecf3  tint_color;
+    };
+
+    radiosity_flags flags;
+    radiosity_lod   detail_level;
+    Vecf3           emission;
+    Vecf3           tint;
+
+    u32 physics;
+};
+
 struct alignas(4) shader_chicago /* aka tag_class_t::schi */
 {
     u32    unknown_1;
@@ -867,6 +928,8 @@ struct alignas(4) shader_chicago /* aka tag_class_t::schi */
     u32    zero_4[4];
 
     tagref_typed_t<tag_class_t::bitm> bitmap;
+
+    //    u32 unknown_6[28];
 };
 
 struct alignas(4) shader_chicago_extended /* aka tag_class_t::scex */
@@ -907,22 +970,56 @@ struct alignas(4) shader_chicago_extended /* aka tag_class_t::scex */
     u32 pad[2];
 };
 
-struct alignas(4) shader_glass
+struct alignas(4) shader_glass : shader_base
 {
-    u32                               unknown_1[5];
-    Vecf3                             unknown_2;
-    u32                               unknown_3;
-    u32                               unknown_4;
-    u32                               unknown_5[10];
-    scalar                            unknown_6[5];
-    tagref_typed_t<tag_class_t::bitm> bitmap;
-    u32                               unknown_7[5];
-    u32                               unknown_8;
-    scalar                            unknown_9[8];
-    tagref_typed_t<tag_class_t::bitm> bitmap2;
+    enum class glass_flags : u32
+    {
+        none                      = 0x0,
+        alpha_test                = 0x1,
+        decal                     = 0x2,
+        two_sided                 = 0x4,
+        bump_map_is_specular_mask = 0x8,
+    };
+
+    glass_flags flags;
+
+    u32 padding_[11];
+
+    struct
+    {
+        Vecf3      color;
+        detail_map map;
+
+        u32 padding_[5];
+    } background_tint;
+
+    struct
+    {
+        reflection_map_type               type;
+        view_props                        perpendicular;
+        view_props                        parallel;
+        tagref_typed_t<tag_class_t::bitm> map;
+        detail_map                        bump_map;
+
+        u32 padding_[33];
+    } reflection;
+
+    struct
+    {
+        detail_map map;
+        detail_map detail;
+
+        u32 padding_[8];
+    } diffuse;
+
+    struct
+    {
+        detail_map map;
+        detail_map detail;
+    } specular;
 };
 
-struct alignas(4) shader_metal
+struct alignas(4) shader_meter
 {
     u32                               unknown_1[19];
     tagref_typed_t<tag_class_t::bitm> bitmap;
@@ -930,19 +1027,199 @@ struct alignas(4) shader_metal
     scalar                            unkown_2[8];
 };
 
-struct alignas(4) shader_water
+struct alignas(4) shader_water : shader_base
 {
-    u32                               unknown_1[19];
-    tagref_typed_t<tag_class_t::bitm> bitmap;
+    enum class water_flags : u32
+    {
+        none                                = 0x0,
+        base_map_alpha_modulates_reflect    = 0x1,
+        base_map_color_modulates_background = 0x2,
+        atmospheric_fod                     = 0x4,
+        draw_before_fog                     = 0x8,
+    };
 
-    u32 unknown[20];
+    u32         unknown_;
+    water_flags flags;
+    u32         padding_[8];
+
+    tagref_typed_t<tag_class_t::bitm> base;
+
+    u32 padding_2[4];
+
+    view_props perpendicular;
+    view_props parallel;
+
+    u32 padding_3[4];
+
+    tagref_typed_t<tag_class_t::bitm> reflection_map;
+
+    struct ripple_t /* TODO: Find the correct layout of this structure */
+    {
+        scalar contribution;
+        scalar anim_angle;
+        scalar anim_velocity;
+        Vecf2  map_offset;
+        u32    map_repeats;
+        u32    map_index;
+    };
+
+    u32 padding_4[4];
+
+    struct
+    {
+        scalar anim_angle;
+        scalar anim_velocity;
+        scalar scale;
+
+        tagref_typed_t<tag_class_t::bitm> maps;
+
+        u32    mipmap_levels;
+        scalar fade_factor;
+        scalar mipmap_bias;
+
+        u32 padding_[16];
+
+        reflexive_t<ripple_t> ripples;
+    } ripple;
 };
 
-struct alignas(4) shader_env /* aka tag_class_t::senv */
+struct alignas(4) shader_env : shader_base /* aka tag_class_t::senv */
 {
-    u32      unknown[34];
-    tagref_t bitmap;
-    u32      unknown_[98];
+    enum class env_shader_type : u32
+    {
+        unknown,
+
+        normal = 1,
+        blended,
+        blended_base_specular,
+    };
+    enum class diffuse_flags : u32
+    {
+        none                = 0x0,
+        rescale_detail_maps = 0x1,
+        rescale_bump_map    = 0x2,
+    };
+
+    env_shader_type shader_type;
+
+    u32 padding_;
+
+    struct
+    {
+        scalar                            spacing;
+        tagref_typed_t<tag_class_t::lens> lens_flare;
+
+        u32 unknown_2[17];
+    } lens_flare;
+
+    struct
+    {
+        diffuse_flags                     flags;
+        tagref_typed_t<tag_class_t::bitm> base;
+
+        u32 padding_[6];
+
+        detail_map_function detail_function;
+        detail_map          primary;
+        detail_map          secondary;
+
+        u32 padding_2[6];
+
+        detail_map_function micro_function;
+        detail_map          micro;
+        Vecf3               material_color;
+
+        u32 padding_1[3];
+    } diffuse;
+
+    detail_map bump;
+
+    scalar unknown_1[2];
+    u32    padding_2[4];
+
+    struct
+    {
+        animation_function u_anim;
+        scalar             u_period;
+        scalar             u_scale;
+
+        animation_function v_anim;
+        scalar             v_period;
+        scalar             v_scale;
+
+        u32 padding_[2];
+    } scrolling;
+
+    /* EVERYTHING BELOW IS NOT WORKING */
+
+    enum class illum_flags : u32
+    {
+        none       = 0x0,
+        unfiltered = 0x1,
+    };
+    struct illumination_props
+    {
+        Vecf3              on_color;
+        Vecf3              off_color;
+        animation_function anim;
+        scalar             period;
+        scalar             phase;
+
+        u32 padding_[26];
+    };
+
+    struct
+    {
+        illum_flags flags;
+
+        illumination_props primary;
+        illumination_props secondary;
+        illumination_props plasma;
+
+        u32 padding_1[2];
+
+        detail_map map;
+    } self_illum;
+
+    enum class specular_flags : u32
+    {
+        none              = 0x0,
+        overbright        = 0x1,
+        extra_shiny       = 0x2,
+        lightmap_specular = 0x4,
+    };
+
+    union
+    {
+        struct
+        {
+            specular_flags flags;
+            scalar         brightness;
+            Vecf3          perpendicular_color;
+            Vecf3          parallel_color;
+
+        } specular;
+
+        u32    unknown_3[42];
+        scalar unknown_4[42];
+    };
+
+    enum class reflection_flags : u32
+    {
+        none           = 0x0,
+        dynamic_mirror = 0x1,
+    };
+
+    struct
+    {
+        reflection_flags    flags;
+        reflection_map_type type;
+        scalar              radiosity_brightness_scale;
+        scalar              perpendicular_brightness;
+        scalar              parallel_brightness;
+
+        tagref_typed_t<tag_class_t::bitm> cube_map;
+    } reflection;
 };
 
 struct alignas(4) shader_model /* aka tag_class_t::soso */

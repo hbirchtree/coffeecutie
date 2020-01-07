@@ -105,6 +105,16 @@ Turns out they are cinematic props that disappear when the player enters
 
 There are lots of scenery placed around the level, hiding behind corners and such.
 
+## Better shaders
+
+![](update13-1.png)
+![](update13-2.png)
+
+After investigating the structure of the different shaders, they are more fleshed out.
+Much of the information was found from Guerilla, and winging most of the data alignment,
+ since Guerilla doesn't say a thing about what types or layouts are used.
+Also, Blood Gulch looks a lot better now. Models are still borked, though.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.

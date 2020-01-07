@@ -55,5 +55,6 @@ void main()
     else if(mats.instance[frag.instanceId].source == 2)
         out_color = texture(bc5_tex, vec3(sample_pos, layer));
 
-//    out_color = vec4(frag.tex.xyy, 1);
+    if(out_color.a < 0.5)
+        discard;
 }

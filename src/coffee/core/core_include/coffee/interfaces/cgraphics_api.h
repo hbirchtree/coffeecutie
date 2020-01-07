@@ -107,7 +107,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         RasterizerState() :
             m_culling(0), m_colOp(LogicOp::NOOP), m_colMask({1, 1, 1, 1, 0}),
             m_discard(false), m_wireframe(false), m_polysmooth(false),
-            m_dither(false), m_doCull(false)
+            m_doCull(false)
         {
         }
 
@@ -127,13 +127,14 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
             return m_polysmooth;
         }
-        bool dither() const
-        {
-            return m_dither;
-        }
         bool doCull() const
         {
             return m_doCull;
+        }
+
+        scalar polyOffset() const
+        {
+            return m_polyOffset;
         }
 
         LogicOp colorOp() const
@@ -145,13 +146,13 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return m_colMask;
         }
 
+        scalar      m_polyOffset;
         u32         m_culling;
         LogicOp     m_colOp;
         colormask_t m_colMask;
         bool        m_discard;
         bool        m_wireframe;
         bool        m_polysmooth;
-        bool        m_dither;
         bool        m_doCull;
     };
 
@@ -238,6 +239,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
 
         bool m_doBlend;
         bool m_additive;
+        bool m_lighten;
         bool m_alphaCoverage;
     };
 

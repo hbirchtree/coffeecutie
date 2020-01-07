@@ -35,7 +35,7 @@ enum class type_t : u16
 {
     tex_2d    = 0x0, /*!< Typical 2D texture*/
     tex_3d    = 0x1, /*!< Volume texture*/
-    tex_cude  = 0x2, /*!< Cubemap used for skybox*/
+    tex_cube  = 0x2, /*!< Cubemap used for skybox*/
     tex_white = 0x3,
 };
 

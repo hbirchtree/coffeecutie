@@ -441,13 +441,6 @@ bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
 
 void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
 {
-    {
-        if(rstate.dither())
-            GLC::Enable(Feature::Dither);
-        else
-            GLC::Disable(Feature::Dither);
-    }
-
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
     GLC::PolygonMode(
         Face::Both,
@@ -462,11 +455,7 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
     }
 #endif
 
-    //    CGL33::ColorLogicOp(rstate.colorOp());
-    //    if(!GLEAM_FEATURES.draw_color_mask)
-    //        GLC::ColorMask(rstate.colorMask());
-    //    else
-    //        GLC::ColorMaski(i, rstate.colorMask());
+    GLC::PolygonOffset(1, rstate.polyOffset());
 
     if(rstate.culling())
     {
@@ -478,7 +467,6 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
 
 void GLEAM_API::GetRasterizerState(GLEAM_API::RASTSTATE& rstate)
 {
-    rstate.m_dither = GLC::IsEnabled(Feature::Dither);
 #if GL_VERSION_VERIFY(0x300, 0x320)
     rstate.m_discard = GLC::IsEnabled(Feature::RasterizerDiscard);
 #endif
@@ -646,7 +634,10 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
     {
         if(!GLEAM_FEATURES.draw_buffers_blend)
         {
-            if(bstate.additive())
+            if(bstate.m_lighten)
+            {
+                GLC::BlendFunc(GL_ONE, GL_ONE);
+            } else if(bstate.additive())
             {
                 GLC::BlendFunc(GL_SRC_ALPHA, GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
@@ -656,7 +647,10 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
         else if(GLEAM_FEATURES.draw_buffers_blend)
         {
-            if(bstate.additive())
+            if(bstate.m_lighten)
+            {
+                GLC::BlendFunc(GL_ONE, GL_ONE);
+            } else if(bstate.additive())
             {
                 CGL43::BlendFunci(i, GL_SRC_ALPHA, GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
@@ -671,7 +665,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
     if(bstate.sampleAlphaCoverage())
     {
         CGL33::Enable(Feature::SampleAlphaToCoverage);
-    }else
+    } else
     {
         CGL33::Disable(Feature::SampleAlphaToCoverage);
     }

@@ -75,8 +75,10 @@ struct BspReference
 {
     u32 draw_idx;
 
-    generation_idx_t bsp;
-    generation_idx_t bitmap;
+    generation_idx_t   bsp;
+    generation_idx_t   bitmap;
+    blam::tag_t const* shader;
+    u32                current_pass;
 
     struct
     {
@@ -200,7 +202,7 @@ struct BSPItem
         GFX::D_DATA                      draw;
         generation_idx_t                 color_bitm;
         generation_idx_t                 light_bitm;
-        WkPtr<GFX::PIP>                  shader;
+        blam::tag_t const*               shader;
     };
     struct Group
     {
@@ -557,20 +559,23 @@ struct BitmapCache
         if(!shader.valid())
             return {};
 
-        auto it = index.find(shader);
+        auto it          = index.find(shader);
+        auto shader_name = shader.to_name().to_string(magic);
 
         if(it == index.end())
         {
-            cDebug(
-                "Failed to find shader: {0}",
-                shader.to_name().to_string(magic));
+            cDebug("Failed to find shader: {0}", shader_name);
             return {};
         }
+
+        auto shader_tag = *it;
 
         blam::bitm::header_t const* bitm_ptr = nullptr;
 
         auto               curr_magic = magic;
         blam::tag_t const* bitm_tag   = nullptr;
+
+        Vecf2 prescale = {1, 1};
 
         switch(shader.tag_class)
         {
@@ -579,13 +584,30 @@ struct BitmapCache
             auto shader_env =
                 (*it)->to_reflexive<blam::shader_env>().data(magic);
 
-            if(!shader_env[0].bitmap.valid())
+            if(!shader_env[0].diffuse.base.valid())
                 return {};
 
-            auto bitm_it = index.find(shader_env[0].bitmap);
+            auto bitm_it = index.find(shader_env[0].diffuse.base);
 
             if(bitm_it == index.end())
                 Throw(undefined_behavior("failed to locate bitmap"));
+
+            bitm_tag = (*bitm_it);
+
+            break;
+        }
+        case tag_class_t::soso:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_model>().data(magic);
+
+            auto bitm_it = index.find(shader_model[0].bitmap);
+
+            if(bitm_it == index.end())
+            {
+                break;
+                Throw(undefined_behavior("failed to locate bitmap"));
+            }
 
             bitm_tag = (*bitm_it);
 
@@ -634,29 +656,15 @@ struct BitmapCache
 
             break;
         }
-        case tag_class_t::soso:
-        {
-            auto shader_model =
-                (*it)->to_reflexive<blam::shader_model>().data(magic);
-
-            auto bitm_it = index.find(shader_model[0].bitmap);
-
-            if(bitm_it == index.end())
-                Throw(undefined_behavior("failed to locate bitmap"));
-
-            bitm_tag = (*bitm_it);
-
-            break;
-        }
         case tag_class_t::sgla:
         {
             auto shader_model =
                 (*it)->to_reflexive<blam::shader_glass>().data(magic);
 
-            if(!shader_model[0].bitmap2.valid())
+            if(!shader_model[0].diffuse.map.map.valid())
                 break;
 
-            auto bitm_it = index.find(shader_model[0].bitmap2);
+            auto bitm_it = index.find(shader_model[0].diffuse.map.map);
 
             if(bitm_it == index.end())
                 Throw(undefined_behavior("failed to locate bitmap"));
@@ -672,7 +680,8 @@ struct BitmapCache
             auto shader_model =
                 (*it)->to_reflexive<blam::shader_water>().data(magic);
 
-            auto bitm_it = index.find(shader_model[0].bitmap);
+            auto bitm_it = index.find(shader_model[0].base);
+            auto ripples = shader_model[0].ripple.ripples.data(magic);
 
             if(bitm_it == index.end())
                 Throw(undefined_behavior("failed to locate bitmap"));
@@ -683,10 +692,17 @@ struct BitmapCache
 
             break;
         }
+        case tag_class_t::spla:
+        {
+            auto shader_model =
+                (*it)->to_reflexive<blam::shader_base>().data(magic);
+
+            break;
+        }
         case tag_class_t::smet:
         {
             auto shader_model =
-                (*it)->to_reflexive<blam::shader_metal>().data(magic);
+                (*it)->to_reflexive<blam::shader_meter>().data(magic);
 
             auto bitm_it = index.find(shader_model[0].bitmap);
 
@@ -695,7 +711,7 @@ struct BitmapCache
 
             bitm_tag = (*bitm_it);
 
-            cDebug("Metal shader");
+            cDebug("Meter shader");
             break;
         }
         case tag_class_t::bitm:
@@ -740,6 +756,14 @@ struct BitmapCache
         GFX::DBG::SCOPE _("BitmapCache::predict_impl");
 
         auto image_ = bitm.images.data(curr_magic);
+
+        if(image_.data->type != blam::bitm::type_t::tex_2d)
+        {
+            cDebug(
+                "unimplemented texture type: {0}",
+                magic_enum::enum_name(image_.data->type));
+            return {};
+        }
 
         if(image_.data)
         {
@@ -836,6 +860,7 @@ struct BSPCache
                 mesh_data.color_bitm = bitmap_cache.predict(mesh.shader, 0);
                 mesh_data.light_bitm =
                     bitmap_cache.resolve(section.lightmaps, group.lightmap_idx);
+                mesh_data.shader = *index.find(mesh.shader);
 
                 /* ... and moving on */
 
@@ -1276,7 +1301,7 @@ struct BlamData
 {
     BlamData() :
 #if defined(COFFEE_ANDROID)
-        map_file(MkUrl("c10.map")), bitmap_file("bitmaps.map"_rsc),
+        map_file(MkUrl("bloodgulch.map")), bitmap_file("bitmaps.map"_rsc),
 #else
         map_file(MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile)),
         bitmap_file(Resource(MkUrl(
@@ -1385,7 +1410,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         Pass_Opaque,
         Pass_Metal,
         Pass_LastOpaque,
-        Pass_Glass = Pass_LastOpaque,
+        Pass_Lights = Pass_LastOpaque,
+        Pass_Glass,
 
         Pass_Count,
     };
@@ -1395,11 +1421,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         bsp[Pass_Opaque].source.pipeline = data.bsp_pipeline->pipeline_ptr();
         bsp[Pass_Metal].source.pipeline  = data.bsp_pipeline->pipeline_ptr();
         bsp[Pass_Glass].source.pipeline  = data.bsp_pipeline->pipeline_ptr();
+        bsp[Pass_Lights].source.pipeline = data.bsp_pipeline->pipeline_ptr();
 
         model[Pass_Opaque].source.pipeline =
             data.model_pipeline->pipeline_ptr();
         model[Pass_Metal].source.pipeline = data.model_pipeline->pipeline_ptr();
         model[Pass_Glass].source.pipeline = data.model_pipeline->pipeline_ptr();
+        model[Pass_Lights].source.pipeline =
+            data.model_pipeline->pipeline_ptr();
 
         {
             GFX::RASTSTATE& rast = bsp[Pass_Opaque].source.raster;
@@ -1412,11 +1441,23 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             rast.m_culling       = (u32)typing::graphics::VertexFace::Front;
         }
 
-        bsp[Pass_Glass].source.blend.m_doBlend = true;
+        {
+            GFX::BLNDSTATE& blend = bsp[Pass_Glass].source.blend;
+            blend.m_doBlend       = true;
+        }
         {
             GFX::BLNDSTATE& blend = model[Pass_Glass].source.blend;
             blend.m_doBlend       = true;
-            blend.m_alphaCoverage = true;
+        }
+        {
+            GFX::BLNDSTATE& blend = bsp[Pass_Lights].source.blend;
+            blend.m_doBlend       = true;
+            blend.m_lighten       = true;
+        }
+        {
+            GFX::BLNDSTATE& blend = model[Pass_Lights].source.blend;
+            blend.m_doBlend       = true;
+            blend.m_lighten       = true;
         }
     }
 
@@ -1429,32 +1470,46 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         return *this;
     }
 
+    void render_pass(Pass const& pass)
+    {
+        GFX::SetRasterizerState(pass.source.raster);
+        GFX::SetBlendState(pass.source.blend);
+        GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
+    }
+
+    bool is_transparent(blam::tag_t const* shader)
+    {
+        using tag_class = blam::tag_class_t;
+
+        return false;
+        return shader->matches(tag_class::senv) ||
+               shader->matches(tag_class::sgla);
+    }
+    bool is_light(blam::tag_t const* shader)
+    {
+        using tag_class = blam::tag_class_t;
+
+        return shader->matches(tag_class::schi) ||
+               shader->matches(tag_class::scex) ||
+               shader->matches(tag_class::sgla) ||
+               shader->matches(tag_class::swat);
+    }
+
     void end_restricted(Proxy& p, time_point const& time)
     {
         if(time - last_update > Chrono::seconds(1))
             update_draws(p, time);
 
         for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
-        {
-            GFX::SetRasterizerState(pass.source.raster);
-            GFX::SetBlendState(pass.source.blend);
-            GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
-        }
-        for(auto const& pass : slice_num(model, Pass_LastOpaque))
-        {
-            GFX::SetRasterizerState(pass.source.raster);
-            GFX::SetBlendState(pass.source.blend);
-            GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
-        }
+            render_pass(pass);
 
-        {
-            auto const& pass = model[Pass_Glass];
-            {
-                GFX::SetRasterizerState(pass.source.raster);
-                GFX::SetBlendState(pass.source.blend);
-                GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
-            }
-        }
+        for(auto const& pass : slice_num(model, Pass_LastOpaque))
+            render_pass(pass);
+
+        render_pass(model[Pass_Glass]);
+        render_pass(bsp[Pass_Glass]);
+        render_pass(model[Pass_Lights]);
+        render_pass(bsp[Pass_Lights]);
     }
 
     void update_draws(Proxy& p, time_point const&)
@@ -1467,18 +1522,29 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         /* Update draws */
         for(auto& ent : p.select(ObjectBsp))
         {
-            auto  ref     = p.template ref<Proxy>(ent);
-            auto& bsp_ref = ref.template get<BspTag>();
+            auto          ref     = p.template ref<Proxy>(ent);
+            BspReference& bsp_ref = ref.template get<BspTag>();
 
             if(!bsp_ref.visible)
                 continue;
 
-            bsp_ref.draw_idx = bsp[Pass_Opaque].draws().size();
-            bsp[Pass_Opaque].draws().push_back(
-                {m_data.bsp_attr,
-                 &m_data.bsp_pipeline->get_state(),
-                 bsp_ref.draw.call,
-                 bsp_ref.draw.draw});
+            auto target_pass = &bsp[Pass_Opaque].draws();
+
+            if(is_transparent(bsp_ref.shader))
+            {
+                target_pass          = &bsp[Pass_Glass].draws();
+                bsp_ref.current_pass = Pass_Glass;
+            } else if(is_light(bsp_ref.shader))
+            {
+                target_pass          = &bsp[Pass_Lights].draws();
+                bsp_ref.current_pass = Pass_Lights;
+            }
+
+            bsp_ref.draw_idx = target_pass->size();
+            target_pass->push_back({m_data.bsp_attr,
+                                    &m_data.bsp_pipeline->get_state(),
+                                    bsp_ref.draw.call,
+                                    bsp_ref.draw.draw});
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -1488,10 +1554,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
             auto target_pass = &model[Pass_Opaque].draws();
 
-            if(!mod_ref.shader_tag->matches(blam::tag_class_t::senv))
+            if(is_transparent(mod_ref.shader_tag))
             {
                 target_pass          = &model[Pass_Glass].draws();
                 mod_ref.current_pass = Pass_Glass;
+            } else if(is_light(mod_ref.shader_tag))
+            {
+                target_pass          = &model[Pass_Lights].draws();
+                mod_ref.current_pass = Pass_Lights;
             }
 
             mod_ref.draw_idx = target_pass->size();
@@ -1509,6 +1579,20 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             model[Pass_Glass].source,
             model[Pass_Glass].draw,
             model[Pass_Opaque].draws().size());
+        GFX::OptimizeRenderPass(
+            bsp[Pass_Glass].source,
+            bsp[Pass_Glass].draw,
+            bsp[Pass_Opaque].draws().size());
+
+        GFX::OptimizeRenderPass(
+            model[Pass_Lights].source,
+            model[Pass_Lights].draw,
+            model[Pass_Opaque].draws().size() +
+                model[Pass_Glass].draws().size());
+        GFX::OptimizeRenderPass(
+            bsp[Pass_Lights].source,
+            bsp[Pass_Lights].draw,
+            bsp[Pass_Opaque].draws().size() + bsp[Pass_Glass].draws().size());
 
         /* Update transforms and texture references */
 
@@ -1582,7 +1666,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             BspReference& bsp_ref = ref.template get<BspTag>();
 
             auto& draw_data =
-                bsp[Pass_Opaque].draws().at(bsp_ref.draw_idx).d_data;
+                bsp[bsp_ref.current_pass].draws().at(bsp_ref.draw_idx).d_data;
 
             if(!bsp_ref.bitmap.valid())
                 continue;
@@ -1806,6 +1890,7 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
                 bsp_ref.draw.draw = mesh.draw;
                 bsp_ref.draw.call =
                     GFX::D_CALL().withIndexing().withInstancing();
+                bsp_ref.shader = mesh.shader;
             }
     }
 
@@ -1938,7 +2023,7 @@ i32 blam_main(i32, cstring_w*)
 
     auto loader = e.service<comp_app::AppLoader>();
 
-    loader->config<comp_app::GLConfig>().multisampling.enabled = true;
+    //    loader->config<comp_app::GLConfig>().multisampling.enabled = true;
 
     cDebug(
         "Buffer budget: {0} / {1} MB",
