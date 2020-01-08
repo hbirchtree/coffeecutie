@@ -52,7 +52,6 @@ if(BUILD_GLEAM)
     coffee_library (
         TARGET GLeamRHI
         SOURCES
-        private/rhi/gleam_rhi.cpp
 
         private/rhi/gleam_api_query.cpp
         private/rhi/gleam_api_rhi.cpp

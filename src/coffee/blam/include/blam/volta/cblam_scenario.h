@@ -45,19 +45,22 @@ template<typename T>
  */
 struct reflex_group
 {
-    reflexive_t<T>                  base;
-    reflexive_t<Array<tagref_t, 3>> ref;
+    reflexive_t<T>                  instances;
+    reflexive_t<Array<tagref_t, 3>> palette;
 };
 
 namespace scn {
 
 using scn_chunk = byte_t[100];
 
-struct unit
+struct object
 {
-    reflexive_t<byte_t>               unknown_r;
-    u32                               padding[4];
+    u32                               flags;
+    scalar                            bound_radius;
+    Vecf3                             bound_offset;
     Vecf3                             unknown_offset;
+    scalar                            acceleration_scale;
+    u32                               padding_;
     tagref_typed_t<tag_class_t::mod2> model;
     tagref_typed_t<tag_class_t::antr> anim_trigger;
     u32                               padding2[10];
@@ -65,28 +68,80 @@ struct unit
     tagref_typed_t<tag_class_t::pphy> physics;
     tagref_typed_t<tag_class_t::shdr> shader;
     tagref_typed_t<tag_class_t::effe> effect;
+    scalar                            render_bound_radius;
+
+    struct
+    {
+        u32 inputs[4];
+        i16 hud_msg;
+        i16 shader_perm;
+    } export_;
 };
 
-using vehicle   = unit;
-using biped     = unit;
-using equipment = unit;
+struct item : object
+{
+    struct attachment_t
+    {
+        tagref_t type;
+        i16      marker;
+        u32      primary_scale;
+        u32      second_scale;
+        u32      change_color;
+    };
 
-template<size_t Padding>
+    reflexive_t<attachment_t> attachments;
+};
+
+using vehicle = object;
+using biped   = object;
+
+struct weapon : item
+{
+};
+
+struct equipment : item
+{
+};
+
 struct object_spawn
 {
-    i16   ref;
-    i16   flag;
-    u32   unknown_2;
-    Vecf3 pos;
-    Vecf3 rot;
-    u32   unknown_3[Padding];
+    enum class spawn_flags : u16
+    {
+        none      = 0x0,
+        automatic = 0x1,
+        on_easy   = 0x2,
+        on_normal = 0x4,
+        on_hard   = 0x8,
+    };
+
+    i16         ref;
+    i16         name;
+    spawn_flags flag;
+    u16         permutation;
+    Vecf3       pos;
+    Vecf3       rot;
 };
 
-using biped_spawn   = object_spawn<22>;
-using vehicle_spawn = object_spawn<22>;
-using equip_spawn   = object_spawn<2>;
-using scenery_spawn = object_spawn<10>;
-using weapon_spawn  = object_spawn<15>;
+struct biped_spawn : object_spawn
+{
+    u32 unknown_[22];
+};
+struct vehicle_spawn : object_spawn
+{
+    u32 unknown_[22];
+};
+struct equip_spawn : object_spawn
+{
+    u32 unknown_[2];
+};
+struct scenery_spawn : object_spawn
+{
+    u32 unknown_[10];
+};
+struct weapon_spawn : object_spawn
+{
+    u32 unknown_[15];
+};
 
 struct palette
 {
@@ -167,6 +222,19 @@ struct multiplayer_flag
     uint16 index2;
     bl_tag tag;
     u32    unk2[31];
+};
+
+struct item_permutation
+{
+    u32      padding_[8];
+    scalar   weight;
+    tagref_t item;
+};
+
+struct item_collection
+{
+    reflexive_t<item_permutation> items;
+    u32                           spawn_time;
 };
 
 struct multiplayer_equipment

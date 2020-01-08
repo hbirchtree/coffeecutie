@@ -28,6 +28,8 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
+GLEAM_DataStore* m_store = nullptr;
+
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 using GLC = CGL33;
 #else

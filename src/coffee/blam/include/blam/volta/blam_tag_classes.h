@@ -131,6 +131,7 @@ enum class tag_class_t : u32
     hmt  = 0x686d7420, //  tmh 1752003616 HUD message text
     hud  = 0x68756423, // #duh 1752523811 HUD number/element?
     hudg = 0x68756467, // gduh 1752523879 HUD global
+    item = 0x6974656d, // meti            Item
     itmc = 0x69746d63, // cmti 1769237859 Item collection
     jpt  = 0x6a707421, // !tpj 1785754657 Damage
     lens = 0x6c656e73, // snel 1818586739 Lens flare
@@ -143,6 +144,7 @@ enum class tag_class_t : u32
     mgs2 = 0x6d677332, // 2sgm 1835496242 Light volume
     mod2 = 0x6d6f6432, // 2dom 1836016690 Model
     mply = 0x6d706c79, // ylpm 1836084345 Multiplayer scenario
+    obje = 0x6f626a65, // ejbo            Object
     part = 0x70617274, // trap 1885434484 Particle
     pctl = 0x7063746c, // ltcp 1885566060 Particle system
     phys = 0x70687973, // syhp 1885895027 Physics

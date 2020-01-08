@@ -697,8 +697,13 @@ struct alignas(4) tag_t
         return false;
     }
 
+    inline bool valid() const
+    {
+        return padding == 0;
+    }
+
     template<typename T>
-    reflexive_t<T> to_reflexive() const
+    inline reflexive_t<T> to_reflexive() const
     {
         if(storage == image_storage_t::external && matches(tag_class_t::bitm))
         {
@@ -718,13 +723,13 @@ struct alignas(4) tag_t
                 "bitmap uses external storage, use blam::bitm::bitm_header_t"));
         }
 
-        if(padding != 0)
+        if(!valid())
             Throw(reflexive_error("invalid tag"));
 
         return {1, offset};
     }
 
-    string_ref to_name() const
+    inline string_ref to_name() const
     {
         return name;
     }

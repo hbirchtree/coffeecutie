@@ -317,12 +317,16 @@ void examine_map(Resource&& mapfile, T version)
 
         fprintf(
             tags_,
-            "%s = 0x%x, // %.*s %u\n",
+            "%s = 0x%x, // %.*s %u %.*s %.*s\n",
             tag->tagclass[0].str().c_str(),
             C_OCAST<u32>(tag->tagclass[0]),
             4,
             tag->tagclass[0].data,
-            C_OCAST<u32>(tag->tagclass[0]));
+            C_OCAST<u32>(tag->tagclass[0]),
+            4,
+            tag->tagclass[1].data,
+            4,
+            tag->tagclass[2].data);
 
         if(tag->matches(blam::tag_class_t::bitm))
         {
@@ -388,7 +392,7 @@ void examine_map(Resource&& mapfile, T version)
             cDebug(" - Multiplayer scenario");
         } else if(tag->matches(blam::tag_class_t::weap))
         {
-            auto weap = tag->to_reflexive<blam::scn::unit>().data(map.magic);
+            auto weap = tag->to_reflexive<blam::scn::object>().data(map.magic);
             cDebug(" - Weapon");
         }
     }
@@ -793,8 +797,8 @@ void examine_map(Resource&& mapfile, T version)
 
         u32 base_scenery = 0;
 
-        auto scenery_tags = scn->scenery.ref.data(map.magic);
-        for(auto const& scenery : scn->scenery.base.data(map.magic))
+        auto scenery_tags = scn->scenery.palette.data(map.magic);
+        for(auto const& scenery : scn->scenery.instances.data(map.magic))
         {
             if(scenery.ref == -1)
                 continue;
@@ -805,7 +809,7 @@ void examine_map(Resource&& mapfile, T version)
                 scenery.pos.x(),
                 scenery.pos.y(),
                 scenery.pos.z(),
-                scenery.flag,
+                magic_enum::enum_name(scenery.flag),
                 scenery_tags[scenery.ref][0].to_name().to_string(map.magic),
                 scenery_tags[scenery.ref][0].tag.str());
 
@@ -849,19 +853,19 @@ void examine_map(Resource&& mapfile, T version)
                 base_scenery,
                 base_scenery);
         }
-        auto vehicle_tags = scn->vehicles.ref.data(map.magic);
-        for(auto const& vehicle : scn->vehicles.base.data(map.magic))
+        auto vehicle_tags = scn->vehicles.palette.data(map.magic);
+        for(auto const& vehicle : scn->vehicles.instances.data(map.magic))
         {
             cDebug(
                 "Vehicle: {0} {1}",
                 vehicle_tags[vehicle.ref][0].name.to_string(map.magic),
-                vehicle.flag);
+                magic_enum::enum_name(vehicle.flag));
         }
         for(auto const& device_group : scn->device_groups.data(map.magic))
         {
             cDebug("Device group");
         }
-        for(auto const& machine : scn->machines.ref.data(map.magic))
+        for(auto const& machine : scn->machines.palette.data(map.magic))
         {
             auto name   = machine[0].name.to_string(map.magic);
             auto tag_it = (*index_view.find(machine[0]))
@@ -869,7 +873,7 @@ void examine_map(Resource&& mapfile, T version)
                               .data(map.magic);
             cDebug("Machine");
         }
-        for(auto const& machine : scn->machines.base.data(map.magic))
+        for(auto const& machine : scn->machines.instances.data(map.magic))
         {
             cDebug("Machine tag");
         }
@@ -892,6 +896,33 @@ void examine_map(Resource&& mapfile, T version)
                     cDebug("Sub string: {0}", CString(str.begin(), str.end()));
                 }
                 cDebug("Data found");
+            }
+        }
+        for(auto const& mp_equipment : scn->mp_equipment.data(map.magic))
+        {
+            auto items = *index_view.find(mp_equipment.item);
+
+            auto const& item_coll =
+                items->to_reflexive<blam::scn::item_collection>().data(
+                    map.magic)[0];
+            for(auto const& item : item_coll.items.data(map.magic))
+            {
+                auto equipment_tag = *index_view.find(item.item);
+                auto item_name     = item.item.to_name().to_string(map.magic);
+                if(!item.item.matches(blam::tag_class_t::weap))
+                    continue;
+
+                cDebug(
+                    "MP equipment : {0} : {1} {2}",
+                    mp_equipment.pos,
+                    items->to_name().to_string(map.magic),
+                    item.item.to_name().to_string(map.magic));
+
+                auto equipment =
+                    equipment_tag->to_reflexive<blam::scn::weapon>().data(
+                        map.magic);
+
+                cDebug("");
             }
         }
 

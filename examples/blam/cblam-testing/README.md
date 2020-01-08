@@ -115,6 +115,19 @@ Much of the information was found from Guerilla, and winging most of the data al
  since Guerilla doesn't say a thing about what types or layouts are used.
 Also, Blood Gulch looks a lot better now. Models are still borked, though.
 
+## Guns that you can see
+
+![](update14-1.png)
+![](update14-2.png)
+
+After cleaning up some code, it was more manageable to add multiplayer equipment.
+Vehicles, scenery and bipeds all use the same spawning logic based on the `obje` tag,
+ while multiplayer equipment uses item collections.
+After working out the structure of these (mostly) and tossing out some useless code,
+ they showed up nicely.
+
+On another note, there is a bug with Custom Edition textures that needs to be figured out.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.

@@ -36,10 +36,10 @@ using halo_version = blam::pc_version_t;
 
 struct memory_budget
 {
-    static constexpr auto bsp_buffer      = 30_MB;
-    static constexpr auto bsp_elements    = 10_MB;
-    static constexpr auto mesh_buffer     = 20_MB;
-    static constexpr auto mesh_elements   = 10_MB;
+    static constexpr auto bsp_buffer      = 35_MB;
+    static constexpr auto bsp_elements    = 15_MB;
+    static constexpr auto mesh_buffer     = 25_MB;
+    static constexpr auto mesh_elements   = 15_MB;
     static constexpr auto matrix_buffer   = 4_MB;
     static constexpr auto material_buffer = 4_MB;
 
@@ -47,6 +47,8 @@ struct memory_budget
                                         mesh_buffer + mesh_elements +
                                         matrix_buffer + material_buffer;
 };
+
+using ERef = Components::EntityRef<Components::EntityContainer>;
 
 using cache_id_t = u64;
 
@@ -69,126 +71,10 @@ struct generation_idx_t
     }
 };
 
+template<size_t NumIdx>
+using hierarchial_idx_t = Array<u32, NumIdx>;
+
 using bitm_format_hash = Tup<PixFmt, PixCmp, BitFmt, CompFlags>;
-
-struct BspReference
-{
-    u32 draw_idx;
-
-    generation_idx_t   bsp;
-    generation_idx_t   bitmap;
-    blam::tag_t const* shader;
-    u32                current_pass;
-
-    struct
-    {
-        GFX::D_DATA draw;
-        GFX::D_CALL call;
-    } draw;
-    bool visible = false;
-};
-
-struct ModelReference
-{
-    Matf4 transform;
-    u32   draw_idx;
-
-    generation_idx_t bitmap;
-    generation_idx_t model;
-
-    blam::scn::object_spawn<0> const* instance;
-    blam::tag_t const*                shader_tag;
-    u32                               current_pass;
-
-    struct
-    {
-        GFX::D_DATA draw;
-        GFX::D_CALL call;
-    } draw;
-};
-
-enum ObjectTags
-{
-    ObjectScenery   = 0x1,
-    ObjectEquipment = 0x2,
-    ObjectVehicle   = 0x4,
-    ObjectBiped     = 0x8,
-
-    ObjectMod2 = 0x80,
-    ObjectBsp  = 0x100,
-};
-
-using BspTag   = Components::TagType<BspReference>;
-using ModelTag = Components::TagType<ModelReference>;
-
-using BspStore   = Components::Allocators::VectorContainer<BspTag>;
-using ModelStore = Components::Allocators::VectorContainer<ModelTag>;
-
-template<typename T, typename IdType, typename... IType>
-struct DataCache
-{
-    static constexpr cache_id_t invalid_id = 0;
-
-    DataCache() : counter(0), generation(1)
-    {
-    }
-
-    inline generation_idx_t predict(IType... param)
-    {
-        IdType item_id  = get_id(std::forward<IType>(param)...);
-        auto   cache_it = m_cache_key.find(item_id);
-
-        if(cache_it != m_cache_key.end())
-        {
-            auto cached_it = m_cache.find(cache_it->second);
-
-            if(cached_it != m_cache.end())
-                return {cached_it->first, generation};
-            else
-                Throw(undefined_behavior("corrupt key cache"));
-        }
-
-        cache_id_t out  = ++counter;
-        T          item = predict_impl(param...);
-
-        if(!item.valid())
-            return {invalid_id, 0};
-
-        m_cache.insert({out, std::move(item)});
-        m_cache_key.emplace(item_id, out);
-
-        return {out, generation};
-    }
-
-    auto find(generation_idx_t id)
-    {
-        if(id.gen < generation)
-            Throw(undefined_behavior("stale reference"));
-
-        return m_cache.find(id.i);
-    }
-
-    void evict_all()
-    {
-        evict_impl();
-
-        m_cache.clear();
-        m_cache_key.clear();
-        counter = 0;
-        generation++;
-    }
-
-    cache_id_t              counter;
-    Map<cache_id_t, T>      m_cache;
-    Map<IdType, cache_id_t> m_cache_key;
-    u32                     generation;
-
-    virtual T      predict_impl(IType... param) = 0;
-    virtual IdType get_id(IType... args)        = 0;
-    virtual void   evict_impl()
-    {
-    }
-};
 
 struct BSPItem
 {
@@ -256,30 +142,6 @@ struct ModelAssembly
     Vector<Array<generation_idx_t, 5>>  models;
 };
 
-struct SceneryItem
-{
-    blam::scn::scenery const* scenery;
-    blam::tag_t const*        tag;
-    ModelAssembly             model; /* Reference to cached model */
-
-    inline bool valid() const
-    {
-        return scenery;
-    }
-};
-
-struct VehicleItem
-{
-    blam::scn::vehicle const* vehicle;
-    blam::tag_t const*        tag;
-    ModelAssembly             model;
-
-    inline bool valid() const
-    {
-        return vehicle;
-    }
-};
-
 struct BitmapItem
 {
     BitmapItem() : header(nullptr)
@@ -310,57 +172,175 @@ struct BitmapItem
     }
 };
 
-struct BipedItem
+struct BspReference
 {
-    blam::scn::biped const* header;
-    blam::tag_t const*      tag;
-    ModelAssembly           model;
+    u32                draw_idx;
+    generation_idx_t   bsp;
+    generation_idx_t   bitmap;
+    blam::tag_t const* shader;
+    u32                current_pass;
 
-    inline bool valid() const
+    struct
     {
-        return header;
+        GFX::D_DATA draw;
+        GFX::D_CALL call;
+    } draw;
+    bool visible = false;
+};
+
+struct SubModel
+{
+    ERef parent;
+
+    blam::tag_t const*   shader = nullptr;
+    generation_idx_t     bitmap;
+    generation_idx_t     model;
+    hierarchial_idx_t<1> submodel;
+
+    /* Data used at runtime */
+    u32 draw_idx;
+    u32 current_pass;
+
+    struct
+    {
+        GFX::D_DATA draw;
+        GFX::D_CALL call;
+    } draw;
+
+    void initialize(
+        generation_idx_t           model_idx,
+        ModelItem::SubModel const& model_,
+        decltype(submodel)         submodel_idx)
+    {
+        draw.call =
+            GFX::D_CALL().withIndexing().withTriStrip().withInstancing();
+        draw.draw = model_.draw;
+        shader    = model_.shader;
+        bitmap    = model_.color_bitm;
+        model     = model_idx;
+        submodel  = submodel_idx;
     }
 };
 
-struct EquipmentItem
+struct Model
 {
-    using equipment_type = blam::scn::equipment;
+    Matf4 transform;
 
-    equipment_type const* header;
-    blam::tag_t const*    tag;
-    ModelAssembly         model;
+    Vector<ERef>                        models;
+    mem_chunk<blam::mod2::region const> regions;
+    blam::tag_t const*                  tag = nullptr;
 
-    inline bool valid() const
+    template<typename T>
+    void initialize(T const* spawn)
     {
-        return header;
+        transform = typing::vectors::translation(Matf4(), spawn->pos);
     }
 };
 
-struct MPEquipmentItem
+struct ObjectSpawn
 {
-    using equipment_type = blam::scn::multiplayer_equipment;
-
-    equipment_type const* header;
-    blam::tag_t const*    tag;
-    ModelAssembly         model;
-
-    inline bool valid() const
-    {
-        return header;
-    }
+    blam::scn::object_spawn const* header = nullptr;
+    blam::tag_t const*             tag    = nullptr;
 };
 
-struct WeaponItem
+struct MultiplayerSpawn
 {
-    using equipment_type = blam::scn::unit;
+    blam::scn::multiplayer_equipment const* spawn      = nullptr;
+    blam::scn::item_collection const*       collection = nullptr;
+    blam::scn::item const*                  item       = nullptr;
+};
 
-    equipment_type const* header;
-    blam::tag_t const*    tag;
-    ModelAssembly         model;
+enum ObjectTags
+{
+    ObjectScenery   = 0x1,
+    ObjectEquipment = 0x2,
+    ObjectVehicle   = 0x4,
+    ObjectBiped     = 0x8,
 
-    inline bool valid() const
+    ObjectMod2 = 0x80,
+    ObjectBsp  = 0x100,
+
+    ObjectObject = 0x1000,
+    ObjectUnit   = 0x2000,
+};
+
+using BspTag              = Components::TagType<BspReference>;
+using SubModelTag         = Components::TagType<SubModel>;
+using ModelTag            = Components::TagType<Model>;
+using ObjectSpawnTag      = Components::TagType<ObjectSpawn>;
+using MultiplayerSpawnTag = Components::TagType<MultiplayerSpawn>;
+
+using BspStore         = Components::Allocators::VectorContainer<BspTag>;
+using ModelStore       = Components::Allocators::VectorContainer<SubModelTag>;
+using ModelParentStore = Components::Allocators::VectorContainer<ModelTag>;
+using ObjectSpawnStore =
+    Components::Allocators::VectorContainer<ObjectSpawnTag>;
+using MultiplayerSpawnStore =
+    Components::Allocators::VectorContainer<MultiplayerSpawnTag>;
+
+template<typename T, typename IdType, typename... IType>
+struct DataCache
+{
+    static constexpr cache_id_t invalid_id = 0;
+
+    DataCache() : counter(0), generation(1)
     {
-        return header;
+    }
+
+    inline generation_idx_t predict(IType... param)
+    {
+        IdType item_id  = get_id(std::forward<IType>(param)...);
+        auto   cache_it = m_cache_key.find(item_id);
+
+        if(cache_it != m_cache_key.end())
+        {
+            auto cached_it = m_cache.find(cache_it->second);
+
+            if(cached_it != m_cache.end())
+                return {cached_it->first, generation};
+            else
+                Throw(undefined_behavior("corrupt key cache"));
+        }
+
+        cache_id_t out  = ++counter;
+        T          item = predict_impl(param...);
+
+        if(!item.valid())
+            return {invalid_id, 0};
+
+        m_cache.insert({out, std::move(item)});
+        m_cache_key.emplace(item_id, out);
+
+        return {out, generation};
+    }
+
+    auto find(generation_idx_t id)
+    {
+        if(id.gen < generation)
+            Throw(undefined_behavior("stale reference"));
+
+        return m_cache.find(id.i);
+    }
+
+    void evict_all()
+    {
+        evict_impl();
+
+        m_cache.clear();
+        m_cache_key.clear();
+        counter = 0;
+        generation++;
+    }
+
+    cache_id_t              counter;
+    Map<cache_id_t, T>      m_cache;
+    Map<IdType, cache_id_t> m_cache_key;
+    u32                     generation;
+
+    virtual T      predict_impl(IType... param) = 0;
+    virtual IdType get_id(IType... args)        = 0;
+    virtual void   evict_impl()
+    {
     }
 };
 
@@ -679,6 +659,9 @@ struct BitmapCache
         {
             auto shader_model =
                 (*it)->to_reflexive<blam::shader_water>().data(magic);
+
+            if(!shader_model[0].base.valid())
+                return {};
 
             auto bitm_it = index.find(shader_model[0].base);
             auto ripples = shader_model[0].ripple.ripples.data(magic);
@@ -1141,162 +1124,6 @@ struct ModelCache
 };
 
 template<typename Version>
-struct SceneryCache : DataCache<SceneryItem, u32, blam::tagref_t const&>
-{
-    SceneryCache(
-        blam::map_container const& map, ModelCache<Version>& model_cache) :
-        model_cache(model_cache),
-        magic(map.magic), index(map)
-    {
-    }
-
-    ModelCache<Version>& model_cache;
-    blam::magic_data_t   magic;
-    blam::tag_index_view index;
-
-    virtual SceneryItem predict_impl(blam::tagref_t const& tag) override
-    {
-        auto it = index.find(tag);
-
-        if(it == index.end())
-            return {};
-
-        auto scenery =
-            (*it)->template to_reflexive<blam::scn::scenery>().data(magic);
-
-        if(scenery.elements != 1)
-            Throw(undefined_behavior("no scenery found"));
-
-        SceneryItem out;
-        out.scenery = &scenery[0];
-        out.model   = model_cache.predict_regions(scenery[0].model.to_plain());
-
-        if(!out.model.models.size())
-            return {};
-
-        return out;
-    }
-
-    virtual u32 get_id(blam::tagref_t const& tag) override
-    {
-        return tag.tag_id;
-    }
-};
-
-template<typename Version>
-struct VehicleCache : DataCache<VehicleItem, u32, blam::tagref_t const&>
-{
-    VehicleCache(
-        blam::map_container const& map, ModelCache<Version>& model_cache) :
-        model_cache(model_cache),
-        magic(map.magic), index(map)
-    {
-    }
-
-    ModelCache<Version>& model_cache;
-    blam::magic_data_t   magic;
-    blam::tag_index_view index;
-
-    virtual VehicleItem predict_impl(blam::tagref_t const& vehi) override
-    {
-        auto it = index.find(vehi);
-
-        if(it == index.end())
-            return {};
-
-        auto vehicle =
-            (*it)->template to_reflexive<blam::scn::vehicle>().data(magic);
-
-        if(!vehicle[0].model.valid())
-            return {};
-
-        VehicleItem out;
-        out.vehicle = &vehicle[0];
-        out.model   = model_cache.predict_regions(vehicle[0].model.to_plain());
-
-        return out;
-    }
-    virtual u32 get_id(blam::tagref_t const& tag) override
-    {
-        return tag.tag_id;
-    }
-};
-
-template<typename Version>
-struct BipedCache : DataCache<BipedItem, u32, blam::tagref_t const&>
-{
-    BipedCache(
-        blam::map_container const& map, ModelCache<Version>& model_cache) :
-        magic(map.magic),
-        index(map), model_cache(model_cache)
-    {
-    }
-
-    blam::magic_data_t   magic;
-    blam::tag_index_view index;
-    ModelCache<Version>& model_cache;
-
-    virtual BipedItem predict_impl(blam::tagref_t const& bipd) override
-    {
-        auto it = index.find(bipd);
-
-        if(it == index.end())
-            return {};
-
-        auto biped =
-            (*it)->template to_reflexive<blam::scn::biped>().data(magic);
-
-        BipedItem out;
-        out.header = &biped[0];
-        out.model  = model_cache.predict_regions(biped[0].model.to_plain());
-
-        return out;
-    }
-    virtual u32 get_id(blam::tagref_t const& tag) override
-    {
-        return tag.tag_id;
-    }
-};
-
-template<typename T, typename Version>
-struct EquipmentCache : DataCache<T, u32, blam::tagref_t const&>
-{
-    EquipmentCache(
-        blam::map_container const& map, ModelCache<Version>& model_cache) :
-        magic(map.magic),
-        index(map), model_cache(model_cache)
-    {
-    }
-
-    blam::magic_data_t   magic;
-    blam::tag_index_view index;
-    ModelCache<Version>& model_cache;
-
-    virtual T predict_impl(blam::tagref_t const& equip) override
-    {
-        auto it = index.find(equip);
-
-        if(it == index.end())
-            return {};
-
-        auto equipment =
-            (*it)->template to_reflexive<typename T::equipment_type>().data(
-                magic);
-
-        T out;
-        out.header = &equipment[0];
-        out.model  = model_cache.predict_regions(equipment[0].model.to_plain());
-
-        return out;
-    }
-
-    virtual u32 get_id(blam::tagref_t const& equip) override
-    {
-        return equip.tag_id;
-    }
-};
-
-template<typename Version>
 struct BlamData
 {
     BlamData() :
@@ -1305,7 +1132,10 @@ struct BlamData
 #else
         map_file(MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile)),
         bitmap_file(Resource(MkUrl(
-            Path(GetInitArgs().arguments().at(0)).dirname() + "bitmaps.map",
+            Path(GetInitArgs().arguments().at(0)).dirname() +
+                (std::is_same<Version, blam::pc_version_t>::value
+                     ? "bitmaps.map"
+                     : "bitmaps_custom.map"),
             RSCA::SystemFile))),
 #endif
         map_container(map_file, Version()),
@@ -1315,11 +1145,6 @@ struct BlamData
             nullptr),
         bsp_cache(map_container, bitm_cache),
         model_cache(map_container, bitm_cache),
-        scenery_cache(map_container, model_cache),
-        vehicle_cache(map_container, model_cache),
-        biped_cache(map_container, model_cache),
-        equip_cache(map_container, model_cache),
-        weap_cache(map_container, model_cache),
         std_camera(MkShared<std_camera_t>(&camera, &camera_opts)),
         controller_camera(&camera, &controller_opts)
     {
@@ -1339,17 +1164,8 @@ struct BlamData
     ShPtr<GFX::BUF_E>   bsp_index;
     ShPtr<GFX::V_DESC>  bsp_attr;
     PIP_PARAM*          bsp_pipeline;
-    GFX::RenderPass     bsp_pass;
-    GFX::OPT_DRAW       bsp_draw;
 
-    ModelCache<Version>   model_cache;
-    SceneryCache<Version> scenery_cache;
-    VehicleCache<Version> vehicle_cache;
-    BipedCache<Version>   biped_cache;
-
-    EquipmentCache<EquipmentItem, Version> equip_cache;
-    EquipmentCache<WeaponItem, Version>    weap_cache;
-    //    EquipmentCache<MPEquipmentItem> mp_equip_cache;
+    ModelCache<Version> model_cache;
 
     ShPtr<GFX::BUF_A>  model_buf;
     ShPtr<GFX::BUF_E>  model_index;
@@ -1357,8 +1173,6 @@ struct BlamData
     PIP_PARAM*         model_pipeline;
 
     Vector<Matf4>     model_mats;
-    GFX::RenderPass   model_pass;
-    GFX::OPT_DRAW     model_draw;
     ShPtr<GFX::BUF_S> model_matrix_store;
     ShPtr<GFX::BUF_S> material_store;
 
@@ -1374,12 +1188,22 @@ struct BlamData
 template<typename Version>
 struct MeshRenderer : Components::RestrictedSubsystem<
                           Components::TagType<MeshRenderer<Version>>,
-                          type_list_t<BspTag, ModelTag>,
+                          type_list_t<
+                              BspTag,
+                              SubModelTag,
+                              ModelTag,
+                              ObjectSpawnTag,
+                              MultiplayerSpawnTag>,
                           empty_list_t>
 {
     using parent_type = Components::RestrictedSubsystem<
         Components::TagType<MeshRenderer<Version>>,
-        type_list_t<BspTag, ModelTag>,
+        type_list_t<
+            BspTag,
+            SubModelTag,
+            ModelTag,
+            ObjectSpawnTag,
+            MultiplayerSpawnTag>,
         empty_list_t>;
 
     using Proxy = typename parent_type::Proxy;
@@ -1495,7 +1319,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                shader->matches(tag_class::swat);
     }
 
-    void end_restricted(Proxy& p, time_point const& time)
+    virtual void end_restricted(Proxy& p, time_point const& time) override
     {
         if(time - last_update > Chrono::seconds(1))
             update_draws(p, time);
@@ -1549,16 +1373,16 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto& ent : p.select(ObjectMod2))
         {
-            auto            ref     = p.template ref<Proxy>(ent);
-            ModelReference& mod_ref = ref.template get<ModelTag>();
+            auto      ref     = p.template ref<Proxy>(ent);
+            SubModel& mod_ref = ref.template get<SubModelTag>();
 
             auto target_pass = &model[Pass_Opaque].draws();
 
-            if(is_transparent(mod_ref.shader_tag))
+            if(is_transparent(mod_ref.shader))
             {
                 target_pass          = &model[Pass_Glass].draws();
                 mod_ref.current_pass = Pass_Glass;
-            } else if(is_light(mod_ref.shader_tag))
+            } else if(is_light(mod_ref.shader))
             {
                 target_pass          = &model[Pass_Lights].draws();
                 mod_ref.current_pass = Pass_Lights;
@@ -1616,12 +1440,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto& ent : p.select(ObjectMod2))
         {
-            auto            ref     = p.template ref<Proxy>(ent);
-            ModelReference& mod_ref = ref.template get<ModelTag>();
-            auto&           draw_data =
+            auto      ref     = p.template ref<Proxy>(ent);
+            SubModel& mod_ref = ref.template get<SubModelTag>();
+            auto&     draw_data =
                 model[mod_ref.current_pass].draws().at(mod_ref.draw_idx).d_data;
 
-            matrix_store[draw_data.m_ioff] = mod_ref.transform;
+            matrix_store[draw_data.m_ioff] =
+                mod_ref.parent.get<ModelTag>().transform;
 
             ModelItem& mod2 = m_data.model_cache.find(mod_ref.model)->second;
             Material&  mat  = model_material_store[draw_data.m_ioff];
@@ -1737,6 +1562,8 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
     options.old_shader_processing = true;
     auto& gfx = e.register_subsystem_inplace<GFX_ALLOC::tag_type, GFX_ALLOC>(
         options, true);
+
+    cDebug("Currently loaded with {0}", GFX::Level());
 
     data.bsp_buf = gfx.alloc_buffer<GFX::BUF_A>(
         RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable, 0);
@@ -1863,10 +1690,6 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
     data.bsp_buf->unmap();
     data.bsp_index->unmap();
 
-    auto& bsp_pass       = data.bsp_pass;
-    bsp_pass.pipeline    = data.bsp_pipeline->pipeline_ptr();
-    bsp_pass.framebuffer = GFX::DefaultFramebuffer();
-
     EntityRecipe bsp;
     bsp.components = {type_hash_v<BspTag>()};
     bsp.tags       = ObjectBsp;
@@ -1893,85 +1716,158 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
                 bsp_ref.shader = mesh.shader;
             }
     }
-
-    GFX::OptimizeRenderPass(bsp_pass, data.bsp_draw);
 }
 
-template<typename T, typename CacheType, typename Version>
-void load_unit_group(
-    CacheType&                   cache,
+template<typename T, typename Version>
+void load_objects(
     blam::reflex_group<T> const& group,
-    blam::magic_data_t const&    magic,
-
-    BlamData<Version>& data,
-
-    EntityContainer& e,
-    u32              tags)
+    BlamData<Version>&           data,
+    EntityContainer&             e,
+    u32                          tags)
 {
     ProfContext _(__PRETTY_FUNCTION__);
 
     using namespace Components;
 
-    EntityRecipe unit;
-    unit.components = {type_hash_v<ModelTag>()};
-    unit.tags       = tags | ObjectMod2;
+    EntityRecipe parent;
+    parent.components = {type_hash_v<ModelTag>(),
+                         type_hash_v<ObjectSpawnTag>()};
+    parent.tags       = tags;
 
-    Map<i16, generation_idx_t> objects;
-    i16                        id = 0;
-    for(auto const& object : group.ref.data(magic))
+    EntityRecipe submodel;
+    submodel.components = {type_hash_v<SubModelTag>()};
+    submodel.tags       = tags | ObjectMod2;
+
+    auto obj_names = data.scenario->object_names.data(data.map_container.magic);
+    auto magic     = data.map_container.magic;
+    auto index     = blam::tag_index_view(data.map_container);
+    auto palette   = group.palette.data(magic);
+
+    for(T const& instance : group.instances.data(magic))
     {
-        auto it = cache.predict(object[0]);
+        auto instance_tag = (*index.find(palette[instance.ref][0]));
 
-        if(!it.valid())
+        if(!instance_tag->valid())
             continue;
 
-        objects.insert({id++, it});
-    }
+        auto instance_obj =
+            instance_tag->template to_reflexive<blam::scn::object>().data(
+                magic);
 
-    for(auto const& instance : group.base.data(magic))
-    {
-        auto obj_ref = objects.find(instance.ref);
+        ModelAssembly mesh_data =
+            data.model_cache.predict_regions(instance_obj[0].model.to_plain());
 
-        auto const& object = cache.find(obj_ref->second);
+        auto         parent_ = e.ref(e.create_entity(parent));
+        Model&       model   = parent_.get<ModelTag>();
+        ObjectSpawn& spawn   = parent_.get<ObjectSpawnTag>();
 
-        if(object == cache.m_cache.end())
-            continue;
+        spawn.tag    = instance_tag;
+        spawn.header = &instance;
+        model.tag    = *index.find(instance_obj[0].model.to_plain());
+        model.initialize(&instance);
 
-        ModelAssembly const& mesh_data = object->second.model;
+        for(auto const& model_ : mesh_data.models)
+        {
+            ModelItem const& modelit =
+                data.model_cache.find(model_.at(blam::mod2::lod_high_ext))
+                    ->second;
 
-        for(auto const& region : mesh_data.models)
-            for(auto const& lod : region)
+            for(auto const& sub : modelit.mesh.sub)
             {
-                if(!lod.valid())
-                    continue;
-
-                auto const& model = data.model_cache.find(lod)->second.mesh;
-
-                for(ModelItem::SubModel const& mesh : model.sub)
-                {
-                    auto mesh_ent = e.ref(e.create_entity(unit));
-
-                    ModelReference& model = mesh_ent.get<ModelTag>();
-
-                    model.transform =
-                        typing::vectors::translation(Matf4(), instance.pos) *
-                        typing::vectors::matrixify(
-                            typing::vectors::normalize_quat(Quatf(
-                                1, 0, instance.rot.y(), -instance.rot.x())));
-                    model.draw.draw = mesh.draw;
-                    model.model     = obj_ref->second;
-                    model.instance =
-                        C_RCAST<decltype(model.instance)>(&instance);
-                    model.draw.call = GFX::D_CALL()
-                                          .withIndexing()
-                                          .withTriStrip()
-                                          .withInstancing();
-                    model.bitmap     = mesh.color_bitm;
-                    model.shader_tag = mesh.shader;
-                    model.instance =
-                        C_RCAST<decltype(model.instance)>(&instance);
-                }
+                auto submod = e.ref(e.create_entity(submodel));
+                model.models.push_back(submod);
+                SubModel& submod_ = submod.get<SubModelTag>();
+                submod_.parent    = parent_;
+                submod_.initialize(
+                    model_.at(blam::mod2::lod_high_ext), sub, {});
             }
+        }
+    }
+}
+
+template<typename Version>
+void load_multiplayer_equipment(
+    BlamData<Version>& data,
+
+    EntityContainer& e,
+    u32              tags)
+{
+    using namespace Components;
+
+    blam::tag_index_view index(data.map_container);
+    auto const&          magic = data.map_container.magic;
+
+    EntityRecipe equip;
+    equip.components = {type_hash_v<ModelTag>(),
+                        type_hash_v<MultiplayerSpawnTag>()};
+    equip.tags       = tags;
+
+    EntityRecipe submodel;
+    submodel.components = {type_hash_v<SubModelTag>()};
+    submodel.tags       = tags | ObjectMod2;
+
+    for(blam::scn::multiplayer_equipment const& equipment_ref :
+        data.scenario->mp_equipment.data(magic))
+    {
+        auto item_coll_tag = index.find(equipment_ref.item);
+
+        if(item_coll_tag == index.end())
+            continue;
+
+        blam::scn::item_collection const& item_coll =
+            (*item_coll_tag)
+                ->to_reflexive<blam::scn::item_collection>()
+                .data(magic)[0];
+
+        for(blam::scn::item_permutation const& item_perm :
+            item_coll.items.data(magic))
+        {
+            switch(item_perm.item.tag_class)
+            {
+            case blam::tag_class_t::weap:
+            case blam::tag_class_t::eqip:
+            {
+                blam::scn::item const& item =
+                    (*index.find(item_perm.item))
+                        ->to_reflexive<blam::scn::item>()
+                        .data(magic)[0];
+
+                auto              set    = e.ref(e.create_entity(equip));
+                Model&            model_ = set.get<ModelTag>();
+                MultiplayerSpawn& spawn  = set.get<MultiplayerSpawnTag>();
+
+                spawn.item       = &item;
+                spawn.spawn      = &equipment_ref;
+                spawn.collection = &item_coll;
+                model_.initialize(&equipment_ref);
+                model_.tag = *index.find(item.model.to_plain());
+
+                ModelAssembly models =
+                    data.model_cache.predict_regions(item.model.to_plain());
+
+                for(auto const& model : models.models)
+                {
+                    ModelItem const& modelit =
+                        data.model_cache
+                            .find(model.at(blam::mod2::lod_high_ext))
+                            ->second;
+
+                    for(auto const& sub : modelit.mesh.sub)
+                    {
+                        auto submod = e.ref(e.create_entity(submodel));
+                        model_.models.push_back(submod);
+                        SubModel& submod_ = submod.get<SubModelTag>();
+                        submod_.parent    = set;
+                        submod_.initialize(
+                            model.at(blam::mod2::lod_high_ext), sub, {});
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
     }
 }
 
@@ -1993,21 +1889,11 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 
     pipeline->build_state();
 
-    load_unit_group(
-        data.scenery_cache, scenario->scenery, magic, data, e, ObjectScenery);
-    load_unit_group(
-        data.vehicle_cache, scenario->vehicles, magic, data, e, ObjectVehicle);
-    load_unit_group(
-        data.biped_cache, scenario->bipeds, magic, data, e, ObjectBiped);
-    load_unit_group(
-        data.equip_cache, scenario->equips, magic, data, e, ObjectEquipment);
-    load_unit_group(
-        data.weap_cache,
-        scenario->weapon_spawns,
-        magic,
-        data,
-        e,
-        ObjectEquipment);
+    load_objects(scenario->scenery, data, e, ObjectScenery);
+    load_objects(scenario->vehicles, data, e, ObjectVehicle);
+    load_objects(scenario->bipeds, data, e, ObjectBiped);
+    load_objects(scenario->equips, data, e, ObjectEquipment);
+    load_objects(scenario->weapon_spawns, data, e, ObjectEquipment);
 
     data.model_buf->unmap();
     data.model_index->unmap();
@@ -2039,7 +1925,10 @@ i32 blam_main(i32, cstring_w*)
             ProfContext _(__PRETTY_FUNCTION__);
 
             e.register_component_inplace<ModelStore>();
+            e.register_component_inplace<ModelParentStore>();
             e.register_component_inplace<BspStore>();
+            e.register_component_inplace<ObjectSpawnStore>();
+            e.register_component_inplace<MultiplayerSpawnStore>();
 
             blam::tag_index_view index(data.map_container);
 
@@ -2078,6 +1967,7 @@ i32 blam_main(i32, cstring_w*)
 
             load_scenario_bsp(e, data);
             load_scenario_scenery(e, data);
+            load_multiplayer_equipment(data, e, ObjectEquipment);
 
             {
                 ProfContext _("Texture allocation");

@@ -32,7 +32,7 @@ target_precompile_headers ( ComponentBundleSetup PUBLIC
 
 coffee_library (
     TARGET DropinRenderer
-    SOURCES private/dropin.cpp
+    SOURCES private/dropin_stub.cpp
     LIBRARIES ComponentBundleSetup
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dropin_include>
