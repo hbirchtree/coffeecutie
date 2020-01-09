@@ -315,11 +315,10 @@ struct sig_t
 
     static inline sig_v value = {return_type, num_parameters};
 
-    static constexpr stl_types::Array<type_t, num_parameters + 1>
-        params_static = stl_types::MkArray(type_t::void_, Params...);
-
     static inline stl_types::Vector<type_t> params()
     {
+        auto params_static = stl_types::MkArray(type_t::void_, Params...);
+
         return stl_types::Vector<type_t>(
             params_static.begin() + 1, params_static.end());
     }

@@ -220,7 +220,7 @@ struct header
     reflexive_t<byte_t>            chunk_26;
     reflexive_t<byte_t>            chunk_27;
     reflexive_t<byte_t>            markers;
-    reflexive_t<byte_t>            clutter_objects; /*!< aka detail_objects */
+    reflexive_t<byte_t>            detail_objects; /*!< aka detail_objects */
     reflexive_t<byte_t>            runtime_decals;
     u32                            unkown4[9];
 

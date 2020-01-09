@@ -142,6 +142,44 @@ struct weapon_spawn : object_spawn
 {
     u32 unknown_[15];
 };
+enum class machine_spawn_flags : u16
+{
+    none              = 0x0,
+    initially_on      = 0x1,
+    initially_off     = 0x2,
+    changes_once      = 0x4,
+    position_reversed = 0x8,
+    not_usable        = 0x10,
+};
+struct device_machine_spawn : object_spawn
+{
+    enum class machine_spawn_flags2 : u16
+    {
+        none                 = 0x0,
+        one_sided            = 0x1,
+        never_appears_locked = 0x2,
+        opened_by_melee      = 0x4,
+    };
+
+    i16                  power_group;
+    i16                  position_group;
+    machine_spawn_flags  internal_flags;
+    machine_spawn_flags2 device_flags;
+
+    u32 padding[6];
+};
+struct light_fixture_spawn : object_spawn
+{
+    i16                 power_group;
+    i16                 position_group;
+    machine_spawn_flags flags;
+    Vecf3               color;
+    scalar              intensity;
+    scalar              falloff_angle;
+    scalar              cutoff_angle;
+
+    u32 padding[6];
+};
 
 struct palette
 {
@@ -166,14 +204,8 @@ struct scenery
     tagref_typed_t<tag_class_t::mod2> model;
 };
 
-struct machine
+struct device_machine : object
 {
-    i16    type;
-    i16    unk2;
-    u32    unk3;
-    Vecf3  pos;
-    scalar rot;
-    u32    unk[10];
 };
 
 struct sound_scenery
@@ -237,13 +269,47 @@ struct item_collection
     u32                           spawn_time;
 };
 
+enum class equipment_gamemode_flags : u16
+{
+    none,
+    ctf,
+    slayer,
+    oddball,
+    king_of_the_hill,
+    race,
+    terminator,
+    stub,
+    ignored1,
+    ignored2,
+    ignored3,
+    ignored4,
+    all_games,
+    all_except_ctf,
+    all_except_race_ctf,
+};
+
 struct multiplayer_equipment
 {
-    u32      unk1[4];
-    u32      unknown_tag;
-    u32      unk2[11];
+    enum class equipment_flag : u32
+    {
+        none     = 0x0,
+        levitate = 0x1,
+    };
+
+    equipment_flag flags;
+
+    equipment_gamemode_flags type0;
+    equipment_gamemode_flags type1;
+    equipment_gamemode_flags type2;
+    equipment_gamemode_flags type3;
+
+    u32      team_idx;
+    u32      spawn_time;
+
+    u32 padding[11];
+
     Vecf3    pos;
-    scalar   yaw;
+    scalar   facing;
     tagref_t item;
     u32      unk3[12];
 };
@@ -264,9 +330,16 @@ struct player_starting_profile
 
 struct device_group
 {
-    bl_string name;
-    u32       offset;
-    u32       unk[4];
+    enum class device_group_flags : u32
+    {
+        none         = 0x0,
+        changes_once = 0x1,
+    };
+
+    bl_string          name;
+    scalar             initial_value;
+    device_group_flags flags;
+    u32                unk[3];
 };
 
 struct bsp_trigger
@@ -622,41 +695,61 @@ struct light_fixture
 template<typename Bytecode>
 struct scenario
 {
+    enum class scenario_type : u16
+    {
+        solo,
+        multiplayer,
+        main_menu,
+    };
+    enum class scenario_flags : u16
+    {
+        none         = 0x0,
+        cortana_hack = 0x1,
+        demo_ui      = 0x2,
+    };
+
     struct /* 260-byte block? */
     {
-        tagref_t              unk_bsp1; // 16
-        tagref_t              unk_bsp2; // 16
-        tagref_t              unk_sky;  // 16
-        reflexive_t<skybox>   skyboxes; // 12
-        u32                   padding;
+        tagref_t unk_bsp1; // Unused
+        tagref_t unk_bsp2; // Unused
+        tagref_t unk_sky;  // Unused
+
+        reflexive_t<skybox> skyboxes; // 12
+
+        scenario_type  type;
+        scenario_flags flags;
+
         reflexive_t<tagref_t> child_scenarios; // 12
 
-        u32 unknown_offset;
+        scalar local_north;
 
-        u32 padding1[45];
+        reflexive_t<u32> predicted_resource;
+        reflexive_t<u32> functions;
+
+        u32 padding1[39];
     };
 
     struct /* 256-byte block */
     {
-        i32                    editor_scenario_size;
-        u32                    unknown_2;
-        reflexive_t<scn_chunk> unknown_reflexive;
-        u32                    padding2[59];
+        i32                 editor_scenario_size;
+        u32                 unknown_2;
+        reflexive_t<byte_t> comments;
+        u32                 padding2[59];
     };
 
     struct /* 324-byte block, object spawns */
     {
-        reflexive_t<object_name>    object_names;
-        reflex_group<scenery_spawn> scenery;
-        reflex_group<biped_spawn>   bipeds;
-        reflex_group<vehicle_spawn> vehicles;
-        reflex_group<equip_spawn>   equips;
-        reflex_group<weapon_spawn>  weapon_spawns;
-        reflexive_t<device_group>   device_groups;
-        reflex_group<machine>       machines;
-        reflex_group<control>       controls;
-        reflex_group<light_fixture> light_fixtures;
-        reflex_group<sound_scenery> snd_scenery;
+        reflexive_t<object_name>           object_names;
+        reflex_group<scenery_spawn>        scenery;
+        reflex_group<biped_spawn>          bipeds;
+        reflex_group<vehicle_spawn>        vehicles;
+        reflex_group<equip_spawn>          equips;
+        reflex_group<weapon_spawn>         weapon_spawns;
+        reflexive_t<device_group>          device_groups;
+        reflex_group<device_machine_spawn> machines;
+        reflex_group<control>              controls;
+        reflex_group<light_fixture_spawn>  light_fixtures;
+        reflex_group<sound_scenery>        snd_scenery;
 
         u32 padding3[21];
     };

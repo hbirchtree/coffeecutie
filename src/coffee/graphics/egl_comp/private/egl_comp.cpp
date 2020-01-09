@@ -9,6 +9,10 @@
 #include <CEAGL/eagl.h>
 #else
 #include <EGL/egl.h>
+
+#if defined(COFFEE_ANDROID)
+#include <EGL/eglext.h>
+#endif
 #endif
 
 #if !defined(EGL_VERSION_1_3)
@@ -121,6 +125,11 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
 
         EGL_COLOR_BUFFER_TYPE,
         EGL_RGB_BUFFER,
+
+#if defined(COFFEE_ANDROID)
+        EGL_RECORDABLE_ANDROID,
+        EGL_TRUE,
+#endif
 
         EGL_RED_SIZE,
         color.r,

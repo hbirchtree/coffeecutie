@@ -599,8 +599,25 @@ inline CGenum to_enum(PixFmt f, PixFlg e, CompFlags d)
 #endif
 
 #else
+    case P::RGB8:
+#if defined(GL_OES_rgb8_rgba8)
+        return GL_RGB8_OES;
+#else
+        return GL_RGB;
+#endif
+
     case P::RGBA8:
+#if defined(GL_OES_rgb8_rgba8)
+        return GL_RGBA8_OES;
+#else
         return GL_RGBA;
+#endif
+
+#if defined(GL_DEPTH_COMPONENT16_OES)
+    case P::Depth16:
+        return GL_DEPTH_COMPONENT16_OES;
+#endif
+
 #endif
     default:
         break;
@@ -1071,8 +1088,10 @@ inline CGenum to_enum(TypeEnum f)
     case TypeEnum::Scalar:
         return GL_FLOAT;
 
+#if GL_VERSION_VERIFY(0x300, 0x300)
     case TypeEnum::Packed_UFloat:
         return GL_UNSIGNED_INT_10F_11F_11F_REV;
+#endif
 
     default:
         return GL_NONE;
@@ -1118,8 +1137,13 @@ inline CGenum to_enum(BitFmt f)
         return GL_UNSIGNED_SHORT_1_5_5_5_REV;
     case BitFmt::UIntR:
         return GL_UNSIGNED_INT_8_8_8_8_REV;
+#endif
+#if defined(GL_UNSIGNED_INT_10_10_10_2)
     case BitFmt::UInt_1010102:
         return GL_UNSIGNED_INT_10_10_10_2;
+#elif defined(GL_UNSIGNED_INT_10_10_10_2_OES)
+    case BitFmt::UInt_1010102:
+        return GL_UNSIGNED_INT_10_10_10_2_OES;
 #endif
 
     case BitFmt::UInt_5999R:
@@ -1140,10 +1164,20 @@ inline CGenum to_enum(BitFmt f)
     case BitFmt::Scalar_32_Int_24_8:
         return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 #else
+#if defined(GL_OES_texture_half_float)
+    case BitFmt::Scalar_16:
+        return GL_HALF_FLOAT_OES;
+#endif
+
         /* In order to keep compatibility, we fall back to normal format,
          *  and OpenGL ES 2.0 does not support depth+stencil formats. */
     case BitFmt::UInt24_8:
+#if defined(GL_OES_packed_depth_stencil)
+        return GL_UNSIGNED_INT_24_8_OES;
+#else
         return GL_UNSIGNED_BYTE;
+#endif
+
 #endif
 
     default:

@@ -252,16 +252,19 @@ struct MultiplayerSpawn
 
 enum ObjectTags
 {
-    ObjectScenery   = 0x1,
-    ObjectEquipment = 0x2,
-    ObjectVehicle   = 0x4,
-    ObjectBiped     = 0x8,
-
-    ObjectMod2 = 0x80,
-    ObjectBsp  = 0x100,
+    ObjectScenery      = 0x1,
+    ObjectEquipment    = 0x2,
+    ObjectVehicle      = 0x4,
+    ObjectBiped        = 0x8,
+    ObjectDevice       = 0x10,
+    ObjectLightFixture = 0x20,
+    ObjectControl      = 0x40,
 
     ObjectObject = 0x1000,
     ObjectUnit   = 0x2000,
+
+    ObjectMod2 = 0x100000,
+    ObjectBsp  = 0x200000,
 };
 
 using BspTag              = Components::TagType<BspReference>;
@@ -484,14 +487,6 @@ struct BitmapCache
                     img_offset.w = offset.w;
                     img_offset.h = offset.h - imsize.h;
                     offset.w += imsize.w;
-                    //                }
-                    //                else if((offset.h + imsize.h) <=
-                    //                pool.max.h)
-                    //                {
-                    //                    img_offset.w = 0;
-                    //                    img_offset.h = offset.h;
-                    //                    offset.w     = imsize.w;
-                    //                    offset.h += imsize.h;
                 } else
                 {
                     layer++;
@@ -544,7 +539,10 @@ struct BitmapCache
 
         if(it == index.end())
         {
-            cDebug("Failed to find shader: {0}", shader_name);
+            cDebug(
+                "Failed to find shader: {1} {0}",
+                shader_name,
+                shader.tag.str());
             return {};
         }
 
@@ -585,6 +583,8 @@ struct BitmapCache
 
             if(bitm_it == index.end())
             {
+                cDebug(
+                    "Skipping shader: {0} {1}", shader.tag.str(), shader_name);
                 break;
                 Throw(undefined_behavior("failed to locate bitmap"));
             }
@@ -627,6 +627,10 @@ struct BitmapCache
 
                 if(bitm_it == index.end())
                 {
+                    cDebug(
+                        "Invalid base map: {0} {1}",
+                        shader.tag.str(),
+                        shader_name);
                     break;
                     Throw(undefined_behavior("failed to locate map"));
                 }
@@ -642,7 +646,13 @@ struct BitmapCache
                 (*it)->to_reflexive<blam::shader_glass>().data(magic);
 
             if(!shader_model[0].diffuse.map.map.valid())
+            {
+                cDebug(
+                    "Invalid diffuse map: {0} {1}",
+                    shader.tag.str(),
+                    shader_name);
                 break;
+            }
 
             auto bitm_it = index.find(shader_model[0].diffuse.map.map);
 
@@ -661,7 +671,11 @@ struct BitmapCache
                 (*it)->to_reflexive<blam::shader_water>().data(magic);
 
             if(!shader_model[0].base.valid())
+            {
+                cDebug(
+                    "Invalid base map: {0} {1}", shader.tag.str(), shader_name);
                 return {};
+            }
 
             auto bitm_it = index.find(shader_model[0].base);
             auto ripples = shader_model[0].ripple.ripples.data(magic);
@@ -744,7 +758,12 @@ struct BitmapCache
         {
             cDebug(
                 "unimplemented texture type: {0}",
-                magic_enum::enum_name(image_.data->type));
+#if C_HAS_INCLUDE(<string_view>)
+                magic_enum::enum_name(image_.data->type)
+#else
+                "[unknown]"
+#endif
+            );
             return {};
         }
 
@@ -842,7 +861,7 @@ struct BSPCache
                 /* Just dig up the textures, long process */
                 mesh_data.color_bitm = bitmap_cache.predict(mesh.shader, 0);
                 mesh_data.light_bitm =
-                    bitmap_cache.resolve(section.lightmaps, group.lightmap_idx);
+                    bitmap_cache.resolve(section.lightmaps, 0);
                 mesh_data.shader = *index.find(mesh.shader);
 
                 /* ... and moving on */
@@ -1319,10 +1338,28 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                shader->matches(tag_class::swat);
     }
 
+    bool test_visible(Matf4 const& mat)
+    {
+        return true;
+
+        Vecf4 probe = {0, 0, 0, 1};
+        Vecf4 out   = probe * (m_data.camera_matrix * mat);
+
+        Vecf3 norm = {out.x() / out.w(), out.y() / out.w(), out.z() / out.w()};
+
+        scalar margin = 1.f;
+
+        return norm.x() < margin && norm.y() < margin && norm.z() < margin &&
+               norm.x() > -margin && norm.y() > -margin && norm.z() > -margin;
+    }
+
     virtual void end_restricted(Proxy& p, time_point const& time) override
     {
-        if(time - last_update > Chrono::seconds(1))
+        if(time - last_update > Chrono::seconds(5))
+        {
             update_draws(p, time);
+            last_update = time;
+        }
 
         for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
             render_pass(pass);
@@ -1375,6 +1412,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             auto      ref     = p.template ref<Proxy>(ent);
             SubModel& mod_ref = ref.template get<SubModelTag>();
+
+            if(!test_visible(mod_ref.parent.get<ModelTag>().transform))
+                continue;
 
             auto target_pass = &model[Pass_Opaque].draws();
 
@@ -1442,7 +1482,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             auto      ref     = p.template ref<Proxy>(ent);
             SubModel& mod_ref = ref.template get<SubModelTag>();
-            auto&     draw_data =
+
+            if(!test_visible(mod_ref.parent.get<ModelTag>().transform))
+                continue;
+
+            auto& draw_data =
                 model[mod_ref.current_pass].draws().at(mod_ref.draw_idx).d_data;
 
             matrix_store[draw_data.m_ioff] =
@@ -1894,6 +1938,8 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     load_objects(scenario->bipeds, data, e, ObjectBiped);
     load_objects(scenario->equips, data, e, ObjectEquipment);
     load_objects(scenario->weapon_spawns, data, e, ObjectEquipment);
+    load_objects(scenario->machines, data, e, ObjectDevice);
+    load_objects(scenario->light_fixtures, data, e, ObjectLightFixture);
 
     data.model_buf->unmap();
     data.model_index->unmap();

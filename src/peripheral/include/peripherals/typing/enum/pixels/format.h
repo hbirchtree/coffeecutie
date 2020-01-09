@@ -223,6 +223,8 @@ enum class BitFmt : u8
 
     Int,
     IntR,
+    Int_1010102,
+
     UInt,
     UIntR,
     UInt_5999R,

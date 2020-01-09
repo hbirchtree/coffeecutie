@@ -358,7 +358,7 @@ void examine_map(Resource&& mapfile, T version)
         } else if(tag->matches(blam::tag_class_t::mach))
         {
             auto machine =
-                tag->to_reflexive<blam::scn::machine>().data(map.magic);
+                tag->to_reflexive<blam::scn::device_machine>().data(map.magic);
             cDebug(" - Machine");
         } else if(tag->matches(blam::tag_class_t::vehi))
         {
@@ -809,7 +809,11 @@ void examine_map(Resource&& mapfile, T version)
                 scenery.pos.x(),
                 scenery.pos.y(),
                 scenery.pos.z(),
+#if C_HAS_INCLUDE(<string_view>)
                 magic_enum::enum_name(scenery.flag),
+#else
+                "",
+#endif
                 scenery_tags[scenery.ref][0].to_name().to_string(map.magic),
                 scenery_tags[scenery.ref][0].tag.str());
 
@@ -859,17 +863,26 @@ void examine_map(Resource&& mapfile, T version)
             cDebug(
                 "Vehicle: {0} {1}",
                 vehicle_tags[vehicle.ref][0].name.to_string(map.magic),
-                magic_enum::enum_name(vehicle.flag));
+#if C_HAS_INCLUDE(<string_view>)
+                magic_enum::enum_name(vehicle.flag)
+#else
+                ""
+#endif
+            );
         }
         for(auto const& device_group : scn->device_groups.data(map.magic))
         {
             cDebug("Device group");
         }
+        for(auto const& predicted_rsc : scn->predicted_resource.data(map.magic))
+        {
+            cDebug("Predicted resource");
+        }
         for(auto const& machine : scn->machines.palette.data(map.magic))
         {
             auto name   = machine[0].name.to_string(map.magic);
             auto tag_it = (*index_view.find(machine[0]))
-                              ->to_reflexive<blam::scn::machine>()
+                              ->to_reflexive<blam::scn::device_machine>()
                               .data(map.magic);
             cDebug("Machine");
         }
