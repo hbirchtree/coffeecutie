@@ -1034,7 +1034,6 @@ raspberry.armhf: FORCE rpi-sdk
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-raspberry.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DBUILD_CPP14=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
@@ -1064,7 +1063,6 @@ raspberry.armhf.shell: FORCE rpi-sdk
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-raspberry.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DBUILD_CPP14=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \

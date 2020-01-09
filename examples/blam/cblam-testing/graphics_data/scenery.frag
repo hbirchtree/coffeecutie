@@ -1,4 +1,4 @@
-#version 310 es
+#version 460 core
 
 #extension GL_EXT_shader_io_blocks : enable
 
@@ -42,7 +42,10 @@ void main()
     else if(mats.instance[frag.instanceId].source == 2)
         tex_dims = vec2(textureSize(bc5_tex, 0).xy);
 
-    vec2 tex_ = frag.tex - floor(frag.tex);
+    vec2 tex_ = frag.tex;
+//    vec2 tex_ = mats.instance[frag.instanceId].uvscale * frag.tex
+//            - floor(frag.tex);
+//    tex_ = tex_ * sign(tex_);
 
     vec2 sample_pos = tex_ * mats.instance[frag.instanceId].scaling
             + vec2(mats.instance[frag.instanceId].offset) / tex_dims.xy;

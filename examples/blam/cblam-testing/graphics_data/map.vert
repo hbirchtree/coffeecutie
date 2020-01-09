@@ -1,4 +1,4 @@
-#version 310 es
+#version 460 core
 
 #extension GL_EXT_shader_io_blocks : enable
 

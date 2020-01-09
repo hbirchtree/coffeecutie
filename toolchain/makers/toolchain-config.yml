@@ -262,7 +262,6 @@ testing.linux.*:
   +dependencies: rpi-sdk
   +cmake-opts:
     - -DRASPBERRY_SDK=/pi-sysroot
-    - -DBUILD_CPP14=ON
 
 .*mingw.*:
   =description: MinGW64 environment in Ubuntu Docker
