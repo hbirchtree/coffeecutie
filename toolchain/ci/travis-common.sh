@@ -98,8 +98,8 @@ MAKEFILE="Makefile.linux"
 
 INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
-function buildinfo() {
-    case "$TRAVIS_OS_NAME"; in
+function buildinfo_() {
+    case "$TRAVIS_OS_NAME" in
     "darwin")
         python3.7 "$INFOPY" $@
     ;;
@@ -112,10 +112,33 @@ function buildinfo() {
 #######################################
 # Retrieve script location relative to source dir
 #######################################
-SCRIPT_DIR="$SOURCE_DIR/$(${INFOPY} --source-dir ${SOURCE_DIR} script_location)"
-MAKEFILE_DIR="$SOURCE_DIR/$(${INFOPY} --source-dir ${SOURCE_DIR} makefile_location)"
+SCRIPT_DIR="${SOURCE_DIR}/$(buildinfo_ --source-dir ${SOURCE_DIR} script_location)"
+MAKEFILE_DIR="${SOURCE_DIR}/$(buildinfo_ --source-dir ${SOURCE_DIR} makefile_location)"
 
 CI_DIR="$MAKEFILE_DIR"
 
 HELPER="$SCRIPT_DIR/get_matching_release.py"
 GITHUBPY="$SCRIPT_DIR/github_api.py"
+
+function matching_release_() {
+    case "$TRAVIS_OS_NAME" in
+    "darwin")
+        python3.7 "$HELPER" $@
+    ;;
+    *)
+        "$HELPER" $@
+    ;;
+    esac
+}
+
+function github_py_() {
+    case "$TRAVIS_OS_NAME" in
+    "darwin")
+        python3.7 "$GITHUBPY" $@
+    ;;
+    *)
+        "$GITHUBPY" $@
+    ;;
+    esac
+}
+
