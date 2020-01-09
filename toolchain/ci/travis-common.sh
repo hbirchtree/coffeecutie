@@ -100,7 +100,7 @@ INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
 function buildinfo_() {
     case "$TRAVIS_OS_NAME" in
-    "darwin")
+    "osx")
         python3.7 "$INFOPY" $@
     ;;
     *)
@@ -122,7 +122,7 @@ GITHUBPY="$SCRIPT_DIR/github_api.py"
 
 function matching_release_() {
     case "$TRAVIS_OS_NAME" in
-    "darwin")
+    "osx")
         python3.7 "$HELPER" $@
     ;;
     *)
@@ -133,7 +133,7 @@ function matching_release_() {
 
 function github_py_() {
     case "$TRAVIS_OS_NAME" in
-    "darwin")
+    "osx")
         python3.7 "$GITHUBPY" $@
     ;;
     *)
