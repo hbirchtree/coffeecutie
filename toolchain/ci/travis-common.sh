@@ -98,6 +98,17 @@ MAKEFILE="Makefile.linux"
 
 INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
+function buildinfo() {
+    case "$TRAVIS_OS_NAME"; in
+    "darwin")
+        python3.7 "$INFOPY" $@
+    ;;
+    *)
+        "$INFOPY" $@
+    ;;
+    esac
+}
+
 #######################################
 # Retrieve script location relative to source dir
 #######################################

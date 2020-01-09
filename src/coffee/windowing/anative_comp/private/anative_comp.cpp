@@ -212,10 +212,13 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
         i32 meta   = AKeyEvent_getMetaState(event);
     } else if(source & AINPUT_SOURCE_KEYBOARD)
     {
-        i32 button = AKeyEvent_getKeyCode(event);
-        i32 action = AKeyEvent_getAction(event);
-        i32 flags  = AKeyEvent_getFlags(event);
-        i32 meta   = AKeyEvent_getMetaState(event);
+        i32 button  = AKeyEvent_getKeyCode(event);
+        i32 action  = AKeyEvent_getAction(event);
+        i32 flags   = AKeyEvent_getFlags(event);
+        i32 meta    = AKeyEvent_getMetaState(event);
+        i32 repeats = AKeyEvent_getRepeatCount(event);
+
+
     }
 }
 
