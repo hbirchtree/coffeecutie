@@ -72,12 +72,14 @@ bool link_canonical_test()
     FileFun::Rm(target_test, ec);
     FileFun::Rm(link_test, ec);
 
+    /* Create link to file */
     assertTrue(FileFun::Touch(FileType::File, target_test, ec));
     assertTrue(FileFun::Ln(target_test, link_test, ec));
 
+    /* Grab canonical name, should point to target file */
     auto gotPath = FileFun::CanonicalName(link_test, ec);
 
-    assertNotEquals(gotPath, *target_test);
+    assertEquals(gotPath, *target_test);
 
     /* Symlinks are verified deletable from last test */
     assertTrue(FileFun::Rm(link_test, ec));

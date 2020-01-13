@@ -671,7 +671,7 @@ android.x86_64.nougat: FORCE
 	-e CMAKE_TARGET=AndroidPackage
 
 # Coverage build using same config as Ubuntu
-# Compiler: Clang
+# Compiler: GCC 7+
 coverage: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -679,6 +679,7 @@ coverage: FORCE
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-coverage.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_CPP14=ON \
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
@@ -1146,7 +1147,7 @@ steam.amd64.shell: FORCE
 	-e CMAKE_TARGET=install
 
 # Lowfat debug-mode testing
-# Compiler: GCC 7+
+# Compiler: Clang 8+
 testing.linux.lowfat.debug: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -1167,8 +1168,6 @@ testing.linux.lowfat.debug: FORCE
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e CC= \
-	-e CXX= \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.lowfat.debug:/home/coffee/build:rw \
@@ -1181,7 +1180,7 @@ testing.linux.lowfat.debug: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Lowfat release-mode testing
-# Compiler: GCC 7+
+# Compiler: Clang 8+
 testing.linux.lowfat.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -1202,8 +1201,6 @@ testing.linux.lowfat.release: FORCE
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e CC= \
-	-e CXX= \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.lowfat.release:/home/coffee/build:rw \
@@ -1216,7 +1213,7 @@ testing.linux.lowfat.release: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Release-mode testing
-# Compiler: GCC 7+
+# Compiler: Clang 8+
 testing.linux.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -1236,8 +1233,6 @@ testing.linux.release: FORCE
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e CC= \
-	-e CXX= \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.release:/home/coffee/build:rw \

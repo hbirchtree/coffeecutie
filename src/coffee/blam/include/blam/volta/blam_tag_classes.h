@@ -104,6 +104,8 @@ enum class tag_class_t
 
 enum class tag_class_t : u32
 {
+    none = 0xffffffff,
+
     actr = 0x61637472, // rtca 1633907826 Actor
     actv = 0x61637476, // vtca 1633907830 Actor variant
     ant  = 0x616e7421, // !tna 1634628641 Antenna
@@ -164,6 +166,7 @@ enum class tag_class_t : u32
     snd  = 0x736e6421, // !dns 1936614433 Sound
     snde = 0x736e6465, // edns 1936614501 Sound effect
     soso = 0x736f736f, // osos 1936683887 Shader model
+    sotr = 0x736f7472, // sotr            Shader generic transparency
     Soul = 0x536f756c, // luoS 1399813484 UI item collection
     spla = 0x73706c61, // alps 1936747617 Plasma shader
     ssce = 0x73736365, // ecss 1936941925 Sound scenery

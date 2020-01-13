@@ -102,20 +102,19 @@
 # Some parameters to make coverage testing work
 coverage:
   =description: Coverage build using same config as Ubuntu
-  =compiler: Clang
+  =compiler: GCC 7+
   =preload: linux-coverage.cmake
   =build-type: Debug
   =git-dep-target: ubuntu.amd64
-  +container-opts:
+  +container-opts: # Default to GCC
     - -e CC=
     - -e CXX=
+  +cmake-opts:
+    - -DBUILD_CPP14=ON # Older GCC on Ubuntu, turn to C++14
 
 testing.linux.*:
-  =compiler: GCC 7+
+  =compiler: Clang 8+
   =git-dep-target: ubuntu.amd64
-  +container-opts:
-    - -e CC=
-    - -e CXX=
   +cmake-opts:
     - -DBUILD_EXAMPLES=OFF
     - -DSKIP_HIGHMEM_TESTS=ON

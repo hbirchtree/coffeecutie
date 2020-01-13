@@ -33,7 +33,14 @@ FORCEDINLINE PixFlg to(PixCmp component)
     case PixCmp::RGB:
         return PixFlg::RGB;
     case PixCmp::RGBA:
+    case PixCmp::BGRA:
         return PixFlg::RGBA;
+    case PixCmp::Depth:
+        return PixFlg::R | PixFlg::FloatingPoint;
+    case PixCmp::Stencil:
+        return PixFlg::R;
+    case PixCmp::DepthStencil:
+        return PixFlg::RG;
     default:
         return PixFlg::None;
     }
@@ -116,6 +123,8 @@ CONSTEXPR_EXTENDED FORCEDINLINE BitFmt to(PixFmt fmt)
 
     case P::Depth16:
         return B::UShort;
+    case P::Depth16F:
+        return B::Scalar_16;
     case P::Depth24Stencil8:
         return B::UInt24_8;
     case P::Depth32F:
@@ -219,6 +228,7 @@ CONSTEXPR_EXTENDED FORCEDINLINE PixFlg to(PixFmt fmt)
         return PixFlg::sRGB;
 
     case F::Depth16:
+    case F::Depth16F:
     case F::Depth32F:
     case F::Depth24Stencil8:
     case F::Depth32FStencil8:
@@ -306,6 +316,7 @@ CONSTEXPR_EXTENDED FORCEDINLINE PixCmp to(PixFmt fmt)
         return C::RGBA;
 
     case F::Depth16:
+    case F::Depth16F:
     case F::Depth32F:
         return C::Depth;
 

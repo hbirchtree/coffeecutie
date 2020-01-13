@@ -303,8 +303,8 @@ struct multiplayer_equipment
     equipment_gamemode_flags type2;
     equipment_gamemode_flags type3;
 
-    u32      team_idx;
-    u32      spawn_time;
+    u32 team_idx;
+    u32 spawn_time;
 
     u32 padding[11];
 
@@ -656,7 +656,77 @@ struct shader_index
     u32 ShaderIndex;
 };
 
-using skybox = tagref_t;
+using skybox_ref = tagref_t;
+
+struct skybox
+{
+    struct shader_function
+    {
+        bl_tag global_func;
+    };
+    struct animation
+    {
+        i16 anim_idx;
+        u32 period;
+    };
+    struct light
+    {
+        enum class light_flags : u32
+        {
+            none              = 0x0,
+            affects_exteriors = 0x1,
+            affects_interiors = 0x2,
+        };
+
+        tagref_typed_t<tag_class_t::lens> lens_flare;
+        i16                               marker_name;
+
+        u32 padding[3 * 4 + 2];
+
+        struct
+        {
+            light_flags flags;
+            Vecf3       color;
+            scalar      power;
+            scalar      test_distance;
+            Vecf2       direction; /* yaw, pitch */
+            scalar      diameter;
+        } radiosity;
+    };
+
+    struct radiosity_opts
+    {
+        Vecf3  color;
+        scalar power;
+    };
+    struct fog_opts
+    {
+        Vecf3  color;
+        scalar density;
+        scalar start_distance;
+        scalar opaque_distance;
+    };
+
+    tagref_typed_t<tag_class_t::mod2> model;
+    tagref_typed_t<tag_class_t::antr> anim_graph;
+
+    u32 padding_1[6];
+
+    radiosity_opts ambient;
+    radiosity_opts outdoor_ambient;
+    fog_opts       outdoor_fog;
+    fog_opts       indoor_fog;
+
+    u32 padding_2[4];
+
+    tagref_t indoor_fog_screen;
+
+    u32 padding_3[1];
+
+    reflexive_t<shader_function> shader_functions;
+    reflexive_t<animation>       animations;
+    reflexive_t<light>           lights;
+}; // namespace scn
 
 struct starting_equip
 {
@@ -714,12 +784,12 @@ struct scenario
         tagref_t unk_bsp2; // Unused
         tagref_t unk_sky;  // Unused
 
-        reflexive_t<skybox> skyboxes; // 12
+        reflexive_t<skybox_ref> skyboxes;
 
         scenario_type  type;
         scenario_flags flags;
 
-        reflexive_t<tagref_t> child_scenarios; // 12
+        reflexive_t<tagref_t> child_scenarios;
 
         scalar local_north;
 

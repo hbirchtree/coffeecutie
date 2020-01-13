@@ -1,9 +1,12 @@
 #pragma once
 
+#include <coffee/core/argument_handling.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/libc_types.h>
+#include <coffee/core/resource_prefix.h>
 #include <coffee/core/types/application_main.h>
 #include <peripherals/base.h>
+#include <platforms/argument_parse.h>
 
 #if defined(COFFEE_LOWFAT)
 #include <coffee/core/task_queue/task.h>
@@ -35,6 +38,12 @@ extern CoffeeMainWithArgs android_entry_point;
 
 #endif
 
+namespace Coffee {
+
+COFFEE_APP_FUNC void SetPlatformState();
+
+}
+
 extern int deref_main(
     CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0);
 
@@ -42,12 +51,21 @@ extern int deref_main(
 #if defined(COFFEE_LOWFAT)
 
 #define COFFEE_APPLICATION_MAIN(mainfun)                              \
-    int main(int argv, char** argc)                                   \
+    int main(int argc, char** argv)                                   \
     {                                                                 \
         using namespace Coffee;                                       \
         RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext()); \
         State::SetInternalState(State::CreateNewState());             \
-        return mainfun(argv, argc);                                   \
+        SetPlatformState();                                           \
+        GetInitArgs() = ::platform::args::AppArg::Clone(argc, argv);  \
+        if(argc >= 2)                                                 \
+        {                                                             \
+            platform::file::ResourcePrefix(argv[1]);                  \
+            GetInitArgs().m_ptrStorage.erase(                         \
+                GetInitArgs().m_ptrStorage.begin());                  \
+        }                                                             \
+                                                                      \
+        return mainfun(argc, argv);                                   \
     }
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \

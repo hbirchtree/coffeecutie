@@ -175,7 +175,7 @@ static void CoffeeInit_Internal(u32 flags)
 #endif
 }
 
-static void SetPlatformState()
+void SetPlatformState()
 {
     /* Initialize state management in ::platform namespace */
     auto& platState = platform::state;
