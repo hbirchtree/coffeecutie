@@ -1164,12 +1164,45 @@ struct alignas(4) shader_glass : shader_base /* aka sgla */
     } specular;
 };
 
-struct alignas(4) shader_meter /* aka smet, TODO */
+struct alignas(64) shader_meter : shader_base /* aka smet, TODO */
 {
-    u32                               unknown_1[19];
-    tagref_typed_t<tag_class_t::bitm> bitmap;
-    u32                               unknown[9];
-    scalar                            unkown_2[8];
+    enum class meter_flags : u32
+    {
+        none                    = 0x0,
+        decal                   = 0x1,
+        two_sided               = 0x2,
+        flash_color_is_negative = 0x4,
+        tint_mode_2             = 0x8,
+        unfiltered              = 0x10,
+    };
+
+    meter_flags flags;
+
+    u32 padding_1[9];
+
+    tagref_typed_t<tag_class_t::bitm> map;
+
+    u32 padding_2[8];
+
+    struct alignas(32)
+    {
+        Vecf3  gradient_min;
+        Vecf3  gradient_max;
+        Vecf3  background;
+        Vecf3  flash;
+        Vecf3  tint;
+        scalar transparency;
+        scalar background_transparency;
+    } colors;
+
+    struct alignas(32)
+    {
+        animation_src brightness;
+        animation_src flash;
+        animation_src value;
+        animation_src gradient;
+        animation_src flash_extension;
+    } ext_func_src;
 };
 
 struct alignas(4) shader_water : shader_base /* aka swat */
@@ -1429,6 +1462,44 @@ struct alignas(4) shader_model : shader_base /* aka soso */
 
 struct alignas(4) shader_plasma : shader_base /* TODO */
 {
+    u32 padding_1[2];
+
+    struct
+    {
+        animation_src source;
+        scalar        exponent;
+    } intensity;
+
+    struct
+    {
+        animation_src source;
+        scalar        amount;
+        scalar        exponent;
+    } offset;
+
+    u32 padding_2[9];
+
+    struct
+    {
+        scalar        perpendicular_brightness;
+        Vecf3         perpendicular_tint;
+        scalar        parallel_brightness;
+        Vecf3         parellel_tint;
+        animation_src tint_src;
+    } color;
+
+    u32 padding_3[2 + 3 * 4];
+
+    struct noise_map
+    {
+        scalar     anim_period;
+        Vecf3      anim_dir;
+        detail_map noise;
+    };
+
+    noise_map primary_noise;
+
+    noise_map secondary_noise;
 };
 
 C_FLAGS(shader_model::model_flags, u32)

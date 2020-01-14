@@ -419,6 +419,9 @@ struct BitmapCache
                 img->image.offset = Vecf2(img_offset.w, img_offset.h);
                 img->image.scale  = {imsize.w, imsize.h};
 
+                img->image.scale.x() /= pool.max.w;
+                img->image.scale.y() /= pool.max.h;
+
                 cDebug(
                     "{0}x{1} - {2}x{3} @ {4} ({5},{6})",
                     img_offset.w,
@@ -430,13 +433,10 @@ struct BitmapCache
                     imsize.h);
             }
 
-            for(auto img : pool.images)
+            for(auto& image : pool.images)
             {
-                img.second->image.offset.x() /= pool.max.w;
-                img.second->image.offset.y() /= pool.max.h;
-
-                img.second->image.scale.x() /= pool.max.w;
-                img.second->image.scale.y() /= pool.max.h;
+                image.second->image.offset.x() /= pool.max.w;
+                image.second->image.offset.y() /= pool.max.h;
             }
 
             pool.layers = layer + 1;
@@ -707,8 +707,7 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
             auto shader_model =
                 (*it)->to_reflexive<blam::shader_plasma>().data(magic)[0];
 
-            Throw(undefined_behavior("not implemented"));
-            //            out.color_bitm = get_bitm_idx(shader_model);
+            out.color_bitm = get_bitm_idx(shader_model.primary_noise.noise.map);
 
             break;
         }
@@ -716,6 +715,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
         {
             auto shader_model =
                 (*it)->to_reflexive<blam::shader_meter>().data(magic)[0];
+
+            out.color_bitm = get_bitm_idx(shader_model.map);
 
             break;
         }
