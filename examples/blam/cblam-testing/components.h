@@ -122,12 +122,12 @@ struct alignas(8) basic
 
 struct alignas(64) senv_micro
 {
-    struct alignas(64) map_data
+    struct alignas(32) map_data
     {
-        Vecf2 atlas_scale;
-        Vecf2 atlas_offset;
-        Vecf2 uv_scale;
-        u32   layer;
+        Vecf2         atlas_scale;
+        Vecf2         atlas_offset;
+        Vecf2         uv_scale;
+        u32           layer;
     };
 
     map_data base;
@@ -163,7 +163,7 @@ struct ShaderData
         {
             blam::shader_env const* shader = shader_data<blam::shader_env>();
 
-            return Pass_Env;
+            //            return Pass_Env;
             return shader->diffuse.micro.map.valid() ? Pass_EnvMicro : Pass_Env;
         }
         case tc::soso:

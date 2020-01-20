@@ -1,6 +1,52 @@
 #pragma once
 
+#include <peripherals/stl/tuple_hash.h>
+
 #include "data.h"
+
+namespace detail {
+
+inline Tup<PixFmt, CompFlags> get_bitm_hash(BitmapItem const& bitm)
+{
+    return std::make_tuple(bitm.image.fmt.pixfmt, bitm.image.fmt.cmpflg);
+}
+
+inline u64 shader_hash(ShaderItem const& shader, ShaderCache& cache)
+{
+    using blam::tag_class_t;
+
+    auto& bitm = cache.bitm_cache;
+
+    switch(shader.tag->tagclass_e[0])
+    {
+    case tag_class_t::senv:
+    {
+        BitmapItem const& base = bitm.find(shader.senv.base_bitm)->second;
+
+        if(shader.senv.micro_bitm.valid())
+        {
+            BitmapItem const& micro = bitm.find(shader.senv.micro_bitm)->second;
+
+            auto fmt_hash =
+                std::make_tuple(get_bitm_hash(base), get_bitm_hash(micro));
+
+            return std::hash<decltype(fmt_hash)>()(fmt_hash);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    /* Default: use format of color bitmap */
+    {
+        auto fmt_hash = std::make_tuple(
+            get_bitm_hash(bitm.find(shader.color_bitm)->second));
+        return std::hash<decltype(fmt_hash)>()(fmt_hash);
+    }
+} // namespace detail
+
+} // namespace detail
 
 template<typename Version>
 struct MeshRenderer : Components::RestrictedSubsystem<
@@ -31,9 +77,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
         }
 
-        GFX::RenderPass source;
-        GFX::OPT_DRAW   draw;
-        PIP_PARAM*      pipeline;
+        GFX::RenderPass     source;
+        GFX::OPT_DRAW       draw;
+        PIP_PARAM*          pipeline;
+        Map<u64, PIP_PARAM> format_states;
 
         Pair<u32, u32> material_buffer_range;
         Bytes          material_buffer;
@@ -210,12 +257,69 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         render_pass(bsp[Pass_Lights]);
     }
 
+    void setup_state(
+        ShaderItem const& shader, PIP_PARAM& source, PIP_PARAM& params)
+    {
+        using blam::tag_class_t;
+
+        BitmapCache& bitm = m_data.bitm_cache;
+
+        params.set_constant("camera", Bytes::From(m_data.camera_matrix));
+
+        switch(shader.tag->tagclass_e[0])
+        {
+        case tag_class_t::senv:
+        {
+            BitmapItem const& base = bitm.find(shader.senv.base_bitm)->second;
+
+            if(shader.senv.micro_bitm.valid())
+            {
+                params.set_sampler(
+                    "base",
+                    bitm.get_bucket(base.image.fmt).sampler->handle().bind(0));
+
+                BitmapItem const& micro =
+                    bitm.find(shader.senv.micro_bitm)->second;
+                params.set_sampler(
+                    "micro",
+                    bitm.get_bucket(micro.image.fmt).sampler->handle().bind(1));
+                break;
+            }
+
+            C_FALLTHROUGH;
+        }
+        default:
+        {
+            params.set_sampler(
+                "bc1_tex",
+                bitm.get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT1)))
+                    .sampler->handle()
+                    .bind(0));
+            params.set_sampler(
+                "bc3_tex",
+                bitm.get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT3)))
+                    .sampler->handle()
+                    .bind(1));
+            params.set_sampler(
+                "bc5_tex",
+                bitm.get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT5)))
+                    .sampler->handle()
+                    .bind(2));
+            break;
+        }
+        }
+
+        params.build_state();
+    }
+
     void update_draws(Proxy& p, time_point const&)
     {
         for(Pass& pass : bsp)
             pass.clear();
         for(Pass& pass : model)
             pass.clear();
+
+        BitmapCache& bitm_cache = m_data.bitm_cache;
 
         /* Update draws */
         for(auto& ent : p.select(ObjectBsp))
@@ -226,14 +330,29 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(!bsp_ref.visible)
                 continue;
 
-            auto target_pass = &bsp[bsp_ref.current_pass].draws();
+            Pass& pass        = bsp[bsp_ref.current_pass];
+            auto  target_pass = &pass.draws();
+
+            ShaderItem const& shader =
+                m_data.shader_cache.find(bsp_ref.shader)->second;
+
+            auto state_hash = detail::shader_hash(shader, m_data.shader_cache);
+            auto state      = pass.format_states.find(state_hash);
+
+            if(state == pass.format_states.end())
+            {
+                state = pass.format_states.insert({state_hash, *pass.pipeline})
+                            .first;
+
+                PIP_PARAM& state_ = state->second;
+                setup_state(shader, *pass.pipeline, state_);
+            }
 
             bsp_ref.draw_idx = target_pass->size();
-            target_pass->push_back(
-                {m_data.bsp_attr,
-                 &bsp[bsp_ref.current_pass].pipeline->get_state(),
-                 bsp_ref.draw.call,
-                 bsp_ref.draw.draw});
+            target_pass->push_back({m_data.bsp_attr,
+                                    &state->second.get_state(),
+                                    bsp_ref.draw.call,
+                                    bsp_ref.draw.draw});
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -397,6 +516,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.layer        = bitmap.image.layer;
                 mat.atlas_offset = bitmap.image.offset;
                 mat.atlas_scale  = bitmap.image.scale;
+                mat.uv_scale     = {1};
 
                 auto comp_flags = std::get<3>(bitmap.image.bucket);
                 switch(comp_flags)
@@ -424,6 +544,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     BlamData<Version>& m_data;
 
+    LinkList<PIP_PARAM>     pipelines;
     Array<Pass, Pass_Count> bsp;
     Array<Pass, Pass_Count> model;
 };

@@ -103,11 +103,10 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
             auto shader_data =
                 shader_tag->to_reflexive<blam::shader_model>().data(map.magic);
             cDebug("Shader: {0} {1}", map.get_name(&shader.ref));
-            auto bitm_name = shader_data[0].bitmap.name.to_string(map.magic);
-            auto _0 = shader_data[0].detail_textures.name.to_string(map.magic);
-            auto _1 = shader_data[0].detail_textures_.name.to_string(map.magic);
-            auto _2 = shader_data[0].bitmap_1.name.to_string(map.magic);
-            auto _3 = shader_data[0].bitmap_2.name.to_string(map.magic);
+            auto bitm_name = shader_data[0].maps.base.name.to_string(map.magic);
+            auto _0 = shader_data[0].maps.detail.map.name.to_string(map.magic);
+            auto _1 =
+                shader_data[0].maps.multipurpose.name.to_string(map.magic);
             //            auto _4 =
             //            shader_data[0].unknown_data_1.data(map.magic); auto _5
             //            = shader_data[0].unknown_data_2.data(map.magic);

@@ -155,29 +155,34 @@ struct ShaderItem
         return tag->tagclass_e[0];
     }
 
+    struct soso_t
+    {
+        generation_idx_t base_bitm;
+        generation_idx_t multi_bitm;
+        generation_idx_t detail_bitm;
+    };
+    struct senv_t
+    {
+        generation_idx_t base_bitm;
+        generation_idx_t primary_bitm;
+        generation_idx_t secondary_bitm;
+        generation_idx_t micro_bitm;
+        generation_idx_t reflection_bitm;
+    };
+    struct schi_t
+    {
+        generation_idx_t map1;
+        generation_idx_t map2;
+    };
+
     union
     {
         generation_idx_t color_bitm;
 
-        struct
-        {
-            generation_idx_t base_bitm;
-            generation_idx_t multi_bitm;
-            generation_idx_t detail_bitm;
-        } soso;
-        struct
-        {
-            generation_idx_t base_bitm;
-            generation_idx_t primary_bitm;
-            generation_idx_t secondary_bitm;
-            generation_idx_t micro_bitm;
-            generation_idx_t reflection_bitm;
-        } senv;
-        struct
-        {
-            generation_idx_t map1;
-            generation_idx_t map2;
-        } schi;
+        soso_t soso;
+        senv_t senv;
+        schi_t schi;
+
         struct
         {
         } scex;
@@ -433,12 +438,6 @@ struct BitmapCache
                     imsize.h);
             }
 
-            for(auto& image : pool.images)
-            {
-                image.second->image.offset.x() /= pool.max.w;
-                image.second->image.offset.y() /= pool.max.h;
-            }
-
             pool.layers = layer + 1;
         }
 
@@ -452,6 +451,13 @@ struct BitmapCache
 
         for(auto const& bitm : m_cache)
             commit_bitmap(bitm.second);
+
+        for(auto& pool : fmt_count)
+            for(auto& image : pool.second.images)
+            {
+                image.second->image.offset.x() /= pool.second.max.w;
+                image.second->image.offset.y() /= pool.second.max.h;
+            }
     }
 
     virtual BitmapItem predict_impl(

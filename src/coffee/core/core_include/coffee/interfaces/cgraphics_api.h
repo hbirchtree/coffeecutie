@@ -580,7 +580,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      * \brief Describes a particular uniform value, either inside a uniform
      * block or separately
      */
-    struct UniformDescriptor : non_copy
+    struct UniformDescriptor
     {
         UniformDescriptor() : m_name(), m_flags(0), m_idx(0)
         {

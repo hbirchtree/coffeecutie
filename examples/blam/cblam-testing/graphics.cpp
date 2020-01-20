@@ -98,6 +98,9 @@ void load_objects(
 
     for(T const& instance : group.instances.data(magic))
     {
+        if(instance.ref == -1 || !palette[instance.ref][0].valid())
+            continue;
+
         auto instance_tag = (*index.find(palette[instance.ref][0]));
 
         if(!instance_tag->valid())
@@ -325,6 +328,12 @@ i32 blam_main(i32, cstring_w*)
     auto&               e = comp_app::createContainer();
     comp_app::configureDefaults(e);
 
+#if defined(FEATURE_ENABLE_GLeamRHI)
+    auto& glConfig =
+        e.service<comp_app::AppLoader>()->config<comp_app::GLConfig>();
+    glConfig.swapInterval = 1;
+#endif
+
     cDebug(
         "Buffer budget: {0} / {1} MB",
         memory_budget::grand_total,
@@ -377,8 +386,6 @@ i32 blam_main(i32, cstring_w*)
             data.senv_micro_pipeline = &gfx.alloc_standard_pipeline<2>(
                 {{"map.vert"_rsc, "map_senv.frag"_rsc}});
 
-            auto& senv_micro = *data.senv_micro_pipeline;
-
             pipeline.build_state();
             pipeline.get_state();
             data.model_pipeline->build_state();
@@ -396,28 +403,6 @@ i32 blam_main(i32, cstring_w*)
             data.model_matrix_store->bindrange(0, 0, 4_MB, ec);
             data.material_store->bindrange(1, 0, 2_MB, ec);
             data.material_store->bindrange(2, 2_MB, 2_MB, ec);
-
-            {
-                senv_micro.set_constant(
-                    "view", Bytes::From(data.camera_matrix));
-                senv_micro.set_sampler(
-                    "base",
-                    data.bitm_cache
-                        .get_bucket(
-                            PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT1)))
-                        .sampler->handle()
-                        .bind(0));
-                senv_micro.set_sampler(
-                    "micro",
-                    data.bitm_cache
-                        .get_bucket(
-                            PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT1)))
-                        .sampler->handle()
-                        .bind(1));
-
-                senv_micro.build_state();
-                senv_micro.get_state();
-            }
 
             {
                 auto pipeline = data.model_pipeline;
@@ -449,29 +434,6 @@ i32 blam_main(i32, cstring_w*)
                 pipeline->build_state();
                 pipeline->get_state();
             }
-
-            pipeline.set_constant("view", Bytes::From(data.camera_matrix));
-            pipeline.set_sampler(
-                "bc1_tex",
-                data.bitm_cache
-                    .get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT1)))
-                    .sampler->handle()
-                    .bind(0));
-            pipeline.set_sampler(
-                "bc3_tex",
-                data.bitm_cache
-                    .get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT3)))
-                    .sampler->handle()
-                    .bind(1));
-            pipeline.set_sampler(
-                "bc5_tex",
-                data.bitm_cache
-                    .get_bucket(PixDesc(CompFmt(PixFmt::DXTn, CompFlags::DXT5)))
-                    .sampler->handle()
-                    .bind(2));
-
-            pipeline.build_state();
-            pipeline.get_state();
 
             e.register_subsystem_inplace<
                 MeshRenderer<halo_version>::tag_type,

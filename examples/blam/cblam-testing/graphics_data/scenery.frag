@@ -34,6 +34,11 @@ out vec4 out_color;
 void main()
 {
     vec2 tex_ = frag.tex;
+
+    if(tex_.x < 0 || tex_.y < 0)
+        tex_ = 1 - tex_ - ceil(tex_);
+    else
+        tex_ = tex_ - floor(tex_);
 //    vec2 tex_ = mats.instance[frag.instanceId].uvscale * frag.tex
 //            - floor(frag.tex);
 //    tex_ = tex_ * sign(tex_);

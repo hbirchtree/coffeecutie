@@ -308,6 +308,13 @@ struct shader_param_view
     {
     }
 
+    shader_param_view(shader_param_view const& pip) :
+        m_constant_desc(pip.m_constant_desc),
+        m_parameter_desc(pip.m_parameter_desc),
+        m_constant_values(pip.m_constant_values), m_pipeline(pip.m_pipeline)
+    {
+    }
+
     Pipeline& pipeline()
     {
         return *unwrap_ptr(m_pipeline);
