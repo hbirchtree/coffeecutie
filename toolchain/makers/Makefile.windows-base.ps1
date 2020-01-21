@@ -22,11 +22,10 @@ function yearToVsVersion($year)
 {
     switch($year)
     {
-        "2019" { echo "16 " }
-        "2017" { echo "15 " }
-        "2015" { echo "14 " }
+        "2019" { echo "16" }
+        "2017" { echo "15" }
 
-        default { echo "14 " }
+        default { echo "14" }
     }
 }
 
