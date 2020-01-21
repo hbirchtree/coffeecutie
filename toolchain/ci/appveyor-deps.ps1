@@ -6,7 +6,9 @@ choco install --no-progress -y python3 nuget.commandline
 
 refreshenv
 
+$ErrorActionPreference = "Continue"
 pip -q install pyyaml requests
+$ErrorActionPreference = "Stop"
 
 # We create our own OpenSSL library directory
 # This can be used by FindOpenSSL.cmake
