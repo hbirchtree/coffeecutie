@@ -22,11 +22,11 @@ function yearToVsVersion($year)
 {
     switch($year)
     {
-        "2019" { echo "16" }
-        "2017" { echo "15" }
-        "2015" { echo "14" }
+        "2019" { echo "16 " }
+        "2017" { echo "15 " }
+        "2015" { echo "14 " }
 
-        default { echo "14" }
+        default { echo "14 " }
     }
 }
 
@@ -51,20 +51,22 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 
     if($env:APPVEYOR_BUILD_WORKER_IMAGE -eq "Visual Studio 2017")
     {
-        $Generator = "Visual Studio 15 2017 $arch".Trim()
+        $Generator = "Visual Studio 15 2017 $arch"
     }elseif($env:APPVEYOR_BUILD_WORKER_IMAGE -eq "Visual Studio 2015")
     {
-        $Generator = "Visual Studio 14 2015 $arch".Trim()
+        $Generator = "Visual Studio 14 2015 $arch"
     }elseif($env:AZURE_IMAGE.substring(0, 2) -eq "vs")
     {
         $VsYear = $env:AZURE_IMAGE.substring(2, 4)
-        $Generator = "Visual Studio " + (yearToVsVersion $VsYear) + " $VsYear $arch".Trim()
+        $Generator = "Visual Studio " + (yearToVsVersion $VsYear) + " $VsYear"
     }
 	elseif($env:AZURE_IMAGE.substring(0, 8) -eq "windows-")
 	{
         $VsYear = $env:AZURE_IMAGE.substring(9, 4)
-        $Generator = "Visual Studio" + (yearToVsVersion $VsYear) + " $VsYear $arch".Trim()
+        $Generator = "Visual Studio" + (yearToVsVersion $VsYear) + " $VsYear"
 	}
+
+	$Generator = $Generator.Trim()
 
     if ( "$Generator" -eq "" )
     {
