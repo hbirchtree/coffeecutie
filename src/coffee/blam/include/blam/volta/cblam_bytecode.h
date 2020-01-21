@@ -1071,7 +1071,7 @@ struct bytecode_pointer
         {
             return {out, eval::running};
         }
-        static result_t sleep_timeout(i32 time)
+        static result_t sleep_timeout(u32 time)
         {
             return {{},
                     eval::sleeping,

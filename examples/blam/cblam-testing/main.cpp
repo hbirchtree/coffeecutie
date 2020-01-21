@@ -1013,35 +1013,6 @@ void examine_map(Resource&& mapfile, T version)
         }
     }
 
-    auto skybox = scenario_header->skyboxes.data(map.magic);
-
-    if(skybox[0].matches(blam::tag_class_t::sky))
-    {
-        cDebug(
-            "Skybox: {0} ({1}) -> {2}",
-            map.get_name(skybox.data),
-            C_CAST<int>(skybox[0].tag_class),
-            skybox[0].tag_id);
-
-        auto skybox_it = index_view.find(skybox[0]);
-
-        if(skybox_it != index_view.end())
-        {
-            auto const& skybox_tag = (*skybox_it);
-            auto const& skybox_data =
-                skybox_tag->to_reflexive<blam::scn::skybox>().data(map.magic);
-
-            if(skybox_data[0].valid())
-            {
-                auto const& model_tag = *index_view.find(skybox_data[0]);
-                inspect_model(map, *model_tag);
-            }
-
-            cDebug("Skybox tag: {0}", skybox_tag->tag_id, skybox[0].tag_id);
-        } else
-            cDebug("Failed to find tag");
-    }
-
     return;
 
     if(false)
