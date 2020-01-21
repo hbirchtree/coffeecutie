@@ -6,8 +6,13 @@ using ERef = Components::EntityRef<Components::EntityContainer>;
 
 using comp_app::detail::duration;
 using comp_app::detail::time_point;
+
 using vertex_type      = blam::vert::vertex<blam::vert::uncompressed>;
 using xbox_vertex_type = blam::vert::vertex<blam::vert::compressed>;
+
+using light_vertex_type = blam::vert::light_vertex<blam::vert::uncompressed>;
+using light_xbox_vertex_type = blam::vert::light_vertex<blam::vert::compressed>;
+
 using Components::ComponentRef;
 using Components::EntityContainer;
 
@@ -21,6 +26,8 @@ enum Passes
     Pass_LastOpaque,
     Pass_Lights = Pass_LastOpaque,
     Pass_Glass,
+
+    Pass_Wireframe,
 
     Pass_Count,
 };
@@ -124,10 +131,10 @@ struct alignas(64) senv_micro
 {
     struct alignas(32) map_data
     {
-        Vecf2         atlas_scale;
-        Vecf2         atlas_offset;
-        Vecf2         uv_scale;
-        u32           layer;
+        Vecf2 atlas_scale;
+        Vecf2 atlas_offset;
+        Vecf2 uv_scale;
+        u32   layer;
     };
 
     map_data base;

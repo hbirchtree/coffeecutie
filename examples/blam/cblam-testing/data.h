@@ -48,10 +48,13 @@ struct BlamData
     ShPtr<GFX::BUF_A>   bsp_buf;
     ShPtr<GFX::BUF_E>   bsp_index;
     ShPtr<GFX::V_DESC>  bsp_attr;
+    ShPtr<GFX::BUF_A>   bsp_light_buf;
+    ShPtr<GFX::V_DESC>  bsp_light_attr;
 
     PIP_PARAM* bsp_pipeline;
     PIP_PARAM* model_pipeline;
     PIP_PARAM* senv_micro_pipeline;
+    PIP_PARAM* wireframe_pipeline;
 
     ModelCache<Version> model_cache;
 
@@ -67,6 +70,8 @@ struct BlamData
     Matf4               camera_matrix;
     StandardCameraOpts  camera_opts;
     ShPtr<std_camera_t> std_camera;
+
+    scalar wireframe_distance;
 
     ControllerOpts                               controller_opts;
     ControllerCamera<camera_t*, ControllerOpts*> controller_camera;

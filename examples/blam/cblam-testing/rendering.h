@@ -105,16 +105,18 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     MeshRenderer(BlamData<Version>& data) : m_data(data)
     {
-        bsp[Pass_Opaque].source.pipeline = data.bsp_pipeline->pipeline_ptr();
-        bsp[Pass_Metal].source.pipeline  = data.bsp_pipeline->pipeline_ptr();
-        bsp[Pass_Glass].source.pipeline  = data.bsp_pipeline->pipeline_ptr();
-        bsp[Pass_Lights].source.pipeline = data.bsp_pipeline->pipeline_ptr();
+        for(auto& pass : bsp)
+        {
+            pass.pipeline        = data.bsp_pipeline;
+            pass.source.pipeline = data.bsp_pipeline->pipeline_ptr();
+        }
+        bsp[Pass_EnvMicro].pipeline = data.senv_micro_pipeline;
         bsp[Pass_EnvMicro].source.pipeline =
             data.senv_micro_pipeline->pipeline_ptr();
 
-        for(auto& pass : bsp)
-            pass.pipeline = data.bsp_pipeline;
-        bsp[Pass_EnvMicro].pipeline = data.senv_micro_pipeline;
+        bsp[Pass_Wireframe].pipeline = data.wireframe_pipeline;
+        bsp[Pass_Wireframe].source.pipeline =
+            data.wireframe_pipeline->pipeline_ptr();
 
         model[Pass_Opaque].source.pipeline =
             data.model_pipeline->pipeline_ptr();
@@ -154,6 +156,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             GFX::BLNDSTATE& blend = model[Pass_Lights].source.blend;
             blend.m_doBlend       = true;
             blend.m_lighten       = true;
+        }
+
+        {
+            GFX::BLNDSTATE& blend = bsp[Pass_Wireframe].source.blend;
+            blend.m_doBlend       = true;
         }
 
         u32 base = 0;
@@ -255,6 +262,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         render_pass(bsp[Pass_Glass]);
         render_pass(model[Pass_Lights]);
         render_pass(bsp[Pass_Lights]);
+
+//        render_pass(bsp[Pass_Wireframe]);
     }
 
     void setup_state(
@@ -265,6 +274,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         BitmapCache& bitm = m_data.bitm_cache;
 
         params.set_constant("camera", Bytes::From(m_data.camera_matrix));
+
+        auto dist_constant = std::find_if(
+            params.constants_begin(),
+            params.constants_end(),
+            params.constant_by_name("render_distance"));
+
+        if(dist_constant != params.constants_end())
+            params.set_constant(
+                *dist_constant, Bytes::From(m_data.wireframe_distance));
 
         switch(shader.tag->tagclass_e[0])
         {
@@ -353,6 +371,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                                     &state->second.get_state(),
                                     bsp_ref.draw.call,
                                     bsp_ref.draw.draw});
+
+            bsp[Pass_Wireframe].draws().push_back(
+                {m_data.bsp_attr,
+                 &bsp[Pass_Wireframe].pipeline->get_state(),
+                 GFX::D_CALL().withIndexing().withInstancing().withLineStrip(),
+                 bsp_ref.draw.draw});
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -377,6 +401,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             GFX::OptimizeRenderPass(bsp[i].source, bsp[i].draw);
             GFX::OptimizeRenderPass(model[i].source, model[i].draw);
         }
+
+        GFX::OptimizeRenderPass(
+            bsp[Pass_Wireframe].source, bsp[Pass_Wireframe].draw);
 
         GFX::OptimizeRenderPass(
             model[Pass_Glass].source,

@@ -7,7 +7,9 @@ precision highp int;
 precision highp sampler2DArray;
 
 in FragData {
+    vec3 world_pos;
     vec2 tex;
+    vec2 light_tex;
     flat int instanceId;
 } frag;
 
@@ -29,6 +31,8 @@ struct Material
 uniform sampler2DArray base;
 uniform sampler2DArray micro;
 
+uniform float render_distance;
+
 layout(binding = 1, std140) buffer MaterialProperties
 {
     Material instance[];
@@ -38,6 +42,9 @@ out vec4 out_color;
 
 void main()
 {
+//    if(length(frag.world_pos - vec3(0)) > render_distance)
+//        discard;
+
     vec2 tex_ = frag.tex * mats.instance[frag.instanceId].base.uv_scale;
     tex_ = tex_ - floor(tex_);
     vec2 utex_ = frag.tex * mats.instance[frag.instanceId].micro.uv_scale;

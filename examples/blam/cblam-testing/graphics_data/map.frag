@@ -7,7 +7,9 @@ precision highp int;
 precision highp sampler2DArray;
 
 in FragData {
+    vec3 world_pos;
     vec2 tex;
+    vec2 light_tex;
     flat int instanceId;
 } frag;
 

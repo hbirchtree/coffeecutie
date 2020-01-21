@@ -385,6 +385,8 @@ i32 blam_main(i32, cstring_w*)
             data.model_pipeline      = &scenery_pipeline;
             data.senv_micro_pipeline = &gfx.alloc_standard_pipeline<2>(
                 {{"map.vert"_rsc, "map_senv.frag"_rsc}});
+            data.wireframe_pipeline = &gfx.alloc_standard_pipeline<2>(
+                {{"map.vert"_rsc, "wireframe.frag"_rsc}});
 
             pipeline.build_state();
             pipeline.get_state();
@@ -403,6 +405,12 @@ i32 blam_main(i32, cstring_w*)
             data.model_matrix_store->bindrange(0, 0, 4_MB, ec);
             data.material_store->bindrange(1, 0, 2_MB, ec);
             data.material_store->bindrange(2, 2_MB, 2_MB, ec);
+
+            data.wireframe_pipeline->set_constant(
+                "camera", Bytes::From(data.camera_matrix));
+            data.wireframe_pipeline->set_constant(
+                "render_distance", Bytes::From(data.wireframe_distance));
+            data.wireframe_pipeline->build_state();
 
             {
                 auto pipeline = data.model_pipeline;
@@ -447,6 +455,17 @@ i32 blam_main(i32, cstring_w*)
             GFX::DEPTSTATE depth_enable;
             depth_enable.m_test = true;
             GFX::SetDepthState(depth_enable);
+
+            runtime_queue_error rqec;
+            RuntimeQueue::QueuePeriodic(
+                RuntimeQueue::GetCurrentQueue(rqec),
+                Chrono::milliseconds(10),
+                [&data]() {
+                    data.wireframe_distance += 0.05f;
+                    data.wireframe_distance =
+                        CMath::fmod(data.wireframe_distance, 400.f);
+                },
+                rqec);
         },
         [](EntityContainer&        e,
            BlamData<halo_version>& data,
