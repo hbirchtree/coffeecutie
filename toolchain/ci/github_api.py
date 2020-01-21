@@ -7,8 +7,9 @@ import json
 from sys import stderr
 
 
-REQUEST_POST = 0
-REQUEST_GET  = 1
+REQUEST_POST   = 0
+REQUEST_GET    = 1
+REQUEST_DELETE = 2
 
 GH_TOKEN = None
 GH_API = 'https://api.github.com'
@@ -39,6 +40,8 @@ def rest_request(url, headers, data, form=None, rtype=REQUEST_GET):
         return requests.get(url, headers=headers)
     elif rtype == REQUEST_POST:
         return requests.post(url, data=data, params=form, headers=headers)
+    elif rtype == REQUEST_DELETE:
+        return requests.delete(url, data=data, params=form, headers=headers)
     else:
         raise RuntimeError('Invalid request type')
 
@@ -66,7 +69,8 @@ def gh_request(endpoint, data=None, rtype=REQUEST_GET, headers=None, form=None):
                         form=form)
 
     resp_ = GithubRequestData()
-    resp_.type = resp.headers['Content-Type']
+    if 'Content-Type' in resp.headers:
+        resp_.type = resp.headers['Content-Type']
     resp_.headers = resp.headers
     resp_.content = resp.content
     resp_.status_code = resp.status_code
@@ -107,9 +111,21 @@ def gh_get_release(repo, release):
     return release_data
 
 
+def pick_keys(dic, keys):
+    out = {}
+    for k in dic:
+        if k in keys:
+            out[k] = dic[k]
+    return out
+
+
+def pattern_comp(pattern):
+    import re
+    return re.compile('^' + pattern + '$')
+
+
 def handle_cmd(action, cat, item, select):
     if action == 'list':
-        import re
         if cat == 'release':
             # Just get and format the list of releases
             resp = gh_request('/repos/%s/releases' % item)
@@ -117,7 +133,7 @@ def handle_cmd(action, cat, item, select):
             j = resp.content
             patterns = []
             for e in select:
-                patterns += [re.compile(e)]
+                patterns += [pattern_comp(e)]
             for r in j:
                 match = False
                 if len(patterns) < 1:
@@ -145,7 +161,7 @@ def handle_cmd(action, cat, item, select):
             j = resp.content
             patterns = []
             for e in select:
-                patterns += [re.compile(e)]
+                patterns += [pattern_comp(e)]
             for a in j:
                 match = False
                 if len(patterns) < 1:
@@ -165,7 +181,7 @@ def handle_cmd(action, cat, item, select):
             gh_errorhandle(resp)
             patterns = []
             for e in select:
-                patterns += [re.compile(e)]
+                patterns += [pattern_comp(e)]
             for r in resp.content:
                 match = False
                 if len(patterns) < 1:
@@ -260,6 +276,30 @@ def handle_cmd(action, cat, item, select):
                                     'Content-Type': 'application/json'
                                 })
             gh_errorhandle(status)
+    elif action == 'delete':
+        if cat == 'release':
+            if len(item.split(':')) == 2:
+                item, fmt = item.split(':')
+                select = [fmt] + select
+
+            resp = gh_request('/repos/%s/releases' % item)
+            gh_errorhandle(resp)
+
+            releases = [ pick_keys(x, ['name', 'id', 'tag_name']) for x in resp.content]
+
+            to_delete = set()
+
+            for fmt in select:
+                p = pattern_comp(fmt)
+                for rel in releases:
+                    if p.match(rel['tag_name']):
+                        to_delete.add((rel['tag_name'], rel['id']))
+
+            for rel in to_delete:
+                print('Deleting %s' % rel[0])
+                resp = gh_request('/repos/%s/releases/%s' % (item, rel[1]), rtype=REQUEST_DELETE)
+                gh_errorhandle(resp)
+                print(resp.status_code)
 
 
 def main():
@@ -268,7 +308,7 @@ def main():
     args = ArgumentParser('Github API tool')
 
     args.add_argument('action', type=str,
-                      choices=['list', 'pull', 'push'],
+                      choices=['list', 'pull', 'push', 'delete'],
                       help='action to be performed on category')
 
     args.add_argument('category', type=str,

@@ -115,7 +115,7 @@ if(NOT TARGET StandardLibs)
         list ( APPEND CORE_EXTRA_LIBRARIES m)
     endif()
 
-    if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE)
+    if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE AND NOT N64)
         find_package(Threads REQUIRED)
         list( APPEND CORE_EXTRA_LIBRARIES Threads::Threads )
     endif()

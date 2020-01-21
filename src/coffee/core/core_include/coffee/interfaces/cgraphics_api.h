@@ -1123,6 +1123,13 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             cpy.setCreat(PrimCre::Strip);
             return cpy;
         }
+        inline DrawCall withLineStrip()
+        {
+            auto cpy = *this;
+            cpy.setPrim(Prim::Line);
+            cpy.setCreat(PrimCre::Strip);
+            return cpy;
+        }
     };
 
     /*!
