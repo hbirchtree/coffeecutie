@@ -99,14 +99,7 @@ MAKEFILE="Makefile.linux"
 INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
 function buildinfo_() {
-    case "$TRAVIS_OS_NAME" in
-    "osx")
-        python3.7 "$INFOPY" $@
-    ;;
-    *)
-        "$INFOPY" $@
-    ;;
-    esac
+    "$INFOPY" $@
 }
 
 #######################################
@@ -121,24 +114,10 @@ HELPER="$SCRIPT_DIR/get_matching_release.py"
 GITHUBPY="$SCRIPT_DIR/github_api.py"
 
 function matching_release_() {
-    case "$TRAVIS_OS_NAME" in
-    "osx")
-        python3.7 "$HELPER" $@
-    ;;
-    *)
-        "$HELPER" $@
-    ;;
-    esac
+    "$HELPER" $@
 }
 
 function github_py_() {
-    case "$TRAVIS_OS_NAME" in
-    "osx")
-        python3.7 "$GITHUBPY" $@
-    ;;
-    *)
-        "$GITHUBPY" $@
-    ;;
-    esac
+    "$GITHUBPY" $@
 }
 

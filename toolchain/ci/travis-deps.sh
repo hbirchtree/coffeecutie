@@ -13,6 +13,7 @@ case "${TRAVIS_OS_NAME}" in
 "osx")
     #brew install sdl2 cmake openssl python3 python jq
     #brew upgrade python python3
+    brew install python3
     pip3 install pyyaml requests paho-mqtt
 ;;
 *)
