@@ -79,6 +79,6 @@ function BuildProject($Target, $SourceDir,
     }else{
         CompileProject "windows-$Preload" $Arch $Config $BuildDir
 
-        TestProject "windows-$Preload" $Arch $Config $BuildDir
+        # TestProject "windows-$Preload" $Arch $Config $BuildDir
     }
 }
