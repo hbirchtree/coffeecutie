@@ -50,7 +50,7 @@ set -euf -o pipefail
 
 function build_info()
 {
-    $(dirname $0)/buildinfo.py $@ 2>/dev/null
+    "$(dirname "$0")"/buildinfo.py $@ 2>/dev/null
 }
 
 function get_travis_platform()
@@ -66,37 +66,18 @@ function get_travis_platform()
     esac
 }
 
-TRAVIS_OS_NAME=$(get_travis_platform)
-BUILDVARIANT=$1
-DEPENDENCIES="$(build_info dependencies)"
-DEPENDENCIES="$(echo ${DEPENDENCIES} | sed -e 's/ /%/g')"
-MAKEFILE_DIR=$(build_info makefile_location)
-SCRIPT_DIR=
-NODEPS=${NODEPS:-1}
-LOCALLIB=${LOCALLIB:-}
-
-MULTI_DIR="$PWD/../multi_build"
+export TRAVIS_OS_NAME=$(get_travis_platform)
+export BUILDVARIANT=$1
+export MAKEFILE_DIR=$(build_info makefile_location)
+export SCRIPT_DIR=
+export NODEPS=${NODEPS:-1}
+export LOCALLIB=${LOCALLIB:-}
+export MULTI_DIR="$PWD/../multi_build"
 
 mkdir -p "$MULTI_DIR"
 
-if [ ! -z ${LOCALLIB} ]; then
-    echo " * Using local library build"
-    NODEPS=1
-    [ ! -d "$MULTI_DIR/coffee_lib" ] && ln -s ${LOCALLIB} "$MULTI_DIR/coffee_lib"
-fi
+[ -z "${MAKEFILE_DIR}" ] && echo "No Makefile directory found" && exit 1
 
-[ -z ${MAKEFILE_DIR} ] && echo "No Makefile directory found" && exit 1
-
-export TRAVIS_OS_NAME
-export BUILDVARIANT
-export DEPENDENCIES
-export MAKEFILE_DIR
-export NODEPS
-
-source $(build_info script_location)/travis-build-common.sh
-
-if [ "${NODEPS}" != "1" ]; then
-    download_dependencies "${DEPENDENCIES}" || die "Failed to download dependencies"
-fi
+source "$(build_info script_location)"/travis-build-common.sh
 
 build_target "${BUILDVARIANT}"

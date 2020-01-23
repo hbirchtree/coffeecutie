@@ -1,4 +1,4 @@
-from python.ci.common import flatten_map, get_deploy_info, get_dep_list, create_target_matrix, get_script_locations
+from python.ci.common import flatten_map, get_deploy_info, create_target_matrix, get_script_locations
 from python.common import try_get_key
 
 def pipelines_gen_config(build_info, repo_dir):

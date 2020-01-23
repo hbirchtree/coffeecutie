@@ -3,7 +3,7 @@ CRASH_ASSET="crashrecovery_${BUILDVARIANT}.tar.gz"
 
 # Package and release PressureCooker as its own bundle
 
-pushd "${BUILD_DIR}/${BUILDVARIANT}"
+pushd "${BUILD_DIR}/${BUILDVARIANT}" || exit
 
 # Path to PressureCooker and the extensions may vary,
 #  therefore using $(ls ...) to add them conditionally
@@ -16,7 +16,7 @@ tar -zcf "${PRESSURE_ASSET}" \
         lib/*Pressurize* \
     )
 
-deploy_asset "${PRESSURE_ASSET}" ${TARGET_SLUG}
+deploy_asset "${PRESSURE_ASSET}" "${TARGET_SLUG}"
 
 
 # CrashRecovery, for sending diagnostics on crashes
@@ -26,7 +26,7 @@ tar -zcf "${CRASH_ASSET}" \
         bin/*/CrashRecovery* 
     )
 
-deploy_asset "${CRASH_ASSET}" ${TARGET_SLUG}
+deploy_asset "${CRASH_ASSET}" "${TARGET_SLUG}"
 
-popd
+popd || exit
 

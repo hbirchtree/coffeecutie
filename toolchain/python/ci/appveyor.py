@@ -1,10 +1,8 @@
-from python.ci.common import get_deploy_info, get_dep_list, get_deploy_info, create_target_matrix, get_script_locations
+from python.ci.common import get_deploy_info, get_deploy_info, create_target_matrix, get_script_locations
 from python.common import try_get_key
 
 def appveyor_gen_config(build_info, repo_dir):
     deploy_info = get_deploy_info(build_info)
-
-    dependencies_list = get_dep_list(build_info)
 
     script_loc = build_info['script_location'].replace('/', '\\')
     make_loc = build_info['makefile_location'].replace('/', '\\')
@@ -60,7 +58,6 @@ def appveyor_gen_config(build_info, repo_dir):
             'SAME_BUILD_DIR': 1,
             'CMAKE_BIN': 'cmake.exe',
             'MAKEFILE_DIR': make_loc,
-            'DEPENDENCIES': dependencies_list,
             'DEPLOY_PATTERNS': deploy_patterns,
             'GITHUB_TOKEN': {
                 'secure': secret
