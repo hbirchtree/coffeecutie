@@ -716,6 +716,13 @@ struct PixDesc
     {
     }
 
+    PixDesc(PixFmt pixfmt) :
+        pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(convert::to<BitFmt>(pixfmt)),
+        comp(convert::to<PixCmp>(pixfmt))
+    {
+    }
+
     PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp) :
         pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
         pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)

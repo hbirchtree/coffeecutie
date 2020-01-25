@@ -55,6 +55,9 @@ struct submesh_header
     using pc_vertex   = vert::vertex<vert::uncompressed>;
     using xbox_vertex = vert::vertex<vert::compressed>;
 
+    using pc_light_vertex   = vert::light_vertex<vert::uncompressed>;
+    using xbox_light_vertex = vert::light_vertex<vert::compressed>;
+
     struct dist_light
     {
         Vecf3 color;
@@ -100,6 +103,17 @@ struct submesh_header
         return base;
     }
 
+    inline reflexive_t<pc_light_vertex, xbox_variant> pc_light_verts() const
+    {
+        reflexive_t<pc_light_vertex, xbox_variant> out;
+        /* Offset to vertex segment */
+        out.count  = pc_vertices_data.count;
+        out.offset = pc_vertices_data.offset + pc_vertex_data_offset;
+        /* Skip normal vertices to find light vertices */
+        out.offset += sizeof(pc_vertex) * pc_vertices_data.count;
+        return out;
+    }
+
     inline reflexive_t<xbox_vertex, xbox_variant> xbox_vertices() const
     {
         auto base = xbox_vertices_data;
@@ -107,7 +121,7 @@ struct submesh_header
         return base;
     }
 
-    inline reflexive_t<vert::idx_t> pc_indices(header const& head) const;
+    inline reflexive_t<vert::idx_t> indices(header const& head) const;
 
     inline u32 index_offset() const
     {
@@ -230,7 +244,7 @@ struct header
     }
 };
 
-inline reflexive_t<vert::idx_t> submesh_header::pc_indices(
+inline reflexive_t<vert::idx_t> submesh_header::indices(
     header const& head) const
 {
     return {index_count(), index_offset() + head.submesh_tri_indices.offset, 0};

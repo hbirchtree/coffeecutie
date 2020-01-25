@@ -210,6 +210,18 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         return &it->second;
     }
+    BSPItem const* get_bsp(generation_idx_t bsp)
+    {
+        if(!bsp.valid())
+            return nullptr;
+
+        auto it = m_data.bsp_cache.find(bsp);
+
+        if(it == m_data.bsp_cache.m_cache.end())
+            return nullptr;
+
+        return &it->second;
+    }
 
     void render_pass(Pass const& pass)
     {
@@ -263,7 +275,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         render_pass(model[Pass_Lights]);
         render_pass(bsp[Pass_Lights]);
 
-//        render_pass(bsp[Pass_Wireframe]);
+        //        render_pass(bsp[Pass_Wireframe]);
     }
 
     void setup_state(
@@ -301,6 +313,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 params.set_sampler(
                     "micro",
                     bitm.get_bucket(micro.image.fmt).sampler->handle().bind(1));
+                params.set_sampler(
+                    "lightmaps",
+                    bitm.get_bucket(PixDesc(PixFmt::RGB565))
+                        .sampler->handle()
+                        .bind(2));
                 break;
             }
 
@@ -515,8 +532,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 materials::senv_micro& mat =
                     pass.template material_of<materials::senv_micro>(draw_data);
 
-                BitmapItem const* base  = get_bitm(shader->senv.base_bitm);
-                BitmapItem const* micro = get_bitm(shader->senv.micro_bitm);
+                BitmapItem const* base     = get_bitm(shader->senv.base_bitm);
+                BitmapItem const* micro    = get_bitm(shader->senv.micro_bitm);
+                BitmapItem const* lightmap = get_bitm(bsp_ref.lightmap);
 
                 mat.base.layer        = base->image.layer;
                 mat.base.atlas_scale  = base->image.scale;
@@ -529,6 +547,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.micro.uv_scale     = {
                     C_RCAST<blam::shader_env const*>(shader->header)
                         ->diffuse.micro.scale};
+
+                if(lightmap)
+                {
+                    mat.lightmap.atlas_offset = lightmap->image.offset;
+                    mat.lightmap.atlas_scale  = lightmap->image.scale;
+                    mat.lightmap.layer        = lightmap->image.layer;
+                }
 
                 break;
             }

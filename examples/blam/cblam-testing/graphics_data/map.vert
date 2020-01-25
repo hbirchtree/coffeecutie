@@ -26,6 +26,7 @@ out gl_PerVertex {
 void main()
 {
     frag.tex = tex;
+    frag.light_tex = light_tex;
     frag.instanceId = gl_BaseInstance + gl_InstanceID;
     gl_Position = camera * vec4(position, 1);
     frag.world_pos = position;

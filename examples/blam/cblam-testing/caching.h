@@ -547,7 +547,7 @@ struct BitmapCache
 
         if(image_.data)
         {
-            auto const& image = image_[0];
+            auto const& image = image_[idx];
 
             auto& img = out.image;
             img.mip   = &image;
@@ -757,7 +757,7 @@ struct BSPCache
         ShaderCache&               shader_cache) :
         version(map.map->version),
         bitm_cache(bitm_cache), shader_cache(shader_cache), index(map),
-        magic(map.magic), vert_ptr(0), element_ptr(0)
+        magic(map.magic), vert_ptr(0), element_ptr(0), light_ptr(0)
     {
     }
 
@@ -767,8 +767,8 @@ struct BSPCache
     blam::tag_index_view index;
     blam::magic_data_t   magic;
 
-    Bytes vert_buffer, element_buffer;
-    u32   vert_ptr, element_ptr;
+    Bytes vert_buffer, element_buffer, light_buffer;
+    u32   vert_ptr, element_ptr, light_ptr;
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
     {
@@ -793,14 +793,15 @@ struct BSPCache
                 auto& mesh_data = group_data.meshes.back();
 
                 /* Just dig up the textures, long process */
-                mesh_data.shader     = shader_cache.predict(mesh.shader);
-                mesh_data.light_bitm = bitm_cache.resolve(section.lightmaps, 0);
+                mesh_data.shader = shader_cache.predict(mesh.shader);
+                mesh_data.light_bitm =
+                    bitm_cache.resolve(section.lightmaps, group.lightmap_idx);
 
                 /* ... and moving on */
 
                 if(version == blam::version_t::xbox)
                 {
-                    auto indices  = mesh.pc_indices(section).data(bsp_magic);
+                    auto indices  = mesh.indices(section).data(bsp_magic);
                     auto vertices = mesh.xbox_vertices().data(bsp_magic);
 
                     if(!vertices || !indices)
@@ -832,11 +833,14 @@ struct BSPCache
                     element_ptr += indices.size;
                 } else
                 {
-                    auto indices  = mesh.pc_indices(section).data(bsp_magic);
-                    auto vertices = mesh.pc_vertices().data(bsp_magic);
+                    auto indices     = mesh.indices(section).data(bsp_magic);
+                    auto vertices    = mesh.pc_vertices().data(bsp_magic);
+                    auto light_verts = mesh.pc_light_verts().data(bsp_magic);
 
                     using vertex_type =
                         std::remove_const<decltype(vertices)::value_type>::type;
+                    using light_type = std::remove_const<decltype(
+                        light_verts)::value_type>::type;
                     using element_type =
                         std::remove_const<decltype(indices)::value_type>::type;
 
@@ -853,9 +857,13 @@ struct BSPCache
                     MemCpy(
                         indices,
                         element_buffer.at(element_ptr).as<element_type>());
+                    MemCpy(
+                        light_verts,
+                        light_buffer.at(light_ptr).as<light_type>());
 
                     vert_ptr += vertices.size;
                     element_ptr += indices.size;
+                    light_ptr += light_verts.size;
                 }
             }
         }

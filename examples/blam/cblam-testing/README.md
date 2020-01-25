@@ -128,6 +128,23 @@ After working out the structure of these (mostly) and tossing out some useless c
 
 On another note, there is a bug with Custom Edition textures that needs to be figured out.
 
+## Lightmaps everywhere
+
+![](update15-1.png)
+
+After some work reorganizing the way textures are loaded, it became possible to
+ sort meshes by which textures they used. This made it possible to load microtextures,
+ which really improve the look of the low-res terrain textures.
+
+![](update15-2.png)
+![](update15-3.png)
+![](update15-4.png)
+![](update15-5.png)
+
+After having the textures sorted, I also looked into lightmaps, referencing GuiltySpark again.
+Because all lightmaps are `PixFmt::RGB565`, it was super simple, and they look amazing,
+ and they really make the levels look like they should.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.

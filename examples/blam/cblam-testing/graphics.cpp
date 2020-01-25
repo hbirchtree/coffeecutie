@@ -15,6 +15,7 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
 
     data.bsp_cache.vert_buffer    = data.bsp_buf->map();
     data.bsp_cache.element_buffer = data.bsp_index->map();
+    data.bsp_cache.light_buffer   = data.bsp_light_buf->map();
 
     Vector<generation_idx_t> bsp_meshes;
 
@@ -27,6 +28,7 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
 
     data.bsp_buf->unmap();
     data.bsp_index->unmap();
+    data.bsp_light_buf->unmap();
 
     EntityRecipe bsp;
     bsp.components = {type_hash_v<BspTag>(), type_hash_v<ShaderTag>()};
@@ -49,6 +51,7 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
                 BspReference& bsp_ref  = mesh_ent.get<BspTag>();
 
                 bsp_ref.shader       = mesh.shader;
+                bsp_ref.lightmap     = mesh.light_bitm;
                 bsp_ref.bsp          = mesh_id;
                 bsp_ref.visible      = true;
                 bsp_ref.draw.draw    = mesh.draw;

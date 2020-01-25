@@ -80,11 +80,6 @@ void main()
                         frag.light_tex * light_scale + light_offset,
                         light_layer));
 
-//    micro_col = micro_col * 0.001 + vec4(1);
-
-//    out_color.rgb = vec3(float(layer) / 40.0, float(m_layer) / 40.0, float(frag.instanceId) / 30) + color.rgb * 0.00001 + micro_col.rgb * 0.00001;
-//    out_color.rgb = vec3(vec2(usample_pos), 0) + color.rgb * micro_col.rgb * 0.00001;
-    out_color.rgb = color.rgb * micro_col.rgb * lightmap_col.rgb;
+    out_color.rgb = color.rgb * lightmap_col.rgb;
     out_color.a = 1;
-//    out_color = vec4(color.rgb * micro.rgb, color.a);
 }

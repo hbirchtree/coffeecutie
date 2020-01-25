@@ -131,8 +131,8 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
         bin_attr.m_bassoc = tan_attr.m_bassoc = 0;
     ltex_attr.m_bassoc                        = 1;
 
-    data.bsp_attr =
-        gfx.alloc_desc<5>({{pos_attr, tex_attr, nrm_attr, bin_attr, tan_attr}});
+    data.bsp_attr = gfx.alloc_desc<6>(
+        {{pos_attr, tex_attr, nrm_attr, bin_attr, tan_attr, ltex_attr}});
     data.bsp_attr->setIndexBuffer(data.bsp_index.get());
     data.bsp_attr->bindBuffer(0, *data.bsp_buf);
     data.bsp_attr->bindBuffer(1, *data.bsp_light_buf);

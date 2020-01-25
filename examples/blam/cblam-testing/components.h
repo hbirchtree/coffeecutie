@@ -36,6 +36,7 @@ struct BspReference
 {
     generation_idx_t bsp;
     generation_idx_t shader;
+    generation_idx_t lightmap;
 
     u32    draw_idx;
     Passes current_pass;
@@ -118,6 +119,13 @@ struct ShaderTemplate
 
 namespace materials {
 
+struct alignas(32) lightmap_data
+{
+    Vecf2 atlas_scale;
+    Vecf2 atlas_offset;
+    u32   layer;
+};
+
 struct alignas(8) basic
 {
     Vecf2 atlas_scale;
@@ -127,18 +135,25 @@ struct alignas(8) basic
     u32   layer;
 };
 
-struct alignas(64) senv_micro
+struct alignas(32) map_data
 {
-    struct alignas(32) map_data
-    {
-        Vecf2 atlas_scale;
-        Vecf2 atlas_offset;
-        Vecf2 uv_scale;
-        u32   layer;
-    };
+    Vecf2 atlas_scale;
+    Vecf2 atlas_offset;
+    Vecf2 uv_scale;
+    u32   layer;
+};
 
-    map_data base;
-    map_data micro;
+struct alignas(32) senv
+{
+    map_data      base;
+    lightmap_data lightmap;
+};
+
+struct alignas(32) senv_micro
+{
+    map_data      base;
+    map_data      micro;
+    lightmap_data lightmap;
 };
 
 } // namespace materials
