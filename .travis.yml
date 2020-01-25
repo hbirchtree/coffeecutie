@@ -13,7 +13,6 @@ compiles:
 env:
   global:
   - MAKEFILE_DIR=toolchain/makers
-  - DEPENDENCIES=
   - CONFIGURATION=Release
   matrix:
   - BUILDVARIANT=android.armv7a.kitkat.gles2

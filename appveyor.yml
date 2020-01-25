@@ -40,7 +40,6 @@ environment:
   SAME_BUILD_DIR: 1
   CMAKE_BIN: cmake.exe
   MAKEFILE_DIR: toolchain\makers
-  DEPENDENCIES: ''
   DEPLOY_PATTERNS: ''
   GITHUB_TOKEN:
     secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ

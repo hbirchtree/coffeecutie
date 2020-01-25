@@ -50,14 +50,6 @@ def get_deploy_info(build_info):
     return deploy_data
 
 
-def get_dep_list(build_info):
-    dependencies = ''
-    deps = try_get_key(build_info, 'dependencies', [])
-    for dep in deps:
-        dependencies = '%s;%s' % (dep, dependencies)
-    return dependencies
-
-
 def flatten_map(root, include_intermediary=False):
     root_type = type(root)
 

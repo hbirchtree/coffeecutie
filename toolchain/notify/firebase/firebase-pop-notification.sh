@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[ -z $FCM_TOKEN ]    && echo " * Cannot submit to FCM: no token"     && exit 1
+[ -z "$FCM_TOKEN" ]    && echo " * Cannot submit to FCM: no token"     && exit 1
 
 curl -s -X POST \
     -d "{
@@ -18,7 +18,7 @@ curl -s -X POST \
         \"big-icon\": \"${MSG_ICON:-https://coffee.birchtrees.me/favicon.png}\"
     }
 }" \
-    ${FCM_ENDPOINT:-https://fcm.googleapis.com/fcm/send} \
+    "${FCM_ENDPOINT:-https://fcm.googleapis.com/fcm/send}" \
     --header "Content-Type: application/json" \
     --header "Authorization: key=$FCM_TOKEN"
 echo

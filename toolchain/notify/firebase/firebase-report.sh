@@ -1,7 +1,7 @@
 #!/bin/bash
 
-[ -z $FIREBASE_ENDPOINT ] && echo " * Cannot connect to Firebase: no endpoint" && exit 1
-[ -z $FIREBASE_TOKEN ]    && echo " * Cannot submit to Firebase, no token"     && exit 1
+[ -z "$FIREBASE_ENDPOINT" ] && echo " * Cannot connect to Firebase: no endpoint" && exit 1
+[ -z "$FIREBASE_TOKEN" ]    && echo " * Cannot submit to Firebase, no token"     && exit 1
 
 function api_call()
 {
@@ -11,13 +11,13 @@ function api_call()
 
     case "$method" in
     "GET")
-        curl -s $FIREBASE_ENDPOINT/$2
+        curl -s "$FIREBASE_ENDPOINT"/"$2"
     ;;
     "PUT")
-        curl -s -X PUT -d "$data" $FIREBASE_ENDPOINT/$resource?auth=$FIREBASE_TOKEN
+        curl -s -X PUT -d "$data" "$FIREBASE_ENDPOINT"/"$resource"?auth="$FIREBASE_TOKEN"
     ;;
     "DELETE")
-        curl -s -X DELETE $FIREBASE_ENDPOINT/$resource?auth=$FIREBASE_TOKEN
+        curl -s -X DELETE "$FIREBASE_ENDPOINT"/"$resource"?auth="$FIREBASE_TOKEN"
     ;;
     esac
 }

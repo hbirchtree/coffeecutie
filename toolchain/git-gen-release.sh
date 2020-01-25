@@ -1,10 +1,10 @@
 #!/bin/bash
 
-WDIR="$(dirname $(realpath $0))"
+WDIR="$(dirname "$(realpath "$0")")"
 
 function gitw()
 {
-	[ ! -z $DRYRUN ] && echo git $@ && return 0
+	[ -n "$DRYRUN" ] && echo git $@ && return 0
 	git $@
 }
 
@@ -14,9 +14,9 @@ function die()
 	exit 1
 }
 
-[ -z $1 ] && die "-- Release type not specified"
+[ -z "$1" ] && die "-- Release type not specified"
 
-RELEASE_NAME="$($WDIR/version.py $1)"
+RELEASE_NAME="$("$WDIR"/version.py "$1")"
 
 gitw tag "$RELEASE_NAME" && gitw push
 gitw push --tags

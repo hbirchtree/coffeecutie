@@ -6,9 +6,9 @@ set -xeuf -o pipefail
 BUILD_CI=${BUILD_CI:-}
 
 if [ $(uname) == 'Linux' ]; then
-    BASE_DIR=$(readlink -f $(dirname ${0}))
+    BASE_DIR=$(readlink -f $(dirname "${0}"))
 else
-    BASE_DIR=${PWD}/$(dirname ${0})
+    BASE_DIR=${PWD}/$(dirname "${0}")
 fi
 TC_DIR=${BASE_DIR}/toolchain
 
@@ -18,16 +18,16 @@ export TRAVIS_REPO_URL=$(git -C "${BASE_DIR}" remote get-url $(git -C "${BASE_DI
 
 function all_source_files()
 {
-    local SRC_BASE_DIR=$(dirname ${0})
-    find ${SRC_BASE_DIR}/src/coffee ${SRC_BASE_DIR}/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
+    local SRC_BASE_DIR=$(dirname "${0}")
+    find "${SRC_BASE_DIR}"/src/coffee "${SRC_BASE_DIR}"/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
 }
 
 case $1 in
 "quick-build")
-    if [ -z $BUILD_CI ]; then
-        ${TC_DIR}/quick-build.sh ${@:2}
+    if [ -z "$BUILD_CI" ]; then
+        "${TC_DIR}"/quick-build.sh ${@:2}
     else
-        BUILDVARIANT=${@:2} ${TC_DIR}/ci/travis-build.sh
+        BUILDVARIANT=${@:2} "${TC_DIR}"/ci/travis-build.sh
     fi
 ;;
 "list-targets")
@@ -41,103 +41,103 @@ To build a target, execute $0 quick-build [target]"
     pip install PyYaml
 ;;
 "ci")
-    ${TC_DIR}/configure_ci.py ${@:2}
+    "${TC_DIR}"/configure_ci.py ${@:2}
 ;;
 "version")
-    ${TC_DIR}/version.py ${@:2}
+    "${TC_DIR}"/version.py ${@:2}
 ;;
 "build-info")
-    ${TC_DIR}/buildinfo.py ${@:2}
+    "${TC_DIR}"/buildinfo.py ${@:2}
 ;;
 "extract-tools")
-    ${TC_DIR}/extract-tools.sh ${@:2}
+    "${TC_DIR}"/extract-tools.sh ${@:2}
 ;;
 "extract-native-libs")
-    ${TC_DIR}/extract-native-libs.sh ${@:2}
+    "${TC_DIR}"/extract-native-libs.sh ${@:2}
 ;;
 "generate-project")
-    ${TC_DIR}/generate_project.py ${@:2}
+    "${TC_DIR}"/generate_project.py ${@:2}
 ;;
 "update-local-tools")
-    ${TC_DIR}/update-local-tools.sh ${@:2}
+    "${TC_DIR}"/update-local-tools.sh ${@:2}
 ;;
 "gen-release")
     set -e
     ${0} version ${@:2}
-    git -C ${BASE_DIR} add ${BASE_DIR}/.build.yml
+    git -C "${BASE_DIR}" add "${BASE_DIR}"/.build.yml
     git commit --verbose
-    ${TC_DIR}/git-gen-release.sh none
+    "${TC_DIR}"/git-gen-release.sh none
 ;;
 "makefile-generator")
-    pushd ${TC_DIR}/makers
-    PYTHONPATH=$TC_DIR ${TC_DIR}/python/make_all.py
+    pushd "${TC_DIR}"/makers
+    PYTHONPATH=$TC_DIR "${TC_DIR}"/python/make_all.py
     popd
 ;;
 "format")
-    if [ -z $CLANG_FORMAT ]; then
+    if [ -z "$CLANG_FORMAT" ]; then
         CLANG_FORMAT=clang-format   
     fi
-    if [ -z $2 ]; then
+    if [ -z "$2" ]; then
         all_source_files
     else
-        all_source_files -exec $CLANG_FORMAT -style=file $2 {} \;
+        all_source_files -exec $CLANG_FORMAT -style=file "$2" {} \;
     fi
 ;;
 "include-guards")
     for f in $(all_source_files); do
-        if [ ! -z "$(head -1 $f | grep '#ifndef ')" ]; then
-            echo $f
+        if [ ! -z "$(head -1 "$f" | grep '#ifndef ')" ]; then
+            echo "$f"
         fi
     done
 ;;
 "platform-guards")
     for f in $(all_source_files); do
-        grep '^#if' $f /dev/null | egrep 'defined[ ]*\([ ]*COFFEE_[A-Za-z]+\)'
+        grep '^#if' "$f" /dev/null | grep -E 'defined[ ]*\([ ]*COFFEE_[A-Za-z]+\)'
     done
 ;;
 "exception-guards")
     for f in $(all_source_files); do
-        egrep '[^A-Za-z0-9]throw ' $f /dev/null
+        grep -E '[^A-Za-z0-9]throw ' "$f" /dev/null
     done
 ;;
 "rtti-guards")
     for f in $(all_source_files); do
-        egrep 'typeid' $f /dev/null
+        grep -E 'typeid' "$f" /dev/null
     done
 ;;
 "cast-guards")
     for f in $(all_source_files); do
-        egrep '(reinterpret|static|dynamic|const)_cast' $f /dev/null
+        grep -E '(reinterpret|static|dynamic|const)_cast' "$f" /dev/null
     done
 ;;
 "cpp11-guards")
     for f in $(all_source_files); do
-        egrep '(\[.*\]\s*\(.*?\)\s*\{|std::thread|std::function|std::unique_ptr|std::shared_ptr)' $f /dev/null
+        grep -E '(\[.*\]\s*\(.*?\)\s*\{|std::thread|std::function|std::unique_ptr|std::shared_ptr)' "$f" /dev/null
     done
 ;;
 "stl-guards")
     for f in $(all_source_files); do
-        egrep '(std::| std)' $f /dev/null
+        grep -E '(std::| std)' "$f" /dev/null
     done
 ;;
 "type-guards")
     for f in $(all_source_files); do
-        egrep '(u|)int(8|16|32|64)' $f /dev/null
+        grep -E '(u|)int(8|16|32|64)' "$f" /dev/null
     done
 ;;
 "query-source")
     for f in $(all_source_files); do
-        egrep $2 $f /dev/null
+        grep -E "$2" "$f" /dev/null
     done
 ;;
 "filter-source")
     for f in $(all_source_files); do
-        echo sed -e ${@:2} $f
+        echo sed -e ${@:2} "$f"
     done
 ;;
 "get-notes")
     for f in $(all_source_files); do
-        egrep  '(//|/\*)\s?(TODO|NOTE|WARNING|BUG|FIXME)' $f /dev/null
+        grep -E  '(//|/\*)\s?(TODO|NOTE|WARNING|BUG|FIXME)' "$f" /dev/null
     done
 ;;
 *)

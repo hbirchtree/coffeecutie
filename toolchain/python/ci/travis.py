@@ -1,4 +1,4 @@
-from python.ci.common import flatten_map, get_deploy_info, get_dep_list, create_target_matrix, get_script_locations
+from python.ci.common import flatten_map, get_deploy_info, create_target_matrix, get_script_locations
 from python.common import try_get_key
 
 def travis_gen_config(build_info, repo_dir):
@@ -35,8 +35,6 @@ def travis_gen_config(build_info, repo_dir):
 
     deploy_data = get_deploy_info(build_info)
 
-    dependencies = get_dep_list(build_info).replace(";", "%")
-
     script_locs = get_script_locations(build_info, 'unix')
     return {
         'language': 'cpp',
@@ -51,7 +49,6 @@ def travis_gen_config(build_info, repo_dir):
         'env':
             {
                 'global': ['MAKEFILE_DIR=%s' % make_loc,
-                           'DEPENDENCIES=%s' % dependencies,
                            'CONFIGURATION=Release'],
                 'matrix': build_matrix
             },

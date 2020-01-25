@@ -1,12 +1,12 @@
 #!/bin/bash
 
-source $(dirname ${BASH_SOURCE})/travis-common.sh
+source $(dirname "${BASH_SOURCE}")/travis-common.sh
 
 #######################################
 # Create build directory and go to it
 #######################################
 mkdir -p "$BUILD_DIR"
-cd "$BUILD_DIR"
+cd "$BUILD_DIR" || exit
 
 function github_api()
 {
@@ -17,7 +17,7 @@ function github_api()
     ;;
     "linux")
         # Qt/C++ client
-        docker run --rm -v "$PWD:/data" ${QTHUB_DOCKER} --api-token "$GITHUB_TOKEN" $@
+        docker run --rm -v "$PWD:/data" "${QTHUB_DOCKER}" --api-token "$GITHUB_TOKEN" $@
     ;;
     esac
 }
@@ -25,9 +25,9 @@ function github_api()
 function build_standalone()
 {
     mkdir -p "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
-    [ ! -z ${TRAVIS} ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
+    [ ! -z "${TRAVIS}" ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
 
-    if [ ! -z ${TRAVIS} ]; then
+    if [ ! -z "${TRAVIS}" ]; then
         echo "#####################################################"
         echo "#### Program versions ###############################"
         echo "#####################################################"
@@ -42,7 +42,7 @@ function build_standalone()
         echo
     fi
 
-    [ ! -z $CMAKE_TARGET ] && _CMAKE_TARGET_OPT=-e CMAKE_TARGET="$CMAKE_TARGET"
+    [ ! -z "$CMAKE_TARGET" ] && _CMAKE_TARGET_OPT=-e CMAKE_TARGET="$CMAKE_TARGET"
 
     #####################################################
     # This invokes the build
@@ -61,12 +61,12 @@ function build_standalone()
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
     # We will also submit status to Firebase
-    BUILD_DATA="$(OUTPUT_TYPE=json $CI_DIR/../ci-identify.sh)"
+    BUILD_DATA="$(OUTPUT_TYPE=json "$CI_DIR"/../ci-identify.sh)"
     function get_j()
     {
-        echo "$BUILD_DATA" | jq $1 | cut -d'"' -f 2
+        echo "$BUILD_DATA" | jq "$1" | cut -d'"' -f 2
     }
-    [[ ! "$EXIT_STAT" = 0 ]] && ${CI_DIR}/../notify/firebase/firebase-submit-report.sh "$EXIT_STAT"
+    [[ ! "$EXIT_STAT" = 0 ]] && "${CI_DIR}"/../notify/firebase/firebase-submit-report.sh "$EXIT_STAT"
 
     if [[ "$EXIT_STAT" = 0 ]]; then
         export MQTT_TITLE="Success on $(get_j .build_id)"
@@ -77,7 +77,7 @@ function build_standalone()
     export MQTT_ICON="https://cdn.travis-ci.org/favicon-b4e438ec85b9ae88d26b49538bc4e5ce.png"
     export MQTT_URL="$(get_j .build_url)"
     export MQTT_TOPIC="builds/$(get_j .repo)/$(get_j .build_id)"
-    ${CI_DIR}/../notify/mqtt/mqtt-notify.sh
+    "${CI_DIR}"/../notify/mqtt/mqtt-notify.sh
 
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 
@@ -95,7 +95,7 @@ function build_target()
 
     export DEPLOYED_BUILDVARIANT=${BUILDVARIANT}
 
-    [ -z ${BUILDVARIANT} ] && die "No BUILDVARIANT specified"
+    [ -z "${BUILDVARIANT}" ] && die "No BUILDVARIANT specified"
 
     case "${TRAVIS_OS_NAME}" in
     "linux")
@@ -114,7 +114,7 @@ function build_target()
 
     build_standalone "${BUILDVARIANT}"
 
-    [ ! -z ${TRAVIS} ] && sudo chown -R $(whoami) ${BUILD_DIR}
+    [ ! -z "${TRAVIS}" ] && sudo chown -R $(whoami) "${BUILD_DIR}"
 
     return 0
 }
@@ -124,14 +124,14 @@ function package_libraries()
     local _BASEDIR=${TAR_BASE:-$1/build/$BUILDVARIANT}
     local _OUTFILE=${PWD}/$2
 
-    pushd $_BASEDIR
+    pushd "$_BASEDIR" || exit
 
     tar -zcf "$_OUTFILE" \
-            --exclude=${_BASEDIR}/*/bin \
-            --exclude=${_BASEDIR}/*/packaged \
+            --exclude="${_BASEDIR}"/*/bin \
+            --exclude="${_BASEDIR}"/*/packaged \
             .
 
-    popd
+    popd || exit
 }
 
 function package_binaries()
@@ -139,19 +139,19 @@ function package_binaries()
     local _BASEDIR=${TAR_BASE:-$1/build/$BUILDVARIANT}
     local _OUTFILE=${PWD}/$2
 
-    pushd $_BASEDIR
+    pushd "$_BASEDIR" || exit
 
     tar -zcf "$_OUTFILE" \
-            --exclude=${_BASEDIR}/*/include \
-            --exclude=${_BASEDIR}/*/lib \
-            --exclude=${_BASEDIR}/*/share \
+            --exclude="${_BASEDIR}"/*/include \
+            --exclude="${_BASEDIR}"/*/lib \
+            --exclude="${_BASEDIR}"/*/share \
             .
 
-    popd
+    popd || exit
 }
 
 function main()
 {
-    [ ! -z ${NODEPLOY} ] && exit 0
+    [ ! -z "${NODEPLOY}" ] && exit 0
 }
 

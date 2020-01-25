@@ -6,7 +6,7 @@ OUTPUT_TYPE=${OUTPUT_TYPE:-text}
 
 function create_identity()
 {
-    local build_id="$(echo $5 | sed -e 's/\./-/g')"
+    local build_id="${5//\./-}"
 
     if [ "${OUTPUT_TYPE}" == "text" ]; then
         echo "${1:-unknown/unknown}/${2:-continuous-integration/unknown-ci}/${4:-push}/${3:-master}/${build_id:-unknown}"
@@ -33,16 +33,16 @@ function travis_get_path()
 {
     function travis_repo_slug()
     {
-        if [ ! -z $TRAVIS_REPO_URL ]; then
-            extract_repo_slug $TRAVIS_REPO_URL 
+        if [ -n "$TRAVIS_REPO_URL" ]; then
+            extract_repo_slug "$TRAVIS_REPO_URL" 
             return
         fi
-        if [ ! -z $TRAVIS_PULL_REQUEST_SLUG ]; then
-            echo $TRAVIS_PULL_REQUEST_SLUG
+        if [ -n "$TRAVIS_PULL_REQUEST_SLUG" ]; then
+            echo "$TRAVIS_PULL_REQUEST_SLUG"
             return
         fi
-        if [ ! -z $TRAVIS_REPO_SLUG ]; then
-            echo $TRAVIS_REPO_SLUG
+        if [ -n "$TRAVIS_REPO_SLUG" ]; then
+            echo "$TRAVIS_REPO_SLUG"
             return
         fi
     }
@@ -52,11 +52,11 @@ function travis_get_path()
     local identifier=$BUILDVARIANT
     local branch="$TRAVIS_BRANCH"
 
-    if [ -z $BUILDVARIANT ]; then
+    if [ -z "$BUILDVARIANT" ]; then
         local identifier="unknown"
     fi
-    if [ -z $branch ]; then
-        local branch=`git -C "$TRAVIS_BUILD_DIR" rev-parse --abbrev-ref HEAD`
+    if [ -z "$branch" ]; then
+        local branch=$(git -C "$TRAVIS_BUILD_DIR" rev-parse --abbrev-ref HEAD)
     fi
 
     create_identity "$repo_slug" \
@@ -71,24 +71,24 @@ function jenkins_get_path()
 {
     function jenkins_repo_slug()
     {
-        extract_repo_slug $GIT_URL
+        extract_repo_slug "$GIT_URL"
     }
 
     local identifier=$BUILDVARIANT
 
-    if [ -z $BUILDVARIANT ]; then
+    if [ -z "$BUILDVARIANT" ]; then
         local identifier="unkown"
     fi
 
     create_identity "$(jenkins_repo_slug)" "$CI_PREFIX/jenkins-ci" "$GIT_BRANCH" "push" "$identifier"
 }
 
-CI_IDENTITY="generic-repository/generic-ci/service/push"
+export CI_IDENTITY="generic-repository/generic-ci/service/push"
 
-if [ ! -z $TRAVIS_BRANCH ]; then
+if [ -n "$TRAVIS_BRANCH" ]; then
     travis_get_path
 else
-    if [ ! -z $JENKINS_URL ]; then
+    if [ -n "$JENKINS_URL" ]; then
         jenkins_get_path
     else
         echo ""

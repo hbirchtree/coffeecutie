@@ -76,13 +76,19 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
         $GeneratorArg = "-G$Generator"
     }
 
-    & $CMakeBin $SrcDir `
-        $GeneratorArg `
-        -DCMAKE_TOOLCHAIN_FILE="$SrcDir/toolchain/cmake/Toolchains/$toolchain.toolchain.cmake" `
-        -DANGLE_ROOT_DIR="$ANGLEDir" `
-        -C"$SrcDir/toolchain/cmake/Preload/$preload.cmake" `
-        -DCMAKE_INSTALL_PREFIX="$Pwd/Out" `
-        $ExtraArgs
+	try {
+		& $CMakeBin $SrcDir `
+			$GeneratorArg `
+			-DCMAKE_TOOLCHAIN_FILE="$SrcDir/toolchain/cmake/Toolchains/$toolchain.toolchain.cmake" `
+			-DANGLE_ROOT_DIR="$ANGLEDir" `
+			-C"$SrcDir/toolchain/cmake/Preload/$preload.cmake" `
+			-DCMAKE_INSTALL_PREFIX="$Pwd/Out" `
+			$ExtraArgs
+	} catch [NativeCommandError] {
+		# CMake may emit warnings, which are caught here
+		echo "CMake emitted:"
+		echo $PSItem.Exception.Message
+	}
 }
 
 function CompileProject($preload, $arch, $config, $BuildDir) {
