@@ -114,6 +114,17 @@ struct submesh_header
         return out;
     }
 
+    inline reflexive_t<xbox_light_vertex, xbox_variant> xbox_light_verts() const
+    {
+        reflexive_t<xbox_light_vertex, xbox_variant> out;
+        /* Offset to vertex segment */
+        out.count  = xbox_vertices_data.count;
+        out.offset = xbox_vertices_data.offset + vertex_data_offset;
+        /* Skip normal vertices to find light vertices */
+        out.offset += sizeof(xbox_vertex) * xbox_vertices_data.count;
+        return out;
+    }
+
     inline reflexive_t<xbox_vertex, xbox_variant> xbox_vertices() const
     {
         auto base = xbox_vertices_data;

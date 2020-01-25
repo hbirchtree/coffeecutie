@@ -113,8 +113,9 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
         pos_attr.m_type = tex_attr.m_type = semantic::TypeEnum::Scalar;
         nrm_attr.m_type = bin_attr.m_type = tan_attr.m_type =
             semantic::TypeEnum::Packed_UFloat;
-        ltex_attr.m_type  = semantic::TypeEnum::UShort;
-        ltex_attr.m_flags = GFX::AttributeNormalization;
+        ltex_attr.m_type = semantic::TypeEnum::UShort;
+        ltex_attr.m_flags =
+            GLEAMAPI::AttributePacked | GFX::AttributeNormalization;
 
         pos_attr.m_stride = tex_attr.m_stride = nrm_attr.m_stride =
             bin_attr.m_stride = tan_attr.m_stride = sizeof(xbox_vertex_type);

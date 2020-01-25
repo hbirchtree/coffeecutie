@@ -431,6 +431,13 @@ struct magic_data_t
         return header_ptr->version;
     }
 
+    inline magic_data_t no_magic() const
+    {
+        auto cpy = *this;
+        cpy.magic_offset = 0;
+        return cpy;
+    }
+
     union
     {
         file_header_t const* header_ptr;

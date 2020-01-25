@@ -339,8 +339,14 @@ struct BitmapCache
         GFX::DBG::SCOPE _(img.tag->to_name().to_string(magic));
 
         auto& bucket = get_bucket(img.image.fmt);
+        auto  name   = img.tag->to_name().to_string(magic);
 
-        auto img_data = img.image.mip->data(bitm_magic);
+        auto img_data =
+            (img.tag->storage == blam::image_storage_t::internal &&
+             index.file()->version == blam::version_t::custom_edition)
+                ? img.image.mip->data(magic.no_magic())
+                : img.image.mip->data(bitm_magic);
+
         auto img_size = img.image.mip->isize.convert<i32>();
 
         bucket.surface->upload(
@@ -801,8 +807,9 @@ struct BSPCache
 
                 if(version == blam::version_t::xbox)
                 {
-                    auto indices  = mesh.indices(section).data(bsp_magic);
-                    auto vertices = mesh.xbox_vertices().data(bsp_magic);
+                    auto indices     = mesh.indices(section).data(bsp_magic);
+                    auto vertices    = mesh.xbox_vertices().data(bsp_magic);
+                    auto light_verts = mesh.xbox_light_verts().data(bsp_magic);
 
                     if(!vertices || !indices)
                     {
@@ -812,6 +819,8 @@ struct BSPCache
 
                     using vertex_type =
                         std::remove_const<decltype(vertices)::value_type>::type;
+                    using light_type = std::remove_const<decltype(
+                        light_verts)::value_type>::type;
                     using element_type =
                         std::remove_const<decltype(indices)::value_type>::type;
 
@@ -828,9 +837,13 @@ struct BSPCache
                     MemCpy(
                         indices,
                         element_buffer.at(element_ptr).as<element_type>());
+                    MemCpy(
+                        light_verts,
+                        light_buffer.at(light_ptr).as<light_type>());
 
                     vert_ptr += vertices.size;
                     element_ptr += indices.size;
+                    light_ptr += light_verts.size;
                 } else
                 {
                     auto indices     = mesh.indices(section).data(bsp_magic);

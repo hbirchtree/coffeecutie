@@ -2,7 +2,7 @@
 #include "rendering.h"
 #include "resource_creation.h"
 
-using halo_version = blam::pc_version_t;
+using halo_version = blam::xbox_version_t;
 
 template<typename Version>
 void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)

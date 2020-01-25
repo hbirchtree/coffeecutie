@@ -275,7 +275,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         render_pass(model[Pass_Lights]);
         render_pass(bsp[Pass_Lights]);
 
-        //        render_pass(bsp[Pass_Wireframe]);
+//        render_pass(bsp[Pass_Wireframe]);
     }
 
     void setup_state(
