@@ -89,7 +89,7 @@ def pipelines_gen_config(build_info, repo_dir):
                     },
                     {
                         'powershell': './cb.ps1 quick-build $(variant)',
-                        'displayName': 'Downloading dependencies',
+                        'displayName': 'Building project',
                         'env': { 'AZURE_IMAGE': 'vs2019-win2019', 'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/' },
                     }
                     ]

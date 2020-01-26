@@ -807,8 +807,8 @@ void GetShaderUniforms(
                     GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
                     &unifIndices.at(0));
 
-                Throw(implementation_error(
-                    GLM_API "Uniform block handling not implemented"));
+//                Throw(implementation_error(
+//                    GLM_API "Uniform block handling not implemented"));
             }
         }
 #endif

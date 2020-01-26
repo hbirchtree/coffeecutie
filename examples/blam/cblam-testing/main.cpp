@@ -732,7 +732,7 @@ void examine_map(Resource&& mapfile, T version)
                         map.get_name(&submesh_head.shader));
 
                     auto index_data =
-                        submesh_head.pc_indices(bsp_header).data(bsp_magic);
+                        submesh_head.indices(bsp_header).data(bsp_magic);
 
                     add_mem_map_region(
                         index_data.data, index_data.size, "index data");

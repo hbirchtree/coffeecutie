@@ -258,7 +258,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         GFX::ERROR ec;
 
         m_data.material_store->bindrange(
-            1,
+            0,
             pass.material_buffer_range.first,
             pass.material_buffer_range.second,
             ec);
