@@ -54,12 +54,17 @@ struct GLEAM_Shader : GraphicsAPI::Shader
      * \param data A container with GLSL source code, null-terminated
      * \return true upon success
      */
-    bool compile(ShaderStage stage, Bytes const& data, gleam_error& ec);
+    bool compile(
+        ShaderStage      stage,
+        Bytes const&     data,
+        gleam_error&     ec,
+        Constants const& constants = {});
 
-    bool compile(ShaderStage stage, Bytes const& data)
+    bool compile(
+        ShaderStage stage, Bytes const& data, Constants const& constants = {})
     {
         gleam_error ec;
-        return compile(stage, data, ec);
+        return compile(stage, data, ec, constants);
     }
 
     void dealloc(gleam_error& ec);

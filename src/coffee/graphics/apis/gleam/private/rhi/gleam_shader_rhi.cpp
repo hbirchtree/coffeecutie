@@ -103,10 +103,11 @@ STATICINLINE CString StringExtractLine(CString& shader, cstring query)
 }
 
 STATICINLINE void TransformShader(
-    Bytes const&     inputShader,
-    ShaderStage      stage,
-    Vector<CString>& shaderStorage,
-    Vector<cstring>& shaderSrcVec)
+    Bytes const&                   inputShader,
+    ShaderStage                    stage,
+    Vector<CString>&               shaderStorage,
+    Vector<cstring>&               shaderSrcVec,
+    GLEAM_Shader::Constants const& constants)
 {
     CString transformedShader;
     /* Because the original shader may not be null-terminated, we do
@@ -214,6 +215,11 @@ STATICINLINE void TransformShader(
 )");
     }
 
+    for(auto const& constant : constants)
+        shaderStorage.push_back(
+            "#define " + constant.first + " " +
+            str::convert::to_string(constant.second));
+
     shaderStorage.push_back(transformedShader);
 
     auto directiveEnd = shaderStorage.size() - 1;
@@ -316,7 +322,10 @@ STATICINLINE void ProgramInputGet(
 #endif
 
 bool GLEAM_Shader::compile(
-    ShaderStage stage, const Bytes& data, gleam_error& ec)
+    ShaderStage      stage,
+    const Bytes&     data,
+    gleam_error&     ec,
+    Constants const& constants)
 {
     if(data.size == 0)
     {
@@ -334,7 +343,7 @@ bool GLEAM_Shader::compile(
     Vector<cstring> shaderSrcVec  = {};
     Vector<CString> shaderStorage = {};
 
-    TransformShader(data, stage, shaderStorage, shaderSrcVec);
+    TransformShader(data, stage, shaderStorage, shaderSrcVec, constants);
 
     if(!GLEAM_FEATURES.separable_programs)
     {

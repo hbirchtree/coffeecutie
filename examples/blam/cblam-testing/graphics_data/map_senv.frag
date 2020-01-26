@@ -19,72 +19,96 @@ struct Map
     vec2 atlas_offset;
     vec2 uv_scale;
 
-    uint layer;
+    int layer;
 };
 
 struct Lightmap
 {
     vec2 atlas_scale;
     vec2 atlas_offset;
-    uint layer;
+    int layer;
 };
 
 struct Material
 {
-    Map      base;
-    Map      micro;
+    Map      maps[4];
     Lightmap lightmap;
 };
 
 uniform sampler2DArray base;
+uniform sampler2DArray primary;
+uniform sampler2DArray secondary;
 uniform sampler2DArray micro;
 uniform sampler2DArray lightmaps;
 
 uniform float render_distance;
 
-layout(binding = 1, std140) buffer MaterialProperties
+layout(binding = 1, std140) uniform MaterialProperties
 {
-    Material instance[];
+    Material instance[256];
 } mats;
 
 out vec4 out_color;
+
+const uint base_map_id  = 0;
+const uint micro_map_id = 1;
+const uint prim_map_id  = 2;
+const uint seco_map_id  = 3;
+
+vec4 get_map(uint map_id, sampler2DArray sampler)
+{
+    int layer    = mats.instance[frag.instanceId].maps[map_id].layer;
+
+    if(layer == -1)
+        return vec4(1);
+
+    vec2 scale   = mats.instance[frag.instanceId].maps[map_id].atlas_scale;
+    vec2 uvscale = mats.instance[frag.instanceId].maps[map_id].uv_scale;
+    vec2 offset  = mats.instance[frag.instanceId].maps[map_id].atlas_offset;
+
+    vec2 tc = frag.tex * uvscale;
+    tc = tc - floor(tc);
+
+    return texture(sampler, vec3(tc * scale + offset, layer));
+}
+
+vec4 get_light()
+{
+    vec2 light_scale = mats.instance[frag.instanceId].lightmap.atlas_scale;
+    vec2 light_offset = mats.instance[frag.instanceId].lightmap.atlas_offset;
+    uint light_layer = mats.instance[frag.instanceId].lightmap.layer;
+
+    return texture(lightmaps, vec3(
+                frag.light_tex * light_scale + light_offset,
+                light_layer));
+}
 
 void main()
 {
 //    if(length(frag.world_pos - vec3(0)) > render_distance)
 //        discard;
 
-    vec2 tex_ = frag.tex * mats.instance[frag.instanceId].base.uv_scale;
-    tex_ = tex_ - floor(tex_);
-    vec2 utex_ = frag.tex * mats.instance[frag.instanceId].micro.uv_scale;
-    utex_ = utex_ - floor(utex_);
+    vec4 color     = get_map(base_map_id, base);
+    vec4 primary   = get_map(prim_map_id, primary);
+    vec4 secondary = get_map(seco_map_id, secondary);
+    vec4 micro_col = get_map(micro_map_id, micro);
 
-    vec2 b_a_scale = mats.instance[frag.instanceId].base.atlas_scale;
-    vec2 m_a_scale = mats.instance[frag.instanceId].micro.atlas_scale;
-    vec2 b_a_offset = mats.instance[frag.instanceId].base.atlas_offset;
-    vec2 m_a_offset = mats.instance[frag.instanceId].micro.atlas_offset;
-    uint layer = mats.instance[frag.instanceId].base.layer;
-    uint m_layer = mats.instance[frag.instanceId].micro.layer;
+    vec4 lightmap_col = get_light();
 
-    vec2 light_scale = mats.instance[frag.instanceId].lightmap.atlas_scale;
-    vec2 light_offset = mats.instance[frag.instanceId].lightmap.atlas_offset;
-    uint light_layer = mats.instance[frag.instanceId].lightmap.layer;
+    float map_mix = color.a;
 
-    vec2 sample_pos = (tex_ * b_a_scale + b_a_offset);
-    vec2 usample_pos = (utex_ * m_a_scale + m_a_offset);
+    out_color.rgb =
+            color.rgb *
+            (
+//                vec3(0.5) + 0.001 *
+                ((primary.rgb * map_mix) +
+                (secondary.rgb * (1 - map_mix)))
+            ) *
+            micro_col.rgb *
+            lightmap_col.rgb
+            ;
 
-    vec4 color = texture(base, vec3(sample_pos, layer));
-    vec4 micro_col = texture(micro, vec3(usample_pos, m_layer));
-    vec4 lightmap_col =
-            texture(lightmaps, vec3(
-                        frag.light_tex * light_scale + light_offset,
-                        light_layer));
+    out_color.rgb = pow(out_color.rgb, vec3(1 / 1.2));
 
-//    micro_col = micro_col * 0.001 + vec4(1);
-
-//    out_color.rgb = vec3(float(layer) / 40.0, float(m_layer) / 40.0, float(frag.instanceId) / 30) + color.rgb * 0.00001 + micro_col.rgb * 0.00001;
-//    out_color.rgb = vec3(vec2(usample_pos), 0) + color.rgb * micro_col.rgb * 0.00001;
-    out_color.rgb = color.rgb * micro_col.rgb * lightmap_col.rgb;
     out_color.a = 1;
-//    out_color = vec4(color.rgb * micro.rgb, color.a);
 }

@@ -20,9 +20,9 @@ struct Material
     uint layer;
 };
 
-layout(binding = 2, std140) buffer MaterialProperties
+layout(binding = 2, std140) uniform MaterialProperties
 {
-    Material instance[];
+    Material instance[256];
 } mats;
 
 uniform sampler2DArray bc1_tex;

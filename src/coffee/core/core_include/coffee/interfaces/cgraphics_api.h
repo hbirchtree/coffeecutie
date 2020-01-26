@@ -649,6 +649,8 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
      */
     struct Shader
     {
+        using Constants = Map<CString, i32>;
+
         Shader() : Shader(0)
         {
         }

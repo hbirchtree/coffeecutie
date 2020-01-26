@@ -32,7 +32,6 @@ struct Lightmap
 struct Material
 {
     Map      base;
-    Map      micro;
     Lightmap lightmap;
 };
 

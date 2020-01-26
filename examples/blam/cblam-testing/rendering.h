@@ -23,16 +23,28 @@ inline u64 shader_hash(ShaderItem const& shader, ShaderCache& cache)
     {
         BitmapItem const& base = bitm.find(shader.senv.base_bitm)->second;
 
+        Array<Tup<PixFmt, CompFlags>, 3> maps = {};
+
         if(shader.senv.micro_bitm.valid())
         {
-            BitmapItem const& micro = bitm.find(shader.senv.micro_bitm)->second;
-
-            auto fmt_hash =
-                std::make_tuple(get_bitm_hash(base), get_bitm_hash(micro));
-
-            return std::hash<decltype(fmt_hash)>()(fmt_hash);
+            BitmapItem const& map = bitm.find(shader.senv.micro_bitm)->second;
+            maps[0]               = get_bitm_hash(map);
         }
-        break;
+        if(shader.senv.primary_bitm.valid())
+        {
+            BitmapItem const& map = bitm.find(shader.senv.primary_bitm)->second;
+            maps[1]               = get_bitm_hash(map);
+        }
+        if(shader.senv.secondary_bitm.valid())
+        {
+            BitmapItem const& map =
+                bitm.find(shader.senv.secondary_bitm)->second;
+            maps[2] = get_bitm_hash(map);
+        }
+
+        auto fmt_hash =
+            std::make_tuple(get_bitm_hash(base), maps[0], maps[1], maps[2]);
+        return std::hash<decltype(fmt_hash)>()(fmt_hash);
     }
     default:
         break;
@@ -44,7 +56,22 @@ inline u64 shader_hash(ShaderItem const& shader, ShaderCache& cache)
             get_bitm_hash(bitm.find(shader.color_bitm)->second));
         return std::hash<decltype(fmt_hash)>()(fmt_hash);
     }
-} // namespace detail
+}
+
+template<typename MapType>
+inline void assign_map(MapType& map, BitmapItem const* bitm)
+{
+    map.atlas_scale  = {0};
+    map.atlas_offset = {0};
+    map.layer        = -1;
+
+    if(!bitm)
+        return;
+
+    map.atlas_scale  = bitm->image.scale;
+    map.atlas_offset = bitm->image.offset;
+    map.layer        = bitm->image.layer;
+}
 
 } // namespace detail
 
@@ -275,7 +302,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         render_pass(model[Pass_Lights]);
         render_pass(bsp[Pass_Lights]);
 
-//        render_pass(bsp[Pass_Wireframe]);
+        //        render_pass(bsp[Pass_Wireframe]);
     }
 
     void setup_state(
@@ -302,14 +329,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             BitmapItem const& base = bitm.find(shader.senv.base_bitm)->second;
 
+            params.set_sampler(
+                "base",
+                bitm.get_bucket(base.image.fmt).sampler->handle().bind(0));
+
             if(shader.senv.micro_bitm.valid())
             {
-                params.set_sampler(
-                    "base",
-                    bitm.get_bucket(base.image.fmt).sampler->handle().bind(0));
-
                 BitmapItem const& micro =
                     bitm.find(shader.senv.micro_bitm)->second;
+
                 params.set_sampler(
                     "micro",
                     bitm.get_bucket(micro.image.fmt).sampler->handle().bind(1));
@@ -318,10 +346,31 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     bitm.get_bucket(PixDesc(PixFmt::RGB565))
                         .sampler->handle()
                         .bind(2));
-                break;
             }
 
-            C_FALLTHROUGH;
+            if(shader.senv.primary_bitm.valid())
+            {
+                BitmapItem const& primary =
+                    bitm.find(shader.senv.primary_bitm)->second;
+                params.set_sampler(
+                    "primary",
+                    bitm.get_bucket(primary.image.fmt)
+                        .sampler->handle()
+                        .bind(3));
+            }
+
+            if(shader.senv.secondary_bitm.valid())
+            {
+                BitmapItem const& secondary =
+                    bitm.find(shader.senv.secondary_bitm)->second;
+                params.set_sampler(
+                    "secondary",
+                    bitm.get_bucket(secondary.image.fmt)
+                        .sampler->handle()
+                        .bind(4));
+            }
+
+            break;
         }
         default:
         {
@@ -529,31 +578,30 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             {
             case Pass_EnvMicro:
             {
+                auto shader_data =
+                    C_RCAST<blam::shader_env const*>(shader->header);
                 materials::senv_micro& mat =
                     pass.template material_of<materials::senv_micro>(draw_data);
 
-                BitmapItem const* base     = get_bitm(shader->senv.base_bitm);
-                BitmapItem const* micro    = get_bitm(shader->senv.micro_bitm);
+                BitmapItem const* base  = get_bitm(shader->senv.base_bitm);
+                BitmapItem const* micro = get_bitm(shader->senv.micro_bitm);
+                BitmapItem const* prim  = get_bitm(shader->senv.primary_bitm);
+                BitmapItem const* seco  = get_bitm(shader->senv.secondary_bitm);
                 BitmapItem const* lightmap = get_bitm(bsp_ref.lightmap);
 
-                mat.base.layer        = base->image.layer;
-                mat.base.atlas_scale  = base->image.scale;
-                mat.base.atlas_offset = base->image.offset;
-                mat.base.uv_scale     = {1};
+                detail::assign_map(mat.base, base);
+                mat.base.uv_scale = {1};
 
-                mat.micro.layer        = micro->image.layer;
-                mat.micro.atlas_scale  = micro->image.scale;
-                mat.micro.atlas_offset = micro->image.offset;
-                mat.micro.uv_scale     = {
-                    C_RCAST<blam::shader_env const*>(shader->header)
-                        ->diffuse.micro.scale};
+                detail::assign_map(mat.micro, micro);
+                mat.micro.uv_scale = {shader_data->diffuse.micro.scale};
 
-                if(lightmap)
-                {
-                    mat.lightmap.atlas_offset = lightmap->image.offset;
-                    mat.lightmap.atlas_scale  = lightmap->image.scale;
-                    mat.lightmap.layer        = lightmap->image.layer;
-                }
+                detail::assign_map(mat.primary, prim);
+                mat.primary.uv_scale = {shader_data->diffuse.primary.scale};
+
+                detail::assign_map(mat.secondary, seco);
+                mat.secondary.uv_scale = {shader_data->diffuse.secondary.scale};
+
+                detail::assign_map(mat.lightmap, lightmap);
 
                 break;
             }

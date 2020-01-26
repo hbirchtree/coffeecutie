@@ -343,6 +343,8 @@ enum format_property
     /* For compressed formats */
     block_size,
     supports_subtextures,
+
+    supports_srgb,
 };
 
 template<
@@ -359,6 +361,21 @@ FORCEDINLINE bool get(PixFmt f)
     case PixFmt::ATC:
     case PixFmt::PVRTC:
     case PixFmt::PVRTC2:
+        return true;
+    default:
+        return false;
+    }
+}
+
+template<
+    format_property Prop,
+    typename std::enable_if<Prop == supports_srgb>::type* = nullptr>
+FORCEDINLINE bool get(PixFmt f)
+{
+    switch(f)
+    {
+    case PixFmt::SRGB8:
+    case PixFmt::SRGB8A8:
         return true;
     default:
         return false;

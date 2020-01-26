@@ -207,34 +207,47 @@ FORCEDINLINE bool LoadTexture(
 
 template<
     typename GFX,
+    typename... Args,
     typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadShader(
     typename GFX::SHD&   shader,
     Bytes&&              data,
     ShaderStage          stage,
-    typename GFX::ERROR& ec)
+    typename GFX::ERROR& ec,
+    Args... args)
 {
-    bool status = shader.compile(stage, data, ec);
+    bool status = shader.compile(stage, data, ec, std::forward<Args>(args)...);
 
     return status;
 }
 
 template<
     typename GFX,
+    typename... Args,
     typename implements<GraphicsAPI_Base, GFX>::type* = nullptr>
 FORCEDINLINE bool LoadPipeline(
-    typename GFX::PIP& pip, Bytes&& vert_file, Bytes&& frag_file)
+    typename GFX::PIP& pip, Bytes&& vert_file, Bytes&& frag_file, Args... args)
 {
     typename GFX::ERROR ec;
     typename GFX::SHD   vert;
     typename GFX::SHD   frag;
 
-    if(!LoadShader<GFX>(vert, std::move(vert_file), ShaderStage::Vertex, ec))
+    if(!LoadShader<GFX>(
+           vert,
+           std::move(vert_file),
+           ShaderStage::Vertex,
+           ec,
+           std::forward<Args>(args)...))
     {
         C_ERROR_CHECK(ec);
         return false;
     }
-    if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment, ec))
+    if(!LoadShader<GFX>(
+           frag,
+           std::move(frag_file),
+           ShaderStage::Fragment,
+           ec,
+           std::forward<Args>(args)...))
     {
         vert.dealloc();
         C_ERROR_CHECK(ec);
@@ -269,15 +282,19 @@ FORCEDINLINE bool LoadPipeline(
     return true;
 }
 
-template<typename GFX>
+template<typename GFX, typename... Args>
 FORCEDINLINE bool LoadPipeline(
     typename GFX::PIP&   pip,
     BytesResolver const& resolver,
     Url const&           vert_file,
-    Url const&           frag_file)
+    Url const&           frag_file,
+    Args... args)
 {
     return LoadPipeline<GFX>(
-        pip, resolver.resolver(vert_file), resolver.resolver(frag_file));
+        pip,
+        resolver.resolver(vert_file),
+        resolver.resolver(frag_file),
+        std::forward<Args>(args)...);
 }
 
 template<typename GFX>

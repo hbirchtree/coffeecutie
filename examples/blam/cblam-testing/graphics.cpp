@@ -2,7 +2,7 @@
 #include "rendering.h"
 #include "resource_creation.h"
 
-using halo_version = blam::xbox_version_t;
+using halo_version = blam::pc_version_t;
 
 template<typename Version>
 void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
@@ -387,7 +387,8 @@ i32 blam_main(i32, cstring_w*)
             data.bsp_pipeline        = &pipeline;
             data.model_pipeline      = &scenery_pipeline;
             data.senv_micro_pipeline = &gfx.alloc_standard_pipeline<2>(
-                {{"map.vert"_rsc, "map_senv.frag"_rsc}});
+                {{"map.vert"_rsc, "map_senv.frag"_rsc}},
+                GFX::SHD::Constants{{"MICRO_BLEND", 1}, {"PRIMARY_BLEND", 1}});
             data.wireframe_pipeline = &gfx.alloc_standard_pipeline<2>(
                 {{"map.vert"_rsc, "wireframe.frag"_rsc}});
 

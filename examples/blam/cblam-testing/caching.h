@@ -538,26 +538,28 @@ struct BitmapCache
 
         auto image_ = bitm.images.data(curr_magic);
 
-        if(image_.data->type != blam::bitm::type_t::tex_2d)
-        {
-            cDebug(
-                "unimplemented texture type: {0}",
-#if C_HAS_INCLUDE(<string_view>)
-                magic_enum::enum_name(image_.data->type)
-#else
-                "[unknown]"
-#endif
-            );
-            return {};
-        }
-
         if(image_.data)
         {
+            if(image_.data->type != blam::bitm::type_t::tex_2d)
+            {
+                cDebug(
+                    "unimplemented texture type: {0}",
+#if C_HAS_INCLUDE(<string_view>)
+                    magic_enum::enum_name(image_.data->type)
+#else
+                    "[unknown]"
+#endif
+                    );
+                return {};
+            }
+
             auto const& image = image_[idx];
 
             auto& img = out.image;
             img.mip   = &image;
             img.layer = 0;
+
+            cDebug("Mipmaps: {0}", image.mipmaps);
 
             PixDesc fmt;
             if(image.compressed())
@@ -650,10 +652,6 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
             out.senv.secondary_bitm =
                 get_bitm_idx(shader_env.diffuse.secondary.map);
             out.senv.micro_bitm = get_bitm_idx(shader_env.diffuse.micro.map);
-
-            //            if(out.senv.micro_bitm.valid())
-            //                std::swap(out.senv.base_bitm,
-            //                out.senv.micro_bitm);
 
             break;
         }
@@ -779,8 +777,8 @@ struct BSPCache
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
     {
         auto        bsp_magic = bsp.bsp_magic(magic);
-        auto const& section =
-            bsp.to_bsp(bsp_magic).to_header().data(bsp_magic)[0];
+        auto const& section_  = bsp.to_bsp(bsp_magic);
+        auto const& section   = section_.to_header().data(bsp_magic)[0];
 
         BSPItem out;
         out.mesh = &section;

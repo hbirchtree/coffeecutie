@@ -332,10 +332,11 @@ void GLContext::setupAttributes(entity_container& c)
     using P        = typing::pixels::PixFmt;
     auto& glConfig = comp_app::AppLoader::config<GLConfig>(c);
 
+    using namespace typing::pixels;
+
     SDL_GL_SetAttribute(
         SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
-        (glConfig.framebufferFmt == P::SRGB8 ||
-         glConfig.framebufferFmt == P::SRGB8A8)
+        properties::get<properties::supports_srgb>(glConfig.framebufferFmt)
             ? SDL_TRUE
             : SDL_FALSE);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, SDL_TRUE);

@@ -188,9 +188,9 @@ struct GraphicsAllocator
         return vao;
     }
 
-    template<size_t NumShaders = 2>
+    template<size_t NumShaders, typename... Args>
     typename AllocData::PipelineParams& alloc_standard_pipeline(
-        Array<Bytes, NumShaders>&& shaders)
+        Array<Bytes, NumShaders>&& shaders, Args... args)
     {
         auto& store = this->get().pipelines;
         store.push_back(MkShared<typename AllocData::PipelineData>());
@@ -200,7 +200,8 @@ struct GraphicsAllocator
         if(!RHI::LoadPipeline<API>(
                *pipeline.pipeline,
                std::move(shaders[0]),
-               std::move(shaders[1])))
+               std::move(shaders[1]),
+               std::forward<Args>(args)...))
             Throw(
                 undefined_behavior("shader compile/pipeline assembly failed"));
 

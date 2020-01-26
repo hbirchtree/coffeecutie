@@ -153,6 +153,8 @@ struct alignas(32) senv_micro
 {
     map_data      base;
     map_data      micro;
+    map_data      primary;
+    map_data      secondary;
     lightmap_data lightmap;
 };
 
@@ -185,8 +187,8 @@ struct ShaderData
         {
             blam::shader_env const* shader = shader_data<blam::shader_env>();
 
-            //            return Pass_Env;
-            return shader->diffuse.micro.map.valid() ? Pass_EnvMicro : Pass_Env;
+            return Pass_EnvMicro;
+//            return shader->diffuse.micro.map.valid() ? Pass_EnvMicro : Pass_Env;
         }
         case tc::soso:
         {

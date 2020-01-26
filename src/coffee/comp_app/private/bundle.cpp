@@ -221,6 +221,10 @@ void configureDefaults(AppLoader& loader)
     glConfig.framebufferFmt = PixFmt::RGBA8;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
 
+#if !defined(COFFEE_LINKED_GLES)
+    glConfig.framebufferFmt = PixFmt::SRGB8A8;
+#endif
+
 #if defined(COFFEE_LINKED_GLES)
     glConfig.profile       = GLConfig::Embedded;
     glConfig.version.major = 3;

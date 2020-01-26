@@ -9,9 +9,9 @@ precision highp sampler2DArray;
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex;
 
-layout(binding = 0, std140) buffer MatrixStore
+layout(binding = 0, std140) uniform MatrixStore
 {
-    mat4 transform[];
+    mat4 transform[256];
 } matrices;
 
 uniform mat4 camera;
