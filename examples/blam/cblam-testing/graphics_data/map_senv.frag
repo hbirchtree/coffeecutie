@@ -1,4 +1,4 @@
-#version 460 core
+#version 320 es
 
 #extension GL_EXT_shader_io_blocks : enable
 
@@ -43,24 +43,24 @@ uniform sampler2DArray lightmaps;
 
 uniform float render_distance;
 
-layout(binding = 1, std140) uniform MaterialProperties
+layout(binding = 1, std140) buffer MaterialProperties
 {
-    Material instance[256];
+    Material instance[];
 } mats;
 
 out vec4 out_color;
 
-const uint base_map_id  = 0;
-const uint micro_map_id = 1;
-const uint prim_map_id  = 2;
-const uint seco_map_id  = 3;
+const uint base_map_id  = 0U;
+const uint micro_map_id = 1U;
+const uint prim_map_id  = 2U;
+const uint seco_map_id  = 3U;
 
 vec4 get_map(uint map_id, sampler2DArray sampler)
 {
     int layer    = mats.instance[frag.instanceId].maps[map_id].layer;
 
     if(layer == -1)
-        return vec4(1);
+        return vec4(1.0);
 
     vec2 scale   = mats.instance[frag.instanceId].maps[map_id].atlas_scale;
     vec2 uvscale = mats.instance[frag.instanceId].maps[map_id].uv_scale;
@@ -76,7 +76,7 @@ vec4 get_light()
 {
     vec2 light_scale = mats.instance[frag.instanceId].lightmap.atlas_scale;
     vec2 light_offset = mats.instance[frag.instanceId].lightmap.atlas_offset;
-    uint light_layer = mats.instance[frag.instanceId].lightmap.layer;
+    int light_layer = mats.instance[frag.instanceId].lightmap.layer;
 
     return texture(lightmaps, vec3(
                 frag.light_tex * light_scale + light_offset,
@@ -93,22 +93,24 @@ void main()
     vec4 secondary = get_map(seco_map_id, secondary);
     vec4 micro_col = get_map(micro_map_id, micro);
 
-    vec4 lightmap_col = get_light();
+    vec4 lightmap = get_light();
 
     float map_mix = color.a;
 
     out_color.rgb =
             color.rgb *
             (
-//                vec3(0.5) + 0.001 *
-                ((primary.rgb * map_mix) +
-                (secondary.rgb * (1 - map_mix)))
+                (primary.rgb * map_mix) +
+                (secondary.rgb * (1.0 - map_mix))
             ) *
             micro_col.rgb *
-            lightmap_col.rgb
+            lightmap.rgb
             ;
 
-    out_color.rgb = pow(out_color.rgb, vec3(1 / 1.2));
+    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 1.2));
 
-    out_color.a = 1;
+//    out_color.rgb *= 0.01;
+//    out_color.rgb += lightmap.rgb;
+
+    out_color.a = 1.0;
 }

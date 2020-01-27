@@ -433,7 +433,7 @@ struct magic_data_t
 
     inline magic_data_t no_magic() const
     {
-        auto cpy = *this;
+        auto cpy         = *this;
         cpy.magic_offset = 0;
         return cpy;
     }
@@ -1350,21 +1350,31 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         scalar             period;
         scalar             phase;
 
-        u32 padding_[26];
+        u32 padding_[1];
     };
 
     struct
     {
-        illum_flags flags;
+        union
+        {
+            struct
+            {
+                illum_flags flags;
 
-        illumination_props primary;
-        illumination_props secondary;
-        illumination_props plasma;
+                illumination_props primary;
+                illumination_props secondary;
+                illumination_props plasma;
 
-        u32 padding_1[2];
+                u32 padding_1[2];
+            };
+
+            u32 padding_2[14 * 4];
+        };
 
         detail_map map;
     } self_illum;
+
+    u32 padding_3[4];
 
     enum class specular_flags : u32
     {
@@ -1378,15 +1388,16 @@ struct alignas(4) shader_env : shader_base /* aka senv */
     {
         struct
         {
+            u32            unknown_;
             specular_flags flags;
+            u32            padding_[4];
             scalar         brightness;
             Vecf3          perpendicular_color;
             Vecf3          parallel_color;
 
         } specular;
 
-        u32    unknown_3[42];
-        scalar unknown_4[42];
+        u32 padding_4[39];
     };
 
     enum class reflection_flags : u32
@@ -1395,7 +1406,16 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         dynamic_mirror = 0x1,
     };
 
-    reflection_properties reflection;
+    struct
+    {
+        reflection_flags    flags;
+        reflection_map_type type;
+        scalar              lightmap_brightness;
+        scalar              perpendicular_brightness;
+        scalar              parallel_brightness;
+
+        tagref_typed_t<tag_class_t::bitm> reflection;
+    } reflection;
 };
 
 struct alignas(4) shader_model : shader_base /* aka soso */

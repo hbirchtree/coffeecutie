@@ -167,6 +167,11 @@ struct ShaderItem
         generation_idx_t primary_bitm;
         generation_idx_t secondary_bitm;
         generation_idx_t micro_bitm;
+
+        generation_idx_t bump;
+
+        generation_idx_t self_illum;
+
         generation_idx_t reflection_bitm;
     };
     struct schi_t
@@ -549,7 +554,7 @@ struct BitmapCache
 #else
                     "[unknown]"
 #endif
-                    );
+                );
                 return {};
             }
 
@@ -558,8 +563,6 @@ struct BitmapCache
             auto& img = out.image;
             img.mip   = &image;
             img.layer = 0;
-
-            cDebug("Mipmaps: {0}", image.mipmaps);
 
             PixDesc fmt;
             if(image.compressed())
@@ -619,6 +622,9 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
     template<blam::tag_class_t Tag>
     generation_idx_t get_bitm_idx(blam::tagref_typed_t<Tag> const& bitm)
     {
+        if(!bitm.valid())
+            return generation_idx_t();
+
         return bitm_cache.predict(bitm.to_plain(), 0);
     }
 
@@ -652,6 +658,11 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
             out.senv.secondary_bitm =
                 get_bitm_idx(shader_env.diffuse.secondary.map);
             out.senv.micro_bitm = get_bitm_idx(shader_env.diffuse.micro.map);
+
+            out.senv.self_illum = get_bitm_idx(shader_env.self_illum.map.map);
+            out.senv.bump       = get_bitm_idx(shader_env.bump.map);
+            out.senv.reflection_bitm =
+                get_bitm_idx(shader_env.reflection.reflection);
 
             break;
         }

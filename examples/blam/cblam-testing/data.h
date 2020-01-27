@@ -63,8 +63,8 @@ struct BlamData
     ShPtr<GFX::V_DESC> model_attr;
 
     Vector<Matf4>     model_mats;
-    ShPtr<GFX::BUF_U> model_matrix_store;
-    ShPtr<GFX::BUF_U> material_store;
+    ShPtr<GFX::BUF_S> model_matrix_store;
+    ShPtr<GFX::BUF_S> material_store;
 
     camera_t            camera;
     Matf4               camera_matrix;

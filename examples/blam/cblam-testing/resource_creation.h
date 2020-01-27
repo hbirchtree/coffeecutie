@@ -9,7 +9,7 @@ struct memory_budget
     static constexpr auto mesh_buffer     = 25_MB;
     static constexpr auto mesh_elements   = 15_MB;
     static constexpr auto matrix_buffer   = 4_MB;
-    static constexpr auto material_buffer = 4_MB;
+    static constexpr auto material_buffer = 8_MB;
 
     static constexpr auto grand_total = bsp_buffer + bsp_elements +
                                         mesh_buffer + mesh_elements +
@@ -63,10 +63,10 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
     data.model_index = gfx.alloc_buffer<GFX::BUF_E>(
         RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable, 0);
 
-    data.model_matrix_store = gfx.alloc_buffer<GFX::BUF_U>(
+    data.model_matrix_store = gfx.alloc_buffer<GFX::BUF_S>(
         RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable, sizeof(Matf4), 0);
 
-    data.material_store = gfx.alloc_buffer<GFX::BUF_U>(
+    data.material_store = gfx.alloc_buffer<GFX::BUF_S>(
         RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable,
         sizeof(Vecf2) + sizeof(Veci2) + sizeof(u32),
         0);

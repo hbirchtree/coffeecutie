@@ -109,8 +109,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         PIP_PARAM*          pipeline;
         Map<u64, PIP_PARAM> format_states;
 
-        Pair<u32, u32> material_buffer_range;
-        Bytes          material_buffer;
+        Pair<u32, u32>   material_buffer_range;
+        Pair<u32, u32>   matrix_buffer_range;
+        Bytes            material_buffer;
+        mem_chunk<Matf4> matrix_buffer;
 
         decltype(source.draws)& draws()
         {
@@ -193,14 +195,18 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         u32 base = 0;
         for(Pass& pass : bsp)
         {
-            pass.material_buffer_range = {base, 128_kB};
+            pass.material_buffer_range = {base, 256_kB};
             base += pass.material_buffer_range.second;
         }
-        base = 0;
+        base         = 4_MB;
+        u32 base_mat = 0;
         for(Pass& pass : model)
         {
-            pass.material_buffer_range = {base, 128_kB};
+            pass.material_buffer_range = {base, 512_kB};
+            pass.matrix_buffer_range   = {base_mat, 512_kB};
+
             base += pass.material_buffer_range.second;
+            base_mat += pass.matrix_buffer_range.second;
         }
     }
 
@@ -257,6 +263,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         GFX::ERROR ec;
 
+        m_data.model_matrix_store->bindrange(
+            0,
+            pass.matrix_buffer_range.first,
+            pass.matrix_buffer_range.second,
+            ec);
         m_data.material_store->bindrange(
             1,
             pass.material_buffer_range.first,
@@ -291,8 +302,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             last_update = time;
         }
 
+        u32 i = 0;
         for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
-            render_pass(pass);
+        {
+//            if(i != Pass_EnvMicro)
+                render_pass(pass);
+            i++;
+        }
 
         for(auto const& pass : slice_num(model, Pass_LastOpaque))
             render_pass(pass);
@@ -462,34 +478,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                                     mod_ref.draw.draw});
         }
 
-        for(auto i : Range<>(Pass_LastOpaque))
+        for(auto i : Range<>(Pass_Count))
         {
             GFX::OptimizeRenderPass(bsp[i].source, bsp[i].draw);
             GFX::OptimizeRenderPass(model[i].source, model[i].draw);
         }
 
-        GFX::OptimizeRenderPass(
-            bsp[Pass_Wireframe].source, bsp[Pass_Wireframe].draw);
-
-        GFX::OptimizeRenderPass(
-            model[Pass_Glass].source,
-            model[Pass_Glass].draw,
-            model[Pass_Opaque].draws().size());
-        GFX::OptimizeRenderPass(bsp[Pass_Glass].source, bsp[Pass_Glass].draw);
-
-        GFX::OptimizeRenderPass(
-            model[Pass_Lights].source,
-            model[Pass_Lights].draw,
-            model[Pass_Opaque].draws().size() +
-                model[Pass_Glass].draws().size());
-        GFX::OptimizeRenderPass(bsp[Pass_Lights].source, bsp[Pass_Lights].draw);
-
         /* Update transforms and texture references */
 
         auto material_store = m_data.material_store->map();
+        auto matrix_store   = m_data.model_matrix_store->map();
 
-        auto model_material_store = material_store.at(2_MB);
-        material_store            = material_store.at(0, 2_MB);
+        auto material_store_base = material_store.at(0);
+        material_store           = material_store.at(0, 4_MB);
 
         for(Pass& pass : bsp)
             pass.material_buffer = material_store.at(
@@ -497,12 +498,16 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 pass.material_buffer_range.second);
 
         for(Pass& pass : model)
-            pass.material_buffer = model_material_store.at(
+        {
+            pass.material_buffer = material_store_base.at(
                 pass.material_buffer_range.first,
                 pass.material_buffer_range.second);
 
-        auto matrix_store =
-            m_data.model_matrix_store->map().template as<Matf4>();
+            pass.matrix_buffer = matrix_store
+                                     .at(pass.matrix_buffer_range.first,
+                                         pass.matrix_buffer_range.second)
+                                     .template as<Matf4>();
+        }
 
         for(auto& ent : p.select(ObjectMod2))
         {
@@ -515,7 +520,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             auto& draw_data =
                 model[mod_ref.current_pass].draws().at(mod_ref.draw_idx).d_data;
 
-            matrix_store[draw_data.m_ioff] =
+            Pass& pass = model[mod_ref.current_pass];
+            pass.matrix_buffer[draw_data.m_ioff] =
                 mod_ref.parent.get<ModelTag>().transform;
 
             ModelItem& mod2 = m_data.model_cache.find(mod_ref.model)->second;
@@ -534,7 +540,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 m_data.bitm_cache.find(shader->color_bitm)->second;
 
             materials::basic& mat =
-                model_material_store
+                pass.material_buffer
                     .template as<materials::basic>()[draw_data.m_ioff];
 
             mat.layer        = bitmap.image.layer;

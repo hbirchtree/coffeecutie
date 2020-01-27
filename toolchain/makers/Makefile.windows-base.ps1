@@ -84,7 +84,7 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 			-C"$SrcDir/toolchain/cmake/Preload/$preload.cmake" `
 			-DCMAKE_INSTALL_PREFIX="$Pwd/Out" `
 			$ExtraArgs
-	} catch [NativeCommandError] {
+	} catch {
 		# CMake may emit warnings, which are caught here
 		echo "CMake emitted:"
 		echo $PSItem.Exception.Message

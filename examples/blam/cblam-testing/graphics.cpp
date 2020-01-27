@@ -407,8 +407,6 @@ i32 blam_main(i32, cstring_w*)
 
             GFX::ERROR ec;
             data.model_matrix_store->bindrange(0, 0, 4_MB, ec);
-            data.material_store->bindrange(1, 0, 2_MB, ec);
-            data.material_store->bindrange(2, 2_MB, 2_MB, ec);
 
             data.wireframe_pipeline->set_constant(
                 "camera", Bytes::From(data.camera_matrix));

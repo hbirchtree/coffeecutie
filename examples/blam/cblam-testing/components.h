@@ -30,6 +30,7 @@ enum Passes
     Pass_Wireframe,
 
     Pass_Count,
+
 };
 
 struct BspReference

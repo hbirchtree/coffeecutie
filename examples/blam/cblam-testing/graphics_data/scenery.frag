@@ -1,4 +1,4 @@
-#version 460 core
+#version 320 es
 
 #extension GL_EXT_shader_io_blocks : enable
 
@@ -20,9 +20,9 @@ struct Material
     uint layer;
 };
 
-layout(binding = 2, std140) uniform MaterialProperties
+layout(binding = 1, std140) buffer MaterialProperties
 {
-    Material instance[256];
+    Material instance[];
 } mats;
 
 uniform sampler2DArray bc1_tex;
@@ -34,14 +34,7 @@ out vec4 out_color;
 void main()
 {
     vec2 tex_ = frag.tex;
-
-    if(tex_.x < 0 || tex_.y < 0)
-        tex_ = 1 - tex_ - ceil(tex_);
-    else
-        tex_ = tex_ - floor(tex_);
-//    vec2 tex_ = mats.instance[frag.instanceId].uvscale * frag.tex
-//            - floor(frag.tex);
-//    tex_ = tex_ * sign(tex_);
+    tex_ = tex_ - floor(tex_);
 
     vec2 sample_pos = tex_ * mats.instance[frag.instanceId].scaling
             + vec2(mats.instance[frag.instanceId].offset);
