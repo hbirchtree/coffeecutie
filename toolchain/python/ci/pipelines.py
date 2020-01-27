@@ -39,12 +39,25 @@ def pipelines_gen_config(build_info, repo_dir):
                     {
                         'script': './toolchain/ci/travis-deps.sh',
                         'displayName': 'Downloading dependencies',
-                        'env': { 'TRAVIS_OS_NAME': 'linux' }
+                        'env': {
+                            'TRAVIS_OS_NAME': 'linux',
+                            'PIPELINES': '1'
+                        }
                     },
                     {
                         'script': './cb quick-build $(variant)',
                         'displayName': 'Building project',
-                        'env': { 'CONFIGURATION': 'Release' }
+                        'env': { 
+                            'CONFIGURATION': 'Release',
+                            'TRAVIS_OS_NAME': 'linux',
+                            'BUILDVARIANT': '$(variant)',
+                            'PIPELINES': '1',
+                            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
+                            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
+                            'BUILD_REPO_EVENT': '$(Build.Reason)',
+                            'BUILD_REPO_ID': '$(variant)',
+                            'BUILD_REPO_URL': ''
+                        }
                     }
                     ]
                 },
@@ -62,12 +75,25 @@ def pipelines_gen_config(build_info, repo_dir):
                     {
                         'script': './toolchain/ci/travis-deps.sh',
                         'displayName': 'Downloading dependencies',
-                        'env': { 'TRAVIS_OS_NAME': 'osx' }
+                        'env': { 
+                            'TRAVIS_OS_NAME': 'osx',
+                            'PIPELINES': '1'
+                        }
                     },
                     {
                         'script': './cb quick-build $(variant)',
                         'displayName': 'Building project',
-                        'env': { 'CONFIGURATION': 'Release', 'TRAVIS_OS_NAME': 'osx' }
+                        'env': { 
+                            'CONFIGURATION': 'Release',
+                            'TRAVIS_OS_NAME': 'osx',
+                            'BUILDVARIANT': '$(variant)',
+                            'PIPELINES': '1',
+                            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
+                            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
+                            'BUILD_REPO_EVENT': '$(Build.Reason)',
+                            'BUILD_REPO_ID': '$(variant)',
+                            'BUILD_REPO_URL': ''
+                        }
                     }
                     ]
                 },
@@ -85,12 +111,25 @@ def pipelines_gen_config(build_info, repo_dir):
                     {
                         'powershell': './toolchain/ci/appveyor-deps.ps1',
                         'displayName': 'Downloading dependencies',
-                        'env': { 'AZURE_IMAGE': 'vs2019-win2019', 'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/' },
+                        'env': { 
+                            'AZURE_IMAGE': 'vs2019-win2019', 
+                            'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/' ,
+                            'PIPELINES': '1'
+                        }
                     },
                     {
                         'powershell': './cb.ps1 quick-build $(variant)',
                         'displayName': 'Building project',
-                        'env': { 'AZURE_IMAGE': 'vs2019-win2019', 'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/' },
+                        'env': { 
+                            'AZURE_IMAGE': 'vs2019-win2019',
+                            'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/',
+                            'PIPELINES': '1',
+                            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
+                            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
+                            'BUILD_REPO_EVENT': '$(Build.Reason)',
+                            'BUILD_REPO_ID': '$(variant)',
+                            'BUILD_REPO_URL': ''
+                        }
                     }
                     ]
                 }

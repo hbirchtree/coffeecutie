@@ -83,6 +83,16 @@ function jenkins_get_path()
     create_identity "$(jenkins_repo_slug)" "$CI_PREFIX/jenkins-ci" "$GIT_BRANCH" "push" "$identifier"
 }
 
+function azure_get_path()
+{
+    create_identity "${BUILD_REPO_URI}" \
+        "$CI_PREFIX/azure-pipelines" \
+        "${BUILD_REPO_BRANCH}" \
+        "${BUILD_REPO_EVENT}" \
+        "${BUILD_REPO_ID}" \
+        "${BUILD_REPO_URL}"
+}
+
 export CI_IDENTITY="generic-repository/generic-ci/service/push"
 
 if [ -n "$TRAVIS_BRANCH" ]; then
@@ -91,6 +101,10 @@ else
     if [ -n "$JENKINS_URL" ]; then
         jenkins_get_path
     else
-        echo ""
+        if [ -n "$PIPELINES" ]; then
+            azure_get_path
+        else
+            echo ""
+        fi
     fi
 fi

@@ -47,10 +47,19 @@ jobs:
     displayName: Downloading dependencies
     env:
       TRAVIS_OS_NAME: linux
+      PIPELINES: '1'
   - script: ./cb quick-build $(variant)
     displayName: Building project
     env:
       CONFIGURATION: Release
+      TRAVIS_OS_NAME: linux
+      BUILDVARIANT: $(variant)
+      PIPELINES: '1'
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
 - job: macOS_and_iOS
   pool:
     vmImage: macos-10.14
@@ -67,11 +76,19 @@ jobs:
     displayName: Downloading dependencies
     env:
       TRAVIS_OS_NAME: osx
+      PIPELINES: '1'
   - script: ./cb quick-build $(variant)
     displayName: Building project
     env:
       CONFIGURATION: Release
       TRAVIS_OS_NAME: osx
+      BUILDVARIANT: $(variant)
+      PIPELINES: '1'
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
 - job: Windows
   pool:
     vmImage: windows-2019
@@ -89,8 +106,15 @@ jobs:
     env:
       AZURE_IMAGE: vs2019-win2019
       OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+      PIPELINES: '1'
   - powershell: ./cb.ps1 quick-build $(variant)
     displayName: Building project
     env:
       AZURE_IMAGE: vs2019-win2019
       OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+      PIPELINES: '1'
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
