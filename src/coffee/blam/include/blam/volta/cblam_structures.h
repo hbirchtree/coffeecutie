@@ -1353,23 +1353,15 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         u32 padding_[1];
     };
 
-    struct
+    struct self_illumination_t
     {
-        union
-        {
-            struct
-            {
-                illum_flags flags;
+        illum_flags flags;
 
-                illumination_props primary;
-                illumination_props secondary;
-                illumination_props plasma;
+        illumination_props primary;
+        illumination_props secondary;
+        illumination_props plasma;
 
-                u32 padding_1[2];
-            };
-
-            u32 padding_2[14 * 4];
-        };
+        u32 padding_2[25];
 
         detail_map map;
     } self_illum;
@@ -1384,21 +1376,18 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         lightmap_specular = 0x4,
     };
 
-    union
+    struct
     {
-        struct
-        {
-            u32            unknown_;
-            specular_flags flags;
-            u32            padding_[4];
-            scalar         brightness;
-            Vecf3          perpendicular_color;
-            Vecf3          parallel_color;
+        u32            unknown_;
+        specular_flags flags;
+        u32            padding_[4];
+        scalar         brightness;
+        Vecf3          perpendicular_color;
+        Vecf3          parallel_color;
 
-        } specular;
+    } specular;
 
-        u32 padding_4[39];
-    };
+    u32 padding_4[26];
 
     enum class reflection_flags : u32
     {
