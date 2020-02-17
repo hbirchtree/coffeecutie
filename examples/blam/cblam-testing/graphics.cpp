@@ -142,8 +142,7 @@ void load_objects(
 
                 submod_.parent = parent_;
                 submod_.shader = sub.shader;
-                submod_.initialize(
-                    model_.at(blam::mod2::lod_high_ext), sub, {});
+                submod_.initialize(model_.at(blam::mod2::lod_high_ext), sub);
 
                 ShaderData&       shader_ = submod.get<ShaderTag>();
                 ShaderItem const& shader_it =
@@ -233,7 +232,7 @@ void load_multiplayer_equipment(
                         SubModel& submod_ = submod.get<SubModelTag>();
                         submod_.parent    = set;
                         submod_.initialize(
-                            model.at(blam::mod2::lod_high_ext), sub, {});
+                            model.at(blam::mod2::lod_high_ext), sub);
                     }
                 }
                 break;
@@ -311,7 +310,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
             auto      submod  = e.ref(e.create_entity(skybox_model));
             SubModel& submod_ = submod.get<SubModelTag>();
 
-            submod_.initialize(model, sub, {});
+            submod_.initialize(model, sub);
             skybox_mod.models.push_back(submod);
             submod_.parent = skybox_ent;
         }
@@ -484,7 +483,7 @@ i32 blam_main(i32, cstring_w*)
             {
                 data.camera.aspect =
                     e.service<comp_app::Windowing>()->size().aspect();
-                data.camera.zVals = {0.01f, 1000.f};
+                data.camera.zVals = {0.01f, 20000.f};
 
                 data.camera_matrix =
                     GenPerspective(data.camera) * GenTransform(data.camera) *

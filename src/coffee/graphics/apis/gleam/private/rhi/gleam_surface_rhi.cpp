@@ -572,11 +572,12 @@ void GLEAM_Surface3D_Base::allocate(Size3 size, PixCmp c)
 }
 
 void GLEAM_Surface3D_Base::upload(
-    PixDesc                     pfmt,
-    Size3 const&                size,
-    semantic::BytesConst const& data,
-    Point3 const&               offset,
-    u32                         mip)
+    PixDesc                          pfmt,
+    Size3 const&                     size,
+    semantic::BytesConst const&      data,
+    Coffee::RHI::GLEAM::gleam_error& ec,
+    Point3 const&                    offset,
+    u32                              mip)
 {
     auto msz = size.convert<u32>();
     auto mof = offset.convert<u32>();
@@ -684,21 +685,33 @@ void GLEAM_Surface3D_Base::upload(
     }
 }
 
-void GLEAM_Surface3D_Base::upload(
-    BitFmt            fmt,
-    PixCmp            comp,
-    Size3 const&      size,
-    BytesConst const& data,
-    Point3 const&     offset,
-    u32               mip)
-{
-    upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
-}
-
 GLEAM_SurfaceCubeArray::GLEAM_SurfaceCubeArray(
     PixFmt fmt, u32 mips, u32 texflags) :
-    GLEAM_Surface2DArray(fmt, mips, texflags)
+    GLEAM_Surface3D_Base(tex::tex_cube_array::value, fmt, mips, texflags)
 {
+}
+
+void GLEAM::GLEAM_SurfaceCubeArray::allocate(Size3 size, PixCmp c)
+{
+    /* Cubemap arrays have 6x the layers */
+    GLEAM_Surface3D_Base::allocate(
+        {size.width, size.height, size.depth * 6}, c);
+}
+
+void GLEAM::GLEAM_SurfaceCubeArray::upload(
+    PixDesc const&              pfmt,
+    typing::graphics::CubeFace  face,
+    Size const&                 size,
+    semantic::BytesConst const& data,
+    Point3 const&               offset,
+    GLEAM::gleam_error&         ec)
+{
+    GLEAM_Surface3D_Base::upload(
+        pfmt,
+        Size3(size.w, size.h, 1),
+        data,
+        ec,
+        Point3(offset.x, offset.y, offset.z * 6 + C_CAST<u32>(face)));
 }
 
 } // namespace GLEAM

@@ -12,5 +12,17 @@ enum class VertexFace
     FaceMask = Both,
 };
 
-}
-}
+enum class CubeFace
+{
+    x_positive = 0,
+    x_negative = 1,
+
+    y_positive = 2,
+    y_negative = 3,
+
+    z_positive = 4,
+    z_negative = 5,
+};
+
+} // namespace graphics
+} // namespace typing

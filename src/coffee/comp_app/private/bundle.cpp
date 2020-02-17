@@ -136,7 +136,6 @@ detail::EntityContainer& createContainer()
         }
         case CoffeeHandle_Cleanup:
         {
-            /* TODO: Unload all services */
             app_error appec;
             for(auto& service : container->services_with<AppLoadableService>())
                 service.unload(*container, appec);

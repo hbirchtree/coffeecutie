@@ -191,11 +191,12 @@ FORCEDINLINE bool LoadTexture(
     {
         Size3 tex_size = {tex_src.size.w, tex_src.size.h, 1};
 
+        typename GFX::ERROR ec;
         surface.upload(
-            BitFmt::UByte,
-            PixCmp::RGBA,
+            PixDesc(PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA),
             tex_size,
-            tex_src.data,
+            tex_src.data_owner,
+            ec,
             {0, 0, layer},
             0);
     } else

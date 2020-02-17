@@ -548,7 +548,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             mat.atlas_scale  = bitmap.image.scale;
             mat.uv_scale     = mod2.uvscale;
 
-            auto comp_flags = std::get<3>(bitmap.image.bucket);
+            auto comp_flags = std::get<4>(bitmap.image.bucket);
             switch(comp_flags)
             {
             case CompFlags::DXT1:
@@ -624,7 +624,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 mat.atlas_scale  = bitmap.image.scale;
                 mat.uv_scale     = {1};
 
-                auto comp_flags = std::get<3>(bitmap.image.bucket);
+                auto comp_flags = std::get<4>(bitmap.image.bucket);
                 switch(comp_flags)
                 {
                 case CompFlags::DXT1:

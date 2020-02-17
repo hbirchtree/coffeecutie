@@ -43,10 +43,9 @@ struct generation_idx_t
         return i != 0 && gen != 0;
     }
 };
-template<size_t NumIdx>
-using hierarchial_idx_t = Array<u32, NumIdx>;
 
-using bitm_format_hash = Tup<PixFmt, PixCmp, BitFmt, CompFlags>;
+using bitm_format_hash =
+    Tup<blam::bitm::type_t, PixFmt, PixCmp, BitFmt, CompFlags>;
 
 struct BSPItem
 {
@@ -280,12 +279,14 @@ struct DataCache : non_copy
 struct BitmapCache
     : DataCache<BitmapItem, Tup<u32, i16>, blam::tagref_t const&, i16>
 {
+    template<typename Type>
     struct TextureBucket
     {
-        ShPtr<GFX::S_2DA>  surface;
-        ShPtr<GFX::SM_2DA> sampler;
-        u32                ptr;
-        PixDesc            fmt;
+        ShPtr<typename Type::surface_type> surface;
+        ShPtr<Type>                        sampler;
+
+        u32     ptr;
+        PixDesc fmt;
     };
 
     BitmapCache(
@@ -309,16 +310,19 @@ struct BitmapCache
     blam::bitm::bitmap_header_t const* bitm_header;
     GFX_ALLOC*                         allocator;
 
-    Map<bitm_format_hash, TextureBucket> tex_buckets;
+    Map<bitm_format_hash, TextureBucket<GFX::SM_2DA>>   tex_buckets;
+    Map<bitm_format_hash, TextureBucket<GFX::SM_CubeA>> tex_buckets_cube;
 
-    static inline bitm_format_hash create_hash(PixDesc const& fmt)
+    static inline bitm_format_hash create_hash(
+        PixDesc const& fmt, blam::bitm::type_t type)
     {
-        return std::make_tuple(fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
+        return std::make_tuple(
+            type, fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
     }
 
-    TextureBucket& get_bucket(PixDesc const& fmt)
+    TextureBucket<GFX::SM_2DA>& get_bucket(PixDesc const& fmt)
     {
-        auto hash = create_hash(fmt);
+        auto hash = create_hash(fmt, blam::bitm::type_t::tex_2d);
 
         auto it = tex_buckets.find(hash);
 
@@ -331,6 +335,29 @@ struct BitmapCache
         bucket.fmt = fmt;
         std::tie(bucket.sampler, bucket.surface) =
             allocator->alloc_surface_sampler<GFX::S_2DA>(
+                fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
+
+        bucket.sampler->setFiltering(
+            Filtering::Linear, Filtering::Linear, Filtering::Linear);
+
+        return bucket;
+    }
+
+    TextureBucket<GFX::SM_CubeA>& get_cube_bucket(PixDesc const& fmt)
+    {
+        auto hash = create_hash(fmt, blam::bitm::type_t::tex_cube);
+
+        auto it = tex_buckets_cube.find(hash);
+
+        if(it != tex_buckets_cube.end())
+            return it->second;
+
+        auto& bucket = tex_buckets_cube.insert({hash, {}}).first->second;
+
+        bucket.ptr = 0;
+        bucket.fmt = fmt;
+        std::tie(bucket.sampler, bucket.surface) =
+            allocator->alloc_surface_sampler<GFX::S_CubeA>(
                 fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
 
         bucket.sampler->setFiltering(
@@ -354,10 +381,12 @@ struct BitmapCache
 
         auto img_size = img.image.mip->isize.convert<i32>();
 
+        GFX::ERROR ec;
         bucket.surface->upload(
             img.image.fmt,
             Size3(img_size.w, img_size.h, 1),
             img_data,
+            ec,
             Point3(
                 img.image.offset.x(), img.image.offset.y(), img.image.layer));
     }
@@ -380,9 +409,13 @@ struct BitmapCache
 
         for(auto& bitm : m_cache)
         {
-            auto const& fmt = bitm.second.image.fmt;
-            auto        hash =
-                std::make_tuple(fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
+            auto const& fmt  = bitm.second.image.fmt;
+            auto        hash = std::make_tuple(
+                bitm.second.image.mip->type,
+                fmt.pixfmt,
+                fmt.comp,
+                fmt.bfmt,
+                fmt.cmpflg);
             auto&       pool   = fmt_count[hash];
             auto const& imsize = bitm.second.image.mip->isize;
 
@@ -541,9 +574,7 @@ struct BitmapCache
 
         GFX::DBG::SCOPE _("BitmapCache::predict_impl");
 
-        auto image_ = bitm.images.data(curr_magic);
-
-        if(image_.data)
+        if(auto image_ = bitm.images.data(curr_magic); image_.data)
         {
             if(image_.data->type != blam::bitm::type_t::tex_2d)
             {
@@ -577,7 +608,7 @@ struct BitmapCache
             }
 
             auto& bucket = get_bucket(fmt);
-            img.bucket   = create_hash(fmt);
+            img.bucket   = create_hash(fmt, img.mip->type);
             img.fmt      = fmt;
 
             img.layer = bucket.ptr;
@@ -675,10 +706,6 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
             out.soso.multi_bitm  = get_bitm_idx(shader_model.maps.multipurpose);
             out.soso.detail_bitm = get_bitm_idx(shader_model.maps.detail.map);
 
-            //            if(shader_model.maps.multipurpose.valid())
-            //                out.color_bitm =
-            //                get_bitm_idx(shader_model.maps.multipurpose);
-
             break;
         }
         case tag_class_t::schi:
@@ -686,10 +713,11 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
             auto const& shader_model =
                 (*it)->to_reflexive<blam::shader_chicago>().data(magic)[0];
 
-            auto        maps = shader_model.maps.data(magic);
-            auto const& map1 = maps[0];
-
-            out.schi.map1 = get_bitm_idx(maps[0].map.map);
+            if(auto maps = shader_model.maps.data(magic); maps)
+            {
+                auto const& map1 = maps[0];
+                out.schi.map1    = get_bitm_idx(maps[0].map.map);
+            }
 
             break;
         }
@@ -699,9 +727,18 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
                 (*it)->to_reflexive<blam::shader_chicago_extended>().data(
                     magic)[0];
 
-            auto maps4 = shader_model.maps_4stage.data(magic);
-
-            out.color_bitm = get_bitm_idx(maps4[0].map.map);
+            if(auto maps4 = shader_model.maps_4stage.data(magic); maps4)
+            {
+                out.color_bitm = get_bitm_idx(maps4[0].map.map);
+            }
+            if(auto layers = shader_model.layers.data(magic); layers)
+            {
+                for(auto const& layer : layers)
+                {
+                    if(!layer.valid())
+                        Throw(undefined_behavior("invalid layer!"));
+                }
+            }
 
             break;
         }

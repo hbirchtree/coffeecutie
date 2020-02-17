@@ -6,48 +6,48 @@ These examples use the `coffee/blam` library for opening Blam! maps. For now the
 
 ## The meltdown
 
-![](update1.png)
+![](images/update1.png)
 
 Initial rendering, lots of wrong indexes everywhere. Unplayable framerates when rendering terrain.
 
 ## Getting better
 
-![](update2.png)
+![](images/update2.png)
 
 Somewhat better, missing scenery, not handling multiple BSPs correctly:
 
 ## Holey moley
 
-![](update3.png)
+![](images/update3.png)
 
 Loading scenery, figuring out that they use `GL_TRIANGLE_STRIP` for rendering. Notice the holes in the tree:
 
 ## Admiring the view
 
-![](update4.png)
+![](images/update4.png)
 
 Loading all scenery correctly, loads an entire level with poor performance for rendering scenery, as each piece of scenery is a drawcall.
 
 ## Scenery, but faster
 
-![](update5.png)
+![](images/update5.png)
 
 Rendering the entirety of 343 Guilty Spark, including scenery at nice framerates when using batching.
 Also places matrices for scenery in a shader storage buffer to allow batching at all.
 
 ## Bipeds, vehicles, weapons, equipment!
 
-![](update6.png)
-![](update7-1.png)
-![](update7-2.png)
+![](images/update6.png)
+![](images/update7-1.png)
+![](images/update7-2.png)
 
 More models are placed, albeit with wrong rotation in a lot of places. These all use the `mod2` format internally,
  and was very easily extended from scenery.
  
 ## Textures are hard
 
-![](update8-1.png)
-![](update8-2.png)
+![](images/update8-1.png)
+![](images/update8-2.png)
 
 Textures are a bit of a daunting task to combine with batching. Optimally we
  want to keep the number of textures low, and minimize the waste of texture space.
@@ -62,7 +62,7 @@ As seen from the images, there are many issues with addressing the textures,
 
 ## Progress!
 
-![](update9.png)
+![](images/update9.png)
 
 After trying many exciting ways of atlasing textures, something finally worked,
  and I called it a day. For now only the BSP shows the correct textures,
@@ -70,7 +70,7 @@ After trying many exciting ways of atlasing textures, something finally worked,
 
 ## Cursed models
 
-![](update10.png)
+![](images/update10.png)
 
 After finding out that the model instances weren't propagated to the fragment
  shader for models, they finally look better.
@@ -81,9 +81,9 @@ This image is from the start of 343 Guilty Spark, and Sgt Johnson is
 
 ## Alpha to coverage is good
 
-![](update11-1.png)
-![](update11-2.png)
-![](update11-3.png)
+![](images/update11-1.png)
+![](images/update11-2.png)
+![](images/update11-3.png)
 
 By implementing the requirements for sample alpha to coverage
  (mainly enabling multisampling), plants and other things look much better.
@@ -91,7 +91,7 @@ The people are still cursed, though.
 
 ## A rare new species
 
-![](update12.png)
+![](images/update12.png)
 
 If you look closely at the above image, you may spot a rare specimen of the
  Assault Rifle species. These hide in the bushes of Guilty Spark looking for prey,
@@ -107,8 +107,8 @@ There are lots of scenery placed around the level, hiding behind corners and suc
 
 ## Better shaders
 
-![](update13-1.png)
-![](update13-2.png)
+![](images/update13-1.png)
+![](images/update13-2.png)
 
 After investigating the structure of the different shaders, they are more fleshed out.
 Much of the information was found from Guerilla, and winging most of the data alignment,
@@ -117,8 +117,8 @@ Also, Blood Gulch looks a lot better now. Models are still borked, though.
 
 ## Guns that you can see
 
-![](update14-1.png)
-![](update14-2.png)
+![](images/update14-1.png)
+![](images/update14-2.png)
 
 After cleaning up some code, it was more manageable to add multiplayer equipment.
 Vehicles, scenery and bipeds all use the same spawning logic based on the `obje` tag,
@@ -130,16 +130,16 @@ On another note, there is a bug with Custom Edition textures that needs to be fi
 
 ## Lightmaps everywhere
 
-![](update15-1.png)
+![](images/update15-1.png)
 
 After some work reorganizing the way textures are loaded, it became possible to
  sort meshes by which textures they used. This made it possible to load microtextures,
  which really improve the look of the low-res terrain textures.
 
-![](update15-2.png)
-![](update15-3.png)
-![](update15-4.png)
-![](update15-5.png)
+![](images/update15-2.png)
+![](images/update15-3.png)
+![](images/update15-4.png)
+![](images/update15-5.png)
 
 After having the textures sorted, I also looked into lightmaps, referencing GuiltySpark again.
 Because all lightmaps are `PixFmt::RGB565`, it was super simple, and they look amazing,

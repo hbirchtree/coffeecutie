@@ -506,11 +506,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             stb::LoadData(
                 &img, BytesConst(imdata.data, imdata.size, imdata.size));
 
+            GLM::ERROR ec;
             mainSurface.upload(
-                BitFmt::UByte,
-                PixCmp::RGBA,
+                PixDesc(PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA),
                 {img.size.w, img.size.h, 1},
-                img.data,
+                img.data_owner,
+                ec,
                 {0, 0, 0});
         } else
         {
@@ -549,6 +550,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                         imgCoder.decode(rsc->data(), std::move(rsc))
                             .then(mainQueue, [&](stb::image_rw&& img) {
                                 ProfContext _("Uploading texture");
+                                GLM::ERROR  ec;
                                 mainSurface.upload(
                                     PixDesc(
                                         mainSurface.m_pixfmt,
@@ -556,6 +558,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                                         PixCmp::RGBA),
                                     {img.size.w, img.size.h, 1},
                                     C_OCAST<Bytes>(img),
+                                    ec,
                                     {});
                             });
                     }

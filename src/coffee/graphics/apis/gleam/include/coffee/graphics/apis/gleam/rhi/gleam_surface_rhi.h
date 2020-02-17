@@ -99,17 +99,6 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
         gleam_error&      ec,
         Point             offset = {0, 0},
         u32               mip    = 0);
-
-    void upload(
-        PixDesc           pfmt,
-        Size const&       size,
-        BytesConst const& data,
-        Point             offset = {0, 0},
-        u32               mip    = 0)
-    {
-        gleam_error ec;
-        return upload(pfmt, size, data, ec, offset, mip);
-    }
 };
 
 struct GLEAM_SurfaceCube : GLEAM_Surface2D
@@ -133,30 +122,9 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
         PixDesc           pfmt,
         Size3 const&      size,
         BytesConst const& data,
+        gleam_error&      ec,
         Point3 const&     offset = {0, 0, 0},
         u32               mip    = 0);
-
-    GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt            fmt,
-        PixCmp            comp,
-        Size3 const&      size,
-        BytesConst const& data,
-        Point3 const&     offset = {0, 0, 0},
-        u32               mip    = 0);
-
-    GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt        fmt,
-        PixCmp        comp,
-        Size3 const&  size,
-        c_cptr        data,
-        Point3 const& offset = {0, 0, 0},
-        u32           mip    = 0)
-    {
-        Bytes dataS;
-        dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
-        dataS.size = GetPixSize(fmt, comp, size.volume());
-        upload(fmt, comp, size, dataS, offset, mip);
-    }
 };
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
@@ -181,7 +149,7 @@ struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
     }
 };
 
-struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
+struct GLEAM_SurfaceCubeArray : GLEAM_Surface3D_Base
 {
     using sampler_type = GLEAM_SamplerCubeArray;
 
@@ -189,6 +157,16 @@ struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
 
     GLEAM_API_CLASS_LINKAGE GLEAM_SurfaceCubeArray(
         PixFmt fmt, u32 mips = 1, u32 texflags = 0);
+
+    GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
+
+    GLEAM_API_CLASS_LINKAGE void upload(
+        PixDesc const&             pfmt,
+        typing::graphics::CubeFace face,
+        Size const&                size,
+        BytesConst const&          data,
+        Point3 const&              offset,
+        gleam_error&               ec);
 };
 
 struct GLEAM_SamplerHandle
@@ -249,6 +227,8 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
 template<typename Surf>
 struct GLEAM_Sampler_Base : GLEAM_Sampler
 {
+    using surface_type = Surf;
+
     void attach(Surf* surf)
     {
         m_surface = surf;

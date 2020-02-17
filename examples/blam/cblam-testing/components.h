@@ -56,7 +56,6 @@ struct SubModel
 
     generation_idx_t     shader;
     generation_idx_t     model;
-    hierarchial_idx_t<1> submodel;
 
     /* Data used at runtime */
     u32    draw_idx;
@@ -70,14 +69,12 @@ struct SubModel
 
     void initialize(
         generation_idx_t           model_idx,
-        ModelItem::SubModel const& model_,
-        decltype(submodel)         submodel_idx)
+        ModelItem::SubModel const& model_)
     {
         draw.call =
             GFX::D_CALL().withIndexing().withTriStrip().withInstancing();
         draw.draw = model_.draw;
         model     = model_idx;
-        submodel  = submodel_idx;
     }
 };
 

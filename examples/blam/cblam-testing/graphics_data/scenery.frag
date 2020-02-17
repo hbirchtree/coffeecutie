@@ -33,7 +33,7 @@ out vec4 out_color;
 
 void main()
 {
-    vec2 tex_ = frag.tex;
+    vec2 tex_ = frag.tex * mats.instance[frag.instanceId].uvscale;
     tex_ = tex_ - floor(tex_);
 
     vec2 sample_pos = tex_ * mats.instance[frag.instanceId].scaling
