@@ -94,7 +94,8 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
             Path request_file(requesting_source);
             request_file = request_file.dirname() + requested_source;
 
-            Resource* r = new Resource(MkUrl(request_file, RSCA::AssetFile));
+            UqPtr<Resource> r =
+                MkUq<Resource>(MkUrl(request_file, RSCA::AssetFile));
 
             if(!FileExists(*r))
             {
@@ -112,7 +113,7 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
             res.source_name        = requested_source;
             res.source_name_length = libc::str::len(requested_source);
 
-            res.user_data = r;
+            res.user_data = r.release();
 
             return &res;
         }
@@ -688,10 +689,10 @@ struct ShaderProcessor : FileProcessor
     virtual cstring name() const
     {
         return "ShaderProcessor"
-        #if defined(HAVE_SPIRVCROSS)
+#if defined(HAVE_SPIRVCROSS)
                "+spirvcross"
-        #endif
-                ;
+#endif
+            ;
     }
 };
 

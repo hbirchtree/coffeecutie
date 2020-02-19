@@ -25,6 +25,10 @@
 #include <sys/wait.h>
 #endif
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten.h>
+#endif
+
 namespace posix {
 
 using posix_ec = platform::file::posix_error_code;
@@ -231,6 +235,11 @@ spawn_info spawn(exec_info<ArgType> const& exec)
     return {out.read, err.read, in.write, childPid};
 }
 
+inline pid_t self()
+{
+    return getpid();
+}
+
 inline void send_sig(pid_t target, libc::signal::sig signal)
 {
     errno = 0;
@@ -267,6 +276,18 @@ inline const char* code_to_string(int exit_code)
         return "0";
     }
 #undef CODE_TO_STRING
+}
+
+inline void breakpoint()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+//    if(getenv("DEBUG_BREAK"))
+        std::raise(SIGINT);
+#elif defined(COFFEE_EMSCRIPTEN)
+    emscripten_debugger();
+#endif
+
+    /* TODO: Reimplement Windows breakpoints */
 }
 
 } // namespace proc

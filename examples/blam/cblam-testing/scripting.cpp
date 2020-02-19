@@ -100,7 +100,7 @@ i32 coffee_main(i32, cstring_w*)
                                          scenario[0].function_table(map.magic),
                                          scenario[0].globals.data(map.magic)};
 
-    auto func_table = scenario[0].function_table(map.magic);
+    C_UNUSED(auto func_table) = scenario[0].function_table(map.magic);
 
     auto script = script_types::bytecode_ptr::start_from(
         env, scenario[0].bytecode(map.magic).data);

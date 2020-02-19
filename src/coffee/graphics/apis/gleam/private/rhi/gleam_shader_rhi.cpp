@@ -770,6 +770,7 @@ void GetShaderUniforms(
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
         /* Get uniforms buffers */
+        if(uniforms)
         {
             i32 num_blocks  = 0;
             i32 max_namelen = 0;

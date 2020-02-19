@@ -56,7 +56,6 @@ bool regular_format_coverage()
         if(!properties::get<properties::is_compressed>(fmt) &&
            fmt != PixFmt::None)
         {
-            PixFmt fmt_ = fmt;
             auto sampleType = convert::to<PixFlg>(fmt);
 
             if(sampleType == PixFlg::None)

@@ -357,6 +357,15 @@ target_link_libraries ( Core INTERFACE
     )
 
 if(TARGET SDLPowerInfo)
+    if(NOT TARGET SDL2)
+        dependency_get (
+            SOURCE hbirchtree/native-library-bundle
+            TAG ${NATIVE_LIB_BUNDLE_TAG}
+            NAMES sdl2
+            )
+
+        find_package ( SDL2 QUIET )
+    endif()
     target_link_libraries ( CoreCommon INTERFACE
         SDLPowerInfo
         )

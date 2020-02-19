@@ -848,8 +848,17 @@ inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
             Throw(implementation_error(                             \
                 __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
     }
+
+#define C_ERROR_CHECK_TYPED(ec, etype)                              \
+    {                                                               \
+        if(ec)                                                      \
+            Throw(etype(                             \
+                __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
+    }
+
 #else
 #define C_ERROR_CHECK(ec)
+#define C_ERROR_CHECK_TYPED(ec, etype)
 #endif
 
 #if MODE_DEBUG

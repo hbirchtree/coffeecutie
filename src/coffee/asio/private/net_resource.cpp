@@ -363,18 +363,15 @@ bool Resource::push(http::method_t method, const Bytes& data)
     }
 
     std::istream* http_istream = nullptr;
-    std::ostream* http_ostream = nullptr;
 
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
         http_istream = ssl.get();
-        http_ostream = ssl.get();
     } else
 #endif
     {
         http_istream = normal.get();
-        http_ostream = normal.get();
     }
 
     auto header = header::serialize::request(m_request.header);

@@ -930,6 +930,9 @@ struct scenario
                 break;
         }
 
+        if(!func_seg_start)
+            return {};
+
         auto num_functions =
             (script_string_segment.count - string_seg.data.size) /
             sizeof(hsc::function_declaration);

@@ -26,7 +26,7 @@ coffee_library (
 #
 #
 if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
-        (ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+        (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
 
     if(NOT TARGET SDL2)
         dependency_get (
@@ -39,15 +39,15 @@ if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
     endif()
 
     coffee_library (
-        TARGET CoffeeSDLPowerInfo
+        TARGET SDLPowerInfo
         SOURCES private/sdlpowerinfo.cpp
-        LIBRARIES PeripheralLib SDL2
+        LIBRARIES PeripheralLib SDL2::SDL2-static
         HEADER_DIRS
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         )
 
     dependency_link (
-        TARGET CoffeeSDLPowerInfo
+        TARGET SDLPowerInfo
         DEPENDENCIES
             sdl2
         )

@@ -139,7 +139,7 @@ struct BitmapItem
 
 struct ShaderItem
 {
-    ShaderItem() : header(nullptr)
+    ShaderItem() : header(nullptr), tag(nullptr)
     {
     }
 

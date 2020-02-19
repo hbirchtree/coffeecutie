@@ -16,7 +16,7 @@ struct GLEAM_Shader : GraphicsAPI::Shader
         Vector<GLEAM_ProgramParameter>*  params,
         Vector<GLEAM_ProgramParameter>*  outputs);
 
-    GLEAM_Shader() : Shader(0), m_handle(0)
+    GLEAM_Shader() : Shader(0), m_handle(0), m_stages(ShaderStage::All)
     {
     }
 

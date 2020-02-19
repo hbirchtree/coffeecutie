@@ -18,6 +18,11 @@
 namespace Coffee {
 namespace RHI {
 
+struct graphics_api_error : undefined_behavior
+{
+    using undefined_behavior::undefined_behavior;
+};
+
 #if FEATURE_ENABLE_Image
 FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
 {
@@ -240,7 +245,7 @@ FORCEDINLINE bool LoadPipeline(
            ec,
            std::forward<Args>(args)...))
     {
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK_TYPED(ec, graphics_api_error);
         return false;
     }
     if(!LoadShader<GFX>(
@@ -251,7 +256,7 @@ FORCEDINLINE bool LoadPipeline(
            std::forward<Args>(args)...))
     {
         vert.dealloc();
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK_TYPED(ec, graphics_api_error);
         return false;
     }
 
@@ -260,24 +265,24 @@ FORCEDINLINE bool LoadPipeline(
 
     if(!pip.attach(vert_ref, ShaderStage::Vertex, ec))
     {
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK_TYPED(ec, graphics_api_error);
         return false;
     }
     if(!pip.attach(frag_ref, ShaderStage::Fragment, ec))
     {
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK_TYPED(ec, graphics_api_error);
         return false;
     }
 
     bool status = pip.assemble(ec);
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK_TYPED(ec, graphics_api_error);
 
     if(!status)
     {
         vert_ref.dealloc(ec);
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK_TYPED(ec, graphics_api_error);
         frag_ref.dealloc(ec);
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK_TYPED(ec, graphics_api_error);
     }
 
     return true;

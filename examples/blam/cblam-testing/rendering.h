@@ -210,11 +210,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         }
     }
 
-    MeshRenderer<Version> const& get() const
+    MeshRenderer<Version> const& get() const override
     {
         return *this;
     }
-    MeshRenderer<Version>& get()
+    MeshRenderer<Version>& get() override
     {
         return *this;
     }
@@ -635,6 +635,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     break;
                 case CompFlags::DXT5:
                     mat.source = 2;
+                    break;
+                default:
                     break;
                 }
                 break;

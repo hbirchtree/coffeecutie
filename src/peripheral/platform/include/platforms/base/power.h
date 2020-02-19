@@ -5,7 +5,7 @@
 namespace platform {
 namespace env {
 
-#if defined(COFFEE_USE_SDL2)
+#if defined(FEATURE_ENABLE_SDLPowerInfo)
 struct _SDLPowerInfo : PowerInfoDef
 {
     static bool IsPowered();
