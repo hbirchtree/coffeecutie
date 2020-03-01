@@ -80,7 +80,7 @@ vec4 get_light()
 
     return texture(lightmaps, vec3(
                 frag.light_tex * light_scale + light_offset,
-                light_layer));
+                light_layer), 100.0);
 }
 
 void main()

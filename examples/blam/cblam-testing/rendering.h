@@ -263,16 +263,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         GFX::ERROR ec;
 
-        m_data.model_matrix_store->bindrange(
-            0,
-            pass.matrix_buffer_range.first,
-            pass.matrix_buffer_range.second,
-            ec);
+        if(pass.matrix_buffer_range.second)
+            m_data.model_matrix_store->bindrange(
+                0,
+                pass.matrix_buffer_range.first,
+                pass.matrix_buffer_range.second,
+                ec);
+        C_ERROR_CHECK(ec);
         m_data.material_store->bindrange(
             1,
             pass.material_buffer_range.first,
             pass.material_buffer_range.second,
             ec);
+        C_ERROR_CHECK(ec);
 
         GFX::SetRasterizerState(pass.source.raster);
         GFX::SetBlendState(pass.source.blend);
@@ -305,8 +308,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         u32 i = 0;
         for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
         {
-//            if(i != Pass_EnvMicro)
-                render_pass(pass);
+            //            if(i != Pass_EnvMicro)
+            render_pass(pass);
             i++;
         }
 
@@ -559,6 +562,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 break;
             case CompFlags::DXT5:
                 mat.source = 2;
+                break;
+            default:
                 break;
             }
         }
