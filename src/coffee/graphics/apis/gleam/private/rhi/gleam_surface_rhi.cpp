@@ -363,8 +363,7 @@ inline void surface_internal_alloc(
             num_layers = C_FCAST<u32>(size[2]);
 
         SizeT c_size = size;
-        u32   i      = 0;
-        while(i < surface.m_mips)
+        for(auto i : Range<>(surface.m_mips))
         {
             empty.resize(
                 GetPixCompressedSize(
@@ -376,7 +375,6 @@ inline void surface_internal_alloc(
 
             c_size[0] /= 2;
             c_size[1] /= 2;
-            i++;
         }
 
         return;
@@ -390,8 +388,7 @@ inline void surface_internal_alloc(
     {
         /* Traditional TexImage*D */
         SizeT c_size = size;
-        u32   i      = 0;
-        while(i < surface.m_mips)
+        for(auto i : Range<>(surface.m_mips))
         {
             /* "Old" texture loading, needs full initialization */
             surface_initialize<SurfaceQuirks>(
@@ -399,7 +396,6 @@ inline void surface_internal_alloc(
 
             c_size[0] /= 2;
             c_size[1] /= 2;
-            i++;
         }
     }
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -472,7 +468,10 @@ STATICINLINE bool texture_check_bounds(
 
     if(get<is_compressed>(fmt.pixfmt))
     {
-        r = texdata.size == GetPixCompressedSize(fmt.c, size);
+        auto expected = GetPixCompressedSize(fmt.c, size);
+        auto real     = texdata.size;
+
+        r = expected == real;
     } else
     {
         r = texdata.size >= GetPixSize(fmt.bfmt, fmt.comp, pixels);

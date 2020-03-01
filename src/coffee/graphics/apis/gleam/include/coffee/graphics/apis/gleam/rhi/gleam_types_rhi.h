@@ -65,6 +65,8 @@ enum class APIError
     InvalidObject,
     InvalidElementType,
 
+    NoData,
+
     UnimplementedPath,
 };
 

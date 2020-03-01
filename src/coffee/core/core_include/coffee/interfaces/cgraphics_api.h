@@ -903,6 +903,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         void setFiltering(Filtering, Filtering, Filtering = Filtering::None)
         {
         }
+        void setAnisotropic(f32 samples)
+        {
+        }
         void setLODRange(Vecf2 const&)
         {
         }

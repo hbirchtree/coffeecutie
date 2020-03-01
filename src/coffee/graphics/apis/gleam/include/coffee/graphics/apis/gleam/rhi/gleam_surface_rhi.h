@@ -217,6 +217,7 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     GLEAM_API_CLASS_LINKAGE void setEdgePolicy(u8 dim, WrapPolicy p);
     GLEAM_API_CLASS_LINKAGE void setFiltering(
         Filtering mag, Filtering min, Filtering mip = Filtering::None);
+    GLEAM_API_CLASS_LINKAGE void setAnisotropic(f32 samples);
 
     GLEAM_API_CLASS_LINKAGE void enableShadowSampler();
 

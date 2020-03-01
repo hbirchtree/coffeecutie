@@ -77,6 +77,22 @@ void GLEAM_Sampler::dealloc()
 #endif
 }
 
+void GLEAM_Sampler::setAnisotropic(f32 samples)
+{
+    if(GLEAM_FEATURES.anisotropic)
+    {
+        i32 max_aniso = 0;
+        CGL46::IntegerGetv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_aniso);
+
+        if(samples > max_aniso)
+            Throw(undefined_behavior(
+                GLM_API
+                "anisotropic filtering value out of implementation range"));
+
+        CGL46::SamplerParameterf(m_handle, GL_TEXTURE_MAX_ANISOTROPY, samples);
+    }
+}
+
 void GLEAM_Sampler::setLODRange(C_UNUSED(const Vecf2& range))
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -146,10 +162,8 @@ void GLEAM_Sampler::setFiltering(
     {
         CGL33::SamplerParameteri(m_handle, GL_TEXTURE_MAG_FILTER, to_enum(mag));
 
-        i32 min_filter[2] = {};
-        min_filter[0]     = to_enum(min);
-        min_filter[1]     = to_enum(min);
-        CGL33::SamplerParameteriv(m_handle, GL_TEXTURE_MIN_FILTER, min_filter);
+        CGL33::SamplerParameteri(
+            m_handle, GL_TEXTURE_MIN_FILTER, to_enum(min, mip));
     }
 #endif
 }

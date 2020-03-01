@@ -323,6 +323,11 @@ static void SetExtensionFeatures(GLEAM_API::DataStore store)
         Extensions::DirectStateSupported(store->inst_data->dbgContext);
 
 #endif
+#if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
+    store->features.anisotropic =
+        Extensions::AnisotropicSupported(store->inst_data->dbgContext) ||
+        Extensions::AnisotropicExtSupported(store->inst_data->dbgContext);
+#endif
 }
 
 static void SetCompatibilityFeatures(

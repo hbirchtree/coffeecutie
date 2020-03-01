@@ -41,13 +41,13 @@ struct Extensions
 {
     STATICINLINE bool SRGB_Supported(Debug::Context& c)
     {
-        return Debug::CheckExtensionSupported(c, "GL_EXT_sRGB")
-                || Debug::CheckExtensionSupported(c, "GL_EXT_texture_sRGB");
+        return Debug::CheckExtensionSupported(c, "GL_EXT_sRGB") ||
+               Debug::CheckExtensionSupported(c, "GL_EXT_texture_sRGB");
     }
     STATICINLINE bool GetProgramBinarySupported(Debug::Context& c)
     {
-        return Debug::CheckExtensionSupported(c, "GL_ARB_get_program_binary")
-                || Debug::CheckExtensionSupported(c, "GL_OES_get_program_binary");
+        return Debug::CheckExtensionSupported(c, "GL_ARB_get_program_binary") ||
+               Debug::CheckExtensionSupported(c, "GL_OES_get_program_binary");
     }
 
     STATICINLINE bool ClipDistanceSupported(Debug::Context&)
@@ -55,8 +55,7 @@ struct Extensions
         return false;
     }
 
-    STATICINLINE GL_EXT_CHECK(
-        DrawParameters, "GL_ARB_shader_draw_parameters");
+    STATICINLINE GL_EXT_CHECK(DrawParameters, "GL_ARB_shader_draw_parameters");
 
     STATICINLINE GL_EXT_CHECK(DirectState, "GL_ARB_direct_state_access");
 
@@ -97,6 +96,10 @@ struct Extensions
     STATICINLINE GL_EXT_CHECK(MultiDrawIndirect, "GL_ARB_multi_draw_indirect");
 
     STATICINLINE GL_EXT_CHECK(BufferStorage, "GL_ARB_buffer_storage");
+
+    STATICINLINE GL_EXT_CHECK(Anisotropic, "GL_ARB_texture_filter_anisotropic");
+    STATICINLINE GL_EXT_CHECK(
+        AnisotropicExt, "GL_EXT_texture_filter_anisotropic");
 };
 
 } // namespace CGL
