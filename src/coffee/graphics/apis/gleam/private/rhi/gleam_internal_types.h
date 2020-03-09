@@ -50,8 +50,12 @@ struct GLEAM_Instance_Data
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    GLEAM_PboQueue pboQueue;
+    GLEAM_PboQueue                 pboQueue;
+    Vector<ShPtr<GLEAM_TimeQuery>> queries;
 #endif
+
+    ShPtr<GLEAM_IndirectBuffer> indirectBuf;
+
     struct
     {
         i32 NUM_PROGRAM_BINARY_FORMATS;
@@ -81,7 +85,7 @@ inline APILevel gl_level_from_string(CString const& str)
     else
         return GL_Nothing;
 }
-}
+} // namespace GLEAM
 } // namespace RHI
 } // namespace Coffee
 

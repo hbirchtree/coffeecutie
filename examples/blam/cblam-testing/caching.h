@@ -335,10 +335,14 @@ struct BitmapCache
         bucket.fmt = fmt;
         std::tie(bucket.sampler, bucket.surface) =
             allocator->alloc_surface_sampler<GFX::S_2DA>(
-                fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
+                fmt.pixfmt,
+                fmt.pixfmt == PixFmt::RGB565 ? 1 : 6,
+                C_CAST<u32>(fmt.cmpflg) << 10);
 
         bucket.sampler->setFiltering(
             Filtering::Linear, Filtering::Linear, Filtering::Linear);
+        bucket.sampler->setAnisotropic(4);
+        bucket.surface->setLevels(0, bucket.surface->m_mips - 1);
 
         return bucket;
     }
@@ -358,10 +362,12 @@ struct BitmapCache
         bucket.fmt = fmt;
         std::tie(bucket.sampler, bucket.surface) =
             allocator->alloc_surface_sampler<GFX::S_CubeA>(
-                fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
+                fmt.pixfmt, 2, C_CAST<u32>(fmt.cmpflg) << 10);
 
         bucket.sampler->setFiltering(
             Filtering::Linear, Filtering::Linear, Filtering::Linear);
+        bucket.sampler->setAnisotropic(4);
+        bucket.surface->setLevels(0, 0);
 
         return bucket;
     }

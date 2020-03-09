@@ -8,33 +8,6 @@
 namespace Coffee {
 namespace CGL {
 
-struct Loader
-{
-    STATICINLINE bool LoadBinding(
-#if !defined(COFFEE_LINKED_GLES)
-        CGL_Context* ctxt, C_UNUSED(GLADloadproc fun), void** ptr_check)
-#else
-        CGL_Context* ctxt, C_UNUSED(void* fun), void** ptr_check)
-#endif
-    {
-        if(!ctxt->acquireContext())
-            return false;
-
-#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_LINKED_GLES)
-        if(!gladLoadGLES2Loader(fun))
-            return false;
-#elif !defined(COFFEE_LINKED_GLES)
-        if(!gladLoadGL())
-            return false;
-#endif
-
-        if(!glGetString(GL_VENDOR))
-            return false;
-
-        return static_cast<bool>(*ptr_check);
-    }
-};
-
 using Debug = CGL_Shared_Debug;
 
 struct Extensions

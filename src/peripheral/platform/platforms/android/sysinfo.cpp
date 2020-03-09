@@ -77,7 +77,13 @@ CString SysInfo::GetSystemVersion()
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-    return "Android API " + cast_pod(cmd.data.scalarI64);
+    i64 api_ver = cmd.data.scalarI64;
+
+    cmd.type = Android_QueryReleaseName;
+    CoffeeForeignSignalHandleNA(
+        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+    return cast_pod(cmd.data.scalarI64) + " [" + cast_pod(api_ver) + "]";
 }
 
 HWDeviceInfo SysInfo::DeviceName()

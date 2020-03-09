@@ -98,10 +98,10 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
             auto new_start = it1 + 1;
             auto it2 = std::find_if(new_start, visitors.end(), is_mainthread);
 
-#if MODE_DEBUG
-            if(it1 == it2)
-                Throw(undefined_behavior("incorrect grouping"));
-#endif
+            if constexpr(build_props::debug_mode)
+                if(it1 == it2)
+                    Throw(undefined_behavior("incorrect grouping"));
+
             if(it2 == visitors.end())
                 break;
 
@@ -165,9 +165,10 @@ void EntityContainer::exec()
     for(auto& subsys_ptr : subsystems_)
     {
         auto& subsys = *subsys_ptr;
-#if MODE_DEBUG
-        ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
-#endif
+
+        if constexpr(build_props::debug_mode)
+            ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
+
         subsys.start_frame(proxy, time_now);
     }
 
@@ -175,18 +176,20 @@ void EntityContainer::exec()
     for(auto const& visitor_ptr : visitors)
     {
         auto& visitor = *visitor_ptr;
-#if MODE_DEBUG
-        ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
-#endif
+
+        if constexpr(build_props::debug_mode)
+            ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
+
         visitor.dispatch(*this, time_now);
     }
 
     for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
     {
         auto& subsys = *(*it);
-#if MODE_DEBUG
-        ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
-#endif
+
+        if constexpr(build_props::debug_mode)
+            ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
+
         subsys.end_frame(proxy, time_now);
     }
 }
@@ -213,7 +216,6 @@ FORCEDINLINE void EntityContainer::register_component(
     components.emplace(type_id, std::move(c));
 }
 
-#if MODE_DEBUG
 template<typename ServiceType, typename SubsystemType>
 struct service_test
 {
@@ -232,7 +234,6 @@ struct service_test
         type_list::for_each<typename ServiceType::services, dynamic_test>(sub);
     }
 };
-#endif
 
 template<typename ServiceType, typename SubsystemType>
 void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
@@ -241,9 +242,8 @@ void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
 
     auto types = type_list::collect_list<typename ServiceType::services>();
 
-#if MODE_DEBUG
-    service_test<ServiceType, SubsystemType>().check_subsystems(subsystem);
-#endif
+    if constexpr(build_props::debug_mode)
+        service_test<ServiceType, SubsystemType>().check_subsystems(subsystem);
 
     for(type_hash v : types)
     {

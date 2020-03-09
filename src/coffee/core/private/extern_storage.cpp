@@ -23,9 +23,9 @@ struct InternalState
 
     InternalState() :
         current_app(MkShared<platform::info::AppData>()),
-    #if !defined(COFFEE_DISABLE_PROFILER)
+#if !defined(COFFEE_DISABLE_PROFILER)
         profiler_store(MkShared<profiling::PContext>()),
-    #endif
+#endif
         bits()
     {
     }
@@ -143,7 +143,9 @@ P<InternalState>& GetInternalState()
 
 STATICINLINE void RegisterProfilerThreadState()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!build_props::profiler::enabled)
+        return;
+
     if(ISTATE)
     {
         auto tid   = ThreadId().hash();
@@ -154,17 +156,17 @@ STATICINLINE void RegisterProfilerThreadState()
         Lock _(store->access);
         store->thread_states[tid] = TSTATE->profiler_data;
     }
-#endif
 }
 
 void SetInternalThreadState(P<InternalThreadState> state)
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!build_props::profiler::enabled)
+        return;
+
     TSTATE = state;
 
     if(state)
         RegisterProfilerThreadState();
-#endif
 }
 
 P<InternalThreadState>& GetInternalThreadState()
@@ -193,50 +195,45 @@ ShPtr<info::AppData> GetAppData()
 
 bool ProfilerEnabled()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
-    return true;
-#else
-    return false;
-#endif
+    return build_props::profiler::enabled;
 }
 
 ShPtr<profiling::PContext> GetProfilerStore()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!build_props::profiler::enabled)
+        Throw(implementation_error("profiler disabled"));
+
     if(!ISTATE)
         return {};
 
     return ISTATE->profiler_store;
-#else
-    Throw(implementation_error("profiler disabled"));
-#endif
 }
 
 ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!build_props::profiler::enabled)
+        Throw(implementation_error("profiler disabled"));
+
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
     return TSTATE->profiler_data;
-#else
-    Throw(implementation_error("profiler disabled"));
-#endif
 }
 
 Mutex& GetPrinterLock()
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        Throw(releasemode_error("not available in this mode"));
+
     C_PTR_CHECK(ISTATE);
     return ISTATE->printer_lock;
-#else
-    Throw(releasemode_error("not available in this mode"));
-#endif
 }
 
 ThreadId& GetCurrentThreadId()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!build_props::profiler::enabled)
+        Throw(releasemode_error("thread ID is not available"));
+
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
@@ -244,9 +241,6 @@ ThreadId& GetCurrentThreadId()
     C_PTR_CHECK(TSTATE);
 
     return TSTATE->current_thread_id;
-#else
-    Throw(releasemode_error("thread ID is not available"));
-#endif
 }
 
 stl_types::UqLock LockState(libc_types::cstring key)

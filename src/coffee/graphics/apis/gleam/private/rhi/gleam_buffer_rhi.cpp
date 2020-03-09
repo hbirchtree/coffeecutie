@@ -181,6 +181,17 @@ void GLEAM_PixelBuffer::setState(bool pack)
 {
     m_type = (pack) ? buf::pixel_pack::value : buf::pixel_unpack::value;
 }
+
+void GLEAM_IndirectBuffer::bind()
+{
+    CGL33::BufBind(m_type, m_handle);
+}
+
+void GLEAM_IndirectBuffer::unbind()
+{
+    CGL33::BufBind(m_type, glhnd());
+}
+
 } // namespace GLEAM
 } // namespace RHI
 } // namespace Coffee

@@ -22,3 +22,5 @@
 
 /* Class shortcuts */
 #include <peripherals/stl/constructors.h>
+
+#include <peripherals/constants.h>

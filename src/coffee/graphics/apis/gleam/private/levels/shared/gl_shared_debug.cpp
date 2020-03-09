@@ -102,7 +102,7 @@ Display::GL::Version CGL_Shared_Debug::ContextVersion()
         if(match.at(5).size())
             ver.revision = cast_string<u8>(match.at(5));
 
-        ver.driver = match.at(11);
+        ver.driver = match.at(12);
 
     } while(false);
 

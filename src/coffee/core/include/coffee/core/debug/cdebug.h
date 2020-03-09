@@ -2,8 +2,8 @@
 
 #include <coffee/core/base.h>
 
-#include <peripherals/libc/output_ops.h>
 #include <coffee/core/printing/verbosity_level.h>
+#include <peripherals/libc/output_ops.h>
 
 #ifndef COFFEE_LOWFAT
 #include <coffee/core/printing/outputprinter.h>
@@ -32,7 +32,9 @@ template<typename... Arg>
  */
 FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         libc::io::io_handles::err,
         Severity::Information,
@@ -40,7 +42,6 @@ FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
         OutputPrinter::Flag_NoContext,
         str,
         args...);
-#endif
 }
 
 template<typename... Arg>
@@ -51,7 +52,9 @@ template<typename... Arg>
  */
 FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultDebugOutputPipe,
         Severity::Information,
@@ -59,13 +62,14 @@ FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
         OutputPrinter::Flag_NoContext | OutputPrinter::Flag_NoNewline,
         str,
         args...);
-#endif
 }
 
 template<typename... Arg>
 FORCEDINLINE void cOutputPrint(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultPrintOutputPipe,
         Severity::Information,
@@ -73,13 +77,14 @@ FORCEDINLINE void cOutputPrint(cstring str, Arg... args)
         OutputPrinter::Flag_NoContext,
         str,
         args...);
-#endif
 }
 
 template<typename... Arg>
 FORCEDINLINE void cOutputPrintNoNL(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultPrintOutputPipe,
         Severity::Information,
@@ -87,7 +92,6 @@ FORCEDINLINE void cOutputPrintNoNL(cstring str, Arg... args)
         OutputPrinter::Flag_NoContext | OutputPrinter::Flag_NoNewline,
         str,
         args...);
-#endif
 }
 
 template<typename... Arg>
@@ -98,13 +102,13 @@ template<typename... Arg>
  */
 FORCEDINLINE void cDebug(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultDebugOutputPipe, Severity::Debug, 1, 0, str, args...);
-#endif
 }
 
-#if MODE_DEBUG
 template<typename... Arg>
 /*!
  * \brief Verbose message
@@ -113,10 +117,11 @@ template<typename... Arg>
  */
 FORCEDINLINE void cVerbose(u32 v, cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultDebugOutputPipe, Severity::Verbose, v, 0, str, args...);
-#endif
 }
 
 template<typename... Arg>
@@ -127,18 +132,12 @@ template<typename... Arg>
  */
 FORCEDINLINE void cVerbose(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultDebugOutputPipe, Severity::Verbose, 3, 0, str, args...);
-#endif
 }
-#else
-/* Disable the function in release */
-template<typename... Arg>
-FORCEDINLINE void cVerbose(Arg...)
-{
-}
-#endif
 
 template<typename... Arg>
 /*!
@@ -148,10 +147,11 @@ template<typename... Arg>
  */
 FORCEDINLINE void cWarning(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultDebugOutputPipe, Severity::Medium, 1, 0, str, args...);
-#endif
 }
 
 template<typename... Arg>
@@ -162,26 +162,31 @@ template<typename... Arg>
  */
 FORCEDINLINE void cFatal(cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf(
         DefaultDebugOutputPipe, Severity::Fatal, 0, 0, str, args...);
-#endif
+
     Throw(std::runtime_error(str));
 }
 
 template<typename... Arg>
 FORCEDINLINE void cTag(cstring tag, cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf_tagged(
         DefaultDebugOutputPipe, Severity::Information, 0, 0, tag, str, args...);
-#endif
 }
 
 template<typename... Arg>
 FORCEDINLINE void cTag(u32 level, cstring tag, cstring str, Arg... args)
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(build_props::lowfat_mode)
+        return;
+
     OutputPrinter::fprintf_tagged(
         DefaultDebugOutputPipe,
         Severity::Information,
@@ -190,7 +195,6 @@ FORCEDINLINE void cTag(u32 level, cstring tag, cstring str, Arg... args)
         tag,
         str,
         args...);
-#endif
 }
 
 template<typename... Arg>

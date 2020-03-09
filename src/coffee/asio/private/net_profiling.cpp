@@ -17,10 +17,12 @@ using namespace ::semantic;
 
 void ProfilingExport()
 {
-    using http::header::classify_status;
     using http::response_class;
+    using http::header::classify_status;
 
-#if !defined(COFFEE_LOWFAT) && MODE_DEBUG
+    if constexpr(build_props::lowfat_mode || build_props::release_mode)
+        return;
+
     cVerbose(10, "Checking for network profiling...");
 
     const constexpr cstring network_server = "COFFEE_REPORT_URL";
@@ -94,7 +96,6 @@ void ProfilingExport()
 
     } else
         cVerbose(10, "Network export cancelled");
-#endif
 }
 
 void RegisterProfiling()

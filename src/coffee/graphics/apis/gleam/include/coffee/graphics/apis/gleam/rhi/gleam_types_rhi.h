@@ -15,7 +15,8 @@ using BufType = buf::flags;
 
 struct GLEAM_Options
 {
-    GLEAM_Options() : old_shader_processing(true), crash_on_error(false)
+    GLEAM_Options() :
+        old_shader_processing(true), crash_on_error(false), srgb(false)
     {
     }
 
@@ -27,6 +28,8 @@ struct GLEAM_Options
     bool old_shader_processing;
 
     bool crash_on_error;
+
+    bool srgb;
 };
 
 enum class APIError
@@ -195,6 +198,7 @@ struct GLEAM_ShaderImage;
 
 /* Queries */
 struct GLEAM_OccludeQuery;
+struct GLEAM_TimeQuery;
 
 struct GLEAM_ScopeMarker;
 

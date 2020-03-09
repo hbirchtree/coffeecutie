@@ -46,15 +46,15 @@ struct StartupMessage
 {
     StartupMessage(const char* msg)
     {
-#if !MODE_LOWFAT
-        using Coffee::DebugFun::OutputPrinter;
-        using Coffee::DebugFun::Severity;
+        if constexpr(!build_props::lowfat_mode)
+        {
+            using Coffee::DebugFun::OutputPrinter;
+            using Coffee::DebugFun::Severity;
 
-        OutputPrinter::fprintf_platform(
-            stderr, msg, Severity::Information, 0, 0);
-#else
-        fprintf(stderr, "TESTING: %s\n", msg);
-#endif
+            OutputPrinter::fprintf_platform(
+                stderr, msg, Severity::Information, 0, 0);
+        } else
+            fprintf(stderr, "TESTING: %s\n", msg);
     }
 };
 

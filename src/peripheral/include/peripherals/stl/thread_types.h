@@ -120,7 +120,7 @@ extern CString GetName();
 
 namespace Threads {
 extern bool SetName(Thread& t, CString const& name);
-extern bool SetName(ThreadId::Hash& t, CString const& name);
+extern bool SetName(ThreadId::Hash const& t, CString const& name);
 
 extern CString GetName(Thread& t);
 extern CString GetName(ThreadId::Hash const& t);

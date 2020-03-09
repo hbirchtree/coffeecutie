@@ -1,7 +1,7 @@
 #include <peripherals/stl/thread_types.h>
 
-#include <platforms/pimpl_state.h>
 #include <peripherals/stl/functional_types.h>
+#include <platforms/pimpl_state.h>
 
 using ::type_safety::remove_cvref_t;
 
@@ -49,7 +49,7 @@ STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
 STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
-    auto& context = GetContext();
+    auto& context        = GetContext();
 
     if(context.names.find(hs) != context.names.end())
         return;
@@ -60,7 +60,7 @@ STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
 STATICINLINE CString LoadThreadName(ThreadId::Hash hs)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
-    auto& context = GetContext();
+    auto& context        = GetContext();
 
     return context.names[hs];
 }
@@ -96,7 +96,7 @@ CString GetName(Thread& t)
 #endif
 }
 
-bool SetName(ThreadId::Hash t, CString const& name)
+bool SetName(ThreadId::Hash const& t, CString const& name)
 {
     SaveThreadName(t, name);
     return true;

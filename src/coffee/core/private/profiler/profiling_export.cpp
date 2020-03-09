@@ -154,18 +154,31 @@ STATICINLINE void PutExtraData(
 STATICINLINE void PutRuntimeInfo(
     JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    auto const& buildi = State::GetBuildInfo();
-
     JSON::Object build;
 
-    build.AddMember("version", FromString(buildi.build_version, alloc), alloc);
-    build.AddMember("compiler", FromString(buildi.compiler, alloc), alloc);
     build.AddMember(
-        "architecture", FromString(buildi.architecture, alloc), alloc);
+        "version", FromString(compile_info::engine_version, alloc), alloc);
+    build.AddMember(
+        "compiler", FromString(compile_info::compiler::name, alloc), alloc);
+    build.AddMember(
+        "compilerVersion",
+        FromString(compile_info::compiler::version_str, alloc),
+        alloc);
+    build.AddMember(
+        "architecture", FromString(compile_info::architecture, alloc), alloc);
+    build.AddMember("target", FromString(compile_info::target, alloc), alloc);
     build.AddMember(
         "buildMode",
-        FromString(PlatformData::IsDebug() ? "DEBUG" : "RELEASE", alloc),
+        FromString(
+            platform::info::platform::uses::debug_mode ? "DEBUG" : "RELEASE",
+            alloc),
         alloc);
+
+    if constexpr(build_props::platform::is_android)
+        build.AddMember(
+            "androidTarget",
+            FromString(cast_pod(compile_info::android::api), alloc),
+            alloc);
 
     target.AddMember("build", build, alloc);
 
@@ -176,12 +189,23 @@ STATICINLINE void PutRuntimeInfo(
         FromString(PlatformData::SystemDisplayString(), alloc),
         alloc);
     runtime.AddMember(
+        "distro",
+        FromString(platform::info::device::system::runtime_distro(), alloc),
+        alloc);
+    runtime.AddMember(
+        "distroVersion", FromString(SysInfo::GetSystemVersion(), alloc), alloc);
+    runtime.AddMember(
         "architecture",
         FromString(platform::info::device::system::runtime_arch(), alloc),
         alloc);
     runtime.AddMember(
         "kernel",
         FromString(platform::info::device::system::runtime_kernel(), alloc),
+        alloc);
+    runtime.AddMember(
+        "kernelVersion",
+        FromString(
+            platform::info::device::system::runtime_kernel_version(), alloc),
         alloc);
 
     auto cwd = Env::CurrentDir();
@@ -205,14 +229,22 @@ STATICINLINE void PutRuntimeInfo(
     device.AddMember("dpi", PlatformData::DeviceDPI(), alloc);
     device.AddMember("type", PlatformData::DeviceVariant(), alloc);
     device.AddMember("platform", PlatformData::PlatformVariant(), alloc);
+
+    auto motherboard = SysInfo::Motherboard();
+
     device.AddMember(
-        "version",
-        FromString(Strings::to_string(SysInfo::GetSystemVersion()), alloc),
+        "motherboardVersion",
+        FromString(Strings::to_string(motherboard.firmware), alloc),
         alloc);
+
     device.AddMember(
         "motherboard",
-        FromString(Strings::to_string(SysInfo::Motherboard()), alloc),
+        FromString(
+            Strings::to_string(platform::info::HardwareDevice(
+                motherboard.manufacturer, motherboard.model, {})),
+            alloc),
         alloc);
+
     device.AddMember(
         "chassis",
         FromString(Strings::to_string(SysInfo::Chassis()), alloc),
@@ -309,9 +341,8 @@ void ExportChromeTracerData(CString& target)
 
 void ExportStringToFile(const CString& data, const Url& outfile)
 {
-#ifdef COFFEE_LOWFAT
-    return;
-#endif
+    if constexpr(build_props::lowfat_mode)
+        return;
 
     cVerbose(6, "Creating filename");
     Resource out(outfile);
@@ -328,9 +359,8 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 
 void ExitRoutine()
 {
-#if defined(COFFEE_LOWFAT) || MODE_RELEASE
-    return;
-#endif
+    if constexpr(!build_props::debug_mode)
+        return;
 
     auto profilerStore = State::GetProfilerStore();
 

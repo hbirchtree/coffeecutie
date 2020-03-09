@@ -79,6 +79,7 @@ void GLEAM_Sampler::dealloc()
 
 void GLEAM_Sampler::setAnisotropic(f32 samples)
 {
+#if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
     if(GLEAM_FEATURES.anisotropic)
     {
         i32 max_aniso = 0;
@@ -91,6 +92,7 @@ void GLEAM_Sampler::setAnisotropic(f32 samples)
 
         CGL46::SamplerParameterf(m_handle, GL_TEXTURE_MAX_ANISOTROPY, samples);
     }
+#endif
 }
 
 void GLEAM_Sampler::setLODRange(C_UNUSED(const Vecf2& range))

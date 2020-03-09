@@ -22,16 +22,16 @@ FORCEDINLINE u32 GetPixBlockSize(Size const& size, Size const& blockSize)
     const f32 width_block  = CMath::ceil(size.w / block_w);
     const f32 height_block = CMath::ceil(size.h / block_h);
 
-    return C_CAST<u32>(width_block) * C_CAST<u32>(height_block);
+    return static_cast<u32>(width_block) * static_cast<u32>(height_block);
 }
 
-FORCEDINLINE Size GetPixCompressedBlockSize(CompFmt format)
+FORCEDINLINE constexpr Size GetPixCompressedBlockSize(CompFmt format)
 {
     auto block_dim =
         typing::pixels::properties::get<typing::pixels::properties::block_size>(
             format);
 
-    return {C_FCAST<u32>(block_dim.w), C_FCAST<u32>(block_dim.h)};
+    return {static_cast<u32>(block_dim.w), static_cast<u32>(block_dim.h)};
 }
 
 FORCEDINLINE bool CompressedFormatSupportsSubTexture(CompFmt format)
@@ -70,7 +70,8 @@ FORCEDINLINE bool CompressedFormatSupportsSubTexture(CompFmt format)
  * \param tex_size
  * \return
  */
-FORCEDINLINE szptr GetPixCompressedSize(CompFmt format, Size const& tex_size)
+FORCEDINLINE constexpr szptr GetPixCompressedSize(
+    CompFmt format, Size const& tex_size)
 {
     using namespace ::enum_helpers;
 
@@ -216,6 +217,16 @@ FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)
     }
 
     return "";
+}
+
+FORCEDINLINE constexpr szptr PixDescSize(PixDesc const& desc, Size const& pix)
+{
+    using namespace typing::pixels::properties;
+
+    if(get<is_compressed>(desc.pixfmt))
+        return GetPixCompressedSize(desc.c, pix);
+    else
+        return GetPixSize(desc.bfmt, desc.comp, pix.area());
 }
 
 } // namespace Coffee

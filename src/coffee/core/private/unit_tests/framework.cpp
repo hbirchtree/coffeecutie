@@ -251,14 +251,13 @@ void RunTest(Test const& test, TestInstance& test_info)
 #if !MODE_CRASHTEST
     catch(std::exception const&)
     {
-#if !MODE_LOWFAT
-        platform::env::Stacktracer::ExceptionStacktrace(
-            std::current_exception(),
-            DebugFun::OutputPrinter::fprintf_platform);
-#else
-        platform::env::Stacktracer::ExceptionStacktrace(
-            std::current_exception(), typing::logging::fprintf_logger);
-#endif
+        if constexpr(!build_props::lowfat_mode)
+            platform::env::Stacktracer::ExceptionStacktrace(
+                std::current_exception(),
+                DebugFun::OutputPrinter::fprintf_platform);
+        else
+            platform::env::Stacktracer::ExceptionStacktrace(
+                std::current_exception(), typing::logging::fprintf_logger);
         Profiler::Profile("exception");
     }
 #endif

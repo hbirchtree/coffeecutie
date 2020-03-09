@@ -68,6 +68,7 @@ enum class fork_process
 {
     child,
     parent,
+    error,
 };
 
 enum class wait_by
@@ -148,6 +149,8 @@ FORCEDINLINE fork_process fork(pid_t& childPid, posix_ec& ec)
 {
     childPid = ::fork();
     collect_error(ec);
+    if(childPid == -1)
+        return fork_process::error;
     return childPid == 0 ? fork_process::child : fork_process::parent;
 }
 
@@ -224,6 +227,7 @@ spawn_info spawn(exec_info<ArgType> const& exec)
         /* It should never get here */
         libc::signal::exit(sig::general_error);
     }
+    C_ERROR_CHECK(ec);
 
     fd::close(out.write, ec);
     C_ERROR_CHECK(ec);

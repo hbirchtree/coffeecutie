@@ -10,16 +10,8 @@
 
 #include <peripherals/libc/types.h>
 
-namespace platform {
-namespace info {
+namespace compile_info {
 
-using namespace ::libc_types;
+extern const libc_types::cstring engine_version;
 
-extern const cstring architecture;
-extern const cstring build_version;
-extern const cstring compiler;
-extern const cstring platform_identity;
-extern const cstring build_mode;
-
-} // namespace info
-} // namespace platform
+} // namespace compile_info

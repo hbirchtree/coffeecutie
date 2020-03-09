@@ -580,6 +580,27 @@ struct mem_chunk
         return From(&basePtr[offset], size);
     }
 
+    NO_DISCARD FORCEDINLINE mem_chunk<T const> at_lazy(
+        size_type offset, size_type size = 0) const
+    {
+        using namespace ::libc_types;
+
+        size = std::min(offset + size, this->size - offset);
+
+        if(offset > this->size)
+            return {};
+
+        if(!data)
+            return {};
+
+        u8 const* basePtr = C_RCAST<u8 const*>(data);
+
+        if(size == 0)
+            size = this->size - offset;
+
+        return From(&basePtr[offset], size);
+    }
+
     template<typename T2>
     FORCEDINLINE mem_chunk<T2> as()
     {
@@ -695,6 +716,11 @@ struct mem_chunk
 
         data[it.m_idx] = value;
         return it;
+    }
+
+    FORCEDINLINE bool empty() const
+    {
+        return elements == 0 && size == 0;
     }
 
     /*!

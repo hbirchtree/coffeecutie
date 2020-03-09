@@ -38,14 +38,15 @@ inline bool IsPower2(T const& n)
 }
 
 #if !defined(M_PI)
-constexpr bigscalar pi = 3.1416;
+constexpr f64 pi = 3.1416;
 #else
-constexpr bigscalar pi = M_PI;
+constexpr f64 pi   = M_PI;
+constexpr f32 pi_f = static_cast<f32>(M_PI);
 #endif
 #if !defined(M_E)
-constexpr bigscalar e = 2.7183;
+constexpr f64 e = 2.7183;
 #else
-constexpr bigscalar e  = M_E;
+constexpr f64 e    = M_E;
 #endif
 
 template<typename T>
