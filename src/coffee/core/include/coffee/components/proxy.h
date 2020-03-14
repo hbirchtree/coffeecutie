@@ -103,7 +103,7 @@ struct ConstrainedProxy : ContainerProxy
         type_list::type_in_list<ComponentType, ComponentList>();
         auto v = get<ComponentType>(current_entity);
 
-        if constexpr(build_props::debug_mode)
+        if constexpr(compile_info::debug_mode)
             if(!v)
                 Throw(undefined_behavior("component not found"));
 
@@ -116,7 +116,7 @@ struct ConstrainedProxy : ContainerProxy
         type_list::type_in_list<ComponentType, ComponentList>();
         auto v = get<ComponentType>(current_entity);
 
-        if constexpr(build_props::debug_mode)
+        if constexpr(compile_info::debug_mode)
             if(!v)
                 Throw(undefined_behavior("component not found"));
 

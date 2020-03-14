@@ -169,12 +169,10 @@ STATICINLINE void PutRuntimeInfo(
     build.AddMember("target", FromString(compile_info::target, alloc), alloc);
     build.AddMember(
         "buildMode",
-        FromString(
-            platform::info::platform::uses::debug_mode ? "DEBUG" : "RELEASE",
-            alloc),
+        FromString(compile_info::debug_mode ? "DEBUG" : "RELEASE", alloc),
         alloc);
 
-    if constexpr(build_props::platform::is_android)
+    if constexpr(compile_info::platform::is_android)
         build.AddMember(
             "androidTarget",
             FromString(cast_pod(compile_info::android::api), alloc),
@@ -341,7 +339,7 @@ void ExportChromeTracerData(CString& target)
 
 void ExportStringToFile(const CString& data, const Url& outfile)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     cVerbose(6, "Creating filename");
@@ -359,7 +357,7 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 
 void ExitRoutine()
 {
-    if constexpr(!build_props::debug_mode)
+    if constexpr(!compile_info::debug_mode)
         return;
 
     auto profilerStore = State::GetProfilerStore();

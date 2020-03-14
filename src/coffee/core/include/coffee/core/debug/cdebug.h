@@ -32,7 +32,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -52,7 +52,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -67,7 +67,7 @@ FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
 template<typename... Arg>
 FORCEDINLINE void cOutputPrint(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -82,7 +82,7 @@ FORCEDINLINE void cOutputPrint(cstring str, Arg... args)
 template<typename... Arg>
 FORCEDINLINE void cOutputPrintNoNL(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -102,7 +102,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cDebug(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -117,7 +117,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cVerbose(u32 v, cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -132,7 +132,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cVerbose(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -147,7 +147,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cWarning(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -162,7 +162,7 @@ template<typename... Arg>
  */
 FORCEDINLINE void cFatal(cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf(
@@ -174,7 +174,7 @@ FORCEDINLINE void cFatal(cstring str, Arg... args)
 template<typename... Arg>
 FORCEDINLINE void cTag(cstring tag, cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf_tagged(
@@ -184,7 +184,7 @@ FORCEDINLINE void cTag(cstring tag, cstring str, Arg... args)
 template<typename... Arg>
 FORCEDINLINE void cTag(u32 level, cstring tag, cstring str, Arg... args)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     OutputPrinter::fprintf_tagged(

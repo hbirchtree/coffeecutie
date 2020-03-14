@@ -72,7 +72,7 @@ extern void SetApplicationData(info::AppData& appdata);
 
 FORCEDINLINE void PrintVersionInfo()
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     auto const& app_data = ApplicationData();
@@ -87,7 +87,7 @@ FORCEDINLINE void PrintVersionInfo()
 
 FORCEDINLINE void PrintBuildInfo()
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     cOutputPrint(
@@ -96,7 +96,7 @@ FORCEDINLINE void PrintBuildInfo()
 
 FORCEDINLINE void PrintArchitectureInfo()
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     cOutputPrint(
@@ -115,7 +115,7 @@ FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
 
 FORCEDINLINE void PrintLicenseInfo()
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
     cVerbose(6, "Number of licenses to print: {0}", CoffeeLicenseCount);
@@ -129,15 +129,15 @@ FORCEDINLINE void PrintLicenseInfo()
 
 static void CoffeeInit_Internal(u32 flags)
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
-    if constexpr(build_props::debug_mode)
+    if constexpr(compile_info::debug_mode)
     {
         /* Allow core dump by default in debug mode */
         ProcessProperty::CoreDumpEnable();
 
-        if constexpr(build_props::profiler::enabled)
+        if constexpr(compile_info::profiler::enabled)
         {
             WkPtrUnwrap<platform::profiling::PContext> store(
                 State::GetProfilerStore());
@@ -184,7 +184,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
-    if constexpr(build_props::debug_mode)
+    if constexpr(compile_info::debug_mode)
         InstallDefaultSigHandlers();
 
     /* Contains all global* state
@@ -203,7 +203,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #endif
 
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
-    if constexpr(!build_props::lowfat_mode)
+    if constexpr(!compile_info::lowfat_mode)
     {
         auto appData = State::GetAppData();
         if(appData)
@@ -214,7 +214,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     }
 
     /* Must be created before ThreadState, but after internal state */
-    if constexpr(build_props::profiler::enabled)
+    if constexpr(compile_info::profiler::enabled)
         State::SwapState("jsonProfiler", profiling::CreateJsonProfiler());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
@@ -246,7 +246,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #pragma clang diagnostic pop
 #endif
 
-    if constexpr(!build_props::lowfat_mode)
+    if constexpr(!compile_info::lowfat_mode)
     {
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         if(!(flags & DiscardArgumentHandler))
@@ -321,7 +321,7 @@ catch(std::exception const& ex)
 }
 #endif
 
-    if constexpr(!build_props::lowfat_mode)
+    if constexpr(!compile_info::lowfat_mode)
     {
         Profiler::PopContext();
 
@@ -342,7 +342,7 @@ void CoffeeTerminate()
 
     cVerbose(5, "Terminating");
 
-    if constexpr(!build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         return;
 
 #if MODE_DEBUG && defined(COFFEE_LINUX)
@@ -526,7 +526,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
 #endif
         else if(sw == "json")
         {
-            if constexpr(!build_props::lowfat_mode)
+            if constexpr(!compile_info::lowfat_mode)
                 DebugFun::SetLogInterface(
                     SetupJsonLogger("application.json"_tmp));
         }

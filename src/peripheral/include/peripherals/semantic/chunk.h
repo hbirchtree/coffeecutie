@@ -451,10 +451,7 @@ struct mem_chunk
 
     STATICINLINE size_type nmax(size_type v1, size_type v2)
     {
-        if(v1 < v2)
-            return v2;
-        else
-            return v1;
+        return (v1 < v2) ? v2 : v1;
     }
 
     template<typename T2>
@@ -493,6 +490,10 @@ struct mem_chunk
             nullptr>
     T& operator[](size_type i)
     {
+        if constexpr(compile_info::debug_mode)
+            if(i >= elements)
+                Throw(std::out_of_range("access out of bounds"));
+
         return data[i];
     }
     template<
@@ -501,6 +502,10 @@ struct mem_chunk
             nullptr>
     T const& operator[](size_type i) const
     {
+        if constexpr(compile_info::debug_mode)
+            if(i >= elements)
+                Throw(std::out_of_range("access out of bounds"));
+
         return data[i];
     }
 
@@ -542,7 +547,7 @@ struct mem_chunk
         typename Dummy = void,
         typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
             nullptr>
-    NO_DISCARD FORCEDINLINE mem_chunk<T> at(
+    NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T>> at(
         size_type offset, size_type size = 0)
     {
         using namespace ::libc_types;
@@ -558,10 +563,13 @@ struct mem_chunk
         if(size == 0)
             size = this->size - offset;
 
-        return From(&basePtr[offset], size);
+        if(auto out = From(&basePtr[offset], size); out)
+            return out;
+        else
+            return {};
     }
 
-    NO_DISCARD FORCEDINLINE mem_chunk<T const> at(
+    NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at(
         size_type offset, size_type size = 0) const
     {
         using namespace ::libc_types;
@@ -577,10 +585,13 @@ struct mem_chunk
         if(size == 0)
             size = this->size - offset;
 
-        return From(&basePtr[offset], size);
+        if(auto out = From(&basePtr[offset], size); out)
+            return out;
+        else
+            return {};
     }
 
-    NO_DISCARD FORCEDINLINE mem_chunk<T const> at_lazy(
+    NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at_lazy(
         size_type offset, size_type size = 0) const
     {
         using namespace ::libc_types;
@@ -598,7 +609,10 @@ struct mem_chunk
         if(size == 0)
             size = this->size - offset;
 
-        return From(&basePtr[offset], size);
+        if(auto out = From(&basePtr[offset], size); out)
+            return out;
+        else
+            return {};
     }
 
     template<typename T2>

@@ -2,12 +2,16 @@
 #include "rendering.h"
 #include "resource_creation.h"
 
+#if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/net_profiling.h>
+#endif
+
 using halo_version = blam::pc_version_t;
 
 template<typename Version>
 void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
 {
-    ProfContext _(__PRETTY_FUNCTION__);
+    ProfContext _(__FUNCTION__);
 
     using namespace Components;
 
@@ -34,7 +38,7 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
     bsp.components = {type_hash_v<BspTag>(), type_hash_v<ShaderTag>()};
     bsp.tags       = ObjectBsp;
 
-    for(auto const& mesh_id : bsp_meshes)
+    for(auto const &mesh_id : bsp_meshes)
     {
         if(!mesh_id.valid())
             continue;
@@ -80,7 +84,7 @@ void load_objects(
     EntityContainer&             e,
     u32                          tags)
 {
-    ProfContext _(__PRETTY_FUNCTION__);
+    ProfContext _(__FUNCTION__);
 
     using namespace Components;
 
@@ -141,15 +145,12 @@ void load_objects(
                 SubModel& submod_ = submod.get<SubModelTag>();
 
                 submod_.parent = parent_;
-                submod_.shader = sub.shader;
                 submod_.initialize(model_.at(blam::mod2::lod_high_ext), sub);
 
                 ShaderData&       shader_ = submod.get<ShaderTag>();
                 ShaderItem const& shader_it =
                     data.shader_cache.find(sub.shader)->second;
-                shader_.shader     = shader_it.header;
-                shader_.shader_tag = shader_it.tag;
-                shader_.shader_id  = sub.shader;
+                shader_.initialize(shader_it, submod_);
 
                 submod_.current_pass =
                     shader_.get_render_pass(data.shader_cache);
@@ -176,7 +177,8 @@ void load_multiplayer_equipment(
     equip.tags       = tags;
 
     EntityRecipe submodel;
-    submodel.components = {type_hash_v<SubModelTag>()};
+    submodel.components = {type_hash_v<SubModelTag>(),
+                           type_hash_v<ShaderTag>()};
     submodel.tags       = tags | ObjectMod2;
 
     for(blam::scn::multiplayer_equipment const& equipment_ref :
@@ -233,6 +235,14 @@ void load_multiplayer_equipment(
                         submod_.parent    = set;
                         submod_.initialize(
                             model.at(blam::mod2::lod_high_ext), sub);
+
+                        ShaderData&       shader_ = submod.get<ShaderTag>();
+                        ShaderItem const& shader_it =
+                            data.shader_cache.find(sub.shader)->second;
+                        shader_.initialize(shader_it, submod_);
+
+                        submod_.current_pass =
+                            shader_.get_render_pass(data.shader_cache);
                     }
                 }
                 break;
@@ -247,7 +257,7 @@ void load_multiplayer_equipment(
 template<typename Version>
 void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 {
-    ProfContext _(__PRETTY_FUNCTION__);
+    ProfContext _(__FUNCTION__);
 
     {
         ProfContext _("Buffer mapping");
@@ -281,7 +291,8 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     skybox_base.components = {type_hash_v<ModelTag>()};
     EntityRecipe skybox_model;
     skybox_model.tags       = ObjectSkybox | ObjectMod2;
-    skybox_model.components = {type_hash_v<SubModelTag>()};
+    skybox_model.components = {type_hash_v<SubModelTag>(),
+                               type_hash_v<ShaderTag>()};
 
     auto   skybox_ent = e.ref(e.create_entity(skybox_base));
     Model& skybox_mod = skybox_ent.get<ModelTag>();
@@ -313,6 +324,11 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
             submod_.initialize(model, sub);
             skybox_mod.models.push_back(submod);
             submod_.parent = skybox_ent;
+
+            ShaderData& shader  = submod.get<ShaderTag>();
+            ShaderItem& shader_ = data.shader_cache.find(sub.shader)->second;
+
+            shader.initialize(shader_, submod_);
         }
 
         cDebug("Skybox");
@@ -325,6 +341,9 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 i32 blam_main(i32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Blam Graphics!");
+#if defined(FEATURE_ENABLE_ASIO)
+    Net::RegisterProfiling();
+#endif
 
     comp_app::app_error app_ec;
     auto&               e = comp_app::createContainer();
@@ -347,7 +366,7 @@ i32 blam_main(i32, cstring_w*)
         [](EntityContainer&        e,
            BlamData<halo_version>& data,
            time_point const&) {
-            ProfContext _(__PRETTY_FUNCTION__);
+            ProfContext _(__FUNCTION__);
 
             e.register_component_inplace<ModelStore>();
             e.register_component_inplace<ModelParentStore>();
@@ -398,6 +417,32 @@ i32 blam_main(i32, cstring_w*)
 
             load_scenario_bsp(e, data);
             load_scenario_scenery(e, data);
+
+            /* Move the camera to a player spawn location */
+            {
+                auto spawn_locations =
+                    data.scenario->player_spawns.data(data.map_container.magic);
+
+                auto transform =
+                    //                    GenTransform(data.camera) *
+
+                    //                    typing::vectors::matrixify(typing::vectors::normalize_quat(
+                    //                        Quatf(1, -math::pi_f / 4, 0, 0)))
+                    //                        *
+                    typing::vectors::scale(Matf4(), {10});
+
+                if(!spawn_locations.empty())
+                {
+                    data.camera.position =
+                        (Vecf4(spawn_locations[0].pos + Vecf3(0, 0, 1), 1) *
+                         -1.f) *
+                        transform;
+                }
+
+                data.camera.rotation = typing::vectors::euler(Vecf3{0, 0, -90});
+            }
+
+            data.std_camera->up_direction = {0, 0, 1};
 
             {
                 ProfContext _("Texture allocation");
@@ -472,7 +517,7 @@ i32 blam_main(i32, cstring_w*)
            BlamData<halo_version>& data,
            time_point const&,
            duration const&) {
-            GFX::DefaultFramebuffer()->clear(0, {0.5f, 0.5f, 0.9f, 1.f}, 1.0);
+            GFX::DefaultFramebuffer()->clear(1.);
 
             data.std_camera->tick();
             if(e.service<comp_app::ControllerInput>())
@@ -485,16 +530,14 @@ i32 blam_main(i32, cstring_w*)
                     e.service<comp_app::Windowing>()->size().aspect();
                 data.camera.zVals = {0.01f, 20000.f};
 
-                data.camera_matrix =
-                    GenPerspective(data.camera) * GenTransform(data.camera) *
-                    typing::vectors::scale(Matf4(), {10}) *
-                    typing::vectors::matrixify(typing::vectors::normalize_quat(
-                        Quatf(1, -pi / 4, 0, 0)));
+                data.camera_matrix = GenPerspective(data.camera) *
+                                     GenTransform(data.camera) *
+                                     typing::vectors::scale(Matf4(), Vecf3(10));
+
+                cDebug("Camera pos: {0}", data.camera.position);
             }
         },
-        [](EntityContainer&        e,
-           BlamData<halo_version>& data,
-           time_point const&) {
+        [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 
         });
 

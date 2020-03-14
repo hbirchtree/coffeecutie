@@ -98,7 +98,7 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
             auto new_start = it1 + 1;
             auto it2 = std::find_if(new_start, visitors.end(), is_mainthread);
 
-            if constexpr(build_props::debug_mode)
+            if constexpr(compile_info::debug_mode)
                 if(it1 == it2)
                     Throw(undefined_behavior("incorrect grouping"));
 
@@ -166,7 +166,7 @@ void EntityContainer::exec()
     {
         auto& subsys = *subsys_ptr;
 
-        if constexpr(build_props::debug_mode)
+        if constexpr(compile_info::debug_mode)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
 
         subsys.start_frame(proxy, time_now);
@@ -177,7 +177,7 @@ void EntityContainer::exec()
     {
         auto& visitor = *visitor_ptr;
 
-        if constexpr(build_props::debug_mode)
+        if constexpr(compile_info::debug_mode)
             ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
 
         visitor.dispatch(*this, time_now);
@@ -187,7 +187,7 @@ void EntityContainer::exec()
     {
         auto& subsys = *(*it);
 
-        if constexpr(build_props::debug_mode)
+        if constexpr(compile_info::debug_mode)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
 
         subsys.end_frame(proxy, time_now);
@@ -242,7 +242,7 @@ void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
 
     auto types = type_list::collect_list<typename ServiceType::services>();
 
-    if constexpr(build_props::debug_mode)
+    if constexpr(compile_info::debug_mode)
         service_test<ServiceType, SubsystemType>().check_subsystems(subsystem);
 
     for(type_hash v : types)

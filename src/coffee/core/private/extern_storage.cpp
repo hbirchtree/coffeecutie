@@ -143,7 +143,7 @@ P<InternalState>& GetInternalState()
 
 STATICINLINE void RegisterProfilerThreadState()
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         return;
 
     if(ISTATE)
@@ -160,7 +160,7 @@ STATICINLINE void RegisterProfilerThreadState()
 
 void SetInternalThreadState(P<InternalThreadState> state)
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         return;
 
     TSTATE = state;
@@ -195,12 +195,12 @@ ShPtr<info::AppData> GetAppData()
 
 bool ProfilerEnabled()
 {
-    return build_props::profiler::enabled;
+    return compile_info::profiler::enabled;
 }
 
 ShPtr<profiling::PContext> GetProfilerStore()
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         Throw(implementation_error("profiler disabled"));
 
     if(!ISTATE)
@@ -211,7 +211,7 @@ ShPtr<profiling::PContext> GetProfilerStore()
 
 ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         Throw(implementation_error("profiler disabled"));
 
     if(!TSTATE)
@@ -222,7 +222,7 @@ ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
 
 Mutex& GetPrinterLock()
 {
-    if constexpr(build_props::lowfat_mode)
+    if constexpr(compile_info::lowfat_mode)
         Throw(releasemode_error("not available in this mode"));
 
     C_PTR_CHECK(ISTATE);
@@ -231,7 +231,7 @@ Mutex& GetPrinterLock()
 
 ThreadId& GetCurrentThreadId()
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         Throw(releasemode_error("thread ID is not available"));
 
     if(!TSTATE)

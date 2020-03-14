@@ -107,12 +107,6 @@ constexpr bool virtualfs =
 #else
     false;
 #endif
-constexpr bool debug_mode =
-#if MODE_DEBUG
-    true;
-#else
-    false;
-#endif
 
 } // namespace uses
 
@@ -125,75 +119,11 @@ extern Platform variant();
 
 namespace compile_info {
 
-using libc_types::cstring;
-using libc_types::u32;
-
-struct compiler_version_t
-{
-    u32 major, minor, rev;
-};
-
-constexpr cstring target       = C_SYSTEM_STRING;
-constexpr cstring architecture = COFFEE_ARCH;
-
-namespace android {
-
-constexpr u32 api =
-#if defined(COFFEE_ANDROID)
-    __ANDROID_API__
-#else
-    0
-#endif
-    ;
-
-} // namespace android
-
-namespace apple {
-
-/* TODO: Fix this up on macOS/iOS */
-
-namespace macos {
-constexpr u32 target = 1014;
-}
-namespace ios {
-constexpr u32 target = 100;
-}
-} // namespace apple
-
 /*!
  * \brief The underlying engine version
  */
 extern const cstring engine_version;
 
-namespace compiler {
-
-constexpr cstring name        = C_COMPILER_NAME;
-constexpr cstring version_str = C_STR(C_COMPILER_VER_MAJ) "." C_STR(
-    C_COMPILER_VER_MIN) "." C_STR(C_COMPILER_VER_REV);
-constexpr compiler_version_t version = {
-    C_COMPILER_VER_MAJ, C_COMPILER_VER_MIN, C_COMPILER_VER_REV};
-
-} // namespace compiler
-
-namespace module {
-
-constexpr cstring build_mode =
-#if MODE_DEBUG
-    "Debug"
-#elif MODE_LOWFAT
-    "Low-fat"
-#elif MODE_RELEASE
-    "Release"
-#else
-#error Unknown build mode!
-#endif
-    ;
-
-#if defined(MODULE_VERSION)
-constexpr cstring version = MODULE_VERSION;
-#endif
-
-} // namespace module
 } // namespace compile_info
 
 namespace Coffee {
@@ -273,7 +203,7 @@ COFFEE_APP_CLASS struct PlatformData
      */
     bool IsDebug()
     {
-        return platform::info::platform::uses::debug_mode;
+        return compile_info::debug_mode;
     }
 };
 } // namespace Coffee

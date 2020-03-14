@@ -20,7 +20,7 @@ void ProfilingExport()
     using http::response_class;
     using http::header::classify_status;
 
-    if constexpr(build_props::lowfat_mode || build_props::release_mode)
+    if constexpr(compile_info::lowfat_mode || compile_info::release_mode)
         return;
 
     cVerbose(10, "Checking for network profiling...");

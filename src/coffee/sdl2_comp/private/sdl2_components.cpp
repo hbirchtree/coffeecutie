@@ -3,6 +3,7 @@
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/entity_container.inl>
+#include <coffee/core/CProfiling>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
@@ -356,7 +357,7 @@ void GLContext::setupAttributes(entity_container& c)
     {
         Sint32 contextFlags = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
-        if constexpr(build_props::platform::is_macos)
+        if constexpr(compile_info::platform::is_macos)
             contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 
         if(glConfig.profile & GLConfig::Debug)
@@ -476,7 +477,13 @@ void GLFramebuffer::load(entity_container& c, comp_app::app_error&)
 
 void GLFramebuffer::swapBuffers(comp_app::app_error&)
 {
+    if constexpr(compile_info::debug_mode)
+        Coffee::Profiler::PushContext("sdl2::GLFramebuffer::swapBuffers");
+
     SDL_GL_SwapWindow(m_container->service<sdl2::Windowing>()->m_window);
+
+    if constexpr(compile_info::debug_mode)
+        Coffee::Profiler::PopContext();
 }
 
 comp_app::size_2d_t GLFramebuffer::size() const
@@ -489,7 +496,7 @@ comp_app::size_2d_t GLFramebuffer::size() const
 
 void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
-    if constexpr(build_props::platform::is_emscripten)
+    if constexpr(compile_info::platform::is_emscripten)
         return;
 
     auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
@@ -517,7 +524,7 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
-    if constexpr(build_props::platform::is_emscripten)
+    if constexpr(compile_info::platform::is_emscripten)
         return;
 
     //    for(auto const& controller : m_controllers)
@@ -535,7 +542,7 @@ void ControllerInput::unload(entity_container&, comp_app::app_error&)
 
 void ControllerInput::start_restricted(Proxy& p, time_point const&)
 {
-    if constexpr(build_props::platform::is_emscripten)
+    if constexpr(compile_info::platform::is_emscripten)
         return;
 
     using namespace Coffee::Input;
@@ -621,7 +628,7 @@ ControllerInput::controller_map ControllerInput::state(
 
     controller_map out;
 
-    if constexpr(!build_props::platform::is_emscripten)
+    if constexpr(!compile_info::platform::is_emscripten)
     {
 #define BTN SDL_GameControllerGetButton
 #define AXIS SDL_GameControllerGetAxis
@@ -665,7 +672,7 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
     if(it == m_playerIndex.end())
         return {};
 
-    if constexpr(!build_props::platform::is_emscripten)
+    if constexpr(!compile_info::platform::is_emscripten)
     {
         auto name =
             SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));

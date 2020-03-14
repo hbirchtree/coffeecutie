@@ -18,6 +18,12 @@ coffee_application (
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
     )
 
+if(TARGET ASIO)
+    target_link_libraries ( BlamGraphics PUBLIC
+        ASIO
+        )
+endif()
+
 coffee_application (
     TARGET BlamScripting
     TITLE "Blam Scripting"

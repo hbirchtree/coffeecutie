@@ -18,8 +18,8 @@ struct Map
     vec2 atlas_scale;
     vec2 atlas_offset;
     vec2 uv_scale;
-
-    int layer;
+    int  layer;
+    float bias;
 };
 
 struct Lightmap
@@ -80,7 +80,7 @@ vec4 get_light()
 
     return texture(lightmaps, vec3(
                 frag.light_tex * light_scale + light_offset,
-                light_layer), 100.0);
+                light_layer), -100.0);
 }
 
 void main()
@@ -107,7 +107,7 @@ void main()
             lightmap.rgb
             ;
 
-    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 1.2));
+    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 1.5));
 
 //    out_color.rgb *= 0.01;
 //    out_color.rgb += lightmap.rgb;

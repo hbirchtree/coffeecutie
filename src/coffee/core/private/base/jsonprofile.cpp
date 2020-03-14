@@ -25,7 +25,7 @@ struct JsonProfileWriter : GlobalState
 {
     JsonProfileWriter(Url outputProfile)
     {
-        if constexpr(!build_props::profiler::enabled)
+        if constexpr(!compile_info::profiler::enabled)
             return;
 
         /* We keep a reference to this pointer in order to extend its lifespan.
@@ -61,7 +61,7 @@ struct JsonProfileWriter : GlobalState
 
 JsonProfileWriter::~JsonProfileWriter()
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         return;
 
     FileFun::file_error ec;
@@ -87,7 +87,7 @@ JsonProfileWriter::~JsonProfileWriter()
 
 ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         return {};
 
     auto profile = constructors::MkUrl("profile.json", RSCA::TempFile);
@@ -102,7 +102,7 @@ ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
 
 void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 {
-    if constexpr(!build_props::profiler::enabled)
+    if constexpr(!compile_info::profiler::enabled)
         return;
 
     using namespace profiling;

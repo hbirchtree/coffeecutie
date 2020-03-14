@@ -270,7 +270,7 @@ void Resource::readResponseHeader(std::istream& http_istream)
         m_response.header = http::stream::read_response(http_istream);
     }
 
-    if constexpr(build_props::debug_mode)
+    if constexpr(compile_info::debug_mode)
     {
         cVerbose(
             12,

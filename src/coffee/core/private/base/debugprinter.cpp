@@ -61,7 +61,7 @@ static void AddContextString(CString& prefix, Severity sev)
 
     CString cclock = TimeFormatter<>::String("%H:%M:%S");
 
-    if constexpr(build_props::platform::is_windows)
+    if constexpr(compile_info::platform::is_windows)
     {
         /* VC++ fills the string with \0, and does not ignore it
          *  while appending. This is a big problem. */
@@ -70,7 +70,7 @@ static void AddContextString(CString& prefix, Severity sev)
             cclock.resize(cclock_clip);
     }
 
-    if constexpr(!build_props::printing::is_syslogged)
+    if constexpr(!compile_info::printing::is_syslogged)
     {
         CString ms_time = cast_pod((Time<>::Microsecond() / 1000) % 1000);
         CString clock   = Strings::cStringFormat(
@@ -94,7 +94,7 @@ static void native_print(
     bool locking       = (stream == stdout || stream == stderr);
     bool locking_state = C_OCAST<bool>(State::GetInternalState());
 
-    if constexpr(!build_props::lowfat_mode)
+    if constexpr(!compile_info::lowfat_mode)
         if(locking && locking_state)
             State::GetPrinterLock().lock();
 
@@ -140,7 +140,7 @@ static void native_print(
     libc::io::put(stream, formatted.c_str());
 #endif
 
-    if constexpr(!build_props::lowfat_mode)
+    if constexpr(!compile_info::lowfat_mode)
         if(locking && locking_state)
             State::GetPrinterLock().unlock();
 }
@@ -156,11 +156,11 @@ void OutputPrinterImpl::fprintf_platform_tagged(
     if(PrintingVerbosityLevel() < level)
         return;
 
-    if constexpr(!build_props::printing::is_syslogged)
+    if constexpr(!compile_info::printing::is_syslogged)
     {
         CString formatted;
 
-        if constexpr(!build_props::printing::is_simple)
+        if constexpr(!compile_info::printing::is_simple)
         {
             if(!(flags & Flag_NoContext))
             {

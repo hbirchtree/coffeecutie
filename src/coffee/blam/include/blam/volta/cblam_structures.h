@@ -785,9 +785,9 @@ struct string_segment_ref
     {
         auto out = data.at(offset);
 
-        if(!out.size)
+        if(!out->size)
             Throw(undefined_behavior("string out of bounds"));
-        return {out.data, offset};
+        return {out->data, offset};
     }
 
     inline string_ref indexed(u32 i = 0) const

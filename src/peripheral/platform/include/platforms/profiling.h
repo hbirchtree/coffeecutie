@@ -19,8 +19,6 @@ using profiler_compile_opts = ::profiler::options::compile_default;
 using profiler_compile_opts = ::profiler::options::compile<true, true>;
 #endif
 
-constexpr bool gpu_profiling_enabled = false;
-
 using PClock     = Chrono::high_resolution_clock;
 using PExtraData = Map<CString, CString>;
 
@@ -360,7 +358,7 @@ struct GpuProfilerContext
         m_thread(gpu_thread),
         m_query(query), m_name(name)
     {
-        if constexpr(!gpu_profiling_enabled)
+        if constexpr(!compile_info::profiler::gpu::enabled)
             return;
 
         m_start = PClock::now();
@@ -369,7 +367,7 @@ struct GpuProfilerContext
     }
     FORCEDINLINE ~GpuProfilerContext()
     {
-        if constexpr(!gpu_profiling_enabled)
+        if constexpr(!compile_info::profiler::gpu::enabled)
             return;
 
         DeepProfilerContext _("GpuProfilerContext::Query stall");

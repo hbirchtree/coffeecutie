@@ -150,7 +150,7 @@ struct submesh_header
 
 struct alignas(4) submesh_group
 {
-    u16 lightmap_idx;
+    i16 lightmap_idx;
     /* Intentionally leave 2 bytes here for padding */
     u32                         unknown[4];
     reflexive_t<submesh_header> material;

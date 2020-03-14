@@ -251,7 +251,7 @@ void RunTest(Test const& test, TestInstance& test_info)
 #if !MODE_CRASHTEST
     catch(std::exception const&)
     {
-        if constexpr(!build_props::lowfat_mode)
+        if constexpr(!compile_info::lowfat_mode)
             platform::env::Stacktracer::ExceptionStacktrace(
                 std::current_exception(),
                 DebugFun::OutputPrinter::fprintf_platform);

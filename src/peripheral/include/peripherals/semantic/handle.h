@@ -73,7 +73,7 @@ struct generic_handle_t : non_copy
                 !(exceptions_mode && static_cast<bool>(close_func)),
                 "close function will never be called");
 
-            if constexpr(build_props::debug_mode)
+            if constexpr(compile_info::debug_mode)
                 if(hnd != InvalidValue)
                     Throw(resource_leak("resource leakage detected"));
         }

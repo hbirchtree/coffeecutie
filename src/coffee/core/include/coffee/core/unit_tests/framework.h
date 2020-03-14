@@ -46,7 +46,7 @@ struct StartupMessage
 {
     StartupMessage(const char* msg)
     {
-        if constexpr(!build_props::lowfat_mode)
+        if constexpr(!compile_info::lowfat_mode)
         {
             using Coffee::DebugFun::OutputPrinter;
             using Coffee::DebugFun::Severity;
