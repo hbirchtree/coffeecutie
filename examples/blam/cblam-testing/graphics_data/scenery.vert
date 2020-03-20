@@ -33,5 +33,5 @@ void main()
     frag.instanceId = gl_BaseInstance + gl_InstanceID;
     gl_Position =
             camera * matrices.transform[gl_BaseInstance + gl_InstanceID] *
-            vec4(position, 1);
+            vec4(position.xyz, 1);
 }

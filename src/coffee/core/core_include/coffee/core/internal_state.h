@@ -15,11 +15,6 @@ struct ThreadState;
 
 struct BuildInfo
 {
-    cstring compiler;
-    cstring architecture;
-    cstring platform;
-    cstring build_version;
-
     CString default_window_name;
 
 #if defined(COFFEE_ANDROID)

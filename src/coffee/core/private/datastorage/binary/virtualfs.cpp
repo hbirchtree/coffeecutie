@@ -275,7 +275,8 @@ bool GenVirtFS(
         }
         MemCpy(
             srcData,
-            outputView.at(base_fs.data_offset + files[i].offset, srcData.size));
+            *outputView.at(
+                base_fs.data_offset + files[i].offset, srcData.size));
     }
 
     data_arrays.resize(0);
@@ -327,13 +328,13 @@ bool GenVirtFS(
                 index.second.size() * sizeof(index.second[0]));
 
             MemCpy(
-                Bytes::Create(outIndex), Bytes::CreateFrom(*output).at(start));
+                Bytes::Create(outIndex), *Bytes::CreateFrom(*output).at(start));
 
             start += sizeof(VirtualIndex);
 
             MemCpy(
                 Bytes::CreateFrom(index.second),
-                Bytes::CreateFrom(*output).at(start));
+                *Bytes::CreateFrom(*output).at(start));
         }
 
         outputView = Bytes::CreateFrom(*output);
@@ -361,8 +362,8 @@ bool GenVirtFS(
         output->resize(output->size() + dirIndex.totalSize);
         outputView = Bytes::CreateFrom(*output);
 
-        auto index_ref = outputView.at(prevSize);
-        auto data_ref  = outputView.at(prevSize + sizeof(VirtualIndex));
+        auto index_ref = *outputView.at(prevSize);
+        auto data_ref  = *outputView.at(prevSize + sizeof(VirtualIndex));
 
         MemCpy(Bytes::From(dirIndex.baseIndex), index_ref);
         MemCpy(Bytes::CreateFrom(dirIndex.nodes), data_ref);

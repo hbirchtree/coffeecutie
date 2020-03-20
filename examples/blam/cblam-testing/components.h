@@ -54,8 +54,8 @@ struct SubModel
 {
     ERef parent;
 
-    generation_idx_t     shader;
-    generation_idx_t     model;
+    generation_idx_t shader;
+    generation_idx_t model;
 
     /* Data used at runtime */
     u32    draw_idx;
@@ -68,15 +68,34 @@ struct SubModel
     } draw;
 
     void initialize(
-        generation_idx_t           model_idx,
-        ModelItem::SubModel const& model_)
+        generation_idx_t model_idx, ModelItem::SubModel const& model_)
     {
         draw.call =
             GFX::D_CALL().withIndexing().withTriStrip().withInstancing();
         draw.draw = model_.draw;
         model     = model_idx;
+        shader    = model_.shader;
     }
 };
+
+template<
+    typename SpawnType,
+    typename std::enable_if<
+        !std::is_same<SpawnType, blam::scn::multiplayer_equipment>::value>::
+        type* = nullptr>
+static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
+{
+    return spawn->rot;
+}
+template<
+    typename SpawnType,
+    typename std::enable_if<
+        std::is_same<SpawnType, blam::scn::multiplayer_equipment>::value>::
+        type* = nullptr>
+static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
+{
+    return Vecf3(spawn->facing, 0, 0);
+}
 
 struct Model
 {
@@ -89,7 +108,9 @@ struct Model
     template<typename T>
     void initialize(T const* spawn)
     {
-        transform = typing::vectors::translation(Matf4(), spawn->pos);
+        transform = typing::vectors::translation(Matf4(), spawn->pos) *
+                    typing::vectors::matrixify(
+                        typing::vectors::euler(spawn_rotation_to_euler(spawn)));
     }
 };
 
@@ -124,13 +145,14 @@ struct alignas(32) lightmap_data
     u32   layer;
 };
 
-struct alignas(8) basic
+struct alignas(16) basic
 {
     Vecf2 atlas_scale;
     Vecf2 uv_scale;
     Vecf2 atlas_offset;
     i32   source;
     u32   layer;
+    f32   bias;
 };
 
 struct alignas(32) map_data
@@ -139,6 +161,7 @@ struct alignas(32) map_data
     Vecf2 atlas_offset;
     Vecf2 uv_scale;
     u32   layer;
+    f32   bias;
 };
 
 struct alignas(32) senv
@@ -186,7 +209,8 @@ struct ShaderData
             blam::shader_env const* shader = shader_data<blam::shader_env>();
 
             return Pass_EnvMicro;
-//            return shader->diffuse.micro.map.valid() ? Pass_EnvMicro : Pass_Env;
+            //            return shader->diffuse.micro.map.valid() ?
+            //            Pass_EnvMicro : Pass_Env;
         }
         case tc::soso:
         {
@@ -215,6 +239,13 @@ struct ShaderData
     inline bool match_data() const
     {
         return T::tag_class == shader_tag->tagclass_e[0];
+    }
+
+    void initialize(ShaderItem const& shader_, SubModel const& submod)
+    {
+        shader     = shader_.header;
+        shader_tag = shader_.tag;
+        shader_id  = submod.shader;
     }
 };
 

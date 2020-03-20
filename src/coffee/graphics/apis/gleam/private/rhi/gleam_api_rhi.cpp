@@ -122,7 +122,10 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data* p)
     delete p;
 }
 
-static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
+static bool SetAPIVersion(
+    GLEAM_API::DataStore   store,
+    APILevel&              systemLevel,
+    GLEAM_API::OPTS const& opts)
 {
     cVerbose(10, GLM_API "Getting GL context version");
     auto ver = CGL::Debug::ContextVersion();
@@ -206,7 +209,7 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    if(Extensions::SRGB_Supported(store->inst_data->dbgContext))
+    if(Extensions::SRGB_Supported(store->inst_data->dbgContext) && opts.srgb)
     {
         cVerbose(6, GLM_API "Enabling SRGB color for framebuffers");
         CGL33::Enable(Feature::FramebufferSRGB);
@@ -217,6 +220,29 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
         4,
         GLM_API "Initialized API level {0}",
         stl_types::str::print::pointerify(store->CURR_API));
+
+#if !MODE_LOWFAT
+    using DBG = CGL::Debug;
+    using LIM = CGL_Shared_Limits;
+
+    ExtraData::Add(
+        "glsl:version", Strings::to_string(DBG::ShaderLanguageVersion()));
+    ExtraData::Add("gl:version", Strings::to_string(DBG::ContextVersion()));
+    ExtraData::Add("gl:driver", DBG::ContextVersion().driver);
+    ExtraData::Add("gl:renderer", Strings::to_string(DBG::Renderer()));
+
+    CString props = {};
+    for(auto i : Range<u32>(LIM::Max_Property))
+        if(auto name = LIM::MaxName(i); name)
+        {
+            props += LIM::MaxName(i);
+            props += "=";
+            props += Strings::to_string(LIM::Max(i));
+            props += ",";
+        }
+    ExtraData::Add("gl:limits", props);
+    ExtraData::Add("gl:extensions", store->inst_data->dbgContext.extensionList);
+#endif
 
     return true;
 }
@@ -323,6 +349,11 @@ static void SetExtensionFeatures(GLEAM_API::DataStore store)
         Extensions::DirectStateSupported(store->inst_data->dbgContext);
 
 #endif
+#if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
+    store->features.anisotropic =
+        Extensions::AnisotropicSupported(store->inst_data->dbgContext) ||
+        Extensions::AnisotropicExtSupported(store->inst_data->dbgContext);
+#endif
 }
 
 static void SetCompatibilityFeatures(
@@ -384,14 +415,14 @@ bool GLEAM_API::LoadAPI(
     }
 #endif
 
+    Debug::GetExtensions(store->inst_data->dbgContext);
+
     APILevel systemLevel;
-    SetAPIVersion(store, systemLevel);
+    SetAPIVersion(store, systemLevel, options);
 
     bool forced_api = (store->CURR_API != systemLevel);
 
     ConstructContextObjects(store);
-
-    Debug::GetExtensions(store->inst_data->dbgContext);
 
     /* First, check if an extension is available for behavior */
     if(!Env::ExistsVar("GLEAM_DISABLE_EXTENSIONS"))
@@ -414,6 +445,21 @@ bool GLEAM_API::LoadAPI(
     if(glPopDebugGroup)
         CGL::Debug::UnsetDebugGroup();
 #endif
+
+    if(store->CURR_API != APILevel::GLES_2_0)
+    {
+        store->inst_data->queries.push_back(MkShared<GLEAM_TimeQuery>());
+        store->inst_data->queries.at(0)->alloc();
+    }
+
+    if(GLEAM_FEATURES.draw_multi_indirect || store->CURR_API > APILevel::GL_4_3)
+    {
+        store->inst_data->indirectBuf =
+            MkShared<GLEAM_IndirectBuffer>(RSCA::ReadOnly);
+        store->inst_data->indirectBuf->alloc();
+    }
+
+    ThreadSetName(0x8085, "OpenGL GPU-0");
 
     return true;
 }
@@ -857,6 +903,8 @@ std::string api_error::message(int error_code) const
         return "Unimplemented rendering path";
     case APIError::GeneralError:
         return "General error";
+    case APIError::NoData:
+        return "No data provided";
     case APIError::None:
         return "No error";
     }

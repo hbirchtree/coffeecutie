@@ -61,6 +61,14 @@ using namespace ::libc_types;
 template<typename Clock>
 struct datapoint_t
 {
+    datapoint_t()
+    {
+        flags.type  = Profile;
+        flags.attrs = AttrNone;
+        tid         = 0;
+        component   = nullptr;
+    }
+
     enum Type
     {
         Profile,
@@ -71,20 +79,25 @@ struct datapoint_t
 
     enum Attr
     {
-        AttrNone,
+        AttrNone       = 0x0,
+        ExplicitThread = 0x1,
+        Async          = 0x2,
     };
 
     thread_id                tid;
     std::string              name;
     cstring                  component;
+    std::string              thread_name;
     typename Clock::duration ts;
     typename Clock::duration dur;
 
-    union
+    struct
     {
         Type type : 3;
 
-        u16 _extra : 14;
+        Attr attrs : 2;
+
+        u16 _extra : 11;
         u16 _extra2;
         u32 _extra3;
 
@@ -140,14 +153,15 @@ struct prof_common
         typename prof_types::datapoint&       data,
         typename prof_types::runtime_options& opt)
     {
-        data           = {};
-        data.ts        = prof_types::clock::now().time_since_epoch();
-        data.tid       = thread_id_constructor()(this_thread::get_id());
-        data.component = opt.component();
+        data             = {};
+        data.ts          = prof_types::clock::now().time_since_epoch();
+        data.tid         = thread_id_constructor()(this_thread::get_id());
+        data.component   = opt.component();
+        data.flags.attrs = prof_types::datapoint::AttrNone;
     }
 };
 
-template<typename prof_types, bool Enabled>
+template<typename prof_types, bool Enabled, typename... Extra>
 struct prof_component
 {
     using clock           = typename prof_types::clock;
@@ -157,7 +171,8 @@ struct prof_component
     template<
         typename Dummy                                 = void,
         typename std::enable_if<Enabled, Dummy>::type* = nullptr>
-    STATICINLINE void push(runtime_options& opt, std::string&& name)
+    STATICINLINE void push(
+        runtime_options& opt, std::string&& name, Extra... args)
     {
         datapoint data;
         prof_common<prof_types>::basic_init(data, opt);
@@ -167,7 +182,7 @@ struct prof_component
         data.name       = name.c_str();
         data.component  = opt.component();
 
-        opt.push(*opt.context, data);
+        opt.push(*opt.context, data, std::forward<Extra>(args)...);
     }
 
     template<
@@ -281,13 +296,15 @@ struct prof
 
     struct app
     {
-        STATICINLINE void push(std::string&& name)
+        template<typename... Extra>
+        STATICINLINE void push(std::string&& name, Extra... args)
         {
             if(!runtime_options::enabled())
                 return;
 
             auto& props = runtime_options::get_properties();
-            app_component::push(props, std::move(name));
+            app_component::push(
+                props, std::move(name), std::forward<Extra>(args)...);
         }
 
         STATICINLINE void pop()
@@ -311,13 +328,15 @@ struct prof
 
     struct lib
     {
-        STATICINLINE void push(std::string&& name)
+        template<typename... Extra>
+        STATICINLINE void push(std::string&& name, Extra... args)
         {
             if(!runtime_options::deep_enabled())
                 return;
 
             auto& props = runtime_options::get_properties();
-            lib_component::push(props, std::move(name));
+            lib_component::push(
+                props, std::move(name), std::forward<Extra>(args)...);
         }
 
         STATICINLINE void pop()

@@ -17,7 +17,6 @@ namespace profiling {
 using namespace ::Coffee::DataStorage::TextStorage::RJSON;
 using namespace ::platform::file;
 
-#if !defined(COFFEE_DISABLE_PROFILER)
 static constexpr cstring event_format =
     R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
 )";
@@ -26,6 +25,9 @@ struct JsonProfileWriter : GlobalState
 {
     JsonProfileWriter(Url outputProfile)
     {
+        if constexpr(!compile_info::profiler::enabled)
+            return;
+
         /* We keep a reference to this pointer in order to extend its lifespan.
          * In the destructor we need it for finalizing the thread names. */
         threadState = state->PeekState("threadNames");
@@ -59,6 +61,9 @@ struct JsonProfileWriter : GlobalState
 
 JsonProfileWriter::~JsonProfileWriter()
 {
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
     FileFun::file_error ec;
 
     auto thread_names = Coffee::Strings::fmt(
@@ -79,11 +84,12 @@ JsonProfileWriter::~JsonProfileWriter()
 
     FileFun::Close(std::move(logfile), ec);
 }
-#endif
 
 ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!compile_info::profiler::enabled)
+        return {};
+
     auto profile = constructors::MkUrl("profile.json", RSCA::TempFile);
 
     FileFun::file_error ec;
@@ -92,16 +98,15 @@ ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
     C_ERROR_CHECK(ec);
 
     return MkShared<JsonProfileWriter>(profile);
-#else
-    return {};
-#endif
 }
 
 void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 {
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
     using namespace profiling;
 
-#if !defined(COFFEE_DISABLE_PROFILER)
     auto profileData = C_DCAST<JsonProfileWriter>(tdata.writer);
 
     if(!profileData)
@@ -112,18 +117,20 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     switch(point.flags.type)
     {
     case DataPoint::Push:
-        eventType = "B";
+        eventType = point.flags.attrs & DataPoint::Async ? "b" : "B";
         break;
     case DataPoint::Pop:
-        eventType = "E";
+        eventType = point.flags.attrs & DataPoint::Async ? "e" : "E";
         break;
     default:
         break;
     }
 
-    auto thread_name = ThreadGetName(point.tid);
+    auto thread_name = point.flags.attrs & DataPoint::ExplicitThread
+                           ? ThreadGetName(point.tid)
+                           : point.thread_name;
 
-    if(!thread_name.size())
+    if(thread_name.empty())
         thread_name = str::print::pointerify(point.tid);
 
     auto event = Coffee::Strings::fmt(
@@ -143,7 +150,6 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     C_ERROR_CHECK(ec);
 
     profileData->event_count++;
-#endif
 }
 
 } // namespace profiling

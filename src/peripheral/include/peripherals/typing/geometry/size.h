@@ -176,6 +176,5 @@ struct size_3d : base_size
     }
 };
 
-
-}
-}
+} // namespace geometry
+} // namespace typing

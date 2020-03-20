@@ -27,6 +27,8 @@ namespace env {
 namespace Linux {
 extern CString          get_kern_name();
 extern CString          get_kern_arch();
+extern CString          get_kern_ver();
+extern lsb_data         get_lsb_release();
 extern info::DeviceType get_device_variant();
 } // namespace Linux
 } // namespace env
@@ -38,11 +40,18 @@ CString system_name()
 {
 #ifndef COFFEE_LOWFAT
     //    const constexpr cstring _fmt = "%s %s %u-bit (%s ";
-    CString                 sys_ver   = SysInfo::GetSystemVersion();
-    CString                 sys_name  = C_SYSTEM_STRING;
-    CString                 curr_arch = COFFEE_ARCH;
+    CString sys_ver   = SysInfo::GetSystemVersion();
+    CString sys_name  = C_SYSTEM_STRING;
+    CString curr_arch = COFFEE_ARCH;
+#if defined(COFFEE_ANDROID)
+    sys_name = "Android"; // Override this for clarity
+#elif defined(COFFEE_LINUX)
+    sys_name = env::Linux::get_lsb_release().distribution;
+
+    if(sys_name.empty())
+        sys_name = env::Linux::get_kern_name();
+#endif
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-    sys_name  = env::Linux::get_kern_name();
     curr_arch = env::Linux::get_kern_arch();
 #endif
 
@@ -178,25 +187,36 @@ CString system::runtime_arch()
 #endif
 }
 
+CString system::runtime_kernel_version()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    return env::Linux::get_kern_ver();
+#else
+    return {};
+#endif
+}
+
+CString system::runtime_distro()
+{
+#if defined(COFFEE_LINUX)
+    return env::Linux::get_lsb_release().distribution;
+#else
+    return {};
+#endif
+}
+
+CString system::runtime_distro_version()
+{
+#if defined(COFFEE_LINUX)
+    return env::Linux::get_lsb_release().release;
+#else
+    return {};
+#endif
+}
+
 } // namespace device
 
 namespace platform {
-namespace uses {
-
-const bool virtualfs =
-#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
-    true;
-#else
-    false;
-#endif
-const bool debug_mode =
-#if MODE_DEBUG
-    true;
-#else
-    false;
-#endif
-
-} // namespace uses
 
 Platform variant()
 {

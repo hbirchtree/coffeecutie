@@ -854,7 +854,8 @@ template<typename BC>
 inline opcode_iterator<BC>::opcode_iterator(
     semantic::mem_chunk<u8 const>&& script_base) :
     m_script(C_RCAST<script_ref<BC> const*>(script_base.data)),
-    m_data(script_base.at(sizeof(script_ref<BC>))), m_offset(0), m_is_end(false)
+    m_data(*script_base.at(sizeof(script_ref<BC>))), m_offset(0),
+    m_is_end(false)
 {
 }
 
@@ -1306,7 +1307,10 @@ struct bytecode_pointer
                     context.set_script_state(
                         script->data_ptr,
                         script_status::sleeping,
-                        {sleep_condition::timer, terminator, C_FCAST<u32>(time), 0});
+                        {sleep_condition::timer,
+                         terminator,
+                         C_FCAST<u32>(time),
+                         0});
                 else
                     return result_t::sleep_timeout(time);
 

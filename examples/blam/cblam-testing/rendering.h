@@ -195,15 +195,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         u32 base = 0;
         for(Pass& pass : bsp)
         {
-            pass.material_buffer_range = {base, 256_kB};
+            pass.material_buffer_range = {base, 512_kB};
             base += pass.material_buffer_range.second;
         }
         base         = 4_MB;
         u32 base_mat = 0;
         for(Pass& pass : model)
         {
-            pass.material_buffer_range = {base, 512_kB};
-            pass.matrix_buffer_range   = {base_mat, 512_kB};
+            pass.material_buffer_range = {base, 1024_kB};
+            pass.matrix_buffer_range   = {base_mat, 1024_kB};
 
             base += pass.material_buffer_range.second;
             base_mat += pass.matrix_buffer_range.second;
@@ -263,16 +263,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         GFX::ERROR ec;
 
-        m_data.model_matrix_store->bindrange(
-            0,
-            pass.matrix_buffer_range.first,
-            pass.matrix_buffer_range.second,
-            ec);
+        if(pass.matrix_buffer_range.second)
+            m_data.model_matrix_store->bindrange(
+                0,
+                pass.matrix_buffer_range.first,
+                pass.matrix_buffer_range.second,
+                ec);
+        C_ERROR_CHECK(ec);
         m_data.material_store->bindrange(
             1,
             pass.material_buffer_range.first,
             pass.material_buffer_range.second,
             ec);
+        C_ERROR_CHECK(ec);
 
         GFX::SetRasterizerState(pass.source.raster);
         GFX::SetBlendState(pass.source.blend);
@@ -281,8 +284,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     bool test_visible(Matf4 const& mat)
     {
-        return true;
-
         Vecf4 probe = {0, 0, 0, 1};
         Vecf4 out   = probe * (m_data.camera_matrix * mat);
 
@@ -305,8 +306,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         u32 i = 0;
         for(auto const& pass : slice_num(bsp, Pass_LastOpaque))
         {
-//            if(i != Pass_EnvMicro)
-                render_pass(pass);
+            render_pass(pass);
             i++;
         }
 
@@ -414,6 +414,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     void update_draws(Proxy& p, time_point const&)
     {
+        ProfContext _("Updating draw calls");
+
         for(Pass& pass : bsp)
             pass.clear();
         for(Pass& pass : model)
@@ -489,24 +491,24 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         auto material_store = m_data.material_store->map();
         auto matrix_store   = m_data.model_matrix_store->map();
 
-        auto material_store_base = material_store.at(0);
-        material_store           = material_store.at(0, 4_MB);
+        auto material_store_base = *material_store.at(0);
+        material_store           = *material_store.at(0, 4_MB);
 
         for(Pass& pass : bsp)
-            pass.material_buffer = material_store.at(
+            pass.material_buffer = *material_store.at(
                 pass.material_buffer_range.first,
                 pass.material_buffer_range.second);
 
         for(Pass& pass : model)
         {
-            pass.material_buffer = material_store_base.at(
+            pass.material_buffer = *material_store_base.at(
                 pass.material_buffer_range.first,
                 pass.material_buffer_range.second);
 
             pass.matrix_buffer = matrix_store
                                      .at(pass.matrix_buffer_range.first,
                                          pass.matrix_buffer_range.second)
-                                     .template as<Matf4>();
+                                     ->template as<Matf4>();
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -547,6 +549,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             mat.atlas_offset = bitmap.image.offset;
             mat.atlas_scale  = bitmap.image.scale;
             mat.uv_scale     = mod2.uvscale;
+            mat.bias         = bitmap.image.bias;
 
             auto comp_flags = std::get<4>(bitmap.image.bucket);
             switch(comp_flags)
@@ -559,6 +562,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 break;
             case CompFlags::DXT5:
                 mat.source = 2;
+                break;
+            default:
                 break;
             }
         }
@@ -597,15 +602,22 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
                 detail::assign_map(mat.base, base);
                 mat.base.uv_scale = {1};
+                mat.base.bias     = base->image.bias;
 
                 detail::assign_map(mat.micro, micro);
                 mat.micro.uv_scale = {shader_data->diffuse.micro.scale};
+                if(micro)
+                    mat.micro.bias = micro->image.bias;
 
                 detail::assign_map(mat.primary, prim);
                 mat.primary.uv_scale = {shader_data->diffuse.primary.scale};
+                if(prim)
+                    mat.primary.bias = prim->image.bias;
 
                 detail::assign_map(mat.secondary, seco);
                 mat.secondary.uv_scale = {shader_data->diffuse.secondary.scale};
+                if(seco)
+                    mat.secondary.bias = seco->image.bias;
 
                 detail::assign_map(mat.lightmap, lightmap);
 

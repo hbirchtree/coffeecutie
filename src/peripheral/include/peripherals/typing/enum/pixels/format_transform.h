@@ -22,7 +22,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
         nullptr>
-FORCEDINLINE PixFlg to(PixCmp component)
+FORCEDINLINE constexpr PixFlg to(PixCmp component)
 {
     switch(component)
     {
@@ -50,7 +50,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, BitFmt>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE BitFmt to(PixFmt fmt)
+FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
 {
     using P = PixFmt;
     using B = BitFmt;
@@ -146,7 +146,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE PixFlg to(PixFmt fmt)
+FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 {
     using F = PixFmt;
 
@@ -243,7 +243,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE PixCmp to(PixFmt fmt)
+FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
 {
     using C = PixCmp;
     using F = PixFmt;
@@ -350,7 +350,7 @@ enum format_property
 template<
     format_property Prop,
     typename std::enable_if<Prop == is_compressed>::type* = nullptr>
-FORCEDINLINE bool get(PixFmt f)
+FORCEDINLINE constexpr bool get(PixFmt f)
 {
     switch(f)
     {
@@ -370,7 +370,7 @@ FORCEDINLINE bool get(PixFmt f)
 template<
     format_property Prop,
     typename std::enable_if<Prop == supports_srgb>::type* = nullptr>
-FORCEDINLINE bool get(PixFmt f)
+FORCEDINLINE constexpr bool get(PixFmt f)
 {
     switch(f)
     {
@@ -385,7 +385,7 @@ FORCEDINLINE bool get(PixFmt f)
 template<
     format_property Prop,
     typename std::enable_if<Prop == pixel_size>::type* = nullptr>
-FORCEDINLINE szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
+FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
 {
     using B = BitFmt;
 
@@ -499,7 +499,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE PixCmp to(CompFmt fmt)
+FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
 {
     switch(fmt.base_fmt)
     {
@@ -546,7 +546,7 @@ struct block_dim
 template<
     format_property Prop,
     typename std::enable_if<Prop == block_size>::type* = nullptr>
-FORCEDINLINE block_dim get(CompFmt format)
+FORCEDINLINE constexpr block_dim get(CompFmt format)
 {
     switch(format.base_fmt)
     {
@@ -562,29 +562,28 @@ FORCEDINLINE block_dim get(CompFmt format)
         static_assert(
             C_CAST<u8>(CompFlags::ASTC_12x12) == 14, "assumption broken");
 
-        static const constexpr stl_types::Array<block_dim, 14>
-                 ASTC_Block_Sizes = {{
-                {4, 4},
+        const constexpr stl_types::Array<block_dim, 14> ASTC_Block_Sizes = {{
+            {4, 4},
 
-                {5, 4},
-                {5, 5},
+            {5, 4},
+            {5, 5},
 
-                {6, 5},
-                {6, 6},
+            {6, 5},
+            {6, 6},
 
-                {8, 5},
-                {8, 6},
-                {8, 8},
+            {8, 5},
+            {8, 6},
+            {8, 8},
 
-                {10, 5},
-                {10, 6},
-                {10, 8},
-                {10, 10},
+            {10, 5},
+            {10, 6},
+            {10, 8},
+            {10, 10},
 
-                {12, 10},
-                {12, 12},
-            }};
-        const u8 block_idx =
+            {12, 10},
+            {12, 12},
+        }};
+        const u8                                        block_idx =
             C_CAST<u8>(format.c_flags) - C_CAST<u8>(CompFlags::ASTC_4x4);
 
         return ASTC_Block_Sizes.at(block_idx);
@@ -608,7 +607,7 @@ FORCEDINLINE block_dim get(CompFmt format)
 template<
     format_property Prop,
     typename std::enable_if<Prop == supports_subtextures>::type* = nullptr>
-FORCEDINLINE bool get(CompFmt format)
+FORCEDINLINE constexpr bool get(CompFmt format)
 {
     switch(format.base_fmt)
     {
@@ -645,7 +644,7 @@ struct layout_t
 template<
     format_property Prop,
     typename std::enable_if<Prop == layout>::type* = nullptr>
-FORCEDINLINE layout_t get(PixFmt fmt)
+FORCEDINLINE constexpr layout_t get(PixFmt fmt)
 {
     using F = PixFmt;
 

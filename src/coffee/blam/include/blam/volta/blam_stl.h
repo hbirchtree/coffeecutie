@@ -24,7 +24,7 @@ struct map_container
             using namespace Coffee::Compression;
             using Coffee::Zlib;
 
-            auto compressed_segment = map.at(
+            auto compressed_segment = *map.at(
                 sizeof(file_header_t),
                 (map.size - sizeof(file_header_t) - this->map->trailing_space));
 
@@ -33,10 +33,10 @@ struct map_container
 
             semantic::chunk_ops::MemCpy(
                 semantic::Bytes::From(*this->map),
-                decompressed_store.at(0, sizeof(file_header_t)));
+                *decompressed_store.at(0, sizeof(file_header_t)));
 
             auto decompressed_region =
-                decompressed_store.at(sizeof(file_header_t));
+                *decompressed_store.at(sizeof(file_header_t));
 
             zlib_error_code ec;
             Zlib::Decompress(

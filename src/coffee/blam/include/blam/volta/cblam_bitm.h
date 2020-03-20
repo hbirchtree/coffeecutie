@@ -265,8 +265,8 @@ struct image_t
             Throw(undefined_behavior("non-pow2 texture cannot be mipmapped"));
 
         auto mipsize = isize;
-        mipsize.w <<= mipmap;
-        mipsize.h <<= mipmap;
+        mipsize.w >>= mipmap;
+        mipsize.h >>= mipmap;
 
         if(!compressed())
         {
@@ -279,7 +279,12 @@ struct image_t
             u32 mip_offset = 0;
 
             for(auto i : stl_types::Range<>(mipmap))
-                mip_offset += (isize.area() >> (2 * i));
+            {
+                auto imsize = isize.convert<u32>();
+                imsize.w >>= i;
+                imsize.h >>= i;
+                mip_offset += imsize.area();
+            }
 
             return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
         } else
@@ -291,13 +296,13 @@ struct image_t
 
             u32 size = Coffee::GetPixCompressedSize(comp_fmt, mipsize);
 
-            u32  mip_offset = 0;
-            auto off_size   = isize;
+            u32 mip_offset = 0;
             for(auto i : stl_types::Range<>(mipmap))
             {
+                auto off_size = isize;
+                off_size.w >>= i;
+                off_size.h >>= i;
                 mip_offset += Coffee::GetPixCompressedSize(comp_fmt, off_size);
-                off_size.w << 1;
-                off_size.h << 1;
             }
             return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
         }

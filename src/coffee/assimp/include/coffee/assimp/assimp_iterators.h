@@ -504,17 +504,14 @@ struct MeshLoader
                 newNode.type       = node.type;
                 newNode.mesh       = node.mesh;
                 newNode.objectName = 0; /* Must be set later */
-                MemCpy(Bytes::Create(newNode), baseView.at(offset));
-                //                MemCpy(&basePtr[offset], &newNode,
-                //                sizeof(SerialNodeData));
+                MemCpy(Bytes::Create(newNode), *baseView.at(offset));
                 offset += sizeof(SerialNodeData);
             }
             for(auto i : Range<>(stringStore.size()))
             {
                 auto const& s          = stringStore.at(i);
                 nodeData[i].objectName = offset;
-                MemCpy(s, baseView.at(offset));
-                //                MemCpy(&basePtr[offset], &s[0], s.size());
+                MemCpy(s, *baseView.at(offset));
                 offset += s.size() + 1;
             }
 

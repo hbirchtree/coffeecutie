@@ -27,7 +27,7 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     else
         target->resize(target->size);
 
-    MemCpy(Bytes::FromBytes(data, size), target->at(offset));
+    MemCpy(Bytes::FromBytes(data, size), *target->at(offset));
 }
 
 inline void DataSetDestr(Bytes& b)
@@ -206,12 +206,11 @@ bool LoadData(
         return false;
     }
 
-    target->bpp = scomp;
+    target->bpp        = scomp;
     target->data_owner = Bytes::From(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
     DataSetDestr(target->data_owner);
-
 
     if(!target->data)
     {

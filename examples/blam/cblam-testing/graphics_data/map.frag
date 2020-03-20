@@ -20,6 +20,7 @@ struct Material
     vec2 offset;
     int source;
     uint layer;
+    float bias;
 };
 
 uniform sampler2DArray bc1_tex;
@@ -48,4 +49,6 @@ void main()
         out_color = texture(bc3_tex, vec3(sample_pos, layer));
     else if(mats.instance[frag.instanceId].source == 2)
         out_color = texture(bc5_tex, vec3(sample_pos, layer));
+
+    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 0.8));
 }

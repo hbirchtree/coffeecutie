@@ -132,9 +132,9 @@ static void CompressETC_With(
             sourceImage.data_owner.size,
             mip.uiEncodingBitsBytes);
 
-        MemCpy(mipImage, mipData.at(sizeof(IMG::serial_image)));
+        MemCpy(mipImage, *mipData.at(sizeof(IMG::serial_image)));
         MemCpy(
-            Bytes::Create(imgDesc), mipData.at(0, sizeof(IMG::serial_image)));
+            Bytes::Create(imgDesc), *mipData.at(0, sizeof(IMG::serial_image)));
 
         t.cooker->cacheFile(mipName, mipData);
         t.files.emplace_back(mipName, std::move(mipData), 0);
@@ -145,7 +145,7 @@ static void CompressETC_With(
 
 static bool CompressETC12(
     common_tools_t& t,
-    Size const&    size,
+    Size const&     size,
     Bytes const&    inputData,
     Path const&     outName)
 {

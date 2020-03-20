@@ -17,6 +17,13 @@
 namespace platform {
 namespace env {
 namespace Linux {
+
+struct lsb_data
+{
+    CString distribution;
+    CString release;
+};
+
 struct SysInfo : SysInfoDef
 {
     static CString CPUInfoString(bool force = false);

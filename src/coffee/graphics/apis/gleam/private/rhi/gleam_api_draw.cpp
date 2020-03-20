@@ -318,7 +318,10 @@ bool InternalMultiDraw(
 {
     DPROF_CONTEXT_FUNC(GLM_API);
 
-    static CGhnd indirectBuf;
+#if MODE_DEBUG
+    platform::profiling::GpuProfilerContext<GLEAM_TimeQuery> __(
+        __FUNCTION__, GLEAM_API_INSTANCE_DATA->queries.at(0));
+#endif
 
     if(GL_DEBUG_MODE)
     {
@@ -370,35 +373,30 @@ bool InternalMultiDraw(
     if(ec)
         return false;
 
-    if(data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect)
-    {
-        if(indirectBuf == 0)
-            CGL33::BufAlloc(indirectBuf);
+    const bool indexed = data.dc.indexed();
+    const bool multi_indirect =
+        data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect;
 
+    if(multi_indirect)
+    {
         auto& indirectCalls =
             *C_CCAST<Vector<GLEAM_API::OptimizedDraw::IndirectCall>*>(
                 &data.indirectCalls);
 
-        glhnd ghnd(indirectBuf);
+        GLEAM_API_INSTANCE_DATA->indirectBuf->commit(
+            BytesConst::CreateFrom(indirectCalls));
 
-        CGL33::BufBind(buf::draw_indirect::value, ghnd);
-        CGL33::BufData(
-            buf::draw_indirect::value,
-            Bytes::CreateFrom(indirectCalls),
-            RSCA::ReadOnly);
-
-        ghnd.release();
+        GLEAM_API_INSTANCE_DATA->indirectBuf->bind();
     }
 
-    if(data.dc.indexed() && data.dc.instanced() &&
-       GLEAM_FEATURES.draw_multi_indirect)
+    if(indexed && multi_indirect)
         CGL43::MultiDrawElementsIndirect(
             mode,
             data.etype,
             0,
             data.indirectCalls.size(),
             sizeof(data.indirectCalls[0]));
-    else if(data.dc.indexed() && !data.dc.instanced())
+    else if(indexed && !data.dc.instanced())
         CGL33::MultiDrawElementsBaseVertex(
             mode,
             data.counts.data(),
@@ -406,9 +404,7 @@ bool InternalMultiDraw(
             C_RCAST<uintptr>(data.offsets.data()),
             data.counts.size(),
             data.baseVertex.data());
-    else if(
-        !data.dc.indexed() && data.dc.instanced() &&
-        GLEAM_FEATURES.draw_multi_indirect)
+    else if(!data.dc.indexed() && multi_indirect)
         CGL43::MultiDrawArraysIndirect(
             mode, 0, data.indirectCalls.size(), sizeof(IndirectCall));
     else if(!data.dc.indexed() && !data.dc.instanced())
@@ -419,6 +415,8 @@ bool InternalMultiDraw(
             data.offsets.size());
     else
         ec = APIE::DrawNotCompatible;
+
+    GLEAM_API_INSTANCE_DATA->indirectBuf->unbind();
 
     return true;
 }

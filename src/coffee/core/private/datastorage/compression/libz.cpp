@@ -150,7 +150,7 @@ bool compression_routine(
     if(!direct_output)
     {
         DProfContext _("zlib::Copy to output");
-        MemCpy(Bytes::CreateFrom(compress_store).at(0, output->size), *output);
+        MemCpy(*Bytes::CreateFrom(compress_store).at(0, output->size), *output);
     }
 
     return true;

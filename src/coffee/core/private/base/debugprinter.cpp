@@ -60,28 +60,31 @@ static void AddContextString(CString& prefix, Severity sev)
     cstring severity_str = severity_string(sev);
 
     CString cclock = TimeFormatter<>::String("%H:%M:%S");
-#if defined(COFFEE_WINDOWS)
-    /* VC++ fills the string with \0, and does not ignore it
-     *  while appending. This is a big problem. */
-    auto cclock_clip = cclock.find('\0');
-    if(cclock_clip != CString::npos)
-        cclock.resize(cclock_clip);
-#endif
 
-#if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
-    CString ms_time = cast_pod((Time<>::Microsecond() / 1000) % 1000);
-    CString clock   = Strings::cStringFormat(
-        "{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
-    prefix = Strings::cStringFormat("{0}:", clock.c_str());
-    prefix.append(CurrentThread::GetName() + ":");
-    prefix.push_back(severity_str[0]);
+    if constexpr(compile_info::platform::is_windows)
+    {
+        /* VC++ fills the string with \0, and does not ignore it
+         *  while appending. This is a big problem. */
+        auto cclock_clip = cclock.find('\0');
+        if(cclock_clip != CString::npos)
+            cclock.resize(cclock_clip);
+    }
 
-    platform::ColorMap::ColorText(
-        prefix,
-        platform::ColorMap::CombineFormat(
-            platform::ColorMap::CmdColor::Green,
-            platform::ColorMap::CmdColor::Blue));
-#endif
+    if constexpr(!compile_info::printing::is_syslogged)
+    {
+        CString ms_time = cast_pod((Time<>::Microsecond() / 1000) % 1000);
+        CString clock   = Strings::cStringFormat(
+            "{0}.{1}", cclock, str::pad::left(ms_time, '0', 3));
+        prefix = Strings::cStringFormat("{0}:", clock.c_str());
+        prefix.append(CurrentThread::GetName() + ":");
+        prefix.push_back(severity_str[0]);
+
+        platform::ColorMap::ColorText(
+            prefix,
+            platform::ColorMap::CombineFormat(
+                platform::ColorMap::CmdColor::Green,
+                platform::ColorMap::CmdColor::Blue));
+    }
 }
 
 static void native_print(
@@ -91,10 +94,9 @@ static void native_print(
     bool locking       = (stream == stdout || stream == stderr);
     bool locking_state = C_OCAST<bool>(State::GetInternalState());
 
-#ifndef COFFEE_LOWFAT
-    if(locking && locking_state)
-        State::GetPrinterLock().lock();
-#endif
+    if constexpr(!compile_info::lowfat_mode)
+        if(locking && locking_state)
+            State::GetPrinterLock().lock();
 
 #if defined(COFFEE_ANDROID)
     int flag = 0;
@@ -138,10 +140,9 @@ static void native_print(
     libc::io::put(stream, formatted.c_str());
 #endif
 
-#ifndef COFFEE_LOWFAT
-    if(locking && locking_state)
-        State::GetPrinterLock().unlock();
-#endif
+    if constexpr(!compile_info::lowfat_mode)
+        if(locking && locking_state)
+            State::GetPrinterLock().unlock();
 }
 
 void OutputPrinterImpl::fprintf_platform_tagged(
@@ -155,28 +156,32 @@ void OutputPrinterImpl::fprintf_platform_tagged(
     if(PrintingVerbosityLevel() < level)
         return;
 
-#if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
-    CString formatted;
-#if !defined(COFFEE_SIMPLE_PRINT)
-    if(!(flags & Flag_NoContext))
+    if constexpr(!compile_info::printing::is_syslogged)
     {
-        AddContextString(formatted, sev);
+        CString formatted;
 
-        if(tag)
-            (formatted += ":") += tag;
+        if constexpr(!compile_info::printing::is_simple)
+        {
+            if(!(flags & Flag_NoContext))
+            {
+                AddContextString(formatted, sev);
 
-        (formatted += ": ") += formatted_raw;
+                if(tag)
+                    (formatted += ":") += tag;
+
+                (formatted += ": ") += formatted_raw;
+            } else
+                formatted = formatted_raw;
+        } else
+            formatted = formatted_raw;
+
+        if(!(flags & Flag_NoNewline))
+            formatted += "\n";
+
+        native_print(stream, formatted, sev);
+
     } else
-#endif
-        formatted = formatted_raw;
-
-    if(!(flags & Flag_NoNewline))
-        formatted += "\n";
-#else
-    auto const& formatted = formatted_raw;
-#endif
-
-    native_print(stream, formatted, sev);
+        native_print(stream, formatted_raw, sev);
 }
 
 } // namespace DebugFun

@@ -825,9 +825,6 @@ inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
 #define C_ERROR_CODE_OUT_OF_BOUNDS() \
     Throw(undefined_behavior("invalid error code"))
 
-#define C_STR_HELPER(x) #x
-#define C_STR(x) C_STR_HELPER(x)
-
 #define C_PTR_CHECK(ptr)                                        \
     if(!ptr)                                                    \
         Throw(undefined_behavior("bad pointer deref: " __FILE__ \

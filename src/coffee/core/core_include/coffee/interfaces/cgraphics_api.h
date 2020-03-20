@@ -750,6 +750,33 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return 0;
         }
     };
+    template<typename T>
+    struct TimeQuery
+    {
+        TimeQuery()
+        {
+        }
+        TimeQuery(T)
+        {
+        }
+
+        void begin()
+        {
+        }
+        void end()
+        {
+        }
+
+        /* How to kill perf: */
+        bool available()
+        {
+            return false;
+        }
+        u64 resultu()
+        {
+            return 0;
+        }
+    };
 
     struct SurfaceBase
     {
@@ -901,6 +928,9 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         }
 
         void setFiltering(Filtering, Filtering, Filtering = Filtering::None)
+        {
+        }
+        void setAnisotropic(f32 samples)
         {
         }
         void setLODRange(Vecf2 const&)

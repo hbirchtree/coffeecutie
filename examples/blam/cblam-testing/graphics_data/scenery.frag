@@ -18,6 +18,8 @@ struct Material
     vec2 offset;
     int source;
     uint layer;
+    float bias;
+//    uint pad;
 };
 
 layout(binding = 1, std140) buffer MaterialProperties
@@ -40,13 +42,20 @@ void main()
             + vec2(mats.instance[frag.instanceId].offset);
     uint layer = mats.instance[frag.instanceId].layer;
 
+    float bias = mats.instance[frag.instanceId].bias;
+
     if(mats.instance[frag.instanceId].source == 0)
-        out_color = texture(bc1_tex, vec3(sample_pos, layer));
+        out_color = texture(bc1_tex, vec3(sample_pos, layer), bias);
     else if(mats.instance[frag.instanceId].source == 1)
-        out_color = texture(bc3_tex, vec3(sample_pos, layer));
+        out_color = texture(bc3_tex, vec3(sample_pos, layer), bias);
     else if(mats.instance[frag.instanceId].source == 2)
-        out_color = texture(bc5_tex, vec3(sample_pos, layer));
+        out_color = texture(bc5_tex, vec3(sample_pos, layer), bias);
+
+//    out_color.rgb *= 0.01;
+//    out_color.rgb += vec3(frag.tex.xy, float(layer) / 30.0);
 
     if(out_color.a < 0.5)
         discard;
+
+//    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 0.4));
 }

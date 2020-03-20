@@ -265,8 +265,7 @@ struct socket_base : std::istream, std::ostream, non_copy
         async_dispatch_skiperror(calls, ec, amount_data);
     }
 
-    void async_write_receive(
-        async_ptr<> call, asio::error_code ec, size_t sz)
+    void async_write_receive(async_ptr<> call, asio::error_code ec, size_t sz)
     {
         DProfContext _(DTEXT(ASIO_TAG "write receive"));
 
@@ -464,8 +463,7 @@ struct raw_socket : socket_base<socket_types::raw, socket_types::raw>
     {
     }
 
-    void connect_handler(
-        async_ptr<> call, asio::error_code ec, resolver_iter)
+    void connect_handler(async_ptr<> call, asio::error_code ec, resolver_iter)
     {
         DProfContext _(DTEXT(ASIO_TAG "connect"));
         async_dispatch(call, ec);
@@ -532,7 +530,8 @@ struct ssl_socket
     {
     }
 
-    void connect_handler(async_ptr<> calls, asio::error_code ec, resolver_iter it)
+    void connect_handler(
+        async_ptr<> calls, asio::error_code ec, resolver_iter it)
     {
         DProfContext _(DTEXT(ASIO_TAG "connect"));
 
@@ -546,7 +545,8 @@ struct ssl_socket
         socket.lowest_layer().set_option(asio::ip::tcp::no_delay(true));
 
         socket.set_verify_mode(asio::ssl::verify_peer);
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE) && !defined(COFFEE_LINUX)
+
+#if 0
         if(do_verify)
         {
             socket.set_verify_callback(

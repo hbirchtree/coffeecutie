@@ -3,6 +3,7 @@
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/entity_container.inl>
+#include <coffee/core/CProfiling>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
@@ -63,22 +64,20 @@ using namespace stl_types;
 
 void Context::load(entity_container& c, comp_app::app_error&)
 {
-    auto info = c.service<comp_app::AppInfo>();
-
     C_EXPECT_ZERO(SDL_Init(0))
 
     c.register_subsystem_services<comp_app::AppServiceTraits<Context>>(this);
 
-    if(!info)
-        return;
+    if(auto info = c.service<comp_app::AppInfo>(); info)
+    {
+        SDL_version ver;
+        SDL_GetVersion(&ver);
 
-    SDL_version ver;
-    SDL_GetVersion(&ver);
+        auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "." +
+                         cast_pod(ver.patch);
 
-    auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "." +
-                     cast_pod(ver.patch);
-
-    info->add("sdl2:version", verString);
+        info->add("sdl2:version", verString);
+    }
 }
 
 void Context::unload(entity_container&, comp_app::app_error&)
@@ -358,9 +357,8 @@ void GLContext::setupAttributes(entity_container& c)
     {
         Sint32 contextFlags = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
-#if defined(COFFEE_APPLE)
-        contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-#endif
+        if constexpr(compile_info::platform::is_macos)
+            contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 
         if(glConfig.profile & GLConfig::Debug)
             contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
@@ -479,7 +477,13 @@ void GLFramebuffer::load(entity_container& c, comp_app::app_error&)
 
 void GLFramebuffer::swapBuffers(comp_app::app_error&)
 {
+    if constexpr(compile_info::debug_mode)
+        Coffee::Profiler::PushContext("sdl2::GLFramebuffer::swapBuffers");
+
     SDL_GL_SwapWindow(m_container->service<sdl2::Windowing>()->m_window);
+
+    if constexpr(compile_info::debug_mode)
+        Coffee::Profiler::PopContext();
 }
 
 comp_app::size_2d_t GLFramebuffer::size() const
@@ -492,7 +496,9 @@ comp_app::size_2d_t GLFramebuffer::size() const
 
 void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
-#if !defined(COFFEE_EMSCRIPTEN)
+    if constexpr(compile_info::platform::is_emscripten)
+        return;
+
     auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
 
     if(!config.mapping.empty())
@@ -514,12 +520,13 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
         m_axisScale    = max_val / libc_types::scalar(dead_val);
         m_axisDeadzone = config.deadzone;
     }
-#endif
 }
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
-#if !defined(COFFEE_EMSCRIPTEN)
+    if constexpr(compile_info::platform::is_emscripten)
+        return;
+
     //    for(auto const& controller : m_controllers)
     //        SDL_GameControllerClose(
     //            C_RCAST<SDL_GameController*>(controller.second));
@@ -531,12 +538,13 @@ void ControllerInput::unload(entity_container&, comp_app::app_error&)
 
     SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER);
     SDL_GetError();
-#endif
 }
 
 void ControllerInput::start_restricted(Proxy& p, time_point const&)
 {
-#if !defined(COFFEE_EMSCRIPTEN)
+    if constexpr(compile_info::platform::is_emscripten)
+        return;
+
     using namespace Coffee::Input;
 
     auto    inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
@@ -601,7 +609,6 @@ void ControllerInput::start_restricted(Proxy& p, time_point const&)
     while(SDL_PeepEvents(
         &event, 1, SDL_GETEVENT, SDL_JOYAXISMOTION, SDL_JOYDEVICEREMOVED))
         ;
-#endif
 }
 
 libc_types::u32 ControllerInput::count() const
@@ -621,38 +628,39 @@ ControllerInput::controller_map ControllerInput::state(
 
     controller_map out;
 
-#if !defined(COFFEE_EMSCRIPTEN)
-
+    if constexpr(!compile_info::platform::is_emscripten)
+    {
 #define BTN SDL_GameControllerGetButton
 #define AXIS SDL_GameControllerGetAxis
 
-    out.buttons.e.a      = BTN(controller, SDL_CONTROLLER_BUTTON_A);
-    out.buttons.e.b      = BTN(controller, SDL_CONTROLLER_BUTTON_B);
-    out.buttons.e.x      = BTN(controller, SDL_CONTROLLER_BUTTON_X);
-    out.buttons.e.y      = BTN(controller, SDL_CONTROLLER_BUTTON_Y);
-    out.buttons.e.b_l    = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-    out.buttons.e.b_r    = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-    out.buttons.e.s_l    = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK);
-    out.buttons.e.s_r    = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-    out.buttons.e.p_up   = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
-    out.buttons.e.p_down = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-    out.buttons.e.p_left = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-    out.buttons.e.p_right = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
-    out.buttons.e.back    = BTN(controller, SDL_CONTROLLER_BUTTON_BACK);
-    out.buttons.e.start   = BTN(controller, SDL_CONTROLLER_BUTTON_START);
-    out.buttons.e.guide   = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
+        out.buttons.e.a   = BTN(controller, SDL_CONTROLLER_BUTTON_A);
+        out.buttons.e.b   = BTN(controller, SDL_CONTROLLER_BUTTON_B);
+        out.buttons.e.x   = BTN(controller, SDL_CONTROLLER_BUTTON_X);
+        out.buttons.e.y   = BTN(controller, SDL_CONTROLLER_BUTTON_Y);
+        out.buttons.e.b_l = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        out.buttons.e.b_r =
+            BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        out.buttons.e.s_l  = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK);
+        out.buttons.e.s_r  = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+        out.buttons.e.p_up = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
+        out.buttons.e.p_down = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+        out.buttons.e.p_left = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+        out.buttons.e.p_right =
+            BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        out.buttons.e.back  = BTN(controller, SDL_CONTROLLER_BUTTON_BACK);
+        out.buttons.e.start = BTN(controller, SDL_CONTROLLER_BUTTON_START);
+        out.buttons.e.guide = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
 
-    out.axes.e.l_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX));
-    out.axes.e.l_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY));
-    out.axes.e.r_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTX));
-    out.axes.e.r_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTY));
-    out.axes.e.t_l = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-    out.axes.e.t_r = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+        out.axes.e.l_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX));
+        out.axes.e.l_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY));
+        out.axes.e.r_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTX));
+        out.axes.e.r_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTY));
+        out.axes.e.t_l = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+        out.axes.e.t_r = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 
 #undef BTN
 #undef AXIS
-
-#endif
+    }
 
     return out;
 }
@@ -664,12 +672,14 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
     if(it == m_playerIndex.end())
         return {};
 
-#if !defined(COFFEE_EMSCRIPTEN)
-    auto name =
-        SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
+    if constexpr(!compile_info::platform::is_emscripten)
+    {
+        auto name =
+            SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
-    return name ? name : CString();
-#endif
+        return name ? name : CString();
+    } else
+        return CString();
 }
 
 libc_types::i16 ControllerInput::rescale(libc_types::i16 value) const

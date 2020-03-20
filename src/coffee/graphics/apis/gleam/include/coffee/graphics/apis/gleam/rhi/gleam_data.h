@@ -61,18 +61,20 @@ struct GLEAM_DataStore
         bool draw_indirect       = false;
 
 #if defined(COFFEE_GLEAM_DESKTOP)
+        bool anisotropic   = false;
         bool base_instance = false;
         bool direct_state  = false;
 #else
         bool       qcom_tiling   = false;
         const bool base_instance = false;
         const bool direct_state  = false;
+        const bool anisotropic   = false;
 #endif
 
 #if defined(COFFEE_WEBGL)
         const bool webgl = true;
 #else
-        const bool webgl = false;
+        const bool webgl         = false;
 #endif
     } features;
 

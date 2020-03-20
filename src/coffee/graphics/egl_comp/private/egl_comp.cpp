@@ -2,6 +2,7 @@
 
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
+#include <coffee/core/CProfiling>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
@@ -193,12 +194,19 @@ void GraphicsContext::unload(entity_container& c, comp_app::app_error&)
 
 void GraphicsFramebuffer::swapBuffers(comp_app::app_error& ec)
 {
+    if constexpr(compile_info::debug_mode)
+        Coffee::Profiler::PushContext("egl::GraphicsFramebuffer::swapBuffers");
+
     if(!eglSwapBuffers(
            m_container->service<DisplayHandle>()->context().display, m_surface))
     {
-        ec = stl_types::str::convert::hexify(eglGetError());
+        ec = stl_types::str::convert::hexify(
+            C_FCAST<libc_types::u32>(eglGetError()));
         ec = comp_app::AppError::SwapBuffersFailed;
     }
+
+    if constexpr(compile_info::debug_mode)
+        Coffee::Profiler::PopContext();
 }
 
 void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)

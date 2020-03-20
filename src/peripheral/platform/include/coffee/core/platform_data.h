@@ -74,9 +74,15 @@ extern CString system_name();
 
 namespace device {
 namespace system {
+
 extern CString runtime_kernel();
 extern CString runtime_arch();
-}
+extern CString runtime_kernel_version();
+
+extern CString runtime_distro();
+extern CString runtime_distro_version();
+
+} // namespace system
 namespace display {
 
 extern scalar   dpi();
@@ -94,8 +100,14 @@ extern DeviceType variant();
 
 namespace platform {
 namespace uses {
-extern const bool virtualfs;
-extern const bool debug_mode;
+
+constexpr bool virtualfs =
+#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
+    true;
+#else
+    false;
+#endif
+
 } // namespace uses
 
 extern Platform variant();
@@ -104,6 +116,15 @@ extern Platform variant();
 
 } // namespace info
 } // namespace platform
+
+namespace compile_info {
+
+/*!
+ * \brief The underlying engine version
+ */
+extern const cstring engine_version;
+
+} // namespace compile_info
 
 namespace Coffee {
 
@@ -163,6 +184,7 @@ COFFEE_APP_CLASS struct PlatformData
         return platform::info::device::is::mobile;
     }
 
+    C_DEPRECATED_S("use platform::info::platform::uses::virtualfs")
     STATICINLINE
     /*!
      * \brief Defined for systems where some storage is not file-based, such
@@ -173,6 +195,7 @@ COFFEE_APP_CLASS struct PlatformData
         return platform::info::platform::uses::virtualfs;
     }
 
+    C_DEPRECATED_S("use platform::info::platform::uses::debug_mode")
     STATICINLINE
     /*!
      * \brief IsDebug
@@ -180,7 +203,7 @@ COFFEE_APP_CLASS struct PlatformData
      */
     bool IsDebug()
     {
-        return platform::info::platform::uses::debug_mode;
+        return compile_info::debug_mode;
     }
 };
 } // namespace Coffee

@@ -125,8 +125,6 @@ struct StandardCamera
 
             cqt = normalize_quat(Quatf(1, 0, pitch, 0) * cqt);
 
-            cqt.x() = CMath::max(-0.5f, CMath::min(0.5f, cqt.x()));
-
             cqt = normalize_quat(Quatf(1, yaw, 0, 0) * cqt);
         }
 
@@ -137,7 +135,7 @@ struct StandardCamera
     using Reg = Map<u16, u16>;
 
     StandardCamera(CameraPtr cam, CameraOptsPtr opts) :
-        m_opts(opts), m_camera(cam)
+        m_opts(opts), m_camera(cam), up_direction(Vecf3(0, 1, 0))
     {
     }
 
@@ -165,9 +163,8 @@ struct StandardCamera
 
         auto camDirection =
             quaternion_to_direction<CameraDirection::Forward>(c.rotation);
-        const auto camUp        = Vecf3(0, 1.f, 0);
-        auto       camRight     = cross(camUp, camDirection);
-        scalar     acceleration = 5.f;
+        auto   camRight     = cross(up_direction, camDirection);
+        scalar acceleration = 5.f;
 
         if(has_key(CK_LShift))
             acceleration = 10.f;
@@ -192,10 +189,10 @@ struct StandardCamera
                     c.position += camRight * 0.05f * acceleration;
                     break;
                 case CK_q:
-                    c.position.y() += 0.05f * acceleration;
+                    c.position += up_direction * 0.05f * acceleration;
                     break;
                 case CK_e:
-                    c.position.y() -= 0.05f * acceleration;
+                    c.position -= up_direction * 0.05f * acceleration;
                     break;
                 }
             it++;
@@ -205,6 +202,7 @@ struct StandardCamera
     CameraOptsPtr m_opts;
     CameraPtr     m_camera;
     Reg           m_reg;
+    Vecf3         up_direction;
 };
 
 struct ControllerOpts

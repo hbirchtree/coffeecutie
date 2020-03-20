@@ -145,6 +145,50 @@ After having the textures sorted, I also looked into lightmaps, referencing Guil
 Because all lightmaps are `PixFmt::RGB565`, it was super simple, and they look amazing,
  and they really make the levels look like they should.
 
+## Better senv shading
+
+The `senv` shader is responsible for most terrain with eg. base layer,
+ primary layer, secondary layer and micro texture. When combining these properly
+ it starts looking even more like it should. Neat stuff!
+
+![](images/update16.png)
+
+## Mipmapping, one step forward, one step back
+
+Alright, this one doesn't look quite as good, but hear me out.
+
+Mipmapping is important.
+
+Not just for performance, but for eliminating that terrible aliasing in the distance.
+Also, anisotropic filtering! The grid lines are caused by mipmapping combined with the texture atlas.
+Adjusting for the lines to become invisible is going to be difficult.
+
+![](images/update17-1.png)
+
+Also, I found out that Assault on the Control Room and Two Betrayals,
+ while happening in the same location, are a little different:
+
+![](images/update17-2.png)
+![](images/update17-3.png)
+
+Some trees and rocks are magically in different places. An oversight?
+Adapting the map for flood combat patterns? Who knows?
+This general pattern of trees and rocks moving happens across the map,
+ but not always very noticeable.
+
+## Mipmapping, but better
+
+After thinking about the issues with the black lines surrounding every texture,
+ padding was the solution. Adding a border around every texture such that,
+ when the pixels on the boundary linearly sample outside pixels,
+ they match the texture. This works best with repeating textures,
+ which are used everywhere. The result looks like:
+
+![](images/update18.png)
+
+There are some minor issues with aliasing (because texture size is somewhat bounded now),
+ but it overall is an improvement.
+
 # Bytecode inspection
 
 For now, it's possible to explore bytecode, and deduce what a script may consist of.

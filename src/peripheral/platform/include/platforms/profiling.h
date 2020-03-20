@@ -348,6 +348,56 @@ struct DeepProfilerContext
     }
 };
 
+template<typename QueryType>
+struct GpuProfilerContext
+{
+    FORCEDINLINE GpuProfilerContext(
+        cstring          name,
+        ShPtr<QueryType> query,
+        ThreadId::Hash   gpu_thread = 0x8085) :
+        m_thread(gpu_thread),
+        m_query(query), m_name(name)
+    {
+        if constexpr(!compile_info::profiler::gpu::enabled)
+            return;
+
+        m_start = PClock::now();
+        m_query->begin();
+        push_event(m_name);
+    }
+    FORCEDINLINE ~GpuProfilerContext()
+    {
+        if constexpr(!compile_info::profiler::gpu::enabled)
+            return;
+
+        DeepProfilerContext _("GpuProfilerContext::Query stall");
+
+        m_query->end();
+        push_event(m_name, m_query->result());
+    }
+
+    FORCEDINLINE void push_event(
+        cstring name, PClock::time_point::rep offset = 0)
+    {
+        auto props = Profiler::runtime_options::get_properties();
+
+        Profiler::datapoint event;
+        event.flags.type =
+            offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
+        event.ts   = (m_start + Chrono::nanoseconds(offset)).time_since_epoch();
+        event.name = name;
+        event.tid  = m_thread;
+        event.component = COFFEE_COMPONENT_NAME;
+
+        props.push(*props.context, event);
+    }
+
+    ThreadId::Hash     m_thread;
+    cstring            m_name;
+    PClock::time_point m_start;
+    ShPtr<QueryType>   m_query;
+};
+
 extern void               JsonPush(ThreadState& state, DataPoint const& data);
 extern ShPtr<GlobalState> CreateJsonProfiler();
 

@@ -20,6 +20,7 @@ struct Map
     vec2 uv_scale;
 
     uint layer;
+    float bias;
 };
 
 struct Lightmap
@@ -81,4 +82,6 @@ void main()
 
     out_color.rgb = color.rgb * lightmap_col.rgb;
     out_color.a = 1;
+
+//    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 0.2));
 }

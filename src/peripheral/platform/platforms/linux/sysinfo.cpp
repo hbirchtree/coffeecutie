@@ -31,26 +31,43 @@ using LFileFun = file::Linux::FileFun;
  *
  */
 
-static CString get_lsb_release()
+static void lsb_find_val(cstring& value, CString::size_type& len)
+{
+    if(!value)
+        return;
+
+    value = libc::str::find(value, '=');
+
+    if(!value)
+        return;
+
+    value++;
+
+    auto terminator = libc::str::find(value, '\n');
+    len = terminator ? C_FCAST<CString::size_type>(terminator - value) : 0;
+}
+
+lsb_data get_lsb_release()
 {
 #ifndef COFFEE_LOWFAT
     CString version = LFileFun::sys_read("/etc/lsb-release");
-    cstring desc    = libc::str::find(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = libc::str::find(desc, '=') + 1) &&
-       (desc = libc::str::find(desc, '"') + 1))
-    {
-        cstring end = libc::str::find(desc, '"');
-        if(end || (end = libc::str::find(desc, '\0')))
-        {
-            CString desc_std(desc, C_FCAST<szptr>(end - desc));
-            return desc_std;
-        }
-    }
+
+    cstring distro  = libc::str::find(version.c_str(), "DISTRIB_ID");
+    cstring release = libc::str::find(version.c_str(), "DISTRIB_RELEASE");
+
+    CString::size_type distro_len = 0, release_len = 0;
+
+    lsb_find_val(distro, distro_len);
+    lsb_find_val(release, release_len);
+
+    if(distro && release)
+        return {CString(distro, distro_len), CString(release, release_len)};
 #endif
+
     return {};
 }
 
-static CString get_kern_ver()
+CString get_kern_ver()
 {
 #ifndef COFFEE_LOWFAT
     utsname d;
@@ -149,9 +166,11 @@ info::DeviceType get_device_variant()
 
 CString SysInfo::GetSystemVersion()
 {
-    CString tmp = get_lsb_release();
-    if(tmp.size() <= 0)
+    CString tmp = get_lsb_release().release;
+
+    if(tmp.empty())
         tmp = get_kern_ver();
+
     return tmp;
 }
 

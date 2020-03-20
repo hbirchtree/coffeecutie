@@ -129,6 +129,7 @@ struct BitmapItem
         u32   layer;
         Vecf2 offset;
         Vecf2 scale;
+        f32   bias;
     } image;
 
     inline bool valid() const
@@ -178,6 +179,13 @@ struct ShaderItem
         generation_idx_t map1;
         generation_idx_t map2;
     };
+    struct scex_t
+    {
+        Array<generation_idx_t, 4> maps_4;
+        Array<generation_idx_t, 4> maps_2;
+        Array<generation_idx_t, 4> layers;
+        generation_idx_t           lens_flare;
+    };
 
     union
     {
@@ -186,10 +194,8 @@ struct ShaderItem
         soso_t soso;
         senv_t senv;
         schi_t schi;
+        scex_t scex;
 
-        struct
-        {
-        } scex;
         struct
         {
         } smet;
@@ -335,10 +341,14 @@ struct BitmapCache
         bucket.fmt = fmt;
         std::tie(bucket.sampler, bucket.surface) =
             allocator->alloc_surface_sampler<GFX::S_2DA>(
-                fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
+                fmt.pixfmt,
+                fmt.pixfmt == PixFmt::RGB565 ? 2 : 5,
+                C_CAST<u32>(fmt.cmpflg) << 10);
 
         bucket.sampler->setFiltering(
             Filtering::Linear, Filtering::Linear, Filtering::Linear);
+        bucket.sampler->setAnisotropic(4);
+        bucket.surface->setLevels(0, bucket.surface->m_mips - 1);
 
         return bucket;
     }
@@ -358,37 +368,161 @@ struct BitmapCache
         bucket.fmt = fmt;
         std::tie(bucket.sampler, bucket.surface) =
             allocator->alloc_surface_sampler<GFX::S_CubeA>(
-                fmt.pixfmt, 1, C_CAST<u32>(fmt.cmpflg) << 10);
+                fmt.pixfmt, 2, C_CAST<u32>(fmt.cmpflg) << 10);
 
         bucket.sampler->setFiltering(
             Filtering::Linear, Filtering::Linear, Filtering::Linear);
+        bucket.sampler->setAnisotropic(4);
+        bucket.surface->setLevels(0, 0);
 
         return bucket;
     }
 
-    void commit_bitmap(BitmapItem const& img)
+    template<typename BucketType>
+    inline void upload_mipmap(
+        TextureBucket<BucketType>& bucket,
+        BitmapItem const&          img,
+        blam::magic_data_t const&  magic,
+        u16                        mipmap)
+    {
+        u32 mips = bucket.surface->m_mips;
+
+        if(mipmap >= mips)
+            return;
+
+        auto size = img.image.mip->isize.convert<u32>();
+        size.w >>= mipmap;
+        size.h >>= mipmap;
+        GFX::ERROR ec;
+
+        i32 mip_pad = bucket.surface->m_pixfmt != PixFmt::RGB565
+                          ? 2 << (mips - mipmap)
+                          : 0;
+
+        Veci2 tex_offset = {
+            (C_CAST<i32>(img.image.offset.x()) >> mipmap) - mip_pad,
+            (C_CAST<i32>(img.image.offset.y()) >> mipmap) - mip_pad};
+
+        bucket.surface->upload(
+            img.image.fmt,
+            Size3(size.w, size.h, 1),
+            img.image.mip->data(magic, mipmap),
+            ec,
+            Point3(
+                tex_offset.x() + mip_pad,
+                tex_offset.y() + mip_pad,
+                img.image.layer),
+            mipmap);
+
+        if(mip_pad == 0)
+            return;
+
+        /*
+         * Image padding:
+         *
+         * We insert the pixels marked as X from the other side of the image.
+         * 4x4 blocks are the basis for padding because DXT* uses it
+         *
+         *        XXXXXXXXXXXXXXXXXX
+         *       X|----------------|X
+         *       X|                |X
+         *       X|                |X
+         *       X|                |X
+         *       X|                |X
+         *       X|                |X
+         *       X|                |X
+         *       X|                |X
+         *       X|----------------|X
+         *        XXXXXXXXXXXXXXXXXX
+         *
+         */
+
+        bucket.surface->upload(
+            img.image.fmt,
+            Size3(size.w, 4, 1),
+            *img.image.mip->data(magic, mipmap)
+                 .at(PixDescSize(img.image.fmt, {size.w, size.h - 4}),
+                     PixDescSize(img.image.fmt, {size.w, 4})),
+            ec,
+            Point3(
+                tex_offset.x() + mip_pad,
+                tex_offset.y() + mip_pad - 4,
+                img.image.layer),
+            mipmap);
+
+        bucket.surface->upload(
+            img.image.fmt,
+            Size3(size.w, 4, 1),
+            *img.image.mip->data(magic, mipmap)
+                 .at(0, PixDescSize(img.image.fmt, {size.w, 4})),
+            ec,
+            Point3(
+                tex_offset.x() + mip_pad,
+                tex_offset.y() + size.h + mip_pad,
+                img.image.layer),
+            mipmap);
+
+        /* TODO: Fix vertical padding */
+
+        bucket.surface->upload(
+            img.image.fmt,
+            Size3(4, size.h, 1),
+            *img.image.mip->data(magic, mipmap)
+                 .at_lazy(
+                     PixDescSize(img.image.fmt, {size.w - 4, 1}),
+                     PixDescSize(img.image.fmt, size)),
+            ec,
+            Point3(
+                tex_offset.x() + mip_pad - 4,
+                tex_offset.y() + mip_pad,
+                img.image.layer),
+            mipmap,
+            size.w);
+
+        bucket.surface->upload(
+            img.image.fmt,
+            Size3(4, size.h, 1),
+            *img.image.mip->data(magic, mipmap)
+                 .at_lazy(0, PixDescSize(img.image.fmt, size)),
+            ec,
+            Point3(
+                tex_offset.x() + size.w + mip_pad,
+                tex_offset.y() + mip_pad,
+                img.image.layer),
+            mipmap,
+            size.w);
+
+        /* TODO: Add corner padding */
+    }
+
+    void commit_bitmap(BitmapItem& img)
     {
         GFX::DBG::SCOPE _(img.tag->to_name().to_string(magic));
 
         auto& bucket = get_bucket(img.image.fmt);
-        auto  name   = img.tag->to_name().to_string(magic);
 
-        auto img_data =
-            (img.tag->storage == blam::image_storage_t::internal &&
-             index.file()->version == blam::version_t::custom_edition)
-                ? img.image.mip->data(magic.no_magic())
-                : img.image.mip->data(bitm_magic);
+        C_UNUSED(auto name) = img.tag->to_name().to_string(magic);
 
-        auto img_size = img.image.mip->isize.convert<i32>();
+        auto bmagic = (img.tag->storage == blam::image_storage_t::internal &&
+                       index.file()->version == blam::version_t::custom_edition)
+                          ? magic.no_magic()
+                          : bitm_magic;
 
         GFX::ERROR ec;
-        bucket.surface->upload(
-            img.image.fmt,
-            Size3(img_size.w, img_size.h, 1),
-            img_data,
-            ec,
-            Point3(
-                img.image.offset.x(), img.image.offset.y(), img.image.layer));
+        for(auto i : Range<u16>(img.image.mip->mipmaps))
+        {
+            if((img.image.mip->isize.w >> i) < 4)
+                break;
+
+            upload_mipmap(bucket, img, bmagic, i);
+        }
+
+        img.image.bias = math::min<f32>(
+            C_CAST<f32>(img.image.mip->mipmaps) - bucket.surface->m_mips, 0);
+
+        /* Lightmaps do not use mipmapping */
+        if(img.image.mip->mipmaps == 0)
+            upload_mipmap(bucket, img, bmagic, 0);
     }
 
     void allocate_storage()
@@ -416,14 +550,18 @@ struct BitmapCache
                 fmt.comp,
                 fmt.bfmt,
                 fmt.cmpflg);
-            auto&       pool   = fmt_count[hash];
-            auto const& imsize = bitm.second.image.mip->isize;
+            auto&       pool    = fmt_count[hash];
+            auto const& imsize  = bitm.second.image.mip->isize;
+            auto&       surface = tex_buckets[bitm.second.image.bucket].surface;
+
+            u32 mipmaps = surface->m_mips;
+            u32 pad = surface->m_pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
 
             pool.num++;
-            pool.max.w = std::max<u32>(pool.max.w, imsize.w);
-            pool.max.h = std::max<u32>(pool.max.h, imsize.h);
-            pool.images.insert(
-                {std::make_tuple(imsize.w, imsize.h), &bitm.second});
+            pool.max.w = std::max<u32>(pool.max.w, imsize.w + pad);
+            pool.max.h = std::max<u32>(pool.max.h, imsize.h + pad);
+            pool.images.insert({std::make_tuple(imsize.w + pad, imsize.h + pad),
+                                &bitm.second});
         }
 
         for(auto& pool_ : fmt_count)
@@ -432,12 +570,20 @@ struct BitmapCache
 
             size_2d<i32> offset = {0, 0};
 
-            u32 layer = 0;
+            auto& surface = tex_buckets[pool_.first].surface;
+
+            u32 layer   = 0;
+            u32 mipmaps = surface->m_mips;
+            u32 max_pad =
+                surface->m_pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
 
             for(auto it = pool.images.rbegin(); it != pool.images.rend(); ++it)
             {
                 auto img    = it->second;
                 auto imsize = img->image.mip->isize;
+
+                imsize.w += max_pad;
+                imsize.h += max_pad;
 
                 auto img_offset = offset;
                 auto img_layer  = layer;
@@ -465,8 +611,9 @@ struct BitmapCache
                 }
 
                 img->image.layer  = layer;
-                img->image.offset = Vecf2(img_offset.w, img_offset.h);
-                img->image.scale  = {imsize.w, imsize.h};
+                img->image.offset = Vecf2(
+                    img_offset.w + max_pad / 2, img_offset.h + max_pad / 2);
+                img->image.scale = {imsize.w - max_pad, imsize.h - max_pad};
 
                 img->image.scale.x() /= pool.max.w;
                 img->image.scale.y() /= pool.max.h;
@@ -493,7 +640,7 @@ struct BitmapCache
                 Size3(pool.max.w, pool.max.h, pool.layers), props.fmt.comp);
         }
 
-        for(auto const& bitm : m_cache)
+        for(auto& bitm : m_cache)
             commit_bitmap(bitm.second);
 
         for(auto& pool : fmt_count)
@@ -507,6 +654,8 @@ struct BitmapCache
     virtual BitmapItem predict_impl(
         blam::tagref_t const& shader, i16 idx) override
     {
+        GFX::DBG::SCOPE _("BitmapCache");
+
         using blam::tag_class_t;
 
         if(!shader.valid())
@@ -571,8 +720,6 @@ struct BitmapCache
         out.header     = &bitm;
         out.tag        = bitm_tag;
         out.shader_tag = *it;
-
-        GFX::DBG::SCOPE _("BitmapCache::predict_impl");
 
         if(auto image_ = bitm.images.data(curr_magic); image_.data)
         {
@@ -661,6 +808,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
 
     ShaderItem predict_impl(blam::tagref_t const& shader)
     {
+        GFX::DBG::SCOPE _("ShaderCache");
+
         using blam::tag_class_t;
 
         if(!shader.valid())
@@ -729,10 +878,14 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>
 
             if(auto maps4 = shader_model.maps_4stage.data(magic); maps4)
             {
-                out.color_bitm = get_bitm_idx(maps4[0].map.map);
+                for(auto i : Range<u32>(maps4.elements))
+                    out.scex.maps_4.at(i) = get_bitm_idx(maps4[i].map.map);
             }
             if(auto layers = shader_model.layers.data(magic); layers)
             {
+                for(auto i : Range<u32>(layers.elements))
+                    out.scex.layers.at(i) = predict(layers[i].to_plain());
+
                 for(auto const& layer : layers)
                 {
                     if(!layer.valid())
@@ -824,6 +977,8 @@ struct BSPCache
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
     {
+        GFX::DBG::SCOPE _("BSPCache");
+
         auto        bsp_magic = bsp.bsp_magic(magic);
         auto const& section_  = bsp.to_bsp(bsp_magic);
         auto const& section   = section_.to_header().data(bsp_magic)[0];
@@ -846,8 +1001,9 @@ struct BSPCache
 
                 /* Just dig up the textures, long process */
                 mesh_data.shader = shader_cache.predict(mesh.shader);
-                mesh_data.light_bitm =
-                    bitm_cache.resolve(section.lightmaps, group.lightmap_idx);
+                if(group.lightmap_idx != -1)
+                    mesh_data.light_bitm = bitm_cache.resolve(
+                        section.lightmaps, group.lightmap_idx);
 
                 /* ... and moving on */
 
@@ -879,13 +1035,13 @@ struct BSPCache
                     mesh_data.draw.m_insts = 1;
 
                     MemCpy(
-                        vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
+                        vertices, vert_buffer.at(vert_ptr)->as<vertex_type>());
                     MemCpy(
                         indices,
-                        element_buffer.at(element_ptr).as<element_type>());
+                        element_buffer.at(element_ptr)->as<element_type>());
                     MemCpy(
                         light_verts,
-                        light_buffer.at(light_ptr).as<light_type>());
+                        light_buffer.at(light_ptr)->as<light_type>());
 
                     vert_ptr += vertices.size;
                     element_ptr += indices.size;
@@ -912,13 +1068,13 @@ struct BSPCache
                     mesh_data.draw.m_insts = 1;
 
                     MemCpy(
-                        vertices, vert_buffer.at(vert_ptr).as<vertex_type>());
+                        vertices, vert_buffer.at(vert_ptr)->as<vertex_type>());
                     MemCpy(
                         indices,
-                        element_buffer.at(element_ptr).as<element_type>());
+                        element_buffer.at(element_ptr)->as<element_type>());
                     MemCpy(
                         light_verts,
-                        light_buffer.at(light_ptr).as<light_type>());
+                        light_buffer.at(light_ptr)->as<light_type>());
 
                     vert_ptr += vertices.size;
                     element_ptr += indices.size;
@@ -934,59 +1090,6 @@ struct BSPCache
         return &bsp;
     }
 };
-
-namespace detail {
-
-template<
-    typename Version,
-    typename std::enable_if<
-        !std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
-static inline auto vertex_data(
-    blam::mod2::submesh_header const& model,
-    blam::magic_data_t const&         magic,
-    blam::tag_index_t const*          tags)
-{
-    return model.vertex_segment(*tags).data(magic);
-}
-
-template<
-    typename Version,
-    typename std::enable_if<
-        std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
-static inline auto vertex_data(
-    blam::mod2::submesh_header const& model,
-    blam::magic_data_t const&         magic,
-    blam::tag_index_t const*)
-{
-    auto const& vertex_ref = model.xbox_vertex_ref().data(magic)[0];
-    return vertex_ref.vertices(model.vert_count).data(magic);
-}
-
-template<
-    typename Version,
-    typename std::enable_if<
-        std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
-static inline auto index_data(
-    blam::mod2::submesh_header const& model,
-    blam::magic_data_t const&         magic,
-    blam::tag_index_t const*          tags)
-{
-    return model.xbox_index_segment().data(magic);
-}
-
-template<
-    typename Version,
-    typename std::enable_if<
-        !std::is_same<Version, blam::xbox_version_t>::value>::type* = nullptr>
-static inline auto index_data(
-    blam::mod2::submesh_header const& model,
-    blam::magic_data_t const&         magic,
-    blam::tag_index_t const*          tags)
-{
-    return model.index_segment(*tags).data(magic);
-}
-
-} // namespace detail
 
 template<typename Version>
 struct ModelCache
@@ -1039,16 +1142,26 @@ struct ModelCache
 
     inline auto vertex_data(blam::mod2::submesh_header const& model)
     {
-        return detail::vertex_data<Version>(model, vertex_magic, tags);
+        if constexpr(std::is_same_v<Version, blam::xbox_version_t>)
+        {
+            auto const& vertex_ref = model.xbox_vertex_ref().data(magic)[0];
+            return vertex_ref.vertices(model.vert_count).data(vertex_magic);
+        } else
+            return model.vertex_segment(*tags).data(vertex_magic);
     }
     inline auto index_data(blam::mod2::submesh_header const& model)
     {
-        return detail::index_data<Version>(model, vertex_magic, tags);
+        if constexpr(std::is_same_v<Version, blam::xbox_version_t>)
+            return model.xbox_index_segment().data(vertex_magic);
+        else
+            return model.index_segment(*tags).data(vertex_magic);
     }
 
     virtual ModelItem predict_impl(
         blam::tagref_t const& mod2, u16 geom_idx) override
     {
+        GFX::DBG::SCOPE _("ModelCache");
+
         using namespace blam::mod2;
 
         blam::mod2::header const* header = get_header(mod2);
@@ -1097,13 +1210,16 @@ struct ModelCache
 
                 MemCpy(
                     vertices,
-                    vert_buffer.at(vert_ptr).template as<vertex_type>());
+                    vert_buffer.at(vert_ptr)->template as<vertex_type>());
                 MemCpy(
                     elements,
-                    element_buffer.at(element_ptr).template as<element_type>());
+                    element_buffer.at(element_ptr)
+                        ->template as<element_type>());
+
+                Array<u16, 2> last_indices = {{elements[0], elements[1]}};
 
                 vert_ptr += vertices.size;
-                element_ptr += vertices.size;
+                element_ptr += elements.size + 2 * sizeof(u16);
             }
         }
 

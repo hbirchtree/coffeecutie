@@ -134,7 +134,7 @@ struct submesh_header
     {
         auto cpy = base.index_base();
         cpy.offset += indices.offset;
-        cpy.count = indices.count;
+        cpy.count = indices.count + 2;
         return cpy;
     }
     inline tag_index_t::index_array xbox_index_segment() const

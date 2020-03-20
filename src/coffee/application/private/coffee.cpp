@@ -72,7 +72,9 @@ extern void SetApplicationData(info::AppData& appdata);
 
 FORCEDINLINE void PrintVersionInfo()
 {
-#if !MODE_LOWFAT && !defined(COFFEE_LOADABLE_LIBRARY)
+    if constexpr(compile_info::lowfat_mode)
+        return;
+
     auto const& app_data = ApplicationData();
 
     cOutputPrint(
@@ -80,29 +82,30 @@ FORCEDINLINE void PrintVersionInfo()
         app_data.application_name,
         app_data.organization_name,
         app_data.version_code,
-        platform::info::build_mode);
-#endif
+        compile_info::module::build_mode);
 }
 
 FORCEDINLINE void PrintBuildInfo()
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(compile_info::lowfat_mode)
+        return;
+
     cOutputPrint(
-        "Running {0} build {1}", "Coffee", State::GetBuildInfo().build_version);
-#endif
+        "Running {0} build {1}", "Coffee", compile_info::engine_version);
 }
 
 FORCEDINLINE void PrintArchitectureInfo()
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(compile_info::lowfat_mode)
+        return;
+
     cOutputPrint(
         "Compiled for {0} on {1} ({2})",
-        State::GetBuildInfo().platform,
-        State::GetBuildInfo().compiler,
-        State::GetBuildInfo().architecture);
+        compile_info::target,
+        compile_info::compiler::name,
+        compile_info::architecture);
     cOutputPrint("Executing on {0}", info::system_name());
     cOutputPrint("Device: {0}", SysInfo::DeviceName());
-#endif
 }
 
 FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
@@ -112,7 +115,9 @@ FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
 
 FORCEDINLINE void PrintLicenseInfo()
 {
-#if !MODE_LOWFAT && !defined(COFFEE_LOADABLE_LIBRARY)
+    if constexpr(compile_info::lowfat_mode)
+        return;
+
     cVerbose(6, "Number of licenses to print: {0}", CoffeeLicenseCount);
     for(unsigned int i = 0; i < CoffeeLicenseCount; i++)
     {
@@ -120,31 +125,28 @@ FORCEDINLINE void PrintLicenseInfo()
         if(i < (CoffeeLicenseCount - 1))
             cOutputPrint("\n\n--|END OF LICENSE|--\n\n");
     }
-#endif
 }
 
 static void CoffeeInit_Internal(u32 flags)
 {
-#if !MODE_LOWFAT
-#if MODE_DEBUG
+    if constexpr(compile_info::lowfat_mode)
+        return;
 
-    /* Allow core dump by default in debug mode */
-    ProcessProperty::CoreDumpEnable();
+    if constexpr(compile_info::debug_mode)
+    {
+        /* Allow core dump by default in debug mode */
+        ProcessProperty::CoreDumpEnable();
 
-#if !defined(COFFEE_DISABLE_PROFILER)
-    WkPtrUnwrap<platform::profiling::PContext> store(State::GetProfilerStore());
-    store([](platform::profiling::PContext* context) { context->enable(); });
-#endif
-#else
-    Coffee::PrintingVerbosityLevel()          = 1;
-#endif
-
-#if defined(COFFEE_ANDROID)
-    State::GetBuildInfo().plat_tmp_string =
-        Strings::cStringFormat("Android ({0})", __ANDROID_API__);
-    State::GetBuildInfo().platform =
-        State::GetBuildInfo().plat_tmp_string.c_str();
-#endif
+        if constexpr(compile_info::profiler::enabled)
+        {
+            WkPtrUnwrap<platform::profiling::PContext> store(
+                State::GetProfilerStore());
+            store([](platform::profiling::PContext* context) {
+                context->enable();
+            });
+        }
+    } else
+        Coffee::PrintingVerbosityLevel() = 1;
 
     if(!(flags & SilentInit))
     {
@@ -153,26 +155,8 @@ static void CoffeeInit_Internal(u32 flags)
         PrintArchitectureInfo();
     }
 
-#ifdef COFFEE_SLAP_LOWMEM
-    /*
-     * Dealing with non-PAE systems is a pain in the ass, fuck it
-     * They are unlikely to have enough memory and processing power anyway.
-     *
-     */
-    if(!SysInfo::HasPAE() && !PlatformData::IsMobile())
-    {
-        cOutputPrint("Unsupported system, insufficient addressing space");
-        libc::signal::exit(libc::signal::sig::general_error);
-    }
-#endif
-
-#ifndef COFFEE_LOADABLE_LIBRARY
     State::GetBuildInfo().default_window_name =
         ApplicationData().application_name + " [OpenGL]";
-#else
-    State::GetBuildInfo().default_window_name = "Coffee [OpenGL]";
-#endif
-#endif
 }
 
 void SetPlatformState()
@@ -200,9 +184,8 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
-#if MODE_DEBUG
-    InstallDefaultSigHandlers();
-#endif
+    if constexpr(compile_info::debug_mode)
+        InstallDefaultSigHandlers();
 
     /* Contains all global* state
      *  (*except RuntimeQueue, which is separate) */
@@ -219,8 +202,8 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     Coffee::PrintingVerbosityLevel() = 1;
 #endif
 
-#if !MODE_LOWFAT
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
+    if constexpr(!compile_info::lowfat_mode)
     {
         auto appData = State::GetAppData();
         if(appData)
@@ -230,23 +213,9 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         }
     }
 
-    /* BuildInfo contains information on the compiler, architecture
-     *  and platform */
-    {
-        auto& buildInfo = State::GetBuildInfo();
-
-        buildInfo.architecture  = platform::info::architecture;
-        buildInfo.build_version = platform::info::build_version;
-        buildInfo.compiler      = platform::info::compiler;
-        buildInfo.platform      = platform::info::platform_identity;
-    }
-
-#endif
-
-#if !defined(COFFEE_DISABLE_PROFILER)
     /* Must be created before ThreadState, but after internal state */
-    State::SwapState("jsonProfiler", profiling::CreateJsonProfiler());
-#endif
+    if constexpr(compile_info::profiler::enabled)
+        State::SwapState("jsonProfiler", profiling::CreateJsonProfiler());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     /* On Android and iOS, we want to terminate the profiler early */
@@ -277,48 +246,50 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #pragma clang diagnostic pop
 #endif
 
-#if !MODE_LOWFAT
+    if constexpr(!compile_info::lowfat_mode)
+    {
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
-    if(!(flags & DiscardArgumentHandler))
-    {
-        auto parser = BaseArgParser::GetBase();
-        auto args   = parser.parseArguments(GetInitArgs());
-        auto ret    = BaseArgParser::PerformDefaults(parser, args);
+        if(!(flags & DiscardArgumentHandler))
+        {
+            auto parser = BaseArgParser::GetBase();
+            auto args   = parser.parseArguments(GetInitArgs());
+            auto ret    = BaseArgParser::PerformDefaults(parser, args);
 
-        if(ret > 0)
-            return ret;
-    } else
-    {
-        Coffee::PrintingVerbosityLevel() = 1;
-    }
+            if(ret > 0)
+                return ret;
+        } else
+        {
+            Coffee::PrintingVerbosityLevel() = 1;
+        }
 #endif
 
 #if defined(COFFEE_DEFAULT_VERBOSITY)
-    Coffee::PrintingVerbosityLevel() = 12;
+        Coffee::PrintingVerbosityLevel() = 12;
 #endif
 
-    Profiler::PushContext("CoffeeInit");
-    CoffeeInit_Internal(flags);
-    Profiler::PopContext();
+        Profiler::PushContext("CoffeeInit");
+        CoffeeInit_Internal(flags);
+        Profiler::PopContext();
 
-    if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
-    {
-        auto profilerState = State::GetProfilerStore();
+        if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
+        {
+            auto profilerState = State::GetProfilerStore();
 
-        if(profilerState)
-            profilerState->flags.deep_enabled = true;
+            if(profilerState)
+                profilerState->flags.deep_enabled = true;
+        }
+
+        if(!(flags & SilentInit))
+            cVerbose(
+                1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
+
+        /* This is a bit more versatile than simple procedures
+         */
+        libc::signal::register_atexit(CoffeeTerminate);
+
+        cVerbose(8, "Entering main function");
+        Profiler::PushContext("main()");
     }
-
-    if(!(flags & SilentInit))
-        cVerbose(1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
-
-    /* This is a bit more versatile than simple procedures
-     */
-    libc::signal::register_atexit(CoffeeTerminate);
-
-    cVerbose(8, "Entering main function");
-    Profiler::PushContext("main()");
-#endif
 
     i32 result = -1;
 
@@ -350,15 +321,17 @@ catch(std::exception const& ex)
 }
 #endif
 
-#if !MODE_LOWFAT
-    Profiler::PopContext();
+    if constexpr(!compile_info::lowfat_mode)
+    {
+        Profiler::PopContext();
 
-    cBasicPrint(
-        "Execution time: {0}",
-        Chrono::duration_cast<Chrono::seconds_double>(
-            Chrono::high_resolution_clock::now() - start_time)
-            .count());
-#endif
+        cBasicPrint(
+            "Execution time: {0}",
+            Chrono::duration_cast<Chrono::seconds_double>(
+                Chrono::high_resolution_clock::now() - start_time)
+                .count());
+    }
+
     return result;
 } // namespace Coffee
 
@@ -369,10 +342,10 @@ void CoffeeTerminate()
 
     cVerbose(5, "Terminating");
 
-#if !MODE_LOWFAT
+    if constexpr(compile_info::lowfat_mode)
+        return;
 
-#if MODE_DEBUG
-#if defined(COFFEE_LINUX)
+#if MODE_DEBUG && defined(COFFEE_LINUX)
     /* Do runtime leak checks for POSIX resources,
      *  useful when debugging resource APIs */
 
@@ -408,11 +381,9 @@ void CoffeeTerminate()
             str::print::pointerify(C_CAST<u32>(e.access)));
     }
 #endif
-#endif
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     Profiling::ExitRoutine();
-#endif
 #endif
 }
 
@@ -555,9 +526,9 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
 #endif
         else if(sw == "json")
         {
-#if !MODE_LOWFAT
-            DebugFun::SetLogInterface(SetupJsonLogger("application.json"_tmp));
-#endif
+            if constexpr(!compile_info::lowfat_mode)
+                DebugFun::SetLogInterface(
+                    SetupJsonLogger("application.json"_tmp));
         }
     }
 

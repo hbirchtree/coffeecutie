@@ -156,6 +156,18 @@ void GLEAM_BindableBuffer::bindrange(
     {
         VerifyBuffer(m_handle);
 
+        if(m_size < (off + size))
+        {
+            ec = APIE::BufferMappingOutOfBounds;
+            return;
+        }
+
+        if(!size)
+        {
+            ec = APIE::NoData;
+            return;
+        }
+
         CGL33::BufBindRange(
             m_type, idx, m_handle, C_FCAST<ptroff>(off), C_FCAST<ptroff>(size));
     } else
@@ -169,6 +181,17 @@ void GLEAM_PixelBuffer::setState(bool pack)
 {
     m_type = (pack) ? buf::pixel_pack::value : buf::pixel_unpack::value;
 }
+
+void GLEAM_IndirectBuffer::bind()
+{
+    CGL33::BufBind(m_type, m_handle);
+}
+
+void GLEAM_IndirectBuffer::unbind()
+{
+    CGL33::BufBind(m_type, glhnd());
+}
+
 } // namespace GLEAM
 } // namespace RHI
 } // namespace Coffee

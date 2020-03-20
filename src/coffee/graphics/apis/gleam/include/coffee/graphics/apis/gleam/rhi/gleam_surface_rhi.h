@@ -124,7 +124,8 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
         BytesConst const& data,
         gleam_error&      ec,
         Point3 const&     offset = {0, 0, 0},
-        u32               mip    = 0);
+        u32               mip    = 0,
+        u32               stride = 0);
 };
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
@@ -166,7 +167,8 @@ struct GLEAM_SurfaceCubeArray : GLEAM_Surface3D_Base
         Size const&                size,
         BytesConst const&          data,
         Point3 const&              offset,
-        gleam_error&               ec);
+        gleam_error&               ec,
+        u32                        mipmap = 0);
 };
 
 struct GLEAM_SamplerHandle
@@ -217,6 +219,7 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     GLEAM_API_CLASS_LINKAGE void setEdgePolicy(u8 dim, WrapPolicy p);
     GLEAM_API_CLASS_LINKAGE void setFiltering(
         Filtering mag, Filtering min, Filtering mip = Filtering::None);
+    GLEAM_API_CLASS_LINKAGE void setAnisotropic(f32 samples);
 
     GLEAM_API_CLASS_LINKAGE void enableShadowSampler();
 
