@@ -8,18 +8,19 @@ Some features are special cases and quite ugly. Beware.
 
 | Platform         | Compiler name       | Compiler version |Workarounds       |
 |:-----------------|--------------------:|:-----------------|:-----------------|
-|Android           | Clang (GCC libs)    | 3.8.0+ (4.9.x)   |7                 |
-|Apple iOS         | Apple/Clang         | 3.4.0+           |2*                |
-|Apple OS X        | Apple/Clang         | 3.4.0+           |1*, 7             |
-|Emscripten        | Clang/emcc          | 1.37.0+          |2.1, 7, 8         |
+|Android           | Clang (GCC libs)    | NDK 15c          |7                 |
+|Apple iOS         | Apple/Clang         | Xcode 10/11      |                  |
+|Apple OS X        | Apple/Clang         | Xcode 10/11      |7                 |
+|Emscripten        | Clang/emcc          | Latest           |2.1, 7, 8         |
 |Maemo 5           | GCC                 | 6.0.1            |3, 5, 6, 7, 8     |
-|Raspberry Pi      | GCC                 | 4.9.3            |10                |
+|Raspberry Pi      | GCC                 | 9.2.1            |                  |
 |SteamOS           | GCC                 | 4.8.1            |10                |
-|Ubuntu            | GCC                 | 5.4.0+           |                  |
-|Ubuntu (alt.)     | Clang               | 3.8.0+           |                  |
-|Windows (Win32)   | MSVC++              | 14.0+            |4                 |
-|Windows (UWP)     | MSVC++              | 14.0+            |4                 |
-|Nintendo Gekko    | GCC                 | 6.3.0            |9                 |
+|Fedora            | GCC                 | 9.2.1            |                  |
+|Ubuntu            | GCC                 | 7.4.0            |                  |
+|Ubuntu (alt.)     | Clang               | 8.0.0            |                  |
+|Windows (Win32)   | MSVC++              | MSVC 19          |4                 |
+|Windows (UWP)     | MSVC++              | MSVC 19          |4                 |
+|Nintendo Gekko    | GCC                 | 8.3.0            |9                 |
 |                  |                     |                  |                  |
 
 \* Only necessary with Xcode versions before 8
@@ -28,8 +29,6 @@ Some features are special cases and quite ugly. Beware.
 
 | #    | Notes                                                                 |
 |:-----|:----------------------------------------------------------------------|
-| 1    | Replaces `thread_local` with `__thread`, only supports POD types      |
-| 2    | Removes usage of `thread_local`, `__thread` not supported             |
 | 2.1  | Removes uses of `thread_local` from code, no fallback                 |
 | 3    | `std::future` is not implemented, replaced by single-thread solution. |
 | 4    | OpenSSL support disabled, plain sockets only                          |
@@ -45,14 +44,14 @@ Some features are special cases and quite ugly. Beware.
 
 | Platform         | CMake version   | Notes                                   |
 |:-----------------|----------------:|:----------------------------------------|
-|Android           |3.10.2           |Runs on Ubuntu Xenial                    | 
+|Android           |3.16.2           |Runs on Ubuntu Bionic                    | 
 |Apple iOS/OSX     |Recent version   |Pulled from Brew                         | 
-|Emscripten        |3.5.1            |Runs on Ubuntu Xenial                    | 
-|Fedora            |3.11.0           |Runs on Fedora 28                        | 
+|Emscripten        |3.16.2           |Runs on Ubuntu Xenial                    | 
+|Fedora            |3.16.2           |Runs on Fedora 28                        | 
 |Maemo 5           |3.1.0            |Latest compatible version for Maemo      | 
-|Raspberry Pi      |3.5.1            |Runs on Ubuntu Xenial, limited toolchain | 
+|Raspberry Pi      |3.16.2           |Runs on Ubuntu Bionic                    | 
 |SteamOS           |3.2.2            |Runs on Ubuntu Trusty                    | 
-|Ubuntu            |3.5.1            |Runs on Ubuntu Xenial                    | 
+|Ubuntu            |3.16.2           |Runs on Ubuntu Bionic                    | 
 |Windows (all)     |Recent version   |Pulled from Chocolatey                   | 
 |                  |                 |                                         |
 
