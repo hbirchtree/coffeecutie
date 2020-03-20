@@ -90,6 +90,16 @@ void TraceModel::parseAccountingInfo()
         return;
     }
 
+    qint64 firstTimestamp = std::numeric_limits<qint64>::max();
+
+    emit parseUpdate("Finding first timestamp...");
+    for(auto event : eventIt->toArray())
+    {
+        auto ev = event.toObject().toVariantMap();
+        firstTimestamp =
+            std::min<qint64>(ev["ts"].toString().toLongLong(), firstTimestamp);
+    }
+
     emit parseUpdate("Finding processes...");
     for(auto event : eventIt->toArray())
     {
@@ -106,7 +116,10 @@ void TraceModel::parseAccountingInfo()
         m_processes.emplace(
             pid,
             std::make_unique<ProcessModel>(
-                m_trace, pid, ev["args"].toMap()["name"].toString()));
+                m_trace,
+                pid,
+                ev["args"].toMap()["name"].toString(),
+                firstTimestamp));
     }
 
     for(auto const& process : m_processes)
@@ -124,12 +137,11 @@ ProcessModel::ProcessModel(
     const QJsonObject& trace,
     quint64            pid,
     QString const&     name,
+    qint64             baseTimestamp,
     QObject*           parent) :
     QAbstractListModel(parent),
     m_processId(pid), m_name(name), m_trace(trace)
 {
-    qDebug() << "ProcessModel";
-
     auto events = m_trace.find("traceEvents");
 
     if(events == m_trace.end())
@@ -142,7 +154,11 @@ ProcessModel::ProcessModel(
         if(ev["ph"] != "M" && ev["name"] != "thread_name")
             continue;
 
-        auto tid = ev["tid"].toString().toULongLong();
+        bool tid_valid = false;
+        auto tid       = ev["tid"].toString().toULongLong(&tid_valid);
+
+        if(!tid_valid)
+            continue;
 
         if(m_threads.find(tid) != m_threads.end())
             continue;
@@ -154,7 +170,8 @@ ProcessModel::ProcessModel(
                 events->toArray(),
                 ev["pid"].toLongLong(),
                 tid,
-                ev["args"].toMap()["name"].toString()));
+                ev["args"].toMap()["name"].toString(),
+                baseTimestamp));
     }
 
     for(auto const& thread : m_threads)
@@ -175,8 +192,8 @@ QVariant ProcessModel::data(const QModelIndex& index, int role) const
     case FieldModel:
         return QVariant::fromValue(m_threadList.at(index.row()).get());
     case FieldMaxStackDepth:
-        return 2;
-        //        return m_threadList.at(index.row())->m_maxStack;
+        //        return 2;
+        return m_threadList.at(index.row())->m_maxStack;
     default:
         return {};
     }
@@ -195,21 +212,21 @@ ThreadModel::ThreadModel(
     quint64            pid,
     quint64            tid,
     const QString&     name,
+    qint64             baseTimestamp,
     QObject*           parent) :
     QAbstractListModel(parent),
-    m_processId(pid), m_threadId(tid), m_name(name), m_trace(trace),
-    m_events(events)
+    m_processId(pid), m_threadId(tid), m_name(name), m_maxStack(0),
+    m_trace(trace), m_events(events)
 {
-    qDebug() << "ThreadModel";
-
-    qint32  stackDepth = 0;
-    quint64 i          = 0;
+    quint64 i = 0;
 
     std::stack<size_t> stack_frames;
 
     for(auto event : m_events)
     {
         auto ev = event.toObject().toVariantMap();
+
+        i++;
 
         if(ev.contains("pid") && ev["pid"] != m_processId)
             continue;
@@ -224,30 +241,32 @@ ThreadModel::ThreadModel(
 
             auto& event      = m_eventMeta.back();
             event.index      = i;
-            event.stackDepth = stackDepth;
+            event.stackDepth = stack_frames.size();
+            event.timestamp  = ev["ts"].toLongLong() - baseTimestamp;
         }
 
         if(type == "B")
         {
             stack_frames.push(m_eventMeta.size() - 1);
-            stackDepth++;
         } else if(type == "E")
         {
             auto start_event_data =
                 m_events.at(stack_frames.top()).toObject().toVariantMap();
 
-            auto start_time = ev["ts"].toString().toULongLong();
-            auto end_time   = start_event_data["ts"].toString().toULongLong();
+            auto start_time = m_eventMeta.at(stack_frames.top()).timestamp;
+            auto end_time   = m_eventMeta.at(i).timestamp;
 
             auto& start_event    = m_eventMeta.at(stack_frames.top());
             start_event.duration = end_time - start_time;
 
             stack_frames.pop();
-            stackDepth--;
         }
 
-        m_maxStack = std::max(m_maxStack, stackDepth);
+        m_maxStack = std::max<qint32>(m_maxStack, stack_frames.size());
     }
+
+    qDebug() << "Number of events:" << m_eventMeta.size() << "/"
+             << m_events.size();
 }
 
 int ThreadModel::rowCount(const QModelIndex&) const
@@ -264,8 +283,6 @@ QVariant ThreadModel::data(const QModelIndex& index, int role) const
     {
     case FieldName:
         return event.find("name")->toVariant();
-    case FieldTimestamp:
-        return event.find("ts")->toVariant();
     case FieldCategory:
         return event.find("cat")->toVariant();
     case FieldPid:
@@ -276,8 +293,10 @@ QVariant ThreadModel::data(const QModelIndex& index, int role) const
         return event.find("ph")->toVariant();
 
     case FieldFillColor:
-        return QColor(Qt::red);
+        return QColor(Qt::blue);
 
+    case FieldTimestamp:
+        return m_eventMeta.at(index.row()).timestamp;
     case FieldDuration:
         return m_eventMeta.at(index.row()).duration;
     case FieldStackDepth:

@@ -28,12 +28,7 @@ struct Subsystem : Components::Globals::ValueSubsystem<Tag>
 
     void stop()
     {
-        get().worker->context->service.stop();
-
-        runtime_queue_error ec;
-        RuntimeQueue::TerminateThread(get().worker->worker_queue, ec);
-
-        C_ERROR_CHECK(ec);
+        get().worker->stop();
     }
 };
 

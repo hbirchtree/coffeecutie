@@ -3,5 +3,6 @@
         <file>main.qml</file>
         <file>Scope.qml</file>
         <file>TimelineBar.qml</file>
+        <file>ThreadView.qml</file>
     </qresource>
 </RCC>

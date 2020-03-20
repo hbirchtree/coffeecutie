@@ -30,7 +30,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        processes.source = "/tmp/Blam Graphics/profile.json"
+        processes.source = "/tmp/GLeam Basic RHI/profile.json"
     }
 
     TraceModel {
@@ -41,9 +41,8 @@ ApplicationWindow {
 
             console.log("Parsed!")
         }
-        onParseError: {
-            console.log(error);
-        }
+        onParseError: console.log(error)
+        onParseUpdate: console.log(message)
 
         onStartingParse: {
             busy.enabled = true
@@ -57,120 +56,102 @@ ApplicationWindow {
     property int headerHeight: 40
     property int threadWidth: 100
     property real timelineScale: 2.0
+    property int spacing: 8
 
-//    Rectangle {
-//        id: busy
-//        anchors.fill: parent
-//        color: "#000000f0"
-//        BusyIndicator {
-//            anchors.centerIn: parent
-//        }
-//    }
+    property color threadColor: Qt.lighter(root.color, 1.2)
 
-
-    ScrollView {
+    Rectangle {
+        id: busy
         anchors.fill: parent
-        clip: true
-
+        color: "#000000"
+        opacity: 0.8
+        ProgressBar {
+            id: busyIndicator
+            indeterminate: true
+            anchors.centerIn: parent
+        }
         Label {
-            text: "hello"
-            font.pixelSize: 300
-            anchors.bottom: parent.bottom
+            id: busyText
+            text: qsTr("Loading...")
+            anchors.top: busyIndicator.bottom
+            anchors.horizontalCenter: busy.horizontalCenter
+
+            Connections {
+                target: processes
+                onParseUpdate: busyText.text = message
+            }
+        }
+    }
+
+    Flickable {
+        id: timeView
+        anchors.fill: parent
+        contentWidth: 0
+        contentHeight: headerHeight * 2
+        boundsBehavior: Flickable.StopAtBounds
+
+        ScrollBar.horizontal: ScrollBar {
+            policy: ScrollBar.AlwaysOn
+        }
+        ScrollBar.vertical: ScrollBar {
+
         }
 
-//        Column {
-//            clip: true
-//            id: threadsBar
-//            width: threadWidth
-//            spacing: 8
+        TimelineBar {
+            id: timeline
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.leftMargin: threadWidth
 
-//            Item {
-//                height: headerHeight
-//                width: parent.width
-//            }
+            minSpacing: root.spacing
+            contentWidth: width
+            timeScale: timelineScale
+            backgroundColor: Qt.darker(root.color, 1.5)
 
-//            Repeater {
-//                model: processes
+            width: eventColumn.width
+            height: headerHeight
+        }
 
-//                Repeater {
-//                    model: threads
+        Column {
+            id: eventColumn
+            clip: true
+            anchors.left: parent.left
+            anchors.top: timeline.bottom
+            spacing: root.spacing
+            z: -1
 
-//                    Rectangle {
-//                        color: Qt.lighter(root.color, 1.5)
-//                        width: threadWidth
-//                        height: rowHeight + (maxDepth - 1) * 20
+            Repeater {
+                model: processes
+                Repeater {
+                    model: threads
+                    ThreadView {
+                        Component.onCompleted: {
+                            console.log(computedWidth, computedHeight)
+                            timeView.contentHeight = timeView.contentHeight +
+                                    computedHeight +
+                                    root.spacing
+                            timeView.contentWidth = timeView.contentWidth +
+                                    computedWidth
+                        }
 
-//                        Component.onCompleted: console.log(name)
+                        width: computedWidth
+                        height: computedHeight
 
-//                        Label {
-//                            text: name
-//                        }
+                        spacing: root.spacing
+                        rowHeight: root.rowHeight
+                        threadWidth: root.threadWidth
+                        timelineScale: root.timelineScale
+                        fillColor: "purple"
+                        threadColor: root.threadColor
 
-//                        Label {
-//                            text: "Async"
-//                            anchors.bottom: parent.bottom
-//                        }
-//                    }
-//                }
-//            }
-//        }
+                        container: timeView
 
-////        Rectangle {
-////            anchors.left: threadsBar.right
-////            anchors.top: timeline.bottom
-////            anchors.leftMargin: 8
-////            anchors.topMargin: 8
-////            height: 20
-////            width: 2000
-////            color: "red"
-////        }
-
-//        TimelineBar {
-//            id: timeline
-//            anchors.left: threadsBar.right
-//            anchors.top: parent.top
-//            anchors.leftMargin: 8
-
-//            minSpacing: 8
-//            contentWidth: 2000
-//            timeScale: timelineScale
-//            backgroundColor: Qt.darker(root.color, 1.5)
-
-//            width: 2000
-//            height: headerHeight
-//        }
-
-//        Column {
-//            clip: false
-//            anchors.left: threadsBar.right
-//            anchors.top: timeline.bottom
-//            anchors.leftMargin: 8
-//            anchors.topMargin: 8
-//            spacing: 8
-
-//            Repeater {
-//                model: processes
-//                Repeater {
-//                    model: threads
-//                    Rectangle {
-//                        height: rowHeight + (maxDepth - 1) * 20
-//                        width: 2000
-//                        color: "purple"
-
-//                        Repeater {
-//                            model: events
-//                            Scope {
-//                                color: Qt.darker(fillColor, focus ? 50 : 1)
-//                                x: ts * 100 * timelineScale
-//                                y: stackDepth * height
-//                                width: 10 * 100 * timelineScale
-//                                height: 20
-//                                text: name
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
+                        name: name
+                        maxStackDepth: maxDepth
+                        threadEvents: events
+                    }
+                }
+            }
+        }
     }
 }

@@ -9,7 +9,7 @@ void ASIO_Worker::stop()
 {
     DProfContext _("ASIO_Worker::stop");
 
-    State::SwapState(context_name, {});
+    auto self = State::SwapState(context_name, {});
 
     runtime_queue_error ec;
 
@@ -19,7 +19,7 @@ void ASIO_Worker::stop()
         context->service.stop();
 
         RuntimeQueue::AwaitTask(worker_queue->threadId(), runner_task, ec);
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK(ec)
 
         context.reset();
     }

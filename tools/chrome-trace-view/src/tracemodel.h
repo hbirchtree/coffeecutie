@@ -31,12 +31,12 @@ class ThreadModel : public QAbstractListModel
     std::vector<TraceMeta> m_eventMeta;
 
   public:
-    explicit ThreadModel(
-        QJsonObject const& trace,
+    explicit ThreadModel(QJsonObject const& trace,
         QJsonArray const&  events,
         quint64            pid,
         quint64            tid,
         QString const&     name,
+        qint64 baseTimestamp,
         QObject*           parent = nullptr);
 
     enum EventType
@@ -86,10 +86,10 @@ class ProcessModel : public QAbstractListModel
     std::vector<std::shared_ptr<ThreadModel>>       m_threadList;
 
   public:
-    ProcessModel(
-        QJsonObject const& trace,
+    ProcessModel(QJsonObject const& trace,
         quint64            pid,
         QString const&     name,
+        qint64 baseTimestamp,
         QObject*           parent = nullptr);
 
     int                    rowCount(QModelIndex const& parent) const;
@@ -148,6 +148,7 @@ class TraceModel : public QAbstractListModel
 struct TraceMeta
 {
     quint64 index;
-    quint64 duration;
-    qint32  stackDepth;
+    qint64 duration;
+    qint64 timestamp;
+    qint32 stackDepth;
 };
