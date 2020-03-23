@@ -3,7 +3,6 @@ import QtQuick.Controls 2.12
 
 Item {
     id: root
-    clip: true
 
     property int spacing: 8
     property int rowHeight: 20
@@ -17,7 +16,7 @@ Item {
     property Flickable container
 
     // Thread properties
-    property string name
+    property string threadName
     property int maxStackDepth: 1
     property QtObject threadEvents
 
@@ -25,6 +24,18 @@ Item {
     property real eventsComputedWidth: 0
     property real computedWidth: eventsComputedWidth + threadWidth + spacing
     property real computedHeight: Math.max(maxStackDepth * rowHeight, rowHeight)
+
+    property var viewport
+
+    signal eventClicked(Item eventItem, var pid, var tid, int eventId)
+    signal timescaleUpdate(int computedWidth)
+
+    function updateTimescale(scale) {
+        eventsComputedWidth = eventsComputedWidth * scale;
+        computedWidth = eventsComputedWidth + threadWidth + spacing;
+
+        timescaleUpdate(computedWidth);
+    }
 
     Rectangle {
         width: threadWidth
@@ -42,11 +53,11 @@ Item {
         }
     }
 
-    Rectangle {
+    Item {
+        clip: true
         id: eventContainer
         height: computedHeight
         width: eventsComputedWidth
-        color: "purple"
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.leftMargin: threadWidth + spacing
@@ -55,16 +66,23 @@ Item {
         Repeater {
             model: threadEvents
             Scope {
-                color: Qt.darker(fillColor, focus ? 50 : 1)
-                x: ts * 100 * timelineScale
+                property bool highlighted: false
+                property color baseColor: fillColor
+
+                color: Qt.lighter(baseColor, highlighted ? 1.2 : 1)
+                x: ts * Math.pow(10, timelineScale + 2)
                 y: stackDepth * rowHeight
-                width: 10 * 100 * timelineScale
+                width: time * Math.pow(10, timelineScale + 2)
                 height: rowHeight
-                text: name
+                text: name ? name : "Unknown event"
+                container: root.container
+
+                onClicked: {
+                    root.eventClicked(this, pid, tid, eventId);
+                }
 
                 Component.onCompleted: {
                     eventsComputedWidth = Math.max(eventsComputedWidth, x + width)
-                    console.log("Event time:", ts, "+", time)
                 }
             }
         }

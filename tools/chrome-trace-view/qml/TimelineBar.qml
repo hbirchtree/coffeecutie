@@ -6,46 +6,37 @@ RowLayout {
     id: root
 
     property int minSpacing: 8
-    property int contentWidth: 100
+    property int visibleWidth: 640
+    property int visibleOffset: 0
     property int timeScale: 1.0
+    property real timePerPixel
     property color backgroundColor
 
-    property string suffix: "s"
-    property real tickInterval: 10.0
-    property real timeMultiplier: 1
+    QtObject {
+        id: p
+        property int wrapAlignment: visibleWidth % 100
+        property int adjustedVisibleWidth: visibleWidth - wrapAlignment
+
+        property int currentPage: (visibleOffset / p.adjustedVisibleWidth)
+
+        property string suffix: "s"
+    }
 
     onTimeScaleChanged: {
-        tickInterval = 20 / timeScale;
-
-        // Zoom level 2: 10 tickers == 1 second
-        // Zoom level 4: 10 tickers == 1/4 second
-        // Zoom level 8: 10 tickers == 1/8 second
-
-        if(timeScale <= 2)
-            suffix = "s";
-        else if(timeScale <= 4)
-            suffix = "ms";
-         else if(timeScale <= 8)
-            suffix = "ms";
-        else if(timeScale <= 16)
-            suffix = "ms";
-        else if(timeScale <= 32)
-            suffix = "us";
-
-        if(suffix == "s")
-            timeMultiplier = 1;
-        if(suffix == "ms")
-            timeMultiplier = 1000;
-        else if(suffix == "us")
-            timeMultiplier = 1000000;
+        return;
+        if(timeScale <= 1)
+            p.suffix = "s";
+        else if(timeScale <= 3)
+            p.suffix = "ms";
+        else if(timeScale >= 6)
+            p.suffix = "us";
     }
 
     spacing: minSpacing
 
-    Rectangle {
-        color: backgroundColor
+    Item {
         height: headerHeight
-        width: contentWidth
+        width: root.width
 
         /* Second ticks with text */
         Item {
@@ -56,10 +47,13 @@ RowLayout {
             height: (root.height / 3) * 2
 
             Repeater {
-                model: contentWidth / (timeScale * tickInterval)
+                model: root.width * 2 / 100
                 Label {
-                    x: index * tickInterval * timeScale * 10 - width / 2
-                    text: index * timeMultiplier / (timeScale / 2) + suffix
+                    x: index * 100 -
+                            width / 2 -
+                            visibleOffset % p.adjustedVisibleWidth
+                    text: (index * 100 * timePerPixel + p.adjustedVisibleWidth * p.currentPage * timePerPixel) + p.suffix
+                    clip: true
                 }
             }
         }
@@ -70,12 +64,13 @@ RowLayout {
             anchors.leftMargin: minSpacing
             height: root.height / 3
             Repeater {
-                model: contentWidth / (timeScale * tickInterval)
+                model: root.width * 2 / 10
                 Rectangle {
-                    x: index * tickInterval * timeScale
+                    x: index * 10 -
+                            visibleOffset % p.adjustedVisibleWidth
                     width: 2
-                    height: parent.height
-                    color: (index % tickInterval == 0) ? "white" : "#555"
+                    height: (index % 10 == 0) ? parent.height * 1.2 : parent.height
+                    color: (index % 10 == 0) ? "white" : "#555"
                 }
             }
         }

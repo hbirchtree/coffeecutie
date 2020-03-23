@@ -4,5 +4,6 @@
         <file>Scope.qml</file>
         <file>TimelineBar.qml</file>
         <file>ThreadView.qml</file>
+        <file>InspectorDrawer.qml</file>
     </qresource>
 </RCC>
