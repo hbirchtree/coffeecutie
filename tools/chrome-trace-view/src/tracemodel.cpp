@@ -2,6 +2,7 @@
 
 #include <QColor>
 #include <QFile>
+#include <QFileDialog>
 #include <QJsonDocument>
 #include <array>
 #include <future>
@@ -23,16 +24,34 @@ TraceModel::TraceModel(QObject* parent) : QAbstractListModel(parent)
 
         emit beginInsertRows({}, 0, m_processes.size());
 
-        m_parseTask = std::async(std::launch::async, [this]() {
+        auto parseWorker = [this]() {
             try
             {
-                parseAccountingInfo();
+                if(!m_traceFile->open(QFile::ReadOnly))
+                {
+                    emit parseError("File '" + m_source + "' not found");
+                    return;
+                }
+
+                auto size = static_cast<quint32>(m_traceFile->size());
+                auto ptr  = m_traceFile->map(0, size);
+
+                QByteArray source;
+                source.setRawData(reinterpret_cast<const char*>(ptr), size);
+
+                parseAccountingInfo(source);
                 m_parsing = false;
             } catch(std::exception const& e)
             {
                 qWarning() << "Worker died with exception:" << e.what();
             }
-        });
+        };
+
+#if defined(__EMCSRIPTEN__)
+        parseWorker();
+#else
+        m_parseTask = std::async(std::launch::async, parseWorker);
+#endif
     });
 
     connect(this, &TraceModel::viewStartChanged, this, [this](double) {
@@ -66,6 +85,21 @@ QObject* TraceModel::eventFromId(quint64 pid, quint64 tid, quint64 id)
     {
         return nullptr;
     }
+}
+
+void TraceModel::openFile()
+{
+#if defined(__EMSCRIPTEN__)
+    QFileDialog::getOpenFileContent(
+        "Chrome Trace Files (*.json)",
+        [this](QString const& filename, QByteArray const& data) {
+            qDebug() << "Opening profile" << filename;
+
+            emit beginInsertRows({}, 0, m_processes.size());
+
+            parseAccountingInfo(data);
+        });
+#endif
 }
 
 double TraceModel::timestampBase() const
@@ -105,23 +139,12 @@ QHash<int, QByteArray> TraceModel::roleNames() const
     return {{FieldName, "name"}, {FieldModel, "threads"}};
 }
 
-void TraceModel::parseAccountingInfo()
+void TraceModel::parseAccountingInfo(QByteArray const& profile)
 {
     emit startingParse();
 
-    if(!m_traceFile->open(QFile::ReadOnly))
-    {
-        emit parseError("File '" + m_source + "' not found");
-        return;
-    }
-
-    auto size = static_cast<quint32>(m_traceFile->size());
-    auto ptr  = m_traceFile->map(0, size);
-
-    QByteArray      source;
     QJsonParseError error;
-    source.setRawData(reinterpret_cast<const char*>(ptr), size);
-    auto trace = QJsonDocument::fromJson(source, &error);
+    auto            trace = QJsonDocument::fromJson(profile, &error);
 
     if(!trace.isObject())
     {

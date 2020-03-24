@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Core Quick QuickControls2 REQUIRED)
+find_package(Qt5 COMPONENTS Core Quick QuickControls2 Widgets REQUIRED)
 
 find_package(Threads REQUIRED)
 
@@ -23,5 +23,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     )
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Core Qt5::Quick Qt5::QuickControls2
+    Qt5::Widgets
     Threads::Threads
     )

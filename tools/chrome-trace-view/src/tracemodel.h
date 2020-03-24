@@ -221,6 +221,8 @@ class TraceModel : public QAbstractListModel
 
     Q_INVOKABLE QObject* eventFromId(quint64 pid, quint64 tid, quint64 id);
 
+    Q_INVOKABLE void openFile();
+
     double timestampBase() const;
     double totalDuration() const
     {
@@ -231,7 +233,7 @@ class TraceModel : public QAbstractListModel
     QVariant               data(QModelIndex const& index, int role) const;
     QHash<int, QByteArray> roleNames() const;
 
-    void parseAccountingInfo();
+    void parseAccountingInfo(QByteArray const& profile);
 
     enum ProcessField
     {

@@ -1,8 +1,10 @@
 TEMPLATE = app
 
-QT += quick quickcontrols2
+QT += quick quickcontrols2 widgets
 
-QMAKE_CXXFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'"
+CONFIG += c++17
+QMAKE_CXXFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -mnontrapping-fptoint
+QMAKE_LFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -mnontrapping-fptoint
 
 DEFINES += QT_DEPRECATED_WARNINGS
 

@@ -88,6 +88,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        processes.openFile();
 //        processes.source = "/tmp/Blam Graphics/profile.json"
     }
 
