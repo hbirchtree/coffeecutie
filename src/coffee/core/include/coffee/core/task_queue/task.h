@@ -330,6 +330,8 @@ class RuntimeQueue
 
     static void AwaitTask(ThreadId const& targetThread, u64 taskId, rqe& ec);
 
+    static bool IsRunning(RuntimeQueue* thread, rqe& ec);
+
     static void TerminateThread(RuntimeQueue* thread, rqe& ec);
     static void TerminateThreads(rqe& ec);
 

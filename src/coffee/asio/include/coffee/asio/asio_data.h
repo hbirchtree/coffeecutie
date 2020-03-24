@@ -16,47 +16,43 @@ namespace Coffee {
  */
 namespace ASIO {
 
-struct ASIO_Client
+struct Service
 {
-    struct AsioContext_data
-    {
-        AsioContext_data() :
-            service(), resolver(service), resolver_udp(service)
+    Service() :
+        service(), resolver(service), resolver_udp(service)
 #if defined(ASIO_USE_SSL)
-            ,
-            sslctxt(asio::ssl::context::sslv23)
+        ,
+        sslctxt(asio::ssl::context::sslv23)
 #endif
-        {
+    {
 #if defined(ASIO_USE_SSL) && !defined(COFFEE_ANDROID)
-            asio::error_code ec;
-            sslctxt.set_default_verify_paths(ec);
-            if(ec != asio::error_code())
-            {
-                throw undefined_behavior(
-                    "Setting verification paths failed: " + ec.message());
-            }
-            sslctxt.set_verify_mode(asio::ssl::verify_peer);
-#endif
+        asio::error_code ec;
+        sslctxt.set_default_verify_paths(ec);
+        if(ec != asio::error_code())
+        {
+            throw undefined_behavior(
+                "Setting verification paths failed: " + ec.message());
         }
-
-        asio::io_service        service;
-        asio::ip::tcp::resolver resolver;
-        asio::ip::udp::resolver resolver_udp;
-#if defined(ASIO_USE_SSL)
-        asio::ssl::context sslctxt;
+        sslctxt.set_verify_mode(asio::ssl::verify_peer);
 #endif
-    };
-
-    using AsioContext_internal = ShPtr<AsioContext_data>;
-
-    STATICINLINE AsioContext_internal InitService()
-    {
-        return AsioContext_internal(new AsioContext_data());
     }
+
+    ~Service()
+    {
+    }
+
+    asio::io_service        service;
+    asio::ip::tcp::resolver resolver;
+    asio::ip::udp::resolver resolver_udp;
+#if defined(ASIO_USE_SSL)
+    asio::ssl::context sslctxt;
+#endif
 };
 
-using service      = ASIO_Client;
-using asio_context = ASIO_Client::AsioContext_internal;
+STATICINLINE ShPtr<ASIO::Service> InitService()
+{
+    return MkShared<ASIO::Service>();
+}
 
 } // namespace ASIO
 } // namespace Coffee
