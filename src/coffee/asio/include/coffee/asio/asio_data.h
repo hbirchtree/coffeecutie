@@ -11,9 +11,6 @@
 #include <peripherals/stl/types.h>
 
 namespace Coffee {
-/*!
- * \brief ASIO bindings with simplified structures
- */
 namespace ASIO {
 
 struct Service
@@ -49,9 +46,13 @@ struct Service
 #endif
 };
 
+extern ShPtr<ASIO::Service> global_service;
+
 STATICINLINE ShPtr<ASIO::Service> InitService()
 {
-    return MkShared<ASIO::Service>();
+    if(!global_service)
+        global_service = MkShared<ASIO::Service>();
+    return global_service;
 }
 
 } // namespace ASIO

@@ -53,7 +53,7 @@
 #if defined(__APPLE__)
 
 #undef C_SYSTEM_STRING
-#define C_SYSTEM_STRING "Mac OS X"
+#define C_SYSTEM_STRING "macOS"
 #define COFFEE_APPLE
 
 #if defined(TARGET_OS_MAC)

@@ -8,7 +8,7 @@ namespace ASIO {
 namespace detail {
 struct WorkerData
 {
-    ShPtr<ASIO_Worker> worker;
+    ShPtr<Worker> worker;
 };
 } // namespace detail
 

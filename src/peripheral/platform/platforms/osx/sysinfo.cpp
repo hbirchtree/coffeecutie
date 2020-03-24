@@ -38,6 +38,16 @@ static uint64 _GetSysctlInt(const cstring mod_string)
     return temp;
 }
 
+CString get_kern_name()
+{
+    return _GetSysctlString("kern.ostype");
+}
+
+CString get_kern_ver()
+{
+    return _GetSysctlString("kern.osrelease");
+}
+
 CString SysInfo::GetSystemVersion()
 {
     FILE* out = popen("sw_vers -productVersion", "r");
@@ -64,9 +74,7 @@ info::HardwareDevice SysInfo::DeviceName()
 
     CString target = _GetSysctlString(mod_string);
     CString kern   = _GetSysctlString(typ_string);
-    ;
-    CString osrel = _GetSysctlString(rel_string);
-    ;
+    CString osrel  = _GetSysctlString(rel_string);
 
     return info::HardwareDevice("Apple", target, kern + " " + osrel);
 }
@@ -148,6 +156,6 @@ bool SysInfo::HasHyperThreading()
     return thr_count != CoreCount();
 }
 
-} // namespace Mac
-} // namespace Environment
-} // namespace Coffee
+} // namespace mac
+} // namespace env
+} // namespace platform

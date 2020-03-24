@@ -125,7 +125,7 @@ void Resource::close()
         normal.release();
     }
 
-//    C_ERROR_CHECK(ec)
+    //C_ERROR_CHECK(ec)
 }
 
 Resource::Resource(ShPtr<ASIO::Service> ctxt, const Url& url) :
@@ -303,6 +303,11 @@ void Resource::readResponsePayload(net_buffer& buffer)
         m_response.payload.insert(
             m_response.payload.begin(), buffer.begin(), buffer.end());
         m_response.payload.resize(content_len);
+
+        /* If we're lucky, we already got all the data */
+        if(content_len == buffer.size())
+            return;
+
         auto view = *Bytes::CreateFrom(m_response.payload).at(buffer.size());
 
         szptr read;

@@ -38,7 +38,8 @@ struct ssl_socket
     using lowest_layer = socket_types::ssl::lowest_layer_type;
 
     ssl_socket(net::context& service) :
-        m_resolver(service.resolver), m_socket(service.service, service.sslctxt)
+        m_resolver(service.resolver),
+        m_socket(service.service, service.sslctxt)
     {
     }
 
@@ -102,8 +103,6 @@ struct ssl_socket
     {
         asio::error_code ec;
         m_socket.shutdown(ec);
-        VALIDATE();
-        m_socket.lowest_layer().shutdown(lowest_layer::shutdown_both, ec);
         VALIDATE();
         m_socket.lowest_layer().close(ec);
         return ec;

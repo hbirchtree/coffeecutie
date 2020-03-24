@@ -173,6 +173,8 @@ CString system::runtime_kernel()
 {
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     return env::Linux::get_kern_name();
+#elif defined(COFFEE_APPLE)
+    return env::mac::get_kern_name();
 #else
     return C_SYSTEM_STRING;
 #endif
@@ -191,6 +193,8 @@ CString system::runtime_kernel_version()
 {
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     return env::Linux::get_kern_ver();
+#elif defined(COFFEE_APPLE)
+    return env::mac::get_kern_ver();
 #else
     return {};
 #endif
@@ -200,6 +204,10 @@ CString system::runtime_distro()
 {
 #if defined(COFFEE_LINUX)
     return env::Linux::get_lsb_release().distribution;
+#elif defined(COFFEE_IOS)
+    return "iOS";
+#elif defined(COFFEE_APPLE)
+    return "macOS";
 #else
     return {};
 #endif
