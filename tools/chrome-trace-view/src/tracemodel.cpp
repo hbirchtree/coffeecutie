@@ -89,7 +89,6 @@ QObject* TraceModel::eventFromId(quint64 pid, quint64 tid, quint64 id)
 
 void TraceModel::openFile()
 {
-#if defined(__EMSCRIPTEN__)
     QFileDialog::getOpenFileContent(
         "Chrome Trace Files (*.json)",
         [this](QString const& filename, QByteArray const& data) {
@@ -97,9 +96,14 @@ void TraceModel::openFile()
 
             emit beginInsertRows({}, 0, m_processes.size());
 
+#if defined(__EMSCRIPTEN__)
             parseAccountingInfo(data);
-        });
+#else
+            m_parseTask = std::async(std::launch::async, [this, data]() {
+                parseAccountingInfo(data);
+            });
 #endif
+        });
 }
 
 double TraceModel::timestampBase() const

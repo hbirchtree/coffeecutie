@@ -22,6 +22,8 @@ struct ASIO_Worker : State::GlobalState
 
 STATICINLINE void RunWorker()
 {
+    return;
+
     auto ptr = State::PeekState(context_name);
 
     if(!ptr.get())

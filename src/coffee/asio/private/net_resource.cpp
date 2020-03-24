@@ -125,7 +125,7 @@ void Resource::close()
         normal.release();
     }
 
-    C_ERROR_CHECK(ec)
+//    C_ERROR_CHECK(ec)
 }
 
 Resource::Resource(ShPtr<ASIO::Service> ctxt, const Url& url) :

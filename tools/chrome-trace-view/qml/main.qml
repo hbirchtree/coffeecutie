@@ -31,6 +31,13 @@ ApplicationWindow {
                     timelineScale = timelineScale - 1;
                 }
             }
+
+            ToolButton {
+                text: qsTr("Open file")
+                onClicked: {
+                    processes.openFile();
+                }
+            }
         }
     }
 
@@ -88,7 +95,6 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        processes.openFile();
 //        processes.source = "/tmp/Blam Graphics/profile.json"
     }
 

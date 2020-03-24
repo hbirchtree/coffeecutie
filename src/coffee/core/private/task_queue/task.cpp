@@ -640,7 +640,7 @@ void RuntimeQueue::AwaitTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
     }
 }
 
-bool RuntimeQueue::IsRunning(RuntimeQueue *thread, RuntimeQueue::rqe &ec)
+bool RuntimeQueue::IsRunning(RuntimeQueue* thread, RuntimeQueue::rqe& ec)
 {
     if(!thread)
     {
@@ -650,7 +650,7 @@ bool RuntimeQueue::IsRunning(RuntimeQueue *thread, RuntimeQueue::rqe &ec)
 
     auto tid = thread->threadId().hash();
 
-//    UqLock _(context->globalMod, std::try_to_lock);
+    //    UqLock _(context->globalMod, std::try_to_lock);
 
     return context->queueFlags[tid]->running;
 }
@@ -778,7 +778,7 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext()
 RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
 {
     RuntimeTask::Timepoint firstTask;
-    bool taskFound = false;
+    bool                   taskFound = false;
 
     for(auto task : mTasks)
         if(task.alive)

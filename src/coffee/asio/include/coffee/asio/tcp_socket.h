@@ -50,6 +50,7 @@ struct ssl_socket
         VALIDATE();
         asio::connect(m_socket.lowest_layer(), it, ec);
         VALIDATE();
+        m_socket.set_verify_mode(asio::ssl::verify_none);
         m_socket.handshake(asio::ssl::stream_base::handshake_type::client, ec);
         return ec;
     }
@@ -60,10 +61,6 @@ struct ssl_socket
         size_t read = 0;
         do
         {
-            m_socket.lowest_layer().wait(lowest_layer::wait_read, ec);
-            if(ec)
-                return read;
-
             read += m_socket.read_some(
                 asio::buffer(data.data + read, data.size - read), ec);
             if(ec || read == data.size)
@@ -93,10 +90,6 @@ struct ssl_socket
         size_t written = 0;
         do
         {
-            m_socket.lowest_layer().wait(lowest_layer::wait_write, ec);
-            if(ec)
-                return written;
-
             written += m_socket.write_some(
                 asio::buffer(data.data + written, data.size - written), ec);
             if(ec || written == data.size)
@@ -150,10 +143,6 @@ struct raw_socket
         size_t read = 0;
         do
         {
-            m_socket.wait(socket_types::raw::wait_read, ec);
-            if(ec)
-                return read;
-
             read += m_socket.read_some(
                 asio::buffer(data.data + read, data.size - read), ec);
             if(ec || read == data.size)
@@ -183,10 +172,6 @@ struct raw_socket
         size_t written = 0;
         do
         {
-            m_socket.wait(socket_types::raw::wait_write, ec);
-            if(ec)
-                return written;
-
             written += m_socket.write_some(
                 asio::buffer(data.data + written, data.size - written), ec);
             if(ec || written == data.size)
