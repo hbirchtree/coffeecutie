@@ -21,7 +21,7 @@ struct Subsystem : Components::Globals::ValueSubsystem<Tag>
         get().worker = GenWorker();
     }
 
-    asio_context& context()
+    ShPtr<ASIO::Service> context()
     {
         return get().worker->context;
     }

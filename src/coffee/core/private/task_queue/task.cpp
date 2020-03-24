@@ -640,6 +640,21 @@ void RuntimeQueue::AwaitTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
     }
 }
 
+bool RuntimeQueue::IsRunning(RuntimeQueue *thread, RuntimeQueue::rqe &ec)
+{
+    if(!thread)
+    {
+        ec = RQE::InvalidQueue;
+        return false;
+    }
+
+    auto tid = thread->threadId().hash();
+
+//    UqLock _(context->globalMod, std::try_to_lock);
+
+    return context->queueFlags[tid]->running;
+}
+
 void RuntimeQueue::TerminateThread(RuntimeQueue* thread, rqe& ec)
 {
     if(!thread)

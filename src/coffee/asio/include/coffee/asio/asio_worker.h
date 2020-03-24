@@ -13,9 +13,9 @@ struct ASIO_Worker : State::GlobalState
 {
     virtual ~ASIO_Worker();
 
-    RuntimeQueue* worker_queue;
-    asio_context  context;
-    u64           runner_task;
+    RuntimeQueue*        worker_queue;
+    ShPtr<ASIO::Service> context;
+    u64                  runner_task;
 
     void stop();
 };
@@ -30,7 +30,18 @@ STATICINLINE void RunWorker()
     ASIO_Worker* worker = C_DCAST<ASIO_Worker>(ptr.get());
 
     auto work = asio::make_work_guard(worker->context->service);
-    worker->context->service.run();
+
+    runtime_queue_error ec;
+
+    while(RuntimeQueue::IsRunning(worker->worker_queue, ec))
+    {
+        C_ERROR_CHECK(ec)
+
+        asio::error_code asio_ec;
+        worker->context->service.run_for(Chrono::milliseconds(5));
+
+        C_ERROR_CHECK(asio_ec)
+    }
 }
 
 STATICINLINE ShPtr<ASIO_Worker> GenWorker()
@@ -38,14 +49,14 @@ STATICINLINE ShPtr<ASIO_Worker> GenWorker()
     if(State::PeekState(context_name).get())
         return {};
 
+    auto worker     = MkShared<ASIO_Worker>();
+    worker->context = ASIO::InitService();
+
     runtime_queue_error ec;
     auto queue = RuntimeQueue::CreateNewThreadQueue("::asio net", ec);
-
     C_ERROR_CHECK(ec);
 
-    auto worker          = MkShared<ASIO_Worker>();
     worker->worker_queue = queue;
-    worker->context      = service::InitService();
 
     State::SwapState(context_name, worker);
 
@@ -59,7 +70,7 @@ STATICINLINE ShPtr<ASIO_Worker> GenWorker()
     return worker;
 }
 
-STATICINLINE asio_context GetContext()
+STATICINLINE ShPtr<ASIO::Service> GetContext()
 {
     auto ptr = State::PeekState(context_name);
     if(!ptr)

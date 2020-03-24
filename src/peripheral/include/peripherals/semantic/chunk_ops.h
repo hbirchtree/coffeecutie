@@ -10,7 +10,7 @@ template<
     typename T1,
     typename T2,
     typename std::enable_if<
-        !is_specialized<T2, semantic::mem_chunk>::value>::type* = nullptr>
+        !is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE void MemCpy(T1 const& src, T2& target)
 {
     std::copy(src.begin(), src.end(), std::back_insert_iterator<T2>(target));
@@ -20,7 +20,7 @@ template<
     typename T1,
     typename T2,
     typename std::enable_if<
-        is_specialized<T2, semantic::mem_chunk>::value>::type* = nullptr>
+        is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE void MemCpy(T1 const& src, T2& target)
 {
     std::copy(
@@ -33,7 +33,7 @@ template<
     typename T1,
     typename T2,
     typename std::enable_if<
-        is_specialized<T2, semantic::mem_chunk>::value>::type* = nullptr>
+        is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE void MemCpy(T1 const& src, T2&& target)
 {
     MemCpy(src, target);
@@ -43,7 +43,7 @@ template<
     typename T1,
     typename T2,
     typename std::enable_if<
-        is_specialized<T2, semantic::mem_chunk>::value>::type* = nullptr>
+        is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE bool MemCmp(T1 const& a1, T2 const& a2)
 {
     /* TODO: Replace with std::equal() for C++14 and up */

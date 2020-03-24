@@ -13,22 +13,26 @@ void ASIO_Worker::stop()
 
     runtime_queue_error ec;
 
-    if(context)
-    {
-        DProfContext _("ASIO_Worker::Awaiting task");
-        context->service.stop();
-
-        RuntimeQueue::AwaitTask(worker_queue->threadId(), runner_task, ec);
-        C_ERROR_CHECK(ec)
-
-        context.reset();
-    }
-
     if(worker_queue)
     {
         DProfContext _("ASIO_Worker::Terminating thread");
         RuntimeQueue::TerminateThread(worker_queue, ec);
         worker_queue = nullptr;
+    }
+
+    if(context)
+    {
+        DProfContext _("ASIO_Worker::Awaiting task");
+        context->resolver.cancel();
+        context->resolver_udp.cancel();
+
+        context->service.stop();
+        context->service.restart();
+
+//        RuntimeQueue::AwaitTask(worker_queue->threadId(), runner_task, ec);
+//        C_ERROR_CHECK(ec)
+
+        context.reset();
     }
 }
 

@@ -59,7 +59,7 @@ bool LoadFromMemory(BytesConst const& src, image_rw* target, int req_comp)
         &target->bpp,
         req_comp);
 
-    return true;
+    return target->data;
 }
 
 template<>
@@ -73,7 +73,7 @@ bool LoadFromMemory(BytesConst const& src, image_float* target, int req_comp)
         &target->bpp,
         req_comp);
 
-    return true;
+    return target->data;
 }
 
 /*!
@@ -202,7 +202,8 @@ bool LoadData(
 
     if(!stb_templates::LoadFromMemory(src, target, scomp))
     {
-        ec = STBError::InvalidPixFmt;
+        ec = STBError::DecodingError;
+        ec = stbi_failure_reason();
         return false;
     }
 
