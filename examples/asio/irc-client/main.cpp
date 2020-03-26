@@ -9,7 +9,7 @@ using namespace Coffee;
 
 const constexpr cstring quit_message = "Leaving";
 
-static ASIO::asio_context context;
+static ASIO::Service context;
 static UqPtr<TCP::Socket> irc_stream;
 
 void ExitFun()

@@ -221,14 +221,18 @@ STATICINLINE bool LoadData(
     image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA)
 {
     stb_error ec;
-    return LoadData(target, src, ec, comp);
+    auto out = LoadData(target, src, ec, comp);
+    C_ERROR_CHECK(ec)
+    return out;
 }
 
 STATICINLINE bool LoadData(
     image_rw* target, Bytes const& src, PixCmp comp = PixCmp::RGBA)
 {
     stb_error ec;
-    return LoadData(target, C_OCAST<BytesConst>(src), ec, comp);
+    auto      out = LoadData(target, C_OCAST<BytesConst>(src), ec, comp);
+    C_ERROR_CHECK(ec)
+    return out;
 }
 
 /*!
@@ -278,12 +282,13 @@ namespace IMG {
 using stb::stb_error;
 
 STATICINLINE bool Load(
-    Bytes& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
+    BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     stb_error ec;
 
     stb::image_rw img;
-    bool          stat = stb::LoadData(&img, C_OCAST<BytesConst>(r), ec, cmp);
+    bool          stat = stb::LoadData(&img, r, ec, cmp);
+    C_ERROR_CHECK(ec)
 
     fmt  = BitFmt::UByte;
     data = std::move(img.data_owner);
@@ -295,7 +300,7 @@ STATICINLINE bool Load(
 }
 
 STATICINLINE bool Load(
-    Bytes&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
+    BytesConst&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     return Load(r, cmp, fmt, data, res);
 }

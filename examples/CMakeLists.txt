@@ -21,9 +21,9 @@ endif()
 
 # ASIO examples, we leave this as core
 if(BUILD_ASIO)
-    add_subdirectory(asio/base-client)
+#    add_subdirectory(asio/base-client)
 #    add_subdirectory(asio/base-server)
-    add_subdirectory(asio/irc-client)
+#    add_subdirectory(asio/irc-client)
 endif()
 
 # Not going to say.

@@ -61,6 +61,15 @@ FORCEDINLINE void default_exit(int)
 }
 } // namespace handlers
 
+template<void(*Handler)()>
+struct scope_exit_handler
+{
+    ~scope_exit_handler()
+    {
+        Handler();
+    }
+};
+
 extern void register_atexit(exit_handler hnd);
 
 } // namespace signal

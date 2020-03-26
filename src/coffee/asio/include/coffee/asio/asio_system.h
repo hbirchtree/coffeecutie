@@ -8,7 +8,7 @@ namespace ASIO {
 namespace detail {
 struct WorkerData
 {
-    ShPtr<ASIO_Worker> worker;
+    ShPtr<Worker> worker;
 };
 } // namespace detail
 
@@ -21,19 +21,14 @@ struct Subsystem : Components::Globals::ValueSubsystem<Tag>
         get().worker = GenWorker();
     }
 
-    asio_context& context()
+    ShPtr<ASIO::Service> context()
     {
         return get().worker->context;
     }
 
     void stop()
     {
-        get().worker->context->service.stop();
-
-        runtime_queue_error ec;
-        RuntimeQueue::TerminateThread(get().worker->worker_queue, ec);
-
-        C_ERROR_CHECK(ec);
+        get().worker->stop();
     }
 };
 

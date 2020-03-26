@@ -30,16 +30,16 @@ void ProfilingExport()
     {
         cVerbose(10, "Network export starting");
 
+        State::SwapState("jsonProfiler", {});
+
         auto profilerState = State::GetProfilerStore();
 
         if(profilerState)
             profilerState->disable();
 
-        State::SwapState(ASIO::context_name, {});
-
         auto worker = ASIO::GenWorker();
 
-        auto ctxt = worker->context;
+        auto ctxt = worker ? worker->context : ASIO::InitService();
 
         CString target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
@@ -98,11 +98,14 @@ void ProfilingExport()
         cVerbose(10, "Network export cancelled");
 }
 
-void RegisterProfiling()
+#if !defined(COFFEE_APPLE)
+int RegisterProfiling()
 {
     cVerbose(10, "Registering network profiling");
     libc::signal::register_atexit(ProfilingExport);
+    return 0;
 }
+#endif
 
 } // namespace Net
 } // namespace Coffee

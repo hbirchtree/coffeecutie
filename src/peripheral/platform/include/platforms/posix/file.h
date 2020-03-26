@@ -243,7 +243,12 @@ struct PosixFileFun_def : PosixFileMod_def
             C_FCAST<i64>(pa_offset)));
 #else
         addr = static_cast<byte_t*>(mmap(
-            NULL, offset + size - pa_offset, prot, mapping, fd, pa_offset));
+            nullptr,
+            offset + size - pa_offset,
+            prot,
+            mapping,
+            fd,
+            C_FCAST<i64>(pa_offset)));
 #endif
 
         if(!addr || addr == MAP_FAILED)

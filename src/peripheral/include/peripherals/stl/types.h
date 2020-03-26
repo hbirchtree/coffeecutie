@@ -279,15 +279,19 @@ template<typename T, typename... Args>
  */
 inline UqPtr<T> MkUq(Args... a)
 {
+#if __cplusplus >= 201703L
+    return std::make_unique<T>(std::forward<Args>(a)...);
+#else
     return UqPtr<T>(new T(std::forward<Args>(a)...));
+#endif
 }
 template<typename T>
-inline UqPtr<T> MkUqWrap(T* ptr)
+C_DEPRECATED_S("unsafe behavior") inline UqPtr<T> MkUqWrap(T* ptr)
 {
     return UqPtr<T>(ptr);
 }
 template<typename T, class Deleter, typename... Args>
-inline UqPtr<T, Deleter> MkUqDST(Args... a)
+C_DEPRECATED_S("outdated behavior") inline UqPtr<T, Deleter> MkUqDST(Args... a)
 {
     return UqPtr<T, Deleter>(new T(std::forward<Args>(a)...));
 }
