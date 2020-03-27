@@ -52,11 +52,13 @@
 /* Mac OS X macro, not iOS */
 #if defined(__APPLE__)
 
+#include <TargetConditionals.h>
+
 #undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "macOS"
 #define COFFEE_APPLE
 
-#if defined(TARGET_OS_MAC)
+#if defined(TARGET_OS_OSX)
 #define COFFEE_APPLE_DESKTOP
 #elif defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
 #undef C_SYSTEM_STRING

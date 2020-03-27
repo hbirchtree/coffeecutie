@@ -46,7 +46,7 @@ CString SysInfoDef::HostName()
 #endif
 
 #else
-    return "";
+    return {};
 #endif
 }
 

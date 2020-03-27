@@ -388,7 +388,10 @@ bool Resource::push(http::method_t method, const Bytes& data)
         readResponseHeader(recv_buf, consumed);
         if(m_response.header.code != status::continue_)
         {
-            cWarning(NETRSC_TAG "No continue received");
+            cWarning(
+                NETRSC_TAG "No continue received, got {0}",
+                m_response.header.code);
+            close();
             return false;
         }
     }

@@ -178,6 +178,21 @@ STATICINLINE void PutRuntimeInfo(
             FromString(cast_pod(compile_info::android::api), alloc),
             alloc);
 
+    if constexpr(compile_info::platform::is_windows)
+        build.AddMember("windowsTarget", FromString("", alloc), alloc);
+
+    if constexpr(compile_info::platform::is_macos)
+        build.AddMember(
+            "macTarget",
+            FromString(cast_pod(compile_info::apple::macos::target), alloc),
+            alloc);
+
+    if constexpr(compile_info::platform::is_ios)
+        build.AddMember(
+            "iosTarget",
+            FromString(cast_pod(compile_info::apple::ios::target), alloc),
+            alloc);
+
     target.AddMember("build", build, alloc);
 
     JSON::Object runtime;
@@ -248,12 +263,19 @@ STATICINLINE void PutRuntimeInfo(
         FromString(Strings::to_string(SysInfo::Chassis()), alloc),
         alloc);
 
-#if defined(COFFEE_INTERNAL_BUILD)
+    if constexpr(compile_info::internal_build)
+        device.AddMember(
+            "hostname",
+            FromString(Strings::to_string(SysInfo::HostName()), alloc),
+            alloc);
+
+    auto deviceName = SysInfo::DeviceName();
     device.AddMember(
-        "hostname",
-        FromString(Strings::to_string(SysInfo::HostName()), alloc),
+        "machineManufacturer",
+        FromString(deviceName.manufacturer, alloc),
         alloc);
-#endif
+    device.AddMember(
+        "machineModel", FromString(deviceName.model, alloc), alloc);
 
     target.AddMember("device", device, alloc);
 

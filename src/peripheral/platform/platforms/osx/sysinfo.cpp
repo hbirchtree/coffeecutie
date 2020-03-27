@@ -50,19 +50,11 @@ CString get_kern_ver()
 
 CString SysInfo::GetSystemVersion()
 {
-    FILE* out = popen("sw_vers -productVersion", "r");
-    if(out)
-    {
-        char  buf[16];
-        char* ptr = fgets(buf, sizeof(buf), out);
-        pclose(out);
-        if(ptr)
-        {
-            CString output = ptr;
-            output.resize(libc::str::find(ptr, '\n') - ptr);
-            return output;
-        }
-    }
+    CString version = _GetSysctlString("kern.osproductversion");
+
+    if(!version.empty())
+        return version;
+
     return "0.0";
 }
 

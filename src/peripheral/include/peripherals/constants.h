@@ -107,6 +107,14 @@ constexpr bool lowfat_mode =
 #endif
     ;
 
+constexpr bool internal_build =
+#if defined(COFFEE_INTERNAL_BUILD)
+    true
+#else
+    false
+#endif
+    ;
+
 /*
  * Platform identifiers
  *
