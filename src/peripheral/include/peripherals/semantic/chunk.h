@@ -237,6 +237,22 @@ struct mem_chunk
         inst.m_destr = d;
     }
 
+    template<typename T2>
+    FORCEDINLINE void transfer(mem_chunk<T2>&& other)
+    {
+        data     = other.data;
+        size     = other.size;
+        elements = other.elements;
+        m_destr  = other.m_destr;
+        m_access = other.m_access;
+
+        other.data     = nullptr;
+        other.size     = 0;
+        other.elements = 0;
+        other.m_destr  = nullptr;
+        other.m_access = RSCA::None;
+    }
+
     template<
         typename SizeT,
         typename std::enable_if<std::is_unsigned<SizeT>::value, SizeT>::type* =

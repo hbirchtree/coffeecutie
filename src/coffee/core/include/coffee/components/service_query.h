@@ -7,11 +7,13 @@
 namespace Coffee {
 namespace Components {
 
-template<typename T>
+template<typename T, bool Reversed>
 struct service_query : Iterator<ForwardIteratorTag, T>
 {
-    using subsystem_iterator =
-        typename decltype(EntityContainer::subsystems)::const_iterator;
+    using subsystem_iterator = typename std::conditional<
+        Reversed,
+        typename decltype(EntityContainer::subsystems)::const_reverse_iterator,
+        typename decltype(EntityContainer::subsystems)::const_iterator>::type;
     using subsystem_ref =
         typename decltype(EntityContainer::subsystems)::const_reference;
     using service_predicate = Function<bool(subsystem_ref)>;
@@ -30,14 +32,16 @@ struct service_query : Iterator<ForwardIteratorTag, T>
         initialize_iterator();
     }
 
-    service_query(EntityContainer& c, end_iterator_t) : m_container(&c)
+    service_query(EntityContainer& c, end_iterator_t) :
+        pred([](subsystem_ref e) { return C_DCAST<T>(e.second.get()); }),
+        m_container(&c)
     {
-        it = m_container->subsystems.end();
+        it = end_iterator();
     }
 
     service_query& operator++()
     {
-        it = std::find_if(++it, m_container->subsystems.end(), pred);
+        it = std::find_if(++it, end_iterator(), pred);
         return *this;
     }
 
@@ -53,19 +57,31 @@ struct service_query : Iterator<ForwardIteratorTag, T>
 
     T& operator*() const
     {
-        if(it == m_container->subsystems.end())
+        if(it == end_iterator())
             Throw(std::out_of_range("bad iterator"));
 
         return *C_DCAST<T>(it->second.get());
     }
 
   private:
+    auto begin_iterator() const
+    {
+        if constexpr(Reversed)
+            return m_container->subsystems.rbegin();
+        else
+            return m_container->subsystems.begin();
+    }
+    auto end_iterator() const
+    {
+        if constexpr(Reversed)
+            return m_container->subsystems.rend();
+        else
+            return m_container->subsystems.end();
+    }
+
     void initialize_iterator()
     {
-        it = std::find_if(
-            m_container->subsystems.begin(),
-            m_container->subsystems.end(),
-            pred);
+        it = std::find_if(begin_iterator(), end_iterator(), pred);
     }
 
     service_predicate const pred;

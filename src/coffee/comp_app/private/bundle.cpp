@@ -148,7 +148,10 @@ detail::EntityContainer& createContainer()
         case CoffeeHandle_Cleanup:
         {
             app_error appec;
-            for(auto& service : container->services_with<AppLoadableService>())
+            auto      services = container->services_with<AppLoadableService>(
+                Components::reverse_query);
+
+            for(auto& service : services)
                 service.unload(*container, appec);
             break;
         }

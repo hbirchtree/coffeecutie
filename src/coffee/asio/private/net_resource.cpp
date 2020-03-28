@@ -125,7 +125,7 @@ void Resource::close()
         normal.release();
     }
 
-    //C_ERROR_CHECK(ec)
+    // C_ERROR_CHECK(ec)
 }
 
 Resource::Resource(ShPtr<ASIO::Service> ctxt, const Url& url) :
@@ -326,7 +326,7 @@ void Resource::readResponsePayload(net_buffer& buffer)
     cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
 }
 
-bool Resource::push(http::method_t method, const Bytes& data)
+bool Resource::push(http::method_t method, Bytes const& data)
 {
     using namespace http;
 
@@ -359,12 +359,7 @@ bool Resource::push(http::method_t method, const Bytes& data)
         st_fields[header_field::expect] = "100-continue";
 
     if(has_payload)
-    {
         st_fields[header_field::content_length] = cast_pod(data.size);
-
-        m_request.payload.reserve(data.size);
-        MemCpy(data, m_request.payload);
-    }
 
     auto header = header::serialize::request(m_request.header);
 
@@ -403,20 +398,17 @@ bool Resource::push(http::method_t method, const Bytes& data)
     {
         DProfContext _(NETRSC_TAG "Writing payload");
 
-        cVerbose(
-            12,
-            NETRSC_TAG "Pushed payload size: {0}",
-            m_request.payload.size());
+        cVerbose(12, NETRSC_TAG "Pushed payload size: {0}", data.size);
 
 #if defined(ASIO_USE_SSL)
         if(secure())
         {
-            ssl->write(Bytes::CreateFrom(m_request.payload), ec);
+            ssl->write(data, ec);
             ssl->flush();
         } else
 #endif
         {
-            normal->write(Bytes::CreateFrom(m_request.payload), ec);
+            normal->write(data, ec);
             normal->flush();
         }
         C_ERROR_CHECK(ec)

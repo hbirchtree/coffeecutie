@@ -98,15 +98,20 @@ STATICINLINE SystemPaths GetSystemPaths()
 #if defined(COFFEE_ANDROID)
 
     AndroidForeignCommand cmd;
-    cmd.type         = Android_QueryDataPath;
     cmd.store_string = {};
 
+    cmd.type = Android_QueryDataPath;
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
     paths.configDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
 
     cmd.type = Android_QueryCachePath;
+    CoffeeForeignSignalHandleNA(
+        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+    paths.cacheDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
+    paths.tempDir  = paths.cacheDir;
 
 #elif defined(COFFEE_LINUX)
 

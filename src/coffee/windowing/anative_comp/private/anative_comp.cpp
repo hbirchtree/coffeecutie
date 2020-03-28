@@ -210,6 +210,15 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
         i32 action = AKeyEvent_getAction(event);
         i32 flags  = AKeyEvent_getFlags(event);
         i32 meta   = AKeyEvent_getMetaState(event);
+
+        switch(button)
+        {
+        case AKEYCODE_BACK:
+            Coffee::DebugFun::cDebug("Back key");
+            break;
+        default:
+            break;
+        }
     } else if(source & AINPUT_SOURCE_KEYBOARD)
     {
         i32 button  = AKeyEvent_getKeyCode(event);
@@ -264,10 +273,14 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
     i32 type   = AInputEvent_getType(event);
     i32 source = AInputEvent_getSource(event);
 
-    if(source & (AINPUT_SOURCE_GAMEPAD | AINPUT_SOURCE_JOYSTICK))
+    switch(source)
     {
+    case AINPUT_SOURCE_GAMEPAD:
+    case AINPUT_SOURCE_JOYSTICK:
         handleGamepadEvent(event);
         return;
+    default:
+        break;
     }
 
     switch(type)

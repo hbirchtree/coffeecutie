@@ -230,7 +230,7 @@
 #endif
 
 #if defined(COFFEE_ANDROID)
-#define COFFEE_DYNAMIC_TEMPFILES
+//#define COFFEE_DYNAMIC_TEMPFILES
 #endif
 
 /*

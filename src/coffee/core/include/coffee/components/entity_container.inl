@@ -274,10 +274,11 @@ ServiceRef<Service> EntityContainer::service_ref()
     return ServiceRef<Service>(this);
 }
 
-template<class BaseType>
-quick_container<service_query<BaseType>> EntityContainer::services_with()
+template<class BaseType, bool Reversed>
+quick_container<service_query<BaseType, Reversed>> EntityContainer::
+    services_with()
 {
-    using query_type = service_query<BaseType>;
+    using query_type = service_query<BaseType, Reversed>;
 
     return {[this]() {
                 return query_type(
@@ -286,6 +287,12 @@ quick_container<service_query<BaseType>> EntityContainer::services_with()
             [this]() {
                 return query_type(*this, typename query_type::end_iterator_t());
             }};
+}
+
+template<class BaseType>
+auto EntityContainer::services_with(reverse_query_t)
+{
+    return services_with<BaseType, true>();
 }
 
 FORCEDINLINE EntityContainer& SubsystemBase::get_container(

@@ -33,8 +33,14 @@ struct ComponentRef;
 template<typename Service>
 struct ServiceRef;
 
-template<typename T>
+template<typename T, bool Reversed = false>
 struct service_query;
+
+struct reverse_query_t
+{
+};
+
+constexpr reverse_query_t reverse_query;
 
 namespace matchers {
 
@@ -70,7 +76,7 @@ struct EntityContainer : non_copy
     };
 
     friend struct Entity;
-    template<typename T>
+    template<typename T, bool Reversed>
     friend struct service_query;
 
     EntityContainer() : entity_counter(0), debug_flags(0)
@@ -391,8 +397,11 @@ struct EntityContainer : non_copy
     template<typename Service>
     ServiceRef<Service> service_ref();
 
+    template<class BaseType, bool Reversed = false>
+    quick_container<service_query<BaseType, Reversed>> services_with();
+
     template<class BaseType>
-    quick_container<service_query<BaseType>> services_with();
+    auto services_with(reverse_query_t);
 
     template<typename ComponentType>
     typename ComponentType::type* get(u64 id)

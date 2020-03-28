@@ -128,7 +128,7 @@ coffee_library (
     private/base/jsonprofile.cpp
 
     LIBRARIES
-    CoreDebug CoreCommon PeripheralThreadNaming
+    CoreDebug CoreCommon PeripheralThreadNaming CoreProfiling
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/logging>

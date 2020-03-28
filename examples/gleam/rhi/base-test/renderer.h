@@ -411,7 +411,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     load_opts.crash_on_error = true;
 
     auto& gfx = entities.register_subsystem_inplace<GfxTag, GfxSys>(
-        load_opts, PlatformData::IsDebug());
+        load_opts, compile_info::debug_mode);
 
     ShPtr<GLM::V_DESC> vao = nullptr;
 

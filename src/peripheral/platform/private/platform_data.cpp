@@ -209,7 +209,7 @@ CString system::runtime_distro()
 #elif defined(COFFEE_APPLE)
     return "macOS";
 #else
-    return {};
+    return C_SYSTEM_STRING;
 #endif
 }
 

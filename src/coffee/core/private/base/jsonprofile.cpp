@@ -7,6 +7,8 @@
 #include <platforms/file.h>
 #include <rapidjson/filewritestream.h>
 
+#include <coffee/core/profiler/profiling-export.h>
+
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/formatting.h>
@@ -66,23 +68,46 @@ JsonProfileWriter::~JsonProfileWriter()
 
     FileFun::file_error ec;
 
-    auto thread_names = Coffee::Strings::fmt(
+    auto thread_name = Coffee::Strings::fmt(
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
         appData ? appData->application_name : "Coffee App");
+    FileFun::Write(logfile, Bytes::CreateString(thread_name.c_str()), ec);
+    C_ERROR_CHECK(ec);
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
-        thread_names += Coffee::Strings::fmt(
+        thread_name = Coffee::Strings::fmt(
             R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",
             thread.first,
             thread.second);
+        FileFun::Write(logfile, Bytes::CreateString(thread_name.c_str()), ec);
+        C_ERROR_CHECK(ec);
     }
 
-    FileFun::Write(logfile, Bytes::CreateString(thread_names.c_str()), ec);
+    FileFun::Write(logfile, Bytes::CreateString(R"({}],)"), ec);
+    C_ERROR_CHECK(ec);
 
-    FileFun::Write(logfile, Bytes::CreateString(R"({}]})"), ec);
+    CString chromeInfo;
+    Coffee::Profiling::ExportChromeTracerData(chromeInfo);
+
+    if(auto idx = chromeInfo.find(R"(,"traceEvents")"); idx != CString::npos)
+    {
+        chromeInfo.resize(idx);
+    }
+
+    /* Okay, this is a stupid thing to do, but here goes:
+     *  - Here we skip the opening { such that we may merge it with the preceding
+     *     object. This lets us plug it into the same model as before.
+     *    This is also more compatible with the Chrome Trace Format.
+     */
+    FileFun::Write(logfile, Bytes::CreateString(chromeInfo.c_str() + 1), ec);
+    C_ERROR_CHECK(ec);
+
+    FileFun::Write(logfile, Bytes::CreateString("}"), ec);
+    C_ERROR_CHECK(ec);
 
     FileFun::Close(std::move(logfile), ec);
+    C_ERROR_CHECK(ec);
 }
 
 ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()

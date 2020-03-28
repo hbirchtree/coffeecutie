@@ -25,12 +25,9 @@ struct Service
 #if defined(ASIO_USE_SSL) && !defined(COFFEE_ANDROID)
         asio::error_code ec;
         sslctxt.set_default_verify_paths(ec);
-        if(ec != asio::error_code())
-        {
-            throw undefined_behavior(
-                "Setting verification paths failed: " + ec.message());
-        }
-        sslctxt.set_verify_mode(asio::ssl::verify_peer);
+        C_ERROR_CHECK(ec);
+//        sslctxt.set_verify_mode(asio::ssl::verify_none, ec);
+        C_ERROR_CHECK(ec);
 #endif
     }
 

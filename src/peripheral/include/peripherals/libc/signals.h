@@ -10,7 +10,7 @@ namespace libc {
 namespace signal {
 
 using sig_handler  = void(int);
-using exit_handler = void();
+using exit_handler = void(*)();
 
 enum class sig
 {

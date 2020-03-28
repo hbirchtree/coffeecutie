@@ -38,8 +38,7 @@ struct ssl_socket
     using lowest_layer = socket_types::ssl::lowest_layer_type;
 
     ssl_socket(net::context& service) :
-        m_resolver(service.resolver),
-        m_socket(service.service, service.sslctxt)
+        m_resolver(service.resolver), m_socket(service.service, service.sslctxt)
     {
     }
 
@@ -51,7 +50,6 @@ struct ssl_socket
         VALIDATE();
         asio::connect(m_socket.lowest_layer(), it, ec);
         VALIDATE();
-        m_socket.set_verify_mode(asio::ssl::verify_none);
         m_socket.handshake(asio::ssl::stream_base::handshake_type::client, ec);
         return ec;
     }
@@ -199,6 +197,101 @@ struct raw_socket
 };
 
 } // namespace tcp
+
+namespace udp {
+
+enum class write_flags
+{
+    none = 0,
+    eof  = asio::ip::udp::socket::message_end_of_record,
+};
+
+struct raw_socket
+{
+    raw_socket(net::context& service) :
+        m_resolver(service.resolver_udp), m_socket(service.service)
+    {
+    }
+
+    asio::error_code connect(host_t const& host, service_t const& port)
+    {
+        asio::error_code ec;
+
+        auto it = m_resolver.resolve(host, port, ec);
+        VALIDATE();
+        m_endpoint = *it;
+
+        return ec;
+    }
+
+    asio::error_code connect_broadcast(service_t const& port)
+    {
+        asio::error_code ec;
+
+        m_socket.set_option(asio::socket_base::broadcast(), ec);
+        auto it = m_resolver.resolve(asio::ip::udp::resolver::query(port), ec);
+        VALIDATE();
+
+        m_endpoint = asio::ip::udp::endpoint(*it);
+
+        return ec;
+    }
+
+    template<typename T>
+    auto read(
+        semantic::mem_chunk<T>&  data,
+        asio::ip::udp::endpoint& from,
+        asio::error_code&        ec)
+    {
+        size_t read = 0;
+        do
+        {
+            read += m_socket.receive_from(
+                asio::buffer(data.data, data.size), from, 0, ec);
+            if(ec || read == data.size)
+                return read;
+        } while(read < data.size);
+        return read;
+    }
+
+    template<typename T>
+    auto write(
+        semantic::mem_chunk<T> const& data,
+        asio::error_code&             ec,
+        write_flags                   flags = write_flags::none)
+    {
+        return write_to(data, m_endpoint, ec, flags);
+    }
+
+    template<typename T>
+    auto write_to(
+        semantic::mem_chunk<T> const&  data,
+        asio::ip::udp::endpoint const& to,
+        asio::error_code&              ec,
+        write_flags                    flags = write_flags::none)
+    {
+        size_t written = 0;
+        do
+        {
+            written += m_socket.send_to(
+                asio::buffer(data.data, data.size),
+                to,
+                static_cast<int>(flags),
+                ec);
+            if(ec || written == data.size)
+                return read;
+        } while(written < data.size);
+        return written;
+    }
+
+  private:
+    asio::ip::udp::resolver& m_resolver;
+    asio::ip::udp::socket    m_socket;
+    asio::ip::udp::endpoint  m_endpoint;
+};
+
+} // namespace udp
+
 } // namespace net
 
 namespace Coffee {

@@ -15,6 +15,10 @@
 #include <platforms/sysinfo.h>
 #include <url/url.h>
 
+#if defined(COFFEE_ANDROID)
+#include <coffee/android/android_main.h>
+#endif
+
 #include <coffee/core/CDebug>
 
 #ifndef COFFEE_LOWFAT
@@ -173,10 +177,24 @@ STATICINLINE void PutRuntimeInfo(
         alloc);
 
     if constexpr(compile_info::platform::is_android)
+    {
         build.AddMember(
             "androidTarget",
             FromString(cast_pod(compile_info::android::api), alloc),
             alloc);
+
+#if defined(COFFEE_ANDROID)
+        AndroidForeignCommand cmd;
+        cmd.type = Android_QueryAPI;
+        CoffeeForeignSignalHandleNA(
+            CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+        build.AddMember(
+            "androidSdkTarget",
+            FromString(cast_pod(cmd.data.scalarI64), alloc),
+            alloc);
+#endif
+    }
 
     if constexpr(compile_info::platform::is_windows)
         build.AddMember("windowsTarget", FromString("", alloc), alloc);
@@ -396,6 +414,11 @@ void ExitRoutine()
         {
             auto log_name = (Path{Env::ExecutableName()}.fileBasename());
 
+            if constexpr(
+                compile_info::platform::is_android ||
+                compile_info::platform::is_ios)
+                log_name = Path("chrome");
+
             auto log_url = url::constructors::MkUrl("", RSCA::TemporaryFile);
 
             auto log_url2 =
@@ -409,7 +432,7 @@ void ExitRoutine()
             cVerbose(
                 6,
                 "Saved profiler data to: {0}",
-                file::FileFun::CanonicalName(log_url, ec));
+                file::FileFun::CanonicalName(log_url2, ec));
         }
     }
 }

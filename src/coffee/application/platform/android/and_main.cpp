@@ -28,6 +28,14 @@
 #include <gestureDetector.h>
 #include <sys/sysinfo.h>
 
+namespace libc {
+namespace signal {
+
+extern stl_types::Vector<exit_handler> global_exit_handlers;
+
+}
+} // namespace libc
+
 using namespace jnipp;
 
 namespace android {
@@ -164,6 +172,14 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         if(!(app_internal_state->currentState & AndroidApp_Initialized))
         {
             deref_main_c(android_entry_point, 0, nullptr);
+
+            ScopedJNI jni(coffee_app->activity->vm);
+            jnipp::SwapJNI(&jni);
+
+            auto extras = android::intent().extras();
+            if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
+                Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
+
             app_internal_state->currentState |= AndroidApp_Initialized;
         }
 
@@ -212,12 +228,15 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     {
         CoffeeEventHandleCall(CoffeeHandle_Cleanup);
 
+        Profiling::ExitRoutine();
+
+        std::reverse(
+            libc::signal::global_exit_handlers.begin(),
+            libc::signal::global_exit_handlers.end());
+        for(auto const& hnd : libc::signal::global_exit_handlers)
+            hnd();
+
         libc::signal::exit(libc::signal::sig::abort);
-
-        //        auto exit_func = CmdInterface::BasicTerm::GetAtExit();
-
-        //        for(auto func : exit_func)
-        //            func();
 
         break;
     }
@@ -514,8 +533,20 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             out->store_string = coffee_app->activity->externalDataPath;
             break;
         case Android_QueryCachePath:
-            Throw(implementation_error("deprecated function"));
+        {
+            auto Context     = "android.content.Context"_jclass;
+            auto File        = "java.io.File"_jclass;
+            auto getCacheDir = "getCacheDir"_jmethod.ret("java.io.File");
+            auto getAbsolutePath =
+                "getAbsolutePath"_jmethod.ret("java.lang.String");
+
+            auto context  = Context(coffee_app->activity->clazz);
+            auto cacheDir = File(context[getCacheDir]());
+
+            out->store_string =
+                java::type_unwrapper<std::string>(cacheDir[getAbsolutePath]());
             break;
+        }
 #if ANDROID_API_LEVEL >= 13
         case Android_QueryObbPath:
             out->store_string = coffee_app->activity->obbPath;
@@ -534,7 +565,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 
         case Android_QueryReleaseName:
             out->store_string = Strings::fmt(
-                "Android {0} ({1})",
+                "{0} ({1})",
                 GetBuildVersionField("RELEASE"_jfield),
                 (coffee_app->activity->sdkVersion >= 23)
                     ? GetBuildVersionField("SECURITY_PATCH"_jfield)
