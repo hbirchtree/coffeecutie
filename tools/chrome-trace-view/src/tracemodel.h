@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QObject>
 
 #include <future>
@@ -12,7 +14,7 @@
 
 class QFile;
 
-struct TraceModel;
+class TraceModel;
 struct TraceMeta;
 
 struct TraceProperties
@@ -180,6 +182,47 @@ class ProcessModel : public QAbstractListModel
     void parseUpdate(QString const& message);
 };
 
+class NetDownload : public QObject
+{
+    Q_OBJECT
+
+    QNetworkAccessManager m_man;
+
+  public:
+    NetDownload(QObject* parent = nullptr);
+
+  public slots:
+    void downloadFile(QString const& source);
+
+  signals:
+    void fileError(QString const& reason);
+    void fileDownloaded(QByteArray const& data);
+};
+
+class ExtraInfo : public QAbstractListModel
+{
+    Q_OBJECT
+
+    TraceModel*                              m_trace;
+    std::vector<std::pair<QString, QVariant>> m_data;
+
+  public:
+    ExtraInfo(TraceModel* trace, QObject* parent = nullptr);
+
+    enum FieldNames
+    {
+        FieldName,
+        FieldValue,
+    };
+
+    int                    rowCount(const QModelIndex& parent) const;
+    QVariant               data(const QModelIndex& index, int role) const;
+    QHash<int, QByteArray> roleNames() const;
+
+  public slots:
+    void updateData();
+};
+
 class TraceModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -196,7 +239,10 @@ class TraceModel : public QAbstractListModel
 
     Q_PROPERTY(bool parsing MEMBER m_parsing)
 
-    QString m_source;
+    Q_PROPERTY(QObject* extraInfo READ extraInfo NOTIFY extraInfoChanged)
+
+    QString    m_source;
+    ExtraInfo* m_extraInfo;
 
     std::unique_ptr<QFile>                           m_traceFile;
     QJsonObject                                      m_trace;
@@ -219,15 +265,20 @@ class TraceModel : public QAbstractListModel
         return m_trace;
     }
 
+    void resetData();
+
     Q_INVOKABLE QObject* eventFromId(quint64 pid, quint64 tid, quint64 id);
 
     Q_INVOKABLE void openFile();
+
+    Q_INVOKABLE void emscriptenAuto();
 
     double timestampBase() const;
     double totalDuration() const
     {
         return m_totalDuration;
     }
+    QObject* extraInfo() const;
 
     int                    rowCount(QModelIndex const& parent) const;
     QVariant               data(QModelIndex const& index, int role) const;
@@ -248,11 +299,14 @@ class TraceModel : public QAbstractListModel
     void viewEndChanged(double newViewEnd);
     void viewUpdated();
 
+    void extraInfoChanged(QObject* extra);
+
     void totalDurationChanged(double totalDuration);
 
     void startingParse();
     void parseUpdate(QString const& message);
     void traceParsed();
+    void traceReceived();
     void parseError(QString const& error);
 
   public slots:

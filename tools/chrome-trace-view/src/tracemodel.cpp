@@ -1,6 +1,7 @@
 #include "tracemodel.h"
 
 #include <QColor>
+#include <QCoreApplication>
 #include <QFile>
 #include <QFileDialog>
 #include <QJsonDocument>
@@ -9,18 +10,29 @@
 #include <set>
 #include <stack>
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+
+EM_JS(char*, get_queries, (), {
+    var lengthBytes = lengthBytesUTF8(window.location.search) + 1;
+    var wasmString  = _malloc(lengthBytes);
+    stringToUTF8(window.location.search, wasmString, lengthBytes + 1);
+    return wasmString;
+});
+
+#endif
+
 #include <QtDebug>
 
-TraceModel::TraceModel(QObject* parent) : QAbstractListModel(parent)
+TraceModel::TraceModel(QObject* parent) :
+    QAbstractListModel(parent), m_extraInfo(new ExtraInfo(this, this)),
+    m_parsing(false)
 {
-    m_parsing = false;
-
     connect(this, &TraceModel::sourceChanged, [this](QString const& newSource) {
+        resetData();
+
         m_traceFile = std::make_unique<QFile>(newSource);
         m_parsing   = true;
-
-        emit beginResetModel();
-        emit endResetModel();
 
         emit beginInsertRows({}, 0, m_processes.size());
 
@@ -61,12 +73,38 @@ TraceModel::TraceModel(QObject* parent) : QAbstractListModel(parent)
         emit viewUpdated();
     });
 
-    QObject::connect(
+    connect(
         this,
         &TraceModel::traceParsed,
         this,
-        [this]() { emit endInsertRows(); },
+        [this]() {
+            emit endInsertRows();
+            m_parsing = false;
+        },
         Qt::QueuedConnection);
+    connect(
+        this,
+        &TraceModel::parseError,
+        this,
+        [this](QString const&) { m_parsing = false; },
+        Qt::QueuedConnection);
+    connect(
+        this, &TraceModel::traceReceived, m_extraInfo, &ExtraInfo::updateData);
+}
+
+void TraceModel::resetData()
+{
+    emit beginRemoveRows({}, 0, m_processes.size());
+
+    m_processes.clear();
+    m_processList.clear();
+    m_trace         = {};
+    m_traceFile     = {};
+    m_totalDuration = 0.0;
+
+    totalDurationChanged(0.0);
+
+    emit endRemoveRows();
 }
 
 QObject* TraceModel::eventFromId(quint64 pid, quint64 tid, quint64 id)
@@ -94,6 +132,8 @@ void TraceModel::openFile()
         [this](QString const& filename, QByteArray const& data) {
             qDebug() << "Opening profile" << filename;
 
+            resetData();
+
             emit beginInsertRows({}, 0, m_processes.size());
 
 #if defined(__EMSCRIPTEN__)
@@ -104,6 +144,45 @@ void TraceModel::openFile()
             });
 #endif
         });
+}
+
+void TraceModel::emscriptenAuto()
+{
+    QString source  = "";
+    char*   queries = nullptr;
+
+#if defined(__EMSCRIPTEN__)
+    queries = get_queries();
+#else
+    queries = "?source=https://api.birchy.dev/v2/reports/482/json";
+#endif
+
+    if(!queries)
+        qDebug() << "No query string";
+
+    source = queries;
+
+    if(!source.startsWith("?source="))
+        return;
+
+    source = source.split("&")[0].split("=")[1];
+
+    NetDownload* downloader = new NetDownload(this);
+    connect(
+        downloader,
+        &NetDownload::fileDownloaded,
+        [this](QByteArray const& data) {
+            qDebug() << "File downloaded";
+
+            resetData();
+
+            emit beginInsertRows({}, 0, m_processes.size());
+
+            parseAccountingInfo(data);
+        });
+
+    downloader->downloadFile(source);
+    qDebug() << "Downloading" << source;
 }
 
 double TraceModel::timestampBase() const
@@ -118,6 +197,11 @@ double TraceModel::timestampBase() const
     }
 
     return 1000000.0;
+}
+
+QObject* TraceModel::extraInfo() const
+{
+    return m_extraInfo;
 }
 
 int TraceModel::rowCount(QModelIndex const&) const
@@ -152,11 +236,19 @@ void TraceModel::parseAccountingInfo(QByteArray const& profile)
 
     if(!trace.isObject())
     {
-        emit parseError("Failed to find root object: " + error.errorString());
-        return;
-    }
+        if(error.error != QJsonParseError::NoError)
+        {
+            emit parseError(
+                "Failed to find root object: " + error.errorString());
+            return;
+        }
 
-    m_trace = trace.object();
+        m_trace.insert("traceEvents", trace.array());
+    } else
+        m_trace = trace.object();
+
+    qDebug() << m_trace.keys();
+    emit traceReceived();
 
     auto eventIt = m_trace.find("traceEvents");
 
@@ -644,4 +736,86 @@ EventStats::EventStats() :
     num_events(0), average(0), max(std::numeric_limits<float>::min()),
     min(std::numeric_limits<float>::max())
 {
+}
+
+NetDownload::NetDownload(QObject* parent) : QObject(parent)
+{
+    connect(
+        &m_man, &QNetworkAccessManager::finished, [this](QNetworkReply* reply) {
+            emit fileDownloaded(reply->readAll());
+            reply->deleteLater();
+        });
+}
+
+void NetDownload::downloadFile(QString const& source)
+{
+    QNetworkRequest req;
+    req.setUrl(source);
+
+    auto reply = m_man.get(req);
+    connect(
+        reply,
+        static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(
+            &QNetworkReply::error),
+        [this, reply](QNetworkReply::NetworkError) {
+            emit fileError(reply->errorString());
+        });
+}
+
+ExtraInfo::ExtraInfo(TraceModel* trace, QObject* parent) :
+    QAbstractListModel(parent), m_trace(trace)
+{
+}
+
+int ExtraInfo::rowCount(const QModelIndex& parent) const
+{
+    return m_data.size();
+}
+
+QVariant ExtraInfo::data(const QModelIndex& index, int role) const
+{
+    if(index.row() >= m_data.size())
+        return {};
+
+    auto const& val = m_data.at(index.row());
+
+    switch(role)
+    {
+    case FieldName:
+        return val.first;
+    case FieldValue:
+        return val.second;
+    default:
+        return {};
+    }
+}
+
+QHash<int, QByteArray> ExtraInfo::roleNames() const
+{
+    return {{FieldName, "infoName"}, {FieldValue, "infoValue"}};
+}
+
+void ExtraInfo::updateData()
+{
+    emit beginRemoveRows({}, 0, m_data.size());
+    m_data.clear();
+    emit endRemoveRows();
+
+    auto trace = m_trace->traceObject();
+    auto it    = trace.find("otherData");
+    if(it == trace.end())
+    {
+        qDebug() << "Found no 'otherData'";
+        return;
+    }
+
+    auto otherData = it->toObject();
+
+    emit beginInsertRows({}, 0, otherData.size());
+    for(auto val : otherData.keys())
+        m_data.push_back({val, otherData[val].toVariant()});
+
+    emit endInsertRows();
+
+    emit m_trace->extraInfoChanged(this);
 }

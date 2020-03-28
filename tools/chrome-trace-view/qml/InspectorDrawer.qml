@@ -1,9 +1,10 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Window 2.12
+import QtQuick.Layouts 1.12
 
-Rectangle {
+Drawer {
     id: root
-    clip: true
 
     property bool revealed: false
     property Item previousFocusItem
@@ -22,69 +23,60 @@ Rectangle {
         {
             revealed = true;
             focusItem.highlighted = true
-            nameField.text = event.name
-            catField.text = event.category
-            tsField.text = event.timestamp + " s"
-            durationField.text = event.duration + " s"
+
+            nameField.value = event.name
+            catField.value = event.category
+            tsField.value = event.timestamp + " s"
+            durationField.value = event.duration + " s"
 
             stats.max = event.max;
             stats.min = event.min;
             stats.average = event.average;
             stats.value = event.duration;
 
-            avgDiff.text = (event.average - event.duration) + " s";
-            minmaxDiff.text = (event.max- event.min) + " s";
+            avgDiff.value = (event.average - event.duration) + " s";
+            minmaxDiff.value = (event.max- event.min) + " s";
         }
         else
             revealed = false;
     }
 
-    Row {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        anchors.topMargin: 8
-        anchors.leftMargin: 8
-        spacing: 8
-        Column {
-            spacing: 8
-            Label {
-                text: "Name"
-                font.bold: true
-            }
-            Label {
-                text: "Category"
-                font.bold: true
-            }
-            Label {
-                text: "Timestamp"
-                font.bold: true
-            }
-            Label {
-                text: "Duration"
-                font.bold: true
-            }
-        }
-        Column {
-            spacing: 8
-            Label {
+    RowLayout {
+        anchors.fill: parent
+        anchors.topMargin: 2 * Screen.pixelDensity
+        anchors.leftMargin: 2 * Screen.pixelDensity
+        spacing: 2 * Screen.pixelDensity
+        ColumnLayout {
+            Layout.alignment: Qt.AlignTop
+            Layout.preferredWidth: 20 * Screen.pixelDensity
+            spacing: 2 * Screen.pixelDensity
+
+            KeyValueProperty {
+            Layout.fillWidth: true
                 id: nameField
+                name: "Name"
             }
-            Label {
+            KeyValueProperty {
+                Layout.fillWidth: true
                 id: catField
+                name: "Category"
             }
-            Label {
+            KeyValueProperty {
+                Layout.fillWidth: true
                 id: tsField
+                name: "Timestamp"
             }
-            Label {
+            KeyValueProperty {
+                Layout.fillWidth: true
                 id: durationField
+                name: "Duration"
             }
         }
 
         Item {
+            Layout.fillWidth: true
             id: stats
-            width: 300
-            height: root.height
+            Layout.minimumWidth: 20 * Screen.pixelDensity
 
             property real average: 0.0
             property real max: 0.0
@@ -104,7 +96,7 @@ Rectangle {
                 text: "Timing"
                 font.bold: true
                 anchors.top: parent.top
-                anchors.topMargin: 4
+                anchors.topMargin: Screen.pixelDensity
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
@@ -133,52 +125,45 @@ Rectangle {
             Rectangle {
                 id: maxLine
                 anchors.top: parent.top
-                anchors.topMargin: 8 * 3
+                anchors.topMargin: 2 * 3 * Screen.pixelDensity
                 width: parent.width
-                height: 1
+                height: Screen.pixelDensity / 4
                 color: "red"
             }
             Rectangle {
                 id: minLine
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 8 * 3
+                anchors.bottomMargin: 2 * 3 * Screen.pixelDensity
                 width: parent.width
-                height: 1
+                height: Screen.pixelDensity / 4
                 color: "orange"
             }
             Rectangle {
                 id: avgLine
                 anchors.bottom: minLine.bottom
                 width: parent.width
-                height: 1
+                height: Screen.pixelDensity / 4
                 color: "blue"
             }
             Rectangle {
                 id: valLine
                 anchors.bottom: minLine.bottom
                 width: parent.width
-                height: 2
+                height: Screen.pixelDensity / 2
                 color: "white"
             }
         }
         Column {
-            spacing: 8
-            Label {
-                text: "Min-max difference"
-                font.bold: true
-            }
-            Label {
-                text: "Avg difference"
-                font.bold: true
-            }
-        }
-        Column {
-            spacing: 8
-            Label {
+            Layout.alignment: Qt.AlignTop
+            Layout.minimumWidth: 25 * Screen.pixelDensity
+            spacing: 2 * Screen.pixelDensity
+            KeyValueProperty {
                 id: minmaxDiff
+                name: "Min-max difference"
             }
-            Label {
+            KeyValueProperty {
                 id: avgDiff
+                name: "Avg difference"
             }
         }
     }

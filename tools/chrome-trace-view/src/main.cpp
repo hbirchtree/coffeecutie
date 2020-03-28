@@ -9,10 +9,10 @@ int main(int argc, char* argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
+    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
-
     qmlRegisterType<TraceModel>("me.birchtrees.ctf", 1, 0, "TraceModel");
 
     QUrl const url(QStringLiteral("qrc:/main.qml"));

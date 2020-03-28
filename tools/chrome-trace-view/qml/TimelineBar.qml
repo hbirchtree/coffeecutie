@@ -1,6 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import QtQuick.Window 2.12
 
 RowLayout {
     id: root
@@ -49,10 +50,10 @@ RowLayout {
             Repeater {
                 model: root.width * 2 / 100
                 Label {
-                    x: index * 100 -
+                    x: index * 100 * (Screen.pixelDensity / 4) -
                             width / 2 -
                             visibleOffset % p.adjustedVisibleWidth
-                    text: (index * 100 * timePerPixel + p.adjustedVisibleWidth * p.currentPage * timePerPixel) + p.suffix
+                    text: (index * 100 * timePerPixel + p.adjustedVisibleWidth * p.currentPage * timePerPixel) * (Screen.pixelDensity / 4) + p.suffix
                     clip: true
                 }
             }
@@ -66,9 +67,9 @@ RowLayout {
             Repeater {
                 model: root.width * 2 / 10
                 Rectangle {
-                    x: index * 10 -
+                    x: index * 10 * (Screen.pixelDensity / 4) -
                             visibleOffset % p.adjustedVisibleWidth
-                    width: 2
+                    width: 2 * (Screen.pixelDensity / 4)
                     height: (index % 10 == 0) ? parent.height * 1.2 : parent.height
                     color: (index % 10 == 0) ? "white" : "#555"
                 }

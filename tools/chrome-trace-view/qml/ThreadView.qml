@@ -1,12 +1,13 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Window 2.12
 
 Item {
     id: root
 
-    property int spacing: 8
-    property int rowHeight: 20
-    property int threadWidth: 40
+    property int spacing: 2 * Screen.pixelDensity
+    property int rowHeight: 5 * Screen.pixelDensity
+    property int threadWidth: 10 * Screen.pixelDensity
     property real timelineScale: 1.0
 
     property color threadColor: "black"
@@ -70,9 +71,9 @@ Item {
                 property color baseColor: fillColor
 
                 color: Qt.lighter(baseColor, highlighted ? 1.2 : 1)
-                x: ts * Math.pow(10, timelineScale + 2)
+                x: ts * Math.pow(10, timelineScale + 2) * (Screen.pixelDensity / 4)
                 y: stackDepth * rowHeight
-                width: time * Math.pow(10, timelineScale + 2)
+                width: time * Math.pow(10, timelineScale + 2) * (Screen.pixelDensity / 4)
                 height: rowHeight
                 text: name ? name : "Unknown event"
                 container: root.container
