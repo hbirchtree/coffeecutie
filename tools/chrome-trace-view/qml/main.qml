@@ -76,6 +76,8 @@ ApplicationWindow {
         edge: Qt.BottomEdge
         width: root.width
         height: threadWidth
+        modal: false
+        interactive: false
     }
 
     Component.onCompleted: {
@@ -218,22 +220,36 @@ ApplicationWindow {
 
     Drawer {
         id: extraInfoDrawer
-        width: threadWidth * 3
+        width: threadWidth * 4
         height: root.height
         edge: Qt.RightEdge
 
-        ColumnLayout {
+        ScrollView {
             anchors.fill: parent
             anchors.leftMargin: root.spacing
             anchors.topMargin: root.spacing
-            spacing: root.spacing
-            Repeater {
-                model: processes.extraInfo
-                KeyValueProperty {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    name: infoName
-                    value: infoValue
+            ColumnLayout {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                spacing: root.spacing
+                Repeater {
+                    model: processes.extraInfo
+                    GroupBox {
+                        title: groupName
+                        width: parent.width
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            width: parent.width
+                            Repeater {
+                                model: group
+                                KeyValueProperty {
+                                    name: infoKey
+                                    value: infoValue
+                                    Layout.maximumWidth: threadWidth * 4 - root.spacing * 6
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

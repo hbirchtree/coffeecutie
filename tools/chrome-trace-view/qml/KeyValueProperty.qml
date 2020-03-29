@@ -7,6 +7,8 @@ RowLayout {
     property string name
     property string value
 
+    property Label valueItem: valueField
+
     Label {
         id: nameField
         text: name
@@ -17,6 +19,7 @@ RowLayout {
     }
     Label {
         Layout.alignment: Qt.AlignRight
+        Layout.maximumWidth: parent.width - nameField.width
         id: valueField
         text: value
     }

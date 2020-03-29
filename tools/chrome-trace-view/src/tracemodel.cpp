@@ -769,22 +769,22 @@ ExtraInfo::ExtraInfo(TraceModel* trace, QObject* parent) :
 
 int ExtraInfo::rowCount(const QModelIndex& parent) const
 {
-    return m_data.size();
+    return m_groups.size();
 }
 
 QVariant ExtraInfo::data(const QModelIndex& index, int role) const
 {
-    if(index.row() >= m_data.size())
+    if(index.row() >= m_groups.size())
         return {};
 
-    auto const& val = m_data.at(index.row());
+    auto const& val = m_groups.at(index.row());
 
     switch(role)
     {
-    case FieldName:
-        return val.first;
-    case FieldValue:
-        return val.second;
+    case FieldGroupName:
+        return val->name();
+    case FieldGroup:
+        return QVariant::fromValue(val.get());
     default:
         return {};
     }
@@ -792,30 +792,84 @@ QVariant ExtraInfo::data(const QModelIndex& index, int role) const
 
 QHash<int, QByteArray> ExtraInfo::roleNames() const
 {
-    return {{FieldName, "infoName"}, {FieldValue, "infoValue"}};
+    return {{FieldGroup, "group"}, {FieldGroupName, "groupName"}};
+}
+
+static bool isProfileInfo(QString const& key)
+{
+    static const std::array<const char*, 6> included_keys = {
+        {"application", "build", "runtime", "device", "processor", "extra"}};
+
+    for(auto const& includedKey : included_keys)
+        if(includedKey == key.toStdString())
+            return true;
+    return false;
 }
 
 void ExtraInfo::updateData()
 {
-    emit beginRemoveRows({}, 0, m_data.size());
-    m_data.clear();
+    emit beginRemoveRows({}, 0, m_groups.size());
+    m_groups.clear();
     emit endRemoveRows();
 
     auto trace = m_trace->traceObject();
-    auto it    = trace.find("otherData");
-    if(it == trace.end())
+
+    std::vector<QString> selectedKeys;
+
+    for(auto val : trace.keys())
+        if(isProfileInfo(val))
+            selectedKeys.push_back(val);
+
+    emit beginInsertRows({}, 0, selectedKeys.size());
+    for(auto val : trace.keys())
     {
-        qDebug() << "Found no 'otherData'";
-        return;
+        if(!isProfileInfo(val))
+            continue;
+
+        m_groups.push_back(
+            std::make_unique<ExtraInfoGroup>(val, trace.find(val)->toObject()));
     }
-
-    auto otherData = it->toObject();
-
-    emit beginInsertRows({}, 0, otherData.size());
-    for(auto val : otherData.keys())
-        m_data.push_back({val, otherData[val].toVariant()});
 
     emit endInsertRows();
 
     emit m_trace->extraInfoChanged(this);
+}
+
+ExtraInfoGroup::ExtraInfoGroup(
+    const QString& name, QJsonObject const& data, QObject* parent) :
+    QAbstractListModel(parent),
+    m_data(data), m_name(name)
+{
+    for(auto const& key : data.keys())
+        m_keys.push_back(key);
+
+    std::sort(m_keys.begin(), m_keys.end());
+}
+
+int ExtraInfoGroup::rowCount(const QModelIndex& parent) const
+{
+    return m_keys.size();
+}
+
+QVariant ExtraInfoGroup::data(const QModelIndex& index, int role) const
+{
+    if(index.row() >= m_keys.size())
+        return {};
+
+    auto row = m_data.find(m_keys.at(index.row()));
+
+    switch(role)
+    {
+    case FieldName:
+        return row.key();
+    case FieldValue:
+        return row.value();
+    default:
+        return {};
+    }
+}
+
+QHash<int, QByteArray> ExtraInfoGroup::roleNames() const
+{
+    return {{FieldName, "infoKey"}, {FieldValue, "infoValue"}};
 }

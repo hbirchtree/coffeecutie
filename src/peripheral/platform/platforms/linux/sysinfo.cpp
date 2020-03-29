@@ -119,11 +119,6 @@ info::DeviceType get_device_variant()
 {
     using namespace platform::info;
 
-#if defined(COFFEE_MAEMO)
-    return DevicePhone;
-#elif defined(COFFEE_RASPBERRYPI)
-    return DeviceIOT;
-#endif
     CString input = LFileFun::sys_read("/sys/class/dmi/id/chassis_type");
 
     i32 chassis_type = cast_string<i32>(input);

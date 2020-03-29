@@ -150,23 +150,44 @@ const bool mobile =
 
 DeviceType variant()
 {
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE) || \
-    defined(COFFEE_MAEMO)
+    if constexpr(
+        compile_info::platform::is_android || compile_info::platform::is_ios ||
+        compile_info::platform::is_maemo)
+        return DevicePhone;
 
-    /* TODO: Add difference between tablet and phone */
+    /* TODO: Add better identification for Emscripten */
+    if constexpr(
+        compile_info::platform::is_iot || compile_info::platform::is_emscripten)
+        return DeviceIOT;
 
-    return DevicePhone;
-#elif defined(COFFEE_LINUX)
+    if constexpr(compile_info::platform::is_gekko)
+        return DeviceConsole;
+
+    if constexpr(compile_info::platform::is_macos)
+    {
+        auto system_type = SysInfo::DeviceName().model;
+
+        if(system_type.find("MacBook") != CString::npos)
+            return DeviceLaptop;
+
+        if(system_type.find("iMac") != CString::npos)
+            return DeviceAllInOne;
+
+        if(system_type.find("MacPro") != CString::npos ||
+           system_type.find("Macmini") != CString::npos)
+            return DeviceDesktop;
+
+        return DeviceUnknown;
+    }
+
+    if constexpr(compile_info::platform::is_windows)
+        return DeviceDesktop;
+
+#if defined(COFFEE_LINUX)
     return env::Linux::get_device_variant();
-#elif defined(COFFEE_RASPBERRY)
-    return DeviceIOT;
-#elif defined(COFFEE_EMSCRIPTEN)
-    return DeviceIOT;
-#elif defined(COFFEE_GEKKO)
-    return DeviceConsole;
-#else
-    return DeviceUnknown;
 #endif
+
+    return DeviceUnknown;
 }
 
 CString system::runtime_kernel()

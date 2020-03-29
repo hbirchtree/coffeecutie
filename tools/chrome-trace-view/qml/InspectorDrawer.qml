@@ -89,7 +89,6 @@ Drawer {
             }
             onValueChanged: {
                 valLine.anchors.bottomMargin = (value - min) * pixelDistance / max;
-                console.log(valLine.y);
             }
 
             Label {

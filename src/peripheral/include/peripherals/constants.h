@@ -154,6 +154,14 @@ constexpr bool is_android =
 #endif
     ;
 
+constexpr bool is_maemo =
+        #if defined(COFFEE_MAEMO)
+        true
+        #else
+        false
+        #endif
+        ;
+
 constexpr bool is_emscripten =
 #if defined(COFFEE_EMSCRIPTEN)
     true
@@ -185,6 +193,16 @@ constexpr bool is_ios =
     false
 #endif
     ;
+
+constexpr bool is_raspberrypi =
+        #if defined(COFFEE_RASPBERRY)
+        true
+        #else
+        false
+        #endif
+        ;
+
+constexpr bool is_iot = is_raspberrypi;
 
 } // namespace platform
 
