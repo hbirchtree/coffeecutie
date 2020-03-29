@@ -75,7 +75,7 @@ ApplicationWindow {
         id: drawer
         edge: Qt.BottomEdge
         width: root.width
-        height: threadWidth
+        height: threadWidth * 1.2
         modal: false
         interactive: false
     }
