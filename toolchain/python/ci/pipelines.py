@@ -15,6 +15,50 @@ def pipelines_gen_config(build_info, repo_dir):
 
     include_branches = [x['name'] for x in try_get_key(build_info, 'branches', [])]
 
+    unix_env = { 
+                'CONFIGURATION': 'Release',
+                'BUILDVARIANT': '$(variant)',
+                'PIPELINES': '1',
+                'MAKEFILE_DIR': 'toolchain/makers',
+                'BUILD_REPO_URI': '$(Build.Repository.Uri)',
+                'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
+                'BUILD_REPO_EVENT': '$(Build.Reason)',
+                'BUILD_REPO_ID': '$(variant)',
+                'BUILD_REPO_URL': '',
+                'TRAVIS_COMMIT': '$(Build.SourceVersion)',
+                'TRAVIS_REPO_SLUG': '$(Build.Repository.Name)',
+                'GITHUB_TOKEN': '$(Github.Token)'
+        }
+    linux_env = unix_env.copy()
+    osx_env = unix_env.copy()
+
+    linux_env['TRAVIS_OS_NAME'] = 'linux'
+    osx_env['TRAVIS_OS_NAME'] = 'osx'
+
+    windows_env = {
+            'AZURE_IMAGE': 'vs2019-win2019',
+            'VSVERSION': '2019',
+            'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/',
+            'PIPELINES': '1',
+            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
+            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
+            'BUILD_REPO_EVENT': '$(Build.Reason)',
+            'BUILD_REPO_ID': '$(variant)',
+            'BUILD_REPO_URL': '',
+            'GITHUB_TOKEN': '$(Github.Token)',
+            'CMAKE_BIN': 'cmake.exe',
+            'MAKEFILE_DIR': 'toolchain/makers',
+            'SAME_BUILD_DIR': '1',
+            'NOBUILD': '1',
+            'SOURCE_DIR': '$(Build.SourcesDirectory)',
+            'BUILD_DIR': '$(Build.SourcesDirectory)/build',
+            'APPVEYOR_BUILD_FOLDER': '$(Build.SourcesDirectory)/build',
+            'APPVEYOR_REPO_NAME': '$(Build.Repository.Name)',
+            'APPVEYOR_REPO_COMMIT': '$(Build.SourceVersion)',
+            'BUILDVARIANT': '$(variant)',
+            'CONFIGURATION': 'Debug',
+        }
+
     return {
             'trigger': {
                 'paths': {
@@ -45,19 +89,15 @@ def pipelines_gen_config(build_info, repo_dir):
                         }
                     },
                     {
-                        'script': './cb quick-build $(variant)',
+                        'script': './toolchain/ci/travis-build.sh',
                         'displayName': 'Building project',
-                        'env': { 
-                            'CONFIGURATION': 'Release',
-                            'TRAVIS_OS_NAME': 'linux',
-                            'BUILDVARIANT': '$(variant)',
-                            'PIPELINES': '1',
-                            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
-                            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
-                            'BUILD_REPO_EVENT': '$(Build.Reason)',
-                            'BUILD_REPO_ID': '$(variant)',
-                            'BUILD_REPO_URL': ''
-                        }
+                        'env': linux_env.copy()
+                    },
+                    {
+                        'script': './toolchain/ci/travis-deploy.sh',
+                        'displayName': 'Deploying artifacts',
+                        'continueOnError': True,
+                        'env': linux_env.copy()
                     }
                     ]
                 },
@@ -81,19 +121,15 @@ def pipelines_gen_config(build_info, repo_dir):
                         }
                     },
                     {
-                        'script': './cb quick-build $(variant)',
+                        'script': './toolchain/ci/travis-build.sh',
                         'displayName': 'Building project',
-                        'env': { 
-                            'CONFIGURATION': 'Release',
-                            'TRAVIS_OS_NAME': 'osx',
-                            'BUILDVARIANT': '$(variant)',
-                            'PIPELINES': '1',
-                            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
-                            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
-                            'BUILD_REPO_EVENT': '$(Build.Reason)',
-                            'BUILD_REPO_ID': '$(variant)',
-                            'BUILD_REPO_URL': ''
-                        }
+                        'env': osx_env.copy()
+                    },
+                    {
+                        'script': './toolchain/ci/travis-deploy.sh',
+                        'displayName': 'Deploying artifacts',
+                        'continueOnError': True,
+                        'env': osx_env.copy()
                     }
                     ]
                 },
@@ -118,18 +154,20 @@ def pipelines_gen_config(build_info, repo_dir):
                         }
                     },
                     {
-                        'powershell': './cb.ps1 quick-build $(variant)',
+                        'powershell': './toolchain/ci/appveyor-build.ps1',
+                        'displayName': 'Configuring project',
+                        'env': windows_env.copy()
+                    },
+                    {
+                        'powershell': '& cmake.exe --build $env:BUILD_DIR --target install --config $env:CONFIGURATION',
                         'displayName': 'Building project',
-                        'env': { 
-                            'AZURE_IMAGE': 'vs2019-win2019',
-                            'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/',
-                            'PIPELINES': '1',
-                            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
-                            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
-                            'BUILD_REPO_EVENT': '$(Build.Reason)',
-                            'BUILD_REPO_ID': '$(variant)',
-                            'BUILD_REPO_URL': ''
-                        }
+                        'env': windows_env.copy()
+                    },
+                    {
+                        'powershell': './toolchain/ci/appveyor-deploy.ps1',
+                        'displayName': 'Deploying artifacts',
+                        'continueOnError': True,
+                        'env': windows_env.copy()
                     }
                     ]
                 }

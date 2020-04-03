@@ -23,8 +23,11 @@ makefile_location: toolchain/makers
 name: Coffee
 platforms:
   android:
-  - armv7a.kitkat.gles2
-  - armv8a.nougat.gles3
+  - armv7a.v27
+  - armv7a.v21
+  - armv7a.v19
+  - armv8a.v29
+  - armv8a.v27
   emscripten:
   - wasm
   fedora:
@@ -55,9 +58,9 @@ secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 template_location: toolchain/cmake/Templates
 version:
-  hotfix: 23
+  hotfix: 0
   major: 4
   minor: 4
-  patch: 10
+  patch: 12
   release: 2
 versionprefix: rel-

@@ -6,7 +6,7 @@ if($env:SAME_BUILD_DIR) {
     $BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
 }
 
-$VCPP_VERSION = $env:APPVEYOR_BUILD_WORKER_IMAGE.split(" ")[2]
+$VCPP_VERSION = $env:VSVERSION
 $DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$VCPP_VERSION+$env:BUILDVARIANT.zip"
 $DEPLOY_ASSET_BIN = "$env:APPVEYOR_BUILD_FOLDER\binaries_$VCPP_VERSION+$env:BUILDVARIANT.zip"
 
@@ -24,7 +24,7 @@ cd $PrevWd
 
 # Next, we need to find the target tag and release
 # We use Python to do most of the work...
-$PYTHON="C:\Python36\python.exe"
+$PYTHON="python"
 $BUILDINFOPY = "$env:SOURCE_DIR\toolchain\buildinfo.py"
 $SCRIPT_DIR = (. $PYTHON $BUILDINFOPY --source-dir $env:SOURCE_DIR script_location )
 $SCRIPT_DIR = "$env:SOURCE_DIR\$SCRIPT_DIR"

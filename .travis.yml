@@ -15,8 +15,11 @@ env:
   - MAKEFILE_DIR=toolchain/makers
   - CONFIGURATION=Release
   matrix:
-  - BUILDVARIANT=android.armv7a.kitkat.gles2
-  - BUILDVARIANT=android.armv8a.nougat.gles3
+  - BUILDVARIANT=android.armv7a.v19
+  - BUILDVARIANT=android.armv7a.v21
+  - BUILDVARIANT=android.armv7a.v27
+  - BUILDVARIANT=android.armv8a.v27
+  - BUILDVARIANT=android.armv8a.v29
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
   - BUILDVARIANT=gamecube
@@ -26,16 +29,21 @@ env:
   - BUILDVARIANT=testing.linux.lowfat.release
   - BUILDVARIANT=testing.linux.release
   - BUILDVARIANT=ubuntu.amd64
-  - BUILDVARIANT=ubuntu.i686.gles
   - BUILDVARIANT=ios.x86_64
   - BUILDVARIANT=osx
   - BUILDVARIANT=coverage
 matrix:
   exclude:
   - os: osx
-    env: BUILDVARIANT=android.armv7a.kitkat.gles2
+    env: BUILDVARIANT=android.armv7a.v19
   - os: osx
-    env: BUILDVARIANT=android.armv8a.nougat.gles3
+    env: BUILDVARIANT=android.armv7a.v21
+  - os: osx
+    env: BUILDVARIANT=android.armv7a.v27
+  - os: osx
+    env: BUILDVARIANT=android.armv8a.v27
+  - os: osx
+    env: BUILDVARIANT=android.armv8a.v29
   - os: osx
     env: BUILDVARIANT=emscripten.wasm
   - os: osx
@@ -54,8 +62,6 @@ matrix:
     env: BUILDVARIANT=testing.linux.release
   - os: osx
     env: BUILDVARIANT=ubuntu.amd64
-  - os: osx
-    env: BUILDVARIANT=ubuntu.i686.gles
   - os: linux
     env: BUILDVARIANT=ios.x86_64
   - os: linux

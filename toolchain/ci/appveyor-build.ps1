@@ -70,12 +70,12 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
 
 switch -regex ($env:BUILDVARIANT)
 {
-    "^win32.x86$" {
+    "^win32.x86.vs19$" {
         $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
                  "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
 	         "-DCOFFEE_BUILD_ASSIMP=OFF")
     }
-    "^win32.amd64$" {
+    "^win32.amd64.vs19$" {
         $Args = ("-DCOFFEE_BUILD_OPENSSL=ON","-DCOFFEE_BUILD_OPENAL=OFF",`
                  "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
 	         "-DCOFFEE_BUILD_ASSIMP=ON")
@@ -84,6 +84,10 @@ switch -regex ($env:BUILDVARIANT)
         $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
                  "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries",`
 	         "-DCOFFEE_BUILD_ASSIMP=OFF", "-DCOFFEE_BUILD_ASIO=OFF")
+    }
+    default {
+        echo "Failed to match $env:BUILDVARIANT"
+        throw;
     }
 }
 

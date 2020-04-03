@@ -1,6 +1,6 @@
-def linux_targets = ['ubuntu.i686.gles', 'ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'steam.amd64', 'raspberry.armhf', 'gamecube', 'fedora.amd64', 'emscripten.wasm', 'android.armv8a.nougat.gles3', 'android.armv7a.kitkat.gles2', ]
+def linux_targets = ['ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'steam.amd64', 'raspberry.armhf', 'gamecube', 'fedora.amd64', 'emscripten.wasm', 'android.armv8a.v29', 'android.armv8a.v27', 'android.armv7a.v27', 'android.armv7a.v21', 'android.armv7a.v19', ]
 def osx_targets = ['osx', 'ios.x86_64', ]
-def windows_targets = ['win32.amd64', 'uwp.amd64', ]
+def windows_targets = ['win32.amd64.vs19', 'uwp.amd64.vs19', ]
 
 String linux_label = 'linux && docker'
 String osx_label = 'osx'

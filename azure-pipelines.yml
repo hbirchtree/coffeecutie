@@ -16,10 +16,16 @@ jobs:
     vmImage: ubuntu-18.04
   strategy:
     matrix:
-      android.armv7a.kitkat.gles2:
-        variant: android.armv7a.kitkat.gles2
-      android.armv8a.nougat.gles3:
-        variant: android.armv8a.nougat.gles3
+      android.armv7a.v19:
+        variant: android.armv7a.v19
+      android.armv7a.v21:
+        variant: android.armv7a.v21
+      android.armv7a.v27:
+        variant: android.armv7a.v27
+      android.armv8a.v27:
+        variant: android.armv8a.v27
+      android.armv8a.v29:
+        variant: android.armv8a.v29
       emscripten.wasm:
         variant: emscripten.wasm
       fedora.amd64:
@@ -38,8 +44,6 @@ jobs:
         variant: testing.linux.release
       ubuntu.amd64:
         variant: ubuntu.amd64
-      ubuntu.i686.gles:
-        variant: ubuntu.i686.gles
   steps:
   - checkout: self
     submodules: true
@@ -48,18 +52,39 @@ jobs:
     env:
       TRAVIS_OS_NAME: linux
       PIPELINES: '1'
-  - script: ./cb quick-build $(variant)
+  - script: ./toolchain/ci/travis-build.sh
     displayName: Building project
     env:
       CONFIGURATION: Release
-      TRAVIS_OS_NAME: linux
       BUILDVARIANT: $(variant)
       PIPELINES: '1'
+      MAKEFILE_DIR: toolchain/makers
       BUILD_REPO_URI: $(Build.Repository.Uri)
       BUILD_REPO_BRANCH: $(Build.SourceBranch)
       BUILD_REPO_EVENT: $(Build.Reason)
       BUILD_REPO_ID: $(variant)
       BUILD_REPO_URL: ''
+      TRAVIS_COMMIT: $(Build.SourceVersion)
+      TRAVIS_REPO_SLUG: $(Build.Repository.Name)
+      GITHUB_TOKEN: $(Github.Token)
+      TRAVIS_OS_NAME: linux
+  - script: ./toolchain/ci/travis-deploy.sh
+    displayName: Deploying artifacts
+    continueOnError: true
+    env:
+      CONFIGURATION: Release
+      BUILDVARIANT: $(variant)
+      PIPELINES: '1'
+      MAKEFILE_DIR: toolchain/makers
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
+      TRAVIS_COMMIT: $(Build.SourceVersion)
+      TRAVIS_REPO_SLUG: $(Build.Repository.Name)
+      GITHUB_TOKEN: $(Github.Token)
+      TRAVIS_OS_NAME: linux
 - job: macOS_and_iOS
   pool:
     vmImage: macos-10.14
@@ -77,27 +102,48 @@ jobs:
     env:
       TRAVIS_OS_NAME: osx
       PIPELINES: '1'
-  - script: ./cb quick-build $(variant)
+  - script: ./toolchain/ci/travis-build.sh
     displayName: Building project
     env:
       CONFIGURATION: Release
-      TRAVIS_OS_NAME: osx
       BUILDVARIANT: $(variant)
       PIPELINES: '1'
+      MAKEFILE_DIR: toolchain/makers
       BUILD_REPO_URI: $(Build.Repository.Uri)
       BUILD_REPO_BRANCH: $(Build.SourceBranch)
       BUILD_REPO_EVENT: $(Build.Reason)
       BUILD_REPO_ID: $(variant)
       BUILD_REPO_URL: ''
+      TRAVIS_COMMIT: $(Build.SourceVersion)
+      TRAVIS_REPO_SLUG: $(Build.Repository.Name)
+      GITHUB_TOKEN: $(Github.Token)
+      TRAVIS_OS_NAME: osx
+  - script: ./toolchain/ci/travis-deploy.sh
+    displayName: Deploying artifacts
+    continueOnError: true
+    env:
+      CONFIGURATION: Release
+      BUILDVARIANT: $(variant)
+      PIPELINES: '1'
+      MAKEFILE_DIR: toolchain/makers
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
+      TRAVIS_COMMIT: $(Build.SourceVersion)
+      TRAVIS_REPO_SLUG: $(Build.Repository.Name)
+      GITHUB_TOKEN: $(Github.Token)
+      TRAVIS_OS_NAME: osx
 - job: Windows
   pool:
     vmImage: windows-2019
   strategy:
     matrix:
-      uwp.amd64:
-        variant: uwp.amd64
-      win32.amd64:
-        variant: win32.amd64
+      uwp.amd64.vs19:
+        variant: uwp.amd64.vs19
+      win32.amd64.vs19:
+        variant: win32.amd64.vs19
   steps:
   - checkout: self
     submodules: true
@@ -107,10 +153,11 @@ jobs:
       AZURE_IMAGE: vs2019-win2019
       OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
       PIPELINES: '1'
-  - powershell: ./cb.ps1 quick-build $(variant)
-    displayName: Building project
+  - powershell: ./toolchain/ci/appveyor-build.ps1
+    displayName: Configuring project
     env:
       AZURE_IMAGE: vs2019-win2019
+      VSVERSION: '2019'
       OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
       PIPELINES: '1'
       BUILD_REPO_URI: $(Build.Repository.Uri)
@@ -118,3 +165,64 @@ jobs:
       BUILD_REPO_EVENT: $(Build.Reason)
       BUILD_REPO_ID: $(variant)
       BUILD_REPO_URL: ''
+      GITHUB_TOKEN: $(Github.Token)
+      CMAKE_BIN: cmake.exe
+      MAKEFILE_DIR: toolchain/makers
+      SAME_BUILD_DIR: '1'
+      NOBUILD: '1'
+      SOURCE_DIR: $(Build.SourcesDirectory)
+      BUILD_DIR: $(Build.SourcesDirectory)/build
+      APPVEYOR_BUILD_FOLDER: $(Build.SourcesDirectory)/build
+      APPVEYOR_REPO_NAME: $(Build.Repository.Name)
+      APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
+      BUILDVARIANT: $(variant)
+      CONFIGURATION: Debug
+  - powershell: '& cmake.exe --build $env:BUILD_DIR --target install --config $env:CONFIGURATION'
+    displayName: Building project
+    env:
+      AZURE_IMAGE: vs2019-win2019
+      VSVERSION: '2019'
+      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+      PIPELINES: '1'
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
+      GITHUB_TOKEN: $(Github.Token)
+      CMAKE_BIN: cmake.exe
+      MAKEFILE_DIR: toolchain/makers
+      SAME_BUILD_DIR: '1'
+      NOBUILD: '1'
+      SOURCE_DIR: $(Build.SourcesDirectory)
+      BUILD_DIR: $(Build.SourcesDirectory)/build
+      APPVEYOR_BUILD_FOLDER: $(Build.SourcesDirectory)/build
+      APPVEYOR_REPO_NAME: $(Build.Repository.Name)
+      APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
+      BUILDVARIANT: $(variant)
+      CONFIGURATION: Debug
+  - powershell: ./toolchain/ci/appveyor-deploy.ps1
+    displayName: Deploying artifacts
+    continueOnError: true
+    env:
+      AZURE_IMAGE: vs2019-win2019
+      VSVERSION: '2019'
+      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+      PIPELINES: '1'
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
+      GITHUB_TOKEN: $(Github.Token)
+      CMAKE_BIN: cmake.exe
+      MAKEFILE_DIR: toolchain/makers
+      SAME_BUILD_DIR: '1'
+      NOBUILD: '1'
+      SOURCE_DIR: $(Build.SourcesDirectory)
+      BUILD_DIR: $(Build.SourcesDirectory)/build
+      APPVEYOR_BUILD_FOLDER: $(Build.SourcesDirectory)/build
+      APPVEYOR_REPO_NAME: $(Build.Repository.Name)
+      APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
+      BUILDVARIANT: $(variant)
+      CONFIGURATION: Debug

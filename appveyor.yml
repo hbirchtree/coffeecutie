@@ -32,8 +32,8 @@ matrix:
     image: Visual Studio 2015
 environment:
   matrix:
-  - BUILDVARIANT: uwp.amd64
-  - BUILDVARIANT: win32.amd64
+  - BUILDVARIANT: uwp.amd64.vs19
+  - BUILDVARIANT: win32.amd64.vs19
   BUILD_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%
   SOURCE_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%\src
   NOBUILD: 1

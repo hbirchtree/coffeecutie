@@ -24,29 +24,29 @@ function BuildProject($Target, $SourceDir,
     $LibType = "Win32"
     $Arch = "Win64"
 
-    switch ($Target)
+    switch -regex ($Target)
     {
-        "win32.amd64" {
+        "win32.amd64.*" {
             echo "W32/AMD64"
         }
-        "win32.x86" {
+        "win32.x86.*" {
             echo "W32/x86"
             $Arch = ""
         }
-        "uwp.amd64" {
+        "uwp.amd64.*" {
             echo "UWP/AMD64"
             $Toolchain = "uwp"
             $Preload = "uwp"
             $LibType = "WinUWP"
         }
-        "uwp.x86" {
+        "uwp.x86.*" {
             echo "UWP/x86"
             $Toolchain = "uwp"
             $Preload = "uwp"
             $Arch = ""
             $LibType = "WinUWP"
         }
-        "uwp.arm" {
+        "uwp.arm.*" {
             echo "UWP/ARM"
             $Toolchain = "uwp"
             $Preload = "uwp"

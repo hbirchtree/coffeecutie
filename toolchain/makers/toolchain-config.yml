@@ -193,6 +193,7 @@ testing.linux.*:
 .*android.*:
   =description: Android builds, ARMv8-A and ARMv7-A mostly
   =compiler: Clang
+  =android.gles2: OFF
   # Architecture specifics
   .*armv8a.*:
     =android.abi: arm64-v8a
@@ -208,16 +209,23 @@ testing.linux.*:
     =android.abi: mips
   .*(mips64).*:
     =android.abi: mips64
-  # Specifying native API level
-  .*(jelly|kitkat).*:
+  # Native API
+  .*(gingerbread).*:
+    =android.api: 5
+  .*(v19).*:
     =android.api: 19
-  .*(lollipop|marshmallow).*:
+  .*(v21).*:
     =android.api: 21
-  .*nougat.*:
+  .*(v23).*:
+    =android.api: 23
+  .*(v24).*:
     =android.api: 24
-  # Graphical properties
-  .*gles3.*:
-    =android.gles20: OFF
+  .*(v27).*:
+    =android.api: 27
+  .*(v28).*:
+    =android.api: 28
+  .*(v29).*:
+    =android.api: 29
 
   =android.toolchain: clang
   =android.ssl.dir: $(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl
@@ -254,7 +262,7 @@ testing.linux.*:
 
 .*raspberry.*:
   =description: Raspberry Pi ARM 32-bit build
-  =compiler: GCC 8.3
+  =compiler: GCC 9.x
   =preload: linux-raspberry.cmake
   =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
   =container: raspberry

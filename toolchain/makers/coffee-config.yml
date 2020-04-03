@@ -52,10 +52,12 @@ testing.linux.*:
 .*android.*:
   +cmake-opts:
     - -DBUILD_GLES=ON
-    - -DBUILD_GLES_20=$(android.gles20)
     - -DBUILD_ANATIVE=ON
     - -DBUILD_TESTS=OFF
     - -DBUILD_SDL2=OFF
+  .*(gingerbread|v19).*:
+    +cmake-opts:
+      - -DBUILD_GLES_20=ON
   ^((?!\$\(shell\)).)*$:
     =target: multi.ensureinstall
   =cmake-target:
@@ -84,7 +86,7 @@ gamecube.*:
     - -DBUILD_SDL2=OFF
     - -DBUILD_X11=ON
     - -DBUILD_EGL=ON
-.*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten|osx).*:
+.*(ubuntu|fedora|coverage|testing.linux|docs|steam|osx).*:
   +cmake-opts:
     - -DBUILD_ASSIMP=ON
 (ubuntu.amd64|osx).*:
