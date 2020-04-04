@@ -54,7 +54,9 @@ struct GLEAM_Instance_Data
     Vector<ShPtr<GLEAM_TimeQuery>> queries;
 #endif
 
+#if GL_VERSION_VERIFY(0x400, 0x310)
     ShPtr<GLEAM_IndirectBuffer> indirectBuf;
+#endif
 
     struct
     {

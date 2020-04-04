@@ -446,18 +446,22 @@ bool GLEAM_API::LoadAPI(
         CGL::Debug::UnsetDebugGroup();
 #endif
 
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(store->CURR_API != APILevel::GLES_2_0)
     {
         store->inst_data->queries.push_back(MkShared<GLEAM_TimeQuery>());
         store->inst_data->queries.at(0)->alloc();
     }
+#endif
 
+#if GL_VERSION_VERIFY(0x400, 0x310)
     if(GLEAM_FEATURES.draw_multi_indirect || store->CURR_API > APILevel::GL_4_3)
     {
         store->inst_data->indirectBuf =
             MkShared<GLEAM_IndirectBuffer>(RSCA::ReadOnly);
         store->inst_data->indirectBuf->alloc();
     }
+#endif
 
     ThreadSetName(0x8085, "OpenGL GPU-0");
 
