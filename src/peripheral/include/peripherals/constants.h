@@ -155,12 +155,12 @@ constexpr bool is_android =
     ;
 
 constexpr bool is_maemo =
-        #if defined(COFFEE_MAEMO)
-        true
-        #else
-        false
-        #endif
-        ;
+#if defined(COFFEE_MAEMO)
+    true
+#else
+    false
+#endif
+    ;
 
 constexpr bool is_emscripten =
 #if defined(COFFEE_EMSCRIPTEN)
@@ -195,12 +195,12 @@ constexpr bool is_ios =
     ;
 
 constexpr bool is_raspberrypi =
-        #if defined(COFFEE_RASPBERRY)
-        true
-        #else
-        false
-        #endif
-        ;
+#if defined(COFFEE_RASPBERRY)
+    true
+#else
+    false
+#endif
+    ;
 
 constexpr bool is_iot = is_raspberrypi;
 
@@ -217,8 +217,10 @@ namespace profiler {
 
 constexpr bool enabled =
 #if defined(COFFEE_GEKKO) || defined(COFFEE_EMSCRIPTEN) || MODE_RELEASE
+#define PERIPHERAL_PROFILER_ENABLED 0
     false
 #else
+#define PERIPHERAL_PROFILER_ENABLED 1
     true
 #endif
     ;

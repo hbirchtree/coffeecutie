@@ -154,28 +154,28 @@ struct ExtraDataImpl
     STATICINLINE void Add(
         UNUSED_PARAM(CString const&, k), UNUSED_PARAM(CString const&, v))
     {
-#if MODE_DEBUG
+        if constexpr(!compile_info::profiler::enabled)
+            return;
+
         auto context = PContext::ProfilerStore();
 
-        C_PTR_CHECK(context);
+        C_PTR_CHECK(context)
 
         Lock _(context->access);
 
         context->extra_data[k] = v;
-#endif
     }
 
     STATICINLINE PExtraData Get()
     {
-#if MODE_DEBUG
+        if constexpr(!compile_info::profiler::enabled)
+            return {};
+
         auto context = PContext::ProfilerStore();
 
-        C_PTR_CHECK(context);
+        C_PTR_CHECK(context)
 
         return context->extra_data;
-#else
-        return {};
-#endif
     }
 };
 

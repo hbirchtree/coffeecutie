@@ -62,12 +62,24 @@ namespace comp_app {
 struct DefaultAppInfo : AppInfo
 {
   public:
-    void add(text_type key, text_type value);
+    virtual void        add(text_type key, text_type value) final;
+    virtual text_type_t get(text_type key) final;
 };
 
 void DefaultAppInfo::add(text_type key, text_type value)
 {
     Coffee::ExtraData::Add(key, value);
+}
+
+text_type_t DefaultAppInfo::get(text_type key)
+{
+    auto data = Coffee::ExtraData::Get();
+    auto it   = Coffee::ExtraData::Get().find(key);
+
+    if(it == data.end())
+        return {};
+
+    return it->second;
 }
 
 #if defined(COFFEE_EMSCRIPTEN)
@@ -281,23 +293,23 @@ void addDefaults(
         BasicEventBus<AppEvent>,
         DefaultAppInfo>>(container, ec);
 
+    auto& appInfo = *container.service<AppInfo>();
+
     /* Selection of window/event manager */
 #if defined(FEATURE_ENABLE_SDL2Components)
     sdl2::GLContext::register_service<sdl2::GLContext>(container);
     loader.loadAll<sdl2::Services>(container, ec);
 
-    Coffee::ExtraData::Add(
-        "window:library",
-        "SDL2 " + Coffee::ExtraData::Get().at("sdl2:version"));
+    appInfo.add("window:library", "SDL2 " + appInfo.get("sdl2:version"));
 #elif defined(FEATURE_ENABLE_X11Component)
     loader.loadAll<x11::Services>(container, ec);
-    Coffee::ExtraData::Add("window:library", "X11");
+    appInfo.add("window:library", "X11");
 #elif defined(FEATURE_ENABLE_GLKitComponent)
     loader.loadAll<glkit::Services>(container, ec);
-    Coffee::ExtraData::Add("window:library", "Apple GLKit");
+    appInfo.add("window:library", "Apple GLKit");
 #elif defined(FEATURE_ENABLE_ANativeComponent)
     loader.loadAll<anative::Services>(container, ec);
-    Coffee::ExtraData::Add("window:library", "Android NativeActivity");
+    appInfo.add("window:library", "Android NativeActivity");
 #elif defined(FEATURE_ENABLE_CogComponent)
     /* There is no window */
 #else
@@ -305,7 +317,7 @@ void addDefaults(
 #endif
 
 #if defined(SELECT_API_OPENGL)
-    Coffee::ExtraData::Add("graphics:library", "OpenGL");
+    appInfo.add("graphics:library", "OpenGL");
 
     /* Selection of (E)GL context */
 #if defined(FEATURE_ENABLE_SDL2Components)
@@ -313,10 +325,10 @@ void addDefaults(
     sdl2::GLFramebuffer::register_service<sdl2::GLFramebuffer>(container);
     container.service<sdl2::GLContext>()->load(container, ec);
     container.service<sdl2::GLFramebuffer>()->load(container, ec);
-    Coffee::ExtraData::Add("gl:context", "SDL2");
+    appInfo.add("gl:context", "SDL2");
 #elif defined(FEATURE_ENABLE_EGLComponent)
     loader.loadAll<egl::Services>(container, ec);
-    Coffee::ExtraData::Add("gl:context", "EGL");
+    appInfo.add("gl:context", "EGL");
 #else
 #error No context manager
 #endif
@@ -326,10 +338,10 @@ void addDefaults(
     defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN) || \
     defined(COFFEE_RASPBERRYPI)
     loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
-    Coffee::ExtraData::Add("gl:loader", "Linked");
+    appInfo.add("gl:loader", "Linked");
 #elif defined(FEATURE_ENABLE_GLADComponent)
     loader.loadAll<glad::Services>(container, ec);
-    Coffee::ExtraData::Add("gl:loader", "GLAD");
+    appInfo.add("gl:loader", "GLAD");
 #else
 #error No OpenGL/ES binding
 #endif

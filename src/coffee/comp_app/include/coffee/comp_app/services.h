@@ -132,7 +132,8 @@ struct AppLoadableService
 
 struct AppInfo : AppService<AppInfo>
 {
-    virtual void add(text_type key, text_type value) = 0;
+    virtual void        add(text_type key, text_type value) = 0;
+    virtual text_type_t get(text_type key)                  = 0;
 };
 
 struct Windowing : AppService<Windowing>

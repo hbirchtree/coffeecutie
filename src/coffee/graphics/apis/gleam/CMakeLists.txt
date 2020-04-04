@@ -92,7 +92,7 @@ endif()
 
 if(BUILD_ANGLE)
     # TODO: Write wrapper for importing/downloading choco packages
-    find_package( ANGLE REQUIRED )
+    find_package( ANGLE CONFIG REQUIRED )
     list ( APPEND CORE_EXTRA_LIBRARIES
         AngleEGL AngleGLESv2
         )

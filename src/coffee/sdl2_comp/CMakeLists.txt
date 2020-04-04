@@ -7,7 +7,7 @@ if(NOT EMSCRIPTEN)
             NAMES sdl2=SDL2
             )
 
-        find_package ( SDL2 REQUIRED )
+        find_package ( SDL2 CONFIG REQUIRED )
     endif()
 
     set ( LIBS

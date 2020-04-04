@@ -155,8 +155,8 @@ dependency_get (
         zstd
         lz4
     )
-find_package ( lz4 )
-find_package ( zstd )
+find_package ( lz4 CONFIG )
+find_package ( zstd CONFIG )
 
 coffee_library (
     TARGET CoreCompression
@@ -361,10 +361,10 @@ if(TARGET SDLPowerInfo)
         dependency_get (
             SOURCE hbirchtree/native-library-bundle
             TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES sdl2
+            NAMES sdl2=SDL2
             )
 
-        find_package ( SDL2 QUIET )
+        find_package ( SDL2 CONFIG QUIET )
     endif()
     target_link_libraries ( CoreCommon INTERFACE
         SDLPowerInfo

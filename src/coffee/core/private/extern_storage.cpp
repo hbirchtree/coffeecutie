@@ -51,7 +51,7 @@ struct InternalState
     unw_context_t* unwind_context = nullptr;
 #endif
 
-#if !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
     ShPtr<profiling::PContext> profiler_store;
 #endif
 
@@ -146,6 +146,7 @@ STATICINLINE void RegisterProfilerThreadState()
     if constexpr(!compile_info::profiler::enabled)
         return;
 
+#if PERIPHERAL_PROFILER_ENABLED
     if(ISTATE)
     {
         auto tid   = ThreadId().hash();
@@ -156,6 +157,7 @@ STATICINLINE void RegisterProfilerThreadState()
         Lock _(store->access);
         store->thread_states[tid] = TSTATE->profiler_data;
     }
+#endif
 }
 
 void SetInternalThreadState(P<InternalThreadState> state)
@@ -200,13 +202,14 @@ bool ProfilerEnabled()
 
 ShPtr<profiling::PContext> GetProfilerStore()
 {
-    if constexpr(!compile_info::profiler::enabled)
-        Throw(implementation_error("profiler disabled"));
-
+#if PERIPHERAL_PROFILER_ENABLED
     if(!ISTATE)
         return {};
 
     return ISTATE->profiler_store;
+#else
+    return {};
+#endif
 }
 
 ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
@@ -214,10 +217,14 @@ ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
     if constexpr(!compile_info::profiler::enabled)
         Throw(implementation_error("profiler disabled"));
 
+#if PERIPHERAL_PROFILER_ENABLED
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
     return TSTATE->profiler_data;
+#else
+    return {};
+#endif
 }
 
 Mutex& GetPrinterLock()
@@ -234,6 +241,7 @@ ThreadId& GetCurrentThreadId()
     if constexpr(!compile_info::profiler::enabled)
         Throw(releasemode_error("thread ID is not available"));
 
+#if PERIPHERAL_PROFILER_ENABLED
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
@@ -241,6 +249,7 @@ ThreadId& GetCurrentThreadId()
     C_PTR_CHECK(TSTATE);
 
     return TSTATE->current_thread_id;
+#endif
 }
 
 stl_types::UqLock LockState(libc_types::cstring key)
