@@ -37,13 +37,13 @@ bool filescratch_test()
     Bytes testMem = Bytes::From(test_data, sz);
 
     for(u32 i = 0; i < times; i++)
-        MemCpy(testMem, f.at(sz * i, sz));
+        MemCpy(testMem, *f.at(sz * i, sz));
     //        MemCpy(&((byte_t*)f.ptr)[sz*i],test_data,sz);
 
     bool flag = true;
 
     for(u32 i = 0; i < times; i++)
-        if(!MemCmp(f.at(sz * i, sz), testMem))
+        if(!MemCmp(*f.at(sz * i, sz), testMem))
         {
             flag = false;
             break;

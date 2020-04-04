@@ -286,7 +286,7 @@ coffee_library (
     SOURCES
     private/profiler/profiling_export.cpp
 
-    LIBRARIES CoreDebug CoreCommon
+    LIBRARIES CoreDebug CoreCommon CoreFile
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/profiler>
