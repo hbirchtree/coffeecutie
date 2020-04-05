@@ -483,11 +483,11 @@ void GXAPI::Draw(
         auto indexMask   = data.elementType() == T::UByte ? 0xFF : 0xFFFF;
         auto indexStride = data.elementType() == T::UByte ? 1 : 2;
 
-        auto baseIndex = desc.indexBuffer->data.at(data.indexOffset());
+        auto baseIndex = *desc.indexBuffer->data.at(data.indexOffset());
 
         for(auto i : stl_types::Range<>(data.elements()))
         {
-            u16 idx = baseIndex.at(i * indexStride).as<u16 const>()[0];
+            u16 idx = *baseIndex.at(i * indexStride).as<u16 const>()[0];
             indexMap(desc.attribs, idx);
         }
     } else
@@ -503,7 +503,7 @@ void GXAPI::Draw(
                 if(buf_it == desc.buffers.end())
                     continue;
 
-                auto buf = buf_it->second->data.at(
+                auto buf = *buf_it->second->data.at(
                     attr.m_boffset + i * attr.m_stride + attr.m_off);
 
                 auto buf_u8  = buf.as<u8>();

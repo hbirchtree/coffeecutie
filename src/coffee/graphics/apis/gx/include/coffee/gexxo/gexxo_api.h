@@ -77,7 +77,7 @@ struct VertexBuffer : Coffee::RHI::GraphicsAPI::VertexBuffer
 
     FORCEDINLINE semantic::Bytes map(szptr offset, szptr size)
     {
-        return data.at(offset, size);
+        return *data.at(offset, size);
     }
 
     semantic::Bytes data;
