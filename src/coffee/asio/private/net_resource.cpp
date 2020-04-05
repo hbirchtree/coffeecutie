@@ -60,7 +60,7 @@ void Resource::initRsc(const Url& url)
     m_request.header.resource = "/" + urlComponents.resource();
     m_request.header.version  = http::version_t::v11;
 
-    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
+    //    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
 
     m_request.port = port;
 

@@ -173,7 +173,7 @@ endif (${IOS_PLATFORM} STREQUAL "OS")
 set (CMAKE_OSX_ARCHITECTURES ${IOS_ARCH} CACHE string  "Build architecture for iOS")
 
 # Set the find root to the iOS developer roots and to user defined paths
-set (CMAKE_FIND_ROOT_PATH ${CMAKE_IOS_DEVELOPER_ROOT} ${CMAKE_IOS_SDK_ROOT} ${CMAKE_PREFIX_PATH} ${NATIVE_LIBRARY_DIR} ${COFFEE_ROOT_DIR} CACHE string  "iOS find search path root")
+set (CMAKE_FIND_ROOT_PATH ${CMAKE_IOS_DEVELOPER_ROOT};${CMAKE_IOS_SDK_ROOT};${CMAKE_PREFIX_PATH} CACHE string  "iOS find search path root")
 
 # default to searching for frameworks first
 set (CMAKE_FIND_FRAMEWORK FIRST)
@@ -220,29 +220,26 @@ set ( CMAKE_FIND_ROOT_PATH
     ${CMAKE_SOURCE_DIR}/src/libs
     )
 
-set ( CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++0x" 
+set ( CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++17" 
 		CACHE STRING "" )
 set ( CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" 
 		CACHE STRING "" )
 set ( CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0.compiler"
 		CACHE STRING "" )
 
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" )
 
-set ( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -std=c++11 -stdlib=libc++" )
+set ( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -stdlib=libc++" )
 set ( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g" )
 
-set ( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Ofast -std=c++11 -stdlib=libc++" )
+set ( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Ofast -stdlib=libc++" )
 set ( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -g -Ofast" )
 
-set ( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -std=c++11 -stdlib=libc++" )
+set ( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -stdlib=libc++" )
 set ( CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os" )
 
-set ( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast -std=c++11 -stdlib=libc++" )
+set ( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast -stdlib=libc++" )
 set ( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Ofast" )
-
-#add_definitions (-fvisibility=hidden)
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 
 if (${IOS_PLATFORM} STREQUAL "OS")
     set ( CMAKE_LIBRARY_ARCHITECTURE "ios-universal" CACHE STRING "" )

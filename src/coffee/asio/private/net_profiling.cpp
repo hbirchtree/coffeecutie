@@ -108,7 +108,7 @@ void ProfilingExport()
         cVerbose(10, "Network export cancelled");
 }
 
-#if !defined(COFFEE_APPLE)
+#if !defined(COFFEE_MACOS)
 int RegisterProfiling()
 {
     cVerbose(10, "Registering network profiling");

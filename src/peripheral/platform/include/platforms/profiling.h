@@ -356,7 +356,7 @@ struct GpuProfilerContext
         ShPtr<QueryType> query,
         ThreadId::Hash   gpu_thread = 0x8085) :
         m_thread(gpu_thread),
-        m_query(query), m_name(name)
+        m_name(name), m_query(query)
     {
         if constexpr(!compile_info::profiler::gpu::enabled)
             return;

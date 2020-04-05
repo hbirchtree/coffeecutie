@@ -75,7 +75,7 @@ FORCEDINLINE void PrintVersionInfo()
     if constexpr(compile_info::lowfat_mode)
         return;
 
-    auto const& app_data = ApplicationData();
+    auto const& app_data = GetCurrentApp();
 
     cOutputPrint(
         "{0}, released by {1}, version {2} ({3} mode)",
@@ -156,7 +156,7 @@ static void CoffeeInit_Internal(u32 flags)
     }
 
     State::GetBuildInfo().default_window_name =
-        ApplicationData().application_name + " [OpenGL]";
+        GetCurrentApp().application_name + " [OpenGL]";
 }
 
 void SetPlatformState()

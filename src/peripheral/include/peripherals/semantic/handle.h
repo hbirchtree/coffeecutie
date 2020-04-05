@@ -63,11 +63,11 @@ struct generic_handle_t : non_copy
     {
         using namespace handle_modes;
 
-        if constexpr(std::is_same_v<auto_close, HandleMode>)
+        if constexpr(std::is_same<auto_close, HandleMode>::value)
             if(static_cast<bool>(close_func) && hnd != InvalidValue)
                 close_func(hnd);
 
-        if constexpr(std::is_same_v<exception_on_destruct, HandleMode>)
+        if constexpr(std::is_same<exception_on_destruct, HandleMode>::value)
         {
             static_assert(
                 !(exceptions_mode && static_cast<bool>(close_func)),

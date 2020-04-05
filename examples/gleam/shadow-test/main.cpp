@@ -47,7 +47,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     cDebug("Monitor: {0}", renderer.monitor());
 
     data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
-    if(!data->api(PlatformData::IsDebug()))
+    if(!data->api(compile_info::debug_mode))
     {
         cDebug("Failed to initialize graphics API");
     }
@@ -59,7 +59,8 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
 
 void loop_fun(CDRenderer& renderer, SharedData* data)
 {
-    RHI::GLEAM::GLEAM_API::DefaultFramebuffer()->clear(0, {1.f, 1.f, 0.f, 0.1f});
+    RHI::GLEAM::GLEAM_API::DefaultFramebuffer()->clear(
+        0, {1.f, 1.f, 0.f, 0.1f});
 
     if(data->frame_ts <= Time<>::CurrentTimestamp())
     {

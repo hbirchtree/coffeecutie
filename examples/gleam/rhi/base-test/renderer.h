@@ -10,12 +10,15 @@
 #include <coffee/core/types/graphics_types.h>
 #include <coffee/core/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
-#include <coffee/graphics/common/query/gpu_query.h>
 #include <coffee/image/image_coder_system.h>
 #include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
 
 #include <coffee/components/entity_selectors.h>
+
+#if defined(FEATURE_ENABLE_GpuQuery)
+#include <coffee/graphics/common/query/gpu_query.h>
+#endif
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/asio_system.h>
@@ -662,6 +665,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     entities.exec();
 
+#if defined(FEATURE_ENABLE_GpuQuery)
     GpuInfo::GpuQueryInterface interf;
     gpu_query_error            ec;
     GpuInfo::LoadDefaultGpuQuery(interf, ec);
@@ -671,6 +675,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         for(auto dev : GpuInfo::GpuQueryView(interf))
             cDebug("Video memory: {0}:{1}", dev.mem().total, dev.mem().free);
     }
+#endif
 
     /* We query the current pipeline for possible uniform/texture/buffer values
      */
@@ -774,4 +779,5 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     Profiler::PopContext();
 
     d->entities.reset();
+    d->g_data = {};
 }

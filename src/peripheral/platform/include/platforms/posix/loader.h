@@ -2,7 +2,7 @@
 
 #include <peripherals/base.h>
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE) || defined(COFFEE_ANDROID)
+#if defined(COFFEE_LINUX) || defined(COFFEE_MACOS) || defined(COFFEE_ANDROID)
 
 #include <platforms/base/loader.h>
 

@@ -126,9 +126,8 @@ macro(COFFEE_LIBRARY)
 
             if(IS_DIRECTORY "${HEAD_DIR}")
                 file ( GLOB_RECURSE ALL_HEADERS
-                    #        ${HEADER_DIR}/*.h
-                    #        ${HEADER_DIR}/*.hpp
-                    ${HEADER_DIR}/*
+                    ${HEAD_DIR}/*.h
+                    ${HEAD_DIR}/*.hpp
                     )
             else()
                 message ( FATAL_ERROR "No header directory: ${HEAD_DIR} (${HEADER_DIR})" )

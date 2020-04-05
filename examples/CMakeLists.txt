@@ -10,7 +10,7 @@
 add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
 
-if(BUILD_GRAPHICS_COMMON)
+if(BUILD_GRAPHICS_COMMON AND NOT NO_DYNAMIC_LINKING)
     add_subdirectory (core/gpu-query)
 endif()
 
@@ -82,7 +82,7 @@ endif()
 #
 
 # Examples of the CBlam API and its import of Blam engine data
-if(BUILD_BLAM AND BUILD_GLEAM)
+if(BUILD_BLAM AND BUILD_GLEAM AND FALSE)
     add_subdirectory (blam/cblam-testing)
 endif()
 

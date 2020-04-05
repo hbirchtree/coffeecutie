@@ -597,6 +597,8 @@ UrlParse UrlParse::From(const Url& url)
     DProfContext _(URLPARSE_TAG);
     UrlParse     p = {};
 
+#if !defined(COFFEE_IOS)
+
     Vector<CString> matches;
 
     {
@@ -620,7 +622,32 @@ UrlParse UrlParse::From(const Url& url)
         p.m_port     = 0;
         p.m_resource = matches[URL_Resource];
     }
+#else
+    p.m_protocol = "https";
+    p.m_port     = 0;
 
+    auto urlData     = *url;
+    auto protocolEnd = urlData.find("://");
+    auto hasProtocol = protocolEnd != CString::npos;
+
+    auto host        = urlData.substr(hasProtocol ? protocolEnd + 3 : 0);
+    auto hostEnd     = host.find("/");
+    auto hasResource = hostEnd != CString::npos;
+    auto portStart   = host.find(":");
+
+    if(portStart != CString::npos)
+    {
+        p.m_port = cast_string<u32>(host.substr(
+            portStart + 1, hasResource ? hostEnd - portStart : CString::npos));
+    }
+
+    auto resource = host.substr(hostEnd);
+
+    p.m_protocol = urlData.substr(0, protocolEnd);
+    p.m_host     = host.substr(0, hostEnd);
+    p.m_resource = resource;
+
+#endif
     return p;
 }
 

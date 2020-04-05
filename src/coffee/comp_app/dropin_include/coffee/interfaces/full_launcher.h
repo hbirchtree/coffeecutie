@@ -24,9 +24,6 @@ libc_types::i32 AutoExec(
     LoopFunc<R, D>&&     loop,
     LoopFunc<R, D>&&     cleanup)
 {
-    using EventAppType =
-        comp_app::AppService<comp_app::EventapplicationWrapper<R, D>>;
-
     comp_app::app_error ec;
 
     auto& container = comp_app::createContainer();
@@ -34,8 +31,6 @@ libc_types::i32 AutoExec(
 
     comp_app::configureDefaults(loader);
     comp_app::addDefaults(container, loader, ec);
-
-    auto container_ptr = &container;
 
     comp_app::AutoExec<R, D>::addTo(
         container,

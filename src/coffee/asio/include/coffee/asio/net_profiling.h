@@ -12,7 +12,7 @@ namespace Net {
  */
 extern void ProfilingExport();
 
-#if !defined(COFFEE_APPLE)
+#if !defined(COFFEE_MACOS)
 NO_DISCARD extern int RegisterProfiling();
 #else
 NO_DISCARD inline auto RegisterProfiling()

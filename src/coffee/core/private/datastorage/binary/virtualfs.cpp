@@ -317,7 +317,7 @@ bool GenVirtFS(
 
             MemClear(extensionData);
 
-            dir_index::CharInsert(
+            C_UNUSED(auto ext) = dir_index::CharInsert(
                 index.first, outIndex.extension.ext, MaxExtensionLength);
             outIndex.extension.num_files = index.second.size();
 

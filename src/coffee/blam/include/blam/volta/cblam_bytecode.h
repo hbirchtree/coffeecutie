@@ -271,7 +271,7 @@ struct opcode_layout
         if(param_type != type_t::string_)
             Throw(undefined_behavior("invalid string"));
 
-        return string_seg.at(data_ptr).str();
+        return (*string_seg.at(data_ptr)).str();
     }
 
     /* Value types for return */
@@ -781,7 +781,7 @@ struct opcode_iterator
 
     inline opcode_iterator& operator++()
     {
-        auto code      = m_data.at(m_offset);
+        auto code      = *m_data.at(m_offset);
         auto separator = terminator;
         auto loc =
             ::memmem(code.data, code.size, &separator, sizeof(separator));
@@ -813,7 +813,7 @@ struct opcode_iterator
 
     inline opcode_layout<BC> const& operator*() const
     {
-        auto out = m_data.at(m_offset).template as<opcode_layout<BC> const>();
+        auto out = (*m_data.at(m_offset)).template as<opcode_layout<BC> const>();
         if(!out)
             Throw(undefined_behavior("invalid iterator"));
 
@@ -1170,7 +1170,7 @@ struct bytecode_pointer
         if(i > (last_param - first_param + 1))
             Throw(undefined_behavior("param out of bounds"));
 
-        auto const& out = value_stack.at(value_stack.size() - i - 1);
+        auto out = *value_stack.at(value_stack.size() - i - 1);
 
         if(!match_type(type, out.ret_type))
             Throw(undefined_behavior("param has wrong type"));

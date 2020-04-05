@@ -184,7 +184,7 @@ i32 coffee_main(i32, cstring_w*)
 
         255, 255, 0x00, 0xff, 0xff,
     };
-    static Array<u8, 4> index_data = {0, 1, 2, 3};
+//    static Array<u8, 4> index_data = {0, 1, 2, 3};
 
     comp_app::AppContainer<APIData>::addTo(
         e,

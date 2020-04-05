@@ -26,6 +26,7 @@ COFFEE_APP_FUNC void InstallDefaultSigHandlers();
 
 COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
 
+C_DEPRECATED_S("use GetCurrentApp()")
 COFFEE_APP_FUNC platform::info::AppData const& ApplicationData();
 
 extern void SetCurrentApp(platform::info::AppData const& app);

@@ -3,7 +3,6 @@
 #include "gl_shared_debug.h"
 
 #include <coffee/core/base.h>
-#include <coffee/graphics/common/gltypes.h>
 
 namespace Coffee {
 namespace CGL {

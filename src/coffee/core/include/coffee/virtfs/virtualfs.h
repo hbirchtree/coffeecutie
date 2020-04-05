@@ -91,7 +91,7 @@ struct Resource : semantic::ByteProvider
      * \brief Check validity of resource and/or data it returns
      * \return
      */
-    bool valid() const;
+    NO_DISCARD bool valid() const;
 
     cstring resource() const;
     /*!
@@ -100,14 +100,14 @@ struct Resource : semantic::ByteProvider
      *  decompression happens here.
      * \return
      */
-    Bytes data() const;
+    NO_DISCARD Bytes data() const;
 
-    operator Bytes()
+    NO_DISCARD operator Bytes()
     {
         return data();
     }
 
-    operator Path() const;
+    NO_DISCARD operator Path() const;
 };
 
 enum FileFlags
@@ -839,18 +839,17 @@ struct vfs_view
         VFS::OpenVFS(base, &m_vfs, ec);
     }
 
-    iterator begin() const
+    NO_DISCARD iterator begin() const
     {
         return iterator(m_vfs, 0);
     }
 
-    iterator end() const
+    NO_DISCARD iterator end() const
     {
         return iterator();
     }
 
-    C_DEPRECATED_S("Use GetFile<binary_tree> for better performance")
-    iterator starting_with(Path const& path, iterator start)
+    NO_DISCARD iterator starting_with(Path const& path, iterator start)
     {
         return std::find_if(start, end(), [&](VFile const& file) {
             CString fname = file.name;
@@ -914,7 +913,7 @@ extern bool GenVirtFS(
     vfs_error_code&       ec,
     generation_settings&& settings = {});
 
-FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
+NO_DISCARD FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
     Url out      = MkUrl(url);
     out.category = Url::Memory;
@@ -926,7 +925,7 @@ FORCEDINLINE cstring Resource::resource() const
     return file->name;
 }
 
-FORCEDINLINE Resource::operator Path() const
+NO_DISCARD FORCEDINLINE Resource::operator Path() const
 {
     return Path(file->name);
 }

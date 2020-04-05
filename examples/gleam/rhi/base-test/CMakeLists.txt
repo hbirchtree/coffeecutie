@@ -16,6 +16,9 @@ coffee_application (
     "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
     )
 
+if(TARGET GpuQuery)
+    target_link_libraries ( GLeamBaseTest_RHI PUBLIC GpuQuery )
+endif()
 
 if(TARGET ASIO)
     target_link_libraries ( GLeamBaseTest_RHI PUBLIC ASIO )

@@ -39,9 +39,9 @@ bool matrix_decompose()
     Matf4 xf = translation(Matf4(), {1, 2, 3}) * rotation_xf *
                scale(Matf4(), {20, 30, 40});
 
-    Vecf3 trans_    = decompose::get<decompose::translation>(xf);
-    Vecf3 scale_    = decompose::get<decompose::scale>(xf);
-    Matf4 rotation_ = decompose::get<decompose::rotation>(xf);
+    C_UNUSED(Vecf3 trans_) = decompose::get<decompose::translation>(xf);
+    Vecf3 scale_           = decompose::get<decompose::scale>(xf);
+    Matf4 rotation_        = decompose::get<decompose::rotation>(xf);
 
     xf = translation(Matf4(), {1, 2, 3}) * scale(Matf4(), {20, 30, 40}) *
          rotation_xf;

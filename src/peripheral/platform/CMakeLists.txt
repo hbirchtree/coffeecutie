@@ -150,15 +150,19 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
         platforms/posix/stacktrace.cpp
 
         #
-        # Dynamic linking (libdl)
-        #
-        platforms/posix/loader.cpp
-
-        #
         # File management
         #
         platforms/posix/file.cpp
         )
+
+    if(NOT IOS)
+        target_sources ( PeripheralPlatform PRIVATE
+            #
+            # Dynamic linking (libdl)
+            #
+            platforms/posix/loader.cpp
+            )
+    endif()
 
     find_package( Unwind QUIET )
     if(UNWIND_FOUND)

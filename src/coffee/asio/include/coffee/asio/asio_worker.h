@@ -20,10 +20,12 @@ struct Worker : State::GlobalState
 
 STATICINLINE ShPtr<Worker> GenWorker()
 {
-    if(State::PeekState(context_name).get())
-        return {};
+    auto worker = std::dynamic_pointer_cast<Worker>(
+                                    State::PeekState(context_name));
+    if(worker)
+        return worker;
 
-    auto worker     = MkShared<Worker>();
+    worker          = MkShared<Worker>();
     worker->context = ASIO::InitService();
 
     State::SwapState(context_name, worker);

@@ -51,6 +51,7 @@ elseif(APPLE AND IOS)
 
     target_sources ( CoreApplication PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platform/uikit/AppDelegate.mm>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platform/uikit/main.m>
         )
     target_compile_definitions ( CoreApplication PRIVATE
         -DGLES_SILENCE_DEPRECATION

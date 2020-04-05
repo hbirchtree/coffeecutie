@@ -161,7 +161,7 @@ i32 coffee_main(i32, cstring_w*)
                 bytecode_pointer.num_params(),
                 bytecode_pointer.current->exp_type);
 
-            auto out = bytecode_pointer.evaluate(
+            C_UNUSED(auto out) = bytecode_pointer.evaluate(
                 *bytecode_pointer.current, opcode_executor);
 
             bytecode_pointer.advance();

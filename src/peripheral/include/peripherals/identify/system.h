@@ -54,18 +54,24 @@
 
 #include <TargetConditionals.h>
 
-#undef C_SYSTEM_STRING
-#define C_SYSTEM_STRING "macOS"
 #define COFFEE_APPLE
 
-#if defined(TARGET_OS_OSX)
+#if TARGET_OS_OSX
+#undef C_SYSTEM_STRING
+#define C_SYSTEM_STRING "macOS"
 #define COFFEE_APPLE_DESKTOP
-#elif defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+#define COFFEE_MACOS
+
+#elif TARGET_OS_IOS || TARGET_OS_SIMULATOR
 #undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "iOS"
 #define COFFEE_ARCH_LLP64
 #define COFFEE_APPLE_MOBILE
 #define COFFEE_IOS
+
+#else
+#error Unrecognized Apple platform, please define it
+
 #endif
 
 #endif
@@ -80,7 +86,7 @@
 #endif
 
 /* Generic UNIX, mostly for POSIX libraries */
-#if(defined(__unix__) || defined(COFFEE_APPLE)) && !defined(COFFEE_WINDOWS)
+#if (defined(__unix__) || defined(COFFEE_APPLE)) && !defined(COFFEE_WINDOWS)
 #define COFFEE_UNIXPLAT
 #endif
 

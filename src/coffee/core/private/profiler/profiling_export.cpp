@@ -361,13 +361,12 @@ void ExportChromeTracerData(CString& target)
 
     JSON::Object application;
 
-    auto appd = ApplicationData();
+    auto appd = GetCurrentApp();
     application.AddMember(
         "name", FromString(appd.application_name, alloc), alloc);
     application.AddMember(
         "organization", FromString(appd.organization_name, alloc), alloc);
-    application.AddMember<u64>(
-        "version", ApplicationData().version_code, alloc);
+    application.AddMember<u64>("version", appd.version_code, alloc);
 
     doc.AddMember("application", application, alloc);
     PutRuntimeInfo(doc, alloc);

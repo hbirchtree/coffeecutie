@@ -592,10 +592,15 @@ void GLEAM_Surface3D_Base::upload(
 
     if(stride != 0)
     {
+#if GL_VERSION_VERIFY(0x300, 0x300)
         if(stride < size.width)
             Throw(undefined_behavior("stride is less than upload size"));
 
         CGL33::PixelStorei(GL_UNPACK_ROW_LENGTH, stride);
+#else
+        ec = GLEAM::APIError::UnimplementedPath;
+        return;
+#endif
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -693,8 +698,10 @@ void GLEAM_Surface3D_Base::upload(
         }
     }
 
+#if GL_VERSION_VERIFY(0x300, 0x300)
     if(stride != 0)
         CGL33::PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
 }
 
 GLEAM_SurfaceCubeArray::GLEAM_SurfaceCubeArray(

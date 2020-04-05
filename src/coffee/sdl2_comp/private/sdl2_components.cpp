@@ -328,7 +328,6 @@ comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32) const
 void GLContext::setupAttributes(entity_container& c)
 {
     using GLConfig = comp_app::GLConfig;
-    using P        = typing::pixels::PixFmt;
     auto& glConfig = comp_app::AppLoader::config<GLConfig>(c);
 
     using namespace typing::pixels;

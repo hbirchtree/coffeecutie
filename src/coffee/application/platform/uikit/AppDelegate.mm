@@ -283,7 +283,12 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
             // nativeBounds returns the portrait resolution...
             CGSize size = [[UIScreen mainScreen] nativeBounds].size;
             
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+            UIInterfaceOrientation currOri =
+                appdelegate_typed.window.windowScene.interfaceOrientation;
+#else
             UIInterfaceOrientation currOri = [[UIApplication sharedApplication] statusBarOrientation];
+#endif
             // So we have to transpose it when running in landscape mode
             // We cannot use UIDevice's orientation, because it is undefined
             //  at load-time
@@ -340,12 +345,5 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
         default:
         printf("Unhandled signal: %i\n", event);
         break;
-    }
-}
-
-int main(int argc, char** argv)
-{
-    @autoreleasepool {
-        UIApplicationMain(argc, argv, NULL, NSStringFromClass([AppDelegate class]));
     }
 }

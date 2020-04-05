@@ -278,8 +278,8 @@ void examine_map(Resource&& mapfile, T version)
         {
             Bytes cache_view = cache_out;
 
-            cache_view.insert(cache_view.begin(), 255);
-            cache_view.insert(cache_view.begin() + 10, 255);
+            cache_view[0]  = 255;
+            cache_view[10] = 255;
 
             MemCpy(map.decompressed_store, cache_view);
             cDebug("Saved!");
@@ -303,7 +303,7 @@ void examine_map(Resource&& mapfile, T version)
 
     Profiler::PushContext("Tag search");
     auto tags_fn = map_basename + "_tags.txt";
-    auto tags_ = fopen(tags_fn.c_str(), "a+");
+    auto tags_   = fopen(tags_fn.c_str(), "a+");
 
     for(auto tag : index_view)
     {
