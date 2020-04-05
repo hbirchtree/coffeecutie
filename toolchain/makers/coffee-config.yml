@@ -80,7 +80,6 @@ gamecube.*:
     - -DBUILD_GRAPHICS_COMMON=OFF
     - -DBUILD_BLAM=OFF
     - -DBUILD_GX=ON
-    - -DBUILD_CPP14=ON
 .*maemo.*:
   +cmake-opts:
     - -DBUILD_SDL2=OFF

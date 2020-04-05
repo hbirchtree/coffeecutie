@@ -487,7 +487,7 @@ void GXAPI::Draw(
 
         for(auto i : stl_types::Range<>(data.elements()))
         {
-            u16 idx = *baseIndex.at(i * indexStride).as<u16 const>()[0];
+            u16 idx = (*baseIndex.at(i * indexStride)).as<u16 const>()[0];
             indexMap(desc.attribs, idx);
         }
     } else
