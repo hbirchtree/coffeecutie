@@ -1,2 +1,0 @@
-set ( GENERATE_FLATPAK  ON CACHE BOOL "" )
-set ( BUILD_ASSIMP      ON CACHE BOOL "" )
