@@ -35,7 +35,7 @@ if(NOT NO_DYNAMIC_LINKING)
             LIBRARIES
             ${NVIDIAML_LIBRARIES}
             Core
-            GraphicsAPI
+            GpuQuery
             )
 
         target_include_directories( NVIDIAQuery PRIVATE
@@ -54,6 +54,7 @@ if(NOT NO_DYNAMIC_LINKING)
             LIBRARIES
             ${LIBDRM_LIBRARIES}
             Core
+            GpuQuery
             )
 
         target_include_directories( LibDRMQuery PRIVATE
@@ -72,7 +73,7 @@ if(NOT NO_DYNAMIC_LINKING)
             Core
             GLAD
             GLeamCommon
-            GraphicsAPI
+            GpuQuery
             )
     endif()
 endif()
