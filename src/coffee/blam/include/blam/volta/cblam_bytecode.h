@@ -271,7 +271,7 @@ struct opcode_layout
         if(param_type != type_t::string_)
             Throw(undefined_behavior("invalid string"));
 
-        return (*string_seg.at(data_ptr)).str();
+        return string_seg.at(data_ptr).str();
     }
 
     /* Value types for return */
