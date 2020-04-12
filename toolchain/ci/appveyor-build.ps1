@@ -4,9 +4,9 @@ function BuildProject()
     $Preload = "generic"
     $LibType = "Win32"
     $Arch = "Win64"
-	$CMakeArch = "x64"
+    $CMakeArch = "x64"
 
-	switch -regex ($env:BUILDVARIANT)
+    switch -regex ($env:BUILDVARIANT)
     {
         "win32.amd64.*" {
             echo "W32/AMD64"
@@ -14,7 +14,7 @@ function BuildProject()
         "win32.x86.*" {
             echo "W32/x86"
             $Arch = ""
-			$CMakeArch = "x86"
+            $CMakeArch = "x86"
         }
         "uwp.amd64.*" {
             echo "UWP/AMD64"
@@ -61,7 +61,7 @@ function BuildProject()
 	md -Force $env:BUILD_DIR
 	pushd $env:BUILD_DIR
 
-	if($variant == "uwp")
+	if($variant -Eq "uwp")
 	{
 		nuget install ANGLE.WindowsStore
 		$ANGLE_DIR = (ls $PWD/ANGLE.* | % FullName)
@@ -74,13 +74,15 @@ function BuildProject()
 	echo "Beginning CMake"
 	echo "-------------------------------------------"
 
+	$ToolchainFile = "$env:SOURCE_DIR/toolchain/cmake/Toolchains/windows-" + $Toolchain + "_windows.toolchain.cmake"
+
 	& cmake $env:SOURCE_DIR `
-		-DCMAKE_TOOLCHAIN_FILE="$env:SOURCE_DIR/toolchain/cmake/Toolchains/windows-$Toolchain_windows.toolchain.cmake" `
+		-DCMAKE_TOOLCHAIN_FILE="$ToolchainFile" `
 		-C"$env:SOURCE_DIR/toolchain/cmake/Preload/windows-$Preload.cmake" `
 		$GeneratorVersion `
-        $ArchArgument `
+                $ArchArgument `
 		-DCMAKE_BUILD_TYPE="$env:CONFIGURATION" `
-		-DGIT_DEP_BUILDVARIANT=$Target `
+		-DGIT_DEP_BUILDVARIANT="$env:BUILDVARIANT" `
 		-DANGLE_ROOT_DIR="$ANGLE_DIR" `
 		-DCMAKE_INSTALL_PREFIX="$env:BUILD_DIR/install"
 
