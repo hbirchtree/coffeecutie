@@ -1,1 +1,0 @@
-set ( BUILD_ASSIMP ON CACHE BOOL "" )

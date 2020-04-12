@@ -33,6 +33,7 @@ using service_t = std::string;
 
 namespace tcp {
 
+#if defined(ASIO_USE_SSL)
 struct ssl_socket
 {
     using lowest_layer = socket_types::ssl::lowest_layer_type;
@@ -115,6 +116,7 @@ struct ssl_socket
     asio::ip::tcp::resolver& m_resolver;
     socket_types::ssl        m_socket;
 };
+#endif
 
 struct raw_socket
 {

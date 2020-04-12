@@ -46,7 +46,7 @@ ios: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
-	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
@@ -70,7 +70,7 @@ ios.x86_64: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
-	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
@@ -95,7 +95,7 @@ ios.x86: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
-	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-ios.cmake \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
@@ -120,7 +120,7 @@ osx: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
-	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-generic.cmake \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_DISCORD_RPC=ON \
@@ -143,7 +143,7 @@ osx.coverage: FORCE
 	make -f $(ROOT_DIR)/Makefile.mac-base build \
 	-e EXTRA_OPTIONS=" \
 	$(SOURCE_DIR) \
-	-C$(SOURCE_DIR)/toolchain/cmake/Preload/osx-generic.cmake \
+	-C$(SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_ASAN=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \

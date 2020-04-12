@@ -1291,15 +1291,20 @@ coverage: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-coverage.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASAN=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DBUILD_CPP14=ON \
+	-DBUILD_COVERAGE=ON \
+	-DBUILD_EXAMPLES=OFF \
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-DSKIP_HIGHMEM_TESTS=ON \
+	-DSKIP_LINKAGE_TEST=ON \
+	-DSKIP_OPENVR_TEST=ON \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
@@ -1322,9 +1327,11 @@ docs: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/docs-all.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_DOCS=ON \
+	-DBUILD_LIBRARIES=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/docs \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
@@ -1350,17 +1357,23 @@ emscripten.wasm: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten-wasm.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=OFF \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_GLES=ON \
+	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=OFF \
 	-DBUILD_OPENSSL=OFF \
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
 	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
+	-DGENERATE_HTML=ON \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
@@ -1386,17 +1399,23 @@ emscripten.wasm.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten-wasm.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=OFF \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_GLES=ON \
+	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=OFF \
 	-DBUILD_OPENSSL=OFF \
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
 	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
 	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
+	-DGENERATE_HTML=ON \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
@@ -1422,12 +1441,14 @@ fedora.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-fedora.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DGENERATE_FLATPAK=ON \
 	-DGIT_DEP_BUILDVARIANT=fedora.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
@@ -1450,12 +1471,14 @@ fedora.amd64.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-fedora.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DGENERATE_FLATPAK=ON \
 	-DGIT_DEP_BUILDVARIANT=fedora.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
@@ -1483,7 +1506,6 @@ gamecube: FORCE
 	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_BLAM=OFF \
-	-DBUILD_CPP14=ON \
 	-DBUILD_GLEAM=OFF \
 	-DBUILD_GRAPHICS_COMMON=OFF \
 	-DBUILD_GX=ON \
@@ -1520,7 +1542,6 @@ gamecube.shell: FORCE
 	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_BLAM=OFF \
-	-DBUILD_CPP14=ON \
 	-DBUILD_GLEAM=OFF \
 	-DBUILD_GRAPHICS_COMMON=OFF \
 	-DBUILD_GX=ON \
@@ -1552,9 +1573,13 @@ maemo.armel: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.make8 \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-maemo.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_SDL2=OFF \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_X11=ON \
 	-DCMAKE_BUILD_TYPE=Release \
@@ -1585,9 +1610,13 @@ maemo.armel.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-maemo.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_SDL2=OFF \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_X11=ON \
 	-DCMAKE_BUILD_TYPE=Release \
@@ -1618,8 +1647,10 @@ mingw.w64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/windows-mingw64.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_OPENSSL=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/mingw.w64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/windows-mingw64_linux.toolchain.cmake \
@@ -1645,8 +1676,11 @@ raspberry.armhf: FORCE rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-raspberry.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
@@ -1673,8 +1707,11 @@ raspberry.armhf.shell: FORCE rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-raspberry.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
@@ -1701,7 +1738,8 @@ steam.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_CPP11=ON \
@@ -1732,7 +1770,8 @@ steam.amd64.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_CPP11=ON \
@@ -1861,8 +1900,9 @@ ubuntu.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-generic.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_DISCORD_RPC=ON \
@@ -1893,8 +1933,9 @@ ubuntu.amd64.tools: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-generic.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_DISCORD_RPC=ON \
@@ -1934,11 +1975,13 @@ ubuntu.amd64.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DBUILD_DISCORD_RPC=ON \
+	-DBUILD_GLES=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \

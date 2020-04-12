@@ -761,22 +761,17 @@ using bad_optional_access = undefined_behavior;
 template<typename T>
 struct Optional
 {
+    constexpr
     Optional() : valid(false)
     {
     }
-    Optional(T&& value) : m_value(value), valid(true)
+    constexpr
+    Optional(T&& value) : m_value(std::move(value)), valid(true)
     {
     }
 
-    T& operator->() const
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    T& operator*() const
+    constexpr
+    T& operator->() &
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -784,12 +779,59 @@ struct Optional
         return m_value;
     }
 
+    constexpr
+    T const& operator->() const&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T& operator*() &
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T const& operator*() const&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T&& operator*() &&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return std::move(m_value);
+    }
+
+    constexpr
+    T const&& operator*() const&&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return std::move(m_value);
+    }
+
+    constexpr
     operator bool() const
     {
         return valid;
     }
 
-    T& value()
+    constexpr
+    T const& value() const&
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -797,6 +839,16 @@ struct Optional
         return m_value;
     }
 
+    constexpr
+    T& value() &
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
     Optional& operator=(T&& v)
     {
         m_value = std::move(v);
