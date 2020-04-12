@@ -23,6 +23,9 @@ function ( DEPENDENCY_GET )
 
     if("${DEP_EXTENSION}" STREQUAL "")
         set ( DEP_EXTENSION "tar.gz" )
+        if(WIN32 AND NOT MINGW)
+            set ( DEP_EXTENSION "zip" )
+        endif()
     endif()
 
     execute_process (
