@@ -241,8 +241,8 @@ void inspect_bitm(
         GLEAMAPI::ERROR ec;
         GLEAMAPI::S_2D  surface(
             image.to_pixfmt(), 1, C_CAST<u32>(fmt.cmpflg) << 10);
-        surface.allocate(size, fmt.comp);
-        surface.upload(fmt, size, img_data.as<const u8>(), ec);
+        surface.allocate(size.convert<u32>(), fmt.comp);
+        surface.upload(fmt, size.convert<u32>(), img_data.as<const u8>(), ec);
         surface.setLevels(0, 0);
         surface.dealloc();
     }
