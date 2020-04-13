@@ -52,8 +52,10 @@ struct GLEAM_Instance_Data
 
     ~GLEAM_Instance_Data()
     {
+#if GL_VERSION_VERIFY(0x300, 0x300)
         for(auto const& pbo : pboQueue.buffers)
             CGL33::BufFree(pbo.buf);
+#endif
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)

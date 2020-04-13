@@ -44,14 +44,14 @@ struct mesh_descriptor_t
 /*    u16 attr_buffers[num_attrs]; */
 };
 
-PACKEDSTRUCT smsh_header_t
+PACKEDSTRUCT(smsh_header_t
 {
     char magic[8];
     char build_ver[32];
     u32 num_attr_desc;
     u32 num_mesh_descs;
     u32 num_groups;
-};
+});
 
 //struct smsh_groups_t
 //{

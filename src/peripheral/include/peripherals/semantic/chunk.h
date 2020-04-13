@@ -748,6 +748,34 @@ struct mem_chunk
         return it;
     }
 
+    struct find_result
+    {
+        size_type offset;
+        mem_chunk chunk;
+    };
+
+    NO_DISCARD stl_types::Optional<find_result> find(
+        mem_chunk<T> const& needle)
+    {
+        if(needle.empty())
+            return {};
+
+        size_type needle_idx = 0;
+
+        for(size_type i = 0; i < size; i++)
+        {
+            if(data[i] == needle[needle_idx])
+            {
+                needle_idx++;
+                if(needle_idx == needle.size)
+                    return find_result{i - needle_idx, *at(i - needle_idx)};
+            } else
+                needle_idx = 0;
+        }
+
+        return {};
+    }
+
     FORCEDINLINE bool empty() const
     {
         return elements == 0 && size == 0;

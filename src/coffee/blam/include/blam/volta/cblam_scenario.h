@@ -884,32 +884,31 @@ struct scenario
     {
         constexpr Array<char, 4> terminator = {{0, 0, 0, 0}};
 
+        auto terminator_data = semantic::mem_chunk<char const>::From(
+            terminator.data(), terminator.size());
+
         auto string_base = script_string_segment.data(magic);
-        auto end         = C_RCAST<const char*>(::memmem(
-            &string_base[0],
-            string_base.size,
-            terminator.data(),
-            terminator.size()));
+        auto end         = (*string_base.find(terminator_data)).chunk;
 
         u32  num_strings = 0;
-        auto start_ptr   = string_base.data;
+        auto start_ptr   = *string_base.at(0);
 
-        while(start_ptr < end && start_ptr >= string_base.data)
+        while(C_OCAST<bool>(start_ptr))
         {
             if(start_ptr[0] != 0)
                 num_strings++;
 
-            start_ptr =
-                C_RCAST<const char*>(::memchr(start_ptr, 0, string_base.size));
+            start_ptr = (*start_ptr.find(
+                semantic::mem_chunk<char const>::From(terminator[0]))).chunk;
 
-            if(memmem(start_ptr, 4, terminator.data(), terminator.size()))
+            if((*start_ptr.find(terminator_data)).offset == 0)
                 break;
 
-            start_ptr++; // Jump over null-terminator
+            start_ptr = *start_ptr.at(1); // Jump over null-terminator
         }
 
         return {semantic::mem_chunk<const char>::From(
-                    &string_base[0], (end - &string_base[0]) + 1),
+                    &string_base[0], end.size + 1),
                 num_strings};
     }
     inline semantic::mem_chunk<hsc::function_declaration const> function_table(
