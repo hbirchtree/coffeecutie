@@ -137,7 +137,7 @@ struct AutoExecEx
         Coffee::Display::Properties props;
 
         props.title = windowConfig.title.c_str();
-        props.size = windowConfig.size;
+        props.size = windowConfig.size.convert<libc_types::u32>();
         props.gl.version.major = glConfig.version.major;
         props.gl.version.minor = glConfig.version.minor;
 
@@ -145,7 +145,7 @@ struct AutoExecEx
         presetup(config.m_renderer, config.m_data, props);
 
         windowConfig.title = props.title;
-        windowConfig.size = props.size;
+        windowConfig.size = props.size.convert<libc_types::i32>();
         glConfig.version.major = props.gl.version.major;
         glConfig.version.minor = props.gl.version.minor;
 

@@ -4,7 +4,7 @@
 #include <type_traits>
 
 #if defined(COFFEE_WINDOWS)
-#include <coffee/core/plat/plat_windows.h>
+#include <peripherals/platform/windows.h>
 #else
 #include <arpa/inet.h>
 #endif

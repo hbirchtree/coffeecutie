@@ -76,6 +76,8 @@ function BuildProject()
 
 	$ToolchainFile = "$env:SOURCE_DIR/toolchain/cmake/Toolchains/windows-" + $Toolchain + "_windows.toolchain.cmake"
 
+    $env:PATH = $env:PATH + ";C:/Program Files/NASM/;"
+
 	& cmake $env:SOURCE_DIR `
 		-DCMAKE_TOOLCHAIN_FILE="$ToolchainFile" `
 		-C"$env:SOURCE_DIR/toolchain/cmake/Preload/windows-$Preload.cmake" `

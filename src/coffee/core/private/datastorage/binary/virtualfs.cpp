@@ -165,7 +165,7 @@ bool GenVirtFS(
                 case compression::codec::deflate:
 #endif
                 {
-                    Compression::error_code comp_ec;
+                    Compression::zlib::error_code comp_ec;
                     Zlib::Compress(in_data, &out_data, {}, comp_ec);
 
                     if(comp_ec)
@@ -437,7 +437,7 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
             case compression::codec::deflate:
 #endif
             {
-                Compression::error_code comp_ec;
+                Compression::zlib::error_code comp_ec;
                 Zlib::Decompress(
                     Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
 

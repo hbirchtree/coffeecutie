@@ -48,7 +48,7 @@ endif()
 # Disabling dynamic linking on unsupported platforms
 ################################################################################
 
-if( (APPLE AND IOS) OR GAMECUBE )
+if( (APPLE AND IOS) OR GAMECUBE OR WIN32 )
     set ( NO_DYNAMIC_LINKING ON )
 else()
     set ( NO_DYNAMIC_LINKING OFF )

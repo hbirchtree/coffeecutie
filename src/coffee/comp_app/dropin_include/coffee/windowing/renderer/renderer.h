@@ -62,14 +62,14 @@ struct CSDL2Renderer
     {
         auto window = m_container->service<comp_app::Windowing>();
         if(window)
-            return window->size();
+            return window->size().convert<u32>();
         return {};
     }
     Size framebufferSize() const
     {
         auto fb = m_container->service<comp_app::GraphicsFramebuffer>();
         if(fb)
-            return fb->size();
+            return fb->size().convert<u32>();
         return {};
     }
     int monitor() const

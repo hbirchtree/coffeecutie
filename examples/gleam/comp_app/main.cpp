@@ -19,6 +19,7 @@
 #endif
 
 #include <coffee/strings/geometry_types.h>
+#include <coffee/strings/vector_types.h>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 
@@ -129,9 +130,9 @@ i32 coffee_main(i32, cstring_w*)
 
     if(displays)
     {
-        cDebug("{0}", displays->virtualSize());
+        cDebug("{0}", displays->virtualSize().convert<u32>());
         for(auto i : stl_types::Range<libc_types::u32>(displays->count()))
-            cDebug("- {0}", displays->size(i));
+            cDebug("- {0}", displays->size(i).convert<u32>());
     }
 
     C_ERROR_CHECK(ec)
@@ -154,7 +155,7 @@ i32 coffee_main(i32, cstring_w*)
 
             cDebug(
                 "Mouse state: {0} {1}",
-                mouse->position(),
+                mouse->position().toVector<f32>(),
                 C_CAST<u32>(mouse->buttons()));
         },
         rqec);
@@ -168,6 +169,11 @@ i32 coffee_main(i32, cstring_w*)
         GFX::V_DESC       plane_desc;
         ShPtr<GFX::BUF_A> plane_vertex;
         ShPtr<GFX::BUF_E> plane_index;
+
+        ~APIData()
+        {
+            abort();
+        }
     };
 
 #if defined(COFFEE_GEKKO)
@@ -254,10 +260,13 @@ i32 coffee_main(i32, cstring_w*)
 
         },
         [](EntityContainer& e, APIData& d, Components::time_point const&) {
-            d.context = nullptr;
             e.remove_subsystems_matching<
                 Components::matchers::all_subsystems_in<
                     type_list_t<GFX_SYS>>>();
+            d.plain_color.dealloc();
+            d.plane_desc.dealloc();
+            GFX::UnloadAPI();
+            d.context = nullptr;
         });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);

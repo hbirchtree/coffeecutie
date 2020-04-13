@@ -783,11 +783,11 @@ struct string_segment_ref
 
     inline string_ref at(u32 offset = 0) const
     {
-        auto out = data.at(offset);
+        auto out = *data.at(offset);
 
-        if(!out->size)
+        if(!out.size)
             Throw(undefined_behavior("string out of bounds"));
-        return {out->data, offset};
+        return {out.data, offset};
     }
 
     inline string_ref indexed(u32 i = 0) const
@@ -820,8 +820,12 @@ struct string_segment_ref
             num_chars++;
         }
 
+        #if defined(COFFEE_WINDOWS)
+        const char* ptr = data.data;
+        #else
         const char* ptr = C_RCAST<const char*>(
             ::memmem(data.data, data.size, search.data(), num_chars));
+        #endif
 
         if(!ptr)
             return 0;

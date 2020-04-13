@@ -34,7 +34,7 @@ int deref_main(
 #if MODE_RELEASE
     ShowWindow(GetConsoleWindow(), SW_HIDE);
 #else
-    if(Env::GetVar("VisualStudioVersion").size())
+    if(platform::Env::GetVar("VisualStudioVersion").size())
         ShowWindow(GetConsoleWindow(), SW_HIDE);
 #endif
     InitCOMInterface();

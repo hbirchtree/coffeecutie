@@ -46,7 +46,7 @@ FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
     if(!properties::get<properties::is_compressed>(c_fmt.base_fmt))
         return {};
 
-    auto loc_size = pix->size.convert<i32>();
+    auto loc_size = pix->size.convert<u32>();
 
     data.data_size = GetPixCompressedSize(c_fmt, loc_size);
 

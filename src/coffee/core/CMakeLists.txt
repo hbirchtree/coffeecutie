@@ -207,6 +207,22 @@ elseif(APPLE OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"))
     target_link_libraries ( CoreCompression PUBLIC
         z
         )
+else()
+    target_sources ( CoreCompression PRIVATE
+        zlib/inflate.c
+        zlib/deflate.c
+
+        zlib/infback.c
+        zlib/inffast.c
+        zlib/inftrees.c
+        zlib/trees.c
+        zlib/adler32.c
+        zlib/crc32.c
+        zlib/zutil.c
+        )
+    target_include_directories ( CoreCompression PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zlib/include>
+        )
 endif()
 
 if(EMSCRIPTEN)

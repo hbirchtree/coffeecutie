@@ -28,7 +28,7 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
-GLEAM_DataStore* m_store = nullptr;
+UqPtr<GLEAM_DataStore> m_store;
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 using GLC = CGL33;
@@ -123,9 +123,9 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data* p)
 }
 
 static bool SetAPIVersion(
-    GLEAM_API::DataStore   store,
-    APILevel&              systemLevel,
-    GLEAM_API::OPTS const& opts)
+    GLEAM_API::DataStore const& store,
+    APILevel&                   systemLevel,
+    GLEAM_API::OPTS const&      opts)
 {
     cVerbose(10, GLM_API "Getting GL context version");
     auto ver = CGL::Debug::ContextVersion();
@@ -247,7 +247,7 @@ static bool SetAPIVersion(
     return true;
 }
 
-static void ConstructContextObjects(GLEAM_API::DataStore store)
+static void ConstructContextObjects(GLEAM_API::DataStore const& store)
 {
 #if GL_VERSION_VERIFY(0x330, 0x300)
     do
@@ -276,7 +276,7 @@ static void ConstructContextObjects(GLEAM_API::DataStore store)
 #endif
 }
 
-static void SetAPIFeatures(GLEAM_API::DataStore store)
+static void SetAPIFeatures(GLEAM_API::DataStore const& store)
 {
     auto api        = store->CURR_API;
     bool is_desktop = APILevelIsOfClass(api, APIClass::GLCore);
@@ -331,7 +331,7 @@ static void SetAPIFeatures(GLEAM_API::DataStore store)
         !is_desktop || (is_desktop && store->CURR_API < GL_4_5);
 }
 
-static void SetExtensionFeatures(GLEAM_API::DataStore store)
+static void SetExtensionFeatures(GLEAM_API::DataStore const& store)
 {
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
 //    if(store->features.qcom_tiling)
@@ -357,7 +357,7 @@ static void SetExtensionFeatures(GLEAM_API::DataStore store)
 }
 
 static void SetCompatibilityFeatures(
-    GLEAM_API::DataStore store, bool forced_api)
+    GLEAM_API::DataStore const& store, bool forced_api)
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(forced_api && store->CURR_API < GL_4_5 && store->CURR_API < GLES_MIN)
@@ -432,7 +432,7 @@ bool GLEAM_API::LoadAPI(
     /* Disable features when emulating lower API levels */
     SetCompatibilityFeatures(store, forced_api);
 
-    m_store = store;
+    m_store = std::move(store);
 
     DefaultFramebuffer()->size();
 
@@ -447,20 +447,25 @@ bool GLEAM_API::LoadAPI(
 #endif
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    if(store->CURR_API != APILevel::GLES_2_0)
+    if(m_store->CURR_API != APILevel::GLES_2_0)
     {
-        store->inst_data->queries.push_back(MkShared<GLEAM_TimeQuery>());
-        store->inst_data->queries.at(0)->alloc();
+        m_store->inst_data->queries.push_back(MkShared<GLEAM_TimeQuery>());
+        m_store->inst_data->queries.at(0)->alloc();
     }
 #endif
 
 #if GL_VERSION_VERIFY(0x400, 0x310)
-    if(GLEAM_FEATURES.draw_multi_indirect || store->CURR_API > APILevel::GL_4_3)
+    if(GLEAM_FEATURES.draw_multi_indirect ||
+       m_store->CURR_API > APILevel::GL_4_3)
     {
-        store->inst_data->indirectBuf =
+        m_store->inst_data->indirectBuf =
             MkShared<GLEAM_IndirectBuffer>(RSCA::ReadOnly);
-        store->inst_data->indirectBuf->alloc();
+        m_store->inst_data->indirectBuf->alloc();
     }
+#endif
+
+#if MODE_DEBUG
+    m_store->debug_drawer = MkUq<GLEAM_Quad_Drawer>();
 #endif
 
     ThreadSetName(0x8085, "OpenGL GPU-0");
@@ -470,7 +475,9 @@ bool GLEAM_API::LoadAPI(
 
 bool GLEAM_API::UnloadAPI()
 {
-    m_store = nullptr;
+    m_store->inst_data.reset();
+    m_store->debug_drawer.reset();
+    m_store.reset();
     return true;
 }
 
@@ -480,9 +487,8 @@ GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI(GLEAM_API::OPTS const& options)
 {
     cVerbose(8, GLM_API "Returning GLEAM loader...");
     return [=](bool debug = false) {
-        static GLEAM_DataStore m_gleam_data = {};
         cVerbose(8, GLM_API "Running GLEAM loader");
-        return LoadAPI(&m_gleam_data, debug, options);
+        return LoadAPI(MkUq<GLEAM_DataStore>(), debug, options);
     };
 }
 
@@ -625,7 +631,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
         {
             auto   sview = vstate.view(0);
             Rect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Viewport(tview.x, tview.y, tview.size().convert<i32>());
+            GLC::Viewport(tview.x, tview.y, tview.size().convert<u32>());
         }
         if(vstate.m_depth.size() > 0)
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
@@ -637,7 +643,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
         {
             auto   sview = vstate.scissor(0);
             Rect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Scissor(tview.x, tview.y, tview.size().convert<i32>());
+            GLC::Scissor(tview.x, tview.y, tview.size().convert<u32>());
             GLC::Enable(Feature::ScissorTest);
         } else
             GLC::Disable(Feature::ScissorTest);

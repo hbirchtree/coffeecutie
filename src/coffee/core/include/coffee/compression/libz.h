@@ -3,7 +3,7 @@
 #include "standard.h"
 
 #if defined(COFFEE_BUILD_WINDOWS_DEFLATE)
-#include <coffee/core/plat/plat_windows_errors.h>
+#include <peripherals/error/windows.h>
 #endif
 
 namespace Coffee {
@@ -19,9 +19,10 @@ struct zlib_error_category : error_category
 
 using zlib_error_code = domain_error_code<int, zlib_error_category>;
 
-#elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
+#endif
+#if defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
-using deflate_error_code = Win32::win32_error_code;
+using deflate_error_code = platform::win32::error_code;
 
 #endif
 
@@ -35,7 +36,9 @@ using deflate_error_code = Win32::win32_error_code;
  * Data compressed on Windows is not compatible with Unix/Linux
  */
 #if defined(COFFEE_BUILD_ZLIB)
-struct ZlibCompressor : Compressor_def
+namespace zlib {
+
+struct Compressor : Compressor_def
 {
     struct Opts
     {
@@ -63,9 +66,13 @@ struct ZlibCompressor : Compressor_def
 };
 
 using error_code = zlib_error_code;
+} // namespace zlib
+#endif
 
-#elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
-struct DeflateCompressor : Compressor_def
+#if defined(COFFEE_BUILD_WINDOWS_DEFLATE)
+namespace deflate {
+
+struct Compressor : Compressor_def
 {
     struct Opts
     {
@@ -92,6 +99,8 @@ struct DeflateCompressor : Compressor_def
 
 using error_code = deflate_error_code;
 
+} // namespace deflate
+
 #else
 
 using error_code = Coffee::error_code;
@@ -101,11 +110,11 @@ using error_code = Coffee::error_code;
 
 #if defined(COFFEE_BUILD_ZLIB)
 
-using Zlib = Compression::ZlibCompressor;
+using Zlib = Compression::zlib::Compressor;
 
 #elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
-using Zlib = Compression::DeflateCompressor;
+using Zlib = Compression::deflate::Compressor;
 
 #else
 

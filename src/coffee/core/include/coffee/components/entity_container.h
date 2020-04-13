@@ -429,7 +429,10 @@ struct EntityContainer : non_copy
         {
             it = std::find_if(subsystems.begin(), subsystems.end(), pred);
             if(it != subsystems.end())
+            {
                 subsystems.erase(it);
+                it = subsystems.begin();
+            }
         }
     }
 

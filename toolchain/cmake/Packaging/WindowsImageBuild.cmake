@@ -9,16 +9,12 @@ macro(WINPE_PACKAGE
     # Locate necessary binary files
     set ( BASE_LIBS )
     if(NOT MINGW64)
-        if(BUILD_SDL2)
-            find_package ( SDL2 REQUIRED )
-            list ( APPEND BASE_LIBS SDL2 )
-        endif()
-
         if(BUILD_ANGLE)
             find_package ( ANGLE REQUIRED )
             list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
         endif()
-        foreach(lib_target ${BASE_LIBS})
+        
+	foreach(lib_target ${BASE_LIBS})
             get_target_property ( lib ${lib_target} IMPORTED_LOCATION )
             get_filename_component ( LIB_BASE "${lib}" NAME_WE )
             get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
@@ -46,8 +42,8 @@ macro(WINPE_PACKAGE
     set ( WINDOWS_APP_COPYRIGHT "${COPYRIGHT}")
     
     # We describe resources in a .rc file for in-memory access
-    set ( RESOURCE_DESCRIPTOR ${CMAKE_CURRENT_BINARY_DIR}/custom_data.rc )
-    set ( RESOURCE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/custom_data.c )
+    set ( RESOURCE_DESCRIPTOR ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_custom_data.rc )
+    set ( RESOURCE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_custom_data.c )
 
     set ( LINESHIFT "\r\n" )
 
@@ -118,7 +114,7 @@ macro(WINPE_PACKAGE
 
     set ( WINDOWS_BASE_SOURCE_RESOURCE
         "${WINDOWS_DESKTOP_DIR}/winresources.rc" )
-    set ( WINDOWS_BASE_RESOURCE "winresource.rc" )
+    set ( WINDOWS_BASE_RESOURCE "${TARGET}_winresource.rc" )
     set ( MANIFEST_SOURCE_FILE
         "${WINDOWS_DESKTOP_DIR}/template.manifest.in" )
     set ( MANIFEST_FILE "${TARGET}.exe.manifest" )

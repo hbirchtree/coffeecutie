@@ -92,7 +92,7 @@ struct GLEAM_API : GraphicsAPI
 
     using Q_OCC = OccludeQuery;
 
-    using DataStore = GLEAM_DataStore*;
+    using DataStore = UqPtr<GLEAM_DataStore>;
 
     using PipelineState = Map<ShaderStage, GLEAM_ShaderUniformState*>;
 

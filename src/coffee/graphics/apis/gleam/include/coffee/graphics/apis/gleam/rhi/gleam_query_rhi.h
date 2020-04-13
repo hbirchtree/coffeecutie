@@ -27,6 +27,10 @@ struct GLEAM_TimeQuery : GraphicsAPI::TimeQuery<query::flags>, GLEAM_Query
     GLEAM_TimeQuery() : GLEAM_Query(query::timing::value)
     {
     }
+    ~GLEAM_TimeQuery()
+    {
+        dealloc();
+    }
 
     void begin();
     void end();

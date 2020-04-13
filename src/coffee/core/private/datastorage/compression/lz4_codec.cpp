@@ -66,7 +66,7 @@ bool compressor::Compress(
     header.magic     = chunk_header::header_magic;
     header.real_size = C_FCAST<libc_types::u32>(uncompressed.size);
 
-    auto contentChunk = target->at(sizeof(chunk_header));
+    auto contentChunk = *target->at(sizeof(chunk_header));
 
     int result;
 
@@ -78,9 +78,9 @@ bool compressor::Compress(
         result = LZ4_compress_fast_extState(
             state.data,
             C_RCAST<const char*>(uncompressed.data),
-            C_RCAST<char*>(contentChunk->data),
+            C_RCAST<char*>(contentChunk.data),
             C_FCAST<int>(uncompressed.size),
-            C_FCAST<int>(contentChunk->size),
+            C_FCAST<int>(contentChunk.size),
             opts.mode == compression_mode::default_ ? 0
                                                     : opts.fast_acceleration);
         break;

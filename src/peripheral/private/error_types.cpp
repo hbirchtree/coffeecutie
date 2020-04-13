@@ -5,8 +5,6 @@
 
 #include <peripherals/stl/string_ops.h>
 
-using namespace ::stl_types::str;
-
 namespace platform {
 namespace file {
 
@@ -112,16 +110,17 @@ std::string posix_error_category::message(int error_code) const
 #if defined(COFFEE_WINDOWS)
 
 #include <peripherals/platform/windows.h>
+#include <peripherals/libc/string_ops.h>
 
 namespace platform {
-namespace file {
+namespace win32 {
 
-const char* win32_error_category::name() const noexcept
+const char* error_category::name() const noexcept
 {
     return "win32_error_code";
 }
 
-std::string win32_error_category::message(int error_code) const
+std::string error_category::message(int error_code) const
 {
     LPWSTR msgBuf = nullptr;
     size_t size   = FormatMessageW(
@@ -135,9 +134,9 @@ std::string win32_error_category::message(int error_code) const
         nullptr);
 
     LocalFree(msgBuf);
-    return str::encode::to<char>(std::wstring(msgBuf, size));
+    return stl_types::str::encode::to<char>(std::wstring(msgBuf, size));
 }
 
-} // namespace file
+} // namespace win32
 } // namespace platform
 #endif

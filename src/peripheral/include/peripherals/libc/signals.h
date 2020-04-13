@@ -26,7 +26,10 @@ enum class sig
     fpe               = SIGFPE,
     segfault          = SIGSEGV,
     abort             = SIGABRT,
+
+#if !defined(COFFEE_WINDOWS)
     bus_error         = SIGBUS,
+#endif
 
     ill_op = illegal_operation,
 

@@ -132,7 +132,7 @@ static void native_print(
     emscripten_log(flag, "%s", formatted.c_str());
 #elif defined(COFFEE_WINDOWS)
     auto formatted_w = str::encode::to<wchar_t>(formatted);
-    if(Env::GetVar("VisualStudioVersion").size())
+    if(platform::Env::ExistsVar("VisualStudioVersion"))
         OutputDebugStringW(formatted_w.c_str());
     else
         libc::io::put(stream, formatted.c_str());

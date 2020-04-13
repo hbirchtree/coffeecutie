@@ -6,6 +6,7 @@
 
 #include <platforms/base/environment.h>
 #include <platforms/win32/file.h>
+#include <url/url.h>
 
 namespace platform {
 namespace env {
@@ -48,16 +49,16 @@ struct WindowsEnvFun : EnvInterface
     }
     STATICINLINE Url GetUserHome()
     {
-        return MkUrl(GetVar("USERPROFILE"), RSCA::SystemFile);
+        return url::constructors::MkUrl(GetVar("USERPROFILE"), RSCA::SystemFile);
     }
 
     static Url GetUserData(cstring org, cstring app);
 
     STATICINLINE Url ApplicationDir()
     {
-        CResources::Windows::WinFileFun::file_error ec;
+        file::win32::WinFileFun::file_error ec;
         CString                                     fn = ExecutableName();
-        return DirFun::Dirname(fn.c_str(), ec);
+        return file::win32::WinDirFun::Dirname(fn.c_str(), ec);
     }
 
     static Url CurrentDir();

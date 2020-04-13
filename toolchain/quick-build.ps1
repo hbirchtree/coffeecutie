@@ -9,3 +9,5 @@ $env:APPVEYOR_BUILD_WORKER_IMAGE = "$VSVER"
 echo "-- Building $env:BUILDVARIANT in $env:CONFIGURATION mode"
 
 . $PWD\toolchain\ci\appveyor-build.ps1
+
+cmake --build $env:BUILD_DIR --target install

@@ -124,8 +124,8 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     for(auto i : Range<>(neigh_size))
     {
         unique_rows.insert(Vector<bool>(
-            neighbor_matrix.begin() + C_FCAST<ssize_t>(neigh_size * i),
-            neighbor_matrix.begin() + C_FCAST<ssize_t>(neigh_size * (i + 1))));
+            neighbor_matrix.begin() + C_FCAST<ptroff>(neigh_size * i),
+            neighbor_matrix.begin() + C_FCAST<ptroff>(neigh_size * (i + 1))));
     }
 
     return unique_rows;

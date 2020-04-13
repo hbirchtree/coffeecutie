@@ -161,20 +161,24 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_WINDOWS)
 
+    auto GetCurrentApp = platform::state->GetAppData;
+
+    paths.assetDir = MkUrl(_coffee_resource_prefix, RSCA::SystemFile);
+
     CString temp_dir = Env::GetVar("TEMP");
     paths.tempDir    = MkUrl(temp_dir.c_str(), RSCA::SystemFile) +
-                    Path{GetCurrentApp().organization_name} +
-                    Path{GetCurrentApp().application_name};
+                    Path{GetCurrentApp()->organization_name} +
+                    Path{GetCurrentApp()->application_name};
 
     CString config_dir = Env::GetVar("APPDATA");
     paths.configDir    = MkUrl(config_dir.c_str(), RSCA::SystemFile) +
-                      Path{GetCurrentApp().organization_name} +
-                      Path{GetCurrentApp().application_name};
+                      Path{GetCurrentApp()->organization_name} +
+                      Path{GetCurrentApp()->application_name};
 
     CString cache_dir = Env::GetVar("LOCALAPPDATA");
     paths.cacheDir    = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
-                     Path{GetCurrentApp().organization_name} +
-                     Path{GetCurrentApp().application_name};
+                     Path{GetCurrentApp()->organization_name} +
+                     Path{GetCurrentApp()->application_name};
 
 #if defined(COFFEE_WINDOWS_UWP)
     auto pkg     = ::Windows::ApplicationModel::Package::Current();

@@ -243,11 +243,43 @@ enum class BitFmt : u8
     Undefined,
 };
 
-PACKED(struct) r11g11b10f
+PACKED(struct) r11g11b10f 
 {
-    u16 b : 10;
-    u16 g : 11;
-    u16 r : 11;
+#if !defined(COFFEE_WINDOWS)
+    u16 b_ : 10;
+    u16 g_ : 11;
+    u16 r_ : 11;
+#else
+    u32 data;
+#endif
+
+    static constexpr u32 bit_10_mask = 0b1111111111;
+    static constexpr u32 bit_11_mask = 0b11111111111;
+
+    u16 b() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return b_;
+#else
+        return data & bit_10_mask;
+#endif
+    }
+    u16 g() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return g_;
+#else
+        return (data >> 10) & bit_11_mask;
+#endif
+    }
+    u16 r() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return r_;
+#else
+        return (data >> 21) & bit_11_mask;
+#endif
+    }
 
   private:
     constexpr void size_check()
@@ -258,10 +290,49 @@ PACKED(struct) r11g11b10f
 
 PACKED(struct) r10g10b10a2
 {
-    u16 r : 10;
-    u16 g : 10;
-    u16 b : 10;
-    u8  a : 2;
+#if !defined(COFFEE_WINDOWS)
+    u16 r_ : 10;
+    u16 g_ : 10;
+    u16 b_ : 10;
+    u8  a_ : 2;
+#else
+    u32 data;
+
+    static constexpr u32 bit_10_mask = 0b1111111111;
+#endif
+
+    u16 r() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return r_;
+#else
+        return data & bit_10_mask;
+#endif
+    }
+    u16 g() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return g_;
+#else
+        return (data >> 10) & bit_10_mask;
+#endif
+    }
+    u16 b() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return b_;
+#else
+        return (data >> 20) & bit_10_mask;
+#endif
+    }
+    u8 a() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return a_;
+#else
+        return (data >> 30) & 0b11;
+#endif
+    }
 
   private:
     constexpr void size_check()

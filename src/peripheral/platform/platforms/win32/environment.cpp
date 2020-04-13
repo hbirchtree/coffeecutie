@@ -1,14 +1,14 @@
-#include <coffee/core/plat/environment/windows/environment.h>
+#include <platforms/win32/environment.h>
 
-#include <coffee/core/coffee.h>
-#include <coffee/core/plat/plat_memory.h>
-#include <coffee/core/plat/plat_windows.h>
+#include <peripherals/platform/windows.h>
+#include <platforms/pimpl_state.h>
+
 #include <stdlib.h>
 #include <wchar.h>
 
-namespace Coffee {
-namespace Environment {
-namespace Windows {
+namespace platform {
+namespace env {
+namespace win32 {
 CString WindowsEnvFun::ExecutableName(cstring_w)
 {
     CWString excname;
@@ -56,7 +56,7 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
 
         var[p_r.substr(0, key_end)] = p_r.substr(key_end);
 
-        env = (TCHAR*)str::find(env, TCHAR(0));
+        env = (TCHAR*)libc::str::find(env, TCHAR(0));
         env += 1; // Skipping the expected \0
     }
 
@@ -81,15 +81,15 @@ Url WindowsEnvFun::CurrentDir()
     out.resize(out.size() - 1);
 
     out = str::replace::str(out, L"\\", L"/");
-    return MkUrl(str::encode::to<char>(out), RSCA::SystemFile);
+    return url::constructors::MkUrl(str::encode::to<char>(out), RSCA::SystemFile);
 }
 
 Url WindowsEnvFun::GetUserData(cstring org, cstring app)
 {
     if(!org && !app)
     {
-        org = ApplicationData().organization_name.c_str();
-        app = ApplicationData().application_name.c_str();
+        org = platform::state->GetAppData()->organization_name.c_str();
+        app = platform::state->GetAppData()->application_name.c_str();
     }
 
     CString out;
@@ -99,7 +99,7 @@ Url WindowsEnvFun::GetUserData(cstring org, cstring app)
     out = ConcatPath(out.c_str(), org);
     out = ConcatPath(out.c_str(), app);
     out = str::replace::str(out, "\\", "/");
-    return MkUrl(out, RSCA::SystemFile);
+    return url::constructors::MkUrl(out, RSCA::SystemFile);
 }
 } // namespace Windows
 } // namespace Environment

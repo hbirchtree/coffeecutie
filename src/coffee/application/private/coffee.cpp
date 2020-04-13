@@ -332,6 +332,12 @@ catch(std::exception const& ex)
                 .count());
     }
 
+    if constexpr(compile_info::profiler::enabled && 
+        !compile_info::platform::custom_exit)
+    {
+        State::SwapState("jsonProfiler", {});
+    }
+
     return result;
 } // namespace Coffee
 

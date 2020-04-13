@@ -19,6 +19,11 @@
 #include <coffee/android/android_main.h>
 #endif
 
+#if defined(COFFEE_WINDOWS)
+#include <peripherals/platform/windows.h>
+#include <VersionHelpers.h>
+#endif
+
 #include <coffee/core/CDebug>
 
 #ifndef COFFEE_LOWFAT
@@ -101,8 +106,7 @@ STATICINLINE void PutEvents(
 
         switch(p.flags.type)
         {
-        case Profiling::DataPoint::Profile:
-        {
+        case Profiling::DataPoint::Profile: {
             //            if(feval(p.at & Profiling::DataPoint::Hot))
             //                o.AddMember("ph", "P", alloc);
             //            else
@@ -111,18 +115,15 @@ STATICINLINE void PutEvents(
             o.AddMember("s", "t", alloc);
             break;
         }
-        case Profiling::DataPoint::Push:
-        {
+        case Profiling::DataPoint::Push: {
             o.AddMember("ph", "B", alloc);
             break;
         }
-        case Profiling::DataPoint::Pop:
-        {
+        case Profiling::DataPoint::Pop: {
             o.AddMember("ph", "E", alloc);
             break;
         }
-        case DataPoint::Complete:
-        {
+        case DataPoint::Complete: {
             o.AddMember("ph", "X", alloc);
             break;
         }
@@ -166,7 +167,11 @@ STATICINLINE void PutRuntimeInfo(
         "compiler", FromString(compile_info::compiler::name, alloc), alloc);
     build.AddMember(
         "compilerVersion",
-        FromString(compile_info::compiler::version_str, alloc),
+        FromString(
+            cast_pod(compile_info::compiler::version.major) + "." +
+                cast_pod(compile_info::compiler::version.minor) + "." +
+                cast_pod(compile_info::compiler::version.rev),
+            alloc),
         alloc);
     build.AddMember(
         "architecture", FromString(compile_info::architecture, alloc), alloc);
@@ -197,8 +202,23 @@ STATICINLINE void PutRuntimeInfo(
     }
 
     if constexpr(compile_info::platform::is_windows)
-        build.AddMember("windowsTarget", FromString("", alloc), alloc);
-
+    {
+        build.AddMember(
+            "windowsTarget",
+            FromString(
+                stl_types::str::convert::hexify(compile_info::windows::target), alloc),
+            alloc);
+        build.AddMember(
+            "windowsWdk",
+            FromString(
+                stl_types::str::convert::hexify(compile_info::windows::wdk),
+                alloc),
+            alloc);
+#if defined(COFFEE_WINDOWS)
+        build.AddMember("windowsServer", IsWindowsServer() ? true : false, alloc);
+#endif
+    }
+    
     if constexpr(compile_info::platform::is_macos)
         build.AddMember(
             "macTarget",

@@ -82,7 +82,7 @@ endif()
 #
 
 # Examples of the CBlam API and its import of Blam engine data
-if(BUILD_BLAM AND BUILD_GLEAM AND FALSE)
+if(BUILD_BLAM AND BUILD_GLEAM)
     add_subdirectory (blam/cblam-testing)
 endif()
 

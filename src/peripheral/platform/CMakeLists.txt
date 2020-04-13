@@ -250,11 +250,11 @@ if(WIN32)
         )
     if(NOT WIN_UWP AND NOT MINGW64)
         target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/windows_startup.cpp
+            platforms/win32/wmi_win32.cpp
             )
     elseif(WIN_UWP)
         target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/windows_startup_uwp.cpp
+            platforms/win32/wmi_uwp.cpp
             )
     endif()
 endif()

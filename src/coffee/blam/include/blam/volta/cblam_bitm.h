@@ -294,7 +294,7 @@ struct image_t
             std::tie(fmt, flags) = to_compressed_fmt();
             auto comp_fmt        = typing::pixels::CompFmt(fmt, flags);
 
-            u32 size = Coffee::GetPixCompressedSize(comp_fmt, mipsize);
+            u32 size = Coffee::GetPixCompressedSize(comp_fmt, mipsize.convert<u32>());
 
             u32 mip_offset = 0;
             for(auto i : stl_types::Range<>(mipmap))
@@ -302,7 +302,7 @@ struct image_t
                 auto off_size = isize;
                 off_size.w >>= i;
                 off_size.h >>= i;
-                mip_offset += Coffee::GetPixCompressedSize(comp_fmt, off_size);
+                mip_offset += Coffee::GetPixCompressedSize(comp_fmt, off_size.convert<u32>());
             }
             return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
         }

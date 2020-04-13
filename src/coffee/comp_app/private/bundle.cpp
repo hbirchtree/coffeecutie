@@ -74,7 +74,7 @@ void DefaultAppInfo::add(text_type key, text_type value)
 text_type_t DefaultAppInfo::get(text_type key)
 {
     auto data = Coffee::ExtraData::Get();
-    auto it   = Coffee::ExtraData::Get().find(key);
+    auto it   = data.find(key);
 
     if(it == data.end())
         return {};

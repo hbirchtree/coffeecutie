@@ -389,11 +389,11 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
             cstring text;
         } text_data;
     };
-    PACKEDSTRUCT
+    PACKEDSTRUCT(
     {
         u32 size : 24; /*!< Size of data*/
         u8  type;      /*!< Event type*/
-    };
+    });
 
     u32 pad1;
 };

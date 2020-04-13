@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 #include <peripherals/stl/standard_exceptions.h>
 
 #include <peripherals/stl/types.h>

@@ -19,7 +19,7 @@ struct memory_budget
 template<typename Version>
 void create_resources(EntityContainer& e, BlamData<Version>& data)
 {
-    ProfContext _(__PRETTY_FUNCTION__);
+    ProfContext _(__FUNCTION__);
 
     {
         using namespace Display::EventHandlers;

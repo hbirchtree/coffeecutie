@@ -644,7 +644,7 @@ struct VirtualFS
         VFS const* vfs, cstring name, vfs_error_code& ec);
 };
 
-PACKEDSTRUCT VirtualFile
+PACKEDSTRUCT(VirtualFile
 {
     char name[MaxFileNameLength]; /*!< File name */
     u64  offset;                  /*!< Offset to file */
@@ -652,7 +652,7 @@ PACKEDSTRUCT VirtualFile
     u64  rsize; /*!< Size of file in memory. If compressed, uncompressed size */
     u32  flags;
     compression::codec codec = compression::codec::none;
-};
+});
 
 FORCEDINLINE VFile const* VirtualFS::GetFileLinear(
     VFS const* vfs, cstring name, vfs_error_code& ec)

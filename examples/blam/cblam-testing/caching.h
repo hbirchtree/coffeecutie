@@ -605,7 +605,7 @@ struct BitmapCache
                 } else
                 {
                     layer++;
-                    offset     = imsize;
+                    offset     = imsize.convert<i32>();
                     img_offset = {};
                     img_layer  = layer;
                 }
@@ -613,7 +613,10 @@ struct BitmapCache
                 img->image.layer  = layer;
                 img->image.offset = Vecf2(
                     img_offset.w + max_pad / 2, img_offset.h + max_pad / 2);
-                img->image.scale = {imsize.w - max_pad, imsize.h - max_pad};
+                img->image.scale = {
+                    C_CAST<f32>(imsize.w - max_pad), 
+                    C_CAST<f32>(imsize.h - max_pad)
+                };
 
                 img->image.scale.x() /= pool.max.w;
                 img->image.scale.y() /= pool.max.h;
@@ -1035,13 +1038,13 @@ struct BSPCache
                     mesh_data.draw.m_insts = 1;
 
                     MemCpy(
-                        vertices, vert_buffer.at(vert_ptr)->as<vertex_type>());
+                        vertices, (*vert_buffer.at(vert_ptr)).as<vertex_type>());
                     MemCpy(
                         indices,
-                        element_buffer.at(element_ptr)->as<element_type>());
+                        (*element_buffer.at(element_ptr)).as<element_type>());
                     MemCpy(
                         light_verts,
-                        light_buffer.at(light_ptr)->as<light_type>());
+                        (*light_buffer.at(light_ptr)).as<light_type>());
 
                     vert_ptr += vertices.size;
                     element_ptr += indices.size;
@@ -1068,13 +1071,13 @@ struct BSPCache
                     mesh_data.draw.m_insts = 1;
 
                     MemCpy(
-                        vertices, vert_buffer.at(vert_ptr)->as<vertex_type>());
+                        vertices, (*vert_buffer.at(vert_ptr)).as<vertex_type>());
                     MemCpy(
                         indices,
-                        element_buffer.at(element_ptr)->as<element_type>());
+                        (*element_buffer.at(element_ptr)).as<element_type>());
                     MemCpy(
                         light_verts,
-                        light_buffer.at(light_ptr)->as<light_type>());
+                        (*light_buffer.at(light_ptr)).as<light_type>());
 
                     vert_ptr += vertices.size;
                     element_ptr += indices.size;
@@ -1210,11 +1213,11 @@ struct ModelCache
 
                 MemCpy(
                     vertices,
-                    vert_buffer.at(vert_ptr)->template as<vertex_type>());
+                    (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
                 MemCpy(
                     elements,
-                    element_buffer.at(element_ptr)
-                        ->template as<element_type>());
+                    (*element_buffer.at(element_ptr))
+                        .template as<element_type>());
 
                 Array<u16, 2> last_indices = {{elements[0], elements[1]}};
 

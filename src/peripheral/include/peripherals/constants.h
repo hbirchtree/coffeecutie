@@ -6,6 +6,10 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
+#if defined(COFFEE_WINDOWS)
+#include <sdkddkver.h>
+#endif
+
 namespace compile_info {
 
 using libc_types::cstring;
@@ -43,13 +47,41 @@ constexpr u32 target = 100;
 }
 } // namespace apple
 
+namespace windows {
+
+constexpr u32 target =
+#if defined(COFFEE_WINDOWS)
+    WINVER
+#else
+    0
+#endif
+    ;
+constexpr u32 wdk =
+#if defined(COFFEE_WINDOWS)
+    WDK_NTDDI_VERSION
+#else
+    0
+#endif
+    ;
+
+}
+
 namespace compiler {
 
 constexpr cstring name        = C_COMPILER_NAME;
 constexpr cstring version_str = C_STR(C_COMPILER_VER_MAJ) "." C_STR(
     C_COMPILER_VER_MIN) "." C_STR(C_COMPILER_VER_REV);
 constexpr compiler_version_t version = {
-    C_COMPILER_VER_MAJ, C_COMPILER_VER_MIN, C_COMPILER_VER_REV};
+#if defined(COFFEE_WINDOWS)
+    C_COMPILER_VER_MAJ / 10000000,
+    C_COMPILER_VER_MAJ / 100000 - (C_COMPILER_VER_MAJ / 10000000) * 100,
+    C_COMPILER_VER_MAJ / 1000 - (C_COMPILER_VER_MAJ / 100000) * 100
+#else
+    C_COMPILER_VER_MAJ, 
+    C_COMPILER_VER_MIN,
+    C_COMPILER_VER_REV
+#endif
+};
 
 } // namespace compiler
 
@@ -122,6 +154,14 @@ constexpr bool internal_build =
 
 namespace platform {
 
+constexpr bool custom_exit =
+#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
+    true
+#else
+    false
+#endif
+    ;
+
 constexpr bool is_unix =
 #if defined(COFFEE_UNIXPLAT) || defined(COFFEE_ANDROID)
     true
@@ -136,6 +176,14 @@ constexpr bool is_windows =
 #else
     false
 #endif
+    ;
+
+constexpr bool is_windows_uwp =
+#if defined(COFFEE_WINDOWS_UWP)
+    true
+#else
+    false
+#endif  
     ;
 
 constexpr bool is_linux =

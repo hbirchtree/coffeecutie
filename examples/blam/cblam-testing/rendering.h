@@ -505,10 +505,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 pass.material_buffer_range.first,
                 pass.material_buffer_range.second);
 
-            pass.matrix_buffer = matrix_store
+            pass.matrix_buffer = (*matrix_store
                                      .at(pass.matrix_buffer_range.first,
-                                         pass.matrix_buffer_range.second)
-                                     ->template as<Matf4>();
+                                         pass.matrix_buffer_range.second))
+                                     .template as<Matf4>();
         }
 
         for(auto& ent : p.select(ObjectMod2))

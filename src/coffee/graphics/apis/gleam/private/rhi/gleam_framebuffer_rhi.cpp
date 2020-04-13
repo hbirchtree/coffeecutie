@@ -173,7 +173,7 @@ void GLEAM_RenderTarget::blit(
 
 void GLEAM_RenderTarget::resize(u32 i, Rect64 const& view)
 {
-    m_size = view.convert<i32>().size();
+    m_size = view.convert<u32>().size();
 
     auto prevDraw = fb_cached_binds[FramebufferT::Draw];
 

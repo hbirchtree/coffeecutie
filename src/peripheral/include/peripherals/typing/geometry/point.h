@@ -62,7 +62,7 @@ struct point_2d : base_point
     template<typename T2>
     vectors::tvector<T2, 2> toVector() const
     {
-        return {x, y};
+        return {static_cast<T2>(x), static_cast<T2>(y)};
     }
 };
 

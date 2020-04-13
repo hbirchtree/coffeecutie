@@ -57,6 +57,7 @@ def pipelines_gen_config(build_info, repo_dir):
             'APPVEYOR_REPO_COMMIT': '$(Build.SourceVersion)',
             'BUILDVARIANT': '$(variant)',
             'CONFIGURATION': 'Debug',
+            'PATH': '$(Path);C:/Program Files/NASM'
         }
 
     return {

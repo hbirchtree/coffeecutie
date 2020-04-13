@@ -20,14 +20,10 @@ struct GLEAM_DataStore
     {
     }
 
-    ~GLEAM_DataStore()
-    {
-    }
-
     UqPtr<GLEAM_Instance_Data, InstanceDataDeleter> inst_data;
     ShPtr<GLEAM_API::FB_T>                          DefaultFramebuffer;
 
-    GLEAM_Quad_Drawer debug_drawer;
+    UqPtr<GLEAM_Quad_Drawer> debug_drawer;
 
     APILevel CURR_API = GL_Nothing;
 

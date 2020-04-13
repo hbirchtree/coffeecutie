@@ -367,7 +367,7 @@ inline void surface_internal_alloc(
         {
             empty.resize(
                 GetPixCompressedSize(
-                    c_fmt, size_2d<i32>(c_size[0], c_size[1])) *
+                    c_fmt, size_2d<u32>(c_size[0], c_size[1])) *
                 num_layers);
 
             surface_initialize<SurfaceQuirks | Compression_Impl>(

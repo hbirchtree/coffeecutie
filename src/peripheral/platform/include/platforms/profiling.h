@@ -173,7 +173,8 @@ struct ExtraDataImpl
 
         auto context = PContext::ProfilerStore();
 
-        C_PTR_CHECK(context)
+        if(!context)
+            return {};
 
         return context->extra_data;
     }

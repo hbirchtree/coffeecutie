@@ -40,7 +40,9 @@ std::string zlib_error_category::message(int error_code) const
     }
 }
 
-using Opts = ZlibCompressor::Opts;
+namespace zlib {
+
+using Opts = Compressor::Opts;
 
 using inflate_init_fun = int (*)(z_streamp, const char*, int);
 using deflate_init_fun = int (*)(z_streamp, int, const char*, int);
@@ -156,39 +158,41 @@ bool compression_routine(
     return true;
 }
 
-bool ZlibCompressor::Compress(
+bool Compressor::Compress(
     Bytes const&     uncompressed,
     Bytes*           target,
     Opts const&      opts,
     zlib_error_code& ec)
 {
-    return compression_routine<nullptr, deflateInit_, deflate, deflateEnd>(
+    return compression_routine<nullptr, ::deflateInit_, ::deflate, ::deflateEnd>(
         uncompressed, target, opts, ec);
 }
 
-bool ZlibCompressor::Decompress(
+bool Compressor::Decompress(
     Bytes const&     compressed,
     Bytes*           target,
     Opts const&      opts,
     zlib_error_code& ec)
 {
-    return compression_routine<inflateInit_, nullptr, inflate, inflateEnd>(
+    return compression_routine<::inflateInit_, nullptr, ::inflate, ::inflateEnd>(
         compressed, target, opts, ec);
 }
 
+} // namespace zlib
 } // namespace Compression
 } // namespace Coffee
-#elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
-#include <coffee/core/plat/plat_windows.h>
+#endif
+#if defined(COFFEE_BUILD_WINDOWS_DEFLATE)
+
+#include <peripherals/platform/windows.h>
 #include <compressapi.h>
-
-#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Compression {
+namespace deflate {
 
-bool DeflateCompressor::Compress(
+bool Compressor::Compress(
     Bytes const&        uncompressed,
     Bytes*              target,
     Opts const&         opts,
@@ -201,11 +205,6 @@ bool DeflateCompressor::Compress(
     if(!succ)
     {
         ec = GetLastError();
-
-        cWarning(
-            "LibZCompressor::Failed to create"
-            " compressor: {0}",
-            ec.message());
         return false;
     }
 
@@ -217,11 +216,7 @@ bool DeflateCompressor::Compress(
     if(compSize == 0 || !succ)
     {
         ec = GetLastError();
-
-        cWarning(
-            "LibZCompressor::Failed to estimate"
-            " compressed size: {0}",
-            ec.message());
+        return false;
     }
 
     *target = Bytes::Alloc(compSize);
@@ -239,7 +234,7 @@ bool DeflateCompressor::Compress(
     return true;
 }
 
-bool DeflateCompressor::Decompress(
+bool Compressor::Decompress(
     Bytes const&        compressed,
     Bytes*              target,
     Opts const&         opts,
@@ -252,9 +247,6 @@ bool DeflateCompressor::Decompress(
     if(!succ)
     {
         ec = GetLastError();
-
-        cWarning(
-            "LibZCompressor::Failed to create decompressor: {0}", ec.message());
         return false;
     }
 
@@ -265,10 +257,7 @@ bool DeflateCompressor::Decompress(
 
     if(compSize == 0 || !succ)
     {
-        cWarning(
-            "LibZCompressor::Failed to estimate"
-            " decompressed size: {0}",
-            ec.message());
+        ec = GetLastError();
         return false;
     }
 
@@ -287,6 +276,7 @@ bool DeflateCompressor::Decompress(
     return true;
 }
 
+} // namespace deflate
 } // namespace Compression
 } // namespace Coffee
 

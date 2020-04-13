@@ -8,7 +8,7 @@
 #if defined(COFFEE_UNIXPLAT)
 #include <unistd.h>
 #elif defined(COFFEE_WINDOWS)
-#include <coffee/core/plat/plat_windows.h>
+#include <peripherals/platform/windows.h>
 #endif
 
 namespace platform {

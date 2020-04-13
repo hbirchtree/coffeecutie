@@ -9,7 +9,7 @@ STATICINLINE void VerifyBuffer(glhnd const& h)
 {
     // TODO: Return error
 
-    if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h.hnd))
+    if(!CGL::Debug::IsBuffer(h))
         return;
     //        cWarning("Invalid use of buffer API,"
     //                 " buffer handle is not valid");

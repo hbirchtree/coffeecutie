@@ -43,7 +43,9 @@ struct ExecLoop
                 queue->executeTasks();
         }
 
-        for(auto& service : container.services_with<AppLoadableService>())
+        auto services = container.services_with<AppLoadableService>(
+            Coffee::Components::reverse_query);
+        for(auto& service : services)
             service.unload(container, appec);
             /* TODO: Unload all services */
 #endif
