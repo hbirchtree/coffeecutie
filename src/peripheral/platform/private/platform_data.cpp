@@ -16,6 +16,10 @@ extern "C" void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis);
 #include <coffee/foreign/foreign.h>
 #endif
 
+#if defined(COFFEE_WINDOWS)
+#include <lm.h>
+#endif
+
 using namespace ::stl_types;
 
 namespace platform {
@@ -31,6 +35,21 @@ extern CString          get_kern_ver();
 extern lsb_data         get_lsb_release();
 extern info::DeviceType get_device_variant();
 } // namespace Linux
+} // namespace env
+#endif
+
+#if defined(COFFEE_WINDOWS)
+namespace env {
+namespace win32 {
+
+extern stl_types::Optional<CString> GetWineVersion();
+stl_types::Optional<CString>        GetRegistryString(
+           HKEY                key,
+           libc_types::cstring subKey,
+           libc_types::cstring valueKey,
+           CString::size_type  size);
+
+}
 } // namespace env
 #endif
 
@@ -196,6 +215,11 @@ CString system::runtime_kernel()
     return env::Linux::get_kern_name();
 #elif defined(COFFEE_APPLE)
     return env::mac::get_kern_name();
+#elif defined(COFFEE_WINDOWS)
+    if(auto wineVer = env::win32::GetWineVersion(); wineVer)
+        return "WINE";
+
+    return "Windows NT";
 #else
     return C_SYSTEM_STRING;
 #endif
@@ -216,6 +240,32 @@ CString system::runtime_kernel_version()
     return env::Linux::get_kern_ver();
 #elif defined(COFFEE_APPLE)
     return env::mac::get_kern_ver();
+#elif defined(COFFEE_WINDOWS)
+    if(auto wineVer = env::win32::GetWineVersion(); wineVer)
+        return *wineVer;
+
+    if(auto version = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "BuildLab",
+           128);
+       version)
+        return *version;
+
+    LPSERVER_INFO_101 ver = nullptr;
+    if(auto err = NetServerGetInfo(nullptr, 101, C_RCAST<LPBYTE*>(&ver));
+       err != NERR_Success)
+        return env::win32::WindowsSysInfo::GetSystemVersion();
+    else
+    {
+        auto base_ver = cast_pod(ver->sv101_version_major) + "." +
+                        cast_pod(ver->sv101_version_minor);
+
+        NetApiBufferFree(&ver);
+
+        return base_ver;
+    }
+
 #else
     return {};
 #endif
@@ -229,6 +279,16 @@ CString system::runtime_distro()
     return "iOS";
 #elif defined(COFFEE_APPLE)
     return "macOS";
+#elif defined(COFFEE_WINDOWS)
+    if(auto name = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ProductName",
+           128);
+       name)
+        return *name;
+    else
+        return C_SYSTEM_STRING;
 #else
     return C_SYSTEM_STRING;
 #endif
@@ -238,6 +298,16 @@ CString system::runtime_distro_version()
 {
 #if defined(COFFEE_LINUX)
     return env::Linux::get_lsb_release().release;
+#elif defined(COFFEE_WINDOWS)
+    if(auto version = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ReleaseId",
+           128);
+       version)
+        return *version;
+    else
+        return {};
 #else
     return {};
 #endif

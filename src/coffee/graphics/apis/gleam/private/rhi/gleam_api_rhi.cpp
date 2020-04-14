@@ -229,7 +229,13 @@ static bool SetAPIVersion(
         "glsl:version", Strings::to_string(DBG::ShaderLanguageVersion()));
     ExtraData::Add("gl:version", Strings::to_string(DBG::ContextVersion()));
     ExtraData::Add("gl:driver", DBG::ContextVersion().driver);
-    ExtraData::Add("gl:renderer", Strings::to_string(DBG::Renderer()));
+    {
+        auto device = DBG::Renderer();
+        auto renderer      = platform::info::HardwareDevice(
+            device.manufacturer, device.model, {});
+        ExtraData::Add("gl:renderer", Strings::to_string(renderer));
+    }
+    ExtraData::Add("gl:vendor", DBG::Renderer().manufacturer);
 
     CString props = {};
     for(auto i : Range<u32>(LIM::Max_Property))

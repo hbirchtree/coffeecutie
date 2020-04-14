@@ -112,6 +112,59 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
     return info;
 }
 
+stl_types::Optional<CString> GetWineVersion()
+{
+    if constexpr(compile_info::platform::is_windows_uwp)
+        return {};
+
+    /* Checking for Wine, being a cheeky cunt */
+    /* Source:
+     * https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
+    typedef const char*(CDECL * WINE_GET_VERSION_FPTR)(void);
+
+    static WINE_GET_VERSION_FPTR pwine_get_version = nullptr;
+
+    if(!pwine_get_version)
+    {
+        HMODULE hntdll = GetModuleHandle("ntdll.dll");
+        if(!hntdll)
+            return {};
+        pwine_get_version =
+            (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll, "wine_get_version");
+        if(!pwine_get_version)
+            return {};
+    }
+
+    CString out = pwine_get_version();
+    return out;
+}
+
+stl_types::Optional<CString> GetRegistryString(
+    HKEY key, libc_types::cstring subKey, libc_types::cstring valueKey, CString::size_type size)
+{
+    CString value;
+    value.resize(size);
+    DWORD valueLen = value.size();
+
+    auto  stat    = RegGetValueA(
+        key,
+        subKey,
+        valueKey,
+        RRF_RT_REG_SZ,
+        nullptr,
+        &value[0],
+        &valueLen);
+
+    if(stat != 0)
+        return {};
+
+    if(valueLen == 1)
+        return {};
+
+    value.resize(valueLen - 1);
+    return value;
+}
+
 uint64 WindowsSysInfo::MemTotal()
 {
     MEMORYSTATUSEX st;
@@ -250,29 +303,9 @@ bool WindowsSysInfo::HasHyperThreading()
 
 CString WindowsSysInfo::GetSystemVersion()
 {
-/* Checking for Wine, being a cheeky cunt */
-/* Source:
- * https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
-#if !defined(COFFEE_WINDOWS_UWP)
-    typedef const char*(CDECL * WINE_GET_VERSION_FPTR)(void);
-    do
-    {
-        static WINE_GET_VERSION_FPTR pwine_get_version;
+    if(auto wineVer = GetWineVersion(); wineVer)
+        return *wineVer;
 
-        if(!pwine_get_version)
-        {
-            HMODULE hntdll = GetModuleHandle("ntdll.dll");
-            if(!hntdll)
-                break;
-            pwine_get_version = (WINE_GET_VERSION_FPTR)GetProcAddress(
-                hntdll, "wine_get_version");
-            if(!pwine_get_version)
-                break;
-        }
-        CString out = CString("Wine ") + pwine_get_version();
-        return out;
-    } while(false);
-#endif
     /* Dear Microsoft, I only want a string. */
     OSVERSIONINFO a;
 
@@ -287,11 +320,17 @@ CString WindowsSysInfo::GetSystemVersion()
     GetVersionEx(&a);
 #endif
 
-    CString out;
-    out += str::convert::to_string(a.dwMajorVersion);
-    out += ".";
-    out += str::convert::to_string(a.dwMinorVersion);
-    return out;
+    CString out = cast_pod(a.dwMajorVersion) + "." + cast_pod(a.dwMinorVersion);
+
+    if(auto version = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ReleaseId",
+           128);
+       version)
+        return out + "." + *version;
+    else
+        return out;
 }
 
 platform::info::HardwareDevice WindowsSysInfo::DeviceName()
@@ -315,6 +354,6 @@ platform::info::HardwareDevice WindowsSysInfo::Chassis()
     return platform::info::HardwareDevice();
 }
 
-} // namespace Windows
-} // namespace Environment
-} // namespace Coffee
+} // namespace win32
+} // namespace env
+} // namespace platform
