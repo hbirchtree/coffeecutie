@@ -70,6 +70,12 @@ target_include_directories ( ASIO PUBLIC
     )
 
 if(BUILD_OPENSSL)
+    if(WIN32)
+        target_link_libraries ( ASIO PUBLIC
+            crypt32 # Necessary for OpenSSL
+            )
+    endif()
+
     target_include_directories ( ASIO SYSTEM PUBLIC
         $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
         )
