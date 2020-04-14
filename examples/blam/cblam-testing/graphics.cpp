@@ -342,7 +342,7 @@ i32 blam_main(i32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Blam Graphics!");
 #if defined(FEATURE_ENABLE_ASIO)
-    Net::RegisterProfiling();
+    auto _ = Net::RegisterProfiling();
 #endif
 
     comp_app::app_error app_ec;
