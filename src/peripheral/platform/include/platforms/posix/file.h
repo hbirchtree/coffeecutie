@@ -5,18 +5,21 @@
 #include <peripherals/semantic/handle.h>
 #include <platforms/libc/file.h>
 
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_GEKKO)
 
 #if defined(COFFEE_APPLE)
 // ???
 #include <mach/vm_statistics.h>
 #endif
 
+#if !defined(COFFEE_NO_MMAN)
+#include <sys/mman.h> // mmap(), mmap64(), msync(), mlock(), munlock()
+#endif
+
 #include <dirent.h>   // opendir(), readdir()
 #include <errno.h>    // errno
 #include <fcntl.h>    // open(), close(), read(), write(), creat()
 #include <libgen.h>   // basename()
-#include <sys/mman.h> // mmap(), mmap64(), msync(), mlock(), munlock()
 #include <sys/stat.h> // lstat()
 #include <sys/types.h>
 #include <unistd.h> // ???
@@ -203,6 +206,7 @@ struct PosixFileFun_def : PosixFileMod_def
         return i == C_FCAST<ptroff>(d.size);
     }
 
+#if !defined(COFFEE_NO_MMAN)
     STATICINLINE
     FM Map(
         Url const& filename, RSCA acc, szptr offset, szptr size, file_error& ec)
@@ -239,7 +243,12 @@ struct PosixFileFun_def : PosixFileMod_def
             C_FCAST<i64>(pa_offset)));
 #else
         addr = static_cast<byte_t*>(mmap(
-            NULL, offset + size - pa_offset, prot, mapping, fd, pa_offset));
+            nullptr,
+            offset + size - pa_offset,
+            prot,
+            mapping,
+            fd,
+            C_FCAST<i64>(pa_offset)));
 #endif
 
         if(!addr || addr == MAP_FAILED)
@@ -351,6 +360,7 @@ struct PosixFileFun_def : PosixFileMod_def
 
         posix::collect_error_to(ec);
     }
+#endif
 
     STATICINLINE szptr Size(FH const& fh, file_error& ec)
     {

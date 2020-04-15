@@ -33,7 +33,7 @@ void surface_allocate(
     if(!feval(m_flags & GLEAM_API::TextureImmutable) ||
        properties::get<properties::is_compressed>(fmt))
     {
-    /* We must set this to register a proper mipmap level */
+        /* We must set this to register a proper mipmap level */
 #if GL_VERSION_VERIFY(0x300, 0x300)
         //        int32 min_lev = 0;
         i32 max_lev  = C_FCAST<i32>(mips - 1);
@@ -68,7 +68,7 @@ void surface_dealloc(glhnd& m_handle)
  */
 
 Tup<u32, u32> surface_get_levels(
-    glhnd const& m_handle, TexComp::tex_flag m_type)
+    glhnd const& m_handle, TexComp::tex_flag m_type, gleam_error& ec)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     i32 base = 0, max = 0;
@@ -88,6 +88,11 @@ Tup<u32, u32> surface_get_levels(
     }
 
     return std::make_tuple(C_FCAST<u32>(base), C_FCAST<u32>(max));
+
+#else
+
+    ec = APIError::UnimplementedPath;
+    return std::make_tuple(u32(), u32());
 #endif
 }
 
@@ -358,12 +363,11 @@ inline void surface_internal_alloc(
             num_layers = C_FCAST<u32>(size[2]);
 
         SizeT c_size = size;
-        u32   i      = 0;
-        while(i < surface.m_mips)
+        for(auto i : Range<>(surface.m_mips))
         {
             empty.resize(
                 GetPixCompressedSize(
-                    c_fmt, size_2d<i32>(c_size[0], c_size[1])) *
+                    c_fmt, size_2d<u32>(c_size[0], c_size[1])) *
                 num_layers);
 
             surface_initialize<SurfaceQuirks | Compression_Impl>(
@@ -371,7 +375,6 @@ inline void surface_internal_alloc(
 
             c_size[0] /= 2;
             c_size[1] /= 2;
-            i++;
         }
 
         return;
@@ -385,8 +388,7 @@ inline void surface_internal_alloc(
     {
         /* Traditional TexImage*D */
         SizeT c_size = size;
-        u32   i      = 0;
-        while(i < surface.m_mips)
+        for(auto i : Range<>(surface.m_mips))
         {
             /* "Old" texture loading, needs full initialization */
             surface_initialize<SurfaceQuirks>(
@@ -394,13 +396,12 @@ inline void surface_internal_alloc(
 
             c_size[0] /= 2;
             c_size[1] /= 2;
-            i++;
         }
     }
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else if(GLEAM_FEATURES.texture_storage)
     {
-    /* Immutable textures, optionally using direct_state_access */
+        /* Immutable textures, optionally using direct_state_access */
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(GLEAM_FEATURES.direct_state)
             surface_initialize<
@@ -437,11 +438,11 @@ C_UNUSED(STATICINLINE void texture_swizzle(
 }
 
 STATICINLINE void texture_pbo_upload(
-    szptr pixSize, Bytes const& data, u32 m_flags, c_cptr& data_ptr)
+    szptr pixSize, BytesConst const& data, u32 m_flags, c_cptr& data_ptr)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(pixSize > data.size)
-        throw undefined_behavior("memory access would go out of bounds");
+        Throw(undefined_behavior("memory access would go out of bounds"));
 
     if(m_flags & GLEAM_API::TextureDMABuffered)
     {
@@ -450,7 +451,7 @@ STATICINLINE void texture_pbo_upload(
         CGL33::BufBind(buf::pixel_unpack::value, hand);
         CGL33::BufData(
             buf::pixel_unpack::value,
-            Bytes::From(data.data, pixSize),
+            BytesConst::From(data.data, pixSize),
             RSCA::WriteOnly | RSCA::Persistent);
 
         hand.release();
@@ -459,17 +460,24 @@ STATICINLINE void texture_pbo_upload(
 }
 
 STATICINLINE bool texture_check_bounds(
-    Bytes const& texdata, PixCmp pix, BitFmt bit, szptr pixels)
+    BytesConst const& texdata, PixDesc const& fmt, szptr pixels, Size size = {})
 {
-    bool r = texdata.size >= GetPixSize(bit, pix, pixels);
+    using namespace typing::pixels::properties;
+
+    bool r = false;
+
+    if(get<is_compressed>(fmt.pixfmt))
+    {
+        auto expected = GetPixCompressedSize(fmt.c, size);
+        auto real     = texdata.size;
+
+        r = expected == real;
+    } else
+    {
+        r = texdata.size >= GetPixSize(fmt.bfmt, fmt.comp, pixels);
+    }
 
     // TODO: Return error
-
-    //    if(!r)
-    //        cWarning(
-    //            GLM_API "Texture failed bounds test: {0} < {1}",
-    //            texdata.size,
-    //            GetPixSize(bit, pix, pixels));
 
     return r;
 }
@@ -485,12 +493,12 @@ void GLEAM_Surface2D::allocate(Size size, PixCmp c)
 }
 
 void GLEAM_Surface2D::upload(
-    PixDesc      pfmt,
-    const Size&  size,
-    const Bytes& data,
-    gleam_error& ec,
-    Point        offset,
-    u32          mip)
+    PixDesc                     pfmt,
+    const Size&                 size,
+    const semantic::BytesConst& data,
+    gleam_error&                ec,
+    Point                       offset,
+    u32                         mip)
 {
     c_cptr data_ptr = data.data;
     auto   msz      = size.convert<u32>();
@@ -498,8 +506,8 @@ void GLEAM_Surface2D::upload(
     auto   fmt      = pfmt.bfmt;
     auto   pxfmt    = pfmt.pixfmt;
 
-    if(!texture_check_bounds(data, comp, fmt, msz.area()))
-        return;
+    if(!texture_check_bounds(data, pfmt, msz.area(), size))
+        Throw(undefined_behavior("not enough texture data"));
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!properties::get<properties::is_compressed>(pxfmt))
@@ -563,22 +571,37 @@ void GLEAM_Surface3D_Base::allocate(Size3 size, PixCmp c)
 }
 
 void GLEAM_Surface3D_Base::upload(
-    PixDesc       pfmt,
-    Size3 const&  size,
-    Bytes const&  data,
-    Point3 const& offset,
-    u32           mip)
+    PixDesc                          pfmt,
+    Size3 const&                     size,
+    semantic::BytesConst const&      data,
+    Coffee::RHI::GLEAM::gleam_error& ec,
+    Point3 const&                    offset,
+    u32                              mip,
+    u32                              stride)
 {
     auto msz = size.convert<u32>();
     auto mof = offset.convert<u32>();
 
     auto pxfmt = pfmt.pixfmt;
-    auto comp  = pfmt.comp;
     auto fmt   = pfmt.bfmt;
 
-    if(!properties::get<properties::is_compressed>(pxfmt) &&
-       !texture_check_bounds(data, comp, fmt, msz.volume()))
+    if(size.depth == 1 && stride == 0 &&
+       !texture_check_bounds(
+           data, pfmt, msz.volume(), Size(msz.width, msz.height)))
+        Throw(undefined_behavior("not enough texture data"));
+
+    if(stride != 0)
+    {
+#if GL_VERSION_VERIFY(0x300, 0x300)
+        if(stride < size.width)
+            Throw(undefined_behavior("stride is less than upload size"));
+
+        CGL33::PixelStorei(GL_UNPACK_ROW_LENGTH, stride);
+#else
+        ec = GLEAM::APIError::UnimplementedPath;
         return;
+#endif
+    }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
@@ -588,7 +611,7 @@ void GLEAM_Surface3D_Base::upload(
 
         if(!properties::get<properties::is_compressed>(pxfmt))
             texture_pbo_upload(
-                GetPixSize(fmt, comp, size.convert<u32>().volume()),
+                PixDescSize(pfmt, Size(msz.width, msz.height)),
                 data,
                 m_flags,
                 data_ptr);
@@ -596,7 +619,7 @@ void GLEAM_Surface3D_Base::upload(
         if(!GLEAM_FEATURES.direct_state)
             CGL33::TexBind(m_type, m_handle);
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(properties::get<properties::is_compressed>(pxfmt) &&
            GLEAM_FEATURES.direct_state)
         {
@@ -606,13 +629,20 @@ void GLEAM_Surface3D_Base::upload(
                 offset,
                 size,
                 pfmt.c,
-                C_FCAST<i32>(data.size),
+                C_FCAST<i32>(PixDescSize(
+                    pfmt, Size(size.width, size.height * size.depth))),
                 data.data);
-        } else if(properties::get<properties::is_compressed>(pxfmt))
+        } else
+#endif
+#if GL_VERSION_VERIFY(0x300, 0x300)
+            if(properties::get<properties::is_compressed>(pxfmt))
         {
             CGL33::TexCompressedSubImage3D(
                 m_type, mip, offset, size, pfmt.c, data.size, data.data);
-        } else if(GLEAM_FEATURES.direct_state)
+        } else
+#endif
+#if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
+            if(GLEAM_FEATURES.direct_state)
         {
             CGL45::TexSubImage3D(
                 m_handle,
@@ -667,23 +697,41 @@ void GLEAM_Surface3D_Base::upload(
                 data.data);
         }
     }
-}
 
-void GLEAM_Surface3D_Base::upload(
-    BitFmt        fmt,
-    PixCmp        comp,
-    Size3 const&  size,
-    Bytes const&  data,
-    Point3 const& offset,
-    u32           mip)
-{
-    upload({m_pixfmt, fmt, comp}, size, data, offset, mip);
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    if(stride != 0)
+        CGL33::PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
 }
 
 GLEAM_SurfaceCubeArray::GLEAM_SurfaceCubeArray(
     PixFmt fmt, u32 mips, u32 texflags) :
-    GLEAM_Surface2DArray(fmt, mips, texflags)
+    GLEAM_Surface3D_Base(tex::tex_cube_array::value, fmt, mips, texflags)
 {
+}
+
+void GLEAM::GLEAM_SurfaceCubeArray::allocate(Size3 size, PixCmp c)
+{
+    /* Cubemap arrays have 6x the layers */
+    GLEAM_Surface3D_Base::allocate(
+        {size.width, size.height, size.depth * 6}, c);
+}
+
+void GLEAM::GLEAM_SurfaceCubeArray::upload(
+    PixDesc const&              pfmt,
+    typing::graphics::CubeFace  face,
+    Size const&                 size,
+    semantic::BytesConst const& data,
+    Point3 const&               offset,
+    GLEAM::gleam_error&         ec,
+    u32                         mipmap)
+{
+    GLEAM_Surface3D_Base::upload(
+        pfmt,
+        Size3(size.w, size.h, 1),
+        data,
+        ec,
+        Point3(offset.x, offset.y, offset.z * 6 + C_CAST<u32>(face)));
 }
 
 } // namespace GLEAM

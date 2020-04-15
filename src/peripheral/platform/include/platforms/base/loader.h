@@ -99,7 +99,7 @@ struct ObjConstructor
     inline return_type operator()(Args... args) const
     {
         auto ptr = loader(args...);
-        return MkUqWrap<Obj>(ptr);
+        return MkUqFrom<Obj>(ptr);
     }
 };
 

@@ -2,21 +2,21 @@
 
 #include <peripherals/base.h>
 
-#ifdef COFFEE_WINDOWS
+#if defined(COFFEE_WINDOWS)
 
-#include "../cfile.h"
 
 #include <sys/stat.h>
 
-#include "../../plat_windows.h"
-#include "../../plat_windows_errors.h"
+#include <platforms/libc/file.h>
+#include <peripherals/platform/windows.h>
+#include <peripherals/error/windows.h>
 
 namespace platform {
 namespace file {
 namespace win32 {
 
-using win32_file_error =
-    nested_domain_error_code<u32, win32_error_category, FILE_error_code>;
+using file_error =
+    nested_domain_error_code<u32, platform::win32::error_category, FILE_error_code>;
 
 struct WinFileApi
 {
@@ -33,6 +33,7 @@ struct WinFileApi
         win_handle file;
         HRSRC      rsrc;
         FH_Type    type = FS;
+        RSCA       access;
     };
     struct FileMapping : FileFunDef<>::FileMapping
     {
@@ -59,7 +60,7 @@ struct WinFileApi
     static DWORD      GetMappingViewFlags(RSCA acc);
 };
 
-using Win32FILEFun = CFILEFunBase_def<win32_file_error, WinFileApi::FileHandle>;
+using Win32FILEFun = CFILEFunBase_def<file_error, WinFileApi::FileHandle>;
 
 struct WinFileFun : Win32FILEFun
 {
@@ -91,7 +92,7 @@ struct WinFileFun : Win32FILEFun
     static void       ScratchUnmap(ScratchBuf&& buf, file_error& ec);
 };
 
-struct WinDirFun : DirFunDef<win32_file_error>
+struct WinDirFun : DirFunDef<file_error>
 {
     using file_error = WinFileFun::file_error;
 
@@ -107,12 +108,12 @@ struct WinDirFun : DirFunDef<win32_file_error>
     static Url Basename(CString const& fn, file_error& ec);
 };
 
-} // namespace Windows
+} // namespace win32
 
-using DirFun  = Windows::WinDirFun;
-using FileFun = Windows::WinFileFun;
+using DirFun  = win32::WinDirFun;
+using FileFun = win32::WinFileFun;
 
-} // namespace CResources
-} // namespace Coffee
+} // namespace env
+} // namespace platform
 
 #endif

@@ -2,19 +2,84 @@
 
 #include <algorithm>
 #include <coffee/components/types.h>
+#include <coffee/core/printing/log_interface.h>
 
 namespace Coffee {
 namespace Components {
+namespace Convenience {
+
+using hash_type = declmemtype(&std::type_info::hash_code);
+
+template<typename T>
+FORCEDINLINE hash_type type_hash_v()
+{
+    return typeid(T).hash_code();
+}
+
+} // namespace Convenience
+
+using Convenience::type_hash_v;
 
 namespace detail {
 struct visitor_path;
 }
 
+template<typename ContainerType>
+struct EntityRef;
+
+template<typename ContainerType, typename ComponentType>
+struct ComponentRef;
+
+template<typename Service>
+struct ServiceRef;
+
+template<typename T, bool Reversed = false>
+struct service_query;
+
+struct reverse_query_t
+{
+};
+
+constexpr reverse_query_t reverse_query;
+
+namespace matchers {
+
+template<typename subsystem_list>
+struct all_subsystems_in
+{
+    template<typename T>
+    struct match_single
+    {
+        void operator()(SubsystemBase* sub, bool& match)
+        {
+            match = match || C_DCAST<T>(sub);
+        }
+    };
+
+    static bool match(SubsystemBase* sub)
+    {
+        bool out = false;
+        type_safety::type_list::for_each<subsystem_list, match_single>(
+            sub, std::ref(out));
+        return out;
+    }
+};
+
+} // namespace matchers
+
 struct EntityContainer : non_copy
 {
-    friend struct Entity;
+    enum DebugFlags
+    {
+        Verbose_Subsystems = 0x1,
+        Verbose_Visitors   = 0x2,
+    };
 
-    EntityContainer() : entity_counter(0)
+    friend struct Entity;
+    template<typename T, bool Reversed>
+    friend struct service_query;
+
+    EntityContainer() : entity_counter(0), debug_flags(0)
     {
     }
 
@@ -50,11 +115,7 @@ struct EntityContainer : non_copy
 
         entity_query& operator++()
         {
-            if(!pred)
-                Throw(undefined_behavior("bad function"));
-
             it = std::find_if(++it, m_container->entities.end(), pred);
-
             return *this;
         }
 
@@ -133,6 +194,13 @@ struct EntityContainer : non_copy
     template<typename ComponentType>
     void register_component(UqPtr<ComponentContainer<ComponentType>>&& c);
 
+    template<typename ContainerType, typename... Args>
+    void register_component_inplace(Args... args)
+    {
+        register_component<typename ContainerType::tag_type>(
+            MkUq<ContainerType>(std::forward<Args>(args)...));
+    }
+
     template<typename OutputType>
     void register_subsystem(UqPtr<Subsystem<OutputType>>&& sys)
     {
@@ -169,6 +237,9 @@ struct EntityContainer : non_copy
         register_system(MkUq<SystemType>(std::forward<Args>(args)...));
     }
 
+    template<typename ServiceType, typename SubsystemType>
+    void register_subsystem_services(SubsystemType* subsystem);
+
     inline void add_component(u64 entity_id, size_t type_id)
     {
         container(type_id).register_entity(entity_id);
@@ -186,10 +257,8 @@ struct EntityContainer : non_copy
         entities.emplace_back();
         auto& entity = entities.back();
 
-        entity.id       = entity_counter;
-        entity.interval = recipe.interval;
-        entity.tags     = recipe.tags;
-        entity.next_run = clock::now();
+        entity.id   = entity_counter;
+        entity.tags = recipe.tags;
 
         for(auto type_id : recipe.components)
             add_component(entity_counter, type_id);
@@ -217,6 +286,18 @@ struct EntityContainer : non_copy
             [=]() {
                 return entity_query::from_container(
                     *this, container<ComponentType>());
+            },
+            [=]() { return entity_query(*this); });
+    }
+
+    template<typename Matcher>
+    quick_container<entity_query> match()
+    {
+        return quick_container<entity_query>(
+            [=]() {
+                return entity_query(*this, [=](Entity const& e) {
+                    return Matcher::match(*this, e.id);
+                });
             },
             [=]() { return entity_query(*this); });
     }
@@ -286,12 +367,12 @@ struct EntityContainer : non_copy
             Throw(undefined_behavior("subsystem not found"));
     }
 
-    template<typename OutputType>
-    Subsystem<OutputType>& subsystem()
+    template<typename TagType>
+    Subsystem<TagType>& subsystem()
     {
-        using subsystem_t = Subsystem<OutputType>;
+        using subsystem_t = Subsystem<TagType>;
 
-        const type_hash type_id = typeid(OutputType).hash_code();
+        const type_hash type_id = typeid(TagType).hash_code();
 
         auto it = subsystems.find(type_id);
 
@@ -301,10 +382,58 @@ struct EntityContainer : non_copy
         return *C_FCAST<subsystem_t*>(it->second.get());
     }
 
+    template<typename Service>
+    typename Service::type* service()
+    {
+        const type_hash type_id = typeid(Service).hash_code();
+        auto            it      = services.find(type_id);
+
+        if(it == services.end())
+            return nullptr;
+
+        return C_DCAST<typename Service::type>(it->second);
+    }
+
+    template<typename Service>
+    ServiceRef<Service> service_ref();
+
+    template<class BaseType, bool Reversed = false>
+    quick_container<service_query<BaseType, Reversed>> services_with();
+
+    template<class BaseType>
+    auto services_with(reverse_query_t);
+
     template<typename ComponentType>
     typename ComponentType::type* get(u64 id)
     {
         return container<ComponentType>().get(id);
+    }
+
+    EntityRef<EntityContainer> ref(Entity& entity);
+    EntityRef<EntityContainer> ref(u64 entity);
+
+    template<typename ComponentTag>
+    ComponentRef<EntityContainer, ComponentTag> ref_comp(u64 entity);
+
+    template<typename Matcher>
+    void remove_subsystems_matching()
+    {
+        using subsystem_pair = decltype(subsystems)::value_type;
+
+        auto it   = subsystems.begin();
+        auto pred = [](subsystem_pair const& sub) {
+            return Matcher::match(sub.second.get());
+        };
+
+        while(it != subsystems.end())
+        {
+            it = std::find_if(subsystems.begin(), subsystems.end(), pred);
+            if(it != subsystems.end())
+            {
+                subsystems.erase(it);
+                it = subsystems.begin();
+            }
+        }
     }
 
     /* For optimizations */
@@ -312,13 +441,16 @@ struct EntityContainer : non_copy
 
     visitor_graph create_task_graph();
 
+    u32 debug_flags;
+
   private:
     u64            entity_counter; /*!< For enumerating entities */
     Vector<Entity> entities;
 
     Map<type_hash, UqPtr<ComponentContainerBase>> components;
-    Map<type_hash, UqPtr<SubsystemBase>> subsystems; /*!< Not really systems */
-    Vector<UqPtr<EntityVisitorBase>>     visitors;
+    Map<type_hash, UqPtr<SubsystemBase>>          subsystems;
+    Vector<UqPtr<EntityVisitorBase>>              visitors;
+    Map<type_hash, SubsystemBase*>                services;
 };
 
 } // namespace Components

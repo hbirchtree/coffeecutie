@@ -1,18 +1,26 @@
+option ( PRESSURIZE_FIND_TIFF "Look for libtiff" OFF )
+
 dependency_get (
     SOURCE hbirchtree/native-library-bundle
     TAG ${NATIVE_LIB_BUNDLE_TAG}
     NAMES
-        squish
-        shaderc
-        spirvcross
-        glslang
+        squish=SQUISH
+        shaderc=SHADERC
+        spirvcross=SPVCROSS
+        glslang=GLSLANG
     )
 
+# SPIR-V Tools is built with Shaderc
+set ( SPVTOOLS_DIR "${SHADERC_DIR}" )
+
 find_package( Squish QUIET     )
-find_package( TIFF QUIET       )
 find_package( shaderc QUIET    )
 find_package( SPIRVCross QUIET )
 find_package( SPIRVTools QUIET )
+
+if(PRESSURIZE_FIND_TIFF)
+    find_package( TIFF QUIET )
+endif()
 
 option ( BUILD_ETC2COMP "Build with ETC1/ETC2 compression support" OFF )
 
@@ -37,7 +45,7 @@ coffee_application (
     USE_CMD
     TITLE "Pressure Cooker"
     SOURCES main.cpp
-    LIBRARIES Core
+    LIBRARIES Core CoreVirtFS
     BUNDLE_LIBRARIES ${PRESSURIZERS}
     )
 
@@ -46,7 +54,7 @@ coffee_application (
     USE_CMD
     TITLE "Depressurizer"
     SOURCES depressure_main.cpp
-    LIBRARIES Core
+    LIBRARIES Core CoreVirtFS
     )
 
 if(BUILD_ASSIMP)
@@ -54,6 +62,7 @@ if(BUILD_ASSIMP)
         TARGET PressurizeModels
         LINKABLE
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES model_compress.cpp
         LIBRARIES Core AssimpTools
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -76,6 +85,7 @@ if(SQUISH_FOUND)
         TARGET PressurizeTextures
         LINKABLE
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES
         texture_compress.cpp
         dxt_compression.h
@@ -93,10 +103,10 @@ if(SQUISH_FOUND)
             )
     endif()
 
-    if(TIFF_FOUND)
+    if(PRESSURIZE_FIND_TIFF AND TIFF_FOUND)
         target_compile_definitions ( PressurizeTextures
             PRIVATE
-            -DHAVE_LIBTIFF
+            HAVE_LIBTIFF
             )
 
         target_link_libraries ( PressurizeTextures
@@ -167,11 +177,12 @@ else()
     message ( STATUS "Skipping PressurizeTextures" )
 endif()
 
-if(SHADERC_FOUND)
+if(SHADERC_FOUND AND SPVTOOLS_FOUND)
     coffee_library (
         TARGET PressurizeShaders
         LINKABLE
         LINKAGE SHARED
+        NO_EXPORT
         SOURCES shader_compress.cpp
         LIBRARIES Core shaderc
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

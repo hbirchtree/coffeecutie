@@ -1,6 +1,6 @@
-#include <coffee/core/plat/environment/windows/sysinfo.h>
-#include <coffee/core/plat/plat_environment.h>
-#include <coffee/core/plat/plat_primary_identify.h>
+#include <platforms/win32/sysinfo.h>
+
+#include <platforms/environment.h>
 
 #if !defined(COFFEE_MINGW64)
 extern bool WMI_Query(
@@ -11,11 +11,11 @@ static inline bool WMI_Query(const char*, const wchar_t*, std::string&)
 }
 #endif
 
-namespace Coffee {
-namespace Environment {
-namespace Windows {
+namespace platform {
+namespace env {
+namespace win32 {
 
-uint32 WindowsSysInfo::CountThreads(ULONG_PTR bitm)
+static u32 CountThreads(ULONG_PTR bitm)
 {
     uint32    bitc   = 0;
     DWORD     lshift = sizeof(ULONG_PTR) * 8 - 1;
@@ -43,7 +43,7 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
             if(GetLastError() == ERROR_INSUFFICIENT_BUFFER)
             {
                 if(st)
-                    Mem::CFree(st);
+                    ::free(st);
                 else
                     st = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(rsize);
             } else
@@ -107,12 +107,105 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
         ptr++;
     }*/
 
-    Mem::CFree(st);
+    ::free(st);
 
     return info;
 }
 
-HWDeviceInfo WindowsSysInfo::Processor()
+stl_types::Optional<CString> GetWineVersion()
+{
+    if constexpr(compile_info::platform::is_windows_uwp)
+        return {};
+
+    /* Checking for Wine, being a cheeky cunt */
+    /* Source:
+     * https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
+    typedef const char*(CDECL * WINE_GET_VERSION_FPTR)(void);
+
+    static WINE_GET_VERSION_FPTR pwine_get_version = nullptr;
+
+    if(!pwine_get_version)
+    {
+        HMODULE hntdll = GetModuleHandle("ntdll.dll");
+        if(!hntdll)
+            return {};
+        pwine_get_version =
+            (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll, "wine_get_version");
+        if(!pwine_get_version)
+            return {};
+    }
+
+    CString out = pwine_get_version();
+    return out;
+}
+
+stl_types::Optional<CString> GetRegistryString(
+    HKEY key, libc_types::cstring subKey, libc_types::cstring valueKey, CString::size_type size)
+{
+    CString value;
+    value.resize(size);
+    DWORD valueLen = value.size();
+
+    auto  stat    = RegGetValueA(
+        key,
+        subKey,
+        valueKey,
+        RRF_RT_REG_SZ,
+        nullptr,
+        &value[0],
+        &valueLen);
+
+    if(stat != 0)
+        return {};
+
+    if(valueLen == 1)
+        return {};
+
+    value.resize(valueLen - 1);
+    return value;
+}
+
+uint64 WindowsSysInfo::MemTotal()
+{
+    MEMORYSTATUSEX st;
+    st.dwLength = sizeof(st);
+
+    GlobalMemoryStatusEx(&st);
+
+    return st.ullTotalPhys;
+}
+
+uint64 WindowsSysInfo::MemAvailable()
+{
+    MEMORYSTATUSEX st;
+    st.dwLength = sizeof(st);
+
+    GlobalMemoryStatusEx(&st);
+
+    return st.ullAvailPhys;
+}
+
+uint64 WindowsSysInfo::SwapTotal()
+{
+    MEMORYSTATUSEX st;
+    st.dwLength = sizeof(st);
+
+    GlobalMemoryStatusEx(&st);
+
+    return st.ullTotalPageFile;
+}
+
+uint64 WindowsSysInfo::SwapAvailable()
+{
+    MEMORYSTATUSEX st;
+    st.dwLength = sizeof(st);
+
+    GlobalMemoryStatusEx(&st);
+
+    return st.ullAvailPageFile;
+}
+
+platform::info::HardwareDevice WindowsSysInfo::Processor()
 {
 #if defined(COFFEE_ARCH_AMD64) || defined(COFFEE_ARCH_X86)
     char CPUString[0x20];
@@ -153,14 +246,32 @@ HWDeviceInfo WindowsSysInfo::Processor()
 
     CString brand = CPUBrandString;
     str::trim::both(brand);
-    cstring brand_find = str::find(brand.c_str(), '\0');
+    cstring brand_find = libc::str::find(brand.c_str(), '\0');
     if(brand_find)
         brand.resize(brand_find - brand.c_str());
 
-    return HWDeviceInfo(CPUString, brand, Env::GetVar("PROCESSOR_REVISION"));
+    return platform::info::HardwareDevice(
+        CPUString, brand, Env::GetVar("PROCESSOR_REVISION"));
 #else
     return HWDeviceInfo("Generic", COFFEE_ARCH, "0x0");
 #endif
+}
+
+bigscalar WindowsSysInfo::ProcessorFrequency()
+{
+    LARGE_INTEGER e;
+    QueryPerformanceFrequency(&e);
+    return e.QuadPart / 1000000.0;
+}
+
+bool WindowsSysInfo::HasFPU()
+{
+    return IsProcessorFeaturePresent(PF_FLOATING_POINT_EMULATED) == 0;
+}
+
+bool WindowsSysInfo::HasPAE()
+{
+    return IsProcessorFeaturePresent(PF_PAE_ENABLED);
 }
 
 bool WindowsSysInfo::HasHyperThreading()
@@ -192,29 +303,9 @@ bool WindowsSysInfo::HasHyperThreading()
 
 CString WindowsSysInfo::GetSystemVersion()
 {
-/* Checking for Wine, being a cheeky cunt */
-/* Source:
- * https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
-#if !defined(COFFEE_WINDOWS_UWP)
-    typedef const char*(CDECL * WINE_GET_VERSION_FPTR)(void);
-    do
-    {
-        static WINE_GET_VERSION_FPTR pwine_get_version;
+    if(auto wineVer = GetWineVersion(); wineVer)
+        return *wineVer;
 
-        if(!pwine_get_version)
-        {
-            HMODULE hntdll = GetModuleHandle("ntdll.dll");
-            if(!hntdll)
-                break;
-            pwine_get_version = (WINE_GET_VERSION_FPTR)GetProcAddress(
-                hntdll, "wine_get_version");
-            if(!pwine_get_version)
-                break;
-        }
-        CString out = CString("Wine ") + pwine_get_version();
-        return out;
-    } while(false);
-#endif
     /* Dear Microsoft, I only want a string. */
     OSVERSIONINFO a;
 
@@ -229,14 +320,20 @@ CString WindowsSysInfo::GetSystemVersion()
     GetVersionEx(&a);
 #endif
 
-    CString out;
-    out += str::convert::to_string(a.dwMajorVersion);
-    out += ".";
-    out += str::convert::to_string(a.dwMinorVersion);
-    return out;
+    CString out = cast_pod(a.dwMajorVersion) + "." + cast_pod(a.dwMinorVersion);
+
+    if(auto version = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ReleaseId",
+           128);
+       version)
+        return out + "." + *version;
+    else
+        return out;
 }
 
-HWDeviceInfo WindowsSysInfo::DeviceName()
+platform::info::HardwareDevice WindowsSysInfo::DeviceName()
 {
     CString dev_manuf;
     CString dev_desc;
@@ -244,19 +341,19 @@ HWDeviceInfo WindowsSysInfo::DeviceName()
     WMI_Query("SELECT * FROM CIM_Product", L"Vendor", dev_manuf);
     WMI_Query("SELECT * FROM CIM_Product", L"Version", dev_desc);
     WMI_Query("SELECT * FROM CIM_Product", L"SKUNumber", dev_fw);
-    return HWDeviceInfo(dev_manuf, dev_desc, dev_fw);
+    return platform::info::HardwareDevice(dev_manuf, dev_desc, dev_fw);
 }
 
-HWDeviceInfo WindowsSysInfo::Motherboard()
+platform::info::HardwareDevice WindowsSysInfo::Motherboard()
 {
-    return HWDeviceInfo();
+    return platform::info::HardwareDevice();
 }
 
-HWDeviceInfo WindowsSysInfo::Chassis()
+platform::info::HardwareDevice WindowsSysInfo::Chassis()
 {
-    return HWDeviceInfo();
+    return platform::info::HardwareDevice();
 }
 
-} // namespace Windows
-} // namespace Environment
-} // namespace Coffee
+} // namespace win32
+} // namespace env
+} // namespace platform

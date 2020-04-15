@@ -6,7 +6,7 @@ coffee_application (
     SOURCES main.cpp
 
     LIBRARIES
-    OpenALMix RendererDefault GLeamRHI Core
+    OpenALMix DropinRenderer GLeamRHI Core
 
     BUNDLE_LIBRARIES ${OPENAL_LIBRARY}
 

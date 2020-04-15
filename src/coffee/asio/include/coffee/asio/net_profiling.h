@@ -1,5 +1,8 @@
 #pragma once
 
+#include <peripherals/base.h>
+#include <peripherals/libc/signals.h>
+
 namespace Coffee {
 namespace Net {
 
@@ -9,7 +12,14 @@ namespace Net {
  */
 extern void ProfilingExport();
 
-extern void RegisterProfiling();
+#if !defined(COFFEE_MACOS) && !defined(COFFEE_WINDOWS)
+NO_DISCARD extern int RegisterProfiling();
+#else
+NO_DISCARD inline auto RegisterProfiling()
+{
+    return libc::signal::scope_exit_handler<ProfilingExport>();
+}
+#endif
 
 } // namespace Net
 } // namespace Coffee

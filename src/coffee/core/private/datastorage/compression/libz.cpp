@@ -1,7 +1,7 @@
 #include <coffee/core/base.h>
 
+#include <coffee/compression/libz.h>
 #include <coffee/core/CProfiling>
-#include <coffee/core/datastorage/compression/libz.h>
 #include <platforms/profiling.h>
 
 #if defined(COFFEE_BUILD_ZLIB)
@@ -40,7 +40,9 @@ std::string zlib_error_category::message(int error_code) const
     }
 }
 
-using Opts = ZlibCompressor::Opts;
+namespace zlib {
+
+using Opts = Compressor::Opts;
 
 using inflate_init_fun = int (*)(z_streamp, const char*, int);
 using deflate_init_fun = int (*)(z_streamp, int, const char*, int);
@@ -59,16 +61,24 @@ bool compression_routine(
 {
     DProfContext _("zlib::Compression routine");
 
+    bool direct_output = opts.prealloc_size > 0;
+
+    if(direct_output && output->size < opts.prealloc_size)
+        direct_output = false;
+
     Vector<byte_t> compress_store;
-    compress_store.resize(opts.chunk_size);
+    compress_store.resize(direct_output ? opts.prealloc_size : opts.chunk_size);
+
+    byte_t* write_ptr = direct_output ? output->data : compress_store.data();
 
     z_stream strm;
     strm.zalloc = nullptr;
     strm.zfree  = nullptr;
     strm.opaque = nullptr;
 
-    strm.avail_out = C_FCAST<u32>(opts.chunk_size);
-    strm.next_out  = compress_store.data();
+    strm.avail_out = C_FCAST<u32>(
+        direct_output ? opts.prealloc_size : compress_store.size());
+    strm.next_out = write_ptr;
 
     strm.avail_in = C_FCAST<u32>(input.size);
     strm.next_in  = input.data;
@@ -85,17 +95,21 @@ bool compression_routine(
 
     while(strm.avail_in > 0)
     {
-        auto comp_size = compress_store.size();
-        ret            = Proc(&strm, Z_NO_FLUSH);
+        ret = Proc(&strm, Z_NO_FLUSH);
 
         if(ret != Z_OK && ret != Z_STREAM_END)
             return false;
 
         if(strm.avail_out == 0 && strm.avail_in > 0)
         {
+            if(direct_output)
+                Throw(undefined_behavior("Failed direct output"));
+
+            auto comp_size = compress_store.size();
             compress_store.resize(comp_size + opts.chunk_size);
+            write_ptr      = compress_store.data();
             strm.avail_out = C_FCAST<u32>(opts.chunk_size);
-            strm.next_out  = &compress_store[comp_size];
+            strm.next_out  = &write_ptr[comp_size];
         }
     }
 
@@ -110,10 +124,14 @@ bool compression_routine(
 
             if(ret != Z_STREAM_END && strm.avail_out == 0)
             {
+                if(direct_output)
+                    Throw(undefined_behavior("Failed direct output"));
+
                 auto comp_size = compress_store.size();
                 compress_store.resize(comp_size + opts.chunk_size);
+                write_ptr      = compress_store.data();
                 strm.avail_out = C_FCAST<u32>(opts.chunk_size);
-                strm.next_out  = &compress_store[comp_size];
+                strm.next_out  = &write_ptr[comp_size];
             }
         } while(ret != Z_STREAM_END);
     }
@@ -123,48 +141,58 @@ bool compression_routine(
     if(ret != Z_OK)
         return false;
 
-    szptr out_size = compress_store.size() - strm.avail_out;
+    szptr out_size = direct_output ? 0 : compress_store.size() - strm.avail_out;
 
-    (*output) = Bytes::Alloc(out_size);
+    {
+        DProfContext _("zlib::Allocate output");
+        if(output->size < out_size)
+            (*output) = Bytes::Alloc(out_size);
+    }
 
-    MemCpy(Bytes::CreateFrom(compress_store).at(0, output->size), *output);
+    if(!direct_output)
+    {
+        DProfContext _("zlib::Copy to output");
+        MemCpy(*Bytes::CreateFrom(compress_store).at(0, output->size), *output);
+    }
 
     return true;
 }
 
-bool ZlibCompressor::Compress(
+bool Compressor::Compress(
     Bytes const&     uncompressed,
     Bytes*           target,
     Opts const&      opts,
     zlib_error_code& ec)
 {
-    return compression_routine<nullptr, deflateInit_, deflate, deflateEnd>(
+    return compression_routine<nullptr, ::deflateInit_, ::deflate, ::deflateEnd>(
         uncompressed, target, opts, ec);
 }
 
-bool ZlibCompressor::Decompress(
+bool Compressor::Decompress(
     Bytes const&     compressed,
     Bytes*           target,
     Opts const&      opts,
     zlib_error_code& ec)
 {
-    return compression_routine<inflateInit_, nullptr, inflate, inflateEnd>(
+    return compression_routine<::inflateInit_, nullptr, ::inflate, ::inflateEnd>(
         compressed, target, opts, ec);
 }
 
+} // namespace zlib
 } // namespace Compression
 } // namespace Coffee
-#elif defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
-#include <coffee/core/plat/plat_windows.h>
+#endif
+#if defined(COFFEE_BUILD_WINDOWS_DEFLATE)
+
+#include <peripherals/platform/windows.h>
 #include <compressapi.h>
-
-#include <coffee/core/CDebug>
 
 namespace Coffee {
 namespace Compression {
+namespace deflate {
 
-bool DeflateCompressor::Compress(
+bool Compressor::Compress(
     Bytes const&        uncompressed,
     Bytes*              target,
     Opts const&         opts,
@@ -177,11 +205,6 @@ bool DeflateCompressor::Compress(
     if(!succ)
     {
         ec = GetLastError();
-
-        cWarning(
-            "LibZCompressor::Failed to create"
-            " compressor: {0}",
-            ec.message());
         return false;
     }
 
@@ -193,11 +216,7 @@ bool DeflateCompressor::Compress(
     if(compSize == 0 || !succ)
     {
         ec = GetLastError();
-
-        cWarning(
-            "LibZCompressor::Failed to estimate"
-            " compressed size: {0}",
-            ec.message());
+        return false;
     }
 
     *target = Bytes::Alloc(compSize);
@@ -215,7 +234,7 @@ bool DeflateCompressor::Compress(
     return true;
 }
 
-bool DeflateCompressor::Decompress(
+bool Compressor::Decompress(
     Bytes const&        compressed,
     Bytes*              target,
     Opts const&         opts,
@@ -228,9 +247,6 @@ bool DeflateCompressor::Decompress(
     if(!succ)
     {
         ec = GetLastError();
-
-        cWarning(
-            "LibZCompressor::Failed to create decompressor: {0}", ec.message());
         return false;
     }
 
@@ -241,10 +257,7 @@ bool DeflateCompressor::Decompress(
 
     if(compSize == 0 || !succ)
     {
-        cWarning(
-            "LibZCompressor::Failed to estimate"
-            " decompressed size: {0}",
-            ec.message());
+        ec = GetLastError();
         return false;
     }
 
@@ -263,6 +276,7 @@ bool DeflateCompressor::Decompress(
     return true;
 }
 
+} // namespace deflate
 } // namespace Compression
 } // namespace Coffee
 

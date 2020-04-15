@@ -1,14 +1,23 @@
+set ( SPVTOOLS_PATHS
+    /usr
+    /usr/local
+    ${CMAKE_SOURCE_DIR}/libs
+    ${SPVTOOLS_DIR}
+    )
+
+set ( SPVTOOLS_SUFFIXES
+    lib
+    lib/${CMAKE_LIBRARY_ARCHITECTURE}
+    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
+    "lib/${WINDOWS_ABI}"
+    )
+
 find_path ( SPVTOOLS_INCLUDE_DIR_TMP
     NAMES
     libspirv.hpp
     optimizer.hpp
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVTOOLS_PATHS}
 
     PATH_SUFFIXES
     include/spirv-tools
@@ -17,34 +26,16 @@ find_path ( SPVTOOLS_INCLUDE_DIR_TMP
 find_library ( SPVTOOLS_LIBRARY_TMP
     NAMES SPIRV-Tools
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVTOOLS_PATHS}
 
-    PATH_SUFFIXES
-    lib
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-    "lib/${WINDOWS_ABI}"
+    PATH_SUFFIXES ${SPVTOOLS_SUFFIXES}
     )
 find_library ( SPVTOOLS_OPT_LIBRARY_TMP
     NAMES SPIRV-Tools-opt
 
-    PATHS
-    /usr
-    /usr/local
-    ${CMAKE_SOURCE_DIR}/libs
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
+    PATHS ${SPVTOOLS_PATHS}
 
-    PATH_SUFFIXES
-    lib
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-    "lib/${WINDOWS_ABI}"
+    PATH_SUFFIXES ${SPVTOOLS_SUFFIXES}
     )
 
 if(NOT TARGET SPVTools)

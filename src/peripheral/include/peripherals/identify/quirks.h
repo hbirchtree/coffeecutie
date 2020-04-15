@@ -164,7 +164,9 @@
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
+#if defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_STACKTRACE
+#endif
 #endif
 
 /*
@@ -228,10 +230,8 @@
 #endif
 
 #if defined(COFFEE_ANDROID)
-#define COFFEE_DYNAMIC_TEMPFILES
+//#define COFFEE_DYNAMIC_TEMPFILES
 #endif
-
-
 
 /*
  *
@@ -245,6 +245,7 @@
 #define COFFEE_BUILD_ZLIB
 #elif defined(COFFEE_WINDOWS) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0602
 #define COFFEE_BUILD_WINDOWS_DEFLATE
+#define COFFEE_BUILD_ZLIB
 #else
 #define COFFEE_BUILD_NO_COMPRESSION
 #endif
@@ -308,6 +309,7 @@
 
 #if defined(COFFEE_GEKKO)
 #define COFFEE_STUBBED_TIMING
+#define COFFEE_DISABLE_PROFILER
 #endif
 
 /*
@@ -319,6 +321,11 @@
 #if defined(COFFEE_GEKKO)
 /* For more correct types IRT what all the libraries use */
 #define COFFEE_PLAIN_INT_TYPES
+
+#define COFFEE_NO_MMAN
+#define COFFEE_NO_ENDIAN_OPS
+
+#undef COFFEE_USE_POSIX_BASENAME
 #endif
 
 #include "video_quirks.h"
@@ -334,4 +341,11 @@
 #endif
 #if defined(COFFEE_GLEAM_DESKTOP) && defined(COFFEE_USE_MAEMO_EGL)
 #error Invalid configuration detected, cannot use EGL with OpenGL (non-ES)!
+#endif
+
+#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS) || \
+    defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_FIXED_RESOURCE_DIR 1
+#else
+#define COFFEE_FIXED_RESOURCE_DIR 0
 #endif

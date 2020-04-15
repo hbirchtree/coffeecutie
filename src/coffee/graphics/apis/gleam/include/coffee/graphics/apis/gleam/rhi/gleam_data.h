@@ -16,14 +16,14 @@ struct InstanceDataDeleter
 
 struct GLEAM_DataStore
 {
-    ~GLEAM_DataStore()
+    GLEAM_DataStore() : DefaultFramebuffer(MkShared<GLEAM_API::FB_T>())
     {
     }
 
     UqPtr<GLEAM_Instance_Data, InstanceDataDeleter> inst_data;
-    GLEAM_API::FB_T                                 DefaultFramebuffer;
+    ShPtr<GLEAM_API::FB_T>                          DefaultFramebuffer;
 
-    GLEAM_Quad_Drawer debug_drawer;
+    UqPtr<GLEAM_Quad_Drawer> debug_drawer;
 
     APILevel CURR_API = GL_Nothing;
 
@@ -57,12 +57,20 @@ struct GLEAM_DataStore
         bool draw_indirect       = false;
 
 #if defined(COFFEE_GLEAM_DESKTOP)
+        bool anisotropic   = false;
         bool base_instance = false;
         bool direct_state  = false;
 #else
         bool       qcom_tiling   = false;
         const bool base_instance = false;
         const bool direct_state  = false;
+        const bool anisotropic   = false;
+#endif
+
+#if defined(COFFEE_WEBGL)
+        const bool webgl = true;
+#else
+        const bool webgl         = false;
 #endif
     } features;
 

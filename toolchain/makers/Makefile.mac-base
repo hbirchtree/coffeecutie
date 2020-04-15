@@ -26,7 +26,10 @@ make-dirs:
 	mkdir -p \
 		$(CMAKE_BUILD_DIR)
 
-config: make-dirs
+cmake_version:
+	$(CMAKE) --version
+
+config: make-dirs cmake_version
 	sh -c 'cd $(CMAKE_BUILD_DIR) && ls && CC=clang CXX=clang++ $(CMAKE) $(CMAKE_OPTS)'
 
 build: config
@@ -34,3 +37,6 @@ build: config
 
 custom:
 	$(CUSTOM_COMMAND)
+
+shell:
+	bash

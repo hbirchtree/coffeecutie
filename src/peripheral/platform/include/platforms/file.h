@@ -11,7 +11,7 @@
 namespace platform {
 namespace file {
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
 using FileFun = CFILEFun;
 using DirFun  = posix::DirFun;
 #endif

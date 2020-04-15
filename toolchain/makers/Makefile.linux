@@ -42,7 +42,7 @@ rpi-sdk:
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.gingerbread.gles2: FORCE
+android.armv7a.v28: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -51,38 +51,198 @@ android.armv7a.gingerbread.gles2: FORCE
 	-DANDROID_ARM_NEON=OFF \
 	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_PLATFORM=android-9 \
+	-DANDROID_PLATFORM=android-28 \
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread.gles2 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.v28 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv7a.gingerbread.gles2 \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.v28 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv7a.gingerbread.gles2:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.armv7a.v28:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.gingerbread.gles2 \
+	-e BUILD_NAME=android.armv7a.v28 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.kitkat.gles2: FORCE
+android.armv7a.v27: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='armeabi-v7a with NEON' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-27 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.v27 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.v27 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv7a.v27:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv7a.v27 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.v24: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='armeabi-v7a with NEON' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.v24 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.v24 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv7a.v24:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv7a.v24 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.v23: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='armeabi-v7a with NEON' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-23 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.v23 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.v23 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv7a.v23:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv7a.v23 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.v21: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='armeabi-v7a with NEON' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.v21 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.v21 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv7a.v21:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv7a.v21 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv7a.v19: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -95,34 +255,35 @@ android.armv7a.kitkat.gles2: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.kitkat.gles2 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.v19 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv7a.kitkat.gles2 \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.v19 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv7a.kitkat.gles2:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.armv7a.v19:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.kitkat.gles2 \
+	-e BUILD_NAME=android.armv7a.v19 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.lollipop.gles3: FORCE
+android.armv7a.gingerbread: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -131,43 +292,164 @@ android.armv7a.lollipop.gles3: FORCE
 	-DANDROID_ARM_NEON=OFF \
 	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_PLATFORM=android-5 \
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=OFF \
+	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.lollipop.gles3 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.gingerbread \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv7a.lollipop.gles3 \
+	-DGIT_DEP_BUILDVARIANT=android.armv7a.gingerbread \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv7a.lollipop.gles3:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.armv7a.gingerbread:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.lollipop.gles3 \
+	-e BUILD_NAME=android.armv7a.gingerbread \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.nougat.gles2: FORCE
+android.armv8a.v29: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DANDROID_ABI='armeabi-v7a with NEON' \
+	-DANDROID_ABI='arm64-v8a' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-29 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.v29 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.v29 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv8a.v29:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv8a.v29 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv8a.v28: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='arm64-v8a' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-28 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.v28 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.v28 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv8a.v28:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv8a.v28 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv8a.v27: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='arm64-v8a' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-27 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.v27 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.v27 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.armv8a.v27:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.armv8a.v27 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.armv8a.v24: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='arm64-v8a' \
 	-DANDROID_ARM_NEON=OFF \
 	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
@@ -175,74 +457,74 @@ android.armv7a.nougat.gles2: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles2 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.v24 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv7a.nougat.gles2 \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.v24 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv7a.nougat.gles2:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.armv8a.v24:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.nougat.gles2 \
+	-e BUILD_NAME=android.armv8a.v24 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv7a.nougat.gles3: FORCE
+android.armv8a.v23: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DANDROID_ABI='armeabi-v7a with NEON' \
+	-DANDROID_ABI='arm64-v8a' \
 	-DANDROID_ARM_NEON=OFF \
 	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_PLATFORM=android-23 \
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=OFF \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv7a.nougat.gles3 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.v23 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv7a.nougat.gles3 \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.v23 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv7a.nougat.gles3:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.armv8a.v23:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv7a.nougat.gles3 \
+	-e BUILD_NAME=android.armv8a.v23 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv8a.lollipop.gles3: FORCE
+android.armv8a.v21: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -255,39 +537,79 @@ android.armv8a.lollipop.gles3: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=OFF \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.lollipop.gles3 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.v21 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv8a.lollipop.gles3 \
+	-DGIT_DEP_BUILDVARIANT=android.armv8a.v21 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv8a.lollipop.gles3:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.armv8a.v21:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv8a.lollipop.gles3 \
+	-e BUILD_NAME=android.armv8a.v21 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.armv8a.nougat.gles3: FORCE
+android.mips.v27: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DANDROID_ABI='arm64-v8a' \
+	-DANDROID_ABI='mips' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-27 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.v27 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.mips.v27 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.mips.v27:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.mips.v27 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips.v24: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='mips' \
 	-DANDROID_ARM_NEON=OFF \
 	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
@@ -295,34 +617,74 @@ android.armv8a.nougat.gles3: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=OFF \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.armv8a.nougat.gles3 \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.v24 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.armv8a.nougat.gles3 \
+	-DGIT_DEP_BUILDVARIANT=android.mips.v24 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.armv8a.nougat.gles3:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.mips.v24:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.armv8a.nougat.gles3 \
+	-e BUILD_NAME=android.mips.v24 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.mips.kitkat: FORCE
+android.mips.v21: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='mips' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.v21 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.mips.v21 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.mips.v21:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.mips.v21 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips.v19: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -335,34 +697,155 @@ android.mips.kitkat: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.kitkat \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips.v19 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.mips.kitkat \
+	-DGIT_DEP_BUILDVARIANT=android.mips.v19 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.mips.kitkat:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.mips.v19:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.mips.kitkat \
+	-e BUILD_NAME=android.mips.v19 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.mips64.kitkat: FORCE
+android.mips64.v27: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='mips64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-27 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.v27 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.mips64.v27 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.mips64.v27:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.mips64.v27 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips64.v24: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='mips64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.v24 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.mips64.v24 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.mips64.v24:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.mips64.v24 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips64.v21: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='mips64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.v21 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.mips64.v21 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.mips64.v21:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.mips64.v21 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.mips64.v19: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -375,34 +858,195 @@ android.mips64.kitkat: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.kitkat \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.mips64.v19 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.mips64.kitkat \
+	-DGIT_DEP_BUILDVARIANT=android.mips64.v19 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.mips64.kitkat:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.mips64.v19:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.mips64.kitkat \
+	-e BUILD_NAME=android.mips64.v19 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.x86.kitkat: FORCE
+android.x86.v29: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-29 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.v29 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86.v29 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86.v29:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86.v29 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86.v27: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-27 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.v27 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86.v27 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86.v27:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86.v27 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86.v24: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-24 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.v24 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86.v24 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86.v24:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86.v24 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86.v21: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.v21 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86.v21 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86.v21:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86.v21 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86.v19: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -415,34 +1059,35 @@ android.x86.kitkat: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
 	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.kitkat \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86.v19 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.x86.kitkat \
+	-DGIT_DEP_BUILDVARIANT=android.x86.v19 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.x86.kitkat:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.x86.v19:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.x86.kitkat \
+	-e BUILD_NAME=android.x86.v19 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.x86_64.kitkat: FORCE
+android.x86_64.v29: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -451,38 +1096,78 @@ android.x86_64.kitkat: FORCE
 	-DANDROID_ARM_NEON=OFF \
 	-DANDROID_CPP_FEATURES=rtti\;exceptions \
 	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
-	-DANDROID_PLATFORM=android-19 \
+	-DANDROID_PLATFORM=android-29 \
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.kitkat \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.v29 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.x86_64.kitkat \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.v29 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.x86_64.kitkat:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.x86_64.v29:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.x86_64.kitkat \
+	-e BUILD_NAME=android.x86_64.v29 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
-android.x86_64.nougat: FORCE
+android.x86_64.v27: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86_64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-27 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.v27 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.v27 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86_64.v27:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86_64.v27 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86_64.v24: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -495,45 +1180,131 @@ android.x86_64.nougat: FORCE
 	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
 	-DANDROID_STL=c++_static \
 	-DANDROID_TOOLCHAIN=clang \
-	-DBUILD_ASSIMP=ON \
+	-DBUILD_ANATIVE=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
 	-DBUILD_GLES=ON \
-	-DBUILD_GLES_20=ON \
 	-DBUILD_SDL2=OFF \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.nougat \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.v24 \
 	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=android.x86_64.nougat \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.v24 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/android.x86_64.nougat:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/android.x86_64.v24:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=android \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=android.x86_64.nougat \
+	-e BUILD_NAME=android.x86_64.v24 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86_64.v23: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86_64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-23 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.v23 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.v23 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86_64.v23:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86_64.v23 \
+	-e CMAKE_TARGET=AndroidPackage
+
+# Android builds, ARMv8-A and ARMv7-A mostly
+# Compiler: Clang
+android.x86_64.v21: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) multi.ensureinstall \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DANDROID_ABI='x86_64' \
+	-DANDROID_ARM_NEON=OFF \
+	-DANDROID_CPP_FEATURES=rtti\;exceptions \
+	-DANDROID_NDK=$(ANDROID_NDK_INTERNAL) \
+	-DANDROID_PLATFORM=android-21 \
+	-DANDROID_SDK=$(ANDROID_SDK_INTERNAL) \
+	-DANDROID_STL=c++_static \
+	-DANDROID_TOOLCHAIN=clang \
+	-DBUILD_ANATIVE=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_TESTS=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/android.x86_64.v21 \
+	-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_INTERNAL)/build/cmake/android.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=android.x86_64.v21 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/android.x86_64.v21:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=android \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=android.x86_64.v21 \
 	-e CMAKE_TARGET=AndroidPackage
 
 # Coverage build using same config as Ubuntu
-# Compiler: Clang
+# Compiler: GCC 7+
 coverage: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-coverage.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASAN=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_COVERAGE=ON \
+	-DBUILD_EXAMPLES=OFF \
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/coverage \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
 	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-DSKIP_HIGHMEM_TESTS=ON \
+	-DSKIP_LINKAGE_TEST=ON \
+	-DSKIP_OPENVR_TEST=ON \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
@@ -556,9 +1327,11 @@ docs: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/docs-all.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_DOCS=ON \
+	-DBUILD_LIBRARIES=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/docs \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
@@ -578,55 +1351,79 @@ docs: FORCE
 	-e BUILD_NAME=docs \
 	-e CMAKE_TARGET=install
 
-# Emscripten with WebAsm and asm.js
-# Compiler: Clang 4+
-emscripten.asmjs: FORCE
+# Emscripten with WebAssembly
+# Compiler: Clang 7+
+emscripten.wasm: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten.cmake \
-	-DBUILD_ASSIMP=ON \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=OFF \
+	-DBUILD_AUDIO=OFF \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=OFF \
+	-DBUILD_OPENSSL=OFF \
+	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.asmjs \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
-	-DGIT_DEP_BUILDVARIANT=emscripten.asmjs \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
+	-DGENERATE_HTML=ON \
+	-DGENERATE_HTML=ON \
+	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'Unix Makefiles'" \
+	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
+	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/emscripten.asmjs:/home/coffee/build:rw \
+	-v $(BUILD_DIR)/emscripten.wasm:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
 	-e DOCKER_CONFIG=emscripten \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=emscripten.asmjs \
+	-e BUILD_NAME=emscripten.wasm \
 	-e CMAKE_TARGET=install
 
-# Emscripten with WebAsm and asm.js
-# Compiler: Clang 4+
-emscripten.wasm: FORCE
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
+# Emscripten with WebAssembly
+# Compiler: Clang 7+
+emscripten.wasm.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/js-emscripten-wasm.cmake \
-	-DBUILD_ASSIMP=ON \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=OFF \
+	-DBUILD_AUDIO=OFF \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=OFF \
+	-DBUILD_OPENSSL=OFF \
+	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/js-emscripten.toolchain.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master \
+	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
+	-DGENERATE_HTML=ON \
+	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'Unix Makefiles'" \
+	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master \
+	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
+	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/emscripten.wasm:/home/coffee/build:rw \
@@ -639,17 +1436,49 @@ emscripten.wasm: FORCE
 	-e CMAKE_TARGET=install
 
 # Fedora build in a Fedora Docker
-# Compiler: GCC 5+
+# Compiler: GCC 8+
 fedora.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-fedora.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DGENERATE_FLATPAK=ON \
+	-DGIT_DEP_BUILDVARIANT=fedora.amd64 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/fedora.amd64:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=fedora \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=fedora.amd64 \
+	-e CMAKE_TARGET=install
+
+# Fedora build in a Fedora Docker
+# Compiler: GCC 8+
+fedora.amd64.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/fedora.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
+	-DGENERATE_FLATPAK=ON \
 	-DGIT_DEP_BUILDVARIANT=fedora.amd64 \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
@@ -672,8 +1501,17 @@ gamecube: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/gamecube.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_BLAM=OFF \
+	-DBUILD_GLEAM=OFF \
+	-DBUILD_GRAPHICS_COMMON=OFF \
+	-DBUILD_GX=ON \
+	-DBUILD_LIBOGC=ON \
+	-DBUILD_OPENGL=OFF \
+	-DBUILD_SDL2=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/gamecube \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/none-cube-powerpc-eabi_linux.toolchain.cmake \
@@ -687,7 +1525,43 @@ gamecube: FORCE
 	-v $(BUILD_DIR)/gamecube:/home/coffee/build:rw \
 	-v $(COFFEE_DIR):/home/coffee/library:ro \
 	--workdir \"$(CMAKE_BUILD_DIR)\"" \
-	-e DOCKER_CONFIG=ubuntu \
+	-e DOCKER_CONTAINER=hbirch/devkit:ppc \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=gamecube \
+	-e CMAKE_TARGET=install
+
+# Nintendo Gamecube through DevkitPPC
+# Compiler: GCC 6+
+gamecube.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
+	-DBUILD_AUDIO=OFF \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_BLAM=OFF \
+	-DBUILD_GLEAM=OFF \
+	-DBUILD_GRAPHICS_COMMON=OFF \
+	-DBUILD_GX=ON \
+	-DBUILD_LIBOGC=ON \
+	-DBUILD_OPENGL=OFF \
+	-DBUILD_SDL2=OFF \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/gamecube \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/none-cube-powerpc-eabi_linux.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=gamecube \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/gamecube:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONTAINER=hbirch/devkit:ppc \
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=gamecube \
@@ -699,8 +1573,52 @@ maemo.armel: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.make8 \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-maemo.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_X11=ON \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/maemo.armel \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=maemo.armel \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'Unix Makefiles'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	-v $(COFFEE_DIR):/maemo//home/coffee/library:ro \
+	-v $(SOURCE_DIR):/maemo//home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/maemo//home/coffee/out:rw \
+	-v $(BUILD_DIR)/maemo.armel:/maemo//home/coffee/build:rw \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/maemo.armel:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONTAINER=hbirch/maemo-builder:v3 \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=maemo.armel \
+	-e CMAKE_TARGET=install
+
+# Maemo 5 builds, performed within a Maemo 5 armel chroot
+# Compiler: GCC 6
+maemo.armel.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASIO=OFF \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_EGL=ON \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_SDL2=OFF \
+	-DBUILD_X11=ON \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/maemo.armel \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake \
@@ -729,8 +1647,10 @@ mingw.w64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/windows-mingw64.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_AUDIO=OFF \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_OPENSSL=OFF \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/mingw.w64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/windows-mingw64_linux.toolchain.cmake \
@@ -750,25 +1670,57 @@ mingw.w64: FORCE
 	-e BUILD_NAME=mingw.w64 \
 	-e CMAKE_TARGET=install
 
-# Raspberry Pi ARMv6 build
-# Compiler: GCC 4.9
+# Raspberry Pi ARM 32-bit build
+# Compiler: GCC 9.x
 raspberry.armhf: FORCE rpi-sdk
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-raspberry.cmake \
-	-DBUILD_ASSIMP=ON \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
 	-DGIT_DEP_BUILDVARIANT=raspberry.armhf \
-	-DRASPBERRY_SDK=/rpi-sysroot \
+	-DRASPBERRY_SDK=/pi-sysroot \
 	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-v $(BUILD_DIR)/dependencies/raspberry-sysroot/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/raspberry.armhf:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=raspberry \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=raspberry.armhf \
+	-e CMAKE_TARGET=install
+
+# Raspberry Pi ARM 32-bit build
+# Compiler: GCC 9.x
+raspberry.armhf.shell: FORCE rpi-sdk
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_GLES=ON \
+	-DBUILD_GLES_20=ON \
+	-DBUILD_OPENSSL=ON \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/raspberry.armhf \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=raspberry.armhf \
+	-DRASPBERRY_SDK=/pi-sysroot \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/raspberry.armhf:/home/coffee/build:rw \
@@ -786,9 +1738,43 @@ steam.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-steam.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_CPP11=ON \
+	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
+	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
+	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/cxx11.toolchain.cmake \
+	-DGIT_DEP_BUILDVARIANT=steam.amd64 \
+	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
+	-G'CodeBlocks - Ninja'" \
+	-e DOCKER_EXTRA_OPTIONS=" \
+	 \
+	-e CC=clang-3.6 \
+	-e CXX=clang++-3.6 \
+	-v $(SOURCE_DIR):/home/coffee/project:ro \
+	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
+	-v $(BUILD_DIR)/steam.amd64:/home/coffee/build:rw \
+	-v $(COFFEE_DIR):/home/coffee/library:ro \
+	--workdir \"$(CMAKE_BUILD_DIR)\"" \
+	-e DOCKER_CONFIG=steam \
+	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
+	-e OUTPUT_DIR=$(BUILD_DIR) \
+	-e BUILD_NAME=steam.amd64 \
+	-e CMAKE_TARGET=install
+
+# Build against the SteamRT SDK
+# Compiler: GCC 4.8.4
+steam.amd64.shell: FORCE
+	make -f $(ROOT_DIR)/$(RUNNER) shell \
+	-e EXTRA_OPTIONS=" \
+	$(CMAKE_SOURCE_DIR) \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_ASSIMP=ON \
+	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_CPP11=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/steam.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/cxx11.toolchain.cmake \
@@ -811,7 +1797,7 @@ steam.amd64: FORCE
 	-e CMAKE_TARGET=install
 
 # Lowfat debug-mode testing
-# Compiler: GCC 5+
+# Compiler: Clang 8+
 testing.linux.lowfat.debug: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -832,8 +1818,6 @@ testing.linux.lowfat.debug: FORCE
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e CC= \
-	-e CXX= \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.lowfat.debug:/home/coffee/build:rw \
@@ -846,7 +1830,7 @@ testing.linux.lowfat.debug: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Lowfat release-mode testing
-# Compiler: GCC 5+
+# Compiler: Clang 8+
 testing.linux.lowfat.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -867,8 +1851,6 @@ testing.linux.lowfat.release: FORCE
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e CC= \
-	-e CXX= \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.lowfat.release:/home/coffee/build:rw \
@@ -881,7 +1863,7 @@ testing.linux.lowfat.release: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Release-mode testing
-# Compiler: GCC 5+
+# Compiler: Clang 8+
 testing.linux.release: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 	-e EXTRA_OPTIONS=" \
@@ -901,8 +1883,6 @@ testing.linux.release: FORCE
 	-G'CodeBlocks - Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e CC= \
-	-e CXX= \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
 	-v $(BUILD_DIR)/testing.linux.release:/home/coffee/build:rw \
@@ -915,15 +1895,17 @@ testing.linux.release: FORCE
 	-e CMAKE_SECOND_TARGET=test
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-generic.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DBUILD_ASSIMP=ON \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_DISCORD_RPC=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
@@ -946,15 +1928,17 @@ ubuntu.amd64: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64.tools: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-generic.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DBUILD_ASSIMP=ON \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_DISCORD_RPC=ON \
 	-DBUILD_ETC2COMP=ON \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_HEADFUL=OFF \
@@ -986,46 +1970,18 @@ ubuntu.amd64.tools: FORCE
 	-e CMAKE_TARGET=install
 
 # Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
-ubuntu.amd64.gles2: FORCE
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
-	-e EXTRA_OPTIONS=" \
-	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles20.cmake \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
-	-DBUILD_ASSIMP=ON \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles2 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
-	-DGENERATE_APPIMAGE=ON \
-	-DGIT_DEP_BUILDVARIANT=ubuntu.amd64.gles2 \
-	-DMKSQUASH_PROGRAM=/usr/bin/mksquashfs \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'CodeBlocks - Ninja'" \
-	-e DOCKER_EXTRA_OPTIONS=" \
-	 \
-	-v $(SOURCE_DIR):/home/coffee/project:ro \
-	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/ubuntu.amd64.gles2:/home/coffee/build:rw \
-	-v $(COFFEE_DIR):/home/coffee/library:ro \
-	--workdir \"$(CMAKE_BUILD_DIR)\"" \
-	-e DOCKER_CONFIG=ubuntu \
-	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
-	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.amd64.gles2 \
-	-e CMAKE_TARGET=install
-
-# Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
+# Compiler: GCC 7+
 ubuntu.amd64.gles3: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles.cmake \
+	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
 	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DBUILD_ASSIMP=ON \
+	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
+	-DBUILD_DISCORD_RPC=ON \
+	-DBUILD_GLES=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.amd64.gles3 \
 	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake \
@@ -1045,61 +2001,5 @@ ubuntu.amd64.gles3: FORCE
 	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
 	-e OUTPUT_DIR=$(BUILD_DIR) \
 	-e BUILD_NAME=ubuntu.amd64.gles3 \
-	-e CMAKE_TARGET=install
-
-# Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
-ubuntu.i686.gles: FORCE
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
-	-e EXTRA_OPTIONS=" \
-	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles.cmake \
-	-DBUILD_ASSIMP=ON \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=ubuntu.i686.gles \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'CodeBlocks - Ninja'" \
-	-e DOCKER_EXTRA_OPTIONS=" \
-	 \
-	-v $(SOURCE_DIR):/home/coffee/project:ro \
-	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/ubuntu.i686.gles:/home/coffee/build:rw \
-	-v $(COFFEE_DIR):/home/coffee/library:ro \
-	--workdir \"$(CMAKE_BUILD_DIR)\"" \
-	-e DOCKER_CONFIG=ubuntu-i686 \
-	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
-	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.i686.gles \
-	-e CMAKE_TARGET=install
-
-# Ubuntu build in a Ubuntu Docker
-# Compiler: GCC 5+
-ubuntu.i686.gles2: FORCE
-	make -f $(ROOT_DIR)/$(RUNNER) multi \
-	-e EXTRA_OPTIONS=" \
-	$(CMAKE_SOURCE_DIR) \
-	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/linux-gles20.cmake \
-	-DBUILD_ASSIMP=ON \
-	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
-	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
-	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/ubuntu.i686.gles2 \
-	-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_SOURCE_DIR)/toolchain/cmake/Toolchains/linux-generic-i686_linux.toolchain.cmake \
-	-DGIT_DEP_BUILDVARIANT=ubuntu.i686.gles2 \
-	-DSKIP_GRAPHIC_TESTS=$(HEADLESS) \
-	-G'CodeBlocks - Ninja'" \
-	-e DOCKER_EXTRA_OPTIONS=" \
-	 \
-	-v $(SOURCE_DIR):/home/coffee/project:ro \
-	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
-	-v $(BUILD_DIR)/ubuntu.i686.gles2:/home/coffee/build:rw \
-	-v $(COFFEE_DIR):/home/coffee/library:ro \
-	--workdir \"$(CMAKE_BUILD_DIR)\"" \
-	-e DOCKER_CONFIG=ubuntu-i686 \
-	-e CMAKE_BUILD_DIR=$(CMAKE_BUILD_DIR) \
-	-e OUTPUT_DIR=$(BUILD_DIR) \
-	-e BUILD_NAME=ubuntu.i686.gles2 \
 	-e CMAKE_TARGET=install
 

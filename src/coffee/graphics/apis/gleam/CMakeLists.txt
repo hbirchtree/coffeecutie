@@ -5,17 +5,38 @@ if(WIN32 AND WIN_UWP)
     option ( BUILD_ANGLE "Build with OpenGL ES 2.0 backed by ANGLE" ON )
 endif()
 
+add_library ( GLVersion INTERFACE )
+
+if(BUILD_GLES_20 OR BUILD_ANGLE)
+    target_compile_definitions ( GLVersion INTERFACE
+        -DCOFFEE_LINKED_GLES
+        -DCOFFEE_GLES20_MODE
+        )
+elseif(BUILD_GLES)
+    target_compile_definitions ( GLVersion INTERFACE
+        -DCOFFEE_LINKED_GLES
+        -DCOFFEE_LINKED_GLES31
+        -DCOFFEE_LINKED_GLES30
+        )
+elseif(NOT BUILD_GLES)
+    target_compile_definitions ( GLVersion INTERFACE
+        -DCOFFEE_GLEAM_DESKTOP
+        )
+endif()
+
+add_export ( GLVersion "" )
+
 coffee_library (
     TARGET GLeamCommon
 
     SOURCES
-    private/levels/glbase.cpp
     private/levels/shared/gl_shared_debug.cpp
 
     LIBRARIES
     Core
     Image
     GraphicsAPI
+    GLVersion
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -31,7 +52,6 @@ if(BUILD_GLEAM)
     coffee_library (
         TARGET GLeamRHI
         SOURCES
-        private/rhi/gleam_rhi.cpp
 
         private/rhi/gleam_api_query.cpp
         private/rhi/gleam_api_rhi.cpp
@@ -65,11 +85,14 @@ if(APPLE AND IOS)
     target_compile_definitions ( GLeamCommon PUBLIC
         -DGLES_SILENCE_DEPRECATION=1
         )
+    target_link_libraries ( GLeamCommon PUBLIC
+        CEAGL
+        )
 endif()
 
 if(BUILD_ANGLE)
     # TODO: Write wrapper for importing/downloading choco packages
-    find_package( ANGLE REQUIRED )
+    find_package( ANGLE CONFIG REQUIRED )
     list ( APPEND CORE_EXTRA_LIBRARIES
         AngleEGL AngleGLESv2
         )
@@ -91,11 +114,22 @@ elseif(BUILD_GLES AND NOT APPLE)
             IMGegl
             )
     endif()
+elseif(APPLE AND IOS)
+    target_link_libraries ( GLeamCommon PUBLIC
+        "-framework OpenGLES"
+        )
 endif()
 
 if(BUILD_GLES_20 OR BUILD_ANGLE)
     target_compile_definitions ( GLeamCommon PUBLIC
+        -DCOFFEE_LINKED_GLES
         -DCOFFEE_GLES20_MODE
+        )
+elseif(BUILD_GLES)
+    target_compile_definitions ( GLeamCommon PUBLIC
+        -DCOFFEE_LINKED_GLES
+        -DCOFFEE_LINKED_GLES31
+        -DCOFFEE_LINKED_GLES30
         )
 elseif(NOT BUILD_GLES)
     target_compile_definitions ( GLeamCommon PUBLIC

@@ -27,18 +27,13 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     else
         target->resize(target->size);
 
-    MemCpy(Bytes::From(data, size), target->at(offset));
+    MemCpy(Bytes::FromBytes(data, size), *target->at(offset));
 }
 
-void ImageFreePtr(void* img)
-{
-    stbi_image_free(img);
-}
-
-void DataSetDestr(Bytes& b)
+inline void DataSetDestr(Bytes& b)
 {
     Bytes::SetDestr(b, [](Bytes& b) {
-        ImageFreePtr(b.data);
+        stbi_image_free(b.data);
         b.data     = nullptr;
         b.size     = 0;
         b.elements = 0;
@@ -64,7 +59,7 @@ bool LoadFromMemory(BytesConst const& src, image_rw* target, int req_comp)
         &target->bpp,
         req_comp);
 
-    return true;
+    return target->data;
 }
 
 template<>
@@ -78,7 +73,7 @@ bool LoadFromMemory(BytesConst const& src, image_float* target, int req_comp)
         &target->bpp,
         req_comp);
 
-    return true;
+    return target->data;
 }
 
 /*!
@@ -207,16 +202,16 @@ bool LoadData(
 
     if(!stb_templates::LoadFromMemory(src, target, scomp))
     {
-        ec = STBError::InvalidPixFmt;
+        ec = STBError::DecodingError;
+        ec = stbi_failure_reason();
         return false;
     }
 
-    target->bpp = scomp;
+    target->bpp        = scomp;
     target->data_owner = Bytes::From(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
     DataSetDestr(target->data_owner);
-
 
     if(!target->data)
     {

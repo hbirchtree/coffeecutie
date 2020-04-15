@@ -41,7 +41,7 @@ i32 cmain(i32 argc, cstring_w* argv)
 
     u32 count = 0;
 
-    while(count < 100)
+    while(count < 1000000)
     {
         service->poll();
         CurrentThread::sleep_for(Chrono::milliseconds(100));

@@ -17,26 +17,37 @@
 
 /* General interfaces */
 #include <coffee/interfaces/byte_provider.h>
-#include <coffee/interfaces/caudiomixer_api.h>
-#include <coffee/interfaces/caudiomixer_utils.h>
 #include <coffee/interfaces/cdialog_api.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/file_resolver.h>
+#if defined(FEATURE_ENABLE_Audio)
+#include <coffee/interfaces/caudiomixer_api.h>
+#include <coffee/interfaces/caudiomixer_utils.h>
+#endif
 
 /* Common graphics stuff */
+#if defined(FEATURE_ENABLE_GraphicsAPI)
 #include <coffee/graphics/common/cgraphicsdata.h>
-#include <coffee/graphics/common/gltypes.h>
 #include <coffee/graphics/common/query/gpu_query.h>
+#endif
 
 /* GLEAM graphics API */
+#if defined(FEATURE_ENABLE_GLeamCommon)
 #include <coffee/graphics/apis/CGLeamRHI>
+#endif
 
 /* Blam! integration */
-#include <coffee/blam/cblam.h>
+#if defined(FEATURE_ENABLE_Blam)
+#include <blam/cblam.h>
+#endif
 
 /* STB-related APIs */
+#if defined(FEATURE_ENABLE_Audio)
 #include <coffee/audio/caudio.h>
+#endif
+#if defined(FEATURE_ENABLE_Image)
 #include <coffee/image/cimage.h>
+#endif
 
 /* ASSIMP APIs */
 #if defined(HAS_ASSIMP)

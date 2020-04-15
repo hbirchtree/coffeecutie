@@ -1,12 +1,14 @@
 #include <platforms/base/sysinfo.h>
 
+#include <platforms/pimpl_state.h>
+
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/stlstring_ops.h>
 
 #if defined(COFFEE_UNIXPLAT)
 #include <unistd.h>
 #elif defined(COFFEE_WINDOWS)
-#include <coffee/core/plat/plat_windows.h>
+#include <peripherals/platform/windows.h>
 #endif
 
 namespace platform {
@@ -44,7 +46,7 @@ CString SysInfoDef::HostName()
 #endif
 
 #else
-    return "";
+    return {};
 #endif
 }
 

@@ -3,6 +3,7 @@
 #include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CEnvironment>
+#include <coffee/core/CFiles>
 #include <peripherals/libc/signals.h>
 
 #include <coffee/strings/libc_types.h>
@@ -17,10 +18,13 @@ using namespace ::semantic;
 
 void ProfilingExport()
 {
-    using http::header::classify_status;
     using http::response_class;
+    using http::header::classify_status;
+    using namespace platform::url::constructors;
 
-#if !defined(COFFEE_LOWFAT) && MODE_DEBUG
+    if constexpr(compile_info::lowfat_mode || compile_info::release_mode)
+        return;
+
     cVerbose(10, "Checking for network profiling...");
 
     const constexpr cstring network_server = "COFFEE_REPORT_URL";
@@ -28,19 +32,18 @@ void ProfilingExport()
     {
         cVerbose(10, "Network export starting");
 
+        State::SwapState("jsonProfiler", {});
+
         auto profilerState = State::GetProfilerStore();
 
         if(profilerState)
             profilerState->disable();
 
-        State::SwapState(ASIO::context_name, {});
-
         auto worker = ASIO::GenWorker();
 
-        auto ctxt = worker->context;
+        auto ctxt = worker ? worker->context : ASIO::InitService();
 
-        CString target_chrome;
-        Profiling::ExportChromeTracerData(target_chrome);
+        Coffee::Resource profile("profile.json", RSCA::TempFile);
 
         auto netServerUrl = Env::GetVar(network_server);
 
@@ -68,7 +71,16 @@ void ProfilingExport()
         reportBinRsc.setHeaderField(
             "X-Coffee-Token", "token " + Env::GetVar("COFFEE_REPORT_ID"));
 
-        auto chromeData = Bytes::CreateString(target_chrome.c_str());
+        Bytes chromeData;
+
+        if(FileExists(profile))
+            chromeData = C_OCAST<Bytes>(profile);
+        else
+        {
+            CString target_chrome;
+            Profiling::ExportChromeTracerData(target_chrome);
+            chromeData = Bytes::CreateString(target_chrome.c_str());
+        }
 
         reportBinRsc.push(chromeData);
 
@@ -94,13 +106,16 @@ void ProfilingExport()
 
     } else
         cVerbose(10, "Network export cancelled");
-#endif
 }
 
-void RegisterProfiling()
+#if !defined(COFFEE_MACOS)&& !defined(COFFEE_WINDOWS)
+int RegisterProfiling()
 {
+    cVerbose(10, "Registering network profiling");
     libc::signal::register_atexit(ProfilingExport);
+    return 0;
 }
+#endif
 
 } // namespace Net
 } // namespace Coffee

@@ -1,5 +1,5 @@
 from os.path import dirname
-from yaml import load, dump
+from oyaml import load, dump, loader # oyaml allows ordering in dict
 from python.common import try_get_key
 from collections import namedtuple
 
@@ -18,7 +18,7 @@ def assertm(condition, message='BAD ASSERT'):
 
 def parse_yaml(source_file):
     with open(source_file, mode='r') as f:
-        data = load(f.read())
+        data = load(f.read(), Loader=loader.Loader)
         return data
 
 
@@ -50,14 +50,6 @@ def get_deploy_info(build_info):
     return deploy_data
 
 
-def get_dep_list(build_info):
-    dependencies = ''
-    deps = try_get_key(build_info, 'dependencies', [])
-    for dep in deps:
-        dependencies = '%s;%s' % (dep, dependencies)
-    return dependencies
-
-
 def flatten_map(root, include_intermediary=False):
     root_type = type(root)
 
@@ -81,8 +73,9 @@ def flatten_map(root, include_intermediary=False):
 def load_targets(makers_dir, target_base):
     file_base = '%s/build-targets-%s.yml' % (makers_dir, target_base)
 
-    return TargetContainer(sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=True))),
-                          sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=False))))
+    return TargetContainer(
+            [x for x in sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=True))) if not x.endswith('$(shell)')],
+            [x for x in sorted(list(flatten_map(parse_yaml(file_base), include_intermediary=False))) if not x.endswith('$(shell)')])
 
 
 def intersect_targets(source_targets, source_support_targets, selected_targets):

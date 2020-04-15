@@ -7,6 +7,12 @@
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/type_list.h>
 
+#define ENTCOMP_CREATE_TAG(name)      \
+    struct name                       \
+    {                                 \
+        using type = libc_types::u32; \
+    };
+
 namespace Coffee {
 namespace Components {
 
@@ -42,20 +48,19 @@ C_FLAGS(VisitorFlags, u32);
 
 struct EntityRecipe
 {
+    EntityRecipe(Vector<size_t>&& comps = {}, u32 tags = 0) :
+        components(std::move(comps)), tags(tags)
+    {
+    }
+
     Vector<size_t> components;
-    duration       interval;
     u32            tags;
 };
 
 struct Entity : non_copy
 {
     u64 id;
-
-    duration   interval;
-    time_point next_run;
-
     u32 tags;
-
     u32 _pad = 0;
 };
 
@@ -101,12 +106,21 @@ struct ComponentContainer : ComponentContainerBase
     using type     = typename ComponentType::type;
 
     virtual type* get(u64 id) = 0;
+
+    virtual type const* get(u64 id) const final
+    {
+        return C_CCAST<ComponentContainer<ComponentType>*>(this)->get(id);
+    }
 };
 
 struct SubsystemBase : non_copy
 {
     using ContainerProxy = Components::ContainerProxy;
     using time_point     = Components::time_point;
+    using duration       = Components::duration;
+
+    static constexpr u32 default_prio = 1024;
+    static constexpr u32 system_prio  = 0;
 
     virtual ~SubsystemBase();
 
@@ -116,6 +130,11 @@ struct SubsystemBase : non_copy
     virtual void end_frame(ContainerProxy&, time_point const&)
     {
     }
+
+    u32 priority = default_prio;
+
+  protected:
+    static EntityContainer& get_container(ContainerProxy& proxy);
 };
 
 template<typename OutputType>
@@ -148,7 +167,7 @@ struct ValueSubsystem : Subsystem<T>
     type m_value;
 };
 
-}
+} // namespace Globals
 
 // namespace Globals
 } // namespace Components

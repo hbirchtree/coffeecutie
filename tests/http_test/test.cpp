@@ -14,7 +14,7 @@ bool url_parsing()
                          "&filter=123"
                          "&another_thing=abc123"_web;
 
-    for(auto _ : Range<>(10))
+    for(C_UNUSED(auto _) : Range<>(10))
     {
         ProfContext __("Parse");
 

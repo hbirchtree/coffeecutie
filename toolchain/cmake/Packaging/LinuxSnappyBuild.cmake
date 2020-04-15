@@ -8,11 +8,11 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( SNAPPY_PACKAGING_CAT "linux-snappy" CACHE STRING "" )
 
     set ( SNAPPY_DEPLOY_DIRECTORY
-	"${COFFEE_DEPLOY_DIRECTORY}/${SNAPPY_PACKAGING_CAT}"
-	CACHE PATH "" )
+        "${COFFEE_DEPLOY_DIRECTORY}/${SNAPPY_PACKAGING_CAT}"
+        CACHE PATH "" )
     set ( SNAPPY_OUTPUT_DIRECTORY
-	"${COFFEE_PACKAGE_DIRECTORY}/${SNAPPY_PACKAGING_CAT}"
-	CACHE PATH "" )
+        "${COFFEE_PACKAGE_DIRECTORY}/${SNAPPY_PACKAGING_CAT}"
+        CACHE PATH "" )
 endif()
 
 macro ( SNAPPY_TRANSLATE_ARCH_NAME OUTPUT_VAR )
@@ -25,19 +25,8 @@ macro ( SNAPPY_TRANSLATE_ARCH_NAME OUTPUT_VAR )
 endmacro()
 
 macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
-    set ( ${PERMISSION_OUTPUT}
-#        "system-observe"
-#        "hardware-observe"
+    set ( ${PERMISSION_OUTPUT} )
 
-#        "network"
-#        "network-observe"
-#        "network-bind"
-
-#        "opengl"
-#        "x11"
-
-#        "pulseaudio"
-        )
     foreach( PARAM ${PERMISSIONS_LIST} )
         get_permission_flag( ${PARAM} PARAM_ENABLED )
         if( "${PARAM_ENABLED}" STREQUAL "1" )
@@ -45,9 +34,21 @@ macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
             # Snapcraft does not like it if we have non-unique elements in the list, we therefore verify this
             if("${PARAM}" MATCHES "SIMPLE_GRAPHICS" OR "${PARAM}" MATCHES "OPENGL")
                 # SDL2 needs to create a Unix socket, therefore we need this
-                set ( PARAM_TRANS "x11;opengl;network-bind;network" )
+                set ( PARAM_TRANS
+                    x11
+                    opengl
+                    network-bind
+                    network
+                    desktop
+                    desktop-legacy
+                    home
+                    unity7
+                    wayland
+                    screen-inhibit-control
+                    joystick
+                    )
             elseif("${PARAM}" MATCHES "AUDIO")
-                set ( PARAM_TRANS "pulseaudio" )
+                set ( PARAM_TRANS pulseaudio )
             elseif("${PARAM}" MATCHES "JOYSTICK")
                 set ( PARAM_TRANS "system-observe;hardware-observe" )
             elseif("${PARAM}" MATCHES "BROWSER")
@@ -147,13 +148,18 @@ macro ( SNAPPY_PACKAGE
         "parts:\n"
         "  binary-import:\n"
         "    plugin: copy\n"
+        "    stage-packages:\n"
+        "      - libxcursor1\n"
+        "      - libxinerama1\n"
+        "      - libxrandr2\n"
+        "      - libsdl2-2.0-0\n"
         "    files:\n"
-	"      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
+        "      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
         "      \"${SNAPPY_PKG_DIR}/snap-select.sh\": \"bin/${TARGET}\"\n"
         )
 
     foreach(LIB ${LIBRARY_FILES})
-	get_filename_component ( SH_LIB "${LIB}" NAME )
+        get_filename_component ( SH_LIB "${LIB}" NAME )
 
         file ( APPEND "${SNAPCRAFT_FILE}"
             "      \"${LIB}\": \"lib/${CMAKE_LIBRARY_ARCHITECTURE}/${SH_LIB}\"\n")
@@ -176,7 +182,7 @@ macro ( SNAPPY_PACKAGE
         math ( EXPR NUM_IMPORTS "${NUM_IMPORTS}+1" )
     endforeach()
 
-    target_sources ( ${TARGET} PUBLIC
+    target_sources ( ${TARGET}.snap PUBLIC
         "${SNAPCRAFT_FILE}"
         "${ICON_TARGET}"
         "${SNAPPY_PKG_DIR}/snap-select.sh"
@@ -184,19 +190,21 @@ macro ( SNAPPY_PACKAGE
 
     set ( PYTHON_ENCODING_STUFF LC_ALL=C.UTF-8 LANG=C.UTF-8 )
 
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_target ( ${TARGET}.snap ALL DEPENDS ${TARGET} )
+
+    add_custom_command ( TARGET ${TARGET}.snap
         POST_BUILD
         COMMAND ${PYTHON_ENCODING_STUFF} ${SNAPPY_PROGRAM} clean
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
         USES_TERMINAL
-	)
-    add_custom_command ( TARGET ${TARGET}
+        )
+    add_custom_command ( TARGET ${TARGET}.snap
         POST_BUILD
         COMMAND ${PYTHON_ENCODING_STUFF} ${SNAPPY_PROGRAM} build
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
         USES_TERMINAL
         )
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}.snap
         POST_BUILD
         COMMAND ${PYTHON_ENCODING_STUFF} ${SNAPPY_PROGRAM} snap -o "${SNAPPY_FINAL_SNAP}"
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
@@ -204,11 +212,11 @@ macro ( SNAPPY_PACKAGE
         )
 
     install (
-	FILES
-	"${SNAPPY_FINAL_SNAP}"
+        FILES
+        "${SNAPPY_FINAL_SNAP}"
 
-	DESTINATION
-	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/${SNAPPY_PACKAGING_CAT}"
-	)
+        DESTINATION
+        "${CMAKE_PACKAGED_OUTPUT_PREFIX}/${SNAPPY_PACKAGING_CAT}"
+        )
 
 endmacro()

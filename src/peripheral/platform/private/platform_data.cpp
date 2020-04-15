@@ -16,6 +16,10 @@ extern "C" void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis);
 #include <coffee/foreign/foreign.h>
 #endif
 
+#if defined(COFFEE_WINDOWS)
+#include <lm.h>
+#endif
+
 using namespace ::stl_types;
 
 namespace platform {
@@ -27,8 +31,25 @@ namespace env {
 namespace Linux {
 extern CString          get_kern_name();
 extern CString          get_kern_arch();
+extern CString          get_kern_ver();
+extern lsb_data         get_lsb_release();
 extern info::DeviceType get_device_variant();
 } // namespace Linux
+} // namespace env
+#endif
+
+#if defined(COFFEE_WINDOWS)
+namespace env {
+namespace win32 {
+
+extern stl_types::Optional<CString> GetWineVersion();
+stl_types::Optional<CString>        GetRegistryString(
+           HKEY                key,
+           libc_types::cstring subKey,
+           libc_types::cstring valueKey,
+           CString::size_type  size);
+
+}
 } // namespace env
 #endif
 
@@ -38,35 +59,22 @@ CString system_name()
 {
 #ifndef COFFEE_LOWFAT
     //    const constexpr cstring _fmt = "%s %s %u-bit (%s ";
-    const constexpr cstring _fmt      = "%s %s (%s ";
-    CString                 sys_ver   = SysInfo::GetSystemVersion();
-    CString                 sys_name  = C_SYSTEM_STRING;
-    CString                 curr_arch = COFFEE_ARCH;
+    CString sys_ver   = SysInfo::GetSystemVersion();
+    CString sys_name  = C_SYSTEM_STRING;
+    CString curr_arch = COFFEE_ARCH;
+#if defined(COFFEE_ANDROID)
+    sys_name = "Android"; // Override this for clarity
+#elif defined(COFFEE_LINUX)
+    sys_name = env::Linux::get_lsb_release().distribution;
+
+    if(sys_name.empty())
+        sys_name = env::Linux::get_kern_name();
+#endif
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-    sys_name  = env::Linux::get_kern_name();
     curr_arch = env::Linux::get_kern_arch();
 #endif
-    int len = snprintf(
-        nullptr,
-        0,
-        _fmt,
-        sys_name.c_str(),
-        sys_ver.c_str(),
-        //                       C_SYSTEM_BITNESS,
-        curr_arch.c_str());
-    CString base;
-    base.resize(len);
-    snprintf(
-        &base[0],
-        base.size(),
-        _fmt,
-        sys_name.c_str(),
-        sys_ver.c_str(),
-        //            C_SYSTEM_BITNESS,
-        curr_arch.c_str());
-    base.resize(base.find('\0'));
-    /* What the fuck. Where does the rest of the string go? */
-    base.append(")");
+
+    CString base = sys_name + " " + sys_ver + " (" + curr_arch + ")";
 
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
     typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
@@ -161,41 +169,153 @@ const bool mobile =
 
 DeviceType variant()
 {
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE) || \
-    defined(COFFEE_MAEMO)
+    if constexpr(
+        compile_info::platform::is_android || compile_info::platform::is_ios ||
+        compile_info::platform::is_maemo)
+        return DevicePhone;
 
-    /* TODO: Add difference between tablet and phone */
+    /* TODO: Add better identification for Emscripten */
+    if constexpr(
+        compile_info::platform::is_iot || compile_info::platform::is_emscripten)
+        return DeviceIOT;
 
-    return DevicePhone;
-#elif defined(COFFEE_LINUX)
+    if constexpr(compile_info::platform::is_gekko)
+        return DeviceConsole;
+
+    if constexpr(compile_info::platform::is_macos)
+    {
+        auto system_type = SysInfo::DeviceName().model;
+
+        if(system_type.find("MacBook") != CString::npos)
+            return DeviceLaptop;
+
+        if(system_type.find("iMac") != CString::npos)
+            return DeviceAllInOne;
+
+        if(system_type.find("MacPro") != CString::npos ||
+           system_type.find("Macmini") != CString::npos)
+            return DeviceDesktop;
+
+        return DeviceUnknown;
+    }
+
+    if constexpr(compile_info::platform::is_windows)
+        return DeviceDesktop;
+
+#if defined(COFFEE_LINUX)
     return env::Linux::get_device_variant();
-#elif defined(COFFEE_RASPBERRY)
-    return DeviceIOT;
-#elif defined(COFFEE_EMSCRIPTEN)
-    return DeviceIOT;
-#else
+#endif
+
     return DeviceUnknown;
+}
+
+CString system::runtime_kernel()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    return env::Linux::get_kern_name();
+#elif defined(COFFEE_APPLE)
+    return env::mac::get_kern_name();
+#elif defined(COFFEE_WINDOWS)
+    if(auto wineVer = env::win32::GetWineVersion(); wineVer)
+        return "WINE";
+
+    return "Windows NT";
+#else
+    return C_SYSTEM_STRING;
 #endif
 }
+
+CString system::runtime_arch()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    return env::Linux::get_kern_arch();
+#else
+    return COFFEE_ARCH;
+#endif
+}
+
+CString system::runtime_kernel_version()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    return env::Linux::get_kern_ver();
+#elif defined(COFFEE_APPLE)
+    return env::mac::get_kern_ver();
+#elif defined(COFFEE_WINDOWS)
+    if(auto wineVer = env::win32::GetWineVersion(); wineVer)
+        return *wineVer;
+
+    if(auto version = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "BuildLab",
+           128);
+       version)
+        return *version;
+
+    LPSERVER_INFO_101 ver = nullptr;
+    if(auto err = NetServerGetInfo(nullptr, 101, C_RCAST<LPBYTE*>(&ver));
+       err != NERR_Success)
+        return env::win32::WindowsSysInfo::GetSystemVersion();
+    else
+    {
+        auto base_ver = cast_pod(ver->sv101_version_major) + "." +
+                        cast_pod(ver->sv101_version_minor);
+
+        NetApiBufferFree(&ver);
+
+        return base_ver;
+    }
+
+#else
+    return {};
+#endif
+}
+
+CString system::runtime_distro()
+{
+#if defined(COFFEE_LINUX)
+    return env::Linux::get_lsb_release().distribution;
+#elif defined(COFFEE_IOS)
+    return "iOS";
+#elif defined(COFFEE_APPLE)
+    return "macOS";
+#elif defined(COFFEE_WINDOWS)
+    if(auto name = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ProductName",
+           128);
+       name)
+        return *name;
+    else
+        return C_SYSTEM_STRING;
+#else
+    return C_SYSTEM_STRING;
+#endif
+}
+
+CString system::runtime_distro_version()
+{
+#if defined(COFFEE_LINUX)
+    return env::Linux::get_lsb_release().release;
+#elif defined(COFFEE_WINDOWS)
+    if(auto version = env::win32::GetRegistryString(
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ReleaseId",
+           128);
+       version)
+        return *version;
+    else
+        return {};
+#else
+    return {};
+#endif
+}
+
 } // namespace device
 
 namespace platform {
-namespace uses {
-
-const bool virtualfs =
-#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
-    true;
-#else
-    false;
-#endif
-const bool debug_mode =
-#if MODE_DEBUG
-    true;
-#else
-    false;
-#endif
-
-} // namespace uses
 
 Platform variant()
 {
@@ -226,6 +346,8 @@ Platform variant()
 
 #elif defined(COFFEE_UNIXPLAT)
     return PlatformUnix;
+#elif defined(COFFEE_GEKKO)
+    return PlatformPOSIX;
 #endif
 }
 

@@ -24,7 +24,10 @@ multi-prepare: multi-mk-build multi-mk-output
 multi-config: multi-prepare
 	sh -c "cd $(INTERNAL_BUILD_DIR) && $(CMAKE) $(EXTRA_OPTIONS)"
 
-multi: multi-config
+cmake_version:
+	$(CMAKE) --version
+
+multi: multi-config cmake_version
 	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET)
 
 multi.twostage: multi-config
@@ -39,3 +42,5 @@ multi.ensureinstall: multi-config
 multi.make8: multi-config
 	$(CMAKE) --build $(INTERNAL_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8
 
+shell:
+	bash

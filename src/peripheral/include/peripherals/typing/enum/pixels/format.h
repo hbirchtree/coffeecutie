@@ -127,9 +127,10 @@ enum class PixFmt : u8
 
     /* Special data */
     //    Stencil,         /*  8-bit integer, not a real format */
-    Depth16,          /* 16-bit unsigned short */
-    Depth24Stencil8,  /* 32-bit data,           24-bit floating-point, 8-bit
-                         integer */
+    Depth16,         /* 16-bit unsigned short */
+    Depth24Stencil8, /* 32-bit data,           24-bit floating-point, 8-bit
+                        integer */
+    Depth16F,
     Depth32F,         /* 32-bit floating-point */
     Depth32FStencil8, /* 32-bit floating-point, 8-bit stencil */
 
@@ -181,12 +182,16 @@ enum class CompFlags : u8
     S3TC_3,
     S3TC_5, /* RGBA */
 
+    DXT1 = S3TC_1,
+    DXT3 = S3TC_3,
+    DXT5 = S3TC_5,
+
     BC1 = S3TC_1,
     BC3 = S3TC_5,
-    BC4, /* R */
-    BC5, /* RG */
-    BC6H,
-    BC7, /* RGBA */
+    BC4,  /* 8-bit R */
+    BC5,  /* 8-bit RG */
+    BC6H, /* RGBA half-precision float */
+    BC7,  /* 8-bit RGBA */
 
     /* BPP specification, meant for PVRTC */
     bpp_2,
@@ -218,6 +223,8 @@ enum class BitFmt : u8
 
     Int,
     IntR,
+    Int_1010102,
+
     UInt,
     UIntR,
     UInt_5999R,
@@ -235,6 +242,107 @@ enum class BitFmt : u8
 
     Undefined,
 };
+
+PACKED(struct) r11g11b10f 
+{
+#if !defined(COFFEE_WINDOWS)
+    u16 b_ : 10;
+    u16 g_ : 11;
+    u16 r_ : 11;
+#else
+    u32 data;
+#endif
+
+    static constexpr u32 bit_10_mask = 0b1111111111;
+    static constexpr u32 bit_11_mask = 0b11111111111;
+
+    u16 b() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return b_;
+#else
+        return data & bit_10_mask;
+#endif
+    }
+    u16 g() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return g_;
+#else
+        return (data >> 10) & bit_11_mask;
+#endif
+    }
+    u16 r() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return r_;
+#else
+        return (data >> 21) & bit_11_mask;
+#endif
+    }
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
+    }
+};
+
+PACKED(struct) r10g10b10a2
+{
+#if !defined(COFFEE_WINDOWS)
+    u16 r_ : 10;
+    u16 g_ : 10;
+    u16 b_ : 10;
+    u8  a_ : 2;
+#else
+    u32 data;
+
+    static constexpr u32 bit_10_mask = 0b1111111111;
+#endif
+
+    u16 r() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return r_;
+#else
+        return data & bit_10_mask;
+#endif
+    }
+    u16 g() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return g_;
+#else
+        return (data >> 10) & bit_10_mask;
+#endif
+    }
+    u16 b() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return b_;
+#else
+        return (data >> 20) & bit_10_mask;
+#endif
+    }
+    u8 a() const
+    {
+#if !defined(COFFEE_WINDOWS)
+        return a_;
+#else
+        return (data >> 30) & 0b11;
+#endif
+    }
+
+  private:
+    constexpr void size_check()
+    {
+        static_assert(sizeof(r10g10b10a2) == 4, "Invalid size");
+    }
+};
+
+using f11 = r11g11b10f;
+using u10 = r10g10b10a2;
 
 } // namespace pixels
 } // namespace typing

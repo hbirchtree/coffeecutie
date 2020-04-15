@@ -172,8 +172,7 @@ FileFun::FileMapping FileFun::Map(
         auto fm = Ancestor::Map(fn, acc, offset, size, ec);
 
         FileMapping map;
-        map.data = fm.data;
-        map.size = fm.size;
+        map.transfer(std::move(fm));
         return map;
     }
 }

@@ -16,7 +16,21 @@
 namespace stl_types {
 namespace str {
 
-using namespace ::libc_types;
+using libc_types::bigscalar;
+using libc_types::byte_t;
+using libc_types::c_cptr;
+using libc_types::cstring;
+using libc_types::i16;
+using libc_types::i32;
+using libc_types::i64;
+using libc_types::i8;
+using libc_types::lscalar;
+using libc_types::scalar;
+using libc_types::szptr;
+using libc_types::u16;
+using libc_types::u32;
+using libc_types::u64;
+using libc_types::u8;
 
 namespace encode {
 template<
@@ -97,7 +111,9 @@ template<typename CharType>
  */
 FORCEDINLINE std::basic_string<CharType>& left(std::basic_string<CharType>& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), NOT_FN(std::isspace)));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {
+                return !std::isspace(c);
+            }));
     return s;
 }
 
@@ -105,7 +121,9 @@ template<typename CharType>
 FORCEDINLINE std::basic_string<CharType>& right(std::basic_string<CharType>& s)
 {
     s.erase(
-        std::find_if(s.rbegin(), s.rend(), NOT_FN(std::isspace)).base(),
+        std::find_if(
+            s.rbegin(), s.rend(), [](int c) { return !std::isspace(c); })
+            .base(),
         s.end());
     return s;
 }
@@ -147,7 +165,7 @@ FORCEDINLINE std::basic_string<OutCharType> convertformat(
 {
     return std::basic_string<OutCharType>(input.begin(), input.end());
 }
-}
+} // namespace trim
 
 namespace convert {
 #define FMT_TYPE const constexpr cstring
@@ -355,6 +373,16 @@ FORCEDINLINE std::basic_string<T> right(
 }
 } // namespace pad
 
+namespace print {
+
+template<typename CharType = char>
+FORCEDINLINE std::basic_string<CharType> pointer_pad(u64 ptr, u32 pad = 0)
+{
+    return pad::left<CharType>(convert::hexify(ptr), '0', pad);
+}
+
+} // namespace print
+
 namespace fmt {
 template<typename CharT>
 FORCEDINLINE std::basic_string<CharT> lower(
@@ -436,6 +464,93 @@ FORCEDINLINE std::basic_string<CharType> str(
 }
 
 } // namespace replace
+
+namespace split {
+
+template<typename CharType>
+struct spliterator : Iterator<std::forward_iterator_tag, CharType>
+{
+    using string_type = std::basic_string<CharType>;
+    using sep_type    = CharType;
+
+    spliterator() : source(nullptr), sep(sep_type()), idx(string_type::npos)
+    {
+    }
+
+    spliterator(string_type const& source, sep_type sep) :
+        source(&source), sep(sep), idx(0)
+    {
+    }
+
+    spliterator operator++() const
+    {
+        auto cpy = *this;
+        cpy.idx  = next_idx();
+
+        if(cpy.idx > source->size())
+            cpy.idx = string_type::npos;
+
+        return cpy;
+    }
+
+    spliterator& operator++(int)
+    {
+        idx = next_idx();
+
+        if(idx > source->size())
+            idx = string_type::npos;
+
+        return *this;
+    }
+
+    string_type operator*() const
+    {
+        return source->substr(idx, len());
+    }
+
+    bool operator!=(spliterator const& other) const
+    {
+        return idx != other.idx;
+    }
+
+  private:
+    typename string_type::size_type len() const
+    {
+        auto it = next_idx();
+
+        return it - idx;
+    }
+
+    typename string_type::size_type next_idx() const
+    {
+        return source->find(sep, idx + 1);
+    }
+
+    string_type const*              source;
+    sep_type                        sep;
+    typename string_type::size_type idx;
+};
+
+template<typename CharType>
+FORCEDINLINE quick_container<spliterator<CharType>> str(
+    std::basic_string<CharType> const& source, CharType sep)
+{
+    using str_type = std::basic_string<CharType>;
+
+    auto it = source.find(sep);
+
+    if(it == str_type::npos)
+        return quick_container<spliterator<CharType>>(
+            []() { return spliterator<CharType>(); },
+            []() { return spliterator<CharType>(); });
+
+    return quick_container<spliterator<CharType>>(
+        [&]() { return spliterator<CharType>(source, sep); },
+        []() { return spliterator<CharType>(); });
+}
+
+} // namespace split
+
 } // namespace str
 } // namespace stl_types
 

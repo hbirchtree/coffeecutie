@@ -3,7 +3,6 @@ coffee_library (
 
     LIBRARIES
     PeripheralLib
-    CoreState
 
     SOURCES
     private/argument_parse.cpp
@@ -27,24 +26,30 @@ coffee_library (
 #
 #
 if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
-        (ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+        (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
 
     if(NOT TARGET SDL2)
         dependency_get (
             SOURCE hbirchtree/native-library-bundle
             TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES sdl2
+            NAMES sdl2=SDL2
             )
 
-        find_package ( SDL2 QUIET )
+        find_package ( SDL2 CONFIG QUIET )
     endif()
 
     coffee_library (
-        TARGET CoffeeSDLPowerInfo
+        TARGET SDLPowerInfo
         SOURCES private/sdlpowerinfo.cpp
-        LIBRARIES PeripheralLib SDL2
+        LIBRARIES PeripheralLib SDL2::SDL2-static
         HEADER_DIRS
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        )
+
+    dependency_link (
+        TARGET SDLPowerInfo
+        DEPENDENCIES
+            sdl2
         )
 endif()
 
@@ -55,21 +60,7 @@ endif()
 #
 #
 if(ANDROID)
-    find_package( AndroidGlue REQUIRED )
-
-    add_export( GlueCpuFeatures "" )
-    add_export( Glue "" )
-    add_export( GlueNdkHelper "" )
-
-    target_link_libraries ( PeripheralPlatform PUBLIC
-        GlueCpuFeatures
-        Glue
-        GlueNdkHelper
-        )
-
-    target_include_directories ( PeripheralPlatform PRIVATE
-        platform/android/include
-        )
+    set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
 
     target_sources ( PeripheralPlatform PRIVATE
         platforms/android/sensor.cpp
@@ -78,6 +69,11 @@ if(ANDROID)
         platforms/linux/file.cpp
         platforms/linux/process.cpp
         platforms/linux/sysinfo.cpp
+
+        platforms/android/jnipp.cpp
+        platforms/android/JNIHelper.cpp
+        ${ANDROID_SOURCES_DIR}/ndk_helper/gestureDetector.cpp
+        ${ANDROID_SOURCES_DIR}/cpufeatures/cpu-features.c
         )
 
     target_compile_definitions ( PeripheralPlatform PUBLIC
@@ -90,7 +86,15 @@ if(ANDROID)
         )
 
     target_include_directories ( PeripheralPlatform PUBLIC
+        $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/native_app_glue>
+        $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/ndk_helper>
+        $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/cpufeatures>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include>
+        )
+    header_install (
+        PeripheralPlatform
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include/coffee/jni>
+        coffee
         )
 endif()
 
@@ -100,15 +104,6 @@ endif()
 #
 #
 if(APPLE)
-    if(NOT IOS)
-        target_link_libraries ( PeripheralPlatform PUBLIC
-            "-framework CoreGraphics"
-            "-framework QuartzCore"
-            "-framework OpenGL"
-            "-framework AppKit"
-            )
-    endif()
-
     target_sources ( PeripheralPlatform PRIVATE
         #
         # System information queries
@@ -117,8 +112,6 @@ if(APPLE)
         platforms/osx/environment.cpp
         # Some functions are exposed by Obj-C
         platforms/osx/system_interface.m
-
-        platforms/osx/file.cpp
         )
 endif()
 
@@ -141,15 +134,19 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
         platforms/posix/stacktrace.cpp
 
         #
-        # Dynamic linking (libdl)
-        #
-        platforms/posix/loader.cpp
-
-        #
         # File management
         #
         platforms/posix/file.cpp
         )
+
+    if(NOT IOS)
+        target_sources ( PeripheralPlatform PRIVATE
+            #
+            # Dynamic linking (libdl)
+            #
+            platforms/posix/loader.cpp
+            )
+    endif()
 
     find_package( Unwind QUIET )
     if(UNWIND_FOUND)
@@ -170,7 +167,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         # Linux-specific system calls and behavior all around
         #
         platforms/linux/environment.cpp
-        platforms/linux/stacktrace.cpp
         platforms/linux/process.cpp
         platforms/linux/sysinfo.cpp
 
@@ -233,16 +229,27 @@ if(WIN32)
         platforms/win32/sysinfo.cpp
 
         platforms/win32/file.cpp
-
-#        platforms/win32/errors.cpp
         )
-    if(NOT WIN_UWP AND NOT MINGW64)
+    if(WIN_UWP)
         target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/windows_startup.cpp
+            platforms/win32/wmi_uwp.cpp
             )
-    elseif(WIN_UWP)
+    else()
         target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/windows_startup_uwp.cpp
+            platforms/win32/wmi_win32.cpp
             )
     endif()
+endif()
+
+#
+#
+# Gamecube/Wii-specific code
+#
+#
+if(GAMECUBE OR WII)
+    target_sources ( PeripheralPlatform PRIVATE
+        platforms/posix/environment.cpp
+        platforms/posix/file.cpp
+        platforms/posix/stacktrace.cpp
+        )
 endif()

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "threads/thread_id.h"
-#include <coffee/core/base_state.h>
 #include <peripherals/identify/identify.h>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/types.h>
+#include <platforms/pimpl_state.h>
 
 #include <functional>
 #include <future>
@@ -12,11 +12,6 @@
 #if defined(COFFEE_ANDROID) && (defined(COFFEE_NO_PTHREAD_GETNAME_NP) || \
                                 defined(COFFEE_NO_PTHREAD_SETNAME_NP))
 #include <sys/prctl.h>
-#endif
-
-#if defined(COFFEE_GEKKO)
-#include <sys/timespec.h>
-extern "C" int nanosleep(struct timespec* tb);
 #endif
 
 namespace stl_types {
@@ -57,7 +52,7 @@ using SharedFuture = std::shared_future<RType>;
 #if defined(COFFEE_NO_THREADLIB)
 struct Thread
 {
-    using id = u32;
+    using id = libc_types::u32;
 
     Thread(std::function<void()> f);
     template<
@@ -69,7 +64,7 @@ struct Thread
     {
     }
     Thread();
-    static inline i32 hardware_concurrency()
+    static inline libc_types::i32 hardware_concurrency()
     {
         return 1;
     }
@@ -79,7 +74,7 @@ struct Thread
 
   private:
 #if defined(COFFEE_GEKKO)
-    long unsigned int     m_threadHandle;
+    unsigned int          m_threadHandle;
     std::function<void()> m_threadLambda;
 #endif
 };
@@ -101,7 +96,7 @@ STATICINLINE void sleep_for(const std::chrono::duration<Rep, Period>& dura)
     sleepyTime.tv_nsec =
         std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count() %
         1000000000;
-    nanosleep(&sleepyTime);
+    nanosleep(&sleepyTime, nullptr);
 #endif
 }
 template<typename Clock, typename Duration>
@@ -125,13 +120,13 @@ extern CString GetName();
 
 namespace Threads {
 extern bool SetName(Thread& t, CString const& name);
-extern bool SetName(ThreadId::Hash& t, CString const& name);
+extern bool SetName(ThreadId::Hash const& t, CString const& name);
 
 extern CString GetName(Thread& t);
 extern CString GetName(ThreadId::Hash const& t);
 
 extern Map<ThreadId::Hash, CString> GetNames(
-    Coffee::State::GlobalState* context = nullptr);
+    platform::GlobalState* context = nullptr);
 } // namespace Threads
 
 FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
@@ -182,12 +177,14 @@ struct concurrent_notif
     {
         UqLock lock(awaiter);
 
+        prep_lock.unlock();
+
         return variable.wait_for(lock, dur);
     }
 
     FORCEDINLINE void notify()
     {
-        (void)notify(Chrono::seconds(10));
+        (void)notify(Chrono::seconds(1));
     }
 
     template<typename Dur = Chrono::system_clock::duration>

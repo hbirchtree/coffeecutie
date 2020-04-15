@@ -9,10 +9,14 @@ using namespace Coffee;
 
 const constexpr cstring quit_message = "Leaving";
 
-UqPtr<TCP::Socket> irc_stream;
+static ASIO::Service context;
+static UqPtr<TCP::Socket> irc_stream;
 
 void ExitFun()
 {
+    if(!irc_stream)
+        return;
+
     *irc_stream << "QUIT :" << quit_message << "\r\n";
 
     irc_stream->flush();
@@ -26,7 +30,17 @@ i32 coffee_main(i32, cstring_w*)
     CString user    = "testuser";
     CString channel = "#test";
 
-    irc_stream->connect("localhost", "6667");
+    context = ASIO::ASIO_Client::InitService();
+    irc_stream = MkUq<TCP::Socket>(context);
+
+    auto ec = irc_stream->connect(std::chrono::seconds(2), "localhost", "6667");
+
+    if(ec)
+    {
+        irc_stream = {};
+        cWarning("Error occurred: {0}", ec.message());
+        return 1;
+    }
 
     *irc_stream << "NICK " << user << "\r\n";
     *irc_stream << "USER " << user << " 8 * : Sumthing\r\n";

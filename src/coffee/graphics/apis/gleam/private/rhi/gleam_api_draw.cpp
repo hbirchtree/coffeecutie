@@ -14,21 +14,77 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
+using draw_hash = Tup<GLEAM_API::PSTATE*, GLEAM_API::V_DESC*, TypeEnum>;
+
+using instance_hash = Tup<u32, u32, u32, u32>;
+
+static draw_hash hash_draw(GLEAM_API::RenderPass::DrawCall const& drawCall)
+{
+    auto const& draw = drawCall.d_data;
+
+    /* TODO: Use a proper, lightweight hash */
+
+    return std::make_tuple(
+        drawCall.state, drawCall.vertices.lock().get(), draw.m_eltype);
+}
+
+static instance_hash instance_hash_draw(
+    GLEAM_API::RenderPass::DrawCall const& drawCall)
+{
+    return std::make_tuple(
+        drawCall.d_data.m_elems,
+        drawCall.d_data.m_eoff,
+        drawCall.d_data.m_verts,
+        drawCall.d_data.m_voff);
+}
+
 void GLEAM_API::OptimizeRenderPass(
-    GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer)
+    GLEAM_API::RenderPass& rpass, GLEAM_API::OPT_DRAW& buffer, u32 baseinstance)
 {
     DProfContext _(GLM_API "Optimizing RenderPass");
 
-    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
-    auto&                                       cmdBufs = buffer.cmdBufs;
+    Map<draw_hash, Vector<RenderPass::DrawCall*>> draws;
 
-    for(auto& call : rpass.draws)
+    for(auto& draw : rpass.draws)
+        draws[hash_draw(draw)].push_back(&draw);
+
+    u32                          globalInstanceOffset = baseinstance;
+    Vector<RenderPass::DrawCall> collectedDraws;
+    collectedDraws.reserve(draws.size());
+
+    for(auto& bucket : draws)
     {
-        vert_sort[call.vertices].push_back(&call);
+        /* Sort by same mesh for instancing */
+        Map<instance_hash, Vector<RenderPass::DrawCall*>> instance_draws;
+        for(auto draw : bucket.second)
+            instance_draws[instance_hash_draw(*draw)].push_back(draw);
+
+        for(auto const& instance : instance_draws)
+        {
+            D_DATA collected  = instance.second.front()->d_data;
+            collected.m_insts = 0;
+            collected.m_ioff  = globalInstanceOffset;
+            for(auto& draw : instance.second)
+            {
+                draw->d_data.m_ioff = globalInstanceOffset + collected.m_insts;
+                collected.m_insts += draw->d_data.m_insts;
+            }
+
+            globalInstanceOffset += collected.m_insts;
+
+            collectedDraws.push_back(*instance.second.front());
+            collectedDraws.back().d_data = collected;
+        }
+        bucket.second.clear();
     }
 
-    /* TODO: Add step to de-duplicate D_DATA into instancing */
+    Map<ShPtr<V_DESC>, Vector<RenderPass::DrawCall*>> vert_sort;
+    for(auto& call : collectedDraws)
+    {
+        vert_sort[call.vertices.lock()].push_back(&call);
+    }
 
+    auto& cmdBufs = buffer.cmdBufs;
     for(auto& group : vert_sort)
     {
         Map<PSTATE*, Vector<RenderPass::DrawCall*>> ustate_sort;
@@ -42,7 +98,8 @@ void GLEAM_API::OptimizeRenderPass(
 
         for(auto& ustate_group : ustate_sort)
         {
-            cmdBufs.push_back({*group.first, *ustate_group.first, {}});
+            cmdBufs.push_back(
+                CommandBuffer{group.first, ustate_group.first, {}});
             auto& cmd_buf = cmdBufs.back();
 
             cmd_buf.commands.reserve(ustate_group.second.size());
@@ -148,7 +205,7 @@ static bool InternalDraw(
 
         if(d.instanced())
         {
-        /* TODO: Implement the disabled drawcalls using other means */
+            /* TODO: Implement the disabled drawcalls using other means */
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
             if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0 &&
                i.vertexOffset() != 0)
@@ -261,7 +318,10 @@ bool InternalMultiDraw(
 {
     DPROF_CONTEXT_FUNC(GLM_API);
 
-    static CGhnd indirectBuf;
+#if MODE_DEBUG
+    platform::profiling::GpuProfilerContext<GLEAM_TimeQuery> __(
+        __FUNCTION__, GLEAM_API_INSTANCE_DATA->queries.at(0));
+#endif
 
     if(GL_DEBUG_MODE)
     {
@@ -313,35 +373,30 @@ bool InternalMultiDraw(
     if(ec)
         return false;
 
-    if(data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect)
-    {
-        if(indirectBuf == 0)
-            CGL33::BufAlloc(indirectBuf);
+    const bool indexed = data.dc.indexed();
+    const bool multi_indirect =
+        data.dc.instanced() && GLEAM_FEATURES.draw_multi_indirect;
 
+    if(multi_indirect)
+    {
         auto& indirectCalls =
             *C_CCAST<Vector<GLEAM_API::OptimizedDraw::IndirectCall>*>(
                 &data.indirectCalls);
 
-        glhnd ghnd(indirectBuf);
+        GLEAM_API_INSTANCE_DATA->indirectBuf->commit(
+            BytesConst::CreateFrom(indirectCalls));
 
-        CGL33::BufBind(buf::draw_indirect::value, ghnd);
-        CGL33::BufData(
-            buf::draw_indirect::value,
-            Bytes::CreateFrom(indirectCalls),
-            RSCA::ReadOnly);
-
-        ghnd.release();
+        GLEAM_API_INSTANCE_DATA->indirectBuf->bind();
     }
 
-    if(data.dc.indexed() && data.dc.instanced() &&
-       GLEAM_FEATURES.draw_multi_indirect)
+    if(indexed && multi_indirect)
         CGL43::MultiDrawElementsIndirect(
             mode,
             data.etype,
             0,
             data.indirectCalls.size(),
             sizeof(data.indirectCalls[0]));
-    else if(data.dc.indexed() && !data.dc.instanced())
+    else if(indexed && !data.dc.instanced())
         CGL33::MultiDrawElementsBaseVertex(
             mode,
             data.counts.data(),
@@ -349,9 +404,7 @@ bool InternalMultiDraw(
             C_RCAST<uintptr>(data.offsets.data()),
             data.counts.size(),
             data.baseVertex.data());
-    else if(
-        !data.dc.indexed() && data.dc.instanced() &&
-        GLEAM_FEATURES.draw_multi_indirect)
+    else if(!data.dc.indexed() && multi_indirect)
         CGL43::MultiDrawArraysIndirect(
             mode, 0, data.indirectCalls.size(), sizeof(IndirectCall));
     else if(!data.dc.indexed() && !data.dc.instanced())
@@ -362,6 +415,8 @@ bool InternalMultiDraw(
             data.offsets.size());
     else
         ec = APIE::DrawNotCompatible;
+
+    GLEAM_API_INSTANCE_DATA->indirectBuf->unbind();
 
     return true;
 }
@@ -468,9 +523,9 @@ void GLEAM_API::MultiDraw(
     /* We will use these to allow use of existing state.
      * We will treat program uniform state as atomic,
      *  because it can be a lot to compare */
-    V_DESC* p_vertices   = nullptr;
-    PSTATE* p_state      = nullptr;
-    i32     vertexOffset = 0;
+    ShPtr<V_DESC> p_vertices;
+    PSTATE*       p_state      = nullptr;
+    i32           vertexOffset = 0;
 
     glhnd vertexHandle(0);
     i32   baseInstanceLoc = -1;
@@ -522,19 +577,21 @@ void GLEAM_API::MultiDraw(
         {
             auto& buffer = *mdData.first;
 
-            if(&buffer.vertices != p_vertices)
+            auto tmp_vert = unwrap_ptr(buffer.vertices);
+
+            if(tmp_vert != p_vertices)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "VBuffer::bind");
-                buffer.vertices.bind();
-                p_vertices = &buffer.vertices;
+                p_vertices = tmp_vert;
+                p_vertices->bind();
             }
 
-            if(&buffer.state != p_state)
+            if(buffer.state != p_state)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "SetShaderUniformState");
-                for(auto const& s : buffer.state)
+                p_state = buffer.state;
+                for(auto const& s : *p_state)
                     SetShaderUniformState(pipeline, s.first, *s.second, ec);
-                p_state = &buffer.state;
             }
 
             InternalMultiDraw(mdData.second, ec);
@@ -546,21 +603,21 @@ void GLEAM_API::MultiDraw(
          *  multiple calls to Draw() */
         for(auto& buffer : draws.cmdBufs)
         {
-            if(&buffer.vertices != p_vertices)
+            auto tmp_vert = unwrap_ptr(buffer.vertices);
+
+            if(tmp_vert != p_vertices)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "VBuffer::bind");
-                if(GLEAM_FEATURES.gles20)
-                    vertexOffset = 0;
-                buffer.vertices.bind();
-                p_vertices = &buffer.vertices;
+                p_vertices = tmp_vert;
+                p_vertices->bind();
             }
 
-            if(&buffer.state != p_state)
+            if(buffer.state != p_state)
             {
                 GLEAM_API::DBG::SCOPE b(GLM_API "SetShaderUniformState");
-                for(auto const& s : buffer.state)
+                p_state = buffer.state;
+                for(auto const& s : *p_state)
                     SetShaderUniformState(pipeline, s.first, *s.second, ec);
-                p_state = &buffer.state;
             }
 
             for(auto& cmd : buffer.commands)
@@ -582,7 +639,7 @@ void GLEAM_API::MultiDraw(
                     if(cmd.data.vertexOffset() != vertexOffset)
                     {
                         vertexOffset = cmd.data.vertexOffset();
-                        buffer.vertices.bind(vertexOffset);
+                        p_vertices->bind(vertexOffset);
                     }
                 }
                 if(GLEAM_FEATURES.gles20 && cmd.data.instances() > 1)
@@ -641,7 +698,7 @@ void GLEAM_API::Draw(
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x330)
     if(m_store->features.qcom_tiling)
     {
-        auto size = GLEAM_API::DefaultFramebuffer().size();
+        auto size = GLEAM_API::DefaultFramebuffer()->size();
         glStartTilingQCOM(
             0,
             0,

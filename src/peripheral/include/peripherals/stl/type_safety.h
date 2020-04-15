@@ -6,6 +6,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <type_traits>
+#include <utility>
+
+#if defined(COFFEE_GEKKO)
+#include <cxxabi.h>
+#include <stdexcept>
+#endif
 
 /* Wrap text that is used for debugging with this, and it will disappear
  *  in release-mode */
@@ -23,11 +29,28 @@
 #define IS_POLY std::is_polymorphic
 
 #if defined(COFFEE_USE_EXCEPTIONS)
+#if defined(COFFEE_GEKKO)
 template<typename T>
 [[noreturn]] inline void Throw(T&& exception)
 {
-    throw exception;
+    try
+    {
+        throw std::move(exception);
+    } catch(...)
+    {
+        int stat = 0;
+
+        std::throw_with_nested(std::runtime_error(
+            abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &stat)));
+    }
 }
+#else
+template<typename T>
+[[noreturn]] inline void Throw(T&& exception)
+{
+    throw std::move(exception);
+}
+#endif
 #else
 #define Throw(a) abort()
 #endif

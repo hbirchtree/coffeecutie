@@ -239,11 +239,11 @@ if __name__ == '__main__':
             mak.write(var_templates.finalize_var(block.serialize(indent=0)) + "\n")
 
         for target in linux_make_targets:
-            mak.write(var_templates.finalize_var(target.serialize()) + "\n")
+            mak.write(var_templates.finalize_var(target.serialize()).replace('$(shell)', '.shell') + "\n")
 
     with open('Makefile.mac', 'w') as mak:
         for block in blocks:
-            mak.write(var_templates.finalize_var(block.serialize(indent=0)) + "\n")
+            mak.write(var_templates.finalize_var(block.serialize(indent=0)).replace('$(shell)', '.shell') + "\n")
 
         for target in mac_make_targets:
             mak.write(var_templates.finalize_var(target.serialize()) + "\n")

@@ -17,6 +17,11 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     {
     }
 
+    ~GLEAM_VBuffer()
+    {
+        dealloc();
+    }
+
     void alloc();
     void dealloc();
 
@@ -100,12 +105,15 @@ struct GLEAM_PixelBuffer : GLEAM_VBuffer
 
 struct GLEAM_IndirectBuffer : GLEAM_VBuffer
 {
-    GLEAM_IndirectBuffer(RSCA acc, u32 flags, szptr stride, szptr size) :
-        GLEAM_VBuffer(buf::draw_indirect::value, acc, size), m_stride(stride),
-        m_flags(flags)
-
+    GLEAM_IndirectBuffer(
+        RSCA acc, u32 flags = 0, szptr stride = 0, szptr size = 0) :
+        GLEAM_VBuffer(buf::draw_indirect::value, acc, size),
+        m_stride(stride), m_flags(flags)
     {
     }
+
+    void bind();
+    void unbind();
 
   protected:
     szptr m_stride;

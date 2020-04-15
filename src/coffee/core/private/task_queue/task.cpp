@@ -640,6 +640,21 @@ void RuntimeQueue::AwaitTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
     }
 }
 
+bool RuntimeQueue::IsRunning(RuntimeQueue* thread, RuntimeQueue::rqe& ec)
+{
+    if(!thread)
+    {
+        ec = RQE::InvalidQueue;
+        return false;
+    }
+
+    auto tid = thread->threadId().hash();
+
+    //    UqLock _(context->globalMod, std::try_to_lock);
+
+    return context->queueFlags[tid]->running;
+}
+
 void RuntimeQueue::TerminateThread(RuntimeQueue* thread, rqe& ec)
 {
     if(!thread)
@@ -762,28 +777,30 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext()
 
 RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
 {
-    task_data_t* firstTask = nullptr;
+    RuntimeTask::Timepoint firstTask;
+    bool                   taskFound = false;
 
     for(auto task : mTasks)
         if(task.alive)
         {
-            firstTask = &task;
+            firstTask = task.task.time;
+            taskFound = true;
             break;
         }
 
-    if(!firstTask)
+    if(!taskFound)
     {
         Profiler::DeepProfile(RQ_API "Entering deep sleep");
         if(mNextWakeup < current)
-            return Chrono::seconds(10);
+            return Chrono::seconds(1);
         else
             return mNextWakeup - current;
     } else
     {
-        if(firstTask->task.time < current)
+        if(firstTask < current)
             return Chrono::milliseconds::zero();
         else
-            return firstTask->task.time - current;
+            return firstTask - current;
     }
 }
 

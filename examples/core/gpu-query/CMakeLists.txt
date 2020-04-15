@@ -6,5 +6,5 @@ coffee_application (
     VERSION_CODE "5"
 
     SOURCES main.cpp
-    LIBRARIES Core GraphicsAPI
+    LIBRARIES Core GpuQuery
     )

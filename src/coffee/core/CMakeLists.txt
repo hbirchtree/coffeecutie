@@ -7,6 +7,13 @@ target_include_directories ( CoreCommon INTERFACE
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include>
+    )
+
+header_install (
+    CoreCommon
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include>
+    ""
     )
 
 target_link_libraries ( CoreCommon INTERFACE
@@ -43,12 +50,18 @@ coffee_library (
     #
     private/strings.cpp
 
-    LIBRARIES CoreCommon
+    LIBRARIES CoreCommon PeripheralThreadNaming
 
     HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/debug>
     $<INSTALL_INTERFACE:include>
+    HEADER_BASE coffee/core
+    )
+
+header_install (
+    "CoreDebug"
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/strings>
+    coffee
     )
 
 coffee_library (
@@ -60,9 +73,7 @@ coffee_library (
     #
     private/extern_storage.cpp
 
-    LIBRARIES
-    CoreCommon
-    CoreDebug
+    LIBRARIES CoreCommon CoreJsonLogger CoreDebug PeripheralThreadNaming
     )
 
 coffee_library (
@@ -76,6 +87,15 @@ coffee_library (
 
     LIBRARIES
     CoreCommon
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/files>
+    HEADER_BASE coffee/core
+    )
+
+target_precompile_headers ( CoreFile PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/core/CFiles>
+    $<$<COMPILE_LANGUAGE:CXX>:platforms/file.h>
     )
 
 coffee_library (
@@ -90,6 +110,14 @@ coffee_library (
     LIBRARIES
     CoreCommon
     PeripheralThreadNaming
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/task_queue>
+    HEADER_BASE coffee/core
+    )
+
+target_precompile_headers ( CoreQueue PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/core/task_queue/task.h>
     )
 
 coffee_library (
@@ -100,12 +128,36 @@ coffee_library (
     private/base/jsonprofile.cpp
 
     LIBRARIES
-    CoreCommon
+    CoreDebug CoreCommon PeripheralThreadNaming CoreProfiling
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/logging>
+    HEADER_BASE coffee/core
     )
 
 #
 # libz compression and whatever compression Windows has
 #
+if(NOT EMSCRIPTEN AND NOT APPLE)
+    dependency_get (
+        SOURCE hbirchtree/native-library-bundle
+        TAG ${NATIVE_LIB_BUNDLE_TAG}
+        NAMES
+            zlib
+        )
+    find_package ( zlib )
+endif()
+
+dependency_get (
+    SOURCE hbirchtree/native-library-bundle
+    TAG ${NATIVE_LIB_BUNDLE_TAG}
+    NAMES
+        zstd
+        lz4
+    )
+find_package ( lz4 CONFIG )
+find_package ( zstd CONFIG )
+
 coffee_library (
     TARGET CoreCompression
 
@@ -113,7 +165,74 @@ coffee_library (
     private/datastorage/compression/libz.cpp
 
     LIBRARIES CoreCommon
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/compression>
+    HEADER_BASE coffee
     )
+
+if(lz4_FOUND)
+    target_sources ( CoreCompression PRIVATE
+        private/datastorage/compression/lz4_codec.cpp
+        )
+    target_link_libraries ( CoreCompression PUBLIC
+        lz4::lz4 lz4::lz4hc
+        )
+    target_compile_definitions ( CoreCompression PUBLIC
+        -DCOFFEE_COMPRESS_LZ4
+        )
+    dependency_link (
+        TARGET CoreCompression
+        DEPENDENCIES lz4
+        )
+endif()
+if(zstd_FOUND)
+
+endif()
+
+if(TARGET zlib::zlibstatic AND NOT EMSCRIPTEN AND NOT APPLE)
+    target_link_libraries ( CoreCompression PUBLIC
+        zlib::zlibstatic
+        )
+    dependency_link (
+        TARGET CoreCompression
+        DEPENDENCIES
+            zlib
+        )
+elseif(ANDROID)
+    target_link_libraries ( CoreCompression PUBLIC
+        z
+        )
+elseif(APPLE OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"))
+    target_link_libraries ( CoreCompression PUBLIC
+        z
+        )
+else()
+    target_sources ( CoreCompression PRIVATE
+        zlib/inflate.c
+        zlib/deflate.c
+
+        zlib/infback.c
+        zlib/inffast.c
+        zlib/inftrees.c
+        zlib/trees.c
+        zlib/adler32.c
+        zlib/crc32.c
+        zlib/zutil.c
+        )
+    target_include_directories ( CoreCompression PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zlib/include>
+        )
+endif()
+
+if(EMSCRIPTEN)
+    target_compile_options ( CoreCompression PUBLIC
+        "-s" USE_ZLIB=1
+       )
+   target_link_options ( CoreCompression PUBLIC
+        "-s" USE_ZLIB=1
+       )
+endif()
 
 #
 # Virtual filesystem
@@ -127,19 +246,10 @@ coffee_library (
     LIBRARIES
     CoreCommon
     CoreCompression
-    )
 
-#
-# EventApplication C wrapper
-#
-coffee_library (
-    TARGET CoreEventApplicationC
-
-    SOURCES
-    private/base/eventapplication_wrapper.cpp
-    private/base/cdisplay.cpp
-
-    LIBRARIES CoreCommon
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/virtfs>
+    HEADER_BASE coffee
     )
 
 #
@@ -152,6 +262,10 @@ coffee_library (
     private/terminal/table_print.cpp
 
     LIBRARIES CoreCommon
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
+    HEADER_BASE coffee/core
     )
 
 #
@@ -166,6 +280,19 @@ coffee_library (
     LIBRARIES CoreCommon
     )
 
+coffee_library (
+    TARGET CoreObject
+
+    SOURCES
+    private/base/cobject.cpp
+
+    LIBRARIES CoreCommon
+
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/object>
+    HEADER_BASE coffee/core
+    )
+
 #
 # Profiling export to Chrome trace format
 #
@@ -175,20 +302,11 @@ coffee_library (
     SOURCES
     private/profiler/profiling_export.cpp
 
-    LIBRARIES CoreCommon
-    )
+    LIBRARIES CoreDebug CoreCommon CoreFile
 
-#
-# Avoid this
-#
-coffee_library (
-    TARGET CoreOldBlob
-
-    SOURCES
-    # Object ownership and labeling
-    private/base/cobject.cpp
-
-    LIBRARIES CoreCommon
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/profiler>
+    HEADER_BASE coffee/core
     )
 
 #
@@ -207,6 +325,13 @@ coffee_library (
     TARGET EntComp
     LIBRARIES CoreCommon
     SOURCES private/components/allocators.cpp
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/components>
+    HEADER_BASE coffee
+    )
+
+target_precompile_headers ( EntComp PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/components/components.h>
     )
 
 #
@@ -215,7 +340,10 @@ coffee_library (
 coffee_library (
     TARGET Testing
     SOURCES private/unit_tests/framework.cpp
-    LIBRARIES CoreCommon
+    LIBRARIES CoreTerminal CoreCommon
+    HEADER_DIRS
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
+    HEADER_BASE coffee/core
     )
 
 if(LOWFAT_BUILD)
@@ -233,22 +361,27 @@ add_export ( CoreCommon "" )
 
 target_link_libraries ( Core INTERFACE
     CoreCommon
-    CoreCompression
-    CoreEventApplicationC
-    CoreOldBlob
     CoreProfiling
     CoreSaving
     CoreTerminal
-    CoreVirtFS
     CoreQueue
     CoreFile
-    CoreJsonLogger
     CoreState
+    CoreJsonLogger
 
     PeripheralThreadNaming
     )
 
 if(TARGET SDLPowerInfo)
+    if(NOT TARGET SDL2)
+        dependency_get (
+            SOURCE hbirchtree/native-library-bundle
+            TAG ${NATIVE_LIB_BUNDLE_TAG}
+            NAMES sdl2=SDL2
+            )
+
+        find_package ( SDL2 CONFIG QUIET )
+    endif()
     target_link_libraries ( CoreCommon INTERFACE
         SDLPowerInfo
         )
@@ -267,8 +400,8 @@ coffee_bundle (
     ${STANDARDLIBS_INCLUDE_DIR}
     )
 
-coffee_bundle (
-    FORCE
-    HEADER_DIRECTORIES
-    ${CMAKE_CURRENT_SOURCE_DIR}/interface_include/coffee
+header_install (
+    Core
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
+    ""
     )

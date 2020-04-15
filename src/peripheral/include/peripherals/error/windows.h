@@ -4,18 +4,18 @@
 #include <peripherals/stl/types.h>
 
 namespace platform {
-namespace file {
+namespace win32 {
 
-using namespace ::stl_types;
+using ::stl_types::domain_error_code;
 
-struct win32_error_category : error_category
+struct error_category : ::stl_types::error_category
 {
     virtual const char* name() const noexcept;
     virtual std::string message(int error_code) const;
 };
 
-using win32_error_code =
-    domain_error_code<libc_types::u32, win32_error_category>;
+using error_code =
+    domain_error_code<libc_types::u32, error_category>;
 
-} // namespace file
+} // namespace win32
 } // namespace platform

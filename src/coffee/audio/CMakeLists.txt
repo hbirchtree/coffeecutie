@@ -15,8 +15,6 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-
     )
 
 target_include_directories ( Audio SYSTEM PRIVATE
@@ -49,13 +47,18 @@ if(BUILD_OPENAL)
         private/abstraction/openal/calsoundtrack.cpp
         private/abstraction/openal/calsoundsample.cpp
 
-        LIBRARIES Audio
+        LIBRARIES Audio CoreObject
         )
 
     if(NOT APPLE AND NOT WIN32)
         target_link_libraries ( OpenALMix
             PUBLIC
             OpenAL
+            )
+        dependency_link (
+            TARGET OpenALMix
+            DEPENDENCIES
+                openal
             )
     elseif( WIN32 )
         target_link_libraries ( OpenALMix

@@ -43,6 +43,8 @@ struct generic_handle_t : non_copy
 
     using handle_type = hnd_type;
 
+    using borrow = generic_handle_t<hnd_type, handle_modes::no_op>;
+
     generic_handle_t() : hnd(InvalidValue)
     {
     }
@@ -59,48 +61,27 @@ struct generic_handle_t : non_copy
 
     void handle_check()
     {
-#if MODE_DEBUG
-        if(hnd != InvalidValue)
-            Throw(resource_leak("resource leakage detected"));
-#endif
-    }
+        using namespace handle_modes;
 
-    template<
-        typename Dummy = int,
-        typename std::enable_if<
-            std::is_same<handle_modes::exception_on_destruct, HandleMode>::
-                value,
-            Dummy>::type* = nullptr>
-    void handle_check_enable()
-    {
-        static_assert(
-            !(exceptions_mode && close_func),
-            "close function will never be called");
+        if constexpr(std::is_same<auto_close, HandleMode>::value)
+            if(static_cast<bool>(close_func) && hnd != InvalidValue)
+                close_func(hnd);
 
-        handle_check();
+        if constexpr(std::is_same<exception_on_destruct, HandleMode>::value)
+        {
+            static_assert(
+                !(exceptions_mode && static_cast<bool>(close_func)),
+                "close function will never be called");
+
+            if constexpr(compile_info::debug_mode)
+                if(hnd != InvalidValue)
+                    Throw(resource_leak("resource leakage detected"));
+        }
     }
-    template<
-        typename Dummy = int,
-        typename std::enable_if<
-            std::is_same<handle_modes::auto_close, HandleMode>::value,
-            Dummy>::type* = nullptr>
-    void handle_check_enable()
-    {
-        if(static_cast<bool>(close_func) && hnd != InvalidValue)
-            close_func(hnd);
-    }
-//    template<
-//        typename Dummy = int,
-//        typename std::enable_if<
-//            std::is_same<handle_modes::no_op, HandleMode>::value,
-//            Dummy>::type* = nullptr>
-//    void handle_check_enable()
-//    {
-//    }
 
     ~generic_handle_t()
     {
-        handle_check_enable();
+        handle_check();
     }
 
     bool operator!() const

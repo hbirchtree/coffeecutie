@@ -21,7 +21,7 @@ class CALSoundManager : public CSoundArbiter<CALSource,CALBuffer>
 
 public:
     CALSoundManager();
-    ~CALSoundManager();
+    virtual ~CALSoundManager();
 
     CSoundDeviceIdentifier &defaultSoundDevice();
     u32 numberSoundDevices();

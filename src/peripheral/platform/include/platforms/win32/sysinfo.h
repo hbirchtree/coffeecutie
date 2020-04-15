@@ -4,18 +4,15 @@
 
 #ifdef COFFEE_WINDOWS
 
-#pragma once
+#include <platforms/base/sysinfo.h>
+#include <peripherals/error/windows.h>
 
-#include "../sysinfo_def.h"
-
-#include <coffee/core/plat/plat_windows.h>
-
-#include "../../memory/cmemory.h"
 #include <intrin.h>
 
-namespace Coffee {
-namespace Environment {
-namespace Windows {
+namespace platform {
+namespace env {
+namespace win32 {
+
 struct WindowsSysInfo : SysInfoDef
 {
     enum CPUID_Data
@@ -91,8 +88,6 @@ struct WindowsSysInfo : SysInfoDef
         Vector<proc> processors;
     };
 
-    static uint32 CountThreads(ULONG_PTR bitm);
-
     static proc_info GetProcInfo();
 
     STATICINLINE uint32 CpuCount()
@@ -115,59 +110,16 @@ struct WindowsSysInfo : SysInfoDef
     {
         return true;
     }
-    STATICINLINE uint64 MemTotal()
-    {
-        MEMORYSTATUSEX st;
-        st.dwLength = sizeof(st);
+    static uint64 MemTotal();
+    static uint64 MemAvailable();
+    static uint64       SwapTotal();
+    static uint64 SwapAvailable();
 
-        GlobalMemoryStatusEx(&st);
+    static platform::info::HardwareDevice Processor();
 
-        return st.ullTotalPhys;
-    }
-    STATICINLINE uint64 MemAvailable()
-    {
-        MEMORYSTATUSEX st;
-        st.dwLength = sizeof(st);
-
-        GlobalMemoryStatusEx(&st);
-
-        return st.ullAvailPhys;
-    }
-    STATICINLINE uint64 SwapTotal()
-    {
-        MEMORYSTATUSEX st;
-        st.dwLength = sizeof(st);
-
-        GlobalMemoryStatusEx(&st);
-
-        return st.ullTotalPageFile;
-    }
-    STATICINLINE uint64 SwapAvailable()
-    {
-        MEMORYSTATUSEX st;
-        st.dwLength = sizeof(st);
-
-        GlobalMemoryStatusEx(&st);
-
-        return st.ullAvailPageFile;
-    }
-
-    static HWDeviceInfo Processor();
-
-    STATICINLINE bigscalar ProcessorFrequency()
-    {
-        LARGE_INTEGER e;
-        QueryPerformanceFrequency(&e);
-        return e.QuadPart / 1000000.0;
-    }
-    STATICINLINE bool HasFPU()
-    {
-        return IsProcessorFeaturePresent(PF_FLOATING_POINT_EMULATED) == 0;
-    }
-    STATICINLINE bool HasPAE()
-    {
-        return IsProcessorFeaturePresent(PF_PAE_ENABLED);
-    }
+    static bigscalar    ProcessorFrequency();
+    static bool         HasFPU();
+    static bool         HasPAE();
     STATICINLINE uint64 ProcessorCacheSize()
     {
         auto info = GetProcInfo();
@@ -183,18 +135,18 @@ struct WindowsSysInfo : SysInfoDef
     }
     static CString GetSystemVersion();
 
-    static HWDeviceInfo DeviceName();
+    static platform::info::HardwareDevice DeviceName();
 
-    static HWDeviceInfo Motherboard();
+    static platform::info::HardwareDevice Motherboard();
 
-    static HWDeviceInfo Chassis();
+    static platform::info::HardwareDevice Chassis();
 };
 
 } // namespace Windows
 } // namespace Environment
 
-using PowerInfo = PowerInfoDef;
-using SysInfo   = Environment::Windows::WindowsSysInfo;
+using PowerInfo = env::PowerInfoDef;
+using SysInfo   = env::win32::WindowsSysInfo;
 } // namespace Coffee
 
 #endif

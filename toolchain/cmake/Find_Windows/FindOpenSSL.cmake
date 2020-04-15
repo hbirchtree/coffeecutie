@@ -1,23 +1,23 @@
 set ( OPENSSL_SEARCH_PATHS
-    "C:\\OpenSSL-Win64"
-    "C:\\OpenSSL-Win32"
+    ${OpenSSL_DIR}
+    ${OPENSSL_ROOT_DIR}
     )
 
 find_library ( SSL_CRYPTO_LIBRARY_TMP
-    ssleay32
+    libcrypto
 
     PATH_SUFFIXES
     lib
-	lib/VC
+
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
 find_library ( SSL_LIBRARY_TMP
-    libeay32
+    libssl
 
     PATH_SUFFIXES
     lib
-	lib/VC
+    
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
@@ -29,22 +29,32 @@ find_path ( SSL_INCLUDE_DIR_TMP
 
     PATH_SUFFIXES
     include
-	include/openssl
+    include/openssl
+    
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
 
-if(DEFINED SSL_CRYPTO_LIBRARY_TMP AND DEFINED SSL_LIBRARY_TMP)
-	set ( OPENSSL_LIBRARIES "${SSL_CRYPTO_LIBRARY_TMP};${SSL_LIBRARY_TMP}" CACHE STRING "" )
+if(NOT TARGET OpenSSL::SSL)
+    add_library ( OpenSSL::SSL STATIC IMPORTED )
 endif()
-if(DEFINED SSL_INCLUDE_DIR_TMP)
-	set ( OPENSSL_INCLUDE_DIR "${SSL_INCLUDE_DIR_TMP}/.." CACHE PATH "" )
+
+set_target_properties ( OpenSSL::SSL PROPERTIES
+    IMPORTED_LOCATION "${SSL_LIBRARY_TMP}"
+    INTERFACE_LINK_LIBRARIES "${SSL_CRYPTO_LIBRARY_TMP}"
+    INTERFACE_INCLUDE_DIRECTORIES "${SSL_INCLUDE_DIR_TMP}"
+    )
+
+if(SSL_LIBRARY_TMP AND SSL_CRYPTO_LIBRARY_TMP AND SSL_INCLUDE_DIR_TMP)
+    set ( OpenSSL_FOUND TRUE )
 endif()
 
 INCLUDE(FindPackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenSSL
     REQUIRED_VARS
-    OPENSSL_LIBRARIES
-    OPENSSL_INCLUDE_DIR
+    SSL_LIBRARY_TMP
+    SSL_CRYPTO_LIBRARY_TMP
+    SSL_INCLUDE_DIR_TMP
+    OpenSSL_FOUND
     )

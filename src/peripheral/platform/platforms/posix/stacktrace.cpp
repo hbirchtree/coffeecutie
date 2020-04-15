@@ -1,6 +1,6 @@
 #include <platforms/posix/stacktrace.h>
 
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_GEKKO)
 
 #include <peripherals/base.h>
 #include <peripherals/libc/output_ops.h>
@@ -18,6 +18,12 @@
 
 #if defined(COFFEE_GLIBC_STACKTRACE)
 #include <execinfo.h>
+#include <peripherals/libc/signals.h>
+#endif
+
+#if defined(COFFEE_UNWIND_STACKTRACE)
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
 #endif
 
 namespace platform {
@@ -130,27 +136,6 @@ CString Stacktracer::GetStackFuncName(u32 depth)
 
 } // namespace posix
 
-
-#if defined(COFFEE_GLIBC_STACKTRACE)
-namespace glibc {
-
-STATICINLINE CString DemangleBacktrace(char* sym)
-{
-    CString sym_      = sym;
-    auto    sym_end   = sym_.rfind('+');
-    auto    sym_begin = sym_.rfind('(', sym_end);
-    if(sym_end != CString::npos && sym_begin != CString::npos)
-    {
-        auto sym_length = sym_end - sym_begin - 1;
-        auto sym_target = sym_.substr(sym_begin + 1, sym_length);
-
-        sym_ = str::replace::str(
-            sym_, sym_target, Stacktracer::DemangleSymbol(sym_target));
-    }
-
-    return sym_;
-}
-
 static void DefaultedPrint(
     typing::logging::LogInterfaceBasic logger, CString const& line)
 {
@@ -160,13 +145,109 @@ static void DefaultedPrint(
     logger(io_handles::err, line, Severity::Critical, 1, 0);
 }
 
+#if defined(COFFEE_GLIBC_STACKTRACE)
+namespace glibc {
+
+STATICINLINE CString DemangleBacktrace(char* sym)
+{
+    CString sym_ = sym;
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+    /* glibc's format */
+    auto sym_end = sym_.rfind('+');
+
+#if defined(COFFEE_APPLE)
+    /* macOS format looks like this:
+     * 0   GLeamBaseTest_RHI                   0x000000010030c86a SIGNATURE + 0
+     *                                  What we want    ~~~~~~~~~^
+     * We fix this by adjusting the beginning index
+     */
+    auto sym_begin = sym_.rfind(' ', sym_end);
+    sym_begin      = sym_.rfind(' ', sym_begin - 1);
+
+    sym_end -= 1;
+#else
+    auto sym_begin = sym_.rfind('(', sym_end);
+#endif
+
+    if(sym_end != CString::npos && sym_begin != CString::npos)
+    {
+        auto sym_length = sym_end - sym_begin - 1;
+        auto sym_target = sym_.substr(sym_begin + 1, sym_length);
+
+        sym_ = str::replace::str(
+            sym_, sym_target, Stacktracer::DemangleSymbol(sym_target));
+    }
+#endif
+
+#if defined(COFFEE_APPLE)
+    auto const is_space = [](CString::value_type v) {
+        return !std::isspace(v);
+    };
+
+    auto crop = sym_.find(' ');
+
+    auto crop_it = std::find_if(sym_.begin() + crop, sym_.end(), is_space);
+
+    auto cursor_start = crop_it - sym_.begin();
+    auto cursor_end   = sym_.find(' ', cursor_start);
+
+    auto module = sym_.substr(cursor_start, cursor_end - cursor_start);
+
+    crop_it = std::find_if(sym_.begin() + cursor_end, sym_.end(), is_space);
+    cursor_start = crop_it - sym_.begin();
+    cursor_end   = sym_.find(' ', cursor_start);
+
+    auto address = sym_.substr(cursor_start, cursor_end - cursor_start);
+
+    crop_it = std::find_if(sym_.begin() + cursor_end, sym_.end(), is_space);
+    cursor_start = crop_it - sym_.begin();
+    cursor_end   = sym_.find(' ', cursor_start);
+
+    auto func = sym_.substr(cursor_start, CString::npos);
+
+    return module + "(" + func + ") [" + address + "]";
+#else
+    return sym_;
+#endif
+}
+
+COFFEE_DISABLE_ASAN void Stacktracer::Backtrace(
+    typing::logging::LogInterfaceBasic log)
+{
+    static constexpr szptr MAX_CONTEXT = 21;
+    static void*           tracestore[MAX_CONTEXT];
+
+    for(szptr i = 0; i < MAX_CONTEXT; i++)
+        tracestore[i] = nullptr;
+
+    auto num = backtrace(tracestore, MAX_CONTEXT);
+
+    if(!log)
+    {
+        free(backtrace_symbols(tracestore, num));
+        return;
+    }
+
+    auto syms = backtrace_symbols(tracestore, num);
+    if(syms && num)
+    {
+        DefaultedPrint(log, "dumping stacktrace:");
+        for(auto i : Range<>(C_FCAST<szptr>(num)))
+        {
+            if(syms[i])
+            {
+                DefaultedPrint(log, " >> " + DemangleBacktrace(syms[i]));
+            } else
+                DefaultedPrint(
+                    log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
+        }
+        free(syms);
+    }
+}
+
 void Stacktracer::ExceptionStacktrace(
     const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
 {
-    static constexpr szptr MAX_CONTEXT = 20;
-
-    void* tracestore[MAX_CONTEXT];
-
     try
     {
         if(exc_ptr)
@@ -183,22 +264,7 @@ void Stacktracer::ExceptionStacktrace(
             log,
             " >> " + Stacktracer::DemangleSymbol(typeid(e).name()) + ": " +
                 e.what());
-        auto num  = backtrace(tracestore, MAX_CONTEXT);
-        auto syms = backtrace_symbols(tracestore, num);
-        if(syms && num)
-        {
-            DefaultedPrint(log, "dumping stacktrace:");
-            for(auto i : Range<>(C_FCAST<szptr>(num)))
-            {
-                if(syms[i])
-                {
-                    DefaultedPrint(log, " >> " + DemangleBacktrace(syms[i]));
-                } else
-                    DefaultedPrint(
-                        log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
-            }
-        }
-        free(syms);
+        Backtrace(log);
     }
 }
 
@@ -216,6 +282,59 @@ CString Stacktracer::GetFuncName_Internal(void* funcPtr)
 }
 
 } // namespace glibc
+#endif
+
+#if defined(COFFEE_UNWIND_STACKTRACE)
+namespace unwind {
+
+void Stacktracer::ExceptionStacktrace(
+    const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
+{
+    try
+    {
+        if(exc_ptr)
+            std::rethrow_exception(exc_ptr);
+    } catch(std::exception& e)
+    {
+        if(libc::io::terminal::interactive())
+            DefaultedPrint(
+                log,
+                str::transform::multiply(
+                    '-', libc::io::terminal::size().first));
+
+        DefaultedPrint(log, "exception encountered:");
+        DefaultedPrint(
+            log,
+            " >> " + Stacktracer::DemangleSymbol(typeid(e).name()) + ": " +
+                e.what());
+
+        DefaultedPrint(log, "dumping stacktrace:");
+
+        unw_context_t context;
+        unw_cursor_t  cursor;
+
+        unw_getcontext(&context);
+        unw_init_local(&cursor, &context);
+
+        while(unw_step(&cursor) > 0)
+        {
+            unw_word_t offset, pc;
+            unw_get_reg(&cursor, UNW_REG_IP, &pc);
+            if(pc == 0)
+                break;
+
+            CString func_name(255);
+
+            if(unw_get_proc_name(
+                   &cursor, func_name.data(), func_name.size(), &offset) == 0)
+            {
+                DefaultedPrint(log, " >> " + func_name);
+            }
+        }
+    }
+}
+
+} // namespace unwind
 #endif
 
 } // namespace env

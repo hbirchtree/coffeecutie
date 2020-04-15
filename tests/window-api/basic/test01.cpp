@@ -189,20 +189,23 @@ void gc_memorymap()
 
 bool basic_window_test()
 {
-    auto win = Display::CreateRendererUq();
+    using namespace Display::EventHandlers;
 
-    ::EventLoop* eld = GenELoop();
+    auto win = Display::CreateRendererSh();
+
+    ShPtr<::EventLoop> eld = MkSharedMove<::EventLoop>(std::move(*GenELoop()));
 
     eld->flags    = ::EventLoop::TimeLimited;
     eld->time.max = 1;
 
     eld->r().installEventHandler(
-        {EventHandlers::ExitOnQuitSignal<R>, nullptr, &eld->r()});
+        EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(eld->renderer)));
 
     auto visual = GetDefaultVisual<API>();
 
     CString err;
-    int     status = EventApplication::execEventLoop(*eld, visual, err);
+    int     status = 
+        EventApplication::execEventLoop(std::move(eld), visual, err);
 
 #if defined(COFFEE_GEKKO)
     printf("Yeeeeh m8\n");

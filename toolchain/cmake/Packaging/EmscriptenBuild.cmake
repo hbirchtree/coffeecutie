@@ -32,6 +32,14 @@ macro ( EMSCRIPTEN_PACKAGE )
         LINK_FLAGS "${${EM_TARGET}_RSC_FLAGS}"
         )
 
+    if("${CMAKE_BUILD_TYPE}" MATCHES ".*Deb.*")
+        add_custom_command ( TARGET ${EM_TARGET}
+            COMMAND ${COFFEE_DESKTOP_DIRECTORY}/emscripten/fix-source-map.py
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EM_TARGET}.bundle/${EM_TARGET}.wasm.map
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            )
+    endif()
+
     install(
         DIRECTORY
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EM_TARGET}.bundle

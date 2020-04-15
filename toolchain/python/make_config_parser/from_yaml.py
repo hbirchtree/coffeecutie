@@ -1,13 +1,13 @@
 import python.make_config_parser.variable_templates as var_templates
 import python.make_config_parser.name_generator as ng
 from python.make_config_parser.name_generator import conditional_append
-from python.make_config_parser.yaml_config import load
+from python.make_config_parser.yaml_config import load, Loader
 
 from copy import deepcopy
 
 def read_yaml(source_file):
     with open(source_file) as f:
-        return load(f.read())
+        return load(f.read(), Loader=Loader)
 
 def create_target_listing(source_file):
     data = read_yaml(source_file)

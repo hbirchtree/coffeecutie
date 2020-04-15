@@ -92,7 +92,7 @@ struct GLEAM_API : GraphicsAPI
 
     using Q_OCC = OccludeQuery;
 
-    using DataStore = GLEAM_DataStore*;
+    using DataStore = UqPtr<GLEAM_DataStore>;
 
     using PipelineState = Map<ShaderStage, GLEAM_ShaderUniformState*>;
 
@@ -100,8 +100,8 @@ struct GLEAM_API : GraphicsAPI
 
     struct CommandBuffer
     {
-        V_DESC& vertices;
-        PSTATE& state;
+        WkPtr<V_DESC> vertices;
+        PSTATE*       state;
 
         struct Command
         {
@@ -159,19 +159,24 @@ struct GLEAM_API : GraphicsAPI
 
     struct RenderPass
     {
-        PIP*  pipeline;
-        FB_T* framebuffer;
+        WkPtr<PIP>  pipeline;
+        WkPtr<FB_T> framebuffer;
 
-        BLNDSTATE* blend;
-        RASTSTATE* raster;
-        DEPTSTATE* depth;
+        BLNDSTATE blend;
+        RASTSTATE raster;
+        DEPTSTATE depth;
 
         struct DrawCall
         {
-            V_DESC* vertices;
-            PSTATE* state;
-            D_CALL  d_call;
-            D_DATA  d_data;
+            DrawCall(WkPtr<V_DESC> v, PSTATE* s, D_CALL call, D_DATA data) :
+                vertices(v), state(s), d_call(call), d_data(data)
+            {
+            }
+
+            WkPtr<V_DESC> vertices;
+            PSTATE*       state;
+            D_CALL        d_call;
+            D_DATA        d_data;
         };
 
         Vector<DrawCall> draws;
@@ -258,7 +263,8 @@ struct GLEAM_API : GraphicsAPI
      * pass by the user code \param buffer An output structure which is ready to
      * be drawn in an optimized fashion.
      */
-    static void OptimizeRenderPass(RenderPass& rpass, OPT_DRAW& buffer);
+    static void OptimizeRenderPass(
+        RenderPass& rpass, OPT_DRAW& buffer, u32 baseinstance = 0);
 
     /*!
      * \brief Providing data output by OptimizeRenderPass(), use this function
@@ -332,7 +338,7 @@ struct GLEAM_API : GraphicsAPI
         DrawConditional(pipeline, ustate, vertices, d, i, c, ec);
     }
 
-    static FB_T& DefaultFramebuffer();
+    static ShPtr<FB_T> DefaultFramebuffer();
 
     using APIClass = RHI::GLEAM::APIClass;
     static APILevel Level();

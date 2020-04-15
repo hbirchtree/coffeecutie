@@ -15,6 +15,15 @@
 #include <platforms/sysinfo.h>
 #include <url/url.h>
 
+#if defined(COFFEE_ANDROID)
+#include <coffee/android/android_main.h>
+#endif
+
+#if defined(COFFEE_WINDOWS)
+#include <peripherals/platform/windows.h>
+#include <VersionHelpers.h>
+#endif
+
 #include <coffee/core/CDebug>
 
 #ifndef COFFEE_LOWFAT
@@ -97,8 +106,7 @@ STATICINLINE void PutEvents(
 
         switch(p.flags.type)
         {
-        case Profiling::DataPoint::Profile:
-        {
+        case Profiling::DataPoint::Profile: {
             //            if(feval(p.at & Profiling::DataPoint::Hot))
             //                o.AddMember("ph", "P", alloc);
             //            else
@@ -107,18 +115,15 @@ STATICINLINE void PutEvents(
             o.AddMember("s", "t", alloc);
             break;
         }
-        case Profiling::DataPoint::Push:
-        {
+        case Profiling::DataPoint::Push: {
             o.AddMember("ph", "B", alloc);
             break;
         }
-        case Profiling::DataPoint::Pop:
-        {
+        case Profiling::DataPoint::Pop: {
             o.AddMember("ph", "E", alloc);
             break;
         }
-        case DataPoint::Complete:
-        {
+        case DataPoint::Complete: {
             o.AddMember("ph", "X", alloc);
             break;
         }
@@ -154,18 +159,77 @@ STATICINLINE void PutExtraData(
 STATICINLINE void PutRuntimeInfo(
     JSON::Value& target, JSON::Document::AllocatorType& alloc)
 {
-    auto const& buildi = State::GetBuildInfo();
-
     JSON::Object build;
 
-    build.AddMember("version", FromString(buildi.build_version, alloc), alloc);
-    build.AddMember("compiler", FromString(buildi.compiler, alloc), alloc);
     build.AddMember(
-        "architecture", FromString(buildi.architecture, alloc), alloc);
+        "version", FromString(compile_info::engine_version, alloc), alloc);
     build.AddMember(
-                "buildMode",
-                FromString(PlatformData::IsDebug() ? "DEBUG" : "RELEASE", alloc),
-                alloc);
+        "compiler", FromString(compile_info::compiler::name, alloc), alloc);
+    build.AddMember(
+        "compilerVersion",
+        FromString(
+            cast_pod(compile_info::compiler::version.major) + "." +
+                cast_pod(compile_info::compiler::version.minor) + "." +
+                cast_pod(compile_info::compiler::version.rev),
+            alloc),
+        alloc);
+    build.AddMember(
+        "architecture", FromString(compile_info::architecture, alloc), alloc);
+    build.AddMember("target", FromString(compile_info::target, alloc), alloc);
+    build.AddMember(
+        "buildMode",
+        FromString(compile_info::debug_mode ? "DEBUG" : "RELEASE", alloc),
+        alloc);
+
+    if constexpr(compile_info::platform::is_android)
+    {
+        build.AddMember(
+            "androidTarget",
+            FromString(cast_pod(compile_info::android::api), alloc),
+            alloc);
+
+#if defined(COFFEE_ANDROID)
+        AndroidForeignCommand cmd;
+        cmd.type = Android_QueryAPI;
+        CoffeeForeignSignalHandleNA(
+            CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+        build.AddMember(
+            "androidSdkTarget",
+            FromString(cast_pod(cmd.data.scalarI64), alloc),
+            alloc);
+#endif
+    }
+
+    if constexpr(compile_info::platform::is_windows)
+    {
+        build.AddMember(
+            "windowsTarget",
+            FromString(
+                stl_types::str::convert::hexify(compile_info::windows::target), alloc),
+            alloc);
+        build.AddMember(
+            "windowsWdk",
+            FromString(
+                stl_types::str::convert::hexify(compile_info::windows::wdk),
+                alloc),
+            alloc);
+#if defined(COFFEE_WINDOWS)
+        build.AddMember("windowsServer", IsWindowsServer() ? true : false, alloc);
+#endif
+    }
+    
+    if constexpr(compile_info::platform::is_macos)
+        build.AddMember(
+            "macTarget",
+            FromString(cast_pod(compile_info::apple::macos::target), alloc),
+            alloc);
+
+    if constexpr(compile_info::platform::is_ios)
+        build.AddMember(
+            "iosTarget",
+            FromString(cast_pod(compile_info::apple::ios::target), alloc),
+            alloc);
 
     target.AddMember("build", build, alloc);
 
@@ -174,6 +238,25 @@ STATICINLINE void PutRuntimeInfo(
     runtime.AddMember(
         "system",
         FromString(PlatformData::SystemDisplayString(), alloc),
+        alloc);
+    runtime.AddMember(
+        "distro",
+        FromString(platform::info::device::system::runtime_distro(), alloc),
+        alloc);
+    runtime.AddMember(
+        "distroVersion", FromString(SysInfo::GetSystemVersion(), alloc), alloc);
+    runtime.AddMember(
+        "architecture",
+        FromString(platform::info::device::system::runtime_arch(), alloc),
+        alloc);
+    runtime.AddMember(
+        "kernel",
+        FromString(platform::info::device::system::runtime_kernel(), alloc),
+        alloc);
+    runtime.AddMember(
+        "kernelVersion",
+        FromString(
+            platform::info::device::system::runtime_kernel_version(), alloc),
         alloc);
 
     auto cwd = Env::CurrentDir();
@@ -197,25 +280,40 @@ STATICINLINE void PutRuntimeInfo(
     device.AddMember("dpi", PlatformData::DeviceDPI(), alloc);
     device.AddMember("type", PlatformData::DeviceVariant(), alloc);
     device.AddMember("platform", PlatformData::PlatformVariant(), alloc);
+
+    auto motherboard = SysInfo::Motherboard();
+
     device.AddMember(
-        "version",
-        FromString(Strings::to_string(SysInfo::GetSystemVersion()), alloc),
+        "motherboardVersion",
+        FromString(Strings::to_string(motherboard.firmware), alloc),
         alloc);
+
     device.AddMember(
         "motherboard",
-        FromString(Strings::to_string(SysInfo::Motherboard()), alloc),
+        FromString(
+            Strings::to_string(platform::info::HardwareDevice(
+                motherboard.manufacturer, motherboard.model, {})),
+            alloc),
         alloc);
+
     device.AddMember(
         "chassis",
         FromString(Strings::to_string(SysInfo::Chassis()), alloc),
         alloc);
 
-#if defined(COFFEE_INTERNAL_BUILD)
+    if constexpr(compile_info::internal_build)
+        device.AddMember(
+            "hostname",
+            FromString(Strings::to_string(SysInfo::HostName()), alloc),
+            alloc);
+
+    auto deviceName = SysInfo::DeviceName();
     device.AddMember(
-        "hostname",
-        FromString(Strings::to_string(SysInfo::HostName()), alloc),
+        "machineManufacturer",
+        FromString(deviceName.manufacturer, alloc),
         alloc);
-#endif
+    device.AddMember(
+        "machineModel", FromString(deviceName.model, alloc), alloc);
 
     target.AddMember("device", device, alloc);
 
@@ -240,7 +338,7 @@ STATICINLINE void PutRuntimeInfo(
         processor.AddMember("frequencies", freq_j, alloc);
     }
 
-    processor.AddMember("cores", SysInfo::CoreCount(), alloc);
+    processor.AddMember<u64>("cores", SysInfo::CoreCount(), alloc);
     processor.AddMember("threads", SysInfo::ThreadCount(), alloc);
 
     processor.AddMember("hyperthreading", SysInfo::HasHyperThreading(), alloc);
@@ -283,12 +381,12 @@ void ExportChromeTracerData(CString& target)
 
     JSON::Object application;
 
-    auto appd = ApplicationData();
+    auto appd = GetCurrentApp();
     application.AddMember(
         "name", FromString(appd.application_name, alloc), alloc);
     application.AddMember(
         "organization", FromString(appd.organization_name, alloc), alloc);
-    application.AddMember("version", ApplicationData().version_code, alloc);
+    application.AddMember<u64>("version", appd.version_code, alloc);
 
     doc.AddMember("application", application, alloc);
     PutRuntimeInfo(doc, alloc);
@@ -300,9 +398,8 @@ void ExportChromeTracerData(CString& target)
 
 void ExportStringToFile(const CString& data, const Url& outfile)
 {
-#ifdef COFFEE_LOWFAT
-    return;
-#endif
+    if constexpr(compile_info::lowfat_mode)
+        return;
 
     cVerbose(6, "Creating filename");
     Resource out(outfile);
@@ -319,9 +416,8 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 
 void ExitRoutine()
 {
-#if defined(COFFEE_LOWFAT) || MODE_RELEASE
-    return;
-#endif
+    if constexpr(!compile_info::debug_mode)
+        return;
 
     auto profilerStore = State::GetProfilerStore();
 
@@ -337,6 +433,11 @@ void ExitRoutine()
         {
             auto log_name = (Path{Env::ExecutableName()}.fileBasename());
 
+            if constexpr(
+                compile_info::platform::is_android ||
+                compile_info::platform::is_ios)
+                log_name = Path("chrome");
+
             auto log_url = url::constructors::MkUrl("", RSCA::TemporaryFile);
 
             auto log_url2 =
@@ -350,7 +451,7 @@ void ExitRoutine()
             cVerbose(
                 6,
                 "Saved profiler data to: {0}",
-                file::FileFun::CanonicalName(log_url, ec));
+                file::FileFun::CanonicalName(log_url2, ec));
         }
     }
 }

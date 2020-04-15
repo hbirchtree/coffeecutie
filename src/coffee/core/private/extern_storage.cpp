@@ -1,8 +1,8 @@
 #include <coffee/core/internal_state.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/base/printing/log_interface.h>
-#include <coffee/core/base/printing/outputprinter.h>
+#include <coffee/core/printing/log_interface.h>
+#include <coffee/core/printing/outputprinter.h>
 #include <coffee/foreign/foreign.h>
 #include <platforms/argument_parse.h>
 #include <platforms/environment.h>
@@ -23,9 +23,9 @@ struct InternalState
 
     InternalState() :
         current_app(MkShared<platform::info::AppData>()),
-    #if !defined(COFFEE_DISABLE_PROFILER)
+#if !defined(COFFEE_DISABLE_PROFILER)
         profiler_store(MkShared<profiling::PContext>()),
-    #endif
+#endif
         bits()
     {
     }
@@ -51,7 +51,7 @@ struct InternalState
     unw_context_t* unwind_context = nullptr;
 #endif
 
-#if !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
     ShPtr<profiling::PContext> profiler_store;
 #endif
 
@@ -143,7 +143,10 @@ P<InternalState>& GetInternalState()
 
 STATICINLINE void RegisterProfilerThreadState()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
+#if PERIPHERAL_PROFILER_ENABLED
     if(ISTATE)
     {
         auto tid   = ThreadId().hash();
@@ -159,6 +162,9 @@ STATICINLINE void RegisterProfilerThreadState()
 
 void SetInternalThreadState(P<InternalThreadState> state)
 {
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
     TSTATE = state;
 
     if(state)
@@ -191,50 +197,51 @@ ShPtr<info::AppData> GetAppData()
 
 bool ProfilerEnabled()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
-    return true;
-#else
-    return false;
-#endif
+    return compile_info::profiler::enabled;
 }
 
 ShPtr<profiling::PContext> GetProfilerStore()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
     if(!ISTATE)
         return {};
 
     return ISTATE->profiler_store;
 #else
-    Throw(implementation_error("profiler disabled"));
+    return {};
 #endif
 }
 
 ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!compile_info::profiler::enabled)
+        Throw(implementation_error("profiler disabled"));
+
+#if PERIPHERAL_PROFILER_ENABLED
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
     return TSTATE->profiler_data;
 #else
-    Throw(implementation_error("profiler disabled"));
+    return {};
 #endif
 }
 
 Mutex& GetPrinterLock()
 {
-#ifndef COFFEE_LOWFAT
+    if constexpr(compile_info::lowfat_mode)
+        Throw(releasemode_error("not available in this mode"));
+
     C_PTR_CHECK(ISTATE);
     return ISTATE->printer_lock;
-#else
-    Throw(releasemode_error("not available in this mode"));
-#endif
 }
 
 ThreadId& GetCurrentThreadId()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!compile_info::profiler::enabled)
+        Throw(releasemode_error("thread ID is not available"));
+
+#if PERIPHERAL_PROFILER_ENABLED
     if(!TSTATE)
         SetInternalThreadState(CreateNewThreadState());
 
@@ -242,8 +249,6 @@ ThreadId& GetCurrentThreadId()
     C_PTR_CHECK(TSTATE);
 
     return TSTATE->current_thread_id;
-#else
-    Throw(releasemode_error("thread ID is not available"));
 #endif
 }
 
@@ -323,15 +328,6 @@ Coffee::DebugFun::LogInterface GetLogInterface()
 }
 
 } // namespace DebugFun
-
-namespace State {
-
-GlobalState::~GlobalState()
-{
-}
-
-} // namespace State
-
 } // namespace Coffee
 
 namespace platform {
@@ -375,6 +371,19 @@ CString const& ResourcePrefix(bool fallback)
 } // namespace platform
 
 /*
+ * Pointer to main() function to be used
+ * This storage is for non-standard platforms
+ */
+#if defined(COFFEE_CUSTOM_MAIN)
+CoffeeMainWithArgs coffee_main_function_ptr = nullptr;
+#endif
+
+#if defined(COFFEE_APPLE_MOBILE)
+void* uikit_appdelegate = nullptr;
+void* uikit_window      = nullptr;
+#endif
+
+/*
  * These declarations are library-local storage for event handling
  *
  * They require compatibility with C linkage in order to work with
@@ -390,3 +399,33 @@ void (*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
 
 void (*CoffeeForeignSignalHandle)(int);
 void (*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
+
+bool CoffeeEventHandleCall(int event)
+{
+    if(CoffeeEventHandle && coffee_event_handling_data)
+    {
+        CoffeeEventHandle(coffee_event_handling_data, event);
+        return true;
+    } else
+    {
+        fprintf(
+            stderr,
+            "Event handler function called without valid configuration!\n");
+        return false;
+    }
+}
+bool CoffeeEventHandleNACall(int event, void* ptr1, void* ptr2, void* ptr3)
+{
+    if(CoffeeEventHandleNA && coffee_event_handling_data)
+    {
+        CoffeeEventHandleNA(
+            coffee_event_handling_data, event, ptr1, ptr2, ptr3);
+        return true;
+    } else
+    {
+        fprintf(
+            stderr,
+            "Event handler function called without valid configuration!\n");
+        return false;
+    }
+}

@@ -42,11 +42,23 @@ custom:
 		$(DOCKER_CONTAINER) \
 			$(CUSTOM_COMMAND)
 
-multi: multi-config
+cmake_version:
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			$(CMAKE) --version
+
+multi: multi-config cmake_version
 	$(DOCKER) run --rm \
 		$(DOCKER_EXTRA_OPTIONS) \
 		$(DOCKER_CONTAINER) \
 			$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET)
+
+multi.emmake: multi-config cmake_version
+	$(DOCKER) run --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			emmake make $(CMAKE_TARGET)
 
 multi.twostage: multi-config
 	$(DOCKER) run --rm \
@@ -71,3 +83,8 @@ multi.make8: multi-config
 		$(DOCKER_CONTAINER) \
 			sh -c "$(CMAKE) --build $(CMAKE_BUILD_DIR) --target $(CMAKE_TARGET) -- -j8"
 
+shell:
+	$(DOCKER) run -ti --rm \
+		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_CONTAINER) \
+			bash

@@ -55,6 +55,11 @@ struct size_2d : base_size
         return w * h;
     }
 
+    scalar aspect() const
+    {
+        return scalar(w) / scalar(h);
+    }
+
     template<typename U>
     inline size_2d<U> convert() const
     {
@@ -171,6 +176,5 @@ struct size_3d : base_size
     }
 };
 
-
-}
-}
+} // namespace geometry
+} // namespace typing

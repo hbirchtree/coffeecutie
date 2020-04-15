@@ -92,7 +92,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
     GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t, b), m_size(t.size()),
     m_depth_stencil(PixFmt::Depth24Stencil8, 1), m_color(PixFmt::RGBA8, 1)
 {
-    auto& m_quad_drawer = m_store->debug_drawer;
+    auto& m_quad_drawer = *m_store->debug_drawer;
 
     if(!GL_DEBUG_MODE)
     {
@@ -162,7 +162,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
 GLEAM_DBufQuery::~GLEAM_DBufQuery()
 {
 #if MODE_DEBUG
-    auto& m_quad_drawer = m_store->debug_drawer;
+    auto& m_quad_drawer = *m_store->debug_drawer;
 
     if(GL_DEBUG_MODE && m_enabled)
     {
@@ -195,7 +195,7 @@ void GLEAM_DBufQuery::begin()
 void GLEAM_DBufQuery::end()
 {
 #if MODE_DEBUG
-    auto& m_quad_drawer = m_store->debug_drawer;
+    auto& m_quad_drawer = *m_store->debug_drawer;
 
     if(GL_DEBUG_MODE && m_enabled)
     {

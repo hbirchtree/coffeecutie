@@ -180,27 +180,7 @@ struct CfMessageDisplay
 #endif
 
 #ifdef __cplusplus
-namespace Coffee{
-namespace Display{
-class EventApplication;
-}
+#include <coffee/core/types/application_main.h>
 
-namespace CfAdaptors{
-
-using namespace Display;
-
-struct CfAdaptor
-{
-    CfGeneralEventType type;
-    void(*func)(EventApplication*, int event, void*, void*, void*);
-};
-
-extern void CfResizeHandler(EventApplication* app, int event,
-                            void* p1, void* p2, void* p3);
-
-extern void CfTouchHandler(EventApplication* app, int event,
-                           void* p1, void* p2, void* p3);
-
-}
-}
+extern CoffeeMainWithArgs coffee_main_function_ptr;
 #endif

@@ -8,6 +8,7 @@ from python.ci.common import parse_yaml, render_yaml, assertm, load_targets, fla
 from python.ci.appveyor import appveyor_gen_config
 from python.ci.jenkins import jenkins_gen_config
 from python.ci.travis import travis_gen_config
+from python.ci.pipelines import pipelines_gen_config
 
 from python.common import try_get_key, build_yml_filespec
 
@@ -100,7 +101,8 @@ travis_targets = []
 CI_SERVICES = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.travis.yml'),
                ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
                ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, '.jenkins.groovy',
-                             data_format=DATAFORMAT_TEXT)]
+                             data_format=DATAFORMAT_TEXT),
+               ConfigCreator(pipelines_gen_config, 'Azure Pipelines', jenkins_targets, 'azure-pipelines.yml')]
 
 
 def main():

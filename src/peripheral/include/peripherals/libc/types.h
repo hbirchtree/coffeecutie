@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -119,10 +120,10 @@ constexpr MemUnit Unit_MB = 1024 * 1024;
 constexpr MemUnit Unit_GB = 1024 * 1024 * 1024;
 constexpr MemUnit Unit_TB = 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 
-#define GEN_SIZE_LITERAL(unit)                                     \
-    inline MemUnit operator"" _##unit##B(unsigned long long int v) \
-    {                                                              \
-        return v * Unit_##unit##B;                                 \
+#define GEN_SIZE_LITERAL(unit)                                               \
+    constexpr inline MemUnit operator"" _##unit##B(unsigned long long int v) \
+    {                                                                        \
+        return v * Unit_##unit##B;                                           \
     }
 
 GEN_SIZE_LITERAL(k)
@@ -130,19 +131,19 @@ GEN_SIZE_LITERAL(M)
 GEN_SIZE_LITERAL(G)
 GEN_SIZE_LITERAL(T)
 
-#define GEN_TIME_LITERAL(unit, div)                                  \
-    inline bigscalar operator"" _##unit##s(unsigned long long int v) \
-    {                                                                \
-        return bigscalar(v) / div;                                   \
+#define GEN_TIME_LITERAL(unit, div)                                            \
+    constexpr inline bigscalar operator"" _##unit##s(unsigned long long int v) \
+    {                                                                          \
+        return bigscalar(v) / div;                                             \
     }
 
 GEN_TIME_LITERAL(m, 1000)
 GEN_TIME_LITERAL(u, 1000000)
 
-PACKEDSTRUCT uint24
+PACKEDSTRUCT(uint24
 {
     u32 d : 24;
-};
+});
 
 using u24 = uint24;
 
@@ -150,4 +151,10 @@ FORCEDINLINE scalar convert_i16_f(i16 v)
 {
     return static_cast<scalar>(v) / Int16_Max;
 }
+
+template<typename T>
+FORCEDINLINE T convert_f32(f32 v)
+{
+    return static_cast<T>(v * std::numeric_limits<T>::max());
 }
+} // namespace libc_types

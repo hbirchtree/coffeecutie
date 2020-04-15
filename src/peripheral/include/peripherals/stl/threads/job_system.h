@@ -1,10 +1,16 @@
 #pragma once
 
-#include "async_tasks.h"
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/types.h>
+
+#include "async_tasks.h"
+
+#if __cplusplus >= 201703L && C_HAS_INCLUDE(<execution>) && 0
+#include <execution>
+#define JOB_SYSTEM_ENABLE_17_PAR 0
+#endif
 
 #if defined(THREAD_PROFILING)
 using JobProfiler = Coffee::Profiler;
@@ -88,7 +94,6 @@ Function<void(szptr)> get_worker(
 #if defined(THREAD_PROFILING)
             JobProfiler::PopContext();
 #endif
-
         }
 #if defined(THREAD_PROFILING)
         JobProfiler::PopContext();
@@ -139,7 +144,7 @@ struct parametric_parallel
     using container_type = typename remove_cvref<ContainerT>::type;
     using value_type     = typename container_type::value_type;
     using iterator       = typename container_type::iterator;
-    using storage_type   = typename declmemtype(iterator::operator*);
+    using storage_type   = typename declmemtype(&iterator::operator*);
 
     static constexpr size_t batch_size = BatchSize;
 };
@@ -166,7 +171,13 @@ FORCEDINLINE void ForEach(
     Function<void(typename Parameters::storage_type)>&& pred,
     szptr                                               num_workers = 0)
 {
-#if __cplusplus < 201703L
+#if JOB_SYSTEM_ENABLE_17_PAR
+    std::for_each(
+        std::execution::par_unseq,
+        std::begin(container),
+        std::end(container),
+        pred);
+#else
 #if defined(COFFEE_NO_THREADLIB)
     auto thread_count = 1UL;
 #else
@@ -193,8 +204,6 @@ FORCEDINLINE void ForEach(
 
     for(auto& task : tasks)
         task.get();
-#else
-    static_assert(false, "Missing C++17 implementation");
 #endif
 }
 
@@ -210,7 +219,9 @@ FORCEDINLINE void Consume(
     ForEach<typename Parameters::container_type, Parameters>(
         container_store, std::move(pred), num_workers);
 }
-}
+} // namespace Parallel
 
 } // namespace threads
 } // namespace stl_types
+
+#undef JOB_SYSTEM_ENABLE_17_PAR

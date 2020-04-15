@@ -2,8 +2,12 @@
 
 #include <coffee/core/base.h>
 #include <peripherals/stl/string_casting.h>
-#include <peripherals/stl/types.h>
 #include <peripherals/stl/type_safety.h>
+#include <peripherals/stl/types.h>
+
+#if C_HAS_INCLUDE(<string_view>)
+#include <string_view>
+#endif
 
 namespace Coffee {
 namespace Strings {
@@ -78,6 +82,16 @@ inline CString to_string(StringType<CharT> const& v)
 {
     return CString(v.begin(), v.end());
 }
+
+#if C_HAS_INCLUDE(<string_view>)
+template<typename CharT>
+inline CString to_string(std::basic_string_view<CharT> const& v)
+{
+    if(v.empty())
+        return {};
+    return CString(v.data(), v.length());
+}
+#endif
 
 template<
     typename T,

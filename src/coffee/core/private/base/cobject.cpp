@@ -1,8 +1,6 @@
-#include <coffee/core/CObject>
+#include <coffee/core/object/cobject.h>
 
 #include <algorithm>
-
-#include <coffee/core/CDebug>
 
 namespace Coffee {
 

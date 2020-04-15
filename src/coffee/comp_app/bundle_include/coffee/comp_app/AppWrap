@@ -1,0 +1,3 @@
+#pragma once
+
+#include <coffee/comp_app/app_wrap.h>

@@ -31,26 +31,43 @@ using LFileFun = file::Linux::FileFun;
  *
  */
 
-static CString get_lsb_release()
+static void lsb_find_val(cstring& value, CString::size_type& len)
+{
+    if(!value)
+        return;
+
+    value = libc::str::find(value, '=');
+
+    if(!value)
+        return;
+
+    value++;
+
+    auto terminator = libc::str::find(value, '\n');
+    len = terminator ? C_FCAST<CString::size_type>(terminator - value) : 0;
+}
+
+lsb_data get_lsb_release()
 {
 #ifndef COFFEE_LOWFAT
     CString version = LFileFun::sys_read("/etc/lsb-release");
-    cstring desc    = libc::str::find(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = libc::str::find(desc, '=') + 1) &&
-       (desc = libc::str::find(desc, '"') + 1))
-    {
-        cstring end = libc::str::find(desc, '"');
-        if(end || (end = libc::str::find(desc, '\0')))
-        {
-            CString desc_std(desc, C_FCAST<szptr>(end - desc));
-            return desc_std;
-        }
-    }
+
+    cstring distro  = libc::str::find(version.c_str(), "DISTRIB_ID");
+    cstring release = libc::str::find(version.c_str(), "DISTRIB_RELEASE");
+
+    CString::size_type distro_len = 0, release_len = 0;
+
+    lsb_find_val(distro, distro_len);
+    lsb_find_val(release, release_len);
+
+    if(distro && release)
+        return {CString(distro, distro_len), CString(release, release_len)};
 #endif
+
     return {};
 }
 
-static CString get_kern_ver()
+CString get_kern_ver()
 {
 #ifndef COFFEE_LOWFAT
     utsname d;
@@ -102,11 +119,6 @@ info::DeviceType get_device_variant()
 {
     using namespace platform::info;
 
-#if defined(COFFEE_MAEMO)
-    return DevicePhone;
-#elif defined(COFFEE_RASPBERRYPI)
-    return DeviceIOT;
-#endif
     CString input = LFileFun::sys_read("/sys/class/dmi/id/chassis_type");
 
     i32 chassis_type = cast_string<i32>(input);
@@ -149,9 +161,11 @@ info::DeviceType get_device_variant()
 
 CString SysInfo::GetSystemVersion()
 {
-    CString tmp = get_lsb_release();
-    if(tmp.size() <= 0)
+    CString tmp = get_lsb_release().release;
+
+    if(tmp.empty())
         tmp = get_kern_ver();
+
     return tmp;
 }
 
@@ -333,23 +347,31 @@ u64 SysInfo::CachedMemory()
 
 info::HardwareDevice SysInfo::Processor()
 {
-#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
+#if !defined(COFFEE_LOWFAT) && \
+    (defined(COFFEE_LINUX) || defined(COFFEE_ANDROID))
     const cstring mk_query = "vendor_id";
     const cstring md_query = "model name";
     const cstring fw_query = "microcode";
 
-    const cstring mk_query_linaro = "Hardware";
+    const cstring md_query_linaro = "Hardware";
     const cstring fw_query_linaro = "Revision";
+
+    const cstring mk_query_arm = "CPU implementer";
+    const cstring fw_query_arm = "CPU revision";
 
     CPUInfoString();
 
     CString mk_str = get_linux_property(cached_cpuinfo_string, mk_query);
+    if(!mk_str.size())
+        mk_str = get_linux_property(cached_cpuinfo_string, mk_query_arm);
     CString md_str = get_linux_property(cached_cpuinfo_string, md_query);
     if(!md_str.size())
-        md_str = get_linux_property(cached_cpuinfo_string, mk_query_linaro);
+        md_str = get_linux_property(cached_cpuinfo_string, md_query_linaro);
     CString fw_str = get_linux_property(cached_cpuinfo_string, fw_query);
     if(!fw_str.size())
         fw_str = get_linux_property(cached_cpuinfo_string, fw_query_linaro);
+    if(!fw_str.size())
+        fw_str = get_linux_property(cached_cpuinfo_string, fw_query_arm);
 
     str::trim::both(mk_str);
     str::trim::both(md_str);

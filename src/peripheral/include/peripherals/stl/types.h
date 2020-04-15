@@ -28,7 +28,7 @@
 #include <system_error>
 #include <type_traits>
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
 #include <optional>
 #endif
 
@@ -54,7 +54,7 @@ struct Mutex
 
   private:
 #if defined(COFFEE_GEKKO)
-    long unsigned int m_mutexHandle;
+    unsigned int m_mutexHandle;
 #endif
 };
 
@@ -68,7 +68,7 @@ struct RecMutex
 
   private:
 #if defined(COFFEE_GEKKO)
-    long unsigned int m_mutexHandle;
+    unsigned int m_mutexHandle;
 #endif
 };
 
@@ -99,23 +99,38 @@ using RecLock = BaseLock<RecMutex>;
 
 struct UqLock
 {
-    // TODO: implement std::defer_lock and friends
-    UqLock(Mutex& m) : m_mutex(m)
+    UqLock()
     {
-        m_mutex.lock();
+    }
+    UqLock(Mutex& m) : m_mutex(&m), m_hasLock(true)
+    {
+        m_mutex->try_lock();
+    }
+    UqLock(Mutex& m, std::try_to_lock_t) : m_mutex(&m)
+    {
+        m_hasLock = m_mutex->try_lock() == 0;
+    }
+    UqLock(Mutex& m, std::defer_lock_t) : m_mutex(&m), m_hasLock(false)
+    {
     }
     ~UqLock()
     {
-        m_mutex.unlock();
+        m_mutex->unlock();
+    }
+
+    bool owns_lock() const
+    {
+        return m_hasLock;
     }
 
     Mutex* mutex()
     {
-        return &m_mutex;
+        return m_mutex;
     }
 
   private:
-    Mutex& m_mutex;
+    Mutex* m_mutex;
+    bool   m_hasLock;
 };
 
 struct CondVar
@@ -148,7 +163,7 @@ struct CondVar
     Mutex                     m_signalLock;
     std::atomic<unsigned int> m_waiters;
     std::atomic<unsigned int> m_signals;
-    long unsigned int         m_syncQueue;
+    unsigned int              m_syncQueue;
 #endif
 };
 
@@ -158,10 +173,10 @@ using Mutex    = std::mutex;
 using Lock     = std::lock_guard<Mutex>;
 using RecLock  = std::lock_guard<RecMutex>;
 
-using UqLock    = std::unique_lock<Mutex>;
-using UqRecLock = std::unique_lock<RecMutex>;
-using CondVar   = std::condition_variable;
-using cv_status = std::cv_status;
+using UqLock              = std::unique_lock<Mutex>;
+using UqRecLock           = std::unique_lock<RecMutex>;
+using CondVar             = std::condition_variable;
+using cv_status           = std::cv_status;
 #endif
 
 using ErrCode = std::error_code;
@@ -264,10 +279,15 @@ template<typename T, typename... Args>
  */
 inline UqPtr<T> MkUq(Args... a)
 {
+#if __cplusplus >= 201703L
+    return std::make_unique<T>(std::forward<Args>(a)...);
+#else
     return UqPtr<T>(new T(std::forward<Args>(a)...));
+#endif
 }
+
 template<typename T>
-inline UqPtr<T> MkUqWrap(T* ptr)
+inline UqPtr<T> MkUqFrom(T* ptr)
 {
     return UqPtr<T>(ptr);
 }
@@ -280,7 +300,41 @@ inline UqPtr<T, Deleter> MkUqDST(Args... a)
 template<typename T, typename... Args>
 inline ShPtr<T> MkShared(Args... a)
 {
-    return ShPtr<T>(new T(std::forward<Args>(a)...));
+    return std::make_shared<T>(std::forward<Args>(a)...);
+}
+
+template<typename T>
+inline ShPtr<T> MkSharedMove(T&& v)
+{
+    return ShPtr<T>(new T(std::move(v)));
+}
+
+namespace detail_array {
+
+template<typename ArrayT, typename T>
+constexpr inline void insert_packed(ArrayT& out, size_t i, T item)
+{
+    out.at(i) = item;
+}
+
+template<typename ArrayT, typename T, typename... Items>
+constexpr inline void insert_packed(
+    ArrayT& out, size_t i, T item, Items... items)
+{
+    insert_packed<ArrayT, T>(out, i, item);
+    insert_packed<ArrayT, Items...>(out, ++i, items...);
+}
+
+} // namespace detail_array
+
+template<typename... Items, size_t Count = sizeof...(Items)>
+constexpr inline auto MkArray(Items... items)
+{
+    using out_type =
+        std::remove_reference_t<decltype(std::get<0>(std::tuple<Items...>()))>;
+    Array<out_type, Count> out = {items...};
+
+    return out;
 }
 
 /*
@@ -308,7 +362,8 @@ struct range
         {
         }
 
-        iterator(T start, T end) : m_idx(start), m_end(end)
+        iterator(T start, T end, T stride) :
+            m_idx(start), m_end(end), m_stride(stride)
         {
             bool correct     = (!range_param::reversed) && start > end;
             bool correct_rev = range_param::reversed && start > end;
@@ -323,9 +378,10 @@ struct range
         iterator& operator++()
         {
             if(range_param::reversed)
-                m_idx--;
-            else
-                m_idx++;
+            {
+                m_idx -= m_stride;
+            } else
+                m_idx += m_stride;
 
             if(m_idx >= m_end)
                 m_idx = npos;
@@ -337,13 +393,7 @@ struct range
         {
             iterator copy = *this;
 
-            if(range_param::reversed)
-                m_idx--;
-            else
-                m_idx++;
-
-            if(m_idx >= m_end)
-                m_idx = npos;
+            ++(*this);
 
             return copy;
         }
@@ -366,17 +416,18 @@ struct range
       private:
         T m_idx;
         T m_end;
+        T m_stride;
     };
 
     using value_type = T;
 
-    range(T len) : m_len(len)
+    range(T len, T stride = 1) : m_len(len), m_stride(stride)
     {
     }
 
     iterator begin()
     {
-        return iterator(0, m_len);
+        return iterator(0, m_len, m_stride);
     }
 
     iterator end()
@@ -386,6 +437,7 @@ struct range
 
   private:
     T m_len;
+    T m_stride;
 };
 
 template<typename T = size_t>
@@ -421,12 +473,12 @@ struct slice
     {
     }
 
-    iterator begin() const
+    iterator begin()
     {
         return m_begin;
     }
 
-    iterator end() const
+    iterator end()
     {
         return m_end;
     }
@@ -436,6 +488,26 @@ struct slice
         return m_end - m_begin;
     }
 };
+
+template<
+    typename ContainerType,
+    typename std::enable_if<!std::is_const<ContainerType>::value>::type* =
+        nullptr>
+static inline auto slice_num(
+    ContainerType& c, typename ContainerType::difference_type num)
+{
+    return slice<ContainerType>(std::begin(c), std::begin(c) + num);
+}
+
+template<
+    typename ContainerType,
+    typename std::enable_if<std::is_const<ContainerType>::value>::type* =
+        nullptr>
+static inline auto slice_num(
+    ContainerType& c, typename ContainerType::difference_type num)
+{
+    return slice<ContainerType>(std::cbegin(c), std::cbegin(c) + num);
+}
 
 struct non_copy
 {
@@ -680,81 +752,167 @@ struct nested_empty_error_code
     using nested_error_type = NestedError;
 };
 
-#if __cplusplus < 201703L
+#if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
+template<typename T>
+using Optional = std::optional<T>;
+#else
 using bad_optional_access = undefined_behavior;
 
 template<typename T>
 struct Optional
 {
+    constexpr
     Optional() : valid(false)
     {
     }
-    Optional(T&& value) : value(value), valid(true)
+    constexpr
+    Optional(T&& value) : m_value(std::move(value)), valid(true)
     {
     }
 
-    T& operator->() const
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return value;
-    }
-
-    T& operator*() const
+    constexpr
+    T& operator->() &
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
 
-        return value;
+        return m_value;
     }
 
+    constexpr
+    T const& operator->() const&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T& operator*() &
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T const& operator*() const&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T&& operator*() &&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return std::move(m_value);
+    }
+
+    constexpr
+    T const&& operator*() const&&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return std::move(m_value);
+    }
+
+    constexpr
     operator bool() const
     {
         return valid;
     }
 
+    constexpr
+    T const& value() const&
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
+    T& value() &
+    {
+        if(!valid)
+            Throw(bad_optional_access("invalid optional"));
+
+        return m_value;
+    }
+
+    constexpr
     Optional& operator=(T&& v)
     {
-        value = std::move(v);
-        valid = true;
+        m_value = std::move(v);
+        valid   = true;
 
         return *this;
     }
 
-    T value;
+    T    m_value;
     bool valid;
 };
-#else
-template<typename T>
-using Optional = std::optional<T>;
 #endif
+
+template<typename T>
+inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
+{
+#if MODE_DEBUG
+    auto ptr_lock = ptr.lock();
+
+    if(!ptr_lock)
+        Throw(undefined_behavior("failed to lock WkPtr"));
+
+    return ptr_lock;
+#else
+    return ptr.lock();
+#endif
+}
 
 } // namespace stl_types
 
 #define C_ERROR_CODE_OUT_OF_BOUNDS() \
     Throw(undefined_behavior("invalid error code"))
 
-#define C_STR_HELPER(x) #x
-#define C_STR(x) C_STR_HELPER(x)
-
 #define C_PTR_CHECK(ptr)                                        \
     if(!ptr)                                                    \
         Throw(undefined_behavior("bad pointer deref: " __FILE__ \
                                  ":" C_STR(__LINE__)));
+#define C_PTR_CHECK_MSG(ptr, msg) \
+    if(!ptr)                      \
+        Throw(undefined_behavior("bad pointer deref: " msg));
+
 #define C_THIS_CHECK                                              \
     if(!this)                                                     \
         Throw(undefined_behavior("bad access to *this: " __FILE__ \
                                  ":" C_STR(__LINE__)));
 
 #if MODE_DEBUG
-#define C_ERROR_CHECK(ec)                              \
-    {                                                  \
-        if(ec)                                         \
-            Throw(implementation_error(ec.message())); \
+#define C_ERROR_CHECK(ec)                                           \
+    {                                                               \
+        if(ec)                                                      \
+            Throw(implementation_error(                             \
+                __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
     }
+
+#define C_ERROR_CHECK_TYPED(ec, etype)                              \
+    {                                                               \
+        if(ec)                                                      \
+            Throw(etype(                             \
+                __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
+    }
+
 #else
 #define C_ERROR_CHECK(ec)
+#define C_ERROR_CHECK_TYPED(ec, etype)
 #endif
 
 #if MODE_DEBUG

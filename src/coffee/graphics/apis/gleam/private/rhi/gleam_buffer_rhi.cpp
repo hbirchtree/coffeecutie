@@ -9,7 +9,7 @@ STATICINLINE void VerifyBuffer(glhnd const& h)
 {
     // TODO: Return error
 
-    if(GL_DEBUG_MODE && !CGL::Debug::IsBuffer(h.hnd))
+    if(!CGL::Debug::IsBuffer(h))
         return;
     //        cWarning("Invalid use of buffer API,"
     //                 " buffer handle is not valid");
@@ -74,8 +74,8 @@ Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
         return {};
     }
 
-#if GL_VERSION_VERIFY(0x330, 0x300) && !defined(COFFEE_WEBGL)
-    if(!GLEAM_FEATURES.gles20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
+    if(!GLEAM_FEATURES.gles20 && !GLEAM_FEATURES.webgl)
     {
         VerifyBuffer(m_handle);
 
@@ -107,13 +107,13 @@ Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
         return {};
     }
 
-    return Bytes::From(out_ptr, size);
+    return Bytes::FromBytes(out_ptr, size);
 }
 
 void GLEAM_VBuffer::unmap()
 {
-#if GL_VERSION_VERIFY(0x330, 0x300) && !defined(COFFEE_WEBGL)
-    if(!GLEAM_FEATURES.gles20)
+#if GL_VERSION_VERIFY(0x330, 0x300)
+    if(!GLEAM_FEATURES.gles20 && !GLEAM_FEATURES.webgl)
     {
         VerifyBuffer(m_handle);
 
@@ -156,6 +156,18 @@ void GLEAM_BindableBuffer::bindrange(
     {
         VerifyBuffer(m_handle);
 
+        if(m_size < (off + size))
+        {
+            ec = APIE::BufferMappingOutOfBounds;
+            return;
+        }
+
+        if(!size)
+        {
+            ec = APIE::NoData;
+            return;
+        }
+
         CGL33::BufBindRange(
             m_type, idx, m_handle, C_FCAST<ptroff>(off), C_FCAST<ptroff>(size));
     } else
@@ -169,6 +181,17 @@ void GLEAM_PixelBuffer::setState(bool pack)
 {
     m_type = (pack) ? buf::pixel_pack::value : buf::pixel_unpack::value;
 }
+
+void GLEAM_IndirectBuffer::bind()
+{
+    CGL33::BufBind(m_type, m_handle);
+}
+
+void GLEAM_IndirectBuffer::unbind()
+{
+    CGL33::BufBind(m_type, glhnd());
+}
+
 } // namespace GLEAM
 } // namespace RHI
 } // namespace Coffee

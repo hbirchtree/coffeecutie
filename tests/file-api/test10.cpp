@@ -1,4 +1,6 @@
+#if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_resource.h>
+#endif
 #include <coffee/core/CFiles>
 #include <coffee/strings/url_types.h>
 
@@ -104,7 +106,7 @@ bool url_get_string()
     return true;
 }
 
-#if defined(FEATURE_ENABLE_CoffeeASIO)
+#if defined(FEATURE_ENABLE_ASIO)
 bool url_parsing_http()
 {
     const Url http_url = "http://coffee.birchtrees.me/some/path/with/Stuff"_web;

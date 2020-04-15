@@ -55,31 +55,17 @@ macro( FLATPAK_PACKAGE
     # TODO: Unify this with the in-app information somehow
     set ( FLATPAK_CONFIG "${TARGET}" )
 
+    add_custom_target ( ${TARGET}.flatpak ALL DEPENDS ${TARGET} )
+
     # Create directory structures
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}.flatpak
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_ASSET_DIR}"
-        )
-
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_BINARY_DIR}"
-        )
-
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_LIBRARY_DIR}"
-        )
-
-    add_custom_command ( TARGET ${TARGET}
-        PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_DEPLOY_DIRECTORY}"
         )
-
-    add_custom_command ( TARGET ${TARGET}
-	PRE_BUILD
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_DEPLOY_DIRECTORY}"
-	)
 
     # Configure metadata file
     configure_file (
@@ -100,7 +86,7 @@ macro( FLATPAK_PACKAGE
 
     # Copy resources into flatpak
     foreach ( RESC ${DATA} )
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.flatpak
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESC}" "${FLATPAK_ASSET_DIR}"
             )
@@ -108,70 +94,66 @@ macro( FLATPAK_PACKAGE
 
     # Copy bundled libraries into flatpak
     foreach ( LIB ${BUNDLE_LIBRARIES} )
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.flatpak
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${FLATPAK_LIBRARY_DIR}"
             )
     endforeach()
 
     foreach ( LIB ${LIBRARIES} )
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.flatpak
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>" "${FLATPAK_LIBRARY_DIR}"
             )
     endforeach()
 
     # Finally, copy binary into flatpak
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}.flatpak
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>" "${FLATPAK_BINARY_DIR}"
         )
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.flatpak
             POST_BUILD
             COMMAND strip "${FLATPAK_BINARY_DIR}/${TARGET}"
             )
     endif()
 
-    add_custom_command ( TARGET ${TARGET}
-	POST_BUILD
-	COMMAND ${FLATPAK_PROGRAM} build-export "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BASE_DIR}"
-	)
+    add_custom_command ( TARGET ${TARGET}.flatpak
+        POST_BUILD
+        COMMAND ${FLATPAK_PROGRAM} build-export "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BASE_DIR}"
+        )
 
-    add_custom_command ( TARGET ${TARGET}
-	POST_BUILD
+    add_custom_command ( TARGET ${TARGET}.flatpak
+        POST_BUILD
         COMMAND ${FLATPAK_PROGRAM} build-bundle "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}" )
 
     if(FLATPAK_DEPLOY_LOCALLY)
-        add_custom_command( TARGET ${TARGET}
+        add_custom_command( TARGET ${TARGET}.flatpak
             POST_BUILD
             COMMAND ${FLATPAK_PROGRAM} remote-add --user --no-gpg-verify deployed_${FLATPAK_PKG_NAME} ${FLATPAK_BUNDLE_REPO} || true
-            )
-        add_custom_command( TARGET ${TARGET}
-            POST_BUILD
+
             COMMAND ${FLATPAK_PROGRAM} uninstall --user ${FLATPAK_PKG_NAME} || true
-            )
-        add_custom_command( TARGET ${TARGET}
-            POST_BUILD
+
             COMMAND ${FLATPAK_PROGRAM} install --user deployed_${FLATPAK_PKG_NAME} ${FLATPAK_PKG_NAME}
             )
     endif()
 
     # Add arrangement to install flatpak structure somewhere else
-#    install (
-#        DIRECTORY
-#        "${FLATPAK_BASE_DIR}"
+    #    install (
+    #        DIRECTORY
+    #        "${FLATPAK_BASE_DIR}"
 
-#        DESTINATION
-#	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
-#        )
+    #        DESTINATION
+    #	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
+    #        )
     install (
         FILES
         "${FLATPAK_BUNDLE_DIR}"
 
-	DESTINATION
-	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
-	)
+        DESTINATION
+        "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
+        )
 
 endmacro(FLATPAK_PACKAGE)

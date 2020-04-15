@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/core/base_state.h>
 #include <peripherals/profiler/profiler.h>
+#include <platforms/pimpl_state.h>
 
 #ifndef COFFEE_COMPONENT_NAME
 #define COFFEE_COMPONENT_NAME "(unknown)"
@@ -10,7 +10,6 @@
 namespace platform {
 namespace profiling {
 
-using namespace ::Coffee;
 using namespace ::libc_types;
 using namespace ::stl_types;
 
@@ -30,7 +29,7 @@ struct ThreadInternalState
 
 struct ThreadState
 {
-    State::GlobalState*        writer;
+    GlobalState*               writer;
     Vector<CString>            context_stack;
     ThreadId::Hash             thread_id;
     UqPtr<ThreadInternalState> internal_state;
@@ -72,12 +71,12 @@ struct PContext
 
     static ShPtr<PContext> ProfilerStore()
     {
-        return State::GetProfilerStore();
+        return state->GetProfilerStore();
     }
 
     static ShPtr<ThreadState> ProfilerTStore()
     {
-        return State::GetProfilerTStore();
+        return state->GetProfilerTStore();
     }
 };
 
@@ -95,7 +94,7 @@ struct RuntimeProperties : ThreadInternalState
     }
     static bool enabled()
     {
-        if(!State::ProfilerEnabled())
+        if(!state || !state->ProfilerEnabled())
             return false;
 
         auto context = PContext::ProfilerStore();
@@ -155,28 +154,29 @@ struct ExtraDataImpl
     STATICINLINE void Add(
         UNUSED_PARAM(CString const&, k), UNUSED_PARAM(CString const&, v))
     {
-#if MODE_DEBUG
+        if constexpr(!compile_info::profiler::enabled)
+            return;
+
         auto context = PContext::ProfilerStore();
 
-        C_PTR_CHECK(context);
+        C_PTR_CHECK(context)
 
         Lock _(context->access);
 
         context->extra_data[k] = v;
-#endif
     }
 
     STATICINLINE PExtraData Get()
     {
-#if MODE_DEBUG
+        if constexpr(!compile_info::profiler::enabled)
+            return {};
+
         auto context = PContext::ProfilerStore();
 
-        C_PTR_CHECK(context);
+        if(!context)
+            return {};
 
         return context->extra_data;
-#else
-        return {};
-#endif
     }
 };
 
@@ -349,8 +349,58 @@ struct DeepProfilerContext
     }
 };
 
-extern void JsonPush(ThreadState& state, DataPoint const& data);
-extern ShPtr<State::GlobalState> CreateJsonProfiler();
+template<typename QueryType>
+struct GpuProfilerContext
+{
+    FORCEDINLINE GpuProfilerContext(
+        cstring          name,
+        ShPtr<QueryType> query,
+        ThreadId::Hash   gpu_thread = 0x8085) :
+        m_thread(gpu_thread),
+        m_name(name), m_query(query)
+    {
+        if constexpr(!compile_info::profiler::gpu::enabled)
+            return;
+
+        m_start = PClock::now();
+        m_query->begin();
+        push_event(m_name);
+    }
+    FORCEDINLINE ~GpuProfilerContext()
+    {
+        if constexpr(!compile_info::profiler::gpu::enabled)
+            return;
+
+        DeepProfilerContext _("GpuProfilerContext::Query stall");
+
+        m_query->end();
+        push_event(m_name, m_query->result());
+    }
+
+    FORCEDINLINE void push_event(
+        cstring name, PClock::time_point::rep offset = 0)
+    {
+        auto props = Profiler::runtime_options::get_properties();
+
+        Profiler::datapoint event;
+        event.flags.type =
+            offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
+        event.ts   = (m_start + Chrono::nanoseconds(offset)).time_since_epoch();
+        event.name = name;
+        event.tid  = m_thread;
+        event.component = COFFEE_COMPONENT_NAME;
+
+        props.push(*props.context, event);
+    }
+
+    ThreadId::Hash     m_thread;
+    cstring            m_name;
+    PClock::time_point m_start;
+    ShPtr<QueryType>   m_query;
+};
+
+extern void               JsonPush(ThreadState& state, DataPoint const& data);
+extern ShPtr<GlobalState> CreateJsonProfiler();
 
 } // namespace profiling
 } // namespace platform

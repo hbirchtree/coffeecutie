@@ -159,9 +159,29 @@ FORCEDINLINE tvector<T, 3> quaternion_to_direction(tquaternion<T> const& q)
 }
 
 template<typename T>
-tquaternion<T> lock_axis(tquaternion<T> const& v, tvector<T, 3> const& axes)
+/*!
+ * \brief Convert euler angles to quaternion
+ * \param e Vector with yaw, pitch and roll in that order
+ * \return
+ */
+FORCEDINLINE tquaternion<T> euler(tvector<T, 3> const& e)
 {
-    return v;
+    using namespace stl_types;
+
+    T _5 = T(0.5);
+
+    T cy = math::cos(e.x() * _5);
+    T sy = math::sin(e.x() * _5);
+    T cp = math::cos(e.y() * _5);
+    T sp = math::sin(e.y() * _5);
+    T cr = math::cos(e.z() * _5);
+    T sr = math::sin(e.z() * _5);
+
+    return tquaternion<T>(
+        cy * cp * cr + sy * sp * sr,
+        cy * cp * sr - sy * sp * cr,
+        sy * cp * sr + cy * sp * cr,
+        sy * cp * cr - cy * sp * sr);
 }
 
 } // namespace vectors

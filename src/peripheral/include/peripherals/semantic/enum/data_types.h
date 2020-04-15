@@ -17,5 +17,7 @@ enum class TypeEnum : libc_types::u8
     LL,
     Scalar,
     BigScalar,
+
+    Packed_UFloat, /* PixFmt::R10FG11FB11F */
 };
 }

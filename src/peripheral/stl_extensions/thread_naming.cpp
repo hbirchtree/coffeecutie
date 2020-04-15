@@ -1,14 +1,13 @@
 #include <peripherals/stl/thread_types.h>
 
-#include <coffee/core/base_state.h>
 #include <peripherals/stl/functional_types.h>
+#include <platforms/pimpl_state.h>
 
-using namespace ::Coffee;
 using ::type_safety::remove_cvref_t;
 
 namespace stl_types {
 
-struct ThreadNames : State::GlobalState
+struct ThreadNames : platform::GlobalState
 {
     virtual ~ThreadNames();
 
@@ -19,19 +18,21 @@ ThreadNames::~ThreadNames()
 {
 }
 
-STATICINLINE ThreadNames& GetContext(State::GlobalState* context = nullptr)
+STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
 {
-    State::GlobalState* castablePtr = context;
+    using namespace ::platform;
 
-    remove_cvref_t<declreturntype(State::PeekState)> ptr;
+    platform::GlobalState* castablePtr = context;
+
+    ShPtr<GlobalState> ptr;
 
     if(!castablePtr)
     {
-        ptr = State::PeekState("threadNames");
+        ptr = state->PeekState("threadNames");
         if(!ptr)
         {
             ptr = MkShared<ThreadNames>();
-            State::SwapState("threadNames", ptr);
+            state->SwapState("threadNames", ptr);
         }
         castablePtr = ptr.get();
     }
@@ -47,8 +48,8 @@ STATICINLINE ThreadNames& GetContext(State::GlobalState* context = nullptr)
 
 STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
 {
-    C_UNUSED(auto state) = State::LockState("threadNames");
-    auto& context = GetContext();
+    C_UNUSED(auto state) = platform::state->LockState("threadNames");
+    auto& context        = GetContext();
 
     if(context.names.find(hs) != context.names.end())
         return;
@@ -58,8 +59,8 @@ STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
 
 STATICINLINE CString LoadThreadName(ThreadId::Hash hs)
 {
-    C_UNUSED(auto state) = State::LockState("threadNames");
-    auto& context = GetContext();
+    C_UNUSED(auto state) = platform::state->LockState("threadNames");
+    auto& context        = GetContext();
 
     return context.names[hs];
 }
@@ -95,7 +96,7 @@ CString GetName(Thread& t)
 #endif
 }
 
-bool SetName(ThreadId::Hash t, CString const& name)
+bool SetName(ThreadId::Hash const& t, CString const& name)
 {
     SaveThreadName(t, name);
     return true;
@@ -106,9 +107,9 @@ CString GetName(ThreadId::Hash const& t)
     return LoadThreadName(t);
 }
 
-Map<ThreadId::Hash, CString> GetNames(State::GlobalState* context)
+Map<ThreadId::Hash, CString> GetNames(platform::GlobalState* context)
 {
-    C_UNUSED(auto state) = State::LockState(*context);
+    C_UNUSED(auto state) = platform::state->LockState(*context);
     return GetContext(context).names;
 }
 } // namespace Threads

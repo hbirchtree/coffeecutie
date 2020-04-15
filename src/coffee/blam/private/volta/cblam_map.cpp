@@ -1,84 +1,78 @@
-#include <coffee/blam/volta/cblam_map.h>
+#include <blam/volta/cblam_map.h>
 #include <coffee/core/types/chunk.h>
 
-namespace Coffee {
-namespace Blam {
+namespace blam {
+namespace detail {
 
-cstring file_header_full_mapname(const file_header_t* map)
-{
-    for(i32 i = 0; i < blam_num_map_names; i++)
-    {
-        if(libc::str::cmp(map->name, blam_map_names[i].key))
-            return blam_map_names[i].value;
-    }
-    return map->name;
-}
-
-file_header_t const* file_header_get(c_cptr baseptr, version_t expectedVersion)
-{
-    file_header_t const* fh = C_CAST<const file_header_t*>(baseptr);
-    if(fh->version != expectedVersion &&
-       MemCmp(Bytes::Create(fh->id), Bytes::From(header_head, 4)) &&
-       MemCmp(Bytes::Create(fh->footer), Bytes::From(header_foot, 4)))
-        return nullptr;
-    return fh;
-}
-
-void tag_index_magic(tag_index_t* tagindex, i32 tagIndexOffset)
-{
-    tagindex->index_magic -= tagIndexOffset + 40;
-}
-
-const tag_index_t* tag_index_ptr(const file_header_t* file)
-{
-    return C_FCAST<const tag_index_t*>(
-        &(C_FCAST<const byte_t*>(file))[file->tagIndexOffset]);
-}
-
-tag_index_t tag_index_get(const file_header_t* file)
-{
-    const tag_index_t* tgi = tag_index_ptr(file);
-    tag_index_t        dupe;
-    MemCpy(Bytes::Create(*tgi), Bytes::Create(dupe));
-    //    MemCpy(&dupe,tgi,sizeof(tag_index_t));
-    tag_index_magic(&dupe, file->tagIndexOffset);
-    return dupe;
-}
-
-const index_item_t* tag_index_get_items(const file_header_t* file)
-{
-    const tag_index_t* ptr = tag_index_ptr(file);
-    return C_FCAST<const index_item_t*>(&(ptr[1]));
-}
-
-c_cptr blam_mptr(c_cptr base, i32 magic, i32 offset)
+c_cptr magic_ptr(c_cptr base, i32 magic, i32 offset)
 {
     const byte_t* ptr = (C_FCAST<const byte_t*>(base)) + offset - magic;
     return (ptr < base) ? nullptr : ptr;
 }
 
-cstring index_item_get_string(
-    const index_item_t*  idx,
-    const file_header_t* map,
-    const tag_index_t*   tagindex)
+} // namespace detail
+
+using semantic::Bytes;
+using namespace semantic::chunk_ops;
+
+file_header_t const* file_header_t::from_data(
+    const semantic::Bytes& data, pc_version_t)
 {
-    return C_CAST<cstring>(blam_mptr(
-        map, tagindex->index_magic, C_CAST<i32>(idx->string_offset)));
+    file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
+
+    if(fh->version != version_t::pc)
+        Throw(map_load_error("invalid map version: not a pc map"));
+
+    auto file_head = Bytes::Create(fh->id);
+    auto targ_head = Bytes::From(header_head, 4);
+
+    auto file_foot = Bytes::Create(fh->footer);
+    auto targ_foot = Bytes::From(header_foot, 4);
+
+    if(!MemCmp(file_head, targ_head) || !MemCmp(file_foot, targ_foot))
+        Throw(map_load_error("map failed endian check"));
+
+    return fh;
 }
 
-const index_item_t* tag_index_get_item(
-    const file_header_t* file, const tag_index_t* tags, i32 tag_id)
+file_header_t const* file_header_t::from_data(
+    semantic::Bytes const& data, custom_version_t)
 {
-    return &tag_index_get_items(file)[tag_id - tags->baseTag];
+    file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
+
+    if(fh->version != version_t::custom_edition)
+        Throw(map_load_error("invalid map version: not a custom edition map"));
+
+    auto file_head = Bytes::Create(fh->id);
+    auto targ_head = Bytes::From(header_head, 4);
+
+    auto file_foot = Bytes::Create(fh->footer);
+    auto targ_foot = Bytes::From(header_foot, 4);
+
+    if(!MemCmp(file_head, targ_head) || !MemCmp(file_foot, targ_foot))
+        Throw(map_load_error("map failed endian check"));
+
+    return fh;
 }
 
-cstring tagref_get_name(
-    const tagref_t* tag, const file_header_t* file, const tag_index_t* tags)
+file_header_t const* file_header_t::from_data(
+    const semantic::Bytes& data, xbox_version_t)
 {
-    return C_CAST<cstring>(
-        blam_mptr(file, tags->index_magic, tag->string_offset));
+    file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
+
+    if(fh->version != version_t::xbox)
+        Throw(map_load_error("invalid map version: not an xbox map"));
+
+    auto file_head = Bytes::Create(fh->id);
+    auto targ_head = Bytes::From(header_head, 4);
+
+    auto file_foot = Bytes::Create(fh->footer);
+    auto targ_foot = Bytes::From(header_foot, 4);
+
+    if(!MemCmp(file_head, targ_head) || !MemCmp(file_foot, targ_foot))
+        Throw(map_load_error("map failed endian check"));
+
+    return fh;
 }
 
-} // namespace Blam
-
-} // namespace Coffee
+} // namespace blam

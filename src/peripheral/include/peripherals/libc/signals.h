@@ -10,7 +10,7 @@ namespace libc {
 namespace signal {
 
 using sig_handler  = void(int);
-using exit_handler = void();
+using exit_handler = void(*)();
 
 enum class sig
 {
@@ -27,7 +27,13 @@ enum class sig
     segfault          = SIGSEGV,
     abort             = SIGABRT,
 
-    /* May only be sent */
+#if !defined(COFFEE_WINDOWS)
+    bus_error         = SIGBUS,
+#endif
+
+    ill_op = illegal_operation,
+
+/* May only be sent */
 #if defined(COFFEE_WINDOWS)
     kill = 101,
 #else
@@ -57,6 +63,15 @@ FORCEDINLINE void default_exit(int)
     signal::exit(sig::general_error);
 }
 } // namespace handlers
+
+template<void(*Handler)()>
+struct scope_exit_handler
+{
+    ~scope_exit_handler()
+    {
+        Handler();
+    }
+};
 
 extern void register_atexit(exit_handler hnd);
 

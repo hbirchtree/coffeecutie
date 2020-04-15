@@ -4,12 +4,14 @@
 #define STR_UNREDIR(s) #s
 #define STR_REDIR(s) STR_UNREDIR(s)
 
-#define C_COMPILER_DEFINE_STRING(name,maj,min,lev) name " " STR_REDIR(maj) "." STR_REDIR(min) "." STR_REDIR(lev)
+#define C_COMPILER_DEFINE_STRING(name, maj, min, lev) \
+    name " " STR_REDIR(maj) "." STR_REDIR(min) "." STR_REDIR(lev)
 
 #undef C_SYSTEM_BITNESS
 #define C_SYSTEM_BITNESS 0
 
-/* Pre-processors are stupid. Very stupid. They would suffocate with a glass of water in their hand. */
+/* Pre-processors are stupid. Very stupid. They would suffocate with a glass of
+ * water in their hand. */
 #undef C_COMPILER_NAME
 #undef C_COMPILER_VER_MAJ
 #undef C_COMPILER_VER_MIN
@@ -19,7 +21,6 @@
 #define C_COMPILER_VER_MAJ 0
 #define C_COMPILER_VER_MIN 0
 #define C_COMPILER_VER_REV 0
-
 
 /* GCC compiler identification */
 #if defined(__GNUC__)
@@ -90,7 +91,10 @@
 
 #define C_COMPILER_NAME "MSVC++"
 #define C_COMPILER_VER_MAJ _MSC_FULL_VER
-#define C_COMPILER_VER_MIN _MSC_BUILD
+#define C_COMPILER_VER_MIN 0
 #define C_COMPILER_VER_REV 0
 
 #endif
+
+#define C_STR_HELPER(x) #x
+#define C_STR(x) C_STR_HELPER(x)

@@ -21,7 +21,21 @@
 #undef ERROR
 
 namespace platform {
+namespace win32 {
+namespace detail {
 
-using win_handle = semantic::generic_handle_t<HANDLE>;
+inline void closeHandle(HANDLE hnd)
+{
+    ::CloseHandle(hnd);
+}
+
+} // namespace detail
+} // namespace win32
+
+using win_handle = semantic::generic_handle_t<
+    HANDLE, 
+    semantic::handle_modes::auto_close, 
+    INVALID_HANDLE_VALUE,
+    win32::detail::closeHandle>;
 
 } // namespace platform

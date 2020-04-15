@@ -1,7 +1,13 @@
 uwp:
-  - amd64
-  - x86
-  - arm
+  amd64:
+    - vs19
+  x86:
+    - vs19
+  arm:
+    - vs19
 win32:
-  - amd64
-  - x86
+  amd64:
+    - vs19
+  x86:
+    - vs19
+

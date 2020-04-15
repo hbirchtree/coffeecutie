@@ -104,10 +104,10 @@
  * has_include
  *
  */
-#if(__cplusplus >= 201703L)
+#if __cplusplus >= 201703L
 #define C_HAS_INCLUDE(header) __has_include(header)
 #else
-#define C_HAS_INCLUDE(header) 0
+#define C_HAS_INCLUDE(header) (0)
 
 #endif
 
@@ -120,3 +120,9 @@ struct C_DEPRECATED_TYPE
 };
 
 #undef VERIFY_CPP_FEATURE
+
+#if defined(COFFEE_CLANG) || defined(COFFEE_GCC)
+#define COFFEE_DISABLE_ASAN __attribute__((no_sanitize("address")))
+#else
+#define COFFEE_DISABLE_ASAN
+#endif

@@ -1,43 +1,20 @@
-before_build:
-- ps: toolchain\ci\appveyor-build.ps1
-before_deploy:
-- cmd: cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%
+version: '{build}'
+skip_tags: true
 branches:
   only:
   - master
   - /^testing.*$/
   - /^feature.*$/
-build:
-  parallel: true
-  project: Coffee.sln
-  verbosity: minimal
+configuration:
+- Debug
+platform: x64
 clone_script:
 - cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
     %SOURCE_DIR%
 - cmd: cd %SOURCE_DIR% && git checkout -qf %APPVEYOR_REPO_COMMIT%
-configuration:
-- Debug
-deploy_script:
-- ps: toolchain\ci\appveyor-deploy.ps1
-environment:
-  BUILD_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%
-  CMAKE_BIN: cmake.exe
-  DEPENDENCIES: ''
-  DEPLOY_PATTERNS: ''
-  GITHUB_TOKEN:
-    secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
-  MAKEFILE_DIR: toolchain\makers
-  NOBUILD: 1
-  SAME_BUILD_DIR: 1
-  SOURCE_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%\src
-  matrix:
-  - BUILDVARIANT: uwp.amd64
-  - BUILDVARIANT: win32.amd64
 image:
 - Visual Studio 2015
 - Visual Studio 2017
-install:
-- ps: toolchain\ci\appveyor-deps.ps1
 matrix:
   allow_failures:
   - BUILDVARIANT: maemo.armel
@@ -48,9 +25,33 @@ matrix:
   - BUILDVARIANT: testing.linux.lowfat.release
   - BUILDVARIANT: testing.linux.release
   - BUILDVARIANT: ubuntu.i686.gles
+  - BUILDVARIANT: gamecube
+  - BUILDVARIANT: steam.amd64
   exclude:
   - BUILDVARIANT: uwp.amd64
     image: Visual Studio 2015
-platform: x64
-skip_tags: true
-version: '{build}'
+environment:
+  matrix:
+  - BUILDVARIANT: uwp.amd64.vs19
+  - BUILDVARIANT: win32.amd64.vs19
+  BUILD_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%
+  SOURCE_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%\src
+  NOBUILD: 1
+  SAME_BUILD_DIR: 1
+  CMAKE_BIN: cmake.exe
+  MAKEFILE_DIR: toolchain\makers
+  DEPLOY_PATTERNS: ''
+  GITHUB_TOKEN:
+    secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
+install:
+- ps: toolchain\ci\appveyor-deps.ps1
+build:
+  parallel: true
+  verbosity: minimal
+  project: Coffee.sln
+before_build:
+- ps: toolchain\ci\appveyor-build.ps1
+before_deploy:
+- cmd: cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%
+deploy_script:
+- ps: toolchain\ci\appveyor-deploy.ps1

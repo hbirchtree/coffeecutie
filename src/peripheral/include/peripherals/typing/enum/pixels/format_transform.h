@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 #include <peripherals/stl/standard_exceptions.h>
 
 #include <peripherals/stl/types.h>
@@ -22,7 +22,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
         nullptr>
-FORCEDINLINE PixFlg to(PixCmp component)
+FORCEDINLINE constexpr PixFlg to(PixCmp component)
 {
     switch(component)
     {
@@ -33,7 +33,14 @@ FORCEDINLINE PixFlg to(PixCmp component)
     case PixCmp::RGB:
         return PixFlg::RGB;
     case PixCmp::RGBA:
+    case PixCmp::BGRA:
         return PixFlg::RGBA;
+    case PixCmp::Depth:
+        return PixFlg::R | PixFlg::FloatingPoint;
+    case PixCmp::Stencil:
+        return PixFlg::R;
+    case PixCmp::DepthStencil:
+        return PixFlg::RG;
     default:
         return PixFlg::None;
     }
@@ -43,7 +50,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, BitFmt>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE BitFmt to(PixFmt fmt)
+FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
 {
     using P = PixFmt;
     using B = BitFmt;
@@ -116,6 +123,8 @@ CONSTEXPR_EXTENDED FORCEDINLINE BitFmt to(PixFmt fmt)
 
     case P::Depth16:
         return B::UShort;
+    case P::Depth16F:
+        return B::Scalar_16;
     case P::Depth24Stencil8:
         return B::UInt24_8;
     case P::Depth32F:
@@ -137,7 +146,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE PixFlg to(PixFmt fmt)
+FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 {
     using F = PixFmt;
 
@@ -219,6 +228,7 @@ CONSTEXPR_EXTENDED FORCEDINLINE PixFlg to(PixFmt fmt)
         return PixFlg::sRGB;
 
     case F::Depth16:
+    case F::Depth16F:
     case F::Depth32F:
     case F::Depth24Stencil8:
     case F::Depth32FStencil8:
@@ -233,7 +243,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE PixCmp to(PixFmt fmt)
+FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
 {
     using C = PixCmp;
     using F = PixFmt;
@@ -306,6 +316,7 @@ CONSTEXPR_EXTENDED FORCEDINLINE PixCmp to(PixFmt fmt)
         return C::RGBA;
 
     case F::Depth16:
+    case F::Depth16F:
     case F::Depth32F:
         return C::Depth;
 
@@ -327,15 +338,19 @@ enum format_property
     is_compressed,
     pixel_size,
 
+    layout,
+
     /* For compressed formats */
     block_size,
     supports_subtextures,
+
+    supports_srgb,
 };
 
 template<
     format_property Prop,
     typename std::enable_if<Prop == is_compressed>::type* = nullptr>
-FORCEDINLINE bool get(PixFmt f)
+FORCEDINLINE constexpr bool get(PixFmt f)
 {
     switch(f)
     {
@@ -354,44 +369,65 @@ FORCEDINLINE bool get(PixFmt f)
 
 template<
     format_property Prop,
+    typename std::enable_if<Prop == supports_srgb>::type* = nullptr>
+FORCEDINLINE constexpr bool get(PixFmt f)
+{
+    switch(f)
+    {
+    case PixFmt::SRGB8:
+    case PixFmt::SRGB8A8:
+        return true;
+    default:
+        return false;
+    }
+}
+
+template<
+    format_property Prop,
     typename std::enable_if<Prop == pixel_size>::type* = nullptr>
-FORCEDINLINE szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
+FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
 {
     using B = BitFmt;
+
+    /* Packed formats contain RGB/RGBA within a single value */
+    bool packed = false;
 
     szptr pxsz = 0;
     switch(fmt)
     {
+    case B::UByte_332:
+    case B::UByte_233R:
+        packed = true;
     case B::Byte:
     case B::ByteR:
     case B::UByte:
     case B::UByteR:
-    case B::UByte_332:
-    case B::UByte_233R:
         pxsz = 1;
         break;
-    case B::Short:
-    case B::ShortR:
-    case B::UShort:
-    case B::UShortR:
     case B::UShort_4444:
     case B::UShort_4444R:
     case B::UShort_565:
     case B::UShort_565R:
     case B::UShort_5551:
     case B::UShort_1555R:
+        packed = true;
+    case B::Short:
+    case B::ShortR:
+    case B::UShort:
+    case B::UShortR:
     case B::Scalar_16:
         pxsz = 2;
         break;
+    case B::UInt_5999R:
+    case B::UInt_1010102:
+    case B::UInt_2101010R:
+    case B::Scalar_11_11_10:
+        packed = true;
     case B::Int:
     case B::IntR:
     case B::UInt:
     case B::UIntR:
-    case B::UInt_5999R:
-    case B::UInt_1010102:
-    case B::UInt_2101010R:
     case B::Scalar_32:
-    case B::Scalar_11_11_10:
     case B::UInt24_8:
         pxsz = 4;
         break;
@@ -403,32 +439,33 @@ FORCEDINLINE szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
     default:
         Throw(implementation_error("size calculation not implemented"));
     }
-    switch(comp)
-    {
-    case PixCmp::R:
-    case PixCmp::G:
-    case PixCmp::B:
-    case PixCmp::A:
-    case PixCmp::Stencil:
-    case PixCmp::Depth:
-    case PixCmp::DepthStencil:
-        pxsz *= 1;
-        break;
-    case PixCmp::RG:
-        pxsz *= 2;
-        break;
-    case PixCmp::RGB:
-    case PixCmp::BGR:
-        pxsz *= 3;
-        break;
-    case PixCmp::RGBA:
-    case PixCmp::BGRA:
-        pxsz *= 4;
-        break;
+    if(!packed)
+        switch(comp)
+        {
+        case PixCmp::R:
+        case PixCmp::G:
+        case PixCmp::B:
+        case PixCmp::A:
+        case PixCmp::Stencil:
+        case PixCmp::Depth:
+        case PixCmp::DepthStencil:
+            pxsz *= 1;
+            break;
+        case PixCmp::RG:
+            pxsz *= 2;
+            break;
+        case PixCmp::RGB:
+        case PixCmp::BGR:
+            pxsz *= 3;
+            break;
+        case PixCmp::RGBA:
+        case PixCmp::BGRA:
+            pxsz *= 4;
+            break;
 
-    default:
-        Throw(implementation_error("size calculation not implemented"));
-    }
+        default:
+            Throw(implementation_error("size calculation not implemented"));
+        }
 
     return pxsz * pixels;
 }
@@ -462,7 +499,7 @@ template<
     typename ToType,
     typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
         nullptr>
-CONSTEXPR_EXTENDED FORCEDINLINE PixCmp to(CompFmt fmt)
+FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
 {
     switch(fmt.base_fmt)
     {
@@ -509,7 +546,7 @@ struct block_dim
 template<
     format_property Prop,
     typename std::enable_if<Prop == block_size>::type* = nullptr>
-FORCEDINLINE block_dim get(CompFmt format)
+FORCEDINLINE constexpr block_dim get(CompFmt format)
 {
     switch(format.base_fmt)
     {
@@ -525,29 +562,28 @@ FORCEDINLINE block_dim get(CompFmt format)
         static_assert(
             C_CAST<u8>(CompFlags::ASTC_12x12) == 14, "assumption broken");
 
-        static const constexpr stl_types::Array<block_dim, 14>
-                 ASTC_Block_Sizes = {{
-                {4, 4},
+        const constexpr stl_types::Array<block_dim, 14> ASTC_Block_Sizes = {{
+            {4, 4},
 
-                {5, 4},
-                {5, 5},
+            {5, 4},
+            {5, 5},
 
-                {6, 5},
-                {6, 6},
+            {6, 5},
+            {6, 6},
 
-                {8, 5},
-                {8, 6},
-                {8, 8},
+            {8, 5},
+            {8, 6},
+            {8, 8},
 
-                {10, 5},
-                {10, 6},
-                {10, 8},
-                {10, 10},
+            {10, 5},
+            {10, 6},
+            {10, 8},
+            {10, 10},
 
-                {12, 10},
-                {12, 12},
-            }};
-        const u8 block_idx =
+            {12, 10},
+            {12, 12},
+        }};
+        const u8                                        block_idx =
             C_CAST<u8>(format.c_flags) - C_CAST<u8>(CompFlags::ASTC_4x4);
 
         return ASTC_Block_Sizes.at(block_idx);
@@ -571,7 +607,7 @@ FORCEDINLINE block_dim get(CompFmt format)
 template<
     format_property Prop,
     typename std::enable_if<Prop == supports_subtextures>::type* = nullptr>
-FORCEDINLINE bool get(CompFmt format)
+FORCEDINLINE constexpr bool get(CompFmt format)
 {
     switch(format.base_fmt)
     {
@@ -585,6 +621,107 @@ FORCEDINLINE bool get(CompFmt format)
     }
 }
 
+struct layout_t
+{
+    u8 r, g, b, a;
+
+    u8 depth, stencil;
+
+    static layout_t rgba(u8 v)
+    {
+        return {v, v, v, v, 0, 0};
+    }
+    static layout_t rgba(u8 v, u8 a)
+    {
+        return {v, v, v, a, 0, 0};
+    }
+    static layout_t ds(u8 depth, u8 stencil)
+    {
+        return {0, 0, 0, 0, depth, stencil};
+    }
+};
+
+template<
+    format_property Prop,
+    typename std::enable_if<Prop == layout>::type* = nullptr>
+FORCEDINLINE constexpr layout_t get(PixFmt fmt)
+{
+    using F = PixFmt;
+
+    switch(fmt)
+    {
+    case F::RGBA2:
+        return layout_t::rgba(2);
+    case F::RGBA4:
+        return layout_t::rgba(4);
+    case F::RGBA8:
+    case F::RGBA8I:
+    case F::RGBA8UI:
+        return layout_t::rgba(8);
+    case F::RGBA12:
+        return layout_t::rgba(12);
+    case F::RGBA16:
+    case F::RGBA16I:
+    case F::RGBA16UI:
+    case F::RGBA16F:
+        return layout_t::rgba(16);
+    case F::RGBA32F:
+    case F::RGBA32I:
+    case F::RGBA32UI:
+        return layout_t::rgba(32);
+    case F::RGB5A1:
+        return layout_t::rgba(5, 1);
+    case F::RGB10A2:
+    case F::RGB10A2UI:
+        return layout_t::rgba(10, 2);
+
+    case F::R3G3B2:
+        return {3, 3, 2, 0, 0, 0};
+    case F::RGB4:
+        return layout_t::rgba(4, 0);
+    case F::RGB5:
+        return layout_t::rgba(5, 0);
+    case F::RGB565:
+        return {5, 6, 5, 0, 0, 0};
+    case F::RGB8:
+        return layout_t::rgba(8, 0);
+    case F::RGB10:
+        return layout_t::rgba(10, 0);
+    case F::RGB12:
+        return layout_t::rgba(12, 0);
+    case F::RGB16F:
+    case F::RGB16:
+        return layout_t::rgba(16, 0);
+    case F::RGB9E5:
+        return layout_t::rgba(9, 0);
+    case F::R11G11B10F:
+        return {11, 11, 10, 0, 0, 0};
+    case F::RGB32F:
+    case F::RGB32I:
+    case F::RGB32UI:
+        return layout_t::rgba(32, 0);
+
+    case F::SRGB8:
+        return {8, 8, 8, 0, 0, 0};
+    case F::SRGB8A8:
+        return {8, 8, 8, 8, 0, 0};
+
+    case F::Depth16:
+        return layout_t::ds(16, 0);
+    case F::Depth24Stencil8:
+        return layout_t::ds(24, 8);
+    case F::Depth16F:
+        return layout_t::ds(16, 0);
+    case F::Depth32F:
+        return layout_t::ds(32, 0);
+    case F::Depth32FStencil8:
+        return layout_t::ds(32, 8);
+
+    default:
+        Throw(undefined_behavior("layout not defined"));
+    }
+}
+
 } // namespace properties
 
 struct PixDesc
@@ -595,6 +732,13 @@ struct PixDesc
     {
     }
 
+    PixDesc(PixFmt pixfmt) :
+        pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(convert::to<BitFmt>(pixfmt)),
+        comp(convert::to<PixCmp>(pixfmt))
+    {
+    }
+
     PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp) :
         pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
         pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)
@@ -602,8 +746,8 @@ struct PixDesc
     }
 
     PixDesc(BitFmt bitfmt, PixCmp comp) :
-        cmpflg(CompFlags::CompressionNone), pixflg(PixFlg::None), bfmt(bitfmt),
-        comp(comp)
+        pixfmt(PixFmt::None), cmpflg(CompFlags::CompressionNone),
+        pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)
     {
     }
 
@@ -643,6 +787,6 @@ struct PixInfoDefault
 {
 };
 #endif
-}
+} // namespace pixels
 } // namespace typing
 #undef CONSTEXPR_EXTENDED

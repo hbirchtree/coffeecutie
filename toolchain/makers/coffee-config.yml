@@ -22,6 +22,18 @@
     - -DBUILD_ETC2COMP=ON
     - -DBUILD_SDL2=OFF
     - -DBUILD_HEADFUL=OFF
+(ios|android).*:
+  +cmake-opts:
+    - -DBUILD_EGL=ON
+osx:
+  +cmake-opts:
+    - -DBUILD_ETC2COMP=ON
+ios.*:
+  +cmake-opts:
+    - -DBUILD_GLKIT=ON
+    - -DBUILD_SDL2=OFF
+    - -DBUILD_GLES=ON
+    - -DBUILD_GLES_20=ON
 coverage:
   =target: multi.twostage
   =cmake-target:
@@ -40,12 +52,42 @@ testing.linux.*:
 .*android.*:
   +cmake-opts:
     - -DBUILD_GLES=ON
-    - -DBUILD_GLES_20=$(android.gles20)
+    - -DBUILD_ANATIVE=ON
     - -DBUILD_TESTS=OFF
     - -DBUILD_SDL2=OFF
-  =target: multi.ensureinstall
+  .*(gingerbread|v19).*:
+    +cmake-opts:
+      - -DBUILD_GLES_20=ON
+  ^((?!\$\(shell\)).)*$:
+    =target: multi.ensureinstall
   =cmake-target:
     - AndroidPackage
-.*(ubuntu|fedora|coverage|testing.linux|android|docs|steam|raspberry|emscripten).*:
+emscripten.*:
+  +cmake-opts:
+    - -DBUILD_SDL2=ON
+    - -DBUILD_OPENSSL=OFF
+    - -DBUILD_AUDIO=OFF
+    - -DBUILD_GLES=ON
+    - -DBUILD_GLES_20=ON
+    - -DGENERATE_HTML=ON
+gamecube.*:
+  +cmake-opts:
+    - -DBUILD_LIBOGC=ON
+    - -DBUILD_ASIO=OFF
+    - -DBUILD_AUDIO=OFF
+    - -DBUILD_SDL2=OFF
+    - -DBUILD_OPENGL=OFF
+    - -DBUILD_GRAPHICS_COMMON=OFF
+    - -DBUILD_BLAM=OFF
+    - -DBUILD_GX=ON
+.*maemo.*:
+  +cmake-opts:
+    - -DBUILD_SDL2=OFF
+    - -DBUILD_X11=ON
+    - -DBUILD_EGL=ON
+.*(ubuntu|fedora|coverage|testing.linux|docs|steam|osx).*:
   +cmake-opts:
     - -DBUILD_ASSIMP=ON
+(ubuntu.amd64|osx).*:
+  +cmake-opts:
+    - -DBUILD_DISCORD_RPC=ON

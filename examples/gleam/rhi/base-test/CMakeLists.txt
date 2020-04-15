@@ -8,7 +8,7 @@ coffee_application (
 
     LIBRARIES
     GLeamRHI
-    RendererDefault
+    DropinRenderer
     Core
     EntComp
 
@@ -16,11 +16,13 @@ coffee_application (
     "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
     )
 
+if(TARGET GpuQuery)
+    target_link_libraries ( GLeamBaseTest_RHI PUBLIC GpuQuery )
+endif()
 
 if(TARGET ASIO)
     target_link_libraries ( GLeamBaseTest_RHI PUBLIC ASIO )
-endif()
-
-if(TARGET DiscordLatte)
-    target_link_libraries ( GLeamBaseTest_RHI PUBLIC DiscordLatte )
+    if(TARGET DiscordLatte)
+        target_link_libraries ( GLeamBaseTest_RHI PUBLIC DiscordLatte )
+    endif()
 endif()

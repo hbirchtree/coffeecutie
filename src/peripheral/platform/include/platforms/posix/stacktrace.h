@@ -2,7 +2,8 @@
 
 #include <peripherals/base.h>
 
-#if defined(COFFEE_UNIXPLAT)
+#if(defined(COFFEE_UNIXPLAT) && !defined(COFFEE_EMSCRIPTEN)) || \
+    defined(COFFEE_GEKKO)
 
 #include <platforms/base/stacktrace.h>
 
@@ -62,6 +63,9 @@ namespace glibc {
 
 struct Stacktracer : posix::Stacktracer
 {
+    COFFEE_DISABLE_ASAN static void Backtrace(
+        typing::logging::LogInterfaceBasic log = nullptr);
+
     static void ExceptionStacktrace(
         ExceptionPtr const& exc_ptr, typing::logging::LogInterfaceBasic log);
 
@@ -77,7 +81,25 @@ struct Stacktracer : posix::Stacktracer
 } // namespace glibc
 #endif
 
-#if defined(COFFEE_GLIBC_STACKTRACE)
+#if 0
+
+#define COFFEE_UNWIND_STACKTRACE 1
+
+namespace unwind {
+
+struct Stacktracer : posix::Stacktracer
+{
+    static void ExceptionStacktrace(
+        ExceptionPtr const& exc_ptr, typing::logging::LogInterfaceBasic log);
+};
+
+} // namespace unwind
+
+#endif
+
+#if defined(COFFEE_UNWIND_STACKTRACE)
+using Stacktracer = unwind::Stacktracer;
+#elif defined(COFFEE_GLIBC_STACKTRACE)
 using Stacktracer = glibc::Stacktracer;
 #else
 using Stacktracer = posix::Stacktracer;

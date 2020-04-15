@@ -59,6 +59,21 @@ static CString srpad(CString src, szptr len)
     return str::pad::right(src, ' ', len);
 }
 
+static cstring comp_to_string(compression::codec codec)
+{
+    switch(codec)
+    {
+    case compression::codec::lz4:
+        return "lz4";
+    case compression::codec::deflate:
+        return "deflate";
+    case compression::codec::deflate_ms:
+        return "deflate_ms";
+    default:
+        return "none";
+    }
+}
+
 static void normal_printing(
     VirtFS::vfs_view& vfsView, bool human_readable, u32 columns)
 {
@@ -67,7 +82,7 @@ static void normal_printing(
     szptr rsizePadLength = 0;
     szptr sizePadLength  = 0;
 
-    auto print_fmt = "{0} {1} {2}";
+    auto print_fmt = "{0} {1} {3} {2}";
 
     switch(columns)
     {
@@ -105,13 +120,15 @@ static void normal_printing(
                 print_fmt,
                 srpad(humanize_size(file.rsize), rsizePadLength),
                 srpad(humanize_size(file.size), sizePadLength),
-                file.name);
+                file.name,
+                comp_to_string(file.codec));
         else
             cOutputPrint(
                 print_fmt,
                 srpad(cast_pod(file.rsize), rsizePadLength),
                 srpad(cast_pod(file.size), sizePadLength),
-                file.name);
+                file.name,
+                comp_to_string(file.codec));
     }
 }
 
@@ -342,7 +359,7 @@ i32 coffee_main(i32, cstring_w*)
         return extract_file(
             vfsData.data,
             get_file->second,
-            out_it != args.arguments.end() ? out_it->second : "",
+            out_it != args.arguments.end() ? out_it->second : "-",
             forceful ? RSCA::Discard : RSCA::None);
     }
 

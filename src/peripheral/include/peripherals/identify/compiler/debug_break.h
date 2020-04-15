@@ -18,4 +18,3 @@ FORCEDINLINE void C_BREAK()
     emscripten_debugger();
 #endif
 }
-

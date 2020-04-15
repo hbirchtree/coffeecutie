@@ -191,13 +191,15 @@ i32 coffee_main(i32, cstring_w*)
     }
 #endif
 */
-    for(auto i : Range<>(10))
+    for(C_UNUSED(auto i) : Range<>(10))
     {
         TCP::Socket connection(net_context);
 
-        connection.connect("example.com", "http");
+        auto ec =
+            connection.connect(std::chrono::seconds(2), "example.com", "http");
 
-        connection.sync_close();
+        if(!ec)
+            connection.sync_close();
     }
 
     {

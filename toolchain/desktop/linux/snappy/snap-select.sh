@@ -6,7 +6,7 @@ case "$SNAP_ARCH" in
 @SNAPPY_ARCH_DATA@
 esac
 
-EXEC_NAME="$SNAP/bin/$ARCH_STRING/@TARGET@"
+EXEC_NAME="$SNAP/bin/$ARCH_STRING/$(basename $0)"
 
 echo "-- System information --"
 uname -a

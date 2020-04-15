@@ -6,11 +6,11 @@ if(BUILD_OPENSSL)
         REQUIRED
         SOURCE hbirchtree/native-library-bundle
         TAG ${NATIVE_LIB_BUNDLE_TAG}
-        NAMES openssl
+        NAMES openssl=OpenSSL
         )
 
-    set ( OPENSSL_ROOT_DIR "${GIT_DEP_DIR}/openssl" )
-    set ( ENV{OPENSSL_ROOT_DIR} "${GIT_DEP_DIR}/openssl" )
+    set ( OPENSSL_ROOT_DIR "${OpenSSL_DIR}" )
+    set ( ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}" )
 
     if(ANDROID OR (APPLE AND IOS))
         set ( OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a" )
@@ -24,6 +24,9 @@ endif()
 
 if(TARGET OpenSSL::SSL)
     set ( LIBS OpenSSL::SSL )
+    if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT EMSCRIPTEN)
+        list ( APPEND LIBS dl )
+    endif()
 else()
     set ( LIBS $<BUILD_INTERFACE:${OPENSSL_LIBRARIES}> Threads::Threads )
 endif()
@@ -41,36 +44,52 @@ coffee_library (
     private/net_resource.cpp
     private/net_profiling.cpp
 
-    LIBRARIES Core ${LIBS}
+    LIBRARIES Core CoreState ${LIBS}
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    )
+
+target_precompile_headers ( ASIO PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/http.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/net_resource.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/tcp_socket.h>
+    $<$<COMPILE_LANGUAGE:CXX>:coffee/asio/udp_socket.h>
     )
 
 set ( ASIO_DIR "${COFFEE_EXT_LIBRARY_DIR}/asio" )
 
-target_include_directories ( ASIO SYSTEM PUBLIC
+header_install (
+    ASIO
     $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
-    $<INSTALL_INTERFACE:include>
+    ""
+    )
+
+target_include_directories ( ASIO PUBLIC
+    $<BUILD_INTERFACE:${ASIO_DIR}/asio/include>
     )
 
 if(BUILD_OPENSSL)
+    if(WIN32)
+        target_link_libraries ( ASIO PUBLIC
+            crypt32 # Necessary for OpenSSL
+            )
+    endif()
+
     target_include_directories ( ASIO SYSTEM PUBLIC
         $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
         )
     target_compile_definitions ( ASIO PUBLIC
         -DCOFFEE_ENABLE_SSL
         )
+
+    dependency_link (
+        TARGET ASIO
+        DEPENDENCIES
+            openssl=OpenSSL
+        )
 endif()
 
 target_compile_definitions( ASIO PUBLIC
     -DASIO_STANDALONE
-    )
-
-coffee_bundle (
-    DESTINATION libs
-
-    HEADER_DIRECTORIES
-    "${ASIO_DIR}/asio/include"
     )

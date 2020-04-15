@@ -84,7 +84,7 @@ Resource::operator Path() const
 Resource::operator Bytes()
 {
     if(data && size)
-        return Bytes::From(data, size);
+        return Bytes::FromBytes(data, size);
 
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
         return FileGetDescriptor(*this);
@@ -186,8 +186,7 @@ bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
     resc.m_platform_data->m_mapping =
         FileFun::Map(resc.m_platform_data->m_url, acc, 0, size, ec);
 
-    if(ec)
-        return false;
+    C_ERROR_CHECK(ec);
 
     resc.data = resc.m_platform_data->m_mapping.data;
     resc.size = resc.m_platform_data->m_mapping.size;

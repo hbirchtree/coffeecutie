@@ -1,21 +1,26 @@
 set ( BUILD_EXAMPLES OFF )
 set ( ENABLE_IO_THREAD OFF )
 
-add_subdirectory ( discord-rpc )
+dependency_get (
+    SOURCE hbirchtree/native-library-bundle
+    TAG ${NATIVE_LIB_BUNDLE_TAG}
+    REQUIRED
+    NAMES
+        discord-rpc=DiscordRpc
+    )
+
+find_package ( DiscordRpc REQUIRED )
 
 coffee_library (
     TARGET DiscordLatte
-    NO_EXPORT
 
     SOURCES private/discord_binding.cpp
-    LIBRARIES Core OnlineService ASIO
+    LIBRARIES Core OnlineService ASIO DiscordRPC::discord-rpc
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 
-target_link_libraries ( DiscordLatte PRIVATE
-    discord-rpc
-    )
-
-target_include_directories ( DiscordLatte PRIVATE
-    discord-rpc/include
+dependency_link (
+    TARGET DiscordLatte
+    DEPENDENCIES
+        discord-rpc=DiscordRpc
     )

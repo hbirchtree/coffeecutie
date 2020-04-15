@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../coffee.h"
+#include <coffee/core/coffee.h>
 
 namespace platform {
 namespace url {

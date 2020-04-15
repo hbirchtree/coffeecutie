@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#if defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_IOS)
 #import <UIKit/UIKit.h>
 #else
 #import <AppKit/AppKit.h>

@@ -257,7 +257,7 @@ inline CGenum to_enum(Prim p, PrimCre c)
 
     case Prim::Triangle:
 #ifdef COFFEE_GLEAM_DESKTOP
-        if(feval(c & (PrimCre::Adjacency | PrimCre::Strip)))
+        if(feval(c, PrimCre::Adjacency | PrimCre::Strip))
             return GL_TRIANGLE_STRIP_ADJACENCY;
 #endif
         switch(c)
@@ -276,7 +276,7 @@ inline CGenum to_enum(Prim p, PrimCre c)
             return GL_TRIANGLES;
         }
 
-            /* PATCHES */
+        /* PATCHES */
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case Prim::Patch:
@@ -403,9 +403,13 @@ inline CGenum to_enum(PixFmt f, PixFlg e, CompFlags d)
             /* BC1 */
             if(feval(e, PixFlg::RGBA))
                 return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            else if(feval(e, PixFlg::RGB))
+            else
                 return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        } else if(d == CompFlags::S3TC_3)
+        {
+            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
         }
+
 #endif
         break;
 
@@ -595,8 +599,25 @@ inline CGenum to_enum(PixFmt f, PixFlg e, CompFlags d)
 #endif
 
 #else
+    case P::RGB8:
+#if defined(GL_OES_rgb8_rgba8)
+        return GL_RGB8_OES;
+#else
+        return GL_RGB;
+#endif
+
     case P::RGBA8:
+#if defined(GL_OES_rgb8_rgba8)
+        return GL_RGBA8_OES;
+#else
         return GL_RGBA;
+#endif
+
+#if defined(GL_DEPTH_COMPONENT16_OES)
+    case P::Depth16:
+        return GL_DEPTH_COMPONENT16_OES;
+#endif
+
 #endif
     default:
         break;
@@ -738,18 +759,20 @@ inline CGenum texture_to_enum(tex::flag f)
         return GL_TEXTURE_CUBE_MAP;
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    case t2d_ms::value:
-        return GL_TEXTURE_2D_MULTISAMPLE;
     case t2d_array::value:
         return GL_TEXTURE_2D_ARRAY;
-    case t2d_array_ms::value:
-        return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
-
     case t3d::value:
         return GL_TEXTURE_3D;
-
+#if GL_VERSION_VERIFY(0x300, 0x310)
+    case t2d_ms::value:
+        return GL_TEXTURE_2D_MULTISAMPLE;
+#endif
+#if GL_VERSION_VERIFY(0x300, 0x320)
+    case t2d_array_ms::value:
+        return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
     case cube_array::value:
         return GL_TEXTURE_CUBE_MAP_ARRAY;
+#endif
 #endif
 
     default:
@@ -847,17 +870,23 @@ inline CGenum buffer_to_enum(buf::flags f)
 #endif
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    case draw_indirect::value:
-        return GL_DRAW_INDIRECT_BUFFER;
-    case compute_indirect::value:
-        return GL_DISPATCH_INDIRECT_BUFFER;
-
-    case constants_rw::value:
-        return GL_SHADER_STORAGE_BUFFER;
-    case atomic::value:
-        return GL_ATOMIC_COUNTER_BUFFER;
     case buf::query::value:
         return GL_QUERY_BUFFER;
+#endif
+
+#if GL_VERSION_VERIFY(0x330, 0x310)
+    case draw_indirect::value:
+        return GL_DRAW_INDIRECT_BUFFER;
+#endif
+#if GL_VERSION_VERIFY(0x420, 0x310)
+    case atomic::value:
+        return GL_ATOMIC_COUNTER_BUFFER;
+#endif
+#if GL_VERSION_VERIFY(0x430, 0x310)
+    case compute_indirect::value:
+        return GL_DISPATCH_INDIRECT_BUFFER;
+    case constants_rw::value:
+        return GL_SHADER_STORAGE_BUFFER;
 #endif
     }
 
@@ -889,16 +918,16 @@ inline CGenum to_enum1(RSCA acc)
     if(f != GL_NONE)
         return f;
 
-    if(feval(acc & RSCA::ReadOnly))
+    if(feval(acc, RSCA::ReadOnly))
         f = GL_STATIC_READ;
-    if(feval(acc & RSCA::WriteOnly))
+    if(feval(acc, RSCA::WriteOnly))
         f = GL_STATIC_DRAW;
-    if(feval(acc & RSCA::ReadWrite))
+    if(feval(acc, RSCA::ReadWrite))
         f = GL_STATIC_COPY;
 #else
-    if(feval(acc & (RSCA::Persistent)))
+    if(feval(acc, (RSCA::Persistent)))
         f = GL_DYNAMIC_DRAW;
-    else if(feval(acc & (RSCA::Streaming)))
+    else if(feval(acc, (RSCA::Streaming)))
         f = GL_STREAM_DRAW;
     else
         f = GL_STATIC_DRAW;
@@ -1059,6 +1088,11 @@ inline CGenum to_enum(TypeEnum f)
     case TypeEnum::Scalar:
         return GL_FLOAT;
 
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    case TypeEnum::Packed_UFloat:
+        return GL_UNSIGNED_INT_10F_11F_11F_REV;
+#endif
+
     default:
         return GL_NONE;
     }
@@ -1103,8 +1137,13 @@ inline CGenum to_enum(BitFmt f)
         return GL_UNSIGNED_SHORT_1_5_5_5_REV;
     case BitFmt::UIntR:
         return GL_UNSIGNED_INT_8_8_8_8_REV;
+#endif
+#if defined(GL_UNSIGNED_INT_10_10_10_2)
     case BitFmt::UInt_1010102:
         return GL_UNSIGNED_INT_10_10_10_2;
+#elif defined(GL_UNSIGNED_INT_10_10_10_2_OES)
+    case BitFmt::UInt_1010102:
+        return GL_UNSIGNED_INT_10_10_10_2_OES;
 #endif
 
     case BitFmt::UInt_5999R:
@@ -1125,10 +1164,20 @@ inline CGenum to_enum(BitFmt f)
     case BitFmt::Scalar_32_Int_24_8:
         return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 #else
+#if defined(GL_OES_texture_half_float)
+    case BitFmt::Scalar_16:
+        return GL_HALF_FLOAT_OES;
+#endif
+
         /* In order to keep compatibility, we fall back to normal format,
          *  and OpenGL ES 2.0 does not support depth+stencil formats. */
     case BitFmt::UInt24_8:
+#if defined(GL_OES_packed_depth_stencil)
+        return GL_UNSIGNED_INT_24_8_OES;
+#else
         return GL_UNSIGNED_BYTE;
+#endif
+
 #endif
 
     default:

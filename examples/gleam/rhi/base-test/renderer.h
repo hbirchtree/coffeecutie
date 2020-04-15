@@ -1,3 +1,5 @@
+#include <coffee/components/proxy.h>
+
 #include <coffee/components/components.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
@@ -8,10 +10,15 @@
 #include <coffee/core/types/graphics_types.h>
 #include <coffee/core/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
-#include <coffee/graphics/common/query/gpu_query.h>
 #include <coffee/image/image_coder_system.h>
 #include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
+
+#include <coffee/components/entity_selectors.h>
+
+#if defined(FEATURE_ENABLE_GpuQuery)
+#include <coffee/graphics/common/query/gpu_query.h>
+#endif
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/asio_system.h>
@@ -28,8 +35,6 @@
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
-
-#undef FEATURE_ENABLE_ASIO
 
 //#define USE_NULL_RENDERER
 
@@ -346,13 +351,13 @@ struct RendererState
             deptstate  = {};
         }
 
-        Vecf4          clear_col  = {.267f, .267f, .267f, 1.f};
-        GLM::D_DATA    instdata   = {6, 0, 4};
-        GLM::BLNDSTATE blendstate = {};
-        GLM::DEPTSTATE deptstate  = {};
-        GLM::D_CALL    call       = {};
-        GLM::OPT_DRAW  draws      = {};
-        GLM::PIP*      pipeline;
+        Vecf4           clear_col  = {.267f, .267f, .267f, 1.f};
+        GLM::D_DATA     instdata   = {6, 0, 4};
+        GLM::BLNDSTATE  blendstate = {};
+        GLM::DEPTSTATE  deptstate  = {};
+        GLM::D_CALL     call       = {};
+        GLM::OPT_DRAW   draws      = {};
+        WkPtr<GLM::PIP> pipeline;
     } g_data;
 };
 
@@ -363,10 +368,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     d->component_queue =
         RuntimeQueue::CreateNewThreadQueue("Component Worker", rqec);
 
+#if defined(FEATURE_ENABLE_DiscordLatte)
     auto onlineWorker =
         RuntimeQueue::CreateNewThreadQueue("Online Worker", rqec);
 
     C_ERROR_CHECK(rqec);
+#endif
 
     RendererState::RGraphicsData& g        = d->g_data;
     auto&                         entities = d->entities;
@@ -407,9 +414,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     load_opts.crash_on_error = true;
 
     auto& gfx = entities.register_subsystem_inplace<GfxTag, GfxSys>(
-        load_opts, PlatformData::IsDebug());
+        load_opts, compile_info::debug_mode);
 
-    GLM::V_DESC* vao = nullptr;
+    ShPtr<GLM::V_DESC> vao = nullptr;
 
     /* Uploading vertex data and creating descriptors */
     {
@@ -436,11 +443,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         tc.m_type      = TypeEnum::Scalar;
         tc.m_stride    = sizeof(Vecf3) + sizeof(Vecf2);
 
-        auto verts = gfx.alloc_desc<2>({{pos, tc}});
-
-        verts->bindBuffer(0, *array_buf);
-
-        vao = verts.get();
+        vao = gfx.alloc_desc<2>({{pos, tc}});
+        vao->bindBuffer(0, *array_buf);
     }
 
     /* Compiling shaders and assemble a graphics pipeline */
@@ -456,12 +460,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
         Resource v_rsc(
             (isGles20) ? "vr/vshader_es2.glsl"
-                     : (isGles) ? "vr/vshader_es.glsl" : "vr/vshader.glsl");
+                       : (isGles) ? "vr/vshader_es.glsl" : "vr/vshader.glsl");
         Resource f_rsc(
             (isGles20) ? "vr/fshader_es2.glsl"
-                     : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
+                       : (isGles) ? "vr/fshader_es.glsl" : "vr/fshader.glsl");
 
-        params = &gfx.alloc_standard_pipeline<2, Resource>(
+        params = &gfx.alloc_standard_pipeline<2>(
             {{std::move(v_rsc), std::move(f_rsc)}});
     }
 
@@ -505,11 +509,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             stb::LoadData(
                 &img, BytesConst(imdata.data, imdata.size, imdata.size));
 
+            GLM::ERROR ec;
             mainSurface.upload(
-                BitFmt::UByte,
-                PixCmp::RGBA,
+                PixDesc(PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA),
                 {img.size.w, img.size.h, 1},
-                img.data,
+                img.data_owner,
+                ec,
                 {0, 0, 0});
         } else
         {
@@ -534,6 +539,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             Chrono::milliseconds(100),
             [mainQueue, &discord, &network, &imgCoder, &mainSurface]() {
                 ProfContext _("Awaiting Discord");
+                cDebug("Waiting for discord...");
                 if(discord.awaitReady(Chrono::milliseconds(10)))
                 {
                     cDebug("User ID: {0}", discord.playerInfo().userTag);
@@ -547,6 +553,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                         imgCoder.decode(rsc->data(), std::move(rsc))
                             .then(mainQueue, [&](stb::image_rw&& img) {
                                 ProfContext _("Uploading texture");
+                                GLM::ERROR  ec;
                                 mainSurface.upload(
                                     PixDesc(
                                         mainSurface.m_pixfmt,
@@ -554,9 +561,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                                         PixCmp::RGBA),
                                     {img.size.w, img.size.h, 1},
                                     C_OCAST<Bytes>(img),
+                                    ec,
                                     {});
                             });
                     }
+
+                    discord.game().put(platform::online::GameDelegate::Builder(
+                        "Cool Game", "Gaming", MkUrl("coffee_cup")));
 
                     runtime_queue_error ec;
                     RuntimeQueue::CancelTask(RuntimeQueue::GetSelfId(ec), ec);
@@ -564,11 +575,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             },
             rqec);
 
+        C_ERROR_CHECK(rqec);
+
         discord.start();
     }
-//    service->getPresence()->put({"", 1, 1, {}, {}});
-//    service->getGame()->put(platform::online::GameDelegate::Builder(
-//        {}, "Messing around", MkUrl("coffee_cup")));
 #endif
 #endif
 
@@ -622,7 +632,6 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
         floor_object.components = {typeid(TransformTag).hash_code(),
                                    typeid(MatrixTag).hash_code()};
-        floor_object.interval   = Chrono::milliseconds(10);
         base_object             = floor_object;
 
         floor_object.tags = FloorTag;
@@ -656,6 +665,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     entities.exec();
 
+#if defined(FEATURE_ENABLE_GpuQuery)
     GpuInfo::GpuQueryInterface interf;
     gpu_query_error            ec;
     GpuInfo::LoadDefaultGpuQuery(interf, ec);
@@ -665,6 +675,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         for(auto dev : GpuInfo::GpuQueryView(interf))
             cDebug("Video memory: {0}:{1}", dev.mem().total, dev.mem().free);
     }
+#endif
 
     /* We query the current pipeline for possible uniform/texture/buffer values
      */
@@ -683,7 +694,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
     params->build_state();
 
-    g.pipeline = &params->pipeline();
+    g.pipeline = params->pipeline_ptr();
 
     cVerbose("Acquire and set shader uniforms");
 
@@ -692,10 +703,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     {
         GLM::RenderPass pass;
 
-        pass.pipeline    = &params->pipeline();
-        pass.blend       = &g.blendstate;
-        pass.depth       = &g.deptstate;
-        pass.framebuffer = &GLM::DefaultFramebuffer();
+        pass.pipeline    = params->pipeline_ptr();
+        pass.blend       = g.blendstate;
+        pass.depth       = g.deptstate;
+        pass.framebuffer = GLM::DefaultFramebuffer();
 
         g.call.m_inst = true;
 
@@ -725,10 +736,10 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         DProfContext __("Exclusive context");
         RuntimeQueue::Block(component_task.threadId(), component_task.id(), ec);
 
-        GLM::DefaultFramebuffer().use(FramebufferT::All);
-        GLM::DefaultFramebuffer().clear(0, g.clear_col, 1.);
+        GLM::DefaultFramebuffer()->use(FramebufferT::All);
+        GLM::DefaultFramebuffer()->clear(0, g.clear_col, 1.);
 
-        GLM::MultiDraw(*g.pipeline, g.draws);
+        GLM::MultiDraw(*unwrap_ptr(g.pipeline), g.draws);
 
         RuntimeQueue::Unblock(
             component_task.threadId(), component_task.id(), ec);
@@ -768,4 +779,5 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     Profiler::PopContext();
 
     d->entities.reset();
+    d->g_data = {};
 }

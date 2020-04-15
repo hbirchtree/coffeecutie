@@ -3,7 +3,7 @@
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CMath>
 #include <coffee/core/CProfiling>
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/virtfs/virtualfs.h>
 #include <peripherals/libc/memory_ops.h>
 #include <peripherals/stl/threads/job_system.h>
 
@@ -85,10 +85,7 @@ static u32 VirtRecurseChildren(
  * \return
  */
 static u32 VirtPartitionChildren(
-    node_working_set_t& set,
-    part_slice const&   children,
-    cstring             prefix,
-    u32                 flags = 0)
+    node_working_set_t& set, part_slice children, cstring prefix, u32 flags = 0)
 {
     auto parentIdx = C_FCAST<u32>(set.outNodes.size());
 

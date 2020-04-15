@@ -1,16 +1,14 @@
 #include <platforms/osx/environment.h>
 
-#include <coffee/core/base_state.h>
+#include <platforms/pimpl_state.h>
 
-namespace platform{
-namespace env{
-namespace mac{
-
-using namespace ::Coffee::State;
+namespace platform {
+namespace env {
+namespace mac {
 
 Url EnvironmentF::GetUserData(cstring orgname, cstring appname)
 {
-    auto appData = GetAppData();
+    auto appData = state->GetAppData();
 
     if(!orgname && !appname && appData)
     {
@@ -19,12 +17,12 @@ Url EnvironmentF::GetUserData(cstring orgname, cstring appname)
     }
 
     CString dir = GetVar("HOME");
-    dir = ConcatPath(dir.c_str(),"Library/Application Support");
-    dir = ConcatPath(dir.c_str(),orgname);
-    dir = ConcatPath(dir.c_str(),appname);
+    dir         = ConcatPath(dir.c_str(), "Library/Application Support");
+    dir         = ConcatPath(dir.c_str(), orgname);
+    dir         = ConcatPath(dir.c_str(), appname);
     return constructors::MkUrl(dir, RSCA::SystemFile);
 }
 
-}
-}
-}
+} // namespace mac
+} // namespace env
+} // namespace platform

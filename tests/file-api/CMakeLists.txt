@@ -10,7 +10,6 @@ coffee_add_test ( Unit_File_Mapping01 "Cu_FileMap" test02.cpp Core )
 
 # Testing anonymous buffers for memory allocation
 #  can be more efficient that malloc() on some systems
-coffee_add_test ( Unit_File_Scratch01 "Cu_FileScratchBuf" test03.cpp Core )
 
 if(NOT SKIP_HIGHMEM_TESTS)
     if(NOT ANDROID AND CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -19,6 +18,8 @@ if(NOT SKIP_HIGHMEM_TESTS)
         #  most likely (unless they have swap space, and tons of it)
         # These tests might not fare well on Windows and <8GB RAM systems
         # TODO: Skip these tests on more low-memory systems
+
+        coffee_add_test ( Unit_File_Scratch01 "Cu_FileScratchBuf" test03.cpp Core )
 
         coffee_add_test ( Unit_File_Write02
             "Cu_FileMassiveWrite" test04.cpp Core )
@@ -40,8 +41,14 @@ coffee_test (
     TARGET Unit_Url01
     TITLE "Cu_FileUrl"
     SOURCES test10.cpp
-    LIBRARIES Core ASIO
+    LIBRARIES Core
     )
+
+if(TARGET ASIO)
+    target_link_libraries ( Cu_FileUrl PRIVATE
+        ASIO
+        )
+endif()
 
 coffee_add_test ( Unit_Bytes01 "Cu_Bytes"
     test11.cpp Core

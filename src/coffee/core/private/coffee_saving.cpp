@@ -1,6 +1,7 @@
+#include <coffee/core/coffee_saving.h>
+
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
-#include <coffee/core/coffee_saving.h>
 #include <coffee/core/internal_state.h>
 
 #include <peripherals/stl/string_casting.h>
@@ -54,7 +55,8 @@ void emscripten_callback_load(void* arg, void* data, int size)
     DataStatus* status = C_FCAST<DataStatus*>(arg);
     cDebug("Loaded file");
     if(size <= C_CAST<int>(*status->size))
-        MemCpy(Bytes::From(data, size), Bytes::From(status->ptr, size));
+        MemCpy(
+            Bytes::FromBytes(data, size), Bytes::FromBytes(status->ptr, size));
     status->status = 1;
 }
 void emscripten_callback_store(void* arg)

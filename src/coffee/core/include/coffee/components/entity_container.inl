@@ -1,7 +1,27 @@
 #pragma once
 
 #include <coffee/components/entity_container.h>
+#include <coffee/components/entity_reference.h>
+#include <coffee/components/service_query.h>
 #include <coffee/components/visitor.h>
+
+#include <platforms/stacktrace.h>
+
+#define ENT_TYPE_NAME(var) \
+    platform::env::Stacktracer::DemangleSymbol(typeid(var).name())
+
+#define ENT_DBG_TYPE(flag, prefix, var)        \
+    if(debug_flags & flag)                     \
+    {                                          \
+        CString dbg;                           \
+        (dbg += prefix) += ENT_TYPE_NAME(var); \
+        cDebug(dbg.c_str());                   \
+    }
+
+namespace Coffee {
+
+extern void cDebug(cstring f);
+}
 
 namespace Coffee {
 namespace Components {
@@ -78,10 +98,10 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
             auto new_start = it1 + 1;
             auto it2 = std::find_if(new_start, visitors.end(), is_mainthread);
 
-#if MODE_DEBUG
-            if(it1 == it2)
-                Throw(undefined_behavior("incorrect grouping"));
-#endif
+            if constexpr(compile_info::debug_mode)
+                if(it1 == it2)
+                    Throw(undefined_behavior("incorrect grouping"));
+
             if(it2 == visitors.end())
                 break;
 
@@ -104,11 +124,23 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     for(auto i : Range<>(neigh_size))
     {
         unique_rows.insert(Vector<bool>(
-            neighbor_matrix.begin() + C_FCAST<ssize_t>(neigh_size * i),
-            neighbor_matrix.begin() + C_FCAST<ssize_t>(neigh_size * (i + 1))));
+            neighbor_matrix.begin() + C_FCAST<ptroff>(neigh_size * i),
+            neighbor_matrix.begin() + C_FCAST<ptroff>(neigh_size * (i + 1))));
     }
 
     return unique_rows;
+}
+
+FORCEDINLINE SubsystemBase* pointer_extract(
+    Pair<const type_hash, UqPtr<SubsystemBase>> const& sub)
+{
+    return sub.second.get();
+}
+
+FORCEDINLINE bool subsystem_sort(
+    SubsystemBase const* s1, SubsystemBase const* s2)
+{
+    return s1->priority < s2->priority;
 }
 
 } // namespace detail
@@ -119,17 +151,47 @@ void EntityContainer::exec()
     time_point     time_now = clock::now();
     ContainerProxy proxy(*this);
 
-    for(auto& subsys : subsystems)
-        subsys.second->start_frame(proxy, time_now);
+    Vector<SubsystemBase*> subsystems_;
+    subsystems_.reserve(subsystems.size());
 
-    /* TODO: Put visitors in buckets according to what data they access */
-    for(auto const& visitor : visitors)
+    std::transform(
+        std::cbegin(subsystems),
+        std::cend(subsystems),
+        std::back_inserter(subsystems_),
+        detail::pointer_extract);
+
+    std::sort(subsystems_.begin(), subsystems_.end(), detail::subsystem_sort);
+
+    for(auto& subsys_ptr : subsystems_)
     {
-        visitor->dispatch(*this, time_now);
+        auto& subsys = *subsys_ptr;
+
+        if constexpr(compile_info::debug_mode)
+            ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
+
+        subsys.start_frame(proxy, time_now);
     }
 
-    for(auto& subsys : subsystems)
-        subsys.second->end_frame(proxy, time_now);
+    /* TODO: Put visitors in buckets according to what data they access */
+    for(auto const& visitor_ptr : visitors)
+    {
+        auto& visitor = *visitor_ptr;
+
+        if constexpr(compile_info::debug_mode)
+            ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
+
+        visitor.dispatch(*this, time_now);
+    }
+
+    for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
+    {
+        auto& subsys = *(*it);
+
+        if constexpr(compile_info::debug_mode)
+            ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
+
+        subsys.end_frame(proxy, time_now);
+    }
 }
 
 FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()
@@ -154,5 +216,93 @@ FORCEDINLINE void EntityContainer::register_component(
     components.emplace(type_id, std::move(c));
 }
 
+template<typename ServiceType, typename SubsystemType>
+struct service_test
+{
+    template<typename T>
+    struct dynamic_test
+    {
+        void operator()(SubsystemType* sub)
+        {
+            C_PTR_CHECK_MSG(
+                C_DCAST<typename T::type>(sub), "service cast mismatch");
+        }
+    };
+
+    void check_subsystems(SubsystemType* sub)
+    {
+        type_list::for_each<typename ServiceType::services, dynamic_test>(sub);
+    }
+};
+
+template<typename ServiceType, typename SubsystemType>
+void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
+{
+    static_assert(std::is_same<type_hash, size_t>::value, "Mismatched types");
+
+    auto types = type_list::collect_list<typename ServiceType::services>();
+
+    if constexpr(compile_info::debug_mode)
+        service_test<ServiceType, SubsystemType>().check_subsystems(subsystem);
+
+    for(type_hash v : types)
+    {
+        services.insert({v, subsystem});
+    }
+}
+
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity& entity)
+{
+    return EntityRef<EntityContainer>(entity.id, this);
+}
+
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(u64 entity)
+{
+    return EntityRef<EntityContainer>(entity, this);
+}
+
+template<typename ComponentTag>
+ComponentRef<EntityContainer, ComponentTag> EntityContainer::ref_comp(
+    u64 entity)
+{
+    return ComponentRef<EntityContainer, ComponentTag>(entity, this);
+}
+
+template<typename Service>
+ServiceRef<Service> EntityContainer::service_ref()
+{
+    return ServiceRef<Service>(this);
+}
+
+template<class BaseType, bool Reversed>
+quick_container<service_query<BaseType, Reversed>> EntityContainer::
+    services_with()
+{
+    using query_type = service_query<BaseType, Reversed>;
+
+    return {[this]() {
+                return query_type(
+                    *this, typename query_type::begin_iterator_t());
+            },
+            [this]() {
+                return query_type(*this, typename query_type::end_iterator_t());
+            }};
+}
+
+template<class BaseType>
+auto EntityContainer::services_with(reverse_query_t)
+{
+    return services_with<BaseType, true>();
+}
+
+FORCEDINLINE EntityContainer& SubsystemBase::get_container(
+    SubsystemBase::ContainerProxy& proxy)
+{
+    return proxy.m_container;
+}
+
 } // namespace Components
 } // namespace Coffee
+
+#undef ENT_DBG_TYPE
+#undef ENT_TYPE_NAME

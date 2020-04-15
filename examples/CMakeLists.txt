@@ -9,17 +9,21 @@
 
 add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
-add_subdirectory (core/gpu-query)
+
+if(BUILD_GRAPHICS_COMMON AND NOT NO_DYNAMIC_LINKING)
+    add_subdirectory (core/gpu-query)
+endif()
 
 if(NOT LOWFAT_BUILD)
     add_subdirectory (components)
+    add_subdirectory (gleam/comp_app)
 endif()
 
 # ASIO examples, we leave this as core
 if(BUILD_ASIO)
-    add_subdirectory(asio/base-client)
+#    add_subdirectory(asio/base-client)
 #    add_subdirectory(asio/base-server)
-    add_subdirectory(asio/irc-client)
+#    add_subdirectory(asio/irc-client)
 endif()
 
 # Not going to say.
@@ -32,7 +36,7 @@ endif()
 # SDL2
 #
 
-if(BUILD_SDL2)
+if(BUILD_SDL2 AND FALSE)
     # Sprite rendering with SDL2
     add_subdirectory(sdl_sprite/base-test)
     # Joystick visualizer

@@ -1,10 +1,13 @@
 #include <platforms/profiling.h>
 
+#include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/datastorage/text/json/cjsonparser.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/file.h>
 #include <rapidjson/filewritestream.h>
+
+#include <coffee/core/profiler/profiling-export.h>
 
 #include <coffee/strings/libc_types.h>
 
@@ -13,22 +16,24 @@
 namespace platform {
 namespace profiling {
 
-using namespace DataStorage::TextStorage::RJSON;
+using namespace ::Coffee::DataStorage::TextStorage::RJSON;
 using namespace ::platform::file;
 
-#if !defined(COFFEE_DISABLE_PROFILER)
 static constexpr cstring event_format =
     R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
 )";
 
-struct JsonProfileWriter : State::GlobalState
+struct JsonProfileWriter : GlobalState
 {
     JsonProfileWriter(Url outputProfile)
     {
+        if constexpr(!compile_info::profiler::enabled)
+            return;
+
         /* We keep a reference to this pointer in order to extend its lifespan.
          * In the destructor we need it for finalizing the thread names. */
-        threadState = State::PeekState("threadNames");
-        appData = State::GetAppData();
+        threadState = state->PeekState("threadNames");
+        appData     = state->GetAppData();
         if(!threadState)
             Throw(undefined_behavior("thread naming is not initialized!"));
 
@@ -49,7 +54,7 @@ struct JsonProfileWriter : State::GlobalState
     }
 
     FileFun::FileHandle            logfile;
-    ShPtr<State::GlobalState>      threadState;
+    ShPtr<GlobalState>             threadState;
     ShPtr<platform::info::AppData> appData;
     AtomicUInt64                   event_count;
 
@@ -58,31 +63,58 @@ struct JsonProfileWriter : State::GlobalState
 
 JsonProfileWriter::~JsonProfileWriter()
 {
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
     FileFun::file_error ec;
 
-    auto thread_names = Strings::fmt(
+    auto thread_name = Coffee::Strings::fmt(
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
         appData ? appData->application_name : "Coffee App");
+    FileFun::Write(logfile, Bytes::CreateString(thread_name.c_str()), ec);
+    C_ERROR_CHECK(ec);
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
-        thread_names += Strings::fmt(
+        thread_name = Coffee::Strings::fmt(
             R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",
             thread.first,
             thread.second);
+        FileFun::Write(logfile, Bytes::CreateString(thread_name.c_str()), ec);
+        C_ERROR_CHECK(ec);
     }
 
-    FileFun::Write(logfile, Bytes::CreateString(thread_names.c_str()), ec);
+    FileFun::Write(logfile, Bytes::CreateString(R"({}],)"), ec);
+    C_ERROR_CHECK(ec);
 
-    FileFun::Write(logfile, Bytes::CreateString(R"({}]})"), ec);
+    CString chromeInfo;
+    Coffee::Profiling::ExportChromeTracerData(chromeInfo);
+
+    if(auto idx = chromeInfo.find(R"(,"traceEvents")"); idx != CString::npos)
+    {
+        chromeInfo.resize(idx);
+    }
+
+    /* Okay, this is a stupid thing to do, but here goes:
+     *  - Here we skip the opening { such that we may merge it with the preceding
+     *     object. This lets us plug it into the same model as before.
+     *    This is also more compatible with the Chrome Trace Format.
+     */
+    FileFun::Write(logfile, Bytes::CreateString(chromeInfo.c_str() + 1), ec);
+    C_ERROR_CHECK(ec);
+
+    FileFun::Write(logfile, Bytes::CreateString("}"), ec);
+    C_ERROR_CHECK(ec);
 
     FileFun::Close(std::move(logfile), ec);
+    C_ERROR_CHECK(ec);
 }
-#endif
 
-ShPtr<State::GlobalState> CreateJsonProfiler()
+ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+    if constexpr(!compile_info::profiler::enabled)
+        return {};
+
     auto profile = constructors::MkUrl("profile.json", RSCA::TempFile);
 
     FileFun::file_error ec;
@@ -91,16 +123,15 @@ ShPtr<State::GlobalState> CreateJsonProfiler()
     C_ERROR_CHECK(ec);
 
     return MkShared<JsonProfileWriter>(profile);
-#else
-    return {};
-#endif
 }
 
 void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 {
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
     using namespace profiling;
 
-#if !defined(COFFEE_DISABLE_PROFILER)
     auto profileData = C_DCAST<JsonProfileWriter>(tdata.writer);
 
     if(!profileData)
@@ -111,21 +142,23 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     switch(point.flags.type)
     {
     case DataPoint::Push:
-        eventType = "B";
+        eventType = point.flags.attrs & DataPoint::Async ? "b" : "B";
         break;
     case DataPoint::Pop:
-        eventType = "E";
+        eventType = point.flags.attrs & DataPoint::Async ? "e" : "E";
         break;
     default:
         break;
     }
 
-    auto thread_name = ThreadGetName(point.tid);
+    auto thread_name = point.flags.attrs & DataPoint::ExplicitThread
+                           ? ThreadGetName(point.tid)
+                           : point.thread_name;
 
-    if(!thread_name.size())
+    if(thread_name.empty())
         thread_name = str::print::pointerify(point.tid);
 
-    auto event = Strings::fmt(
+    auto event = Coffee::Strings::fmt(
         event_format,
         Chrono::duration_cast<Chrono::microseconds>(point.ts).count(),
         point.name,
@@ -142,7 +175,6 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     C_ERROR_CHECK(ec);
 
     profileData->event_count++;
-#endif
 }
 
 } // namespace profiling

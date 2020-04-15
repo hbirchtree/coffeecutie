@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/components/types.h>
+#include <coffee/components/components.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/discord/discord_binding.h>
 
@@ -20,6 +20,8 @@ using Tag = Components::TagType<detail::DiscordData>;
 
 struct Subsystem : Components::Globals::ValueSubsystem<Tag>
 {
+    using tag_type = Tag;
+
     Subsystem(RuntimeQueue* queue, DiscordOptions&& options) :
         m_discordQueue(queue), m_options(std::move(options))
     {

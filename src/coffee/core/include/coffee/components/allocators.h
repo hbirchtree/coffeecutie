@@ -76,6 +76,8 @@ template<
     typename AllocationType = typename ComponentType::type>
 struct VectorContainer : VectorBaseContainer<ComponentType, AllocationType>
 {
+    using container_type = VectorContainer<ComponentType, AllocationType>;
+
     virtual typename ComponentType::type* get(u64 id);
 };
 

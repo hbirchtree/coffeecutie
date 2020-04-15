@@ -7,6 +7,8 @@ allow_fail:
 - env: BUILDVARIANT=testing.linux.lowfat.release
 - env: BUILDVARIANT=testing.linux.release
 - env: BUILDVARIANT=ubuntu.i686.gles
+- env: BUILDVARIANT=gamecube
+- env: BUILDVARIANT=steam.amd64
 branches:
 - build: true
   deploy: true
@@ -21,12 +23,17 @@ makefile_location: toolchain/makers
 name: Coffee
 platforms:
   android:
-  - armv7a.kitkat.gles2
-  - armv8a.nougat.gles3
+  - armv7a.v27
+  - armv7a.v21
+  - armv7a.v19
+  - armv8a.v29
+  - armv8a.v27
   emscripten:
   - wasm
   fedora:
   - amd64
+  gamecube:
+  - .
   ios:
   - x86_64
   osx:
@@ -51,9 +58,9 @@ secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 template_location: toolchain/cmake/Templates
 version:
-  hotfix: 0
+  hotfix: 5
   major: 4
   minor: 4
-  patch: 1
-  release: 1
-versionprefix: automated-release-
+  patch: 12
+  release: 2
+versionprefix: rel-

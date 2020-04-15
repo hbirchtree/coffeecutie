@@ -9,61 +9,37 @@ namespace ASIO {
 
 static const constexpr cstring context_name = "asioContext";
 
-struct ASIO_Worker : State::GlobalState
+struct Worker : State::GlobalState
 {
-    virtual ~ASIO_Worker();
+    virtual ~Worker();
 
-    RuntimeQueue* worker_queue;
-    asio_context  context;
-    u64           runner_task;
+    ShPtr<ASIO::Service> context;
 
     void stop();
 };
 
-STATICINLINE void RunWorker()
+STATICINLINE ShPtr<Worker> GenWorker()
 {
-    auto ptr = State::PeekState(context_name);
+    auto worker = std::dynamic_pointer_cast<Worker>(
+                                    State::PeekState(context_name));
+    if(worker)
+        return worker;
 
-    if(!ptr.get())
-        Throw(implementation_error("asio state not set"));
-
-    ASIO_Worker* worker = C_DCAST<ASIO_Worker>(ptr.get());
-
-    auto work = asio::make_work_guard(worker->context->service);
-    worker->context->service.run();
-}
-
-STATICINLINE ShPtr<ASIO_Worker> GenWorker()
-{
-    if(State::PeekState(context_name).get())
-        return {};
-
-    runtime_queue_error ec;
-    auto queue = RuntimeQueue::CreateNewThreadQueue("::asio net", ec);
-
-    C_ERROR_CHECK(ec);
-
-    auto worker          = MkShared<ASIO_Worker>();
-    worker->worker_queue = queue;
-    worker->context      = service::InitService();
+    worker          = MkShared<Worker>();
+    worker->context = ASIO::InitService();
 
     State::SwapState(context_name, worker);
-
-    auto taskId = RuntimeQueue::QueueImmediate(
-        queue, Chrono::milliseconds(0), RunWorker, ec);
-
-    worker->runner_task = taskId;
 
     return worker;
 }
 
-STATICINLINE asio_context GetContext()
+STATICINLINE ShPtr<ASIO::Service> GetContext()
 {
     auto ptr = State::PeekState(context_name);
     if(!ptr)
         return {};
 
-    ASIO_Worker* worker = C_DCAST<ASIO_Worker>(ptr.get());
+    Worker* worker = C_DCAST<Worker>(ptr.get());
 
     return worker->context;
 }

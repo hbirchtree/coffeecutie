@@ -22,13 +22,13 @@ struct TextureCooker : FileProcessor
     virtual cstring name() const
     {
         return "TextureCooker"
-        #if defined(HAVE_LIBTIFF)
-            "+libtiff"
-        #endif
-        #if defined(HAVE_ETC2COMP)
-            "+etc2comp"
-        #endif
-                ;
+#if defined(HAVE_LIBTIFF)
+               "+libtiff"
+#endif
+#if defined(HAVE_ETC2COMP)
+               "+etc2comp"
+#endif
+            ;
     }
 };
 
@@ -41,7 +41,8 @@ bool StbDecode(
     Bytes&    data,
     Resource& r)
 {
-    return IMG::Load(std::move(r), cmp, bfmt, data, size);
+    Bytes in_data = C_OCAST<Bytes>(r);
+    return IMG::Load(BytesConst(in_data), cmp, bfmt, data, size);
 }
 
 static Map<
@@ -172,8 +173,8 @@ static void CompressTextureSet(
         auto& rawData = files.back().data;
 
         rawData = Bytes::Alloc(sizeof(img) + data.size);
-        MemCpy(Bytes::From(img), rawData.at(0, sizeof(img)));
-        MemCpy(data, rawData.at(sizeof(img)));
+        MemCpy(Bytes::From(img), *rawData.at(0, sizeof(img)));
+        MemCpy(data, *rawData.at(sizeof(img)));
 
         cursor.progress(
             TEXCOMPRESS_API "Exporting raw RGBA for {0}", file.first);

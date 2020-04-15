@@ -22,6 +22,23 @@ struct GLEAM_Query
     query::flags m_type;
 };
 
+struct GLEAM_TimeQuery : GraphicsAPI::TimeQuery<query::flags>, GLEAM_Query
+{
+    GLEAM_TimeQuery() : GLEAM_Query(query::timing::value)
+    {
+    }
+    ~GLEAM_TimeQuery()
+    {
+        dealloc();
+    }
+
+    void begin();
+    void end();
+
+    bool available();
+    u64  result();
+};
+
 struct GLEAM_OccludeQuery : GraphicsAPI::OccludeQuery<query::flags>, GLEAM_Query
 {
     GLEAM_OccludeQuery(query::flags t) : GLEAM_Query(t)
@@ -31,7 +48,7 @@ struct GLEAM_OccludeQuery : GraphicsAPI::OccludeQuery<query::flags>, GLEAM_Query
     void begin();
     void end();
 
-    i64  resulti();
+    i64 resulti();
     u64 resultu();
 };
 

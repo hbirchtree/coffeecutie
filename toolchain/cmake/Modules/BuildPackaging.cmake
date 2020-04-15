@@ -84,7 +84,8 @@ function(COFFEE_APPLICATION)
 
     # These define and create LICENSE_FILE and APPLICATION_INFO_FILE
     coffee_gen_licenseinfo("${APP_TARGET}" "${APP_BUNDLE_LICENSES}")
-    coffee_gen_applicationinfo("${APP_TARGET}"
+    coffee_gen_applicationinfo(
+        "${APP_TARGET}"
         "${APP_TITLE}"
         "${APP_COMPANY}"
         "${APP_VERSION_CODE}"
@@ -152,6 +153,8 @@ function(COFFEE_APPLICATION)
             DESTINATION
             "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
+
+        # TODO: Add use of Path key to desktop file
 
         file ( WRITE "${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}.desktop"
 "[Desktop Entry]
@@ -229,6 +232,19 @@ StartupWMClass=${APP_TARGET}
             )
     endif()
 
+    set_target_properties ( ${APP_TARGET} PROPERTIES
+        APP_TITLE "${APP_TITLE}"
+        APP_COLOR "#E91E63"
+        APP_INFO_STRING "${APP_INFO_STRING}"
+        APP_COPYRIGHT "${APP_COPYRIGHT}"
+        APP_COMPANY "${APP_COMPANY}"
+        APP_VERSION_INT "${APP_VERSION_CODE}"
+        APP_VERSION_STR "${COFFEE_BUILD_STRING}"
+        ICON_SOURCE "${ICON_ASSET}"
+        PKG_NAME "${APP_PACKAGE_PREFIX}.${APP_TARGET}"
+        IS_GAME "true"
+        )
+
     target_compile_definitions ( ${APP_TARGET}
         PRIVATE
         -DCOFFEE_COMPONENT_NAME="${APP_TARGET}"
@@ -236,6 +252,7 @@ StartupWMClass=${APP_TARGET}
         )
 
     target_enable_cxx11(${APP_TARGET})
+    target_enable_lto(${APP_TARGET})
 
     set ( CORE_APP_LIB Coffee::CoreApplication )
 

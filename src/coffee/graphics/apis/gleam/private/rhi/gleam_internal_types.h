@@ -2,6 +2,7 @@
 
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_query_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
 
 #define GLM_API "GLEAM_API::"
@@ -21,7 +22,7 @@ using CGL43 = CGL::CGLES20;
 
 using namespace CGL;
 
-extern GLEAM_DataStore* m_store;
+extern UqPtr<GLEAM_DataStore> m_store;
 
 struct GLEAM_PboQueue
 {
@@ -49,9 +50,23 @@ struct GLEAM_Instance_Data
         GL_CACHED.NUM_PROGRAM_BINARY_FORMATS = -1;
     }
 
+    ~GLEAM_Instance_Data()
+    {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    GLEAM_PboQueue pboQueue;
+        for(auto const& pbo : pboQueue.buffers)
+            CGL33::BufFree(pbo.buf);
 #endif
+    }
+
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    GLEAM_PboQueue                 pboQueue;
+    Vector<ShPtr<GLEAM_TimeQuery>> queries;
+#endif
+
+#if GL_VERSION_VERIFY(0x400, 0x310)
+    ShPtr<GLEAM_IndirectBuffer> indirectBuf;
+#endif
+
     struct
     {
         i32 NUM_PROGRAM_BINARY_FORMATS;
@@ -81,7 +96,7 @@ inline APILevel gl_level_from_string(CString const& str)
     else
         return GL_Nothing;
 }
-}
+} // namespace GLEAM
 } // namespace RHI
 } // namespace Coffee
 

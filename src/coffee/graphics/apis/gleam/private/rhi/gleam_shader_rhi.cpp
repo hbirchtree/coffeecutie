@@ -103,10 +103,11 @@ STATICINLINE CString StringExtractLine(CString& shader, cstring query)
 }
 
 STATICINLINE void TransformShader(
-    Bytes const&     inputShader,
-    ShaderStage      stage,
-    Vector<CString>& shaderStorage,
-    Vector<cstring>& shaderSrcVec)
+    Bytes const&                   inputShader,
+    ShaderStage                    stage,
+    Vector<CString>&               shaderStorage,
+    Vector<cstring>&               shaderSrcVec,
+    GLEAM_Shader::Constants const& constants)
 {
     CString transformedShader;
     /* Because the original shader may not be null-terminated, we do
@@ -214,6 +215,11 @@ STATICINLINE void TransformShader(
 )");
     }
 
+    for(auto const& constant : constants)
+        shaderStorage.push_back(
+            "#define " + constant.first + " " +
+            str::convert::to_string(constant.second));
+
     shaderStorage.push_back(transformedShader);
 
     auto directiveEnd = shaderStorage.size() - 1;
@@ -264,7 +270,7 @@ STATICINLINE bool translate_sampler_type(tex::flag& samplerType, u32 m_flags)
     }
 }
 
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x330, 0x310) && !defined(COFFEE_WEBGL)
 STATICINLINE void ProgramInputGet(
     glhnd const&                    hnd,
     ShaderStage                     stages,
@@ -316,7 +322,10 @@ STATICINLINE void ProgramInputGet(
 #endif
 
 bool GLEAM_Shader::compile(
-    ShaderStage stage, const Bytes& data, gleam_error& ec)
+    ShaderStage      stage,
+    const Bytes&     data,
+    gleam_error&     ec,
+    Constants const& constants)
 {
     if(data.size == 0)
     {
@@ -334,7 +343,7 @@ bool GLEAM_Shader::compile(
     Vector<cstring> shaderSrcVec  = {};
     Vector<CString> shaderStorage = {};
 
-    TransformShader(data, stage, shaderStorage, shaderSrcVec);
+    TransformShader(data, stage, shaderStorage, shaderSrcVec, constants);
 
     if(!GLEAM_FEATURES.separable_programs)
     {
@@ -704,7 +713,7 @@ void GetShaderUniforms(
 
     using namespace ShaderTypes;
 
-    if(!GLEAM_FEATURES.separable_programs)
+    if(!GLEAM_FEATURES.separable_programs || GLEAM_FEATURES.webgl)
     {
         /* Does not differentiate between shader stages and
          *  their uniforms */
@@ -761,6 +770,7 @@ void GetShaderUniforms(
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
         /* Get uniforms buffers */
+        if(uniforms)
         {
             i32 num_blocks  = 0;
             i32 max_namelen = 0;
@@ -798,8 +808,8 @@ void GetShaderUniforms(
                     GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
                     &unifIndices.at(0));
 
-                Throw(implementation_error(
-                    GLM_API "Uniform block handling not implemented"));
+//                Throw(implementation_error(
+//                    GLM_API "Uniform block handling not implemented"));
             }
         }
 #endif
@@ -847,7 +857,7 @@ void GetShaderUniforms(
             }
         }
     }
-#if GL_VERSION_VERIFY(0x430, 0x310)
+#if GL_VERSION_VERIFY(0x430, 0x310) && !defined(COFFEE_WEBGL)
     else if(GLEAM_FEATURES.separable_programs)
     {
         enum GL_PROP_IDX

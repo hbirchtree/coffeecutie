@@ -28,6 +28,8 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
+UqPtr<GLEAM_DataStore> m_store;
+
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 using GLC = CGL33;
 #else
@@ -120,10 +122,15 @@ void InstanceDataDeleter::operator()(GLEAM_Instance_Data* p)
     delete p;
 }
 
-static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
+static bool SetAPIVersion(
+    GLEAM_API::DataStore const& store,
+    APILevel&                   systemLevel,
+    GLEAM_API::OPTS const&      opts)
 {
     cVerbose(10, GLM_API "Getting GL context version");
     auto ver = CGL::Debug::ContextVersion();
+
+    cVerbose(11, GLM_API "Got version {0}", ver);
 
     cVerbose(10, GLM_API "Matching GL API...");
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
@@ -202,7 +209,7 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    if(Extensions::SRGB_Supported(store->inst_data->dbgContext))
+    if(Extensions::SRGB_Supported(store->inst_data->dbgContext) && opts.srgb)
     {
         cVerbose(6, GLM_API "Enabling SRGB color for framebuffers");
         CGL33::Enable(Feature::FramebufferSRGB);
@@ -214,10 +221,39 @@ static bool SetAPIVersion(GLEAM_API::DataStore store, APILevel& systemLevel)
         GLM_API "Initialized API level {0}",
         stl_types::str::print::pointerify(store->CURR_API));
 
+#if !MODE_LOWFAT
+    using DBG = CGL::Debug;
+    using LIM = CGL_Shared_Limits;
+
+    ExtraData::Add(
+        "glsl:version", Strings::to_string(DBG::ShaderLanguageVersion()));
+    ExtraData::Add("gl:version", Strings::to_string(DBG::ContextVersion()));
+    ExtraData::Add("gl:driver", DBG::ContextVersion().driver);
+    {
+        auto device = DBG::Renderer();
+        auto renderer      = platform::info::HardwareDevice(
+            device.manufacturer, device.model, {});
+        ExtraData::Add("gl:renderer", Strings::to_string(renderer));
+    }
+    ExtraData::Add("gl:vendor", DBG::Renderer().manufacturer);
+
+    CString props = {};
+    for(auto i : Range<u32>(LIM::Max_Property))
+        if(auto name = LIM::MaxName(i); name)
+        {
+            props += LIM::MaxName(i);
+            props += "=";
+            props += Strings::to_string(LIM::Max(i));
+            props += ",";
+        }
+    ExtraData::Add("gl:limits", props);
+    ExtraData::Add("gl:extensions", store->inst_data->dbgContext.extensionList);
+#endif
+
     return true;
 }
 
-static void ConstructContextObjects(GLEAM_API::DataStore store)
+static void ConstructContextObjects(GLEAM_API::DataStore const& store)
 {
 #if GL_VERSION_VERIFY(0x330, 0x300)
     do
@@ -246,7 +282,7 @@ static void ConstructContextObjects(GLEAM_API::DataStore store)
 #endif
 }
 
-static void SetAPIFeatures(GLEAM_API::DataStore store)
+static void SetAPIFeatures(GLEAM_API::DataStore const& store)
 {
     auto api        = store->CURR_API;
     bool is_desktop = APILevelIsOfClass(api, APIClass::GLCore);
@@ -301,7 +337,7 @@ static void SetAPIFeatures(GLEAM_API::DataStore store)
         !is_desktop || (is_desktop && store->CURR_API < GL_4_5);
 }
 
-static void SetExtensionFeatures(GLEAM_API::DataStore store)
+static void SetExtensionFeatures(GLEAM_API::DataStore const& store)
 {
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
 //    if(store->features.qcom_tiling)
@@ -319,10 +355,15 @@ static void SetExtensionFeatures(GLEAM_API::DataStore store)
         Extensions::DirectStateSupported(store->inst_data->dbgContext);
 
 #endif
+#if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
+    store->features.anisotropic =
+        Extensions::AnisotropicSupported(store->inst_data->dbgContext) ||
+        Extensions::AnisotropicExtSupported(store->inst_data->dbgContext);
+#endif
 }
 
 static void SetCompatibilityFeatures(
-    GLEAM_API::DataStore store, bool forced_api)
+    GLEAM_API::DataStore const& store, bool forced_api)
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(forced_api && store->CURR_API < GL_4_5 && store->CURR_API < GLES_MIN)
@@ -380,14 +421,14 @@ bool GLEAM_API::LoadAPI(
     }
 #endif
 
+    Debug::GetExtensions(store->inst_data->dbgContext);
+
     APILevel systemLevel;
-    SetAPIVersion(store, systemLevel);
+    SetAPIVersion(store, systemLevel, options);
 
     bool forced_api = (store->CURR_API != systemLevel);
 
     ConstructContextObjects(store);
-
-    Debug::GetExtensions(store->inst_data->dbgContext);
 
     /* First, check if an extension is available for behavior */
     if(!Env::ExistsVar("GLEAM_DISABLE_EXTENSIONS"))
@@ -397,9 +438,9 @@ bool GLEAM_API::LoadAPI(
     /* Disable features when emulating lower API levels */
     SetCompatibilityFeatures(store, forced_api);
 
-    m_store = store;
+    m_store = std::move(store);
 
-    DefaultFramebuffer().size();
+    DefaultFramebuffer()->size();
 
     GLC::Enable(Feature::Culling);
     GLC::CullFace(Face::Back);
@@ -411,12 +452,38 @@ bool GLEAM_API::LoadAPI(
         CGL::Debug::UnsetDebugGroup();
 #endif
 
+#if GL_VERSION_VERIFY(0x300, 0x300)
+    if(m_store->CURR_API != APILevel::GLES_2_0)
+    {
+        m_store->inst_data->queries.push_back(MkShared<GLEAM_TimeQuery>());
+        m_store->inst_data->queries.at(0)->alloc();
+    }
+#endif
+
+#if GL_VERSION_VERIFY(0x400, 0x310)
+    if(GLEAM_FEATURES.draw_multi_indirect ||
+       m_store->CURR_API > APILevel::GL_4_3)
+    {
+        m_store->inst_data->indirectBuf =
+            MkShared<GLEAM_IndirectBuffer>(RSCA::ReadOnly);
+        m_store->inst_data->indirectBuf->alloc();
+    }
+#endif
+
+#if MODE_DEBUG
+    m_store->debug_drawer = MkUq<GLEAM_Quad_Drawer>();
+#endif
+
+    ThreadSetName(0x8085, "OpenGL GPU-0");
+
     return true;
 }
 
 bool GLEAM_API::UnloadAPI()
 {
-    m_store = nullptr;
+    m_store->inst_data.reset();
+    m_store->debug_drawer.reset();
+    m_store.reset();
     return true;
 }
 
@@ -426,9 +493,8 @@ GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI(GLEAM_API::OPTS const& options)
 {
     cVerbose(8, GLM_API "Returning GLEAM loader...");
     return [=](bool debug = false) {
-        static GLEAM_DataStore m_gleam_data = {};
         cVerbose(8, GLM_API "Running GLEAM loader");
-        return LoadAPI(&m_gleam_data, debug, options);
+        return LoadAPI(MkUq<GLEAM_DataStore>(), debug, options);
     };
 }
 
@@ -439,13 +505,6 @@ bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
 
 void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
 {
-    {
-        if(rstate.dither())
-            GLC::Enable(Feature::Dither);
-        else
-            GLC::Disable(Feature::Dither);
-    }
-
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
     GLC::PolygonMode(
         Face::Both,
@@ -460,11 +519,7 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
     }
 #endif
 
-    //    CGL33::ColorLogicOp(rstate.colorOp());
-    //    if(!GLEAM_FEATURES.draw_color_mask)
-    //        GLC::ColorMask(rstate.colorMask());
-    //    else
-    //        GLC::ColorMaski(i, rstate.colorMask());
+    GLC::PolygonOffset(1, rstate.polyOffset());
 
     if(rstate.culling())
     {
@@ -476,7 +531,6 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
 
 void GLEAM_API::GetRasterizerState(GLEAM_API::RASTSTATE& rstate)
 {
-    rstate.m_dither = GLC::IsEnabled(Feature::Dither);
 #if GL_VERSION_VERIFY(0x300, 0x320)
     rstate.m_discard = GLC::IsEnabled(Feature::RasterizerDiscard);
 #endif
@@ -583,7 +637,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
         {
             auto   sview = vstate.view(0);
             Rect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Viewport(tview.x, tview.y, tview.size().convert<i32>());
+            GLC::Viewport(tview.x, tview.y, tview.size().convert<u32>());
         }
         if(vstate.m_depth.size() > 0)
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
@@ -595,7 +649,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
         {
             auto   sview = vstate.scissor(0);
             Rect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Scissor(tview.x, tview.y, tview.size().convert<i32>());
+            GLC::Scissor(tview.x, tview.y, tview.size().convert<u32>());
             GLC::Enable(Feature::ScissorTest);
         } else
             GLC::Disable(Feature::ScissorTest);
@@ -606,14 +660,17 @@ void GLEAM_API::GetViewportState(GLEAM_API::VIEWSTATE& vstate, u32 i)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     CGL33::IntegerGeti_v(GL_VIEWPORT, i, vstate.m_view.at(0).data);
-    CGL33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
+    if(CGL33::IsEnabled(Feature::ScissorTest))
+        CGL33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
+    else
+        vstate.m_scissor.clear();
 #else
     CGL33::IntegerGetv(GL_VIEWPORT, vstate.m_view.at(0).data);
     CGL33::IntegerGetv(GL_SCISSOR_BOX, vstate.m_scissor.at(0).data);
 #endif
 
     typing::graphics::field<scalar> tmp_field;
-    CGL33::ScalarfGetv(GL_SCISSOR_BOX, tmp_field.data);
+    CGL33::ScalarfGetv(GL_DEPTH_RANGE, tmp_field.data);
     vstate.m_depth.at(0) = tmp_field.convert<bigscalar>();
 }
 
@@ -641,7 +698,10 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
     {
         if(!GLEAM_FEATURES.draw_buffers_blend)
         {
-            if(bstate.additive())
+            if(bstate.m_lighten)
+            {
+                GLC::BlendFunc(GL_ONE, GL_ONE);
+            } else if(bstate.additive())
             {
                 GLC::BlendFunc(GL_SRC_ALPHA, GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
@@ -651,7 +711,10 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
         else if(GLEAM_FEATURES.draw_buffers_blend)
         {
-            if(bstate.additive())
+            if(bstate.m_lighten)
+            {
+                GLC::BlendFunc(GL_ONE, GL_ONE);
+            } else if(bstate.additive())
             {
                 CGL43::BlendFunci(i, GL_SRC_ALPHA, GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
@@ -661,6 +724,14 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
             }
         }
 #endif
+    }
+
+    if(bstate.sampleAlphaCoverage())
+    {
+        CGL33::Enable(Feature::SampleAlphaToCoverage);
+    } else
+    {
+        CGL33::Disable(Feature::SampleAlphaToCoverage);
     }
 
     /*TODO: Add more advanced blending options*/
@@ -674,7 +745,7 @@ void GLEAM_API::GetBlendState(GLEAM_API::BLNDSTATE& bstate, u32 i)
     {
         bstate.m_doBlend = GLC::IsEnabled(Feature::Blend);
     }
-#if GL_VERSION_VERIFY(0x300, 0x300)
+#if GL_VERSION_VERIFY(0x300, 0x320)
     else
     {
         bstate.m_doBlend = GLC::IsEnabledi(Feature::Blend, i);
@@ -748,7 +819,7 @@ void GLEAM_API::GetStencilState(GLEAM_API::STENSTATE& sstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
         sstate.m_test = GLC::IsEnabled(Feature::StencilTest);
-#if GL_VERSION_VERIFY(0x300, 0x300)
+#if GL_VERSION_VERIFY(0x300, 0x320)
     else
         sstate.m_test = GLC::IsEnabledi(Feature::StencilTest, i);
 #endif
@@ -780,7 +851,7 @@ void GLEAM_API::DisposePixelBuffers()
 #endif
 }
 
-GLEAM_API::FB_T& GLEAM_API::DefaultFramebuffer()
+ShPtr<GLEAM_API::FB_T> GLEAM_API::DefaultFramebuffer()
 {
     return m_store->DefaultFramebuffer;
 }
@@ -848,6 +919,8 @@ std::string api_error::message(int error_code) const
         return "Unimplemented rendering path";
     case APIError::GeneralError:
         return "General error";
+    case APIError::NoData:
+        return "No data provided";
     case APIError::None:
         return "No error";
     }
@@ -863,7 +936,6 @@ cstring to_string(RHI::GLEAM::APILevel lev)
 {
     using LEV = RHI::GLEAM::APILevel;
 
-#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     switch(lev)
     {
     case LEV::GL_3_3:
@@ -874,12 +946,7 @@ cstring to_string(RHI::GLEAM::APILevel lev)
         return "Desktop GL 4.5";
     case LEV::GL_4_6:
         return "Desktop GL 4.6";
-    default:
-        break;
-    }
-#else
-    switch(lev)
-    {
+
     case LEV::GLES_2_0:
         return "GL ES 2.0";
     case LEV::GLES_3_0:
@@ -889,7 +956,6 @@ cstring to_string(RHI::GLEAM::APILevel lev)
     default:
         break;
     }
-#endif
 
     return "?";
 }

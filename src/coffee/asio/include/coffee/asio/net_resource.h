@@ -26,13 +26,15 @@ FORCEDINLINE bool Supported()
 
 struct Resource : semantic::ByteProvider
 {
+    using net_buffer = Vector<u8>;
+
   private:
-    Url                m_resource;
-    ASIO::asio_context m_ctxt;
+    Url                  m_resource;
+    ShPtr<ASIO::Service> m_ctxt;
 #if defined(ASIO_USE_SSL)
-    UqPtr<TCP::SSLSocket> ssl;
+    UqPtr<net::tcp::ssl_socket> ssl;
 #endif
-    UqPtr<TCP::Socket> normal;
+    UqPtr<net::tcp::raw_socket> normal;
 
     http::request_t  m_request;
     http::response_t m_response;
@@ -44,11 +46,11 @@ struct Resource : semantic::ByteProvider
     void initRsc(Url const& url);
     void close();
 
-    void readResponseHeader(std::istream& http_istream);
-    void readResponsePayload(std::istream& http_istream);
+    void readResponseHeader(net_buffer& buffer, szptr& consumed);
+    void readResponsePayload(net_buffer& buffer);
 
   public:
-    Resource(ASIO::asio_context ctxt, Url const& url);
+    Resource(ShPtr<ASIO::Service> ctxt, Url const& url);
     ~Resource();
 
     C_MOVE_CONSTRUCTOR(Resource);

@@ -1,6 +1,10 @@
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/virtfs/virtualfs.h>
 
-#include <coffee/core/datastorage/compression/libz.h>
+#include <coffee/compression/libz.h>
+
+#if defined(COFFEE_COMPRESS_LZ4)
+#include <coffee/compression/lz4.h>
+#endif
 
 #include "directory_index.h"
 
@@ -27,7 +31,9 @@ std::string vfs_error_category::message(int error_code) const
     case E::EndianMismatch:
         return "Virtual filesystem has incompatible endianness";
     case E::CompressionUnsupported:
-        return "Compression is not supported";
+        return "Compression is not supported, platform policy";
+    case E::UnsupportedCompressionCodec:
+        return "Unsupported compression codec";
     case E::CompressionError:
         return "Error while compressing";
     case E::VersionMismatch:
@@ -138,22 +144,50 @@ bool GenVirtFS(
 #else
                 DProfContext _(VIRTFS_API "Compression worker");
 
-                Compression::error_code comp_ec;
-                Zlib::Compress(in_data, &out_data, {}, comp_ec);
-
-                if(comp_ec)
+                switch(settings.file_codec)
                 {
-                    ec = VFSError::CompressionError;
+#if defined(COFFEE_COMPRESS_LZ4)
+                case compression::codec::lz4:
+                {
+                    lz4::error_code comp_ec;
+                    lz4::compressor::Compress(
+                        in_data,
+                        &out_data,
+                        lz4::compressor::opts::high_comp(9),
+                        comp_ec);
+
+                    break;
+                }
+#endif
+#if defined(COFFEE_WINDOWS)
+                case compression::codec::deflate_ms:
+#else
+                case compression::codec::deflate:
+#endif
+                {
+                    Compression::zlib::error_code comp_ec;
+                    Zlib::Compress(in_data, &out_data, {}, comp_ec);
+
+                    if(comp_ec)
+                    {
+                        ec = VFSError::CompressionError;
+                    }
+                    break;
+                }
+                default:
+                {
+                    ec = VFSError::UnsupportedCompressionCodec;
+                    break;
+                }
                 }
 
-                file.size = out_data.size;
+                file.codec = settings.file_codec;
+                file.size  = out_data.size;
 #endif
             }
         };
         threads::Parallel::Consume(
-            Range<>(filenames.size()),
-            std::move(worker),
-            settings.workers);
+            Range<>(filenames.size()), std::move(worker), settings.workers);
     }
 
     {
@@ -241,7 +275,8 @@ bool GenVirtFS(
         }
         MemCpy(
             srcData,
-            outputView.at(base_fs.data_offset + files[i].offset, srcData.size));
+            *outputView.at(
+                base_fs.data_offset + files[i].offset, srcData.size));
     }
 
     data_arrays.resize(0);
@@ -282,7 +317,7 @@ bool GenVirtFS(
 
             MemClear(extensionData);
 
-            dir_index::CharInsert(
+            C_UNUSED(auto ext) = dir_index::CharInsert(
                 index.first, outIndex.extension.ext, MaxExtensionLength);
             outIndex.extension.num_files = index.second.size();
 
@@ -293,13 +328,13 @@ bool GenVirtFS(
                 index.second.size() * sizeof(index.second[0]));
 
             MemCpy(
-                Bytes::Create(outIndex), Bytes::CreateFrom(*output).at(start));
+                Bytes::Create(outIndex), *Bytes::CreateFrom(*output).at(start));
 
             start += sizeof(VirtualIndex);
 
             MemCpy(
                 Bytes::CreateFrom(index.second),
-                Bytes::CreateFrom(*output).at(start));
+                *Bytes::CreateFrom(*output).at(start));
         }
 
         outputView = Bytes::CreateFrom(*output);
@@ -318,7 +353,7 @@ bool GenVirtFS(
         DProfContext _(VIRTFS_API "Inserting directory index");
 
         auto vfsRef = outputView.as<VFS>().data;
-        auto files  = mem_chunk<const VFile>::From(
+        auto files  = mem_chunk<const VFile>::FromBytes(
             vfsRef->files(), vfsRef->num_files * sizeof(VFile));
 
         dir_index::directory_index_t dirIndex = dir_index::Generate(files);
@@ -327,8 +362,8 @@ bool GenVirtFS(
         output->resize(output->size() + dirIndex.totalSize);
         outputView = Bytes::CreateFrom(*output);
 
-        auto index_ref = outputView.at(prevSize);
-        auto data_ref  = outputView.at(prevSize + sizeof(VirtualIndex));
+        auto index_ref = *outputView.at(prevSize);
+        auto data_ref  = *outputView.at(prevSize + sizeof(VirtualIndex));
 
         MemCpy(Bytes::From(dirIndex.baseIndex), index_ref);
         MemCpy(Bytes::CreateFrom(dirIndex.nodes), data_ref);
@@ -376,14 +411,48 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
 #else
             DProfContext _(VIRTFS_API "Decompressing file");
 
-            Compression::error_code comp_ec;
-            Zlib::Decompress(
-                Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
-
-            if(comp_ec)
+            switch(file->codec)
             {
-                ec = VFSError::CompressionError;
+            case compression::codec::lz4:
+            {
+#if defined(COFFEE_COMPRESS_LZ4)
+                lz4::error_code comp_ec;
+                lz4::compressor::Decompress(
+                    Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
+
+                if(comp_ec)
+                {
+                    ec = VFSError::CompressionError;
+                    return {};
+                }
+                break;
+#else
+                ec = VFSError::UnsupportedCompressionCodec;
                 return {};
+#endif
+            }
+#if defined(COFFEE_WINDOWS)
+            case compression::codec::deflate_ms:
+#else
+            case compression::codec::deflate:
+#endif
+            {
+                Compression::zlib::error_code comp_ec;
+                Zlib::Decompress(
+                    Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
+
+                if(comp_ec)
+                {
+                    ec = VFSError::CompressionError;
+                    return {};
+                }
+                break;
+            }
+            default:
+            {
+                ec = VFSError::UnsupportedCompressionCodec;
+                break;
+            }
             }
 #endif
         } else

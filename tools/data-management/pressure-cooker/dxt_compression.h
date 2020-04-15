@@ -1,7 +1,7 @@
 #pragma once
 
 #include "texture_common.h"
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/virtfs/virtualfs.h>
 #include <coffee/core/resource_prefix.h>
 #include <peripherals/stl/string_casting.h>
 #include <squish.h>

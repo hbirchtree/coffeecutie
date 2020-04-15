@@ -1,19 +1,20 @@
 #pragma once
 
-#include <coffee/core/base.h>
+#include <peripherals/base.h>
 
 #ifdef COFFEE_WINDOWS
 
-#include "../../plat_windows_errors.h"
-#include "../libraries.h"
+#include <peripherals/error/windows.h>
+#include <peripherals/platform/windows.h>
+#include <platforms/base/loader.h>
 
-namespace Coffee {
-namespace Library {
-namespace Windows {
+namespace platform {
+namespace ld {
+namespace win32 {
 
 struct WindowsFunctionLoader : FunctionLoad_def
 {
-    using error_type = Win32::win32_error_code;
+    using error_type = platform::win32::error_code;
 
     static const constexpr cstring LIBRARY_SUFFIX = ".dll";
 
@@ -96,8 +97,8 @@ struct WindowsObjectLoader : ObjectLoader_def<WindowsFunctionLoader>
 
 } // namespace Windows
 
-using FunctionLoader = Windows::WindowsFunctionLoader;
-using ObjectLoader   = Windows::WindowsObjectLoader;
+using FunctionLoader = win32::WindowsFunctionLoader;
+using ObjectLoader   = win32::WindowsObjectLoader;
 
 } // namespace Library
 } // namespace Coffee

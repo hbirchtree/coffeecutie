@@ -2,7 +2,8 @@
 
 #include <peripherals/base.h>
 
-#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_EMSCRIPTEN) || \
+    defined(COFFEE_ANDROID) || defined(COFFEE_GEKKO)
 
 #include <platforms/base/environment.h>
 
@@ -40,7 +41,7 @@ struct EnvironmentF : EnvInterface
     }
     STATICINLINE bool ClearEnv()
     {
-#if !defined(COFFEE_APPLE)
+#if !defined(COFFEE_APPLE) && !defined(COFFEE_GEKKO)
         return clearenv() == 0;
 #endif
         return false;
@@ -70,7 +71,8 @@ struct TerminalColorCodes : EnvColorCodes
 } // namespace posix
 } // namespace env
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
+    defined(COFFEE_GEKKO)
 using ColorMap_ = env::posix::TerminalColorCodes;
 using Env_      = env::posix::EnvironmentF;
 #endif

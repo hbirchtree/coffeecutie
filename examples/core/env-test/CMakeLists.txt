@@ -2,7 +2,7 @@ coffee_application (
     TARGET EnvTest
     TITLE "Environment Data"
     SOURCES main.cpp
-    LIBRARIES Core
+    LIBRARIES Core ComponentApp
     )
 
 if(TARGET ASIO)

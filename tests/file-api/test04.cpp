@@ -28,9 +28,9 @@ bool filewrite_test()
 
     {
         /* Write some data below 4GB mark */
-        MemCpy(Bytes::From(write_data, 100), rscView.at(0, 100));
+        MemCpy(Bytes::From(write_data, 100), *rscView.at(0, 100));
         /* Write data above 4GB mark, requires 64-bit. Fuck 32-bit. */
-        MemCpy(Bytes::From(write_data, 100), rscView.at(4_GB, 100));
+        MemCpy(Bytes::From(write_data, 100), *rscView.at(4_GB, 100));
     }
 
     Profiler::Profile("Copying data into segment");

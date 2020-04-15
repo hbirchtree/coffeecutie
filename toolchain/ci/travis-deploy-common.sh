@@ -1,15 +1,15 @@
 #!/bin/bash
 
-source $(dirname $0)/travis-common.sh
+source $(dirname "$0")/travis-common.sh
 
-[ -z ${BUILDVARIANT} ] && die "No BUILDVARIANT specified"
+[ -z "${BUILDVARIANT}" ] && die "No BUILDVARIANT specified"
 
 #DEPLOY_ASSET="libraries_$BUILDVARIANT.tar.gz"
 #DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
 
 function github_api()
 {
-    if [ -z ${GITHUB_TOKEN} ]; then
+    if [ -z "${GITHUB_TOKEN}" ]; then
         echo "DRY: ${GITHUBPY}" $@
         return
     fi
@@ -19,7 +19,7 @@ function github_api()
 #        $GITHUBPY --api-token ${GITHUB_TOKEN} $@
 #    ;;
     *)
-        python3 ${GITHUBPY} --api-token "${GITHUB_TOKEN}" $@
+        python3 "${GITHUBPY}" --api-token "${GITHUB_TOKEN}" $@
     ;;
     esac
 }
@@ -28,11 +28,11 @@ function get_deploy_slug()
 {
     TARGET_TAG=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)
 
-    [ -z ${TARGET_TAG} ] && die " * Could not find tag, will not deploy"
+    [ -z "${TARGET_TAG}" ] && die " * Could not find tag, will not deploy"
 
     TARGET_RELEASE=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TARGET_TAG$" | cut -d'|' -f 1)
 
-    [ -z ${TARGET_RELEASE} ] && github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Autorelease" "Autorelease"
+    [ -z "${TARGET_RELEASE}" ] && github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Autorelease" "Autorelease"
 
     echo "${TRAVIS_REPO_SLUG}:${TARGET_TAG}"
 }
@@ -41,8 +41,8 @@ function collect_coverage()
 {
     if [[ ${BUILDVARIANT} = "coverage" ]]; then
         SEARCH_DIR=${SOURCE_DIR}/multi_build/coverage
-        mv ${SEARCH_DIR}/coverage.info.cleaned ${SEARCH_DIR}/coverage.info
-        bash <(curl -s https://codecov.io/bash) -X gcov -s ${SEARCH_DIR} || echo "Codecov did not collect coverage reports"
+        mv "${SEARCH_DIR}"/coverage.info.cleaned "${SEARCH_DIR}"/coverage.info
+        bash <(curl -s https://codecov.io/bash) -X gcov -s "${SEARCH_DIR}" || echo "Codecov did not collect coverage reports"
     fi
 }
 

@@ -1,3 +1,7 @@
+option ( BUILD_COMPRESSION_TEST "Run test for compression formats, long test" OFF )
+if(BUILD_COMPRESSION_TEST)
+    add_subdirectory(compression)
+endif()
 add_subdirectory(ini)
 add_subdirectory(save-api)
 add_subdirectory(virtfs)

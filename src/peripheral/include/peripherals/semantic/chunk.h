@@ -46,24 +46,38 @@ struct mem_chunk
             return *this;
         }
 
+        iterator_base operator++(int)
+        {
+            auto cpy = *this;
+            m_idx++;
+            return cpy;
+        }
+
         iterator_base& operator--()
         {
             m_idx--;
             return *this;
         }
 
+        iterator_base operator--(int)
+        {
+            auto cpy = *this;
+            m_idx--;
+            return cpy;
+        }
+
         iterator_base operator+(difference_type inc)
         {
             auto copy = *this;
             copy.m_idx += inc;
-            return *this;
+            return copy;
         }
 
         iterator_base operator-(difference_type inc)
         {
             auto copy = *this;
             copy.m_idx -= inc;
-            return *this;
+            return copy;
         }
 
         iterator_base& operator+=(difference_type inc)
@@ -97,7 +111,7 @@ struct mem_chunk
         {
 #if MODE_DEBUG
             if(m_idx > m_chunk->elements)
-                Throw(std::out_of_range("index out of bounds"));
+                Throw(std::out_of_range(BYTE_API "index out of bounds"));
 #endif
             return m_chunk->data[m_idx];
         }
@@ -130,8 +144,13 @@ struct mem_chunk
     }
 
     FORCEDINLINE
-    mem_chunk(T* data, size_type size, size_type elements) :
-        data(data), size(size), elements(elements)
+    mem_chunk(
+        T*        data,
+        size_type size,
+        size_type elements,
+        RSCA      access = RSCA::ReadOnly) :
+        data(data),
+        size(size), elements(elements), m_access(access)
     {
 #if MODE_DEBUG
         if((size && !data) || (size && !elements) || (!size && data))
@@ -145,14 +164,14 @@ struct mem_chunk
             !std::is_void<typename std::remove_cv<T>::type>::value,
             Dummy>::type* = nullptr>
     FORCEDINLINE mem_chunk(T& value) :
-        data(&value), size(sizeof(T)), elements(1)
+        data(&value), size(sizeof(T)), elements(1), m_access(RSCA::ReadWrite)
     {
     }
 
     FORCEDINLINE
     mem_chunk(stl_types::Vector<T>& array) :
         data(array.data()), size(sizeof(T) * array.size()),
-        elements(array.size())
+        elements(array.size()), m_access(RSCA::ReadWrite | RSCA::Immutable)
     {
     }
 
@@ -163,7 +182,7 @@ struct mem_chunk
             nullptr>
     FORCEDINLINE mem_chunk(mem_chunk<T2> const& other) :
         data(C_RCAST<T*>(other.data)), size(other.size),
-        elements(other.elements)
+        elements(other.elements), m_access(other.access())
     {
     }
 
@@ -189,15 +208,22 @@ struct mem_chunk
 
     mem_chunk& operator=(mem_chunk&& other)
     {
+        if(data && m_destr)
+        {
+            m_destr(*this);
+        }
+
         data     = other.data;
         elements = other.elements;
         size     = other.size;
         m_destr  = other.m_destr;
+        m_access = other.m_access;
 
         other.data     = nullptr;
         other.elements = 0;
         other.size     = 0;
         other.m_destr  = nullptr;
+        other.m_access = RSCA::None;
 
         return *this;
     }
@@ -209,6 +235,22 @@ struct mem_chunk
             Throw(implementation_error(BYTE_API "abuse of SetDestr()"));
 #endif
         inst.m_destr = d;
+    }
+
+    template<typename T2>
+    FORCEDINLINE void transfer(mem_chunk<T2>&& other)
+    {
+        data     = other.data;
+        size     = other.size;
+        elements = other.elements;
+        m_destr  = other.m_destr;
+        m_access = other.m_access;
+
+        other.data     = nullptr;
+        other.size     = 0;
+        other.elements = 0;
+        other.m_destr  = nullptr;
+        other.m_access = RSCA::None;
     }
 
     template<
@@ -238,6 +280,7 @@ struct mem_chunk
 
         out.size     = sizeof(T) * num;
         out.elements = num;
+        out.m_access = RSCA::ReadWrite;
 
         mem_chunk<T>::SetDestr(out, [](mem_chunk<T>& d) { free(d.data); });
 
@@ -265,6 +308,7 @@ struct mem_chunk
         out.data     = C_RCAST<T*>(data);
         out.size     = size;
         out.elements = elements;
+        out.m_access = RSCA::ReadOnly | RSCA::Immutable;
 
         return out;
     }
@@ -312,6 +356,18 @@ struct mem_chunk
 
     template<
         typename T2,
+        size_t Size,
+        typename is_not_virtual<T2>::type* = nullptr>
+    NO_DISCARD STATICINLINE mem_chunk<T> CreateFrom(
+        stl_types::Array<T2, Size>& data)
+    {
+        return {C_RCAST<T*>(data.data()),
+                data.size() * sizeof(T2),
+                (data.size() * sizeof(T2)) / sizeof(T)};
+    }
+
+    template<
+        typename T2,
         typename std::enable_if<
             !std::is_same<typename std::remove_cv<T2>::type, void>::value>::
             type* = nullptr>
@@ -343,7 +399,7 @@ struct mem_chunk
          * \return
          */
         mem_chunk<T>
-        From(T2* data, size_type size)
+        FromBytes(T2* data, size_type size)
     {
         return {C_FCAST<T*>(data), size, size / sizeof(T)};
     }
@@ -411,10 +467,7 @@ struct mem_chunk
 
     STATICINLINE size_type nmax(size_type v1, size_type v2)
     {
-        if(v1 < v2)
-            return v2;
-        else
-            return v1;
+        return (v1 < v2) ? v2 : v1;
     }
 
     template<typename T2>
@@ -453,6 +506,10 @@ struct mem_chunk
             nullptr>
     T& operator[](size_type i)
     {
+        if constexpr(compile_info::debug_mode)
+            if(i >= elements)
+                Throw(std::out_of_range("access out of bounds"));
+
         return data[i];
     }
     template<
@@ -461,6 +518,10 @@ struct mem_chunk
             nullptr>
     T const& operator[](size_type i) const
     {
+        if constexpr(compile_info::debug_mode)
+            if(i >= elements)
+                Throw(std::out_of_range("access out of bounds"));
+
         return data[i];
     }
 
@@ -470,6 +531,7 @@ struct mem_chunk
         data     = C_FCAST<T*>(vec.data());
         size     = vec.size() * sizeof(typename VectorT::value_type);
         elements = vec.size();
+        m_access = RSCA::ReadWrite;
 
         return *this;
     }
@@ -480,6 +542,7 @@ struct mem_chunk
         data     = C_FCAST<T*>(vec.data());
         size     = vec.size() * sizeof(T2);
         elements = vec.size();
+        m_access = RSCA::ReadWrite;
 
         return *this;
     }
@@ -496,7 +559,11 @@ struct mem_chunk
      * \param size
      * \return
      */
-    NO_DISCARD FORCEDINLINE mem_chunk<T> at(
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
+            nullptr>
+    NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T>> at(
         size_type offset, size_type size = 0)
     {
         using namespace ::libc_types;
@@ -512,7 +579,56 @@ struct mem_chunk
         if(size == 0)
             size = this->size - offset;
 
-        return From(&basePtr[offset], size);
+        if(auto out = From(&basePtr[offset], size); out)
+            return out;
+        else
+            return {};
+    }
+
+    NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at(
+        size_type offset, size_type size = 0) const
+    {
+        using namespace ::libc_types;
+
+        if(offset > this->size || offset + size > this->size)
+            return {};
+
+        if(!data)
+            return {};
+
+        u8 const* basePtr = C_RCAST<u8 const*>(data);
+
+        if(size == 0)
+            size = this->size - offset;
+
+        if(auto out = From(&basePtr[offset], size); out)
+            return out;
+        else
+            return {};
+    }
+
+    NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at_lazy(
+        size_type offset, size_type size = 0) const
+    {
+        using namespace ::libc_types;
+
+        size = std::min(offset + size, this->size - offset);
+
+        if(offset > this->size)
+            return {};
+
+        if(!data)
+            return {};
+
+        u8 const* basePtr = C_RCAST<u8 const*>(data);
+
+        if(size == 0)
+            size = this->size - offset;
+
+        if(auto out = From(&basePtr[offset], size); out)
+            return out;
+        else
+            return {};
     }
 
     template<typename T2>
@@ -524,8 +640,20 @@ struct mem_chunk
             (size * sizeof(T)) / sizeof(T2));
     }
 
+    template<typename T2>
+    FORCEDINLINE mem_chunk<T2 const> as() const
+    {
+        return mem_chunk<T2 const>(
+            C_RCAST<T2 const*>(data),
+            size * sizeof(T),
+            (size * sizeof(T)) / sizeof(T2));
+    }
+
     FORCEDINLINE mem_chunk<T>& resize(size_type newSize)
     {
+        if(enum_helpers::feval(m_access & RSCA::Immutable))
+            Throw(undefined_behavior(BYTE_API "cannot resize immutable chunk"));
+
         data = C_RCAST<T*>(realloc(data, newSize));
 
         if(!data)
@@ -542,6 +670,11 @@ struct mem_chunk
         return *this;
     }
 
+    FORCEDINLINE RSCA access() const
+    {
+        return m_access;
+    }
+
     /*!
      * \brief Remove ownership of memory.
      * All responsibility is left to the user.
@@ -555,7 +688,7 @@ struct mem_chunk
     {
 #if MODE_DEBUG
         if(elements == 0)
-            Throw(implementation_error(BYTE_API "no elements"));
+            return end();
 #endif
 
         return iterator(*this);
@@ -570,7 +703,7 @@ struct mem_chunk
     {
 #if MODE_DEBUG
         if(elements == 0)
-            Throw(implementation_error(BYTE_API "no elements"));
+            return end();
 #endif
 
         return const_iterator(*this);
@@ -581,26 +714,71 @@ struct mem_chunk
         return const_iterator(*this, elements);
     }
 
-    iterator insert(iterator it, T&& value)
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
+            nullptr>
+    C_DEPRECATED iterator insert(iterator it, T&& value)
     {
 #if MODE_DEBUG
         if(it.m_idx >= elements)
-            Throw(std::out_of_range("iterator out of bounds"));
+            Throw(
+                std::string(BYTE_API "iterator out of bounds") + " " +
+                std::to_string(it.m_idx) + " >= " + std::to_string(elements));
 #endif
 
         data[it.m_idx] = std::move(value);
         return it;
     }
 
-    iterator insert(iterator it, T const& value)
+    template<
+        typename Dummy = void,
+        typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
+            nullptr>
+    C_DEPRECATED iterator insert(iterator it, T const& value)
     {
 #if MODE_DEBUG
         if(it.m_idx >= elements)
-            Throw(std::out_of_range("iterator out of bounds"));
+            Throw(std::out_of_range(
+                std::string(BYTE_API "iterator out of bounds") + " " +
+                std::to_string(it.m_idx) + " >= " + std::to_string(elements)));
 #endif
 
         data[it.m_idx] = value;
         return it;
+    }
+
+    struct find_result
+    {
+        size_type offset;
+        mem_chunk chunk;
+    };
+
+    NO_DISCARD stl_types::Optional<find_result> find(
+        mem_chunk<T> const& needle)
+    {
+        if(needle.empty())
+            return {};
+
+        size_type needle_idx = 0;
+
+        for(size_type i = 0; i < size; i++)
+        {
+            if(data[i] == needle[needle_idx])
+            {
+                needle_idx++;
+                if(needle_idx == needle.size)
+                    return find_result{i - needle_idx, *at(i - needle_idx)};
+            } else
+                needle_idx = 0;
+        }
+
+        return {};
+    }
+
+    FORCEDINLINE bool empty() const
+    {
+        return elements == 0 && size == 0;
     }
 
     /*!

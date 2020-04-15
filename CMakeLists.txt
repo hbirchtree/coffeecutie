@@ -1,5 +1,6 @@
-cmake_minimum_required( VERSION 3.1 )
+cmake_minimum_required( VERSION 3.10 )
 cmake_policy ( SET CMP0048 NEW )
+cmake_policy ( SET CMP0069 NEW )
 
 project( 
     Coffee 
@@ -20,7 +21,7 @@ dependency_get (
         appimage-runtime
     )
 
-set ( NATIVE_LIB_BUNDLE_TAG "rel-0.3.1.0.12" )
+set ( NATIVE_LIB_BUNDLE_TAG "rel-0.3.5.0.23" )
 
 set ( COFFEE_EXT_LIBRARY_DIR
     "${CMAKE_SOURCE_DIR}/src/libs"

@@ -11,11 +11,11 @@ using GFX = RHI::GLEAM::GLEAM_API;
 
 bool framebuffer_read()
 {
-    GFX::DefaultFramebuffer().clear(0, Vecf4(0.0, 1.0, 0.0, 1.0));
+    GFX::DefaultFramebuffer()->clear(0, Vecf4(0.0, 1.0, 0.0, 1.0));
 
     Vector<byte_t> framebuffer;
     GFX::DumpFramebuffer(
-        GFX::DefaultFramebuffer(), PixFmt::RGBA8, BitFmt::UByte, framebuffer);
+        *GFX::DefaultFramebuffer(), PixFmt::RGBA8, BitFmt::UByte, framebuffer);
 
     rgba_t color = {0, 255, 0, 255};
 

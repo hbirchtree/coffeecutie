@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/base/files/cfiles.h>
+#include <coffee/core/CFiles>
 #include <peripherals/libc/types.h>
 
 namespace Coffee {

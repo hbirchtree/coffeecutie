@@ -1,1 +1,2 @@
-#include <coffee/core/types/cobject.h>
+#pragma once
+#include <coffee/core/object/cobject.h>

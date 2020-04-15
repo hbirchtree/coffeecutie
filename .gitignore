@@ -1,9 +1,11 @@
 # General
 *~
 *.userprefs
-*.user
+*.user*
 .DS_Store
 *.swp
+massif.out*
+core
 
 # Directories
 bin

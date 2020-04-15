@@ -17,7 +17,7 @@ struct StbFontRenderer::FontData
 StbFontRenderer::FontPtr StbFontRenderer::LoadFontConfig(Bytes&& p)
 {
     if(!p)
-        return FontPtr();
+        Throw(undefined_behavior("failed to load font data"));
 
     auto data = MkUqDST<FontData, DataDeleter>();
 

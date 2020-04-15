@@ -4,6 +4,9 @@
 #if defined(COFFEE_GCC)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-bool-conversion"
+#elif defined(COFFEE_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
 #endif
 
 namespace Coffee{
@@ -18506,4 +18509,6 @@ STATICINLINE void ReadnPixelsKHR(i32 x, i32 y, Size const& size, PixCmp format, 
 
 #if defined(COFFEE_GCC)
 #pragma GCC diagnostic pop
+#elif defined(COFFEE_CLANG)
+#pragma clang diagnostic pop
 #endif

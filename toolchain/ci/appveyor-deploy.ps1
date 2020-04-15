@@ -1,14 +1,13 @@
-$ErrorActionPreference = "Stop"
-
-if($env:SAME_BUILD_DIR) {
-    $BuildDir = $env:BUILD_DIR
-}else{
-    $BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
+if(test-path $env:SOURCE_DIR/deploy-script.ps1)
+{
+    . $env:SOURCE_DIR/deploy-script.ps1
+    exit
 }
 
-$VCPP_VERSION = $env:APPVEYOR_BUILD_WORKER_IMAGE.split(" ")[2]
-$DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$VCPP_VERSION+$env:BUILDVARIANT.zip"
-$DEPLOY_ASSET_BIN = "$env:APPVEYOR_BUILD_FOLDER\binaries_$VCPP_VERSION+$env:BUILDVARIANT.zip"
+$ErrorActionPreference = "Stop"
+
+$DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$env:BUILDVARIANT.zip"
+$DEPLOY_ASSET_BIN = "$env:APPVEYOR_BUILD_FOLDER\binaries_$env:BUILDVARIANT.zip"
 
 if(Test-Path $DEPLOY_ASSET) {
     rm $DEPLOY_ASSET
@@ -16,24 +15,22 @@ if(Test-Path $DEPLOY_ASSET) {
 }
 
 # First, compress the compiled files
-$PrevWd = $Pwd
-cd "$BuildDir\out"
+pushd "$env:BUILD_DIR/install"
 7z a $DEPLOY_ASSET "*" -xr!bin -xr!packaged
 7z a $DEPLOY_ASSET_BIN "*" -xr!share -xr!lib -xr!include
-cd $PrevWd
+popd
 
 # Next, we need to find the target tag and release
 # We use Python to do most of the work...
-$PYTHON="C:\Python36\python.exe"
 $BUILDINFOPY = "$env:SOURCE_DIR\toolchain\buildinfo.py"
-$SCRIPT_DIR = (. $PYTHON $BUILDINFOPY --source-dir $env:SOURCE_DIR script_location )
+$SCRIPT_DIR = (. python $BUILDINFOPY --source-dir $env:SOURCE_DIR script_location )
 $SCRIPT_DIR = "$env:SOURCE_DIR\$SCRIPT_DIR"
 
 $GITHUBAPIPY = "$SCRIPT_DIR\github_api.py"
 
 function github_api()
 {
-    . $PYTHON $GITHUBAPIPY --api-token "$env:GITHUB_TOKEN" $args
+    . python $GITHUBAPIPY --api-token "$env:GITHUB_TOKEN" $args
 }
 
 if ($env:APPVEYOR_PULL_REQUEST_NUMBER.Length -ne "0") {

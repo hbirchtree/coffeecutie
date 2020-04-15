@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Scope.qml</file>
+        <file>TimelineBar.qml</file>
+        <file>ThreadView.qml</file>
+        <file>InspectorDrawer.qml</file>
+        <file>KeyValueProperty.qml</file>
+    </qresource>
+</RCC>

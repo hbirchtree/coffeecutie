@@ -1,1 +1,2 @@
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#pragma once
+#include <coffee/virtfs/virtualfs.h>

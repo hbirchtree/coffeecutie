@@ -46,15 +46,15 @@ struct StartupMessage
 {
     StartupMessage(const char* msg)
     {
-#if !MODE_LOWFAT
-        using Coffee::DebugFun::OutputPrinter;
-        using Coffee::DebugFun::Severity;
+        if constexpr(!compile_info::lowfat_mode)
+        {
+            using Coffee::DebugFun::OutputPrinter;
+            using Coffee::DebugFun::Severity;
 
-        OutputPrinter::fprintf_platform(
-            stderr, msg, Severity::Information, 0, 0);
-#else
-        fprintf(stderr, "TESTING: %s\n", msg);
-#endif
+            OutputPrinter::fprintf_platform(
+                stderr, msg, Severity::Information, 0, 0);
+        } else
+            fprintf(stderr, "TESTING: %s\n", msg);
     }
 };
 
@@ -123,13 +123,13 @@ using TestArray = Coffee::Array<CoffeeTest::Test, NumTests>;
     assertion::assertEquals_impl( \
         v1,                       \
         v2,                       \
-        ASSERT_CONTEXT "equivalence failed: " C_STR(v1) " != " C_STR(v2))
+        ASSERT_CONTEXT "equivalence failed: " C_STR(v1) " == " C_STR(v2))
 
 #define assertNotEquals(v1, v2)      \
     assertion::assertNotEquals_impl( \
         v1,                          \
         v2,                          \
-        ASSERT_CONTEXT "equivalence failed: " C_STR(v1) " == " C_STR(v2))
+        ASSERT_CONTEXT "equivalence failed: " C_STR(v1) " != " C_STR(v2))
 
 #define assertTrue(val)         \
     assertion::assertTrue_impl( \

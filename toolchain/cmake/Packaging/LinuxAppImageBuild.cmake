@@ -1,7 +1,7 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( APPIMAGE_CONFIG_DIR "${COFFEE_DESKTOP_DIRECTORY}/linux/appimage" )
 
-    set ( MKSQUASH_PROGRAM CACHE FILEPATH "AppImageAssistant executable" )
+    find_program ( MKSQUASH_PROGRAM mksquashfs )
     set ( APPIMAGE_APPRUN_PROGRAM CACHE FILEPATH "AppImage AppRun executable" )
     set ( APPIMAGE_RUNTIME_BINARY CACHE FILEPATH "AppImage runtime to be embedded into the AppImage" )
 
@@ -85,7 +85,9 @@ function( APPIMAGE_PACKAGE
     list ( APPEND APPIMAGE_DATA
         ${DATA} )
 
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_target ( ${TARGET}.AppImage ALL DEPENDS ${TARGET} )
+
+    add_custom_command ( TARGET ${TARGET}.AppImage
         PRE_BUILD
 
         # Remove the previous AppImage file to avoid confusion when generating a new one
@@ -141,7 +143,7 @@ function( APPIMAGE_PACKAGE
 
     # Copy resources into AppDir
     foreach ( RESC ${DATA} )
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.AppImage
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESC}" "${APPIMAGE_ASSET_DIR}"
             )
@@ -149,14 +151,14 @@ function( APPIMAGE_PACKAGE
 
     # Copy bundled libraries into AppDir
     foreach ( LIB ${LIBRARY_FILES} )
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${APPIMAGE_LIBRARY_DIR}"
             )
     endforeach()
 
     foreach ( LIB ${LIBRARIES} )
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>" "${APPIMAGE_LIBRARY_DIR}"
             )
@@ -164,27 +166,27 @@ function( APPIMAGE_PACKAGE
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND
             (NOT "${LIBRARIES}" STREQUAL "" OR NOT "${LIBRARY_FILES}" STREQUAL ""))
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
             COMMAND bash -c '${CMAKE_STRIP} `find ${APPIMAGE_LIBRARY_DIR} -type f`'
             )
     endif()
 
     # Copy the binary to AppDir
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}.AppImage
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>" "${APPIMAGE_BINARY_DIR}"
         )
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        add_custom_command ( TARGET ${TARGET}
+        add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
             COMMAND strip "${APPIMAGE_BINARY_DIR}/${TARGET}"
             )
     endif()
 
     # Do the actual packaging
-    add_custom_command ( TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}.AppImage
         POST_BUILD
         USES_TERMINAL
 

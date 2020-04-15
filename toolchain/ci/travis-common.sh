@@ -19,7 +19,7 @@ function debug()
 function requires()
 {
     for prog in $@; do
-        local mute=$(which ${prog})
+        local mute=$(which "${prog}")
         if [[ ! "$?" = "0" ]]; then
             die "Could not find program: $prog"
         fi
@@ -52,10 +52,6 @@ FIREBASE_ENDPOINT=${FIREBASE_ENDPOINT:-}
 #######################################
 # Dependencies
 #######################################
-# Dependency listing
-DEPENDENCIES=${DEPENDENCIES:-}
-# No dependency downloads
-NODEPS=${NODEPS:-}
 # For downloading dependencies
 GITHUB_TOKEN=${GITHUB_TOKEN:-}
 
@@ -98,13 +94,26 @@ MAKEFILE="Makefile.linux"
 
 INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
 
+function buildinfo_() {
+    "$INFOPY" $@
+}
+
 #######################################
 # Retrieve script location relative to source dir
 #######################################
-SCRIPT_DIR="$SOURCE_DIR/$(${INFOPY} --source-dir ${SOURCE_DIR} script_location)"
-MAKEFILE_DIR="$SOURCE_DIR/$(${INFOPY} --source-dir ${SOURCE_DIR} makefile_location)"
+SCRIPT_DIR="${SOURCE_DIR}/$(buildinfo_ --source-dir "${SOURCE_DIR}" script_location)"
+MAKEFILE_DIR="${SOURCE_DIR}/$(buildinfo_ --source-dir "${SOURCE_DIR}" makefile_location)"
 
 CI_DIR="$MAKEFILE_DIR"
 
 HELPER="$SCRIPT_DIR/get_matching_release.py"
 GITHUBPY="$SCRIPT_DIR/github_api.py"
+
+function matching_release_() {
+    "$HELPER" $@
+}
+
+function github_py_() {
+    "$GITHUBPY" $@
+}
+

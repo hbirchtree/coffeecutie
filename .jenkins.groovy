@@ -1,6 +1,6 @@
-def linux_targets = ['ubuntu.i686.gles', 'ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'steam.amd64', 'raspberry.armhf', 'fedora.amd64', 'emscripten.wasm', 'android.armv8a.nougat.gles3', 'android.armv7a.kitkat.gles2', ]
+def linux_targets = ['ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'steam.amd64', 'raspberry.armhf', 'gamecube', 'fedora.amd64', 'emscripten.wasm', 'android.armv8a.v29', 'android.armv8a.v27', 'android.armv7a.v27', 'android.armv7a.v21', 'android.armv7a.v19', ]
 def osx_targets = ['osx', 'ios.x86_64', ]
-def windows_targets = ['win32.amd64', 'uwp.amd64', ]
+def windows_targets = ['win32.amd64.vs19', 'uwp.amd64.vs19', ]
 
 String linux_label = 'linux && docker'
 String osx_label = 'osx'
@@ -62,7 +62,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
                     env('TRAVIS_OS_NAME', platform)
                     env('TRAVIS_BUILD_DIR', srcDir)
                     env('MAKEFILE_DIR', 'toolchain/makers')
-                    env('DEPENDENCIES', '')
+                    env('DEPENDENCIES', '@DEPENDENCIES_NIX@')
                     env('GITHUB_TOKEN', '${GH_API_TOKEN}')
                     env('MANUAL_DEPLOY', '1')
                     env('MANUAL_CONTEXT', 'continuous-integration/jenkins')
@@ -80,7 +80,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
                     env('BUILD_DIR', '${WORKSPACE}/build_' + target)
                     env('CMAKE_BIN', 'C:\\Program Files\\CMake\\bin\\cmake.exe')
                     env('MAKEFILE_DIR', 'toolchain/makers')
-                    env('DEPENDENCIES', '')
+                    env('DEPENDENCIES', '@DEPENDENCIES@')
                     env('GITHUB_TOKEN', '${GITHUB_TOKEN}')
                     env('BUILDVARIANT', target)
                     env('MANUAL_DEPLOY', '1')

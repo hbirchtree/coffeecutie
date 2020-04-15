@@ -12,6 +12,9 @@ namespace platform {
 namespace env {
 namespace mac {
 
+extern CString get_kern_name();
+extern CString get_kern_ver();
+
 struct SysInfo : SysInfoDef
 {
     static CString              GetSystemVersion();

@@ -5,7 +5,6 @@ add_subdirectory(cmd-api)
 add_subdirectory(datastorage-api)
 add_subdirectory(file-api)
 add_subdirectory(graphics)
-add_subdirectory(http_test)
 add_subdirectory(image-api)
 add_subdirectory(math-logic)
 add_subdirectory(profiling-api)
@@ -13,6 +12,10 @@ add_subdirectory(size-tests)
 add_subdirectory(string-api)
 add_subdirectory(sysinfo-api)
 add_subdirectory(type-safe)
+
+if(BUILD_ASIO)
+    add_subdirectory(http_test)
+endif()
 
 if(NOT EMSCRIPTEN)
     add_subdirectory(thread-api)
@@ -47,14 +50,25 @@ coffee_test (
 
     LIBRARIES
     Core
-    Audio
-    Blam
     )
+
+if(TARGET Blam)
+    target_link_libraries ( Dummy_Target PRIVATE
+        Blam
+        )
+endif()
+
+if(TARGET Audio)
+    target_link_libraries ( Dummy_Target PRIVATE
+        Audio
+        )
+endif()
 
 if(BUILD_GLEAM)
     target_link_libraries ( Dummy_Target
         PUBLIC
         GLeamCommon
+        ComponentBundleSetup
         )
 endif()
 if(BUILD_ASSIMP)

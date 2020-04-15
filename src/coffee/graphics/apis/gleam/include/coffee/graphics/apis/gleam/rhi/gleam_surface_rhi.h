@@ -16,7 +16,7 @@ GLEAM_API_LINKAGE void surface_dealloc(glhnd& m_handle);
 GLEAM_API_LINKAGE void surface_flag(u32& m_flags, PixFmt fmt);
 
 GLEAM_API_LINKAGE Tup<u32, u32> surface_get_levels(
-    glhnd const& m_handle, TexComp::tex_flag m_type);
+    glhnd const& m_handle, TexComp::tex_flag m_type, gleam_error& ec);
 
 GLEAM_API_LINKAGE void surface_set_levels(
     glhnd const& m_handle, TexComp::tex_flag m_type, u32 base, u32 max);
@@ -35,6 +35,11 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
     {
         detail::surface_flag(this->m_flags, fmt);
         detail::surface_allocate(texflags, m_handle, mips, fmt, type);
+    }
+
+    ~GLEAM_Surface()
+    {
+        dealloc();
     }
 
     void dealloc()
@@ -59,7 +64,10 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
 
     Tup<u32, u32> levels() const
     {
-        return detail::surface_get_levels(m_handle, m_type);
+        gleam_error ec;
+        auto        out = detail::surface_get_levels(m_handle, m_type, ec);
+        C_ERROR_CHECK(ec);
+        return out;
     }
 
     void setLevels(u32 base, u32 max)
@@ -85,23 +93,12 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
     void allocate(Size size, PixCmp c);
 
     void upload(
-        PixDesc      pfmt,
-        Size const&  size,
-        const Bytes& data,
-        gleam_error& ec,
-        Point        offset = {0, 0},
-        u32          mip    = 0);
-
-    void upload(
-        PixDesc      pfmt,
-        Size const&  size,
-        const Bytes& data,
-        Point        offset = {0, 0},
-        u32          mip    = 0)
-    {
-        gleam_error ec;
-        return upload(pfmt, size, data, ec, offset, mip);
-    }
+        PixDesc           pfmt,
+        Size const&       size,
+        BytesConst const& data,
+        gleam_error&      ec,
+        Point             offset = {0, 0},
+        u32               mip    = 0);
 };
 
 struct GLEAM_SurfaceCube : GLEAM_Surface2D
@@ -122,33 +119,13 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
     GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
 
     GLEAM_API_CLASS_LINKAGE void upload(
-        PixDesc       pfmt,
-        Size3 const&  size,
-        Bytes const&  data,
-        Point3 const& offset = {0, 0, 0},
-        u32           mip    = 0);
-
-    GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt        fmt,
-        PixCmp        comp,
-        Size3 const&  size,
-        Bytes const&  data,
-        Point3 const& offset = {0, 0, 0},
-        u32           mip    = 0);
-
-    GLEAM_API_CLASS_LINKAGE void upload(
-        BitFmt        fmt,
-        PixCmp        comp,
-        Size3 const&  size,
-        c_cptr        data,
-        Point3 const& offset = {0, 0, 0},
-        u32           mip    = 0)
-    {
-        Bytes dataS;
-        dataS.data = C_RCAST<byte_t*>(C_CCAST<c_ptr>(data));
-        dataS.size = GetPixSize(fmt, comp, size.volume());
-        upload(fmt, comp, size, dataS, offset, mip);
-    }
+        PixDesc           pfmt,
+        Size3 const&      size,
+        BytesConst const& data,
+        gleam_error&      ec,
+        Point3 const&     offset = {0, 0, 0},
+        u32               mip    = 0,
+        u32               stride = 0);
 };
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
@@ -173,7 +150,7 @@ struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
     }
 };
 
-struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
+struct GLEAM_SurfaceCubeArray : GLEAM_Surface3D_Base
 {
     using sampler_type = GLEAM_SamplerCubeArray;
 
@@ -181,6 +158,17 @@ struct GLEAM_SurfaceCubeArray : GLEAM_Surface2DArray
 
     GLEAM_API_CLASS_LINKAGE GLEAM_SurfaceCubeArray(
         PixFmt fmt, u32 mips = 1, u32 texflags = 0);
+
+    GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
+
+    GLEAM_API_CLASS_LINKAGE void upload(
+        PixDesc const&             pfmt,
+        typing::graphics::CubeFace face,
+        Size const&                size,
+        BytesConst const&          data,
+        Point3 const&              offset,
+        gleam_error&               ec,
+        u32                        mipmap = 0);
 };
 
 struct GLEAM_SamplerHandle
@@ -206,11 +194,22 @@ struct GLEAM_SamplerHandle
     {
         return m_sampler;
     }
+
+    inline GLEAM_SamplerHandle bind(u32 i = 0)
+    {
+        m_unit = i;
+        return *this;
+    }
 };
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler
 {
     GLEAM_Sampler();
+
+    ~GLEAM_Sampler()
+    {
+        dealloc();
+    }
 
     GLEAM_API_CLASS_LINKAGE void alloc();
     GLEAM_API_CLASS_LINKAGE void dealloc();
@@ -220,6 +219,7 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     GLEAM_API_CLASS_LINKAGE void setEdgePolicy(u8 dim, WrapPolicy p);
     GLEAM_API_CLASS_LINKAGE void setFiltering(
         Filtering mag, Filtering min, Filtering mip = Filtering::None);
+    GLEAM_API_CLASS_LINKAGE void setAnisotropic(f32 samples);
 
     GLEAM_API_CLASS_LINKAGE void enableShadowSampler();
 
@@ -230,6 +230,8 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
 template<typename Surf>
 struct GLEAM_Sampler_Base : GLEAM_Sampler
 {
+    using surface_type = Surf;
+
     void attach(Surf* surf)
     {
         m_surface = surf;

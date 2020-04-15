@@ -1,5 +1,5 @@
 from python.git_common import sshgit_to_https, git_get_origin
-from python.ci.common import get_dep_list, create_target_matrix, get_script_locations
+from python.ci.common import create_target_matrix, get_script_locations
 from python.common import try_get_key, configure_string
 
 def jenkins_gen_config(build_info, src_dir):
@@ -11,8 +11,6 @@ def jenkins_gen_config(build_info, src_dir):
 
     makers_dir = '%s/toolchain/makers' % src_dir
     template_dir = '%s/toolchain/cmake/Templates' % src_dir
-
-    deps = get_dep_list(build_info)
 
     linux_targets = create_target_matrix(makers_dir, 'linux', build_info)
     osx_targets = create_target_matrix(makers_dir, 'osx', build_info)
@@ -30,8 +28,6 @@ def jenkins_gen_config(build_info, src_dir):
         'OSX_TARGETS': mk_groovy_list(osx_targets),
         'WINDOWS_TARGETS': mk_groovy_list(windows_targets),
 
-        'DEPENDENCIES': deps.replace(";", "%"),
-        'DEPENDENCIES_NIX': deps.replace(";", "%"),
         'REPO_URL': repo_url,
 
         'MAKEFILE_DIR': try_get_key(build_info, 'makefile_location', 'ci'),

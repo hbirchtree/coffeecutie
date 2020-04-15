@@ -9,7 +9,7 @@
 
 namespace platform {
 
-#if defined(COFFEE_ANDROID)
+#if 0 && defined(COFFEE_ANDROID)
 using Env      = platform::env::EnvInterface;
 using ColorMap = platform::env::EnvColorCodes;
 #else

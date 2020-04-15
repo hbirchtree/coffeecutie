@@ -29,7 +29,6 @@ struct SharedData
     RHI::GLEAM::GLEAM_API::API_CONTEXT api;
 };
 
-using ELoop   = EventLoopData<CDRenderer, SharedData>;
 using CGL_DBG = CGL::CGL_Shared_Debug;
 
 void setup_fun(CDRenderer& renderer, SharedData* data)
@@ -48,7 +47,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     cDebug("Monitor: {0}", renderer.monitor());
 
     data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
-    if(!data->api(PlatformData::IsDebug()))
+    if(!data->api(compile_info::debug_mode))
     {
         cDebug("Failed to initialize graphics API");
     }
@@ -60,7 +59,8 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
 
 void loop_fun(CDRenderer& renderer, SharedData* data)
 {
-    RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
+    RHI::GLEAM::GLEAM_API::DefaultFramebuffer()->clear(
+        0, {1.f, 1.f, 0.f, 0.1f});
 
     if(data->frame_ts <= Time<>::CurrentTimestamp())
     {
@@ -85,22 +85,27 @@ i32 coffee_main(i32, cstring_w*)
     CString err;
 
     return AutoExec<RHI::GLEAM::GLEAM_API, CDRenderer, SharedData>(
-        [](CDRenderer& r, SharedData*, Display::Properties& visual) {
+        [](ShPtr<CDRenderer> r,
+           ShPtr<SharedData>,
+           Display::Properties& visual) {
             visual.flags ^= Properties::Windowed;
             visual.flags |= Properties::WindowedFullScreen;
 
-            r.installEventHandler(
-                {EventHandlers::EscapeCloseWindow<CDRenderer>, nullptr, &r});
-            r.installEventHandler(
-                {EventHandlers::ExitOnQuitSignal<CDRenderer>, nullptr, &r});
-            r.installEventHandler(
-                {EventHandlers::WindowManagerCloseWindow<CDRenderer>,
-                 nullptr,
-                 &r});
-            r.installEventHandler(
-                {EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>,
-                 nullptr,
-                 &r});
+            using namespace Input;
+            using namespace EventHandlers;
+
+            r->installEventHandler(
+                EHandle<Event>::MkHandler(WindowResize<GLEAMAPI>()));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                ExitOn<OnKey<Input::CK_Escape>>(r->window())));
+            r->installEventHandler(
+                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r->window())));
+            r->installEventHandler(EHandle<CIEvent>::MkHandler(
+                FullscreenOn<AnyIKey<
+                    KeyCombo<
+                        CK_EnterNL,
+                        CIKeyEvent::KeyModifiers::RAltModifier>,
+                    KeyCombo<CK_F11>>>(r->window())));
         },
         setup_fun,
         loop_fun,

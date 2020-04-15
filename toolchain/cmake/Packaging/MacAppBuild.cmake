@@ -2,6 +2,7 @@ if(APPLE)
     set ( OSX_DEFAULT_ICON "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.icns" CACHE FILEPATH "" )
     set ( IOS_LOADING_ICON "${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png" CACHE FILEPATH "" )
     set ( IOS_DEFAULT_STORYBOARD "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.storyboard" CACHE FILEPATH "" )
+    set ( IOS_ICON_ASSETS "${COFFEE_DESKTOP_DIRECTORY}/osx/Icons.xcassets" CACHE PATH "" )
     file ( GLOB IMAGES_TMP "${COFFEE_DESKTOP_DIRECTORY}/osx/launch_images/*.png" )
     set ( IMAGES "${IMAGES_TMP}" CACHE FILEPATH "" )
 endif()
@@ -110,17 +111,12 @@ macro( MACAPP_PACKAGE
             ${SOURCES} ${IMAGES}
             ${IOS_DEFAULT_STORYBOARD}
             ${IOS_LOADING_ICON}
+            ${IOS_ICON_ASSETS}
             )
+        message ( "Xcassets: ${IOS_ICON_ASSETS}" )
     endif()
 
     if(IOS)
-        set ( GLKIT_LIB Coffee::WindowGLKit )
-        if("${PROJECT_NAME}" STREQUAL "Coffee")
-            set ( GLKIT_LIB WindowGLKit )
-        endif()
-
-        target_link_libraries ( ${TARGET} PUBLIC ${GLKIT_LIB} )
-
         set ( IOS_NAME "${TITLE}" )
         set ( IOS_IDENTIFIER "${TITLE}" )
         set ( IOS_INFO "${INFO_STRING}" )
@@ -140,6 +136,8 @@ macro( MACAPP_PACKAGE
             @ONLY
             )
 
+        file ( GLOB_RECURSE ICON_ASSET_FILES "${IOS_ICON_ASSETS}" )
+
         set_target_properties ( ${TARGET} PROPERTIES
             MACOSX_BUNDLE YES
             MACOSX_BUNDLE_INFO_PLIST "${IOS_PLIST_FILE}"
@@ -149,25 +147,47 @@ macro( MACAPP_PACKAGE
             XCODE_ATTRIBUTE_TARGET_DEVICE_FAMILY "1,2"
             XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
             XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO"
-            RESOURCE "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES}"
+            RESOURCE
+            "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES};${ICON_ASSET_FILES}"
             )
         
             #XCODE_PRODUCT_TYPE "com.apple.product-type.application"
     else()
 
-    # Lots of properties!
-    set_target_properties(${TARGET} PROPERTIES
-        MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "${TITLE}"
-        MACOSX_BUNDLE_ICON_FILE "${OSX_ICON_NAME}"
+        # Lots of properties!
+        set_target_properties ( ${TARGET} PROPERTIES
+            MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "${TITLE}"
+            MACOSX_BUNDLE_ICON_FILE "Coffee.icns"
 
-        MACOSX_BUNDLE_COPYRIGHT "${COPYRIGHT}"
-        MACOSX_BUNDLE_INFO_STRING "${INFO_STRING}"
+            MACOSX_BUNDLE_COPYRIGHT "${COPYRIGHT}"
+            MACOSX_BUNDLE_INFO_STRING "${INFO_STRING}"
 
-        MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "${COFFEE_VERSION_CODE}"
-        MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
-        )
+            MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${COFFEE_VERSION_CODE}"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
+            )
+
+        set ( RESOURCE_DIR
+            ${CMAKE_BINARY_DIR}/bin/${TARGET}.app/Contents/Resources
+            )
+
+        get_filename_component ( ICON_BASENAME "${OSX_ICON}" NAME )
+        add_custom_target ( ${TARGET}.resources
+            COMMAND
+                ${CMAKE_COMMAND} -E make_directory ${RESOURCE_DIR}
+            )
+        add_custom_target ( ${TARGET}.icns
+            DEPENDS ${OSX_ICON} ${TARGET}.resources
+            COMMAND
+                qlmanage -t -s 512 -o . ${OSX_ICON}
+            COMMAND
+                ${COFFEE_DESKTOP_DIRECTORY}/osx/gen_icons.sh
+                    ${ICON_BASENAME}.png
+            COMMAND rm ${ICON_BASENAME}.png
+            WORKING_DIRECTORY ${RESOURCE_DIR}
+            )
+        add_dependencies ( ${TARGET} ${TARGET}.icns )
     endif()
 
     if(IOS)

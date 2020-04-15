@@ -200,6 +200,102 @@ struct FileFunDef : FileBase<NestedError>
     }
 };
 
+template<typename FileReader, typename ErrorType>
+struct FileMappingDefault
+{
+    struct FileMapping : non_copy
+    {
+        static FileMapping Wrap(
+            FileFunDef<>::FileMapping&&       data,
+            typename FileReader::FileHandle&& handle)
+        {
+            FileMapping out;
+
+            out.fm_handle = std::move(data);
+            out.handle    = std::move(handle);
+            out.data      = out.fm_handle.data;
+            out.size      = out.fm_handle.size;
+
+            return out;
+        }
+
+        FileMapping() : fm_handle(), handle(), data(nullptr), size(0)
+        {
+        }
+
+        FileMapping(FileMapping&& other) :
+            fm_handle(std::move(other.fm_handle)),
+            handle(std::move(other.handle)), data(other.data), size(other.size)
+        {
+            other.fm_handle = {};
+            other.handle    = {};
+            other.data      = nullptr;
+            other.size      = 0;
+        }
+
+        FileMapping& operator=(FileMapping&& other)
+        {
+            this->fm_handle = std::move(other.fm_handle);
+            this->handle    = std::move(other.handle);
+            this->data      = other.data;
+            this->size      = other.size;
+
+            other.fm_handle = {};
+            other.handle    = {};
+            other.data      = nullptr;
+            other.size      = 0;
+
+            return *this;
+        }
+
+        FileFunDef<>::FileMapping       fm_handle;
+        typename FileReader::FileHandle handle;
+        void*                           data;
+        szptr                           size;
+    };
+
+    /*!
+     * \brief Wrapped function for platforms without support for file mapping.
+     * \param fname
+     * \param access
+     * \param size
+     * \param offset
+     * \param err
+     * \return
+     */
+    STATICINLINE
+    FileMapping Map(
+        Url const& fname, RSCA access, szptr offset, szptr size, ErrorType& ec)
+    {
+        auto  handle = FileReader::Open(fname, access, ec);
+        szptr r_size = FileReader::Size(handle, ec);
+        if(size + offset > r_size)
+        {
+            return {};
+        }
+
+        auto data = FileReader::Read(handle, offset + size, ec);
+        data.assignAccess(access);
+
+        auto f = FileMapping::Wrap(std::move(data), std::move(handle));
+
+        data   = {};
+        handle = {};
+
+        return f;
+    }
+    /*!
+     * \brief Unmap the fake mapping.
+     *  Works by moving the mapping into this scope, deleting it on return.
+     * \param map
+     * \return
+     */
+    STATICINLINE bool Unmap(C_UNUSED(FileMapping&& map), ErrorType&)
+    {
+        return true;
+    }
+};
+
 template<typename NestedError = sentinel_error_code>
 struct DirFunDef : FileBase<NestedError>
 {

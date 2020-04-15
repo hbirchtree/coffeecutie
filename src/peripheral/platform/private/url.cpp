@@ -1,6 +1,5 @@
 #include <url/url.h>
 
-#include <coffee/core/base_state.h>
 #include <coffee/core/resource_prefix.h>
 #include <peripherals/error/file_base.h>
 #include <peripherals/libc/string_ops.h>
@@ -9,6 +8,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
+#include <platforms/pimpl_state.h>
 #include <platforms/profiling.h>
 
 #if defined(COFFEE_ANDROID)
@@ -84,8 +84,6 @@ Url GetAppleStoragePath()
 
 STATICINLINE SystemPaths GetSystemPaths()
 {
-    using namespace ::Coffee::State;
-
     SystemPaths paths;
 
     paths.assetDir  = MkInvalidUrl();
@@ -95,20 +93,25 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     CString const& _coffee_resource_prefix = file::ResourcePrefix();
 
-    auto& appData = *GetAppData();
+    auto& appData = *state->GetAppData();
 
 #if defined(COFFEE_ANDROID)
 
     AndroidForeignCommand cmd;
-    cmd.type         = Android_QueryDataPath;
     cmd.store_string = {};
 
+    cmd.type = Android_QueryDataPath;
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
     paths.configDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
 
     cmd.type = Android_QueryCachePath;
+    CoffeeForeignSignalHandleNA(
+        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+    paths.cacheDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
+    paths.tempDir  = paths.cacheDir;
 
 #elif defined(COFFEE_LINUX)
 
@@ -158,20 +161,24 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #elif defined(COFFEE_WINDOWS)
 
+    auto GetCurrentApp = platform::state->GetAppData;
+
+    paths.assetDir = MkUrl(_coffee_resource_prefix, RSCA::SystemFile);
+
     CString temp_dir = Env::GetVar("TEMP");
     paths.tempDir    = MkUrl(temp_dir.c_str(), RSCA::SystemFile) +
-                    Path{GetCurrentApp().organization_name} +
-                    Path{GetCurrentApp().application_name};
+                    Path{GetCurrentApp()->organization_name} +
+                    Path{GetCurrentApp()->application_name};
 
     CString config_dir = Env::GetVar("APPDATA");
     paths.configDir    = MkUrl(config_dir.c_str(), RSCA::SystemFile) +
-                      Path{GetCurrentApp().organization_name} +
-                      Path{GetCurrentApp().application_name};
+                      Path{GetCurrentApp()->organization_name} +
+                      Path{GetCurrentApp()->application_name};
 
     CString cache_dir = Env::GetVar("LOCALAPPDATA");
     paths.cacheDir    = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
-                     Path{GetCurrentApp().organization_name} +
-                     Path{GetCurrentApp().application_name};
+                     Path{GetCurrentApp()->organization_name} +
+                     Path{GetCurrentApp()->application_name};
 
 #if defined(COFFEE_WINDOWS_UWP)
     auto pkg     = ::Windows::ApplicationModel::Package::Current();
@@ -361,6 +368,8 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
 
+#if !defined(COFFEE_GEKKO)
+
     file::file_error ec;
     auto             paths = GetSystemPaths();
 
@@ -425,6 +434,14 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
 #endif
     tempStore.flags |= storageMask & RSCA::NoDereference;
     return *tempStore;
+#else
+    switch(storageMask & RSCA::StorageMask)
+    {
+    default:
+        Throw(undefined_behavior("failed to resolve path"));
+    }
+
+#endif
 }
 
 CString Url::DereferenceLocalPath() const
@@ -449,7 +466,7 @@ Path Path::addExtension(cstring ext) const
 Path Path::fileBasename() const
 {
     file::file_error ec;
-    Path             p = Path{file::DirFun::Basename(internUrl, ec).internUrl};
+    Path             p(file::DirFun::Basename(internUrl, ec).internUrl);
 #if MODE_DEBUG
     C_ERROR_CHECK(ec);
 #endif
@@ -470,7 +487,7 @@ CString Path::extension() const
 Path Path::dirname() const
 {
     file::file_error ec;
-    Path p = Path{file::DirFun::Dirname(internUrl.c_str(), ec).internUrl};
+    Path             p(file::DirFun::Dirname(internUrl.c_str(), ec).internUrl);
 #if MODE_DEBUG
     C_ERROR_CHECK(ec);
 #endif
@@ -480,7 +497,7 @@ Path Path::dirname() const
 Path Path::canonical() const
 {
     file::file_error ec;
-    Path             p = Path{file::FileFun::CanonicalName(MkUrl(*this), ec)};
+    Path             p(file::FileFun::CanonicalName(MkUrl(*this), ec));
 #if MODE_DEBUG
     C_ERROR_CHECK(ec);
 #endif
@@ -530,7 +547,7 @@ Path& Path::operator=(const Url& url)
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
-struct UrlParseCache : Coffee::State::GlobalState
+struct UrlParseCache : GlobalState
 {
     virtual ~UrlParseCache();
     regex::Pattern pattern;
@@ -552,7 +569,7 @@ UrlParseCache& GetCache()
 
     constexpr cstring pattern_key = "urlParsePattern";
 
-    auto ptr = Coffee::State::PeekState(pattern_key);
+    auto ptr = state->PeekState(pattern_key);
 
     if(ptr)
         return *C_DCAST<UrlParseCache>(ptr.get());
@@ -563,7 +580,7 @@ UrlParseCache& GetCache()
     patt->pattern = regex::compile_pattern(url_pattern);
     Profiler::DeepPopContext();
 
-    State::SwapState(pattern_key, patt);
+    state->SwapState(pattern_key, patt);
 
     return *C_DCAST<UrlParseCache>(patt.get());
 }
@@ -583,6 +600,8 @@ UrlParse UrlParse::From(const Url& url)
 
     DProfContext _(URLPARSE_TAG);
     UrlParse     p = {};
+
+#if !defined(COFFEE_IOS)
 
     Vector<CString> matches;
 
@@ -607,7 +626,32 @@ UrlParse UrlParse::From(const Url& url)
         p.m_port     = 0;
         p.m_resource = matches[URL_Resource];
     }
+#else
+    p.m_protocol = "https";
+    p.m_port     = 0;
 
+    auto urlData     = *url;
+    auto protocolEnd = urlData.find("://");
+    auto hasProtocol = protocolEnd != CString::npos;
+
+    auto host        = urlData.substr(hasProtocol ? protocolEnd + 3 : 0);
+    auto hostEnd     = host.find("/");
+    auto hasResource = hostEnd != CString::npos;
+    auto portStart   = host.find(":");
+
+    if(portStart != CString::npos)
+    {
+        p.m_port = cast_string<u32>(host.substr(
+            portStart + 1, hasResource ? hostEnd - portStart : CString::npos));
+    }
+
+    auto resource = host.substr(hostEnd);
+
+    p.m_protocol = urlData.substr(0, protocolEnd);
+    p.m_host     = host.substr(0, hostEnd);
+    p.m_resource = resource;
+
+#endif
     return p;
 }
 

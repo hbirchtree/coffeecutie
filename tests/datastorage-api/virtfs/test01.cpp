@@ -1,5 +1,5 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/datastorage/binary/virtualfs.h>
+#include <coffee/core/VirtualFS>
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CUnitTesting>

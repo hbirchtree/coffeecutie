@@ -60,7 +60,7 @@ void Resource::initRsc(const Url& url)
     m_request.header.resource = "/" + urlComponents.resource();
     m_request.header.version  = http::version_t::v11;
 
-    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
+    //    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
 
     m_request.port = port;
 
@@ -79,21 +79,18 @@ void Resource::initRsc(const Url& url)
 #if defined(ASIO_USE_SSL)
         if(secure())
         {
-            ssl = MkUq<TCP::SSLSocket>(m_ctxt);
+            ssl = MkUq<net::tcp::ssl_socket>(std::ref(*m_ctxt));
 
-            ssl->connect(
-                verify_https, m_request.host, cast_pod(m_request.port));
+            m_error = ssl->connect(m_request.host, cast_pod(m_request.port));
 
-            m_error = ssl->error();
         } else
 #endif
         {
-            normal = MkUq<TCP::Socket>(m_ctxt);
+            normal = MkUq<net::tcp::raw_socket>(std::ref(*m_ctxt));
 
-            normal->connect(m_request.host, cast_pod(m_request.port));
-
-            m_error = normal->error();
+            m_error = normal->connect(m_request.host, cast_pod(m_request.port));
         }
+        C_ERROR_CHECK(m_error)
     }
 
     if(!connected())
@@ -109,14 +106,14 @@ void Resource::initRsc(const Url& url)
 
 void Resource::close()
 {
+    asio::error_code ec;
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
         if(!ssl)
             return;
 
-        if(ssl->error() == asio::error_code())
-            ssl->sync_close();
+        ec = ssl->disconnect();
         ssl.release();
     } else
 #endif
@@ -124,13 +121,14 @@ void Resource::close()
         if(!normal)
             return;
 
-        if(normal->error() == asio::error_code())
-            normal->sync_close();
+        ec = normal->disconnect();
         normal.release();
     }
+
+    // C_ERROR_CHECK(ec)
 }
 
-Resource::Resource(ASIO::asio_context ctxt, const Url& url) :
+Resource::Resource(ShPtr<ASIO::Service> ctxt, const Url& url) :
     m_resource(url), m_ctxt(ctxt), m_access(url.netflags)
 {
     using namespace http::header::to_string;
@@ -145,7 +143,6 @@ Resource::Resource(ASIO::asio_context ctxt, const Url& url) :
 
     fields[field::accept] = content_type(content::any);
 
-    //    HTTP::InitializeRequest(m_request);
     initRsc(url);
 }
 
@@ -235,8 +232,10 @@ bool Resource::push(const Bytes& data)
     return push(meth, data);
 }
 
-void Resource::readResponseHeader(std::istream& http_istream)
+void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
 {
+    asio::error_code ec;
+
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
@@ -246,7 +245,7 @@ void Resource::readResponseHeader(std::istream& http_istream)
         if(socketError)
             cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
 
-        ssl->read_until(http::header_terminator);
+        ssl->read_until(buffer, http::header_terminator, ec);
 
         if(socketError)
             cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
@@ -255,15 +254,17 @@ void Resource::readResponseHeader(std::istream& http_istream)
     {
         DProfContext __(NETRSC_TAG "Read response");
         normal->flush();
-        normal->read_until(http::header_terminator);
+        normal->read_until(buffer, http::header_terminator, ec);
     }
+    C_ERROR_CHECK(ec)
 
     {
         DProfContext __(NETRSC_TAG "Parsing response");
-        m_response.header = http::stream::read_response(http_istream);
+        consumed = http::buffer::read_response(
+            m_response.header, Bytes::CreateFrom(buffer));
     }
 
-#if MODE_DEBUG
+    if constexpr(compile_info::debug_mode)
     {
         cVerbose(
             12,
@@ -280,15 +281,14 @@ void Resource::readResponseHeader(std::istream& http_istream)
         for(auto const& header : m_response.header.fields)
             cVerbose(12, NETRSC_TAG "-- {0}: {1}", header.first, header.second);
     }
-#endif
 }
 
-void Resource::readResponsePayload(std::istream& http_istream)
+void Resource::readResponsePayload(net_buffer& buffer)
 {
     using namespace http;
 
-    auto& response_fields = m_response.header.standard_fields;
-
+    asio::error_code ec;
+    auto&            response_fields = m_response.header.standard_fields;
     auto content_len_it = response_fields.find(header_field::content_length);
 
     if(content_len_it == response_fields.end())
@@ -300,24 +300,33 @@ void Resource::readResponsePayload(std::istream& http_istream)
 
         cVerbose(12, NETRSC_TAG "Reading {0} bytes...", content_len);
 
+        m_response.payload.insert(
+            m_response.payload.begin(), buffer.begin(), buffer.end());
+        m_response.payload.resize(content_len);
+
+        /* If we're lucky, we already got all the data */
+        if(content_len == buffer.size())
+            return;
+
+        auto view = *Bytes::CreateFrom(m_response.payload).at(buffer.size());
+
+        szptr read;
 #if defined(ASIO_USE_SSL)
         if(secure())
         {
-            ssl->read_some(content_len);
+            read = ssl->read(view, ec);
         } else
 #endif
-            normal->read_some(content_len);
+            read = normal->read(view, ec);
+        C_ERROR_CHECK(ec)
 
         cVerbose(12, NETRSC_TAG "Read complete");
-
-        m_response.payload =
-            http::stream::read_payload(http_istream, content_len);
     }
 
     cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
 }
 
-bool Resource::push(http::method_t method, const Bytes& data)
+bool Resource::push(http::method_t method, Bytes const& data)
 {
     using namespace http;
 
@@ -330,6 +339,8 @@ bool Resource::push(http::method_t method, const Bytes& data)
         Profiler::DeepProfile(NETRSC_TAG "Resource not ready");
         return false;
     }
+
+    asio::error_code ec;
 
     bool has_payload = data.size > 0;
     bool should_expect =
@@ -348,27 +359,7 @@ bool Resource::push(http::method_t method, const Bytes& data)
         st_fields[header_field::expect] = "100-continue";
 
     if(has_payload)
-    {
         st_fields[header_field::content_length] = cast_pod(data.size);
-
-        m_request.payload.reserve(data.size);
-        MemCpy(data, m_request.payload);
-    }
-
-    std::istream* http_istream = nullptr;
-    std::ostream* http_ostream = nullptr;
-
-#if defined(ASIO_USE_SSL)
-    if(secure())
-    {
-        http_istream = ssl.get();
-        http_ostream = ssl.get();
-    } else
-#endif
-    {
-        http_istream = normal.get();
-        http_ostream = normal.get();
-    }
 
     auto header = header::serialize::request(m_request.header);
 
@@ -376,22 +367,30 @@ bool Resource::push(http::method_t method, const Bytes& data)
 
     Profiler::DeepPushContext(NETRSC_TAG "Writing header");
 
+    szptr written = 0;
 #if defined(ASIO_USE_SSL)
     if(secure())
-        ssl->write(header);
+        written = ssl->write(Bytes::From(header.data(), header.size()), ec);
     else
 #endif
-        normal->write(header);
+        written = normal->write(Bytes::From(header.data(), header.size()), ec);
+    C_ERROR_CHECK(ec)
 
+    szptr      consumed = 0;
+    Vector<u8> recv_buf;
     if(should_expect)
     {
-        readResponseHeader(*http_istream);
+        readResponseHeader(recv_buf, consumed);
         if(m_response.header.code != status::continue_)
         {
-            cWarning(NETRSC_TAG "No continue received");
+            cWarning(
+                NETRSC_TAG "No continue received, got {0}",
+                m_response.header.code);
+            close();
             return false;
         }
     }
+    recv_buf.clear();
 
     Profiler::DeepPopContext();
 
@@ -399,27 +398,26 @@ bool Resource::push(http::method_t method, const Bytes& data)
     {
         DProfContext _(NETRSC_TAG "Writing payload");
 
-        cVerbose(
-            12,
-            NETRSC_TAG "Pushed payload size: {0}",
-            m_request.payload.size());
+        cVerbose(12, NETRSC_TAG "Pushed payload size: {0}", data.size);
 
 #if defined(ASIO_USE_SSL)
         if(secure())
         {
-            ssl->write(m_request.payload);
+            ssl->write(data, ec);
             ssl->flush();
         } else
 #endif
         {
-            normal->write(m_request.payload);
+            normal->write(data, ec);
             normal->flush();
         }
+        C_ERROR_CHECK(ec)
     }
 
-    readResponseHeader(*http_istream);
-
-    readResponsePayload(*http_istream);
+    consumed = 0;
+    readResponseHeader(recv_buf, consumed);
+    recv_buf.erase(recv_buf.begin(), recv_buf.begin() + consumed);
+    readResponsePayload(recv_buf);
 
     auto& response_fields = m_response.header.standard_fields;
 

@@ -1,644 +1,313 @@
 #pragma once
 
 #include <coffee/core/CProfiling>
-#include <iostream>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/functional_types.h>
 
 #include "asio_data.h"
 
 #define ASIO_TAG "asio::"
 
-namespace Coffee {
-namespace ASIO {
+#define VALIDATE() \
+    if(ec)         \
+    return ec
+
+namespace net {
+
+using stl_types::UqPtr;
+
+using libc_types::u16;
+using libc_types::u32;
+
+using context = Coffee::ASIO::Service;
 
 namespace socket_types {
 #if defined(ASIO_USE_SSL)
-using ssl = asio::ssl::stream<asio::ip::tcp::socket>;
+using ssl = ::asio::ssl::stream<asio::ip::tcp::socket>;
 #endif
-using raw = asio::ip::tcp::socket;
+using raw = ::asio::ip::tcp::socket;
 } // namespace socket_types
 
-using host_t = std::string;
+using host_t    = std::string;
+using service_t = std::string;
 
-namespace tcp_sockets {
-template<typename SocketType, typename LowestLayerType>
-struct socket_base : std::istream, std::ostream, non_copy
+namespace tcp {
+
+#if defined(ASIO_USE_SSL)
+struct ssl_socket
 {
-    using sock_t          = SocketType;
-    using lowest_sock_t   = LowestLayerType;
-    using resolver_result = asio::ip::tcp::resolver::results_type;
-    using resolver_iter   = asio::ip::tcp::resolver::iterator;
+    using lowest_layer = socket_types::ssl::lowest_layer_type;
 
-    template<typename... Args>
-    struct async_callbacks
-    {
-        static void default_error_callback(asio::error_code ec)
-        {
-            Throw(resource_error(ec.message()));
-        }
-
-        async_callbacks() :
-            on_complete([](Args...) {
-                Throw(implementation_error(DTEXT("No callback registered")));
-            }),
-            on_error(default_error_callback)
-        {
-        }
-
-        async_callbacks(Function<void(Args...)>&& on_complete) :
-            on_complete(on_complete), on_error(default_error_callback)
-        {
-        }
-
-        async_callbacks(
-            Function<void(Args...)>&&          on_complete,
-            Function<void(asio::error_code)>&& on_error) :
-            on_complete(on_complete),
-            on_error(on_error)
-        {
-        }
-
-        Function<void(Args...)>          on_complete;
-        Function<void(asio::error_code)> on_error;
-    };
-
-    asio_context context;
-    sock_t       socket;
-
-  private:
-    asio::streambuf recvp;
-    asio::streambuf trans;
-
-  protected:
-    asio::error_code lastError;
-
-  public:
-#if defined(ASIO_USE_SSL)
-    template<
-        typename Dummy = void,
-        typename std::enable_if<
-            std::is_same<sock_t, socket_types::ssl>::value,
-            Dummy>::type* = nullptr>
-    socket_base(asio_context c) :
-        std::istream(&recvp), std::ostream(&trans), context(c),
-        socket(context->service, context->sslctxt)
-    {
-    }
-#endif
-
-    template<
-        typename Dummy = void,
-        typename std::enable_if<
-            std::is_same<sock_t, socket_types::raw>::value,
-            Dummy>::type* = nullptr>
-    socket_base(asio_context c) :
-        std::istream(&recvp), std::ostream(&trans), context(c),
-        socket(context->service)
+    ssl_socket(net::context& service) :
+        m_resolver(service.resolver), m_socket(service.service, service.sslctxt)
     {
     }
 
-    asio::error_code error() const
+    asio::error_code connect(host_t const& host, service_t const& port)
     {
-        return lastError;
-    }
-
-    template<typename T, typename R>
-    R& operator<<(T const& v)
-    {
-        return (*this) << v;
-    }
-
-    template<typename T, typename R>
-    R& operator>>(T& v)
-    {
-        return (*this) >> v;
-    }
-
-    socket_base<SocketType, LowestLayerType>& write(Vector<char>& buf)
-    {
-        concurrent_notif var;
-        var.prepare_lock();
-
-        auto ref = asio::dynamic_vector_buffer<
-            Vector<char>::value_type,
-            Vector<char>::allocator_type>(buf);
-
-        asio::error_code ec;
-        asio::async_write(
-            socket, std::move(ref), [&](asio::error_code, size_t) {
-                var.notify();
-            });
-
-        var.await();
-
-        return *this;
-    }
-
-    socket_base<SocketType, LowestLayerType>& write(CString& buf)
-    {
-        concurrent_notif var;
-        var.prepare_lock();
-
-        auto ref = asio::dynamic_string_buffer<
-            CString::value_type,
-            CString::traits_type,
-            CString::allocator_type>(buf);
-
-        asio::error_code ec;
-        asio::async_write(
-            socket, std::move(ref), [&](asio::error_code, size_t) {
-                var.notify();
-            });
-
-        var.await();
-
-        return *this;
-    }
-
-    template<typename... Args>
-    async_callbacks<Args...> gen_handler(
-        Function<void(Args...)>&&          completion,
-        Function<void(asio::error_code)>&& errored)
-    {
-        return async_callbacks<Args...>(
-            std::move(completion), std::move(errored));
-    }
-
-    void resolve_handler(
-        std::tuple<
-            LowestLayerType*,
-            async_callbacks<asio::error_code, resolver_iter>> fun,
-        asio::error_code                                      ec,
-        resolver_iter                                         r)
-    {
-        DProfContext _(DTEXT(ASIO_TAG "resolve"));
-
-        async_callbacks<asio::error_code, resolver_iter> calls;
-        LowestLayerType*                                 socket_layer = nullptr;
-
-        std::tie(socket_layer, calls) = fun;
-
-        if(ec)
-        {
-            calls.on_error(ec);
-            lastError = ec;
-            return;
-        }
-
-        using it_type = decltype(r);
-
-        asio::async_connect(*socket_layer, r, it_type(), calls.on_complete);
-    }
-
-    template<typename... Args>
-    void async_connect_dispatch(
-        LowestLayerType&                                 socket_layer,
-        async_callbacks<asio::error_code, resolver_iter> onConnect,
-        Args... args)
-    {
-        asio::ip::tcp::resolver::query q(args...);
-
-        DProfContext _(DTEXT(ASIO_TAG "connection negotiation"));
-
-        context->resolver.async_resolve(
-            q,
-            bind_this::func(
-                this,
-                &socket_base::resolve_handler,
-                std::make_tuple(&socket_layer, onConnect)));
-    }
-
-    template<typename... Args>
-    void async_dispatch(
-        async_callbacks<Args...> const& calls,
-        asio::error_code                ec,
-        Args... args)
-    {
-        DProfContext _(DTEXT(ASIO_TAG "async dispatch"));
-        if(ec)
-        {
-            calls.on_error(ec);
-            lastError = ec;
-            return;
-        }
-
-        calls.on_complete(args...);
-    }
-
-    template<typename... Args>
-    void async_dispatch_skiperror(
-        async_callbacks<Args...> const& calls,
-        asio::error_code                ec,
-        Args... args)
-    {
-        DProfContext _(DTEXT(ASIO_TAG "async dispatch"));
-        if(ec)
-        {
-            calls.on_error(ec);
-            lastError = ec;
-        }
-
-        calls.on_complete(args...);
-    }
-    void async_read_some_receive(
-        std::tuple<async_callbacks<size_t>> funs,
-        asio::error_code                    ec,
-        size_t                              amount_data)
-    {
-        DProfContext            _(DTEXT(ASIO_TAG "read receive"));
-        async_callbacks<size_t> calls;
-        std::tie(calls) = funs;
-
-        std::istream::rdbuf(&recvp);
-        async_dispatch_skiperror(calls, ec, amount_data);
-    }
-
-    void async_write_receive(
-        std::tuple<async_callbacks<>> fun, asio::error_code ec, size_t sz)
-    {
-        DProfContext _(DTEXT(ASIO_TAG "write receive"));
-
-        async_callbacks<> call;
-        std::tie(call) = fun;
-
-        trans.consume(sz);
-        async_dispatch_skiperror(call, ec);
-    }
-
-#if defined(ASIO_USE_SSL)
-    template<
-        typename Dummy = void,
-        typename std::enable_if<
-            std::is_same<sock_t, socket_types::ssl>::value,
-            Dummy>::type* = nullptr>
-    void close_internal()
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "socket close"));
         asio::error_code ec;
 
-        socket.shutdown(ec);
-
-        auto& next_layer = socket.next_layer();
-
-        next_layer.shutdown(sock_t::next_layer_type::shutdown_both, ec);
-        next_layer.close(ec);
-
-        next_layer.wait(sock_t::next_layer_type::wait_error, ec);
-    }
-#endif
-
-    template<
-        typename Dummy = void,
-        typename std::enable_if<
-            std::is_same<sock_t, socket_types::raw>::value,
-            Dummy>::type* = nullptr>
-    void close_internal()
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "socket close"));
-        asio::error_code ec;
-
-        socket.shutdown(sock_t::shutdown_both, ec);
-        socket.close(ec);
-
-        socket.wait(sock_t::wait_error, ec);
-    }
-
-    void async_close_receive(std::tuple<async_callbacks<>> fun)
-    {
-        async_callbacks<> calls;
-        std::tie(calls) = fun;
-
-        close_internal();
-
-        calls.on_complete();
+        auto it = m_resolver.resolve(host, port, ec);
+        VALIDATE();
+        asio::connect(m_socket.lowest_layer(), it, ec);
+        VALIDATE();
+        m_socket.handshake(asio::ssl::stream_base::handshake_type::client, ec);
+        return ec;
     }
 
     template<typename T>
-    void async_read_until(T const& delim, async_callbacks<size_t>&& callbacks)
+    auto read(semantic::mem_chunk<T>& data, asio::error_code& ec)
     {
-        asio::async_read_until(
-            socket,
-            recvp,
-            delim,
-            bind_this::func(
-                this, &socket_base::async_read_some_receive, callbacks));
+        size_t read = 0;
+        do
+        {
+            read += m_socket.read_some(
+                asio::buffer(data.data + read, data.size - read), ec);
+            if(ec || read == data.size)
+                return read;
+        } while(read < data.size);
+        return read;
     }
 
     template<typename T>
-    size_t read_until(T const& delim)
+    auto read_until(
+        stl_types::Vector<T>&     data,
+        stl_types::CString const& delim,
+        asio::error_code&         ec,
+        libc_types::szptr         max_size = 0)
     {
-        size_t           out = 0;
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_read_until(
-            delim,
-            {[&](size_t amount_bytes) {
-                 out = amount_bytes;
-                 var.notify();
-             },
-             [&](asio::error_code) { var.notify(); }});
-
-        var.await();
-        return out;
+        return asio::read_until(
+            m_socket,
+            max_size != 0 ? asio::dynamic_buffer(data, max_size)
+                          : asio::dynamic_buffer(data),
+            asio::string_view(delim.data(), delim.size()),
+            ec);
     }
 
-    void async_read_some(
-        size_t amount_bytes, async_callbacks<size_t>&& callbacks)
+    template<typename T>
+    auto write(semantic::mem_chunk<T> const& data, asio::error_code& ec)
     {
-        if(amount_bytes < recvp.in_avail())
+        size_t written = 0;
+        do
         {
-            callbacks.on_complete(amount_bytes);
-            return;
-        }
-
-        asio::async_read(
-            socket,
-            recvp,
-            asio::transfer_exactly(amount_bytes - recvp.in_avail()),
-            bind_this::func(
-                this, &socket_base::async_read_some_receive, callbacks));
+            written += m_socket.write_some(
+                asio::buffer(data.data + written, data.size - written), ec);
+            if(ec || written == data.size)
+                return written;
+        } while(written < data.size);
+        return written;
     }
 
-    size_t read_some(size_t amount_bytes)
+    asio::error_code disconnect()
     {
-        size_t           out = 0;
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_read_some(
-            amount_bytes,
-            {[&](size_t amount_bytes) {
-                 out = amount_bytes;
-                 var.notify();
-             },
-             [&](asio::error_code) { var.notify(); }});
-
-        var.await();
-        return out;
-    }
-
-    void async_read_all(Function<void(size_t)>&& onRead)
-    {
-        asio::async_read(
-            socket,
-            recvp,
-            bind_this::func(
-                this,
-                &socket_base::async_read_some_receive,
-                {std::move(onRead),
-                 async_callbacks<>::default_error_callback}));
-    }
-
-    void async_write(async_callbacks<>&& callbacks)
-    {
-        //        std::ostream::flush();
-
-        asio::async_write(
-            socket,
-            trans.data(),
-            bind_this::func(
-                this, &socket_base::async_write_receive, std::move(callbacks)));
-    }
-
-    asio::error_code pull(size_t amount_bytes)
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous read"));
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_read_some(amount_bytes, [&](size_t) { var.notify(); });
-
-        var.await();
-
-        return lastError;
+        asio::error_code ec;
+        m_socket.shutdown(ec);
+        VALIDATE();
+        m_socket.lowest_layer().close(ec);
+        return ec;
     }
 
     asio::error_code flush()
     {
-        DProfContext     _(DTEXT(ASIO_TAG "flushing"));
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_write(
-            {[&]() { var.notify(); }, [&](asio::error_code) { var.notify(); }});
-
-        var.await();
-
-        return lastError;
+        return asio::error_code();
     }
-
-    void async_close(Function<void()>&& onClose)
-    {
-        context->service.post(bind_this::func(
-            this,
-            &socket_base::async_close_receive,
-            {std::move(onClose), async_callbacks<>::default_error_callback}));
-    }
-
-    void sync_close()
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous close"));
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_close([&]() { var.notify(); });
-
-        var.await();
-    }
-
-    asio::error_code pull()
-    {
-        DProfContext _(DTEXT(ASIO_TAG "synchronous read"));
-
-        concurrent_notif var;
-
-        var.prepare_lock();
-
-        async_read_all([&](size_t) { var.notify(); });
-
-        var.await();
-
-        return lastError;
-    }
-};
-
-struct raw_socket : socket_base<socket_types::raw, socket_types::raw>
-{
-  public:
-    raw_socket(asio_context c) : socket_base(c)
-    {
-    }
-
-    void connect_handler(
-        std::tuple<async_callbacks<>> fun, asio::error_code ec, resolver_iter)
-    {
-        DProfContext      _(DTEXT(ASIO_TAG "connect"));
-        async_callbacks<> call;
-        std::tie(call) = fun;
-
-        async_dispatch(call, ec);
-    }
-
-    template<typename... Args>
-    void async_connect(async_callbacks<> callbacks, Args... args)
-    {
-        auto error_copy = callbacks.on_error;
-
-        async_connect_dispatch(
-            socket,
-            bind_this::func(
-                C_CAST<socket_base*>(this),
-                &socket_base::resolve_handler,
-                std::make_tuple(
-                    &socket,
-                    gen_handler(
-                        bind_this::func(
-                            this, &raw_socket::connect_handler, callbacks),
-                        std::move(error_copy)))),
-            args...);
-    }
-
-    template<typename... Args>
-    void connect(Args... args)
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous connect"));
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_connect(
-            {[&]() { var.notify(); }, [&](asio::error_code) { var.notify(); }},
-            args...);
-
-        var.await();
-    }
-};
-
-/*!
- * \brief A wrapper for asio::ssl::stream to make it work like iostream,
- *  except that it needs to have pull() called before using std::getline.
- * The rest works the same!
- * This is made as a drop-in replacement for Socket, and may not support
- *  all specifics of SSL.
- */
-#if defined(ASIO_USE_SSL)
-struct ssl_socket
-    : socket_base<socket_types::ssl, socket_types::ssl::next_layer_type>
-{
-    using resolver_result = asio::ip::tcp::resolver::results_type;
-    using resolver_iter   = asio::ip::tcp::resolver::iterator;
 
   private:
-    bool do_verify;
-
-  public:
-    ssl_socket(asio_context c) : socket_base(c), do_verify(true)
-    {
-    }
-
-    void connect_handler(
-        std::tuple<async_callbacks<>> fun,
-        asio::error_code              ec,
-        resolver_iter                 it)
-    {
-        DProfContext      _(DTEXT(ASIO_TAG "connect"));
-        async_callbacks<> calls;
-        std::tie(calls) = fun;
-
-        if(ec)
-        {
-            calls.on_error(ec);
-            lastError = ec;
-            return;
-        }
-
-        socket.lowest_layer().set_option(asio::ip::tcp::no_delay(true));
-
-        socket.set_verify_mode(asio::ssl::verify_peer);
-#if !defined(COFFEE_ANDROID)
-        if(do_verify)
-        {
-            socket.set_verify_callback(
-                asio::ssl::rfc2818_verification(it->host_name()), ec);
-            if(ec != asio::error_code())
-            {
-                calls.on_error(ec);
-                lastError = ec;
-                return;
-            }
-        } else
-#endif
-        {
-            socket.set_verify_callback(
-                [](bool, asio::ssl::verify_context&) { return true; });
-        }
-
-        socket.async_handshake(
-            sock_t::client,
-            bind_this::func(this, &ssl_socket::handshake_handler, fun));
-    }
-
-    void handshake_handler(
-        std::tuple<async_callbacks<>> fun, asio::error_code ec)
-    {
-        DProfContext      _(DTEXT(ASIO_TAG "handshake"));
-        async_callbacks<> calls;
-        std::tie(calls) = fun;
-
-        async_dispatch(calls, ec);
-    }
-
-    template<typename... Args>
-    void async_connect(async_callbacks<>&& callbacks, bool verify, Args... args)
-    {
-        auto error_copy = callbacks.on_error;
-        this->do_verify = verify;
-
-        async_connect_dispatch(
-            socket.next_layer(),
-            bind_this::func(
-                C_CAST<socket_base*>(this),
-                &socket_base::resolve_handler,
-                &socket.next_layer(),
-                gen_handler(
-                    bind_this::func(
-                        this, &ssl_socket::connect_handler, callbacks),
-                    std::move(error_copy))),
-            args...);
-    }
-
-    template<typename... Args>
-    void connect(bool verify, Args... args)
-    {
-        DProfContext     _(DTEXT(ASIO_TAG "synchronous connect"));
-        asio::error_code ec;
-        concurrent_notif var;
-        var.prepare_lock();
-
-        async_connect(
-            {[&]() { var.notify(); }, [&](asio::error_code) { var.notify(); }},
-            verify,
-            args...);
-
-        var.await();
-
-        if(ec)
-            lastError = ec;
-    }
+    asio::ip::tcp::resolver& m_resolver;
+    socket_types::ssl        m_socket;
 };
 #endif
 
-}; // namespace tcp_sockets
+struct raw_socket
+{
+    raw_socket(net::context& service) :
+        m_resolver(service.resolver), m_socket(service.service)
+    {
+    }
 
-} // namespace ASIO
+    asio::error_code connect(host_t const& host, service_t const& port)
+    {
+        asio::error_code ec;
+
+        auto it = m_resolver.resolve(host, port, ec);
+        VALIDATE();
+        asio::connect(m_socket, it, ec);
+
+        return ec;
+    }
+
+    template<typename T>
+    auto read(semantic::mem_chunk<T>& data, asio::error_code& ec)
+    {
+        size_t read = 0;
+        do
+        {
+            read += m_socket.read_some(
+                asio::buffer(data.data + read, data.size - read), ec);
+            if(ec || read == data.size)
+                return read;
+        } while(read < data.size);
+        return read;
+    }
+
+    template<typename T>
+    auto read_until(
+        stl_types::Vector<T>&     data,
+        stl_types::CString const& delim,
+        asio::error_code&         ec,
+        libc_types::szptr         max_size = 0)
+    {
+        return asio::read_until(
+            m_socket,
+            max_size != 0 ? asio::dynamic_buffer(data, max_size)
+                          : asio::dynamic_buffer(data),
+            asio::string_view(delim.data(), delim.size()),
+            ec);
+    }
+
+    template<typename T>
+    auto write(semantic::mem_chunk<T> const& data, asio::error_code& ec)
+    {
+        size_t written = 0;
+        do
+        {
+            written += m_socket.write_some(
+                asio::buffer(data.data + written, data.size - written), ec);
+            if(ec || written == data.size)
+                return written;
+        } while(written < data.size);
+        return written;
+    }
+
+    asio::error_code disconnect()
+    {
+        asio::error_code ec;
+        m_socket.shutdown(socket_types::raw::shutdown_both, ec);
+        VALIDATE();
+        m_socket.close(ec);
+        return ec;
+    }
+
+    asio::error_code flush()
+    {
+        return asio::error_code();
+    }
+
+  private:
+    asio::ip::tcp::resolver& m_resolver;
+    socket_types::raw        m_socket;
+};
+
+} // namespace tcp
+
+namespace udp {
+
+enum class write_flags
+{
+    none = 0,
+    eof  = asio::ip::udp::socket::message_end_of_record,
+};
+
+struct raw_socket
+{
+    raw_socket(net::context& service) :
+        m_resolver(service.resolver_udp), m_socket(service.service)
+    {
+    }
+
+    asio::error_code connect(host_t const& host, service_t const& port)
+    {
+        asio::error_code ec;
+
+        auto it = m_resolver.resolve(host, port, ec);
+        VALIDATE();
+        m_endpoint = *it;
+
+        return ec;
+    }
+
+    asio::error_code connect_broadcast(service_t const& port)
+    {
+        asio::error_code ec;
+
+        m_socket.set_option(asio::socket_base::broadcast(), ec);
+        auto it = m_resolver.resolve(asio::ip::udp::resolver::query(port), ec);
+        VALIDATE();
+
+        m_endpoint = asio::ip::udp::endpoint(*it);
+
+        return ec;
+    }
+
+    template<typename T>
+    auto read(
+        semantic::mem_chunk<T>&  data,
+        asio::ip::udp::endpoint& from,
+        asio::error_code&        ec)
+    {
+        size_t read = 0;
+        do
+        {
+            read += m_socket.receive_from(
+                asio::buffer(data.data, data.size), from, 0, ec);
+            if(ec || read == data.size)
+                return read;
+        } while(read < data.size);
+        return read;
+    }
+
+    template<typename T>
+    auto write(
+        semantic::mem_chunk<T> const& data,
+        asio::error_code&             ec,
+        write_flags                   flags = write_flags::none)
+    {
+        return write_to(data, m_endpoint, ec, flags);
+    }
+
+    template<typename T>
+    auto write_to(
+        semantic::mem_chunk<T> const&  data,
+        asio::ip::udp::endpoint const& to,
+        asio::error_code&              ec,
+        write_flags                    flags = write_flags::none)
+    {
+        size_t written = 0;
+        do
+        {
+            written += m_socket.send_to(
+                asio::buffer(data.data, data.size),
+                to,
+                static_cast<int>(flags),
+                ec);
+            if(ec || written == data.size)
+                return read;
+        } while(written < data.size);
+        return written;
+    }
+
+  private:
+    asio::ip::udp::resolver& m_resolver;
+    asio::ip::udp::socket    m_socket;
+    asio::ip::udp::endpoint  m_endpoint;
+};
+
+} // namespace udp
+
+} // namespace net
+
+namespace Coffee {
+namespace ASIO {
 
 namespace TCP {
-using Socket = ASIO::tcp_sockets::raw_socket;
+using Socket = net::tcp::raw_socket;
 #if defined(ASIO_USE_SSL)
-using SSLSocket = ASIO::tcp_sockets::ssl_socket;
+using SSLSocket = net::tcp::ssl_socket;
 #endif
 } // namespace TCP
 
+} // namespace ASIO
 } // namespace Coffee
 
+#undef VALIDATE
 #undef ASIO_TAG

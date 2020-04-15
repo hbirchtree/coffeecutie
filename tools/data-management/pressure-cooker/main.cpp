@@ -134,7 +134,7 @@ void load_extension(cstring name)
 
     if(!library)
     {
-        cWarning("Failed to load library: {0}", ec.message());
+        C_ERROR_CHECK(ec);
         return;
     }
 
@@ -307,6 +307,21 @@ i32 coffee_main(i32, cstring_w*)
             nullptr,
             "List loaded extensions (for troubleshooting)");
 
+#if !defined(COFFEE_NO_COMPRESSION)
+        CString codec_help = "Compression codec, one of [";
+
+        codec_help += "zlib";
+
+#if defined(COFFEE_COMPRESS_LZ4)
+        codec_help += ", lz4";
+#endif
+
+        codec_help += "]";
+
+        parser.addArgument(
+            "compress_codec", "compress-codec", nullptr, codec_help.c_str());
+#endif
+
         parser.addSwitch(
             "statistics", "stats", "s", "Show statistics for files afterwards");
 
@@ -434,7 +449,9 @@ i32 coffee_main(i32, cstring_w*)
         proc->setCacheBaseDirectory(cacheDir);
 
         proc->setInternalState(
-            State::GetInternalState(), State::GetInternalThreadState());
+            State::GetInternalState(),
+            State::GetInternalThreadState(),
+            platform::state);
         proc->setBaseDirectories(baseDirs);
         proc->numWorkers = globalNumWorkers;
 
@@ -443,10 +460,20 @@ i32 coffee_main(i32, cstring_w*)
 
     cursor.progress("Creating filesystem...");
 
-    VirtFS::vfs_error_code virt_ec;
+    VirtFS::vfs_error_code      virt_ec;
+    VirtFS::generation_settings settings;
+
+    settings.workers    = globalNumWorkers;
+    settings.file_codec = compression::codec::deflate;
+
+#if defined(COFFEE_COMPRESS_LZ4)
+    settings.file_codec = compression::codec::lz4;
+#elif defined(COFFEE_WINDOWS)
+    settings.file_codec = compression::codec::deflate_ms;
+#endif
 
     if(!VirtFS::GenVirtFS(
-           descriptors, &outputData, virt_ec, {globalNumWorkers}))
+           descriptors, &outputData, virt_ec, std::move(settings)))
     {
         cursor.print(
             "{0}:0: Failed to create VirtFS: {1}",
@@ -468,6 +495,8 @@ i32 coffee_main(i32, cstring_w*)
     } else
         cursor.print("");
 
+    descriptors.clear();
+
     /* Unmap all files */
     Profiler::PushContext("Unmapping resources");
     for(auto& rsc : resources)
@@ -488,6 +517,8 @@ i32 coffee_main(i32, cstring_w*)
         Bytes outputView = output;
         MemCpy(outputData, outputView);
     }
+
+    libc::io::terminal::bell();
 
     return 0;
 }

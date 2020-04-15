@@ -65,7 +65,7 @@ bool regular_format_coverage()
             auto bitFmt    = convert::to<BitFmt>(fmt);
 
             if(component == PixCmp::None)
-                throw implementation_error("no sample type");
+                throw implementation_error("no component type");
 
             GetPixSize(bitFmt, component, 16);
         }

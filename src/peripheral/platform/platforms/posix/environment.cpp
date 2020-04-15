@@ -3,7 +3,7 @@
 #if defined(COFFEE_APPLE)
 #include <platforms/osx/environment.h>
 
-#if !defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_MACOS)
 #include <libproc.h>
 #endif
 

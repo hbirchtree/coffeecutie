@@ -7,35 +7,59 @@ set ( CMAKE_EXECUTABLE_SUFFIX "elf" )
 
 set ( GAMECUBE TRUE )
 
-set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
-set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
+find_program ( C_COMPILER
+    ${TOOLCHAIN_PREFIX}-gcc
+
+    PATHS
+    ${DEVKITPPC}
+    $ENV{DEVKITPPC}
+    PATH_SUFFIXES
+    bin
+    )
+find_program ( CXX_COMPILER
+    ${TOOLCHAIN_PREFIX}-g++
+
+    PATHS
+    ${DEVKITPPC}
+    $ENV{DEVKITPPC}
+    PATH_SUFFIXES
+    bin
+    )
+
+set ( CMAKE_C_COMPILER "${C_COMPILER}" )
+set ( CMAKE_CXX_COMPILER "${CXX_COMPILER}" )
+
+if(EXISTS "$ENV{PPCPORTLIBS_CUBE}")
+    set ( PORTLIBS_DIR "$ENV{PPCPORTLIBS_CUBE}" )
+else()
+    get_filename_component ( PORTLIBS_DIR "${CMAKE_C_COMPILER}" DIRECTORY )
+    get_filename_component ( PORTLIBS_DIR "${PORTLIBS_DIR}" DIRECTORY )
+    set ( PORTLIBS_DIR "${PORTLIBS_DIR}/portlibs/cube-${TOOLCHAIN_PREFIX}" )
+endif()
+set ( DEVKITPPC "${DEVKITPPC}" CACHE STRING "" )
 
 find_program ( ELF2DOL elf2dol )
 
 set ( ELF2DOL "${ELF2DOL}" CACHE STRING "" )
 
-set ( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -I$ENV{PPCPORTLIBS_CUBE}/include" CACHE STRING "" )
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -I$ENV{PPCPORTLIBS_CUBE}/include" CACHE STRING "" )
+set ( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -I${PORTLIBS_DIR}/include" CACHE STRING "" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mogc -mcpu=750 -meabi -mhard-float -I${PORTLIBS_DIR}/include" CACHE STRING "" )
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
-set ( CMAKE_FIND_ROOT_PATH 
-    $ENV{PPCPORTLIBS_CUBE}
-    ${NATIVE_LIBRARY_DIR}
-    ${COFFEE_ROOT_DIR}
-    ${CMAKE_SOURCE_DIR}/src/libs
-    )
+set ( CMAKE_FIND_ROOT_PATH ${PORTLIBS_DIR} )
 set ( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
 set ( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 set ( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 
 set ( CMAKE_EXE_LINKER_FLAGS
-    "${CMAKE_EXE_LINKER_FLAGS} -I$ENV{PPCPORTLIBS_CUBE}/include -L$ENV{PPCPORTLIBS_CUBE}/lib -logc -lm"
+    "${CMAKE_EXE_LINKER_FLAGS} -I${PORTLIBS_DIR}/include -L${PORTLIBS_DIR}/lib -logc -lm"
     CACHE STRING ""
     )
 
-set ( CMAKE_LIBRARY_ARCHITECTURE "powerpc-eabi" CACHE STRING "" )
+set ( CMAKE_LIBRARY_ARCHITECTURE "${TOOLCHAIN_PREFIX}"
+    CACHE STRING "" )
 
 set ( GAMECUBE ON CACHE BOOL "" )
 

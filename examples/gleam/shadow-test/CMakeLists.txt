@@ -3,7 +3,7 @@ coffee_application (
     TITLE "GLeam Shadows"
     SOURCES main.cpp
     LIBRARIES
-    RendererDefault
+    DropinRenderer
     GLeamRHI
     Core
     )

@@ -1,6 +1,7 @@
 #include <platforms/posix/file.h>
 
 #include <peripherals/libc/memory_ops.h>
+#include <peripherals/libc/string_ops.h>
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -15,7 +16,11 @@ NodeType PosixFileMod_def::Stat(Url const& fn, file_error&)
 {
     auto        url = *fn;
     struct stat fs  = {};
-    int         s   = lstat(url.c_str(), &fs);
+#if !defined(COFFEE_NO_MMAN)
+    int s = lstat(url.c_str(), &fs);
+#else
+    int s = stat(url.c_str(), &fs);
+#endif
 
     errno = 0;
 
@@ -148,8 +153,13 @@ szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
     auto        url = *fn;
     struct stat st  = {};
 
+#if !defined(COFFEE_NO_MMAN)
     if(lstat(url.c_str(), &st) != 0)
         posix::collect_error_to(ec);
+#else
+    if(stat(url.c_str(), &st) != 0)
+        posix::collect_error_to(ec);
+#endif
 
     return C_FCAST<szptr>(st.st_size);
 }
@@ -158,7 +168,11 @@ bool PosixFileMod_def::Exists(Url const& fn, file_error&)
 {
     auto        url = *fn;
     struct stat st;
-    bool        status = lstat(url.c_str(), &st) == 0;
+#if !defined(COFFEE_NO_MMAN)
+    bool status = lstat(url.c_str(), &st) == 0;
+#else
+    bool status = stat(url.c_str(), &st) == 0;
+#endif
     if(status)
     {
         errno = 0;
@@ -179,7 +193,7 @@ void PosixFileMod_def::Truncate(const Url& fn, szptr size, file_error& ec)
     if(stat(url.c_str(), &file_info) != 0)
         fd = creat(url.c_str(), S_IRWXU);
     else
-        fd = open(url.c_str(), PROT_WRITE);
+        fd = open(url.c_str(), O_WRONLY);
 
     errno = 0;
 
@@ -310,17 +324,18 @@ bool posix::DirFun::Ls(
 Url posix::DirFun::Basename(CString const& n, file_error& ec)
 {
 #if !defined(COFFEE_USE_POSIX_BASENAME)
-    if(str::len(n) < 1)
-        return ".";
+    if(libc::str::len(n.c_str()) < 1)
+        return constructors::MkUrl(".");
     // This one is fast, but does not handle rootfs
-    int64 idx = Search::ChrFindR(n, '/') - n;
-    if(idx < 0)
-        return n;
+    auto idx = libc::str::len(
+        libc::str::find<libc::str::find_reverse>(n.c_str(), '/'));
+    if(idx == 0)
+        return constructors::MkUrl(n);
     CString out;
-    out.insert(0, &n[idx + 1], str::len(n) - idx - 1);
+    out.insert(0, &n[idx + 1], libc::str::len(n.c_str()) - idx - 1);
     if(out.empty())
         out = ".";
-    return out;
+    return constructors::MkUrl(out);
 #else
     // This one is slower, but more compliant
     CString out   = n;
@@ -333,14 +348,15 @@ Url posix::DirFun::Basename(CString const& n, file_error& ec)
 Url posix::DirFun::Dirname(CString const& fname, file_error& ec)
 {
 #if !defined(COFFEE_USE_POSIX_BASENAME)
-    int64 idx = Search::ChrFindR(fname, '/') - fname;
-    if(idx < 0)
-        return fname;
+    auto idx = libc::str::len(
+        libc::str::find<libc::str::find_reverse>(fname.c_str(), '/'));
+    if(idx == 0)
+        return constructors::MkUrl(fname);
     CString out;
     out.insert(0, &fname[0], idx);
     if(out.empty())
         out = ".";
-    return out;
+    return constructors::MkUrl(out);
 #else
     // This one is slower, but more compliant
     CString out   = fname;
@@ -354,6 +370,8 @@ u32 PosixFileMod_def::PageSize()
 {
     return libc::mem::page_size();
 }
+
+#if !defined(COFFEE_NO_MMAN)
 
 int PosixFileMod_def::MappingFlags(RSCA acc)
 {
@@ -398,6 +416,8 @@ int PosixFileMod_def::ProtFlags(RSCA acc)
 
     return prot;
 }
+
+#endif
 
 int PosixFileMod_def::PosixRscFlags(RSCA acc)
 {

@@ -1,5 +1,7 @@
 #include <coffee/android/android_main.h>
 
+#include <coffee/anative/anative_comp.h>
+#include <coffee/comp_app/bundle.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/types/point.h>
@@ -12,13 +14,12 @@
 #include <platforms/environment.h>
 #include <platforms/sensor.h>
 
-//#include "../../private/plat/sensor/android/android_sensors.h"
-
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/strings/format.h>
 
 #include <android/looper.h>
 #include <android/native_activity.h>
@@ -26,6 +27,14 @@
 #include <android_native_app_glue.h>
 #include <gestureDetector.h>
 #include <sys/sysinfo.h>
+
+namespace libc {
+namespace signal {
+
+extern stl_types::Vector<exit_handler> global_exit_handlers;
+
+}
+} // namespace libc
 
 using namespace jnipp;
 
@@ -43,9 +52,12 @@ namespace android {
 
 enum AndroidAppState
 {
-    AndroidApp_Hidden,
-    AndroidApp_Visible,
+    AndroidApp_Hidden      = 0x1,
+    AndroidApp_Visible     = 0x2,
+    AndroidApp_Initialized = 0x4,
 };
+
+C_FLAGS(AndroidAppState, Coffee::u32);
 
 struct AndroidSensorData
 {
@@ -94,10 +106,6 @@ std::string jni_error_category::message(int error_code) const
 
 } // namespace android
 
-static char AndroidWindowType[] = "android.view.Window";
-static char AndroidViewType[]   = "android.view.View";
-static char javaioFile[]        = "java.io.File";
-
 extern CoffeeMainWithArgs android_entry_point;
 extern void*              coffee_event_handling_data;
 extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv);
@@ -128,8 +136,21 @@ void (*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
  *
  */
 
+inline void AndroidForwardAppEvent(android_app* app, libc_types::i32 event)
+{
+    auto& entities    = comp_app::createContainer();
+    auto  android_bus = entities.service<anative::AndroidEventBus>();
+
+    if(!android_bus)
+        return;
+
+    android_bus->handleWindowEvent(app, event);
+}
+
 void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 {
+    AndroidForwardAppEvent(app, event);
+
     switch(event)
     {
     case APP_CMD_START:
@@ -148,12 +169,28 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         /* Lifecycle events we care about */
     case APP_CMD_INIT_WINDOW:
     {
+        if(!(app_internal_state->currentState & AndroidApp_Initialized))
+        {
+            deref_main_c(android_entry_point, 0, nullptr);
+
+            ScopedJNI jni(coffee_app->activity->vm);
+            jnipp::SwapJNI(&jni);
+
+            auto extras = android::intent().extras();
+            if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
+                Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
+
+            app_internal_state->currentState |= AndroidApp_Initialized;
+        }
+
         CoffeeEventHandleCall(CoffeeHandle_Setup);
 
         ANativeActivity_setWindowFlags(
             app->activity,
             AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON,
             AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON);
+
+        cDebug("Window: {0}", coffee_app->window);
 
         /* Intentional fallthrough, we need to push a resize event */
     }
@@ -175,26 +212,31 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     {
         CoffeeEventHandleCall(CoffeeHandle_IsForeground);
 
-        app_internal_state->currentState = AndroidApp_Visible;
+        app_internal_state->currentState =
+            AndroidApp_Visible | AndroidApp_Initialized;
         break;
     }
     case APP_CMD_LOST_FOCUS:
     {
         CoffeeEventHandleCall(CoffeeHandle_IsBackground);
 
-        app_internal_state->currentState = AndroidApp_Hidden;
+        app_internal_state->currentState =
+            AndroidApp_Hidden | AndroidApp_Initialized;
         break;
     }
     case APP_CMD_TERM_WINDOW:
     {
         CoffeeEventHandleCall(CoffeeHandle_Cleanup);
 
+        Profiling::ExitRoutine();
+
+        std::reverse(
+            libc::signal::global_exit_handlers.begin(),
+            libc::signal::global_exit_handlers.end());
+        for(auto const& hnd : libc::signal::global_exit_handlers)
+            hnd();
+
         libc::signal::exit(libc::signal::sig::abort);
-
-        //        auto exit_func = CmdInterface::BasicTerm::GetAtExit();
-
-        //        for(auto func : exit_func)
-        //            func();
 
         break;
     }
@@ -219,10 +261,23 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
 }
 
+inline void AndroidForwardInputEvent(AInputEvent* event)
+{
+    auto& entities    = comp_app::createContainer();
+    auto  android_bus = entities.service<anative::AndroidEventBus>();
+
+    if(!android_bus)
+        return;
+
+    android_bus->handleInputEvent(event);
+}
+
 int32_t AndroidHandleInputCmd(
     struct android_app* app, struct AInputEvent* event)
 {
     pthread_mutex_lock(&app->mutex);
+
+    AndroidForwardInputEvent(event);
 
     switch(AInputEvent_getType(event))
     {
@@ -379,6 +434,10 @@ int32_t AndroidHandleInputCmd(
             tev.event.pan.fingerCount = 1;
 
             initial_point = point;
+        } else
+        {
+            cVerbose(
+                INPUT_VERB, "Motion event: {0},{1}", tapCoord.x, tapCoord.y);
         }
 
         if(tev.type != CfTouch_None)
@@ -435,6 +494,20 @@ static std::string GetBuildField(wrapping::jfield<T>&& field)
     return java::type_unwrapper<std::string>(fieldValue);
 }
 
+template<typename T>
+static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
+{
+    using namespace ::jnipp_operators;
+
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
+
+    jvalue fieldValue =
+        *"android.os.Build$VERSION"_jclass[field.as("java.lang.String")];
+
+    return java::type_unwrapper<std::string>(fieldValue);
+}
+
 static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
     using namespace ::jnipp_operators;
@@ -460,8 +533,20 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             out->store_string = coffee_app->activity->externalDataPath;
             break;
         case Android_QueryCachePath:
-            Throw(implementation_error("deprecated function"));
+        {
+            auto Context     = "android.content.Context"_jclass;
+            auto File        = "java.io.File"_jclass;
+            auto getCacheDir = "getCacheDir"_jmethod.ret("java.io.File");
+            auto getAbsolutePath =
+                "getAbsolutePath"_jmethod.ret("java.lang.String");
+
+            auto context  = Context(coffee_app->activity->clazz);
+            auto cacheDir = File(context[getCacheDir]());
+
+            out->store_string =
+                java::type_unwrapper<std::string>(cacheDir[getAbsolutePath]());
             break;
+        }
 #if ANDROID_API_LEVEL >= 13
         case Android_QueryObbPath:
             out->store_string = coffee_app->activity->obbPath;
@@ -479,7 +564,12 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             break;
 
         case Android_QueryReleaseName:
-            out->store_string = GetBuildField("BOARD"_jfield);
+            out->store_string = Strings::fmt(
+                "{0} ({1})",
+                GetBuildVersionField("RELEASE"_jfield),
+                (coffee_app->activity->sdkVersion >= 23)
+                    ? GetBuildVersionField("SECURITY_PATCH"_jfield)
+                    : CString());
             break;
         case Android_QueryDeviceBoardName:
             out->store_string = GetBuildField("BOARD"_jfield);
@@ -509,6 +599,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 
         case Android_QueryNativeWindow:
             out->data.ptr = coffee_app->window;
+            cDebug("Window ptr: {0}", coffee_app->window);
             break;
         case Android_QueryActivity:
             out->data.ptr = coffee_app->activity->clazz;
@@ -576,8 +667,21 @@ STATICINLINE void GetExtras()
 
         cDebug("App URI: {0}", appIntent.data());
 
-        for(auto e : appIntent.extras())
+        auto extras = appIntent.extras();
+
+        for(auto e : extras)
+        {
+            if(e.first.substr(0, 7) != "COFFEE_")
+                continue;
+
+            platform::Env::SetVar(e.first.c_str(), e.second.c_str());
             cDebug("{0} = {1}", e.first, e.second);
+        }
+
+        auto verbosity = extras.find("COFFEE_VERBOSITY");
+        if(verbosity != extras.end())
+            Coffee::SetPrintingVerbosity(
+                stl_types::cast_string<u8>(verbosity->second));
 
         cDebug("App action: {0}", appIntent.action());
 
@@ -591,9 +695,6 @@ STATICINLINE void GetExtras()
 STATICINLINE void InitializeState(struct android_app* state)
 {
     using namespace jnipp_operators;
-
-    platform::Env::SetVar(
-        "COFFEE_REPORT_URL", "https://coffee.birchtrees.me/reports");
 
     coffee_app = state;
 
@@ -618,7 +719,7 @@ STATICINLINE void InitializeState(struct android_app* state)
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
 
-    //    GetExtras();
+    GetExtras();
 
     jnipp::SwapJNI(nullptr);
 }
@@ -640,7 +741,7 @@ STATICINLINE void HandleEvents()
             cDebug("User event");
         }
 
-        if(coffee_app->destroyRequested != 0)
+        if(coffee_app->destroyRequested)
         {
             CoffeeEventHandleCall(CoffeeHandle_Cleanup);
             return;
@@ -659,7 +760,7 @@ STATICINLINE void StartEventProcessing()
 
         HandleEvents();
 
-        if(app_internal_state->currentState == AndroidApp_Visible)
+        if(app_internal_state->currentState & AndroidApp_Visible)
             CoffeeEventHandleCall(CoffeeHandle_Loop);
     }
 }
@@ -671,33 +772,6 @@ STATICINLINE void StartEventProcessing()
  * JNI functions
  *
  */
-
-namespace jnipp {
-
-thread_local android::ScopedJNI* jniScope = nullptr;
-
-android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope)
-{
-    auto prevScope  = jniScope;
-    jnipp::jniScope = jniScope;
-
-    return prevScope;
-}
-
-JNIEnv* GetJNI()
-{
-    if(!jniScope)
-        throw undefined_behavior("no JNI environment");
-
-    return jniScope->env();
-}
-
-JavaVM* GetVM()
-{
-    return Coffee::coffee_app->activity->vm;
-}
-
-} // namespace jnipp
 
 namespace android {
 
@@ -717,6 +791,9 @@ intent::intent() : m_intent(nullptr, nullptr)
 
 std::string intent::action()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto getAction = "getAction"_jmethod.ret("java.lang.String");
 
     return jnipp::java::type_unwrapper<std::string>(m_intent[getAction]());
@@ -724,6 +801,9 @@ std::string intent::action()
 
 std::string intent::data()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto Uri = "android.net.Uri"_jclass;
 
     auto getData  = "getData"_jmethod.ret("android.net.Uri");
@@ -741,12 +821,20 @@ std::string intent::data()
 
 std::set<std::string> intent::categories()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto Set = "java.util.Set"_jclass;
 
     auto getCategories = "getCategories"_jmethod.ret("java.util.Set");
     auto toArray = "toArray"_jmethod.ret<jobjectArray>("java.lang.Object");
 
-    auto categorySet = Set(m_intent[getCategories]());
+    auto categories = m_intent[getCategories]();
+
+    if(!java::objects::not_null(categories))
+        return {};
+
+    auto categorySet = Set(categories);
     auto categoryArray =
         jnipp::java::array_type_unwrapper<jobjectArray>(categorySet[toArray]());
 
@@ -761,6 +849,9 @@ std::set<std::string> intent::categories()
 
 std::map<std::string, std::string> intent::extras()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     std::map<std::string, std::string> out;
 
     auto Bundle = "android.os.Bundle"_jclass;
@@ -785,8 +876,17 @@ std::map<std::string, std::string> intent::extras()
         for(auto key : *extraKeys)
         {
             std::string key_s = jnipp::java::type_unwrapper<std::string>(key);
-            std::string value = jnipp::java::type_unwrapper<std::string>(
-                m_intent[getStringExtra](key_s));
+
+            auto extraVal = m_intent[getStringExtra](key_s);
+
+            if(!jnipp::java::objects::not_null(extraVal))
+            {
+                cDebug("Extra value not included: {0}", key_s);
+                continue;
+            }
+
+            std::string value =
+                jnipp::java::type_unwrapper<std::string>(extraVal);
             out[key_s] = value;
         }
     }
@@ -796,6 +896,9 @@ std::map<std::string, std::string> intent::extras()
 
 int intent::flags()
 {
+    if(!java::objects::not_null(m_intent))
+        return {};
+
     auto getFlags = "getFlags"_jmethod.ret<jint>();
 
     return jnipp::java::type_unwrapper<jint>(m_intent[getFlags]());
@@ -858,10 +961,6 @@ int app_dpi()
 void android_main(struct android_app* state)
 {
     Coffee::InitializeState(state);
-
-    deref_main_c(android_entry_point, 0, nullptr);
-
     Coffee::SetPrintingVerbosity(15);
-
     Coffee::StartEventProcessing();
 }
