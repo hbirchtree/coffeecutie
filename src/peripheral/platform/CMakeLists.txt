@@ -104,22 +104,6 @@ endif()
 #
 #
 if(APPLE)
-    if(NOT IOS)
-        target_link_libraries ( PeripheralPlatform PUBLIC
-            "-framework CoreGraphics"
-            "-framework QuartzCore"
-            "-framework OpenGL"
-            "-framework AppKit"
-            )
-    else()
-        target_link_libraries ( PeripheralPlatform PUBLIC
-            "-framework CoreGraphics"
-            "-framework CoreMotion"
-            "-framework QuartzCore"
-            "-framework UIKit"
-            )
-    endif()
-
     target_sources ( PeripheralPlatform PRIVATE
         #
         # System information queries
@@ -245,16 +229,14 @@ if(WIN32)
         platforms/win32/sysinfo.cpp
 
         platforms/win32/file.cpp
-
-#        platforms/win32/errors.cpp
         )
-    if(NOT WIN_UWP AND NOT MINGW64)
-        target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/wmi_win32.cpp
-            )
-    elseif(WIN_UWP)
+    if(WIN_UWP)
         target_sources ( PeripheralPlatform PRIVATE
             platforms/win32/wmi_uwp.cpp
+            )
+    else()
+        target_sources ( PeripheralPlatform PRIVATE
+            platforms/win32/wmi_win32.cpp
             )
     endif()
 endif()

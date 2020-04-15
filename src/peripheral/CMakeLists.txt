@@ -1,7 +1,3 @@
-find_package ( StandardLibs REQUIRED )
-
-add_export ( StandardLibs "" )
-
 coffee_library (
     TARGET PeripheralLib
     SOURCES
@@ -9,9 +5,6 @@ coffee_library (
     private/build_info.cpp
     private/libc_functions.cpp
     private/pimpl_state.cpp
-
-    LIBRARIES
-    StandardLibs
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -73,6 +66,147 @@ if(EMSCRIPTEN)
             -O3
             )
     endif()
+endif()
+
+###########################################################
+# Base system libraries
+###########################################################
+
+if(WIN32)
+    if(WIN_UWP)
+        target_link_libraries ( PeripheralLib PUBLIC
+            OneCore
+            )
+    else()
+        target_link_libraries ( PeripheralLib PUBLIC
+            user32
+            gdi32
+            winmm
+            imm32
+            ole32
+            oleaut32
+            version
+            uuid
+            dinput8
+            shell32
+            ws2_32
+            wbemuuid
+            netapi32
+            )
+    endif()
+
+    if(MINGW)
+        target_link_libraries ( PeripheralLib PUBLIC
+            mingw32
+            )
+    endif()
+
+    target_link_libraries ( PeripheralLib PUBLIC
+        # For compression using Windows built-in zlib-like
+        # This is only available on Windows 8+
+        cabinet
+        )
+    target_compile_definitions ( PeripheralLib PUBLIC
+        -DCOFFEE_WINDOWS_COMPRESSION_AVAILABLE=1
+        )
+endif()
+
+if(ANDROID)
+    target_link_libraries ( PeripheralLib PUBLIC
+        # For logcat logging
+        log
+        # Most Android-specifics are in here
+        android
+        )
+endif()
+
+if(APPLE)
+    if(NOT IOS)
+        target_link_libraries ( PeripheralLib PUBLIC
+            "-framework CoreGraphics"
+            "-framework QuartzCore"
+            "-framework OpenGL"
+            "-framework AppKit"
+            )
+    else()
+        target_link_libraries ( PeripheralLib PUBLIC
+            "-framework CoreGraphics"
+            "-framework CoreMotion"
+            "-framework QuartzCore"
+            "-framework UIKit"
+            )
+    endif()
+
+    target_link_libraries (PeripheralLib PUBLIC
+        "-framework AudioToolbox"
+        "-framework CoreAudio"
+        "-framework CoreFoundation"
+        "-framework Foundation"
+        )
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+    # Libunwind is used to print function names at runtime
+    # Windows does not support this library
+    # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
+    if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
+        find_package(Unwind QUIET )
+    endif()
+    if (LIBUNWIND_FOUND)
+        target_include_directories ( PeripheralLib PUBLIC
+            $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
+            )
+        target_link_libraries ( PeripheralLib PUBLIC 
+            $<BUILD_INTERFACE:${LIBUNWIND_LIBRARIES}>
+            )
+    endif()
+
+    target_link_libraries ( PeripheralLib PUBLIC
+        rt
+        )
+endif()
+
+if(NOT WIN32 AND NOT MSYS AND NOT MINGW AND NOT EMSCRIPTEN)
+    if(NOT APPLE AND NOT GAMECUBE)
+        target_link_libraries ( PeripheralLib PUBLIC
+            dl
+            )
+    endif()
+    target_link_libraries ( PeripheralLib PUBLIC
+        m
+        )
+endif()
+
+if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE)
+    find_package ( Threads REQUIRED )
+    target_link_libraries ( PeripheralLib PUBLIC
+        Threads::Threads
+        )
+endif()
+
+if(GAMECUBE)
+    target_link_libraries ( PeripheralLib PUBLIC
+        ogc
+        )
+endif()
+
+if(EMSCRIPTEN)
+    target_compile_options ( PeripheralLib PUBLIC
+        "-s            " ALLOW_MEMORY_GROWTH=1
+        "-s           " SAFE_HEAP=1
+        "-s          " DISABLE_EXCEPTION_CATCHING=0
+        "-s         " DEMANGLE_SUPPORT=1
+        "--no-heap-copy"
+        "-fPIC"
+       )
+   target_link_options ( PeripheralLib PUBLIC
+        "-s            " ALLOW_MEMORY_GROWTH=1
+        "-s           " SAFE_HEAP=1
+        "-s          " DISABLE_EXCEPTION_CATCHING=0
+        "-s         " DEMANGLE_SUPPORT=1
+        "--no-heap-copy"
+        "-fPIC"
+       )
 endif()
 
 ############################################################

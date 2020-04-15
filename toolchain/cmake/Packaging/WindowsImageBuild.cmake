@@ -271,8 +271,6 @@ macro(WINPE_PACKAGE
                 VS_DEPLOYMENT_LOCATION "."
                 )
         endforeach()
-
-
     endif()
 
     set_target_properties ( ${TARGET}
@@ -280,21 +278,6 @@ macro(WINPE_PACKAGE
         VERSION ${COFFEE_BUILD_STRING}
         SOVERSION 1
         )
-    if(NOT WIN_UWP)
-        target_link_libraries ( ${TARGET}
-            PUBLIC
-
-            user32
-            gdi32
-            winmm
-            imm32
-            ole32
-            oleaut32
-            version
-            uuid
-            dinput8
-            )
-    endif()
     if(NOT WIN_UWP)
         install(
             TARGETS
