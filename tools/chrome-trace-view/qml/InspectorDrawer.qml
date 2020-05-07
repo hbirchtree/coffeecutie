@@ -22,7 +22,7 @@ Drawer {
         if(event)
         {
             revealed = true;
-            focusItem.highlighted = true
+            focusItem.highlighted = true;
 
             nameField.value = event.name
             catField.value = event.category
@@ -36,9 +36,14 @@ Drawer {
 
             avgDiff.value = (event.average - event.duration) + " s";
             minmaxDiff.value = (event.max- event.min) + " s";
+
+            open();
         }
         else
+        {
             revealed = false;
+            close();
+        }
     }
 
     RowLayout {

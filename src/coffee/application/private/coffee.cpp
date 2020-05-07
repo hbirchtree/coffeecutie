@@ -20,6 +20,7 @@
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/process.h>
+#include <platforms/profiling/jsonprofile.h>
 #include <platforms/stacktrace.h>
 #include <platforms/sysinfo.h>
 
@@ -215,7 +216,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     /* Must be created before ThreadState, but after internal state */
     if constexpr(compile_info::profiler::enabled)
-        State::SwapState("jsonProfiler", profiling::CreateJsonProfiler());
+        State::SwapState("jsonProfiler", profiling::json::CreateProfiler());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     /* On Android and iOS, we want to terminate the profiler early */
@@ -332,8 +333,8 @@ catch(std::exception const& ex)
                 .count());
     }
 
-    if constexpr(compile_info::profiler::enabled && 
-        !compile_info::platform::custom_exit)
+    if constexpr(
+        compile_info::profiler::enabled && !compile_info::platform::custom_exit)
     {
         State::SwapState("jsonProfiler", {});
     }

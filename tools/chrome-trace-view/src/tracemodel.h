@@ -253,6 +253,103 @@ class ExtraInfo : public QAbstractListModel
     void updateData();
 };
 
+class Metrics;
+
+class MetricValues : public QAbstractListModel
+{
+  public:
+    enum MetricType
+    {
+        MetricValue,
+        MetricSymbolic,
+        MetricMarker,
+    };
+
+    Q_ENUM(MetricType)
+
+    Q_PROPERTY(QString unit MEMBER m_unit)
+
+  private:
+    Q_OBJECT
+
+    friend class Metrics;
+
+    struct Value
+    {
+        double ts;
+        float  value;
+    };
+
+    TraceModel*          m_trace;
+    std::vector<Value>   m_values;
+    std::vector<quint64> m_visible;
+
+    QString    m_name;
+    quint64    m_id;
+    MetricType m_type;
+    QString    m_unit;
+
+    float m_minValue = std::numeric_limits<float>::max(),
+          m_maxValue = std::numeric_limits<float>::min();
+
+  public:
+    MetricValues(Metrics* metrics, QObject* parent = nullptr);
+
+    enum FieldNames
+    {
+        FieldValue,
+        FieldValueScaled,
+        FieldPreviousValue,
+        FieldPreviousValueScaled,
+        FieldTimestamp,
+        FieldPreviousTimestamp,
+    };
+
+    Q_INVOKABLE float sampleValue(double x);
+    Q_INVOKABLE float sampleValueScaled(double x);
+
+    int                    rowCount(const QModelIndex& parent) const final;
+    QVariant               data(const QModelIndex& index, int role) const final;
+    QHash<int, QByteArray> roleNames() const final;
+};
+
+class Metrics : public QAbstractListModel
+{
+    Q_OBJECT
+
+    TraceModel*     m_trace;
+    TraceProperties m_props;
+
+    std::map<quint64, std::shared_ptr<MetricValues>> m_metric;
+    std::vector<std::shared_ptr<MetricValues>>       m_metricList;
+
+    friend class MetricValues;
+
+  public:
+    Metrics(
+        TraceModel*            trace,
+        TraceProperties const& props,
+        QObject*               parent = nullptr);
+
+    enum FieldNames
+    {
+        FieldMetric,
+        FieldMetricType,
+        FieldName,
+        FieldId,
+    };
+
+    int                    rowCount(const QModelIndex& parent) const final;
+    QVariant               data(const QModelIndex& index, int role) const final;
+    QHash<int, QByteArray> roleNames() const final;
+
+    void insertValue(QJsonObject const& data);
+    void populate(QJsonObject const& meta);
+    void optimize();
+  public slots:
+    void updateView();
+};
+
 class TraceModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -271,6 +368,8 @@ class TraceModel : public QAbstractListModel
 
     Q_PROPERTY(QObject* extraInfo READ extraInfo NOTIFY extraInfoChanged)
 
+    Q_PROPERTY(QObject* metrics READ metrics NOTIFY metricsChanged)
+
     QString    m_source;
     ExtraInfo* m_extraInfo;
 
@@ -278,6 +377,8 @@ class TraceModel : public QAbstractListModel
     QJsonObject                                      m_trace;
     std::map<quint64, std::shared_ptr<ProcessModel>> m_processes;
     std::vector<std::shared_ptr<ProcessModel>>       m_processList;
+
+    std::unique_ptr<Metrics> m_metrics;
 
     std::future<void> m_parseTask;
 
@@ -308,13 +409,20 @@ class TraceModel : public QAbstractListModel
     {
         return m_totalDuration;
     }
-    QObject* extraInfo() const;
+    QObject* extraInfo() const
+    {
+        return m_extraInfo;
+    }
+    QObject* metrics() const
+    {
+        return m_metrics.get();
+    }
 
     int                    rowCount(QModelIndex const& parent) const;
     QVariant               data(QModelIndex const& index, int role) const;
     QHash<int, QByteArray> roleNames() const;
 
-    void parseAccountingInfo(QByteArray const& profile);
+    void parseAccountingInfo(QByteArray const& profile, uchar *ptr = nullptr);
 
     enum ProcessField
     {
@@ -330,6 +438,7 @@ class TraceModel : public QAbstractListModel
     void viewUpdated();
 
     void extraInfoChanged(QObject* extra);
+    void metricsChanged(QObject* metrics);
 
     void totalDurationChanged(double totalDuration);
 

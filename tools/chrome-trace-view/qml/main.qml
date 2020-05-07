@@ -3,14 +3,15 @@ import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import QtQuick.Shapes 1.12
 
 import me.birchtrees.ctf 1.0
 
 ApplicationWindow {
     id: root
     visible: true
-    width: 640
-    height: 480
+    width: 1280
+    height: 1200
     title: qsTr("Chrome Trace Viewer")
 
     property int rowHeight: 10 * Screen.pixelDensity
@@ -82,7 +83,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         //processes.emscriptenAuto();
-        processes.source = "/tmp/GLeam Basic RHI/GLeamBaseTest_RHI-chrome.json";
+        processes.source = "/tmp/GLeam Basic RHI/profile.json";
     }
 
     DropArea {
@@ -133,7 +134,7 @@ ApplicationWindow {
     TraceModel {
         id: processes
 
-        onTraceParsed: {        
+        onTraceParsed: {
             busy.close();
             console.log("Parsed!");
         }
@@ -201,6 +202,7 @@ ApplicationWindow {
         anchors.top: parent.top
         color: Qt.darker(root.color, 1.5)
         height: headerHeight
+        z: 1
 
         TimelineBar {
             id: timeline
@@ -258,6 +260,7 @@ ApplicationWindow {
     Flickable {
         id: timeView
         anchors.fill: parent
+        anchors.bottomMargin: drawer.opened ? drawer.height : 0
         contentWidth: processes.totalDuration * Math.pow(10, timelineScale + 2) * (Screen.pixelDensity / 4) + threadWidth + spacing * 4
         contentHeight: headerHeight
         boundsBehavior: Flickable.StopAtBounds
@@ -283,7 +286,6 @@ ApplicationWindow {
                         onEventClicked: {
                             drawer.focusItem = eventItem;
                             drawer.event = processes.eventFromId(pid, tid, eventId);
-                            drawer.open();
                         }
 
                         Connections {
@@ -320,6 +322,31 @@ ApplicationWindow {
                         threadName: name
                         maxStackDepth: maxDepth
                         threadEvents: events
+                    }
+                }
+            }
+
+            Repeater {
+                model: processes.metrics
+
+                MetricView {
+                    width: timeView.contentWidth
+                    height: root.rowHeight * 2
+
+                    source: metric
+
+                    container: timeView
+                    timePerPixel: root.timePerPixel
+
+                    threadColor: root.threadColor
+                    rowHeight: root.rowHeight
+                    threadWidth: root.threadWidth
+                    spacing: root.spacing
+
+                    Component.onCompleted: {
+                        timeView.contentHeight = timeView.contentHeight +
+                                height +
+                                root.spacing;
                     }
                 }
             }

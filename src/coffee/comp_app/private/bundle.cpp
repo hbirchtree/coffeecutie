@@ -3,6 +3,7 @@
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/comp_app/performance_monitor.h>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
 #include <coffee/core/task_queue/task.h>
@@ -295,7 +296,13 @@ void addDefaults(
 
     auto& appInfo = *container.service<AppInfo>();
 
-    /* Selection of window/event manager */
+#if MODE_DEBUG
+    if constexpr(compile_info::profiler::enabled)
+        loader.loadAll<type_safety::type_list_t<PerformanceMonitor>>(
+            container, ec);
+#endif
+
+        /* Selection of window/event manager */
 #if defined(FEATURE_ENABLE_SDL2Components)
     sdl2::GLContext::register_service<sdl2::GLContext>(container);
     loader.loadAll<sdl2::Services>(container, ec);
@@ -357,6 +364,67 @@ void addDefaults(
 #if defined(FEATURE_ENABLE_UIKitGestures)
     loader.loadAll<uikit::Services>(container, ec);
 #endif
+}
+
+} // namespace comp_app
+
+#include <coffee/core/printing/verbosity_level.h>
+#include <platforms/profiling/jsonprofile.h>
+#include <platforms/sysinfo.h>
+
+namespace comp_app {
+
+void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
+{
+    if(Coffee::PrintingVerbosityLevel() < 10)
+        return;
+
+    if(time < m_nextTime)
+        return;
+
+    m_nextTime = time + Chrono::seconds(1);
+
+    using namespace platform::profiling;
+
+    auto timestamp =
+        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+
+    u32 i = 0;
+    for(auto freq : platform::SysInfo::ProcessorFrequencies())
+        json::CaptureMetrics(
+            "CPU frequency", MetricVariant::Value, freq, timestamp, i++);
+
+    json::CaptureMetrics(
+        "CPU temperature",
+        MetricVariant::Value,
+        platform::PowerInfo::CpuTemperature().current,
+        timestamp);
+    json::CaptureMetrics(
+        "GPU temperature",
+        MetricVariant::Value,
+        platform::PowerInfo::GpuTemperature().current,
+        timestamp);
+
+    json::CaptureMetrics(
+        "Memory consumption",
+        MetricVariant::Value,
+        platform::SysInfo::MemResident(),
+        timestamp);
+}
+
+void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)
+{
+    if(Coffee::PrintingVerbosityLevel() < 10)
+        return;
+
+    using namespace platform::profiling;
+
+    json::CaptureMetrics(
+        "VSYNC",
+        MetricVariant::Marker,
+        0,
+        Chrono::duration_cast<Chrono::microseconds>(
+            Profiler::clock::now().time_since_epoch()));
 }
 
 } // namespace comp_app

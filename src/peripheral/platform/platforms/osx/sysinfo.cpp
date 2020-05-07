@@ -5,6 +5,8 @@
 
 #include <peripherals/stl/stlstring_ops.h>
 
+#include <IOKit/IOKitLib.h>
+
 namespace platform {
 namespace env {
 namespace mac {
@@ -85,14 +87,14 @@ info::HardwareDevice SysInfo::Processor()
         vendor, brand, str::convert::hexify(microcode & 0xFFFF, true));
 }
 
-bigscalar SysInfo::ProcessorFrequency()
+Vector<bigscalar> SysInfo::ProcessorFrequencies(u32)
 {
     static const cstring frq_string = "machdep.tsc.frequency";
     //            "hw.cpufrequency"
 
     uint64 freq_i = _GetSysctlInt(frq_string);
 
-    return freq_i / (1000. * 1000. * 1000.);
+    return {freq_i / (1000. * 1000. * 1000.)};
 }
 
 CoreCnt SysInfo::CpuCount()
@@ -131,6 +133,13 @@ MemUnit SysInfo::MemAvailable()
     return MemTotal() - c;
 }
 
+MemUnit SysInfo::MemResident()
+{
+    if(rusage usage; getrusage(RUSAGE_SELF, &usage) == 0)
+        return C_FCAST<MemUnit>(usage.ru_maxrss) / 1024;
+    return 0;
+}
+
 bool SysInfo::HasFPU()
 {
     static const cstring fpu_string = "hw.optional.floatingpoint";
@@ -146,6 +155,16 @@ bool SysInfo::HasHyperThreading()
     uint64               thr_count  = _GetSysctlInt(thd_string);
 
     return thr_count != CoreCount();
+}
+
+PowerInfoDef::Temp PowerInfo::CpuTemperature()
+{
+    return {scalar(_GetSysctlInt("machdep.xcpm.cpu_thermal_level")), 0.f};
+}
+
+PowerInfoDef::Temp PowerInfo::GpuTemperature()
+{
+    return {scalar(_GetSysctlInt("machdep.xcpm.gpu_thermal_level")), 0.f};
 }
 
 } // namespace mac

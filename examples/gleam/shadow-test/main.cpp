@@ -14,6 +14,10 @@
 
 #include <coffee/core/CDebug>
 
+#if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/net_profiling.h>
+#endif
+
 using namespace Coffee;
 using namespace Display;
 
@@ -81,6 +85,11 @@ void cleanup_fun(CDRenderer&, SharedData*)
 i32 coffee_main(i32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Main");
+
+#if defined(FEATURE_ENABLE_ASIO)
+    auto _ = Net::RegisterProfiling();
+    cDebug("Installing net profiler");
+#endif
 
     CString err;
 

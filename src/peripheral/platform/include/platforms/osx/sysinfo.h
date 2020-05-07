@@ -22,7 +22,7 @@ struct SysInfo : SysInfoDef
 
     static info::HardwareDevice Processor();
 
-    static bigscalar ProcessorFrequency();
+    static Vector<bigscalar> ProcessorFrequencies(u32 = 0);
 
     static CoreCnt CpuCount();
     static CoreCnt CoreCount();
@@ -30,16 +30,25 @@ struct SysInfo : SysInfoDef
     static MemUnit MemTotal();
     static MemUnit MemAvailable();
 
+    static MemUnit MemResident();
+
     static bool HasFPU();
 
     static bool HasHyperThreading();
 };
 
+struct PowerInfo : PowerInfoDef
+{
+    static Temp CpuTemperature();
+
+    static Temp GpuTemperature();
+};
+
 } // namespace mac
 } // namespace env
 
-using SysInfo = env::mac::SysInfo;
-using PowerInfo = env::PowerInfoDef;
+using SysInfo   = env::mac::SysInfo;
+using PowerInfo = env::mac::PowerInfo;
 
 } // namespace platform
 #endif

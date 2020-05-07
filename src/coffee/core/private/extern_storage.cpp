@@ -6,6 +6,7 @@
 #include <coffee/foreign/foreign.h>
 #include <platforms/argument_parse.h>
 #include <platforms/environment.h>
+#include <platforms/profiling/jsonprofile.h>
 
 #if !defined(COFFEE_DISABLE_PROFILER)
 #include <coffee/core/profiler/profiling-export.h>
@@ -82,7 +83,7 @@ struct InternalThreadState
         using RuntimeProperties = profiling::Profiler::runtime_options;
         auto runtimeProps       = MkUq<RuntimeProperties>();
 
-        runtimeProps->push               = profiling::JsonPush;
+        runtimeProps->push               = profiling::json::Push;
         runtimeProps->context            = profiler_data;
         runtimeProps->context->thread_id = current_thread_id.hash();
 

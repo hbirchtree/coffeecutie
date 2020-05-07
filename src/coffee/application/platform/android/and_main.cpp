@@ -761,7 +761,9 @@ STATICINLINE void StartEventProcessing()
         HandleEvents();
 
         if(app_internal_state->currentState & AndroidApp_Visible)
+        {
             CoffeeEventHandleCall(CoffeeHandle_Loop);
+        }
     }
 }
 
@@ -796,7 +798,12 @@ std::string intent::action()
 
     auto getAction = "getAction"_jmethod.ret("java.lang.String");
 
-    return jnipp::java::type_unwrapper<std::string>(m_intent[getAction]());
+    auto out = m_intent[getAction]();
+
+    if(!java::objects::not_null(out))
+        return {};
+
+    return jnipp::java::type_unwrapper<std::string>(out);
 }
 
 std::string intent::data()
