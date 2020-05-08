@@ -252,9 +252,10 @@ void configureDefaults(AppLoader& loader)
 #endif
 
 #if defined(COFFEE_LINKED_GLES)
-    glConfig.profile       = GLConfig::Embedded;
-    glConfig.version.major = 3;
-    glConfig.version.minor = 0;
+    glConfig.framebufferFmt = PixFmt::RGB565;
+    glConfig.profile        = GLConfig::Embedded;
+    glConfig.version.major  = 3;
+    glConfig.version.minor  = 0;
 #else
     glConfig.profile       = GLConfig::Core;
     glConfig.version.major = 3;

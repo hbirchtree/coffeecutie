@@ -15,9 +15,9 @@
                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                  android:hardwareAccelerated="true"
                  android:fullBackupContent="@xml/backup_descriptor">
-        <activity android:name="me.birchtrees.CoffeeNativeActivity"
+        <activity android:name="@ANDROID_ACTIVITY_NAME@"
                   android:label="@string/app_name"
-                  android:configChanges="keyboardHidden|orientation|keyboardHidden|keyboard"
+                  android:configChanges="keyboardHidden|orientation|keyboard"
                   android:screenOrientation="@ANDROID_ORIENTATION_MODE@"
                   >
             <meta-data  android:name="android.app.lib_name"

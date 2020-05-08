@@ -1,4 +1,4 @@
-package me.birchtrees;
+package dev.birchy;
 
 import android.app.NativeActivity;
 import android.content.ComponentName;

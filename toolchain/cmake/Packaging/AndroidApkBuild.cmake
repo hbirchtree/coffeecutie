@@ -16,7 +16,9 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( ANDROID_BUILD_TOOLS_VER "28.0.2" CACHE STRING "" )
+    set ( ANDROID_BUILD_TOOLS_VER "28.0.3" CACHE STRING "" )
+    set ( ANDROID_GRADLE_MODULE_VER "3.6.3" CACHE STRING "" )
+    set ( ANDROID_GRADLE_VER "5.6.4" CACHE STRING "" )
 
     set ( ANDROID_APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk"
         CACHE PATH "" )
@@ -142,6 +144,7 @@ function(ANDROIDAPK_PACKAGE)
 -DSTRINGS_TEMPLATE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_STRINGS_TEMPLATE>"
 -DMANIFEST_TEMPLATE="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_MANIFEST_TEMPLATE>"
 
+-DANDROID_ES20_REQUIRED="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_ES20_REQUIRED>"
 -DANDROID_ES30_REQUIRED="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_ES30_REQUIRED>"
 -DANDROID_ES31_REQUIRED="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_ES31_REQUIRED>"
 -DANDROID_ES32_REQUIRED="$<TARGET_PROPERTY:${AAPK_TARGET},ANDROID_ES32_REQUIRED>"
@@ -191,11 +194,13 @@ function(ANDROIDAPK_PACKAGE)
         ANDROID_START
             "ANativeActivity_onCreate"
         ANDROID_ACTIVITY
-            "${ANDROID_PACKAGE_NAME}.NativeActivity"
+            "dev.birchy.CoffeeNativeActivity"
+            # "${ANDROID_PACKAGE_NAME}.NativeActivity"
         ANDROID_ORIENTATION
             # http://developer.android.com/guide/topics/manifest/activity-element.html
             "sensorLandscape"
 
+        ANDROID_ES20_REQUIRED true
         ANDROID_ES30_REQUIRED false
         ANDROID_ES31_REQUIRED false
         ANDROID_ES32_REQUIRED false
@@ -255,13 +260,19 @@ function(ANDROIDAPK_PACKAGE)
             "${ANDROID_PROJECT_INPUT}/Gradle" "${BUILD_OUTDIR}"
             )
 
+        configure_file (
+            ${ANDROID_PROJECT_INPUT}/build.root.gradle.in
+            ${BUILD_OUTDIR}/build.gradle
+            @ONLY
+            )
+
         #
         # We need to change the Gradle version used by the project
         #
         set ( GRADLE_WRAPPER_FILE
             "${BUILD_OUTDIR}/gradle/wrapper/gradle-wrapper.properties" )
         file ( READ "${GRADLE_WRAPPER_FILE}" GRADLE_PROPERTIES )
-        string ( REGEX REPLACE "gradle-[0-9\.]+-all" "gradle-4.10-all"
+        string ( REGEX REPLACE "gradle-[0-9\.]+-all" "gradle-${ANDROID_GRADLE_VER}-all"
             GRADLE_PROPERTIES "${GRADLE_PROPERTIES}" )
         file( WRITE "${GRADLE_WRAPPER_FILE}"  "${GRADLE_PROPERTIES}" )
 

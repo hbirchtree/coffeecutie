@@ -71,7 +71,7 @@ function(COFFEE_APPLICATION)
         ${ARGN}
         )
 
-    set_default ( APP_PACKAGE_PREFIX "me.birchtrees" )
+    set_default ( APP_PACKAGE_PREFIX "dev.birchy" )
     set_default ( APP_COMPANY "Birchtrees" )
     set_default ( APP_VERSION_CODE "1" )
     set_default ( APP_INFO_STRING "This is a Coffee application" )
@@ -111,7 +111,7 @@ function(COFFEE_APPLICATION)
             RESOURCES ${APP_RESOURCES}
             BUNDLE_LIBRARIES ${APP_BUNDLE_LIBRARIES}
 
-            APK_TARGET 28
+            APK_TARGET ${NDK_MAX_PLATFORM_LEVEL}
             APK_MIN_TARGET ${ANDROID_NATIVE_API_LEVEL}
             )
     elseif(WIN32)

@@ -12,34 +12,21 @@ set ( ANDROID_FEATURES "" )
 foreach(feat ${ANDROID_REQUIRED_FEATURES})
     set ( ANDROID_FEATURES
         "${ANDROID_FEATURES}
-<uses-feature android:name=\"${feat}\"
-    android:required=\"true\" />")
+    <uses-feature android:name=\"${feat}\" android:required=\"true\" />")
 endforeach()
 foreach(feat ${ANDROID_OPTIONAL_FEATURES})
     set ( ANDROID_FEATURES
         "${ANDROID_FEATURES}
-<uses-feature android:name=\"${feat}\"
-    android:required=\"false\" />")
+    <uses-feature android:name=\"${feat}\" android:required=\"false\" />")
 endforeach()
 
-if(BUILD_GLES)
-    set ( ANDROID_FEATURES
-        "${ANDROID_FEATURES}
-
-<uses-feature android:glEsVersion=\"@ANDROID_ES_VERSION@\"
-    android:required=\"true\" />"
-        )
-
-    set ( ANDROID_FEATURES
-        "${ANDROID_FEATURES}
-<uses-feature android:glEsVersion=\"0x00030000\"
-    android:required=\"@ANDROID_ES30_REQUIRED@\" />
-<uses-feature android:glEsVersion=\"0x00030001\"
-    android:required=\"@ANDROID_ES31_REQUIRED@\" />
-<uses-feature android:glEsVersion=\"0x00030002\"
-    android:required=\"@ANDROID_ES32_REQUIRED@\" />"
-        )
-endif()
+set ( ANDROID_FEATURES
+    "${ANDROID_FEATURES}
+    <uses-feature android:glEsVersion=\"0x00020000\" android:required=\"${ANDROID_ES20_REQUIRED}\" />
+    <uses-feature android:glEsVersion=\"0x00030000\" android:required=\"${ANDROID_ES30_REQUIRED}\" />
+    <uses-feature android:glEsVersion=\"0x00030001\" android:required=\"${ANDROID_ES31_REQUIRED}\" />
+    <uses-feature android:glEsVersion=\"0x00030002\" android:required=\"${ANDROID_ES32_REQUIRED}\" />"
+    )
 
 #########################################################
 #
@@ -50,7 +37,7 @@ endif()
 foreach(perm ${ANDROID_PERMISSIONS_PRE})
     set ( ANDROID_PERMISSIONS
         "${ANDROID_PERMISSIONS}
-<uses-permission android:name=\"${perm}\" />"
+    <uses-permission android:name=\"${perm}\" />"
         )
 endforeach()
 

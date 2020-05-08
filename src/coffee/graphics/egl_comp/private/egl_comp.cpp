@@ -165,8 +165,10 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
         config.version.major,
         EGL_CONTEXT_MINOR_VERSION,
         config.version.minor,
+#if 0
         EGL_CONTEXT_OPENGL_DEBUG,
         (config.profile & comp_app::GLConfig::Debug) ? EGL_TRUE : EGL_FALSE,
+#endif
 #elif defined(EGL_VERSION_1_3)
         EGL_CONTEXT_CLIENT_VERSION,
         2,
