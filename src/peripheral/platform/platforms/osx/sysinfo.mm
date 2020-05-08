@@ -5,7 +5,9 @@
 
 #include <peripherals/stl/stlstring_ops.h>
 
-#include <IOKit/IOKitLib.h>
+#if defined(COFFEE_IOS)
+#import <UIKit/UIDevice.h>
+#endif
 
 namespace platform {
 namespace env {
@@ -32,9 +34,9 @@ static CString _GetSysctlString(const cstring mod_string)
     return target;
 }
 
-static uint64 _GetSysctlInt(const cstring mod_string)
+static u64 _GetSysctlInt(const cstring mod_string)
 {
-    uint64 temp = 0;
+    u64 temp = 0;
     size_t len  = sizeof(temp);
     sysctlbyname(mod_string, &temp, &len, nullptr, 0);
     return temp;
@@ -42,26 +44,42 @@ static uint64 _GetSysctlInt(const cstring mod_string)
 
 CString get_kern_name()
 {
+#if defined(COFFEE_IOS)
+    return "Darwin";
+#else
     return _GetSysctlString("kern.ostype");
+#endif
 }
 
 CString get_kern_ver()
 {
+#if defined(COFFEE_IOS)
+    return [UIDevice currentDevice].systemVersion.UTF8String;
+#else
     return _GetSysctlString("kern.osrelease");
+#endif
 }
 
 CString SysInfo::GetSystemVersion()
 {
-    CString version = _GetSysctlString("kern.osproductversion");
-
-    if(!version.empty())
-        return version;
+#if defined(COFFEE_IOS)
+    if(auto ver = [UIDevice currentDevice].systemVersion.UTF8String; ver)
+        return ver;
+#else
+    if(auto ver = _GetSysctlString("kern.osproductversion"); !ver.empty())
+        return ver;
+#endif
 
     return "0.0";
 }
 
 info::HardwareDevice SysInfo::DeviceName()
 {
+#if defined(COFFEE_IOS)
+    UIDevice* device = [UIDevice currentDevice];
+    
+    return info::HardwareDevice("Apple", device.model.UTF8String, "0");
+#else
     static const cstring mod_string = "hw.model";
     static const cstring typ_string = "kern.ostype";
     static const cstring rel_string = "kern.osrelease";
@@ -71,20 +89,25 @@ info::HardwareDevice SysInfo::DeviceName()
     CString osrel  = _GetSysctlString(rel_string);
 
     return info::HardwareDevice("Apple", target, kern + " " + osrel);
+#endif
 }
 
 info::HardwareDevice SysInfo::Processor()
 {
+#if defined(COFFEE_IOS)
+    return info::HardwareDevice("Apple Axx", "0x0");
+#else
     static const cstring ven_string = "machdep.cpu.vendor";
     static const cstring brd_string = "machdep.cpu.brand_string";
     static const cstring mcc_string = "machdep.cpu.microcode_version";
 
     CString vendor    = _GetSysctlString(ven_string);
     CString brand     = _GetSysctlString(brd_string);
-    uint64  microcode = _GetSysctlInt(mcc_string);
+    u64  microcode = _GetSysctlInt(mcc_string);
 
     return info::HardwareDevice(
         vendor, brand, str::convert::hexify(microcode & 0xFFFF, true));
+#endif
 }
 
 Vector<bigscalar> SysInfo::ProcessorFrequencies(u32)
@@ -92,7 +115,7 @@ Vector<bigscalar> SysInfo::ProcessorFrequencies(u32)
     static const cstring frq_string = "machdep.tsc.frequency";
     //            "hw.cpufrequency"
 
-    uint64 freq_i = _GetSysctlInt(frq_string);
+    u64 freq_i = _GetSysctlInt(frq_string);
 
     return {freq_i / (1000. * 1000. * 1000.)};
 }
@@ -101,34 +124,42 @@ CoreCnt SysInfo::CpuCount()
 {
     static const cstring cpu_string = "hw.packages";
 
-    uint64 c = _GetSysctlInt(cpu_string);
+    u64 c = _GetSysctlInt(cpu_string);
 
     return C_FCAST<CoreCnt>(c);
 }
 
 CoreCnt SysInfo::CoreCount()
 {
+#if defined(COFFEE_IOS)
+    return C_FCAST<CoreCnt>([NSProcessInfo processInfo].activeProcessorCount);
+#else
     static const cstring cre_string = "machdep.cpu.core_count";
 
-    uint64 c = _GetSysctlInt(cre_string);
+    u64 c = _GetSysctlInt(cre_string);
 
     return C_FCAST<CoreCnt>(c);
+#endif
 }
 
 MemUnit SysInfo::MemTotal()
 {
+#if defined(COFFEE_IOS)
+    return [NSProcessInfo processInfo].physicalMemory;
+#else
     static const cstring mtl_string = "hw.memsize";
 
-    uint64 c = _GetSysctlInt(mtl_string);
+    u64 c = _GetSysctlInt(mtl_string);
 
     return C_FCAST<MemUnit>(c);
+#endif
 }
 
 MemUnit SysInfo::MemAvailable()
 {
     static const cstring mav_string = "hw.usermem";
 
-    uint64 c = _GetSysctlInt(mav_string);
+    u64 c = _GetSysctlInt(mav_string);
 
     return MemTotal() - c;
 }
@@ -144,7 +175,7 @@ bool SysInfo::HasFPU()
 {
     static const cstring fpu_string = "hw.optional.floatingpoint";
 
-    uint64 c = _GetSysctlInt(fpu_string);
+    u64 c = _GetSysctlInt(fpu_string);
 
     return c;
 }
@@ -152,19 +183,85 @@ bool SysInfo::HasFPU()
 bool SysInfo::HasHyperThreading()
 {
     static const cstring thd_string = "machdep.cpu.thread_count";
-    uint64               thr_count  = _GetSysctlInt(thd_string);
+    u64               thr_count  = _GetSysctlInt(thd_string);
 
     return thr_count != CoreCount();
 }
 
 PowerInfoDef::Temp PowerInfo::CpuTemperature()
 {
+#if defined(COFFEE_IOS)
+    auto thermal = [NSProcessInfo processInfo].thermalState;
+    f32 temp = 0.f;
+    
+    switch(thermal)
+    {
+    case NSProcessInfoThermalStateNominal:
+        temp = 30.f;
+        break;
+    case NSProcessInfoThermalStateFair:
+        temp = 50.f;
+        break;
+    case NSProcessInfoThermalStateSerious:
+        temp = 60.f;
+        break;
+    case NSProcessInfoThermalStateCritical:
+        temp = 80.f;
+        break;
+    default:
+        break;
+    }
+    
+    return {temp, 0.f};
+#else
     return {scalar(_GetSysctlInt("machdep.xcpm.cpu_thermal_level")), 0.f};
+#endif
 }
 
 PowerInfoDef::Temp PowerInfo::GpuTemperature()
 {
+#if defined(COFFEE_IOS)
+    return {0.f, 0.f};
+#else
     return {scalar(_GetSysctlInt("machdep.xcpm.gpu_thermal_level")), 0.f};
+#endif
+}
+
+bool PowerInfo::IsPowered()
+{
+#if defined(COFFEE_IOS)
+    return false;
+#else
+    
+#endif
+}
+
+bool PowerInfo::IsCharging()
+{
+#if defined(COFFEE_IOS)
+    return
+        [UIDevice currentDevice].batteryState == UIDeviceBatteryStateCharging;
+#else
+    return false;
+#endif
+}
+
+bool PowerInfo::HasBattery()
+{
+#if defined(COFFEE_IOS)
+    return true;
+#else
+    return false;
+#endif
+}
+
+u16 PowerInfo::BatteryPercentage()
+{
+#if defined(COFFEE_IOS)
+    return static_cast<u16>([UIDevice currentDevice].batteryLevel);
+#else
+    return 0;
+#endif
 }
 
 } // namespace mac

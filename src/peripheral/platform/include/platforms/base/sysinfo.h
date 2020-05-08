@@ -356,7 +356,7 @@ struct PowerInfoDef
      * \brief Battery percentage
      * \return
      */
-    uint16 BatteryPercentage()
+    u16 BatteryPercentage()
     {
         return 0;
     }

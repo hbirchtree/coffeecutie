@@ -136,6 +136,8 @@ static void native_print(
         OutputDebugStringW(formatted_w.c_str());
     else
         libc::io::put(stream, formatted.c_str());
+#elif defined(COFFEE_IOS)
+    libc::io::put(libc::io::io_handles::out, formatted.c_str());
 #else
     libc::io::put(stream, formatted.c_str());
 #endif

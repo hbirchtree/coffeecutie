@@ -40,10 +40,36 @@ namespace apple {
 /* TODO: Fix this up on macOS/iOS */
 
 namespace macos {
-constexpr u32 target = 1014;
+constexpr u32 target =
+        #if defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
+        __MAC_OS_X_VERSION_MAX_ALLOWED
+        #else
+        0
+        #endif
+        ;
+constexpr u32 min_target =
+        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED)
+        __MAC_OS_X_VERSION_MIN_REQUIRED
+        #else
+        0
+        #endif
+        ;
 }
 namespace ios {
-constexpr u32 target = 100;
+constexpr u32 target =
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED)
+        __IPHONE_OS_VERSION_MAX_ALLOWED
+#else
+        0
+#endif
+        ;
+constexpr u32 min_target =
+#if defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
+        __IPHONE_OS_VERSION_MIN_REQUIRED
+#else
+        0
+#endif
+        ;
 }
 } // namespace apple
 

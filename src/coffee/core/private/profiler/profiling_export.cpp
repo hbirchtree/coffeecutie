@@ -220,16 +220,28 @@ STATICINLINE void PutRuntimeInfo(
     }
     
     if constexpr(compile_info::platform::is_macos)
+    {
         build.AddMember(
             "macTarget",
             FromString(cast_pod(compile_info::apple::macos::target), alloc),
             alloc);
+        build.AddMember(
+            "macMinTarget",
+            FromString(cast_pod(compile_info::apple::macos::min_target), alloc),
+            alloc);
+    }
 
     if constexpr(compile_info::platform::is_ios)
+    {
         build.AddMember(
             "iosTarget",
             FromString(cast_pod(compile_info::apple::ios::target), alloc),
             alloc);
+        build.AddMember(
+            "iosMinTarget",
+            FromString(cast_pod(compile_info::apple::ios::min_target), alloc),
+            alloc);
+    }
 
     target.AddMember("build", build, alloc);
 

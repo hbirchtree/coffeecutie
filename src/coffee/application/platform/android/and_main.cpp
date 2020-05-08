@@ -230,10 +230,10 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
         Profiling::ExitRoutine();
 
-        std::reverse(
-            libc::signal::global_exit_handlers.begin(),
-            libc::signal::global_exit_handlers.end());
-        for(auto const& hnd : libc::signal::global_exit_handlers)
+        auto rev_handlers = libc::signal::global_exit_handlers;
+        std::reverse(rev_handlers.begin(), rev_handlers.end());
+
+        for(auto const& hnd : rev_handlers)
             hnd();
 
         libc::signal::exit(libc::signal::sig::abort);
