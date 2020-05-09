@@ -1,8 +1,8 @@
 #include <platforms/android/sysinfo.h>
 
-#include <jni.h>
 #include <coffee/android/android_main.h>
 #include <coffee/core/stl_types.h>
+#include <jni.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/file.h>
 
@@ -128,6 +128,46 @@ u32 SysInfo::CoreCount()
 ThrdCnt SysInfo::ThreadCount()
 {
     return C_FCAST<u32>(android_getCpuCount());
+}
+
+u16 PowerInfo::BatteryPercentage()
+{
+    using namespace ::jnipp_operators;
+
+    auto BatteryManager    = "android.os.BatteryManager"_jclass;
+    auto getProperty = "getIntProperty"_jmethod.arg<jint>()
+                                     .ret<jint>();
+
+    auto battery = *::android::app_info().get_service("batterymanager");
+
+    auto values = BatteryManager(battery)[getProperty](4);
+
+    return values.i;
+}
+
+PowerInfo::Temp PowerInfo::CpuTemperature()
+{
+    using namespace ::jnipp_operators;
+
+    /* Note: CPU temps are not available anymore, get the battery temp I guess */
+
+    auto BatteryManager    = "android.os.BatteryManager"_jclass;
+    auto getProperty = "getIntProperty"_jmethod.arg<jint>()
+                                     .arg<jint>()
+                                     .ret<jfloatArray>();
+
+    auto battery = *::android::app_info().get_service("batterymanager");
+
+//    auto values = BatteryManager(battery)[getProperty](0);
+
+    return {0.f, 0.f};
+}
+
+PowerInfo::Temp PowerInfo::GpuTemperature()
+{
+//    auto hw = *::android::app_info().get_service("hardware_properties");
+
+    return {0.f, 0.f};
 }
 
 } // namespace android

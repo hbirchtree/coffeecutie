@@ -173,9 +173,6 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         {
             deref_main_c(android_entry_point, 0, nullptr);
 
-            ScopedJNI jni(coffee_app->activity->vm);
-            jnipp::SwapJNI(&jni);
-
             auto extras = android::intent().extras();
             if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
                 Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
@@ -485,9 +482,6 @@ static std::string GetBuildField(wrapping::jfield<T>&& field)
 {
     using namespace ::jnipp_operators;
 
-    ScopedJNI jni(coffee_app->activity->vm);
-    jnipp::SwapJNI(&jni);
-
     jvalue fieldValue =
         *"android.os.Build"_jclass[field.as("java.lang.String")];
 
@@ -499,9 +493,6 @@ static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
 {
     using namespace ::jnipp_operators;
 
-    ScopedJNI jni(coffee_app->activity->vm);
-    jnipp::SwapJNI(&jni);
-
     jvalue fieldValue =
         *"android.os.Build$VERSION"_jclass[field.as("java.lang.String")];
 
@@ -511,9 +502,6 @@ static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
 static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
     using namespace ::jnipp_operators;
-
-    android::ScopedJNI _(coffee_app->activity->vm);
-    jnipp::SwapJNI(&_);
 
     switch(evtype)
     {
@@ -631,6 +619,8 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
         break;
     }
     }
+
+//    jnipp::SwapJNI(prev);
 }
 
 STATICINLINE void GetExtras()
@@ -751,6 +741,9 @@ STATICINLINE void HandleEvents()
 
 STATICINLINE void StartEventProcessing()
 {
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
+
     while(1)
     {
         int timeout = -1;
@@ -765,6 +758,8 @@ STATICINLINE void StartEventProcessing()
             CoffeeEventHandleCall(CoffeeHandle_Loop);
         }
     }
+
+    jnipp::SwapJNI(nullptr);
 }
 
 } // namespace Coffee
@@ -909,6 +904,34 @@ int intent::flags()
     auto getFlags = "getFlags"_jmethod.ret<jint>();
 
     return jnipp::java::type_unwrapper<jint>(m_intent[getFlags]());
+}
+
+std::string app_info::package_name()
+{
+    auto Context        = "android.content.Context"_jclass;
+    auto getPackageName = "getPackageName"_jmethod.ret("java.lang.String");
+
+    auto context = Context(coffee_app->activity->clazz);
+
+    return jnipp::java::type_unwrapper<std::string>(context[getPackageName]());
+}
+
+stl_types::Optional<::jobject> app_info::get_service(
+    std::string const& service)
+{
+    auto Context          = "android.content.Context"_jclass;
+    auto getSystemService = "getSystemService"_jmethod.arg("java.lang.String")
+                                .ret("java.lang.Object");
+
+    auto instance =
+        Context(coffee_app->activity->clazz)[getSystemService](jnipp::java::type_wrapper(service));
+
+    if(!java::objects::not_null(instance))
+        return {};
+
+    auto class_type = jnipp::java::objects::get_class(instance.l);
+
+    return instance.l;
 }
 
 std::vector<std::string> cpu_abis()

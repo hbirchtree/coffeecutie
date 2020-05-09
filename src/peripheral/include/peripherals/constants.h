@@ -10,6 +10,10 @@
 #include <sdkddkver.h>
 #endif
 
+#if defined(COFFEE_ANDROID)
+#include <android/ndk-version.h>
+#endif
+
 namespace compile_info {
 
 using libc_types::cstring;
@@ -33,6 +37,14 @@ constexpr u32 api =
 #endif
     ;
 
+constexpr u32 ndk_ver =
+#if defined(__NDK_MAJOR__)
+    __NDK_MAJOR__
+#else
+    0
+#endif
+    ;
+
 } // namespace android
 
 namespace apple {
@@ -41,36 +53,36 @@ namespace apple {
 
 namespace macos {
 constexpr u32 target =
-        #if defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
-        __MAC_OS_X_VERSION_MAX_ALLOWED
-        #else
-        0
-        #endif
-        ;
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
+    __MAC_OS_X_VERSION_MAX_ALLOWED
+#else
+    0
+#endif
+    ;
 constexpr u32 min_target =
-        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED)
-        __MAC_OS_X_VERSION_MIN_REQUIRED
-        #else
-        0
-        #endif
-        ;
-}
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED)
+    __MAC_OS_X_VERSION_MIN_REQUIRED
+#else
+    0
+#endif
+    ;
+} // namespace macos
 namespace ios {
 constexpr u32 target =
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED)
-        __IPHONE_OS_VERSION_MAX_ALLOWED
+    __IPHONE_OS_VERSION_MAX_ALLOWED
 #else
-        0
+    0
 #endif
-        ;
+    ;
 constexpr u32 min_target =
 #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
-        __IPHONE_OS_VERSION_MIN_REQUIRED
+    __IPHONE_OS_VERSION_MIN_REQUIRED
 #else
-        0
+    0
 #endif
-        ;
-}
+    ;
+} // namespace ios
 } // namespace apple
 
 namespace windows {
@@ -90,7 +102,7 @@ constexpr u32 wdk =
 #endif
     ;
 
-}
+} // namespace windows
 
 namespace compiler {
 
@@ -103,9 +115,7 @@ constexpr compiler_version_t version = {
     C_COMPILER_VER_MAJ / 100000 - (C_COMPILER_VER_MAJ / 10000000) * 100,
     C_COMPILER_VER_MAJ / 1000 - (C_COMPILER_VER_MAJ / 100000) * 100
 #else
-    C_COMPILER_VER_MAJ, 
-    C_COMPILER_VER_MIN,
-    C_COMPILER_VER_REV
+    C_COMPILER_VER_MAJ, C_COMPILER_VER_MIN, C_COMPILER_VER_REV
 #endif
 };
 
@@ -209,7 +219,7 @@ constexpr bool is_windows_uwp =
     true
 #else
     false
-#endif  
+#endif
     ;
 
 constexpr bool is_linux =

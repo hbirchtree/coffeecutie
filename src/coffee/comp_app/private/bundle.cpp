@@ -377,13 +377,10 @@ namespace comp_app {
 
 void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
 {
-    if(Coffee::PrintingVerbosityLevel() < 10)
-        return;
-
     if(time < m_nextTime)
         return;
 
-    m_nextTime = time + Chrono::seconds(1);
+    m_nextTime = time + Chrono::seconds(5);
 
     using namespace platform::profiling;
 
@@ -391,7 +388,11 @@ void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
         Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
     u32 i = 0;
-    for(auto freq : platform::SysInfo::ProcessorFrequencies())
+    for(auto freq : platform::SysInfo::ProcessorFrequencies(
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+            true
+#endif
+            ))
         json::CaptureMetrics(
             "CPU frequency", MetricVariant::Value, freq, timestamp, i++);
 
@@ -411,13 +412,16 @@ void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
         MetricVariant::Value,
         platform::SysInfo::MemResident(),
         timestamp);
+
+    json::CaptureMetrics(
+        "Battery level",
+        MetricVariant::Value,
+        platform::PowerInfo::BatteryPercentage(),
+        timestamp);
 }
 
 void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)
 {
-    if(Coffee::PrintingVerbosityLevel() < 10)
-        return;
-
     using namespace platform::profiling;
 
     json::CaptureMetrics(

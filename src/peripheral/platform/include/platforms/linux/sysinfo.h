@@ -10,7 +10,9 @@
 #include <platforms/base/power.h>
 #endif
 
+#include <sys/resource.h>
 #include <sys/sysinfo.h>
+#include <sys/types.h>
 #include <sys/utsname.h>
 #include <unistd.h>
 
@@ -75,6 +77,13 @@ struct SysInfo : SysInfoDef
         return free * inf.mem_unit;
     }
 
+    STATICINLINE MemUnit MemResident()
+    {
+        if(rusage usage; getrusage(RUSAGE_SELF, &usage) == 0)
+            return C_FCAST<MemUnit>(usage.ru_maxrss);
+        return 0;
+    }
+
     STATICINLINE u64 SwapTotal()
     {
         struct sysinfo inf;
@@ -91,7 +100,7 @@ struct SysInfo : SysInfoDef
 
     static info::HardwareDevice Processor();
 
-    static Vector<bigscalar> ProcessorFrequencies();
+    static Vector<bigscalar> ProcessorFrequencies(bool current = false);
 
     static bigscalar ProcessorFrequency();
 

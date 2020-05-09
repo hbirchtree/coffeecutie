@@ -78,7 +78,8 @@ info::HardwareDevice SysInfo::DeviceName()
 #if defined(COFFEE_IOS)
     UIDevice* device = [UIDevice currentDevice];
     
-    return info::HardwareDevice("Apple", device.model.UTF8String, "0");
+    return info::HardwareDevice(
+                "Apple", device.name.UTF8String, GetSystemVersion());
 #else
     static const cstring mod_string = "hw.model";
     static const cstring typ_string = "kern.ostype";
@@ -232,7 +233,7 @@ bool PowerInfo::IsPowered()
 #if defined(COFFEE_IOS)
     return false;
 #else
-    
+    return true;
 #endif
 }
 

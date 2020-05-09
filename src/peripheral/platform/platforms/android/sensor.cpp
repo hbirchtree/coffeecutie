@@ -1,5 +1,6 @@
 #include <platforms/android/sensor.h>
 
+#include <coffee/android/android_main.h>
 #include <android/sensor.h>
 
 namespace platform {
@@ -23,7 +24,12 @@ static const ASensor* m_sensors[SENS_Count] = {};
 
 void Android_InitSensors()
 {
+#if __ANDROID_API__ >= 26
+    auto pkg_name = ::android::app_info().package_name();
+    s_sensor_man = ASensorManager_getInstanceForPackage(pkg_name.c_str());
+#else
     s_sensor_man = ASensorManager_getInstance();
+#endif
 
     ASensorList sensors;
     int num_sensors = ASensorManager_getSensorList(s_sensor_man, &sensors);

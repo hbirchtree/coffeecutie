@@ -83,8 +83,16 @@ struct intent
 
     int flags();
 
-private:
+  private:
     jnipp::wrapping::jobject m_intent;
+};
+
+struct app_info
+{
+    std::string package_name();
+
+    stl_types::Optional<::jobject> get_service(
+        std::string const& service);
 };
 
 extern std::vector<std::string> cpu_abis();
@@ -99,7 +107,7 @@ extern android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope);
 
 extern JavaVM* GetVM();
 
-} // namespace JNIPP
+} // namespace jnipp
 
 namespace Coffee {
 
