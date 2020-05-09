@@ -1016,6 +1016,9 @@ void Metrics::optimize()
     {
         auto& values = *metric.second;
 
+        if(values.m_type != MetricValues::MetricValue)
+            continue;
+
         if(values.m_maxValue == values.m_minValue)
         {
             auto end_ts = values.m_values.back().ts;
@@ -1042,7 +1045,7 @@ void Metrics::optimize()
 
         for(auto it = to_remove.rbegin(); it != to_remove.rend(); ++it)
         {
-            if(*it == (values.m_values.size() - 1) && *it != 0)
+            if(*it == (values.m_values.size() - 1) || *it == 0)
                 continue;
 
             values.m_values.erase(values.m_values.begin() + *it);

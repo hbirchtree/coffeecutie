@@ -29,61 +29,101 @@ Item {
         }
     }
 
-    Repeater {
-        model: metric
-        Shape {
-            z: -1
-            anchors.top: root.top
-            anchors.bottom: root.bottom
-            anchors.left: root.left
-            anchors.right: root.right
-            anchors.topMargin: spacing
-            anchors.bottomMargin: spacing
-            anchors.leftMargin: threadWidth
+    onSourceChanged: {
+        if(metric.type == 0)
+            valueLoader.active = true;
+        else if(metric.type == 2)
+            markerLoader.active = true;
+    }
 
-            clip: true
+    Loader {
+        id: valueLoader
+        active: false
+        anchors.fill: parent
+        z: -1
+        sourceComponent: Repeater {
+            model: metric
+            Shape {
+                anchors.fill: parent
+                anchors.topMargin: spacing
+                anchors.bottomMargin: spacing
+                anchors.leftMargin: threadWidth
 
-            property real vertX1: previousTs / timePerPixel
-            property real vertX2: ts / timePerPixel
+                clip: true
 
-            property real vertY1: (1.0 - previousValueScaled) * metricHeight * 0.8 + 0.2
-            property real vertY2: (1.0 - valueScaled) * metricHeight * 0.8 + 0.2
+                property real vertX1: previousTs / timePerPixel
+                property real vertX2: ts / timePerPixel
 
-            ShapePath {
-                strokeColor: "transparent"
-                fillColor: "#005000"
-                fillRule: ShapePath.WindingFill
+                property real vertY1: (1.0 - previousValueScaled) * metricHeight * 0.8 + 0.2
+                property real vertY2: (1.0 - valueScaled) * metricHeight * 0.8 + 0.2
 
-                startX: vertX1
-                startY: vertY1
-                PathLine {
-                    x: vertX2
-                    y: vertY2
+                ShapePath {
+                    strokeColor: "transparent"
+                    fillColor: "#005000"
+                    fillRule: ShapePath.WindingFill
+
+                    startX: vertX1
+                    startY: vertY1
+                    PathLine {
+                        x: vertX2
+                        y: vertY2
+                    }
+                    PathLine {
+                        x: vertX2
+                        y: metricHeight
+                    }
+                    PathLine {
+                        x: vertX1
+                        y: metricHeight
+                    }
+                    PathLine {
+                        x: vertX1
+                        y: vertY1
+                    }
                 }
-                PathLine {
-                    x: vertX2
-                    y: metricHeight
-                }
-                PathLine {
-                    x: vertX1
-                    y: metricHeight
-                }
-                PathLine {
-                    x: vertX1
-                    y: vertY1
+                ShapePath {
+                    strokeColor: "green"
+                    strokeWidth: 2
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+
+                    startX: vertX1
+                    startY: vertY1
+                    PathLine {
+                        x: vertX2
+                        y: vertY2
+                    }
                 }
             }
-            ShapePath {
-                strokeColor: "green"
-                strokeWidth: 2
-                fillColor: "transparent"
-                capStyle: ShapePath.RoundCap
+        }
+    }
+    Loader {
+        id: markerLoader
+        active: false
+        anchors.fill: parent
+        z: -1
+        opacity: 0.2
 
-                startX: vertX1
-                startY: vertY1
-                PathLine {
-                    x: vertX2
-                    y: vertY2
+        sourceComponent: Repeater {
+            model: metric
+            Shape {
+                anchors.fill: parent
+                anchors.topMargin: spacing
+                anchors.leftMargin: threadWidth
+
+                ShapePath {
+                    strokeColor: "yellow"
+                    strokeWidth: 1
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+
+                    startX: ts / timePerPixel
+                    startY: metricHeight
+
+                    PathLine {
+                        x: ts / timePerPixel
+                        y: -container.contentHeight
+                    }
                 }
             }
         }
@@ -98,6 +138,7 @@ Item {
         height: metricHeight
         z: -1
         visible: false
+        enabled: valueLoader.active
 
         Label {
             id: markerText
@@ -105,6 +146,7 @@ Item {
     }
 
     MouseArea {
+        enabled: valueLoader.active
         anchors.fill: parent
         hoverEnabled: true
         onPositionChanged: {

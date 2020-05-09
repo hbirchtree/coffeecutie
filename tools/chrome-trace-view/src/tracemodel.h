@@ -268,6 +268,7 @@ class MetricValues : public QAbstractListModel
     Q_ENUM(MetricType)
 
     Q_PROPERTY(QString unit MEMBER m_unit)
+    Q_PROPERTY(MetricType type MEMBER m_type)
 
   private:
     Q_OBJECT
@@ -422,7 +423,7 @@ class TraceModel : public QAbstractListModel
     QVariant               data(QModelIndex const& index, int role) const;
     QHash<int, QByteArray> roleNames() const;
 
-    void parseAccountingInfo(QByteArray const& profile, uchar *ptr = nullptr);
+    void parseAccountingInfo(QByteArray const& profile, uchar* ptr = nullptr);
 
     enum ProcessField
     {
