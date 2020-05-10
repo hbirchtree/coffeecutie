@@ -91,8 +91,28 @@ struct app_info
 {
     std::string package_name();
 
-    stl_types::Optional<::jobject> get_service(
-        std::string const& service);
+    stl_types::Optional<::jobject> get_service(std::string const& service);
+};
+
+struct network_stats
+{
+    enum network_class
+    {
+        network_class_mobile = 0,
+        network_class_wifi   = 1,
+    };
+
+    struct result_t
+    {
+        result_t(libc_types::u64 rx = 0, libc_types::u64 tx = 0) :
+            rx(rx), tx(tx)
+        {
+        }
+
+        libc_types::u64 rx, tx;
+    };
+
+    stl_types::Optional<result_t> query();
 };
 
 extern std::vector<std::string> cpu_abis();

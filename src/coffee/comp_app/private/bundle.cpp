@@ -373,6 +373,10 @@ void addDefaults(
 #include <platforms/profiling/jsonprofile.h>
 #include <platforms/sysinfo.h>
 
+#if defined(COFFEE_ANDROID)
+#include <coffee/android/android_main.h>
+#endif
+
 namespace comp_app {
 
 void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
@@ -418,6 +422,15 @@ void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
         MetricVariant::Value,
         platform::PowerInfo::BatteryPercentage(),
         timestamp);
+
+#if defined(COFFEE_ANDROID)
+    auto network_stats = *::android::network_stats().query();
+
+    json::CaptureMetrics(
+        "Network RX", MetricVariant::Value, network_stats.rx, timestamp);
+    json::CaptureMetrics(
+        "Network TX", MetricVariant::Value, network_stats.tx, timestamp);
+#endif
 }
 
 void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)

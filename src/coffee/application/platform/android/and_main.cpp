@@ -619,8 +619,6 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
         break;
     }
     }
-
-//    jnipp::SwapJNI(prev);
 }
 
 STATICINLINE void GetExtras()
@@ -708,6 +706,8 @@ STATICINLINE void InitializeState(struct android_app* state)
     cDebug("State:       {0}", str::print::pointerify(state));
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
+
+    auto stats = android::network_stats().query();
 
     GetExtras();
 
@@ -916,15 +916,14 @@ std::string app_info::package_name()
     return jnipp::java::type_unwrapper<std::string>(context[getPackageName]());
 }
 
-stl_types::Optional<::jobject> app_info::get_service(
-    std::string const& service)
+stl_types::Optional<::jobject> app_info::get_service(std::string const& service)
 {
     auto Context          = "android.content.Context"_jclass;
     auto getSystemService = "getSystemService"_jmethod.arg("java.lang.String")
                                 .ret("java.lang.Object");
 
-    auto instance =
-        Context(coffee_app->activity->clazz)[getSystemService](jnipp::java::type_wrapper(service));
+    auto instance = Context(coffee_app->activity->clazz)[getSystemService](
+        jnipp::java::type_wrapper(service));
 
     if(!java::objects::not_null(instance))
         return {};
@@ -932,6 +931,59 @@ stl_types::Optional<::jobject> app_info::get_service(
     auto class_type = jnipp::java::objects::get_class(instance.l);
 
     return instance.l;
+}
+
+stl_types::Optional<network_stats::result_t> network_stats::query()
+{
+    auto System = "java.lang.System"_jclass;
+    auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<jlong>();
+
+    auto NetStats     = "android.app.usage.NetworkStatsManager"_jclass;
+    auto querySummary = "querySummary"_jmethod.arg<jint>()
+                            .arg("java.lang.String")
+                            .arg<jlong>()
+                            .arg<jlong>()
+                            .ret("android.app.usage.NetworkStats");
+
+    auto NetworkStats = "android.app.usage.NetworkStats"_jclass;
+    auto getNextBucket =
+        "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
+            .ret<jboolean>();
+    auto hasNextBucket = "hasNextBucket"_jmethod.ret<jboolean>();
+
+    auto Bucket          = "android.app.usage.NetworkStats$Bucket"_jclass;
+    auto bucketConstruct = "<init>"_jmethod;
+
+    auto getRxBytes = "getRxBytes"_jmethod.ret<jlong>();
+    auto getTxBytes = "getTxBytes"_jmethod.ret<jlong>();
+
+    auto net_stats = NetStats(*app_info().get_service("netstats"));
+
+    ::jvalue subId;
+    subId.l = 0;
+
+    auto now = System[currentTimeMillis]();
+
+    auto stats = NetworkStats(
+        net_stats[querySummary](network_class_mobile, subId, 0, now.j));
+
+    auto bucket = Bucket.construct(bucketConstruct);
+
+    result_t out;
+
+    while(stats[hasNextBucket]().z)
+    {
+        if(!stats[getNextBucket](bucket).z)
+            break;
+
+        auto rx = bucket[getRxBytes]();
+        auto tx = bucket[getTxBytes]();
+
+        out.rx += rx.j;
+        out.tx += tx.j;
+    }
+
+    return out;
 }
 
 std::vector<std::string> cpu_abis()
