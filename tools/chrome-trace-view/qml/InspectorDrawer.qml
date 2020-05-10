@@ -10,6 +10,9 @@ Drawer {
     property Item previousFocusItem
     property Item focusItem
     property QtObject event
+    property Item drawerBackground
+
+    background: drawerBackground
 
     onFocusItemChanged: {
         if(previousFocusItem)
@@ -98,6 +101,7 @@ Drawer {
 
             Label {
                 text: "Timing"
+                color: "white"
                 font.bold: true
                 anchors.top: parent.top
                 anchors.topMargin: Screen.pixelDensity
@@ -106,6 +110,7 @@ Drawer {
 
             Label {
                 text: "Max"
+                color: "white"
                 anchors.bottom: maxLine.bottom
                 anchors.left: parent.left
             }
@@ -117,11 +122,13 @@ Drawer {
 
             Label {
                 text: "Average"
+                color: "white"
                 anchors.top: avgLine.bottom
                 anchors.right: parent.right
             }
             Label {
                 text: "Current"
+                color: "white"
                 anchors.bottom: valLine.bottom
                 anchors.right: parent.right
             }

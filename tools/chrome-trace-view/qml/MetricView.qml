@@ -25,7 +25,10 @@ Item {
         anchors.leftMargin: container.contentX
         color: threadColor
         Label {
+            anchors.fill: parent
             text: metricName
+            color: "white"
+            wrapMode: Label.WordWrap
         }
     }
 
@@ -142,6 +145,7 @@ Item {
 
         Label {
             id: markerText
+            color: "white"
         }
     }
 
@@ -150,7 +154,7 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         onPositionChanged: {
-            markerText.text = metric.sampleValue((mouse.x - threadWidth) * timePerPixel) + metric.unit;
+            markerText.text = (metric.sampleValue((mouse.x - threadWidth) * timePerPixel)).toFixed(4) + metric.unit;
             markerLine.x = mouse.x;
         }
         onEntered: markerLine.visible = true

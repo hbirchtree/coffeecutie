@@ -17,6 +17,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: 8 + Math.max(0, container.contentX - root.x)
         text: parent.width < 40 ? "" : root.text
+        color: "white"
     }
 
     MouseArea {

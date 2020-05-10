@@ -23,13 +23,13 @@ RowLayout {
         property string suffix: "s"
     }
 
-    onTimeScaleChanged: {
+    onTimePerPixelChanged: {
         return;
-        if(timeScale <= 1)
+        if(timePerPixel <= 1)
             p.suffix = "s";
-        else if(timeScale <= 3)
+        else if(timePerPixel <= 3)
             p.suffix = "ms";
-        else if(timeScale >= 6)
+        else if(timePerPixel >= 6)
             p.suffix = "us";
     }
 
@@ -53,7 +53,13 @@ RowLayout {
                     x: index * 100 * (Screen.pixelDensity / 4) -
                             width / 2 -
                             visibleOffset % p.adjustedVisibleWidth
-                    text: (index * 100 * timePerPixel + p.adjustedVisibleWidth * p.currentPage * timePerPixel) * (Screen.pixelDensity / 4) + p.suffix
+                    property real valueSeconds: (index * 100 * timePerPixel
+                                                 + p.adjustedVisibleWidth
+                                                    * p.currentPage
+                                                    * timePerPixel)
+                                                * (Screen.pixelDensity / 4)
+                    text: valueSeconds.toFixed(2) + p.suffix
+                    color: "white"
                     clip: true
                 }
             }

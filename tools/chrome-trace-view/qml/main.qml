@@ -12,6 +12,9 @@ ApplicationWindow {
     visible: true
     width: 1280
     height: 1200
+
+    color: "#111"
+
     title: qsTr("Chrome Trace Viewer")
 
     property int rowHeight: 10 * Screen.pixelDensity
@@ -21,6 +24,8 @@ ApplicationWindow {
     property int spacing: 2 * Screen.pixelDensity
 
     property color threadColor: Qt.lighter(root.color, 1.2)
+
+    property color subWindowBackground: "#222"
 
     // 10^timelineScale is the time over a 100-pixel range
     // Dividing that by 100 we get a good per-pixel time ratio
@@ -32,6 +37,7 @@ ApplicationWindow {
     signal zoomOut();
 
     header: ToolBar {
+        background: Rectangle { color: subWindowBackground }
         height: Screen.pixelDensity * 10
         RowLayout {
             spacing: 0
@@ -79,6 +85,7 @@ ApplicationWindow {
         height: threadWidth * 1.2
         modal: false
         interactive: false
+        drawerBackground: Rectangle { color: subWindowBackground }
     }
 
     Component.onCompleted: {
@@ -225,6 +232,7 @@ ApplicationWindow {
         width: threadWidth * 4
         height: root.height
         edge: Qt.RightEdge
+        background: Rectangle { color: subWindowBackground }
 
         ScrollView {
             anchors.fill: parent
