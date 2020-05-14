@@ -12,10 +12,13 @@ Item {
     property int rowHeight
     property int threadWidth
     property Item container
+    property bool highlighted: false
 
     property real timePerPixel
 
     property real metricHeight: height - spacing * 2
+
+    signal clicked(var model, Item item)
 
     Rectangle {
         width: threadWidth
@@ -86,7 +89,7 @@ Item {
                 }
                 ShapePath {
                     strokeColor: "green"
-                    strokeWidth: 2
+                    strokeWidth: highlighted ? 4 : 2
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 
@@ -116,7 +119,7 @@ Item {
 
                 ShapePath {
                     strokeColor: "yellow"
-                    strokeWidth: 1
+                    strokeWidth: highlighted ? 2 : 1
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 
@@ -150,12 +153,17 @@ Item {
     }
 
     MouseArea {
-        enabled: valueLoader.active
         anchors.fill: parent
-        hoverEnabled: true
+        hoverEnabled: valueLoader.active
         onPositionChanged: {
+            if(!hoverEnabled)
+                return;
+
             markerText.text = (metric.sampleValue((mouse.x - threadWidth) * timePerPixel)).toFixed(4) + metric.unit;
             markerLine.x = mouse.x;
+        }
+        onClicked: {
+            root.clicked(source, root);
         }
         onEntered: markerLine.visible = true
         onExited: markerLine.visible = false

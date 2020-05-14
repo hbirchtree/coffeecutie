@@ -975,6 +975,13 @@ void Metrics::insertValue(const QJsonObject& data)
     auto& newValue     = metric->m_values.back();
     metric->m_minValue = std::min(metric->m_minValue, newValue.value);
     metric->m_maxValue = std::max(metric->m_maxValue, newValue.value);
+
+    metric->m_numEvents++;
+
+    if(metric->m_numEvents != 1)
+        metric->m_average =
+                metric->m_average + (ts - metric->m_prevTime) / metric->m_numEvents;
+    metric->m_prevTime = ts;
 }
 
 void Metrics::populate(const QJsonObject& meta)
@@ -1019,7 +1026,7 @@ void Metrics::optimize()
         if(values.m_type != MetricValues::MetricValue)
             continue;
 
-        if(values.m_maxValue == values.m_minValue)
+        if((values.m_maxValue - values.m_minValue) < 1.f / 1000000.f)
         {
             auto end_ts = values.m_values.back().ts;
 

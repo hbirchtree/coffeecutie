@@ -82,7 +82,7 @@ ApplicationWindow {
         id: drawer
         edge: Qt.BottomEdge
         width: root.width
-        height: threadWidth * 1.2
+        height: threadWidth * 1.8
         modal: false
         interactive: false
         drawerBackground: Rectangle { color: subWindowBackground }
@@ -350,6 +350,11 @@ ApplicationWindow {
                     rowHeight: root.rowHeight
                     threadWidth: root.threadWidth
                     spacing: root.spacing
+
+                    onClicked: {
+                        drawer.focusItem = item;
+                        drawer.event = model;
+                    }
 
                     Component.onCompleted: {
                         timeView.contentHeight = timeView.contentHeight +
