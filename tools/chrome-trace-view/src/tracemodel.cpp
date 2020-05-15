@@ -978,9 +978,8 @@ void Metrics::insertValue(const QJsonObject& data)
 
     metric->m_numEvents++;
 
-    if(metric->m_numEvents != 1)
-        metric->m_average =
-                metric->m_average + (ts - metric->m_prevTime) / metric->m_numEvents;
+    auto diff = ts - metric->m_prevTime;
+    metric->m_average += diff;
     metric->m_prevTime = ts;
 }
 
@@ -1022,6 +1021,8 @@ void Metrics::optimize()
     for(auto& metric : m_metric)
     {
         auto& values = *metric.second;
+
+        values.m_average /= values.m_numEvents;
 
         if(values.m_type != MetricValues::MetricValue)
             continue;

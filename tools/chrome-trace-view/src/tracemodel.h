@@ -276,7 +276,7 @@ class MetricValues : public QAbstractListModel
     Q_PROPERTY(double timestamp READ timestamp)
     Q_PROPERTY(double duration READ duration)
 
-    Q_PROPERTY(float average MEMBER m_average)
+    Q_PROPERTY(double average MEMBER m_average)
     Q_PROPERTY(float max MEMBER m_maxValue)
     Q_PROPERTY(float min MEMBER m_minValue)
     Q_PROPERTY(quint64 numEvents MEMBER m_numEvents)
@@ -304,7 +304,7 @@ class MetricValues : public QAbstractListModel
     quint64 m_numEvents = 0;
     float   m_minValue  = std::numeric_limits<float>::max(),
           m_maxValue    = std::numeric_limits<float>::min();
-    float  m_average    = 0.f;
+    double m_average    = 0.f;
     double m_prevTime   = 0.f;
 
   public:
