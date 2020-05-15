@@ -113,6 +113,45 @@ struct app_loadable_matcher
     }
 };
 
+static void lifecycle_manage(
+    detail::EntityContainer* container, LifecycleEvent const& event)
+{
+    using namespace Coffee;
+
+    switch(event.lifecycle_type)
+    {
+    case LifecycleEvent::WillEnterForeground:
+    {
+        app_error ec;
+        for(auto& service : container->services_with<AppLoadableService>())
+        {
+            if(C_DCAST<AppMain>(&service))
+                continue;
+            service.load(*container, ec);
+            C_ERROR_CHECK(ec)
+        }
+
+        auto eventMain = container->service<AppMain>();
+        C_PTR_CHECK(eventMain)
+        eventMain->load(*container, ec);
+        C_ERROR_CHECK(ec)
+        break;
+    }
+    case LifecycleEvent::WillEnterBackground:
+    {
+        app_error appec;
+        auto      services = container->services_with<AppLoadableService>(
+            Components::reverse_query);
+
+        for(auto& service : services)
+            service.unload(*container, appec);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 detail::EntityContainer& createContainer()
 {
     static stl_types::ShPtr<detail::EntityContainer> container;
@@ -121,113 +160,6 @@ detail::EntityContainer& createContainer()
         return *container;
 
     container = stl_types::MkShared<detail::EntityContainer>();
-
-    using namespace Coffee;
-
-    coffee_event_handling_data = container.get();
-    CoffeeEventHandle          = [](void*, int event) {
-        using namespace Coffee;
-
-        runtime_queue_error ec;
-
-        switch(event)
-        {
-        case CoffeeHandle_Setup:
-        {
-            app_error ec;
-            for(auto& service : container->services_with<AppLoadableService>())
-            {
-                if(C_DCAST<AppMain>(&service))
-                    continue;
-                service.load(*container, ec);
-                C_ERROR_CHECK(ec)
-            }
-
-            auto eventMain = container->service<AppMain>();
-            C_PTR_CHECK(eventMain)
-            eventMain->load(*container, ec);
-            C_ERROR_CHECK(ec)
-            break;
-        }
-        case CoffeeHandle_Loop:
-        {
-            container->exec();
-
-            auto queue = RuntimeQueue::GetCurrentQueue(ec);
-            if(queue)
-                queue->executeTasks();
-            break;
-        }
-        case CoffeeHandle_Cleanup:
-        {
-            app_error appec;
-            auto      services = container->services_with<AppLoadableService>(
-                Components::reverse_query);
-
-            for(auto& service : services)
-                service.unload(*container, appec);
-            break;
-        }
-        default:
-        {
-            auto&    app_bus = *container->service<EventBus<AppEvent>>();
-            AppEvent appevent;
-            appevent.type = AppEvent::None;
-            union
-            {
-                LifecycleEvent  lifecycle;
-                NavigationEvent navi;
-            };
-            switch(event)
-            {
-            case CoffeeHandle_LowMem:
-            case CoffeeHandle_IsTerminating:
-            case CoffeeHandle_IsBackground:
-            case CoffeeHandle_IsForeground:
-            case CoffeeHandle_TransBackground:
-            case CoffeeHandle_TransForeground:
-                appevent.type = AppEvent::LifecycleEvent;
-                break;
-            }
-
-            switch(event)
-            {
-            case CoffeeHandle_LowMem:
-                lifecycle.lifecycle_type = LifecycleEvent::LowMemory;
-                break;
-            case CoffeeHandle_IsTerminating:
-                lifecycle.lifecycle_type = LifecycleEvent::Terminate;
-                break;
-            case CoffeeHandle_IsBackground:
-                lifecycle.lifecycle_type = LifecycleEvent::Background;
-                break;
-            case CoffeeHandle_IsForeground:
-                lifecycle.lifecycle_type = LifecycleEvent::Foreground;
-                break;
-            case CoffeeHandle_TransBackground:
-                lifecycle.lifecycle_type = LifecycleEvent::WillEnterBackground;
-                break;
-            case CoffeeHandle_TransForeground:
-                lifecycle.lifecycle_type = LifecycleEvent::WillEnterForeground;
-                break;
-            }
-            switch(event)
-            {
-            case CoffeeHandle_LowMem:
-            case CoffeeHandle_IsTerminating:
-            case CoffeeHandle_IsBackground:
-            case CoffeeHandle_IsForeground:
-            case CoffeeHandle_TransBackground:
-            case CoffeeHandle_TransForeground:
-                app_bus.process(appevent, &lifecycle);
-                break;
-            }
-        }
-        }
-    };
-    CoffeeEventHandleNA = [](void*, int event, void*, void*, void*) {
-
-    };
 
     return *container;
 }
@@ -292,10 +224,20 @@ void addDefaults(
     loader.loadAll<detail::TypeList<
         BasicEventBus<Coffee::Input::CIEvent>,
         BasicEventBus<Coffee::Display::Event>,
-        BasicEventBus<AppEvent>,
         DefaultAppInfo>>(container, ec);
 
     auto& appInfo = *container.service<AppInfo>();
+
+#if defined(COFFEE_IOS) || defined(COFFEE_ANDROID)
+    loader.loadAll<detail::TypeList<BasicEventBus<AppEvent>>>(container, ec);
+
+    auto app_handler =
+        [&container](AppEvent& ev, LifecycleEvent* cycle) mutable {
+            lifecycle_manage(&container, *cycle);
+        };
+    container.service<BasicEventBus<AppEvent>>()
+        ->addEventFunction<LifecycleEvent>(0, std::move(app_handler));
+#endif
 
 #if MODE_DEBUG
     if constexpr(compile_info::profiler::enabled)
@@ -437,12 +379,14 @@ void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)
 {
     using namespace platform::profiling;
 
+#if !defined(COFFEE_IOS)
     json::CaptureMetrics(
         "VSYNC",
         MetricVariant::Marker,
         0,
         Chrono::duration_cast<Chrono::microseconds>(
             Profiler::clock::now().time_since_epoch()));
+#endif
 }
 
 } // namespace comp_app

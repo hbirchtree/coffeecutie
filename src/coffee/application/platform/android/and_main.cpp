@@ -1,6 +1,7 @@
 #include <coffee/android/android_main.h>
 
 #include <coffee/anative/anative_comp.h>
+#include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/bundle.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/profiler/profiling-export.h>
@@ -124,12 +125,6 @@ static AndroidInternalState* app_internal_state = nullptr;
 struct android_app*          coffee_app         = nullptr;
 static JNIEnv*               coffee_jni_env;
 
-void (*CoffeeEventHandle_Platform)(void*, int);
-void (*CoffeeEventHandleNA_Platform)(void*, int, void*, void*, void*);
-
-void (*CoffeeForeignSignalHandle_Platform)(int);
-void (*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
-
 /*
  *
  * Android event handling
@@ -145,6 +140,23 @@ inline void AndroidForwardAppEvent(android_app* app, libc_types::i32 event)
         return;
 
     android_bus->handleWindowEvent(app, event);
+}
+
+inline void AppForwardLifecycleEvent(comp_app::LifecycleEvent::Type type)
+{
+    auto& entities = comp_app::createContainer();
+    auto  app_bus  = entities.service<comp_app::EventBus<comp_app::AppEvent>>();
+
+    if(!app_bus)
+        return;
+
+    comp_app::AppEvent event;
+    event.type = comp_app::AppEvent::LifecycleEvent;
+
+    comp_app::LifecycleEvent lifecycle;
+    lifecycle.lifecycle_type = type;
+
+    app_bus->process(event, &lifecycle);
 }
 
 void AndroidHandleAppCmd(struct android_app* app, int32_t event)
@@ -180,7 +192,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
             app_internal_state->currentState |= AndroidApp_Initialized;
         }
 
-        CoffeeEventHandleCall(CoffeeHandle_Setup);
+        AppForwardLifecycleEvent(comp_app::LifecycleEvent::WillEnterForeground);
 
         ANativeActivity_setWindowFlags(
             app->activity,
@@ -207,7 +219,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
     case APP_CMD_GAINED_FOCUS:
     {
-        CoffeeEventHandleCall(CoffeeHandle_IsForeground);
+        AppForwardLifecycleEvent(comp_app::LifecycleEvent::Foreground);
 
         app_internal_state->currentState =
             AndroidApp_Visible | AndroidApp_Initialized;
@@ -215,7 +227,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
     case APP_CMD_LOST_FOCUS:
     {
-        CoffeeEventHandleCall(CoffeeHandle_IsBackground);
+        AppForwardLifecycleEvent(comp_app::LifecycleEvent::Background);
 
         app_internal_state->currentState =
             AndroidApp_Hidden | AndroidApp_Initialized;
@@ -223,7 +235,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
     case APP_CMD_TERM_WINDOW:
     {
-        CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+        AppForwardLifecycleEvent(comp_app::LifecycleEvent::Terminate);
 
         Profiling::ExitRoutine();
 
@@ -241,7 +253,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         /* Special events */
     case APP_CMD_LOW_MEMORY:
     {
-        CoffeeEventHandleCall(CoffeeHandle_LowMem);
+        AppForwardLifecycleEvent(comp_app::LifecycleEvent::LowMemory);
         break;
     }
 
@@ -935,7 +947,7 @@ stl_types::Optional<::jobject> app_info::get_service(std::string const& service)
 
 stl_types::Optional<network_stats::result_t> network_stats::query()
 {
-    auto System = "java.lang.System"_jclass;
+    auto System            = "java.lang.System"_jclass;
     auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<jlong>();
 
     auto NetStats     = "android.app.usage.NetworkStatsManager"_jclass;

@@ -19,31 +19,13 @@
 #include <coffee/foreign/foreign.h>
 #include <peripherals/stl/types.h>
 #include <peripherals/libc/signals.h>
+#include <platforms/profiling/jsonprofile.h>
 
 // For accessibility from other parts of the Objective-C code
 // We will be using this to attach a GLKViewController
 // Stored in extern_storage.cpp
 extern void* uikit_appdelegate;
 extern void* uikit_window;
-
-CMMotionManager* app_motionManager = NULL;
-
-// Event handling, sending stuff to Coffee
-void(*CoffeeForeignSignalHandle)(int);
-void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
-
-void HandleForeignSignals(int event);
-void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
-
-void DispatchGeneralEvent(uint32_t type, void* data)
-{
-    struct CfGeneralEvent ev = {
-        .type = static_cast<CfGeneralEventType>(type),
-        .pad = 0,
-    };
-    
-    CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
-}
 
 namespace libc {
 namespace signal {
@@ -64,9 +46,16 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     comp_app::createContainer().service<bus_type>()->process(baseEvent, event);
 }
 
-@interface AppDelegate ()
+extern "C" {
 
-@end
+void start_app(int argc, char* argv[])
+{
+    @autoreleasepool {
+        UIApplicationMain(argc, argv, NULL, NSStringFromClass([AppDelegate class]));
+    }
+}
+
+}
 
 @implementation AppDelegate
 
@@ -74,15 +63,18 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 {
     uikit_appdelegate = self;
     
-    CoffeeForeignSignalHandle = HandleForeignSignals;
-    CoffeeForeignSignalHandleNA = HandleForeignSignalsNA;
-    
     NSLog(@"View controller");
     
     Coffee::SetPrintingVerbosity(10);
     // Call the Coffee entrypoint, it will set up a bunch of things
     Coffee::CoffeeMain(coffee_main_function_ptr, 0, NULL);
     Coffee::SetPrintingVerbosity(10);
+     
+    Coffee::runtime_queue_error rqec;
+    self.mainQueue = Coffee::RuntimeQueue::GetCurrentQueue(rqec);
+    C_ERROR_CHECK(rqec);
+    
+    self.app = &comp_app::createContainer();
     
     self.hasInitialized = FALSE;
     self.window = [[UIWindow alloc] init];
@@ -92,7 +84,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     
     return YES;
 }
-
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
 {
@@ -116,7 +107,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
     
     NSLog(@"AppDelegate running cleanup");
-    CoffeeEventHandleCall(CoffeeHandle_Cleanup);
     self.hasInitialized = FALSE;
 }
 
@@ -140,44 +130,43 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     LifecycleEvent event;
     event.lifecycle_type = LifecycleEvent::WillEnterForeground;
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
+
+    self.window.backgroundColor = [UIColor blackColor];
+    uikit_window = self.window;
+    [self.window makeKeyAndVisible];
+
+    self.hasInitialized = TRUE;
+
+    CGSize screenRes = [[UIScreen mainScreen] nativeBounds].size;
+
+    using namespace Coffee::Display;
+
+    Event baseEvent;
+    baseEvent.type = Event::Resize;
+    ResizeEvent resize;
+    resize.w = screenRes.width;
+    resize.h = screenRes.height;
+
+    comp_app::createContainer()
+        .service<comp_app::EventBus<Event>>()->process(baseEvent, &resize);
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive.
     // If the application was previously in the background, optionally refresh the user interface.
     NSLog(@"AppDelegate::applicationDidBecomeActive");
+
     if(!self.hasInitialized)
-    {
-        NSLog(@"AppDelegate running setup");
-
-        self.window.backgroundColor = [UIColor blackColor];
-        uikit_window = self.window;
-        [self.window makeKeyAndVisible];
-
-        CoffeeEventHandleCall(CoffeeHandle_Setup);
-        self.hasInitialized = TRUE;
-    }
+        [self applicationWillEnterForeground: application];
     
     LifecycleEvent event;
     event.lifecycle_type = LifecycleEvent::Foreground;
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
-    
-    CGSize screenRes = [[UIScreen mainScreen] nativeBounds].size;
-    
-    using namespace Coffee::Display;
-    
-    Event baseEvent;
-    baseEvent.type = Event::Resize;
-    ResizeEvent resize;
-    resize.w = screenRes.width;
-    resize.h = screenRes.height;
-    
-    comp_app::createContainer()
-        .service<comp_app::EventBus<Event>>()->process(baseEvent, &resize);
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    // Called when the application is about to terminate.
+    // Save data if appropriate. See also applicationDidEnterBackground:.
     NSLog(@"AppDelegate::applicationWillTerminate");
     LifecycleEvent event;
     event.lifecycle_type = LifecycleEvent::Terminate;
@@ -187,8 +176,21 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 #if defined(COFFEE_APP_USE_GLKIT)
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
+    using namespace platform::profiling;
+    
     if(self.hasInitialized)
-        CoffeeEventHandleCall(CoffeeHandle_Loop);
+    {
+        self.app->exec();
+        self.mainQueue->executeTasks();
+        
+        json::CaptureMetrics(
+            "VSYNC",
+            MetricVariant::Marker,
+            0,
+            Chrono::duration_cast<Chrono::microseconds>(
+                Profiler::clock::now().time_since_epoch()));
+    }
+
 }
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
@@ -199,12 +201,8 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 
 @end
 
-// The simple foreign signal handler
-void HandleForeignSignals(int)
-{
-}
-
 // Foreign signal handler
+/*
 void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
 {
     AppDelegate* appdelegate_typed = (AppDelegate*)uikit_appdelegate;
@@ -289,30 +287,7 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
         }
         case CoffeeForeign_GetWinSize:
         {
-            int* winSize = (int*)ptr1;
-            // nativeBounds returns the portrait resolution...
-            CGSize size = [[UIScreen mainScreen] nativeBounds].size;
-            
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-            UIInterfaceOrientation currOri =
-                appdelegate_typed.window.windowScene.interfaceOrientation;
-#else
-            UIInterfaceOrientation currOri = [[UIApplication sharedApplication] statusBarOrientation];
-#endif
-            // So we have to transpose it when running in landscape mode
-            // We cannot use UIDevice's orientation, because it is undefined
-            //  at load-time
-            if(UIInterfaceOrientationIsLandscape(currOri))
-            {
-                CGFloat width = size.width;
-                size.width = size.height;
-                size.height = width;
-            }
-            
-            // ... and then we just fill the C++-side buffers.
-            winSize[0] = size.width;
-            winSize[1] = size.height;
-            break;
+            abort();
         }
         case CoffeeForeign_GetSafeMargins:
         {
@@ -338,22 +313,23 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
             // Make sensor initialization explicit, for power consumption
         
             printf("Request to activate motion device");
-            if(!app_motionManager)
-                app_motionManager = [CMMotionManager alloc];
-            
-            uint32_t flags = *((uint32_t*)ptr1);
-            
-            if(flags & CfSensor_Accel)
-                [app_motionManager startAccelerometerUpdates];
-            if(flags & CfSensor_Gyro)
-                [app_motionManager startGyroUpdates];
-            if(flags & CfSensor_Magnetometer)
-                [app_motionManager startMagnetometerUpdates];
+//            if(!app_motionManager)
+//                app_motionManager = [CMMotionManager alloc];
+//
+//            uint32_t flags = *((uint32_t*)ptr1);
+//
+//            if(flags & CfSensor_Accel)
+//                [app_motionManager startAccelerometerUpdates];
+//            if(flags & CfSensor_Gyro)
+//                [app_motionManager startGyroUpdates];
+//            if(flags & CfSensor_Magnetometer)
+//                [app_motionManager startMagnetometerUpdates];
             
             break;
         }
         default:
-        printf("Unhandled signal: %i\n", event);
-        break;
+            printf("Unhandled signal: %i\n", event);
+            break;
     }
 }
+*/

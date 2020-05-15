@@ -27,6 +27,8 @@ struct NavigationEvent
 
 struct LifecycleEvent
 {
+    static constexpr AppEvent::Type event_type = AppEvent::LifecycleEvent;
+
     enum Type
     {
         None,

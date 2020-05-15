@@ -42,11 +42,11 @@ struct PowerInfo : PowerInfoDef
     static Temp CpuTemperature();
 
     static Temp GpuTemperature();
-    
+
     static bool IsPowered();
     static bool IsCharging();
     static bool HasBattery();
-    static u16 BatteryPercentage();
+    static u16  BatteryPercentage();
 };
 
 } // namespace mac
@@ -55,10 +55,17 @@ struct PowerInfo : PowerInfoDef
 using SysInfo   = env::mac::SysInfo;
 using PowerInfo = env::mac::PowerInfo;
 
+namespace info {
+
+union SafeArea;
+
+}
+
 namespace mac {
 
 extern void get_display_dpi(stl_types::Vector<libc_types::f32>& dpis);
+extern void get_safe_insets(::platform::info::SafeArea& insets);
 
-}
+} // namespace mac
 } // namespace platform
 #endif

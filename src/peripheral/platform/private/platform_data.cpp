@@ -144,8 +144,7 @@ extern SafeArea safe_area()
 {
     SafeArea area = {};
 #if defined(COFFEE_APPLE_MOBILE)
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_GetSafeMargins, &area, nullptr, nullptr);
+    ::platform::mac::get_safe_insets(area);
 #endif
     return area;
 }
