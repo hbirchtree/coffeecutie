@@ -88,14 +88,14 @@ constexpr u32 min_target =
 namespace windows {
 
 constexpr u32 target =
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
     WINVER
 #else
     0
 #endif
     ;
 constexpr u32 wdk =
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
     WDK_NTDDI_VERSION
 #else
     0

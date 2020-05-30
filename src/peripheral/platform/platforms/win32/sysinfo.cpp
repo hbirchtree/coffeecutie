@@ -1,5 +1,6 @@
 #include <platforms/win32/sysinfo.h>
 
+#include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 
 #if !defined(COFFEE_MINGW64)
@@ -303,6 +304,8 @@ bool WindowsSysInfo::HasHyperThreading()
 
 CString WindowsSysInfo::GetSystemVersion()
 {
+    using namespace stl_types;
+
     if(auto wineVer = GetWineVersion(); wineVer)
         return *wineVer;
 

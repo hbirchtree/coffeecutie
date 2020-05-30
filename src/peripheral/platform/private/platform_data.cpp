@@ -14,6 +14,7 @@
 
 #if defined(COFFEE_WINDOWS)
 #include <lm.h>
+#include <peripherals/stl/string_casting.h>
 #endif
 
 using namespace ::stl_types;
@@ -229,6 +230,8 @@ CString system::runtime_arch()
 
 CString system::runtime_kernel_version()
 {
+    using namespace stl_types;
+
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     return env::Linux::get_kern_ver();
 #elif defined(COFFEE_APPLE)

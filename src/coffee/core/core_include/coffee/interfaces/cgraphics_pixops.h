@@ -188,7 +188,9 @@ FORCEDINLINE constexpr szptr GetPixCompressedSize(
         break;
     }
 
-    Throw(implementation_error("size calculation not implemented"));
+    //static_assert(false, "size calculation not implemented");
+    //Throw(implementation_error("size calculation not implemented"));
+    return 0;
 }
 
 FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)

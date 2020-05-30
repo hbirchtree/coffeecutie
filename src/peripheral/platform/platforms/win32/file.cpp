@@ -1,5 +1,6 @@
 #include <platforms/win32/file.h>
 
+#include <peripherals/stl/string_ops.h>
 #include <platforms/win32/environment.h>
 
 #include <fileapi.h>
@@ -7,6 +8,8 @@
 namespace platform {
 namespace file {
 namespace win32 {
+
+using namespace ::platform::win32;
 
 const constexpr cstring coffee_rsc_tag = "CF_RES";
 
@@ -49,10 +52,11 @@ win_handle WinFileApi::GetFileHandle(Url const& fn, RSCA acc)
     FileAccess f   = GetAccess(acc);
 #ifdef COFFEE_WINDOWS_UWP
     CWString fn_w = str::encode::to<wbyte_t>(url);
-    return CreateFile2(&fn_w[0], f.open, f.share, f.create, nullptr);
+    return win_handle(handle_to_u64(CreateFile2(
+        &fn_w[0], f.open, f.share, f.create, nullptr)));
 #else
-    return win_handle(CreateFile(
-        url.c_str(), f.open, f.share, nullptr, f.create, f.attr, nullptr));
+    return win_handle(handle_to_u64(CreateFile(
+        url.c_str(), f.open, f.share, nullptr, f.create, f.attr, nullptr)));
 #endif
 }
 
@@ -163,7 +167,7 @@ WinFileFun::FileHandle WinFileFun::Open(Url const& fn, RSCA acc, file_error& ec)
     fh.access     = acc;
     if(!fh.handle)
     {
-        CloseHandle(ff.hnd);
+        CloseHandle(ff);
         ff.release();
         ec.as<platform::win32::error_code>() = GetLastError();
         return {};
@@ -209,7 +213,7 @@ Bytes WinFileFun::Read(FileHandle const& h, uint64 size, file_error& ec)
         {
             chnk      = ((d.size - i) < UInt32_Max) ? (d.size - i) : UInt32_Max;
             BOOL stat = ReadFile(
-                C_OCAST<HANDLE>(h.file), &d.data[i], chnk, &size, nullptr);
+                h.file, &d.data[i], chnk, &size, nullptr);
 
 #if MODE_DEBUG
             ec.as<platform::win32::error_code>() = GetLastError();
@@ -218,7 +222,7 @@ Bytes WinFileFun::Read(FileHandle const& h, uint64 size, file_error& ec)
 #endif
 
             SetFilePointer(
-                C_OCAST<HANDLE>(h.file), chnk, nullptr, FILE_CURRENT);
+                h.file, chnk, nullptr, FILE_CURRENT);
 
 #if MODE_DEBUG
             ec.as<platform::win32::error_code>() = GetLastError();
@@ -235,7 +239,7 @@ Bytes WinFileFun::Read(FileHandle const& h, uint64 size, file_error& ec)
             }
         }
 
-        SetFilePointer(C_OCAST<HANDLE>(h.file), 0, nullptr, FILE_BEGIN);
+        SetFilePointer(h.file, 0, nullptr, FILE_BEGIN);
 
         ec.as<platform::win32::error_code>() = GetLastError();
 
@@ -270,7 +274,7 @@ bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, file_error& ec)
         {
             chnk      = ((d.size - i) < UInt32_Max) ? (d.size - i) : UInt32_Max;
             BOOL stat = WriteFile(
-                C_OCAST<HANDLE>(fh.file), &d.data[i], chnk, &size, nullptr);
+                fh.file, &d.data[i], chnk, &size, nullptr);
 
 #if MODE_DEBUG
             ec.as<platform::win32::error_code>() = GetLastError();
@@ -280,7 +284,7 @@ bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, file_error& ec)
 
             if(!enum_helpers::feval(fh.access, RSCA::Append))
                 SetFilePointer(
-                    C_OCAST<HANDLE>(fh.file), chnk, nullptr, FILE_CURRENT);
+                    fh.file, chnk, nullptr, FILE_CURRENT);
 
 #if MODE_DEBUG
             ec.as<platform::win32::error_code>() = GetLastError();
@@ -297,7 +301,7 @@ bool WinFileFun::Write(FileHandle const& fh, Bytes const& d, file_error& ec)
         //BOOL stat2 = FlushFileBuffers(C_OCAST<HANDLE>(fh.file));
 
         if(!enum_helpers::feval(fh.access, RSCA::Append))
-            SetFilePointer(C_OCAST<HANDLE>(fh.file), 0, nullptr, FILE_BEGIN);
+            SetFilePointer(fh.file, 0, nullptr, FILE_BEGIN);
 
         ec.as<platform::win32::error_code>() = GetLastError();
 
@@ -500,15 +504,14 @@ WinFileFun::FileMapping WinFileFun::Map(
     LARGE_INTEGER offsize_;
     offsize_.QuadPart = offsize;
 
-    HANDLE mh = nullptr;
 #ifdef COFFEE_WINDOWS_WIN32
-    mh = CreateFileMapping(
-        C_OCAST<HANDLE>(fh),
+    win_handle mh(handle_to_u64(CreateFileMapping(
+        fh,
         nullptr,
         profl,
         offsize_.HighPart,
         offsize_.LowPart,
-        nullptr);
+        nullptr)));
 #else
     // mh = CreateFIleMappingFromApp(fh,nullptr,profl,offsize,nullptr);
 #endif
@@ -516,7 +519,7 @@ WinFileFun::FileMapping WinFileFun::Map(
     if(!mh)
     {
         ec.as<platform::win32::error_code>() = GetLastError();
-        CloseHandle(fh.hnd);
+        CloseHandle(fh);
         return {};
     }
 
@@ -535,14 +538,14 @@ WinFileFun::FileMapping WinFileFun::Map(
     if(!ptr)
     {
         ec.as<platform::win32::error_code>() = GetLastError();
-        CloseHandle(fh.hnd);
+        CloseHandle(fh);
         CloseHandle(mh);
         return {};
     }
 
     FileMapping fm;
     fm.file    = std::move(fh);
-    fm.mapping = mh;
+    fm.mapping = std::move(mh);
     fm.size    = size;
     fm.data    = C_RCAST<byte_t*>(ptr);
     fm.assignAccess(acc);
@@ -555,9 +558,9 @@ bool WinFileFun::Unmap(WinFileFun::FileMapping&& fp, file_error& ec)
         return true;
     if(!UnmapViewOfFile(fp.data))
         return false;
-    if(!CloseHandle(fp.mapping.hnd))
+    if(!CloseHandle(fp.mapping))
         return false;
-    if(!CloseHandle(fp.file.hnd))
+    if(!CloseHandle(fp.file))
         return false;
 
     return true;
@@ -572,8 +575,8 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
     LARGE_INTEGER s;
     s.QuadPart = size;
 #ifdef COFFEE_WINDOWS_WIN32
-    b.mapping = CreateFileMapping(
-        INVALID_HANDLE_VALUE, nullptr, fl1, s.HighPart, s.LowPart, nullptr);
+    b.mapping = win_handle(handle_to_u64(CreateFileMapping(
+        INVALID_HANDLE_VALUE, nullptr, fl1, s.HighPart, s.LowPart, nullptr)));
 #else
     b.mapping = nullptr;
 #endif
@@ -588,7 +591,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
 
 #ifdef COFFEE_WINDOWS_WIN32
     b.data = C_RCAST<byte_t*>(
-        MapViewOfFile(C_OCAST<HANDLE>(b.mapping), fl2, 0, 0, size));
+        MapViewOfFile(b.mapping, fl2, 0, 0, size));
 #else
     b.data    = nullptr;
 #endif
@@ -596,7 +599,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
     if(!b.data)
     {
         ec.as<platform::win32::error_code>() = GetLastError();
-        CloseHandle(b.mapping.hnd);
+        CloseHandle(b.mapping);
         return {};
     }
 
@@ -607,7 +610,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(
 void WinFileFun::ScratchUnmap(WinFileFun::ScratchBuf&& buf, file_error& ec)
 {
     UnmapViewOfFile(buf.data);
-    CloseHandle(buf.mapping.hnd);
+    CloseHandle(buf.mapping);
 }
 
 bool WinDirFun::MkDir(Url const& dname, bool parent, file_error& ec)

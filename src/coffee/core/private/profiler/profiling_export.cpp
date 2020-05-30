@@ -21,7 +21,9 @@
 
 #if defined(COFFEE_WINDOWS)
 #include <peripherals/platform/windows.h>
+#if !defined(COFFEE_MINGW64)
 #include <VersionHelpers.h>
+#endif
 #endif
 
 #include <coffee/core/CDebug>
@@ -214,7 +216,7 @@ STATICINLINE void PutRuntimeInfo(
                 stl_types::str::convert::hexify(compile_info::windows::wdk),
                 alloc),
             alloc);
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
         build.AddMember("windowsServer", IsWindowsServer() ? true : false, alloc);
 #endif
     }

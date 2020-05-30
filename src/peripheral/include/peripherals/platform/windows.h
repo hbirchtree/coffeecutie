@@ -22,20 +22,44 @@
 
 namespace platform {
 namespace win32 {
-namespace detail {
 
-inline void closeHandle(HANDLE hnd)
+constexpr libc_types::u64 invalid_handle_value = (libc_types::u64)-1L;
+
+inline libc_types::u64 handle_to_u64(HANDLE hnd)
 {
-    ::CloseHandle(hnd);
+    return C_RCAST<libc_types::u64>(hnd);
+}
+
+inline HANDLE u64_to_handle(libc_types::u64 hnd)
+{
+    return C_RCAST<HANDLE>(hnd);
+}
+    
+namespace detail {
+inline void closeHandle(libc_types::u64 hnd)
+{
+    ::CloseHandle(u64_to_handle(hnd));
 }
 
 } // namespace detail
 } // namespace win32
 
-using win_handle = semantic::generic_handle_t<
-    HANDLE, 
-    semantic::handle_modes::auto_close, 
-    INVALID_HANDLE_VALUE,
-    win32::detail::closeHandle>;
+struct win_handle : semantic::generic_handle_t<
+    libc_types::u64,
+    semantic::handle_modes::auto_close,
+    win32::invalid_handle_value,
+    win32::detail::closeHandle>
+{
+    using semantic::generic_handle_t<
+        libc_types::u64,
+        semantic::handle_modes::auto_close,
+        win32::invalid_handle_value,
+        win32::detail::closeHandle>::generic_handle_t;
+
+    operator HANDLE() const
+    {
+        return C_RCAST<HANDLE>(hnd);
+    }
+};
 
 } // namespace platform
