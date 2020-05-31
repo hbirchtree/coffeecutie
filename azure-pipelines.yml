@@ -177,6 +177,7 @@ jobs:
       APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
       BUILDVARIANT: $(variant)
       CONFIGURATION: Debug
+      PATH: $(Path);C:/Program Files/NASM
   - powershell: '& cmake.exe --build $env:BUILD_DIR --target install --config $env:CONFIGURATION'
     displayName: Building project
     env:
@@ -201,6 +202,7 @@ jobs:
       APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
       BUILDVARIANT: $(variant)
       CONFIGURATION: Debug
+      PATH: $(Path);C:/Program Files/NASM
   - powershell: ./toolchain/ci/appveyor-deploy.ps1
     displayName: Deploying artifacts
     continueOnError: true
@@ -226,3 +228,4 @@ jobs:
       APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
       BUILDVARIANT: $(variant)
       CONFIGURATION: Debug
+      PATH: $(Path);C:/Program Files/NASM
