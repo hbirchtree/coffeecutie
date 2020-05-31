@@ -115,10 +115,7 @@ def github_gen_config(build_info, repo_dir):
                         'with': {
                             'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
                             'buildDirectory': '${{ github.workspace }}/build',
-                            'cmakeAppendedArgs': [
-                                '-GNinja',
-                                '-C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
-                            ]
+                            'cmakeAppendedArgs': '-GNinja -C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
                         }
                     }
                     ]
