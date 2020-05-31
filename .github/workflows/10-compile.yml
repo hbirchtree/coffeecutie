@@ -117,7 +117,7 @@ jobs:
       APPVEYOR_REPO_COMMIT: ${{ github.sha }}
       BUILDVARIANT: ${{ matrix.variant }}
       CONFIGURATION: Debug
-      PATH: $(Path);C:/Program Files/NASM
+      PATH: ${{ env.PATH }};C:/Program Files/NASM
     steps:
     - uses: actions/checkout@v2
       with:

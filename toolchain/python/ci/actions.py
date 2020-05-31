@@ -60,7 +60,7 @@ def github_gen_config(build_info, repo_dir):
             'APPVEYOR_REPO_COMMIT': '${{ github.sha }}',
             'BUILDVARIANT': '${{ matrix.variant }}',
             'CONFIGURATION': 'Debug',
-            'PATH': '$(Path);C:/Program Files/NASM'
+            'PATH': '${{ env.PATH }};C:/Program Files/NASM'
         }
 
     linux_strategy = defaultdict(list)

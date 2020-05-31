@@ -24,7 +24,6 @@ env:
   - BUILDVARIANT=fedora.amd64
   - BUILDVARIANT=gamecube
   - BUILDVARIANT=raspberry.armhf
-  - BUILDVARIANT=steam.amd64
   - BUILDVARIANT=testing.linux.lowfat.debug
   - BUILDVARIANT=testing.linux.lowfat.release
   - BUILDVARIANT=testing.linux.release
@@ -53,8 +52,6 @@ matrix:
   - os: osx
     env: BUILDVARIANT=raspberry.armhf
   - os: osx
-    env: BUILDVARIANT=steam.amd64
-  - os: osx
     env: BUILDVARIANT=testing.linux.lowfat.debug
   - os: osx
     env: BUILDVARIANT=testing.linux.lowfat.release
@@ -78,7 +75,6 @@ matrix:
   - env: BUILDVARIANT=testing.linux.release
   - env: BUILDVARIANT=ubuntu.i686.gles
   - env: BUILDVARIANT=gamecube
-  - env: BUILDVARIANT=steam.amd64
 branches:
   only:
   - master

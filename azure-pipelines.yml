@@ -34,8 +34,6 @@ jobs:
         variant: gamecube
       raspberry.armhf:
         variant: raspberry.armhf
-      steam.amd64:
-        variant: steam.amd64
       testing.linux.lowfat.debug:
         variant: testing.linux.lowfat.debug
       testing.linux.lowfat.release:

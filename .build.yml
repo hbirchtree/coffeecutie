@@ -8,7 +8,6 @@ allow_fail:
 - env: BUILDVARIANT=testing.linux.release
 - env: BUILDVARIANT=ubuntu.i686.gles
 - env: BUILDVARIANT=gamecube
-- env: BUILDVARIANT=steam.amd64
 branches:
 - build: true
   deploy: true
@@ -40,15 +39,11 @@ platforms:
   - .
   raspberry:
   - armhf
-  steam:
-  - amd64
   testing:
   - linux
   ubuntu:
     amd64:
     - .
-    i686:
-    - gles
   uwp:
   - amd64
   win32:
