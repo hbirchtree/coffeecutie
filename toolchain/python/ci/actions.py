@@ -126,7 +126,7 @@ def github_gen_config(build_info, repo_dir):
                     ]
                 },
                 'macOS': {
-                    'runs-on': 'macos-10.15',
+                    'runs-on': 'macos-latest',
                     'strategy': {
                         'matrix': macos_strategy
                     },
