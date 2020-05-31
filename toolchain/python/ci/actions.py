@@ -111,7 +111,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Select Docker container',
-                        'run': '${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
+                        'run': 'sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
                     },
                     {
                         'name': 'Building project',
@@ -146,10 +146,6 @@ def github_gen_config(build_info, repo_dir):
                             'submodules': True,
                             'path': '/source'
                         }
-                    },
-                    {
-                        'name': 'Select Docker container',
-                        'run': '${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
                     },
                     {
                         'name': 'Building project',

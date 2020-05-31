@@ -47,7 +47,7 @@ jobs:
         submodules: true
         path: source
     - name: Select Docker container
-      run: ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
+      run: sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
         }}.sh
     - name: Building project
       uses: lukka/run-cmake@v2
@@ -89,9 +89,6 @@ jobs:
       with:
         submodules: true
         path: /source
-    - name: Select Docker container
-      run: ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
-        }}.sh
     - name: Building project
       uses: lukka/run-cmake@v2
       with:
