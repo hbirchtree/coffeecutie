@@ -62,13 +62,13 @@ def github_gen_config(build_info, repo_dir):
         }
 
     linux_strategy = defaultdict(list)
-    linux_strategy['os'] = 'ubuntu-18.04'
+#    linux_strategy['os'] = 'ubuntu-18.04'
 
     macos_strategy = defaultdict(list)
-    macos_strategy['os'] = 'macos-10.15'
+#    macos_strategy['os'] = 'macos-10.15'
 
     windows_strategy = defaultdict(list)
-    windows_strategy['os'] = 'windows-2019'
+#    windows_strategy['os'] = 'windows-2019'
 
     for val in linux_targets.values():
         for key in val:

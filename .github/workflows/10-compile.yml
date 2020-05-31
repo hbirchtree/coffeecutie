@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        os: ubuntu-18.04
         variant:
         - android.armv7a.v19
         - android.armv7a.v21
@@ -55,7 +54,6 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        os: macos-10.15
         variant:
         - ios.x86_64
         - osx
@@ -88,7 +86,6 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        os: windows-2019
         variant:
         - uwp.amd64.vs19
         - win32.amd64.vs19
