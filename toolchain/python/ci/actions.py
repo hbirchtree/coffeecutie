@@ -19,15 +19,17 @@ def github_gen_config(build_info, repo_dir):
     unix_env = {
                 'CONFIGURATION': 'Release',
                 'BUILDVARIANT': '${{ matrix.variant }}',
-                'PIPELINES': '1',
+                'ACTIONS': '1',
                 'MAKEFILE_DIR': 'toolchain/makers',
-                'BUILD_REPO_URI': '$(Build.Repository.Uri)',
-                'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
-                'BUILD_REPO_EVENT': '$(Build.Reason)',
-                'BUILD_REPO_ID': '$(variant)',
-                'BUILD_REPO_URL': '',
-                'TRAVIS_COMMIT': '$(Build.SourceVersion)',
-                'TRAVIS_REPO_SLUG': '$(Build.Repository.Name)',
+                'SOURCE_DIR': '${{ github.workspace }}/source',
+                'BUILD_DIR': '${{ github.workspace }}/build',
+                'BUILD_REPO_URI': '${{ github.repository }}',
+                'BUILD_REPO_BRANCH': '${{ github.ref }}',
+                'BUILD_REPO_EVENT': 'push',
+                'BUILD_REPO_ID': '',
+                'BUILD_REPO_URL': 'https://github.com/${{ github.repository }}',
+                'TRAVIS_COMMIT': '${{ github.sha }}',
+                'TRAVIS_REPO_SLUG': '${{ github.repository }}',
                 'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
         }
     linux_env = unix_env.copy()
@@ -40,23 +42,23 @@ def github_gen_config(build_info, repo_dir):
             'AZURE_IMAGE': 'vs2019-win2019',
             'VSVERSION': '2019',
             'OPENSSL_ROOT_DIR': '$(Build.SourcesDirectory)/openssl-libs/',
-            'PIPELINES': '1',
-            'BUILD_REPO_URI': '$(Build.Repository.Uri)',
-            'BUILD_REPO_BRANCH': '$(Build.SourceBranch)',
-            'BUILD_REPO_EVENT': '$(Build.Reason)',
+            'ACTIONS': '1',
+            'BUILD_REPO_URI': '${{ github.repository }}',
+            'BUILD_REPO_BRANCH': '${{ github.ref }}',
+            'BUILD_REPO_EVENT': 'push',
             'BUILD_REPO_ID': '${{ matrix.variant }}',
-            'BUILD_REPO_URL': '',
-            'GITHUB_TOKEN': '$(Github.Token)',
+            'BUILD_REPO_URL': 'https://github.com/${{ github.repository }}',
+            'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}',
             'CMAKE_BIN': 'cmake.exe',
             'MAKEFILE_DIR': 'toolchain/makers',
             'SAME_BUILD_DIR': '1',
             'NOBUILD': '1',
-            'SOURCE_DIR': '$(Build.SourcesDirectory)',
-            'BUILD_DIR': '$(Build.SourcesDirectory)/build',
-            'APPVEYOR_BUILD_FOLDER': '$(Build.SourcesDirectory)/build',
-            'APPVEYOR_REPO_NAME': '$(Build.Repository.Name)',
-            'APPVEYOR_REPO_COMMIT': '$(Build.SourceVersion)',
-            'BUILDVARIANT': '$(variant)',
+            'SOURCE_DIR': '${{ github.workspace }}/source',
+            'BUILD_DIR': '${{ github.workspace }}/build',
+            'APPVEYOR_BUILD_FOLDER': '${{ github.workspace }}/build',
+            'APPVEYOR_REPO_NAME': '${{ github.repository }}',
+            'APPVEYOR_REPO_COMMIT': '${{ github.sha }}',
+            'BUILDVARIANT': '${{ matrix.variant }}',
             'CONFIGURATION': 'Debug',
             'PATH': '$(Path);C:/Program Files/NASM'
         }
@@ -100,17 +102,24 @@ def github_gen_config(build_info, repo_dir):
                     'env': linux_env.copy(),
                     'steps': [
                     {
-                        'run': './toolchain/ci/travis-deps.sh',
+                        'uses': 'actions/checkout@v2',
+                        'with': {
+                            'submodules': True,
+                            'path': 'source'
+                        }
+                    },
+                    {
+                        'run': 'source/toolchain/ci/travis-deps.sh',
                         'shell': 'sh',
                         'name': 'Downloading dependencies'
                     },
                     {
-                        'run': './toolchain/ci/travis-build.sh',
+                        'run': 'source/toolchain/ci/travis-build.sh',
                         'shell': 'sh',
                         'name': 'Building project'
                     },
                     {
-                        'run': './toolchain/ci/travis-deploy.sh',
+                        'run': 'source/toolchain/ci/travis-deploy.sh',
                         'shell': 'sh',
                         'name': 'Deploying artifacts',
                         'continue-on-error': True
@@ -125,17 +134,24 @@ def github_gen_config(build_info, repo_dir):
                     'env': osx_env.copy(),
                     'steps': [
                     {
-                        'run': './toolchain/ci/travis-deps.sh',
+                        'uses': 'actions/checkout@v2',
+                        'with': {
+                            'submodules': True,
+                            'path': 'source'
+                        }
+                    },
+                    {
+                        'run': 'source/toolchain/ci/travis-deps.sh',
                         'shell': 'sh',
                         'name': 'Downloading dependencies'
                     },
                     {
-                        'run': './toolchain/ci/travis-build.sh',
+                        'run': 'source/toolchain/ci/travis-build.sh',
                         'shell': 'sh',
                         'name': 'Building project'
                     },
                     {
-                        'run': './toolchain/ci/travis-deploy.sh',
+                        'run': 'source/toolchain/ci/travis-deploy.sh',
                         'shell': 'sh',
                         'name': 'Deploying artifacts',
                         'continue-on-error': True
@@ -150,12 +166,19 @@ def github_gen_config(build_info, repo_dir):
                     'env': windows_env,
                     'steps': [
                     {
-                        'run': './toolchain/ci/appveyor-deps.ps1',
+                        'uses': 'actions/checkout@v2',
+                        'with': {
+                            'submodules': True,
+                            'path': 'source'
+                        }
+                    },
+                    {
+                        'run': 'source/toolchain/ci/appveyor-deps.ps1',
                         'shell': 'powershell',
                         'name': 'Downloading dependencies'
                     },
                     {
-                        'run': './toolchain/ci/appveyor-build.ps1',
+                        'run': 'source/toolchain/ci/appveyor-build.ps1',
                         'shell': 'powershell',
                         'name': 'Configuring project'
                     },
@@ -165,7 +188,7 @@ def github_gen_config(build_info, repo_dir):
                         'name': 'Building project'
                     },
                     {
-                        'run': './toolchain/ci/appveyor-deploy.ps1',
+                        'run': 'source/toolchain/ci/appveyor-deploy.ps1',
                         'shell': 'powershell',
                         'name': 'Deploying artifacts',
                         'continue-on-error': True
