@@ -144,7 +144,7 @@ def github_gen_config(build_info, repo_dir):
                         'uses': 'actions/checkout@v2',
                         'with': {
                             'submodules': True,
-                            'path': '/source'
+                            'path': 'source'
                         }
                     },
                     {
