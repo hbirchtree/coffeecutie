@@ -11,14 +11,6 @@ from python.make_components.conditional_block import *
 from python.make_components.var_decl import *
 
 #
-# Check that all dependencies are present by probing the environment
-#
-def verify_dependencies(vars, dependency_list):
-    for dep in dependency_list:
-        if 'dependencies.%s.target' % dep not in vars:
-            raise RuntimeError('missing dependency: ' + dep)
-
-#
 # YAML is silly, it converts ON/OFF to True/False
 # We use ON/OFF as symbols for CMake
 #
@@ -42,55 +34,6 @@ def convert_to_cmake(variables):
             variables[var] = convert_value(value)
     return variables
 
-def create_dependencies(precompiled_deps, base_config):
-    #
-    # Create dependency targets, for acquiring them through Git
-    #
-    make_targets = []
-
-    for dep in sorted(list(precompiled_deps.keys())):
-        dep_info = precompiled_deps[dep]
-        dep_type = dep_info['type']
-
-        if dep_type not in ['git']:
-            continue
-
-        vars = yml.create_plain_variables({
-            'dep.target': dep,
-            'dep.source': '$(env:BUILD_DIR)/dependencies/$(dep.target)',
-            'dep.source_root': dep_info['root'],
-            'dep.url': dep_info['source'],
-            'dep.type': dep_info['type'],
-            'dependencies': {
-                dep: dep_info
-            }
-        }, yml.deepcopy(base_config))
-
-        var_templates.resolve_variables(vars)
-
-        mkdir_cmd = Command()
-        mkdir_cmd.command = 'mkdir -p $(dep.source_root)'
-
-        clone_cmd = Command()
-        clone_cmd.flags = COMMAND_FLAGS.IGNORED
-        clone_cmd.command = '$(dep.type) clone --recursive --depth 1 $(dep.url) $(dep.source_root)'
-
-        update_cmd = Command()
-        update_cmd.flags = COMMAND_FLAGS.IGNORED
-        update_cmd.command = '$(dep.type) -C $(dep.source_root) pull'
-
-        mkdir_cmd.command = var_templates.resolve_variable(vars, mkdir_cmd.command)[0]
-        clone_cmd.command = var_templates.resolve_variable(vars, clone_cmd.command)[0]
-        update_cmd.command = var_templates.resolve_variable(vars, update_cmd.command)[0]
-
-        dep_target = Target()
-        dep_target.target_name = dep
-        dep_target.commands = [mkdir_cmd, clone_cmd, update_cmd]
-
-        make_targets.append(dep_target)
-
-    return make_targets
-
 def create_global_variables(precompiled_deps, base_config):
     #
     # Create variable sets, for switching between bare-metal and Dockerized builds
@@ -98,15 +41,11 @@ def create_global_variables(precompiled_deps, base_config):
     global_vars = convert_to_cmake(yml.read_yaml('build-globals.yml'))
     blocks = []
 
-    global_var_variables = yml.create_plain_variables(precompiled_deps, yml.deepcopy(base_config), 'dependencies')
-
-    var_templates.resolve_variables(global_var_variables, loose_resolve=True)
-
     for var in sorted(list(global_vars['globals'].keys())):
         var_desc = VarDecl()
         var_desc.name = var
         var_desc.var = global_vars['globals'][var]
-        var_desc.var = var_templates.resolve_variable(global_var_variables, var_desc.var)[0]
+        var_desc.var = var_templates.resolve_variable(base_config, var_desc.var)[0]
         var_desc.flag = VARFLAGS.DEFAULTS
 
         blocks.append(var_desc)
@@ -120,7 +59,8 @@ def create_global_variables(precompiled_deps, base_config):
         for var in sorted(list(block_desc.keys())):
             var_desc = VarDecl()
             var_desc.name = var
-            var_desc.var = var_templates.resolve_variable(global_var_variables, block_desc[var])[0]
+            var_desc.var  = block_desc[var]
+            var_desc.var = var_templates.resolve_variable(base_config, block_desc[var])[0]
 
             var_block.statements.append(var_desc)
 
@@ -140,13 +80,6 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
         vars = yml.create_variable_template(toolchain_data, yml.deepcopy(base_config), target)
         vars = yml.create_variable_template(coffee_data, vars, target)
         vars['target-name'] = [target]
-
-        # Add specified dependencies to environment
-        target_dependencies = vars['dependencies']
-        target_dependencies = [x for x in target_dependencies if x != "None"]
-        for dep in target_dependencies:
-            yml.create_plain_variables(precompiled_deps[dep], vars, 'dependencies.%s' % dep)
-        verify_dependencies(vars, target_dependencies)
 
         # Resolve all variables before creating Makefile entry
         var_templates.resolve_variables(vars)
@@ -202,10 +135,7 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
         # Generate Makefile entry
         compile_target = Target()
         compile_target.target_name = target
-        compile_target.dependencies = [force_target] + [
-            Target(name) for name in target_dependencies
-            if precompiled_deps[name]['type'] != 'empty'
-        ]
+        compile_target.dependencies = [force_target]
         compile_target.commands.append(cmd)
         compile_target.source = vars
 
@@ -234,34 +164,43 @@ def create_cmake_preload(source):
             out.write(' set ( %s "%s" CACHE STRING "" )\n' % (name, value))
 
 if __name__ == '__main__':
-    precompiled_deps = yml.read_yaml('build-dependencies.yml')['binary-dependencies']
-    convert_to_cmake(precompiled_deps)
-
     # Load pre-compiled dependencies and variables
     base_config = {}
     base_config = yml.create_plain_variables(convert_to_cmake(yml.read_yaml('build-variables.yml')), base_config)
     var_templates.resolve_variables(base_config, loose_resolve=True)
 
-    blocks = create_global_variables(precompiled_deps, base_config)
+    blocks = create_global_variables({}, base_config)
 
     force_target = Target()
     force_target.target_name = 'FORCE'
     make_targets = [force_target]
-    make_targets += create_dependencies(precompiled_deps, base_config)
 
     linux_targets = yml.create_target_listing('build-targets-linux.yml')
     linux_make_targets = yml.deepcopy(make_targets)
-    linux_make_targets += create_target_definitions(precompiled_deps, base_config, linux_targets, force_target)
+    linux_make_targets += create_target_definitions({}, base_config, linux_targets, force_target)
 
     mac_targets = yml.create_target_listing('build-targets-osx.yml')
     mac_make_targets = yml.deepcopy(make_targets)
-    mac_make_targets += create_target_definitions(precompiled_deps, base_config, mac_targets, force_target)
+    mac_make_targets += create_target_definitions({}, base_config, mac_targets, force_target)
 
-    makedirs('../../.github/cmake', exist_ok=True)
+    windows_targets = yml.create_target_listing('build-targets-windows.yml')
+    windows_make_targets = yml.deepcopy(make_targets)
+    windows_make_targets += create_target_definitions({}, base_config, windows_targets, force_target)
 
-    for target in linux_make_targets:
+    makedirs('../../.github/cmake/select', exist_ok=True)
+
+    for target in linux_make_targets + mac_make_targets + windows_make_targets:
         if isinstance(target, Target) and target.source is not None:
             create_cmake_preload(target.source)
+
+            if 'container' not in target.source:
+                continue
+
+            if ':' not in target.source['container']:
+                target.source['container'] = 'hbirch/coffeecutie:' + target.source['container'][0]
+
+            with open('../../.github/cmake/select/%s.sh' % target.target_name, 'w') as selector:
+                selector.write('echo "::set-env name=CONTAINER::%s"\n' % target.source['container'])
 
     with open('Makefile.linux', 'w') as mak:
         for block in blocks:

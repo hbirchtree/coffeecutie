@@ -16,8 +16,13 @@ jobs:
         - android.armv7a.v27
         - android.armv8a.v27
         - android.armv8a.v29
+        - emscripten.wasm
         - fedora.amd64
+        - gamecube
         - raspberry.armhf
+        - testing.linux.lowfat.debug
+        - testing.linux.lowfat.release
+        - testing.linux.release
         - ubuntu.amd64
     env:
       CONFIGURATION: Release
@@ -41,13 +46,58 @@ jobs:
       with:
         submodules: true
         path: source
+    - name: Select Docker container
+      run: ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
+        }}.sh
     - name: Building project
       uses: lukka/run-cmake@v2
       with:
         cmakeListsTxtPath: ${{ github.workspace }}/source/CMakeLists.txt
         buildDirectory: ${{ github.workspace }}/build
-        cmakeAppendedArgs: -GNinja -C${{ github.workspace }}/source/.github/cmake/${{
-          matrix.variant }}.preload.cmake
+        cmakeAppendedArgs: -C${{ github.workspace }}/source/.github/cmake/${{matrix.variant}}.preload.cmake
+  Android:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        variant:
+        - android.armv8a.v29
+        - android.armv7a.v29
+    container:
+      image: hbirch/android:r21
+      env:
+        CONFIGURATION: Release
+        GENERATE_PROGRAMS: 'ON'
+        BUILDVARIANT: ${{ matrix.variant }}
+        ACTIONS: '1'
+        MAKEFILE_DIR: toolchain/makers
+        SOURCE_DIR: ${{ github.workspace }}/source
+        BUILD_DIR: ${{ github.workspace }}/build
+        BUILD_REPO_URI: ${{ github.repository }}
+        BUILD_REPO_BRANCH: ${{ github.ref }}
+        BUILD_REPO_EVENT: push
+        BUILD_REPO_ID: ''
+        BUILD_REPO_URL: https://github.com/${{ github.repository }}
+        TRAVIS_COMMIT: ${{ github.sha }}
+        TRAVIS_REPO_SLUG: ${{ github.repository }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TRAVIS_OS_NAME: linux
+      volumes:
+      - ${{ github.workspace }}/source:/source
+      - ${{ github.workspace }}/build:/build
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        path: /source
+    - name: Select Docker container
+      run: ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
+        }}.sh
+    - name: Building project
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsTxtPath: /source/CMakeLists.txt
+        buildDirectory: /build
+        cmakeAppendedArgs: -C/source/.github/cmake/${{ matrix.variant }}.preload.cmake
   macOS:
     runs-on: macos-latest
     strategy:
@@ -77,16 +127,16 @@ jobs:
       with:
         submodules: true
         path: source
-    - run: source/toolchain/ci/travis-deps.sh
-      shell: sh
-      name: Downloading dependencies
-    - run: source/toolchain/ci/travis-build.sh
-      shell: sh
-      name: Building project
-    - run: source/toolchain/ci/travis-deploy.sh
-      shell: sh
-      name: Deploying artifacts
-      continue-on-error: true
+    - name: Installing system dependencies
+      run: source/toolchain/ci/travis-deps.sh
+    - name: Building project
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: ${{ github.workspace }}/source/CMakeLists.txt
+        buildDirectory: ${{ github.workspace }}/build
+        cmakeAppendedArgs: -GXcode -C${{ github.workspace }}/source/.github/cmake/${{
+          matrix.variant }}.preload.cmake
   Windows:
     runs-on: windows-2019
     strategy:
@@ -125,7 +175,7 @@ jobs:
     - run: source/toolchain/ci/appveyor-deps.ps1
       shell: powershell
       name: Downloading dependencies
-    - run: echo "::add-path::/path/to/dir"
+    - run: echo "::add-path::C:/Program Files/Nasm"
       name: Add Nasm to PATH
     - run: source/toolchain/ci/appveyor-build.ps1
       shell: powershell

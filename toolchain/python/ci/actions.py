@@ -110,12 +110,54 @@ def github_gen_config(build_info, repo_dir):
                         }
                     },
                     {
+                        'name': 'Select Docker container',
+                        'run': '${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
+                    },
+                    {
                         'name': 'Building project',
                         'uses': 'lukka/run-cmake@v2',
                         'with': {
                             'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
                             'buildDirectory': '${{ github.workspace }}/build',
-                            'cmakeAppendedArgs': '-GNinja -C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
+                            'cmakeAppendedArgs': '-C${{ github.workspace }}/source/.github/cmake/${{matrix.variant}}.preload.cmake'
+                        }
+                    }
+                    ]
+                },
+                'Android': {
+                    'runs-on': 'ubuntu-18.04',
+                    'strategy': {
+                        'matrix': {
+                            'variant': ['android.armv8a.v29', 'android.armv7a.v29']
+                        }
+                    },
+                    'container': {
+                        'image': 'hbirch/android:r21',
+                        'env': linux_env.copy(),
+                        'volumes': [
+                            '${{ github.workspace }}/source:/source',
+                            '${{ github.workspace }}/build:/build'
+                        ]
+                    },
+                    'steps': [
+                    {
+                        'uses': 'actions/checkout@v2',
+                        'with': {
+                            'submodules': True,
+                            'path': '/source'
+                        }
+                    },
+                    {
+                        'name': 'Select Docker container',
+                        'run': '${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
+                    },
+                    {
+                        'name': 'Building project',
+                        'uses': 'lukka/run-cmake@v2',
+                        'with': {
+                            'cmakeListsTxtPath': '/source/CMakeLists.txt',
+                            'buildDirectory': '/build',
+                            'cmakeAppendedArgs': '-C/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
                         }
                     }
                     ]
@@ -135,20 +177,18 @@ def github_gen_config(build_info, repo_dir):
                         }
                     },
                     {
-                        'run': 'source/toolchain/ci/travis-deps.sh',
-                        'shell': 'sh',
-                        'name': 'Downloading dependencies'
+                        'name': 'Installing system dependencies',
+                        'run': 'source/toolchain/ci/travis-deps.sh'
                     },
                     {
-                        'run': 'source/toolchain/ci/travis-build.sh',
-                        'shell': 'sh',
-                        'name': 'Building project'
-                    },
-                    {
-                        'run': 'source/toolchain/ci/travis-deploy.sh',
-                        'shell': 'sh',
-                        'name': 'Deploying artifacts',
-                        'continue-on-error': True
+                        'name': 'Building project',
+                        'uses': 'lukka/run-cmake@v2',
+                        'with': {
+                            'cmakeListsOrSettingsJson': 'CMakeListsTxtAdvanced',
+                            'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
+                            'buildDirectory': '${{ github.workspace }}/build',
+                            'cmakeAppendedArgs': '-GXcode -C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
+                        }
                     }
                     ]
                 },
@@ -172,7 +212,7 @@ def github_gen_config(build_info, repo_dir):
                         'name': 'Downloading dependencies'
                     },
                     {
-                        'run': 'echo "::add-path::/path/to/dir"',
+                        'run': 'echo "::add-path::C:/Program Files/Nasm"',
                         'name': 'Add Nasm to PATH'
                     },
                     {

@@ -1,6 +1,5 @@
  set ( GIT_DEP_BUILDVARIANT "emscripten.wasm" CACHE STRING "" )
- set ( EMSCRIPTEN_ROOT_PATH "/home/coffee/emsdk_portable/upstream/emscripten" CACHE STRING "" )
- set ( CMAKE_TOOLCHAIN_FILE "/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" CACHE STRING "" )
+ set ( CMAKE_TOOLCHAIN_FILE "$ENV{EMSCRIPTEN}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" CACHE STRING "" )
  set ( BUILD_AUDIO "OFF" CACHE STRING "" )
  set ( BUILD_GLES "ON" CACHE STRING "" )
  set ( BUILD_GLES_20 "ON" CACHE STRING "" )

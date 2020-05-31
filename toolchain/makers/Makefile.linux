@@ -25,20 +25,11 @@ ifeq ($(BUILD_MODE), containerized)
 	CMAKE_INSTALL_DIR := /home/coffee/out
 	CMAKE_SOURCE_DIR := /home/coffee/project
 	COFFEE_ROOT_DIR := /home/coffee/library
+	EMSCRIPTEN := /home/coffee/emsdk_portable
 	RUNNER := Makefile.multi
 endif
 
 FORCE:
-
-native-libs:
-	mkdir -p $(BUILD_DIR)/dependencies/native-libs
-	-git clone --recursive --depth 1 https://github.com/hbirchtree/native-library-bundle.git $(BUILD_DIR)/dependencies/native-libs
-	-git -C $(BUILD_DIR)/dependencies/native-libs pull
-
-rpi-sdk:
-	mkdir -p $(BUILD_DIR)/dependencies/raspberry-sysroot
-	-git clone --recursive --depth 1 https://github.com/hbirchtree/raspberry-sysroot.git $(BUILD_DIR)/dependencies/raspberry-sysroot
-	-git -C $(BUILD_DIR)/dependencies/raspberry-sysroot pull
 
 # Android builds, ARMv8-A and ARMv7-A mostly
 # Compiler: Clang
@@ -1371,8 +1362,7 @@ emscripten.wasm: FORCE
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
+	-DCMAKE_TOOLCHAIN_FILE=$(EMSCRIPTEN)/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
 	-DGENERATE_HTML=ON \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
@@ -1380,7 +1370,6 @@ emscripten.wasm: FORCE
 	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
 	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
@@ -1413,8 +1402,7 @@ emscripten.wasm.shell: FORCE
 	-DBUILD_SDL2=ON \
 	-DCMAKE_BUILD_TYPE=$(CONFIGURATION) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_DIR)/emscripten.wasm \
-	-DCMAKE_TOOLCHAIN_FILE=/home/coffee/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
-	-DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/upstream/emscripten \
+	-DCMAKE_TOOLCHAIN_FILE=$(EMSCRIPTEN)/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
 	-DGENERATE_HTML=ON \
 	-DGENERATE_HTML=ON \
 	-DGIT_DEP_BUILDVARIANT=emscripten.wasm \
@@ -1422,7 +1410,6 @@ emscripten.wasm.shell: FORCE
 	-G'Ninja'" \
 	-e DOCKER_EXTRA_OPTIONS=" \
 	 \
-	-e EMSCRIPTEN=/home/coffee/emsdk_portable/upstream/emscripten \
 	-e CMAKE='emcmake cmake' \
 	-v $(SOURCE_DIR):/home/coffee/project:ro \
 	-v $(BUILD_DIR)/build:/home/coffee/out:rw \
@@ -1672,7 +1659,7 @@ mingw.w64: FORCE
 
 # Raspberry Pi ARM 32-bit build
 # Compiler: GCC 9.x
-raspberry.armhf: FORCE rpi-sdk
+raspberry.armhf: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) multi \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
@@ -1703,7 +1690,7 @@ raspberry.armhf: FORCE rpi-sdk
 
 # Raspberry Pi ARM 32-bit build
 # Compiler: GCC 9.x
-raspberry.armhf.shell: FORCE rpi-sdk
+raspberry.armhf.shell: FORCE
 	make -f $(ROOT_DIR)/$(RUNNER) shell \
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \

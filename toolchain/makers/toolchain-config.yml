@@ -16,9 +16,6 @@
 =program.workdir: $(env:CMAKE_BUILD_DIR)
 =shell: ''
 
-# Default dependency
-=dependencies: 
-
 # Default container options
 =container-opts: ''
 =git-dep-target: $(target-name)
@@ -35,13 +32,6 @@
     +cmake-opts:
       - -DCMAKE_TOOLCHAIN_FILE=$(toolchain-dir)/Toolchains/$(toolchain)
 
-# unused, but links build dependencies to platforms
-=build-deps:
-  - assimp
-  - openal
-  - bullet
-  - openssl
-
 .*(osx|ios).*:
   =runner-choice: Makefile.mac-base
   ^((?!\$\(shell\)).)*$: # Don't apply this to shell targets
@@ -53,7 +43,6 @@
   =cmake.build: $(project.build)/$(target-name)
   =cmake.install: $(project.install)
   =cmake.coffee-lib: $(lib.root)
-  #=cmake.native-lib: $(dependencies.native-libs.root)
   =cmake-project.src: $(project.src)/cmake
   =program.workdir: $(project.build)/$(target-name)
   =container-opts:
@@ -185,13 +174,9 @@ testing.linux.*:
   =description: Emscripten with WebAssembly
   =compiler: Clang 7+
   =container: emscripten
-  =emscripten.root: $(dependencies.emscripten.target)/upstream/emscripten
-  =emscripten.cmake: $(emscripten.root)/cmake
-  +dependencies:
-    - emscripten
+  =toolchain: emscripten.toolchain.cmake
   +cmake-opts:
-    - -DEMSCRIPTEN_ROOT_PATH=$(emscripten.root)
-    - -DCMAKE_TOOLCHAIN_FILE=$(emscripten.cmake)/Modules/Platform/Emscripten.cmake
+    - -DCMAKE_TOOLCHAIN_FILE=$(env:EMSCRIPTEN)/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
     - -DBUILD_AUDIO=OFF
     - -DBUILD_GLES=ON
     - -DBUILD_GLES_20=ON
@@ -199,7 +184,6 @@ testing.linux.*:
     - -DBUILD_ASSIMP=OFF
     - -DGENERATE_HTML=ON
   +container-opts:
-    - -e EMSCRIPTEN=$(emscripten.root)
     - -e CMAKE='emcmake cmake'
 
 
@@ -241,7 +225,6 @@ testing.linux.*:
     =android.api: 29
 
   =android.toolchain: clang
-  =android.ssl.dir: $(cmake.native-lib)/$(build.prettyname)/libraries/$(android.abi)/ssl
   +cmake-opts:
     # Yay! Configuring the entire Android toolchain
     - -DANDROID_NDK=$(android.ndk)
@@ -265,7 +248,6 @@ testing.linux.*:
   =target: multi.make8
   =generator: Unix Makefiles
   =container-opts:
-      #- -v $(dependencies.native-libs.root):/maemo/$(dependencies.native-libs.target):ro
     - -v $(lib.root):/maemo/$(lib.target):ro
     - -v $(project.src):/maemo/$(container.src):ro
     - -v $(project.install):/maemo/$(container.install):rw
@@ -282,7 +264,6 @@ testing.linux.*:
   =compiler: GCC 9.x
   =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
   =container: raspberry
-  +dependencies: rpi-sdk
   +cmake-opts:
     - -DRASPBERRY_SDK=/pi-sysroot
     - -DBUILD_GLES=ON
@@ -326,3 +307,14 @@ testing.linux.*:
   =build.prettyname: GCN/DevkitPPC
 .*\$\(shell\)$:
   =target: shell
+
+win32:
+  =description: Win32 build
+  =compiler: MSVC
+  =build.prettyname: Win32
+  =toolchain: windows-win32_windows.toolchain.cmake
+uwp:
+  =description: UWP build
+  =compiler: MSVC
+  =build.prettyname: Universal Windows Platform
+  =toolchain: windows-uwp_windows.toolchain.cmake

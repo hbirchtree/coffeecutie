@@ -4,16 +4,15 @@ global-sets:
     CMAKE_SOURCE_DIR: $(container.src)
     CMAKE_BUILD_DIR: $(container.build)
     CMAKE_INSTALL_DIR: $(container.install)
-    #NATIVE_LIBRARY_DIR: $(dependencies.native-libs.target)
     COFFEE_ROOT_DIR: $(lib.target)
     ANDROID_NDK_INTERNAL: /home/coffee/android-ndk-linux
     ANDROID_SDK_INTERNAL: /home/coffee/android-sdk-linux
+    EMSCRIPTEN: /home/coffee/emsdk_portable
   bare:
     RUNNER: Makefile.workspace
     CMAKE_SOURCE_DIR: $(project.src)
     CMAKE_BUILD_DIR: $(project.build)
     CMAKE_INSTALL_DIR: $(project.install)
-    #NATIVE_LIBRARY_DIR: $(dependencies.native-libs.root)
     COFFEE_ROOT_DIR: $(lib.root)
     ANDROID_NDK_INTERNAL: $(env:ANDROID_NDK)
     ANDROID_SDK_INTERNAL: $(env:ANDROID_SDK)
