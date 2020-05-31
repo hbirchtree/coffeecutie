@@ -59,8 +59,7 @@ def github_gen_config(build_info, repo_dir):
             'APPVEYOR_REPO_NAME': '${{ github.repository }}',
             'APPVEYOR_REPO_COMMIT': '${{ github.sha }}',
             'BUILDVARIANT': '${{ matrix.variant }}',
-            'CONFIGURATION': 'Debug',
-            'PATH': '${{ env.PATH }};C:/Program Files/NASM'
+            'CONFIGURATION': 'Debug'
         }
 
     linux_strategy = defaultdict(list)
@@ -176,6 +175,10 @@ def github_gen_config(build_info, repo_dir):
                         'run': 'source/toolchain/ci/appveyor-deps.ps1',
                         'shell': 'powershell',
                         'name': 'Downloading dependencies'
+                    },
+                    {
+                        'run': 'echo "::add-path::/path/to/dir"',
+                        'name': 'Add Nasm to PATH'
                     },
                     {
                         'run': 'source/toolchain/ci/appveyor-build.ps1',

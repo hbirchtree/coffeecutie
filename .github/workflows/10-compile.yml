@@ -16,8 +16,13 @@ jobs:
         - android.armv7a.v27
         - android.armv8a.v27
         - android.armv8a.v29
+        - emscripten.wasm
         - fedora.amd64
+        - gamecube
         - raspberry.armhf
+        - testing.linux.lowfat.debug
+        - testing.linux.lowfat.release
+        - testing.linux.release
         - ubuntu.amd64
     env:
       CONFIGURATION: Release
@@ -117,7 +122,6 @@ jobs:
       APPVEYOR_REPO_COMMIT: ${{ github.sha }}
       BUILDVARIANT: ${{ matrix.variant }}
       CONFIGURATION: Debug
-      PATH: ${{ env.PATH }};C:/Program Files/NASM
     steps:
     - uses: actions/checkout@v2
       with:
@@ -126,6 +130,8 @@ jobs:
     - run: source/toolchain/ci/appveyor-deps.ps1
       shell: powershell
       name: Downloading dependencies
+    - run: echo "::add-path::/path/to/dir"
+      name: Add Nasm to PATH
     - run: source/toolchain/ci/appveyor-build.ps1
       shell: powershell
       name: Configuring project
