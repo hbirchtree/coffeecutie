@@ -33,6 +33,7 @@ class Target:
         self.target_name = title
         self.dependencies = []
         self.commands = []
+        self.source = None
 
     def serialize(self):
         target_description = self.target_name + ": "

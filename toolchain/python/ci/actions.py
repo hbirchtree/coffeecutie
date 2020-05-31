@@ -18,6 +18,7 @@ def github_gen_config(build_info, repo_dir):
 
     unix_env = {
                 'CONFIGURATION': 'Release',
+                'GENERATE_PROGRAMS': 'ON',
                 'BUILDVARIANT': '${{ matrix.variant }}',
                 'ACTIONS': '1',
                 'MAKEFILE_DIR': 'toolchain/makers',
@@ -59,6 +60,7 @@ def github_gen_config(build_info, repo_dir):
             'APPVEYOR_REPO_NAME': '${{ github.repository }}',
             'APPVEYOR_REPO_COMMIT': '${{ github.sha }}',
             'BUILDVARIANT': '${{ matrix.variant }}',
+            'GENERATE_PROGRAMS': 'ON',
             'CONFIGURATION': 'Debug'
         }
 

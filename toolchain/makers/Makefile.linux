@@ -1901,7 +1901,6 @@ ubuntu.amd64: FORCE
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
@@ -1934,7 +1933,6 @@ ubuntu.amd64.tools: FORCE
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \
@@ -1976,7 +1974,6 @@ ubuntu.amd64.gles3: FORCE
 	-e EXTRA_OPTIONS=" \
 	$(CMAKE_SOURCE_DIR) \
 	-C$(CMAKE_SOURCE_DIR)/toolchain/cmake/Preload/nothing.cmake \
-	-DAPPIMAGE_RUNTIME_BINARY=$(NATIVE_LIBRARY_DIR)/Ubuntu/util/x86_64-linux-gnu/runtime \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_ASSIMP=ON \
 	-DBUILD_BINARIES=$(GENERATE_PROGRAMS) \

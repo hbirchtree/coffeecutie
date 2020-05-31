@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from os import makedirs
+
 import python.make_config_parser.variable_templates as var_templates
 import python.make_config_parser.name_generator as ng
 import python.make_config_parser.from_yaml as yml
@@ -205,10 +207,31 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
             if precompiled_deps[name]['type'] != 'empty'
         ]
         compile_target.commands.append(cmd)
+        compile_target.source = vars
 
         make_targets.append(compile_target)
 
     return make_targets
+
+def create_cmake_preload(source):
+    def dissolve_env(var):
+        import re
+        res = re.findall(r'^.*\$\(env:(.+)\).*$', var)
+        if len(res) == 0:
+            return var.replace('_INTERNAL', '').replace("'", '')
+        return dissolve_env(var.replace('$(env:%s)' % res[0], '$ENV{%s}' % res[0]))
+
+    variables = source['cmake-opts']
+    target_name = source['target-name'][0]
+
+    vars = [ var[2:] for var in variables if var.startswith('-D') ]
+#    vars = [ var for var in vars if not var.startswith('CMAKE_') ]
+    vars = [ dissolve_env(var) for var in vars ]
+
+    with open('../../.github/cmake/%s.preload.cmake' % target_name, 'w') as out:
+        for var in vars:
+            name, value = var.split('=')
+            out.write(' set ( %s "%s" CACHE STRING "" )\n' % (name, value))
 
 if __name__ == '__main__':
     precompiled_deps = yml.read_yaml('build-dependencies.yml')['binary-dependencies']
@@ -233,6 +256,12 @@ if __name__ == '__main__':
     mac_targets = yml.create_target_listing('build-targets-osx.yml')
     mac_make_targets = yml.deepcopy(make_targets)
     mac_make_targets += create_target_definitions(precompiled_deps, base_config, mac_targets, force_target)
+
+    makedirs('../../.github/cmake', exist_ok=True)
+
+    for target in linux_make_targets:
+        if isinstance(target, Target) and target.source is not None:
+            create_cmake_preload(target.source)
 
     with open('Makefile.linux', 'w') as mak:
         for block in blocks:

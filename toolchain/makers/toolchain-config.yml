@@ -211,7 +211,7 @@ testing.linux.*:
   .*armv8a.*:
     =android.abi: arm64-v8a
   .*armv7a.*:
-    =android.abi: 'armeabi-v7a with NEON'
+    =android.abi: armeabi-v7a with NEON
   .*armeabi.*:
     =android.abi: armeabi
   .*(x86\.).*:
