@@ -76,8 +76,8 @@ TRAVIS=${TRAVIS:-}
 #######################################
 # General variables
 #######################################
-SOURCE_DIR="$PWD"
-BUILD_DIR="$SOURCE_DIR/multi_build"
+SOURCE_DIR="${SOURCE_DIR:-$PWD}"
+BUILD_DIR="${BUILD_DIR:-$SOURCE_DIR/multi_build}"
 
 
 COFFEE_DIR="$BUILD_DIR/coffee_lib"
