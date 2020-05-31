@@ -9,26 +9,23 @@ jobs:
   Linux:
     runs-on: ubuntu-18.04
     strategy:
-      matrix: !!python/object/apply:collections.defaultdict
-        args:
-        - &id001 !!python/name:builtins.list ''
-        dictitems:
-          os: ubuntu-18.04
-          variant:
-          - android.armv7a.v19
-          - android.armv7a.v21
-          - android.armv7a.v27
-          - android.armv8a.v27
-          - android.armv8a.v29
-          - emscripten.wasm
-          - fedora.amd64
-          - gamecube
-          - raspberry.armhf
-          - steam.amd64
-          - testing.linux.lowfat.debug
-          - testing.linux.lowfat.release
-          - testing.linux.release
-          - ubuntu.amd64
+      matrix:
+        os: ubuntu-18.04
+        variant:
+        - android.armv7a.v19
+        - android.armv7a.v21
+        - android.armv7a.v27
+        - android.armv8a.v27
+        - android.armv8a.v29
+        - emscripten.wasm
+        - fedora.amd64
+        - gamecube
+        - raspberry.armhf
+        - steam.amd64
+        - testing.linux.lowfat.debug
+        - testing.linux.lowfat.release
+        - testing.linux.release
+        - ubuntu.amd64
     env:
       CONFIGURATION: Release
       BUILDVARIANT: ${{ matrix.variant }}
@@ -57,14 +54,11 @@ jobs:
   macOS:
     runs-on: macos-10.15
     strategy:
-      matrix: !!python/object/apply:collections.defaultdict
-        args:
-        - *id001
-        dictitems:
-          os: macos-10.15
-          variant:
-          - ios.x86_64
-          - osx
+      matrix:
+        os: macos-10.15
+        variant:
+        - ios.x86_64
+        - osx
     env:
       CONFIGURATION: Release
       BUILDVARIANT: ${{ matrix.variant }}
@@ -93,14 +87,11 @@ jobs:
   Windows:
     runs-on: windows-2019
     strategy:
-      matrix: !!python/object/apply:collections.defaultdict
-        args:
-        - *id001
-        dictitems:
-          os: windows-2019
-          variant:
-          - uwp.amd64.vs19
-          - win32.amd64.vs19
+      matrix:
+        os: windows-2019
+        variant:
+        - uwp.amd64.vs19
+        - win32.amd64.vs19
     env:
       AZURE_IMAGE: vs2019-win2019
       VSVERSION: '2019'

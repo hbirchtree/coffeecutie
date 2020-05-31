@@ -80,6 +80,10 @@ def github_gen_config(build_info, repo_dir):
         for key in val:
             windows_strategy[key].append(val[key])
 
+    linux_strategy = dict(linux_strategy)
+    macos_strategy = dict(macos_strategy)
+    windows_strategy = dict(windows_strategy)
+
     return {
             'name': 'CMake Build',
             'on': {
