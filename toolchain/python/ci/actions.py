@@ -111,7 +111,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Building project',
-                        'uses': 'actions/run-cmake@v2',
+                        'uses': 'lukka/run-cmake@v2',
                         'with': {
                             'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
                             'buildDirectory': '${{ github.workspace }}/build',
