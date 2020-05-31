@@ -51,7 +51,7 @@ jobs:
       name: Deploying artifacts
       continue-on-error: true
   macOS:
-    runs-on: macos-10.15
+    runs-on: macos-latest
     strategy:
       matrix:
         variant:
