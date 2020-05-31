@@ -21,7 +21,6 @@ jobs:
         - ubuntu.amd64
     env:
       CONFIGURATION: Release
-      GENERATE_PROGRAMS: 'ON'
       BUILDVARIANT: ${{ matrix.variant }}
       ACTIONS: '1'
       MAKEFILE_DIR: toolchain/makers
@@ -41,14 +40,16 @@ jobs:
       with:
         submodules: true
         path: source
-    - name: Building project
-      uses: actions/run-cmake@v2
-      with:
-        cmakeListsTxtPath: ${{ github.workspace }}/source/CMakeLists.txt
-        buildDirectory: ${{ github.workspace }}/build
-        cmakeAppendedArgs:
-        - -GNinja
-        - -C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake
+    - run: source/toolchain/ci/travis-deps.sh
+      shell: sh
+      name: Downloading dependencies
+    - run: source/toolchain/ci/travis-build.sh
+      shell: sh
+      name: Building project
+    - run: source/toolchain/ci/travis-deploy.sh
+      shell: sh
+      name: Deploying artifacts
+      continue-on-error: true
   macOS:
     runs-on: macos-latest
     strategy:
@@ -58,7 +59,6 @@ jobs:
         - osx
     env:
       CONFIGURATION: Release
-      GENERATE_PROGRAMS: 'ON'
       BUILDVARIANT: ${{ matrix.variant }}
       ACTIONS: '1'
       MAKEFILE_DIR: toolchain/makers
@@ -93,7 +93,6 @@ jobs:
     strategy:
       matrix:
         variant:
-        - uwp.amd64.vs19
         - win32.amd64.vs19
     env:
       AZURE_IMAGE: vs2019-win2019
@@ -116,7 +115,6 @@ jobs:
       APPVEYOR_REPO_NAME: ${{ github.repository }}
       APPVEYOR_REPO_COMMIT: ${{ github.sha }}
       BUILDVARIANT: ${{ matrix.variant }}
-      GENERATE_PROGRAMS: 'ON'
       CONFIGURATION: Debug
     steps:
     - uses: actions/checkout@v2

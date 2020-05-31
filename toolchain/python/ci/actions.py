@@ -110,20 +110,16 @@ def github_gen_config(build_info, repo_dir):
                         }
                     },
                     {
-                        'run': 'source/toolchain/ci/travis-deps.sh',
-                        'shell': 'sh',
-                        'name': 'Downloading dependencies'
-                    },
-                    {
-                        'run': 'source/toolchain/ci/travis-build.sh',
-                        'shell': 'sh',
-                        'name': 'Building project'
-                    },
-                    {
-                        'run': 'source/toolchain/ci/travis-deploy.sh',
-                        'shell': 'sh',
-                        'name': 'Deploying artifacts',
-                        'continue-on-error': True
+                        'name': 'Building project',
+                        'uses': 'actions/run-cmake@v2',
+                        'with': {
+                            'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
+                            'buildDirectory': '${{ github.workspace }}/build',
+                            'cmakeAppendedArgs': [
+                                '-GNinja',
+                                '-C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
+                            ]
+                        }
                     }
                     ]
                 },
