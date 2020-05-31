@@ -383,19 +383,23 @@ info::HardwareDevice SysInfo::Processor()
 #endif
 }
 
-Vector<bigscalar> SysInfo::ProcessorFrequencies()
+Vector<bigscalar> SysInfo::ProcessorFrequencies(bool current)
 {
     using namespace url::constructors;
 
-#if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    static const constexpr struct
+#if !defined(COFFEE_LOWFAT) && \
+    (defined(COFFEE_LINUX) || defined(COFFEE_ANDROID))
+    static const struct
     {
         cstring prefix;
         cstring suffix;
     } root_paths[3] = {
-        {"/sys/bus/cpu/devices", "cpufreq/scaling_max_freq"},
-        {"/sys/devices/system/cpu", "cpufreq/scaling_max_freq"},
-        {"/sys/devices/system/cpu", "cpufreq/cpuinfo_max_freq"},
+        {"/sys/bus/cpu/devices",
+         current ? "cpufreq/scaling_cur_freq" : "cpufreq/scaling_max_freq"},
+        {"/sys/devices/system/cpu",
+         current ? "cpufreq/scaling_cur_freq" : "cpufreq/scaling_max_freq"},
+        {"/sys/devices/system/cpu",
+         current ? "cpufreq/scaling_cur_freq" : "cpufreq/scaling_max_freq"},
     };
 
     for(size_t i = 0; i < 3; i++)

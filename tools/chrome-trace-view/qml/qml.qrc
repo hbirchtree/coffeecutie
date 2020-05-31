@@ -6,5 +6,6 @@
         <file>ThreadView.qml</file>
         <file>InspectorDrawer.qml</file>
         <file>KeyValueProperty.qml</file>
+        <file>MetricView.qml</file>
     </qresource>
 </RCC>

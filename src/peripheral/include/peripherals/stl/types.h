@@ -173,10 +173,10 @@ using Mutex    = std::mutex;
 using Lock     = std::lock_guard<Mutex>;
 using RecLock  = std::lock_guard<RecMutex>;
 
-using UqLock              = std::unique_lock<Mutex>;
-using UqRecLock           = std::unique_lock<RecMutex>;
-using CondVar             = std::condition_variable;
-using cv_status           = std::cv_status;
+using UqLock    = std::unique_lock<Mutex>;
+using UqRecLock = std::unique_lock<RecMutex>;
+using CondVar   = std::condition_variable;
+using cv_status = std::cv_status;
 #endif
 
 using ErrCode = std::error_code;
@@ -761,17 +761,14 @@ using bad_optional_access = undefined_behavior;
 template<typename T>
 struct Optional
 {
-    constexpr
-    Optional() : valid(false)
+    constexpr Optional() : valid(false)
     {
     }
-    constexpr
-    Optional(T&& value) : m_value(std::move(value)), valid(true)
+    constexpr Optional(T&& value) : m_value(std::move(value)), valid(true)
     {
     }
 
-    constexpr
-    T& operator->() &
+    constexpr T& operator->() &
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -779,8 +776,7 @@ struct Optional
         return m_value;
     }
 
-    constexpr
-    T const& operator->() const&
+    constexpr T const& operator->() const&
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -788,8 +784,7 @@ struct Optional
         return m_value;
     }
 
-    constexpr
-    T& operator*() &
+    constexpr T& operator*() &
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -797,8 +792,7 @@ struct Optional
         return m_value;
     }
 
-    constexpr
-    T const& operator*() const&
+    constexpr T const& operator*() const&
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -806,8 +800,7 @@ struct Optional
         return m_value;
     }
 
-    constexpr
-    T&& operator*() &&
+    constexpr T&& operator*() &&
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -815,8 +808,7 @@ struct Optional
         return std::move(m_value);
     }
 
-    constexpr
-    T const&& operator*() const&&
+    constexpr T const&& operator*() const&&
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -824,14 +816,12 @@ struct Optional
         return std::move(m_value);
     }
 
-    constexpr
-    operator bool() const
+    constexpr operator bool() const
     {
         return valid;
     }
 
-    constexpr
-    T const& value() const&
+    constexpr T const& value() const&
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -839,8 +829,7 @@ struct Optional
         return m_value;
     }
 
-    constexpr
-    T& value() &
+    constexpr T& value() &
     {
         if(!valid)
             Throw(bad_optional_access("invalid optional"));
@@ -848,8 +837,7 @@ struct Optional
         return m_value;
     }
 
-    constexpr
-    Optional& operator=(T&& v)
+    constexpr Optional& operator=(T&& v)
     {
         m_value = std::move(v);
         valid   = true;
@@ -879,6 +867,24 @@ inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
 
 } // namespace stl_types
 
+namespace type_safety {
+
+template<typename D, typename T>
+FORCEDINLINE typename stl_types::ShPtr<D> C_DCAST(
+    typename stl_types::ShPtr<T> const& from)
+{
+    return std::dynamic_pointer_cast<D>(from);
+}
+
+template<typename D, typename T>
+FORCEDINLINE typename stl_types::ShPtr<D> C_PCAST(
+    typename stl_types::ShPtr<T> const& from)
+{
+    return std::static_pointer_cast<D>(from);
+}
+
+} // namespace type_safety
+
 #define C_ERROR_CODE_OUT_OF_BOUNDS() \
     Throw(undefined_behavior("invalid error code"))
 
@@ -903,11 +909,10 @@ inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
                 __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
     }
 
-#define C_ERROR_CHECK_TYPED(ec, etype)                              \
-    {                                                               \
-        if(ec)                                                      \
-            Throw(etype(                             \
-                __FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
+#define C_ERROR_CHECK_TYPED(ec, etype)                                      \
+    {                                                                       \
+        if(ec)                                                              \
+            Throw(etype(__FILE__ ":" C_STR(__LINE__) ": " + ec.message())); \
     }
 
 #else

@@ -1,0 +1,140 @@
+name: CMake Build
+'on':
+  push:
+    branches:
+    - master
+    - testing
+    - feature**
+jobs:
+  Linux:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix: !!python/object/apply:collections.defaultdict
+        args:
+        - &id001 !!python/name:builtins.list ''
+        dictitems:
+          os: ubuntu-18.04
+          variant:
+          - android.armv7a.v19
+          - android.armv7a.v21
+          - android.armv7a.v27
+          - android.armv8a.v27
+          - android.armv8a.v29
+          - emscripten.wasm
+          - fedora.amd64
+          - gamecube
+          - raspberry.armhf
+          - steam.amd64
+          - testing.linux.lowfat.debug
+          - testing.linux.lowfat.release
+          - testing.linux.release
+          - ubuntu.amd64
+    env:
+      CONFIGURATION: Release
+      BUILDVARIANT: ${{ matrix.variant }}
+      PIPELINES: '1'
+      MAKEFILE_DIR: toolchain/makers
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
+      TRAVIS_COMMIT: $(Build.SourceVersion)
+      TRAVIS_REPO_SLUG: $(Build.Repository.Name)
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TRAVIS_OS_NAME: linux
+    steps:
+    - run: ./toolchain/ci/travis-deps.sh
+      shell: sh
+      name: Downloading dependencies
+    - run: ./toolchain/ci/travis-build.sh
+      shell: sh
+      name: Building project
+    - run: ./toolchain/ci/travis-deploy.sh
+      shell: sh
+      name: Deploying artifacts
+      continue-on-error: true
+  macOS:
+    runs-on: macos-10.15
+    strategy:
+      matrix: !!python/object/apply:collections.defaultdict
+        args:
+        - *id001
+        dictitems:
+          os: macos-10.15
+          variant:
+          - ios.x86_64
+          - osx
+    env:
+      CONFIGURATION: Release
+      BUILDVARIANT: ${{ matrix.variant }}
+      PIPELINES: '1'
+      MAKEFILE_DIR: toolchain/makers
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: $(variant)
+      BUILD_REPO_URL: ''
+      TRAVIS_COMMIT: $(Build.SourceVersion)
+      TRAVIS_REPO_SLUG: $(Build.Repository.Name)
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TRAVIS_OS_NAME: osx
+    steps:
+    - run: ./toolchain/ci/travis-deps.sh
+      shell: sh
+      name: Downloading dependencies
+    - run: ./toolchain/ci/travis-build.sh
+      shell: sh
+      name: Building project
+    - run: ./toolchain/ci/travis-deploy.sh
+      shell: sh
+      name: Deploying artifacts
+      continue-on-error: true
+  Windows:
+    runs-on: windows-2019
+    strategy:
+      matrix: !!python/object/apply:collections.defaultdict
+        args:
+        - *id001
+        dictitems:
+          os: windows-2019
+          variant:
+          - uwp.amd64.vs19
+          - win32.amd64.vs19
+    env:
+      AZURE_IMAGE: vs2019-win2019
+      VSVERSION: '2019'
+      OPENSSL_ROOT_DIR: $(Build.SourcesDirectory)/openssl-libs/
+      PIPELINES: '1'
+      BUILD_REPO_URI: $(Build.Repository.Uri)
+      BUILD_REPO_BRANCH: $(Build.SourceBranch)
+      BUILD_REPO_EVENT: $(Build.Reason)
+      BUILD_REPO_ID: ${{ matrix.variant }}
+      BUILD_REPO_URL: ''
+      GITHUB_TOKEN: $(Github.Token)
+      CMAKE_BIN: cmake.exe
+      MAKEFILE_DIR: toolchain/makers
+      SAME_BUILD_DIR: '1'
+      NOBUILD: '1'
+      SOURCE_DIR: $(Build.SourcesDirectory)
+      BUILD_DIR: $(Build.SourcesDirectory)/build
+      APPVEYOR_BUILD_FOLDER: $(Build.SourcesDirectory)/build
+      APPVEYOR_REPO_NAME: $(Build.Repository.Name)
+      APPVEYOR_REPO_COMMIT: $(Build.SourceVersion)
+      BUILDVARIANT: $(variant)
+      CONFIGURATION: Debug
+      PATH: $(Path);C:/Program Files/NASM
+    steps:
+    - run: ./toolchain/ci/appveyor-deps.ps1
+      shell: powershell
+      name: Downloading dependencies
+    - run: ./toolchain/ci/appveyor-build.ps1
+      shell: powershell
+      name: Configuring project
+    - run: '& cmake.exe --build $env:BUILD_DIR --target install --config $env:CONFIGURATION'
+      shell: powershell
+      name: Building project
+    - run: ./toolchain/ci/appveyor-deploy.ps1
+      shell: powershell
+      name: Deploying artifacts
+      continue-on-error: true

@@ -141,6 +141,12 @@ struct SysInfoDef
     }
 
     STATICINLINE
+    MemUnit MemResident()
+    {
+        return 0;
+    }
+
+    STATICINLINE
     /*!
      * \brief Total amount of swap space in system. On Windows,
      *  this is the collected size of all page files.
@@ -350,7 +356,7 @@ struct PowerInfoDef
      * \brief Battery percentage
      * \return
      */
-    uint16 BatteryPercentage()
+    u16 BatteryPercentage()
     {
         return 0;
     }
@@ -369,6 +375,12 @@ struct PowerInfoDef
      * \return
      */
     Temp CpuTemperature()
+    {
+        return {0.f, 0.f};
+    }
+
+    STATICINLINE
+    Temp GpuTemperature()
     {
         return {0.f, 0.f};
     }

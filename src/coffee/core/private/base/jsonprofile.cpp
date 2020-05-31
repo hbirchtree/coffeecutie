@@ -1,4 +1,4 @@
-#include <platforms/profiling.h>
+#include <platforms/profiling/jsonprofile.h>
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
@@ -15,6 +15,7 @@
 
 namespace platform {
 namespace profiling {
+namespace json {
 
 using namespace ::Coffee::DataStorage::TextStorage::RJSON;
 using namespace ::platform::file;
@@ -23,9 +24,20 @@ static constexpr cstring event_format =
     R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
 )";
 
-struct JsonProfileWriter : GlobalState
+struct MetricData
 {
-    JsonProfileWriter(Url outputProfile)
+    MetricVariant variant;
+    u32           id;
+};
+
+namespace metrics {
+static Map<cstring, MetricData> data;
+static u32                      count;
+} // namespace metrics
+
+struct ProfileWriter : GlobalState
+{
+    ProfileWriter(Url outputProfile)
     {
         if constexpr(!compile_info::profiler::enabled)
             return;
@@ -43,14 +55,14 @@ struct JsonProfileWriter : GlobalState
             RSCA::Append | RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile,
             ec);
 
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK(ec)
 
         FileFun::Write(
             logfile,
             Bytes::CreateString(R"({"displayTimeUnit": "ms","traceEvents":[)"),
             ec);
 
-        C_ERROR_CHECK(ec);
+        C_ERROR_CHECK(ec)
     }
 
     FileFun::FileHandle            logfile;
@@ -58,21 +70,26 @@ struct JsonProfileWriter : GlobalState
     ShPtr<platform::info::AppData> appData;
     AtomicUInt64                   event_count;
 
-    virtual ~JsonProfileWriter();
+    virtual ~ProfileWriter();
+
+    FORCEDINLINE void write(Bytes&& data)
+    {
+        file_error ec;
+        FileFun::Write(logfile, data, ec);
+
+        C_ERROR_CHECK(ec)
+    }
 };
 
-JsonProfileWriter::~JsonProfileWriter()
+ProfileWriter::~ProfileWriter()
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
 
-    FileFun::file_error ec;
-
     auto thread_name = Coffee::Strings::fmt(
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
         appData ? appData->application_name : "Coffee App");
-    FileFun::Write(logfile, Bytes::CreateString(thread_name.c_str()), ec);
-    C_ERROR_CHECK(ec);
+    write(Bytes::CreateString(thread_name.c_str()));
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
@@ -80,12 +97,20 @@ JsonProfileWriter::~JsonProfileWriter()
             R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",
             thread.first,
             thread.second);
-        FileFun::Write(logfile, Bytes::CreateString(thread_name.c_str()), ec);
-        C_ERROR_CHECK(ec);
+        write(Bytes::CreateString(thread_name.c_str()));
     }
 
-    FileFun::Write(logfile, Bytes::CreateString(R"({}],)"), ec);
-    C_ERROR_CHECK(ec);
+    for(auto const& metric : metrics::data)
+    {
+        auto out = Coffee::Strings::fmt(
+            R"({"name":"metric_name","ph":"M","id":{0},"args":{"name":"{1}","type":{2}}},)",
+            metric.second.id,
+            metric.first,
+            C_CAST<int>(metric.second.variant));
+        write(Bytes::CreateString(out.c_str()));
+    }
+
+    write(Bytes::CreateString(R"({}],)"));
 
     CString chromeInfo;
     Coffee::Profiling::ExportChromeTracerData(chromeInfo);
@@ -96,21 +121,20 @@ JsonProfileWriter::~JsonProfileWriter()
     }
 
     /* Okay, this is a stupid thing to do, but here goes:
-     *  - Here we skip the opening { such that we may merge it with the preceding
-     *     object. This lets us plug it into the same model as before.
+     *  - Here we skip the opening { such that we may merge it with the
+     * preceding object. This lets us plug it into the same model as before.
      *    This is also more compatible with the Chrome Trace Format.
      */
-    FileFun::Write(logfile, Bytes::CreateString(chromeInfo.c_str() + 1), ec);
-    C_ERROR_CHECK(ec);
+    write(Bytes::CreateString(chromeInfo.c_str() + 1));
 
-    FileFun::Write(logfile, Bytes::CreateString("}"), ec);
-    C_ERROR_CHECK(ec);
+    write(Bytes::CreateString("}"));
 
+    FileFun::file_error ec;
     FileFun::Close(std::move(logfile), ec);
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK(ec)
 }
 
-ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
+ShPtr<Coffee::State::GlobalState> CreateProfiler()
 {
     if constexpr(!compile_info::profiler::enabled)
         return {};
@@ -120,19 +144,19 @@ ShPtr<Coffee::State::GlobalState> CreateJsonProfiler()
     FileFun::file_error ec;
     FileFun::Truncate(profile, 0, ec);
 
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK(ec)
 
-    return MkShared<JsonProfileWriter>(profile);
+    return MkShared<ProfileWriter>(profile);
 }
 
-void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
+void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
 
     using namespace profiling;
 
-    auto profileData = C_DCAST<JsonProfileWriter>(tdata.writer);
+    auto profileData = C_DCAST<ProfileWriter>(tdata.writer);
 
     if(!profileData)
         return;
@@ -168,14 +192,46 @@ void JsonPush(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 
     event = str::transform::printclean(event);
 
-    FileFun::file_error ec;
-    FileFun::Write(
-        profileData->logfile, Bytes::CreateString(event.c_str()), ec);
-
-    C_ERROR_CHECK(ec);
-
+    profileData->write(Bytes::CreateString(event.c_str()));
     profileData->event_count++;
 }
 
+void CaptureMetrics(
+    profiling::ThreadState& tdata,
+    cstring                 name,
+    MetricVariant           variant,
+    f32                     value,
+    Chrono::microseconds    ts,
+    u32                     index)
+{
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
+    auto it = metrics::data.find(name);
+
+    if(it == metrics::data.end())
+    {
+        it           = metrics::data.insert({name, {}}).first;
+        auto& data   = it->second;
+        data.id      = ++metrics::count;
+        data.variant = variant;
+    }
+
+    auto const& data     = it->second;
+    auto&       profiler = *C_DCAST<ProfileWriter>(tdata.writer);
+
+    constexpr auto metric_format =
+        R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
+)";
+
+    using namespace Chrono;
+
+    auto out =
+        Coffee::Strings::fmt(metric_format, data.id, value, ts.count(), index);
+
+    profiler.write(Bytes::CreateString(out.c_str()));
+}
+
+} // namespace json
 } // namespace profiling
 } // namespace platform

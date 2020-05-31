@@ -9,7 +9,7 @@ thread_local android::ScopedJNI* jniScope = nullptr;
 
 android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope)
 {
-    auto prevScope  = jniScope;
+    auto prevScope  = jnipp::jniScope;
     jnipp::jniScope = jniScope;
 
     return prevScope;

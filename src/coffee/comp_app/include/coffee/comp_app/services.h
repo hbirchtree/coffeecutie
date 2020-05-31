@@ -44,11 +44,11 @@ struct Config : detail::Subsystem<ConfigTraits<ExposedConfig>>
 
     virtual ExposedConfig const& get() const final
     {
-        return *C_RCAST<ExposedConfig const*>(this);
+        return *C_CAST<ExposedConfig const*>(this);
     }
     virtual ExposedConfig& get() final
     {
-        return *C_RCAST<ExposedConfig*>(this);
+        return *C_CAST<ExposedConfig*>(this);
     }
 };
 

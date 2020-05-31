@@ -17,7 +17,9 @@ int main(int argc, char* argv[])
 
     QUrl const url(QStringLiteral("qrc:/main.qml"));
 
-    QQuickStyle::setStyle("Material.Dark");
+#if !defined(__EMSCRIPTEN__)
+//    QQuickStyle::setStyle("Material.Dark");
+#endif
 
     QObject::connect(
         &engine,

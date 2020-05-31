@@ -8,16 +8,13 @@
 #include <coffee/android/android_main.h>
 #endif
 
-#if defined(COFFEE_APPLE)
-extern "C" void OSX_GetDisplayDPI(float* dpis, size_t* num_dpis);
-#endif
-
 #if defined(COFFEE_APPLE_MOBILE)
 #include <coffee/foreign/foreign.h>
 #endif
 
 #if defined(COFFEE_WINDOWS)
 #include <lm.h>
+#include <peripherals/stl/string_casting.h>
 #endif
 
 using namespace ::stl_types;
@@ -129,16 +126,13 @@ extern scalar dpi()
      *  and a 420 DPI screen */
     return (scalar(fcmd.data.scalarI64) / 160.f);
 #elif defined(COFFEE_APPLE)
-    size_t numDpis = 0;
-    OSX_GetDisplayDPI(nullptr, &numDpis);
-    if(numDpis == 0)
+    stl_types::Vector<f32> dpis;
+    ::platform::mac::get_display_dpi(dpis);
+
+    if(dpis.empty())
         return 1.f;
 
-    Vector<float> dpis;
-    dpis.resize(numDpis);
-    OSX_GetDisplayDPI(dpis.data(), nullptr);
-
-    float maxDpi = 0.f;
+    f32 maxDpi = 0.f;
     for(auto const& dpi : dpis)
         maxDpi = math::max(dpi, maxDpi);
 
@@ -236,6 +230,8 @@ CString system::runtime_arch()
 
 CString system::runtime_kernel_version()
 {
+    using namespace stl_types;
+
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     return env::Linux::get_kern_ver();
 #elif defined(COFFEE_APPLE)

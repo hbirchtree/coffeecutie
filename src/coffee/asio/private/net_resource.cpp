@@ -42,8 +42,10 @@ void Resource::initRsc(const Url& url)
     if(port == 0)
     {
         if(urlComponents.protocol() == "https")
+        {
             port = 443;
-        else
+            m_access |= HTTPAccess::Secure;
+        } else
             port = 80;
     }
 

@@ -23,15 +23,13 @@ struct SysInfo : Linux::SysInfo
     static ThrdCnt ThreadCount();
 };
 
-#if defined(COFFEE_USE_SDL2)
-struct PowerInfo : _SDLPowerInfo
-{
-};
-#else
 struct PowerInfo : PowerInfoDef
 {
+    static u16 BatteryPercentage();
+
+    static Temp CpuTemperature();
+    static Temp GpuTemperature();
 };
-#endif
 
 } // namespace android
 } // namespace env

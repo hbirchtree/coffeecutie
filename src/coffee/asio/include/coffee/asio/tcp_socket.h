@@ -101,8 +101,8 @@ struct ssl_socket
     asio::error_code disconnect()
     {
         asio::error_code ec;
-        m_socket.shutdown(ec);
-        VALIDATE();
+//        m_socket.shutdown(ec);
+//        VALIDATE();
         m_socket.lowest_layer().close(ec);
         return ec;
     }

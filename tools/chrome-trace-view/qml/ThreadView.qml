@@ -45,12 +45,15 @@ Item {
         anchors.top: parent.top
         anchors.leftMargin: container.contentX
         color: threadColor
+        clip: true
 
         Label {
-            text: name ? name : "Thread"
+            anchors.fill: parent
             anchors.leftMargin: spacing
             anchors.topMargin: spacing
-            anchors.fill: parent
+            text: name ? name : "Thread"
+            color: "white"
+            wrapMode: Label.WordWrap
         }
     }
 

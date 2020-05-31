@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from os.path import dirname, realpath, isfile
+from os import makedirs
 
 from argparse import ArgumentParser
 
@@ -9,6 +10,7 @@ from python.ci.appveyor import appveyor_gen_config
 from python.ci.jenkins import jenkins_gen_config
 from python.ci.travis import travis_gen_config
 from python.ci.pipelines import pipelines_gen_config
+from python.ci.actions import github_gen_config
 
 from python.common import try_get_key, build_yml_filespec
 
@@ -89,6 +91,8 @@ def process_configs(configs, print_config=False, overwrite=False, cur_dir='.'):
             print(data)
             print('-' * 80)
         else:
+            dir = dirname(trg_file)
+            makedirs(dir, exist_ok=True)
             with open(trg_file, mode='w') as f:
                 f.write(data)
 
@@ -102,7 +106,8 @@ CI_SERVICES = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.t
                ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
                ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, '.jenkins.groovy',
                              data_format=DATAFORMAT_TEXT),
-               ConfigCreator(pipelines_gen_config, 'Azure Pipelines', jenkins_targets, 'azure-pipelines.yml')]
+               ConfigCreator(pipelines_gen_config, 'Azure Pipelines', jenkins_targets, 'azure-pipelines.yml'),
+               ConfigCreator(github_gen_config, 'Github Actions', jenkins_targets, '.github/workflows/10-compile.yml')]
 
 
 def main():

@@ -108,10 +108,10 @@ if(APPLE)
         #
         # System information queries
         #
-        platforms/osx/sysinfo.cpp
+        platforms/osx/sysinfo.mm
         platforms/osx/environment.cpp
         # Some functions are exposed by Obj-C
-        platforms/osx/system_interface.m
+        platforms/osx/system_interface.mm
         )
 endif()
 

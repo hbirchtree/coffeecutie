@@ -399,9 +399,6 @@ struct GpuProfilerContext
     ShPtr<QueryType>   m_query;
 };
 
-extern void               JsonPush(ThreadState& state, DataPoint const& data);
-extern ShPtr<GlobalState> CreateJsonProfiler();
-
 } // namespace profiling
 } // namespace platform
 

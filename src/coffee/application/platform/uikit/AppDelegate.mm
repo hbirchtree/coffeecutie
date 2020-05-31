@@ -18,6 +18,7 @@
 #include <coffee/core/types/application_main.h>
 #include <coffee/foreign/foreign.h>
 #include <peripherals/stl/types.h>
+#include <peripherals/libc/signals.h>
 
 // For accessibility from other parts of the Objective-C code
 // We will be using this to attach a GLKViewController
@@ -44,6 +45,14 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
 }
 
+namespace libc {
+namespace signal {
+
+extern stl_types::Vector<exit_handler> global_exit_handlers;
+
+}
+} // namespace libc
+
 using comp_app::LifecycleEvent;
 
 static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
@@ -63,8 +72,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    setenv("COFFEE_REPORT_URL", "https://reports.birchy.dev/", 1);
-    
     uikit_appdelegate = self;
     
     CoffeeForeignSignalHandle = HandleForeignSignals;
@@ -72,8 +79,10 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     
     NSLog(@"View controller");
     
+    Coffee::SetPrintingVerbosity(10);
     // Call the Coffee entrypoint, it will set up a bunch of things
     Coffee::CoffeeMain(coffee_main_function_ptr, 0, NULL);
+    Coffee::SetPrintingVerbosity(10);
     
     self.hasInitialized = FALSE;
     self.window = [[UIWindow alloc] init];
@@ -111,7 +120,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     self.hasInitialized = FALSE;
 }
 
-
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
@@ -119,8 +127,12 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     LifecycleEvent event;
     event.lifecycle_type = LifecycleEvent::Background;
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
-}
 
+    auto rev_handlers = libc::signal::global_exit_handlers;
+    std::reverse(rev_handlers.begin(), rev_handlers.end());
+    for(auto const& hnd : rev_handlers)
+        hnd();
+}
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Do data stuff here
@@ -129,7 +141,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     event.lifecycle_type = LifecycleEvent::WillEnterForeground;
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
-
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive.
@@ -164,7 +175,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     comp_app::createContainer()
         .service<comp_app::EventBus<Event>>()->process(baseEvent, &resize);
 }
-
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.

@@ -3,6 +3,7 @@
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/comp_app/performance_monitor.h>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
 #include <coffee/core/task_queue/task.h>
@@ -251,9 +252,10 @@ void configureDefaults(AppLoader& loader)
 #endif
 
 #if defined(COFFEE_LINKED_GLES)
-    glConfig.profile       = GLConfig::Embedded;
-    glConfig.version.major = 3;
-    glConfig.version.minor = 0;
+    glConfig.framebufferFmt = PixFmt::RGB565;
+    glConfig.profile        = GLConfig::Embedded;
+    glConfig.version.major  = 3;
+    glConfig.version.minor  = 0;
 #else
     glConfig.profile       = GLConfig::Core;
     glConfig.version.major = 3;
@@ -295,7 +297,13 @@ void addDefaults(
 
     auto& appInfo = *container.service<AppInfo>();
 
-    /* Selection of window/event manager */
+#if MODE_DEBUG
+    if constexpr(compile_info::profiler::enabled)
+        loader.loadAll<type_safety::type_list_t<PerformanceMonitor>>(
+            container, ec);
+#endif
+
+        /* Selection of window/event manager */
 #if defined(FEATURE_ENABLE_SDL2Components)
     sdl2::GLContext::register_service<sdl2::GLContext>(container);
     loader.loadAll<sdl2::Services>(container, ec);
@@ -357,6 +365,84 @@ void addDefaults(
 #if defined(FEATURE_ENABLE_UIKitGestures)
     loader.loadAll<uikit::Services>(container, ec);
 #endif
+}
+
+} // namespace comp_app
+
+#include <coffee/core/printing/verbosity_level.h>
+#include <platforms/profiling/jsonprofile.h>
+#include <platforms/sysinfo.h>
+
+#if defined(COFFEE_ANDROID)
+#include <coffee/android/android_main.h>
+#endif
+
+namespace comp_app {
+
+void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
+{
+    if(time < m_nextTime)
+        return;
+
+    m_nextTime = time + Chrono::seconds(5);
+
+    using namespace platform::profiling;
+
+    auto timestamp =
+        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+
+    u32 i = 0;
+    for(auto freq : platform::SysInfo::ProcessorFrequencies(
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+            true
+#endif
+            ))
+        json::CaptureMetrics(
+            "CPU frequency", MetricVariant::Value, freq, timestamp, i++);
+
+    json::CaptureMetrics(
+        "CPU temperature",
+        MetricVariant::Value,
+        platform::PowerInfo::CpuTemperature().current,
+        timestamp);
+    json::CaptureMetrics(
+        "GPU temperature",
+        MetricVariant::Value,
+        platform::PowerInfo::GpuTemperature().current,
+        timestamp);
+
+    json::CaptureMetrics(
+        "Memory consumption",
+        MetricVariant::Value,
+        platform::SysInfo::MemResident(),
+        timestamp);
+
+    json::CaptureMetrics(
+        "Battery level",
+        MetricVariant::Value,
+        platform::PowerInfo::BatteryPercentage(),
+        timestamp);
+
+#if defined(COFFEE_ANDROID)
+    auto network_stats = *::android::network_stats().query();
+
+    json::CaptureMetrics(
+        "Network RX", MetricVariant::Value, network_stats.rx, timestamp);
+    json::CaptureMetrics(
+        "Network TX", MetricVariant::Value, network_stats.tx, timestamp);
+#endif
+}
+
+void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)
+{
+    using namespace platform::profiling;
+
+    json::CaptureMetrics(
+        "VSYNC",
+        MetricVariant::Marker,
+        0,
+        Chrono::duration_cast<Chrono::microseconds>(
+            Profiler::clock::now().time_since_epoch()));
 }
 
 } // namespace comp_app

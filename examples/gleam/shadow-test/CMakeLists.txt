@@ -7,3 +7,10 @@ coffee_application (
     GLeamRHI
     Core
     )
+
+if(TARGET ASIO)
+    target_link_libraries ( GLeamShadowTest PUBLIC
+        ASIO
+        )
+endif()
+

@@ -779,5 +779,6 @@ void RendererCleanup(CDRenderer&, RendererState* d)
     Profiler::PopContext();
 
     d->entities.reset();
+    GLM::UnloadAPI();
     d->g_data = {};
 }

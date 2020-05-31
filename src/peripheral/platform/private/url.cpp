@@ -645,11 +645,13 @@ UrlParse UrlParse::From(const Url& url)
             portStart + 1, hasResource ? hostEnd - portStart : CString::npos));
     }
 
-    auto resource = host.substr(hostEnd);
+    if(hostEnd != CString::npos)
+    {
+        p.m_resource = host.substr(hostEnd);
+    }
 
     p.m_protocol = urlData.substr(0, protocolEnd);
     p.m_host     = host.substr(0, hostEnd);
-    p.m_resource = resource;
 
 #endif
     return p;

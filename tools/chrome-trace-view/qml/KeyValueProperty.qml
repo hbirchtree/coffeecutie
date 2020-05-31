@@ -13,6 +13,7 @@ RowLayout {
         id: nameField
         text: name
         font.bold: true
+        color: "white"
     }
     Item {
         Layout.fillWidth: true
@@ -22,5 +23,6 @@ RowLayout {
         Layout.maximumWidth: parent.width - nameField.width
         id: valueField
         text: value
+        color: "white"
     }
 }

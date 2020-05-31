@@ -173,9 +173,6 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         {
             deref_main_c(android_entry_point, 0, nullptr);
 
-            ScopedJNI jni(coffee_app->activity->vm);
-            jnipp::SwapJNI(&jni);
-
             auto extras = android::intent().extras();
             if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
                 Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
@@ -230,10 +227,10 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
         Profiling::ExitRoutine();
 
-        std::reverse(
-            libc::signal::global_exit_handlers.begin(),
-            libc::signal::global_exit_handlers.end());
-        for(auto const& hnd : libc::signal::global_exit_handlers)
+        auto rev_handlers = libc::signal::global_exit_handlers;
+        std::reverse(rev_handlers.begin(), rev_handlers.end());
+
+        for(auto const& hnd : rev_handlers)
             hnd();
 
         libc::signal::exit(libc::signal::sig::abort);
@@ -485,9 +482,6 @@ static std::string GetBuildField(wrapping::jfield<T>&& field)
 {
     using namespace ::jnipp_operators;
 
-    ScopedJNI jni(coffee_app->activity->vm);
-    jnipp::SwapJNI(&jni);
-
     jvalue fieldValue =
         *"android.os.Build"_jclass[field.as("java.lang.String")];
 
@@ -499,9 +493,6 @@ static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
 {
     using namespace ::jnipp_operators;
 
-    ScopedJNI jni(coffee_app->activity->vm);
-    jnipp::SwapJNI(&jni);
-
     jvalue fieldValue =
         *"android.os.Build$VERSION"_jclass[field.as("java.lang.String")];
 
@@ -511,9 +502,6 @@ static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
 static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
     using namespace ::jnipp_operators;
-
-    android::ScopedJNI _(coffee_app->activity->vm);
-    jnipp::SwapJNI(&_);
 
     switch(evtype)
     {
@@ -719,6 +707,8 @@ STATICINLINE void InitializeState(struct android_app* state)
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
 
+    auto stats = android::network_stats().query();
+
     GetExtras();
 
     jnipp::SwapJNI(nullptr);
@@ -751,6 +741,9 @@ STATICINLINE void HandleEvents()
 
 STATICINLINE void StartEventProcessing()
 {
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
+
     while(1)
     {
         int timeout = -1;
@@ -761,8 +754,12 @@ STATICINLINE void StartEventProcessing()
         HandleEvents();
 
         if(app_internal_state->currentState & AndroidApp_Visible)
+        {
             CoffeeEventHandleCall(CoffeeHandle_Loop);
+        }
     }
+
+    jnipp::SwapJNI(nullptr);
 }
 
 } // namespace Coffee
@@ -796,7 +793,12 @@ std::string intent::action()
 
     auto getAction = "getAction"_jmethod.ret("java.lang.String");
 
-    return jnipp::java::type_unwrapper<std::string>(m_intent[getAction]());
+    auto out = m_intent[getAction]();
+
+    if(!java::objects::not_null(out))
+        return {};
+
+    return jnipp::java::type_unwrapper<std::string>(out);
 }
 
 std::string intent::data()
@@ -902,6 +904,86 @@ int intent::flags()
     auto getFlags = "getFlags"_jmethod.ret<jint>();
 
     return jnipp::java::type_unwrapper<jint>(m_intent[getFlags]());
+}
+
+std::string app_info::package_name()
+{
+    auto Context        = "android.content.Context"_jclass;
+    auto getPackageName = "getPackageName"_jmethod.ret("java.lang.String");
+
+    auto context = Context(coffee_app->activity->clazz);
+
+    return jnipp::java::type_unwrapper<std::string>(context[getPackageName]());
+}
+
+stl_types::Optional<::jobject> app_info::get_service(std::string const& service)
+{
+    auto Context          = "android.content.Context"_jclass;
+    auto getSystemService = "getSystemService"_jmethod.arg("java.lang.String")
+                                .ret("java.lang.Object");
+
+    auto instance = Context(coffee_app->activity->clazz)[getSystemService](
+        jnipp::java::type_wrapper(service));
+
+    if(!java::objects::not_null(instance))
+        return {};
+
+    auto class_type = jnipp::java::objects::get_class(instance.l);
+
+    return instance.l;
+}
+
+stl_types::Optional<network_stats::result_t> network_stats::query()
+{
+    auto System = "java.lang.System"_jclass;
+    auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<jlong>();
+
+    auto NetStats     = "android.app.usage.NetworkStatsManager"_jclass;
+    auto querySummary = "querySummary"_jmethod.arg<jint>()
+                            .arg("java.lang.String")
+                            .arg<jlong>()
+                            .arg<jlong>()
+                            .ret("android.app.usage.NetworkStats");
+
+    auto NetworkStats = "android.app.usage.NetworkStats"_jclass;
+    auto getNextBucket =
+        "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
+            .ret<jboolean>();
+    auto hasNextBucket = "hasNextBucket"_jmethod.ret<jboolean>();
+
+    auto Bucket          = "android.app.usage.NetworkStats$Bucket"_jclass;
+    auto bucketConstruct = "<init>"_jmethod;
+
+    auto getRxBytes = "getRxBytes"_jmethod.ret<jlong>();
+    auto getTxBytes = "getTxBytes"_jmethod.ret<jlong>();
+
+    auto net_stats = NetStats(*app_info().get_service("netstats"));
+
+    ::jvalue subId;
+    subId.l = 0;
+
+    auto now = System[currentTimeMillis]();
+
+    auto stats = NetworkStats(
+        net_stats[querySummary](network_class_mobile, subId, 0, now.j));
+
+    auto bucket = Bucket.construct(bucketConstruct);
+
+    result_t out;
+
+    while(stats[hasNextBucket]().z)
+    {
+        if(!stats[getNextBucket](bucket).z)
+            break;
+
+        auto rx = bucket[getRxBytes]();
+        auto tx = bucket[getTxBytes]();
+
+        out.rx += rx.j;
+        out.tx += tx.j;
+    }
+
+    return out;
 }
 
 std::vector<std::string> cpu_abis()

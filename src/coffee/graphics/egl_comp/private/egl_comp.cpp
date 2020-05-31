@@ -20,6 +20,14 @@
 #error EGL version 1.3 is required
 #endif
 
+#if defined(COFFEE_ANDROID)
+namespace android_egl {
+static PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC
+                                            GetCompositorTimingSupported;
+static PFNEGLGETCOMPOSITORTIMINGANDROIDPROC GetCompositorTiming;
+} // namespace android_egl
+#endif
+
 namespace egl {
 namespace detail {
 
@@ -165,8 +173,10 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
         config.version.major,
         EGL_CONTEXT_MINOR_VERSION,
         config.version.minor,
+#if 0
         EGL_CONTEXT_OPENGL_DEBUG,
         (config.profile & comp_app::GLConfig::Debug) ? EGL_TRUE : EGL_FALSE,
+#endif
 #elif defined(EGL_VERSION_1_3)
         EGL_CONTEXT_CLIENT_VERSION,
         2,
@@ -197,8 +207,9 @@ void GraphicsFramebuffer::swapBuffers(comp_app::app_error& ec)
     if constexpr(compile_info::debug_mode)
         Coffee::Profiler::PushContext("egl::GraphicsFramebuffer::swapBuffers");
 
-    if(!eglSwapBuffers(
-           m_container->service<DisplayHandle>()->context().display, m_surface))
+    auto display = m_container->service<DisplayHandle>()->context().display;
+
+    if(!eglSwapBuffers(display, m_surface))
     {
         ec = stl_types::str::convert::hexify(
             C_FCAST<libc_types::u32>(eglGetError()));
@@ -237,6 +248,24 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
         ec = stl_types::str::convert::hexify(eglGetError());
         ec = comp_app::AppError::ContextNotAvailable;
     }
+
+#if defined(EGL_ANDROID_get_frame_timestamps)
+    auto& feature_flags = e.service<GraphicsContext>()->feature_flags;
+
+    android_egl::GetCompositorTimingSupported =
+        reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC>(
+            eglGetProcAddress("eglGetCompositorTimingSupportedANDROID"));
+    android_egl::GetCompositorTiming =
+        reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGANDROIDPROC>(
+            eglGetProcAddress("eglGetCompositorTimingANDROID"));
+
+    feature_flags.android_composite_deadline =
+        android_egl::GetCompositorTimingSupported(
+            display, m_surface, EGL_COMPOSITE_DEADLINE_ANDROID);
+    feature_flags.android_composite_deadline =
+        android_egl::GetCompositorTimingSupported(
+            display, m_surface, EGL_COMPOSITE_TO_PRESENT_LATENCY_ANDROID);
+#endif
 }
 
 void GraphicsFramebuffer::unload(entity_container& e, comp_app::app_error& ec)

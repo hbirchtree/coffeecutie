@@ -22,7 +22,7 @@ struct WinFileApi
 {
     struct FileHandle : FILEApi::FileHandle
     {
-        FileHandle() : file(nullptr)
+        FileHandle() : file(platform::win32::invalid_handle_value)
         {
         }
         enum FH_Type

@@ -39,13 +39,19 @@ struct GraphicsContext : comp_app::GraphicsContext, comp_app::AppLoadableService
     EGLContext        m_context;
     EGLConfig         m_config;
     entity_container* m_container;
+
+    struct feature_flags_t
+    {
+        bool android_composite_deadline = false;
+        bool android_present_latency    = false;
+    } feature_flags;
 };
 
 struct GraphicsFramebuffer : comp_app::GraphicsFramebuffer,
                              comp_app::AppLoadableService
 {
     virtual void load(entity_container& e, comp_app::app_error& ec) final;
-    virtual void unload(entity_container &e, comp_app::app_error& ec) final;
+    virtual void unload(entity_container& e, comp_app::app_error& ec) final;
 
     virtual comp_app::size_2d_t size() const final;
     virtual void                swapBuffers(comp_app::app_error& ec) final;

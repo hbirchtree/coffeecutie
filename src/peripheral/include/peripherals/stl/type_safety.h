@@ -440,6 +440,3 @@ struct is_pod
 #undef IS_CONST
 #undef IS_SIGNED
 #undef IS_USIGNED
-
-#define C_CAST(type, var) C_CAST<type>(var)
-#define C_DCAST(type, var) C_DCAST<type>(var)

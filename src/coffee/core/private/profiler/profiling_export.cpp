@@ -21,7 +21,9 @@
 
 #if defined(COFFEE_WINDOWS)
 #include <peripherals/platform/windows.h>
+#if !defined(COFFEE_MINGW64)
 #include <VersionHelpers.h>
+#endif
 #endif
 
 #include <coffee/core/CDebug>
@@ -214,22 +216,34 @@ STATICINLINE void PutRuntimeInfo(
                 stl_types::str::convert::hexify(compile_info::windows::wdk),
                 alloc),
             alloc);
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
         build.AddMember("windowsServer", IsWindowsServer() ? true : false, alloc);
 #endif
     }
     
     if constexpr(compile_info::platform::is_macos)
+    {
         build.AddMember(
             "macTarget",
             FromString(cast_pod(compile_info::apple::macos::target), alloc),
             alloc);
+        build.AddMember(
+            "macMinTarget",
+            FromString(cast_pod(compile_info::apple::macos::min_target), alloc),
+            alloc);
+    }
 
     if constexpr(compile_info::platform::is_ios)
+    {
         build.AddMember(
             "iosTarget",
             FromString(cast_pod(compile_info::apple::ios::target), alloc),
             alloc);
+        build.AddMember(
+            "iosMinTarget",
+            FromString(cast_pod(compile_info::apple::ios::min_target), alloc),
+            alloc);
+    }
 
     target.AddMember("build", build, alloc);
 

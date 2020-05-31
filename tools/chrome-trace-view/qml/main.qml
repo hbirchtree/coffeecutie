@@ -3,14 +3,18 @@ import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import QtQuick.Shapes 1.12
 
 import me.birchtrees.ctf 1.0
 
 ApplicationWindow {
     id: root
     visible: true
-    width: 640
-    height: 480
+    width: 1280
+    height: 1200
+
+    color: "#111"
+
     title: qsTr("Chrome Trace Viewer")
 
     property int rowHeight: 10 * Screen.pixelDensity
@@ -20,6 +24,8 @@ ApplicationWindow {
     property int spacing: 2 * Screen.pixelDensity
 
     property color threadColor: Qt.lighter(root.color, 1.2)
+
+    property color subWindowBackground: "#222"
 
     // 10^timelineScale is the time over a 100-pixel range
     // Dividing that by 100 we get a good per-pixel time ratio
@@ -31,6 +37,7 @@ ApplicationWindow {
     signal zoomOut();
 
     header: ToolBar {
+        background: Rectangle { color: subWindowBackground }
         height: Screen.pixelDensity * 10
         RowLayout {
             spacing: 0
@@ -75,14 +82,15 @@ ApplicationWindow {
         id: drawer
         edge: Qt.BottomEdge
         width: root.width
-        height: threadWidth * 1.2
+        height: threadWidth * 1.8
         modal: false
         interactive: false
+        drawerBackground: Rectangle { color: subWindowBackground }
     }
 
     Component.onCompleted: {
         //processes.emscriptenAuto();
-        processes.source = "/tmp/GLeam Basic RHI/GLeamBaseTest_RHI-chrome.json";
+        processes.source = "/tmp/GLeam Basic RHI/profile.json";
     }
 
     DropArea {
@@ -133,7 +141,7 @@ ApplicationWindow {
     TraceModel {
         id: processes
 
-        onTraceParsed: {        
+        onTraceParsed: {
             busy.close();
             console.log("Parsed!");
         }
@@ -201,6 +209,7 @@ ApplicationWindow {
         anchors.top: parent.top
         color: Qt.darker(root.color, 1.5)
         height: headerHeight
+        z: 1
 
         TimelineBar {
             id: timeline
@@ -223,6 +232,7 @@ ApplicationWindow {
         width: threadWidth * 4
         height: root.height
         edge: Qt.RightEdge
+        background: Rectangle { color: subWindowBackground }
 
         ScrollView {
             anchors.fill: parent
@@ -258,6 +268,7 @@ ApplicationWindow {
     Flickable {
         id: timeView
         anchors.fill: parent
+        anchors.bottomMargin: drawer.opened ? drawer.height : 0
         contentWidth: processes.totalDuration * Math.pow(10, timelineScale + 2) * (Screen.pixelDensity / 4) + threadWidth + spacing * 4
         contentHeight: headerHeight
         boundsBehavior: Flickable.StopAtBounds
@@ -283,7 +294,6 @@ ApplicationWindow {
                         onEventClicked: {
                             drawer.focusItem = eventItem;
                             drawer.event = processes.eventFromId(pid, tid, eventId);
-                            drawer.open();
                         }
 
                         Connections {
@@ -320,6 +330,36 @@ ApplicationWindow {
                         threadName: name
                         maxStackDepth: maxDepth
                         threadEvents: events
+                    }
+                }
+            }
+
+            Repeater {
+                model: processes.metrics
+
+                MetricView {
+                    width: timeView.contentWidth
+                    height: root.rowHeight * 2
+
+                    source: metric
+
+                    container: timeView
+                    timePerPixel: root.timePerPixel
+
+                    threadColor: root.threadColor
+                    rowHeight: root.rowHeight
+                    threadWidth: root.threadWidth
+                    spacing: root.spacing
+
+                    onClicked: {
+                        drawer.focusItem = item;
+                        drawer.event = model;
+                    }
+
+                    Component.onCompleted: {
+                        timeView.contentHeight = timeView.contentHeight +
+                                height +
+                                root.spacing;
                     }
                 }
             }

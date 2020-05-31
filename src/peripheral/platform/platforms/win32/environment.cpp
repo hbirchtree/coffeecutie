@@ -1,10 +1,13 @@
 #include <platforms/win32/environment.h>
 
 #include <peripherals/platform/windows.h>
+#include <peripherals/stl/string_ops.h>
 #include <platforms/pimpl_state.h>
 
 #include <stdlib.h>
 #include <wchar.h>
+
+using namespace stl_types;
 
 namespace platform {
 namespace env {
