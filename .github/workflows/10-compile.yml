@@ -16,13 +16,8 @@ jobs:
         - android.armv7a.v27
         - android.armv8a.v27
         - android.armv8a.v29
-        - emscripten.wasm
         - fedora.amd64
-        - gamecube
         - raspberry.armhf
-        - testing.linux.lowfat.debug
-        - testing.linux.lowfat.release
-        - testing.linux.release
         - ubuntu.amd64
     env:
       CONFIGURATION: Release
@@ -98,7 +93,6 @@ jobs:
     strategy:
       matrix:
         variant:
-        - uwp.amd64.vs19
         - win32.amd64.vs19
     env:
       AZURE_IMAGE: vs2019-win2019
