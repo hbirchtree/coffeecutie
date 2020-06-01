@@ -139,7 +139,8 @@ def github_gen_config(build_info, repo_dir):
                         'volumes': [
                             '${{github.workspace}}/source:${{github.workspace}}/source',
                             '${{github.workspace}}/build:/build'
-                        ]
+                        ],
+                        'options': ['--user=root']
                     },
                     'steps': [
                     {
