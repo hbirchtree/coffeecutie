@@ -41,7 +41,7 @@ case $1 in
 ;;
 "docker-build")
     source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
-    docker run --rm -ti \
+    docker run --rm \
         -v ${BASE_DIR}:/build \
         -e BUILDVARIANT=${BUILDVARIANT} \
         -e CONFIGURATION=${CONFIGURATION} \
