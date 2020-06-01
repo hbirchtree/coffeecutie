@@ -101,6 +101,8 @@ jobs:
       run: source/toolchain/ci/travis-deps.sh
     - name: Building project
       run: source/cb ci-build -GXcode
+      env:
+        BUILD_TARGET: ALL_BUILD
   Windows:
     runs-on: windows-2019
     strategy:

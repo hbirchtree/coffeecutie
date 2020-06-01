@@ -165,7 +165,10 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Building project',
-                        'run': 'source/cb ci-build -GXcode'
+                        'run': 'source/cb ci-build -GXcode',
+                        'env': {
+                            'BUILD_TARGET': 'ALL_BUILD'
+                        }
                     }
                     ]
                 },
