@@ -8,6 +8,7 @@ name: CMake Build
 jobs:
   Linux:
     runs-on: ubuntu-18.04
+    fail-fast: false
     strategy:
       matrix:
         variant:
@@ -57,6 +58,7 @@ jobs:
         cmakeAppendedArgs: -C${{ github.workspace }}/source/.github/cmake/${{matrix.variant}}.preload.cmake
   Android:
     runs-on: ubuntu-18.04
+    fail-fast: false
     strategy:
       matrix:
         variant:
@@ -85,19 +87,17 @@ jobs:
       - ${{github.workspace}}/source:${{github.workspace}}/source
       - ${{github.workspace}}/build:/build
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-        path: source
+    - run: git clone https://${{github.repository}} /source --recursive -j4 --shallow-submodules
+        --depth 1 --branch ${{github.sha}}
     - name: Building project
       uses: lukka/run-cmake@v2
       with:
-        cmakeListsTxtPath: ${{github.workspace}}/source/CMakeLists.txt
+        cmakeListsTxtPath: /source/CMakeLists.txt
         buildDirectory: /build
-        cmakeAppendedArgs: -C${{github.workspace}}/source/.github/cmake/${{ matrix.variant
-          }}.preload.cmake
+        cmakeAppendedArgs: -C/source/.github/cmake/${{ matrix.variant }}.preload.cmake
   macOS:
     runs-on: macos-latest
+    fail-fast: false
     strategy:
       matrix:
         variant:
@@ -137,6 +137,7 @@ jobs:
           matrix.variant }}.preload.cmake
   Windows:
     runs-on: windows-2019
+    fail-fast: false
     strategy:
       matrix:
         variant:

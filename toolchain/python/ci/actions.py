@@ -97,6 +97,7 @@ def github_gen_config(build_info, repo_dir):
             'jobs': {
                 'Linux': {
                     'runs-on': 'ubuntu-18.04',
+                    'fail-fast': False,
                     'strategy': {
                         'matrix': linux_strategy
                     },
@@ -126,6 +127,7 @@ def github_gen_config(build_info, repo_dir):
                 },
                 'Android': {
                     'runs-on': 'ubuntu-18.04',
+                    'fail-fast': False,
                     'strategy': {
                         'matrix': {
                             'variant': ['android.armv8a.v29', 'android.armv7a.v29']
@@ -141,25 +143,22 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'steps': [
                     {
-                        'uses': 'actions/checkout@v2',
-                        'with': {
-                            'submodules': True,
-                            'path': 'source'
-                        }
+                        'run': 'git clone https://${{github.repository}} /source --recursive -j4 --shallow-submodules --depth 1 --branch ${{github.sha}}'
                     },
                     {
                         'name': 'Building project',
                         'uses': 'lukka/run-cmake@v2',
                         'with': {
-                            'cmakeListsTxtPath': '${{github.workspace}}/source/CMakeLists.txt',
+                            'cmakeListsTxtPath': '/source/CMakeLists.txt',
                             'buildDirectory': '/build',
-                            'cmakeAppendedArgs': '-C${{github.workspace}}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
+                            'cmakeAppendedArgs': '-C/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
                         }
                     }
                     ]
                 },
                 'macOS': {
                     'runs-on': 'macos-latest',
+                    'fail-fast': False,
                     'strategy': {
                         'matrix': macos_strategy
                     },
@@ -190,6 +189,7 @@ def github_gen_config(build_info, repo_dir):
                 },
                 'Windows': {
                     'runs-on': 'windows-2019',
+                    'fail-fast': False,
                     'strategy': {
                         'matrix': windows_strategy
                     },
