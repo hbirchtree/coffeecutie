@@ -123,7 +123,7 @@ jobs:
     - name: Installing system dependencies
       run: source/toolchain/ci/travis-deps.sh
     - name: Building project
-      run: /source/cb ci-build -GXcode
+      run: source/cb ci-build -GXcode
   Windows:
     runs-on: windows-2019
     strategy:
