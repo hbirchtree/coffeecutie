@@ -87,8 +87,8 @@ jobs:
       - ${{github.workspace}}/source:${{github.workspace}}/source
       - ${{github.workspace}}/build:/build
     steps:
-    - run: git clone https://${{github.repository}} /source --recursive -j4 --shallow-submodules
-        --depth 1 --branch ${{github.sha}}
+    - run: git clone https://github.com/${{github.repository}} /source --recursive
+        -j4 --shallow-submodules --depth 1 --branch ${{github.ref}}
     - name: Building project
       uses: lukka/run-cmake@v2
       with:

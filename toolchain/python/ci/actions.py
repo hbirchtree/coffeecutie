@@ -143,7 +143,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'steps': [
                     {
-                        'run': 'git clone https://${{github.repository}} /source --recursive -j4 --shallow-submodules --depth 1 --branch ${{github.sha}}'
+                        'run': 'git clone https://github.com/${{github.repository}} /source --recursive -j4 --shallow-submodules --depth 1 --branch ${{github.ref}}'
                     },
                     {
                         'name': 'Building project',
