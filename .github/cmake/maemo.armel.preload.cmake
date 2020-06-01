@@ -1,5 +1,5 @@
 set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: ENV{SOURCE_DIR}" )
+message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "maemo.armel" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{CMAKE_SOURCE_DIR}/toolchain/cmake/Toolchains/linux-maemo-armv7_linux.toolchain.cmake" CACHE STRING "" )
 set ( BUILD_ASIO "OFF" CACHE STRING "" )

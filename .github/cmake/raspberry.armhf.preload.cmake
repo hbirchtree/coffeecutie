@@ -1,5 +1,5 @@
 set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: ENV{SOURCE_DIR}" )
+message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "raspberry.armhf" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{CMAKE_SOURCE_DIR}/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake" CACHE STRING "" )
 set ( RASPBERRY_SDK "/pi-sysroot" CACHE STRING "" )

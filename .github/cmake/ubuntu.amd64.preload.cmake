@@ -1,5 +1,5 @@
 set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: ENV{SOURCE_DIR}" )
+message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "ubuntu.amd64" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{CMAKE_SOURCE_DIR}/toolchain/cmake/Toolchains/linux-generic_linux.toolchain.cmake" CACHE STRING "" )
 set ( BUILD_ASSIMP "ON" CACHE STRING "" )

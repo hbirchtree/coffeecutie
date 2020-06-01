@@ -1,5 +1,5 @@
 set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: ENV{SOURCE_DIR}" )
+message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "ios.x86_64" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{SOURCE_DIR}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake" CACHE STRING "" )
 set ( IOS_PLATFORM "SIMULATOR64" CACHE STRING "" )

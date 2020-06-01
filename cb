@@ -45,6 +45,7 @@ case $1 in
     docker run --rm \
         -v ${BASE_DIR}:/build \
         -e BUILDVARIANT=${BUILDVARIANT} \
+        -e SOURCE_DIR=/build \
         -e CONFIGURATION=${CONFIGURATION} \
         -e GENERATE_PROGRAMS=${GENERATE_PROGRAMS} \
         -e BUILD_TARGET=${BUILD_TARGET:-all} \

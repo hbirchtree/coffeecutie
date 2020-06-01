@@ -1,5 +1,5 @@
 set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: ENV{SOURCE_DIR}" )
+message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "emscripten.wasm" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{EMSCRIPTEN}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" CACHE STRING "" )
 set ( BUILD_AUDIO "OFF" CACHE STRING "" )

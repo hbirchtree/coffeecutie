@@ -1,5 +1,5 @@
 set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: ENV{SOURCE_DIR}" )
+message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "android.x86_64.v23" CACHE STRING "" )
 set ( ANDROID_NDK "$ENV{ANDROID_NDK}" CACHE STRING "" )
 set ( ANDROID_SDK "$ENV{ANDROID_SDK}" CACHE STRING "" )

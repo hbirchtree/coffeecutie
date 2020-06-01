@@ -160,7 +160,7 @@ def create_cmake_preload(source):
 
     with open('../../.github/cmake/%s.preload.cmake' % target_name, 'w') as out:
         out.write('set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )\n')
-        out.write('message( "Source dir: ENV{SOURCE_DIR}" )\n')
+        out.write('message( "Source dir: $ENV{SOURCE_DIR}" )\n')
         for var in vars:
             name, value = var.split('=')
             out.write('set ( %s "%s" CACHE STRING "" )\n' % (name, value))
