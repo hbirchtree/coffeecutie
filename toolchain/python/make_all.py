@@ -196,8 +196,10 @@ if __name__ == '__main__':
             if 'container' not in target.source:
                 continue
 
-            if ':' not in target.source['container']:
+            if ':' not in target.source['container'][0]:
                 target.source['container'] = 'hbirch/coffeecutie:' + target.source['container'][0]
+            else:
+                target.source['container'] = target.source['container'][0]
 
             with open('../../.github/cmake/select/%s.sh' % target.target_name, 'w') as selector:
                 selector.write('echo "::set-env name=CONTAINER::%s"\n' % target.source['container'])

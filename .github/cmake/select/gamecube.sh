@@ -1,2 +1,2 @@
-echo "::set-env name=CONTAINER::hbirch/coffeecutie:hbirch/devkit:ppc"
-CONTAINER=hbirch/coffeecutie:hbirch/devkit:ppc
+echo "::set-env name=CONTAINER::hbirch/devkit:ppc"
+CONTAINER=hbirch/devkit:ppc

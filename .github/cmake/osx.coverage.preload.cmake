@@ -1,5 +1,3 @@
-set( ENV{SOURCE_DIR} ${CMAKE_SOURCE_DIR} )
-message( "Source dir: $ENV{SOURCE_DIR}" )
 set ( GIT_DEP_BUILDVARIANT "osx.coverage" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{SOURCE_DIR}/toolchain/cmake/Toolchains/osx-generic_osx.toolchain.cmake" CACHE STRING "" )
 set ( OPENSSL_ROOT_DIR "/usr/local/opt/openssl" CACHE STRING "" )

@@ -1,2 +1,2 @@
-echo "::set-env name=CONTAINER::hbirch/coffeecutie:hbirch/maemo-builder:v3"
-CONTAINER=hbirch/coffeecutie:hbirch/maemo-builder:v3
+echo "::set-env name=CONTAINER::hbirch/maemo-builder:v3"
+CONTAINER=hbirch/maemo-builder:v3
