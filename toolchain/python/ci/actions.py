@@ -152,11 +152,11 @@ def github_gen_config(build_info, repo_dir):
                         'working-directory': '/source',
                         'run': 'git remote add origin https://github.com/${{github.repository}}'
                     },
-                    {
-                        'name': 'git auth',
-                        'working-directory': '/source',
-                        'run': 'git config --local --add http.https://github.com/.extraheader "AUTHORIZATION: basic ${{github.token}}"'
-                    },
+#                    {
+#                        'name': 'git auth',
+#                        'working-directory': '/source',
+#                        'run': 'git config --local --add http.https://github.com/.extraheader "AUTHORIZATION: basic ${{github.token}}"'
+#                    },
                     {
                         'name': 'git fetch',
                         'working-directory': '/source',

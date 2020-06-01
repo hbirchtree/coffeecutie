@@ -93,10 +93,6 @@ jobs:
     - name: git remote
       working-directory: /source
       run: git remote add origin https://github.com/${{github.repository}}
-    - name: git auth
-      working-directory: /source
-      run: 'git config --local --add http.https://github.com/.extraheader "AUTHORIZATION:
-        basic ${{github.token}}"'
     - name: git fetch
       working-directory: /source
       run: git -c protocol.version=2 fetch --no-tags --prune --recurse-submodules
