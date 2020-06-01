@@ -35,6 +35,7 @@ case $1 in
     pushd build
     export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
     export CONFIGURATION=${CONFIGURATION:-Debug}
+    export SOURCE_DIR=${BASE_DIR}
     cmake -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake ${BASE_DIR} ${@:2}
     cmake --build . --target ${BUILD_TARGET}
     popd
