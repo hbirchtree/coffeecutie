@@ -201,6 +201,7 @@ if __name__ == '__main__':
 
             with open('../../.github/cmake/select/%s.sh' % target.target_name, 'w') as selector:
                 selector.write('echo "::set-env name=CONTAINER::%s"\n' % target.source['container'])
+                selector.write('CONTAINER=%s' % target.source['container'])
 
     with open('Makefile.linux', 'w') as mak:
         for block in blocks:

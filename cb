@@ -30,6 +30,26 @@ case $1 in
         BUILDVARIANT=${@:2} "${TC_DIR}"/ci/travis-build.sh
     fi
 ;;
+"ci-build")
+    mkdir -p build
+    pushd build
+    export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
+    export CONFIGURATION=${CONFIGURATION:-Debug}
+    cmake -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake ${BASE_DIR} ${@:2}
+    cmake --build . --target ${BUILD_TARGET}
+    popd
+;;
+"docker-build")
+    source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
+    docker run --rm -ti \
+        -v ${BASE_DIR}:/build \
+        -e BUILDVARIANT=${BUILDVARIANT} \
+        -e CONFIGURATION=${CONFIGURATION} \
+        -e GENERATE_PROGRAMS=${GENERATE_PROGRAMS} \
+        -e BUILD_TARGET=${BUILD_TARGET:-all} \
+        -u root \
+        ${CONTAINER} /build/cb ci-build ${@:2}
+;;
 "list-targets")
     grep '^[a-z]' toolchain/makers/Makefile.linux | grep FORCE | cut -d':' -f 1
     grep '^[a-z]' toolchain/makers/Makefile.mac | grep FORCE | cut -d':' -f 1

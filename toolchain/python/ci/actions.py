@@ -149,18 +149,22 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'git auth',
+                        'working-directory': '/source',
                         'run': 'git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ${{github.token}}'
                     },
                     {
                         'name': 'git remote',
+                        'working-directory': '/source',
                         'run': 'git remote add origin https://github.com/${{github.repository}}'
                     },
                     {
                         'name': 'git fetch',
+                        'working-directory': '/source',
                         'run': 'git fetch --no-tags --prune --recurse-submodules --depth=1 origin +${{github.sha}}:${{github.ref}}'
                     },
                     {
                         'name': 'git checkout',
+                        'working-directory': '/source',
                         'run': 'git checkout --force ${{github.ref}}'
                     },
                     {
