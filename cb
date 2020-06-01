@@ -37,7 +37,7 @@ case $1 in
     export CONFIGURATION=${CONFIGURATION:-Debug}
     export SOURCE_DIR=${BASE_DIR}
     cmake -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake ${BASE_DIR} ${@:2}
-    cmake --build . --target ${BUILD_TARGET}
+    cmake --build . --target ${BUILD_TARGET:-all}
     popd
 ;;
 "docker-build")
