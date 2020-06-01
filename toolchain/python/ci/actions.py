@@ -144,7 +144,24 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'steps': [
                     {
-                        'run': 'git clone https://github.com/${{github.repository}} /source --recursive -j4 --shallow-submodules --depth 1 --branch ${{github.ref}}'
+                        'name': 'git init',
+                        'run': 'git init /source'
+                    },
+                    {
+                        'name': 'git auth',
+                        'run': 'git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ${{github.token}}'
+                    },
+                    {
+                        'name': 'git remote',
+                        'run': 'git remote add origin https://github.com/${{github.repository}}'
+                    },
+                    {
+                        'name': 'git fetch',
+                        'run': 'git fetch --no-tags --prune --recurse-submodules --depth=1 origin +${{github.sha}}:${{github.ref}}'
+                    },
+                    {
+                        'name': 'git checkout',
+                        'run': 'git checkout --force ${{github.ref}}'
                     },
                     {
                         'name': 'Building project',
