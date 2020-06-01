@@ -140,7 +140,7 @@ def github_gen_config(build_info, repo_dir):
                             '${{github.workspace}}/source:${{github.workspace}}/source',
                             '${{github.workspace}}/build:/build'
                         ],
-                        'options': ['--user=root']
+                        'options': '--user=root'
                     },
                     'steps': [
                     {

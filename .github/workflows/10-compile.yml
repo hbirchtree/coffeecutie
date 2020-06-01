@@ -86,8 +86,7 @@ jobs:
       volumes:
       - ${{github.workspace}}/source:${{github.workspace}}/source
       - ${{github.workspace}}/build:/build
-      options:
-      - --user=root
+      options: --user=root
     steps:
     - run: git clone https://github.com/${{github.repository}} /source --recursive
         -j4 --shallow-submodules --depth 1 --branch ${{github.ref}}
