@@ -126,6 +126,7 @@ def github_gen_config(build_info, repo_dir):
                         'fail-fast': False,
                         'matrix': android_strategy
                     },
+                    'env': linux_env.copy(),
                     'steps': [
                     {
                         'uses': 'actions/checkout@v2',
