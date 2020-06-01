@@ -41,7 +41,9 @@ case $1 in
     popd
 ;;
 "docker-build")
-    source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
+    if [ -z "$CONTAINER" ]; then
+        source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
+    fi
     docker run --rm \
         -v ${BASE_DIR}:/build \
         -e BUILDVARIANT=${BUILDVARIANT} \

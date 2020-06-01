@@ -174,9 +174,9 @@ function(ANDROIDAPK_PACKAGE)
         "android.permission.VIBRATE"
         )
 
-    set_target_properties ( ${AAPK_TARGET} PROPERTIES
-        ANDROID_API_TARGET ${AAPK_APK_TARGET}
-        ANDROID_API_MIN_TARGET ${AAPK_APK_MIN_TARGET}
+    set_target_properties ( "${AAPK_TARGET}" PROPERTIES
+        ANDROID_API_TARGET "${AAPK_APK_TARGET}"
+        ANDROID_API_MIN_TARGET "${AAPK_APK_MIN_TARGET}"
         ANDROID_FEATURES
             "${ANDROID_REQUIRED_FEATURES}"
         ANDROID_FEATURES_OPTIONAL
