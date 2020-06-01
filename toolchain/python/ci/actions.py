@@ -65,17 +65,16 @@ def github_gen_config(build_info, repo_dir):
         }
 
     linux_strategy = defaultdict(list)
-#    linux_strategy['os'] = 'ubuntu-18.04'
-
     macos_strategy = defaultdict(list)
-#    macos_strategy['os'] = 'macos-10.15'
-
     windows_strategy = defaultdict(list)
-#    windows_strategy['os'] = 'windows-2019'
+    android_strategy = defaultdict(list)
 
     for val in linux_targets.values():
         for key in val:
-            linux_strategy[key].append(val[key])
+            if val[key].startswith('android.'):
+                android_strategy[key].append(val[key])
+            else:
+                linux_strategy[key].append(val[key])
     for val in macos_targets.values():
         for key in val:
             macos_strategy[key].append(val[key])
@@ -86,6 +85,7 @@ def github_gen_config(build_info, repo_dir):
     linux_strategy = dict(linux_strategy)
     macos_strategy = dict(macos_strategy)
     windows_strategy = dict(windows_strategy)
+    android_strategy = dict(android_strategy)
 
     return {
             'name': 'CMake Build',
@@ -124,9 +124,7 @@ def github_gen_config(build_info, repo_dir):
                     'runs-on': 'ubuntu-18.04',
                     'strategy': {
                         'fail-fast': False,
-                        'matrix': {
-                            'variant': ['android.armv8a.v29', 'android.armv7a.v29']
-                        }
+                        'matrix': android_strategy
                     },
                     'container': {
                         'image': 'hbirch/android:r21',
@@ -139,37 +137,19 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'steps': [
                     {
-                        'name': 'git init',
-                        'run': 'git init /source'
+                        'uses': 'actions/checkout@v2',
+                        'with': {
+                            'submodules': True,
+                            'path': 'source'
+                        }
                     },
                     {
-                        'name': 'git remote',
-                        'working-directory': '/source',
-                        'run': 'git remote add origin https://github.com/${{github.repository}}'
-                    },
-#                    {
-#                        'name': 'git auth',
-#                        'working-directory': '/source',
-#                        'run': 'git config --local --add http.https://github.com/.extraheader "AUTHORIZATION: basic ${{github.token}}"'
-#                    },
-                    {
-                        'name': 'git fetch',
-                        'working-directory': '/source',
-                        'run': 'git -c protocol.version=2 fetch --no-tags --prune --recurse-submodules --depth=1 origin +${{github.sha}}:${{github.ref}}'
-                    },
-                    {
-                        'name': 'git checkout',
-                        'working-directory': '/source',
-                        'run': 'git checkout --force ${{github.ref}}'
-                    },
-                    {
-                        'name': 'git submodules',
-                        'working-directory': '/source',
-                        'run': 'git submodule update --init --recommend-shallow --depth=1'
+                        'name': 'Select Docker container',
+                        'run': 'echo "::set-env name=CONTAINER::hbirch/android:r21"'
                     },
                     {
                         'name': 'Building project',
-                        'run': '/source/cb ci-build -GNinja'
+                        'run': 'source/cb docker-build -GNinja'
                     }
                     ]
                 },

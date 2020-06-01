@@ -12,11 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         variant:
-        - android.armv7a.v19
-        - android.armv7a.v21
-        - android.armv7a.v27
-        - android.armv8a.v27
-        - android.armv8a.v29
         - emscripten.wasm
         - fedora.amd64
         - gamecube
@@ -58,8 +53,11 @@ jobs:
       fail-fast: false
       matrix:
         variant:
+        - android.armv7a.v19
+        - android.armv7a.v21
+        - android.armv7a.v27
+        - android.armv8a.v27
         - android.armv8a.v29
-        - android.armv7a.v29
     container:
       image: hbirch/android:r21
       env:
@@ -84,23 +82,14 @@ jobs:
       - ${{github.workspace}}/build:/build
       options: --user=root
     steps:
-    - name: git init
-      run: git init /source
-    - name: git remote
-      working-directory: /source
-      run: git remote add origin https://github.com/${{github.repository}}
-    - name: git fetch
-      working-directory: /source
-      run: git -c protocol.version=2 fetch --no-tags --prune --recurse-submodules
-        --depth=1 origin +${{github.sha}}:${{github.ref}}
-    - name: git checkout
-      working-directory: /source
-      run: git checkout --force ${{github.ref}}
-    - name: git submodules
-      working-directory: /source
-      run: git submodule update --init --recommend-shallow --depth=1
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        path: source
+    - name: Select Docker container
+      run: echo "::set-env name=CONTAINER::hbirch/android:r21"
     - name: Building project
-      run: /source/cb ci-build -GNinja
+      run: source/cb docker-build -GNinja
   macOS:
     runs-on: macos-latest
     strategy:
