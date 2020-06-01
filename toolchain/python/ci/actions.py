@@ -116,12 +116,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Building project',
-                        'uses': 'lukka/run-cmake@v2',
-                        'with': {
-                            'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
-                            'buildDirectory': '${{ github.workspace }}/build',
-                            'cmakeAppendedArgs': '-C${{ github.workspace }}/source/.github/cmake/${{matrix.variant}}.preload.cmake'
-                        }
+                        'run': '/source/cb docker-build -GNinja'
                     }
                     ]
                 },
@@ -169,12 +164,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Building project',
-                        'uses': 'lukka/run-cmake@v2',
-                        'with': {
-                            'cmakeListsTxtPath': '/source/CMakeLists.txt',
-                            'buildDirectory': '/build',
-                            'cmakeAppendedArgs': '-C/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
-                        }
+                        'run': '/source/cb ci-build -GNinja'
                     }
                     ]
                 },
@@ -199,13 +189,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Building project',
-                        'uses': 'lukka/run-cmake@v2',
-                        'with': {
-                            'cmakeListsOrSettingsJson': 'CMakeListsTxtAdvanced',
-                            'cmakeListsTxtPath': '${{ github.workspace }}/source/CMakeLists.txt',
-                            'buildDirectory': '${{ github.workspace }}/build',
-                            'cmakeAppendedArgs': '-GXcode -C${{ github.workspace }}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
-                        }
+                        'run': '/source/cb ci-build -GXcode'
                     }
                     ]
                 },

@@ -51,11 +51,7 @@ jobs:
       run: sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
         }}.sh
     - name: Building project
-      uses: lukka/run-cmake@v2
-      with:
-        cmakeListsTxtPath: ${{ github.workspace }}/source/CMakeLists.txt
-        buildDirectory: ${{ github.workspace }}/build
-        cmakeAppendedArgs: -C${{ github.workspace }}/source/.github/cmake/${{matrix.variant}}.preload.cmake
+      run: /source/cb docker-build -GNinja
   Android:
     runs-on: ubuntu-18.04
     strategy:
@@ -101,11 +97,7 @@ jobs:
       working-directory: /source
       run: git checkout --force ${{github.ref}}
     - name: Building project
-      uses: lukka/run-cmake@v2
-      with:
-        cmakeListsTxtPath: /source/CMakeLists.txt
-        buildDirectory: /build
-        cmakeAppendedArgs: -C/source/.github/cmake/${{ matrix.variant }}.preload.cmake
+      run: /source/cb ci-build -GNinja
   macOS:
     runs-on: macos-latest
     strategy:
@@ -139,13 +131,7 @@ jobs:
     - name: Installing system dependencies
       run: source/toolchain/ci/travis-deps.sh
     - name: Building project
-      uses: lukka/run-cmake@v2
-      with:
-        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-        cmakeListsTxtPath: ${{ github.workspace }}/source/CMakeLists.txt
-        buildDirectory: ${{ github.workspace }}/build
-        cmakeAppendedArgs: -GXcode -C${{ github.workspace }}/source/.github/cmake/${{
-          matrix.variant }}.preload.cmake
+      run: /source/cb ci-build -GXcode
   Windows:
     runs-on: windows-2019
     strategy:
