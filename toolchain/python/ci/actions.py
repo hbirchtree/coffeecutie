@@ -165,7 +165,7 @@ def github_gen_config(build_info, repo_dir):
                     {
                         'name': 'git submodules',
                         'working-directory': '/source',
-                        'run': 'git submodules update --init --recommend-shallow --depth=1'
+                        'run': 'git submodule update --init --recommend-shallow --depth=1'
                     },
                     {
                         'name': 'Building project',
