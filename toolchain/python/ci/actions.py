@@ -97,8 +97,8 @@ def github_gen_config(build_info, repo_dir):
             'jobs': {
                 'Linux': {
                     'runs-on': 'ubuntu-18.04',
-                    'fail-fast': False,
                     'strategy': {
+                        'fail-fast': False,
                         'matrix': linux_strategy
                     },
                     'env': linux_env.copy(),
@@ -127,8 +127,8 @@ def github_gen_config(build_info, repo_dir):
                 },
                 'Android': {
                     'runs-on': 'ubuntu-18.04',
-                    'fail-fast': False,
                     'strategy': {
+                        'fail-fast': False,
                         'matrix': {
                             'variant': ['android.armv8a.v29', 'android.armv7a.v29']
                         }
@@ -158,8 +158,8 @@ def github_gen_config(build_info, repo_dir):
                 },
                 'macOS': {
                     'runs-on': 'macos-latest',
-                    'fail-fast': False,
                     'strategy': {
+                        'fail-fast': False,
                         'matrix': macos_strategy
                     },
                     'env': osx_env.copy(),
@@ -189,8 +189,8 @@ def github_gen_config(build_info, repo_dir):
                 },
                 'Windows': {
                     'runs-on': 'windows-2019',
-                    'fail-fast': False,
                     'strategy': {
+                        'fail-fast': False,
                         'matrix': windows_strategy
                     },
                     'env': windows_env,

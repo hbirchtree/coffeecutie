@@ -8,8 +8,8 @@ name: CMake Build
 jobs:
   Linux:
     runs-on: ubuntu-18.04
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         variant:
         - android.armv7a.v19
@@ -58,8 +58,8 @@ jobs:
         cmakeAppendedArgs: -C${{ github.workspace }}/source/.github/cmake/${{matrix.variant}}.preload.cmake
   Android:
     runs-on: ubuntu-18.04
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         variant:
         - android.armv8a.v29
@@ -97,8 +97,8 @@ jobs:
         cmakeAppendedArgs: -C/source/.github/cmake/${{ matrix.variant }}.preload.cmake
   macOS:
     runs-on: macos-latest
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         variant:
         - ios.x86_64
@@ -137,8 +137,8 @@ jobs:
           matrix.variant }}.preload.cmake
   Windows:
     runs-on: windows-2019
-    fail-fast: false
     strategy:
+      fail-fast: false
       matrix:
         variant:
         - uwp.amd64.vs19
