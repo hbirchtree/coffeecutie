@@ -58,29 +58,6 @@ jobs:
         - android.armv7a.v27
         - android.armv8a.v27
         - android.armv8a.v29
-    container:
-      image: hbirch/android:r21
-      env:
-        CONFIGURATION: Release
-        GENERATE_PROGRAMS: 'ON'
-        BUILDVARIANT: ${{ matrix.variant }}
-        ACTIONS: '1'
-        MAKEFILE_DIR: toolchain/makers
-        SOURCE_DIR: ${{ github.workspace }}/source
-        BUILD_DIR: ${{ github.workspace }}/build
-        BUILD_REPO_URI: ${{ github.repository }}
-        BUILD_REPO_BRANCH: ${{ github.ref }}
-        BUILD_REPO_EVENT: push
-        BUILD_REPO_ID: ''
-        BUILD_REPO_URL: https://github.com/${{ github.repository }}
-        TRAVIS_COMMIT: ${{ github.sha }}
-        TRAVIS_REPO_SLUG: ${{ github.repository }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        TRAVIS_OS_NAME: linux
-      volumes:
-      - ${{github.workspace}}/source:${{github.workspace}}/source
-      - ${{github.workspace}}/build:/build
-      options: --user=root
     steps:
     - uses: actions/checkout@v2
       with:

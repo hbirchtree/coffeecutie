@@ -126,15 +126,6 @@ def github_gen_config(build_info, repo_dir):
                         'fail-fast': False,
                         'matrix': android_strategy
                     },
-                    'container': {
-                        'image': 'hbirch/android:r21',
-                        'env': linux_env.copy(),
-                        'volumes': [
-                            '${{github.workspace}}/source:${{github.workspace}}/source',
-                            '${{github.workspace}}/build:/build'
-                        ],
-                        'options': '--user=root'
-                    },
                     'steps': [
                     {
                         'uses': 'actions/checkout@v2',
