@@ -116,7 +116,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     {
                         'name': 'Building project',
-                        'run': '/source/cb docker-build -GNinja'
+                        'run': 'source/cb docker-build -GNinja'
                     }
                     ]
                 },
