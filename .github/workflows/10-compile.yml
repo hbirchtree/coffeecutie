@@ -82,8 +82,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TRAVIS_OS_NAME: linux
       volumes:
-      - ${{ github.workspace }}/source:/source
-      - ${{ github.workspace }}/build:/build
+      - ${{github.workspace}}/source:${{github.workspace}}/source
+      - ${{github.workspace}}/build:/build
     steps:
     - uses: actions/checkout@v2
       with:
@@ -92,9 +92,10 @@ jobs:
     - name: Building project
       uses: lukka/run-cmake@v2
       with:
-        cmakeListsTxtPath: /source/CMakeLists.txt
+        cmakeListsTxtPath: ${{github.workspace}}/source/CMakeLists.txt
         buildDirectory: /build
-        cmakeAppendedArgs: -C/source/.github/cmake/${{ matrix.variant }}.preload.cmake
+        cmakeAppendedArgs: -C${{github.workspace}}/source/.github/cmake/${{ matrix.variant
+          }}.preload.cmake
   macOS:
     runs-on: macos-latest
     strategy:

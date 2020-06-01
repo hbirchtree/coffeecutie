@@ -135,8 +135,8 @@ def github_gen_config(build_info, repo_dir):
                         'image': 'hbirch/android:r21',
                         'env': linux_env.copy(),
                         'volumes': [
-                            '${{ github.workspace }}/source:/source',
-                            '${{ github.workspace }}/build:/build'
+                            '${{github.workspace}}/source:${{github.workspace}}/source',
+                            '${{github.workspace}}/build:/build'
                         ]
                     },
                     'steps': [
@@ -151,9 +151,9 @@ def github_gen_config(build_info, repo_dir):
                         'name': 'Building project',
                         'uses': 'lukka/run-cmake@v2',
                         'with': {
-                            'cmakeListsTxtPath': '/source/CMakeLists.txt',
+                            'cmakeListsTxtPath': '${{github.workspace}}/source/CMakeLists.txt',
                             'buildDirectory': '/build',
-                            'cmakeAppendedArgs': '-C/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
+                            'cmakeAppendedArgs': '-C${{github.workspace}}/source/.github/cmake/${{ matrix.variant }}.preload.cmake'
                         }
                     }
                     ]
