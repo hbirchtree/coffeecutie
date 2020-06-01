@@ -150,7 +150,7 @@ def github_gen_config(build_info, repo_dir):
                     {
                         'name': 'git auth',
                         'working-directory': '/source',
-                        'run': 'git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ${{github.token}}'
+                        'run': 'git config --local --add http.https://github.com/.extraheader "AUTHORIZATION: basic ${{github.token}}"'
                     },
                     {
                         'name': 'git remote',

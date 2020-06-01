@@ -92,8 +92,8 @@ jobs:
       run: git init /source
     - name: git auth
       working-directory: /source
-      run: 'git config --local http.https://github.com/.extraheader AUTHORIZATION:
-        basic ${{github.token}}'
+      run: 'git config --local --add http.https://github.com/.extraheader "AUTHORIZATION:
+        basic ${{github.token}}"'
     - name: git remote
       working-directory: /source
       run: git remote add origin https://github.com/${{github.repository}}
