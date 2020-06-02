@@ -1,6 +1,7 @@
 from python.ci.common import flatten_map, get_deploy_info, create_target_matrix, get_script_locations
 from python.common import try_get_key
 from collections import defaultdict
+from copy import deepcopy
 
 def github_gen_config(build_info, repo_dir):
     script_loc = try_get_key(build_info, 'script_location', 'ci')
@@ -87,6 +88,14 @@ def github_gen_config(build_info, repo_dir):
     windows_strategy = dict(windows_strategy)
     android_strategy = dict(android_strategy)
 
+    checkout_step = {
+            'uses': 'actions/checkout@v2',
+            'with': {
+                'submodules': True,
+                'path': 'source'
+                }
+            }
+
     return {
             'name': 'CMake Build',
             'on': {
@@ -103,13 +112,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'env': linux_env.copy(),
                     'steps': [
-                    {
-                        'uses': 'actions/checkout@v2',
-                        'with': {
-                            'submodules': True,
-                            'path': 'source'
-                        }
-                    },
+                    deepcopy(checkout_step),
                     {
                         'name': 'Select Docker container',
                         'run': 'sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
@@ -117,6 +120,34 @@ def github_gen_config(build_info, repo_dir):
                     {
                         'name': 'Building project',
                         'run': 'source/cb docker-build -GNinja'
+                    }
+                    ]
+                },
+                'Coverage': {
+                    'runs-on': 'ubuntu-18.04',
+                    'strategy': {
+                        'fail-fast': False,
+                        'matrix': {'variant': ['coverage']}
+                    },
+                    'env': linux_env.copy(),
+                    'steps': [
+                    deepcopy(checkout_step),
+                    {
+                        'name': 'Select Docker container',
+                        'run': 'sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
+                    },
+                    {
+                        'name': 'Building project',
+                        'run': 'source/cb docker-build -GNinja'
+                    },
+                    {
+                        'name': 'Running tests',
+                        'env': { 'BUILD_TARGET': 'CoverageTest' },
+                        'run': 'source/cb docker-build -GNinja'
+                    },
+                    {
+                        'name': 'Gathering coverage info',
+                        'uses': 'codecov/codecov-action@v1'
                     }
                     ]
                 },
@@ -128,13 +159,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'env': linux_env.copy(),
                     'steps': [
-                    {
-                        'uses': 'actions/checkout@v2',
-                        'with': {
-                            'submodules': True,
-                            'path': 'source'
-                        }
-                    },
+                    deepcopy(checkout_step),
                     {
                         'name': 'Select Docker container',
                         'run': 'echo "::set-env name=CONTAINER::hbirch/android:r21"'
@@ -153,13 +178,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'env': osx_env.copy(),
                     'steps': [
-                    {
-                        'uses': 'actions/checkout@v2',
-                        'with': {
-                            'submodules': True,
-                            'path': 'source'
-                        }
-                    },
+                    deepcopy(checkout_step),
                     {
                         'name': 'Installing system dependencies',
                         'run': 'source/toolchain/ci/travis-deps.sh'
@@ -181,13 +200,7 @@ def github_gen_config(build_info, repo_dir):
                     },
                     'env': windows_env,
                     'steps': [
-                    {
-                        'uses': 'actions/checkout@v2',
-                        'with': {
-                            'submodules': True,
-                            'path': 'source'
-                        }
-                    },
+                    deepcopy(checkout_step),
                     {
                         'run': 'source/toolchain/ci/appveyor-deps.ps1',
                         'shell': 'powershell',
