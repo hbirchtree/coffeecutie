@@ -55,7 +55,7 @@ case $1 in
 ;;
 "compress-usr-dir")
     OUTPUT=$(realpath .)/${2}_${BUILDVARIANT}.tar.gz
-    INSTALL_DIR=$(realpath .)/install/${BUILDVARIANT}
+    INSTALL_DIR=$(realpath .)/build/install/${BUILDVARIANT}
 
     pushd ${INSTALL_DIR}
     case $2 in
