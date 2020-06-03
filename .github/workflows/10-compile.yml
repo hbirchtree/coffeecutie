@@ -47,6 +47,15 @@ jobs:
         }}.sh
     - name: Building project
       run: source/cb docker-build -GNinja
+    - name: Compress executables
+      run: source/cb compress-usr-dir bin
+    - name: Compress libraries
+      run: source/cb compress-usr-dir libraries
+    - name: Uploading artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: '{{matrix.variant}}'
+        path: '*.tar.bz2'
   Coverage:
     runs-on: ubuntu-18.04
     strategy:
@@ -124,6 +133,15 @@ jobs:
       run: echo "::set-env name=CONTAINER::hbirch/android:r21"
     - name: Building project
       run: source/cb docker-build -GNinja
+    - name: Compress executables
+      run: source/cb compress-usr-dir bin
+    - name: Compress libraries
+      run: source/cb compress-usr-dir libraries
+    - name: Uploading artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: '{{matrix.variant}}'
+        path: '*.tar.bz2'
   macOS:
     runs-on: macos-latest
     strategy:
@@ -160,6 +178,15 @@ jobs:
       run: source/cb ci-build -GXcode
       env:
         BUILD_TARGET: ALL_BUILD
+    - name: Compress executables
+      run: source/cb compress-usr-dir bin
+    - name: Compress libraries
+      run: source/cb compress-usr-dir libraries
+    - name: Uploading artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: '{{matrix.variant}}'
+        path: '*.tar.bz2'
   Windows:
     runs-on: windows-2019
     strategy:
@@ -211,3 +238,8 @@ jobs:
       shell: powershell
       name: Deploying artifacts
       continue-on-error: true
+    - name: Uploading artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: '{{matrix.variant}}'
+        path: build/*.7z

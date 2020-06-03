@@ -95,6 +95,24 @@ def github_gen_config(build_info, repo_dir):
                 'path': 'source'
                 }
             }
+    package_step = [
+            {
+                'name': 'Compress executables',
+                'run': 'source/cb compress-usr-dir bin'
+            },
+            {
+                'name': 'Compress libraries',
+                'run': 'source/cb compress-usr-dir libraries'
+            },
+            {
+                'name': 'Uploading artifacts',
+                'uses': 'actions/upload-artifact@v2',
+                'with': {
+                    'name': '{{matrix.variant}}',
+                    'path': '*.tar.bz2'
+                }
+            }
+            ]
 
     return {
             'name': 'CMake Build',
@@ -121,7 +139,7 @@ def github_gen_config(build_info, repo_dir):
                         'name': 'Building project',
                         'run': 'source/cb docker-build -GNinja'
                     }
-                    ]
+                    ] + deepcopy(package_step)
                 },
                 'Coverage': {
                     'runs-on': 'ubuntu-18.04',
@@ -168,7 +186,7 @@ def github_gen_config(build_info, repo_dir):
                         'name': 'Building project',
                         'run': 'source/cb docker-build -GNinja'
                     }
-                    ]
+                    ] + deepcopy(package_step)
                 },
                 'macOS': {
                     'runs-on': 'macos-latest',
@@ -190,7 +208,7 @@ def github_gen_config(build_info, repo_dir):
                             'BUILD_TARGET': 'ALL_BUILD'
                         }
                     }
-                    ]
+                    ] + deepcopy(package_step)
                 },
                 'Windows': {
                     'runs-on': 'windows-2019',
@@ -225,6 +243,14 @@ def github_gen_config(build_info, repo_dir):
                         'shell': 'powershell',
                         'name': 'Deploying artifacts',
                         'continue-on-error': True
+                    },
+                    {
+                        'name': 'Uploading artifacts',
+                        'uses': 'actions/upload-artifact@v2',
+                        'with': {
+                            'name': '{{matrix.variant}}',
+                            'path': 'build/*.7z'
+                        }
                     }
                     ]
                 }

@@ -35,6 +35,7 @@ case $1 in
     export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
     export CONFIGURATION=${CONFIGURATION:-Debug}
     export CMAKE_SOURCE_DIR=${BASE_DIR}
+    export CMAKE_INSTALL_DIR=$(realpath .)/install
     cmake -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake ${BASE_DIR} ${@:2}
     cmake --build . --target ${BUILD_TARGET:-all}
     popd
@@ -51,6 +52,28 @@ case $1 in
         -e BUILD_TARGET=${BUILD_TARGET:-all} \
         -u root \
         ${CONTAINER} /build/cb ci-build ${@:2}
+;;
+"compress-usr-dir")
+    OUTPUT=$(realpath .)/${2}_${BUILDVARIANT}.tar.gz
+    INSTALL_DIR=$(realpath .)/install/${BUILDVARIANT}
+
+    pushd ${INSTALL_DIR}
+    case $2 in
+    "bin")
+        tar zcf ${OUTPUT} \
+            --exclude=${INSTALL_DIR}/include \
+            --exclude=${INSTALL_DIR}/lib \
+            --exclude=${INSTALL_DIR}/share \
+            ${INSTALL_DIR}
+    ;;
+    "libraries")
+        tar zcf ${OUTPUT} \
+            --exclude=${INSTALL_DIR}/bin \
+            --exclude=${INSTALL_DIR}/packaged \
+            ${INSTALL_DIR}
+    ;;
+    esac
+    popd
 ;;
 "lint")
     find src/ -regextype egrep -regex '.*\.(h|hpp|c|cpp)' -exec ${0} lint-file {} \;
