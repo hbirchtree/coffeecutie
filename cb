@@ -63,9 +63,8 @@ case $1 in
 
     LINTED=$(${CLANG_FORMAT:-clang-format} -style=file ${FILE_IN})
 
-    echo "-------- ${FILE_IN} START --------"
-    diff -py -W 200 --suppress-common-lines ${FILE_IN} <(echo "$LINTED")
-    echo "-------- ${FILE_IN} END   --------"
+    DIFF=$(diff -py -W 200 --suppress-common-lines ${FILE_IN} <(echo "$LINTED"))
+    echo "::warning file=${FILE_IN}::${DIFF}"
 
     popd
 ;;
