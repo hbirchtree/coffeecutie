@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[ -z $CI] && set -xeuf -o pipefail
+[ -z $CI ] && set -xeuf -o pipefail
 
 BUILD_CI=${BUILD_CI:-}
 
@@ -63,7 +63,7 @@ case $1 in
     LINTED=$(${CLANG_FORMAT:-clang-format} -style=file ${FILE_IN})
 
     DIFF=$(diff -py -W 200 --suppress-common-lines ${FILE_IN} <(echo "$LINTED"))
-    DIFF=$(echo "${DIFF}" | sed -e 's/\n/%0A/g' | sed -e 's/\[/%5B/g' | sed -e 's/\]/%5D/g' | sed -e 's/;/%3B/g')
+    DIFF=$(echo "${DIFF}" | tr '\n' '%0A' | sed -e 's/\[/%5B/g' | sed -e 's/\]/%5D/g' | sed -e 's/;/%3B/g')
     echo "::warning file=${FILE_IN}::${DIFF}"
 
     popd
