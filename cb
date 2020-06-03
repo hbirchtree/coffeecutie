@@ -62,7 +62,10 @@ case $1 in
     pushd ${BASE_DIR}
 
     LINTED=$(${CLANG_FORMAT:-clang-format} -style=file ${FILE_IN})
-    diff -py -W 200 ${FILE_IN} <(echo "$LINTED")
+
+    echo "-------- ${FILE_IN} START --------"
+    diff -py -W 200 --suppress-common-lines ${FILE_IN} <(echo "$LINTED")
+    echo "-------- ${FILE_IN} END   --------"
 
     popd
 ;;
