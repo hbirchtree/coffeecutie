@@ -6,7 +6,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
-            - uses: DoozyX/clang-format-lint-action@v0.5
-              with:
-                  source: ./src
+            - name: Running clang-format
+              run: ./cb lint 2>/dev/null
 

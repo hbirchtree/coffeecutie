@@ -53,6 +53,19 @@ case $1 in
         -u root \
         ${CONTAINER} /build/cb ci-build ${@:2}
 ;;
+"lint")
+    find src/ -regextype egrep -regex '.*\.(h|hpp|c|cpp)' -exec ${0} lint-file {} \;
+;;
+"lint-file")
+    FILE_IN=$(realpath ${2})
+
+    pushd ${BASE_DIR}
+
+    LINTED=$(${CLANG_FORMAT:-clang-format} -style=file ${FILE_IN})
+    diff -py -W 200 ${FILE_IN} <(echo "$LINTED")
+
+    popd
+;;
 "list-targets")
     grep '^[a-z]' toolchain/makers/Makefile.linux | grep FORCE | cut -d':' -f 1
     grep '^[a-z]' toolchain/makers/Makefile.mac | grep FORCE | cut -d':' -f 1
