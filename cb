@@ -65,6 +65,7 @@ case $1 in
 
     DIFF=$(diff -py -W 200 --suppress-common-lines ${FILE_IN} <(echo "$LINTED"))
     DIFF=$(echo "${DIFF}" | sed -e 's/\n/%0A/g' | sed -e 's/\[/%5B/g' | sed -e 's/\]/%5D/g' | sed -e 's/;/%3B/g')
+    [ "$DIFF" = "" ] && echo "::warning file=null::Not matching formatting"
     echo "::warning file=${FILE_IN}::${DIFF}"
 
     popd
