@@ -17,6 +17,8 @@ struct map_container
     template<typename T>
     map_container(semantic::Bytes map, T ver)
     {
+        static_assert(sizeof(tag_index_t) == 40, "Invalid tag index size");
+
         this->map = file_header_t::from_data(map, ver);
 
         if(this->map->version == version_t::xbox)
@@ -50,9 +52,7 @@ struct map_container
         }
 
         if(!this->map)
-            Throw(undefined_behavior("not a valid map"));
-
-        static_assert(sizeof(tag_index_t) == 40, "Invalid tag index size");
+            Throw(map_load_error("not a valid map"));
 
         tags  = &tag_index_t::from_header(this->map);
         magic = tags->get_magic(this->map);

@@ -754,8 +754,7 @@ struct mem_chunk
         mem_chunk chunk;
     };
 
-    NO_DISCARD stl_types::Optional<find_result> find(
-        mem_chunk<T> const& needle)
+    NO_DISCARD stl_types::Optional<find_result> find(mem_chunk<T> const& needle)
     {
         if(needle.empty())
             return {};
@@ -768,7 +767,8 @@ struct mem_chunk
             {
                 needle_idx++;
                 if(needle_idx == needle.size)
-                    return find_result{i - needle_idx, *at(i - needle_idx)};
+                    return find_result{i - (needle_idx - 1),
+                                       *at(i - (needle_idx - 1))};
             } else
                 needle_idx = 0;
         }

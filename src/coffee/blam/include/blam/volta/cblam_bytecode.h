@@ -1170,12 +1170,12 @@ struct bytecode_pointer
         if(i > (last_param - first_param + 1))
             Throw(undefined_behavior("param out of bounds"));
 
-        auto out = value_stack.at(value_stack.size() - i - 1);
+        auto out = &value_stack.at(value_stack.size() - i - 1);
 
-        if(!match_type(type, out.ret_type))
+        if(!match_type(type, out->ret_type))
             Throw(undefined_behavior("param has wrong type"));
 
-        return out;
+        return *out;
     }
     inline result_t evaluate(
         opcode_layout_t const& op, opcode_handler_t const& handler)
@@ -1506,6 +1506,8 @@ struct bytecode_pointer
             return from.to_u16();
         case expression_t::global_ref:
             return context.global_by_ptr(from.data_ptr)->short_;
+        default:
+            break;
         }
 
         Throw(undefined_behavior("failed to dereference value"));

@@ -891,15 +891,20 @@ struct scenario
         auto end         = (*string_base.find(terminator_data)).chunk;
 
         u32  num_strings = 0;
-        auto start_ptr   = *string_base.at(0);
+        auto start_ptr   = *string_base.at(0, end.size);
 
         while(C_OCAST<bool>(start_ptr))
         {
             if(start_ptr[0] != 0)
                 num_strings++;
 
-            start_ptr = (*start_ptr.find(
-                semantic::mem_chunk<char const>::From(terminator[0]))).chunk;
+            auto start_ptr_ = start_ptr.find(
+                semantic::mem_chunk<char const>::From(terminator[0]));
+
+            if(!start_ptr_)
+                break;
+
+            start_ptr = std::move((*start_ptr_).chunk);
 
             if((*start_ptr.find(terminator_data)).offset == 0)
                 break;
