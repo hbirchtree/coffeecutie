@@ -7,5 +7,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - name: Running clang-format
-              run: ./cb lint 2>/dev/null
+              env: 
+                CI: 1
+              run: ./cb lint
 
