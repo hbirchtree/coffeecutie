@@ -38,6 +38,7 @@ case $1 in
     export CMAKE_INSTALL_DIR=$(realpath .)/install
     cmake -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake ${BASE_DIR} ${@:2}
     cmake --build . --target ${BUILD_TARGET:-all}
+    cmake --build . --target install
     popd
 ;;
 "docker-build")
@@ -56,6 +57,11 @@ case $1 in
 "compress-usr-dir")
     OUTPUT=$(realpath .)/${2}_${BUILDVARIANT}.tar.gz
     INSTALL_DIR=$(realpath .)/build/install/${BUILDVARIANT}
+
+    pwd
+    ls
+    ls build
+    ls build/install
 
     pushd ${INSTALL_DIR}
     case $2 in
