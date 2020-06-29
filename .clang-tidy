@@ -1,0 +1,1 @@
+Checks: '*,-google*,-fuchsia*,-abseil*,-hicpp-braces-around-statements,-readability-braces-around-statements,-cppcoreguidelines-pro-type-union-access,-hicpp-uppercase-literal-suffix'

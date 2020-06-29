@@ -24,7 +24,7 @@ using namespace platform::url::constructors;
 i32 coffee_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_ASIO)
-    auto _ = Net::RegisterProfiling();
+    C_UNUSED(auto _) = Net::RegisterProfiling();
 #endif
 
     file_error ec;

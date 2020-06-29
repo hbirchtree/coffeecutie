@@ -25,31 +25,31 @@ struct Empty
 namespace Coffee {
 namespace Strings {
 
-template<typename BC>
-inline CString to_string(blam::hsc::opcode_layout<BC> const& opcode)
-{
-    return fmt(
-        "{0}"
-        " [{1}],"
-        " #{2}, #{3}, #{4}, #{5} | #{6}, #{7} | #{8} | f{9}"
-        " // type:{11}, returns:{10}, next:{13}/{14}, String "
-        "ref:\"{12}\"",
-        opcode.opcode,
-        opcode.data_ptr,
-        opcode.data_bytes[0],
-        opcode.data_bytes[1],
-        opcode.data_bytes[2],
-        opcode.data_bytes[3],
-        opcode.data_short[0],
-        opcode.data_short[1],
-        opcode.data_int,
-        opcode.data_real,
-        opcode.ret_type,
-        opcode.exp_type,
-        "",
-        stl_types::str::print::pointer_pad(opcode.next_op.ip, 4),
-        opcode.next_op.salt);
-}
+// template<typename BC>
+// inline CString to_string(blam::hsc::opcode_layout<BC> const& opcode)
+//{
+//    return fmt(
+//        "{0}"
+//        " [{1}],"
+//        " #{2}, #{3}, #{4}, #{5} | #{6}, #{7} | #{8} | f{9}"
+//        " // type:{11}, returns:{10}, next:{13}/{14}, String "
+//        "ref:\"{12}\"",
+//        opcode.opcode,
+//        opcode.data_ptr,
+//        opcode.data_bytes[0],
+//        opcode.data_bytes[1],
+//        opcode.data_bytes[2],
+//        opcode.data_bytes[3],
+//        opcode.data_short[0],
+//        opcode.data_short[1],
+//        opcode.data_int,
+//        opcode.data_real,
+//        opcode.ret_type,
+//        opcode.exp_type,
+//        "",
+//        stl_types::str::print::pointer_pad(opcode.next_op.ip, 4),
+//        opcode.next_op.salt);
+//}
 
 } // namespace Strings
 } // namespace Coffee
@@ -435,7 +435,12 @@ void examine_map(Resource&& mapfile, T version)
 
     add_mem_map(map.map, "file_header");
 
-    auto scn = &blam::scn::get_scenario<blam::hsc::bc::v2>(map.map, map.magic);
+    using bytecode_ver = typename std::conditional<
+        std::is_same_v<T, blam::hsc::bc::v1>,
+        blam::hsc::bc::v1,
+        blam::hsc::bc::v2>::type;
+
+    auto scn = &blam::scn::get_scenario<bytecode_ver>(map.map, map.magic);
 
     {
         Profiler::PushContext("Scripting");
@@ -532,12 +537,29 @@ void examine_map(Resource&& mapfile, T version)
             auto bytecode = scn->bytecode(map.magic);
             for(auto const& opcode : bytecode)
             {
+                using blam::hsc::expression_t;
+                using blam::hsc::type_t;
+
                 if(!opcode.valid())
                     break;
 
                 if(opcode.opcode == blam::hsc::bc::v2::begin &&
                    opcode.ret_type == blam::hsc::type_t::immediate_val)
                     fprintf(dism_file, "\n");
+
+                if(opcode.ret_type == type_t::immediate_val &&
+                   opcode.to_ptr() && opcode.to_ptr() < string_seg.data.size)
+                {
+                    auto ename = magic_enum::enum_name(opcode.opcode);
+                    auto sname =
+                        std::string_view(string_seg.at(opcode.to_ptr()).str());
+                    if(ename != sname)
+                        cWarning(
+                            "Mismatched names: {0} != {1} ({2})",
+                            ename,
+                            sname,
+                            C_CAST<i16>(opcode.opcode));
+                }
 
                 auto dism = Strings::fmt(
                     "{0}"
@@ -546,16 +568,21 @@ void examine_map(Resource&& mapfile, T version)
                     " // type:{11}, returns:{10}, next:{13}/{14},"
                     " as param:{15},"
                     " String ref:\"{12}\"",
-                    opcode.opcode,
+                    (opcode.exp_type == expression_t::group ||
+                     opcode.ret_type == type_t::immediate_val)
+                        ? Strings::to_string(opcode.opcode)
+                        : (opcode.exp_type == expression_t::expression)
+                              ? Strings::to_string(opcode.param_type)
+                              : Strings::to_string(opcode.exp_type),
                     opcode.data_ptr,
-                    opcode.data_bytes[0],
-                    opcode.data_bytes[1],
-                    opcode.data_bytes[2],
-                    opcode.data_bytes[3],
-                    opcode.data_short[0],
-                    opcode.data_short[1],
-                    opcode.data_int,
-                    opcode.data_real,
+                    opcode.bytes[0],
+                    opcode.bytes[1],
+                    opcode.bytes[2],
+                    opcode.bytes[3],
+                    opcode.shorts[0],
+                    opcode.shorts[1],
+                    opcode.ret_type == type_t::long_ ? opcode.long_ : 0,
+                    opcode.ret_type == type_t::real_ ? opcode.real : 0.f,
                     opcode.ret_type,
                     opcode.exp_type,
                     string_seg
@@ -778,7 +805,7 @@ void examine_map(Resource&& mapfile, T version)
                     }
 
                     for(auto const& idx :
-                        index_data.as<blam::vert::face const>())
+                        index_data.template as<blam::vert::face const>())
                     {
                         fprintf(
                             obj_out,
@@ -836,9 +863,10 @@ void examine_map(Resource&& mapfile, T version)
 
             if(weapon_tag != index_view.end())
             {
-                auto weapon_ref = (*weapon_tag)
-                                      ->to_reflexive<blam::scn::weapon_tagref>()
-                                      .data(map.magic);
+                auto weapon_ref =
+                    (*weapon_tag)
+                        ->template to_reflexive<blam::scn::weapon_tagref>()
+                        .data(map.magic);
                 auto        weapon_data = weapon_ref[0].data(map.magic);
                 auto const& weapon_stuff =
                     *index_view.find(weapon_data[0].something);
@@ -881,10 +909,11 @@ void examine_map(Resource&& mapfile, T version)
         }
         for(auto const& machine : scn->machines.palette.data(map.magic))
         {
-            auto name   = machine[0].name.to_string(map.magic);
-            auto tag_it = (*index_view.find(machine[0]))
-                              ->to_reflexive<blam::scn::device_machine>()
-                              .data(map.magic);
+            auto name = machine[0].name.to_string(map.magic);
+            auto tag_it =
+                (*index_view.find(machine[0]))
+                    ->template to_reflexive<blam::scn::device_machine>()
+                    .data(map.magic);
             cDebug("Machine");
         }
         for(auto const& machine : scn->machines.instances.data(map.magic))
@@ -902,8 +931,9 @@ void examine_map(Resource&& mapfile, T version)
             if(tag != index_view.end())
             {
                 auto const& data =
-                    (*tag)->to_reflexive<blam::ui::unicode_string>().data(
-                        map.magic)[0];
+                    (*tag)
+                        ->template to_reflexive<blam::ui::unicode_string>()
+                        .data(map.magic)[0];
                 for(auto const& sub_string : data.sub_strings.data(map.magic))
                 {
                     auto str = sub_string.str(map.magic);
@@ -917,7 +947,7 @@ void examine_map(Resource&& mapfile, T version)
             auto items = *index_view.find(mp_equipment.item);
 
             auto const& item_coll =
-                items->to_reflexive<blam::scn::item_collection>().data(
+                items->template to_reflexive<blam::scn::item_collection>().data(
                     map.magic)[0];
             for(auto const& item : item_coll.items.data(map.magic))
             {
@@ -933,8 +963,8 @@ void examine_map(Resource&& mapfile, T version)
                     item.item.to_name().to_string(map.magic));
 
                 auto equipment =
-                    equipment_tag->to_reflexive<blam::scn::weapon>().data(
-                        map.magic);
+                    equipment_tag->template to_reflexive<blam::scn::weapon>()
+                        .data(map.magic);
 
                 cDebug("");
             }
@@ -958,7 +988,7 @@ void examine_map(Resource&& mapfile, T version)
             auto tag = *hud_it;
 
             for(auto const& data :
-                (*hud_it)->to_reflexive<blam::ui::hud_message>().data(
+                (*hud_it)->template to_reflexive<blam::ui::hud_message>().data(
                     map.magic))
             {
                 for(auto const& symbol : data.symbols.data(map.magic))

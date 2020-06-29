@@ -87,7 +87,7 @@ i32 coffee_main(i32, cstring_w*)
     RuntimeQueue::CreateNewQueue("Main");
 
 #if defined(FEATURE_ENABLE_ASIO)
-    auto _ = Net::RegisterProfiling();
+    C_UNUSED(auto _) = Net::RegisterProfiling();
     cDebug("Installing net profiler");
 #endif
 

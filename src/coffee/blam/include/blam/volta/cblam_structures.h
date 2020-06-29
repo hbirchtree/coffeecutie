@@ -36,17 +36,17 @@ struct bl_string_var
 {
     static constexpr size_t size = Size;
 
-    char data[Size];
+    std::array<char, Size> data;
 
     template<
         typename Dummy                                   = void,
         typename std::enable_if<Size == 4, Dummy>::type* = nullptr>
     inline stl_types::CString str() const
     {
-        if(data[0] == 0)
+        if(data.at(0) == 0)
             return {};
 
-        auto out = stl_types::CString(data, Size);
+        auto out = stl_types::CString(data.data(), Size);
 #if __cplusplus >= 201703
         std::reverse(out.begin(), out.end());
 #else
@@ -63,13 +63,13 @@ struct bl_string_var
         typename std::enable_if<Size != 4, Dummy>::type* = nullptr>
     inline stl_types::CString str() const
     {
-        auto end = libc::str::find(data, '\0');
-        return stl_types::CString(data, end);
+        auto end = libc::str::find(data.data(), '\0');
+        return stl_types::CString(data.data(), end);
     }
 
     inline operator cstring() const
     {
-        return data;
+        return data.data();
     }
 
     template<
@@ -77,8 +77,19 @@ struct bl_string_var
         typename std::enable_if<Size == 4, Dummy>::type* = nullptr>
     explicit operator u32() const
     {
-        u32 const* idata = C_RCAST<u32 const*>(data);
+        u32 const* idata = C_RCAST<u32 const*>(data.data());
         return *idata;
+    }
+
+    static bl_string_var from(stl_types::CString const& from)
+    {
+        if(from.size() > 31)
+            Throw(undefined_behavior("string too big for bl_string_var"));
+
+        bl_string_var out;
+        std::copy(from.begin(), from.end(), out.data.begin());
+
+        return out;
     }
 };
 
@@ -156,8 +167,10 @@ enum class maptype_t : int32
 
 enum class game_difficulty_t : u16
 {
-    insane = 0,
-
+    easy       = 0,
+    normal     = 1,
+    hard       = 2,
+    impossible = 3,
 };
 
 /*!
@@ -820,12 +833,12 @@ struct string_segment_ref
             num_chars++;
         }
 
-        #if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS)
         const char* ptr = data.data;
-        #else
+#else
         const char* ptr = C_RCAST<const char*>(
             ::memmem(data.data, data.size, search.data(), num_chars));
-        #endif
+#endif
 
         if(!ptr)
             return 0;
