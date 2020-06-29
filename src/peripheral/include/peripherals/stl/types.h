@@ -377,11 +377,7 @@ struct range
 
         iterator& operator++()
         {
-            if(range_param::reversed)
-            {
-                m_idx -= m_stride;
-            } else
-                m_idx += m_stride;
+            m_idx += m_stride;
 
             if(m_idx >= m_end)
                 m_idx = npos;
@@ -410,7 +406,10 @@ struct range
 
         T operator*() const
         {
-            return m_idx;
+            if constexpr(range_param::reversed)
+                return m_end - m_idx - 1;
+            else
+                return m_idx;
         }
 
       private:

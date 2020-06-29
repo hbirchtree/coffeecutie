@@ -109,9 +109,6 @@ function(COFFEE_TEST)
 
     if(IOS)
         # There is not solution for iOS as of yet
-
-        message ( "Skipping unit test: ${TEST_TITLE}" )
-        message ( "Please run the tests somehow!" )
         return()
     elseif(EMSCRIPTEN)
         add_test (

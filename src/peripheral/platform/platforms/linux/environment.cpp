@@ -14,6 +14,9 @@ CString EnvironmentF::ExecutableName(cstring_w)
 {
     Ptr<char, ptr_opts::managed_ptr> p = realpath("/proc/self/exe", nullptr);
 
+    if(!p)
+        return {};
+
     CString v = p.get();
     return v;
 }
