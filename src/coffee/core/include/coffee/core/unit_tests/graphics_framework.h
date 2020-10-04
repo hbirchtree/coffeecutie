@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/base/renderer/eventapplication.h>
+#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/windowing/renderer/renderer.h>
 #include <peripherals/stl/functional_types.h>

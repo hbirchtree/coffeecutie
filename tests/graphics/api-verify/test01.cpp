@@ -31,7 +31,7 @@ bool test_api()
 {
     using A = GFXAPI;
 
-    auto ctxt = A::GetLoadAPI();
+    auto ctxt = A::GetLoadAPI({});
 
     if(!ctxt(true))
         return false;

@@ -1,7 +1,7 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/coffee.h>
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/windowing/renderer/renderer.h>
+#include <coffee/core/unit_tests/graphics_framework.h>
 
 #if defined(COFFEE_GEKKO)
 #include <malloc.h>
