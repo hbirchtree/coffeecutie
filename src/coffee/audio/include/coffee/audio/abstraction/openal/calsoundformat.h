@@ -10,7 +10,7 @@ namespace COpenAL{
 class CALSoundFormat : public CSoundFormat
 {
     u32 i_samrate;
-    uint16 i_channels;
+    u16 i_channels;
     u8 i_bitd;
 
 public:
@@ -18,10 +18,10 @@ public:
 
     u32 sampleSize() const;
     u32 samplerate() const;
-    uint16 channels() const;
+    u16 channels() const;
     u8 bitDepth() const;
     void setSamplerate(const u32 &smrt);
-    void setChannels(const uint16 &chans);
+    void setChannels(const u16 &chans);
     void setBitDepth(const u8 &bitd);
 };
 

@@ -26,6 +26,8 @@ GLEAM_API_LINKAGE void surface_set_levels(
 template<typename SizeT, typename PointT>
 struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
 {
+    using size_type = SizeT;
+
     friend struct GLEAM_RenderTarget;
 
     GLEAM_Surface(
@@ -82,7 +84,7 @@ struct GLEAM_Surface : GraphicsAPI::Surface<SizeT, PointT>
     glhnd                   m_handle;
 };
 
-struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
+struct GLEAM_Surface2D : GLEAM_Surface<size_2d<i32>, Point>
 {
     using sampler_type = GLEAM_Sampler2D;
 
@@ -90,11 +92,11 @@ struct GLEAM_Surface2D : GLEAM_Surface<Size, Point>
 
     GLEAM_Surface2D(PixFmt fmt, u32 mips = 1, u32 texflags = 0);
 
-    void allocate(Size size, PixCmp c);
+    void allocate(size_type size, PixCmp c);
 
     void upload(
         PixDesc           pfmt,
-        Size const&       size,
+        size_type const&  size,
         BytesConst const& data,
         gleam_error&      ec,
         Point             offset = {0, 0},
@@ -110,17 +112,17 @@ struct GLEAM_SurfaceCube : GLEAM_Surface2D
     GLEAM_SurfaceCube(PixFmt fmt, u32 mips = 1, u32 texflags = 0);
 };
 
-struct GLEAM_Surface3D_Base : GLEAM_Surface<Size3, Point3>
+struct GLEAM_Surface3D_Base : GLEAM_Surface<size_3d<i32>, Point3>
 {
     friend struct GLEAM_Sampler3D;
 
     GLEAM_Surface3D_Base(tex::flag t, PixFmt fmt, u32 mips, u32 texflags);
 
-    GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
+    GLEAM_API_CLASS_LINKAGE void allocate(size_type size, PixCmp c);
 
     GLEAM_API_CLASS_LINKAGE void upload(
         PixDesc           pfmt,
-        Size3 const&      size,
+        size_type const&  size,
         BytesConst const& data,
         gleam_error&      ec,
         Point3 const&     offset = {0, 0, 0},
@@ -159,12 +161,12 @@ struct GLEAM_SurfaceCubeArray : GLEAM_Surface3D_Base
     GLEAM_API_CLASS_LINKAGE GLEAM_SurfaceCubeArray(
         PixFmt fmt, u32 mips = 1, u32 texflags = 0);
 
-    GLEAM_API_CLASS_LINKAGE void allocate(Size3 size, PixCmp c);
+    GLEAM_API_CLASS_LINKAGE void allocate(size_type const& size, PixCmp c);
 
     GLEAM_API_CLASS_LINKAGE void upload(
         PixDesc const&             pfmt,
         typing::graphics::CubeFace face,
-        Size const&                size,
+        size_2d<i32> const&        size,
         BytesConst const&          data,
         Point3 const&              offset,
         gleam_error&               ec,

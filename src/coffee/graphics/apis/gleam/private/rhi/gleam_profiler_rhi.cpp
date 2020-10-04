@@ -40,25 +40,25 @@ void GLEAM_PrfQuery::begin()
     if(m_handle == 0)
         alloc();
 
-    CGL33::QueryBegin(m_type, m_handle);
+    gl::v33::QueryBegin(m_type, m_handle);
 #endif
 }
 
 void GLEAM_PrfQuery::end()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::QueryEnd(m_type);
+    gl::v33::QueryEnd(m_type);
 #endif
 }
 
 i64 GLEAM_PrfQuery::resulti()
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    int64 v;
-    CGL33::QueryGetObjecti64v(m_handle, GL_QUERY_RESULT, &v);
+    i64 v;
+    gl::v33::QueryGetObjecti64v(m_handle, GL_QUERY_RESULT, &v);
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-    uint32 v;
-    CGL33::QueryGetObjectuiv(m_handle, GL_QUERY_RESULT, &v);
+    u32 v;
+    gl::v33::QueryGetObjectuiv(m_handle, GL_QUERY_RESULT, &v);
 #endif
 #if GL_VERSION_VERIFY(0x300, 0x300)
     return v;
@@ -70,11 +70,11 @@ i64 GLEAM_PrfQuery::resulti()
 u64 GLEAM_PrfQuery::resultu()
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    uint64 v;
-    CGL33::QueryGetObjectui64v(m_handle, GL_QUERY_RESULT, &v);
+    u64 v;
+    gl::v33::QueryGetObjectui64v(m_handle, GL_QUERY_RESULT, &v);
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-    uint32 v;
-    CGL33::QueryGetObjectuiv(m_handle, GL_QUERY_RESULT, &v);
+    u32 v;
+    gl::v33::QueryGetObjectuiv(m_handle, GL_QUERY_RESULT, &v);
 #endif
 #if GL_VERSION_VERIFY(0x300, 0x300)
     return v;
@@ -100,7 +100,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b) :
         return;
     }
 
-    //    if(CGL33::Tex_SRGB_Supported())
+    //    if(gl::v33::Tex_SRGB_Supported())
     //    {
     //        m_color.dealloc();
     //        new (&m_color) GLEAM_Surface2D(PixFmt::SRGB8A8);
@@ -221,7 +221,7 @@ GLEAM_ScopeMarker::GLEAM_ScopeMarker(cstring tag) :
 #if GL_VERSION_VERIFY(0x300, 0x320)
     if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2) ||
        Debug::CheckExtensionSupported(CGL_DBG_CTXT, "GL_KHR_debug"))
-        CGL43::PushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, strlen(tag), tag);
+        gl::v43::PushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, {}, -1, tag);
 //    else
 //        CGL_KHR_debug<int>::PushDebugGroupKHR(
 //            GL_DEBUG_SOURCE_APPLICATION_KHR, 0, strlen(tag), tag);
@@ -233,7 +233,7 @@ GLEAM_ScopeMarker::~GLEAM_ScopeMarker()
 #if GL_VERSION_VERIFY(0x300, 0x320)
     if(GLEAM_VERSION_CHECK(GL_4_3, GLES_3_2) ||
        Debug::CheckExtensionSupported(CGL_DBG_CTXT, "GL_KHR_debug"))
-        CGL43::PopDebugGroup();
+        gl::v43::PopDebugGroup();
 //    else
 //        CGL_KHR_debug<int>::PopDebugGroupKHR();
 #endif

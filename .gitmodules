@@ -31,3 +31,6 @@
 [submodule "src/coffee/windowing/glkit_comp/ceagl"]
 	path = src/coffee/windowing/glkit_comp/ceagl
 	url = https://github.com/hbirchtree/ceagl.git
+[submodule "src/libs/tiny-utf8"]
+	path = src/libs/tiny-utf8
+	url = https://github.com/DuffsDevice/tiny-utf8.git

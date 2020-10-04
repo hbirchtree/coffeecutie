@@ -104,6 +104,51 @@ constexpr u32 wdk =
 
 } // namespace windows
 
+namespace linux_ {
+
+constexpr cstring libc_runtime =
+#if defined(_LIBCPP_VERSION)
+    "libc++"
+#elif defined(__GLIBC__)
+    "glibc"
+#else
+    "<unknown>"
+#endif
+    ;
+
+namespace glibc {
+
+constexpr u32 major =
+#if defined(__GLIBC__)
+    __GLIBC__
+#else
+    0
+#endif
+    ;
+constexpr u32 minor =
+#if defined(__GLIBC_MINOR__)
+    __GLIBC_MINOR__
+#else
+    0
+#endif
+    ;
+
+}
+
+namespace libcpp {
+
+constexpr u32 version =
+#if defined(_LIBCPP_VERSION)
+    _LIBCPP_VERSION
+#else
+    0
+#endif
+    ;
+
+}
+
+}
+
 namespace compiler {
 
 constexpr cstring name        = C_COMPILER_NAME;

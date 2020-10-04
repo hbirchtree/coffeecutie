@@ -83,7 +83,7 @@
     - appimg-runtime
     - SDL2
 
-(ubuntu|fedora|coverage|testing.linux|android|steam|raspberry|mingw).*:
+(ubuntu|fedora|coverage|testing.linux|android|steam|beaglebone|raspberry|mingw).*:
   =generator: CodeBlocks - Ninja
 
 # Some parameters to make coverage testing work
@@ -269,6 +269,12 @@ testing.linux.*:
     - -DBUILD_GLES=ON
     - -DBUILD_GLES_20=ON
     - -DBUILD_OPENSSL=ON
+
+.*beaglebone.*:
+  =description: BeagleBone Black ARM 32-bit build
+  =compiler: GCC 9.x
+  =toolchain: linux-beagle-armv7hf_linux.toolchain.cmake
+  =container: beaglebone
 
 .*mingw.*:
   =description: MinGW64 environment in Ubuntu Docker

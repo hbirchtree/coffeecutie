@@ -13,6 +13,11 @@
 namespace Coffee {
 namespace Net {
 
+struct net_error : resource_error
+{
+    using resource_error::resource_error;
+};
+
 FORCEDINLINE bool Supported()
 {
 #if !defined(COFFEE_EMSCRIPTEN) && !defined(COFFEE_WINDOWS_UWP)
@@ -72,7 +77,8 @@ struct Resource : semantic::ByteProvider
     void setHeaderField(http::header_field field, CString const& value);
     void setHeaderField(CString const& field, CString const& value);
 
-    http::request_t& getRequest();
+    http::request_t&        request();
+    http::response_t const& response() const;
 
     bool fetch();
     bool push(Bytes const& data);

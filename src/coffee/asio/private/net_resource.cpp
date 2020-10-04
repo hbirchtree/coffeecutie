@@ -92,7 +92,7 @@ void Resource::initRsc(const Url& url)
 
             m_error = normal->connect(m_request.host, cast_pod(m_request.port));
         }
-        C_ERROR_CHECK(m_error)
+        C_ERROR_CHECK_TYPED(m_error, net_error)
     }
 
     if(!connected())
@@ -193,9 +193,14 @@ void Resource::setHeaderField(const CString& field, const CString& value)
     m_request.header.fields[field] = value;
 }
 
-http::request_t& Resource::getRequest()
+http::request_t& Resource::request()
 {
     return m_request;
+}
+
+http::response_t const& Resource::response() const
+{
+    return m_response;
 }
 
 bool Resource::fetch()
@@ -385,9 +390,33 @@ bool Resource::push(http::method_t method, Bytes const& data)
         readResponseHeader(recv_buf, consumed);
         if(m_response.header.code != status::continue_)
         {
-            cWarning(
-                NETRSC_TAG "No continue received, got {0}",
-                m_response.header.code);
+            auto& head = m_response.header;
+
+            cWarning(NETRSC_TAG "No continue received, got {0}", head.code);
+
+            cVerbose(12, NETRSC_TAG "HTTP header dump:");
+            cVerbose(
+                12,
+                NETRSC_TAG "{0} {1} {2}",
+                http::header::to_string::method(head.method),
+                head.resource,
+                cast_pod(head.code),
+                head.message);
+
+            for(auto header : head.fields)
+                cVerbose(
+                    12, NETRSC_TAG "{0}: {1}", header.first, header.second);
+
+            readResponsePayload(recv_buf);
+
+            auto type = http::header::from_string::content_type(
+                head.standard_fields[header_field::content_type]);
+            if(type == content_type::json || type == content_type::text)
+            {
+                cWarning(
+                    NETRSC_TAG "Payload:\n{0}", m_response.payload.data());
+            }
+
             close();
             return false;
         }

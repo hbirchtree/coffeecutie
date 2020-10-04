@@ -149,9 +149,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
     endif()
 
     find_package( Unwind QUIET )
-    if(UNWIND_FOUND)
-        add_definitions(
-            -DLIBUNWIND_ENABLED
+    if(LIBUNWIND_FOUND AND NOT BEAGLE)
+        target_compile_definitions( PeripheralPlatform PUBLIC
+            -DLIBUNWIND_ENABLED=1
+            -DCOFFEE_UNWIND_STACKTRACE=1
             )
     endif()
 endif()

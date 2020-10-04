@@ -74,10 +74,10 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     Size size();
 
     void clear(u32 i, Vecf4 const& color);
-    void clear(bigscalar depth);
-    void clear(bigscalar depth, i32 stencil);
-    void clear(u32 i, Vecf4 const& color, bigscalar depth);
-    void clear(u32 i, Vecf4 const& color, bigscalar depth, i32 stencil);
+    void clear(f64 depth);
+    void clear(f64 depth, i32 stencil);
+    void clear(u32 i, Vecf4 const& color, f64 depth);
+    void clear(u32 i, Vecf4 const& color, f64 depth, i32 stencil);
 
   protected:
     void bind(FramebufferT t);

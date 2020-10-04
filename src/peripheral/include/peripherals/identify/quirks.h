@@ -349,3 +349,13 @@
 #else
 #define COFFEE_FIXED_RESOURCE_DIR 0
 #endif
+
+#if defined(COFFEE_BEAGLEBONE)
+/* Fix some symbol versioning for BeagleBone, very hacky */
+__asm__(".symver fcntl,fcntl@GLIBC_2.4");
+#endif
+
+#if defined(__MUSL__)
+#define COFFEE_NO_CANONICALIZE 1
+#define COFFEE_MUSL
+#endif

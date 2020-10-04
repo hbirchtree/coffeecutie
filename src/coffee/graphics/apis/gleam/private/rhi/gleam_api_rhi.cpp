@@ -30,12 +30,6 @@ namespace GLEAM {
 
 UqPtr<GLEAM_DataStore> m_store;
 
-#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
-using GLC = CGL33;
-#else
-using GLC = CGL43;
-#endif
-
 GraphicsAPI_Threading::GraphicsQueue& GLEAM_API::Queue(u32 idx)
 {
     C_PTR_CHECK(m_store);
@@ -59,8 +53,8 @@ void GLEAM_API::DumpFramebuffer(
         C_FCAST<szptr>(size.area())));
 
     fb.use(FramebufferT::Read);
-    CGL33::ReadPixels(
-        0, 0, size, typing::pixels::convert::to<PixCmp>(c), dt, &storage[0]);
+    gl::vlow::ReadPixels(
+        {0, 0}, size, typing::pixels::convert::to<PixCmp>(c), dt, &storage[0]);
 }
 
 void GLEAM_API::GetDefaultVersion(i32& major, i32& minor)
@@ -190,8 +184,8 @@ static bool SetAPIVersion(
     if(prevApi != GLES_2_0 && store->CURR_API == GLES_2_0)
     {
         glhnd vao;
-        CGL33::VAOAlloc(vao.hnd);
-        CGL33::VAOBind(vao);
+        gl::vlow::VAOAlloc(vao.hnd);
+        gl::vlow::VAOBind(vao);
         vao.release();
     }
 #endif
@@ -204,7 +198,7 @@ static bool SetAPIVersion(
             GLM_API "Totally failed to create a GLEAM context,"
                     " got version: {0}",
             ver);
-        CGL::Debug::UnsetDebugGroup();
+        gl::common::PopDebugGroup();
         return false;
     }
 
@@ -212,7 +206,7 @@ static bool SetAPIVersion(
     if(Extensions::SRGB_Supported(store->inst_data->dbgContext) && opts.srgb)
     {
         cVerbose(6, GLM_API "Enabling SRGB color for framebuffers");
-        CGL33::Enable(Feature::FramebufferSRGB);
+        gl::vlow::Enable(Feature::FramebufferSRGB);
     }
 #endif
 
@@ -230,8 +224,8 @@ static bool SetAPIVersion(
     ExtraData::Add("gl:version", Strings::to_string(DBG::ContextVersion()));
     ExtraData::Add("gl:driver", DBG::ContextVersion().driver);
     {
-        auto device = DBG::Renderer();
-        auto renderer      = platform::info::HardwareDevice(
+        auto device   = DBG::Renderer();
+        auto renderer = platform::info::HardwareDevice(
             device.manufacturer, device.model, {});
         ExtraData::Add("gl:renderer", Strings::to_string(renderer));
     }
@@ -268,10 +262,10 @@ static void ConstructContextObjects(GLEAM_API::DataStore const& store)
         Vector<CGhnd> bufs;
         bufs.resize(num_pbos);
 
-        CGL33::BufAlloc(bufs);
+        gl::vlow::BufAlloc(bufs);
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
-        for(uint32 i = 0; i < num_pbos; i++)
+        for(u32 i = 0; i < num_pbos; i++)
         {
             GLEAM_PboQueue::Pbo pbo;
             pbo.buf   = bufs[i];
@@ -381,14 +375,18 @@ static void SetCompatibilityFeatures(
 #endif
 }
 
+struct debug_exception : undefined_behavior
+{
+    using undefined_behavior::undefined_behavior;
+};
+
 bool GLEAM_API::LoadAPI(
     DataStore store, bool debug, GLEAM_API::OPTS const& options)
 {
     DProfContext _(GLM_API "LoadAPI()");
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
-    if(glPushDebugGroup)
-        CGL::Debug::SetDebugGroup(GLM_API "Loading GLEAM");
+    gl::common::PushDebugGroup(GLM_API "Loading GLEAM");
 #endif
 
     if(m_store)
@@ -401,23 +399,46 @@ bool GLEAM_API::LoadAPI(
     if(!store)
     {
         cWarning(GLM_API "No data store provided");
-        CGL::Debug::UnsetDebugGroup();
+        gl::common::PopDebugGroup();
         return false;
     }
 
     runtime_queue_error ec;
     store->GpuThread = GraphicsQueue(RuntimeQueue::GetCurrentQueue(ec));
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK(ec)
 
     cVerbose(8, GLM_API "Creating instance data");
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
     store->options = options;
-#if MODE_DEBUG
+#if MODE_DEBUG && defined(GL_KHR_debug)
     store->DEBUG_MODE = debug;
-    if(!debug)
+    if(debug)
     {
-        Debug::SetDebugMode(false);
+        gl::vlow::Enable(Feature::DebugOutputSync);
+        gl::v43::DebugMessageControl(
+            GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, {}, true);
+        gl::v43::DebugMessageCallback(
+            [](GLenum source,
+               GLenum type,
+               GLuint id,
+               GLenum severity,
+               GLsizei,
+               const GLchar* message,
+               const void*) {
+                switch(severity)
+                {
+                case GL_DEBUG_SEVERITY_NOTIFICATION:
+                    cVerbose(8, "GL Debug: {0}", message);
+                    break;
+                case GL_DEBUG_SEVERITY_HIGH:
+                    Throw(debug_exception(message));
+                default:
+                    cDebug("GL Debug: {0}", message);
+                    break;
+                }
+            },
+            nullptr);
     }
 #endif
 
@@ -442,14 +463,13 @@ bool GLEAM_API::LoadAPI(
 
     DefaultFramebuffer()->size();
 
-    GLC::Enable(Feature::Culling);
-    GLC::CullFace(Face::Back);
+    gl::vlow::Enable(Feature::Culling);
+    gl::vlow::CullFace(Face::Back);
 
-    GLC::FrontFace(GL_CCW);
+    gl::vlow::FrontFace(GL_CCW);
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
-    if(glPopDebugGroup)
-        CGL::Debug::UnsetDebugGroup();
+    gl::common::PopDebugGroup();
 #endif
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
@@ -506,35 +526,35 @@ bool Coffee::RHI::GLEAM::GLEAM_API::IsAPILoaded()
 void GLEAM_API::SetRasterizerState(const RASTSTATE& rstate)
 {
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
-    GLC::PolygonMode(
+    gl::vlow::PolygonMode(
         Face::Both,
         (rstate.wireframeRender()) ? DrawMode::Line : DrawMode::Fill);
 #endif
 #if GL_VERSION_VERIFY(0x300, 0x320)
     {
         if(rstate.discard())
-            GLC::Enable(Feature::RasterizerDiscard);
+            gl::vlow::Enable(Feature::RasterizerDiscard);
         else
-            GLC::Disable(Feature::RasterizerDiscard);
+            gl::vlow::Disable(Feature::RasterizerDiscard);
     }
 #endif
 
-    GLC::PolygonOffset(1, rstate.polyOffset());
+    gl::vlow::PolygonOffset(1, rstate.polyOffset());
 
     if(rstate.culling())
     {
-        GLC::Enable(Feature::Culling);
-        GLC::CullFace(C_CAST<Face>(rstate.culling()) & Face::FaceMask);
+        gl::vlow::Enable(Feature::Culling);
+        gl::vlow::CullFace(C_CAST<Face>(rstate.culling()) & Face::FaceMask);
     } else
-        GLC::Disable(Feature::Culling);
+        gl::vlow::Disable(Feature::Culling);
 }
 
 void GLEAM_API::GetRasterizerState(GLEAM_API::RASTSTATE& rstate)
 {
 #if GL_VERSION_VERIFY(0x300, 0x320)
-    rstate.m_discard = GLC::IsEnabled(Feature::RasterizerDiscard);
+    rstate.m_discard = gl::vlow::IsEnabled(Feature::RasterizerDiscard);
 #endif
-    rstate.m_doCull = GLC::IsEnabled(Feature::Culling);
+    rstate.m_doCull = gl::vlow::IsEnabled(Feature::Culling);
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
     {
@@ -544,7 +564,7 @@ void GLEAM_API::GetRasterizerState(GLEAM_API::RASTSTATE& rstate)
 
     {
         i32 culled_faces = 0;
-        CGL33::IntegerGetv(GL_CULL_FACE_MODE, &culled_faces);
+        gl::vlow::IntegerGetv(GL_CULL_FACE_MODE, &culled_faces);
 
         switch(culled_faces)
         {
@@ -568,7 +588,7 @@ void GLEAM_API::SetTessellatorState(C_UNUSED(const TSLRSTATE& tstate))
 #if GL_VERSION_VERIFY(0x400, 0x320)
     if(Extensions::TessellationSupported(CGL_DBG_CTXT))
     {
-        CGL43::PatchParameteri(PatchProperty::Vertices, tstate.patchCount());
+        gl::v40::PatchParameteri(PatchProperty::Vertices, tstate.patchCount());
         /*TODO: Add configurability for inner and outer levels in place of TCS
          */
     }
@@ -588,7 +608,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
         {
             Vector<RectF> varr;
 
-            for(uint32 k = i; k < vstate.viewCount(); k++)
+            for(u32 k = i; k < vstate.viewCount(); k++)
             {
                 RectF& e = varr[k];
                 auto   s = vstate.view(k);
@@ -599,26 +619,25 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
                 e.h = s.h;
             }
 
-            CGL43::DepthRangeArrayv(
+            gl::v41::DepthRangeArrayv(
                 i,
-                vstate.viewCount(),
-                C_RCAST<bigscalar const*>(&vstate.depth(i)));
-            CGL43::ScissorArrayv(
-                i, vstate.viewCount(), C_RCAST<i32 const*>(&vstate.scissor(i)));
-            CGL43::ViewportArrayv(
-                i, vstate.viewCount(), C_RCAST<scalar const*>(varr.data()));
+                Span<f64>::From(&vstate.depth(i), vstate.viewCount()));
+            gl::v41::ScissorArrayv(
+                i, Span<i32>::From(&vstate.scissor(i), vstate.viewCount()));
+            gl::v41::ViewportArrayv(
+                i, Span<f32>::CreateFrom(varr));
 
-            GLC::Enablei(Feature::ClipDist, 0);
-            GLC::Enablei(Feature::ClipDist, 1);
-            GLC::Enablei(Feature::ClipDist, 2);
-            GLC::Enablei(Feature::ClipDist, 3);
+            gl::vlow::Enablei(Feature::ClipDist, 0);
+            gl::vlow::Enablei(Feature::ClipDist, 1);
+            gl::vlow::Enablei(Feature::ClipDist, 2);
+            gl::vlow::Enablei(Feature::ClipDist, 3);
 
         } else
 #endif
             if(Extensions::ClipDistanceSupported(CGL_DBG_CTXT))
         {
             /* TODO: Expand on this feature */
-            GLC::Enablei(Feature::ClipDist, 0);
+            gl::vlow::Enablei(Feature::ClipDist, 0);
         }
     } else
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
@@ -635,42 +654,40 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
     {
         if(vstate.m_view.size() > 0)
         {
-            auto   sview = vstate.view(0);
-            Rect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Viewport(tview.x, tview.y, tview.size().convert<u32>());
+            auto sview = vstate.view(0);
+            gl::vlow::Viewport(sview.bottomleft().toVector<i32>(), sview.size());
         }
         if(vstate.m_depth.size() > 0)
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
-            GLC::DepthRange(vstate.depth(0).near_, vstate.depth(0).far_);
+            gl::vlow::DepthRange(vstate.depth(0).near_, vstate.depth(0).far_);
 #else
-            GLC::DepthRangef(vstate.depth(0).near_, vstate.depth(0).far_);
+            gl::vlow::DepthRangef(vstate.depth(0).near_, vstate.depth(0).far_);
 #endif
         if(vstate.m_scissor.size() > 0)
         {
-            auto   sview = vstate.scissor(0);
-            Rect64 tview(sview.x, sview.y, sview.w, sview.h);
-            GLC::Scissor(tview.x, tview.y, tview.size().convert<u32>());
-            GLC::Enable(Feature::ScissorTest);
+            auto sview = vstate.scissor(0);
+            gl::vlow::Scissor(sview.bottomleft().toVector<i32>(), sview.size());
+            gl::vlow::Enable(Feature::ScissorTest);
         } else
-            GLC::Disable(Feature::ScissorTest);
+            gl::vlow::Disable(Feature::ScissorTest);
     }
 }
 
 void GLEAM_API::GetViewportState(GLEAM_API::VIEWSTATE& vstate, u32 i)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::IntegerGeti_v(GL_VIEWPORT, i, vstate.m_view.at(0).data);
-    if(CGL33::IsEnabled(Feature::ScissorTest))
-        CGL33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
+    gl::v33::IntegerGeti_v(GL_VIEWPORT, i, vstate.m_view.at(0).data);
+    if(gl::v33::IsEnabled(Feature::ScissorTest))
+        gl::v33::IntegerGeti_v(GL_SCISSOR_BOX, i, vstate.m_scissor.at(0).data);
     else
         vstate.m_scissor.clear();
 #else
-    CGL33::IntegerGetv(GL_VIEWPORT, vstate.m_view.at(0).data);
-    CGL33::IntegerGetv(GL_SCISSOR_BOX, vstate.m_scissor.at(0).data);
+    gl::v33::IntegerGetv(GL_VIEWPORT, vstate.m_view.at(0).data);
+    gl::v33::IntegerGetv(GL_SCISSOR_BOX, vstate.m_scissor.at(0).data);
 #endif
 
     typing::graphics::field<scalar> tmp_field;
-    CGL33::ScalarfGetv(GL_DEPTH_RANGE, tmp_field.data);
+    gl::v33::ScalarfGetv(GL_DEPTH_RANGE, tmp_field.data);
     vstate.m_depth.at(0) = tmp_field.convert<bigscalar>();
 }
 
@@ -680,17 +697,17 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
     {
         if(bstate.blend())
         {
-            GLC::Enable(Feature::Blend);
+            gl::vlow::Enable(Feature::Blend);
         } else
-            GLC::Disable(Feature::Blend);
+            gl::vlow::Disable(Feature::Blend);
     }
 #if GL_VERSION_VERIFY(0x300, 0x320)
     else
     {
         if(bstate.blend())
-            GLC::Enablei(Feature::Blend, i);
+            gl::vlow::Enablei(Feature::Blend, i);
         else
-            GLC::Disablei(Feature::Blend, i);
+            gl::vlow::Disablei(Feature::Blend, i);
     }
 #endif
 
@@ -700,27 +717,27 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
         {
             if(bstate.m_lighten)
             {
-                GLC::BlendFunc(GL_ONE, GL_ONE);
+                gl::vlow::BlendFunc(GL_ONE, GL_ONE);
             } else if(bstate.additive())
             {
-                GLC::BlendFunc(GL_SRC_ALPHA, GL_ONE);
+                gl::vlow::BlendFunc(GL_SRC_ALPHA, GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
             } else
-                GLC::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                gl::vlow::BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
         else if(GLEAM_FEATURES.draw_buffers_blend)
         {
             if(bstate.m_lighten)
             {
-                GLC::BlendFunc(GL_ONE, GL_ONE);
+                gl::vlow::BlendFunc(GL_ONE, GL_ONE);
             } else if(bstate.additive())
             {
-                CGL43::BlendFunci(i, GL_SRC_ALPHA, GL_ONE);
+                gl::v41::BlendFunci(i, GL_SRC_ALPHA, GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
             } else
             {
-                CGL43::BlendFunci(i, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                gl::v41::BlendFunci(i, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             }
         }
 #endif
@@ -728,10 +745,10 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, u32 i)
 
     if(bstate.sampleAlphaCoverage())
     {
-        CGL33::Enable(Feature::SampleAlphaToCoverage);
+        gl::vlow::Enable(Feature::SampleAlphaToCoverage);
     } else
     {
-        CGL33::Disable(Feature::SampleAlphaToCoverage);
+        gl::vlow::Disable(Feature::SampleAlphaToCoverage);
     }
 
     /*TODO: Add more advanced blending options*/
@@ -743,12 +760,12 @@ void GLEAM_API::GetBlendState(GLEAM_API::BLNDSTATE& bstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
     {
-        bstate.m_doBlend = GLC::IsEnabled(Feature::Blend);
+        bstate.m_doBlend = gl::vlow::IsEnabled(Feature::Blend);
     }
 #if GL_VERSION_VERIFY(0x300, 0x320)
     else
     {
-        bstate.m_doBlend = GLC::IsEnabledi(Feature::Blend, i);
+        bstate.m_doBlend = gl::vlow::IsEnabledi(Feature::Blend, i);
     }
 #endif
 
@@ -758,25 +775,25 @@ void GLEAM_API::GetBlendState(GLEAM_API::BLNDSTATE& bstate, u32 i)
 void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, u32 i)
 {
     if(dstate.testDepth())
-        GLC::Enable(Feature::DepthTest);
+        gl::vlow::Enable(Feature::DepthTest);
     else
     {
-        GLC::Disable(Feature::DepthTest);
+        gl::vlow::Disable(Feature::DepthTest);
         return;
     }
 
-    GLC::DepthMask(dstate.mask());
+    gl::vlow::DepthMask(dstate.mask());
 
     if(dstate.fun())
-        GLC::DepthFunc(to_enum(C_CAST<ValueComparison>(dstate.fun())));
+        gl::vlow::DepthFunc(to_enum(C_CAST<ValueComparison>(dstate.fun())));
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
     if(GLEAM_FEATURES.depth_clamp)
     {
         if(dstate.clampDepth())
-            GLC::Enablei(Feature::DepthClamp, i);
+            gl::vlow::Enablei(Feature::DepthClamp, i);
         else
-            GLC::Disablei(Feature::DepthClamp, i);
+            gl::vlow::Disablei(Feature::DepthClamp, i);
     }
 #endif
     /*TODO: Implement clamping*/
@@ -784,10 +801,10 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, u32 i)
 
 void GLEAM_API::GetDepthState(GLEAM_API::DEPTSTATE& dstate, u32 i)
 {
-    dstate.m_test = GLC::IsEnabled(Feature::DepthTest);
+    dstate.m_test = gl::vlow::IsEnabled(Feature::DepthTest);
 
     u8 mask = 0;
-    CGL33::BoolGetv(GL_DEPTH_WRITEMASK, &mask);
+    gl::vlow::BoolGetv(GL_DEPTH_WRITEMASK, &mask);
     dstate.m_mask = mask;
 }
 
@@ -796,21 +813,21 @@ void GLEAM_API::SetStencilState(const STENSTATE& sstate, u32 i)
     if(!GLEAM_FEATURES.viewport_indexed)
     {
         if(sstate.testStencil())
-            GLC::Enable(Feature::StencilTest);
+            gl::vlow::Enable(Feature::StencilTest);
         else
-            GLC::Disable(Feature::StencilTest);
+            gl::vlow::Disable(Feature::StencilTest);
     }
 #if GL_VERSION_VERIFY(0x300, 0x320)
     else if(GLEAM_FEATURES.viewport_indexed)
     {
         if(sstate.testStencil())
-            GLC::Enablei(Feature::StencilTest, i);
+            gl::vlow::Enablei(Feature::StencilTest, i);
         else
-            GLC::Disablei(Feature::StencilTest, i);
+            gl::vlow::Disablei(Feature::StencilTest, i);
     }
 #endif
 
-    //    GLC::StencilFuncSeparate(Face::Both,0x00000000);
+    //    gl::vlow::StencilFuncSeparate(Face::Both,0x00000000);
 
     /*TODO: Implement functionality for more operations */
 }
@@ -818,10 +835,10 @@ void GLEAM_API::SetStencilState(const STENSTATE& sstate, u32 i)
 void GLEAM_API::GetStencilState(GLEAM_API::STENSTATE& sstate, u32 i)
 {
     if(!GLEAM_FEATURES.viewport_indexed)
-        sstate.m_test = GLC::IsEnabled(Feature::StencilTest);
+        sstate.m_test = gl::vlow::IsEnabled(Feature::StencilTest);
 #if GL_VERSION_VERIFY(0x300, 0x320)
     else
-        sstate.m_test = GLC::IsEnabledi(Feature::StencilTest, i);
+        sstate.m_test = gl::vlow::IsEnabledi(Feature::StencilTest, i);
 #endif
 }
 
@@ -834,8 +851,10 @@ void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
 
 void GLEAM_API::PreDrawCleanup()
 {
+#if GL_VERSION_VERIFY(0x410, 0x200)
     DPROF_CONTEXT_FUNC(GLM_API);
-    CGL43::ShaderReleaseCompiler();
+    gl::v20es::ShaderReleaseCompiler();
+#endif
 }
 
 void GLEAM_API::DisposePixelBuffers()
@@ -845,7 +864,7 @@ void GLEAM_API::DisposePixelBuffers()
 
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
-        CGL33::BufFree(buf.buf);
+        gl::v33::BufFree(buf.buf);
 
     queue.buffers.clear();
 #endif

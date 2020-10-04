@@ -15,15 +15,6 @@ using int32_t  = int;
 using uint32_t = unsigned int;
 #endif
 
-using int8   = C_DEPRECATED_TYPE<int8_t>::type;
-using int16  = C_DEPRECATED_TYPE<int16_t>::type;
-using int32  = C_DEPRECATED_TYPE<int32_t>::type;
-using int64  = C_DEPRECATED_TYPE<int64_t>::type;
-using uint8  = C_DEPRECATED_TYPE<uint8_t>::type;
-using uint16 = C_DEPRECATED_TYPE<uint16_t>::type;
-using uint32 = C_DEPRECATED_TYPE<uint32_t>::type;
-using uint64 = C_DEPRECATED_TYPE<uint64_t>::type;
-
 using i8  = int8_t;
 using i16 = int16_t;
 using i32 = int32_t;
@@ -57,9 +48,11 @@ using cstring    = const char*;    /*!< Typical C-string*/
 using cstring_w  = char*;          /*!< Writable C-string*/
 using cwstring   = const wchar_t*; /*!< Wide C-string*/
 using cwstring_w = wchar_t*;       /*!< Wide, writable C-string*/
+using u8string   = const uint8_t*; /*!< UTF-8 string */
+using u8string_w = uint8_t*;       /*!< Writable UTF-8 string */
 
-using szptr  = size_t; /*!< Usable as offset into data*/
-using ptroff = intptr_t;
+using szptr  = size_t;   /*!< Usable as offset into data, or size of data */
+using ptroff = intptr_t; /*!< Signed offset into data */
 
 using intptr  = intptr_t;
 using uintptr = uintptr_t;
@@ -140,10 +133,7 @@ GEN_SIZE_LITERAL(T)
 GEN_TIME_LITERAL(m, 1000)
 GEN_TIME_LITERAL(u, 1000000)
 
-PACKEDSTRUCT(uint24
-{
-    u32 d : 24;
-});
+PACKEDSTRUCT(uint24 { u32 d : 24; });
 
 using u24 = uint24;
 

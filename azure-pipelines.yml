@@ -26,6 +26,8 @@ jobs:
         variant: android.armv8a.v27
       android.armv8a.v29:
         variant: android.armv8a.v29
+      beaglebone.black:
+        variant: beaglebone.black
       emscripten.wasm:
         variant: emscripten.wasm
       fedora.amd64:

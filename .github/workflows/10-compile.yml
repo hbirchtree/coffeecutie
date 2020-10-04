@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         variant:
+        - beaglebone.black
         - emscripten.wasm
         - fedora.amd64
         - gamecube

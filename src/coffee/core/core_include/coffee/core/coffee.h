@@ -24,6 +24,8 @@ COFFEE_APP_FUNC void GotoApplicationDir();
 
 COFFEE_APP_FUNC void InstallDefaultSigHandlers();
 
+COFFEE_APP_FUNC void InstallStacktraceWriter();
+
 COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
 
 C_DEPRECATED_S("use GetCurrentApp()")

@@ -12,6 +12,8 @@
 #include <coffee/foreign/foreign.h>
 #include <platforms/environment.h>
 
+#include <coffee/comp_app/stat_providers.h>
+
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten/emscripten.h>
 #endif
@@ -54,6 +56,7 @@
 #endif
 
 #if defined(FEATURE_ENABLE_GLADComponent) || \
+    defined(FEATURE_ENABLE_EGLComponent) ||  \
     defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
@@ -320,6 +323,9 @@ void addDefaults(
     appInfo.add("window:library", "Android NativeActivity");
 #elif defined(FEATURE_ENABLE_CogComponent)
     /* There is no window */
+#elif defined(COFFEE_BEAGLEBONE)
+    loader.loadAll<type_safety::type_list_t<egl::Windowing>>(container, ec);
+    appInfo.add("window:library", "EGL Headless");
 #else
 #error No window manager
 #endif
@@ -344,7 +350,7 @@ void addDefaults(
     /* Selection of GL binding */
 #if defined(FEATURE_ENABLE_GLKitComponent) ||                                 \
     defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_RASPBERRYPI)
+    defined(COFFEE_RASPBERRYPI) || defined(COFFEE_BEAGLEBONE)
     loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
     appInfo.add("gl:loader", "Linked");
 #elif defined(FEATURE_ENABLE_GLADComponent)
@@ -355,9 +361,7 @@ void addDefaults(
 #endif
 
 #elif defined(FEATURE_ENABLE_CogComponent)
-
     loader.loadAll<cog::Services>(container, ec);
-
 #else
 #error No graphics
 #endif
@@ -365,72 +369,119 @@ void addDefaults(
 #if defined(FEATURE_ENABLE_UIKitGestures)
     loader.loadAll<uikit::Services>(container, ec);
 #endif
+
+    loader.loadAll<detail::TypeList<
+        comp_app::SysBattery,
+        comp_app::SysCPUTemp,
+        comp_app::SysGPUTemp,
+        comp_app::SysCPUClock,
+        comp_app::SysMemoryStats
+        >>(container, ec);
 }
 
 } // namespace comp_app
 
 #include <coffee/core/printing/verbosity_level.h>
 #include <platforms/profiling/jsonprofile.h>
-#include <platforms/sysinfo.h>
-
-#if defined(COFFEE_ANDROID)
-#include <coffee/android/android_main.h>
-#endif
 
 namespace comp_app {
 
-void PerformanceMonitor::start_restricted(Proxy&, time_point const& time)
+void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
 {
     if(time < m_nextTime)
         return;
 
-    m_nextTime = time + Chrono::seconds(5);
+    m_nextTime = time + Coffee::Chrono::seconds(5);
 
     using namespace platform::profiling;
 
     auto timestamp =
         Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
-    u32 i = 0;
-    for(auto freq : platform::SysInfo::ProcessorFrequencies(
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-            true
-#endif
-            ))
+    auto clock    = p.service<CPUClockProvider>();
+    auto cpu_temp = p.service<CPUTempProvider>();
+    auto gpu_temp = p.service<GPUTempProvider>();
+    auto mem      = p.service<MemoryStatProvider>();
+    auto battery  = p.service<BatteryProvider>();
+    auto network  = p.service<NetworkStatProvider>();
+
+//    u32 i = 0;
+//    for(auto freq : platform::SysInfo::ProcessorFrequencies(
+//#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+//            true
+//#endif
+//            ))
+//        json::CaptureMetrics(
+//            "CPU frequency", MetricVariant::Value, freq, timestamp, i++);
+    if(clock)
+        for(auto i : Range<u32>(clock->threads()))
+        {
+            json::CaptureMetrics(
+                "CPU frequency",
+                MetricVariant::Value,
+                C_FCAST<f32>(clock->frequency(i)),
+                timestamp,
+                i);
+            json::CaptureMetrics(
+                "CPU governor",
+                MetricVariant::Value,
+                C_CAST<u32>(clock->governor(i)),
+                timestamp,
+                i);
+        }
+
+    if(cpu_temp)
         json::CaptureMetrics(
-            "CPU frequency", MetricVariant::Value, freq, timestamp, i++);
+            "CPU temperature",
+            MetricVariant::Value,
+            cpu_temp->value(),
+            timestamp);
+    if(gpu_temp)
+        json::CaptureMetrics(
+            "GPU temperature",
+            MetricVariant::Value,
+            gpu_temp->value(),
+            timestamp);
 
-    json::CaptureMetrics(
-        "CPU temperature",
-        MetricVariant::Value,
-        platform::PowerInfo::CpuTemperature().current,
-        timestamp);
-    json::CaptureMetrics(
-        "GPU temperature",
-        MetricVariant::Value,
-        platform::PowerInfo::GpuTemperature().current,
-        timestamp);
+    if(mem)
+        json::CaptureMetrics(
+            "Memory consumption",
+            MetricVariant::Value,
+            mem->resident(),
+            timestamp);
+    if(battery)
+    {
+        json::CaptureMetrics(
+            "Battery level",
+            MetricVariant::Value,
+            battery->percentage(),
+            timestamp);
+        json::CaptureMetrics(
+            "Power state",
+            MetricVariant::Symbolic,
+            battery->source() == BatteryProvider::PowerSource::Battery ? 1 : 0,
+            timestamp);
+    }
 
-    json::CaptureMetrics(
-        "Memory consumption",
-        MetricVariant::Value,
-        platform::SysInfo::MemResident(),
-        timestamp);
-
-    json::CaptureMetrics(
-        "Battery level",
-        MetricVariant::Value,
-        platform::PowerInfo::BatteryPercentage(),
-        timestamp);
-
-#if defined(COFFEE_ANDROID)
-    auto network_stats = *::android::network_stats().query();
-
-    json::CaptureMetrics(
-        "Network RX", MetricVariant::Value, network_stats.rx, timestamp);
-    json::CaptureMetrics(
-        "Network TX", MetricVariant::Value, network_stats.tx, timestamp);
-#endif
+    if(network)
+    {
+        json::CaptureMetrics(
+            "Network RX",
+            MetricVariant::Value,
+            network->received(),
+            timestamp);
+        json::CaptureMetrics(
+            "Network TX",
+            MetricVariant::Value,
+            network->transmitted(),
+            timestamp);
+        json::CaptureMetrics(
+            "Network connections",
+            MetricVariant::Value,
+            network->connections(),
+            timestamp);
+        network->reset_counters();
+    }
 }
 
 void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)

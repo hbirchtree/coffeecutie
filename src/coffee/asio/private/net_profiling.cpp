@@ -108,14 +108,12 @@ void ProfilingExport()
         cVerbose(10, "Network export cancelled");
 }
 
-#if !defined(COFFEE_MACOS)&& !defined(COFFEE_WINDOWS)
-int RegisterProfiling()
+int RegisterProfilingAtExit()
 {
     cVerbose(10, "Registering network profiling");
     libc::signal::register_atexit(ProfilingExport);
     return 0;
 }
-#endif
 
 } // namespace Net
 } // namespace Coffee

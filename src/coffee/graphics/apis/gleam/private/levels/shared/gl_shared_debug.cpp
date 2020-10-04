@@ -25,17 +25,17 @@ void CGL_Shared_Debug::SetDebugMode(C_UNUSED(bool enabled))
 void CGL_Shared_Debug::GetExtensions(Context& ctxt)
 {
 #if GL_VERSION_VERIFY(0x330, 0x300)
-    int32 numExtensions = 0;
-    numExtensions       = GetInteger(GL_NUM_EXTENSIONS);
+    i32 numExtensions = 0;
+    gl::vlow::IntegerGetv(GL_NUM_EXTENSIONS, &numExtensions);
 
     if(numExtensions <= 0)
         return;
 
     ctxt.extensionList = CString();
     ctxt.extensionList.reserve(C_CAST<size_t>(numExtensions * 20));
-    for(int32 i = 0; i < numExtensions; i++)
+    for(i32 i = 0; i < numExtensions; i++)
     {
-        cstring str = GetStringi(GL_EXTENSIONS, C_CAST<uint32>(i));
+        cstring str = gl::vlow::GetStringi(GL_EXTENSIONS, C_CAST<u32>(i));
         ctxt.extensionList.append(str);
         if(i < numExtensions - 1)
             ctxt.extensionList.push_back(' ');
@@ -65,8 +65,8 @@ Display::GL::Version CGL_Shared_Debug::ContextVersion()
 
     /* In most cases, this will work wonders */
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    ver.major = C_CAST<uint8>(GetInteger(GL_MAJOR_VERSION));
-    ver.minor = C_CAST<uint8>(GetInteger(GL_MINOR_VERSION));
+    gl::vlow::IntegerGetv(GL_MAJOR_VERSION, &ver.major);
+    gl::vlow::IntegerGetv(GL_MINOR_VERSION, &ver.minor);
 #else
     ver.major = 2;
     ver.minor = 0;
@@ -76,7 +76,7 @@ Display::GL::Version CGL_Shared_Debug::ContextVersion()
      * We still want to know what the hardware supports, though. */
     do
     {
-        cstring str_ = GetString(GL_VERSION);
+        cstring str_ = gl::vlow::GetString(GL_VERSION);
         if(!str_)
             break;
         CString str = str_;
@@ -122,7 +122,7 @@ Display::GL::Version CGL_Shared_Debug::ShaderLanguageVersion()
     ver.minor = 0;
 #endif
 
-    cstring str_c = GetString(GL_SHADING_LANGUAGE_VERSION);
+    cstring str_c = gl::vlow::GetString(GL_SHADING_LANGUAGE_VERSION);
 
     if(!str_c)
         return ver;
@@ -163,8 +163,8 @@ Display::GL::Version CGL_Shared_Debug::ShaderLanguageVersion()
 
 HWDeviceInfo CGL_Shared_Debug::Renderer()
 {
-    cstring vendor = GetString(GL_VENDOR);
-    cstring device = GetString(GL_RENDERER);
+    cstring vendor = gl::vlow::GetString(GL_VENDOR);
+    cstring device = gl::vlow::GetString(GL_RENDERER);
     CString driver = ContextVersion().driver;
 
 #if defined(COFFEE_USE_MAEMO_EGL) && !defined(COFFEE_USE_APPLE_GLKIT)
@@ -378,7 +378,9 @@ i32 CGL_Shared_Limits::Max(u32 v)
     if(pname == 0)
         return 0;
 
-    return DBG::GetInteger(pname);
+    i32 lim = 0;
+    gl::vlow::IntegerGetv(pname, &lim);
+    return lim;
 }
 
 cstring CGL_Shared_Limits::MaxName(u32 v)
@@ -396,7 +398,8 @@ size_2d<i32> CGL_Shared_Limits::MaxSize(u32 v)
     GLuint pname = limit_map_2d[v].i;
 
     if(pname != 0)
-        DBG::GetIntegerv(pname, &size.w);
+        gl::vlow::IntegerGetv(pname, &size.w);
+    size.h = size.w;
 
     return size;
 }

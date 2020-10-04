@@ -383,7 +383,7 @@ info::HardwareDevice SysInfo::Processor()
 #endif
 }
 
-Vector<bigscalar> SysInfo::ProcessorFrequencies(bool current)
+Vector<f64> SysInfo::ProcessorFrequencies(bool current)
 {
     using namespace url::constructors;
 
@@ -413,7 +413,7 @@ Vector<bigscalar> SysInfo::ProcessorFrequencies(bool current)
         if(cpus.size() == 0)
             continue;
 
-        Vector<bigscalar> freqs;
+        Vector<f64> freqs;
         freqs.reserve(cpus.size());
 
         for(DirFun::DirItem_t const& e : cpus)
@@ -426,7 +426,7 @@ Vector<bigscalar> SysInfo::ProcessorFrequencies(bool current)
             CString tmp = LFileFun::sys_read((*cpu).c_str());
             tmp         = tmp.substr(0, tmp.find('\n'));
             if(tmp.size())
-                freqs.push_back(cast_string<bigscalar>(tmp) / 1000000.0);
+                freqs.push_back(cast_string<f64>(tmp) / 1000000.0);
         }
 
         if(freqs.size() == 0)
@@ -439,7 +439,7 @@ Vector<bigscalar> SysInfo::ProcessorFrequencies(bool current)
     return {};
 }
 
-bigscalar SysInfo::ProcessorFrequency()
+f64 SysInfo::ProcessorFrequency()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
 #if defined(__arm__)
@@ -465,7 +465,7 @@ bigscalar SysInfo::ProcessorFrequency()
 
     str::trim::both(res);
 
-    return math::floor(cast_string<bigscalar>(res)) / 1000;
+    return math::floor(cast_string<f64>(res)) / 1000;
 #endif
 #else
     return 0.0;

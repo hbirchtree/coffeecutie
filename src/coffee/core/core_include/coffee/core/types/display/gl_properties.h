@@ -17,7 +17,7 @@ struct Properties
     {
     }
 
-    enum Flags : uint32
+    enum Flags : u32
     {
         GLNoFlag          = 0x00,
         GLCoreProfile     = 0x01,  /*!< Set GL core profile*/
@@ -37,7 +37,7 @@ struct Properties
     GL::Version version; /*!< Context version*/
 };
 
-C_FLAGS(GL::Properties::Flags, libc_types::u8);
+C_FLAGS(GL::Properties::Flags, libc_types::u32);
 
 } // namespace GL
 } // namespace Display

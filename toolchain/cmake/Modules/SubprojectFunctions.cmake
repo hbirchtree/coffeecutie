@@ -1,3 +1,5 @@
+include ( FetchContent )
+
 macro( INIT_SUBPROJECT )
 
     export ( PACKAGE ${PROJECT_NAME} )
@@ -209,3 +211,41 @@ function( IMPORT_COFFEE_LIB LIBNAME DEPENDENCY )
 
     find_package( ${LIBNAME} ${DEPENDENCY} )
 endfunction()
+
+function( ADD_GITPROJECT_INTERNAL NAME SOURCE )
+    cmake_parse_arguments ( GITP
+        ""
+        "TAG"
+        ""
+
+        ${ARGN}
+        )
+
+    if(NOT GITP_TAG)
+        set ( GITP_TAG "master" )
+    endif()
+
+    FetchContent_GetProperties ( ${NAME} )
+
+    if(${NAME}_POPULATED)
+        message ( STATUS "${NAME} has already been populated" )
+        return()
+    endif()
+
+    message ( STATUS "${NAME} being populated" )
+
+    FetchContent_Declare ( ${NAME}
+        GIT_REPOSITORY ${SOURCE}
+        GIT_TAG ${GITP_TAG}
+        )
+
+    FetchContent_Populate ( ${NAME} )
+
+    set ( ${NAME}_BINARY_DIR "${${NAME}_BINARY_DIR}" PARENT_SCOPE )
+    set ( ${NAME}_SOURCE_DIR "${${NAME}_SOURCE_DIR}" PARENT_SCOPE )
+endfunction()
+
+macro( ADD_GITPROJECT NAME )
+    add_gitproject_internal( ${NAME} ${ARGN} )
+    add_subdirectory ( ${${NAME}_SOURCE_DIR} ${${NAME}_BINARY_DIR} )
+endmacro()

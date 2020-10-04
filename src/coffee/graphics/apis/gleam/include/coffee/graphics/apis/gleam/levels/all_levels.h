@@ -9,11 +9,12 @@
 #pragma clang diagnostic ignored "-Wpointer-bool-conversion"
 #endif
 
-namespace Coffee{
-namespace CGL{
+namespace glwrap {
+using namespace Coffee::CGL;
+
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 template<typename ReqVer>
-struct CGL_10
+struct v10
 {
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
@@ -33,7 +34,7 @@ STATICINLINE void BlendFunc(GLenum sfactor, GLenum dfactor)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void Clear(u32 mask)
+STATICINLINE void Clear(libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glClear)
@@ -48,7 +49,7 @@ STATICINLINE void Clear(u32 mask)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ClearColor(_cbasic_vec4<scalar> const& color)
+STATICINLINE void ClearColor(typing::vectors::tvector<libc_types::f32,4> const& color)
 {
 #ifndef NDEBUG
     if(!glClearColor)
@@ -63,7 +64,7 @@ STATICINLINE void ClearColor(_cbasic_vec4<scalar> const& color)
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void ClearDepth(bigscalar depth)
+STATICINLINE void ClearDepth(libc_types::f64 depth)
 {
 #ifndef NDEBUG
     if(!glClearDepth)
@@ -78,7 +79,7 @@ STATICINLINE void ClearDepth(bigscalar depth)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ClearStencil(i32 s)
+STATICINLINE void ClearStencil(libc_types::i32 s)
 {
 #ifndef NDEBUG
     if(!glClearStencil)
@@ -93,7 +94,7 @@ STATICINLINE void ClearStencil(i32 s)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ColorMask(_cbasic_vec4<u8> const& color)
+STATICINLINE void ColorMask(typing::vectors::tvector<libc_types::u8,4> const& color)
 {
 #ifndef NDEBUG
     if(!glColorMask)
@@ -138,7 +139,7 @@ STATICINLINE void DepthFunc(GLenum func)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void DepthMask(bool flag)
+STATICINLINE void DepthMask(libc_types::u8 flag)
 {
 #ifndef NDEBUG
     if(!glDepthMask)
@@ -146,14 +147,14 @@ STATICINLINE void DepthMask(bool flag)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDepthMask(flag ? GL_TRUE : GL_FALSE);
+    glDepthMask(flag);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void DepthRange(bigscalar n, bigscalar f)
+STATICINLINE void DepthRange(libc_types::f64 n, libc_types::f64 f)
 {
 #ifndef NDEBUG
     if(!glDepthRange)
@@ -258,7 +259,7 @@ STATICINLINE void FrontFace(GLenum mode)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void BoolGetv(GLenum pname, u8 * data)
+STATICINLINE void BoolGetv(GLenum pname, libc_types::u8 * data)
 {
 #ifndef NDEBUG
     if(!glGetBooleanv)
@@ -273,7 +274,7 @@ STATICINLINE void BoolGetv(GLenum pname, u8 * data)
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void ScalarGetv(GLenum pname, bigscalar * data)
+STATICINLINE void ScalarGetv(GLenum pname, libc_types::f64 * data)
 {
 #ifndef NDEBUG
     if(!glGetDoublev)
@@ -296,14 +297,14 @@ STATICINLINE GLenum ErrorGet()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetError();
+    return (GLenum)glGetError();
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ScalarfGetv(GLenum pname, scalar * data)
+STATICINLINE void ScalarfGetv(GLenum pname, libc_types::f32 * data)
 {
 #ifndef NDEBUG
     if(!glGetFloatv)
@@ -318,7 +319,7 @@ STATICINLINE void ScalarfGetv(GLenum pname, scalar * data)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void IntegerGetv(GLenum pname, i32 * data)
+STATICINLINE void IntegerGetv(GLenum pname, libc_types::i32 * data)
 {
 #ifndef NDEBUG
     if(!glGetIntegerv)
@@ -333,7 +334,7 @@ STATICINLINE void IntegerGetv(GLenum pname, i32 * data)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE const u8 * GetString(GLenum name)
+STATICINLINE libc_types::cstring  GetString(GLenum name)
 {
 #ifndef NDEBUG
     if(!glGetString)
@@ -341,14 +342,14 @@ STATICINLINE const u8 * GetString(GLenum name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetString(name);
+    return (libc_types::cstring )glGetString(name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void TexGetImage(TexComp::tex_flag const& target, i32 level, PixCmp format, BitFmt type, void * pixels)
+STATICINLINE void TexGetImage(TexComp::tex_flag const& target, libc_types::i32 level, typing::PixCmp format, typing::pixels::BitFmt type, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetTexImage)
@@ -356,14 +357,14 @@ STATICINLINE void TexGetImage(TexComp::tex_flag const& target, i32 level, PixCmp
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTexImage(texture_to_enum(target), level, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glGetTexImage(texture_to_enum(target), level, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_31)
-STATICINLINE void TexGetLevelParameterfv(TexComp::tex_flag const& target, i32 level, GLenum pname, scalar * params)
+STATICINLINE void TexGetLevelParameterfv(TexComp::tex_flag const& target, libc_types::i32 level, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexLevelParameterfv)
@@ -378,7 +379,7 @@ STATICINLINE void TexGetLevelParameterfv(TexComp::tex_flag const& target, i32 le
 
 #if GL_VERSION_VERIFY(0x100, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_31)
-STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, i32 level, GLenum pname, i32 * params)
+STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, libc_types::i32 level, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexLevelParameteriv)
@@ -393,7 +394,7 @@ STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, i32 le
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexGetParameterfv(TexComp::tex_flag const& target, GLenum pname, scalar * params)
+STATICINLINE void TexGetParameterfv(TexComp::tex_flag const& target, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameterfv)
@@ -408,7 +409,7 @@ STATICINLINE void TexGetParameterfv(TexComp::tex_flag const& target, GLenum pnam
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexGetParameteriv(TexComp::tex_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void TexGetParameteriv(TexComp::tex_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameteriv)
@@ -438,7 +439,7 @@ STATICINLINE void Hint(GLenum target, GLenum mode)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE u8 IsEnabled(Feature cap)
+STATICINLINE libc_types::u8 IsEnabled(Feature cap)
 {
 #ifndef NDEBUG
     if(!glIsEnabled)
@@ -446,14 +447,14 @@ STATICINLINE u8 IsEnabled(Feature cap)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsEnabled(to_enum(cap));
+    return (libc_types::u8)glIsEnabled(to_enum(cap));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void LineWidth(scalar width)
+STATICINLINE void LineWidth(libc_types::f32 width)
 {
 #ifndef NDEBUG
     if(!glLineWidth)
@@ -483,7 +484,7 @@ STATICINLINE void LogicOp(GLenum opcode)
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void PixelStoref(GLenum pname, scalar param)
+STATICINLINE void PixelStoref(GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glPixelStoref)
@@ -498,7 +499,7 @@ STATICINLINE void PixelStoref(GLenum pname, scalar param)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void PixelStorei(GLenum pname, i32 param)
+STATICINLINE void PixelStorei(GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glPixelStorei)
@@ -513,7 +514,7 @@ STATICINLINE void PixelStorei(GLenum pname, i32 param)
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void PointSize(scalar size)
+STATICINLINE void PointSize(libc_types::f32 size)
 {
 #ifndef NDEBUG
     if(!glPointSize)
@@ -558,7 +559,7 @@ STATICINLINE void BufRead(GLenum src)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ReadPixels(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, void * pixels)
+STATICINLINE void ReadPixels(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, void * pixels)
 {
 #ifndef NDEBUG
     if(!glReadPixels)
@@ -566,14 +567,14 @@ STATICINLINE void ReadPixels(i32 x, i32 y, Size const& size, PixCmp format, BitF
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glReadPixels(x, y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glReadPixels(x[0], x[1], width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void Scissor(i32 x, i32 y, Size const& size)
+STATICINLINE void Scissor(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glScissor)
@@ -581,14 +582,14 @@ STATICINLINE void Scissor(i32 x, i32 y, Size const& size)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glScissor(x, y, size.w, size.h);
+    glScissor(x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void StencilFunc(GLenum func, i32 ref, u32 mask)
+STATICINLINE void StencilFunc(GLenum func, libc_types::i32 ref, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilFunc)
@@ -603,7 +604,7 @@ STATICINLINE void StencilFunc(GLenum func, i32 ref, u32 mask)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void StencilMask(u32 mask)
+STATICINLINE void StencilMask(libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilMask)
@@ -633,7 +634,7 @@ STATICINLINE void StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_10)
-STATICINLINE void TexImage1D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, i32 width, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexImage1D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, libc_types::i32 width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexImage1D)
@@ -641,14 +642,14 @@ STATICINLINE void TexImage1D(TexComp::tex_flag const& target, i32 level, PixFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage1D(texture_to_enum(target), level, to_enum(internalformat), width, 0, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexImage1D(texture_to_enum(target), level, to_enum(internalformat), width, 0, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexImage2D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, Size const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexImage2D)
@@ -656,14 +657,14 @@ STATICINLINE void TexImage2D(TexComp::tex_flag const& target, i32 level, PixFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage2D(texture_to_enum(target), level, to_enum(internalformat), size.w, size.h, 0, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexImage2D(texture_to_enum(target), level, to_enum(internalformat), width.w, width.h, 0, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameterf(TexComp::tex_flag const& target, GLenum pname, scalar param)
+STATICINLINE void TexParameterf(TexComp::tex_flag const& target, GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glTexParameterf)
@@ -678,7 +679,7 @@ STATICINLINE void TexParameterf(TexComp::tex_flag const& target, GLenum pname, s
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameterfv(TexComp::tex_flag const& target, GLenum pname, const scalar * params)
+STATICINLINE void TexParameterfv(TexComp::tex_flag const& target, GLenum pname, const libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameterfv)
@@ -693,7 +694,7 @@ STATICINLINE void TexParameterfv(TexComp::tex_flag const& target, GLenum pname, 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameteri(TexComp::tex_flag const& target, GLenum pname, i32 param)
+STATICINLINE void TexParameteri(TexComp::tex_flag const& target, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glTexParameteri)
@@ -708,7 +709,7 @@ STATICINLINE void TexParameteri(TexComp::tex_flag const& target, GLenum pname, i
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameteriv(TexComp::tex_flag const& target, GLenum pname, const i32 * params)
+STATICINLINE void TexParameteriv(TexComp::tex_flag const& target, GLenum pname, const libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameteriv)
@@ -723,7 +724,7 @@ STATICINLINE void TexParameteriv(TexComp::tex_flag const& target, GLenum pname, 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void Viewport(i32 x, i32 y, Size const& size)
+STATICINLINE void Viewport(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glViewport)
@@ -731,16 +732,16 @@ STATICINLINE void Viewport(i32 x, i32 y, Size const& size)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glViewport(x, y, size.w, size.h);
+    glViewport(x[0], x[1], width.w, width.h);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_11
-    : CGL_10<ReqVer>
+struct v11
+    : v10<ReqVer>
 {
-using Parent = CGL_10<ReqVer>;
+using Parent = v10<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
@@ -752,14 +753,14 @@ STATICINLINE void TexBind(TexComp::tex_flag const& target, glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindTexture(texture_to_enum(target), C_OCAST<u32>(texture));
+    glBindTexture(texture_to_enum(target), C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_11)
-STATICINLINE void TexCopyImage1D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, i32 x, i32 y, i32 width)
+STATICINLINE void TexCopyImage1D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::vectors::tvector<libc_types::i32, 2> x, libc_types::i32 width)
 {
 #ifndef NDEBUG
     if(!glCopyTexImage1D)
@@ -767,14 +768,14 @@ STATICINLINE void TexCopyImage1D(TexComp::tex_flag const& target, i32 level, Pix
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexImage1D(texture_to_enum(target), level, to_enum(internalformat), x, y, width, 0);
+    glCopyTexImage1D(texture_to_enum(target), level, to_enum(internalformat), x[0], x[1], width, 0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexCopyImage2D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopyImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTexImage2D)
@@ -782,14 +783,14 @@ STATICINLINE void TexCopyImage2D(TexComp::tex_flag const& target, i32 level, Pix
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexImage2D(texture_to_enum(target), level, to_enum(internalformat), x, y, size.w, size.h, 0);
+    glCopyTexImage2D(texture_to_enum(target), level, to_enum(internalformat), x[0], x[1], width.w, width.h, 0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_11)
-STATICINLINE void TexCopySubImage1D(TexComp::tex_flag const& target, i32 level, i32 xoffset, i32 x, i32 y, i32 width)
+STATICINLINE void TexCopySubImage1D(TexComp::tex_flag const& target, libc_types::i32 level, libc_types::i32 xoffset, typing::vectors::tvector<libc_types::i32, 2> x, libc_types::i32 width)
 {
 #ifndef NDEBUG
     if(!glCopyTexSubImage1D)
@@ -797,14 +798,14 @@ STATICINLINE void TexCopySubImage1D(TexComp::tex_flag const& target, i32 level, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexSubImage1D(texture_to_enum(target), level, xoffset, x, y, width);
+    glCopyTexSubImage1D(texture_to_enum(target), level, xoffset, x[0], x[1], width);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexCopySubImage2D(TexComp::tex_flag const& target, i32 level, Point const& offset, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopySubImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTexSubImage2D)
@@ -812,14 +813,14 @@ STATICINLINE void TexCopySubImage2D(TexComp::tex_flag const& target, i32 level, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexSubImage2D(texture_to_enum(target), level, offset.x, offset.y, x, y, size.w, size.h);
+    glCopyTexSubImage2D(texture_to_enum(target), level, xoffset.x, xoffset.y, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexFree(Span<const u32> const& textures)
+STATICINLINE void TexFree(semantic::Span<const libc_types::u32>&& textures)
 {
 #ifndef NDEBUG
     if(!glDeleteTextures)
@@ -827,14 +828,14 @@ STATICINLINE void TexFree(Span<const u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTextures(C_FCAST<i32>(textures.elements), textures.data);
+    glDeleteTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void DrawArrays(DrwMd const& mode, i32 first, i32 count)
+STATICINLINE void DrawArrays(DrwMd const& mode, libc_types::i32 first, libc_types::i32 count)
 {
 #ifndef NDEBUG
     if(!glDrawArrays)
@@ -849,7 +850,7 @@ STATICINLINE void DrawArrays(DrwMd const& mode, i32 first, i32 count)
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void DrawElements(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices)
+STATICINLINE void DrawElements(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices)
 {
 #ifndef NDEBUG
     if(!glDrawElements)
@@ -864,7 +865,7 @@ STATICINLINE void DrawElements(DrwMd const& mode, i32 count, TypeEnum type, uint
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexAlloc(Span<u32> const& textures)
+STATICINLINE void TexAlloc(semantic::Span<libc_types::u32>&& textures)
 {
 #ifndef NDEBUG
     if(!glGenTextures)
@@ -872,14 +873,14 @@ STATICINLINE void TexAlloc(Span<u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTextures(C_FCAST<i32>(textures.elements), textures.data);
+    glGenTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE u8 IsTexture(glhnd const& texture)
+STATICINLINE libc_types::u8 IsTexture(glhnd const& texture)
 {
 #ifndef NDEBUG
     if(!glIsTexture)
@@ -887,14 +888,14 @@ STATICINLINE u8 IsTexture(glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsTexture(C_OCAST<u32>(texture));
+    return (libc_types::u8)glIsTexture(C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void PolygonOffset(scalar factor, scalar units)
+STATICINLINE void PolygonOffset(libc_types::f32 factor, libc_types::f32 units)
 {
 #ifndef NDEBUG
     if(!glPolygonOffset)
@@ -909,7 +910,7 @@ STATICINLINE void PolygonOffset(scalar factor, scalar units)
 
 #if GL_VERSION_VERIFY(0x110, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_11)
-STATICINLINE void TexSubImage1D(TexComp::tex_flag const& target, i32 level, i32 xoffset, i32 width, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage1D(TexComp::tex_flag const& target, libc_types::i32 level, libc_types::i32 xoffset, libc_types::i32 width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexSubImage1D)
@@ -917,14 +918,14 @@ STATICINLINE void TexSubImage1D(TexComp::tex_flag const& target, i32 level, i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexSubImage1D(texture_to_enum(target), level, xoffset, width, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexSubImage1D(texture_to_enum(target), level, xoffset, width, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexSubImage2D(TexComp::tex_flag const& target, i32 level, Point const& offset, Size const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexSubImage2D)
@@ -932,20 +933,20 @@ STATICINLINE void TexSubImage2D(TexComp::tex_flag const& target, i32 level, Poin
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexSubImage2D(texture_to_enum(target), level, offset.x, offset.y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexSubImage2D(texture_to_enum(target), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_12
-    : CGL_11<ReqVer>
+struct v12
+    : v11<ReqVer>
 {
-using Parent = CGL_11<ReqVer>;
+using Parent = v11<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void TexCopySubImage3D(TexComp::tex_flag const& target, i32 level, Point3 const& offset, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopySubImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTexSubImage3D)
@@ -953,14 +954,14 @@ STATICINLINE void TexCopySubImage3D(TexComp::tex_flag const& target, i32 level, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexSubImage3D(texture_to_enum(target), level, offset.x, offset.y, offset.z, x, y, size.w, size.h);
+    glCopyTexSubImage3D(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void DrawRangeElements(DrwMd const& mode, u32 start, u32 end, i32 count, TypeEnum type, uintptr indices)
+STATICINLINE void DrawRangeElements(DrwMd const& mode, libc_types::u32 start, libc_types::u32 end, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices)
 {
 #ifndef NDEBUG
     if(!glDrawRangeElements)
@@ -975,7 +976,7 @@ STATICINLINE void DrawRangeElements(DrwMd const& mode, u32 start, u32 end, i32 c
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void TexImage3D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, Size3 const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexImage3D)
@@ -983,14 +984,14 @@ STATICINLINE void TexImage3D(TexComp::tex_flag const& target, i32 level, PixFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage3D(texture_to_enum(target), level, to_enum(internalformat), size.width, size.height, size.depth, 0, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexImage3D(texture_to_enum(target), level, to_enum(internalformat), width.width, width.height, width.depth, 0, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void TexSubImage3D(TexComp::tex_flag const& target, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexSubImage3D)
@@ -998,16 +999,16 @@ STATICINLINE void TexSubImage3D(TexComp::tex_flag const& target, i32 level, Poin
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexSubImage3D(texture_to_enum(target), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexSubImage3D(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_13
-    : CGL_12<ReqVer>
+struct v13
+    : v12<ReqVer>
 {
-using Parent = CGL_12<ReqVer>;
+using Parent = v12<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
@@ -1026,7 +1027,7 @@ STATICINLINE void TexActive(GLenum texture)
 
 #if GL_VERSION_VERIFY(0x130, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_13)
-STATICINLINE void TexCompressedImage1D(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, i32 width, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage1D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, libc_types::i32 width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage1D)
@@ -1044,7 +1045,7 @@ STATICINLINE void TexCompressedImage1D(TexComp::tex_flag const& target, i32 leve
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
-STATICINLINE void TexCompressedImage2D(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size const& size, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage2D)
@@ -1055,14 +1056,14 @@ STATICINLINE void TexCompressedImage2D(TexComp::tex_flag const& target, i32 leve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexImage2D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), size.w, size.h, 0, imageSize, data);
+    glCompressedTexImage2D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), width.w, width.h, 0, imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_30)
-STATICINLINE void TexCompressedImage3D(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size3 const& size, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage3D)
@@ -1073,14 +1074,14 @@ STATICINLINE void TexCompressedImage3D(TexComp::tex_flag const& target, i32 leve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexImage3D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), size.width, size.height, size.depth, 0, imageSize, data);
+    glCompressedTexImage3D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), width.width, width.height, width.depth, 0, imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_13)
-STATICINLINE void TexCompressedSubImage1D(TexComp::tex_flag const& target, i32 level, i32 xoffset, i32 width, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage1D(TexComp::tex_flag const& target, libc_types::i32 level, libc_types::i32 xoffset, libc_types::i32 width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage1D)
@@ -1098,7 +1099,7 @@ STATICINLINE void TexCompressedSubImage1D(TexComp::tex_flag const& target, i32 l
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
-STATICINLINE void TexCompressedSubImage2D(TexComp::tex_flag const& target, i32 level, Point const& offset, Size const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage2D)
@@ -1109,14 +1110,14 @@ STATICINLINE void TexCompressedSubImage2D(TexComp::tex_flag const& target, i32 l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexSubImage2D(texture_to_enum(target), level, offset.x, offset.y, size.w, size.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTexSubImage2D(texture_to_enum(target), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_30)
-STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, i32 level, Point3 const& offset, Size3 const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage3D)
@@ -1127,14 +1128,14 @@ STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, i32 l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexSubImage3D(texture_to_enum(target), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTexSubImage3D(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_13)
-STATICINLINE void TexGetCompressedImage(TexComp::tex_flag const& target, i32 level, void * img)
+STATICINLINE void TexGetCompressedImage(TexComp::tex_flag const& target, libc_types::i32 level, void * img)
 {
 #ifndef NDEBUG
     if(!glGetCompressedTexImage)
@@ -1152,7 +1153,7 @@ STATICINLINE void TexGetCompressedImage(TexComp::tex_flag const& target, i32 lev
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
-STATICINLINE void SampleCoverage(scalar value, bool invert)
+STATICINLINE void SampleCoverage(libc_types::f32 value, libc_types::u8 invert)
 {
 #ifndef NDEBUG
     if(!glSampleCoverage)
@@ -1163,20 +1164,20 @@ STATICINLINE void SampleCoverage(scalar value, bool invert)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSampleCoverage(value, invert ? GL_TRUE : GL_FALSE);
+    glSampleCoverage(value, invert);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_14
-    : CGL_13<ReqVer>
+struct v14
+    : v13<ReqVer>
 {
-using Parent = CGL_13<ReqVer>;
+using Parent = v13<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x140, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_14, GLESVER_20)
-STATICINLINE void BlendColor(_cbasic_vec4<scalar> const& color)
+STATICINLINE void BlendColor(typing::vectors::tvector<libc_types::f32,4> const& color)
 {
 #ifndef NDEBUG
     if(!glBlendColor)
@@ -1221,7 +1222,7 @@ STATICINLINE void BlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum
 
 #if GL_VERSION_VERIFY(0x140, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_14)
-STATICINLINE void MultiDrawArrays(DrwMd const& mode, const i32 * first, const i32 * count, i32 drawcount)
+STATICINLINE void MultiDrawArrays(DrwMd const& mode, const libc_types::i32 * first, const libc_types::i32 * count, libc_types::i32 drawcount)
 {
 #ifndef NDEBUG
     if(!glMultiDrawArrays)
@@ -1236,7 +1237,7 @@ STATICINLINE void MultiDrawArrays(DrwMd const& mode, const i32 * first, const i3
 
 #if GL_VERSION_VERIFY(0x140, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_14)
-STATICINLINE void MultiDrawElements(DrwMd const& mode, const i32 * count, TypeEnum type, uintptr indices, i32 drawcount)
+STATICINLINE void MultiDrawElements(DrwMd const& mode, const libc_types::i32 * count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 drawcount)
 {
 #ifndef NDEBUG
     if(!glMultiDrawElements)
@@ -1251,7 +1252,7 @@ STATICINLINE void MultiDrawElements(DrwMd const& mode, const i32 * count, TypeEn
 
 #if GL_VERSION_VERIFY(0x140, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_14)
-STATICINLINE void PointParameterf(GLenum pname, scalar param)
+STATICINLINE void PointParameterf(GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glPointParameterf)
@@ -1269,7 +1270,7 @@ STATICINLINE void PointParameterf(GLenum pname, scalar param)
 
 #if GL_VERSION_VERIFY(0x140, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_14)
-STATICINLINE void PointParameterfv(GLenum pname, const scalar * params)
+STATICINLINE void PointParameterfv(GLenum pname, const libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glPointParameterfv)
@@ -1287,7 +1288,7 @@ STATICINLINE void PointParameterfv(GLenum pname, const scalar * params)
 
 #if GL_VERSION_VERIFY(0x140, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_14)
-STATICINLINE void PointParameteri(GLenum pname, i32 param)
+STATICINLINE void PointParameteri(GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glPointParameteri)
@@ -1302,7 +1303,7 @@ STATICINLINE void PointParameteri(GLenum pname, i32 param)
 
 #if GL_VERSION_VERIFY(0x140, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_14)
-STATICINLINE void PointParameteriv(GLenum pname, const i32 * params)
+STATICINLINE void PointParameteriv(GLenum pname, const libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glPointParameteriv)
@@ -1316,14 +1317,14 @@ STATICINLINE void PointParameteriv(GLenum pname, const i32 * params)
 
 };
 template<typename ReqVer>
-struct CGL_15
-    : CGL_14<ReqVer>
+struct v15
+    : v14<ReqVer>
 {
-using Parent = CGL_14<ReqVer>;
+using Parent = v14<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryBegin(QueryComp::query_flag const& target, u32 id)
+STATICINLINE void QueryBegin(QueryComp::query_flag const& target, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glBeginQuery)
@@ -1334,7 +1335,7 @@ STATICINLINE void QueryBegin(QueryComp::query_flag const& target, u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBeginQuery(query_to_enum(target), id);
+    glBeginQuery(query_to_enum(target), C_OCAST<libc_types::u32>(id));
 }
 #endif
 
@@ -1349,14 +1350,14 @@ STATICINLINE void BufBind(BufferComp::buf_flag const& target, glhnd const& buffe
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindBuffer(buffer_to_enum(target), C_OCAST<u32>(buffer));
+    glBindBuffer(buffer_to_enum(target), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufData(BufferComp::buf_flag const& target, BytesConst const& data, RSCA usage)
+STATICINLINE void BufData(BufferComp::buf_flag const& target, semantic::BytesConst const& data, semantic::RSCA usage)
 {
 #ifndef NDEBUG
     if(!glBufferData)
@@ -1364,14 +1365,14 @@ STATICINLINE void BufData(BufferComp::buf_flag const& target, BytesConst const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferData(buffer_to_enum(target), C_FCAST<ptroff>(data.size), data.data, to_enum1(usage));
+    glBufferData(buffer_to_enum(target), C_FCAST<libc_types::ptroff>(data.size), data.data, to_enum1(usage));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufSubData(BufferComp::buf_flag const& target, ptroff offset, BytesConst const& data)
+STATICINLINE void BufSubData(BufferComp::buf_flag const& target, libc_types::ptroff offset, semantic::BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glBufferSubData)
@@ -1379,14 +1380,14 @@ STATICINLINE void BufSubData(BufferComp::buf_flag const& target, ptroff offset, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferSubData(buffer_to_enum(target), offset, C_FCAST<ptroff>(data.size), data.data);
+    glBufferSubData(buffer_to_enum(target), offset, C_FCAST<libc_types::ptroff>(data.size), data.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufFree(Span<const u32> const& buffers)
+STATICINLINE void BufFree(semantic::Span<const libc_types::u32>&& buffers)
 {
 #ifndef NDEBUG
     if(!glDeleteBuffers)
@@ -1394,14 +1395,14 @@ STATICINLINE void BufFree(Span<const u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
+    glDeleteBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryFree(Span<const u32> const& ids)
+STATICINLINE void QueryFree(semantic::Span<const libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glDeleteQueries)
@@ -1412,7 +1413,7 @@ STATICINLINE void QueryFree(Span<const u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteQueries(C_FCAST<i32>(ids.elements), ids.data);
+    glDeleteQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
@@ -1437,7 +1438,7 @@ STATICINLINE void QueryEnd(QueryComp::query_flag const& target)
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufAlloc(Span<u32> const& buffers)
+STATICINLINE void BufAlloc(semantic::Span<libc_types::u32>&& buffers)
 {
 #ifndef NDEBUG
     if(!glGenBuffers)
@@ -1445,14 +1446,14 @@ STATICINLINE void BufAlloc(Span<u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
+    glGenBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryAlloc(Span<u32> const& ids)
+STATICINLINE void QueryAlloc(semantic::Span<libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glGenQueries)
@@ -1463,14 +1464,14 @@ STATICINLINE void QueryAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenQueries(C_FCAST<i32>(ids.elements), ids.data);
+    glGenQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufGetParameteriv(BufferComp::buf_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void BufGetParameteriv(BufferComp::buf_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetBufferParameteriv)
@@ -1500,7 +1501,7 @@ STATICINLINE void BufGetPointerv(BufferComp::buf_flag const& target, GLenum pnam
 
 #if GL_VERSION_VERIFY(0x150, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_15)
-STATICINLINE void BufGetSubData(BufferComp::buf_flag const& target, ptroff offset, Bytes const& data)
+STATICINLINE void BufGetSubData(BufferComp::buf_flag const& target, libc_types::ptroff offset, semantic::Bytes const& data)
 {
 #ifndef NDEBUG
     if(!glGetBufferSubData)
@@ -1508,14 +1509,14 @@ STATICINLINE void BufGetSubData(BufferComp::buf_flag const& target, ptroff offse
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetBufferSubData(buffer_to_enum(target), offset, C_FCAST<ptroff>(data.size), data.data);
+    glGetBufferSubData(buffer_to_enum(target), offset, C_FCAST<libc_types::ptroff>(data.size), data.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_15)
-STATICINLINE void QueryGetObjectiv(u32 id, GLenum pname, i32 * params)
+STATICINLINE void QueryGetObjectiv(glhnd const& id, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjectiv)
@@ -1526,14 +1527,14 @@ STATICINLINE void QueryGetObjectiv(u32 id, GLenum pname, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjectiv(id, pname, params);
+    glGetQueryObjectiv(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryGetObjectuiv(u32 id, GLenum pname, u32 * params)
+STATICINLINE void QueryGetObjectuiv(glhnd const& id, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjectuiv)
@@ -1544,14 +1545,14 @@ STATICINLINE void QueryGetObjectuiv(u32 id, GLenum pname, u32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjectuiv(id, pname, params);
+    glGetQueryObjectuiv(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryiv)
@@ -1569,7 +1570,7 @@ STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE u8 IsBuffer(glhnd const& buffer)
+STATICINLINE libc_types::u8 IsBuffer(glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glIsBuffer)
@@ -1577,14 +1578,14 @@ STATICINLINE u8 IsBuffer(glhnd const& buffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsBuffer(C_OCAST<u32>(buffer));
+    return (libc_types::u8)glIsBuffer(C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE u8 IsQuery(u32 id)
+STATICINLINE libc_types::u8 IsQuery(glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glIsQuery)
@@ -1595,14 +1596,14 @@ STATICINLINE u8 IsQuery(u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsQuery(id);
+    return (libc_types::u8)glIsQuery(C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_15)
-STATICINLINE void * BufMap(BufferComp::buf_flag const& target, RSCA access)
+STATICINLINE void * BufMap(BufferComp::buf_flag const& target, semantic::RSCA access)
 {
 #ifndef NDEBUG
     if(!glMapBuffer)
@@ -1610,14 +1611,14 @@ STATICINLINE void * BufMap(BufferComp::buf_flag const& target, RSCA access)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glMapBuffer(buffer_to_enum(target), to_enum2(access));
+    return (void *)glMapBuffer(buffer_to_enum(target), to_enum2(access));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE u8 BufUnmap(BufferComp::buf_flag const& target)
+STATICINLINE libc_types::u8 BufUnmap(BufferComp::buf_flag const& target)
 {
 #ifndef NDEBUG
     if(!glUnmapBuffer)
@@ -1625,16 +1626,16 @@ STATICINLINE u8 BufUnmap(BufferComp::buf_flag const& target)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glUnmapBuffer(buffer_to_enum(target));
+    return (libc_types::u8)glUnmapBuffer(buffer_to_enum(target));
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_20
-    : CGL_15<ReqVer>
+struct v20
+    : v15<ReqVer>
 {
-using Parent = CGL_15<ReqVer>;
+using Parent = v15<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
@@ -1649,14 +1650,14 @@ STATICINLINE void ShaderAttach(glhnd const& program, glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glAttachShader(C_OCAST<u32>(program), C_OCAST<u32>(shader));
+    glAttachShader(C_OCAST<libc_types::u32>(program), C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void AttribBindLocation(glhnd const& program, u32 index, const GLchar * name)
+STATICINLINE void AttribBindLocation(glhnd const& program, libc_types::u32 index, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glBindAttribLocation)
@@ -1664,7 +1665,7 @@ STATICINLINE void AttribBindLocation(glhnd const& program, u32 index, const GLch
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindAttribLocation(C_OCAST<u32>(program), index, name);
+    glBindAttribLocation(C_OCAST<libc_types::u32>(program), index, name);
 }
 #endif
 
@@ -1697,14 +1698,14 @@ STATICINLINE void ShaderCompile(glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompileShader(C_OCAST<u32>(shader));
+    glCompileShader(C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ProgramAllocEx()
+STATICINLINE libc_types::u32 ProgramAllocEx()
 {
 #ifndef NDEBUG
     if(!glCreateProgram)
@@ -1715,14 +1716,14 @@ STATICINLINE u32 ProgramAllocEx()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateProgram();
+    return (libc_types::u32)glCreateProgram();
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ShaderAllocEx(ShaderStage type)
+STATICINLINE libc_types::u32 ShaderAllocEx(ShaderStage type)
 {
 #ifndef NDEBUG
     if(!glCreateShader)
@@ -1733,7 +1734,7 @@ STATICINLINE u32 ShaderAllocEx(ShaderStage type)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShader(to_enum1(type));
+    return (libc_types::u32)glCreateShader(to_enum1(type));
 }
 #endif
 
@@ -1748,7 +1749,7 @@ STATICINLINE void ProgramFree(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgram(C_OCAST<u32>(program));
+    glDeleteProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
@@ -1763,7 +1764,7 @@ STATICINLINE void ShaderFree(glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteShader(C_OCAST<u32>(shader));
+    glDeleteShader(C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
@@ -1781,14 +1782,14 @@ STATICINLINE void ShaderDetach(glhnd const& program, glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDetachShader(C_OCAST<u32>(program), C_OCAST<u32>(shader));
+    glDetachShader(C_OCAST<libc_types::u32>(program), C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAODisableArray(u32 index)
+STATICINLINE void VAODisableArray(libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glDisableVertexAttribArray)
@@ -1803,7 +1804,7 @@ STATICINLINE void VAODisableArray(u32 index)
 
 #if GL_VERSION_VERIFY(0x200, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
-STATICINLINE void DrawBuffers(i32 n, const GLenum * bufs)
+STATICINLINE void DrawBuffers(libc_types::i32 n, const GLenum * bufs)
 {
 #ifndef NDEBUG
     if(!glDrawBuffers)
@@ -1821,7 +1822,7 @@ STATICINLINE void DrawBuffers(i32 n, const GLenum * bufs)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOEnableArray(u32 index)
+STATICINLINE void VAOEnableArray(libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glEnableVertexAttribArray)
@@ -1836,7 +1837,7 @@ STATICINLINE void VAOEnableArray(u32 index)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ActiveAttribGet(glhnd const& program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveAttribGet(glhnd const& program, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveAttrib)
@@ -1844,14 +1845,14 @@ STATICINLINE void ActiveAttribGet(glhnd const& program, u32 index, i32 bufSize, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveAttrib(C_OCAST<u32>(program), index, bufSize, length, size, type, name);
+    glGetActiveAttrib(C_OCAST<libc_types::u32>(program), index, bufSize, length, size, type, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ActiveUnifGet(glhnd const& program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveUnifGet(glhnd const& program, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniform)
@@ -1862,14 +1863,14 @@ STATICINLINE void ActiveUnifGet(glhnd const& program, u32 index, i32 bufSize, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniform(C_OCAST<u32>(program), index, bufSize, length, size, type, name);
+    glGetActiveUniform(C_OCAST<libc_types::u32>(program), index, bufSize, length, size, type, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void AttachedShadersGet(glhnd const& program, i32 maxCount, i32 * count, u32 * shaders)
+STATICINLINE void AttachedShadersGet(glhnd const& program, libc_types::i32 maxCount, libc_types::i32 * count, libc_types::u32 * shaders)
 {
 #ifndef NDEBUG
     if(!glGetAttachedShaders)
@@ -1877,14 +1878,14 @@ STATICINLINE void AttachedShadersGet(glhnd const& program, i32 maxCount, i32 * c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetAttachedShaders(C_OCAST<u32>(program), maxCount, count, shaders);
+    glGetAttachedShaders(C_OCAST<libc_types::u32>(program), maxCount, count, shaders);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE i32 AttribGetLocation(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 AttribGetLocation(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetAttribLocation)
@@ -1892,14 +1893,14 @@ STATICINLINE i32 AttribGetLocation(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetAttribLocation(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetAttribLocation(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ProgramGetInfoLog(glhnd const& program, i32 bufSize, i32 * length, GLchar * infoLog)
+STATICINLINE void ProgramGetInfoLog(glhnd const& program, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetProgramInfoLog)
@@ -1907,14 +1908,14 @@ STATICINLINE void ProgramGetInfoLog(glhnd const& program, i32 bufSize, i32 * len
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramInfoLog(C_OCAST<u32>(program), bufSize, length, infoLog);
+    glGetProgramInfoLog(C_OCAST<libc_types::u32>(program), bufSize, length, infoLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, i32 * params)
+STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramiv)
@@ -1922,14 +1923,14 @@ STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramiv(C_OCAST<u32>(program), pname, params);
+    glGetProgramiv(C_OCAST<libc_types::u32>(program), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderGetInfoLog(glhnd const& shader, i32 bufSize, i32 * length, GLchar * infoLog)
+STATICINLINE void ShaderGetInfoLog(glhnd const& shader, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetShaderInfoLog)
@@ -1937,14 +1938,14 @@ STATICINLINE void ShaderGetInfoLog(glhnd const& shader, i32 bufSize, i32 * lengt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetShaderInfoLog(C_OCAST<u32>(shader), bufSize, length, infoLog);
+    glGetShaderInfoLog(C_OCAST<libc_types::u32>(shader), bufSize, length, infoLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderGetSource(glhnd const& shader, i32 bufSize, i32 * length, GLchar * source)
+STATICINLINE void ShaderGetSource(glhnd const& shader, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * source)
 {
 #ifndef NDEBUG
     if(!glGetShaderSource)
@@ -1955,14 +1956,14 @@ STATICINLINE void ShaderGetSource(glhnd const& shader, i32 bufSize, i32 * length
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetShaderSource(C_OCAST<u32>(shader), bufSize, length, source);
+    glGetShaderSource(C_OCAST<libc_types::u32>(shader), bufSize, length, source);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderGetiv(glhnd const& shader, GLenum pname, i32 * params)
+STATICINLINE void ShaderGetiv(glhnd const& shader, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetShaderiv)
@@ -1970,14 +1971,14 @@ STATICINLINE void ShaderGetiv(glhnd const& shader, GLenum pname, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetShaderiv(C_OCAST<u32>(shader), pname, params);
+    glGetShaderiv(C_OCAST<libc_types::u32>(shader), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE i32 UnifGetLocation(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 UnifGetLocation(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetUniformLocation)
@@ -1988,14 +1989,14 @@ STATICINLINE i32 UnifGetLocation(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetUniformLocation(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetUniformLocation(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void UnifGetfv(glhnd const& program, i32 location, scalar * params)
+STATICINLINE void UnifGetfv(glhnd const& program, libc_types::i32 location, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformfv)
@@ -2006,14 +2007,14 @@ STATICINLINE void UnifGetfv(glhnd const& program, i32 location, scalar * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformfv(C_OCAST<u32>(program), location, params);
+    glGetUniformfv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void UnifGetiv(glhnd const& program, i32 location, i32 * params)
+STATICINLINE void UnifGetiv(glhnd const& program, libc_types::i32 location, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformiv)
@@ -2024,14 +2025,14 @@ STATICINLINE void UnifGetiv(glhnd const& program, i32 location, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformiv(C_OCAST<u32>(program), location, params);
+    glGetUniformiv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOGetPointerv(u32 index, GLenum pname, void * * pointer)
+STATICINLINE void VAOGetPointerv(libc_types::u32 index, GLenum pname, void * * pointer)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribPointerv)
@@ -2046,7 +2047,7 @@ STATICINLINE void VAOGetPointerv(u32 index, GLenum pname, void * * pointer)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAOGetdv(u32 index, GLenum pname, bigscalar * params)
+STATICINLINE void VAOGetdv(libc_types::u32 index, GLenum pname, libc_types::f64 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribdv)
@@ -2061,7 +2062,7 @@ STATICINLINE void VAOGetdv(u32 index, GLenum pname, bigscalar * params)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOGetfv(u32 index, GLenum pname, scalar * params)
+STATICINLINE void VAOGetfv(libc_types::u32 index, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribfv)
@@ -2076,7 +2077,7 @@ STATICINLINE void VAOGetfv(u32 index, GLenum pname, scalar * params)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOGetiv(u32 index, GLenum pname, i32 * params)
+STATICINLINE void VAOGetiv(libc_types::u32 index, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribiv)
@@ -2091,7 +2092,7 @@ STATICINLINE void VAOGetiv(u32 index, GLenum pname, i32 * params)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u8 IsProgram(glhnd const& program)
+STATICINLINE libc_types::u8 IsProgram(glhnd const& program)
 {
 #ifndef NDEBUG
     if(!glIsProgram)
@@ -2099,14 +2100,14 @@ STATICINLINE u8 IsProgram(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsProgram(C_OCAST<u32>(program));
+    return (libc_types::u8)glIsProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u8 IsShader(glhnd const& shader)
+STATICINLINE libc_types::u8 IsShader(glhnd const& shader)
 {
 #ifndef NDEBUG
     if(!glIsShader)
@@ -2114,7 +2115,7 @@ STATICINLINE u8 IsShader(glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsShader(C_OCAST<u32>(shader));
+    return (libc_types::u8)glIsShader(C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
@@ -2132,14 +2133,14 @@ STATICINLINE void ProgramLink(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glLinkProgram(C_OCAST<u32>(program));
+    glLinkProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderSource(glhnd const& shader, i32 count, const GLchar * *const string, const i32 * length)
+STATICINLINE void ShaderSource(glhnd const& shader, libc_types::i32 count, const GLchar * *const string, const libc_types::i32 * length)
 {
 #ifndef NDEBUG
     if(!glShaderSource)
@@ -2150,14 +2151,14 @@ STATICINLINE void ShaderSource(glhnd const& shader, i32 count, const GLchar * *c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glShaderSource(C_OCAST<u32>(shader), count, string, length);
+    glShaderSource(C_OCAST<libc_types::u32>(shader), count, string, length);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void StencilFuncSeparate(GLenum face, GLenum func, i32 ref, u32 mask)
+STATICINLINE void StencilFuncSeparate(GLenum face, GLenum func, libc_types::i32 ref, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilFuncSeparate)
@@ -2172,7 +2173,7 @@ STATICINLINE void StencilFuncSeparate(GLenum face, GLenum func, i32 ref, u32 mas
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void StencilMaskSeparate(GLenum face, u32 mask)
+STATICINLINE void StencilMaskSeparate(GLenum face, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilMaskSeparate)
@@ -2202,7 +2203,7 @@ STATICINLINE void StencilOpSeparate(GLenum face, GLenum sfail, GLenum dpfail, GL
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif1f(i32 location, scalar v0)
+STATICINLINE void Unif1f(libc_types::i32 location, libc_types::f32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1f)
@@ -2220,7 +2221,7 @@ STATICINLINE void Unif1f(i32 location, scalar v0)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<const scalar> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1fv)
@@ -2231,14 +2232,14 @@ STATICINLINE void Uniffv(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform1fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif1i(i32 location, i32 v0)
+STATICINLINE void Unif1i(libc_types::i32 location, libc_types::i32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1i)
@@ -2256,7 +2257,7 @@ STATICINLINE void Unif1i(i32 location, i32 v0)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<const i32> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1iv)
@@ -2267,14 +2268,14 @@ STATICINLINE void Unifiv(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform1iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif2f(i32 location, scalar v0, scalar v1)
+STATICINLINE void Unif2f(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2f)
@@ -2285,14 +2286,14 @@ STATICINLINE void Unif2f(i32 location, scalar v0, scalar v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2f(location, v0, v1);
+    glUniform2f(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<Vecf2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecf2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2fv)
@@ -2303,14 +2304,14 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform2fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif2i(i32 location, i32 v0, i32 v1)
+STATICINLINE void Unif2i(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2i)
@@ -2321,14 +2322,14 @@ STATICINLINE void Unif2i(i32 location, i32 v0, i32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2i(location, v0, v1);
+    glUniform2i(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<Veci2> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector_types::Veci2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2iv)
@@ -2339,14 +2340,14 @@ STATICINLINE void Unifiv(i32 location, Span<Veci2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform2iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif3f(i32 location, scalar v0, scalar v1, scalar v2)
+STATICINLINE void Unif3f(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 3> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3f)
@@ -2357,14 +2358,14 @@ STATICINLINE void Unif3f(i32 location, scalar v0, scalar v1, scalar v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3f(location, v0, v1, v2);
+    glUniform3f(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<Vecf3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecf3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3fv)
@@ -2375,14 +2376,14 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform3fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif3i(i32 location, i32 v0, i32 v1, i32 v2)
+STATICINLINE void Unif3i(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 3> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3i)
@@ -2393,14 +2394,14 @@ STATICINLINE void Unif3i(i32 location, i32 v0, i32 v1, i32 v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3i(location, v0, v1, v2);
+    glUniform3i(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<Veci3> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector_types::Veci3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3iv)
@@ -2411,14 +2412,14 @@ STATICINLINE void Unifiv(i32 location, Span<Veci3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform3iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif4f(i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
+STATICINLINE void Unif4f(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 4> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4f)
@@ -2429,14 +2430,14 @@ STATICINLINE void Unif4f(i32 location, scalar v0, scalar v1, scalar v2, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4f(location, v0, v1, v2, v3);
+    glUniform4f(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<Vecf4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecf4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4fv)
@@ -2447,14 +2448,14 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform4fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif4i(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
+STATICINLINE void Unif4i(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 4> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4i)
@@ -2465,14 +2466,14 @@ STATICINLINE void Unif4i(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4i(location, v0, v1, v2, v3);
+    glUniform4i(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<Veci4> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector_types::Veci4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4iv)
@@ -2483,14 +2484,14 @@ STATICINLINE void Unifiv(i32 location, Span<Veci4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform4iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2fv)
@@ -2501,14 +2502,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3fv)
@@ -2519,14 +2520,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4fv)
@@ -2537,7 +2538,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
@@ -2555,7 +2556,7 @@ STATICINLINE void ProgramUse(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUseProgram(C_OCAST<u32>(program));
+    glUseProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
@@ -2573,14 +2574,14 @@ STATICINLINE void ProgramValidate(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glValidateProgram(C_OCAST<u32>(program));
+    glValidateProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO1d(u32 index, bigscalar x)
+STATICINLINE void VAO1d(libc_types::u32 index, libc_types::f64 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1d)
@@ -2595,7 +2596,7 @@ STATICINLINE void VAO1d(u32 index, bigscalar x)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO1dv(u32 index, const bigscalar * v)
+STATICINLINE void VAO1dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1dv)
@@ -2610,7 +2611,7 @@ STATICINLINE void VAO1dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO1f(u32 index, scalar x)
+STATICINLINE void VAO1f(libc_types::u32 index, libc_types::f32 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1f)
@@ -2625,7 +2626,7 @@ STATICINLINE void VAO1f(u32 index, scalar x)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO1fv(u32 index, const scalar * v)
+STATICINLINE void VAO1fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1fv)
@@ -2640,7 +2641,7 @@ STATICINLINE void VAO1fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO1s(u32 index, i16 x)
+STATICINLINE void VAO1s(libc_types::u32 index, libc_types::i16 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1s)
@@ -2655,7 +2656,7 @@ STATICINLINE void VAO1s(u32 index, i16 x)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO1sv(u32 index, const i16 * v)
+STATICINLINE void VAO1sv(libc_types::u32 index, const libc_types::i16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1sv)
@@ -2670,7 +2671,7 @@ STATICINLINE void VAO1sv(u32 index, const i16 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO2d(u32 index, bigscalar x, bigscalar y)
+STATICINLINE void VAO2d(libc_types::u32 index, typing::vectors::tvector<libc_types::f64, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2d)
@@ -2678,14 +2679,14 @@ STATICINLINE void VAO2d(u32 index, bigscalar x, bigscalar y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib2d(index, x, y);
+    glVertexAttrib2d(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO2dv(u32 index, const bigscalar * v)
+STATICINLINE void VAO2dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2dv)
@@ -2700,7 +2701,7 @@ STATICINLINE void VAO2dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO2f(u32 index, scalar x, scalar y)
+STATICINLINE void VAO2f(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2f)
@@ -2708,14 +2709,14 @@ STATICINLINE void VAO2f(u32 index, scalar x, scalar y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib2f(index, x, y);
+    glVertexAttrib2f(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO2fv(u32 index, const scalar * v)
+STATICINLINE void VAO2fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2fv)
@@ -2730,7 +2731,7 @@ STATICINLINE void VAO2fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO2s(u32 index, i16 x, i16 y)
+STATICINLINE void VAO2s(libc_types::u32 index, typing::vectors::tvector<libc_types::i16, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2s)
@@ -2738,14 +2739,14 @@ STATICINLINE void VAO2s(u32 index, i16 x, i16 y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib2s(index, x, y);
+    glVertexAttrib2s(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO2sv(u32 index, const i16 * v)
+STATICINLINE void VAO2sv(libc_types::u32 index, const libc_types::i16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2sv)
@@ -2760,7 +2761,7 @@ STATICINLINE void VAO2sv(u32 index, const i16 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO3d(u32 index, bigscalar x, bigscalar y, bigscalar z)
+STATICINLINE void VAO3d(libc_types::u32 index, typing::vectors::tvector<libc_types::f64, 3> x, libc_types::f64 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3d)
@@ -2768,14 +2769,14 @@ STATICINLINE void VAO3d(u32 index, bigscalar x, bigscalar y, bigscalar z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib3d(index, x, y, z);
+    glVertexAttrib3d(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO3dv(u32 index, const bigscalar * v)
+STATICINLINE void VAO3dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3dv)
@@ -2790,7 +2791,7 @@ STATICINLINE void VAO3dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO3f(u32 index, scalar x, scalar y, scalar z)
+STATICINLINE void VAO3f(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 3> x, libc_types::f32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3f)
@@ -2798,14 +2799,14 @@ STATICINLINE void VAO3f(u32 index, scalar x, scalar y, scalar z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib3f(index, x, y, z);
+    glVertexAttrib3f(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO3fv(u32 index, const scalar * v)
+STATICINLINE void VAO3fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3fv)
@@ -2820,7 +2821,7 @@ STATICINLINE void VAO3fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO3s(u32 index, i16 x, i16 y, i16 z)
+STATICINLINE void VAO3s(libc_types::u32 index, typing::vectors::tvector<libc_types::i16, 3> x, libc_types::i16 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3s)
@@ -2828,14 +2829,14 @@ STATICINLINE void VAO3s(u32 index, i16 x, i16 y, i16 z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib3s(index, x, y, z);
+    glVertexAttrib3s(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO3sv(u32 index, const i16 * v)
+STATICINLINE void VAO3sv(libc_types::u32 index, const libc_types::i16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3sv)
@@ -2850,7 +2851,7 @@ STATICINLINE void VAO3sv(u32 index, const i16 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Nbv(u32 index, const i8 * v)
+STATICINLINE void VAO4Nbv(libc_types::u32 index, const libc_types::i8 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Nbv)
@@ -2865,7 +2866,7 @@ STATICINLINE void VAO4Nbv(u32 index, const i8 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Niv(u32 index, const i32 * v)
+STATICINLINE void VAO4Niv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Niv)
@@ -2880,7 +2881,7 @@ STATICINLINE void VAO4Niv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Nsv(u32 index, const i16 * v)
+STATICINLINE void VAO4Nsv(libc_types::u32 index, const libc_types::i16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Nsv)
@@ -2895,7 +2896,7 @@ STATICINLINE void VAO4Nsv(u32 index, const i16 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Nub(u32 index, bool x, bool y, bool z, bool w)
+STATICINLINE void VAO4Nub(libc_types::u32 index, typing::vectors::tvector<libc_types::u8, 4> x, libc_types::u8 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Nub)
@@ -2903,14 +2904,14 @@ STATICINLINE void VAO4Nub(u32 index, bool x, bool y, bool z, bool w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib4Nub(index, x ? GL_TRUE : GL_FALSE, y ? GL_TRUE : GL_FALSE, z ? GL_TRUE : GL_FALSE, w ? GL_TRUE : GL_FALSE);
+    glVertexAttrib4Nub(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Nubv(u32 index, const u8 * v)
+STATICINLINE void VAO4Nubv(libc_types::u32 index, const libc_types::u8 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Nubv)
@@ -2925,7 +2926,7 @@ STATICINLINE void VAO4Nubv(u32 index, const u8 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Nuiv(u32 index, const u32 * v)
+STATICINLINE void VAO4Nuiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Nuiv)
@@ -2940,7 +2941,7 @@ STATICINLINE void VAO4Nuiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4Nusv(u32 index, const u16 * v)
+STATICINLINE void VAO4Nusv(libc_types::u32 index, const libc_types::u16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4Nusv)
@@ -2955,7 +2956,7 @@ STATICINLINE void VAO4Nusv(u32 index, const u16 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4bv(u32 index, const i8 * v)
+STATICINLINE void VAO4bv(libc_types::u32 index, const libc_types::i8 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4bv)
@@ -2970,7 +2971,7 @@ STATICINLINE void VAO4bv(u32 index, const i8 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4d(u32 index, bigscalar x, bigscalar y, bigscalar z, bigscalar w)
+STATICINLINE void VAO4d(libc_types::u32 index, typing::vectors::tvector<libc_types::f64, 4> x, libc_types::f64 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4d)
@@ -2978,14 +2979,14 @@ STATICINLINE void VAO4d(u32 index, bigscalar x, bigscalar y, bigscalar z, bigsca
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib4d(index, x, y, z, w);
+    glVertexAttrib4d(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4dv(u32 index, const bigscalar * v)
+STATICINLINE void VAO4dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4dv)
@@ -3000,7 +3001,7 @@ STATICINLINE void VAO4dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO4f(u32 index, scalar x, scalar y, scalar z, scalar w)
+STATICINLINE void VAO4f(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 4> x, libc_types::f32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4f)
@@ -3008,14 +3009,14 @@ STATICINLINE void VAO4f(u32 index, scalar x, scalar y, scalar z, scalar w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib4f(index, x, y, z, w);
+    glVertexAttrib4f(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO4fv(u32 index, const scalar * v)
+STATICINLINE void VAO4fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4fv)
@@ -3030,7 +3031,7 @@ STATICINLINE void VAO4fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4iv(u32 index, const i32 * v)
+STATICINLINE void VAO4iv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4iv)
@@ -3045,7 +3046,7 @@ STATICINLINE void VAO4iv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4s(u32 index, i16 x, i16 y, i16 z, i16 w)
+STATICINLINE void VAO4s(libc_types::u32 index, typing::vectors::tvector<libc_types::i16, 4> x, libc_types::i16 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4s)
@@ -3053,14 +3054,14 @@ STATICINLINE void VAO4s(u32 index, i16 x, i16 y, i16 z, i16 w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib4s(index, x, y, z, w);
+    glVertexAttrib4s(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4sv(u32 index, const i16 * v)
+STATICINLINE void VAO4sv(libc_types::u32 index, const libc_types::i16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4sv)
@@ -3075,7 +3076,7 @@ STATICINLINE void VAO4sv(u32 index, const i16 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4ubv(u32 index, const u8 * v)
+STATICINLINE void VAO4ubv(libc_types::u32 index, const libc_types::u8 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4ubv)
@@ -3090,7 +3091,7 @@ STATICINLINE void VAO4ubv(u32 index, const u8 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4uiv(u32 index, const u32 * v)
+STATICINLINE void VAO4uiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4uiv)
@@ -3105,7 +3106,7 @@ STATICINLINE void VAO4uiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x200, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_20)
-STATICINLINE void VAO4usv(u32 index, const u16 * v)
+STATICINLINE void VAO4usv(libc_types::u32 index, const libc_types::u16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4usv)
@@ -3120,7 +3121,7 @@ STATICINLINE void VAO4usv(u32 index, const u16 * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOPointer(u32 index, i32 size, GLenum type, bool normalized, i32 stride, const void * pointer)
+STATICINLINE void VAOPointer(libc_types::u32 index, libc_types::i32 size, GLenum type, libc_types::u8 normalized, libc_types::i32 stride, const void * pointer)
 {
 #ifndef NDEBUG
     if(!glVertexAttribPointer)
@@ -3128,21 +3129,21 @@ STATICINLINE void VAOPointer(u32 index, i32 size, GLenum type, bool normalized, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribPointer(index, size, type, normalized ? GL_TRUE : GL_FALSE, stride, pointer);
+    glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_21
-    : CGL_20<ReqVer>
+struct v21
+    : v20<ReqVer>
 {
-using Parent = CGL_20<ReqVer>;
+using Parent = v20<ReqVer>;
 using Parent::Uniffv;
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2x3fv)
@@ -3150,14 +3151,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2x4fv)
@@ -3165,14 +3166,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3x2fv)
@@ -3180,14 +3181,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3x4fv)
@@ -3195,14 +3196,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4x2fv)
@@ -3210,14 +3211,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4x3fv)
@@ -3225,20 +3226,20 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_30
-    : CGL_21<ReqVer>
+struct v30
+    : v21<ReqVer>
 {
-using Parent = CGL_21<ReqVer>;
+using Parent = v21<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void ConditionalRenderBegin(u32 id, Delay mode)
+STATICINLINE void ConditionalRenderBegin(glhnd const& id, Delay mode)
 {
 #ifndef NDEBUG
     if(!glBeginConditionalRender)
@@ -3246,7 +3247,7 @@ STATICINLINE void ConditionalRenderBegin(u32 id, Delay mode)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBeginConditionalRender(id, to_enum1(mode));
+    glBeginConditionalRender(C_OCAST<libc_types::u32>(id), to_enum1(mode));
 }
 #endif
 
@@ -3268,7 +3269,7 @@ STATICINLINE void XFBegin(GLenum primitiveMode)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer)
+STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, libc_types::u32 index, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glBindBufferBase)
@@ -3276,14 +3277,14 @@ STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glh
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindBufferBase(buffer_to_enum(target), index, C_OCAST<u32>(buffer));
+    glBindBufferBase(buffer_to_enum(target), index, C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer, ptroff offset, ptroff size)
+STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, libc_types::u32 index, glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glBindBufferRange)
@@ -3291,14 +3292,14 @@ STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, gl
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindBufferRange(buffer_to_enum(target), index, C_OCAST<u32>(buffer), offset, size);
+    glBindBufferRange(buffer_to_enum(target), index, C_OCAST<libc_types::u32>(buffer), offset, size);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void BindFragDataLocation(glhnd const& program, u32 color, const GLchar * name)
+STATICINLINE void BindFragDataLocation(glhnd const& program, libc_types::u32 color, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glBindFragDataLocation)
@@ -3306,14 +3307,14 @@ STATICINLINE void BindFragDataLocation(glhnd const& program, u32 color, const GL
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindFragDataLocation(C_OCAST<u32>(program), color, name);
+    glBindFragDataLocation(C_OCAST<libc_types::u32>(program), color, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
+STATICINLINE void FBBind(FramebufferT target, glhnd const& framebuffer)
 {
 #ifndef NDEBUG
     if(!glBindFramebuffer)
@@ -3321,14 +3322,14 @@ STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindFramebuffer(to_enum(target), framebuffer);
+    glBindFramebuffer(to_enum(target), C_OCAST<libc_types::u32>(framebuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
+STATICINLINE void RBufBind(GLenum target, glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glBindRenderbuffer)
@@ -3336,7 +3337,7 @@ STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindRenderbuffer(target, renderbuffer);
+    glBindRenderbuffer(target, C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
@@ -3351,14 +3352,14 @@ STATICINLINE void VAOBind(glhnd const& array)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindVertexArray(C_OCAST<u32>(array));
+    glBindVertexArray(C_OCAST<libc_types::u32>(array));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void FBBlit(i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
+STATICINLINE void FBBlit(libc_types::i32 srcX0, libc_types::i32 srcY0, libc_types::i32 srcX1, libc_types::i32 srcY1, libc_types::i32 dstX0, libc_types::i32 dstY0, libc_types::i32 dstX1, libc_types::i32 dstY1, libc_types::u32 mask, GLenum filter)
 {
 #ifndef NDEBUG
     if(!glBlitFramebuffer)
@@ -3381,7 +3382,7 @@ STATICINLINE GLenum FBCheckStatus(FramebufferT target)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCheckFramebufferStatus(to_enum(target));
+    return (GLenum)glCheckFramebufferStatus(to_enum(target));
 }
 #endif
 
@@ -3403,7 +3404,7 @@ STATICINLINE void ClampColor(GLenum target, GLenum clamp)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufClearfi(GLenum buffer, i32 drawbuffer, scalar depth, i32 stencil)
+STATICINLINE void BufClearfi(GLenum buffer, libc_types::i32 drawbuffer, libc_types::f32 depth, libc_types::i32 stencil)
 {
 #ifndef NDEBUG
     if(!glClearBufferfi)
@@ -3418,7 +3419,7 @@ STATICINLINE void BufClearfi(GLenum buffer, i32 drawbuffer, scalar depth, i32 st
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufClearfv(GLenum buffer, i32 drawbuffer, Span<const scalar> const& value)
+STATICINLINE void BufClearfv(GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearBufferfv)
@@ -3433,7 +3434,7 @@ STATICINLINE void BufClearfv(GLenum buffer, i32 drawbuffer, Span<const scalar> c
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufCleariv(GLenum buffer, i32 drawbuffer, Span<const i32> const& value)
+STATICINLINE void BufCleariv(GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearBufferiv)
@@ -3448,7 +3449,7 @@ STATICINLINE void BufCleariv(GLenum buffer, i32 drawbuffer, Span<const i32> cons
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufClearuiv(GLenum buffer, i32 drawbuffer, Span<const u32> const& value)
+STATICINLINE void BufClearuiv(GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearBufferuiv)
@@ -3463,7 +3464,7 @@ STATICINLINE void BufClearuiv(GLenum buffer, i32 drawbuffer, Span<const u32> con
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void ColorMaski(u32 index, bool r, bool g, bool b, bool a)
+STATICINLINE void ColorMaski(libc_types::u32 index, libc_types::u8 r, libc_types::u8 g, libc_types::u8 b, libc_types::u8 a)
 {
 #ifndef NDEBUG
     if(!glColorMaski)
@@ -3471,14 +3472,14 @@ STATICINLINE void ColorMaski(u32 index, bool r, bool g, bool b, bool a)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glColorMaski(index, r ? GL_TRUE : GL_FALSE, g ? GL_TRUE : GL_FALSE, b ? GL_TRUE : GL_FALSE, a ? GL_TRUE : GL_FALSE);
+    glColorMaski(index, r, g, b, a);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBFree(Span<const u32> const& framebuffers)
+STATICINLINE void FBFree(semantic::Span<const libc_types::u32>&& framebuffers)
 {
 #ifndef NDEBUG
     if(!glDeleteFramebuffers)
@@ -3486,14 +3487,14 @@ STATICINLINE void FBFree(Span<const u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
+    glDeleteFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
+STATICINLINE void RBufFree(semantic::Span<const libc_types::u32>&& renderbuffers)
 {
 #ifndef NDEBUG
     if(!glDeleteRenderbuffers)
@@ -3501,14 +3502,14 @@ STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
+    glDeleteRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOFree(Span<const u32> const& arrays)
+STATICINLINE void VAOFree(semantic::Span<const libc_types::u32>&& arrays)
 {
 #ifndef NDEBUG
     if(!glDeleteVertexArrays)
@@ -3516,14 +3517,14 @@ STATICINLINE void VAOFree(Span<const u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
+    glDeleteVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void Disablei(Feature target, u32 index)
+STATICINLINE void Disablei(Feature target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glDisablei)
@@ -3538,7 +3539,7 @@ STATICINLINE void Disablei(Feature target, u32 index)
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void Enablei(Feature target, u32 index)
+STATICINLINE void Enablei(Feature target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glEnablei)
@@ -3583,7 +3584,7 @@ STATICINLINE void XFEnd()
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length)
+STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, libc_types::ptroff offset, libc_types::ptroff length)
 {
 #ifndef NDEBUG
     if(!glFlushMappedBufferRange)
@@ -3598,7 +3599,7 @@ STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
+STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glFramebufferRenderbuffer)
@@ -3606,14 +3607,14 @@ STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferRenderbuffer(to_enum(target), attachment, renderbuffertarget, renderbuffer);
+    glFramebufferRenderbuffer(to_enum(target), attachment, renderbuffertarget, C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void FBTexture1D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level)
+STATICINLINE void FBTexture1D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture1D)
@@ -3621,14 +3622,14 @@ STATICINLINE void FBTexture1D(FramebufferT target, GLenum attachment, TexComp::t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTexture1D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<u32>(texture), level);
+    glFramebufferTexture1D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level)
+STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture2D)
@@ -3636,14 +3637,14 @@ STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTexture2D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<u32>(texture), level);
+    glFramebufferTexture2D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void FBTexture3D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level, i32 zoffset)
+STATICINLINE void FBTexture3D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, libc_types::i32 level, libc_types::i32 zoffset)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture3D)
@@ -3651,14 +3652,14 @@ STATICINLINE void FBTexture3D(FramebufferT target, GLenum attachment, TexComp::t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTexture3D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<u32>(texture), level, zoffset);
+    glFramebufferTexture3D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<libc_types::u32>(texture), level, zoffset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
+STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level, libc_types::i32 layer)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureLayer)
@@ -3669,14 +3670,14 @@ STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTextureLayer(to_enum(target), attachment, C_OCAST<u32>(texture), level, layer);
+    glFramebufferTextureLayer(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level, layer);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
+STATICINLINE void FBAlloc(semantic::Span<libc_types::u32>&& framebuffers)
 {
 #ifndef NDEBUG
     if(!glGenFramebuffers)
@@ -3684,14 +3685,14 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
+    glGenFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
+STATICINLINE void RBufAlloc(semantic::Span<libc_types::u32>&& renderbuffers)
 {
 #ifndef NDEBUG
     if(!glGenRenderbuffers)
@@ -3699,14 +3700,14 @@ STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
+    glGenRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOAlloc(Span<u32> const& arrays)
+STATICINLINE void VAOAlloc(semantic::Span<libc_types::u32>&& arrays)
 {
 #ifndef NDEBUG
     if(!glGenVertexArrays)
@@ -3714,7 +3715,7 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
+    glGenVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
 }
 #endif
 
@@ -3736,7 +3737,7 @@ STATICINLINE void GenerateMipmap(TexComp::tex_flag const& target)
 
 #if GL_VERSION_VERIFY(0x300, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_31)
-STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, u32 index, u8 * data)
+STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, libc_types::u32 index, libc_types::u8 * data)
 {
 #ifndef NDEBUG
     if(!glGetBooleani_v)
@@ -3751,7 +3752,7 @@ STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, u32 index, u8 *
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetFragDataLocation)
@@ -3759,14 +3760,14 @@ STATICINLINE i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetFragDataLocation(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetFragDataLocation(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachment, GLenum pname, i32 * params)
+STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachment, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetFramebufferAttachmentParameteriv)
@@ -3781,7 +3782,7 @@ STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachm
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
+STATICINLINE void IntegerGeti_v(GLenum target, libc_types::u32 index, libc_types::i32 * data)
 {
 #ifndef NDEBUG
     if(!glGetIntegeri_v)
@@ -3796,7 +3797,7 @@ STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, i32 * params)
+STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetRenderbufferParameteriv)
@@ -3811,7 +3812,7 @@ STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, i32 * params)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE const u8 * GetStringi(GLenum name, u32 index)
+STATICINLINE libc_types::cstring  GetStringi(GLenum name, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glGetStringi)
@@ -3819,14 +3820,14 @@ STATICINLINE const u8 * GetStringi(GLenum name, u32 index)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetStringi(name, index);
+    return (libc_types::cstring )glGetStringi(name, index);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexGetParameterIiv(TexComp::tex_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void TexGetParameterIiv(TexComp::tex_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameterIiv)
@@ -3841,7 +3842,7 @@ STATICINLINE void TexGetParameterIiv(TexComp::tex_flag const& target, GLenum pna
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pname, u32 * params)
+STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameterIuiv)
@@ -3856,7 +3857,7 @@ STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pn
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void XFGetVarying(glhnd const& program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void XFGetVarying(glhnd const& program, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetTransformFeedbackVarying)
@@ -3864,14 +3865,14 @@ STATICINLINE void XFGetVarying(glhnd const& program, u32 index, i32 bufSize, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTransformFeedbackVarying(C_OCAST<u32>(program), index, bufSize, length, size, type, name);
+    glGetTransformFeedbackVarying(C_OCAST<libc_types::u32>(program), index, bufSize, length, size, type, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void UnifGetuiv(glhnd const& program, i32 location, u32 * params)
+STATICINLINE void UnifGetuiv(glhnd const& program, libc_types::i32 location, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformuiv)
@@ -3879,14 +3880,14 @@ STATICINLINE void UnifGetuiv(glhnd const& program, i32 location, u32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformuiv(C_OCAST<u32>(program), location, params);
+    glGetUniformuiv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOGetIiv(u32 index, GLenum pname, i32 * params)
+STATICINLINE void VAOGetIiv(libc_types::u32 index, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribIiv)
@@ -3901,7 +3902,7 @@ STATICINLINE void VAOGetIiv(u32 index, GLenum pname, i32 * params)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOGetIuiv(u32 index, GLenum pname, u32 * params)
+STATICINLINE void VAOGetIuiv(libc_types::u32 index, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribIuiv)
@@ -3916,7 +3917,7 @@ STATICINLINE void VAOGetIuiv(u32 index, GLenum pname, u32 * params)
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE u8 IsEnabledi(Feature target, u32 index)
+STATICINLINE libc_types::u8 IsEnabledi(Feature target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glIsEnabledi)
@@ -3924,14 +3925,14 @@ STATICINLINE u8 IsEnabledi(Feature target, u32 index)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsEnabledi(to_enum(target), index);
+    return (libc_types::u8)glIsEnabledi(to_enum(target), index);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE u8 IsFramebuffer(u32 framebuffer)
+STATICINLINE libc_types::u8 IsFramebuffer(glhnd const& framebuffer)
 {
 #ifndef NDEBUG
     if(!glIsFramebuffer)
@@ -3939,14 +3940,14 @@ STATICINLINE u8 IsFramebuffer(u32 framebuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsFramebuffer(framebuffer);
+    return (libc_types::u8)glIsFramebuffer(C_OCAST<libc_types::u32>(framebuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
+STATICINLINE libc_types::u8 IsRenderbuffer(glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glIsRenderbuffer)
@@ -3954,14 +3955,14 @@ STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsRenderbuffer(renderbuffer);
+    return (libc_types::u8)glIsRenderbuffer(C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE u8 IsVertexArray(glhnd const& array)
+STATICINLINE libc_types::u8 IsVertexArray(glhnd const& array)
 {
 #ifndef NDEBUG
     if(!glIsVertexArray)
@@ -3969,14 +3970,14 @@ STATICINLINE u8 IsVertexArray(glhnd const& array)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsVertexArray(C_OCAST<u32>(array));
+    return (libc_types::u8)glIsVertexArray(C_OCAST<libc_types::u32>(array));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length, RSCA access)
+STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, libc_types::ptroff offset, libc_types::ptroff length, semantic::RSCA access)
 {
 #ifndef NDEBUG
     if(!glMapBufferRange)
@@ -3984,14 +3985,14 @@ STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offse
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glMapBufferRange(buffer_to_enum(target), offset, length, to_enum2(access));
+    return (void *)glMapBufferRange(buffer_to_enum(target), offset, length, to_enum2(access));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& size)
+STATICINLINE void RBufStorage(GLenum target, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glRenderbufferStorage)
@@ -3999,14 +4000,14 @@ STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glRenderbufferStorage(target, to_enum(internalformat), size.w, size.h);
+    glRenderbufferStorage(target, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt internalformat, Size const& size)
+STATICINLINE void RBufStorageMultisample(GLenum target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glRenderbufferStorageMultisample)
@@ -4014,14 +4015,14 @@ STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt inte
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glRenderbufferStorageMultisample(target, samples, to_enum(internalformat), size.w, size.h);
+    glRenderbufferStorageMultisample(target, samples, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexParameterIiv(TexComp::tex_flag const& target, GLenum pname, const i32 * params)
+STATICINLINE void TexParameterIiv(TexComp::tex_flag const& target, GLenum pname, const libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameterIiv)
@@ -4036,7 +4037,7 @@ STATICINLINE void TexParameterIiv(TexComp::tex_flag const& target, GLenum pname,
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname, const u32 * params)
+STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname, const libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameterIuiv)
@@ -4051,7 +4052,7 @@ STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void XFVaryings(glhnd const& program, i32 count, const GLchar * *const varyings, GLenum bufferMode)
+STATICINLINE void XFVaryings(glhnd const& program, libc_types::i32 count, const GLchar * *const varyings, GLenum bufferMode)
 {
 #ifndef NDEBUG
     if(!glTransformFeedbackVaryings)
@@ -4059,14 +4060,14 @@ STATICINLINE void XFVaryings(glhnd const& program, i32 count, const GLchar * *co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTransformFeedbackVaryings(C_OCAST<u32>(program), count, varyings, bufferMode);
+    glTransformFeedbackVaryings(C_OCAST<libc_types::u32>(program), count, varyings, bufferMode);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif1ui(i32 location, u32 v0)
+STATICINLINE void Unif1ui(libc_types::i32 location, libc_types::u32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1ui)
@@ -4081,7 +4082,7 @@ STATICINLINE void Unif1ui(i32 location, u32 v0)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<const u32> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1uiv)
@@ -4089,14 +4090,14 @@ STATICINLINE void Unifuiv(i32 location, Span<const u32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform1uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif2ui(i32 location, u32 v0, u32 v1)
+STATICINLINE void Unif2ui(libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2ui)
@@ -4104,14 +4105,14 @@ STATICINLINE void Unif2ui(i32 location, u32 v0, u32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ui(location, v0, v1);
+    glUniform2ui(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<Vecui2> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecui2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2uiv)
@@ -4119,14 +4120,14 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform2uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif3ui(i32 location, u32 v0, u32 v1, u32 v2)
+STATICINLINE void Unif3ui(libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 3> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3ui)
@@ -4134,14 +4135,14 @@ STATICINLINE void Unif3ui(i32 location, u32 v0, u32 v1, u32 v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ui(location, v0, v1, v2);
+    glUniform3ui(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<Vecui3> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecui3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3uiv)
@@ -4149,14 +4150,14 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform3uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif4ui(i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
+STATICINLINE void Unif4ui(libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 4> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4ui)
@@ -4164,14 +4165,14 @@ STATICINLINE void Unif4ui(i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ui(location, v0, v1, v2, v3);
+    glUniform4ui(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecui4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4uiv)
@@ -4179,14 +4180,14 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform4uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI1i(u32 index, i32 x)
+STATICINLINE void VAOI1i(libc_types::u32 index, libc_types::i32 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI1i)
@@ -4201,7 +4202,7 @@ STATICINLINE void VAOI1i(u32 index, i32 x)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI1iv(u32 index, const i32 * v)
+STATICINLINE void VAOI1iv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI1iv)
@@ -4216,7 +4217,7 @@ STATICINLINE void VAOI1iv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI1ui(u32 index, u32 x)
+STATICINLINE void VAOI1ui(libc_types::u32 index, libc_types::u32 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI1ui)
@@ -4231,7 +4232,7 @@ STATICINLINE void VAOI1ui(u32 index, u32 x)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI1uiv(u32 index, const u32 * v)
+STATICINLINE void VAOI1uiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI1uiv)
@@ -4246,7 +4247,7 @@ STATICINLINE void VAOI1uiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI2i(u32 index, i32 x, i32 y)
+STATICINLINE void VAOI2i(libc_types::u32 index, typing::vectors::tvector<libc_types::i32, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI2i)
@@ -4254,14 +4255,14 @@ STATICINLINE void VAOI2i(u32 index, i32 x, i32 y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI2i(index, x, y);
+    glVertexAttribI2i(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI2iv(u32 index, const i32 * v)
+STATICINLINE void VAOI2iv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI2iv)
@@ -4276,7 +4277,7 @@ STATICINLINE void VAOI2iv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI2ui(u32 index, u32 x, u32 y)
+STATICINLINE void VAOI2ui(libc_types::u32 index, typing::vectors::tvector<libc_types::u32, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI2ui)
@@ -4284,14 +4285,14 @@ STATICINLINE void VAOI2ui(u32 index, u32 x, u32 y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI2ui(index, x, y);
+    glVertexAttribI2ui(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI2uiv(u32 index, const u32 * v)
+STATICINLINE void VAOI2uiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI2uiv)
@@ -4306,7 +4307,7 @@ STATICINLINE void VAOI2uiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI3i(u32 index, i32 x, i32 y, i32 z)
+STATICINLINE void VAOI3i(libc_types::u32 index, typing::vectors::tvector<libc_types::i32, 3> x, libc_types::i32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI3i)
@@ -4314,14 +4315,14 @@ STATICINLINE void VAOI3i(u32 index, i32 x, i32 y, i32 z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI3i(index, x, y, z);
+    glVertexAttribI3i(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI3iv(u32 index, const i32 * v)
+STATICINLINE void VAOI3iv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI3iv)
@@ -4336,7 +4337,7 @@ STATICINLINE void VAOI3iv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI3ui(u32 index, u32 x, u32 y, u32 z)
+STATICINLINE void VAOI3ui(libc_types::u32 index, typing::vectors::tvector<libc_types::u32, 3> x, libc_types::u32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI3ui)
@@ -4344,14 +4345,14 @@ STATICINLINE void VAOI3ui(u32 index, u32 x, u32 y, u32 z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI3ui(index, x, y, z);
+    glVertexAttribI3ui(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI3uiv(u32 index, const u32 * v)
+STATICINLINE void VAOI3uiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI3uiv)
@@ -4366,7 +4367,7 @@ STATICINLINE void VAOI3uiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI4bv(u32 index, const i8 * v)
+STATICINLINE void VAOI4bv(libc_types::u32 index, const libc_types::i8 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4bv)
@@ -4381,7 +4382,7 @@ STATICINLINE void VAOI4bv(u32 index, const i8 * v)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4i(u32 index, i32 x, i32 y, i32 z, i32 w)
+STATICINLINE void VAOI4i(libc_types::u32 index, typing::vectors::tvector<libc_types::i32, 4> x, libc_types::i32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4i)
@@ -4389,14 +4390,14 @@ STATICINLINE void VAOI4i(u32 index, i32 x, i32 y, i32 z, i32 w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI4i(index, x, y, z, w);
+    glVertexAttribI4i(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4iv(u32 index, const i32 * v)
+STATICINLINE void VAOI4iv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4iv)
@@ -4411,7 +4412,7 @@ STATICINLINE void VAOI4iv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI4sv(u32 index, const i16 * v)
+STATICINLINE void VAOI4sv(libc_types::u32 index, const libc_types::i16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4sv)
@@ -4426,7 +4427,7 @@ STATICINLINE void VAOI4sv(u32 index, const i16 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI4ubv(u32 index, const u8 * v)
+STATICINLINE void VAOI4ubv(libc_types::u32 index, const libc_types::u8 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4ubv)
@@ -4441,7 +4442,7 @@ STATICINLINE void VAOI4ubv(u32 index, const u8 * v)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4ui(u32 index, u32 x, u32 y, u32 z, u32 w)
+STATICINLINE void VAOI4ui(libc_types::u32 index, typing::vectors::tvector<libc_types::u32, 4> x, libc_types::u32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4ui)
@@ -4449,14 +4450,14 @@ STATICINLINE void VAOI4ui(u32 index, u32 x, u32 y, u32 z, u32 w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI4ui(index, x, y, z, w);
+    glVertexAttribI4ui(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4uiv(u32 index, const u32 * v)
+STATICINLINE void VAOI4uiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4uiv)
@@ -4471,7 +4472,7 @@ STATICINLINE void VAOI4uiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_30)
-STATICINLINE void VAOI4usv(u32 index, const u16 * v)
+STATICINLINE void VAOI4usv(libc_types::u32 index, const libc_types::u16 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4usv)
@@ -4486,7 +4487,7 @@ STATICINLINE void VAOI4usv(u32 index, const u16 * v)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOIPointer(u32 index, i32 size, GLenum type, i32 stride, const void * pointer)
+STATICINLINE void VAOIPointer(libc_types::u32 index, libc_types::i32 size, GLenum type, libc_types::i32 stride, const void * pointer)
 {
 #ifndef NDEBUG
     if(!glVertexAttribIPointer)
@@ -4500,14 +4501,14 @@ STATICINLINE void VAOIPointer(u32 index, i32 size, GLenum type, i32 stride, cons
 
 };
 template<typename ReqVer>
-struct CGL_31
-    : CGL_30<ReqVer>
+struct v31
+    : v30<ReqVer>
 {
-using Parent = CGL_30<ReqVer>;
+using Parent = v30<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, ptroff readOffset, ptroff writeOffset, ptroff size)
+STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, libc_types::ptroff readOffset, libc_types::ptroff writeOffset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glCopyBufferSubData)
@@ -4522,7 +4523,7 @@ STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, ptroff r
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void DrawArraysInstanced(DrwMd const& mode, i32 first, i32 count, i32 instancecount)
+STATICINLINE void DrawArraysInstanced(DrwMd const& mode, libc_types::i32 first, libc_types::i32 count, libc_types::i32 instancecount)
 {
 #ifndef NDEBUG
     if(!glDrawArraysInstanced)
@@ -4540,7 +4541,7 @@ STATICINLINE void DrawArraysInstanced(DrwMd const& mode, i32 first, i32 count, i
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount)
+STATICINLINE void DrawElementsInstanced(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 instancecount)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstanced)
@@ -4558,7 +4559,7 @@ STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum t
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
+STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, libc_types::u32 uniformBlockIndex, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * uniformBlockName)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockName)
@@ -4566,14 +4567,14 @@ STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockI
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformBlockName(C_OCAST<u32>(program), uniformBlockIndex, bufSize, length, uniformBlockName);
+    glGetActiveUniformBlockName(C_OCAST<libc_types::u32>(program), uniformBlockIndex, bufSize, length, uniformBlockName);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockIndex, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, libc_types::u32 uniformBlockIndex, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockiv)
@@ -4581,14 +4582,14 @@ STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockInd
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformBlockiv(C_OCAST<u32>(program), uniformBlockIndex, pname, params);
+    glGetActiveUniformBlockiv(C_OCAST<libc_types::u32>(program), uniformBlockIndex, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_31)
-STATICINLINE void ActiveUnifGetName(glhnd const& program, u32 uniformIndex, i32 bufSize, i32 * length, GLchar * uniformName)
+STATICINLINE void ActiveUnifGetName(glhnd const& program, libc_types::u32 uniformIndex, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * uniformName)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformName)
@@ -4596,14 +4597,14 @@ STATICINLINE void ActiveUnifGetName(glhnd const& program, u32 uniformIndex, i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformName(C_OCAST<u32>(program), uniformIndex, bufSize, length, uniformName);
+    glGetActiveUniformName(C_OCAST<libc_types::u32>(program), uniformIndex, bufSize, length, uniformName);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifGetsiv(glhnd const& program, libc_types::i32 uniformCount, const libc_types::u32 * uniformIndices, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformsiv)
@@ -4611,14 +4612,14 @@ STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformsiv(C_OCAST<u32>(program), uniformCount, uniformIndices, pname, params);
+    glGetActiveUniformsiv(C_OCAST<libc_types::u32>(program), uniformCount, uniformIndices, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformBlockName)
+STATICINLINE libc_types::u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformBlockName)
 {
 #ifndef NDEBUG
     if(!glGetUniformBlockIndex)
@@ -4626,14 +4627,14 @@ STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformB
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetUniformBlockIndex(C_OCAST<u32>(program), uniformBlockName);
+    return (libc_types::u32)glGetUniformBlockIndex(C_OCAST<libc_types::u32>(program), uniformBlockName);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifGetIndices(glhnd const& program, i32 uniformCount, const GLchar * *const uniformNames, u32 * uniformIndices)
+STATICINLINE void UnifGetIndices(glhnd const& program, libc_types::i32 uniformCount, const GLchar * *const uniformNames, libc_types::u32 * uniformIndices)
 {
 #ifndef NDEBUG
     if(!glGetUniformIndices)
@@ -4641,14 +4642,14 @@ STATICINLINE void UnifGetIndices(glhnd const& program, i32 uniformCount, const G
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformIndices(C_OCAST<u32>(program), uniformCount, uniformNames, uniformIndices);
+    glGetUniformIndices(C_OCAST<libc_types::u32>(program), uniformCount, uniformNames, uniformIndices);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_31)
-STATICINLINE void PrimitiveRestartIndex(u32 index)
+STATICINLINE void PrimitiveRestartIndex(libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glPrimitiveRestartIndex)
@@ -4663,7 +4664,7 @@ STATICINLINE void PrimitiveRestartIndex(u32 index)
 
 #if GL_VERSION_VERIFY(0x310, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_32)
-STATICINLINE void TexBuffer(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer)
+STATICINLINE void TexBuffer(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glTexBuffer)
@@ -4674,14 +4675,14 @@ STATICINLINE void TexBuffer(TexComp::tex_flag const& target, PixFmt internalform
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexBuffer(texture_to_enum(target), to_enum(internalformat), C_OCAST<u32>(buffer));
+    glTexBuffer(texture_to_enum(target), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifBlockBinding(glhnd const& program, u32 uniformBlockIndex, u32 uniformBlockBinding)
+STATICINLINE void UnifBlockBinding(glhnd const& program, libc_types::u32 uniformBlockIndex, libc_types::u32 uniformBlockBinding)
 {
 #ifndef NDEBUG
     if(!glUniformBlockBinding)
@@ -4689,20 +4690,20 @@ STATICINLINE void UnifBlockBinding(glhnd const& program, u32 uniformBlockIndex, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformBlockBinding(C_OCAST<u32>(program), uniformBlockIndex, uniformBlockBinding);
+    glUniformBlockBinding(C_OCAST<libc_types::u32>(program), uniformBlockIndex, uniformBlockBinding);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_32
-    : CGL_31<ReqVer>
+struct v32
+    : v31<ReqVer>
 {
-using Parent = CGL_31<ReqVer>;
+using Parent = v31<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE GLenum SyncClientWait(GLsync sync, RSCA flags, u64 timeout)
+STATICINLINE GLenum SyncClientWait(GLsync sync, semantic::RSCA flags, libc_types::u64 timeout)
 {
 #ifndef NDEBUG
     if(!glClientWaitSync)
@@ -4710,7 +4711,7 @@ STATICINLINE GLenum SyncClientWait(GLsync sync, RSCA flags, u64 timeout)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glClientWaitSync(sync, to_enum2(flags), timeout);
+    return (GLenum)glClientWaitSync(sync, to_enum2(flags), timeout);
 }
 #endif
 
@@ -4732,7 +4733,7 @@ STATICINLINE void SyncFree(GLsync sync)
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
+STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 basevertex)
 {
 #ifndef NDEBUG
     if(!glDrawElementsBaseVertex)
@@ -4747,7 +4748,7 @@ STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum 
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, i32 basevertex)
+STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 instancecount, libc_types::i32 basevertex)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstancedBaseVertex)
@@ -4762,7 +4763,7 @@ STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, 
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, u32 start, u32 end, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
+STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, libc_types::u32 start, libc_types::u32 end, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 basevertex)
 {
 #ifndef NDEBUG
     if(!glDrawRangeElementsBaseVertex)
@@ -4777,7 +4778,7 @@ STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, u32 start, u32 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE GLsync SyncFence(GLenum condition, RSCA flags)
+STATICINLINE GLsync SyncFence(GLenum condition, semantic::RSCA flags)
 {
 #ifndef NDEBUG
     if(!glFenceSync)
@@ -4785,14 +4786,14 @@ STATICINLINE GLsync SyncFence(GLenum condition, RSCA flags)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glFenceSync(condition, to_enum2(flags));
+    return (GLsync)glFenceSync(condition, to_enum2(flags));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level)
+STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture)
@@ -4803,14 +4804,14 @@ STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTexture(to_enum(target), attachment, C_OCAST<u32>(texture), level);
+    glFramebufferTexture(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void BufGetParameteri64v(BufferComp::buf_flag const& target, GLenum pname, i64 * params)
+STATICINLINE void BufGetParameteri64v(BufferComp::buf_flag const& target, GLenum pname, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetBufferParameteri64v)
@@ -4825,7 +4826,7 @@ STATICINLINE void BufGetParameteri64v(BufferComp::buf_flag const& target, GLenum
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void IntegerGet64i_v(GLenum target, u32 index, i64 * data)
+STATICINLINE void IntegerGet64i_v(GLenum target, libc_types::u32 index, libc_types::i64 * data)
 {
 #ifndef NDEBUG
     if(!glGetInteger64i_v)
@@ -4840,7 +4841,7 @@ STATICINLINE void IntegerGet64i_v(GLenum target, u32 index, i64 * data)
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void IntegerGet64v(GLenum pname, i64 * data)
+STATICINLINE void IntegerGet64v(GLenum pname, libc_types::i64 * data)
 {
 #ifndef NDEBUG
     if(!glGetInteger64v)
@@ -4855,7 +4856,7 @@ STATICINLINE void IntegerGet64v(GLenum pname, i64 * data)
 
 #if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
-STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
+STATICINLINE void GetMultisamplefv(GLenum pname, libc_types::u32 index, libc_types::f32 * val)
 {
 #ifndef NDEBUG
     if(!glGetMultisamplefv)
@@ -4870,7 +4871,7 @@ STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void SyncGetiv(GLsync sync, GLenum pname, i32 bufSize, i32 * length, i32 * values)
+STATICINLINE void SyncGetiv(GLsync sync, GLenum pname, libc_types::i32 count, libc_types::i32 * length, libc_types::i32 * values)
 {
 #ifndef NDEBUG
     if(!glGetSynciv)
@@ -4878,14 +4879,14 @@ STATICINLINE void SyncGetiv(GLsync sync, GLenum pname, i32 bufSize, i32 * length
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSynciv(sync, pname, bufSize, length, values);
+    glGetSynciv(sync, pname, count, length, values);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE u8 IsSync(GLsync sync)
+STATICINLINE libc_types::u8 IsSync(GLsync sync)
 {
 #ifndef NDEBUG
     if(!glIsSync)
@@ -4893,14 +4894,14 @@ STATICINLINE u8 IsSync(GLsync sync)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsSync(sync);
+    return (libc_types::u8)glIsSync(sync);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
-STATICINLINE void MultiDrawElementsBaseVertex(DrwMd const& mode, const i32 * count, TypeEnum type, uintptr indices, i32 drawcount, const i32 * basevertex)
+STATICINLINE void MultiDrawElementsBaseVertex(DrwMd const& mode, const libc_types::i32 * count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 drawcount, const libc_types::i32 * basevertex)
 {
 #ifndef NDEBUG
     if(!glMultiDrawElementsBaseVertex)
@@ -4930,7 +4931,7 @@ STATICINLINE void VAOProvoking(GLenum mode)
 
 #if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
-STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
+STATICINLINE void SampleMaski(libc_types::u32 maskNumber, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glSampleMaski)
@@ -4945,7 +4946,7 @@ STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
 
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
-STATICINLINE void TexImage2DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
+STATICINLINE void TexImage2DMultisample(TexComp::tex_flag const& target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTexImage2DMultisample)
@@ -4953,14 +4954,14 @@ STATICINLINE void TexImage2DMultisample(TexComp::tex_flag const& target, i32 sam
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage2DMultisample(texture_to_enum(target), samples, to_enum(internalformat), size.w, size.h, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTexImage2DMultisample(texture_to_enum(target), samples, to_enum(internalformat), width.w, width.h, fixedsamplelocations);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_32)
-STATICINLINE void TexImage3DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
+STATICINLINE void TexImage3DMultisample(TexComp::tex_flag const& target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTexImage3DMultisample)
@@ -4968,14 +4969,14 @@ STATICINLINE void TexImage3DMultisample(TexComp::tex_flag const& target, i32 sam
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage3DMultisample(texture_to_enum(target), samples, to_enum(internalformat), size.width, size.height, size.depth, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTexImage3DMultisample(texture_to_enum(target), samples, to_enum(internalformat), width.width, width.height, width.depth, fixedsamplelocations);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void SyncWait(GLsync sync, RSCA flags, u64 timeout)
+STATICINLINE void SyncWait(GLsync sync, semantic::RSCA flags, libc_types::u64 timeout)
 {
 #ifndef NDEBUG
     if(!glWaitSync)
@@ -4989,14 +4990,14 @@ STATICINLINE void SyncWait(GLsync sync, RSCA flags, u64 timeout)
 
 };
 template<typename ReqVer>
-struct CGL_33
-    : CGL_32<ReqVer>
+struct v33
+    : v32<ReqVer>
 {
-using Parent = CGL_32<ReqVer>;
+using Parent = v32<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void BindFragDataLocationIndexed(glhnd const& program, u32 colorNumber, u32 index, const GLchar * name)
+STATICINLINE void BindFragDataLocationIndexed(glhnd const& program, libc_types::u32 colorNumber, libc_types::u32 index, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glBindFragDataLocationIndexed)
@@ -5004,14 +5005,14 @@ STATICINLINE void BindFragDataLocationIndexed(glhnd const& program, u32 colorNum
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindFragDataLocationIndexed(C_OCAST<u32>(program), colorNumber, index, name);
+    glBindFragDataLocationIndexed(C_OCAST<libc_types::u32>(program), colorNumber, index, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
+STATICINLINE void SamplerBind(libc_types::u32 unit, glhnd const& sampler)
 {
 #ifndef NDEBUG
     if(!glBindSampler)
@@ -5019,14 +5020,14 @@ STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindSampler(unit, C_OCAST<u32>(sampler));
+    glBindSampler(unit, C_OCAST<libc_types::u32>(sampler));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerFree(Span<const u32> const& samplers)
+STATICINLINE void SamplerFree(semantic::Span<const libc_types::u32>&& samplers)
 {
 #ifndef NDEBUG
     if(!glDeleteSamplers)
@@ -5034,14 +5035,14 @@ STATICINLINE void SamplerFree(Span<const u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
+    glDeleteSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
+STATICINLINE void SamplerAlloc(semantic::Span<libc_types::u32>&& samplers)
 {
 #ifndef NDEBUG
     if(!glGenSamplers)
@@ -5049,14 +5050,14 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
+    glGenSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE i32 GetFragDataIndex(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 GetFragDataIndex(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetFragDataIndex)
@@ -5064,14 +5065,14 @@ STATICINLINE i32 GetFragDataIndex(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetFragDataIndex(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetFragDataIndex(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void QueryGetObjecti64v(u32 id, GLenum pname, i64 * params)
+STATICINLINE void QueryGetObjecti64v(glhnd const& id, GLenum pname, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjecti64v)
@@ -5079,14 +5080,14 @@ STATICINLINE void QueryGetObjecti64v(u32 id, GLenum pname, i64 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjecti64v(id, pname, params);
+    glGetQueryObjecti64v(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void QueryGetObjectui64v(u32 id, GLenum pname, u64 * params)
+STATICINLINE void QueryGetObjectui64v(glhnd const& id, GLenum pname, libc_types::u64 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjectui64v)
@@ -5094,14 +5095,14 @@ STATICINLINE void QueryGetObjectui64v(u32 id, GLenum pname, u64 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjectui64v(id, pname, params);
+    glGetQueryObjectui64v(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32 * params)
+STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameterIiv)
@@ -5109,14 +5110,14 @@ STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameterIiv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameterIiv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u32 * params)
+STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameterIuiv)
@@ -5124,14 +5125,14 @@ STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameterIuiv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameterIuiv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scalar * params)
+STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameterfv)
@@ -5139,14 +5140,14 @@ STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameterfv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameterfv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 * params)
+STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameteriv)
@@ -5154,14 +5155,14 @@ STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameteriv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameteriv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE u8 IsSampler(glhnd const& sampler)
+STATICINLINE libc_types::u8 IsSampler(glhnd const& sampler)
 {
 #ifndef NDEBUG
     if(!glIsSampler)
@@ -5169,14 +5170,14 @@ STATICINLINE u8 IsSampler(glhnd const& sampler)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsSampler(C_OCAST<u32>(sampler));
+    return (libc_types::u8)glIsSampler(C_OCAST<libc_types::u32>(sampler));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void QueryCounter(u32 id, QueryComp::query_flag const& target)
+STATICINLINE void QueryCounter(glhnd const& id, GLenum target)
 {
 #ifndef NDEBUG
     if(!glQueryCounter)
@@ -5184,14 +5185,14 @@ STATICINLINE void QueryCounter(u32 id, QueryComp::query_flag const& target)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glQueryCounter(id, query_to_enum(target));
+    glQueryCounter(C_OCAST<libc_types::u32>(id), target);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const i32 * param)
+STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterIiv)
@@ -5199,14 +5200,14 @@ STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterIiv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterIiv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const u32 * param)
+STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const libc_types::u32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterIuiv)
@@ -5214,14 +5215,14 @@ STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterIuiv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterIuiv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar param)
+STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterf)
@@ -5229,14 +5230,14 @@ STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar p
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterf(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterf(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const scalar * param)
+STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const libc_types::f32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterfv)
@@ -5244,14 +5245,14 @@ STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterfv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterfv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 param)
+STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameteri)
@@ -5259,14 +5260,14 @@ STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 para
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameteri(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameteri(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const i32 * param)
+STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameteriv)
@@ -5274,14 +5275,14 @@ STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const i
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameteriv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameteriv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void VAODivisor(u32 index, u32 divisor)
+STATICINLINE void VAODivisor(libc_types::u32 index, libc_types::u32 divisor)
 {
 #ifndef NDEBUG
     if(!glVertexAttribDivisor)
@@ -5299,7 +5300,7 @@ STATICINLINE void VAODivisor(u32 index, u32 divisor)
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP1ui(u32 index, GLenum type, bool normalized, u32 value)
+STATICINLINE void VAOP1ui(libc_types::u32 index, GLenum type, libc_types::u8 normalized, libc_types::u32 value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP1ui)
@@ -5307,14 +5308,14 @@ STATICINLINE void VAOP1ui(u32 index, GLenum type, bool normalized, u32 value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP1ui(index, type, normalized ? GL_TRUE : GL_FALSE, value);
+    glVertexAttribP1ui(index, type, normalized, value);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP1uiv(u32 index, GLenum type, bool normalized, Span<const u32> const& value)
+STATICINLINE void VAOP1uiv(libc_types::u32 index, GLenum type, libc_types::u8 normalized, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP1uiv)
@@ -5322,14 +5323,14 @@ STATICINLINE void VAOP1uiv(u32 index, GLenum type, bool normalized, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP1uiv(index, type, normalized ? GL_TRUE : GL_FALSE, value.data);
+    glVertexAttribP1uiv(index, type, normalized, value.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP2ui(u32 index, GLenum type, bool normalized, u32 value)
+STATICINLINE void VAOP2ui(libc_types::u32 index, GLenum type, libc_types::u8 normalized, libc_types::u32 value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP2ui)
@@ -5337,14 +5338,14 @@ STATICINLINE void VAOP2ui(u32 index, GLenum type, bool normalized, u32 value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP2ui(index, type, normalized ? GL_TRUE : GL_FALSE, value);
+    glVertexAttribP2ui(index, type, normalized, value);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP2uiv(u32 index, GLenum type, bool normalized, Span<const u32> const& value)
+STATICINLINE void VAOP2uiv(libc_types::u32 index, GLenum type, libc_types::u8 normalized, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP2uiv)
@@ -5352,14 +5353,14 @@ STATICINLINE void VAOP2uiv(u32 index, GLenum type, bool normalized, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP2uiv(index, type, normalized ? GL_TRUE : GL_FALSE, value.data);
+    glVertexAttribP2uiv(index, type, normalized, value.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP3ui(u32 index, GLenum type, bool normalized, u32 value)
+STATICINLINE void VAOP3ui(libc_types::u32 index, GLenum type, libc_types::u8 normalized, libc_types::u32 value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP3ui)
@@ -5367,14 +5368,14 @@ STATICINLINE void VAOP3ui(u32 index, GLenum type, bool normalized, u32 value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP3ui(index, type, normalized ? GL_TRUE : GL_FALSE, value);
+    glVertexAttribP3ui(index, type, normalized, value);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP3uiv(u32 index, GLenum type, bool normalized, Span<const u32> const& value)
+STATICINLINE void VAOP3uiv(libc_types::u32 index, GLenum type, libc_types::u8 normalized, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP3uiv)
@@ -5382,14 +5383,14 @@ STATICINLINE void VAOP3uiv(u32 index, GLenum type, bool normalized, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP3uiv(index, type, normalized ? GL_TRUE : GL_FALSE, value.data);
+    glVertexAttribP3uiv(index, type, normalized, value.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP4ui(u32 index, GLenum type, bool normalized, u32 value)
+STATICINLINE void VAOP4ui(libc_types::u32 index, GLenum type, libc_types::u8 normalized, libc_types::u32 value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP4ui)
@@ -5397,14 +5398,14 @@ STATICINLINE void VAOP4ui(u32 index, GLenum type, bool normalized, u32 value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP4ui(index, type, normalized ? GL_TRUE : GL_FALSE, value);
+    glVertexAttribP4ui(index, type, normalized, value);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_33)
-STATICINLINE void VAOP4uiv(u32 index, GLenum type, bool normalized, Span<const u32> const& value)
+STATICINLINE void VAOP4uiv(libc_types::u32 index, GLenum type, libc_types::u8 normalized, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glVertexAttribP4uiv)
@@ -5412,20 +5413,20 @@ STATICINLINE void VAOP4uiv(u32 index, GLenum type, bool normalized, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP4uiv(index, type, normalized ? GL_TRUE : GL_FALSE, value.data);
+    glVertexAttribP4uiv(index, type, normalized, value.data);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_40
-    : CGL_33<ReqVer>
+struct v40
+    : v33<ReqVer>
 {
-using Parent = CGL_33<ReqVer>;
+using Parent = v33<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void QueryBeginIndexed(QueryComp::query_flag const& target, u32 index, u32 id)
+STATICINLINE void QueryBeginIndexed(QueryComp::query_flag const& target, libc_types::u32 index, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glBeginQueryIndexed)
@@ -5433,14 +5434,14 @@ STATICINLINE void QueryBeginIndexed(QueryComp::query_flag const& target, u32 ind
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBeginQueryIndexed(query_to_enum(target), index, id);
+    glBeginQueryIndexed(query_to_enum(target), index, C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE void XFBind(GLenum target, u32 id)
+STATICINLINE void XFBind(GLenum target, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glBindTransformFeedback)
@@ -5448,14 +5449,14 @@ STATICINLINE void XFBind(GLenum target, u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindTransformFeedback(target, id);
+    glBindTransformFeedback(target, C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendEquationSeparatei(u32 buf, GLenum modeRGB, GLenum modeAlpha)
+STATICINLINE void BlendEquationSeparatei(libc_types::u32 buf, GLenum modeRGB, GLenum modeAlpha)
 {
 #ifndef NDEBUG
     if(!glBlendEquationSeparatei)
@@ -5473,7 +5474,7 @@ STATICINLINE void BlendEquationSeparatei(u32 buf, GLenum modeRGB, GLenum modeAlp
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendEquationi(u32 buf, GLenum mode)
+STATICINLINE void BlendEquationi(libc_types::u32 buf, GLenum mode)
 {
 #ifndef NDEBUG
     if(!glBlendEquationi)
@@ -5491,7 +5492,7 @@ STATICINLINE void BlendEquationi(u32 buf, GLenum mode)
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendFuncSeparatei(u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+STATICINLINE void BlendFuncSeparatei(libc_types::u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
 #ifndef NDEBUG
     if(!glBlendFuncSeparatei)
@@ -5509,7 +5510,7 @@ STATICINLINE void BlendFuncSeparatei(u32 buf, GLenum srcRGB, GLenum dstRGB, GLen
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
+STATICINLINE void BlendFunci(libc_types::u32 buf, GLenum src, GLenum dst)
 {
 #ifndef NDEBUG
     if(!glBlendFunci)
@@ -5527,7 +5528,7 @@ STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE void XFFree(Span<const u32> const& ids)
+STATICINLINE void XFFree(semantic::Span<const libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glDeleteTransformFeedbacks)
@@ -5535,14 +5536,14 @@ STATICINLINE void XFFree(Span<const u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
+    glDeleteTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
-STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
+STATICINLINE void DrawArraysIndirect(DrwMd const& mode, libc_types::uintptr indirect)
 {
 #ifndef NDEBUG
     if(!glDrawArraysIndirect)
@@ -5557,7 +5558,7 @@ STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
 
 #if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
-STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr indirect)
+STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, libc_types::uintptr indirect)
 {
 #ifndef NDEBUG
     if(!glDrawElementsIndirect)
@@ -5572,7 +5573,7 @@ STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void DrawTransformFeedback(DrwMd const& mode, u32 id)
+STATICINLINE void DrawTransformFeedback(DrwMd const& mode, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glDrawTransformFeedback)
@@ -5580,14 +5581,14 @@ STATICINLINE void DrawTransformFeedback(DrwMd const& mode, u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDrawTransformFeedback(to_enum(mode.t, mode.c), id);
+    glDrawTransformFeedback(to_enum(mode.t, mode.c), C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void DrawTransformFeedbackStream(DrwMd const& mode, u32 id, u32 stream)
+STATICINLINE void DrawTransformFeedbackStream(DrwMd const& mode, glhnd const& id, libc_types::u32 stream)
 {
 #ifndef NDEBUG
     if(!glDrawTransformFeedbackStream)
@@ -5595,14 +5596,14 @@ STATICINLINE void DrawTransformFeedbackStream(DrwMd const& mode, u32 id, u32 str
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDrawTransformFeedbackStream(to_enum(mode.t, mode.c), id, stream);
+    glDrawTransformFeedbackStream(to_enum(mode.t, mode.c), C_OCAST<libc_types::u32>(id), stream);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void QueryEndIndexed(QueryComp::query_flag const& target, u32 index)
+STATICINLINE void QueryEndIndexed(QueryComp::query_flag const& target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glEndQueryIndexed)
@@ -5617,7 +5618,7 @@ STATICINLINE void QueryEndIndexed(QueryComp::query_flag const& target, u32 index
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE void XFAlloc(Span<u32> const& ids)
+STATICINLINE void XFAlloc(semantic::Span<libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glGenTransformFeedbacks)
@@ -5625,14 +5626,14 @@ STATICINLINE void XFAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
+    glGenTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void GetActiveSubroutineName(glhnd const& program, ShaderStage shadertype, u32 index, i32 bufsize, i32 * length, GLchar * name)
+STATICINLINE void GetActiveSubroutineName(glhnd const& program, ShaderStage shadertype, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveSubroutineName)
@@ -5640,14 +5641,14 @@ STATICINLINE void GetActiveSubroutineName(glhnd const& program, ShaderStage shad
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveSubroutineName(C_OCAST<u32>(program), to_enum1(shadertype), index, bufsize, length, name);
+    glGetActiveSubroutineName(C_OCAST<libc_types::u32>(program), to_enum1(shadertype), index, bufSize, length, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void UnifGetActiveSubroutineName(glhnd const& program, ShaderStage shadertype, u32 index, i32 bufsize, i32 * length, GLchar * name)
+STATICINLINE void UnifGetActiveSubroutineName(glhnd const& program, ShaderStage shadertype, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveSubroutineUniformName)
@@ -5655,14 +5656,14 @@ STATICINLINE void UnifGetActiveSubroutineName(glhnd const& program, ShaderStage 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveSubroutineUniformName(C_OCAST<u32>(program), to_enum1(shadertype), index, bufsize, length, name);
+    glGetActiveSubroutineUniformName(C_OCAST<libc_types::u32>(program), to_enum1(shadertype), index, bufSize, length, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void UnifGetActiveSubroutineiv(glhnd const& program, ShaderStage shadertype, u32 index, GLenum pname, i32 * values)
+STATICINLINE void UnifGetActiveSubroutineiv(glhnd const& program, ShaderStage shadertype, libc_types::u32 index, GLenum pname, libc_types::i32 * values)
 {
 #ifndef NDEBUG
     if(!glGetActiveSubroutineUniformiv)
@@ -5670,14 +5671,14 @@ STATICINLINE void UnifGetActiveSubroutineiv(glhnd const& program, ShaderStage sh
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveSubroutineUniformiv(C_OCAST<u32>(program), to_enum1(shadertype), index, pname, values);
+    glGetActiveSubroutineUniformiv(C_OCAST<libc_types::u32>(program), to_enum1(shadertype), index, pname, values);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void ProgramGetStageiv(glhnd const& program, ShaderStage shadertype, GLenum pname, i32 * values)
+STATICINLINE void ProgramGetStageiv(glhnd const& program, ShaderStage shadertype, GLenum pname, libc_types::i32 * values)
 {
 #ifndef NDEBUG
     if(!glGetProgramStageiv)
@@ -5685,14 +5686,14 @@ STATICINLINE void ProgramGetStageiv(glhnd const& program, ShaderStage shadertype
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramStageiv(C_OCAST<u32>(program), to_enum1(shadertype), pname, values);
+    glGetProgramStageiv(C_OCAST<libc_types::u32>(program), to_enum1(shadertype), pname, values);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void QueryGetIndexediv(GLenum target, u32 index, GLenum pname, i32 * params)
+STATICINLINE void QueryGetIndexediv(QueryComp::query_flag const& target, libc_types::u32 index, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryIndexediv)
@@ -5700,14 +5701,14 @@ STATICINLINE void QueryGetIndexediv(GLenum target, u32 index, GLenum pname, i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryIndexediv(target, index, pname, params);
+    glGetQueryIndexediv(query_to_enum(target), index, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE u32 GetSubroutineIndex(glhnd const& program, ShaderStage shadertype, const GLchar * name)
+STATICINLINE libc_types::u32 GetSubroutineIndex(glhnd const& program, ShaderStage shadertype, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetSubroutineIndex)
@@ -5715,14 +5716,14 @@ STATICINLINE u32 GetSubroutineIndex(glhnd const& program, ShaderStage shadertype
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetSubroutineIndex(C_OCAST<u32>(program), to_enum1(shadertype), name);
+    return (libc_types::u32)glGetSubroutineIndex(C_OCAST<libc_types::u32>(program), to_enum1(shadertype), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE i32 UnifGetSubroutineLocation(glhnd const& program, ShaderStage shadertype, const GLchar * name)
+STATICINLINE libc_types::i32 UnifGetSubroutineLocation(glhnd const& program, ShaderStage shadertype, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetSubroutineUniformLocation)
@@ -5730,14 +5731,14 @@ STATICINLINE i32 UnifGetSubroutineLocation(glhnd const& program, ShaderStage sha
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetSubroutineUniformLocation(C_OCAST<u32>(program), to_enum1(shadertype), name);
+    return (libc_types::i32)glGetSubroutineUniformLocation(C_OCAST<libc_types::u32>(program), to_enum1(shadertype), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void UnifGetSubroutineuiv(ShaderStage shadertype, i32 location, u32 * params)
+STATICINLINE void UnifGetSubroutineuiv(ShaderStage shadertype, libc_types::i32 location, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformSubroutineuiv)
@@ -5752,7 +5753,7 @@ STATICINLINE void UnifGetSubroutineuiv(ShaderStage shadertype, i32 location, u32
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void UnifGetdv(glhnd const& program, i32 location, bigscalar * params)
+STATICINLINE void UnifGetdv(glhnd const& program, libc_types::i32 location, libc_types::f64 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformdv)
@@ -5760,14 +5761,14 @@ STATICINLINE void UnifGetdv(glhnd const& program, i32 location, bigscalar * para
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformdv(C_OCAST<u32>(program), location, params);
+    glGetUniformdv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE u8 IsTransformFeedback(u32 id)
+STATICINLINE libc_types::u8 IsTransformFeedback(glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glIsTransformFeedback)
@@ -5775,14 +5776,14 @@ STATICINLINE u8 IsTransformFeedback(u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsTransformFeedback(id);
+    return (libc_types::u8)glIsTransformFeedback(C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void MinSampleShading(scalar value)
+STATICINLINE void MinSampleShading(libc_types::f32 value)
 {
 #ifndef NDEBUG
     if(!glMinSampleShading)
@@ -5797,7 +5798,7 @@ STATICINLINE void MinSampleShading(scalar value)
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void PatchParameterfv(PatchProperty pname, const scalar * values)
+STATICINLINE void PatchParameterfv(PatchProperty pname, const libc_types::f32 * values)
 {
 #ifndef NDEBUG
     if(!glPatchParameterfv)
@@ -5812,7 +5813,7 @@ STATICINLINE void PatchParameterfv(PatchProperty pname, const scalar * values)
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void PatchParameteri(PatchProperty pname, i32 value)
+STATICINLINE void PatchParameteri(PatchProperty pname, libc_types::i32 value)
 {
 #ifndef NDEBUG
     if(!glPatchParameteri)
@@ -5857,7 +5858,7 @@ STATICINLINE void XFResume()
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unif1d(i32 location, bigscalar x)
+STATICINLINE void Unif1d(libc_types::i32 location, libc_types::f64 x)
 {
 #ifndef NDEBUG
     if(!glUniform1d)
@@ -5872,7 +5873,7 @@ STATICINLINE void Unif1d(i32 location, bigscalar x)
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, Span<const bigscalar> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<const libc_types::f64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1dv)
@@ -5880,14 +5881,14 @@ STATICINLINE void Unifdv(i32 location, Span<const bigscalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glUniform1dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unif2d(i32 location, bigscalar x, bigscalar y)
+STATICINLINE void Unif2d(libc_types::i32 location, typing::vectors::tvector<libc_types::f64, 2> x)
 {
 #ifndef NDEBUG
     if(!glUniform2d)
@@ -5895,14 +5896,14 @@ STATICINLINE void Unif2d(i32 location, bigscalar x, bigscalar y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2d(location, x, y);
+    glUniform2d(location, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, Span<Vecd2> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecd2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2dv)
@@ -5910,14 +5911,14 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glUniform2dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unif3d(i32 location, bigscalar x, bigscalar y, bigscalar z)
+STATICINLINE void Unif3d(libc_types::i32 location, typing::vectors::tvector<libc_types::f64, 3> x, libc_types::f64 z)
 {
 #ifndef NDEBUG
     if(!glUniform3d)
@@ -5925,14 +5926,14 @@ STATICINLINE void Unif3d(i32 location, bigscalar x, bigscalar y, bigscalar z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3d(location, x, y, z);
+    glUniform3d(location, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, Span<Vecd3> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecd3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3dv)
@@ -5940,14 +5941,14 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glUniform3dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unif4d(i32 location, bigscalar x, bigscalar y, bigscalar z, bigscalar w)
+STATICINLINE void Unif4d(libc_types::i32 location, typing::vectors::tvector<libc_types::f64, 4> x, libc_types::f64 z)
 {
 #ifndef NDEBUG
     if(!glUniform4d)
@@ -5955,14 +5956,14 @@ STATICINLINE void Unif4d(i32 location, bigscalar x, bigscalar y, bigscalar z, bi
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4d(location, x, y, z, w);
+    glUniform4d(location, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, Span<Vecd4> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecd4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4dv)
@@ -5970,14 +5971,14 @@ STATICINLINE void Unifdv(i32 location, Span<Vecd4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4dv(location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glUniform4dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2dv)
@@ -5985,14 +5986,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix2dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_3> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd2_3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2x3dv)
@@ -6000,14 +6001,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix2x3dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_4> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd2_4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2x4dv)
@@ -6015,14 +6016,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd2_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix2x4dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3dv)
@@ -6030,14 +6031,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix3dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_2> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd3_2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3x2dv)
@@ -6045,14 +6046,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix3x2dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_4> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd3_4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3x4dv)
@@ -6060,14 +6061,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd3_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix3x4dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4dv)
@@ -6075,14 +6076,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix4dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_2> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd4_2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4x2dv)
@@ -6090,14 +6091,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix4x2dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_3> const& value)
+STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd4_3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4x3dv)
@@ -6105,14 +6106,14 @@ STATICINLINE void Unifdv(i32 location, bool transpose, Span<Matd4_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3dv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glUniformMatrix4x3dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_40)
-STATICINLINE void UnifSubroutinesuiv(ShaderStage shadertype, i32 count, const u32 * indices)
+STATICINLINE void UnifSubroutinesuiv(ShaderStage shadertype, libc_types::i32 count, const libc_types::u32 * indices)
 {
 #ifndef NDEBUG
     if(!glUniformSubroutinesuiv)
@@ -6126,10 +6127,10 @@ STATICINLINE void UnifSubroutinesuiv(ShaderStage shadertype, i32 count, const u3
 
 };
 template<typename ReqVer>
-struct CGL_41
-    : CGL_40<ReqVer>
+struct v41
+    : v40<ReqVer>
 {
-using Parent = CGL_40<ReqVer>;
+using Parent = v40<ReqVer>;
 using Parent::Unif1f;
 using Parent::Uniffv;
 using Parent::Unif1i;
@@ -6161,7 +6162,7 @@ STATICINLINE void ProgramActiveShader(glhnd const& pipeline, glhnd const& progra
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glActiveShaderProgram(C_OCAST<u32>(pipeline), C_OCAST<u32>(program));
+    glActiveShaderProgram(C_OCAST<libc_types::u32>(pipeline), C_OCAST<libc_types::u32>(program));
 }
 #endif
 
@@ -6176,14 +6177,14 @@ STATICINLINE void PipelineBind(glhnd const& pipeline)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindProgramPipeline(C_OCAST<u32>(pipeline));
+    glBindProgramPipeline(C_OCAST<libc_types::u32>(pipeline));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void ClearDepthf(scalar d)
+STATICINLINE void ClearDepthf(libc_types::f32 d)
 {
 #ifndef NDEBUG
     if(!glClearDepthf)
@@ -6198,7 +6199,7 @@ STATICINLINE void ClearDepthf(scalar d)
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> const& strings)
+STATICINLINE libc_types::u32 ShaderProgramvAllocEx(ShaderStage type, semantic::Span<const GLchar *>&& strings)
 {
 #ifndef NDEBUG
     if(!glCreateShaderProgramv)
@@ -6206,14 +6207,14 @@ STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShaderProgramv(to_enum1(type), C_FCAST<i32>(strings.elements), strings.data);
+    return (libc_types::u32)glCreateShaderProgramv(to_enum1(type), C_FCAST<libc_types::i32>(strings.elements), strings.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
+STATICINLINE void PipelineFree(semantic::Span<const libc_types::u32>&& pipelines)
 {
 #ifndef NDEBUG
     if(!glDeleteProgramPipelines)
@@ -6221,14 +6222,14 @@ STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
+    glDeleteProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void DepthRangeArrayv(u32 first, i32 count, const bigscalar * v)
+STATICINLINE void DepthRangeArrayv(libc_types::u32 first, semantic::Span<const libc_types::f64>&& v)
 {
 #ifndef NDEBUG
     if(!glDepthRangeArrayv)
@@ -6236,14 +6237,14 @@ STATICINLINE void DepthRangeArrayv(u32 first, i32 count, const bigscalar * v)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDepthRangeArrayv(first, count, v);
+    glDepthRangeArrayv(first, C_FCAST<libc_types::i32>(v.elements), v.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void DepthRangeIndexed(u32 index, bigscalar n, bigscalar f)
+STATICINLINE void DepthRangeIndexed(libc_types::u32 index, libc_types::f64 n, libc_types::f64 f)
 {
 #ifndef NDEBUG
     if(!glDepthRangeIndexed)
@@ -6258,7 +6259,7 @@ STATICINLINE void DepthRangeIndexed(u32 index, bigscalar n, bigscalar f)
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void DepthRangef(scalar n, scalar f)
+STATICINLINE void DepthRangef(libc_types::f32 n, libc_types::f32 f)
 {
 #ifndef NDEBUG
     if(!glDepthRangef)
@@ -6273,7 +6274,7 @@ STATICINLINE void DepthRangef(scalar n, scalar f)
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
+STATICINLINE void PipelineAlloc(semantic::Span<libc_types::u32>&& pipelines)
 {
 #ifndef NDEBUG
     if(!glGenProgramPipelines)
@@ -6281,14 +6282,14 @@ STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
+    glGenProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ScalarGeti_v(GLenum target, u32 index, bigscalar * data)
+STATICINLINE void ScalarGeti_v(GLenum target, libc_types::u32 index, libc_types::f64 * data)
 {
 #ifndef NDEBUG
     if(!glGetDoublei_v)
@@ -6303,7 +6304,7 @@ STATICINLINE void ScalarGeti_v(GLenum target, u32 index, bigscalar * data)
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ScalarfGeti_v(GLenum target, u32 index, scalar * data)
+STATICINLINE void ScalarfGeti_v(GLenum target, libc_types::u32 index, libc_types::f32 * data)
 {
 #ifndef NDEBUG
     if(!glGetFloati_v)
@@ -6318,7 +6319,7 @@ STATICINLINE void ScalarfGeti_v(GLenum target, u32 index, scalar * data)
 
 #if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
-STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * binaryFormat, Bytes const& binary)
+STATICINLINE void ProgramGetBinary(glhnd const& program, libc_types::i32 * length, GLenum * binaryFormat, semantic::Bytes const& binary)
 {
 #ifndef NDEBUG
     if(!glGetProgramBinary)
@@ -6326,14 +6327,14 @@ STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramBinary(C_OCAST<u32>(program), C_FCAST<i32>(binary.size), length, binaryFormat, binary.data);
+    glGetProgramBinary(C_OCAST<libc_types::u32>(program), C_FCAST<libc_types::i32>(binary.size), length, binaryFormat, binary.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * length, GLchar * infoLog)
+STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetProgramPipelineInfoLog)
@@ -6341,14 +6342,14 @@ STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramPipelineInfoLog(C_OCAST<u32>(pipeline), bufSize, length, infoLog);
+    glGetProgramPipelineInfoLog(C_OCAST<libc_types::u32>(pipeline), bufSize, length, infoLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * params)
+STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramPipelineiv)
@@ -6356,14 +6357,14 @@ STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * param
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramPipelineiv(C_OCAST<u32>(pipeline), pname, params);
+    glGetProgramPipelineiv(C_OCAST<libc_types::u32>(pipeline), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precisiontype, i32 * range, i32 * precision)
+STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precisiontype, libc_types::i32 * range, libc_types::i32 * precision)
 {
 #ifndef NDEBUG
     if(!glGetShaderPrecisionFormat)
@@ -6378,7 +6379,7 @@ STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precis
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOGetLdv(u32 index, GLenum pname, bigscalar * params)
+STATICINLINE void VAOGetLdv(libc_types::u32 index, GLenum pname, libc_types::f64 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribLdv)
@@ -6393,7 +6394,7 @@ STATICINLINE void VAOGetLdv(u32 index, GLenum pname, bigscalar * params)
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
+STATICINLINE libc_types::u8 IsProgramPipeline(glhnd const& pipeline)
 {
 #ifndef NDEBUG
     if(!glIsProgramPipeline)
@@ -6401,14 +6402,14 @@ STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsProgramPipeline(C_OCAST<u32>(pipeline));
+    return (libc_types::u8)glIsProgramPipeline(C_OCAST<libc_types::u32>(pipeline));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
-STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const void * binary, i32 length)
+STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const void * binary, libc_types::i32 length)
 {
 #ifndef NDEBUG
     if(!glProgramBinary)
@@ -6416,14 +6417,14 @@ STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramBinary(C_OCAST<u32>(program), binaryFormat, binary, length);
+    glProgramBinary(C_OCAST<libc_types::u32>(program), binaryFormat, binary, length);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
-STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 value)
+STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, libc_types::i32 value)
 {
 #ifndef NDEBUG
     if(!glProgramParameteri)
@@ -6434,14 +6435,14 @@ STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramParameteri(C_OCAST<u32>(program), pname, value);
+    glProgramParameteri(C_OCAST<libc_types::u32>(program), pname, value);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unif1d(glhnd const& program, i32 location, bigscalar v0)
+STATICINLINE void Unif1d(glhnd const& program, libc_types::i32 location, libc_types::f64 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1d)
@@ -6449,14 +6450,14 @@ STATICINLINE void Unif1d(glhnd const& program, i32 location, bigscalar v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1d(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1d(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<const bigscalar> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::f64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1dv)
@@ -6464,14 +6465,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<const bigscala
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform1dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
+STATICINLINE void Unif1f(glhnd const& program, libc_types::i32 location, libc_types::f32 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1f)
@@ -6479,14 +6480,14 @@ STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1f(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1f(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1fv)
@@ -6494,14 +6495,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform1fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
+STATICINLINE void Unif1i(glhnd const& program, libc_types::i32 location, libc_types::i32 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1i)
@@ -6509,14 +6510,14 @@ STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1i(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1i(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1iv)
@@ -6524,14 +6525,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> con
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform1iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
+STATICINLINE void Unif1ui(glhnd const& program, libc_types::i32 location, libc_types::u32 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1ui)
@@ -6539,14 +6540,14 @@ STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1ui(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1ui(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1uiv)
@@ -6554,14 +6555,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform1uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unif2d(glhnd const& program, i32 location, bigscalar v0, bigscalar v1)
+STATICINLINE void Unif2d(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f64, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2d)
@@ -6569,14 +6570,14 @@ STATICINLINE void Unif2d(glhnd const& program, i32 location, bigscalar v0, bigsc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2d(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2d(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd2> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecd2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2dv)
@@ -6584,14 +6585,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd2> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v1)
+STATICINLINE void Unif2f(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2f)
@@ -6599,14 +6600,14 @@ STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2f(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2f(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecf2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2fv)
@@ -6614,14 +6615,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
+STATICINLINE void Unif2i(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2i)
@@ -6629,14 +6630,14 @@ STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2i(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2i(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Veci2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2iv)
@@ -6644,14 +6645,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform2iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
+STATICINLINE void Unif2ui(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2ui)
@@ -6659,14 +6660,14 @@ STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2ui(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2ui(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecui2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2uiv)
@@ -6674,14 +6675,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform2uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unif3d(glhnd const& program, i32 location, bigscalar v0, bigscalar v1, bigscalar v2)
+STATICINLINE void Unif3d(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f64, 3> v0, libc_types::f64 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3d)
@@ -6689,14 +6690,14 @@ STATICINLINE void Unif3d(glhnd const& program, i32 location, bigscalar v0, bigsc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3d(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3d(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd3> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecd3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3dv)
@@ -6704,14 +6705,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd3> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2)
+STATICINLINE void Unif3f(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 3> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3f)
@@ -6719,14 +6720,14 @@ STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3f(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3f(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecf3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3fv)
@@ -6734,14 +6735,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2)
+STATICINLINE void Unif3i(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 3> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3i)
@@ -6749,14 +6750,14 @@ STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3i(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3i(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Veci3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3iv)
@@ -6764,14 +6765,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform3iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2)
+STATICINLINE void Unif3ui(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 3> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3ui)
@@ -6779,14 +6780,14 @@ STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3ui(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3ui(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecui3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3uiv)
@@ -6794,14 +6795,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform3uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unif4d(glhnd const& program, i32 location, bigscalar v0, bigscalar v1, bigscalar v2, bigscalar v3)
+STATICINLINE void Unif4d(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f64, 4> v0, libc_types::f64 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4d)
@@ -6809,14 +6810,14 @@ STATICINLINE void Unif4d(glhnd const& program, i32 location, bigscalar v0, bigsc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4d(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4d(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd4> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecd4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4dv)
@@ -6824,14 +6825,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, Span<Vecd4> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const bigscalar*>(value.data));
+    glProgramUniform4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
+STATICINLINE void Unif4f(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 4> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4f)
@@ -6839,14 +6840,14 @@ STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4f(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4f(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecf4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4fv)
@@ -6854,14 +6855,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
+STATICINLINE void Unif4i(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 4> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4i)
@@ -6869,14 +6870,14 @@ STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4i(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4i(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Veci4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4iv)
@@ -6884,14 +6885,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform4iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
+STATICINLINE void Unif4ui(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 4> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4ui)
@@ -6899,14 +6900,14 @@ STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4ui(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4ui(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecui4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4uiv)
@@ -6914,14 +6915,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform4uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd2> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2dv)
@@ -6929,14 +6930,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2fv)
@@ -6944,14 +6945,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd2_3> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd2_3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2x3dv)
@@ -6959,14 +6960,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix2x3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2x3fv)
@@ -6974,14 +6975,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd2_4> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd2_4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2x4dv)
@@ -6989,14 +6990,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix2x4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2x4fv)
@@ -7004,14 +7005,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd3> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3dv)
@@ -7019,14 +7020,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3fv)
@@ -7034,14 +7035,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd3_2> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd3_2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3x2dv)
@@ -7049,14 +7050,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix3x2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3x2fv)
@@ -7064,14 +7065,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd3_4> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd3_4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3x4dv)
@@ -7079,14 +7080,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix3x4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3x4fv)
@@ -7094,14 +7095,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd4> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4dv)
@@ -7109,14 +7110,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4fv)
@@ -7124,14 +7125,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd4_2> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd4_2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4x2dv)
@@ -7139,14 +7140,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix4x2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4x2fv)
@@ -7154,14 +7155,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Span<Matd4_3> const& value)
+STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matd4_3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4x3dv)
@@ -7169,14 +7170,14 @@ STATICINLINE void Unifdv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3dv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const bigscalar*>(value.data));
+    glProgramUniformMatrix4x3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4x3fv)
@@ -7184,7 +7185,7 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
@@ -7206,7 +7207,7 @@ STATICINLINE void ShaderReleaseCompiler()
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ScissorArrayv(u32 first, i32 count, const i32 * v)
+STATICINLINE void ScissorArrayv(libc_types::u32 first, semantic::Span<const libc_types::i32>&& v)
 {
 #ifndef NDEBUG
     if(!glScissorArrayv)
@@ -7214,14 +7215,14 @@ STATICINLINE void ScissorArrayv(u32 first, i32 count, const i32 * v)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glScissorArrayv(first, count, v);
+    glScissorArrayv(first, C_FCAST<libc_types::i32>(v.elements), v.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ScissorIndexed(u32 index, i32 left, i32 bottom, Size const& size)
+STATICINLINE void ScissorIndexed(libc_types::u32 index, libc_types::i32 left, libc_types::i32 bottom, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glScissorIndexed)
@@ -7229,14 +7230,14 @@ STATICINLINE void ScissorIndexed(u32 index, i32 left, i32 bottom, Size const& si
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glScissorIndexed(index, left, bottom, size.w, size.h);
+    glScissorIndexed(index, left, bottom, width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ScissorIndexedv(u32 index, const i32 * v)
+STATICINLINE void ScissorIndexedv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glScissorIndexedv)
@@ -7251,7 +7252,7 @@ STATICINLINE void ScissorIndexedv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void ShaderBinary(i32 count, const u32 * shaders, GLenum binaryformat, const void * binary, i32 length)
+STATICINLINE void ShaderBinary(libc_types::i32 count, const libc_types::u32 * shaders, GLenum binaryformat, const void * binary, libc_types::i32 length)
 {
 #ifndef NDEBUG
     if(!glShaderBinary)
@@ -7274,7 +7275,7 @@ STATICINLINE void ProgramUseStages(glhnd const& pipeline, ShaderStage stages, gl
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUseProgramStages(C_OCAST<u32>(pipeline), to_enum2(stages), C_OCAST<u32>(program));
+    glUseProgramStages(C_OCAST<libc_types::u32>(pipeline), to_enum2(stages), C_OCAST<libc_types::u32>(program));
 }
 #endif
 
@@ -7289,14 +7290,14 @@ STATICINLINE void PipelineValidate(glhnd const& pipeline)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glValidateProgramPipeline(C_OCAST<u32>(pipeline));
+    glValidateProgramPipeline(C_OCAST<libc_types::u32>(pipeline));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL1d(u32 index, bigscalar x)
+STATICINLINE void VAOL1d(libc_types::u32 index, libc_types::f64 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL1d)
@@ -7311,7 +7312,7 @@ STATICINLINE void VAOL1d(u32 index, bigscalar x)
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL1dv(u32 index, const bigscalar * v)
+STATICINLINE void VAOL1dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL1dv)
@@ -7326,7 +7327,7 @@ STATICINLINE void VAOL1dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL2d(u32 index, bigscalar x, bigscalar y)
+STATICINLINE void VAOL2d(libc_types::u32 index, typing::vectors::tvector<libc_types::f64, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL2d)
@@ -7334,14 +7335,14 @@ STATICINLINE void VAOL2d(u32 index, bigscalar x, bigscalar y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribL2d(index, x, y);
+    glVertexAttribL2d(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL2dv(u32 index, const bigscalar * v)
+STATICINLINE void VAOL2dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL2dv)
@@ -7356,7 +7357,7 @@ STATICINLINE void VAOL2dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL3d(u32 index, bigscalar x, bigscalar y, bigscalar z)
+STATICINLINE void VAOL3d(libc_types::u32 index, typing::vectors::tvector<libc_types::f64, 3> x, libc_types::f64 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL3d)
@@ -7364,14 +7365,14 @@ STATICINLINE void VAOL3d(u32 index, bigscalar x, bigscalar y, bigscalar z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribL3d(index, x, y, z);
+    glVertexAttribL3d(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL3dv(u32 index, const bigscalar * v)
+STATICINLINE void VAOL3dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL3dv)
@@ -7386,7 +7387,7 @@ STATICINLINE void VAOL3dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL4d(u32 index, bigscalar x, bigscalar y, bigscalar z, bigscalar w)
+STATICINLINE void VAOL4d(libc_types::u32 index, typing::vectors::tvector<libc_types::f64, 4> x, libc_types::f64 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL4d)
@@ -7394,14 +7395,14 @@ STATICINLINE void VAOL4d(u32 index, bigscalar x, bigscalar y, bigscalar z, bigsc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribL4d(index, x, y, z, w);
+    glVertexAttribL4d(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOL4dv(u32 index, const bigscalar * v)
+STATICINLINE void VAOL4dv(libc_types::u32 index, const libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL4dv)
@@ -7416,7 +7417,7 @@ STATICINLINE void VAOL4dv(u32 index, const bigscalar * v)
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void VAOLPointer(u32 index, i32 size, GLenum type, i32 stride, const void * pointer)
+STATICINLINE void VAOLPointer(libc_types::u32 index, libc_types::i32 size, GLenum type, libc_types::i32 stride, const void * pointer)
 {
 #ifndef NDEBUG
     if(!glVertexAttribLPointer)
@@ -7431,7 +7432,7 @@ STATICINLINE void VAOLPointer(u32 index, i32 size, GLenum type, i32 stride, cons
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ViewportArrayv(u32 first, i32 count, const scalar * v)
+STATICINLINE void ViewportArrayv(libc_types::u32 first, semantic::Span<const libc_types::f32>&& v)
 {
 #ifndef NDEBUG
     if(!glViewportArrayv)
@@ -7439,14 +7440,14 @@ STATICINLINE void ViewportArrayv(u32 first, i32 count, const scalar * v)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glViewportArrayv(first, count, v);
+    glViewportArrayv(first, C_FCAST<libc_types::i32>(v.elements), v.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ViewportIndexedf(u32 index, scalar x, scalar y, scalar w, scalar h)
+STATICINLINE void ViewportIndexedf(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 4> x, libc_types::f32 h)
 {
 #ifndef NDEBUG
     if(!glViewportIndexedf)
@@ -7454,14 +7455,14 @@ STATICINLINE void ViewportIndexedf(u32 index, scalar x, scalar y, scalar w, scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glViewportIndexedf(index, x, y, w, h);
+    glViewportIndexedf(index, x[0], x[1], x[3], h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_41)
-STATICINLINE void ViewportIndexedfv(u32 index, const scalar * v)
+STATICINLINE void ViewportIndexedfv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glViewportIndexedfv)
@@ -7475,14 +7476,14 @@ STATICINLINE void ViewportIndexedfv(u32 index, const scalar * v)
 
 };
 template<typename ReqVer>
-struct CGL_42
-    : CGL_41<ReqVer>
+struct v42
+    : v41<ReqVer>
 {
-using Parent = CGL_41<ReqVer>;
+using Parent = v41<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
-STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool layered, i32 layer, RSCA access, PixFmt format)
+STATICINLINE void TexBindImage(libc_types::u32 unit, glhnd const& texture, libc_types::i32 level, libc_types::u8 layered, libc_types::i32 layer, semantic::RSCA access, typing::pixels::PixFmt format)
 {
 #ifndef NDEBUG
     if(!glBindImageTexture)
@@ -7490,14 +7491,14 @@ STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindImageTexture(unit, C_OCAST<u32>(texture), level, layered ? GL_TRUE : GL_FALSE, layer, to_enum2(access), to_enum(format));
+    glBindImageTexture(unit, C_OCAST<libc_types::u32>(texture), level, layered, layer, to_enum2(access), to_enum(format));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd const& mode, i32 first, i32 count, i32 instancecount, u32 baseinstance)
+STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd const& mode, libc_types::i32 first, libc_types::i32 count, libc_types::i32 instancecount, libc_types::u32 baseinstance)
 {
 #ifndef NDEBUG
     if(!glDrawArraysInstancedBaseInstance)
@@ -7512,7 +7513,7 @@ STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd const& mode, i32 first, 
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void DrawElementsInstancedBaseInstance(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, u32 baseinstance)
+STATICINLINE void DrawElementsInstancedBaseInstance(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 instancecount, libc_types::u32 baseinstance)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstancedBaseInstance)
@@ -7527,7 +7528,7 @@ STATICINLINE void DrawElementsInstancedBaseInstance(DrwMd const& mode, i32 count
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, i32 basevertex, u32 baseinstance)
+STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 instancecount, libc_types::i32 basevertex, libc_types::u32 baseinstance)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstancedBaseVertexBaseInstance)
@@ -7542,7 +7543,7 @@ STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(DrwMd const& mode,
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void DrawTransformFeedbackInstanced(DrwMd const& mode, u32 id, i32 instancecount)
+STATICINLINE void DrawTransformFeedbackInstanced(DrwMd const& mode, glhnd const& id, libc_types::i32 instancecount)
 {
 #ifndef NDEBUG
     if(!glDrawTransformFeedbackInstanced)
@@ -7550,14 +7551,14 @@ STATICINLINE void DrawTransformFeedbackInstanced(DrwMd const& mode, u32 id, i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDrawTransformFeedbackInstanced(to_enum(mode.t, mode.c), id, instancecount);
+    glDrawTransformFeedbackInstanced(to_enum(mode.t, mode.c), C_OCAST<libc_types::u32>(id), instancecount);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void DrawTransformFeedbackStreamInstanced(DrwMd const& mode, u32 id, u32 stream, i32 instancecount)
+STATICINLINE void DrawTransformFeedbackStreamInstanced(DrwMd const& mode, glhnd const& id, libc_types::u32 stream, libc_types::i32 instancecount)
 {
 #ifndef NDEBUG
     if(!glDrawTransformFeedbackStreamInstanced)
@@ -7565,14 +7566,14 @@ STATICINLINE void DrawTransformFeedbackStreamInstanced(DrwMd const& mode, u32 id
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDrawTransformFeedbackStreamInstanced(to_enum(mode.t, mode.c), id, stream, instancecount);
+    glDrawTransformFeedbackStreamInstanced(to_enum(mode.t, mode.c), C_OCAST<libc_types::u32>(id), stream, instancecount);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void BufGetActiveAtomicCounteriv(glhnd const& program, u32 bufferIndex, GLenum pname, i32 * params)
+STATICINLINE void BufGetActiveAtomicCounteriv(glhnd const& program, libc_types::u32 bufferIndex, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveAtomicCounterBufferiv)
@@ -7580,14 +7581,14 @@ STATICINLINE void BufGetActiveAtomicCounteriv(glhnd const& program, u32 bufferIn
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveAtomicCounterBufferiv(C_OCAST<u32>(program), bufferIndex, pname, params);
+    glGetActiveAtomicCounterBufferiv(C_OCAST<libc_types::u32>(program), bufferIndex, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
-STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt internalformat, GLenum pname, i32 bufSize, i32 * params)
+STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, GLenum pname, libc_types::i32 count, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetInternalformativ)
@@ -7595,14 +7596,14 @@ STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt in
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetInternalformativ(texture_to_enum(target), to_enum(internalformat), pname, bufSize, params);
+    glGetInternalformativ(texture_to_enum(target), to_enum(internalformat), pname, count, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
-STATICINLINE void MemoryBarrier(u32 barriers)
+STATICINLINE void MemoryBarrier(libc_types::u32 barriers)
 {
 #ifndef NDEBUG
     if(!glMemoryBarrier)
@@ -7617,7 +7618,7 @@ STATICINLINE void MemoryBarrier(u32 barriers)
 
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_42)
-STATICINLINE void TexStorage1D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, i32 width)
+STATICINLINE void TexStorage1D(TexComp::tex_flag const& target, libc_types::i32 levels, typing::pixels::PixFmt internalformat, libc_types::i32 width)
 {
 #ifndef NDEBUG
     if(!glTexStorage1D)
@@ -7632,7 +7633,7 @@ STATICINLINE void TexStorage1D(TexComp::tex_flag const& target, i32 levels, PixF
 
 #if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
-STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size const& size)
+STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, libc_types::i32 levels, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glTexStorage2D)
@@ -7640,14 +7641,14 @@ STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixF
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage2D(texture_to_enum(target), levels, to_enum(internalformat), size.w, size.h);
+    glTexStorage2D(texture_to_enum(target), levels, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
-STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size3 const& size)
+STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, libc_types::i32 levels, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glTexStorage3D)
@@ -7655,20 +7656,20 @@ STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, i32 levels, PixF
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage3D(texture_to_enum(target), levels, to_enum(internalformat), size.width, size.height, size.depth);
+    glTexStorage3D(texture_to_enum(target), levels, to_enum(internalformat), width.width, width.height, width.depth);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_43
-    : CGL_42<ReqVer>
+struct v43
+    : v42<ReqVer>
 {
-using Parent = CGL_42<ReqVer>;
+using Parent = v42<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offset, i32 stride)
+STATICINLINE void VertBufBind(libc_types::u32 bindingindex, glhnd const& buffer, libc_types::ptroff offset, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glBindVertexBuffer)
@@ -7676,14 +7677,14 @@ STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offs
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindVertexBuffer(bindingindex, C_OCAST<u32>(buffer), offset, stride);
+    glBindVertexBuffer(bindingindex, C_OCAST<libc_types::u32>(buffer), offset, stride);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void BufClearData(BufferComp::buf_flag const& target, PixFmt internalformat, PixCmp format, BitFmt type, const void * data)
+STATICINLINE void BufClearData(BufferComp::buf_flag const& target, typing::pixels::PixFmt internalformat, typing::PixCmp format, typing::pixels::BitFmt type, const void * data)
 {
 #ifndef NDEBUG
     if(!glClearBufferData)
@@ -7691,14 +7692,14 @@ STATICINLINE void BufClearData(BufferComp::buf_flag const& target, PixFmt intern
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferData(buffer_to_enum(target), to_enum(internalformat), to_enum(format, PixFmt::None), to_enum(type), data);
+    glClearBufferData(buffer_to_enum(target), to_enum(internalformat), to_enum(format, typing::pixels::PixFmt::None), to_enum(type), data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, BytesConst const& data)
+STATICINLINE void BufClearSubData(BufferComp::buf_flag const& target, typing::pixels::PixFmt internalformat, libc_types::ptroff offset, typing::PixCmp format, typing::pixels::BitFmt type, semantic::BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glClearBufferSubData)
@@ -7706,14 +7707,14 @@ STATICINLINE void BufClearSubData(GLenum target, PixFmt internalformat, ptroff o
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferSubData(target, to_enum(internalformat), offset, C_FCAST<ptroff>(data.size), to_enum(format, PixFmt::None), to_enum(type), data.data);
+    glClearBufferSubData(buffer_to_enum(target), to_enum(internalformat), offset, C_FCAST<libc_types::ptroff>(data.size), to_enum(format, typing::pixels::PixFmt::None), to_enum(type), data.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void CopyImageSubData(u32 srcName, GLenum srcTarget, i32 srcLevel, i32 srcX, i32 srcY, i32 srcZ, u32 dstName, GLenum dstTarget, i32 dstLevel, i32 dstX, i32 dstY, i32 dstZ, i32 srcWidth, i32 srcHeight, i32 srcDepth)
+STATICINLINE void CopyImageSubData(libc_types::u32 srcName, GLenum srcTarget, libc_types::i32 srcLevel, libc_types::i32 srcX, libc_types::i32 srcY, libc_types::i32 srcZ, libc_types::u32 dstName, GLenum dstTarget, libc_types::i32 dstLevel, libc_types::i32 dstX, libc_types::i32 dstY, libc_types::i32 dstZ, libc_types::i32 srcWidth, libc_types::i32 srcHeight, libc_types::i32 srcDepth)
 {
 #ifndef NDEBUG
     if(!glCopyImageSubData)
@@ -7749,7 +7750,7 @@ STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userPa
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
+STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severity, semantic::Span<const libc_types::u32>&& ids, libc_types::u8 enabled)
 {
 #ifndef NDEBUG
     if(!glDebugMessageControl)
@@ -7763,14 +7764,14 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControl(source, type, severity, count, ids, enabled ? GL_TRUE : GL_FALSE);
+    glDebugMessageControl(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
+STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, glhnd const& id, GLenum severity, libc_types::i32 length, const GLchar * buf)
 {
 #ifndef NDEBUG
     if(!glDebugMessageInsert)
@@ -7784,14 +7785,14 @@ STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageInsert(source, type, id, severity, length, buf);
+    glDebugMessageInsert(source, type, C_OCAST<libc_types::u32>(id), severity, length, buf);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_groups_z)
+STATICINLINE void DispatchCompute(libc_types::u32 num_groups_x, libc_types::u32 num_groups_y, libc_types::u32 num_groups_z)
 {
 #ifndef NDEBUG
     if(!glDispatchCompute)
@@ -7806,7 +7807,7 @@ STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_gr
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void DispatchComputeIndirect(ptroff indirect)
+STATICINLINE void DispatchComputeIndirect(libc_types::ptroff indirect)
 {
 #ifndef NDEBUG
     if(!glDispatchComputeIndirect)
@@ -7821,7 +7822,7 @@ STATICINLINE void DispatchComputeIndirect(ptroff indirect)
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
+STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glFramebufferParameteri)
@@ -7836,7 +7837,7 @@ STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
+STATICINLINE libc_types::u32 GetDebugMessageLog(libc_types::u32 count, libc_types::i32 bufSize, GLenum * sources, GLenum * types, libc_types::u32 * ids, GLenum * severities, libc_types::i32 * lengths, GLchar * messageLog)
 {
 #ifndef NDEBUG
     if(!glGetDebugMessageLog)
@@ -7850,14 +7851,14 @@ STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GL
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetDebugMessageLog(count, bufSize, sources, types, ids, severities, lengths, messageLog);
+    return (libc_types::u32)glGetDebugMessageLog(count, bufSize, sources, types, ids, severities, lengths, messageLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * params)
+STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetFramebufferParameteriv)
@@ -7872,7 +7873,7 @@ STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * para
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void GetInternalformati64v(TexComp::tex_flag const& target, PixFmt internalformat, GLenum pname, i32 bufSize, i64 * params)
+STATICINLINE void GetInternalformati64v(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, GLenum pname, libc_types::i32 count, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetInternalformati64v)
@@ -7880,14 +7881,14 @@ STATICINLINE void GetInternalformati64v(TexComp::tex_flag const& target, PixFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetInternalformati64v(texture_to_enum(target), to_enum(internalformat), pname, bufSize, params);
+    glGetInternalformati64v(texture_to_enum(target), to_enum(internalformat), pname, count, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 * length, GLchar * label)
+STATICINLINE void GetObjectLabel(GLenum identifier, libc_types::u32 name, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * label)
 {
 #ifndef NDEBUG
     if(!glGetObjectLabel)
@@ -7905,7 +7906,7 @@ STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 *
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length, GLchar * label)
+STATICINLINE void GetObjectPtrLabel(const void * ptr, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * label)
 {
 #ifndef NDEBUG
     if(!glGetObjectPtrLabel)
@@ -7923,7 +7924,7 @@ STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length,
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInterface, GLenum pname, i32 * params)
+STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInterface, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramInterfaceiv)
@@ -7931,14 +7932,14 @@ STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInte
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramInterfaceiv(C_OCAST<u32>(program), programInterface, pname, params);
+    glGetProgramInterfaceiv(C_OCAST<libc_types::u32>(program), programInterface, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
+STATICINLINE libc_types::u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceIndex)
@@ -7946,14 +7947,14 @@ STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetProgramResourceIndex(C_OCAST<u32>(program), programInterface, name);
+    return (libc_types::u32)glGetProgramResourceIndex(C_OCAST<libc_types::u32>(program), programInterface, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum programInterface, const GLchar * name)
+STATICINLINE libc_types::i32 ProgramGetResourceLocation(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceLocation)
@@ -7961,14 +7962,14 @@ STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum program
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetProgramResourceLocation(C_OCAST<u32>(program), programInterface, name);
+    return (libc_types::i32)glGetProgramResourceLocation(C_OCAST<libc_types::u32>(program), programInterface, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE i32 ProgramGetResourceLocationIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
+STATICINLINE libc_types::i32 ProgramGetResourceLocationIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceLocationIndex)
@@ -7976,14 +7977,14 @@ STATICINLINE i32 ProgramGetResourceLocationIndex(glhnd const& program, GLenum pr
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetProgramResourceLocationIndex(C_OCAST<u32>(program), programInterface, name);
+    return (libc_types::i32)glGetProgramResourceLocationIndex(C_OCAST<libc_types::u32>(program), programInterface, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInterface, u32 index, i32 bufSize, i32 * length, GLchar * name)
+STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInterface, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceName)
@@ -7991,14 +7992,14 @@ STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramResourceName(C_OCAST<u32>(program), programInterface, index, bufSize, length, name);
+    glGetProgramResourceName(C_OCAST<libc_types::u32>(program), programInterface, index, bufSize, length, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInterface, u32 index, i32 propCount, const GLenum * props, i32 bufSize, i32 * length, i32 * params)
+STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInterface, libc_types::u32 index, libc_types::i32 propCount, const GLenum * props, libc_types::i32 count, libc_types::i32 * length, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceiv)
@@ -8006,7 +8007,7 @@ STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInter
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramResourceiv(C_OCAST<u32>(program), programInterface, index, propCount, props, bufSize, length, params);
+    glGetProgramResourceiv(C_OCAST<libc_types::u32>(program), programInterface, index, propCount, props, count, length, params);
 }
 #endif
 
@@ -8021,14 +8022,14 @@ STATICINLINE void BufInvalidateData(glhnd const& buffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateBufferData(C_OCAST<u32>(buffer));
+    glInvalidateBufferData(C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void BufInvalidateSubData(glhnd const& buffer, ptroff offset, ptroff length)
+STATICINLINE void BufInvalidateSubData(glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff length)
 {
 #ifndef NDEBUG
     if(!glInvalidateBufferSubData)
@@ -8036,14 +8037,14 @@ STATICINLINE void BufInvalidateSubData(glhnd const& buffer, ptroff offset, ptrof
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateBufferSubData(C_OCAST<u32>(buffer), offset, length);
+    glInvalidateBufferSubData(C_OCAST<libc_types::u32>(buffer), offset, length);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
-STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GLenum * attachments)
+STATICINLINE void FBInvalidate(FramebufferT target, libc_types::i32 numAttachments, const GLenum * attachments)
 {
 #ifndef NDEBUG
     if(!glInvalidateFramebuffer)
@@ -8058,7 +8059,7 @@ STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GL
 
 #if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
-STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
+STATICINLINE void FBInvalidateSub(FramebufferT target, libc_types::i32 numAttachments, const GLenum * attachments, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glInvalidateSubFramebuffer)
@@ -8066,14 +8067,14 @@ STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateSubFramebuffer(target, numAttachments, attachments, x, y, size.w, size.h);
+    glInvalidateSubFramebuffer(to_enum(target), numAttachments, attachments, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void TexInvalidateImage(glhnd const& texture, i32 level)
+STATICINLINE void TexInvalidateImage(glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glInvalidateTexImage)
@@ -8081,14 +8082,14 @@ STATICINLINE void TexInvalidateImage(glhnd const& texture, i32 level)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateTexImage(C_OCAST<u32>(texture), level);
+    glInvalidateTexImage(C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void TexInvalidateSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size)
+STATICINLINE void TexInvalidateSubImage(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glInvalidateTexSubImage)
@@ -8096,14 +8097,14 @@ STATICINLINE void TexInvalidateSubImage(glhnd const& texture, i32 level, Point3 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateTexSubImage(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth);
+    glInvalidateTexSubImage(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void MultiDrawArraysIndirect(DrwMd const& mode, uintptr indirect, i32 drawcount, i32 stride)
+STATICINLINE void MultiDrawArraysIndirect(DrwMd const& mode, libc_types::uintptr indirect, libc_types::i32 drawcount, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glMultiDrawArraysIndirect)
@@ -8118,7 +8119,7 @@ STATICINLINE void MultiDrawArraysIndirect(DrwMd const& mode, uintptr indirect, i
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void MultiDrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr indirect, i32 drawcount, i32 stride)
+STATICINLINE void MultiDrawElementsIndirect(DrwMd const& mode, TypeEnum type, libc_types::uintptr indirect, libc_types::i32 drawcount, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glMultiDrawElementsIndirect)
@@ -8133,7 +8134,7 @@ STATICINLINE void MultiDrawElementsIndirect(DrwMd const& mode, TypeEnum type, ui
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLchar * label)
+STATICINLINE void ObjectLabel(GLenum identifier, libc_types::u32 name, libc_types::i32 length, const GLchar * label)
 {
 #ifndef NDEBUG
     if(!glObjectLabel)
@@ -8151,7 +8152,7 @@ STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLc
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * label)
+STATICINLINE void ObjectPtrLabel(const void * ptr, libc_types::i32 length, const GLchar * label)
 {
 #ifndef NDEBUG
     if(!glObjectPtrLabel)
@@ -8187,7 +8188,7 @@ STATICINLINE void PopDebugGroup()
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar * message)
+STATICINLINE void PushDebugGroup(GLenum source, glhnd const& id, libc_types::i32 length, const GLchar * message)
 {
 #ifndef NDEBUG
     if(!glPushDebugGroup)
@@ -8198,14 +8199,14 @@ STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glPushDebugGroup(source, id, length, message);
+    glPushDebugGroup(source, C_OCAST<libc_types::u32>(id), length, message);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void SSBOBinding(glhnd const& program, u32 storageBlockIndex, u32 storageBlockBinding)
+STATICINLINE void SSBOBinding(glhnd const& program, libc_types::u32 storageBlockIndex, libc_types::u32 storageBlockBinding)
 {
 #ifndef NDEBUG
     if(!glShaderStorageBlockBinding)
@@ -8213,14 +8214,14 @@ STATICINLINE void SSBOBinding(glhnd const& program, u32 storageBlockIndex, u32 s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glShaderStorageBlockBinding(C_OCAST<u32>(program), storageBlockIndex, storageBlockBinding);
+    glShaderStorageBlockBinding(C_OCAST<libc_types::u32>(program), storageBlockIndex, storageBlockBinding);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer, ptroff offset, ptroff size)
+STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glTexBufferRange)
@@ -8228,14 +8229,14 @@ STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt interna
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexBufferRange(texture_to_enum(target), to_enum(internalformat), C_OCAST<u32>(buffer), offset, size);
+    glTexBufferRange(texture_to_enum(target), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer), offset, size);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
+STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTexStorage2DMultisample)
@@ -8243,14 +8244,14 @@ STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage2DMultisample(texture_to_enum(target), samples, to_enum(internalformat), size.w, size.h, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTexStorage2DMultisample(texture_to_enum(target), samples, to_enum(internalformat), width.w, width.h, fixedsamplelocations);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
+STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTexStorage3DMultisample)
@@ -8258,14 +8259,14 @@ STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage3DMultisample(texture_to_enum(target), samples, to_enum(internalformat), size.width, size.height, size.depth, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTexStorage3DMultisample(texture_to_enum(target), samples, to_enum(internalformat), width.width, width.height, width.depth, fixedsamplelocations);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void TexView(glhnd const& texture, TexComp::tex_flag const& target, u32 origtexture, PixFmt internalformat, u32 minlevel, u32 numlevels, u32 minlayer, u32 numlayers)
+STATICINLINE void TexView(glhnd const& texture, TexComp::tex_flag const& target, libc_types::u32 origtexture, typing::pixels::PixFmt internalformat, libc_types::u32 minlevel, libc_types::u32 numlevels, libc_types::u32 minlayer, libc_types::u32 numlayers)
 {
 #ifndef NDEBUG
     if(!glTextureView)
@@ -8273,14 +8274,14 @@ STATICINLINE void TexView(glhnd const& texture, TexComp::tex_flag const& target,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureView(C_OCAST<u32>(texture), texture_to_enum(target), origtexture, to_enum(internalformat), minlevel, numlevels, minlayer, numlayers);
+    glTextureView(C_OCAST<libc_types::u32>(texture), texture_to_enum(target), origtexture, to_enum(internalformat), minlevel, numlevels, minlayer, numlayers);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
+STATICINLINE void VAOBinding(libc_types::u32 attribindex, libc_types::u32 bindingindex)
 {
 #ifndef NDEBUG
     if(!glVertexAttribBinding)
@@ -8295,7 +8296,7 @@ STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normalized, u32 relativeoffset)
+STATICINLINE void VAOFormat(libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u8 normalized, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexAttribFormat)
@@ -8303,14 +8304,14 @@ STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normali
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribFormat(attribindex, size, type, normalized ? GL_TRUE : GL_FALSE, relativeoffset);
+    glVertexAttribFormat(attribindex, size, type, normalized, relativeoffset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
+STATICINLINE void VAOIFormat(libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexAttribIFormat)
@@ -8325,7 +8326,7 @@ STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativ
 
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_43)
-STATICINLINE void VAOLFormat(u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
+STATICINLINE void VAOLFormat(libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexAttribLFormat)
@@ -8340,7 +8341,7 @@ STATICINLINE void VAOLFormat(u32 attribindex, i32 size, GLenum type, u32 relativ
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOBindingDivisor(u32 bindingindex, u32 divisor)
+STATICINLINE void VAOBindingDivisor(libc_types::u32 bindingindex, libc_types::u32 divisor)
 {
 #ifndef NDEBUG
     if(!glVertexBindingDivisor)
@@ -8354,10 +8355,10 @@ STATICINLINE void VAOBindingDivisor(u32 bindingindex, u32 divisor)
 
 };
 template<typename ReqVer>
-struct CGL_44
-    : CGL_43<ReqVer>
+struct v44
+    : v43<ReqVer>
 {
-using Parent = CGL_43<ReqVer>;
+using Parent = v43<ReqVer>;
 using Parent::TexBind;
 using Parent::BufBindBase;
 using Parent::BufBindRange;
@@ -8367,7 +8368,7 @@ using Parent::VertBufBind;
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 first, i32 count, const u32 * buffers)
+STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * buffers)
 {
 #ifndef NDEBUG
     if(!glBindBuffersBase)
@@ -8382,7 +8383,7 @@ STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 first, i32
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const ptroff * sizes)
+STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * buffers, const libc_types::ptroff * offsets, const libc_types::ptroff * sizes)
 {
 #ifndef NDEBUG
     if(!glBindBuffersRange)
@@ -8397,7 +8398,7 @@ STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 first, i3
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void TexBindImage(u32 first, i32 count, const u32 * textures)
+STATICINLINE void TexBindImage(libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * textures)
 {
 #ifndef NDEBUG
     if(!glBindImageTextures)
@@ -8412,7 +8413,7 @@ STATICINLINE void TexBindImage(u32 first, i32 count, const u32 * textures)
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void SamplerBind(u32 first, i32 count, const u32 * samplers)
+STATICINLINE void SamplerBind(libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * samplers)
 {
 #ifndef NDEBUG
     if(!glBindSamplers)
@@ -8427,7 +8428,7 @@ STATICINLINE void SamplerBind(u32 first, i32 count, const u32 * samplers)
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void TexBind(u32 first, i32 count, const u32 * textures)
+STATICINLINE void TexBind(libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * textures)
 {
 #ifndef NDEBUG
     if(!glBindTextures)
@@ -8442,7 +8443,7 @@ STATICINLINE void TexBind(u32 first, i32 count, const u32 * textures)
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void VertBufBind(u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
+STATICINLINE void VertBufBind(libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * buffers, const libc_types::ptroff * offsets, const libc_types::i32 * strides)
 {
 #ifndef NDEBUG
     if(!glBindVertexBuffers)
@@ -8457,7 +8458,7 @@ STATICINLINE void VertBufBind(u32 first, i32 count, const u32 * buffers, const p
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void BufStorage(BufferComp::buf_flag const& target, BytesConst const& data, RSCA flags)
+STATICINLINE void BufStorage(BufferComp::buf_flag const& target, semantic::BytesConst const& data, semantic::RSCA flags)
 {
 #ifndef NDEBUG
     if(!glBufferStorage)
@@ -8465,14 +8466,14 @@ STATICINLINE void BufStorage(BufferComp::buf_flag const& target, BytesConst cons
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferStorage(buffer_to_enum(target), C_FCAST<ptroff>(data.size), data.data, to_enum2(flags));
+    glBufferStorage(buffer_to_enum(target), C_FCAST<libc_types::ptroff>(data.size), data.data, to_enum2(flags));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void TexClearImage(glhnd const& texture, i32 level, PixCmp format, BitFmt type, const void * data)
+STATICINLINE void TexClearImage(glhnd const& texture, libc_types::i32 level, typing::PixCmp format, typing::pixels::BitFmt type, const void * data)
 {
 #ifndef NDEBUG
     if(!glClearTexImage)
@@ -8480,14 +8481,14 @@ STATICINLINE void TexClearImage(glhnd const& texture, i32 level, PixCmp format, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearTexImage(C_OCAST<u32>(texture), level, to_enum(format, PixFmt::None), to_enum(type), data);
+    glClearTexImage(C_OCAST<libc_types::u32>(texture), level, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x440, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_44)
-STATICINLINE void TexClearSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, const void * data)
+STATICINLINE void TexClearSubImage(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * data)
 {
 #ifndef NDEBUG
     if(!glClearTexSubImage)
@@ -8495,16 +8496,16 @@ STATICINLINE void TexClearSubImage(glhnd const& texture, i32 level, Point3 const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearTexSubImage(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format, PixFmt::None), to_enum(type), data);
+    glClearTexSubImage(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), data);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_45
-    : CGL_44<ReqVer>
+struct v45
+    : v44<ReqVer>
 {
-using Parent = CGL_44<ReqVer>;
+using Parent = v44<ReqVer>;
 using Parent::TexGetImage;
 using Parent::TexGetLevelParameterfv;
 using Parent::TexGetLevelParameteriv;
@@ -8561,7 +8562,7 @@ using Parent::BufStorage;
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexBindUnit(u32 unit, glhnd const& texture)
+STATICINLINE void TexBindUnit(libc_types::u32 unit, glhnd const& texture)
 {
 #ifndef NDEBUG
     if(!glBindTextureUnit)
@@ -8569,14 +8570,14 @@ STATICINLINE void TexBindUnit(u32 unit, glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindTextureUnit(unit, C_OCAST<u32>(texture));
+    glBindTextureUnit(unit, C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBBlitNamed(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
+STATICINLINE void FBBlitNamed(libc_types::u32 readFramebuffer, libc_types::u32 drawFramebuffer, libc_types::i32 srcX0, libc_types::i32 srcY0, libc_types::i32 srcX1, libc_types::i32 srcY1, libc_types::i32 dstX0, libc_types::i32 dstY0, libc_types::i32 dstX1, libc_types::i32 dstY1, libc_types::u32 mask, GLenum filter)
 {
 #ifndef NDEBUG
     if(!glBlitNamedFramebuffer)
@@ -8591,7 +8592,7 @@ STATICINLINE void FBBlitNamed(u32 readFramebuffer, u32 drawFramebuffer, i32 srcX
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE GLenum FBCheckNamedStatus(u32 framebuffer, FramebufferT target)
+STATICINLINE GLenum FBCheckNamedStatus(glhnd const& framebuffer, FramebufferT target)
 {
 #ifndef NDEBUG
     if(!glCheckNamedFramebufferStatus)
@@ -8599,14 +8600,14 @@ STATICINLINE GLenum FBCheckNamedStatus(u32 framebuffer, FramebufferT target)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCheckNamedFramebufferStatus(framebuffer, to_enum(target));
+    return (GLenum)glCheckNamedFramebufferStatus(C_OCAST<libc_types::u32>(framebuffer), to_enum(target));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufClearData(glhnd const& buffer, PixFmt internalformat, PixCmp format, BitFmt type, const void * data)
+STATICINLINE void BufClearData(glhnd const& buffer, typing::pixels::PixFmt internalformat, typing::PixCmp format, typing::pixels::BitFmt type, const void * data)
 {
 #ifndef NDEBUG
     if(!glClearNamedBufferData)
@@ -8614,14 +8615,14 @@ STATICINLINE void BufClearData(glhnd const& buffer, PixFmt internalformat, PixCm
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedBufferData(C_OCAST<u32>(buffer), to_enum(internalformat), to_enum(format, PixFmt::None), to_enum(type), data);
+    glClearNamedBufferData(C_OCAST<libc_types::u32>(buffer), to_enum(internalformat), to_enum(format, typing::pixels::PixFmt::None), to_enum(type), data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufClearSubData(glhnd const& buffer, PixFmt internalformat, ptroff offset, PixCmp format, BitFmt type, BytesConst const& data)
+STATICINLINE void BufClearSubData(glhnd const& buffer, typing::pixels::PixFmt internalformat, libc_types::ptroff offset, typing::PixCmp format, typing::pixels::BitFmt type, semantic::BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glClearNamedBufferSubData)
@@ -8629,14 +8630,14 @@ STATICINLINE void BufClearSubData(glhnd const& buffer, PixFmt internalformat, pt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedBufferSubData(C_OCAST<u32>(buffer), to_enum(internalformat), offset, C_FCAST<ptroff>(data.size), to_enum(format, PixFmt::None), to_enum(type), data.data);
+    glClearNamedBufferSubData(C_OCAST<libc_types::u32>(buffer), to_enum(internalformat), offset, C_FCAST<libc_types::ptroff>(data.size), to_enum(format, typing::pixels::PixFmt::None), to_enum(type), data.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearNamedfi(u32 framebuffer, GLenum buffer, i32 drawbuffer, scalar depth, i32 stencil)
+STATICINLINE void FBClearNamedfi(glhnd const& framebuffer, GLenum buffer, libc_types::i32 drawbuffer, libc_types::f32 depth, libc_types::i32 stencil)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferfi)
@@ -8644,14 +8645,14 @@ STATICINLINE void FBClearNamedfi(u32 framebuffer, GLenum buffer, i32 drawbuffer,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferfi(framebuffer, buffer, drawbuffer, depth, stencil);
+    glClearNamedFramebufferfi(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, depth, stencil);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearNamedfv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const scalar> const& value)
+STATICINLINE void FBClearNamedfv(glhnd const& framebuffer, GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferfv)
@@ -8659,14 +8660,14 @@ STATICINLINE void FBClearNamedfv(u32 framebuffer, GLenum buffer, i32 drawbuffer,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferfv(framebuffer, buffer, drawbuffer, value.data);
+    glClearNamedFramebufferfv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearNamediv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const i32> const& value)
+STATICINLINE void FBClearNamediv(glhnd const& framebuffer, GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferiv)
@@ -8674,14 +8675,14 @@ STATICINLINE void FBClearNamediv(u32 framebuffer, GLenum buffer, i32 drawbuffer,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferiv(framebuffer, buffer, drawbuffer, value.data);
+    glClearNamedFramebufferiv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBClearNameduiv(u32 framebuffer, GLenum buffer, i32 drawbuffer, Span<const u32> const& value)
+STATICINLINE void FBClearNameduiv(glhnd const& framebuffer, GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearNamedFramebufferuiv)
@@ -8689,7 +8690,7 @@ STATICINLINE void FBClearNameduiv(u32 framebuffer, GLenum buffer, i32 drawbuffer
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferuiv(framebuffer, buffer, drawbuffer, value.data);
+    glClearNamedFramebufferuiv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data);
 }
 #endif
 
@@ -8711,7 +8712,7 @@ STATICINLINE void ClipControl(GLenum origin, GLenum depth)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexCompressedSubImage1D(glhnd const& texture, i32 level, i32 xoffset, i32 width, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage1D(glhnd const& texture, libc_types::i32 level, libc_types::i32 xoffset, libc_types::i32 width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTextureSubImage1D)
@@ -8719,14 +8720,14 @@ STATICINLINE void TexCompressedSubImage1D(glhnd const& texture, i32 level, i32 x
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTextureSubImage1D(C_OCAST<u32>(texture), level, xoffset, width, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTextureSubImage1D(C_OCAST<libc_types::u32>(texture), level, xoffset, width, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexCompressedSubImage2D(glhnd const& texture, i32 level, Point const& offset, Size const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage2D(glhnd const& texture, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTextureSubImage2D)
@@ -8734,14 +8735,14 @@ STATICINLINE void TexCompressedSubImage2D(glhnd const& texture, i32 level, Point
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTextureSubImage2D(C_OCAST<u32>(texture), level, offset.x, offset.y, size.w, size.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTextureSubImage2D(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexCompressedSubImage3D(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage3D(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTextureSubImage3D)
@@ -8749,14 +8750,14 @@ STATICINLINE void TexCompressedSubImage3D(glhnd const& texture, i32 level, Point
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTextureSubImage3D(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTextureSubImage3D(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufCopySubData(u32 readBuffer, u32 writeBuffer, ptroff readOffset, ptroff writeOffset, ptroff size)
+STATICINLINE void BufCopySubData(libc_types::u32 readBuffer, libc_types::u32 writeBuffer, libc_types::ptroff readOffset, libc_types::ptroff writeOffset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glCopyNamedBufferSubData)
@@ -8771,7 +8772,7 @@ STATICINLINE void BufCopySubData(u32 readBuffer, u32 writeBuffer, ptroff readOff
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexCopySubImage1D(glhnd const& texture, i32 level, i32 xoffset, i32 x, i32 y, i32 width)
+STATICINLINE void TexCopySubImage1D(glhnd const& texture, libc_types::i32 level, libc_types::i32 xoffset, typing::vectors::tvector<libc_types::i32, 2> x, libc_types::i32 width)
 {
 #ifndef NDEBUG
     if(!glCopyTextureSubImage1D)
@@ -8779,14 +8780,14 @@ STATICINLINE void TexCopySubImage1D(glhnd const& texture, i32 level, i32 xoffset
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTextureSubImage1D(C_OCAST<u32>(texture), level, xoffset, x, y, width);
+    glCopyTextureSubImage1D(C_OCAST<libc_types::u32>(texture), level, xoffset, x[0], x[1], width);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexCopySubImage2D(glhnd const& texture, i32 level, Point const& offset, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopySubImage2D(glhnd const& texture, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTextureSubImage2D)
@@ -8794,14 +8795,14 @@ STATICINLINE void TexCopySubImage2D(glhnd const& texture, i32 level, Point const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTextureSubImage2D(C_OCAST<u32>(texture), level, offset.x, offset.y, x, y, size.w, size.h);
+    glCopyTextureSubImage2D(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexCopySubImage3D(glhnd const& texture, i32 level, Point3 const& offset, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopySubImage3D(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTextureSubImage3D)
@@ -8809,14 +8810,14 @@ STATICINLINE void TexCopySubImage3D(glhnd const& texture, i32 level, Point3 cons
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTextureSubImage3D(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, x, y, size.w, size.h);
+    glCopyTextureSubImage3D(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufAllocEx(Span<u32> const& buffers)
+STATICINLINE void BufAllocEx(semantic::Span<libc_types::u32>&& buffers)
 {
 #ifndef NDEBUG
     if(!glCreateBuffers)
@@ -8824,14 +8825,14 @@ STATICINLINE void BufAllocEx(Span<u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
+    glCreateBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBAllocEx(Span<u32> const& framebuffers)
+STATICINLINE void FBAllocEx(semantic::Span<libc_types::u32>&& framebuffers)
 {
 #ifndef NDEBUG
     if(!glCreateFramebuffers)
@@ -8839,14 +8840,14 @@ STATICINLINE void FBAllocEx(Span<u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
+    glCreateFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void PipelineAllocEx(Span<u32> const& pipelines)
+STATICINLINE void PipelineAllocEx(semantic::Span<libc_types::u32>&& pipelines)
 {
 #ifndef NDEBUG
     if(!glCreateProgramPipelines)
@@ -8854,14 +8855,14 @@ STATICINLINE void PipelineAllocEx(Span<u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
+    glCreateProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void QueryAllocEx(QueryComp::query_flag const& target, Span<u32> const& ids)
+STATICINLINE void QueryAllocEx(QueryComp::query_flag const& target, semantic::Span<libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glCreateQueries)
@@ -8869,14 +8870,14 @@ STATICINLINE void QueryAllocEx(QueryComp::query_flag const& target, Span<u32> co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateQueries(query_to_enum(target), C_FCAST<i32>(ids.elements), ids.data);
+    glCreateQueries(query_to_enum(target), C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void RBufAllocEx(Span<u32> const& renderbuffers)
+STATICINLINE void RBufAllocEx(semantic::Span<libc_types::u32>&& renderbuffers)
 {
 #ifndef NDEBUG
     if(!glCreateRenderbuffers)
@@ -8884,14 +8885,14 @@ STATICINLINE void RBufAllocEx(Span<u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
+    glCreateRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void SamplerAllocEx(Span<u32> const& samplers)
+STATICINLINE void SamplerAllocEx(semantic::Span<libc_types::u32>&& samplers)
 {
 #ifndef NDEBUG
     if(!glCreateSamplers)
@@ -8899,14 +8900,14 @@ STATICINLINE void SamplerAllocEx(Span<u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
+    glCreateSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexAllocEx(TexComp::tex_flag const& target, Span<u32> const& textures)
+STATICINLINE void TexAllocEx(TexComp::tex_flag const& target, semantic::Span<libc_types::u32>&& textures)
 {
 #ifndef NDEBUG
     if(!glCreateTextures)
@@ -8914,14 +8915,14 @@ STATICINLINE void TexAllocEx(TexComp::tex_flag const& target, Span<u32> const& t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateTextures(texture_to_enum(target), C_FCAST<i32>(textures.elements), textures.data);
+    glCreateTextures(texture_to_enum(target), C_FCAST<libc_types::i32>(textures.elements), textures.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFAllocEx(Span<u32> const& ids)
+STATICINLINE void XFAllocEx(semantic::Span<libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glCreateTransformFeedbacks)
@@ -8929,14 +8930,14 @@ STATICINLINE void XFAllocEx(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
+    glCreateTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOAllocEx(Span<u32> const& arrays)
+STATICINLINE void VAOAllocEx(semantic::Span<libc_types::u32>&& arrays)
 {
 #ifndef NDEBUG
     if(!glCreateVertexArrays)
@@ -8944,14 +8945,14 @@ STATICINLINE void VAOAllocEx(Span<u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
+    glCreateVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAODisable(glhnd const& vaobj, u32 index)
+STATICINLINE void VAODisable(glhnd const& vaobj, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glDisableVertexArrayAttrib)
@@ -8959,14 +8960,14 @@ STATICINLINE void VAODisable(glhnd const& vaobj, u32 index)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDisableVertexArrayAttrib(C_OCAST<u32>(vaobj), index);
+    glDisableVertexArrayAttrib(C_OCAST<libc_types::u32>(vaobj), index);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOEnable(glhnd const& vaobj, u32 index)
+STATICINLINE void VAOEnable(glhnd const& vaobj, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glEnableVertexArrayAttrib)
@@ -8974,14 +8975,14 @@ STATICINLINE void VAOEnable(glhnd const& vaobj, u32 index)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glEnableVertexArrayAttrib(C_OCAST<u32>(vaobj), index);
+    glEnableVertexArrayAttrib(C_OCAST<libc_types::u32>(vaobj), index);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufFlushMappedRange(glhnd const& buffer, ptroff offset, ptroff length)
+STATICINLINE void BufFlushMappedRange(glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff length)
 {
 #ifndef NDEBUG
     if(!glFlushMappedNamedBufferRange)
@@ -8989,7 +8990,7 @@ STATICINLINE void BufFlushMappedRange(glhnd const& buffer, ptroff offset, ptroff
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFlushMappedNamedBufferRange(C_OCAST<u32>(buffer), offset, length);
+    glFlushMappedNamedBufferRange(C_OCAST<libc_types::u32>(buffer), offset, length);
 }
 #endif
 
@@ -9004,14 +9005,14 @@ STATICINLINE void TexGenerateMipmap(glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenerateTextureMipmap(C_OCAST<u32>(texture));
+    glGenerateTextureMipmap(C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetCompressedImage(glhnd const& texture, i32 level, i32 bufSize, void * pixels)
+STATICINLINE void TexGetCompressedImage(glhnd const& texture, libc_types::i32 level, libc_types::i32 bufSize, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetCompressedTextureImage)
@@ -9019,14 +9020,14 @@ STATICINLINE void TexGetCompressedImage(glhnd const& texture, i32 level, i32 buf
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetCompressedTextureImage(C_OCAST<u32>(texture), level, bufSize, pixels);
+    glGetCompressedTextureImage(C_OCAST<libc_types::u32>(texture), level, bufSize, pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetCompressedSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, i32 bufSize, void * pixels)
+STATICINLINE void TexGetCompressedSubImage(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::i32 bufSize, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetCompressedTextureSubImage)
@@ -9034,7 +9035,7 @@ STATICINLINE void TexGetCompressedSubImage(glhnd const& texture, i32 level, Poin
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetCompressedTextureSubImage(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, bufSize, pixels);
+    glGetCompressedTextureSubImage(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, bufSize, pixels);
 }
 #endif
 
@@ -9052,14 +9053,14 @@ STATICINLINE GLenum GetGraphicsResetStatus()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetGraphicsResetStatus();
+    return (GLenum)glGetGraphicsResetStatus();
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufGetParameteri64v(glhnd const& buffer, GLenum pname, i64 * params)
+STATICINLINE void BufGetParameteri64v(glhnd const& buffer, GLenum pname, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetNamedBufferParameteri64v)
@@ -9067,14 +9068,14 @@ STATICINLINE void BufGetParameteri64v(glhnd const& buffer, GLenum pname, i64 * p
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedBufferParameteri64v(C_OCAST<u32>(buffer), pname, params);
+    glGetNamedBufferParameteri64v(C_OCAST<libc_types::u32>(buffer), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufGetParameteriv(glhnd const& buffer, GLenum pname, i32 * params)
+STATICINLINE void BufGetParameteriv(glhnd const& buffer, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetNamedBufferParameteriv)
@@ -9082,7 +9083,7 @@ STATICINLINE void BufGetParameteriv(glhnd const& buffer, GLenum pname, i32 * par
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedBufferParameteriv(C_OCAST<u32>(buffer), pname, params);
+    glGetNamedBufferParameteriv(C_OCAST<libc_types::u32>(buffer), pname, params);
 }
 #endif
 
@@ -9097,14 +9098,14 @@ STATICINLINE void BufGetPointerv(glhnd const& buffer, GLenum pname, void * * par
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedBufferPointerv(C_OCAST<u32>(buffer), pname, params);
+    glGetNamedBufferPointerv(C_OCAST<libc_types::u32>(buffer), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufGetSubData(glhnd const& buffer, ptroff offset, Bytes const& data)
+STATICINLINE void BufGetSubData(glhnd const& buffer, libc_types::ptroff offset, semantic::Bytes const& data)
 {
 #ifndef NDEBUG
     if(!glGetNamedBufferSubData)
@@ -9112,14 +9113,14 @@ STATICINLINE void BufGetSubData(glhnd const& buffer, ptroff offset, Bytes const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedBufferSubData(C_OCAST<u32>(buffer), offset, C_FCAST<ptroff>(data.size), data.data);
+    glGetNamedBufferSubData(C_OCAST<libc_types::u32>(buffer), offset, C_FCAST<libc_types::ptroff>(data.size), data.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBGetNamedAttachmentParameteriv(u32 framebuffer, GLenum attachment, GLenum pname, i32 * params)
+STATICINLINE void FBGetNamedAttachmentParameteriv(glhnd const& framebuffer, GLenum attachment, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetNamedFramebufferAttachmentParameteriv)
@@ -9127,14 +9128,14 @@ STATICINLINE void FBGetNamedAttachmentParameteriv(u32 framebuffer, GLenum attach
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedFramebufferAttachmentParameteriv(framebuffer, attachment, pname, params);
+    glGetNamedFramebufferAttachmentParameteriv(C_OCAST<libc_types::u32>(framebuffer), attachment, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBGetNamedParameteriv(u32 framebuffer, GLenum pname, i32 * param)
+STATICINLINE void FBGetNamedParameteriv(glhnd const& framebuffer, GLenum pname, libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glGetNamedFramebufferParameteriv)
@@ -9142,14 +9143,14 @@ STATICINLINE void FBGetNamedParameteriv(u32 framebuffer, GLenum pname, i32 * par
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedFramebufferParameteriv(framebuffer, pname, param);
+    glGetNamedFramebufferParameteriv(C_OCAST<libc_types::u32>(framebuffer), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void RBufGetParameteriv(u32 renderbuffer, GLenum pname, i32 * params)
+STATICINLINE void RBufGetParameteriv(glhnd const& renderbuffer, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetNamedRenderbufferParameteriv)
@@ -9157,14 +9158,14 @@ STATICINLINE void RBufGetParameteriv(u32 renderbuffer, GLenum pname, i32 * param
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetNamedRenderbufferParameteriv(renderbuffer, pname, params);
+    glGetNamedRenderbufferParameteriv(C_OCAST<libc_types::u32>(renderbuffer), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void QueryGetBufferObjecti64v(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjecti64v(glhnd const& id, glhnd const& buffer, GLenum pname, libc_types::ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjecti64v)
@@ -9172,14 +9173,14 @@ STATICINLINE void QueryGetBufferObjecti64v(u32 id, glhnd const& buffer, GLenum p
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryBufferObjecti64v(id, C_OCAST<u32>(buffer), pname, offset);
+    glGetQueryBufferObjecti64v(C_OCAST<libc_types::u32>(id), C_OCAST<libc_types::u32>(buffer), pname, offset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void QueryGetBufferObjectiv(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjectiv(glhnd const& id, glhnd const& buffer, GLenum pname, libc_types::ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjectiv)
@@ -9187,14 +9188,14 @@ STATICINLINE void QueryGetBufferObjectiv(u32 id, glhnd const& buffer, GLenum pna
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryBufferObjectiv(id, C_OCAST<u32>(buffer), pname, offset);
+    glGetQueryBufferObjectiv(C_OCAST<libc_types::u32>(id), C_OCAST<libc_types::u32>(buffer), pname, offset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void QueryGetBufferObjectui64v(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjectui64v(glhnd const& id, glhnd const& buffer, GLenum pname, libc_types::ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjectui64v)
@@ -9202,14 +9203,14 @@ STATICINLINE void QueryGetBufferObjectui64v(u32 id, glhnd const& buffer, GLenum 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryBufferObjectui64v(id, C_OCAST<u32>(buffer), pname, offset);
+    glGetQueryBufferObjectui64v(C_OCAST<libc_types::u32>(id), C_OCAST<libc_types::u32>(buffer), pname, offset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void QueryGetBufferObjectuiv(u32 id, glhnd const& buffer, GLenum pname, ptroff offset)
+STATICINLINE void QueryGetBufferObjectuiv(glhnd const& id, glhnd const& buffer, GLenum pname, libc_types::ptroff offset)
 {
 #ifndef NDEBUG
     if(!glGetQueryBufferObjectuiv)
@@ -9217,14 +9218,14 @@ STATICINLINE void QueryGetBufferObjectuiv(u32 id, glhnd const& buffer, GLenum pn
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryBufferObjectuiv(id, C_OCAST<u32>(buffer), pname, offset);
+    glGetQueryBufferObjectuiv(C_OCAST<libc_types::u32>(id), C_OCAST<libc_types::u32>(buffer), pname, offset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetImage(glhnd const& texture, i32 level, PixCmp format, BitFmt type, i32 bufSize, void * pixels)
+STATICINLINE void TexGetImage(glhnd const& texture, libc_types::i32 level, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetTextureImage)
@@ -9232,14 +9233,14 @@ STATICINLINE void TexGetImage(glhnd const& texture, i32 level, PixCmp format, Bi
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureImage(C_OCAST<u32>(texture), level, to_enum(format, PixFmt::None), to_enum(type), bufSize, pixels);
+    glGetTextureImage(C_OCAST<libc_types::u32>(texture), level, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetLevelParameterfv(glhnd const& texture, i32 level, GLenum pname, scalar * params)
+STATICINLINE void TexGetLevelParameterfv(glhnd const& texture, libc_types::i32 level, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTextureLevelParameterfv)
@@ -9247,14 +9248,14 @@ STATICINLINE void TexGetLevelParameterfv(glhnd const& texture, i32 level, GLenum
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureLevelParameterfv(C_OCAST<u32>(texture), level, pname, params);
+    glGetTextureLevelParameterfv(C_OCAST<libc_types::u32>(texture), level, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetLevelParameteriv(glhnd const& texture, i32 level, GLenum pname, i32 * params)
+STATICINLINE void TexGetLevelParameteriv(glhnd const& texture, libc_types::i32 level, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTextureLevelParameteriv)
@@ -9262,14 +9263,14 @@ STATICINLINE void TexGetLevelParameteriv(glhnd const& texture, i32 level, GLenum
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureLevelParameteriv(C_OCAST<u32>(texture), level, pname, params);
+    glGetTextureLevelParameteriv(C_OCAST<libc_types::u32>(texture), level, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetParameterIiv(glhnd const& texture, GLenum pname, i32 * params)
+STATICINLINE void TexGetParameterIiv(glhnd const& texture, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTextureParameterIiv)
@@ -9277,14 +9278,14 @@ STATICINLINE void TexGetParameterIiv(glhnd const& texture, GLenum pname, i32 * p
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureParameterIiv(C_OCAST<u32>(texture), pname, params);
+    glGetTextureParameterIiv(C_OCAST<libc_types::u32>(texture), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetParameterIuiv(glhnd const& texture, GLenum pname, u32 * params)
+STATICINLINE void TexGetParameterIuiv(glhnd const& texture, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTextureParameterIuiv)
@@ -9292,14 +9293,14 @@ STATICINLINE void TexGetParameterIuiv(glhnd const& texture, GLenum pname, u32 * 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureParameterIuiv(C_OCAST<u32>(texture), pname, params);
+    glGetTextureParameterIuiv(C_OCAST<libc_types::u32>(texture), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetParameterfv(glhnd const& texture, GLenum pname, scalar * params)
+STATICINLINE void TexGetParameterfv(glhnd const& texture, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTextureParameterfv)
@@ -9307,14 +9308,14 @@ STATICINLINE void TexGetParameterfv(glhnd const& texture, GLenum pname, scalar *
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureParameterfv(C_OCAST<u32>(texture), pname, params);
+    glGetTextureParameterfv(C_OCAST<libc_types::u32>(texture), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetParameteriv(glhnd const& texture, GLenum pname, i32 * params)
+STATICINLINE void TexGetParameteriv(glhnd const& texture, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTextureParameteriv)
@@ -9322,14 +9323,14 @@ STATICINLINE void TexGetParameteriv(glhnd const& texture, GLenum pname, i32 * pa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureParameteriv(C_OCAST<u32>(texture), pname, params);
+    glGetTextureParameteriv(C_OCAST<libc_types::u32>(texture), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetSubImage(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, i32 bufSize, void * pixels)
+STATICINLINE void TexGetSubImage(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetTextureSubImage)
@@ -9337,14 +9338,14 @@ STATICINLINE void TexGetSubImage(glhnd const& texture, i32 level, Point3 const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTextureSubImage(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format, PixFmt::None), to_enum(type), bufSize, pixels);
+    glGetTextureSubImage(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFGeti64_v(u32 xfb, GLenum pname, u32 index, i64 * param)
+STATICINLINE void XFGeti64_v(libc_types::u32 xfb, GLenum pname, libc_types::u32 index, libc_types::i64 * param)
 {
 #ifndef NDEBUG
     if(!glGetTransformFeedbacki64_v)
@@ -9359,7 +9360,7 @@ STATICINLINE void XFGeti64_v(u32 xfb, GLenum pname, u32 index, i64 * param)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFGeti_v(u32 xfb, GLenum pname, u32 index, i32 * param)
+STATICINLINE void XFGeti_v(libc_types::u32 xfb, GLenum pname, libc_types::u32 index, libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glGetTransformFeedbacki_v)
@@ -9374,7 +9375,7 @@ STATICINLINE void XFGeti_v(u32 xfb, GLenum pname, u32 index, i32 * param)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void XFGetiv(u32 xfb, GLenum pname, i32 * param)
+STATICINLINE void XFGetiv(libc_types::u32 xfb, GLenum pname, libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glGetTransformFeedbackiv)
@@ -9389,7 +9390,7 @@ STATICINLINE void XFGetiv(u32 xfb, GLenum pname, i32 * param)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOGetIndexed64iv(glhnd const& vaobj, u32 index, GLenum pname, i64 * param)
+STATICINLINE void VAOGetIndexed64iv(glhnd const& vaobj, libc_types::u32 index, GLenum pname, libc_types::i64 * param)
 {
 #ifndef NDEBUG
     if(!glGetVertexArrayIndexed64iv)
@@ -9397,14 +9398,14 @@ STATICINLINE void VAOGetIndexed64iv(glhnd const& vaobj, u32 index, GLenum pname,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetVertexArrayIndexed64iv(C_OCAST<u32>(vaobj), index, pname, param);
+    glGetVertexArrayIndexed64iv(C_OCAST<libc_types::u32>(vaobj), index, pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOGetIndexediv(glhnd const& vaobj, u32 index, GLenum pname, i32 * param)
+STATICINLINE void VAOGetIndexediv(glhnd const& vaobj, libc_types::u32 index, GLenum pname, libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glGetVertexArrayIndexediv)
@@ -9412,14 +9413,14 @@ STATICINLINE void VAOGetIndexediv(glhnd const& vaobj, u32 index, GLenum pname, i
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetVertexArrayIndexediv(C_OCAST<u32>(vaobj), index, pname, param);
+    glGetVertexArrayIndexediv(C_OCAST<libc_types::u32>(vaobj), index, pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOGetiv(glhnd const& vaobj, GLenum pname, i32 * param)
+STATICINLINE void VAOGetiv(glhnd const& vaobj, GLenum pname, libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glGetVertexArrayiv)
@@ -9427,14 +9428,14 @@ STATICINLINE void VAOGetiv(glhnd const& vaobj, GLenum pname, i32 * param)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetVertexArrayiv(C_OCAST<u32>(vaobj), pname, param);
+    glGetVertexArrayiv(C_OCAST<libc_types::u32>(vaobj), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetnCompressedImage(TexComp::tex_flag const& target, i32 lod, i32 bufSize, void * pixels)
+STATICINLINE void TexGetnCompressedImage(TexComp::tex_flag const& target, libc_types::i32 lod, libc_types::i32 bufSize, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetnCompressedTexImage)
@@ -9449,7 +9450,7 @@ STATICINLINE void TexGetnCompressedImage(TexComp::tex_flag const& target, i32 lo
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexGetnImage(TexComp::tex_flag const& target, i32 level, PixCmp format, BitFmt type, i32 bufSize, void * pixels)
+STATICINLINE void TexGetnImage(TexComp::tex_flag const& target, libc_types::i32 level, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * pixels)
 {
 #ifndef NDEBUG
     if(!glGetnTexImage)
@@ -9457,14 +9458,14 @@ STATICINLINE void TexGetnImage(TexComp::tex_flag const& target, i32 level, PixCm
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnTexImage(texture_to_enum(target), level, to_enum(format, PixFmt::None), to_enum(type), bufSize, pixels);
+    glGetnTexImage(texture_to_enum(target), level, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void UnifGetndv(glhnd const& program, i32 location, i32 bufSize, bigscalar * params)
+STATICINLINE void UnifGetndv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::f64 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformdv)
@@ -9472,14 +9473,14 @@ STATICINLINE void UnifGetndv(glhnd const& program, i32 location, i32 bufSize, bi
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformdv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformdv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, scalar * params)
+STATICINLINE void UnifGetnfv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformfv)
@@ -9490,14 +9491,14 @@ STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, sc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformfv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformfv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i32 * params)
+STATICINLINE void UnifGetniv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformiv)
@@ -9508,14 +9509,14 @@ STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformiv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformiv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u32 * params)
+STATICINLINE void UnifGetnuiv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformuiv)
@@ -9526,14 +9527,14 @@ STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformuiv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformuiv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBInvalidateNamedData(u32 framebuffer, i32 numAttachments, const GLenum * attachments)
+STATICINLINE void FBInvalidateNamedData(glhnd const& framebuffer, libc_types::i32 numAttachments, const GLenum * attachments)
 {
 #ifndef NDEBUG
     if(!glInvalidateNamedFramebufferData)
@@ -9541,14 +9542,14 @@ STATICINLINE void FBInvalidateNamedData(u32 framebuffer, i32 numAttachments, con
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateNamedFramebufferData(framebuffer, numAttachments, attachments);
+    glInvalidateNamedFramebufferData(C_OCAST<libc_types::u32>(framebuffer), numAttachments, attachments);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBInvalidateNamedSubData(u32 framebuffer, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
+STATICINLINE void FBInvalidateNamedSubData(glhnd const& framebuffer, libc_types::i32 numAttachments, const GLenum * attachments, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glInvalidateNamedFramebufferSubData)
@@ -9556,14 +9557,14 @@ STATICINLINE void FBInvalidateNamedSubData(u32 framebuffer, i32 numAttachments, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateNamedFramebufferSubData(framebuffer, numAttachments, attachments, x, y, size.w, size.h);
+    glInvalidateNamedFramebufferSubData(C_OCAST<libc_types::u32>(framebuffer), numAttachments, attachments, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void * BufMap(glhnd const& buffer, RSCA access)
+STATICINLINE void * BufMap(glhnd const& buffer, semantic::RSCA access)
 {
 #ifndef NDEBUG
     if(!glMapNamedBuffer)
@@ -9571,14 +9572,14 @@ STATICINLINE void * BufMap(glhnd const& buffer, RSCA access)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glMapNamedBuffer(C_OCAST<u32>(buffer), to_enum2(access));
+    return (void *)glMapNamedBuffer(C_OCAST<libc_types::u32>(buffer), to_enum2(access));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void * BufMapRange(glhnd const& buffer, ptroff offset, ptroff length, RSCA access)
+STATICINLINE void * BufMapRange(glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff length, semantic::RSCA access)
 {
 #ifndef NDEBUG
     if(!glMapNamedBufferRange)
@@ -9586,14 +9587,14 @@ STATICINLINE void * BufMapRange(glhnd const& buffer, ptroff offset, ptroff lengt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glMapNamedBufferRange(C_OCAST<u32>(buffer), offset, length, to_enum2(access));
+    return (void *)glMapNamedBufferRange(C_OCAST<libc_types::u32>(buffer), offset, length, to_enum2(access));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_31)
-STATICINLINE void MemoryBarrierByRegion(u32 barriers)
+STATICINLINE void MemoryBarrierByRegion(libc_types::u32 barriers)
 {
 #ifndef NDEBUG
     if(!glMemoryBarrierByRegion)
@@ -9608,7 +9609,7 @@ STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufData(glhnd const& buffer, BytesConst const& data, RSCA usage)
+STATICINLINE void BufData(glhnd const& buffer, semantic::BytesConst const& data, semantic::RSCA usage)
 {
 #ifndef NDEBUG
     if(!glNamedBufferData)
@@ -9616,14 +9617,14 @@ STATICINLINE void BufData(glhnd const& buffer, BytesConst const& data, RSCA usag
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedBufferData(C_OCAST<u32>(buffer), C_FCAST<ptroff>(data.size), data.data, to_enum1(usage));
+    glNamedBufferData(C_OCAST<libc_types::u32>(buffer), C_FCAST<libc_types::ptroff>(data.size), data.data, to_enum1(usage));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufStorage(glhnd const& buffer, BytesConst const& data, RSCA flags)
+STATICINLINE void BufStorage(glhnd const& buffer, semantic::BytesConst const& data, semantic::RSCA flags)
 {
 #ifndef NDEBUG
     if(!glNamedBufferStorage)
@@ -9631,14 +9632,14 @@ STATICINLINE void BufStorage(glhnd const& buffer, BytesConst const& data, RSCA f
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedBufferStorage(C_OCAST<u32>(buffer), C_FCAST<ptroff>(data.size), data.data, to_enum2(flags));
+    glNamedBufferStorage(C_OCAST<libc_types::u32>(buffer), C_FCAST<libc_types::ptroff>(data.size), data.data, to_enum2(flags));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufSubData(glhnd const& buffer, ptroff offset, BytesConst const& data)
+STATICINLINE void BufSubData(glhnd const& buffer, libc_types::ptroff offset, semantic::BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glNamedBufferSubData)
@@ -9646,14 +9647,14 @@ STATICINLINE void BufSubData(glhnd const& buffer, ptroff offset, BytesConst cons
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedBufferSubData(C_OCAST<u32>(buffer), offset, C_FCAST<ptroff>(data.size), data.data);
+    glNamedBufferSubData(C_OCAST<libc_types::u32>(buffer), offset, C_FCAST<libc_types::ptroff>(data.size), data.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void NamedFramebufferDrawBuffer(u32 framebuffer, GLenum buf)
+STATICINLINE void NamedFramebufferDrawBuffer(glhnd const& framebuffer, GLenum buf)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferDrawBuffer)
@@ -9661,14 +9662,14 @@ STATICINLINE void NamedFramebufferDrawBuffer(u32 framebuffer, GLenum buf)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferDrawBuffer(framebuffer, buf);
+    glNamedFramebufferDrawBuffer(C_OCAST<libc_types::u32>(framebuffer), buf);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void NamedFramebufferDrawBuffers(u32 framebuffer, i32 n, const GLenum * bufs)
+STATICINLINE void NamedFramebufferDrawBuffers(glhnd const& framebuffer, libc_types::i32 n, const GLenum * bufs)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferDrawBuffers)
@@ -9676,14 +9677,14 @@ STATICINLINE void NamedFramebufferDrawBuffers(u32 framebuffer, i32 n, const GLen
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferDrawBuffers(framebuffer, n, bufs);
+    glNamedFramebufferDrawBuffers(C_OCAST<libc_types::u32>(framebuffer), n, bufs);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBNamedParameteri(u32 framebuffer, GLenum pname, i32 param)
+STATICINLINE void FBNamedParameteri(glhnd const& framebuffer, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferParameteri)
@@ -9691,14 +9692,14 @@ STATICINLINE void FBNamedParameteri(u32 framebuffer, GLenum pname, i32 param)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferParameteri(framebuffer, pname, param);
+    glNamedFramebufferParameteri(C_OCAST<libc_types::u32>(framebuffer), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBNamedReadBuffer(u32 framebuffer, GLenum src)
+STATICINLINE void FBNamedReadBuffer(glhnd const& framebuffer, GLenum src)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferReadBuffer)
@@ -9706,14 +9707,14 @@ STATICINLINE void FBNamedReadBuffer(u32 framebuffer, GLenum src)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferReadBuffer(framebuffer, src);
+    glNamedFramebufferReadBuffer(C_OCAST<libc_types::u32>(framebuffer), src);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBNamedRenderbuffer(u32 framebuffer, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
+STATICINLINE void FBNamedRenderbuffer(glhnd const& framebuffer, GLenum attachment, GLenum renderbuffertarget, glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferRenderbuffer)
@@ -9721,14 +9722,14 @@ STATICINLINE void FBNamedRenderbuffer(u32 framebuffer, GLenum attachment, GLenum
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferRenderbuffer(framebuffer, attachment, renderbuffertarget, renderbuffer);
+    glNamedFramebufferRenderbuffer(C_OCAST<libc_types::u32>(framebuffer), attachment, renderbuffertarget, C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBNamedTexture(u32 framebuffer, GLenum attachment, glhnd const& texture, i32 level)
+STATICINLINE void FBNamedTexture(glhnd const& framebuffer, GLenum attachment, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferTexture)
@@ -9736,14 +9737,14 @@ STATICINLINE void FBNamedTexture(u32 framebuffer, GLenum attachment, glhnd const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferTexture(framebuffer, attachment, C_OCAST<u32>(texture), level);
+    glNamedFramebufferTexture(C_OCAST<libc_types::u32>(framebuffer), attachment, C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void FBNamedTextureLayer(u32 framebuffer, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
+STATICINLINE void FBNamedTextureLayer(glhnd const& framebuffer, GLenum attachment, glhnd const& texture, libc_types::i32 level, libc_types::i32 layer)
 {
 #ifndef NDEBUG
     if(!glNamedFramebufferTextureLayer)
@@ -9751,14 +9752,14 @@ STATICINLINE void FBNamedTextureLayer(u32 framebuffer, GLenum attachment, glhnd 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedFramebufferTextureLayer(framebuffer, attachment, C_OCAST<u32>(texture), level, layer);
+    glNamedFramebufferTextureLayer(C_OCAST<libc_types::u32>(framebuffer), attachment, C_OCAST<libc_types::u32>(texture), level, layer);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void RBufStorage(u32 renderbuffer, PixFmt internalformat, Size const& size)
+STATICINLINE void RBufStorage(glhnd const& renderbuffer, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glNamedRenderbufferStorage)
@@ -9766,14 +9767,14 @@ STATICINLINE void RBufStorage(u32 renderbuffer, PixFmt internalformat, Size cons
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedRenderbufferStorage(renderbuffer, to_enum(internalformat), size.w, size.h);
+    glNamedRenderbufferStorage(C_OCAST<libc_types::u32>(renderbuffer), to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void RBufStorageMultisample(u32 renderbuffer, i32 samples, PixFmt internalformat, Size const& size)
+STATICINLINE void RBufStorageMultisample(glhnd const& renderbuffer, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glNamedRenderbufferStorageMultisample)
@@ -9781,14 +9782,14 @@ STATICINLINE void RBufStorageMultisample(u32 renderbuffer, i32 samples, PixFmt i
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glNamedRenderbufferStorageMultisample(renderbuffer, samples, to_enum(internalformat), size.w, size.h);
+    glNamedRenderbufferStorageMultisample(C_OCAST<libc_types::u32>(renderbuffer), samples, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
+STATICINLINE void ReadnPixels(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * data)
 {
 #ifndef NDEBUG
     if(!glReadnPixels)
@@ -9802,7 +9803,7 @@ STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, Bit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glReadnPixels(x, y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), bufSize, data);
+    glReadnPixels(x[0], x[1], width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, data);
 }
 #endif
 
@@ -9824,7 +9825,7 @@ STATICINLINE void TexBarrier()
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexBuffer(glhnd const& texture, PixFmt internalformat, glhnd const& buffer)
+STATICINLINE void TexBuffer(glhnd const& texture, typing::pixels::PixFmt internalformat, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glTextureBuffer)
@@ -9832,14 +9833,14 @@ STATICINLINE void TexBuffer(glhnd const& texture, PixFmt internalformat, glhnd c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureBuffer(C_OCAST<u32>(texture), to_enum(internalformat), C_OCAST<u32>(buffer));
+    glTextureBuffer(C_OCAST<libc_types::u32>(texture), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexBufferRange(glhnd const& texture, PixFmt internalformat, glhnd const& buffer, ptroff offset, ptroff size)
+STATICINLINE void TexBufferRange(glhnd const& texture, typing::pixels::PixFmt internalformat, glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glTextureBufferRange)
@@ -9847,14 +9848,14 @@ STATICINLINE void TexBufferRange(glhnd const& texture, PixFmt internalformat, gl
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureBufferRange(C_OCAST<u32>(texture), to_enum(internalformat), C_OCAST<u32>(buffer), offset, size);
+    glTextureBufferRange(C_OCAST<libc_types::u32>(texture), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer), offset, size);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexParameterIiv(glhnd const& texture, GLenum pname, const i32 * params)
+STATICINLINE void TexParameterIiv(glhnd const& texture, GLenum pname, const libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glTextureParameterIiv)
@@ -9862,14 +9863,14 @@ STATICINLINE void TexParameterIiv(glhnd const& texture, GLenum pname, const i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureParameterIiv(C_OCAST<u32>(texture), pname, params);
+    glTextureParameterIiv(C_OCAST<libc_types::u32>(texture), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexParameterIuiv(glhnd const& texture, GLenum pname, const u32 * params)
+STATICINLINE void TexParameterIuiv(glhnd const& texture, GLenum pname, const libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glTextureParameterIuiv)
@@ -9877,14 +9878,14 @@ STATICINLINE void TexParameterIuiv(glhnd const& texture, GLenum pname, const u32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureParameterIuiv(C_OCAST<u32>(texture), pname, params);
+    glTextureParameterIuiv(C_OCAST<libc_types::u32>(texture), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexParameterf(glhnd const& texture, GLenum pname, scalar param)
+STATICINLINE void TexParameterf(glhnd const& texture, GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glTextureParameterf)
@@ -9892,14 +9893,14 @@ STATICINLINE void TexParameterf(glhnd const& texture, GLenum pname, scalar param
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureParameterf(C_OCAST<u32>(texture), pname, param);
+    glTextureParameterf(C_OCAST<libc_types::u32>(texture), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexParameterfv(glhnd const& texture, GLenum pname, const scalar * param)
+STATICINLINE void TexParameterfv(glhnd const& texture, GLenum pname, const libc_types::f32 * param)
 {
 #ifndef NDEBUG
     if(!glTextureParameterfv)
@@ -9907,14 +9908,14 @@ STATICINLINE void TexParameterfv(glhnd const& texture, GLenum pname, const scala
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureParameterfv(C_OCAST<u32>(texture), pname, param);
+    glTextureParameterfv(C_OCAST<libc_types::u32>(texture), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexParameteri(glhnd const& texture, GLenum pname, i32 param)
+STATICINLINE void TexParameteri(glhnd const& texture, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glTextureParameteri)
@@ -9922,14 +9923,14 @@ STATICINLINE void TexParameteri(glhnd const& texture, GLenum pname, i32 param)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureParameteri(C_OCAST<u32>(texture), pname, param);
+    glTextureParameteri(C_OCAST<libc_types::u32>(texture), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexParameteriv(glhnd const& texture, GLenum pname, const i32 * param)
+STATICINLINE void TexParameteriv(glhnd const& texture, GLenum pname, const libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glTextureParameteriv)
@@ -9937,14 +9938,14 @@ STATICINLINE void TexParameteriv(glhnd const& texture, GLenum pname, const i32 *
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureParameteriv(C_OCAST<u32>(texture), pname, param);
+    glTextureParameteriv(C_OCAST<libc_types::u32>(texture), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexStorage1D(glhnd const& texture, i32 levels, PixFmt internalformat, i32 width)
+STATICINLINE void TexStorage1D(glhnd const& texture, libc_types::i32 levels, typing::pixels::PixFmt internalformat, libc_types::i32 width)
 {
 #ifndef NDEBUG
     if(!glTextureStorage1D)
@@ -9952,14 +9953,14 @@ STATICINLINE void TexStorage1D(glhnd const& texture, i32 levels, PixFmt internal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureStorage1D(C_OCAST<u32>(texture), levels, to_enum(internalformat), width);
+    glTextureStorage1D(C_OCAST<libc_types::u32>(texture), levels, to_enum(internalformat), width);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexStorage2D(glhnd const& texture, i32 levels, PixFmt internalformat, Size const& size)
+STATICINLINE void TexStorage2D(glhnd const& texture, libc_types::i32 levels, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glTextureStorage2D)
@@ -9967,14 +9968,14 @@ STATICINLINE void TexStorage2D(glhnd const& texture, i32 levels, PixFmt internal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureStorage2D(C_OCAST<u32>(texture), levels, to_enum(internalformat), size.w, size.h);
+    glTextureStorage2D(C_OCAST<libc_types::u32>(texture), levels, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexStorage2DMultisample(glhnd const& texture, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
+STATICINLINE void TexStorage2DMultisample(glhnd const& texture, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTextureStorage2DMultisample)
@@ -9982,14 +9983,14 @@ STATICINLINE void TexStorage2DMultisample(glhnd const& texture, i32 samples, Pix
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureStorage2DMultisample(C_OCAST<u32>(texture), samples, to_enum(internalformat), size.w, size.h, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTextureStorage2DMultisample(C_OCAST<libc_types::u32>(texture), samples, to_enum(internalformat), width.w, width.h, fixedsamplelocations);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexStorage3D(glhnd const& texture, i32 levels, PixFmt internalformat, Size3 const& size)
+STATICINLINE void TexStorage3D(glhnd const& texture, libc_types::i32 levels, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glTextureStorage3D)
@@ -9997,14 +9998,14 @@ STATICINLINE void TexStorage3D(glhnd const& texture, i32 levels, PixFmt internal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureStorage3D(C_OCAST<u32>(texture), levels, to_enum(internalformat), size.width, size.height, size.depth);
+    glTextureStorage3D(C_OCAST<libc_types::u32>(texture), levels, to_enum(internalformat), width.width, width.height, width.depth);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexStorage3DMultisample(glhnd const& texture, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
+STATICINLINE void TexStorage3DMultisample(glhnd const& texture, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTextureStorage3DMultisample)
@@ -10012,14 +10013,14 @@ STATICINLINE void TexStorage3DMultisample(glhnd const& texture, i32 samples, Pix
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureStorage3DMultisample(C_OCAST<u32>(texture), samples, to_enum(internalformat), size.width, size.height, size.depth, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTextureStorage3DMultisample(C_OCAST<libc_types::u32>(texture), samples, to_enum(internalformat), width.width, width.height, width.depth, fixedsamplelocations);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexSubImage1D(glhnd const& texture, i32 level, i32 xoffset, i32 width, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage1D(glhnd const& texture, libc_types::i32 level, libc_types::i32 xoffset, libc_types::i32 width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTextureSubImage1D)
@@ -10027,14 +10028,14 @@ STATICINLINE void TexSubImage1D(glhnd const& texture, i32 level, i32 xoffset, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureSubImage1D(C_OCAST<u32>(texture), level, xoffset, width, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTextureSubImage1D(C_OCAST<libc_types::u32>(texture), level, xoffset, width, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexSubImage2D(glhnd const& texture, i32 level, Point const& offset, Size const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage2D(glhnd const& texture, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTextureSubImage2D)
@@ -10042,14 +10043,14 @@ STATICINLINE void TexSubImage2D(glhnd const& texture, i32 level, Point const& of
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureSubImage2D(C_OCAST<u32>(texture), level, offset.x, offset.y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTextureSubImage2D(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void TexSubImage3D(glhnd const& texture, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage3D(glhnd const& texture, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTextureSubImage3D)
@@ -10057,14 +10058,14 @@ STATICINLINE void TexSubImage3D(glhnd const& texture, i32 level, Point3 const& o
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTextureSubImage3D(C_OCAST<u32>(texture), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTextureSubImage3D(C_OCAST<libc_types::u32>(texture), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufTransformFeedbackBase(u32 xfb, u32 index, glhnd const& buffer)
+STATICINLINE void BufTransformFeedbackBase(libc_types::u32 xfb, libc_types::u32 index, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glTransformFeedbackBufferBase)
@@ -10072,14 +10073,14 @@ STATICINLINE void BufTransformFeedbackBase(u32 xfb, u32 index, glhnd const& buff
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTransformFeedbackBufferBase(xfb, index, C_OCAST<u32>(buffer));
+    glTransformFeedbackBufferBase(xfb, index, C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void BufTransformFeedbackRange(u32 xfb, u32 index, glhnd const& buffer, ptroff offset, ptroff size)
+STATICINLINE void BufTransformFeedbackRange(libc_types::u32 xfb, libc_types::u32 index, glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glTransformFeedbackBufferRange)
@@ -10087,14 +10088,14 @@ STATICINLINE void BufTransformFeedbackRange(u32 xfb, u32 index, glhnd const& buf
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTransformFeedbackBufferRange(xfb, index, C_OCAST<u32>(buffer), offset, size);
+    glTransformFeedbackBufferRange(xfb, index, C_OCAST<libc_types::u32>(buffer), offset, size);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE u8 BufUnmap(glhnd const& buffer)
+STATICINLINE libc_types::u8 BufUnmap(glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glUnmapNamedBuffer)
@@ -10102,14 +10103,14 @@ STATICINLINE u8 BufUnmap(glhnd const& buffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glUnmapNamedBuffer(C_OCAST<u32>(buffer));
+    return (libc_types::u8)glUnmapNamedBuffer(C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOBinding(glhnd const& vaobj, u32 attribindex, u32 bindingindex)
+STATICINLINE void VAOBinding(glhnd const& vaobj, libc_types::u32 attribindex, libc_types::u32 bindingindex)
 {
 #ifndef NDEBUG
     if(!glVertexArrayAttribBinding)
@@ -10117,14 +10118,14 @@ STATICINLINE void VAOBinding(glhnd const& vaobj, u32 attribindex, u32 bindingind
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayAttribBinding(C_OCAST<u32>(vaobj), attribindex, bindingindex);
+    glVertexArrayAttribBinding(C_OCAST<libc_types::u32>(vaobj), attribindex, bindingindex);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenum type, bool normalized, u32 relativeoffset)
+STATICINLINE void VAOFormat(glhnd const& vaobj, libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u8 normalized, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexArrayAttribFormat)
@@ -10132,14 +10133,14 @@ STATICINLINE void VAOFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayAttribFormat(C_OCAST<u32>(vaobj), attribindex, size, type, normalized ? GL_TRUE : GL_FALSE, relativeoffset);
+    glVertexArrayAttribFormat(C_OCAST<libc_types::u32>(vaobj), attribindex, size, type, normalized, relativeoffset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOIFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
+STATICINLINE void VAOIFormat(glhnd const& vaobj, libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexArrayAttribIFormat)
@@ -10147,14 +10148,14 @@ STATICINLINE void VAOIFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLen
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayAttribIFormat(C_OCAST<u32>(vaobj), attribindex, size, type, relativeoffset);
+    glVertexArrayAttribIFormat(C_OCAST<libc_types::u32>(vaobj), attribindex, size, type, relativeoffset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOLFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
+STATICINLINE void VAOLFormat(glhnd const& vaobj, libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexArrayAttribLFormat)
@@ -10162,14 +10163,14 @@ STATICINLINE void VAOLFormat(glhnd const& vaobj, u32 attribindex, i32 size, GLen
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayAttribLFormat(C_OCAST<u32>(vaobj), attribindex, size, type, relativeoffset);
+    glVertexArrayAttribLFormat(C_OCAST<libc_types::u32>(vaobj), attribindex, size, type, relativeoffset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOBindingDivisor(glhnd const& vaobj, u32 bindingindex, u32 divisor)
+STATICINLINE void VAOBindingDivisor(glhnd const& vaobj, libc_types::u32 bindingindex, libc_types::u32 divisor)
 {
 #ifndef NDEBUG
     if(!glVertexArrayBindingDivisor)
@@ -10177,7 +10178,7 @@ STATICINLINE void VAOBindingDivisor(glhnd const& vaobj, u32 bindingindex, u32 di
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayBindingDivisor(C_OCAST<u32>(vaobj), bindingindex, divisor);
+    glVertexArrayBindingDivisor(C_OCAST<libc_types::u32>(vaobj), bindingindex, divisor);
 }
 #endif
 
@@ -10192,14 +10193,14 @@ STATICINLINE void VAOElementBuffer(glhnd const& vaobj, glhnd const& buffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayElementBuffer(C_OCAST<u32>(vaobj), C_OCAST<u32>(buffer));
+    glVertexArrayElementBuffer(C_OCAST<libc_types::u32>(vaobj), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOVertexBuffer(glhnd const& vaobj, u32 bindingindex, glhnd const& buffer, ptroff offset, i32 stride)
+STATICINLINE void VAOVertexBuffer(glhnd const& vaobj, libc_types::u32 bindingindex, glhnd const& buffer, libc_types::ptroff offset, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glVertexArrayVertexBuffer)
@@ -10207,14 +10208,14 @@ STATICINLINE void VAOVertexBuffer(glhnd const& vaobj, u32 bindingindex, glhnd co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayVertexBuffer(C_OCAST<u32>(vaobj), bindingindex, C_OCAST<u32>(buffer), offset, stride);
+    glVertexArrayVertexBuffer(C_OCAST<libc_types::u32>(vaobj), bindingindex, C_OCAST<libc_types::u32>(buffer), offset, stride);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_45)
-STATICINLINE void VAOVertexBuffers(glhnd const& vaobj, u32 first, i32 count, const u32 * buffers, const ptroff * offsets, const i32 * strides)
+STATICINLINE void VAOVertexBuffers(glhnd const& vaobj, libc_types::u32 first, libc_types::i32 count, const libc_types::u32 * buffers, const libc_types::ptroff * offsets, const libc_types::i32 * strides)
 {
 #ifndef NDEBUG
     if(!glVertexArrayVertexBuffers)
@@ -10222,20 +10223,20 @@ STATICINLINE void VAOVertexBuffers(glhnd const& vaobj, u32 first, i32 count, con
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexArrayVertexBuffers(C_OCAST<u32>(vaobj), first, count, buffers, offsets, strides);
+    glVertexArrayVertexBuffers(C_OCAST<libc_types::u32>(vaobj), first, count, buffers, offsets, strides);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_46
-    : CGL_45<ReqVer>
+struct v46
+    : v45<ReqVer>
 {
-using Parent = CGL_45<ReqVer>;
+using Parent = v45<ReqVer>;
 
 #if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_46)
-STATICINLINE void MultiDrawArraysIndirectCount(DrwMd const& mode, uintptr indirect, ptroff drawcount, i32 maxdrawcount, i32 stride)
+STATICINLINE void MultiDrawArraysIndirectCount(DrwMd const& mode, libc_types::uintptr indirect, libc_types::ptroff drawcount, libc_types::i32 maxdrawcount, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glMultiDrawArraysIndirectCount)
@@ -10253,7 +10254,7 @@ STATICINLINE void MultiDrawArraysIndirectCount(DrwMd const& mode, uintptr indire
 
 #if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_46)
-STATICINLINE void MultiDrawElementsIndirectCount(DrwMd const& mode, GLenum type, uintptr indirect, ptroff drawcount, i32 maxdrawcount, i32 stride)
+STATICINLINE void MultiDrawElementsIndirectCount(DrwMd const& mode, TypeEnum type, libc_types::uintptr indirect, libc_types::ptroff drawcount, libc_types::i32 maxdrawcount, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glMultiDrawElementsIndirectCount)
@@ -10264,14 +10265,14 @@ STATICINLINE void MultiDrawElementsIndirectCount(DrwMd const& mode, GLenum type,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glMultiDrawElementsIndirectCount(to_enum(mode.t, mode.c), type, C_RCAST<const void *>(indirect), drawcount, maxdrawcount, stride);
+    glMultiDrawElementsIndirectCount(to_enum(mode.t, mode.c), to_enum(type), C_RCAST<const void *>(indirect), drawcount, maxdrawcount, stride);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_46)
-STATICINLINE void PolygonOffsetClamp(scalar factor, scalar units, scalar clamp)
+STATICINLINE void PolygonOffsetClamp(libc_types::f32 factor, libc_types::f32 units, libc_types::f32 clamp)
 {
 #ifndef NDEBUG
     if(!glPolygonOffsetClamp)
@@ -10286,7 +10287,7 @@ STATICINLINE void PolygonOffsetClamp(scalar factor, scalar units, scalar clamp)
 
 #if GL_VERSION_VERIFY(0x460, GL_VERSION_NONE)
 GL_VERSION_REQ_DESKTOP(GLVER_46)
-STATICINLINE void ShaderSpecialize(glhnd const& shader, const GLchar * pEntryPoint, u32 numSpecializationConstants, const u32 * pConstantIndex, const u32 * pConstantValue)
+STATICINLINE void ShaderSpecialize(glhnd const& shader, const GLchar * pEntryPoint, libc_types::u32 numSpecializationConstants, const libc_types::u32 * pConstantIndex, const libc_types::u32 * pConstantValue)
 {
 #ifndef NDEBUG
     if(!glSpecializeShader)
@@ -10297,14 +10298,14 @@ STATICINLINE void ShaderSpecialize(glhnd const& shader, const GLchar * pEntryPoi
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSpecializeShader(C_OCAST<u32>(shader), pEntryPoint, numSpecializationConstants, pConstantIndex, pConstantValue);
+    glSpecializeShader(C_OCAST<libc_types::u32>(shader), pEntryPoint, numSpecializationConstants, pConstantIndex, pConstantValue);
 }
 #endif
 
 };
-#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
+#endif
 template<typename ReqVer>
-struct CGL_20
+struct v20es
 {
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
@@ -10335,14 +10336,14 @@ STATICINLINE void ShaderAttach(glhnd const& program, glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glAttachShader(C_OCAST<u32>(program), C_OCAST<u32>(shader));
+    glAttachShader(C_OCAST<libc_types::u32>(program), C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void AttribBindLocation(glhnd const& program, u32 index, const GLchar * name)
+STATICINLINE void AttribBindLocation(glhnd const& program, libc_types::u32 index, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glBindAttribLocation)
@@ -10350,7 +10351,7 @@ STATICINLINE void AttribBindLocation(glhnd const& program, u32 index, const GLch
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindAttribLocation(C_OCAST<u32>(program), index, name);
+    glBindAttribLocation(C_OCAST<libc_types::u32>(program), index, name);
 }
 #endif
 
@@ -10365,14 +10366,14 @@ STATICINLINE void BufBind(BufferComp::buf_flag const& target, glhnd const& buffe
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindBuffer(buffer_to_enum(target), C_OCAST<u32>(buffer));
+    glBindBuffer(buffer_to_enum(target), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
+STATICINLINE void FBBind(FramebufferT target, glhnd const& framebuffer)
 {
 #ifndef NDEBUG
     if(!glBindFramebuffer)
@@ -10380,14 +10381,14 @@ STATICINLINE void FBBind(FramebufferT target, u32 framebuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindFramebuffer(to_enum(target), framebuffer);
+    glBindFramebuffer(to_enum(target), C_OCAST<libc_types::u32>(framebuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
+STATICINLINE void RBufBind(GLenum target, glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glBindRenderbuffer)
@@ -10395,7 +10396,7 @@ STATICINLINE void RBufBind(GLenum target, u32 renderbuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindRenderbuffer(target, renderbuffer);
+    glBindRenderbuffer(target, C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
@@ -10410,14 +10411,14 @@ STATICINLINE void TexBind(TexComp::tex_flag const& target, glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindTexture(texture_to_enum(target), C_OCAST<u32>(texture));
+    glBindTexture(texture_to_enum(target), C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x140, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_14, GLESVER_20)
-STATICINLINE void BlendColor(_cbasic_vec4<scalar> const& color)
+STATICINLINE void BlendColor(typing::vectors::tvector<libc_types::f32,4> const& color)
 {
 #ifndef NDEBUG
     if(!glBlendColor)
@@ -10492,7 +10493,7 @@ STATICINLINE void BlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufData(BufferComp::buf_flag const& target, BytesConst const& data, RSCA usage)
+STATICINLINE void BufData(BufferComp::buf_flag const& target, semantic::BytesConst const& data, semantic::RSCA usage)
 {
 #ifndef NDEBUG
     if(!glBufferData)
@@ -10500,14 +10501,14 @@ STATICINLINE void BufData(BufferComp::buf_flag const& target, BytesConst const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferData(buffer_to_enum(target), C_FCAST<ptroff>(data.size), data.data, to_enum1(usage));
+    glBufferData(buffer_to_enum(target), C_FCAST<libc_types::ptroff>(data.size), data.data, to_enum1(usage));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufSubData(BufferComp::buf_flag const& target, ptroff offset, BytesConst const& data)
+STATICINLINE void BufSubData(BufferComp::buf_flag const& target, libc_types::ptroff offset, semantic::BytesConst const& data)
 {
 #ifndef NDEBUG
     if(!glBufferSubData)
@@ -10515,7 +10516,7 @@ STATICINLINE void BufSubData(BufferComp::buf_flag const& target, ptroff offset, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBufferSubData(buffer_to_enum(target), offset, C_FCAST<ptroff>(data.size), data.data);
+    glBufferSubData(buffer_to_enum(target), offset, C_FCAST<libc_types::ptroff>(data.size), data.data);
 }
 #endif
 
@@ -10530,14 +10531,14 @@ STATICINLINE GLenum FBCheckStatus(FramebufferT target)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCheckFramebufferStatus(to_enum(target));
+    return (GLenum)glCheckFramebufferStatus(to_enum(target));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void Clear(u32 mask)
+STATICINLINE void Clear(libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glClear)
@@ -10552,7 +10553,7 @@ STATICINLINE void Clear(u32 mask)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ClearColor(_cbasic_vec4<scalar> const& color)
+STATICINLINE void ClearColor(typing::vectors::tvector<libc_types::f32,4> const& color)
 {
 #ifndef NDEBUG
     if(!glClearColor)
@@ -10567,7 +10568,7 @@ STATICINLINE void ClearColor(_cbasic_vec4<scalar> const& color)
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void ClearDepthf(scalar d)
+STATICINLINE void ClearDepthf(libc_types::f32 d)
 {
 #ifndef NDEBUG
     if(!glClearDepthf)
@@ -10582,7 +10583,7 @@ STATICINLINE void ClearDepthf(scalar d)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ClearStencil(i32 s)
+STATICINLINE void ClearStencil(libc_types::i32 s)
 {
 #ifndef NDEBUG
     if(!glClearStencil)
@@ -10597,7 +10598,7 @@ STATICINLINE void ClearStencil(i32 s)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ColorMask(_cbasic_vec4<u8> const& color)
+STATICINLINE void ColorMask(typing::vectors::tvector<libc_types::u8,4> const& color)
 {
 #ifndef NDEBUG
     if(!glColorMask)
@@ -10623,14 +10624,14 @@ STATICINLINE void ShaderCompile(glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompileShader(C_OCAST<u32>(shader));
+    glCompileShader(C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
-STATICINLINE void TexCompressedImage2D(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size const& size, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage2D)
@@ -10641,14 +10642,14 @@ STATICINLINE void TexCompressedImage2D(TexComp::tex_flag const& target, i32 leve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexImage2D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), size.w, size.h, 0, imageSize, data);
+    glCompressedTexImage2D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), width.w, width.h, 0, imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
-STATICINLINE void TexCompressedSubImage2D(TexComp::tex_flag const& target, i32 level, Point const& offset, Size const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage2D)
@@ -10659,14 +10660,14 @@ STATICINLINE void TexCompressedSubImage2D(TexComp::tex_flag const& target, i32 l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexSubImage2D(texture_to_enum(target), level, offset.x, offset.y, size.w, size.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTexSubImage2D(texture_to_enum(target), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexCopyImage2D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopyImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTexImage2D)
@@ -10674,14 +10675,14 @@ STATICINLINE void TexCopyImage2D(TexComp::tex_flag const& target, i32 level, Pix
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexImage2D(texture_to_enum(target), level, to_enum(internalformat), x, y, size.w, size.h, 0);
+    glCopyTexImage2D(texture_to_enum(target), level, to_enum(internalformat), x[0], x[1], width.w, width.h, 0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexCopySubImage2D(TexComp::tex_flag const& target, i32 level, Point const& offset, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopySubImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTexSubImage2D)
@@ -10689,14 +10690,14 @@ STATICINLINE void TexCopySubImage2D(TexComp::tex_flag const& target, i32 level, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexSubImage2D(texture_to_enum(target), level, offset.x, offset.y, x, y, size.w, size.h);
+    glCopyTexSubImage2D(texture_to_enum(target), level, xoffset.x, xoffset.y, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ProgramAllocEx()
+STATICINLINE libc_types::u32 ProgramAllocEx()
 {
 #ifndef NDEBUG
     if(!glCreateProgram)
@@ -10707,14 +10708,14 @@ STATICINLINE u32 ProgramAllocEx()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateProgram();
+    return (libc_types::u32)glCreateProgram();
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u32 ShaderAllocEx(ShaderStage type)
+STATICINLINE libc_types::u32 ShaderAllocEx(ShaderStage type)
 {
 #ifndef NDEBUG
     if(!glCreateShader)
@@ -10725,7 +10726,7 @@ STATICINLINE u32 ShaderAllocEx(ShaderStage type)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShader(to_enum1(type));
+    return (libc_types::u32)glCreateShader(to_enum1(type));
 }
 #endif
 
@@ -10747,7 +10748,7 @@ STATICINLINE void CullFace(Face mode)
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufFree(Span<const u32> const& buffers)
+STATICINLINE void BufFree(semantic::Span<const libc_types::u32>&& buffers)
 {
 #ifndef NDEBUG
     if(!glDeleteBuffers)
@@ -10755,14 +10756,14 @@ STATICINLINE void BufFree(Span<const u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
+    glDeleteBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBFree(Span<const u32> const& framebuffers)
+STATICINLINE void FBFree(semantic::Span<const libc_types::u32>&& framebuffers)
 {
 #ifndef NDEBUG
     if(!glDeleteFramebuffers)
@@ -10770,7 +10771,7 @@ STATICINLINE void FBFree(Span<const u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
+    glDeleteFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
@@ -10785,14 +10786,14 @@ STATICINLINE void ProgramFree(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgram(C_OCAST<u32>(program));
+    glDeleteProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
+STATICINLINE void RBufFree(semantic::Span<const libc_types::u32>&& renderbuffers)
 {
 #ifndef NDEBUG
     if(!glDeleteRenderbuffers)
@@ -10800,7 +10801,7 @@ STATICINLINE void RBufFree(Span<const u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
+    glDeleteRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
@@ -10815,14 +10816,14 @@ STATICINLINE void ShaderFree(glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteShader(C_OCAST<u32>(shader));
+    glDeleteShader(C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexFree(Span<const u32> const& textures)
+STATICINLINE void TexFree(semantic::Span<const libc_types::u32>&& textures)
 {
 #ifndef NDEBUG
     if(!glDeleteTextures)
@@ -10830,7 +10831,7 @@ STATICINLINE void TexFree(Span<const u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTextures(C_FCAST<i32>(textures.elements), textures.data);
+    glDeleteTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
 }
 #endif
 
@@ -10852,7 +10853,7 @@ STATICINLINE void DepthFunc(GLenum func)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void DepthMask(bool flag)
+STATICINLINE void DepthMask(libc_types::u8 flag)
 {
 #ifndef NDEBUG
     if(!glDepthMask)
@@ -10860,14 +10861,14 @@ STATICINLINE void DepthMask(bool flag)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDepthMask(flag ? GL_TRUE : GL_FALSE);
+    glDepthMask(flag);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void DepthRangef(scalar n, scalar f)
+STATICINLINE void DepthRangef(libc_types::f32 n, libc_types::f32 f)
 {
 #ifndef NDEBUG
     if(!glDepthRangef)
@@ -10893,7 +10894,7 @@ STATICINLINE void ShaderDetach(glhnd const& program, glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDetachShader(C_OCAST<u32>(program), C_OCAST<u32>(shader));
+    glDetachShader(C_OCAST<libc_types::u32>(program), C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
@@ -10915,7 +10916,7 @@ STATICINLINE void Disable(Feature cap)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAODisableArray(u32 index)
+STATICINLINE void VAODisableArray(libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glDisableVertexAttribArray)
@@ -10930,7 +10931,7 @@ STATICINLINE void VAODisableArray(u32 index)
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void DrawArrays(DrwMd const& mode, i32 first, i32 count)
+STATICINLINE void DrawArrays(DrwMd const& mode, libc_types::i32 first, libc_types::i32 count)
 {
 #ifndef NDEBUG
     if(!glDrawArrays)
@@ -10945,7 +10946,7 @@ STATICINLINE void DrawArrays(DrwMd const& mode, i32 first, i32 count)
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void DrawElements(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices)
+STATICINLINE void DrawElements(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices)
 {
 #ifndef NDEBUG
     if(!glDrawElements)
@@ -10975,7 +10976,7 @@ STATICINLINE void Enable(Feature cap)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOEnableArray(u32 index)
+STATICINLINE void VAOEnableArray(libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glEnableVertexAttribArray)
@@ -11020,7 +11021,7 @@ STATICINLINE void Flush()
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, u32 renderbuffer)
+STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum renderbuffertarget, glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glFramebufferRenderbuffer)
@@ -11028,14 +11029,14 @@ STATICINLINE void FBRenderbuffer(FramebufferT target, GLenum attachment, GLenum 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferRenderbuffer(to_enum(target), attachment, renderbuffertarget, renderbuffer);
+    glFramebufferRenderbuffer(to_enum(target), attachment, renderbuffertarget, C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, i32 level)
+STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::tex_flag const& textarget, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture2D)
@@ -11043,7 +11044,7 @@ STATICINLINE void FBTexture2D(FramebufferT target, GLenum attachment, TexComp::t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTexture2D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<u32>(texture), level);
+    glFramebufferTexture2D(to_enum(target), attachment, texture_to_enum(textarget), C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
@@ -11065,7 +11066,7 @@ STATICINLINE void FrontFace(GLenum mode)
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufAlloc(Span<u32> const& buffers)
+STATICINLINE void BufAlloc(semantic::Span<libc_types::u32>&& buffers)
 {
 #ifndef NDEBUG
     if(!glGenBuffers)
@@ -11073,14 +11074,14 @@ STATICINLINE void BufAlloc(Span<u32> const& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenBuffers(C_FCAST<i32>(buffers.elements), buffers.data);
+    glGenBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
+STATICINLINE void FBAlloc(semantic::Span<libc_types::u32>&& framebuffers)
 {
 #ifndef NDEBUG
     if(!glGenFramebuffers)
@@ -11088,14 +11089,14 @@ STATICINLINE void FBAlloc(Span<u32> const& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenFramebuffers(C_FCAST<i32>(framebuffers.elements), framebuffers.data);
+    glGenFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
+STATICINLINE void RBufAlloc(semantic::Span<libc_types::u32>&& renderbuffers)
 {
 #ifndef NDEBUG
     if(!glGenRenderbuffers)
@@ -11103,14 +11104,14 @@ STATICINLINE void RBufAlloc(Span<u32> const& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenRenderbuffers(C_FCAST<i32>(renderbuffers.elements), renderbuffers.data);
+    glGenRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexAlloc(Span<u32> const& textures)
+STATICINLINE void TexAlloc(semantic::Span<libc_types::u32>&& textures)
 {
 #ifndef NDEBUG
     if(!glGenTextures)
@@ -11118,7 +11119,7 @@ STATICINLINE void TexAlloc(Span<u32> const& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTextures(C_FCAST<i32>(textures.elements), textures.data);
+    glGenTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
 }
 #endif
 
@@ -11140,7 +11141,7 @@ STATICINLINE void GenerateMipmap(TexComp::tex_flag const& target)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ActiveAttribGet(glhnd const& program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveAttribGet(glhnd const& program, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveAttrib)
@@ -11148,14 +11149,14 @@ STATICINLINE void ActiveAttribGet(glhnd const& program, u32 index, i32 bufSize, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveAttrib(C_OCAST<u32>(program), index, bufSize, length, size, type, name);
+    glGetActiveAttrib(C_OCAST<libc_types::u32>(program), index, bufSize, length, size, type, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ActiveUnifGet(glhnd const& program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void ActiveUnifGet(glhnd const& program, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniform)
@@ -11166,14 +11167,14 @@ STATICINLINE void ActiveUnifGet(glhnd const& program, u32 index, i32 bufSize, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniform(C_OCAST<u32>(program), index, bufSize, length, size, type, name);
+    glGetActiveUniform(C_OCAST<libc_types::u32>(program), index, bufSize, length, size, type, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void AttachedShadersGet(glhnd const& program, i32 maxCount, i32 * count, u32 * shaders)
+STATICINLINE void AttachedShadersGet(glhnd const& program, libc_types::i32 maxCount, libc_types::i32 * count, libc_types::u32 * shaders)
 {
 #ifndef NDEBUG
     if(!glGetAttachedShaders)
@@ -11181,14 +11182,14 @@ STATICINLINE void AttachedShadersGet(glhnd const& program, i32 maxCount, i32 * c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetAttachedShaders(C_OCAST<u32>(program), maxCount, count, shaders);
+    glGetAttachedShaders(C_OCAST<libc_types::u32>(program), maxCount, count, shaders);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE i32 AttribGetLocation(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 AttribGetLocation(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetAttribLocation)
@@ -11196,14 +11197,14 @@ STATICINLINE i32 AttribGetLocation(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetAttribLocation(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetAttribLocation(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void BoolGetv(GLenum pname, u8 * data)
+STATICINLINE void BoolGetv(GLenum pname, libc_types::u8 * data)
 {
 #ifndef NDEBUG
     if(!glGetBooleanv)
@@ -11218,7 +11219,7 @@ STATICINLINE void BoolGetv(GLenum pname, u8 * data)
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE void BufGetParameteriv(BufferComp::buf_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void BufGetParameteriv(BufferComp::buf_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetBufferParameteriv)
@@ -11241,14 +11242,14 @@ STATICINLINE GLenum ErrorGet()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetError();
+    return (GLenum)glGetError();
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ScalarfGetv(GLenum pname, scalar * data)
+STATICINLINE void ScalarfGetv(GLenum pname, libc_types::f32 * data)
 {
 #ifndef NDEBUG
     if(!glGetFloatv)
@@ -11263,7 +11264,7 @@ STATICINLINE void ScalarfGetv(GLenum pname, scalar * data)
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachment, GLenum pname, i32 * params)
+STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachment, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetFramebufferAttachmentParameteriv)
@@ -11278,7 +11279,7 @@ STATICINLINE void FBGetAttachmentParameteriv(FramebufferT target, GLenum attachm
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void IntegerGetv(GLenum pname, i32 * data)
+STATICINLINE void IntegerGetv(GLenum pname, libc_types::i32 * data)
 {
 #ifndef NDEBUG
     if(!glGetIntegerv)
@@ -11293,7 +11294,7 @@ STATICINLINE void IntegerGetv(GLenum pname, i32 * data)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ProgramGetInfoLog(glhnd const& program, i32 bufSize, i32 * length, GLchar * infoLog)
+STATICINLINE void ProgramGetInfoLog(glhnd const& program, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetProgramInfoLog)
@@ -11301,14 +11302,14 @@ STATICINLINE void ProgramGetInfoLog(glhnd const& program, i32 bufSize, i32 * len
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramInfoLog(C_OCAST<u32>(program), bufSize, length, infoLog);
+    glGetProgramInfoLog(C_OCAST<libc_types::u32>(program), bufSize, length, infoLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, i32 * params)
+STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramiv)
@@ -11316,14 +11317,14 @@ STATICINLINE void ProgramGetiv(glhnd const& program, GLenum pname, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramiv(C_OCAST<u32>(program), pname, params);
+    glGetProgramiv(C_OCAST<libc_types::u32>(program), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, i32 * params)
+STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetRenderbufferParameteriv)
@@ -11338,7 +11339,7 @@ STATICINLINE void RBufGetParameteriv(GLenum target, GLenum pname, i32 * params)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderGetInfoLog(glhnd const& shader, i32 bufSize, i32 * length, GLchar * infoLog)
+STATICINLINE void ShaderGetInfoLog(glhnd const& shader, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetShaderInfoLog)
@@ -11346,14 +11347,14 @@ STATICINLINE void ShaderGetInfoLog(glhnd const& shader, i32 bufSize, i32 * lengt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetShaderInfoLog(C_OCAST<u32>(shader), bufSize, length, infoLog);
+    glGetShaderInfoLog(C_OCAST<libc_types::u32>(shader), bufSize, length, infoLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precisiontype, i32 * range, i32 * precision)
+STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precisiontype, libc_types::i32 * range, libc_types::i32 * precision)
 {
 #ifndef NDEBUG
     if(!glGetShaderPrecisionFormat)
@@ -11368,7 +11369,7 @@ STATICINLINE void ShaderGetPrecisionFormat(ShaderStage shadertype, GLenum precis
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderGetSource(glhnd const& shader, i32 bufSize, i32 * length, GLchar * source)
+STATICINLINE void ShaderGetSource(glhnd const& shader, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * source)
 {
 #ifndef NDEBUG
     if(!glGetShaderSource)
@@ -11379,14 +11380,14 @@ STATICINLINE void ShaderGetSource(glhnd const& shader, i32 bufSize, i32 * length
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetShaderSource(C_OCAST<u32>(shader), bufSize, length, source);
+    glGetShaderSource(C_OCAST<libc_types::u32>(shader), bufSize, length, source);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderGetiv(glhnd const& shader, GLenum pname, i32 * params)
+STATICINLINE void ShaderGetiv(glhnd const& shader, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetShaderiv)
@@ -11394,14 +11395,14 @@ STATICINLINE void ShaderGetiv(glhnd const& shader, GLenum pname, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetShaderiv(C_OCAST<u32>(shader), pname, params);
+    glGetShaderiv(C_OCAST<libc_types::u32>(shader), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE const u8 * GetString(GLenum name)
+STATICINLINE libc_types::cstring  GetString(GLenum name)
 {
 #ifndef NDEBUG
     if(!glGetString)
@@ -11409,14 +11410,14 @@ STATICINLINE const u8 * GetString(GLenum name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetString(name);
+    return (libc_types::cstring )glGetString(name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexGetParameterfv(TexComp::tex_flag const& target, GLenum pname, scalar * params)
+STATICINLINE void TexGetParameterfv(TexComp::tex_flag const& target, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameterfv)
@@ -11431,7 +11432,7 @@ STATICINLINE void TexGetParameterfv(TexComp::tex_flag const& target, GLenum pnam
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexGetParameteriv(TexComp::tex_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void TexGetParameteriv(TexComp::tex_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameteriv)
@@ -11446,7 +11447,7 @@ STATICINLINE void TexGetParameteriv(TexComp::tex_flag const& target, GLenum pnam
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE i32 UnifGetLocation(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 UnifGetLocation(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetUniformLocation)
@@ -11457,14 +11458,14 @@ STATICINLINE i32 UnifGetLocation(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetUniformLocation(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetUniformLocation(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void UnifGetfv(glhnd const& program, i32 location, scalar * params)
+STATICINLINE void UnifGetfv(glhnd const& program, libc_types::i32 location, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformfv)
@@ -11475,14 +11476,14 @@ STATICINLINE void UnifGetfv(glhnd const& program, i32 location, scalar * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformfv(C_OCAST<u32>(program), location, params);
+    glGetUniformfv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void UnifGetiv(glhnd const& program, i32 location, i32 * params)
+STATICINLINE void UnifGetiv(glhnd const& program, libc_types::i32 location, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformiv)
@@ -11493,14 +11494,14 @@ STATICINLINE void UnifGetiv(glhnd const& program, i32 location, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformiv(C_OCAST<u32>(program), location, params);
+    glGetUniformiv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOGetPointerv(u32 index, GLenum pname, void * * pointer)
+STATICINLINE void VAOGetPointerv(libc_types::u32 index, GLenum pname, void * * pointer)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribPointerv)
@@ -11515,7 +11516,7 @@ STATICINLINE void VAOGetPointerv(u32 index, GLenum pname, void * * pointer)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOGetfv(u32 index, GLenum pname, scalar * params)
+STATICINLINE void VAOGetfv(libc_types::u32 index, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribfv)
@@ -11530,7 +11531,7 @@ STATICINLINE void VAOGetfv(u32 index, GLenum pname, scalar * params)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOGetiv(u32 index, GLenum pname, i32 * params)
+STATICINLINE void VAOGetiv(libc_types::u32 index, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribiv)
@@ -11560,7 +11561,7 @@ STATICINLINE void Hint(GLenum target, GLenum mode)
 
 #if GL_VERSION_VERIFY(0x150, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_20)
-STATICINLINE u8 IsBuffer(glhnd const& buffer)
+STATICINLINE libc_types::u8 IsBuffer(glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glIsBuffer)
@@ -11568,14 +11569,14 @@ STATICINLINE u8 IsBuffer(glhnd const& buffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsBuffer(C_OCAST<u32>(buffer));
+    return (libc_types::u8)glIsBuffer(C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE u8 IsEnabled(Feature cap)
+STATICINLINE libc_types::u8 IsEnabled(Feature cap)
 {
 #ifndef NDEBUG
     if(!glIsEnabled)
@@ -11583,14 +11584,14 @@ STATICINLINE u8 IsEnabled(Feature cap)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsEnabled(to_enum(cap));
+    return (libc_types::u8)glIsEnabled(to_enum(cap));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE u8 IsFramebuffer(u32 framebuffer)
+STATICINLINE libc_types::u8 IsFramebuffer(glhnd const& framebuffer)
 {
 #ifndef NDEBUG
     if(!glIsFramebuffer)
@@ -11598,14 +11599,14 @@ STATICINLINE u8 IsFramebuffer(u32 framebuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsFramebuffer(framebuffer);
+    return (libc_types::u8)glIsFramebuffer(C_OCAST<libc_types::u32>(framebuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u8 IsProgram(glhnd const& program)
+STATICINLINE libc_types::u8 IsProgram(glhnd const& program)
 {
 #ifndef NDEBUG
     if(!glIsProgram)
@@ -11613,14 +11614,14 @@ STATICINLINE u8 IsProgram(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsProgram(C_OCAST<u32>(program));
+    return (libc_types::u8)glIsProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
+STATICINLINE libc_types::u8 IsRenderbuffer(glhnd const& renderbuffer)
 {
 #ifndef NDEBUG
     if(!glIsRenderbuffer)
@@ -11628,14 +11629,14 @@ STATICINLINE u8 IsRenderbuffer(u32 renderbuffer)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsRenderbuffer(renderbuffer);
+    return (libc_types::u8)glIsRenderbuffer(C_OCAST<libc_types::u32>(renderbuffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE u8 IsShader(glhnd const& shader)
+STATICINLINE libc_types::u8 IsShader(glhnd const& shader)
 {
 #ifndef NDEBUG
     if(!glIsShader)
@@ -11643,14 +11644,14 @@ STATICINLINE u8 IsShader(glhnd const& shader)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsShader(C_OCAST<u32>(shader));
+    return (libc_types::u8)glIsShader(C_OCAST<libc_types::u32>(shader));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE u8 IsTexture(glhnd const& texture)
+STATICINLINE libc_types::u8 IsTexture(glhnd const& texture)
 {
 #ifndef NDEBUG
     if(!glIsTexture)
@@ -11658,14 +11659,14 @@ STATICINLINE u8 IsTexture(glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsTexture(C_OCAST<u32>(texture));
+    return (libc_types::u8)glIsTexture(C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void LineWidth(scalar width)
+STATICINLINE void LineWidth(libc_types::f32 width)
 {
 #ifndef NDEBUG
     if(!glLineWidth)
@@ -11691,14 +11692,14 @@ STATICINLINE void ProgramLink(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glLinkProgram(C_OCAST<u32>(program));
+    glLinkProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void PixelStorei(GLenum pname, i32 param)
+STATICINLINE void PixelStorei(GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glPixelStorei)
@@ -11713,7 +11714,7 @@ STATICINLINE void PixelStorei(GLenum pname, i32 param)
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void PolygonOffset(scalar factor, scalar units)
+STATICINLINE void PolygonOffset(libc_types::f32 factor, libc_types::f32 units)
 {
 #ifndef NDEBUG
     if(!glPolygonOffset)
@@ -11728,7 +11729,7 @@ STATICINLINE void PolygonOffset(scalar factor, scalar units)
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void ReadPixels(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, void * pixels)
+STATICINLINE void ReadPixels(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, void * pixels)
 {
 #ifndef NDEBUG
     if(!glReadPixels)
@@ -11736,7 +11737,7 @@ STATICINLINE void ReadPixels(i32 x, i32 y, Size const& size, PixCmp format, BitF
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glReadPixels(x, y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glReadPixels(x[0], x[1], width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
@@ -11758,7 +11759,7 @@ STATICINLINE void ShaderReleaseCompiler()
 
 #if GL_VERSION_VERIFY(0x300, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_20)
-STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& size)
+STATICINLINE void RBufStorage(GLenum target, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glRenderbufferStorage)
@@ -11766,14 +11767,14 @@ STATICINLINE void RBufStorage(GLenum target, PixFmt internalformat, Size const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glRenderbufferStorage(target, to_enum(internalformat), size.w, size.h);
+    glRenderbufferStorage(target, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_20)
-STATICINLINE void SampleCoverage(scalar value, bool invert)
+STATICINLINE void SampleCoverage(libc_types::f32 value, libc_types::u8 invert)
 {
 #ifndef NDEBUG
     if(!glSampleCoverage)
@@ -11784,14 +11785,14 @@ STATICINLINE void SampleCoverage(scalar value, bool invert)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSampleCoverage(value, invert ? GL_TRUE : GL_FALSE);
+    glSampleCoverage(value, invert);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void Scissor(i32 x, i32 y, Size const& size)
+STATICINLINE void Scissor(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glScissor)
@@ -11799,14 +11800,14 @@ STATICINLINE void Scissor(i32 x, i32 y, Size const& size)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glScissor(x, y, size.w, size.h);
+    glScissor(x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_20)
-STATICINLINE void ShaderBinary(i32 count, const u32 * shaders, GLenum binaryformat, const void * binary, i32 length)
+STATICINLINE void ShaderBinary(libc_types::i32 count, const libc_types::u32 * shaders, GLenum binaryformat, const void * binary, libc_types::i32 length)
 {
 #ifndef NDEBUG
     if(!glShaderBinary)
@@ -11821,7 +11822,7 @@ STATICINLINE void ShaderBinary(i32 count, const u32 * shaders, GLenum binaryform
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void ShaderSource(glhnd const& shader, i32 count, const GLchar * *const string, const i32 * length)
+STATICINLINE void ShaderSource(glhnd const& shader, libc_types::i32 count, const GLchar * *const string, const libc_types::i32 * length)
 {
 #ifndef NDEBUG
     if(!glShaderSource)
@@ -11832,14 +11833,14 @@ STATICINLINE void ShaderSource(glhnd const& shader, i32 count, const GLchar * *c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glShaderSource(C_OCAST<u32>(shader), count, string, length);
+    glShaderSource(C_OCAST<libc_types::u32>(shader), count, string, length);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void StencilFunc(GLenum func, i32 ref, u32 mask)
+STATICINLINE void StencilFunc(GLenum func, libc_types::i32 ref, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilFunc)
@@ -11854,7 +11855,7 @@ STATICINLINE void StencilFunc(GLenum func, i32 ref, u32 mask)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void StencilFuncSeparate(GLenum face, GLenum func, i32 ref, u32 mask)
+STATICINLINE void StencilFuncSeparate(GLenum face, GLenum func, libc_types::i32 ref, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilFuncSeparate)
@@ -11869,7 +11870,7 @@ STATICINLINE void StencilFuncSeparate(GLenum face, GLenum func, i32 ref, u32 mas
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void StencilMask(u32 mask)
+STATICINLINE void StencilMask(libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilMask)
@@ -11884,7 +11885,7 @@ STATICINLINE void StencilMask(u32 mask)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void StencilMaskSeparate(GLenum face, u32 mask)
+STATICINLINE void StencilMaskSeparate(GLenum face, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glStencilMaskSeparate)
@@ -11929,7 +11930,7 @@ STATICINLINE void StencilOpSeparate(GLenum face, GLenum sfail, GLenum dpfail, GL
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexImage2D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, Size const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexImage2D)
@@ -11937,14 +11938,14 @@ STATICINLINE void TexImage2D(TexComp::tex_flag const& target, i32 level, PixFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage2D(texture_to_enum(target), level, to_enum(internalformat), size.w, size.h, 0, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexImage2D(texture_to_enum(target), level, to_enum(internalformat), width.w, width.h, 0, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameterf(TexComp::tex_flag const& target, GLenum pname, scalar param)
+STATICINLINE void TexParameterf(TexComp::tex_flag const& target, GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glTexParameterf)
@@ -11959,7 +11960,7 @@ STATICINLINE void TexParameterf(TexComp::tex_flag const& target, GLenum pname, s
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameterfv(TexComp::tex_flag const& target, GLenum pname, const scalar * params)
+STATICINLINE void TexParameterfv(TexComp::tex_flag const& target, GLenum pname, const libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameterfv)
@@ -11974,7 +11975,7 @@ STATICINLINE void TexParameterfv(TexComp::tex_flag const& target, GLenum pname, 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameteri(TexComp::tex_flag const& target, GLenum pname, i32 param)
+STATICINLINE void TexParameteri(TexComp::tex_flag const& target, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glTexParameteri)
@@ -11989,7 +11990,7 @@ STATICINLINE void TexParameteri(TexComp::tex_flag const& target, GLenum pname, i
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void TexParameteriv(TexComp::tex_flag const& target, GLenum pname, const i32 * params)
+STATICINLINE void TexParameteriv(TexComp::tex_flag const& target, GLenum pname, const libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameteriv)
@@ -12004,7 +12005,7 @@ STATICINLINE void TexParameteriv(TexComp::tex_flag const& target, GLenum pname, 
 
 #if GL_VERSION_VERIFY(0x110, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_11, GLESVER_20)
-STATICINLINE void TexSubImage2D(TexComp::tex_flag const& target, i32 level, Point const& offset, Size const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage2D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexSubImage2D)
@@ -12012,14 +12013,14 @@ STATICINLINE void TexSubImage2D(TexComp::tex_flag const& target, i32 level, Poin
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexSubImage2D(texture_to_enum(target), level, offset.x, offset.y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexSubImage2D(texture_to_enum(target), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif1f(i32 location, scalar v0)
+STATICINLINE void Unif1f(libc_types::i32 location, libc_types::f32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1f)
@@ -12037,7 +12038,7 @@ STATICINLINE void Unif1f(i32 location, scalar v0)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<const scalar> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1fv)
@@ -12048,14 +12049,14 @@ STATICINLINE void Uniffv(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform1fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif1i(i32 location, i32 v0)
+STATICINLINE void Unif1i(libc_types::i32 location, libc_types::i32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1i)
@@ -12073,7 +12074,7 @@ STATICINLINE void Unif1i(i32 location, i32 v0)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<const i32> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1iv)
@@ -12084,14 +12085,14 @@ STATICINLINE void Unifiv(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform1iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif2f(i32 location, scalar v0, scalar v1)
+STATICINLINE void Unif2f(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2f)
@@ -12102,14 +12103,14 @@ STATICINLINE void Unif2f(i32 location, scalar v0, scalar v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2f(location, v0, v1);
+    glUniform2f(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<Vecf2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecf2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2fv)
@@ -12120,14 +12121,14 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform2fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif2i(i32 location, i32 v0, i32 v1)
+STATICINLINE void Unif2i(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2i)
@@ -12138,14 +12139,14 @@ STATICINLINE void Unif2i(i32 location, i32 v0, i32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2i(location, v0, v1);
+    glUniform2i(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<Veci2> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector_types::Veci2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2iv)
@@ -12156,14 +12157,14 @@ STATICINLINE void Unifiv(i32 location, Span<Veci2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform2iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif3f(i32 location, scalar v0, scalar v1, scalar v2)
+STATICINLINE void Unif3f(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 3> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3f)
@@ -12174,14 +12175,14 @@ STATICINLINE void Unif3f(i32 location, scalar v0, scalar v1, scalar v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3f(location, v0, v1, v2);
+    glUniform3f(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<Vecf3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecf3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3fv)
@@ -12192,14 +12193,14 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform3fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif3i(i32 location, i32 v0, i32 v1, i32 v2)
+STATICINLINE void Unif3i(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 3> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3i)
@@ -12210,14 +12211,14 @@ STATICINLINE void Unif3i(i32 location, i32 v0, i32 v1, i32 v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3i(location, v0, v1, v2);
+    glUniform3i(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<Veci3> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector_types::Veci3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3iv)
@@ -12228,14 +12229,14 @@ STATICINLINE void Unifiv(i32 location, Span<Veci3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform3iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif4f(i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
+STATICINLINE void Unif4f(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 4> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4f)
@@ -12246,14 +12247,14 @@ STATICINLINE void Unif4f(i32 location, scalar v0, scalar v1, scalar v2, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4f(location, v0, v1, v2, v3);
+    glUniform4f(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, Span<Vecf4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecf4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4fv)
@@ -12264,14 +12265,14 @@ STATICINLINE void Uniffv(i32 location, Span<Vecf4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fv(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform4fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unif4i(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
+STATICINLINE void Unif4i(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 4> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4i)
@@ -12282,14 +12283,14 @@ STATICINLINE void Unif4i(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4i(location, v0, v1, v2, v3);
+    glUniform4i(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Unifiv(i32 location, Span<Veci4> const& value)
+STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector_types::Veci4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4iv)
@@ -12300,14 +12301,14 @@ STATICINLINE void Unifiv(i32 location, Span<Veci4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iv(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform4iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2fv)
@@ -12318,14 +12319,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3fv)
@@ -12336,14 +12337,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4fv)
@@ -12354,7 +12355,7 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
@@ -12372,7 +12373,7 @@ STATICINLINE void ProgramUse(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUseProgram(C_OCAST<u32>(program));
+    glUseProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
@@ -12390,14 +12391,14 @@ STATICINLINE void ProgramValidate(glhnd const& program)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glValidateProgram(C_OCAST<u32>(program));
+    glValidateProgram(C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO1f(u32 index, scalar x)
+STATICINLINE void VAO1f(libc_types::u32 index, libc_types::f32 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1f)
@@ -12412,7 +12413,7 @@ STATICINLINE void VAO1f(u32 index, scalar x)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO1fv(u32 index, const scalar * v)
+STATICINLINE void VAO1fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib1fv)
@@ -12427,7 +12428,7 @@ STATICINLINE void VAO1fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO2f(u32 index, scalar x, scalar y)
+STATICINLINE void VAO2f(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 2> x)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2f)
@@ -12435,14 +12436,14 @@ STATICINLINE void VAO2f(u32 index, scalar x, scalar y)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib2f(index, x, y);
+    glVertexAttrib2f(index, x[0], x[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO2fv(u32 index, const scalar * v)
+STATICINLINE void VAO2fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib2fv)
@@ -12457,7 +12458,7 @@ STATICINLINE void VAO2fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO3f(u32 index, scalar x, scalar y, scalar z)
+STATICINLINE void VAO3f(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 3> x, libc_types::f32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3f)
@@ -12465,14 +12466,14 @@ STATICINLINE void VAO3f(u32 index, scalar x, scalar y, scalar z)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib3f(index, x, y, z);
+    glVertexAttrib3f(index, x[0], x[1], z);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO3fv(u32 index, const scalar * v)
+STATICINLINE void VAO3fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib3fv)
@@ -12487,7 +12488,7 @@ STATICINLINE void VAO3fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO4f(u32 index, scalar x, scalar y, scalar z, scalar w)
+STATICINLINE void VAO4f(libc_types::u32 index, typing::vectors::tvector<libc_types::f32, 4> x, libc_types::f32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4f)
@@ -12495,14 +12496,14 @@ STATICINLINE void VAO4f(u32 index, scalar x, scalar y, scalar z, scalar w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttrib4f(index, x, y, z, w);
+    glVertexAttrib4f(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAO4fv(u32 index, const scalar * v)
+STATICINLINE void VAO4fv(libc_types::u32 index, const libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttrib4fv)
@@ -12517,7 +12518,7 @@ STATICINLINE void VAO4fv(u32 index, const scalar * v)
 
 #if GL_VERSION_VERIFY(0x200, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_20)
-STATICINLINE void VAOPointer(u32 index, i32 size, GLenum type, bool normalized, i32 stride, const void * pointer)
+STATICINLINE void VAOPointer(libc_types::u32 index, libc_types::i32 size, GLenum type, libc_types::u8 normalized, libc_types::i32 stride, const void * pointer)
 {
 #ifndef NDEBUG
     if(!glVertexAttribPointer)
@@ -12525,14 +12526,14 @@ STATICINLINE void VAOPointer(u32 index, i32 size, GLenum type, bool normalized, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribPointer(index, size, type, normalized ? GL_TRUE : GL_FALSE, stride, pointer);
+    glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x200)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_20)
-STATICINLINE void Viewport(i32 x, i32 y, Size const& size)
+STATICINLINE void Viewport(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glViewport)
@@ -12540,21 +12541,21 @@ STATICINLINE void Viewport(i32 x, i32 y, Size const& size)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glViewport(x, y, size.w, size.h);
+    glViewport(x[0], x[1], width.w, width.h);
 }
 #endif
 
 };
 template<typename ReqVer>
-struct CGL_30
-    : CGL_20<ReqVer>
+struct v30es
+    : v20es<ReqVer>
 {
-using Parent = CGL_20<ReqVer>;
+using Parent = v20es<ReqVer>;
 using Parent::Uniffv;
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryBegin(QueryComp::query_flag const& target, u32 id)
+STATICINLINE void QueryBegin(QueryComp::query_flag const& target, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glBeginQuery)
@@ -12565,7 +12566,7 @@ STATICINLINE void QueryBegin(QueryComp::query_flag const& target, u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBeginQuery(query_to_enum(target), id);
+    glBeginQuery(query_to_enum(target), C_OCAST<libc_types::u32>(id));
 }
 #endif
 
@@ -12587,7 +12588,7 @@ STATICINLINE void XFBegin(GLenum primitiveMode)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer)
+STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, libc_types::u32 index, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glBindBufferBase)
@@ -12595,14 +12596,14 @@ STATICINLINE void BufBindBase(BufferComp::buf_flag const& target, u32 index, glh
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindBufferBase(buffer_to_enum(target), index, C_OCAST<u32>(buffer));
+    glBindBufferBase(buffer_to_enum(target), index, C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, glhnd const& buffer, ptroff offset, ptroff size)
+STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, libc_types::u32 index, glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glBindBufferRange)
@@ -12610,14 +12611,14 @@ STATICINLINE void BufBindRange(BufferComp::buf_flag const& target, u32 index, gl
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindBufferRange(buffer_to_enum(target), index, C_OCAST<u32>(buffer), offset, size);
+    glBindBufferRange(buffer_to_enum(target), index, C_OCAST<libc_types::u32>(buffer), offset, size);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
+STATICINLINE void SamplerBind(libc_types::u32 unit, glhnd const& sampler)
 {
 #ifndef NDEBUG
     if(!glBindSampler)
@@ -12625,14 +12626,14 @@ STATICINLINE void SamplerBind(u32 unit, glhnd const& sampler)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindSampler(unit, C_OCAST<u32>(sampler));
+    glBindSampler(unit, C_OCAST<libc_types::u32>(sampler));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE void XFBind(GLenum target, u32 id)
+STATICINLINE void XFBind(GLenum target, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glBindTransformFeedback)
@@ -12640,7 +12641,7 @@ STATICINLINE void XFBind(GLenum target, u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindTransformFeedback(target, id);
+    glBindTransformFeedback(target, C_OCAST<libc_types::u32>(id));
 }
 #endif
 
@@ -12655,14 +12656,14 @@ STATICINLINE void VAOBind(glhnd const& array)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindVertexArray(C_OCAST<u32>(array));
+    glBindVertexArray(C_OCAST<libc_types::u32>(array));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void FBBlit(i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, i32 dstY0, i32 dstX1, i32 dstY1, u32 mask, GLenum filter)
+STATICINLINE void FBBlit(libc_types::i32 srcX0, libc_types::i32 srcY0, libc_types::i32 srcX1, libc_types::i32 srcY1, libc_types::i32 dstX0, libc_types::i32 dstY0, libc_types::i32 dstX1, libc_types::i32 dstY1, libc_types::u32 mask, GLenum filter)
 {
 #ifndef NDEBUG
     if(!glBlitFramebuffer)
@@ -12677,7 +12678,7 @@ STATICINLINE void FBBlit(i32 srcX0, i32 srcY0, i32 srcX1, i32 srcY1, i32 dstX0, 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufClearfi(GLenum buffer, i32 drawbuffer, scalar depth, i32 stencil)
+STATICINLINE void BufClearfi(GLenum buffer, libc_types::i32 drawbuffer, libc_types::f32 depth, libc_types::i32 stencil)
 {
 #ifndef NDEBUG
     if(!glClearBufferfi)
@@ -12692,7 +12693,7 @@ STATICINLINE void BufClearfi(GLenum buffer, i32 drawbuffer, scalar depth, i32 st
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufClearfv(GLenum buffer, i32 drawbuffer, Span<const scalar> const& value)
+STATICINLINE void BufClearfv(GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearBufferfv)
@@ -12707,7 +12708,7 @@ STATICINLINE void BufClearfv(GLenum buffer, i32 drawbuffer, Span<const scalar> c
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufCleariv(GLenum buffer, i32 drawbuffer, Span<const i32> const& value)
+STATICINLINE void BufCleariv(GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearBufferiv)
@@ -12722,7 +12723,7 @@ STATICINLINE void BufCleariv(GLenum buffer, i32 drawbuffer, Span<const i32> cons
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufClearuiv(GLenum buffer, i32 drawbuffer, Span<const u32> const& value)
+STATICINLINE void BufClearuiv(GLenum buffer, libc_types::i32 drawbuffer, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glClearBufferuiv)
@@ -12737,7 +12738,7 @@ STATICINLINE void BufClearuiv(GLenum buffer, i32 drawbuffer, Span<const u32> con
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE GLenum SyncClientWait(GLsync sync, RSCA flags, u64 timeout)
+STATICINLINE GLenum SyncClientWait(GLsync sync, semantic::RSCA flags, libc_types::u64 timeout)
 {
 #ifndef NDEBUG
     if(!glClientWaitSync)
@@ -12745,14 +12746,14 @@ STATICINLINE GLenum SyncClientWait(GLsync sync, RSCA flags, u64 timeout)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glClientWaitSync(sync, to_enum2(flags), timeout);
+    return (GLenum)glClientWaitSync(sync, to_enum2(flags), timeout);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_30)
-STATICINLINE void TexCompressedImage3D(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size3 const& size, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage3D)
@@ -12763,14 +12764,14 @@ STATICINLINE void TexCompressedImage3D(TexComp::tex_flag const& target, i32 leve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexImage3D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), size.width, size.height, size.depth, 0, imageSize, data);
+    glCompressedTexImage3D(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), width.width, width.height, width.depth, 0, imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x130, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_13, GLESVER_30)
-STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, i32 level, Point3 const& offset, Size3 const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage3D)
@@ -12781,14 +12782,14 @@ STATICINLINE void TexCompressedSubImage3D(TexComp::tex_flag const& target, i32 l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexSubImage3D(texture_to_enum(target), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTexSubImage3D(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, ptroff readOffset, ptroff writeOffset, ptroff size)
+STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, libc_types::ptroff readOffset, libc_types::ptroff writeOffset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glCopyBufferSubData)
@@ -12803,7 +12804,7 @@ STATICINLINE void BufCopySubData(GLenum readTarget, GLenum writeTarget, ptroff r
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void TexCopySubImage3D(TexComp::tex_flag const& target, i32 level, Point3 const& offset, i32 x, i32 y, Size const& size)
+STATICINLINE void TexCopySubImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glCopyTexSubImage3D)
@@ -12811,14 +12812,14 @@ STATICINLINE void TexCopySubImage3D(TexComp::tex_flag const& target, i32 level, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCopyTexSubImage3D(texture_to_enum(target), level, offset.x, offset.y, offset.z, x, y, size.w, size.h);
+    glCopyTexSubImage3D(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryFree(Span<const u32> const& ids)
+STATICINLINE void QueryFree(semantic::Span<const libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glDeleteQueries)
@@ -12829,14 +12830,14 @@ STATICINLINE void QueryFree(Span<const u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteQueries(C_FCAST<i32>(ids.elements), ids.data);
+    glDeleteQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerFree(Span<const u32> const& samplers)
+STATICINLINE void SamplerFree(semantic::Span<const libc_types::u32>&& samplers)
 {
 #ifndef NDEBUG
     if(!glDeleteSamplers)
@@ -12844,7 +12845,7 @@ STATICINLINE void SamplerFree(Span<const u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
+    glDeleteSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
 }
 #endif
 
@@ -12866,7 +12867,7 @@ STATICINLINE void SyncFree(GLsync sync)
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE void XFFree(Span<const u32> const& ids)
+STATICINLINE void XFFree(semantic::Span<const libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glDeleteTransformFeedbacks)
@@ -12874,14 +12875,14 @@ STATICINLINE void XFFree(Span<const u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
+    glDeleteTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOFree(Span<const u32> const& arrays)
+STATICINLINE void VAOFree(semantic::Span<const libc_types::u32>&& arrays)
 {
 #ifndef NDEBUG
     if(!glDeleteVertexArrays)
@@ -12889,14 +12890,14 @@ STATICINLINE void VAOFree(Span<const u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
+    glDeleteVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void DrawArraysInstanced(DrwMd const& mode, i32 first, i32 count, i32 instancecount)
+STATICINLINE void DrawArraysInstanced(DrwMd const& mode, libc_types::i32 first, libc_types::i32 count, libc_types::i32 instancecount)
 {
 #ifndef NDEBUG
     if(!glDrawArraysInstanced)
@@ -12914,7 +12915,7 @@ STATICINLINE void DrawArraysInstanced(DrwMd const& mode, i32 first, i32 count, i
 
 #if GL_VERSION_VERIFY(0x200, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_20, GLESVER_30)
-STATICINLINE void DrawBuffers(i32 n, const GLenum * bufs)
+STATICINLINE void DrawBuffers(libc_types::i32 n, const GLenum * bufs)
 {
 #ifndef NDEBUG
     if(!glDrawBuffers)
@@ -12932,7 +12933,7 @@ STATICINLINE void DrawBuffers(i32 n, const GLenum * bufs)
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount)
+STATICINLINE void DrawElementsInstanced(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 instancecount)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstanced)
@@ -12950,7 +12951,7 @@ STATICINLINE void DrawElementsInstanced(DrwMd const& mode, i32 count, TypeEnum t
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void DrawRangeElements(DrwMd const& mode, u32 start, u32 end, i32 count, TypeEnum type, uintptr indices)
+STATICINLINE void DrawRangeElements(DrwMd const& mode, libc_types::u32 start, libc_types::u32 end, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices)
 {
 #ifndef NDEBUG
     if(!glDrawRangeElements)
@@ -12998,7 +12999,7 @@ STATICINLINE void XFEnd()
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE GLsync SyncFence(GLenum condition, RSCA flags)
+STATICINLINE GLsync SyncFence(GLenum condition, semantic::RSCA flags)
 {
 #ifndef NDEBUG
     if(!glFenceSync)
@@ -13006,14 +13007,14 @@ STATICINLINE GLsync SyncFence(GLenum condition, RSCA flags)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glFenceSync(condition, to_enum2(flags));
+    return (GLsync)glFenceSync(condition, to_enum2(flags));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length)
+STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, libc_types::ptroff offset, libc_types::ptroff length)
 {
 #ifndef NDEBUG
     if(!glFlushMappedBufferRange)
@@ -13028,7 +13029,7 @@ STATICINLINE void BufFlushMappedRange(BufferComp::buf_flag const& target, ptroff
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
+STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level, libc_types::i32 layer)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureLayer)
@@ -13039,14 +13040,14 @@ STATICINLINE void FBTextureLayer(FramebufferT target, GLenum attachment, glhnd c
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTextureLayer(to_enum(target), attachment, C_OCAST<u32>(texture), level, layer);
+    glFramebufferTextureLayer(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level, layer);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryAlloc(Span<u32> const& ids)
+STATICINLINE void QueryAlloc(semantic::Span<libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glGenQueries)
@@ -13057,14 +13058,14 @@ STATICINLINE void QueryAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenQueries(C_FCAST<i32>(ids.elements), ids.data);
+    glGenQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
+STATICINLINE void SamplerAlloc(semantic::Span<libc_types::u32>&& samplers)
 {
 #ifndef NDEBUG
     if(!glGenSamplers)
@@ -13072,14 +13073,14 @@ STATICINLINE void SamplerAlloc(Span<u32> const& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenSamplers(C_FCAST<i32>(samplers.elements), samplers.data);
+    glGenSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE void XFAlloc(Span<u32> const& ids)
+STATICINLINE void XFAlloc(semantic::Span<libc_types::u32>&& ids)
 {
 #ifndef NDEBUG
     if(!glGenTransformFeedbacks)
@@ -13087,14 +13088,14 @@ STATICINLINE void XFAlloc(Span<u32> const& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTransformFeedbacks(C_FCAST<i32>(ids.elements), ids.data);
+    glGenTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOAlloc(Span<u32> const& arrays)
+STATICINLINE void VAOAlloc(semantic::Span<libc_types::u32>&& arrays)
 {
 #ifndef NDEBUG
     if(!glGenVertexArrays)
@@ -13102,14 +13103,14 @@ STATICINLINE void VAOAlloc(Span<u32> const& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenVertexArrays(C_FCAST<i32>(arrays.elements), arrays.data);
+    glGenVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockIndex, i32 bufSize, i32 * length, GLchar * uniformBlockName)
+STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, libc_types::u32 uniformBlockIndex, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * uniformBlockName)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockName)
@@ -13117,14 +13118,14 @@ STATICINLINE void ActiveUnifBlockGetName(glhnd const& program, u32 uniformBlockI
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformBlockName(C_OCAST<u32>(program), uniformBlockIndex, bufSize, length, uniformBlockName);
+    glGetActiveUniformBlockName(C_OCAST<libc_types::u32>(program), uniformBlockIndex, bufSize, length, uniformBlockName);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockIndex, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, libc_types::u32 uniformBlockIndex, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformBlockiv)
@@ -13132,14 +13133,14 @@ STATICINLINE void ActiveUnifBlockGetiv(glhnd const& program, u32 uniformBlockInd
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformBlockiv(C_OCAST<u32>(program), uniformBlockIndex, pname, params);
+    glGetActiveUniformBlockiv(C_OCAST<libc_types::u32>(program), uniformBlockIndex, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const u32 * uniformIndices, GLenum pname, i32 * params)
+STATICINLINE void ActiveUnifGetsiv(glhnd const& program, libc_types::i32 uniformCount, const libc_types::u32 * uniformIndices, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformsiv)
@@ -13147,14 +13148,14 @@ STATICINLINE void ActiveUnifGetsiv(glhnd const& program, i32 uniformCount, const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetActiveUniformsiv(C_OCAST<u32>(program), uniformCount, uniformIndices, pname, params);
+    glGetActiveUniformsiv(C_OCAST<libc_types::u32>(program), uniformCount, uniformIndices, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void BufGetParameteri64v(BufferComp::buf_flag const& target, GLenum pname, i64 * params)
+STATICINLINE void BufGetParameteri64v(BufferComp::buf_flag const& target, GLenum pname, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetBufferParameteri64v)
@@ -13184,7 +13185,7 @@ STATICINLINE void BufGetPointerv(BufferComp::buf_flag const& target, GLenum pnam
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
+STATICINLINE libc_types::i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetFragDataLocation)
@@ -13192,14 +13193,14 @@ STATICINLINE i32 GetFragDataLocation(glhnd const& program, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetFragDataLocation(C_OCAST<u32>(program), name);
+    return (libc_types::i32)glGetFragDataLocation(C_OCAST<libc_types::u32>(program), name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void IntegerGet64i_v(GLenum target, u32 index, i64 * data)
+STATICINLINE void IntegerGet64i_v(GLenum target, libc_types::u32 index, libc_types::i64 * data)
 {
 #ifndef NDEBUG
     if(!glGetInteger64i_v)
@@ -13214,7 +13215,7 @@ STATICINLINE void IntegerGet64i_v(GLenum target, u32 index, i64 * data)
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void IntegerGet64v(GLenum pname, i64 * data)
+STATICINLINE void IntegerGet64v(GLenum pname, libc_types::i64 * data)
 {
 #ifndef NDEBUG
     if(!glGetInteger64v)
@@ -13229,7 +13230,7 @@ STATICINLINE void IntegerGet64v(GLenum pname, i64 * data)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
+STATICINLINE void IntegerGeti_v(GLenum target, libc_types::u32 index, libc_types::i32 * data)
 {
 #ifndef NDEBUG
     if(!glGetIntegeri_v)
@@ -13244,7 +13245,7 @@ STATICINLINE void IntegerGeti_v(GLenum target, u32 index, i32 * data)
 
 #if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
-STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt internalformat, GLenum pname, i32 bufSize, i32 * params)
+STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, GLenum pname, libc_types::i32 count, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetInternalformativ)
@@ -13252,14 +13253,14 @@ STATICINLINE void GetInternalformativ(TexComp::tex_flag const& target, PixFmt in
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetInternalformativ(texture_to_enum(target), to_enum(internalformat), pname, bufSize, params);
+    glGetInternalformativ(texture_to_enum(target), to_enum(internalformat), pname, count, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
-STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * binaryFormat, Bytes const& binary)
+STATICINLINE void ProgramGetBinary(glhnd const& program, libc_types::i32 * length, GLenum * binaryFormat, semantic::Bytes const& binary)
 {
 #ifndef NDEBUG
     if(!glGetProgramBinary)
@@ -13267,14 +13268,14 @@ STATICINLINE void ProgramGetBinary(glhnd const& program, i32 * length, GLenum * 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramBinary(C_OCAST<u32>(program), C_FCAST<i32>(binary.size), length, binaryFormat, binary.data);
+    glGetProgramBinary(C_OCAST<libc_types::u32>(program), C_FCAST<libc_types::i32>(binary.size), length, binaryFormat, binary.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryGetObjectuiv(u32 id, GLenum pname, u32 * params)
+STATICINLINE void QueryGetObjectuiv(glhnd const& id, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjectuiv)
@@ -13285,14 +13286,14 @@ STATICINLINE void QueryGetObjectuiv(u32 id, GLenum pname, u32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjectuiv(id, pname, params);
+    glGetQueryObjectuiv(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryiv)
@@ -13310,7 +13311,7 @@ STATICINLINE void QueryGetiv(QueryComp::query_flag const& target, GLenum pname, 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scalar * params)
+STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameterfv)
@@ -13318,14 +13319,14 @@ STATICINLINE void SamplerGetParameterfv(glhnd const& sampler, GLenum pname, scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameterfv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameterfv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 * params)
+STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameteriv)
@@ -13333,14 +13334,14 @@ STATICINLINE void SamplerGetParameteriv(glhnd const& sampler, GLenum pname, i32 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameteriv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameteriv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE const u8 * GetStringi(GLenum name, u32 index)
+STATICINLINE libc_types::cstring  GetStringi(GLenum name, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glGetStringi)
@@ -13348,14 +13349,14 @@ STATICINLINE const u8 * GetStringi(GLenum name, u32 index)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetStringi(name, index);
+    return (libc_types::cstring )glGetStringi(name, index);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void SyncGetiv(GLsync sync, GLenum pname, i32 bufSize, i32 * length, i32 * values)
+STATICINLINE void SyncGetiv(GLsync sync, GLenum pname, libc_types::i32 count, libc_types::i32 * length, libc_types::i32 * values)
 {
 #ifndef NDEBUG
     if(!glGetSynciv)
@@ -13363,14 +13364,14 @@ STATICINLINE void SyncGetiv(GLsync sync, GLenum pname, i32 bufSize, i32 * length
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSynciv(sync, pname, bufSize, length, values);
+    glGetSynciv(sync, pname, count, length, values);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void XFGetVarying(glhnd const& program, u32 index, i32 bufSize, i32 * length, i32 * size, GLenum * type, GLchar * name)
+STATICINLINE void XFGetVarying(glhnd const& program, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetTransformFeedbackVarying)
@@ -13378,14 +13379,14 @@ STATICINLINE void XFGetVarying(glhnd const& program, u32 index, i32 bufSize, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetTransformFeedbackVarying(C_OCAST<u32>(program), index, bufSize, length, size, type, name);
+    glGetTransformFeedbackVarying(C_OCAST<libc_types::u32>(program), index, bufSize, length, size, type, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformBlockName)
+STATICINLINE libc_types::u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformBlockName)
 {
 #ifndef NDEBUG
     if(!glGetUniformBlockIndex)
@@ -13393,14 +13394,14 @@ STATICINLINE u32 UnifBlockGetIndex(glhnd const& program, const GLchar * uniformB
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetUniformBlockIndex(C_OCAST<u32>(program), uniformBlockName);
+    return (libc_types::u32)glGetUniformBlockIndex(C_OCAST<libc_types::u32>(program), uniformBlockName);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifGetIndices(glhnd const& program, i32 uniformCount, const GLchar * *const uniformNames, u32 * uniformIndices)
+STATICINLINE void UnifGetIndices(glhnd const& program, libc_types::i32 uniformCount, const GLchar * *const uniformNames, libc_types::u32 * uniformIndices)
 {
 #ifndef NDEBUG
     if(!glGetUniformIndices)
@@ -13408,14 +13409,14 @@ STATICINLINE void UnifGetIndices(glhnd const& program, i32 uniformCount, const G
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformIndices(C_OCAST<u32>(program), uniformCount, uniformNames, uniformIndices);
+    glGetUniformIndices(C_OCAST<libc_types::u32>(program), uniformCount, uniformNames, uniformIndices);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void UnifGetuiv(glhnd const& program, i32 location, u32 * params)
+STATICINLINE void UnifGetuiv(glhnd const& program, libc_types::i32 location, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformuiv)
@@ -13423,14 +13424,14 @@ STATICINLINE void UnifGetuiv(glhnd const& program, i32 location, u32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformuiv(C_OCAST<u32>(program), location, params);
+    glGetUniformuiv(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOGetIiv(u32 index, GLenum pname, i32 * params)
+STATICINLINE void VAOGetIiv(libc_types::u32 index, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribIiv)
@@ -13445,7 +13446,7 @@ STATICINLINE void VAOGetIiv(u32 index, GLenum pname, i32 * params)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOGetIuiv(u32 index, GLenum pname, u32 * params)
+STATICINLINE void VAOGetIuiv(libc_types::u32 index, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribIuiv)
@@ -13460,7 +13461,7 @@ STATICINLINE void VAOGetIuiv(u32 index, GLenum pname, u32 * params)
 
 #if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
-STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GLenum * attachments)
+STATICINLINE void FBInvalidate(FramebufferT target, libc_types::i32 numAttachments, const GLenum * attachments)
 {
 #ifndef NDEBUG
     if(!glInvalidateFramebuffer)
@@ -13475,7 +13476,7 @@ STATICINLINE void FBInvalidate(FramebufferT target, i32 numAttachments, const GL
 
 #if GL_VERSION_VERIFY(0x430, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_30)
-STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenum * attachments, i32 x, i32 y, Size const& size)
+STATICINLINE void FBInvalidateSub(FramebufferT target, libc_types::i32 numAttachments, const GLenum * attachments, typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glInvalidateSubFramebuffer)
@@ -13483,14 +13484,14 @@ STATICINLINE void FBInvalidateSub(GLenum target, i32 numAttachments, const GLenu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glInvalidateSubFramebuffer(target, numAttachments, attachments, x, y, size.w, size.h);
+    glInvalidateSubFramebuffer(to_enum(target), numAttachments, attachments, x[0], x[1], width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE u8 IsQuery(u32 id)
+STATICINLINE libc_types::u8 IsQuery(glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glIsQuery)
@@ -13501,14 +13502,14 @@ STATICINLINE u8 IsQuery(u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsQuery(id);
+    return (libc_types::u8)glIsQuery(C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE u8 IsSampler(glhnd const& sampler)
+STATICINLINE libc_types::u8 IsSampler(glhnd const& sampler)
 {
 #ifndef NDEBUG
     if(!glIsSampler)
@@ -13516,14 +13517,14 @@ STATICINLINE u8 IsSampler(glhnd const& sampler)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsSampler(C_OCAST<u32>(sampler));
+    return (libc_types::u8)glIsSampler(C_OCAST<libc_types::u32>(sampler));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE u8 IsSync(GLsync sync)
+STATICINLINE libc_types::u8 IsSync(GLsync sync)
 {
 #ifndef NDEBUG
     if(!glIsSync)
@@ -13531,14 +13532,14 @@ STATICINLINE u8 IsSync(GLsync sync)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsSync(sync);
+    return (libc_types::u8)glIsSync(sync);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_30)
-STATICINLINE u8 IsTransformFeedback(u32 id)
+STATICINLINE libc_types::u8 IsTransformFeedback(glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glIsTransformFeedback)
@@ -13546,14 +13547,14 @@ STATICINLINE u8 IsTransformFeedback(u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsTransformFeedback(id);
+    return (libc_types::u8)glIsTransformFeedback(C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE u8 IsVertexArray(glhnd const& array)
+STATICINLINE libc_types::u8 IsVertexArray(glhnd const& array)
 {
 #ifndef NDEBUG
     if(!glIsVertexArray)
@@ -13561,14 +13562,14 @@ STATICINLINE u8 IsVertexArray(glhnd const& array)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsVertexArray(C_OCAST<u32>(array));
+    return (libc_types::u8)glIsVertexArray(C_OCAST<libc_types::u32>(array));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offset, ptroff length, RSCA access)
+STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, libc_types::ptroff offset, libc_types::ptroff length, semantic::RSCA access)
 {
 #ifndef NDEBUG
     if(!glMapBufferRange)
@@ -13576,7 +13577,7 @@ STATICINLINE void * BufMapRange(BufferComp::buf_flag const& target, ptroff offse
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glMapBufferRange(buffer_to_enum(target), offset, length, to_enum2(access));
+    return (void *)glMapBufferRange(buffer_to_enum(target), offset, length, to_enum2(access));
 }
 #endif
 
@@ -13598,7 +13599,7 @@ STATICINLINE void XFPause()
 
 #if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
-STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const void * binary, i32 length)
+STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const void * binary, libc_types::i32 length)
 {
 #ifndef NDEBUG
     if(!glProgramBinary)
@@ -13606,14 +13607,14 @@ STATICINLINE void ProgramBinary(glhnd const& program, GLenum binaryFormat, const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramBinary(C_OCAST<u32>(program), binaryFormat, binary, length);
+    glProgramBinary(C_OCAST<libc_types::u32>(program), binaryFormat, binary, length);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_30)
-STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 value)
+STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, libc_types::i32 value)
 {
 #ifndef NDEBUG
     if(!glProgramParameteri)
@@ -13624,7 +13625,7 @@ STATICINLINE void ProgramParameteri(glhnd const& program, GLenum pname, i32 valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramParameteri(C_OCAST<u32>(program), pname, value);
+    glProgramParameteri(C_OCAST<libc_types::u32>(program), pname, value);
 }
 #endif
 
@@ -13646,7 +13647,7 @@ STATICINLINE void BufRead(GLenum src)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt internalformat, Size const& size)
+STATICINLINE void RBufStorageMultisample(GLenum target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glRenderbufferStorageMultisample)
@@ -13654,7 +13655,7 @@ STATICINLINE void RBufStorageMultisample(GLenum target, i32 samples, PixFmt inte
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glRenderbufferStorageMultisample(target, samples, to_enum(internalformat), size.w, size.h);
+    glRenderbufferStorageMultisample(target, samples, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
@@ -13676,7 +13677,7 @@ STATICINLINE void XFResume()
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar param)
+STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterf)
@@ -13684,14 +13685,14 @@ STATICINLINE void SamplerParameterf(glhnd const& sampler, GLenum pname, scalar p
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterf(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterf(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const scalar * param)
+STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const libc_types::f32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterfv)
@@ -13699,14 +13700,14 @@ STATICINLINE void SamplerParameterfv(glhnd const& sampler, GLenum pname, const s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterfv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterfv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 param)
+STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameteri)
@@ -13714,14 +13715,14 @@ STATICINLINE void SamplerParameteri(glhnd const& sampler, GLenum pname, i32 para
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameteri(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameteri(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const i32 * param)
+STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameteriv)
@@ -13729,14 +13730,14 @@ STATICINLINE void SamplerParameteriv(glhnd const& sampler, GLenum pname, const i
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameteriv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameteriv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void TexImage3D(TexComp::tex_flag const& target, i32 level, PixFmt internalformat, Size3 const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexImage3D)
@@ -13744,14 +13745,14 @@ STATICINLINE void TexImage3D(TexComp::tex_flag const& target, i32 level, PixFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexImage3D(texture_to_enum(target), level, to_enum(internalformat), size.width, size.height, size.depth, 0, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexImage3D(texture_to_enum(target), level, to_enum(internalformat), width.width, width.height, width.depth, 0, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
-STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size const& size)
+STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, libc_types::i32 levels, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glTexStorage2D)
@@ -13759,14 +13760,14 @@ STATICINLINE void TexStorage2D(TexComp::tex_flag const& target, i32 levels, PixF
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage2D(texture_to_enum(target), levels, to_enum(internalformat), size.w, size.h);
+    glTexStorage2D(texture_to_enum(target), levels, to_enum(internalformat), width.w, width.h);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_30)
-STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, i32 levels, PixFmt internalformat, Size3 const& size)
+STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, libc_types::i32 levels, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width)
 {
 #ifndef NDEBUG
     if(!glTexStorage3D)
@@ -13774,14 +13775,14 @@ STATICINLINE void TexStorage3D(TexComp::tex_flag const& target, i32 levels, PixF
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage3D(texture_to_enum(target), levels, to_enum(internalformat), size.width, size.height, size.depth);
+    glTexStorage3D(texture_to_enum(target), levels, to_enum(internalformat), width.width, width.height, width.depth);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x120, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_12, GLESVER_30)
-STATICINLINE void TexSubImage3D(TexComp::tex_flag const& target, i32 level, Point3 const& offset, Size3 const& size, PixCmp format, BitFmt type, const void * pixels)
+STATICINLINE void TexSubImage3D(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, const void * pixels)
 {
 #ifndef NDEBUG
     if(!glTexSubImage3D)
@@ -13789,14 +13790,14 @@ STATICINLINE void TexSubImage3D(TexComp::tex_flag const& target, i32 level, Poin
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexSubImage3D(texture_to_enum(target), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format, PixFmt::None), to_enum(type), pixels);
+    glTexSubImage3D(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), pixels);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void XFVaryings(glhnd const& program, i32 count, const GLchar * *const varyings, GLenum bufferMode)
+STATICINLINE void XFVaryings(glhnd const& program, libc_types::i32 count, const GLchar * *const varyings, GLenum bufferMode)
 {
 #ifndef NDEBUG
     if(!glTransformFeedbackVaryings)
@@ -13804,14 +13805,14 @@ STATICINLINE void XFVaryings(glhnd const& program, i32 count, const GLchar * *co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTransformFeedbackVaryings(C_OCAST<u32>(program), count, varyings, bufferMode);
+    glTransformFeedbackVaryings(C_OCAST<libc_types::u32>(program), count, varyings, bufferMode);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif1ui(i32 location, u32 v0)
+STATICINLINE void Unif1ui(libc_types::i32 location, libc_types::u32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1ui)
@@ -13826,7 +13827,7 @@ STATICINLINE void Unif1ui(i32 location, u32 v0)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<const u32> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1uiv)
@@ -13834,14 +13835,14 @@ STATICINLINE void Unifuiv(i32 location, Span<const u32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform1uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif2ui(i32 location, u32 v0, u32 v1)
+STATICINLINE void Unif2ui(libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2ui)
@@ -13849,14 +13850,14 @@ STATICINLINE void Unif2ui(i32 location, u32 v0, u32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ui(location, v0, v1);
+    glUniform2ui(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<Vecui2> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecui2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2uiv)
@@ -13864,14 +13865,14 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui2> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform2uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif3ui(i32 location, u32 v0, u32 v1, u32 v2)
+STATICINLINE void Unif3ui(libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 3> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3ui)
@@ -13879,14 +13880,14 @@ STATICINLINE void Unif3ui(i32 location, u32 v0, u32 v1, u32 v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ui(location, v0, v1, v2);
+    glUniform3ui(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<Vecui3> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecui3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3uiv)
@@ -13894,14 +13895,14 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui3> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform3uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unif4ui(i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
+STATICINLINE void Unif4ui(libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 4> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4ui)
@@ -13909,14 +13910,14 @@ STATICINLINE void Unif4ui(i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ui(location, v0, v1, v2, v3);
+    glUniform4ui(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
+STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vector_types::Vecui4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4uiv)
@@ -13924,14 +13925,14 @@ STATICINLINE void Unifuiv(i32 location, Span<Vecui4> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4uiv(location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glUniform4uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_30)
-STATICINLINE void UnifBlockBinding(glhnd const& program, u32 uniformBlockIndex, u32 uniformBlockBinding)
+STATICINLINE void UnifBlockBinding(glhnd const& program, libc_types::u32 uniformBlockIndex, libc_types::u32 uniformBlockBinding)
 {
 #ifndef NDEBUG
     if(!glUniformBlockBinding)
@@ -13939,14 +13940,14 @@ STATICINLINE void UnifBlockBinding(glhnd const& program, u32 uniformBlockIndex, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformBlockBinding(C_OCAST<u32>(program), uniformBlockIndex, uniformBlockBinding);
+    glUniformBlockBinding(C_OCAST<libc_types::u32>(program), uniformBlockIndex, uniformBlockBinding);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2x3fv)
@@ -13954,14 +13955,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2x4fv)
@@ -13969,14 +13970,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf2_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3x2fv)
@@ -13984,14 +13985,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_4> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_4> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3x4fv)
@@ -13999,14 +14000,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf3_4> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_2> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_2> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4x2fv)
@@ -14014,14 +14015,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_2> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x210, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_21, GLESVER_30)
-STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_3> const& value)
+STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_3> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4x3fv)
@@ -14029,14 +14030,14 @@ STATICINLINE void Uniffv(i32 location, bool transpose, Span<Matf4_3> const& valu
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3fv(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x150, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_15, GLESVER_30)
-STATICINLINE u8 BufUnmap(BufferComp::buf_flag const& target)
+STATICINLINE libc_types::u8 BufUnmap(BufferComp::buf_flag const& target)
 {
 #ifndef NDEBUG
     if(!glUnmapBuffer)
@@ -14044,14 +14045,14 @@ STATICINLINE u8 BufUnmap(BufferComp::buf_flag const& target)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glUnmapBuffer(buffer_to_enum(target));
+    return (libc_types::u8)glUnmapBuffer(buffer_to_enum(target));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_30)
-STATICINLINE void VAODivisor(u32 index, u32 divisor)
+STATICINLINE void VAODivisor(libc_types::u32 index, libc_types::u32 divisor)
 {
 #ifndef NDEBUG
     if(!glVertexAttribDivisor)
@@ -14069,7 +14070,7 @@ STATICINLINE void VAODivisor(u32 index, u32 divisor)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4i(u32 index, i32 x, i32 y, i32 z, i32 w)
+STATICINLINE void VAOI4i(libc_types::u32 index, typing::vectors::tvector<libc_types::i32, 4> x, libc_types::i32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4i)
@@ -14077,14 +14078,14 @@ STATICINLINE void VAOI4i(u32 index, i32 x, i32 y, i32 z, i32 w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI4i(index, x, y, z, w);
+    glVertexAttribI4i(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4iv(u32 index, const i32 * v)
+STATICINLINE void VAOI4iv(libc_types::u32 index, const libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4iv)
@@ -14099,7 +14100,7 @@ STATICINLINE void VAOI4iv(u32 index, const i32 * v)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4ui(u32 index, u32 x, u32 y, u32 z, u32 w)
+STATICINLINE void VAOI4ui(libc_types::u32 index, typing::vectors::tvector<libc_types::u32, 4> x, libc_types::u32 z)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4ui)
@@ -14107,14 +14108,14 @@ STATICINLINE void VAOI4ui(u32 index, u32 x, u32 y, u32 z, u32 w)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribI4ui(index, x, y, z, w);
+    glVertexAttribI4ui(index, x[0], x[1], z, x[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOI4uiv(u32 index, const u32 * v)
+STATICINLINE void VAOI4uiv(libc_types::u32 index, const libc_types::u32 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribI4uiv)
@@ -14129,7 +14130,7 @@ STATICINLINE void VAOI4uiv(u32 index, const u32 * v)
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_30)
-STATICINLINE void VAOIPointer(u32 index, i32 size, GLenum type, i32 stride, const void * pointer)
+STATICINLINE void VAOIPointer(libc_types::u32 index, libc_types::i32 size, GLenum type, libc_types::i32 stride, const void * pointer)
 {
 #ifndef NDEBUG
     if(!glVertexAttribIPointer)
@@ -14144,7 +14145,7 @@ STATICINLINE void VAOIPointer(u32 index, i32 size, GLenum type, i32 stride, cons
 
 #if GL_VERSION_VERIFY(0x320, 0x300)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_30)
-STATICINLINE void SyncWait(GLsync sync, RSCA flags, u64 timeout)
+STATICINLINE void SyncWait(GLsync sync, semantic::RSCA flags, libc_types::u64 timeout)
 {
 #ifndef NDEBUG
     if(!glWaitSync)
@@ -14158,10 +14159,10 @@ STATICINLINE void SyncWait(GLsync sync, RSCA flags, u64 timeout)
 
 };
 template<typename ReqVer>
-struct CGL_31
-    : CGL_30<ReqVer>
+struct v31es
+    : v30es<ReqVer>
 {
-using Parent = CGL_30<ReqVer>;
+using Parent = v30es<ReqVer>;
 using Parent::Unif1f;
 using Parent::Uniffv;
 using Parent::Unif1i;
@@ -14188,14 +14189,14 @@ STATICINLINE void ProgramActiveShader(glhnd const& pipeline, glhnd const& progra
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glActiveShaderProgram(C_OCAST<u32>(pipeline), C_OCAST<u32>(program));
+    glActiveShaderProgram(C_OCAST<libc_types::u32>(pipeline), C_OCAST<libc_types::u32>(program));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
-STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool layered, i32 layer, RSCA access, PixFmt format)
+STATICINLINE void TexBindImage(libc_types::u32 unit, glhnd const& texture, libc_types::i32 level, libc_types::u8 layered, libc_types::i32 layer, semantic::RSCA access, typing::pixels::PixFmt format)
 {
 #ifndef NDEBUG
     if(!glBindImageTexture)
@@ -14203,7 +14204,7 @@ STATICINLINE void TexBindImage(u32 unit, glhnd const& texture, i32 level, bool l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindImageTexture(unit, C_OCAST<u32>(texture), level, layered ? GL_TRUE : GL_FALSE, layer, to_enum2(access), to_enum(format));
+    glBindImageTexture(unit, C_OCAST<libc_types::u32>(texture), level, layered, layer, to_enum2(access), to_enum(format));
 }
 #endif
 
@@ -14218,14 +14219,14 @@ STATICINLINE void PipelineBind(glhnd const& pipeline)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindProgramPipeline(C_OCAST<u32>(pipeline));
+    glBindProgramPipeline(C_OCAST<libc_types::u32>(pipeline));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offset, i32 stride)
+STATICINLINE void VertBufBind(libc_types::u32 bindingindex, glhnd const& buffer, libc_types::ptroff offset, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glBindVertexBuffer)
@@ -14233,14 +14234,14 @@ STATICINLINE void VertBufBind(u32 bindingindex, glhnd const& buffer, ptroff offs
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBindVertexBuffer(bindingindex, C_OCAST<u32>(buffer), offset, stride);
+    glBindVertexBuffer(bindingindex, C_OCAST<libc_types::u32>(buffer), offset, stride);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> const& strings)
+STATICINLINE libc_types::u32 ShaderProgramvAllocEx(ShaderStage type, semantic::Span<const GLchar *>&& strings)
 {
 #ifndef NDEBUG
     if(!glCreateShaderProgramv)
@@ -14248,14 +14249,14 @@ STATICINLINE u32 ShaderProgramvAllocEx(ShaderStage type, Span<const GLchar *> co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShaderProgramv(to_enum1(type), C_FCAST<i32>(strings.elements), strings.data);
+    return (libc_types::u32)glCreateShaderProgramv(to_enum1(type), C_FCAST<libc_types::i32>(strings.elements), strings.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
+STATICINLINE void PipelineFree(semantic::Span<const libc_types::u32>&& pipelines)
 {
 #ifndef NDEBUG
     if(!glDeleteProgramPipelines)
@@ -14263,14 +14264,14 @@ STATICINLINE void PipelineFree(Span<const u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
+    glDeleteProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_groups_z)
+STATICINLINE void DispatchCompute(libc_types::u32 num_groups_x, libc_types::u32 num_groups_y, libc_types::u32 num_groups_z)
 {
 #ifndef NDEBUG
     if(!glDispatchCompute)
@@ -14285,7 +14286,7 @@ STATICINLINE void DispatchCompute(u32 num_groups_x, u32 num_groups_y, u32 num_gr
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void DispatchComputeIndirect(ptroff indirect)
+STATICINLINE void DispatchComputeIndirect(libc_types::ptroff indirect)
 {
 #ifndef NDEBUG
     if(!glDispatchComputeIndirect)
@@ -14300,7 +14301,7 @@ STATICINLINE void DispatchComputeIndirect(ptroff indirect)
 
 #if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
-STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
+STATICINLINE void DrawArraysIndirect(DrwMd const& mode, libc_types::uintptr indirect)
 {
 #ifndef NDEBUG
     if(!glDrawArraysIndirect)
@@ -14315,7 +14316,7 @@ STATICINLINE void DrawArraysIndirect(DrwMd const& mode, uintptr indirect)
 
 #if GL_VERSION_VERIFY(0x400, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_31)
-STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr indirect)
+STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, libc_types::uintptr indirect)
 {
 #ifndef NDEBUG
     if(!glDrawElementsIndirect)
@@ -14330,7 +14331,7 @@ STATICINLINE void DrawElementsIndirect(DrwMd const& mode, TypeEnum type, uintptr
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
+STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, libc_types::i32 param)
 {
 #ifndef NDEBUG
     if(!glFramebufferParameteri)
@@ -14345,7 +14346,7 @@ STATICINLINE void FBParameteri(FramebufferT target, GLenum pname, i32 param)
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
+STATICINLINE void PipelineAlloc(semantic::Span<libc_types::u32>&& pipelines)
 {
 #ifndef NDEBUG
     if(!glGenProgramPipelines)
@@ -14353,14 +14354,14 @@ STATICINLINE void PipelineAlloc(Span<u32> const& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenProgramPipelines(C_FCAST<i32>(pipelines.elements), pipelines.data);
+    glGenProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_31)
-STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, u32 index, u8 * data)
+STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, libc_types::u32 index, libc_types::u8 * data)
 {
 #ifndef NDEBUG
     if(!glGetBooleani_v)
@@ -14375,7 +14376,7 @@ STATICINLINE void BoolGeti_v(BufferComp::buf_flag const& target, u32 index, u8 *
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * params)
+STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetFramebufferParameteriv)
@@ -14390,7 +14391,7 @@ STATICINLINE void FBGetParameteriv(FramebufferT target, GLenum pname, i32 * para
 
 #if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
-STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
+STATICINLINE void GetMultisamplefv(GLenum pname, libc_types::u32 index, libc_types::f32 * val)
 {
 #ifndef NDEBUG
     if(!glGetMultisamplefv)
@@ -14405,7 +14406,7 @@ STATICINLINE void GetMultisamplefv(GLenum pname, u32 index, scalar * val)
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInterface, GLenum pname, i32 * params)
+STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInterface, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramInterfaceiv)
@@ -14413,14 +14414,14 @@ STATICINLINE void ProgramGetInterfaceiv(glhnd const& program, GLenum programInte
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramInterfaceiv(C_OCAST<u32>(program), programInterface, pname, params);
+    glGetProgramInterfaceiv(C_OCAST<libc_types::u32>(program), programInterface, pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * length, GLchar * infoLog)
+STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetProgramPipelineInfoLog)
@@ -14428,14 +14429,14 @@ STATICINLINE void PipelineGetInfoLog(glhnd const& pipeline, i32 bufSize, i32 * l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramPipelineInfoLog(C_OCAST<u32>(pipeline), bufSize, length, infoLog);
+    glGetProgramPipelineInfoLog(C_OCAST<libc_types::u32>(pipeline), bufSize, length, infoLog);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * params)
+STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramPipelineiv)
@@ -14443,14 +14444,14 @@ STATICINLINE void PipelineGetiv(glhnd const& pipeline, GLenum pname, i32 * param
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramPipelineiv(C_OCAST<u32>(pipeline), pname, params);
+    glGetProgramPipelineiv(C_OCAST<libc_types::u32>(pipeline), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
+STATICINLINE libc_types::u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceIndex)
@@ -14458,14 +14459,14 @@ STATICINLINE u32 ProgramGetResourceIndex(glhnd const& program, GLenum programInt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetProgramResourceIndex(C_OCAST<u32>(program), programInterface, name);
+    return (libc_types::u32)glGetProgramResourceIndex(C_OCAST<libc_types::u32>(program), programInterface, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum programInterface, const GLchar * name)
+STATICINLINE libc_types::i32 ProgramGetResourceLocation(glhnd const& program, GLenum programInterface, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceLocation)
@@ -14473,14 +14474,14 @@ STATICINLINE i32 ProgramGetResourceLocation(glhnd const& program, GLenum program
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetProgramResourceLocation(C_OCAST<u32>(program), programInterface, name);
+    return (libc_types::i32)glGetProgramResourceLocation(C_OCAST<libc_types::u32>(program), programInterface, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInterface, u32 index, i32 bufSize, i32 * length, GLchar * name)
+STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInterface, libc_types::u32 index, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * name)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceName)
@@ -14488,14 +14489,14 @@ STATICINLINE void ProgramGetResourceName(glhnd const& program, GLenum programInt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramResourceName(C_OCAST<u32>(program), programInterface, index, bufSize, length, name);
+    glGetProgramResourceName(C_OCAST<libc_types::u32>(program), programInterface, index, bufSize, length, name);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInterface, u32 index, i32 propCount, const GLenum * props, i32 bufSize, i32 * length, i32 * params)
+STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInterface, libc_types::u32 index, libc_types::i32 propCount, const GLenum * props, libc_types::i32 count, libc_types::i32 * length, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetProgramResourceiv)
@@ -14503,14 +14504,14 @@ STATICINLINE void ProgramGetResourceiv(glhnd const& program, GLenum programInter
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetProgramResourceiv(C_OCAST<u32>(program), programInterface, index, propCount, props, bufSize, length, params);
+    glGetProgramResourceiv(C_OCAST<libc_types::u32>(program), programInterface, index, propCount, props, count, length, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x100, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_31)
-STATICINLINE void TexGetLevelParameterfv(TexComp::tex_flag const& target, i32 level, GLenum pname, scalar * params)
+STATICINLINE void TexGetLevelParameterfv(TexComp::tex_flag const& target, libc_types::i32 level, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexLevelParameterfv)
@@ -14525,7 +14526,7 @@ STATICINLINE void TexGetLevelParameterfv(TexComp::tex_flag const& target, i32 le
 
 #if GL_VERSION_VERIFY(0x100, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_10, GLESVER_31)
-STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, i32 level, GLenum pname, i32 * params)
+STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, libc_types::i32 level, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexLevelParameteriv)
@@ -14540,7 +14541,7 @@ STATICINLINE void TexGetLevelParameteriv(TexComp::tex_flag const& target, i32 le
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
+STATICINLINE libc_types::u8 IsProgramPipeline(glhnd const& pipeline)
 {
 #ifndef NDEBUG
     if(!glIsProgramPipeline)
@@ -14548,14 +14549,14 @@ STATICINLINE u8 IsProgramPipeline(glhnd const& pipeline)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsProgramPipeline(C_OCAST<u32>(pipeline));
+    return (libc_types::u8)glIsProgramPipeline(C_OCAST<libc_types::u32>(pipeline));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x420, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_42, GLESVER_31)
-STATICINLINE void MemoryBarrier(u32 barriers)
+STATICINLINE void MemoryBarrier(libc_types::u32 barriers)
 {
 #ifndef NDEBUG
     if(!glMemoryBarrier)
@@ -14570,7 +14571,7 @@ STATICINLINE void MemoryBarrier(u32 barriers)
 
 #if GL_VERSION_VERIFY(0x450, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_31)
-STATICINLINE void MemoryBarrierByRegion(u32 barriers)
+STATICINLINE void MemoryBarrierByRegion(libc_types::u32 barriers)
 {
 #ifndef NDEBUG
     if(!glMemoryBarrierByRegion)
@@ -14585,7 +14586,7 @@ STATICINLINE void MemoryBarrierByRegion(u32 barriers)
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
+STATICINLINE void Unif1f(glhnd const& program, libc_types::i32 location, libc_types::f32 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1f)
@@ -14593,14 +14594,14 @@ STATICINLINE void Unif1f(glhnd const& program, i32 location, scalar v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1f(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1f(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1fv)
@@ -14608,14 +14609,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<const scalar> 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform1fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
+STATICINLINE void Unif1i(glhnd const& program, libc_types::i32 location, libc_types::i32 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1i)
@@ -14623,14 +14624,14 @@ STATICINLINE void Unif1i(glhnd const& program, i32 location, i32 v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1i(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1i(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1iv)
@@ -14638,14 +14639,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<const i32> con
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform1iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
+STATICINLINE void Unif1ui(glhnd const& program, libc_types::i32 location, libc_types::u32 v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1ui)
@@ -14653,14 +14654,14 @@ STATICINLINE void Unif1ui(glhnd const& program, i32 location, u32 v0)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1ui(C_OCAST<u32>(program), location, v0);
+    glProgramUniform1ui(C_OCAST<libc_types::u32>(program), location, v0);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u32> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1uiv)
@@ -14668,14 +14669,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<const u32> co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform1uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v1)
+STATICINLINE void Unif2f(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2f)
@@ -14683,14 +14684,14 @@ STATICINLINE void Unif2f(glhnd const& program, i32 location, scalar v0, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2f(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2f(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecf2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2fv)
@@ -14698,14 +14699,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf2> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
+STATICINLINE void Unif2i(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2i)
@@ -14713,14 +14714,14 @@ STATICINLINE void Unif2i(glhnd const& program, i32 location, i32 v0, i32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2i(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2i(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Veci2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2iv)
@@ -14728,14 +14729,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci2> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform2iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
+STATICINLINE void Unif2ui(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2ui)
@@ -14743,14 +14744,14 @@ STATICINLINE void Unif2ui(glhnd const& program, i32 location, u32 v0, u32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2ui(C_OCAST<u32>(program), location, v0, v1);
+    glProgramUniform2ui(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecui2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2uiv)
@@ -14758,14 +14759,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui2> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform2uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2)
+STATICINLINE void Unif3f(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 3> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3f)
@@ -14773,14 +14774,14 @@ STATICINLINE void Unif3f(glhnd const& program, i32 location, scalar v0, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3f(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3f(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecf3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3fv)
@@ -14788,14 +14789,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf3> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2)
+STATICINLINE void Unif3i(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 3> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3i)
@@ -14803,14 +14804,14 @@ STATICINLINE void Unif3i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3i(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3i(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Veci3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3iv)
@@ -14818,14 +14819,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci3> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform3iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2)
+STATICINLINE void Unif3ui(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 3> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3ui)
@@ -14833,14 +14834,14 @@ STATICINLINE void Unif3ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3ui(C_OCAST<u32>(program), location, v0, v1, v2);
+    glProgramUniform3ui(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecui3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3uiv)
@@ -14848,14 +14849,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui3> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform3uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
+STATICINLINE void Unif4f(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 4> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4f)
@@ -14863,14 +14864,14 @@ STATICINLINE void Unif4f(glhnd const& program, i32 location, scalar v0, scalar v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4f(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4f(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecf4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4fv)
@@ -14878,14 +14879,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, Span<Vecf4> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glProgramUniform4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
+STATICINLINE void Unif4i(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 4> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4i)
@@ -14893,14 +14894,14 @@ STATICINLINE void Unif4i(glhnd const& program, i32 location, i32 v0, i32 v1, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4i(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4i(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& value)
+STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Veci4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4iv)
@@ -14908,14 +14909,14 @@ STATICINLINE void Unifiv(glhnd const& program, i32 location, Span<Veci4> const& 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4iv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glProgramUniform4iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u32 v2, u32 v3)
+STATICINLINE void Unif4ui(glhnd const& program, libc_types::i32 location, typing::vectors::tvector<libc_types::u32, 4> v0, libc_types::u32 v2)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4ui)
@@ -14923,14 +14924,14 @@ STATICINLINE void Unif4ui(glhnd const& program, i32 location, u32 v0, u32 v1, u3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4ui(C_OCAST<u32>(program), location, v0, v1, v2, v3);
+    glProgramUniform4ui(C_OCAST<libc_types::u32>(program), location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const& value)
+STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semantic::Span<typing::vector_types::Vecui4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4uiv)
@@ -14938,14 +14939,14 @@ STATICINLINE void Unifuiv(glhnd const& program, i32 location, Span<Vecui4> const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4uiv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u32*>(value.data));
+    glProgramUniform4uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2fv)
@@ -14953,14 +14954,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2x3fv)
@@ -14968,14 +14969,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf2_4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf2_4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix2x4fv)
@@ -14983,14 +14984,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix2x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3fv)
@@ -14998,14 +14999,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3x2fv)
@@ -15013,14 +15014,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf3_4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf3_4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix3x4fv)
@@ -15028,14 +15029,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix3x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4fv)
@@ -15043,14 +15044,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_2> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_2> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4x2fv)
@@ -15058,14 +15059,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_41, GLESVER_31)
-STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Span<Matf4_3> const& value)
+STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_types::u8 transpose, semantic::Span<typing::vector_types::Matf4_3> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniformMatrix4x3fv)
@@ -15073,14 +15074,14 @@ STATICINLINE void Uniffv(glhnd const& program, i32 location, bool transpose, Spa
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3fv(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glProgramUniformMatrix4x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x320, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_31)
-STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
+STATICINLINE void SampleMaski(libc_types::u32 maskNumber, libc_types::u32 mask)
 {
 #ifndef NDEBUG
     if(!glSampleMaski)
@@ -15095,7 +15096,7 @@ STATICINLINE void SampleMaski(u32 maskNumber, u32 mask)
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size const& size, bool fixedsamplelocations)
+STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTexStorage2DMultisample)
@@ -15103,7 +15104,7 @@ STATICINLINE void TexStorage2DMultisample(TexComp::tex_flag const& target, i32 s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage2DMultisample(texture_to_enum(target), samples, to_enum(internalformat), size.w, size.h, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTexStorage2DMultisample(texture_to_enum(target), samples, to_enum(internalformat), width.w, width.h, fixedsamplelocations);
 }
 #endif
 
@@ -15118,7 +15119,7 @@ STATICINLINE void ProgramUseStages(glhnd const& pipeline, ShaderStage stages, gl
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUseProgramStages(C_OCAST<u32>(pipeline), to_enum2(stages), C_OCAST<u32>(program));
+    glUseProgramStages(C_OCAST<libc_types::u32>(pipeline), to_enum2(stages), C_OCAST<libc_types::u32>(program));
 }
 #endif
 
@@ -15133,14 +15134,14 @@ STATICINLINE void PipelineValidate(glhnd const& pipeline)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glValidateProgramPipeline(C_OCAST<u32>(pipeline));
+    glValidateProgramPipeline(C_OCAST<libc_types::u32>(pipeline));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
+STATICINLINE void VAOBinding(libc_types::u32 attribindex, libc_types::u32 bindingindex)
 {
 #ifndef NDEBUG
     if(!glVertexAttribBinding)
@@ -15155,7 +15156,7 @@ STATICINLINE void VAOBinding(u32 attribindex, u32 bindingindex)
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normalized, u32 relativeoffset)
+STATICINLINE void VAOFormat(libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u8 normalized, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexAttribFormat)
@@ -15163,14 +15164,14 @@ STATICINLINE void VAOFormat(u32 attribindex, i32 size, GLenum type, bool normali
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribFormat(attribindex, size, type, normalized ? GL_TRUE : GL_FALSE, relativeoffset);
+    glVertexAttribFormat(attribindex, size, type, normalized, relativeoffset);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativeoffset)
+STATICINLINE void VAOIFormat(libc_types::u32 attribindex, libc_types::i32 size, GLenum type, libc_types::u32 relativeoffset)
 {
 #ifndef NDEBUG
     if(!glVertexAttribIFormat)
@@ -15185,7 +15186,7 @@ STATICINLINE void VAOIFormat(u32 attribindex, i32 size, GLenum type, u32 relativ
 
 #if GL_VERSION_VERIFY(0x430, 0x310)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_31)
-STATICINLINE void VAOBindingDivisor(u32 bindingindex, u32 divisor)
+STATICINLINE void VAOBindingDivisor(libc_types::u32 bindingindex, libc_types::u32 divisor)
 {
 #ifndef NDEBUG
     if(!glVertexBindingDivisor)
@@ -15199,10 +15200,10 @@ STATICINLINE void VAOBindingDivisor(u32 bindingindex, u32 divisor)
 
 };
 template<typename ReqVer>
-struct CGL_32
-    : CGL_31<ReqVer>
+struct v32es
+    : v31es<ReqVer>
 {
-using Parent = CGL_31<ReqVer>;
+using Parent = v31es<ReqVer>;
 
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x320)
 GL_VERSION_REQ_ES(GLESVER_32)
@@ -15224,7 +15225,7 @@ STATICINLINE void BlendBarrier()
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendEquationSeparatei(u32 buf, GLenum modeRGB, GLenum modeAlpha)
+STATICINLINE void BlendEquationSeparatei(libc_types::u32 buf, GLenum modeRGB, GLenum modeAlpha)
 {
 #ifndef NDEBUG
     if(!glBlendEquationSeparatei)
@@ -15242,7 +15243,7 @@ STATICINLINE void BlendEquationSeparatei(u32 buf, GLenum modeRGB, GLenum modeAlp
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendEquationi(u32 buf, GLenum mode)
+STATICINLINE void BlendEquationi(libc_types::u32 buf, GLenum mode)
 {
 #ifndef NDEBUG
     if(!glBlendEquationi)
@@ -15260,7 +15261,7 @@ STATICINLINE void BlendEquationi(u32 buf, GLenum mode)
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendFuncSeparatei(u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+STATICINLINE void BlendFuncSeparatei(libc_types::u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
 #ifndef NDEBUG
     if(!glBlendFuncSeparatei)
@@ -15278,7 +15279,7 @@ STATICINLINE void BlendFuncSeparatei(u32 buf, GLenum srcRGB, GLenum dstRGB, GLen
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
+STATICINLINE void BlendFunci(libc_types::u32 buf, GLenum src, GLenum dst)
 {
 #ifndef NDEBUG
     if(!glBlendFunci)
@@ -15296,7 +15297,7 @@ STATICINLINE void BlendFunci(u32 buf, GLenum src, GLenum dst)
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void ColorMaski(u32 index, bool r, bool g, bool b, bool a)
+STATICINLINE void ColorMaski(libc_types::u32 index, libc_types::u8 r, libc_types::u8 g, libc_types::u8 b, libc_types::u8 a)
 {
 #ifndef NDEBUG
     if(!glColorMaski)
@@ -15304,14 +15305,14 @@ STATICINLINE void ColorMaski(u32 index, bool r, bool g, bool b, bool a)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glColorMaski(index, r ? GL_TRUE : GL_FALSE, g ? GL_TRUE : GL_FALSE, b ? GL_TRUE : GL_FALSE, a ? GL_TRUE : GL_FALSE);
+    glColorMaski(index, r, g, b, a);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void CopyImageSubData(u32 srcName, GLenum srcTarget, i32 srcLevel, i32 srcX, i32 srcY, i32 srcZ, u32 dstName, GLenum dstTarget, i32 dstLevel, i32 dstX, i32 dstY, i32 dstZ, i32 srcWidth, i32 srcHeight, i32 srcDepth)
+STATICINLINE void CopyImageSubData(libc_types::u32 srcName, GLenum srcTarget, libc_types::i32 srcLevel, libc_types::i32 srcX, libc_types::i32 srcY, libc_types::i32 srcZ, libc_types::u32 dstName, GLenum dstTarget, libc_types::i32 dstLevel, libc_types::i32 dstX, libc_types::i32 dstY, libc_types::i32 dstZ, libc_types::i32 srcWidth, libc_types::i32 srcHeight, libc_types::i32 srcDepth)
 {
 #ifndef NDEBUG
     if(!glCopyImageSubData)
@@ -15347,7 +15348,7 @@ STATICINLINE void DebugMessageCallback(GLDEBUGPROC callback, const void * userPa
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
+STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severity, semantic::Span<const libc_types::u32>&& ids, libc_types::u8 enabled)
 {
 #ifndef NDEBUG
     if(!glDebugMessageControl)
@@ -15361,14 +15362,14 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControl(source, type, severity, count, ids, enabled ? GL_TRUE : GL_FALSE);
+    glDebugMessageControl(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
+STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, glhnd const& id, GLenum severity, libc_types::i32 length, const GLchar * buf)
 {
 #ifndef NDEBUG
     if(!glDebugMessageInsert)
@@ -15382,14 +15383,14 @@ STATICINLINE void DebugMessageInsert(GLenum source, GLenum type, u32 id, GLenum 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageInsert(source, type, id, severity, length, buf);
+    glDebugMessageInsert(source, type, C_OCAST<libc_types::u32>(id), severity, length, buf);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void Disablei(Feature target, u32 index)
+STATICINLINE void Disablei(Feature target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glDisablei)
@@ -15404,7 +15405,7 @@ STATICINLINE void Disablei(Feature target, u32 index)
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
+STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 basevertex)
 {
 #ifndef NDEBUG
     if(!glDrawElementsBaseVertex)
@@ -15419,7 +15420,7 @@ STATICINLINE void DrawElementsBaseVertex(DrwMd const& mode, i32 count, TypeEnum 
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 instancecount, i32 basevertex)
+STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 instancecount, libc_types::i32 basevertex)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstancedBaseVertex)
@@ -15434,7 +15435,7 @@ STATICINLINE void DrawElementsInstancedBaseVertex(DrwMd const& mode, i32 count, 
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, u32 start, u32 end, i32 count, TypeEnum type, uintptr indices, i32 basevertex)
+STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, libc_types::u32 start, libc_types::u32 end, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 basevertex)
 {
 #ifndef NDEBUG
     if(!glDrawRangeElementsBaseVertex)
@@ -15449,7 +15450,7 @@ STATICINLINE void DrawRangeElementsBaseVertex(DrwMd const& mode, u32 start, u32 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void Enablei(Feature target, u32 index)
+STATICINLINE void Enablei(Feature target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glEnablei)
@@ -15464,7 +15465,7 @@ STATICINLINE void Enablei(Feature target, u32 index)
 
 #if GL_VERSION_VERIFY(0x320, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_32, GLESVER_32)
-STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level)
+STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTexture)
@@ -15475,14 +15476,14 @@ STATICINLINE void FBTexture(FramebufferT target, GLenum attachment, glhnd const&
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTexture(to_enum(target), attachment, C_OCAST<u32>(texture), level);
+    glFramebufferTexture(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
+STATICINLINE libc_types::u32 GetDebugMessageLog(libc_types::u32 count, libc_types::i32 bufSize, GLenum * sources, GLenum * types, libc_types::u32 * ids, GLenum * severities, libc_types::i32 * lengths, GLchar * messageLog)
 {
 #ifndef NDEBUG
     if(!glGetDebugMessageLog)
@@ -15496,7 +15497,7 @@ STATICINLINE u32 GetDebugMessageLog(u32 count, i32 bufSize, GLenum * sources, GL
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetDebugMessageLog(count, bufSize, sources, types, ids, severities, lengths, messageLog);
+    return (libc_types::u32)glGetDebugMessageLog(count, bufSize, sources, types, ids, severities, lengths, messageLog);
 }
 #endif
 
@@ -15514,14 +15515,14 @@ STATICINLINE GLenum GetGraphicsResetStatus()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetGraphicsResetStatus();
+    return (GLenum)glGetGraphicsResetStatus();
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 * length, GLchar * label)
+STATICINLINE void GetObjectLabel(GLenum identifier, libc_types::u32 name, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * label)
 {
 #ifndef NDEBUG
     if(!glGetObjectLabel)
@@ -15539,7 +15540,7 @@ STATICINLINE void GetObjectLabel(GLenum identifier, u32 name, i32 bufSize, i32 *
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length, GLchar * label)
+STATICINLINE void GetObjectPtrLabel(const void * ptr, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * label)
 {
 #ifndef NDEBUG
     if(!glGetObjectPtrLabel)
@@ -15557,7 +15558,7 @@ STATICINLINE void GetObjectPtrLabel(const void * ptr, i32 bufSize, i32 * length,
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32 * params)
+STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameterIiv)
@@ -15565,14 +15566,14 @@ STATICINLINE void SamplerGetParameterIiv(glhnd const& sampler, GLenum pname, i32
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameterIiv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameterIiv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u32 * params)
+STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetSamplerParameterIuiv)
@@ -15580,14 +15581,14 @@ STATICINLINE void SamplerGetParameterIuiv(glhnd const& sampler, GLenum pname, u3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetSamplerParameterIuiv(C_OCAST<u32>(sampler), pname, params);
+    glGetSamplerParameterIuiv(C_OCAST<libc_types::u32>(sampler), pname, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexGetParameterIiv(TexComp::tex_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void TexGetParameterIiv(TexComp::tex_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameterIiv)
@@ -15602,7 +15603,7 @@ STATICINLINE void TexGetParameterIiv(TexComp::tex_flag const& target, GLenum pna
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pname, u32 * params)
+STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetTexParameterIuiv)
@@ -15617,7 +15618,7 @@ STATICINLINE void TexGetParameterIuiv(TexComp::tex_flag const& target, GLenum pn
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, scalar * params)
+STATICINLINE void UnifGetnfv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformfv)
@@ -15628,14 +15629,14 @@ STATICINLINE void UnifGetnfv(glhnd const& program, i32 location, i32 bufSize, sc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformfv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformfv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i32 * params)
+STATICINLINE void UnifGetniv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformiv)
@@ -15646,14 +15647,14 @@ STATICINLINE void UnifGetniv(glhnd const& program, i32 location, i32 bufSize, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformiv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformiv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u32 * params)
+STATICINLINE void UnifGetnuiv(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformuiv)
@@ -15664,14 +15665,14 @@ STATICINLINE void UnifGetnuiv(glhnd const& program, i32 location, i32 bufSize, u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformuiv(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformuiv(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE u8 IsEnabledi(Feature target, u32 index)
+STATICINLINE libc_types::u8 IsEnabledi(Feature target, libc_types::u32 index)
 {
 #ifndef NDEBUG
     if(!glIsEnabledi)
@@ -15679,14 +15680,14 @@ STATICINLINE u8 IsEnabledi(Feature target, u32 index)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsEnabledi(to_enum(target), index);
+    return (libc_types::u8)glIsEnabledi(to_enum(target), index);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void MinSampleShading(scalar value)
+STATICINLINE void MinSampleShading(libc_types::f32 value)
 {
 #ifndef NDEBUG
     if(!glMinSampleShading)
@@ -15701,7 +15702,7 @@ STATICINLINE void MinSampleShading(scalar value)
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLchar * label)
+STATICINLINE void ObjectLabel(GLenum identifier, libc_types::u32 name, libc_types::i32 length, const GLchar * label)
 {
 #ifndef NDEBUG
     if(!glObjectLabel)
@@ -15719,7 +15720,7 @@ STATICINLINE void ObjectLabel(GLenum identifier, u32 name, i32 length, const GLc
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * label)
+STATICINLINE void ObjectPtrLabel(const void * ptr, libc_types::i32 length, const GLchar * label)
 {
 #ifndef NDEBUG
     if(!glObjectPtrLabel)
@@ -15737,7 +15738,7 @@ STATICINLINE void ObjectPtrLabel(const void * ptr, i32 length, const GLchar * la
 
 #if GL_VERSION_VERIFY(0x400, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_40, GLESVER_32)
-STATICINLINE void PatchParameteri(PatchProperty pname, i32 value)
+STATICINLINE void PatchParameteri(PatchProperty pname, libc_types::i32 value)
 {
 #ifndef NDEBUG
     if(!glPatchParameteri)
@@ -15770,7 +15771,7 @@ STATICINLINE void PopDebugGroup()
 
 #if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x320)
 GL_VERSION_REQ_ES(GLESVER_32)
-STATICINLINE void PrimitiveBoundingBox(scalar minX, scalar minY, scalar minZ, scalar minW, scalar maxX, scalar maxY, scalar maxZ, scalar maxW)
+STATICINLINE void PrimitiveBoundingBox(libc_types::f32 minX, libc_types::f32 minY, libc_types::f32 minZ, libc_types::f32 minW, libc_types::f32 maxX, libc_types::f32 maxY, libc_types::f32 maxZ, libc_types::f32 maxW)
 {
 #ifndef NDEBUG
     if(!glPrimitiveBoundingBox)
@@ -15788,7 +15789,7 @@ STATICINLINE void PrimitiveBoundingBox(scalar minX, scalar minY, scalar minZ, sc
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar * message)
+STATICINLINE void PushDebugGroup(GLenum source, glhnd const& id, libc_types::i32 length, const GLchar * message)
 {
 #ifndef NDEBUG
     if(!glPushDebugGroup)
@@ -15799,14 +15800,14 @@ STATICINLINE void PushDebugGroup(GLenum source, u32 id, i32 length, const GLchar
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glPushDebugGroup(source, id, length, message);
+    glPushDebugGroup(source, C_OCAST<libc_types::u32>(id), length, message);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x450, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_45, GLESVER_32)
-STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
+STATICINLINE void ReadnPixels(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * data)
 {
 #ifndef NDEBUG
     if(!glReadnPixels)
@@ -15820,14 +15821,14 @@ STATICINLINE void ReadnPixels(i32 x, i32 y, Size const& size, PixCmp format, Bit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glReadnPixels(x, y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), bufSize, data);
+    glReadnPixels(x[0], x[1], width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, data);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const i32 * param)
+STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const libc_types::i32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterIiv)
@@ -15835,14 +15836,14 @@ STATICINLINE void SamplerParameterIiv(glhnd const& sampler, GLenum pname, const 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterIiv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterIiv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_33, GLESVER_32)
-STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const u32 * param)
+STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const libc_types::u32 * param)
 {
 #ifndef NDEBUG
     if(!glSamplerParameterIuiv)
@@ -15850,14 +15851,14 @@ STATICINLINE void SamplerParameterIuiv(glhnd const& sampler, GLenum pname, const
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSamplerParameterIuiv(C_OCAST<u32>(sampler), pname, param);
+    glSamplerParameterIuiv(C_OCAST<libc_types::u32>(sampler), pname, param);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x310, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_31, GLESVER_32)
-STATICINLINE void TexBuffer(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer)
+STATICINLINE void TexBuffer(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glTexBuffer)
@@ -15868,14 +15869,14 @@ STATICINLINE void TexBuffer(TexComp::tex_flag const& target, PixFmt internalform
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexBuffer(texture_to_enum(target), to_enum(internalformat), C_OCAST<u32>(buffer));
+    glTexBuffer(texture_to_enum(target), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer, ptroff offset, ptroff size)
+STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, glhnd const& buffer, libc_types::ptroff offset, libc_types::ptroff size)
 {
 #ifndef NDEBUG
     if(!glTexBufferRange)
@@ -15883,14 +15884,14 @@ STATICINLINE void TexBufferRange(TexComp::tex_flag const& target, PixFmt interna
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexBufferRange(texture_to_enum(target), to_enum(internalformat), C_OCAST<u32>(buffer), offset, size);
+    glTexBufferRange(texture_to_enum(target), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer), offset, size);
 }
 #endif
 
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexParameterIiv(TexComp::tex_flag const& target, GLenum pname, const i32 * params)
+STATICINLINE void TexParameterIiv(TexComp::tex_flag const& target, GLenum pname, const libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameterIiv)
@@ -15905,7 +15906,7 @@ STATICINLINE void TexParameterIiv(TexComp::tex_flag const& target, GLenum pname,
 
 #if GL_VERSION_VERIFY(0x300, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_30, GLESVER_32)
-STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname, const u32 * params)
+STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname, const libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glTexParameterIuiv)
@@ -15920,7 +15921,7 @@ STATICINLINE void TexParameterIuiv(TexComp::tex_flag const& target, GLenum pname
 
 #if GL_VERSION_VERIFY(0x430, 0x320)
 GL_VERSION_REQ_COMBO(GLVER_43, GLESVER_32)
-STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 samples, PixFmt internalformat, Size3 const& size, bool fixedsamplelocations)
+STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, libc_types::i32 samples, typing::pixels::PixFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::u8 fixedsamplelocations)
 {
 #ifndef NDEBUG
     if(!glTexStorage3DMultisample)
@@ -15928,20 +15929,21 @@ STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, i32 s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexStorage3DMultisample(texture_to_enum(target), samples, to_enum(internalformat), size.width, size.height, size.depth, fixedsamplelocations ? GL_TRUE : GL_FALSE);
+    glTexStorage3DMultisample(texture_to_enum(target), samples, to_enum(internalformat), width.width, width.height, width.depth, fixedsamplelocations);
 }
 #endif
 
 };
-#endif
+
+namespace ext {
 #if defined(GL_ARB_ES3_2_compatibility) && GL_ARB_ES3_2_compatibility
 template<typename ReqVer>
-struct CGL_ARB_ES3_2_compatibility
+struct ARB_ES3_2_compatibility
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void PrimitiveBoundingBoxARB(scalar minX, scalar minY, scalar minZ, scalar minW, scalar maxX, scalar maxY, scalar maxZ, scalar maxW)
+STATICINLINE void PrimitiveBoundingBoxARB(libc_types::f32 minX, libc_types::f32 minY, libc_types::f32 minZ, libc_types::f32 minW, libc_types::f32 maxX, libc_types::f32 maxY, libc_types::f32 maxZ, libc_types::f32 maxW)
 {
 #ifndef NDEBUG
     if(!glPrimitiveBoundingBoxARB)
@@ -15958,12 +15960,12 @@ STATICINLINE void PrimitiveBoundingBoxARB(scalar minX, scalar minY, scalar minZ,
 
 #if defined(GL_ARB_bindless_texture) && GL_ARB_bindless_texture
 template<typename ReqVer>
-struct CGL_ARB_bindless_texture
+struct ARB_bindless_texture
 {
 
 #if 0
 /* No template check available */
-STATICINLINE u64 GetImageHandleARB(glhnd const& texture, i32 level, bool layered, i32 layer, GLenum format)
+STATICINLINE libc_types::u64 GetImageHandleARB(glhnd const& texture, libc_types::i32 level, libc_types::u8 layered, libc_types::i32 layer, GLenum format)
 {
 #ifndef NDEBUG
     if(!glGetImageHandleARB)
@@ -15971,14 +15973,14 @@ STATICINLINE u64 GetImageHandleARB(glhnd const& texture, i32 level, bool layered
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetImageHandleARB(C_OCAST<u32>(texture), level, layered ? GL_TRUE : GL_FALSE, layer, format);
+    return (libc_types::u64)glGetImageHandleARB(C_OCAST<libc_types::u32>(texture), level, layered, layer, format);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE u64 TexGetHandleARB(glhnd const& texture)
+STATICINLINE libc_types::u64 TexGetHandleARB(glhnd const& texture)
 {
 #ifndef NDEBUG
     if(!glGetTextureHandleARB)
@@ -15986,14 +15988,14 @@ STATICINLINE u64 TexGetHandleARB(glhnd const& texture)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetTextureHandleARB(C_OCAST<u32>(texture));
+    return (libc_types::u64)glGetTextureHandleARB(C_OCAST<libc_types::u32>(texture));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE u64 TexGetSamplerHandleARB(glhnd const& texture, glhnd const& sampler)
+STATICINLINE libc_types::u64 TexGetSamplerHandleARB(glhnd const& texture, glhnd const& sampler)
 {
 #ifndef NDEBUG
     if(!glGetTextureSamplerHandleARB)
@@ -16001,14 +16003,14 @@ STATICINLINE u64 TexGetSamplerHandleARB(glhnd const& texture, glhnd const& sampl
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetTextureSamplerHandleARB(C_OCAST<u32>(texture), C_OCAST<u32>(sampler));
+    return (libc_types::u64)glGetTextureSamplerHandleARB(C_OCAST<libc_types::u32>(texture), C_OCAST<libc_types::u32>(sampler));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void VAOGetLui64vARB(u32 index, GLenum pname, u64 * params)
+STATICINLINE void VAOGetLui64vARB(libc_types::u32 index, GLenum pname, libc_types::u64 * params)
 {
 #ifndef NDEBUG
     if(!glGetVertexAttribLui64vARB)
@@ -16023,7 +16025,7 @@ STATICINLINE void VAOGetLui64vARB(u32 index, GLenum pname, u64 * params)
 
 #if 0
 /* No template check available */
-STATICINLINE u8 IsImageHandleResidentARB(u64 handle)
+STATICINLINE libc_types::u8 IsImageHandleResidentARB(libc_types::u64 handle)
 {
 #ifndef NDEBUG
     if(!glIsImageHandleResidentARB)
@@ -16031,14 +16033,14 @@ STATICINLINE u8 IsImageHandleResidentARB(u64 handle)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsImageHandleResidentARB(handle);
+    return (libc_types::u8)glIsImageHandleResidentARB(handle);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE u8 IsTextureHandleResidentARB(u64 handle)
+STATICINLINE libc_types::u8 IsTextureHandleResidentARB(libc_types::u64 handle)
 {
 #ifndef NDEBUG
     if(!glIsTextureHandleResidentARB)
@@ -16046,14 +16048,14 @@ STATICINLINE u8 IsTextureHandleResidentARB(u64 handle)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsTextureHandleResidentARB(handle);
+    return (libc_types::u8)glIsTextureHandleResidentARB(handle);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void MakeImageHandleNonResidentARB(u64 handle)
+STATICINLINE void MakeImageHandleNonResidentARB(libc_types::u64 handle)
 {
 #ifndef NDEBUG
     if(!glMakeImageHandleNonResidentARB)
@@ -16068,7 +16070,7 @@ STATICINLINE void MakeImageHandleNonResidentARB(u64 handle)
 
 #if 0
 /* No template check available */
-STATICINLINE void MakeImageHandleResidentARB(u64 handle, RSCA access)
+STATICINLINE void MakeImageHandleResidentARB(libc_types::u64 handle, semantic::RSCA access)
 {
 #ifndef NDEBUG
     if(!glMakeImageHandleResidentARB)
@@ -16083,7 +16085,7 @@ STATICINLINE void MakeImageHandleResidentARB(u64 handle, RSCA access)
 
 #if 0
 /* No template check available */
-STATICINLINE void TexMakeHandleNonResidentARB(u64 handle)
+STATICINLINE void TexMakeHandleNonResidentARB(libc_types::u64 handle)
 {
 #ifndef NDEBUG
     if(!glMakeTextureHandleNonResidentARB)
@@ -16098,7 +16100,7 @@ STATICINLINE void TexMakeHandleNonResidentARB(u64 handle)
 
 #if 0
 /* No template check available */
-STATICINLINE void TexMakeHandleResidentARB(u64 handle)
+STATICINLINE void TexMakeHandleResidentARB(libc_types::u64 handle)
 {
 #ifndef NDEBUG
     if(!glMakeTextureHandleResidentARB)
@@ -16113,7 +16115,7 @@ STATICINLINE void TexMakeHandleResidentARB(u64 handle)
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifHandleui64vARB(glhnd const& program, i32 location, Span<const u64> const& values)
+STATICINLINE void UnifHandleui64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u64> const& values)
 {
 #ifndef NDEBUG
     if(!glProgramUniformHandleui64vARB)
@@ -16121,14 +16123,14 @@ STATICINLINE void UnifHandleui64vARB(glhnd const& program, i32 location, Span<co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformHandleui64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(values.elements), C_RCAST<const u64*>(values.data));
+    glProgramUniformHandleui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(values.elements), C_RCAST<const libc_types::u64*>(values.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifHandleui64vARB(i32 location, Span<const u64> const& value)
+STATICINLINE void UnifHandleui64vARB(libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformHandleui64vARB)
@@ -16136,14 +16138,14 @@ STATICINLINE void UnifHandleui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformHandleui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glUniformHandleui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void VAOL1ui64ARB(u32 index, u64 x)
+STATICINLINE void VAOL1ui64ARB(libc_types::u32 index, libc_types::u64 x)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL1ui64ARB)
@@ -16158,7 +16160,7 @@ STATICINLINE void VAOL1ui64ARB(u32 index, u64 x)
 
 #if 0
 /* No template check available */
-STATICINLINE void VAOL1ui64vARB(u32 index, const u64 * v)
+STATICINLINE void VAOL1ui64vARB(libc_types::u32 index, const libc_types::u64 * v)
 {
 #ifndef NDEBUG
     if(!glVertexAttribL1ui64vARB)
@@ -16175,12 +16177,12 @@ STATICINLINE void VAOL1ui64vARB(u32 index, const u64 * v)
 
 #if defined(GL_ARB_compute_variable_group_size) && GL_ARB_compute_variable_group_size
 template<typename ReqVer>
-struct CGL_ARB_compute_variable_group_size
+struct ARB_compute_variable_group_size
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void DispatchComputeGroupSizeARB(u32 num_groups_x, u32 num_groups_y, u32 num_groups_z, u32 group_size_x, u32 group_size_y, u32 group_size_z)
+STATICINLINE void DispatchComputeGroupSizeARB(libc_types::u32 num_groups_x, libc_types::u32 num_groups_y, libc_types::u32 num_groups_z, libc_types::u32 group_size_x, libc_types::u32 group_size_y, libc_types::u32 group_size_z)
 {
 #ifndef NDEBUG
     if(!glDispatchComputeGroupSizeARB)
@@ -16197,7 +16199,7 @@ STATICINLINE void DispatchComputeGroupSizeARB(u32 num_groups_x, u32 num_groups_y
 
 #if defined(GL_ARB_debug_output) && GL_ARB_debug_output
 template<typename ReqVer>
-struct CGL_ARB_debug_output
+struct ARB_debug_output
 {
 
 #if 0
@@ -16217,7 +16219,7 @@ STATICINLINE void DebugMessageCallbackARB(GLDEBUGPROCARB callback, const void * 
 
 #if 0
 /* No template check available */
-STATICINLINE void DebugMessageControlARB(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
+STATICINLINE void DebugMessageControlARB(GLenum source, GLenum type, GLenum severity, semantic::Span<const libc_types::u32>&& ids, libc_types::u8 enabled)
 {
 #ifndef NDEBUG
     if(!glDebugMessageControlARB)
@@ -16225,14 +16227,14 @@ STATICINLINE void DebugMessageControlARB(GLenum source, GLenum type, GLenum seve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControlARB(source, type, severity, count, ids, enabled ? GL_TRUE : GL_FALSE);
+    glDebugMessageControlARB(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void DebugMessageInsertARB(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
+STATICINLINE void DebugMessageInsertARB(GLenum source, GLenum type, glhnd const& id, GLenum severity, libc_types::i32 length, const GLchar * buf)
 {
 #ifndef NDEBUG
     if(!glDebugMessageInsertARB)
@@ -16240,14 +16242,14 @@ STATICINLINE void DebugMessageInsertARB(GLenum source, GLenum type, u32 id, GLen
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageInsertARB(source, type, id, severity, length, buf);
+    glDebugMessageInsertARB(source, type, C_OCAST<libc_types::u32>(id), severity, length, buf);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE u32 GetDebugMessageLogARB(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
+STATICINLINE libc_types::u32 GetDebugMessageLogARB(libc_types::u32 count, libc_types::i32 bufSize, GLenum * sources, GLenum * types, libc_types::u32 * ids, GLenum * severities, libc_types::i32 * lengths, GLchar * messageLog)
 {
 #ifndef NDEBUG
     if(!glGetDebugMessageLogARB)
@@ -16255,7 +16257,7 @@ STATICINLINE u32 GetDebugMessageLogARB(u32 count, i32 bufSize, GLenum * sources,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetDebugMessageLogARB(count, bufSize, sources, types, ids, severities, lengths, messageLog);
+    return (libc_types::u32)glGetDebugMessageLogARB(count, bufSize, sources, types, ids, severities, lengths, messageLog);
 }
 #endif
 
@@ -16264,12 +16266,12 @@ STATICINLINE u32 GetDebugMessageLogARB(u32 count, i32 bufSize, GLenum * sources,
 
 #if defined(GL_ARB_draw_buffers) && GL_ARB_draw_buffers
 template<typename ReqVer>
-struct CGL_ARB_draw_buffers
+struct ARB_draw_buffers
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void DrawBuffersARB(i32 n, const GLenum * bufs)
+STATICINLINE void DrawBuffersARB(libc_types::i32 n, const GLenum * bufs)
 {
 #ifndef NDEBUG
     if(!glDrawBuffersARB)
@@ -16286,12 +16288,12 @@ STATICINLINE void DrawBuffersARB(i32 n, const GLenum * bufs)
 
 #if defined(GL_ARB_draw_buffers_blend) && GL_ARB_draw_buffers_blend
 template<typename ReqVer>
-struct CGL_ARB_draw_buffers_blend
+struct ARB_draw_buffers_blend
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void BlendEquationSeparateiARB(u32 buf, GLenum modeRGB, GLenum modeAlpha)
+STATICINLINE void BlendEquationSeparateiARB(libc_types::u32 buf, GLenum modeRGB, GLenum modeAlpha)
 {
 #ifndef NDEBUG
     if(!glBlendEquationSeparateiARB)
@@ -16306,7 +16308,7 @@ STATICINLINE void BlendEquationSeparateiARB(u32 buf, GLenum modeRGB, GLenum mode
 
 #if 0
 /* No template check available */
-STATICINLINE void BlendEquationiARB(u32 buf, GLenum mode)
+STATICINLINE void BlendEquationiARB(libc_types::u32 buf, GLenum mode)
 {
 #ifndef NDEBUG
     if(!glBlendEquationiARB)
@@ -16321,7 +16323,7 @@ STATICINLINE void BlendEquationiARB(u32 buf, GLenum mode)
 
 #if 0
 /* No template check available */
-STATICINLINE void BlendFuncSeparateiARB(u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+STATICINLINE void BlendFuncSeparateiARB(libc_types::u32 buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
 #ifndef NDEBUG
     if(!glBlendFuncSeparateiARB)
@@ -16336,7 +16338,7 @@ STATICINLINE void BlendFuncSeparateiARB(u32 buf, GLenum srcRGB, GLenum dstRGB, G
 
 #if 0
 /* No template check available */
-STATICINLINE void BlendFunciARB(u32 buf, GLenum src, GLenum dst)
+STATICINLINE void BlendFunciARB(libc_types::u32 buf, GLenum src, GLenum dst)
 {
 #ifndef NDEBUG
     if(!glBlendFunciARB)
@@ -16353,12 +16355,12 @@ STATICINLINE void BlendFunciARB(u32 buf, GLenum src, GLenum dst)
 
 #if defined(GL_ARB_draw_instanced) && GL_ARB_draw_instanced
 template<typename ReqVer>
-struct CGL_ARB_draw_instanced
+struct ARB_draw_instanced
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void DrawArraysInstancedARB(DrwMd const& mode, i32 first, i32 count, i32 primcount)
+STATICINLINE void DrawArraysInstancedARB(DrwMd const& mode, libc_types::i32 first, libc_types::i32 count, libc_types::i32 primcount)
 {
 #ifndef NDEBUG
     if(!glDrawArraysInstancedARB)
@@ -16373,7 +16375,7 @@ STATICINLINE void DrawArraysInstancedARB(DrwMd const& mode, i32 first, i32 count
 
 #if 0
 /* No template check available */
-STATICINLINE void DrawElementsInstancedARB(DrwMd const& mode, i32 count, TypeEnum type, uintptr indices, i32 primcount)
+STATICINLINE void DrawElementsInstancedARB(DrwMd const& mode, libc_types::i32 count, TypeEnum type, libc_types::uintptr indices, libc_types::i32 primcount)
 {
 #ifndef NDEBUG
     if(!glDrawElementsInstancedARB)
@@ -16390,12 +16392,12 @@ STATICINLINE void DrawElementsInstancedARB(DrwMd const& mode, i32 count, TypeEnu
 
 #if defined(GL_ARB_geometry_shader4) && GL_ARB_geometry_shader4
 template<typename ReqVer>
-struct CGL_ARB_geometry_shader4
+struct ARB_geometry_shader4
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void FBTextureARB(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level)
+STATICINLINE void FBTextureARB(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureARB)
@@ -16403,14 +16405,14 @@ STATICINLINE void FBTextureARB(FramebufferT target, GLenum attachment, glhnd con
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTextureARB(to_enum(target), attachment, C_OCAST<u32>(texture), level);
+    glFramebufferTextureARB(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void FBTextureFaceARB(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, TexComp::tex_flag const& face)
+STATICINLINE void FBTextureFaceARB(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level, TexComp::tex_flag const& face)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureFaceARB)
@@ -16418,14 +16420,14 @@ STATICINLINE void FBTextureFaceARB(FramebufferT target, GLenum attachment, glhnd
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTextureFaceARB(to_enum(target), attachment, C_OCAST<u32>(texture), level, texture_to_enum(face));
+    glFramebufferTextureFaceARB(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level, texture_to_enum(face));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void FBTextureLayerARB(FramebufferT target, GLenum attachment, glhnd const& texture, i32 level, i32 layer)
+STATICINLINE void FBTextureLayerARB(FramebufferT target, GLenum attachment, glhnd const& texture, libc_types::i32 level, libc_types::i32 layer)
 {
 #ifndef NDEBUG
     if(!glFramebufferTextureLayerARB)
@@ -16433,14 +16435,14 @@ STATICINLINE void FBTextureLayerARB(FramebufferT target, GLenum attachment, glhn
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glFramebufferTextureLayerARB(to_enum(target), attachment, C_OCAST<u32>(texture), level, layer);
+    glFramebufferTextureLayerARB(to_enum(target), attachment, C_OCAST<libc_types::u32>(texture), level, layer);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void ProgramParameteriARB(glhnd const& program, GLenum pname, i32 value)
+STATICINLINE void ProgramParameteriARB(glhnd const& program, GLenum pname, libc_types::i32 value)
 {
 #ifndef NDEBUG
     if(!glProgramParameteriARB)
@@ -16448,7 +16450,7 @@ STATICINLINE void ProgramParameteriARB(glhnd const& program, GLenum pname, i32 v
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramParameteriARB(C_OCAST<u32>(program), pname, value);
+    glProgramParameteriARB(C_OCAST<libc_types::u32>(program), pname, value);
 }
 #endif
 
@@ -16457,12 +16459,12 @@ STATICINLINE void ProgramParameteriARB(glhnd const& program, GLenum pname, i32 v
 
 #if defined(GL_ARB_gl_spirv) && GL_ARB_gl_spirv
 template<typename ReqVer>
-struct CGL_ARB_gl_spirv
+struct ARB_gl_spirv
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void ShaderSpecializeARB(glhnd const& shader, const GLchar * pEntryPoint, u32 numSpecializationConstants, const u32 * pConstantIndex, const u32 * pConstantValue)
+STATICINLINE void ShaderSpecializeARB(glhnd const& shader, const GLchar * pEntryPoint, libc_types::u32 numSpecializationConstants, const libc_types::u32 * pConstantIndex, const libc_types::u32 * pConstantValue)
 {
 #ifndef NDEBUG
     if(!glSpecializeShaderARB)
@@ -16470,7 +16472,7 @@ STATICINLINE void ShaderSpecializeARB(glhnd const& shader, const GLchar * pEntry
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSpecializeShaderARB(C_OCAST<u32>(shader), pEntryPoint, numSpecializationConstants, pConstantIndex, pConstantValue);
+    glSpecializeShaderARB(C_OCAST<libc_types::u32>(shader), pEntryPoint, numSpecializationConstants, pConstantIndex, pConstantValue);
 }
 #endif
 
@@ -16479,12 +16481,12 @@ STATICINLINE void ShaderSpecializeARB(glhnd const& shader, const GLchar * pEntry
 
 #if defined(GL_ARB_gpu_shader_int64) && GL_ARB_gpu_shader_int64
 template<typename ReqVer>
-struct CGL_ARB_gpu_shader_int64
+struct ARB_gpu_shader_int64
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGeti64vARB(glhnd const& program, i32 location, i64 * params)
+STATICINLINE void UnifGeti64vARB(glhnd const& program, libc_types::i32 location, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformi64vARB)
@@ -16492,14 +16494,14 @@ STATICINLINE void UnifGeti64vARB(glhnd const& program, i32 location, i64 * param
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformi64vARB(C_OCAST<u32>(program), location, params);
+    glGetUniformi64vARB(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetui64vARB(glhnd const& program, i32 location, u64 * params)
+STATICINLINE void UnifGetui64vARB(glhnd const& program, libc_types::i32 location, libc_types::u64 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformui64vARB)
@@ -16507,14 +16509,14 @@ STATICINLINE void UnifGetui64vARB(glhnd const& program, i32 location, u64 * para
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetUniformui64vARB(C_OCAST<u32>(program), location, params);
+    glGetUniformui64vARB(C_OCAST<libc_types::u32>(program), location, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetni64vARB(glhnd const& program, i32 location, i32 bufSize, i64 * params)
+STATICINLINE void UnifGetni64vARB(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::i64 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformi64vARB)
@@ -16522,14 +16524,14 @@ STATICINLINE void UnifGetni64vARB(glhnd const& program, i32 location, i32 bufSiz
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformi64vARB(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformi64vARB(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnui64vARB(glhnd const& program, i32 location, i32 bufSize, u64 * params)
+STATICINLINE void UnifGetnui64vARB(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::u64 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformui64vARB)
@@ -16537,14 +16539,14 @@ STATICINLINE void UnifGetnui64vARB(glhnd const& program, i32 location, i32 bufSi
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformui64vARB(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformui64vARB(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
+STATICINLINE void Unif1i64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1i64vARB)
@@ -16552,14 +16554,14 @@ STATICINLINE void Unif1i64vARB(glhnd const& program, i32 location, Span<const i6
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1i64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glProgramUniform1i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
+STATICINLINE void Unif1ui64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform1ui64vARB)
@@ -16567,14 +16569,14 @@ STATICINLINE void Unif1ui64vARB(glhnd const& program, i32 location, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1ui64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glProgramUniform1ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
+STATICINLINE void Unif2i64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2i64vARB)
@@ -16582,14 +16584,14 @@ STATICINLINE void Unif2i64vARB(glhnd const& program, i32 location, Span<const i6
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2i64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glProgramUniform2i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
+STATICINLINE void Unif2ui64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform2ui64vARB)
@@ -16597,14 +16599,14 @@ STATICINLINE void Unif2ui64vARB(glhnd const& program, i32 location, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2ui64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glProgramUniform2ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
+STATICINLINE void Unif3i64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3i64vARB)
@@ -16612,14 +16614,14 @@ STATICINLINE void Unif3i64vARB(glhnd const& program, i32 location, Span<const i6
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3i64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glProgramUniform3i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
+STATICINLINE void Unif3ui64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform3ui64vARB)
@@ -16627,14 +16629,14 @@ STATICINLINE void Unif3ui64vARB(glhnd const& program, i32 location, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3ui64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glProgramUniform3ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4i64vARB(glhnd const& program, i32 location, Span<const i64> const& value)
+STATICINLINE void Unif4i64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4i64vARB)
@@ -16642,14 +16644,14 @@ STATICINLINE void Unif4i64vARB(glhnd const& program, i32 location, Span<const i6
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4i64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glProgramUniform4i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4ui64vARB(glhnd const& program, i32 location, Span<const u64> const& value)
+STATICINLINE void Unif4ui64vARB(glhnd const& program, libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glProgramUniform4ui64vARB)
@@ -16657,14 +16659,14 @@ STATICINLINE void Unif4ui64vARB(glhnd const& program, i32 location, Span<const u
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4ui64vARB(C_OCAST<u32>(program), location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glProgramUniform4ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1i64vARB(i32 location, Span<const i64> const& value)
+STATICINLINE void Unif1i64vARB(libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1i64vARB)
@@ -16672,14 +16674,14 @@ STATICINLINE void Unif1i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glUniform1i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1ui64vARB(i32 location, Span<const u64> const& value)
+STATICINLINE void Unif1ui64vARB(libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1ui64vARB)
@@ -16687,14 +16689,14 @@ STATICINLINE void Unif1ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glUniform1ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2i64vARB(i32 location, Span<const i64> const& value)
+STATICINLINE void Unif2i64vARB(libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2i64vARB)
@@ -16702,14 +16704,14 @@ STATICINLINE void Unif2i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glUniform2i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2ui64vARB(i32 location, Span<const u64> const& value)
+STATICINLINE void Unif2ui64vARB(libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2ui64vARB)
@@ -16717,14 +16719,14 @@ STATICINLINE void Unif2ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glUniform2ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3i64vARB(i32 location, Span<const i64> const& value)
+STATICINLINE void Unif3i64vARB(libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3i64vARB)
@@ -16732,14 +16734,14 @@ STATICINLINE void Unif3i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glUniform3i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3ui64vARB(i32 location, Span<const u64> const& value)
+STATICINLINE void Unif3ui64vARB(libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3ui64vARB)
@@ -16747,14 +16749,14 @@ STATICINLINE void Unif3ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glUniform3ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4i64vARB(i32 location, Span<const i64> const& value)
+STATICINLINE void Unif4i64vARB(libc_types::i32 location, semantic::Span<const libc_types::i64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4i64vARB)
@@ -16762,14 +16764,14 @@ STATICINLINE void Unif4i64vARB(i32 location, Span<const i64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4i64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i64*>(value.data));
+    glUniform4i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4ui64vARB(i32 location, Span<const u64> const& value)
+STATICINLINE void Unif4ui64vARB(libc_types::i32 location, semantic::Span<const libc_types::u64> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4ui64vARB)
@@ -16777,7 +16779,7 @@ STATICINLINE void Unif4ui64vARB(i32 location, Span<const u64> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ui64vARB(location, C_FCAST<i32>(value.elements), C_RCAST<const u64*>(value.data));
+    glUniform4ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
 }
 #endif
 
@@ -16786,12 +16788,12 @@ STATICINLINE void Unif4ui64vARB(i32 location, Span<const u64> const& value)
 
 #if defined(GL_ARB_indirect_parameters) && GL_ARB_indirect_parameters
 template<typename ReqVer>
-struct CGL_ARB_indirect_parameters
+struct ARB_indirect_parameters
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void MultiDrawArraysIndirectCountARB(DrwMd const& mode, uintptr indirect, ptroff drawcount, i32 maxdrawcount, i32 stride)
+STATICINLINE void MultiDrawArraysIndirectCountARB(DrwMd const& mode, libc_types::uintptr indirect, libc_types::ptroff drawcount, libc_types::i32 maxdrawcount, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glMultiDrawArraysIndirectCountARB)
@@ -16806,7 +16808,7 @@ STATICINLINE void MultiDrawArraysIndirectCountARB(DrwMd const& mode, uintptr ind
 
 #if 0
 /* No template check available */
-STATICINLINE void MultiDrawElementsIndirectCountARB(DrwMd const& mode, TypeEnum type, uintptr indirect, ptroff drawcount, i32 maxdrawcount, i32 stride)
+STATICINLINE void MultiDrawElementsIndirectCountARB(DrwMd const& mode, TypeEnum type, libc_types::uintptr indirect, libc_types::ptroff drawcount, libc_types::i32 maxdrawcount, libc_types::i32 stride)
 {
 #ifndef NDEBUG
     if(!glMultiDrawElementsIndirectCountARB)
@@ -16823,12 +16825,12 @@ STATICINLINE void MultiDrawElementsIndirectCountARB(DrwMd const& mode, TypeEnum 
 
 #if defined(GL_ARB_instanced_arrays) && GL_ARB_instanced_arrays
 template<typename ReqVer>
-struct CGL_ARB_instanced_arrays
+struct ARB_instanced_arrays
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void VAODivisorARB(u32 index, u32 divisor)
+STATICINLINE void VAODivisorARB(libc_types::u32 index, libc_types::u32 divisor)
 {
 #ifndef NDEBUG
     if(!glVertexAttribDivisorARB)
@@ -16845,12 +16847,12 @@ STATICINLINE void VAODivisorARB(u32 index, u32 divisor)
 
 #if defined(GL_ARB_multisample) && GL_ARB_multisample
 template<typename ReqVer>
-struct CGL_ARB_multisample
+struct ARB_multisample
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void SampleCoverageARB(scalar value, bool invert)
+STATICINLINE void SampleCoverageARB(libc_types::f32 value, libc_types::u8 invert)
 {
 #ifndef NDEBUG
     if(!glSampleCoverageARB)
@@ -16858,7 +16860,7 @@ STATICINLINE void SampleCoverageARB(scalar value, bool invert)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glSampleCoverageARB(value, invert ? GL_TRUE : GL_FALSE);
+    glSampleCoverageARB(value, invert);
 }
 #endif
 
@@ -16867,12 +16869,12 @@ STATICINLINE void SampleCoverageARB(scalar value, bool invert)
 
 #if defined(GL_ARB_occlusion_query) && GL_ARB_occlusion_query
 template<typename ReqVer>
-struct CGL_ARB_occlusion_query
+struct ARB_occlusion_query
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void QueryBeginARB(GLenum target, u32 id)
+STATICINLINE void QueryBeginARB(GLenum target, glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glBeginQueryARB)
@@ -16880,14 +16882,14 @@ STATICINLINE void QueryBeginARB(GLenum target, u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glBeginQueryARB(target, id);
+    glBeginQueryARB(target, C_OCAST<libc_types::u32>(id));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void QueryDeleteARB(i32 n, const u32 * ids)
+STATICINLINE void QueryDeleteARB(libc_types::i32 n, const libc_types::u32 * ids)
 {
 #ifndef NDEBUG
     if(!glDeleteQueriesARB)
@@ -16917,7 +16919,7 @@ STATICINLINE void QueryEndARB(QueryComp::query_flag const& target)
 
 #if 0
 /* No template check available */
-STATICINLINE void QueryGenARB(i32 n, u32 * ids)
+STATICINLINE void QueryGenARB(libc_types::i32 n, libc_types::u32 * ids)
 {
 #ifndef NDEBUG
     if(!glGenQueriesARB)
@@ -16932,7 +16934,7 @@ STATICINLINE void QueryGenARB(i32 n, u32 * ids)
 
 #if 0
 /* No template check available */
-STATICINLINE void QueryGetObjectivARB(u32 id, GLenum pname, i32 * params)
+STATICINLINE void QueryGetObjectivARB(glhnd const& id, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjectivARB)
@@ -16940,14 +16942,14 @@ STATICINLINE void QueryGetObjectivARB(u32 id, GLenum pname, i32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjectivARB(id, pname, params);
+    glGetQueryObjectivARB(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void QueryGetObjectuivARB(u32 id, GLenum pname, u32 * params)
+STATICINLINE void QueryGetObjectuivARB(glhnd const& id, GLenum pname, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryObjectuivARB)
@@ -16955,14 +16957,14 @@ STATICINLINE void QueryGetObjectuivARB(u32 id, GLenum pname, u32 * params)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetQueryObjectuivARB(id, pname, params);
+    glGetQueryObjectuivARB(C_OCAST<libc_types::u32>(id), pname, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void QueryGetivARB(QueryComp::query_flag const& target, GLenum pname, i32 * params)
+STATICINLINE void QueryGetivARB(QueryComp::query_flag const& target, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetQueryivARB)
@@ -16977,7 +16979,7 @@ STATICINLINE void QueryGetivARB(QueryComp::query_flag const& target, GLenum pnam
 
 #if 0
 /* No template check available */
-STATICINLINE u8 IsQueryARB(u32 id)
+STATICINLINE libc_types::u8 IsQueryARB(glhnd const& id)
 {
 #ifndef NDEBUG
     if(!glIsQueryARB)
@@ -16985,7 +16987,7 @@ STATICINLINE u8 IsQueryARB(u32 id)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsQueryARB(id);
+    return (libc_types::u8)glIsQueryARB(C_OCAST<libc_types::u32>(id));
 }
 #endif
 
@@ -16994,12 +16996,12 @@ STATICINLINE u8 IsQueryARB(u32 id)
 
 #if defined(GL_ARB_parallel_shader_compile) && GL_ARB_parallel_shader_compile
 template<typename ReqVer>
-struct CGL_ARB_parallel_shader_compile
+struct ARB_parallel_shader_compile
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void ShaderMaxCompilerThreadsARB(u32 count)
+STATICINLINE void ShaderMaxCompilerThreadsARB(libc_types::u32 count)
 {
 #ifndef NDEBUG
     if(!glMaxShaderCompilerThreadsARB)
@@ -17016,12 +17018,12 @@ STATICINLINE void ShaderMaxCompilerThreadsARB(u32 count)
 
 #if defined(GL_ARB_point_parameters) && GL_ARB_point_parameters
 template<typename ReqVer>
-struct CGL_ARB_point_parameters
+struct ARB_point_parameters
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void PointParameterfARB(GLenum pname, scalar param)
+STATICINLINE void PointParameterfARB(GLenum pname, libc_types::f32 param)
 {
 #ifndef NDEBUG
     if(!glPointParameterfARB)
@@ -17036,7 +17038,7 @@ STATICINLINE void PointParameterfARB(GLenum pname, scalar param)
 
 #if 0
 /* No template check available */
-STATICINLINE void PointParameterfvARB(GLenum pname, const scalar * params)
+STATICINLINE void PointParameterfvARB(GLenum pname, const libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glPointParameterfvARB)
@@ -17053,7 +17055,7 @@ STATICINLINE void PointParameterfvARB(GLenum pname, const scalar * params)
 
 #if defined(GL_ARB_robustness) && GL_ARB_robustness
 template<typename ReqVer>
-struct CGL_ARB_robustness
+struct ARB_robustness
 {
 
 #if 0
@@ -17066,14 +17068,14 @@ STATICINLINE GLenum GetGraphicsResetStatusARB()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetGraphicsResetStatusARB();
+    return (GLenum)glGetGraphicsResetStatusARB();
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnColorTableARB(GLenum target, PixCmp format, BitFmt type, i32 bufSize, void * table)
+STATICINLINE void GetnColorTableARB(GLenum target, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * table)
 {
 #ifndef NDEBUG
     if(!glGetnColorTableARB)
@@ -17081,14 +17083,14 @@ STATICINLINE void GetnColorTableARB(GLenum target, PixCmp format, BitFmt type, i
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnColorTableARB(target, to_enum(format, PixFmt::None), to_enum(type), bufSize, table);
+    glGetnColorTableARB(target, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, table);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void TexGetnCompressedImageARB(TexComp::tex_flag const& target, i32 lod, i32 bufSize, void * img)
+STATICINLINE void TexGetnCompressedImageARB(TexComp::tex_flag const& target, libc_types::i32 lod, libc_types::i32 bufSize, void * img)
 {
 #ifndef NDEBUG
     if(!glGetnCompressedTexImageARB)
@@ -17103,7 +17105,7 @@ STATICINLINE void TexGetnCompressedImageARB(TexComp::tex_flag const& target, i32
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnConvolutionFilterARB(GLenum target, PixCmp format, BitFmt type, i32 bufSize, void * image)
+STATICINLINE void GetnConvolutionFilterARB(GLenum target, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * image)
 {
 #ifndef NDEBUG
     if(!glGetnConvolutionFilterARB)
@@ -17111,14 +17113,14 @@ STATICINLINE void GetnConvolutionFilterARB(GLenum target, PixCmp format, BitFmt 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnConvolutionFilterARB(target, to_enum(format, PixFmt::None), to_enum(type), bufSize, image);
+    glGetnConvolutionFilterARB(target, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, image);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnHistogramARB(GLenum target, bool reset, PixCmp format, BitFmt type, i32 bufSize, void * values)
+STATICINLINE void GetnHistogramARB(GLenum target, libc_types::u8 reset, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * values)
 {
 #ifndef NDEBUG
     if(!glGetnHistogramARB)
@@ -17126,14 +17128,14 @@ STATICINLINE void GetnHistogramARB(GLenum target, bool reset, PixCmp format, Bit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnHistogramARB(target, reset ? GL_TRUE : GL_FALSE, to_enum(format, PixFmt::None), to_enum(type), bufSize, values);
+    glGetnHistogramARB(target, reset, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, values);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnMapdvARB(GLenum target, GLenum query, i32 bufSize, bigscalar * v)
+STATICINLINE void GetnMapdvARB(GLenum target, GLenum query, libc_types::i32 bufSize, libc_types::f64 * v)
 {
 #ifndef NDEBUG
     if(!glGetnMapdvARB)
@@ -17148,7 +17150,7 @@ STATICINLINE void GetnMapdvARB(GLenum target, GLenum query, i32 bufSize, bigscal
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnMapfvARB(GLenum target, GLenum query, i32 bufSize, scalar * v)
+STATICINLINE void GetnMapfvARB(GLenum target, GLenum query, libc_types::i32 bufSize, libc_types::f32 * v)
 {
 #ifndef NDEBUG
     if(!glGetnMapfvARB)
@@ -17163,7 +17165,7 @@ STATICINLINE void GetnMapfvARB(GLenum target, GLenum query, i32 bufSize, scalar 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnMapivARB(GLenum target, GLenum query, i32 bufSize, i32 * v)
+STATICINLINE void GetnMapivARB(GLenum target, GLenum query, libc_types::i32 bufSize, libc_types::i32 * v)
 {
 #ifndef NDEBUG
     if(!glGetnMapivARB)
@@ -17178,7 +17180,7 @@ STATICINLINE void GetnMapivARB(GLenum target, GLenum query, i32 bufSize, i32 * v
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnMinmaxARB(GLenum target, bool reset, PixCmp format, BitFmt type, i32 bufSize, void * values)
+STATICINLINE void GetnMinmaxARB(GLenum target, libc_types::u8 reset, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * values)
 {
 #ifndef NDEBUG
     if(!glGetnMinmaxARB)
@@ -17186,14 +17188,14 @@ STATICINLINE void GetnMinmaxARB(GLenum target, bool reset, PixCmp format, BitFmt
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnMinmaxARB(target, reset ? GL_TRUE : GL_FALSE, to_enum(format, PixFmt::None), to_enum(type), bufSize, values);
+    glGetnMinmaxARB(target, reset, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, values);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnPixelMapfvARB(GLenum map, i32 bufSize, scalar * values)
+STATICINLINE void GetnPixelMapfvARB(GLenum map, libc_types::i32 bufSize, libc_types::f32 * values)
 {
 #ifndef NDEBUG
     if(!glGetnPixelMapfvARB)
@@ -17208,7 +17210,7 @@ STATICINLINE void GetnPixelMapfvARB(GLenum map, i32 bufSize, scalar * values)
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnPixelMapuivARB(GLenum map, i32 bufSize, u32 * values)
+STATICINLINE void GetnPixelMapuivARB(GLenum map, libc_types::i32 bufSize, libc_types::u32 * values)
 {
 #ifndef NDEBUG
     if(!glGetnPixelMapuivARB)
@@ -17223,7 +17225,7 @@ STATICINLINE void GetnPixelMapuivARB(GLenum map, i32 bufSize, u32 * values)
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnPixelMapusvARB(GLenum map, i32 bufSize, u16 * values)
+STATICINLINE void GetnPixelMapusvARB(GLenum map, libc_types::i32 bufSize, libc_types::u16 * values)
 {
 #ifndef NDEBUG
     if(!glGetnPixelMapusvARB)
@@ -17238,7 +17240,7 @@ STATICINLINE void GetnPixelMapusvARB(GLenum map, i32 bufSize, u16 * values)
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnPolygonStippleARB(i32 bufSize, u8 * pattern)
+STATICINLINE void GetnPolygonStippleARB(libc_types::i32 bufSize, libc_types::u8 * pattern)
 {
 #ifndef NDEBUG
     if(!glGetnPolygonStippleARB)
@@ -17253,7 +17255,7 @@ STATICINLINE void GetnPolygonStippleARB(i32 bufSize, u8 * pattern)
 
 #if 0
 /* No template check available */
-STATICINLINE void GetnSeparableFilterARB(GLenum target, PixCmp format, BitFmt type, i32 rowBufSize, void * row, i32 columnBufSize, void * column, void * span)
+STATICINLINE void GetnSeparableFilterARB(GLenum target, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 rowBufSize, void * row, libc_types::i32 columnBufSize, void * column, void * span)
 {
 #ifndef NDEBUG
     if(!glGetnSeparableFilterARB)
@@ -17261,14 +17263,14 @@ STATICINLINE void GetnSeparableFilterARB(GLenum target, PixCmp format, BitFmt ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnSeparableFilterARB(target, to_enum(format, PixFmt::None), to_enum(type), rowBufSize, row, columnBufSize, column, span);
+    glGetnSeparableFilterARB(target, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), rowBufSize, row, columnBufSize, column, span);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void TexGetnImageARB(TexComp::tex_flag const& target, i32 level, PixCmp format, BitFmt type, i32 bufSize, void * img)
+STATICINLINE void TexGetnImageARB(TexComp::tex_flag const& target, libc_types::i32 level, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * img)
 {
 #ifndef NDEBUG
     if(!glGetnTexImageARB)
@@ -17276,14 +17278,14 @@ STATICINLINE void TexGetnImageARB(TexComp::tex_flag const& target, i32 level, Pi
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnTexImageARB(texture_to_enum(target), level, to_enum(format, PixFmt::None), to_enum(type), bufSize, img);
+    glGetnTexImageARB(texture_to_enum(target), level, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, img);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetndvARB(glhnd const& program, i32 location, i32 bufSize, bigscalar * params)
+STATICINLINE void UnifGetndvARB(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::f64 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformdvARB)
@@ -17291,14 +17293,14 @@ STATICINLINE void UnifGetndvARB(glhnd const& program, i32 location, i32 bufSize,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformdvARB(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformdvARB(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnfvARB(glhnd const& program, i32 location, i32 bufSize, scalar * params)
+STATICINLINE void UnifGetnfvARB(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformfvARB)
@@ -17306,14 +17308,14 @@ STATICINLINE void UnifGetnfvARB(glhnd const& program, i32 location, i32 bufSize,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformfvARB(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformfvARB(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnivARB(glhnd const& program, i32 location, i32 bufSize, i32 * params)
+STATICINLINE void UnifGetnivARB(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformivARB)
@@ -17321,14 +17323,14 @@ STATICINLINE void UnifGetnivARB(glhnd const& program, i32 location, i32 bufSize,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformivARB(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformivARB(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnuivARB(glhnd const& program, i32 location, i32 bufSize, u32 * params)
+STATICINLINE void UnifGetnuivARB(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformuivARB)
@@ -17336,14 +17338,14 @@ STATICINLINE void UnifGetnuivARB(glhnd const& program, i32 location, i32 bufSize
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformuivARB(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformuivARB(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void ReadnPixelsARB(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
+STATICINLINE void ReadnPixelsARB(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * data)
 {
 #ifndef NDEBUG
     if(!glReadnPixelsARB)
@@ -17351,7 +17353,7 @@ STATICINLINE void ReadnPixelsARB(i32 x, i32 y, Size const& size, PixCmp format, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glReadnPixelsARB(x, y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), bufSize, data);
+    glReadnPixelsARB(x[0], x[1], width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, data);
 }
 #endif
 
@@ -17360,7 +17362,7 @@ STATICINLINE void ReadnPixelsARB(i32 x, i32 y, Size const& size, PixCmp format, 
 
 #if defined(GL_ARB_shader_objects) && GL_ARB_shader_objects
 template<typename ReqVer>
-struct CGL_ARB_shader_objects
+struct ARB_shader_objects
 {
 
 #if 0
@@ -17403,7 +17405,7 @@ STATICINLINE GLhandleARB ProgramCreateObjectARB()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateProgramObjectARB();
+    return (GLhandleARB)glCreateProgramObjectARB();
 }
 #endif
 
@@ -17418,7 +17420,7 @@ STATICINLINE GLhandleARB ShaderCreateObjectARB(ShaderStage shaderType)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glCreateShaderObjectARB(to_enum1(shaderType));
+    return (GLhandleARB)glCreateShaderObjectARB(to_enum1(shaderType));
 }
 #endif
 
@@ -17455,7 +17457,7 @@ STATICINLINE void DetachObjectARB(GLhandleARB containerObj, GLhandleARB attached
 
 #if 0
 /* No template check available */
-STATICINLINE void ActiveUnifGetARB(GLhandleARB programObj, u32 index, i32 maxLength, i32 * length, i32 * size, GLenum * type, GLcharARB * name)
+STATICINLINE void ActiveUnifGetARB(GLhandleARB programObj, libc_types::u32 index, libc_types::i32 maxLength, libc_types::i32 * length, libc_types::i32 * size, GLenum * type, GLcharARB * name)
 {
 #ifndef NDEBUG
     if(!glGetActiveUniformARB)
@@ -17470,7 +17472,7 @@ STATICINLINE void ActiveUnifGetARB(GLhandleARB programObj, u32 index, i32 maxLen
 
 #if 0
 /* No template check available */
-STATICINLINE void GetAttachedObjectsARB(GLhandleARB containerObj, i32 maxCount, i32 * count, GLhandleARB * obj)
+STATICINLINE void GetAttachedObjectsARB(GLhandleARB containerObj, libc_types::i32 maxCount, libc_types::i32 * count, GLhandleARB * obj)
 {
 #ifndef NDEBUG
     if(!glGetAttachedObjectsARB)
@@ -17493,14 +17495,14 @@ STATICINLINE GLhandleARB GetHandleARB(GLenum pname)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetHandleARB(pname);
+    return (GLhandleARB)glGetHandleARB(pname);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetInfoLogARB(GLhandleARB obj, i32 maxLength, i32 * length, GLcharARB * infoLog)
+STATICINLINE void GetInfoLogARB(GLhandleARB obj, libc_types::i32 maxLength, libc_types::i32 * length, GLcharARB * infoLog)
 {
 #ifndef NDEBUG
     if(!glGetInfoLogARB)
@@ -17515,7 +17517,7 @@ STATICINLINE void GetInfoLogARB(GLhandleARB obj, i32 maxLength, i32 * length, GL
 
 #if 0
 /* No template check available */
-STATICINLINE void GetObjectParameterfvARB(GLhandleARB obj, GLenum pname, scalar * params)
+STATICINLINE void GetObjectParameterfvARB(GLhandleARB obj, GLenum pname, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetObjectParameterfvARB)
@@ -17530,7 +17532,7 @@ STATICINLINE void GetObjectParameterfvARB(GLhandleARB obj, GLenum pname, scalar 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetObjectParameterivARB(GLhandleARB obj, GLenum pname, i32 * params)
+STATICINLINE void GetObjectParameterivARB(GLhandleARB obj, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetObjectParameterivARB)
@@ -17545,7 +17547,7 @@ STATICINLINE void GetObjectParameterivARB(GLhandleARB obj, GLenum pname, i32 * p
 
 #if 0
 /* No template check available */
-STATICINLINE void ShaderGetSourceARB(GLhandleARB obj, i32 maxLength, i32 * length, GLcharARB * source)
+STATICINLINE void ShaderGetSourceARB(GLhandleARB obj, libc_types::i32 maxLength, libc_types::i32 * length, GLcharARB * source)
 {
 #ifndef NDEBUG
     if(!glGetShaderSourceARB)
@@ -17560,7 +17562,7 @@ STATICINLINE void ShaderGetSourceARB(GLhandleARB obj, i32 maxLength, i32 * lengt
 
 #if 0
 /* No template check available */
-STATICINLINE i32 UnifGetLocationARB(GLhandleARB programObj, const GLcharARB * name)
+STATICINLINE libc_types::i32 UnifGetLocationARB(GLhandleARB programObj, const GLcharARB * name)
 {
 #ifndef NDEBUG
     if(!glGetUniformLocationARB)
@@ -17568,14 +17570,14 @@ STATICINLINE i32 UnifGetLocationARB(GLhandleARB programObj, const GLcharARB * na
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetUniformLocationARB(programObj, name);
+    return (libc_types::i32)glGetUniformLocationARB(programObj, name);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetfvARB(GLhandleARB programObj, i32 location, scalar * params)
+STATICINLINE void UnifGetfvARB(GLhandleARB programObj, libc_types::i32 location, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformfvARB)
@@ -17590,7 +17592,7 @@ STATICINLINE void UnifGetfvARB(GLhandleARB programObj, i32 location, scalar * pa
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetivARB(GLhandleARB programObj, i32 location, i32 * params)
+STATICINLINE void UnifGetivARB(GLhandleARB programObj, libc_types::i32 location, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetUniformivARB)
@@ -17620,7 +17622,7 @@ STATICINLINE void ProgramLinkARB(GLhandleARB programObj)
 
 #if 0
 /* No template check available */
-STATICINLINE void ShaderSourceARB(GLhandleARB shaderObj, i32 count, const GLcharARB * * string, const i32 * length)
+STATICINLINE void ShaderSourceARB(GLhandleARB shaderObj, libc_types::i32 count, const GLcharARB * * string, const libc_types::i32 * length)
 {
 #ifndef NDEBUG
     if(!glShaderSourceARB)
@@ -17635,7 +17637,7 @@ STATICINLINE void ShaderSourceARB(GLhandleARB shaderObj, i32 count, const GLchar
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1fARB(i32 location, scalar v0)
+STATICINLINE void Unif1fARB(libc_types::i32 location, libc_types::f32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1fARB)
@@ -17650,7 +17652,7 @@ STATICINLINE void Unif1fARB(i32 location, scalar v0)
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1fvARB(i32 location, Span<const scalar> const& value)
+STATICINLINE void Unif1fvARB(libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1fvARB)
@@ -17658,14 +17660,14 @@ STATICINLINE void Unif1fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform1fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1iARB(i32 location, i32 v0)
+STATICINLINE void Unif1iARB(libc_types::i32 location, libc_types::i32 v0)
 {
 #ifndef NDEBUG
     if(!glUniform1iARB)
@@ -17680,7 +17682,7 @@ STATICINLINE void Unif1iARB(i32 location, i32 v0)
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif1ivARB(i32 location, Span<const i32> const& value)
+STATICINLINE void Unif1ivARB(libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform1ivARB)
@@ -17688,14 +17690,14 @@ STATICINLINE void Unif1ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform1ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2fARB(i32 location, scalar v0, scalar v1)
+STATICINLINE void Unif2fARB(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2fARB)
@@ -17703,14 +17705,14 @@ STATICINLINE void Unif2fARB(i32 location, scalar v0, scalar v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fARB(location, v0, v1);
+    glUniform2fARB(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2fvARB(i32 location, Span<const scalar> const& value)
+STATICINLINE void Unif2fvARB(libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2fvARB)
@@ -17718,14 +17720,14 @@ STATICINLINE void Unif2fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform2fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2iARB(i32 location, i32 v0, i32 v1)
+STATICINLINE void Unif2iARB(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 2> v0)
 {
 #ifndef NDEBUG
     if(!glUniform2iARB)
@@ -17733,14 +17735,14 @@ STATICINLINE void Unif2iARB(i32 location, i32 v0, i32 v1)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iARB(location, v0, v1);
+    glUniform2iARB(location, v0[0], v0[1]);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif2ivARB(i32 location, Span<const i32> const& value)
+STATICINLINE void Unif2ivARB(libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform2ivARB)
@@ -17748,14 +17750,14 @@ STATICINLINE void Unif2ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform2ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3fARB(i32 location, scalar v0, scalar v1, scalar v2)
+STATICINLINE void Unif3fARB(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 3> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3fARB)
@@ -17763,14 +17765,14 @@ STATICINLINE void Unif3fARB(i32 location, scalar v0, scalar v1, scalar v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fARB(location, v0, v1, v2);
+    glUniform3fARB(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3fvARB(i32 location, Span<const scalar> const& value)
+STATICINLINE void Unif3fvARB(libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3fvARB)
@@ -17778,14 +17780,14 @@ STATICINLINE void Unif3fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform3fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3iARB(i32 location, i32 v0, i32 v1, i32 v2)
+STATICINLINE void Unif3iARB(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 3> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform3iARB)
@@ -17793,14 +17795,14 @@ STATICINLINE void Unif3iARB(i32 location, i32 v0, i32 v1, i32 v2)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iARB(location, v0, v1, v2);
+    glUniform3iARB(location, v0[0], v0[1], v2);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif3ivARB(i32 location, Span<const i32> const& value)
+STATICINLINE void Unif3ivARB(libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform3ivARB)
@@ -17808,14 +17810,14 @@ STATICINLINE void Unif3ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform3ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4fARB(i32 location, scalar v0, scalar v1, scalar v2, scalar v3)
+STATICINLINE void Unif4fARB(libc_types::i32 location, typing::vectors::tvector<libc_types::f32, 4> v0, libc_types::f32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4fARB)
@@ -17823,14 +17825,14 @@ STATICINLINE void Unif4fARB(i32 location, scalar v0, scalar v1, scalar v2, scala
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fARB(location, v0, v1, v2, v3);
+    glUniform4fARB(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4fvARB(i32 location, Span<const scalar> const& value)
+STATICINLINE void Unif4fvARB(libc_types::i32 location, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4fvARB)
@@ -17838,14 +17840,14 @@ STATICINLINE void Unif4fvARB(i32 location, Span<const scalar> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fvARB(location, C_FCAST<i32>(value.elements), C_RCAST<const scalar*>(value.data));
+    glUniform4fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4iARB(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
+STATICINLINE void Unif4iARB(libc_types::i32 location, typing::vectors::tvector<libc_types::i32, 4> v0, libc_types::i32 v2)
 {
 #ifndef NDEBUG
     if(!glUniform4iARB)
@@ -17853,14 +17855,14 @@ STATICINLINE void Unif4iARB(i32 location, i32 v0, i32 v1, i32 v2, i32 v3)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iARB(location, v0, v1, v2, v3);
+    glUniform4iARB(location, v0[0], v0[1], v2, v0[3]);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void Unif4ivARB(i32 location, Span<const i32> const& value)
+STATICINLINE void Unif4ivARB(libc_types::i32 location, semantic::Span<const libc_types::i32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniform4ivARB)
@@ -17868,14 +17870,14 @@ STATICINLINE void Unif4ivARB(i32 location, Span<const i32> const& value)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ivARB(location, C_FCAST<i32>(value.elements), C_RCAST<const i32*>(value.data));
+    glUniform4ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifMatrix2fvARB(i32 location, bool transpose, Span<const scalar> const& value)
+STATICINLINE void UnifMatrix2fvARB(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix2fvARB)
@@ -17883,14 +17885,14 @@ STATICINLINE void UnifMatrix2fvARB(i32 location, bool transpose, Span<const scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fvARB(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix2fvARB(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifMatrix3fvARB(i32 location, bool transpose, Span<const scalar> const& value)
+STATICINLINE void UnifMatrix3fvARB(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix3fvARB)
@@ -17898,14 +17900,14 @@ STATICINLINE void UnifMatrix3fvARB(i32 location, bool transpose, Span<const scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fvARB(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix3fvARB(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifMatrix4fvARB(i32 location, bool transpose, Span<const scalar> const& value)
+STATICINLINE void UnifMatrix4fvARB(libc_types::i32 location, libc_types::u8 transpose, semantic::Span<const libc_types::f32> const& value)
 {
 #ifndef NDEBUG
     if(!glUniformMatrix4fvARB)
@@ -17913,7 +17915,7 @@ STATICINLINE void UnifMatrix4fvARB(i32 location, bool transpose, Span<const scal
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fvARB(location, C_FCAST<i32>(value.elements), transpose ? GL_TRUE : GL_FALSE, C_RCAST<const scalar*>(value.data));
+    glUniformMatrix4fvARB(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
 }
 #endif
 
@@ -17952,12 +17954,12 @@ STATICINLINE void ProgramValidateARB(GLhandleARB programObj)
 
 #if defined(GL_ARB_shading_language_include) && GL_ARB_shading_language_include
 template<typename ReqVer>
-struct CGL_ARB_shading_language_include
+struct ARB_shading_language_include
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void ShaderCompileIncludeARB(glhnd const& shader, i32 count, const GLchar * *const path, const i32 * length)
+STATICINLINE void ShaderCompileIncludeARB(glhnd const& shader, libc_types::i32 count, const GLchar * *const path, const libc_types::i32 * length)
 {
 #ifndef NDEBUG
     if(!glCompileShaderIncludeARB)
@@ -17965,14 +17967,14 @@ STATICINLINE void ShaderCompileIncludeARB(glhnd const& shader, i32 count, const 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompileShaderIncludeARB(C_OCAST<u32>(shader), count, path, length);
+    glCompileShaderIncludeARB(C_OCAST<libc_types::u32>(shader), count, path, length);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void DeleteNamedStringARB(i32 namelen, const GLchar * name)
+STATICINLINE void DeleteNamedStringARB(libc_types::i32 namelen, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glDeleteNamedStringARB)
@@ -17987,7 +17989,7 @@ STATICINLINE void DeleteNamedStringARB(i32 namelen, const GLchar * name)
 
 #if 0
 /* No template check available */
-STATICINLINE void GetNamedStringARB(i32 namelen, const GLchar * name, i32 bufSize, i32 * stringlen, GLchar * string)
+STATICINLINE void GetNamedStringARB(libc_types::i32 namelen, const GLchar * name, libc_types::i32 bufSize, libc_types::i32 * stringlen, GLchar * string)
 {
 #ifndef NDEBUG
     if(!glGetNamedStringARB)
@@ -18002,7 +18004,7 @@ STATICINLINE void GetNamedStringARB(i32 namelen, const GLchar * name, i32 bufSiz
 
 #if 0
 /* No template check available */
-STATICINLINE void GetNamedStringivARB(i32 namelen, const GLchar * name, GLenum pname, i32 * params)
+STATICINLINE void GetNamedStringivARB(libc_types::i32 namelen, const GLchar * name, GLenum pname, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetNamedStringivARB)
@@ -18017,7 +18019,7 @@ STATICINLINE void GetNamedStringivARB(i32 namelen, const GLchar * name, GLenum p
 
 #if 0
 /* No template check available */
-STATICINLINE u8 IsNamedStringARB(i32 namelen, const GLchar * name)
+STATICINLINE libc_types::u8 IsNamedStringARB(libc_types::i32 namelen, const GLchar * name)
 {
 #ifndef NDEBUG
     if(!glIsNamedStringARB)
@@ -18025,14 +18027,14 @@ STATICINLINE u8 IsNamedStringARB(i32 namelen, const GLchar * name)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glIsNamedStringARB(namelen, name);
+    return (libc_types::u8)glIsNamedStringARB(namelen, name);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void NamedStringARB(GLenum type, i32 namelen, const GLchar * name, i32 stringlen, const GLchar * string)
+STATICINLINE void NamedStringARB(GLenum type, libc_types::i32 namelen, const GLchar * name, libc_types::i32 stringlen, const GLchar * string)
 {
 #ifndef NDEBUG
     if(!glNamedStringARB)
@@ -18049,12 +18051,12 @@ STATICINLINE void NamedStringARB(GLenum type, i32 namelen, const GLchar * name, 
 
 #if defined(GL_ARB_sparse_texture) && GL_ARB_sparse_texture
 template<typename ReqVer>
-struct CGL_ARB_sparse_texture
+struct ARB_sparse_texture
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void TexPageCommitmentARB(GLenum target, i32 level, Point3 const& offset, Size3 const& size, bool commit)
+STATICINLINE void TexPageCommitmentARB(GLenum target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::u8 commit)
 {
 #ifndef NDEBUG
     if(!glTexPageCommitmentARB)
@@ -18062,7 +18064,7 @@ STATICINLINE void TexPageCommitmentARB(GLenum target, i32 level, Point3 const& o
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexPageCommitmentARB(target, level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, commit ? GL_TRUE : GL_FALSE);
+    glTexPageCommitmentARB(target, level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, commit);
 }
 #endif
 
@@ -18071,12 +18073,12 @@ STATICINLINE void TexPageCommitmentARB(GLenum target, i32 level, Point3 const& o
 
 #if defined(GL_ARB_texture_buffer_object) && GL_ARB_texture_buffer_object
 template<typename ReqVer>
-struct CGL_ARB_texture_buffer_object
+struct ARB_texture_buffer_object
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void TexBufferARB(TexComp::tex_flag const& target, PixFmt internalformat, glhnd const& buffer)
+STATICINLINE void TexBufferARB(TexComp::tex_flag const& target, typing::pixels::PixFmt internalformat, glhnd const& buffer)
 {
 #ifndef NDEBUG
     if(!glTexBufferARB)
@@ -18084,7 +18086,7 @@ STATICINLINE void TexBufferARB(TexComp::tex_flag const& target, PixFmt internalf
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glTexBufferARB(texture_to_enum(target), to_enum(internalformat), C_OCAST<u32>(buffer));
+    glTexBufferARB(texture_to_enum(target), to_enum(internalformat), C_OCAST<libc_types::u32>(buffer));
 }
 #endif
 
@@ -18093,12 +18095,12 @@ STATICINLINE void TexBufferARB(TexComp::tex_flag const& target, PixFmt internalf
 
 #if defined(GL_ARB_texture_compression) && GL_ARB_texture_compression
 template<typename ReqVer>
-struct CGL_ARB_texture_compression
+struct ARB_texture_compression
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void TexCompressedImage1DARB(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, i32 width, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage1DARB(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, libc_types::i32 width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage1DARB)
@@ -18113,7 +18115,7 @@ STATICINLINE void TexCompressedImage1DARB(TexComp::tex_flag const& target, i32 l
 
 #if 0
 /* No template check available */
-STATICINLINE void TexCompressedImage2DARB(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size const& size, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage2DARB(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, typing::geometry::size_2d<libc_types::i32> const& width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage2DARB)
@@ -18121,14 +18123,14 @@ STATICINLINE void TexCompressedImage2DARB(TexComp::tex_flag const& target, i32 l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexImage2DARB(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), size.w, size.h, 0, imageSize, data);
+    glCompressedTexImage2DARB(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), width.w, width.h, 0, imageSize, data);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void TexCompressedImage3DARB(TexComp::tex_flag const& target, i32 level, CompFmt internalformat, Size3 const& size, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedImage3DARB(TexComp::tex_flag const& target, libc_types::i32 level, typing::pixels::CompFmt internalformat, typing::geometry::size_3d<libc_types::i32> const& width, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexImage3DARB)
@@ -18136,14 +18138,14 @@ STATICINLINE void TexCompressedImage3DARB(TexComp::tex_flag const& target, i32 l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexImage3DARB(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), size.width, size.height, size.depth, 0, imageSize, data);
+    glCompressedTexImage3DARB(texture_to_enum(target), level, to_enum(internalformat.base_fmt, internalformat.p_flags, internalformat.c_flags), width.width, width.height, width.depth, 0, imageSize, data);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void TexCompressedSubImage1DARB(TexComp::tex_flag const& target, i32 level, i32 xoffset, i32 width, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage1DARB(TexComp::tex_flag const& target, libc_types::i32 level, libc_types::i32 xoffset, libc_types::i32 width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage1DARB)
@@ -18158,7 +18160,7 @@ STATICINLINE void TexCompressedSubImage1DARB(TexComp::tex_flag const& target, i3
 
 #if 0
 /* No template check available */
-STATICINLINE void TexCompressedSubImage2DARB(TexComp::tex_flag const& target, i32 level, Point const& offset, Size const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage2DARB(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_2d<libc_types::i32> const& xoffset, typing::geometry::size_2d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage2DARB)
@@ -18166,14 +18168,14 @@ STATICINLINE void TexCompressedSubImage2DARB(TexComp::tex_flag const& target, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexSubImage2DARB(texture_to_enum(target), level, offset.x, offset.y, size.w, size.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTexSubImage2DARB(texture_to_enum(target), level, xoffset.x, xoffset.y, width.w, width.h, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void TexCompressedSubImage3DARB(TexComp::tex_flag const& target, i32 level, Point3 const& offset, Size3 const& size, CompFmt format, i32 imageSize, const void * data)
+STATICINLINE void TexCompressedSubImage3DARB(TexComp::tex_flag const& target, libc_types::i32 level, typing::geometry::point_3d<libc_types::i32> const& xoffset, typing::geometry::size_3d<libc_types::i32> const& width, typing::pixels::CompFmt format, libc_types::i32 imageSize, const void * data)
 {
 #ifndef NDEBUG
     if(!glCompressedTexSubImage3DARB)
@@ -18181,14 +18183,14 @@ STATICINLINE void TexCompressedSubImage3DARB(TexComp::tex_flag const& target, i3
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCompressedTexSubImage3DARB(texture_to_enum(target), level, offset.x, offset.y, offset.z, size.width, size.height, size.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
+    glCompressedTexSubImage3DARB(texture_to_enum(target), level, xoffset.x, xoffset.y, xoffset.z, width.width, width.height, width.depth, to_enum(format.base_fmt, format.p_flags, format.c_flags), imageSize, data);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void TexGetCompressedImageARB(TexComp::tex_flag const& target, i32 level, void * img)
+STATICINLINE void TexGetCompressedImageARB(TexComp::tex_flag const& target, libc_types::i32 level, void * img)
 {
 #ifndef NDEBUG
     if(!glGetCompressedTexImageARB)
@@ -18203,9 +18205,46 @@ STATICINLINE void TexGetCompressedImageARB(TexComp::tex_flag const& target, i32 
 };
 #endif // GL_ARB_texture_compression
 
+#if defined(GL_ARB_viewport_array) && GL_ARB_viewport_array
+template<typename ReqVer>
+struct ARB_viewport_array
+{
+
+#if 0
+/* No template check available */
+STATICINLINE void DepthRangeArraydvNV(libc_types::u32 first, libc_types::i32 count, const libc_types::f64 * v)
+{
+#ifndef NDEBUG
+    if(!glDepthRangeArraydvNV)
+    {
+        Throw(undefined_behavior("function not loaded!"));
+    }
+#endif
+    glDepthRangeArraydvNV(first, count, v);
+}
+#endif
+
+
+#if 0
+/* No template check available */
+STATICINLINE void DepthRangeIndexeddNV(libc_types::u32 index, libc_types::f64 n, libc_types::f64 f)
+{
+#ifndef NDEBUG
+    if(!glDepthRangeIndexeddNV)
+    {
+        Throw(undefined_behavior("function not loaded!"));
+    }
+#endif
+    glDepthRangeIndexeddNV(index, n, f);
+}
+#endif
+
+};
+#endif // GL_ARB_viewport_array
+
 #if defined(GL_KHR_blend_equation_advanced) && GL_KHR_blend_equation_advanced
 template<typename ReqVer>
-struct CGL_KHR_blend_equation_advanced
+struct KHR_blend_equation_advanced
 {
 
 #if 0
@@ -18227,7 +18266,7 @@ STATICINLINE void BlendBarrierKHR()
 
 #if defined(GL_KHR_debug) && GL_KHR_debug
 template<typename ReqVer>
-struct CGL_KHR_debug
+struct KHR_debug
 {
 
 #if 0
@@ -18247,7 +18286,7 @@ STATICINLINE void DebugMessageCallbackKHR(GLDEBUGPROCKHR callback, const void * 
 
 #if 0
 /* No template check available */
-STATICINLINE void DebugMessageControlKHR(GLenum source, GLenum type, GLenum severity, i32 count, const u32 * ids, bool enabled)
+STATICINLINE void DebugMessageControlKHR(GLenum source, GLenum type, GLenum severity, semantic::Span<const libc_types::u32>&& ids, libc_types::u8 enabled)
 {
 #ifndef NDEBUG
     if(!glDebugMessageControlKHR)
@@ -18255,14 +18294,14 @@ STATICINLINE void DebugMessageControlKHR(GLenum source, GLenum type, GLenum seve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControlKHR(source, type, severity, count, ids, enabled ? GL_TRUE : GL_FALSE);
+    glDebugMessageControlKHR(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void DebugMessageInsertKHR(GLenum source, GLenum type, u32 id, GLenum severity, i32 length, const GLchar * buf)
+STATICINLINE void DebugMessageInsertKHR(GLenum source, GLenum type, glhnd const& id, GLenum severity, libc_types::i32 length, const GLchar * buf)
 {
 #ifndef NDEBUG
     if(!glDebugMessageInsertKHR)
@@ -18270,14 +18309,14 @@ STATICINLINE void DebugMessageInsertKHR(GLenum source, GLenum type, u32 id, GLen
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageInsertKHR(source, type, id, severity, length, buf);
+    glDebugMessageInsertKHR(source, type, C_OCAST<libc_types::u32>(id), severity, length, buf);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE u32 GetDebugMessageLogKHR(u32 count, i32 bufSize, GLenum * sources, GLenum * types, u32 * ids, GLenum * severities, i32 * lengths, GLchar * messageLog)
+STATICINLINE libc_types::u32 GetDebugMessageLogKHR(libc_types::u32 count, libc_types::i32 bufSize, GLenum * sources, GLenum * types, libc_types::u32 * ids, GLenum * severities, libc_types::i32 * lengths, GLchar * messageLog)
 {
 #ifndef NDEBUG
     if(!glGetDebugMessageLogKHR)
@@ -18285,14 +18324,14 @@ STATICINLINE u32 GetDebugMessageLogKHR(u32 count, i32 bufSize, GLenum * sources,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetDebugMessageLogKHR(count, bufSize, sources, types, ids, severities, lengths, messageLog);
+    return (libc_types::u32)glGetDebugMessageLogKHR(count, bufSize, sources, types, ids, severities, lengths, messageLog);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void GetObjectLabelKHR(GLenum identifier, u32 name, i32 bufSize, i32 * length, GLchar * label)
+STATICINLINE void GetObjectLabelKHR(GLenum identifier, libc_types::u32 name, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * label)
 {
 #ifndef NDEBUG
     if(!glGetObjectLabelKHR)
@@ -18307,7 +18346,7 @@ STATICINLINE void GetObjectLabelKHR(GLenum identifier, u32 name, i32 bufSize, i3
 
 #if 0
 /* No template check available */
-STATICINLINE void GetObjectPtrLabelKHR(const void * ptr, i32 bufSize, i32 * length, GLchar * label)
+STATICINLINE void GetObjectPtrLabelKHR(const void * ptr, libc_types::i32 bufSize, libc_types::i32 * length, GLchar * label)
 {
 #ifndef NDEBUG
     if(!glGetObjectPtrLabelKHR)
@@ -18337,7 +18376,7 @@ STATICINLINE void GetPointervKHR(GLenum pname, void * * params)
 
 #if 0
 /* No template check available */
-STATICINLINE void ObjectLabelKHR(GLenum identifier, u32 name, i32 length, const GLchar * label)
+STATICINLINE void ObjectLabelKHR(GLenum identifier, libc_types::u32 name, libc_types::i32 length, const GLchar * label)
 {
 #ifndef NDEBUG
     if(!glObjectLabelKHR)
@@ -18352,7 +18391,7 @@ STATICINLINE void ObjectLabelKHR(GLenum identifier, u32 name, i32 length, const 
 
 #if 0
 /* No template check available */
-STATICINLINE void ObjectPtrLabelKHR(const void * ptr, i32 length, const GLchar * label)
+STATICINLINE void ObjectPtrLabelKHR(const void * ptr, libc_types::i32 length, const GLchar * label)
 {
 #ifndef NDEBUG
     if(!glObjectPtrLabelKHR)
@@ -18382,7 +18421,7 @@ STATICINLINE void PopDebugGroupKHR()
 
 #if 0
 /* No template check available */
-STATICINLINE void PushDebugGroupKHR(GLenum source, u32 id, i32 length, const GLchar * message)
+STATICINLINE void PushDebugGroupKHR(GLenum source, glhnd const& id, libc_types::i32 length, const GLchar * message)
 {
 #ifndef NDEBUG
     if(!glPushDebugGroupKHR)
@@ -18390,7 +18429,7 @@ STATICINLINE void PushDebugGroupKHR(GLenum source, u32 id, i32 length, const GLc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glPushDebugGroupKHR(source, id, length, message);
+    glPushDebugGroupKHR(source, C_OCAST<libc_types::u32>(id), length, message);
 }
 #endif
 
@@ -18399,12 +18438,12 @@ STATICINLINE void PushDebugGroupKHR(GLenum source, u32 id, i32 length, const GLc
 
 #if defined(GL_KHR_parallel_shader_compile) && GL_KHR_parallel_shader_compile
 template<typename ReqVer>
-struct CGL_KHR_parallel_shader_compile
+struct KHR_parallel_shader_compile
 {
 
 #if 0
 /* No template check available */
-STATICINLINE void ShaderMaxCompilerThreadsKHR(u32 count)
+STATICINLINE void ShaderMaxCompilerThreadsKHR(libc_types::u32 count)
 {
 #ifndef NDEBUG
     if(!glMaxShaderCompilerThreadsKHR)
@@ -18424,7 +18463,7 @@ STATICINLINE void ShaderMaxCompilerThreadsKHR(u32 count)
 
 #if defined(GL_KHR_robustness) && GL_KHR_robustness
 template<typename ReqVer>
-struct CGL_KHR_robustness
+struct KHR_robustness
 {
 
 #if 0
@@ -18437,14 +18476,14 @@ STATICINLINE GLenum GetGraphicsResetStatusKHR()
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return glGetGraphicsResetStatusKHR();
+    return (GLenum)glGetGraphicsResetStatusKHR();
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnfvKHR(glhnd const& program, i32 location, i32 bufSize, scalar * params)
+STATICINLINE void UnifGetnfvKHR(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::f32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformfvKHR)
@@ -18452,14 +18491,14 @@ STATICINLINE void UnifGetnfvKHR(glhnd const& program, i32 location, i32 bufSize,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformfvKHR(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformfvKHR(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnivKHR(glhnd const& program, i32 location, i32 bufSize, i32 * params)
+STATICINLINE void UnifGetnivKHR(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::i32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformivKHR)
@@ -18467,14 +18506,14 @@ STATICINLINE void UnifGetnivKHR(glhnd const& program, i32 location, i32 bufSize,
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformivKHR(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformivKHR(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void UnifGetnuivKHR(glhnd const& program, i32 location, i32 bufSize, u32 * params)
+STATICINLINE void UnifGetnuivKHR(glhnd const& program, libc_types::i32 location, libc_types::i32 bufSize, libc_types::u32 * params)
 {
 #ifndef NDEBUG
     if(!glGetnUniformuivKHR)
@@ -18482,14 +18521,14 @@ STATICINLINE void UnifGetnuivKHR(glhnd const& program, i32 location, i32 bufSize
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGetnUniformuivKHR(C_OCAST<u32>(program), location, bufSize, params);
+    glGetnUniformuivKHR(C_OCAST<libc_types::u32>(program), location, bufSize, params);
 }
 #endif
 
 
 #if 0
 /* No template check available */
-STATICINLINE void ReadnPixelsKHR(i32 x, i32 y, Size const& size, PixCmp format, BitFmt type, i32 bufSize, void * data)
+STATICINLINE void ReadnPixelsKHR(typing::vectors::tvector<libc_types::i32, 2> x, typing::geometry::size_2d<libc_types::i32> const& width, typing::PixCmp format, typing::pixels::BitFmt type, libc_types::i32 bufSize, void * data)
 {
 #ifndef NDEBUG
     if(!glReadnPixelsKHR)
@@ -18497,15 +18536,16 @@ STATICINLINE void ReadnPixelsKHR(i32 x, i32 y, Size const& size, PixCmp format, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glReadnPixelsKHR(x, y, size.w, size.h, to_enum(format, PixFmt::None), to_enum(type), bufSize, data);
+    glReadnPixelsKHR(x[0], x[1], width.w, width.h, to_enum(format, typing::pixels::PixFmt::None), to_enum(type), bufSize, data);
 }
 #endif
 
 };
 #endif // GL_KHR_robustness
 
-} // CGL
-} // Coffee
+
+} // ext
+} // glwrap
 
 #if defined(COFFEE_GCC)
 #pragma GCC diagnostic pop

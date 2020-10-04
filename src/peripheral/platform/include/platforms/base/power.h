@@ -12,11 +12,11 @@ struct _SDLPowerInfo : PowerInfoDef
     static bool IsCharging();
     static bool HasBattery();
 
-    static uint16 BatteryPercentage();
-    static uint32 BatteryLifetime();
+    static u16 BatteryPercentage();
+    static u32 BatteryLifetime();
 };
 #else
 using _SDLPowerInfo = PowerInfoDef;
 #endif
-}
+} // namespace env
 } // namespace platform

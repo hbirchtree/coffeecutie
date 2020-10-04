@@ -8,6 +8,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/tiny-utf8>
     $<INSTALL_INTERFACE:include>
     )
 
@@ -28,6 +29,15 @@ target_precompile_headers ( PeripheralLib PUBLIC
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/types.h>
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/type_list.h>
     )
+
+if(BUILD_ASAN)
+    target_compile_options ( PeripheralLib PUBLIC
+        -fsanitize=address
+        )
+    target_link_options ( PeripheralLib PUBLIC
+        -fsanitize=address
+        )
+endif()
 
 if(EMSCRIPTEN)
     if("${EMSCRIPTEN_SOURCEMAP_BASE}" STREQUAL "")
@@ -150,7 +160,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Windows does not support this library
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
     if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
-        find_package(Unwind QUIET )
+        find_package( Unwind QUIET )
     endif()
     if (LIBUNWIND_FOUND)
         target_include_directories ( PeripheralLib PUBLIC
@@ -164,6 +174,16 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     target_link_libraries ( PeripheralLib PUBLIC
         rt
         )
+
+    if(BEAGLE)
+#        find_library ( UNWIND_ARM_LIB unwind
+#            PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE}
+#            )
+
+#        target_link_libraries( PeripheralLib PUBLIC
+#            ${UNWIND_ARM_LIB}
+#            )
+    endif()
 endif()
 
 if(NOT WIN32 AND NOT MSYS AND NOT MINGW AND NOT EMSCRIPTEN)

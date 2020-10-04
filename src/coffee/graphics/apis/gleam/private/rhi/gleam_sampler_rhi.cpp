@@ -29,22 +29,22 @@ template<
     typename std::enable_if<Compatibility != Dim3_Textures>::type* = nullptr>
 inline void bind_sampler_fallback(u32 i, SurfaceT* m_surface)
 {
-    CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
+    gl::vlow::TexBind(m_surface->m_type, m_surface->m_handle);
 }
 
 template<u32 Compatibility = Everything, typename SurfaceT>
 inline void bind_sampler(u32 i, glhnd& m_handle, SurfaceT* m_surface)
 {
-    CGL33::TexActive(i);
+    gl::vlow::TexActive(i);
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
-        CGL33::SamplerBind(i, m_handle);
+        gl::v33::SamplerBind(i, m_handle);
     } else
 #endif
         bind_sampler_fallback<Compatibility>(i, m_surface);
 
-    CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
+    gl::vlow::TexBind(m_surface->m_type, m_surface->m_handle);
 }
 
 } // namespace detail
@@ -58,12 +58,12 @@ void GLEAM_Sampler::alloc()
 #if GL_VERSION_VERIFY(0x300, 0x300)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::SamplerAllocEx(m_handle.hnd);
+        gl::v45::SamplerAllocEx(m_handle.hnd);
     else
 #endif
         if(!GLEAM_FEATURES.gles20)
     {
-        CGL33::SamplerAlloc(m_handle.hnd);
+        gl::v33::SamplerAlloc(m_handle.hnd);
     }
 #endif
 }
@@ -72,7 +72,7 @@ void GLEAM_Sampler::dealloc()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        CGL33::SamplerFree(m_handle.hnd);
+        gl::v33::SamplerFree(m_handle.hnd);
     m_handle.release();
 #endif
 }
@@ -83,14 +83,14 @@ void GLEAM_Sampler::setAnisotropic(f32 samples)
     if(GLEAM_FEATURES.anisotropic)
     {
         i32 max_aniso = 0;
-        CGL46::IntegerGetv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_aniso);
+        gl::v46::IntegerGetv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_aniso);
 
         if(samples > max_aniso)
             Throw(undefined_behavior(
                 GLM_API
                 "anisotropic filtering value out of implementation range"));
 
-        CGL46::SamplerParameterf(m_handle, GL_TEXTURE_MAX_ANISOTROPY, samples);
+        gl::v46::SamplerParameterf(m_handle, GL_TEXTURE_MAX_ANISOTROPY, samples);
     }
 #endif
 }
@@ -100,8 +100,8 @@ void GLEAM_Sampler::setLODRange(C_UNUSED(const Vecf2& range))
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
-        CGL33::SamplerParameterfv(m_handle, GL_TEXTURE_MIN_LOD, &range.x());
-        CGL33::SamplerParameterfv(m_handle, GL_TEXTURE_MAX_LOD, &range.y());
+        gl::v33::SamplerParameterfv(m_handle, GL_TEXTURE_MIN_LOD, &range.x());
+        gl::v33::SamplerParameterfv(m_handle, GL_TEXTURE_MAX_LOD, &range.y());
     }
 #endif
 }
@@ -113,7 +113,8 @@ void GLEAM_Sampler::setLODBias(C_UNUSED(scalar bias))
     {
         if(GL_DEBUG_MODE)
         {
-            scalar max = CGL::Debug::GetScalar(GL_MAX_TEXTURE_LOD_BIAS);
+            scalar max = 0.f;
+            gl::v33::ScalarfGetv(GL_MAX_TEXTURE_LOD_BIAS, &max);
             if(bias > max)
             {
                 // TODO: Error
@@ -122,7 +123,7 @@ void GLEAM_Sampler::setLODBias(C_UNUSED(scalar bias))
                 return;
             }
         }
-        CGL33::SamplerParameterfv(m_handle, GL_TEXTURE_LOD_BIAS, &bias);
+        gl::v33::SamplerParameterfv(m_handle, GL_TEXTURE_LOD_BIAS, &bias);
     }
 #endif
 }
@@ -149,7 +150,7 @@ void GLEAM_Sampler::setEdgePolicy(
             return;
         }
 
-        CGL33::SamplerParameteri(m_handle, d, to_enum(p));
+        gl::v33::SamplerParameteri(m_handle, d, to_enum(p));
     }
 #endif
 }
@@ -162,9 +163,9 @@ void GLEAM_Sampler::setFiltering(
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
     {
-        CGL33::SamplerParameteri(m_handle, GL_TEXTURE_MAG_FILTER, to_enum(mag));
+        gl::v33::SamplerParameteri(m_handle, GL_TEXTURE_MAG_FILTER, to_enum(mag));
 
-        CGL33::SamplerParameteri(
+        gl::v33::SamplerParameteri(
             m_handle, GL_TEXTURE_MIN_FILTER, to_enum(min, mip));
     }
 #endif
@@ -176,7 +177,7 @@ void GLEAM_Sampler::enableShadowSampler()
     if(!GLEAM_FEATURES.gles20)
     {
         i32 v = GL_COMPARE_REF_TO_TEXTURE;
-        CGL33::SamplerParameteriv(m_handle, GL_TEXTURE_COMPARE_MODE, &v);
+        gl::v33::SamplerParameteriv(m_handle, GL_TEXTURE_COMPARE_MODE, &v);
     }
 #endif
 }
@@ -193,8 +194,8 @@ STATICINLINE GLEAM_SamplerHandle SamplerPrepareTexture(
     if(m_surface->m_flags & GLEAM_API::TextureAutoMipmapped ||
        GLEAM_FEATURES.gles20)
     {
-        CGL33::TexBind(m_type, m_surface->m_handle);
-        CGL33::GenerateMipmap(m_type);
+        gl::v33::TexBind(m_type, m_surface->m_handle);
+        gl::v33::GenerateMipmap(m_type);
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)

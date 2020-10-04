@@ -18,69 +18,64 @@ namespace decompose {
 using namespace typing::vectors::decompose;
 }
 
-template<typename T, size_t Num>
-using _cbasic_tvector = typing::vectors::tvector<T, Num>;
+using typing::vectors::tmatrix;
 
-template<typename T, size_t Num>
-using _cbasic_tmatrix = typing::vectors::tmatrix<T, Num>;
-
-template<typename T, size_t NumM, size_t NumN>
-using _cbasic_tmnmatrix = typing::vectors::tmnmatrix<T, NumM, NumN>;
+using typing::vectors::tmnmatrix;
 
 template<typename T>
-using _cbasic_vec2 = typing::vectors::tvector<T, 2>;
+using tvec2 = typing::vectors::tvector<T, 2>;
 
 template<typename T>
-using _cbasic_vec3 = typing::vectors::tvector<T, 3>;
+using tvec3 = typing::vectors::tvector<T, 3>;
 
 template<typename T>
-using _cbasic_vec4 = typing::vectors::tvector<T, 4>;
+using tvec4 = typing::vectors::tvector<T, 4>;
 
 template<typename T>
-using _cbasic_quat = typing::vectors::tquaternion<T>;
+using tquat = typing::vectors::tquaternion<T>;
 
-using Vecf2 = _cbasic_vec2<scalar>;
-using Vecf3 = _cbasic_vec3<scalar>;
-using Vecf4 = _cbasic_vec4<scalar>;
+using Vecf2 = tvec2<f32>;
+using Vecf3 = tvec3<f32>;
+using Vecf4 = tvec4<f32>;
 
-using Vecd2 = _cbasic_vec2<bigscalar>;
-using Vecd3 = _cbasic_vec3<bigscalar>;
-using Vecd4 = _cbasic_vec4<bigscalar>;
+using Vecd2 = tvec2<f64>;
+using Vecd3 = tvec3<f64>;
+using Vecd4 = tvec4<f64>;
 
-using Veci2 = _cbasic_vec2<i32>;
-using Veci3 = _cbasic_vec3<i32>;
-using Veci4 = _cbasic_vec4<i32>;
+using Veci2 = tvec2<i32>;
+using Veci3 = tvec3<i32>;
+using Veci4 = tvec4<i32>;
 
-using Vecui2 = _cbasic_vec2<u32>;
-using Vecui3 = _cbasic_vec3<u32>;
-using Vecui4 = _cbasic_vec4<u32>;
+using Vecui2 = tvec2<u32>;
+using Vecui3 = tvec3<u32>;
+using Vecui4 = tvec4<u32>;
 
-using Quatf = _cbasic_quat<scalar>;
-using Quatd = _cbasic_quat<bigscalar>;
+using Quatf = tquat<f32>;
+using Quatd = tquat<f64>;
 
-using Matf2 = _cbasic_tmatrix<scalar, 2>;
-using Matf3 = _cbasic_tmatrix<scalar, 3>;
-using Matf4 = _cbasic_tmatrix<scalar, 4>;
+using Matf2 = tmatrix<f32, 2>;
+using Matf3 = tmatrix<f32, 3>;
+using Matf4 = tmatrix<f32, 4>;
 
-using Matf2_3 = _cbasic_tmnmatrix<scalar, 2, 3>;
-using Matf2_4 = _cbasic_tmnmatrix<scalar, 2, 4>;
-using Matf3_4 = _cbasic_tmnmatrix<scalar, 3, 4>;
+using Matf2_3 = tmnmatrix<f32, 2, 3>;
+using Matf2_4 = tmnmatrix<f32, 2, 4>;
+using Matf3_4 = tmnmatrix<f32, 3, 4>;
 
-using Matf3_2 = _cbasic_tmnmatrix<scalar, 3, 2>;
-using Matf4_2 = _cbasic_tmnmatrix<scalar, 4, 2>;
-using Matf4_3 = _cbasic_tmnmatrix<scalar, 4, 3>;
+using Matf3_2 = tmnmatrix<f32, 3, 2>;
+using Matf4_2 = tmnmatrix<f32, 4, 2>;
+using Matf4_3 = tmnmatrix<f32, 4, 3>;
 
-using Matd2 = _cbasic_tmatrix<bigscalar, 2>;
-using Matd3 = _cbasic_tmatrix<bigscalar, 3>;
-using Matd4 = _cbasic_tmatrix<bigscalar, 4>;
+using Matd2 = tmatrix<f64, 2>;
+using Matd3 = tmatrix<f64, 3>;
+using Matd4 = tmatrix<f64, 4>;
 
-using Matd2_3 = _cbasic_tmnmatrix<bigscalar, 2, 3>;
-using Matd2_4 = _cbasic_tmnmatrix<bigscalar, 2, 4>;
-using Matd3_4 = _cbasic_tmnmatrix<bigscalar, 3, 4>;
+using Matd2_3 = tmnmatrix<f64, 2, 3>;
+using Matd2_4 = tmnmatrix<f64, 2, 4>;
+using Matd3_4 = tmnmatrix<f64, 3, 4>;
 
-using Matd3_2 = _cbasic_tmnmatrix<bigscalar, 3, 2>;
-using Matd4_2 = _cbasic_tmnmatrix<bigscalar, 4, 2>;
-using Matd4_3 = _cbasic_tmnmatrix<bigscalar, 4, 3>;
+using Matd3_2 = tmnmatrix<f64, 3, 2>;
+using Matd4_2 = tmnmatrix<f64, 4, 2>;
+using Matd4_3 = tmnmatrix<f64, 4, 3>;
 
 } // namespace vector_types
 } // namespace typing

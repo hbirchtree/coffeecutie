@@ -100,9 +100,9 @@ struct SysInfo : SysInfoDef
 
     static info::HardwareDevice Processor();
 
-    static Vector<bigscalar> ProcessorFrequencies(bool current = false);
+    static Vector<f64> ProcessorFrequencies(bool current = false);
 
-    static bigscalar ProcessorFrequency();
+    static f64 ProcessorFrequency();
 
     static bool HasFPU();
 

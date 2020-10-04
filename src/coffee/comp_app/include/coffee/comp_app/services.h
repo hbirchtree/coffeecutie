@@ -485,6 +485,115 @@ struct GraphicsSwapControl : AppService<GraphicsSwapControl>
     virtual void            setSwapInterval(libc_types::i32 interval) = 0;
 };
 
+template<typename T>
+struct TempProvider : AppService<T>
+{
+    enum class Presence
+    {
+        Present,
+        Absent,
+    };
+
+    enum class DeviceClass
+    {
+        Default,
+        CPU,
+        GPU,
+        SOC,
+        Battery,
+        Ambient,
+        Multi,
+    };
+
+    virtual DeviceClass device() = 0;
+
+    virtual Presence sensorPresence(DeviceClass = DeviceClass::Default)
+    {
+        return Presence::Absent;
+    }
+    virtual libc_types::f32 value(DeviceClass = DeviceClass::Default)
+    {
+        return 0.f;
+    }
+};
+
+template<typename T>
+struct ClockProvider : AppService<T>
+{
+    enum class Governor
+    {
+        Powersaving,
+        Ondemand,
+        Performance,
+    };
+
+    virtual libc_types::u32 threads() = 0;
+
+    virtual Governor governor(libc_types::u32) = 0;
+    virtual libc_types::f64 frequency(libc_types::u32) = 0;
+};
+
+struct CPUTempProvider : TempProvider<CPUTempProvider>
+{
+    using type = CPUTempProvider;
+
+    virtual DeviceClass device()
+    {
+        return DeviceClass::CPU;
+    }
+};
+
+struct GPUTempProvider : TempProvider<GPUTempProvider>
+{
+    using type = GPUTempProvider;
+
+    virtual DeviceClass device()
+    {
+        return DeviceClass::GPU;
+    }
+};
+
+struct MultiTempProvider : TempProvider<MultiTempProvider>
+{
+    using type = MultiTempProvider;
+
+    virtual DeviceClass device()
+    {
+        return DeviceClass::Multi;
+    }
+};
+
+struct CPUClockProvider : ClockProvider<CPUClockProvider>
+{
+    using type = CPUClockProvider;
+};
+
+struct NetworkStatProvider : AppService<NetworkStatProvider>
+{
+    virtual libc_types::u32 received() const = 0;
+    virtual libc_types::u32 transmitted() const = 0;
+    virtual libc_types::u32 connections() const = 0;
+
+    virtual void reset_counters() = 0;
+};
+
+struct MemoryStatProvider : AppService<MemoryStatProvider>
+{
+    virtual libc_types::u32 resident() = 0;
+};
+
+struct BatteryProvider : AppService<BatteryProvider>
+{
+    enum class PowerSource
+    {
+        AC,
+        Battery,
+    };
+
+    virtual PowerSource source() = 0;
+    virtual libc_types::u16 percentage() = 0;
+};
+
 } // namespace comp_app
 
 #include "services.inl"

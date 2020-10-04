@@ -16,11 +16,11 @@ namespace ASIO {
 struct Service
 {
     Service() :
-        service(), resolver(service), resolver_udp(service)
+        service(), resolver(service), resolver_udp(service),
 #if defined(ASIO_USE_SSL)
-        ,
-        sslctxt(asio::ssl::context::sslv23)
+        sslctxt(asio::ssl::context::sslv23),
 #endif
+        statistics(MkShared<stats>())
     {
 #if defined(ASIO_USE_SSL) && !defined(COFFEE_ANDROID)
         asio::error_code ec;
@@ -41,6 +41,15 @@ struct Service
 #if defined(ASIO_USE_SSL)
     asio::ssl::context sslctxt;
 #endif
+
+    struct stats
+    {
+        u32 received = 0;
+        u32 transmitted = 0;
+        u32 sockets_created = 0;
+    };
+
+    ShPtr<stats> statistics;
 };
 
 extern ShPtr<ASIO::Service> global_service;

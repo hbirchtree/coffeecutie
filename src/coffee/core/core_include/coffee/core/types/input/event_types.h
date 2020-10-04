@@ -58,8 +58,8 @@ struct CIEvent
     u32       ts   = 0;        /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
 
-    u8     pad1;
-    uint16 pad2;
+    u8  pad1;
+    u16 pad2;
 
     STATICINLINE CIEvent Create(u32 ts, EventType t)
     {
@@ -73,7 +73,7 @@ struct CIEvent
 template<CIEvent::EventType Type>
 struct BaseEvent
 {
-    using parent_type = CIEvent;
+    using parent_type                              = CIEvent;
     static constexpr CIEvent::EventType event_type = Type;
 };
 
@@ -92,7 +92,7 @@ struct CIQuit : BaseEvent<CIEvent::QuitSign>
  */
 struct CIKeyEvent : BaseEvent<CIEvent::Keyboard>
 {
-    enum KeyModifiers : uint16
+    enum KeyModifiers : u16
     {
         NoneModifier = 0x0,
 
@@ -117,7 +117,7 @@ struct CIKeyEvent : BaseEvent<CIEvent::Keyboard>
     u32          scan = 0; /*!< System scancode*/
     KeyModifiers mod  = NoneModifier; /*!< Modifier keys*/
 
-    uint16 pad1;
+    u16 pad1;
 };
 
 /*!
@@ -176,7 +176,7 @@ struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
     ButtonModifier mod = NoneModifier; /*!< Modifier for event*/
     MouseButton    btn = NoneBtn;      /*!< Button*/
 
-    uint16 pad1;
+    u16 pad1;
 };
 
 /*!
@@ -191,8 +191,8 @@ struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
     PtF delta;   /*!< Delta for scroll*/
     u8  mod = 0; /*!< Current mouse modifiers*/
 
-    u8     pad1;
-    uint16 pad2;
+    u8  pad1;
+    u16 pad2;
 };
 
 /*!
@@ -312,7 +312,7 @@ struct CIControllerState
     } axes;
     union
     {
-        uint16 d;
+        u16 d;
         struct
         {
             /* Buttons on right */
@@ -341,7 +341,7 @@ struct CIControllerState
             bool p_right : 1;
         } e;
     } buttons;
-    uint16 pad;
+    u16 pad;
 };
 
 /*!
@@ -374,7 +374,7 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
     /*!
      * \brief Data type for event
      */
-    enum DataType : uint8
+    enum DataType : u8
     {
         Link = 0x1, /*!< Link to resource, internet or file*/
         File = 0x2, /*!< File path*/
@@ -389,8 +389,7 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
             cstring text;
         } text_data;
     };
-    PACKEDSTRUCT(
-    {
+    PACKEDSTRUCT({
         u32 size : 24; /*!< Size of data*/
         u8  type;      /*!< Event type*/
     });
@@ -416,10 +415,10 @@ struct CISensorEvent : BaseEvent<CIEvent::Sensor>
         } sivec;
         struct
         {
-            uint16 x;
-            uint16 y;
-            uint16 z;
-            uint16 w;
+            u16 x;
+            u16 y;
+            u16 z;
+            u16 w;
         } suvec;
         u64       lvalue; /*!< Integer value for input*/
         bigscalar dvalue; /*!< Floating-point value for input*/
@@ -437,9 +436,9 @@ struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
     {
         struct
         {
-            uint16 pressure;
-            uint16 finger : 15;
-            bool   pressed : 1;
+            u16  pressure;
+            u16  finger : 15;
+            bool pressed : 1;
         };
         u32 evdata;
     };
@@ -457,9 +456,9 @@ struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
     {
         struct
         {
-            uint16 pressure;
-            uint16 finger : 15;
-            bool   hover : 1;
+            u16  pressure;
+            u16  finger : 15;
+            bool hover : 1;
         };
         u32 evdata;
     };
@@ -474,9 +473,9 @@ struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
     {
         struct
         {
-            uint16 fingers;
-            i16    angle;
-            i16    dist;
+            u16 fingers;
+            i16 angle;
+            i16 dist;
         };
         u64 evdata;
     };
@@ -489,9 +488,9 @@ struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
     {
         struct
         {
-            u32    gesture_id;
-            uint16 error;
-            uint16 fingers;
+            u32 gesture_id;
+            u16 error;
+            u16 fingers;
         };
         u64 evdata;
     };
@@ -509,7 +508,7 @@ struct CITouchRotateEvent : BaseEvent<CIEvent::TouchRotate>
     scalar radians;
 };
 
-C_FLAGS(CIKeyEvent::KeyModifiers, uint16);
+C_FLAGS(CIKeyEvent::KeyModifiers, u16);
 C_FLAGS(CIMouseButtonEvent::ButtonModifier, u8);
 C_FLAGS(CIMouseButtonEvent::MouseButton, u8);
 

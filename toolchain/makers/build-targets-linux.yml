@@ -67,6 +67,9 @@ maemo:
 raspberry:
   - armhf
   - armhf$(shell)
+beaglebone:
+  - black
+  - black$(shell)
 mingw:
   - w64
 gamecube:

@@ -37,6 +37,9 @@ struct ArgumentResult
     Map<CString, u32>     switches;
     Map<CString, CString> arguments;
     Map<CString, CString> positional;
+
+    CString of(CString const& name) const;
+    CString pos(CString const& name) const;
 };
 
 struct ArgumentParser

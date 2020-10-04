@@ -7,7 +7,7 @@
 
 #include "gleam_internal_types.h"
 
-#define TEX_SQUARE_GRID_SIZE(depth) C_CAST<i32>(CMath::ceil(CMath::sqrt(depth)))
+#define TEX_SQUARE_GRID_SIZE(depth) C_CAST<u32>(CMath::ceil(CMath::sqrt(depth)))
 
 namespace Coffee {
 namespace RHI {
@@ -25,10 +25,10 @@ void surface_allocate(
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        CGL45::TexAllocEx(type, Span<CGhnd>::From(m_handle));
+        gl::v45::TexAllocEx(type, Span<CGhnd>::From(m_handle));
     else
 #endif
-        CGL33::TexAlloc(Span<CGhnd>::From(m_handle));
+        gl::v33::TexAlloc(Span<CGhnd>::From(m_handle));
 
     if(!feval(m_flags & GLEAM_API::TextureImmutable) ||
        properties::get<properties::is_compressed>(fmt))
@@ -38,10 +38,10 @@ void surface_allocate(
         //        int32 min_lev = 0;
         i32 max_lev  = C_FCAST<i32>(mips - 1);
         i32 base_lev = 0;
-        CGL33::TexBind(type, m_handle);
-        CGL33::TexParameteriv(type, GL_TEXTURE_BASE_LEVEL, &base_lev);
-        CGL33::TexParameteriv(type, GL_TEXTURE_MAX_LEVEL, &max_lev);
-        CGL33::TexBind(type, glhnd());
+        gl::v33::TexBind(type, m_handle);
+        gl::v33::TexParameteriv(type, GL_TEXTURE_BASE_LEVEL, &base_lev);
+        gl::v33::TexParameteriv(type, GL_TEXTURE_MAX_LEVEL, &max_lev);
+        gl::v33::TexBind(type, glhnd());
 #endif
     }
 }
@@ -55,7 +55,7 @@ void surface_flag(u32& m_flags, PixFmt fmt)
 
 void surface_dealloc(glhnd& m_handle)
 {
-    CGL33::TexFree(Span<CGhnd>::From(m_handle));
+    gl::v33::TexFree(Span<CGhnd>::From(m_handle));
     m_handle.release();
 }
 
@@ -76,15 +76,15 @@ Tup<u32, u32> surface_get_levels(
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
     {
-        CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &max);
-        CGL45::TexGetParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &base);
+        gl::v45::TexGetParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &max);
+        gl::v45::TexGetParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &base);
     } else
 #endif
     {
-        CGL33::TexBind(m_type, m_handle);
+        gl::v33::TexBind(m_type, m_handle);
 
-        CGL33::TexGetParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &max);
-        CGL33::TexGetParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &base);
+        gl::v33::TexGetParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &max);
+        gl::v33::TexGetParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &base);
     }
 
     return std::make_tuple(C_FCAST<u32>(base), C_FCAST<u32>(max));
@@ -105,15 +105,15 @@ void surface_set_levels(
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
     {
-        CGL45::TexParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &_max);
-        CGL45::TexParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &_base);
+        gl::v45::TexParameteriv(m_handle, GL_TEXTURE_MAX_LEVEL, &_max);
+        gl::v45::TexParameteriv(m_handle, GL_TEXTURE_BASE_LEVEL, &_base);
     } else
 #endif
     {
-        CGL33::TexBind(m_type, m_handle);
+        gl::v33::TexBind(m_type, m_handle);
 
-        CGL33::TexParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &_max);
-        CGL33::TexParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &_base);
+        gl::v33::TexParameteriv(m_type, GL_TEXTURE_MAX_LEVEL, &_max);
+        gl::v33::TexParameteriv(m_type, GL_TEXTURE_BASE_LEVEL, &_base);
     }
 #endif
 }
@@ -157,7 +157,7 @@ inline void surface_initialize(
     PixDesc const&                c,
     i32                           i)
 {
-    CGL33::TexImage2D(
+    gl::v33::TexImage2D(
         surface.m_type, i, surface.m_pixfmt, size, c.comp, c.bfmt, nullptr);
 }
 
@@ -177,7 +177,7 @@ inline void surface_initialize(
     Vector<byte_t> const&         data,
     i32                           i)
 {
-    CGL33::TexCompressedImage2D(
+    gl::v33::TexCompressedImage2D(
         surface.m_type, i, c, size, C_FCAST<i32>(data.size()), data.data());
 }
 
@@ -194,7 +194,7 @@ inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL43::TexStorage2D(
+    gl::v43::TexStorage2D(
         surface.m_type, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
 #endif
 }
@@ -212,7 +212,7 @@ inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL45::TexStorage2D(
+    gl::v45::TexStorage2D(
         surface.m_handle, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
 #endif
 }
@@ -240,7 +240,7 @@ inline void surface_initialize(
     i32                           i)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::TexImage3D(
+    gl::v33::TexImage3D(
         surface.m_type, i, surface.m_pixfmt, size, c.comp, c.bfmt, nullptr);
 #endif
 }
@@ -262,7 +262,7 @@ inline void surface_initialize(
     i32                           i)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::TexCompressedImage3D(
+    gl::v33::TexCompressedImage3D(
         surface.m_type, i, c, size, C_FCAST<i32>(data.size()), data.data());
 #endif
 }
@@ -280,7 +280,7 @@ inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL43::TexStorage3D(
+    gl::v43::TexStorage3D(
         surface.m_type, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
 #endif
 }
@@ -298,7 +298,7 @@ inline void surface_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size)
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL45::TexStorage3D(
+    gl::v45::TexStorage3D(
         surface.m_handle, C_FCAST<i32>(surface.m_mips), surface.m_pixfmt, size);
 #endif
 }
@@ -311,13 +311,15 @@ template<
 inline void surface_gles20_3d_initialize(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size, PixDesc const& c)
 {
-    i32 square_size = TEX_SQUARE_GRID_SIZE(size.depth);
+    u32 square_size = TEX_SQUARE_GRID_SIZE(size.depth);
 
-    CGL33::TexImage2D(
+    gl::v33::TexImage2D(
         surface.m_type,
         0,
         surface.m_pixfmt,
-        {square_size * size.width, square_size * size.height},
+        typing::geometry::size_2d<u32>(
+            square_size * size.width, square_size * size.height)
+            .convert<i32>(),
         c.comp,
         c.bfmt,
         nullptr);
@@ -338,7 +340,7 @@ template<u32 SurfaceQuirks, typename SizeT, typename PointT>
 inline void surface_internal_alloc(
     GLEAM_Surface<SizeT, PointT>& surface, SizeT const& size, PixCmp c)
 {
-    constexpr bool is_3d_texture = std::is_same<SizeT, Size3>::value;
+    constexpr bool is_3d_texture = std::is_same<SizeT, size_3d<i32>>::value;
     const bool     is_immutable_texture =
         feval(surface.m_flags & GLEAM_API::TextureImmutable);
 
@@ -352,7 +354,7 @@ inline void surface_internal_alloc(
     surface.m_size = size;
 
     if(!GLEAM_FEATURES.direct_state || !is_immutable_texture)
-        CGL33::TexBind(surface.m_type, surface.m_handle);
+        gl::v33::TexBind(surface.m_type, surface.m_handle);
 
     if(properties::get<properties::is_compressed>(surface.m_pixfmt))
     {
@@ -431,9 +433,9 @@ C_UNUSED(STATICINLINE void texture_swizzle(
     TexComp::tex_flag type, glhnd const& tex_hnd, PixCmp cmp, PixCmp target))
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    CGL33::TexBind(type, tex_hnd);
+    gl::v33::TexBind(type, tex_hnd);
     i32 val = C_FCAST<i32>(CGL::to_enum(target, PixFmt::None));
-    CGL33::TexParameteriv(type, to_enum_swizz(cmp), &val);
+    gl::v33::TexParameteriv(type, to_enum_swizz(cmp), &val);
 #endif
 }
 
@@ -448,8 +450,8 @@ STATICINLINE void texture_pbo_upload(
     {
         data_ptr = nullptr;
         glhnd hand(GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
-        CGL33::BufBind(buf::pixel_unpack::value, hand);
-        CGL33::BufData(
+        gl::v33::BufBind(buf::pixel_unpack::value, hand);
+        gl::v33::BufData(
             buf::pixel_unpack::value,
             BytesConst::From(data.data, pixSize),
             RSCA::WriteOnly | RSCA::Persistent);
@@ -487,14 +489,14 @@ GLEAM_Surface2D::GLEAM_Surface2D(PixFmt fmt, u32 mips, u32 texflags) :
 {
 }
 
-void GLEAM_Surface2D::allocate(Size size, PixCmp c)
+void GLEAM_Surface2D::allocate(size_type size, PixCmp c)
 {
-    detail::surface_internal_alloc<0>(*this, size, c);
+    detail::surface_internal_alloc<0>(*this, size.convert<i32>(), c);
 }
 
 void GLEAM_Surface2D::upload(
     PixDesc                     pfmt,
-    const Size&                 size,
+    size_type const&            size,
     const semantic::BytesConst& data,
     gleam_error&                ec,
     Point                       offset,
@@ -518,13 +520,13 @@ void GLEAM_Surface2D::upload(
             data_ptr);
 #endif
 
-    CGL33::TexBind(m_type, m_handle);
+    gl::v33::TexBind(m_type, m_handle);
 
     if(properties::get<properties::is_compressed>(pxfmt))
     {
         auto pflags = convert::to<PixFlg>(comp);
 
-        CGL33::TexCompressedImage2D(
+        gl::v33::TexCompressedImage2D(
             m_type,
             C_FCAST<i32>(mip),
             CompFmt(m_pixfmt, pflags, (CompFlags)(m_flags >> 10)),
@@ -538,7 +540,7 @@ void GLEAM_Surface2D::upload(
             m_size = size;
         } else
         {
-            CGL33::TexSubImage2D(
+            gl::v33::TexSubImage2D(
                 m_type,
                 C_FCAST<i32>(mip),
                 offset,
@@ -549,7 +551,7 @@ void GLEAM_Surface2D::upload(
         }
 
         if(m_flags & GLEAM_API::TextureDMABuffered)
-            CGL33::BufBind(buf::pixel::value, glhnd());
+            gl::v33::BufBind(buf::pixel::value, glhnd());
     }
 }
 
@@ -565,14 +567,15 @@ GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(
 {
 }
 
-void GLEAM_Surface3D_Base::allocate(Size3 size, PixCmp c)
+void GLEAM_Surface3D_Base::allocate(size_type size, PixCmp c)
 {
-    detail::surface_internal_alloc<detail::Dim3D_Texture>(*this, size, c);
+    detail::surface_internal_alloc<detail::Dim3D_Texture>(
+        *this, size.convert<i32>(), c);
 }
 
 void GLEAM_Surface3D_Base::upload(
     PixDesc                          pfmt,
-    Size3 const&                     size,
+    size_type const&                 size,
     semantic::BytesConst const&      data,
     Coffee::RHI::GLEAM::gleam_error& ec,
     Point3 const&                    offset,
@@ -596,7 +599,7 @@ void GLEAM_Surface3D_Base::upload(
         if(stride < size.width)
             Throw(undefined_behavior("stride is less than upload size"));
 
-        CGL33::PixelStorei(GL_UNPACK_ROW_LENGTH, stride);
+        gl::v33::PixelStorei(GL_UNPACK_ROW_LENGTH, stride);
 #else
         ec = GLEAM::APIError::UnimplementedPath;
         return;
@@ -617,13 +620,13 @@ void GLEAM_Surface3D_Base::upload(
                 data_ptr);
 
         if(!GLEAM_FEATURES.direct_state)
-            CGL33::TexBind(m_type, m_handle);
+            gl::v33::TexBind(m_type, m_handle);
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
         if(properties::get<properties::is_compressed>(pxfmt) &&
            GLEAM_FEATURES.direct_state)
         {
-            CGL45::TexCompressedSubImage3D(
+            gl::v45::TexCompressedSubImage3D(
                 m_handle,
                 mip,
                 offset,
@@ -637,14 +640,14 @@ void GLEAM_Surface3D_Base::upload(
 #if GL_VERSION_VERIFY(0x300, 0x300)
             if(properties::get<properties::is_compressed>(pxfmt))
         {
-            CGL33::TexCompressedSubImage3D(
+            gl::v33::TexCompressedSubImage3D(
                 m_type, mip, offset, size, pfmt.c, data.size, data.data);
         } else
 #endif
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
             if(GLEAM_FEATURES.direct_state)
         {
-            CGL45::TexSubImage3D(
+            gl::v45::TexSubImage3D(
                 m_handle,
                 mip,
                 offset,
@@ -655,7 +658,7 @@ void GLEAM_Surface3D_Base::upload(
         } else
 #endif
         {
-            CGL33::TexSubImage3D(
+            gl::v33::TexSubImage3D(
                 m_type,
                 mip,
                 offset,
@@ -666,14 +669,14 @@ void GLEAM_Surface3D_Base::upload(
         }
 
         if(m_flags & GLEAM_API::TextureDMABuffered)
-            CGL33::BufBind(buf::pixel_unpack::value, glhnd());
+            gl::v33::BufBind(buf::pixel_unpack::value, glhnd());
 
     } else
 #endif
     {
         // Packs all 2D textures into one 2D texture atlas, limited size
 
-        CGL33::TexBind(m_type, m_handle);
+        gl::v33::TexBind(m_type, m_handle);
 
         u32 g_size = TEX_SQUARE_GRID_SIZE(m_size.depth);
 
@@ -687,11 +690,12 @@ void GLEAM_Surface3D_Base::upload(
             mofi.x += m_size.width * x_coord + offset.x;
             mofi.y += m_size.height * y_coord + offset.y;
 
-            CGL33::TexSubImage2D(
+            gl::v33::TexSubImage2D(
                 m_type,
                 C_FCAST<i32>(mip),
                 mofi,
-                {size.width, size.height},
+                typing::geometry::size_2d(size.width, size.height)
+                    .convert<i32>(),
                 convert::to<PixCmp>(m_pixfmt),
                 fmt,
                 data.data);
@@ -700,7 +704,7 @@ void GLEAM_Surface3D_Base::upload(
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(stride != 0)
-        CGL33::PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        gl::v33::PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
 }
 
@@ -710,7 +714,7 @@ GLEAM_SurfaceCubeArray::GLEAM_SurfaceCubeArray(
 {
 }
 
-void GLEAM::GLEAM_SurfaceCubeArray::allocate(Size3 size, PixCmp c)
+void GLEAM::GLEAM_SurfaceCubeArray::allocate(size_type const& size, PixCmp c)
 {
     /* Cubemap arrays have 6x the layers */
     GLEAM_Surface3D_Base::allocate(
@@ -720,7 +724,7 @@ void GLEAM::GLEAM_SurfaceCubeArray::allocate(Size3 size, PixCmp c)
 void GLEAM::GLEAM_SurfaceCubeArray::upload(
     PixDesc const&              pfmt,
     typing::graphics::CubeFace  face,
-    Size const&                 size,
+    size_2d<i32> const&         size,
     semantic::BytesConst const& data,
     Point3 const&               offset,
     GLEAM::gleam_error&         ec,
@@ -728,7 +732,7 @@ void GLEAM::GLEAM_SurfaceCubeArray::upload(
 {
     GLEAM_Surface3D_Base::upload(
         pfmt,
-        Size3(size.w, size.h, 1),
+        size_3d<i32>(size.w, size.h, 1),
         data,
         ec,
         Point3(offset.x, offset.y, offset.z * 6 + C_CAST<u32>(face)));

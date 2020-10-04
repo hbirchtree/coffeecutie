@@ -16,6 +16,13 @@
 #define COFFEE_RASPBERRYPI
 #endif
 
+#if defined(__BEAGLEBONE__)
+#define COFFEE_BEAGLEBONE
+#if defined(__BEAGLEBONEBLACK__)
+#define COFFEE_BEAGLEBONEBLACK
+#endif
+#endif
+
 #endif
 
 /* Android: the land of oddities */

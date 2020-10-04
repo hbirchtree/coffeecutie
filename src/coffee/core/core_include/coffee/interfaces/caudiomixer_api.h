@@ -136,7 +136,7 @@ class CSoundFormat
      * \brief Number of channels in buffer
      * \return
      */
-    virtual uint16 channels() const = 0;
+    virtual u16 channels() const = 0;
     /*!
      * \brief Bit-depth of buffer data
      * \return
@@ -144,7 +144,7 @@ class CSoundFormat
     virtual u8 bitDepth() const = 0;
 
     virtual void setSamplerate(const u32& smrt)   = 0;
-    virtual void setChannels(const uint16& chans) = 0;
+    virtual void setChannels(const u16& chans) = 0;
     virtual void setBitDepth(const u8& bitd)      = 0;
 };
 

@@ -182,8 +182,8 @@ static bool InternalDraw(
     {
         if(GL_DEBUG_MODE)
         {
-            i32 elementHnd =
-                CGL::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+            i32 elementHnd = 0;
+            gl::vlow::IntegerGetv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &elementHnd);
 
             if(elementHnd == 0)
                 ec = APIError::DrawNoIndexBuffer;
@@ -206,11 +206,11 @@ static bool InternalDraw(
         if(d.instanced())
         {
             /* TODO: Implement the disabled drawcalls using other means */
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
             if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0 &&
                i.vertexOffset() != 0)
 
-                CGL43::DrawElementsInstancedBaseVertexBaseInstance(
+                gl::v42::DrawElementsInstancedBaseVertexBaseInstance(
                     mode,
                     i.elements(),
                     i.elementType(),
@@ -219,10 +219,10 @@ static bool InternalDraw(
                     i.vertexOffset(),
                     i.instanceOffset());
 #endif
-#if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
+#if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE)
             else if(GLEAM_FEATURES.draw_base_instance && i.instanceOffset() > 0)
 
-                CGL43::DrawElementsInstancedBaseInstance(
+                gl::v42::DrawElementsInstancedBaseInstance(
                     mode,
                     i.elements(),
                     i.elementType(),
@@ -232,20 +232,9 @@ static bool InternalDraw(
             else
 #endif
             {
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
+#if GL_VERSION_VERIFY(0x320, 0x320)
                 if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0)
-                    CGL33::DrawElementsInstancedBaseVertex(
-                        mode,
-                        i.elements(),
-                        i.elementType(),
-                        i.indexOffset() * elsize,
-                        i.instances(),
-                        i.vertexOffset());
-                else
-#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x320)
-                if(!GLEAM_FEATURES.gles20 && i.vertexOffset() > 0 &&
-                   GL_CURR_API >= GLES_3_2)
-                    CGL43::DrawElementsInstancedBaseVertex(
+                    gl::v33::DrawElementsInstancedBaseVertex(
                         mode,
                         i.elements(),
                         i.elementType(),
@@ -256,7 +245,7 @@ static bool InternalDraw(
 #endif
 #if GL_VERSION_VERIFY(0x310, 0x300)
                     if(!GLEAM_FEATURES.gles20)
-                    CGL33::DrawElementsInstanced(
+                    gl::v33::DrawElementsInstanced(
                         mode,
                         i.elements(),
                         i.elementType(),
@@ -264,7 +253,7 @@ static bool InternalDraw(
                         i.instances());
                 else
 #endif
-                    CGL33::DrawElements(
+                    gl::v33::DrawElements(
                         mode,
                         i.elements(),
                         i.elementType(),
@@ -272,18 +261,9 @@ static bool InternalDraw(
             }
         } else
         {
-#if GL_VERSION_VERIFY(0x320, GL_VERSION_NONE)
+#if GL_VERSION_VERIFY(0x320, 0x320)
             if(i.vertexOffset() > 0)
-                CGL33::DrawElementsBaseVertex(
-                    mode,
-                    i.elements(),
-                    i.elementType(),
-                    i.indexOffset() * elsize,
-                    i.vertexOffset());
-            else
-#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x320)
-            if(i.vertexOffset() > 0 && GL_CURR_API >= GLES_3_2)
-                CGL43::DrawElementsBaseVertex(
+                gl::v33::DrawElementsBaseVertex(
                     mode,
                     i.elements(),
                     i.elementType(),
@@ -291,7 +271,7 @@ static bool InternalDraw(
                     i.vertexOffset());
             else
 #endif
-                CGL33::DrawElements(
+                gl::v33::DrawElements(
                     mode,
                     i.elements(),
                     i.elementType(),
@@ -302,11 +282,11 @@ static bool InternalDraw(
     {
 #if GL_VERSION_VERIFY(0x310, 0x300)
         if(d.instanced())
-            CGL33::DrawArraysInstanced(
+            gl::v33::DrawArraysInstanced(
                 mode, i.vertexOffset(), i.vertices(), i.instances());
         else
 #endif
-            CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
+            gl::v33::DrawArrays(mode, i.vertexOffset(), i.vertices());
     }
 
     return true;
@@ -327,8 +307,8 @@ bool InternalMultiDraw(
     {
         if(data.dc.indexed())
         {
-            i32 elementHnd =
-                CGL::Debug::GetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+            i32 elementHnd = 0;
+            gl::vlow::IntegerGetv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &elementHnd);
 
             if(elementHnd == 0)
                 ec = APIError::DrawNoIndexBuffer;
@@ -390,14 +370,14 @@ bool InternalMultiDraw(
     }
 
     if(indexed && multi_indirect)
-        CGL43::MultiDrawElementsIndirect(
+        gl::v43::MultiDrawElementsIndirect(
             mode,
             data.etype,
             0,
             data.indirectCalls.size(),
             sizeof(data.indirectCalls[0]));
     else if(indexed && !data.dc.instanced())
-        CGL33::MultiDrawElementsBaseVertex(
+        gl::v33::MultiDrawElementsBaseVertex(
             mode,
             data.counts.data(),
             data.etype,
@@ -405,10 +385,10 @@ bool InternalMultiDraw(
             data.counts.size(),
             data.baseVertex.data());
     else if(!data.dc.indexed() && multi_indirect)
-        CGL43::MultiDrawArraysIndirect(
+        gl::v43::MultiDrawArraysIndirect(
             mode, 0, data.indirectCalls.size(), sizeof(IndirectCall));
     else if(!data.dc.indexed() && !data.dc.instanced())
-        CGL43::MultiDrawArrays(
+        gl::v33::MultiDrawArrays(
             mode,
             C_RCAST<const i32*>(data.offsets.data()),
             data.counts.data(),
@@ -440,9 +420,9 @@ static void GetInstanceUniform(
 
     if(!GLEAM_FEATURES.separable_programs)
     {
-        uloc = CGL33::UnifGetLocation(pipeline.pipelineHandle(), unifName);
+        uloc = gl::v33::UnifGetLocation(pipeline.pipelineHandle(), unifName);
     }
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x430, 0x310)
     else
     {
         auto& hnd = handle;
@@ -452,7 +432,7 @@ static void GetInstanceUniform(
                 hnd = cnt.shader->internalHandle();
 
         auto raw_uloc =
-            CGL43::ProgramGetResourceLocation(hnd, GL_UNIFORM, unifName);
+            gl::v43::ProgramGetResourceLocation(hnd, GL_UNIFORM, unifName);
 
         uloc = C_FCAST<i32>(raw_uloc);
     }
@@ -469,12 +449,12 @@ static void SetInstanceUniform(
 
     if(!GLEAM_FEATURES.separable_programs)
     {
-        CGL33::Unifiv(uloc, baseInstance_i);
+        gl::v33::Unifiv(uloc, baseInstance_i);
     }
-#if GL_VERSION_VERIFY(0x330, 0x320)
+#if GL_VERSION_VERIFY(0x410, 0x310)
     else
     {
-        CGL43::Unifiv(hnd, C_FCAST<i32>(uloc), baseInstance_i);
+        gl::v41::Unifiv(hnd, C_FCAST<i32>(uloc), baseInstance_i);
     }
 #else
     else
@@ -660,7 +640,7 @@ void GLEAM_API::MultiDraw(
 
     if(GL_DEBUG_MODE && ec)
     {
-        Debug::DebugMessage(
+        gl::common::DebugMessageInsert(
             Severity::Critical,
             debug::Type::Other,
             ec.category().message(ec.value()).c_str());
@@ -712,7 +692,7 @@ void GLEAM_API::Draw(
 
     if(GL_DEBUG_MODE && ec)
     {
-        Debug::DebugMessage(
+        gl::common::DebugMessageInsert(
             Severity::Critical,
             debug::Type::Other,
             "GLEAM context error: " + ec.message());
@@ -741,9 +721,9 @@ void GLEAM_API::DrawConditional(
 {
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
-    CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
+    gl::v33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
     Draw(pipeline, ustate, vertices, d, i, ec);
-    CGL33::ConditionalRenderEnd();
+    gl::v33::ConditionalRenderEnd();
 #endif
 }
 

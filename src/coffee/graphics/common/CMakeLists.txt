@@ -12,7 +12,7 @@ add_export ( GraphicsAPI "" )
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
-if(NOT NO_DYNAMIC_LINKING)
+if(NOT NO_DYNAMIC_LINKING AND FALSE)
     coffee_library (
         TARGET GpuQuery
         SOURCES private/query/gpu_query.cpp

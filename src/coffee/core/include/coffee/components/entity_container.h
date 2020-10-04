@@ -222,7 +222,10 @@ struct EntityContainer : non_copy
         visitors.push_back(std::move(visitor));
     }
 
-    template<typename OutputType, typename AllocType, typename... Args>
+    template<
+        typename OutputType,
+        typename AllocType = typename OutputType::type,
+        typename... Args>
     AllocType& register_subsystem_inplace(Args... args)
     {
         register_subsystem<OutputType>(

@@ -64,10 +64,13 @@ namespace glibc {
 struct Stacktracer : posix::Stacktracer
 {
     COFFEE_DISABLE_ASAN static void Backtrace(
-        typing::logging::LogInterfaceBasic log = nullptr);
+        typing::logging::LogInterfaceBasic log    = nullptr,
+        typing::logging::StackWriter       stackw = nullptr);
 
     static void ExceptionStacktrace(
-        ExceptionPtr const& exc_ptr, typing::logging::LogInterfaceBasic log);
+        ExceptionPtr const&                exc_ptr,
+        typing::logging::LogInterfaceBasic log,
+        typing::logging::StackWriter       stackw = nullptr);
 
     static CString GetFuncName_Internal(void* funcPtr);
 
@@ -81,16 +84,20 @@ struct Stacktracer : posix::Stacktracer
 } // namespace glibc
 #endif
 
-#if 0
-
-#define COFFEE_UNWIND_STACKTRACE 1
+#if defined(COFFEE_UNWIND_STACKTRACE)
 
 namespace unwind {
 
 struct Stacktracer : posix::Stacktracer
 {
+    COFFEE_DISABLE_ASAN static void Backtrace(
+        typing::logging::LogInterfaceBasic log    = nullptr,
+        typing::logging::StackWriter       stackw = nullptr);
+
     static void ExceptionStacktrace(
-        ExceptionPtr const& exc_ptr, typing::logging::LogInterfaceBasic log);
+        ExceptionPtr const&                exc_ptr,
+        typing::logging::LogInterfaceBasic log,
+        typing::logging::StackWriter       stackw = nullptr);
 };
 
 } // namespace unwind

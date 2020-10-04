@@ -143,8 +143,14 @@ struct Subsystem : SubsystemBase
     using tag_type = OutputType;
     using type     = typename OutputType::type;
 
-    virtual type const& get() const = 0;
-    virtual type&       get()       = 0;
+    virtual type const& get() const
+    {
+        Throw(implementation_error("unimplemented getter"));
+    }
+    virtual type& get()
+    {
+        Throw(implementation_error("unimplemented getter"));
+    }
 };
 
 namespace Globals {

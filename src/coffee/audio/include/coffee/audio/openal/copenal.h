@@ -192,7 +192,7 @@ struct CALhnd;
 struct CALCaptureDevice;
 using CALVersion = version<i32>;
 
-enum class CALPlaybackState : uint8
+enum class CALPlaybackState : u8
 {
     Stopped,
     Playing,
@@ -200,7 +200,7 @@ enum class CALPlaybackState : uint8
     Rewind,
 };
 
-enum class CSourceProperty : uint8
+enum class CSourceProperty : u8
 {
     Pitch,
 
@@ -232,7 +232,7 @@ enum class CSourceProperty : uint8
     BuffersProcessed,
 };
 
-enum class CDistanceModel : uint8
+enum class CDistanceModel : u8
 {
     InverseDistance         = 1,
     InverseDistanceClamped  = 2,
@@ -294,7 +294,7 @@ struct CALSource
     Vecf3   velocity;  /*!< Source velocity*/
     Vecf3   direction; /*!< Source direction vector*/
     CALhnd* handle;    /*!< AL handle*/
-    uint16  state;     /*!< Source state*/
+    u16  state;     /*!< Source state*/
 };
 
 extern CALVersion context_version(CALContext* ctxt);

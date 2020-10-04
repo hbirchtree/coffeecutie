@@ -103,15 +103,71 @@ elseif(BUILD_GLES AND NOT APPLE)
             GLESv3
             )
     else()
+        find_library ( GLESV2_LIB GLESv2 )
+
         # Elsewhere, just use GLESv2
         target_link_libraries ( GLeamCommon PUBLIC
-            GLESv2
+            ${GLESV2_LIB}
             )
     endif()
 
     if(MAEMO)
         target_link_libraries ( GLeamCommon PUBLIC
             IMGegl
+            )
+    endif()
+    if(BEAGLE)
+        set ( BEAGLE_SUFFIXES
+            lib
+            lib/${CMAKE_LIBRARY_ARCHITECTURE}
+            )
+
+        find_library ( IMGEGL_LIB IMGegl
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+        find_library ( SRVUM_LIB srv_um
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+        find_library ( DRMOMAP_LIB
+            NAMES drm_omap libdrm_omap.so.1
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+        find_library ( DRM_LIB
+            NAMES drm libdrm.so.2
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+        find_library ( WLSERVER_LIB
+            NAMES wayland-server  libwayland-server.so.0
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+        find_library ( WLCLIENT_LIB
+            NAMES wayland-client libwayland-client.so.0
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+        find_library ( FFI_LIB
+            NAMES ffi libffi.so.6
+            PATH_SUFFIXES ${BEAGLE_SUFFIXES}
+            PATHS
+            ${DEB_SYSROOT}/usr
+            )
+
+        target_link_libraries ( GLeamCommon PUBLIC
+            ${IMGEGL_LIB} ${SRVUM_LIB}
+            ${DRMOMAP_LIB} ${WLSERVER_LIB} ${WLCLIENT_LIB}
+
+            ${DRM_LIB} ${FFI_LIB}
             )
     endif()
 elseif(APPLE AND IOS)

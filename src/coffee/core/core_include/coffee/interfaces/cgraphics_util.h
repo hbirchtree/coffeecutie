@@ -194,7 +194,7 @@ FORCEDINLINE bool LoadTexture(
     Stb::Img tex_src;
     if(Stb::LoadData(&tex_src, tex_rsc))
     {
-        Size3 tex_size = {tex_src.size.w, tex_src.size.h, 1};
+        size_3d<i32> tex_size(tex_src.size.w, tex_src.size.h, 1);
 
         typename GFX::ERROR ec;
         surface.upload(

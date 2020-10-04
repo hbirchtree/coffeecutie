@@ -3,6 +3,10 @@
 #include <peripherals/stl/functional_types.h>
 #include <platforms/pimpl_state.h>
 
+#if defined(COFFEE_UNIXPLAT)
+#include <pthread.h>
+#endif
+
 using ::type_safety::remove_cvref_t;
 
 namespace stl_types {
@@ -37,11 +41,11 @@ STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
         castablePtr = ptr.get();
     }
 
-    C_PTR_CHECK(castablePtr);
+    C_PTR_CHECK(castablePtr)
 
     auto threadNames = C_DCAST<ThreadNames>(castablePtr);
 
-    C_PTR_CHECK(threadNames);
+    C_PTR_CHECK(threadNames)
 
     return *threadNames;
 }

@@ -317,4 +317,24 @@ void GraphicsSwapControls::setSwapInterval(libc_types::i32 interval)
     }
 }
 
+void Windowing::load(entity_container& e, comp_app::app_error&)
+{
+    m_container = &e;
+}
+
+comp_app::size_2d_t Windowing::size() const
+{
+    return m_container->service<GraphicsFramebuffer>()->size();
+}
+
+comp_app::detail::WindowState Windowing::state() const
+{
+    using W = comp_app::detail::WindowState;
+    return W::Maximized | W::FullScreen | W::Focused | W::Undecorated;
+}
+
+void Windowing::setState(comp_app::detail::WindowState)
+{
+}
+
 } // namespace egl

@@ -47,7 +47,7 @@ struct _cbasic_mesh
         u32                    attr_index;
     };
 
-    using AttributeType_t = uint16;
+    using AttributeType_t = u16;
 
     _cbasic_mesh(bool referenced) : referenced_attributes(referenced)
     {

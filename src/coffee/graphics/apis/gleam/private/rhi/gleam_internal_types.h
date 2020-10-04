@@ -11,15 +11,6 @@ namespace Coffee {
 namespace RHI {
 namespace GLEAM {
 
-#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x300)
-using CGL33 = CGL::CGLES30;
-using CGL43 = CGL::CGLES32;
-using CGL45 = CGL::CGLES32;
-#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-using CGL33 = CGL::CGLES20;
-using CGL43 = CGL::CGLES20;
-#endif
-
 using namespace CGL;
 
 extern UqPtr<GLEAM_DataStore> m_store;
@@ -54,7 +45,7 @@ struct GLEAM_Instance_Data
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
         for(auto const& pbo : pboQueue.buffers)
-            CGL33::BufFree(pbo.buf);
+            gl::vlow::BufFree(pbo.buf);
 #endif
     }
 

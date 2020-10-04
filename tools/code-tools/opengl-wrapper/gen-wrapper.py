@@ -104,7 +104,7 @@ for cmd in sorted(list(commands.keys())):
         continue
 
     # Translate command name and return type, simply
-    cmd_obj.ret_type = translate_type(cmd_obj.ret_type)
+    cmd_obj.ret_type = translate_type(cmd_obj.ret_type, cmd_obj.name)
     cmd_obj.name = translate_cmd_name(cmd_obj.name)
             
     # Translate argument types
@@ -148,7 +148,8 @@ def gen_feature_bucket(bucket):
         if b == 'GLVER_99':
             continue
 
-        version_name = 'CGL_' + b.replace('GLVER_', '').replace('GLESVER_', '')
+        is_es = 'GLESVER_' in b
+        version_name = 'v' + b.replace('GLVER_', '').replace('GLESVER_', '') + ('es' if is_es else '')
 
         print('template<typename ReqVer>')
         print('struct %s' % version_name)
@@ -190,19 +191,21 @@ print('#pragma clang diagnostic push')
 print('#pragma clang diagnostic ignored "-Wpointer-bool-conversion"')
 print('#endif')
 print()
-print('namespace Coffee{')
-print('namespace CGL{')
+print('namespace glwrap {')
+print('using namespace Coffee::CGL;')
+print()
 print('#if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)')
 gen_feature_bucket(version_buckets)
-print('#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)')
-gen_feature_bucket(version_buckets_es)
 print('#endif')
+gen_feature_bucket(version_buckets_es)
 
+print()
+print("namespace ext {")
 
 for b in sorted(list(buckets)):
     print('#if defined(%s) && %s' % (b, b))
     print('template<typename ReqVer>')
-    print('struct CGL_%s' % b[3:])
+    print('struct %s' % b[3:])
     print('{')
     
     for cmd in buckets[b]:
@@ -212,11 +215,14 @@ for b in sorted(list(buckets)):
     print('#endif // %s' % b)
     print()
 
-print('} // CGL')
-print('} // Coffee')
+print()
+print("} // ext")
+
+print('} // glwrap')
 print()
 print('#if defined(COFFEE_GCC)')
 print('#pragma GCC diagnostic pop')
 print('#elif defined(COFFEE_CLANG)')
 print('#pragma clang diagnostic pop')
 print('#endif')
+

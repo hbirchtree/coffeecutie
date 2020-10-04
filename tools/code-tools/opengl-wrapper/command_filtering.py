@@ -8,36 +8,36 @@ CONST_EXTRACT_RGX = r'^(const )?(.*)$'
 
 # Mapping of GL types
 TYPE_MAP = {
-    'GLubyte': 'u8',
-    'GLbyte': 'i8',
-    'GLushort': 'u16',
-    'GLshort': 'i16',
-    'GLbitfield': 'u32',
-    'GLuint': 'u32',
-    'GLint': 'i32',
-    'GLuint64': 'u64',
-    'GLuint64EXT': 'u64',
-    'GLint64': 'i64',
+    'GLubyte': 'libc_types::u8',
+    'GLbyte': 'libc_types::i8',
+    'GLushort': 'libc_types::u16',
+    'GLshort': 'libc_types::i16',
+    'GLbitfield': 'libc_types::u32',
+    'GLuint': 'libc_types::u32',
+    'GLint': 'libc_types::i32',
+    'GLuint64': 'libc_types::u64',
+    'GLuint64EXT': 'libc_types::u64',
+    'GLint64': 'libc_types::i64',
     
-    'GLsizei': 'i32',
-    'GLsizeiptr': 'ptroff',
-    'GLintptr': 'ptroff',
+    'GLsizei': 'libc_types::i32',
+    'GLsizeiptr': 'libc_types::ptroff',
+    'GLintptr': 'libc_types::ptroff',
     
-    'GLfloat': 'scalar',
-    'GLdouble': 'bigscalar',
-    'GLboolean': 'u8',
+    'GLfloat': 'libc_types::f32',
+    'GLdouble': 'libc_types::f64',
+    'GLboolean': 'libc_types::u8',
 
-    'const GLchar *': 'cstring ',
-    'GLchar *': 'cstring_w ',
-    'void *': 'c_ptr',
-    'const void *': 'c_cptr ',
+    'const GLchar *': 'libc_types::cstring ',
+    'GLchar *': 'libc_types::cstring_w ',
+    'void *': 'libc_types::c_ptr',
+    'const void *': 'libc_types::c_cptr ',
 
-    'GLiptr': 'ptroff'
+    'GLiptr': 'libc_types::ptroff'
 }
 #
 
 class GLBaseType:
-    def __init__(self, type_name='i32', is_const=False):
+    def __init__(self, type_name='libc_types::i32', is_const=False):
         self.type_name = type_name
         self.is_const = is_const
 
@@ -55,17 +55,21 @@ class GLBaseType:
         return ('const ' if self.is_const else '') + self.type_name
 
 class GLBaseTypes:
-    GLenum = GLBaseType(type_name='i32')
-    GLfloat = GLBaseType(type_name='scalar')
-    GLint = GLBaseType(type_name='i32')
+    GLenum = GLBaseType(type_name='libc_types::i32')
+    GLfloat = GLBaseType(type_name='libc_types::f32')
+    GLint = GLBaseType(type_name='libc_types::i32')
 
 # Translate base types of possibly composite types
-def translate_type(gl_type):
+def translate_type(gl_type, command_name = None):
+    if command_name is not None and 'GetString' in command_name:
+        gl_type = GLBaseType(TYPE_MAP['const GLchar *'])
+        return gl_type
+
     if gl_type.is_base():
         if gl_type.type_name in TYPE_MAP:
             gl_type.type_name = TYPE_MAP[gl_type.type_name]
     else:
-        translate_type(gl_type.base_type)
+        translate_type(gl_type.base_type, command_name)
 
     return gl_type
 
@@ -100,7 +104,7 @@ class GLType:
 
     @staticmethod
     def recursive_type(tuple_info):
-        if type(tuple_info[2]) == GLBaseType:
+        if isinstance(tuple_info[2], GLBaseType):
             return GLType(is_const=tuple_info[0],
                     is_ptr=tuple_info[1],
                     base_type=tuple_info[2])
@@ -114,7 +118,7 @@ class GLType:
         out = GLType()
         declaration = get_types(type_string)
 
-        if type(declaration) == GLBaseType:
+        if isinstance(declaration, GLBaseType):
             out.base_type = declaration
         else:
             out = GLType.recursive_type(declaration)
@@ -371,6 +375,7 @@ class ArgumentTransform:
         self.args_consumed = [None for x in range(len(args))]
         self.cmd_inputs = [None for x in range(len(args))]
         self.function_parameters = [None for x in range(len(args))]
+        self.return_type = None
 
     def consume(self, arg):
         self.args_consumed += [arg]
@@ -410,9 +415,9 @@ class ArgumentTransform:
         if arg1 is not None and arg2 is not None:
             self.consume(arg1)
             self.consume(arg2)
-            argument_type = 'Bytes'
+            argument_type = 'semantic::Bytes'
             if 'const' in arg1.atype.underlying_type():
-                argument_type = 'BytesConst'
+                argument_type = 'semantic::BytesConst'
             self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, '%s.data' % arg1.name))
             self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'C_FCAST<%s>(%s.size)' % (arg2.atype, arg1.name)))
             self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('%s const&' % argument_type)))
@@ -425,12 +430,12 @@ class ArgumentTransform:
             self.consume(arg2)
             self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'to_enum(%s)' % arg2.name))
             if arg1.group == 'PixelFormat':
-                self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'to_enum(%s, PixFmt::None)' % arg1.name))
-                self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('PixCmp')))
+                self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'to_enum(%s, typing::pixels::PixFmt::None)' % arg1.name))
+                self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('typing::PixCmp')))
             else:
                 self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'to_enum(%s)' % arg1.name))
-                self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('PixFmt')))
-            self.emit_function_param(arg2, InArgExp(arg2.name, GLBaseType('BitFmt')))
+                self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('typing::pixels::PixFmt')))
+            self.emit_function_param(arg2, InArgExp(arg2.name, GLBaseType('typing::pixels::BitFmt')))
 
         # Using BitFmt and TypeEnum
 
@@ -450,20 +455,44 @@ class ArgumentTransform:
             if unif_info:
                 unif_info = unif_info[0]
                 if unif_info[0] == 'Matrix':
-                    span_type = 'Mat'
+                    span_type = 'typing::vector_types::Mat'
                 else:
-                    span_type = 'Vec'
+                    span_type = 'typing::vector_types::Vec'
                 span_type += unif_info[3]
                 span_type += unif_info[1].replace('x', '_')
                 
             self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_RCAST<%s*>(%s.data)' % (arg1.atype.base_type, arg1.name)))
             self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'C_FCAST<%s>(%s.elements)' % (arg2.atype, arg1.name)))
-            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('Span<%s> const&' % span_type)))
+            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('semantic::Span<%s> const&' % span_type)))
 
-        # For *Alloc/*Free functions, use a Span<T>, this check is thorough
-        if 'Alloc' in self.cmd_name or 'Free' in self.cmd_name:
-            arg1 = self.find_by_name('n')
-            arg1 = self.find_by_name('count') if arg1 is None else arg1
+        arg1 = self.find_by_name('x') or self.find_by_name('v0')
+        arg2 = self.find_by_name('y') or self.find_by_name('v1')
+        arg3 = self.find_by_name('z') or self.find_by_name('v2')
+        arg4 = self.find_by_name('w') or self.find_by_name('v3')
+
+        if arg1 is not None and arg2 is not None:
+            self.consume(arg1)
+            self.consume(arg2)
+
+            vec_template = 'typing::vectors::tvector<%s, %s>'
+            vec_base = str(arg1.atype.base_type)
+
+            vec_type = vec_template % (vec_base, 2)
+            if arg3 is not None:
+                vec_type = vec_template % (vec_base, 3)
+                self.consume(arg4)
+                self.emit_command_input(arg3, InArgExp(arg1.name, arg1.atype, '%s[2]' % arg1.name))
+            if arg4 is not None:
+                vec_type = vec_template % (vec_base, 4)
+                self.consume(arg4)
+                self.emit_command_input(arg4, InArgExp(arg1.name, arg1.atype, '%s[3]' % arg1.name))
+            self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, '%s[0]' % arg1.name))
+            self.emit_command_input(arg2, InArgExp(arg1.name, arg1.atype, '%s[1]' % arg1.name))
+            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType(vec_type)))
+
+        # For passing N IDs to a function, use Span<T>
+        if 'Alloc' in self.cmd_name or 'Free' in self.cmd_name or 'Arrayv' in self.cmd_name or 'Debug' in self.cmd_name:
+            arg1 = self.find_by_name('n') or self.find_by_name('count')
 
             try:
                 arg2 = self.args[self.args.index(arg1) + 1]
@@ -475,12 +504,14 @@ class ArgumentTransform:
             if arg2 is not None and \
                     arg1 is not None and \
                     arg1.atype.base_type.is_base() and \
-                    arg1.atype.base_type.type_name in ['ptroff', 'i32']:
+                    arg1.atype.base_type.type_name in ['libc_types::ptroff', 'libc_types::i32']:
                 self.consume(arg1)
                 self.consume(arg2)
+
                 self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_FCAST<%s>(%s.elements)' % (arg1.atype, arg2.name)))
                 self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, '%s.data' % arg2.name))
-                self.emit_function_param(arg2, InArgExp(arg2.name, GLBaseType('Span<%s> const&' % arg2.atype.base_type)))
+                self.emit_function_param(arg2, InArgExp(arg2.name, GLBaseType('semantic::Span<%s>&&' % arg2.atype.base_type)))
+
 
         arg1 = self.find_by_name('width')
         arg2 = self.find_by_name('height')
@@ -491,39 +522,39 @@ class ArgumentTransform:
             self.consume(arg1)
             self.consume(arg2)
 
-            arg_base = 'size' if self.find_by_name('size') is None else arg1.name
+            arg_base = 'size' if self.find_by_name('size') is not None else arg1.name
             
             if arg3 is not None:
                 self.consume(arg3)
                 self.emit_command_input(arg1, InArgExp(arg_base, arg1.atype, '%s.width' % arg_base))
                 self.emit_command_input(arg2, InArgExp(arg_base, arg1.atype, '%s.height' % arg_base))
                 self.emit_command_input(arg3, InArgExp(arg_base, arg1.atype, '%s.depth' % arg_base))
-                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('Size3 const&')))
+                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('typing::geometry::size_3d<libc_types::i32> const&')))
             else:
                 self.emit_command_input(arg1, InArgExp(arg_base, arg1.atype, '%s.w' % arg_base))
                 self.emit_command_input(arg2, InArgExp(arg_base, arg1.atype, '%s.h' % arg_base))
-                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('Size const&')))
+                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('typing::geometry::size_2d<libc_types::i32> const&')))
 
-        arg1 = self.find_by_name('xoffset')
-        arg2 = self.find_by_name('yoffset')
+        arg1 = self.find_by_name('xoffset') or self.find_by_name('x')
+        arg2 = self.find_by_name('yoffset') or self.find_by_name('y')
         arg3 = self.find_by_name('zoffset')
  
-        if arg1 is not None and arg2 is not None:
+        if arg1 is not None and arg2 is not None and 'i32' in str(arg1.atype.base_type):
             self.consume(arg1)
             self.consume(arg2)
 
-            arg_base = 'offset' if self.find_by_name('offset') is None else arg1.name
+            arg_base = 'offset' if self.find_by_name('offset') is not None else arg1.name
 
             if arg3 is not None:
                 self.consume(arg3)
                 self.emit_command_input(arg1, InArgExp(arg_base, arg1.atype, '%s.x' % arg_base))
                 self.emit_command_input(arg2, InArgExp(arg_base, arg1.atype, '%s.y' % arg_base))
                 self.emit_command_input(arg3, InArgExp(arg_base, arg1.atype, '%s.z' % arg_base))
-                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('Point3 const&')))
+                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('typing::geometry::point_3d<libc_types::i32> const&')))
             else:
                 self.emit_command_input(arg1, InArgExp(arg_base, arg1.atype, '%s.x' % arg_base))
                 self.emit_command_input(arg2, InArgExp(arg_base, arg1.atype, '%s.y' % arg_base))
-                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('Point const&')))
+                self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('typing::geometry::point_2d<libc_types::i32> const&')))
 
         arg1 = self.find_by_name('red')
         arg2 = self.find_by_name('green')
@@ -541,7 +572,7 @@ class ArgumentTransform:
             self.emit_command_input(arg2, InArgExp(arg_base, arg2.atype, '%s.g()' % arg_base))
             self.emit_command_input(arg3, InArgExp(arg_base, arg3.atype, '%s.b()' % arg_base))
             self.emit_command_input(arg4, InArgExp(arg_base, arg4.atype, '%s.a()' % arg_base))
-            self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('_cbasic_vec4<%s> const&' % arg1.atype)))
+            self.emit_function_param(arg1, InArgExp(arg_base, GLBaseType('typing::vectors::tvector<%s,4> const&' % arg1.atype)))
  
         arg1 = None
         arg2 = None
@@ -561,14 +592,14 @@ class ArgumentTransform:
                     enum_idx = 2
 
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'to_enum%s(%s)' % (enum_idx, arg.name)))
-                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('RSCA')))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('semantic::RSCA')))
                 self.consume(arg)
             elif arg.name == 'border' and 'Tex' in self.cmd_name:
                 # Remove the border argument for texture functions
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, '0'))
                 self.consume(arg)
-            elif arg.name in ['texture', 'buffer', 'sampler', 'vaobj', 'array', 'program', 'shader', 'pipeline'] and str(arg.atype) == 'u32':
-                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'C_OCAST<u32>(%s)' % arg.name))
+            elif arg.name in ['texture', 'buffer', 'framebuffer', 'renderbuffer', 'sampler', 'vaobj', 'array', 'program', 'shader', 'pipeline', 'id'] and str(arg.atype) == 'libc_types::u32':
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'C_OCAST<libc_types::u32>(%s)' % arg.name))
                 self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('glhnd const&')))
                 self.consume(arg)
             elif arg.group == 'EnableCap':
@@ -598,18 +629,18 @@ class ArgumentTransform:
             elif arg.group == 'InternalFormat' and 'Compressed' not in self.cmd_name:
                 # Replace GLenum internalformat with PixFmt for Tex* functions
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'to_enum(%s)' % arg.name))
-                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('PixFmt')))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('typing::pixels::PixFmt')))
                 self.consume(arg)
             elif arg.group == 'InternalFormat' and 'Compressed' in self.cmd_name:
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype,
                     'to_enum(%s.base_fmt, %s.p_flags, %s.c_flags)' % (arg.name, arg.name, arg.name)))
-                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('CompFmt')))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('typing::pixels::CompFmt')))
                 self.consume(arg)
             elif arg.group == 'PixelFormat' and 'Compressed' in self.cmd_name:
                 # Compressed formats have more information for the PixFmt
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype,
                     'to_enum(%s.base_fmt, %s.p_flags, %s.c_flags)' % (arg.name, arg.name, arg.name)))
-                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('CompFmt')))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('typing::pixels::CompFmt')))
                 self.consume(arg) 
             elif arg.group == 'PrimitiveType' and arg.name == 'mode': # there's a bug in the spec for this!
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'to_enum(%s.t, %s.c)' % (arg.name, arg.name)))
@@ -624,11 +655,11 @@ class ArgumentTransform:
                 self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('Delay')))
                 self.consume(arg)
             elif 'Draw' in self.cmd_name and arg.name in ['indirect', 'indices'] and '*' in str(arg.atype):
-                self.remap_type(arg, GLBaseType('uintptr'), 'C_RCAST<%s>(%s)' % (arg.atype, arg.name))
+                self.remap_type(arg, GLBaseType('libc_types::uintptr'), 'C_RCAST<%s>(%s)' % (arg.atype, arg.name))
             elif arg.atype.is_ptr and arg.name == 'value' and not arg.atype.is_base():
                 # Use Span<T> on 'T* value' arguments
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, '%s.data' % arg.name))
-                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('Span<%s> const&' % (arg.atype.base_type,))))
+                self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('semantic::Span<%s> const&' % (arg.atype.base_type,))))
                 self.consume(arg)
             elif arg.group == 'TextureTarget':
                 self.emit_command_input(arg, InArgExp(arg.name, arg.atype, 'texture_to_enum(%s)' % arg.name))

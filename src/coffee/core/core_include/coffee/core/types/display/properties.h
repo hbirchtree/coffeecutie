@@ -19,7 +19,7 @@ struct Properties
     {
     }
 
-    enum State : uint16
+    enum State : u16
     {
         FullScreen         = 0x001, /*!< Exclusive fullscreen mode*/
         WindowedFullScreen = 0x002, /*!< Windowed fullscreen mode*/
@@ -49,10 +49,10 @@ struct Properties
     Window*        window;  /*!< If applicable, contains data about a window*/
     Size           size;    /*!< Size of window*/
     State          flags;   /*!< Window flags*/
-    uint16         monitor; /*!< Monitor to use with fullscreen*/
+    u16         monitor; /*!< Monitor to use with fullscreen*/
 };
 
-C_FLAGS(Properties::State, uint16);
+C_FLAGS(Properties::State, u16);
 
 extern Properties GetDefaultVisual(
     const i32& ctxtMajorVer, const i32& ctxtMinorVer);

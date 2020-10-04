@@ -77,34 +77,34 @@ struct gl_version_at_least_ver
 #define GL_EXTENSION_REQ(extname) /* Intentionally empty */
 
 /* -- Danger zone -- */
-#define GLVER_10 gl_ver_t<1, 0>
-#define GLVER_11 gl_ver_t<1, 0>
-#define GLVER_12 gl_ver_t<1, 0>
-#define GLVER_13 gl_ver_t<1, 0>
-#define GLVER_14 gl_ver_t<1, 0>
-#define GLVER_15 gl_ver_t<1, 0>
-#define GLVER_20 gl_ver_t<2, 0>
-#define GLVER_21 gl_ver_t<2, 1>
+#define GLVER_10 Coffee::CGL::gl_ver_t<1, 0>
+#define GLVER_11 Coffee::CGL::gl_ver_t<1, 0>
+#define GLVER_12 Coffee::CGL::gl_ver_t<1, 0>
+#define GLVER_13 Coffee::CGL::gl_ver_t<1, 0>
+#define GLVER_14 Coffee::CGL::gl_ver_t<1, 0>
+#define GLVER_15 Coffee::CGL::gl_ver_t<1, 0>
+#define GLVER_20 Coffee::CGL::gl_ver_t<2, 0>
+#define GLVER_21 Coffee::CGL::gl_ver_t<2, 1>
 
 /* Standardized OpenGL versions */
 
-#define GLVER_30 gl_ver_t<3, 0>
-#define GLVER_31 gl_ver_t<3, 1>
-#define GLVER_32 gl_ver_t<3, 2>
-#define GLVER_33 gl_ver_t<3, 3>
-#define GLVER_40 gl_ver_t<4, 0>
-#define GLVER_41 gl_ver_t<4, 1>
-#define GLVER_42 gl_ver_t<4, 2>
-#define GLVER_43 gl_ver_t<4, 3>
-#define GLVER_44 gl_ver_t<4, 4>
-#define GLVER_45 gl_ver_t<4, 5>
-#define GLVER_46 gl_ver_t<4, 6>
+#define GLVER_30 Coffee::CGL::gl_ver_t<3, 0>
+#define GLVER_31 Coffee::CGL::gl_ver_t<3, 1>
+#define GLVER_32 Coffee::CGL::gl_ver_t<3, 2>
+#define GLVER_33 Coffee::CGL::gl_ver_t<3, 3>
+#define GLVER_40 Coffee::CGL::gl_ver_t<4, 0>
+#define GLVER_41 Coffee::CGL::gl_ver_t<4, 1>
+#define GLVER_42 Coffee::CGL::gl_ver_t<4, 2>
+#define GLVER_43 Coffee::CGL::gl_ver_t<4, 3>
+#define GLVER_44 Coffee::CGL::gl_ver_t<4, 4>
+#define GLVER_45 Coffee::CGL::gl_ver_t<4, 5>
+#define GLVER_46 Coffee::CGL::gl_ver_t<4, 6>
 
 /* OpenGL ES versions */
-#define GLESVER_20 gl_ver_t<2, 0, true>
-#define GLESVER_30 gl_ver_t<3, 0, true>
-#define GLESVER_31 gl_ver_t<3, 1, true>
-#define GLESVER_32 gl_ver_t<3, 2, true>
+#define GLESVER_20 Coffee::CGL::gl_ver_t<2, 0, true>
+#define GLESVER_30 Coffee::CGL::gl_ver_t<3, 0, true>
+#define GLESVER_31 Coffee::CGL::gl_ver_t<3, 1, true>
+#define GLESVER_32 Coffee::CGL::gl_ver_t<3, 2, true>
 
 #define GL_EXT_CHECK(name, ext_name)                        \
     bool name##Supported(Debug::Context& c)                 \

@@ -28,6 +28,8 @@
 #include <system_error>
 #include <type_traits>
 
+#include <tinyutf8.h>
+
 #if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
 #include <optional>
 #endif
@@ -42,6 +44,10 @@ using namespace type_safety;
 
 using CString  = std::string; /*!< Typical string object */
 using CWString = std::wstring;
+
+using String   = CString;
+using WString  = CWString;
+using U8String = tiny_utf8::utf8_string;
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Mutex

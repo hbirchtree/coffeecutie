@@ -89,3 +89,13 @@ gamecube.*:
 (ubuntu.amd64|osx).*:
   +cmake-opts:
     - -DBUILD_DISCORD_RPC=ON
+
+.*beaglebone.*:
+  +cmake-opts:
+    - -DBUILD_GLES=ON
+    - -DBUILD_GLES_20=ON
+    - -DBUILD_OPENAL=OFF
+    - -DBUILD_OPENSSL=OFF
+    - -DBUILD_SDL2=OFF
+    - -DBUILD_EGL=ON
+

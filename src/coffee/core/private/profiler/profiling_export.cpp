@@ -245,6 +245,32 @@ STATICINLINE void PutRuntimeInfo(
             alloc);
     }
 
+    if constexpr(compile_info::platform::is_linux)
+    {
+        build.AddMember(
+            "libcRuntime",
+            FromString(compile_info::linux_::libc_runtime, alloc),
+            alloc);
+
+        if constexpr(compile_info::linux_::glibc::major != 0)
+        {
+            build.AddMember(
+                "libcVersion",
+                FromString(cast_pod(compile_info::linux_::glibc::major) +
+                               "." +
+                               cast_pod(compile_info::linux_::glibc::minor),
+                           alloc),
+                alloc);
+        } else if constexpr(compile_info::linux_::libcpp::version != 0)
+        {
+            build.AddMember(
+                "libcVersion",
+                FromString(cast_pod(compile_info::linux_::libcpp::version),
+                           alloc),
+                alloc);
+        }
+    }
+
     target.AddMember("build", build, alloc);
 
     JSON::Object runtime;
@@ -271,6 +297,11 @@ STATICINLINE void PutRuntimeInfo(
         "kernelVersion",
         FromString(
             platform::info::device::system::runtime_kernel_version(), alloc),
+        alloc);
+    runtime.AddMember(
+        "libcVersion",
+        FromString(platform::info::device::system::runtime_libc_version(),
+                   alloc),
         alloc);
 
     auto cwd = Env::CurrentDir();

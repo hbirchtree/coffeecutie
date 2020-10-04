@@ -81,7 +81,9 @@ struct StacktracerDef
     }
 
     static void ExceptionStacktrace(
-        ExceptionPtr const& exc, typing::logging::LogInterfaceBasic)
+        ExceptionPtr const& exc,
+        typing::logging::LogInterfaceBasic,
+        typing::logging::StackWriter = nullptr)
     {
         try
         {

@@ -64,7 +64,8 @@ i32 crash_main(i32, cstring_w*)
         cOutputPrint("No program specified");
         cOutputPrint(" - Specify CRASH_API to submit reports");
         cOutputPrint(" - Specify CRASH_APITRACE to enable apitrace");
-        cOutputPrint(" - Specify CRASH_WORKING_DIR to change working directory of child");
+        cOutputPrint(" - Specify CRASH_WORKING_DIR to change working directory "
+                     "of child");
         return -1;
     }
 
@@ -79,7 +80,7 @@ i32 crash_main(i32, cstring_w*)
         apitrace_args.push_back(platform::Env::GetVar("CRASH_APITRACE"));
         apitrace_args.push_back("trace");
 
-        for(auto it=apitrace_args.rbegin(); it != apitrace_args.rend(); ++it)
+        for(auto it = apitrace_args.rbegin(); it != apitrace_args.rend(); ++it)
             args.insert(args.begin(), C_CCAST<cstring_w>(it->c_str()));
     }
 
@@ -98,9 +99,9 @@ i32 crash_main(i32, cstring_w*)
     auto spawnInfo = posix::proc::spawn<char*>({args.at(0), args, workingDir});
 
     posix::fd::close(STDIN_FILENO, ec);
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK(ec)
     posix::fd::replace_fd(spawnInfo.in, STDIN_FILENO, ec);
-    C_ERROR_CHECK(ec);
+    C_ERROR_CHECK(ec)
 
     Vector<pollfd> handles(2);
 
@@ -131,8 +132,8 @@ i32 crash_main(i32, cstring_w*)
 
                     if(len < buf->size())
                         fprintf(
-                            buf == &stdoutBuf ? stdout : stderr, 
-                            "%s", 
+                            buf == &stdoutBuf ? stdout : stderr,
+                            "%s",
                             &buf->at(len));
                 }
 
@@ -165,11 +166,9 @@ i32 crash_main(i32, cstring_w*)
 
     using Coffee::JSON;
 
-    cstring const multipartTerminator = "-------CrashRecovery\r\n";
-    CString       multipartData;
+    http::multipart::builder multipart("-------CrashRecovery");
 
-    Url profileLocation;
-    Url machineProfileLocation;
+    Url profileLocation, machineProfileLocation, stacktraceLocation;
 
     {
         auto appNameIdx = stdoutBuf.find(",");
@@ -186,50 +185,61 @@ i32 crash_main(i32, cstring_w*)
                     (DirFun::Basename(args.at(0), fec).internUrl +
                      "-chrome.json"),
                 semantic::RSCA::TempFile);
+            stacktraceLocation = MkUrl(
+                platform::url::Path("..") + Path(appName) + "stacktrace.json",
+                semantic::RSCA::TempFile);
         }
     }
 
     if(platform::file::FileFun::Exists(profileLocation, fec))
     {
         cDebug("Located profile: {0}", *profileLocation);
-        multipartData += multipartTerminator;
-        multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
-                         "form-data; name=\"profile\"\r\n\r\n";
         auto profileResource = Resource(profileLocation);
-        auto profileData     = C_OCAST<Bytes>(profileResource);
-        multipartData.insert(
-            multipartData.end(), profileData.begin(), profileData.end());
-        multipartData += http::line_separator;
+
+        multipart.add(
+            "profile",
+            C_OCAST<Bytes>(profileResource),
+            {{"Content-Type", "text/plain"}});
     }
 
     if(platform::file::FileFun::Exists(machineProfileLocation, fec))
     {
         cDebug("Located machine profile: {0}", *machineProfileLocation);
-        multipartData += multipartTerminator;
-        multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
-                         "form-data; name=\"machineProfile\"\r\n\r\n";
         auto machineProfile = Resource(machineProfileLocation);
-        auto machineData     = C_OCAST<Bytes>(machineProfile);
-        multipartData.insert(
-            multipartData.end(), machineData.begin(), machineData.end());
-        multipartData += http::line_separator;
+
+        multipart.add(
+            "machineProfile",
+            C_OCAST<Bytes>(machineProfile),
+            {{"Content-Type", "text/plain"}});
     }
 
-    multipartData += multipartTerminator;
-    multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
-                     "form-data; name=\"exitCode\"\r\n\r\n";
-    multipartData += Strings::to_string(exitCode) + http::line_separator;
-    multipartData += multipartTerminator;
-    multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
-                     "form-data; name=\"stdout\"\r\n\r\n";
-    multipartData += stdoutBuf;
-    multipartData += multipartTerminator;
-    multipartData += "Content-Type: text/plain\r\nContent-Disposition: "
-                     "form-data; name=\"stderr\"\r\n\r\n";
-    multipartData += stderrBuf;
-    multipartData += "-------CrashRecovery--\r\n\r\n";
+    if(platform::file::FileFun::Exists(stacktraceLocation, fec))
+    {
+        cDebug("Located crash stacktrace: {0}", *stacktraceLocation);
+        auto stacktrace = Resource(stacktraceLocation);
 
-    cDebug("Payload: {0} bytes", multipartData.size());
+        multipart.add(
+            "stacktrace",
+            C_OCAST<Bytes>(stacktrace),
+            {{"Content-Type", "text/plain"}});
+    }
+
+    multipart.add(
+        "exitCode",
+        Bytes::CreateString(cast_pod(exitCode)),
+        {{"Content-Type", "text/plain"}});
+    multipart.add(
+        "stdout",
+        Bytes::CreateString(stdoutBuf),
+        {{"Content-Type", "text/plain"}});
+    multipart.add(
+        "stderr",
+        Bytes::CreateString(stderrBuf),
+        {{"Content-Type", "text/plain"}});
+
+    multipart.finalize();
+
+    cDebug("Payload: {0} bytes", multipart.m_data.size());
 
     auto worker = ASIO::GenWorker();
 
@@ -242,13 +252,23 @@ i32 crash_main(i32, cstring_w*)
 
     if(!crashPush.push(
            http::method_t::post,
-           Bytes::From(multipartData.data(), multipartData.size())))
+           Bytes::From(multipart.m_data.data(), multipart.m_data.size())))
     {
+        auto responseData = crashPush.data();
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());
+        cWarning("{0}", CString(responseData.begin(), responseData.end()));
     } else
     {
         auto responseData = crashPush.data();
         cDebug("{0}", CString(responseData.begin(), responseData.end()));
+
+        auto const& headers = crashPush.response().header.standard_fields;
+
+        if(auto loc = headers.find(http::header_field::location);
+           loc != headers.end())
+        {
+            cDebug(" >> Crash report available at: {0}", loc->second);
+        }
     }
 
     worker->stop();

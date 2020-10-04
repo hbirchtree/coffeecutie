@@ -10,7 +10,7 @@
 add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
 
-if(BUILD_GRAPHICS_COMMON AND NOT NO_DYNAMIC_LINKING)
+if(BUILD_GRAPHICS_COMMON AND NOT NO_DYNAMIC_LINKING AND FALSE)
     add_subdirectory (core/gpu-query)
 endif()
 

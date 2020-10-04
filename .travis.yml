@@ -20,6 +20,7 @@ env:
   - BUILDVARIANT=android.armv7a.v27
   - BUILDVARIANT=android.armv8a.v27
   - BUILDVARIANT=android.armv8a.v29
+  - BUILDVARIANT=beaglebone.black
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
   - BUILDVARIANT=gamecube
@@ -43,6 +44,8 @@ matrix:
     env: BUILDVARIANT=android.armv8a.v27
   - os: osx
     env: BUILDVARIANT=android.armv8a.v29
+  - os: osx
+    env: BUILDVARIANT=beaglebone.black
   - os: osx
     env: BUILDVARIANT=emscripten.wasm
   - os: osx

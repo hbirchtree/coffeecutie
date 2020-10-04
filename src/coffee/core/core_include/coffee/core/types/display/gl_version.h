@@ -11,7 +11,7 @@ namespace GL {
 /*!
  * \brief GL context version
  */
-struct Version : public version<u8>
+struct Version : public version<i32>
 {
     Version()
     {

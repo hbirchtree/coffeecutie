@@ -71,10 +71,23 @@ struct GraphicsSwapControls : comp_app::GraphicsSwapControl,
     entity_container* m_container;
 };
 
+struct Windowing : comp_app::StaticWindowing, comp_app::AppLoadableService
+{
+    void load(entity_container &e, comp_app::app_error &ec);
+
+    comp_app::size_2d_t size() const final;
+    comp_app::detail::WindowState state() const final;
+    void setState(comp_app::detail::WindowState) final;
+
+  private:
+    entity_container* m_container;
+};
+
 using Services = comp_app::detail::TypeList<
     DisplayHandle,
     GraphicsContext,
     GraphicsFramebuffer,
-    GraphicsSwapControls>;
+    GraphicsSwapControls,
+    comp_app::PtrNativeWindowInfo>;
 
 } // namespace egl

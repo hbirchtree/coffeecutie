@@ -125,7 +125,7 @@ class GLCommand:
        self.ret_type, self.name,
        arguments_to_string(self.args) if function_arguments is None else function_arguments,
        self.ptr_check(),
-       'return ' if self.returns_value() else '',
+       'return (%s)' % self.ret_type if self.returns_value() else '',
        self.original_name,
        arguments_to_string(self.args, False) if command_arguments is None else command_arguments
        )

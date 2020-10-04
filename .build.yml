@@ -39,6 +39,8 @@ platforms:
   - .
   raspberry:
   - armhf
+  beaglebone:
+  - .
   testing:
   - linux
   ubuntu:

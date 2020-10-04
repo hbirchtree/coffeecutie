@@ -22,7 +22,7 @@ function ( DEPENDENCY_GET )
     endif()
 
     if("${DEP_EXTENSION}" STREQUAL "")
-        set ( DEP_EXTENSION "tar.gz" )
+        set ( DEP_EXTENSION "tar.bz2" )
         if(WIN32 AND NOT MINGW)
             set ( DEP_EXTENSION "zip" )
         endif()

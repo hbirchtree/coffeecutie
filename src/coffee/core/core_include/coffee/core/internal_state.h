@@ -45,6 +45,12 @@ extern P<InternalThreadState> CreateNewThreadState();
  * \param state
  */
 extern void SetInternalState(P<InternalState> state);
+
+/*!
+ * \brief Clear all stored states
+ */
+extern void ClearStates();
+
 /*!
  * \brief Get the current state object pointer.
  * This should always be handled as opaque.

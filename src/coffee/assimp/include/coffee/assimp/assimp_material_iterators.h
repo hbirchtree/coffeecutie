@@ -18,7 +18,7 @@ struct MaterialParser
 {
     struct MaterialCollection;
 
-    using Vech2 = _cbasic_vec2<i16>;
+    using Vech2 = typing::vector_types::tvec2<i16>;
 
     enum PropertyClass : u16
     {

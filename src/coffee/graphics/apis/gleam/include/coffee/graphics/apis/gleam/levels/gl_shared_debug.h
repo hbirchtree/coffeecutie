@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gl_shared_enum_convert.h"
+#include "../gl_versions.h"
 
 #include <coffee/core/base.h>
 #include <coffee/core/string_ops.h>
@@ -149,12 +149,11 @@ struct CGL_Shared_Debug
         C_UNUSED(debug::Severity s), C_UNUSED(bool enabled))
     {
 #if GL_VERSION_VERIFY(0x330, 0x320)
-        glDebugMessageControl(
+        gl::v43::DebugMessageControl(
             GL_DONT_CARE,
             GL_DONT_CARE,
             to_enum(s),
-            0,
-            nullptr,
+            {},
             (enabled) ? GL_TRUE : GL_FALSE);
 #endif
     }
@@ -167,43 +166,45 @@ struct CGL_Shared_Debug
 #endif
     }
 
-    STATICINLINE void SetDebugGroup(C_UNUSED(cstring n), C_UNUSED(u32 id) = 0)
-    {
-#if GL_VERSION_VERIFY(0x330, 0x320)
-        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, id, -1, n);
-#endif
-    }
-    STATICINLINE void UnsetDebugGroup()
-    {
-#if GL_VERSION_VERIFY(0x330, 0x320)
-        glPopDebugGroup();
-#endif
-    }
+    //    STATICINLINE void SetDebugGroup(C_UNUSED(cstring n), C_UNUSED(u32 id)
+    //    = 0)
+    //    {
+    //#if GL_VERSION_VERIFY(0x330, 0x320)
+    //        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, id, -1, n);
+    //#endif
+    //    }
+    //    STATICINLINE void UnsetDebugGroup()
+    //    {
+    //#if GL_VERSION_VERIFY(0x330, 0x320)
+    //        glPopDebugGroup();
+    //#endif
+    //    }
 
-    STATICINLINE void DebugMessage(
-        debug::Severity s, debug::Type t, CString const& n)
-    {
-        DebugMessage(s, t, n.c_str());
-    }
+    //    STATICINLINE void DebugMessage(
+    //        debug::Severity s, debug::Type t, CString const& n)
+    //    {
+    //        DebugMessage(s, t, n.c_str());
+    //    }
 
-    STATICINLINE void DebugMessage(
-        C_UNUSED(debug::Severity s),
-        C_UNUSED(debug::Type t),
-        C_UNUSED(cstring n))
-    {
-#if GL_VERSION_VERIFY(0x330, 0x320)
-        glDebugMessageInsert(
-            GL_DEBUG_SOURCE_APPLICATION, to_enum(t), 0, to_enum(s), -1, n);
-#endif
-    }
+    //    STATICINLINE void DebugMessage(
+    //        C_UNUSED(debug::Severity s),
+    //        C_UNUSED(debug::Type t),
+    //        C_UNUSED(cstring n))
+    //    {
+    //#if GL_VERSION_VERIFY(0x330, 0x320)
+    //        glDebugMessageInsert(
+    //            GL_DEBUG_SOURCE_APPLICATION, to_enum(t), 0, to_enum(s), -1,
+    //            n);
+    //#endif
+    //    }
 
-    STATICINLINE void DebugSetCallback(
-        C_UNUSED(CGcallback c), C_UNUSED(void* param))
-    {
-#if GL_VERSION_VERIFY(0x330, 0x320)
-        glDebugMessageCallback(c, param);
-#endif
-    }
+    //    STATICINLINE void DebugSetCallback(
+    //        C_UNUSED(CGcallback c), C_UNUSED(void* param))
+    //    {
+    //#if GL_VERSION_VERIFY(0x330, 0x320)
+    //        glDebugMessageCallback(c, param);
+    //#endif
+    //    }
 
     /* Extensions */
 
@@ -239,9 +240,12 @@ struct CGL_Shared_Debug
 
     STATICINLINE void InitCompressedFormats(Context& ctxt)
     {
-        ctxt.internalFormats.resize(
-            C_FCAST<u32>(GetInteger(GL_NUM_COMPRESSED_TEXTURE_FORMATS)));
-        GetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, ctxt.internalFormats.data());
+        i32 size = 0;
+        gl::vlow::IntegerGetv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &size);
+
+        ctxt.internalFormats.resize(C_FCAST<u32>(size));
+        gl::vlow::IntegerGetv(
+            GL_COMPRESSED_TEXTURE_FORMATS, ctxt.internalFormats.data());
     }
 
     C_DEPRECATED
@@ -261,168 +265,33 @@ struct CGL_Shared_Debug
     }
     STATICINLINE Size InternalFormatMaxResolution2D()
     {
-        Size sz;
-        sz.w = sz.h = GetInteger(GL_MAX_TEXTURE_SIZE);
-        return sz;
+        size_2d<i32> sz;
+        gl::vlow::IntegerGetv(GL_MAX_TEXTURE_SIZE, &sz.w);
+        sz.h = sz.w;
+        return sz.convert<u32>();
     }
 
     /* GetString */
 
-    STATICINLINE cstring GetString(CGenum e)
-    {
-        return C_RCAST<cstring>(glGetString(e));
-    }
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    STATICINLINE cstring GetStringi(CGenum e, uint32 i)
-    {
-        return (cstring)glGetStringi(e, i);
-    }
-#endif
+    //    STATICINLINE cstring GetString(CGenum e)
+    //    {
+    //        return C_RCAST<cstring>(glGetString(e));
+    //    }
+    //#if GL_VERSION_VERIFY(0x300, 0x300)
+    //    STATICINLINE cstring GetStringi(CGenum e, u32 i)
+    //    {
+    //        return (cstring)glGetStringi(e, i);
+    //    }
+    //#endif
 
     /* Get*v */
 
     STATICINLINE Size GetViewport()
     {
         rect<i32> r;
-        GetIntegerv(GL_VIEWPORT, r.data);
+        gl::vlow::IntegerGetv(GL_VIEWPORT, r.data);
         return r.convert<u32>().size();
     }
-
-    STATICINLINE void GetIntegerv(CGenum e, i32* v)
-    {
-        glGetIntegerv(e, v);
-    }
-    STATICINLINE i32 GetInteger(CGenum e)
-    {
-        i32 i = 0;
-        glGetIntegerv(e, &i);
-        return i;
-    }
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    STATICINLINE int64 GetIntegerLL(CGenum e)
-    {
-        int64 i = 0;
-        glGetInteger64v(e, &i);
-        return i;
-    }
-#endif
-
-    STATICINLINE scalar GetScalar(CGenum e)
-    {
-        scalar i = 0.f;
-        glGetFloatv(e, &i);
-        return i;
-    }
-
-    STATICINLINE bool GetBooleanv(CGenum e)
-    {
-        GLboolean i = GL_FALSE;
-        glGetBooleanv(e, &i);
-        return i == GL_TRUE;
-    }
-
-        /* Get*i_v */
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    STATICINLINE int32 GetIntegerI(CGenum e, uint32 i)
-    {
-        int32 v = 0;
-        glGetIntegeri_v(e, i, &v);
-        return v;
-    }
-
-    STATICINLINE int64 GetIntegerLLI(CGenum e, uint32 i)
-    {
-        int64 v = 0;
-        glGetInteger64i_v(e, i, &v);
-        return v;
-    }
-#endif
-
-    /* Object validity */
-
-    STATICINLINE
-    bool IsBuffer(CGhnd h)
-    {
-        return glIsBuffer(h) == GL_TRUE;
-    }
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    STATICINLINE
-    bool IsVAO(CGhnd h)
-    {
-        return glIsVertexArray(h) == GL_TRUE;
-    }
-#endif
-
-    STATICINLINE
-    bool IsFramebuffer(CGhnd h)
-    {
-        return glIsFramebuffer(h) == GL_TRUE;
-    }
-    STATICINLINE
-    bool IsRenderbuffer(CGhnd h)
-    {
-        return glIsRenderbuffer(h) == GL_TRUE;
-    }
-
-    STATICINLINE
-    bool IsShader(CGhnd h)
-    {
-        return glIsShader(h) == GL_TRUE;
-    }
-    STATICINLINE
-    bool IsProgram(CGhnd h)
-    {
-        return glIsProgram(h) == GL_TRUE;
-    }
-
-    STATICINLINE
-    bool IsTexture(CGhnd h)
-    {
-        return glIsTexture(h) == GL_TRUE;
-    }
-
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    STATICINLINE
-    bool IsSampler(CGhnd h)
-    {
-        return glIsSampler(h) == GL_TRUE;
-    }
-
-    STATICINLINE
-    bool IsSync(CGsync h)
-    {
-        return glIsSync((GLsync)h) == GL_TRUE;
-    }
-    STATICINLINE
-    bool IsQuery(CGhnd h)
-    {
-        return glIsQuery(h) == GL_TRUE;
-    }
-
-    STATICINLINE
-    bool IsXF(CGhnd h)
-    {
-        return glIsTransformFeedback(h) == GL_TRUE;
-    }
-
-#if GL_VERSION_VERIFY(0x330, 0x310)
-    STATICINLINE
-    bool IsPipeline(CGhnd h)
-    {
-        return glIsProgramPipeline(h) == GL_TRUE;
-    }
-
-#endif
-#if GL_VERSION_VERIFY(0x330, 0x320)
-    /* IsEnabled */
-    STATICINLINE
-    bool IsEnabledi(Feature f, int32 i)
-    {
-        return glIsEnabledi(to_enum(f), i) == GL_TRUE;
-    }
-#endif
-
-#endif
 };
 
 } // namespace CGL

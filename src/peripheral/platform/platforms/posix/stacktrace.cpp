@@ -55,7 +55,7 @@ StacktracerDef::Stacktrace Stacktracer::GetRawStackframes(
 {
     Stacktrace t;
 #ifndef COFFEE_LOWFAT
-#if defined(COFFEE_USE_UNWIND)
+#if defined(COFFEE_USE_UNWIND) && 0
     if(!unwind_context)
     {
         unwind_context = new unw_context_t;
@@ -212,7 +212,7 @@ STATICINLINE CString DemangleBacktrace(char* sym)
 }
 
 COFFEE_DISABLE_ASAN void Stacktracer::Backtrace(
-    typing::logging::LogInterfaceBasic log)
+    typing::logging::LogInterfaceBasic log, typing::logging::StackWriter stackw)
 {
     static constexpr szptr MAX_CONTEXT = 21;
     static void*           tracestore[MAX_CONTEXT];
@@ -237,16 +237,19 @@ COFFEE_DISABLE_ASAN void Stacktracer::Backtrace(
             if(syms[i])
             {
                 DefaultedPrint(log, " >> " + DemangleBacktrace(syms[i]));
-            } else
-                DefaultedPrint(
-                    log, " >> " + Stacktracer::DemangleSymbol(syms[i]));
+
+                if(stackw)
+                    stackw(DemangleBacktrace(syms[i]), "0x0");
+            }
         }
         free(syms);
     }
 }
 
 void Stacktracer::ExceptionStacktrace(
-    const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
+    const ExceptionPtr&                exc_ptr,
+    typing::logging::LogInterfaceBasic log,
+    typing::logging::StackWriter       stackw)
 {
     try
     {
@@ -264,19 +267,20 @@ void Stacktracer::ExceptionStacktrace(
             log,
             " >> " + Stacktracer::DemangleSymbol(typeid(e).name()) + ": " +
                 e.what());
-        Backtrace(log);
+
+        Backtrace(log, stackw);
     }
 }
 
 CString Stacktracer::GetFuncName_Internal(void* funcPtr)
 {
-    auto funcName = backtrace_symbols(&funcPtr, 1);
+    auto func_name = backtrace_symbols(&funcPtr, 1);
 
-    if(!funcName)
+    if(!func_name)
         return {};
 
-    CString out = DemangleBacktrace(funcName[0]);
-    free(funcName);
+    CString out = DemangleBacktrace(func_name[0]);
+    free(func_name);
 
     return out;
 }
@@ -287,8 +291,56 @@ CString Stacktracer::GetFuncName_Internal(void* funcPtr)
 #if defined(COFFEE_UNWIND_STACKTRACE)
 namespace unwind {
 
+void Stacktracer::Backtrace(
+    typing::logging::LogInterfaceBasic log, typing::logging::StackWriter stackw)
+{
+    if(!log)
+        return;
+
+    if(libc::io::terminal::interactive())
+        DefaultedPrint(
+            log,
+            str::transform::multiply('-', libc::io::terminal::size().first));
+
+    DefaultedPrint(log, "dumping stacktrace:");
+
+    unw_context_t context;
+    unw_cursor_t  cursor;
+
+    unw_getcontext(&context);
+    unw_init_local(&cursor, &context);
+
+    while(unw_step(&cursor) > 0)
+    {
+        unw_word_t offset, pc, sp, eh_base;
+        unw_get_reg(&cursor, UNW_REG_IP, &pc);
+        unw_get_reg(&cursor, UNW_REG_SP, &sp);
+        unw_get_reg(&cursor, UNW_REG_EH, &eh_base);
+        if(pc == 0)
+            break;
+
+        CString func_name = str::transform::multiply('\0', 0xFF);
+
+        if(unw_get_proc_name(
+               &cursor, func_name.data(), func_name.size(), &offset) == 0)
+        {
+            auto frame_name      = Stacktracer::DemangleSymbol(func_name);
+            auto program_counter = "0x" + stl_types::str::print::pointerify(pc);
+
+            DefaultedPrint(
+                log,
+                " >> exec(" + frame_name + " + 0) [0x" + program_counter + "]");
+
+            if(stackw)
+                stackw(frame_name, program_counter);
+        }
+    }
+}
+
 void Stacktracer::ExceptionStacktrace(
-    const ExceptionPtr& exc_ptr, typing::logging::LogInterfaceBasic log)
+    const ExceptionPtr&                exc_ptr,
+    typing::logging::LogInterfaceBasic log,
+    typing::logging::StackWriter       stackw)
 {
     try
     {
@@ -308,29 +360,7 @@ void Stacktracer::ExceptionStacktrace(
             " >> " + Stacktracer::DemangleSymbol(typeid(e).name()) + ": " +
                 e.what());
 
-        DefaultedPrint(log, "dumping stacktrace:");
-
-        unw_context_t context;
-        unw_cursor_t  cursor;
-
-        unw_getcontext(&context);
-        unw_init_local(&cursor, &context);
-
-        while(unw_step(&cursor) > 0)
-        {
-            unw_word_t offset, pc;
-            unw_get_reg(&cursor, UNW_REG_IP, &pc);
-            if(pc == 0)
-                break;
-
-            CString func_name(255);
-
-            if(unw_get_proc_name(
-                   &cursor, func_name.data(), func_name.size(), &offset) == 0)
-            {
-                DefaultedPrint(log, " >> " + func_name);
-            }
-        }
+        Backtrace(log, stackw);
     }
 }
 

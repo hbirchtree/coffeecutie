@@ -92,8 +92,7 @@ FORCEDINLINE std::basic_string<CharType> reverse(
 template<typename CharT>
 FORCEDINLINE std::basic_string<CharT> multiply(CharT character, size_t num)
 {
-    std::basic_string<CharT> out;
-    return out.insert(0, num, character);
+    return std::basic_string<CharT>(num, character);
 }
 } // namespace transform
 

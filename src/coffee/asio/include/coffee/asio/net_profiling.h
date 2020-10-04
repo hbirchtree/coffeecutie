@@ -12,14 +12,15 @@ namespace Net {
  */
 extern void ProfilingExport();
 
-#if !defined(COFFEE_MACOS) && !defined(COFFEE_WINDOWS)
-NO_DISCARD extern int RegisterProfiling();
-#else
+NO_DISCARD extern int RegisterProfilingAtExit();
+
 NO_DISCARD inline auto RegisterProfiling()
 {
-    return libc::signal::scope_exit_handler<ProfilingExport>();
+    if constexpr(!compile_info::platform::custom_exit)
+        return libc::signal::scope_exit_handler<ProfilingExport>();
+    else
+        return RegisterProfilingAtExit();
 }
-#endif
 
 } // namespace Net
 } // namespace Coffee

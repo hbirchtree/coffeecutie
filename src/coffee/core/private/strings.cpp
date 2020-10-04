@@ -71,7 +71,8 @@ template<
     typename is_pod<T>::type* = nullptr
 
     >
-static inline CString vector_to_string(_cbasic_tvector<T, num> const& value)
+static inline CString vector_to_string(
+    typing::vectors::tvector<T, num> const& value)
 {
     CString out;
 
@@ -98,7 +99,8 @@ template<
     typename std::is_pod<T>::type* = nullptr
 
     >
-static inline CString matrix_to_string(_cbasic_tmatrix<T, num> const& value)
+static inline CString matrix_to_string(
+    typing::vectors::tmatrix<T, num> const& value)
 {
     CString out;
 

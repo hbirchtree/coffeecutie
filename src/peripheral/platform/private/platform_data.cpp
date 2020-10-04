@@ -17,6 +17,10 @@
 #include <peripherals/stl/string_casting.h>
 #endif
 
+#if defined(__GLIBC__)
+#include <gnu/libc-version.h>
+#endif
+
 using namespace ::stl_types;
 
 namespace platform {
@@ -306,6 +310,15 @@ CString system::runtime_distro_version()
         return {};
 #else
     return {};
+#endif
+}
+
+CString system::runtime_libc_version()
+{
+#if defined(__GLIBC__)
+    return gnu_get_libc_version();
+#else
+    return "0";
 #endif
 }
 

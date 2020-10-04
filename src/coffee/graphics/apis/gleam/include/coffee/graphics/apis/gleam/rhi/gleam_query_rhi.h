@@ -18,7 +18,7 @@ struct GLEAM_Query
     void alloc();
     void dealloc();
 
-    u32          m_handle;
+    glhnd          m_handle;
     query::flags m_type;
 };
 

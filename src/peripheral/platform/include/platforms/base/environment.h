@@ -181,12 +181,12 @@ enum CmdColor_t : u8
 
 struct EnvColorCodes
 {
-    using CmdFormat = uint16;
+    using CmdFormat = u16;
     using CmdColor  = CmdColor::CmdColor_t;
 
     STATICINLINE CmdFormat CombineFormat(u8 fg, u8 bg)
     {
-        return static_cast<uint16>(fg + (bg << 8));
+        return static_cast<u16>(fg + (bg << 8));
     }
 
     STATICINLINE CString& ColorText(CString& text, CmdFormat)

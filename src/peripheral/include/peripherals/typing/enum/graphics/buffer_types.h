@@ -66,7 +66,7 @@ struct buf_basetype
         value = BaseType | Modifiers
     };
 
-    FORCEDINLINE operator buf_flag()
+    explicit FORCEDINLINE operator buf_flag()
     {
         return value;
     }

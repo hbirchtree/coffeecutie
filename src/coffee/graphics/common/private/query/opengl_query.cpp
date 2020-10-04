@@ -15,9 +15,13 @@ bool HasExtension(C_UNUSED(Coffee::CString const& ext_name))
     using namespace CGL;
 
 #if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
-    for(auto i : Range<i32>(Debug::GetInteger(GL_NUM_EXTENSIONS)))
-        if(Debug::GetStringi(GL_EXTENSIONS, C_FCAST<u32>(i)) == ext_name)
+    i32 num = 0;
+    gl::vlow::IntegerGetv(GL_NUM_EXTENSIONS, &num);
+    for(auto i : Range<i32>(num))
+    {
+        if(gl::vlow::GetStringi(GL_EXTENSIONS, C_FCAST<u32>(i)) == ext_name)
             return true;
+    }
 #endif
 
     return false;
@@ -30,9 +34,9 @@ Coffee::GpuInfo::GpuQueryInterface GetQuery()
 
     using MemStat = GpuInfo::MemStatus;
 
-    using GL = CGL_20<GLVER_20>;
+    using GL = gl::vlow;
 
-    if(!glGetString || !GL::GetString(GL_VERSION))
+    if(!GL::GetString(GL_VERSION))
         return {};
 
     return {[]() {
@@ -49,12 +53,12 @@ Coffee::GpuInfo::GpuQueryInterface GetQuery()
                 {
                     i32 total, dedic, freem;
 
-                    total = Debug::GetInteger(
-                        GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX);
-                    freem = Debug::GetInteger(
-                        GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX);
-                    dedic =
-                        Debug::GetInteger(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX);
+                    gl::vlow::IntegerGetv(
+                        GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total);
+                    gl::vlow::IntegerGetv(
+                        GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &freem);
+                    gl::vlow::IntegerGetv(
+                        GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &dedic);
 
                     out.free  = C_FCAST<u32>(freem);
                     out.total = C_FCAST<u32>(total);

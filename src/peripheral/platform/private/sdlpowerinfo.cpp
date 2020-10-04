@@ -23,17 +23,17 @@ bool _SDLPowerInfo::HasBattery()
            state != SDL_POWERSTATE_UNKNOWN;
 }
 
-uint16 _SDLPowerInfo::BatteryPercentage()
+u16 _SDLPowerInfo::BatteryPercentage()
 {
     int prct;
     SDL_GetPowerInfo(nullptr, &prct);
-    return (prct >= 0) ? prct : 0;
+    return (prct >= 0) ? C_FCAST<u16>(prct) : 0;
 }
-uint32 _SDLPowerInfo::BatteryLifetime()
+u32 _SDLPowerInfo::BatteryLifetime()
 {
     int time;
     SDL_GetPowerInfo(&time, nullptr);
-    return (time >= 0) ? time / 60 : 0;
+    return (time >= 0) ? C_FCAST<u32>(time / 60) : 0;
 }
 
 } // namespace env

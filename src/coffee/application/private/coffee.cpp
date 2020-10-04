@@ -214,6 +214,7 @@ i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         }
     }
 
+    InstallStacktraceWriter();
     /* Must be created before ThreadState, but after internal state */
     if constexpr(compile_info::profiler::enabled)
         State::SwapState("jsonProfiler", profiling::json::CreateProfiler());
@@ -352,7 +353,7 @@ void CoffeeTerminate()
     if constexpr(compile_info::lowfat_mode)
         return;
 
-#if MODE_DEBUG && defined(COFFEE_LINUX)
+#if MODE_DEBUG && defined(COFFEE_LINUX) && 0
     /* Do runtime leak checks for POSIX resources,
      *  useful when debugging resource APIs */
 
@@ -404,7 +405,7 @@ void GotoApplicationDir()
     file::DirFun::ChDir(constructors::MkUrl(dir), ec);
 }
 
-#if COFFEE_GLIBC_STACKTRACE
+#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
 void generic_stacktrace(int sig)
 {
     using semantic::debug::Severity;
@@ -419,6 +420,16 @@ void generic_stacktrace(int sig)
 
     posix::proc::send_sig(getpid(), libc::signal::sig::kill);
 }
+
+static FileFun::FileHandle stack_file;
+void                       stack_writer(CString const& frame, CString const& ip)
+{
+    auto out = Strings::fmt(R"({"frame": "{0}", "ip": "{1}"},)", frame, ip);
+    file_error ec;
+    FileFun::Write(stack_file, Bytes::CreateString(out.c_str()), ec);
+    C_ERROR_CHECK(ec)
+}
+
 #endif
 
 void InstallDefaultSigHandlers()
@@ -426,11 +437,13 @@ void InstallDefaultSigHandlers()
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
-            std::current_exception(), typing::logging::fprintf_logger);
-        abort();
+            std::current_exception(),
+            typing::logging::fprintf_logger,
+            stack_writer);
+        libc::signal::exit(libc::signal::sig::abort);
     });
 
-#if COFFEE_GLIBC_STACKTRACE
+#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
     platform::env::Stacktracer::Backtrace();
 
     libc::signal::install(libc::signal::sig::abort, generic_stacktrace);
@@ -438,7 +451,35 @@ void InstallDefaultSigHandlers()
     libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
     libc::signal::install(libc::signal::sig::bus_error, generic_stacktrace);
     libc::signal::install(libc::signal::sig::segfault, generic_stacktrace);
+
+    libc::signal::install(libc::signal::sig::interrupt, [](i32)
+                          {
+                              CoffeeTerminate();
+                              libc::signal::exit(libc::signal::sig::interrupt);
+                          });
 #endif
+#endif
+}
+
+void InstallStacktraceWriter()
+{
+#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
+    using namespace platform::url::constructors;
+    file_error ec;
+    stack_file = FileFun::Open(
+        "stacktrace.json"_tmp,
+        RSCA::Append | RSCA::WriteOnly | RSCA::NewFile,
+        ec);
+    C_ERROR_CHECK(ec)
+    FileFun::Truncate("stacktrace.json"_tmp, 0, ec);
+    FileFun::Write(stack_file, Bytes::CreateString("["), ec);
+    C_ERROR_CHECK(ec)
+
+    libc::signal::register_atexit([]() {
+        file_error ec;
+        FileFun::Write(stack_file, Bytes::CreateString("{}]"), ec);
+        FileFun::Close(std::move(stack_file), ec);
+    });
 #endif
 }
 

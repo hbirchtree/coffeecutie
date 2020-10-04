@@ -80,6 +80,7 @@ enum class header_field : u8
     content_length,
     content_location,
     content_type,
+    date,
     expect,
     host,
     location,
@@ -204,6 +205,8 @@ struct header_t
     u16       code; /*!< response-only */
     version_t version;
     method_t  method;
+
+    u32 padding;
 };
 
 using payload_t = std::vector<char>;
@@ -275,6 +278,8 @@ inline plain_string field(header_field f)
         return "Content-Location";
     case header_field::content_type:
         return "Content-Type";
+    case header_field::date:
+        return "Date";
     case header_field::expect:
         return "Expect";
     case header_field::host:
@@ -393,6 +398,8 @@ inline header_field field(string const& f)
         return header_field::content_location;
     if(util::strings::iequals(f, "Content-Type"))
         return header_field::content_type;
+    if(util::strings::iequals(f, "Date"))
+        return header_field::date;
     if(util::strings::iequals(f, "Expect"))
         return header_field::expect;
     if(util::strings::iequals(f, "Host"))
@@ -427,6 +434,32 @@ inline method_t method(string const& v)
         return method_t::update;
 
     return method_t::get;
+}
+
+inline http::content_type content_type(string const& v)
+{
+    using c = http::content_type;
+
+    if(v == "*/*")
+        return c::any;
+
+    if(v == "text/plain")
+        return c::text;
+    if(v == "application/json")
+        return c::json;
+    if(v == "application/xml")
+        return c::xml;
+
+    if(v == "application/octet-stream")
+        return c::octet_stream;
+    if(v.substr(0, 6) == "audio/")
+        return c::audio;
+    if(v.substr(0, 6) == "image/")
+        return c::image;
+    if(v.substr(0, 6) == "video/")
+        return c::video;
+
+    return c::any;
 }
 } // namespace from_string
 
@@ -582,8 +615,6 @@ inline header_t& response_line(header_t& h, std::istream& s)
 template<typename T>
 inline szptr response_line(header_t& h, semantic::mem_chunk<T> const& buf)
 {
-    constexpr u8 delim = ' ';
-
     szptr offset = 0;
 
     {
@@ -597,7 +628,7 @@ inline szptr response_line(header_t& h, semantic::mem_chunk<T> const& buf)
     return offset;
 }
 
-inline header_t& request_line(header_t& h, std::istream& s)
+inline header_t& request_line(header_t&, std::istream&)
 {
     /* Read in from:
      * GET /resource HTTP/1.0
@@ -605,12 +636,12 @@ inline header_t& request_line(header_t& h, std::istream& s)
 
     Throw(undefined_behavior("something's wrong here"));
 
-    h.method   = from_string::method(read_value(s));
-    h.resource = read_value(s);
-    h.code     = read_int<u16>(s);
-    h.message  = read_line(s);
+//    h.method   = from_string::method(read_value(s));
+//    h.resource = read_value(s);
+//    h.code     = read_int<u16>(s);
+//    h.message  = read_line(s);
 
-    return h;
+//    return h;
 }
 
 inline std::pair<string, string> field(string const& line)
@@ -717,7 +748,11 @@ inline request_t& create_request(request_t& origin)
 {
     auto& standard_headers = origin.header.standard_fields;
 
-    auto host = origin.host /* + ":" + cast_pod(origin.port)*/;
+    auto host = origin.host;
+
+    if(origin.port != 80 && origin.port != 443)
+        host += ":" + cast_pod(origin.port);
+
     standard_headers[header_field::host] = host;
 
     if(origin.payload.size())
@@ -1168,6 +1203,42 @@ struct parser
         return m_sentinel;
     }
 };
+
+struct builder
+{
+    builder(cstring terminator) : m_terminator(terminator)
+    {
+    }
+
+    void add(
+        string const&                         name,
+        semantic::Bytes const&                data,
+        stl_types::Map<string, string> const& extra_headers)
+    {
+        m_data += m_terminator;
+        m_data += line_separator;
+//        m_data +=
+//            header::serialize::field("Content-Length", cast_pod(data.size));
+        m_data += header::serialize::field(
+            "Content-Disposition", "form-data; name=\"" + (name + "\""));
+        for(auto const& header : extra_headers)
+            m_data += header::serialize::field(header.first, header.second);
+        m_data += line_separator;
+        m_data.insert(m_data.end(), data.begin(), data.end());
+        m_data += line_separator;
+    }
+    void finalize()
+    {
+        m_data += m_terminator;
+        m_data += "--";
+        m_data += line_separator;
+        m_data += line_separator;
+    }
+
+    cstring            m_terminator;
+    stl_types::CString m_data;
+};
+
 } // namespace multipart
 #endif
 

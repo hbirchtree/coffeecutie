@@ -42,27 +42,31 @@ struct mem_chunk
 
         iterator_base& operator++()
         {
-            m_idx++;
+            if(m_idx > m_chunk->elements)
+                m_idx = m_chunk->elements;
+            else
+                m_idx++;
             return *this;
         }
 
         iterator_base operator++(int)
         {
             auto cpy = *this;
-            m_idx++;
+            ++(*this);
             return cpy;
         }
 
         iterator_base& operator--()
         {
-            m_idx--;
+            if(m_idx > 0)
+                m_idx--;
             return *this;
         }
 
         iterator_base operator--(int)
         {
             auto cpy = *this;
-            m_idx--;
+            --(*this);
             return cpy;
         }
 
@@ -339,11 +343,20 @@ struct mem_chunk
     }
 
     template<
+        typename Dummy                                               = void,
+        typename std::enable_if<std::is_pod<T>::value, Dummy>::type* = nullptr>
+    NO_DISCARD STATICINLINE mem_chunk<T> CreateString(
+        stl_types::CString const& src)
+    {
+        return {C_FCAST<T*>(src.c_str()), src.size(), src.size() / sizeof(T)};
+    }
+
+    template<
         typename Dummy                                                = void,
         typename std::enable_if<!std::is_pod<T>::value, Dummy>::type* = nullptr>
     NO_DISCARD STATICINLINE mem_chunk<T> CreateString(libc_types::cstring)
     {
-        return {};
+        Throw(undefined_behavior("can't cast string to non-POD type"));
     }
 
     template<typename T2, typename is_not_virtual<T2>::type* = nullptr>
@@ -564,33 +577,38 @@ struct mem_chunk
         typename std::enable_if<!std::is_const<T>::value, Dummy>::type* =
             nullptr>
     NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T>> at(
-        size_type offset, size_type size = 0)
+        size_type offset, size_type elements = 0)
     {
         using namespace ::libc_types;
 
-        if(offset > this->size || offset + size > this->size)
+        if(offset > this->elements || offset + elements > this->elements)
             return {};
 
         if(!data)
             return {};
 
-        u8* basePtr = C_RCAST<u8*>(data);
+        u8 const* basePtr = C_RCAST<u8 const*>(data);
 
-        if(size == 0)
-            size = this->size - offset;
+        if(elements == 0)
+            elements = this->size - offset / sizeof(value_type);
 
-        if(auto out = From(&basePtr[offset], size); out)
+        offset *= sizeof(value_type);
+        elements *= sizeof(value_type);
+
+        if(auto out = From(&basePtr[offset], elements); out)
+        {
+            out.m_access = m_access;
             return out;
-        else
+        } else
             return {};
     }
 
     NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at(
-        size_type offset, size_type size = 0) const
+        size_type offset, size_type elements = 0) const
     {
         using namespace ::libc_types;
 
-        if(offset > this->size || offset + size > this->size)
+        if(offset > this->elements || offset + elements > this->elements)
             return {};
 
         if(!data)
@@ -598,23 +616,28 @@ struct mem_chunk
 
         u8 const* basePtr = C_RCAST<u8 const*>(data);
 
-        if(size == 0)
-            size = this->size - offset;
+        if(elements == 0)
+            elements = this->size - offset / sizeof(value_type);
 
-        if(auto out = From(&basePtr[offset], size); out)
+        offset *= sizeof(value_type);
+        elements *= sizeof(value_type);
+
+        if(auto out = From(&basePtr[offset], elements); out)
+        {
+            out.m_access = m_access;
             return out;
-        else
+        } else
             return {};
     }
 
     NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at_lazy(
-        size_type offset, size_type size = 0) const
+        size_type offset, size_type elements = 0) const
     {
         using namespace ::libc_types;
 
-        size = std::min(offset + size, this->size - offset);
+        elements = std::min(offset + elements, this->elements - offset);
 
-        if(offset > this->size)
+        if(offset > this->elements)
             return {};
 
         if(!data)
@@ -622,10 +645,13 @@ struct mem_chunk
 
         u8 const* basePtr = C_RCAST<u8 const*>(data);
 
-        if(size == 0)
-            size = this->size - offset;
+        if(elements == 0)
+            elements = this->elements - offset;
 
-        if(auto out = From(&basePtr[offset], size); out)
+        offset *= sizeof(value_type);
+        elements *= sizeof(value_type);
+
+        if(auto out = From(&basePtr[offset], elements); out)
             return out;
         else
             return {};
@@ -750,12 +776,17 @@ struct mem_chunk
 
     struct find_result
     {
+        find_result(size_type offset = 0) : offset(offset)
+        {
+        }
+
         size_type offset;
-        mem_chunk chunk;
     };
 
-    NO_DISCARD stl_types::Optional<find_result> find(mem_chunk<T> const& needle)
+    NO_DISCARD stl_types::Optional<find_result> find(mem_chunk const& needle)
     {
+        stl_types::Optional<find_result> out;
+
         if(needle.empty())
             return {};
 
@@ -766,9 +797,13 @@ struct mem_chunk
             if(data[i] == needle[needle_idx])
             {
                 needle_idx++;
-                if(needle_idx == needle.size)
-                    return find_result{i - (needle_idx - 1),
-                                       *at(i - (needle_idx - 1))};
+                if(needle_idx == needle.elements)
+                {
+                    auto offset = i - (needle_idx - 1);
+                    auto chunk =
+                        at((i - (needle_idx - 1)) * sizeof(value_type)).value();
+                    return find_result(offset);
+                }
             } else
                 needle_idx = 0;
         }
@@ -796,7 +831,7 @@ struct mem_chunk
 
   private:
     void (*m_destr)(mem_chunk<T>&) = nullptr;
-    RSCA m_access;
+    RSCA m_access                  = RSCA::None;
 };
 
 #undef BYTE_API

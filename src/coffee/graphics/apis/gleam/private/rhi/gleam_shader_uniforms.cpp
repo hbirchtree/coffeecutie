@@ -30,10 +30,10 @@ void SetUniform_wrapf(
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
-        CGL43::Uniffv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
+        gl::v43::Uniffv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
     else
 #endif
-        CGL33::Uniffv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
+        gl::v33::Uniffv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
 }
 
 template<typename T>
@@ -48,11 +48,11 @@ void SetUniform_wrapf_m(
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
-        CGL43::Uniffv(
+        gl::v43::Uniffv(
             prog, C_CAST<i32>(idx), false, get_uniform_span(data, arr_size));
     else
 #endif
-        CGL33::Uniffv(
+        gl::v33::Uniffv(
             C_CAST<i32>(idx), false, get_uniform_span(data, arr_size));
 }
 
@@ -68,17 +68,17 @@ void SetUniform_wrapi(
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
-        CGL43::Unifiv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
+        gl::v43::Unifiv(prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
     else
 #endif
-        CGL33::Unifiv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
+        gl::v33::Unifiv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
 }
 
 #if GL_VERSION_VERIFY(0x330, 0x300)
 template<typename T>
 void SetUniform_wrapui(
     glhnd const& prog,
-    uint32       idx,
+    u32       idx,
     const T*     data,
     szptr        arr_size,
     gleam_error& ec)
@@ -91,11 +91,11 @@ void SetUniform_wrapui(
 
 #if GL_VERSION_VERIFY(0x330, 0x320)
     if(GLEAM_FEATURES.separable_programs)
-        CGL43::Unifuiv(
+        gl::v43::Unifuiv(
             prog, C_CAST<i32>(idx), get_uniform_span(data, arr_size));
     else
 #endif
-        CGL33::Unifuiv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
+        gl::v33::Unifuiv(C_CAST<i32>(idx), get_uniform_span(data, arr_size));
 }
 #endif
 
@@ -268,25 +268,25 @@ void GLEAM_API::SetShaderUniformState(
             /* Set up texture state */
             glhnd ghnd(handle->texture);
 
-            CGL33::TexActive(GL_TEXTURE0 + handle->m_unit);
-            CGL33::TexBind(handle->m_type, ghnd);
+            gl::v33::TexActive(GL_TEXTURE0 + handle->m_unit);
+            gl::v33::TexBind(handle->m_type, ghnd);
 
             ghnd.release();
 #if GL_VERSION_VERIFY(0x330, 0x300)
             glhnd shnd(handle->m_sampler);
-            CGL33::SamplerBind(handle->m_unit, shnd);
+            gl::v33::SamplerBind(handle->m_unit, shnd);
             shnd.release();
 
 #if GL_VERSION_VERIFY(0x410, 0x310)
             if(GLEAM_FEATURES.separable_programs)
             {
                 /* Set texture handle in shader */
-                CGL43::Unifiv(prog, s.first, handle->m_unit);
+                gl::v43::Unifiv(prog, s.first, handle->m_unit);
             } else
 #endif
             {
                 /* Set texture handle in shader */
-                CGL33::Unifiv(s.first, handle->m_unit);
+                gl::v33::Unifiv(s.first, handle->m_unit);
             }
 #endif
         }
@@ -299,10 +299,10 @@ void GLEAM_API::SetShaderUniformState(
     {
         auto&  det    = b.second;
         auto&  buf    = det.buff;
-        uint32 bindex = b.first;
+        u32 bindex = b.first;
         /* Bind uniform block to binding point */
         buf->bindrange(bindex, det.sec.offset, det.sec.size, ec);
-        CGL33::UnifBlockBinding(prog, b.first, bindex);
+        gl::v33::UnifBlockBinding(prog, b.first, bindex);
     }
 #endif
 
@@ -312,11 +312,11 @@ void GLEAM_API::SetShaderUniformState(
         {
             auto&  det    = b.second;
             auto&  buf    = det.buff;
-            uint32 bindex = b.first;
+            u32 bindex = b.first;
             /* Bind SSBO to binding point */
             buf->bindrange(bindex, det.sec.offset, det.sec.size, ec);
 #if GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
-            CGL43::SSBOBinding(prog, b.first, bindex);
+            gl::v43::SSBOBinding(prog, b.first, bindex);
 #endif
         }
 #endif

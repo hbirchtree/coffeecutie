@@ -48,10 +48,6 @@ struct InternalState
 
     platform::args::AppArg initial_args = {};
 
-#if defined(COFFEE_USE_UNWIND)
-    unw_context_t* unwind_context = nullptr;
-#endif
-
 #if PERIPHERAL_PROFILER_ENABLED
     ShPtr<profiling::PContext> profiler_store;
 #endif
@@ -135,6 +131,12 @@ P<InternalThreadState> CreateNewThreadState()
 void SetInternalState(P<InternalState> state)
 {
     ISTATE = state;
+}
+
+void ClearStates()
+{
+    if(ISTATE)
+        ISTATE->pointer_storage = {};
 }
 
 P<InternalState>& GetInternalState()
@@ -354,15 +356,16 @@ void ResourcePrefix(cstring prefix)
 
 CString const& ResourcePrefix(bool fallback)
 {
-    //    fprintf(stdout, "GET: %p\n", &State::internal_state);
-    fflush(stdout);
-    C_PTR_CHECK(State::ISTATE);
+    static CString fallback_store = "./";
+
+    if(!State::ISTATE)
+        return fallback_store;
+
     auto const& out = State::ISTATE->resource_prefix;
 
     if(fallback && out.size() == 0)
     {
-        static CString fallback = "./";
-        return fallback;
+        return fallback_store;
     }
 
     return out;

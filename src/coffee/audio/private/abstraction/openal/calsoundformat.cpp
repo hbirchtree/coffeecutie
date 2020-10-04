@@ -22,7 +22,7 @@ u32 CALSoundFormat::samplerate() const
     return i_samrate;
 }
 
-uint16 CALSoundFormat::channels() const
+u16 CALSoundFormat::channels() const
 {
     return i_channels;
 }
@@ -37,7 +37,7 @@ void CALSoundFormat::setSamplerate(const u32 &smrt)
     i_samrate = smrt;
 }
 
-void CALSoundFormat::setChannels(const uint16 &chans)
+void CALSoundFormat::setChannels(const u16 &chans)
 {
     i_channels = chans;
 }

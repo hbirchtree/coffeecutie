@@ -14,7 +14,7 @@ void AppArg::rebuildArgs()
         m_ptrStorage.push_back(&m_storage[i][0]);
 }
 
-AppArg AppArg::Clone(i32 argc, cstring_w *argv)
+AppArg AppArg::Clone(i32 argc, cstring_w* argv)
 {
     AppArg arg;
 
@@ -203,8 +203,8 @@ CString ArgumentParser::helpMessage() const
     for(auto p : posargs)
     {
         out += " [" + str::encapsulate(p.name) + "]";
-        desc += "\n  " + str::encapsulate(p.name)
-                + "\t\t" + str::encapsulate(p.help) + "\n";
+        desc += "\n  " + str::encapsulate(p.name) + "\t\t" +
+                str::encapsulate(p.help) + "\n";
     }
 
     if(arguments.size() || switches.size())
@@ -225,15 +225,15 @@ CString ArgumentParser::helpMessage() const
         out += "]";
 
         if(a.longname && a.shortname)
-            desc += "\n  -" + str::encapsulate(a.shortname)
-                    + ", --" + str::encapsulate(a.longname)
-                    + "\t\t" + str::encapsulate(a.help);
+            desc += "\n  -" + str::encapsulate(a.shortname) + ", --" +
+                    str::encapsulate(a.longname) + "\t\t" +
+                    str::encapsulate(a.help);
         else if(a.longname)
-            desc += "\n      --" + str::encapsulate(a.longname)
-                    + "\t\t" + str::encapsulate(a.help);
+            desc += "\n      --" + str::encapsulate(a.longname) + "\t\t" +
+                    str::encapsulate(a.help);
         else if(a.shortname)
-                desc += "\n  -" + str::encapsulate(a.shortname)
-                        + "\t\t\t" + str::encapsulate(a.help);
+            desc += "\n  -" + str::encapsulate(a.shortname) + "\t\t\t" +
+                    str::encapsulate(a.help);
     }
 
     for(auto s : switches)
@@ -249,18 +249,38 @@ CString ArgumentParser::helpMessage() const
         out += "]";
 
         if(s.longname && s.shortname)
-            desc += "\n  -" + str::encapsulate(s.shortname)
-                    + ", --" + str::encapsulate(s.longname)
-                    + "\t\t" + str::encapsulate(s.help);
+            desc += "\n  -" + str::encapsulate(s.shortname) + ", --" +
+                    str::encapsulate(s.longname) + "\t\t" +
+                    str::encapsulate(s.help);
         else if(s.longname)
-            desc += "\n      --" + str::encapsulate(s.longname)
-                    + "\t\t" + str::encapsulate(s.help);
+            desc += "\n      --" + str::encapsulate(s.longname) + "\t\t" +
+                    str::encapsulate(s.help);
         else if(s.shortname)
-                desc += "\n  -" + str::encapsulate(s.shortname)
-                        + "\t\t\t" + str::encapsulate(s.help);
+            desc += "\n  -" + str::encapsulate(s.shortname) + "\t\t\t" +
+                    str::encapsulate(s.help);
     }
 
     return out + desc;
+}
+
+CString ArgumentResult::of(CString const& name) const
+{
+    auto it = arguments.find(name);
+
+    if(it == arguments.end())
+        return {};
+
+    return it->second;
+}
+
+CString ArgumentResult::pos(CString const& name) const
+{
+    auto it = positional.find(name);
+
+    if(it == positional.end())
+        return {};
+
+    return it->second;
 }
 
 } // namespace args

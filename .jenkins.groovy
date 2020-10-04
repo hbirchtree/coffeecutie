@@ -1,4 +1,4 @@
-def linux_targets = ['ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'raspberry.armhf', 'gamecube', 'fedora.amd64', 'emscripten.wasm', 'android.armv8a.v29', 'android.armv8a.v27', 'android.armv7a.v27', 'android.armv7a.v21', 'android.armv7a.v19', ]
+def linux_targets = ['ubuntu.amd64', 'testing.linux.release', 'testing.linux.lowfat.release', 'testing.linux.lowfat.debug', 'raspberry.armhf', 'gamecube', 'fedora.amd64', 'emscripten.wasm', 'beaglebone.black', 'android.armv8a.v29', 'android.armv8a.v27', 'android.armv7a.v27', 'android.armv7a.v21', 'android.armv7a.v19', ]
 def osx_targets = ['osx', 'ios.x86_64', ]
 def windows_targets = ['win32.amd64.vs19', 'uwp.amd64.vs19', ]
 

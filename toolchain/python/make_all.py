@@ -68,10 +68,10 @@ def create_global_variables(precompiled_deps, base_config):
 
     return blocks
 
-def create_target_definitions(precompiled_deps, base_config, targets, force_target):
+def create_target_definitions(precompiled_deps, base_config, targets, force_target, config_name='coffee'):
     # Load toolchain configuration, includes project configuration
     toolchain_data = convert_to_cmake(yml.read_yaml('toolchain-config.yml'))
-    coffee_data = convert_to_cmake(yml.read_yaml('coffee-config.yml'))
+    coffee_data = convert_to_cmake(yml.read_yaml('%s-config.yml' % (config_name,)))
 
     make_targets = []
 
@@ -151,11 +151,15 @@ def create_cmake_preload(source):
             return var.replace('_INTERNAL', '').replace("'", '')
         return dissolve_env(var.replace('$(env:%s)' % res[0], '$ENV{%s}' % res[0]))
 
-    variables = source['cmake-opts']
     target_name = source['target-name'][0]
 
+    ci_source = convert_to_cmake(yml.read_yaml('ci-config.yml'))
+    ci_vars = yml.create_variable_template(ci_source, source, target_name)
+
+    var_templates.resolve_variables(ci_vars)
+    variables = ci_vars['cmake-opts']
+
     vars = [ var[2:] for var in variables if var.startswith('-D') ]
-#    vars = [ var for var in vars if not var.startswith('CMAKE_') ]
     vars = [ dissolve_env(var) for var in vars ]
 
     with open('../../.github/cmake/%s.preload.cmake' % target_name, 'w') as out:

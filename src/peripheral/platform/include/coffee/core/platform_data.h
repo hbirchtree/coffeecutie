@@ -82,6 +82,8 @@ extern CString runtime_kernel_version();
 extern CString runtime_distro();
 extern CString runtime_distro_version();
 
+extern CString runtime_libc_version();
+
 } // namespace system
 namespace display {
 

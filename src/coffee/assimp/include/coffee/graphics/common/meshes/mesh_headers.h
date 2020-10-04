@@ -19,7 +19,7 @@ struct vertex_blob_t
     i64 content_offset;
     buffer_id id;
 
-    uint16 pad_2;
+    u16 pad_2;
     u32 pad_3;
 };
 

@@ -22,6 +22,10 @@ using LogInterfaceTagged = void (*)(
     libc_types::u32, /* level */
     libc_types::u32  /* flags */
 );
+using StackWriter = void (*)(
+    stl_types::CString const&, /* frame name */
+    stl_types::CString const&  /* instruction pointer (hex format) */
+    );
 
 STATICINLINE void fprintf_logger(
     libc::io::output_fd       fd,

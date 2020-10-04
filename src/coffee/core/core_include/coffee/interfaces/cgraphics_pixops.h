@@ -188,8 +188,8 @@ FORCEDINLINE constexpr szptr GetPixCompressedSize(
         break;
     }
 
-    //static_assert(false, "size calculation not implemented");
-    //Throw(implementation_error("size calculation not implemented"));
+    // static_assert(false, "size calculation not implemented");
+    // Throw(implementation_error("size calculation not implemented"));
     return 0;
 }
 
@@ -221,7 +221,8 @@ FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)
     return "";
 }
 
-FORCEDINLINE constexpr szptr PixDescSize(PixDesc const& desc, Size const& pix)
+FORCEDINLINE constexpr szptr PixDescSize(
+    PixDesc const& desc, Size const& pix)
 {
     using namespace typing::pixels::properties;
 

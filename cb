@@ -21,6 +21,11 @@ function all_source_files()
     find "${SRC_BASE_DIR}"/src/coffee "${SRC_BASE_DIR}"/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
 }
 
+function github_api() {
+    echo github_api $@ >&2
+    ${TC_DIR}/ci/github_api.py --verbose --api-token ${GITHUB_TOKEN} "$@"
+}
+
 case $1 in
 "quick-build")
     if [ -z "$BUILD_CI" ]; then
@@ -30,13 +35,25 @@ case $1 in
     fi
 ;;
 "ci-build")
-    mkdir -p build
-    pushd build
+    INSTALL_DIR=/build/install
+    BUILD_DIR=/build/build
+
+    if [ "$(uname)" = "Darwin" ]; then
+        INSTALL_DIR="${BASE_DIR}/../install"
+        BUILD_DIR="${BASE_DIR}/../build"
+    fi
+
+    mkdir -p ${BUILD_DIR} ${INSTALL_DIR}
+
+    pushd ${BUILD_DIR}
     export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
     export CONFIGURATION=${CONFIGURATION:-Debug}
     export CMAKE_SOURCE_DIR=${BASE_DIR}
-    export CMAKE_INSTALL_DIR=$(realpath .)/install
-    cmake -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake ${BASE_DIR} ${@:2}
+    export CMAKE_INSTALL_DIR=${INSTALL_DIR}
+    cmake \
+        -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
+        ${BASE_DIR} ${@:2}
     cmake --build . --target ${BUILD_TARGET:-all}
     cmake --build . --target install
     popd
@@ -45,41 +62,71 @@ case $1 in
     if [ -z "$CONTAINER" ]; then
         source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
     fi
+    pwd
     docker run --rm \
-        -v ${BASE_DIR}:/build \
+        -v ${BASE_DIR}:/build/src \
+        -v $PWD/build:/build/build \
+        -v $PWD/install:/build/install \
         -e BUILDVARIANT=${BUILDVARIANT} \
         -e CONFIGURATION=${CONFIGURATION} \
         -e GENERATE_PROGRAMS=${GENERATE_PROGRAMS} \
         -e BUILD_TARGET=${BUILD_TARGET:-all} \
         -u root \
-        ${CONTAINER} /build/cb ci-build ${@:2}
+        ${CONTAINER} /build/src/cb ci-build ${@:2}
 ;;
 "compress-usr-dir")
-    OUTPUT=$(realpath .)/${2}_${BUILDVARIANT}.tar.gz
-    INSTALL_DIR=$(realpath .)/build/install/${BUILDVARIANT}
+    INSTALL_DIR=$PWD/build/install
 
-    pwd
-    ls
-    ls build
-    ls build/install
+    if [ -f "${BASE_DIR}/deploy-script.sh" ]; then
+        echo "-- Using customized deploy script"
+        source ${BASE_DIR}/deploy-script.sh
+    else
+        OUTPUT=$PWD/${2}_${BUILDVARIANT}.tar.bz2
+        echo "-- Creating $OUTPUT from $INSTALL_DIR"
 
-    pushd ${INSTALL_DIR}
-    case $2 in
-    "bin")
-        tar zcf ${OUTPUT} \
-            --exclude=${INSTALL_DIR}/include \
-            --exclude=${INSTALL_DIR}/lib \
-            --exclude=${INSTALL_DIR}/share \
-            ${INSTALL_DIR}
-    ;;
-    "libraries")
-        tar zcf ${OUTPUT} \
-            --exclude=${INSTALL_DIR}/bin \
-            --exclude=${INSTALL_DIR}/packaged \
-            ${INSTALL_DIR}
-    ;;
-    esac
-    popd
+        echo "-- Current directory: $(pwd)"
+
+        echo "-- Source dir: ${BASE_DIR}"
+        ls ${BASE_DIR}
+        echo "-- Build dir: $PWD/build"
+        ls $PWD/build
+        echo "-- Install dir: ${INSTALL_DIR}"
+        ls ${INSTALL_DIR}
+
+        pushd ${INSTALL_DIR}
+        case $2 in
+        "bin")
+            tar cvf ${OUTPUT} \
+                --exclude=${INSTALL_DIR}/include \
+                --exclude=${INSTALL_DIR}/lib \
+                --exclude=${INSTALL_DIR}/share \
+                ${INSTALL_DIR}
+        ;;
+        "libraries")
+            tar cvf ${OUTPUT} \
+                --exclude=${INSTALL_DIR}/bin \
+                --exclude=${INSTALL_DIR}/packaged \
+                ${INSTALL_DIR}
+        ;;
+        *)
+            echo "-- Unhandled case $2"
+        ;;
+        esac
+        popd
+    fi
+;;
+"push-asset")
+    TAG_NAME=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)
+
+    [ -z "$TAG_NAME" ] && exit 1
+
+    RELEASE_NAME=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 1)
+
+    [ -z "$RELEASE_NAME" ] && github_api push release "$TRAVIS_REPO_SLUG" "$TAG_NAME" "Release $TAG_NAME" "Automated release"
+
+    for FILE in $(find . -maxdepth 1 -type f -name '*.'$2); do
+        github_api push asset "$TRAVIS_REPO_SLUG:$TAG_NAME" "$(basename $FILE)"
+    done
 ;;
 "lint")
     find src/ -regextype egrep -regex '.*\.(h|hpp|c|cpp)' -exec ${0} lint-file {} \;
