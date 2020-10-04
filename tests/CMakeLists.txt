@@ -34,7 +34,7 @@ if(NOT ANDROID AND NOT WIN32)
 endif()
 
 if(NOT SKIP_GRAPHIC_TESTS)
-    add_subdirectory(window-api/basic)
+#    add_subdirectory(window-api/basic)
     add_subdirectory(graphics/api-verify)
     add_subdirectory(graphics/self-test)
 endif()
